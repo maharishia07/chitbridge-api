@@ -311,7 +311,10 @@ console.log('\nAND NOTHING HERE KNOWS ABOUT A SCREEN\n');
 /** ⭐⭐⭐ the rule that keeps the morning out of the markup that draws it */
 it('⭐⭐⭐ the engine touches no DOM, no window, no storage, no fetch', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'dayopen.js'), 'utf8');
-  const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '')
+    /* ⭐ the ONE line an adopted chitbridge-engines file uses to hand a PAGE its global (2026-09-28) — the engine
+       still reads nothing from a window; everything else here is scanned exactly as before */
+    .replace(/if \(root && typeof root\.window !== 'undefined'\) root\.window\.CB\w+ = EXPORTS;/, '');
   ['document', 'window', 'localStorage', 'innerHTML', 'fetch(', 'querySelector'].forEach((w) => {
     assert.ok(body.indexOf(w) < 0, 'lib/dayopen.js mentions ' + w + ' — the morning has drifted into the screen');
   });

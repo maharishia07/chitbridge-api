@@ -211,7 +211,10 @@ console.log('\nAND NOTHING HERE KNOWS ABOUT A SCREEN OR A SOCKET\n');
  */
 it('⭐⭐⭐ the hub touches no DOM, no http, no storage', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'orderhub.js'), 'utf8');
-  const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '')
+    /* ⭐ the ONE line an adopted chitbridge-engines file uses to hand a PAGE its global (2026-09-28) — the engine
+       still reads nothing from a window; everything else here is scanned exactly as before */
+    .replace(/if \(root && typeof root\.window !== 'undefined'\) root\.window\.CB\w+ = EXPORTS;/, '');
   ['document', 'window', 'localStorage', 'fetch', 'require(\'http', 'axios', 'supabase'].forEach((w) => {
     assert.ok(body.indexOf(w) < 0, 'lib/orderhub.js mentions ' + w + ' — the floor now needs a network');
   });

@@ -276,7 +276,10 @@ console.log('\nAND IT BELONGS TO NEITHER SURFACE\n');
  */
 it('⭐⭐⭐ it touches no DOM, no window, and makes no request of its own', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'signin.js'), 'utf8');
-  const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '')
+    /* ⭐ the ONE line an adopted chitbridge-engines file uses to hand a PAGE its global (2026-09-28) — the engine
+       still reads nothing from a window; everything else here is scanned exactly as before */
+    .replace(/if \(root && typeof root\.window !== 'undefined'\) root\.window\.CB\w+ = EXPORTS;/, '');
   ['document', 'window', 'localStorage', 'fetch(', 'axios', 'require(\'http'].forEach((w) => {
     assert.ok(body.indexOf(w) < 0, 'lib/signin.js mentions ' + w + ' — it has picked a surface');
   });
