@@ -138,7 +138,8 @@ const COPIES = () => [
      THE LINE, before offers and before tax, answered by the same function everywhere — now because there is one file. */
   /* ⭐ EIGHTH ENGINE. Money is not a number with a symbol in front of it — grouping, currency and the bidi marks
      an Arabic locale inserts are all decisions, and CB already made them once in locale.js. */
-  [path.join(WEB, 'app', 'locale.js'), path.join(WEB, 'engine', 'locale.js'), 'copy'],
+  /* locale: ADOPTED from chitbridge-engines (v1.4.0, 2026-09-28) — app/, engine/ and lib/locale.browser.js are written only by
+     chitbridge-engines/tools/adopt.cjs; the 2 line(s) that copied it from app/locale.js are retired. */
   /**
    * ⭐ THE GOVERNANCE CONTEXT — what the application can work out about a shop without asking it anything.
    * Registration reads it; the counter does not, so it is NOT in KEEP. It leans on CBLocale.REGIONS for the
@@ -301,7 +302,6 @@ const COPIES = () => [
   /* money: the shop PC is handed lib/money.js itself — adopted from chitbridge-engines, it already runs in a page */
   [null, path.join(API, 'lib', 'docnumber.browser.js'), wrapForBrowser('docnumber.js', 'CBDoc')],
   /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
-  [null, path.join(API, 'lib', 'locale.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'locale.js'), 'utf8'))],
   /* pricing: the shop PC is served lib/pricing-engine.js itself (adopted; it already runs in a page) — pricing.browser.js retired */
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   /* ⭐⭐ UNITS, FOR THE SHOP PC TOO ([TILL-104]). The page learned that a kilo is measured and a plate is
