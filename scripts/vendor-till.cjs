@@ -248,7 +248,7 @@ const COPIES = () => [
   /* qty: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐⭐ one cause → one sentence → one button ([TILL-132]). The health page RENDERS this; the footer and the
      doctor read the same table, which is the whole point of it being an engine. */
-  [null, path.join(WEB, 'engine', 'verdict.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
+  /* verdict: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /**
    * ⭐⭐ THE VALIDATION MODULE, ON THE COUNTER ([TILL-105]). Athi: *"if the gstn is given, we can call the
    * validation module from till application and confirm."* lib/profile-map is DB-free with zero requires, so it
@@ -315,7 +315,6 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'dayopen.browser.js'), wrapForBrowser('dayopen.js', 'CBDayOpen')],
   [null, path.join(API, 'lib', 'signin.browser.js'), wrapForBrowser('signin.js', 'CBSignin')],
   [null, path.join(API, 'lib', 'scalecode.browser.js'), wrapForBrowser('scalecode.js', 'CBScaleCode')],
-  [null, path.join(API, 'lib', 'verdict.browser.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],

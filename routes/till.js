@@ -2477,7 +2477,7 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   scalecode: '../lib/scalecode.browser.js',
                   qty: '../lib/qty.js' /* ADOPTED — one file for node and the page */,
                   /* ⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
-                  verdict: '../lib/verdict.browser.js',
+                  verdict: '../lib/verdict.js' /* ADOPTED — one file for node and the page */,
                   qr: '../node_modules/qrcode-generator/qrcode.js' };
 router.get('/engine/:name', auth, (req, res) => {
   const rel = ENGINES[String(req.params.name || '')];
