@@ -32,6 +32,8 @@ const GUARDS = [
   'engine-versions.test.cjs',   // ⭐⭐ a counter reports which engine release it bills with — /api/state, the snapshot call, its key (2026-09-28)
   /* ⚠️ written 2026-09-28 with the one-gate rebuild and NOT added here the same day — a guard nobody runs. */
   'counter-gates.test.cjs',     // ⭐⭐⭐ ONE door to a shop (becomeShop), ONE for a person (sign-in, offline PIN), lock/break = that sign-in
+  /* ⚠️ "A GUARD NOBODY RUNS" (BACKLOG, 2026-09-18) — the suite ran it, the gate never did. Added 2026-09-28. */
+  'tdz-guard.test.js',          // no const/let read above its declaration in the same function (node -c cannot see a TDZ)
   'knownerr.test.js',         // a refusal the database makes on purpose (b247) reaches a person as a 409, from every route that writes a chit
   'xlsx-read.test.js',        // an Excel file read into the shape a CSV makes, and refused in words otherwise
   'xlsx-write.test.js',       // a workbook Excel will open — every part it needs, and a code keeps its leading zero
