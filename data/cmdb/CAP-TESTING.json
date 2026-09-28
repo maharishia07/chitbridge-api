@@ -613,13 +613,13 @@
    "file": "web e2e/missing-functions.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/panel-reachable.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/sim-run3.cjs",
@@ -669,20 +669,18 @@
   {
    "file": "api tests/board-kinds.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/case-fields.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/cmdb.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/engine-manifest.js",
@@ -693,37 +691,41 @@
    "file": "api tests/key-scopes.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
+  },
+  {
+   "file": "api tests/notifications-count.test.cjs",
+   "kind": "server",
+   "result": "not run"
   },
   {
    "file": "api tests/query-shape.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/support-desks.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/tdz-guard.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/test-board.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/testnews.test.cjs",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: testing\n  annotations:\n    chitbridge.io/ci: CAP-TESTING\n    chitbridge.io/asset: CAP022\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/testing.js\n    - routes/attachments.js\n    - routes/notifications.js"

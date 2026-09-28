@@ -222,25 +222,26 @@
   {
    "file": "web e2e/match-probe.cjs",
    "kind": "browser",
-   "result": "not run"
+   "result": "pass",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/modal-safe-repaint.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/docnumber-gate.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/engine-boundary.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/iam-access.test.cjs",
@@ -251,79 +252,79 @@
    "file": "api tests/key-scopes.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/kit-update.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/knownerr.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/local-supplier.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/policy-defaults.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/query-shape.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/raida.test.cjs",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/retention-floor.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/rev01-price-includes-tax.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/rev02-no-rerate-on-send.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/rev16-delta-cursor-stamped-first.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/reward-cycle.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/rollup.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
+  },
+  {
+   "file": "api tests/round-trips-till.test.cjs",
+   "kind": "server",
+   "result": "not run"
   },
   {
    "file": "api tests/snapshot-wire.test.js",
@@ -334,7 +335,12 @@
    "file": "api tests/tdz-guard.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
+  },
+  {
+   "file": "api tests/till-origin.test.cjs",
+   "kind": "server",
+   "result": "not run"
   },
   {
    "file": "api tests/till-shop-folder.test.js",
@@ -344,14 +350,12 @@
   {
    "file": "api tests/verdict.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/write-limits.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: match\n  annotations:\n    chitbridge.io/ci: CAP-MATCH\n    chitbridge.io/asset: CAP014\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/till.js\n    - routes/chits.js"

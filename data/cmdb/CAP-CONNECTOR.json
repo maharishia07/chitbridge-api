@@ -278,7 +278,7 @@
    "file": "api tests/canon.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: connector\n  annotations:\n    chitbridge.io/ci: CAP-CONNECTOR\n    chitbridge.io/asset: CAP007\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/connectors.js"

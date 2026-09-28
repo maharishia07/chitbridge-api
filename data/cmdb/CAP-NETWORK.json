@@ -358,19 +358,19 @@
    "file": "web e2e/bridge-id-audit.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/guard-static.test.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/one-cart.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/prose-worklist.cjs",
@@ -380,8 +380,8 @@
   {
    "file": "web e2e/session-keys.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/text-budget.cjs",
@@ -392,7 +392,7 @@
    "file": "api tests/currency-envelope.test.cjs",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/engine-manifest.js",
@@ -402,38 +402,40 @@
   {
    "file": "api tests/identity-auth.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/local-supplier.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/query-shape.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/rls-context.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
+  },
+  {
+   "file": "api tests/supplier-list-scope.test.cjs",
+   "kind": "server",
+   "result": "not run"
   },
   {
    "file": "api tests/support-desks.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/visibility-mirror.test.cjs",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: network\n  annotations:\n    chitbridge.io/ci: CAP-NETWORK\n    chitbridge.io/asset: CAP016\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/network-design.js\n    - routes/entities.js"

@@ -313,13 +313,13 @@
    "file": "api tests/docnumber-gate.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/engine-boundary.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/iam-access.test.cjs",
@@ -329,56 +329,53 @@
   {
    "file": "api tests/knownerr.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/local-supplier.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/policy-defaults.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/query-shape.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/raida.test.cjs",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/retention-floor.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/rev01-price-includes-tax.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/rev02-no-rerate-on-send.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/tdz-guard.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: register\n  annotations:\n    chitbridge.io/ci: CAP-REGISTER\n    chitbridge.io/asset: CAP018\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/chits.js"

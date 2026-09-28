@@ -253,19 +253,18 @@
    "file": "web e2e/lazy-screen-guard.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/list-behaviour.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "web e2e/session-keys.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/tests/coassists.spec.js",
@@ -278,10 +277,16 @@
    "result": "not run"
   },
   {
+   "file": "api tests/access-events.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-13"
+  },
+  {
    "file": "api tests/dev-otp.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/engine-manifest.js",
@@ -292,31 +297,28 @@
    "file": "api tests/env-posture.test.cjs",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/identity-auth.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/namespace.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/rls-predicate.test.cjs",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/userid.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: workforce\n  annotations:\n    chitbridge.io/ci: CAP-WORKFORCE\n    chitbridge.io/asset: CAP024\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/actors.js\n    - routes/identity-docs.js"

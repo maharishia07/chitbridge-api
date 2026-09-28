@@ -688,7 +688,7 @@
    "file": "web e2e/asi-return.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/flows/detail-design.js",
@@ -698,32 +698,37 @@
   {
    "file": "web e2e/guard-static.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/locale-map.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
+  },
+  {
+   "file": "web e2e/playwright-report/trace/assets/codeMirrorModule-LEHpjmcn.js",
+   "kind": "browser",
+   "result": "not run"
   },
   {
    "file": "web e2e/policy-reachable.cjs",
    "kind": "browser",
-   "result": "fail",
-   "at": "2026-09-28"
+   "result": "pass",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/prof-dirty.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/profile-groups.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/render-smoke.cjs",
@@ -733,8 +738,8 @@
   {
    "file": "web e2e/session-keys.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/tests/api-keys.spec.js",
@@ -852,51 +857,45 @@
    "result": "not run"
   },
   {
+   "file": "api tests/access-events.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-13"
+  },
+  {
    "file": "api tests/connector-kit.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/currency-envelope.test.cjs",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/dev-otp.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/docnumber-gate.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/engine-boundary.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/engine-manifest.js",
    "kind": "server",
    "result": "not run"
-  },
-  {
-   "file": "api tests/env-posture.test.cjs",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
-  },
-  {
-   "file": "api tests/form-handshake.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: admin\n  annotations:\n    chitbridge.io/ci: CAP-ADMIN\n    chitbridge.io/asset: CAP001\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/entities.js\n    - routes/governance.js\n    - routes/tax.js\n    - routes/chits.js\n    - routes/actors.js\n    - routes/relationships.js\n    - routes/channels.js\n    - routes/keys.js\n    - routes/counters.js\n    - routes/network-offers.js\n    - routes/integrations.js\n    - routes/folders.js\n    - routes/openapi.js"

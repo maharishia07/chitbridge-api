@@ -382,8 +382,7 @@
   {
    "file": "web e2e/api-envelope.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "web e2e/dead-surface.cjs",
@@ -394,13 +393,13 @@
    "file": "web e2e/defs-batch.test.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/guard-static.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/offer-lab-next-offline.cjs",
@@ -415,20 +414,20 @@
   {
    "file": "web e2e/offers-kinds.test.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/one-cart.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/report-card.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/schemes-shot.cjs",
@@ -437,6 +436,11 @@
   },
   {
    "file": "web e2e/shot-rows.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/storefront-offer-ancestors.cjs",
    "kind": "browser",
    "result": "not run"
   },
@@ -533,14 +537,13 @@
   {
    "file": "api tests/dayopen.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/defaults.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/engine-manifest.js",
@@ -556,43 +559,34 @@
    "file": "api tests/local-supplier.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/namespace.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/network-authority.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/network-storefront.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "api tests/products-bulk.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "api tests/query-shape.test.js",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
-  },
-  {
-   "file": "api tests/rls-context.test.cjs",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: definitions\n  annotations:\n    chitbridge.io/ci: CAP-DEFINITIONS\n    chitbridge.io/asset: CAP008\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/products.js\n    - routes/relationships.js\n    - routes/definitions.js\n    - routes/governance.js"

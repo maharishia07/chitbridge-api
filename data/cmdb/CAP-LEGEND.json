@@ -246,26 +246,25 @@
   {
    "file": "web e2e/cmdb-records.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "not run"
   },
   {
    "file": "web e2e/guard-static.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/missing-functions.cjs",
    "kind": "browser",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/movable-panels.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/prose-worklist.cjs",
@@ -275,8 +274,8 @@
   {
    "file": "web e2e/session-keys.cjs",
    "kind": "browser",
-   "result": "pass",
-   "at": "2026-09-28"
+   "result": "fail",
+   "at": "2026-09-13"
   },
   {
    "file": "web e2e/text-budget.cjs",

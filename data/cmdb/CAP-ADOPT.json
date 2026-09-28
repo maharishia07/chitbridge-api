@@ -228,7 +228,7 @@
    "file": "api tests/engine-boundary.test.js",
    "kind": "server",
    "result": "pass",
-   "at": "2026-09-28"
+   "at": "2026-09-13"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: adopt\n  annotations:\n    chitbridge.io/ci: CAP-ADOPT\n    chitbridge.io/asset: CAP002\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/adopt.js"
