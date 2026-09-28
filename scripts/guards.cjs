@@ -166,10 +166,26 @@ const files = all
   : GUARDS.filter((f) => { if (fs.existsSync(path.join(TESTS, f))) return true;
       console.log('  ⚠️  ' + f + ' is listed but missing — renamed, or deleted without updating this list'); return false; });
 
+/**
+ * ⚠️ CI WITHOUT THE ENGINES REPO (2026-09-28). chitbridge-engines is PRIVATE; CI clones it only when the
+ * ENGINES_READ_TOKEN secret exists. Without it, exactly these two guards cannot run — measured by moving the repo
+ * aside and running the whole gate: every other guard passed. They are SKIPPED ONLY when CB_ENGINES_ABSENT_OK=1
+ * (the CI job sets it) AND the repo is really absent, and each skip is printed as a CI warning, never a pass.
+ * Locally the variable is unset, so a missing engines repo still FAILS as it always did.
+ */
+const NEEDS_ENGINES = ['engines-pinned.test.js', 'tax-vendor.test.js'];
+const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
+const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
+
 let total = 0, failed = [], started = Date.now();
 console.log(all ? '— every test file (some need a server) —' : '— the guards —');
 
 for (const f of files) {
+  if (SKIP_ENGINES && NEEDS_ENGINES.indexOf(f) >= 0) {
+    console.log('  skip  ' + f.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   — needs chitbridge-engines (private; set ENGINES_READ_TOKEN)');
+    console.log('::warning::' + f + ' skipped — chitbridge-engines is not checked out (add the ENGINES_READ_TOKEN secret)');
+    continue;
+  }
   const r = spawnSync(process.execPath, [path.join(TESTS, f)], { encoding: 'utf8', timeout: 120000 });
   const out = (r.stdout || '') + (r.stderr || '');
   /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */
