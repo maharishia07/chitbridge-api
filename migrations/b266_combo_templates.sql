@@ -31,6 +31,9 @@ CREATE INDEX IF NOT EXISTS combo_templates_entity_idx ON combo_templates (entity
 
 ALTER TABLE combo_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE combo_templates FORCE ROW LEVEL SECURITY;
+-- ⚠️ re-run safe (2026-09-28): Athi ran this after it had already been applied and got 42710 "policy rls_entity
+-- already exists" — the one statement here with no IF NOT EXISTS. Dropping first makes a second run a no-op.
+DROP POLICY IF EXISTS rls_entity ON combo_templates;
 CREATE POLICY rls_entity ON combo_templates
   USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
   WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
