@@ -213,7 +213,7 @@ const COPIES = () => [
    * ⚠️ NOT ON THE TILL'S SHELF, deliberately — the service worker's KEEP list is what a counter needs to BILL
    * with the line down, and a conversion is not that. A cupboard that holds everything stops being a cupboard.
    */
-  [null, path.join(WEB, 'engine', 'units.js'), wrapForBrowser('units.js', 'CBUnits')],
+  /* units: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /**
    * ⭐⭐ THE DAY'S TAKINGS, AS AN ENGINE ([TILL-125]). The page had its OWN copy of what a return does to a
    * day — correct, and the third place that rule lived. The counter program and the server already share
@@ -307,7 +307,6 @@ const COPIES = () => [
   /* ⭐⭐ UNITS, FOR THE SHOP PC TOO ([TILL-104]). The page learned that a kilo is measured and a plate is
      counted; a counter running on a shop PC bills the same goods and must know the same thing. till-vendor
      caught this the moment the script tag went in — which is what it is for. */
-  [null, path.join(API, 'lib', 'units.browser.js'), wrapForBrowser('units.js', 'CBUnits')],
   /* ⭐ and the shop PC serves it too — a desktop counter closes its day offline more often than the web one */
   [null, path.join(API, 'lib', 'rollup.browser.js'), wrapForBrowser('rollup.js', 'CBRollup')],
   /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */

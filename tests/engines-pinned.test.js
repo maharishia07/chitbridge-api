@@ -46,6 +46,19 @@ else pass++, console.log('  ok  no script but adopt.cjs writes offers');
   const second = [...pinned].filter((n) => code.includes("'app', '" + n + ".js'") || code.includes("wrapForBrowser('" + n + ".js'"));
   if (second.length) { bad++; console.log('  FAIL vendor-till.cjs still writes pinned engine(s): ' + second.join(', ')); }
   else pass++, console.log('  ok  vendor-till writes none of the ' + pinned.size + ' pinned engines');
+  /* ⭐ and by FILE, which catches what a name cannot (lotfields.js is engine 'lots'; the kit's rollup.js; a wrapped
+     lib/X.browser.js): no adopted path may appear in vendor-till's code as a source or a target */
+  const named = [];
+  for (const repo of ['chitbridge-api', 'chitbridge-web']) {
+    const l = JSON.parse(fs.readFileSync(path.join(DEV, repo, 'engines.lock.json'), 'utf8'));
+    const rels = [].concat(...Object.values(l.adopt || {}), Object.keys(l.bundles || {}));
+    for (const rel of rels) {
+      const parts = rel.split('/'); const base = parts.pop(); const dir = parts.pop();
+      if (code.includes("'" + dir + "', '" + base + "')") || code.includes("wrapForBrowser('" + base + "'")) named.push(repo + ':' + rel);
+    }
+  }
+  if (named.length) { bad++; console.log('  FAIL vendor-till.cjs still reads or writes adopted file(s): ' + named.join(', ')); }
+  else pass++, console.log('  ok  vendor-till names no adopted file, as a source or a target');
 }
 console.log(pass + ' checks');
 process.exit(bad ? 1 : 0);

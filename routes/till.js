@@ -2461,7 +2461,7 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                      combinations with the line down, so it needs the rule locally like every other engine. */
                   variant: '../lib/variant.browser.js',
                   /* ⭐ counted or measured — what stops a bill reading '0.25 items' ([TILL-104]) */
-                  units: '../lib/units.browser.js',
+                  units: '../lib/units.js' /* ADOPTED — one file for node and the page */,
                   /* ⭐ the GSTIN / PAN / state table, so a shop PC confirms one offline too ([TILL-105]) */
                   profilemap: '../lib/profile-map.browser.js',
                   /* ⚠️ THE MASTER ITSELF — already a classic script that assigns its own global, like rewards */

@@ -10,7 +10,8 @@
     "variant": "1.4.0",
     "search": "1.4.0",
     "govcontext": "1.4.0",
-    "locale": "1.4.0"
+    "locale": "1.4.0",
+    "units": "1.5.0"
   },
   "adopt": {
     "money": [
@@ -42,6 +43,9 @@
     ],
     "locale": [
       "lib/locale.browser.js"
+    ],
+    "units": [
+      "lib/units.js"
     ]
   },
   "bundles": {
@@ -61,6 +65,7 @@
     "variant": "2b82dcbaba8ad8590623ef72d41979894d4390468abf74d862f158d7d4e48946",
     "search": "3e6b74d84e1fa082d5aa7d676f53421b263beafd8c455dfe9719f7d25cd841fa",
     "govcontext": "b49816056f5284d60599004a4e65df388c61609bdc344a28baad169f58b86d87",
-    "locale": "0f8c7bd83ec0190beb18731192fdde3c0b20dc93d0477bb52197887716aa3668"
+    "locale": "0f8c7bd83ec0190beb18731192fdde3c0b20dc93d0477bb52197887716aa3668",
+    "units": "93626bcaf343cde1a56ca3fa554b8ed0a0e6cdf40e5ab6368fe3b332572b8219"
   }
 }
