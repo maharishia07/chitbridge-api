@@ -393,7 +393,8 @@ it('⭐⭐⭐ the judgement sections carry a QUESTION, never a generated answer'
 it('⚠ the evaluation states what would make a green report wrong', () => {
   /* ⚠ The two facts that most often invalidate a pass rate, stated where the judgement is made rather than
      buried in a table: cases nobody ran, and cases citing a clause that has since changed. */
-  const m = route.match(/id: '6'[\s\S]{0,900}?\},\n\n/);
+  /* ⚠️ the section grew past 900 characters (3,483 now) and the old window read it as "gone" — it never was */
+  const m = route.match(/id: '6'[\s\S]{0,6000}?\},\r?\n\r?\n/);
   assert.ok(m, 'the completion evaluation section is gone');
   assert.ok(/never been run/.test(m[0]), 'the evaluation no longer says how many cases were never run');
   assert.ok(/older version of their spec clause/.test(m[0]),
@@ -423,7 +424,9 @@ const DOC = (() => {
 
 it('⭐⭐⭐ every case on the board declares what KIND of test it is', () => {
   assert.ok(DOC, 'data/test-cases.json is missing — run build-test-cases.cjs');
-  const allowed = ['unit', 'integration', 'system', 'acceptance', 'performance', 'security', 'penetration',
+  /* ⭐ 'screen' added 2026-09-27 — routes/testing.js TEST_TYPES has carried it since the sweep ("A SCREEN TEST IS ITS
+     OWN KIND … Athi asked for these to be filterable as a set"); this list was the one place that never learnt it */
+  const allowed = ['unit', 'integration', 'system', 'acceptance', 'screen', 'performance', 'security', 'penetration',
     'static', 'support'];
   const bad = DOC.cases.filter((c) => allowed.indexOf(c.test_type) < 0).map((c) => c.case_key);
   assert.deepStrictEqual(bad.slice(0, 8), [],

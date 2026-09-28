@@ -112,7 +112,9 @@ if (APP && PANEL) {
   });
   it('⚠️ the panel asks for a reason before it sends a rejection', () => {
     /* The server refuses it too — but a refusal that arrives after the click is a worse way to learn it. */
-    assert.ok(/state === 'rejected'[\s\S]{0,200}prompt\(/.test(PANEL), 'rejecting no longer asks why');
+    /* it asks through the app's own dialog now (testAsk), not the browser's prompt() — and an empty reason is refused */
+    assert.ok(/state === 'rejected'[\s\S]{0,200}(?:prompt|testAsk)\(/.test(PANEL), 'rejecting no longer asks why');
+    assert.ok(/A rejection needs its reason/.test(PANEL), 'an EMPTY reason is accepted — a "no" nobody can learn from');
   });
 } else {
   console.log('  (web repo not checked out — the two cross-repo checks are skipped, never failed)');
