@@ -209,7 +209,9 @@ it('a lock is written only by lockNow and lifted only by lockLift, under the sho
 });
 
 it('⭐ only a PROVED person lifts it: lockLift is called by personIn, and personIn by the sign-in alone', () => {
-  const w = outsideAll(PAGE, /\blockLift\(\)/, ['function personIn(', 'function lockLift(']);
+  /* ⚠️ MOVED, NOT DELETED (2026-09-29, critic H1): one more caller — lockStranded(), the way out when NO sign-in is
+     possible (line down, no usable PIN). The next check pins that it can only run in that state. */
+  const w = outsideAll(PAGE, /\blockLift\(\)/, ['function personIn(', 'function lockLift(', 'async function lockStranded(']);
   assert.deepStrictEqual(w, [], 'the lock comes off without a sign-in:\n      ' + w.join('\n      '));
   const w2 = outsideAll(PAGE, /\bpersonIn\(\w/, ['async function usignVerify(', 'async function usignVerifyLocal(', 'function personIn(']);
   assert.deepStrictEqual(w2, [], 'something other than the sign-in lets a person in:\n      ' + w2.join('\n      '));
@@ -218,6 +220,16 @@ it('⭐ only a PROVED person lifts it: lockLift is called by personIn, and perso
 it('⚠️⚠️ nothing behind the cover is reachable by keyboard ([TILL-30]: Escape once cleared a bill)', () => {
   assert.ok(/window\.addEventListener\('keydown', function\(e\)\{\n  if \(!LOCK\) return;[\s\S]{0,300}e\.stopImmediatePropagation\(\);\n\}, true\);/.test(PAGE),
     'the capture-phase key guard is gone');
+});
+
+it('⚠️⚠️ H1: never lock into a state nobody can leave; the unproven way out exists ONLY in that state', () => {
+  assert.ok(/if \(!lockSafe\(\)\) \{/.test(body(PAGE, 'function lockNow(').text), 'lockNow locks with the line down and no PIN');
+  assert.ok(/if \(!lockSafe\(\)\) \{ AUTOLOCK_T = setTimeout\(autoLockFire, 60000\); return; \}/.test(body(PAGE, 'function autoLockFire(').text),
+    'auto-lock fires with the line down and no PIN');
+  const st = body(PAGE, 'async function lockStranded(').text;
+  assert.ok(/if \(lockSafe\(\)\) return lockOpen\(\);/.test(st) && /if \(!ok \|\| lockSafe\(\)\) return;/.test(st),
+    'the unproven unlock is reachable while a sign-in is possible');
+  assert.ok(/return lineUp\(\) \|\| pinsUsable\(\);/.test(PAGE), 'lockSafe no longer means "a sign-in is possible"');
 });
 
 it('⭐ signing out LOCKS the counter (Athi: "simply if we lock the screen and ask for sign-in")', () => {

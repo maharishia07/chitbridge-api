@@ -998,8 +998,32 @@ function summaryState() {
   return out;
 }
 
+/**
+ * ── ⚠️⚠️⚠️ ONLY THIS COUNTER'S OWN PAGE MAY WRITE TO IT (critic review C1, 2026-09-29) ──────────────────────────
+ *
+ * Listening on 127.0.0.1 keeps other MACHINES out, not other WEBSITES. Any page open in the shop PC's browser could
+ * POST here — the program read the body as JSON whatever its type — and the review did it: a ₹9,999 bill landed in
+ * the day's bills and the queue, and a forced sign-out took the key out of connector.json. And a site that points
+ * its own name at 127.0.0.1 (DNS rebinding) is "same-origin" to itself and could read the answers too.
+ * ⭐ TWO CHECKS, BEFORE ANY ROUTE:
+ *   · the Host must be this program's own address — a rebinding site sends ITS name, and is refused;
+ *   · a write (anything but GET/HEAD) must carry no Origin (a local tool — a test, curl) or this program's own.
+ *     Every browser sends Origin on a POST, and a page cannot forge it.
+ * The page's own calls are unaffected — same origin, same host. tests/till-origin.test.cjs drives both refusals.
+ */
+function ownHost(h) { const v = String(h || '').toLowerCase(); return v === '127.0.0.1:' + PORT || v === 'localhost:' + PORT; }
+function ownOrigin(o) { return o === 'http://127.0.0.1:' + PORT || o === 'http://localhost:' + PORT; }
+function foreignRequest(req) {
+  if (!ownHost(req.headers.host)) return 'this is not the counter at ' + String(req.headers.host || '(no host)');
+  if (req.method !== 'GET' && req.method !== 'HEAD' && req.headers.origin && !ownOrigin(req.headers.origin))
+    return 'only this counter’s own page may change it';
+  return null;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://127.0.0.1');
+  const refused = foreignRequest(req);
+  if (refused) { log('refused a request from outside this counter (' + req.method + ' ' + url.pathname + '): ' + refused); return json(res, 403, { message: refused }); }
   try {
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html'))
       return send(res, 200, 'text/html; charset=utf-8', fs.readFileSync(PAGE, 'utf8'));

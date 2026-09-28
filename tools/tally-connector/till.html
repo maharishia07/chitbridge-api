@@ -3909,7 +3909,7 @@ var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_ti
   'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
   'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
   'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock', 'cb_till_autolock',
-  'cb_till_keep_days', 'cb_till_keep_bills', 'cb_till_keep_mb', 'cb_till_retained'];
+  'cb_till_keep_days', 'cb_till_keep_bills', 'cb_till_keep_mb', 'cb_till_retained', 'cb_till_unproven'];
 /**
  * ⚠️ ONCE, ON THE FIRST START OF THIS CODE ON A SHOP PC: the values it kept under plain names before S1b belong to
  * the shop it held then, which is the shop it holds now — they are MOVED into that shop's slot. Only into an EMPTY
@@ -4033,6 +4033,16 @@ function tillStore(){
    * finishing one billed X's items as Y. The program reports its shop off its own key (offline, no network), and
    * that bridge id names the slot. Unpaired, there is no shop and nothing shop-scoped to keep.
    */
+  /**
+   * ⚠️⚠️ BEFORE THE HOST IS KNOWN (critic review M1, 2026-09-29). whoLoad/breakLoad/parkedLoad/lockLoad run at the
+   * bottom of this file, before pickHost() — they read the UNSCOPED name, found no lock, and a locked counter was
+   * usable (bill on screen, keys live) until load() read it again: 3 s on a slow line. The last slot this device
+   * used (written by load() once the shop is known) is the right answer until then, on both hosts.
+   */
+  if ((typeof HOST === 'undefined' || !HOST) && !(typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key)) {
+    var last = ''; try { last = localStorage.getItem('cb_till_lastslot') || ''; } catch (_) {}
+    if (/^cb-till-[A-Za-z0-9_-]+$/.test(last)) return last;
+  }
   if (typeof HOST !== 'undefined' && typeof AgentHost !== 'undefined' && HOST === AgentHost) {
     var b = STATE && STATE.shop && STATE.shop.bridge_id;
     return b ? 'cb-till-pc-' + String(b).replace(/[^A-Za-z0-9_-]/g, '') : 'cb-till';
@@ -6028,6 +6038,8 @@ async function load(){
        parkedLoad() ran only at the bottom of the file, before the key, so it read the plain name, found nothing,
        and the next park SAVED OVER the shop's real list: parked customers vanished on reload, then were lost. */
     try { whoLoad(); breakLoad(); changedLoad(); parkedLoad(); lockLoad(); } catch (_) {}
+    /* ⭐ remembered for the next start-up's first lines (M1) — device-wide, it names a slot, never a key */
+    try { var st0 = tillStore(); if (st0 !== 'cb-till') localStorage.setItem('cb_till_lastslot', st0); else localStorage.removeItem('cb_till_lastslot'); } catch (_) {}
     /* ⭐ the auto-lock clock starts HERE — its minutes are the shop's, readable only once the key is known, and a
        counter reloaded and left alone must still lock (the activity watcher only restarts it on a touch) */
     try { autoLockPoke(); } catch (_) {}
@@ -8253,6 +8265,8 @@ function autoLockFire(){
   if (typeof LOCK !== 'undefined' && LOCK) return;
   try { if (!paired()) return; } catch (_) { return; }
   if (document.querySelector('dialog[open]')) { AUTOLOCK_T = setTimeout(autoLockFire, 60000); return; }
+  /* ⚠️ H1 — offline with no usable PIN, a lock could not be opened: wait, and try again in a minute */
+  if (!lockSafe()) { AUTOLOCK_T = setTimeout(autoLockFire, 60000); return; }
   var idle = document.getElementById('tillidle');
   if (idle && !idle.hidden) { idle.hidden = true; idle.setAttribute('aria-hidden', 'true'); }
   lockNow();
@@ -24062,8 +24076,19 @@ function paintLock(){
     + 'since ' + new Date(LOCK.since).toTimeString().slice(0, 5);
 }
 /** 🔒 — the only writer of a lock. `reason` 'break' paints the ☕ cover. */
+/**
+ * ⚠️⚠️⚠️ NEVER LOCK INTO A STATE NOBODY CAN LEAVE (critic review H1, 2026-09-29). Unlocking is a sign-in; with the line
+ * down that needs a counter PIN, and a PIN is optional. So with the line down and nobody here holding a usable PIN, a
+ * lock could only be opened when the internet came back — on the exact morning a counter exists for.
+ */
+function pinsUsable(){ try { var b = pinBook(); return Object.keys(b).some(function(k){ return b[k] && !SIGN().pinLocked(b[k]); }); } catch (_) { return false; } }
+function lockSafe(){ return lineUp() || pinsUsable(); }
 function lockNow(reason){
   if (LOCK) { paintLock(); return; }
+  if (!lockSafe()) {
+    toastLine('Not locked: the internet is down and nobody here has a counter PIN, so nobody could unlock it. Set a counter PIN while online.');
+    return false;
+  }
   LOCK = { since: new Date().toISOString(), by: (WHO && WHO.name) || null, id: (WHO && WHO.id) || null, reason: reason || null };
   try { ls.set(lockKey(), JSON.stringify(LOCK)); } catch (_) {}
   try { closeMenu(); } catch (_) {}
@@ -24071,6 +24096,7 @@ function lockNow(reason){
 }
 /** 🔓 — opens the one sign-in over the cover; it closes itself once somebody is in */
 function lockOpen(){
+  if (!lockSafe()) return lockStranded();
   usignOpen();
   /* ⚠️ usignOpen() starts from whoever is on — an unlock must ASK, never show "is signed in" */
   USIGN.person = null; USIGN.closeWhenIn = true;
@@ -24079,7 +24105,24 @@ function lockOpen(){
   if (loc && !SIGN().pinLocked(loc)) { USIGN.who = String(id); USIGN.local = loc; USIGN.sent = true; USIGN.usePin = true; }
   usignPaint();
 }
-/** the only way a lock comes off — called by personIn(), after a real sign-in */
+/**
+ * ⚠️ THE ONE WAY OUT WITHOUT A SIGN-IN, and only in the state that has no other (H1): the counter was locked while
+ * online, the line has since dropped, and nobody here holds a usable counter PIN. Nobody can prove who they are, so
+ * the choice is between a counter that cannot bill and one that says so and carries on. It asks, says why, keeps the
+ * person who was on (the bills keep their name), and leaves a line in the shop's own log.
+ */
+async function lockStranded(){
+  if (lockSafe()) return lockOpen();
+  var ok = await sure('The internet is down and nobody on this counter has a counter PIN, so nobody can sign in to '
+    + 'unlock it.\n\nUnlock anyway? It will be noted, and the bills keep ' + ((WHO && WHO.name) ? WHO.name + '\u2019s' : 'no')
+    + ' name. Set a counter PIN once the line is back.', 'Unlock anyway', 'Locked, and no way to sign in', 'Keep it locked');
+  if (!ok || lockSafe()) return;
+  try { var lg = JSON.parse(ls.get(shopLs('cb_till_unproven'), '[]') || '[]'); lg.push({ at: new Date().toISOString(), who: (WHO && WHO.name) || null });
+        ls.set(shopLs('cb_till_unproven'), JSON.stringify(lg.slice(-50))); } catch (_) {}
+  lockLift();
+  toastLine('Unlocked without a sign-in (no internet, no counter PIN) — noted.');
+}
+/** the only ways a lock comes off — personIn(), after a real sign-in; lockStranded(), when no sign-in is possible */
 function lockLift(){
   if (!LOCK) return;
   LOCK = null;
