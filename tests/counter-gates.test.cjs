@@ -236,6 +236,15 @@ it('☕ a break IS a lock: taking one locks, and only a sign-in (personIn) ends 
   assert.ok(!/onclick="endBreak\(\)"/.test(PAGE), 'a button ends the break on a tap again');
 });
 
+it('⏱ auto-lock: 5 minutes by default, per shop, and it locks through lockNow — no second lock path', () => {
+  assert.ok(/raw === '' \|\| raw == null \? 5/.test(body(PAGE, 'function autoLockMins(').text), 'the default is no longer 5 minutes');
+  assert.ok(/'cb_till_autolock'[,\]]/.test(PAGE.match(/var SHOP_KEYS = \[[^\]]*\]/)[0]), 'the auto-lock minutes are not a SHOP key');
+  const fire = body(PAGE, 'function autoLockFire(').text;
+  assert.ok(/lockNow\(\);\n\}/.test(fire), 'auto-lock does not lock through lockNow()');
+  assert.ok(/dialog\[open\]/.test(fire), 'auto-lock no longer waits for an open dialog');
+  assert.ok(/autoLockPoke\(\);/.test(body(PAGE, 'function idlePoke(').text), 'activity no longer restarts the lock clock');
+});
+
 console.log('\nG1 · the program\n');
 
 it('connector.json\'s key is written in ONE place (enrol) and removed in ONE place (sign out)', () => {

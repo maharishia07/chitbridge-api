@@ -3904,7 +3904,7 @@ var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_ti
   'cb_till_counter_name', 'cb_till_dayicon', 'cb_till_dayimg', 'cb_till_daystart', 'cb_till_draft', 'cb_till_given',
   'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
   'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
-  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock'];
+  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock', 'cb_till_autolock'];
 /**
  * ⚠️ ONCE, ON THE FIRST START OF THIS CODE ON A SHOP PC: the values it kept under plain names before S1b belong to
  * the shop it held then, which is the shop it holds now — they are MOVED into that shop's slot. Only into an EMPTY
@@ -5968,6 +5968,9 @@ async function load(){
        parkedLoad() ran only at the bottom of the file, before the key, so it read the plain name, found nothing,
        and the next park SAVED OVER the shop's real list: parked customers vanished on reload, then were lost. */
     try { whoLoad(); breakLoad(); changedLoad(); parkedLoad(); lockLoad(); } catch (_) {}
+    /* ⭐ the auto-lock clock starts HERE — its minutes are the shop's, readable only once the key is known, and a
+       counter reloaded and left alone must still lock (the activity watcher only restarts it on a touch) */
+    try { autoLockPoke(); } catch (_) {}
   }
   /**
    * ⚠️⚠️ NOT ONE LINE EARLIER THAN THIS. The owner and any refusal are read HERE, after pickHost, because pickHost is what learns
@@ -8130,8 +8133,43 @@ function idleSet(v){
 }
 function idlePoke(){
   if (IDLE_T) clearTimeout(IDLE_T);
+  autoLockPoke();                                  /* ⭐ the same "somebody touched it" restarts the lock's clock */
   var m = idleMins(); if (!m) return;
   IDLE_T = setTimeout(idleShow, m * 60000);
+}
+/**
+ * ── ⭐⭐ AUTO-LOCK (2026-09-28) ─────────────────────────────────────────────────────────────────────────────────
+ * Athi: *"add auto-lock after 5 idle minutes, keep it as editable."* After that many minutes with no touch, key or
+ * scan, the counter does exactly what 🔒 does — lockNow(), the bill kept — and coming back is the one sign-in.
+ * ⭐ ON BY DEFAULT (5 min), unlike the idle screen: an unattended till with a cashier's name on it is the risk the
+ * lock exists for. Editable per shop in ☰ (🔒 Never … 30 min); 0 means never.
+ * ⚠️ It waits, rather than locks, while a dialog is open — a dialog sits ABOVE the cover and would stay usable —
+ * and it never locks a counter that has no shop yet (the sign-in that pairs it must stay reachable).
+ */
+var AUTOLOCK_T = null;
+function autoLockMins(){
+  var raw = ls.get(shopLs('cb_till_autolock'), '');
+  var v = raw === '' || raw == null ? 5 : Number(raw);
+  return isFinite(v) ? Math.max(0, Math.min(120, v)) : 5;
+}
+function autoLockSet(v){
+  try { ls.set(shopLs('cb_till_autolock'), String(Math.max(0, Number(v) || 0))); } catch (_) {}
+  autoLockPoke();
+  toastLine(Number(v) ? 'This counter locks after ' + Number(v) + ' quiet minutes.' : 'This counter no longer locks by itself.');
+}
+function autoLockPoke(){
+  if (AUTOLOCK_T) clearTimeout(AUTOLOCK_T);
+  var m = autoLockMins(); if (!m) return;
+  AUTOLOCK_T = setTimeout(autoLockFire, m * 60000);
+}
+function autoLockFire(){
+  AUTOLOCK_T = null;
+  if (typeof LOCK !== 'undefined' && LOCK) return;
+  try { if (!paired()) return; } catch (_) { return; }
+  if (document.querySelector('dialog[open]')) { AUTOLOCK_T = setTimeout(autoLockFire, 60000); return; }
+  var idle = document.getElementById('tillidle');
+  if (idle && !idle.hidden) { idle.hidden = true; idle.setAttribute('aria-hidden', 'true'); }
+  lockNow();
 }
 ['keydown', 'pointerdown', 'wheel', 'touchstart'].forEach(function(t){
   document.addEventListener(t, idleWake, true);
@@ -9292,6 +9330,10 @@ function paintMenu(){
         /* ⭐ the idle screen — OFF by default; a till that blanks itself unasked is one a shopkeeper distrusts */
         + '<label title="Show the shop picture after a quiet spell">🖼 <select id="mq_idle" data-testid="till-mq-idle" onchange="idleSet(this.value)">'
         + '<option value="0">No idle screen</option><option value="3">After 3 min</option><option value="5">After 5 min</option><option value="10">After 10 min</option></select></label>'
+        /* ⭐ auto-lock (Athi, 2026-09-28: "auto-lock after 5 idle minutes, keep it as editable") — ON by default, 5 min */
+        + '<label title="Lock this counter after a quiet spell — the bill stays; sign in to carry on">🔒 <select id="mq_lock" data-testid="till-mq-lock" onchange="autoLockSet(this.value)">'
+        + '<option value="0">Never lock</option><option value="2">Lock after 2 min</option><option value="5">Lock after 5 min</option>'
+        + '<option value="10">Lock after 10 min</option><option value="15">Lock after 15 min</option><option value="30">Lock after 30 min</option></select></label>'
         + '<label title="Which hand this counter is used with — moves the + on a row, the pay buttons and a key\'s controls">✋ <select id="mq_hand" data-testid="till-mq-hand" onchange="quickLook(\'cb_till_hand\',this.value)">'
         + '<option value="right">Right hand</option><option value="left">Left hand</option></select></label>'
         /* ⚠️ AND THE LAYOUT. Same reason — it lives in Screen style now, where you can see it before it lands. */
@@ -9576,6 +9618,7 @@ function paintMenuQuick(){
   set('mq_theme', ls.get('cb_till_theme', 'light'));
   set('mq_hand', ls.get('cb_till_hand', 'right'));
   set('mq_idle', ls.get(shopLs('cb_till_idle'), '0'));
+  set('mq_lock', String(autoLockMins()));
   set('mq_shows', (tillOpt().layout) || 'full');
   set('mq_layout', (tillOpt().layout) || 'full');
   /* ⚠️ THE PANEL SIZES ARE FILLED IN HERE TOO. Their markup is built by the hub, so it does not exist at
