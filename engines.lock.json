@@ -20,7 +20,8 @@
     "docnumber": "1.5.0",
     "gs1": "1.5.0",
     "lots": "1.5.0",
-    "nums": "1.5.0"
+    "nums": "1.5.0",
+    "profilemap": "1.5.0"
   },
   "adopt": {
     "money": [
@@ -82,6 +83,9 @@
     ],
     "nums": [
       "lib/numerals.js"
+    ],
+    "profilemap": [
+      "lib/profile-map.js"
     ]
   },
   "bundles": {
@@ -111,6 +115,7 @@
     "docnumber": "51ab8c8a9dae42037a494cca58dd62b11d6050a5ad482b8b39e36d026014bbbb",
     "gs1": "5c3be207c19920b50ec2e99da5904fe17f7480d2078a912170879cce5518a3cd",
     "lots": "2653cbbb378263d56cffe3c6c1f6a30761adeca5ed103be9b5772dfab7206df6",
-    "nums": "acde341546a99823f0ee9b7e3544ebfddabbb5773dd64fb371e2f5cffbbaebc5"
+    "nums": "acde341546a99823f0ee9b7e3544ebfddabbb5773dd64fb371e2f5cffbbaebc5",
+    "profilemap": "2bc483bf5ae3b67cdf69949f1076cf4a8670006f12f2b0a51e975547c6668b81"
   }
 }

@@ -256,7 +256,7 @@ const COPIES = () => [
    * ⚠️ Confirmation at the point of typing. routes/till.js POST /shop still refuses a bad one; a page is not
    * a place a rule can be enforced.
    */
-  [null, path.join(WEB, 'engine', 'profilemap.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
+  /* profilemap: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /**
    * ⭐⭐ THE JURISDICTION LAYER, ON THE COUNTER ([TILL-105]). lib/jurisdiction.js has said since 2026-09-11 that
    * its *"shape is right and the wiring is missing"*; this is the wiring. It answers what a country REQUIRES —
@@ -310,7 +310,6 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'orders.browser.js'), wrapForBrowser('orders.js', 'CBOrders')],
   [null, path.join(API, 'lib', 'orderhub.browser.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
-  [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],
   [null, path.join(WEB, 'till-icon.svg'), ICON],
