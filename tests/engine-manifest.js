@@ -301,6 +301,14 @@ const INFRA_LIBS = [
    */
   'tax-slab.js',           // which declared slab answers for this product, and who declared it. No rate tables.
   /**
+   * INFRA, BY THE SAME TEST AS tax.js — and the closest call of the three, so said plainly (2026-09-28). `tax-packs.js`
+   * is a country's tax AS DATA: its scheme, whether supply splits by state or by border, the rates the LAW defines (the
+   * picker menu that sat in tax-slab.js until v1.2.0), and the invoice round-off. It is a statement of the law, not a
+   * rate assigned to any product: which rate a product attracts is still the entity's own declaration. ADOPTED from
+   * chitbridge-engines. ⭐ It moves to ENGINE with tax.js, the day CB asserts what a product attracts.
+   */
+  'tax-packs.js',          // a country's tax scheme as data — scheme, supply rule, the legal rate menu, round-off
+  /**
    * INFRA, BY THE SAME TEST. `tax-governance.js` serves the JURISDICTION's declared slabs (region_layer, put there
    * by a migration a person read) to the entities in it, as read-only rows. It still asserts no rate of CB's own —
    * the data is the jurisdiction's, the file only carries it. Same trigger to become ENGINE as its two siblings.
