@@ -28,5 +28,8 @@ else pass++, console.log('  ok  no script but adopt.cjs writes money.js');
 const back = ['vendor-tax.cjs', 'mirror-pure-libs.cjs'].filter((f) => fs.existsSync(path.join(__dirname, '..', 'scripts', f)));
 if (back.length || /tax-engine\.js'\)|'engine', 'tax\.js'\)/.test(vt)) { bad++; console.log('  FAIL a second writer of tax is back: ' + (back.join(', ') || 'vendor-till.cjs')); }
 else pass++, console.log('  ok  no script but adopt.cjs writes tax or tax-slab');
+/* pricing (v1.3.0): vendor-till copied app/pricing.js to engine/ and wrote lib/pricing.browser.js — both writers must stay gone */
+if (/'app', 'pricing\.js'/.test(vt) || fs.existsSync(path.join(__dirname, '..', 'lib', 'pricing.browser.js'))) { bad++; console.log('  FAIL a second writer of pricing is back (vendor-till.cjs or lib/pricing.browser.js)'); }
+else pass++, console.log('  ok  no script but adopt.cjs writes pricing');
 console.log(pass + ' checks');
 process.exit(bad ? 1 : 0);

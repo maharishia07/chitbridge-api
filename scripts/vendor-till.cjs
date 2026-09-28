@@ -132,9 +132,9 @@ const COPIES = () => [
   [path.join(WEB, 'app', 'offers.js'), path.join(WEB, 'engine', 'offers.js'), 'copy'],
   /* tax: ADOPTED from chitbridge-engines (2026-09-28) — engine/tax.js is a bundle of the tax-slab + tax releases, written
      only by chitbridge-engines/tools/adopt.cjs. The old vendor-tax.cjs → app/tax-engine.js → here chain is retired. */
-  /* ⭐ PRICING IS THE FIRST STEP OF THE LINE, before offers and before tax — the counter must answer it with the
-     SAME function as the product page, the cart, the storefront and the server's order path. Seven engines now. */
-  [path.join(WEB, 'app', 'pricing.js'), path.join(WEB, 'engine', 'pricing.js'), 'copy'],
+  /* pricing: ADOPTED from chitbridge-engines (v1.3.0, 2026-09-28) — app/pricing.js, engine/pricing.js and the server's
+     lib/pricing-engine.js are all written only by chitbridge-engines/tools/adopt.cjs. PRICING IS STILL THE FIRST STEP OF
+     THE LINE, before offers and before tax, answered by the same function everywhere — now because there is one file. */
   /* ⭐ EIGHTH ENGINE. Money is not a number with a symbol in front of it — grouping, currency and the bidi marks
      an Arabic locale inserts are all decisions, and CB already made them once in locale.js. */
   [path.join(WEB, 'app', 'locale.js'), path.join(WEB, 'engine', 'locale.js'), 'copy'],
@@ -301,7 +301,7 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'locale.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'locale.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'govcontext.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'govcontext.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'variant.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'variant.js'), 'utf8'))],
-  [null, path.join(API, 'lib', 'pricing.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'pricing.js'), 'utf8'))],
+  /* pricing: the shop PC is served lib/pricing-engine.js itself (adopted; it already runs in a page) — pricing.browser.js retired */
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   /* ⭐⭐ UNITS, FOR THE SHOP PC TOO ([TILL-104]). The page learned that a kilo is measured and a plate is
      counted; a counter running on a shop PC bills the same goods and must know the same thing. till-vendor

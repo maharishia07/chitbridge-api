@@ -2456,7 +2456,7 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   screen: '../lib/screen-kit.js',     /* the screen library — a UMD, the master itself */
                   money: '../lib/money.js',   /* ⭐ ADOPTED from chitbridge-engines — one file for node and the page, no wrapper */
                   docnumber: '../lib/docnumber.browser.js',
-                  locale: '../lib/locale.browser.js', pricing: '../lib/pricing.browser.js',
+                  locale: '../lib/locale.browser.js', pricing: '../lib/pricing-engine.js' /* ADOPTED — one file for node and the page */,
                   /* ⭐ VARIANTS — what makes two combinations the SAME thing to sell. A shop PC bills
                      combinations with the line down, so it needs the rule locally like every other engine. */
                   variant: '../lib/variant.browser.js',

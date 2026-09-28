@@ -572,7 +572,7 @@ const ENGINE_OTHER = [
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
   /* money.browser.js retired 2026-09-28 — lib/money.js is adopted from chitbridge-engines and runs in a page as it is */
-  'docnumber.browser.js', 'locale.browser.js', 'pricing.browser.js',
+  'docnumber.browser.js', 'locale.browser.js',   /* pricing.browser.js retired 2026-09-28 — lib/pricing-engine.js is adopted and runs in a page */
   /**
    * ⭐ ENGINE, not infra, and the difference is the whole point of the file. It DECIDES which country a shop is
    * in from what the browser already knows — and country decides the tax regime, the currency and every
@@ -709,7 +709,7 @@ const TILL_SHIPPABLE = {
      guarding the lib copy would be guarding the wrong file. */
   'search.js':    'web:app/search.js', // finding a product cannot wait for a network
   'offers.js':    'web:app/offers.js', // an offer must apply with the line down — this is why it is not a server call
-  'pricing.js':   'web:app/pricing.js',//   the same, for a price
+  'pricing.js':   'pricing-engine.js', //   the same, for a price — ADOPTED from chitbridge-engines (v1.3.0)
   'tax.js':       'tax.js',            // and for tax: a bill printed offline is still a legal document — ADOPTED (chitbridge-engines), with tax-slab
   'locale.js':    'web:app/locale.js', // region → language, currency, format
   'variant.js':   'web:app/variant.js',// what makes two of the same product a different LINE
