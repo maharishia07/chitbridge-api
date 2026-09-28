@@ -28,6 +28,7 @@ const GUARDS = [
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
   'engines-pinned.test.js',    // ⭐⭐⭐ every adopted engine is EXACTLY its chitbridge-engines release — no hand edit survives
   'money-round.test.js',       // one rounder (0 wrong in 1.74 M cases, per-currency decimals) and one price reader
+  'google-availability.test.cjs', // one output shape: status → Google Merchant availability; nothing Google does not define (M53)
   'one-rounding-rule.test.cjs', // ⭐⭐⭐ no platform-owned file carries a second copy of the rule; cart/pick pages load money.js first; the kit carries it (2026-09-28)
   'engine-versions.test.cjs',   // ⭐⭐ a counter reports which engine release it bills with — /api/state, the snapshot call, its key (2026-09-28)
   /* ⚠️ written 2026-09-28 with the one-gate rebuild and NOT added here the same day — a guard nobody runs. */
