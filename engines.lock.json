@@ -11,7 +11,8 @@
     "search": "1.4.0",
     "govcontext": "1.4.0",
     "locale": "1.4.0",
-    "units": "1.5.0"
+    "units": "1.5.0",
+    "qty": "1.5.0"
   },
   "adopt": {
     "money": [
@@ -46,6 +47,9 @@
     ],
     "units": [
       "lib/units.js"
+    ],
+    "qty": [
+      "lib/qty.js"
     ]
   },
   "bundles": {
@@ -66,6 +70,7 @@
     "search": "3e6b74d84e1fa082d5aa7d676f53421b263beafd8c455dfe9719f7d25cd841fa",
     "govcontext": "b49816056f5284d60599004a4e65df388c61609bdc344a28baad169f58b86d87",
     "locale": "0f8c7bd83ec0190beb18731192fdde3c0b20dc93d0477bb52197887716aa3668",
-    "units": "93626bcaf343cde1a56ca3fa554b8ed0a0e6cdf40e5ab6368fe3b332572b8219"
+    "units": "93626bcaf343cde1a56ca3fa554b8ed0a0e6cdf40e5ab6368fe3b332572b8219",
+    "qty": "48f6fb0cc0338202b1b938193cff6e0e9b1ef1edc10cd36a27104e967d1b9fbe"
   }
 }

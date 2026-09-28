@@ -245,7 +245,7 @@ const COPIES = () => [
   /* ⭐⭐⭐ MAGNITUDE ([TILL-186]). Athi: *"no data should be tied tightly to the front end."* The weight and
      volume factors were a table in till.html — its own note said *"only the arithmetic is here"*, and the
      data came with it. It is an engine now, and tests/qty.test.js asserts the page never grows it back. */
-  [null, path.join(WEB, 'engine', 'qty.js'), wrapForBrowser('qty.js', 'CBQty')],
+  /* qty: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐⭐ one cause → one sentence → one button ([TILL-132]). The health page RENDERS this; the footer and the
      doctor read the same table, which is the whole point of it being an engine. */
   [null, path.join(WEB, 'engine', 'verdict.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
@@ -315,7 +315,6 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'dayopen.browser.js'), wrapForBrowser('dayopen.js', 'CBDayOpen')],
   [null, path.join(API, 'lib', 'signin.browser.js'), wrapForBrowser('signin.js', 'CBSignin')],
   [null, path.join(API, 'lib', 'scalecode.browser.js'), wrapForBrowser('scalecode.js', 'CBScaleCode')],
-  [null, path.join(API, 'lib', 'qty.browser.js'), wrapForBrowser('qty.js', 'CBQty')],
   [null, path.join(API, 'lib', 'verdict.browser.js'), wrapForBrowser('verdict.js', 'CBVerdict')],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],

@@ -2475,7 +2475,7 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   dayopen: '../lib/dayopen.browser.js',
                   signin: '../lib/signin.browser.js',
                   scalecode: '../lib/scalecode.browser.js',
-                  qty: '../lib/qty.browser.js',
+                  qty: '../lib/qty.js' /* ADOPTED — one file for node and the page */,
                   /* ⭐ what a counter TELLS somebody when something is wrong — one table, every surface */
                   verdict: '../lib/verdict.browser.js',
                   qr: '../node_modules/qrcode-generator/qrcode.js' };

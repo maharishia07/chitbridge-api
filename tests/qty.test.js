@@ -121,7 +121,10 @@ it('⭐⭐⭐ till.html holds no conversion table of its own', () => {
 
 it('and the engine touches no screen', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'qty.js'), 'utf8');
-  const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  const body = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '')
+    /* ⭐ the ONE line an adopted chitbridge-engines file uses to hand a PAGE its global (2026-09-28) — the engine
+       still reads nothing from a window; everything else here is scanned exactly as before */
+    .replace(/if \(root && typeof root\.window !== 'undefined'\) root\.window\.CB\w+ = EXPORTS;/, '');
   ['document', 'window', 'localStorage', 'fetch('].forEach((w) => {
     assert.ok(body.indexOf(w) < 0, 'lib/qty.js mentions ' + w);
   });
