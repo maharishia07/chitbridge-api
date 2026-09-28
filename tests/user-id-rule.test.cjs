@@ -87,7 +87,13 @@ const srv = app.listen(0, async () => {
   const fs = require('fs');
   const csrc = fs.readFileSync(API + '/routes/catalogue.js', 'utf8');
   const ca = csrc.indexOf('function crHandle');
-  const crHandle = new Function(csrc.slice(ca, csrc.indexOf('\n}', ca) + 2) + '; return crHandle;')();
+  /* ⚠️ MOVED, NOT DELETED (2026-09-28): crHandle() in routes/catalogue.js now DELEGATES to lib/mintuserid.customer(),
+     so evaluating the route's source in a sandbox died on `require is not defined` before a single assertion ran.
+     The rule is tested where it lives now, and the route is held to delegating (the one-helper rule), below. */
+  const crBody = csrc.slice(ca, csrc.indexOf('\n}', ca) + 2);
+  t('the route still hands the rule to lib/mintuserid (one helper, not a copy)',
+    /require\('\.\.\/lib\/mintuserid'\)\.customer\(/.test(crBody), true);
+  const crHandle = (channel, raw, entity) => require(API + '/lib/mintuserid').customer(channel, raw, entity).handle;
 
   t('phone + user_id  -> readable',
     crHandle('phone', '9876512345', { user_id: 'alpha-timers', bridge_id: 'CBZQK5DAH9' }),

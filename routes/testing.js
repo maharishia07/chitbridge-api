@@ -706,39 +706,149 @@ async function upsertClause(db, entity_id, who, spec, clause, text) {
   if (!name) return null;
   const doc = String(spec || '').trim() || null;
   const rules = { text: String(text || '').trim(), spec: doc };
+  return upsertVersioned(db, entity_id, who, 'spec', name, doc, rules.text.slice(0, 200) || null, rules);
+}
 
+/**
+ * ⭐ ONE VERSIONED UPSERT FOR A NAMED DEFINITION — a spec clause and a CMDB record are the same act (2026-09-28).
+ * New name → version 1. Identical rules → nothing written. Changed rules → the next version, never an edit.
+ * ⚠️ NO NEW VERSION FOR AN IDENTICAL RE-IMPORT: a version per import marks everything changed on every load,
+ * which trains a person to ignore the word — and then it means nothing when it is true.
+ * ⚠️ The INSERT keeps each KIND AS A LITERAL, one statement per kind, because tests/board-kinds.test.cjs reads
+ * the literals to prove every kind written here was classified shared-or-private on purpose. A kind passed as
+ * a parameter would be invisible to that guard.
+ */
+const INSERT_BY_KIND = {
+  spec: `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
+         VALUES ($1,'spec',$2,$3,$4,'live',1,$5) RETURNING definition_id`,
+  cmdb: `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
+         VALUES ($1,'cmdb',$2,$3,$4,'live',1,$5) RETURNING definition_id`,
+};
+async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, rules) {
+  const insert = INSERT_BY_KIND[kind];
+  if (!insert) throw new Error('upsertVersioned: kind ' + kind + ' has no declared INSERT');
   const cur = await db.query(
     `SELECT d.definition_id, d.current_version, v.rules
        FROM definition d
        JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
-      WHERE d.entity_id = $1 AND d.kind = 'spec' AND d.name = $2`, [entity_id, name]);
-
+      WHERE d.entity_id = $1 AND d.kind = $2 AND d.name = $3`, [entity_id, kind, name]);
   if (!cur.rows[0]) {
-    const ins = await db.query(
-      `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
-       VALUES ($1,'spec',$2,$3,$4,'live',1,$5) RETURNING definition_id`,
-      [entity_id, doc, name, rules.text.slice(0, 200) || null, who.id]);
+    const ins = await db.query(insert, [entity_id, subKind, name, note, who.id]);
     const id = ins.rows[0].definition_id;
     await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-                    VALUES ($1,1,$2,$3,$4)`,
-      [id, entity_id, JSON.stringify(rules), who.id]);
+                    VALUES ($1,1,$2,$3,$4)`, [id, entity_id, JSON.stringify(rules), who.id]);
     return { definition_id: id, version: 1, changed: true };
   }
-
   const id = cur.rows[0].definition_id;
-  /* ⚠️ NO NEW VERSION FOR AN IDENTICAL RE-IMPORT. A version per import would mark every case stale on every
-     load, which trains a person to ignore the word "stale" — and then it means nothing when it is true. */
   if (JSON.stringify(cur.rows[0].rules || {}) === JSON.stringify(rules)) {
     return { definition_id: id, version: cur.rows[0].current_version, changed: false };
   }
   const next = Number(cur.rows[0].current_version) + 1;
   await db.query(`INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
-                  VALUES ($1,$2,$3,$4,$5)`,
-    [id, next, entity_id, JSON.stringify(rules), who.id]);
+                  VALUES ($1,$2,$3,$4,$5)`, [id, next, entity_id, JSON.stringify(rules), who.id]);
   await db.query(`UPDATE definition SET current_version = $2, sub_kind = $3, note = $4 WHERE definition_id = $1`,
-    [id, next, doc, rules.text.slice(0, 200) || null]);
+    [id, next, subKind, note]);
   return { definition_id: id, version: next, changed: true };
 }
+
+/* ── ⭐⭐⭐ THE CMDB — one record per configuration item, on the shared board (2026-09-28) ─────────────────────
+ *
+ * Athi: *"can it be linked in the cmdb database as part of this capability, so anyone can look at this?"* and
+ * *"store it in the cloud database"*. A record is a `definition` of kind 'cmdb' named by its CI id (CAP-SIGNIN),
+ * on the board every signed-in user reads (lib/testboard.js), versioned only when it changes (upsertVersioned).
+ * The shape is lib/cmdb.js; the page that draws any record is public/cmdb/record.html in the web app.
+ * ⚠️ READ by everyone signed in; WRITTEN only by the board's own entity or TEST_BOARD_WRITERS (testboard.canWrite)
+ * — a shared row is published to every shop, so writing one is not every shop's call.
+ */
+const cmdb = require('../lib/cmdb');
+const CMDB_DIR = require('path').join(__dirname, '..', 'data', 'cmdb');
+
+function cmdbRefused(req, res) {
+  if (testboard.canWrite(auth.entityOf(req))) return false;
+  res.status(403).json({ error: 'Not a writer of the shared board',
+    message: 'CMDB records are read by every shop, so only the board’s own account (or one named in '
+      + 'TEST_BOARD_WRITERS) can change them.' });
+  return true;
+}
+
+/** GET /api/testing/cmdb — every record: its id, title, version, and the flags it raises about itself */
+router.get('/cmdb', auth, async (req, res) => {
+  try {
+    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const rows = await withEntity(entity_id, (db) => db.query(
+      `SELECT d.name, d.current_version, d.updated_at, v.rules
+         FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
+        WHERE d.entity_id = $1 AND d.kind = 'cmdb' AND d.status <> 'retired'
+        ORDER BY d.name`, [entity_id]));
+    res.json({ records: rows.rows.map((r) => ({ ci: r.name, title: (r.rules || {}).title || r.name,
+      version: r.current_version, updated_at: r.updated_at, source: (r.rules || {}).source || null,
+      flags: cmdb.flags(r.rules || {}) })) });
+  } catch (err) { res.status(500).json({ error: 'Could not read the CMDB', message: String(err.message || err) }); }
+});
+
+/** GET /api/testing/cmdb/:ci — one record, as stored (?version=N for an earlier one) */
+router.get('/cmdb/:ci', auth, async (req, res) => {
+  try {
+    const ci = String(req.params.ci || '');
+    if (!cmdb.CI_RE.test(ci)) return res.status(400).json({ error: 'Not a CI id', message: 'A CI id looks like CAP-SIGNIN.' });
+    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const want = Number(req.query.version) || null;
+    const rows = await withEntity(entity_id, (db) => db.query(
+      `SELECT d.name, d.current_version, v.version, v.rules, v.created_at
+         FROM definition d
+         JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = COALESCE($3, d.current_version)
+        WHERE d.entity_id = $1 AND d.kind = 'cmdb' AND d.name = $2`, [entity_id, ci, want]));
+    const r = rows.rows[0];
+    if (!r) return res.status(404).json({ error: 'No such record', message: 'Nothing in the CMDB is called ' + ci + '.' });
+    res.json({ ci: r.name, version: r.version, current_version: r.current_version, saved_at: r.created_at,
+               record: r.rules, flags: cmdb.flags(r.rules || {}) });
+  } catch (err) { res.status(500).json({ error: 'Could not read the record', message: String(err.message || err) }); }
+});
+
+/** PUT /api/testing/cmdb/:ci — save one record; a new version only when it actually changed */
+router.put('/cmdb/:ci', auth, async (req, res) => {
+  try {
+    if (cmdbRefused(req, res)) return;
+    const rec = Object.assign({}, req.body || {}, { ci: String(req.params.ci || '') });
+    const v = cmdb.shape(rec);
+    if (!v.ok) return res.status(400).json({ error: 'That record does not fit', message: v.why });
+    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const out = await withEntity(entity_id, (db) =>
+      upsertVersioned(db, entity_id, testerOf(req), 'cmdb', rec.ci, rec.system || null, rec.title, v.record));
+    res.json(Object.assign({ ci: rec.ci, flags: cmdb.flags(rec) }, out));
+  } catch (err) { res.status(500).json({ error: 'Could not save the record', message: String(err.message || err) }); }
+});
+
+/** POST /api/testing/cmdb/seed — load every record shipped in data/cmdb/*.json, the way cases/seed loads cases */
+router.post('/cmdb/seed', auth, async (req, res) => {
+  try {
+    if (cmdbRefused(req, res)) return;
+    const fs = require('fs');
+    if (!fs.existsSync(CMDB_DIR)) {
+      return res.status(500).json({ error: 'The CMDB records are not on this server',
+        message: 'This API was deployed without data/cmdb/. Deploy again.' });
+    }
+    const entity_id = testboard.entityFor(auth.entityOf(req));
+    const who = testerOf(req);
+    const out = { seeded: [], unchanged: [], refused: [] };
+    const files = fs.readdirSync(CMDB_DIR).filter((n) => /\.json$/.test(n)).sort();
+    /* ⚠️ every file is checked BEFORE anything is written: one bad record refuses the whole load, said by name,
+       rather than leaving the CMDB half-seeded and looking complete */
+    const recs = files.map((n) => { let r = null; try { r = JSON.parse(fs.readFileSync(require('path').join(CMDB_DIR, n), 'utf8')); } catch (_) {}
+      return { n, r, v: cmdb.shape(r) }; });
+    const bad = recs.filter((x) => !x.v.ok);
+    if (bad.length) return res.status(400).json({ error: 'A shipped record does not fit',
+      message: bad.map((x) => x.n + ': ' + x.v.why).join(' · ') });
+    await withEntity(entity_id, async (db) => {
+      for (const x of recs) {
+        const w = await upsertVersioned(db, entity_id, who, 'cmdb', x.r.ci, x.r.system || null, x.r.title, x.r);
+        (w.changed ? out.seeded : out.unchanged).push(x.r.ci + ' v' + w.version);
+      }
+    });
+    res.json(out);
+  } catch (err) { res.status(500).json({ error: 'Could not load the CMDB records', message: String(err.message || err) }); }
+});
 
 /* ── THE RESULTS ──────────────────────────────────────────────────────────────────────────────────────────── */
 

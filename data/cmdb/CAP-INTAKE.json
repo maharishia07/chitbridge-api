@@ -1,0 +1,318 @@
+{
+ "ci": "CAP-INTAKE",
+ "title": "Capture connector — a message becomes a chit",
+ "type": "Capability module",
+ "system": "ChitBridge web app",
+ "summary": "WhatsApp / email / any channel → a chit, through ONE pipeline where every channel is only an adapter: channel → capture → co-assist reads it → chit on the rail. ⚠️ THE CHIT IS UNI-DIRECTIONAL — it lands as a TASK in the entity's inbox and never as an Order, because the entity did not raise it; someone outside asked. The sender is the ORIGIN, not a party: a phone number is not an entity, and the send path still refuses any recipient that does not resolve. Priced from the catalogue only when the entity is set to SELL (a catalogue price is a sell-side price — a factory receiving milk must not pr…",
+ "source": "generated",
+ "maturity": {
+  "now": 2,
+  "target": 3,
+  "set": "legend"
+ },
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "ok",
+   "note": "1 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 8 API call(s)"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2",
+   "node": "p1"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 23 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 8 API call(s)"
+  }
+ ],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "📨 Work › Intake",
+   "s": "WRK003 · nav intake",
+   "d": "A screen this capability draws — reached from the menu path Work › Intake."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "cap-intake.js",
+   "s": "app/cap-intake.js · 20 functions",
+   "d": "The capability module: what the screens above call."
+  },
+  {
+   "id": "p2",
+   "t": "CBCart",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "GET /api/capture/pending",
+   "s": "api('capturePending') → routes/capture.js",
+   "d": "Reads through the API, answered by routes/capture.js."
+  },
+  {
+   "id": "x2",
+   "t": "POST /api/capture/simulate",
+   "s": "api('captureSimulate') → routes/capture.js",
+   "d": "Writes through the API, answered by routes/capture.js."
+  },
+  {
+   "id": "x3",
+   "t": "POST /api/capture/:id/structure",
+   "s": "api('captureStructure') → routes/capture.js",
+   "d": "Writes through the API, answered by routes/capture.js."
+  },
+  {
+   "id": "x4",
+   "t": "POST /api/capture/:id/dismiss",
+   "s": "api('captureDismiss') → routes/capture.js",
+   "d": "Writes through the API, answered by routes/capture.js."
+  },
+  {
+   "id": "x5",
+   "t": "POST /api/capture/:id/raise",
+   "s": "api('captureRaise') → routes/capture.js",
+   "d": "Writes through the API, answered by routes/capture.js."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "CAP012 cap-intake.js",
+   "rel": "draws",
+   "that": "WRK003"
+  },
+  {
+   "this": "CAP012 cap-intake.js",
+   "rel": "calls",
+   "that": "routes/capture.js"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/app/cap-intake.js",
+  "design": "Capability Capture connector — a message becomes a chit"
+ },
+ "tests": [
+  {
+   "file": "web e2e/empty-states.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/list-behaviour.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/repro-intake.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/intake-sender.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/intake.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/verify-att.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/verify-raise.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/engine-boundary.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/exports-exist.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: intake\n  annotations:\n    chitbridge.io/ci: CAP-INTAKE\n    chitbridge.io/asset: CAP012\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/capture.js"
+}

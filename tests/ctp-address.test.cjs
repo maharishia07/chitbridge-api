@@ -1,3 +1,4 @@
+/* ⚠️ CRLF-tolerant (2026-09-28): a Windows checkout (autocrlf) hands back \r\n, and patterns anchored on \n went red on line endings alone */
 /**
  * ── ⭐⭐ THE ADDRESS SEAM — CTP step 2 ───────────────────────────────────────────────────────────────────────────
  *
@@ -107,7 +108,7 @@ function loadAddress(dbStub) {
 
   /* ── ④ deliver() refuses a remote copy BEFORE writing anything ───────────────────────────────────────────── */
   {
-    const src = require('fs').readFileSync(path.join(__dirname, '..', 'lib', 'mint.js'), 'utf8');
+    const src = require('fs').readFileSync(path.join(__dirname, '..', 'lib', 'mint.js'), 'utf8').replace(/\r\n/g, '\n');
     /* ⚠️ offsets RELATIVE to deliver(). The first version searched the whole file for 'chit_deliver' and found
        it in a comment far above the function, so the "before the write" test measured backwards and the throw
        test sliced an empty string. A test that reads the wrong region reports on nothing. */

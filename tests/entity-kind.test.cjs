@@ -1,4 +1,5 @@
 'use strict';
+/* ⚠️ CRLF-tolerant (2026-09-28): a Windows checkout (autocrlf) hands back \r\n, and patterns anchored on \n went red on line endings alone */
 /**
  * ── tests/entity-kind.test.cjs · EVERY MINT DECLARES WHAT IT IS MAKING ──────────────────────────────────────────
  *
@@ -28,7 +29,7 @@ function migration(suffix) {
   const dir = path.join(ROOT, 'migrations');
   const hit = fs.readdirSync(dir).filter((f) => f.endsWith(suffix)).sort().pop();
   if (!hit) throw new Error('no migration ending in ' + suffix + ' — was it renamed as well as renumbered?');
-  return fs.readFileSync(path.join(dir, hit), 'utf8');
+  return fs.readFileSync(path.join(dir, hit), 'utf8').replace(/\r\n/g, '\n');
 }
 
 const KINDS = ['customer', 'network', 'supplier', 'test', 'internal', 'actor', 'shopper'];
@@ -77,7 +78,7 @@ it('the migration exists and its vocabulary matches this guard', () => {
 it('every INSERT INTO identities names entity_kind', () => {
   const missing = [];
   for (const rel of files) {
-    const src = blank(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    const src = blank(fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n'));
     let m; const re = /INSERT\s+INTO\s+identities\b/gi;
     while ((m = re.exec(src))) {
       /* the statement runs to the closing backtick of the template literal it lives in */
@@ -97,7 +98,7 @@ it('every INSERT INTO identities names entity_kind', () => {
 it('entity_kind is never taken from the request body', () => {
   const bad = [];
   for (const rel of files) {
-    const src = blank(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
+    const src = blank(fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n'));
     /* req.body.entity_kind, body('entity_kind'), b.entity_kind — any route of client control */
     if (/(req\.body|\bb)\.entity_kind\b|body\(\s*['"]entity_kind['"]/.test(src)) bad.push('  ' + rel);
   }

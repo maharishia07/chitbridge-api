@@ -1,4 +1,5 @@
 'use strict';
+/* ⚠️ CRLF-tolerant (2026-09-28): a Windows checkout (autocrlf) hands back \r\n, and patterns anchored on \n went red on line endings alone */
 /**
  * categories.test.js — A PRODUCT CITES ITS CATEGORY; NOTHING WRITES THE LEGACY KEY ([TILL-114]).
  *
@@ -74,7 +75,7 @@ it('⚠️⚠️⚠️ the blueprint emits a NAME to resolve, never the stored k
 
 /** ⚠️ and the route must turn that name into a citation rather than passing it through */
 it('⚠️⚠️ the route resolves names to ids and strips the name', () => {
-  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
   const at = src.indexOf("router.post('/catalogue'");
   assert.ok(at > 0, 'the mint route is gone');
   const route = src.slice(at, src.indexOf("router.get('/catalogue/blueprints'", at));
@@ -90,7 +91,7 @@ it('⚠️⚠️ the route resolves names to ids and strips the name', () => {
  * a second "vegetables".
  */
 it('⚠️⚠️ the counter receives the relation, not just the answer', () => {
-  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
   assert.ok(/category: categories\.nameOf\(d, catNames\)/.test(src), 'the snapshot no longer resolves the name');
   assert.ok(/category_id:/.test(src), 'a product reaches the counter without its category id');
   assert.ok(/categories: catList\.map/.test(src), 'the category master does not travel with the snapshot');
@@ -105,7 +106,7 @@ it('⚠️⚠️ the counter receives the relation, not just the answer', () => 
  * categories for the same reason it has no tax. A category is not a tax fact.
  */
 it('⚠️⚠️⚠️ the category master is read without the tax gate', () => {
-  const src = fs.readFileSync(path.join(API, 'lib', 'categories.js'), 'utf8');
+  const src = fs.readFileSync(path.join(API, 'lib', 'categories.js'), 'utf8').replace(/\r\n/g, '\n');
   /* ⚠️ STRIP BOTH KINDS OF COMMENT. This file EXPLAINS the tax gate it avoids, in a // @stage-note as well
      as a block — and a scan that strips only one reads the explanation as the offence. The same trap
      scripts/dbfree.cjs records. */
@@ -114,7 +115,7 @@ it('⚠️⚠️⚠️ the category master is read without the tax gate', () => 
   assert.ok(!/tax-shelf|readShelf/.test(code),
     'lib/categories reads through the tax shelf — an unregistered shop loses its categories');
   assert.ok(/kind = 'category'/.test(src), 'it no longer selects categories by kind');
-  const till = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
+  const till = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
   assert.ok(/categories\.listCategories\(entity_id/.test(till),
     'the snapshot gets its categories from somewhere other than the master');
 });

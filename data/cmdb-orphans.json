@@ -1,0 +1,9 @@
+{
+ "_what": "Capabilities that break Athi's rule today — no way in, no way out, or no test — recorded so a NEW one fails the build (tests/cmdb.test.cjs) and these can only shrink. Derived by C:/dev/cmdb.cjs on 2026-09-28.",
+ "_rule": "\"for any capability built there must be a way of invoking the same and it must be used somewhere … if there is no entry or exit path, this means it is not useful\" — Athi, 2026-09-28. Each entry is a FINDING for Athi: wire it in, or retire it. Remove an entry the moment it is no longer true (the test says so).",
+ "known": {
+  "CAP-CMDB": { "flags": ["no test"], "finding": "cap-cmdb.js: no test file names its testids or the module." },
+  "CAP-LEGEND": { "flags": ["no exit"], "finding": "cap-legend.js only paints: it calls no API and stores nothing. A legend may legitimately be read-only — Athi's call." },
+  "CAP-STANDARDS": { "flags": ["no entry", "no exit"], "finding": "cap-standards.js draws no screen and calls nothing: likely dead code — confirm, then retire or wire in." }
+ }
+}

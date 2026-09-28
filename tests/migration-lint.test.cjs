@@ -1,3 +1,4 @@
+/* ⚠️ CRLF-tolerant (2026-09-28): a Windows checkout (autocrlf) hands back \r\n, and patterns anchored on \n went red on line endings alone */
 /**
  * tests/migration-lint.test.cjs — the two ways a hand-run migration fails SILENTLY.
  *
@@ -29,7 +30,7 @@ console.log('\n-- ⚠️⚠️ every dollar-quoted block must CLOSE --');
 const ACCEPTED_QUOTES = ['b185_register.sql'];
 const badQuotes = [];
 for (const f of files) {
-  const src = fs.readFileSync(path.join(DIR, f), 'utf8');
+  const src = fs.readFileSync(path.join(DIR, f), 'utf8').replace(/\r\n/g, '\n');
   const code = src.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
   /* Every dollar-quote delimiter: $$ or $tag$. They must pair up. */
   const tags = code.match(/\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$/g) || [];
@@ -82,7 +83,7 @@ const ACCEPTED = [
 ];
 const found = [];
 for (const f of files) {
-  const src = fs.readFileSync(path.join(DIR, f), 'utf8');
+  const src = fs.readFileSync(path.join(DIR, f), 'utf8').replace(/\r\n/g, '\n');
   const code = src.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
   const re = /CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([\s\S]*?)\n\)\s*;/gi;
   let m;
@@ -97,7 +98,7 @@ t('  ...and the baseline names nothing that has since gone', stale.length === 0,
 t('  ...covering every occurrence on disk', found.length === ACCEPTED.length, found.length + ' occurrences');
 
 console.log('\n-- b189 repairs the silent-empty-table class --');
-const rd = (f) => fs.existsSync(path.join(DIR, f)) ? fs.readFileSync(path.join(DIR, f), 'utf8') : '';
+const rd = (f) => fs.existsSync(path.join(DIR, f)) ? fs.readFileSync(path.join(DIR, f), 'utf8').replace(/\r\n/g, '\n') : '';
 const b189dry = rd('b189_rls_without_policy_dryrun.sql');
 const b189app = rd('b189_rls_without_policy_apply.sql');
 /* ⭐ THE CLASS: RLS enabled with no policy returns ZERO ROWS to every non-owner, silently. The owner is exempt
