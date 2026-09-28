@@ -65,6 +65,15 @@ function versionOf(payload) {
   return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex').slice(0, 12);
 }
 
+/** ⚠️ the most changed rows one delta answer carries — past it the delta is sent in parts (`more`), never cut */
+const DELTA_CAP = Math.max(1, parseInt(process.env.TILL_DELTA_CAP || '20000', 10) || 20000);
+/** rows were read oldest-first, cap + 1 of them: keep the cap, and if there was more, the cursor is the last row kept */
+function deltaPage(rows, cap) {
+  if (!Array.isArray(rows) || rows.length <= cap) return { rows: rows || [], more: false, cursor: null };
+  const kept = rows.slice(0, cap);
+  return { rows: kept, more: true, cursor: new Date(kept[kept.length - 1].updated_at).toISOString() };
+}
+
 router.get('/snapshot', auth, async (req, res) => {
   try {
     /**
@@ -174,7 +183,10 @@ router.get('/snapshot', auth, async (req, res) => {
        * skip a row that changed in between.
        */
       withEntity(entity_id, (db) => (since
-        ? db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND updated_at > $2 ORDER BY updated_at DESC LIMIT 20000', [entity_id, since])
+        /* ⚠️⚠️ OLDEST FIRST, AND ONE MORE THAN THE CAP (external review 2026-09-25, fixed 2026-09-28). It was newest-first
+           LIMIT 20000 with the cursor at readAt: past the cap the OLDEST changes were cut and the cursor jumped over them,
+           so a counter never received them. Now a cut delta hands back the LAST row sent as its cursor (see DELTA_CAP). */
+        ? db.query('SELECT item_id, item_data, is_active, updated_at FROM catalogue_items WHERE entity_id = $1 AND updated_at > $2 ORDER BY updated_at ASC LIMIT $3', [entity_id, since, DELTA_CAP + 1])
         : db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at DESC NULLS LAST LIMIT 20000', [entity_id])
       )).catch(() => ({ rows: [] })),
       /**
@@ -287,7 +299,16 @@ router.get('/snapshot', auth, async (req, res) => {
 
     /* ⚠️ A CAP, AND IT IS A REAL LIMIT. 20,000 items is about 5 MB in one answer — heavy but workable on a shop line. Beyond that
        the snapshot must PAGE (a cursor beside ?since=), because no counter should wait on a 26 MB download; measured 2026-09-08. */
-    const all = (itemRows && itemRows.rows) || [];
+    let all = (itemRows && itemRows.rows) || [];
+    /**
+     * ⭐ A DELTA LONGER THAN THE CAP IS SENT IN PARTS, NEVER CUT. The query asked for DELTA_CAP + 1 rows oldest-first; a +1th row
+     * means more changed than one answer carries. The answer then stops at DELTA_CAP and its cursor is the updated_at of the
+     * LAST row it carries — not readAt — so the next ?since= continues exactly there, and `more: true` tells the counter to
+     * ask again now. ⚠️ The cursor is ≤ that row's timestamp (a JS Date keeps milliseconds, Postgres keeps microseconds), so
+     * rows sharing it may be sent twice: a repeat is a no-op merge by item_id, a skip would be permanent.
+     */
+    let deltaMore = false, deltaCursor = null;
+    if (since) { const pg = deltaPage(all, DELTA_CAP); all = pg.rows; deltaMore = pg.more; deltaCursor = pg.cursor; }
     /**
      * ⚠️ SELLABLE, NOT MERELY ALIVE. `is_active` says the row exists; itemstatus.isOfferable says a customer may take one — retired,
      * unavailable and redundant are all alive and all unsellable. Filtering on the wrong one put retired stock on the counter
@@ -530,7 +551,9 @@ router.get('/snapshot', auth, async (req, res) => {
     } catch (_) { /* a network that cannot be read never stops the store's own offers */ }
 
     const body = {
-      at: readAt,   /* [REV-16] captured before the item SELECT ran — see the comment at the top of this handler */
+      at: deltaCursor || readAt,   /* [REV-16] captured before the item SELECT ran — see the comment at the top of this handler;
+                                      a delta sent in parts hands back its last row instead (see DELTA_CAP) */
+      more: deltaMore,
       /**
        * ⭐⭐ WHICH SHOP IS THIS, ANSWERED BY THE SERVER (2026-09-08). Athi: *"can we check is there any other user id sits in the
        * session layer, so we can open it correctly?"* A counter could not check, because nothing it held said whose shop it was —
