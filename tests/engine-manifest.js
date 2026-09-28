@@ -708,7 +708,7 @@ const TILL_SHIPPABLE = {
   /* ⚠️ MASTERED IN chitbridge-web, copied INTO lib/ — the direction is the opposite of the five above, and
      guarding the lib copy would be guarding the wrong file. */
   'search.js':    'web:app/search.js', // finding a product cannot wait for a network
-  'offers.js':    'web:app/offers.js', // an offer must apply with the line down — this is why it is not a server call
+  'offers.js':    'offers-engine.js',  // an offer must apply with the line down — this is why it is not a server call — ADOPTED (v1.3.0)
   'pricing.js':   'pricing-engine.js', //   the same, for a price — ADOPTED from chitbridge-engines (v1.3.0)
   'tax.js':       'tax.js',            // and for tax: a bill printed offline is still a legal document — ADOPTED (chitbridge-engines), with tax-slab
   'locale.js':    'web:app/locale.js', // region → language, currency, format

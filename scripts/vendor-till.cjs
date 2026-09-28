@@ -129,7 +129,8 @@ const COPIES = () => [
   /* ⭐ THE SHOP'S SCREEN rides the same rail as the counter: one master, both hosts, the same engines and the same
      snapshot. It is the counter's data with a different job — advertising it instead of billing it. */
   [path.join(API, 'tools', 'tally-connector', 'promo.html'), path.join(WEB, 'promo.html'), 'copy'],
-  [path.join(WEB, 'app', 'offers.js'), path.join(WEB, 'engine', 'offers.js'), 'copy'],
+  /* offers: ADOPTED from chitbridge-engines (v1.3.0, 2026-09-28) — app/offers.js, engine/offers.js and lib/offers-engine.js are
+     written only by chitbridge-engines/tools/adopt.cjs; the hand cp to the server and this copy are both retired. */
   /* tax: ADOPTED from chitbridge-engines (2026-09-28) — engine/tax.js is a bundle of the tax-slab + tax releases, written
      only by chitbridge-engines/tools/adopt.cjs. The old vendor-tax.cjs → app/tax-engine.js → here chain is retired. */
   /* pricing: ADOPTED from chitbridge-engines (v1.3.0, 2026-09-28) — app/pricing.js, engine/pricing.js and the server's

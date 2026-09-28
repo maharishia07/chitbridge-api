@@ -31,5 +31,8 @@ else pass++, console.log('  ok  no script but adopt.cjs writes tax or tax-slab')
 /* pricing (v1.3.0): vendor-till copied app/pricing.js to engine/ and wrote lib/pricing.browser.js — both writers must stay gone */
 if (/'app', 'pricing\.js'/.test(vt) || fs.existsSync(path.join(__dirname, '..', 'lib', 'pricing.browser.js'))) { bad++; console.log('  FAIL a second writer of pricing is back (vendor-till.cjs or lib/pricing.browser.js)'); }
 else pass++, console.log('  ok  no script but adopt.cjs writes pricing');
+/* offers (v1.3.0): vendor-till copied app/offers.js to engine/, and the server copy was a hand cp — the copier must stay gone */
+if (/'app', 'offers\.js'/.test(vt)) { bad++; console.log('  FAIL scripts/vendor-till.cjs writes offers again — a second writer'); }
+else pass++, console.log('  ok  no script but adopt.cjs writes offers');
 console.log(pass + ' checks');
 process.exit(bad ? 1 : 0);
