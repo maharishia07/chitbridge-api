@@ -144,7 +144,8 @@ const COPIES = () => [
    * Registration reads it; the counter does not, so it is NOT in KEEP. It leans on CBLocale.REGIONS for the
    * country→money and country→language maps rather than keeping a second opinion about either.
    */
-  [path.join(WEB, 'app', 'govcontext.js'), path.join(WEB, 'engine', 'govcontext.js'), 'copy'],
+  /* govcontext: ADOPTED from chitbridge-engines (v1.4.0, 2026-09-28) — app/, engine/ and lib/govcontext.browser.js are written only by
+     chitbridge-engines/tools/adopt.cjs; the 2 line(s) that copied it from app/govcontext.js are retired. */
   /**
    * ⭐ VARIANTS — one product, many combinations. What makes two of them the SAME (a canonical, sorted
    * signature), what the choices add, and how to say them. On the till because a bill line is a variant, and
@@ -301,7 +302,6 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'docnumber.browser.js'), wrapForBrowser('docnumber.js', 'CBDoc')],
   /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
   [null, path.join(API, 'lib', 'locale.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'locale.js'), 'utf8'))],
-  [null, path.join(API, 'lib', 'govcontext.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'govcontext.js'), 'utf8'))],
   /* pricing: the shop PC is served lib/pricing-engine.js itself (adopted; it already runs in a page) — pricing.browser.js retired */
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   /* ⭐⭐ UNITS, FOR THE SHOP PC TOO ([TILL-104]). The page learned that a kilo is measured and a plate is

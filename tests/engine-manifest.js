@@ -697,7 +697,7 @@ const TILL_SHIPPABLE = {
   /* ⭐⭐ [TILL-186] a grocer types "500 gm" with the line down all day; the factors cannot be fetched. */
   'qty.js':       'qty.js',
   'jurisdiction.js': 'jurisdiction.js',
-  'govcontext.js': 'web:app/govcontext.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
+  'govcontext.js': 'govcontext.browser.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter
   'lots.js':      'lotfields.js',      // a lot's fields travel with the goods, not with the server
 
