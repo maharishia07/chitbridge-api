@@ -14,7 +14,8 @@
     "sql": "node scripts/sql.cjs",
     "db:role": "node scripts/check-db-role.js",
     "rls:census": "node scripts/rls-census.cjs",
-    "rls:baseline": "node scripts/rls-census.cjs --save"
+    "rls:baseline": "node scripts/rls-census.cjs --save",
+    "lint:copy": "node scripts/lint-copy.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",

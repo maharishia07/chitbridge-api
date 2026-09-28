@@ -54,7 +54,23 @@ export const words = s => s.trim().split(/\s+/).filter(Boolean).length;
 // a duplicate finding is cheap, a missed string is not.
 const TEXT_ATTRS = 'title|label|placeholder|aria-label|alt|heading|subtitle|caption|message|text|tooltip|hint|description|cta|buttonLabel|actionLabel|emptyText|errorText|confirmText';
 
-export function extract(src, file) {
+/**
+ * ⚠️ COMMENTS ARE NOT COPY (2026-09-28). Rule 1 below — text between `>` and `<` — matched INSIDE comments too, so the
+ * counter's own long design notes read as 209 "too long" strings and `r.status >= 400` read as an HTTP code shown to a
+ * person. A lint that is mostly false alarms gets ignored, and then the real finding goes with it (external review §25:
+ * "the rules are good and they are currently decorative"). Blanked with spaces, so every line number is unchanged.
+ * ⚠️ `//` is only blanked where it STARTS a line — anywhere else it may be inside a URL.
+ */
+export function blankComments(src) {
+  const keepNl = (m) => m.replace(/[^\n]/g, ' ');
+  return String(src)
+    .replace(/<!--[\s\S]*?-->/g, keepNl)
+    .replace(/\/\*[\s\S]*?\*\//g, keepNl)
+    .replace(/^[ \t]*\/\/[^\n]*/gm, keepNl);
+}
+
+export function extract(rawSrc, file) {
+  const src = blankComments(rawSrc);
   const ext = extname(file);
   const found = [];
   const push = (text, kind, index) => {
