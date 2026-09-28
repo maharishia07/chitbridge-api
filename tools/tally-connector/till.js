@@ -284,7 +284,8 @@ function fyOf(d) {
 }
 function nextNumberOf(kind){
   /* ⚠️ ONE SERIES PER KIND. A goods receipt in the middle of the sales run puts a hole in the very thing a gapless series proves. */
-  const tag = (kind === 'GRN' || kind === 'DC') ? kind : '';
+  /* ⭐ CN and EXP (2026-09-28): a credit note and a counter expense each keep their OWN run — never the sales series */
+  const tag = (kind === 'GRN' || kind === 'DC' || kind === 'CN' || kind === 'EXP') ? kind : '';
   const file = tag ? path.join(DIR, 'series-' + tag + '.json') : F.series;
   const fy = fyOf(new Date());
   const s = readJSON(file, { prefix: tillCfg.id, fy, next: 1 });
@@ -306,6 +307,8 @@ function nextNumber() {
 
 /* ── the copy of the shop ──────────────────────────────────────────────────────────────────────────────────── */
 let snapshot = readJSON(F.snapshot, null);
+/* numbers handed out by /api/number and not yet recorded — /api/record accepts only these (lost on restart = a gap) */
+const ISSUED = {};
 let online = false;
 /* ⚠️ said ONCE per spell of failure — a wrong key would otherwise fill the log every drain */
 let QUEUE_SAID = false;
@@ -314,6 +317,34 @@ let QUEUE_SAID = false;
  * it to the screen. A count on its own reads as patience; a count with a reason reads as a thing to do.
  */
 let QUEUE_WHY = null;
+/**
+ * ── ⭐⭐ THE COUNTER'S OWN HEALTH, WRITTEN DOWN WHEN IT CHANGES (2026-09-28, M16 / TILL-145 as reassessed) ─────
+ *
+ * The watch list lives in the page, so a shop PC with its page shut was watched by nobody — and that is mostly
+ * harmless (with no screen there is nobody to tell). What WAS missing is a durable record: a shop that finds a
+ * stuck counter in the morning could not see WHEN it went wrong. So the program appends one line to health.jsonl
+ * in the shop's own folder each time its state CHANGES — online/offline, bills waiting or not, why the queue is
+ * stuck — never on every tick, and says it in its log. /api/state reports the current line and the recent ones.
+ * ⚠️ Bounded: the file is trimmed to its last 500 lines once it passes 1000.
+ */
+let HEALTH = null;
+function healthNote() {
+  const queued = readLines(F.queue).length;
+  const now = { online: !!online, paired: !!cfg.key, queued: queued, waiting: queued > 0,
+                why: QUEUE_WHY ? QUEUE_WHY.say : null, fatal: !!(QUEUE_WHY && QUEUE_WHY.fatal) };
+  const sig = [now.online, now.paired, now.waiting, now.why, now.fatal].join('|');
+  if (HEALTH && HEALTH.sig === sig) { HEALTH.queued = queued; return; }
+  const line = Object.assign({ at: new Date().toISOString() }, now);
+  HEALTH = Object.assign({ sig: sig }, line);
+  try {
+    const file = path.join(DIR, 'health.jsonl');
+    appendLine(file, line);
+    const all = readLines(file);
+    if (all.length > 1000) fs.writeFileSync(file, all.slice(-500).map((x) => JSON.stringify(x)).join('\n') + '\n');
+  } catch (_) { /* the record is a courtesy — it must never stop a sale */ }
+  log('health: ' + (now.online ? 'online' : 'OFFLINE') + ' · ' + (queued ? queued + ' waiting' : 'nothing waiting')
+    + (now.why ? ' · ' + now.why : ''));
+}
 
 /**
  * ── ⭐⭐⭐ WHY A CALL DID NOT WORK, AND WHETHER THE LINE IS THE REASON ([TILL-117]) ──────────────
@@ -428,7 +459,9 @@ async function drain() {
   draining = true; drainAt = Date.now();
   try {
     const rows = readLines(F.queue);
-    if (!rows.length) return;
+    /* ⭐ M16: the health note is taken on BOTH ways out of a drain — never inside the finally, which must stay
+       a single line that clears the busy flag and nothing else (tests/snapshot-wire.test.js) */
+    if (!rows.length) { try { healthNote(); } catch (_) {} return; }
     const left = [];
     for (const bill of rows) {
       try {
@@ -452,6 +485,17 @@ async function drain() {
           cur.chit_ref = (rs && (rs.chit_id || (rs.chit && rs.chit.chit_id))) || cur.chit_ref || null;
           writeSummary(cur);
           log('summary ' + bill.no + ' → ' + (rs && rs.duplicate ? 'already recorded' : 'recorded'));
+          online = true;
+          continue;
+        }
+        /**
+         * ⭐⭐ A FIFTH KIND (2026-09-28): a credit note or an expense the PAGE built (chitOfCN / chitOfExpense in
+         * till.html — one builder for both hosts, never a second copy here). Sent exactly as built; client_ref is
+         * its number, so a second send after a timeout is answered with the chit it already made.
+         */
+        if (bill.chitBody) {
+          const rc = await cb.call('POST', '/api/chits/send', bill.chitBody);
+          log((bill.kind === 'expense' ? 'expense ' : 'credit note ') + bill.no + ' → ' + (rc && rc.duplicate ? 'already recorded' : 'recorded'));
           online = true;
           continue;
         }
@@ -511,6 +555,10 @@ async function drain() {
       }
     }
     fs.writeFileSync(F.queue, left.map((b) => JSON.stringify(b)).join('\n') + (left.length ? '\n' : ''));
+    /* ⚠️ AN EMPTY QUEUE HAS NO REASON TO BE STUCK (2026-09-28). Only a sale's success cleared QUEUE_WHY; a credit
+       note, expense, document or summary 'continue'd past it, so the last outage's reason outlived its recovery. */
+    if (!left.length) { QUEUE_WHY = null; QUEUE_SAID = false; }
+    try { healthNote(); } catch (_) {}
   } catch (e) { log('queue: ' + e.message); }
   /* ⚠️ FINALLY, NOT AFTER. The old placement was reachable only if nothing above threw past its own catch —
      which is exactly the condition that cannot be relied on when the thing that fails is the network. */
@@ -1020,6 +1068,43 @@ const server = http.createServer(async (req, res) => {
      * a crash costs a gap and never a duplicate. The movement rows, when the document was against an order, are queued SEPARATELY:
      * they go to b144's deliver-lines, which writes into every party's copy, and either half may wait for the line without the other.
      */
+    /**
+     * ── ⭐⭐⭐ RETURNS AND EXPENSES ON THE SHOP PC (2026-09-28) ─────────────────────────────────────────────────
+     *
+     * The shop PC could not issue a credit note or record an expense at all — AgentHost had neither, so the page
+     * hid Return and Expense on the primary deployment. Two routes, one job each:
+     *   POST /api/number  { kind: 'CN' | 'EXP' }  → the next number in that kind's OWN series (written to disk first)
+     *   POST /api/record  { doc, chitBody }       → the document into the day's file + its chit onto the queue
+     * ⭐ THE PROGRAM OWNS THE NUMBER, THE PAGE OWNS THE CHIT. Numbering stays where every other number on this PC
+     * is issued (crash = a gap, never a duplicate); the chit is built by the page's own chitOfCN/chitOfExpense, so
+     * there is one builder for both hosts.
+     * ⚠️ /api/record accepts only a number THIS program issued for that kind — a record cannot invent its own.
+     */
+    if (req.method === 'POST' && url.pathname === '/api/number') {
+      let raw = ''; for await (const c of req) raw += c;
+      const b = JSON.parse(raw || '{}');
+      if (b.kind !== 'CN' && b.kind !== 'EXP') return json(res, 400, { ok: false, message: 'only a credit note (CN) or an expense (EXP) is numbered here' });
+      const no = nextNumberOf(b.kind);
+      ISSUED[no] = b.kind;
+      return json(res, 200, { ok: true, no: no });
+    }
+    if (req.method === 'POST' && url.pathname === '/api/record') {
+      let raw = ''; for await (const c of req) raw += c;
+      const b = JSON.parse(raw || '{}');
+      const doc = b.doc || {}, chitBody = b.chitBody || null;
+      const want = doc.kind === 'credit_note' ? 'CN' : doc.kind === 'expense' ? 'EXP' : null;
+      if (!want) return json(res, 400, { ok: false, message: 'only a credit note or an expense is recorded here' });
+      if (!doc.no || ISSUED[doc.no] !== want) return json(res, 400, { ok: false, message: 'that number was not issued by this counter for a ' + (want === 'CN' ? 'credit note' : 'expense') });
+      if (!chitBody || chitBody.client_ref !== doc.no) return json(res, 400, { ok: false, message: 'the record and its chit do not carry the same number' });
+      delete ISSUED[doc.no];
+      const rec = Object.assign({ at: new Date().toISOString(), till: tillCfg.id, catalogue_version: snapshot && snapshot.version }, doc);
+      /* THE FILE, THEN THE QUEUE — the same order a bill keeps */
+      appendLine(F.bills(today()), rec);
+      appendLine(F.queue, { no: rec.no, at: rec.at, kind: rec.kind, chitBody: chitBody });
+      drain().catch(() => {});
+      return json(res, 200, { ok: true, bill: rec, today: todayTotals() });
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/doc') {
       let raw = ''; for await (const c of req) raw += c;
       const d = JSON.parse(raw || '{}');
@@ -1269,6 +1354,9 @@ const server = http.createServer(async (req, res) => {
                                * what happened and offer the one control that fixes it.
                                */
                               queue_why: QUEUE_WHY,
+                              /* ⭐ M16: the counter's health as it last CHANGED, and the recent record of changes */
+                              health: HEALTH ? { at: HEALTH.at, online: HEALTH.online, queued: readLines(F.queue).length, why: HEALTH.why, fatal: HEALTH.fatal } : null,
+                              health_log: (function(){ try { return readLines(path.join(DIR, 'health.jsonl')).slice(-20); } catch (_) { return []; } })(),
                               /**
                                * ⭐⭐ WHAT IS WAITING, NOT JUST HOW MANY ([TILL-137]). The counter-health design
                                * calls the bare count the page's first fault: "Bills 0, queued 0, then 10 rows
@@ -1433,8 +1521,22 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, made, state: summaryState() });
     }
 
-    if (req.method === 'GET' && url.pathname === '/api/bills')
+    if (req.method === 'GET' && url.pathname === '/api/bills') {
+      /**
+       * ⭐ ?days=N (2026-09-28, M11): the bills THIS PC still holds for the last N days, read from its own day
+       * files — offline, no server. A return against a bill rung at 23:58 must be possible at 00:01; today-only
+       * made the counter say the bill was "not on this counter any more", which was untrue.
+       */
+      const days = Math.min(Number(url.searchParams.get('days')) || 0, 365);
+      if (days > 1) {
+        const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+        const all = [];
+        daysOnDisk().filter((d) => d >= since).forEach((d) => { readLines(F.bills(d)).forEach((b) => all.push(b)); });
+        all.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+        return json(res, 200, { days: days, bills: all });
+      }
       return json(res, 200, { day: today(), bills: readLines(F.bills(today())).slice(-50).reverse(), totals: todayTotals() });
+    }
 
     if (req.method === 'POST' && url.pathname === '/api/bill') {
       let body = ''; for await (const c of req) body += c;

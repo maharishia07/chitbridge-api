@@ -3908,7 +3908,8 @@ var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_ti
   'cb_till_counter_name', 'cb_till_dayicon', 'cb_till_dayimg', 'cb_till_daystart', 'cb_till_draft', 'cb_till_given',
   'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
   'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
-  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock', 'cb_till_autolock'];
+  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock', 'cb_till_autolock',
+  'cb_till_keep_days', 'cb_till_keep_bills', 'cb_till_keep_mb', 'cb_till_retained'];
 /**
  * ⚠️ ONCE, ON THE FIRST START OF THIS CODE ON A SHOP PC: the values it kept under plain names before S1b belong to
  * the shop it held then, which is the shop it holds now — they are MOVED into that shop's slot. Only into an EMPTY
@@ -4755,8 +4756,28 @@ async function fetchBy_(url, opts, ms){
 }
 var AgentHost = {
   mode:'agent',
+  /**
+   * ⭐⭐ RETURNS AND EXPENSES ON THE SHOP PC (2026-09-28). The program numbers (its own CN / EXP series, on
+   * disk); the page builds the chit with the same chitOfCN / chitOfExpense the browser counter uses; the program
+   * files it with the day's bills and queues it. One builder, one numbering authority, one queue.
+   */
+  record: async function(tag, doc0, build){
+    var post = function(p, b){ return fetch(p, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(b) })
+      .then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why: 'The counter program did not answer (' + e.message + ')' }; }); };
+    var n = await post('/api/number', { kind: tag });
+    if (!n || !n.ok || !n.no) return { ok:false, why: (n && (n.message || n.why)) || 'No number was issued.' };
+    var doc = Object.assign({ at: new Date().toISOString(), till: (STATE && STATE.till && STATE.till.id) || 'C1',
+                              catalogue_version: S && S.version }, doc0, { no: n.no });
+    var r = await post('/api/record', { doc: doc, chitBody: build(doc) });
+    if (!r || !r.ok) return { ok:false, why: (r && (r.message || r.why)) || 'The counter program did not keep it.' };
+    return { ok:true, bill: r.bill || doc };
+  },
+  creditNote: function(cn){ return this.record('CN', Object.assign({}, cn, { kind: 'credit_note' }), chitOfCN); },
+  expense: function(e){ return this.record('EXP', Object.assign({}, e, { kind: 'expense' }), chitOfExpense); },
   state: function(){ return fetch('/api/state').then(function(r){ return r.json(); }); },
   bills: function(){ return fetch('/api/bills').then(function(r){ return r.json(); }).then(function(j){ return (j && j.bills) || []; }); },
+  /** ⭐ the bills the program still holds for the last N days, from its own day files (M11) */
+  local: function(days){ return fetch('/api/bills?days=' + (days || 2)).then(function(r){ return r.json(); }).then(function(j){ return (j && j.bills) || []; }); },
   history: function(days){ return fetch('/api/history?days=' + (days||30)).then(function(r){ return r.json(); }); },
   shift: function(sh){ return fetch('/api/shift',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sh)}).then(function(r){ return r.json(); }); },
   refresh: function(){ return fetch('/api/refresh',{method:'POST'}).then(function(r){ return r.json(); }); },
@@ -4976,6 +4997,12 @@ var CloudHost = {
     var all = (await DB.all('bills')) || [];
     var day = new Date().toISOString().slice(0,10);
     return all.filter(function(b){ return String(b.at||'').slice(0,10) === day; }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
+  },
+  /** ⭐ the bills THIS device still holds for the last N days — offline (M11: a return after midnight) */
+  async local(days){
+    var all = (await DB.all('bills')) || [];
+    var since = new Date(Date.now() - (days || 1) * 86400000).toISOString().slice(0, 10);
+    return all.filter(function(b){ return String(b.at||'').slice(0,10) >= since; }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
   },
   async history(days){
     if (!this.key || !lineUp()) return { bills: [], offline: true };
@@ -5675,6 +5702,8 @@ function docTagOf(kind){
  * credit note is stored correctly and is invisible in the day's list, which is the worst of both.
  * ⚠️ NO series KEY. That is the sales run's high-water mark and a credit note has a run of its own.
  */
+/** which counter wrote a chit — the shop PC's program or a browser (both build credit notes and expenses now) */
+function tillHostWord(){ return (typeof HOST !== 'undefined' && HOST && HOST.mode === 'agent') ? 'agent' : 'browser'; }
 function chitOfCN(cn){
   return {
     recipients: [{ self: true, name: 'self' }],
@@ -5683,7 +5712,7 @@ function chitOfCN(cn){
     client_ref: cn.no,
     business_json: {
       customer: cn.customer || { name: 'Walk-in' },
-      till: { id: cn.till, name: ls.get('cb_till_name', 'Counter 1'), host: 'browser', by: cn.by || null },
+      till: { id: cn.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: cn.by || null },
       doc: 'credit_note', slip: 'credit_note',
       bill_no: cn.no, billed_at: cn.at,
       catalogue_version: cn.catalogue_version || null,
@@ -5722,7 +5751,7 @@ function chitOfExpense(e){
     subject: subject, manual_subject: subject,
     client_ref: e.no,
     business_json: {
-      till: { id: e.till, name: ls.get('cb_till_name', 'Counter 1'), host: 'browser', by: e.by || null },
+      till: { id: e.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: e.by || null },
       doc: 'expense', slip: 'expense',
       bill_no: e.no, billed_at: e.at,
       /* ⭐ money OUT, named as its own thing — same reasoning as a credit note's `refund` above */
@@ -6020,6 +6049,8 @@ async function load(){
   STATE = st || STATE; S = catRestamp((st && st.snapshot) || S);
   /* ⭐ the person who just changed the shop (becomeShop → whoPending) is adopted by G2 now the shop is open — once */
   if (!HOST._whoNext) { try { HOST._whoNext = !!whoAdoptPending(); } catch (_) {} }
+  /* ⭐ M15: the day's retention, once — see retainDaily() */
+  if (!HOST._retained) { HOST._retained = true; try { retainDaily(); } catch (_) {} }
   /**
    * ⚠️⚠️⚠️ THE COUNTER CLAIMS ITS NUMBER HERE, FOR BOTH HOSTS ([TILL-130]).
    *
@@ -7428,6 +7459,30 @@ async function retainRun(){
  * ⚠️ It is also the only place it runs: a trim that fires while somebody is billing is a trim that will one
  * day fire while somebody is billing.
  */
+/**
+ * ⚠️⚠️ ONCE A BUSINESS DAY, NOT ONLY AT RETIREMENT (2026-09-28, M15). retainRun() existed and was called from
+ * closeCounter() alone — the act that RETIRES a counter, which most never do. So the browser counter still kept
+ * every bill it had ever taken, until the browser refused a write with a customer standing there. It now runs the
+ * first time a counter opens in a business day, after the shop is known. Unsent bills never leave (retainPlan).
+ * The shop PC has its own folder purge ([TILL-123]); this is the browser's.
+ */
+async function retainDaily(){
+  if (!(HOST && HOST.mode === 'cloud' && CloudHost.key)) return null;
+  var day = bizDay(), k = shopLs('cb_till_retained');
+  if (ls.get(k, '') === day) return null;
+  var r = await retainAtClose();
+  if (r && r.ok !== false) ls.set(k, day);
+  return r;
+}
+/** ⭐ the Settings row: a limit changed, and the sentence says at once which limit binds and what it would cost */
+async function retainSave(k, v){
+  retainSet(k, v);
+  await retainPaint();
+}
+async function retainPaint(){
+  var el = document.getElementById('set_keep_say'); if (!el) return;
+  try { el.textContent = retainPlan((await DB.all('bills')) || []).say; } catch (_) { el.textContent = ''; }
+}
 async function retainAtClose(){
   try {
     var r = await retainRun();
@@ -8885,23 +8940,40 @@ function dayReportHTML(bills){
     + '<button data-testid="till-dayreport-close" onclick="dayReportClose()">Close</button>'
     + '</div></header>';
 
-  if (!n) return head + '<p class="drnone">No sales yet today. The day report fills itself as bills are made.</p>';
+  /* ⚠️ NOTHING AT ALL, not "no sales" (2026-09-28, M11): a day whose only activity was a return or an expense
+     printed "No sales yet today" and hid the Returns table beneath this line */
+  if (!n && !back.length && !spent.length) return head + '<p class="drnone">No sales yet today. The day report fills itself as bills are made.</p>';
 
   var summary = dayRepTable('The day', [{ label: 'What' }, { label: 'Figure', num: true }], [
     ['Bills', String(n)],
     ['Items sold', String(qty)],
-    ['Average bill', money(r2(total / n))],
+    ['Average bill', n ? money(r2(total / n)) : '\u2014'],
     ['Taken off by offers', saved ? '\u2212' + money(saved) : money(0)],
     ['Taxable value', money(taxable)],
     ['Tax', money(tax)],
-  ], ['<b>Net sales</b>', '<b>' + money(total) + '</b>']);
+  ], ['<b>Net sales</b>', '<b data-testid="till-dayrep-netsales">' + money(total) + '</b>']);
 
-  var payRows = Object.keys(agg.byPay).sort().map(function(how){
-    return [esc(how.charAt(0).toUpperCase() + how.slice(1)), String(agg.payBills[how] || 0), money(agg.byPay[how])];
+  /**
+   * ⚠️⚠️ THE SHEET RECONCILES TO ITSELF (2026-09-28, M11). "How it was paid" summed only money TAKEN, so it was
+   * gross of refunds while "Net sales" above it was net: ₹4,600 over ₹5,000 with nothing saying the two were on
+   * different bases. Each method now shows what was taken, what went back (credit notes) and what was paid out
+   * (expenses), and its net — and the net total is the Net sales figure, to the paisa.
+   */
+  var outBack = {}, outPaid = {};
+  back.forEach(function(b){ (b.refunds || []).forEach(function(x){ if (x && x.how) outBack[x.how] = r2((outBack[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
+  spent.forEach(function(b){ (b.spent || []).forEach(function(x){ if (x && x.how) outPaid[x.how] = r2((outPaid[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
+  var hows = {}; [agg.byPay, outBack, outPaid].forEach(function(o){ Object.keys(o).forEach(function(k){ hows[k] = 1; }); });
+  var payRows = Object.keys(hows).sort().map(function(how){
+    var inn = agg.byPay[how] || 0, bk = outBack[how] || 0, pd = outPaid[how] || 0;
+    return [esc(how.charAt(0).toUpperCase() + how.slice(1)), String(agg.payBills[how] || 0), money(inn),
+            bk ? '\u2212' + money(bk) : '', pd ? '\u2212' + money(pd) : '', money(r2(inn - bk - pd))];
   });
-  var payTotal = Object.keys(agg.byPay).reduce(function(a, k){ return r2(a + agg.byPay[k]); }, 0);
-  var pay = dayRepTable('How it was paid', [{ label: 'Method' }, { label: 'Bills', num: true }, { label: 'Amount', num: true }],
-    payRows, ['<b>Total</b>', '', '<b>' + money(payTotal) + '</b>']);
+  var sumOf = function(o){ return Object.keys(o).reduce(function(a, k){ return r2(a + o[k]); }, 0); };
+  var payTotal = r2(sumOf(agg.byPay) - sumOf(outBack) - sumOf(outPaid));
+  var pay = dayRepTable('How the money moved', [{ label: 'Method' }, { label: 'Bills', num: true }, { label: 'Taken', num: true },
+    { label: 'Given back', num: true }, { label: 'Paid out', num: true }, { label: 'Net', num: true }],
+    payRows, ['<b>Total</b>', '', '<b>' + money(sumOf(agg.byPay)) + '</b>', sumOf(outBack) ? '<b>\u2212' + money(sumOf(outBack)) + '</b>' : '',
+              sumOf(outPaid) ? '<b>\u2212' + money(sumOf(outPaid)) + '</b>' : '', '<b data-testid="till-dayrep-net">' + money(payTotal) + '</b>']);
 
   var rateRows = Object.keys(agg.byRate).sort(function(a, b){ return Number(a) - Number(b); }).map(function(k){
     var r = agg.byRate[k];
@@ -9859,7 +9931,9 @@ function paintChips(){
         try { if (thumbsOn()) pic = '<span class="cpic">' + catPic(c) + '</span>'; } catch (_) {}
         return '<button class="' + (FILTER.cat === c ? 'on' : '') + (pic ? ' haspic' : '') + '"'
           + ' data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '"'
-          + ' onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">'
+          /* ⚠️ THE NAME TRAVELS IN AN ATTRIBUTE, INTACT (2026-09-28, M19): stripping apostrophes to fit it inside the
+             onclick made "Baker's" filter on "Bakers" — a category with an apostrophe could never be chosen */
+          + ' data-cat="' + esc(c) + '" onclick="setFilter(\'cat\', this.dataset.cat)">'
           + pic + esc(c) + ' <span class="u">' + cats[c] + '</span></button>';
       }).join('')
     ;
@@ -10725,7 +10799,13 @@ function screenCfg(){
   var o = tillOpt(), s = o.screen || {};
   if (!window.CBScreen) return { tile: 'classic', theme: 'lightCream', photos: false, preset: 'counterClassic' };
   /* the look already chosen on this device (☰ text & look) is the device's theme unless a preset says otherwise */
-  var t = ls.get('cb_till_theme', 'light');
+  /**
+   * ⚠️⚠️ ONLY A THEME THIS DEVICE ACTUALLY CHOSE OVERRIDES THE SHOP'S (2026-09-28, M13). The read defaulted to
+   * 'light', so it always returned a value and always won: a chain that set a navy counter centrally saw nothing
+   * change on any device that had never touched ☰. Nobody chose here → the shop's own screen setting stands.
+   */
+  var t = ls.get('cb_till_theme', null);
+  if (!t) return CBScreen.resolve(s);
   var theme = (t === 'light') ? 'lightCream' : t;
   /* ⚠️ the device's look LAST: choosing a preset writes its theme there (screenSet), and a later change in ☰ must win */
   return CBScreen.resolve(s, { theme: theme });
@@ -13687,7 +13767,8 @@ function cardGroups(i){
         var ids = all[nm] || [], on = ids.map(String).indexOf(String(i.item_id)) >= 0;
         return '<button class="gchip' + (on ? ' on' : '') + '" data-testid="card-group-'
           + esc(nm.replace(/[^a-z0-9]+/gi, '-').toLowerCase()) + '"'
-          + ' onclick="cardGroupTap(\'' + esc(nm.replace(/'/g, '')) + '\')">'
+          /* ⚠️ same as the category chip (M19): the group's real name, in an attribute */
+          + ' data-group="' + esc(nm) + '" onclick="cardGroupTap(this.dataset.group)">'
           + (on ? '✓ ' : '') + esc(nm) + ' <span class="u">' + ids.length + '</span></button>';
       }).join('')
     + '</div></div>';
@@ -15134,10 +15215,25 @@ function modWords(mods){ return CBVariant.words(mods, money); }
  * to show the check happened, and "the till asked" is not evidence unless the till also wrote it down.
  * ⚠️ NO IS A REAL ANSWER. Refusing does not add the item. A prompt that cannot refuse is decoration.
  */
-function ageOf(i){
+/** an item's OWN age restriction, 0 when none */
+function ageOwn(i){
   var d = (i && (i.age_check != null ? i.age_check : (i.item_data && i.item_data.age_check)));
   var n = Number(d);
   return (n > 0 && n < 130) ? Math.floor(n) : 0;
+}
+/**
+ * ⚠️⚠️ A COMBO CARRIES THE HIGHEST AGE OF ANY PART IT NAMES (2026-09-28, M12). ageOf() read only the combo SKU's
+ * own age_check, so a party pack naming a beer billed with no prompt. Parts resolve on the shelf by name, exactly as
+ * comboOf() resolves them; a part is read at its OWN level only, so a combo of combos cannot loop.
+ */
+function ageOf(i){
+  var age = ageOwn(i);
+  var c = (i && (i.combo_of || (i.item_data && i.item_data.combo_of))) || null;
+  if (Array.isArray(c) && c.length && S && S.items) {
+    var by = {}; S.items.forEach(function(x){ if (x && x.name) by[String(x.name).toLowerCase()] = x; });
+    c.forEach(function(nm){ var p = by[String(nm || '').toLowerCase()]; if (p && p !== i) age = Math.max(age, ageOwn(p)); });
+  }
+  return age;
 }
 var AGE_OK = {};                                  /* ages cleared for THIS bill — cleared with the bill */
 function ageClear(){ AGE_OK = {}; }
@@ -21046,6 +21142,15 @@ async function resendBill(no){
 function isSaleRow(b){
   return !!(b && !b.tillPost && Array.isArray(b.lines) && (b.kind == null || b.kind === 'cash' || b.kind === 'tax' || b.kind === 'supply'));
 }
+/**
+ * ⭐⭐ EVERY DOCUMENT THIS COUNTER ISSUED THAT THE BOOKS MUST RECEIVE (2026-09-28, M11) — a sale, a credit note,
+ * an expense, a subscription. isSaleRow() stays the SALES allow-list (the renumber path, the sales series); this
+ * is what the day's close must account for. closeCounter() filtered through isSaleRow(), so an unsent credit note
+ * was never re-queued, never counted as outstanding, and was then destroyed with the local store.
+ */
+function isIssuedRow(b){
+  return !!(b && !b.tillPost && (isSaleRow(b) || b.kind === 'credit_note' || b.kind === 'expense' || b.kind === 'subscription'));
+}
 async function renumberBill(bill, why){
   var tries = Number(bill._renum) || 0;
   if (tries >= 20) return null;
@@ -21089,7 +21194,7 @@ async function checkAbsorbed(force){
   var bills = [];
   try { bills = (await DB.all('bills')) || []; } catch (_) { return null; }
   var sent = bills.filter(function(b){
-    return b && b._sent && b._sent.chit_id && !b._verified && isSaleRow(b)
+    return b && b._sent && b._sent.chit_id && !b._verified && isIssuedRow(b)
         && new Date(b.at).getTime() > cutoff;
   }).slice(0, 200);
   if (!sent.length) return { checked: 0, fixed: 0 };
@@ -21105,6 +21210,10 @@ async function checkAbsorbed(force){
     if (v.verdict === 'ok') { b._verified = Date.now(); try { await DB.put('bills', b); } catch (_) {} continue; }
     if (v.verdict !== 'absorbed' && v.verdict !== 'missing') continue;     /* 'unknown' is left alone */
     delete b._sent;                                                        /* it never landed — say so */
+    /* ⚠️ a credit note / expense recorded under ANOTHER counter's document is never renumbered as if it were a
+       sale, and never re-sent (client_ref would answer with the other counter's chit): it is marked, and the
+       close says so, for a person to resolve */
+    if (v.verdict === 'absorbed' && !isSaleRow(b)) { b._absorbed = v.recorded_as || true; try { await DB.put('bills', b); } catch (_) {} continue; }
     if (v.verdict === 'absorbed') {
       var m = await renumberBill(b, 'ChitBridge had recorded another counter\'s sale under ' + b.no);
       if (m) { renumbered.push(m); fixed++; continue; }
@@ -21153,7 +21262,7 @@ async function checkAbsorbedNow(){
 async function closeReadinessNow(){
   var bills = []; try { bills = ((await DB.all('bills')) || []); } catch (_) {}
   var q = []; try { q = ((await DB.allRaw('queue')) || []).filter(rowIsMine); } catch (_) {}
-  var sale = bills.filter(isSaleRow);
+  var sale = bills.filter(isIssuedRow);
   return { sent: sale.filter(function(b){ return b._sent; }).length, total: sale.length,
            waiting: q.length, inHand: (PARKED || []).length };
 }
@@ -21194,7 +21303,7 @@ async function closeCounter(already){
      */
     try {
       var inQ = {}; ((await DB.allRaw('queue')) || []).forEach(function(x){ if (x && x.no) inQ[x.no] = 1; });
-      var bare = ((await DB.all('bills')) || []).filter(function(b){ return b && isSaleRow(b) && !b._sent && !inQ[b.no]; });
+      var bare = ((await DB.all('bills')) || []).filter(function(b){ return b && isIssuedRow(b) && !b._sent && !b._absorbed && !inQ[b.no]; });
       for (var bi = 0; bi < bare.length; bi++) { if (bare[bi]._aside) delete bare[bi]._aside; await DB.put('bills', bare[bi]); await DB.put('queue', bare[bi]); }
     } catch (_) {}
     try { await HOST.drain(); } catch (_) {}
@@ -21212,8 +21321,10 @@ async function closeCounter(already){
     var bills = []; try { bills = ((await DB.all('bills')) || []); } catch (_) { why.push('the bill list could not be read'); }
     var aside = bills.filter(function(b){ return b && b._aside && !b._sent; }).length;
     if (aside) why.push(aside + ' bill(s) set aside and not sent');
-    var unconfirmed = bills.filter(function(b){ return b && isSaleRow(b) && !b._sent; }).length - aside;
-    if (unconfirmed > 0) why.push(unconfirmed + ' bill(s) never confirmed by ChitBridge');
+    var unconfirmed = bills.filter(function(b){ return b && isIssuedRow(b) && !b._sent && !b._absorbed; }).length - aside;
+    if (unconfirmed > 0) why.push(unconfirmed + ' bill(s), credit note(s) or expense(s) never confirmed by ChitBridge');
+    var absorbed = bills.filter(function(b){ return b && b._absorbed; }).length;
+    if (absorbed) why.push(absorbed + ' credit note(s) or expense(s) recorded at ChitBridge under another counter\'s number — ask the shop before closing');
     var left = 0; try { (await otherCounters()).forEach(function(s){ if (String(s.owner || '') === String(OWNER || '')) left += s.bills + s.queue; }); } catch (_) {}
     if (left) why.push(left + ' bill(s) in an earlier copy of this counter on this PC — bring them in first (🩺 → 🗄)');
     if (why.length) {
@@ -22258,7 +22369,7 @@ var RET_FOR = null, RET_QTY = null, RET_WHY = '', RET_HOW = '';
  * ⭐ A LIMITATION SAID OUT LOUD BEATS A BUTTON THAT LOSES WORK. The pill is not drawn on a host that cannot do
  * it, and if it is reached another way the refusal comes BEFORE the confirmation, naming the reason.
  */
-var RET_WHYNOT = 'This counter cannot issue a credit note yet — returns are on the browser counter only.';
+var RET_WHYNOT = 'This counter cannot issue a credit note — the counter program did not load its returns.';
 function retCanIssue(){ return !!(HOST && typeof HOST.creditNote === 'function'); }
 /* the reasons GST recognises for a credit note, in the words a shopkeeper would use */
 var RET_WHYS = [
@@ -22280,12 +22391,7 @@ function retLeft(bill, n){
    * refunded against a ₹1,000 sale. printed_as is the number the customer was given, and renumbered.from is
    * where the books moved it from — both are checked, so a return follows the bill through a renumber.
    */
-  var names = [bill.no, bill.printed_as, (bill.renumbered && (bill.renumbered.from || bill.renumbered.was))]
-    .filter(Boolean).map(String);
-  var prior = [];
-  names.forEach(function(nm){ ((RET_PRIOR && RET_PRIOR[nm]) || []).forEach(function(cn){
-    if (prior.indexOf(cn) < 0) prior.push(cn); }); });
-  prior.forEach(function(cn){
+  retPriorOf(bill).forEach(function(cn){
     /* ⚠️ MATCHED ON from_line, NEVER ON POSITION — see retMoney(). A credit note carries only what came back. */
     (cn.lines || []).forEach(function(cl){
       if (cl && Number(cl.from_line) === n) back = r2(back + Math.abs(Number(cl.qty) || 0));
@@ -22293,12 +22399,44 @@ function retLeft(bill, n){
   });
   return r2(Math.max(0, had - back));
 }
+/** the credit notes already issued against this bill, under any number it has carried (renumbered, printed_as) */
+function retPriorOf(bill){
+  var names = [bill.no, bill.printed_as, (bill.renumbered && (bill.renumbered.from || bill.renumbered.was))]
+    .filter(Boolean).map(String);
+  var prior = [];
+  names.forEach(function(nm){ ((RET_PRIOR && RET_PRIOR[nm]) || []).forEach(function(cn){
+    if (prior.indexOf(cn) < 0) prior.push(cn); }); });
+  return prior;
+}
+/**
+ * ⭐ WHAT HAS ALREADY BEEN REVERSED on one line, money by money (2026-09-28, M11). retMoney() uses it to cap a
+ * return at what is LEFT of the line, and to make the LAST return exactly the remainder — see its note.
+ */
+function retBack(bill, n){
+  var out = { net: 0, taxable: 0, tax: 0, save: 0, gross: 0 };
+  retPriorOf(bill).forEach(function(cn){
+    (cn.lines || []).forEach(function(cl){
+      if (!cl || Number(cl.from_line) !== n) return;
+      Object.keys(out).forEach(function(k){ out[k] = r2(out[k] + Math.abs(Number(cl[k]) || 0)); });
+    });
+  });
+  return out;
+}
+/**
+ * ⭐ HOW FAR BACK A RETURN CAN REACH (2026-09-28, M11) — the same 30 days the Earlier tab opens on. Returns read
+ * the bills THIS counter still holds, offline; a bill older than that is said to be older, never "not here".
+ */
+var RET_DAYS = 30;
+function retBills(){
+  if (HOST && typeof HOST.local === 'function') return HOST.local(RET_DAYS);
+  return (HOST && HOST.bills) ? HOST.bills() : Promise.resolve([]);
+}
 var RET_PRIOR = null;
 /** every credit note already issued against this bill — so a shop cannot refund the same goods twice */
 async function retPriorFor(no){
   var out = {};
   try {
-    var all = (HOST && HOST.bills) ? (await HOST.bills()) : [];
+    var all = await retBills();
     all.forEach(function(b){
       if (b && b.kind === 'credit_note' && b.against && b.against.bill_no) {
         (out[b.against.bill_no] = out[b.against.bill_no] || []).push(b);
@@ -22309,9 +22447,9 @@ async function retPriorFor(no){
 }
 async function retOpen(no){
   var rows = [];
-  try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) {}
-  var bill = rows.filter(function(b){ return String(b.no) === String(no); })[0];
-  if (!bill) { toastLine('That bill is not on this counter any more.'); return; }
+  try { rows = await retBills(); } catch (_) {}
+  var bill = rows.filter(function(b){ return String(b.no) === String(no) || String(b.printed_as || '') === String(no); })[0];
+  if (!bill) { toastLine('Only bills from the last ' + RET_DAYS + ' days that were rung on this counter can be returned here.'); return; }
   if (bill.kind === 'credit_note') { toastLine('That is already a credit note.'); return; }
   RET_PRIOR = await retPriorFor(no);
   RET_FOR = bill; RET_QTY = {}; RET_WHY = 'returned';
@@ -22343,10 +22481,20 @@ function retMoney(){
     if (!(q > 0)) return;
     var had = Number(l.qty) || 0;
     var share = had > 0 ? (q / had) : 0;              /* ⭐ the SHARE, so a part return refunds a part of the line */
-    var net = r2((Number(l.net) || 0) * share);
-    var taxable = r2((Number(l.taxable) || 0) * share);
-    var tax = r2((Number(l.tax) || 0) * share);
-    var save = r2((Number(l.save) || 0) * share);
+    /**
+     * ⚠️⚠️ THE LAST RETURN IS THE REMAINDER, NOT A SHARE (2026-09-28, M11). Each part return rounded its share
+     * independently, so eight one-unit returns of a line taxed ₹12.04 reversed ₹12.08 of GST — more than was
+     * ever charged, and it is by_rate that goes to the books. Every amount is now capped at what is LEFT of the
+     * line, and the return that takes the last unit takes exactly that: the credit notes on a line sum to the
+     * line, to the paisa.
+     */
+    var back = retBack(RET_FOR, n), last = q >= retLeft(RET_FOR, n);
+    var part = function(k){
+      var orig = Math.abs(Number(l[k]) || 0), left = r2(orig - back[k]);
+      var v = last ? left : Math.min(r2(orig * share), left);
+      return r2(Math.max(0, v)) * ((Number(l[k]) || 0) < 0 ? -1 : 1);
+    };
+    var net = part('net'), taxable = part('taxable'), tax = part('tax'), save = part('save');
     /**
      * ⚠️⚠️ from_line IS NOT DECORATION. A credit note holds only the lines actually coming back, so its line 0
      * may be the original's line 3. retLeft() first matched prior credit notes BY ARRAY INDEX and would have
@@ -22355,7 +22503,7 @@ function retMoney(){
      * "already returned" means when two lines are returned separately.
      */
     out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net,
-                                          gross: r2(-(Number(l.gross) || 0) * share),
+                                          gross: -part('gross'),
                                           taxable: -taxable, tax: -tax, save: -save }));
     out.total = r2(out.total + net); out.taxable = r2(out.taxable + taxable);
     out.tax = r2(out.tax + tax); out.saved = r2(out.saved + save);
@@ -22421,9 +22569,9 @@ function retClose(){
  * — which is why this is a CHIT (purpose:'expense'), the same document of record every sale and credit note
  * already is, not a side number that a real ledger would later have to be told about separately.
  *
- * ⚠️⚠️ SAME HOST LIMITATION AS A CREDIT NOTE, for the identical reason — AgentHost has no expense() either.
+ * ⚠️⚠️ (2026-09-28: lifted — AgentHost.expense() numbers through the program and files through /api/record, as a credit note does.)
  */
-var EXP_WHYNOT = 'This counter cannot record an expense yet — that is on the browser counter only.';
+var EXP_WHYNOT = 'This counter cannot record an expense — the counter program did not load its expenses.';
 function expCanIssue(){ return !!(HOST && typeof HOST.expense === 'function'); }
 var EXP_WHAT = '', EXP_AMOUNT = '', EXP_HOW = 'Cash', EXP_DONE = null;
 /**
@@ -23104,6 +23252,9 @@ async function paintEarlier(){
   var r = { bills: [] };
   try { r = (HOST && HOST.history) ? (await HOST.history(days)) : { bills: [], offline: true }; } catch (_) { r = { bills: [], offline: true }; }
   var rows = (r && r.bills) || [];
+  /* ⭐ M11: which of these this counter still HOLDS — only those can be returned from here (their lines are local) */
+  var held = {};
+  try { (await retBills()).forEach(function(b){ if (b && b.kind !== 'credit_note' && b.kind !== 'expense') held[b.no] = true; }); } catch (_) {}
   var mine = WHO ? rows.filter(function(b){ return b.by && b.by.id === WHO.id; }) : rows;
   var body = '';
   if (r.offline) body = '<div style="color:var(--warn);padding:10px">The line is down, so earlier bills cannot be read. Today\'s are on this device and are still here.</div>';
@@ -23117,7 +23268,9 @@ async function paintEarlier(){
           + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(String(b.at).slice(0,10)) + ' ' + esc(String(b.at).slice(11,16)) + ' · '
           + esc(b.customer || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + '</div></span>'
           + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
-          + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')">print</button></div>';
+          + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')">print</button>'
+          + ((held[b.no] && retCanIssue()) ? '<button class="pill" data-testid="till-bill-return-' + esc(b.no) + '"'
+              + ' onclick="retOpen(\'' + esc(b.no) + '\')">return</button>' : '') + '</div>';
       }).join('');
   }
   document.getElementById('billsbody').innerHTML = body;
@@ -24317,7 +24470,16 @@ function openSettings(tab){
       + '<input id="set_key" placeholder="paste the key once" value="' + esc(masked) + '" style="flex:1" onchange="settingsKeySave(this.value)">'
       + (CloudHost.key ? '<button class="pill" type="button" data-testid="till-set-keycopy" onclick="settingsCopyKey()">Copy</button>' : '')
       + '</span></div>'
-      + '<div class="srow"><span>ChitBridge<i class="scope shop">the shop</i></span><input id="set_api" value="' + esc(CloudHost.api||'') + '" onchange="settingsApiSave(this.value)"></div>';
+      + '<div class="srow"><span>ChitBridge<i class="scope shop">the shop</i></span><input id="set_api" value="' + esc(CloudHost.api||'') + '" onchange="settingsApiSave(this.value)"></div>'
+      /* ⭐ M15 [TILL-134]: what this device keeps — whichever limit binds first; unsent bills never leave */
+      + (function(){ var L = retainLimits();
+          var box = function(k, v, w){ return '<input id="set_keep_' + k + '" data-testid="till-set-keep-' + k + '" inputmode="numeric" style="width:' + w
+            + '" value="' + esc(String(v)) + '" onchange="retainSave(\'' + k + '\', this.value)">'; };
+          return '<div class="srow" title="Settled bills beyond these limits leave this device, whichever limit is reached first. They stay at the shop and can be read back. A bill not yet sent never leaves.">'
+            + '<span>Keeps<i class="scope shop">the shop</i></span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
+            + box('days', L.days, '4em') + ' days ·' + box('bills', L.bills, '5em') + ' bills ·' + box('mb', L.mb, '4em') + ' MB</span></div>'
+            + '<div class="srow"><span></span><span class="u" id="set_keep_say" data-testid="till-set-keep-say"></span></div>'; })();
+    retainPaint();
   } else {
     /**
      * ⚠️⚠️ IT USED TO SAY ONLY 'on this PC' ([TILL-121]), which is true and useless. A counter holding the

@@ -245,6 +245,26 @@ it('⏱ auto-lock: 5 minutes by default, per shop, and it locks through lockNow 
   assert.ok(/autoLockPoke\(\);/.test(body(PAGE, 'function idlePoke(').text), 'activity no longer restarts the lock clock');
 });
 
+console.log('\nM10 · RETURNS AND EXPENSES ON THE SHOP PC — the program numbers, the page builds, one queue\n');
+
+it('the program numbers a credit note and an expense in their OWN series, never the sales run', () => {
+  assert.ok(/kind === 'CN' \|\| kind === 'EXP'\) \? kind : ''/.test(PROG), 'CN/EXP are not their own series in nextNumberOf');
+  const num = PROG.slice(PROG.indexOf("url.pathname === '/api/number'"), PROG.indexOf("url.pathname === '/api/record'"));
+  assert.ok(/nextNumberOf\(b\.kind\)/.test(num) && !/nextNumber\(\)/.test(num), '/api/number takes from the sales series');
+});
+
+it('⚠️ /api/record files ONLY a number this program issued for that kind — a record cannot invent its own', () => {
+  const rec = PROG.slice(PROG.indexOf("url.pathname === '/api/record'"), PROG.indexOf("url.pathname === '/api/doc'"));
+  assert.ok(/ISSUED\[doc\.no\] !== want/.test(rec), 'the issued-number check is gone');
+  assert.ok(/chitBody\.client_ref !== doc\.no/.test(rec), 'a record and its chit can carry different numbers');
+});
+
+it('ONE chit builder: the program never builds a credit-note or expense chit of its own', () => {
+  assert.ok(!/function chitOfCN|function chitOfExpense/.test(PROG), 'the program grew a second builder');
+  assert.ok(/creditNote: function\(cn\)\{ return this\.record\('CN'[\s\S]{0,80}chitOfCN\)/.test(PAGE), 'AgentHost does not build with chitOfCN');
+  assert.ok(/expense: function\(e\)\{ return this\.record\('EXP'[\s\S]{0,80}chitOfExpense\)/.test(PAGE), 'AgentHost does not build with chitOfExpense');
+});
+
 console.log('\nG1 · the program\n');
 
 it('connector.json\'s key is written in ONE place (enrol) and removed in ONE place (sign out)', () => {
