@@ -11931,7 +11931,9 @@ function paintStepBar(){
       + (at === s ? ' aria-current="step"' : '') + (off ? ' disabled' : '') + ' onclick="stepGo(\'' + s + '\')">' + label + '</button>';
   };
   el.innerHTML = btn('pick', 'Items')
-    + btn('bill', 'Bill' + (n ? ' <b data-testid="till-step-count">' + n + '</b> <span>' + money(net) + '</span>' : ''))
+    /* ⚠️ countShort(), not n (2026-09-28): the cart chip already said "ONE COUNT FOR THE WHOLE COUNTER", and on a phone
+       the chip read 3 while this button read 2 for the same bill (2 dosa + 1 coffee: 3 items, 2 lines) */
+    + btn('bill', 'Bill' + (n ? ' <b data-testid="till-step-count">' + countShort() + '</b> <span>' + money(net) + '</span>' : ''))
     /**
      * ⭐⭐ THE MONEY IS ON THE BUTTON ([TILL-44], 2026-09-18). Athi, on the kiosk shape: *"the pay panel is at
      * very bottom, so i was searching where it is, as my eyes are focusing on the top… can we introduce Pay
@@ -12745,7 +12747,7 @@ function inBillStrip(){
   var byId = {}; ((S && S.items) || []).forEach(function(i){ byId[String(i.item_id)] = i; });
   var rows = CART.map(function(c, n){ return cartPicCell(c, n, byId, 'till-inbill'); }).join('');
   return '<div class="ibstrip" data-testid="till-inbill">'
-    + '<div class="ibhead">On this bill <span>' + CART.length + '</span></div>'
+    + '<div class="ibhead">On this bill <span>' + countShort() + '</span></div>'   /* the chip's count, not the line count */
     + '<div class="ibrow">' + rows + '</div></div>';
 }
 function quickAdd(id){
@@ -19970,6 +19972,29 @@ var PLACEHOLDER = {
   despatch: 'Scan what you are packing',
   maintain: 'Which product? Name, code or barcode — then change it on the right',
 };
+/**
+ * ⭐ A PLACEHOLDER THAT FITS A PHONE (2026-09-28). On a 390 px screen the selling one read "Item name, code or b…" —
+ * and the half that fell off is a KEYBOARD hint (↓↑, Enter) a phone has no use for. Under 601 px, where the counter
+ * becomes its three-step phone shape, each mode gets its short form; it follows a turn or a resize.
+ */
+var PLACEHOLDER_PHONE = {
+  sell:     'Item or barcode',          /* a code still finds it — the word did not fit a 390 px box */
+  receive:  'What arrived?',
+  despatch: 'Scan what you pack',
+  maintain: 'Which product?',
+};
+var PHONE_MQ = '(max-width: 600px)';
+function placeholderFor(m){
+  var narrow = false; try { narrow = !!(window.matchMedia && window.matchMedia(PHONE_MQ).matches); } catch (_) {}
+  var t = narrow ? PLACEHOLDER_PHONE : PLACEHOLDER;
+  return t[m] || t.sell;
+}
+try {
+  var _phMq = window.matchMedia && window.matchMedia(PHONE_MQ);
+  var _phRe = function(){ var el = document.getElementById('q'); if (el) el.placeholder = placeholderFor(typeof MODE !== 'undefined' ? MODE : 'sell'); };
+  if (_phMq && _phMq.addEventListener) _phMq.addEventListener('change', _phRe);
+  else if (_phMq && _phMq.addListener) _phMq.addListener(_phRe);
+} catch (_) {}
 function setMode(m){
   MODE = OPS.indexOf(m) >= 0 ? m : 'sell';
   ls.set('cb_till_mode', MODE);
@@ -19984,7 +20009,7 @@ function setMode(m){
   OPS.forEach(function(k){ document.body.classList.remove('op-' + k); });
   document.body.classList.add('op-' + MODE);
   var q = document.getElementById('q');
-  if (q) q.placeholder = PLACEHOLDER[MODE] || PLACEHOLDER.sell;
+  if (q) q.placeholder = placeholderFor(MODE);
   /* ⚠️ the chips and the quick keys belong to SELLING. On the other operations they are a second thing to read while somebody
      waits, and the quick keys would put a hot item one careless tap from being marked out of stock. */
   /* ⚠️ the chips help you FIND a product, which maintenance needs as much as selling does — the quick keys do not,
