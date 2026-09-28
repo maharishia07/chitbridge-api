@@ -16,16 +16,21 @@ const { execFileSync } = require('child_process');
 
 const server = require('../lib/tax.js');
 const serverSlab = require('../lib/tax-slab.js');
-const COPY = path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'app', 'tax-engine.js');
+/* ⭐ 2026-09-28: the counter's copy is the ADOPTED bundle (tax-slab + tax from chitbridge-engines), not a generated file */
+const COPY = path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'engine', 'tax.js');
 
 let pass = 0;
 const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + e.message); process.exitCode = 1; } };
 
 console.log('— the tax engine, on both sides —');
 
-it('the generated copy on disk is current (nobody edited one side only)', () => {
-  try { execFileSync(process.execPath, [path.join(__dirname, '..', 'scripts', 'vendor-tax.cjs'), '--check'], { encoding: 'utf8' }); }
-  catch (e) { throw new Error((e.stdout || '').trim() || 'scripts/vendor-tax.cjs --check failed'); }
+it('the copy on disk is exactly the release both sides pin (nobody edited one side only)', () => {
+  /* moved 2026-09-28 from "vendor-tax.cjs --check": the copy is now adopted, so the check is the adopt tool's */
+  const ADOPT = path.join(__dirname, '..', '..', 'chitbridge-engines', 'tools', 'adopt.cjs');
+  for (const repo of ['chitbridge-api', 'chitbridge-web']) {
+    try { execFileSync(process.execPath, [ADOPT, path.join(__dirname, '..', '..', repo), '--check'], { encoding: 'utf8' }); }
+    catch (e) { throw new Error(repo + ': ' + ((e.stdout || '').trim() || 'adopt --check failed')); }
+  }
 });
 
 const load = () => { const sandbox = { window: {} }; vm.createContext(sandbox); vm.runInContext(fs.readFileSync(COPY, 'utf8'), sandbox); return sandbox.window.CBTax; };

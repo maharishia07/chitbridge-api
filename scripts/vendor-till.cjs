@@ -130,7 +130,8 @@ const COPIES = () => [
      snapshot. It is the counter's data with a different job — advertising it instead of billing it. */
   [path.join(API, 'tools', 'tally-connector', 'promo.html'), path.join(WEB, 'promo.html'), 'copy'],
   [path.join(WEB, 'app', 'offers.js'), path.join(WEB, 'engine', 'offers.js'), 'copy'],
-  [path.join(WEB, 'app', 'tax-engine.js'), path.join(WEB, 'engine', 'tax.js'), 'copy'],
+  /* tax: ADOPTED from chitbridge-engines (2026-09-28) — engine/tax.js is a bundle of the tax-slab + tax releases, written
+     only by chitbridge-engines/tools/adopt.cjs. The old vendor-tax.cjs → app/tax-engine.js → here chain is retired. */
   /* ⭐ PRICING IS THE FIRST STEP OF THE LINE, before offers and before tax — the counter must answer it with the
      SAME function as the product page, the cart, the storefront and the server's order path. Seven engines now. */
   [path.join(WEB, 'app', 'pricing.js'), path.join(WEB, 'engine', 'pricing.js'), 'copy'],

@@ -1,12 +1,26 @@
 {
   "$comment": "The engines this platform ADOPTS from chitbridge-engines, and at which version. Change \"version\", then run: node ../chitbridge-engines/tools/adopt.cjs . — never edit an adopted file.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "adopt": {
     "money": [
       "lib/money.js"
+    ],
+    "tax-slab": [
+      "lib/tax-slab.js"
+    ],
+    "tax": [
+      "lib/tax.js"
+    ]
+  },
+  "bundles": {
+    "lib/tax-engine.browser.js": [
+      "tax-slab",
+      "tax"
     ]
   },
   "sha256": {
-    "money": "1d27c14c8a7240e035e916537fbd77ce945b9083c6efa9d9ec2f579f9ba58e5a"
+    "money": "1d27c14c8a7240e035e916537fbd77ce945b9083c6efa9d9ec2f579f9ba58e5a",
+    "tax-slab": "7abb2bea829423509a0aa4c72658c711e7b170a38462c74335bd059b9c39f9d4",
+    "tax": "069a7a64c4135018973d0163f9dcb650368e9aa362cd0da2f81b1250932b15bc"
   }
 }

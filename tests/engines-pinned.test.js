@@ -24,5 +24,9 @@ for (const repo of ['chitbridge-api', 'chitbridge-web']) {
 const vt = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'vendor-till.cjs'), 'utf8');
 if (/wrapForBrowser\('money\.js'/.test(vt)) { bad++; console.log('  FAIL scripts/vendor-till.cjs still writes money.js — a second writer of an adopted engine'); }
 else pass++, console.log('  ok  no script but adopt.cjs writes money.js');
+/* tax (2026-09-28): vendor-tax.cjs and mirror-pure-libs.cjs were its writers; they must stay gone, and vendor-till must not copy it */
+const back = ['vendor-tax.cjs', 'mirror-pure-libs.cjs'].filter((f) => fs.existsSync(path.join(__dirname, '..', 'scripts', f)));
+if (back.length || /tax-engine\.js'\)|'engine', 'tax\.js'\)/.test(vt)) { bad++; console.log('  FAIL a second writer of tax is back: ' + (back.join(', ') || 'vendor-till.cjs')); }
+else pass++, console.log('  ok  no script but adopt.cjs writes tax or tax-slab');
 console.log(pass + ' checks');
 process.exit(bad ? 1 : 0);
