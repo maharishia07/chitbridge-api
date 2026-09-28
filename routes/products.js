@@ -223,13 +223,14 @@ async function defaultSchemaId(entity_id) {
  * arrive. `validateItem` keeps its old shape for the single-add and single-edit paths, where one query IS the
  * whole cost.
  */
-async function schemaFieldsOf(schema_id) {
-  if (!schema_id) return [];
-  const f = await query(
-    `SELECT field_key, field_name, field_type, required, min_value
-     FROM schema_fields WHERE schema_id = $1`, [schema_id]);
-  return f.rows;
-}
+/**
+ * ⭐ ONE VALIDATOR, NOT TWO (external review §24, 2026-09-28). This file carried its own schemaFieldsOf() and
+ * validateAgainst(), byte-identical to lib/catalogue-write.js's — "which is the whole risk": nothing kept them equal,
+ * and the library is what bulk add, Product Lab's adopt, the till's mint and the reference stores all write through.
+ * The route now uses the library's, by the same names, so every call site below is unchanged.
+ * tests/products-bulk asserts this file defines neither again.
+ */
+const { schemaFieldsOf, validateAgainst } = catwrite;
 
 async function validateItem(schema_id, item_data) {
   if (!schema_id) return null;
@@ -237,28 +238,6 @@ async function validateItem(schema_id, item_data) {
 }
 
 /** Pure: the same rules, against rows already in hand. No I/O. */
-function validateAgainst(fieldRows, item_data) {
-  const f = { rows: fieldRows || [] };
-  for (const field of f.rows) {
-    if (field.field_key === 'quantity') continue;
-    // A stamped price is `{amount, currency}`, and String() on that is "[object Object]" → NaN → "must be a number".
-    // Found in production, not in tests: it rejected a legitimate ROUND-TRIP EDIT (read an item, change the name,
-    // write it back) and it also swallowed the currency-mismatch case before money.stampPrice could refuse it
-    // properly — so the spoof was blocked by accident of ordering rather than by the guard built for it.
-    // Validate a money value on its AMOUNT; the currency is checked at stamping, where it belongs.
-    const rawV = item_data?.[field.field_key];
-    const v = (money.isMoney(rawV) ? String(rawV.amount) : (rawV == null ? '' : String(rawV))).trim();
-    if (field.required && !v) return `${field.field_name} is required`;
-    if (field.field_type === 'number' && v !== '' && !catcols.IDENT_KEYS.has(field.field_key)) {   /* a code is text even when declared number by an early numeric value */
-      const n = Number(v);
-      if (Number.isNaN(n))            return `${field.field_name} must be a number`;
-      if (n < 0)                      return `${field.field_name} cannot be negative`;
-      if (field.min_value != null && n < Number(field.min_value))
-                                      return `${field.field_name} must be at least ${field.min_value}`;
-    }
-  }
-  return null;
-}
 
 /** This entity's declared face (b112). Tolerant: no face is a valid state, not an error. */
 async function faceOf(entity_id) {

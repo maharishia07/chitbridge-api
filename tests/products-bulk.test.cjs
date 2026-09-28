@@ -44,6 +44,11 @@ t('the bulk route exists', bulk.length > 0);
 const cw = fs.readFileSync(API + '/lib/catalogue-write.js', 'utf8');
 const writer = cw.slice(cw.indexOf('async function writeItems(opts)'), cw.indexOf('\n}\n', cw.indexOf('async function writeItems(opts)')) + 2);
 t('the route hands the whole set to the one writer, once', (bulk.match(/catwrite\.writeItems\(/g) || []).length === 1);
+/* ⭐ external review §24 (2026-09-28): this route kept byte-identical copies of the library's validator — nothing
+   kept them equal. It must use the library's, and never grow its own again. */
+t('the route has no validator of its own — it uses the library\'s',
+  !/\nfunction validateAgainst\(|\nasync function schemaFieldsOf\(/.test(code)
+  && /const \{ schemaFieldsOf, validateAgainst \} = catwrite;/.test(code));
 t('the schema is resolved ONCE', (writer.match(/defaultSchemaId\(/g) || []).length === 1);
 t('the currency is resolved ONCE', (writer.match(/currencyFor\(/g) || []).length === 1);
 /* ⭐ One INSERT for the lot, not one per item — unnest, the same shape query-shape.test.js enforces elsewhere. */
