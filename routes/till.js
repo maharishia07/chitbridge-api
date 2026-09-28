@@ -2448,7 +2448,7 @@ router.post('/listen', auth, async (req, res) => {
  * of difference, because it only shows up on the machine nobody is testing on. `lots` was missing exactly that way (2026-09-08).
  */
 const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.browser.js', search: '../lib/search-engine.js',
-                  gs1: '../lib/gs1.browser.js',        /* what a pack's barcode carries — batch, expiry, serial */
+                  gs1: '../lib/gs1.js' /* ADOPTED — one file for node and the page */,        /* what a pack's barcode carries — batch, expiry, serial */
                   lots: '../lib/lotfields.browser.js', /* what this trade must capture, and the difference it absorbs */
                   nums: '../lib/numerals.browser.js', /* "two kilo", "rendu kilo" — the closed class, in both */
                   rewards: '../lib/rewards.js',      /* ⚠️ THE MASTER ITSELF — it is a UMD and needs no browser wrapper */

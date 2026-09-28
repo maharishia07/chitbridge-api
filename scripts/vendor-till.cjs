@@ -165,8 +165,7 @@ const COPIES = () => [
      till's own cached copy. Two searches would be two definitions of what a shop's words mean. */
   /* search: ADOPTED from chitbridge-engines (v1.4.0, 2026-09-28) — app/, engine/ and lib/search-engine.js are written only by
      chitbridge-engines/tools/adopt.cjs; the 2 line(s) that copied it from app/search.js are retired. */
-  [null, path.join(WEB, 'engine', 'gs1.js'), wrapForBrowser('gs1.js', 'CBGS1')],
-  [null, path.join(API, 'lib', 'gs1.browser.js'), wrapForBrowser('gs1.js', 'CBGS1')],   /* what /api/till/engine/gs1 serves a shop PC */
+  /* gs1: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐ and the trade's own rules — what a consignment must carry, and how much difference it absorbs. ONE definition, because the
      counter decides at the door and the match decides afterwards, and those two must never disagree. */
   /**

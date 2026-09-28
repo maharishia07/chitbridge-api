@@ -538,7 +538,6 @@ const ENGINE_OTHER = [
   'search-engine.js',
   /* GENERATED beside it: what /api/till/engine/gs1 serves a shop PC, so a pharma counter can read a batch and an expiry off a pack
      with the line down (scripts/vendor-till.cjs wraps lib/gs1.js for a browser). */
-  'gs1.browser.js',
   /* ENGINE: what a VERTICAL must capture about a consignment — batch, expiry, serial — resolved from the sector governance already
      holds. It decides what goods-in refuses, which makes it a rule about obligations, not a helper. */
   'lotfields.js',
