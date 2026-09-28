@@ -134,6 +134,18 @@ for (const [file, start, name] of COPIES) {
   });
 }
 
+it('⭐ network-view.js (Tier A, zero dependencies) — its copy of the reader is money.priceOf', () => {
+  const body = cut(fs.readFileSync(path.join(API, 'lib', 'network-view.js'), 'utf8'), 'function priceOfCopy(v)');
+  assert.ok(body, 'network-view.js no longer has priceOfCopy — the reader moved; move this check with it');
+  /* eslint-disable-next-line no-new-func */
+  const f = new Function(body + '\nreturn priceOfCopy;')();
+  const shapes = ['', '  ', null, undefined, 'abc', '12abc', NaN, Infinity, -Infinity, {}, [], true, 0, -5, 12.5,
+    '12.50', ' 12.50 ', '.5', '1e3', '0x10', { amount: 12.5, currency: 'INR' }, { amount: '12.50' }, { amount: '' },
+    { amount: null }, { amount: 'x' }, [12]];
+  const bad = shapes.filter((v) => !Object.is(f(v), M.priceOf(v))).map((v) => JSON.stringify(v) + ' → ' + f(v) + ' vs ' + M.priceOf(v));
+  assert.deepStrictEqual(bad, [], 'network-view reads a price differently from money.priceOf');
+});
+
 console.log('\n— the count stays at one (SPEC-money-one-reader.md step 6) —');
 
 /**
