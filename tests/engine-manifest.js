@@ -562,7 +562,6 @@ const ENGINE_OTHER = [
   /* GENERATED beside lib/dayopen.js ([TILL-182]) — the morning, for the page that narrates it. */
   'dayopen.browser.js',
   /* GENERATED beside lib/signin.js ([TILL-183]) — for the counter's own sign-in screen. */
-  'signin.browser.js',
   /* GENERATED beside lib/scalecode.js ([TILL-185]) — read on the counter, where the scale is. */
   /* GENERATED beside lib/qty.js ([TILL-186]) — every typed "500 gm" and every scale label asks it. */
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —

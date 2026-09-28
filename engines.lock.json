@@ -14,7 +14,8 @@
     "units": "1.5.0",
     "qty": "1.5.0",
     "verdict": "1.5.0",
-    "scalecode": "1.5.0"
+    "scalecode": "1.5.0",
+    "signin": "1.5.0"
   },
   "adopt": {
     "money": [
@@ -58,6 +59,9 @@
     ],
     "scalecode": [
       "lib/scalecode.js"
+    ],
+    "signin": [
+      "lib/signin.js"
     ]
   },
   "bundles": {
@@ -81,6 +85,7 @@
     "units": "93626bcaf343cde1a56ca3fa554b8ed0a0e6cdf40e5ab6368fe3b332572b8219",
     "qty": "48f6fb0cc0338202b1b938193cff6e0e9b1ef1edc10cd36a27104e967d1b9fbe",
     "verdict": "fd056da9669edcf81ce3fc94b9505982628e56ec471b69005b6330fc27452f10",
-    "scalecode": "6ac871cc2e934d9cc45778036f6fb5ce087bdbc6c6f7f3aa885a0b5f983827cf"
+    "scalecode": "6ac871cc2e934d9cc45778036f6fb5ce087bdbc6c6f7f3aa885a0b5f983827cf",
+    "signin": "50634c6dcb5ee22f053483b6ee7338cadbd44718bb06fb721bf80e2427e52911"
   }
 }

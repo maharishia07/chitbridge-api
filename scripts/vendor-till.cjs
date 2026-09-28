@@ -237,7 +237,7 @@ const COPIES = () => [
      it should be independent and also can be called from the backoffice."* So it is neither surface's: the
      rules are here, and each surface keeps a different half of the answer — a session for the back office,
      an identity and no session for a counter, because a token that expires at noon stops a shop at noon. */
-  [null, path.join(WEB, 'engine', 'signin.js'), wrapForBrowser('signin.js', 'CBSignin')],
+  /* signin: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐⭐⭐ A SCALE'S LABEL ([TILL-185]) — the grocery baseline the backlog has carried as a red blocker since
      it was written. The rule was inside till.html and read a layout it had worked out by hand; it is a MASK
      the shop declares now, so no scale vendor is hard-wired and an unusual scale is a setting, not a release. */
@@ -313,7 +313,6 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'orders.browser.js'), wrapForBrowser('orders.js', 'CBOrders')],
   [null, path.join(API, 'lib', 'orderhub.browser.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
   [null, path.join(API, 'lib', 'dayopen.browser.js'), wrapForBrowser('dayopen.js', 'CBDayOpen')],
-  [null, path.join(API, 'lib', 'signin.browser.js'), wrapForBrowser('signin.js', 'CBSignin')],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],
