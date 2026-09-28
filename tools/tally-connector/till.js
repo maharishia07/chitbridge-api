@@ -284,7 +284,8 @@ function fyOf(d) {
 }
 function nextNumberOf(kind){
   /* ⚠️ ONE SERIES PER KIND. A goods receipt in the middle of the sales run puts a hole in the very thing a gapless series proves. */
-  const tag = (kind === 'GRN' || kind === 'DC') ? kind : '';
+  /* ⭐ CN and EXP (2026-09-28): a credit note and a counter expense each keep their OWN run — never the sales series */
+  const tag = (kind === 'GRN' || kind === 'DC' || kind === 'CN' || kind === 'EXP') ? kind : '';
   const file = tag ? path.join(DIR, 'series-' + tag + '.json') : F.series;
   const fy = fyOf(new Date());
   const s = readJSON(file, { prefix: tillCfg.id, fy, next: 1 });
@@ -306,6 +307,8 @@ function nextNumber() {
 
 /* ── the copy of the shop ──────────────────────────────────────────────────────────────────────────────────── */
 let snapshot = readJSON(F.snapshot, null);
+/* numbers handed out by /api/number and not yet recorded — /api/record accepts only these (lost on restart = a gap) */
+const ISSUED = {};
 let online = false;
 /* ⚠️ said ONCE per spell of failure — a wrong key would otherwise fill the log every drain */
 let QUEUE_SAID = false;
@@ -452,6 +455,17 @@ async function drain() {
           cur.chit_ref = (rs && (rs.chit_id || (rs.chit && rs.chit.chit_id))) || cur.chit_ref || null;
           writeSummary(cur);
           log('summary ' + bill.no + ' → ' + (rs && rs.duplicate ? 'already recorded' : 'recorded'));
+          online = true;
+          continue;
+        }
+        /**
+         * ⭐⭐ A FIFTH KIND (2026-09-28): a credit note or an expense the PAGE built (chitOfCN / chitOfExpense in
+         * till.html — one builder for both hosts, never a second copy here). Sent exactly as built; client_ref is
+         * its number, so a second send after a timeout is answered with the chit it already made.
+         */
+        if (bill.chitBody) {
+          const rc = await cb.call('POST', '/api/chits/send', bill.chitBody);
+          log((bill.kind === 'expense' ? 'expense ' : 'credit note ') + bill.no + ' → ' + (rc && rc.duplicate ? 'already recorded' : 'recorded'));
           online = true;
           continue;
         }
@@ -1020,6 +1034,43 @@ const server = http.createServer(async (req, res) => {
      * a crash costs a gap and never a duplicate. The movement rows, when the document was against an order, are queued SEPARATELY:
      * they go to b144's deliver-lines, which writes into every party's copy, and either half may wait for the line without the other.
      */
+    /**
+     * ── ⭐⭐⭐ RETURNS AND EXPENSES ON THE SHOP PC (2026-09-28) ─────────────────────────────────────────────────
+     *
+     * The shop PC could not issue a credit note or record an expense at all — AgentHost had neither, so the page
+     * hid Return and Expense on the primary deployment. Two routes, one job each:
+     *   POST /api/number  { kind: 'CN' | 'EXP' }  → the next number in that kind's OWN series (written to disk first)
+     *   POST /api/record  { doc, chitBody }       → the document into the day's file + its chit onto the queue
+     * ⭐ THE PROGRAM OWNS THE NUMBER, THE PAGE OWNS THE CHIT. Numbering stays where every other number on this PC
+     * is issued (crash = a gap, never a duplicate); the chit is built by the page's own chitOfCN/chitOfExpense, so
+     * there is one builder for both hosts.
+     * ⚠️ /api/record accepts only a number THIS program issued for that kind — a record cannot invent its own.
+     */
+    if (req.method === 'POST' && url.pathname === '/api/number') {
+      let raw = ''; for await (const c of req) raw += c;
+      const b = JSON.parse(raw || '{}');
+      if (b.kind !== 'CN' && b.kind !== 'EXP') return json(res, 400, { ok: false, message: 'only a credit note (CN) or an expense (EXP) is numbered here' });
+      const no = nextNumberOf(b.kind);
+      ISSUED[no] = b.kind;
+      return json(res, 200, { ok: true, no: no });
+    }
+    if (req.method === 'POST' && url.pathname === '/api/record') {
+      let raw = ''; for await (const c of req) raw += c;
+      const b = JSON.parse(raw || '{}');
+      const doc = b.doc || {}, chitBody = b.chitBody || null;
+      const want = doc.kind === 'credit_note' ? 'CN' : doc.kind === 'expense' ? 'EXP' : null;
+      if (!want) return json(res, 400, { ok: false, message: 'only a credit note or an expense is recorded here' });
+      if (!doc.no || ISSUED[doc.no] !== want) return json(res, 400, { ok: false, message: 'that number was not issued by this counter for a ' + (want === 'CN' ? 'credit note' : 'expense') });
+      if (!chitBody || chitBody.client_ref !== doc.no) return json(res, 400, { ok: false, message: 'the record and its chit do not carry the same number' });
+      delete ISSUED[doc.no];
+      const rec = Object.assign({ at: new Date().toISOString(), till: tillCfg.id, catalogue_version: snapshot && snapshot.version }, doc);
+      /* THE FILE, THEN THE QUEUE — the same order a bill keeps */
+      appendLine(F.bills(today()), rec);
+      appendLine(F.queue, { no: rec.no, at: rec.at, kind: rec.kind, chitBody: chitBody });
+      drain().catch(() => {});
+      return json(res, 200, { ok: true, bill: rec, today: todayTotals() });
+    }
+
     if (req.method === 'POST' && url.pathname === '/api/doc') {
       let raw = ''; for await (const c of req) raw += c;
       const d = JSON.parse(raw || '{}');

@@ -4755,6 +4755,24 @@ async function fetchBy_(url, opts, ms){
 }
 var AgentHost = {
   mode:'agent',
+  /**
+   * ⭐⭐ RETURNS AND EXPENSES ON THE SHOP PC (2026-09-28). The program numbers (its own CN / EXP series, on
+   * disk); the page builds the chit with the same chitOfCN / chitOfExpense the browser counter uses; the program
+   * files it with the day's bills and queues it. One builder, one numbering authority, one queue.
+   */
+  record: async function(tag, doc0, build){
+    var post = function(p, b){ return fetch(p, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(b) })
+      .then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why: 'The counter program did not answer (' + e.message + ')' }; }); };
+    var n = await post('/api/number', { kind: tag });
+    if (!n || !n.ok || !n.no) return { ok:false, why: (n && (n.message || n.why)) || 'No number was issued.' };
+    var doc = Object.assign({ at: new Date().toISOString(), till: (STATE && STATE.till && STATE.till.id) || 'C1',
+                              catalogue_version: S && S.version }, doc0, { no: n.no });
+    var r = await post('/api/record', { doc: doc, chitBody: build(doc) });
+    if (!r || !r.ok) return { ok:false, why: (r && (r.message || r.why)) || 'The counter program did not keep it.' };
+    return { ok:true, bill: r.bill || doc };
+  },
+  creditNote: function(cn){ return this.record('CN', Object.assign({}, cn, { kind: 'credit_note' }), chitOfCN); },
+  expense: function(e){ return this.record('EXP', Object.assign({}, e, { kind: 'expense' }), chitOfExpense); },
   state: function(){ return fetch('/api/state').then(function(r){ return r.json(); }); },
   bills: function(){ return fetch('/api/bills').then(function(r){ return r.json(); }).then(function(j){ return (j && j.bills) || []; }); },
   history: function(days){ return fetch('/api/history?days=' + (days||30)).then(function(r){ return r.json(); }); },
@@ -5675,6 +5693,8 @@ function docTagOf(kind){
  * credit note is stored correctly and is invisible in the day's list, which is the worst of both.
  * ⚠️ NO series KEY. That is the sales run's high-water mark and a credit note has a run of its own.
  */
+/** which counter wrote a chit — the shop PC's program or a browser (both build credit notes and expenses now) */
+function tillHostWord(){ return (typeof HOST !== 'undefined' && HOST && HOST.mode === 'agent') ? 'agent' : 'browser'; }
 function chitOfCN(cn){
   return {
     recipients: [{ self: true, name: 'self' }],
@@ -5683,7 +5703,7 @@ function chitOfCN(cn){
     client_ref: cn.no,
     business_json: {
       customer: cn.customer || { name: 'Walk-in' },
-      till: { id: cn.till, name: ls.get('cb_till_name', 'Counter 1'), host: 'browser', by: cn.by || null },
+      till: { id: cn.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: cn.by || null },
       doc: 'credit_note', slip: 'credit_note',
       bill_no: cn.no, billed_at: cn.at,
       catalogue_version: cn.catalogue_version || null,
@@ -5722,7 +5742,7 @@ function chitOfExpense(e){
     subject: subject, manual_subject: subject,
     client_ref: e.no,
     business_json: {
-      till: { id: e.till, name: ls.get('cb_till_name', 'Counter 1'), host: 'browser', by: e.by || null },
+      till: { id: e.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: e.by || null },
       doc: 'expense', slip: 'expense',
       bill_no: e.no, billed_at: e.at,
       /* ⭐ money OUT, named as its own thing — same reasoning as a credit note's `refund` above */
@@ -22258,7 +22278,7 @@ var RET_FOR = null, RET_QTY = null, RET_WHY = '', RET_HOW = '';
  * ⭐ A LIMITATION SAID OUT LOUD BEATS A BUTTON THAT LOSES WORK. The pill is not drawn on a host that cannot do
  * it, and if it is reached another way the refusal comes BEFORE the confirmation, naming the reason.
  */
-var RET_WHYNOT = 'This counter cannot issue a credit note yet — returns are on the browser counter only.';
+var RET_WHYNOT = 'This counter cannot issue a credit note — the counter program did not load its returns.';
 function retCanIssue(){ return !!(HOST && typeof HOST.creditNote === 'function'); }
 /* the reasons GST recognises for a credit note, in the words a shopkeeper would use */
 var RET_WHYS = [
@@ -22421,9 +22441,9 @@ function retClose(){
  * — which is why this is a CHIT (purpose:'expense'), the same document of record every sale and credit note
  * already is, not a side number that a real ledger would later have to be told about separately.
  *
- * ⚠️⚠️ SAME HOST LIMITATION AS A CREDIT NOTE, for the identical reason — AgentHost has no expense() either.
+ * ⚠️⚠️ (2026-09-28: lifted — AgentHost.expense() numbers through the program and files through /api/record, as a credit note does.)
  */
-var EXP_WHYNOT = 'This counter cannot record an expense yet — that is on the browser counter only.';
+var EXP_WHYNOT = 'This counter cannot record an expense — the counter program did not load its expenses.';
 function expCanIssue(){ return !!(HOST && typeof HOST.expense === 'function'); }
 var EXP_WHAT = '', EXP_AMOUNT = '', EXP_HOW = 'Cash', EXP_DONE = null;
 /**
