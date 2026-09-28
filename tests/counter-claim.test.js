@@ -114,7 +114,9 @@ it('the screen names the holder and what taking it costs them', () => {
 it('and taking it is the quiet button — leaving it alone is the default', () => {
   const at = PAGE.indexOf('till-signin-takeover');
   const near = PAGE.slice(Math.max(0, at - 500), at);
-  assert.ok(/class="pri" onclick="signinClose\(\)/.test(near),
+  /* ⚠️ MOVED, NOT DELETED (2026-09-28): the shop PC's own connect dialog was retired — one sign-in for both hosts —
+     so the held choice lives on usignPaint()'s 'held' stage and "leave it alone" closes THAT dialog */
+  assert.ok(/class="pri" onclick="usignClose\(\)">Leave it alone/.test(near),
     'the primary button is not "leave it alone" — the destructive choice is the default');
 });
 

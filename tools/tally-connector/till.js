@@ -44,7 +44,7 @@ const http = require('http');
  * ⚠️ An older till.js on a shop PC knows only the first three: it updates ITSELF first, restarts, and this list then
  * brings the engines on the following start. Two restarts, nothing lost, never a half-old pair.
  */
-const STAGED = ['till.js', 'core.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js'];
+const STAGED = ['till.js', 'core.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js', 'signin.js'];
 (function applyStagedUpdate() {
   if (process.env.CB_TILL_UPDATED) return;
   const here = __dirname;
@@ -926,8 +926,17 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'GET' && ENGINE_RE.test(url.pathname)) {
       const n = url.pathname.split('/')[2].replace('.js', '');
-      if (!fs.existsSync(F.engine(n))) return send(res, 503, 'text/plain', '// the engine has not been fetched yet — press Refresh while online');
-      return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(F.engine(n), 'utf8'));
+      /**
+       * ⚠️⚠️ AN UNPAIRED PC HAS NO ENGINES — it fetches them WITH its key, into its shop's folder — and the one
+       * screen it must show is the sign-in, which runs on lib/signin.js (2026-09-28: one sign-in for both hosts;
+       * the shop PC's own connect dialog, which needed no engine, was retired). So the kit CARRIES the engines
+       * it needs before it has a shop, adopted like rollup/orders/orderhub, and serves its own copy until the
+       * shop's fetched one exists. The shop's copy always wins once there is one.
+       */
+      const kitCopy = path.join(__dirname, n + '.js');
+      const file = fs.existsSync(F.engine(n)) ? F.engine(n) : (ENGINE_NAMES.indexOf(n) >= 0 && fs.existsSync(kitCopy) ? kitCopy : null);
+      if (!file) return send(res, 503, 'text/plain', '// the engine has not been fetched yet — press Refresh while online');
+      return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(file, 'utf8'));
     }
 
     /**

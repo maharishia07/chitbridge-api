@@ -74,7 +74,8 @@
       "lib/scalecode.js"
     ],
     "signin": [
-      "lib/signin.js"
+      "lib/signin.js",
+      "tools/tally-connector/signin.js"
     ],
     "dayopen": [
       "lib/dayopen.js"

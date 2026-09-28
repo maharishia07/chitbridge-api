@@ -3703,6 +3703,11 @@
 </div></div>
 <!-- ⚠️ THE ONE THIRD-PARTY FILE HERE: qrcode-generator 1.4.4 (MIT). Served from our own origin, because a counter
      with no internet still has to take a UPI payment — which is exactly when it cannot reach a CDN. -->
+<!-- ⚠️⚠️ BEFORE THE ENGINES, NOT AFTER (2026-09-28). engineMissed() was declared in the main script BELOW these tags,
+     so a missing engine's onerror fired while the name did not exist yet: "engineMissed is not defined", once per
+     engine, and MISSING stayed EMPTY — the counter's own "an engine is missing" report could never fire on the
+     one PC that needs it, an unpaired one that has fetched nothing. Found by e2e/till-shop-switch-pc.cjs. -->
+<script>var MISSING = []; function engineMissed(n){ MISSING.push(n); }</script>
 <script src="/engine/qr.js" onerror="engineMissed('qr')"></script>
 <!-- ⭐ LOCALE FIRST OF ALL — every other engine's output is eventually shown as money or a date. -->
 <script src="/engine/money.js" onerror="engineMissed('money')"></script>
@@ -3758,8 +3763,7 @@
 <script src="/engine/screen.js" onerror="engineMissed('screen')"></script>
 <script>
 /* ═══ 0 · state ══════════════════════════════════════════════════════════════════════════════════════════════ */
-var MISSING = [];
-function engineMissed(n){ MISSING.push(n); }
+/* MISSING and engineMissed() live in the small script ABOVE the engine tags — see its note */
 var S = null, STATE = { online:false, queued:0, today:{count:0,total:0}, till:{ id:'C1', name:'Counter 1' } };
 /* set when a catalogue for a DIFFERENT shop was refused; kept on disk, because a refused sync is not a passing glitch */
 var REJECTED = null;
@@ -5805,9 +5809,11 @@ async function pickHost(){
      * accuse itself of being the wrong shop, with the "fix" already in place.
      * Namespacing something by a value you have not assigned yet is not namespacing. Two lines, in the right order.
      */
-    if (k) { ls.set('cb_till_key', k); CloudHost.key = k; DB.reopen();   /* a new key = a different shop = a different copy */
-             history.replaceState(null, '', location.pathname + location.search); }
-    if (wantShop) { ls.set(shopLs('cb_till_shop'), wantShop); ls.set(shopLs('cb_till_shopname'), wantName || ''); }
+    /* ⭐ through the one door: a different key RELOADS into its shop (the address cleaned first, so it cannot loop);
+       the same key again just records the marker and carries on booting */
+    if (k) { var b = await becomeShop({ key: k, marker: wantShop ? { shop: wantShop, name: wantName } : null });
+             if (!b.same) return new Promise(function(){});     /* the page is going away — boot no further */ }
+    else if (wantShop) { ls.set(shopLs('cb_till_shop'), wantShop); ls.set(shopLs('cb_till_shopname'), wantName || ''); }
   }
   return CloudHost;
 }
@@ -5921,6 +5927,8 @@ async function load(){
   var st = await HOST.state().catch(function(){ return STATE; });
   /* ⚠️ the master decides the name — see catRestamp ([TILL-114]) */
   STATE = st || STATE; S = catRestamp((st && st.snapshot) || S);
+  /* ⭐ the person who just changed the shop (becomeShop → whoPending) is adopted by G2 now the shop is open — once */
+  if (!HOST._whoNext) { try { HOST._whoNext = !!whoAdoptPending(); } catch (_) {} }
   /**
    * ⚠️⚠️⚠️ THE COUNTER CLAIMS ITS NUMBER HERE, FOR BOTH HOSTS ([TILL-130]).
    *
@@ -14597,7 +14605,7 @@ function queueBlock(){
  * ⚠️⚠️⚠️ [TILL-192] "I SIGNED OUT AND SIGNED IN AGAIN, BUT IT'S STILL NOT WORKING" — Athi, live, 2026-09-25.
  * pairAgain() is reached ONLY because the shop just refused this device's key (the regex two lines above
  * this function, or the 🔑 "Not signed in" flash) — the one fact already established here is that the key
- * this browser is holding is BAD. But usignEnrolIfNeeded() (below) only ever mints a fresh one when
+ * this browser is holding is BAD. But the enrol (usignShopMove, below) only ever minted a fresh one when
  * `!paired()`, and paired() answers from `CloudHost.key` alone: "is there A key on file", never "is the key
  * on file the one the shop just refused". A browser stuck on exactly this bug is, by that definition,
  * ALWAYS still "paired" — so a normal re-sign-in silently skipped re-enrolling and put the caller right
@@ -14605,9 +14613,12 @@ function queueBlock(){
  * BECAUSE the current key already failed, so paired()'s stale truth must not be trusted this one time.
  */
 function pairAgain(){
-  if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return signinOpen();
+  /* ⭐ ONE SIGN-IN FOR BOTH HOSTS (2026-09-28). The shop PC had its own connect dialog, a second path to the key;
+     now the same dialog proves the person and becomeShop() hands the session to the program. */
   return usignOpen(true);
 }
+/** ⚠️ a NAME the verdict engine hands out (lib/verdict.js act: 'signinOpen'), kept as a signpost to the one door */
+function signinOpen(){ return pairAgain(); }
 /** ⚠️ one phrasing, used wherever this is said — a shopkeeper must not learn two ways to read one fact */
 function queueWords(){
   /**
@@ -17514,11 +17525,9 @@ function signoutOpen(){
 }
 async function signoutDo(force){
   signinSay(force ? 'Signing out…' : 'Sending anything still waiting…', false);
-  var r = null;
-  try {
-    r = await fetch('/api/signout', { method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ force: !!force }) }).then(function(x){ return x.json(); });
-  } catch (e) { signinSay('This PC could not reach the counter program. Is it still running?', true); return; }
+  /* ⭐ through the one door — becomeShop() asks the program, and starts waiting for its restart if it went */
+  var r = await becomeShop({ key: null, force: !!force,
+    gaveUp: function(){ signinSay('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.', true); } });
 
   /**
    * ⚠️⚠️ IT COULD NOT SYNC — SAY SO, AND SAY WHICH WALL IT HIT. "Offline" and "ChitBridge refused it" need
@@ -17547,9 +17556,6 @@ async function signoutDo(force){
       '<p class="note"><b>' + esc(r.message || 'Signed out.') + '</b></p>'
     + '<p class="note">This counter is restarting. It will come back with no shop, ready to be signed in.</p>';
   signinSay('', false);
-  /* ⚠️ `!st.paired`: the old process is still up for 400 ms and would answer first, still signed in */
-  counterRestarted(function(st){ return !(st && st.paired); },
-    function(){ signinSay('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.', true); });
 }
 /**
  * ⚠️ THE BROWSER COUNTER keeps its key in this device's own storage, so signing out is local — but the unsent
@@ -17570,11 +17576,7 @@ function signoutCloud(){
     + (q ? 'Sign out and leave them here' : 'Sign out') + '</button></div>';
   if (!d.open) d.showModal();
 }
-function signoutCloudDo(){
-  try { ls.del ? ls.del('cb_till_key') : localStorage.removeItem('cb_till_key'); } catch (_) {}
-  try { localStorage.removeItem('cb_till_key'); } catch (_) {}
-  location.reload();
-}
+function signoutCloudDo(){ return becomeShop({ key: null }); }
 
 /**
  * ── ⭐⭐⭐ COUNTER HEALTH ([TILL-137]) ────────────────────────────────────────────────────────────────────────
@@ -18458,125 +18460,8 @@ function signinSay(m, bad){
 function signinClose(){ var d = document.getElementById('signindlg'); if (d && d.open) d.close(); }
 /* the settings dialog has no close function of its own — every caller inlined .close(). One name, one place. */
 function setClose(){ var d = document.getElementById('setdlg'); if (d && d.open) d.close(); }
-function signinOpen(){
-  var d = document.getElementById('signindlg'); if (!d) return;
-  signinSay('', false);
-  var body = document.getElementById('signinbody');
-  if (!(typeof AgentHost !== 'undefined' && HOST === AgentHost)) {
-    /**
-     * ⚠️⚠️ A DEAD END WITH AN EXPLANATION IS STILL A DEAD END ([TILL-188]). This branch printed four
-     * menu steps and left the person to walk them. Athi: *"Pair Key should be an action button and when you
-     * press it whatever authentication required it has to be performed."* A browser counter cannot mint its
-     * own key — but it can put them on the box that takes one, which is the nearest thing to the press.
-     *
-     * ⚠️⚠️⚠️ [TILL-193] AND THE BUTTON NO LONGER NAMES THE MECHANISM. It called this a key, then offered
-     * "Paste a key," when pressing it has only ever opened the same sign-in usignOpen() shows anywhere else
-     * — see keyWord()'s own comment. esc(keyWord()) so both spots read the same word if either ever changes.
-     */
-    body.innerHTML = '<p class="note">Sign in again to reconnect this counter.</p>'
-      + '<div class="dlgbtns"><button class="pri" data-testid="till-signin-key"'
-      + ' onclick="document.getElementById(\'signindlg\').close();pairAgain()">' + esc(keyWord()) + '</button></div>';
-    d.showModal(); return;
-  }
-  body.innerHTML = '<p class="note">Sign in with the email address or User ID you use for ChitBridge. This is'
-    + ' asked once — afterwards this counter bills whether or not there is internet.</p>'
-    + '<div class="shoprow"><span>Email or User ID</span>'
-    + '<input id="signin_who" data-testid="till-signin-who" autocomplete="username" placeholder="you@example.com"></div>'
-    + '<div class="dlgbtns"><button class="pri" data-testid="till-signin-send" onclick="signinSend()">Send me a code</button></div>';
-  d.showModal();
-  var i = document.getElementById('signin_who'); if (i) i.focus();
-}
-async function signinSend(){
-  var who = (document.getElementById('signin_who') || {}).value || '';
-  who = String(who).trim();
-  if (!who) { signinSay('Type the email address or User ID you use for ChitBridge.', true); return; }
-  signinSay('Asking ChitBridge for a code…', false);
-  var r = null;
-  try {
-    r = await fetch('/api/signin/start', { method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ email: who }) }).then(function(x){ return x.json(); });
-  } catch (e) { signinSay('This PC could not reach the counter program. Is it still running?', true); return; }
-  if (!r || !r.ok) { signinSay((r && r.message) || 'Could not ask for a code.', true); return; }
-  document.getElementById('signinbody').innerHTML =
-    '<p class="note">' + esc(r.message || ('A code has gone to ' + who + '.')) + '</p>'
-    + '<div class="shoprow"><span>The 6-digit code</span>'
-    + '<input id="signin_otp" data-testid="till-signin-otp" inputmode="numeric" maxlength="6" placeholder="000000"'
-    /**
-     * ⚠️ A TEST SERVER HANDS THE CODE BACK (lib/dev-otp.js refuses to anywhere else) and it is filled in, so a
-     * counter can be set up end to end against test without a mailbox. On live this is simply absent.
-     */
-    + (r.dev_otp ? ' value="' + esc(r.dev_otp) + '"' : '') + '></div>'
-    + (r.dev_otp ? '<p class="note">This is a test server, so the code is filled in for you.</p>' : '')
-    + '<div class="dlgbtns"><button data-testid="till-signin-again" onclick="signinOpen()">Use a different account</button>'
-    + '<button class="pri" data-testid="till-signin-go" onclick="signinDo(' + JSON.stringify(who).replace(/"/g, '&quot;') + ')">Connect this counter</button></div>';
-  signinSay('', false);
-  var i = document.getElementById('signin_otp'); if (i) i.focus();
-}
-/** ⚠️ `takeover` is only ever true because somebody pressed the button that says what it does ([TILL-138]) */
-async function signinDo(who, takeover){
-  var who0 = who;
-  var otp = ((document.getElementById('signin_otp') || {}).value || '').replace(/[^0-9]/g, '');
-  if (otp.length !== 6) { signinSay('The code is six digits.', true); return; }
-  signinSay('Connecting…', false);
-  var r = null;
-  try {
-    r = await fetch('/api/signin/finish', { method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ email: who, otp: otp, takeover: !!takeover }) }).then(function(x){ return x.json(); });
-  } catch (e) { signinSay('This PC could not reach the counter program. Is it still running?', true); return; }
-  /**
-   * ── ⚠️⚠️ THIS COUNTER IS OPEN SOMEWHERE ELSE ([TILL-138]) ───────────────────────
-   *
-   * Athi: *"check that counter is active. if not active, offer to knock it off and then open here."* So the
-   * question is asked with the two facts a person needs to answer it — WHO has it and WHEN they were last
-   * seen — and with what taking it back costs them, before the button rather than after.
-   */
-  if (r && r.held) {
-    var who = r.held_by ? esc(r.held_by) : 'another device';
-    var when = r.seen ? (' · last seen ' + esc(new Date(r.seen).toTimeString().slice(0, 5))) : '';
-    document.getElementById('signinbody').innerHTML =
-        '<p class="note"><b>Counter ' + esc(r.counter || 'C1') + ' is already open on ' + who + '.</b>'
-      + '<span class="u">' + when + '</span></p>'
-      + '<p class="note">Two counters cannot share one number — their bills would end up with the same numbers'
-      + ' as yours. If that PC is still being used, close it there instead.</p>'
-      + '<p class="note u">Taking it here stops that device from sending. Anything it has already taken stays'
-      + ' on it and goes when it signs in again — nothing is lost either way.</p>'
-      + '<div class="dlgbtns"><button class="pri" onclick="signinClose()">Leave it alone · Esc</button>'
-      /* ⚠️ the taking is the QUIET button and says what it does — never the default */
-      + '<button data-testid="till-signin-takeover" onclick="signinDo(' + JSON.stringify(who0).replace(/"/g, '&quot;')
-      + ', true)">Take counter ' + esc(r.counter || 'C1') + ' here</button></div>';
-    signinSay('', true);
-    return;
-  }
-  if (!r || !r.ok) { signinSay((r && r.message) || 'Could not connect this counter.', true); return; }
-  /**
-   * ⭐⭐ THE SHOP IS NAMED BEFORE ANYTHING ELSE HAPPENS. Somebody who signed into the wrong account sees the
-   * wrong shop's name here, rather than finding it in the books a week later.
-   * ⚠️⚠️ AND THE PROGRAM IS RESTARTING — it must, because its data folder is named after the key it booted
-   * with ([TILL-120]). The page says so and waits, instead of showing a dead counter for ten seconds.
-   */
-  var nm = (r.shop && (r.shop.name || r.shop.bridge_id)) || 'your shop';
-  document.getElementById('signinbody').innerHTML =
-    '<p class="note"><b>Connected to ' + esc(nm) + '.</b>'
-    + (r.shop && r.shop.bridge_id ? ' <span class="u">' + esc(r.shop.bridge_id) + '</span>' : '') + '</p>'
-    + '<p class="note">This counter is restarting so it opens this shop’s own folder. It will come back in a'
-    + ' few seconds — this page reloads itself.</p>';
-  signinSay('', false);
-  /**
-   * ⚠️ WAIT FOR IT TO ANSWER, then reload. Reloading straight away shows “cannot reach this page” on a PC
-   * where nothing is wrong — the same mistake counter.cmd was written to avoid.
-   */
-  var tries = 0;
-  (function again(){
-    tries++;
-    fetch('/api/state', { cache:'no-store' }).then(function(x){
-      if (x.ok) { location.reload(); return; }
-      throw new Error('not yet');
-    }).catch(function(){
-      if (tries < 30) setTimeout(again, 700);
-      else signinSay('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.', true);
-    });
-  })();
-}
+/* ⚠️ The shop PC's own connect dialog (signinOpen · signinSend · signinDo) was RETIRED 2026-09-28: it was a
+   second path to the key. Both hosts sign in through usignOpen(), and becomeShop() is the only door to a shop. */
 
 async function startOpen(){
   /**
@@ -21218,13 +21103,14 @@ async function closeCounter(already){
     try { await new Promise(function(res){ var rq = indexedDB.deleteDatabase(name); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; }); } catch (_) {}
     try { [tillGivenKey(), shopLs('cb_till_parked'), shopLs('cb_till_who'), shopLs('cb_till_qhide'), shopLs('cb_till_qpin'),
            shopLs('cb_till_shop'), shopLs('cb_till_shopname')].forEach(function(k){ localStorage.removeItem(k); });
-          localStorage.removeItem('cb_till_key'); localStorage.removeItem('cb_till_id'); } catch (_) {}
+          localStorage.removeItem('cb_till_id'); } catch (_) {}
     busyDone();
     await _askOpen({ title: 'Counter closed', cancelValue: true,
       message: 'Counter ' + (r.prefix || tillId()) + ' is closed on this PC' + (lastNo ? ' — its last bill was ' + lastNo : '') + '.\n\n'
         + 'To open it again — here or on another PC — go to ChitBridge → Settings → Integrations → Counters and press Open. '
         + 'Its bill numbers carry on from where they stopped.' });
-    location.reload();
+    /* ⭐ the browser's key goes through the one door; a shop PC's counter close never took its key, and still does not */
+    if (onAgent()) location.reload(); else becomeShop({ key: null });
   } catch (e) {
     busyDone();
     say('The counter was not closed: ' + ((e && e.message) || 'something went wrong') + '. Nothing on this PC was cleared.');
@@ -23160,7 +23046,7 @@ function paintWho(){
  * ⚠️⚠️⚠️ EXCEPT THE FIRST TIME, ON A BROWSER ([TILL-190]). Athi: *"login credential and key mapping should
  * happen in the background."* Until this, signing in and pairing were two things a person had to know were
  * different — the header once said so outright. Now: a browser with no key AT ALL spends this same sign-in's
- * session, once, on POST /api/till/enrol (usignEnrolIfNeeded()) — exactly what the shop PC's connect flow
+ * session, once, on POST /api/till/enrol (becomeShop(), via usignShopMove()) — exactly what the shop PC's connect flow
  * has always done — and keeps the key, not the session, after. A counter that already has a key never touches
  * this path; every sign-in after the first is exactly as before, identity and no session.
  */
@@ -23181,7 +23067,7 @@ var USIGN = { sent: false, refused: '', person: null, who: '', busy: false, useP
  * nothing about testing there would have shown a browser counter's sign-in dialog had never actually reached
  * ChitBridge at all.
  * ⭐ EVERY OTHER FETCH IN THIS FILE ALREADY KNEW BETTER — CloudHost.api + '/api/events/ticket', + '/api/op',
- * and so on. Only this one, and usignEnrolIfNeeded()'s new enrol call, were still bare paths.
+ * and so on. Only this one, and enrolBrowser()'s enrol call, were still bare paths.
  */
 function usignApiBase(){
   return (typeof AgentHost !== 'undefined' && HOST === AgentHost) ? '' : (CloudHost.api || '');
@@ -23218,6 +23104,30 @@ function usignPaint(){
   if (!body) return;
   var at = SIGN().stage(USIGN);
   var h = '';
+
+  if (USIGN.opening) {
+    /* ⭐ the shop is named before anything else happens — a person in the wrong account sees it here, not in the books */
+    h = '<p class="note" data-testid="till-usign-opening"><b>Opening ' + esc(USIGN.opening) + '…</b></p>';
+    body.innerHTML = h; return;
+  }
+  if (USIGN.held) {
+    /**
+     * ── ⚠️⚠️ THIS COUNTER NUMBER IS OPEN SOMEWHERE ELSE ([TILL-138]) — moved here from the shop PC's own connect
+     * dialog (retired 2026-09-28, one sign-in for both hosts). Athi: *"check that counter is active. if not
+     * active, offer to knock it off and then open here."* Who has it, when they were last seen, and what taking
+     * it costs — before the button. ⚠️ Leaving it alone is the DEFAULT; taking it is the quiet button.
+     */
+    var hd = USIGN.held, c = esc(hd.counter || tillId());
+    h = '<p class="note"><b>Counter ' + c + ' is already open on ' + esc(hd.held_by || 'another device') + '.</b>'
+      + (hd.seen ? '<span class="u"> · last seen ' + esc(new Date(hd.seen).toTimeString().slice(0, 5)) + '</span>' : '') + '</p>'
+      + '<p class="note">Two counters cannot share one number — their bills would end up with the same numbers'
+      + ' as yours. If that PC is still being used, close it there instead.</p>'
+      + '<p class="note u">Taking it here stops that device from sending. Anything it has already taken stays'
+      + ' on it and goes when it signs in again — nothing is lost either way.</p>'
+      + '<div class="dlgbtns"><button class="pri" onclick="usignClose()">Leave it alone · Esc</button>'
+      + '<button data-testid="till-signin-takeover" onclick="USIGN.held=null;usignBecome(true)">Take counter ' + c + ' here</button></div>';
+    body.innerHTML = h; return;
+  }
 
   if (at === 'in') {
     var p = USIGN.person || {};
@@ -23307,173 +23217,167 @@ async function usignVerify(){
   var r = await usignPost('/api/entities/verify', v.body);
   USIGN.busy = false;
   if (!r.ok) { USIGN.refused = SIGN().refusal({ status: r.status, message: r.body && (r.body.message || r.body.error) }); usignPaint(); return; }
-  /**
-   * ⚠️⚠️⚠️ THE TOKEN IS SPENT HERE, ONCE, BEFORE THE ENGINE DROPS IT ([TILL-190]). SIGN().keep() takes the
-   * identity out of the answer and throws the rest away — deliberately, for a counter that already has a key,
-   * where a session is a liability, never a use. A browser with NO key yet needs that one use FIRST: the same
-   * session /api/till/enrol trades for a key, exactly as the shop PC's own connect flow already does.
-   * usignEnrolIfNeeded() no-ops instantly on an agent host or an already-paired browser, so this line changes
-   * nothing for the ordinary, every-shift sign-in — it only fires the one time this device has never met a key.
-   */
-  if (await usignOtherShop(r.body)) return;
-  if (!(await usignEnrolIfNeeded(r.body.token))) { usignPaint(); return; }
   /* ⭐⭐ THE ENGINE TAKES THE IDENTITY AND DROPS THE TOKEN. 'counter', not 'session' — deliberately. */
   var k = SIGN().keep('counter', r.body);
   if (!k.ok) { USIGN.refused = k.why; usignPaint(); return; }
+  /**
+   * ⚠️⚠️⚠️ THE TOKEN IS SPENT HERE, ONCE, OR NOT AT ALL ([TILL-190], one gate since 2026-09-28). A counter that
+   * already belongs to this person's shop keeps no session — it takes the identity and drops the rest. Every
+   * other case is a SHOP change, and a shop change has exactly one door: becomeShop().
+   */
+  var move = usignShopMove(r.body);
+  if (move === 'other') {
+    var here = (S && S.shop && S.shop.name) || 'this shop';
+    var q = Number((STATE && STATE.queued) || 0);
+    var ok = await sure('This counter is ' + here + '. You signed in to a different shop.\n\n'
+      + (q ? q + ' unsent bill' + (q > 1 ? 's stay' : ' stays') + ' with ' + here + ' until it signs in here again.'
+           : 'Nothing of ' + here + ' is lost.'),
+      'Switch to your shop', 'A different shop', 'Stay ' + here);
+    if (!ok) { USIGN = { sent: false, refused: 'Nobody signed in. This counter stays ' + here + '.', person: null,
+                         who: '', busy: false, usePin: false }; usignPaint(); return; }
+  }
+  if (move !== 'same') { USIGN.pending = { token: r.body.token, person: k.person }; return usignBecome(false); }
   USIGN.person = k.person;
   usignAdopt(k.person);
   usignPaint();
 }
 
 /**
- * ── ⭐⭐⭐ SIGNING IN MINTS THE KEY, IN THE BACKGROUND ([TILL-190]) ────────────────────────────────────────────
+ * ── ⭐⭐⭐ DOES THIS SIGN-IN CHANGE THE SHOP? — the one question, asked once ────────────────────────────────────
  *
- * Athi, watching "I still can't sign in" turn out to be a browser stuck on "paste the key once": *"no one will
- * be able to understand pair key etc — login credential and key mapping should happen in the background."*
- *
- * ⭐ THE SAME TWO CALLS THE SHOP PC HAS ALWAYS MADE (tools/tally-connector/till.js, /api/signin/finish): sign
- * in, then spend that session ONCE on POST /api/till/enrol, which claims a counter number and hands back a
- * key. Nobody types a key anywhere; nobody needs to know one exists.
- * ⚠️ ONLY WHEN THIS DEVICE HAS NONE. paired() is the whole gate — a browser that already has a key from an
- * earlier sign-in, a shared link, or the manual ⚙ box is untouched; every sign-in after the first is exactly
- * the identity-only exchange it always was.
- * ⚠️ THE DESKTOP NEVER REACHES HERE. AgentHost has its OWN connect flow (signinOpen → /api/signin/start+finish
- * → till.js's own enrol call, then a process restart) — this is the equivalent for the host that never had one.
- *
- * Returns true when it is safe to carry on adopting the signed-in person; false when it stopped to ask
- * something or report a refusal, in which case USIGN.refused is already set.
+ * 'pair'  — the counter has no shop, or it was entered BECAUSE its key just failed ([TILL-192] forceEnrol:
+ *           paired() answers "is there a key", never "is the key good").
+ * 'other' — the person belongs to a different shop than the one this counter holds (2026-09-28, Athi: signed
+ *           in as another shop and *"still i could see the products of shop x"*). lib/identity-auth.js
+ *           personShape says which shop a person belongs to; S.entity_id is what the SERVER said this key opens.
+ * 'same'  — everything else, including "cannot tell" (an older server, a counter that never read its shop):
+ *           the old behaviour, never a new leak, because the server still scopes every call to the key held.
  */
-async function usignEnrolIfNeeded(token){
-  if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return true;
-  /**
-   * ⚠️⚠️⚠️ [TILL-192] paired() ANSWERS "IS THERE A KEY", NEVER "IS THE KEY GOOD" — see pairAgain()'s own
-   * comment. Skipping this only when NOT forced keeps every ordinary sign-in exactly as cheap as it always
-   * was (one identity exchange, no enrol call) while letting the one path that exists BECAUSE the current
-   * key just failed actually replace it, instead of confirming the same bad key is still there and stopping.
-   */
-  if (paired() && !(USIGN && USIGN.forceEnrol)) return true;
-  if (!token) { USIGN.refused = 'Signed in, but the shop did not send a session to pair with.'; return false; }
-  /* ⚠️ CloudHost.api, NOT a bare path — see usignPost()'s own header for why a relative /api/... never
-     reaches ChitBridge from a browser counter at all. This function only ever runs on that host (AgentHost
-     returned above), so the prefix is unconditional here. */
-  var body = { name: 'Browser counter', counter: tillId() };
+function usignShopMove(answer){
+  if (!paired() || (USIGN && USIGN.forceEnrol)) return 'pair';
+  var mine = S && S.entity_id;
+  var theirs = ((answer && answer.identity) || {}).entity_id || null;
+  if (mine && theirs && String(mine) !== String(theirs)) return 'other';
+  return 'same';
+}
+
+/**
+ * Spends the pending session on becomeShop(). A counter number held elsewhere is a DECISION, not an error
+ * ([TILL-138]) — it is asked on the dialog's own 'held' stage, where leaving it alone is the default button.
+ */
+async function usignBecome(takeover){
+  var p = USIGN.pending; if (!p) return;
+  USIGN.busy = true; usignPaint();
+  var r = await becomeShop({ token: p.token, who: p.person, takeover: !!takeover });
+  USIGN.busy = false;
+  if (r && r.held) { USIGN.held = r; usignPaint(); return; }
+  if (!r || !r.ok) { USIGN.pending = null; USIGN.held = null;
+                     USIGN.refused = (r && r.message) || 'Signed in, but the shop did not issue a counter key.'; usignPaint(); return; }
+  USIGN.opening = (r.shop && (r.shop.name || r.shop.bridge_id)) || 'your shop';
+  usignPaint();                                   /* "Opening …" — the reload or the restart follows */
+}
+
+function onAgent(){ return typeof AgentHost !== 'undefined' && HOST === AgentHost; }
+
+/**
+ * ── ⭐⭐⭐ G1 · becomeShop() — THE ONLY CODE THAT CHANGES WHICH SHOP THIS COUNTER IS ──────────────────────────
+ *
+ * Athi, 2026-09-28: *"we should be having any number of inlet and many exit, but all should lead to same path."*
+ * [SPEC-counter-identity.md §2]. Before this, four pieces of code wrote the key and three of them repainted in
+ * place — the bill in hand, the day totals and the person carried across into the next shop.
+ *
+ *   becomeShop({ token })        a signed-in session is traded for this shop's key (enrol)
+ *   becomeShop({ key })          a key handed over (#key= link, ⚙ paste) — browser only
+ *   becomeShop({ key: null })    signed out: no shop
+ *   + who      the person carries across the reload as a PENDING sign-in; only G2 (usignAdopt) sets WHO
+ *   + marker   {shop, name} — the shop ChitBridge opened this counter for, checked against the server's answer
+ *
+ * ⭐ IT NEVER REPAINTS. Browser: store, then RELOAD. Shop PC: the program holds the key, so it enrols
+ * (/api/signin/finish) or signs out (/api/signout) and RESTARTS; the page waits for the new process.
+ * ⚠️ THE OLD SHOP'S COPY IS NEVER TOUCHED — a queued sale is money. The browser's store is named per key, the
+ * PC's folder per shop; signing back in finds it. [[feedback-shop-scoped-local-store]]
+ * ⚠️⚠️ tests/counter-gates.test.cjs fails if anything else writes the key.
+ *
+ * Returns { ok, ... } (and the page is going away), or the refusal: { ok:false, held } / { ok:false, message }.
+ */
+async function becomeShop(to){
+  to = to || {};
+  if (onAgent()) {
+    var enrol = !!to.token;
+    var r = await fetch(enrol ? '/api/signin/finish' : '/api/signout', { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(enrol ? { token: to.token, takeover: !!to.takeover } : { force: !!to.force }) })
+      .then(function(x){ return x.json(); }).catch(function(){ return null; });
+    if (!r) return { ok: false, message: 'This PC could not reach the counter program. Is it still running?' };
+    if (r.held) return { ok: false, held: true, counter: r.counter || tillId(), held_by: r.held_by || null, seen: r.seen || null };
+    if (!r.ok) return r;
+    if (to.who) whoPending(to.who, r.shop);
+    var was = JSON.stringify((STATE && STATE.shop) || null);
+    counterRestarted(enrol ? function(st){ return JSON.stringify((st && st.shop) || null) !== was; }
+                           : function(st){ return !(st && st.paired); }, to.gaveUp);
+    return Object.assign({ restarting: true }, r);
+  }
+  var key = to.key || null, shop = null;
+  if (to.token) {
+    var en = await enrolBrowser(to.token, to.takeover);
+    if (!en.ok) return en;
+    key = en.key; shop = en.shop;
+  }
+  var same = !!key && key === CloudHost.key;
+  try { if (key) ls.set('cb_till_key', key); else { if (ls.del) ls.del('cb_till_key'); localStorage.removeItem('cb_till_key'); } } catch (_) {}
+  CloudHost.key = key;                             /* ⚠️ FIRST — shopLs() below names the NEW shop's slot from it */
+  if (key && to.marker && to.marker.shop) { ls.set(shopLs('cb_till_shop'), to.marker.shop); ls.set(shopLs('cb_till_shopname'), to.marker.name || ''); }
+  if (to.who) whoPending(to.who, shop);
+  if (location.hash.indexOf('key=') >= 0) history.replaceState(null, '', location.pathname + location.search);
+  /* the same key again is not a change of shop — nothing to reopen, and reloading a boot into itself would loop */
+  if (!same) location.reload();
+  return { ok: true, same: same, shop: shop };
+}
+
+/** the browser's half of an enrol: a session in, this shop's key out. Held elsewhere is reported, not decided. */
+async function enrolBrowser(token, takeover){
   var r = await fetchBy(CloudHost.api + '/api/till/enrol', { method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify(body) }).then(function(x){ return x.json().then(function(j){ return { status: x.status, ok: x.ok, body: j }; }); })
+    body: JSON.stringify({ name: 'Browser counter', counter: tillId(), takeover: !!takeover }) })
+    .then(function(x){ return x.json().then(function(j){ return { status: x.status, ok: x.ok, body: j }; }); })
     .catch(function(){ return { status: 0, ok: false, body: {} }; });
-  /**
-   * ⚠️⚠️ COUNTER_HELD IS A DECISION, NOT AN ERROR ([TILL-138], the same rule the shop PC's own connect flow
-   * follows). Flattening it into "could not sign in" sends somebody hunting for a fault when what they need is
-   * to choose whether to take this counter number from whoever is holding it.
-   */
   if (!r.ok && r.status === 409 && r.body && r.body.code === 'COUNTER_HELD') {
-    var heldBy = (r.body.counter && r.body.counter.held_by && r.body.counter.held_by.name) || 'another device';
-    var ok = await sure('Counter ' + tillId() + ' is already open on ' + heldBy + '.\n\nTaking it over stops '
-      + 'that device sending any more bills. Nothing already sent is affected.', 'Take it over', 'Counter ' + tillId());
-    if (!ok) { USIGN.refused = 'Kept ' + heldBy + ' on counter ' + tillId() + '. Nothing changed here.'; return false; }
-    r = await fetchBy(CloudHost.api + '/api/till/enrol', { method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify(Object.assign({}, body, { takeover: true })) })
-      .then(function(x){ return x.json().then(function(j){ return { status: x.status, ok: x.ok, body: j }; }); })
-      .catch(function(){ return { status: 0, ok: false, body: {} }; });
+    var c = r.body.counter || {};
+    return { ok: false, held: true, counter: c.id || tillId(), held_by: (c.held_by && c.held_by.name) || null, seen: c.seen || null };
   }
-  if (!r.ok || !r.body || !r.body.key) {
-    USIGN.refused = 'Signed in, but the shop did not issue a counter key.' + (r.body && r.body.message ? ' ' + r.body.message : '');
-    return false;
-  }
-  /* ⭐ THE SAME TWO LINES THE MANUAL ⚙ PASTE BOX HAS ALWAYS RUN — a new key IS a different shop, a different
-     local copy, and S (the old shop's snapshot, if any) is stale the instant this key lands. */
-  ls.set('cb_till_key', r.body.key); CloudHost.key = r.body.key; DB.reopen();
-  S = null;
-  toastLine('Paired with ' + ((r.body.shop && r.body.shop.name) || 'the shop') + ' — counter ' + tillId() + '.');
+  if (!r.ok || !r.body || !r.body.key)
+    return { ok: false, message: 'Signed in, but the shop did not issue a counter key.' + (r.body && r.body.message ? ' ' + r.body.message : '') };
+  return { ok: true, key: r.body.key, shop: r.body.shop || null };
+}
+
+/**
+ * ⭐ THE PERSON WHO CHANGED THE SHOP STAYS SIGNED IN ON THE OTHER SIDE OF THE RELOAD — as a PENDING sign-in,
+ * device-wide, that G2 adopts at start-up only if it belongs to the shop that actually opened
+ * (whoAdoptPending). Writing WHO here directly would be a second writer, and the shop it would be written for
+ * is not open yet.
+ */
+function whoPending(person, shop){
+  try { ls.set('cb_till_whonext', JSON.stringify({ person: person, shop: shop || null, at: Date.now() })); } catch (_) {}
+}
+function whoAdoptPending(){
+  var raw = null; try { raw = JSON.parse(ls.get('cb_till_whonext', '') || 'null'); } catch (_) { raw = null; }
+  if (!raw) return true;
+  var drop = function(){ try { if (ls.del) ls.del('cb_till_whonext'); localStorage.removeItem('cb_till_whonext'); } catch (_) {} };
+  var p = raw.person;
+  if (!p || !p.id || !(Date.now() - Number(raw.at || 0) < 10 * 60 * 1000)) { drop(); return true; }   /* ten minutes, or stale */
+  /* ⚠️ only onto the shop they belong to — the one check that makes carrying a person across safe */
+  if (p.entity && S && S.entity_id && String(p.entity) !== String(S.entity_id)) { drop(); return true; }
+  /* ⚠️ a shop PC that has just restarted may not have fetched its engines yet — then this throws, the pending
+     sign-in is KEPT, and the next load() tries again (the caller only marks it done on true) */
+  usignAdopt(p);
+  drop();
   return true;
 }
 
 /**
- * ── ⚠️⚠️⚠️ A DIFFERENT SHOP SIGNING IN SWITCHES THE WHOLE COUNTER, OR SIGNS NOBODY IN (2026-09-28) ─────────────
- *
- * Athi: signed in to shop X, loaded products, signed out, signed in to another shop — *"still i could see the
- * products of shop x. … if the shop credentials are different, then the till has to switch to new shop and it
- * should not allow to carry on."*
- *
- * ⚠️⚠️ usignEnrolIfNeeded() trusts any key already held, so a person from shop Y was ADOPTED onto shop X's
- * counter: X's shelf, X's key, and Y's name on bills filed as X. Nothing compared the two because nothing could:
- * the sign-in answer never said which shop a person belongs to (lib/identity-auth.js personShape now does).
- * ⭐ TWO OUTCOMES ONLY. The person and the counter are the same shop, or the counter becomes the person's shop.
- * There is no third state where somebody is "signed in" to a shop that is not theirs.
- * ⭐⭐ THE SWITCH IS A RELOAD, NEVER A REPAINT — the proven start-up path opens the new shop ([TILL-15]). A repaint
- * carries the bill in hand, the day totals and WHO across, which is this fault again under another name.
- * ⚠️ X's unsent bills are not touched. The browser's store is named per KEY and the desktop's folder per SHOP,
- * so they wait where they are; when X signs in here again the counter offers "Bring N bills" (rescueOrphans).
- * [[feedback-shop-scoped-local-store]] [[project-till-store-per-key]]
- *
- * Returns true when it has dealt with the sign-in (switched, or refused), false to carry on as before.
- */
-function usignShopOf(answer){ var id = (answer && answer.identity) || {}; return id.entity_id || null; }
-async function usignOtherShop(answer){
-  if (!paired()) return false;                    /* no shop yet — the ordinary first sign-in pairs it */
-  var mine = S && S.entity_id, theirs = usignShopOf(answer);
-  /* ⚠️ cannot tell — an older server, or a counter that has never read its shop. As before: the server still
-     scopes every call to this key, so the worst case is the old behaviour, never a new leak. */
-  if (!mine || !theirs || String(mine) === String(theirs)) return false;
-  var here = (S.shop && S.shop.name) || 'this shop';
-  var q = Number((STATE && STATE.queued) || 0);
-  var ok = await sure('This counter is ' + here + '. You signed in to a different shop.\n\n'
-    + (q ? q + ' unsent bill' + (q > 1 ? 's stay' : ' stays') + ' with ' + here + ' until it signs in here again.'
-         : 'Nothing of ' + here + ' is lost.'),
-    'Switch to your shop', 'A different shop', 'Stay ' + here);
-  if (!ok) { USIGN = { sent: false, refused: 'Nobody signed in. This counter stays ' + here + '.', person: null,
-                       who: '', busy: false, usePin: false }; usignPaint(); return true; }
-
-  if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return usignSwitchAgent(answer);
-  /* the browser: the same enrol the first sign-in makes, forced, then the key is this shop's and S is gone */
-  USIGN.forceEnrol = true;
-  if (!(await usignEnrolIfNeeded(answer.token))) { usignPaint(); return true; }
-  usignKeepWho(answer);                           /* shopLs() is namespaced by the NEW key by now */
-  location.reload();
-  return true;
-}
-/** the person who just switched the counter stays signed in on the other side of the reload */
-function usignKeepWho(answer){
-  var k = SIGN().keep('counter', answer); if (!k.ok) return;
-  var p = k.person;
-  try { ls.set(shopLs('cb_till_who'), JSON.stringify({ id: p.id, name: p.name, kind: p.kind,
-                                                        since: new Date().toISOString(), float: 0 })); } catch (_) {}
-}
-/**
- * ⚠️ THE SHOP PC HOLDS ITS KEY ON ITS OWN SIDE, so the page hands the program the session it just got and the
- * program enrols with it — the same /api/signin/finish the connect flow uses, given a token instead of a code
- * (a second code for the same person would be asking twice for one proof). It saves the key and RESTARTS,
- * because its folder was chosen at boot from the old key ([TILL-120]).
- */
-async function usignSwitchAgent(answer){
-  var post = function(extra){
-    return fetch('/api/signin/finish', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({ token: answer.token }, extra || {})) })
-      .then(function(x){ return x.json(); }).catch(function(){ return null; });
-  };
-  var r = await post();
-  if (r && r.held) {
-    var ok = await sure('Counter ' + (r.counter || tillId()) + ' is already open on '
-      + ((r.held_by && r.held_by.name) || 'another device') + '.\n\nTaking it over stops that device sending any more bills.',
-      'Take it over', 'Counter ' + (r.counter || tillId()));
-    if (!ok) { USIGN.refused = 'Nothing changed. This counter stays ' + ((S && S.shop && S.shop.name) || 'as it was') + '.';
-               usignPaint(); return true; }
-    r = await post({ takeover: true });
-  }
-  if (!r || !r.ok) { USIGN.refused = (r && r.message) || 'This PC could not reach the counter program.'; usignPaint(); return true; }
-  usignKeepWho(answer);                           /* the desktop's shopLs is not keyed — this IS the new shop's slot */
-  USIGN.refused = ''; usignClose();
-  toastLine('Opening ' + ((r.shop && r.shop.name) || 'your shop') + '…');
-  var was = JSON.stringify((STATE && STATE.shop) || null);
-  counterRestarted(function(st){ return JSON.stringify((st && st.shop) || null) !== was; },
-    function(){ toastLine('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.'); });
-  return true;
-}
-/**
- * ⭐ WAIT FOR THE PROGRAM TO COME BACK, THEN RELOAD — one loop for every restart the page asks for (sign out,
- * switch shop). `changed(state)` says the NEW process is the one answering; without it the old one, still up
- * for 400 ms, answers first and the page reloads into the shop it was leaving.
+ * ⭐ WAIT FOR THE PROGRAM TO COME BACK, THEN RELOAD — one loop for every restart the page asks for. `changed(state)`
+ * says the NEW process is the one answering; without it the old one, still up for 400 ms, answers first and the
+ * page reloads into the shop it was leaving.
  */
 function counterRestarted(changed, gaveUp){
   var tries = 0;
@@ -23481,7 +23385,8 @@ function counterRestarted(changed, gaveUp){
     tries++;
     fetch('/api/state', { cache: 'no-store' }).then(function(x){ if (!x.ok) throw new Error('no'); return x.json(); })
       .then(function(st){ if (!changed || changed(st)) { location.reload(); return; } throw new Error('old'); })
-      .catch(function(){ if (tries < 30) setTimeout(again, 700); else if (gaveUp) gaveUp(); });
+      .catch(function(){ if (tries < 30) setTimeout(again, 700);
+        else (gaveUp || function(){ toastLine('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.'); })(); });
   })();
 }
 
@@ -24236,10 +24141,10 @@ async function printerSettingsSave(){
 function settingsKeySave(v){
   var val = String(v || '').trim();
   if (!val || val.indexOf('•') >= 0 || val === CloudHost.key) return;
-  ls.set('cb_till_key', val); CloudHost.key = val; DB.reopen();
-  S = null;                                       /* what is on screen belongs to the shop we just left */
-  toastLine('Counter key saved — reading this shop.');
-  (HOST && HOST.mode === 'cloud' ? refresh() : load()).catch(function(){});
+  /* ⚠️ A NEW KEY IS A NEW SHOP. This used to repaint in place (S = null, refresh) — the bill in hand, the day and
+     the person carried into the next shop. Through the one door, which reloads. */
+  toastLine('Counter key saved — opening this shop.');
+  becomeShop({ key: val });
 }
 function settingsApiSave(v){
   var val = String(v || '').trim(); if (!val) return;

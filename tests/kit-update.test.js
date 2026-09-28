@@ -152,10 +152,10 @@ it('⭐⭐⭐ the kit refreshes the ENGINES it runs, not only its own program �
   const m = src.match(/const STAGED = (\[[^\]]*\]);/);
   assert.ok(m, 'no STAGED list in till.js');
   const list = JSON.parse(m[1].replace(/'/g, '"'));
-  for (const n of ['till.js', 'core.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js']) assert.ok(list.indexOf(n) >= 0, n + ' is never refreshed on a shop PC');
+  for (const n of ['till.js', 'core.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js', 'signin.js']) assert.ok(list.indexOf(n) >= 0, n + ' is never refreshed on a shop PC');
   assert.ok(/staged: STAGED \}/.test(src), 'the refresh does not use the same list the swap applies — a file staged and never swapped in');
   const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'integrations.js'), 'utf8');
-  for (const n of ['rollup.js', 'orders.js', 'orderhub.js']) assert.ok(route.indexOf("'" + n + "'") > 0, 'the server does not offer ' + n + ' to a kit');
+  for (const n of ['rollup.js', 'orders.js', 'orderhub.js', 'signin.js']) assert.ok(route.indexOf("'" + n + "'") > 0, 'the server does not offer ' + n + ' to a kit');
 });
 
 it('⭐⭐ a newer program is swapped in at the start, the old one kept as .bak, and the new one is what runs', () => {
