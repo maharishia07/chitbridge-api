@@ -22,7 +22,8 @@
     "lots": "1.5.0",
     "nums": "1.5.0",
     "profilemap": "1.5.0",
-    "jurisdiction": "1.5.0"
+    "jurisdiction": "1.5.0",
+    "rewards": "1.5.0"
   },
   "adopt": {
     "money": [
@@ -90,6 +91,9 @@
     ],
     "jurisdiction": [
       "lib/jurisdiction.js"
+    ],
+    "rewards": [
+      "lib/rewards.js"
     ]
   },
   "bundles": {
@@ -121,6 +125,7 @@
     "lots": "2653cbbb378263d56cffe3c6c1f6a30761adeca5ed103be9b5772dfab7206df6",
     "nums": "acde341546a99823f0ee9b7e3544ebfddabbb5773dd64fb371e2f5cffbbaebc5",
     "profilemap": "2bc483bf5ae3b67cdf69949f1076cf4a8670006f12f2b0a51e975547c6668b81",
-    "jurisdiction": "b3d6dc15feffb2b3037c77b6c50ee97fbde3f1c51f434681838777392b37f57b"
+    "jurisdiction": "b3d6dc15feffb2b3037c77b6c50ee97fbde3f1c51f434681838777392b37f57b",
+    "rewards": "8beaa4eb43e449dbdc8611463ad33bb5388473681e8d000cb0f364041fe96ea9"
   }
 }

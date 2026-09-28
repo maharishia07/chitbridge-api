@@ -288,7 +288,7 @@ const COPIES = () => [
    * ⭐ A file that already handles a browser needs no wrapper. The lesson is the general one: the parity test
    * compared TEXT, and text was never the question — tests/till-vendor now EXECUTES each engine (see that file).
    */
-  [path.join(API, 'lib', 'rewards.js'), path.join(WEB, 'engine', 'rewards.js'), 'copy'],
+  /* rewards: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐ THE SCREEN LIBRARY (2026-09-17) — themes, tiles, pickers, layouts, presets. A UMD like rewards.js, so copied, not wrapped;
      on the till's shelf because the counter draws its keys with it, line or no line. */
   [path.join(API, 'lib', 'screen-kit.js'), path.join(WEB, 'engine', 'screen.js'), 'copy'],
