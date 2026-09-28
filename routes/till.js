@@ -2450,7 +2450,7 @@ router.post('/listen', auth, async (req, res) => {
 const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.browser.js', search: '../lib/search-engine.js',
                   gs1: '../lib/gs1.js' /* ADOPTED — one file for node and the page */,        /* what a pack's barcode carries — batch, expiry, serial */
                   lots: '../lib/lotfields.js' /* ADOPTED — one file for node and the page */, /* what this trade must capture, and the difference it absorbs */
-                  nums: '../lib/numerals.browser.js', /* "two kilo", "rendu kilo" — the closed class, in both */
+                  nums: '../lib/numerals.js' /* ADOPTED — one file for node and the page */, /* "two kilo", "rendu kilo" — the closed class, in both */
                   rewards: '../lib/rewards.js',      /* ⚠️ THE MASTER ITSELF — it is a UMD and needs no browser wrapper */
                   /* ⭐ 2026-09-17: the rest of what the page loads — a shop PC had none of these (scripts/vendor-till.cjs) */
                   screen: '../lib/screen-kit.js',     /* the screen library — a UMD, the master itself */

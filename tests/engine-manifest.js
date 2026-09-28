@@ -545,7 +545,6 @@ const ENGINE_OTHER = [
      decides afterwards and those two must never disagree (scripts/vendor-till.cjs). */
   /* GENERATED beside lib/numerals.js: the closed class — numerals in English and transliterated Tamil — so a counter that hears
      "two kilo" writes 2 and not a second opinion about a number (scripts/vendor-till.cjs). */
-  'numerals.browser.js',
   'profile-map.browser.js',
   /* GENERATED beside lib/rollup.js ([TILL-125]): what a day's takings are, and what a return does to them. The page
      had its own copy of this rule and the shop PC another; the two disagreed until 2026-09-20. One engine now,

@@ -271,7 +271,7 @@ const COPIES = () => [
   /* ⭐ THE CLOSED CLASS — numerals, in English and in transliterated Tamil ("rendu" is 2, and "oru" is 1 only when no other numeral
      follows it). It is the platform's own table, already trusted by the WhatsApp path; a counter that heard "two kilo" and wrote 1
      would be a second opinion about a number, which lib/numerals exists to prevent. */
-  [null, path.join(WEB, 'engine', 'nums.js'), wrapForBrowser('numerals.js', 'CBNums')],
+  /* nums: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /**
    * ⭐⭐ NINTH ENGINE — REWARDS. The counter has to tell a customer what they just earned WHILE THEY ARE STANDING
    * THERE, which means the arithmetic has to run with the line down. The server runs the same file again when the
@@ -301,7 +301,6 @@ const COPIES = () => [
   /* money: the shop PC is handed lib/money.js itself — adopted from chitbridge-engines, it already runs in a page */
   /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
   /* pricing: the shop PC is served lib/pricing-engine.js itself (adopted; it already runs in a page) — pricing.browser.js retired */
-  [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   /* ⭐⭐ UNITS, FOR THE SHOP PC TOO ([TILL-104]). The page learned that a kilo is measured and a plate is
      counted; a counter running on a shop PC bills the same goods and must know the same thing. till-vendor
      caught this the moment the script tag went in — which is what it is for. */
