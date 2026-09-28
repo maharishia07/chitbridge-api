@@ -262,8 +262,7 @@ const COPIES = () => [
    * ⚠️ It is already a classic script that assigns root.CBJurisdiction itself, so the wrapper only isolates it.
    */
   /* jurisdiction: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
-  [null, path.join(WEB, 'engine', 'convert.js'),
-    wrapForBrowser('convert.js', 'CBConvert', { './money': 'CBMoney', './units': 'CBUnits' })],
+  /* convert: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* lots: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐ THE CLOSED CLASS — numerals, in English and in transliterated Tamil ("rendu" is 2, and "oru" is 1 only when no other numeral
      follows it). It is the platform's own table, already trusted by the WhatsApp path; a counter that heard "two kilo" and wrote 1
