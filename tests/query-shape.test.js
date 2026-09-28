@@ -94,10 +94,8 @@ const BUDGET = {
   /* ⚠️ ORDER IS THE MEANING: scheduled patches apply in effective_at order, and two patches to ONE product must land
      in sequence — a batched merge would pick one arbitrarily. Due rows per run are few (a shop's price changes). */
   'lib/schedule.js': 1,
-  /* ⚠️⚠️ KNOWN DEBT, NOT A PASS (2026-09-27): a purchase records each line with ensure() (find-or-create the supply
-     item) and then an update — two round trips per line. Hoisting needs ensure() to take a set; left for a daylight
-     change with Athi rather than an overnight one. It is budgeted so the count cannot GROW past it, not because it is fine. */
-  'lib/supply-store.js': 1,
+  /* 'lib/supply-store.js' — was KNOWN DEBT here (2 round trips per purchase line); batched 2026-09-28 (ensureMany + one
+     last-cost UPDATE), so it has none left and its budget is gone. The stock postings stay per line: order-dependent. */
   'routes/governance.js': 1,
   'routes/network-design.js': 3,
   'routes/products.js': 4,
