@@ -1348,10 +1348,14 @@ it('⭐⭐⭐ goods-in records the tax paid, per line and per consignment', () =
 it('⚠️⚠️ the customer list asks for columns that exist, on the table that has them', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   const q = src.slice(src.indexOf('let customers = []'), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
+  /* ⭐ MOVED 2026-09-29 (M36): the SQL now lives in the snapshot's OWN map, read in one shared transaction; the site
+     reads it through ownRead('customers'). The assertions follow the SQL to where it is, and the site must still use it. */
+  const sq = src.slice(src.indexOf('      customers: (db) => db.query('), src.indexOf('      adoption: (db) =>'));
+  assert.ok(sq.length > 0 && q.indexOf("ownRead('customers')") > 0, 'the customer read is no longer OWN.customers — find where it went');
   /* the name and the number live on identities; customer_list is the JOIN and carries the relationship */
-  assert.ok(q.indexOf('JOIN identities') > 0, 'the name and phone are read from customer_list, which has neither');
-  assert.ok(q.indexOf('c.owner_entity_id = $1') > 0, 'it filters on entity_id — customer_list has owner_entity_id');
-  assert.ok(q.indexOf('FROM customer_list c') > 0, 'the join is gone');
+  assert.ok(sq.indexOf('JOIN identities') > 0, 'the name and phone are read from customer_list, which has neither');
+  assert.ok(sq.indexOf('c.owner_entity_id = $1') > 0, 'it filters on entity_id — customer_list has owner_entity_id');
+  assert.ok(sq.indexOf('FROM customer_list c') > 0, 'the join is gone');
   /* ⚠️ and the failure is no longer silent */
   /* ⚠️ the OUTER catch must bind the error and log it. An inner catch(_) around the LOGGER is correct and stays —
      writing a log line must never be the thing that stops a shop billing. */
@@ -1399,7 +1403,8 @@ it('⭐⭐⭐ ONE reader of a balance — the counter and the shop must never qu
 it('⚠️ a customer carries the ID points hang from, not just a name', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
   const q = src.slice(src.indexOf('let customers = []'), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
-  assert.ok(q.indexOf('i.identity_id') > 0, 'the query must select identity_id');
+  const sq = src.slice(src.indexOf('      customers: (db) => db.query('), src.indexOf('      adoption: (db) =>'));   /* OWN.customers (M36) */
+  assert.ok(sq.indexOf('i.identity_id') > 0, 'the query must select identity_id');
   assert.ok(q.indexOf('identity_id: x.identity_id') > 0,
     'the id must reach the counter — a balance addressed by name would eventually be paid to the wrong Kumar');
 });
