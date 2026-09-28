@@ -80,7 +80,8 @@ const GUARDS = [
   'item-kind.test.cjs',        // a supply is never counted as a product — one column carries the whole split
   'root-link.test.cjs',        // the values rootlink writes must be values the CHECK constraints accept
   'entity-kind.test.cjs',      // every identity mint declares WHAT it is — a DELETE predicate depends on it
-  'board-kinds.test.cjs',      // the shared board carries CASES and nothing else — findings stay with the raiser
+  'board-kinds.test.cjs',      // the shared board carries CASES and CMDB records, nothing else — findings stay with the raiser
+  'cmdb.test.cjs',             // ⭐⭐ the CMDB: every shipped record fits, a way in + out + tests, only a board writer writes
   'engine-boundary.test.js',  // every lib declared engine or not; anything unreachable carries an @stage
   'adopt.test.js',            // what one shop may take into its catalogue from another's delivery
   'local-supplier.test.js',   // ~<user id>.sup-nnnn — one row per shop, never a recipient, never in the search

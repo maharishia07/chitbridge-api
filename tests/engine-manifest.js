@@ -433,6 +433,11 @@ const ENGINE_OTHER = [
    */
   'testboard.js',
   /**
+   * ENGINE: it holds a RULE — what a CMDB record may be, and when a capability is flagged as not useful (no way in,
+   * no way out, no test, never run — Athi, 2026-09-28). Pure; routes/testing.js stores what it accepts.
+   */
+  'cmdb.js',
+  /**
    * ENGINE, and on the same test as testboard.js beside it: it holds a RULE about who may see what.
    * ⭐ The rule is *a shop's fault report reaches the operator, the raiser keeps their own copy, and the copy
    * remembers where it came from.* Swap this file and support stops working — our queue empties, and a

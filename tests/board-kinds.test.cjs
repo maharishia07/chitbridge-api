@@ -69,8 +69,11 @@ it("'spec' IS the requirement kind — the premise this guard rests on", () => {
     + 'guard together — the split is by kind, and a rename that misses one of them reopens the hole.');
 });
 
-it('testcase is the only shared kind', () => {
-  assert.deepStrictEqual(BOARD.sharedKinds(), ['testcase'],
+/* ⚠️ MOVED, NOT DELETED (2026-09-28). 'cmdb' joined 'testcase' by Athi's own decision: *"can it be linked in the cmdb
+   database as part of this capability, so anyone can look at this?"* then *"store it in the cloud database"*. A CMDB
+   record describes the PRODUCT (its capabilities, doors, tests) — nobody's trade — exactly the testcase argument. */
+it('testcase and cmdb are the only shared kinds', () => {
+  assert.deepStrictEqual(BOARD.sharedKinds().sort(), ['cmdb', 'testcase'],
     'SHARED_KINDS changed. Adding a kind here publishes it to every signed-in user — that is a decision for '
     + 'Athi, not a refactor.');
 });
@@ -96,6 +99,7 @@ it('testcase is the only shared kind', () => {
  */
 const CLASSIFIED = {
   testcase: 'shared',    /* the product's own suite — nobody's trade in it */
+  cmdb:     'shared',    /* the product's configuration records (Athi, 2026-09-28: "so anyone can look at this") */
   spec:     'private',   /* ⚠️ the REQUIREMENT kind. See the note below: it is two things under one name. */
   incident: 'private',   /* somebody's fault report, in their words, with a screenshot */
   evidence: 'private',   /* the screenshot itself */
@@ -158,6 +162,7 @@ const ANSWERED_AS = { spec: 'requirement' };
 const USES_THE_CASE_LADDER = new Set([
   'testcase',   /* it IS a case — retired/last/todo is its own ladder */
   'evidence',   /* a screenshot has no state of its own; it belongs to the finding that carries it */
+  'cmdb',       /* a configuration record has versions, not a work state — nothing is "todo" about it */
 ]);
 
 it('every classified kind is one workStatus can actually answer for', () => {
