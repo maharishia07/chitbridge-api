@@ -136,15 +136,27 @@ say('— the swap, at the start, or not at all —');
 /** the real block out of till.js, put in a folder of its own with a marker so we can see WHICH version ran */
 function stage(newBody) {
   const src = fs.readFileSync(path.join(KIT, 'till.js'), 'utf8');
-  const from = src.indexOf('(function applyStagedUpdate()');
-  const to = src.indexOf('})();', from) + 5;
-  assert.ok(from > 0 && to > from, 'applyStagedUpdate is no longer in till.js');
+  /* from the STAGED list (2026-09-28: one list, read by the swap AND by the refresh) through the end of the swap */
+  const from = src.indexOf('const STAGED =');
+  const to = src.indexOf('})();', src.indexOf('(function applyStagedUpdate()')) + 5;
+  assert.ok(from > 0 && to > from, 'STAGED + applyStagedUpdate are no longer in till.js');
   const head = "'use strict';\nconst fs = require('fs');\nconst path = require('path');\n";
   const dir = tmp();
   fs.writeFileSync(path.join(dir, 'till.js'), head + src.slice(from, to) + "\nconsole.log('RAN old');\n");
   fs.writeFileSync(path.join(dir, 'till.js.new'), head + src.slice(from, to) + newBody);
   return dir;
 }
+
+it('⭐⭐⭐ the kit refreshes the ENGINES it runs, not only its own program — rollup, orders, orderhub (2026-09-28)', () => {
+  const src = fs.readFileSync(path.join(KIT, 'till.js'), 'utf8');
+  const m = src.match(/const STAGED = (\[[^\]]*\]);/);
+  assert.ok(m, 'no STAGED list in till.js');
+  const list = JSON.parse(m[1].replace(/'/g, '"'));
+  for (const n of ['till.js', 'core.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js']) assert.ok(list.indexOf(n) >= 0, n + ' is never refreshed on a shop PC');
+  assert.ok(/staged: STAGED \}/.test(src), 'the refresh does not use the same list the swap applies — a file staged and never swapped in');
+  const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'integrations.js'), 'utf8');
+  for (const n of ['rollup.js', 'orders.js', 'orderhub.js']) assert.ok(route.indexOf("'" + n + "'") > 0, 'the server does not offer ' + n + ' to a kit');
+});
 
 it('⭐⭐ a newer program is swapped in at the start, the old one kept as .bak, and the new one is what runs', () => {
   const dir = stage("\nconsole.log('RAN new');\n");

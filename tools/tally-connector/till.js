@@ -35,10 +35,20 @@ const http = require('http');
  * counter that is a week old. The version being replaced is kept as <name>.bak.
  * ⚠️ CB_TILL_UPDATED marks the child, so a swap can happen once per start and never loop.
  */
+/**
+ * ⭐⭐ WHAT THE KIT REFRESHES WHILE IT RUNS, AND SWAPS IN AT THE NEXT START — ONE LIST, read by both (2026-09-28).
+ * rollup.js, orders.js and orderhub.js are ENGINES this program requires at start-up (the day's summaries, the floor's
+ * order rules). They were copied in once, at install, and NEVER refreshed: kitUpdate was only ever asked for the three
+ * files below, so a shop PC folded its day with the rules it was installed with while the server moved on. They are
+ * adopted from chitbridge-engines now; the kit takes the same release the server serves (routes/integrations.js KIT_NAMES).
+ * ⚠️ An older till.js on a shop PC knows only the first three: it updates ITSELF first, restarts, and this list then
+ * brings the engines on the following start. Two restarts, nothing lost, never a half-old pair.
+ */
+const STAGED = ['till.js', 'core.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js'];
 (function applyStagedUpdate() {
   if (process.env.CB_TILL_UPDATED) return;
   const here = __dirname;
-  const names = ['till.js', 'core.js', 'printer.js'].filter((n) => fs.existsSync(path.join(here, n + '.new')));
+  const names = STAGED.filter((n) => fs.existsSync(path.join(here, n + '.new')));
   if (!names.length) return;
   const vm = require('vm');
   for (const n of names) {
@@ -347,7 +357,7 @@ async function refresh() {
     }
     /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
     try {
-      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html'], staged: ['till.js', 'core.js', 'printer.js'] });
+      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html'], staged: STAGED });
       if (up) {
         UPDATE.version = up.version;
         if (up.updated.length) { UPDATE.page_at = new Date().toISOString(); log('the counter screen was updated — reload the page in the browser (F5) when you are between customers'); }
