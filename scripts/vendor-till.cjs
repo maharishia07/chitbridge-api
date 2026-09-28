@@ -198,7 +198,7 @@ const COPIES = () => [
    * legal by the only rule everyone agrees on, and the checks list says the rules for that country have not been
    * confirmed. The alternative — a confident green tick — would be the platform claiming something nobody checked.
    */
-  [null, path.join(WEB, 'engine', 'docnumber.js'), wrapForBrowser('docnumber.js', 'CBDoc')],
+  /* docnumber: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /**
    * ⭐⭐ TWELFTH AND THIRTEENTH — UNITS, AND WHAT A QUANTITY IS WORTH (2026-09-15).
    *
@@ -300,7 +300,6 @@ const COPIES = () => [
    * GET /api/till/engine/:name hands the program (routes/till.js ENGINES); the web serves its own /engine/ copies.
    */
   /* money: the shop PC is handed lib/money.js itself — adopted from chitbridge-engines, it already runs in a page */
-  [null, path.join(API, 'lib', 'docnumber.browser.js'), wrapForBrowser('docnumber.js', 'CBDoc')],
   /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
   /* pricing: the shop PC is served lib/pricing-engine.js itself (adopted; it already runs in a page) — pricing.browser.js retired */
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],

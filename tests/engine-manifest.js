@@ -566,7 +566,7 @@ const ENGINE_OTHER = [
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */
   /* money.browser.js retired 2026-09-28 — lib/money.js is adopted from chitbridge-engines and runs in a page as it is */
-  'docnumber.browser.js', 'locale.browser.js',   /* pricing.browser.js retired 2026-09-28 — lib/pricing-engine.js is adopted and runs in a page */
+  'locale.browser.js',   /* pricing.browser.js retired 2026-09-28 — lib/pricing-engine.js is adopted and runs in a page */
   /**
    * ⭐ ENGINE, not infra, and the difference is the whole point of the file. It DECIDES which country a shop is
    * in from what the browser already knows — and country decides the tax regime, the currency and every
