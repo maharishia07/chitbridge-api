@@ -39,6 +39,7 @@ const GUARDS = [
   'entity-cast-guard.test.cjs',  // no NEW RLS policy casts an unset current_setting straight to ::uuid
   /* ⚠️ a guard nobody ran: the access gate for co-assists was never in this list (found 2026-09-28) */
   'hat-gate.test.cjs',          // ⭐⭐ a View-only/Comment-only co-assist cannot write; asking /assist is open, its five writes are not
+  'access-events.test.cjs',     // the IAM audit trail never invents a change, and a lost row is SAID (review 2026-09-25)
   'notifications-count.test.cjs', // ⭐⭐ the badge's number is ONE withEntity statement over the feed's own rows (M7, 2026-09-28)
   'supplier-list-scope.test.cjs', // ⭐⭐⭐ every supplier_list statement runs inside withEntity — ready for FORCE RLS (H2, 2026-09-28)
   'knownerr.test.js',         // a refusal the database makes on purpose (b247) reaches a person as a 409, from every route that writes a chit

@@ -508,7 +508,8 @@ router.patch('/:id',
        * this runs only when someone's access actually changes — not on any read path — and an audit trail that
        * is cheap and empty is worth less than nothing, because it is believed.
        */
-      await withEntity(entity_id, (edb) => accessEvents.recordChanges((sql, args) => edb.query(sql, args), {
+      /* ⚠️ the change stands either way; a lost audit row is SAID — in the answer and in the log (review 2026-09-25) */
+      const audit = await withEntity(entity_id, (edb) => accessEvents.recordChanges((sql, args) => edb.query(sql, args), {
         entity_id,
         subject_identity_id: actor_id,
         before: beforeRow,
@@ -516,8 +517,10 @@ router.patch('/:id',
         changed_by: req.identity && req.identity.identity_id,
         reason: (req.body.reason || '').trim() || null,
       }));
+      if (audit && audit.failed) console.error('[actors] access change saved but', audit.failed, 'audit row(s) lost', { actor_id });
 
-      res.json({ message: 'Co-assist updated', actor: r.rows[0] });
+      res.json({ message: 'Co-assist updated', actor: r.rows[0],
+                 audit: { recorded: (audit && audit.written) || 0, failed: (audit && audit.failed) || 0 } });
     } catch (err) {
       console.error('Update actor error:', err.message);
       res.status(500).json({ error: 'Update failed', message: safeErr(err) });
