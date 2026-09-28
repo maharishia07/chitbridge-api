@@ -213,9 +213,9 @@ it('⭐⭐⭐ the engine touches no DOM, no window, no storage', () => {
 it('and it is reachable from the server, not only the counter', () => {
   assert.strictEqual(typeof O.totals, 'function');
   assert.strictEqual(typeof O.canSettle, 'function');
-  /* the same file the browser gets, wrapped — see scripts/vendor-till.cjs */
-  assert.ok(require('fs').existsSync(require('path').join(__dirname, '..', 'lib', 'orders.browser.js')),
-    'the browser build is missing, so the page and the server would drift');
+  /* ⭐ 2026-09-28: the SAME file the page gets — adopted from chitbridge-engines, served to the shop PC as it is */
+  const route = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  assert.ok(/orders:\s*'\.\.\/lib\/orders\.js'/.test(route), 'the shop PC is served a different copy of the order rules — the page and the server would drift');
 });
 
 console.log('\n' + pass + ' checks passed\n');

@@ -552,7 +552,6 @@ const ENGINE_OTHER = [
   /* GENERATED beside lib/verdict.js ([TILL-137]): one cause → one sentence → one button, wrapped for the page
      that renders it. The counter-health screen IS this table with a layout. */
   /* GENERATED beside lib/orders.js ([TILL-181]) — the order rules for the page that paints them. */
-  'orders.browser.js',
   /* GENERATED beside lib/orderhub.js ([TILL-178b]) — the floor's rules, for a device that IS the floor. */
   'orderhub.browser.js',
   /* GENERATED beside lib/dayopen.js ([TILL-182]) — the morning, for the page that narrates it. */

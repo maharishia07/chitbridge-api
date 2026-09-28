@@ -2470,7 +2470,7 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   /* ⭐ what a day's takings are, and what a return does to them — one rule for the page, the
                      shop PC and this server ([TILL-125]) */
                   rollup: '../lib/rollup.browser.js',
-                  orders: '../lib/orders.browser.js',
+                  orders: '../lib/orders.js' /* ADOPTED — one file for node and the page */,
                   orderhub: '../lib/orderhub.browser.js',
                   dayopen: '../lib/dayopen.js' /* ADOPTED — one file for node and the page */,
                   signin: '../lib/signin.js' /* ADOPTED — one file for node and the page */,

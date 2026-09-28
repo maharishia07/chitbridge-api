@@ -124,7 +124,7 @@ const COPIES = () => [
      kitchen screen, it applies the order rules for all three — so it needs them at `require` time, before the
      line has come up, exactly like the rollup. These two copies are what makes "the whole cycle with no
      internet" a thing that RUNS rather than a thing that is claimed. orderhub requires orders, so both travel. */
-  [path.join(API, 'lib', 'orders.js'), path.join(API, 'tools', 'tally-connector', 'orders.js'), 'copy'],
+  /* orders: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   [path.join(API, 'lib', 'orderhub.js'), path.join(API, 'tools', 'tally-connector', 'orderhub.js'), 'copy'],
   /* ⭐ THE SHOP'S SCREEN rides the same rail as the counter: one master, both hosts, the same engines and the same
      snapshot. It is the counter's data with a different job — advertising it instead of billing it. */
@@ -222,7 +222,6 @@ const COPIES = () => [
    */
   [null, path.join(WEB, 'engine', 'rollup.js'), wrapForBrowser('rollup.js', 'CBRollup')],
   /* ⭐ the order rules, off the page ([TILL-181]) — the same file the server can call */
-  [null, path.join(WEB, 'engine', 'orders.js'), wrapForBrowser('orders.js', 'CBOrders')],
   /* ⭐⭐⭐ THE SAME FLOOR RULES IN THE PAGE ([TILL-178b]). A counter with no shop hub still holds its own
      orders — and it must hold them by the IDENTICAL rules, or a one-counter shop and a floor of six devices
      would slowly disagree about what a round is. So the page runs lib/orderhub.js against its own memory and
@@ -307,7 +306,6 @@ const COPIES = () => [
   /* ⭐ and the shop PC serves it too — a desktop counter closes its day offline more often than the web one */
   [null, path.join(API, 'lib', 'rollup.browser.js'), wrapForBrowser('rollup.js', 'CBRollup')],
   /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */
-  [null, path.join(API, 'lib', 'orders.browser.js'), wrapForBrowser('orders.js', 'CBOrders')],
   [null, path.join(API, 'lib', 'orderhub.browser.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
