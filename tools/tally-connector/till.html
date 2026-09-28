@@ -9904,7 +9904,9 @@ function paintChips(){
         try { if (thumbsOn()) pic = '<span class="cpic">' + catPic(c) + '</span>'; } catch (_) {}
         return '<button class="' + (FILTER.cat === c ? 'on' : '') + (pic ? ' haspic' : '') + '"'
           + ' data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '"'
-          + ' onclick="setFilter(\'cat\',\'' + esc(c.replace(/'/g,'')) + '\')">'
+          /* ⚠️ THE NAME TRAVELS IN AN ATTRIBUTE, INTACT (2026-09-28, M19): stripping apostrophes to fit it inside the
+             onclick made "Baker's" filter on "Bakers" — a category with an apostrophe could never be chosen */
+          + ' data-cat="' + esc(c) + '" onclick="setFilter(\'cat\', this.dataset.cat)">'
           + pic + esc(c) + ' <span class="u">' + cats[c] + '</span></button>';
       }).join('')
     ;
@@ -10770,7 +10772,13 @@ function screenCfg(){
   var o = tillOpt(), s = o.screen || {};
   if (!window.CBScreen) return { tile: 'classic', theme: 'lightCream', photos: false, preset: 'counterClassic' };
   /* the look already chosen on this device (☰ text & look) is the device's theme unless a preset says otherwise */
-  var t = ls.get('cb_till_theme', 'light');
+  /**
+   * ⚠️⚠️ ONLY A THEME THIS DEVICE ACTUALLY CHOSE OVERRIDES THE SHOP'S (2026-09-28, M13). The read defaulted to
+   * 'light', so it always returned a value and always won: a chain that set a navy counter centrally saw nothing
+   * change on any device that had never touched ☰. Nobody chose here → the shop's own screen setting stands.
+   */
+  var t = ls.get('cb_till_theme', null);
+  if (!t) return CBScreen.resolve(s);
   var theme = (t === 'light') ? 'lightCream' : t;
   /* ⚠️ the device's look LAST: choosing a preset writes its theme there (screenSet), and a later change in ☰ must win */
   return CBScreen.resolve(s, { theme: theme });
@@ -13732,7 +13740,8 @@ function cardGroups(i){
         var ids = all[nm] || [], on = ids.map(String).indexOf(String(i.item_id)) >= 0;
         return '<button class="gchip' + (on ? ' on' : '') + '" data-testid="card-group-'
           + esc(nm.replace(/[^a-z0-9]+/gi, '-').toLowerCase()) + '"'
-          + ' onclick="cardGroupTap(\'' + esc(nm.replace(/'/g, '')) + '\')">'
+          /* ⚠️ same as the category chip (M19): the group's real name, in an attribute */
+          + ' data-group="' + esc(nm) + '" onclick="cardGroupTap(this.dataset.group)">'
           + (on ? '✓ ' : '') + esc(nm) + ' <span class="u">' + ids.length + '</span></button>';
       }).join('')
     + '</div></div>';
@@ -15179,10 +15188,25 @@ function modWords(mods){ return CBVariant.words(mods, money); }
  * to show the check happened, and "the till asked" is not evidence unless the till also wrote it down.
  * ⚠️ NO IS A REAL ANSWER. Refusing does not add the item. A prompt that cannot refuse is decoration.
  */
-function ageOf(i){
+/** an item's OWN age restriction, 0 when none */
+function ageOwn(i){
   var d = (i && (i.age_check != null ? i.age_check : (i.item_data && i.item_data.age_check)));
   var n = Number(d);
   return (n > 0 && n < 130) ? Math.floor(n) : 0;
+}
+/**
+ * ⚠️⚠️ A COMBO CARRIES THE HIGHEST AGE OF ANY PART IT NAMES (2026-09-28, M12). ageOf() read only the combo SKU's
+ * own age_check, so a party pack naming a beer billed with no prompt. Parts resolve on the shelf by name, exactly as
+ * comboOf() resolves them; a part is read at its OWN level only, so a combo of combos cannot loop.
+ */
+function ageOf(i){
+  var age = ageOwn(i);
+  var c = (i && (i.combo_of || (i.item_data && i.item_data.combo_of))) || null;
+  if (Array.isArray(c) && c.length && S && S.items) {
+    var by = {}; S.items.forEach(function(x){ if (x && x.name) by[String(x.name).toLowerCase()] = x; });
+    c.forEach(function(nm){ var p = by[String(nm || '').toLowerCase()]; if (p && p !== i) age = Math.max(age, ageOwn(p)); });
+  }
+  return age;
 }
 var AGE_OK = {};                                  /* ages cleared for THIS bill — cleared with the bill */
 function ageClear(){ AGE_OK = {}; }
