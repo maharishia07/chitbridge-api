@@ -548,7 +548,6 @@ const ENGINE_OTHER = [
   /* GENERATED beside lib/rollup.js ([TILL-125]): what a day's takings are, and what a return does to them. The page
      had its own copy of this rule and the shop PC another; the two disagreed until 2026-09-20. One engine now,
      wrapped for the browser by scripts/vendor-till.cjs. */
-  'rollup.browser.js',
   /* GENERATED beside lib/verdict.js ([TILL-137]): one cause → one sentence → one button, wrapped for the page
      that renders it. The counter-health screen IS this table with a layout. */
   /* GENERATED beside lib/orders.js ([TILL-181]) — the order rules for the page that paints them. */

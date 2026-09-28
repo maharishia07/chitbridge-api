@@ -119,7 +119,7 @@ const COPIES = () => [
      week and month summaries are computed with the line down. Unlike the engines below it is not fetched at
      runtime: till.js needs it at `require` time, before it has ever spoken to a server. The vendor guard holds
      this copy byte-equal to lib/rollup.js, which is the point — one rule for the counter and the server. */
-  [path.join(API, 'lib', 'rollup.js'), path.join(API, 'tools', 'tally-connector', 'rollup.js'), 'copy'],
+  /* rollup: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐⭐⭐ AND THE SAME ARGUMENT FOR THE FLOOR ([TILL-178b]). When the shop PC serves a waiter's phone and a
      kitchen screen, it applies the order rules for all three — so it needs them at `require` time, before the
      line has come up, exactly like the rollup. These two copies are what makes "the whole cycle with no
@@ -220,7 +220,6 @@ const COPIES = () => [
    * ⚠️ ON THE TILL'S SHELF (the KEEP list below), unlike convert: closing the day is something a shop does
    * with the shutters down and the line often off.
    */
-  [null, path.join(WEB, 'engine', 'rollup.js'), wrapForBrowser('rollup.js', 'CBRollup')],
   /* ⭐ the order rules, off the page ([TILL-181]) — the same file the server can call */
   /* ⭐⭐⭐ THE SAME FLOOR RULES IN THE PAGE ([TILL-178b]). A counter with no shop hub still holds its own
      orders — and it must hold them by the IDENTICAL rules, or a one-counter shop and a floor of six devices
@@ -303,7 +302,6 @@ const COPIES = () => [
      counted; a counter running on a shop PC bills the same goods and must know the same thing. till-vendor
      caught this the moment the script tag went in — which is what it is for. */
   /* ⭐ and the shop PC serves it too — a desktop counter closes its day offline more often than the web one */
-  [null, path.join(API, 'lib', 'rollup.browser.js'), wrapForBrowser('rollup.js', 'CBRollup')],
   /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
