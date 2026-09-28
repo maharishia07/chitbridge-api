@@ -1484,8 +1484,22 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { ok: true, made, state: summaryState() });
     }
 
-    if (req.method === 'GET' && url.pathname === '/api/bills')
+    if (req.method === 'GET' && url.pathname === '/api/bills') {
+      /**
+       * ⭐ ?days=N (2026-09-28, M11): the bills THIS PC still holds for the last N days, read from its own day
+       * files — offline, no server. A return against a bill rung at 23:58 must be possible at 00:01; today-only
+       * made the counter say the bill was "not on this counter any more", which was untrue.
+       */
+      const days = Math.min(Number(url.searchParams.get('days')) || 0, 365);
+      if (days > 1) {
+        const since = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+        const all = [];
+        daysOnDisk().filter((d) => d >= since).forEach((d) => { readLines(F.bills(d)).forEach((b) => all.push(b)); });
+        all.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+        return json(res, 200, { days: days, bills: all });
+      }
       return json(res, 200, { day: today(), bills: readLines(F.bills(today())).slice(-50).reverse(), totals: todayTotals() });
+    }
 
     if (req.method === 'POST' && url.pathname === '/api/bill') {
       let body = ''; for await (const c of req) body += c;

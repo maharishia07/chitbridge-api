@@ -4775,6 +4775,8 @@ var AgentHost = {
   expense: function(e){ return this.record('EXP', Object.assign({}, e, { kind: 'expense' }), chitOfExpense); },
   state: function(){ return fetch('/api/state').then(function(r){ return r.json(); }); },
   bills: function(){ return fetch('/api/bills').then(function(r){ return r.json(); }).then(function(j){ return (j && j.bills) || []; }); },
+  /** ⭐ the bills the program still holds for the last N days, from its own day files (M11) */
+  local: function(days){ return fetch('/api/bills?days=' + (days || 2)).then(function(r){ return r.json(); }).then(function(j){ return (j && j.bills) || []; }); },
   history: function(days){ return fetch('/api/history?days=' + (days||30)).then(function(r){ return r.json(); }); },
   shift: function(sh){ return fetch('/api/shift',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sh)}).then(function(r){ return r.json(); }); },
   refresh: function(){ return fetch('/api/refresh',{method:'POST'}).then(function(r){ return r.json(); }); },
@@ -4994,6 +4996,12 @@ var CloudHost = {
     var all = (await DB.all('bills')) || [];
     var day = new Date().toISOString().slice(0,10);
     return all.filter(function(b){ return String(b.at||'').slice(0,10) === day; }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
+  },
+  /** ⭐ the bills THIS device still holds for the last N days — offline (M11: a return after midnight) */
+  async local(days){
+    var all = (await DB.all('bills')) || [];
+    var since = new Date(Date.now() - (days || 1) * 86400000).toISOString().slice(0, 10);
+    return all.filter(function(b){ return String(b.at||'').slice(0,10) >= since; }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
   },
   async history(days){
     if (!this.key || !lineUp()) return { bills: [], offline: true };
@@ -8905,23 +8913,40 @@ function dayReportHTML(bills){
     + '<button data-testid="till-dayreport-close" onclick="dayReportClose()">Close</button>'
     + '</div></header>';
 
-  if (!n) return head + '<p class="drnone">No sales yet today. The day report fills itself as bills are made.</p>';
+  /* ⚠️ NOTHING AT ALL, not "no sales" (2026-09-28, M11): a day whose only activity was a return or an expense
+     printed "No sales yet today" and hid the Returns table beneath this line */
+  if (!n && !back.length && !spent.length) return head + '<p class="drnone">No sales yet today. The day report fills itself as bills are made.</p>';
 
   var summary = dayRepTable('The day', [{ label: 'What' }, { label: 'Figure', num: true }], [
     ['Bills', String(n)],
     ['Items sold', String(qty)],
-    ['Average bill', money(r2(total / n))],
+    ['Average bill', n ? money(r2(total / n)) : '\u2014'],
     ['Taken off by offers', saved ? '\u2212' + money(saved) : money(0)],
     ['Taxable value', money(taxable)],
     ['Tax', money(tax)],
-  ], ['<b>Net sales</b>', '<b>' + money(total) + '</b>']);
+  ], ['<b>Net sales</b>', '<b data-testid="till-dayrep-netsales">' + money(total) + '</b>']);
 
-  var payRows = Object.keys(agg.byPay).sort().map(function(how){
-    return [esc(how.charAt(0).toUpperCase() + how.slice(1)), String(agg.payBills[how] || 0), money(agg.byPay[how])];
+  /**
+   * ⚠️⚠️ THE SHEET RECONCILES TO ITSELF (2026-09-28, M11). "How it was paid" summed only money TAKEN, so it was
+   * gross of refunds while "Net sales" above it was net: ₹4,600 over ₹5,000 with nothing saying the two were on
+   * different bases. Each method now shows what was taken, what went back (credit notes) and what was paid out
+   * (expenses), and its net — and the net total is the Net sales figure, to the paisa.
+   */
+  var outBack = {}, outPaid = {};
+  back.forEach(function(b){ (b.refunds || []).forEach(function(x){ if (x && x.how) outBack[x.how] = r2((outBack[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
+  spent.forEach(function(b){ (b.spent || []).forEach(function(x){ if (x && x.how) outPaid[x.how] = r2((outPaid[x.how] || 0) + Math.abs(Number(x.amount) || 0)); }); });
+  var hows = {}; [agg.byPay, outBack, outPaid].forEach(function(o){ Object.keys(o).forEach(function(k){ hows[k] = 1; }); });
+  var payRows = Object.keys(hows).sort().map(function(how){
+    var inn = agg.byPay[how] || 0, bk = outBack[how] || 0, pd = outPaid[how] || 0;
+    return [esc(how.charAt(0).toUpperCase() + how.slice(1)), String(agg.payBills[how] || 0), money(inn),
+            bk ? '\u2212' + money(bk) : '', pd ? '\u2212' + money(pd) : '', money(r2(inn - bk - pd))];
   });
-  var payTotal = Object.keys(agg.byPay).reduce(function(a, k){ return r2(a + agg.byPay[k]); }, 0);
-  var pay = dayRepTable('How it was paid', [{ label: 'Method' }, { label: 'Bills', num: true }, { label: 'Amount', num: true }],
-    payRows, ['<b>Total</b>', '', '<b>' + money(payTotal) + '</b>']);
+  var sumOf = function(o){ return Object.keys(o).reduce(function(a, k){ return r2(a + o[k]); }, 0); };
+  var payTotal = r2(sumOf(agg.byPay) - sumOf(outBack) - sumOf(outPaid));
+  var pay = dayRepTable('How the money moved', [{ label: 'Method' }, { label: 'Bills', num: true }, { label: 'Taken', num: true },
+    { label: 'Given back', num: true }, { label: 'Paid out', num: true }, { label: 'Net', num: true }],
+    payRows, ['<b>Total</b>', '', '<b>' + money(sumOf(agg.byPay)) + '</b>', sumOf(outBack) ? '<b>\u2212' + money(sumOf(outBack)) + '</b>' : '',
+              sumOf(outPaid) ? '<b>\u2212' + money(sumOf(outPaid)) + '</b>' : '', '<b data-testid="till-dayrep-net">' + money(payTotal) + '</b>']);
 
   var rateRows = Object.keys(agg.byRate).sort(function(a, b){ return Number(a) - Number(b); }).map(function(k){
     var r = agg.byRate[k];
@@ -21066,6 +21091,15 @@ async function resendBill(no){
 function isSaleRow(b){
   return !!(b && !b.tillPost && Array.isArray(b.lines) && (b.kind == null || b.kind === 'cash' || b.kind === 'tax' || b.kind === 'supply'));
 }
+/**
+ * ⭐⭐ EVERY DOCUMENT THIS COUNTER ISSUED THAT THE BOOKS MUST RECEIVE (2026-09-28, M11) — a sale, a credit note,
+ * an expense, a subscription. isSaleRow() stays the SALES allow-list (the renumber path, the sales series); this
+ * is what the day's close must account for. closeCounter() filtered through isSaleRow(), so an unsent credit note
+ * was never re-queued, never counted as outstanding, and was then destroyed with the local store.
+ */
+function isIssuedRow(b){
+  return !!(b && !b.tillPost && (isSaleRow(b) || b.kind === 'credit_note' || b.kind === 'expense' || b.kind === 'subscription'));
+}
 async function renumberBill(bill, why){
   var tries = Number(bill._renum) || 0;
   if (tries >= 20) return null;
@@ -21109,7 +21143,7 @@ async function checkAbsorbed(force){
   var bills = [];
   try { bills = (await DB.all('bills')) || []; } catch (_) { return null; }
   var sent = bills.filter(function(b){
-    return b && b._sent && b._sent.chit_id && !b._verified && isSaleRow(b)
+    return b && b._sent && b._sent.chit_id && !b._verified && isIssuedRow(b)
         && new Date(b.at).getTime() > cutoff;
   }).slice(0, 200);
   if (!sent.length) return { checked: 0, fixed: 0 };
@@ -21125,6 +21159,10 @@ async function checkAbsorbed(force){
     if (v.verdict === 'ok') { b._verified = Date.now(); try { await DB.put('bills', b); } catch (_) {} continue; }
     if (v.verdict !== 'absorbed' && v.verdict !== 'missing') continue;     /* 'unknown' is left alone */
     delete b._sent;                                                        /* it never landed — say so */
+    /* ⚠️ a credit note / expense recorded under ANOTHER counter's document is never renumbered as if it were a
+       sale, and never re-sent (client_ref would answer with the other counter's chit): it is marked, and the
+       close says so, for a person to resolve */
+    if (v.verdict === 'absorbed' && !isSaleRow(b)) { b._absorbed = v.recorded_as || true; try { await DB.put('bills', b); } catch (_) {} continue; }
     if (v.verdict === 'absorbed') {
       var m = await renumberBill(b, 'ChitBridge had recorded another counter\'s sale under ' + b.no);
       if (m) { renumbered.push(m); fixed++; continue; }
@@ -21173,7 +21211,7 @@ async function checkAbsorbedNow(){
 async function closeReadinessNow(){
   var bills = []; try { bills = ((await DB.all('bills')) || []); } catch (_) {}
   var q = []; try { q = ((await DB.allRaw('queue')) || []).filter(rowIsMine); } catch (_) {}
-  var sale = bills.filter(isSaleRow);
+  var sale = bills.filter(isIssuedRow);
   return { sent: sale.filter(function(b){ return b._sent; }).length, total: sale.length,
            waiting: q.length, inHand: (PARKED || []).length };
 }
@@ -21214,7 +21252,7 @@ async function closeCounter(already){
      */
     try {
       var inQ = {}; ((await DB.allRaw('queue')) || []).forEach(function(x){ if (x && x.no) inQ[x.no] = 1; });
-      var bare = ((await DB.all('bills')) || []).filter(function(b){ return b && isSaleRow(b) && !b._sent && !inQ[b.no]; });
+      var bare = ((await DB.all('bills')) || []).filter(function(b){ return b && isIssuedRow(b) && !b._sent && !b._absorbed && !inQ[b.no]; });
       for (var bi = 0; bi < bare.length; bi++) { if (bare[bi]._aside) delete bare[bi]._aside; await DB.put('bills', bare[bi]); await DB.put('queue', bare[bi]); }
     } catch (_) {}
     try { await HOST.drain(); } catch (_) {}
@@ -21232,8 +21270,10 @@ async function closeCounter(already){
     var bills = []; try { bills = ((await DB.all('bills')) || []); } catch (_) { why.push('the bill list could not be read'); }
     var aside = bills.filter(function(b){ return b && b._aside && !b._sent; }).length;
     if (aside) why.push(aside + ' bill(s) set aside and not sent');
-    var unconfirmed = bills.filter(function(b){ return b && isSaleRow(b) && !b._sent; }).length - aside;
-    if (unconfirmed > 0) why.push(unconfirmed + ' bill(s) never confirmed by ChitBridge');
+    var unconfirmed = bills.filter(function(b){ return b && isIssuedRow(b) && !b._sent && !b._absorbed; }).length - aside;
+    if (unconfirmed > 0) why.push(unconfirmed + ' bill(s), credit note(s) or expense(s) never confirmed by ChitBridge');
+    var absorbed = bills.filter(function(b){ return b && b._absorbed; }).length;
+    if (absorbed) why.push(absorbed + ' credit note(s) or expense(s) recorded at ChitBridge under another counter\'s number — ask the shop before closing');
     var left = 0; try { (await otherCounters()).forEach(function(s){ if (String(s.owner || '') === String(OWNER || '')) left += s.bills + s.queue; }); } catch (_) {}
     if (left) why.push(left + ' bill(s) in an earlier copy of this counter on this PC — bring them in first (🩺 → 🗄)');
     if (why.length) {
@@ -22300,12 +22340,7 @@ function retLeft(bill, n){
    * refunded against a ₹1,000 sale. printed_as is the number the customer was given, and renumbered.from is
    * where the books moved it from — both are checked, so a return follows the bill through a renumber.
    */
-  var names = [bill.no, bill.printed_as, (bill.renumbered && (bill.renumbered.from || bill.renumbered.was))]
-    .filter(Boolean).map(String);
-  var prior = [];
-  names.forEach(function(nm){ ((RET_PRIOR && RET_PRIOR[nm]) || []).forEach(function(cn){
-    if (prior.indexOf(cn) < 0) prior.push(cn); }); });
-  prior.forEach(function(cn){
+  retPriorOf(bill).forEach(function(cn){
     /* ⚠️ MATCHED ON from_line, NEVER ON POSITION — see retMoney(). A credit note carries only what came back. */
     (cn.lines || []).forEach(function(cl){
       if (cl && Number(cl.from_line) === n) back = r2(back + Math.abs(Number(cl.qty) || 0));
@@ -22313,12 +22348,44 @@ function retLeft(bill, n){
   });
   return r2(Math.max(0, had - back));
 }
+/** the credit notes already issued against this bill, under any number it has carried (renumbered, printed_as) */
+function retPriorOf(bill){
+  var names = [bill.no, bill.printed_as, (bill.renumbered && (bill.renumbered.from || bill.renumbered.was))]
+    .filter(Boolean).map(String);
+  var prior = [];
+  names.forEach(function(nm){ ((RET_PRIOR && RET_PRIOR[nm]) || []).forEach(function(cn){
+    if (prior.indexOf(cn) < 0) prior.push(cn); }); });
+  return prior;
+}
+/**
+ * ⭐ WHAT HAS ALREADY BEEN REVERSED on one line, money by money (2026-09-28, M11). retMoney() uses it to cap a
+ * return at what is LEFT of the line, and to make the LAST return exactly the remainder — see its note.
+ */
+function retBack(bill, n){
+  var out = { net: 0, taxable: 0, tax: 0, save: 0, gross: 0 };
+  retPriorOf(bill).forEach(function(cn){
+    (cn.lines || []).forEach(function(cl){
+      if (!cl || Number(cl.from_line) !== n) return;
+      Object.keys(out).forEach(function(k){ out[k] = r2(out[k] + Math.abs(Number(cl[k]) || 0)); });
+    });
+  });
+  return out;
+}
+/**
+ * ⭐ HOW FAR BACK A RETURN CAN REACH (2026-09-28, M11) — the same 30 days the Earlier tab opens on. Returns read
+ * the bills THIS counter still holds, offline; a bill older than that is said to be older, never "not here".
+ */
+var RET_DAYS = 30;
+function retBills(){
+  if (HOST && typeof HOST.local === 'function') return HOST.local(RET_DAYS);
+  return (HOST && HOST.bills) ? HOST.bills() : Promise.resolve([]);
+}
 var RET_PRIOR = null;
 /** every credit note already issued against this bill — so a shop cannot refund the same goods twice */
 async function retPriorFor(no){
   var out = {};
   try {
-    var all = (HOST && HOST.bills) ? (await HOST.bills()) : [];
+    var all = await retBills();
     all.forEach(function(b){
       if (b && b.kind === 'credit_note' && b.against && b.against.bill_no) {
         (out[b.against.bill_no] = out[b.against.bill_no] || []).push(b);
@@ -22329,9 +22396,9 @@ async function retPriorFor(no){
 }
 async function retOpen(no){
   var rows = [];
-  try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) {}
-  var bill = rows.filter(function(b){ return String(b.no) === String(no); })[0];
-  if (!bill) { toastLine('That bill is not on this counter any more.'); return; }
+  try { rows = await retBills(); } catch (_) {}
+  var bill = rows.filter(function(b){ return String(b.no) === String(no) || String(b.printed_as || '') === String(no); })[0];
+  if (!bill) { toastLine('Only bills from the last ' + RET_DAYS + ' days that were rung on this counter can be returned here.'); return; }
   if (bill.kind === 'credit_note') { toastLine('That is already a credit note.'); return; }
   RET_PRIOR = await retPriorFor(no);
   RET_FOR = bill; RET_QTY = {}; RET_WHY = 'returned';
@@ -22363,10 +22430,20 @@ function retMoney(){
     if (!(q > 0)) return;
     var had = Number(l.qty) || 0;
     var share = had > 0 ? (q / had) : 0;              /* ⭐ the SHARE, so a part return refunds a part of the line */
-    var net = r2((Number(l.net) || 0) * share);
-    var taxable = r2((Number(l.taxable) || 0) * share);
-    var tax = r2((Number(l.tax) || 0) * share);
-    var save = r2((Number(l.save) || 0) * share);
+    /**
+     * ⚠️⚠️ THE LAST RETURN IS THE REMAINDER, NOT A SHARE (2026-09-28, M11). Each part return rounded its share
+     * independently, so eight one-unit returns of a line taxed ₹12.04 reversed ₹12.08 of GST — more than was
+     * ever charged, and it is by_rate that goes to the books. Every amount is now capped at what is LEFT of the
+     * line, and the return that takes the last unit takes exactly that: the credit notes on a line sum to the
+     * line, to the paisa.
+     */
+    var back = retBack(RET_FOR, n), last = q >= retLeft(RET_FOR, n);
+    var part = function(k){
+      var orig = Math.abs(Number(l[k]) || 0), left = r2(orig - back[k]);
+      var v = last ? left : Math.min(r2(orig * share), left);
+      return r2(Math.max(0, v)) * ((Number(l[k]) || 0) < 0 ? -1 : 1);
+    };
+    var net = part('net'), taxable = part('taxable'), tax = part('tax'), save = part('save');
     /**
      * ⚠️⚠️ from_line IS NOT DECORATION. A credit note holds only the lines actually coming back, so its line 0
      * may be the original's line 3. retLeft() first matched prior credit notes BY ARRAY INDEX and would have
@@ -22375,7 +22452,7 @@ function retMoney(){
      * "already returned" means when two lines are returned separately.
      */
     out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net,
-                                          gross: r2(-(Number(l.gross) || 0) * share),
+                                          gross: -part('gross'),
                                           taxable: -taxable, tax: -tax, save: -save }));
     out.total = r2(out.total + net); out.taxable = r2(out.taxable + taxable);
     out.tax = r2(out.tax + tax); out.saved = r2(out.saved + save);
@@ -23124,6 +23201,9 @@ async function paintEarlier(){
   var r = { bills: [] };
   try { r = (HOST && HOST.history) ? (await HOST.history(days)) : { bills: [], offline: true }; } catch (_) { r = { bills: [], offline: true }; }
   var rows = (r && r.bills) || [];
+  /* ⭐ M11: which of these this counter still HOLDS — only those can be returned from here (their lines are local) */
+  var held = {};
+  try { (await retBills()).forEach(function(b){ if (b && b.kind !== 'credit_note' && b.kind !== 'expense') held[b.no] = true; }); } catch (_) {}
   var mine = WHO ? rows.filter(function(b){ return b.by && b.by.id === WHO.id; }) : rows;
   var body = '';
   if (r.offline) body = '<div style="color:var(--warn);padding:10px">The line is down, so earlier bills cannot be read. Today\'s are on this device and are still here.</div>';
@@ -23137,7 +23217,9 @@ async function paintEarlier(){
           + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(String(b.at).slice(0,10)) + ' ' + esc(String(b.at).slice(11,16)) + ' · '
           + esc(b.customer || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + '</div></span>'
           + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
-          + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')">print</button></div>';
+          + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')">print</button>'
+          + ((held[b.no] && retCanIssue()) ? '<button class="pill" data-testid="till-bill-return-' + esc(b.no) + '"'
+              + ' onclick="retOpen(\'' + esc(b.no) + '\')">return</button>' : '') + '</div>';
       }).join('');
   }
   document.getElementById('billsbody').innerHTML = body;
