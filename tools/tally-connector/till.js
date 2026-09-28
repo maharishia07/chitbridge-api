@@ -1126,9 +1126,17 @@ const server = http.createServer(async (req, res) => {
       const b = JSON.parse(raw || '{}');
       const who = String(b.email || b.user_id || '').trim();
       const otp = String(b.otp || '').replace(/[^0-9]/g, '');
-      if (otp.length !== 6) return json(res, 400, { ok: false, message: 'The code is six digits.' });
+      /**
+       * ⭐ OR A SESSION THE PAGE ALREADY HOLDS (2026-09-28). A person from ANOTHER shop signing in at this counter
+       * switches it to their shop (till.html usignOtherShop) — they have just proved who they are through the
+       * forwarded /api/entities/verify, and asking for a second code for the same proof is asking twice. The
+       * session is spent on /api/till/enrol exactly as below and kept nowhere; the server still decides whose
+       * shop that key opens.
+       */
+      const given = typeof b.token === 'string' && b.token ? b.token : null;
+      if (!given && otp.length !== 6) return json(res, 400, { ok: false, message: 'The code is six digits.' });
       try {
-        const vr = await noKey('POST', '/api/entities/verify',
+        const vr = given ? { token: given } : await noKey('POST', '/api/entities/verify',
           Object.assign({ otp: otp }, who.indexOf('@') > 0 ? { email: who } : { user_id: who }));
         const token = vr && (vr.token || vr.access_token);
         if (!token) return json(res, 200, { ok: false, message: 'That code was not accepted. Ask for a new one.' });

@@ -17547,13 +17547,9 @@ async function signoutDo(force){
       '<p class="note"><b>' + esc(r.message || 'Signed out.') + '</b></p>'
     + '<p class="note">This counter is restarting. It will come back with no shop, ready to be signed in.</p>';
   signinSay('', false);
-  var tries = 0;
-  (function again(){
-    tries++;
-    fetch('/api/state', { cache:'no-store' }).then(function(x){ if (x.ok) { location.reload(); return; } throw new Error('no'); })
-      .catch(function(){ if (tries < 30) setTimeout(again, 700);
-        else signinSay('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.', true); });
-  })();
+  /* ⚠️ `!st.paired`: the old process is still up for 400 ms and would answer first, still signed in */
+  counterRestarted(function(st){ return !(st && st.paired); },
+    function(){ signinSay('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.', true); });
 }
 /**
  * ⚠️ THE BROWSER COUNTER keeps its key in this device's own storage, so signing out is local — but the unsent
@@ -23319,6 +23315,7 @@ async function usignVerify(){
    * usignEnrolIfNeeded() no-ops instantly on an agent host or an already-paired browser, so this line changes
    * nothing for the ordinary, every-shift sign-in — it only fires the one time this device has never met a key.
    */
+  if (await usignOtherShop(r.body)) return;
   if (!(await usignEnrolIfNeeded(r.body.token))) { usignPaint(); return; }
   /* ⭐⭐ THE ENGINE TAKES THE IDENTITY AND DROPS THE TOKEN. 'counter', not 'session' — deliberately. */
   var k = SIGN().keep('counter', r.body);
@@ -23390,6 +23387,102 @@ async function usignEnrolIfNeeded(token){
   S = null;
   toastLine('Paired with ' + ((r.body.shop && r.body.shop.name) || 'the shop') + ' — counter ' + tillId() + '.');
   return true;
+}
+
+/**
+ * ── ⚠️⚠️⚠️ A DIFFERENT SHOP SIGNING IN SWITCHES THE WHOLE COUNTER, OR SIGNS NOBODY IN (2026-09-28) ─────────────
+ *
+ * Athi: signed in to shop X, loaded products, signed out, signed in to another shop — *"still i could see the
+ * products of shop x. … if the shop credentials are different, then the till has to switch to new shop and it
+ * should not allow to carry on."*
+ *
+ * ⚠️⚠️ usignEnrolIfNeeded() trusts any key already held, so a person from shop Y was ADOPTED onto shop X's
+ * counter: X's shelf, X's key, and Y's name on bills filed as X. Nothing compared the two because nothing could:
+ * the sign-in answer never said which shop a person belongs to (lib/identity-auth.js personShape now does).
+ * ⭐ TWO OUTCOMES ONLY. The person and the counter are the same shop, or the counter becomes the person's shop.
+ * There is no third state where somebody is "signed in" to a shop that is not theirs.
+ * ⭐⭐ THE SWITCH IS A RELOAD, NEVER A REPAINT — the proven start-up path opens the new shop ([TILL-15]). A repaint
+ * carries the bill in hand, the day totals and WHO across, which is this fault again under another name.
+ * ⚠️ X's unsent bills are not touched. The browser's store is named per KEY and the desktop's folder per SHOP,
+ * so they wait where they are; when X signs in here again the counter offers "Bring N bills" (rescueOrphans).
+ * [[feedback-shop-scoped-local-store]] [[project-till-store-per-key]]
+ *
+ * Returns true when it has dealt with the sign-in (switched, or refused), false to carry on as before.
+ */
+function usignShopOf(answer){ var id = (answer && answer.identity) || {}; return id.entity_id || null; }
+async function usignOtherShop(answer){
+  if (!paired()) return false;                    /* no shop yet — the ordinary first sign-in pairs it */
+  var mine = S && S.entity_id, theirs = usignShopOf(answer);
+  /* ⚠️ cannot tell — an older server, or a counter that has never read its shop. As before: the server still
+     scopes every call to this key, so the worst case is the old behaviour, never a new leak. */
+  if (!mine || !theirs || String(mine) === String(theirs)) return false;
+  var here = (S.shop && S.shop.name) || 'this shop';
+  var q = Number((STATE && STATE.queued) || 0);
+  var ok = await sure('This counter is ' + here + '. You signed in to a different shop.\n\n'
+    + (q ? q + ' unsent bill' + (q > 1 ? 's stay' : ' stays') + ' with ' + here + ' until it signs in here again.'
+         : 'Nothing of ' + here + ' is lost.'),
+    'Switch to your shop', 'A different shop', 'Stay ' + here);
+  if (!ok) { USIGN = { sent: false, refused: 'Nobody signed in. This counter stays ' + here + '.', person: null,
+                       who: '', busy: false, usePin: false }; usignPaint(); return true; }
+
+  if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return usignSwitchAgent(answer);
+  /* the browser: the same enrol the first sign-in makes, forced, then the key is this shop's and S is gone */
+  USIGN.forceEnrol = true;
+  if (!(await usignEnrolIfNeeded(answer.token))) { usignPaint(); return true; }
+  usignKeepWho(answer);                           /* shopLs() is namespaced by the NEW key by now */
+  location.reload();
+  return true;
+}
+/** the person who just switched the counter stays signed in on the other side of the reload */
+function usignKeepWho(answer){
+  var k = SIGN().keep('counter', answer); if (!k.ok) return;
+  var p = k.person;
+  try { ls.set(shopLs('cb_till_who'), JSON.stringify({ id: p.id, name: p.name, kind: p.kind,
+                                                        since: new Date().toISOString(), float: 0 })); } catch (_) {}
+}
+/**
+ * ⚠️ THE SHOP PC HOLDS ITS KEY ON ITS OWN SIDE, so the page hands the program the session it just got and the
+ * program enrols with it — the same /api/signin/finish the connect flow uses, given a token instead of a code
+ * (a second code for the same person would be asking twice for one proof). It saves the key and RESTARTS,
+ * because its folder was chosen at boot from the old key ([TILL-120]).
+ */
+async function usignSwitchAgent(answer){
+  var post = function(extra){
+    return fetch('/api/signin/finish', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ token: answer.token }, extra || {})) })
+      .then(function(x){ return x.json(); }).catch(function(){ return null; });
+  };
+  var r = await post();
+  if (r && r.held) {
+    var ok = await sure('Counter ' + (r.counter || tillId()) + ' is already open on '
+      + ((r.held_by && r.held_by.name) || 'another device') + '.\n\nTaking it over stops that device sending any more bills.',
+      'Take it over', 'Counter ' + (r.counter || tillId()));
+    if (!ok) { USIGN.refused = 'Nothing changed. This counter stays ' + ((S && S.shop && S.shop.name) || 'as it was') + '.';
+               usignPaint(); return true; }
+    r = await post({ takeover: true });
+  }
+  if (!r || !r.ok) { USIGN.refused = (r && r.message) || 'This PC could not reach the counter program.'; usignPaint(); return true; }
+  usignKeepWho(answer);                           /* the desktop's shopLs is not keyed — this IS the new shop's slot */
+  USIGN.refused = ''; usignClose();
+  toastLine('Opening ' + ((r.shop && r.shop.name) || 'your shop') + '…');
+  var was = JSON.stringify((STATE && STATE.shop) || null);
+  counterRestarted(function(st){ return JSON.stringify((st && st.shop) || null) !== was; },
+    function(){ toastLine('The counter did not come back on its own. Double-click “ChitBridge counter” to start it again.'); });
+  return true;
+}
+/**
+ * ⭐ WAIT FOR THE PROGRAM TO COME BACK, THEN RELOAD — one loop for every restart the page asks for (sign out,
+ * switch shop). `changed(state)` says the NEW process is the one answering; without it the old one, still up
+ * for 400 ms, answers first and the page reloads into the shop it was leaving.
+ */
+function counterRestarted(changed, gaveUp){
+  var tries = 0;
+  (function again(){
+    tries++;
+    fetch('/api/state', { cache: 'no-store' }).then(function(x){ if (!x.ok) throw new Error('no'); return x.json(); })
+      .then(function(st){ if (!changed || changed(st)) { location.reload(); return; } throw new Error('old'); })
+      .catch(function(){ if (tries < 30) setTimeout(again, 700); else if (gaveUp) gaveUp(); });
+  })();
 }
 
 /**
