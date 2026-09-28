@@ -1,6 +1,10 @@
 {
-  "$comment": "The engines this platform ADOPTS from chitbridge-engines, and at which version. Change \"version\", then run: node ../chitbridge-engines/tools/adopt.cjs . — never edit an adopted file.",
-  "version": "1.1.0",
+  "$comment": "The engines this platform ADOPTS from chitbridge-engines — ONE PIN PER ENGINE, so a rollout moves one engine at a time. Change a pin, then run: node ../chitbridge-engines/tools/adopt.cjs . — never edit an adopted file.",
+  "pins": {
+    "money": "1.0.0",
+    "tax-slab": "1.1.0",
+    "tax": "1.1.0"
+  },
   "adopt": {
     "money": [
       "lib/money.js"
