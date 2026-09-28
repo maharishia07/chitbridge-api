@@ -109,6 +109,39 @@ it('the shop PC has ONE sign-in: its own connect dialog is retired, "sign in aga
   assert.ok(/function pairAgain\(\)\{[\s\S]{0,400}return usignOpen\(true\);\n\}/.test(PAGE), 'pairAgain opens something else on some host');
 });
 
+console.log('\nS1b · WHAT BELONGS TO A SHOP IS STORED UNDER THE SHOP — on the shop PC too\n');
+
+it('the shop PC names its slot after the shop the program reports (it holds no key to hash)', () => {
+  const ts = body(PAGE, 'function tillStore(').text;
+  assert.ok(/HOST === AgentHost[\s\S]{0,200}STATE\.shop\.bridge_id/.test(ts), 'tillStore() still gives every shop on a PC the same name');
+});
+
+it('the page learns the PC\'s shop BEFORE anything reads a shop-scoped value', () => {
+  const ph = body(PAGE, 'async function pickHost(').text;
+  assert.ok(/STATE = st; HOST = AgentHost; shopSlotMove\(\); return AgentHost;/.test(ph), 'pickHost returns the agent before the shop is known');
+});
+
+it('every name shopLs() is asked for is in SHOP_KEYS — or the one-time move leaves it behind', () => {
+  const m = PAGE.match(/var SHOP_KEYS = \[([^\]]*)\]/);
+  assert.ok(m, 'SHOP_KEYS is gone');
+  const listed = m[1].match(/'[a-z_]+'/g).map((x) => x.slice(1, -1));
+  const used = Array.from(new Set((PAGE.match(/shopLs\('[a-z_]+'\)/g) || []).map((x) => x.slice(8, -2))));
+  const draft = (PAGE.match(/DRAFT_KEY = '([a-z_]+)'/) || [])[1]; if (draft) used.push(draft);
+  const missing = used.filter((k) => listed.indexOf(k) < 0);
+  assert.deepStrictEqual(missing, [], 'shop-scoped names not in SHOP_KEYS: ' + missing.join(', '));
+});
+
+it('⚠️ the move happens ONCE and only into an EMPTY slot — a later switch never sweeps anything into a shop', () => {
+  const mv = body(PAGE, 'function shopSlotMove(').text;
+  assert.ok(/localStorage\.getItem\('cb_till_slotmoved'\)\) return/.test(mv), 'the move is not once-only');
+  assert.ok(/if \(!filled\)/.test(mv), 'the move writes into a slot that already has values');
+});
+
+it('⚠️⚠️ parked bills are read again once the shop is known (they were read before the key and then saved over)', () => {
+  const ld = body(PAGE, 'async function load(').text;
+  assert.ok(/whoLoad\(\); breakLoad\(\); changedLoad\(\); parkedLoad\(\);/.test(ld), 'load() does not re-read parked bills after pickHost');
+});
+
 console.log('\nG1 · the program\n');
 
 it('connector.json\'s key is written in ONE place (enrol) and removed in ONE place (sign out)', () => {

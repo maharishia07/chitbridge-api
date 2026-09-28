@@ -3884,6 +3884,34 @@ var ls = { last:null,
  * ⚠️ The rule is one line long and it is worth stating out loud: **anything read out of the shop is stored under the shop.**
  */
 function shopLs(k){ var st = tillStore(); return st === 'cb-till' ? k : (k + '@' + st.slice(8)); }
+/**
+ * ⭐ EVERY NAME shopLs() IS ASKED FOR — the shop's half of the device/shop split, written down so the one-time move
+ * below knows what to carry. ⚠️ tests/counter-gates.test.cjs fails if a shopLs('…') name is missing from here.
+ */
+var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_till_catorder', 'cb_till_changed',
+  'cb_till_counter_name', 'cb_till_dayicon', 'cb_till_dayimg', 'cb_till_daystart', 'cb_till_draft', 'cb_till_given',
+  'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
+  'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
+  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who'];
+/**
+ * ⚠️ ONCE, ON THE FIRST START OF THIS CODE ON A SHOP PC: the values it kept under plain names before S1b belong to
+ * the shop it held then, which is the shop it holds now — they are MOVED into that shop's slot. Only into an EMPTY
+ * slot (the same rule till.js keeps for folders), and never again after: a later switch to another shop must not
+ * sweep anything into it. The marker is device-wide on purpose.
+ */
+function shopSlotMove(){
+  try {
+    if (localStorage.getItem('cb_till_slotmoved')) return;
+    var st = tillStore(); if (st === 'cb-till') return;           /* unpaired — nothing to move yet, try next start */
+    var filled = SHOP_KEYS.some(function(k){ return localStorage.getItem(shopLs(k)) != null; });
+    var moved = 0;
+    if (!filled) SHOP_KEYS.forEach(function(k){
+      var v = localStorage.getItem(k);
+      if (v != null) { localStorage.setItem(shopLs(k), v); localStorage.removeItem(k); moved++; }
+    });
+    localStorage.setItem('cb_till_slotmoved', st + (filled ? ' (slot already had values — nothing moved)' : ' · ' + moved + ' moved'));
+  } catch (_) {}
+}
 
 /**
  * ── ⭐⭐⭐ R2 · THE RETRY LADDER ([TILL-47], 2026-09-18) ─────────────────────────────────
@@ -3981,8 +4009,19 @@ function drainSoon(rows){
  * rather than destroyed — a queued sale is money, and wiping on switch would have thrown it away.
  */
 function tillStore(){
+  /**
+   * ⚠️⚠️ THE SHOP PC HAD NO SLOT AT ALL (S1b, 2026-09-28). The page there never holds the key, so this answered
+   * 'cb-till' for every shop — and shopLs() below scoped NOTHING: parked bills, open orders, who is on, the day's
+   * start, all under one device-wide name. A PC switched from shop X to Y showed X's parked bills in Y, and
+   * finishing one billed X's items as Y. The program reports its shop off its own key (offline, no network), and
+   * that bridge id names the slot. Unpaired, there is no shop and nothing shop-scoped to keep.
+   */
+  if (typeof HOST !== 'undefined' && typeof AgentHost !== 'undefined' && HOST === AgentHost) {
+    var b = STATE && STATE.shop && STATE.shop.bridge_id;
+    return b ? 'cb-till-pc-' + String(b).replace(/[^A-Za-z0-9_-]/g, '') : 'cb-till';
+  }
   var k = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) ? String(CloudHost.key) : '';
-  if (!k) return 'cb-till';                       /* the desktop kit keeps its copy on the agent side, not in here */
+  if (!k) return 'cb-till';                       /* no key — nothing belongs to a shop yet */
   var h = 5381;                                    /* djb2 — a name, not a secret: the key itself never goes near a store name */
   for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0);
   return 'cb-till-' + h.toString(36);
@@ -5781,7 +5820,9 @@ function chitOf(bill){
 async function pickHost(){
   try {
     var r = await fetch('/api/state', { cache:'no-store' });
-    if (r.ok) { var st = await r.json(); if (st && ('queued' in st)) return AgentHost; }
+    if (r.ok) { var st = await r.json();
+      /* ⚠️ the shop is learned HERE, before anything reads a shop-scoped value — tillStore() names the slot from it */
+      if (st && ('queued' in st)) { STATE = st; HOST = AgentHost; shopSlotMove(); return AgentHost; } }
   } catch (_) {}
   CloudHost.api = ls.get('cb_till_api', (location.origin.indexOf('localhost') >= 0 ? 'https://chitbridge-api-production.up.railway.app' : (window.CB_API || 'https://chitbridge-api-production.up.railway.app')));
   CloudHost.key = ls.get('cb_till_key', null);
@@ -5910,7 +5951,10 @@ async function load(){
        stored under shopLs(), the boot call at the bottom of the file runs before pickHost has learned the key,
        so it looked under the fallback name, found nothing, and the morning's changes vanished on every reload.
        The comment above has warned about this since [TILL-25] and I still walked into it. */
-    try { whoLoad(); breakLoad(); changedLoad(); } catch (_) {}
+    /* ⚠️⚠️ AND THE PARKED BILLS — the FOURTH list caught by this exact timing (2026-09-28, found building S1b).
+       parkedLoad() ran only at the bottom of the file, before the key, so it read the plain name, found nothing,
+       and the next park SAVED OVER the shop's real list: parked customers vanished on reload, then were lost. */
+    try { whoLoad(); breakLoad(); changedLoad(); parkedLoad(); } catch (_) {}
   }
   /**
    * ⚠️⚠️ NOT ONE LINE EARLIER THAN THIS. The owner and any refusal are read HERE, after pickHost, because pickHost is what learns
