@@ -264,7 +264,7 @@ const COPIES = () => [
    * telling it a field is blank.
    * ⚠️ It is already a classic script that assigns root.CBJurisdiction itself, so the wrapper only isolates it.
    */
-  [path.join(API, 'lib', 'jurisdiction.js'), path.join(WEB, 'engine', 'jurisdiction.js'), 'copy'],
+  /* jurisdiction: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   [null, path.join(WEB, 'engine', 'convert.js'),
     wrapForBrowser('convert.js', 'CBConvert', { './money': 'CBMoney', './units': 'CBUnits' })],
   /* lots: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
