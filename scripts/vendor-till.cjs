@@ -267,7 +267,7 @@ const COPIES = () => [
   [path.join(API, 'lib', 'jurisdiction.js'), path.join(WEB, 'engine', 'jurisdiction.js'), 'copy'],
   [null, path.join(WEB, 'engine', 'convert.js'),
     wrapForBrowser('convert.js', 'CBConvert', { './money': 'CBMoney', './units': 'CBUnits' })],
-  [null, path.join(WEB, 'engine', 'lots.js'), wrapForBrowser('lotfields.js', 'CBLots')],
+  /* lots: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐ THE CLOSED CLASS — numerals, in English and in transliterated Tamil ("rendu" is 2, and "oru" is 1 only when no other numeral
      follows it). It is the platform's own table, already trusted by the WhatsApp path; a counter that heard "two kilo" and wrote 1
      would be a second opinion about a number, which lib/numerals exists to prevent. */
@@ -312,7 +312,6 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'orderhub.browser.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
-  [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],
   [null, path.join(WEB, 'till-icon.svg'), ICON],

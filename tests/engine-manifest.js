@@ -543,7 +543,6 @@ const ENGINE_OTHER = [
   'lotfields.js',
   /* GENERATED beside it, for the counter: the tolerance rule must have ONE definition, because the door decides and the match
      decides afterwards and those two must never disagree (scripts/vendor-till.cjs). */
-  'lotfields.browser.js',
   /* GENERATED beside lib/numerals.js: the closed class — numerals in English and transliterated Tamil — so a counter that hears
      "two kilo" writes 2 and not a second opinion about a number (scripts/vendor-till.cjs). */
   'numerals.browser.js',

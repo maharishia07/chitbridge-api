@@ -179,14 +179,15 @@ it('⚠️ it is ABSORBED, not hidden — the words say what happened', () => {
 });
 
 it('the counter and the match read the SAME rule', () => {
-  /* the browser copy the counter loads is generated from this file — if they ever diverge, this is where it shows */
+  /* ⭐ 2026-09-28: there is no second copy to diverge — the counter and the server load the SAME adopted file
+     (chitbridge-engines v1.5.0). What is left to prove is that it is the file the counter is served, and that it hands
+     the page the rule. */
   const path = require('path');
-  const gen = fs.readFileSync(path.join(__dirname, '..', 'lib', 'lotfields.browser.js'), 'utf8');
-  assert.ok(gen.indexOf('function withinTolerance') > 0, 'the counter has no tolerance rule');
-  assert.ok(gen.indexOf('window.CBLots') > 0, 'the page is never handed the rule');
-  const master = fs.readFileSync(path.join(__dirname, '..', 'lib', 'lotfields.js'), 'utf8').replace(/\r\n/g, '\n');
-  const inner = master.replace(/module\.exports\s*=/, 'var EXPORTS =');
-  assert.ok(gen.indexOf(inner) > 0, 'the counter is running a different copy — run node scripts/vendor-till.cjs');
+  const one = fs.readFileSync(path.join(__dirname, '..', 'lib', 'lotfields.js'), 'utf8');
+  assert.ok(one.indexOf('function withinTolerance') > 0, 'the counter has no tolerance rule');
+  assert.ok(one.indexOf('window.CBLots') > 0, 'the page is never handed the rule');
+  const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  assert.ok(/lots:\s*'\.\.\/lib\/lotfields\.js'/.test(route), 'the shop PC is served some other copy of the lot rules');
 });
 
 console.log(pass + ' checks');
