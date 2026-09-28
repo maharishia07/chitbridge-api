@@ -291,7 +291,7 @@ const COPIES = () => [
   /* rewards: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐ THE SCREEN LIBRARY (2026-09-17) — themes, tiles, pickers, layouts, presets. A UMD like rewards.js, so copied, not wrapped;
      on the till's shelf because the counter draws its keys with it, line or no line. */
-  [path.join(API, 'lib', 'screen-kit.js'), path.join(WEB, 'engine', 'screen.js'), 'copy'],
+  /* screen: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /**
    * ⚠️⚠️ AND THE SHOP PC HAS TO BE ABLE TO SERVE EVERY ONE OF THEM (2026-09-17). The desktop counter fetched and served FOUR
    * engines (offers, tax, search, gs1) while the page loads thirteen — so on a shop PC money, the bill-number rules, pricing,
