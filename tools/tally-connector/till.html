@@ -3399,8 +3399,8 @@
     <div style="font-size:3em;line-height:1">☕</div>
     <div style="font-size:1.4em;font-weight:700" id="breaktitle">On break</div>
     <div style="color:var(--dim)" id="breakwho"></div>
-    <div style="color:var(--dim);font-size:.85em">This counter stays with this PC. Bills already taken keep going. Nothing can be billed until the break ends.</div>
-    <button class="pill" style="font-size:1.1em;padding:12px 18px" data-testid="till-break-end" onclick="endBreak()"><b>Back to billing</b></button>
+    <div style="color:var(--dim);font-size:.85em">This counter stays with this PC. Bills already taken keep going. Sign in to carry on.</div>
+    <button class="pill" style="font-size:1.1em;padding:12px 18px" data-testid="till-break-end" onclick="lockOpen()" title="Sign in to carry on — a counter PIN works without the internet"><b>🔓 Back to billing</b></button>
   </div>
 </div>
 <!-- ⭐⭐⭐ SIGNING A PERSON IN ([TILL-183]). Athi: *"what we need is a user id screen same as our back
@@ -5446,7 +5446,8 @@ async function tillGivenOK(){
   return await tillIssued();
 }
 async function tillStopped(){
-  if (BREAK) { paintBreak(); return true; }        /* ☕ nobody is at the counter */
+  if (BREAK) { paintLock(); return true; }         /* ☕ nobody is at the counter */
+  if (typeof LOCK !== 'undefined' && LOCK) { paintLock(); return true; }   /* 🔒 nobody has signed in to it */
   if (!(await tillGivenOK())) {
     say('This counter has not been given its number yet.\n\n'
       + 'A new counter needs the internet once, so ChitBridge can give it a number no other counter uses. '
@@ -23800,21 +23801,40 @@ function whoPick(id, name, kind){
  */
 var LOCK = null;
 function lockKey(){ return shopLs('cb_till_lock'); }
-function lockLoad(){ try { LOCK = JSON.parse(ls.get(lockKey(), 'null')); } catch (_) { LOCK = null; } paintLock(); }
+function lockLoad(){
+  try { LOCK = JSON.parse(ls.get(lockKey(), 'null')); } catch (_) { LOCK = null; }
+  /* ⚠️ a counter already on a break when this version arrived: the break becomes the lock it now is */
+  if (!LOCK && typeof BREAK !== 'undefined' && BREAK) { lockNow('break'); return; }
+  paintLock();
+}
+/**
+ * ⭐ ONE PAINTER, TWO COVERS. ☕ A BREAK IS A LOCK (Athi, 2026-09-28: *"make break a lock too"*) — the same state,
+ * the same way back (a sign-in), shown with the break's own words so the shop and the cashier can tell them apart.
+ */
 function paintLock(){
   var c = document.getElementById('lockcover'); if (!c) return;
-  c.hidden = !LOCK;
+  var brk = document.getElementById('breakcover');
+  var isBreak = !!(LOCK && LOCK.reason === 'break');
+  c.hidden = !LOCK || isBreak;
+  if (brk) brk.hidden = !isBreak;
   var b = document.getElementById('lockbtn'); if (b) b.hidden = !!LOCK;
   if (!LOCK) return;
+  if (isBreak) {
+    var nb = ls.get(shopLs('cb_till_counter_name'), '');
+    document.getElementById('breaktitle').textContent = 'Counter ' + tillId() + (nb ? ' · ' + nb : '') + ' — on break';
+    document.getElementById('breakwho').textContent = (LOCK.by ? LOCK.by + ' · ' : '')
+      + 'since ' + new Date(LOCK.since).toTimeString().slice(0, 5);
+    return;
+  }
   var nm = ls.get(shopLs('cb_till_counter_name'), '');
   document.getElementById('locktitle').textContent = 'Counter ' + tillId() + (nm ? ' · ' + nm : '') + ' — locked';
   document.getElementById('lockwho').textContent = (LOCK.by ? LOCK.by + ' · ' : '')
     + 'since ' + new Date(LOCK.since).toTimeString().slice(0, 5);
 }
-/** 🔒 — the only writer of a lock */
-function lockNow(){
+/** 🔒 — the only writer of a lock. `reason` 'break' paints the ☕ cover. */
+function lockNow(reason){
   if (LOCK) { paintLock(); return; }
-  LOCK = { since: new Date().toISOString(), by: (WHO && WHO.name) || null, id: (WHO && WHO.id) || null };
+  LOCK = { since: new Date().toISOString(), by: (WHO && WHO.name) || null, id: (WHO && WHO.id) || null, reason: reason || null };
   try { ls.set(lockKey(), JSON.stringify(LOCK)); } catch (_) {}
   try { closeMenu(); } catch (_) {}
   paintLock();
@@ -23842,6 +23862,8 @@ function lockLift(){
  * their bill — and anybody else is a shift change (usignAdopt). Either way the lock lifts.
  */
 function personIn(p){
+  /* ☕ closed FIRST — its minutes belong to the shift that took the break, whoever comes back */
+  if (typeof BREAK !== 'undefined' && BREAK) endBreak();
   if (!(WHO && p && String(WHO.id) === String(p.id))) usignAdopt(p);
   lockLift();
 }
@@ -23849,24 +23871,15 @@ function personIn(p){
 window.addEventListener('keydown', function(e){
   if (!LOCK) return;
   var t = e.target;
-  if (t && t.closest && (t.closest('dialog[open]') || t.closest('#lockcover'))) return;
+  if (t && t.closest && (t.closest('dialog[open]') || t.closest('#lockcover') || t.closest('#breakcover'))) return;
   e.preventDefault(); e.stopImmediatePropagation();
 }, true);
 var BREAK = null;
 function breakKey(){ return shopLs('cb_till_break'); }
 function breakLoad(){
   try { BREAK = JSON.parse(ls.get(breakKey(), 'null')); } catch (_) { BREAK = null; }
-  paintBreak();
 }
-function paintBreak(){
-  var c = document.getElementById('breakcover'); if (!c) return;
-  c.hidden = !BREAK;
-  if (!BREAK) return;
-  var nm = ls.get(shopLs('cb_till_counter_name'), '');
-  document.getElementById('breaktitle').textContent = 'Counter ' + tillId() + (nm ? ' · ' + nm : '') + ' — on break';
-  document.getElementById('breakwho').textContent = (BREAK.by ? BREAK.by + ' · ' : '')
-    + 'since ' + new Date(BREAK.since).toTimeString().slice(0, 5);
-}
+/* paintBreak() retired 2026-09-28 — the break is a lock; paintLock() draws its ☕ cover */
 /** tell ChitBridge, so the shop's Counters screen can say "on break" — best effort, a break never waits for the line */
 function breakTell(state){
   try {
@@ -23876,14 +23889,15 @@ function breakTell(state){
   } catch (_) {}
 }
 function takeBreak(){
-  if (BREAK) { paintBreak(); return; }
+  if (BREAK) { paintLock(); return; }
   /* ⚠️ the bill on the screen is parked, not lost — a break is exactly when a half-rung basket gets forgotten */
   if (CART.length) { try { parkBill(); toastLine('The bill on the screen was parked (F6 list) for when you are back.'); } catch (_) {} }
   BREAK = { since: new Date().toISOString(), by: (WHO && WHO.name) || null };
   ls.set(breakKey(), JSON.stringify(BREAK));
   try { document.getElementById('whodlg').close(); } catch (_) {}
-  paintBreak();
   breakTell('break');
+  /* ☕ AND IT LOCKS — nobody bills on a counter whose cashier is away; coming back is a sign-in */
+  lockNow('break');
 }
 function endBreak(){
   if (!BREAK) return;
@@ -23895,7 +23909,6 @@ function endBreak(){
   }
   BREAK = null;
   ls.set(breakKey(), '');
-  paintBreak();
   breakTell('billing');
   toastLine('Back to billing' + (mins ? ' after ' + mins + ' min' : '') + '.');
   focusSearch();

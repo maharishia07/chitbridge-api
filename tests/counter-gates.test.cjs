@@ -229,6 +229,13 @@ it('the engine\'s unlock door opens the one sign-in', () => {
   assert.ok(/usignOpen\(\);/.test(body(PAGE, 'function lockOpen(').text), 'unlock is its own dialog instead of the sign-in');
 });
 
+it('☕ a break IS a lock: taking one locks, and only a sign-in (personIn) ends it', () => {
+  assert.ok(/lockNow\('break'\);\n\}/.test(body(PAGE, 'function takeBreak(').text), 'a break no longer locks');
+  const w = outsideAll(PAGE, /\bendBreak\(\)/, ['function personIn(', 'function endBreak(']);
+  assert.deepStrictEqual(w, [], 'a break ends without a sign-in:\n      ' + w.join('\n      '));
+  assert.ok(!/onclick="endBreak\(\)"/.test(PAGE), 'a button ends the break on a tap again');
+});
+
 console.log('\nG1 · the program\n');
 
 it('connector.json\'s key is written in ONE place (enrol) and removed in ONE place (sign out)', () => {
