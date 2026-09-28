@@ -2454,7 +2454,8 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                   rewards: '../lib/rewards.js',      /* ⚠️ THE MASTER ITSELF — it is a UMD and needs no browser wrapper */
                   /* ⭐ 2026-09-17: the rest of what the page loads — a shop PC had none of these (scripts/vendor-till.cjs) */
                   screen: '../lib/screen-kit.js',     /* the screen library — a UMD, the master itself */
-                  money: '../lib/money.browser.js', docnumber: '../lib/docnumber.browser.js',
+                  money: '../lib/money.js',   /* ⭐ ADOPTED from chitbridge-engines — one file for node and the page, no wrapper */
+                  docnumber: '../lib/docnumber.browser.js',
                   locale: '../lib/locale.browser.js', pricing: '../lib/pricing.browser.js',
                   /* ⭐ VARIANTS — what makes two combinations the SAME thing to sell. A shop PC bills
                      combinations with the line down, so it needs the rule locally like every other engine. */

@@ -175,7 +175,10 @@ const COPIES = () => [
    * on the server since 2026-07-31 and was the only engine of its kind not vendored. Athi, 2026-09-11: 'remove
    * any duplicate code, call it perfectly.'
    */
-  [null, path.join(WEB, 'engine', 'money.js'), wrapForBrowser('money.js', 'CBMoney')],
+  /* ⭐⭐⭐ MONEY IS NO LONGER WRITTEN HERE (2026-09-28). It is the first engine in chitbridge-engines — one file that runs
+     in node AND a page — and every platform ADOPTS a tagged version of it (engines.lock.json, tools/adopt.cjs in that
+     repo). This line used to wrap lib/money.js for the page; a second writer of the same file would be the drift the
+     move exists to end. [[SPEC-one-engine]] */
   /**
    * ⭐⭐⭐ ELEVENTH ENGINE — WHAT A DOCUMENT NUMBER MAY LOOK LIKE, and it is vendored for the one reason that
    * matters: THE COUNTER NUMBERS ITS OWN BILLS, OFFLINE. The rule cannot live only on the server, because the
@@ -291,7 +294,7 @@ const COPIES = () => [
    * the QR and the rest were simply absent, and the page said so in its note for good. These copies are what
    * GET /api/till/engine/:name hands the program (routes/till.js ENGINES); the web serves its own /engine/ copies.
    */
-  [null, path.join(API, 'lib', 'money.browser.js'), wrapForBrowser('money.js', 'CBMoney')],
+  /* money: the shop PC is handed lib/money.js itself — adopted from chitbridge-engines, it already runs in a page */
   [null, path.join(API, 'lib', 'docnumber.browser.js'), wrapForBrowser('docnumber.js', 'CBDoc')],
   /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
   [null, path.join(API, 'lib', 'locale.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'locale.js'), 'utf8'))],

@@ -1,0 +1,12 @@
+{
+  "$comment": "The engines this platform ADOPTS from chitbridge-engines, and at which version. Change \"version\", then run: node ../chitbridge-engines/tools/adopt.cjs . — never edit an adopted file.",
+  "version": "1.0.0",
+  "adopt": {
+    "money": [
+      "lib/money.js"
+    ]
+  },
+  "sha256": {
+    "money": "1d27c14c8a7240e035e916537fbd77ce945b9083c6efa9d9ec2f579f9ba58e5a"
+  }
+}
