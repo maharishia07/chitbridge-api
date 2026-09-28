@@ -183,7 +183,7 @@ console.log('\nG2 · THE COUNTER PIN — kept per shop, never the PIN itself\n')
 it('the PIN book is written in ONE place, under the shop', () => {
   const w = outside(PAGE, /shopLs\('cb_till_pins'\)/, body(PAGE, 'function pinBookSave('), ['function pinBook(){']);
   assert.deepStrictEqual(w, [], 'the PIN book is touched outside pinBook/pinBookSave:\n      ' + w.join('\n      '));
-  assert.ok(/'cb_till_pins'\]/.test(PAGE.match(/var SHOP_KEYS = \[[^\]]*\]/)[0]), 'the PIN book is not a SHOP key');
+  assert.ok(/'cb_till_pins'[,\]]/.test(PAGE.match(/var SHOP_KEYS = \[[^\]]*\]/)[0]), 'the PIN book is not a SHOP key');
 });
 
 it('⚠️⚠️ what goes into the book comes from the engine (pinEntry / pinAfter) — a salt and a hash, never the PIN', () => {
@@ -198,6 +198,35 @@ it('⭐ the counter\'s own PIN is tried FIRST, and it works with the line down',
   const pinAt = ask.indexOf('SIGN().pinFind('), netAt = ask.indexOf("usignPost('/api/entities/register'");
   assert.ok(pinAt > 0 && netAt > pinAt, 'the network is asked before this counter\'s own PIN');
   assert.ok(/if \(!lineUp\(\)\)/.test(ask.slice(pinAt, netAt)), 'offline with no PIN is not refused in words');
+});
+
+console.log('\nS3/S4 · 🔒 LOCK · 🔓 UNLOCK — the lock is the one sign-in over a covered screen\n');
+
+it('a lock is written only by lockNow and lifted only by lockLift, under the shop', () => {
+  const w = outsideAll(PAGE, /ls\.set\(lockKey\(\)/, ['function lockNow(', 'function lockLift(']);
+  assert.deepStrictEqual(w, [], 'another writer of the lock:\n      ' + w.join('\n      '));
+  assert.ok(/'cb_till_lock'[,\]]/.test(PAGE.match(/var SHOP_KEYS = \[[^\]]*\]/)[0]), 'the lock is not a SHOP key — it would not survive a reload per shop');
+});
+
+it('⭐ only a PROVED person lifts it: lockLift is called by personIn, and personIn by the sign-in alone', () => {
+  const w = outsideAll(PAGE, /\blockLift\(\)/, ['function personIn(', 'function lockLift(']);
+  assert.deepStrictEqual(w, [], 'the lock comes off without a sign-in:\n      ' + w.join('\n      '));
+  const w2 = outsideAll(PAGE, /\bpersonIn\(\w/, ['async function usignVerify(', 'async function usignVerifyLocal(', 'function personIn(']);
+  assert.deepStrictEqual(w2, [], 'something other than the sign-in lets a person in:\n      ' + w2.join('\n      '));
+});
+
+it('⚠️⚠️ nothing behind the cover is reachable by keyboard ([TILL-30]: Escape once cleared a bill)', () => {
+  assert.ok(/window\.addEventListener\('keydown', function\(e\)\{\n  if \(!LOCK\) return;[\s\S]{0,300}e\.stopImmediatePropagation\(\);\n\}, true\);/.test(PAGE),
+    'the capture-phase key guard is gone');
+});
+
+it('⭐ signing out LOCKS the counter (Athi: "simply if we lock the screen and ask for sign-in")', () => {
+  assert.ok(/lockNow\(\);\n\}/.test(body(PAGE, 'function usignOut(').text), 'signing out leaves the counter open with nobody on it');
+});
+
+it('the engine\'s unlock door opens the one sign-in', () => {
+  assert.ok(/if \(d\.act === 'unlock'\)  return lockOpen\(\);/.test(PAGE), 'whoAct does not route the unlock door');
+  assert.ok(/usignOpen\(\);/.test(body(PAGE, 'function lockOpen(').text), 'unlock is its own dialog instead of the sign-in');
 });
 
 console.log('\nG1 · the program\n');

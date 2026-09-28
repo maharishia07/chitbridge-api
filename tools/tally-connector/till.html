@@ -95,6 +95,9 @@
   html,body{height:100%}
   #breakcover{position:fixed;inset:0;z-index:9000;background:var(--paper);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
   #breakcover[hidden]{display:none}
+  /* 🔒 above the break cover — a locked counter on a break is still locked */
+  #lockcover{position:fixed;inset:0;z-index:9500;background:var(--paper);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
+  #lockcover[hidden]{display:none}
   body{margin:0;background:var(--paper);color:var(--ink);font:var(--fs)/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-text-size-adjust:100%}
   button,input,select{font:inherit;color:inherit}
 
@@ -3089,6 +3092,7 @@
       <span class="shop" id="shopname">…</span>
       <span class="pill" id="tillpill">till</span>
       <button class="pill" id="whopill" data-testid="till-who" onclick="whoAct()" title="who is signed in at this counter (F7 to hand over)">…</button>
+      <button class="pill" id="lockbtn" data-testid="till-lock" onclick="lockNow()" title="Lock this counter — the bill stays; sign in to carry on">🔒</button>
       <!--
         ⭐⭐ THE LINE PILL IS THE WAY IN TO "WHY IS A BILL STUCK?". Athi, 2026-09-17: *"do you have a chip called why is a bill
         stuck? I couldn't see that."* It lived only inside ☰, and this pill — the first place anyone looks when bills are not
@@ -3382,6 +3386,14 @@
   </div>
 </div></dialog>
 <div id="whosebar"></div>
+<div id="lockcover" hidden data-testid="till-lock-cover">
+  <div style="max-width:420px;width:100%;text-align:center;display:flex;flex-direction:column;gap:14px">
+    <div style="font-size:3em;line-height:1">🔒</div>
+    <div style="font-size:1.4em;font-weight:700" id="locktitle">Locked</div>
+    <div style="color:var(--dim)" id="lockwho"></div>
+    <button class="pill" style="font-size:1.1em;padding:12px 18px" data-testid="till-unlock" onclick="lockOpen()" title="Sign in to carry on — a counter PIN works without the internet"><b>🔓 Unlock</b></button>
+  </div>
+</div>
 <div id="breakcover" hidden data-testid="till-break-cover">
   <div style="max-width:420px;width:100%;text-align:center;display:flex;flex-direction:column;gap:14px">
     <div style="font-size:3em;line-height:1">☕</div>
@@ -3892,7 +3904,7 @@ var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_ti
   'cb_till_counter_name', 'cb_till_dayicon', 'cb_till_dayimg', 'cb_till_daystart', 'cb_till_draft', 'cb_till_given',
   'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
   'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
-  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins'];
+  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock'];
 /**
  * ⚠️ ONCE, ON THE FIRST START OF THIS CODE ON A SHOP PC: the values it kept under plain names before S1b belong to
  * the shop it held then, which is the shop it holds now — they are MOVED into that shop's slot. Only into an EMPTY
@@ -5954,7 +5966,7 @@ async function load(){
     /* ⚠️⚠️ AND THE PARKED BILLS — the FOURTH list caught by this exact timing (2026-09-28, found building S1b).
        parkedLoad() ran only at the bottom of the file, before the key, so it read the plain name, found nothing,
        and the next park SAVED OVER the shop's real list: parked customers vanished on reload, then were lost. */
-    try { whoLoad(); breakLoad(); changedLoad(); parkedLoad(); } catch (_) {}
+    try { whoLoad(); breakLoad(); changedLoad(); parkedLoad(); lockLoad(); } catch (_) {}
   }
   /**
    * ⚠️⚠️ NOT ONE LINE EARLIER THAN THIS. The owner and any refusal are read HERE, after pickHost, because pickHost is what learns
@@ -23202,7 +23214,7 @@ function usignPaint(){
        * continue the same counter number, it is like shift."* The counter keeps its number and its series; only
        * the person changes. [[project-till-series-prefix]]
        */
-      + '<button data-testid="till-usign-out" onclick="usignOut()">Sign out · the counter stays open</button></div>';
+      + '<button data-testid="till-usign-out" onclick="usignOut()" title="The counter keeps its number and the bill; it locks until somebody signs in">Sign out 🔒</button></div>';
   } else if (at === 'code' || at === 'refused') {
     /**
      * ⚠️⚠️ [capability: sign-in] TWO CREDENTIALS, ONE BOX. USIGN.usePin is set by usignAsk() from the
@@ -23221,7 +23233,8 @@ function usignPaint(){
       + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-verify" onclick="usignVerify()">Sign in</button>'
       + (pinMode ? '' : '<button data-testid="till-usign-again" onclick="usignAsk(true)">Send another code</button>')
       + '<button onclick="usignClose()">Close</button></div>'
-      + (USIGN.local && lineUp() ? '<div class="dlgbtns"><button data-testid="till-usign-code" onclick="usignByCode()">Use a code instead</button></div>' : '')
+      + (USIGN.local ? '<div class="dlgbtns"><button data-testid="till-usign-other" onclick="usignOther()">Someone else</button>'
+         + (lineUp() ? '<button data-testid="till-usign-code" onclick="usignByCode()">Use a code instead</button>' : '') + '</div>' : '')
       + (USIGN.local ? '<p class="note u">Forgotten it? Sign in with a code while online, then choose a new one.</p>'
          : pinMode ? '<p class="note u">Forgotten it? Ask your admin to reset it in Co-assists.</p>' : '');
   } else {
@@ -23319,7 +23332,7 @@ async function usignVerify(){
   }
   if (move !== 'same') { USIGN.pending = { token: r.body.token, person: k.person, idn: r.body.identity || null }; return usignBecome(false); }
   USIGN.person = k.person;
-  usignAdopt(k.person);
+  personIn(k.person);
   usignAfterIn(k.person, r.body.identity || null);
 }
 
@@ -23545,9 +23558,11 @@ async function usignVerifyLocal(otp){
   }
   USIGN.local = null;
   USIGN.person = a.person;
-  usignAdopt(a.person);
+  personIn(a.person);
   usignAfterIn(a.person, null);
 }
+/** "Someone else" — back to the user-ID box, keeping whatever the dialog was opened for (an unlock, the picker) */
+function usignOther(){ USIGN.local = null; USIGN.sent = false; USIGN.usePin = false; USIGN.who = ''; USIGN.refused = ''; usignPaint(); }
 /** "Use a code instead" — the same person, through the line, e.g. to reset a forgotten counter PIN */
 function usignByCode(){ USIGN.local = null; USIGN.sent = false; USIGN.usePin = false; USIGN.noLocal = true; USIGN.refused = ''; usignAsk(true); }
 
@@ -23605,6 +23620,8 @@ function usignOut(){
   try { paintWho(); paintStatus(); paintMenu(); } catch (_) {}
   usignPaint();
   toastLine(s.say);
+  /* ⭐ and the counter LOCKS (S3): nobody on it means nobody may bill on it — the next person signs in over the cover */
+  lockNow();
 }
 
 /**
@@ -23632,6 +23649,7 @@ function signState(){
            person: !!(typeof WHO !== 'undefined' && WHO && WHO.name),
            /* ⭐ v1.6.0 — a person door needs no line when somebody here has a counter PIN */
            pins: (function(){ try { return Object.keys(pinBook()).length; } catch (_) { return 0; } })(),
+           locked: !!(typeof LOCK !== 'undefined' && LOCK),
            online: lineUp() };
 }
 
@@ -23676,6 +23694,7 @@ function whoAct(){
      on either host. signinOpen() in a browser was a paragraph naming a menu, which is not an action. */
   if (d.act === 'connect') return pairAgain();
   if (d.act === 'key')     return pairAgain();
+  if (d.act === 'unlock')  return lockOpen();
   if (d.act === 'signin')  return usignOpen();
   return openWho();                                /* handover — the picker's actual job, and always was */
 }
@@ -23763,6 +23782,76 @@ function whoPick(id, name, kind){
  * ⚠️ A break that silently released the counter would let another PC take it while this one still held unsent bills —
  * which is the two-PCs-one-series fault all over again. That is why a break is not a small close.
  */
+/**
+ * ── ⭐⭐⭐ 🔒 LOCK · 🔓 UNLOCK (S3/S4, 2026-09-28, SPEC-counter-identity.md §4) ─────────────────────────────────
+ *
+ * Athi: *"simply if we lock the screen and ask for sign-in, that will be good … we need to have an icon for lock
+ * screen for the application, and unlock screen."*
+ *
+ * ⭐ THE LOCK IS NOT A NEW DOOR. Unlocking is the one sign-in (G2) over a covered screen: the same person comes
+ * back to exactly where they were; another person of this shop is a shift change; another SHOP is G1's switch.
+ * With the line down it takes a counter PIN, so a locked counter is never dead on the morning it matters.
+ * ⚠️ The bill in hand is KEPT — in memory, and in the draft that survives a reload — never parked, never cleared.
+ * ⚠️⚠️ NOTHING BEHIND THE COVER CAN BE REACHED: the cover takes every click, and a capture-phase key guard takes
+ * every key that is not inside an open dialog or the cover itself — so Escape, F-keys and typing cannot reach the
+ * basket ([TILL-30]: Escape under a dialog once cleared a bill).
+ * ⚠️ It survives a reload (it lives under the shop, shopLs), and it belongs to THAT shop: switching to another
+ * shop does not carry it, and coming back finds it still locked.
+ */
+var LOCK = null;
+function lockKey(){ return shopLs('cb_till_lock'); }
+function lockLoad(){ try { LOCK = JSON.parse(ls.get(lockKey(), 'null')); } catch (_) { LOCK = null; } paintLock(); }
+function paintLock(){
+  var c = document.getElementById('lockcover'); if (!c) return;
+  c.hidden = !LOCK;
+  var b = document.getElementById('lockbtn'); if (b) b.hidden = !!LOCK;
+  if (!LOCK) return;
+  var nm = ls.get(shopLs('cb_till_counter_name'), '');
+  document.getElementById('locktitle').textContent = 'Counter ' + tillId() + (nm ? ' · ' + nm : '') + ' — locked';
+  document.getElementById('lockwho').textContent = (LOCK.by ? LOCK.by + ' · ' : '')
+    + 'since ' + new Date(LOCK.since).toTimeString().slice(0, 5);
+}
+/** 🔒 — the only writer of a lock */
+function lockNow(){
+  if (LOCK) { paintLock(); return; }
+  LOCK = { since: new Date().toISOString(), by: (WHO && WHO.name) || null, id: (WHO && WHO.id) || null };
+  try { ls.set(lockKey(), JSON.stringify(LOCK)); } catch (_) {}
+  try { closeMenu(); } catch (_) {}
+  paintLock();
+}
+/** 🔓 — opens the one sign-in over the cover; it closes itself once somebody is in */
+function lockOpen(){
+  usignOpen();
+  /* ⚠️ usignOpen() starts from whoever is on — an unlock must ASK, never show "is signed in" */
+  USIGN.person = null; USIGN.closeWhenIn = true;
+  /* ⭐ the person who locked it, straight to their counter PIN; "Someone else" is one tap away */
+  var id = LOCK && LOCK.id, loc = id ? SIGN().pinFind(pinBook(), id) : null;
+  if (loc && !SIGN().pinLocked(loc)) { USIGN.who = String(id); USIGN.local = loc; USIGN.sent = true; USIGN.usePin = true; }
+  usignPaint();
+}
+/** the only way a lock comes off — called by personIn(), after a real sign-in */
+function lockLift(){
+  if (!LOCK) return;
+  LOCK = null;
+  try { ls.set(lockKey(), ''); } catch (_) {}
+  paintLock();
+  try { focusSearch(); } catch (_) {}
+}
+/**
+ * ⭐ WHO COMES IN, after G2 has proved them: the same person as before carries on — their shift, their float,
+ * their bill — and anybody else is a shift change (usignAdopt). Either way the lock lifts.
+ */
+function personIn(p){
+  if (!(WHO && p && String(WHO.id) === String(p.id))) usignAdopt(p);
+  lockLift();
+}
+/* ⚠️⚠️ the key guard — capture phase on window, so it runs before every document listener in this page */
+window.addEventListener('keydown', function(e){
+  if (!LOCK) return;
+  var t = e.target;
+  if (t && t.closest && (t.closest('dialog[open]') || t.closest('#lockcover'))) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+}, true);
 var BREAK = null;
 function breakKey(){ return shopLs('cb_till_break'); }
 function breakLoad(){
@@ -24591,6 +24680,7 @@ try { tryBoot(); } catch (_) {}
 whoLoad();
 breakLoad();
 parkedLoad();
+lockLoad();
 /* ⚠ changedLoad() is NOT called here — it is shop-scoped and the key is not known yet. load() does it. */
 /* #cblink is painted with the menu now (paintMenu sets its own href), so there is nothing to set at boot —
    this threw on every load and the try/catch hid it. Kept as a note rather than a silent dead line. */
