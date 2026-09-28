@@ -110,12 +110,14 @@ function cut(src, start) {
   for (let j = i; j < src.length; j++) { if (src[j] === '{') d++; else if (src[j] === '}') { d--; if (!d) return src.slice(at, j + 1); } }
   return null;
 }
+/* ⚠️ MOVED, NOT DELETED (2026-09-28): inventory.js, cart.js, pick.js and till.html no longer HAVE a fallback copy —
+   tests/one-rounding-rule.test.cjs now asserts that, and that nothing platform-owned grows one back. What is left
+   here are the ADOPTED engines' own fallbacks, which only a chitbridge-engines release can retire. */
 const COPIES = [
-  ...['tax.js', 'rewards.js', 'inventory.js', 'rollup.js', 'orders.js', 'qty.js', 'offers-engine.js', 'pricing-engine.js']
+  ...['tax.js', 'rewards.js', 'rollup.js', 'orders.js', 'qty.js', 'offers-engine.js', 'pricing-engine.js']
     .map((f) => [path.join(API, 'lib', f), 'function roundMoney_(n)', 'roundMoney_']),
-  ...['cart.js', 'pick.js', 'variant.js', 'offers.js', 'pricing.js']
+  ...['variant.js', 'offers.js', 'pricing.js']
     .map((f) => [path.join(WEB_APP, f), 'function roundMoney_(n)', 'roundMoney_']),
-  [path.join(API, 'tools', 'tally-connector', 'till.html'), 'var r2 = function(n)', 'r2'],
 ];
 for (const [file, start, name] of COPIES) {
   it('⭐ ' + path.basename(file) + ' — its fallback is money.round', () => {

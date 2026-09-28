@@ -50,7 +50,7 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
 const SW = `${GEN}const SHELF = 'cb-till-v1';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/till.webmanifest', '/till-icon.svg'];
+const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -111,6 +111,23 @@ const wrapForBrowser = (file, global, deps) => {
   return GEN + '(function(){' + NL
     + src.replace(/module\.exports\s*=/, 'var EXPORTS =') + NL
     + 'window.' + global + ' = EXPORTS;' + NL + '})();' + NL;
+};
+
+/**
+ * ⭐⭐ WHICH RELEASE OF EACH ENGINE THE BROWSER COUNTER RUNS (2026-09-28, the loader step). The shop-PC program reads
+ * the release line off the files it serves (till.js engineVersion); a browser counter has no program, so this writes
+ * the same answer next to the engines: engine/versions.json, from the "ADOPTED from chitbridge-engines vX.Y.Z" first
+ * line of each web/public/engine/*.js. --check recomputes it, so re-adopting an engine without re-vendoring is STALE.
+ * ⚠️ Run AFTER tools/adopt.cjs — the web engines are its output, this only reads them.
+ */
+const VERSIONS = () => {
+  const dir = path.join(WEB, 'engine'), out = {};
+  fs.readdirSync(dir).filter((n) => /\.js$/.test(n)).sort().forEach((n) => {
+    const head = fs.readFileSync(path.join(dir, n), 'utf8').slice(0, 320);
+    const m = head.match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/);
+    out[n.replace(/\.js$/, '')] = m ? m[1] : 'unversioned';
+  });
+  return JSON.stringify({ engines: out }, null, 2) + '\n';
 };
 
 const COPIES = () => [
@@ -303,6 +320,7 @@ const COPIES = () => [
   /* ⭐ and the shop PC serves it too — a desktop counter closes its day offline more often than the web one */
   /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
+  [null, path.join(WEB, 'engine', 'versions.json'), VERSIONS()],
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],
   [null, path.join(WEB, 'till-icon.svg'), ICON],

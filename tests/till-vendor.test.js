@@ -63,8 +63,10 @@ function load() {
    * import rather than a bug. The same trap units-alias.test.js fell into.
    *
    * ⚠️ ORDER: units before qty, because qty is HANDED the vocabulary and resolves 'கிலோ' through it.
+   * ⭐ AND MONEY FIRST OF ALL (2026-09-28): the page's r2 no longer carries its own copy of the rounding rule — it
+   * rounds through MONEY(), i.e. the adopted money engine, exactly as the counter does in a browser and on a PC.
    */
-  for (const eng of ['units.js', 'qty.js']) {
+  for (const eng of ['money.js', 'units.js', 'qty.js']) {
     const f = path.join(__dirname, '..', 'lib', eng);
     if (!fs.existsSync(f)) throw new Error(eng + ' is missing — run scripts/vendor-till.cjs');
     vm.runInContext(fs.readFileSync(f, 'utf8'), sandbox);

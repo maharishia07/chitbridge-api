@@ -42,7 +42,8 @@ const ASSETS = [
   { file: 'docnumber.js',      allow: [],                      what: 'what a document number may look like, per country' },
   { file: 'jurisdiction.js',   allow: [],                      what: 'country → how a party may be paid' },
   { file: 'rewards.js',        allow: [],                      what: 'what a point is worth, said in words' },
-  { file: 'inventory.js',      allow: [],                      what: 'perpetual stock, weighted average' },
+  /* ⚠️ ./money since 2026-09-28 — its own copy of the rounding rule retired; money travels with it (as convert) */
+  { file: 'inventory.js',      allow: ['./money'],             what: 'perpetual stock, weighted average' },
   /* ⚠️ `crypto` is node's own. A builtin travels with the LANGUAGE, not with this product — a Java or Go port
      would use its own standard library and the module would still be the same asset. */
   { file: 'canon.js',          allow: ['crypto'],              what: 'the same value, always the same bytes' },

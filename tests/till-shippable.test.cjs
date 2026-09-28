@@ -48,7 +48,8 @@ function resolve(src) {
  */
 it('⭐⭐ the declared list is exactly what the counter loads — no more, no less', () => {
   const html = fs.readFileSync(PAGE, 'utf8');
-  const loads = [...new Set((html.match(/engine\/[a-z0-9-]+\.js/g) || []).map((s) => s.replace('engine/', '')))].sort();
+  /* ⚠️ `.js` must END the name — engine/versions.json (2026-09-28) is data beside the engines, not an engine */
+  const loads = [...new Set((html.match(/engine\/[a-z0-9-]+\.js(?![a-z])/g) || []).map((s) => s.replace('engine/', '')))].sort();
   const declared = Object.keys(M.TILL_SHIPPABLE).sort();
   assert.deepStrictEqual(declared, loads,
     'the manifest and the counter disagree about which engines ship\n      page: ' + loads.join(' ')

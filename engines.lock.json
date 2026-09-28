@@ -32,7 +32,8 @@
   },
   "adopt": {
     "money": [
-      "lib/money.js"
+      "lib/money.js",
+      "tools/tally-connector/money.js"
     ],
     "tax-packs": [
       "lib/tax-packs.js"

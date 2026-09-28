@@ -3840,15 +3840,19 @@ var CFD = (function(){
   };
 })();
 
-/* ⭐ money.round — SPEC-money-one-reader.md. engine/money.js loads second, before every caller; but a counter whose
-   engine failed to load must STILL BILL, so if CBMoney is absent it is the SAME rule, never the old one
-   (tests/money-round holds this copy equal). */
-var r2 = function(n){
-  var x = Number(n) || 0;
-  if (typeof CBMoney !== 'undefined' && CBMoney.round) return CBMoney.round(x);
-  var c = Math.round(Number((Math.abs(x) * 100).toPrecision(15))) / 100;
-  return (x < 0 && c !== 0) ? -c : c;
-};
+/**
+ * ⭐ money.round — SPEC-money-one-reader.md. ONE rule, and it is engine/money.js (CBMoney).
+ * ⚠️⚠️ THE FALLBACK COPY IS RETIRED (2026-09-28, the loader step). It existed so a counter whose engine failed to
+ * load could still bill — by a SECOND copy of the rule, which tests/money-round then had to hold equal. The case
+ * it covered is closed at the source instead: a browser counter gets money.js from its own host, and the shop-PC
+ * KIT now CARRIES money.js (as it carries signin.js), served until the shop's fetched copy exists. If it is still
+ * missing, MONEY() says so in words and engineMissed() has already listed it — a wrong total is never the answer.
+ */
+function MONEY(){
+  if (!window.CBMoney || typeof CBMoney.round !== 'function') throw new Error('CBMoney is not loaded — /engine/money.js is missing from this page');
+  return window.CBMoney;
+}
+var r2 = function(n){ return MONEY().round(Number(n) || 0); };
 var WHO = null;   /* { id, name } — who is standing at this counter, kept on this device until somebody hands over */
 /**
  * ⭐⭐ ONE MONEY FORMATTER, AND IT IS NOT OURS. CBLocale.money(amount, code) groups by the locale (India is 2-2-3,
@@ -4406,6 +4410,8 @@ function whoAmI(){
       store: tillStore(),                                    /* the IndexedDB this shop's copy lives in */
       opened_for: ls.get(shopLs('cb_till_shop'), '') || null, /* the shop the ADDRESS said, when opened from the app */
     },
+    /* ⭐ which release of each engine this counter bills with — false = not on this device (2026-09-28) */
+    engines: (onAgent() ? (STATE && STATE.engines) : ENGINE_V) || 'not read yet',
     signed_in_here: sess ? {
       /* ⚠️ the id is what matters; the name is here only to make a mismatch readable */
       entity_id: sess.entityId || sess.entity_id || null,
@@ -4421,10 +4427,13 @@ function whoAmI(){
   };
 }
 function whoAmIShow(){
-  var j = JSON.stringify(whoAmI(), null, 2);
-  var box = document.getElementById('whoamibody');
-  if (box) box.textContent = j;
-  var d = document.getElementById('whoamidlg'); if (d && d.showModal && !d.open) d.showModal();
+  /* the engine releases are read first (a browser fetches engine/versions.json once), then the panel is painted */
+  engineVersionsLoad().catch(function(){}).then(function(){
+    var j = JSON.stringify(whoAmI(), null, 2);
+    var box = document.getElementById('whoamibody');
+    if (box) box.textContent = j;
+    var d = document.getElementById('whoamidlg'); if (d && d.showModal && !d.open) d.showModal();
+  });
 }
 function whoAmIClose(){ var d = document.getElementById('whoamidlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
 function whoAmICopy(){
@@ -5468,7 +5477,29 @@ async function tillIssued(){
 }
 async function tillClaimQuery(){
   var issued = await tillIssued();
-  return 'till=' + encodeURIComponent(tillId()) + '&issued=' + (issued ? '1' : '0');
+  /* ⭐ and which engine releases this counter runs — the server keeps them on this counter's key */
+  var eng = engineQueryOf(await engineVersionsLoad());
+  return 'till=' + encodeURIComponent(tillId()) + '&issued=' + (issued ? '1' : '0') + (eng ? '&' + eng : '');
+}
+/**
+ * ── ⭐⭐ WHICH ENGINE RELEASES THIS COUNTER RUNS (2026-09-28, the loader step) ─────────────────────────────────
+ * The shop-PC program reads them off the files it serves (/api/state.engines, and it sends them itself with its
+ * snapshot call); a browser counter reads engine/versions.json, which vendor-till writes beside the engines from
+ * their own "ADOPTED from chitbridge-engines vX.Y.Z" lines. Read once per page — offline it comes from the service
+ * worker's shelf. ⚠️ Reported, never decided on: which release a counter SHOULD run is the canary's question
+ * (C:\dev\DESIGN-engine-canary.md), not this one's.
+ */
+var ENGINE_V = null;
+async function engineVersionsLoad(){
+  if (onAgent()) { if (STATE && STATE.engines) ENGINE_V = STATE.engines; return ENGINE_V; }
+  if (ENGINE_V) return ENGINE_V;
+  try { var r = await fetch('/engine/versions.json'); if (r.ok) { var j = await r.json(); ENGINE_V = (j && j.engines) || null; } } catch (_) {}
+  return ENGINE_V;
+}
+function engineQueryOf(v){
+  if (!v) return '';
+  var s = Object.keys(v).filter(function(n){ return v[n]; }).map(function(n){ return n + ':' + v[n]; }).join(',');
+  return s ? 'eng=' + encodeURIComponent(s) : '';
 }
 async function tillClaim(t){
   if (!t) return;
@@ -10014,9 +10045,12 @@ function typed(){
    */
   /* ⚠️ THE SAME TABLE THE CONVERSION USES, so a spelling this parser accepts is one that can be converted.
      Two lists would let the box accept '2 quintal' and then bill it as two of something. */
-  var names = Object.keys(QTY().FAMILY).join('|');
-  var re = new RegExp('(^|\\s)(\\d+(?:[./]\\d+)?)\\s*(' + names + ')(?=\\s|$)', 'i');
-  var hit = re.exec(raw);
+  /* ⚠️ AND ONLY WITH THE ENGINE (2026-09-28). An unpaired shop PC has fetched no engines yet, and this runs on paint:
+     QTY() threw "CBQty is not loaded" into the sign-in screen. With no qty engine there is no weight branch — the
+     text is searched as typed, as unitBase()/unitConvert() already degrade; engineMissed() has listed the engine. */
+  var names = window.CBQty ? Object.keys(QTY().FAMILY).join('|') : '';
+  var re = names ? new RegExp('(^|\\s)(\\d+(?:[./]\\d+)?)\\s*(' + names + ')(?=\\s|$)', 'i') : null;
+  var hit = re ? re.exec(raw) : null;
   if (hit) {
     var num = hit[2], val;
     if (num.indexOf('/') > 0) { var parts = num.split('/'); val = Number(parts[0]) / Number(parts[1]); }

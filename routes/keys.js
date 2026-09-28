@@ -195,6 +195,24 @@ const TILL_IDS = (() => {
   for (let L = 65; L <= 90; L++) { if (L === 67) continue; for (let n = 1; n <= 9; n++) out.push(String.fromCharCode(L) + n); }
   return out;
 })();
+/**
+ * ⭐ WHICH ENGINE RELEASES A COUNTER RUNS (2026-09-28). The counter sends "money:1.0.0,signin:1.6.0,…" with its
+ * snapshot call; it is kept on THIS key's till record (identities.policy_flags.api_keys[].till.engines — the JSON the
+ * claim already writes, no new table), so the shop's counter list can say which rules each counter bills with.
+ * ⚠️ Read, never trusted: names and versions are shape-checked and capped; nothing downstream decides on them yet.
+ */
+function cleanEngines(raw) {
+  if (!raw) return null;
+  const s = Array.isArray(raw) ? raw.join(',') : String(raw);
+  const out = {};
+  s.split(',').slice(0, 60).forEach((pair) => {
+    const m = /^([a-z0-9-]{1,32}):([0-9A-Za-z.\-]{1,20})$/.exec(pair.trim());
+    if (m) out[m[1]] = m[2];
+  });
+  return Object.keys(out).length ? out : null;
+}
+router.cleanEngines = cleanEngines;
+
 router.claimTill = async (entity_id, jti, ask) => withTransaction(async (db) => {
   /* ⚠️ FOR UPDATE — two counters opening at the same moment must not both be handed the same free prefix */
   const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
@@ -208,6 +226,7 @@ router.claimTill = async (entity_id, jti, ask) => withTransaction(async (db) => 
   const using = String((ask && ask.id) || '').trim().toUpperCase() || null;
   const issued = !!(ask && ask.issued);
   const now = new Date().toISOString();
+  const engines = cleanEngines(ask && ask.engines);
 
   /**
    * ⭐⭐⭐ A KEY OPENED FOR A NAMED COUNTER TAKES THAT COUNTER'S NUMBER, AND ITS PLACE IN THE SERIES (2026-09-17).
@@ -220,6 +239,7 @@ router.claimTill = async (entity_id, jti, ask) => withTransaction(async (db) => 
     const cid = String(me.counter).toUpperCase();
     const c = (pf.counters || {})[cid] || {};
     me.till = Object.assign({}, me.till || {}, { id: cid, issued: issued || Number(c.next) > 1, at: now });
+    if (engines) me.till.engines = engines;
     await patchKey(entity_id, jti, { till: me.till }, db);
     return { id: cid, clash: null, counter: cid, name: c.name || null,
              resume_next: Number(c.next) > 0 ? Number(c.next) : null, resume_period: c.period || null };
@@ -287,6 +307,7 @@ router.claimTill = async (entity_id, jti, ask) => withTransaction(async (db) => 
     out = { id, clash: null };
     me.till = { id, issued: false, at: now };
   }
+  if (engines) me.till.engines = engines;
   await patchKey(entity_id, jti, { till: me.till }, db);
   return out;
 });

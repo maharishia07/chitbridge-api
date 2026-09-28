@@ -44,7 +44,7 @@ const http = require('http');
  * ⚠️ An older till.js on a shop PC knows only the first three: it updates ITSELF first, restarts, and this list then
  * brings the engines on the following start. Two restarts, nothing lost, never a half-old pair.
  */
-const STAGED = ['till.js', 'core.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js', 'signin.js'];
+const STAGED = ['till.js', 'core.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js', 'signin.js', 'money.js'];
 (function applyStagedUpdate() {
   if (process.env.CB_TILL_UPDATED) return;
   const here = __dirname;
@@ -175,6 +175,36 @@ const DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
    ⚠️ THE ORDER MATCHES THE PAGE'S SCRIPT TAGS, and the guard checks that — load order is load-bearing here. */
 const ENGINE_NAMES = ['qr', 'money', 'docnumber', 'locale', 'pricing', 'offers', 'tax', 'search', 'variant', 'gs1', 'lots', 'nums', 'units', 'profilemap', 'jurisdiction', 'govcontext', 'rollup', 'verdict', 'orders', 'orderhub', 'dayopen', 'signin', 'qty', 'scalecode', 'rewards', 'screen'];
 const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
+/**
+ * ── ⭐⭐ WHICH RELEASE OF EACH ENGINE THIS PC BILLS WITH (2026-09-28, the loader step) ──────────────────────────
+ * Every adopted engine opens with "ADOPTED from chitbridge-engines vX.Y.Z · <name> · sha256 …". The version is read
+ * off the file this program actually SERVES — the shop's fetched copy, else the kit's own — so what is reported is
+ * what the page runs, not what a list says it should. Cached by file time: /api/state is read every 15 s.
+ * ⚠️ false = none on this PC; 'unversioned' = a file with no release line (qr is third-party, copied not adopted).
+ */
+const ENGINE_V_CACHE = new Map();
+function engineVersion(n) {
+  const kit = path.join(__dirname, n + '.js');
+  const file = fs.existsSync(F.engine(n)) ? F.engine(n) : (fs.existsSync(kit) ? kit : null);
+  if (!file) return false;
+  try {
+    const t = fs.statSync(file).mtimeMs, hit = ENGINE_V_CACHE.get(file);
+    if (hit && hit.t === t) return hit.v;
+    const fd = fs.openSync(file, 'r'), buf = Buffer.alloc(320);
+    const got = fs.readSync(fd, buf, 0, 320, 0); fs.closeSync(fd);
+    const m = buf.slice(0, got).toString('utf8').match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/);
+    const v = m ? m[1] : 'unversioned';
+    ENGINE_V_CACHE.set(file, { t: t, v: v });
+    return v;
+  } catch (_) { return false; }
+}
+function engineVersions() { return Object.fromEntries(ENGINE_NAMES.map((n) => [n, engineVersion(n)])); }
+/** the same, as the snapshot call carries it to the server: eng=money:1.0.0,signin:1.6.0,… */
+function engineQuery() {
+  const v = engineVersions();
+  const s = Object.keys(v).filter((n) => v[n]).map((n) => n + ':' + v[n]).join(',');
+  return s ? 'eng=' + encodeURIComponent(s) : '';
+}
 const F = {
   snapshot: path.join(DIR, 'snapshot.json'),
   series: path.join(DIR, 'series.json'),
@@ -332,7 +362,9 @@ async function refresh() {
   try {
     /* ⭐ only what changed since we last looked (2026-09-08) — a 10,000-item shop must not travel every fifteen minutes */
     const since = (snapshot && snapshot.at) ? '?since=' + encodeURIComponent(snapshot.at) : '';
-    const snap = await cb.call('GET', '/api/till/snapshot' + since);
+    /* ⭐ and which engine releases this PC bills with — the server keeps it on this counter's key (keys.claimTill) */
+    const eng = engineQuery();
+    const snap = await cb.call('GET', '/api/till/snapshot' + since + (eng ? (since ? '&' : '?') + eng : ''));
     if (snap && snap.shop) {
       if (snap.delta && snapshot && Array.isArray(snapshot.items)) {
         const byId = new Map(snapshot.items.map((i) => [i.item_id, i]));
@@ -1250,7 +1282,8 @@ const server = http.createServer(async (req, res) => {
                                  how long its detailed bills are kept ([TILL-123]) */
                               keep_days: Number(tillCfg.keepDays) > 0 ? Number(tillCfg.keepDays) : 90,
                               till: { id: tillCfg.id, name: tillCfg.name, host: os.hostname() },
-                              engines: Object.fromEntries(ENGINE_NAMES.map((n) => [n, fs.existsSync(F.engine(n))])),
+                              /* ⭐ { name: 'X.Y.Z' | 'unversioned' | false } — still truthy where it was true */
+                              engines: engineVersions(),
                               printer: { chosen: tillCfg.printer || null, mm: tillCfg.paper_mm || 80, drawer: !!tillCfg.drawer },
                               update: UPDATE });
 

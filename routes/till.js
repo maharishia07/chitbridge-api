@@ -120,7 +120,9 @@ router.get('/snapshot', auth, async (req, res) => {
       const jti = req.api_key && req.api_key.jti;
       if (jti) {
         const c = await keys.claimTill(entity_id, jti, {
-          id: req.query.till, issued: req.query.issued === '1' || req.query.issued === 'true' });
+          id: req.query.till, issued: req.query.issued === '1' || req.query.issued === 'true',
+          /* ⭐ the engine releases this counter runs — kept on its key (keys.cleanEngines) */
+          engines: req.query.eng });
         if (c) {
           const all = await keys.listOf(entity_id);
           const tills = all.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);

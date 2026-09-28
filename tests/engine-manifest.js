@@ -56,7 +56,6 @@ const TIER_A = [
      arithmetic about an obligation (what the shop holds and what it cost), so it must behave identically on a
      counter that is offline and on the server that re-applies the same movement. No database, no clock it does
      not receive, no locale: the moment it needs any of those it stops being answerable in two places at once. */
-  'lib/inventory.js',        // perpetual stock, weighted average (Ind AS 2); pure, holds nothing
   /**
    * ── ⭐⭐⭐ THE NAMING MODULES (2026-09-15) ──────────────────────────────────────────────────────────────────
    *
@@ -88,6 +87,10 @@ const TIER_B = [
      the case Tier B exists for. What an identity is CALLED is the product's own rule and travels with it. */
   'lib/mintuserid.js',       // ⭐ MAKE a name — entity · network · employee · customer · minted · bridge id
   'lib/resolveuserid.js',    // ⭐ READ one back, and say which KIND it is, before anyone reaches the database
+  /* ⚠️ MOVED FROM TIER A, OUT LOUD (2026-09-28). inventory.js is still pure — no database, no clock, no locale —
+     but it rounds money, and it did so with its OWN copy of the rule to keep zero dependencies. One rule, one
+     place: it takes ./money now, exactly as convert.js does, and money is Tier A so the pair still lifts together. */
+  'lib/inventory.js',        // perpetual stock, weighted average (Ind AS 2); pure, holds nothing — takes ./money
 ];
 
 /** Everything an engine module is permitted to reach for. Deliberately tiny. */
