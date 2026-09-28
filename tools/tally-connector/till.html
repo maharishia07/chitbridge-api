@@ -3892,7 +3892,7 @@ var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_ti
   'cb_till_counter_name', 'cb_till_dayicon', 'cb_till_dayimg', 'cb_till_daystart', 'cb_till_draft', 'cb_till_given',
   'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
   'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
-  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who'];
+  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins'];
 /**
  * ⚠️ ONCE, ON THE FIRST START OF THIS CODE ON A SHOP PC: the values it kept under plain names before S1b belong to
  * the shop it held then, which is the shop it holds now — they are MOVED into that shop's slot. Only into an EMPTY
@@ -8043,7 +8043,7 @@ async function dayStepRun(id){
     return;
   }
   if (id === 'float') {
-    /* ⭐ setWho() asks for the drawer when somebody signs in. If they were already signed in from yesterday
+    /* ⭐ usignAfterIn() asks for the drawer when somebody signs in through the picker. If they were already signed in from yesterday
        the drawer has not been counted today, so it is asked here and nowhere else. */
     if (typeof WHO !== 'undefined' && WHO && (WHO.float == null || WHO.float === '')) await dayFloatAsk();
     return;
@@ -8056,9 +8056,7 @@ async function dayFloatAsk(){
   var v = await ask('How much cash is in the drawer right now?\n\nLeave it blank if it has not been counted.',
                     '', 'Cash in the drawer (' + curSym() + ')', 'Starting the day');
   if (v === null || v === undefined || String(v).trim() === '') return;
-  WHO.float = Math.max(0, Number(v) || 0);
-  try { ls.set(shopLs('cb_till_who'), JSON.stringify(WHO)); } catch (_) {}
-  try { paintWho(); } catch (_) {}
+  whoFloat(Math.max(0, Number(v) || 0));     /* the one writer of the person's float (G2) */
 }
 
 /** ⭐ and the moment it is finished, said once — the counter is set up for the day */
@@ -8342,7 +8340,7 @@ function menuDayBody(){
      *
      * ⚠️⚠️ EVERY ONE IS READ FROM SOMETHING THAT EXISTS. My first draft called printReady() and money(),
      * neither of which is in this page — the same invented-name mistake the watch-list guard caught twice.
-     * The printer gate is the one autoPrint() actually uses; the float is what setWho() recorded.
+     * The printer gate is the one autoPrint() actually uses; the float is what usignAfterIn()/dayFloatAsk() recorded.
      */
     /**
      * ⭐⭐⭐ THE FOUR HARD-CODED ROWS BECAME FIVE READ FROM AN ENGINE ([TILL-182]). They were right and they
@@ -23173,6 +23171,25 @@ function usignPaint(){
     body.innerHTML = h; return;
   }
 
+  if (USIGN.setPin) {
+    /**
+     * ⭐⭐ CHOOSE A COUNTER PIN (v1.6.0) — offered once, right after a real sign-in, while the line is up. It is
+     * what lets this person sign in here with the internet down. Separate from any online PIN on purpose
+     * (SPEC-counter-identity §3). "Not now" is honest: they can still sign in with a code while online.
+     */
+    h = '<p class="note"><b>Choose a counter PIN</b> — four digits, to sign in here without the internet.</p>'
+      + '<div class="srow"><span>PIN</span><input id="usign_pin1" data-testid="till-usign-pin1" type="password"'
+      + ' inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off"></div>'
+      + '<div class="srow"><span>Again</span><input id="usign_pin2" data-testid="till-usign-pin2" type="password"'
+      + ' inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off"'
+      + ' onkeydown="if(event.key===\'Enter\')usignPinSave()"></div>'
+      + (USIGN.refused ? '<p class="note bad" data-testid="till-usign-why">' + esc(USIGN.refused) + '</p>' : '')
+      + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-pinsave" onclick="usignPinSave()">Save PIN</button>'
+      + '<button data-testid="till-usign-pinlater" onclick="usignPinLater()">Not now</button></div>';
+    body.innerHTML = h;
+    var f1 = document.getElementById('usign_pin1'); if (f1) { try { f1.focus(); } catch (_) {} }
+    return;
+  }
   if (at === 'in') {
     var p = USIGN.person || {};
     h = '<div class="nowbox" data-testid="till-usign-in"><b>' + esc(p.name || p.id) + '</b> is signed in'
@@ -23193,7 +23210,9 @@ function usignPaint(){
      * a PIN never had a code "sent" to resend, so that branch says so rather than offering a dead button.
      */
     var pinMode = !!USIGN.usePin;
-    h = '<p class="note">' + esc(pinMode ? 'Enter your PIN.' : SIGN().say({ sent: true })) + '</p>'
+    /* ⭐ v1.6.0: a PIN found in THIS counter's book is checked here, with or without the line */
+    h = '<p class="note">' + esc(USIGN.local ? ('Counter PIN for ' + (USIGN.local.name || USIGN.who) + '.')
+                                            : pinMode ? 'Enter your PIN.' : SIGN().say({ sent: true })) + '</p>'
       + '<div class="srow"><span>' + (pinMode ? 'PIN' : 'Code') + '</span>'
       + '<input id="usign_otp" data-testid="till-usign-otp" inputmode="numeric" maxlength="' + (pinMode ? 4 : 6)
       + '" placeholder="' + (pinMode ? '0000' : '000000') + '"'
@@ -23202,7 +23221,9 @@ function usignPaint(){
       + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-verify" onclick="usignVerify()">Sign in</button>'
       + (pinMode ? '' : '<button data-testid="till-usign-again" onclick="usignAsk(true)">Send another code</button>')
       + '<button onclick="usignClose()">Close</button></div>'
-      + (pinMode ? '<p class="note u">Forgotten it? Ask your admin to reset it in Co-assists.</p>' : '');
+      + (USIGN.local && lineUp() ? '<div class="dlgbtns"><button data-testid="till-usign-code" onclick="usignByCode()">Use a code instead</button></div>' : '')
+      + (USIGN.local ? '<p class="note u">Forgotten it? Sign in with a code while online, then choose a new one.</p>'
+         : pinMode ? '<p class="note u">Forgotten it? Ask your admin to reset it in Co-assists.</p>' : '');
   } else {
     /* ⚠️ ONE BOX FOR BOTH. The person typing does not know whether they have a user ID or an email, and a
        network-minted store is issued a user_id and no email at all. */
@@ -23234,6 +23255,21 @@ async function usignAsk(again){
   var typed = again ? USIGN.who : ((document.getElementById('usign_who') || {}).value || '');
   var a = SIGN().ask(typed);
   if (!a.ok) { USIGN.refused = a.why; usignPaint(); return; }
+  /**
+   * ⭐⭐ THE COUNTER'S OWN PIN FIRST (v1.6.0, SPEC-counter-identity §3). Somebody who set a counter PIN here signs
+   * in with it, line or no line — the shift change that happens forty times a day needs no code in a mailbox.
+   * ⚠️ Only if the PIN is not locked; a locked one sends them to the line, which is the only way to reset it.
+   */
+  var loc = USIGN.noLocal ? null : SIGN().pinFind(pinBook(), typed);
+  if (loc && !SIGN().pinLocked(loc)) {
+    USIGN.who = String(typed).trim(); USIGN.local = loc; USIGN.sent = true; USIGN.usePin = true; USIGN.refused = '';
+    usignPaint(); return;
+  }
+  if (!lineUp()) {
+    USIGN.refused = loc ? SIGN().pinAfter(loc, true).why
+      : 'There is no counter PIN for ' + String(typed).trim() + ' on this counter yet. The first sign-in here needs the internet.';
+    usignPaint(); return;
+  }
   USIGN.who = String(typed).trim(); USIGN.busy = true; USIGN.refused = '';
   var r = await usignPost('/api/entities/register', a.body);
   USIGN.busy = false;
@@ -23255,6 +23291,7 @@ async function usignAsk(again){
 async function usignVerify(){
   if (USIGN.busy) return;
   var otp = (document.getElementById('usign_otp') || {}).value || '';
+  if (USIGN.local) return usignVerifyLocal(otp);
   var v = SIGN().verify(USIGN.who, otp);
   if (!v.ok) { USIGN.refused = v.why; usignPaint(); return; }
   USIGN.busy = true; USIGN.refused = '';
@@ -23280,10 +23317,10 @@ async function usignVerify(){
     if (!ok) { USIGN = { sent: false, refused: 'Nobody signed in. This counter stays ' + here + '.', person: null,
                          who: '', busy: false, usePin: false }; usignPaint(); return; }
   }
-  if (move !== 'same') { USIGN.pending = { token: r.body.token, person: k.person }; return usignBecome(false); }
+  if (move !== 'same') { USIGN.pending = { token: r.body.token, person: k.person, idn: r.body.identity || null }; return usignBecome(false); }
   USIGN.person = k.person;
   usignAdopt(k.person);
-  usignPaint();
+  usignAfterIn(k.person, r.body.identity || null);
 }
 
 /**
@@ -23312,7 +23349,7 @@ function usignShopMove(answer){
 async function usignBecome(takeover){
   var p = USIGN.pending; if (!p) return;
   USIGN.busy = true; usignPaint();
-  var r = await becomeShop({ token: p.token, who: p.person, takeover: !!takeover });
+  var r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover });
   USIGN.busy = false;
   if (r && r.held) { USIGN.held = r; usignPaint(); return; }
   if (!r || !r.ok) { USIGN.pending = null; USIGN.held = null;
@@ -23355,7 +23392,7 @@ async function becomeShop(to){
     if (!r) return { ok: false, message: 'This PC could not reach the counter program. Is it still running?' };
     if (r.held) return { ok: false, held: true, counter: r.counter || tillId(), held_by: r.held_by || null, seen: r.seen || null };
     if (!r.ok) return r;
-    if (to.who) whoPending(to.who, r.shop);
+    if (to.who) whoPending(to.who, r.shop, to.idn);
     var was = JSON.stringify((STATE && STATE.shop) || null);
     counterRestarted(enrol ? function(st){ return JSON.stringify((st && st.shop) || null) !== was; }
                            : function(st){ return !(st && st.paired); }, to.gaveUp);
@@ -23371,7 +23408,7 @@ async function becomeShop(to){
   try { if (key) ls.set('cb_till_key', key); else { if (ls.del) ls.del('cb_till_key'); localStorage.removeItem('cb_till_key'); } } catch (_) {}
   CloudHost.key = key;                             /* ⚠️ FIRST — shopLs() below names the NEW shop's slot from it */
   if (key && to.marker && to.marker.shop) { ls.set(shopLs('cb_till_shop'), to.marker.shop); ls.set(shopLs('cb_till_shopname'), to.marker.name || ''); }
-  if (to.who) whoPending(to.who, shop);
+  if (to.who) whoPending(to.who, shop, to.idn);
   if (location.hash.indexOf('key=') >= 0) history.replaceState(null, '', location.pathname + location.search);
   /* the same key again is not a change of shop — nothing to reopen, and reloading a boot into itself would loop */
   if (!same) location.reload();
@@ -23400,8 +23437,8 @@ async function enrolBrowser(token, takeover){
  * (whoAdoptPending). Writing WHO here directly would be a second writer, and the shop it would be written for
  * is not open yet.
  */
-function whoPending(person, shop){
-  try { ls.set('cb_till_whonext', JSON.stringify({ person: person, shop: shop || null, at: Date.now() })); } catch (_) {}
+function whoPending(person, shop, idn){
+  try { ls.set('cb_till_whonext', JSON.stringify({ person: person, idn: idn || null, shop: shop || null, at: Date.now() })); } catch (_) {}
 }
 function whoAdoptPending(){
   var raw = null; try { raw = JSON.parse(ls.get('cb_till_whonext', '') || 'null'); } catch (_) { raw = null; }
@@ -23415,6 +23452,8 @@ function whoAdoptPending(){
      sign-in is KEPT, and the next load() tries again (the caller only marks it done on true) */
   usignAdopt(p);
   drop();
+  /* ⭐ they proved who they are online a moment ago — the one time a counter PIN can be offered safely */
+  try { if (!pinUsableFor(p)) { usignOpen(); USIGN.person = p; usignAfterIn(p, raw.idn || null); } } catch (_) {}
   return true;
 }
 
@@ -23447,6 +23486,114 @@ function usignAdopt(p){
   try { ls.set(shopLs('cb_till_who'), JSON.stringify(WHO)); } catch (_) {}
   try { paintWho(); paintStatus(); paintMenu(); } catch (_) {}
   toastLine(s.say);
+}
+
+/**
+ * ── ⭐⭐⭐ G2 · THE COUNTER PIN — the page's half (v1.6.0, SPEC-counter-identity.md §3) ───────────────────────
+ *
+ * Athi: *"PIN should work offline."* lib/signin.js decides what a PIN is, whose it is and when to stop trusting
+ * it; this does the arithmetic and the storage. The book lives under the SHOP (shopLs, SHOP_KEYS), holds a
+ * random salt and a PBKDF2 hash per person — never the PIN — and is what lets a person sign in with the line
+ * down. Only a real sign-in (code or server PIN, online) can put a PIN in it.
+ */
+function pinBook(){ try { return JSON.parse(ls.get(shopLs('cb_till_pins'), '{}') || '{}') || {}; } catch (_) { return {}; } }
+function pinBookSave(b){ try { ls.set(shopLs('cb_till_pins'), JSON.stringify(b || {})); } catch (_) {} }
+function pinB64(u){ var t = ''; for (var i = 0; i < u.length; i++) t += String.fromCharCode(u[i]); return btoa(t); }
+function pinBytes(b){ var t = atob(b), u = new Uint8Array(t.length); for (var i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; }
+/**
+ * ⚠️ crypto.subtle exists only on a SECURE page — https, or the shop PC's own 127.0.0.1. A screen opened over
+ * the shop's LAN by plain http has none, and must say so rather than store something weaker.
+ */
+async function pinDerive(pin, salt, iter){
+  if (!(window.crypto && crypto.subtle)) throw new Error('A counter PIN cannot be kept on this screen (it is not opened securely). Sign in with a code.');
+  var k = await crypto.subtle.importKey('raw', new TextEncoder().encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
+  var bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: pinBytes(salt), iterations: iter }, k, 256);
+  return pinB64(new Uint8Array(bits));
+}
+async function pinMake(pin){
+  var salt = new Uint8Array(16); crypto.getRandomValues(salt);
+  var st = pinB64(salt), it = SIGN().PIN_ITER;
+  return { salt: st, hash: await pinDerive(pin, st, it), iter: it };
+}
+/** does this person already have a working counter PIN here */
+function pinUsableFor(p){
+  var e = p && pinBook()[p.id];
+  return !!(e && !SIGN().pinLocked(e));
+}
+
+/** ⭐ a PIN from THIS counter's book, checked here — no network, whatever the line is doing */
+async function usignVerifyLocal(otp){
+  var e = USIGN.local, pin = String(otp || '').replace(/[^0-9]/g, '');
+  if (pin.length !== 4) { USIGN.refused = 'Your counter PIN is four digits.'; usignPaint(); return; }
+  USIGN.busy = true;
+  var h = null;
+  try { h = await pinDerive(pin, e.salt, e.iter); }
+  catch (x) { USIGN.busy = false; USIGN.refused = (x && x.message) || 'The PIN could not be checked.'; usignPaint(); return; }
+  USIGN.busy = false;
+  var book = pinBook();
+  var a = SIGN().pinAfter(book[e.id] || e, h === e.hash);
+  book[e.id] = a.entry; pinBookSave(book);
+  if (!a.ok) {
+    USIGN.refused = a.why;
+    /* locked: back to the user-ID box — the line is the only way on from here */
+    if (a.locked) { USIGN.local = null; USIGN.sent = false; USIGN.usePin = false; } else USIGN.local = a.entry;
+    usignPaint(); return;
+  }
+  /* ⚠️ the book is per shop, so this cannot happen — and if it ever did, nobody is signed in */
+  if (a.person.entity && S && S.entity_id && String(a.person.entity) !== String(S.entity_id)) {
+    USIGN.refused = 'That PIN belongs to another shop.'; USIGN.local = null; usignPaint(); return;
+  }
+  USIGN.local = null;
+  USIGN.person = a.person;
+  usignAdopt(a.person);
+  usignAfterIn(a.person, null);
+}
+/** "Use a code instead" — the same person, through the line, e.g. to reset a forgotten counter PIN */
+function usignByCode(){ USIGN.local = null; USIGN.sent = false; USIGN.usePin = false; USIGN.noLocal = true; USIGN.refused = ''; usignAsk(true); }
+
+/**
+ * ⭐ WHAT FOLLOWS A SIGN-IN, in one place: the drawer (when the picker started it — a new person counts their own
+ * float), then a counter PIN if they have none and they just proved themselves online, then the dialog closes.
+ */
+async function usignAfterIn(p, idn){
+  if (USIGN.floatAsk) {
+    USIGN.floatAsk = false;
+    var float0 = await ask('Starting ' + (p.name || p.id) + " at this counter.\n\nHow much cash is in the drawer right now? Leave it blank if there is none.",
+                           '', 'Cash in the drawer (' + curSym() + ')', 'Who is at this counter');
+    whoFloat(Math.max(0, Number(float0) || 0));
+  }
+  if (idn && !pinUsableFor(p) && window.crypto && crypto.subtle) {
+    USIGN.setPin = true; USIGN.idn = idn; USIGN.refused = '';
+    usignPaint();
+    var d = document.getElementById('usigndlg'); if (d && !d.open && d.showModal) { try { d.showModal(); } catch (_) {} }
+    return;
+  }
+  usignPaint();
+  if (USIGN.closeWhenIn) usignClose();
+}
+async function usignPinSave(){
+  var a = SIGN().pinPair((document.getElementById('usign_pin1') || {}).value, (document.getElementById('usign_pin2') || {}).value);
+  if (!a.ok) { USIGN.refused = a.why; usignPaint(); return; }
+  var p = USIGN.person || {}, idn = USIGN.idn || {};
+  var v = null;
+  try { v = await pinMake(a.value); } catch (x) { USIGN.refused = (x && x.message) || 'The PIN could not be kept.'; usignPaint(); return; }
+  var book = pinBook();
+  book[p.id] = SIGN().pinEntry({ id: p.id, user_id: idn.user_id, email: idn.email, identity_id: idn.identity_id,
+                                 name: p.name, kind: p.kind, entity: p.entity || idn.entity_id || (S && S.entity_id) || null },
+                               v, new Date().toISOString());
+  pinBookSave(book);
+  USIGN.setPin = false; USIGN.refused = '';
+  toastLine('Counter PIN saved — ' + (p.name || p.id) + ' can sign in here without the internet.');
+  usignPaint();
+  if (USIGN.closeWhenIn) usignClose();
+}
+function usignPinLater(){ USIGN.setPin = false; USIGN.refused = ''; usignPaint(); if (USIGN.closeWhenIn) usignClose(); }
+/** the drawer's float, for the person just signed in — part of G2, the only writer of who is on */
+function whoFloat(amount){
+  if (!WHO) return;
+  WHO.float = amount;
+  try { ls.set(shopLs('cb_till_who'), JSON.stringify(WHO)); } catch (_) {}
+  try { paintWho(); } catch (_) {}
 }
 
 /** ⚠️ a shift ends; the counter does not. Its number and its series stay exactly where they are. */
@@ -23483,6 +23630,8 @@ function signState(){
            /* ⚠️ null scopes is "we cannot tell from here", which is NOT "the wrong kind of key" */
            till: sc ? sc.indexOf('till') >= 0 : true,
            person: !!(typeof WHO !== 'undefined' && WHO && WHO.name),
+           /* ⭐ v1.6.0 — a person door needs no line when somebody here has a counter PIN */
+           pins: (function(){ try { return Object.keys(pinBook()).length; } catch (_) { return 0; } })(),
            online: lineUp() };
 }
 
@@ -23559,14 +23708,14 @@ function openWho(){
         var nm = (S && S.shop && S.shop.name) || 'the shop';
         var on = (WHO && WHO.kind === 'entity');
         return '<button class="choice' + (on ? ' on' : '') + '" data-testid="till-who-entity"'
-          + ' onclick="setWho(\'entity\',' + JSON.stringify(nm).replace(/"/g, '&quot;') + ',\'entity\')">'
+          + ' onclick="whoPick(\'entity\',' + JSON.stringify(nm).replace(/"/g, '&quot;') + ',\'entity\')">'
           + esc(nm) + '<span class="u">the shop itself — the owner is at the counter</span></button>';
       })()
     + (list.length
     ? list.map(function(a){
         var on = (WHO && String(WHO.id) === String(a.id));
         return '<button class="choice' + (on ? ' on' : '') + '" data-testid="till-who-' + esc(a.id) + '"'
-          + ' onclick="setWho(\'' + esc(a.id) + '\',\'' + esc(String(a.name).replace(/'/g, "")) + '\')">'
+          + ' onclick="whoPick(\'' + esc(a.id) + '\',\'' + esc(String(a.name).replace(/'/g, "")) + '\')">'
           + esc(a.name) + (a.hat ? '<span class="u">' + esc(a.hat) + '</span>' : '') + '</button>';
       }).join('')
     : '<div style="color:var(--dim)">No co-assists yet — add them in ChitBridge › Co-assists. Bills are recorded as the shop.</div>')
@@ -23574,20 +23723,29 @@ function openWho(){
     + (WHO ? '<button class="choice" style="margin-top:6px" data-testid="till-handover" onclick="handOver()">Hand over<span class="u">end ' + esc(WHO.name) + '\'s shift and close the drawer count</span></button>' : '');
   document.getElementById('whodlg').showModal();
 }
-async function setWho(id, name, kind){
-  /* ⭐ THE FLOAT. What is in the drawer before a rupee is taken — without it, "expected" at the end means nothing. Skipping is
-     allowed (a shop with no float, or a busy moment): it counts as zero and the close says so. */
-  /* ⭐ the question a shift starts with — asked in our own words, in our own box */
-  var float0 = await ask('Starting ' + name + " at this counter.\n\nHow much cash is in the drawer right now? Leave it blank if there is none.",
-                         '', 'Cash in the drawer (' + curSym() + ')', 'Who is at this counter');
-  /**
-   * ⚠️ THE LEVEL IS PART OF THE RECORD ([TILL-128]). A day close that cannot tell "the owner ran the
-   * counter" from "Kumar ran the counter" is answering a different question from the one being asked.
-   */
-  WHO = { id: id, name: name, kind: (kind === 'entity' ? 'entity' : 'coassist'),
-          since: new Date().toISOString(), float: Math.max(0, Number(float0) || 0) };
-  ls.set(shopLs('cb_till_who'), JSON.stringify(WHO));
-  paintWho(); document.getElementById('whodlg').close(); focusSearch();
+/**
+ * ── ⚠️⚠️⚠️ PICKING A NAME IS NO LONGER SIGNING IN (G2, 2026-09-28) ──────────────────────────────────────────
+ *
+ * setWho() set WHO from one tap on a name — the owner or any co-assist, no proof at all — and every bill after it
+ * carried that name. Athi: *"is there multiple entry path? different piece of code allowing the application to
+ * sign-in?"* There were two, and this was the one that asked nothing.
+ * ⭐ The name now only says WHO is about to prove it: their counter PIN if they set one here (line or no line),
+ * else the sign-in with their user ID. The drawer question follows, once they are in (usignAfterIn).
+ * The staff list carries identity ids, not logins, which is exactly what the PIN book is also keyed by.
+ */
+function whoPick(id, name, kind){
+  var target = kind === 'entity' ? ((S && S.entity_id) || '') : id;
+  try { document.getElementById('whodlg').close(); } catch (_) {}
+  usignOpen();
+  USIGN.floatAsk = true; USIGN.closeWhenIn = true;
+  var loc = target ? SIGN().pinFind(pinBook(), target) : null;
+  if (loc && !SIGN().pinLocked(loc)) {
+    USIGN.who = target; USIGN.local = loc; USIGN.sent = true; USIGN.usePin = true;
+  } else {
+    USIGN.refused = (loc ? SIGN().pinAfter(loc, true).why + ' ' : '')
+      + (lineUp() ? name + ' — type your user ID to sign in.' : 'There is no counter PIN for ' + name + ' on this counter yet. The first sign-in here needs the internet.');
+  }
+  usignPaint();
 }
 /**
  * ── ⭐⭐⭐ FOUR DIFFERENT THINGS A COUNTER CAN "STOP" FOR (Athi, 2026-09-17) ─────────────────────────────────────
@@ -23707,7 +23865,7 @@ async function shiftClose(){
   try { if (HOST && HOST.shift) await HOST.shift(SHIFT); } catch (_) {}
 }
 function shiftDone(){
-  SHIFT = null; WHO = null; ls.set(shopLs('cb_till_who'), '');
+  SHIFT = null; usignOut();
   var b = document.getElementById('shiftgo'); if (b) { b.textContent = 'Count and hand over'; b.setAttribute('onclick', 'shiftClose()'); }
   document.getElementById('shiftdlg').close(); paintWho(); load(); openWho();
 }

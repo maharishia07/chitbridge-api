@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.5.0 · signin · sha256 50634c6dcb5ee22f053483b6ee7338cadbd44718bb06fb721bf80e2427e52911 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.6.0 · signin · sha256 ef9bf38f24bde460f058fe75edaca186d97722fa385258b5258945b56a348470 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · signin. Edited ONLY in chitbridge-engines/src/signin.js; every platform adopts a released version of it. */
 (function (root) {
 'use strict';
@@ -71,8 +71,8 @@ function who(input) {
  * a PERSON IN at a counter is never that — a mistyped id should say so, not spin up a phantom empty shop.
  * `req.body.mode === 'login'` is the ONE flag that turns "create if missing" into "refuse if missing", and it
  * has been sitting in routes/entities.js unused by this file since the day it was written. This is the sign-in
- * dialog's only caller of ask() (usignAsk() in till.html) — the device-connect dialog builds its own body via
- * a completely separate path (signinSend(), /api/signin/start) and is unaffected by this change.
+ * dialog's only caller of ask() (usignAsk() in till.html) — since v1.6.0 the ONLY sign-in dialog on either host:
+ * the shop PC's own connect dialog (signinSend(), /api/signin/start) was retired as a second path to the key.
  */
 function ask(input) {
   const w = who(input);
@@ -214,6 +214,9 @@ const ACTS = {
               line: true,  leaves: 'who you are, and no session', then: 'the counter keeps its number' },
   handover: { id: 'handover', subject: 'person', label: 'Hand over',            how: 'every shift',
               line: false, leaves: 'the next person on the bills', then: 'the counter keeps its number' },
+  /* ⭐ v1.6.0 — the screen is covered and the counter waits for a person; the bill in hand is kept */
+  unlock:   { id: 'unlock',   subject: 'person', label: 'Unlock',               how: 'after a lock',
+              line: false, leaves: 'the same counter, exactly as it was', then: 'the bill in hand comes back' },
 };
 
 /** ⭐ and the two ways out, which were also one word over two different acts */
@@ -241,13 +244,16 @@ function door(state) {
   const s = state || {};
   const browser = s.host === 'browser';
   const online = s.online !== false;
+  /* ⭐ v1.6.0: a PERSON door needs no line when this counter holds a counter PIN for somebody (pinBook) */
+  const pins = Number(s.pins || 0) > 0;
   const out = (act, why) => {
     const a = ACTS[act];
+    const needs = !!(a.line && !(a.subject === 'person' && pins));
     return { act: act, label: a.label, subject: a.subject, how: a.how, why: why || '',
              /* ⚠️ blocked is not "hidden". A door that cannot be opened is still the right door, and saying
                 which one it is beats a screen that offers nothing. [[feedback-silence-is-the-bug]] */
-             blocked: !!(a.line && !online),
-             stop: (a.line && !online) ? 'This needs the internet. Once this counter is set up it bills without it.' : '' };
+             blocked: !!(needs && !online),
+             stop: (needs && !online) ? 'This needs the internet. Once this counter is set up it bills without it.' : '' };
   };
   /**
    * ⚠️⚠️⚠️ [TILL-193] NEITHER "why" BELOW SAYS THE WORD KEY ANY MORE — a shopkeeper never typed one and
@@ -265,6 +271,8 @@ function door(state) {
       ? out('key', 'Due to maintenance, please sign in again to reconnect this counter.')
       : out('connect', 'This key is not a till key, so it cannot read the shop or send a bill.');
   }
+  /* ⚠️ a locked counter has ONE door, whoever was on it — the lock is the question being asked */
+  if (s.locked) return out('unlock', 'This counter is locked. Sign in to carry on where it was left.');
   if (!s.person) return out('signin', 'Nobody is signed in, so every bill would be recorded against no one.');
   return out('handover', 'Somebody is on this counter. The counter number stays; only the person changes.');
 }
@@ -282,7 +290,83 @@ function leave(state) {
              ? 'Sending anything still waiting needs the internet. Bills would be left on this PC.' : '' };
 }
 
-const EXPORTS = { STAGES, ACTS, LEAVES, who, ask, code, verify, keep, refusal, stage, say, door, leave };
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
+ * ── ⭐⭐⭐ THE COUNTER PIN — SIGNING IN WITH THE LINE DOWN (v1.6.0, 2026-09-28) ─────────────────────────────
+ *
+ * Athi: *"PIN should work offline."* A counter exists to bill with the internet down, and a sign-in that needs
+ * the line would leave a locked counter unopenable on exactly that morning. [SPEC-counter-identity.md §3]
+ *
+ *   · SET ONCE per person per counter, WHILE ONLINE, right after a real sign-in (code or server PIN).
+ *   · SEPARATE from the online credential on purpose: a 4-digit verifier kept on a device can be broken by
+ *     whoever copies the device's storage. If it were the co-assist's server PIN, that copy would give away
+ *     their online sign-in. A counter PIN opens this counter and nothing else.
+ *   · The page does the arithmetic (PBKDF2, PIN_ITER rounds, a random salt) and stores {salt, hash} — never the
+ *     PIN. These rules decide what is a PIN, whose it is, and when to stop trusting it.
+ *   · PIN_TRIES wrong in a row and that person's PIN stops working on this counter until they sign in online.
+ *
+ * ⚠️ What it protects against is somebody at the keyboard. Nothing four digits long protects a device that has
+ * been taken apart, and nothing here pretends to.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+const PIN_TRIES = 5;
+const PIN_ITER = 150000;
+
+/** ⭐ is this a PIN worth keeping — four digits, and not one a stranger guesses first */
+function pinShape(input) {
+  const d = String(input == null ? '' : input).replace(/[^0-9]/g, '');
+  if (d.length !== 4) return { ok: false, value: d, why: 'A counter PIN is four digits.' };
+  if (/^(\d)\1{3}$/.test(d) || '0123456789'.indexOf(d) >= 0 || '9876543210'.indexOf(d) >= 0)
+    return { ok: false, value: d, why: 'That one is too easy to guess. Choose four digits that are not a run or a repeat.' };
+  return { ok: true, value: d };
+}
+/** the second typing must match the first — a PIN nobody can repeat is a PIN nobody can use */
+function pinPair(first, again) {
+  const a = pinShape(first); if (!a.ok) return a;
+  const b = String(again == null ? '' : again).replace(/[^0-9]/g, '');
+  if (a.value !== b) return { ok: false, why: 'The two PINs are different. Type the same four digits twice.' };
+  return { ok: true, value: a.value };
+}
+/**
+ * ⭐ the record kept for a person on this counter. `ids` holds every name they might type (user ID, email, the
+ * identity id) so one box finds them; `entity` is their shop, so a PIN can never sign anybody into another.
+ */
+function pinEntry(person, verifier, now) {
+  const p = person || {}, v = verifier || {};
+  const ids = [p.id, p.user_id, p.email, p.identity_id].filter(Boolean).map((x) => String(x).toLowerCase());
+  return { id: p.id, ids: Array.from(new Set(ids)), name: p.name || p.id, kind: p.kind || 'coassist',
+           entity: p.entity || null, salt: v.salt, hash: v.hash, iter: v.iter || PIN_ITER,
+           tries: 0, set_at: now || null };
+}
+/** ⭐ whose PIN is this — the typed user ID or email, found in this counter's book (or nobody) */
+function pinFind(book, typed) {
+  const t = String(typed == null ? '' : typed).trim().toLowerCase();
+  if (!t || !book) return null;
+  for (const k of Object.keys(book)) {
+    const e = book[k];
+    if (e && Array.isArray(e.ids) && e.ids.indexOf(t) >= 0) return e;
+  }
+  return null;
+}
+/** is the PIN still usable, or has it been guessed at too often */
+function pinLocked(entry) { return !!(entry && Number(entry.tries || 0) >= PIN_TRIES); }
+/**
+ * ⚠️⚠️ WHAT ONE ATTEMPT MEANS. `matched` is the page's own comparison of the hashes; this decides the rest —
+ * and a locked PIN is refused BEFORE its hash is even looked at, so a right guess after the fifth wrong one
+ * still does not open the counter.
+ */
+function pinAfter(entry, matched) {
+  const e = Object.assign({}, entry || {});
+  if (pinLocked(e)) return { ok: false, locked: true, entry: e,
+    why: 'Too many wrong PINs. Sign in once with the internet to use your PIN on this counter again.' };
+  if (matched) { e.tries = 0; return { ok: true, entry: e, person: { id: e.id, name: e.name, kind: e.kind, entity: e.entity } }; }
+  e.tries = Number(e.tries || 0) + 1;
+  const left = PIN_TRIES - e.tries;
+  return { ok: false, locked: left <= 0, entry: e,
+           why: left <= 0 ? 'Too many wrong PINs. Sign in once with the internet to use your PIN on this counter again.'
+                          : 'That PIN did not match. ' + left + (left === 1 ? ' try' : ' tries') + ' left.' };
+}
+
+const EXPORTS = { STAGES, ACTS, LEAVES, PIN_TRIES, PIN_ITER, who, ask, code, verify, keep, refusal, stage, say, door, leave,
+                  pinShape, pinPair, pinEntry, pinFind, pinLocked, pinAfter };
 
 /* ⭐ ONE FILE, EVERY HOST: node takes module.exports; a page, the TV and the shop PC take window.CBSignin. */
 if (typeof module !== 'undefined' && module.exports) module.exports = EXPORTS;

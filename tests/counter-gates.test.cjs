@@ -142,6 +142,64 @@ it('⚠️⚠️ parked bills are read again once the shop is known (they were r
   assert.ok(/whoLoad\(\); breakLoad\(\); changedLoad\(\); parkedLoad\(\);/.test(ld), 'load() does not re-read parked bills after pickHost');
 });
 
+console.log('\nG2 · ONE DOOR FOR A PERSON — who is on is set only by the sign-in\n');
+
+/** matches of re outside ALL of the named functions */
+function outsideAll(src, re, names) {
+  const gates = names.map((n) => body(src, n));
+  let hits = null;
+  gates.forEach((g, i) => {
+    const h = outside(src, re, g);
+    hits = hits === null ? h : hits.filter((x) => h.indexOf(x) >= 0);
+  });
+  return hits || [];
+}
+
+it('WHO is assigned only by the sign-in (usignAdopt), the sign-out (usignOut) and the start-up read (whoLoad)', () => {
+  const w = outsideAll(PAGE, /\bWHO = (?!=)/, ['function usignAdopt(', 'function usignOut(', 'function whoLoad(']);
+  const real = w.filter((x) => x.indexOf('var WHO = null') < 0);
+  assert.deepStrictEqual(real, [], 'somebody is put on the counter outside the gate:\n      ' + real.join('\n      '));
+});
+
+it('the stored person is written only by the gate (adopt, sign out, the drawer\'s float, the break log)', () => {
+  const w = outsideAll(PAGE, /ls\.set\(shopLs\('cb_till_who'\)/,
+    ['function usignAdopt(', 'function usignOut(', 'function whoFloat(', 'function endBreak(']);
+  assert.deepStrictEqual(w, [], 'a second writer of who is on:\n      ' + w.join('\n      '));
+});
+
+it('⚠️⚠️ picking a name no longer signs anybody in — the picker opens the gate', () => {
+  assert.ok(!/function setWho\(/.test(PAGE), 'setWho() is back: a name set on one tap, no proof');
+  assert.ok(!/onclick="setWho\(/.test(PAGE), 'the picker still calls setWho');
+  const wp = body(PAGE, 'function whoPick(').text;
+  assert.ok(/usignOpen\(\)/.test(wp) && !/WHO\s*=/.test(wp), 'whoPick sets WHO itself instead of opening the gate');
+});
+
+it('the hand-over frees the counter through the gate\'s own exit', () => {
+  assert.ok(/SHIFT = null; usignOut\(\);/.test(body(PAGE, 'function shiftDone(').text), 'shiftDone clears WHO itself');
+});
+
+console.log('\nG2 · THE COUNTER PIN — kept per shop, never the PIN itself\n');
+
+it('the PIN book is written in ONE place, under the shop', () => {
+  const w = outside(PAGE, /shopLs\('cb_till_pins'\)/, body(PAGE, 'function pinBookSave('), ['function pinBook(){']);
+  assert.deepStrictEqual(w, [], 'the PIN book is touched outside pinBook/pinBookSave:\n      ' + w.join('\n      '));
+  assert.ok(/'cb_till_pins'\]/.test(PAGE.match(/var SHOP_KEYS = \[[^\]]*\]/)[0]), 'the PIN book is not a SHOP key');
+});
+
+it('⚠️⚠️ what goes into the book comes from the engine (pinEntry / pinAfter) — a salt and a hash, never the PIN', () => {
+  const save = body(PAGE, 'async function usignPinSave(').text, loc = body(PAGE, 'async function usignVerifyLocal(').text;
+  assert.ok(/SIGN\(\)\.pinEntry\(/.test(save) && /await pinMake\(a\.value\)/.test(save), 'a PIN is saved without the engine\'s record');
+  assert.ok(/SIGN\(\)\.pinAfter\(/.test(loc), 'a local PIN is judged here, not by the engine');
+  assert.ok(/PBKDF2/.test(body(PAGE, 'async function pinDerive(').text), 'the PIN is no longer derived with PBKDF2');
+});
+
+it('⭐ the counter\'s own PIN is tried FIRST, and it works with the line down', () => {
+  const ask = body(PAGE, 'async function usignAsk(').text;
+  const pinAt = ask.indexOf('SIGN().pinFind('), netAt = ask.indexOf("usignPost('/api/entities/register'");
+  assert.ok(pinAt > 0 && netAt > pinAt, 'the network is asked before this counter\'s own PIN');
+  assert.ok(/if \(!lineUp\(\)\)/.test(ask.slice(pinAt, netAt)), 'offline with no PIN is not refused in words');
+});
+
 console.log('\nG1 · the program\n');
 
 it('connector.json\'s key is written in ONE place (enrol) and removed in ONE place (sign out)', () => {
