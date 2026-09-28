@@ -47,6 +47,17 @@ check('mis running a report', { path: '/metrics/run', identity: { identity_type:
 check('view_only asking the assistant', { path: '/assist/ask', identity: { identity_type: 'actor', hat: 'view_only' } }, true);
 check('view_only setting their own break', { path: '/actors/break', identity: { identity_type: 'actor', hat: 'view_only' } }, true);
 
+/* ⚠️⚠️ external review 2026-09-25, fixed 2026-09-28: '/assist' was exempt BY PREFIX and five routes under it write */
+console.log('\n── /assist: ASKING IS OPEN, WRITING IS GATED ──');
+check('view_only asking the assistant (POST /api/assist)', { path: '/assist', identity: { identity_type: 'actor', hat: 'view_only' } }, true);
+check('view_only checking conformance', { path: '/assist/conform', identity: { identity_type: 'actor', hat: 'view_only' } }, true);
+check('view_only resolving a view', { path: '/assist/resolve', identity: { identity_type: 'actor', hat: 'view_only' } }, true);
+check('⚠️ view_only WIPING a brand\'s shared source', { method: 'PUT', path: '/assist/catalogue-source', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
+check('⚠️ view_only adopting a catalogue', { path: '/assist/catalogue-adopt', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
+check('⚠️ view_only publishing to the help desk', { path: '/assist/publish', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
+check('⚠️ view_only overriding a region', { method: 'PUT', path: '/assist/region-override', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
+check('⚠️ view_only changing a container', { method: 'PUT', path: '/assist/container', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
+
 console.log('\n── FAIL CLOSED: A PATH NOBODY THOUGHT ABOUT ──');
 check('view_only on an endpoint invented tomorrow', { path: '/something-new/x', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
 check('a prefix that only LOOKS self-scoped', { path: '/assistant-impersonation', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
@@ -80,4 +91,5 @@ checkUrl('/api/entities/profile', 'view_only', false);
 console.log('\n── THE MESSAGE ──');
 console.log('   ' + (b && b.message));
 console.log('\n  ' + pass + ' passed · ' + fail + ' failed\n');
+console.log('  ' + pass + ' checks');   /* the gate (scripts/guards.cjs) reads "<n> checks" */
 process.exit(fail ? 1 : 0);
