@@ -564,7 +564,6 @@ const ENGINE_OTHER = [
   /* GENERATED beside lib/signin.js ([TILL-183]) — for the counter's own sign-in screen. */
   'signin.browser.js',
   /* GENERATED beside lib/scalecode.js ([TILL-185]) — read on the counter, where the scale is. */
-  'scalecode.browser.js',
   /* GENERATED beside lib/qty.js ([TILL-186]) — every typed "500 gm" and every scale label asks it. */
   /* GENERATED for the shop PC (2026-09-17): money, the bill-number rules, locale and pricing, as the counter page loads them —
      a desktop counter served none of these until then. Copies of the masters, nothing decided here (scripts/vendor-till.cjs). */

@@ -241,7 +241,7 @@ const COPIES = () => [
   /* ⭐⭐⭐ A SCALE'S LABEL ([TILL-185]) — the grocery baseline the backlog has carried as a red blocker since
      it was written. The rule was inside till.html and read a layout it had worked out by hand; it is a MASK
      the shop declares now, so no scale vendor is hard-wired and an unusual scale is a setting, not a release. */
-  [null, path.join(WEB, 'engine', 'scalecode.js'), wrapForBrowser('scalecode.js', 'CBScaleCode')],
+  /* scalecode: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐⭐⭐ MAGNITUDE ([TILL-186]). Athi: *"no data should be tied tightly to the front end."* The weight and
      volume factors were a table in till.html — its own note said *"only the arithmetic is here"*, and the
      data came with it. It is an engine now, and tests/qty.test.js asserts the page never grows it back. */
@@ -314,7 +314,6 @@ const COPIES = () => [
   [null, path.join(API, 'lib', 'orderhub.browser.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
   [null, path.join(API, 'lib', 'dayopen.browser.js'), wrapForBrowser('dayopen.js', 'CBDayOpen')],
   [null, path.join(API, 'lib', 'signin.browser.js'), wrapForBrowser('signin.js', 'CBSignin')],
-  [null, path.join(API, 'lib', 'scalecode.browser.js'), wrapForBrowser('scalecode.js', 'CBScaleCode')],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(API, 'lib', 'profile-map.browser.js'), wrapForBrowser('profile-map.js', 'CBProfileMap')],
   [null, path.join(API, 'lib', 'lotfields.browser.js'), wrapForBrowser('lotfields.js', 'CBLots')],
