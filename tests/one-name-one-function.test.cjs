@@ -29,7 +29,9 @@ const it = (what, fn) => {
 
 /** the one inline <script> the counter carries */
 function scriptOf(file) {
-  const html = fs.readFileSync(file, 'utf8');
+  /* ⚠️ CRLF-tolerant (2026-09-28): a Windows checkout (autocrlf) hands back \r\n, and a declaration that ends in \r
+     was invisible to every pattern below — the guard went red on line endings alone, not on a second declaration */
+  const html = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
   const blocks = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
   assert.ok(blocks.length, file + ' has no inline script');
   return blocks.join('\n');
