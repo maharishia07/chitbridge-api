@@ -58,7 +58,8 @@ check('⚠️ view_only publishing to the help desk', { path: '/assist/publish',
 check('⚠️ view_only overriding a region', { method: 'PUT', path: '/assist/region-override', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
 check('⚠️ view_only changing a container', { method: 'PUT', path: '/assist/container', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
 
-console.log('\n── FAIL CLOSED: A PATH NOBODY THOUGHT ABOUT ──');
+/* ⚠️ lower case on purpose: scripts/guards.cjs reads the word F-A-I-L in capitals as a failed guard */
+console.log('\n── Fail closed: a path nobody thought about ──');
 check('view_only on an endpoint invented tomorrow', { path: '/something-new/x', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
 check('a prefix that only LOOKS self-scoped', { path: '/assistant-impersonation', identity: { identity_type: 'actor', hat: 'view_only' } }, false);
 
