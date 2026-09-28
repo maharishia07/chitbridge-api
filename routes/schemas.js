@@ -226,24 +226,27 @@ router.patch('/fields/order', auth,
       if (!sid.rows.length) return res.status(404).json({ error: 'Not found', message: 'Your catalogue has no definition.' });
       const schema_id = sid.rows[0].schema_id;
 
-      const own = await query(`SELECT field_key FROM schema_fields WHERE schema_id = $1`, [schema_id]);
+      /* ⚠️ ORDERED, or "everything not named keeps its relative order" (below) was whatever order Postgres returned */
+      const own = await query(`SELECT field_key FROM schema_fields WHERE schema_id = $1
+                               ORDER BY display_order NULLS LAST, field_key`, [schema_id]);
       const mine = new Set(own.rows.map((r) => r.field_key));
       /* ⚠️ Only this catalogue's own columns, de-duplicated — a repeated key would otherwise take two positions
          and leave a gap that the next reorder would read as an ordering. */
       const wanted = [...new Set(req.body.order.map(String).filter((k) => mine.has(k)))];
       if (!wanted.length) return res.status(400).json({ error: 'Nothing to order', message: 'None of those columns are in your catalogue.' });
 
-      let n = 0;
-      for (const k of wanted) {
-        await query(`UPDATE schema_fields SET display_order = $1 WHERE schema_id = $2 AND field_key = $3`,
-          [++n, schema_id, k]);
-      }
       /* Everything not named keeps its relative order, after the ones that were. */
       const rest = own.rows.map((r) => r.field_key).filter((k) => !wanted.includes(k));
-      for (const k of rest) {
-        await query(`UPDATE schema_fields SET display_order = $1 WHERE schema_id = $2 AND field_key = $3`,
-          [++n, schema_id, k]);
-      }
+      /**
+       * ⭐ ONE STATEMENT FOR THE WHOLE ORDER (2026-09-27, tests/query-shape). This was one UPDATE per column — twenty
+       * columns, twenty round trips — and a failure half-way left the catalogue half-reordered. Now every position in
+       * one UPDATE … FROM unnest: all of it lands, or none of it does.
+       */
+      const keys = wanted.concat(rest);
+      await query(`UPDATE schema_fields s SET display_order = u.ord
+                     FROM unnest($2::text[], $3::int[]) AS u(k, ord)
+                    WHERE s.schema_id = $1 AND s.field_key = u.k`,
+        [schema_id, keys, keys.map((_, i) => i + 1)]);
       res.json({ message: 'Order saved', ordered: wanted.length, untouched: rest.length });
     } catch (err) {
       console.error('Schema field order error:', err.message);

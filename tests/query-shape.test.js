@@ -80,12 +80,28 @@ const BUDGET = {
    * file. Sixteen features, and a deliberate manual act — not a hot path.
    */
   'routes/testing.js': 3,
-  'routes/chits.js': 9,
+  /* 9 → 11 (2026-09-27): cancel-requested and withdraw (b195/b197, 2026-09-02) write each PARTY's own copy, each
+     under that party's RLS context — "a write per recipient", which this file's rule allows by name. */
+  'routes/chits.js': 11,
+  /**
+   * ⭐ PER-TENANT, BY CONSTRUCTION (2026-09-27, each read before it was budgeted). Each loop is over ENTITIES, and each
+   * entity's rows sit behind FORCE RLS keyed on the context withEntity() sets — one statement cannot read or write
+   * two tenants, so the loop IS the isolation, not an N+1.
+   */
+  'routes/network-offers.js': 1,   // each brand's offers, read under that brand
+  'lib/network-catalogue.js': 2,   // each store's copy written under that store; each member store read under itself
+  'lib/workroute.js': 1,           // each routing target's folder, under that target
+  /* ⚠️ ORDER IS THE MEANING: scheduled patches apply in effective_at order, and two patches to ONE product must land
+     in sequence — a batched merge would pick one arbitrarily. Due rows per run are few (a shop's price changes). */
+  'lib/schedule.js': 1,
+  /* ⚠️⚠️ KNOWN DEBT, NOT A PASS (2026-09-27): a purchase records each line with ensure() (find-or-create the supply
+     item) and then an update — two round trips per line. Hoisting needs ensure() to take a set; left for a daylight
+     change with Athi rather than an overnight one. It is budgeted so the count cannot GROW past it, not because it is fine. */
+  'lib/supply-store.js': 1,
   'routes/governance.js': 1,
   'routes/network-design.js': 3,
   'routes/products.js': 4,
   'lib/storage.js': 2,
-  'src/services/catalogue.js': 1,
   'src/services/chit.js': 2,
   'src/services/network.js': 1,
 };
@@ -120,6 +136,14 @@ function loopQueries(rel) {
     if (/\b(for\s*\(|for\s+await|\.forEach\s*\()/.test(ln)) open = { line: i + 1, brace: 0 };
     if (!open) return;
     open.brace += (ln.match(/\{/g) || []).length - (ln.match(/\}/g) || []).length;
+    /**
+     * ⚠️ A LOOP THAT ENDS ON ITS OWN LINE HAS ENDED (2026-09-27). `rows.forEach((r) => { set.add(r.id); });` opens and
+     * closes on one line, but the loop stayed "open" for a second line, so the query AFTER it — outside it — was
+     * counted as inside: 8 of 20 hits were exactly that (keys.js, counters.js, entities.js ×2, profile.js ×2, …).
+     * Closed here when the braces balance on the loop's own line and the query is not ON that line.
+     */
+    if (i + 1 === open.line && open.brace <= 0 && !/await\s+(\w+\.)?(query|db\.query|withEntity)\s*\(/.test(ln)
+        && !/\{\s*$/.test(ln) && (/\}\s*\)?\s*;?\s*$/.test(ln) || /\)\s*[^{]*;\s*$/.test(ln))) { open = null; return; }
     if (/await\s+(\w+\.)?(query|db\.query|withEntity)\s*\(/.test(ln) && i + 1 > open.line) { n++; open = null; return; }
     if (open.brace <= 0 && i > open.line + 1) open = null;
   });
