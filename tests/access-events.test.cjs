@@ -56,6 +56,25 @@ const ok = (n, c, x) => { if (c) { pass++; console.log('  ✓ ' + n); } else { f
   });
   ok('an unchanged PATCH writes nothing', written.length === 0, JSON.stringify(written.map(w => w.args[2])));
 
+  /* ⚠️⚠️ external review 2026-09-25: a failed audit write was swallowed AND unreported — the change answered 200 */
+  console.log('\n── a lost audit row is SAID, never thrown ──');
+  const refused = async () => { throw Object.assign(new Error('new row violates row-level security policy'), { code: '42501' }); };
+  const logged = [];
+  const realErr = console.error; console.error = (...a) => logged.push(a.map(String).join(' '));
+  let res, threw = false;
+  try {
+    res = await ev.recordChanges(refused, {
+      entity_id: 'e', subject_identity_id: 's', changed_by: 'c',
+      before: { hat: 'act', can_see_costs: false }, after: { hat: 'audit', can_see_costs: true },
+    });
+  } catch (_) { threw = true; } finally { console.error = realErr; }
+  ok('the caller is never failed by the audit', !threw);
+  ok('it reports what was lost: { written: 0, failed: 2 }', res && res.written === 0 && res.failed === 2, JSON.stringify(res));
+  ok('and says so in the log, with the code', logged.length === 2 && logged.every((l) => /audit row NOT written/.test(l)), JSON.stringify(logged));
+  ok('the route puts it in its answer (routes/actors.js)', /audit: \{ recorded: \(audit && audit\.written\)/.test(
+    require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'actors.js'), 'utf8')));
+
   console.log(`\n══ ${pass} passed · ${fail} failed ══\n`);
+  console.log('  ' + pass + ' checks');   /* the gate (scripts/guards.cjs) reads "<n> checks" */
   process.exit(fail ? 1 : 0);
 })();

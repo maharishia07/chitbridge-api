@@ -34,6 +34,16 @@ const GUARDS = [
   /* ⚠️ written 2026-09-28 with the one-gate rebuild and NOT added here the same day — a guard nobody runs. */
   'till-origin.test.cjs',       // ⚠️⚠️⚠️ only the counter's own page may write to the shop-PC program (critic C1)
   'counter-gates.test.cjs',     // ⭐⭐⭐ ONE door to a shop (becomeShop), ONE for a person (sign-in, offline PIN), lock/break = that sign-in
+  /* ⚠️ "A GUARD NOBODY RUNS" (BACKLOG, 2026-09-18) — the suite ran it, the gate never did. Added 2026-09-28. */
+  'tdz-guard.test.js',          // no const/let read above its declaration in the same function (node -c cannot see a TDZ)
+  /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
+  'migration-lint.test.cjs',     // no NEW migration hides a FOREIGN KEY inside CREATE TABLE IF NOT EXISTS
+  'entity-cast-guard.test.cjs',  // no NEW RLS policy casts an unset current_setting straight to ::uuid
+  /* ⚠️ a guard nobody ran: the access gate for co-assists was never in this list (found 2026-09-28) */
+  'hat-gate.test.cjs',          // ⭐⭐ a View-only/Comment-only co-assist cannot write; asking /assist is open, its five writes are not
+  'access-events.test.cjs',     // the IAM audit trail never invents a change, and a lost row is SAID (review 2026-09-25)
+  'notifications-count.test.cjs', // ⭐⭐ the badge's number is ONE withEntity statement over the feed's own rows (M7, 2026-09-28)
+  'supplier-list-scope.test.cjs', // ⭐⭐⭐ every supplier_list statement runs inside withEntity — ready for FORCE RLS (H2, 2026-09-28)
   'knownerr.test.js',         // a refusal the database makes on purpose (b247) reaches a person as a 409, from every route that writes a chit
   'xlsx-read.test.js',        // an Excel file read into the shape a CSV makes, and refused in words otherwise
   'xlsx-write.test.js',       // a workbook Excel will open — every part it needs, and a code keeps its leading zero
@@ -54,6 +64,9 @@ const GUARDS = [
   'orderhub.test.js',         // ⭐⭐⭐ one floor, several devices, no internet — [TILL-178b]
   'till-hidden.test.js',      // [hidden] must win — a class that sets display draws a closed panel anyway
   'till-exits.test.js',       // every screen has a lid, and it never sits in a row of ways to CHANGE things
+  'tax-lines.test.js',          // ⭐⭐ the month's ledger and GSTR: a credit note REDUCES tax; cdnr · cdnur · b2cs netting · Table 13 (2026-09-28)
+  'round-trips-till.test.cjs', // ⭐⭐ the counter's snapshot has a trip budget: its own five tables in ONE transaction, 50 → 38 (M36, 2026-09-29)
+  'rev16-delta-cursor-stamped-first.test.js', // ⭐⭐ a delta's cursor never skips a change — stamped before the read; past the cap sent in parts (2026-09-28)
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs',// the bill number's shape: what the date says vs when the run restarts
@@ -166,10 +179,26 @@ const files = all
   : GUARDS.filter((f) => { if (fs.existsSync(path.join(TESTS, f))) return true;
       console.log('  ⚠️  ' + f + ' is listed but missing — renamed, or deleted without updating this list'); return false; });
 
+/**
+ * ⚠️ CI WITHOUT THE ENGINES REPO (2026-09-28). chitbridge-engines is PRIVATE; CI clones it only when the
+ * ENGINES_READ_TOKEN secret exists. Without it, exactly these two guards cannot run — measured by moving the repo
+ * aside and running the whole gate: every other guard passed. They are SKIPPED ONLY when CB_ENGINES_ABSENT_OK=1
+ * (the CI job sets it) AND the repo is really absent, and each skip is printed as a CI warning, never a pass.
+ * Locally the variable is unset, so a missing engines repo still FAILS as it always did.
+ */
+const NEEDS_ENGINES = ['engines-pinned.test.js', 'tax-vendor.test.js'];
+const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
+const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
+
 let total = 0, failed = [], started = Date.now();
 console.log(all ? '— every test file (some need a server) —' : '— the guards —');
 
 for (const f of files) {
+  if (SKIP_ENGINES && NEEDS_ENGINES.indexOf(f) >= 0) {
+    console.log('  skip  ' + f.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   — needs chitbridge-engines (private; set ENGINES_READ_TOKEN)');
+    console.log('::warning::' + f + ' skipped — chitbridge-engines is not checked out (add the ENGINES_READ_TOKEN secret)');
+    continue;
+  }
   const r = spawnSync(process.execPath, [path.join(TESTS, f)], { encoding: 'utf8', timeout: 120000 });
   const out = (r.stdout || '') + (r.stderr || '');
   /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */

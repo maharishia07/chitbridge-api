@@ -83,11 +83,11 @@ router.post('/suppliers',
       if (!bridge) {
         const local = await require('../lib/local-identity').mint(owner, localName, { query });
         if (local.error) return res.status(local.status).json(local.error);
-        const dupL = await query(
-          `SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, local.identity_id]);
+        const dupL = await withEntity(owner, (db) => db.query(
+          `SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, local.identity_id]));
         if (dupL.rows.length > 0)
           return res.status(409).json({ error: 'Exists', message: localName + ' is already in your supplier list' });
-        await query(
+        await withEntity(owner, (db) => db.query(
           /**
            * ⚠️ added_via = 'manual', NOT 'local'. `added_via` has a CHECK constraint (manual/transaction/import)
            * and 'local' failed it — a 500 that reached the screen as "Something went wrong", caught by [SUP-02]
@@ -99,7 +99,7 @@ router.post('/suppliers',
           `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind,
                                       category, nickname, notes, preferred, added_via)
            VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
-          [owner, local.identity_id, kind, category, nickname, notes, preferred]);
+          [owner, local.identity_id, kind, category, nickname, notes, preferred]));
         return res.json({ message: 'Supplier added',
           supplier: { supplier_entity_id: local.identity_id, bridge_id: local.bridge_id,
                       display_name: local.display_name, on_rail: false,
@@ -117,16 +117,16 @@ router.post('/suppliers',
       if (sup.rows[0].identity_id === owner)
         return res.status(400).json({ error: 'Invalid', message: 'Cannot add yourself' });
 
-      const dup = await query(
+      const dup = await withEntity(owner, (db) => db.query(
         `SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
-        [owner, sup.rows[0].identity_id]);
+        [owner, sup.rows[0].identity_id]));
       if (dup.rows.length > 0)
         return res.status(409).json({ error: 'Exists', message: 'Already in your supplier list' });
 
-      await query(
+      await withEntity(owner, (db) => db.query(
         `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind, category, nickname, notes, preferred, added_via)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
-        [owner, sup.rows[0].identity_id, kind, category, nickname, notes, preferred]);
+        [owner, sup.rows[0].identity_id, kind, category, nickname, notes, preferred]));
 
       res.json({ message: 'Supplier added',
         supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, on_rail: true,
@@ -141,7 +141,7 @@ router.post('/suppliers',
 router.get('/suppliers', auth, async (req, res) => {
   try {
     const owner = ctx(req);
-    const r = await query(
+    const r = await withEntity(owner, (db) => db.query(
       /* ⭐ `on_rail` COMES FROM THE HANDLE — a `~` handle was minted by a business, never registered by a person
          (lib/handle.js). The row is an ordinary entity in every other respect, so the join and every downstream
          lookup stay exactly as they were; that was the point of minting a real id rather than writing a null. */
@@ -156,7 +156,7 @@ router.get('/suppliers', auth, async (req, res) => {
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
-       ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]);
+       ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]));
     /* ⭐ the public facts with their rung (lib/public-facts.js) — the row's raw flags never leave the server */
     const { factsOf } = require('../lib/public-facts');
     const rows = r.rows.map((x) => { const facts = factsOf(x); const o = Object.assign({}, x); delete o.policy_flags; delete o.gstn; o.facts = facts; return o; });
@@ -223,9 +223,9 @@ router.patch('/suppliers/:id',
        * mix-up he is guarding against, and a silent merge would move history between two real records.
        */
       if ('display_name' in req.body && String(req.body.display_name || '').trim()) {
-        const who = await query(
+        const who = await withEntity(owner, (db) => db.query(
           `SELECT i.identity_id, i.user_id FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
-            WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`, [req.params.id, owner]);
+            WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`, [req.params.id, owner]));
         const row = who.rows[0];
         if (!row) return res.status(404).json({ error: 'Not found' });
         if (!require('../lib/handle').isMinted(row.user_id))
@@ -243,9 +243,9 @@ router.patch('/suppliers/:id',
       }
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide nickname, category, notes, supply_kind, or preferred' });
       vals.push(req.params.id, owner);
-      const r = await query(
+      const r = await withEntity(owner, (db) => db.query(
         `UPDATE supplier_list SET ${sets.join(', ')}
-         WHERE supplier_list_id = $${n++} AND owner_entity_id = $${n} RETURNING supplier_list_id`, vals);
+         WHERE supplier_list_id = $${n++} AND owner_entity_id = $${n} RETURNING supplier_list_id`, vals));
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
       res.json({ message: 'Supplier updated' });
     } catch (err) {
@@ -265,9 +265,9 @@ router.patch('/suppliers/:id',
 router.delete('/suppliers/:id', auth, async (req, res) => {
   try {
     const owner = ctx(req);
-    const r = await query(
+    const r = await withEntity(owner, (db) => db.query(
       `DELETE FROM supplier_list WHERE supplier_list_id = $1 AND owner_entity_id = $2 RETURNING supplier_list_id`,
-      [req.params.id, owner]);
+      [req.params.id, owner]));
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
     res.json({ message: 'Supplier removed' });
   } catch (err) {
@@ -312,7 +312,7 @@ router.get('/suppliers/availability', auth, async (req, res) => {
     /* Two characters, same floor as the panel. A one-letter query matches most catalogues and answers nothing. */
     if (q.length < 2) return res.json({ q, results: [], count: 0, searched: 0 });
 
-    const sup = await query(
+    const sup = await withEntity(owner, (db) => db.query(
       /* ⚠️ The SAME columns the single-catalogue route selects. buildPublicView reads `business_status` for the
          shop block; selecting a narrower row here would build a subtly different view from the same resolver. */
       `SELECT sl.supplier_list_id, sl.nickname, sl.preferred,
@@ -329,7 +329,7 @@ router.get('/suppliers/availability', auth, async (req, res) => {
              supplier has none — including them would spend a read per row to learn nothing and then report "no",
              which reads as "they don't stock it" rather than "we cannot ask them". Silence is the truer answer. */
           AND COALESCE(i.identity_type, 'entity') <> 'local'
-        ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]);
+        ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]));
 
     const viewer = req.identity && req.identity.bridge_id;
     const deps = { query, withEntity, catalogueBuild, orderInput,

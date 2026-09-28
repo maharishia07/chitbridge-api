@@ -202,4 +202,6 @@ t('no const/let is read above the line that declares it, in the same function', 
 });
 
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
+/* ⚠️ the gate (scripts/guards.cjs) reads "<n> checks" and counts a guard that reports none as a FAIL */
+console.log('  ' + pass + ' checks');
 process.exit(fail ? 1 : 0);

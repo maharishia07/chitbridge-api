@@ -33,6 +33,44 @@ jobs:
             echo "::error::CRLF found in a shell script (must be LF — see .gitattributes)"; exit 1
           fi
 
+  guards:
+    # ⭐⭐ THE GATE, ON EVERY PUSH (2026-09-28). Until today CI ran syntax only and scripts/guards.cjs ran when
+    # somebody remembered to type it. The guards are offline by design — no DB, no network, no server — so they
+    # need only the three repos side by side, exactly as they sit in C:\dev:
+    #   chitbridge-api (this) · chitbridge-web (public) · chitbridge-engines (PRIVATE — needs ENGINES_READ_TOKEN)
+    # Without the token, the two guards that read the engines repo are SKIPPED WITH A WARNING (never passed);
+    # every other guard runs. Add the secret (a fine-grained read-only token for chitbridge-engines) to run all.
+    name: guards (offline — no DB, no network)
+    runs-on: ubuntu-latest
+    env:
+      CB_ENGINES_ABSENT_OK: "1"
+      HAS_ENGINES_TOKEN: ${{ secrets.ENGINES_READ_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: chitbridge-api
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-web
+          path: chitbridge-web
+      - name: chitbridge-engines (private — only when the token is set)
+        if: ${{ env.HAS_ENGINES_TOKEN == 'true' }}
+        uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-engines
+          token: ${{ secrets.ENGINES_READ_TOKEN }}
+          path: chitbridge-engines
+          fetch-depth: 0     # adopt --check verifies against the TAGS the lock pins
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: install (api)
+        working-directory: chitbridge-api
+        run: npm ci
+      - name: scripts/guards.cjs
+        working-directory: chitbridge-api
+        run: node scripts/guards.cjs
+
   integration:
     name: integration (smoke + isolation) — DB-backed
     # GATED until the prerequisites land, then flip on by setting repo variable CI_INTEGRATION=true:

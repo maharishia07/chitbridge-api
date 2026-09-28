@@ -7,11 +7,67 @@ const { query, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 
 // GET /api/notifications?limit= — recent activity (newest first) on my chits, excluding my own actions.
+/**
+ * ⭐ WHICH state_log ROWS ARE THIS CALLER'S FEED — one fragment, read by the feed AND by the badge count, so the
+ * two can never disagree about what counts (2026-09-28). $1 = the caller's entity, $2 = the caller.
+ *   · F3 (P0 isolation): only the caller's OWN copy's state_log row, OR a genuinely cross-party event. Stops the
+ *     counterparty's INTERNAL actions (read / archive / delete / restore / internal assign + their actor names)
+ *     leaking into this feed; disputes/voids still cross. Status changes already fan a row to each copy
+ *     (chits.js:688), so a counterparty status change still shows via the caller's own row.
+ *   · ⚠️ DISMISSED IS HIDDEN, NEVER DELETED — b164. The feed is a VIEW over state_log, the trail that
+ *     traceability and disputes are built on; clearing a notification must not touch the event.
+ *   · The inner ORDER BY leads with the DISTINCT ON keys (Postgres requires it); the caller sorts newest-first
+ *     OUTSIDE and applies its LIMIT there — see the DISTINCT ON note in the feed below.
+ */
+/** how far back the feed and the badge look — an integer, so it is safe inside the SQL text below */
+const FEED_DAYS = Math.max(1, parseInt(process.env.NOTIF_FEED_DAYS || '90', 10) || 90);
+const FEED_FROM = `FROM state_log sl
+         JOIN chit_status cs
+           ON cs.chit_id = sl.chit_id AND cs.entity_id = $1 AND cs.deleted_at IS NULL
+         LEFT JOIN chit_header ch
+           ON ch.chit_id = sl.chit_id AND ch.entity_id = $1 AND ch.direction = cs.direction
+        WHERE (sl.action_by_identity_id <> $2
+               OR sl.action IN ('dispute_raised','dispute_resolved','voided'))
+          AND ( sl.entity_id = $1 OR sl.action IN ('dispute_raised','dispute_resolved','voided') )
+          AND NOT EXISTS (SELECT 1 FROM notif_dismissed nd
+                           WHERE nd.entity_id = $1 AND nd.log_id = sl.log_id)
+          /* ⚠️ BOUNDED (external review 2026-09-25): with no date bound this re-sorted the shop's WHOLE state_log on every
+             poll and grew without limit. idx_state_log_entity (entity_id, created_at DESC) already exists; the bound is
+             what lets it serve the read. The bell shows the newest thirty anyway — ninety days is far beyond that. */
+          AND sl.created_at > now() - interval '${FEED_DAYS} days'
+        ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail`;
+
 router.get('/', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const caller_id = req.identity.identity_id;   // the actor (or entity) actually making the call
     const limit = Math.min(parseInt(req.query.limit || 30), 100);
+
+    /**
+     * ── ⭐⭐ ?count=1 — THE BADGE'S OWN QUESTION, IN ONE STATEMENT (2026-09-28, BACKLOG "THE BADGE COSTS A FULL
+     * FEED READ") ─────────────────────────────────────────────────────────────────────────────────────────────
+     * The badge needs ONE number. Asking for it through the feed cost an unscoped identities read, a withEntity
+     * over the DISTINCT ON join returning up to thirty full rows, and a second withEntity for notif_seen_at —
+     * three transactions. This is one withEntity, one statement: the same rows (FEED_FROM), the same newest-
+     * `limit` window, the same rule (newer than notif_seen_at, messages excluded). Same number, nothing else sent.
+     * notif_seen_at is read through to_jsonb, so before b157 every row counts, exactly as the feed does.
+     */
+    if (String(req.query.count || '') === '1') {
+      const c = await withEntity(entity_id, (db) => db.query(
+        `WITH me AS (SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1)
+         SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
+                                   AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
+                count(*)::int AS total,
+                (SELECT seen FROM me) AS seen_at
+           FROM (SELECT x.action, x.created_at
+                   FROM (SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail) sl.action, sl.created_at
+                         ${FEED_FROM}) x
+                  ORDER BY x.created_at DESC
+                  LIMIT $3) d`,
+        [entity_id, caller_id, limit]));
+      const r = c.rows[0] || { count: 0, total: 0, seen_at: null };
+      return res.json({ count: r.count, total: r.total, seen_at: r.seen_at });
+    }
 
     // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
     // regardless of which actor the individual chit is assigned to.
@@ -48,24 +104,7 @@ router.get('/', auth, async (req, res) => {
               ch.auto_subject, ch.manual_subject,
               (cs.assigned_to_actor_id = $2)                                           AS assigned_to_me,
               (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me
-         FROM state_log sl
-         JOIN chit_status cs
-           ON cs.chit_id = sl.chit_id AND cs.entity_id = $1 AND cs.deleted_at IS NULL
-         LEFT JOIN chit_header ch
-           ON ch.chit_id = sl.chit_id AND ch.entity_id = $1 AND ch.direction = cs.direction
-        WHERE (sl.action_by_identity_id <> $2
-               OR sl.action IN ('dispute_raised','dispute_resolved','voided'))
-          -- F3 (P0 isolation): only the caller's OWN copy's state_log row, OR a genuinely cross-party event.
-          -- Stops the counterparty's INTERNAL actions (read / archive / delete / restore / internal assign +
-          -- their actor names) leaking into this feed; disputes/voids still cross. Status changes already fan a
-          -- row to each copy (chits.js:688), so a counterparty status change still shows via the caller's own row.
-          AND ( sl.entity_id = $1 OR sl.action IN ('dispute_raised','dispute_resolved','voided') )
-          /* ⚠️ DISMISSED IS HIDDEN, NEVER DELETED — b164. The feed is a VIEW over state_log, the trail that
-             traceability and disputes are built on; clearing a notification must not touch the event. The
-             LEFT JOIN degrades on its own if b164 is not applied: see the catch below. */
-          AND NOT EXISTS (SELECT 1 FROM notif_dismissed nd
-                           WHERE nd.entity_id = $1 AND nd.log_id = sl.log_id)
-        ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail
+        ${FEED_FROM}
       ) d
       ORDER BY d.created_at DESC
       LIMIT $4`,

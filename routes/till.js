@@ -65,6 +65,15 @@ function versionOf(payload) {
   return crypto.createHash('sha1').update(JSON.stringify(payload)).digest('hex').slice(0, 12);
 }
 
+/** ⚠️ the most changed rows one delta answer carries — past it the delta is sent in parts (`more`), never cut */
+const DELTA_CAP = Math.max(1, parseInt(process.env.TILL_DELTA_CAP || '20000', 10) || 20000);
+/** rows were read oldest-first, cap + 1 of them: keep the cap, and if there was more, the cursor is the last row kept */
+function deltaPage(rows, cap) {
+  if (!Array.isArray(rows) || rows.length <= cap) return { rows: rows || [], more: false, cursor: null };
+  const kept = rows.slice(0, cap);
+  return { rows: kept, more: true, cursor: new Date(kept[kept.length - 1].updated_at).toISOString() };
+}
+
 router.get('/snapshot', auth, async (req, res) => {
   try {
     /**
@@ -135,36 +144,20 @@ router.get('/snapshot', auth, async (req, res) => {
         }
       }
     } catch (_) { /* ⚠ best effort — a counter must open whatever this says */ }
-    let profile = {}, sectors = [];
-    try {
-      /**
-       * ⭐ SECTORS ARE A COLUMN, not something inside profile_json — and this line SAID SO while selecting
-       * profile_json anyway. There is no such column, so the query threw on every snapshot, the catch below
-       * swallowed it, and sectors was ALWAYS []. 
-       * ⚠️⚠️ WHICH MEANS lot_fields HAS NEVER WORKED. No counter has ever asked for a batch or an expiry,
-       * for any vertical, since the day it was written — a pharma shop received medicine and was asked
-       * nothing. Found 2026-09-10 in the Railway log, by an error nobody was reading.
-       * ⚠️ AND IT USED A BARE query() ON A TENANT TABLE. The platform prints [RLS-GUARD] for exactly that;
-       * withEntity is what every other read of this table uses.
-       */
-      const p = await withEntity(entity_id, (db) => db.query(
-        `SELECT trade_mode, markets, sectors, adopted FROM entity_profile WHERE entity_id = $1`, [entity_id]));
-      profile = p.rows[0] || {};
-      sectors = (p.rows[0] && p.rows[0].sectors) || [];
-    } catch (e) {
-      /* ⚠️ SAY IT. The silent catch here is what let the above hide for weeks — a shop with no profile is
-         the ordinary case and needs no noise, but a query that CANNOT run must leave a trace. */
-      try { require('../lib/logger').warn('till.sectors', { entity_id, why: String(e && e.message) }); } catch (_) {}
-    }
-
     /**
-     * ⚠️ THE ITEMS ARE NOT THE TAX SHELF. readShelf() answers null for a seller with no GSTIN — the one place that decides "no GSTIN,
-     * no GST" for the cart, the send and the invoice alike — and most shops we are building this counter for have none. So the shelf
-     * is asked only for slabs, categories and the face; the items come from the catalogue, whoever the shop is.
+     * ⭐⭐ THE ROUTE'S OWN FIVE READS, IN ONE TRANSACTION (2026-09-29, M36). entity_profile, the items, the live count, the
+     * customers and the adoptions were five withEntity transactions — BEGIN · set_config · the read · COMMIT each, twenty
+     * trips, two of them racing the tax shelf for pool connections inside a Promise.all. They are independent reads of one
+     * shop, so they share one: 3 + 5 = eight trips.
+     * ⚠️ ONE FAILURE MUST NOT EMPTY THE OTHERS. Postgres aborts a whole transaction on any error, so if one statement fails
+     * the shared read is dropped and each section is read on its own, exactly as before — with its own catch and its own
+     * warning below. The shared read is a fast path, never a second behaviour; its failure is said out loud.
+     * ⚠️ NOT readBatch: that checks each statement with the RLS guard, and these are all tenant tables.
+     * Measured: tests/round-trips-till.test.cjs.
      */
-    const [shelf, itemRows, liveCount] = await Promise.all([
-      taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
-        getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: false }).catch(() => null),
+    const OWN = {
+      profile: (db) => db.query(
+        `SELECT trade_mode, markets, sectors, adopted FROM entity_profile WHERE entity_id = $1`, [entity_id]),
       /**
        * ⭐ A DELTA WHEN THE TILL SAYS WHEN IT LAST LOOKED (2026-09-08). A shop with 10,000 items should not send them all every fifteen
        * minutes to say nothing changed. With ?since= we return only rows touched after that moment — and, separately, the ids of rows
@@ -173,10 +166,12 @@ router.get('/snapshot', auth, async (req, res) => {
        * ⚠️ The stamp we hand back is the SERVER's clock (body.at), never the till's — two clocks a few seconds apart would silently
        * skip a row that changed in between.
        */
-      withEntity(entity_id, (db) => (since
-        ? db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND updated_at > $2 ORDER BY updated_at DESC LIMIT 20000', [entity_id, since])
-        : db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at DESC NULLS LAST LIMIT 20000', [entity_id])
-      )).catch(() => ({ rows: [] })),
+      items: (db) => (since
+        /* ⚠️⚠️ OLDEST FIRST, AND ONE MORE THAN THE CAP (external review 2026-09-25, fixed 2026-09-28). It was newest-first
+           LIMIT 20000 with the cursor at readAt: past the cap the OLDEST changes were cut and the cursor jumped over them,
+           so a counter never received them. Now a cut delta hands back the LAST row sent as its cursor (see DELTA_CAP). */
+        ? db.query('SELECT item_id, item_data, is_active, updated_at FROM catalogue_items WHERE entity_id = $1 AND updated_at > $2 ORDER BY updated_at ASC LIMIT $3', [entity_id, since, DELTA_CAP + 1])
+        : db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at DESC NULLS LAST LIMIT 20000', [entity_id])),
       /**
        * ⚠️⚠️ A DELETE IS INVISIBLE TO A DELTA, AND THAT IS WHY THE COUNTER KEPT SHOWING STOCK THAT NO LONGER EXISTS.
        *
@@ -194,11 +189,71 @@ router.get('/snapshot', auth, async (req, res) => {
        * unrecognised status, so the SQL excludes the three blocked statuses rather than requiring 'available'. Requiring it would
        * under-count every product that never had the field, and the counter would then refresh itself in a loop for ever.
        */
-      withEntity(entity_id, (db) => db.query(
+      count: (db) => db.query(
         `SELECT count(*)::int AS n FROM catalogue_items
            WHERE entity_id = $1 AND is_active = true
              AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')
-                 NOT IN ('redundant', 'retired')`, [entity_id])).catch(() => ({ rows: [{ n: null }] })),
+                 NOT IN ('redundant', 'retired')`, [entity_id]),
+      /**
+       * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
+       * owner_entity_id, customer_identity_id, groups, and how often they have transacted.
+       * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
+       */
+      customers: (db) => db.query(
+        `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, c.groups, c.last_txn_at
+           FROM customer_list c
+           JOIN identities i ON i.identity_id = c.customer_identity_id
+          WHERE c.owner_entity_id = $1
+          ORDER BY c.last_txn_at DESC NULLS LAST
+          LIMIT 2000`, [entity_id]),
+      adoption: (db) => db.query(
+        'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [entity_id]),
+    };
+    let own = null;
+    try {
+      own = await withEntity(entity_id, async (db) => {
+        const out = {};
+        for (const k of Object.keys(OWN)) out[k] = await OWN[k](db);   /* ⚠️ in turn — one client runs one statement at a time */
+        return out;
+      });
+    } catch (e) {
+      own = null;
+      try { require('../lib/logger').warn('till.snapshot.shared-read', { entity_id, why: String(e && e.message) }); } catch (_) {}
+    }
+    const ownRead = (k) => (own ? own[k] : withEntity(entity_id, OWN[k]));
+
+    let profile = {}, sectors = [];
+    try {
+      /**
+       * ⭐ SECTORS ARE A COLUMN, not something inside profile_json — and this line SAID SO while selecting
+       * profile_json anyway. There is no such column, so the query threw on every snapshot, the catch below
+       * swallowed it, and sectors was ALWAYS []. 
+       * ⚠️⚠️ WHICH MEANS lot_fields HAS NEVER WORKED. No counter has ever asked for a batch or an expiry,
+       * for any vertical, since the day it was written — a pharma shop received medicine and was asked
+       * nothing. Found 2026-09-10 in the Railway log, by an error nobody was reading.
+       * ⚠️ AND IT USED A BARE query() ON A TENANT TABLE. The platform prints [RLS-GUARD] for exactly that;
+       * withEntity is what every other read of this table uses.
+       */
+      const p = await ownRead('profile');
+      profile = p.rows[0] || {};
+      sectors = (p.rows[0] && p.rows[0].sectors) || [];
+    } catch (e) {
+      /* ⚠️ SAY IT. The silent catch here is what let the above hide for weeks — a shop with no profile is
+         the ordinary case and needs no noise, but a query that CANNOT run must leave a trace. */
+      try { require('../lib/logger').warn('till.sectors', { entity_id, why: String(e && e.message) }); } catch (_) {}
+    }
+
+    /**
+     * ⚠️ THE ITEMS ARE NOT THE TAX SHELF. readShelf() answers null for a seller with no GSTIN — the one place that decides "no GSTIN,
+     * no GST" for the cart, the send and the invoice alike — and most shops we are building this counter for have none. So the shelf
+     * is asked only for slabs, categories and the face; the items come from the catalogue, whoever the shop is.
+     */
+    const [shelf, itemRows, liveCount] = await Promise.all([
+      taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
+        getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: false }).catch(() => null),
+      /* ⭐ the items and the live count — read in the shared transaction above (OWN.items, OWN.count), each on its own if it failed */
+      Promise.resolve().then(() => ownRead('items')).catch(() => ({ rows: [] })),
+      Promise.resolve().then(() => ownRead('count')).catch(() => ({ rows: [{ n: null }] })),
     ]);
 
     /**
@@ -250,13 +305,7 @@ router.get('/snapshot', auth, async (req, res) => {
        * owner_entity_id, customer_identity_id, groups, and how often they have transacted.
        * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
        */
-      const c = await withEntity(entity_id, (db) => db.query(
-        `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, c.groups, c.last_txn_at
-           FROM customer_list c
-           JOIN identities i ON i.identity_id = c.customer_identity_id
-          WHERE c.owner_entity_id = $1
-          ORDER BY c.last_txn_at DESC NULLS LAST
-          LIMIT 2000`, [entity_id]));
+      const c = await ownRead('customers');   /* OWN.customers — the name and number are on identities, see there */
       /* ⚠️ THE ID TRAVELS because points hang from it. A name is not a holder — two customers can be called
          Kumar, and a reward balance addressed by name would eventually be paid to the wrong one. */
       customers = c.rows.map((x) => ({ identity_id: x.identity_id, name: x.display_name, phone: x.phone || null,
@@ -287,7 +336,16 @@ router.get('/snapshot', auth, async (req, res) => {
 
     /* ⚠️ A CAP, AND IT IS A REAL LIMIT. 20,000 items is about 5 MB in one answer — heavy but workable on a shop line. Beyond that
        the snapshot must PAGE (a cursor beside ?since=), because no counter should wait on a 26 MB download; measured 2026-09-08. */
-    const all = (itemRows && itemRows.rows) || [];
+    let all = (itemRows && itemRows.rows) || [];
+    /**
+     * ⭐ A DELTA LONGER THAN THE CAP IS SENT IN PARTS, NEVER CUT. The query asked for DELTA_CAP + 1 rows oldest-first; a +1th row
+     * means more changed than one answer carries. The answer then stops at DELTA_CAP and its cursor is the updated_at of the
+     * LAST row it carries — not readAt — so the next ?since= continues exactly there, and `more: true` tells the counter to
+     * ask again now. ⚠️ The cursor is ≤ that row's timestamp (a JS Date keeps milliseconds, Postgres keeps microseconds), so
+     * rows sharing it may be sent twice: a repeat is a no-op merge by item_id, a skip would be permanent.
+     */
+    let deltaMore = false, deltaCursor = null;
+    if (since) { const pg = deltaPage(all, DELTA_CAP); all = pg.rows; deltaMore = pg.more; deltaCursor = pg.cursor; }
     /**
      * ⚠️ SELLABLE, NOT MERELY ALIVE. `is_active` says the row exists; itemstatus.isOfferable says a customer may take one — retired,
      * unavailable and redundant are all alive and all unsellable. Filtering on the wrong one put retired stock on the counter
@@ -481,8 +539,7 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     let networkUnpriced = 0;
     try {
-      const ado = await withEntity(entity_id, (db) => db.query(
-        'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [entity_id]));
+      const ado = await ownRead('adoption');
       if (ado.rows.length) {
         const catalogueBuild = require('../lib/catalogue-build');
         const catalogueRead = require('../lib/catalogue-read');
@@ -530,7 +587,9 @@ router.get('/snapshot', auth, async (req, res) => {
     } catch (_) { /* a network that cannot be read never stops the store's own offers */ }
 
     const body = {
-      at: readAt,   /* [REV-16] captured before the item SELECT ran — see the comment at the top of this handler */
+      at: deltaCursor || readAt,   /* [REV-16] captured before the item SELECT ran — see the comment at the top of this handler;
+                                      a delta sent in parts hands back its last row instead (see DELTA_CAP) */
+      more: deltaMore,
       /**
        * ⭐⭐ WHICH SHOP IS THIS, ANSWERED BY THE SERVER (2026-09-08). Athi: *"can we check is there any other user id sits in the
        * session layer, so we can open it correctly?"* A counter could not check, because nothing it held said whose shop it was —

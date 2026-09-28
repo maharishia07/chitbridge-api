@@ -2129,7 +2129,19 @@ router.get('/mis', auth, async (req, res) => {
        the shop's name, its handle, or its bridge id. NOT email — that is how you build an address harvester. */
     const q = String(req.query.q || '').trim();
 
-    const rows = (await query(
+    /**
+     * ⚠️⚠️ THE SUPPLIER COUNT READS THROUGH THE COUNTING SURFACE (b241), NOT supplier_list (2026-09-28, H2).
+     * supplier_list is getting FORCE ROW LEVEL SECURITY. This route deliberately sets no app.current_entity
+     * (it reads across shops), so the inline count would turn into 0 for every shop the moment RLS lands — and
+     * SORTS.suppliers orders the page IN SQL, before LIMIT, so a JS override afterwards cannot rescue the order.
+     * ops.f_entity_counts() is SECURITY DEFINER and returns counts only; 'suppliers' is already in ops.countable.
+     * ⭐ If the function is missing or refused (42883 · 3F000 · 42501) the list runs once more with the old
+     * inline count — right until RLS is forced, and never a blank screen. The counts block below reports why.
+     */
+    let _supFn = true;
+    const SUP_JOIN = `LEFT JOIN (SELECT entity_id, n::int AS n FROM ops.f_entity_counts() WHERE metric = 'suppliers') supc
+                        ON supc.entity_id = i.identity_id`;
+    const _list = () => query(
       /**
        * ── ⭐ EVERY WAY THIS SHOP CAN BE ADDRESSED, IN ONE ROW ─────────────────────────────────────────────
        *
@@ -2183,7 +2195,7 @@ router.get('/mis', auth, async (req, res) => {
               (SELECT count(*)::int FROM identities a
                 WHERE a.parent_entity_id = i.identity_id AND a.entity_kind = 'actor'
                   AND coalesce(a.status,'active') <> 'erased')                    AS seats,
-              (SELECT count(*)::int FROM supplier_list s WHERE s.owner_entity_id = i.identity_id) AS suppliers,
+              ${_supFn ? 'COALESCE(supc.n, 0)' : '(SELECT count(*)::int FROM supplier_list s WHERE s.owner_entity_id = i.identity_id)'} AS suppliers,
               c.path::text AS path,
               CASE WHEN c.bridge_id IS NULL THEN 0 ELSE nlevel(c.path) END        AS depth,
               (SELECT count(*)::int FROM cb_entity k
@@ -2192,6 +2204,7 @@ router.get('/mis', auth, async (req, res) => {
          LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
          LEFT JOIN cb_entity root ON nlevel(c.path) > 1 AND root.path = subpath(c.path, 0, 1)
          ${ST_JOIN}
+         ${_supFn ? SUP_JOIN : ''}
         WHERE i.identity_type = 'entity' AND coalesce(i.status,'active') <> 'erased'
           ${stWhere(10)}
           ${TEST_WHERE}
@@ -2237,7 +2250,14 @@ router.get('/mis', auth, async (req, res) => {
        String(req.query.entity_visibility || '').trim(),
        String(req.query.supplies || '').trim(),
        String(req.query.standing || '').trim(),
-       Math.max(0, Number(req.query.offset) || 0)])).rows;
+       Math.max(0, Number(req.query.offset) || 0)]);
+    let rows;
+    try { rows = (await _list()).rows; }
+    catch (e) {
+      if (!(e && ['42883', '3F000', '42501'].indexOf(e.code) >= 0)) throw e;
+      _supFn = false;
+      rows = (await _list()).rows;
+    }
 
     /**
      * ── ⭐⭐ THE COUNTING SURFACE — counts from any table, rows from none (b241) ──────────────────────────────

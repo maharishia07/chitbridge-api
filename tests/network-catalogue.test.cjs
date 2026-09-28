@@ -121,6 +121,24 @@ it('⭐⭐ a store\'s save keeps following while it saves the brand\'s price —
   assert.ok(!('follow' in ncat.keepFollow({ 'Apex 500W': { price: 3899 } }, {}, items)['Apex 500W']), 'a store began following without a publish');
 });
 
+/* ⚠️ BACKLOG "REFERENCED PRICES ARE KEYED BY PRODUCT NAME", option 3 (2026-09-28): a price that reaches no product is SAID */
+it('⚠️⚠️ a store\'s price that reaches no product is named in `detached` — not silently dropped', async () => {
+  const items = ncat.diff(OLD, PRODUCTS, []).items;
+  SOURCE_ROW = { source_key: 'k@v1', title: 'Prestige', items, owner_entity_id: null, pending: null };
+  const r = await build.resolve('k@v1', {
+    'Gas Hob': { price: 6500 },            /* renamed at the brand → reached through `formerly` */
+    'Mixer 750W': { price: 5100 },         /* no product of that name, now or before */
+  });
+  assert.deepStrictEqual(r.detached, ['Mixer 750W'], 'the stale price was not reported, or a renamed one was');
+});
+
+it('⚠️ a product the brand WITHDREW from this store is not a detached price — it is a withdrawal', async () => {
+  SOURCE_ROW = { source_key: 'k@v1', title: 'Prestige', items: OLD.slice(0, 2), owner_entity_id: null, pending: null };
+  const r = await build.resolve('k@v1', { 'Apex 500W': { price: 3799, brand_withdrawn: true }, 'Gas Hob': { price: 6860 } });
+  assert.deepStrictEqual(r.detached, [], 'a withdrawal was reported as a price that reaches nothing');
+  assert.deepStrictEqual(build.detachedKeys([{ name: 'A', formerly: ['A0'] }], { A0: 1, B: 2 }), ['B']);
+});
+
 (async () => {
   console.log('\nnetwork catalogue · publish changes, suggest prices');
   for (const [name, fn] of tests) {

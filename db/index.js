@@ -327,6 +327,8 @@ function inlineSql(text, params) {
 }
 const readBatch = async (entityId, actorId, statements) => {
   if (!pool) await ensurePool();
+  /* ⭐ ONE trip, and lib/trips is told so — it was not, so X-DB-Trips left every readBatch out of the count (2026-09-29) */
+  try { require('../lib/trips').tick('batch'); } catch (_) {}
   const head = "BEGIN; SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true);";
   const body = statements.map((s) => { rlsGuardCheck(s.text); return inlineSql(s.text, s.params); }).join(';\n') + ';';
   const text = head + '\n' + body + '\nCOMMIT;';

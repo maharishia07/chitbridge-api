@@ -59,7 +59,10 @@ const SELF_SCOPED = [
   ['/actors/break', 'their own break status — a person may say they are on a break'],
   ['/auth', 'signing in cannot require permission to sign in'],
   ['/notifications', 'clearing one\'s own notifications changes no record — b164 writes only a dismissal'],
-  ['/assist', 'asking the assistant a question; it creates nothing on the rail'],
+  /* ⚠️⚠️ '/assist' WAS HERE, BY PREFIX — and five routes under it WRITE business records (external review
+     2026-09-25, fixed 2026-09-28): catalogue-adopt, catalogue-source (PUT with an empty list wipes a brand's
+     shared source that every member store adopts), container, region-override, publish. A View-only co-assist
+     could do all five. Asking is now opened by EXACT path below, and the writes are gated like any other. */
   ['/metrics', 'reporting — which is precisely what the mis hat is for'],
   ['/exports', 'the same'],
 
@@ -90,6 +93,13 @@ const SELF_SCOPED = [
  */
 const SELF_SCOPED_EXACT = [
   [/^\/chits\/[^/]+\/messages$/, 'messaging — the route itself refuses an EXTERNAL thread for a read-only hat'],
+  /* ⭐ the assistant's READ-SHAPED posts only — each answers a question and writes nothing (routes/assist.js,
+     checked 2026-09-28). A new /assist route is gated until somebody adds it here on purpose. */
+  [/^\/assist(\/ask)?\/?$/, 'asking the assistant a question (POST /api/assist) — it creates nothing on the rail'],
+  [/^\/assist\/conform$/, 'checking a product against a standard — a read'],
+  [/^\/assist\/catalogue-structure$/, 'a proposed catalogue structure, returned, not saved'],
+  [/^\/assist\/gap$/, 'deprecated: logs a line and writes nothing (capture is the chit flow)'],
+  [/^\/assist\/resolve$/, 'resolving a governed view — a read'],
 ];
 
 /** Verbs that change something. GET/HEAD/OPTIONS are never gated. */
