@@ -37,6 +37,7 @@ const GUARDS = [
   /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
   'migration-lint.test.cjs',     // no NEW migration hides a FOREIGN KEY inside CREATE TABLE IF NOT EXISTS
   'entity-cast-guard.test.cjs',  // no NEW RLS policy casts an unset current_setting straight to ::uuid
+  'notifications-count.test.cjs', // ⭐⭐ the badge's number is ONE withEntity statement over the feed's own rows (M7, 2026-09-28)
   'supplier-list-scope.test.cjs', // ⭐⭐⭐ every supplier_list statement runs inside withEntity — ready for FORCE RLS (H2, 2026-09-28)
   'knownerr.test.js',         // a refusal the database makes on purpose (b247) reaches a person as a 409, from every route that writes a chit
   'xlsx-read.test.js',        // an Excel file read into the shape a CSV makes, and refused in words otherwise
