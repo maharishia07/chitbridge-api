@@ -90,7 +90,12 @@ console.log('\n══ 5 · THE ROUTES ACTUALLY CALL IT ══');
 const fs = require('fs');
 const src = fs.readFileSync(require('path').join(__dirname, '..', 'routes', 'testing.js'), 'utf8');
 const calls = (src.match(/testnews'\)\.testRaised\(/g) || []).length;
-ok(calls === 5, 'five emits: incident raised, requirement raised, case written, incident moved, requirement decided — found ' + calls);
+/* ⭐ SEVEN since the release flow (2026-09-27, counted and each one read before this number moved): the five below,
+   plus 'change' (a change recorded, routes/testing.js POST changes) and 'incident' again when a RELEASE resolves the
+   incident it fixed and its raiser is told. Named, so the next one added has to be named too. */
+ok(calls === 7, 'seven emits: incident raised, requirement raised, case written, incident moved, requirement decided, change recorded, incident resolved by a release — found ' + calls);
+ok(/testRaised\(entity_id, 'change'/.test(src), 'a recorded change no longer reaches the board');
+ok(/testRaised\(entity_id, 'incident', ru\.ref/.test(src), 'a release no longer tells the raiser their incident was resolved');
 ok(/raised_by_id: who\.id/.test(src), 'a new incident records its raiser BY ID, not only by name');
 /* ⭐ AND OLDER FINDINGS ARE NOT ORPHANS: definition.created_by has held the raiser since the first incident,
    so the retest loop works on what Athi raised this week rather than only on what is raised after it ships.

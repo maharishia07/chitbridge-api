@@ -124,7 +124,9 @@ it('⭐⭐ it says which limit bound, in words', () => {
   for (let i = 0; i < 20; i++) bills.push(bill(i, 0, true));
   const p = RUN.retainPlan(bills, { days: 30, bills: 5, mb: 200 });
   assert.ok(/reached 5 bills/.test(p.say), 'it does not name the limit that bound: "' + p.say + '"');
-  assert.ok(/on the server/.test(p.say), 'it does not say the bills are still readable: "' + p.say + '"');
+  /* the wording moved to the shopkeeper's words ("stay at the shop and can always be read back"); the PROPERTY is
+     that it says they are still readable — held on the meaning, not on one phrasing (2026-09-27) */
+  assert.ok(/can always be read back|still (?:readable|there)|on the server/.test(p.say), 'it does not say the bills are still readable: "' + p.say + '"');
 });
 
 it('and when nothing needs to go, it says that instead of saying nothing', () => {
