@@ -161,8 +161,8 @@ const COPIES = () => [
   /* ⭐ ONE SEARCH FOR BOTH SCREENS (Athi, 2026-09-08: "make it one shared file for both"). The counter and the app's Catalogue have to
      answer "ac co" the same way, so the master lives with the app and is copied here for the web and into the API, which serves the
      till's own cached copy. Two searches would be two definitions of what a shop's words mean. */
-  [path.join(WEB, 'app', 'search.js'), path.join(WEB, 'engine', 'search.js'), 'copy'],
-  [path.join(WEB, 'app', 'search.js'), path.join(API, 'lib', 'search-engine.js'), 'copy'],
+  /* search: ADOPTED from chitbridge-engines (v1.4.0, 2026-09-28) — app/, engine/ and lib/search-engine.js are written only by
+     chitbridge-engines/tools/adopt.cjs; the 2 line(s) that copied it from app/search.js are retired. */
   [null, path.join(WEB, 'engine', 'gs1.js'), wrapForBrowser('gs1.js', 'CBGS1')],
   [null, path.join(API, 'lib', 'gs1.browser.js'), wrapForBrowser('gs1.js', 'CBGS1')],   /* what /api/till/engine/gs1 serves a shop PC */
   /* ⭐ and the trade's own rules — what a consignment must carry, and how much difference it absorbs. ONE definition, because the
