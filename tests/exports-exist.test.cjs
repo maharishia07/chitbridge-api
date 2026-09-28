@@ -109,7 +109,9 @@ scan.forEach((rel) => {
     const declared = (src.match(new RegExp('(?:const|let|var)\\s+' + local.replace(/\$/g, '\\$') + '\\s*=', 'g')) || []).length;
     if (declared > 1) { skipped.push(rel + ' → ' + target + ' (name reused locally)'); return; }
     const used = new Set();
-    const re = new RegExp('\\b' + local.replace(/\$/g, '\\$') + '\\.([A-Za-z_$][\\w$]*)\\s*\\(', 'g');
+    /* ⚠️ NOT \b: a word boundary sits between "." and a name, so `bp.starter.map(` read as the MODULE `starter`
+       calling .map() — a property that merely shares the module's local name (2026-09-27). Not after . or a name char. */
+    const re = new RegExp('(?<![\\w$.])' + local.replace(/\$/g, '\\$') + '\\.([A-Za-z_$][\\w$]*)\\s*\\(', 'g');
     let m;
     while ((m = re.exec(src))) used.add(m[1]);
     used.forEach((k) => {

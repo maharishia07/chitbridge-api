@@ -54,6 +54,13 @@ function files() {
  * the comment above the real declaration. Blanked rather than removed, so every line number still matches the
  * file a person will open. [[the same lesson as case-fields.test.js]]
  */
+/** a '/' starts a regex when what came before cannot end an operand — the standard tokenizer rule */
+function regexCanStart(out) {
+  const t = out.replace(/\s+$/, '');
+  if (!t) return true;
+  if (/(^|[^\w$])(return|typeof|case|do|else|in|of|new|delete|void|throw|yield|await)$/.test(t)) return true;
+  return /[(,=:[!&|?{};+\-*%<>~^]$/.test(t);
+}
 function blank(src) {
   let out = '';
   let i = 0;
@@ -70,6 +77,23 @@ function blank(src) {
       if (end < 0) end = N;
       out += ' '.repeat(end - i);
       i = end;
+    } else if (c === '/' && regexCanStart(out)) {
+      /* ⭐ A REGEX LITERAL (2026-09-27). The blanker had no idea these existed, so a quote inside one — /['"]/ —
+         opened a "string" that ran on for hundreds of lines, and from there comments read as code and code as
+         strings: it flagged the word "told" INSIDE a message string in routes/testing.js as a use-before-declare.
+         Skipped to its closing slash, honouring escapes and [...] classes (a / inside a class does not close it). */
+      let j = i + 1, inClass = false;
+      while (j < N && src[j] !== '\n') {
+        if (src[j] === '\\') { j += 2; continue; }
+        if (src[j] === '[') inClass = true; else if (src[j] === ']') inClass = false;
+        else if (src[j] === '/' && !inClass) break;
+        j++;
+      }
+      if (j < N && src[j] === '/') {
+        const seg = src.slice(i, j + 1);
+        out += '/' + seg.slice(1, -1).replace(/[^\n]/g, ' ') + '/';
+        i = j + 1;
+      } else { out += c; i++; }                       /* no closing slash on this line — it was division after all */
     } else if (c === '"' || c === "'" || c === '`') {
       let j = i + 1;
       while (j < N && src[j] !== c) { if (src[j] === '\\') j++; j++; }

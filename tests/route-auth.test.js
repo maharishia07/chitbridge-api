@@ -47,6 +47,11 @@ const PUBLIC = {
   'entities POST /verify': 'the one-time code that completes registration',
   'catalogue POST /:bridge_id/login/verify': 'a customer proving a phone number at a storefront',
   'catalogue POST /:bridge_id/order/start': 'a walk-in ordering from a public storefront',
+  /* ⭐ declared 2026-09-27 (they were public and unlisted — the guard's exact point). Read before listing: */
+  'catalogue POST /:bridge_id/support/start': 'a buyer asking for the one-time code to raise a complaint — /order/start\'s twin, which also accepts a CLOSED shop so a complaint never dead-ends',
+  'catalogue POST /:bridge_id/support': 'the complaint itself — requires that 6-digit code (verifyOtp) and SPENDS it, exactly as /order/confirm does',
+  'ctp POST /deliver': 'another CTP installation delivering — authenticated inside: a known, active installation row, then its signature verified against the key on ITS domain (403 otherwise)',
+  'ctp POST /query': 'another CTP installation asking — the same door-keeping as /deliver; answers only the anonymous public view',
   'catalogue POST /:bridge_id/order/confirm': 'the same order, confirmed',
   'catalogue POST /network-store/:networkId/order': 'a public network storefront',
   'capture POST /webhook/whatsapp': 'a webhook — the provider cannot hold our JWT; it is verified by its own means',

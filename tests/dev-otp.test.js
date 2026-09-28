@@ -73,10 +73,17 @@ t('a sealed env NEVER issues a fixed code, even if DEV_OTP survived (defence beh
 });
 
 // ── THE FIX for defect (b): exposure is never gated on the raw env var ──
-t('dev + armed is the ONLY state that may echo a code', () => {
-  assert.strictEqual(load({ NODE_ENV: 'development', DEV_OTP: '123456' }).mayExpose, true);
-  assert.strictEqual(load({ NODE_ENV: 'production',  DEV_OTP: '123456' }).mayExpose, false);
-  assert.strictEqual(load({ NODE_ENV: 'development', DEV_OTP: '' }).mayExpose, false);
+/**
+ * ⚠️ MOVED 2026-09-27, not deleted. This asserted that dev + armed ALONE echoes a code — the exact exposure
+ * lib/dev-otp.js's echoOptIn() later closed ("armed-and-unsealed … is where the product has lived every day
+ * since"; "NOTHING NEEDS THE ECHO"). The rule now has three parts, and each is checked on its own.
+ */
+t('dev + armed + a WRITTEN opt-in is the ONLY state that may echo a code', () => {
+  assert.strictEqual(load({ NODE_ENV: 'development', DEV_OTP: '123456', DEV_OTP_IN_RESPONSE: 'true' }).mayExpose, true);
+  assert.strictEqual(load({ NODE_ENV: 'development', DEV_OTP: '123456' }).mayExpose, false,
+    'dev + armed echoed a code with nobody opting in — the 2026-07-29 exposure is back');
+  assert.strictEqual(load({ NODE_ENV: 'production',  DEV_OTP: '123456', DEV_OTP_IN_RESPONSE: 'true' }).mayExpose, false);
+  assert.strictEqual(load({ NODE_ENV: 'development', DEV_OTP: '', DEV_OTP_IN_RESPONSE: 'true' }).mayExpose, false);
 });
 
 // ── the boot guard: you cannot HALF-seal ──
