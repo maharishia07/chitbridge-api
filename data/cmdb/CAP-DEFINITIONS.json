@@ -1,0 +1,599 @@
+{
+ "ci": "CAP-DEFINITIONS",
+ "title": "cap-definitions.js",
+ "type": "Capability module",
+ "system": "ChitBridge web app",
+ "summary": "Derived from the code: the screens cap-definitions.js draws, what it calls, what it writes, and the tests that touch it.",
+ "source": "generated",
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "ok",
+   "note": "1 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 8 API call(s)",
+   "node": "p1"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 23 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 8 API call(s)"
+  }
+ ],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "Inside a screen › Definitions",
+   "s": "SCR003",
+   "d": "A screen this capability draws — reached from the menu path Inside a screen › Definitions."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "cap-definitions.js",
+   "s": "app/cap-definitions.js · 70 functions",
+   "d": "The capability module: what the screens above call."
+  },
+  {
+   "id": "p2",
+   "t": "CBCart",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p3",
+   "t": "CBOffers",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p4",
+   "t": "CBCatalogueModel",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p5",
+   "t": "CBDEF",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p6",
+   "t": "CBRewards",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p7",
+   "t": "CBTaxSlab",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p8",
+   "t": "CBCatalogue",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p9",
+   "t": "CBCatUI",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p10",
+   "t": "CBPricing",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p11",
+   "t": "CBLocale",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "GET /api/definitions?all=1",
+   "s": "api('defListAll')",
+   "d": "Reads through the API."
+  },
+  {
+   "id": "x2",
+   "t": "GET /api/products",
+   "s": "api('prodList') → routes/products.js",
+   "d": "Reads through the API, answered by routes/products.js."
+  },
+  {
+   "id": "x3",
+   "t": "GET /api/relationships/customers",
+   "s": "api('custList') → routes/relationships.js",
+   "d": "Reads through the API, answered by routes/relationships.js."
+  },
+  {
+   "id": "x4",
+   "t": "GET /api/relationships/customers/groups",
+   "s": "api('custGroupNames') → routes/relationships.js",
+   "d": "Reads through the API, answered by routes/relationships.js."
+  },
+  {
+   "id": "x5",
+   "t": "PUT /api/definitions/:id",
+   "s": "api('defSave') → routes/definitions.js",
+   "d": "Writes through the API, answered by routes/definitions.js."
+  },
+  {
+   "id": "x6",
+   "t": "POST /api/definitions",
+   "s": "api('defAdd') → routes/definitions.js",
+   "d": "Writes through the API, answered by routes/definitions.js."
+  },
+  {
+   "id": "x7",
+   "t": "DELETE /api/definitions/:id",
+   "s": "api('defRetire') → routes/definitions.js",
+   "d": "Writes through the API, answered by routes/definitions.js."
+  },
+  {
+   "id": "x8",
+   "t": "CALL /api/governance/readiness",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p1",
+   "p3"
+  ],
+  [
+   "p1",
+   "p4"
+  ],
+  [
+   "p1",
+   "p5"
+  ],
+  [
+   "p1",
+   "p6"
+  ],
+  [
+   "p1",
+   "p7"
+  ],
+  [
+   "p1",
+   "p8"
+  ],
+  [
+   "p1",
+   "p9"
+  ],
+  [
+   "p1",
+   "p10"
+  ],
+  [
+   "p1",
+   "p11"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "CAP008 cap-definitions.js",
+   "rel": "draws",
+   "that": "SCR003"
+  },
+  {
+   "this": "CAP008 cap-definitions.js",
+   "rel": "calls",
+   "that": "routes/products.js · routes/relationships.js · routes/definitions.js · routes/governance.js"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/app/cap-definitions.js",
+  "design": "Capability cap-definitions.js"
+ },
+ "tests": [
+  {
+   "file": "web e2e/api-envelope.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/dead-surface.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/defs-batch.test.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/guard-static.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/offer-lab-next-offline.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/offer-lab-next-saved.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/offers-kinds.test.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/one-cart.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/report-card.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/schemes-shot.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/shot-rows.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/capture-offers.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/demo-invoice.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/design-guard.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/exposure.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/governance.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/network-storefront.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/offers-customer.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/offers-groups.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/offers-lifecycle.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/order-models.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/parity-money.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/parity-order.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/parity.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/pricing-structure.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/record-sale.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/tax-slab.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/tax-takeover.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/tour.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/dayopen.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/defaults.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/engine-manifest.js",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/fixtures/walkthrough.js",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/local-supplier.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/namespace.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/network-authority.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/network-storefront.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/products-bulk.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/query-shape.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/rls-context.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: definitions\n  annotations:\n    chitbridge.io/ci: CAP-DEFINITIONS\n    chitbridge.io/asset: CAP008\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/products.js\n    - routes/relationships.js\n    - routes/definitions.js\n    - routes/governance.js"
+}

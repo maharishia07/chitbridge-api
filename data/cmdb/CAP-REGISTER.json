@@ -1,0 +1,385 @@
+{
+ "ci": "CAP-REGISTER",
+ "title": "cap-register.js",
+ "type": "Capability module",
+ "system": "ChitBridge web app",
+ "summary": "Derived from the code: the screens cap-register.js draws, what it calls, what it writes, and the tests that touch it.",
+ "source": "generated",
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "ok",
+   "note": "1 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 8 API call(s)"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)",
+   "node": "p1"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 23 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 8 API call(s)"
+  }
+ ],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "Inside a screen › Register",
+   "s": "SCR007",
+   "d": "A screen this capability draws — reached from the menu path Inside a screen › Register."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "cap-register.js",
+   "s": "app/cap-register.js · 58 functions",
+   "d": "The capability module: what the screens above call."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "GET /api/chits/raida/report",
+   "s": "api('raidaReport') → routes/chits.js",
+   "d": "Reads through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x2",
+   "t": "GET /api/chits/register/subjects",
+   "s": "api('regSubjects') → routes/chits.js",
+   "d": "Reads through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x3",
+   "t": "GET /api/chits/register/attachables",
+   "s": "api('regAttachables') → routes/chits.js",
+   "d": "Reads through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x4",
+   "t": "POST /api/chits/register/subjects",
+   "s": "api('regSubjectNew') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x5",
+   "t": "POST /api/chits/register/subjects/:sid/entries",
+   "s": "api('regEntryAdd') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x6",
+   "t": "POST /api/chits/:id/raida",
+   "s": "api('regChitAdd') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x7",
+   "t": "POST /api/chits/register/entries/:rid/revise",
+   "s": "api('regEntryRevise') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x8",
+   "t": "POST /api/chits/register/entries/:rid/close",
+   "s": "api('regEntryClose') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x9",
+   "t": "POST /api/chits/register/subjects/:sid/close",
+   "s": "api('regSubjectClose') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x10",
+   "t": "GET /api/chits/register/walk/:from",
+   "s": "api('regWalk') → routes/chits.js",
+   "d": "Reads through the API, answered by routes/chits.js."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ],
+  [
+   "p1",
+   "x9"
+  ],
+  [
+   "p1",
+   "x10"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "CAP018 cap-register.js",
+   "rel": "draws",
+   "that": "SCR007"
+  },
+  {
+   "this": "CAP018 cap-register.js",
+   "rel": "calls",
+   "that": "routes/chits.js"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/app/cap-register.js",
+  "design": "Capability cap-register.js"
+ },
+ "tests": [
+  {
+   "file": "web e2e/empty-shot.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/register.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/docnumber-gate.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/engine-boundary.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/iam-access.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/knownerr.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/local-supplier.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/policy-defaults.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/query-shape.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/raida.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/retention-floor.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/rev01-price-includes-tax.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/rev02-no-rerate-on-send.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/tdz-guard.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: register\n  annotations:\n    chitbridge.io/ci: CAP-REGISTER\n    chitbridge.io/asset: CAP018\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/chits.js"
+}

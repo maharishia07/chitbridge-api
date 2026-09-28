@@ -1,0 +1,730 @@
+{
+ "ci": "CAP-TESTING",
+ "title": "Test lab — cases, results and the spec they cite",
+ "type": "Capability module",
+ "system": "ChitBridge web app",
+ "summary": "The test cases as a thing you tap, not a PDF you cannot write on. A panel that follows you across every screen, a ledger that never overwrites a result, and a spec clause each case cites by version — so when the spec moves, the cases that need re-reading name themselves.",
+ "source": "generated",
+ "maturity": {
+  "now": 2,
+  "target": 3,
+  "set": "legend"
+ },
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "ok",
+   "note": "1 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 8 API call(s)"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 23 API call(s) · maturity 2",
+   "node": "p1"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 8 API call(s)"
+  }
+ ],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "Inside a screen › Testing",
+   "s": "SCR010",
+   "d": "A screen this capability draws — reached from the menu path Inside a screen › Testing."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "cap-testing.js",
+   "s": "app/cap-testing.js · 228 functions",
+   "d": "The capability module: what the screens above call."
+  },
+  {
+   "id": "p2",
+   "t": "CBSCREENS",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p3",
+   "t": "CBBUILD",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p4",
+   "t": "CBCALLS",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p5",
+   "t": "CBGEN",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p6",
+   "t": "CBDROP",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p7",
+   "t": "CBERRS",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "GET /api/testing/cases",
+   "s": "api('testCases') → routes/testing.js",
+   "d": "Reads through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x2",
+   "t": "GET /api/testing/results",
+   "s": "api('testResults') → routes/testing.js",
+   "d": "Reads through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x3",
+   "t": "GET /api/testing/stale",
+   "s": "api('testStale') → routes/testing.js",
+   "d": "Reads through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x4",
+   "t": "GET /api/testing/coverage",
+   "s": "api('testCoverage') → routes/testing.js",
+   "d": "Reads through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x5",
+   "t": "GET /api/testing/requirements",
+   "s": "api('testReqList') → routes/testing.js",
+   "d": "Reads through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x6",
+   "t": "PATCH /api/testing/requirements/:id",
+   "s": "api('testReqSet') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x7",
+   "t": "POST /api/testing/requirements",
+   "s": "api('testReqRaise') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x8",
+   "t": "GET /api/testing/incidents",
+   "s": "api('testIncList') → routes/testing.js",
+   "d": "Reads through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x9",
+   "t": "PATCH /api/testing/incidents/:id",
+   "s": "api('testIncSet') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x10",
+   "t": "POST /api/testing/incidents",
+   "s": "api('testIncNew') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x11",
+   "t": "POST /api/testing/evidence",
+   "s": "api('testShot') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x12",
+   "t": "POST /api/testing/cases/import",
+   "s": "api('testCaseWrite') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x13",
+   "t": "GET /api/testing/trace",
+   "s": "api('testTraceGet') → routes/testing.js",
+   "d": "Reads through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x14",
+   "t": "POST /api/testing/trace",
+   "s": "api('testTraceSet') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x15",
+   "t": "GET /api/testing/cases?all=1",
+   "s": "api('testCasesAll') → routes/testing.js",
+   "d": "Reads through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x16",
+   "t": "POST /api/testing/cases/close",
+   "s": "api('testCaseClose') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x17",
+   "t": "POST /api/testing/results",
+   "s": "api('testRecord') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x18",
+   "t": "POST /api/testing/cases/seed",
+   "s": "api('testSeed') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x19",
+   "t": "POST /api/testing/cases/import",
+   "s": "api('testCaseAdd') → routes/testing.js",
+   "d": "Writes through the API, answered by routes/testing.js."
+  },
+  {
+   "id": "x20",
+   "t": "CALL /api/attachments/:id",
+   "s": "routes/attachments.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x21",
+   "t": "CALL /api/attachments/",
+   "s": "routes/attachments.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x22",
+   "t": "CALL /api/notifications",
+   "s": "routes/notifications.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x23",
+   "t": "stores cb_testrun",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x24",
+   "t": "stores cb_testmode",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x25",
+   "t": "stores cb_testguide",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x26",
+   "t": "stores cb_test_view",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x27",
+   "t": "stores cb_test_reqf",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x28",
+   "t": "stores cb_test_incf",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x29",
+   "t": "stores cb_test_scrsort",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x30",
+   "t": "stores cb_case_area",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x31",
+   "t": "stores cb_case_filter",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x32",
+   "t": "stores cb_hand_filter",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x33",
+   "t": "stores cb_find_who",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  },
+  {
+   "id": "x34",
+   "t": "stores cb_work_filter",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p1",
+   "p3"
+  ],
+  [
+   "p1",
+   "p4"
+  ],
+  [
+   "p1",
+   "p5"
+  ],
+  [
+   "p1",
+   "p6"
+  ],
+  [
+   "p1",
+   "p7"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ],
+  [
+   "p1",
+   "x9"
+  ],
+  [
+   "p1",
+   "x10"
+  ],
+  [
+   "p1",
+   "x11"
+  ],
+  [
+   "p1",
+   "x12"
+  ],
+  [
+   "p1",
+   "x13"
+  ],
+  [
+   "p1",
+   "x14"
+  ],
+  [
+   "p1",
+   "x15"
+  ],
+  [
+   "p1",
+   "x16"
+  ],
+  [
+   "p1",
+   "x17"
+  ],
+  [
+   "p1",
+   "x18"
+  ],
+  [
+   "p1",
+   "x19"
+  ],
+  [
+   "p1",
+   "x20"
+  ],
+  [
+   "p1",
+   "x21"
+  ],
+  [
+   "p1",
+   "x22"
+  ],
+  [
+   "p1",
+   "x23"
+  ],
+  [
+   "p1",
+   "x24"
+  ],
+  [
+   "p1",
+   "x25"
+  ],
+  [
+   "p1",
+   "x26"
+  ],
+  [
+   "p1",
+   "x27"
+  ],
+  [
+   "p1",
+   "x28"
+  ],
+  [
+   "p1",
+   "x29"
+  ],
+  [
+   "p1",
+   "x30"
+  ],
+  [
+   "p1",
+   "x31"
+  ],
+  [
+   "p1",
+   "x32"
+  ],
+  [
+   "p1",
+   "x33"
+  ],
+  [
+   "p1",
+   "x34"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "CAP022 cap-testing.js",
+   "rel": "draws",
+   "that": "SCR010"
+  },
+  {
+   "this": "CAP022 cap-testing.js",
+   "rel": "calls",
+   "that": "routes/testing.js · routes/attachments.js · routes/notifications.js"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/app/cap-testing.js",
+  "design": "Capability Test lab — cases, results and the spec they cite"
+ },
+ "tests": [
+  {
+   "file": "web e2e/flows/design2.js",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/missing-functions.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/panel-reachable.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/sim-run3.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/close-repaints.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/filter-vs-action.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/speed-bar.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/techniques.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/testmode.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/worklist.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/till-catorder.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/_paylook.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/board-kinds.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/case-fields.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/cmdb.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/engine-manifest.js",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/key-scopes.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/query-shape.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/support-desks.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/tdz-guard.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/test-board.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/testnews.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: testing\n  annotations:\n    chitbridge.io/ci: CAP-TESTING\n    chitbridge.io/asset: CAP022\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/testing.js\n    - routes/attachments.js\n    - routes/notifications.js"
+}

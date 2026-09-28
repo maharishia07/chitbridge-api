@@ -1,0 +1,487 @@
+{
+ "ci": "CAP-WORKLIST",
+ "title": "cap-worklist.js",
+ "type": "Capability module",
+ "system": "ChitBridge web app",
+ "summary": "Derived from the code: the screens cap-worklist.js draws, what it calls, what it writes, and the tests that touch it.",
+ "source": "generated",
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "ok",
+   "note": "1 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 8 API call(s)"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 23 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 8 API call(s)",
+   "node": "p1"
+  }
+ ],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "📥 Rail › Task",
+   "s": "RAL002 · nav task",
+   "d": "A screen this capability draws — reached from the menu path Rail › Task."
+  },
+  {
+   "id": "e2",
+   "t": "🗄️ Rail › Archive",
+   "s": "RAL005 · nav archive",
+   "d": "A screen this capability draws — reached from the menu path Rail › Archive."
+  },
+  {
+   "id": "e3",
+   "t": "🗑️ Rail › Trash",
+   "s": "RAL006 · nav trash",
+   "d": "A screen this capability draws — reached from the menu path Rail › Trash."
+  },
+  {
+   "id": "e4",
+   "t": "🧰 Work › Everyone's work",
+   "s": "WRK002 · nav worklist",
+   "d": "A screen this capability draws — reached from the menu path Work › Everyone's work."
+  },
+  {
+   "id": "e5",
+   "t": "The app itself › app.html",
+   "s": "APP001",
+   "d": "A screen this capability draws — reached from the menu path The app itself › app.html."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "cap-worklist.js",
+   "s": "app/cap-worklist.js · 58 functions",
+   "d": "The capability module: what the screens above call."
+  },
+  {
+   "id": "p2",
+   "t": "CBLocale",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p3",
+   "t": "CBPick",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p4",
+   "t": "CBCart",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p5",
+   "t": "CBCatUI",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "CALL /api/folders/worklist",
+   "s": "routes/folders.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x2",
+   "t": "CALL /api/chits/:id/deliver-lines",
+   "s": "routes/chits.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x3",
+   "t": "CALL /api/chits/:id/assign-lines",
+   "s": "routes/chits.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x4",
+   "t": "CALL /api/chits/:id",
+   "s": "routes/chits.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x5",
+   "t": "CALL /api/actors",
+   "s": "routes/actors.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x6",
+   "t": "CALL /api/chits/:id/messages",
+   "s": "routes/chits.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x7",
+   "t": "CALL /api/chits/:id/raida",
+   "s": "routes/chits.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x8",
+   "t": "CALL /api/chits/:id/raida/:rid/close",
+   "s": "routes/chits.js",
+   "d": "A direct call to the API."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "e2",
+   "p1"
+  ],
+  [
+   "e3",
+   "p1"
+  ],
+  [
+   "e4",
+   "p1"
+  ],
+  [
+   "e5",
+   "p1"
+  ],
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p1",
+   "p3"
+  ],
+  [
+   "p1",
+   "p4"
+  ],
+  [
+   "p1",
+   "p5"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "CAP025 cap-worklist.js",
+   "rel": "draws",
+   "that": "RAL002 · RAL005 · RAL006 · WRK002 · APP001"
+  },
+  {
+   "this": "CAP025 cap-worklist.js",
+   "rel": "calls",
+   "that": "routes/folders.js · routes/chits.js · routes/actors.js"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/app/cap-worklist.js",
+  "design": "Capability cap-worklist.js"
+ },
+ "tests": [
+  {
+   "file": "web e2e/prove-paths.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/dev-otp.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/docnumber-gate.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/engine-boundary.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/engine-manifest.js",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/env-posture.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/groupsum-selection.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/iam-access.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/identity-auth.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/knownerr.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/local-supplier.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/namespace.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/policy-defaults.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/query-shape.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/raida.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/retention-floor.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/rev01-price-includes-tax.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/rev02-no-rerate-on-send.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/rls-predicate.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/tdz-guard.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/userid.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: worklist\n  annotations:\n    chitbridge.io/ci: CAP-WORKLIST\n    chitbridge.io/asset: CAP025\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/folders.js\n    - routes/chits.js\n    - routes/actors.js"
+}

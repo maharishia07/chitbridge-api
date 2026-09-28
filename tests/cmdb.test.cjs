@@ -33,6 +33,37 @@ it('⭐ CAP-SIGNIN has a way in, a way out, and tests (Athi\'s rule for a useful
   assert.deepStrictEqual(cmdb.flags(r), [], 'CAP-SIGNIN raises flags: ' + cmdb.flags(r).join(', '));
 });
 
+console.log('\nNO NEW CAPABILITY WITHOUT A WAY IN, A WAY OUT AND A TEST\n');
+/**
+ * ⭐⭐ Athi's rule as a gate. The generated records (C:/dev/cmdb.cjs, source "generated") carry flags; today's
+ * orphans are recorded in data/cmdb-orphans.json as findings. A NEW orphan fails; a recorded one that has been
+ * fixed also fails until its entry is removed — so the list can only shrink. "never run" is left out: it depends
+ * on whether a suite has run, not on the capability.
+ */
+const ORPHANS = JSON.parse(fs.readFileSync(path.join(API, 'data', 'cmdb-orphans.json'), 'utf8')).known;
+const structural = (r) => cmdb.flags(r).filter((f) => f !== 'never run');
+const generated = files.map((n) => JSON.parse(fs.readFileSync(path.join(DIR, n), 'utf8'))).filter((r) => r.source === 'generated');
+it('there are generated records to hold to the rule (the generator has run)', () => {
+  assert.ok(generated.length >= 10, 'only ' + generated.length + ' generated records — run node C:/dev/cmdb.cjs');
+});
+it('⚠️⚠️ no capability has a flag that is not already a recorded finding', () => {
+  const fresh = [];
+  generated.forEach((r) => structural(r).forEach((f) => {
+    if (!(ORPHANS[r.ci] && ORPHANS[r.ci].flags.indexOf(f) >= 0)) fresh.push(r.ci + ': ' + f);
+  }));
+  assert.deepStrictEqual(fresh, [], 'a capability with no way in / no way out / no test: ' + fresh.join(' · ')
+    + ' — wire it in or give it a test; recording it in data/cmdb-orphans.json is a decision for Athi, not a fix');
+});
+it('a recorded finding that is no longer true is removed (the list only shrinks)', () => {
+  const stale = [];
+  Object.keys(ORPHANS).forEach((ci) => {
+    const r = generated.find((x) => x.ci === ci);
+    if (!r) { stale.push(ci + ' (no such record any more)'); return; }
+    ORPHANS[ci].flags.forEach((f) => { if (structural(r).indexOf(f) < 0) stale.push(ci + ': ' + f + ' is fixed'); });
+  });
+  assert.deepStrictEqual(stale, [], 'remove these from data/cmdb-orphans.json: ' + stale.join(' · '));
+});
+
 console.log('\nTHE SHAPE REFUSES, IT DOES NOT TRIM\n');
 const good = () => JSON.parse(fs.readFileSync(path.join(DIR, 'CAP-SIGNIN.json'), 'utf8'));
 it('a CI id that is not CAP-… is refused', () => { const r = good(); r.ci = 'signin'; assert.ok(!cmdb.shape(r).ok); });

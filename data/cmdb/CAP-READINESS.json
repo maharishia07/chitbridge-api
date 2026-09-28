@@ -1,0 +1,468 @@
+{
+ "ci": "CAP-READINESS",
+ "title": "Trade ready — compliance + commerce",
+ "type": "Capability module",
+ "system": "ChitBridge web app",
+ "summary": "The supplier’s readiness + the buyer’s confidence: per-destination clearances (spin the globe), a trust ladder (declared→documented→attested→verified), a self-proving reference, and the invariant commercial spine (instruments by FRM risk + the settlement chain). Each topic opens to its lifecycle. Backend harness-proven; the screen needs a human live-run.",
+ "source": "generated",
+ "maturity": {
+  "now": 2,
+  "target": 4,
+  "set": "legend"
+ },
+ "map": [
+  {
+   "title": "Admin",
+   "ci": "CAP-ADMIN",
+   "state": "ok",
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-adopt.js",
+   "ci": "CAP-ADOPT",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-categories.js",
+   "ci": "CAP-CATEGORIES",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-catsetup.js",
+   "ci": "CAP-CATSETUP",
+   "state": "ok",
+   "note": "1 screen(s) · 14 API call(s)"
+  },
+  {
+   "title": "cap-chit2.js",
+   "ci": "CAP-CHIT2",
+   "state": "ok",
+   "note": "3 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-cmdb.js",
+   "ci": "CAP-CMDB",
+   "state": "ok",
+   "note": "1 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "Connector · IoT / ERP",
+   "ci": "CAP-CONNECTOR",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-definitions.js",
+   "ci": "CAP-DEFINITIONS",
+   "state": "ok",
+   "note": "1 screen(s) · 8 API call(s)"
+  },
+  {
+   "title": "Disputes — the USP",
+   "ci": "CAP-DISPUTE",
+   "state": "ok",
+   "note": "1 screen(s) · 1 API call(s) · maturity 3"
+  },
+  {
+   "title": "cap-folders.js",
+   "ci": "CAP-FOLDERS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s)"
+  },
+  {
+   "title": "cap-iddocs.js",
+   "ci": "CAP-IDDOCS",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "Capture connector — a message becomes a chit",
+   "ci": "CAP-INTAKE",
+   "state": "ok",
+   "note": "1 screen(s) · 5 API call(s) · maturity 2"
+  },
+  {
+   "title": "Legend (this map)",
+   "ci": "CAP-LEGEND",
+   "state": "warn",
+   "note": "1 screen(s) · 0 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-match.js",
+   "ci": "CAP-MATCH",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s)"
+  },
+  {
+   "title": "cap-messages.js",
+   "ci": "CAP-MESSAGES",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Network — one shopfront, many entities",
+   "ci": "CAP-NETWORK",
+   "state": "ok",
+   "note": "1 screen(s) · 11 API call(s) · maturity 2"
+  },
+  {
+   "title": "Trade ready — compliance + commerce",
+   "ci": "CAP-READINESS",
+   "state": "ok",
+   "note": "1 screen(s) · 13 API call(s) · maturity 2",
+   "node": "p1"
+  },
+  {
+   "title": "cap-register.js",
+   "ci": "CAP-REGISTER",
+   "state": "ok",
+   "note": "1 screen(s) · 10 API call(s)"
+  },
+  {
+   "title": "cap-service.js",
+   "ci": "CAP-SERVICE",
+   "state": "ok",
+   "note": "1 screen(s) · 7 API call(s)"
+  },
+  {
+   "title": "cap-standards.js",
+   "ci": "CAP-STANDARDS",
+   "state": "warn",
+   "note": "0 screen(s) · 0 API call(s)"
+  },
+  {
+   "title": "cap-supplies.js",
+   "ci": "CAP-SUPPLIES",
+   "state": "ok",
+   "note": "1 screen(s) · 4 API call(s)"
+  },
+  {
+   "title": "Test lab — cases, results and the spec they cite",
+   "ci": "CAP-TESTING",
+   "state": "ok",
+   "note": "1 screen(s) · 23 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-traceability.js",
+   "ci": "CAP-TRACEABILITY",
+   "state": "ok",
+   "note": "1 screen(s) · 3 API call(s)"
+  },
+  {
+   "title": "Co-assists",
+   "ci": "CAP-WORKFORCE",
+   "state": "ok",
+   "note": "1 screen(s) · 2 API call(s) · maturity 2"
+  },
+  {
+   "title": "cap-worklist.js",
+   "ci": "CAP-WORKLIST",
+   "state": "ok",
+   "note": "5 screen(s) · 8 API call(s)"
+  }
+ ],
+ "entries": [
+  {
+   "id": "e1",
+   "t": "🛡️ Insight › Trade ready",
+   "s": "INS004 · nav readiness",
+   "d": "A screen this capability draws — reached from the menu path Insight › Trade ready."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "cap-readiness.js",
+   "s": "app/cap-readiness.js · 49 functions",
+   "d": "The capability module: what the screens above call."
+  },
+  {
+   "id": "p2",
+   "t": "CBLocale",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "POST /api/chits/send",
+   "s": "api('createChit') → routes/chits.js",
+   "d": "Writes through the API, answered by routes/chits.js."
+  },
+  {
+   "id": "x2",
+   "t": "GET /api/governance/profile",
+   "s": "api('profileGet') → routes/governance.js",
+   "d": "Reads through the API, answered by routes/governance.js."
+  },
+  {
+   "id": "x3",
+   "t": "PUT /api/governance/profile",
+   "s": "api('profilePut') → routes/governance.js",
+   "d": "Writes through the API, answered by routes/governance.js."
+  },
+  {
+   "id": "x4",
+   "t": "CALL /api/governance/readiness",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x5",
+   "t": "CALL /api/governance/readiness/:bridge_id",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x6",
+   "t": "CALL /api/governance/compliance",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x7",
+   "t": "CALL /api/governance/lanes",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x8",
+   "t": "CALL /api/governance/verify",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x9",
+   "t": "CALL /api/governance/instruments",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x10",
+   "t": "CALL /api/governance/journey",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x11",
+   "t": "CALL /api/governance/ai-draft",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x12",
+   "t": "CALL /api/governance/ai-skills",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x13",
+   "t": "CALL /api/governance/ai-usage",
+   "s": "routes/governance.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x14",
+   "t": "stores cb_rd_lane",
+   "s": "browser storage",
+   "d": "Kept in this browser."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p1",
+   "x1"
+  ],
+  [
+   "p1",
+   "x2"
+  ],
+  [
+   "p1",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ],
+  [
+   "p1",
+   "x5"
+  ],
+  [
+   "p1",
+   "x6"
+  ],
+  [
+   "p1",
+   "x7"
+  ],
+  [
+   "p1",
+   "x8"
+  ],
+  [
+   "p1",
+   "x9"
+  ],
+  [
+   "p1",
+   "x10"
+  ],
+  [
+   "p1",
+   "x11"
+  ],
+  [
+   "p1",
+   "x12"
+  ],
+  [
+   "p1",
+   "x13"
+  ],
+  [
+   "p1",
+   "x14"
+  ]
+ ],
+ "relationships": [
+  {
+   "this": "CAP017 cap-readiness.js",
+   "rel": "draws",
+   "that": "INS004"
+  },
+  {
+   "this": "CAP017 cap-readiness.js",
+   "rel": "calls",
+   "that": "routes/chits.js · routes/governance.js"
+  }
+ ],
+ "layers": {
+  "build": "chitbridge-web/public/app/cap-readiness.js",
+  "design": "Capability Trade ready — compliance + commerce"
+ },
+ "tests": [
+  {
+   "file": "web e2e/movable-panels.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "web e2e/prose-worklist.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/cap-collision.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/tests/zz-register.spec.js",
+   "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/text-budget.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/theme-literals.cjs",
+   "kind": "browser",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/docnumber-gate.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/engine-boundary.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/iam-access.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/knownerr.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/local-supplier.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/network-authority.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/policy-defaults.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/query-shape.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/raida.test.cjs",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/retention-floor.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/rev01-price-includes-tax.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/rev02-no-rerate-on-send.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  },
+  {
+   "file": "api tests/tdz-guard.test.js",
+   "kind": "server",
+   "result": "pass",
+   "at": "2026-09-28"
+  }
+ ],
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: readiness\n  annotations:\n    chitbridge.io/ci: CAP-READINESS\n    chitbridge.io/asset: CAP017\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/chits.js\n    - routes/governance.js"
+}
