@@ -66,6 +66,49 @@ test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; 
   assert.equal(g3.sup_details.osup_det.iamt, 18); assert.equal(g3._cb.provisional, true);
 });
 
+/* ⚠️⚠️ 2026-09-28: a counter return is a self chit with a customer, so it arrived as the shop's SALE and was ADDED to output */
+{
+  const inv = (buyer, rate, price, supply) => {
+    const r = T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price, gst_rate: rate, hsn: '1006' }], seller: { Gstin: '33S', State: '33' }, buyer, chit_id: 'c', at: '2026-09-04' }).invoice;
+    if (supply) r._cb = Object.assign({}, r._cb, { supply });
+    return r;
+  };
+  const sale = (id, buyer, rate, price, no) => ({ chit_id: id, doc_no: no, direction: 'sent', sells: true, purpose: 'general', invoice: inv(buyer, rate, price), provisional: false, seller: { entity_id: 'me' }, buyer: { entity_id: null }, at: '2026-09-04' });
+  const ret = (id, buyer, rate, price, no, supply) => Object.assign(sale(id, buyer, rate, price, no), { purpose: 'credit_note', invoice: inv(buyer, rate, price, supply) });
+
+  test('⭐⭐⭐ ledger: a credit note REDUCES output tax — it is not another sale', () => {
+    const led = T.ledger([sale('s1', { Pos: '33' }, 5, 1000, 'C1-0001'), ret('r1', { Pos: '33' }, 5, 200, 'CN-0001')], { RegType: 'regular' });
+    assert.equal(led.output.taxable, 800, 'the return was added to sales, not taken off them');
+    assert.equal(led.output.tax, 40);
+    assert.equal(led.rows.find((r) => r.chit_id === 'r1').side, 'output_cn');
+  });
+
+  test('⭐ a supplier\'s credit note to me gives back input credit — ITC goes DOWN', () => {
+    const buy = { chit_id: 'p1', direction: 'received', purpose: 'general', invoice: inv({ Gstin: '33M', Pos: '33' }, 18, 1000), provisional: false, seller: { entity_id: 'sup', RegType: 'regular' }, buyer: { entity_id: 'me' }, at: '2026-09-04' };
+    const cn = Object.assign({}, buy, { chit_id: 'p2', purpose: 'credit_note', invoice: inv({ Gstin: '33M', Pos: '33' }, 18, 100) });
+    const led = T.ledger([buy, cn], { RegType: 'regular' });
+    assert.equal(led.itc.tax, 162); assert.equal(led.rows.find((r) => r.chit_id === 'p2').side, 'itc_cn');
+  });
+
+  test('⭐⭐ gstr1: a registered buyer\'s credit note → cdnr; a walk-in return nets off b2cs; B2C large inter-state → cdnur', () => {
+    const led = T.ledger([
+      sale('s1', { Pos: '33' }, 5, 1000, 'C1-0001'),
+      sale('s2', { Pos: '33' }, 5, 500, 'C1-0002'),
+      ret('r1', { Pos: '33' }, 5, 200, 'CN-0001'),                          /* a walk-in return: nets off b2cs */
+      ret('r2', { Gstin: '29B', Pos: '29' }, 18, 300, 'CN-0002'),           /* to a registered buyer: cdnr */
+      ret('r3', { Pos: '29' }, 18, 300000, 'CN-0003', 'inter'),            /* B2C large, inter-state: cdnur */
+    ], { RegType: 'regular' });
+    const g = T.gstr1(led, { Gstin: '33S' }, '092026');
+    assert.equal(g.b2cs.length, 1); assert.equal(g.b2cs[0].txval, 1300, 'the walk-in return did not net off b2cs (1500 − 200)');
+    assert.equal(g.cdnr.length, 1); assert.equal(g.cdnr[0].ctin, '29B'); assert.equal(g.cdnr[0].nt[0].ntty, 'C'); assert.equal(g.cdnr[0].nt[0].nt_num, 'CN-0002');
+    assert.equal(g.cdnur.length, 1); assert.equal(g.cdnur[0].typ, 'B2CL');
+    assert.equal(g.hsn.data[0].txval, 1500 - 200 - 300 - 300000, 'the HSN summary is not net of returns');
+    const t13 = g.doc_issue.doc_det;
+    assert.deepEqual(t13.map((d) => [d.doc_num, d.docs[0].from, d.docs[0].to, d.docs[0].totnum]),
+      [[1, 'C1-0001', 'C1-0002', 2], [5, 'CN-0001', 'CN-0003', 3]], 'Table 13 does not list the invoices and credit notes issued');
+  });
+}
+
 /* [TAX-03] regression: all_recipients lists the sender FIRST; the counterparty of a sent copy is the receiver. */
 {
   const T = require('../lib/tax-lines');
@@ -89,3 +132,10 @@ test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; 
   assert.strictEqual(T.decorate(line, { items, slabs: [...map.values()] })[0].gst_rate, 18, 'normalised array (the send path)');
   console.log('normalised slabs: 3 passed');
 }
+
+/* the gate (scripts/guards.cjs) reads "<n> checks": the node:test cases declared above, plus the two plain blocks' 6 —
+   printed AFTER the runner has finished, and a failing case still fails the file through its exit code */
+require('node:test').after(() => {
+  const declared = (require('fs').readFileSync(__filename, 'utf8').match(/^\s*test\('/gm) || []).length;
+  console.log('  ' + (declared + 6) + ' checks');
+});

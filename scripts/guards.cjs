@@ -62,6 +62,7 @@ const GUARDS = [
   'orderhub.test.js',         // ⭐⭐⭐ one floor, several devices, no internet — [TILL-178b]
   'till-hidden.test.js',      // [hidden] must win — a class that sets display draws a closed panel anyway
   'till-exits.test.js',       // every screen has a lid, and it never sits in a row of ways to CHANGE things
+  'tax-lines.test.js',          // ⭐⭐ the month's ledger and GSTR: a credit note REDUCES tax; cdnr · cdnur · b2cs netting · Table 13 (2026-09-28)
   'rev16-delta-cursor-stamped-first.test.js', // ⭐⭐ a delta's cursor never skips a change — stamped before the read; past the cap sent in parts (2026-09-28)
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
