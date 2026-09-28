@@ -712,7 +712,7 @@ const TILL_SHIPPABLE = {
   'pricing.js':   'pricing-engine.js', //   the same, for a price — ADOPTED from chitbridge-engines (v1.3.0)
   'tax.js':       'tax.js',            // and for tax: a bill printed offline is still a legal document — ADOPTED (chitbridge-engines), with tax-slab
   'locale.js':    'web:app/locale.js', // region → language, currency, format
-  'variant.js':   'web:app/variant.js',// what makes two of the same product a different LINE
+  'variant.js':   'variant.browser.js',// what makes two of the same product a different LINE
 
   /* ⚠️ THE ONE THIRD-PARTY FILE ON THE COUNTER. qrcode-generator 1.4.4 (MIT), copied from node_modules so the
      version is pinned in package.json and an upgrade shows up in a diff. A UPI QR is most needed with the line

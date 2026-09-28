@@ -6,7 +6,8 @@
     "tax-slab": "1.2.0",
     "tax": "1.2.0",
     "pricing": "1.3.0",
-    "offers": "1.3.0"
+    "offers": "1.3.0",
+    "variant": "1.4.0"
   },
   "adopt": {
     "money": [
@@ -26,6 +27,9 @@
     ],
     "offers": [
       "lib/offers-engine.js"
+    ],
+    "variant": [
+      "lib/variant.browser.js"
     ]
   },
   "bundles": {
@@ -41,6 +45,7 @@
     "tax-slab": "439500a95910ff8bd55d4a1c422e2c4e810f509c7a6af2f1cd4e34aa239bc98d",
     "tax": "01c906213bd77d2a141c39b17a5f8937a7155d2c98a0eb713986f2dc5690f542",
     "pricing": "8fa9a3ec7cae3c049222706433c6fcfac7aaa33cae27d4a259ed60359ba208fd",
-    "offers": "b90632d3ffa35196adcee8722269468dc83255edd327e2ff28e3cb07f5d82dee"
+    "offers": "b90632d3ffa35196adcee8722269468dc83255edd327e2ff28e3cb07f5d82dee",
+    "variant": "2b82dcbaba8ad8590623ef72d41979894d4390468abf74d862f158d7d4e48946"
   }
 }

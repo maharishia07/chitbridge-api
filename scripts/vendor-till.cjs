@@ -150,7 +150,8 @@ const COPIES = () => [
    * signature), what the choices add, and how to say them. On the till because a bill line is a variant, and
    * extracted so the storefront and order capture ask the same question rather than each having a view.
    */
-  [path.join(WEB, 'app', 'variant.js'), path.join(WEB, 'engine', 'variant.js'), 'copy'],
+  /* variant: ADOPTED from chitbridge-engines (v1.4.0, 2026-09-28) — app/, engine/ and lib/variant.browser.js are written only by
+     chitbridge-engines/tools/adopt.cjs; the 2 line(s) that copied it from app/variant.js are retired. */
   /**
    * ⚠️ THE ONE THIRD-PARTY FILE ON THE TILL. qrcode-generator 1.4.4 (MIT), the same build shop.html loads from a
    * CDN — but a counter cannot reach a CDN with the line down, and a UPI QR is most needed exactly then. Copied
@@ -301,7 +302,6 @@ const COPIES = () => [
   /* written WITH the generated header (a plain copy would carry no @stage — the engine boundary asks every uncalled file for one) */
   [null, path.join(API, 'lib', 'locale.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'locale.js'), 'utf8'))],
   [null, path.join(API, 'lib', 'govcontext.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'govcontext.js'), 'utf8'))],
-  [null, path.join(API, 'lib', 'variant.browser.js'), GEN + norm(fs.readFileSync(path.join(WEB, 'app', 'variant.js'), 'utf8'))],
   /* pricing: the shop PC is served lib/pricing-engine.js itself (adopted; it already runs in a page) — pricing.browser.js retired */
   [null, path.join(API, 'lib', 'numerals.browser.js'), wrapForBrowser('numerals.js', 'CBNums')],
   /* ⭐⭐ UNITS, FOR THE SHOP PC TOO ([TILL-104]). The page learned that a kilo is measured and a plate is

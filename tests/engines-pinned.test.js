@@ -34,5 +34,18 @@ else pass++, console.log('  ok  no script but adopt.cjs writes pricing');
 /* offers (v1.3.0): vendor-till copied app/offers.js to engine/, and the server copy was a hand cp — the copier must stay gone */
 if (/'app', 'offers\.js'/.test(vt)) { bad++; console.log('  FAIL scripts/vendor-till.cjs writes offers again — a second writer'); }
 else pass++, console.log('  ok  no script but adopt.cjs writes offers');
+/* ⭐ AND FOR EVERY ENGINE, WITHOUT A LINE PER ENGINE (2026-09-28): whatever either platform pins, vendor-till may not copy it
+   from app/ or wrap it from lib/ — a pinned engine with a second writer is the drift this whole move exists to end. */
+{
+  const pinned = new Set();
+  for (const repo of ['chitbridge-api', 'chitbridge-web']) {
+    const l = JSON.parse(fs.readFileSync(path.join(DEV, repo, 'engines.lock.json'), 'utf8'));
+    Object.keys(l.pins || {}).forEach((n) => pinned.add(n));
+  }
+  const code = vt.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const second = [...pinned].filter((n) => code.includes("'app', '" + n + ".js'") || code.includes("wrapForBrowser('" + n + ".js'"));
+  if (second.length) { bad++; console.log('  FAIL vendor-till.cjs still writes pinned engine(s): ' + second.join(', ')); }
+  else pass++, console.log('  ok  vendor-till writes none of the ' + pinned.size + ' pinned engines');
+}
 console.log(pass + ' checks');
 process.exit(bad ? 1 : 0);

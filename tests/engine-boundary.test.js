@@ -248,7 +248,11 @@ function libStages() {
     const re = reqRe(name);
     const viaRoute = re.test(routeSrc);
     const viaLib = Object.entries(srcs).some(([g, s]) => g !== f && re.test(s));
-    const tag = (srcs[f].match(/@stage\s+([a-z-]+)/) || [])[1] || null;
+    /* ⭐ an ADOPTED file (chitbridge-engines, 2026-09-28) is a tagged release whose tests ran before the tag — that is
+       what 'tested' means, and its header says so. Stamping a platform's @stage into the engine source instead would
+       put this repo's bookkeeping inside the one codebase every platform adopts. */
+    const adopted = /^\/\* ADOPTED (BUNDLE )?from chitbridge-engines/.test(srcs[f]);
+    const tag = (srcs[f].match(/@stage\s+([a-z-]+)/) || [])[1] || (adopted ? 'tested' : null);
     return { file: f, reachable: viaRoute || viaLib, viaRoute, tag };
   });
 }
