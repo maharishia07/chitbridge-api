@@ -1,3 +1,6 @@
+/* ADOPTED from chitbridge-engines v1.5.0 · orderhub · sha256 c70a78a6839c10d41f6c43901f0557bd782463460e4af3f2e99d369a5012e9e5 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* chitbridge-engines · orderhub. Edited ONLY in chitbridge-engines/src/orderhub.js; every platform adopts a released version of it. */
+(function (root) {
 'use strict';
 // @stage tested
 // @stage-note [TILL-178b] The rules a SHOP HUB applies when several devices share one set of orders. till.js
@@ -35,7 +38,7 @@
  * tables is a second implementation that will disagree with the counter within a month.
  * [[feedback-no-duplicate-functions]] [[feedback-stay-in-the-construct]]
  */
-const ORD = require('./orders');
+const ORD = ((typeof module !== 'undefined' && typeof require === 'function') ? require('./orders') : root.CBOrders);
 
 /** a hub's whole memory. Handed in and returned, never a module global — one process may serve one shop. */
 function create() { return { orders: [], seq: 0 }; }
@@ -168,4 +171,9 @@ function stations(items) {
   return Object.keys(seen).sort();
 }
 
-module.exports = { create, apply, since, queue, find, stations };
+const EXPORTS = { create, apply, since, queue, find, stations };
+
+/* ⭐ ONE FILE, EVERY HOST: node takes module.exports; a page, the TV and the shop PC take window.CBOrderHub. */
+if (typeof module !== 'undefined' && module.exports) module.exports = EXPORTS;
+if (root && typeof root.window !== 'undefined') root.window.CBOrderHub = EXPORTS;
+})(typeof globalThis !== 'undefined' ? globalThis : this);

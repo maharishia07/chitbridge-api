@@ -2471,7 +2471,7 @@ const ENGINES = { offers: '../lib/offers-engine.js', tax: '../lib/tax-engine.bro
                      shop PC and this server ([TILL-125]) */
                   rollup: '../lib/rollup.browser.js',
                   orders: '../lib/orders.js' /* ADOPTED — one file for node and the page */,
-                  orderhub: '../lib/orderhub.browser.js',
+                  orderhub: '../lib/orderhub.js' /* ADOPTED — one file for node and the page */,
                   dayopen: '../lib/dayopen.js' /* ADOPTED — one file for node and the page */,
                   signin: '../lib/signin.js' /* ADOPTED — one file for node and the page */,
                   scalecode: '../lib/scalecode.js' /* ADOPTED — one file for node and the page */,

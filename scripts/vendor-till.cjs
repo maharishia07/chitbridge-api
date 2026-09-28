@@ -125,7 +125,7 @@ const COPIES = () => [
      line has come up, exactly like the rollup. These two copies are what makes "the whole cycle with no
      internet" a thing that RUNS rather than a thing that is claimed. orderhub requires orders, so both travel. */
   /* orders: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
-  [path.join(API, 'lib', 'orderhub.js'), path.join(API, 'tools', 'tally-connector', 'orderhub.js'), 'copy'],
+  /* orderhub: ADOPTED from chitbridge-engines (v1.5.0, 2026-09-28) — written only by chitbridge-engines/tools/adopt.cjs. */
   /* ⭐ THE SHOP'S SCREEN rides the same rail as the counter: one master, both hosts, the same engines and the same
      snapshot. It is the counter's data with a different job — advertising it instead of billing it. */
   [path.join(API, 'tools', 'tally-connector', 'promo.html'), path.join(WEB, 'promo.html'), 'copy'],
@@ -226,7 +226,6 @@ const COPIES = () => [
      orders — and it must hold them by the IDENTICAL rules, or a one-counter shop and a floor of six devices
      would slowly disagree about what a round is. So the page runs lib/orderhub.js against its own memory and
      the shop PC runs the same file against the floor's: one rule, two places to keep it. */
-  [null, path.join(WEB, 'engine', 'orderhub.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
   /* ⭐⭐⭐ THE MORNING ([TILL-182]). Athi: *"once you sign-in, set up begins… so the counter is setting up for
      the day."* What comes first, what may be skipped and what stops the morning dead is a RULE, and it is read
      by the page that narrates it — so it is wrapped like every other engine rather than written into the page. */
@@ -306,7 +305,6 @@ const COPIES = () => [
   /* ⭐ and the shop PC serves it too — a desktop counter closes its day offline more often than the web one */
   [null, path.join(API, 'lib', 'rollup.browser.js'), wrapForBrowser('rollup.js', 'CBRollup')],
   /* ⭐ the server's copy of the order rules, so routes/till.js can serve the same file ([TILL-181]) */
-  [null, path.join(API, 'lib', 'orderhub.browser.js'), wrapForBrowser('orderhub.js', 'CBOrderHub', { './orders': 'CBOrders' })],
   /* ⚠️ and the shop PC serves it too — a desktop counter setting up its own shop is the likeliest one of all */
   [null, path.join(WEB, 'till.webmanifest'), MANIFEST],
   [null, path.join(WEB, 'till-sw.js'), SW],

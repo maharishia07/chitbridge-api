@@ -553,7 +553,6 @@ const ENGINE_OTHER = [
      that renders it. The counter-health screen IS this table with a layout. */
   /* GENERATED beside lib/orders.js ([TILL-181]) — the order rules for the page that paints them. */
   /* GENERATED beside lib/orderhub.js ([TILL-178b]) — the floor's rules, for a device that IS the floor. */
-  'orderhub.browser.js',
   /* GENERATED beside lib/dayopen.js ([TILL-182]) — the morning, for the page that narrates it. */
   /* GENERATED beside lib/signin.js ([TILL-183]) — for the counter's own sign-in screen. */
   /* GENERATED beside lib/scalecode.js ([TILL-185]) — read on the counter, where the scale is. */

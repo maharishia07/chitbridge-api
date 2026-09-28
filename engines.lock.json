@@ -25,7 +25,8 @@
     "jurisdiction": "1.5.0",
     "rewards": "1.5.0",
     "screen": "1.5.0",
-    "orders": "1.5.0"
+    "orders": "1.5.0",
+    "orderhub": "1.5.0"
   },
   "adopt": {
     "money": [
@@ -103,6 +104,10 @@
     "orders": [
       "lib/orders.js",
       "tools/tally-connector/orders.js"
+    ],
+    "orderhub": [
+      "lib/orderhub.js",
+      "tools/tally-connector/orderhub.js"
     ]
   },
   "bundles": {
@@ -137,6 +142,7 @@
     "jurisdiction": "b3d6dc15feffb2b3037c77b6c50ee97fbde3f1c51f434681838777392b37f57b",
     "rewards": "8beaa4eb43e449dbdc8611463ad33bb5388473681e8d000cb0f364041fe96ea9",
     "screen": "6ca7e55a964373b19a97db139d4130ab9b91469def89e263eac34c73ca5ca151",
-    "orders": "a8e4417ed369e5b6e18bb5bf90eaf57e1097c112744566a47ebc46af0d3ba069"
+    "orders": "a8e4417ed369e5b6e18bb5bf90eaf57e1097c112744566a47ebc46af0d3ba069",
+    "orderhub": "c70a78a6839c10d41f6c43901f0557bd782463460e4af3f2e99d369a5012e9e5"
   }
 }
