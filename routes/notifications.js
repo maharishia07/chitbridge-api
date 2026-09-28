@@ -19,6 +19,8 @@ const auth = require('../middleware/auth');
  *   · The inner ORDER BY leads with the DISTINCT ON keys (Postgres requires it); the caller sorts newest-first
  *     OUTSIDE and applies its LIMIT there — see the DISTINCT ON note in the feed below.
  */
+/** how far back the feed and the badge look — an integer, so it is safe inside the SQL text below */
+const FEED_DAYS = Math.max(1, parseInt(process.env.NOTIF_FEED_DAYS || '90', 10) || 90);
 const FEED_FROM = `FROM state_log sl
          JOIN chit_status cs
            ON cs.chit_id = sl.chit_id AND cs.entity_id = $1 AND cs.deleted_at IS NULL
@@ -29,6 +31,10 @@ const FEED_FROM = `FROM state_log sl
           AND ( sl.entity_id = $1 OR sl.action IN ('dispute_raised','dispute_resolved','voided') )
           AND NOT EXISTS (SELECT 1 FROM notif_dismissed nd
                            WHERE nd.entity_id = $1 AND nd.log_id = sl.log_id)
+          /* ⚠️ BOUNDED (external review 2026-09-25): with no date bound this re-sorted the shop's WHOLE state_log on every
+             poll and grew without limit. idx_state_log_entity (entity_id, created_at DESC) already exists; the bound is
+             what lets it serve the read. The bell shows the newest thirty anyway — ninety days is far beyond that. */
+          AND sl.created_at > now() - interval '${FEED_DAYS} days'
         ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail`;
 
 router.get('/', auth, async (req, res) => {

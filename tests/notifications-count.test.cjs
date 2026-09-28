@@ -88,12 +88,17 @@ const norm = (s) => s.replace(/\s+/g, ' ').trim();
     const feed = calls.filter((c) => c.via === 'withEntity').map((c) => c.tx.statements[0]).find((s) => /DISTINCT ON/.test(s.sql));
     assert.ok(feed, 'the feed statement was not found');
     const feedSql = norm(feed.sql);
+    /* the fragment as SENT: its source text, with the one constant it interpolates filled in */
     const frag = norm(require('fs').readFileSync(path.join(API, 'routes', 'notifications.js'), 'utf8')
-      .match(/const FEED_FROM = `([\s\S]*?)`;/)[1]);
+      .match(/const FEED_FROM = `([\s\S]*?)`;/)[1]
+      .replace(/\$\{FEED_DAYS\}/g, String(Math.max(1, parseInt(process.env.NOTIF_FEED_DAYS || '90', 10) || 90))));
     assert.ok(countSql.indexOf(frag) >= 0, 'the count does not use FEED_FROM');
     assert.ok(feedSql.indexOf(frag) >= 0, 'the feed does not use FEED_FROM');
     assert.ok(/notif_dismissed/.test(frag) && /sl\.entity_id = \$1 OR sl\.action IN/.test(frag),
       'the fragment lost the dismissed rows or the F3 isolation rule');
+    /* ⚠️ external review 2026-09-25: the poll re-sorted the whole state_log — both paths are bounded in time */
+    assert.ok(/sl\.created_at > now\(\) - interval '\d+ days'/.test(countSql) && /sl\.created_at > now\(\) - interval '\d+ days'/.test(feedSql),
+      'the feed or the count is no longer bounded in time — it re-sorts the whole history on every poll');
   });
 
   await ita('without ?count=1 the feed is unchanged: rows, count, total, seen_at', async () => {
