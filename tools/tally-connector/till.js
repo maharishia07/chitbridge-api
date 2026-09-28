@@ -317,6 +317,34 @@ let QUEUE_SAID = false;
  * it to the screen. A count on its own reads as patience; a count with a reason reads as a thing to do.
  */
 let QUEUE_WHY = null;
+/**
+ * ── ⭐⭐ THE COUNTER'S OWN HEALTH, WRITTEN DOWN WHEN IT CHANGES (2026-09-28, M16 / TILL-145 as reassessed) ─────
+ *
+ * The watch list lives in the page, so a shop PC with its page shut was watched by nobody — and that is mostly
+ * harmless (with no screen there is nobody to tell). What WAS missing is a durable record: a shop that finds a
+ * stuck counter in the morning could not see WHEN it went wrong. So the program appends one line to health.jsonl
+ * in the shop's own folder each time its state CHANGES — online/offline, bills waiting or not, why the queue is
+ * stuck — never on every tick, and says it in its log. /api/state reports the current line and the recent ones.
+ * ⚠️ Bounded: the file is trimmed to its last 500 lines once it passes 1000.
+ */
+let HEALTH = null;
+function healthNote() {
+  const queued = readLines(F.queue).length;
+  const now = { online: !!online, paired: !!cfg.key, queued: queued, waiting: queued > 0,
+                why: QUEUE_WHY ? QUEUE_WHY.say : null, fatal: !!(QUEUE_WHY && QUEUE_WHY.fatal) };
+  const sig = [now.online, now.paired, now.waiting, now.why, now.fatal].join('|');
+  if (HEALTH && HEALTH.sig === sig) { HEALTH.queued = queued; return; }
+  const line = Object.assign({ at: new Date().toISOString() }, now);
+  HEALTH = Object.assign({ sig: sig }, line);
+  try {
+    const file = path.join(DIR, 'health.jsonl');
+    appendLine(file, line);
+    const all = readLines(file);
+    if (all.length > 1000) fs.writeFileSync(file, all.slice(-500).map((x) => JSON.stringify(x)).join('\n') + '\n');
+  } catch (_) { /* the record is a courtesy — it must never stop a sale */ }
+  log('health: ' + (now.online ? 'online' : 'OFFLINE') + ' · ' + (queued ? queued + ' waiting' : 'nothing waiting')
+    + (now.why ? ' · ' + now.why : ''));
+}
 
 /**
  * ── ⭐⭐⭐ WHY A CALL DID NOT WORK, AND WHETHER THE LINE IS THE REASON ([TILL-117]) ──────────────
@@ -431,7 +459,9 @@ async function drain() {
   draining = true; drainAt = Date.now();
   try {
     const rows = readLines(F.queue);
-    if (!rows.length) return;
+    /* ⭐ M16: the health note is taken on BOTH ways out of a drain — never inside the finally, which must stay
+       a single line that clears the busy flag and nothing else (tests/snapshot-wire.test.js) */
+    if (!rows.length) { try { healthNote(); } catch (_) {} return; }
     const left = [];
     for (const bill of rows) {
       try {
@@ -525,6 +555,10 @@ async function drain() {
       }
     }
     fs.writeFileSync(F.queue, left.map((b) => JSON.stringify(b)).join('\n') + (left.length ? '\n' : ''));
+    /* ⚠️ AN EMPTY QUEUE HAS NO REASON TO BE STUCK (2026-09-28). Only a sale's success cleared QUEUE_WHY; a credit
+       note, expense, document or summary 'continue'd past it, so the last outage's reason outlived its recovery. */
+    if (!left.length) { QUEUE_WHY = null; QUEUE_SAID = false; }
+    try { healthNote(); } catch (_) {}
   } catch (e) { log('queue: ' + e.message); }
   /* ⚠️ FINALLY, NOT AFTER. The old placement was reachable only if nothing above threw past its own catch —
      which is exactly the condition that cannot be relied on when the thing that fails is the network. */
@@ -1320,6 +1354,9 @@ const server = http.createServer(async (req, res) => {
                                * what happened and offer the one control that fixes it.
                                */
                               queue_why: QUEUE_WHY,
+                              /* ⭐ M16: the counter's health as it last CHANGED, and the recent record of changes */
+                              health: HEALTH ? { at: HEALTH.at, online: HEALTH.online, queued: readLines(F.queue).length, why: HEALTH.why, fatal: HEALTH.fatal } : null,
+                              health_log: (function(){ try { return readLines(path.join(DIR, 'health.jsonl')).slice(-20); } catch (_) { return []; } })(),
                               /**
                                * ⭐⭐ WHAT IS WAITING, NOT JUST HOW MANY ([TILL-137]). The counter-health design
                                * calls the bare count the page's first fault: "Bills 0, queued 0, then 10 rows

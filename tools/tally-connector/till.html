@@ -3908,7 +3908,8 @@ var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_ti
   'cb_till_counter_name', 'cb_till_dayicon', 'cb_till_dayimg', 'cb_till_daystart', 'cb_till_draft', 'cb_till_given',
   'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
   'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
-  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock', 'cb_till_autolock'];
+  'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock', 'cb_till_autolock',
+  'cb_till_keep_days', 'cb_till_keep_bills', 'cb_till_keep_mb', 'cb_till_retained'];
 /**
  * ⚠️ ONCE, ON THE FIRST START OF THIS CODE ON A SHOP PC: the values it kept under plain names before S1b belong to
  * the shop it held then, which is the shop it holds now — they are MOVED into that shop's slot. Only into an EMPTY
@@ -6048,6 +6049,8 @@ async function load(){
   STATE = st || STATE; S = catRestamp((st && st.snapshot) || S);
   /* ⭐ the person who just changed the shop (becomeShop → whoPending) is adopted by G2 now the shop is open — once */
   if (!HOST._whoNext) { try { HOST._whoNext = !!whoAdoptPending(); } catch (_) {} }
+  /* ⭐ M15: the day's retention, once — see retainDaily() */
+  if (!HOST._retained) { HOST._retained = true; try { retainDaily(); } catch (_) {} }
   /**
    * ⚠️⚠️⚠️ THE COUNTER CLAIMS ITS NUMBER HERE, FOR BOTH HOSTS ([TILL-130]).
    *
@@ -7456,6 +7459,30 @@ async function retainRun(){
  * ⚠️ It is also the only place it runs: a trim that fires while somebody is billing is a trim that will one
  * day fire while somebody is billing.
  */
+/**
+ * ⚠️⚠️ ONCE A BUSINESS DAY, NOT ONLY AT RETIREMENT (2026-09-28, M15). retainRun() existed and was called from
+ * closeCounter() alone — the act that RETIRES a counter, which most never do. So the browser counter still kept
+ * every bill it had ever taken, until the browser refused a write with a customer standing there. It now runs the
+ * first time a counter opens in a business day, after the shop is known. Unsent bills never leave (retainPlan).
+ * The shop PC has its own folder purge ([TILL-123]); this is the browser's.
+ */
+async function retainDaily(){
+  if (!(HOST && HOST.mode === 'cloud' && CloudHost.key)) return null;
+  var day = bizDay(), k = shopLs('cb_till_retained');
+  if (ls.get(k, '') === day) return null;
+  var r = await retainAtClose();
+  if (r && r.ok !== false) ls.set(k, day);
+  return r;
+}
+/** ⭐ the Settings row: a limit changed, and the sentence says at once which limit binds and what it would cost */
+async function retainSave(k, v){
+  retainSet(k, v);
+  await retainPaint();
+}
+async function retainPaint(){
+  var el = document.getElementById('set_keep_say'); if (!el) return;
+  try { el.textContent = retainPlan((await DB.all('bills')) || []).say; } catch (_) { el.textContent = ''; }
+}
 async function retainAtClose(){
   try {
     var r = await retainRun();
@@ -24443,7 +24470,16 @@ function openSettings(tab){
       + '<input id="set_key" placeholder="paste the key once" value="' + esc(masked) + '" style="flex:1" onchange="settingsKeySave(this.value)">'
       + (CloudHost.key ? '<button class="pill" type="button" data-testid="till-set-keycopy" onclick="settingsCopyKey()">Copy</button>' : '')
       + '</span></div>'
-      + '<div class="srow"><span>ChitBridge<i class="scope shop">the shop</i></span><input id="set_api" value="' + esc(CloudHost.api||'') + '" onchange="settingsApiSave(this.value)"></div>';
+      + '<div class="srow"><span>ChitBridge<i class="scope shop">the shop</i></span><input id="set_api" value="' + esc(CloudHost.api||'') + '" onchange="settingsApiSave(this.value)"></div>'
+      /* ⭐ M15 [TILL-134]: what this device keeps — whichever limit binds first; unsent bills never leave */
+      + (function(){ var L = retainLimits();
+          var box = function(k, v, w){ return '<input id="set_keep_' + k + '" data-testid="till-set-keep-' + k + '" inputmode="numeric" style="width:' + w
+            + '" value="' + esc(String(v)) + '" onchange="retainSave(\'' + k + '\', this.value)">'; };
+          return '<div class="srow" title="Settled bills beyond these limits leave this device, whichever limit is reached first. They stay at the shop and can be read back. A bill not yet sent never leaves.">'
+            + '<span>Keeps<i class="scope shop">the shop</i></span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
+            + box('days', L.days, '4em') + ' days ·' + box('bills', L.bills, '5em') + ' bills ·' + box('mb', L.mb, '4em') + ' MB</span></div>'
+            + '<div class="srow"><span></span><span class="u" id="set_keep_say" data-testid="till-set-keep-say"></span></div>'; })();
+    retainPaint();
   } else {
     /**
      * ⚠️⚠️ IT USED TO SAY ONLY 'on this PC' ([TILL-121]), which is true and useless. A counter holding the
