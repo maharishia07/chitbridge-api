@@ -23,13 +23,14 @@ t('2.1 · a negotiation is purpose "offer" with NO total_value', () => {
   // Was pinned to the literal `total_value: negotiation ? null : …`. The condition gained a second term when a chit
   // with no currency (help desk / form) also stopped carrying a total, so the literal moved while the PROPERTY —
   // an offer carries no settled total — held and got stronger. Assert the property.
-  assert.match(ROUTE, /total_value: \(!monetary \|\| negotiation\) \? null : Math\.round\(total \* 100\) \/ 100/,
+  /* 2026-09-27: the rounding became money.round(total) (SPEC-money-one-reader.md) — the PROPERTY is unchanged */
+  assert.match(ROUTE, /total_value: \(!monetary \|\| negotiation\) \? null : money\.round\(total\)/,
     'an offer, and anything non-monetary, must carry no settled total');
   assert.match(ROUTE, /const monetary = oi\.pipeline === 'commerce'/, 'monetary must be derived from the pipeline, not a new flag');
 });
 t('2.1 · the indicative figure is kept, but under a name that cannot be mistaken for a total', () => {
-  assert.match(ROUTE, /indicative_total: Math\.round\(total \* 100\) \/ 100/);
-  assert.ok(!/total_value: Math\.round\(total \* 100\) \/ 100,\s*\n\s*currency_code/.test(ROUTE), 'the old unconditional total_value is gone');
+  assert.match(ROUTE, /indicative_total: money\.round\(total\)/);
+  assert.ok(!/total_value: (?:Math\.round\(total \* 100\) \/ 100|money\.round\(total\)),\s*\n\s*currency_code/.test(ROUTE), 'the old unconditional total_value is gone');
 });
 t('2.1 · purpose reaches BOTH chit copies and both detail rows, on both write paths', () => {
   // `all_recipients, purpose, auto_subject` also appears in two SQL COLUMN LISTS, which are not JS and were always

@@ -36,21 +36,29 @@ const bulkUpdate = route('bulk-update');
 console.log('\n-- ⭐⭐ the whole set in ONE transaction --');
 t('the bulk route exists', bulk.length > 0);
 /* ⭐ The point of the route: these two are the same for every item, and were being re-resolved per request. */
-t('the schema is resolved ONCE', (bulk.match(/defaultSchemaId/g) || []).length === 1);
-t('the currency is resolved ONCE', (bulk.match(/currencyFor/g) || []).length === 1);
+/**
+ * ⚠️ MOVED 2026-09-27, not deleted. The write left this route for lib/catalogue-write.js writeItems() — the ONE
+ * catalogue writer the till's mint, Product Lab's adopt and the reference stores now share — so every property below
+ * is asserted where the code now IS, and the route is held to calling that writer exactly once.
+ */
+const cw = fs.readFileSync(API + '/lib/catalogue-write.js', 'utf8');
+const writer = cw.slice(cw.indexOf('async function writeItems(opts)'), cw.indexOf('\n}\n', cw.indexOf('async function writeItems(opts)')) + 2);
+t('the route hands the whole set to the one writer, once', (bulk.match(/catwrite\.writeItems\(/g) || []).length === 1);
+t('the schema is resolved ONCE', (writer.match(/defaultSchemaId\(/g) || []).length === 1);
+t('the currency is resolved ONCE', (writer.match(/currencyFor\(/g) || []).length === 1);
 /* ⭐ One INSERT for the lot, not one per item — unnest, the same shape query-shape.test.js enforces elsewhere. */
-t('one INSERT covers every item', /unnest\(\$3::jsonb\[\]\)/.test(bulk));
+t('one INSERT covers every item', /unnest\(\$3::jsonb\[\]\)/.test(writer));
 t('  ...and there is no per-item insert loop',
-  !/for\s*\([^)]*\)\s*\{[\s\S]{0,300}INSERT INTO catalogue_items/.test(bulk));
+  !/for\s*\([^)]*\)\s*\{[\s\S]{0,300}INSERT INTO catalogue_items/.test(writer));
 
 console.log('\n-- ⚠️ nothing half-written --');
 /* The sequential version skipped a failing item and carried on, so a typo in item 30 left 29 created and no
    record of what went missing. */
 t('every item is validated before anything is written',
-  bulk.indexOf('validateItem') < bulk.indexOf('INSERT INTO catalogue_items'));
-t('  ...and a refusal names the failing indexes', /invalid: bad/.test(bulk) && /index: i/.test(bulk));
+  writer.indexOf('validateAgainst') > 0 && writer.indexOf('validateAgainst') < writer.indexOf('INSERT INTO catalogue_items'));
+t('  ...and a refusal names the failing indexes', /invalid: bad/.test(writer) && /index: i/.test(writer));
 t('  ...and writes nothing when any is bad',
-  /if \(bad\.length\)[\s\S]{0,200}return res\.status\(400\)/.test(bulk));
+  /if \(bad\.length\)[\s\S]{0,200}return \{ ok: false, status: 400/.test(writer));
 
 console.log('\n-- ⚠️ the guards a write route needs --');
 t('it is authed', /router\.post\('\/bulk', auth/.test(bulk));
@@ -60,7 +68,7 @@ t('a request is capped', /BULK_MAX/.test(bulk) && /Too many/.test(bulk));
    would not. */
 t('every member must be an object', /typeof it === 'object' && !Array\.isArray\(it\)/.test(bulk));
 /* ⚠️ RLS: catalogue_items is a tenant table, so the insert must run inside withEntity. */
-t('the insert runs inside withEntity', /withEntity\(entity_id/.test(bulk));
+t('the insert runs inside withEntity', /withEntity\(entity_id/.test(writer));
 
 console.log('\n-- ⚠️ route ORDER, which Express decides and nothing else checks --');
 /* `bulk` is a perfectly good :id. Declared after /:id, every call would be read as a product by that name. */
@@ -69,12 +77,21 @@ const iParam = code.indexOf("router.patch('/:id'");
 t('/bulk is declared before /:id', iBulk > 0 && iParam > 0 && iBulk < iParam);
 
 console.log('\n-- ⚠️ and the caller no longer loops --');
-const web = fs.readFileSync('C:/dev/chitbridge-web/public/app/cap-catalogue.js', 'utf8');
-const webCode = web.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-const persist = webCode.slice(webCode.indexOf('var persistProducts'), webCode.indexOf('var isValue'));
-t('the wizard sends one request', /prodAddMany/.test(persist));
-t('  ...and the sequential step() loop is gone', !/step\(\);/.test(persist));
-t('  ...and a refusal reports which item', /inv\[0\]\.index/.test(persist));
+/**
+ * ⚠️ MOVED 2026-09-27, not deleted. These read app/cap-catalogue.js's wizard — deleted on purpose on 2026-09-03 (web
+ * 163c2550, "delete the six-step wizard"), so the test threw ENOENT and checked nothing. What it guarded was never the
+ * wizard: it was "no front end adds products one request at a time in a loop". That is asserted across the whole web
+ * app now — app.html and every app/*.js — so the next screen that adds many products cannot quietly loop either.
+ */
+const WEBP = 'C:/dev/chitbridge-web/public';
+const webFiles = [WEBP + '/app.html'].concat(fs.readdirSync(WEBP + '/app').filter((f) => /\.js$/.test(f)).map((f) => WEBP + '/app/' + f));
+const loops = [];
+for (const f of webFiles) {
+  const w = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  if (/(?:for\s*\(|\.forEach\(|while\s*\()[\s\S]{0,300}api\(\s*['"]prodAdd['"]/.test(w)) loops.push(f.split('/').pop());
+}
+t('no front end adds products one request per item in a loop', loops.length === 0);
+if (loops.length) console.log('      looping: ' + loops.join(', ') + ' — send the set to prodAddMany (POST /api/products/bulk)');
 
 
 console.log('\n-- ⭐⭐ availability for the TICKED SET --');
