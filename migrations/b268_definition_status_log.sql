@@ -36,6 +36,9 @@ CREATE INDEX IF NOT EXISTS definition_status_log_ent_idx ON definition_status_lo
 
 ALTER TABLE definition_status_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE definition_status_log FORCE ROW LEVEL SECURITY;
+-- ⚠️ the header says "Safe to re-run" and this statement was not (2026-09-28): a second run failed 42710 "policy
+-- already exists", as b266 did for Athi. Dropping first makes it true.
+DROP POLICY IF EXISTS rls_entity ON definition_status_log;
 CREATE POLICY rls_entity ON definition_status_log
   USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
   WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
