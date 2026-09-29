@@ -57,10 +57,8 @@ const M = path.join(__dirname, '..', 'migrations');
  * ZERO, so one new unguarded policy is unsuperseded, unlisted, and red on the next run.
  */
 const BASELINE = {
-  /* ⚠️ 2026-09-28 — b250's policy, written after b222 paid the debt and red here ever since (this test was not in
-     the gate). Settled by docs/drafts/fk_b250_b262_b264_draft.sql, which recreates the policy NULLIF-guarded; once
-     it is moved into migrations/ the tree settles it and this line must be DELETED (the counter reads the tree). */
-  'b250_work_routing_by_kind.sql': 2,
+  /* 2026-09-29 — b250's two unguarded casts are SETTLED: b271 (run by Athi) recreates its policy NULLIF-guarded, and
+     the counter reads the tree, so the entry is deleted as its own note said. Empty again: every file against zero. */
 };
 
 let pass = 0, fail = 0;
