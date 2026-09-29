@@ -285,7 +285,8 @@ function fyOf(d) {
 function nextNumberOf(kind){
   /* ⚠️ ONE SERIES PER KIND. A goods receipt in the middle of the sales run puts a hole in the very thing a gapless series proves. */
   /* ⭐ CN and EXP (2026-09-28): a credit note and a counter expense each keep their OWN run — never the sales series */
-  const tag = (kind === 'GRN' || kind === 'DC' || kind === 'CN' || kind === 'EXP') ? kind : '';
+  /* ⭐ R (BOOKS v2, 2026-09-29): money received from a customer — its own run, tag first, never shaped like a sale number */
+  const tag = (kind === 'GRN' || kind === 'DC' || kind === 'CN' || kind === 'EXP' || kind === 'R') ? kind : '';
   const file = tag ? path.join(DIR, 'series-' + tag + '.json') : F.series;
   const fy = fyOf(new Date());
   const s = readJSON(file, { prefix: tillCfg.id, fy, next: 1 });
@@ -495,7 +496,7 @@ async function drain() {
          */
         if (bill.chitBody) {
           const rc = await cb.call('POST', '/api/chits/send', bill.chitBody);
-          log((bill.kind === 'expense' ? 'expense ' : 'credit note ') + bill.no + ' → ' + (rc && rc.duplicate ? 'already recorded' : 'recorded'));
+          log((({ expense: 'expense ', payment: 'payment received ' })[bill.kind] || 'credit note ') + bill.no + ' → ' + (rc && rc.duplicate ? 'already recorded' : 'recorded'));
           online = true;
           continue;
         }
@@ -592,6 +593,9 @@ function chitOf(bill) {
       catalogue_version: bill.catalogue_version || null,
       payment: { mode: (bill.payments || []).map((p) => p.how).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments || [] },
       slip: bill.kind || 'cash',
+      /* ⭐ BOOKS v2 — a credit bill's terms and any owner override (the page's chitOf carries the same two) */
+      terms: bill.terms || null,
+      credit_override: bill.credit_override || null,
     },
     line_items: (bill.lines || []).map((l) => Object.assign({
       particulars: l.name, quantity: l.qty, unit: l.unit || 'piece', price: l.price, total: l.net,
@@ -1107,7 +1111,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/number') {
       let raw = ''; for await (const c of req) raw += c;
       const b = JSON.parse(raw || '{}');
-      if (b.kind !== 'CN' && b.kind !== 'EXP') return json(res, 400, { ok: false, message: 'only a credit note (CN) or an expense (EXP) is numbered here' });
+      if (b.kind !== 'CN' && b.kind !== 'EXP' && b.kind !== 'R') return json(res, 400, { ok: false, message: 'only a credit note (CN), an expense (EXP) or a payment received (R) is numbered here' });
       const no = nextNumberOf(b.kind);
       ISSUED[no] = b.kind;
       return json(res, 200, { ok: true, no: no });
@@ -1116,14 +1120,16 @@ const server = http.createServer(async (req, res) => {
       let raw = ''; for await (const c of req) raw += c;
       const b = JSON.parse(raw || '{}');
       const doc = b.doc || {}, chitBody = b.chitBody || null;
-      const want = doc.kind === 'credit_note' ? 'CN' : doc.kind === 'expense' ? 'EXP' : null;
-      if (!want) return json(res, 400, { ok: false, message: 'only a credit note or an expense is recorded here' });
-      if (!doc.no || ISSUED[doc.no] !== want) return json(res, 400, { ok: false, message: 'that number was not issued by this counter for a ' + (want === 'CN' ? 'credit note' : 'expense') });
+      const want = doc.kind === 'credit_note' ? 'CN' : doc.kind === 'expense' ? 'EXP' : doc.kind === 'payment' ? 'R' : null;
+      if (!want) return json(res, 400, { ok: false, message: 'only a credit note, an expense or a payment received is recorded here' });
+      if (!doc.no || ISSUED[doc.no] !== want) return json(res, 400, { ok: false, message: 'that number was not issued by this counter for a ' + ({ CN: 'credit note', EXP: 'expense', R: 'payment received' })[want] });
       if (!chitBody || chitBody.client_ref !== doc.no) return json(res, 400, { ok: false, message: 'the record and its chit do not carry the same number' });
       delete ISSUED[doc.no];
       const rec = Object.assign({ at: new Date().toISOString(), till: tillCfg.id, catalogue_version: snapshot && snapshot.version }, doc);
-      /* THE FILE, THEN THE QUEUE — the same order a bill keeps */
-      appendLine(F.bills(today()), rec);
+      /* THE FILE, THEN THE QUEUE — the same order a bill keeps.
+         ⚠️⚠️ A PAYMENT RECEIVED IS NOT A SALE: it goes to the day's DOCUMENTS file, never the bills file, which the day's
+         totals read row by row as sales (BOOKS v2, 2026-09-29). */
+      appendLine(want === 'R' ? F.docs(today()) : F.bills(today()), rec);
       appendLine(F.queue, { no: rec.no, at: rec.at, kind: rec.kind, chitBody: chitBody });
       drain().catch(() => {});
       return json(res, 200, { ok: true, bill: rec, today: todayTotals() });

@@ -260,7 +260,8 @@ it('⏱ auto-lock: 5 minutes by default, per shop, and it locks through lockNow 
 console.log('\nM10 · RETURNS AND EXPENSES ON THE SHOP PC — the program numbers, the page builds, one queue\n');
 
 it('the program numbers a credit note and an expense in their OWN series, never the sales run', () => {
-  assert.ok(/kind === 'CN' \|\| kind === 'EXP'\) \? kind : ''/.test(PROG), 'CN/EXP are not their own series in nextNumberOf');
+  /* MOVED 2026-09-29: the tag list gained R (money received, BOOKS v2) after EXP — CN and EXP are still their own runs */
+  assert.ok(/kind === 'CN' \|\| kind === 'EXP'( \|\| kind === 'R')?\) \? kind : ''/.test(PROG), 'CN/EXP are not their own series in nextNumberOf');
   const num = PROG.slice(PROG.indexOf("url.pathname === '/api/number'"), PROG.indexOf("url.pathname === '/api/record'"));
   assert.ok(/nextNumberOf\(b\.kind\)/.test(num) && !/nextNumber\(\)/.test(num), '/api/number takes from the sales series');
 });
@@ -293,6 +294,42 @@ it('both restart the program, so the shop\'s folder is chosen again from the new
   const out = PROG.slice(PROG.indexOf("url.pathname === '/api/signout'"));
   assert.ok(/process\.exit\(0\)/.test(fin.slice(0, 6000)), 'enrolling no longer restarts');
   assert.ok(/process\.exit\(0\)/.test(out.slice(0, 4000)), 'signing out no longer restarts');
+});
+
+/**
+ * ⭐⭐ BOOKS v2 (2026-09-29) — MONEY RECEIVED IS NOT A SALE, AND CREDIT NEEDS SOMEBODY. The day's totals (CBRollup)
+ * count every row of the bills store / bills file as a sale, so a payment filed there would inflate the day's sales
+ * by exactly the money collected on old bills. And a credit bill addressed to nobody is money nobody can be asked for.
+ * [SPEC-books-v2 §4 · e2e/till-books-offline.cjs proves the behaviour; these pin the source]
+ */
+console.log('\nB2 · money received, and credit\n');
+
+it('the browser files a payment received in its own list — never the bills store', () => {
+  const at = PAGE.indexOf('\n  async payment(p){');
+  assert.ok(at > 0, 'CloudHost.payment is gone — this guard is measuring nothing');
+  const p = { text: PAGE.slice(at, PAGE.indexOf('\n  },\n', at)) };   /* a method ends at its own "  }," */
+  assert.ok(/nextNumber\('R'\)/.test(p.text), 'payments are not numbered in their own R series');
+  assert.ok(/DB\.put\('queue'/.test(p.text), 'a payment is not queued');
+  assert.ok(!/DB\.put\('bills'/.test(p.text), 'a payment was written into the bills store — the day would count it as a sale');
+});
+it('the shop PC files a payment received with the day\'s documents — never the bills file', () => {
+  assert.ok(/doc\.kind === 'payment' \? 'R'/.test(PROG), '/api/record no longer knows a payment');
+  assert.ok(/appendLine\(want === 'R' \? F\.docs\(today\(\)\) : F\.bills\(today\(\)\), rec\)/.test(PROG), 'a payment may land in the bills file');
+  assert.ok(/payment: function\(p\)\{ return this\.record\('R'[\s\S]{0,80}chitOfPayment\)/.test(PAGE), 'AgentHost does not build with chitOfPayment');
+});
+it('a receipt number cannot take the shape of a sale number (tag first, for a kind the engine does not know)', () => {
+  assert.ok(/R: 'payment'/.test(PAGE), 'DOC_TAGS lost the R series');
+  assert.ok(/hasOwnProperty\.call\(D\.KINDS, docKindOf\(kind\)\)\)\) return tag \+ '\/' \+ body;/.test(PAGE), 'an unknown kind would be composed like a sale');
+});
+it('On credit is offered only for ONE known customer, and a credit bill without one is refused', () => {
+  assert.ok(/if \(credCust\) ways\.push\(\{ id:'credit', label:'On credit' \}\);\n  else if \(PICKED === 'On credit'\) PICKED = ways\[0\]\.label;/.test(PAGE), 'the credit tender is offered without a known customer, or stays picked after one is cleared');
+  assert.ok(/if \(!cust\) \{ say\('On credit needs a customer/.test(PAGE), 'finish() lets a credit bill through with nobody on it');
+  assert.ok(/return hits\.length === 1 \? hits\[0\] : null;/.test(body(PAGE, 'function custKnown(').text), 'custKnown() no longer insists on exactly one match');
+});
+it('over the limit, only the OWNER\'s counter PIN allows it', () => {
+  const o = body(PAGE, 'async function ownerApprove(');
+  assert.ok(/e\.kind === 'entity'/.test(o.text), 'the override is no longer limited to the owner');
+  assert.ok(/SIGN\(\)\.pinAfter\(/.test(o.text), 'a wrong PIN no longer counts against the PIN');
 });
 
 console.log('\n' + pass + ' checks passed\n');
