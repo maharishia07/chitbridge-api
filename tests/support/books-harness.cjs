@@ -15,7 +15,7 @@ function enginesSrc() {
   for (const d of c) {
     try { if (fs.existsSync(path.join(d, 'ledger.js')) && typeof require(path.join(d, 'accounts-packs')).withAccounts === 'function') return { dir: d }; } catch (_) {}
   }
-  return { dir: null, why: 'books engines v1.8.0 not found (set BOOKS_ENGINES_SRC to chitbridge-engines/src on the books-v2 branch) — tried ' + c.join(' · ') };
+  return { dir: null, why: 'books engines v1.8.1 not found (set BOOKS_ENGINES_SRC to chitbridge-engines/src on the books-v2 branch) — tried ' + c.join(' · ') };
 }
 
 function load(opt) {

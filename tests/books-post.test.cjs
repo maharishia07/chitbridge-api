@@ -156,11 +156,18 @@ const SUPP = '33333333-3333-4333-8333-333333333333';
   ok('…and mid-month (rows before + the month\'s lines to the day)', tbMid.balanced, JSON.stringify([tbMid.total_dr_minor, tbMid.total_cr_minor]));
   const nextYr = await B.postEntry(db, SHOP, { type: 'expense', date: '2027-04-05', currency: 'INR', class: 'rent', amount: 100, paid_from: 'cash', source_ref: 'chit:ny' });
   ok('an entry in 2027-28 creates that year\'s months', nextYr.ok && T.periods.filter((p) => p.fiscal_year === '2027-28').length === 13);
-  const bsNext = await B.balanceSheet(db, SHOP, '2027-04-30');
-  ok('the balance sheet of the next year balances (period 0 carried forward, computed)', bsNext.balanced, JSON.stringify([bsNext.total_assets_minor, bsNext.total_liabilities_minor]));
+  let sn = null; try { await B.balanceSheet(db, SHOP, '2027-04-30'); } catch (e) { sn = e; }
+  ok('while last year\'s Suspense is not nil the next year is REFUSED by name (never an empty carry that "balances")', sn && sn.code === 'SUSPENSE_NOT_NIL' && /Suspense is not nil/.test(sn.message), sn && sn.message);
+  await B.postEntry(db, SHOP, { type: 'manual', owner: true, narration: 'Opening difference was the owner\'s capital', date: '2026-09-30', currency: 'INR', lines: [{ account: '2900', dr: 6000 }, { account: '3000', cr: 6000 }] });
   const cash = T.accounts.find((a) => a.role === 'cash');
+  const closing = (await B.trialBalance(db, SHOP, '2027-03-31')).rows.find((r) => r.code === cash.code);
+  const bsNext = await B.balanceSheet(db, SHOP, '2027-04-30');
+  ok('Suspense cleared → the next year\'s balance sheet balances, with real carried figures', bsNext.balanced && bsNext.total_assets_minor > 100000, JSON.stringify([bsNext.total_assets_minor, bsNext.total_liabilities_minor]));
   const tbNext = await B.trialBalance(db, SHOP, '2027-04-30');
-  ok('…cash carried: this year\'s closing less April\'s rent', tbNext.balanced && tbNext.rows.some((r) => r.code === cash.code), JSON.stringify(tbNext.rows.map((r) => r.code)));
+  const cashNext = tbNext.rows.find((r) => r.code === cash.code);
+  ok('…cash carried to the paisa: this year\'s closing less April\'s rent (100.00)', tbNext.balanced && closing && cashNext && cashNext.debit_minor === closing.debit_minor - 10000, JSON.stringify([closing, cashNext]));
+  const lgY = await B.ledgerOf(db, SHOP, cash, null, '2027-04-01', '2027-04-30');
+  ok('…a ledger opened on the year\'s first day starts from the carried balance', lgY.opening_minor === closing.debit_minor, JSON.stringify(lgY));
   const ctl = await B.controls(db, SHOP, '2026-09-30');
   ok('CBLedger.controls finds nothing wrong', ctl.ok, JSON.stringify(ctl.mismatches));
 

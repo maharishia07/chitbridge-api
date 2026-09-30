@@ -57,6 +57,8 @@ const entries = [
   { entry_id: 'e6', entry_no: 'JV/2026-27/000006', posting_date: '2026-09-23', event_type: 'write_off', lines: [L('6850', 5000, 0), L('1300', 0, 5000, CUST)] },
   { entry_id: 'e7', entry_no: 'JV/2026-27/000007', posting_date: '2026-09-24', event_type: 'manual', narration: 'Owner brought in cash', lines: [L('1400', 100000, 0), L('3000', 0, 100000)] },
 ];
+/* a party line whose own items do NOT add up to it (300 of 500): Tally would refuse the voucher — it must fall back to one On Account row */
+const ODD = { entry_id: 'e8', entry_no: 'JV/2026-27/000008', posting_date: '2026-09-25', event_type: 'credit_given', lines: [L('1300', 50000, 0, CUST), L('1400', 0, 50000)] };
 const items = [
   { entry_id: 'e1', party: CUST, ref: CHIT, against_ref: CHIT, ref_kind: 'bill', amount_minor: 100000 },
   { entry_id: 'e2', party: SUPP, ref: 'PB-9', against_ref: 'PB-9', ref_kind: 'bill', amount_minor: 50000 },
@@ -89,6 +91,10 @@ ok('every ledger a voucher names has a master (' + named.size + ')', Array.from(
 ok('the customer under Sundry Debtors with its GSTIN; the supplier under Sundry Creditors, unregistered', /<LEDGER NAME="Ravi Stores &amp; Co"[^]*?<PARENT>Sundry Debtors<\/PARENT><ISBILLWISEON>Yes<\/ISBILLWISEON>\n<PARTYGSTIN>33ABCDE1234F1Z5<\/PARTYGSTIN>/.test(M)
   && /<LEDGER NAME="Kumar Traders"[^]*?<PARENT>Sundry Creditors<\/PARENT><ISBILLWISEON>Yes<\/ISBILLWISEON>\n<GSTREGISTRATIONTYPE>Unregistered<\/GSTREGISTRATIONTYPE>/.test(M));
 ok('a GST ledger carries its duty head; Sales sits under Sales Accounts', /<LEDGER NAME="Output CGST"[^]*?<PARENT>Duties &amp; Taxes<\/PARENT><TAXTYPE>GST<\/TAXTYPE><GSTDUTYHEAD>CGST<\/GSTDUTYHEAD>/.test(M) && /<LEDGER NAME="Sales"[^]*?<PARENT>Sales Accounts<\/PARENT>/.test(M));
+const odd = T.build({ entries: [ODD], accounts, parties, items: [{ entry_id: 'e8', party: CUST, ref: 'cg:1', against_ref: 'cg:1', ref_kind: 'bill', amount_minor: 30000 }], dec });
+const ov = odd.files.find((f) => f.name === 'tally-vouchers.xml').data;
+ok('references that do not add up to their line become ONE On Account row for the whole line (never a voucher Tally refuses)',
+  /<AMOUNT>-500\.00<\/AMOUNT>\n<BILLALLOCATIONS\.LIST><NAME>JV\/2026-27\/000008<\/NAME><BILLTYPE>On Account<\/BILLTYPE><AMOUNT>-500\.00<\/AMOUNT><\/BILLALLOCATIONS\.LIST><\/ALLLEDGERENTRIES/.test(ov) && !/300\.00/.test(ov), ov);
 let threw = null; try { T.build({ entries: [{ entry_id: 'x', entry_no: 'X', posting_date: '2026-09-01', event_type: 'manual', lines: [L('9999', 1, 0), L('4000', 0, 1)] }], accounts, parties, items: [], dec }); } catch (e) { threw = e; }
 ok('a line on a ledger that is not in the chart is refused (the pack then falls back, and says unverified)', threw && /not in the chart/.test(threw.message));
 

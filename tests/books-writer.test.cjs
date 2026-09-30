@@ -30,7 +30,8 @@ function walk(dir, out) {
   }
   return out;
 }
-const FILES = ['lib', 'routes', 'db', 'scripts', 'tools', 'backfill', 'middleware'].reduce((a, d) => walk(d, a), []).concat(['server.js']);
+/* scripts/books-breaks.cjs is the tool that BREAKS these guards on purpose (it carries the forbidden strings as break text) */
+const FILES = ['lib', 'routes', 'db', 'scripts', 'tools', 'backfill', 'middleware'].reduce((a, d) => walk(d, a), []).concat(['server.js']).filter((f) => f !== 'scripts/books-breaks.cjs');
 const JOURNAL = ['journal_entry', 'journal_line', 'account_balance', 'party_item'];
 const WRITE_RE = new RegExp('\\b(INSERT\\s+INTO|UPDATE|DELETE\\s+FROM)\\s+(' + JOURNAL.join('|') + ')\\b', 'i');
 const STORE_WRITES = ['insertEntry', 'insertLines', 'addBalances', 'insertItems'];

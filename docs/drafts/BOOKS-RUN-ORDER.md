@@ -68,3 +68,10 @@ are adopted and the server is deployed): `POST /api/books/enable` from that shop
 the India pack and its months, and sets the switch. There is no SQL for it.
 
 ⚠️ If any check shows a different number, stop and send the row — do not run the next file.
+
+## After all three — one refresh, no SQL
+
+The row-level-security snapshot (`db/rls-baseline.json`) is what the guards compare against; the 13 new tables are not
+in it until it is taken again: `railway run node scripts/rls-census.cjs --save` (it only reads), then commit the file.
+Until then the new tables are guarded by `tests/books-writer.test.cjs` instead (FORCE RLS in the SQL, and each table in
+the server's tripwire list).

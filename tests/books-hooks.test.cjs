@@ -89,6 +89,11 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     X.T.parties.push({ owner: SHOP, party_id: CUST, name: 'Ravi', customer: true });
     const h1 = await K.postChit(SHOP, 'r9', {}); const h2 = await K.postChit(SHOP, 'r9', {});
     eq('…through the hook: one payment row, one entry; the replay is a duplicate', [X.T.payments.length, h1.payment && h1.payment.status, h1.posted && h1.posted.ok, h2.payment && h2.payment.duplicate, X.T.entries.filter((e) => e.event_type === 'payment_received').length], [1, 'recorded', true, true, 1]);
+    /* engines v1.8.1: an expense naming a class that is not an expense ledger is REFUSED by the rules — parked and named, never swallowed */
+    TCp.copyOf = async () => ({ chit_id: 'x9', purpose: 'expense', created_at: '2026-09-29T05:00:00Z', business_json: { expense: { what: 'x', mode: 'Cash', amount: 10, class: 'sales' } } });
+    const rf = await K.postChit(SHOP, 'x9', {});
+    const pk9 = X.T.outbox.find((o) => o.source_chit_id === 'x9');
+    ok('a post the RULES refuse (an expense on a non-expense ledger) is queued with the rules\' own words — the chit is untouched', rf.queued === true && pk9 && pk9.why && pk9.why.length > 10 && !X.T.entries.some((e) => e.source_ref === 'chit:x9'), JSON.stringify([rf, pk9 && pk9.why]));
     TCp.copyOf = was; await X.store.saveSetting(X.db, SHOP, { enabled: false }); K.forget(SHOP);
   }
   eq('an order (a promise) posts nothing', K.classify({ chit: { chit_id: 'c9', created_at: '2026-09-29T05:00:00Z', purpose: 'order', business_json: {} }, entry: { sells: true, invoice: inv([[5, 10, 0.25]], 10.5) }, setting: S }).kind, 'none');
@@ -119,9 +124,10 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
   }
   /* off: one cached read, nothing else */
   K.forget(SHOP); await X.store.saveSetting(X.db, SHOP, { enabled: false });
-  const n0 = X.T.outbox.length;
+  const n0 = X.T.outbox.length; let reads = 0; const c0 = TC.copyOf; TC.copyOf = async (...a) => { reads++; return c0(...a); };
   const off = await K.afterChit(SHOP, 'f1', SHOP);
   ok('books OFF → afterChit does nothing, queues nothing', off && off.off === true && X.T.outbox.length === n0);
+  ok('…and does not even READ the chit (off costs one cached look at the switch, nothing more)', reads === 0, 'chit reads: ' + reads);
 
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
