@@ -1,4 +1,5 @@
 -- b274_books_party.sql — BOOKS v2, part 3 of 3: the party master (on the lists that already exist) and the packs.
+-- RUN BY ATHI 2026-10-01 (Supabase editor, as postgres). Check row after: 7 | 6 | 2 | 1 | 1314 | 929 — as expected (docs/drafts/BOOKS-RUN-ORDER.md).
 -- SPEC-books-v2.md §1/§4/§6 · research §6.1 ("party ≠ a new table"). Run after b273. Safe to re-run.
 --
 -- ⚠️⚠️ RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS. It creates tables, policies and grants, which the

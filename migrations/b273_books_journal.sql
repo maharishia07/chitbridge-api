@@ -1,4 +1,5 @@
 -- b273_books_journal.sql — BOOKS v2, part 2 of 3: the journal, the running balances, the open items, the payments.
+-- RUN BY ATHI 2026-10-01 (Supabase editor, as postgres). Check row after: 7 | 7 | 5 | 0 | 1 — as expected (docs/drafts/BOOKS-RUN-ORDER.md).
 -- SPEC-books-v2.md §1/§3 · research §6.1/§6.3. Run after b272. Safe to re-run.
 --
 -- ⚠️⚠️ RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS. It creates tables, policies and grants, which the

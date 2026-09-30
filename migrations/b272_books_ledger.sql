@@ -1,4 +1,5 @@
 -- b272_books_ledger.sql — BOOKS v2, part 1 of 3: the switch, the chart of accounts, the periods, the number series.
+-- RUN BY ATHI 2026-10-01 (Supabase editor, as postgres). Check row after: 4 | 4 | 1 | 0 — as expected (docs/drafts/BOOKS-RUN-ORDER.md).
 -- SPEC-books-v2.md §1 · RESEARCH-ledger-design-2026-09-29.md §6.1. For Athi to run in the Supabase editor, in order
 -- b272 → b273 → b274 (docs/drafts/BOOKS-RUN-ORDER.md has the one-row check after each). Safe to re-run.
 --
