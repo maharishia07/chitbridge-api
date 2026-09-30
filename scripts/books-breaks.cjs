@@ -52,6 +52,7 @@ const BREAKS = [
   ["books-fixes","routes/books.js","      waiting: waiting.map(require('../lib/books-hooks').waitingRow) });","      waiting: [] });","M12: /health names no waiting post"],
   ["books-fixes","routes/books.js","        const next = ['deposited', 'cleared', 'bounced'].filter(","        const next = [].filter(","M12: the cheque list offers no next step"],
   ["books-fixes","lib/books-store.js","AND done_at IS NULL ORDER BY tries, id LIMIT $2","AND done_at IS NULL ORDER BY id LIMIT $2","F6: stuck rows starve a new one"],
+  ["books-fixes","lib/books.js","  if (ev.strict_date) typedDate(s, packOf(s), on, false);","","M9: a cheque cleared on a typed date in 2099 creates that year"],
   ["books-writer","migrations/b272_books_ledger.sql","REVOKE DELETE ON books_setting, ledger_account, fiscal_period, books_counter FROM cb_app;\n","","F16: cb_app keeps DELETE on the ledger's setup tables"],
   ["books-writer","migrations/b273_books_journal.sql","-- ⚠️⚠️ RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS.","-- ⚠️⚠️ RUN IN THE SUPABASE SQL EDITOR.","F23: a SQL file no longer says who runs it"],
   ["books-writer","lib/books-tally.js","every voucher is a ledger-only voucher","every voucher is an accounting voucher","F24: \"accounting\" in the file a shop downloads"],

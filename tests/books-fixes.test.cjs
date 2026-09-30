@@ -375,6 +375,13 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     eq('…the balance is untouched by the bounce', await bal(), 85000);
     const l2 = await q('GET', '/cheques'), l3 = await q('GET', '/cheques?all=1');
     eq('GET /cheques shows only cheques still held; ?all=1 shows every cheque with where it ended', [l2.body.cheques.length, l3.body.cheques.map((c) => c.status).sort(), l3.body.cheques.every((c) => c.next.length === 0)], [0, ['bounced', 'cleared'], true]);
+    /* the date of a step is typed by a person: it is held to the same rule as any typed date (it would create a financial year) */
+    const c3 = (await q('POST', '/payments', { party_id: MALA, direction: 'in', amount_minor: 1000, mode: 'cheque', cheque: { number: '000125' }, received_at: '2026-09-22', client_ref: 'chq-3' })).body.payment;
+    const y0 = X.T.periods.length, i0 = X.T.items.length;
+    const far = await q('POST', '/cheques/' + c3.payment_id + '/status', { status: 'deposited', date: '2099-01-01' });
+    const old = await q('POST', '/cheques/' + c3.payment_id + '/status', { status: 'deposited', date: '2020-01-01' });
+    ok('a step dated in 2099, or before the ledger began → 422 in words, nothing written, no new year', far.status === 422 && /future/.test(far.body.error || '') && old.status === 422 && /before this ledger began/.test(old.body.error || '')
+      && X.T.periods.length === y0 && X.T.items.length === i0, JSON.stringify([far.status, far.body, old.status, old.body]));
     const bad = await q('POST', '/cheques/' + c1.payment_id + '/status', { status: 'lost' });
     ok('an unknown step → 400 "Deposited, cleared or bounced?"', bad.status === 400 && /Deposited, cleared or bounced/.test(bad.body.error || ''));
     srv.close();

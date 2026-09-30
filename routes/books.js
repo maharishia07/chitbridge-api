@@ -413,7 +413,7 @@ router.post('/cheques/:id/status', auth, on, async (req, res) => {
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
     const to = ['deposited', 'cleared', 'bounced'].indexOf(b.status) >= 0 ? b.status : null;
     if (!to) return res.status(400).json({ error: 'Deposited, cleared or bounced?', message: 'Deposited, cleared or bounced?' });
-    res.json(await B.postEntry(null, e, { type: 'cheque_step', payment_id: id, to, date: dateQ(b.date, today()), by: byOf(req) }));
+    res.json(await B.postEntry(null, e, { type: 'cheque_step', payment_id: id, to, date: dateQ(b.date, today()), strict_date: true, by: byOf(req) }));
   } catch (err) { fail(res, err); }
 });
 /** POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } — a disputed bill cannot take a payment (C4) */
