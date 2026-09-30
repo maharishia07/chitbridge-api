@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+   "note": "3 screen(s) · 54 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -307,6 +307,11 @@
   {
    "file": "web e2e/tests/register.spec.js",
    "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/books-writer.test.cjs",
+   "kind": "server",
    "result": "not run"
   },
   {

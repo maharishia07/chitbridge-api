@@ -15,7 +15,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 51 API call(s) · maturity 2"
+   "note": "3 screen(s) · 54 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -385,6 +385,11 @@
    "kind": "browser",
    "result": "fail",
    "at": "2026-09-13"
+  },
+  {
+   "file": "api tests/books-writer.test.cjs",
+   "kind": "server",
+   "result": "not run"
   },
   {
    "file": "api tests/docnumber-gate.test.js",

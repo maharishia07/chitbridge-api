@@ -15,7 +15,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 51 API call(s) · maturity 2",
+   "note": "3 screen(s) · 54 API call(s) · maturity 2",
    "node": "p1"
   },
   {
@@ -187,7 +187,7 @@
   {
    "id": "p1",
    "t": "cap-admin.js",
-   "s": "app/cap-admin.js · 261 functions",
+   "s": "app/cap-admin.js · 264 functions",
    "d": "The capability module: what the screens above call."
   },
   {
@@ -314,157 +314,157 @@
   },
   {
    "id": "x15",
+   "t": "GET /api/books/status",
+   "s": "api('booksStatus') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x16",
+   "t": "POST /api/books/enable",
+   "s": "api('booksEnable') → routes/books.js",
+   "d": "Writes through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x17",
+   "t": "POST /api/books/setting",
+   "s": "api('booksSetting') → routes/books.js",
+   "d": "Writes through the API, answered by routes/books.js."
+  },
+  {
+   "id": "x18",
    "t": "GET /api/entities/routing",
    "s": "api('workRouting') → routes/entities.js",
    "d": "Reads through the API, answered by routes/entities.js."
   },
   {
-   "id": "x16",
+   "id": "x19",
    "t": "PUT /api/entities/routing",
    "s": "api('workRoutingSet') → routes/entities.js",
    "d": "Writes through the API, answered by routes/entities.js."
   },
   {
-   "id": "x17",
+   "id": "x20",
    "t": "GET /api/entities/policy",
    "s": "api('policyGet') → routes/entities.js",
    "d": "Reads through the API, answered by routes/entities.js."
   },
   {
-   "id": "x18",
+   "id": "x21",
    "t": "GET /api/channels",
    "s": "api('channelsList') → routes/channels.js",
    "d": "Reads through the API, answered by routes/channels.js."
   },
   {
-   "id": "x19",
+   "id": "x22",
    "t": "POST /api/channels",
    "s": "api('channelBind') → routes/channels.js",
    "d": "Writes through the API, answered by routes/channels.js."
   },
   {
-   "id": "x20",
+   "id": "x23",
    "t": "POST /api/channels/:id/auto-raise",
    "s": "api('channelAutoRaise') → routes/channels.js",
    "d": "Writes through the API, answered by routes/channels.js."
   },
   {
-   "id": "x21",
+   "id": "x24",
    "t": "POST /api/channels/:id/template",
    "s": "api('channelTemplate') → routes/channels.js",
    "d": "Writes through the API, answered by routes/channels.js."
   },
   {
-   "id": "x22",
+   "id": "x25",
    "t": "DELETE /api/channels/:id",
    "s": "api('channelUnbind') → routes/channels.js",
    "d": "Writes through the API, answered by routes/channels.js."
   },
   {
-   "id": "x23",
+   "id": "x26",
    "t": "CALL /api/keys",
    "s": "routes/keys.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x24",
+   "id": "x27",
    "t": "CALL /api/keys/:jti",
    "s": "routes/keys.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x25",
+   "id": "x28",
    "t": "CALL /api/counters",
    "s": "routes/counters.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x26",
+   "id": "x29",
    "t": "CALL /api/counters/:id",
    "s": "routes/counters.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x27",
+   "id": "x30",
    "t": "CALL /api/counters/:id/open",
    "s": "routes/counters.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x28",
+   "id": "x31",
    "t": "CALL /api/counters/:id/release",
    "s": "routes/counters.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x29",
+   "id": "x32",
    "t": "CALL /api/network-offers",
    "s": "routes/network-offers.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x30",
+   "id": "x33",
    "t": "CALL /api/network-offers/policy",
    "s": "routes/network-offers.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x31",
+   "id": "x34",
    "t": "CALL /api/network-offers/:id/release",
    "s": "routes/network-offers.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x32",
+   "id": "x35",
    "t": "CALL /api/network-offers/:id/withdraw",
    "s": "routes/network-offers.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x33",
+   "id": "x36",
    "t": "CALL /api/network-offers/:id/choice",
    "s": "routes/network-offers.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x34",
+   "id": "x37",
    "t": "CALL /api/network-offers/catalogue/publish",
    "s": "routes/network-offers.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x35",
+   "id": "x38",
    "t": "CALL /api/network-offers/catalogue/cancel",
    "s": "routes/network-offers.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x36",
+   "id": "x39",
    "t": "CALL /api/network-offers/catalogue/price",
    "s": "routes/network-offers.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x37",
-   "t": "CALL /api/integrations/catalogue",
-   "s": "routes/integrations.js",
-   "d": "A direct call to the API."
-  },
-  {
-   "id": "x38",
-   "t": "CALL /api/integrations/status",
-   "s": "routes/integrations.js",
-   "d": "A direct call to the API."
-  },
-  {
-   "id": "x39",
-   "t": "CALL /api/integrations/:id/approve",
-   "s": "routes/integrations.js",
-   "d": "A direct call to the API."
-  },
-  {
    "id": "x40",
-   "t": "CALL /api/integrations/profile-map",
+   "t": "CALL /api/integrations/catalogue",
    "s": "routes/integrations.js",
    "d": "A direct call to the API."
   }
@@ -676,7 +676,7 @@
   {
    "this": "CAP001 cap-admin.js",
    "rel": "calls",
-   "that": "routes/entities.js · routes/governance.js · routes/tax.js · routes/chits.js · routes/actors.js · routes/relationships.js · routes/channels.js · routes/keys.js · routes/counters.js · routes/network-offers.js · routes/integrations.js · routes/folders.js · routes/openapi.js"
+   "that": "routes/entities.js · routes/governance.js · routes/tax.js · routes/chits.js · routes/actors.js · routes/relationships.js · routes/books.js · routes/channels.js · routes/keys.js · routes/counters.js · routes/network-offers.js · routes/integrations.js · routes/folders.js · routes/openapi.js"
   }
  ],
  "layers": {
@@ -689,6 +689,16 @@
    "kind": "browser",
    "result": "pass",
    "at": "2026-09-13"
+  },
+  {
+   "file": "web e2e/books-web-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/books-web.cjs",
+   "kind": "browser",
+   "result": "not run"
   },
   {
    "file": "web e2e/flows/detail-design.js",
@@ -863,40 +873,25 @@
    "at": "2026-09-13"
   },
   {
-   "file": "api tests/connector-kit.test.js",
+   "file": "api tests/books-counter-snapshot.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
-   "file": "api tests/currency-envelope.test.cjs",
+   "file": "api tests/books-fixes.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
-   "file": "api tests/dev-otp.test.js",
+   "file": "api tests/books-hooks.test.cjs",
    "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
+   "result": "not run"
   },
   {
-   "file": "api tests/docnumber-gate.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/engine-boundary.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/engine-manifest.js",
+   "file": "api tests/books-routes.test.cjs",
    "kind": "server",
    "result": "not run"
   }
  ],
- "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: admin\n  annotations:\n    chitbridge.io/ci: CAP-ADMIN\n    chitbridge.io/asset: CAP001\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/entities.js\n    - routes/governance.js\n    - routes/tax.js\n    - routes/chits.js\n    - routes/actors.js\n    - routes/relationships.js\n    - routes/channels.js\n    - routes/keys.js\n    - routes/counters.js\n    - routes/network-offers.js\n    - routes/integrations.js\n    - routes/folders.js\n    - routes/openapi.js"
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: admin\n  annotations:\n    chitbridge.io/ci: CAP-ADMIN\n    chitbridge.io/asset: CAP001\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/entities.js\n    - routes/governance.js\n    - routes/tax.js\n    - routes/chits.js\n    - routes/actors.js\n    - routes/relationships.js\n    - routes/books.js\n    - routes/channels.js\n    - routes/keys.js\n    - routes/counters.js\n    - routes/network-offers.js\n    - routes/integrations.js\n    - routes/folders.js\n    - routes/openapi.js"
 }
