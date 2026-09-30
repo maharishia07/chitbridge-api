@@ -2,6 +2,9 @@
 -- SPEC-books-v2.md §1 · RESEARCH-ledger-design-2026-09-29.md §6.1. For Athi to run in the Supabase editor, in order
 -- b272 → b273 → b274 (docs/drafts/BOOKS-RUN-ORDER.md has the one-row check after each). Safe to re-run.
 --
+-- ⚠️⚠️ RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS. It creates tables, policies and grants, which the
+--    application role cannot do: run as cb_app it fails on the first CREATE.
+--
 -- ⚠️ NOTHING POSTS UNTIL books_setting.enabled IS TRUE for a shop — creating these tables changes nothing a shop sees.
 -- ⚠️ Every table is entity-scoped, ENABLE + FORCE row-level security, current_setting NULLIF-guarded (an unset shop
 --    reads nothing instead of raising on ''::uuid). Foreign keys are added with ALTER TABLE, never inside
@@ -108,6 +111,10 @@ CREATE POLICY rls_entity ON books_counter
   USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)
   WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
 
+-- the default grants (b48) give cb_app DELETE on every new table. Nothing in the server deletes from these four (a ledger
+-- is switched off, never removed; a month is locked, never dropped; a number series only moves forward) — and a deleted
+-- hard-locked month would simply be recreated OPEN by the next entry. So the application role may not delete them.
+REVOKE DELETE ON books_setting, ledger_account, fiscal_period, books_counter FROM cb_app;
 GRANT SELECT, INSERT, UPDATE ON books_setting, ledger_account, fiscal_period, books_counter TO cb_app;
 
 -- ── the one cross-shop read the nightly check needs: WHICH shops have books on — ids only, never a row of books ──

@@ -150,6 +150,9 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     const { X, K, sales, put } = await shop('bill');
     const b1 = put(wb(BILL(1)));
     X.store.counterBills = async () => [b1];
+    /* the day close can arrive BEFORE the bill's own hook has run: even then the day posts nothing under this grain */
+    const early = await K.postDay(SHOP, 'C1', '2026-09-29', {});
+    ok('grain "bill": a day close that arrives before the bill\'s own hook posts nothing', early.ok === true && early.empty === true && X.T.entries.length === 0, JSON.stringify(early));
     const own = await K.postChit(SHOP, b1.chit_id, {});
     ok('grain "bill": the ₹118 cash bill posts as its own entry (bill:<chit>)', own.ok && X.T.entries.some((e) => e.source_ref === 'bill:' + b1.chit_id), JSON.stringify(own));
     const day = await K.postDay(SHOP, 'C1', '2026-09-29', {});
@@ -315,6 +318,10 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
       && p2.body.payment.payment_id === p1.body.payment.payment_id && !!p2.body.posted && p2.body.posted.entry_no === p1.body.posted.entry_no && p2.body.payment.status === 'recorded', JSON.stringify([p1.body, p2.body]));
     const p3 = await q('POST', '/payments', Object.assign({}, body, { mode: 'cheque', amount_minor: 1 }));
     ok('…the same ref with a different body is still the FIRST payment (its own status, not the new body\'s)', p3.status === 200 && p3.body.payment.payment_id === p1.body.payment.payment_id && p3.body.payment.status === 'recorded' && count()[0] - c0[0] === 1, JSON.stringify(p3.body));
+    /* the replay is answered BEFORE the new body is judged: a retry that arrives after its month was locked (or with a body
+       that would now be refused) must still hear "recorded", not an error for a payment that exists */
+    const p4 = await q('POST', '/payments', Object.assign({}, body, { received_at: '2099-01-01', party_id: STRANGER }));
+    ok('…a replay whose body would now be refused still answers 200 with the first payment', p4.status === 200 && p4.body.payment.duplicate === true && p4.body.payment.payment_id === p1.body.payment.payment_id, p4.status + ' ' + JSON.stringify(p4.body));
     const cq = { party_id: MALA, direction: 'in', amount_minor: 10000, mode: 'cheque', cheque: { number: '000777' }, received_at: '2026-09-21', client_ref: 'tap-chq' };
     const q1 = await q('POST', '/payments', cq), q2 = await q('POST', '/payments', cq);
     ok('a cheque tapped twice is held once', q1.body.payment.status === 'cheque_received' && q2.body.payment.duplicate === true && q2.body.payment.status === 'cheque_received' && q2.body.payment.payment_id === q1.body.payment.payment_id

@@ -8,7 +8,9 @@
  *      lib/books.js — and, inside it, from anything but postEntry's own write helpers, which are never exported;
  *   3. migrations/b273 stops making the journal insert-only (the trigger on all five, and cb_app's UPDATE/DELETE revoked);
  *   4. routes/chits.js AWAITS the ledger hook (a posting failure must never fail the chit) or calls it outside try;
- *   5. a books table is missing from db/index.js RLS_TENANT_TABLES or from any b272–b274 FORCE RLS.
+ *   5. a books table is missing from db/index.js RLS_TENANT_TABLES or from any b272–b274 FORCE RLS;
+ *   6. cb_app may DELETE the ledger's setup tables (or the server starts to), a SQL file stops saying who runs it
+ *      (as postgres, WITHOUT RLS), or a file the shop downloads says "accounting".
  * Run: node tests/books-writer.test.cjs
  */
 'use strict';
@@ -88,6 +90,20 @@ TABLES.forEach((t) => {
   ok(t + ': FORCE RLS + a NULLIF-guarded policy + in the RLS tripwire', new RegExp('ALTER TABLE ' + t + '\\s+FORCE\\s+ROW LEVEL SECURITY').test(sql)
     && new RegExp('CREATE POLICY rls_entity ON ' + t + '\\s+USING\\s+\\(\\w+ = NULLIF\\(current_setting').test(sql) && new RegExp("'" + t + "'").test(idx));
 });
+
+/* 6 · the setup tables cannot be deleted by the application role; the SQL says who runs it; the pack's own words */
+const b272 = read('migrations/b272_books_ledger.sql');
+ok('b272: cb_app loses DELETE on the switch, the chart, the months and the number series (critic F16)', /REVOKE DELETE ON books_setting, ledger_account, fiscal_period, books_counter FROM cb_app;/.test(b272));
+const SETUP_DELETE = /DELETE\s+FROM\s+(books_setting|ledger_account|fiscal_period|books_counter)\b/i;
+const deleters = FILES.filter((f) => SETUP_DELETE.test(read(f)));
+ok('…and nothing in the server deletes from them (the revoke takes away nothing that is used)', deleters.length === 0, 'found in: ' + deleters.join(', '));
+['b272_books_ledger.sql', 'b273_books_journal.sql', 'b274_books_party.sql'].forEach((f) => {
+  ok(f + ' says who runs it: as postgres, WITHOUT RLS (critic F23)', /RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS/.test(read('migrations/' + f)));
+});
+const order = read('docs/drafts/BOOKS-RUN-ORDER.md');
+ok('BOOKS-RUN-ORDER says the same, the three expected rows, and how an owner switches a shop on (no screen does)', /Run as `postgres` in the Supabase editor \(WITHOUT RLS\)/.test(order)
+  && /expect `4 \| 4 \| 1 \| 0`/.test(order) && /expect `7 \| 7 \| 5 \| 0 \| 1`/.test(order) && /expect `7 \| 6 \| 2 \| 1 \|/.test(order) && /POST \/api\/books\/enable/.test(order) && !/v1\.8\.0/.test(order));
+ok('the pack a shop downloads never says "accounting" in our own words (critic F24)', !/an accounting voucher/i.test(read('lib/books-tally.js')));
 
 console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
 process.exit(fail ? 1 : 0);

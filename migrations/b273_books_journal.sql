@@ -1,6 +1,9 @@
 -- b273_books_journal.sql — BOOKS v2, part 2 of 3: the journal, the running balances, the open items, the payments.
 -- SPEC-books-v2.md §1/§3 · research §6.1/§6.3. Run after b272. Safe to re-run.
 --
+-- ⚠️⚠️ RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS. It creates tables, policies and grants, which the
+--    application role cannot do: run as cb_app it fails on the first CREATE.
+--
 -- ⭐ THE JOURNAL IS INSERT-ONLY (Companies (Accounts) Rules 3(1): an audit trail that cannot be switched off). A
 --   correction is a REVERSING entry that points at the one it reverses (reverses_entry_id) — never an UPDATE, never a
 --   DELETE. A trigger refuses both, and cb_app is granted neither, so it holds even for a hand-written query.

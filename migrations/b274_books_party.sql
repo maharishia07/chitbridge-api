@@ -1,6 +1,9 @@
 -- b274_books_party.sql — BOOKS v2, part 3 of 3: the party master (on the lists that already exist) and the packs.
 -- SPEC-books-v2.md §1/§4/§6 · research §6.1 ("party ≠ a new table"). Run after b273. Safe to re-run.
 --
+-- ⚠️⚠️ RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS. It creates tables, policies and grants, which the
+--    application role cannot do: run as cb_app it fails on the first CREATE.
+--
 -- ⭐ THE PARTY IS NOT A NEW LIST. Every counterparty is already an identity (on-rail, or a local `~shop.name` one —
 --   lib/local-identity.js) held by the shop in customer_list and/or supplier_list. Those rows gain the fields a ledger
 --   needs; a party that is BOTH is the same identity in both lists and carries the same party_no (one series per shop).

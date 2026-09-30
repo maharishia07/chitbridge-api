@@ -3,6 +3,9 @@
 Three files, in the Supabase SQL editor, one at a time, **in this order**. Each is safe to run twice. After each one, run
 its check below — the editor shows only the last result, so each check is a single row.
 
+⚠️ **Run as `postgres` in the Supabase editor (WITHOUT RLS).** The files create tables, policies and grants; run as the
+application role `cb_app` they fail on the first CREATE. The three checks are read the same way.
+
 Creating these tables changes nothing a shop sees: nothing is written to them until a shop's switch
 (`books_setting.enabled`) is turned on, and the server keeps them out of every screen until then.
 
@@ -12,7 +15,10 @@ Creating these tables changes nothing a shop sees: nothing is written to them un
 | 2 | `migrations/b273_books_journal.sql` | the journal (insert-only), the monthly balances, the open items per party, payments, the waiting list, the change log |
 | 3 | `migrations/b274_books_party.sql` | party number, legal name, credit days/limit, state, merged-into on the customer and supplier lists; tax ids; the handover packs |
 
-## 1 · after b272 — expect `4 | 4 | 1`
+## 1 · after b272 — expect `4 | 4 | 1 | 0`
+
+The last column is how many of the four tables `cb_app` may DELETE from — it must be **0** (nothing in the server
+deletes a ledger's switch, its chart, a month or a number series).
 
 ```sql
 SELECT
@@ -21,13 +27,16 @@ SELECT
   (SELECT count(*) FROM pg_policies WHERE policyname = 'rls_entity'
      AND tablename IN ('books_setting','ledger_account','fiscal_period','books_counter'))           AS policies,
   (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-     WHERE n.nspname = 'ops' AND p.proname = 'f_books_enabled')                                    AS ops_function;
+     WHERE n.nspname = 'ops' AND p.proname = 'f_books_enabled')                                    AS ops_function,
+  (SELECT count(*) FROM information_schema.role_table_grants WHERE grantee = 'cb_app' AND privilege_type = 'DELETE'
+     AND table_name IN ('books_setting','ledger_account','fiscal_period','books_counter'))         AS cb_app_can_delete;
 ```
 
-## 2 · after b273 — expect `7 | 7 | 5 | 0`
+## 2 · after b273 — expect `7 | 7 | 5 | 0 | 1`
 
-The last column is the proof that the journal cannot be changed: how many of the five insert-only tables `cb_app` may
-UPDATE or DELETE — it must be **0**.
+The fourth column is the proof that the journal cannot be changed: how many of the five insert-only tables `cb_app` may
+UPDATE or DELETE — it must be **0**. The fifth is the column a walk-in day uses to name the bills it covers
+(`journal_entry.source_chit_ids`) — it must be **1**.
 
 ```sql
 SELECT
@@ -40,7 +49,9 @@ SELECT
      'party_item_insert_only','books_change_log_insert_only','books_payment_insert_only'))        AS insert_only_triggers,
   (SELECT count(*) FROM information_schema.role_table_grants WHERE grantee = 'cb_app'
      AND privilege_type IN ('UPDATE','DELETE') AND table_name IN ('journal_entry','journal_line','party_item',
-     'books_payment','books_change_log'))                                                          AS cb_app_can_change;
+     'books_payment','books_change_log'))                                                          AS cb_app_can_change,
+  (SELECT count(*) FROM information_schema.columns WHERE table_name = 'journal_entry'
+     AND column_name = 'source_chit_ids')                                                          AS covers_column;
 ```
 
 ## 3 · after b274 — expect `7 | 6 | 2 | 1 | <customers> | <suppliers>`
@@ -63,9 +74,20 @@ SELECT
 
 ## Then — nothing more until the switch
 
-Books stay off for every shop. Turning them on for one shop is a separate, deliberate step (after the engines v1.8.0
-are adopted and the server is deployed): `POST /api/books/enable` from that shop's owner account seeds its chart from
-the India pack and its months, and sets the switch. There is no SQL for it.
+Books stay off for every shop. Turning them on for one shop is a separate, deliberate step (after the engines v1.8.1
+are adopted — they are, `engines.lock.json` — and the server is deployed). There is no SQL for it, and **no screen sends
+it yet: it is one API call**, from that shop's OWNER session (a co-assist or an API key is refused):
+
+1. `GET /api/books/status` → expect `{ "migrated": true, "enabled": false, … }`. `migrated: false` means b272 has not
+   been run against this database — stop.
+2. `POST /api/books/enable` with body `{}` (or `{ "walkin_grain": "day" }` — `day`, `shift` or `bill`) →
+   `{ "ok": true, "accounts_added": <about 80>, "fiscal_year": "2026-27", "parties_numbered": <n> }`. It seeds the chart
+   from the India pack, this year's months, a party number for everyone already on the lists, and sets the switch.
+   Safe to send twice (the second adds nothing).
+3. The day it is switched on is the ledger's first day for the nightly check: nothing sold before it is posted. What
+   customers and suppliers owed before then goes in as opening balances (Ledger → Opening balances).
+
+Turning it off again: `POST /api/books/setting` `{ "enabled": false }` (owner). Nothing is deleted.
 
 ⚠️ If any check shows a different number, stop and send the row — do not run the next file.
 
