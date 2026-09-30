@@ -292,11 +292,11 @@ const KEY_ROUTES = {
               /* ⭐ the narrowest write a counter has: remember what a supplier calls a product. It appends one alias and can do
                  nothing else — which is why it exists instead of letting a till key PATCH products. */
               ['POST', /^\/api\/till\/alias$/],
-              /* ⭐ THE LEDGER AT THE COUNTER (SPEC-books-v2 §4): read a customer's dues and statement, record a payment
-                 received and confirm what it settles. Nothing else under /api/books — no entry, no reversal, no lock. Every
-                 one of these 404s while the shop's ledger is off. */
-              ['GET', /^\/api\/books\/(dues|party\/[0-9a-f-]{36}\/statement)$/],
-              ['POST', /^\/api\/books\/payments(\/[0-9a-f-]{36}\/(propose|confirm))?$/],
+              /* ⚠️⚠️ NOTHING UNDER /api/books (critic M9, 2026-09-30). Four ledger routes were listed here "for the counter" — dues,
+                 a party's statement, payments, propose/confirm — and the counter calls none of them: it sends a CHIT (money
+                 received is business_json.payment_received), and what each customer owes rides its snapshot. So they were
+                 only surface: a till key (a TV screen's parent holds one) could POST /api/books/payments { direction: 'out' }
+                 for any id on any date. Add a line here the day the counter really calls one — tests/key-scopes holds the DENY. */
               /* ⭐ a counter may ask what was just said into its own microphone — audio in, text out, nothing kept */
               ['POST', /^\/api\/till\/listen$/],
               ['POST', /^\/api\/events\/ticket$/], ['*', /^\/api\/offers(\/|$)/],

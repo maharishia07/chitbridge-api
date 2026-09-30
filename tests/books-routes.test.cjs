@@ -46,7 +46,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   /* ── OFF: every door is a 404 ── */
   const ROUTES = [['GET', '/health'], ['GET', '/accounts'], ['POST', '/accounts'], ['GET', '/daybook'], ['GET', '/ledger/1300'], ['GET', '/party/' + CUST + '/statement'],
     ['GET', '/dues'], ['GET', '/trial-balance'], ['GET', '/pl'], ['GET', '/bs'], ['POST', '/payments'], ['POST', '/payments/' + CUST + '/propose'], ['POST', '/payments/' + CUST + '/confirm'],
-    ['POST', '/cheques/' + CUST + '/status'], ['POST', '/entries'], ['POST', '/entries/' + CUST + '/reverse'], ['POST', '/write-off'], ['POST', '/opening'],
+    ['POST', '/cheques/' + CUST + '/status'], ['GET', '/cheques'], ['POST', '/entries'], ['POST', '/entries/' + CUST + '/reverse'], ['POST', '/write-off'], ['POST', '/opening'],
     ['POST', '/periods/2026-27/6/lock'], ['POST', '/periods/2026-27/6/unlock'], ['GET', '/periods'], ['GET', '/packs'], ['POST', '/packs'], ['GET', '/packs/' + CUST],
     ['GET', '/packs/' + CUST + '/file'], ['POST', '/packs/' + CUST + '/ack'], ['POST', '/setting'], ['POST', '/check'], ['POST', '/outbox/retry'], ['POST', '/parties/' + CUST + '/dispute']];
   const offs = [];
@@ -183,8 +183,11 @@ const call = (port, method, p, body) => new Promise((done) => {
     && BPx.seal(Object.assign({}, mm, { sha256: null }), Object.fromEntries(mm.files.map((f) => [f.file, f.sha256])), require(path.join(H.API, 'lib', 'books-pack')).sha).sha256 === mm.sha256);
   const pk2 = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 6 });
   ok('…the next pack is chained to this one (prev_sha256)', pk2.body.manifest && pk2.body.manifest.prev_sha256 === pk.body.pack.sha256, JSON.stringify(pk2.body.manifest && pk2.body.manifest.prev_sha256));
+  /* MOVED 2026-09-30 (critic M10): this pack was built with no storage, and acknowledging it answered 200 — the shop "had" a
+     pack it could never have downloaded. An unstored pack is now refused; the handover of a STORED pack (download, then
+     acknowledge) is held in tests/books-fixes.test.cjs. */
   const ak = await q('POST', '/packs/' + k0.pack_id + '/ack', {});
-  ok('POST /packs/:id/ack records the handover', ak.status === 200 && ak.body.acknowledged_at);
+  ok('POST /packs/:id/ack of a pack with no stored file is refused (409 PACK_NO_FILE) — nothing to acknowledge', ak.status === 409 && ak.body.code === 'PACK_NO_FILE' && !ak.body.acknowledged_at, JSON.stringify(ak.body));
   const fl = await q('GET', '/packs/' + k0.pack_id + '/file');
   ok('GET /packs/:id/file of an unstored pack → 409 in words (never an empty file)', fl.status === 409 && /storage/.test(fl.body.error));
 

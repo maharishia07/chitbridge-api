@@ -237,6 +237,142 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     ok('…and the real statement orders the waiting list by tries, then id', /FROM books_outbox\s+WHERE entity_id = \$1 AND done_at IS NULL ORDER BY tries, id LIMIT \$2/.test(sql.replace(/\s+/g, ' ')));
   });
 
+  /* ═══ M9 · money out to any id on any date ═══ */
+  await section('M9 · a payment names a party the shop knows and a date the ledger can hold; a key never reaches the ledger', async () => {
+    const { X } = await shop('day');
+    const { srv, q } = serve(X);
+    const n0 = X.T.payments.length, e0 = X.T.entries.length;
+    const out = await q('POST', '/payments', { party_id: STRANGER, direction: 'out', amount_minor: 900000, mode: 'cash', received_at: '2026-09-20' });
+    ok('money paid OUT to an id on neither list is refused in words (it was 200: Dr Creditors / Cr Cash ₹9,000)', out.status === 422 && /customer or supplier list/.test(out.body.error || ''), out.status + ' ' + JSON.stringify(out.body));
+    const old = await q('POST', '/payments', { party_id: SUPP, direction: 'out', amount_minor: 900000, mode: 'cash', received_at: '2020-01-01' });
+    ok('a payment dated 1 Jan 2020 — years before this ledger began — is refused in words', old.status === 422 && /before this ledger began/.test(old.body.error || ''), old.status + ' ' + JSON.stringify(old.body));
+    const fut = await q('POST', '/payments', { party_id: MALA, direction: 'in', amount_minor: 100, mode: 'cash', received_at: '2099-01-01' });
+    ok('…and one dated in the future', fut.status === 422 && /future/.test(fut.body.error || ''), fut.status + ' ' + JSON.stringify(fut.body));
+    const chq = await q('POST', '/payments', { party_id: MALA, direction: 'in', amount_minor: 100, mode: 'cheque', cheque: { number: '1' }, received_at: '2020-01-01' });
+    ok('…a cheque too (it posts nothing until it clears — the date is still checked when it is recorded)', chq.status === 422 && /before this ledger began/.test(chq.body.error || ''), chq.status + ' ' + JSON.stringify(chq.body));
+    eq('nothing was recorded, and no financial year 2019-20 (or 2098-99) was created', [X.T.payments.length - n0, X.T.entries.length - e0, X.T.periods.filter((p) => p.fiscal_year !== '2026-27').length], [0, 0, 0]);
+    const me = await q('POST', '/entries', { narration: 'x', date: '2020-01-01', lines: [{ code: '1400', dr_minor: 100 }, { code: '3000', cr_minor: 100 }] });
+    const op = await q('POST', '/opening', { date: '2020-04-01', rows: [{ code: '1400', dr_minor: 100 }, { code: '3000', cr_minor: 100 }] });
+    ok('a manual entry and opening balances dated before the ledger began are refused the same way', me.status === 422 && op.status === 422 && /before this ledger began/.test(me.body.error + op.body.error), JSON.stringify([me.status, me.body, op.status, op.body]));
+    /* a CHIT dated before the ledger began (a counter whose clock is wrong, a supplier's old invoice): the locked-month rule — the date moves, the document's own date is kept */
+    const sys = await X.B.postEntry(X.db, SHOP, { type: 'expense', date: '2020-01-01', currency: 'INR', class: 'rent', amount: 10, paid_from: 'cash', source_ref: 'chit:old' });
+    eq('a chit dated before the ledger began posts on the ledger\'s first day, its own date kept — and no old year appears', [sys.posting_date, sys.doc_date, sys.moved, X.T.periods.some((p) => p.fiscal_year === '2019-20')], ['2026-04-01', '2020-01-01', true, false]);
+    const good = await q('POST', '/payments', { party_id: SUPP, direction: 'out', amount_minor: 5000, mode: 'cash', received_at: '2026-09-20' });
+    ok('a payment to a supplier on the list, dated inside the ledger, still records', good.status === 200 && good.body.payment && good.body.payment.status === 'recorded', good.status + ' ' + JSON.stringify(good.body));
+    srv.close();
+    /* the second fence: a key-bearing request that somehow reached the route is refused there too */
+    const keyAuth = Object.assign((req, res, next) => { req.identity = OWNER; req.api_key = { scopes: ['till'] }; next(); }, { entityOf: authStub.entityOf, requireScope: authStub.requireScope });
+    const Xk = H.load({ auth: keyAuth }); parties(Xk);
+    await Xk.B.enable(Xk.db, SHOP, { by: SHOP, today: '2026-09-29' });
+    const k = serve(Xk);
+    const kp = await k.q('POST', '/payments', { party_id: MALA, direction: 'in', amount_minor: 100, mode: 'cash', received_at: '2026-09-20' });
+    const kd = await k.q('GET', '/dues'), ks = await k.q('GET', '/party/' + MALA + '/statement');
+    eq('a counter key on /payments, /dues, /statement → 403 (the counter sends a chit; it calls none of these)', [kp.status, kd.status, ks.status, Xk.T.payments.length], [403, 403, 403, 0]);
+    k.srv.close();
+  });
+
+  /* ═══ M10 · a pack with no stored file cannot be acknowledged ═══ */
+  await section('M10 · "We have it" is refused for a pack that has no file; a stored pack downloads, then acknowledges', async () => {
+    const { X } = await shop('day');
+    const kept = new Map(); let AVAIL = false;
+    require.cache[require.resolve(path.join(H.API, 'lib', 'storage-object'))] = { exports: { available: async () => AVAIL, put: async (p, buf) => { kept.set(p, Buffer.from(buf)); }, get: async (p) => kept.get(p) } };
+    const TC = require(path.join(H.API, 'lib', 'tax-copy')); TC.ledgerFor = async () => { throw new Error('no chits in this test'); };
+    const { srv, q } = serve(X);
+    await X.B.postEntry(X.db, SHOP, { type: 'expense', date: '2026-09-11', currency: 'INR', class: 'rent', amount: 500, paid_from: 'cash', source_ref: 'chit:e1' });
+    const b1 = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 6 });
+    const id1 = b1.body.pack && b1.body.pack.pack_id;
+    const g1 = await q('GET', '/packs/' + id1);
+    ok('GET /packs/:id (no storage) → JSON with has_file: false and file: "/api/books/packs/<id>/file"', g1.status === 200 && g1.body.has_file === false && g1.body.file === '/api/books/packs/' + id1 + '/file' && !!g1.body.manifest, JSON.stringify(g1.body).slice(0, 300));
+    const a1 = await q('POST', '/packs/' + id1 + '/ack', {});
+    ok('POST /packs/:id/ack on a pack with NO file → 409 PACK_NO_FILE, one clear sentence (it was 200: acknowledged, and the shop held nothing)', a1.status === 409 && a1.body.code === 'PACK_NO_FILE' && /no file/.test(a1.body.error || ''), a1.status + ' ' + JSON.stringify(a1.body));
+    ok('…and the pack is NOT acknowledged', !X.T.packs.find((p) => p.pack_id === id1).acknowledged_at);
+    AVAIL = true;
+    const b2 = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 6 });
+    const id2 = b2.body.pack && b2.body.pack.pack_id;
+    const g2 = await q('GET', '/packs/' + id2);
+    ok('with storage: GET /packs/:id → has_file: true, the same file path', b2.body.pack.stored === true && g2.body.has_file === true && g2.body.file === '/api/books/packs/' + id2 + '/file', JSON.stringify([b2.body.pack, g2.body.has_file, g2.body.file]));
+    const f2 = await q('GET', '/packs/' + id2 + '/file');
+    ok('GET /packs/:id/file → the zip itself (application/zip, "PK…"), its hash in a header', f2.status === 200 && /application\/zip/.test(f2.headers['content-type'] || '') && f2.raw.slice(0, 2).toString() === 'PK' && f2.headers['x-pack-sha256'] === b2.body.pack.sha256, f2.status + ' ' + f2.headers['content-type']);
+    const a2 = await q('POST', '/packs/' + id2 + '/ack', {});
+    ok('…and that pack can be acknowledged', a2.status === 200 && a2.body.ok === true && !!a2.body.acknowledged_at, a2.status + ' ' + JSON.stringify(a2.body));
+    const ls = await q('GET', '/packs');
+    ok('GET /packs → each row says has_file', ls.status === 200 && ls.body.packs.length === 2 && ls.body.packs.every((p) => typeof p.has_file === 'boolean') && ls.body.packs.filter((p) => p.has_file).length === 1, JSON.stringify(ls.body.packs));
+    srv.close();
+  });
+
+  /* ═══ M11 · a second tap never records a second time ═══ */
+  await section('M11 · payments, opening balances and write-offs: the same client_ref returns the first result, 200, no second posting', async () => {
+    const { X } = await shop('day');
+    const { srv, q } = serve(X);
+    await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-05', currency: 'INR', party: MALA, source_chit_id: 'c0000000-0000-4000-8000-00000000000a', source_ref: 'chit:a',
+      by_rate: [{ rate: 5, taxable: 1000, cgst: 25, sgst: 25, igst: 0 }], paid: {}, round_off: 0 });
+    const count = () => [X.T.payments.length, X.T.entries.length];
+    const c0 = count();
+    const body = { party_id: MALA, direction: 'in', amount_minor: 60000, mode: 'upi', received_at: '2026-09-20', client_ref: 'tap-1' };
+    const p1 = await q('POST', '/payments', body), p2 = await q('POST', '/payments', body);
+    eq('two taps on Receive: one payment, one entry', [count()[0] - c0[0], count()[1] - c0[1]], [1, 1]);
+    ok('…both answer 200 with the SAME payment and the SAME entry; the second says duplicate', p1.status === 200 && p2.status === 200 && p2.body.payment.duplicate === true && p1.body.payment.duplicate === false
+      && p2.body.payment.payment_id === p1.body.payment.payment_id && !!p2.body.posted && p2.body.posted.entry_no === p1.body.posted.entry_no && p2.body.payment.status === 'recorded', JSON.stringify([p1.body, p2.body]));
+    const p3 = await q('POST', '/payments', Object.assign({}, body, { mode: 'cheque', amount_minor: 1 }));
+    ok('…the same ref with a different body is still the FIRST payment (its own status, not the new body\'s)', p3.status === 200 && p3.body.payment.payment_id === p1.body.payment.payment_id && p3.body.payment.status === 'recorded' && count()[0] - c0[0] === 1, JSON.stringify(p3.body));
+    const cq = { party_id: MALA, direction: 'in', amount_minor: 10000, mode: 'cheque', cheque: { number: '000777' }, received_at: '2026-09-21', client_ref: 'tap-chq' };
+    const q1 = await q('POST', '/payments', cq), q2 = await q('POST', '/payments', cq);
+    ok('a cheque tapped twice is held once', q1.body.payment.status === 'cheque_received' && q2.body.payment.duplicate === true && q2.body.payment.status === 'cheque_received' && q2.body.payment.payment_id === q1.body.payment.payment_id
+      && X.T.items.filter((i) => i.ref === 'pay:' + q1.body.payment.payment_id).length === 1, JSON.stringify([q1.body, q2.body]));
+    /* opening balances */
+    const e1 = X.T.entries.length;
+    const ob = { client_ref: 'open-A', rows: [{ code: '1400', dr_minor: 500000 }, { code: '1300', party_no: 'P-00002', dr_minor: 200000, bill_ref: 'OLD-7' }, { code: '3000', cr_minor: 700000 }] };
+    const o1 = await q('POST', '/opening', ob), o2 = await q('POST', '/opening', ob);
+    ok('the opening import pressed twice: one entry; the second answers 200 with the first entry, duplicate', o1.status === 200 && o2.status === 200 && X.T.entries.length - e1 === 1 && o2.body.duplicate === true && o2.body.entry_no === o1.body.entry_no && o2.body.suspense_minor === o1.body.suspense_minor, JSON.stringify([o1.body, o2.body]));
+    /* a write-off */
+    const e2 = X.T.entries.length;
+    const wo = { party_id: MALA, amount_minor: 10000, reason: 'will never be paid', date: '2026-09-25', client_ref: 'wo-1' };
+    const w1 = await q('POST', '/write-off', wo), w2 = await q('POST', '/write-off', wo);
+    ok('a write-off pressed twice: one entry (it was two — the customer at −₹100 and bad debts charged twice)', w1.status === 200 && w2.status === 200 && X.T.entries.length - e2 === 1 && w2.body.duplicate === true && w2.body.entry_no === w1.body.entry_no, JSON.stringify([w1.status, w1.body, w2.status, w2.body]));
+    const du = await q('GET', '/dues?asOf=2026-09-30');
+    eq('…Mala owes 1050 − 600 − 100 = ₹350.00 (the cheque is held, not counted)', ((du.body.parties || []).find((x) => x.party_id === MALA) || {}).balance_minor, 35000);
+    srv.close();
+  });
+
+  /* ═══ M12 · a cheque can move: received → deposited → cleared | bounced ═══ */
+  await section('M12 · cheques end to end through the routes, and the list a screen needs to show them', async () => {
+    const { X } = await shop('day');
+    const { srv, q } = serve(X);
+    await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-05', currency: 'INR', party: MALA, source_chit_id: 'c0000000-0000-4000-8000-00000000000a', source_ref: 'chit:a',
+      by_rate: [{ rate: 5, taxable: 1000, cgst: 25, sgst: 25, igst: 0 }], paid: {}, round_off: 0 });
+    const bal = async () => (((await q('GET', '/dues?asOf=2026-09-30')).body.parties || []).find((x) => x.party_id === MALA) || {}).balance_minor;
+    const c1 = (await q('POST', '/payments', { party_id: MALA, direction: 'in', amount_minor: 20000, mode: 'cheque', cheque: { number: '000123', bank: 'SBI', date: '2026-09-22' }, received_at: '2026-09-22', client_ref: 'chq-1' })).body.payment;
+    const c2 = (await q('POST', '/payments', { party_id: MALA, direction: 'in', amount_minor: 15000, mode: 'cheque', cheque: { number: '000124', bank: 'SBI' }, received_at: '2026-09-22', client_ref: 'chq-2' })).body.payment;
+    const l0 = await q('GET', '/cheques');
+    const r0 = (l0.body.cheques || []).find((c) => c.payment_id === c1.payment_id);
+    ok('GET /cheques → { currency, cheques: [{ payment_id, party_id, party_no, name, direction, amount_minor, cheque_no, cheque_bank, cheque_date, received_at, status, next }] } — the held ones',
+      l0.status === 200 && l0.body.currency === 'INR' && (l0.body.cheques || []).length === 2 && !!r0
+      && ['payment_id', 'party_id', 'party_no', 'name', 'direction', 'amount_minor', 'cheque_no', 'cheque_bank', 'cheque_date', 'received_at', 'status', 'next'].every((k) => k in r0)
+      && r0.status === 'received' && JSON.stringify(r0.next) === '["deposited"]' && r0.name === 'Mala' && r0.amount_minor === 20000 && r0.cheque_no === '000123' && r0.received_at === '2026-09-22', l0.status + ' ' + JSON.stringify(l0.body));
+    eq('a held cheque has not moved the balance', await bal(), 105000);
+    const skip = await q('POST', '/cheques/' + c1.payment_id + '/status', { status: 'cleared' });
+    ok('a cheque cannot clear before it is deposited → 422, the order in words', skip.status === 422 && /received → deposited → cleared or bounced/.test(skip.body.error || ''), skip.status + ' ' + JSON.stringify(skip.body));
+    const d1 = await q('POST', '/cheques/' + c1.payment_id + '/status', { status: 'deposited', date: '2026-09-23' });
+    ok('POST /cheques/:id/status { status: "deposited" } → { ok, status: "deposited", items: 1 }', d1.status === 200 && d1.body.ok === true && d1.body.status === 'deposited' && d1.body.items === 1 && !d1.body.posted, JSON.stringify(d1.body));
+    const l1 = (await q('GET', '/cheques')).body.cheques.find((c) => c.payment_id === c1.payment_id);
+    eq('…the list now offers Cleared or Bounced for it', [l1.status, l1.next], ['deposited', ['cleared', 'bounced']]);
+    const n0 = X.T.entries.length;
+    const k1 = await q('POST', '/cheques/' + c1.payment_id + '/status', { status: 'cleared', date: '2026-09-24' });
+    ok('{ status: "cleared" } → { ok, status: "cleared", items: 2, posted: { ok, entry_id, entry_no, posting_date } } — the entry posts now',
+      k1.status === 200 && k1.body.status === 'cleared' && k1.body.items === 2 && !!k1.body.posted && k1.body.posted.ok === true && /^JV\//.test(k1.body.posted.entry_no) && k1.body.posted.posting_date === '2026-09-24' && X.T.entries.length === n0 + 1, JSON.stringify(k1.body));
+    eq('…and the customer\'s balance moves (1050 − 200)', await bal(), 85000);
+    await q('POST', '/cheques/' + c2.payment_id + '/status', { status: 'deposited', date: '2026-09-23' });
+    const n1 = X.T.entries.length;
+    const b2 = await q('POST', '/cheques/' + c2.payment_id + '/status', { status: 'bounced', date: '2026-09-25' });
+    ok('the other: deposited → { status: "bounced" } → { ok, status: "bounced", items: 1 }, no entry (it never counted)', b2.status === 200 && b2.body.ok === true && b2.body.status === 'bounced' && X.T.entries.length === n1, JSON.stringify(b2.body));
+    eq('…the balance is untouched by the bounce', await bal(), 85000);
+    const l2 = await q('GET', '/cheques'), l3 = await q('GET', '/cheques?all=1');
+    eq('GET /cheques shows only cheques still held; ?all=1 shows every cheque with where it ended', [l2.body.cheques.length, l3.body.cheques.map((c) => c.status).sort(), l3.body.cheques.every((c) => c.next.length === 0)], [0, ['bounced', 'cleared'], true]);
+    const bad = await q('POST', '/cheques/' + c1.payment_id + '/status', { status: 'lost' });
+    ok('an unknown step → 400 "Deposited, cleared or bounced?"', bad.status === 400 && /Deposited, cleared or bounced/.test(bad.body.error || ''));
+    srv.close();
+  });
+
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log('   FAIL threw: ' + (e && e.stack)); process.exit(1); });

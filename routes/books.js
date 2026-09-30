@@ -13,7 +13,11 @@
  *   through lib/books-engines.js. This file shapes answers; it computes no balance of its own.
  * ⚠️ OWNER-ONLY, enforced HERE (the screen does not check role): manual entries, reversals, write-offs, month locks
  *   (hard or soft), opening balances, packs, the switch, a new ledger. A co-assist may read and record a payment (the
- *   hat gate still decides whether their hat may write at all); a till key may read dues/statements and record a payment.
+ *   hat gate still decides whether their hat may write at all).
+ * ⚠️⚠️ NO API KEY REACHES THE LEDGER (critic M9, 2026-09-30). The counter sends a chit and calls nothing here, so its key
+ *   lost these routes in middleware/auth.js KEY_ROUTES; `noKey` is the second fence on the five that used to be listed.
+ * ⭐ A SECOND TAP NEVER RECORDS TWICE (M11): payments, opening balances, write-offs and manual entries take `client_ref`
+ *   (unique per shop) — the same ref answers 200 with the FIRST result and `duplicate: true`.
  * Money in and out is *_minor (integer minor units) with the currency beside it.
  */
 const express = require('express');
@@ -48,6 +52,11 @@ function fail(res, e) {
   if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
   if (e && e.code === '23505') return res.status(409).json({ error: 'That is already recorded.', message: 'That is already recorded.' });
   return res.status(500).json({ error: 'Failed', message: String((e && e.message) || e).slice(0, 300) });
+}
+/** a key-bearer (a counter, a TV, a connector) has no business in the ledger — the second fence behind KEY_ROUTES */
+function noKey(req, res, next) {
+  if (req.api_key) return res.status(403).json({ error: 'Sign in to use the ledger.', message: 'Sign in to use the ledger.' });
+  next();
 }
 function owner(req, res, next) {
   if (!isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
@@ -188,7 +197,7 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
 });
 
 /** GET /party/:id/statement?from&to → CBLedger.partyStatement, as { currency, opening_minor, lines: [{ date, what, ref, source_chit_id, dr_minor, cr_minor, running_minor }], closing_minor } */
-router.get('/party/:id/statement', auth, auth.requireScope('till', 'books'), on, async (req, res) => {
+router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
@@ -215,7 +224,7 @@ async function statementInput(h, e, party, from, to) {
  * Without `side`: both, one row per party (a party on both lists nets). ⚠️ A supplier's buckets are Schedule III's
  * PAYABLE ones (not_due · lt_1y · y1_2 · y2_3 · gt_3y) — the six receivable columns do not apply to them.
  */
-router.get('/dues', auth, auth.requireScope('till', 'books'), on, async (req, res) => {
+router.get('/dues', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), asOf = dateQ(req.query.asOf, today());
     const sides = req.query.side === 'customer' ? ['debtors'] : req.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
@@ -295,11 +304,13 @@ const MODES = ['cash', 'bank', 'upi', 'card', 'cheque'];
 
 /**
  * POST /payments { party_id, direction: in|out, amount_minor, currency, mode, reference?, cheque?: { number, bank, date },
- * received_at?, client_ref? } → { payment: { payment_id, status: 'recorded' | 'cheque_received', duplicate }, posted }
+ * received_at?, client_ref? } → { ok, payment: { payment_id, status: 'recorded' | 'cheque_received', duplicate }, posted }
  * The payment row and its entry are ONE transaction: a refusal (a locked month) leaves nothing half-recorded.
+ * ⭐ client_ref: the same ref again → 200, the FIRST payment (duplicate: true) and its entry — never a second posting.
+ * ⚠️ Refused in words (422): a party on neither of the shop's lists; a date before the ledger began or in the future.
  * A cheque posts only when it CLEARS (C3) — until then it is a status row, and there is nothing to propose.
  */
-router.post('/payments', auth, auth.requireScope('till', 'books'), on, async (req, res) => {
+router.post('/payments', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), b = req.body || {}, cur = String(curOf(req)).toUpperCase();
     const party = String(b.party_id || b.party || '');
@@ -321,7 +332,7 @@ router.post('/payments', auth, auth.requireScope('till', 'books'), on, async (re
   } catch (err) { fail(res, err); }
 });
 /** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } */
-router.post('/payments/:id/propose', auth, auth.requireScope('till', 'books'), on, async (req, res) => {
+router.post('/payments/:id/propose', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
@@ -346,7 +357,7 @@ router.post('/payments/:id/propose', auth, auth.requireScope('till', 'books'), o
   } catch (err) { fail(res, err); }
 });
 /** POST /payments/:id/confirm { allocations: [{ against_ref, amount_minor }] } — CBReceivables.confirmItems decides (disputed frozen, never more than open) */
-router.post('/payments/:id/confirm', auth, auth.requireScope('till', 'books'), on, async (req, res) => {
+router.post('/payments/:id/confirm', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
@@ -361,7 +372,41 @@ router.post('/payments/:id/confirm', auth, auth.requireScope('till', 'books'), o
     res.json(out);
   } catch (err) { fail(res, err); }
 });
-/** POST /cheques/:id/status { status: deposited|cleared|bounced, date? } — clearing posts the entry; a bounce after clearing reverses it */
+/**
+ * GET /cheques[?all=1] → { currency, cheques: [{ payment_id, party_id, party_no, name, direction, amount_minor, currency,
+ *   reference, cheque_no, cheque_bank, cheque_date, received_at, status: received|deposited|cleared|bounced, next: [...] }] }
+ * The cheques still HELD (with ?all=1, every cheque) — what a "Cheques held" list shows. `next` is the steps the ENGINE
+ * will accept now (CBReceivables.itemsOfCheque decides — received → deposited → cleared | bounced); a screen offers those.
+ */
+router.get('/cheques', auth, noKey, on, async (req, res) => {
+  try {
+    const e = ctx(req), all = String(req.query.all || '') === '1';
+    const out = await withEntity(e, async (h) => {
+      const rows = await S.cheques(h, e, all, 200);
+      const names = await partyNames(h, e), chart = await S.accounts(h, e), R = E.receivables(), kept = new Map(), day = today();
+      const list = [];
+      for (const c of rows) {
+        const a = chart.find((x) => x.role === (c.direction === 'in' ? 'debtors' : 'creditors'));
+        const k = c.party_id + '|' + (a ? a.account_id : '');
+        if (!kept.has(k)) kept.set(k, a ? await B.partyItems(h, e, c.party_id, a.account_id) : []);
+        const next = ['deposited', 'cleared', 'bounced'].filter((to) => { try { R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day); return true; } catch (_) { return false; } });
+        const p = names.get(String(c.party_id)) || {};
+        list.push({ payment_id: c.payment_id, party_id: c.party_id, party_no: p.party_no || null, name: p.nickname || p.name || null, direction: c.direction, amount_minor: Number(c.amount_minor),
+          currency: c.currency, reference: c.reference || null, cheque_no: c.cheque_no || null, cheque_bank: c.cheque_bank || null, cheque_date: E.ymd(c.cheque_date), received_at: E.ymd(c.received_at),
+          status: c.status || 'received', next });
+      }
+      return list;
+    });
+    res.json({ currency: curOf(req), cheques: out });
+  } catch (err) { fail(res, err); }
+});
+/**
+ * POST /cheques/:id/status { status: deposited|cleared|bounced, date? } — :id is the cheque's payment_id.
+ *   deposited → { ok, status: 'deposited', items: 1 }
+ *   cleared   → { ok, status: 'cleared', items: 2, posted: { ok, entry_id, entry_no, posting_date, doc_date, moved, lines, items, note } }  (the entry posts NOW)
+ *   bounced   → { ok, status: 'bounced', items: 1 }  (a cheque that never cleared never counted: no entry)
+ * Out of order (received → deposited → cleared | bounced) → 422 with the engine's sentence; not a cheque → 404.
+ */
 router.post('/cheques/:id/status', auth, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id), b = req.body || {};
@@ -405,8 +450,12 @@ router.post('/write-off', auth, owner, on, async (req, res) => {
     const b = req.body || {};
     const party = String(b.party_id || b.party || '');
     if (!UUID.test(party)) return res.status(400).json({ error: 'Which customer?', message: 'Which customer?' });
+    /* ⭐ client_ref → source_ref: the same write-off pressed twice is ONE entry (it was two — critic M11); the second answers
+       200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
+    const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
     res.json(await B.postEntry(null, ctx(req), { type: 'write_off', owner: true, party, amount: minorOf(b) / 100, reason: b.reason, currency: curOf(req), strict_date: true,
-      date: dateQ(b.date, today()), against_ref: b.against_ref ? String(b.against_ref) : null, doc_ref: 'wo:' + party + ':' + Date.now(), by: byOf(req) }));
+      date: dateQ(b.date, today()), against_ref: b.against_ref ? String(b.against_ref) : null, source_ref: ref ? 'wo:' + ref : null,
+      doc_ref: 'wo:' + party + ':' + (ref || Date.now()), by: byOf(req) }));
   } catch (err) { fail(res, err); }
 });
 /**
@@ -481,7 +530,13 @@ router.post('/packs', auth, owner, on, async (req, res) => {
     res.json({ ok: true, pack: { pack_id: r.pack_id, sha256: r.sha256, stored: r.stored, bytes: r.bytes }, manifest: manifestView(r.manifest) });
   } catch (err) { fail(res, err); }
 });
-/** GET /packs/:id → { pack, manifest: { files: [{ name, sha256, bytes }], controls }, download } — the zip itself is /packs/:id/file */
+/**
+ * GET /packs/:id → JSON: { pack, manifest: { files: [{ name, sha256, bytes }], controls }, has_file, file, download }
+ *   has_file  boolean — is there a stored zip to download (false: built while storage was not connected)
+ *   file      '/api/books/packs/:id/file' — where the ZIP ITSELF is (this route is the manifest, never the pack; critic M10:
+ *             the web saved this JSON as "the pack" and then acknowledged it)
+ *   download  the same path, or null when has_file is false (kept for the first web build)
+ */
 router.get('/packs/:id', auth, owner, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
@@ -489,8 +544,8 @@ router.get('/packs/:id', auth, owner, on, async (req, res) => {
     const p = await withEntity(e, (h) => S.pack(h, e, id));
     if (!p) return res.status(404).json({ error: 'Not found' });
     res.json({ pack: { pack_id: p.pack_id, kind: p.kind, fiscal_year: p.fiscal_year, period: p.period, created_at: p.created_at, sha256: p.sha256, prev_sha256: p.prev_sha256,
-      stored: !!p.storage_path, acknowledged_at: p.acknowledged_at, delete_after: p.delete_after }, manifest: manifestView(p.manifest),
-      download: p.storage_path ? '/api/books/packs/' + id + '/file' : null });
+      stored: !!p.storage_path, acknowledged_at: p.acknowledged_at, delete_after: E.ymd(p.delete_after) }, manifest: manifestView(p.manifest),
+      has_file: !!p.storage_path, file: '/api/books/packs/' + id + '/file', download: p.storage_path ? '/api/books/packs/' + id + '/file' : null });
   } catch (err) { fail(res, err); }
 });
 router.get('/packs/:id/file', auth, owner, on, async (req, res) => {
@@ -505,12 +560,23 @@ router.get('/packs/:id/file', auth, owner, on, async (req, res) => {
     res.end(r.bytes);
   } catch (err) { fail(res, err); }
 });
+/**
+ * POST /packs/:id/ack → { ok, acknowledged_at } — "we have it": the fact that later licenses summarising detail away.
+ * ⚠️⚠️ REFUSED FOR A PACK WITH NO STORED FILE (critic M10): 409 { code: 'PACK_NO_FILE', error } — there is nothing the shop
+ *   could have downloaded, so there is nothing to acknowledge. Build it again once storage is connected.
+ */
+const PACK_NO_FILE = 'This pack has no file to download, so there is nothing to confirm yet. Build it again, download it, then confirm.';
 router.post('/packs/:id/ack', auth, owner, on, async (req, res) => {
   try {
     const e = ctx(req);
     if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
-    const r = await withEntity(e, async (h) => { const x = await S.ackPack(h, e, String(req.params.id), byOf(req)); if (x) await S.logChange(h, e, { by: byOf(req), table_name: 'books_pack', row_id: req.params.id, field: 'acknowledged', new: 'yes' }); return x; });
+    const r = await withEntity(e, async (h) => {
+      const p = await S.pack(h, e, String(req.params.id));
+      if (!p) return null;
+      if (!p.storage_path) return { no_file: true };
+      const x = await S.ackPack(h, e, String(req.params.id), byOf(req)); if (x) await S.logChange(h, e, { by: byOf(req), table_name: 'books_pack', row_id: req.params.id, field: 'acknowledged', new: 'yes' }); return x; });
     if (!r) return res.status(404).json({ error: 'Not found' });
+    if (r.no_file) return res.status(409).json({ code: 'PACK_NO_FILE', error: PACK_NO_FILE, message: PACK_NO_FILE });
     res.json({ ok: true, acknowledged_at: r.acknowledged_at });
   } catch (err) { fail(res, err); }
 });

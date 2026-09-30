@@ -15,7 +15,7 @@ const BREAKS = [
   ['books-post', 'lib/books.js', "    if (cf.ok === false) throw refuse(SUSPENSE_NOT_NIL(prev), 'SUSPENSE_NOT_NIL');", "", 'an empty carryforward passes silently'],
   ['books-hooks', 'lib/books-hooks.js', "    if (!o.retry) await park(entity, job, String(e && e.message || e), ev.source_chit_id, ev.source_ref);\n    if (o.retry) throw e;", "    throw e;", 'a failed post is not parked'],
   ['books-hooks', 'lib/books-hooks.js', "  if (!s) return { off: true };\n    return postChit(entity, chit_id, { setting: s, by });", "  return postChit(entity, chit_id, { setting: s || {}, by });", 'the off switch is ignored by the hook'],
-  ['books-routes', 'routes/books.js', "router.get('/dues', auth, auth.requireScope('till', 'books'), on, async", "router.get('/dues', auth, auth.requireScope('till', 'books'), async", '/dues answers while the ledger is off'],
+  ['books-routes', 'routes/books.js', "router.get('/dues', auth, noKey, on, async", "router.get('/dues', auth, noKey, async", '/dues answers while the ledger is off'],
   ['books-routes', 'routes/books.js', "router.post('/write-off', auth, owner, on, async", "router.post('/write-off', auth, on, async", 'a co-assist may write off'],
   ['books-routes', 'routes/books.js', "  if (e && e.code === 'PERIOD_LOCKED') return res.status(409).json({ code: 'PERIOD_LOCKED', error: e.message, message: e.message });", "", 'PERIOD_LOCKED loses its code'],
   ['books-tally', 'tools/tally-connector/adapters/tally.js', "bills: [{ name: ref, type: 'Agst Ref', amount }]", "bills: [{ name: ref, type: 'New Ref', amount }]", 'the connector\'s Receipt changes'],

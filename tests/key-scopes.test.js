@@ -54,6 +54,14 @@ const SENSITIVE = [
   ['DELETE', '/api/products/abc',        'remove a product'],
   ['GET',  '/api/tax/gstr',              'read the tax return'],
   ['POST', '/api/events/ticket',         'listen to the bell'],
+  /* ⚠️ THE LEDGER (critic M9, 2026-09-30): no key reaches it. A till key could record money paid OUT to any id on any date;
+     the counter calls none of these — it sends a chit — so every one is DENY for every scope. */
+  ['POST', '/api/books/payments',        'record money received or paid out in the ledger'],
+  ['POST', '/api/books/payments/11111111-1111-4111-8111-111111111111/confirm', 'set a payment against bills'],
+  ['GET',  '/api/books/dues',            'read what every party owes'],
+  ['GET',  '/api/books/party/11111111-1111-4111-8111-111111111111/statement', 'read a party statement'],
+  ['POST', '/api/books/entries',         'post a journal entry'],
+  ['POST', '/api/books/cheques/11111111-1111-4111-8111-111111111111/status', 'clear or bounce a cheque'],
 ];
 
 /**

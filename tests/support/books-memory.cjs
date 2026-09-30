@@ -97,6 +97,15 @@ function create() {
       if (seen) return { payment_id: seen.payment_id, duplicate: true };
       const r = Object.assign({ payment_id: id(), entity_id: e }, clone(p)); T.payments.push(r); return { payment_id: r.payment_id, duplicate: false };
     },
+    async paymentByRef(db, e, ref) { const p = T.payments.find((x) => x.entity_id === e && x.client_ref === String(ref)); return p ? { payment_id: p.payment_id, mode: p.mode } : null; },
+    async cheques(db, e, all, limit) {
+      const steps = ['received', 'deposited', 'cleared', 'bounced'];
+      return clone(T.payments.filter((p) => p.entity_id === e && p.mode === 'cheque')).map((p) => {
+        const st = T.items.filter((i) => i.payment_id === p.payment_id && i.ref_kind === 'status' && steps.indexOf(i.status) >= 0).slice(-1)[0];
+        return Object.assign(p, { status: st ? st.status : null });
+      }).filter((p) => all || !p.status || p.status === 'received' || p.status === 'deposited')
+        .sort((a, b) => String(b.received_at).localeCompare(String(a.received_at))).slice(0, limit || 200);
+    },
     async payment(db, e, pid) { const p = T.payments.find((x) => x.entity_id === e && x.payment_id === pid); return p ? clone(p) : null; },
     async queue(db, e, o) { T.outbox.push(Object.assign({ id: T.outbox.length + 1, entity_id: e, tries: 0, created_at: now(), done_at: null }, clone(o))); },
     async waiting(db, e, limit) { return clone(T.outbox.filter((o) => o.entity_id === e && !o.done_at).sort((a, b) => a.tries - b.tries || a.id - b.id).slice(0, limit || 100)); },
@@ -105,6 +114,7 @@ function create() {
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
     async parties(db, e) { return clone(T.parties.filter((p) => p.owner === e)); },
+    async partyOn(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },
     async partyNoOf(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return p ? p.party_no || null : null; },
     async setPartyNo(db, e, party, no) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); if (p && !p.party_no) p.party_no = no; },
     async billNos(db, e, ids) { const o = {}; (ids || []).forEach((i) => { const c = T.chits.find((x) => x.chit_id === i); if (c) o[i] = c.bill_no; }); return o; },
