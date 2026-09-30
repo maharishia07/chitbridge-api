@@ -79,8 +79,13 @@ const t = (name, cond, extra) => {
  * After M36 (one shared transaction for them): 38 and 37. Ceiling 40 — two spare, so a genuine need does not have to
  * edit this file in the same commit. What is left is inside the libs (tax shelf, offers, reward programme, categories,
  * invoiceParty), each opening its own transaction — an onEntity pass-through is the next cut (BACKLOG M36 part 2).
+ * ⚠️ RAISED 40 → 43 ON 2026-09-30, AND WHY (critic M5): the snapshot now says whether the shop's ledger is on (`books: true`),
+ * because the counter was offering credit to shops with no ledger. That is one read of books_setting inside the shared
+ * transaction, in a savepoint (SAVEPOINT · SELECT · RELEASE = 3 trips) so a server before b272 cannot lose the whole shared
+ * read to "table not there": 38 → 41, still two spare. The answer is cached 60 s per process (lib/books-hooks isOn), and the
+ * dues transaction (4 trips once b273 exists) no longer runs for a shop whose ledger is off — for those this is a saving.
  */
-const BUDGET = Number(process.env.TILL_SNAPSHOT_BUDGET || 40);
+const BUDGET = Number(process.env.TILL_SNAPSHOT_BUDGET || 43);
 
 let srv;
 async function measure(label, qs) {

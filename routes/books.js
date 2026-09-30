@@ -224,7 +224,8 @@ router.get('/dues', auth, auth.requireScope('till', 'books'), on, async (req, re
       for (const role of sides) {
         const a = chart.find((x) => x.role === role); if (!a) continue;
         const side = role === 'creditors' ? 'payable' : 'receivable', sign = role === 'creditors' ? -1 : 1;
-        const items = (await S.items(h, e, null, a.account_id)).filter((i) => E.ymd(i.created_at) <= asOf).map(E.itemOf);
+        /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
+        const items = (await S.items(h, e, null, a.account_id)).filter((i) => require('../lib/books-hooks').dayOf(i.created_at, req.books.country) <= asOf).map(E.itemOf);
         const d = E.dues(items, asOf, side);
         const byRef = d.outstanding.by_ref || {};
         Object.keys(d.ageing.by_party || {}).concat(Object.keys(d.outstanding.by_party || {})).forEach((pid) => {
@@ -451,7 +452,12 @@ router.post('/periods/:fy/:p/:act', auth, owner, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 router.get('/periods', auth, on, async (req, res) => {
-  try { const e = ctx(req); res.json({ periods: await withEntity(e, (h) => S.periods(h, e, req.query.fy ? String(req.query.fy) : null)) }); } catch (err) { fail(res, err); }
+  try {
+    const e = ctx(req);
+    const rows = await withEntity(e, (h) => S.periods(h, e, req.query.fy ? String(req.query.fy) : null));
+    /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
+    res.json({ periods: rows.map((p) => Object.assign({}, p, { start_date: E.ymd(p.start_date), end_date: E.ymd(p.end_date) })) });
+  } catch (err) { fail(res, err); }
 });
 
 /* ── packs ──────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -465,7 +471,7 @@ router.get('/packs', auth, owner, on, async (req, res) => {
     const e = ctx(req);
     const rows = await withEntity(e, (h) => S.packs(h, e));
     res.json({ packs: rows.map((k) => ({ pack_id: k.pack_id, kind: k.kind, fiscal_year: k.fiscal_year, period: k.period, created_at: k.created_at, sha256: k.sha256,
-      stored: !!k.storage_path, acknowledged_at: k.acknowledged_at || null, delete_after: k.delete_after || null })) });
+      stored: !!k.storage_path, has_file: !!k.storage_path, acknowledged_at: k.acknowledged_at || null, delete_after: E.ymd(k.delete_after) })) });
   } catch (err) { fail(res, err); }
 });
 router.post('/packs', auth, owner, on, async (req, res) => {

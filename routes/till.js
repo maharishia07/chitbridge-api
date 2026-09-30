@@ -33,6 +33,9 @@ const regional = require('../lib/regional');
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
 const lotfields = require('../lib/lotfields');
+/* ⭐ BOOKS v2: is this shop's ledger on (the hooks' one cached read), and the ledger's one reader of a `date` column */
+const booksHooks = require('../lib/books-hooks');
+const booksYmd = require('../lib/books-engines').ymd;
 const variantEngine = require('../lib/variant.browser.js');   /* the same shape-guard the Modifiers tab authors through */
 const keys = require('./keys');
 const { shopChanged } = require('../lib/shopchanged');
@@ -212,6 +215,14 @@ router.get('/snapshot', auth, async (req, res) => {
           LIMIT 2000`, [entity_id]),
       adoption: (db) => db.query(
         'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [entity_id]),
+      /**
+       * ⭐⭐ IS THIS SHOP'S LEDGER ON (critic M5, 2026-09-30). The counter offered "On credit" and "Received" to any shop with a
+       * known customer; with the ledger off the server posts nothing, so the debt existed only as words on a chit.
+       * lib/books-hooks isOn — the SAME cached answer the posting hook uses, read on this transaction's own handle inside a
+       * savepoint (so "table not there yet" cannot abort the shared read). It never throws: unreadable = not on, and logged.
+       * ⚠️ LAST in this list on purpose: the five reads above stay back to back (tests/round-trips-till.test.cjs).
+       */
+      books: (db) => booksHooks.isOn(entity_id, db),
     };
     let own = null;
     try {
@@ -302,7 +313,7 @@ router.get('/snapshot', auth, async (req, res) => {
     }
 
     /* the counter's customer list — a name and a phone, nothing more; the till looks up a repeat customer, it does not hold history */
-    let customers = [];
+    let customers = [], snapshotBooksOn = false;
     try {
       /**
        * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
@@ -318,18 +329,30 @@ router.get('/snapshot', auth, async (req, res) => {
        * oldest due first. ⚠️ Asked on its own, and only when party_item exists (the customers row says so) — until b273
        * is run it costs no trip at all and the counter says "limit unknown offline". Absent = unknown, never 0.
        */
+      /**
+       * ⚠️⚠️ ONLY FOR A SHOP WHOSE LEDGER IS ON (critic M5). It ran for every shop once b273 existed — one extra transaction a
+       *   snapshot — and stamped balance_minor: 0 ("owes nothing") on every customer of a shop that keeps no ledger at all.
+       * ⚠️ THE RECEIVABLE SIDE ONLY (F2): a party who is also a supplier has payable rows here too; summed together, what the
+       *   shop owes them was added to what they owe, and their purchase bills appeared in the receipt proposal.
+       * ⚠️ DISPUTED = THE LATEST DISPUTE ROW (F3): BOOL_OR(status = 'disputed') stayed true for ever — a later 'undisputed'
+       *   row is a new row (the table is insert-only), so only the newest of the two statuses says what the bill is now.
+       * ⚠️ ORDERED before the limit (oldest due first): a LIMIT with no ORDER BY cuts an arbitrary part away.
+       */
+      let booksOn = false;
+      try { booksOn = !!(await ownRead('books')); } catch (_) { booksOn = false; }
       let dues = { rows: [] };
-      if (c.rows.some((x) => x.has_party_item)) {
+      if (booksOn && c.rows.some((x) => x.has_party_item)) {
         try {
           dues = await withEntity(entity_id, (db) => db.query(
             `SELECT party_id, against_ref, SUM(amount_minor)::bigint AS balance_minor,
                     MIN(due_date) FILTER (WHERE ref_kind = 'bill') AS due_date,
                     MIN(doc_date) FILTER (WHERE ref_kind = 'bill') AS doc_date,
-                    BOOL_OR(status = 'disputed') AS disputed
+                    COALESCE((array_agg(status ORDER BY item_id DESC) FILTER (WHERE status IN ('disputed', 'undisputed')))[1] = 'disputed', false) AS disputed
                FROM party_item
-              WHERE entity_id = $1
+              WHERE entity_id = $1 AND side = 'receivable'
               GROUP BY party_id, against_ref
              HAVING SUM(amount_minor) <> 0
+              ORDER BY MIN(due_date) FILTER (WHERE ref_kind = 'bill') NULLS LAST, against_ref
               LIMIT 20000`, [entity_id]));
         } catch (e) { try { require('../lib/logger').warn('till.snapshot.dues', { entity_id, why: String(e && e.message) }); } catch (_) {} }
       }
@@ -338,17 +361,18 @@ router.get('/snapshot', auth, async (req, res) => {
         const k = String(d.party_id), o = owe[k] || (owe[k] = { balance_minor: 0, open_bills: [] });
         o.balance_minor += Number(d.balance_minor) || 0;
         if (Number(d.balance_minor) > 0) o.open_bills.push({ ref: d.against_ref, balance_minor: Number(d.balance_minor),
-          due_date: d.due_date ? new Date(d.due_date).toISOString().slice(0, 10) : null,
-          date: d.doc_date ? new Date(d.doc_date).toISOString().slice(0, 10) : null, disputed: !!d.disputed });
+          /* ⚠️ `date` columns, read by the ledger's ONE date reader — toISOString() was the day before, east of UTC (critic M8) */
+          due_date: booksYmd(d.due_date), date: booksYmd(d.doc_date), disputed: !!d.disputed });
       }
       const num = (v) => (v == null || v === '' || !isFinite(Number(v)) ? null : Number(v));
+      snapshotBooksOn = booksOn;
       customers = c.rows.map((x) => {
         const o = owe[String(x.identity_id)];
         const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null,
                       groups: Array.isArray(x.groups) ? x.groups : [] };
         if (num(x.credit_days) != null) out.credit_days = num(x.credit_days);
         if (num(x.credit_limit_minor) != null) out.credit_limit_minor = num(x.credit_limit_minor);
-        if (x.has_party_item) {
+        if (booksOn && x.has_party_item) {   /* absent = unknown (no ledger, or not read) — never a 0 that reads as "owes nothing" */
           out.balance_minor = o ? o.balance_minor : 0;
           out.open_bills = o ? o.open_bills.sort((a, b) => String(a.due_date || '').localeCompare(String(b.due_date || ''))).slice(0, 20) : [];
         }
@@ -748,6 +772,13 @@ router.get('/snapshot', auth, async (req, res) => {
        */
       lot_fields: lotfields.forEntity(sectors),
     };
+    /**
+     * ⭐⭐ `books: true` — TOP LEVEL, PRESENT ONLY WHEN THE SHOP'S LEDGER IS ON (critic M5). The counter requires exactly
+     * S.books === true before it offers "On credit" or "Received"; absent means off, not migrated, or not readable — and in
+     * all three nothing would be posted, so nothing is offered. (A snapshot replaces the counter's copy whole, so switching
+     * the ledger off takes the key away on the next read.)
+     */
+    if (snapshotBooksOn) body.books = true;
     body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
     res.json(body);
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }

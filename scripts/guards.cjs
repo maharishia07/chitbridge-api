@@ -181,6 +181,8 @@ const GUARDS = [
   'books-routes.test.cjs',      // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
   'books-tally.test.cjs',       // ⭐⭐ the pack's Tally files come from the connector's adapter — one Tally writer, Receipt byte-identical
   'books-fixes.test.cjs',       // ⭐⭐⭐ the red-team findings of 2026-09-30 (M1–M12), each held by a check that was red before its fix
+  'books-dates-tz.test.cjs',    // ⭐⭐ a date read back from Postgres is the same date under Asia/Kolkata and UTC (it runs itself in both)
+  'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
