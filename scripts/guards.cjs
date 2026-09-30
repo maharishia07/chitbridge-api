@@ -179,6 +179,7 @@ const GUARDS = [
   'books-post.test.cjs',        // ⭐⭐ the one writer: balances both grains, gap-free JV, locks, reversal, cheques, carryforward
   'books-hooks.test.cjs',       // ⭐⭐ what a chit posts — and a failed post NEVER fails the chit (parked, named)
   'books-routes.test.cjs',      // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
+  'books-tally.test.cjs',       // ⭐⭐ the pack's Tally files come from the connector's adapter — one Tally writer, Receipt byte-identical
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

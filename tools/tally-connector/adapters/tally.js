@@ -129,16 +129,43 @@ function receiptXML(p, opt) {
   const party = opt.partyLedger || 'Cash';
   const into = p.method === 'cash' ? (opt.cashLedger || 'Cash') : (opt.bankLedger || 'Bank');
   const amount = Math.round(Number(p.amount) * 100) / 100, ref = 'CB-' + String(p.chit_id).slice(0, 8);
-  return `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME>
-<STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
-<VOUCHER VCHTYPE="Receipt" ACTION="Create" OBJVIEW="Accounting Voucher View"><DATE>${ymd(eduDate(p.at, opt.eduDates))}</DATE><VOUCHERTYPENAME>Receipt</VOUCHERTYPENAME>
-<REFERENCE>${esc(ref)}</REFERENCE><NARRATION>${esc('ChitBridge payment ' + (p.method || '').toUpperCase() + (p.ref ? ' ' + p.ref : '') + ' for order ' + p.chit_id + ' from ' + (p.buyer || 'customer'))}</NARRATION>
-<PARTYLEDGERNAME>${esc(party)}</PARTYLEDGERNAME>
-<ALLLEDGERENTRIES.LIST><LEDGERNAME>${esc(party)}</LEDGERNAME><ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE><ISPARTYLEDGER>Yes</ISPARTYLEDGER><AMOUNT>${amount}</AMOUNT>
-<BILLALLOCATIONS.LIST><NAME>${esc(ref)}</NAME><BILLTYPE>Agst Ref</BILLTYPE><AMOUNT>${amount}</AMOUNT></BILLALLOCATIONS.LIST></ALLLEDGERENTRIES.LIST>
-<ALLLEDGERENTRIES.LIST><LEDGERNAME>${esc(into)}</LEDGERNAME><ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE><AMOUNT>-${amount}</AMOUNT></ALLLEDGERENTRIES.LIST>
-</VOUCHER></TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+  return vouchersEnvelope([accountingVoucherBody({ vtype: 'Receipt', date: ymd(eduDate(p.at, opt.eduDates)), ref,
+    narration: 'ChitBridge payment ' + (p.method || '').toUpperCase() + (p.ref ? ' ' + p.ref : '') + ' for order ' + p.chit_id + ' from ' + (p.buyer || 'customer'),
+    party, entries: [{ ledger: party, cr: amount, is_party: true, bills: [{ name: ref, type: 'Agst Ref', amount }] }, { ledger: into, dr: amount }] })], opt);
 }
+/**
+ * ⭐ ONE ACCOUNTING VOUCHER, ANY TYPE (2026-09-29) — the Receipt voucher's own shape, which is live-proven, made general so the
+ * ledger pack (lib/books-tally.js) writes Payment, Journal, Credit Note, Debit Note and accounting-mode Sales / Purchase through
+ * THIS adapter rather than a second Tally writer. receiptXML is built on it (byte-identical to what it sent before).
+ *   v: { vtype, date: 'YYYYMMDD', ref, narration, party? (the party ledger's name),
+ *        entries: [{ ledger, dr | cr (one of them; a number or an exact decimal string), is_party?, bills?: [{ name, type, amount }] }] }
+ * Tally's sign rule, as the Receipt already does it: a DEBIT line is ISDEEMEDPOSITIVE Yes with a NEGATIVE amount; a credit is No and
+ * positive; a bill allocation carries its line's sign. type: 'New Ref' · 'Agst Ref' · 'Advance' · 'On Account'.
+ * ⚠️ Only Receipt has been imported into a real TallyPrime. The other types share its structure and are NOT yet proven there.
+ */
+function accountingVoucherBody(v) {
+  const lines = (v.entries || []).map((e) => {
+    const dr = e.dr != null && e.dr !== '';
+    const bills = (e.bills || []).map((b) => `<BILLALLOCATIONS.LIST><NAME>${esc(b.name)}</NAME><BILLTYPE>${esc(b.type)}</BILLTYPE><AMOUNT>${dr ? '-' : ''}${b.amount}</AMOUNT></BILLALLOCATIONS.LIST>`).join('');
+    return `<ALLLEDGERENTRIES.LIST><LEDGERNAME>${esc(e.ledger)}</LEDGERNAME><ISDEEMEDPOSITIVE>${dr ? 'Yes' : 'No'}</ISDEEMEDPOSITIVE>${e.is_party ? '<ISPARTYLEDGER>Yes</ISPARTYLEDGER>' : ''}<AMOUNT>${dr ? '-' + e.dr : e.cr}</AMOUNT>${bills ? '\n' + bills : ''}</ALLLEDGERENTRIES.LIST>`;
+  }).join('\n');
+  return `<VOUCHER VCHTYPE="${esc(v.vtype)}" ACTION="Create" OBJVIEW="Accounting Voucher View"><DATE>${v.date}</DATE><VOUCHERTYPENAME>${esc(v.vtype)}</VOUCHERTYPENAME>
+<REFERENCE>${esc(v.ref)}</REFERENCE><NARRATION>${esc(v.narration)}</NARRATION>
+${v.party ? '<PARTYLEDGERNAME>' + esc(v.party) + '</PARTYLEDGERNAME>\n' : ''}${lines}
+</VOUCHER>`;
+}
+/** the import envelope around one or more vouchers */
+function vouchersEnvelope(bodies, opt) {
+  return `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME>
+<STATICVARIABLES>${opt && opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
+${bodies.join('\n')}</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+}
+/** the import envelope around ledger masters (what ensure / ensureParty / ensureSupplier send, for many at once) */
+function mastersEnvelope(masters, opt) {
+  return `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>All Masters</REPORTNAME><STATICVARIABLES>${opt && opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">\n${masters.join('\n')}\n</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+}
+/* ⭐ the pure builders, without an adapter instance (no Tally, no network) — lib/books-tally.js and the tests */
+const BUILDERS = { voucherXML, receiptXML, partyLedgerXML, ledgerMasterXML, accountingVoucherBody, vouchersEnvelope, mastersEnvelope, partyLedgerName, stateName };
 
 module.exports = function tallyAdapter(cfg) {
   const url = (cfg.tally && cfg.tally.url) || 'http://localhost:9000';
@@ -347,6 +374,7 @@ ${taxLines}
       return { ref: tag('VCHID', res) || tag('LASTVCHID', res) || ('created:' + created) };
     },
     /* the pure builders, for a caller that wants the XML without posting it (tests; the ledger pack, lib/books-tally.js) */
-    _xml: { exportRequest, voucherXML, companyRequest, receiptXML, partyLedgerXML, ledgerMasterXML },
+    _xml: Object.assign({ exportRequest, companyRequest }, BUILDERS),
   };
 };
+module.exports.builders = BUILDERS;

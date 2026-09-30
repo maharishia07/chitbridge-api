@@ -305,18 +305,11 @@ router.post('/payments', auth, auth.requireScope('till', 'books'), on, async (re
     if (!mode) return res.status(400).json({ error: 'Paid how — cash, bank, UPI, card or cheque?', message: 'Paid how — cash, bank, UPI, card or cheque?' });
     const date = dateQ(b.received_at || b.date, today());
     const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
-    const side = direction === 'in' ? 'customer' : 'supplier';
-    const out = await withEntity(e, async (h) => {
-      const pay = await S.insertPayment(h, e, { party_id: party, direction, amount_minor, currency: cur, mode, reference: b.reference, cheque_no: chq.number || b.cheque_no,
-        cheque_bank: chq.bank || b.cheque_bank, cheque_date: DATE.test(String(chq.date || b.cheque_date || '')) ? (chq.date || b.cheque_date) : null, received_at: date,
-        client_ref: b.client_ref ? String(b.client_ref).slice(0, 80) : null, by: byOf(req) });
-      if (pay.duplicate) return { payment: { payment_id: pay.payment_id, status: mode === 'cheque' ? 'cheque_received' : 'recorded', duplicate: true } };
-      const p = { payment_id: pay.payment_id, party_id: party, direction, amount_minor, currency: cur, mode, received_at: date, cheque_no: chq.number || b.cheque_no };
-      const posted = mode === 'cheque'
-        ? await B.postEntry(h, e, { type: 'cheque_received', party, side, payment_id: pay.payment_id, amount_minor, currency: cur, date, cheque: { no: p.cheque_no || null }, by: byOf(req) })
-        : await B.postEntry(h, e, Object.assign(B.paymentEvent(p, { by: byOf(req) }), { strict_date: true }));
-      return { payment: { payment_id: pay.payment_id, status: mode === 'cheque' ? 'cheque_received' : 'recorded', duplicate: false }, posted };
-    });
+    /* ⭐ the payment row and its entry are ONE transaction (B.recordPayment) — a refusal leaves nothing half-recorded */
+    const out = await withEntity(e, (h) => B.recordPayment(h, e, { party_id: party, direction, amount_minor, currency: cur, mode, reference: b.reference,
+      cheque_no: chq.number || chq.no || b.cheque_no, cheque_bank: chq.bank || b.cheque_bank,
+      cheque_date: DATE.test(String(chq.date || chq.dated || b.cheque_date || '')) ? (chq.date || chq.dated || b.cheque_date) : null, received_at: date,
+      client_ref: b.client_ref ? String(b.client_ref).slice(0, 80) : null, by: byOf(req), strict_date: true }));
     res.json(Object.assign({ ok: true }, out));
   } catch (err) { fail(res, err); }
 });

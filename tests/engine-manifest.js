@@ -192,6 +192,8 @@ const INFRA_LIBS = [
   /* [BOOKS v2] the ledger's SQL (books-store), its nightly runner (books-nightly: retries, names mismatches, never fixes)
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
   'books-store.js', 'books-nightly.js', 'books-pack.js',
+  /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */
+  'books-tally.js',
   /* one translation of a refusal the database makes ON PURPOSE (b247's population boundary) into a 409 in words, used
      by the routes that catch their own errors and by server.js's handler — wording, not a rule; the rule is the
      trigger. (2026-09-28, external review §23) */

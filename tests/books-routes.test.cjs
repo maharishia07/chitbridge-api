@@ -137,7 +137,10 @@ const call = (port, method, p, body) => new Promise((done) => {
     && lp.body.error === 'That month is locked. Open it again (with a reason) to record this.', JSON.stringify(lp.body));
   const src = require('fs').readFileSync(path.join(H.API, 'routes', 'books.js'), 'utf8');
   const payH = src.slice(src.indexOf("router.post('/payments', "), src.indexOf("router.post('/payments/:id/propose'"));
-  ok('…and the payment row and its entry are ONE transaction (no half-recorded payment)', /withEntity\(e, async \(h\) => \{[\s\S]*S\.insertPayment\(h,[\s\S]*B\.postEntry\(h,/.test(payH) && nP >= 0);
+  const bsrc = require('fs').readFileSync(path.join(H.API, 'lib', 'books.js'), 'utf8');
+  const recP = bsrc.slice(bsrc.indexOf('async function recordPayment('), bsrc.indexOf('/** the payment\'s journal event'));
+  ok('…and the payment row and its entry are ONE transaction (the route hands recordPayment one handle; it inserts and posts on it)',
+    /withEntity\(e, \(h\) => B\.recordPayment\(h, e,/.test(payH) && /S\.insertPayment\(h, entity, p\)/.test(recP) && (recP.match(/postEntry\(h, entity,/g) || []).length === 2 && nP >= 0);
   const ul0 = await q('POST', '/periods/2026-27/5/unlock', {});
   ok('unlock without a reason is refused', ul0.status === 422);
   const ul = await q('POST', '/periods/2026-27/5/unlock', { reason: 'late supplier bill' });
@@ -168,7 +171,14 @@ const call = (port, method, p, body) => new Promise((done) => {
   const f0 = pg.body.manifest && pg.body.manifest.files && pg.body.manifest.files[0];
   ok('GET /packs/:id → { pack, manifest: { files: [{ name, sha256, bytes }], controls } }', pg.status === 200 && has(pg.body, ['pack', 'manifest']) && has(f0, ['name', 'sha256', 'bytes']) && pg.body.manifest.controls
     && pg.body.manifest.controls.totals && pg.body.manifest.controls.totals.balanced === true, JSON.stringify(pg.body).slice(0, 400));
-  ok('…every file hashed, tally.xml and saft.json among them', pg.body.manifest.files.every((f) => /^[0-9a-f]{64}$/.test(f.sha256)) && ['tally.xml', 'saft.json'].every((n) => pg.body.manifest.files.some((f) => f.name === n)));
+  const names = pg.body.manifest.files.map((f) => f.name);
+  ok('…every file hashed; saft.json, the change log and the Tally masters + vouchers among them', pg.body.manifest.files.every((f) => /^[0-9a-f]{64}$/.test(f.sha256))
+    && ['saft.json', 'change_log.csv', 'tally-masters.xml', 'tally-vouchers.xml'].every((n) => names.indexOf(n) >= 0), names.join(', '));
+  ok('…the Tally files are the ADAPTER\'s (tally_xml_status "adapter"), the engine\'s tally.xml is gone, and what is unproven is said', pg.body.manifest.tally_xml_status === 'adapter'
+    && names.indexOf('tally.xml') < 0 && /Only the Receipt voucher/.test(pg.body.manifest.tally.proven) && Array.isArray(pg.body.manifest.tally.needs_review), JSON.stringify(pg.body.manifest.tally));
+  const BPx = X.E.bookpack(), mm = X.T.packs[0].manifest;
+  ok('…the manifest is sealed once: its own hash is the pack\'s, and covers the file list', mm.sha256 === pk.body.pack.sha256
+    && BPx.seal(Object.assign({}, mm, { sha256: null }), Object.fromEntries(mm.files.map((f) => [f.file, f.sha256])), require(path.join(H.API, 'lib', 'books-pack')).sha).sha256 === mm.sha256);
   const pk2 = await q('POST', '/packs', { kind: 'month', fiscal_year: '2026-27', period: 6 });
   ok('…the next pack is chained to this one (prev_sha256)', pk2.body.manifest && pk2.body.manifest.prev_sha256 === pk.body.pack.sha256, JSON.stringify(pk2.body.manifest && pk2.body.manifest.prev_sha256));
   const ak = await q('POST', '/packs/' + k0.pack_id + '/ack', {});

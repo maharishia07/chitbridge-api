@@ -52,23 +52,46 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     eq('a tender with no ledger (Points) is queued and named', [pts.kind, /Points/.test(pts.why)], ['queue', true]);
   } else console.log('   SKIP the granularity checks: ' + X.src.why);
 
-  const cess = K.classify({ chit: { chit_id: 'c2', purpose: 'order', business_json: { bill_no: 'x', till: { id: 'C1' }, payment: { parts: [{ how: 'Cash', amount: 130 }] } } },
+  const cess = K.classify({ chit: { chit_id: 'c2', created_at: '2026-09-29T05:00:00Z', purpose: 'order', business_json: { bill_no: 'x', till: { id: 'C1' }, payment: { parts: [{ how: 'Cash', amount: 130 }] } } },
     entry: { sells: true, invoice: { ItemList: [{ GstRt: 28, AssAmt: 100, CgstAmt: 14, SgstAmt: 14, IgstAmt: 0, CesAmt: 2 }] } }, setting: S });
   eq('cess on a bill is queued (the rules do not post it yet) — never folded into another line', cess.kind, 'queue');
-  const sent = K.classify({ chit: { chit_id: 'c3', purpose: 'invoice', business_json: {} }, entry: { sells: true, buyer: { entity_id: CUST }, invoice: inv([[5, 200, 5]], 210) }, setting: S });
+  const sent = K.classify({ chit: { chit_id: 'c3', created_at: '2026-09-29T05:00:00Z', purpose: 'invoice', business_json: {} }, entry: { sells: true, buyer: { entity_id: CUST }, invoice: inv([[5, 200, 5]], 210) }, setting: S });
   eq('an invoice I send → sale_bill, the buyer owes all of it', [sent.event.type, sent.event.party, sent.event.paid, sent.event.source_ref], ['sale_bill', CUST, {}, 'chit:c3']);
-  const got = K.classify({ chit: { chit_id: 'c4', purpose: 'invoice', business_json: {} }, entry: { sells: false, seller: { entity_id: SUPP }, invoice: inv([[12, 1000, 60]], 1120) }, setting: S });
+  const got = K.classify({ chit: { chit_id: 'c4', created_at: '2026-09-29T05:00:00Z', purpose: 'invoice', business_json: {} }, entry: { sells: false, seller: { entity_id: SUPP }, invoice: inv([[12, 1000, 60]], 1120) }, setting: S });
   eq('an invoice I receive → purchase_bill, I owe the supplier', [got.event.type, got.event.party], ['purchase_bill', SUPP]);
-  const cn = K.classify({ chit: { chit_id: 'c5', purpose: 'credit_note', business_json: { till: { id: 'C1' }, bill_no: 'CN-1', against: 'C1-0001', refund: { parts: [{ how: 'Cash', amount: 118 }] } } },
+  const cn = K.classify({ chit: { chit_id: 'c5', created_at: '2026-09-29T05:00:00Z', purpose: 'credit_note', business_json: { till: { id: 'C1' }, bill_no: 'CN-1', against: 'C1-0001', refund: { parts: [{ how: 'Cash', amount: 118 }] } } },
     entry: { sells: true, invoice: inv([[18, 100, 9]], 118) }, setting: S });
   eq('a counter credit note → return, refunded in cash', [cn.event.type, cn.event.refund, cn.event.against_bill], ['return', { cash: 118 }, 'C1-0001']);
-  const ex = K.classify({ chit: { chit_id: 'c6', purpose: 'expense', business_json: { till: { id: 'C1' }, expense: { what: 'tea', mode: 'Cash', amount: 40 } } }, entry: {}, setting: S });
+  const ex = K.classify({ chit: { chit_id: 'c6', created_at: '2026-09-29T05:00:00Z', purpose: 'expense', business_json: { till: { id: 'C1' }, expense: { what: 'tea', mode: 'Cash', amount: 40 } } }, entry: {}, setting: S });
   eq('an expense → by class (sundry when unclassed), paid from cash', [ex.event.type, ex.event.class, ex.event.paid_from, ex.event.amount], ['expense', 'sundry_expense', 'cash', 40]);
-  const inc = K.classify({ chit: { chit_id: 'c7', purpose: 'income', business_json: { income: { what: 'scrap', mode: 'UPI', amount: 250, class: 'scrap_sales' } } }, entry: {}, setting: S });
+  const inc = K.classify({ chit: { chit_id: 'c7', created_at: '2026-09-29T05:00:00Z', purpose: 'income', business_json: { income: { what: 'scrap', mode: 'UPI', amount: 250, class: 'scrap_sales' } } }, entry: {}, setting: S });
   eq('an income chit → other_income by its class, into UPI', [inc.event.type, inc.event.class, inc.event.into], ['other_income', 'scrap_sales', 'upi']);
   const day = K.classify({ chit: { chit_id: 'c8', purpose: 'general', business_json: { summary: { period: 'day', key: 'day-2026-09-28', till: { id: 'C2' } } } }, entry: {}, setting: S });
   eq('a counter\'s day summary chit → post that counter\'s walk-in day', [day.kind, day.counter, day.day], ['day', 'C2', '2026-09-28']);
-  eq('an order (a promise) posts nothing', K.classify({ chit: { chit_id: 'c9', purpose: 'order', business_json: {} }, entry: { sells: true, invoice: inv([[5, 10, 0.25]], 10.5) }, setting: S }).kind, 'none');
+  /* the counter's own fields (books-counter 3e1c88f) */
+  const rc = (p) => K.classify({ chit: { chit_id: 'r1', purpose: 'general', created_at: '2026-09-29T05:00:00Z', business_json: { kind: 'payment_received', till: { id: 'C1' },
+    payment_received: Object.assign({ no: 'R/C1/0007', at: '2026-09-29T05:00:00Z', party: { identity_id: CUST, name: 'Ravi' }, amount: 250.5, currency: 'INR', mode: 'UPI', status: 'cleared' }, p) } }, entry: {}, setting: S });
+  const r0 = rc({});
+  eq('the counter\'s "money received" chit → a PAYMENT (not a bill): party, 25050 minor, UPI, the shop\'s day, idempotent by the chit',
+    [r0.kind, r0.payment.party_id, r0.payment.amount_minor, r0.payment.mode, r0.payment.received_at, r0.payment.client_ref, r0.payment.reference], ['payment', CUST, 25050, 'upi', '2026-09-29', 'chit:r1', 'R/C1/0007']);
+  const rq = rc({ mode: 'cheque', status: 'received', cheque: { no: '000123', bank: 'SBI', dated: '2026-10-01' } });
+  eq('…a cheque rides as a cheque (held until it clears), with its number', [rq.payment.mode, rq.payment.cheque_no, rq.payment.cheque_date], ['cheque', '000123', '2026-10-01']);
+  eq('…from nobody the shop knows → queued, named', [rc({ party: null }).kind, /nobody/.test(rc({ party: null }).why)], ['queue', true]);
+  eq('…with no usable date → queued, never guessed', K.classify({ chit: { chit_id: 'r2', purpose: 'general', business_json: { kind: 'payment_received', payment_received: { party: { identity_id: CUST }, amount: 1, mode: 'cash', at: 'not a date' } } }, entry: {}, setting: S }).kind, 'queue');
+  eq('an expense chit with no usable date is queued (CBPosting refuses an undated event)', K.classify({ chit: { chit_id: 'c6b', purpose: 'expense', business_json: { expense: { what: 'x', mode: 'Cash', amount: 1 } } }, entry: {}, setting: S }).kind, 'queue');
+  if (X.src.dir) {
+    const tb = K.classify(bill({ customer: { name: 'Ravi', identity_id: CUST }, terms: { credit_days: 7, due_date: '2026-10-06' }, credit_override: { by: 'owner' }, payment: { parts: [{ how: 'On credit', amount: 118 }] } }));
+    eq('a credit bill carries the counter\'s own terms: due 6 Oct, the customer by identity_id', [tb.event.type, tb.event.party, tb.event.due_date, tb.event.paid], ['sale_bill', CUST, '2026-10-06', {}]);
+    /* end to end through the hook: the payment chit records ONE payment, and a replay records none */
+    const TCp = require(path.join(H.API, 'lib', 'tax-copy')); const was = TCp.copyOf;
+    TCp.copyOf = async () => ({ chit_id: 'r9', purpose: 'general', created_at: '2026-09-29T05:00:00Z', business_json: { kind: 'payment_received', payment_received: { no: 'R/C1/0009', at: '2026-09-29T05:00:00Z', party: { identity_id: CUST }, amount: 100, currency: 'INR', mode: 'Cash' } } });
+    await X.store.saveSetting(X.db, SHOP, { enabled: true }); await X.B.enable(X.db, SHOP, { by: SHOP, today: '2026-09-29' }); K.forget(SHOP);
+    X.T.parties.push({ owner: SHOP, party_id: CUST, name: 'Ravi', customer: true });
+    const h1 = await K.postChit(SHOP, 'r9', {}); const h2 = await K.postChit(SHOP, 'r9', {});
+    eq('…through the hook: one payment row, one entry; the replay is a duplicate', [X.T.payments.length, h1.payment && h1.payment.status, h1.posted && h1.posted.ok, h2.payment && h2.payment.duplicate, X.T.entries.filter((e) => e.event_type === 'payment_received').length], [1, 'recorded', true, true, 1]);
+    TCp.copyOf = was; await X.store.saveSetting(X.db, SHOP, { enabled: false }); K.forget(SHOP);
+  }
+  eq('an order (a promise) posts nothing', K.classify({ chit: { chit_id: 'c9', created_at: '2026-09-29T05:00:00Z', purpose: 'order', business_json: {} }, entry: { sells: true, invoice: inv([[5, 10, 0.25]], 10.5) }, setting: S }).kind, 'none');
   eq('a week summary posts nothing', K.classify({ chit: { purpose: 'general', business_json: { summary: { period: 'week' } } }, entry: {}, setting: S }).kind, 'none');
 
   /* ── a failed post NEVER fails the chit ── */
