@@ -86,6 +86,8 @@ function create() {
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { return clone(T.items.filter((i) => i.entity_id === e && (!party || i.party_id === party) && (!account || i.account_id === account))); },
+    async itemOwners(db, e, account, refs) { const seen = new Set(), out = []; T.items.filter((i) => i.entity_id === e && i.account_id === account && i.ref === i.against_ref && (refs || []).indexOf(i.ref) >= 0)
+      .forEach((i) => { const k = i.ref + '|' + i.party_id; if (!seen.has(k)) { seen.add(k); out.push({ ref: i.ref, party_id: i.party_id }); } }); return out; },
     async itemTotals(db, e, account) { const m = {}; T.items.filter((i) => i.entity_id === e && i.account_id === account).forEach((i) => { m[i.party_id] = (m[i.party_id] || 0) + i.amount_minor; }); return Object.keys(m).map((k) => ({ party_id: k, total_minor: m[k] })); },
     async accountNet(db, e, account) { let n = 0; T.balances.forEach((b) => { if (b.entity_id === e && b.account_id === account && b.party_key === ZERO) n += b.dr_minor - b.cr_minor; }); return n; },
     async insertPayment(db, e, p) {

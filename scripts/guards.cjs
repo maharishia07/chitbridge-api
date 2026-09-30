@@ -180,6 +180,7 @@ const GUARDS = [
   'books-hooks.test.cjs',       // ⭐⭐ what a chit posts — and a failed post NEVER fails the chit (parked, named)
   'books-routes.test.cjs',      // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
   'books-tally.test.cjs',       // ⭐⭐ the pack's Tally files come from the connector's adapter — one Tally writer, Receipt byte-identical
+  'books-fixes.test.cjs',       // ⭐⭐⭐ the red-team findings of 2026-09-30 (M1–M12), each held by a check that was red before its fix
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

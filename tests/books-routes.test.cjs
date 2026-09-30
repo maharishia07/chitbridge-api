@@ -53,7 +53,9 @@ const call = (port, method, p, body) => new Promise((done) => {
   for (const [m, p] of ROUTES) { const r = await q(m, p, {}); if (r.status !== 404) offs.push(m + ' ' + p + ' → ' + r.status); }
   ok('books OFF: all ' + ROUTES.length + ' routes answer 404 (the web\'s Ledger door stays shut)', offs.length === 0, offs.join(' · '));
   const st = await q('GET', '/status');
-  ok('GET /status answers while off (owner): not migrated, not enabled', st.status === 200 && st.body.enabled === false && st.body.migrated === false, JSON.stringify(st.body));
+  /* MOVED 2026-09-30 (critic M1): this asserted `migrated === false` for a shop with NO ROW — the very confusion that made the
+     switch impossible to turn on. No row = off, tables there. "Not migrated" (42P01 only) is held in tests/books-fixes.test.cjs. */
+  ok('GET /status answers while off (owner): the tables are there, this shop is not enabled', st.status === 200 && st.body.enabled === false && st.body.migrated === true, JSON.stringify(st.body));
   WHO = STAFF; ok('…and refuses a co-assist (403)', (await q('GET', '/status')).status === 403); ok('POST /enable refuses a co-assist', (await q('POST', '/enable')).status === 403); WHO = OWNER;
 
   if (!X.src.dir) { console.log('\n   SKIP the "on" half: ' + X.src.why); srv.close(); return done(); }

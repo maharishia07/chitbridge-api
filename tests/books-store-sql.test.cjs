@@ -37,7 +37,7 @@ const CALLS = {
   addBalances: [E, [{ account_id: U, currency: 'INR', fiscal_year: '2026-27', period: 1, dr_minor: 1, cr_minor: 0, line_count: 1 }]],
   insertItems: [E, [{ party_id: U, account_id: U, side: 'receivable', ref: 'r', against_ref: 'r', ref_kind: 'bill', amount_minor: 1, currency: 'INR' }]],
   periodSums: [E, '2026-27', 0, 5, true], lineSums: [E, '2026-04-01', '2026-04-30', true], firstYear: [E], balanceDrift: [E], unbalancedEntries: [E],
-  items: [E, U, U], itemTotals: [E, U], accountNet: [E, U],
+  items: [E, U, U], itemOwners: [E, U, ['r1', 'r2']], itemTotals: [E, U], accountNet: [E, U],
   insertPayment: [E, { party_id: U, direction: 'in', amount_minor: 1, currency: 'INR', mode: 'cash', received_at: '2026-04-01', client_ref: 'c1' }], payment: [E, U],
   queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], outboxDone: [E, 1, false, 'why'], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'],
   terms: [E, U, 'customer'], parties: [E], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
