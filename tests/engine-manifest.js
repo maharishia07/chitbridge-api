@@ -373,6 +373,9 @@ const ENGINE_OTHER = [
      party-fields.js — the party master's field rules and the duplicate-tax-id refusal. CB's own decisions, not an
      outside standard's; the debit/credit rules themselves stay in CBPosting. (2026-09-29) */
   'books.js', 'books-hooks.js', 'party-fields.js',
+  /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
+     tools/adopt.cjs, never edited here: the chart and roles, the debit/credit rules, open items, the reads, the pack. */
+  'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'bookpack.js',
   /**
    * ⭐⭐⭐ [capability: sign-in] identity-auth.js — CB's own decision about who needs an OTP and who needs a
    * PIN, extracted 2026-09-23 when routes/entities.js and routes/actors.js were found each answering that
