@@ -326,6 +326,29 @@ it('On credit is offered only for ONE known customer, and a credit bill without 
   assert.ok(/if \(!cust\) \{ say\('On credit needs a customer/.test(PAGE), 'finish() lets a credit bill through with nobody on it');
   assert.ok(/return hits\.length === 1 \? hits\[0\] : null;/.test(body(PAGE, 'function custKnown(').text), 'custKnown() no longer insists on exactly one match');
 });
+/**
+ * ⚠️⚠️ 2026-09-30 (review M5): both controls were offered to a shop whose ledger is OFF — the server posts nothing, so
+ * the debt existed only as words on a chit. The snapshot says whether it is on; ONE function reads that, and every
+ * control asks it. A second reader of the flag, or a control that asks custKnown() directly, fails here by name.
+ */
+it('On credit and Received need the shop\'s ledger ON — one reader of the flag, asked by every control', () => {
+  const on = body(PAGE, 'function booksOn(');
+  assert.ok(/snap\.books === true \|\| \(snap\.shop && snap\.shop\.books === true\) \|\| \(snap\.settings && snap\.settings\.books === true\)/.test(on.text), 'booksOn() no longer reads the snapshot\'s flag (top level, shop, settings)');
+  assert.ok(/function creditCust\(\)\{ return booksOn\(\) \? custKnown\(\) : null; \}/.test(PAGE), 'creditCust() no longer asks booksOn()');
+  const others = outside(PAGE, /\.books === true/, on);
+  assert.deepStrictEqual(others, [], 'a second reader of the ledger flag:\n      ' + others.join('\n      '));
+  assert.ok(/var credCust = creditCust\(\);/.test(PAGE), 'the On credit tender is offered without asking whether the ledger is on');
+  assert.ok(/var c = creditCust\(\);\n  b\.hidden = !c;/.test(body(PAGE, 'function paintRcvPayBtn(').text), 'Received is shown without asking whether the ledger is on');
+  assert.ok(/if \(!booksOn\(\)\) \{ say\(/.test(body(PAGE, 'function rcvPayOpen(').text), 'rcvPayOpen() opens with the ledger off');
+  assert.ok(/var c = creditCust\(\); if \(!c\) return;/.test(body(PAGE, 'async function rcvPaySave(').text), 'rcvPaySave() records with the ledger off');
+  assert.ok(/if \(credit\) \{\n[^\n]*\n    if \(!booksOn\(\)\) \{ say\(/.test(PAGE), 'finish() lets a credit bill through with the ledger off');
+});
+it('the offline limit counts credit bills not yet confirmed sent, whatever the snapshot\'s age (review F4)', () => {
+  const c = body(PAGE, 'async function creditSinceRefresh(');
+  assert.ok(/<= snapAt && !unsent\(b\)\) return;/.test(c.text), 'a bill older than the snapshot is dropped even when it never reached the shop');
+  const u = body(PAGE, 'async function creditUnsentTest(');
+  assert.ok(/queue_kinds\.oldest/.test(u.text) && /!b\._sent/.test(u.text), 'unsent is no longer read from the program\'s queue / the _sent stamp');
+});
 it('over the limit, only the OWNER\'s counter PIN allows it', () => {
   const o = body(PAGE, 'async function ownerApprove(');
   assert.ok(/e\.kind === 'entity'/.test(o.text), 'the override is no longer limited to the owner');

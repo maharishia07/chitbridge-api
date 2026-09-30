@@ -6386,6 +6386,19 @@ function custKnown(){
   if (!hits.length && nm) hits = list.filter(function(c){ return c && c.identity_id && String(c.name || '').trim().toLowerCase() === nm; });
   return hits.length === 1 ? hits[0] : null;
 }
+/**
+ * ⚠️⚠️ THE SHOP'S LEDGER MUST BE ON (2026-09-30, review M5). On credit and Received were offered to any shop with a
+ * known customer — with the ledger off the server posts nothing, so the debt existed only as words on a chit while the
+ * counter said "on Kumar's account". The snapshot says whether the ledger is on (routes/till.js: books: true), and
+ * it is kept WITH the snapshot, so the answer is the same with the line down. Absent or false = off: neither is shown.
+ * ⭐ ONE reader of the flag. Every control asks booksOn() or creditCust(); nothing else looks at the snapshot for it.
+ */
+function booksOn(){
+  var snap = S;
+  return !!(snap && (snap.books === true || (snap.shop && snap.shop.books === true) || (snap.settings && snap.settings.books === true)));
+}
+/** the customer credit and money received may be recorded against: a KNOWN one, in a shop whose ledger is on */
+function creditCust(){ return booksOn() ? custKnown() : null; }
 /** minor units → the amount, in the shop's own currency's decimals (the money engine's rule, never a hard-coded 100) */
 function booksMajor(minor){
   var cur = (S && S.shop && S.shop.currency) || 'INR';
@@ -6419,16 +6432,34 @@ function creditLimitCheck(c, amount){
  * from the same morning made it ₹1,145.) So the counter adds its OWN credit bills since the snapshot. Money received
  * is NOT subtracted here — a cheque may bounce, and the server applies payments; erring towards asking the owner.
  */
+/**
+ * ⚠️⚠️ AND A BILL STILL WAITING TO BE SENT IS IN NO SNAPSHOT, HOWEVER NEW (2026-09-30, review F4). Three credit bills made
+ * offline, the line returns, the snapshot is read again BEFORE the queue drains: those bills are now older than the
+ * snapshot and the server has never seen them — so they fell out of this sum and the fourth bill passed the limit.
+ * A bill not yet confirmed sent is counted whatever its date.
+ *   · this device's own store: a bill carries _sent once the shop acknowledged it (drain)
+ *   · the shop PC: the program's queue is in order, so anything at or after its oldest waiting row is unsent
+ * Both err towards asking the owner, never towards letting it through.
+ */
+async function creditUnsentTest(){
+  if (typeof AgentHost !== 'undefined' && HOST === AgentHost) {
+    var oldest = null;
+    try { var st = await HOST.state(); oldest = (st && st.queue_kinds && st.queue_kinds.oldest) || null; } catch (_) { oldest = null; }
+    return function(b){ return !!oldest && String(b.at || '') >= String(oldest); };
+  }
+  return function(b){ return !b._sent && !b._absorbed; };
+}
 var CREDIT_SINCE = {};
 async function creditSinceRefresh(c){
   if (!c || !c.identity_id || !HOST) return 0;
   var snapAt = String((S && S.at) || '');
   var bills = [];
   try { bills = (HOST.local ? await HOST.local(30) : await HOST.bills()) || []; } catch (_) { bills = []; }
+  var unsent = await creditUnsentTest();
   var owed = 0;
   bills.forEach(function(b){
     if (!b || !b.customer || b.customer.identity_id !== c.identity_id) return;
-    if (snapAt && String(b.at || '') <= snapAt) return;
+    if (snapAt && String(b.at || '') <= snapAt && !unsent(b)) return;
     (b.payments || []).forEach(function(p){ if (p && p.how === 'On credit') owed = r2(owed + (Number(p.amount) || 0)); });
   });
   CREDIT_SINCE[c.identity_id] = owed;
@@ -6469,11 +6500,12 @@ async function ownerApprove(chk){
  */
 function paintRcvPayBtn(){
   var b = document.getElementById('rcvpaybtn'); if (!b) return;
-  var c = custKnown();
+  var c = creditCust();
   b.hidden = !c;
   if (c) b.title = 'Money received from ' + c.name + ' — the shop matches it to the oldest bills first';
 }
 function rcvPayOpen(){
+  if (!booksOn()) { say('The shop’s Ledger is off.\n\nNothing was recorded. The owner turns it on in the app.'); return; }
   var c = custKnown();
   if (!c) { say('Choose a customer the shop knows first — a payment has to land on somebody’s account.'); return; }
   var d = document.getElementById('rcvpaydlg'); if (!d) return;
@@ -6499,7 +6531,7 @@ function rcvPayOpen(){
  * confirms the matching. ⚠️ Never a local copy of the matching rule: advisory here, decided on the server.
  */
 function rcvPayPropose(){
-  var c = custKnown(), box = document.getElementById('rp_prop'); if (!box || !c) return;
+  var c = creditCust(), box = document.getElementById('rp_prop'); if (!box || !c) return;
   var mode = (document.getElementById('rp_mode') || {}).value || 'cash';
   var chq = document.getElementById('rp_chq'); if (chq) chq.hidden = mode !== 'cheque';
   var amt = Number((document.getElementById('rp_amt') || {}).value) || 0;
@@ -6527,7 +6559,7 @@ function rcvPayPropose(){
     + (open.length > 4 ? ' …' : '') + '. <span class="u">The shop matches it when it arrives.</span>';
 }
 async function rcvPaySave(){
-  var c = custKnown(); if (!c) return;
+  var c = creditCust(); if (!c) return;
   var amt = r2(Number((document.getElementById('rp_amt') || {}).value) || 0);
   if (!(amt > 0)) { say('Type the amount received.'); return; }
   var mode = (document.getElementById('rp_mode') || {}).value || 'cash';
@@ -19945,7 +19977,7 @@ function paintPays(){
   }
   /* ⭐ BOOKS v2 — ON CREDIT, only when exactly one known customer is on the bill (custKnown). A credit bill addressed
      to "Walk-in" is money nobody can be asked for. Deselected if the customer is cleared while it was picked. */
-  var credCust = custKnown();
+  var credCust = creditCust();
   if (credCust) ways.push({ id:'credit', label:'On credit' });
   else if (PICKED === 'On credit') PICKED = ways[0].label;
   /* ⚠️ the credit this counter gave since the snapshot, read once in the background (see creditSinceRefresh) */
@@ -20027,6 +20059,8 @@ async function finish(){
   /* ⭐ BOOKS v2 — a known customer rides the bill BY ID; On credit is what is left after any parts already taken */
   var cust = custKnown(), credit = PICKED === 'On credit', override = null;
   if (credit) {
+    /* ⚠️ a draft or a stale pick can still say On credit after the ledger went off — refused here, not only hidden */
+    if (!booksOn()) { say('The shop’s Ledger is off, so this cannot go On credit.\n\nTake it another way.'); return; }
     if (!cust) { say('On credit needs a customer the shop knows — choose them first.'); return; }
     var takenC = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
     var owedNow = r2(m.net - takenC);
@@ -20047,7 +20081,7 @@ async function finish(){
      */
     if (tendered > 0 && r2(m.net - tendered) >= 0.01) {
       say(money(r2(m.net - tendered)) + ' is still to take.\n\nTake the rest, or use "+ part" to take it another way'
-        + (custKnown() ? ', or put it On credit.' : '.'));
+        + (creditCust() ? ', or put it On credit.' : '.'));
       return;
     }
     parts = [{ how: PICKED, amount: Math.min(tendered || m.net, m.net) }];
