@@ -23749,7 +23749,16 @@ function usignPaint(){
       + '<p class="note u">Taking it here stops that device from sending. Anything it has already taken stays'
       + ' on it and goes when it signs in again — nothing is lost either way.</p>'
       + '<div class="dlgbtns"><button class="pri" onclick="usignClose()">Leave it alone · Esc</button>'
-      + '<button data-testid="till-signin-takeover" onclick="USIGN.held=null;usignBecome(true)">Take counter ' + c + ' here</button></div>';
+      + '<button data-testid="till-signin-takeover" onclick="USIGN.held=null;usignBecome(true)">Take counter ' + c + ' here</button></div>'
+      /**
+       * ⚠️⚠️ A PHONE BESIDE A WORKING PC (2026-10-01). Athi, on a phone never paired: *"i couldn't login at all in
+       * the mobile."* A fresh browser always asks for C1, and C1 was open on the shop's own PC — so the only two
+       * ways on were "nobody signed in" or knocking the PC off. The third is the one he wanted: this device as
+       * ANOTHER counter, with its own numbers. The PC is not touched. Browser only — the shop PC's program
+       * claims its own number.
+       */
+      + (onAgent() ? '' : '<div class="dlgbtns"><button data-testid="till-usign-newcounter" onclick="usignNewCounter()">'
+         + 'Open as another counter</button></div><p class="note u">Its own bill numbers. ' + c + ' stays where it is.</p>');
     body.innerHTML = h; return;
   }
 
@@ -23812,7 +23821,9 @@ function usignPaint(){
        network-minted store is issued a user_id and no email at all. */
     h = '<p class="note">' + esc(SIGN().say({})) + '</p>'
       + '<div class="srow"><span>You are</span>'
+      /* ⚠️ a phone keyboard capitalises and "corrects" what it does not know — a user ID is not a word (2026-10-01) */
       + '<input id="usign_who" data-testid="till-usign-who" autocomplete="username" placeholder="user ID or email"'
+      + ' autocapitalize="none" autocorrect="off" spellcheck="false"'
       + ' value="' + esc(USIGN.who || '') + '" onkeydown="if(event.key===\'Enter\')usignAsk()"></div>'
       + (USIGN.refused ? '<p class="note bad" data-testid="till-usign-why">' + esc(USIGN.refused) + '</p>' : '')
       + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-ask" onclick="usignAsk()">Send me a code</button>'
@@ -23929,16 +23940,26 @@ function usignShopMove(answer){
  * Spends the pending session on becomeShop(). A counter number held elsewhere is a DECISION, not an error
  * ([TILL-138]) — it is asked on the dialog's own 'held' stage, where leaving it alone is the default button.
  */
-async function usignBecome(takeover){
+async function usignBecome(takeover, counter){
   var p = USIGN.pending; if (!p) return;
   USIGN.busy = true; usignPaint();
-  var r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover });
+  var r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover, counter: counter || null });
   USIGN.busy = false;
   if (r && r.held) { USIGN.held = r; usignPaint(); return; }
   if (!r || !r.ok) { USIGN.pending = null; USIGN.held = null;
                      USIGN.refused = (r && r.message) || 'Signed in, but the shop did not issue a counter key.'; usignPaint(); return; }
   USIGN.opening = (r.shop && (r.shop.name || r.shop.bridge_id)) || 'your shop';
   usignPaint();                                   /* "Opening …" — the reload or the restart follows */
+}
+/** the held stage's third way: a free counter number for this browser, then the same enrol — the holder untouched */
+async function usignNewCounter(){
+  var p = USIGN.pending; if (!p) return;
+  var not = USIGN.held && USIGN.held.counter;
+  USIGN.busy = true;
+  var f = await counterFree(p.token, not);
+  USIGN.busy = false; USIGN.held = null;
+  if (!f.ok) { USIGN.pending = null; USIGN.refused = f.message; usignPaint(); return; }
+  return usignBecome(false, f.id);
 }
 
 function onAgent(){ return typeof AgentHost !== 'undefined' && HOST === AgentHost; }
@@ -23983,9 +24004,11 @@ async function becomeShop(to){
   }
   var key = to.key || null, shop = null;
   if (to.token) {
-    var en = await enrolBrowser(to.token, to.takeover);
+    var en = await enrolBrowser(to.token, to.takeover, to.counter);
     if (!en.ok) return en;
     key = en.key; shop = en.shop;
+    /* ⭐ the counter number the shop gave THIS browser — a device value, read by the next start-up's claim */
+    if (en.counter && String(en.counter).toUpperCase() !== String(tillId()).toUpperCase()) ls.set('cb_till_id', String(en.counter).toUpperCase());
   }
   var same = !!key && key === CloudHost.key;
   try { if (key) ls.set('cb_till_key', key); else { if (ls.del) ls.del('cb_till_key'); localStorage.removeItem('cb_till_key'); } } catch (_) {}
@@ -23999,19 +24022,49 @@ async function becomeShop(to){
 }
 
 /** the browser's half of an enrol: a session in, this shop's key out. Held elsewhere is reported, not decided. */
-async function enrolBrowser(token, takeover){
+async function enrolBrowser(token, takeover, counter){
+  var id = counter || tillId();
   var r = await fetchBy(CloudHost.api + '/api/till/enrol', { method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ name: 'Browser counter', counter: tillId(), takeover: !!takeover }) })
+    body: JSON.stringify({ name: 'Browser counter', counter: id, takeover: !!takeover }) })
     .then(function(x){ return x.json().then(function(j){ return { status: x.status, ok: x.ok, body: j }; }); })
     .catch(function(){ return { status: 0, ok: false, body: {} }; });
   if (!r.ok && r.status === 409 && r.body && r.body.code === 'COUNTER_HELD') {
     var c = r.body.counter || {};
-    return { ok: false, held: true, counter: c.id || tillId(), held_by: (c.held_by && c.held_by.name) || null, seen: c.seen || null };
+    return { ok: false, held: true, counter: c.id || id, held_by: (c.held_by && c.held_by.name) || null, seen: c.seen || null };
+  }
+  /**
+   * ⚠️⚠️ NO COUNTER BY THAT NUMBER — a shop that has never opened one has none at all, and a fresh browser always
+   * asks for C1 (2026-10-01, a phone: "Signed in, but the shop did not issue a counter key. There is no counter C1
+   * in this shop."). Nobody holds anything, so there is nothing to decide: ask the shop for a free one, once.
+   * ⚠️ And the code has been SPENT by now — sending the person back to type 123456 again could only be refused.
+   */
+  if (!r.ok && r.status === 404 && !counter) {
+    var f = await counterFree(token, null);
+    if (f.ok) return enrolBrowser(token, takeover, f.id);
+    return { ok: false, message: 'Signed in, but the shop did not issue a counter key. ' + f.message };
   }
   if (!r.ok || !r.body || !r.body.key)
     return { ok: false, message: 'Signed in, but the shop did not issue a counter key.' + (r.body && r.body.message ? ' ' + r.body.message : '') };
-  return { ok: true, key: r.body.key, shop: r.body.shop || null };
+  return { ok: true, key: r.body.key, shop: r.body.shop || null, counter: r.body.counter || id };
+}
+/**
+ * ⭐ A COUNTER NUMBER THIS SHOP CAN GIVE A NEW BROWSER — the lowest one no device holds, else a new one. The same
+ * /api/counters the back office uses (session only: the sign-in's token is still in hand here, and only here).
+ * `not` is the number just refused as held, never offered back.
+ */
+async function counterFree(token, not){
+  var h = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+  var read = function(x){ return x.json().then(function(j){ return { ok: x.ok, body: j || {} }; }, function(){ return { ok: x.ok, body: {} }; }); };
+  var none = function(){ return { ok: false, body: {} }; };
+  var l = await fetchBy(CloudHost.api + '/api/counters', { headers: h }).then(read).catch(none);
+  var free = ((l.body && l.body.counters) || []).filter(function(c){
+    return c && c.id && c.state === 'closed' && String(c.id).toUpperCase() !== String(not || '').toUpperCase(); })[0];
+  if (free) return { ok: true, id: String(free.id).toUpperCase() };
+  var m = await fetchBy(CloudHost.api + '/api/counters', { method: 'POST', headers: h, body: JSON.stringify({ name: 'Browser counter' }) })
+    .then(read).catch(none);
+  if (m.ok && m.body.counter && m.body.counter.id) return { ok: true, id: String(m.body.counter.id).toUpperCase() };
+  return { ok: false, message: (m.body && m.body.message) || 'The shop could not give this device a counter number. Check the line and try again.' };
 }
 
 /**
