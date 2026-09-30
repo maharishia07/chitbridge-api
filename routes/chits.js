@@ -259,8 +259,12 @@ router.post('/send',
          ⭐ 'subscription' — a recurring commitment sold at the counter (a delivery run, an AMC): the money is
          taken like an ordinary sale (no rollup change needed — it is not 'credit_note'/'expense', so it falls
          through to the normal sale bucket, correctly), but it is its own document, in its own numbered series
-         (docnumber.js KINDS.subscription), same reasoning as the two above. */
-      .isIn(['order','invoice','receipt','inquiry','delivery_note','general','credit_note','expense','subscription'])
+         (docnumber.js KINDS.subscription), same reasoning as the two above.
+         ⭐ 'income' (SPEC-books-v2 §3, 2026-09-29) — money that comes IN and is not a sale (commission, rent received,
+         scrap): the mirror of 'expense', business_json.income = { what, mode, amount, class }. Posted by class (4210+)
+         when the shop's ledger is on (lib/books-hooks.js). ⚠️ The counter's rollup (engine rollup.js v1.5.0) does not
+         know it yet and would count it as a sale — no counter sends one until engines v1.8.0 teaches rollup isIncome. */
+      .isIn(['order','invoice','receipt','inquiry','delivery_note','general','credit_note','expense','income','subscription'])
       .withMessage('Invalid purpose'),
     body('manual_subject').optional().trim().isLength({ max: 500 }),
     // Per-send copy choice — honoured ONLY on a pure self-chit (see the pureSelfChit branch); ignored elsewhere.
@@ -1412,6 +1416,23 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
               } catch (_) {}
             })
             .catch(() => {});   /* postFor already never rejects; this is belt and braces on the hot path */
+        } catch (_) {}
+      }
+
+      /**
+       * ⭐⭐ THE LEDGER HEARS ABOUT IT (SPEC-books-v2 §3) — AFTER the commit, never awaited, never able to fail the chit:
+       * lib/books-hooks.afterChit swallows everything and parks what cannot post in books_outbox, named. Off (the
+       * default) it is one cached read. Each side that holds a copy posts its OWN view: the sender, and every 'to'
+       * receiver (a supplier's invoice is the receiving shop's purchase).
+       */
+      if (!is_draft) {
+        try {
+          const hooks = require('../lib/books-hooks');
+          const who = req.identity && req.identity.identity_id;
+          setImmediate(() => {
+            hooks.afterChit(sender_id, chit_id, who);
+            for (const r of receiverDetails) if (r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)) hooks.afterChit(r.entity_id, chit_id, null);
+          });
         } catch (_) {}
       }
 

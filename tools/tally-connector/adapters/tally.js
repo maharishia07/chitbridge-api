@@ -53,6 +53,25 @@ const STATES = { '01': 'Jammu & Kashmir', '02': 'Himachal Pradesh', '03': 'Punja
 function stateName(code) { const c = String(code || '').padStart(2, '0'); return STATES[c] || String(code || ''); }
 /** the party ledger a registered buyer books under — their legal name, so the ledger reads as the ledger they would keep for us */
 function partyLedgerName(buyer) { return String(buyer.name || buyer.gstin || 'Customer').trim().slice(0, 60); }
+/**
+ * ⭐ ONE BUILDER FOR A PARTY'S LEDGER MASTER (2026-09-29): a buyer under Sundry Debtors, a supplier under Sundry Creditors,
+ * bill-wise on, GSTIN · registration type · state · mailing address. ensureParty and ensureSupplier build theirs here, and so
+ * does the ledger pack (lib/books-tally.js) — one writer of a Tally party master, not two. A party with no GSTIN is
+ * Unregistered (ensureParty only ever passes a registered buyer, so its output is unchanged).
+ */
+/** a plain ledger master under its Tally group (a GST duty head when it is one) — ensure() and the ledger pack build theirs here */
+function ledgerMasterXML(n, g, duty) {
+  return `<LEDGER NAME="${esc(n)}" ACTION="Create"><NAME.LIST><NAME>${esc(n)}</NAME></NAME.LIST><PARENT>${esc(g)}</PARENT>${g === 'Bank Accounts' || g === 'Sundry Debtors' ? '<ISBILLWISEON>Yes</ISBILLWISEON>' : ''}${duty ? '<TAXTYPE>GST</TAXTYPE><GSTDUTYHEAD>' + esc(duty) + '</GSTDUTYHEAD>' : ''}</LEDGER>`;
+}
+function partyLedgerXML(p, parent) {
+  const name = partyLedgerName(p), st = stateName(p.state_code);
+  const addr = [p.addr, p.loc].filter(Boolean).map((a) => '<ADDRESS>' + esc(a) + '</ADDRESS>').join('');
+  const gst = p.gstin ? '<PARTYGSTIN>' + esc(p.gstin) + '</PARTYGSTIN><GSTREGISTRATIONTYPE>' + esc(p.reg_type || 'Regular') + '</GSTREGISTRATIONTYPE>' : '<GSTREGISTRATIONTYPE>Unregistered</GSTREGISTRATIONTYPE>';
+  return `<LEDGER NAME="${esc(name)}" ACTION="Create"><NAME.LIST><NAME>${esc(name)}</NAME></NAME.LIST><PARENT>${esc(parent)}</PARENT><ISBILLWISEON>Yes</ISBILLWISEON>
+${gst}<LEDSTATENAME>${esc(st)}</LEDSTATENAME><COUNTRYNAME>India</COUNTRYNAME>
+<LEDGERMAILINGDETAILS.LIST><APPLICABLEFROM>${ymd(new Date(new Date().getFullYear() - (new Date().getMonth() < 3 ? 1 : 0), 3, 1))}</APPLICABLEFROM><MAILINGNAME>${esc(name)}</MAILINGNAME>${addr ? '<ADDRESS.LIST>' + addr + '</ADDRESS.LIST>' : ''}<STATE>${esc(st)}</STATE><COUNTRY>India</COUNTRY>${p.pin ? '<PINCODE>' + esc(p.pin) + '</PINCODE>' : ''}</LEDGERMAILINGDETAILS.LIST>
+</LEDGER>`;
+}
 
 /** the offers that shaped the lines, for the accountant's eye — Tally has no field for them, the narration carries the names */
 function offerNote(order) {
@@ -196,7 +215,7 @@ module.exports = function tallyAdapter(cfg) {
       if (/buyer|both/.test(String(opt.role || cfg.role || 'seller'))) { const I = opt.inputTaxLedgers || {}; want.push([opt.purchaseLedger || 'Purchase', 'Purchase Accounts'], [I.cgst || 'Input CGST', 'Duties & Taxes', 'CGST'], [I.sgst || 'Input SGST', 'Duties & Taxes', 'SGST/UTGST'], [I.igst || 'Input IGST', 'Duties & Taxes', 'IGST']); }
       const missing = want.filter(([n]) => !have.has(String(n).toLowerCase()));
       if (!missing.length) return { existing: want.map((w) => w[0]), created: [] };
-      const masters = missing.map(([n, g, duty]) => `<LEDGER NAME="${esc(n)}" ACTION="Create"><NAME.LIST><NAME>${esc(n)}</NAME></NAME.LIST><PARENT>${esc(g)}</PARENT>${g === 'Bank Accounts' || g === 'Sundry Debtors' ? '<ISBILLWISEON>Yes</ISBILLWISEON>' : ''}${duty ? '<TAXTYPE>GST</TAXTYPE><GSTDUTYHEAD>' + esc(duty) + '</GSTDUTYHEAD>' : ''}</LEDGER>`).join('\n');
+      const masters = missing.map(([n, g, duty]) => ledgerMasterXML(n, g, duty)).join('\n');
       const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>All Masters</REPORTNAME><STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">\n${masters}\n</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
       if (dry) { log('[dry] ledger masters:\n' + xml); return { existing: want.map((w) => w[0]).filter((n) => have.has(n.toLowerCase())), created: [], would_create: missing.map((m) => m[0] + ' (' + m[1] + ')') }; }
       const res = await post(xml);
@@ -215,13 +234,8 @@ module.exports = function tallyAdapter(cfg) {
       const req = `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBLed1</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="CBLed1" ISMODIFY="No"><TYPE>Ledger</TYPE><FETCH>NAME, PARENT, PARTYGSTIN</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
       const have = tags('LEDGER', dataOf(await post(req))).map((l) => unesc(tag('NAME', l)).trim().toLowerCase());
       if (have.includes(name.toLowerCase())) return { name, created: null };
-      const st = stateName(buyer.state_code);
-      const addr = [buyer.addr, buyer.loc].filter(Boolean).map((a) => '<ADDRESS>' + esc(a) + '</ADDRESS>').join('');
       const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>All Masters</REPORTNAME><STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
-<LEDGER NAME="${esc(name)}" ACTION="Create"><NAME.LIST><NAME>${esc(name)}</NAME></NAME.LIST><PARENT>Sundry Debtors</PARENT><ISBILLWISEON>Yes</ISBILLWISEON>
-<PARTYGSTIN>${esc(buyer.gstin)}</PARTYGSTIN><GSTREGISTRATIONTYPE>${esc(buyer.reg_type || 'Regular')}</GSTREGISTRATIONTYPE><LEDSTATENAME>${esc(st)}</LEDSTATENAME><COUNTRYNAME>India</COUNTRYNAME>
-<LEDGERMAILINGDETAILS.LIST><APPLICABLEFROM>${ymd(new Date(new Date().getFullYear() - (new Date().getMonth() < 3 ? 1 : 0), 3, 1))}</APPLICABLEFROM><MAILINGNAME>${esc(name)}</MAILINGNAME>${addr ? '<ADDRESS.LIST>' + addr + '</ADDRESS.LIST>' : ''}<STATE>${esc(st)}</STATE><COUNTRY>India</COUNTRY>${buyer.pin ? '<PINCODE>' + esc(buyer.pin) + '</PINCODE>' : ''}</LEDGERMAILINGDETAILS.LIST>
-</LEDGER></TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+${partyLedgerXML(buyer, 'Sundry Debtors')}</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
       if (dry) { log('[dry] party ledger:\n' + xml); return { name, created: null, would_create: name }; }
       const res = await post(xml);
       const created = num(tag('CREATED', res)) || 0, errors = num(tag('ERRORS', res)) || 0;
@@ -235,13 +249,8 @@ module.exports = function tallyAdapter(cfg) {
       const req = `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>CBLed2</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="CBLed2" ISMODIFY="No"><TYPE>Ledger</TYPE><FETCH>NAME, PARENT</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`;
       const have = tags('LEDGER', dataOf(await post(req))).map((l) => unesc(tag('NAME', l)).trim().toLowerCase());
       if (have.includes(name.toLowerCase())) return { name, created: null };
-      const st = stateName(seller.state_code);
-      const addr = [seller.addr, seller.loc].filter(Boolean).map((a) => '<ADDRESS>' + esc(a) + '</ADDRESS>').join('');
       const xml = `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>All Masters</REPORTNAME><STATICVARIABLES>${opt.company ? '<SVCURRENTCOMPANY>' + esc(opt.company) + '</SVCURRENTCOMPANY>' : ''}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">
-<LEDGER NAME="${esc(name)}" ACTION="Create"><NAME.LIST><NAME>${esc(name)}</NAME></NAME.LIST><PARENT>Sundry Creditors</PARENT><ISBILLWISEON>Yes</ISBILLWISEON>
-${seller.gstin ? '<PARTYGSTIN>' + esc(seller.gstin) + '</PARTYGSTIN><GSTREGISTRATIONTYPE>' + esc(seller.reg_type || 'Regular') + '</GSTREGISTRATIONTYPE>' : '<GSTREGISTRATIONTYPE>Unregistered</GSTREGISTRATIONTYPE>'}<LEDSTATENAME>${esc(st)}</LEDSTATENAME><COUNTRYNAME>India</COUNTRYNAME>
-<LEDGERMAILINGDETAILS.LIST><APPLICABLEFROM>${ymd(new Date(new Date().getFullYear() - (new Date().getMonth() < 3 ? 1 : 0), 3, 1))}</APPLICABLEFROM><MAILINGNAME>${esc(name)}</MAILINGNAME>${addr ? '<ADDRESS.LIST>' + addr + '</ADDRESS.LIST>' : ''}<STATE>${esc(st)}</STATE><COUNTRY>India</COUNTRY>${seller.pin ? '<PINCODE>' + esc(seller.pin) + '</PINCODE>' : ''}</LEDGERMAILINGDETAILS.LIST>
-</LEDGER></TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
+${partyLedgerXML(seller, 'Sundry Creditors')}</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`;
       if (dry) { log('[dry] supplier ledger:\n' + xml); return { name, created: null, would_create: name }; }
       const res = await post(xml);
       const created = num(tag('CREATED', res)) || 0, errors = num(tag('ERRORS', res)) || 0;
@@ -337,6 +346,7 @@ ${taxLines}
       if (errors || !created) throw new Error('Tally refused the voucher: ' + (tag('LINEERROR', res) || res.slice(0, 160)));
       return { ref: tag('VCHID', res) || tag('LASTVCHID', res) || ('created:' + created) };
     },
-    _xml: { exportRequest, voucherXML, companyRequest },
+    /* the pure builders, for a caller that wants the XML without posting it (tests; the ledger pack, lib/books-tally.js) */
+    _xml: { exportRequest, voucherXML, companyRequest, receiptXML, partyLedgerXML, ledgerMasterXML },
   };
 };

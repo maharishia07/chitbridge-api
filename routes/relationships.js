@@ -10,6 +10,23 @@ const catalogueView  = require('../lib/catalogue-view');    // the SAME catalogu
 const catalogueBuild = require('../lib/catalogue-build');
 const customerGroups = require('../lib/customer-groups');   // the one segment expression + the viewer's groups
 const orderInput     = require('../lib/order-input');
+/* ⭐ SPEC-books-v2 §4: the party fields (legal name, party no, credit days/limit, state, tax ids) live ON these lists */
+const partyFields    = require('../lib/party-fields');
+const PARTY_KEYS     = ['legal_name', 'nickname', 'credit_days', 'credit_limit', 'credit_limit_minor', 'state_code', 'merged_into', 'tax_ids'];
+const hasParty = (b, side) => PARTY_KEYS.some((k) => k in (b || {}) && !(side === 'supplier' && k === 'nickname'));
+/** the party half of a PATCH: its own answer (404 / 409 / 400 in words) or null when the body carries none */
+async function partyPatch(req, res, side) {
+  if (!hasParty(req.body, side)) return null;
+  const owner = ctx(req);
+  try {
+    return await withEntity(owner, (db) => partyFields.patch(db, owner, side, req.params.id, req.body, req.identity && req.identity.identity_id));
+  } catch (e) {
+    if (e && e.code === 'DUPLICATE_PARTY') { res.status(409).json({ code: 'DUPLICATE_PARTY', error: e.message, message: e.message, holder: e.holder || null, scheme: e.scheme || null }); return false; }
+    if (e && e.status) { res.status(e.status).json({ error: e.status === 404 ? 'Not found' : (e.status === 409 ? 'Conflict' : 'validation'), message: e.message }); return false; }
+    if (e && e.code === '23505') { res.status(409).json({ code: 'DUPLICATE_PARTY', error: partyFields.DUPLICATE_PARTY, message: partyFields.DUPLICATE_PARTY }); return false; }
+    throw e;
+  }
+}
 
 // actors act in their parent entity's context
 const ctx = (req) => auth.entityOf(req);
@@ -176,6 +193,7 @@ router.get('/suppliers', auth, async (req, res) => {
         } catch (_) { o.for_you = []; }
       }));
     } catch (_) {}
+    await partyFields.decorate(withEntity, owner, rows, 'supplier_entity_id', 'supplier');
     res.json({ suppliers: rows, count: rows.length });
   } catch (err) {
     console.error('Get suppliers error:', err.message);
@@ -196,6 +214,8 @@ router.patch('/suppliers/:id',
   async (req, res) => {
     try {
       const owner = ctx(req);
+      const party = await partyPatch(req, res, 'supplier');
+      if (party === false) return;
       const sets = [], vals = []; let n = 1;
       if ('nickname'  in req.body) { sets.push(`nickname = $${n++}`);  vals.push(sanitise(req.body.nickname || '') || null); }
       if ('category'  in req.body) { sets.push(`category = $${n++}`);  vals.push(sanitise(req.body.category || '') || null); }
@@ -241,13 +261,14 @@ router.patch('/suppliers/:id',
         }
         if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm });
       }
+      if (!sets.length && party) return res.json({ message: 'Supplier updated', party });
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide nickname, category, notes, supply_kind, or preferred' });
       vals.push(req.params.id, owner);
       const r = await withEntity(owner, (db) => db.query(
         `UPDATE supplier_list SET ${sets.join(', ')}
          WHERE supplier_list_id = $${n++} AND owner_entity_id = $${n} RETURNING supplier_list_id`, vals));
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
-      res.json({ message: 'Supplier updated' });
+      res.json({ message: 'Supplier updated', ...(party ? { party } : {}) });
     } catch (err) {
       console.error('Update supplier error:', err.message);
       res.status(500).json({ error: 'Update failed', message: safeErr(err) });
@@ -460,6 +481,7 @@ router.get('/customers', auth, async (req, res) => {
        ORDER BY cl.last_txn_at DESC NULLS LAST`, [owner]));
     let r; try { r = await _run(); } catch (e) { if (e && e.code === '42703') { _g = false; r = await _run(); } else throw e; }
     const rows = (segment ? r.rows.filter(c => c.segment === segment) : r.rows).map((c) => Object.assign(c, { groups: Array.isArray(c.groups) ? c.groups : [] }));
+    await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
     res.json({ customers: rows, count: rows.length, groups_migrated: _g });
   } catch (err) {
     console.error('Get customers error:', err.message);
@@ -573,11 +595,17 @@ router.post('/customers/:id/groups', auth, async (req, res) => {
 
 // Manual segment override (optional)
 router.patch('/customers/:id',
-  [ body('segment_override').isIn(['high_value','regular','new','inactive']) ],
+  [ body('segment_override').optional().isIn(['high_value','regular','new','inactive']) ],
   validate, auth,
   async (req, res) => {
     try {
       const owner = ctx(req);
+      const party = await partyPatch(req, res, 'customer');
+      if (party === false) return;
+      if (!('segment_override' in (req.body || {}))) {
+        if (party) return res.json({ message: 'Customer updated', party });
+        return res.status(400).json({ error: 'Nothing to update', message: 'Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)' });
+      }
       const r = await withEntity(owner, (db) => db.query(
         `UPDATE customer_list SET segment_override = $1
          WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id`,

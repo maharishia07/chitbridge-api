@@ -223,6 +223,20 @@ function booksGate(c, policy) {
   if (at === 'completed') return st === 'completed' ? { go: true, why: 'completed' } : { go: false, why: 'waits for completion (state ' + (st || 'pending') + ')' };
   return { go: false, why: 'waits for "Send to books" on the Task' };
 }
+/**
+ * ⭐ THE B2B BLOCK OF AN ORDER (2026-09-05; one function since 2026-09-29 so the ledger pack builds the SAME Tally voucher the
+ * connector posts — lib/books-tally.js): the registered buyer, the place of supply and the tax split, all from the invoice.
+ * null for a buyer without a GSTIN (a walk-in books as before).
+ */
+function b2bOf(inv, order) {
+  const b = (inv && inv.invoice && inv.invoice.BuyerDtls) || {};
+  if (!b.Gstin) return null;
+  const h = (inv.heads) || {}; const cbx = (inv.invoice && inv.invoice._cb) || {};
+  return { buyer: { name: b.LglNm || b.TrdNm || order.buyer, gstin: b.Gstin, state_code: b.State || String(b.Gstin).slice(0, 2), addr: [b.Addr1, b.Addr2].filter(Boolean).join(', '), loc: b.Loc || '', pin: b.Pin || '', reg_type: 'Regular' },
+           place_of_supply: b.Pos || cbx.place_of_supply || b.State || String(b.Gstin).slice(0, 2), supply: cbx.supply || null,
+           taxes: { cgst: Number(h.cgst) || 0, sgst: Number(h.sgst) || 0, igst: Number(h.igst) || 0, cess: Number(h.cess) || 0 }, taxable: Number(h.taxable) || 0, total: Number(h.total) || order.total,
+           items: ((inv.invoice && inv.invoice.ItemList) || []).map((it) => ({ name: it.PrdDesc, hsn: it.HsnCd, rate: Number(it.GstRt) || 0, ass: Number(it.AssAmt) || 0, cgst: Number(it.CgstAmt) || 0, sgst: Number(it.SgstAmt) || 0, igst: Number(it.IgstAmt) || 0 })) };
+}
 async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
   if (!ownsStream(cb, 'order', log)) return { chit_id, outcome: 'skipped', why: 'not the owner' };
   const last = receipts.last('order', chit_id);
@@ -245,13 +259,9 @@ async function pushOrder({ cb, adapter, receipts, log, chit_id }) {
    */
   try {
     const inv = await cb.invoice(chit_id);
-    const b = (inv && inv.invoice && inv.invoice.BuyerDtls) || {};
-    if (b.Gstin) {
-      const h = (inv.heads) || {}; const cbx = (inv.invoice && inv.invoice._cb) || {};
-      order.b2b = { buyer: { name: b.LglNm || b.TrdNm || order.buyer, gstin: b.Gstin, state_code: b.State || String(b.Gstin).slice(0, 2), addr: [b.Addr1, b.Addr2].filter(Boolean).join(', '), loc: b.Loc || '', pin: b.Pin || '', reg_type: 'Regular' },
-                    place_of_supply: b.Pos || cbx.place_of_supply || b.State || String(b.Gstin).slice(0, 2), supply: cbx.supply || null,
-                    taxes: { cgst: Number(h.cgst) || 0, sgst: Number(h.sgst) || 0, igst: Number(h.igst) || 0, cess: Number(h.cess) || 0 }, taxable: Number(h.taxable) || 0, total: Number(h.total) || order.total,
-                    items: ((inv.invoice && inv.invoice.ItemList) || []).map((it) => ({ name: it.PrdDesc, hsn: it.HsnCd, rate: Number(it.GstRt) || 0, ass: Number(it.AssAmt) || 0, cgst: Number(it.CgstAmt) || 0, sgst: Number(it.SgstAmt) || 0, igst: Number(it.IgstAmt) || 0 })) };
+    const b2b = b2bOf(inv, order);
+    if (b2b) {
+      order.b2b = b2b;
       if (adapter.ensureParty) { try { const pr = await adapter.ensureParty(order.b2b.buyer); if (pr && pr.created) log('party ledger created: ' + pr.created); } catch (e) { log('party ledger: ' + e.message); } }
     }
   } catch (e) {
@@ -456,4 +466,4 @@ function loadConfig(file, opts) {
   cfg.receipts = cfg.receipts || path.join(path.dirname(file), 'receipts.jsonl');
   return cfg;
 }
-module.exports = { kitUpdate, booksGate, ownsStream, pushPurchase, syncPurchases, purchaseOf, pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, loadConfig, hashOf };
+module.exports = { kitUpdate, booksGate, ownsStream, pushPurchase, syncPurchases, purchaseOf, pushReceipt, paymentOf, counts, syncStock, syncProfile, CB, Receipts, syncProducts, evaluate, pushOrder, catchUp, watchOrders, orderOf, b2bOf, loadConfig, hashOf };

@@ -292,6 +292,11 @@ const KEY_ROUTES = {
               /* ⭐ the narrowest write a counter has: remember what a supplier calls a product. It appends one alias and can do
                  nothing else — which is why it exists instead of letting a till key PATCH products. */
               ['POST', /^\/api\/till\/alias$/],
+              /* ⭐ THE LEDGER AT THE COUNTER (SPEC-books-v2 §4): read a customer's dues and statement, record a payment
+                 received and confirm what it settles. Nothing else under /api/books — no entry, no reversal, no lock. Every
+                 one of these 404s while the shop's ledger is off. */
+              ['GET', /^\/api\/books\/(dues|party\/[0-9a-f-]{36}\/statement)$/],
+              ['POST', /^\/api\/books\/payments(\/[0-9a-f-]{36}\/(propose|confirm))?$/],
               /* ⭐ a counter may ask what was just said into its own microphone — audio in, text out, nothing kept */
               ['POST', /^\/api\/till\/listen$/],
               ['POST', /^\/api\/events\/ticket$/], ['*', /^\/api\/offers(\/|$)/],

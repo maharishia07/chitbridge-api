@@ -34,7 +34,8 @@ const fs = require('fs');
 const path = require('path');
 
 /** FORCE ROW LEVEL SECURITY as at 2026-09-26 — regenerate with the query above. */
-const RLS = `access_events capture catalogue_adoption catalogue_face catalogue_item_schedule
+const RLS = `access_events account_balance books_change_log books_counter books_outbox books_pack books_payment
+books_setting fiscal_period journal_entry journal_line ledger_account party_item party_tax_id capture catalogue_adoption catalogue_face catalogue_item_schedule
 catalogue_item_version catalogue_items cb_attachment channel_binding channel_outbound chit_detail chit_disputes
 chit_header chit_line chit_line_amendment chit_line_assignment chit_line_cost chit_line_delivery chit_messages
 chit_reads chit_sla chit_sla_pause chit_status combo_templates connector_receipt counter_hidden_item

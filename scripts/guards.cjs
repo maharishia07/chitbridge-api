@@ -171,6 +171,14 @@ const GUARDS = [
   /* ⭐⭐ CTP QUERY — the READ verb (Athi: catalogue PULL, by store id, same as local). A signed question,
      refused when stale/tampered/unpaired, answered with the SAME public view an anonymous visitor gets. */
   'ctp-query.test.cjs',
+  /* ⭐⭐⭐ THE LEDGER (SPEC-books-v2, 2026-09-29). books-writer: ONE writer of the journal tables (postEntry), insert-only by
+     trigger + grant, the chit never waits on it, FORCE RLS on all 13. The rest need the books engines v1.8.0 for their "on"
+     half (BOOKS_ENGINES_SRC, else a v1.8.0 sibling) and say SKIP with the reason without them — never a silent pass. */
+  'books-writer.test.cjs',      // ⭐⭐⭐ only lib/books-store writes the journal, only postEntry calls it
+  'books-store-sql.test.cjs',   // every books statement: binds = placeholders, the shop is $1
+  'books-post.test.cjs',        // ⭐⭐ the one writer: balances both grains, gap-free JV, locks, reversal, cheques, carryforward
+  'books-hooks.test.cjs',       // ⭐⭐ what a chit posts — and a failed post NEVER fails the chit (parked, named)
+  'books-routes.test.cjs',      // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

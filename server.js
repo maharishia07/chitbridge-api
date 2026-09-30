@@ -339,6 +339,9 @@ app.use('/api/service', require('./routes/service'));
 app.use('/api/definitions', require('./routes/definitions'));
 /* TAX — the invoice a copy is stamped with, the month's ledger, the GSTR shapes. Reads only; we do not file. */
 app.use('/api/tax', require('./routes/tax'));
+/* ⭐ THE LEDGER (SPEC-books-v2, b272–b274) — a record kept by double-entry principle; every route 404s until a shop's
+   switch is on. ⚠️ Never called "accounting" on a screen (Athi). */
+app.use('/api/books', require('./routes/books'));
 /* ⭐ what a shop buys to USE — its own list, never products, never priced, and structurally unable to
    reach a storefront because a storefront query would have to JOIN a table it has no reason to know. */
 app.use('/api/supplies', require('./routes/supplies'));
@@ -407,6 +410,8 @@ app.listen(PORT, () => {
   console.log(`Chit and Bridge API running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Health: http://localhost:${PORT}/health`);
+  /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
+  try { require('./lib/books-nightly').start(); } catch (e) { console.warn('books nightly not started:', e.message); }
 });
 
 module.exports = app;

@@ -120,6 +120,9 @@ const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './contain
  * The test PRINTS the pending count every run, so it is visible debt rather than silence.
  */
 const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "What is NOT engine"
+  /* ⭐ [BOOKS v2] the ONE door to the books engines (CBPosting, CBAccountsPacks, CBReceivables, CBLedger, CBBookPack) and
+     the row ↔ engine-shape mapping. Decides nothing: every debit, credit, due date, allocation and balance is theirs. */
+  'books-engines.js',
   /* ⭐⭐ ADOPTION IN THE MOST LITERAL SENSE THE LIST HAS: gherkin.js implements SOMEBODY ELSE'S FORMAT, and the
      test for adoption — "if the standard changed tomorrow, this file changes and nothing else does" — is not
      an argument here, it is the definition. It decides nothing. Given/When/Then already IS what a test case
@@ -186,6 +189,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* [BOOKS v2] the ledger's SQL (books-store), its nightly runner (books-nightly: retries, names mismatches, never fixes)
+     and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
+  'books-store.js', 'books-nightly.js', 'books-pack.js',
   /* one translation of a refusal the database makes ON PURPOSE (b247's population boundary) into a 409 in words, used
      by the routes that catch their own errors and by server.js's handler — wording, not a rule; the rule is the
      trigger. (2026-09-28, external review §23) */
@@ -360,6 +366,11 @@ const INFRA_LIBS = [
   'whatsapp-templates.js', // provider template shapes
 ];
 const ENGINE_OTHER = [
+  /* ⭐⭐⭐ [BOOKS v2] books.js — postEntry, THE ONE WRITER of the journal (where and when: which ledger a code is, which
+     month is open, the gap-free number); books-hooks.js — which chit posts which event (classify(), pure, tested);
+     party-fields.js — the party master's field rules and the duplicate-tax-id refusal. CB's own decisions, not an
+     outside standard's; the debit/credit rules themselves stay in CBPosting. (2026-09-29) */
+  'books.js', 'books-hooks.js', 'party-fields.js',
   /**
    * ⭐⭐⭐ [capability: sign-in] identity-auth.js — CB's own decision about who needs an OTP and who needs a
    * PIN, extracted 2026-09-23 when routes/entities.js and routes/actors.js were found each answering that
