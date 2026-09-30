@@ -134,6 +134,7 @@
   button.pill:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
   button.pill{cursor:pointer}
   .pill.on{color:var(--ok);border-color:var(--ok);background:var(--ok-tint)}
+  .pill[hidden]{display:none}   /* [TILL-148] — #rcvpaybtn is a pill toggled by hidden (BOOKS v2) */
   .pill.off{color:var(--warn);border-color:var(--warn);background:var(--warn-tint)}
 
   .left{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
@@ -3194,6 +3195,8 @@
       <datalist id="custlist"></datalist>
       <input id="cphone" placeholder="Phone" autocomplete="off" inputmode="tel" style="max-width:150px" oninput="rwTyped()">
       <button class="pill" id="micphone" data-testid="till-mic-phone" onclick="listen('cphone')" title="speak the number">🎤</button>
+      <!-- ⭐ BOOKS v2 — money received from a KNOWN customer; hidden until exactly one customer matches (custKnown) -->
+      <button class="pill" id="rcvpaybtn" data-testid="till-receive-pay" onclick="rcvPayOpen()" hidden>Received</button>
     </div>
     <!-- ⭐⭐ what this customer holds, and what this bill will add. Empty and invisible for a shop with no programme,
          which is most shops — nothing on the counter is spent on a feature nobody switched on. -->
@@ -3408,6 +3411,11 @@
      code, and an authenticated person at the end. Owner or employee, same path.
      ⚠️ NOT #signindlg, which pairs the DEVICE and fetches its key ([TILL-121]). Two different acts, and the
      button that said "Sign in" used to open neither of them — it opened the name picker below. -->
+<dialog id="rcvpaydlg" class="setdlg"><div class="dlg">
+  <h3>Money received</h3>
+  <div id="rcvpaybody" data-testid="till-rp-body"></div>
+</div></dialog>
+
 <dialog id="usigndlg" class="setdlg"><div class="dlg">
   <h3>Sign in</h3>
   <div id="usignbody" data-testid="till-usign-body"></div>
@@ -4784,6 +4792,8 @@ var AgentHost = {
   },
   creditNote: function(cn){ return this.record('CN', Object.assign({}, cn, { kind: 'credit_note' }), chitOfCN); },
   expense: function(e){ return this.record('EXP', Object.assign({}, e, { kind: 'expense' }), chitOfExpense); },
+  /* ⭐ BOOKS v2 — money received: the program numbers it in its own 'R' series and files it with the day's documents */
+  payment: function(p){ return this.record('R', Object.assign({}, p, { kind: 'payment' }), chitOfPayment); },
   state: function(){ return fetch('/api/state').then(function(r){ return r.json(); }); },
   bills: function(){ return fetch('/api/bills').then(function(r){ return r.json(); }).then(function(j){ return (j && j.bills) || []; }); },
   /** ⭐ the bills the program still holds for the last N days, from its own day files (M11) */
@@ -5154,6 +5164,24 @@ var CloudHost = {
    * entry, its own queue slot. ⚠️⚠️ SAME RULE: MUST NOT TOUCH LAST_SERIES, for the identical reason — an
    * expense is not a sale and must never advance or share the sales run's numbering.
    */
+  /**
+   * ⭐⭐ BOOKS v2 — MONEY RECEIVED goes the way an expense goes: its own series ('R'), queued, sent. ⚠️ NOT into the bills
+   * store — a payment received is not a sale, and the day's totals (CBRollup) count every bill row as one. Kept in its own
+   * day list instead (payments-<day>), so the day close can say what came in on account.
+   */
+  async payment(p){
+    LAST_SERIES = null;
+    var no = await nextNumber('R');
+    var doc = Object.assign({ at: new Date().toISOString(), till: ls.get('cb_till_id', 'C1') }, p, { kind: 'payment', no: no });
+    doc.chitBody = chitOfPayment(doc);
+    var key = 'payments-' + doc.at.slice(0, 10);
+    var list = (await DB.get(key)) || [];
+    list.push(doc);
+    await DB.set(key, list);
+    await DB.put('queue', { no: no, at: doc.at, kind: 'payment', chitBody: doc.chitBody });
+    this.drain();
+    return { ok: true, bill: doc };
+  },
   async expense(e){
     LAST_SERIES = null;
     var no = await nextNumber('EXP');
@@ -5679,7 +5707,10 @@ async function nextNumber(kind){
   var sch = _eff;
   var body = D.compose({ country: country, prefix: s.prefix, kind: 'sale', at: now, seq: seq, scheme: sch });
   if (!tag) return body;
-  if (s.tagStyle === 'long') return tag + '/' + body;
+  /* ⚠️⚠️ A KIND THE ENGINE DOES NOT KNOW WOULD COME BACK SHAPED LIKE A SALE ('payment' — BOOKS v2, 2026-09-29): the
+     same text as a sale number from another run, which the server's client_ref index answers with the SALE. Such a
+     kind keeps the long form, tag first, until the docnumber engine learns it. */
+  if (s.tagStyle === 'long' || !(D.KINDS && Object.prototype.hasOwnProperty.call(D.KINDS, docKindOf(kind)))) return tag + '/' + body;
   return D.compose({ country: country, prefix: s.prefix, at: now, seq: seq, scheme: sch,
                      kind: docKindOf(kind) });
 }
@@ -5694,7 +5725,7 @@ async function nextNumber(kind){
  * ⚠️ AND AN UNKNOWN TAG IS A SALE, which is what the engine already does — stated here rather than discovered.
  * [[feedback-no-duplicate-functions]] [[feedback-name-vs-behaviour]]
  */
-var DOC_TAGS = { GRN: 'receipt', DC: 'despatch', CN: 'credit', EXP: 'expense', SUB: 'subscription' };
+var DOC_TAGS = { GRN: 'receipt', DC: 'despatch', CN: 'credit', EXP: 'expense', SUB: 'subscription', R: 'payment' };
 function docKindOf(tag){ return DOC_TAGS[tag] || 'sale'; }
 /** and back the other way, for a caller that holds the engine's word and needs the counter's */
 function docTagOf(kind){
@@ -5881,6 +5912,9 @@ function chitOf(bill){
       renumbered: bill.renumbered || null,
       payment: { mode: (bill.payments||[]).map(function(p){ return p.how; }).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments||[] },
       slip: bill.kind || 'cash',
+      /* ⭐ BOOKS v2 — a credit bill's terms and any owner override, on the record both copies hold */
+      terms: bill.terms || null,
+      credit_override: bill.credit_override || null,
     },
     line_items: (bill.lines||[]).map(function(l){
       var o = { particulars:l.name, quantity:l.qty, unit:l.unit||'piece', price:l.price, total:l.net };
@@ -6324,6 +6358,212 @@ function paintUpdate(){
 function paintCustomers(){
   var list = (S && S.customers) || [];
   document.getElementById('custlist').innerHTML = list.slice(0, 500).map(function(c){ return '<option value="' + esc(c.name) + '">'; }).join('');
+  try { paintRcvPayBtn(); } catch (_) {}
+}
+/**
+ * ── ⭐⭐⭐ BOOKS v2 AT THE COUNTER — the customer ON the sale, On credit, and money received (2026-09-29) ─────────────
+ *
+ * Athi: *"we need to record names of the customers or suppliers … then he has to be linked to a sale or a purchase … need
+ * to store the final payment due or owe."* [SPEC-books-v2.md §3–§4 · SPEC-credit-lifecycle.md §11]
+ *
+ * ⚠️⚠️ THE COUNTER DROPPED WHO THE CUSTOMER WAS. The snapshot has always carried each customer's identity_id (routes/till.js
+ * OWN.customers) and the sale kept only { name, phone } — so a credit bill could never reach the right account. A known
+ * customer now rides the bill by id, on both hosts, and the chit carries it (business_json.customer.identity_id).
+ * ⭐ WHO IS "KNOWN": exactly ONE snapshot customer matches — by phone (last 10 digits) when a phone is typed, else by the
+ * exact name. Two Kumars is nobody: a credit bill addressed by a name that fits two people ends up on the wrong account.
+ * ⭐ THE COUNTER DECIDES NOTHING ABOUT THE BOOKS. It records the facts (who, on credit, the terms, money received); the
+ * server posts them (SPEC-books-v2 §3). The only rules here are the two a counter must answer offline: is this customer
+ * over their limit (C2), and what would the oldest-due-first proposal be (advisory; the server confirms, D1).
+ */
+function custKnown(){
+  var list = (S && S.customers) || [];
+  var nm = String((document.getElementById('cname') || {}).value || '').trim().toLowerCase();
+  var ph = String((document.getElementById('cphone') || {}).value || '').replace(/[^0-9]/g, '');
+  if (!nm && ph.length < 6) return null;
+  var tail = function(p){ return String(p || '').replace(/[^0-9]/g, '').slice(-10); };
+  var hits = [];
+  if (ph.length >= 6) hits = list.filter(function(c){ return c && c.identity_id && tail(c.phone) && tail(c.phone) === tail(ph); });
+  if (!hits.length && nm) hits = list.filter(function(c){ return c && c.identity_id && String(c.name || '').trim().toLowerCase() === nm; });
+  return hits.length === 1 ? hits[0] : null;
+}
+/** minor units → the amount, in the shop's own currency's decimals (the money engine's rule, never a hard-coded 100) */
+function booksMajor(minor){
+  var cur = (S && S.shop && S.shop.currency) || 'INR';
+  var dec = (window.CBMoney && CBMoney.decimals) ? CBMoney.decimals(cur) : 2;
+  return r2(Number(minor || 0) / Math.pow(10, dec));
+}
+function creditDaysOf(c){
+  var d = c && c.credit_days;
+  return (d != null && d !== '' && isFinite(Number(d))) ? Math.max(0, Math.floor(Number(d))) : null;
+}
+/** the due date a credit bill carries; null when the shop has not set this customer's terms (never guessed) */
+function dueDateFor(c, at){
+  var d = creditDaysOf(c); if (d == null) return null;
+  var t = new Date(at || Date.now()); t.setUTCDate(t.getUTCDate() + d);
+  return t.toISOString().slice(0, 10);
+}
+/**
+ * ⭐ THE LIMIT, OFFLINE (C2): from the snapshot's credit_limit_minor and balance_minor for this customer. When the snapshot
+ * does not carry them, the answer is "unknown" — said on the screen, never a guess dressed as a check.
+ */
+function creditLimitCheck(c, amount){
+  if (!c || c.credit_limit_minor == null || c.credit_limit_minor === '') return { known: false };
+  var since = CREDIT_SINCE[c.identity_id] || 0;
+  var limit = booksMajor(c.credit_limit_minor), owed = r2(booksMajor(c.balance_minor || 0) + since), after = r2(owed + (Number(amount) || 0));
+  return { known: true, limit: limit, owed: owed, since: since, after: after, over: after > limit + 0.004 };
+}
+/**
+ * ⚠️⚠️ THE SNAPSHOT'S BALANCE IS AS OLD AS THE SNAPSHOT. Credit this counter gave AFTER it was read — offline all
+ * morning, three bills on Kumar's account — is not in it, and a limit checked against the snapshot alone would let
+ * the fourth through. (Caught by till-books-offline: ₹200 owed + an ₹840 bill read as ₹1,040 when a ₹105 credit bill
+ * from the same morning made it ₹1,145.) So the counter adds its OWN credit bills since the snapshot. Money received
+ * is NOT subtracted here — a cheque may bounce, and the server applies payments; erring towards asking the owner.
+ */
+var CREDIT_SINCE = {};
+async function creditSinceRefresh(c){
+  if (!c || !c.identity_id || !HOST) return 0;
+  var snapAt = String((S && S.at) || '');
+  var bills = [];
+  try { bills = (HOST.local ? await HOST.local(30) : await HOST.bills()) || []; } catch (_) { bills = []; }
+  var owed = 0;
+  bills.forEach(function(b){
+    if (!b || !b.customer || b.customer.identity_id !== c.identity_id) return;
+    if (snapAt && String(b.at || '') <= snapAt) return;
+    (b.payments || []).forEach(function(p){ if (p && p.how === 'On credit') owed = r2(owed + (Number(p.amount) || 0)); });
+  });
+  CREDIT_SINCE[c.identity_id] = owed;
+  return owed;
+}
+/**
+ * ⚠️⚠️ OVER THE LIMIT ONLY THE OWNER MAY ALLOW IT (C2) — with the owner's COUNTER PIN, offline (G2's book, kind 'entity').
+ * Each wrong PIN counts against that PIN exactly as a sign-in does; a counter with no owner PIN cannot allow it here.
+ * Returns { by } when allowed, null when not.
+ */
+async function ownerApprove(chk){
+  var book = pinBook();
+  var owners = Object.keys(book).map(function(k){ return book[k]; })
+    .filter(function(e){ return e && e.kind === 'entity' && !SIGN().pinLocked(e); });
+  var msg = 'Over the credit limit.\n\nOwes ' + money(chk.owed) + ' now' + (chk.since ? ' (' + money(chk.since) + ' of it on this counter today)' : '')
+    + '; this bill takes it to ' + money(chk.after)
+    + ' against a limit of ' + money(chk.limit) + '. Only the owner can allow it.';
+  if (!owners.length) { say(msg + '\n\nThe owner has no counter PIN on this counter, so it cannot be allowed here.'); return null; }
+  var box = document.getElementById('askinput'); if (box) box.type = 'password';
+  var pin = await ask(msg + '\n\nOwner’s counter PIN:', '', 'Owner PIN', 'Over the limit');
+  if (box) box.type = 'text';
+  if (pin == null || !String(pin).trim()) return null;
+  for (var i = 0; i < owners.length; i++) {
+    var e = owners[i], h = null;
+    try { h = await pinDerive(String(pin).replace(/[^0-9]/g, ''), e.salt, e.iter); } catch (x) { say((x && x.message) || 'The PIN could not be checked.'); return null; }
+    if (h === e.hash) { var ok = SIGN().pinAfter(book[e.id] || e, true); book[e.id] = ok.entry; pinBookSave(book); return { by: { id: e.id, name: e.name } }; }
+  }
+  if (owners.length === 1) { var no = SIGN().pinAfter(book[owners[0].id] || owners[0], false); book[owners[0].id] = no.entry; pinBookSave(book); say(no.why); }
+  else say('That PIN did not match the owner’s.');
+  return null;
+}
+
+/* ── ⭐⭐ MONEY RECEIVED FROM A CUSTOMER — "Received" on the customer row (SPEC-books-v2 §3 · C3 · D1) ─────────────────
+ * Recorded at the counter, numbered from its OWN series ('R/…', never the sales run — a receipt that looked like a sale
+ * number would collide with it on the server's client_ref index and be answered with the SALE), kept locally, queued, sent
+ * as a chit like every other counter document. ⚠️ It is NOT a bill: it never enters the day's sales (a payment received
+ * is not a sale). A cheque is recorded "received, not cleared" — nothing is applied until it clears (C3).
+ */
+function paintRcvPayBtn(){
+  var b = document.getElementById('rcvpaybtn'); if (!b) return;
+  var c = custKnown();
+  b.hidden = !c;
+  if (c) b.title = 'Money received from ' + c.name + ' — the shop matches it to the oldest bills first';
+}
+function rcvPayOpen(){
+  var c = custKnown();
+  if (!c) { say('Choose a customer the shop knows first — a payment has to land on somebody’s account.'); return; }
+  var d = document.getElementById('rcvpaydlg'); if (!d) return;
+  document.getElementById('rcvpaybody').innerHTML =
+      '<p class="note"><b>' + esc(c.name) + '</b>' + (c.phone ? ' <span class="u">' + esc(c.phone) + '</span>' : '') + '</p>'
+    + '<div class="srow"><span>Amount</span><input id="rp_amt" data-testid="till-rp-amount" type="number" min="0" step="0.01" inputmode="decimal" oninput="rcvPayPropose()"></div>'
+    + '<div class="srow"><span>How</span><select id="rp_mode" data-testid="till-rp-mode" onchange="rcvPayPropose()">'
+    + '<option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option><option value="cheque">Cheque</option></select></div>'
+    + '<div id="rp_chq" hidden>'
+    + '<div class="srow"><span>Cheque no.</span><input id="rp_chq_no" data-testid="till-rp-chq-no" inputmode="numeric"></div>'
+    + '<div class="srow"><span>Bank</span><input id="rp_chq_bank" data-testid="till-rp-chq-bank"></div>'
+    + '<div class="srow"><span>Dated</span><input id="rp_chq_date" data-testid="till-rp-chq-date" type="date"></div></div>'
+    + '<div id="rp_prop" class="note" data-testid="till-rp-proposal"></div>'
+    + '<div class="dlgbtns"><button class="pri" data-testid="till-rp-save" onclick="rcvPaySave()">Save</button>'
+    + '<button onclick="document.getElementById(\'rcvpaydlg\').close()">Close</button></div>';
+  rcvPayPropose();
+  if (!d.open) d.showModal();
+  setTimeout(function(){ var i = document.getElementById('rp_amt'); if (i) i.focus(); }, 30);
+}
+/**
+ * ⭐ THE PROPOSAL, SHOWN BEFORE SAVING (D1) — the receivables engine's own oldest-due-first suggestion when this page has it;
+ * otherwise this customer's open bills oldest-due first, as the snapshot knows them, and a plain sentence that the shop
+ * confirms the matching. ⚠️ Never a local copy of the matching rule: advisory here, decided on the server.
+ */
+function rcvPayPropose(){
+  var c = custKnown(), box = document.getElementById('rp_prop'); if (!box || !c) return;
+  var mode = (document.getElementById('rp_mode') || {}).value || 'cash';
+  var chq = document.getElementById('rp_chq'); if (chq) chq.hidden = mode !== 'cheque';
+  var amt = Number((document.getElementById('rp_amt') || {}).value) || 0;
+  var cur = (S && S.shop && S.shop.currency) || 'INR';
+  var open = (Array.isArray(c.open_bills) ? c.open_bills : []).slice()
+    .sort(function(a, b){ return String(a.due_date || '').localeCompare(String(b.due_date || '')) || String(a.ref).localeCompare(String(b.ref)); });
+  var head = mode === 'cheque' ? '<b>A cheque is applied when it clears.</b> Until then it shows as received, not cleared. ' : '';
+  if (!open.length) { box.innerHTML = head + 'The shop matches it to ' + esc(c.name) + '’s oldest bills first when it arrives.'; return; }
+  var prop = null;
+  if (window.CBReceivables && CBReceivables.propose && amt > 0) {
+    try {
+      prop = CBReceivables.propose(open.map(function(o){ return { id: o.ref, party: c.identity_id, date: o.date || o.due_date,
+                                                                  due: o.due_date, amount: booksMajor(o.balance_minor), currency: cur,
+                                                                  disputed: !!o.disputed }; }),
+                                   { id: 'new', party: c.identity_id, amount: amt, currency: cur, date: new Date().toISOString().slice(0, 10) });
+    } catch (_) { prop = null; }
+  }
+  if (prop && prop.ok) {
+    box.innerHTML = head + (prop.allocations || []).map(function(a){ return 'clears ' + money(a.amount) + ' of ' + esc(a.debit); }).join(' · ')
+      + (prop.on_account > 0 ? ' · ' + money(prop.on_account) + ' on account' : '') + ' <span class="u">(the shop confirms)</span>';
+    return;
+  }
+  box.innerHTML = head + 'Owes on ' + open.length + ' bill' + (open.length > 1 ? 's' : '') + ', oldest due first: '
+    + open.slice(0, 4).map(function(o){ return esc(o.ref) + ' ' + money(booksMajor(o.balance_minor)) + (o.due_date ? ' (due ' + esc(o.due_date) + ')' : ''); }).join(' · ')
+    + (open.length > 4 ? ' …' : '') + '. <span class="u">The shop matches it when it arrives.</span>';
+}
+async function rcvPaySave(){
+  var c = custKnown(); if (!c) return;
+  var amt = r2(Number((document.getElementById('rp_amt') || {}).value) || 0);
+  if (!(amt > 0)) { say('Type the amount received.'); return; }
+  var mode = (document.getElementById('rp_mode') || {}).value || 'cash';
+  var cheque = null;
+  if (mode === 'cheque') {
+    cheque = { no: String((document.getElementById('rp_chq_no') || {}).value || '').trim(),
+               bank: String((document.getElementById('rp_chq_bank') || {}).value || '').trim(),
+               dated: String((document.getElementById('rp_chq_date') || {}).value || '').trim() || null };
+    if (!cheque.no) { say('A cheque needs its number — it is how a bounce is traced.'); return; }
+  }
+  var doc = { kind: 'payment', party: { identity_id: c.identity_id, name: c.name, phone: c.phone || null },
+              amount: amt, currency: (S && S.shop && S.shop.currency) || 'INR', mode: mode, cheque: cheque,
+              status: mode === 'cheque' ? 'received' : 'cleared',
+              by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null };
+  var r = null;
+  try { r = await HOST.payment(doc); } catch (e) { r = { ok: false, why: e && e.message }; }
+  if (!r || !r.ok) { say('The payment was not kept: ' + ((r && r.why) || 'unknown') + '.\n\nNothing was recorded — try again.'); return; }
+  try { document.getElementById('rcvpaydlg').close(); } catch (_) {}
+  toastLine(money(amt) + ' received from ' + c.name + ' — ' + ((r.bill && r.bill.no) || '')
+    + (mode === 'cheque' ? ' (cheque, not cleared)' : '') + '. It reaches the shop with the next send.');
+}
+/** the payment, as the chit every other part of ChitBridge understands — one builder for both hosts */
+function chitOfPayment(p){
+  var subject = 'Payment received ' + p.no + ' — ' + ((p.party && p.party.name) || 'customer');
+  return {
+    recipients: [{ self: true, name: 'self' }], purpose: 'general',
+    subject: subject, manual_subject: subject, client_ref: p.no,
+    business_json: {
+      kind: 'payment_received',
+      payment_received: { no: p.no, at: p.at, party: p.party, amount: p.amount, currency: p.currency, mode: p.mode,
+                          cheque: p.cheque || null, status: p.status || 'cleared' },
+      customer: p.party ? { name: p.party.name, phone: p.party.phone || null, identity_id: p.party.identity_id } : null,
+      till: { id: p.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: p.by || null },
+    },
+    line_items: [],
+  };
 }
 
 /* ═══ 3 · finding, adding, pricing ═══════════════════════════════════════════════════════════════════════════ */
@@ -17090,7 +17330,7 @@ async function rwLook(){
 }
 /* ⚠️ ON CHANGE, NOT ON EVERY KEYSTROKE. A lookup per character would be a request per letter of somebody's name. */
 var RW_T = null;
-function rwTyped(){ clearTimeout(RW_T); RW_T = setTimeout(rwLook, 450); draftSave(); }   /* R1 · who the bill is for is part of it */
+function rwTyped(){ clearTimeout(RW_T); RW_T = setTimeout(rwLook, 450); draftSave(); try { paintRcvPayBtn(); if (document.getElementById('pay')) paintPays(); } catch (_) {} }   /* R1 · who the bill is for is part of it */
 
 function paintRw(){
   var el = document.getElementById('rw'); if (!el) return;
@@ -19703,6 +19943,16 @@ function paintPays(){
   if (own && own.payee && !ways.some(function(w){ return String(w.payee || '') === String(own.payee); })) {
     ways.push({ id:'upi-local', label:(own.label || 'UPI'), qr:'upi-deeplink', payee:own.payee });
   }
+  /* ⭐ BOOKS v2 — ON CREDIT, only when exactly one known customer is on the bill (custKnown). A credit bill addressed
+     to "Walk-in" is money nobody can be asked for. Deselected if the customer is cleared while it was picked. */
+  var credCust = custKnown();
+  if (credCust) ways.push({ id:'credit', label:'On credit' });
+  else if (PICKED === 'On credit') PICKED = ways[0].label;
+  /* ⚠️ the credit this counter gave since the snapshot, read once in the background (see creditSinceRefresh) */
+  if (credCust && CREDIT_SINCE[credCust.identity_id] == null) {
+    CREDIT_SINCE[credCust.identity_id] = 0;
+    creditSinceRefresh(credCust).then(function(v){ if (v) try { paintPays(); } catch (_) {} });
+  }
   document.getElementById('pay').innerHTML = ways.map(function(w){
     return '<button class="' + (PICKED===w.label?'on':'') + '" data-testid="till-pay-' + esc(w.id) + '"'
       + ' onclick="pickPay(\'' + esc(w.label) + '\')">' + esc(w.label)
@@ -19728,6 +19978,14 @@ function paintPays(){
           ? 'Taking ' + PARTS.map(function(p){ return money(p.amount) + ' in ' + esc(p.how); }).join(' + ')
             + (left > 0 ? ' · ' + money(left) + ' still due as <b>' + esc(PICKED) + '</b>' : '')
           : 'This bill will be recorded as <b>' + esc(PICKED) + '</b>')
+      + (PICKED === 'On credit' && credCust ? (function(){
+          var due = dueDateFor(credCust), chk = creditLimitCheck(credCust, left);
+          return ' · on ' + esc(credCust.name) + '’s account'
+            + (due ? ', due by <b>' + esc(due) + '</b>' : ', on the shop’s terms')
+            + (!chk.known ? ' <span class="u" data-testid="till-credit-limit">· limit unknown offline</span>'
+               : chk.over ? ' <b class="bad" data-testid="till-credit-limit">· over the limit: ' + money(chk.after) + ' of ' + money(chk.limit) + ' — owner PIN needed</b>'
+               : ' <span class="u" data-testid="till-credit-limit">· ' + money(chk.after) + ' of ' + money(chk.limit) + ' limit</span>');
+        })() : '')
       + '</div>' : '');
 }
 /**
@@ -19766,7 +20024,34 @@ async function finish(){
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();
-  if (!parts.length) parts = [{ how: PICKED, amount: Math.min(tendered || m.net, m.net) }];
+  /* ⭐ BOOKS v2 — a known customer rides the bill BY ID; On credit is what is left after any parts already taken */
+  var cust = custKnown(), credit = PICKED === 'On credit', override = null;
+  if (credit) {
+    if (!cust) { say('On credit needs a customer the shop knows — choose them first.'); return; }
+    var takenC = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
+    var owedNow = r2(m.net - takenC);
+    if (owedNow > 0) {
+      await creditSinceRefresh(cust);
+      var chk = creditLimitCheck(cust, owedNow);
+      if (chk.known && chk.over) { override = await ownerApprove(chk); if (!override) return;
+                                   override = { by: override.by, limit: chk.limit, after: chk.after, at: new Date().toISOString() }; }
+      parts.push({ how: 'On credit', amount: owedNow });
+    }
+  }
+  else if (!parts.length) {
+    /**
+     * ⚠️⚠️ SHORT OF THE TOTAL IS NOT PAID (2026-09-29, found by till-books-offline). ₹100 typed against a ₹105 bill was
+     * saved as a ₹105 sale paid with ₹100 — the drawer and the day's sales disagreed by ₹5 with nothing saying so, and
+     * the day's entry had to carry it as round-off. The shortfall is taken, split (+ part), or put on credit — never
+     * dropped. (An empty box still means "exactly the total", the ordinary one-keystroke sale.)
+     */
+    if (tendered > 0 && r2(m.net - tendered) >= 0.01) {
+      say(money(r2(m.net - tendered)) + ' is still to take.\n\nTake the rest, or use "+ part" to take it another way'
+        + (custKnown() ? ', or put it On credit.' : '.'));
+      return;
+    }
+    parts = [{ how: PICKED, amount: Math.min(tendered || m.net, m.net) }];
+  }
   else if (tendered > 0) { var taken0 = parts.reduce(function(a,p){ return r2(a + p.amount); }, 0);
     if (taken0 < m.net) parts.push({ how: PICKED, amount: Math.min(tendered, r2(m.net - taken0)) }); }
   var paid = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
@@ -19807,7 +20092,11 @@ async function finish(){
     /* ⭐ the rate-wise summary the printed bill shows at the foot — recorded with the bill for the same reason
        the heads are, so a reprint states what was issued rather than what today's slabs would say */
     by_rate: m.byRate || {},
-    customer: { name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
+    customer: Object.assign({ name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
+                            cust ? { identity_id: cust.identity_id } : {}),
+    /* ⭐ BOOKS v2 — the terms travel on the chit, so both copies carry the same due date (SPEC-credit-lifecycle §3) */
+    terms: credit && cust ? { credit_days: creditDaysOf(cust), due_date: dueDateFor(cust) } : null,
+    credit_override: override,
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     kind: shopTax().kind,
@@ -20879,7 +21168,9 @@ function slipHTML(bill, m){
     + t('No ' + esc(bill.no), esc(new Date(bill.at).toLocaleString()))
     /* ⚠️ a REPRINT of a renumbered sale must carry both numbers — the customer's paper says the first one */
     + (bill.printed_as ? t('Printed as ' + esc(bill.printed_as), 'recorded as ' + esc(bill.no)) : '')
-    + t(esc((STATE.till && STATE.till.name) || '') + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in')) + dash
+    + t(esc((STATE.till && STATE.till.name) || '') + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in'))
+    /* ⭐ BOOKS v2 — a credit bill says so on the paper, and when it is due */
+    + (bill.terms ? t('<b>ON CREDIT</b>', bill.terms.due_date ? '<b>Due by ' + esc(bill.terms.due_date) + '</b>' : 'shop’s terms') : '') + dash
     /**
      * ── ⭐⭐⭐ EVERY ITEM ACCOUNTS FOR ITSELF ON THE PAPER ──────────────────────────────────────────────────────
      *

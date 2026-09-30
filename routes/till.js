@@ -200,7 +200,11 @@ router.get('/snapshot', auth, async (req, res) => {
        * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
        */
       customers: (db) => db.query(
-        `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, c.groups, c.last_txn_at
+        `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, c.groups, c.last_txn_at,
+                /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
+                   columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
+                to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
+                to_regclass('party_item') IS NOT NULL AS has_party_item
            FROM customer_list c
            JOIN identities i ON i.identity_id = c.customer_identity_id
           WHERE c.owner_entity_id = $1
@@ -308,8 +312,48 @@ router.get('/snapshot', auth, async (req, res) => {
       const c = await ownRead('customers');   /* OWN.customers — the name and number are on identities, see there */
       /* ⚠️ THE ID TRAVELS because points hang from it. A name is not a holder — two customers can be called
          Kumar, and a reward balance addressed by name would eventually be paid to the wrong one. */
-      customers = c.rows.map((x) => ({ identity_id: x.identity_id, name: x.display_name, phone: x.phone || null,
-                                       groups: Array.isArray(x.groups) ? x.groups : [] }));
+      /**
+       * ⭐⭐ BOOKS v2 — WHAT EACH CUSTOMER OWES, for the counter's offline limit check (C2) and the receipt proposal (D1).
+       * Outstanding = SUM(amount_minor) per bill (the payment-ledger rule, SPEC-books-v2 §1); only open bills travel,
+       * oldest due first. ⚠️ Asked on its own, and only when party_item exists (the customers row says so) — until b273
+       * is run it costs no trip at all and the counter says "limit unknown offline". Absent = unknown, never 0.
+       */
+      let dues = { rows: [] };
+      if (c.rows.some((x) => x.has_party_item)) {
+        try {
+          dues = await withEntity(entity_id, (db) => db.query(
+            `SELECT party_id, against_ref, SUM(amount_minor)::bigint AS balance_minor,
+                    MIN(due_date) FILTER (WHERE ref_kind = 'bill') AS due_date,
+                    MIN(doc_date) FILTER (WHERE ref_kind = 'bill') AS doc_date,
+                    BOOL_OR(status = 'disputed') AS disputed
+               FROM party_item
+              WHERE entity_id = $1
+              GROUP BY party_id, against_ref
+             HAVING SUM(amount_minor) <> 0
+              LIMIT 20000`, [entity_id]));
+        } catch (e) { try { require('../lib/logger').warn('till.snapshot.dues', { entity_id, why: String(e && e.message) }); } catch (_) {} }
+      }
+      const owe = {};
+      for (const d of dues.rows) {
+        const k = String(d.party_id), o = owe[k] || (owe[k] = { balance_minor: 0, open_bills: [] });
+        o.balance_minor += Number(d.balance_minor) || 0;
+        if (Number(d.balance_minor) > 0) o.open_bills.push({ ref: d.against_ref, balance_minor: Number(d.balance_minor),
+          due_date: d.due_date ? new Date(d.due_date).toISOString().slice(0, 10) : null,
+          date: d.doc_date ? new Date(d.doc_date).toISOString().slice(0, 10) : null, disputed: !!d.disputed });
+      }
+      const num = (v) => (v == null || v === '' || !isFinite(Number(v)) ? null : Number(v));
+      customers = c.rows.map((x) => {
+        const o = owe[String(x.identity_id)];
+        const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null,
+                      groups: Array.isArray(x.groups) ? x.groups : [] };
+        if (num(x.credit_days) != null) out.credit_days = num(x.credit_days);
+        if (num(x.credit_limit_minor) != null) out.credit_limit_minor = num(x.credit_limit_minor);
+        if (x.has_party_item) {
+          out.balance_minor = o ? o.balance_minor : 0;
+          out.open_bills = o ? o.open_bills.sort((a, b) => String(a.due_date || '').localeCompare(String(b.due_date || ''))).slice(0, 20) : [];
+        }
+        return out;
+      });
     } catch (e) {
       /**
        * ⚠️ SAY WHAT WENT WRONG. The old catch claimed to be handling a known schema difference and was in fact

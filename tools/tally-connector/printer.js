@@ -96,6 +96,8 @@ function slipBytes(doc, shop, opts) {
 
   line(pair(doc.no || '', new Date(doc.at || Date.now()).toLocaleString(), w));
   if (kind === 'bill') line(pair((doc.by && doc.by.name) || '', (doc.customer && doc.customer.name) || 'Walk-in', w));
+  /* ⭐ BOOKS v2 — a credit bill says so on the paper, and when it is due */
+  if (kind === 'bill' && doc.terms) line(pair('ON CREDIT', doc.terms.due_date ? 'Due by ' + doc.terms.due_date : "shop's terms", w));
   if (kind === 'receipt') {
     line(pair('From', (doc.vendor && doc.vendor.name) || ''));
     if (doc.their_bill && doc.their_bill.no) line(pair('Their bill', doc.their_bill.no, w));
