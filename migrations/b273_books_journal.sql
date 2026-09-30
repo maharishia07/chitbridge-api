@@ -35,6 +35,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS journal_entry_src_uq ON journal_entry (entity_
 CREATE INDEX IF NOT EXISTS journal_entry_date_idx ON journal_entry (entity_id, posting_date);
 CREATE INDEX IF NOT EXISTS journal_entry_chit_idx ON journal_entry (entity_id, source_chit_id);
 
+-- the chits a SUMMARY entry covers: a walk-in day names the bills it summed, so a bill it does not name posts as a late
+-- bill instead of waiting for ever (critic M7); the nightly sweep reads it too. Null on every per-document entry.
+ALTER TABLE journal_entry ADD COLUMN IF NOT EXISTS source_chit_ids uuid[];
+CREATE INDEX IF NOT EXISTS journal_entry_covers_gin ON journal_entry USING gin (source_chit_ids) WHERE source_chit_ids IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS journal_line (
   line_id           bigserial PRIMARY KEY,
   entry_id          uuid NOT NULL,

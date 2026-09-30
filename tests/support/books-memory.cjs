@@ -20,7 +20,8 @@ function create() {
     ZERO, T,
     async setting(db, e) { const s = T.setting.get(String(e)); return s ? clone(s) : null; },
     async saveSetting(db, e, s) { const cur = T.setting.get(String(e)) || {}; T.setting.set(String(e), Object.assign({}, cur, { entity_id: e, enabled: !!s.enabled, walkin_grain: s.walkin_grain || 'day',
-      fy_start_month: s.fy_start_month || 4, functional_currency: s.functional_currency || 'INR', country: s.country || 'IN', pack_version: s.pack_version || cur.pack_version || null })); },
+      fy_start_month: s.fy_start_month || 4, functional_currency: s.functional_currency || 'INR', country: s.country || 'IN', pack_version: s.pack_version || cur.pack_version || null,
+      enabled_at: cur.enabled_at || (s.enabled ? now() : null) /* the FIRST time it was switched on, kept (the real upsert's COALESCE) */ })); },
     async saveCheck(db, e, r) { const s = T.setting.get(String(e)); if (s) s.last_check = clone(r); },
     async accounts(db, e) { return clone(T.accounts.filter((a) => a.entity_id === e)).sort((a, b) => String(a.code).localeCompare(String(b.code))); },
     async insertAccount(db, e, a) {
@@ -35,6 +36,7 @@ function create() {
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
     async nextNo(db, e, series, fy) { const k = e + '|' + series + '|' + (fy || '-'); const n = (T.counters.get(k) || 1); T.counters.set(k, n + 1); return n; },
     async entryBySource(db, e, ref) { const h = T.entries.find((x) => x.entity_id === e && x.source_ref === ref); return h ? clone(h) : null; },
+    async postedSources(db, e, refs) { return T.entries.filter((x) => x.entity_id === e && x.source_ref && (refs || []).indexOf(x.source_ref) >= 0).map((x) => x.source_ref); },
     async entry(db, e, eid) {
       const h = T.entries.find((x) => x.entity_id === e && x.entry_id === eid); if (!h) return null;
       return Object.assign(clone(h), { lines: clone(T.lines.filter((l) => l.entry_id === eid)), items: clone(T.items.filter((i) => i.entry_id === eid)) });
@@ -97,7 +99,7 @@ function create() {
     },
     async payment(db, e, pid) { const p = T.payments.find((x) => x.entity_id === e && x.payment_id === pid); return p ? clone(p) : null; },
     async queue(db, e, o) { T.outbox.push(Object.assign({ id: T.outbox.length + 1, entity_id: e, tries: 0, created_at: now(), done_at: null }, clone(o))); },
-    async waiting(db, e) { return clone(T.outbox.filter((o) => o.entity_id === e && !o.done_at)); },
+    async waiting(db, e, limit) { return clone(T.outbox.filter((o) => o.entity_id === e && !o.done_at).sort((a, b) => a.tries - b.tries || a.id - b.id).slice(0, limit || 100)); },
     async outboxDone(db, e, oid, ok, why) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else o.why = why; },
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
@@ -111,7 +113,7 @@ function create() {
     async packs(db, e) { return clone(T.packs.filter((x) => x.entity_id === e)); },
     async pack(db, e, pid) { const p = T.packs.find((x) => x.entity_id === e && x.pack_id === pid); return p ? clone(p) : null; },
     async ackPack(db, e, pid) { const p = T.packs.find((x) => x.entity_id === e && x.pack_id === pid); if (!p) return null; p.acknowledged_at = p.acknowledged_at || now(); return { acknowledged_at: p.acknowledged_at }; },
-    async counterBills() { return []; }, async countersBilling() { return []; },
+    async counterBills() { return []; }, async countersBilling() { return []; }, async unpostedChits() { return []; },
   };
   return S;
 }

@@ -95,13 +95,17 @@ router.post('/setting', auth, owner, on, async (req, res) => {
     res.json({ ok: true, enabled, walkin_grain: grain });
   } catch (err) { fail(res, err); }
 });
-/** GET /health → { enabled, currency, last_check, waiting[], engines } — the web's probe (404 = off) and the to-do list */
+/**
+ * GET /health → { enabled, currency, walkin_grain, last_check, engines, waiting: [{ id, chit_id, ref, reason, tries, since, job }] }
+ * — the web's probe (404 = off) and the to-do list: `waiting` is every post that failed or was parked, least-tried first,
+ * each with the `reason` it could not post (lib/books-hooks waitingRow; POST /outbox/retry tries them again).
+ */
 router.get('/health', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const waiting = await withEntity(e, (h) => S.waiting(h, e, 50));
     res.json({ enabled: true, currency: curOf(req), walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
-      waiting: waiting.map((w) => ({ id: w.id, chit_id: w.source_chit_id, ref: w.source_ref, why: w.why, tries: w.tries, since: w.created_at })) });
+      waiting: waiting.map(require('../lib/books-hooks').waitingRow) });
   } catch (err) { fail(res, err); }
 });
 router.post('/check', auth, owner, on, async (req, res) => {
