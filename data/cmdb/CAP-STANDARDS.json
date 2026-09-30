@@ -156,6 +156,12 @@
    "ci": "CAP-WORKLIST",
    "state": "ok",
    "note": "5 screen(s) · 8 API call(s)"
+  },
+  {
+   "title": "cap-books.js",
+   "ci": "CAP-BOOKS",
+   "state": "ok",
+   "note": "1 screen(s) · 22 API call(s)"
   }
  ],
  "entries": [],

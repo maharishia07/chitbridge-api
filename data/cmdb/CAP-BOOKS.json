@@ -1,15 +1,10 @@
 {
- "ci": "CAP-READINESS",
- "title": "Trade ready — compliance + commerce",
+ "ci": "CAP-BOOKS",
+ "title": "cap-books.js",
  "type": "Capability module",
  "system": "ChitBridge web app",
- "summary": "The supplier’s readiness + the buyer’s confidence: per-destination clearances (spin the globe), a trust ladder (declared→documented→attested→verified), a self-proving reference, and the invariant commercial spine (instruments by FRM risk + the settlement chain). Each topic opens to its lifecycle. Backend harness-proven; the screen needs a human live-run.",
+ "summary": "Derived from the code: the screens cap-books.js draws, what it calls, what it writes, and the tests that touch it.",
  "source": "generated",
- "maturity": {
-  "now": 2,
-  "target": 4,
-  "set": "legend"
- },
  "map": [
   {
    "title": "Admin",
@@ -111,8 +106,7 @@
    "title": "Trade ready — compliance + commerce",
    "ci": "CAP-READINESS",
    "state": "ok",
-   "note": "1 screen(s) · 13 API call(s) · maturity 2",
-   "node": "p1"
+   "note": "1 screen(s) · 13 API call(s) · maturity 2"
   },
   {
    "title": "cap-register.js",
@@ -166,26 +160,33 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 22 API call(s)",
+   "node": "p1"
   }
  ],
  "entries": [
   {
    "id": "e1",
-   "t": "🛡️ Insight › Trade ready",
-   "s": "INS004 · nav readiness",
-   "d": "A screen this capability draws — reached from the menu path Insight › Trade ready."
+   "t": "📒 Business › Ledger",
+   "s": "BUS014 · nav ledger",
+   "d": "A screen this capability draws — reached from the menu path Business › Ledger."
   }
  ],
  "process": [
   {
    "id": "p1",
-   "t": "cap-readiness.js",
-   "s": "app/cap-readiness.js · 49 functions",
+   "t": "cap-books.js",
+   "s": "app/cap-books.js · 68 functions",
    "d": "The capability module: what the screens above call."
   },
   {
    "id": "p2",
+   "t": "CBMoney",
+   "s": "engine / shared global",
+   "d": "A shared rule set this module calls."
+  },
+  {
+   "id": "p3",
    "t": "CBLocale",
    "s": "engine / shared global",
    "d": "A shared rule set this module calls."
@@ -194,87 +195,135 @@
  "exits": [
   {
    "id": "x1",
-   "t": "POST /api/chits/send",
-   "s": "api('createChit') → routes/chits.js",
-   "d": "Writes through the API, answered by routes/chits.js."
+   "t": "GET /api/books/dues",
+   "s": "api('booksDues') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
   },
   {
    "id": "x2",
-   "t": "GET /api/governance/profile",
-   "s": "api('profileGet') → routes/governance.js",
-   "d": "Reads through the API, answered by routes/governance.js."
+   "t": "GET /api/books/party/:id/statement",
+   "s": "api('booksStatement') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
   },
   {
    "id": "x3",
-   "t": "PUT /api/governance/profile",
-   "s": "api('profilePut') → routes/governance.js",
-   "d": "Writes through the API, answered by routes/governance.js."
+   "t": "GET /api/books/health",
+   "s": "api('booksHealth') → routes/books.js",
+   "d": "Reads through the API, answered by routes/books.js."
   },
   {
    "id": "x4",
-   "t": "CALL /api/governance/readiness",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/accounts",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x5",
-   "t": "CALL /api/governance/readiness/:bridge_id",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/daybook",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x6",
-   "t": "CALL /api/governance/compliance",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/ledger/:account",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x7",
-   "t": "CALL /api/governance/lanes",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/trial-balance",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x8",
-   "t": "CALL /api/governance/verify",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/pl",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x9",
-   "t": "CALL /api/governance/instruments",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/bs",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x10",
-   "t": "CALL /api/governance/journey",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/payments",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x11",
-   "t": "CALL /api/governance/ai-draft",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/payments/:id/propose",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x12",
-   "t": "CALL /api/governance/ai-skills",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/payments/:id/confirm",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x13",
-   "t": "CALL /api/governance/ai-usage",
-   "s": "routes/governance.js",
+   "t": "CALL /api/books/periods/:fy/:p/lock",
+   "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
    "id": "x14",
-   "t": "stores cb_rd_lane",
-   "s": "browser storage",
-   "d": "Kept in this browser."
+   "t": "CALL /api/books/periods/:fy/:p/unlock",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x15",
+   "t": "CALL /api/books/opening",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x16",
+   "t": "CALL /api/books/packs",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x17",
+   "t": "CALL /api/books/packs/:id",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x18",
+   "t": "CALL /api/books/packs/:id/file",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x19",
+   "t": "CALL /api/books/packs/:id/ack",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x20",
+   "t": "CALL /api/books/cheques",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x21",
+   "t": "CALL /api/books/cheques/:id/status",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
+  },
+  {
+   "id": "x22",
+   "t": "CALL /api/books/outbox/retry",
+   "s": "routes/books.js",
+   "d": "A direct call to the API."
   }
  ],
  "edges": [
@@ -285,6 +334,10 @@
   [
    "p1",
    "p2"
+  ],
+  [
+   "p1",
+   "p3"
   ],
   [
    "p1",
@@ -341,135 +394,92 @@
   [
    "p1",
    "x14"
+  ],
+  [
+   "p1",
+   "x15"
+  ],
+  [
+   "p1",
+   "x16"
+  ],
+  [
+   "p1",
+   "x17"
+  ],
+  [
+   "p1",
+   "x18"
+  ],
+  [
+   "p1",
+   "x19"
+  ],
+  [
+   "p1",
+   "x20"
+  ],
+  [
+   "p1",
+   "x21"
+  ],
+  [
+   "p1",
+   "x22"
   ]
  ],
  "relationships": [
   {
-   "this": "CAP017 cap-readiness.js",
+   "this": "CAP026 cap-books.js",
    "rel": "draws",
-   "that": "INS004"
+   "that": "BUS014"
   },
   {
-   "this": "CAP017 cap-readiness.js",
+   "this": "CAP026 cap-books.js",
    "rel": "calls",
-   "that": "routes/chits.js · routes/governance.js"
+   "that": "routes/books.js"
   }
  ],
  "layers": {
-  "build": "chitbridge-web/public/app/cap-readiness.js",
-  "design": "Capability Trade ready — compliance + commerce"
+  "build": "chitbridge-web/public/app/cap-books.js",
+  "design": "Capability cap-books.js"
  },
  "tests": [
   {
-   "file": "web e2e/movable-panels.cjs",
-   "kind": "browser",
-   "result": "fail",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "web e2e/prose-worklist.cjs",
+   "file": "web e2e/books-web-breaks.cjs",
    "kind": "browser",
    "result": "not run"
   },
   {
-   "file": "web e2e/tests/cap-collision.spec.js",
-   "kind": "live spec",
-   "result": "not run"
-  },
-  {
-   "file": "web e2e/tests/zz-register.spec.js",
-   "kind": "live spec",
-   "result": "not run"
-  },
-  {
-   "file": "web e2e/text-budget.cjs",
+   "file": "web e2e/books-web.cjs",
    "kind": "browser",
    "result": "not run"
   },
   {
-   "file": "web e2e/theme-literals.cjs",
-   "kind": "browser",
-   "result": "fail",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/books-writer.test.cjs",
+   "file": "api tests/books-counter-snapshot.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/docnumber-gate.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/engine-boundary.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/iam-access.test.cjs",
+   "file": "api tests/books-fixes.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/knownerr.test.js",
+   "file": "api tests/books-hooks.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/local-supplier.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/network-authority.test.cjs",
+   "file": "api tests/books-routes.test.cjs",
    "kind": "server",
    "result": "not run"
   },
   {
-   "file": "api tests/policy-defaults.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/query-shape.test.js",
-   "kind": "server",
-   "result": "fail",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/raida.test.cjs",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/retention-floor.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/rev01-price-includes-tax.test.js",
+   "file": "api tests/support/books-harness.cjs",
    "kind": "server",
    "result": "not run"
-  },
-  {
-   "file": "api tests/rev02-no-rerate-on-send.test.js",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/tdz-guard.test.js",
-   "kind": "server",
-   "result": "pass",
-   "at": "2026-09-13"
   }
  ],
- "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: readiness\n  annotations:\n    chitbridge.io/ci: CAP-READINESS\n    chitbridge.io/asset: CAP017\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/chits.js\n    - routes/governance.js"
+ "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: books\n  annotations:\n    chitbridge.io/ci: CAP-BOOKS\n    chitbridge.io/asset: CAP026\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/books.js"
 }
