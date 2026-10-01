@@ -5,6 +5,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { query, withEntity } = require('../db');
 const auth = require('../middleware/auth');
+const billPrivacy = require('../lib/bill-privacy');
 
 // GET /api/notifications?limit= — recent activity (newest first) on my chits, excluding my own actions.
 /**
@@ -29,6 +30,9 @@ const FEED_FROM = `FROM state_log sl
         WHERE (sl.action_by_identity_id <> $2
                OR sl.action IN ('dispute_raised','dispute_resolved','voided'))
           AND ( sl.entity_id = $1 OR sl.action IN ('dispute_raised','dispute_resolved','voided') )
+          /* ⭐⭐ ON A BILL, THE OTHER SHOP'S OWN STEPS ARE NOT MY NEWS (lib/bill-privacy, Athi 2026-10-01): its accepting, its goods-in —
+             including rows fanned here before that rule — never ring my bell. The dispute and what its folder made external do. */
+          AND NOT (${billPrivacy.billSql('ch', 'cs')} AND ${billPrivacy.foreignStepSql('sl', '$1')})
           AND NOT EXISTS (SELECT 1 FROM notif_dismissed nd
                            WHERE nd.entity_id = $1 AND nd.log_id = sl.log_id)
           /* ⚠️ BOUNDED (external review 2026-09-25): with no date bound this re-sorted the shop's WHOLE state_log on every

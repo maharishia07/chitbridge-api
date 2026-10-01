@@ -437,6 +437,12 @@ router.post('/payments/:id/confirm', auth, noKey, on, async (req, res) => {
         allocations: list.map((a) => ({ against_ref: String(a.against_ref || ''), amount_minor: Math.round(Number(a.amount_minor)) })), currency: p.currency, by: byOf(req) });
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
+    /* ⭐ a payment against a BILL is a step of R-1400 — written at its messaging level (lib/bill-privacy): my history, and the
+       other party's too while R-1400 is external (a remittance advice). After the posting committed; never able to undo it. */
+    try {
+      const pay = await withEntity(e, (h) => S.payment(h, e, id));
+      await require('../lib/bill-privacy').moneySteps(e, pay, list, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
+    } catch (e2) { console.error('bill money steps:', e2.message); }
     res.json(out);
   } catch (err) { fail(res, err); }
 });

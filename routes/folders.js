@@ -89,27 +89,46 @@ router.get('/', auth, async (req, res) => {
 router.get('/inventory', auth, async (req, res) => {
   try {
     const e = ent(req);
-    res.json({ rows: views.inventoryRows(await views.switchesOf(e)), can_change: isOwner(req) });
+    res.json({ rows: views.inventoryRows(await views.flagsOf(e)), can_change: isOwner(req) });
   } catch (err) { res.status(500).json({ error: 'Inventory failed', message: safeErr(err) }); }
 });
 
 /**
- * PUT /api/folders/inventory/:code { on: true|false } — the OWNER switches one system folder on or off.
+ * PUT /api/folders/inventory/:code { on?: true|false, msg?: 'external'|'internal'|'none' } — the OWNER switches one system
+ * folder on or off, and/or sets its MESSAGING LEVEL.
  * ⚠️ A track (Tasks, Orders) cannot be switched off. ⚠️ Off HIDES the folder; its bills still stay out of Task (they are not
  * tasks — lib/folder-inventory leaves_inbox), which the screen says beside the checkbox.
+ * ⚠️ THE LEVEL ONLY GOES DOWN (Athi, 2026-10-01): the inventory's level is the ceiling — a level above it is refused with 409
+ * and a plain sentence, and the dispute's level cannot be changed at all.
  */
 router.put('/inventory/:code', auth, async (req, res) => {
   try {
     if (!isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
     const f = INV.byCode(String(req.params.code || ''));
     if (!f) return res.status(404).json({ error: 'No such folder', message: 'There is no folder ' + req.params.code + ' in the inventory.' });
-    if (f.fixed) return res.status(400).json({ error: 'Always on', message: f.name + ' is where work arrives — it cannot be switched off.' });
-    if (typeof (req.body || {}).on !== 'boolean') return res.status(400).json({ error: 'Bad request', message: 'on must be true or false' });
+    const b = req.body || {};
+    const hasOn = b.on !== undefined, hasMsg = b.msg !== undefined;
+    if (!hasOn && !hasMsg) return res.status(400).json({ error: 'Bad request', message: 'Send on (true or false) or msg (external, internal or none).' });
+    if (hasOn && typeof b.on !== 'boolean') return res.status(400).json({ error: 'Bad request', message: 'on must be true or false' });
+    if (hasOn && f.fixed) return res.status(400).json({ error: 'Always on', message: f.name + ' is always on — it cannot be switched off.' });
+    if (hasMsg) {
+      if (INV.LEVELS.indexOf(b.msg) < 0) return res.status(400).json({ error: 'Bad request', message: 'msg must be external, internal or none.' });
+      if (f.msg_fixed || f.kind === 'track') return res.status(409).json({ error: 'Fixed', code: 'MSG_FIXED',
+        message: f.kind === 'track' ? f.name + ' has no messaging level of its own.' : f.name + ' are always shared with the other party — that cannot be changed.' });
+      if (!INV.msgAllowed(f, b.msg)) {
+        const how = f.msg === 'internal' ? 'kept internal or switched off' : 'switched off';
+        return res.status(409).json({ error: 'Above the default', code: 'MSG_ABOVE_CEILING',
+          message: f.name + ' can be ' + how + ', but not shared beyond the default.' });
+      }
+    }
     const e = ent(req);
     const cur = (await policy.get(e)).system_folders || {};
-    const next = Object.assign({}, cur, { [f.code]: req.body.on ? 'on' : 'off' });
-    await policy.set(e, { system_folders: next });
-    res.json({ rows: views.inventoryRows(await views.switchesOf(e)), can_change: true });
+    /* the stored row becomes { on, msg } — an older 'on'/'off' string is carried into it, never lost */
+    const was = cur[f.code], row = (was && typeof was === 'object') ? Object.assign({}, was) : (was === 'on' ? { on: true } : was === 'off' ? { on: false } : {});
+    if (hasOn) row.on = b.on;
+    if (hasMsg) row.msg = b.msg;
+    await policy.set(e, { system_folders: Object.assign({}, cur, { [f.code]: row }) });
+    res.json({ rows: views.inventoryRows(await views.flagsOf(e)), can_change: true });
   } catch (err) { res.status(err.status || 500).json({ error: 'Switch failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 

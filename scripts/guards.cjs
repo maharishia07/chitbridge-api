@@ -191,6 +191,7 @@ const GUARDS = [
   'bill-use.test.cjs',          // what a bill I received is for — resale · use · asset — and what each posts; stock only for resale
   /* ⭐⭐ THE BILLS FOLDER (2026-10-01) — broken once each by scripts/bills-folder-breaks.cjs */
   'bills-folder.test.cjs',      // the folder inventory numbered with the ledger; view folders; the step function; bills leave Task — nothing else
+  'bills-private.test.cjs',     // ⭐⭐ a bill's steps stay with the shop that took them, at the folder's messaging level; only the dispute always crosses
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

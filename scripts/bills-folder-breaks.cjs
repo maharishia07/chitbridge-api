@@ -8,7 +8,7 @@ const BREAKS = [
   /* the inventory and the one classification (lib/folder-inventory.js) */
   [T, 'lib/folder-inventory.js', "const LEAVES = INVENTORY.filter((f) => f.leaves_inbox).map((f) => f.when.doc);", "const LEAVES = INVENTORY.filter((f) => f.kind === 'view').map((f) => f.when.doc);", 'receipts, expenses and returns leave the inbox too'],
   [T, 'lib/folder-inventory.js', "    if (k === 'counter_bill') return !!(bj.bill_no && String(bj.bill_no) !== '' && bj.till && bj.till.id && String(bj.till.id) !== '');", "    if (k === 'counter_bill') return !!bj.bill_no;", 'the JS classification drifts from the ledger (no till needed)'],
-  [T, 'lib/folder-inventory.js', "  INVENTORY.forEach((f) => { const v = said[f.code]; out[f.code] = f.fixed ? true : (v === 'on' ? true : v === 'off' ? false : !!f.on); });", "  INVENTORY.forEach((f) => { out[f.code] = f.fixed ? true : !!f.on; });", 'the switch is ignored'],
+  [T, 'lib/folder-inventory.js', "    out[f.code] = f.fixed ? true : (typeof on === 'boolean' ? on : !!f.on); });", "    out[f.code] = f.fixed ? true : !!f.on; });", 'the switch is ignored'],
   [T, 'lib/folder-inventory.js', "{ code: 'B-2100',  name: 'Bills · Received', role: 'creditors',", "{ code: 'B-2100',  name: 'Bills · Received', role: 'debtors',", 'Bills received point at the wrong ledger'],
   /* the inbox predicate (routes/chits.js) */
   [T, 'routes/chits.js', "    if (!/^[0-9a-f-]{36}$/i.test(String(req.query.folder_id || '').trim())) whereClause += ` AND ${FOLDER_INV.inboxSql('ch', 'cs')}`;", "", 'bills come back into Task'],
@@ -28,13 +28,13 @@ const BREAKS = [
   [T, 'lib/folder-rules.js', "views.size ? rules.filter((r) => !views.has(String(r.folder_id))) : rules", "rules", 'a view folder\'s rule files chits'],
   [T, 'lib/select.js', "  (${INV.docSql('ch', 'cs')}) AS doc_kind,", "  NULL::text AS doc_kind,", 'the folders read a different classification from the inbox'],
   /* the step function and its facts (lib/bill-steps.js) */
-  [T, 'lib/bill-steps.js', "    if (disputed) step = 'disputed';\n    else if (refusedE)", "    if (false) step = 'disputed';\n    else if (refusedE)", 'a dispute does not show'],
+  [T, 'lib/bill-steps.js', "    if (disputed) { step = 'disputed'; cur = { code: CODE.dispute, label: LABEL.disputed, by: lastDispute && lastDispute.by, at: lastDispute && lastDispute.at }; }\n    else if (refused)", "    if (false) { step = 'disputed'; }\n    else if (refused)", 'a dispute does not show'],
   [T, 'lib/bill-steps.js', "    const goodsIn = !g || !g.lines || g.complete >= g.lines;", "    const goodsIn = true;", 'a bill closes before the goods are in'],
-  [T, 'lib/bill-steps.js', "side === 'issued' ? LABEL.money_received : LABEL.paid, x.money, CODE.money);", "side === 'issued' ? LABEL.money_received : LABEL.paid, x.money);", 'money reads as the bill\'s acceptance (one code for two acceptances)'],
+  [T, 'lib/bill-steps.js', "h.push({ step: l.step || 'line', code: l.code, label: l.label,", "h.push({ step: l.step || 'line', code: code, label: l.label,", 'money reads as the bill\'s acceptance (one code for two acceptances)'],
   [T, 'lib/bill-steps.js', "return (i && (i.user_id || i.display_name)) || name || null;", "return (i && i.display_name) || name || null;", 'the line names a display name, not the user id'],
-  [T, 'lib/bill-steps.js', "        waiting: recips.some((p) => p && p.entity_id && String(p.entity_id) !== me),", "        waiting: true,", 'a walk-in bill waits for a customer who does not exist'],
-  [T, 'lib/bill-steps.js', "        accepted: pt(theirs(ACCEPTED_ACT)[0]), refused: pt(theirs(REFUSED_ACT)[0]) } : null,", "        accepted: null, refused: null } : null,", 'the customer\'s acceptance is never read'],
-  [T, 'lib/bill-steps.js', "  if (paid) add('paid',", "  if (false) add('paid',", 'paid is not shown'],
+  [T, 'lib/bill-steps.js', "      waiting: recips.some((p) => p && p.entity_id && String(p.entity_id) !== me),", "      waiting: true,", 'a walk-in bill waits for a customer who does not exist'],
+  /* (2026-10-01, bills-private: the seller no longer reads the customer's acceptance at all — scripts/bills-private-breaks.cjs guards that) */
+  [T, 'lib/bill-steps.js', "open: step !== 'closed', paid: !!(x.money && x.money.settled), history: h };", "open: step !== 'closed', paid: false, history: h };", 'paid is not shown'],
 ];
 let caught = 0; const missed = [];
 for (const [test, file, from, to, what] of BREAKS) {

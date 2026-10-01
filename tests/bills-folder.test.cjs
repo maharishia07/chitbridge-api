@@ -147,7 +147,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('a co-assist cannot switch a folder (403), nor through the generic policy door (403)', no1.status === 403 && no2.status === 403 && !FLAGS.system_folders, no1.status + ' ' + no2.status);
     WHO = { identity_id: SHOP, identity_type: 'entity', display_name: 'Mayur Traders' };
     const t1 = await call('PUT', '/api/folders/inventory/E-6000', { on: true });
-    ok('the owner turns Expenses on → stored as policy_flags.system_folders', t1.status === 200 && FLAGS.system_folders && FLAGS.system_folders['E-6000'] === 'on', JSON.stringify(FLAGS));
+    ok('the owner turns Expenses on → stored as policy_flags.system_folders { on }', t1.status === 200 && FLAGS.system_folders && FLAGS.system_folders['E-6000'] && FLAGS.system_folders['E-6000'].on === true, JSON.stringify(FLAGS));
     ok('…and E-6000 is now in the tree', ((await call('GET', '/api/folders')).body.folders || []).some((f) => f.code === 'E-6000'));
     ok('a track cannot be switched off (400)', (await call('PUT', '/api/folders/inventory/T', { on: false })).status === 400);
     await call('PUT', '/api/folders/inventory/B-2100', { on: false });
@@ -223,29 +223,33 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('Received — nothing posted, nothing counted', s1.step === 'received' && s1.code === 'B-2100' && s1.label === 'Received' && s1.open, JSON.stringify(s1));
     ok('Goods checked — goods-in recorded, B-2100 · Goods checked · chola-ravi · 08:50', s2.step === 'goods_checked' && s2.code === 'B-2100' && s2.label === 'Goods checked' && s2.by === 'chola-ravi' && s2.at === T1, JSON.stringify(s2));
     ok('Accepted — B-2100 · Bill accepted · chola-ravi (goods not all in: still open)', s3.step === 'accepted' && s3.label === 'Bill accepted' && s3.by === 'chola-ravi' && s3.open, JSON.stringify(s3));
-    ok('Disputed — an open dispute wins over every other step', s4.step === 'disputed' && s4.code === 'B-2100' && s4.open, JSON.stringify(s4));
+    ok('Disputed — an open dispute wins over every other step, and its line carries the DISPUTE code (DSP)', s4.step === 'disputed' && s4.code === 'DSP' && s4.open, JSON.stringify(s4));
     ok('Closed — goods in + accepted, no longer open', s5.step === 'closed' && !s5.open && s5.code === 'B-2100', JSON.stringify(s5));
     ok('a bill with no lines to count closes on acceptance', L({ status: 'accepted', accepted: rv2 }).step === 'closed');
     ok('a refused bill is closed, "Bill refused"', L({ status: 'rejected', refused: rv2 }).label === 'Bill refused' && !L({ status: 'rejected', refused: rv2 }).open);
-    const s6 = L({ status: 'accepted', accepted: rv2, posted: rv2, goods: { lines: 1, complete: 1, started: 1, by: rv.by, at: rv.at }, money: { settled: true, by: 'tallytest', at: T3 } });
+    const s6 = L({ status: 'accepted', accepted: rv2, posted: rv2, goods: { lines: 1, complete: 1, started: 1, by: rv.by, at: rv.at }, money: { settled: true, at: T3 },
+                   lines: [{ step: 'paid', code: 'R-1400', label: 'Paid ₹481.65 of ₹481.65', by: 'tallytest', at: T3 }] });
     const codes = s6.history.map((h) => h.code + ' · ' + h.label + ' · ' + h.by);
-    ok('PAID is shown, never holding the bill: R-1400 · Money paid · tallytest — step stays Closed', s6.paid && s6.step === 'closed' && codes.indexOf('R-1400 · Money paid · tallytest') >= 0, JSON.stringify(codes));
-    ok('…two acceptances on one bill carry TWO codes (B-2100 Bill accepted, R-1400 Money paid)', codes.indexOf('B-2100 · Bill accepted · chola-ravi') >= 0 && codes.indexOf('R-1400 · Money paid · tallytest') >= 0);
+    ok('PAID is shown, never holding the bill: R-1400 · Paid ₹481.65 of ₹481.65 · tallytest — step stays Closed', s6.paid && s6.step === 'closed' && codes.indexOf('R-1400 · Paid ₹481.65 of ₹481.65 · tallytest') >= 0, JSON.stringify(codes));
+    ok('…two acceptances on one bill carry TWO codes (B-2100 Bill accepted, R-1400 Paid)', codes.indexOf('B-2100 · Bill accepted · chola-ravi') >= 0 && codes.some((c) => /^R-1400 · Paid/.test(c)));
     ok('…a paid bill whose goods are not in is NOT closed by the money', L({ status: 'accepted', accepted: rv2, goods: { lines: 2, complete: 0, started: 0 }, money: { settled: true, by: 'x', at: T3 } }).step === 'accepted');
     const I = (f) => steps.lifecycle(Object.assign({ side: 'issued', status: 'pending', created: { by: 'mayur-owner', at: T0 } }, f));
-    const i1 = I({ customer: { waiting: true } }), i2 = I({ customer: { waiting: true, accepted: { by: 'chola-ravi', at: T2 } } });
-    const i3 = I({ customer: { waiting: false } }), i4 = I({ customer: { waiting: true }, disputes: [rv2] });
-    ok('Issued — waiting on the customer: B-1300 · Issued', i1.step === 'issued' && i1.code === 'B-1300' && i1.open, JSON.stringify(i1));
-    ok('Accepted by the customer → Closed, the line reads B-1300 · Accepted by customer · chola-ravi', i2.step === 'closed' && !i2.open && i2.history.some((h) => h.code === 'B-1300' && h.label === 'Accepted by customer' && h.by === 'chola-ravi' && h.at === T2), JSON.stringify(i2));
-    ok('a walk-in bill has nobody to accept it: Closed when issued', i3.step === 'closed' && !i3.open);
-    ok('Disputed by the customer → Disputed', i4.step === 'disputed' && i4.open);
-    ok('money on an issued bill reads R-1400 · Money received', I({ customer: { waiting: false }, money: { settled: true, by: 'tallytest', at: T3 } }).history.some((h) => h.code === 'R-1400' && h.label === 'Money received' && h.by === 'tallytest'));
+    const i1 = I({ waiting: true }), i2 = I({ waiting: true, money: { settled: true, at: T3 } });
+    const i3 = I({ waiting: false }), i4 = I({ waiting: true, disputes: [rv2] });
+    ok('Issued — waiting on payment: B-1300 · Issued', i1.step === 'issued' && i1.code === 'B-1300' && i1.open, JSON.stringify(i1));
+    ok('paid in full in MY ledger → Closed', i2.step === 'closed' && !i2.open && i2.paid, JSON.stringify(i2));
+    ok('a walk-in bill: Closed when issued', i3.step === 'closed' && !i3.open);
+    ok('Disputed → Disputed (DSP)', i4.step === 'disputed' && i4.open && i4.code === 'DSP');
+    ok('money on an issued bill reads R-1400 · Received ₹118 of ₹118 (my own receipt)', I({ waiting: false, money: { settled: true, at: T3 }, lines: [{ step: 'received', code: 'R-1400', label: 'Received ₹118 of ₹118', by: 'tallytest', at: T3 }] }).history.some((h) => h.code === 'R-1400' && h.label === 'Received ₹118 of ₹118' && h.by === 'tallytest'));
 
     console.log('\n══ G · THE FACTS ARE THE RECORDS THAT EXIST — the listing returns each bill\'s step ══\n');
     world();
     PEOPLE = { [CHOLA]: { identity_id: CHOLA, user_id: 'chola-ravi', display_name: 'Ravi K' }, [RAVI]: { identity_id: RAVI, user_id: 'tallytest', display_name: 'Tally Test' } };
     LINES = [{ chit_id: BILL_IN, line_id: 'l1', particulars: 'Rice', ordered_unit: 'kg', ordered: 10, removed: false, delivery_id: 'd1', dq: 10, du: 'kg', recorded_by_entity_id: SHOP, recorded_by_actor_id: CHOLA, recorded_by_name: 'Mayur', delivered_at: T1 }];
     LOG = [{ chit_id: BILL_IN, action: 'status_accepted', who_id: CHOLA, who_name: 'Ravi K', at: T2, parent_entity_id: SHOP },
+           { chit_id: BILL_IN, action: 'bill_step', who_id: RAVI, who_name: 'Tally Test', at: T3, parent_entity_id: SHOP,
+             detail: JSON.stringify({ code: 'R-1400', step: 'paid', label: 'Money paid', party: 'Mayur Traders', amount_minor: 48165, of_minor: 48165, due_minor: 0, currency: 'INR' }) },
+           /* fanned into MY state_log by the buyer before the privacy rule — never read as anything of mine */
            { chit_id: BILL_OUT, action: 'status_accepted', who_id: '99999999-9999-4999-8999-999999999999', who_name: 'Chola buyer', at: T2, parent_entity_id: CUST }];
     PEOPLE['99999999-9999-4999-8999-999999999999'] = { identity_id: '99999999-9999-4999-8999-999999999999', user_id: 'chola-buyer', display_name: 'Chola buyer' };
     JE = [{ chit_id: BILL_IN, at: T2, who_id: CHOLA }];
@@ -255,10 +259,10 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('the received bill reads Closed from the records: goods in (deliveries), accepted (state_log), posted (journal)', gb.step === 'closed', JSON.stringify(gb));
     ok('…every line names the person by USER ID: B-2100 · Goods checked · chola-ravi', (gb.history || []).some((h) => h.code === 'B-2100' && h.label === 'Goods checked' && h.by === 'chola-ravi' && h.at === T1), JSON.stringify(gb.history));
     ok('…B-2100 · Bill accepted · chola-ravi (from the status history, not a new log)', (gb.history || []).some((h) => h.label === 'Bill accepted' && h.by === 'chola-ravi'));
-    ok('…R-1400 · Money paid · tallytest (from the payment that settled the party item)', gb.paid === true && (gb.history || []).some((h) => h.code === 'R-1400' && h.by === 'tallytest'));
+    ok('…R-1400 · Paid ₹481.65 of ₹481.65 · tallytest (my own payment step; paid from MY ledger)', gb.paid === true && (gb.history || []).some((h) => h.code === 'R-1400' && h.by === 'tallytest' && h.label === 'Paid ₹481.65 of ₹481.65'), JSON.stringify(gb.history));
     ok('the closed bill leaves the OPEN list (state=open) and the open count', ((await call('GET', '/api/folders/' + B2100 + '/chits')).body.chits || []).every((c) => c.chit_id !== BILL_IN));
     const ib = ((await call('GET', '/api/folders/' + B1300 + '/chits?state=all')).body.chits || []).find((c) => c.chit_id === BILL_OUT) || {};
-    ok('the issued bill reads B-1300 · Accepted by customer · chola-buyer (the customer\'s acceptance in MY state_log)', ib.bill && ib.bill.step === 'closed' && ib.bill.history.some((h) => h.label === 'Accepted by customer' && h.by === 'chola-buyer'), JSON.stringify(ib.bill));
+    ok('the issued bill does NOT read the customer\'s acceptance (a buyer row in my state_log): still Issued, open, no line of theirs', ib.bill && ib.bill.step === 'issued' && ib.bill.open && !ib.bill.history.some((h) => h.by === 'chola-buyer'), JSON.stringify(ib.bill));
     const wk = ((await call('GET', '/api/folders/' + B1300 + '/chits?state=all')).body.chits || []).find((c) => c.chit_id === WALKIN) || {};
     ok('the walk-in bill (only the shop on it) reads Closed — nobody to accept it', wk.bill && wk.bill.step === 'closed', JSON.stringify(wk.bill));
     ok('…and the bill to a rail customer nobody has accepted yet stays Issued, open', (() => { LOG = []; return true; })()

@@ -91,7 +91,10 @@ const norm = (s) => s.replace(/\s+/g, ' ').trim();
     /* the fragment as SENT: its source text, with the one constant it interpolates filled in */
     const frag = norm(require('fs').readFileSync(path.join(API, 'routes', 'notifications.js'), 'utf8')
       .match(/const FEED_FROM = `([\s\S]*?)`;/)[1]
-      .replace(/\$\{FEED_DAYS\}/g, String(Math.max(1, parseInt(process.env.NOTIF_FEED_DAYS || '90', 10) || 90))));
+      .replace(/\$\{FEED_DAYS\}/g, String(Math.max(1, parseInt(process.env.NOTIF_FEED_DAYS || '90', 10) || 90)))
+      /* the bill-privacy predicate it interpolates (lib/bill-privacy, 2026-10-01), filled in the same way */
+      .replace("${billPrivacy.billSql('ch', 'cs')}", () => require(path.join(API, 'lib', 'bill-privacy')).billSql('ch', 'cs'))
+      .replace("${billPrivacy.foreignStepSql('sl', '$1')}", () => require(path.join(API, 'lib', 'bill-privacy')).foreignStepSql('sl', '$1')));
     assert.ok(countSql.indexOf(frag) >= 0, 'the count does not use FEED_FROM');
     assert.ok(feedSql.indexOf(frag) >= 0, 'the feed does not use FEED_FROM');
     assert.ok(/notif_dismissed/.test(frag) && /sl\.entity_id = \$1 OR sl\.action IN/.test(frag),

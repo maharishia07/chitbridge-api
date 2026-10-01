@@ -54,6 +54,8 @@ const taxCopy = require('../lib/tax-copy');
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
    live in the Bills folders. The SAME classification the folders read through lib/select.js, so the two can never disagree. */
 const FOLDER_INV = require('../lib/folder-inventory');
+/* ⭐⭐ A BILL'S STEPS STAY WITH THE SHOP THAT TOOK THEM, at its folder's messaging level (lib/bill-privacy, Athi 2026-10-01) */
+const billPrivacy = require('../lib/bill-privacy');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
@@ -2142,7 +2144,7 @@ router.get('/:chit_id', auth, async (req, res) => {
 
       // Each participant has their own copy (entity_id = their entity).
       const log = await db.query(
-        `SELECT action, action_by_display_name, previous_status,
+        `SELECT action, action_by_identity_id, action_by_display_name, previous_status,
                 new_status, detail, created_at
          FROM state_log
          WHERE chit_id = $1 AND entity_id = $2 AND action != 'read'
@@ -2376,7 +2378,32 @@ router.get('/:chit_id', auth, async (req, res) => {
        payload and it never changes, which is the only reason a struck-through "was 3" can be trusted. */
     const _rows = bundle.rows;
     const _assigned = bundle.assigned;
-    const _prog = bundle.prog;
+    let _prog = bundle.prog;
+    /**
+     * ⭐⭐ A BILL IS READ AS ITS HOLDER MAY SEE IT (lib/bill-privacy). The other shop keeps who it is on the participants panel,
+     * never its status, read time or assignee; its goods-in claims are dropped from the delivery picture; its internal history
+     * (status, goods-in — including rows fanned here before this rule) is hidden. The bill itself, its dispute, and the steps
+     * the other shop's own folder made external stay. Not a bill → untouched.
+     */
+    let _red = { private: false, state_log: data.log.rows, participants: bundle.participants };
+    try {
+      const _h = data.header.rows[0];
+      if (_h && billPrivacy.isBill(_h, entity_id)) {
+        const mine = await billPrivacy.mineSet(entity_id, data.log.rows.map((r) => r.action_by_identity_id));
+        _red = billPrivacy.redactRead({ header: _h, me: entity_id, state_log: data.log.rows, participants: bundle.participants, mine });
+        if (_lines0) {
+          const dl = await withEntity(entity_id, (db) => db.query(
+            `SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
+                    d.delivery_id, d.quantity AS dq, d.unit AS du, d.reference, d.note, d.recorded_by_entity_id, d.recorded_by_name,
+                    d.recorded_by_actor_name, d.delivered_at, to_jsonb(d)->>'kind' AS dkind, (to_jsonb(d)->>'amount')::numeric AS damount,
+                    to_jsonb(d)->>'particulars' AS dparticulars
+               FROM chit_line l LEFT JOIN chit_line_delivery d ON d.entity_id = l.entity_id AND d.chit_id = l.chit_id AND d.line_id = l.line_id
+              WHERE l.entity_id = $1 AND l.chit_id = $2 AND (d.delivery_id IS NULL OR d.recorded_by_entity_id = $1)
+              ORDER BY l.seq, l.line_id, d.delivered_at`, [entity_id, chit_id])).catch(() => null);
+          _prog = dl ? await deliverline.progress(entity_id, chit_id, null, dl.rows) : null;
+        }
+      }
+    } catch (e) { console.error('bill read redaction:', e.message); _red = { private: true, state_log: [], participants: [] }; _prog = null; }
     const _byId = new Map((_lines || []).map((l) => [l.line_id, l]));
     const _live = _rows
       ? _rows.map((row, i) => {
@@ -2409,8 +2436,9 @@ router.get('/:chit_id', auth, async (req, res) => {
       ...(_wantTiming ? { _timing: _T } : {}),
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
-      participants,
-      state_log: data.log.rows,
+      participants: _red.participants,
+      state_log: _red.state_log,
+      ...(_red.private ? { bill_private: true } : {}),
       attachments,
       amendments: amd.amendments,
       /* ⚠️ THE UI GATES THE ✎ ON THIS. Without it the pen renders on every line before b138 is applied, and the
@@ -2785,8 +2813,18 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
       useSaid = await require('../lib/bill-use').set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines },
         { name: req.identity && req.identity.display_name }).catch((e) => ({ ok: false, message: String(e && e.message) }));
     }
+    /* ⭐⭐ ON A BILL, GOODS-IN IS MY OWN STEP (lib/bill-privacy): recorded on my copy only, and its line is written at my bill
+       folder's level — never replicated into, or announced to, the other shop */
+    const _mineCopy = await taxCopy.copyOf(chit_id, entity_id).catch(() => null);
+    const _bill = !!(_mineCopy && billPrivacy.isBill(_mineCopy, entity_id));
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
-      actor_id: req.identity.identity_id, actor_name: req.identity.display_name });
+      actor_id: req.identity.identity_id, actor_name: req.identity.display_name, private: _bill });
+    if (_bill) {
+      try {
+        out.step = await billPrivacy.writeStep(entity_id, chit_id, { code: billPrivacy.ownerCode(_mineCopy, entity_id), step: 'goods_checked',
+          label: 'Goods checked', lines: out.delivered.length }, { id: req.identity.identity_id, name: req.identity.display_name });
+      } catch (e) { console.error('bill step (goods-in) not written:', e.message); }
+    } else
     try {
       const d = out.delivered.map((x) => x.quantity).join(', ');
       /**
@@ -3194,7 +3232,8 @@ async function moveStatus(entity_id, chit_id, new_status, by, note) {
         const hdr = (copy !== undefined)
           ? { rows: copy ? [copy] : [] }
           : await db.query(
-              `SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
+              /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
+              `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
               [chit_id, entity_id]);
         // Update chit_status — the caller's OWN received copy.
         await db.query(
@@ -3242,6 +3281,19 @@ async function moveStatus(entity_id, chit_id, new_status, by, note) {
         `Status changed from ${previous_status} to ${new_status} by ${action_by_name}`)
         + (disputeWarning ? ` ⚠ ${disputeWarning}` : '');
 
+      /**
+       * ⭐⭐ A BILL'S STATUS IS THE HOLDER'S OWN STEP (Athi, 2026-10-01: "goods verified and accounted are internal status, not
+       * between two shops"). On a bill copy the change is written ONCE, as a bill_step at the level of the folder that owns it
+       * (B-2100 for a bill I received, B-1300 for one I issued — internal by default, never external): my history only, or
+       * nothing. It is no longer fanned into the other shop's timeline, feed or bell. Every other chit logs as it always did.
+       */
+      const _hrow = (_pre.header && _pre.header.rows && _pre.header.rows[0]) || null;
+      if (_hrow && billPrivacy.isBill(_hrow, entity_id)) {
+        try {
+          await billPrivacy.writeStep(entity_id, chit_id, { code: billPrivacy.ownerCode(_hrow, entity_id), step: new_status,
+            label: billPrivacy.STATUS_LABEL[new_status] || new_status, note: note || undefined }, { id: action_by_id, name: action_by_name });
+        } catch (e) { console.error('bill step (status) not written:', e.message); }
+      } else
       await crossing(entity_id,
         `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
         [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail],
