@@ -20,8 +20,10 @@ process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test';
 const SHOP = '11111111-1111-4111-8111-111111111111', CUST = '22222222-2222-4222-8222-222222222222';
 let ME = CUST, STATUS = 'pending', UPDATES = [], SENDER = SHOP, TASK_ROWS = [], HEADS = [];
 
+let SQLS = [];
 function rowsFor(sql, p) {
   const s = String(sql);
+  SQLS.push(s.replace(/\s+/g, ' '));
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
   if (/SELECT current_status FROM chit_status/.test(s)) return [{ current_status: STATUS }];
   if (/UPDATE chit_status SET current_status = \$1/.test(s)) { UPDATES.push([p[2], p[0]]); STATUS = p[0]; return []; }
@@ -136,6 +138,10 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('goods-in (receive) lists the supplier\'s counter bill sent to me, with what is left to count', rcv.count === 1 && rcv.tasks[0].chit_id === 'cb1' && rcv.tasks[0].lines[0].remaining === 2, JSON.stringify(rcv));
     const dsp = await (await fetch(`http://127.0.0.1:${srv.address().port}/api/till/tasks?kind=despatch`)).json();
     ok('…and neither it nor my own counter sale is a despatch task', dsp.count === 0, JSON.stringify(dsp));
+    SQLS = [];
+    await (await fetch(`http://127.0.0.1:${srv.address().port}/api/till/bills`)).json();
+    const bq = SQLS.filter((x) => /business_json \? 'bill_no'/.test(x) && /credit_note/.test(x))[0] || '';
+    ok('"earlier bills" reads only bills I SENT — a supplier\'s counter bill to me is a purchase, not one of mine', /h\.entity_id = \$1 AND h\.sender_entity_id = \$1/.test(bq), bq.slice(-300));
   } catch (e) { fail++; console.log('   FAIL the test ran   ' + (e && e.stack)); }
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   srv.close(); process.exit(fail ? 1 : 0);

@@ -35,9 +35,11 @@ const ROWS = {
 const LIST = { [CUST]: { rail: true }, [OUTSIDE]: { rail: false } };
 let REPLAY = null, SQL = [];
 
+let LISTED = [];
 function rowsFor(sql, p) {
   const s = String(sql);
   SQL.push(s.replace(/\s+/g, ' ').trim());
+  if (/INSERT INTO customer_list/.test(s)) { LISTED.push([String(p && p[0]), String(p && p[1])]); return []; }
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
   if (/business_json->>'client_ref' = \$2/.test(s)) return REPLAY ? [REPLAY] : [];
   if (/FROM customer_list/.test(s) && /customer_identity_id = \$2/.test(s)) {
@@ -71,6 +73,8 @@ const hooks = require(path.join(API, 'lib', 'books-hooks'));
 let HEARD = [];
 hooks.afterChit = (e, c) => { HEARD.push(String(e)); return Promise.resolve({}); };
 try { require(path.join(API, 'lib', 'meter')).meter = async () => {}; } catch (_) {}
+let SHELVES = [];
+require(path.join(API, 'lib', 'tax-shelf')).readShelf = async (eid) => { SHELVES.push(String(eid)); return null; };
 try { require(path.join(API, 'lib', 'stock-from-chit')).postFor = async () => ({ failed: [], skipped: [] }); } catch (_) {}
 
 const express = require('express');
@@ -93,7 +97,7 @@ const SELF = { self: true, name: 'self' };
 
 const srv = app.listen(0, '127.0.0.1', async () => {
   const send = async (body) => {
-    COPIES = null; HEARD = []; SQL = [];
+    COPIES = null; HEARD = []; SQL = []; LISTED = []; SHELVES = [];
     const r = await fetch(`http://127.0.0.1:${srv.address().port}/api/chits/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     await new Promise((res) => setTimeout(res, 30));   /* the ledger hooks run on setImmediate */
     return { status: r.status, body: await r.json().catch(() => ({})) };
@@ -122,6 +126,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       (theirs[0] || {}).sender_entity_id === SHOP && JSON.stringify(((theirs[0] || {}).all_recipients || []).map((r) => r.entity_id)) === JSON.stringify([SHOP, SHOP, CUST]),
       JSON.stringify((theirs[0] || {}).all_recipients));
     ok('…the ledger hears from BOTH sides (the shop\'s sale, the customer\'s purchase-waiting)', HEARD.indexOf(SHOP) >= 0 && HEARD.indexOf(CUST) >= 0, JSON.stringify(HEARD));
+    ok('…the SHOP sells it: only the shop\'s shelf is read for rates, never the customer\'s', SHELVES.length >= 1 && SHELVES.every((e) => e === SHOP), JSON.stringify(SHELVES));
+    ok('…and the shop is never written into the CUSTOMER\'s customer list (that is what an order to a seller does)', !LISTED.some((x) => x[0] === CUST), JSON.stringify(LISTED));
 
     /* the gate: a till key sends a bill to its own customer on the rail, and to nobody else */
     const notList = await send(bill('C1/26-27/0042', Object.assign({}, chola, { entity_id: STRANGER, identity_id: STRANGER }), { recipients: [SELF, Object.assign({}, toCust, { entity_id: STRANGER })] }));
