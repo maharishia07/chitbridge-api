@@ -79,7 +79,9 @@ const call = (port, method, p, body) => new Promise((done) => {
   const B = X.B;
   await B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-05', currency: 'INR', party: CUST, source_chit_id: 'c0000000-0000-4000-8000-00000000000a', source_ref: 'chit:a',
     by_rate: [{ rate: 5, taxable: 1000, cgst: 25, sgst: 25, igst: 0 }], paid: {}, round_off: 0 });
-  X.T.chits.push({ chit_id: 'c0000000-0000-4000-8000-00000000000a', bill_no: 'C1-0042' });
+  /* the bill as the counter sends it: its number, its counter, and who was signed in there (till.by — till.html chitOf) */
+  X.T.chits.push({ chit_id: 'c0000000-0000-4000-8000-00000000000a', bill_no: 'C1-0042', entity_id: SHOP, purpose: 'order',
+    business_json: { bill_no: 'C1-0042', till: { id: 'C2', name: 'Counter 2', by: { id: STAFF.identity_id, name: 'Athi', kind: 'coassist' } } } });
   await B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-06', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:b',
     by_rate: [{ rate: 12, taxable: 500, cgst: 30, sgst: 30, igst: 0 }], paid: {}, round_off: 0 });
 
@@ -208,6 +210,47 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('an unknown tax id kind is refused', badS && badS.status === 400);
   const cl = PF.clean('customer', { credit_limit: '2500.50', credit_days: '15', state_code: '33', nickname: '  Ravi  ' });
   ok('party fields clean: limit in minor units, days a whole number, nickname trimmed', cl.credit_limit_minor === 250050 && cl.credit_days === 15 && cl.nickname === 'Ravi' && cl.state_code === '33', JSON.stringify(cl));
+
+  /* ── WHERE AN ENTRY CAME FROM (Athi, 2026-10-01, the first real entry: "where is it referenced to the sale record, how do I
+     connect to the sale record, who has done it?") — every entry names its bill, its counter, who sold it; a day its count ── */
+  const DAY = ['d0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000003'];
+  const day = X.E.posting().daySummary([{ currency: 'INR', pay: { cash: 118 }, taxes: [{ rate: 18, taxable: 100, cgst: 9, sgst: 9, igst: 0 }], round_off: 0 },
+    { currency: 'INR', pay: { cash: 118 }, taxes: [{ rate: 18, taxable: 100, cgst: 9, sgst: 9, igst: 0 }], round_off: 0 },
+    { currency: 'INR', pay: { upi: 118 }, taxes: [{ rate: 18, taxable: 100, cgst: 9, sgst: 9, igst: 0 }], round_off: 0 }], { ref: 'walkin C2 2026-09-28', date: '2026-09-28', counter: 'C2' });
+  await B.postEntry(X.db, SHOP, Object.assign(day, { source_ref: 'walkin:C2:2026-09-28', source_chit_ids: DAY, counter: 'C2', by: SHOP, narration: 'Walk-in sales, counter C2, 2026-09-28 (3 bills)' }));
+  const sb = await q('GET', '/daybook?from=2026-09-01&to=2026-09-30');
+  const ents = sb.body.entries || [];
+  const bill = ents.find((x) => x.event_type === 'sale_bill'), wday = ents.find((x) => x.event_type === 'walkin_day'), upi = ents.find((x) => x.event_type === 'payment_received');
+  ok('GET /daybook: a bill entry names its source — { chit_id, ref: the printed number, kind: "bill", counter, by: who was signed in }',
+    bill && bill.source && bill.source.chit_id === 'c0000000-0000-4000-8000-00000000000a' && bill.source.ref === 'C1-0042' && bill.source.kind === 'bill'
+    && bill.source.counter === 'C2' && bill.source.by === 'Athi', JSON.stringify(bill && bill.source));
+  ok('…a walk-in day names how many bills it covers, and its counter (kind "day", no single bill, no single seller)',
+    wday && wday.source && wday.source.kind === 'day' && wday.source.count === 3 && wday.source.counter === 'C2' && wday.source.chit_id === null && wday.source.ref === null && wday.source.by === null,
+    JSON.stringify(wday && wday.source));
+  ok('…an entry with no chit behind it (a payment typed in the Ledger) has source null', upi && upi.source === null, JSON.stringify(upi && upi.source));
+  const sl = await q('GET', '/ledger/1300?from=2026-09-01&to=2026-09-30');
+  const sl0 = (sl.body.lines || []).find((l) => l.source_chit_id === 'c0000000-0000-4000-8000-00000000000a'), sl1 = (sl.body.lines || []).find((l) => !l.source_chit_id);
+  ok('GET /ledger/:acc: each line carries the same source (bill C1-0042 · C2 · Athi); a line with no chit has source null',
+    sl0 && sl0.source && sl0.source.ref === 'C1-0042' && sl0.source.counter === 'C2' && sl0.source.by === 'Athi' && sl1 && sl1.source === null, JSON.stringify([sl0, sl1]));
+  /* a bill nobody signed in for: the entry's own writer names it (created_by → identities), else null — never a guess */
+  X.T.identities.push({ identity_id: SHOP, display_name: 'Mayur Bhavan' });
+  X.T.chits.push({ chit_id: 'c0000000-0000-4000-8000-00000000000c', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1/26-27/0009', printed_as: 'C1/26-27/0009', till: { id: 'C1', by: null } } });
+  await B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-27', currency: 'INR', party: CUST, source_chit_id: 'c0000000-0000-4000-8000-00000000000c', source_ref: 'chit:c', by: SHOP,
+    by_rate: [{ rate: 5, taxable: 100, cgst: 2.5, sgst: 2.5, igst: 0 }], paid: { cash: 105 }, round_off: 0 });
+  const nb = ((await q('GET', '/daybook?from=2026-09-27&to=2026-09-27')).body.entries || [])[0];
+  ok('…nobody signed in at the counter: "by" falls back to who wrote the entry (created_by → identities)', nb && nb.source && nb.source.by === 'Mayur Bhavan' && nb.source.counter === 'C1', JSON.stringify(nb && nb.source));
+  /* a chit that is not this shop's own is never read (entity-scoped join): the entry keeps its id, the source names nothing of it */
+  X.T.chits.push({ chit_id: 'c0000000-0000-4000-8000-00000000000d', entity_id: SUPP, purpose: 'invoice', business_json: { bill_no: 'THEIRS-1', till: { id: 'X9', by: { name: 'Someone else' } } } });
+  await B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-26', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-00000000000d', source_ref: 'chit:d',
+    by_rate: [{ rate: 12, taxable: 100, cgst: 6, sgst: 6, igst: 0 }], paid: {}, round_off: 0 });
+  const ot = ((await q('GET', '/daybook?from=2026-09-26&to=2026-09-26')).body.entries || [])[0];
+  ok('…another entity\'s copy of a chit is never read: no ref, no counter, no seller from it', ot && ot.source && ot.source.kind === 'purchase' && ot.source.ref === null && ot.source.counter === null
+    && ot.source.by === null && ot.source.chit_id === null, JSON.stringify(ot && ot.source));
+  const ssrc = require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
+  const el = ssrc.slice(ssrc.indexOf('async function entryLines('), ssrc.indexOf('async function entries('));
+  ok('…in ONE query: entryLines LEFT JOINs the shop\'s own chit_header (entity-scoped, ONE copy — a self-chit can have two, b149) and identities — never a read per row',
+    /LEFT JOIN LATERAL \(SELECT [^)]*FROM chit_header x\s+WHERE x\.entity_id = \$1 AND x\.chit_id = h\.source_chit_id[^)]*LIMIT 1\) c ON true/.test(el) && /LEFT JOIN identities i ON i\.identity_id = h\.created_by/.test(el)
+    && !/S\.(billNos|entry)\(/.test(src.slice(src.indexOf("router.get('/daybook'"), src.indexOf("router.get('/party/:id/statement'"))));
 
   srv.close();
   done();

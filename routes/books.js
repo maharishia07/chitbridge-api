@@ -148,11 +148,36 @@ router.post('/accounts', auth, owner, on, async (req, res) => {
 
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 function fyStart(req, d) { const pack = B.packOf(req.books); const A = E.packs(); return A.fyRange(A.fiscalYearOf(d, pack), pack).start; }
+/**
+ * ⭐ WHERE AN ENTRY CAME FROM (Athi, 2026-10-01, the first real entry: "where is it referenced to the sale record, how do I
+ * connect to the sale record, who has done it?") — from the src_* columns S.entryLines reads in its own query:
+ *   { chit_id   the shop's OWN chit (null when it is not the shop's — the screen links only what it can open)
+ *     ref       the number as printed (printed_as → bill_no → the receipt's R/… number)
+ *     kind      bill · purchase · receipt · payment · credit_note · expense · income · day · write_off · reversal · …
+ *     counter   the counter it was billed on (C2) — the chit's, else the day's source_ref, else a line's
+ *     by        who was signed in at the counter (business_json.till.by), else who wrote the entry (created_by → identities)
+ *     count     a walk-in day: how many bills it covers }
+ * null for an entry with no chit behind it (a payment typed in the Ledger, an opening, a manual entry).
+ * ⚠️ A walk-in day names no seller: many people sold those bills, and "by" on it would read as if one person sold them all.
+ */
+const KIND = { sale_bill: 'bill', purchase_bill: 'purchase', payment_received: 'receipt', payment_made: 'payment', return: 'credit_note', purchase_return: 'credit_note',
+  expense: 'expense', other_income: 'income', write_off: 'write_off', reversal: 'reversal', manual: 'manual', opening: 'opening', credit_given: 'bill' };
+function sourceOf(l) {
+  const day = Number(l.covers) > 0 && !l.source_chit_id;
+  if (!l.source_chit_id && !day) return null;
+  const m = /^walkin:([^:]+):/.exec(String(l.source_ref || ''));
+  const b = l.src_by;
+  const seller = b && typeof b === 'object' ? (b.name || null) : (typeof b === 'string' && b.trim() ? b.trim() : null);
+  return { chit_id: l.src_chit_id || null, ref: l.src_ref || null, kind: day ? 'day' : (l.event_type === 'walkin_day' ? 'bill' : KIND[l.event_type] || l.event_type || null),
+    counter: l.src_till || (m ? m[1] : null) || l.counter_id || null, by: day ? null : (seller || l.by_name || null),
+    count: day ? Number(l.covers) : null };
+}
 async function partyNames(h, e) {
   const m = new Map(); (await S.parties(h, e)).forEach((p) => m.set(String(p.party_id), p)); return m;
 }
 
-/** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, narration, lines: [{ code, name, party_name, dr_minor, cr_minor }] }] } */
+/** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count } | null, narration,
+ *  lines: [{ code, name, party_name, dr_minor, cr_minor }] }] } — `source` is sourceOf(), read in the same query as the lines */
 router.get('/daybook', auth, on, async (req, res) => {
   try {
     const e = ctx(req), from = dateQ(req.query.from, today()), to = dateQ(req.query.to, from);
@@ -163,7 +188,9 @@ router.get('/daybook', auth, on, async (req, res) => {
       for (const l of lines) {
         let x = at.get(l.entry_id);
         if (!x) { x = { entry_id: l.entry_id, entry_no: l.entry_no, posting_date: E.ymd(l.posting_date), doc_date: E.ymd(l.doc_date), event_type: l.event_type,
-                        narration: l.narration || WORD[l.event_type] || l.event_type, source_chit_id: l.source_chit_id, reverses_entry_id: l.reverses_entry_id, lines: [] }; at.set(l.entry_id, x); entries.push(x); }
+                        narration: l.narration || WORD[l.event_type] || l.event_type, source_chit_id: l.source_chit_id, reverses_entry_id: l.reverses_entry_id,
+                        source: sourceOf(l), lines: [] }; at.set(l.entry_id, x); entries.push(x); }
+        if (x.source && !x.source.counter && l.counter_id) x.source.counter = l.counter_id;
         const p = l.party_id ? names.get(String(l.party_id)) : null;
         x.lines.push({ code: l.code, name: l.account_name, party_id: l.party_id, party_name: p ? (p.nickname || p.name) : null, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), counter: l.counter_id });
       }
@@ -174,7 +201,7 @@ router.get('/daybook', auth, on, async (req, res) => {
 });
 
 /** GET /ledger/:account?party&from&to — :account is the code (1300), the role (debtors) or the id →
- *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, dr_minor, cr_minor, running_minor }], closing_minor } */
+ *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], closing_minor } */
 router.get('/ledger/:account', auth, on, async (req, res) => {
   try {
     const e = ctx(req), to = dateQ(req.query.to, today()), from = dateQ(req.query.from, fyStart(req, to));
@@ -188,7 +215,7 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
       const rows = await S.entryLines(h, e, from, to, a.account_id, party);
       let run = open;
       const lines = rows.map((l) => { run += Number(l.dr_minor) - Number(l.cr_minor); return { date: E.ymd(l.posting_date), doc_date: E.ymd(l.doc_date), what: l.narration || WORD[l.event_type] || l.event_type,
-        ref: l.entry_no, source_chit_id: l.source_chit_id, party_id: l.party_id, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), running_minor: run }; });
+        ref: l.entry_no, source_chit_id: l.source_chit_id, source: sourceOf(l), party_id: l.party_id, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), running_minor: run }; });
       return { account: { code: a.code, name: a.name, nature: a.nature }, party, from, to, opening_minor: open, lines, closing_minor: run };
     });
     if (!out) return res.status(404).json({ error: 'Not found', message: 'No such ledger.' });
@@ -582,4 +609,4 @@ router.post('/packs/:id/ack', auth, owner, on, async (req, res) => {
 });
 
 module.exports = router;
-module.exports._test = { isOwner, minorOf, flat, manifestView };
+module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
