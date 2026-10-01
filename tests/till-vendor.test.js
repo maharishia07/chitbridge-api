@@ -126,6 +126,44 @@ it('⭐⭐⭐ [SPLIT-01] mixed rates and a zero-rated line, to the paisa — wit
   assert.ok(m.byRate['5'] && m.byRate['18'], 'each rate is reported on its own, as a slip must show it');
 });
 
+/**
+ * ⭐⭐⭐ [SPLIT-02] THE SLIP'S HEADS ARE THE INVOICE'S HEADS, TO THE PAISA (tax v1.9.0, 2026-10-01). Seen live on the
+ * first real ledger entry: two 5% lines of ₹209 — the slip said CGST 10.45 / SGST 10.45 (it halved the RATE's
+ * total), the invoice, GSTR-1 and the ledger said 10.46 / 10.44 (each LINE split: CGST the rounded half, SGST the
+ * remainder). Same total, a paisa apart on the heads, on a document a customer holds. Now the page asks the engine
+ * for each line's heads (CBTax.lineHeads) and SUMS them, exactly as lib/tax.js's ItemList does. Red before the fix.
+ */
+it('⭐⭐⭐ [SPLIT-02] the slip\'s CGST/SGST are the SUM of the lines\' heads — the invoice\'s figures, never a rate\'s half', () => {
+  const taxEngine = require(path.join(API, 'lib', 'tax.js'));
+  const prev = P.CBTax;
+  P.CBTax = Object.assign({}, taxEngine, { slab: require(path.join(API, 'lib', 'tax-slab.js')) });
+  P.CART = [
+    { price: 209, qty: 1, gross: 209, net: 209, save: 0, gst_rate: 5 },
+    { price: 209, qty: 1, gross: 209, net: 209, save: 0, gst_rate: 5 },
+  ];
+  /* prices quoted EXCLUSIVE of tax, as the live bill was: ₹209 taxable at 5% = ₹10.45 a line */
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', state_code: '33' }, policy: { price_includes_tax: 'no' } };
+  try {
+    const m = P.billMoney();
+    const r5 = m.byRate['5'];
+    assert.ok(r5, 'the 5% rate is on the slip');
+    assert.strictEqual(r5.tax, 20.9, 'the rate total is ₹20.90 either way');
+    assert.strictEqual(r5.cgst, 10.46, 'CGST is the SUM of the two lines\' rounded halves (5.23 + 5.23), not half the rate total');
+    assert.strictEqual(r5.sgst, 10.44, 'SGST is the SUM of the two lines\' remainders (5.22 + 5.22)');
+    const cg = m.heads.find((h) => h.name === 'CGST'), sg = m.heads.find((h) => h.name === 'SGST');
+    assert.ok(cg && sg, 'the bill carries CGST and SGST heads');
+    assert.strictEqual(cg.amount, 10.46); assert.strictEqual(sg.amount, 10.44);
+    /* and the server's invoice for the same two lines says the same */
+    const inv = require(path.join(API, 'lib', 'tax-lines.js')).invoiceFor({
+      lines: [{ name: 'a', qty: 1, price: 209, gst_rate: 5 }, { name: 'b', qty: 1, price: 209, gst_rate: 5 }],
+      seller: { Gstin: '33ABCDE1234F1Z5', State: '33', Country: 'IN' }, buyer: { State: '33' }, currency: 'INR', frozen: true,
+    }).invoice;
+    const sum = (k) => Math.round((inv.ItemList || []).reduce((t, it) => t + (it[k] || 0), 0) * 100) / 100;
+    assert.strictEqual(sum('CgstAmt'), r5.cgst, 'the invoice\'s CGST equals the slip\'s');
+    assert.strictEqual(sum('SgstAmt'), r5.sgst, 'the invoice\'s SGST equals the slip\'s');
+  } finally { P.CBTax = prev; P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' } }; }   /* the shop as the tests before it had it — never leave a policy behind */
+});
+
 it('the financial year in a bill number starts in April, as India\'s does', () => {
   assert.strictEqual(P.fyOf(new Date('2026-03-31T00:00:00Z')), '25-26');
   assert.strictEqual(P.fyOf(new Date('2026-04-01T00:00:00Z')), '26-27');

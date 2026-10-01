@@ -17431,6 +17431,9 @@ function billMoney(){
      exclusive ADDS it on top. Getting this backwards is wrong by exactly the tax on every bill, in silence. */
   var inclusive = taxIncluded();   /* ⭐ one answer, shared with the shelf row — they must never disagree */
   var base = net, tax = 0, byRate = {};
+  /* ⭐ the supply (intra / inter / unknown) is decided ONCE, up here, because each line's heads need it below */
+  var sc = (S && S.shop && S.shop.state_code) ? String(S.shop.state_code) : '';
+  var supply = (window.CBTax && CBTax.supplyType) ? CBTax.supplyType(sc, sc) : 'unknown';
   if (taxed){
     base = 0;
     CART.forEach(function(c){
@@ -17456,8 +17459,20 @@ function billMoney(){
        * its own total, which is the single worst thing a tax document can do.
        */
       c.taxable = b; c.tax = t;
+      /**
+       * ⭐⭐⭐ THE HEADS OF THIS LINE'S TAX — CBTax.lineHeads (tax v1.9.0), the same split the invoice's ItemList and
+       * the ledger carry (CGST the rounded half, SGST the remainder), SUMMED per rate for the slip. Seen live
+       * 2026-10-01: the slip halved each rate's total (10.45 / 10.45) while the invoice and the ledger said
+       * 10.46 / 10.44. A bill and its invoice never disagree by a paisa — so the slip adds up the lines, like them.
+       */
+      var hd = (window.CBTax && CBTax.lineHeads) ? CBTax.lineHeads({ tax: t, supply: supply === 'inter' ? 'inter' : 'intra' }) : null;
+      if (hd) { c.cgst = hd.cgst; c.sgst = hd.sgst; c.igst = hd.igst; }
       base = r2(base + b); tax = r2(tax + t);
-      if (rate){ byRate[rate] = byRate[rate] || { base:0, tax:0 }; byRate[rate].base = r2(byRate[rate].base + b); byRate[rate].tax = r2(byRate[rate].tax + t); }
+      if (rate){
+        var br = byRate[rate] = byRate[rate] || { base:0, tax:0 };
+        br.base = r2(br.base + b); br.tax = r2(br.tax + t);
+        if (hd) { br.cgst = r2((br.cgst || 0) + hd.cgst); br.sgst = r2((br.sgst || 0) + hd.sgst); br.igst = r2((br.igst || 0) + hd.igst); }
+      }
     });
   }
   /**
@@ -17476,12 +17491,12 @@ function billMoney(){
    * ⚠️ THE HEADS ARE PART OF THE MONEY, so they are worked out here beside it and never in a painter — the screen, the
    * printed slip and the chit must all read the same figures from one place.
    */
-  var sc = (S && S.shop && S.shop.state_code) ? String(S.shop.state_code) : '';
-  var supply = (window.CBTax && CBTax.supplyType) ? CBTax.supplyType(sc, sc) : 'unknown';
   var heads = [];
   if (taxed && supply !== 'unknown') {
     Object.keys(byRate).sort(function(a, b){ return Number(a) - Number(b); }).forEach(function(rt){
-      var t = byRate[rt].tax, half = r2(t / 2);
+      var t = byRate[rt].tax, br0 = byRate[rt];
+      /* ⭐ the heads are the SUM of the lines' heads (CBTax.lineHeads); a rate's half is only the fallback for an engine that did not load */
+      var half = (br0.cgst != null) ? br0.cgst : r2(t / 2);
       if (supply === 'inter') heads.push({ name:'IGST', rate:Number(rt), amount:t, base:byRate[rt].base });
       else {
         /* ⭐ the engine's own rule: CGST takes the rounded half, SGST the remainder, so the pair always sums to the tax */
@@ -21328,7 +21343,9 @@ function taxSummaryHTML(bill, t, dash){
   };
   var tb = 0, t1 = 0, t2 = 0;
   var body = rates.map(function(rt){
-    var b = by[rt].base, tx = by[rt].tax, half = r2(tx / 2);
+    /* ⭐ the printed heads are the SUM of the lines' heads (billMoney, CBTax.lineHeads) — the slip, the invoice and the
+       ledger then carry the same paise; a rate's half is only the fallback for a bill saved before tax v1.9.0 */
+    var b = by[rt].base, tx = by[rt].tax, half = (by[rt].cgst != null) ? by[rt].cgst : r2(tx / 2);
     tb = r2(tb + b);
     if (inter) { t1 = r2(t1 + tx); return row(rt + '%', money(b), money(tx), ''); }
     t1 = r2(t1 + half); t2 = r2(t2 + r2(tx - half));
