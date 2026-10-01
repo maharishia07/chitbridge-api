@@ -171,7 +171,20 @@ function sourceOf(l) {
   const pay = howOf(l, day);
   return { chit_id: l.src_chit_id || null, ref: l.src_ref || null, kind: day ? 'day' : (l.event_type === 'walkin_day' ? 'bill' : KIND[l.event_type] || l.event_type || null),
     counter: l.src_till || (m ? m[1] : null) || l.counter_id || null, by: day ? null : (seller || l.by_name || null),
-    count: day ? Number(l.covers) : null, how: pay.how, how_ref: pay.how_ref, split: pay.split };
+    count: day ? Number(l.covers) : null, how: pay.how, how_ref: pay.how_ref, split: pay.split,
+    doc_at: day ? null : momentOf(l.src_billed_at) || momentOf(l.src_created_at), recorded_at: momentOf(l.recorded_at) };
+}
+/**
+ * ⭐ BOTH TIMES (Athi, 2026-10-01: "the time the bill was made or the time the entry was accepted? both should be there"):
+ *   doc_at       the chit's own moment, ISO — the counter's billed_at (a receipt's at), else the chit's created_at; null
+ *                for a walk-in day (many bills) or a chit that is not the shop's
+ *   recorded_at  the entry's created_at — when the ledger accepted it
+ * ⚠️ billed_at is the counter's free text: a value that is not a moment is skipped, never passed on as one.
+ */
+function momentOf(v) {
+  if (v == null || v === '') return null;
+  const t = v instanceof Date ? v.getTime() : Date.parse(String(v));
+  return isFinite(t) ? new Date(t).toISOString() : null;
 }
 /**
  * ⭐ HOW IT WAS PAID (Athi, 2026-10-01: "it has to clearly segregate credit, cash, UPI (UPI id) and so on"):
@@ -204,7 +217,7 @@ async function partyNames(h, e) {
   const m = new Map(); (await S.parties(h, e)).forEach((p) => m.set(String(p.party_id), p)); return m;
 }
 
-/** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split } | null, narration,
+/** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration,
  *  lines: [{ code, name, party_name, dr_minor, cr_minor }] }] } — `source` is sourceOf(), read in the same query as the lines */
 router.get('/daybook', auth, on, async (req, res) => {
   try {

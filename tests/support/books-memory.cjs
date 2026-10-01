@@ -54,6 +54,8 @@ function create() {
           src_till: c ? ((bj.till && bj.till.id) || (bj.summary && bj.summary.till && bj.summary.till.id) || null) : null,
           src_by: c && bj.till && bj.till.by !== undefined ? clone(bj.till.by) : null, by_name: who ? who.display_name : null,
           src_parts: c ? clone((bj.payment && bj.payment.parts) || (bj.refund && bj.refund.parts) || null) : null,
+          recorded_at: h.created_at || null, src_created_at: c ? c.created_at || null : null,
+          src_billed_at: c ? (bj.billed_at || (bj.payment_received && bj.payment_received.at) || null) : null,
           src_mode: c && bj.payment_received ? bj.payment_received.mode || null : null, src_cheque: c && bj.payment_received ? clone(bj.payment_received.cheque || null) : null,
           tenders: Array.isArray(h.source_chit_ids) ? (() => { const t = T.lines.filter((x) => x.entry_id === h.entry_id && x.dr_minor > 0).sort((p, q) => p.line_no - q.line_no)
             .map((x) => ({ role: (T.accounts.find((y) => y.account_id === x.account_id) || {}).role, dr_minor: x.dr_minor })).filter((x) => ['cash', 'upi', 'card', 'bank'].indexOf(x.role) >= 0); return t.length ? t : null; })() : null });

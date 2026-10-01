@@ -264,6 +264,18 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('how: money received at the counter is a receipt — its number, UPI, counter, who', hr && hr.source.ref === 'R/C2/0001' && hr.source.how === 'UPI' && hr.source.counter === 'C2'
     && hr.source.by === 'Athi', JSON.stringify(hr && hr.source));
   ok('how: a bill without a split names none (split null)', hb && hb.source.split === null && hd && hd.source.how_ref === null);
+  /* ── BOTH TIMES (Athi, 2026-10-01: "the time the bill was made or the time the entry was accepted? both should be there") ── */
+  X.T.chits.find((x) => x.chit_id === 'c0000000-0000-4000-8000-00000000000a').business_json.billed_at = '2026-09-05T08:42:00.000Z';
+  Object.assign(X.T.chits.find((x) => x.chit_id === 'c0000000-0000-4000-8000-00000000000c'), { created_at: '2026-09-27T05:00:00.000Z' });
+  X.T.chits.find((x) => x.chit_id === 'c0000000-0000-4000-8000-00000000000c').business_json.billed_at = 'teatime';
+  const tw = (await q('GET', '/daybook?from=2026-09-01&to=2026-09-30')).body.entries || [];
+  const tb1 = tw.find((x) => x.source && x.source.ref === 'C1-0042'), tb2 = tw.find((x) => x.source && x.source.ref === 'C1/26-27/0009'), td = tw.find((x) => x.source && x.source.kind === 'day');
+  const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+  ok('times: a bill carries its own moment (billed_at) and the moment the ledger recorded it', tb1 && tb1.source.doc_at === '2026-09-05T08:42:00.000Z' && ISO.test(tb1.source.recorded_at || ''), JSON.stringify(tb1 && tb1.source));
+  ok('times: a billed_at that is not a moment is skipped — the chit\'s created_at stands', tb2 && tb2.source.doc_at === '2026-09-27T05:00:00.000Z', JSON.stringify(tb2 && tb2.source));
+  ok('times: a walk-in day has no one bill time, but says when it was recorded', td && td.source.doc_at === null && ISO.test(td.source.recorded_at || ''), JSON.stringify(td && td.source));
+  ok('times: the day book still runs by posting date, then entry number', tw.every((x, i) => !i || tw[i - 1].posting_date < x.posting_date || (tw[i - 1].posting_date === x.posting_date && tw[i - 1].entry_no < x.entry_no)),
+    tw.map((x) => x.posting_date + ' ' + x.entry_no).join(' · '));
   const ssrc = require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
   const el = ssrc.slice(ssrc.indexOf('async function entryLines('), ssrc.indexOf('async function entries('));
   ok('…in ONE query: entryLines LEFT JOINs the shop\'s own chit_header (entity-scoped, ONE copy — a self-chit can have two, b149) and identities — never a read per row',
