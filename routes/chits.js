@@ -51,6 +51,9 @@ const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
 const taxCopy = require('../lib/tax-copy');
+/* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
+   live in the Bills folders. The SAME classification the folders read through lib/select.js, so the two can never disagree. */
+const FOLDER_INV = require('../lib/folder-inventory');
 
 // The acting entity for RLS/ownership: an actor carries parent_entity_id; a bare entity login is its own id.
 // Single source of truth (was duplicated 26× as `auth.entityOf(req)`).
@@ -1660,6 +1663,8 @@ router.get('/sent', auth, async (req, res) => {
     // search across the header data (subject, recipients, purpose). pg_trgm GIN index recommended at scale.
     const params = [entity_id];
     let where = `ch.entity_id = $1 AND ch.direction = 'sent' AND ch.role <> 'Draft' AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
+    /* ⭐⭐ the Order list leaves out bills the same way Task does (lib/folder-inventory inboxSql) — they live in Bills · Issued */
+    where += ` AND ${FOLDER_INV.inboxSql('ch', 'cs')}`;
     if (q_search) {
       params.push('%' + q_search + '%');
       where += ` AND (ch.manual_subject ILIKE $${params.length} OR ch.auto_subject ILIKE $${params.length} OR ch.all_recipients::text ILIKE $${params.length} OR ch.purpose ILIKE $${params.length})`;
@@ -1780,6 +1785,9 @@ router.get('/rollup', auth, async (req, res) => {
     const params = [entity_id];
     let where = `cs.entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
     if (dir) { params.push(dir); where += ` AND cs.direction = $${params.length}`; }
+    /* ⭐ the track's counts leave out the bills its list leaves out (lib/folder-inventory inboxSql) — a tab that counted them
+       would promise rows the list never shows. Both queries below join chit_header as ch. */
+    if (dir) where += ` AND ${FOLDER_INV.inboxSql('ch', 'cs')}`;
     if (req.query.assignment === 'unassigned')      where += ` AND cs.assigned_to_actor_id IS NULL`;
     else if (req.query.assignment === 'assigned')   where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
     else if (req.query.assigned_to === 'me')        { params.push(req.identity.identity_id); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
@@ -1800,6 +1808,7 @@ router.get('/rollup', auth, async (req, res) => {
     const disp = await db.query(
       `SELECT COUNT(DISTINCT cs.chit_id)::int AS n
          FROM chit_status cs
+         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
           AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.status = 'open')`,
       params).catch(() => ({ rows: [{ n: 0 }] }));
@@ -1898,6 +1907,13 @@ router.get('/inbox', auth, async (req, res) => {
       if (/^[0-9a-f-]{36}$/i.test(fid)) { paramCount++; whereClause += ` AND cs.folder_id = $${paramCount}::uuid`; params.push(fid); }
       else if (!asksAssignment) whereClause += ` AND cs.folder_id IS NULL`;
     }
+    /**
+     * ⭐⭐ BILLS ARE NOT TASKS (Athi, 2026-10-01: "the purpose of rail is for the order to be received and serviced, but this is
+     * not a task"). A bill I received and my own counter bill leave this list for the Bills folders — ONE predicate, the one the
+     * folders read (lib/folder-inventory inboxSql). ⚠️ A folder named explicitly still shows what the person filed into it: a
+     * bill they moved there by hand is their own filing.
+     */
+    if (!/^[0-9a-f-]{36}$/i.test(String(req.query.folder_id || '').trim())) whereClause += ` AND ${FOLDER_INV.inboxSql('ch', 'cs')}`;
 
     if (status_filter) {
       paramCount++;

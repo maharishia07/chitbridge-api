@@ -626,6 +626,10 @@ router.get('/policy', auth, async (req, res) => {
 });
 
 router.patch('/policy', auth, async (req, res) => {
+  /* ⚠️ the folder inventory's switches are the OWNER's (routes/folders.js PUT /inventory/:code) — not a back door for a co-assist or a key */
+  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'system_folders') && !require('../lib/owner').isOwner(req)) {
+    return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may switch folders on or off.' });
+  }
   try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
   catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });

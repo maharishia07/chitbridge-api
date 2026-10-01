@@ -189,6 +189,8 @@ const GUARDS = [
   'goods-in-accepts.test.cjs',  // goods-in, every line in → accepted through the SAME transition as Intake
   'two-sided-books.test.cjs',   // one bill, two ledgers: sale at save, purchase on acceptance
   'bill-use.test.cjs',          // what a bill I received is for — resale · use · asset — and what each posts; stock only for resale
+  /* ⭐⭐ THE BILLS FOLDER (2026-10-01) — broken once each by scripts/bills-folder-breaks.cjs */
+  'bills-folder.test.cjs',      // the folder inventory numbered with the ledger; view folders; the step function; bills leave Task — nothing else
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

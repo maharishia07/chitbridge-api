@@ -32,9 +32,25 @@ let SCOPE_OK = false;                       // latches TRUE once the column is r
 const missingCol = (e) => e && e.code === '42703';
 /* Always attempt the scoped form unless we have already proved it works — so a pre-b133 database pays one failed
    query per call (a transient state) and a migrated one pays nothing after the first success. */
+const views   = require('../lib/folder-views');      // ⭐ VIEW folders — contents = the rule's matches (system + a shop's own)
+const INV     = require('../lib/folder-inventory');  // the folder inventory, numbered with the ledger
+const { isOwner } = require('../lib/owner');
 const select  = require('../lib/select');    // WHICH chits — shared with the scorecard
 const measure = require('../lib/measure');   // ...and how they are counted
 const policy  = require('../lib/policy');    // overdue is a declared flag, not a magic number
+
+/**
+ * viewFolder(entity, id) → the VIEW folder behind an id: a system one (lib/folder-inventory; `false` when the shop switched it
+ * off), or a shop's own (folder.kind = 'view', b275) — null for an ordinary filed folder. Every folder route asks this first.
+ */
+async function viewFolder(e, id) {
+  const sys = await views.systemById(e, id);
+  if (sys) return sys.on ? sys : false;
+  const r = await withEntity(e, (db) => db.query(
+    `SELECT f.folder_id, f.name, to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [id, e])).catch(() => ({ rows: [] }));
+  const f = r.rows[0];
+  return f && f.kind === 'view' ? f : null;
+}
 
 // GET /api/folders — the entity's folder tree (flat rows; the client builds the tree) with CURRENT (non-archived) counts.
 router.get('/', auth, async (req, res) => {
@@ -42,6 +58,7 @@ router.get('/', auth, async (req, res) => {
     const e = ent(req);
     const readFolders = (withScope) => withEntity(e, (db) => db.query(
       `SELECT f.folder_id, f.parent_id, f.name, f.sort, ${withScope ? "f.scope" : "NULL::text AS scope"},
+              COALESCE(to_jsonb(f)->>'kind', 'filed') AS kind,      /* b275 — read through to_jsonb: before it, every folder is filed */
               (SELECT COUNT(*) FROM chit_status cs
                  WHERE cs.entity_id = f.entity_id AND cs.folder_id = f.folder_id
                    AND cs.deleted_at IS NULL AND cs.archived_at IS NULL) AS count
@@ -51,8 +68,49 @@ router.get('/', auth, async (req, res) => {
     let r;
     try { r = await readFolders(true); SCOPE_OK = true; }
     catch (e1) { if (!missingCol(e1)) throw e1; r = await readFolders(false); }   // pre-b133 → retry in a FRESH tx
-    res.json({ folders: r.rows });
+    /* a shop's own VIEW folder counts what its rules match, not what was filed into it (nothing can be) */
+    const rows = r.rows;
+    for (const f of rows) if (f.kind === 'view') { try { f.count = (await views.members(e, f, {})).counts.open; } catch (_) { f.count = null; } }
+    /**
+     * ⭐ THE SYSTEM FOLDERS FIRST — the inventory's ON rows (lib/folder-inventory), each with its code, its ledger and the count
+     * of its OPEN items. ⚠️ A failure reading them never blanks the shop's own tree, and it is SAID (system_error), not swallowed.
+     */
+    let sys = [], sysErr = null;
+    try { sys = await views.systemFolders(e); } catch (e2) { sysErr = safeErr(e2); console.error('system folders:', e2.message); }
+    res.json(Object.assign({ folders: sys.concat(rows) }, sysErr ? { system_error: sysErr } : {}));
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
+});
+
+/**
+ * ⭐ GET /api/folders/inventory — every folder a shop can have, numbered with its ledger: code · name · ledger · on/off.
+ * Athi, 2026-10-01: *"an inventory of folders tied with the ledger number, enabled or disabled using a checkbox."*
+ * `can_change` tells the screen whether to offer the checkboxes (the owner only).
+ */
+router.get('/inventory', auth, async (req, res) => {
+  try {
+    const e = ent(req);
+    res.json({ rows: views.inventoryRows(await views.switchesOf(e)), can_change: isOwner(req) });
+  } catch (err) { res.status(500).json({ error: 'Inventory failed', message: safeErr(err) }); }
+});
+
+/**
+ * PUT /api/folders/inventory/:code { on: true|false } — the OWNER switches one system folder on or off.
+ * ⚠️ A track (Tasks, Orders) cannot be switched off. ⚠️ Off HIDES the folder; its bills still stay out of Task (they are not
+ * tasks — lib/folder-inventory leaves_inbox), which the screen says beside the checkbox.
+ */
+router.put('/inventory/:code', auth, async (req, res) => {
+  try {
+    if (!isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
+    const f = INV.byCode(String(req.params.code || ''));
+    if (!f) return res.status(404).json({ error: 'No such folder', message: 'There is no folder ' + req.params.code + ' in the inventory.' });
+    if (f.fixed) return res.status(400).json({ error: 'Always on', message: f.name + ' is where work arrives — it cannot be switched off.' });
+    if (typeof (req.body || {}).on !== 'boolean') return res.status(400).json({ error: 'Bad request', message: 'on must be true or false' });
+    const e = ent(req);
+    const cur = (await policy.get(e)).system_folders || {};
+    const next = Object.assign({}, cur, { [f.code]: req.body.on ? 'on' : 'off' });
+    await policy.set(e, { system_folders: next });
+    res.json({ rows: views.inventoryRows(await views.switchesOf(e)), can_change: true });
+  } catch (err) { res.status(err.status || 500).json({ error: 'Switch failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 
 // POST /api/folders — create { name, parent_id? }
@@ -65,6 +123,21 @@ router.post('/', auth,
     /* ⚠️ A FOLDER BELONGS TO ONE TRACK (b133). Task and Order are different lists with different actions; a folder
        that held both could inherit neither. Default 'task' — the track folders were built for. */
     const scope = (req.body.scope === 'order') ? 'order' : 'task';
+    /**
+     * ⭐ A VIEW FOLDER (b275) — its contents are its rules' matches, so a chit shows in it AND keeps its own filing (a supplier's
+     * folder: rule { from: 'Mayur' }). Needs the kind column; before b275 it is refused by name, never made as a filed folder.
+     */
+    if (req.body.kind === 'view') {
+      try {
+        const r = await withEntity(e, (db) => db.query(
+          `INSERT INTO folder (entity_id, parent_id, name, scope, kind) VALUES ($1, NULL, $2, $3, 'view') RETURNING folder_id, parent_id, name, sort, scope, kind`,
+          [e, name, scope]));
+        return res.json({ folder: Object.assign({}, r.rows[0], { count: 0 }) });
+      } catch (ev) {
+        if (missingCol(ev)) return res.status(503).json({ error: 'Not migrated', message: 'View folders need b275 on this environment.' });
+        throw ev;
+      }
+    }
     /**
      * ⚠️ A FALLBACK INSIDE A TRANSACTION IS NOT A FALLBACK. The first version caught 42703 (no `scope` column, i.e.
      * pre-b133) and retried the plain INSERT on the SAME client — but Postgres had already aborted the transaction,
@@ -131,6 +204,15 @@ router.post('/move', auth,
   validate, async (req, res) => {
   try {
     const e = ent(req); const fid = req.body.folder_id || null;
+    /* ⚠️ A VIEW FOLDER IS NOT A PLACE — it shows what its rule matches, so nothing can be moved into it (a system folder or a
+       shop's own view). Refused by name: a silent "moved: 0" would read as a filing that happened. */
+    if (fid && INV.byId(fid)) return res.status(400).json({ error: 'View folder', code: 'FOLDER_IS_VIEW',
+      message: 'That folder shows what its rule matches — it is not a place to move chits into. The chit is already there if it matches.' });
+    if (fid) {
+      const k = await withEntity(e, (db) => db.query(`SELECT to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [fid, e])).catch(() => ({ rows: [] }));
+      if (k.rows[0] && k.rows[0].kind === 'view') return res.status(400).json({ error: 'View folder', code: 'FOLDER_IS_VIEW',
+        message: 'That folder shows what its rules match — it is not a place to move chits into.' });
+    }
     const doMove = (scoped) => withEntity(e, async (db) => {
       let fscope = null;
       if (fid) {
@@ -199,6 +281,16 @@ router.post('/move', auth,
 router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, res) => {
   try {
     const e = ent(req); const arch = (req.query.archived === '1' || req.query.archived === 'true');
+    /**
+     * ⭐ A VIEW FOLDER answers with its rule's matches — a bill carrying its lifecycle (lib/bill-steps: step · code · label ·
+     * by · at, and the history of every acceptance). ?state=open (default) | closed | all. An OFF system folder is absent.
+     */
+    const vf = await viewFolder(e, req.params.id);
+    if (vf === false) return res.status(404).json({ error: 'Not found', message: 'That folder is switched off.' });
+    if (vf) {
+      const m = await views.members(e, vf, { archived: arch, state: req.query.state });
+      return res.json({ chits: m.chits, counts: m.counts, state: m.state, folder: { folder_id: req.params.id, code: vf.code || null, name: vf.name, system: !!vf.system } });
+    }
     const r = await withEntity(e, (db) => db.query(
       `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
               ch.business_json, ch.created_by_actor_id,
@@ -227,6 +319,13 @@ router.get('/:id/metrics', auth, [ param('id').isUUID() ], validate, async (req,
   try {
     const me = ent(req);
     const flags = await policy.get(me);      //  is a POLICY, not a constant hidden inside a report
+    /* a VIEW folder measures its rule's matches — the same measure, a different set */
+    const vf = await viewFolder(me, req.params.id);
+    if (vf === false) return res.status(404).json({ error: 'Not found', message: 'That folder is switched off.' });
+    if (vf) {
+      const vrows = await views.rowsFor(me, await views.whensOf(me, vf), { archived: req.query.archived === '1' });
+      return res.json(Object.assign({ folder_id: req.params.id, scope: null, code: vf.code || null }, measure.measure(vrows, { overdue_days: flags.overdue_days })));
+    }
     /* The folder's own side scopes what it measures — a Task folder's arithmetic is over Task copies. */
     let fscope = null;
     try { const f = await withEntity(me, (db) => db.query('SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2', [req.params.id, me])); fscope = (f.rows[0]||{}).scope || null; } catch (_) {}
@@ -241,10 +340,19 @@ const rules = require('../lib/folder-rules');
 const fail = (res, err, label) => res.status(err.status || 500).json({ error: label, message: err.status ? (err.message || safeErr(err)) : safeErr(err) });
 
 router.get('/:id/rules', auth, [ param('id').isUUID() ], validate, async (req, res) => {
-  try { res.json(await rules.list(ent(req), req.params.id)); } catch (err) { fail(res, err, 'Rules list failed'); }
+  try {
+    /* ⭐ a SYSTEM folder's rule is the inventory's, shown and fixed — the Task list leaves out the same documents, so an
+       edited rule here would make the folder and the inbox disagree */
+    const f = INV.byId(req.params.id);
+    if (f) return res.json({ rules: [{ rule_id: null, folder_id: req.params.id, name: f.code + ' ' + f.name, when: f.when, enabled: true, system: true }], migrated: true, system: true });
+    res.json(await rules.list(ent(req), req.params.id));
+  } catch (err) { fail(res, err, 'Rules list failed'); }
 });
 router.post('/:id/rules', auth, [ param('id').isUUID() ], validate, async (req, res) => {
-  try { res.json(await rules.create(ent(req), req.params.id, req.body || {})); } catch (err) { fail(res, err, 'Rule create failed'); }
+  try {
+    if (INV.byId(req.params.id)) return res.status(400).json({ error: 'Fixed rule', message: 'A system folder\'s rule is part of the folder inventory and cannot be changed here.' });
+    res.json(await rules.create(ent(req), req.params.id, req.body || {}));
+  } catch (err) { fail(res, err, 'Rule create failed'); }
 });
 router.patch('/rules/:rule_id', auth, [ param('rule_id').isUUID() ], validate, async (req, res) => {
   try { res.json(await rules.update(ent(req), req.params.rule_id, req.body || {})); } catch (err) { fail(res, err, 'Rule update failed'); }
@@ -583,16 +691,25 @@ router.get('/reconcile', auth, async (req, res) => {
 
     const filed = rows.length - unfiled;
     const summed = out.reduce((n, f) => n + f.own, 0);
+    /**
+     * ⭐ THE BILLS LEFT THE INBOX, SO THEY ARE COUNTED, NOT LOST (2026-10-01). An unfiled bill is in the Bills folders, not in
+     * Task: unfiled = inbox + in_bills, by the same classification the inbox uses (lib/folder-inventory LEAVES over doc_kind).
+     */
+    const leaves = new Set(INV.LEAVES);
+    const inBills = rows.filter((x) => !x.folder_id && leaves.has(x.doc_kind)).length;
+    const inbox = unfiled - inBills;
     res.json({
       scope, direction,
       total: rows.length,
       unfiled,
+      inbox,
+      in_bills: inBills,
       filed,
       folders: out,
       overall: seg(rows),
       // ⚠️ The assertion, returned rather than described: `filed` counted from the chits must equal the sum of the
       //    folders' own counts. If it does not, a chit is filed into a folder this entity cannot see.
-      reconciles: filed === summed,
+      reconciles: filed === summed && inbox + inBills + filed === rows.length,
       ...(filed === summed ? {} : { discrepancy: { filed, sum_of_folders: summed, missing: filed - summed } }),
     });
   } catch (err) { res.status(500).json({ error: 'Reconcile failed', message: safeErr(err) }); }

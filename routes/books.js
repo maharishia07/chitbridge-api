@@ -29,7 +29,7 @@ const E = require('../lib/books-engines');
 const S = require('../lib/books-store');
 
 const ctx = (req) => auth.entityOf(req);
-const isOwner = (req) => !req.api_key && !(req.identity && req.identity.parent_entity_id);
+const { isOwner } = require('../lib/owner');   /* one owner test — the folder inventory's switch reads it too */
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
