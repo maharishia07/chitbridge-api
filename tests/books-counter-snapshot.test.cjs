@@ -32,7 +32,7 @@ function rowsFor(sql) {
   if (/count\(\*\)::int AS n FROM catalogue_items/.test(sql)) return [{ n: 1 }];
   if (/FROM catalogue_items/.test(sql)) return [{ item_id: 'i1', item_data: { name: 'Rice', price: 60, unit: 'kg' }, is_active: true, updated_at: '2026-09-29T10:00:00.000Z' }];
   if (/FROM customer_list/.test(sql)) return [
-    { identity_id: 'c1', display_name: 'Kumar', phone: '9', groups: [], last_txn_at: null, credit_days: '10', credit_limit_minor: '500000', has_party_item: true },
+    { identity_id: 'c1', display_name: 'Kumar', phone: '9', groups: [], last_txn_at: null, credit_days: '10', credit_limit_minor: '500000', has_party_item: true, rail_entity_id: 'c1' },
     { identity_id: 'c2', display_name: 'Mala', phone: '8', groups: [], last_txn_at: null, credit_days: null, credit_limit_minor: null, has_party_item: true }];
   if (/FROM party_item/.test(sql)) return [
     { party_id: 'c1', against_ref: 'bill-1', balance_minor: '11800', due_date: pgDate('2026-10-05'), doc_date: pgDate('2026-09-25'), disputed: false },
@@ -74,6 +74,13 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     t('…the dues query does not run at all (it ran for every shop once b273 existed)', !off.queries.some((q) => /FROM party_item/.test(q)), off.queries.filter((q) => /party_item/.test(q)).join(' | ').slice(0, 200));
     t('…and no customer is stamped with a balance (it said balance_minor: 0 — "owes nothing" — for a shop with no ledger)',
       Array.isArray(off.body.customers) && off.body.customers.length === 2 && off.body.customers.every((c) => !('balance_minor' in c) && !('open_bills' in c)), JSON.stringify(off.body.customers));
+    /* ⭐ THE TWO-SIDED COUNTER BILL (2026-10-01): the counter sends a bill to a customer only when that customer is a business
+       ON THE RAIL — the snapshot says which, as customers[].entity_id; a local (~) or storefront (OTP) customer carries none */
+    t('a customer who is a business on the rail carries entity_id (the counter may send them their copy)', off.body.customers[0].entity_id === 'c1', JSON.stringify(off.body.customers[0]));
+    t('…a customer who is not on the rail carries NO entity_id (the bill stays the shop\'s own record)', off.body.customers[1] && !('entity_id' in off.body.customers[1]), JSON.stringify(off.body.customers[1]));
+    const cq = off.queries.filter((q) => /FROM customer_list/.test(q))[0] || '';
+    t('…decided in the read: an active ENTITY, never a minted (~) local record, never a storefront shopper',
+      /identity_type = 'entity'/.test(cq) && /status = 'active'/.test(cq) && /NOT LIKE '~%'/.test(cq) && /shopper/.test(cq), cq.slice(0, 400));
     t('…the customer\'s own terms still travel (they are the list\'s, not the ledger\'s)', off.body.customers[0].credit_days === 10 && off.body.customers[0].credit_limit_minor === 500000);
 
     /* ── the ledger ON ── */

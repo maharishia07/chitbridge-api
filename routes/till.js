@@ -207,7 +207,10 @@ router.get('/snapshot', auth, async (req, res) => {
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
-                to_regclass('party_item') IS NOT NULL AS has_party_item
+                to_regclass('party_item') IS NOT NULL AS has_party_item,
+                /* ⭐ THE TWO-SIDED COUNTER BILL (2026-10-01): a customer who is a business ON THE RAIL can be sent their copy
+                   of a bill — lib/local-identity onRailSql, the same test the send route's till gate makes */
+                CASE WHEN ${require('../lib/local-identity').onRailSql('i')} THEN i.identity_id END AS rail_entity_id
            FROM customer_list c
            JOIN identities i ON i.identity_id = c.customer_identity_id
           WHERE c.owner_entity_id = $1
@@ -370,6 +373,8 @@ router.get('/snapshot', auth, async (req, res) => {
         const o = owe[String(x.identity_id)];
         const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null,
                       groups: Array.isArray(x.groups) ? x.groups : [] };
+        /* ⭐ present only for a business on the rail — absent = the bill stays the shop's own record (never sent) */
+        if (x.rail_entity_id) out.entity_id = x.rail_entity_id;
         if (num(x.credit_days) != null) out.credit_days = num(x.credit_days);
         if (num(x.credit_limit_minor) != null) out.credit_limit_minor = num(x.credit_limit_minor);
         if (booksOn && x.has_party_item) {   /* absent = unknown (no ledger, or not read) — never a 0 that reads as "owes nothing" */
@@ -2264,7 +2269,9 @@ router.get('/bills', auth, async (req, res) => {
         */
         /* ⭐ credit notes belong in the day's list. Left out, the counter would show a day's sales that the
            books disagree with, and the one document a shopkeeper most needs to find again would be invisible. */
-        WHERE h.entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
+        /* ⚠️ AND SENT BY ME (the two-sided counter bill, 2026-10-01): a supplier's counter bill I RECEIVED carries a bill_no
+           and a till too — it is my purchase, never one of "my earlier bills" (lib/books-store counterBills asks the same) */
+        WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no'
           AND h.created_at > NOW() - ($2 || ' days')::interval
         ORDER BY h.created_at DESC LIMIT $3`, [entity_id, String(days), limit]));
