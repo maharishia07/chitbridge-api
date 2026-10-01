@@ -38,6 +38,11 @@ const BROOM = { line_id: 'l2', particulars: 'Shop broom', quantity: 1, unit: 'pi
   const BU = require(path.join(H.API, 'lib', 'bill-use'));
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
 
+  /* ── the catalogue is read STRICTLY: a read that fails is not an empty shelf (the harness refuses real SQL) ── */
+  let threw = null;
+  try { await BU.catalogueOf(CUST); } catch (e) { threw = String(e && e.message); }
+  ok('a catalogue read that FAILS is an error, never "nothing in the catalogue" (itemmatch strict)', !!threw, String(threw));
+
   /* ── the decision, pure ── */
   const copyOf = (lines, use, status) => ({ chit_id: 'x', sender_entity_id: SHOP, purpose: 'invoice', current_status: status || 'pending',
     business_json: Object.assign({ counter_bill: true, bill_no: 'C1/26-27/0050', till: { id: 'C1' } }, use ? { use } : {}), line_items: lines });

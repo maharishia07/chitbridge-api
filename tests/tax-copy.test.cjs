@@ -65,6 +65,10 @@ const copy = (id, bj, recipients, purpose) => ({ chit_id: 'cb1', sender_entity_i
   eq('…received, and never the counter rule (no "counter: true" on a bill I did not issue)', [c.direction, !!c.counter], ['received', false]);
   eq('…priced the way the SELLER prices (its own price_includes_tax)', c.priceIncludesTax, false);
 
+  /* the customer's copy as the send route now writes it: purpose invoice + counter_bill */
+  const ci = await TC.partiesFor(Object.assign(copy(CUST, Object.assign({ counter_bill: true }, counterBj(named)), recips), { purpose: 'invoice' }), CUST);
+  eq('…and in the shape the send route now writes (purpose invoice, counter_bill): a purchase from the shop', [ci.sells, ci.seller.entity_id, ci.buyer.entity_id], [false, SHOP, CUST]);
+
   /* a storefront order the shop received: the customer sent it, the shop sells — must not move */
   const storefront = { chit_id: 'o1', sender_entity_id: CUST, purpose: 'order', all_recipients: [Object.assign({ role: 'sender' }, me(CUST)), Object.assign({ role: 'receiver' }, me(SHOP))],
     business_json: {}, summary_json: {}, sent_at: '2026-10-01T05:00:00.000Z', created_at: '2026-10-01T05:00:00.000Z', line_items: lines, currency_code: 'INR' };

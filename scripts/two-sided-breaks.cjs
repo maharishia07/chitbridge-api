@@ -8,7 +8,7 @@ const BREAKS = [
   ['tax-copy', 'lib/tax-copy.js', "  const iSell = theirCounterBill ? false : (orderLike ? !sent : sent);", "  const iSell = orderLike ? !sent : sent;", 'a received counter bill is the receiver\'s sale again'],
   ['tax-copy', 'lib/tax-copy.js', "(orderLike || toSelf) && !theirCounterBill) {", "(orderLike || toSelf)) {", 'the counter rule claims a bill I did not issue'],
   ['tax-copy', 'lib/tax-copy.js', "function counterIssued(bj) { return !!(bj && typeof bj === 'object' && bj.bill_no && bj.till && bj.till.id); }", "function counterIssued(bj) { return false; }", 'no bill is recognised as a counter\'s'],
-  ['two-sided-books', 'lib/tax-copy.js', "  const theirCounterBill = orderLike && !sent && counterIssued(hdr.business_json);", "  const theirCounterBill = false;", 'the customer\'s ledger: their copy prices as their own sale'],
+  ['tax-copy', 'lib/tax-copy.js', "  const theirCounterBill = orderLike && !sent && counterIssued(hdr.business_json);", "  const theirCounterBill = false;", 'a received counter bill in the older shape (purpose order) is the receiver\'s sale'],
   /* the till gate (routes/chits.js tillMaySend) */
   ['two-sided-bill', 'routes/chits.js', "    if (!bj.customer || String(bj.customer.entity_id || '') !== eid) return false;", "", 'a till sends to someone the bill does not name'],
   ['two-sided-bill', 'routes/chits.js', "    return ok.rows.length === 1;\n  } catch (_) { return false; }", "    return true;\n  } catch (_) { return false; }", 'a till sends to a business off its customer list'],
@@ -32,6 +32,20 @@ const BREAKS = [
   ['books-counter-snapshot', 'routes/till.js', "        if (x.rail_entity_id) out.entity_id = x.rail_entity_id;", "        out.entity_id = x.identity_id;", 'every customer is called "on the rail"'],
   ['books-counter-snapshot', 'lib/local-identity.js', " AND COALESCE(${a}.user_id, '') NOT LIKE '~%'`", "`", 'a minted local record counts as on the rail'],
   ['books-counter-snapshot', 'lib/local-identity.js', "       + ` AND COALESCE(to_jsonb(${a})->>'entity_kind', '') <> 'shopper')`;", "       + `)`;", 'a storefront shopper counts as on the rail'],
+  /* ── Athi's decisions of 2026-10-01: B2B on the seller's side · the customer's copy is a bill · what the goods are for ── */
+  ['tax-copy', 'lib/tax-copy.js', "    if (railId && otherId && railId === String(otherId) && otherRow && otherRow.identity_id) {", "    if (false) {", 'a rail customer is B2C on the seller\'s GSTR-1 again'],
+  ['tax-copy', 'lib/tax-lines.js', "      e.inv.push({ inum: numOf(r), idt:", "      e.inv.push({ inum: String(r.chit_id || '').slice(0, 16), idt:", 'a b2b row carries the chit id, not the bill number'],
+  ['two-sided-bill', 'routes/chits.js', "        return { purpose: 'invoice', business_json: bj,", "        return { purpose: 'order', business_json: bj,", 'the customer\'s copy reads as an order again'],
+  ['two-sided-books', 'lib/books-hooks.js', " || (purpose === 'invoice' && bj.counter_bill === true))) {", ")) {", 'a counter bill received as invoice loses its counter payments'],
+  ['goods-in-accepts', 'routes/till.js', "    if (kind === 'receive') {\n      const bills", "    if (false) {\n      const bills", 'goods-in does not offer a counter bill received as invoice'],
+  ['goods-in-accepts', 'routes/chits.js', "    if (req.body && !Array.isArray(req.body) && (req.body.use !== undefined", "    if (false && req.body && !Array.isArray(req.body) && (req.body.use !== undefined", 'goods-in cannot say what the goods are for'],
+  ['bill-use', 'lib/bill-use.js', "    else { use = inCatalogue(l, cat) ? 'resale' : 'use'; source = 'catalogue'; }", "    else { use = 'resale'; source = 'catalogue'; }", 'the catalogue no longer decides — everything is resale'],
+  ['bill-use', 'lib/bill-use.js', "    if (id && ch.lines[id]) { use = ch.lines[id]; source = 'line'; }", "    if (false) { use = ch.lines[id]; source = 'line'; }", 'a line\'s own choice is ignored'],
+  ['bill-use', 'lib/bill-use.js', "  if (!OPEN.test(String(copy.current_status || ''))) {", "  if (false) {", 'the choice can change after acceptance'],
+  ['bill-use', 'lib/books-hooks.js', "      if (split.asset.length) return", "      if (false) return", 'an asset posts as a purchase'],
+  ['bill-use', 'lib/books-hooks.js', "  for (const m of Object.keys(paid || {})) if (paid[m])", "  for (const m of []) if (paid[m])", 'what was paid at the counter is left owing on a use bill'],
+  ['bill-use', 'lib/itemmatch.js', "  } catch (e) { if (strict) throw e; rows = []; }", "  } catch (e) { rows = []; }", 'an unreadable catalogue posts everything as an expense'],
+  ['bill-use', 'lib/stock-from-chit.js', "    if (reason === 'purchase' && useOf && useOf(l) !== 'resale') {", "    if (false) {", 'goods for the shop\'s own use go on the shelf'],
 ];
 let caught = 0; const missed = [];
 for (const [test, file, from, to, what] of BREAKS) {
