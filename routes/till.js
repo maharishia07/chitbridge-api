@@ -2331,7 +2331,14 @@ router.get('/tasks', auth, async (req, res) => {
     const since = new Date(Date.now() - 120 * 24 * 3600 * 1000).toISOString();
 
     /* ⚠️ BOTH DIRECTIONS, and sideOf decides — a purchase order for an off-platform supplier arrives as 'received' and is still a purchase */
-    const heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300 });
+    let heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300 });
+    /* ⭐ a supplier's counter bill reaches me as purpose 'invoice' + counter_bill (routes/chits.js billCopyFor) — goods to
+       count in, so goods-in reads those too (only those: an app invoice is not a counter's delivery) */
+    if (kind === 'receive') {
+      const bills = await select.rows(entity_id, { purpose: 'invoice', direction: 'received', since, limit: 300 });
+      heads = heads.concat(bills.map((h) => Object.assign({ _counterBillOnly: true }, h)))
+        .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+    }
     if (!heads.length) return res.json({ kind, count: 0, tasks: [] });
 
     const { withEntity } = require('../db');
@@ -2347,6 +2354,7 @@ router.get('/tasks', auth, async (req, res) => {
       for (const h of heads) {
         const det = byId.get(String(h.chit_id)) || {};
         const bj = det.business_json || {};
+        if (h._counterBillOnly && bj.counter_bill !== true) continue;
         /* ⭐ A SUPPLIER'S COUNTER BILL SENT TO ME is goods to count in (the two-sided counter bill, 2026-10-01): a purchase,
            whatever its direction says — and receiving every line accepts it (routes/chits.js deliver-lines) */
         const theirBill = require('../lib/tax-copy').billReceived(Object.assign({}, h, { business_json: bj }), entity_id);

@@ -913,6 +913,22 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       const bjFor = (eid) => (client_ref && business_json && typeof business_json === 'object' && String(eid) !== String(sender_id))
         ? (() => { const o = Object.assign({}, business_json); delete o.client_ref; return o; })()
         : business_json;
+      /**
+       * ⭐⭐ THE CUSTOMER'S COPY OF A COUNTER BILL IS NAMED FOR WHAT IT IS (Athi, 2026-10-01). To them it is not an order to
+       * fulfil but a BILL to accept: purpose 'invoice' (the purpose an app-side supplier invoice already has, so the ledger's
+       * invoice reading and every purchase reader apply), marked `counter_bill: true` with the bill's number, till and terms
+       * kept, its own subject ("Bill C1/26-27/0041 from Mayur Traders") and, on its summary, what the list row shows — who
+       * it is from, the number, and what is owed. The SHOP's own copy is untouched. One chit, each copy in its holder's words.
+       */
+      const billCopyFor = (receiver) => {
+        if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
+        const bj = Object.assign({}, bjFor(receiver.entity_id), { counter_bill: true });
+        const parts = (bj.payment && Array.isArray(bj.payment.parts)) ? bj.payment.parts : [];
+        const total = roundMoney(parts.reduce((t, p) => t + (Number(p && p.amount) || 0), 0));
+        return { purpose: 'invoice', business_json: bj,
+                 manual_subject: 'Bill ' + bj.bill_no + ' from ' + (sender_display_name || 'the seller'),
+                 bill_received: { from: sender_display_name || null, no: String(bj.bill_no), total } };
+      };
 
       // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
       //    and other send-time rules will plug in here when we build Suppliers.) ──
@@ -1204,7 +1220,8 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       }) ];
       if (!is_draft) for (const receiver of receiverDetails) {
         const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered';   // To acts; CC/For informational
-        copies.push(mkCopy({
+        const billCopy = billCopyFor(receiver);   /* the customer's copy of a counter bill — a bill, in their words */
+        copies.push(mkCopy(Object.assign({
           /**
            * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING — see _summaryFor above. Every other key
            * here is the shared record and must not diverge; `detail_design` is the one exception, because it is
@@ -1219,7 +1236,11 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
           current_status: rcv_status, priority_flag: 'normal',
           log: { action: 'delivered', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
                  new_status: rcv_status, detail: `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})` },
-        }));
+        }, billCopy ? {
+          purpose: billCopy.purpose, detail_type: billCopy.purpose, manual_subject: billCopy.manual_subject,
+          business_json: billCopy.business_json,
+          summary_json: Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received }),
+        } : {})));
       }
 
       // Operator's REDACTED oversight copy — co-holds the EDGE (product/qty/topology) but NOT commercial terms:
@@ -1300,6 +1321,11 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         // RECIPIENTS (skipped for drafts — a draft is the author's copy only)
         if (!is_draft) for (const receiver of receiverDetails) {
           const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered'; // To acts; CC/For are informational
+          const billCopy = billCopyFor(receiver);   /* the same per-copy reading as the live path above */
+          const rcvPurpose = billCopy ? billCopy.purpose : purpose;
+          const rcvBj = billCopy ? billCopy.business_json : bjFor(receiver.entity_id);
+          const rcvSummary = billCopy ? Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received })
+                                      : _summaryFor(receiver.entity_id);
           await client.query(
             `INSERT INTO chit_header
              (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
@@ -1308,8 +1334,8 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
               schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())`,
             [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
-             sender_display_name, JSON.stringify(all_recipients), purpose,
-             auto_subject, manual_subject || null,
+             sender_display_name, JSON.stringify(all_recipients), rcvPurpose,
+             auto_subject, (billCopy ? billCopy.manual_subject : manual_subject) || null,
              /**
               * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING. Athi, 2026-08-24: *"the customer copy
               * and supplier copy should be the same, but the interpretation can be in another tab — how the
@@ -1323,8 +1349,8 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
               * ⚠️ Read server-side, per copy. This is not one entity reading another's settings — no client
               * ever sees it — it is the server writing each copy the way its own owner asked to read it.
               */
-             JSON.stringify(_summaryFor(receiver.entity_id)),
-             bjFor(receiver.entity_id) ? JSON.stringify(bjFor(receiver.entity_id)) : null,
+             JSON.stringify(rcvSummary),
+             rcvBj ? JSON.stringify(rcvBj) : null,
              frozen_schema_version, frozen_schema_id, created_by_actor_id,
              receiver.role, chit_id, 'received']
           );
@@ -1333,7 +1359,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
              (chit_id, entity_id, detail_type, line_item_count,
               total_value, currency_code, line_items, direction)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-            [chit_id, receiver.entity_id, purpose,
+            [chit_id, receiver.entity_id, rcvPurpose,
              summary.line_item_count, summary.total_value,
              summary_json.currency_code,
              line_items.length > 0 ? JSON.stringify(line_items) : null, 'received']

@@ -39,8 +39,10 @@ const IDS = {
     payment: { mode: 'On credit', paid: 0, parts: [{ how: 'On credit', amount: 118 }] }, slip: 'cash', terms: { credit_days: 15, due_date: '2026-10-16' } };
   const recips = [{ entity_id: SHOP, role: 'sender' }, { entity_id: SHOP, role: 'receiver' }, { entity_id: CUST, role: 'receiver' }];
   let custStatus = 'pending';
-  TC.copyOf = async (chit_id, me) => ({ chit_id, sender_entity_id: SHOP, all_recipients: recips, purpose: 'order',
-    business_json: me === SHOP ? Object.assign({ client_ref: bj.bill_no }, bj) : bj, summary_json: {},
+  let BJ = bj;
+  /* ⭐ the customer's copy as the send route now writes it: purpose invoice, counter_bill: true (the shop's stays 'order') */
+  TC.copyOf = async (chit_id, me) => ({ chit_id, sender_entity_id: SHOP, all_recipients: recips, purpose: me === SHOP ? 'order' : 'invoice',
+    business_json: me === SHOP ? Object.assign({ client_ref: BJ.bill_no }, BJ) : Object.assign({ counter_bill: true }, BJ), summary_json: {},
     sent_at: '2026-10-01T05:00:01.000Z', created_at: '2026-10-01T05:00:01.000Z',
     line_items: [{ line_id: 'l1', particulars: 'Brake pad', quantity: 2, unit: 'piece', price: 50, total: 100, gst_rate: 18 }],
     currency_code: 'INR', current_status: me === SHOP ? 'pending' : custStatus, direction: 'received' });
@@ -82,6 +84,17 @@ const IDS = {
   const c3 = await K.afterChit(CUST, 'tb1', CUST);
   ok('…the second door firing the same acceptance is a duplicate — one purchase, ever', c3 && c3.duplicate === true && posted(CUST).length === 1, JSON.stringify(c3));
   ok('…and the shop\'s own sale was never touched by the customer\'s side', posted(SHOP).length === 1);
+
+  /* a NAMED bill paid in cash at the counter: the customer's purchase is paid, not owed */
+  BJ = Object.assign({}, bj, { payment: { mode: 'Cash', paid: 118, parts: [{ how: 'Cash', amount: 118 }] }, terms: null });
+  custStatus = 'accepted';
+  const pc = await K.afterChit(CUST, 'tb2', CUST);
+  const pe2 = X.T.entries.filter((x) => x.entity_id === CUST && x.source_ref === 'chit:tb2')[0];
+  const pl2 = pe2 ? linesOf(pe2) : [];
+  const cashA = acct(CUST, 'cash');
+  ok('the renamed copy (purpose invoice, counter_bill) of a CASH bill posts purchase_bill PAID: Cr Cash 118, nothing to Creditors',
+    pe2 && pe2.event_type === 'purchase_bill' && cashA && pl2.some((l) => l.account_id === cashA.account_id && l.cr_minor === 11800) && !pl2.some((l) => l.account_id === cred.account_id && l.cr_minor > 0),
+    JSON.stringify([pc, pl2.map((l) => [l.code, l.dr_minor, l.cr_minor, l.party_id])]));
 
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);

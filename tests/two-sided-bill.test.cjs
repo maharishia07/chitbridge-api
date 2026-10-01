@@ -116,6 +116,17 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const tb = (theirs[0] || {}).business_json || {}, mb = (mine[0] || {}).business_json || {};
     ok('…the customer\'s copy carries the bill: its number, its till, its customer, its terms',
       tb.bill_no === 'C1/26-27/0041' && tb.till && tb.till.id === 'C1' && tb.customer && tb.customer.entity_id === CUST && tb.terms && tb.terms.due_date === '2026-10-16', JSON.stringify(tb).slice(0, 300));
+    /* ⭐ THE CUSTOMER'S COPY IS NAMED FOR WHAT IT IS (Athi, 2026-10-01): a bill to accept, not a task */
+    const tc = theirs[0] || {}, mc = mine[0] || {};
+    ok('…the customer\'s copy is a BILL: purpose invoice (detail invoice), marked counter_bill',
+      tc.purpose === 'invoice' && tc.detail_type === 'invoice' && tb.counter_bill === true, JSON.stringify([tc.purpose, tc.detail_type, tb.counter_bill]));
+    ok('…its subject reads "Bill C1/26-27/0041 from Mayur Traders"', tc.manual_subject === 'Bill C1/26-27/0041 from Mayur Traders', tc.manual_subject);
+    ok('…and its summary says what the list row shows: from, number, what is owed (₹118)',
+      tc.summary_json && tc.summary_json.purpose === 'invoice' && JSON.stringify(tc.summary_json.bill_received) === JSON.stringify({ from: 'Mayur Traders', no: 'C1/26-27/0041', total: 118 }),
+      JSON.stringify(tc.summary_json && [tc.summary_json.purpose, tc.summary_json.bill_received]));
+    ok('…the SHOP\'s own copy is unchanged: purpose order, its own subject, no bill marker',
+      mc.purpose === 'order' && mc.manual_subject === 'Counter sale C1/26-27/0041' && !mb.counter_bill && !(mc.summary_json || {}).bill_received,
+      JSON.stringify([mc.purpose, mc.manual_subject, mb.counter_bill]));
     ok('…but NOT client_ref (the shop\'s replay key — on the customer\'s copy it collides with their own C1/26-27/0041)',
       !('client_ref' in tb), JSON.stringify(Object.keys(tb)));
     ok('…the shop\'s copy keeps client_ref (its replay key, b263)', mb.client_ref === 'C1/26-27/0041', JSON.stringify(Object.keys(mb)));

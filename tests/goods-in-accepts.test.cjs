@@ -59,7 +59,7 @@ let HEARD = [];
 hooks.afterChit = (e, c) => { HEARD.push(String(e)); return Promise.resolve({}); };
 try { require(path.join(API, 'lib', 'whatsapp-out')).notifyChitStatus = async () => null; } catch (_) {}
 
-require(path.join(API, 'lib', 'select')).rows = async () => HEADS;
+require(path.join(API, 'lib', 'select')).rows = async (e, sel) => HEADS.filter((h) => !sel || !sel.purpose || h.purpose === sel.purpose);
 
 const express = require('express');
 const app = express(); app.use(express.json());
@@ -131,9 +131,9 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     /* the counter's goods-in list: the supplier's bill is goods to count in; my own counter sale is not */
     ME = CUST;
     const line = [{ line_id: 'l1', particulars: 'Brake pad', quantity: 2, unit: 'piece', price: 59 }];
-    HEADS = [{ chit_id: 'cb1', direction: 'received', purpose: 'order', sender_entity_id: SHOP, created_at: '2026-10-01T05:00:01Z', manual_subject: 'Counter sale C1/26-27/0041', counterparty_name: 'Mayur Traders' },
+    HEADS = [{ chit_id: 'cb1', direction: 'received', purpose: 'invoice', sender_entity_id: SHOP, created_at: '2026-10-01T05:00:01Z', manual_subject: 'Bill C1/26-27/0041 from Mayur Traders', counterparty_name: 'Mayur Traders' },
              { chit_id: 'mine', direction: 'received', purpose: 'order', sender_entity_id: CUST, created_at: '2026-10-01T06:00:00Z', manual_subject: 'Counter sale C1/26-27/0007' }];
-    TASK_ROWS = [{ chit_id: 'cb1', line_items: line, business_json: counterBill }, { chit_id: 'mine', line_items: line, business_json: { bill_no: 'C1/26-27/0007', till: { id: 'C1' }, customer: { name: 'Walk-in' } } }];
+    TASK_ROWS = [{ chit_id: 'cb1', line_items: line, business_json: Object.assign({ counter_bill: true }, counterBill) }, { chit_id: 'mine', line_items: line, business_json: { bill_no: 'C1/26-27/0007', till: { id: 'C1' }, customer: { name: 'Walk-in' } } }];
     const rcv = await (await fetch(`http://127.0.0.1:${srv.address().port}/api/till/tasks?kind=receive`)).json();
     ok('goods-in (receive) lists the supplier\'s counter bill sent to me, with what is left to count', rcv.count === 1 && rcv.tasks[0].chit_id === 'cb1' && rcv.tasks[0].lines[0].remaining === 2, JSON.stringify(rcv));
     const dsp = await (await fetch(`http://127.0.0.1:${srv.address().port}/api/till/tasks?kind=despatch`)).json();
