@@ -468,7 +468,10 @@ router.get('/stock/:handle', async (req, res) => {
 /* ── THE PROFILE FROM THEIR SYSTEM (Athi, 2026-09-05): what we look for · where it comes from · how trusted ── */
 const PM = require('../lib/profile-map');
 router.get('/profile-map', auth, async (req, res) => {
-  try { const P = require('../lib/profile'); const values = await P.profileValues(auth.entityOf(req)); res.json(Object.assign({ engine: 'chitbridge-profile-map', version: 1 }, PM.assess(values))); }
+  try { const P = require('../lib/profile'); const values = await P.profileValues(auth.entityOf(req)); const out = Object.assign({ engine: 'chitbridge-profile-map', version: 1 }, PM.assess(values));
+    const tn = values.trade_name, norm = (x) => String(x == null ? '' : x).replace(/\s+/g, '').toLowerCase();
+    if (tn && tn.other && norm(tn.other.value) !== norm(tn.value)) out.name_mismatch = { profile: tn.value, other: tn.other.value, source: tn.other.source };
+    res.json(out); }
   catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 router.post('/profile', auth, auth.requireScope('connector'), async (req, res) => {
