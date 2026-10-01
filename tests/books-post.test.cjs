@@ -168,6 +168,27 @@ const SUPP = '33333333-3333-4333-8333-333333333333';
   ok('…cash carried to the paisa: this year\'s closing less April\'s rent (100.00)', tbNext.balanced && closing && cashNext && cashNext.debit_minor === closing.debit_minor - 10000, JSON.stringify([closing, cashNext]));
   const lgY = await B.ledgerOf(db, SHOP, cash, null, '2027-04-01', '2027-04-30');
   ok('…a ledger opened on the year\'s first day starts from the carried balance', lgY.opening_minor === closing.debit_minor, JSON.stringify(lgY));
+  /* ── THE BUYER'S SIDE OF A COUNTER BILL: what lib/books-hooks hands postEntry once the buyer accepted it (2026-10-01) ──
+     Kumar Traders (SUPP) billed this shop ₹481.65 on credit at its counter: 418.00 @5% (10.46 + 10.44), 33.40 @28% (4.68 + 4.67). */
+  const K = require(path.join(H.API, 'lib', 'books-hooks'));
+  const buy = K.classify({ chit: { chit_id: 'c0000000-0000-4000-8000-0000000000b1', purpose: 'order', sender_entity_id: SUPP, currency_code: 'INR',
+      business_json: { bill_no: 'C2/26-27/0002', till: { id: 'C2' }, billed_at: '2026-09-26T05:00:00Z', customer: { name: 'This shop', identity_id: SHOP },
+        payment: { parts: [{ how: 'On credit', amount: 481.65 }] }, terms: { due_date: '2026-10-11' } } },
+    entry: { sells: false, seller: { entity_id: SUPP, LglNm: 'Kumar Traders' }, me: { entity_id: SHOP },
+      invoice: { ItemList: [{ GstRt: 5, AssAmt: 418, CgstAmt: 10.46, SgstAmt: 10.44, IgstAmt: 0, CesAmt: 0 }, { GstRt: 28, AssAmt: 33.4, CgstAmt: 4.68, SgstAmt: 4.67, IgstAmt: 0, CesAmt: 0 }] } },
+    setting: { country: 'IN', functional_currency: 'INR' }, status: 'accepted' });
+  const pb = buy.kind === 'post' ? await B.postEntry(db, SHOP, buy.event) : { why: buy.why };
+  ok('the buyer\'s accepted counter bill posts as a purchase', pb.ok, JSON.stringify(pb));
+  const pl = T.lines.filter((l) => l.entry_id === pb.entry_id);
+  const byCode = (c) => pl.filter((l) => l.code === c).map((l) => [l.dr_minor, l.cr_minor]);
+  eq('…Dr Purchases 5000: 418.00 and 33.40', byCode('5000').sort(), [[3340, 0], [41800, 0]]);
+  eq('…Dr Input CGST 2210: 10.46 + 4.68 · Dr Input SGST 2211: 10.44 + 4.67 (the tax credit)', [byCode('2210').map((x) => x[0]).sort((a, b) => a - b), byCode('2211').map((x) => x[0]).sort((a, b) => a - b)], [[468, 1046], [467, 1044]]);
+  const credA = T.accounts.find((a) => a.entity_id === SHOP && a.role === 'creditors');
+  eq('…Cr Creditors 481.65, named for Kumar Traders; Σ Dr = Σ Cr', [pl.filter((l) => l.account_id === credA.account_id).map((l) => [l.party_id, l.cr_minor]), pl.reduce((t, l) => t + l.dr_minor, 0) === pl.reduce((t, l) => t + l.cr_minor, 0)], [[[SUPP, 48165]], true]);
+  const dues = E.receivables().outstanding(await B.partyItems(db, SHOP, SUPP, credA.account_id));
+  const due1 = dues.by_ref[buy.event.source_chit_id];
+  eq('Dues, payable side: Kumar Traders is owed 481.65 on that bill, due 11 Oct', due1 && [due1.outstanding_minor, T.items.find((i) => i.ref === buy.event.source_chit_id).side, T.items.find((i) => i.ref === buy.event.source_chit_id).due_date], [48165, 'payable', '2026-10-11']);
+
   const ctl = await B.controls(db, SHOP, '2026-09-30');
   ok('CBLedger.controls finds nothing wrong', ctl.ok, JSON.stringify(ctl.mismatches));
 

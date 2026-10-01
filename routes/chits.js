@@ -3126,6 +3126,16 @@ router.put('/:chit_id/status',
       const previous_status = _pre.previous_status;
       /* ⭐ G3 — THE STAMP. `completed` freezes the invoice on MY copy (lib/tax-copy.freezeOnComplete); fails open. */
       if (new_status === 'completed') { try { await taxCopy.freezeOnComplete(chit_id, entity_id, _pre.copy); } catch (_) {} }
+      /**
+       * ⭐⭐ THE BUYER'S ACCEPTANCE REACHES THE LEDGER (Athi, 2026-10-01: "a checking mechanism in the rail to allow it to the
+       * sundry creditor"). A bill I RECEIVED posts as my purchase only once MY copy is accepted / in_progress / completed
+       * (lib/books-hooks buyerGate) — and THIS is the one transition that says so. After the commit, never awaited, never
+       * able to fail the status change; off it is one cached read. Idempotent on the chit (source_ref chit:<id>), so a
+       * second door firing the same acceptance posts nothing twice.
+       */
+      if (/^(accepted|in_progress|completed)$/.test(new_status)) {
+        try { const hooks = require('../lib/books-hooks'); setImmediate(() => hooks.afterChit(entity_id, chit_id, action_by_id)); } catch (_) {}
+      }
 
       if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
 
@@ -3774,6 +3784,11 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
         }
         return { allResolved, resolvedPartyIds };
       });
+      /* ⭐ a settled dispute may release a bill a party already ACCEPTED (lib/books-hooks buyerGate: open dispute → waits).
+         The dispute carries no "in whose favour"; the buyer's own status says it — accepted posts, rejected never does. */
+      if (out.allResolved) {
+        try { const hooks = require('../lib/books-hooks'); setImmediate(() => { for (const p of [entity_id].concat(out.resolvedPartyIds || [])) hooks.afterChit(p, chit_id, null); }); } catch (_) {}
+      }
 
       res.json({
         dispute_id,

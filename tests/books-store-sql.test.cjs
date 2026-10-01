@@ -43,7 +43,7 @@ const CALLS = {
   terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
   lastPack: [E], insertPack: [E, { pack_id: U, kind: 'month', sha256: 'x', manifest: {} }], packs: [E], pack: [E, U], ackPack: [E, U, U],
   counterBills: [E, 'C1', '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'], countersBilling: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'],
-  unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200],
+  unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200], openDisputes: [E, U],
 };
 
 (async () => {

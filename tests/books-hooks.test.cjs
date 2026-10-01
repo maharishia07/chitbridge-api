@@ -57,8 +57,8 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
   eq('cess on a bill is queued (the rules do not post it yet) — never folded into another line', cess.kind, 'queue');
   const sent = K.classify({ chit: { chit_id: 'c3', created_at: '2026-09-29T05:00:00Z', purpose: 'invoice', business_json: {} }, entry: { sells: true, buyer: { entity_id: CUST }, invoice: inv([[5, 200, 5]], 210) }, setting: S });
   eq('an invoice I send → sale_bill, the buyer owes all of it', [sent.event.type, sent.event.party, sent.event.paid, sent.event.source_ref], ['sale_bill', CUST, {}, 'chit:c3']);
-  const got = K.classify({ chit: { chit_id: 'c4', created_at: '2026-09-29T05:00:00Z', purpose: 'invoice', business_json: {} }, entry: { sells: false, seller: { entity_id: SUPP }, invoice: inv([[12, 1000, 60]], 1120) }, setting: S });
-  eq('an invoice I receive → purchase_bill, I owe the supplier', [got.event.type, got.event.party], ['purchase_bill', SUPP]);
+  const got = K.classify({ chit: { chit_id: 'c4', created_at: '2026-09-29T05:00:00Z', purpose: 'invoice', business_json: {} }, entry: { sells: false, seller: { entity_id: SUPP }, invoice: inv([[12, 1000, 60]], 1120) }, setting: S, status: 'accepted' });
+  eq('an invoice I receive, once I ACCEPTED it → purchase_bill, I owe the supplier (2026-10-01: no longer on arrival)', [got.event.type, got.event.party], ['purchase_bill', SUPP]);
   const cn = K.classify({ chit: { chit_id: 'c5', created_at: '2026-09-29T05:00:00Z', purpose: 'credit_note', business_json: { till: { id: 'C1' }, bill_no: 'CN-1', against: 'C1-0001', refund: { parts: [{ how: 'Cash', amount: 118 }] } } },
     entry: { sells: true, invoice: inv([[18, 100, 9]], 118) }, setting: S });
   eq('a counter credit note → return, refunded in cash', [cn.event.type, cn.event.refund, cn.event.against_bill], ['return', { cash: 118 }, 'C1-0001']);
@@ -96,6 +96,104 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     ok('a post the RULES refuse (an expense on a non-expense ledger) is queued with the rules\' own words — the chit is untouched', rf.queued === true && pk9 && pk9.why && pk9.why.length > 10 && !X.T.entries.some((e) => e.source_ref === 'chit:x9'), JSON.stringify([rf, pk9 && pk9.why]));
     TCp.copyOf = was; await X.store.saveSetting(X.db, SHOP, { enabled: false }); K.forget(SHOP);
   }
+  /* ══ THE BUYER'S SIDE OF A COUNTER BILL (Athi, 2026-10-01: "can chola see it as a purchase …") ══
+     Tally Test Shop (SHOP) bills Chola Auto Care (CUST) ₹481.65 at counter C2: 418.00 @5% (10.46 + 10.44) and 33.40 @28% (4.68 + 4.67).
+     ⭐ The buyer's copy NEVER posts on arrival — only once the buyer has ACCEPTED it on the rail (the chit's own status), never while a
+     dispute is open, never after a rejection; and the seller must be on the buyer's supplier list (checked by the hook, not guessed). */
+  const BILLNO = 'C2/26-27/0002';
+  const inv2 = { currency: 'INR', ItemList: [{ GstRt: 5, AssAmt: 418, CgstAmt: 10.46, SgstAmt: 10.44, IgstAmt: 0, CesAmt: 0 }, { GstRt: 28, AssAmt: 33.4, CgstAmt: 4.68, SgstAmt: 4.67, IgstAmt: 0, CesAmt: 0 }], ValDtls: { TotInvVal: 481.65 } };
+  const RATES = [{ rate: 5, taxable: 418, cgst: 10.46, sgst: 10.44, igst: 0 }, { rate: 28, taxable: 33.4, cgst: 4.68, sgst: 4.67, igst: 0 }];
+  const cbj = (parts) => ({ bill_no: BILLNO, till: { id: 'C2' }, billed_at: '2026-10-01T05:00:00Z', customer: { name: 'Chola Auto Care', identity_id: CUST },
+    payment: { parts }, terms: { credit_days: 15, due_date: '2026-10-16' } });
+  const CREDIT = [{ how: 'On credit', amount: 481.65 }], CASH = [{ how: 'Cash', amount: 481.65 }];
+  const sellerEntry = { sells: true, seller: { entity_id: SHOP, LglNm: 'Tally Test Shop' }, buyer: { entity_id: null }, me: { entity_id: SHOP }, invoice: inv2 };
+  const buyerEntry = { sells: false, seller: { entity_id: SHOP, LglNm: 'Tally Test Shop' }, buyer: { entity_id: CUST }, me: { entity_id: CUST }, invoice: inv2 };
+  const buyerCopy = (id, parts, extra) => Object.assign({ chit_id: id, purpose: 'order', sender_entity_id: SHOP, currency_code: 'INR', business_json: cbj(parts) }, extra || {});
+  const bk = (id, parts, status, more) => K.classify(Object.assign({ chit: buyerCopy(id, parts), entry: buyerEntry, setting: S, status }, more || {}));
+
+  const arr = bk('b0', CREDIT, 'delivered');
+  eq('the BUYER\'s copy of a counter bill, on arrival → waits for the buyer to confirm the goods, named (bill + seller)',
+    [arr.kind, arr.why, arr.event], ['queue', 'Waiting for you to confirm the goods were received (bill ' + BILLNO + ' from Tally Test Shop)', undefined]);
+  const acc = bk('b1', CREDIT, 'accepted');
+  eq('…ACCEPTED, on credit → purchase_bill: party = the SELLER, input tax per rate, nothing paid (all owed to Creditors), its due date, no counter',
+    acc.event && [acc.kind, acc.event.type, acc.event.party, acc.event.by_rate, acc.event.paid, acc.event.round_off, acc.event.counter, acc.event.source_ref, acc.event.against_ref, acc.event.due_date, acc.supplier_check],
+    ['post', 'purchase_bill', SHOP, RATES, {}, 0, null, 'chit:b1', 'b1', '2026-10-16', true]);
+  const cashB = bk('b2', CASH, 'completed');
+  eq('…ACCEPTED (completed), paid in cash at the counter → purchase_bill paid { cash: 481.65 }, nothing owed', cashB.event && [cashB.event.type, cashB.event.paid, cashB.event.party], ['purchase_bill', { cash: 481.65 }, SHOP]);
+  const dis = bk('b3', CREDIT, 'accepted', { disputed: true });
+  eq('…accepted but DISPUTED (an open dispute) → never posts; it waits, and says why', [dis.kind, /disput/i.test(dis.why || '')], ['queue', true]);
+  eq('…REJECTED by the buyer (a dispute settled in the buyer\'s favour) → never posts, and leaves the waiting list', bk('b4', CREDIT, 'rejected').kind, 'none');
+  eq('…cancelled → never posts', bk('b4c', CREDIT, 'cancelled').kind, 'none');
+  const walk = K.classify({ chit: buyerCopy('b5', CASH, { business_json: Object.assign(cbj(CASH), { customer: { name: 'Walk-in' } }) }), entry: buyerEntry, setting: S, status: 'accepted' });
+  eq('…a buyer copy is NEVER a walk-in (no customer named, cash, grain day): a purchase, not the buyer\'s own day sales', [walk.kind, walk.event && walk.event.type], ['post', 'purchase_bill']);
+  const walkB = K.classify({ chit: buyerCopy('b5b', CASH, { business_json: Object.assign(cbj(CASH), { customer: { name: 'Walk-in' } }) }), entry: buyerEntry, setting: Object.assign({}, S, { walkin_grain: 'bill' }), status: 'delivered' });
+  ok('…and never the walk-in per-bill entry either, whatever the grain', walkB.kind !== 'walkin' && !(walkB.event && walkB.event.type === 'walkin_day'), JSON.stringify(walkB));
+  const misl = K.classify({ chit: buyerCopy('b6', CREDIT), entry: Object.assign({}, buyerEntry, { sells: true, seller: { entity_id: CUST } }), setting: S, status: 'accepted' });
+  eq('…a copy tax-copy calls "sells" but SENT by another shop\'s counter is still the buyer\'s: purchase_bill from the sender', misl.event && [misl.event.type, misl.event.party], ['purchase_bill', SHOP]);
+  const sellerSide = K.classify({ chit: buyerCopy('b7', CREDIT), entry: sellerEntry, setting: S });
+  eq('the SELLER\'s copy of the same bill still posts at save → sale_bill to Chola, unchanged (no acceptance asked)', sellerSide.event && [sellerSide.kind, sellerSide.event.type, sellerSide.event.party, sellerSide.event.counter, sellerSide.event.by_rate], ['post', 'sale_bill', CUST, 'C2', RATES]);
+  /* the invoice purpose's buyer branch: behind acceptance too */
+  const invC = (st, more) => K.classify(Object.assign({ chit: { chit_id: 'i1', created_at: '2026-09-29T05:00:00Z', purpose: 'invoice', sender_entity_id: SUPP, business_json: { invoice_no: 'KT/77' } }, entry: { sells: false, seller: { entity_id: SUPP, LglNm: 'Kumar Traders' }, me: { entity_id: SHOP }, invoice: inv([[12, 1000, 60]], 1120) }, setting: S, status: st }, more || {}));
+  eq('an INVOICE I receive, on arrival → waits for me to confirm the goods (it no longer posts on arrival)', [invC('delivered').kind, /Waiting for you to confirm the goods were received .*Kumar Traders/.test(invC('delivered').why)], ['queue', true]);
+  eq('…accepted → purchase_bill from the supplier, supplier list checked', [invC('accepted').event.type, invC('accepted').event.party, invC('accepted').supplier_check], ['purchase_bill', SUPP, true]);
+  eq('…disputed → waits; rejected → nothing', [invC('accepted', { disputed: true }).kind, invC('rejected').kind], ['queue', 'none']);
+
+  if (X.src.dir) {
+    /* ── through the hook, on the buyer's own ledger ── */
+    const TCb = require(path.join(H.API, 'lib', 'tax-copy')); const wasC = TCb.copyOf, wasE = TCb.entryFor;
+    let copyNow = null;
+    TCb.copyOf = async () => copyNow; TCb.entryFor = async () => buyerEntry;
+    await X.store.saveSetting(X.db, CUST, { enabled: true }); await X.B.enable(X.db, CUST, { by: CUST, today: '2026-10-01' }); K.forget(CUST);
+    const posted = (id) => X.T.entries.filter((e) => e.entity_id === CUST && e.source_ref === 'chit:' + id);
+    const waitRows = (id) => X.T.outbox.filter((o) => o.entity_id === CUST && o.source_chit_id === id && !o.done_at);
+
+    copyNow = Object.assign(buyerCopy('h1', CREDIT), { current_status: 'delivered' });
+    const a1 = await K.postChit(CUST, 'h1', {});
+    const w1 = waitRows('h1')[0], row1 = w1 && K.waitingRow(w1);
+    eq('arrival → parked on Waiting with the sentence, nothing posted', [a1.queued, w1 && w1.why, posted('h1').length], [true, 'Waiting for you to confirm the goods were received (bill ' + BILLNO + ' from Tally Test Shop)', 0]);
+    eq('…the Waiting row names its source so the screen can open the chit', row1 && row1.source, { chit_id: 'h1', ref: BILLNO, kind: 'purchase', counter: null, by: null });
+    const r1 = await K.retryOutbox(CUST, 10);
+    eq('…a retry before acceptance changes nothing (still waiting, nothing posted)', [r1.posted, waitRows('h1').length, posted('h1').length], [0, 1, 0]);
+
+    copyNow = Object.assign(buyerCopy('h1', CREDIT), { current_status: 'accepted' });
+    const a2 = await K.postChit(CUST, 'h1', {});
+    const w2 = X.T.outbox.filter((o) => o.entity_id === CUST && o.source_chit_id === 'h1').pop();
+    eq('accepted, but Tally Test Shop is NOT on Chola\'s supplier list → parked with the sentence, nothing posted (never auto-added)',
+      [a2.queued, w2 && w2.why, posted('h1').length, X.T.parties.some((p) => p.owner === CUST && p.party_id === SHOP)], [true, 'Tally Test Shop is not on your supplier list — add them, then this posts', 0, false]);
+    X.T.parties.push({ owner: CUST, party_id: SHOP, name: 'Tally Test Shop', supplier: true, credit_days: 15 });
+    const r2 = await K.retryOutbox(CUST, 10);
+    const pe = posted('h1')[0];
+    ok('…once they are on the list, the retry POSTS it (purchase_bill) and clears the waiting rows', pe && pe.event_type === 'purchase_bill' && r2.posted >= 1 && waitRows('h1').length === 0, JSON.stringify([r2, pe, waitRows('h1')]));
+    const lines = pe ? X.T.lines.filter((l) => l.entry_id === pe.entry_id) : [];
+    const cred = X.T.accounts.find((a) => a.entity_id === CUST && a.role === 'creditors') || X.T.accounts.find((a) => a.role === 'creditors');
+    ok('…Cr Creditors 481.65 named for Tally Test Shop; Σ Dr = Σ Cr', lines.some((l) => l.account_id === cred.account_id && l.party_id === SHOP && l.cr_minor === 48165)
+      && lines.reduce((t, l) => t + l.dr_minor, 0) === lines.reduce((t, l) => t + l.cr_minor, 0), JSON.stringify(lines.map((l) => [l.code, l.dr_minor, l.cr_minor, l.party_id])));
+    const a3 = await K.postChit(CUST, 'h1', {});
+    ok('…posting again (Intake and goods-in both firing) is a duplicate — one entry, ever', a3.duplicate === true && posted('h1').length === 1, JSON.stringify(a3));
+
+    /* disputed → not posted; settled for the SELLER (dispute resolved, buyer accepts) → posted; settled for the BUYER (rejected) → never */
+    copyNow = Object.assign(buyerCopy('h2', CREDIT), { current_status: 'accepted' });
+    X.T.disputes.push({ entity_id: CUST, chit_id: 'h2', status: 'open' });
+    const d1 = await K.postChit(CUST, 'h2', {});
+    eq('accepted with an OPEN dispute → not posted, parked naming the dispute', [d1.queued, /disput/i.test(d1.why || ''), posted('h2').length], [true, true, 0]);
+    X.T.disputes.find((d) => d.chit_id === 'h2').status = 'resolved';
+    const d2 = await K.postChit(CUST, 'h2', {});
+    ok('…the dispute resolved and the copy still accepted (the seller\'s favour) → posted', d2.ok && posted('h2').length === 1, JSON.stringify(d2));
+    copyNow = Object.assign(buyerCopy('h3', CREDIT), { current_status: 'rejected' });
+    X.T.disputes.push({ entity_id: CUST, chit_id: 'h3', status: 'resolved' });
+    const d3 = await K.postChit(CUST, 'h3', {});
+    ok('…resolved and the buyer REJECTED it (the buyer\'s favour) → never posts', d3.none === true && posted('h3').length === 0, JSON.stringify(d3));
+
+    /* the walk-in day of the BUYER's own counter C2 never sums a buyer copy, even one sharing the counter's id */
+    const wasCB = X.store.counterBills;
+    X.store.counterBills = async () => [buyerCopy('h4', CASH, { business_json: Object.assign(cbj(CASH), { customer: { name: 'Walk-in' } }) })];
+    const n0 = X.T.entries.length;
+    const pd = await K.postDay(CUST, 'C2', '2026-10-01', {});
+    ok('a walk-in day never sums a BUYER copy (same counter id C2, cash, no customer) — nothing posted', pd.empty === true && X.T.entries.length === n0, JSON.stringify(pd));
+    X.store.counterBills = wasCB;
+    TCb.copyOf = wasC; TCb.entryFor = wasE; await X.store.saveSetting(X.db, CUST, { enabled: false }); K.forget(CUST);
+  }
+
   eq('an order (a promise) posts nothing', K.classify({ chit: { chit_id: 'c9', created_at: '2026-09-29T05:00:00Z', purpose: 'order', business_json: {} }, entry: { sells: true, invoice: inv([[5, 10, 0.25]], 10.5) }, setting: S }).kind, 'none');
   eq('a week summary posts nothing', K.classify({ chit: { purpose: 'general', business_json: { summary: { period: 'week' } } }, entry: {}, setting: S }).kind, 'none');
 

@@ -13,7 +13,7 @@ const ymd = (v) => (v ? String(v).slice(0, 10) : null);
 
 function create() {
   const T = { setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
-              outbox: [], changes: [], parties: [], packs: [], chits: [] };
+              outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [] };
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
   const now = () => new Date(clock += 1000).toISOString();
   const S = {
@@ -124,6 +124,7 @@ function create() {
     async pack(db, e, pid) { const p = T.packs.find((x) => x.entity_id === e && x.pack_id === pid); return p ? clone(p) : null; },
     async ackPack(db, e, pid) { const p = T.packs.find((x) => x.entity_id === e && x.pack_id === pid); if (!p) return null; p.acknowledged_at = p.acknowledged_at || now(); return { acknowledged_at: p.acknowledged_at }; },
     async counterBills() { return []; }, async countersBilling() { return []; }, async unpostedChits() { return []; },
+    async openDisputes(db, e, chit) { return T.disputes.filter((d) => d.entity_id === e && d.chit_id === chit && d.status === 'open').length; },
   };
   return S;
 }
