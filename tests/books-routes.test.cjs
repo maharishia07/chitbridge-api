@@ -246,6 +246,24 @@ const call = (port, method, p, body) => new Promise((done) => {
   const ot = ((await q('GET', '/daybook?from=2026-09-26&to=2026-09-26')).body.entries || [])[0];
   ok('…another entity\'s copy of a chit is never read: no ref, no counter, no seller from it', ot && ot.source && ot.source.kind === 'purchase' && ot.source.ref === null && ot.source.counter === null
     && ot.source.by === null && ot.source.chit_id === null, JSON.stringify(ot && ot.source));
+  /* ── HOW IT WAS PAID (Athi, 2026-10-01, after 4–5 live bills: "it has to clearly segregate credit, cash, UPI") ── */
+  X.T.chits.find((x) => x.chit_id === 'c0000000-0000-4000-8000-00000000000a').business_json.payment = { parts: [{ how: 'On credit', amount: 1050 }] };
+  X.T.chits.find((x) => x.chit_id === 'c0000000-0000-4000-8000-00000000000c').business_json.payment = { parts: [{ how: 'Cash', amount: 50 }, { how: 'UPI', amount: 55, ref: '4421009931' }] };
+  const RC = 'c0000000-0000-4000-8000-00000000000e';
+  X.T.chits.push({ chit_id: RC, entity_id: SHOP, purpose: 'general', business_json: { kind: 'payment_received', payment_received: { no: 'R/C2/0001', mode: 'upi', amount: 100 },
+    till: { id: 'C2', by: { name: 'Athi' } } } });
+  await B.recordPayment(X.db, SHOP, { party_id: CUST, direction: 'in', amount_minor: 10000, currency: 'INR', mode: 'upi', reference: 'R/C2/0001', received_at: '2026-09-25',
+    client_ref: 'chit:' + RC, source_chit_id: RC, by: SHOP });
+  const hw = (await q('GET', '/daybook?from=2026-09-01&to=2026-09-30')).body.entries || [];
+  const hb = hw.find((x) => x.source && x.source.ref === 'C1-0042'), hm = hw.find((x) => x.source && x.source.ref === 'C1/26-27/0009');
+  const hd = hw.find((x) => x.source && x.source.kind === 'day'), hr = hw.find((x) => x.source && x.source.kind === 'receipt');
+  ok('how: a credit bill says "On credit"', hb && hb.source.how === 'On credit' && hb.source.how_ref === null, JSON.stringify(hb && hb.source));
+  ok('how: a split bill says "Cash + UPI", in order, with the UPI reference the counter kept', hm && hm.source.how === 'Cash + UPI' && hm.source.how_ref === '4421009931', JSON.stringify(hm && hm.source));
+  ok('how: a walk-in day is its own split, read from the entry\'s lines (Cash 236.00 · UPI 118.00)', hd && hd.source.how === 'Cash · UPI'
+    && JSON.stringify(hd.source.split) === JSON.stringify([{ how: 'Cash', amount_minor: 23600 }, { how: 'UPI', amount_minor: 11800 }]), JSON.stringify(hd && hd.source));
+  ok('how: money received at the counter is a receipt — its number, UPI, counter, who', hr && hr.source.ref === 'R/C2/0001' && hr.source.how === 'UPI' && hr.source.counter === 'C2'
+    && hr.source.by === 'Athi', JSON.stringify(hr && hr.source));
+  ok('how: a bill without a split names none (split null)', hb && hb.source.split === null && hd && hd.source.how_ref === null);
   const ssrc = require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
   const el = ssrc.slice(ssrc.indexOf('async function entryLines('), ssrc.indexOf('async function entries('));
   ok('…in ONE query: entryLines LEFT JOINs the shop\'s own chit_header (entity-scoped, ONE copy — a self-chit can have two, b149) and identities — never a read per row',

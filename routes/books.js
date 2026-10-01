@@ -168,15 +168,43 @@ function sourceOf(l) {
   const m = /^walkin:([^:]+):/.exec(String(l.source_ref || ''));
   const b = l.src_by;
   const seller = b && typeof b === 'object' ? (b.name || null) : (typeof b === 'string' && b.trim() ? b.trim() : null);
+  const pay = howOf(l, day);
   return { chit_id: l.src_chit_id || null, ref: l.src_ref || null, kind: day ? 'day' : (l.event_type === 'walkin_day' ? 'bill' : KIND[l.event_type] || l.event_type || null),
     counter: l.src_till || (m ? m[1] : null) || l.counter_id || null, by: day ? null : (seller || l.by_name || null),
-    count: day ? Number(l.covers) : null };
+    count: day ? Number(l.covers) : null, how: pay.how, how_ref: pay.how_ref, split: pay.split };
+}
+/**
+ * ⭐ HOW IT WAS PAID (Athi, 2026-10-01: "it has to clearly segregate credit, cash, UPI (UPI id) and so on"):
+ *   how      a bill: its tenders as the counter recorded them, in order — 'Cash' · 'On credit' · 'Cash + UPI'
+ *            a receipt: its mode ('UPI', 'Cheque') · a walk-in day: the tenders of its split ('Cash · UPI · Card')
+ *   how_ref  the reference the counter kept with a tender (a part's ref / reference / utr), a receipt's cheque number
+ *            (and bank) — null when none was recorded (⚠️ the counter does not ask for a UPI reference on a bill today)
+ *   split    a walk-in day only: [{ how, amount_minor }] from the entry's OWN debit lines (cash · UPI · card · bank)
+ * The words come through the posting rules' own reader (books-hooks modeOf); a tender it does not know keeps its word.
+ */
+const HOW = { cash: 'Cash', upi: 'UPI', card: 'Card', cheque: 'Cheque', bank: 'Bank', credit: 'On credit' };
+function howWord(w) { const m = require('../lib/books-hooks').modeOf(w); return m ? HOW[m] : (String(w || '').trim() || null); }
+function howOf(l, day) {
+  if (day) {
+    const split = [];
+    (Array.isArray(l.tenders) ? l.tenders : []).forEach((t) => { const w = HOW[t.role] || t.role, x = split.find((s) => s.how === w);
+      if (x) x.amount_minor += Number(t.dr_minor); else split.push({ how: w, amount_minor: Number(t.dr_minor) }); });
+    return { how: split.length ? split.map((s) => s.how).join(' · ') : null, how_ref: null, split: split.length ? split : null };
+  }
+  if (l.src_mode) {
+    const c = l.src_cheque && typeof l.src_cheque === 'object' ? l.src_cheque : null;
+    return { how: howWord(l.src_mode), how_ref: c && c.no ? [c.no, c.bank].filter(Boolean).join(' · ') : null, split: null };
+  }
+  const parts = Array.isArray(l.src_parts) ? l.src_parts.filter((p) => p && p.how) : [];
+  const words = []; parts.forEach((p) => { const w = howWord(p.how); if (w && words.indexOf(w) < 0) words.push(w); });
+  const r = parts.map((p) => p.ref || p.reference || p.utr).find((x) => x != null && String(x).trim());
+  return { how: words.length ? words.join(' + ') : null, how_ref: r ? String(r).trim() : null, split: null };
 }
 async function partyNames(h, e) {
   const m = new Map(); (await S.parties(h, e)).forEach((p) => m.set(String(p.party_id), p)); return m;
 }
 
-/** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count } | null, narration,
+/** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split } | null, narration,
  *  lines: [{ code, name, party_name, dr_minor, cr_minor }] }] } — `source` is sourceOf(), read in the same query as the lines */
 router.get('/daybook', auth, on, async (req, res) => {
   try {
