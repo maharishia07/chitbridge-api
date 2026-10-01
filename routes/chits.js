@@ -2733,10 +2733,42 @@ router.post('/:chit_id/raida/:raida_id/dispute', auth, async (req, res) => {
 // ⚠️ quantity may be NEGATIVE — that is a correcting entry, which is how a delivery is undone. Rows are never
 //    edited or deleted, so what was claimed on the day stays legible after someone changes their mind.
 // ⚠️ It writes into EVERY participant's copy via a gated SECURITY DEFINER fn. That is what shared means.
+/**
+ * ⭐⭐ WHAT A BILL I RECEIVED IS FOR — resale · use · asset (Athi, 2026-10-01; lib/bill-use). The buyer's own fact, on their
+ * own copy, before they accept it: GET answers what each line will post as (their choice, else their catalogue); PUT
+ * { use?, lines? } records a choice — merged, and refused (409) once the bill is accepted. Goods-in may carry the same
+ * `use` on deliver-lines.
+ */
+router.get('/:chit_id/use', auth, async (req, res) => {
+  try {
+    const entity_id = entityId(req);
+    const copy = await taxCopy.copyOf(req.params.chit_id, entity_id);
+    if (!copy) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+    if (!taxCopy.billReceived(copy, entity_id)) return res.status(409).json({ error: 'Not a bill', message: 'Only a bill you received says what its goods are for' });
+    const eff = await require('../lib/bill-use').forCopy(entity_id, copy);
+    res.json(Object.assign({ chit_id: req.params.chit_id, status: copy.current_status,
+      changeable: /^(pending|delivered|read)$/.test(String(copy.current_status || '')) }, eff));
+  } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
+});
+router.put('/:chit_id/use', auth, async (req, res) => {
+  try {
+    const r = await require('../lib/bill-use').set(entityId(req), req.params.chit_id, req.body || {}, { name: req.identity && req.identity.display_name });
+    if (!r.ok) return res.status(r.status || 400).json({ error: 'Not saved', message: r.message });
+    res.json(r);
+  } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
+});
+
 router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
+    /* ⭐ goods-in may say what the goods are for (the same field Intake sets) — recorded BEFORE the lines, so the tick below
+       accepts with the answer in place; a bill already accepted refuses it, said, and the delivery still records */
+    let useSaid = null;
+    if (req.body && !Array.isArray(req.body) && (req.body.use !== undefined || req.body.use_lines !== undefined)) {
+      useSaid = await require('../lib/bill-use').set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines },
+        { name: req.identity && req.identity.display_name }).catch((e) => ({ ok: false, message: String(e && e.message) }));
+    }
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name });
     try {
@@ -2824,6 +2856,7 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
         }
       }
     } catch (e) { console.error('goods-in accept skipped:', e.message); }
+    if (useSaid) out.use = useSaid.ok ? useSaid.use : { refused: useSaid.message };
     res.json(out);
   } catch (err) {
     console.error('Deliver lines error:', err.message);

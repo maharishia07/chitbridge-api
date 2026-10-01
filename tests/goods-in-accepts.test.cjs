@@ -114,6 +114,20 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const inv = await deliver();
     ok('a supplier INVOICE received in full is accepted the same way (the ledger gates it the same way)', UPDATES.length === 1 && UPDATES[0][1] === 'accepted' && inv.body.accepted === true, JSON.stringify(UPDATES));
 
+    /* ⭐ goods-in may say what the goods are for — the same field Intake sets (lib/bill-use), written BEFORE the accept tick */
+    ME = CUST; SENDER = SHOP; STATUS = 'pending'; HDR = hdr({ purpose: 'invoice', business_json: Object.assign({ counter_bill: true }, counterBill),
+      line_items: [{ line_id: 'l1', particulars: 'Brake pad' }, { line_id: 'l2', particulars: 'Shop broom' }] });
+    SQLS = [];
+    const gu = await (async () => { UPDATES = []; const r = await fetch(base + '/cb1/deliver-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: [{ line_id: 'l1', quantity: 1 }], use: 'use', use_lines: { l1: 'resale' } }) }); await new Promise((res) => setTimeout(res, 30)); return r.json(); })();
+    const wi = SQLS.findIndex((x) => /UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) \|\| jsonb_build_object\('use'/.test(x));
+    const ai = SQLS.findIndex((x) => /UPDATE chit_status SET current_status/.test(x));
+    ok('goods-in with { use, use_lines } records what the goods are for on MY copy — before the bill is accepted',
+      wi >= 0 && ai > wi && gu.use && gu.use.bill === 'use' && gu.use.lines.l1 === 'resale' && gu.accepted === true, JSON.stringify([wi, ai, gu.use, gu.accepted]));
+    STATUS = 'accepted';
+    const gu2 = await (await fetch(base + '/cb1/deliver-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: [{ line_id: 'l1', quantity: 1 }], use: 'asset' }) })).json();
+    ok('…once accepted the answer is settled: refused, said, and the delivery itself still records', gu2.ok === true && gu2.use && /already accepted/.test(gu2.use.refused || ''), JSON.stringify(gu2.use));
+
     /* Intake's door is unchanged */
     ME = CUST; STATUS = 'pending'; UPDATES = []; HEARD = [];
     const put = await fetch(base + '/cb1/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'accepted' }) });

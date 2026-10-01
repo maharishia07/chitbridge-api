@@ -373,6 +373,9 @@ const ENGINE_OTHER = [
      party-fields.js — the party master's field rules and the duplicate-tax-id refusal. CB's own decisions, not an
      outside standard's; the debit/credit rules themselves stay in CBPosting. (2026-09-29) */
   'books.js', 'books-hooks.js', 'party-fields.js',
+  /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
+     books-hooks (which event) and stock-from-chit (whether it is stock). CB's own decision. (2026-10-01) */
+  'bill-use.js',
   /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
      tools/adopt.cjs, never edited here: the chart and roles, the debit/credit rules, open items, the reads, the pack. */
   'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'bookpack.js',

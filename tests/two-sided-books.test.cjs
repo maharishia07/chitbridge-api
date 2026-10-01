@@ -33,6 +33,8 @@ const IDS = {
   delete require.cache[require.resolve(path.join(H.API, 'lib', 'tax-copy'))];
   const TC = require(path.join(H.API, 'lib', 'tax-copy'));
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
+  /* Chola's own catalogue sells brake pads — so, unchosen, the bill is for RESALE (lib/bill-use; tests/bill-use.test.cjs has the rest) */
+  require(path.join(H.API, 'lib', 'bill-use')).catalogueOf = async () => ({ items: [{ name: 'Brake pad', variant: '', synonyms: [] }], variantsOf: {} });
 
   const bj = { customer: { name: 'Chola Auto Care', phone: '9840012345', identity_id: CUST, entity_id: CUST },
     till: { id: 'C1', name: 'Counter 1', host: 'browser' }, bill_no: 'C1/26-27/0041', billed_at: '2026-10-01T05:00:00.000Z',
