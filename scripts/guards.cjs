@@ -183,6 +183,11 @@ const GUARDS = [
   'books-fixes.test.cjs',       // ⭐⭐⭐ the red-team findings of 2026-09-30 (M1–M12), each held by a check that was red before its fix
   'books-dates-tz.test.cjs',    // ⭐⭐ a date read back from Postgres is the same date under Asia/Kolkata and UTC (it runs itself in both)
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
+  /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
+  'tax-copy.test.cjs',          // who sells on each copy: a counter bill I RECEIVED is my purchase, never in my GSTR-1
+  'two-sided-bill.test.cjs',    // a till sends its own on-rail customer their copy — and nobody else; one shop row; replay-safe
+  'goods-in-accepts.test.cjs',  // goods-in, every line in → accepted through the SAME transition as Intake
+  'two-sided-books.test.cjs',   // one bill, two ledgers: sale at save, purchase on acceptance
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
