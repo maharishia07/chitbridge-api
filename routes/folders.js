@@ -289,7 +289,9 @@ router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, r
     if (vf === false) return res.status(404).json({ error: 'Not found', message: 'That folder is switched off.' });
     if (vf) {
       const m = await views.members(e, vf, { archived: arch, state: req.query.state });
-      return res.json({ chits: m.chits, counts: m.counts, state: m.state, folder: { folder_id: req.params.id, code: vf.code || null, name: vf.name, system: !!vf.system } });
+      /* ⚠️ { chits, counts } and nothing else: the web's envelope collapses `chits` to the array and keeps only the siblings it
+         knows (`counts` is one) — anything more would be dropped silently on the way in */
+      return res.json({ chits: m.chits, counts: m.counts });
     }
     const r = await withEntity(e, (db) => db.query(
       `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
