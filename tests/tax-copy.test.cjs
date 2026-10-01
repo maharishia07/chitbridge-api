@@ -80,7 +80,25 @@ const copy = (id, bj, recipients, purpose) => ({ chit_id: 'cb1', sender_entity_i
   eq('the shop\'s ledger: output tax ₹18, no input credit', [lShop.output.tax, lShop.itc.tax], [18, 0]);
   eq('the customer\'s ledger: NO output tax, input credit ₹18', [lCust.output.tax, lCust.itc.tax, lCust.rows[0] && lCust.rows[0].side], [0, 18, 'itc']);
   const gShop = T.gstr1(lShop, eShop.me, '102026'), gCust = T.gstr1(lCust, eCust.me, '102026');
-  ok('the shop\'s GSTR-1 reports the bill (B2B to the customer\'s GSTIN)', gShop.b2b.length === 1 || gShop.b2cs.length === 1, JSON.stringify({ b2b: gShop.b2b, b2cs: gShop.b2cs }));
+  /* ⭐⭐ B2B ON THE SELLER'S SIDE (Athi, 2026-10-01): the customer is on the rail, so the seller's invoice names them from the
+     rail identity — GSTIN, legal name, state — and GSTR-1 reports the bill b2b to that GSTIN, under its bill number. */
+  eq('the shop\'s invoice names the rail customer: GSTIN, legal name, state, registered',
+    [eShop.buyer.Gstin, eShop.buyer.LglNm, eShop.buyer.State, eShop.buyer.RegType, eShop.buyer.entity_id], ['33BBBBB0000B1Z5', 'Chola Auto Care', '33', 'regular', CUST]);
+  eq('…and the invoice\'s buyer block carries the GSTIN', eShop.invoice.BuyerDtls && eShop.invoice.BuyerDtls.Gstin, '33BBBBB0000B1Z5');
+  ok('the shop\'s GSTR-1 reports the bill B2B to Chola\'s GSTIN, under the bill number — no b2cs row',
+    gShop.b2b.length === 1 && gShop.b2b[0].ctin === '33BBBBB0000B1Z5' && gShop.b2b[0].inv[0].inum === 'C1/26-27/0041' && gShop.b2cs.length === 0, JSON.stringify({ b2b: gShop.b2b, b2cs: gShop.b2cs }));
+  eq('…output tax unchanged (₹18 — the buyer\'s identity moved, never the tax)', lShop.output.tax, 18);
+  /* a rail customer with no GSTIN stays B2C, exactly as the existing rules place it */
+  IDS[CUST].gstn = null;
+  const eNoG = await TC.entryFor(copy(SHOP, counterBj(named), recips), SHOP);
+  const gNoG = T.gstr1(T.ledger([eNoG], eNoG.me), eNoG.me, '102026');
+  eq('a rail customer with NO GSTIN stays b2cs (place of supply = the shop\'s state), output tax ₹18', [gNoG.b2b.length, gNoG.b2cs.length, gNoG.b2cs[0] && gNoG.b2cs[0].pos, T.ledger([eNoG], eNoG.me).output.tax], [0, 1, '33', 18]);
+  IDS[CUST].gstn = '33BBBBB0000B1Z5';
+  /* a walk-in, and an outside customer with a typed GSTIN, are what they were */
+  const eWalk = await TC.entryFor(copy(SHOP, counterBj({ name: 'Walk-in' }), [Object.assign({ role: 'receiver' }, me(SHOP))]), SHOP);
+  eq('a walk-in is unchanged: unregistered, b2cs', [eWalk.buyer.Gstin, eWalk.buyer.RegType, T.gstr1(T.ledger([eWalk], eWalk.me), eWalk.me, '102026').b2cs.length], [null, 'unregistered', 1]);
+  const eTyped = await TC.entryFor(copy(SHOP, counterBj({ name: 'Acme', gstin: '29ACMEE0000A1Z5' }), [Object.assign({ role: 'receiver' }, me(SHOP))]), SHOP);
+  eq('an outside customer with a TYPED GSTIN is unchanged: that GSTIN, inter-state', [eTyped.buyer.Gstin, eTyped.buyer.State, eTyped.buyer.entity_id], ['29ACMEE0000A1Z5', '29', null]);
   eq('⭐ the customer\'s GSTR-1 has NO outward supply from a bill they received', [gCust.b2b.length, gCust.b2cs.length, gCust.hsn.data.length], [0, 0, 0]);
   const g3 = T.gstr3b(lCust, eCust.me, '102026');
   ok('…and their GSTR-3B carries it as input credit, not output', JSON.stringify(g3).indexOf('18') >= 0 && lCust.output.total === 0, JSON.stringify(g3).slice(0, 300));
