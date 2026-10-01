@@ -22516,6 +22516,26 @@ function billsTab(which){
   openBills(true);
 }
 var BILLS_TAB = 'today';
+/** the tender filter on the Today sheet — a screen state, never stored; '' = every bill */
+var TODAY_HOW = '';
+function todayHow(k){ TODAY_HOW = (TODAY_HOW === k) ? '' : String(k || ''); openBills(true); }
+/**
+ * ⭐ HOW A BILL WAS PAID, from what the bill itself recorded — one entry per tender, same tenders merged, so a
+ * bill paid ₹500 cash and ₹200 UPI reads "Cash ₹500 · UPI ₹200". A credit note reads its refund, an expense what
+ * it was paid by. Never recomputed from the total: the record is the record.
+ * → [{ how, amount }]
+ */
+function billHow(b){
+  var src = b && (b.kind === 'credit_note' ? b.refunds : b.kind === 'expense' ? b.spent : b.payments) || [];
+  var m = {}, order = [];
+  src.forEach(function(p){
+    if (!p || !p.how) return;
+    var how = String(p.how);
+    if (!(how in m)) { m[how] = 0; order.push(how); }
+    m[how] = r2(m[how] + (Number(p.amount) || 0));
+  });
+  return order.map(function(how){ return { how: how, amount: m[how] }; });
+}
 async function openBills(keepOpen){
   if (!keepOpen) BILLS_TAB = 'today';
   if (BILLS_TAB === 'earlier') return paintEarlier();
@@ -22563,10 +22583,22 @@ async function openBills(keepOpen){
   var nLost = rows.filter(function(b){ return stateOf(b) === 'unconfirmed'; }).length;
 
   var d = STATE.today || { count:0, total:0, by:{} };
-  var by = Object.keys(d.by || {}).map(function(k){ return esc(k) + ' ' + money(d.by[k]); }).join(' · ');
+  /**
+   * ⭐⭐ WHICH BILLS WERE CASH, WHICH CREDIT (Athi, 2026-10-01: *"in the POS / till it has to segregate the bill, which
+   * one are in cash / credit etc"*). The totals line was the only place the tender showed; every ROW now carries its
+   * tender (billHow), and the totals are CHIPS — tap "On credit" and the list is only those bills, tap again for all.
+   * The filter is on the screen, not in the store: the day's figures above it never change.
+   */
+  var by = Object.keys(d.by || {}).map(function(k){
+    var on = TODAY_HOW === k;
+    return '<button class="pill' + (on ? ' on' : '') + '" data-testid="till-today-how-' + esc(k.replace(/\W+/g, '-').toLowerCase()) + '"'
+      + ' onclick="todayHow(\'' + esc(k) + '\')">' + esc(k) + ' ' + money(d.by[k]) + '</button>';
+  }).join(' ');
+  if (TODAY_HOW) rows = rows.filter(function(b){ return billHow(b).some(function(h){ return h.how === TODAY_HOW; }); });
   document.getElementById('billstitle').textContent = 'Today — ' + (d.count||0) + ' bills · ' + money(d.total||0);
   document.getElementById('billsbody').innerHTML =
-    '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + (by || 'nothing taken yet') + '</div>'
+    '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + (by || 'nothing taken yet')
+      + (TODAY_HOW ? '<span data-testid="till-today-how-on">only ' + esc(TODAY_HOW) + '</span>' : '') + '</div>'
     + '<div data-testid="till-sync-report" style="display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:9px;margin-bottom:8px;'
       + ((nWait || nLost) ? 'background:var(--warn-tint);color:var(--warn)' : 'background:var(--ok-tint);color:var(--ok)') + '">'
       /* ⚠️ THE HEADLINE NEVER CLAIMS MORE THAN IS PROVED. "All reached the shop" is said only when every bill
@@ -22675,13 +22707,19 @@ async function openBills(keepOpen){
                 var named = (b.customer && b.customer.name && !/^walk.?in$/i.test(b.customer.name)) ? b.customer.name : null;
                 var what = (b.lines || []).map(function(l){ return l.name; }).filter(Boolean);
                 var said = what.slice(0, 2).join(', ') + (what.length > 2 ? ' +' + (what.length - 2) : '');
+                /* ⭐ the tender, on the row: "On credit" · "Cash" · "UPI" · "Cash ₹500 · UPI ₹200" when mixed */
+                var hows = billHow(b);
+                var howSaid = hows.length > 1 ? hows.map(function(h){ return h.how + ' ' + money(h.amount); }).join(' · ')
+                            : (hows.length ? hows[0].how : '');
                 return '<div class="u">' + esc(new Date(b.at).toTimeString().slice(0, 5))
                   + (said ? ' · ' + esc(said) : '')
                   + (named ? ' · ' + esc(named) : '')
-                  + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + '</div></span>';
+                  + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '')
+                  + (howSaid ? ' · <b data-testid="till-bill-how-' + esc(b.no) + '">' + esc(howSaid) + '</b>' : '') + '</div></span>';
               })()
           + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
-          + '<button class="pill" onclick="reprint(\'' + esc(b.no) + '\')">print</button>'
+          /* ⭐ "view" brings the bill up; the print button is on the bill itself (Athi, 2026-10-01) */
+          + '<button class="pill" data-testid="till-bill-view-' + esc(b.no) + '" onclick="reprint(\'' + esc(b.no) + '\')">view</button>'
           /* ⭐ a return starts from the bill it undoes — there is nowhere else it could sensibly start */
           /* ⭐ only offered where it can actually be carried through — see retCanIssue() */
           /* ⚠️ [till expenses] AND NOT ON AN EXPENSE — it has no lines to return, "take a return" against a
