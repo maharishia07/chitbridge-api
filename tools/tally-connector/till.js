@@ -580,8 +580,11 @@ function chitOf(bill) {
       line_items: [],
     };
   }
+  /* ⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — the page's billRecipients(): a customer who is a business on the rail
+     (customer.entity_id, stamped by the page from the snapshot) is sent their copy; anyone else, self only */
+  const to = bill.customer && bill.customer.entity_id && /^[0-9a-f-]{36}$/i.test(String(bill.customer.entity_id)) ? bill.customer : null;
   return {
-    recipients: [{ self: true, name: 'self' }],
+    recipients: [{ self: true, name: 'self' }].concat(to ? [{ name: to.name || 'Customer', entity_id: String(to.entity_id), role: 'to', self: false }] : []),
     purpose: 'order',
     subject: 'Counter sale ' + bill.no,
     manual_subject: 'Counter sale ' + bill.no,

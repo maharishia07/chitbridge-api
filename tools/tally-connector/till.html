@@ -5895,10 +5895,29 @@ function movesOfDoc(d){
     });
   return rows.length ? { chit_id: d.against.chit_id, rows: rows } : null;
 }
+/**
+ * ⭐⭐ THE TWO-SIDED COUNTER BILL (Athi, 2026-10-01: "naming a connected customer on a credit or named bill IS the sending").
+ * A bill whose customer is KNOWN and a business ON THE RAIL — the snapshot's customers[].entity_id, stamped on the bill by
+ * finish() — goes to that customer too: their copy lands in their Intake to accept or dispute. A walk-in, or a customer who
+ * is not on the rail (a local record, a storefront shopper), stays the shop's own record.
+ * ⚠️ READ FROM THE BILL, never from today's snapshot: a bill queued with the line down sends to whom it was billed to.
+ * ⚠️ The shape compose sends ({ name, entity_id, role:'to' }); the server lets a till key send exactly this and no more.
+ */
+function billSendTo(bill){
+  /* a SALE only — a return or an expense carries the customer it came from, and is never sent (chitOfCN: self only) */
+  if (!bill || isReturnRow(bill) || isExpenseRow(bill)) return null;
+  var c = bill.customer;
+  return (c && c.entity_id && /^[0-9a-f-]{36}$/i.test(String(c.entity_id))) ? c : null;
+}
+function billRecipients(bill){
+  var to = billSendTo(bill), r = [{ self:true, name:'self' }];
+  if (to) r.push({ name: to.name || 'Customer', entity_id: String(to.entity_id), role:'to', self:false });
+  return r;
+}
 /** the bill, as the chit the rest of ChitBridge already understands (the same shape the program sends) */
 function chitOf(bill){
   return {
-    recipients: [{ self:true, name:'self' }],
+    recipients: billRecipients(bill),
     purpose:'order', subject:'Counter sale ' + bill.no, manual_subject:'Counter sale ' + bill.no,
     client_ref: bill.no,
     business_json: {
@@ -20142,7 +20161,10 @@ async function finish(){
        the heads are, so a reprint states what was issued rather than what today's slabs would say */
     by_rate: m.byRate || {},
     customer: Object.assign({ name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
-                            cust ? { identity_id: cust.identity_id } : {}),
+                            cust ? { identity_id: cust.identity_id } : {},
+                            /* ⭐ a business on the rail: the bill is SENT to them too (billRecipients) — stamped now, from
+                               the snapshot this bill was rung up against, so a queued bill keeps whom it was for */
+                            cust && cust.entity_id ? { entity_id: cust.entity_id } : {}),
     /* ⭐ BOOKS v2 — the terms travel on the chit, so both copies carry the same due date (SPEC-credit-lifecycle §3) */
     terms: credit && cust ? { credit_days: creditDaysOf(cust), due_date: dueDateFor(cust) } : null,
     credit_override: override,
@@ -21219,7 +21241,9 @@ function slipHTML(bill, m){
     + (bill.printed_as ? t('Printed as ' + esc(bill.printed_as), 'recorded as ' + esc(bill.no)) : '')
     + t(esc((STATE.till && STATE.till.name) || '') + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in'))
     /* ⭐ BOOKS v2 — a credit bill says so on the paper, and when it is due */
-    + (bill.terms ? t('<b>ON CREDIT</b>', bill.terms.due_date ? '<b>Due by ' + esc(bill.terms.due_date) + '</b>' : 'shop’s terms') : '') + dash
+    + (bill.terms ? t('<b>ON CREDIT</b>', bill.terms.due_date ? '<b>Due by ' + esc(bill.terms.due_date) + '</b>' : 'shop’s terms') : '')
+    /* ⭐ the two-sided bill says so, in one line: the customer has their own copy on ChitBridge */
+    + (billSendTo(bill) ? '<div data-testid="till-slip-sent-to" style="text-align:center">Sent to ' + esc(billSendTo(bill).name || 'customer') + '</div>' : '') + dash
     /**
      * ── ⭐⭐⭐ EVERY ITEM ACCOUNTS FOR ITSELF ON THE PAPER ──────────────────────────────────────────────────────
      *
