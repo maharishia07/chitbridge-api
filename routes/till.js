@@ -2347,8 +2347,11 @@ router.get('/tasks', auth, async (req, res) => {
       for (const h of heads) {
         const det = byId.get(String(h.chit_id)) || {};
         const bj = det.business_json || {};
-        if (bj.bill_no) continue;                     /* a counter sale is a record, not a task */
-        if (sideOf(h, bj) !== want) continue;         /* the other way round belongs to the other screen */
+        /* ⭐ A SUPPLIER'S COUNTER BILL SENT TO ME is goods to count in (the two-sided counter bill, 2026-10-01): a purchase,
+           whatever its direction says — and receiving every line accepts it (routes/chits.js deliver-lines) */
+        const theirBill = require('../lib/tax-copy').billReceived(Object.assign({}, h, { business_json: bj }), entity_id);
+        if (bj.bill_no && !theirBill) continue;       /* MY counter sale is a record, not a task */
+        if ((theirBill ? 'buy' : sideOf(h, bj)) !== want) continue;   /* the other way round belongs to the other screen */
         if (tasks.length >= limit) break;
         const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(() => null);
         const lines = (Array.isArray(det.line_items) ? det.line_items : []).map((l) => {

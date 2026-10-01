@@ -2778,6 +2778,26 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
        */
       out.summary = deliverline.summarise(_map);
     } catch (e) { /* the write succeeded; a stale screen is not worth failing it */ }
+    /**
+     * ⭐⭐ GOODS-IN TICKS THE SAME FACT (Athi, 2026-10-01: "one fact, three doors"). Every line of a bill I RECEIVED is now
+     * in → my copy is accepted, through moveStatus — the very function PUT /:chit_id/status runs for Intake: the same
+     * transition table, timeline row and ledger hook (the purchase posts behind acceptance). Before this, goods-in recorded
+     * the lines and the bill sat "waiting for you to confirm the goods were received".
+     * ⚠️ Only from pending / delivered / read: a bill I rejected, or already accepted, is never moved by a goods-in, and a
+     *   replayed or corrected delivery moves nothing twice. Only a bill I bought (tax-copy billReceived) — never the seller's
+     *   own despatch, never an order I am fulfilling. After the delivery, and never able to fail it.
+     */
+    try {
+      const s = out.summary;
+      if (s && s.lines > 0 && s.complete === s.lines) {
+        const mine = await taxCopy.copyOf(chit_id, entity_id);
+        if (mine && taxCopy.billReceived(mine, entity_id) && /^(pending|delivered|read)$/.test(String(mine.current_status || ''))) {
+          const mv = await moveStatus(entity_id, chit_id, 'accepted',
+            { id: req.identity.identity_id, name: req.identity.display_name }, 'Goods received in full — accepted at goods-in');
+          if (mv.moved) out.accepted = true;
+        }
+      }
+    } catch (e) { console.error('goods-in accept skipped:', e.message); }
     res.json(out);
   } catch (err) {
     console.error('Deliver lines error:', err.message);
@@ -3038,74 +3058,15 @@ router.post('/:chit_id/books-request', auth, async (req, res) => {
     res.json({ ok: true, books_request: reqRec });
   } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
 });
-router.put('/:chit_id/status',
-  [
-    body('status')
-      .trim()
-      .isIn(['pending','accepted','rejected','in_progress','partial','completed','cancelled'])
-      .withMessage('Invalid status'),
-    body('note').optional().trim().isLength({ max: 500 }),
-  ],
-  auth,
-  validate,
-  async (req, res) => {
-    try {
-      const chit_id      = req.params.chit_id;
-      // entity_id   = participant entity context (parent for actors, self for entities)
-      // action_by_* = whoever is performing — entity admin or actor, never remapped
-      const entity_id    = entityId(req);
-      const action_by_id   = req.identity.identity_id;
-      const action_by_name = req.identity.display_name;
-      const new_status = req.body.status;
-      const note = sanitise(req.body.note || '');
-
-      // Get current status
-      // B1 RLS: own received-copy read -> withEntity(me).
-      /**
-       * ── ⭐⭐⭐ FOUR TRANSACTIONS BECAME ONE, AND THE READ MOVED INSIDE THE WRITE ────────────────────────────
-       *
-       * Athi, 2026-09-11: *"fix the 29 round trips."* The note below this one records the last time this was
-       * cut — from six transactions to three. It drifted back to SIX, which is the argument for the budget
-       * existing at all: an optimisation with no guard is a thing that gets undone by the next feature.
-       *
-       * ⚠️⚠️ THE STATUS READ WAS ITS OWN TRANSACTION, AND EVERYTHING IT GATES IS IN THE NEXT ONE. BEGIN,
-       * set_config, one SELECT, COMMIT — four round trips across the Pacific to learn one word, and then the
-       * whole ceremony again to act on it. The validation between them is PURE: a table lookup and two string
-       * comparisons. There was never a reason for it to cost a connection round trip.
-       *
-       * ⭐ So the read, the validation and the write are one transaction now, and an early return is a MARKER
-       * carried out of it rather than a `return` from inside the callback — returning from inside would leave
-       * the transaction to be committed by the pool wrapper with the response already sent, which is how a
-       * connection leak starts.
-       *
-       * ⚠️ THE DISPUTE PROBE STAYS OUTSIDE. `schema.hasTable` is a plain query, cached per process, and the
-       * note below explains why it must not move in: Postgres aborts the WHOLE transaction on any error, so a
-       * missing chit_disputes would take the status change down with it. A savepoint would cost two more trips
-       * than it saves.
-       */
-
-      /**
-       * ── ⭐⭐ THREE TRANSACTIONS BECAME ONE ─────────────────────────────────────────────────────────────────
-       *
-       * Athi, closing twenty-six tasks: *"it takes a while… also, why does it take long time to do this
-       * activity?"* Measured: ONE status change was 7 statements in SIX transactions — 25 round trips, ~6.7s
-       * on the Railway→Supabase hop, and he does it once per chit. Three of those transactions were the same
-       * entity's own rows, read and written back to back: the open-dispute count, the status UPDATE and the
-       * header. One BEGIN, one set_config, three statements, one COMMIT.
-       *
-       * ⚠️ NOT Promise.all, for the reason stated elsewhere in this file: the pool is max:10, so parallel
-       * transactions per request means two concurrent users queue the third. Sequential, inside ONE connection.
-       *
-       * ⚠️ THE HEADER IS NOW READ BEFORE THE UPDATE RATHER THAN AFTER. Nothing depends on the order — the
-       * status write does not touch chit_header — and it is read only to decide whether the caller is sender.
-       *
-       * ⚠️ A CACHED PROBE, NOT A SAVEPOINT, for the dispute count. The old code guarded it with .catch(),
-       * which is fine across separate transactions and useless inside a shared one: Postgres aborts the WHOLE
-       * transaction on any error, so a missing chit_disputes would have taken the status change down with it.
-       * A savepoint would fix that and cost two more round trips — measured on the chit read today — while
-       * schema.hasTable costs one query per process.
-       */
-
+/**
+ * ⭐⭐ ONE TRANSITION, MANY DOORS (Athi, 2026-10-01: "one fact, three doors"). The body of PUT /:chit_id/status, lifted
+ * out unchanged so that goods-in (POST /:chit_id/deliver-lines, all lines received) moves a bill to `accepted` through the
+ * SAME validation, timeline row, ledger hook and cancel legs as Intake — never a second status writer.
+ * → { code, body, moved?, noop? }  — the caller answers with code/body; `moved` = a status actually changed.
+ */
+async function moveStatus(entity_id, chit_id, new_status, by, note) {
+      const action_by_id = by.id, action_by_name = by.name;
+      let disputeWarning = null;
       const validTransitions = {
         'pending':     ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled'],
         'delivered':   ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled', 'pending'],
@@ -3120,7 +3081,6 @@ router.put('/:chit_id/status',
 
       // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
       // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
-      let disputeWarning = null;
       const _checkDisputes = (new_status === 'completed' || new_status === 'cancelled')
         && await schema.hasTable('chit_disputes');
 
@@ -3171,17 +3131,17 @@ router.put('/:chit_id/status',
 
       /* ⭐ the early returns, OUTSIDE the transaction — see the note above on why they are markers */
       if (_pre.stop === 'missing') {
-        return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+        return { code: 404, body: { error: 'Not found', message: 'Chit not found' } };
       }
       if (_pre.stop === 'noop') {
-        return res.json({ message: `Already ${new_status}`, chit_id, status: new_status, noop: true });
+        return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
       }
       if (_pre.stop === 'invalid') {
-        return res.status(400).json({
+        return { code: 400, body: {
           error: 'Invalid transition',
           message: `Cannot move from ${_pre.previous_status} to ${new_status}`,
           allowed_transitions: _pre.allowed,
-        });
+        } };
       }
       const previous_status = _pre.previous_status;
       /* ⭐ G3 — THE STAMP. `completed` freezes the invoice on MY copy (lib/tax-copy.freezeOnComplete); fails open. */
@@ -3273,13 +3233,86 @@ router.put('/:chit_id/status',
         } catch (e) { console.error('cancel confirm:', e.message); }
       }
 
-      res.json({
+      return { code: 200, moved: true, body: {
         message: `Chit ${new_status}`,
         warning: disputeWarning,   // C1: set when a disputed chit was closed anyway (UI shows who + that it was open)
         chit_id,
         previous_status,
         new_status
-      });
+      } };
+}
+
+router.put('/:chit_id/status',
+  [
+    body('status')
+      .trim()
+      .isIn(['pending','accepted','rejected','in_progress','partial','completed','cancelled'])
+      .withMessage('Invalid status'),
+    body('note').optional().trim().isLength({ max: 500 }),
+  ],
+  auth,
+  validate,
+  async (req, res) => {
+    try {
+      const chit_id      = req.params.chit_id;
+      // entity_id   = participant entity context (parent for actors, self for entities)
+      // action_by_* = whoever is performing — entity admin or actor, never remapped
+      const entity_id    = entityId(req);
+      const action_by_id   = req.identity.identity_id;
+      const action_by_name = req.identity.display_name;
+      const new_status = req.body.status;
+      const note = sanitise(req.body.note || '');
+
+      // Get current status
+      // B1 RLS: own received-copy read -> withEntity(me).
+      /**
+       * ── ⭐⭐⭐ FOUR TRANSACTIONS BECAME ONE, AND THE READ MOVED INSIDE THE WRITE ────────────────────────────
+       *
+       * Athi, 2026-09-11: *"fix the 29 round trips."* The note below this one records the last time this was
+       * cut — from six transactions to three. It drifted back to SIX, which is the argument for the budget
+       * existing at all: an optimisation with no guard is a thing that gets undone by the next feature.
+       *
+       * ⚠️⚠️ THE STATUS READ WAS ITS OWN TRANSACTION, AND EVERYTHING IT GATES IS IN THE NEXT ONE. BEGIN,
+       * set_config, one SELECT, COMMIT — four round trips across the Pacific to learn one word, and then the
+       * whole ceremony again to act on it. The validation between them is PURE: a table lookup and two string
+       * comparisons. There was never a reason for it to cost a connection round trip.
+       *
+       * ⭐ So the read, the validation and the write are one transaction now, and an early return is a MARKER
+       * carried out of it rather than a `return` from inside the callback — returning from inside would leave
+       * the transaction to be committed by the pool wrapper with the response already sent, which is how a
+       * connection leak starts.
+       *
+       * ⚠️ THE DISPUTE PROBE STAYS OUTSIDE. `schema.hasTable` is a plain query, cached per process, and the
+       * note below explains why it must not move in: Postgres aborts the WHOLE transaction on any error, so a
+       * missing chit_disputes would take the status change down with it. A savepoint would cost two more trips
+       * than it saves.
+       */
+
+      /**
+       * ── ⭐⭐ THREE TRANSACTIONS BECAME ONE ─────────────────────────────────────────────────────────────────
+       *
+       * Athi, closing twenty-six tasks: *"it takes a while… also, why does it take long time to do this
+       * activity?"* Measured: ONE status change was 7 statements in SIX transactions — 25 round trips, ~6.7s
+       * on the Railway→Supabase hop, and he does it once per chit. Three of those transactions were the same
+       * entity's own rows, read and written back to back: the open-dispute count, the status UPDATE and the
+       * header. One BEGIN, one set_config, three statements, one COMMIT.
+       *
+       * ⚠️ NOT Promise.all, for the reason stated elsewhere in this file: the pool is max:10, so parallel
+       * transactions per request means two concurrent users queue the third. Sequential, inside ONE connection.
+       *
+       * ⚠️ THE HEADER IS NOW READ BEFORE THE UPDATE RATHER THAN AFTER. Nothing depends on the order — the
+       * status write does not touch chit_header — and it is read only to decide whether the caller is sender.
+       *
+       * ⚠️ A CACHED PROBE, NOT A SAVEPOINT, for the dispute count. The old code guarded it with .catch(),
+       * which is fine across separate transactions and useless inside a shared one: Postgres aborts the WHOLE
+       * transaction on any error, so a missing chit_disputes would have taken the status change down with it.
+       * A savepoint would fix that and cost two more round trips — measured on the chit read today — while
+       * schema.hasTable costs one query per process.
+       */
+
+      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note);
+      res.status(_moved.code).json(_moved.body);
+      if (!_moved.moved) return;
 
       /**
        * ⚠️ NOTIFY BACK — AFTER res.json(), AND DELIBERATELY NOT AWAITED (b126).
