@@ -78,6 +78,35 @@ async function definersReady() {
   return _definersReady;
 }
 
+/**
+ * ⭐⭐ THE ONE THING A TILL KEY MAY SEND BEYOND ITSELF — the two-sided counter bill (Athi, 2026-10-01: *"naming a connected
+ * customer on a credit or named bill IS the sending"*). The key lives on a shop PC anyone can pick up, so the door opens
+ * exactly this wide and no wider:
+ *   · a COUNTER BILL (a bill number from a till — lib/tax-copy counterIssued), purpose 'order'
+ *   · ONE outside recipient, as 'to', addressed by entity id
+ *   · who is the bill's own customer (business_json.customer.entity_id) — the counter names whom it is billing
+ *   · and is on THIS shop's customer list AND a business on the rail (lib/local-identity onRailSql — the same test the
+ *     counter's snapshot made when it offered them). A stranger, a local (~) record, a storefront shopper: refused.
+ * ⚠️ Fails closed: a lookup that cannot run answers no, and the counter keeps the bill queued with the server's words.
+ */
+async function tillMaySend(sender_id, outward, body) {
+  try {
+    const b = body || {}, bj = b.business_json || {};
+    if (outward.length !== 1) return false;
+    const r = outward[0];
+    if (String(r.role || 'to').toLowerCase() !== 'to') return false;
+    if (String(b.purpose || 'order') !== 'order' || !taxCopy.counterIssued(bj)) return false;
+    const eid = String(r.entity_id || '');
+    if (!/^[0-9a-f-]{36}$/i.test(eid)) return false;
+    if (!bj.customer || String(bj.customer.entity_id || '') !== eid) return false;
+    const ok = await withEntity(sender_id, (db) => db.query(
+      `SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id
+        WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ${require('../lib/local-identity').onRailSql('i')}
+        LIMIT 1`, [sender_id, eid]));
+    return ok.rows.length === 1;
+  } catch (_) { return false; }
+}
+
 // Run a b50/b51/b52 definer inside withEntity(caller); before the delivery layer is applied, run the legacy
 // direct-SQL fallback instead (fallback(db) receives the tx client). Keeps every crossing feature working
 // before/after the migration; once the fns exist the definer path wins, so writes cross safely + audited.
@@ -474,7 +503,10 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       if (req.api_key && Array.isArray(req.api_key.scopes) && req.api_key.scopes.indexOf('till') >= 0 && !req.api_key.scopes.includes('connector')) {
         const rl = (Array.isArray(req.body.recipients) ? req.body.recipients : (Array.isArray(req.body.receivers) ? req.body.receivers : []));
         const outward = rl.filter((r) => r && r.self !== true && String(r.entity_id || '') !== String(sender_id));
-        if (outward.length) return res.status(403).json({ error: 'Forbidden', message: 'A till may only record its own sales.' });
+        if (outward.length && !(await tillMaySend(sender_id, outward, req.body))) {
+          return res.status(403).json({ error: 'Forbidden',
+            message: 'A till may only record its own sales, or send a bill to a customer of this shop who is on ChitBridge.' });
+        }
       }
       const purpose = req.body.purpose || 'order';
       const manual_subject = sanitise(req.body.manual_subject || req.body.subject || '');
@@ -712,7 +744,11 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
        */
       const orderLike = /^(order|offer)$/.test(String(purpose || ''));
       const toIds = receiverDetails.filter((r) => r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)).map((r) => String(r.entity_id));
-      const sellerId = (orderLike && toIds.length === 1) ? toIds[0] : sender_id;
+      /* ⚠️ A COUNTER BILL IS 'order' TOO, AND THE COUNTER SELLS IT (the two-sided counter bill, 2026-10-01). Sent to an on-rail
+         customer it has one 'to' recipient — read as an order, the CUSTOMER would have become the seller: their shelf, their
+         offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
+      const counterBill = taxCopy.counterIssued(business_json);
+      const sellerId = (orderLike && !counterBill && toIds.length === 1) ? toIds[0] : sender_id;
       /**
        * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
        * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
@@ -776,7 +812,8 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         const gross = r2m(li.reduce((a, l) => a + listOf(l) * qtyOf(l), 0));
         const net = r2m(li.reduce((a, l) => a + netOf(l), 0));
         let tax = null, total = null;
-        const buyerId = orderLike ? String(sender_id) : (toIds.length === 1 ? toIds[0] : null);
+        /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
+        const buyerId = counterBill ? null : orderLike ? String(sender_id) : (toIds.length === 1 ? toIds[0] : null);
         if (li.length && buyerId && String(sellerId) !== String(buyerId)) {
           const ids = [String(sellerId), String(buyerId)];
           const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [ids]);
@@ -853,7 +890,29 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         } else {                                  // BOTH → keep both copies, but STILL declare the self-chit identity
           copyPolicy = { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: copySource };
         }
+      } else if (client_ref && hasSelf && !is_draft && !promote_draft_id) {
+        /**
+         * ⚠️⚠️ THE SAME RULE WHEN THE NUMBERED DOCUMENT ALSO GOES OUT (the two-sided counter bill, 2026-10-01). A counter bill
+         * to an on-rail customer is self + the customer: not a PURE self chit, so the branch above never ran and the shop got
+         * TWO rows — its 'sent' Order copy and its self Task copy — both carrying client_ref, which b263's unique index refuses:
+         * the counter could not sell to a connected customer at all. The shop keeps the ONE row it keeps for every counter bill
+         * (the self copy); the customer holds their own. Declared, like every suppression here.
+         */
+        suppressSentCopy = true;
+        copyPolicy = { scope: 'sender', kept: ['received'], suppressed: ['sent'],
+                       reason: 'One copy for the sender — ' + client_ref + ' is a numbered document, and a number may appear once '
+                             + 'in a shop\'s books (b263).', source: 'numbered-document' };
       }
+      /**
+       * ⚠️⚠️ client_ref IS THE SENDER'S REPLAY KEY, NOT A FACT ABOUT THE TRADE — so it stays on the sender's own row only.
+       * b263's unique index is (entity_id, client_ref) over EVERY row an entity holds, received ones included: a counter bill
+       * C1/26-27/0041 sent to a customer whose own counter has issued C1/26-27/0041 (two shops, both on the default prefix)
+       * would be refused on the CUSTOMER's row, and the whole send with it — retried for ever. The bill's number travels as
+       * bill_no on every copy; only the dedupe key is withheld.
+       */
+      const bjFor = (eid) => (client_ref && business_json && typeof business_json === 'object' && String(eid) !== String(sender_id))
+        ? (() => { const o = Object.assign({}, business_json); delete o.client_ref; return o; })()
+        : business_json;
 
       // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
       //    and other send-time rules will plug in here when we build Suppliers.) ──
@@ -1155,6 +1214,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
            * per-copy summary_json was already a seam — this rides the same one rather than inventing another.
            */
           summary_json: _summaryFor(receiver.entity_id),
+          business_json: bjFor(receiver.entity_id) || undefined,   /* the sender's replay key stays on the sender's row (bjFor) */
           entity_id: receiver.entity_id, direction: 'received', role: receiver.role,
           current_status: rcv_status, priority_flag: 'normal',
           log: { action: 'delivered', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
@@ -1264,7 +1324,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
               * ever sees it — it is the server writing each copy the way its own owner asked to read it.
               */
              JSON.stringify(_summaryFor(receiver.entity_id)),
-             business_json ? JSON.stringify(business_json) : null,
+             bjFor(receiver.entity_id) ? JSON.stringify(bjFor(receiver.entity_id)) : null,
              frozen_schema_version, frozen_schema_id, created_by_actor_id,
              receiver.role, chit_id, 'received']
           );
