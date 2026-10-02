@@ -32,19 +32,21 @@
    ok   a bill with NO invoice keeps the old path: provisional, recomputed, total = the line nets (1118.15), no check
    ok   …its place of supply is still the SHOP's state (33 → CGST + SGST), not the buyer's (29): both copies
    ok   …and its reprint says the tax detail was not kept — never GST ₹0.00 on a tax invoice
-{"t":"2026-10-02T05:06:27.370Z","level":"warn","msg":"tax.check-differs","entity_id":"11111111-1111-4111-8111-111111111111","bill_no":"C2/26-27/0014","says":"cgst: issued 59.99, server 59.98 · sgst: issued 59.98, server 59.97 · total: issued 1118.18, server 1118.16 · tax at 12%: issued 119.53, server 119.51"}
+{"t":"2026-10-02T05:36:52.046Z","level":"warn","msg":"tax.check-differs","entity_id":"11111111-1111-4111-8111-111111111111","bill_no":"C2/26-27/0014","says":"cgst: issued 59.99, server 59.98 · sgst: issued 59.98, server 59.97 · total: issued 1118.18, server 1118.16 · tax at 12%: issued 119.53, server 119.51"}
    ok   a stored figure the server's recompute DISAGREES with: the stored one is kept (tax 119.97, total 1118.18) on both copies, the money and the reprint
    ok   …and the difference is NAMED: on the entry, and on the stored chit (business_json.tax_check, kept: issued)
 
 ── one computation, one rule, one shape ──
 
    ok   billMoney() computes nothing of its own: it calls CBTax.determine() and reads the answer (no split, no heads, no supply decision)
-   ok   …and with no engine there is no bill — never a second formula (zeros, and the counter already refuses to sell)
-   ok   the place-of-supply rule is ONE text: till.html placeOfSupply is lib/issued-invoice placeOfSupply, byte for byte
+   ok   …and with no engine there is no invoice — never a second formula (zeros, no invoice to save)
+   ok   …and with the engine MISSING, finish() refuses the sale: it says what happened and what to do, saves nothing, keeps the cart
+   ok   the place-of-supply rule is the ENGINE's, with no copy: no placeOfSupply in till.html or lib/issued-invoice; the counter calls CBTax.placeOfSupply
    ok   …over the counter is the shop's state; a recorded delivery is its state; a bad state code is ignored
-   ok   lib/issued-invoice keeps only the place-of-supply rule and the check
+   ok   the reading of an issued invoice is the ENGINE's moneyOf on both hosts: the counter maps CBTax.moneyOf, the server's summary_json.money is its header fields
+   ok   lib/issued-invoice keeps only the check
    ok   the shop-PC program's chitOf carries the SAME invoice as the page's, unchanged
 
-  ✓ 36 passed · 36 checks
+  ✓ 38 passed · 38 checks
 
 exit=0

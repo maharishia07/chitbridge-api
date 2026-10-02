@@ -17447,21 +17447,6 @@ function rwEncash(){
 }
 
 /**
- * ⭐⭐⭐ PLACE OF SUPPLY — ONE RULE, THE COUNTER AND THE SERVER ALIKE (IGST Act s.10(1)(a); Athi, 2026-10-02).
- * A counter bill is handed over at the counter → the SHOP's state → CGST + SGST, even for a registered buyer from another
- * state. Only a bill that RECORDS a delivery (`delivery.state_code`) is supplied there. Until 2026-10-02 billMoney asked
- * CBTax.supplyType(shop, shop) — the shop compared with itself, which happened to be right for every counter bill and
- * could never be right for a delivery.
- * ⚠️ THE SAME TEXT AS lib/issued-invoice.js placeOfSupply, byte for byte (tests/tax-truth.test.cjs) — change both or neither.
- */
-function placeOfSupply(rec, shopState) {
-  var shop = String(shopState == null ? '' : shopState).trim();
-  var d = (rec && typeof rec === 'object' && rec.delivery && typeof rec.delivery === 'object') ? rec.delivery : null;
-  var to = d ? String(d.state_code == null ? '' : d.state_code).trim() : '';
-  if (/^\d$/.test(to)) to = '0' + to;
-  return /^\d{2}$/.test(to) ? to : shop;
-}
-/**
  * ⚠️ A DELIVERY THIS BILL RECORDS ({ state_code, address }) — the one thing that moves its place of supply off the shop.
  * The counter has no screen that takes a delivery address yet, so this stays null and every bill is over the counter;
  * whatever records one sets it here, and it travels on the bill (finish) and the chit (chitOf).
@@ -17473,8 +17458,11 @@ var BILL_DELIVERY = null;
  * The shop is the seller, the customer the buyer with Pos = the place of supply, the cart the lines (qty · unit price ·
  * the offer's saving as the line's discount · rate · HSN · cess). What comes back IS the invoice: the screen, the paper,
  * the chit (business_json.invoice), both ledgers and every reprint read it — nothing adds it up again.
- * ⚠️ NO SECOND FORMULA. Without the engine there is no bill — the counter already refuses to sell when the tax engine is
- * missing (counterStops), so this answers an empty invoice rather than a guess.
+ * ⭐ THE PLACE OF SUPPLY IS THE ENGINE'S RULE TOO — CBTax.placeOfSupply (IGST Act s.10(1)(a)): over the counter it is the
+ * shop's state (CGST + SGST, even for a registered buyer from another state); only a recorded delivery moves it. The server
+ * checks against the same function (lib/tax.js), so there is no second copy to drift.
+ * ⚠️ NO SECOND FORMULA. Without the engine there is no invoice: this answers an empty one (zeros, m.invoice null), and
+ * finish() refuses to complete a bill whose invoice is missing — it never saves a ₹0 sale.
  * ⚠️ A shop that charges no GST (unregistered, composition) is zero-rated on its own invoice and its prices are never
  * split — the shelf price is the taxable value and the total.
  */
@@ -17492,7 +17480,7 @@ function billMoney(){
               Ph: sh.phone || '', State: sc, Country: sh.country || '', RegType: sh.reg_type || 'regular' },
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
              Gstin: g, State: /^\d{2}/.test(g) ? g.slice(0, 2) : '', RegType: g ? 'regular' : 'unregistered',
-             Pos: placeOfSupply({ delivery: BILL_DELIVERY }, sc) },
+             Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY }, sc) },
     lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
       qty: Number(c.qty) || 0, unit_price: c.unitPrice != null ? c.unitPrice : (Number(c.price) || 0), discount: c.save || 0,
       gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0 }; }),
@@ -17505,29 +17493,23 @@ function billMoney(){
   return m;
 }
 /**
- * ⭐⭐⭐ WHAT A BILL SAYS, READ OFF ITS INVOICE — a mapping, never a sum of its own (INV-01 → the counter's names). The bill
- * on the screen (billMoney) and the duplicate from "Earlier bills" (slipOfRow) both read through here, so the paper is the
- * same document twice. The server maps the same fields the same way (routes/chits.js moneyOfInvoice → summary_json.money).
- *   total = TotInvVal · taxable = AssVal · tax = the heads (CGST + SGST + IGST + cess) · round = RndOffAmt · saved = Discount
- *   gross = Σ ItemList TotAmt · by rate = _cb.slabs · supply and place of supply = _cb
+ * ⭐⭐⭐ WHAT A BILL SAYS, READ OFF ITS INVOICE — the engine's CBTax.moneyOf, with the counter's display names put on its
+ * fields. A mapping only: no sum, no rounding, nothing worked out here. The bill on the screen (billMoney) and the duplicate
+ * from "Earlier bills" (slipOfRow) both read through here, and the server reads the same function for summary_json.money
+ * (routes/chits.js moneyOfInvoice → lib/tax.js moneyOf), so the screen, the paper and the chit cannot disagree.
+ *   net = total · base = taxable · save = savings · round = round_off · byRate = by_rate (base = taxable; a rate of 0 has no
+ *   row on the slip) · heads, supply, pos_state and each line's figures as the engine names them
+ * ⚠️ No engine (or no invoice) → zeros and no lines, never a figure of its own; finish() then refuses the sale.
  */
 function moneyOf(inv){
-  var v = (inv && inv.ValDtls) || {}, cb = (inv && inv._cb) || {}, items = (inv && inv.ItemList) || [];
-  var supply = cb.supply || 'unknown', byRate = {}, heads = [];
-  (cb.slabs || []).forEach(function(s){
-    if (!Number(s.GstRt)) return;
-    byRate[s.GstRt] = { base:s.AssVal, tax:r2(s.CgstVal + s.SgstVal + s.IgstVal), cgst:s.CgstVal, sgst:s.SgstVal, igst:s.IgstVal };
-    if (supply === 'inter') heads.push({ name:'IGST', rate:Number(s.GstRt), amount:s.IgstVal, base:s.AssVal });
-    else if (supply === 'intra') { heads.push({ name:'CGST', rate:Number(s.GstRt) / 2, amount:s.CgstVal, base:s.AssVal });
-                                   heads.push({ name:'SGST', rate:Number(s.GstRt) / 2, amount:s.SgstVal, base:s.AssVal }); }
-  });
-  heads.sort(function(a, b){ return a.rate - b.rate; });
-  return { gross: r2(items.reduce(function(a, it){ return a + (it.TotAmt || 0); }, 0)), save: v.Discount || 0,
-           net: v.TotInvVal || 0, base: v.AssVal || 0,
-           tax: r2((v.CgstVal || 0) + (v.SgstVal || 0) + (v.IgstVal || 0) + (v.CesVal || 0) + (v.TaxVal || 0)),
-           round: v.RndOffAmt || 0, byRate: byRate, heads: heads, supply: supply, pos_state: cb.place_of_supply || null,
-           lines: items.map(function(it){ return { gross: it.TotAmt, taxable: it.AssAmt, cgst: it.CgstAmt, sgst: it.SgstAmt, igst: it.IgstAmt,
-             tax: r2(it.CgstAmt + it.SgstAmt + it.IgstAmt + (it.CesAmt || 0) + (it.TaxAmt || 0)) }; }) };
+  var e = (inv && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(inv) : null;
+  if (!e) return { gross:0, save:0, net:0, base:0, tax:0, round:0, byRate:{}, heads:[], supply:'unknown', pos_state:null, lines:[] };
+  var byRate = {};
+  Object.keys(e.by_rate).forEach(function(rt){ var x = e.by_rate[rt];
+    if (Number(rt)) byRate[rt] = { base:x.taxable, tax:x.tax, cgst:x.cgst, sgst:x.sgst, igst:x.igst }; });
+  return { gross:e.gross, save:e.savings, net:e.total, base:e.taxable, tax:e.tax, round:e.round_off, byRate:byRate,
+           heads:e.heads, supply:e.supply, pos_state:e.pos_state,
+           lines: e.lines.map(function(l){ return { gross:l.gross, taxable:l.taxable, cgst:l.cgst, sgst:l.sgst, igst:l.igst, tax:l.tax }; }) };
 }
 /**
  * ── ⭐⭐⭐ WHAT IS ON THIS BILL, COUNTED THE WAY EACH LINE IS SOLD ([TILL-104]) ──────────────────
@@ -17600,7 +17582,7 @@ function paintShop(){
   var sh = S.shop, tx = shopTax();
   var doc = tx.kind === 'tax' ? 'a TAX INVOICE' : (tx.kind === 'supply' ? 'a BILL OF SUPPLY' : 'a cash memo');
   var split = !sh.state_code ? 'cannot be split'
-    : ((window.CBTax && CBTax.supplyType(String(sh.state_code), placeOfSupply(null, String(sh.state_code))) === 'intra') ? 'CGST + SGST' : 'IGST');
+    : ((window.CBTax && CBTax.supplyType(String(sh.state_code), CBTax.placeOfSupply(null, String(sh.state_code))) === 'intra') ? 'CGST + SGST' : 'IGST');
   /**
    * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
    * *"service tax not registered."* A shop below the threshold is correctly unregistered, and the line says so.
@@ -20089,6 +20071,9 @@ async function finish(){
   if (!CART.length) return;
   if (await tillStopped()) return;   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
   var m = billMoney();
+  /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
+     a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
+  if (!m.invoice) { say('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return; }
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();

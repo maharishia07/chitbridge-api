@@ -24,8 +24,9 @@
  *   6 the buyer's invoice     — entryFor(customer copy) → what GET /api/tax/invoice returns (invoice + heads)
  * Variants: a recorded delivery to another state (IGST everywhere) · an exclusive-price shop · a walk-in · a bill with no
  * invoice (the old path, place of supply = the shop's state) · a stored figure the server's recompute disagrees with (the
- * stored one kept, the difference named). And: billMoney computes nothing of its own; the place-of-supply rule is ONE text
- * on both hosts; the shop-PC program's chitOf carries the same invoice the page's does.
+ * stored one kept, the difference named). And: billMoney computes nothing of its own; the place-of-supply rule and the
+ * reading of an issued invoice are the engine's (CBTax.placeOfSupply, CBTax.moneyOf) on both hosts — no copy; with the
+ * engine missing the counter refuses the sale (never a ₹0 bill); the shop-PC program's chitOf carries the same invoice.
  * Broken once each by scripts/tax-truth-breaks.cjs.
  * Run: node tests/tax-truth.test.cjs
  */
@@ -97,7 +98,7 @@ function fnText(src, sig) {
   const end = src.indexOf('\n}\n', at);
   return src.slice(at, end + 2);
 }
-const PAGE_FNS = ['function placeOfSupply(', 'function billMoney(', 'function moneyOf(', 'async function finish(', 'function chitOf(',
+const PAGE_FNS = ['function billMoney(', 'function moneyOf(', 'async function finish(', 'function chitOf(',
   'function billRecipients(', 'function billSendTo(', 'function isReturnRow(', 'function isExpenseRow(', 'function slipOfRow(',
   'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded('];
 
@@ -107,7 +108,7 @@ async function ring(o) {
   const els = { tendered: el(''), cname: el(o.cust ? o.cust.name : ''), cphone: el(o.cust ? '9840012345' : ''), lastnote: el(''), billsdlg: el('') };
   const ctx = {
     window: {}, console, Object, Array, String, Number, JSON, Math, Date, Promise,
-    CBTax: CBTAX,
+    CBTax: o.noEngine ? undefined : CBTAX,
     MONEY: () => MONEY, r2, esc: (v) => String(v == null ? '' : v), money: (v) => '₹' + (Number(v) || 0).toFixed(2),
     S: { shop: { name: 'Tally Test', gstin: '33AABCK1234F1Z6', state_code: '33', country: 'IN', reg_type: 'regular' },
          policy: { price_includes_tax: o.inclusive === false ? 'no' : 'yes' } },
@@ -122,7 +123,7 @@ async function ring(o) {
     rwProg: () => null, rwEarns: () => 0, rewardOnSlip: () => '', CFD: { done() {} }, autoPrint() {}, ageClear() {}, paintParts() {},
     paintRw() {}, price() {}, menuFresh() {}, load() {}, loadQuick() {}, stepGo() {},
     showSlip: (b, m) => { saved.slip = { bill: b, m }; },
-    HOST: { bill: async (body) => { saved.body = JSON.parse(JSON.stringify(body));
+    HOST: { bill: async (body) => { saved.called = true; saved.body = JSON.parse(JSON.stringify(body));
       return { ok: true, bill: Object.assign({ no: o.no, at: '2026-10-01T17:32:00.000Z', till: 'C2' }, JSON.parse(JSON.stringify(body))) }; } },
     document: { getElementById: (id) => els[id] || el('') },
   };
@@ -130,6 +131,7 @@ async function ring(o) {
   vm.createContext(ctx);
   vm.runInContext(PAGE_FNS.map((s) => fnText(PAGE, s)).join('\n'), ctx);
   await vm.runInContext('finish()', ctx);
+  if (o.noEngine) return { ctx, said: saved.said, called: !!saved.called, last: ctx.LAST, cart: ctx.CART.length };
   const bill = ctx.LAST;
   return { ctx, bill, body: saved.body, said: saved.said, m: saved.slip && saved.slip.m, slip: ctx.slipHTML(bill, saved.slip && saved.slip.m),
            chit: JSON.parse(JSON.stringify(ctx.chitOf(bill))) };
@@ -365,16 +367,25 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const BM = fnText(PAGE, 'function billMoney('), MO = fnText(PAGE, 'function moneyOf(');
     ok('billMoney() computes nothing of its own: it calls CBTax.determine() and reads the answer (no split, no heads, no supply decision)',
       /CBTax\.determine\(/.test(BM) && !/splitLineTax|lineHeads|supplyType|\* ?100|\/ ?\(100/.test(BM + MO), 'billMoney or moneyOf works a figure out again');
-    ok('…and with no engine there is no bill — never a second formula (zeros, and the counter already refuses to sell)', (() => {
+    ok('…and with no engine there is no invoice — never a second formula (zeros, no invoice to save)', (() => {
       const ctx = { r2, CBTax: undefined, window: {} }; vm.createContext(ctx); vm.runInContext(MO, ctx);
       const m = ctx.moneyOf(null); return m.net === 0 && m.tax === 0 && m.base === 0 && m.heads.length === 0;
     })());
-    ok('the place-of-supply rule is ONE text: till.html placeOfSupply is lib/issued-invoice placeOfSupply, byte for byte',
-      fnText(PAGE, 'function placeOfSupply(') === I.placeOfSupply.toString(), 'the two copies differ — change both or neither');
+    ok('…and with the engine MISSING, finish() refuses the sale: it says what happened and what to do, saves nothing, keeps the cart',
+      await (async () => { const n = await ring({ no: 'C2/26-27/0099', cart: CART_0007, cust: { name: 'Chola Auto Care' }, noEngine: true });
+        return n.said === 'Prices cannot be worked out on this counter right now.\n\nPress refresh while online.' && !n.called && n.last === null && n.cart === CART_0007.length; })());
+    ok('the place-of-supply rule is the ENGINE\'s, with no copy: no placeOfSupply in till.html or lib/issued-invoice; the counter calls CBTax.placeOfSupply',
+      !/function placeOfSupply\(/.test(PAGE) && !/function placeOfSupply\(/.test(fs.readFileSync(path.join(API, 'lib', 'issued-invoice.js'), 'utf8'))
+      && /CBTax\.placeOfSupply\(/.test(BM) && /require\('\.\/tax'\)\.placeOfSupply|placeOfSupply \} = require\('\.\/tax'\)/.test(fs.readFileSync(path.join(API, 'lib', 'tax-copy.js'), 'utf8')));
     ok('…over the counter is the shop\'s state; a recorded delivery is its state; a bad state code is ignored',
-      I.placeOfSupply({}, '33') === '33' && I.placeOfSupply({ delivery: { state_code: '29' } }, '33') === '29' && I.placeOfSupply({ delivery: { state_code: 7 } }, '33') === '07'
-      && I.placeOfSupply({ delivery: { state_code: 'KA' } }, '33') === '33' && I.placeOfSupply(null, '33') === '33');
-    ok('lib/issued-invoice keeps only the place-of-supply rule and the check', Object.keys(I).sort().join() === 'check,placeOfSupply', Object.keys(I).join());
+      CBTAX.placeOfSupply({}, '33') === '33' && CBTAX.placeOfSupply({ delivery: { state_code: '29' } }, '33') === '29' && CBTAX.placeOfSupply({ delivery: { state_code: 7 } }, '33') === '07'
+      && CBTAX.placeOfSupply({ delivery: { state_code: 'KA' } }, '33') === '33' && CBTAX.placeOfSupply(null, '33') === '33');
+    ok('the reading of an issued invoice is the ENGINE\'s moneyOf on both hosts: the counter maps CBTax.moneyOf, the server\'s summary_json.money is its header fields',
+      /CBTax\.moneyOf\(/.test(MO) && !/\breduce\(|\+ ?\(|r2\(/.test(MO) && (() => { const e = CBTAX.moneyOf(b.invoice, 'INR');
+        return mm.gross === e.gross && mm.savings === e.savings && mm.net === e.net && mm.taxable === e.taxable && mm.tax === e.tax && mm.total === e.total && mm.round_off === e.round_off
+          && b.total === e.total && b.taxable === e.taxable && b.tax === e.tax && b.saved === e.savings && same(b.heads, e.heads); })(),
+      'a reading of the invoice was worked out somewhere other than CBTax.moneyOf');
+    ok('lib/issued-invoice keeps only the check', Object.keys(I).sort().join() === 'check', Object.keys(I).join());
     /* the shop-PC program builds its own chit from the same bill */
     const pctx = { tillCfg: { id: 'C2', name: 'Counter 2' }, os: { hostname: () => 'SHOP-PC' }, Object, String, Array, JSON };
     vm.createContext(pctx); vm.runInContext(fnText(PROG, 'function chitOf(bill) {'), pctx);

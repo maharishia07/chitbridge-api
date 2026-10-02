@@ -337,10 +337,10 @@ const INFRA_LIBS = [
   'tax-lines.js',          // rate on the line at send · INV-01 for a copy · the month's ledger · GSTR shapes
   'tax-shelf.js',          // one reader of slabs (own + governed) · categories · face
   'tax-copy.js', 'schedule.js', 'slab-cites.js',           // my copy as a tax record; freeze at completed; ledger over my copies
-  /* INFRA, THE SAME TEST (2026-10-02): `issued-invoice.js` holds the one place-of-supply rule and the CHECK that compares the
-     server's recompute with the invoice the counter computed (CBTax.determine) — it names a difference and never returns a
-     figure anyone posts. It asserts no rate of CB's own. */
-  'issued-invoice.js',     // the one place-of-supply rule · the check that only names a difference
+  /* INFRA, THE SAME TEST (2026-10-02): `issued-invoice.js` holds only the CHECK that compares the server's recompute with
+     the invoice the counter computed (CBTax.determine) — it names a difference and never returns a figure anyone posts. The
+     place-of-supply rule is the engine's (lib/tax.js placeOfSupply). It asserts no rate of CB's own. */
+  'issued-invoice.js',     // the check that only names a difference
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status

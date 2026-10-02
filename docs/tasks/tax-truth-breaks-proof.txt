@@ -1,20 +1,22 @@
   caught  tax-truth   the bill sums its own line nets as the total
   caught  tax-truth   the counter takes the buyer's GSTIN state as place of supply
   caught  tax-truth   the bill leaves determine()'s invoice behind
+  caught  tax-truth   the counter sells at ₹0 with the tax engine missing
   caught  tax-truth   chitOf drops the invoice
   caught  tax-truth   the shop-PC program drops the invoice
   caught  tax-truth   summary_json.money is not mapped off the stored invoice
+  caught  tax-truth   the header's total is taken from a field the engine did not name total
   caught  tax-truth   the stored total is the sum of line nets
   caught  tax-truth   the server posts its recompute instead of the stored invoice
   caught  tax-truth   the check writes its recompute over the stored invoice
   caught  tax-truth   a difference is silently swallowed
   caught  tax-truth   the seller's copy checks against the buyer's state as place of supply
   caught  tax-truth   the buyer's copy checks against the buyer's own state as place of supply
-  caught  tax-truth   the server ignores a recorded delivery (and the two rules part)
+  caught  tax-truth   the server keeps a rule of its own that ignores a recorded delivery
   caught  tax-truth   the earlier-bills row leaves the stored invoice behind
   caught  tax-truth   the reprint ignores the stored invoice
   caught  tax-truth   the reprint's lines do not read their ItemList (Gross ₹0.00)
   caught  tax-truth   a reprint with no stored invoice prints GST 0.00
 
-17/17 caught
+19/19 caught
 exit=0

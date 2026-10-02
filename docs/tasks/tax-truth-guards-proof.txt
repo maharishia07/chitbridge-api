@@ -137,10 +137,11 @@ node scripts/guards.cjs — this branch (the 15 FAILED files fail identically on
   FAIL  two-sided-books          0 checks
 
    ok   bill-use                15 checks
-   ok   tax-truth               36 checks
+   ok   tax-truth               38 checks
    ok   bills-folder            74 checks
    ok   bills-private           46 checks
    ok   shop-name                9 checks
    ok   shop-name-breaks         4 checks
   ────────────────────────────────────────
-  2104 checks · 111 files · 25.6s · 15 FAILED: pages-parse.test.js, till-vendor.test.js, engines-pinned.test.js, money-round.test.js, one-rounding-rule.test.cjs, engine-versions.test.cjs, snapshot-wire.test.js, govcontext.test.js, variant.test.js, money-language.test.js, search-engine.test.js, tax-vendor.test.js, books-fixes.test.cjs, books-dates-tz.test.cjs, two-sided-books.test.cjs
+  2106 checks · 111 files · 28.6s · 15 FAILED: pages-parse.test.js, till-vendor.test.js, engines-pinned.test.js, money-round.test.js, one-rounding-rule.test.cjs, engine-versions.test.cjs, snapshot-wire.test.js, govcontext.test.js, variant.test.js, money-language.test.js, search-engine.test.js, tax-vendor.test.js, books-fixes.test.cjs, books-dates-tz.test.cjs, two-sided-books.test.cjs
+exit=1

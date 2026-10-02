@@ -6,22 +6,25 @@ const fs = require('fs'), path = require('path'), { spawnSync } = require('child
 const R = process.argv[2] || path.join(__dirname, '..');
 const BREAKS = [
   /* (A) billing computes once — CBTax.determine() in the counter's billMoney(); the bill reads its answer */
-  ['tax-truth', 'tools/tally-connector/till.html', "           net: v.TotInvVal || 0, base: v.AssVal || 0,", "           net: r2(CART.reduce(function(a, c){ return a + (c.net || 0); }, 0)), base: v.AssVal || 0,", 'the bill sums its own line nets as the total'],
-  ['tax-truth', 'tools/tally-connector/till.html', "             Pos: placeOfSupply({ delivery: BILL_DELIVERY }, sc) },", "             Pos: g ? g.slice(0, 2) : sc },", 'the counter takes the buyer\'s GSTIN state as place of supply'],
+  ['tax-truth', 'tools/tally-connector/till.html', "  return { gross:e.gross, save:e.savings, net:e.total, base:e.taxable, tax:e.tax, round:e.round_off, byRate:byRate,", "  return { gross:e.gross, save:e.savings, net:r2(CART.reduce(function(a, c){ return a + (c.net || 0); }, 0)), base:e.taxable, tax:e.tax, round:e.round_off, byRate:byRate,", 'the bill sums its own line nets as the total'],
+  ['tax-truth', 'tools/tally-connector/till.html', "             Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY }, sc) },", "             Pos: g ? g.slice(0, 2) : sc },", 'the counter takes the buyer\'s GSTIN state as place of supply'],
   ['tax-truth', 'tools/tally-connector/till.html', "    invoice: m.invoice,", "    invoice: undefined,", 'the bill leaves determine()\'s invoice behind'],
+  /* (A2) no invoice, no sale — with the engine missing finish() refuses rather than saving a ₹0 bill */
+  ['tax-truth', 'tools/tally-connector/till.html', "  if (!m.invoice) { say('Prices cannot be worked out on this counter right now.\\n\\nPress refresh while online.'); return; }", "", 'the counter sells at ₹0 with the tax engine missing'],
   /* (B) chitOf carries the result unchanged, on both hosts */
   ['tax-truth', 'tools/tally-connector/till.html', "      invoice: bill.invoice || undefined,", "", 'chitOf drops the invoice'],
   ['tax-truth', 'tools/tally-connector/till.js', "      invoice: bill.invoice || undefined,", "", 'the shop-PC program drops the invoice'],
   /* (C) the server only reads — stores, maps, posts; a recompute only checks */
   ['tax-truth', 'routes/chits.js', "        moneyBlock = moneyOfInvoice(carried, currency_code);", "", 'summary_json.money is not mapped off the stored invoice'],
+  ['tax-truth', 'routes/chits.js', "  return { gross: m.gross, savings: m.savings, net: m.net, taxable: m.taxable, tax: m.tax, total: m.total,", "  return { gross: m.gross, savings: m.savings, net: m.net, taxable: m.taxable, tax: m.tax, total: m.net,", 'the header\'s total is taken from a field the engine did not name total'],
   ['tax-truth', 'routes/chits.js', "      if (issuedTotal != null) summary.total_value = issuedTotal;", "", 'the stored total is the sum of line nets'],
   ['tax-truth', 'lib/tax-copy.js', "  const inv = frozen ? { invoice: frozen, rated: null, unrated: null, provisional: false }", "  const inv = (frozen && !issued) ? { invoice: frozen, rated: null, unrated: null, provisional: false }", 'the server posts its recompute instead of the stored invoice'],
   ['tax-truth', 'lib/tax-copy.js', "      taxCheck = I.check(frozen, server);", "      taxCheck = I.check(frozen, server); Object.assign(frozen, server);", 'the check writes its recompute over the stored invoice'],
   ['tax-truth', 'lib/issued-invoice.js', "  return { ok: out.length === 0, differences: out, says: out.map((d) => d.what + ': issued ' + d.issued + ', server ' + d.server).join(' · ') };", "  return { ok: true, differences: [], says: '' };", 'a difference is silently swallowed'],
-  /* place of supply — one rule (the server's check uses it) */
-  ['tax-truth', 'lib/tax-copy.js', "    if (counterIssued(bj)) b.Pos = I.placeOfSupply(bj, meParty.State);", "    if (false) b.Pos = I.placeOfSupply(bj, meParty.State);", 'the seller\'s copy checks against the buyer\'s state as place of supply'],
-  ['tax-truth', 'lib/tax-copy.js', "  if (!sent && counterIssued(hdr.business_json) && buyer && seller && seller.State) buyer.Pos = I.placeOfSupply(hdr.business_json, seller.State);", "", 'the buyer\'s copy checks against the buyer\'s own state as place of supply'],
-  ['tax-truth', 'lib/issued-invoice.js', "  return /^\\d{2}$/.test(to) ? to : shop;", "  return shop;", 'the server ignores a recorded delivery (and the two rules part)'],
+  /* place of supply — the engine's one rule (the server's check uses it) */
+  ['tax-truth', 'lib/tax-copy.js', "    if (counterIssued(bj)) b.Pos = placeOfSupply(bj, meParty.State);", "    if (false) b.Pos = placeOfSupply(bj, meParty.State);", 'the seller\'s copy checks against the buyer\'s state as place of supply'],
+  ['tax-truth', 'lib/tax-copy.js', "  if (!sent && counterIssued(hdr.business_json) && buyer && seller && seller.State) buyer.Pos = placeOfSupply(hdr.business_json, seller.State);", "", 'the buyer\'s copy checks against the buyer\'s own state as place of supply'],
+  ['tax-truth', 'lib/tax-copy.js', "const { placeOfSupply } = require('./tax');   // ⭐ the ONE place-of-supply rule — the engine's, the counter's CBTax.placeOfSupply", "const placeOfSupply = (rec, shopState) => shopState;", 'the server keeps a rule of its own that ignores a recorded delivery'],
   /* the reprint reads the stored invoice (routes/till.js /bills · till.html reprintOld · slipOfRow · slipHTML) */
   ['tax-truth', 'routes/till.js', "               invoice: (b.invoice && typeof b.invoice === 'object' && b.invoice.ValDtls) ? b.invoice : null,", "               invoice: null,", 'the earlier-bills row leaves the stored invoice behind'],
   ['tax-truth', 'tools/tally-connector/till.html', "  b = slipOfRow(b);", "", 'the reprint ignores the stored invoice'],

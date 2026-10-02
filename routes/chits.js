@@ -50,6 +50,7 @@ const regional = require('../lib/regional');
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
+const taxEngine = require('../lib/tax');   // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
    live in the Bills folders. The SAME classification the folders read through lib/select.js, so the two can never disagree. */
@@ -405,19 +406,16 @@ function refOf(req) {
   return (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 64) : null;
 }
 /**
- * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT, never worked out again (Athi, 2026-10-02).
- * The same five figures the header always carried, plus the two an invoice adds, each MAPPED from INV-01:
- *   taxable = AssVal · tax = CGST + SGST + IGST + cess (+ the VAT head) and total = TotInvVal, both through taxLines.heads ·
- *   round_off = RndOffAmt · savings = Discount · gross = Σ ItemList TotAmt · net = gross − Discount (the line nets after
- *   offers — what `net` has always meant in this slot)
- * `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route makes for other chits.
+ * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
+ * reading the counter's screen, slip and reprint use — window.CBTax.moneyOf), never worked out again (Athi, 2026-10-02).
+ * The header keeps its own names, which are moneyOf's: gross · savings · net · taxable · tax · total · round_off. Picked,
+ * not added up. `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route
+ * makes for other chits.
  */
 function moneyOfInvoice(inv, currency_code) {
-  const v = inv.ValDtls || {}, h = taxLines.heads(inv);
-  const gross = roundMoney((inv.ItemList || []).reduce((a, it) => a + (Number(it.TotAmt) || 0), 0));
-  const savings = roundMoney(Number(v.Discount) || 0);
-  return { gross, savings, net: roundMoney(gross - savings), taxable: h.taxable, tax: h.tax, total: h.total,
-           round_off: roundMoney(Number(v.RndOffAmt) || 0), currency_code, provisional: false, issued: true };
+  const m = taxEngine.moneyOf(inv, currency_code);
+  return { gross: m.gross, savings: m.savings, net: m.net, taxable: m.taxable, tax: m.tax, total: m.total,
+           round_off: m.round_off, currency_code, provisional: false, issued: true };
 }
 /**
  * ⭐⭐⭐ ONE TIE-BREAK, TWO CALLERS — lifted 2026-09-26 per the external review's §22. This verdict (same till id
@@ -860,7 +858,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
        * ⭐⭐⭐ A COUNTER BILL CARRIES ITS INVOICE, AND THE SERVER ONLY READS IT (Athi, 2026-10-02: "the computation should happen
        * in only one place like billing, rest all the places the value has to only read … recomputation can be done, but
        * cannot rewrite what has been already wrote"). business_json.invoice is CBTax.determine()'s result from the counter's
-       * billMoney(), stored as it came. The header's money is MAPPED off it (moneyOfInvoice) — ₹1,118.16 for bill
+       * billMoney(), stored as it came. The header's money is MAPPED off it (moneyOfInvoice → the engine's moneyOf) — ₹1,118.16 for bill
        * C2/26-27/0007, where the sum of its line nets said ₹1,118.15. The server's own computation runs ONLY to check it
        * (lib/tax-copy entryFor → lib/issued-invoice check): a difference is named on the chit (business_json.tax_check) and in
        * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.

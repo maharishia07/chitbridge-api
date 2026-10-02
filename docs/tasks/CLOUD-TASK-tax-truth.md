@@ -15,21 +15,30 @@ The one module already existed: **`CBTax.determine()`** (lib/tax.js; `window.CBT
 
 | | Where | What it does |
 |---|---|---|
-| **A · billing computes once** | `till.html` `billMoney()` | `CBTax.determine({ seller: the shop, buyer: the customer with Pos = placeOfSupply(), lines: qty · unit_price · discount = the offer saving · gst_rate · hsn · cess_rate, priceIncludesTax })`. `moneyOf(inv)` READS the screen's and the paper's figures off it (total = TotInvVal, taxable = AssVal, tax = the heads, round = RndOffAmt, saved = Discount, gross = Σ TotAmt, by rate = `_cb.slabs`). No sums of its own, no fallback formula (no engine → no bill; the counter already stops). |
+| **A · billing computes once** | `till.html` `billMoney()` | `CBTax.determine({ seller: the shop, buyer: the customer with Pos = CBTax.placeOfSupply(), lines: qty · unit_price · discount = the offer saving · gst_rate · hsn · cess_rate, priceIncludesTax })`. `moneyOf(inv)` is the engine's `CBTax.moneyOf` with the counter's display names put on its fields (net = total, base = taxable, save = savings, round = round_off, byRate = by_rate) — no arithmetic. No fallback formula: with no engine billMoney answers zeros and no invoice, and `finish()` refuses the sale ("Prices cannot be worked out on this counter right now. Press refresh while online.") — it never saves a ₹0 bill. |
 | **B · the chit carries it** | `till.html` / `till.js` `chitOf` | `business_json.invoice` = determine()'s result, unchanged (and `delivery`, for the place of supply). |
-| **C · the server only reads** | `routes/chits.js` | stores the invoice as sent; `summary_json.money` = `moneyOfInvoice()` MAPPING ValDtls (through `taxLines.heads`); `total_value` = TotInvVal. |
+| **C · the server only reads** | `routes/chits.js` | stores the invoice as sent; `summary_json.money` = `moneyOfInvoice()` = the header fields of the engine's `moneyOf` (`require('../lib/tax').moneyOf`), picked, not added; `total_value` = its total (TotInvVal). |
 | | `lib/tax-copy.js` `entryFor` | posts the stored invoice for both copies (the existing frozen path); its recompute (`taxLines.invoiceFor`) is a CHECK only — `tax_check` on the entry, `business_json.tax_check` + log `tax.check-differs` at send; never written over. |
 | | `routes/till.js` `/bills` · `till.html` `slipOfRow` | the row carries the stored invoice; the reprint reads it through the same `moneyOf`. |
-| **D** | `lib/issued-invoice.js` | only `placeOfSupply()` (byte-identical in till.html) and `check()`. |
+| **D** | `lib/issued-invoice.js` | only `check()`. The place-of-supply rule is the engine's `placeOfSupply` (lib/tax.js, tax v1.11.0) — `lib/tax-copy.js` requires it, the counter calls `CBTax.placeOfSupply`; no hand-kept copy anywhere. |
 
 New keys (dictionary): `summary_json.money.taxable` (derived = ValDtls.AssVal; written by routes/chits.js; read by
 routes/till.js /bills) · `summary_json.money.round_off` (= RndOffAmt; same writer) · `summary_json.money.issued` (true when
 mapped from a carried invoice) · `business_json.delivery` ({ state_code, address }; written by the counter; read by
-placeOfSupply) · `business_json.tax_check` ({ at, differences, kept: 'issued' }; written by routes/chits.js; read by the
+the engine's placeOfSupply) · `business_json.tax_check` ({ at, differences, kept: 'issued' }; written by routes/chits.js; read by the
 health view) · the till snapshot's `customers[].gstin` (identities.gstn; read by billMoney as the buyer's GSTIN).
 
-Proof: `node tests/tax-truth.test.cjs` (36 checks — the six readings equal to the paisa, place of supply 33, intra; the
-variants; billMoney computes nothing of its own) · `node scripts/tax-truth-breaks.cjs` (17/17) — outputs beside this file.
+Proof: `node tests/tax-truth.test.cjs` (38 checks — the six readings equal to the paisa, place of supply 33, intra; the
+variants; billMoney computes nothing of its own; the engine's placeOfSupply and moneyOf are the only ones; with the engine
+missing finish() refuses the sale) · `node scripts/tax-truth-breaks.cjs` (19/19) — outputs beside this file.
+
+**Amended 2026-10-02 (review, after main adopted tax v1.11.0):** the hand-kept copies are gone — the counter's
+`placeOfSupply`, `lib/issued-invoice.js` `placeOfSupply` and the arithmetic in the counter's `moneyOf` and the server's
+`moneyOfInvoice` now read the engine's `placeOfSupply` / `moneyOf`; the byte-for-byte copy test went with them (one text
+now; it also failed on a Windows checkout). The comment that said the counter "already refuses to sell" (`counterStops`)
+was not true — no such check existed and a bill completed at ₹0 with the engine missing; `finish()` now refuses, with a test
+and a break. The web copy (`public/till.html`, `public/engine/*`) is synced after merge by `node scripts/vendor-till.cjs`;
+`till-vendor` and `pages-parse` stay red in CI until then.
 
 **Read first:** `docs/tasks/TAX-TRUTH-2026-10-02.md` (the diagnosis, with the real bill C2/26-27/0007 read six ways).
 The decisions, verbatim from Athi's `DECISIONS.md` (2026-10-02):
