@@ -3673,6 +3673,20 @@ router.post('/:chit_id/messages',
           });
       }
 
+      /* ⭐ THE BELL, for the people on the other side of an EXTERNAL message (CB CRM — a reply lands on the party's timeline and the
+         Next block, so their open tab refreshes it). Internal notes are the author's own and ring nobody. Best effort, after the
+         answer: a push that cannot be sent never fails the message. kind · id · who — nothing of the text rides it (lib/events). */
+      if (thread_type === 'external') {
+        try {
+          const aud = await withEntity(entity_id, (db) => db.query(
+            `SELECT sender_entity_id, all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]));
+          const h = aud.rows[0] || {};
+          const others = [h.sender_entity_id].concat((Array.isArray(h.all_recipients) ? h.all_recipients : []).map((x) => x && x.entity_id))
+            .filter((x) => x && String(x) !== String(entity_id));
+          if (others.length) require('../lib/events').notifyAfter(res, others, { kind: 'message', id: chit_id, who: display_name || null });
+        } catch (_) { /* the message is sent; only the push is lost */ }
+      }
+
       res.json({
         message_id:           result.message_id,
         thread_type,
