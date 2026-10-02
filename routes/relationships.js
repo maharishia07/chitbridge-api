@@ -483,12 +483,12 @@ router.get('/customers', auth, async (req, res) => {
     const segment = (req.query.segment || '').trim();
     // B1 RLS: customer_list is owner-scoped (owner_entity_id) -> withEntity(me).
     /* the groups column may not be migrated yet: ask with it, and once more without on 42703 */
-    let _g = true; const _run = () => withEntity(owner, (db) => db.query(
+    let _g = true, _seg = customerGroups.SEGMENT_SQL; const _run = () => withEntity(owner, (db) => db.query(
       `SELECT cl.customer_list_id, cl.customer_type, cl.added_via,
               cl.txn_count, cl.last_txn_at, ${_g ? 'cl.groups,' : ''}
               i.identity_id AS customer_identity_id, i.bridge_id, i.user_id, i.display_name,
               i.email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
-              ${customerGroups.SEGMENT_SQL} AS segment,
+              ${_seg} AS segment,
               /* ⭐ can bills reach them (lib/istest mayTradeSql, b249's rule) — the CRM table's "one-sided" mark */
               ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail
        FROM customer_list cl
@@ -499,7 +499,8 @@ router.get('/customers', auth, async (req, res) => {
            WHERE sl.owner_entity_id = $1 AND sl.supplier_entity_id = cl.customer_identity_id
          )
        ORDER BY cl.last_txn_at DESC NULLS LAST`, [owner]));
-    let r; try { r = await _run(); } catch (e) { if (e && e.code === '42703') { _g = false; r = await _run(); } else throw e; }
+    /* no party_item yet (42P01) → the segment without high_value, as before b273 */
+    let r; for (let _t = 0; !r && _t < 3; _t++) { try { r = await _run(); } catch (e) { if (e && e.code === '42703' && _g) _g = false; else if (e && e.code === '42P01' && _seg !== customerGroups.SEGMENT_SQL_BASE) _seg = customerGroups.SEGMENT_SQL_BASE; else throw e; } }
     const rows = (segment ? r.rows.filter(c => c.segment === segment) : r.rows).map((c) => Object.assign(c, { groups: Array.isArray(c.groups) ? c.groups : [] }));
     await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
     res.json({ customers: rows, count: rows.length, groups_migrated: _g });
