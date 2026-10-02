@@ -15,7 +15,7 @@ function make() {
   const data = {
     cust: [], sup: [], walk: [], stored: { customer: {}, supplier: {} }, chits: [], messages: [], disputes: [], ledger: [], changes: [],
     interactions: [], followups: [], migrated: true, hvMissing: false, hiddenColumn: true, team: ['E1', 'A1', 'A2'], country: null, points: null,
-    queries: [], identities: [], lists: { customer: [], supplier: [] },
+    queries: [], appended: [],
   };
   let seq = 0; const uid = () => '00000000-0000-4000-8000-' + String(++seq).padStart(12, '0');
   const norm = (s) => String(s).replace(/\s+/g, ' ').trim();
@@ -61,8 +61,10 @@ function make() {
         const q = sql.match(/f\.party_id = \$(\d+)/); if (q) rows = rows.filter((r) => r.party_id === p[q[1] - 1]);
         rows = rows.slice().sort((a, b) => (a.due_at < b.due_at ? -1 : 1));
       }
-      return { rows: rows.map((r) => Object.assign({ party_name: 'Name of ' + r.party_id.slice(-4), party_no: 'P-' + r.party_id.slice(-4), assignee_name: 'Who ' + r.assignee_user_id, listed: true }, r)) };
+      return { rows: rows.map((r) => Object.assign({ party_name: 'Name of ' + r.party_id.slice(-4), assignee_name: 'Who ' + r.assignee_user_id }, r)) };
     }
+    if (/^SELECT cl\.customer_identity_id AS pid/.test(sql)) return { rows: data.cust.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
+    if (/^SELECT sl\.supplier_entity_id AS pid/.test(sql)) return { rows: data.sup.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ pid: r.party_id, party_no: 'P-' + r.party_id.slice(-4), live: !r.hidden_at && !r.merged_into })) };
     if (/^SELECT 1 FROM identities WHERE identity_id = \$1 AND \(identity_id = \$2/.test(sql)) return { rows: data.team.indexOf(p[0]) >= 0 && p[1] === 'E1' ? [{ '?column?': 1 }] : [] };
     if (/^INSERT INTO party_followup/.test(sql)) {
       if (!data.migrated) throw gone('party_followup');
@@ -83,6 +85,7 @@ function make() {
       const end = p[1], today = p[2];
       return { rows: data.followups.filter((r) => r.owner === p[0] && !r.done_at && r.due_at < end && r.bell_day !== today) };
     }
+    if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) { if (!data.migrated) { const e = new Error('function ops.f_crm_followup_entities() does not exist'); e.code = '42883'; throw e; } }
     if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) return { rows: Array.from(new Set(data.followups.filter((r) => !r.done_at).map((r) => ({ owner_entity_id: r.owner })).map((x) => x.owner_entity_id))).map((x) => ({ owner_entity_id: x })) };
     /* lists */
     if (/EXISTS \(SELECT 1 FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2\) AS customer/.test(sql)) {
@@ -112,7 +115,7 @@ function make() {
     } });
   stub('lib/select', { rows: async (owner, sel) => data.chits.filter((c) => c.counterparty_id === sel.counterparty_id) });
   stub('lib/policy', { get: async () => ({ overdue_days: 7 }) });
-  stub('lib/reward-store', { balance: async () => data.points || { programme: null, points: 0, worth: 0, entries: [] }, append: async () => {}, holderFrom: () => null });
+  stub('lib/reward-store', { balance: async () => data.points || { programme: null, points: 0, worth: 0, entries: [] }, append: async (o, holder, e, def) => { data.appended.push({ owner: o, holder, entry: e, def }); }, holderFrom: () => null });
 
   const ref = { entity: 'E1', identity: null, api_key: false };
   const authFn = (req, res, next) => { req.identity = ref.identity || { identity_id: ref.entity }; if (ref.api_key) req.api_key = true; next(); };

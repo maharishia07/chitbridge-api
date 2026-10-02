@@ -47,4 +47,4 @@ it('mint kind "cus" hands out ~owner.cus-NNNN (the same mint as a supplier, a di
   const b = await L.mint('O', 'ravi  kumar', { query: q, kind: 'cus' }); assert.strictEqual(b.created, false); assert.strictEqual(b.identity_id, a.identity_id);
   const s = await L.mint('O', 'Ravi Kumar', { query: q, kind: 'sup' }); assert.strictEqual(s.user_id, '~acme.sup-0001'); assert.notStrictEqual(s.identity_id, a.identity_id);
 });
-(async () => { let ok = 0; for (const [w, f] of checks) { try { await f(); ok++; console.log('  ok  ' + w); } catch (e) { process.exitCode = 1; console.log('  FAIL ' + w + '\n      ' + e.message); } } console.log(ok + '/' + checks.length + ' passed'); })();
+(async () => { let ok = 0; for (const [w, f] of checks) { try { await f(); ok++; console.log('  ok  ' + w); } catch (e) { process.exitCode = 1; console.log('  FAIL ' + w + '\n      ' + e.message); } } console.log('  ' + ok + ' checks'); })();

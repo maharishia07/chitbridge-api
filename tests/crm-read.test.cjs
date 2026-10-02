@@ -148,5 +148,5 @@ const byId = (list, id) => list.parties.filter((p) => p.party_id === id);
   await ita('an API key reaches nothing here (403)', async () => { t.as('E1', { key: true }); const r = await t.get('/parties'); assert.strictEqual(r.status, 403); t.as('E1'); });
 
   t.close();
-  console.log(pass + ' passed'); if (process.exitCode) console.log('FAILED');
+  console.log('  ' + pass + ' checks'); if (process.exitCode) console.log('FAILED');
 })();

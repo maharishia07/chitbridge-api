@@ -197,6 +197,14 @@ const GUARDS = [
   /* ⭐⭐ THE SHOP'S NAME IS THE PROFILE'S NAME (2026-10-01) — broken once each by tests/shop-name-breaks.test.js */
   'shop-name.test.js',          // the account's name wins invoiceParty/profileValues; a vault name only fills an empty one; a difference is reported, case-blind
   'shop-name-breaks.test.js',   // each of those four rules, broken once, turns shop-name.test.js red
+  /* ⭐⭐ CB CRM, PHASES 3–4 (2026-10-02, API side) — offline: the real router over an in-memory stand-in (tests/support/crm-stub.cjs) */
+  'crm-maytrade.test.cjs',      // one mayTrade (onRail + population) with the verdict as a word; tillMaySend and the till snapshot ask it; mint kind 'cus'
+  'crm-segment.test.cjs',       // high_value in SEGMENT_SQL (top 10 %, >= 3 bills, override wins) and the fall-back before party_item exists
+  'crm-read.test.cjs',          // a both-roles party is ONE row; a merged / hidden / other-population party is never listed; dues = the stored figures; no per-row fetch
+  'crm-interactions.test.cjs',  // log a call / note (party_interaction stubbed); the 503 before b276
+  'crm-followups.test.cjs',     // follow-ups CRUD, assignment (owner or assignee), late in the SHOP's day, the 503 before b276
+  'crm-sweep.test.cjs',         // the nightly sweep rings the bell once a day per assignee, nothing sensitive on the event
+  'crm-remove-walkin.test.cjs', // "Remove from my parties" (owner, no dues, hides, deletes nothing); walk-in → party moves the points by rewards.claim
 ];
 
 const all = process.argv.indexOf('--all') >= 0;

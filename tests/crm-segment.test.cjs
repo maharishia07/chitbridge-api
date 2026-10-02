@@ -42,4 +42,4 @@ it('groupsOf with the table present answers high_value', async () => {
   const withEntity = async (id, fn) => fn({ query: async () => ({ rows: [{ segment: 'high_value', groups: [] }] }) });
   assert.deepStrictEqual(await G.groupsOf({ seller_id: 'S', viewer_id: 'V', withEntity }), ['customer:V', 'high_value']);
 });
-(async () => { let ok = 0; for (const [w, f] of checks) { try { await f(); ok++; console.log('  ok  ' + w); } catch (e) { process.exitCode = 1; console.log('  FAIL ' + w + '\n      ' + e.message); } } console.log(ok + '/' + checks.length + ' passed'); })();
+(async () => { let ok = 0; for (const [w, f] of checks) { try { await f(); ok++; console.log('  ok  ' + w); } catch (e) { process.exitCode = 1; console.log('  FAIL ' + w + '\n      ' + e.message); } } console.log('  ' + ok + ' checks'); })();
