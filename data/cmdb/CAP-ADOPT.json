@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -161,7 +161,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 19 API call(s)"
   }
  ],
  "entries": [
@@ -218,6 +218,11 @@
    "this": "CAP002 cap-adopt.js",
    "rel": "calls",
    "that": "routes/adopt.js"
+  },
+  {
+   "this": "CAP002 cap-adopt.js",
+   "rel": "documented-by",
+   "that": "api docs/drafts/h2_supplier_list_rls_draft.sql"
   }
  ],
  "layers": {

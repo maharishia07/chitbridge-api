@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -161,7 +161,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 19 API call(s)"
   }
  ],
  "entries": [
@@ -368,6 +368,16 @@
    "this": "CAP005 cap-chit2.js",
    "rel": "calls",
    "that": "routes/chits.js · routes/actors.js · routes/relationships.js · routes/products.js"
+  },
+  {
+   "this": "CAP005 cap-chit2.js",
+   "rel": "documented-by",
+   "that": "api docs/CB-SYNC.md · api docs/COUNTER.md · api docs/drafts/h2_supplier_list_rls_draft.sql · api docs/NAMESPACE.md"
+  },
+  {
+   "this": "CAP005 cap-chit2.js",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "api docs/B1-RLS-STEP-D-STATUS.md · api docs/HANDOFF-dispute-notifications-2026-06-28.md · api docs/HANDOVER-TO-CLAUDE.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
   }
  ],
  "layers": {
@@ -433,6 +443,16 @@
    "at": "2026-09-13"
   },
   {
+   "file": "api tests/bills-folder.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/bills-private.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
    "file": "api tests/books-writer.test.cjs",
    "kind": "server",
    "result": "not run"
@@ -479,6 +499,11 @@
   },
   {
    "file": "api tests/fixtures/walkthrough.js",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/goods-in-accepts.test.cjs",
    "kind": "server",
    "result": "not run"
   },
@@ -571,17 +596,7 @@
    "at": "2026-09-13"
   },
   {
-   "file": "api tests/userid.test.cjs",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/write-limits.test.js",
-   "kind": "server",
-   "result": "not run"
-  },
-  {
-   "file": "api tests/xlsx-read.test.js",
+   "file": "api tests/two-sided-bill.test.cjs",
    "kind": "server",
    "result": "not run"
   }

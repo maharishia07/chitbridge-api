@@ -15,7 +15,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -166,7 +166,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 19 API call(s)"
   }
  ],
  "entries": [
@@ -603,6 +603,16 @@
    "this": "CAP022 cap-testing.js",
    "rel": "calls",
    "that": "routes/testing.js · routes/attachments.js · routes/notifications.js"
+  },
+  {
+   "this": "CAP022 cap-testing.js",
+   "rel": "documented-by",
+   "that": "api docs/CB-SYNC.md"
+  },
+  {
+   "this": "CAP022 cap-testing.js",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "api docs/HANDOFF-dispute-notifications-2026-06-28.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
   }
  ],
  "layers": {
@@ -670,6 +680,11 @@
   {
    "file": "web e2e/_paylook.cjs",
    "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/bills-private.test.cjs",
+   "kind": "server",
    "result": "not run"
   },
   {

@@ -15,7 +15,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -166,7 +166,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 19 API call(s)"
   }
  ],
  "entries": [
@@ -263,6 +263,16 @@
    "this": "CAP012 cap-intake.js",
    "rel": "calls",
    "that": "routes/capture.js"
+  },
+  {
+   "this": "CAP012 cap-intake.js",
+   "rel": "documented-by",
+   "that": "no document names this module or its routes"
+  },
+  {
+   "this": "CAP012 cap-intake.js",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "web docs/design/daybook-todo/CLOUD-TASK.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
   }
  ],
  "layers": {
