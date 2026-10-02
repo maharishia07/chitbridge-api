@@ -4,6 +4,33 @@
 issued, and is what BOTH ledgers post and every reprint prints. Place of supply for a counter bill is the shop's state
 (over-the-counter), so the heads are CGST + SGST, unless the bill records delivery to another state (then IGST).
 
+## ⭐ Final design (Athi, 2026-10-02) — supersedes "Build" below
+*"The computation should happen in only one place like billing, rest all the places the value has to only read, no
+recomputation … recomputation can be done, but cannot rewrite what has been already wrote."* And main adopted tax-packs
+v1.10.0: India's `invoice_round_to` is 0.01, so the invoice total is to the PAISA (bill 0007 stays ₹1,118.16, RndOffAmt 0).
+
+The one module already existed: **`CBTax.determine()`** (lib/tax.js; `window.CBTax` on the counter, served as
+`/engine/tax.js` from lib/tax-engine.browser.js). It computes the whole INV-01 invoice, and its output IS the shape of
+`business_json.invoice` that lib/tax-copy.js `entryFor` posts a frozen invoice from.
+
+| | Where | What it does |
+|---|---|---|
+| **A · billing computes once** | `till.html` `billMoney()` | `CBTax.determine({ seller: the shop, buyer: the customer with Pos = placeOfSupply(), lines: qty · unit_price · discount = the offer saving · gst_rate · hsn · cess_rate, priceIncludesTax })`. `moneyOf(inv)` READS the screen's and the paper's figures off it (total = TotInvVal, taxable = AssVal, tax = the heads, round = RndOffAmt, saved = Discount, gross = Σ TotAmt, by rate = `_cb.slabs`). No sums of its own, no fallback formula (no engine → no bill; the counter already stops). |
+| **B · the chit carries it** | `till.html` / `till.js` `chitOf` | `business_json.invoice` = determine()'s result, unchanged (and `delivery`, for the place of supply). |
+| **C · the server only reads** | `routes/chits.js` | stores the invoice as sent; `summary_json.money` = `moneyOfInvoice()` MAPPING ValDtls (through `taxLines.heads`); `total_value` = TotInvVal. |
+| | `lib/tax-copy.js` `entryFor` | posts the stored invoice for both copies (the existing frozen path); its recompute (`taxLines.invoiceFor`) is a CHECK only — `tax_check` on the entry, `business_json.tax_check` + log `tax.check-differs` at send; never written over. |
+| | `routes/till.js` `/bills` · `till.html` `slipOfRow` | the row carries the stored invoice; the reprint reads it through the same `moneyOf`. |
+| **D** | `lib/issued-invoice.js` | only `placeOfSupply()` (byte-identical in till.html) and `check()`. |
+
+New keys (dictionary): `summary_json.money.taxable` (derived = ValDtls.AssVal; written by routes/chits.js; read by
+routes/till.js /bills) · `summary_json.money.round_off` (= RndOffAmt; same writer) · `summary_json.money.issued` (true when
+mapped from a carried invoice) · `business_json.delivery` ({ state_code, address }; written by the counter; read by
+placeOfSupply) · `business_json.tax_check` ({ at, differences, kept: 'issued' }; written by routes/chits.js; read by the
+health view) · the till snapshot's `customers[].gstin` (identities.gstn; read by billMoney as the buyer's GSTIN).
+
+Proof: `node tests/tax-truth.test.cjs` (36 checks — the six readings equal to the paisa, place of supply 33, intra; the
+variants; billMoney computes nothing of its own) · `node scripts/tax-truth-breaks.cjs` (17/17) — outputs beside this file.
+
 **Read first:** `docs/tasks/TAX-TRUTH-2026-10-02.md` (the diagnosis, with the real bill C2/26-27/0007 read six ways).
 The decisions, verbatim from Athi's `DECISIONS.md` (2026-10-02):
 - *One invoice, everywhere* — "the figures the counter prints ARE the invoice (CGST Act s.31, Rule 46; the buyer's ITC
@@ -17,7 +44,7 @@ The decisions, verbatim from Athi's `DECISIONS.md` (2026-10-02):
 
 **Branch:** you are on `cloud/tax-truth` (cut from `main`). Open a PR against `main`; never push to `main`.
 
-## Build
+## Build (the first pass — superseded by the final design above)
 1. **The bill carries its invoice** — `tools/tally-connector/till.html` `chitOf()` (~5918): add
    `business_json.invoice = { taxable, tax, total, round_off, supply, pos_state, by_rate, heads, priced_inclusive }`
    from the bill `billMoney()` built (never recomputed in chitOf), and per line `gross · taxable · tax · cgst · sgst ·

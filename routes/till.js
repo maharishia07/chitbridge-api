@@ -203,7 +203,7 @@ router.get('/snapshot', auth, async (req, res) => {
        * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
        */
       customers: (db) => db.query(
-        `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, c.groups, c.last_txn_at,
+        `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, i.gstn, c.groups, c.last_txn_at,
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
@@ -375,6 +375,8 @@ router.get('/snapshot', auth, async (req, res) => {
                       groups: Array.isArray(x.groups) ? x.groups : [] };
         /* ⭐ present only for a business on the rail — absent = the bill stays the shop's own record (never sent) */
         if (x.rail_entity_id) out.entity_id = x.rail_entity_id;
+        /* ⭐ the customer's GSTIN, so the counter's invoice names its buyer (CBTax.determine BuyerDtls — GSTR-1 b2b, Rule 46) */
+        if (x.gstn && String(x.gstn).trim()) out.gstin = String(x.gstn).trim().toUpperCase();
         if (num(x.credit_days) != null) out.credit_days = num(x.credit_days);
         if (num(x.credit_limit_minor) != null) out.credit_limit_minor = num(x.credit_limit_minor);
         if (booksOn && x.has_party_item) {   /* absent = unknown (no ledger, or not read) — never a 0 that reads as "owes nothing" */
@@ -2275,10 +2277,24 @@ router.get('/bills', auth, async (req, res) => {
           AND h.business_json ? 'bill_no'
           AND h.created_at > NOW() - ($2 || ' days')::interval
         ORDER BY h.created_at DESC LIMIT $3`, [entity_id, String(days), limit]));
-    /* ⭐⭐ each row carries the INVOICE AS ISSUED (lib/issued-invoice billRow) — a reprint is the same document as the original
-       (2026-10-02: "Earlier bills → print" of C2/26-27/0007 printed taxable ₹1,118.15 and GST ₹0.00 on a TAX INVOICE) */
-    const rows = r.rows.map((x) => require('../lib/issued-invoice').billRow(x))
-      .filter((x) => x.no && (!by || (x.by && x.by.id === by)));
+    const rows = r.rows.map((x) => {
+      const b = x.business_json || {}, t = b.till || {}, m = (x.summary_json || {}).money || {};
+      return { chit_id: x.chit_id, no: b.bill_no || null, at: b.billed_at || x.created_at,
+               customer: (b.customer && b.customer.name) || 'Walk-in',
+               by: t.by || null, till: { id: t.id || null, name: t.name || null },
+               total: m.total != null ? m.total : (m.net != null ? m.net : (x.summary_json || {}).total_value),
+               saved: m.savings != null ? m.savings : null, taxable: m.taxable != null ? m.taxable : (m.net != null ? m.net : null),
+               tax: m.tax != null ? m.tax : null,
+               kind: b.slip || 'cash',
+               payments: (b.payment && b.payment.parts) || [],
+               /* ⭐⭐ THE STORED INVOICE, AS IT IS (2026-10-02) — the counter's CBTax.determine() result. The page reprints from it
+                  (till.html slipOfRow → moneyOf), so a duplicate is the same document as the original: "Earlier bills → print"
+                  of C2/26-27/0007 printed taxable ₹1,118.15 and GST ₹0.00 on a TAX INVOICE. null for a bill that never carried one. */
+               invoice: (b.invoice && typeof b.invoice === 'object' && b.invoice.ValDtls) ? b.invoice : null,
+               lines: (Array.isArray(x.line_items) ? x.line_items : []).map((l) => ({
+                 name: l.particulars || l.name, qty: l.quantity, unit: l.unit, price: l.price, net: l.total,
+                 save: (l.offer && l.offer.off) || 0, off: !!l.offer, off_label: (l.offer && l.offer.label) || '', gst_rate: l.gst_rate, hsn: l.hsn })) };
+    }).filter((x) => x.no && (!by || (x.by && x.by.id === by)));
     res.json({ days, count: rows.length, bills: rows });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });

@@ -1,20 +1,20 @@
-  caught  tax-truth   chitOf drops the carried invoice
-  caught  tax-truth   chitOf drops each line's taxable · tax · heads
-  caught  tax-truth   the carried total is the sum of line nets (the round-off lost)
-  caught  tax-truth   the shop-PC program drops the carried invoice
-  caught  tax-truth   the server recomputes over the carried figures
-  caught  tax-truth   the carried block is never read
-  caught  tax-truth   a difference is silently swallowed
-  caught  tax-truth   the seller's copy takes the buyer's state as place of supply
-  caught  tax-truth   the buyer's copy takes the buyer's own state as place of supply
+  caught  tax-truth   the bill sums its own line nets as the total
   caught  tax-truth   the counter takes the buyer's GSTIN state as place of supply
-  caught  tax-truth   the counter compares the shop with itself (a delivery stays intra)
-  caught  tax-truth   the server ignores a recorded delivery (and the two rules part)
+  caught  tax-truth   the bill leaves determine()'s invoice behind
+  caught  tax-truth   chitOf drops the invoice
+  caught  tax-truth   the shop-PC program drops the invoice
+  caught  tax-truth   summary_json.money is not mapped off the stored invoice
   caught  tax-truth   the stored total is the sum of line nets
-  caught  tax-truth   the header value is the sum of line nets
-  caught  tax-truth   the reprint ignores the carried invoice
-  caught  tax-truth   a reprint with no carried block prints GST 0.00
-  caught  tax-truth   the earlier-bills row leaves the invoice behind
+  caught  tax-truth   the server posts its recompute instead of the stored invoice
+  caught  tax-truth   the check writes its recompute over the stored invoice
+  caught  tax-truth   a difference is silently swallowed
+  caught  tax-truth   the seller's copy checks against the buyer's state as place of supply
+  caught  tax-truth   the buyer's copy checks against the buyer's own state as place of supply
+  caught  tax-truth   the server ignores a recorded delivery (and the two rules part)
+  caught  tax-truth   the earlier-bills row leaves the stored invoice behind
+  caught  tax-truth   the reprint ignores the stored invoice
+  caught  tax-truth   the reprint's lines do not read their ItemList (Gross ₹0.00)
+  caught  tax-truth   a reprint with no stored invoice prints GST 0.00
 
 17/17 caught
 exit=0

@@ -405,6 +405,21 @@ function refOf(req) {
   return (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 64) : null;
 }
 /**
+ * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT, never worked out again (Athi, 2026-10-02).
+ * The same five figures the header always carried, plus the two an invoice adds, each MAPPED from INV-01:
+ *   taxable = AssVal · tax = CGST + SGST + IGST + cess (+ the VAT head) and total = TotInvVal, both through taxLines.heads ·
+ *   round_off = RndOffAmt · savings = Discount · gross = Σ ItemList TotAmt · net = gross − Discount (the line nets after
+ *   offers — what `net` has always meant in this slot)
+ * `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route makes for other chits.
+ */
+function moneyOfInvoice(inv, currency_code) {
+  const v = inv.ValDtls || {}, h = taxLines.heads(inv);
+  const gross = roundMoney((inv.ItemList || []).reduce((a, it) => a + (Number(it.TotAmt) || 0), 0));
+  const savings = roundMoney(Number(v.Discount) || 0);
+  return { gross, savings, net: roundMoney(gross - savings), taxable: h.taxable, tax: h.tax, total: h.total,
+           round_off: roundMoney(Number(v.RndOffAmt) || 0), currency_code, provisional: false, issued: true };
+}
+/**
  * ⭐⭐⭐ ONE TIE-BREAK, TWO CALLERS — lifted 2026-09-26 per the external review's §22. This verdict (same till id
  * AND same billed_at moment → a retry; anything else once a client_ref collides → two counters on one number) was
  * written out twice — the pre-send check below and the race-catch further down — and had actually drifted: the
@@ -842,28 +857,28 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         moneyBlock = { gross, savings: r2m(gross - net), net, tax, total: total != null ? total : (tax != null ? r2m(net + tax) : null), currency_code, provisional: true };
       } catch (_) { /* a chit never fails to send because its money summary could not be built */ }
       /**
-       * ⭐⭐⭐ A COUNTER BILL'S HEADER CARRIES THE INVOICE IT ISSUED (Athi, 2026-10-02: "one invoice, everywhere"). The counter's
-       * carried invoice (business_json.invoice, issued: 'counter') is the total: taxable + tax rounded once — ₹1,118.16 for bill
-       * C2/26-27/0007, where the sum of its line nets said ₹1,118.15 and the paisa of round-off was lost. And the server's own
-       * computation runs here ONLY to check it: a difference is named on the chit (business_json.tax_check) and in the log
-       * (tax.check-differs, for the health view) — the issued figures are never replaced. Fails open, like the block above.
+       * ⭐⭐⭐ A COUNTER BILL CARRIES ITS INVOICE, AND THE SERVER ONLY READS IT (Athi, 2026-10-02: "the computation should happen
+       * in only one place like billing, rest all the places the value has to only read … recomputation can be done, but
+       * cannot rewrite what has been already wrote"). business_json.invoice is CBTax.determine()'s result from the counter's
+       * billMoney(), stored as it came. The header's money is MAPPED off it (moneyOfInvoice) — ₹1,118.16 for bill
+       * C2/26-27/0007, where the sum of its line nets said ₹1,118.15. The server's own computation runs ONLY to check it
+       * (lib/tax-copy entryFor → lib/issued-invoice check): a difference is named on the chit (business_json.tax_check) and in
+       * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
        */
       let issuedTotal = null;
-      if (counterBill && !is_draft && require('../lib/issued-invoice').issuedOf(business_json)) {
-        const II = require('../lib/issued-invoice');
-        const hm = II.headerMoney(business_json.invoice, line_items);
-        issuedTotal = hm.total_value;
-        moneyBlock = Object.assign({}, hm.money, { currency_code });
+      const carried = business_json && business_json.invoice;
+      if (counterBill && !is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
+        moneyBlock = moneyOfInvoice(carried, currency_code);
+        issuedTotal = moneyBlock.total;
         try {
           const e = await taxCopy.entryFor({ chit_id: null, sender_entity_id: sender_id, purpose, business_json, line_items, currency_code,
             all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(receiverDetails.filter((r) => r.entity_id)
               .map((r) => ({ entity_id: r.entity_id, role: r.all_role || 'receiver' }))), sent_at: business_json.billed_at || null }, sender_id);
           if (e && e.tax_check && !e.tax_check.ok) {
             business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
-            require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no,
-              says: II.checkWords(e.tax_check) });
+            require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
           }
-        } catch (_) { /* the check never stops a bill — the issued figures stand either way */ }
+        } catch (_) { /* the check never stops a bill — the stored invoice stands either way */ }
       }
       const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
       /**
@@ -1007,7 +1022,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
 
       // Calculate summary from line items
       const summary = calculateSummary(line_items);
-      /* ⭐ a counter bill's value is the invoice it issued (above), never the sum of its line nets */
+      /* ⭐ a counter bill's value is its invoice's TotInvVal (above), never the sum of its line nets */
       if (issuedTotal != null) summary.total_value = issuedTotal;
       // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
       const ext_priority = ['normal','high','urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';

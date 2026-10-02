@@ -1,3 +1,4 @@
+node scripts/guards.cjs — this branch (the 15 FAILED files fail identically on main in this container: the web and engines repos are not checked out beside it; see the PR)
 — the guards —
   FAIL  pages-parse              3 checks
           FAIL the app parses
@@ -66,7 +67,7 @@
    ok   network-storefront       8 checks
    ok   network-catalogue       12 checks
    ok   screen-kit              17 checks
-   ok   no-tax-reformula         3 checks
+   ok   no-tax-reformula         4 checks
    ok   network-authority        8 checks
   FAIL  govcontext               0 checks
           Error: ENOENT: no such file or directory, open '/home/user/chitbridge-web/public/app/govcontext.js'
@@ -136,11 +137,10 @@
   FAIL  two-sided-books          0 checks
 
    ok   bill-use                15 checks
-   ok   tax-truth               32 checks
+   ok   tax-truth               36 checks
    ok   bills-folder            74 checks
    ok   bills-private           46 checks
    ok   shop-name                9 checks
    ok   shop-name-breaks         4 checks
   ────────────────────────────────────────
-  2099 checks · 111 files · 21.1s · 15 FAILED: pages-parse.test.js, till-vendor.test.js, engines-pinned.test.js, money-round.test.js, one-rounding-rule.test.cjs, engine-versions.test.cjs, snapshot-wire.test.js, govcontext.test.js, variant.test.js, money-language.test.js, search-engine.test.js, tax-vendor.test.js, books-fixes.test.cjs, books-dates-tz.test.cjs, two-sided-books.test.cjs
-exit=1
+  2104 checks · 111 files · 25.6s · 15 FAILED: pages-parse.test.js, till-vendor.test.js, engines-pinned.test.js, money-round.test.js, one-rounding-rule.test.cjs, engine-versions.test.cjs, snapshot-wire.test.js, govcontext.test.js, variant.test.js, money-language.test.js, search-engine.test.js, tax-vendor.test.js, books-fixes.test.cjs, books-dates-tz.test.cjs, two-sided-books.test.cjs
