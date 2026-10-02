@@ -67,3 +67,11 @@ docs/                design notes and contracts (COUNTER.md, CTP-DESIGN.md, THRE
 
 Push to `main` → Railway builds and deploys (check with `railway deployment list`). Cloud sessions work on
 `cloud/<task>` branches and arrive as pull requests; nothing lands on `main` unread.
+
+## Books: voucher series by type
+
+Voucher series by type from 2026-10-03 (engines v1.16.0; DECISIONS "Voucher numbering follows the standard"): a journal entry takes the series of its voucher type
+(SV sales · PV purchase · RV receipt · PY payment · CV contra · CN credit note · DN debit note · JV journal), and an entry a person made at the owner's door (manual entry,
+reversal, typed write-off) takes the single series MJ. Counters are `books_counter (entity, series, fiscal year)`, taken inside the entry's own transaction. Entries issued
+before this date keep their `JV/` numbers; nothing is renumbered. The voucher type column (`journal_entry.voucher_type`) is the DRAFT migration b279, not yet run — until then the
+type is derived from the series (`lib/books.js voucherTypeOfEntry`).
