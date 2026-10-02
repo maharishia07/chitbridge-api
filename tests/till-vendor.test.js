@@ -122,12 +122,14 @@ it('⭐⭐⭐ [SPLIT-01] mixed rates and a zero-rated line, to the paisa — wit
    * and its tax is ₹11.91 by rate, not the ₹11.90 the old shortcut gave it. Real Indian bills already have a
    * name for this paisa: "Round off" — lib/tax.js declares it as RndOffAmt, and billMoney() now declares it too.
    */
-  assert.strictEqual(m.net, 731.01, 'the total reconciles to its own components, the way an invoice does');
+  /* tax v1.12.0 (Athi, 2026-10-02): CGST and SGST are each the value at half the rate, rounded once each, so they are equal —
+     and on THIS bill the exact heads land the total back on the shelf total, ₹731.00 (v1.9.0's halved heads made it ₹731.01). */
+  assert.strictEqual(m.net, 731, 'the total reconciles to its own components, the way an invoice does');
   /* ⚠️ 2026-10-02: m.round IS the invoice's RndOffAmt now (billMoney reads CBTax.determine). India's pack rounds the total to
      the PAISA (tax-packs v1.10.0, Athi), so taxable + tax is already the total and nothing is rounded off: the paisa between
      the shelf prices (₹731.00) and the invoice (₹731.01) is the tax by rate, stated in the heads, not a round-off. */
   assert.strictEqual(m.round, 0, 'the invoice\'s own round-off (RndOffAmt), to the paisa');
-  assert.strictEqual(Math.round((m.base + m.tax) * 100) / 100, 731.01, 'taxable plus tax is the total, always');
+  assert.strictEqual(Math.round((m.base + m.tax) * 100) / 100, 731, 'taxable plus tax is the total, always');
   assert.ok(m.byRate['5'] && m.byRate['18'], 'each rate is reported on its own, as a slip must show it');
 });
 
@@ -152,12 +154,13 @@ it('⭐⭐⭐ [SPLIT-02] the slip\'s CGST/SGST are the SUM of the lines\' heads 
     const m = P.billMoney();
     const r5 = m.byRate['5'];
     assert.ok(r5, 'the 5% rate is on the slip');
-    assert.strictEqual(r5.tax, 20.9, 'the rate total is ₹20.90 either way');
-    assert.strictEqual(r5.cgst, 10.46, 'CGST is the SUM of the two lines\' rounded halves (5.23 + 5.23), not half the rate total');
-    assert.strictEqual(r5.sgst, 10.44, 'SGST is the SUM of the two lines\' remainders (5.22 + 5.22)');
+    /* tax v1.12.0: each ₹209 line carries CGST 2.5% = 5.225 → 5.23 AND SGST 2.5% → 5.23 — equal heads (v1.9.0: 5.23 + 5.22) */
+    assert.strictEqual(r5.tax, 20.92, 'the rate total is the sum of the exact heads');
+    assert.strictEqual(r5.cgst, 10.46, 'CGST is the SUM of the two lines\' CGST (5.23 + 5.23)');
+    assert.strictEqual(r5.sgst, 10.46, 'SGST equals CGST — each the value at its own rate (5.23 + 5.23)');
     const cg = m.heads.find((h) => h.name === 'CGST'), sg = m.heads.find((h) => h.name === 'SGST');
     assert.ok(cg && sg, 'the bill carries CGST and SGST heads');
-    assert.strictEqual(cg.amount, 10.46); assert.strictEqual(sg.amount, 10.44);
+    assert.strictEqual(cg.amount, 10.46); assert.strictEqual(sg.amount, 10.46);
     /* and the server's invoice for the same two lines says the same */
     const inv = require(path.join(API, 'lib', 'tax-lines.js')).invoiceFor({
       lines: [{ name: 'a', qty: 1, price: 209, gst_rate: 5 }, { name: 'b', qty: 1, price: 209, gst_rate: 5 }],
@@ -686,8 +689,9 @@ it('⚠️ and the split follows it — the same shelf price is two different bi
   P.S.policy.price_includes_tax = 'no';
   const exc = P.billMoney();
   assert.strictEqual(exc.base, 105, 'exclusive: the shelf price IS the taxable value');
-  assert.strictEqual(exc.tax, 5.25);
-  assert.strictEqual(exc.net, 110.25, 'and the tax is added on top of it');
+  /* tax v1.12.0: CGST 2.5% of 105 = 2.625 → 2.63 and SGST the same — two taxes at their own rates, equal (v1.9.0: 2.63 + 2.62) */
+  assert.strictEqual(exc.tax, 5.26);
+  assert.strictEqual(exc.net, 110.26, 'and the tax is added on top of it');
 });
 
 it('a price of nothing is a fault worth naming', () => {

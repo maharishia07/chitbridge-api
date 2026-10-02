@@ -227,19 +227,19 @@ const srv = app.listen(0, '127.0.0.1', async () => {
   try {
     console.log('\n══ ONE INVOICE, EVERYWHERE — bill C2/26-27/0007 read six ways ══\n');
     const W = await sixWays(port, { no: 'C2/26-27/0007', cart: CART_0007, cust: { name: 'Chola Auto Care' } });
-    const want = { by: { 12: { taxable: 995.77, cgst: 59.76, sgst: 59.75, igst: 0 }, 18: { taxable: 2.44, cgst: 0.22, sgst: 0.22, igst: 0 } },
-                   taxable: 998.21, tax: 119.95, total: 1118.16, supply: 'intra', pos: '33' };
+    const want = { by: { 12: { taxable: 995.77, cgst: 59.75, sgst: 59.75, igst: 0 }, 18: { taxable: 2.44, cgst: 0.22, sgst: 0.22, igst: 0 } },
+                   taxable: 998.21, tax: 119.94, total: 1118.15, supply: 'intra', pos: '33' };   /* tax v1.12.0: exact heads */
     const b = W.r.bill || {};
 
     /* 1 · the counter's bill */
     const f1 = figOfBill(b);
-    ok('1 the COUNTER\'s bill: taxable 998.21 · CGST/SGST 59.76/59.75 at 12% and 0.22/0.22 at 18% · total 1118.16 · intra · place of supply 33',
+    ok('1 the COUNTER\'s bill: taxable 998.21 · CGST/SGST 59.75/59.75 at 12% and 0.22/0.22 at 18% · total 1118.15 · intra · place of supply 33',
       same(f1, want), J(f1));
     ok('…the bill\'s invoice IS CBTax.determine()\'s result — the INV-01 shape, the figures above read off it',
       b.invoice && b.invoice.ValDtls && b.invoice.ItemList && b.invoice._cb && same(figOfInv(b.invoice), want) && same(b.invoice, W.r.m && W.r.m.invoice)
       && Object.keys(b.invoice).join() === 'TranDtls,SellerDtls,BuyerDtls,ItemList,ValDtls,_cb', J(b.invoice && Object.keys(b.invoice)));
-    ok('…to the paisa (tax-packs v1.10.0): TotInvVal 1118.16 = AssVal + the heads, RndOffAmt 0; the line nets sum to 1118.15',
-      b.invoice.ValDtls.TotInvVal === 1118.16 && b.invoice.ValDtls.RndOffAmt === 0 && b.round_off === 0
+    ok('…to the paisa (tax-packs v1.10.0, tax v1.12.0): TotInvVal 1118.15 = AssVal + the exact heads, RndOffAmt 0; the line nets sum to 1118.15',
+      b.invoice.ValDtls.TotInvVal === 1118.15 && b.invoice.ValDtls.RndOffAmt === 0 && b.round_off === 0
       && r2(b.lines.reduce((a, l) => a + l.net, 0)) === 1118.15, J([b.invoice.ValDtls, b.round_off]));
     ok('…the invoice names its parties: the shop (GSTIN, state 33), the buyer (GSTIN 29…, B2B) with Pos = the place of supply 33',
       b.invoice.SellerDtls.Gstin === '33AABCK1234F1Z6' && b.invoice.SellerDtls.State === '33' && b.invoice.BuyerDtls.Gstin === '29BBBBB0000B1Z5'
@@ -247,7 +247,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('…each line on the bill reads its ItemList entry (taxable = AssAmt, tax = its heads), line for line',
       b.lines.every((l, i) => { const it = b.invoice.ItemList[i]; return it && l.taxable === it.AssAmt && l.tax === r2(it.CgstAmt + it.SgstAmt + it.IgstAmt + it.CesAmt); }),
       J(b.lines.map((l) => [l.taxable, l.tax])));
-    ok('…and the printed slip says so: the rate rows, TOTAL ₹1118.16, place of supply 33', slipSays(W.r.slip, want).length === 0, J(slipSays(W.r.slip, want)));
+    ok('…and the printed slip says so: the rate rows, TOTAL ₹1118.15, place of supply 33', slipSays(W.r.slip, want).length === 0, J(slipSays(W.r.slip, want)));
 
     /* 2 · the chit as stored */
     const sc = W.shopCopy || {}, sbj = sc.business_json || {};
@@ -256,8 +256,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('…summary_json.money is MAPPED off ValDtls: taxable = AssVal, tax = the heads, total = TotInvVal, round-off = RndOffAmt, savings = Discount, gross = Σ TotAmt',
       mm.taxable === vd.AssVal && mm.tax === r2(vd.CgstVal + vd.SgstVal + vd.IgstVal + vd.CesVal) && mm.total === vd.TotInvVal && mm.round_off === vd.RndOffAmt
       && mm.savings === vd.Discount && mm.gross === r2(b.invoice.ItemList.reduce((a, it) => a + it.TotAmt, 0)) && mm.issued === true && mm.provisional === false, J(mm));
-    ok('…its value is the invoice total 1118.16 — the copy (chit_detail.total_value), the summary, the money block (not the 1118.15 of the line nets)',
-      sc.total_value === 1118.16 && sc.summary_json && sc.summary_json.total_value === 1118.16 && mm.total === 1118.16 && mm.tax === 119.95,
+    ok('…its value is the invoice total 1118.15 — the copy (chit_detail.total_value), the summary, the money block (tax v1.12.0: it equals the line nets)',
+      sc.total_value === 1118.15 && sc.summary_json && sc.summary_json.total_value === 1118.15 && mm.total === 1118.15 && mm.tax === 119.94,
       J([sc.total_value, sc.summary_json && sc.summary_json.total_value, mm]));
     ok('…the customer\'s copy carries the same invoice and lines', W.custCopy && same(W.custCopy.business_json.invoice, b.invoice) && same(W.custCopy.line_items, sc.line_items));
     ok('…and the server\'s check agrees with the counter: no tax_check on the chit, a passing one on each entry',
@@ -270,11 +270,11 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('3 the SELLER\'s posting: sale_bill to Chola, the same rates, heads and total; round-off 0', W.sPost && W.sPost.kind === 'post' && sev.type === 'sale_bill'
       && sev.party === CUST && same(f3, want) && sev.round_off === 0 && sev.paid && Object.keys(sev.paid).length === 0, J([W.sPost && W.sPost.kind, sev.type, f3, sev.round_off]));
     ok('…its invoice is the issued one (frozen, not provisional), output CGST + SGST — never IGST', W.sEntry.issued && W.sEntry.frozen && !W.sEntry.provisional
-      && T.heads(W.sEntry.invoice).igst === 0 && T.heads(W.sEntry.invoice).cgst === 59.98 && T.heads(W.sEntry.invoice).sgst === 59.97, J(T.heads(W.sEntry.invoice)));
-    ok('…GSTR-1 reports it b2b to the buyer\'s GSTIN, place of supply 33, under the bill\'s number, value 1118.16', (() => {
+      && T.heads(W.sEntry.invoice).igst === 0 && T.heads(W.sEntry.invoice).cgst === 59.97 && T.heads(W.sEntry.invoice).sgst === 59.97, J(T.heads(W.sEntry.invoice)));
+    ok('…GSTR-1 reports it b2b to the buyer\'s GSTIN, place of supply 33, under the bill\'s number, value 1118.15', (() => {
       const g = T.gstr1(T.ledger([W.sEntry], W.sEntry.me), W.sEntry.me, '102026');
       const e = (g.b2b[0] || {}).inv || [];
-      return g.b2b.length === 1 && g.b2b[0].ctin === '29BBBBB0000B1Z5' && e[0] && e[0].pos === '33' && e[0].inum === 'C2/26-27/0007' && e[0].val === 1118.16;
+      return g.b2b.length === 1 && g.b2b[0].ctin === '29BBBBB0000B1Z5' && e[0] && e[0].pos === '33' && e[0].inum === 'C2/26-27/0007' && e[0].val === 1118.15;
     })());
 
     /* 4 · the buyer's posting */
@@ -283,7 +283,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('4 the BUYER\'s posting on acceptance: purchase_bill from Tally Test, the same rates, heads and total', W.cPost && W.cPost.kind === 'post' && cev.type === 'purchase_bill'
       && cev.party === SHOP && same(f4, want) && cev.round_off === 0, J([W.cPost && W.cPost.kind, cev.type, f4]));
     ok('…input CGST + SGST on the buyer\'s side too (the invoice as issued is what ITC rests on, s.16)',
-      (() => { const l = T.ledger([W.cEntry], W.cEntry.me); return l.itc.cgst === 59.98 && l.itc.sgst === 59.97 && l.itc.igst === 0; })());
+      (() => { const l = T.ledger([W.cEntry], W.cEntry.me); return l.itc.cgst === 59.97 && l.itc.sgst === 59.97 && l.itc.igst === 0; })());
 
     /* 5 · the reprint */
     const rb = W.reprint && W.reprint.bill || {};
@@ -296,7 +296,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     /* 6 · the buyer's invoice read */
     const inv6 = W.cEntry.invoice;
     const f6 = figOfInv(inv6);
-    ok('6 the BUYER\'s invoice read (/api/tax/invoice): the same figures, place of supply 33', same(f6, want) && T.heads(inv6).total === 1118.16 && T.heads(inv6).tax === 119.95, J([f6, T.heads(inv6)]));
+    ok('6 the BUYER\'s invoice read (/api/tax/invoice): the same figures, place of supply 33', same(f6, want) && T.heads(inv6).total === 1118.15 && T.heads(inv6).tax === 119.94, J([f6, T.heads(inv6)]));
     ok('…the buyer is named on the invoice (GSTIN, legal name — the snapshot\'s customer), the seller is the shop', inv6.BuyerDtls.Gstin === '29BBBBB0000B1Z5' && inv6.BuyerDtls.LglNm === 'Chola Auto Care'
       && inv6.SellerDtls.Gstin === '33AABCK1234F1Z6' && inv6.TranDtls.SupTyp === 'B2B', J([inv6.BuyerDtls, inv6.SellerDtls]));
     ok('ALL SIX agree to the paisa', [f1, figOfInv(sbj.invoice), f3, f4, f5, f6].every((f) => same(f, want)), J([f1, figOfInv(sbj.invoice), f3, f4, f5, f6]));
@@ -353,13 +353,13 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       sl.CgstVal = r2(sl.CgstVal + 0.01); sl.SgstVal = r2(sl.SgstVal + 0.01);
       v.CgstVal = r2(v.CgstVal + 0.01); v.SgstVal = r2(v.SgstVal + 0.01); v.TotInvVal = r2(v.TotInvVal + 0.02); return c; } });
     const zf = figOfInv(Z.sEntry.invoice);
-    ok('a stored figure the server\'s recompute DISAGREES with: the stored one is kept (tax 119.97, total 1118.18) on both copies, the money and the reprint',
-      zf.tax === 119.97 && zf.total === 1118.18 && figOfInv(Z.cEntry.invoice).tax === 119.97 && Z.shopCopy.total_value === 1118.18
-      && Z.shopCopy.summary_json.money.tax === 119.97 && figOfBill(Z.reprint.bill).total === 1118.18, J([zf, Z.shopCopy && Z.shopCopy.total_value]));
+    ok('a stored figure the server\'s recompute DISAGREES with: the stored one is kept (tax 119.96, total 1118.17) on both copies, the money and the reprint',
+      zf.tax === 119.96 && zf.total === 1118.17 && figOfInv(Z.cEntry.invoice).tax === 119.96 && Z.shopCopy.total_value === 1118.17
+      && Z.shopCopy.summary_json.money.tax === 119.96 && figOfBill(Z.reprint.bill).total === 1118.17, J([zf, Z.shopCopy && Z.shopCopy.total_value]));
     const zd = (Z.sEntry.tax_check && Z.sEntry.tax_check.differences) || [];
     ok('…and the difference is NAMED: on the entry, and on the stored chit (business_json.tax_check, kept: issued)',
-      Z.sEntry.tax_check.ok === false && zd.some((d) => d.what === 'tax at 12%' && d.issued === 119.53 && d.server === 119.51)
-      && zd.some((d) => d.what === 'total' && d.issued === 1118.18 && d.server === 1118.16)
+      Z.sEntry.tax_check.ok === false && zd.some((d) => d.what === 'tax at 12%' && d.issued === 119.52 && d.server === 119.5)
+      && zd.some((d) => d.what === 'total' && d.issued === 1118.17 && d.server === 1118.15)
       && Z.shopCopy.business_json.tax_check && Z.shopCopy.business_json.tax_check.kept === 'issued'
       && Z.shopCopy.business_json.tax_check.differences.some((d) => d.what === 'tax at 12%'), J([zd, Z.shopCopy && Z.shopCopy.business_json.tax_check]));
 
