@@ -27,6 +27,16 @@ async function partyPatch(req, res, side) {
     throw e;
   }
 }
+/**
+ * ⭐ A PARTY IS NUMBERED WHEN IT IS ADDED (Athi, 2026-10-02: *"each customer / supplier will have a customer id, and it should
+ * be used in ledger"*). party-fields.ensureNo — the one numbering path (series 'P', shared by both lists) — was reached only
+ * by a field save, books setup or the nightly job, so a customer added today showed no number until tonight.
+ * ⚠️ Never fails the add: before b272/b274 there is no series, and the nightly job still catches up. → the number, or null.
+ */
+async function numberParty(owner, party_id) {
+  try { return await withEntity(owner, (db) => require('../db').trySavepoint(db, () => partyFields.ensureNo(db, owner, party_id), null)); }
+  catch (_) { return null; }
+}
 
 // actors act in their parent entity's context
 const ctx = (req) => auth.entityOf(req);
@@ -117,8 +127,9 @@ router.post('/suppliers',
                                       category, nickname, notes, preferred, added_via)
            VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
           [owner, local.identity_id, kind, category, nickname, notes, preferred]));
+        const localNo = await numberParty(owner, local.identity_id);
         return res.json({ message: 'Supplier added',
-          supplier: { supplier_entity_id: local.identity_id, bridge_id: local.bridge_id,
+          supplier: { supplier_entity_id: local.identity_id, bridge_id: local.bridge_id, party_no: localNo,
                       display_name: local.display_name, on_rail: false,
                       supply_kind: kind, category, nickname, notes, preferred } });
       }
@@ -149,8 +160,9 @@ router.post('/suppliers',
          the lookup above but cannot trade with this shop — lib/istest mayTrade, b249's rule. Added anyway (the list is the
          shop's), but it says so now rather than at the first order. */
       const trade = await require('../lib/istest').mayTrade(owner, sup.rows[0].identity_id);
+      const supNo = await numberParty(owner, sup.rows[0].identity_id);
       res.json({ message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
-        supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, on_rail: !!trade.ok,
+        supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, on_rail: !!trade.ok, party_no: supNo,
                     ...(trade.ok ? {} : { one_sided: { why: trade.why } }),
                     supply_kind: kind, category, nickname, notes, preferred } });
     } catch (err) {
@@ -169,7 +181,8 @@ router.get('/suppliers', auth, async (req, res) => {
          lookup stay exactly as they were; that was the point of minting a real id rather than writing a null. */
       `SELECT sl.supplier_list_id, sl.category, sl.nickname, sl.preferred, sl.notes, sl.created_at,
               COALESCE(sl.supply_kind, 'resale') AS supply_kind,
-              (COALESCE(i.user_id, '') NOT LIKE '~%') AS on_rail,
+              /* ⭐ lib/istest mayTradeSql — the ONE rule (b249 + on the rail); this was a second, handle-only copy of it */
+              ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail,
               i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
               i.gstn, i.country, i.policy_flags,
               EXISTS (SELECT 1 FROM entity_schemas es
@@ -475,7 +488,9 @@ router.get('/customers', auth, async (req, res) => {
               cl.txn_count, cl.last_txn_at, ${_g ? 'cl.groups,' : ''}
               i.identity_id AS customer_identity_id, i.bridge_id, i.user_id, i.display_name,
               i.email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
-              ${customerGroups.SEGMENT_SQL} AS segment
+              ${customerGroups.SEGMENT_SQL} AS segment,
+              /* ⭐ can bills reach them (lib/istest mayTradeSql, b249's rule) — the CRM table's "one-sided" mark */
+              ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail
        FROM customer_list cl
        JOIN identities i ON i.identity_id = cl.customer_identity_id
        WHERE cl.owner_entity_id = $1
@@ -578,8 +593,9 @@ router.post('/customers',
          in without a word). lib/istest mayTrade, b249's rule: inactive or another sandbox → the sale is still recorded and
          booked, only their copy is not sent. Said here, before the first bill, not discovered at the counter. */
       const trade = await require('../lib/istest').mayTrade(owner, c.identity_id);
+      const custNo = await numberParty(owner, c.identity_id);
       res.json({ message: trade.ok ? 'Customer added' : 'Customer added — bills to them stay here only: ' + trade.why,
-        customer: { customer_list_id: r.rows[0].customer_list_id, customer_identity_id: c.identity_id, display_name: c.display_name, user_id: c.user_id, bridge_id: c.bridge_id, segment: 'new', added_via: 'manual',
+        customer: { customer_list_id: r.rows[0].customer_list_id, customer_identity_id: c.identity_id, display_name: c.display_name, user_id: c.user_id, bridge_id: c.bridge_id, segment: 'new', added_via: 'manual', party_no: custNo,
                     on_rail: !!trade.ok, ...(trade.ok ? {} : { one_sided: { why: trade.why } }) } });
     } catch (err) {
       console.error('Add customer error:', err.message);
