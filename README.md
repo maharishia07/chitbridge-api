@@ -1,189 +1,69 @@
-# Chit and Bridge MVP
+# ChitBridge — API
 
-**The world's first guaranteed cross-organisation business execution platform**
+The server for ChitBridge: businesses send each other **chits** (orders, bills, messages, disputes) on a governed rail,
+and every chit lands in each party's own records — a counter bill becomes the seller's sale and the buyer's purchase in
+their ledgers. Node.js + Express on PostgreSQL (Supabase), deployed on **Railway from `main`**.
 
-Version 1.0 — June 2026
+ChitBridge is three repositories:
 
----
+| Repo | What it holds |
+|---|---|
+| **chitbridge-api** (this one) | the server, the database migrations, the counter's master code, the Tally/Zoho connector kit |
+| **chitbridge-web** | the app people use (Vercel, from `main`): the home page, the app, CB Accounts, the Labs, the counter page |
+| **chitbridge-engines** | the pure engines (money, tax, offers, books…) every platform adopts as stamped, version-pinned copies |
 
-## What This Is
+**Read first:** [`CLAUDE.md`](CLAUDE.md) — the standing rules (reuse before you build, design, testing).
+**What already exists:** [`docs/SEAMS.md`](docs/SEAMS.md) (functions reused across files) ·
+[`docs/SOFTWARE-ASSETS.md`](docs/SOFTWARE-ASSETS.md) (modules that stand alone).
 
-Chit and Bridge allows any two businesses to interact with each other — sending structured requests, receiving confirmed responses, and tracking execution — regardless of what internal systems they use.
-
-This MVP proves the fundamental concept: three entities, a handshake, and a chit that flows between them with full state tracking.
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- Node.js v18 or above — [nodejs.org](https://nodejs.org)
-- Git — [git-scm.com](https://git-scm.com)
-- Supabase account — [supabase.com](https://supabase.com)
-- Railway account — [railway.app](https://railway.app)
-- Resend account — [resend.com](https://resend.com)
-
-### 1. Clone and install
+## Run it
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/chitbridge-mvp.git
-cd chitbridge-mvp
 npm install
+cp .env.example .env        # DATABASE_URL and the rest — never commit .env
+npm start                   # node server.js   (npm run dev → nodemon)
 ```
 
-### 2. Set up database
+## Check it
 
-- Go to your Supabase project
-- Open SQL Editor
-- Copy contents of `db/schema.sql`
-- Paste and click Run
-- You should see: `Schema created successfully | 6`
+| Command | What it proves |
+|---|---|
+| `npm run guards` | the offline gate before any commit — every guard and unit test that needs no database |
+| `npm run lint:copy` | every on-screen string within the text budget |
+| `npm test` | the full suite (slow; once, when a piece of work is finished) |
+| `npm run check:trips` | round trips per screen within budget |
+| `npm run rls:census` | row-level security covers every tenant table |
+| `node ../chitbridge-engines/tools/adopt.cjs . --check` | the adopted engines are exactly their releases |
+| `node scripts/regression.js` (and `lifecycle-iot.js`, `actor-harness.js`, `dispute-scope.js`, `cancel-request.js`, `erp-connector.js`) | ⚠️ drive the **LIVE API by default** (`CB_API=` to point elsewhere) — Athi's call to run, never part of the gate |
 
-### 3. Configure environment
+SQL is never run by a session: a migration is written into `migrations/` and Athi runs it.
 
-```bash
-cp .env.example .env
+## Where things are
+
+```
+server.js            entry point — mounts every route
+routes/              HTTP routes (chits, books, till, counters, folders, integrations, …)
+lib/                 the logic behind the routes; adopted engine copies (lib/tax.js, lib/money.js …) — never edit those
+middleware/          auth, scopes, idempotency
+db/                  connection, the schema snapshot, the RLS baseline
+migrations/          numbered SQL migrations (MANIFEST.md indexes them)
+src/                 the network module (mounted at /api/network)
+governance/          entitlements, mint, resolver
+tools/
+  tally-connector/   the connector kit (Tally · Zoho · CSV) and the COUNTER'S MASTER (till.html, till.js) —
+                     chitbridge-web/public/till.html is a vendored copy (scripts/vendor-till.cjs)
+  seed/ …            round-trip budgets, endpoint usage, seed checks
+scripts/             guards.cjs (the offline gate), lint-copy, rls-census, sql, vendor-till, backups
+tests/               unit and offline tests (run by the gate); support/ holds the in-memory harness
+data/                CMDB records (data/cmdb), test cases, fixtures
+public/              the few server-rendered pages (chit, connections, inbox, register)
+design-handoff/      the counter's design packages: A-screens/, B-fine-tuning/, stuck-bill/ (HANDOVER.md first)
+design-style*/       screen-style and key-size specs the counter cites
+docs/                design notes and contracts (COUNTER.md, CTP-DESIGN.md, THREAT-MODEL.md, NAMESPACE.md …),
+                     docs/tasks/ for open cloud tasks, docs/drafts/ for work in progress
 ```
 
-Edit `.env` with your values:
+## Deploy
 
-```
-DATABASE_URL=postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres
-JWT_SECRET=your-minimum-32-character-secret
-RESEND_API_KEY=re_your_resend_key
-FROM_EMAIL=noreply@yourdomain.com
-PORT=3000
-NODE_ENV=development
-```
-
-### 4. Run locally
-
-```bash
-npm start
-```
-
-Open [http://localhost:3000](http://localhost:3000)
-
-### 5. Run tests
-
-```bash
-npm test
-```
-
----
-
-## Deploy to Railway
-
-```bash
-# Push to GitHub first
-git add .
-git commit -m "Initial MVP build"
-git push origin main
-
-# Then in Railway:
-# New Project → Deploy from GitHub → Select repo
-# Add environment variables (same as .env)
-# Generate domain → Share URL
-```
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | /health | None | Server health check |
-| POST | /api/entities/register | None | Register entity — sends OTP |
-| POST | /api/entities/verify | None | Verify OTP — returns JWT |
-| GET | /api/entities/search | JWT | Search entities by name |
-| GET | /api/entities/me | JWT | Get current entity profile |
-| POST | /api/connections/request | JWT | Send connection request |
-| GET | /api/connections/pending | JWT | Get pending requests |
-| PUT | /api/connections/:id/respond | JWT | Accept or reject request |
-| GET | /api/connections/list | JWT | Get accepted connections |
-| POST | /api/chits/send | JWT | Send chit to one or more receivers |
-| GET | /api/chits/inbox | JWT | Get inbox — lightweight |
-| GET | /api/chits/:chit_id | JWT | Get full chit detail |
-| PUT | /api/chits/:chit_id/status | JWT | Update chit status |
-
----
-
-## Database Tables
-
-| Table | Purpose |
-|-------|---------|
-| identities | All participants — entities only for MVP |
-| connections | Handshake between two entities |
-| chit_header | Header per entity per chit — immutable |
-| chit_detail | Content per entity per chit — payload deleted after delivery |
-| chit_status | Mutable state per entity per chit |
-| state_log | Append-only audit trail |
-
----
-
-## Pages
-
-| Page | URL | Description |
-|------|-----|-------------|
-| Register | / | Register and verify entity |
-| Inbox | /inbox.html | View all chits |
-| Connections | /connections.html | Manage connections |
-| Send | /send.html | Send a new chit |
-| Chit Detail | /chit.html?id=CHIT_ID | Full chit view and actions |
-
----
-
-## Test Scenarios
-
-The test harness runs six scenarios automatically:
-
-1. **Registration** — Three entities register and verify
-2. **Handshake** — Entity A connects to B and C
-3. **Send chit** — A sends chit to B and C simultaneously
-4. **State updates** — B accepts, C rejects
-5. **Invalid transition** — Platform rejects wrong state sequence
-6. **Unconnected block** — Cannot send to unconnected entity
-
----
-
-## Security Practices (MVP)
-
-1. ✅ Parameterised queries — no SQL injection possible
-2. ✅ Input validation on every endpoint
-3. ✅ JWT authentication — all endpoints protected
-4. ✅ Environment variables — no secrets in code
-5. ✅ HTTPS on Railway — all traffic encrypted
-
----
-
-## Architecture
-
-Built on the functional specification:
-- `CB_FunctionalSpec_v1.0.pdf` — Sections 1 and 2
-- `CB_TechnicalArchitecture_v1.0.pdf`
-
-**What is NOT in this MVP:**
-- Actor model (iteration 2)
-- Schema engine (Phase 1)
-- Encryption (Phase 1)
-- Metering and billing (Phase 1)
-- Zoho connector (Phase 0.5)
-
----
-
-## Document Set
-
-| Document | Purpose |
-|----------|---------|
-| CB_FunctionalSpec_v1.0.pdf | Platform overview and identity model |
-| CB_TechnicalArchitecture_v1.0.pdf | Technical layers and build plan |
-| CB_DeveloperSetup_v1.0.pdf | Setup guide (this guide) |
-| CB_MasterIndex_v1.0.pdf | Complete document registry |
-
----
-
-## Contact
-
-Athi Narayanan — Founder and Architect
-Chit and Bridge — June 2026
+Push to `main` → Railway builds and deploys (check with `railway deployment list`). Cloud sessions work on
+`cloud/<task>` branches and arrive as pull requests; nothing lands on `main` unread.
