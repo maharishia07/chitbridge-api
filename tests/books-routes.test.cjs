@@ -114,6 +114,24 @@ const call = (port, method, p, body) => new Promise((done) => {
     bs.status === 200 && has(bs.body, ['assets', 'liabilities', 'equity', 'total_assets_minor', 'total_liab_equity_minor']) && bs.body.total_assets_minor === bs.body.total_liab_equity_minor
     && bs.body.equity.some((r) => /Profit/.test(r.name)), JSON.stringify(bs.body).slice(0, 400));
 
+  /* ── /bs also carries the Schedule III grouping (additive) ── */
+  const s3 = bs.body.schedule_iii, ORDER = ['ppe', 'investments', 'inventories', 'trade_receivables', 'cash_equivalents', 'short_term_loans_advances', 'other_current_assets', 'share_capital', 'reserves_surplus',
+    'borrowings', 'trade_payables', 'other_current_liabilities', 'short_term_provisions', 'suspense', 'branch'];
+  const inOrder = (heads) => heads.every((h, i) => !i || ORDER.indexOf(heads[i - 1].line) <= ORDER.indexOf(h.line));
+  ok('GET /bs → schedule_iii: both sides have heads (each with line, label, total_minor, ledgers[{ code, name, amount_minor }]) in Schedule III order',
+    s3 && s3.assets.heads.length >= 1 && s3.equity_and_liabilities.heads.length > 2 && inOrder(s3.assets.heads) && inOrder(s3.equity_and_liabilities.heads)
+    && has(s3.assets.heads[0], ['line', 'label', 'total_minor', 'ledgers']) && has(s3.assets.heads[0].ledgers[0], ['code', 'name', 'amount_minor']), JSON.stringify(s3).slice(0, 500));
+  const allL = [].concat(...s3.assets.heads.map((h) => h.ledgers), ...s3.equity_and_liabilities.heads.map((h) => h.ledgers));
+  ok('…a shop with creditors and input GST: side totals are the real sums, equal and non-zero; balanced: true, difference 0',
+    s3.assets.total_minor > 0 && s3.assets.total_minor === s3.equity_and_liabilities.total_minor && s3.balanced === true && s3.difference_minor === 0
+    && s3.assets.total_minor === s3.assets.heads.reduce((t, h) => t + h.total_minor, 0) && s3.equity_and_liabilities.heads.some((h) => h.line === 'trade_payables' && h.total_minor === 56000)
+    && /GST/i.test(JSON.stringify(allL)) && s3.assets.total_minor === bs.body.total_assets_minor, JSON.stringify(s3).slice(0, 600));
+  ok('…the profit so far is its own named line under Reserves and surplus ("Net profit", sign kept)',
+    s3.equity_and_liabilities.heads.some((h) => h.line === 'reserves_surplus' && h.ledgers.some((l) => l.name === 'Net profit' && l.amount_minor === 50000)));
+  ok('…the old flat keys are untouched (assets / liabilities / equity rows { code, name, amount_minor, line }, by_line, profit_to_date_minor)',
+    has(bs.body.assets[0], ['code', 'name', 'amount_minor', 'line']) && Array.isArray(bs.body.by_line.assets) && Array.isArray(bs.body.by_line.liabilities) && bs.body.profit_to_date_minor === 50000
+    && bs.body.balanced === true && bs.body.equity.some((r) => r.name === 'Profit for the year to date'));
+
   /* payments */
   const pay = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 60000, currency: 'INR', mode: 'upi', reference: 'UTR123', received_at: '2026-09-20T10:00:00Z' });
   ok('POST /payments → { payment: { payment_id, status: "recorded" } }', pay.status === 200 && pay.body.payment && pay.body.payment.status === 'recorded' && pay.body.payment.payment_id, JSON.stringify(pay.body));
@@ -281,6 +299,13 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('…in ONE query: entryLines LEFT JOINs the shop\'s own chit_header (entity-scoped, ONE copy — a self-chit can have two, b149) and identities — never a read per row',
     /LEFT JOIN LATERAL \(SELECT [^)]*FROM chit_header x\s+WHERE x\.entity_id = \$1 AND x\.chit_id = h\.source_chit_id[^)]*LIMIT 1\) c ON true/.test(el) && /LEFT JOIN identities i ON i\.identity_id = h\.created_by/.test(el)
     && !/S\.(billNos|entry)\(/.test(src.slice(src.indexOf("router.get('/daybook'"), src.indexOf("router.get('/party/:id/statement'"))));
+
+  /* a loss: salaries paid from cash, bigger than the profit so far → "Net loss" under capital, still balanced */
+  const ls = await q('POST', '/entries', { narration: 'Salaries', date: '2026-09-08', lines: [{ code: '6020', dr_minor: 200000 }, { code: '1400', cr_minor: 200000 }] });
+  const bl = await q('GET', '/bs?asOf=2026-09-30'), s3l = bl.body.schedule_iii, nloss = s3l && s3l.equity_and_liabilities.heads.find((h) => h.line === 'reserves_surplus');
+  ok('/bs with a loss: the line reads "Net loss" (negative, sign kept) under Reserves and surplus, and the sides still balance',
+    ls.status === 200 && nloss && nloss.ledgers.some((l) => l.name === 'Net loss' && l.amount_minor < 0 && l.amount_minor === bl.body.profit_to_date_minor) && !nloss.ledgers.some((l) => l.name === 'Net profit')
+    && s3l.balanced === true && s3l.assets.total_minor === s3l.equity_and_liabilities.total_minor, JSON.stringify(s3l).slice(0, 600));
 
   srv.close();
   done();

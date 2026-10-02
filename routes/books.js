@@ -351,7 +351,26 @@ router.get('/pl', auth, on, async (req, res) => {
       total_expense_minor: pl.total_expenses_minor, profit_minor: pl.profit_minor, by_line: { income: pl.income, expense: pl.expenses } });
   } catch (err) { fail(res, err); }
 });
-/** GET /bs?asOf → { currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced } */
+/**
+ * The engine's Schedule III lines → one side as the statement prints it: heads in the pack's order, each with its ledgers and a head total.
+ * ⭐ Only a regrouping of what CBLedger.balanceSheet returned — no figure is computed here beyond adding up the engine's own lines.
+ * The year's profit so far (the engine's code-less 'profit_to_date' line) is named "Net profit" / "Net loss", sign kept.
+ */
+function sideOf(lines, order) {
+  const rank = (k) => { const i = order.indexOf(k); return i < 0 ? order.length : i; };
+  const heads = (lines || []).map((L, i) => ({ L, i })).sort((a, b) => rank(a.L.line) - rank(b.L.line) || a.i - b.i).map(({ L }) => ({
+    line: L.line, label: L.label, total_minor: L.amount_minor,
+    ledgers: (L.accounts || []).map((a) => (a.role === 'profit_to_date'
+      ? { code: null, name: a.amount_minor < 0 ? 'Net loss' : 'Net profit', amount_minor: a.amount_minor, role: 'profit_to_date' }
+      : { code: a.code, name: a.name, amount_minor: a.amount_minor })) }));
+  return { heads, total_minor: heads.reduce((t, h) => t + h.total_minor, 0) };
+}
+function sched3(bs, order) {
+  const eq = sideOf(bs.liabilities, order), as = sideOf(bs.assets, order), diff = as.total_minor - eq.total_minor;
+  return { equity_and_liabilities: eq, assets: as, balanced: diff === 0, difference_minor: diff };
+}
+/** GET /bs?asOf → { currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced, by_line,
+ *  schedule_iii: { equity_and_liabilities: { heads, total_minor }, assets: { heads, total_minor }, balanced, difference_minor } } */
 router.get('/bs', auth, on, async (req, res) => {
   try {
     const e = ctx(req), asOf = dateQ(req.query.asOf, today());
@@ -361,7 +380,8 @@ router.get('/bs', auth, on, async (req, res) => {
       const left = flat(bs.liabilities);
       return { assets: flat(bs.assets), liabilities: left.filter((r) => r.code && nature.get(String(r.code)) !== 'equity'),
         equity: left.filter((r) => !r.code || nature.get(String(r.code)) === 'equity'), total_assets_minor: bs.total_assets_minor,
-        total_liab_equity_minor: bs.total_liabilities_minor, profit_to_date_minor: bs.profit_to_date_minor, balanced: bs.balanced, by_line: { assets: bs.assets, liabilities: bs.liabilities } };
+        total_liab_equity_minor: bs.total_liabilities_minor, profit_to_date_minor: bs.profit_to_date_minor, balanced: bs.balanced, by_line: { assets: bs.assets, liabilities: bs.liabilities },
+        schedule_iii: sched3(bs, Object.keys(B.packOf(req.books).sch3 || {})) };
     });
     res.json(Object.assign({ currency: curOf(req), asOf }, out));
   } catch (err) { fail(res, err); }
