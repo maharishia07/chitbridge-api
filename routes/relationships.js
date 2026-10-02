@@ -567,11 +567,42 @@ router.get('/customers/:id/rewards', auth, async (req, res) => {
  * never yourself, 'manual', no transactions yet (segment reads "new" until the count says otherwise).
  */
 router.post('/customers',
-  [ body('handle').trim().notEmpty().withMessage('User ID, bridge ID or email required') ],
+  [ body('handle').optional().trim(), body('name').optional().trim(),
+    body().custom((b) => { if (!String((b && b.handle) || '').trim() && !String((b && b.name) || '').trim())
+      throw new Error('Give a User ID or email for a ChitBridge business, or a name for a local customer'); return true; }) ],
   validate, auth,
   async (req, res) => {
     try {
-      const owner = ctx(req), handle = req.body.handle.trim();
+      const owner = ctx(req), handle = String(req.body.handle || '').trim();
+      /* ⭐⭐ A NAME, NOT AN ID (Athi, 2026-10-02): a walk-in regular who is not on ChitBridge. The counter allows On credit only for a
+         customer the shop KNOWS (till.html custKnown), and the snapshot lists every customer_list row — so a named row is what makes
+         credit possible. The supplier door's own path: lib/local-identity.mint (kind 'cus') gives an ordinary entity row with a
+         `~owner.cus-nnnn` handle, never a recipient (handle.isMinted), so a bill to them is one-sided: recorded and booked, not sent. */
+      if (!handle) {
+        const localName = sanitise(String(req.body.name || '').trim());
+        const phone = String(req.body.phone || '').replace(/[^0-9+]/g, '');
+        if (req.body.phone && (phone.length < 6 || phone.length > 20)) return res.status(400).json({ error: 'Invalid', message: 'Enter a valid phone number.' });
+        const local = await require('../lib/local-identity').mint(owner, localName, { query, kind: 'cus' });
+        if (local.error) return res.status(local.status).json(local.error);
+        /* ⭐ phone and GSTIN go where the till's customer query already reads them: identities.otp_contact (as phone) and .gstn —
+           no schema change. Nothing looks an identity up BY otp_contact, so a minted row cannot be reached through it. */
+        const gstin = sanitise(String(req.body.gstin || '')).replace(/\s+/g, '').toUpperCase();
+        if (local.created && (phone || gstin))
+          await query(`UPDATE identities SET otp_contact = COALESCE($2, otp_contact), gstn = COALESCE($3, gstn)
+                        WHERE identity_id = $1 AND parent_entity_id = $4`, [local.identity_id, phone || null, gstin || null, owner]);
+        const rr = await withEntity(owner, (db) => db.query(
+          `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
+           VALUES ($1, $2, 'entity', 'manual', 0, NULL)
+           ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING
+           RETURNING customer_list_id`, [owner, local.identity_id]));
+        if (rr.rows.length === 0) return res.status(409).json({ error: 'Exists', message: localName + ' is already in your customer list' });
+        const no = await numberParty(owner, local.identity_id);
+        const why = 'not on ChitBridge — bills stay with you';
+        return res.json({ message: 'Customer added — ' + why,
+          customer: { customer_list_id: rr.rows[0].customer_list_id, customer_identity_id: local.identity_id, display_name: local.display_name,
+                      user_id: local.user_id, bridge_id: local.bridge_id, segment: 'new', added_via: 'manual', party_no: no,
+                      phone: phone || null, gstin: gstin || null, on_rail: false, one_sided: { why } } });
+      }
       /* ⚠️ Same fence as the supplier add: a `~` handle is a party some OTHER business minted, and it resolves by
          user_id like any entity. Answer as if it does not exist rather than confirming the guess. */
       if (require('../lib/handle').isMinted(handle))
