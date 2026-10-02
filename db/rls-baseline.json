@@ -511,6 +511,18 @@
    "policies": 1,
    "app_reads": true
   },
+  "party_followup": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
+  "party_interaction": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "platform_constitution": {
    "rls": false,
    "forced": false,
