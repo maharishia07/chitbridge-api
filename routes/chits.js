@@ -52,7 +52,7 @@ const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
 const taxEngine = require('../lib/tax');   // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
-const istest = require('../lib/istest');   /* mayTrade — may these two businesses trade (b249's rule, at the door) */
+const localIdentity = require('../lib/local-identity');   /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
    live in the Bills folders. The SAME classification the folders read through lib/select.js, so the two can never disagree. */
 const FOLDER_INV = require('../lib/folder-inventory');
@@ -117,15 +117,15 @@ async function tillMaySend(sender_id, outward, body) {
   try {
     const ok = await withEntity(sender_id, (db) => db.query(
       `SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id
-        WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ${istest.mayTradeSql('i', '$1')}
+        WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ${localIdentity.mayTradeSql('i', '$1')}
         LIMIT 1`, [sender_id, eid]));
     if (ok.rows.length === 1) return null;
     /* the second look only says WHICH rule failed, so the words on the bill are the true ones */
     const listed = await withEntity(sender_id, (db) => db.query(
       `SELECT 1 AS ok FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 LIMIT 1`, [sender_id, eid]));
     if (!listed.rows.length) return { oneSided: who + ' is not on this shop\'s customer list' };
-    const v = await istest.mayTrade(sender_id, eid);
-    return { oneSided: v.ok ? who + ' could not be sent their copy' : v.why };
+    const v = await localIdentity.mayTrade(sender_id, eid);
+    return { oneSided: v.ok ? who + ' could not be sent their copy' : v.say };
   } catch (_) { return { oneSided: 'the customer could not be checked just now' }; }
 }
 
