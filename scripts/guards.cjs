@@ -192,6 +192,9 @@ const GUARDS = [
   /* ⭐⭐ THE BILLS FOLDER (2026-10-01) — broken once each by scripts/bills-folder-breaks.cjs */
   'bills-folder.test.cjs',      // the folder inventory numbered with the ledger; view folders; the step function; bills leave Task — nothing else
   'bills-private.test.cjs',     // ⭐⭐ a bill's steps stay with the shop that took them, at the folder's messaging level; only the dispute always crosses
+  /* ⭐⭐ THE SHOP'S NAME IS THE PROFILE'S NAME (2026-10-01) — broken once each by tests/shop-name-breaks.test.js */
+  'shop-name.test.js',          // the account's name wins invoiceParty/profileValues; a vault name only fills an empty one; a difference is reported, case-blind
+  'shop-name-breaks.test.js',   // each of those four rules, broken once, turns shop-name.test.js red
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
