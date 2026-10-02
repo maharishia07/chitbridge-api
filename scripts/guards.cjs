@@ -189,6 +189,8 @@ const GUARDS = [
   'goods-in-accepts.test.cjs',  // goods-in, every line in → accepted through the SAME transition as Intake
   'two-sided-books.test.cjs',   // one bill, two ledgers: sale at save, purchase on acceptance
   'bill-use.test.cjs',          // what a bill I received is for — resale · use · asset — and what each posts; stock only for resale
+  /* ⭐⭐⭐ ONE INVOICE, EVERYWHERE (2026-10-02) — broken once each by scripts/tax-truth-breaks.cjs */
+  'tax-truth.test.cjs',         // one counter bill read six ways (bill · chit · both ledgers · reprint · buyer's read), equal to the paisa; place of supply = the shop's state
   /* ⭐⭐ THE BILLS FOLDER (2026-10-01) — broken once each by scripts/bills-folder-breaks.cjs */
   'bills-folder.test.cjs',      // the folder inventory numbered with the ledger; view folders; the step function; bills leave Task — nothing else
   'bills-private.test.cjs',     // ⭐⭐ a bill's steps stay with the shop that took them, at the folder's messaging level; only the dispute always crosses

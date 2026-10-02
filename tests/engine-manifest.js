@@ -337,6 +337,10 @@ const INFRA_LIBS = [
   'tax-lines.js',          // rate on the line at send · INV-01 for a copy · the month's ledger · GSTR shapes
   'tax-shelf.js',          // one reader of slabs (own + governed) · categories · face
   'tax-copy.js', 'schedule.js', 'slab-cites.js',           // my copy as a tax record; freeze at completed; ledger over my copies
+  /* INFRA, THE SAME TEST (2026-10-02): `issued-invoice.js` carries the invoice a COUNTER issued into the INV-01 shape by
+     value, checks the server's recompute against it (names, never replaces), and holds the one place-of-supply rule. It
+     asserts no rate of CB's own — every figure is the counter's. */
+  'issued-invoice.js',     // the counter's invoice as issued · the check · place of supply · the earlier-bills row
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
@@ -771,4 +775,4 @@ const TILL_CANDIDATES = [
 
 module.exports = { TIER_A, TIER_B, ALLOWED_FOR_ENGINE, ADOPTION_LIBS, INFRA_LIBS, ENGINE_OTHER, PENDING_LIBS,
   TILL_SHIPPABLE, TILL_CANDIDATES };
-
+

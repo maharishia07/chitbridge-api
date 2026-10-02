@@ -5934,12 +5934,18 @@ function chitOf(bill){
       /* ⭐ BOOKS v2 — a credit bill's terms and any owner override, on the record both copies hold */
       terms: bill.terms || null,
       credit_override: bill.credit_override || null,
+      /* ⭐⭐⭐ THE INVOICE AS ISSUED (invoiceOf, built once at the sale) — carried as it is, never recomputed here. A bill
+         saved before it existed carries none, and the server keeps its old path for it. */
+      invoice: bill.invoice || undefined,
+      delivery: bill.delivery || undefined,
     },
     line_items: (bill.lines||[]).map(function(l){
       var o = { particulars:l.name, quantity:l.qty, unit:l.unit||'piece', price:l.price, total:l.net };
       if (l.item_id) o.item_id = l.item_id;
       if (l.hsn) o.hsn = l.hsn;
       if (l.gst_rate != null) o.gst_rate = l.gst_rate;
+      /* ⭐⭐ the line's own invoice figures, as billMoney worked them out (finish kept them on the bill) */
+      ['gross','taxable','tax','cgst','sgst','igst'].forEach(function(k){ if (l[k] != null) o[k] = l[k]; });
       /* ⭐ THE CHIT CARRIES EVERY OFFER. `offer` stays exactly as it was so nothing downstream changes; `offers`
          is the full list, because one label over the sum of several is a record that cannot be checked. */
       if (l.off) {
@@ -17442,6 +17448,27 @@ function rwEncash(){
   paintParts(); paintTotals(); paintRw();
 }
 
+/**
+ * ⭐⭐⭐ PLACE OF SUPPLY — ONE RULE, THE COUNTER AND THE SERVER ALIKE (IGST Act s.10(1)(a); Athi, 2026-10-02).
+ * A counter bill is handed over at the counter → the SHOP's state → CGST + SGST, even for a registered buyer from another
+ * state. Only a bill that RECORDS a delivery (`delivery.state_code`) is supplied there. Until 2026-10-02 billMoney asked
+ * CBTax.supplyType(shop, shop) — the shop compared with itself, which happened to be right for every counter bill and
+ * could never be right for a delivery.
+ * ⚠️ THE SAME TEXT AS lib/issued-invoice.js placeOfSupply, byte for byte (tests/tax-truth.test.cjs) — change both or neither.
+ */
+function placeOfSupply(rec, shopState) {
+  var shop = String(shopState == null ? '' : shopState).trim();
+  var d = (rec && typeof rec === 'object' && rec.delivery && typeof rec.delivery === 'object') ? rec.delivery : null;
+  var to = d ? String(d.state_code == null ? '' : d.state_code).trim() : '';
+  if (/^\d$/.test(to)) to = '0' + to;
+  return /^\d{2}$/.test(to) ? to : shop;
+}
+/**
+ * ⚠️ A DELIVERY THIS BILL RECORDS ({ state_code, address }) — the one thing that moves its place of supply off the shop.
+ * The counter has no screen that takes a delivery address yet, so this stays null and every bill is over the counter;
+ * whatever records one sets it here, and it travels on the bill (finish) and the chit (chitOf).
+ */
+var BILL_DELIVERY = null;
 function billMoney(){
   var gross = 0, save = 0, net = 0;
   CART.forEach(function(c){ gross = r2(gross + (c.gross||0)); save = r2(save + (c.save||0)); net = r2(net + (c.net||0)); });
@@ -17452,7 +17479,8 @@ function billMoney(){
   var base = net, tax = 0, byRate = {};
   /* ⭐ the supply (intra / inter / unknown) is decided ONCE, up here, because each line's heads need it below */
   var sc = (S && S.shop && S.shop.state_code) ? String(S.shop.state_code) : '';
-  var supply = (window.CBTax && CBTax.supplyType) ? CBTax.supplyType(sc, sc) : 'unknown';
+  var pos = placeOfSupply({ delivery: BILL_DELIVERY }, sc);
+  var supply = (window.CBTax && CBTax.supplyType) ? CBTax.supplyType(sc, pos) : 'unknown';
   if (taxed){
     base = 0;
     CART.forEach(function(c){
@@ -17525,7 +17553,19 @@ function billMoney(){
     });
   }
   return { gross:gross, save:save, net:net, base:base, tax:tax, byRate:byRate, taxed:taxed, inclusive:inclusive,
-           supply:supply, heads:heads, round:round };
+           supply:supply, pos_state:pos, heads:heads, round:round };
+}
+/**
+ * ⭐⭐⭐ THE INVOICE THIS BILL ISSUED — read off billMoney(), never worked out again (Athi, 2026-10-02: "one invoice,
+ * everywhere"; CGST Act s.31, Rule 46). It rides the bill (finish) and the chit (chitOf, and the shop-PC program's chitOf
+ * passes the same object on), and it is what the server stores, BOTH ledgers post and every reprint prints. Bill
+ * C2/26-27/0007 lost it: the server rebuilt the tax its own way (IGST), its total from the line nets (₹1,118.15 for a
+ * ₹1,118.16 bill), and the reprint printed GST ₹0.00 on a TAX INVOICE.
+ */
+function invoiceOf(m){
+  return { issued:'counter', taxable:m.base, tax:m.tax, total:m.net, round_off:m.round || 0, supply:m.supply,
+           pos_state:m.pos_state || null, by_rate:m.byRate || {}, heads:m.heads || [], priced_inclusive:!!m.inclusive,
+           taxed:!!m.taxed };
 }
 /**
  * ── ⭐⭐⭐ WHAT IS ON THIS BILL, COUNTED THE WAY EACH LINE IS SOLD ([TILL-104]) ──────────────────
@@ -17598,7 +17638,7 @@ function paintShop(){
   var sh = S.shop, tx = shopTax();
   var doc = tx.kind === 'tax' ? 'a TAX INVOICE' : (tx.kind === 'supply' ? 'a BILL OF SUPPLY' : 'a cash memo');
   var split = !sh.state_code ? 'cannot be split'
-    : ((window.CBTax && CBTax.supplyType(String(sh.state_code), String(sh.state_code)) === 'intra') ? 'CGST + SGST' : 'IGST');
+    : ((window.CBTax && CBTax.supplyType(String(sh.state_code), placeOfSupply(null, String(sh.state_code))) === 'intra') ? 'CGST + SGST' : 'IGST');
   /**
    * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
    * *"service tax not registered."* A shop below the threshold is correctly unregistered, and the line says so.
@@ -20145,7 +20185,10 @@ async function finish(){
                                             return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
                                                      off:r2(Math.abs(a.amount)), why:a.why||null }; }),
                                           save_unnamed:c.save_unnamed || 0,
-                                          hsn:c.hsn, gst_rate:c.gst_rate }; }),
+                                          hsn:c.hsn, gst_rate:c.gst_rate,
+                                          /* ⭐ the line's heads, as billMoney split them — the invoice's lines, carried */
+                                          cgst:c.cgst != null ? c.cgst : null, sgst:c.sgst != null ? c.sgst : null,
+                                          igst:c.igst != null ? c.igst : null }; }),
     payments: parts, paid: paid,
     /* ⚠️ RECORDED, NOT INFERRED. The day close counts the bills nobody answered this for; working it out afterwards
        from the shape of a bill would be a guess dressed as a finding. */
@@ -20156,7 +20199,9 @@ async function finish(){
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
     /* ⚠️ THE SPLIT IS RECORDED, NOT RE-DERIVED. A reprint months later must show the heads this bill was ISSUED with —
        the shop's registration can change, and a slip that recomputes would quietly restate a filed return. */
-    heads: m.heads, supply: m.supply,
+    heads: m.heads, supply: m.supply, pos_state: m.pos_state, round_off: m.round || 0, delivery: BILL_DELIVERY || null,
+    /* ⭐⭐⭐ the invoice as issued — see invoiceOf(); the chit carries this object, unchanged */
+    invoice: invoiceOf(m),
     /* ⭐ the rate-wise summary the printed bill shows at the foot — recorded with the bill for the same reason
        the heads are, so a reprint states what was issued rather than what today's slabs would say */
     by_rate: m.byRate || {},
@@ -20206,7 +20251,7 @@ async function finish(){
   CFD.done(r.bill && r.bill.no, r.bill && money(r.bill.total));
   showSlip(r.bill, m);
   autoPrint(r.bill);
-  ageClear(); CART = []; PARTS = []; paintParts();
+  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; paintParts();
   /* ⚠️ the balance on screen belonged to the customer who just left */
   RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
   document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
@@ -21325,7 +21370,10 @@ function slipHTML(bill, m){
      * ⚠️ IT FALLS BACK, because bills saved before by_rate existed still get reprinted, and a reprint that
      * dropped the tax block would be worse than one that shows it the old way.
      */
-    + (bill.kind === 'tax' ? taxSummaryHTML(bill, t, dash) : '')
+    /* ⚠️ a reprint of a bill whose tax was never kept says so — never "GST 0.00" on a TAX INVOICE (slipOfRow) */
+    + (bill.kind === 'tax' ? (bill.tax_lost ? t('Tax detail not kept for this bill', '') : taxSummaryHTML(bill, t, dash)) : '')
+    /* ⭐ Rule 46(n): a tax invoice names its place of supply */
+    + (bill.kind === 'tax' && bill.pos_state ? t('Place of supply', esc(String(bill.pos_state))) : '')
     + solid + t('TOTAL', money(bill.total), true) + solid
     + (bill.payments||[]).map(function(p){ return t(esc(p.how), money(p.amount)); }).join('')
     + (bill.change > 0 ? t('Change', money(bill.change)) : '') + dash
@@ -23701,8 +23749,22 @@ function reprintOld(no){
   var b = EARLIER.filter(function(x){ return x.no === no; })[0];
   if (!b) return;
   document.getElementById('billsdlg').close();
+  b = slipOfRow(b);
   LAST = b;
   showSlip(b, { gross: r2((b.total||0) + (b.saved||0)) });
+}
+/**
+ * ⭐⭐⭐ A DUPLICATE IS THE SAME DOCUMENT AS THE ORIGINAL (2026-10-02). The row ChitBridge kept carries the invoice the counter
+ * issued (lib/issued-invoice billRow): its taxable value, tax, total, rate-wise summary, heads and place of supply are what
+ * the slip prints — never the row's own sums. Bill C2/26-27/0007, reprinted from the server copy, said taxable ₹1,118.15,
+ * GST ₹0.00, total ₹1,118.15 on a TAX INVOICE. A row with no carried invoice (a bill from before) says so on the paper.
+ */
+function slipOfRow(b){
+  var inv = (b && b.invoice && typeof b.invoice === 'object' && b.invoice.issued === 'counter') ? b.invoice : null;
+  if (!inv) return Object.assign({}, b, { tax_lost: true });
+  return Object.assign({}, b, { total: inv.total, taxable: inv.taxable, tax: inv.tax, by_rate: inv.by_rate || {},
+                                heads: inv.heads || [], supply: inv.supply, pos_state: inv.pos_state || null,
+                                round_off: inv.round_off || 0 });
 }
 async function reprint(no){
   var rows = (HOST && HOST.bills) ? (await HOST.bills()) : [];

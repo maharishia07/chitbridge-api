@@ -1,0 +1,358 @@
+/**
+ * tests/tax-truth.test.cjs — ONE INVOICE, EVERYWHERE: one counter bill read SIX ways, every figure equal to the paisa
+ * (docs/tasks/TAX-TRUTH-2026-10-02.md · docs/tasks/CLOUD-TASK-tax-truth.md; Athi's decisions of 2026-10-02).
+ *
+ * The bill is C2/26-27/0007 as the counter printed it: Tally Test (33AABCK1234F1Z6, regular, state 33, prices include
+ * tax) → Chola Auto Care, a business on the rail with a GSTIN from ANOTHER state (29), on credit; mixed 12% and 18%, two
+ * lines with offers. Printed: taxable ₹998.21 · CGST 59.76 + SGST 59.75 at 12% · CGST 0.22 + SGST 0.22 at 18% · total
+ * ₹1,118.16 (its line nets sum to ₹1,118.15 — the paisa is the declared round-off) · intra · place of supply 33.
+ * ⚠️ The diagnosis records the bill's totals, not its lines; the lines here are a reconstruction that prints exactly
+ * those totals through the counter's own arithmetic (CBTax.splitLineTax / lineHeads), which is what is under test.
+ *
+ * The six readings, each through the REAL code, no database, no network:
+ *   1 the counter's bill      — till.html finish() → the bill it saves (billMoney · invoiceOf), and its printed slip
+ *   2 the chit as stored      — till.html chitOf() → POST /api/chits/send (the real route, db stubbed) → the shop's copy
+ *   3 the seller's posting    — lib/tax-copy entryFor(shop copy) → lib/books-hooks classify → sale_bill
+ *   4 the buyer's posting     — entryFor(customer copy) → classify, accepted → purchase_bill
+ *   5 the reprint's slip      — lib/issued-invoice billRow (GET /api/till/bills) → till.html reprintOld → slipOfRow → slipHTML
+ *   6 the buyer's invoice     — entryFor(customer copy) → what GET /api/tax/invoice returns (invoice + heads)
+ * Variants: a recorded delivery to another state (IGST everywhere) · an exclusive-price shop · a walk-in · a bill with no
+ * carried block (the old path, place of supply = the shop's state) · a carried figure the server disagrees with (carried
+ * kept, the difference named). And: the place-of-supply rule is ONE text on both hosts; the shop-PC program's chitOf
+ * carries the same invoice the page's does.
+ * Broken once each by scripts/tax-truth-breaks.cjs.
+ * Run: node tests/tax-truth.test.cjs
+ */
+'use strict';
+const fs = require('fs'), path = require('path'), vm = require('vm');
+const API = path.join(__dirname, '..');
+process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test';
+
+let pass = 0, fail = 0;
+const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
+const J = (x) => JSON.stringify(x);
+
+const SHOP = '11111111-1111-4111-8111-111111111111', CUST = '22222222-2222-4222-8222-222222222222';
+const ROWS = {
+  [SHOP]: { identity_id: SHOP, bridge_id: 'CB-SHOP', display_name: 'Tally Test', country: 'IN', gstn: '33AABCK1234F1Z6', status: 'active', policy_flags: { price_includes_tax: 'yes' } },
+  [CUST]: { identity_id: CUST, bridge_id: 'CB-CUST', display_name: 'Chola Auto Care', country: 'IN', gstn: '29BBBBB0000B1Z5', status: 'active', policy_flags: {} },
+};
+
+/* ── the database, stubbed (the shape tests/two-sided-bill.test.cjs uses) ────────────────────────────────────────── */
+function rowsFor(sql, p) {
+  const s = String(sql);
+  if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
+  if (/business_json->>'client_ref' = \$2/.test(s)) return [];
+  if (/FROM customer_list/.test(s) && /customer_identity_id = \$2/.test(s)) return String(p && p[1]) === CUST ? [{ ok: 1 }] : [];
+  if (/FROM supplier_list/.test(s)) return [];
+  if (/SELECT self_copy_pref/.test(s)) return [{ self_copy_pref: null }];
+  if (/FROM identities/.test(s) && /identity_id = ANY/.test(s)) return (p[0] || []).map((id) => ROWS[id]).filter(Boolean);
+  if (/FROM identities/.test(s) && /identity_id = \$1/.test(s)) { const r = ROWS[p && p[0]]; return r ? [r] : []; }
+  return [];
+}
+const dbPath = require.resolve(path.join(API, 'db'));
+const tx = { query: async (s, p) => ({ rows: rowsFor(s, p) }) };
+require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
+  query: async (s, p) => ({ rows: rowsFor(s, p) }),
+  withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx),
+  trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } },
+  onEntity: async (id, db, fn) => fn(tx),
+} };
+const authPath = require.resolve(path.join(API, 'middleware', 'auth'));
+require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: Object.assign(
+  (req, res, next) => { req.identity = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CB-SHOP', display_name: 'Tally Test' }; req.api_key = { scopes: ['till'] }; next(); },
+  { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id, requireScope: () => (q, s, n) => n(),
+    userOf: (req) => req.identity, forgetKey: () => {}, keyAlive: async () => true }) };
+const mint = require(path.join(API, 'lib', 'mint'));
+let COPIES = null;
+mint.deliver = async (sender, chit_id, copies) => { COPIES = copies; return { ok: true }; };
+const hooks = require(path.join(API, 'lib', 'books-hooks'));
+const classify = hooks.classify;
+hooks.afterChit = () => Promise.resolve({});
+try { require(path.join(API, 'lib', 'meter')).meter = async () => {}; } catch (_) {}
+require(path.join(API, 'lib', 'tax-shelf')).readShelf = async () => null;
+try { require(path.join(API, 'lib', 'stock-from-chit')).postFor = async () => ({ failed: [], skipped: [] }); } catch (_) {}
+const TC = require(path.join(API, 'lib', 'tax-copy'));
+const T = require(path.join(API, 'lib', 'tax-lines'));
+const I = require(path.join(API, 'lib', 'issued-invoice'));
+const MONEY = require(path.join(API, 'lib', 'money'));
+const r2 = (n) => MONEY.round(Number(n) || 0);
+
+/* ── the counter page, its own functions in a sandbox ─────────────────────────────────────────────────────────────── */
+const PAGE = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+const PROG = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
+function fnText(src, sig) {
+  const at = src.indexOf(sig);
+  if (at < 0) throw new Error(sig + ' is gone from the source — this test is measuring nothing');
+  const end = src.indexOf('\n}\n', at);
+  return src.slice(at, end + 2);
+}
+const PAGE_FNS = ['function placeOfSupply(', 'function billMoney(', 'function invoiceOf(', 'async function finish(', 'function chitOf(',
+  'function billRecipients(', 'function billSendTo(', 'function isReturnRow(', 'function isExpenseRow(', 'function slipOfRow(',
+  'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded('];
+
+/** one bill rung at the counter: the page's finish() over a cart, as it runs in a browser — returns what it saved and printed */
+async function ring(o) {
+  const saved = {}, el = (v) => ({ value: v || '', textContent: '', className: '', innerHTML: '', classList: { remove() {}, add() {} }, showModal() {}, close() {}, open: false });
+  const els = { tendered: el(''), cname: el(o.cust ? o.cust.name : ''), cphone: el(o.cust ? '9840012345' : ''), lastnote: el(''), billsdlg: el('') };
+  const ctx = {
+    window: {}, console, Object, Array, String, Number, JSON, Math, Date, Promise,
+    CBTax: require(path.join(API, 'lib', 'tax.js')),
+    MONEY: () => MONEY, r2, esc: (v) => String(v == null ? '' : v), money: (v) => '₹' + (Number(v) || 0).toFixed(2),
+    S: { shop: { name: 'Tally Test', gstin: '33AABCK1234F1Z6', state_code: '33' }, policy: { price_includes_tax: o.inclusive === false ? 'no' : 'yes' } },
+    STATE: { till: { name: 'Counter 2' } }, ls: { get: (k, d) => d }, WHO: { id: 'u1', name: 'Athi', kind: 'entity' },
+    CART: o.cart.map((c) => Object.assign({}, c)), PARTS: [], PAY_ASKED: false, PICKED: o.cust ? 'On credit' : 'Cash',
+    BILL_DELIVERY: o.delivery || null, RW: { holder: null, points: 0, worth: 0, spend: 0, says: null, seq: 0 }, LAST: null, LASTNO: null, EARLIER: [],
+    shopTax: () => ({ charges: true, kind: 'tax' }), tillStopped: async () => false, booksOn: () => true,
+    custKnown: () => (o.cust ? { identity_id: CUST, entity_id: CUST, name: o.cust.name, gstin: '29BBBBB0000B1Z5' } : null),
+    creditSinceRefresh: async () => {}, creditLimitCheck: () => ({ known: false }), ownerApprove: async () => null,
+    creditDaysOf: () => 15, dueDateFor: () => '2026-10-17', creditCust: () => null, say: (m) => { saved.said = m; },
+    ageRecord: () => null, kotOn: () => false, purposeHas: () => false, orderKind: () => 'counter', orderTable: () => null,
+    rwProg: () => null, rwEarns: () => 0, rewardOnSlip: () => '', CFD: { done() {} }, autoPrint() {}, ageClear() {}, paintParts() {},
+    paintRw() {}, price() {}, menuFresh() {}, load() {}, loadQuick() {}, stepGo() {},
+    showSlip: (b, m) => { saved.slip = { bill: b, m }; },
+    HOST: { bill: async (body) => { saved.body = JSON.parse(JSON.stringify(body));
+      return { ok: true, bill: Object.assign({ no: o.no, at: '2026-10-01T17:32:00.000Z', till: 'C2' }, JSON.parse(JSON.stringify(body))) }; } },
+    document: { getElementById: (id) => els[id] || el('') },
+  };
+  ctx.window.CBTax = ctx.CBTax;
+  vm.createContext(ctx);
+  vm.runInContext(PAGE_FNS.map((s) => fnText(PAGE, s)).join('\n'), ctx);
+  await vm.runInContext('finish()', ctx);
+  const bill = ctx.LAST;
+  return { ctx, bill, body: saved.body, said: saved.said, slip: ctx.slipHTML(bill, saved.slip && saved.slip.m),
+           chit: JSON.parse(JSON.stringify(ctx.chitOf(bill))) };
+}
+const text = (html) => String(html).replace(/<[^>]+>/g, '');
+
+/* ── the bill: C2/26-27/0007's lines (see the header — a reconstruction that prints its totals) ───────────────────── */
+const line = (item_id, name, price, qty, save, rate, hsn) => {
+  const gross = r2(price * qty), net = r2(gross - save);
+  return { item_id, name, unit: 'piece', price, unitPrice: price, qty, gross, save, net, gst_rate: rate, hsn,
+           off: save > 0, off_label: save > 0 ? 'Monsoon offer' : '', offs: save > 0 ? [{ offer_id: 'o1', label: 'Monsoon offer', amount: -save }] : [], save_unnamed: 0 };
+};
+const CART_0007 = [
+  line('i1', 'Engine flush 500ml', 78.43, 3, 10.21, 12, '3403'), line('i2', 'Brake fluid DOT4', 113.94, 2, 3.45, 12, '3819'),
+  line('i3', 'Coolant 1L', 145.02, 2, 0, 12, '3820'), line('i4', 'Wiper refill', 22.87, 2, 0, 12, '4016'),
+  line('i5', 'Polish kit', 329.98, 1, 0, 12, '3405'), line('i6', 'Fuse 10A', 2.88, 1, 0, 18, '8536'),
+];
+
+/* ── the server ──────────────────────────────────────────────────────────────────────────────────────────────────── */
+const express = require('express');
+const app = express(); app.use(express.json());
+app.use('/api/chits', require(path.join(API, 'routes', 'chits')));
+
+/** the six readings of one bill */
+async function sixWays(port, o) {
+  const r = await ring(o);
+  const chitBody = o.mutate ? o.mutate(JSON.parse(JSON.stringify(r.chit))) : r.chit;
+  COPIES = null;
+  const res = await fetch(`http://127.0.0.1:${port}/api/chits/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: J(chitBody) });
+  const sent = await res.json().catch(() => ({}));
+  const shopCopy = (COPIES || []).find((c) => c.entity_id === SHOP), custCopy = (COPIES || []).find((c) => c.entity_id === CUST);
+  const asHdr = (c, status) => c && { chit_id: 'ch-' + o.no, sender_entity_id: c.sender_entity_id || SHOP, all_recipients: c.all_recipients,
+    business_json: c.business_json, purpose: c.purpose, line_items: c.line_items, currency_code: 'INR', current_status: status,
+    sent_at: '2026-10-01T17:32:05.000Z', created_at: '2026-10-01T17:32:05.000Z', summary_json: c.summary_json };
+  const sHdr = asHdr(shopCopy, 'pending'), cHdr = asHdr(custCopy, 'accepted');
+  const sEntry = sHdr ? await TC.entryFor(sHdr, SHOP) : null, cEntry = cHdr ? await TC.entryFor(cHdr, CUST) : null;
+  const setting = { enabled: true, country: 'IN', walkin_grain: 'day' };
+  const sPost = sEntry ? classify({ chit: sHdr, entry: sEntry, setting }) : null;
+  const cPost = cEntry ? classify({ chit: cHdr, entry: cEntry, setting, status: 'accepted' }) : null;
+  /* the reprint: the row GET /api/till/bills returns, through the page's own reprintOld() */
+  const row = shopCopy ? I.billRow({ chit_id: 'ch-' + o.no, created_at: '2026-10-01T17:32:05.000Z', business_json: shopCopy.business_json,
+    line_items: shopCopy.line_items, summary_json: shopCopy.summary_json }) : null;
+  let reprint = null;
+  if (row) {
+    const ctx = r.ctx; ctx.EARLIER = [JSON.parse(J(row))]; let shown = null;
+    ctx.showSlip = (b, m) => { shown = { b, m }; };
+    vm.runInContext('reprintOld(' + J(row.no) + ')', ctx);
+    reprint = shown ? { bill: shown.b, html: ctx.slipHTML(shown.b, shown.m) } : null;
+  }
+  return { r, res, sent, shopCopy, custCopy, sEntry, cEntry, sPost, cPost, row, reprint };
+}
+
+/** the figures of an INV-01 invoice, per rate — what every reading is compared by */
+const figOfInv = (inv) => {
+  const by = {}; for (const it of (inv && inv.ItemList) || []) {
+    const k = String(it.GstRt), o = by[k] || (by[k] = { taxable: 0, cgst: 0, sgst: 0, igst: 0 });
+    o.taxable = r2(o.taxable + it.AssAmt); o.cgst = r2(o.cgst + it.CgstAmt); o.sgst = r2(o.sgst + it.SgstAmt); o.igst = r2(o.igst + it.IgstAmt);
+  }
+  const v = (inv && inv.ValDtls) || {};
+  return { by, taxable: r2(v.AssVal), tax: r2(r2(v.CgstVal) + r2(v.SgstVal) + r2(v.IgstVal)), total: r2(v.TotInvVal),
+           supply: inv && inv._cb && inv._cb.supply, pos: inv && inv.BuyerDtls && inv.BuyerDtls.Pos };
+};
+const figOfBill = (b) => {
+  const by = {}; Object.keys(b.by_rate || {}).forEach((k) => { const x = b.by_rate[k];
+    by[k] = { taxable: r2(x.base), cgst: r2(x.cgst || 0), sgst: r2(x.sgst || 0), igst: r2(x.igst || 0) }; });
+  return { by, taxable: r2(b.taxable), tax: r2(b.tax), total: r2(b.total), supply: b.supply, pos: b.pos_state };
+};
+const figOfPost = (ev, total) => {
+  const by = {}; (ev.by_rate || []).forEach((x) => { by[String(x.rate)] = { taxable: r2(x.taxable), cgst: r2(x.cgst), sgst: r2(x.sgst), igst: r2(x.igst) }; });
+  const rows = ev.by_rate || [];
+  const tax = r2(rows.reduce((a, x) => a + x.cgst + x.sgst + x.igst, 0)), taxable = r2(rows.reduce((a, x) => a + x.taxable, 0));
+  return { by, taxable, tax, total: r2(taxable + tax + (ev.round_off || 0)) };
+};
+/** a slip's GST summary, read back off the paper */
+const slipSays = (html, b) => {
+  const s = text(html), inter = b.supply === 'inter', out = [];
+  Object.keys(b.by).forEach((k) => {
+    const x = b.by[k];
+    out.push([k + '%', '₹' + x.taxable.toFixed(2), '₹' + (inter ? x.igst : x.cgst).toFixed(2), inter ? '' : '₹' + x.sgst.toFixed(2)].join(''));
+  });
+  out.push('TOTAL₹' + b.total.toFixed(2));
+  if (b.pos) out.push('Place of supply' + b.pos);
+  return out.filter((x) => s.indexOf(x) < 0);
+};
+const same = (a, b) => J(a) === J(b);
+const pick = (f, ks) => Object.fromEntries(ks.map((k) => [k, f[k]]));
+
+const srv = app.listen(0, '127.0.0.1', async () => {
+  const port = srv.address().port;
+  try {
+    console.log('\n══ ONE INVOICE, EVERYWHERE — bill C2/26-27/0007 read six ways ══\n');
+    const W = await sixWays(port, { no: 'C2/26-27/0007', cart: CART_0007, cust: { name: 'Chola Auto Care' } });
+    const want = { by: { 12: { taxable: 995.77, cgst: 59.76, sgst: 59.75, igst: 0 }, 18: { taxable: 2.44, cgst: 0.22, sgst: 0.22, igst: 0 } },
+                   taxable: 998.21, tax: 119.95, total: 1118.16, supply: 'intra', pos: '33' };
+    const b = W.r.bill || {};
+
+    /* 1 · the counter's bill */
+    const f1 = figOfBill(b);
+    ok('1 the COUNTER\'s bill: taxable 998.21 · CGST/SGST 59.76/59.75 at 12% and 0.22/0.22 at 18% · total 1118.16 · intra · place of supply 33',
+      same(f1, want), J(f1));
+    ok('…its line nets sum to 1118.15 — the paisa is the declared round-off (0.01), not lost', r2(b.lines.reduce((a, l) => a + l.net, 0)) === 1118.15 && b.round_off === 0.01, J([b.round_off]));
+    ok('…the bill carries its invoice, read off billMoney (issued by the counter, the same figures)',
+      b.invoice && b.invoice.issued === 'counter' && same(figOfBill({ by_rate: b.invoice.by_rate, taxable: b.invoice.taxable, tax: b.invoice.tax, total: b.invoice.total,
+        supply: b.invoice.supply, pos_state: b.invoice.pos_state }), want) && b.invoice.round_off === 0.01 && b.invoice.priced_inclusive === true, J(b.invoice));
+    ok('…every line keeps its gross · taxable · tax · CGST · SGST · IGST', b.lines.every((l) => [l.gross, l.taxable, l.tax, l.cgst, l.sgst, l.igst].every((v) => typeof v === 'number')),
+      J(b.lines.map((l) => [l.taxable, l.tax, l.cgst, l.sgst])));
+    ok('…and the printed slip says so: the rate rows, TOTAL ₹1118.16, place of supply 33', slipSays(W.r.slip, want).length === 0, J(slipSays(W.r.slip, want)));
+
+    /* 2 · the chit as stored */
+    const sc = W.shopCopy || {}, sbj = sc.business_json || {};
+    ok('2 the CHIT as stored: sent (200), the shop\'s copy carries the counter\'s invoice unchanged', W.res.status === 200 && same(sbj.invoice, b.invoice), W.res.status + ' ' + J(W.sent).slice(0, 200));
+    ok('…its value is the invoice total 1118.16 — the copy (chit_detail.total_value), the summary, the money block (not the 1118.15 of the line nets)',
+      sc.total_value === 1118.16 && sc.summary_json && sc.summary_json.total_value === 1118.16
+      && sc.summary_json.money && sc.summary_json.money.total === 1118.16 && sc.summary_json.money.tax === 119.95 && sc.summary_json.money.issued === true,
+      J([sc.total_value, sc.summary_json && sc.summary_json.total_value, sc.summary_json && sc.summary_json.money]));
+    const lineKeys = ['gross', 'taxable', 'tax', 'cgst', 'sgst', 'igst'];
+    ok('…every stored line carries the counter\'s own gross · taxable · tax · heads, line for line',
+      (sc.line_items || []).length === b.lines.length && sc.line_items.every((l, i) => lineKeys.every((k) => l[k] === b.lines[i][k])),
+      J((sc.line_items || []).map((l) => pick(l, lineKeys))));
+    ok('…the customer\'s copy carries the same invoice and lines', W.custCopy && same(W.custCopy.business_json.invoice, b.invoice) && same(W.custCopy.line_items, sc.line_items));
+    ok('…and the server\'s check agrees with the counter: no tax_check on the chit, none on either entry',
+      !sbj.tax_check && W.sEntry && W.sEntry.tax_check && W.sEntry.tax_check.ok && W.cEntry && W.cEntry.tax_check && W.cEntry.tax_check.ok,
+      J([sbj.tax_check, W.sEntry && W.sEntry.tax_check, W.cEntry && W.cEntry.tax_check]));
+
+    /* 3 · the seller's posting */
+    const sev = W.sPost && W.sPost.event || {};
+    const f3 = Object.assign(figOfPost(sev), { supply: W.sEntry.invoice._cb.supply, pos: W.sEntry.invoice.BuyerDtls.Pos });
+    ok('3 the SELLER\'s posting: sale_bill to Chola, the same rates, heads and total; round-off 0', W.sPost && W.sPost.kind === 'post' && sev.type === 'sale_bill'
+      && sev.party === CUST && same(f3, want) && sev.round_off === 0 && sev.paid && Object.keys(sev.paid).length === 0, J([W.sPost && W.sPost.kind, sev.type, f3, sev.round_off]));
+    ok('…its invoice is the issued one (frozen, not provisional), output CGST + SGST — never IGST', W.sEntry.issued && W.sEntry.frozen && !W.sEntry.provisional
+      && T.heads(W.sEntry.invoice).igst === 0 && T.heads(W.sEntry.invoice).cgst === 59.98 && T.heads(W.sEntry.invoice).sgst === 59.97, J(T.heads(W.sEntry.invoice)));
+    ok('…GSTR-1 reports it b2b to the buyer\'s GSTIN, place of supply 33, under the bill\'s number, value 1118.16', (() => {
+      const g = T.gstr1(T.ledger([W.sEntry], W.sEntry.me), W.sEntry.me, '102026');
+      const e = (g.b2b[0] || {}).inv || [];
+      return g.b2b.length === 1 && g.b2b[0].ctin === '29BBBBB0000B1Z5' && e[0] && e[0].pos === '33' && e[0].inum === 'C2/26-27/0007' && e[0].val === 1118.16;
+    })());
+
+    /* 4 · the buyer's posting */
+    const cev = W.cPost && W.cPost.event || {};
+    const f4 = Object.assign(figOfPost(cev), { supply: W.cEntry.invoice._cb.supply, pos: W.cEntry.invoice.BuyerDtls.Pos });
+    ok('4 the BUYER\'s posting on acceptance: purchase_bill from Tally Test, the same rates, heads and total', W.cPost && W.cPost.kind === 'post' && cev.type === 'purchase_bill'
+      && cev.party === SHOP && same(f4, want) && cev.round_off === 0, J([W.cPost && W.cPost.kind, cev.type, f4]));
+    ok('…input CGST + SGST on the buyer\'s side too (the invoice as issued is what ITC rests on, s.16)',
+      (() => { const l = T.ledger([W.cEntry], W.cEntry.me); return l.itc.cgst === 59.98 && l.itc.sgst === 59.97 && l.itc.igst === 0; })());
+
+    /* 5 · the reprint */
+    const rb = W.reprint && W.reprint.bill || {};
+    const f5 = figOfBill(rb);
+    ok('5 the REPRINT (Earlier bills → print) is the original: the same figures, the same paper', same(f5, want) && slipSays(W.reprint.html, want).length === 0,
+      J([f5, W.reprint && slipSays(W.reprint.html, want)]));
+    ok('…no line prints "Gross ₹0.00", and no "GST ₹0.00" on a tax invoice', W.reprint && !/Gross₹0\.00/.test(text(W.reprint.html)) && !/GST₹0\.00/.test(text(W.reprint.html)),
+      text(W.reprint && W.reprint.html).slice(0, 400));
+
+    /* 6 · the buyer's invoice read */
+    const inv6 = W.cEntry.invoice;
+    const f6 = figOfInv(inv6);
+    ok('6 the BUYER\'s invoice read (/api/tax/invoice): the same figures, place of supply 33', same(f6, want) && T.heads(inv6).total === 1118.16 && T.heads(inv6).tax === 119.95, J([f6, T.heads(inv6)]));
+    ok('…the buyer is named by the rail (GSTIN, legal name), the seller is the shop', inv6.BuyerDtls.Gstin === '29BBBBB0000B1Z5' && inv6.BuyerDtls.LglNm === 'Chola Auto Care'
+      && inv6.SellerDtls.Gstin === '33AABCK1234F1Z6' && inv6.TranDtls.SupTyp === 'B2B', J([inv6.BuyerDtls, inv6.SellerDtls]));
+    ok('ALL SIX agree to the paisa', [f1, figOfBill(Object.assign({}, b.invoice, { by_rate: sbj.invoice.by_rate, pos_state: sbj.invoice.pos_state })), f3, f4, f5, f6].every((f) => same(f, want)));
+
+    console.log('\n── variants ──\n');
+    /* a delivery to another state → IGST everywhere */
+    const D = await sixWays(port, { no: 'C2/26-27/0011', cart: CART_0007, cust: { name: 'Chola Auto Care' }, delivery: { state_code: '29', address: 'Bengaluru' } });
+    const wantD = { by: { 12: { taxable: 995.77, cgst: 0, sgst: 0, igst: 119.51 }, 18: { taxable: 2.44, cgst: 0, sgst: 0, igst: 0.44 } },
+                    taxable: 998.21, tax: 119.95, total: 1118.16, supply: 'inter', pos: '29' };
+    const fD = [figOfBill(D.r.bill),
+      Object.assign(figOfPost(D.sPost.event), { supply: D.sEntry.invoice._cb.supply, pos: D.sEntry.invoice.BuyerDtls.Pos }),
+      Object.assign(figOfPost(D.cPost.event), { supply: D.cEntry.invoice._cb.supply, pos: D.cEntry.invoice.BuyerDtls.Pos }),
+      figOfBill(D.reprint.bill), figOfInv(D.cEntry.invoice)];
+    ok('a bill RECORDING a delivery to state 29 is inter-state: IGST in the bill, both postings, the reprint and the buyer\'s read',
+      fD.every((f) => same(f, wantD)) && D.sEntry.tax_check.ok && slipSays(D.reprint.html, wantD).length === 0, J(fD));
+    ok('…the delivery travels on the chit', D.shopCopy && D.shopCopy.business_json.delivery && D.shopCopy.business_json.delivery.state_code === '29');
+
+    /* an exclusive-price shop */
+    ROWS[SHOP].policy_flags = { price_includes_tax: 'no' };
+    const X = await sixWays(port, { no: 'C2/26-27/0012', cart: CART_0007, cust: { name: 'Chola Auto Care' }, inclusive: false });
+    ROWS[SHOP].policy_flags = { price_includes_tax: 'yes' };
+    const xb = X.r.bill;
+    const fX = [figOfBill(xb), Object.assign(figOfPost(X.sPost.event), { supply: X.sEntry.invoice._cb.supply, pos: X.sEntry.invoice.BuyerDtls.Pos }),
+      Object.assign(figOfPost(X.cPost.event), { supply: X.cEntry.invoice._cb.supply, pos: X.cEntry.invoice.BuyerDtls.Pos }), figOfBill(X.reprint.bill), figOfInv(X.cEntry.invoice)];
+    ok('an EXCLUSIVE-price shop: tax added on top (taxable 1118.15), and all readings agree; the server\'s check agrees',
+      xb.taxable === 1118.15 && xb.total === r2(xb.taxable + xb.tax) && fX.every((f) => same(f, fX[0])) && X.sEntry.tax_check.ok && X.shopCopy.total_value === xb.total,
+      J(fX.concat([X.sEntry.tax_check])));
+
+    /* a walk-in */
+    const K = await sixWays(port, { no: 'C2/26-27/0013', cart: CART_0007.slice(0, 2) });
+    const kb = K.r.bill, kw = figOfBill(kb);
+    const kSlip = K.sPost && K.sPost.bill;
+    ok('a WALK-IN: one copy, place of supply 33, intra; the shop\'s day posting carries the bill\'s rates; the reprint is the original',
+      !K.custCopy && kw.pos === '33' && kw.supply === 'intra' && K.sPost.kind === 'walkin'
+      && same(Object.fromEntries((kSlip.taxes || []).map((x) => [String(x.rate), { taxable: x.taxable, cgst: x.cgst, sgst: x.sgst, igst: x.igst }])), kw.by)
+      && same(figOfBill(K.reprint.bill), kw) && same(figOfInv(K.sEntry.invoice), kw) && K.shopCopy.total_value === kb.total,
+      J([kw, K.sPost, figOfInv(K.sEntry.invoice)]));
+
+    /* a bill with no carried block — an older bill, or another host */
+    const O = await sixWays(port, { no: 'C2/26-27/0005', cart: CART_0007, cust: { name: 'Chola Auto Care' }, mutate: (c) => {
+      delete c.business_json.invoice; c.line_items.forEach((l) => lineKeys.forEach((k) => delete l[k])); return c; } });
+    ok('a bill with NO carried block keeps the old path: provisional, recomputed, total = the line nets (1118.15), no check',
+      O.sEntry && !O.sEntry.issued && O.sEntry.provisional && O.sEntry.tax_check === null && O.shopCopy.total_value === 1118.15, J([O.sEntry && O.sEntry.issued, O.shopCopy && O.shopCopy.total_value]));
+    ok('…its place of supply is still the SHOP\'s state (33 → CGST + SGST), not the buyer\'s (29): both copies',
+      O.sEntry.invoice.BuyerDtls.Pos === '33' && O.sEntry.invoice._cb.supply === 'intra' && O.cEntry.invoice.BuyerDtls.Pos === '33' && O.cEntry.invoice._cb.supply === 'intra',
+      J([O.sEntry.invoice.BuyerDtls, O.sEntry.invoice._cb.supply, O.cEntry.invoice.BuyerDtls, O.cEntry.invoice._cb.supply]));
+    ok('…and its reprint says the tax detail was not kept — never GST ₹0.00 on a tax invoice',
+      O.reprint && /Tax detail not kept for this bill/.test(text(O.reprint.html)) && !/GST₹0\.00/.test(text(O.reprint.html)), text(O.reprint && O.reprint.html).slice(0, 500));
+
+    /* a carried figure the server disagrees with */
+    const Z = await sixWays(port, { no: 'C2/26-27/0014', cart: CART_0007, cust: { name: 'Chola Auto Care' }, mutate: (c) => {
+      const l = c.line_items[0]; l.tax = r2(l.tax + 0.02); l.cgst = r2(l.cgst + 0.01); l.sgst = r2(l.sgst + 0.01);
+      const iv = c.business_json.invoice, br = iv.by_rate['12']; br.tax = r2(br.tax + 0.02); br.cgst = r2(br.cgst + 0.01); br.sgst = r2(br.sgst + 0.01);
+      iv.tax = r2(iv.tax + 0.02); iv.total = r2(iv.total + 0.02); return c; } });
+    const zf = figOfInv(Z.sEntry.invoice);
+    ok('a carried figure the server\'s recompute DISAGREES with: the carried one is kept (tax 119.97, total 1118.18) on both copies',
+      zf.tax === 119.97 && zf.total === 1118.18 && figOfInv(Z.cEntry.invoice).tax === 119.97 && Z.shopCopy.total_value === 1118.18, J([zf, Z.shopCopy && Z.shopCopy.total_value]));
+    const zd = (Z.sEntry.tax_check && Z.sEntry.tax_check.differences) || [];
+    ok('…and the difference is NAMED: on the entry, and on the stored chit (business_json.tax_check, kept: issued)',
+      Z.sEntry.tax_check.ok === false && zd.some((d) => d.what === 'tax at 12%' && d.issued === 119.53 && d.server === 119.51)
+      && Z.shopCopy.business_json.tax_check && Z.shopCopy.business_json.tax_check.kept === 'issued'
+      && Z.shopCopy.business_json.tax_check.differences.some((d) => d.what === 'tax at 12%'), J([zd, Z.shopCopy && Z.shopCopy.business_json.tax_check]));
+
+    console.log('\n── one rule, one shape ──\n');
+    ok('the place-of-supply rule is ONE text: till.html placeOfSupply is lib/issued-invoice placeOfSupply, byte for byte',
+      fnText(PAGE, 'function placeOfSupply(') === I.placeOfSupply.toString(), 'the two copies differ — change both or neither');
+    ok('…over the counter is the shop\'s state; a recorded delivery is its state; a bad state code is ignored',
+      I.placeOfSupply({}, '33') === '33' && I.placeOfSupply({ delivery: { state_code: '29' } }, '33') === '29' && I.placeOfSupply({ delivery: { state_code: 7 } }, '33') === '07'
+      && I.placeOfSupply({ delivery: { state_code: 'KA' } }, '33') === '33' && I.placeOfSupply(null, '33') === '33');
+    /* the shop-PC program builds its own chit from the same bill */
+    const pctx = { tillCfg: { id: 'C2', name: 'Counter 2' }, os: { hostname: () => 'SHOP-PC' }, Object, String, Array, JSON };
+    vm.createContext(pctx); vm.runInContext(fnText(PROG, 'function chitOf(bill) {'), pctx);
+    const progChit = JSON.parse(J(pctx.chitOf(W.r.bill)));
+    ok('the shop-PC program\'s chitOf carries the SAME invoice and the same per-line figures as the page\'s',
+      same(progChit.business_json.invoice, W.r.chit.business_json.invoice)
+      && same(progChit.line_items.map((l) => pick(l, lineKeys)), W.r.chit.line_items.map((l) => pick(l, lineKeys))), J(progChit.business_json.invoice));
+  } catch (e) { fail++; console.log('   FAIL the test ran   ' + (e && e.stack)); }
+  console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
+  srv.close(); process.exit(fail ? 1 : 0);
+});

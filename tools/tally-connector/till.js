@@ -599,10 +599,16 @@ function chitOf(bill) {
       /* ⭐ BOOKS v2 — a credit bill's terms and any owner override (the page's chitOf carries the same two) */
       terms: bill.terms || null,
       credit_override: bill.credit_override || null,
+      /* ⭐⭐⭐ THE INVOICE AS ISSUED (2026-10-02) — the page built it once at the sale (till.html invoiceOf) and it arrived on
+         this bill; carried as it is, never recomputed here. One shape for both hosts (tests/tax-truth.test.cjs). */
+      invoice: bill.invoice || undefined,
+      delivery: bill.delivery || undefined,
     },
     line_items: (bill.lines || []).map((l) => Object.assign({
       particulars: l.name, quantity: l.qty, unit: l.unit || 'piece', price: l.price, total: l.net,
     }, l.item_id ? { item_id: l.item_id } : {}, l.hsn ? { hsn: l.hsn } : {}, l.gst_rate != null ? { gst_rate: l.gst_rate } : {},
+       /* ⭐⭐ the line's own invoice figures, as the page's billMoney worked them out */
+       Object.fromEntries(['gross', 'taxable', 'tax', 'cgst', 'sgst', 'igst'].filter((k) => l[k] != null).map((k) => [k, l[k]])),
        l.off ? { offer: { off: l.save, label: l.off_label || 'Offer' } } : {})),
   };
 }

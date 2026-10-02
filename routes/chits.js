@@ -841,6 +841,30 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         }
         moneyBlock = { gross, savings: r2m(gross - net), net, tax, total: total != null ? total : (tax != null ? r2m(net + tax) : null), currency_code, provisional: true };
       } catch (_) { /* a chit never fails to send because its money summary could not be built */ }
+      /**
+       * ⭐⭐⭐ A COUNTER BILL'S HEADER CARRIES THE INVOICE IT ISSUED (Athi, 2026-10-02: "one invoice, everywhere"). The counter's
+       * carried invoice (business_json.invoice, issued: 'counter') is the total: taxable + tax rounded once — ₹1,118.16 for bill
+       * C2/26-27/0007, where the sum of its line nets said ₹1,118.15 and the paisa of round-off was lost. And the server's own
+       * computation runs here ONLY to check it: a difference is named on the chit (business_json.tax_check) and in the log
+       * (tax.check-differs, for the health view) — the issued figures are never replaced. Fails open, like the block above.
+       */
+      let issuedTotal = null;
+      if (counterBill && !is_draft && require('../lib/issued-invoice').issuedOf(business_json)) {
+        const II = require('../lib/issued-invoice');
+        const hm = II.headerMoney(business_json.invoice, line_items);
+        issuedTotal = hm.total_value;
+        moneyBlock = Object.assign({}, hm.money, { currency_code });
+        try {
+          const e = await taxCopy.entryFor({ chit_id: null, sender_entity_id: sender_id, purpose, business_json, line_items, currency_code,
+            all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(receiverDetails.filter((r) => r.entity_id)
+              .map((r) => ({ entity_id: r.entity_id, role: r.all_role || 'receiver' }))), sent_at: business_json.billed_at || null }, sender_id);
+          if (e && e.tax_check && !e.tax_check.ok) {
+            business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
+            require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no,
+              says: II.checkWords(e.tax_check) });
+          }
+        } catch (_) { /* the check never stops a bill — the issued figures stand either way */ }
+      }
       const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
       /**
        * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
@@ -983,6 +1007,8 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
 
       // Calculate summary from line items
       const summary = calculateSummary(line_items);
+      /* ⭐ a counter bill's value is the invoice it issued (above), never the sum of its line nets */
+      if (issuedTotal != null) summary.total_value = issuedTotal;
       // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
       const ext_priority = ['normal','high','urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
       // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires

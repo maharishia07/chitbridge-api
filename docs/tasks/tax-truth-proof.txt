@@ -1,0 +1,46 @@
+
+══ ONE INVOICE, EVERYWHERE — bill C2/26-27/0007 read six ways ══
+
+   ok   1 the COUNTER's bill: taxable 998.21 · CGST/SGST 59.76/59.75 at 12% and 0.22/0.22 at 18% · total 1118.16 · intra · place of supply 33
+   ok   …its line nets sum to 1118.15 — the paisa is the declared round-off (0.01), not lost
+   ok   …the bill carries its invoice, read off billMoney (issued by the counter, the same figures)
+   ok   …every line keeps its gross · taxable · tax · CGST · SGST · IGST
+   ok   …and the printed slip says so: the rate rows, TOTAL ₹1118.16, place of supply 33
+   ok   2 the CHIT as stored: sent (200), the shop's copy carries the counter's invoice unchanged
+   ok   …its value is the invoice total 1118.16 — the copy (chit_detail.total_value), the summary, the money block (not the 1118.15 of the line nets)
+   ok   …every stored line carries the counter's own gross · taxable · tax · heads, line for line
+   ok   …the customer's copy carries the same invoice and lines
+   ok   …and the server's check agrees with the counter: no tax_check on the chit, none on either entry
+   ok   3 the SELLER's posting: sale_bill to Chola, the same rates, heads and total; round-off 0
+   ok   …its invoice is the issued one (frozen, not provisional), output CGST + SGST — never IGST
+   ok   …GSTR-1 reports it b2b to the buyer's GSTIN, place of supply 33, under the bill's number, value 1118.16
+   ok   4 the BUYER's posting on acceptance: purchase_bill from Tally Test, the same rates, heads and total
+   ok   …input CGST + SGST on the buyer's side too (the invoice as issued is what ITC rests on, s.16)
+   ok   5 the REPRINT (Earlier bills → print) is the original: the same figures, the same paper
+   ok   …no line prints "Gross ₹0.00", and no "GST ₹0.00" on a tax invoice
+   ok   6 the BUYER's invoice read (/api/tax/invoice): the same figures, place of supply 33
+   ok   …the buyer is named by the rail (GSTIN, legal name), the seller is the shop
+   ok   ALL SIX agree to the paisa
+
+── variants ──
+
+   ok   a bill RECORDING a delivery to state 29 is inter-state: IGST in the bill, both postings, the reprint and the buyer's read
+   ok   …the delivery travels on the chit
+   ok   an EXCLUSIVE-price shop: tax added on top (taxable 1118.15), and all readings agree; the server's check agrees
+   ok   a WALK-IN: one copy, place of supply 33, intra; the shop's day posting carries the bill's rates; the reprint is the original
+   ok   a bill with NO carried block keeps the old path: provisional, recomputed, total = the line nets (1118.15), no check
+   ok   …its place of supply is still the SHOP's state (33 → CGST + SGST), not the buyer's (29): both copies
+   ok   …and its reprint says the tax detail was not kept — never GST ₹0.00 on a tax invoice
+{"t":"2026-10-02T02:46:20.349Z","level":"warn","msg":"tax.check-differs","entity_id":"11111111-1111-4111-8111-111111111111","bill_no":"C2/26-27/0014","says":"cgst: issued 59.99, server 59.98 · sgst: issued 59.98, server 59.97 · tax at 12%: issued 119.53, server 119.51"}
+   ok   a carried figure the server's recompute DISAGREES with: the carried one is kept (tax 119.97, total 1118.18) on both copies
+   ok   …and the difference is NAMED: on the entry, and on the stored chit (business_json.tax_check, kept: issued)
+
+── one rule, one shape ──
+
+   ok   the place-of-supply rule is ONE text: till.html placeOfSupply is lib/issued-invoice placeOfSupply, byte for byte
+   ok   …over the counter is the shop's state; a recorded delivery is its state; a bad state code is ignored
+   ok   the shop-PC program's chitOf carries the SAME invoice and the same per-line figures as the page's
+
+  ✓ 32 passed · 32 checks
+
+exit=0
