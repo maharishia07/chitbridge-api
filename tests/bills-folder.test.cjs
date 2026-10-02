@@ -220,6 +220,10 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const s3 = L({ status: 'accepted', accepted: rv2, posted: rv2, goods: { lines: 2, complete: 0, started: 0 } });
     const s4 = L({ disputes: [rv2], goods: { lines: 2, complete: 1, started: 1, by: rv.by, at: rv.at } });
     const s5 = L({ status: 'accepted', accepted: rv2, posted: rv2, goods: { lines: 2, complete: 2, started: 2, by: rv.by, at: rv.at } });
+    /* ⭐ the NAME beside the id (2026-10-02: Bills › "accepted by" showed a handle) — by stays the stable id, by_name is for the screen */
+    const sN = L({ status: 'accepted', accepted: { by: 'chola-ravi', by_name: 'Ravi (Chola Auto Care)', at: T2 }, goods: { lines: 1, complete: 0, started: 0 } });
+    ok('a step carries by_name beside by — "Ravi (Chola Auto Care)" for the screen, chola-ravi kept as the id', sN.by === 'chola-ravi' && sN.by_name === 'Ravi (Chola Auto Care)'
+      && sN.history.some((h) => h.step === 'accepted' && h.by_name === 'Ravi (Chola Auto Care)'), JSON.stringify(sN));
     ok('Received — nothing posted, nothing counted', s1.step === 'received' && s1.code === 'B-2100' && s1.label === 'Received' && s1.open, JSON.stringify(s1));
     ok('Goods checked — goods-in recorded, B-2100 · Goods checked · chola-ravi · 08:50', s2.step === 'goods_checked' && s2.code === 'B-2100' && s2.label === 'Goods checked' && s2.by === 'chola-ravi' && s2.at === T1, JSON.stringify(s2));
     ok('Accepted — B-2100 · Bill accepted · chola-ravi (goods not all in: still open)', s3.step === 'accepted' && s3.label === 'Bill accepted' && s3.by === 'chola-ravi' && s3.open, JSON.stringify(s3));
