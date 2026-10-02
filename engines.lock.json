@@ -29,11 +29,11 @@
     "orderhub": "1.5.0",
     "rollup": "1.5.0",
     "convert": "1.5.0",
-    "accounts-packs": "1.14.0",
-    "receivables": "1.14.0",
-    "posting": "1.14.0",
-    "ledger": "1.14.0",
-    "bookpack": "1.14.0"
+    "accounts-packs": "1.16.0",
+    "receivables": "1.16.0",
+    "posting": "1.16.0",
+    "ledger": "1.16.0",
+    "bookpack": "1.16.0"
   },
   "adopt": {
     "money": [
@@ -177,10 +177,10 @@
     "orderhub": "c70a78a6839c10d41f6c43901f0557bd782463460e4af3f2e99d369a5012e9e5",
     "rollup": "caa165589a6c658cc6a8cbd83c743576f287d6397bc4f9fca20ad4b5f7d51662",
     "convert": "31b4b4d40a211f0a437ad1b5f4ff394bfb6f63637f05c24323b9846a1e51a5ba",
-    "accounts-packs": "da529a2f6ab0f9d759808b87d8d361cc1ee89538a3cddcbbee627a0a4dace4ab",
+    "accounts-packs": "6b28f3c9cc7f6a039baf586616dd55e42e11821d52b236c52cf1cc698e2ccb7e",
     "receivables": "4b9b3d41b9c3d1f35525fe84bd6efc6d8766666aca8d7117b0c8fa518c727026",
-    "posting": "30cb00b7c8cff9a253889afba48a8d67311fcb7528aacffb55570fa10d569136",
-    "ledger": "725caf3aea04788af5c71dcd14d32d62433890e361a8aa524fba0636aec9c9e4",
-    "bookpack": "3e21677a0ab4041bc1759e4fc7e703c9a5ad55d180e5e854026bb28eef84b4bc"
+    "posting": "716650c4ff4e1f7642481b0f58699b1c09aaa164ac7ceca41dfa6867d278506f",
+    "ledger": "175d836b79d339b3cb8894347ff3c6249434ab12125afb6575e5a2a3829e3838",
+    "bookpack": "1021a12646ad9a3ce224f90ae2ca0c7e96ae346640e7e77b1694cbe32956ae58"
   }
 }

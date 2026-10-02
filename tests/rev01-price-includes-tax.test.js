@@ -85,7 +85,8 @@ async function theReproduction() {
     const entry2 = await freshTaxCopy.entryFor(hdr, SELLER_ID);
     const h2 = taxLines.heads(entry2.invoice);
     assert.strictEqual(h2.taxable, 236);       // the listed ₹236 IS the ex-tax value now
-    assert.strictEqual(h2.total, 278);         // and 18% is added on top of it (engine's own per-line rounding)
+    // 2 x Rs118 ex-tax + 18% = 278.48: DECISIONS "The invoice total is kept to the paisa" (was 278 under whole-rupee rounding)
+    assert.strictEqual(h2.total, 278.48);      // and 18% is added on top of it (engine's own per-line rounding)
   });
 }
 

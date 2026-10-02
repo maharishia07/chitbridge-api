@@ -136,7 +136,7 @@ async function ensurePool() {
 // tests/rls-guard-baseline.test.cjs re-derives this same set from db/rls-baseline.json on every run, so the
 // next table this list forgets fails a test instead of waiting for the next outside review to find it.
 const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'books_change_log', 'books_counter', 'books_outbox',
-  'books_pack', 'books_payment', 'books_setting', 'fiscal_period', 'journal_entry', 'journal_line', 'ledger_account',
+  'books_pack', 'books_payment', 'fixed_asset', 'books_setting', 'fiscal_period', 'journal_entry', 'journal_line', 'ledger_account',
   'party_item', 'party_tax_id', 'party_interaction', 'party_followup', 'capture', 'catalogue_adoption', 'catalogue_face',
   'catalogue_item_schedule', 'catalogue_item_version', 'catalogue_items', 'cb_attachment', 'channel_binding',
   'channel_outbound', 'chit_detail', 'chit_disputes', 'chit_header', 'chit_line', 'chit_line_amendment',

@@ -366,7 +366,7 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     const n0 = X.T.entries.length;
     const k1 = await q('POST', '/cheques/' + c1.payment_id + '/status', { status: 'cleared', date: '2026-09-24' });
     ok('{ status: "cleared" } → { ok, status: "cleared", items: 2, posted: { ok, entry_id, entry_no, posting_date } } — the entry posts now',
-      k1.status === 200 && k1.body.status === 'cleared' && k1.body.items === 2 && !!k1.body.posted && k1.body.posted.ok === true && /^JV\//.test(k1.body.posted.entry_no) && k1.body.posted.posting_date === '2026-09-24' && X.T.entries.length === n0 + 1, JSON.stringify(k1.body));
+      k1.status === 200 && k1.body.status === 'cleared' && k1.body.items === 2 && !!k1.body.posted && k1.body.posted.ok === true && /^RV\//.test(k1.body.posted.entry_no) && k1.body.posted.posting_date === '2026-09-24' && X.T.entries.length === n0 + 1, JSON.stringify(k1.body));   // v1.16.0: a cleared cheque is a Receipt voucher, series RV
     eq('…and the customer\'s balance moves (1050 − 200)', await bal(), 85000);
     await q('POST', '/cheques/' + c2.payment_id + '/status', { status: 'deposited', date: '2026-09-23' });
     const n1 = X.T.entries.length;

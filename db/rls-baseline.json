@@ -427,6 +427,12 @@
    "policies": 1,
    "app_reads": true
   },
+  "fixed_asset": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "folder": {
    "rls": true,
    "forced": true,

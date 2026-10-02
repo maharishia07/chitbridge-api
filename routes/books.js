@@ -47,7 +47,9 @@ function fail(res, e) {
   if (e && e.code === 'SUSPENSE_NOT_NIL') return res.status(409).json({ code: 'SUSPENSE_NOT_NIL', error: e.message, message: e.message });
   if (e && e.code === 'BOOKS_NOT_FOUND') return res.status(404).json({ error: 'Not found', message: e.message });
   /* ⚠️ before the 422: "not migrated" is thrown as a refusal too, and read as 422 — missing tables are the server's state, 503 */
-  if (e && (e.code === 'BOOKS_ENGINE' || e.code === 'BOOKS_NOT_MIGRATED')) return res.status(503).json({ error: e.message, message: e.message });
+  if (e && (e.code === 'BOOKS_ENGINE' || e.code === 'BOOKS_NOT_MIGRATED')) return res.status(503).json({ code: e.code, error: e.message, message: e.message });
+  /* a question the owner can answer (a missing field, a date that is not a date): 400, in words */
+  if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
   if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json({ error: e.message, message: e.message });
   if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
   if (e && e.code === '23505') return res.status(409).json({ error: 'That is already recorded.', message: 'That is already recorded.' });
@@ -375,7 +377,7 @@ router.get('/bs', auth, on, async (req, res) => {
   try {
     const e = ctx(req), asOf = dateQ(req.query.asOf, today());
     const out = await withEntity(e, async (h) => {
-      const bs = await B.balanceSheet(h, e, asOf);
+      const bs = await B.balanceSheet(h, e, asOf, B.entityBasisOf(req.books));   /* undefined until the entity-type decision is taken → Schedule III */
       const nature = new Map((await S.accounts(h, e)).map((a) => [String(a.code), a.nature]));
       const left = flat(bs.liabilities);
       return { assets: flat(bs.assets), liabilities: left.filter((r) => r.code && nature.get(String(r.code)) !== 'equity'),
@@ -674,6 +676,41 @@ router.post('/packs/:id/ack', auth, owner, on, async (req, res) => {
     res.json({ ok: true, acknowledged_at: r.acknowledged_at });
   } catch (err) { fail(res, err); }
 });
+
+module.exports = router;
+/* ── the period-end routes (engines v1.14–v1.16; lib/books-period.js builds each event THROUGH THE ENGINE) ─────────────
+   Owner-only, switch on, idempotent (client_ref, or the entry's natural key), refused in a locked month (PERIOD_LOCKED, 409).
+   The asset ones answer 503 BOOKS_NOT_MIGRATED until b280 (DRAFT) is run. */
+const P = () => require('../lib/books-period');
+const route = (method, p, fn) => router[method](p, auth, owner, on, async (req, res) => {
+  try { res.json(await fn(req, ctx(req), req.books, req.body || {}, byOf(req))); } catch (err) { fail(res, err); }
+});
+/** GET /assets?asOf → { currency, asOf, assets: [{ asset_id, name, asset_class, cost_minor, put_to_use, accumulated_minor, wdv_minor, disposed_on }], net_block: [per class, with the ledger's figure beside], total_wdv_minor } */
+router.get('/assets', auth, owner, on, async (req, res) => {
+  try { res.json(await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today()))); } catch (err) { fail(res, err); }
+});
+/** POST /assets { name, class, cost, date, put_to_use?, how | party_id, client_ref } → the purchase entry (MJ) and the register row */
+route('post', '/assets', (req, e, s, b, by) => P().addAsset(e, s, b, by));
+/** POST /assets/:id/dispose { date, proceeds?, into?, client_ref } */
+route('post', '/assets/:id/dispose', (req, e, s, b, by) => {
+  if (!UUID.test(String(req.params.id))) { const x = new Error('Not found'); x.code = 'BOOKS_NOT_FOUND'; throw x; }
+  return P().disposeAsset(e, s, String(req.params.id), b, by);
+});
+/** POST /depreciation/run { fy } → one entry at the year end, from the register; says which entity basis it used */
+route('post', '/depreciation/run', (req, e, s, b, by) => P().runDepreciation(e, s, b, by));
+/** POST /closing-stock { date, value_minor, nrv_minor?, method: 'manual' } */
+route('post', '/closing-stock', (req, e, s, b, by) => P().closingStock(e, s, b, by));
+/** POST /gst/close { fy, period } → { utilised, payable_minor, carried_minor, pay_total_minor, entry_no } · POST /gst/pay { fy, period, amounts, bank, challan_no } */
+route('post', '/gst/close', (req, e, s, b, by) => P().gstClose(e, s, b, by));
+route('post', '/gst/pay', (req, e, s, b, by) => P().gstPay(e, s, b, by));
+/** POST /loans { ref, lender, amount, into, rate?, kind? } · POST /loans/:ref/emi { principal, interest, from?, date, client_ref } */
+route('post', '/loans', (req, e, s, b, by) => P().takeLoan(e, s, b, by));
+route('post', '/loans/:ref/emi', (req, e, s, b, by) => P().loanEmi(e, s, String(req.params.ref).slice(0, 60), b, by));
+/** POST /accruals { ref, kind, class, amount, date } → reverses_on · POST /accruals/:ref/reverse (due from reverses_on) */
+route('post', '/accruals', (req, e, s, b, by) => P().accrue(e, s, b, by));
+route('post', '/accruals/:ref/reverse', (req, e, s, b, by) => P().reverseAccrual(e, s, String(req.params.ref).slice(0, 60), b, by));
+/** POST /contra { from, to, amount, date, client_ref } — cash ↔ bank ↔ UPI */
+route('post', '/contra', (req, e, s, b, by) => P().contra(e, s, b, by));
 
 module.exports = router;
 module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
