@@ -145,8 +145,13 @@ router.post('/suppliers',
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
         [owner, sup.rows[0].identity_id, kind, category, nickname, notes, preferred]));
 
-      res.json({ message: 'Supplier added',
-        supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, on_rail: true,
+      /* ⭐ ON THE RAIL WAS ASSERTED, NOW ASKED (2026-10-02): an inactive business, or one in another sandbox, is found by
+         the lookup above but cannot trade with this shop — lib/istest mayTrade, b249's rule. Added anyway (the list is the
+         shop's), but it says so now rather than at the first order. */
+      const trade = await require('../lib/istest').mayTrade(owner, sup.rows[0].identity_id);
+      res.json({ message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
+        supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, on_rail: !!trade.ok,
+                    ...(trade.ok ? {} : { one_sided: { why: trade.why } }),
                     supply_kind: kind, category, nickname, notes, preferred } });
     } catch (err) {
       console.error('Add supplier error:', err.message);
@@ -569,7 +574,13 @@ router.post('/customers',
          ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING
          RETURNING customer_list_id`, [owner, c.identity_id]));
       if (r.rows.length === 0) return res.status(409).json({ error: 'Exists', message: 'Already in your customer list' });
-      res.json({ message: 'Customer added', customer: { customer_list_id: r.rows[0].customer_list_id, customer_identity_id: c.identity_id, display_name: c.display_name, user_id: c.user_id, bridge_id: c.bridge_id, segment: 'new', added_via: 'manual' } });
+      /* ⭐ ADDED, AND TOLD WHETHER BILLS CAN REACH THEM (Athi, 2026-10-02 — two bills sat pending for customers this door let
+         in without a word). lib/istest mayTrade, b249's rule: inactive or another sandbox → the sale is still recorded and
+         booked, only their copy is not sent. Said here, before the first bill, not discovered at the counter. */
+      const trade = await require('../lib/istest').mayTrade(owner, c.identity_id);
+      res.json({ message: trade.ok ? 'Customer added' : 'Customer added — bills to them stay here only: ' + trade.why,
+        customer: { customer_list_id: r.rows[0].customer_list_id, customer_identity_id: c.identity_id, display_name: c.display_name, user_id: c.user_id, bridge_id: c.bridge_id, segment: 'new', added_via: 'manual',
+                    on_rail: !!trade.ok, ...(trade.ok ? {} : { one_sided: { why: trade.why } }) } });
     } catch (err) {
       console.error('Add customer error:', err.message);
       res.status(500).json({ error: 'Add customer failed', message: safeErr(err) });

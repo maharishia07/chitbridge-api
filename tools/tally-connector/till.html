@@ -4758,8 +4758,18 @@ async function fetchBy(url, opts, ms){
     /* ⭐ timed HERE and nowhere else ([TILL-177]) — one gate, one answer. A second place to measure is a
        second answer, and the two would disagree the first time one of them was moved. */
     var t0 = Date.now();
+    /**
+     * ⚠️⚠️⚠️ AN ANSWER IS A WORKING LINE, EVEN WHEN THE ANSWER IS NO (Athi, 2026-10-02: *"since two bills are waiting in
+     * the queue, the billing becomes offline … only the bill in issue should be waiting rest all should go on its own"*).
+     * This recorded r.ok — so a bill the shop REFUSED (a 403, a 409) counted as a dead line; three refusals in a row and
+     * lineState() said 'none', drain() stopped, and every bill after them queued behind a line that was fine.
+     * ⭐ The LINE is down only when nothing answered (the catch below) or the gateway could not reach the shop
+     * (502 · 503 · 504 — a deploy restarting, the host down). Anything else got there and back. devTimed keeps r.ok:
+     * it is the request's own success, which is a different question.
+     */
     return fetchBy_(url, opts, ms)
-      .then(function(r){ var ms = Date.now() - t0; lineNote(r && r.ok !== false, ms); devTimed(url, ms, r && r.ok !== false); return r; },
+      .then(function(r){ var ms = Date.now() - t0, st = Number(r && r.status) || 0;
+                         lineNote(!!r && !(st >= 502 && st <= 504), ms); devTimed(url, ms, r && r.ok !== false); return r; },
             function(e){ var ms = Date.now() - t0; lineNote(false, ms); devTimed(url, ms, false); throw e; });
   }
   return fetchBy_(url, opts, ms);
@@ -5371,19 +5381,21 @@ var CloudHost = {
              * "sent" only if it carries one. Absence now reads as "not confirmed", which is the truth, and the
              * shopkeeper is given a way to send it again rather than a green tick over a missing sale.
              */
-            var ack = null;
+            var ack = null, oneSided = null;
             try {
               var ans = await r.json();
               if (ans && ans.number_check && !ans.number_check.ok) {
                 ls.set('cb_numwarn', JSON.stringify({ no: bill.no, why: ans.number_check.reason, at: Date.now() }));
               }
               if (ans && (ans.chit_id || (ans.chit && ans.chit.chit_id))) ack = ans.chit_id || ans.chit.chit_id;
+              /* ⭐ ONE-SIDED (2026-10-02): the sale is recorded, but the customer could not be sent their copy — said, not hidden */
+              if (ans && ans.one_sided) oneSided = String(ans.one_sided.why || 'the customer could not be sent their copy');
             } catch (_) { /* a body we cannot read is not a reason to lose the bill */ }
             /* ⚠️ the RECEIPT goes on the bill, not on the queue row — the queue row is about to be deleted, and a
                proof that dies with the thing it proves is not a proof. */
             try {
               var kept = (await DB.all('bills')).filter(function(x){ return x && String(x.no) === String(bill.no); })[0];
-              if (kept) { kept._sent = { at: Date.now(), chit_id: ack || null }; await DB.put('bills', kept); }
+              if (kept) { kept._sent = { at: Date.now(), chit_id: ack || null, one_sided: oneSided }; await DB.put('bills', kept); }
             } catch (_) { /* a bill we cannot stamp still went — it will read "not confirmed", which is honest */ }
             await DB.del('queue', bill.no); sent++;
           }
@@ -22700,6 +22712,10 @@ async function openBills(keepOpen){
                  * already said it once for the whole day. Ten green chips under that banner is the same fact
                  * printed twenty-one times, and it teaches the eye to skip the row where the chip matters.
                  */
+                /* ⭐ ONE-SIDED (2026-10-02): recorded, but the customer was not sent their copy — quiet, with the reason on hover */
+                if (st === 'sent' && b._sent && b._sent.one_sided)
+                  return '<span data-testid="till-bill-onesided-' + esc(b.no) + '" class="pill" title="' + esc(b._sent.one_sided)
+                       + '" style="margin-inline-start:8px;color:var(--dim);border-color:var(--line)">· no copy to customer</span>';
                 if (st === 'sent') return '';
                 var look = (st === 'unknown') ? 'color:var(--dim);border-color:var(--line)'
                          : 'color:var(--warn);border-color:var(--warn)';
