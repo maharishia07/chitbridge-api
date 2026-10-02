@@ -5387,7 +5387,12 @@ var CloudHost = {
             } catch (_) { /* a bill we cannot stamp still went — it will read "not confirmed", which is honest */ }
             await DB.del('queue', bill.no); sent++;
           }
-          else if (r.status === 403 || r.status === 401) {
+          /* ⚠️⚠️ NOT EVERY 403 IS THE KEY (Athi, 2026-10-02: two bills "pending", network green). The send route
+             refuses ONE BILL with code TILL_SEND_REFUSED — e.g. a customer not on this shop's list. Calling that
+             "the key was refused" stopped every bill behind it and named the wrong cause. That bill now keeps the
+             server's words below, like any other refusal, and the rest of the queue goes. */
+          else if ((r.status === 403 || r.status === 401)
+                   && (await r.clone().json().then(function(j){ return j && j.code; }, function(){ return ''; })) !== 'TILL_SEND_REFUSED') {
             /* ⚠️ A KEY PROBLEM IS NOT FIXED BY TRYING HARDER, and it is also not fixed by saying nothing. This is
                the one failure a shopkeeper can actually act on — and until now it was the most invisible. */
             why = 'The shop refused this counter\'s key (' + r.status + '). It may have been changed or removed — '

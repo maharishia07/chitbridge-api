@@ -144,6 +144,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const notList = await send(bill('C1/26-27/0042', Object.assign({}, chola, { entity_id: STRANGER, identity_id: STRANGER }), { recipients: [SELF, Object.assign({}, toCust, { entity_id: STRANGER })] }));
     ok('a till key cannot send to a business that is NOT on this shop\'s customer list (403)', notList.status === 403 && !COPIES, notList.status + ' ' + JSON.stringify(notList.body));
     const local = await send(bill('C1/26-27/0043', Object.assign({}, chola, { entity_id: OUTSIDE, identity_id: OUTSIDE }), { recipients: [SELF, Object.assign({}, toCust, { entity_id: OUTSIDE })] }));
+    ok('…and the refusal names the reason for THIS BILL, not the key (code TILL_SEND_REFUSED, says "customer list")', notList.body && notList.body.code === 'TILL_SEND_REFUSED' && /customer list/.test(notList.body.message || ''), JSON.stringify(notList.body));
     ok('…nor to a customer on the list who is not on the rail (a local record) (403)', local.status === 403 && !COPIES, local.status + ' ' + JSON.stringify(local.body));
     const other = await send(bill('C1/26-27/0044', Object.assign({}, chola, { entity_id: null }), { recipients: [SELF, toCust] }));
     ok('…nor to anyone the bill itself does not name as its customer (403)', other.status === 403 && !COPIES, other.status + ' ' + JSON.stringify(other.body));

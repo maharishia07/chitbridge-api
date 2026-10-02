@@ -94,23 +94,30 @@ async function definersReady() {
  *   · and is on THIS shop's customer list AND a business on the rail (lib/local-identity onRailSql — the same test the
  *     counter's snapshot made when it offered them). A stranger, a local (~) record, a storefront shopper: refused.
  * ⚠️ Fails closed: a lookup that cannot run answers no, and the counter keeps the bill queued with the server's words.
+ * ⚠️⚠️ ANSWERS WHY, NOT JUST NO (Athi, 2026-10-02: two bills "pending", network green, nothing saying why). null = may
+ * send; otherwise the one rule this bill failed, in words the counter puts on the stuck bill.
  */
 async function tillMaySend(sender_id, outward, body) {
   try {
     const b = body || {}, bj = b.business_json || {};
-    if (outward.length !== 1) return false;
+    if (outward.length !== 1) return 'a counter bill can go to one customer only';
     const r = outward[0];
-    if (String(r.role || 'to').toLowerCase() !== 'to') return false;
-    if (String(b.purpose || 'order') !== 'order' || !taxCopy.counterIssued(bj)) return false;
+    if (String(r.role || 'to').toLowerCase() !== 'to') return 'a counter bill can only be addressed "to" its customer';
+    if (String(b.purpose || 'order') !== 'order' || !taxCopy.counterIssued(bj)) return 'it is not a counter bill (no bill number or counter on it)';
     const eid = String(r.entity_id || '');
-    if (!/^[0-9a-f-]{36}$/i.test(eid)) return false;
-    if (!bj.customer || String(bj.customer.entity_id || '') !== eid) return false;
+    if (!/^[0-9a-f-]{36}$/i.test(eid)) return 'the customer has no ChitBridge id on this bill';
+    if (!bj.customer || String(bj.customer.entity_id || '') !== eid) return 'the bill names a different customer from the one it is sent to';
     const ok = await withEntity(sender_id, (db) => db.query(
       `SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id
         WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ${require('../lib/local-identity').onRailSql('i')}
         LIMIT 1`, [sender_id, eid]));
-    return ok.rows.length === 1;
-  } catch (_) { return false; }
+    if (ok.rows.length === 1) return null;
+    /* refused — the second look only says WHICH half failed, so the words on the stuck bill are the true ones */
+    const listed = await withEntity(sender_id, (db) => db.query(
+      `SELECT 1 AS ok FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 LIMIT 1`, [sender_id, eid]));
+    return listed.rows.length ? `${r.name || 'this customer'} is not an active business on ChitBridge`
+                              : `${r.name || 'this customer'} is not on this shop's customer list`;
+  } catch (_) { return 'the customer could not be checked just now'; }
 }
 
 // Run a b50/b51/b52 definer inside withEntity(caller); before the delivery layer is applied, run the legacy
@@ -521,9 +528,11 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       if (req.api_key && Array.isArray(req.api_key.scopes) && req.api_key.scopes.indexOf('till') >= 0 && !req.api_key.scopes.includes('connector')) {
         const rl = (Array.isArray(req.body.recipients) ? req.body.recipients : (Array.isArray(req.body.receivers) ? req.body.receivers : []));
         const outward = rl.filter((r) => r && r.self !== true && String(r.entity_id || '') !== String(sender_id));
-        if (outward.length && !(await tillMaySend(sender_id, outward, req.body))) {
-          return res.status(403).json({ error: 'Forbidden',
-            message: 'A till may only record its own sales, or send a bill to a customer of this shop who is on ChitBridge.' });
+        const refused = outward.length ? await tillMaySend(sender_id, outward, req.body) : null;
+        if (refused) {
+          /* ⚠️ code TILL_SEND_REFUSED: a refusal of THIS BILL, not of the key — the counter keeps it and sends the rest */
+          return res.status(403).json({ error: 'Forbidden', code: 'TILL_SEND_REFUSED',
+            message: 'Not sent: ' + refused + '. A counter bill can go only to a customer of this shop who is on ChitBridge.' });
         }
       }
       const purpose = req.body.purpose || 'order';
