@@ -137,13 +137,13 @@ router.get('/accounts', auth, on, async (req, res) => {
       nature: a.nature, role: a.role, parent_code: a.parent_id ? codeOf.get(String(a.parent_id)) || null : null, active: a.active !== false })) });
   } catch (err) { fail(res, err); }
 });
-/** POST /accounts { name, parent_code | parent_id } → { account: { code, account_id, name } } */
+/** POST /accounts { name, parent_code | parent_id } → { account: { code, account_id, name } } — the code is the system's (engines nextCode, role null); one typed here is refused (422) */
 router.post('/accounts', auth, owner, on, async (req, res) => {
   try {
     const e = ctx(req), b = req.body || {};
     let parent = b.parent_id;
     if (!parent && b.parent_code) parent = ((await withEntity(e, (h) => S.accounts(h, e))).find((a) => String(a.code) === String(b.parent_code) && a.is_group) || {}).account_id;
-    const r = await B.addAccount(null, e, { name: b.name, parent_id: parent, by: byOf(req) });
+    const r = await B.addAccount(null, e, { name: b.name, parent_id: parent, code: b.code != null ? b.code : b.account_code, by: byOf(req) });
     res.json({ ok: true, account: { code: r.code, account_id: r.account_id, name: r.name } });
   } catch (err) { fail(res, err); }
 });
@@ -522,12 +522,26 @@ router.post('/parties/:id/dispute', auth, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
+/* ── the "＋ Entry" door: the grid, the preview, the everyday events ───────────────────────────────────────────── */
+const M = () => require('../lib/books-manual');
+/** GET /events → { events: [{ kind, words, icon, band, voucher, fields, ledger_group, preview, post | route }], picks, pending, golden } — the grid; the screen holds no rules */
+router.get('/events', auth, noKey, on, (req, res) => {
+  try { res.json(M().catalogue(req.books)); } catch (err) { fail(res, err); }
+});
+/**
+ * POST /preview { event: { kind, …fields } } (or { event: 'kind', …fields }) → { ok, voucher: { series, type }, lines: [{ code, ledger, dr_minor, cr_minor, type, rule }], balanced, refusals, … }
+ * Composed by lib/books.js composeEntry — the writer's own function. Writes nothing, takes no counter. A co-assist may preview; only the owner posts.
+ */
+router.post('/preview', auth, noKey, on, async (req, res) => {
+  try { res.json(await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req), by: byOf(req) })); } catch (err) { fail(res, err); }
+});
+/** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). Owner only; the same client_ref answers the first entry, duplicate: true. */
+router.post('/events', auth, noKey, owner, on, async (req, res) => {
+  try { res.json(await M().post(ctx(req), req.books, req.body || {}, byOf(req))); } catch (err) { fail(res, err); }
+});
+
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
-function givenLines(list, cur) {
-  const f = Math.pow(10, 2);
-  return (Array.isArray(list) ? list : []).map((l) => ({ account: String(l.account || l.code || ''), dr: l.dr_minor != null ? Number(l.dr_minor) / f : Number(l.dr || 0),
-    cr: l.cr_minor != null ? Number(l.cr_minor) / f : Number(l.cr || 0), party: UUID.test(String(l.party || l.party_id || '')) ? String(l.party || l.party_id) : undefined }));
-}
+const givenLines = (list) => require('../lib/books-manual').givenLines(list);   /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 router.post('/entries', auth, owner, on, async (req, res) => {
   try {
     const b = req.body || {};
