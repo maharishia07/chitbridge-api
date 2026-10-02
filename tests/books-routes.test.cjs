@@ -119,13 +119,19 @@ const call = (port, method, p, body) => new Promise((done) => {
     'borrowings', 'trade_payables', 'other_current_liabilities', 'short_term_provisions', 'suspense', 'branch'];
   const inOrder = (heads) => heads.every((h, i) => !i || ORDER.indexOf(heads[i - 1].line) <= ORDER.indexOf(h.line));
   ok('GET /bs → schedule_iii: both sides have heads (each with line, label, total_minor, ledgers[{ code, name, amount_minor }]) in Schedule III order',
-    s3 && s3.assets.heads.length >= 1 && s3.equity_and_liabilities.heads.length > 2 && inOrder(s3.assets.heads) && inOrder(s3.equity_and_liabilities.heads)
+    s3 && s3.assets.heads.length >= 1 && s3.equity_and_liabilities.heads.length >= 2 /* R4 (engines v1.14.0): Input GST is an ASSET now, so the liabilities side lost its third head */ && inOrder(s3.assets.heads) && inOrder(s3.equity_and_liabilities.heads)
     && has(s3.assets.heads[0], ['line', 'label', 'total_minor', 'ledgers']) && has(s3.assets.heads[0].ledgers[0], ['code', 'name', 'amount_minor']), JSON.stringify(s3).slice(0, 500));
   const allL = [].concat(...s3.assets.heads.map((h) => h.ledgers), ...s3.equity_and_liabilities.heads.map((h) => h.ledgers));
   ok('…a shop with creditors and input GST: side totals are the real sums, equal and non-zero; balanced: true, difference 0',
     s3.assets.total_minor > 0 && s3.assets.total_minor === s3.equity_and_liabilities.total_minor && s3.balanced === true && s3.difference_minor === 0
     && s3.assets.total_minor === s3.assets.heads.reduce((t, h) => t + h.total_minor, 0) && s3.equity_and_liabilities.heads.some((h) => h.line === 'trade_payables' && h.total_minor === 56000)
     && /GST/i.test(JSON.stringify(allL)) && s3.assets.total_minor === bs.body.total_assets_minor, JSON.stringify(s3).slice(0, 600));
+  /* R4 (engines v1.14.0, ledger.balanceSheet): a net GST debit is presented under Other current assets, never as a liability */
+  const oca = s3.assets.heads.find((h) => h.line === 'other_current_assets');
+  ok('…Input GST lands under ASSETS → Other current assets (2210 + 2211 = 1000), not on the liabilities side; the sides are equal and non-zero',
+    !!oca && oca.total_minor === 1000 && ['2210', '2211'].every((c) => oca.ledgers.some((l) => l.code === c && l.amount_minor === 500))
+    && !s3.equity_and_liabilities.heads.some((h) => h.ledgers.some((l) => /^22(10|11)$/.test(String(l.code))))
+    && s3.assets.total_minor === 106000 && s3.assets.total_minor === s3.equity_and_liabilities.total_minor && s3.assets.total_minor > 0, JSON.stringify(s3).slice(0, 600));
   ok('…the profit so far is its own named line under Reserves and surplus ("Net profit", sign kept)',
     s3.equity_and_liabilities.heads.some((h) => h.line === 'reserves_surplus' && h.ledgers.some((l) => l.name === 'Net profit' && l.amount_minor === 50000)));
   ok('…the old flat keys are untouched (assets / liabilities / equity rows { code, name, amount_minor, line }, by_line, profit_to_date_minor)',
