@@ -144,8 +144,12 @@ it('⭐ English IS the key, so a missing translation stays readable', () => {
    * ⭐ gettext's rule, adopted rather than invented: tx('Save & print') returns the English when no pack carries
    * it. A key-based layer degrades to "till.save_print" on screen, which is worse than the English it replaced.
    */
-  const app = fs.readFileSync(path.join(WEB, 'app.html'), 'utf8');
-  const fn = app.slice(app.indexOf('function tx('), app.indexOf('function tx(') + 400);
+  /* tx() moved to the shared shell with CB Accounts (web PR #7, 2026-10-02) so app.html and accounts.html use ONE copy —
+     read it wherever it is declared, app.html first */
+  const app = ['app.html', 'app/accounts-shell.js']
+    .map((f) => { try { return fs.readFileSync(path.join(WEB, f), 'utf8'); } catch (_) { return ''; } })
+    .find((t) => t.indexOf('function tx(') >= 0) || '';
+  const fn = app.indexOf('function tx(') >= 0 ? app.slice(app.indexOf('function tx('), app.indexOf('function tx(') + 400) : '';
   assert.ok(fn, 'tx() is gone');
   /* ⚠️ the PARAMETER IS NAMED `english`, and that is the convention stated in the signature itself — my first
      version of this check looked for a `s`/`key` parameter and failed on code that was doing it right. */

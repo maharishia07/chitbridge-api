@@ -120,7 +120,8 @@ it('⭐⭐⭐ every onclick in a capability calls a function that exists', () =>
     while ((m = decl.exec(s))) defined.add(m[1]);
     const assign = /(?:^|\n)\s*(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function|\()/g;
     while ((m = assign.exec(s))) defined.add(m[1]);
-    const win = /window\.([A-Za-z_$][\w$]*)\s*=/g;
+    /* window.X = … and root.X = … — an IIFE handed window as `root` (chit-sheet.js, one-person.js), 2026-10-02 */
+    const win = /(?:window|root)\.([A-Za-z_$][\w$]*)\s*=/g;
     while ((m = win.exec(s))) defined.add(m[1]);
   });
 
