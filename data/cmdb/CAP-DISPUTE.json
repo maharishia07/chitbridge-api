@@ -15,7 +15,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -166,7 +166,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 19 API call(s)"
   }
  ],
  "entries": [
@@ -223,6 +223,11 @@
    "this": "CAP009 cap-dispute.js",
    "rel": "calls",
    "that": "routes/governance.js"
+  },
+  {
+   "this": "CAP009 cap-dispute.js",
+   "rel": "documented-by",
+   "that": "api docs/CTP-DESIGN.md · web e2e/l3-proposals/cap-dispute.md"
   }
  ],
  "layers": {

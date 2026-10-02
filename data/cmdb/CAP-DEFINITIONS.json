@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -161,7 +161,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 19 API call(s)"
   }
  ],
  "entries": [
@@ -378,6 +378,11 @@
    "this": "CAP008 cap-definitions.js",
    "rel": "calls",
    "that": "routes/products.js · routes/relationships.js · routes/definitions.js · routes/governance.js"
+  },
+  {
+   "this": "CAP008 cap-definitions.js",
+   "rel": "documented-by",
+   "that": "api docs/CTP-DESIGN.md · api docs/drafts/h2_supplier_list_rls_draft.sql"
   }
  ],
  "layers": {
@@ -406,6 +411,16 @@
    "kind": "browser",
    "result": "fail",
    "at": "2026-09-13"
+  },
+  {
+   "file": "web e2e/index-page.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/labs-flow.cjs",
+   "kind": "browser",
+   "result": "not run"
   },
   {
    "file": "web e2e/offer-lab-next-offline.cjs",
@@ -581,18 +596,6 @@
    "file": "api tests/network-storefront.test.cjs",
    "kind": "server",
    "result": "not run"
-  },
-  {
-   "file": "api tests/products-bulk.test.cjs",
-   "kind": "server",
-   "result": "fail",
-   "at": "2026-09-13"
-  },
-  {
-   "file": "api tests/query-shape.test.js",
-   "kind": "server",
-   "result": "fail",
-   "at": "2026-09-13"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: definitions\n  annotations:\n    chitbridge.io/ci: CAP-DEFINITIONS\n    chitbridge.io/asset: CAP008\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/products.js\n    - routes/relationships.js\n    - routes/definitions.js\n    - routes/governance.js"

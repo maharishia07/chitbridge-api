@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -160,7 +160,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)",
+   "note": "1 screen(s) · 19 API call(s)",
    "node": "p1"
   }
  ],
@@ -176,7 +176,7 @@
   {
    "id": "p1",
    "t": "cap-books.js",
-   "s": "app/cap-books.js · 68 functions",
+   "s": "app/cap-books.js · 103 functions",
    "d": "The capability module: what the screens above call."
   },
   {
@@ -195,132 +195,114 @@
  "exits": [
   {
    "id": "x1",
-   "t": "GET /api/books/dues",
-   "s": "api('booksDues') → routes/books.js",
-   "d": "Reads through the API, answered by routes/books.js."
-  },
-  {
-   "id": "x2",
-   "t": "GET /api/books/party/:id/statement",
-   "s": "api('booksStatement') → routes/books.js",
-   "d": "Reads through the API, answered by routes/books.js."
-  },
-  {
-   "id": "x3",
-   "t": "GET /api/books/health",
-   "s": "api('booksHealth') → routes/books.js",
-   "d": "Reads through the API, answered by routes/books.js."
-  },
-  {
-   "id": "x4",
    "t": "CALL /api/books/accounts",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x5",
+   "id": "x2",
    "t": "CALL /api/books/daybook",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x6",
+   "id": "x3",
    "t": "CALL /api/books/ledger/:account",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x7",
+   "id": "x4",
    "t": "CALL /api/books/trial-balance",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x8",
+   "id": "x5",
    "t": "CALL /api/books/pl",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x9",
+   "id": "x6",
    "t": "CALL /api/books/bs",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x10",
+   "id": "x7",
    "t": "CALL /api/books/payments",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x11",
+   "id": "x8",
    "t": "CALL /api/books/payments/:id/propose",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x12",
+   "id": "x9",
    "t": "CALL /api/books/payments/:id/confirm",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x13",
+   "id": "x10",
    "t": "CALL /api/books/periods/:fy/:p/lock",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x14",
+   "id": "x11",
    "t": "CALL /api/books/periods/:fy/:p/unlock",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x15",
+   "id": "x12",
    "t": "CALL /api/books/opening",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x16",
+   "id": "x13",
    "t": "CALL /api/books/packs",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x17",
+   "id": "x14",
    "t": "CALL /api/books/packs/:id",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x18",
+   "id": "x15",
    "t": "CALL /api/books/packs/:id/file",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x19",
+   "id": "x16",
    "t": "CALL /api/books/packs/:id/ack",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x20",
+   "id": "x17",
    "t": "CALL /api/books/cheques",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x21",
+   "id": "x18",
    "t": "CALL /api/books/cheques/:id/status",
    "s": "routes/books.js",
    "d": "A direct call to the API."
   },
   {
-   "id": "x22",
+   "id": "x19",
    "t": "CALL /api/books/outbox/retry",
    "s": "routes/books.js",
    "d": "A direct call to the API."
@@ -414,18 +396,6 @@
   [
    "p1",
    "x19"
-  ],
-  [
-   "p1",
-   "x20"
-  ],
-  [
-   "p1",
-   "x21"
-  ],
-  [
-   "p1",
-   "x22"
   ]
  ],
  "relationships": [
@@ -438,11 +408,21 @@
    "this": "CAP026 cap-books.js",
    "rel": "calls",
    "that": "routes/books.js"
+  },
+  {
+   "this": "CAP026 cap-books.js",
+   "rel": "documented-by",
+   "that": "web docs/design/cb-accounts/CLOUD-TASK.md · web docs/design/chit-sheet/CLOUD-TASK.md"
+  },
+  {
+   "this": "CAP026 cap-books.js",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "web docs/design/chit-sheet/FOLLOWUPS-TASK.md · web docs/design/daybook-todo/CLOUD-TASK.md · web docs/design/daybook-views/CLOUD-TASK.md · web docs/design/index-page/CLOUD-TASK.md · web docs/design/ledgers-page/CLOUD-TASK.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
   }
  ],
  "layers": {
   "build": "chitbridge-web/public/app/cap-books.js",
-  "design": "Capability cap-books.js"
+  "design": "web docs/design/cb-accounts/CLOUD-TASK.md"
  },
  "tests": [
   {
@@ -452,6 +432,31 @@
   },
   {
    "file": "web e2e/books-web.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/cb-accounts.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/chit-sheet-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/chit-sheet.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/index-page-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "web e2e/index-page.cjs",
    "kind": "browser",
    "result": "not run"
   },

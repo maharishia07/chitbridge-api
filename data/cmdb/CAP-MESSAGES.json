@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -161,7 +161,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 19 API call(s)"
   }
  ],
  "entries": [
@@ -238,6 +238,16 @@
    "this": "CAP015 cap-messages.js",
    "rel": "calls",
    "that": "routes/folders.js · routes/chits.js"
+  },
+  {
+   "this": "CAP015 cap-messages.js",
+   "rel": "documented-by",
+   "that": "api docs/CB-SYNC.md · api docs/COUNTER.md · api docs/drafts/h2_supplier_list_rls_draft.sql · web e2e/l3-proposals/cap-messages.md"
+  },
+  {
+   "this": "CAP015 cap-messages.js",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "api docs/B1-RLS-STEP-D-STATUS.md · api docs/HANDOFF-dispute-notifications-2026-06-28.md · api docs/HANDOVER-TO-CLAUDE.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
   }
  ],
  "layers": {
@@ -248,6 +258,16 @@
   {
    "file": "web e2e/tests/messages.spec.js",
    "kind": "live spec",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/bills-folder.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/bills-private.test.cjs",
+   "kind": "server",
    "result": "not run"
   },
   {
@@ -266,6 +286,11 @@
    "kind": "server",
    "result": "pass",
    "at": "2026-09-13"
+  },
+  {
+   "file": "api tests/goods-in-accepts.test.cjs",
+   "kind": "server",
+   "result": "not run"
   },
   {
    "file": "api tests/groupsum-selection.test.js",
@@ -328,6 +353,11 @@
    "kind": "server",
    "result": "pass",
    "at": "2026-09-13"
+  },
+  {
+   "file": "api tests/two-sided-bill.test.cjs",
+   "kind": "server",
+   "result": "not run"
   }
  ],
  "descriptor": "apiVersion: backstage.io/v1alpha1\nkind: Component\nmetadata:\n  name: messages\n  annotations:\n    chitbridge.io/ci: CAP-MESSAGES\n    chitbridge.io/asset: CAP015\nspec:\n  type: capability-module\n  lifecycle: production\n  system: chitbridge-web\n  consumesApis:\n    - routes/folders.js\n    - routes/chits.js"

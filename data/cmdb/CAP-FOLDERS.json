@@ -10,7 +10,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -161,7 +161,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 19 API call(s)"
   }
  ],
  "entries": [
@@ -176,7 +176,7 @@
   {
    "id": "p1",
    "t": "cap-folders.js",
-   "s": "app/cap-folders.js · 41 functions",
+   "s": "app/cap-folders.js · 42 functions",
    "d": "The capability module: what the screens above call."
   }
  ],
@@ -328,13 +328,23 @@
    "this": "CAP010 cap-folders.js",
    "rel": "calls",
    "that": "routes/folders.js · routes/relationships.js"
+  },
+  {
+   "this": "CAP010 cap-folders.js",
+   "rel": "documented-by",
+   "that": "api docs/drafts/h2_supplier_list_rls_draft.sql · web docs/design/cb-accounts/CLOUD-TASK.md · web e2e/l3-proposals/cap-folders.md"
   }
  ],
  "layers": {
   "build": "chitbridge-web/public/app/cap-folders.js",
-  "design": "Capability cap-folders.js"
+  "design": "web docs/design/cb-accounts/CLOUD-TASK.md"
  },
  "tests": [
+  {
+   "file": "web e2e/bills-folder-breaks.cjs",
+   "kind": "browser",
+   "result": "not run"
+  },
   {
    "file": "web e2e/group-sum.cjs",
    "kind": "browser",
@@ -355,6 +365,16 @@
   {
    "file": "web e2e/verify-folder-ux.cjs",
    "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/bills-folder.test.cjs",
+   "kind": "server",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/bills-private.test.cjs",
+   "kind": "server",
    "result": "not run"
   },
   {

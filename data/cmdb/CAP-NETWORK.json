@@ -15,7 +15,7 @@
    "title": "Admin",
    "ci": "CAP-ADMIN",
    "state": "ok",
-   "note": "3 screen(s) · 54 API call(s) · maturity 2"
+   "note": "3 screen(s) · 51 API call(s) · maturity 2"
   },
   {
    "title": "cap-adopt.js",
@@ -166,7 +166,7 @@
    "title": "cap-books.js",
    "ci": "CAP-BOOKS",
    "state": "ok",
-   "note": "1 screen(s) · 22 API call(s)"
+   "note": "1 screen(s) · 19 API call(s)"
   }
  ],
  "entries": [
@@ -353,6 +353,16 @@
    "this": "CAP016 cap-network.js",
    "rel": "calls",
    "that": "routes/network-design.js · routes/entities.js"
+  },
+  {
+   "this": "CAP016 cap-network.js",
+   "rel": "documented-by",
+   "that": "api docs/CB-SYNC.md · api docs/COUNTER-SIGNIN.md · api docs/CTP-DESIGN.md · api docs/drafts/h2_supplier_list_rls_draft.sql · api docs/NAMESPACE.md · api scripts/grant-platform-scope.sql · web e2e/l3-proposals/cap-network.md"
+  },
+  {
+   "this": "CAP016 cap-network.js",
+   "rel": "retired-docs (tidy 2026-10-02)",
+   "that": "api docs/HANDOFF-dispute-notifications-2026-06-28.md — restore: git checkout archive/pre-tidy-2026-10-02 -- <path>"
   }
  ],
  "layers": {
@@ -392,6 +402,11 @@
   {
    "file": "web e2e/text-budget.cjs",
    "kind": "browser",
+   "result": "not run"
+  },
+  {
+   "file": "api tests/bills-folder.test.cjs",
+   "kind": "server",
    "result": "not run"
   },
   {
