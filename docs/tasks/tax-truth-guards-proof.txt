@@ -1,0 +1,147 @@
+node scripts/guards.cjs — this branch (the 15 FAILED files fail identically on main in this container: the web and engines repos are not checked out beside it; see the PR)
+— the guards —
+  FAIL  pages-parse              3 checks
+          FAIL the app parses
+          FAIL the counter (web) parses
+          FAIL the shop screen (web) parses
+          FAIL the offer lab parses
+          FAIL the combo lab parses
+  FAIL  till-vendor             65 checks
+          FAIL every copy of the screen is current (the master is the kit's till.html)
+          scripts/vendor-till.cjs --check failed
+          ok  ⭐ only cash is expected in the drawer, and the float is part of it
+          FAIL ⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over its global
+          Error: ENOENT: no such file or directory, scandir '/home/user/chitbridge-web/public/engine'
+   ok   till-shippable           5 checks
+   ok   catalogue-blueprint     15 checks
+  FAIL  engines-pinned           0 checks
+          FAIL chitbridge-engines is not checked out beside this repo — clone maharishia07/chitbridge-engines into /home/user/chitbridge-engines
+  FAIL  money-round             17 checks
+          FAIL ⭐ variant.js — its fallback is money.round
+          FAIL ⭐ offers.js — its fallback is money.round
+          FAIL ⭐ pricing.js — its fallback is money.round
+          FAIL ⭐⭐⭐ no hand-written money rounding outside money.js
+   ok   google-availability      6 checks
+  FAIL  one-rounding-rule        5 checks
+          FAIL the scan reaches the files that used to carry a copy (a guard that reads nothing proves nothing)
+  FAIL  engine-versions          6 checks
+          FAIL vendor-till writes versions.json from the engines' own lines, and the service worker keeps it offline
+   ok   till-origin              7 checks
+   ok   counter-gates           41 checks
+   ok   tdz-guard                1 checks
+   ok   migration-lint          12 checks
+   ok   entity-cast-guard        8 checks
+   ok   hat-gate                34 checks
+   ok   access-events            9 checks
+   ok   notifications-count      5 checks
+   ok   supplier-list-scope      4 checks
+   ok   knownerr                 3 checks
+   ok   xlsx-read               17 checks
+   ok   xlsx-write              10 checks
+   ok   write-limits             4 checks
+   ok   categories               6 checks
+   ok   till-agent-says          6 checks
+   ok   till-shop-folder        14 checks
+   ok   rollup                  68 checks
+   ok   verdict                 19 checks
+   ok   counter-claim           11 checks
+   ok   till-watch              21 checks
+   ok   orders                  21 checks
+   ok   dayopen                 34 checks
+   ok   qty                     12 checks
+   ok   scalecode               14 checks
+   ok   signin                  30 checks
+   ok   identity-auth           16 checks
+   ok   orderhub                19 checks
+   ok   till-hidden              4 checks
+   ok   till-exits               6 checks
+   ok   tax-lines               15 checks
+   ok   round-trips-till        15 checks
+   ok   rev16-delta-cursor-stamped-first  11 checks
+  FAIL  snapshot-wire           69 checks
+          FAIL ⭐⭐⭐ the counter and the server compute points with the SAME file, byte for byte
+          DB init failed — the next query will retry: Invalid DATABASE_URL
+   ok   one-name-one-function    3 checks
+   ok   docnumber-scheme         8 checks
+   ok   bell-param               5 checks
+   ok   network-storefront       8 checks
+   ok   network-catalogue       12 checks
+   ok   screen-kit              17 checks
+   ok   no-tax-reformula         4 checks
+   ok   network-authority        8 checks
+  FAIL  govcontext               0 checks
+          Error: ENOENT: no such file or directory, open '/home/user/chitbridge-web/public/app/govcontext.js'
+   ok   signup-context           9 checks
+  FAIL  variant                  0 checks
+          Error: ENOENT: no such file or directory, open '/home/user/chitbridge-web/public/app/variant.js'
+   ok   rewards                 33 checks
+   ok   reward-cycle            12 checks
+   ok   sql-runner              10 checks
+   ok   stock-cycle             32 checks
+   ok   item-kind                5 checks
+   ok   root-link                4 checks
+   ok   entity-kind              5 checks
+   ok   board-kinds             13 checks
+   ok   cmdb                    44 checks
+   ok   engine-boundary         29 checks
+   ok   adopt                   14 checks
+   ok   local-supplier          23 checks
+  FAIL  money-language           0 checks
+          Error: Cannot find module '/home/user/chitbridge-web/public/engine/money.js'
+  FAIL  search-engine           23 checks
+          FAIL ⭐ the counter and the app load the SAME search: three copies, byte for byte
+          FAIL neither screen keeps a search of its own
+   ok   lotfields               24 checks
+   ok   printer                 11 checks
+   ok   kit-update              14 checks
+   ok   speech                   8 checks
+   ok   key-scopes              19 checks
+   ok   column-home              4 checks
+   ok   connector-kit           45 checks
+  FAIL  tax-vendor               0 checks
+          FAIL the copy on disk is exactly the release both sides pin (nobody edited one side only)
+          chitbridge-api: adopt --check failed
+          Error: Cannot find module '/home/user/chitbridge-engines/tools/adopt.cjs'
+          Error: ENOENT: no such file or directory, open '/home/user/chitbridge-web/public/engine/tax.js'
+   ok   migration-rerunnable    86 checks
+   ok   support-desks           50 checks
+   ok   scope-leak               5 checks
+   ok   mint-riders              5 checks
+   ok   rls-context              4 checks
+   ok   rls-guard-baseline       5 checks
+   ok   rls-predicate          279 checks
+   ok   migration-rls            5 checks
+   ok   ctp-address             10 checks
+   ok   ctp-conformance         18 checks
+   ok   ctp-collision           10 checks
+   ok   bare-slate              22 checks
+   ok   convert                 21 checks
+   ok   namespace               20 checks
+   ok   userid                  23 checks
+   ok   govresolve-ctp          10 checks
+   ok   ctp-query               15 checks
+   ok   books-writer            38 checks
+   ok   books-store-sql          4 checks
+   ok   books-post               3 checks
+   ok   books-hooks             35 checks
+   ok   books-routes             4 checks
+   ok   books-tally             19 checks
+  FAIL  books-fixes              0 checks
+
+  FAIL  books-dates-tz          12 checks
+          ✗ FAIL — the two zones do not agree · 12 checks
+   ok   books-counter-snapshot  17 checks
+   ok   tax-copy                21 checks
+   ok   two-sided-bill          26 checks
+   ok   goods-in-accepts        19 checks
+  FAIL  two-sided-books          0 checks
+
+   ok   bill-use                15 checks
+   ok   tax-truth               38 checks
+   ok   bills-folder            74 checks
+   ok   bills-private           46 checks
+   ok   shop-name                9 checks
+   ok   shop-name-breaks         4 checks
+  ────────────────────────────────────────
+  2106 checks · 111 files · 28.6s · 15 FAILED: pages-parse.test.js, till-vendor.test.js, engines-pinned.test.js, money-round.test.js, one-rounding-rule.test.cjs, engine-versions.test.cjs, snapshot-wire.test.js, govcontext.test.js, variant.test.js, money-language.test.js, search-engine.test.js, tax-vendor.test.js, books-fixes.test.cjs, books-dates-tz.test.cjs, two-sided-books.test.cjs
+exit=1

@@ -599,6 +599,10 @@ function chitOf(bill) {
       /* ⭐ BOOKS v2 — a credit bill's terms and any owner override (the page's chitOf carries the same two) */
       terms: bill.terms || null,
       credit_override: bill.credit_override || null,
+      /* ⭐⭐⭐ THE INVOICE (2026-10-02) — CBTax.determine()'s result, computed once by the page's billMoney() and arriving on
+         this bill; carried UNCHANGED, never recomputed here. One shape for both hosts (tests/tax-truth.test.cjs). */
+      invoice: bill.invoice || undefined,
+      delivery: bill.delivery || undefined,
     },
     line_items: (bill.lines || []).map((l) => Object.assign({
       particulars: l.name, quantity: l.qty, unit: l.unit || 'piece', price: l.price, total: l.net,

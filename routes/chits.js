@@ -50,6 +50,7 @@ const regional = require('../lib/regional');
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
+const taxEngine = require('../lib/tax');   // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
    live in the Bills folders. The SAME classification the folders read through lib/select.js, so the two can never disagree. */
@@ -403,6 +404,18 @@ async function sameRefLook(sender_id, client_ref) {
 function refOf(req) {
   const v = req && req.body && req.body.client_ref;
   return (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 64) : null;
+}
+/**
+ * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
+ * reading the counter's screen, slip and reprint use — window.CBTax.moneyOf), never worked out again (Athi, 2026-10-02).
+ * The header keeps its own names, which are moneyOf's: gross · savings · net · taxable · tax · total · round_off. Picked,
+ * not added up. `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route
+ * makes for other chits.
+ */
+function moneyOfInvoice(inv, currency_code) {
+  const m = taxEngine.moneyOf(inv, currency_code);
+  return { gross: m.gross, savings: m.savings, net: m.net, taxable: m.taxable, tax: m.tax, total: m.total,
+           round_off: m.round_off, currency_code, provisional: false, issued: true };
 }
 /**
  * ⭐⭐⭐ ONE TIE-BREAK, TWO CALLERS — lifted 2026-09-26 per the external review's §22. This verdict (same till id
@@ -841,6 +854,30 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         }
         moneyBlock = { gross, savings: r2m(gross - net), net, tax, total: total != null ? total : (tax != null ? r2m(net + tax) : null), currency_code, provisional: true };
       } catch (_) { /* a chit never fails to send because its money summary could not be built */ }
+      /**
+       * ⭐⭐⭐ A COUNTER BILL CARRIES ITS INVOICE, AND THE SERVER ONLY READS IT (Athi, 2026-10-02: "the computation should happen
+       * in only one place like billing, rest all the places the value has to only read … recomputation can be done, but
+       * cannot rewrite what has been already wrote"). business_json.invoice is CBTax.determine()'s result from the counter's
+       * billMoney(), stored as it came. The header's money is MAPPED off it (moneyOfInvoice → the engine's moneyOf) — ₹1,118.16 for bill
+       * C2/26-27/0007, where the sum of its line nets said ₹1,118.15. The server's own computation runs ONLY to check it
+       * (lib/tax-copy entryFor → lib/issued-invoice check): a difference is named on the chit (business_json.tax_check) and in
+       * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
+       */
+      let issuedTotal = null;
+      const carried = business_json && business_json.invoice;
+      if (counterBill && !is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
+        moneyBlock = moneyOfInvoice(carried, currency_code);
+        issuedTotal = moneyBlock.total;
+        try {
+          const e = await taxCopy.entryFor({ chit_id: null, sender_entity_id: sender_id, purpose, business_json, line_items, currency_code,
+            all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(receiverDetails.filter((r) => r.entity_id)
+              .map((r) => ({ entity_id: r.entity_id, role: r.all_role || 'receiver' }))), sent_at: business_json.billed_at || null }, sender_id);
+          if (e && e.tax_check && !e.tax_check.ok) {
+            business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
+            require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
+          }
+        } catch (_) { /* the check never stops a bill — the stored invoice stands either way */ }
+      }
       const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
       /**
        * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
@@ -983,6 +1020,8 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
 
       // Calculate summary from line items
       const summary = calculateSummary(line_items);
+      /* ⭐ a counter bill's value is its invoice's TotInvVal (above), never the sum of its line nets */
+      if (issuedTotal != null) summary.total_value = issuedTotal;
       // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
       const ext_priority = ['normal','high','urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
       // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires

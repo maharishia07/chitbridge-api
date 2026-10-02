@@ -5934,6 +5934,10 @@ function chitOf(bill){
       /* ⭐ BOOKS v2 — a credit bill's terms and any owner override, on the record both copies hold */
       terms: bill.terms || null,
       credit_override: bill.credit_override || null,
+      /* ⭐⭐⭐ THE INVOICE — CBTax.determine()'s result from billMoney(), carried UNCHANGED: this is the frozen invoice both
+         ledgers post from (lib/tax-copy entryFor). A bill saved before it existed carries none; the server keeps its old path. */
+      invoice: bill.invoice || undefined,
+      delivery: bill.delivery || undefined,
     },
     line_items: (bill.lines||[]).map(function(l){
       var o = { particulars:l.name, quantity:l.qty, unit:l.unit||'piece', price:l.price, total:l.net };
@@ -17442,90 +17446,70 @@ function rwEncash(){
   paintParts(); paintTotals(); paintRw();
 }
 
+/**
+ * ⚠️ A DELIVERY THIS BILL RECORDS ({ state_code, address }) — the one thing that moves its place of supply off the shop.
+ * The counter has no screen that takes a delivery address yet, so this stays null and every bill is over the counter;
+ * whatever records one sets it here, and it travels on the bill (finish) and the chit (chitOf).
+ */
+var BILL_DELIVERY = null;
+/**
+ * ⭐⭐⭐ THE BILL IS COMPUTED ONCE, BY THE ENGINE — CBTax.determine(), the INV-01 invoice (Athi, 2026-10-02: "the computation
+ * should happen in only one place like billing, rest all the places the value has to only read, no recomputation").
+ * The shop is the seller, the customer the buyer with Pos = the place of supply, the cart the lines (qty · unit price ·
+ * the offer's saving as the line's discount · rate · HSN · cess). What comes back IS the invoice: the screen, the paper,
+ * the chit (business_json.invoice), both ledgers and every reprint read it — nothing adds it up again.
+ * ⭐ THE PLACE OF SUPPLY IS THE ENGINE'S RULE TOO — CBTax.placeOfSupply (IGST Act s.10(1)(a)): over the counter it is the
+ * shop's state (CGST + SGST, even for a registered buyer from another state); only a recorded delivery moves it. The server
+ * checks against the same function (lib/tax.js), so there is no second copy to drift.
+ * ⚠️ NO SECOND FORMULA. Without the engine there is no invoice: this answers an empty one (zeros, m.invoice null), and
+ * finish() refuses to complete a bill whose invoice is missing — it never saves a ₹0 sale.
+ * ⚠️ A shop that charges no GST (unregistered, composition) is zero-rated on its own invoice and its prices are never
+ * split — the shelf price is the taxable value and the total.
+ */
 function billMoney(){
-  var gross = 0, save = 0, net = 0;
-  CART.forEach(function(c){ gross = r2(gross + (c.gross||0)); save = r2(save + (c.save||0)); net = r2(net + (c.net||0)); });
-  var taxed = shopTax().charges;
+  var sh = (S && S.shop) || {}, taxed = shopTax().charges;
   /* ⚠️ WHICH WAY THE PRICE IS QUOTED. Inclusive (the Indian retail norm, and the default) splits the tax OUT of the shelf price;
      exclusive ADDS it on top. Getting this backwards is wrong by exactly the tax on every bill, in silence. */
   var inclusive = taxIncluded();   /* ⭐ one answer, shared with the shelf row — they must never disagree */
-  var base = net, tax = 0, byRate = {};
-  /* ⭐ the supply (intra / inter / unknown) is decided ONCE, up here, because each line's heads need it below */
-  var sc = (S && S.shop && S.shop.state_code) ? String(S.shop.state_code) : '';
-  var supply = (window.CBTax && CBTax.supplyType) ? CBTax.supplyType(sc, sc) : 'unknown';
-  if (taxed){
-    base = 0;
-    CART.forEach(function(c){
-      var rate = Number(c.gst_rate)||0;
-      /**
-       * ⚠️⚠️ THE SAME FORMULA THE INVOICE WILL USE — CBTax.splitLineTax(), not a shortcut re-derived here.
-       * `net − assessable` looks identical to `assessable × rate ÷ 100` and is not, once assessable itself has
-       * rounded (₹10 at 18% inclusive already lands a paisa apart — proved in tests/tax.test.js SPLIT-01). The
-       * server builds the completed bill's GST invoice with this same function (lib/tax.js), so the figure the
-       * counter shows and the figure the invoice declares can no longer disagree by a paisa nobody can explain.
-       */
-      var split = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: c.net||0, rate: rate, priceIncludesTax: inclusive })
-        /* the engine failed to load — same shape, so a bill can still be checked, not a second formula in normal use */
-        : (function(){ var b2 = inclusive ? r2((c.net||0) * 100 / (100 + rate)) : r2(c.net||0); return { assessable: b2, tax: r2(b2 * rate / 100) }; })();
-      var b = split.assessable, t = split.tax;
-      /**
-       * ⭐⭐ THE LINE'S OWN TAXABLE VALUE AND TAX, KEPT ON THE LINE. Athi, 2026-09-10: *"so every line item will
-       * have its own breakdown — original cost, discount, tax and so on."*
-       *
-       * ⚠️ WORKED OUT HERE, WHERE THE BILL'S TOTAL IS WORKED OUT, and never again anywhere else. These figures
-       * must sum to the totals printed underneath them — and the only way to guarantee that is for both to come
-       * out of the same loop. Recomputing them in the printer would produce a bill whose lines do not add up to
-       * its own total, which is the single worst thing a tax document can do.
-       */
-      c.taxable = b; c.tax = t;
-      /**
-       * ⭐⭐⭐ THE HEADS OF THIS LINE'S TAX — CBTax.lineHeads (tax v1.9.0), the same split the invoice's ItemList and
-       * the ledger carry (CGST the rounded half, SGST the remainder), SUMMED per rate for the slip. Seen live
-       * 2026-10-01: the slip halved each rate's total (10.45 / 10.45) while the invoice and the ledger said
-       * 10.46 / 10.44. A bill and its invoice never disagree by a paisa — so the slip adds up the lines, like them.
-       */
-      var hd = (window.CBTax && CBTax.lineHeads) ? CBTax.lineHeads({ tax: t, supply: supply === 'inter' ? 'inter' : 'intra' }) : null;
-      if (hd) { c.cgst = hd.cgst; c.sgst = hd.sgst; c.igst = hd.igst; }
-      base = r2(base + b); tax = r2(tax + t);
-      if (rate){
-        var br = byRate[rate] = byRate[rate] || { base:0, tax:0 };
-        br.base = r2(br.base + b); br.tax = r2(br.tax + t);
-        if (hd) { br.cgst = r2((br.cgst || 0) + hd.cgst); br.sgst = r2((br.sgst || 0) + hd.sgst); br.igst = r2((br.igst || 0) + hd.igst); }
-      }
-    });
-  }
-  /**
-   * ⚠️⚠️ THE TOTAL RECONCILES TO ITS OWN COMPONENTS, THE WAY AN INVOICE'S TotInvVal DOES (lib/tax.js: rounded once
-   * from AssVal + the tax heads, with RndOffAmt as the declared difference). Exclusive pricing always needed this
-   * (the tax is added on top). Inclusive needs it NOW too: splitLineTax() derives each line's tax from its OWN
-   * rate (assessable × rate ÷ 100 — what the invoice justifies itself by), not from "net − assessable" — so on a
-   * multi-rate bill, Σbase + Σtax can land a paisa from Σnet (₹731.00 shelf-priced can decompose to ₹731.01 of
-   * base+tax; tests/till-vendor.test.js, "mixed rates and a zero-rated line, to the paisa"). The BILL, like the
-   * invoice, is the sum of its declared components — never a total its own breakdown fails to add up to.
-   */
-  /* ⭐ NAMED, NOT HIDDEN — the same paisa a printed Indian bill's "Round off" line already shows. */
-  var beforeRound = net, round = 0;
-  if (taxed) { net = r2(base + tax); round = r2(net - beforeRound); }
-  /**
-   * ⚠️ THE HEADS ARE PART OF THE MONEY, so they are worked out here beside it and never in a painter — the screen, the
-   * printed slip and the chit must all read the same figures from one place.
-   */
-  var heads = [];
-  if (taxed && supply !== 'unknown') {
-    Object.keys(byRate).sort(function(a, b){ return Number(a) - Number(b); }).forEach(function(rt){
-      var t = byRate[rt].tax, br0 = byRate[rt];
-      /* ⭐ the heads are the SUM of the lines' heads (CBTax.lineHeads); a rate's half is only the fallback for an engine that did not load */
-      var half = (br0.cgst != null) ? br0.cgst : r2(t / 2);
-      if (supply === 'inter') heads.push({ name:'IGST', rate:Number(rt), amount:t, base:byRate[rt].base });
-      else {
-        /* ⭐ the engine's own rule: CGST takes the rounded half, SGST the remainder, so the pair always sums to the tax */
-        heads.push({ name:'CGST', rate:Number(rt) / 2, amount:half, base:byRate[rt].base });
-        heads.push({ name:'SGST', rate:Number(rt) / 2, amount:r2(t - half), base:byRate[rt].base });
-      }
-    });
-  }
-  return { gross:gross, save:save, net:net, base:base, tax:tax, byRate:byRate, taxed:taxed, inclusive:inclusive,
-           supply:supply, heads:heads, round:round };
+  /* ⚠️ the shop's state is the first two digits of its GSTIN — the rule the snapshot sends state_code by (routes/till.js),
+     read here too, so a copy that came without the field still states its supply rather than charging no tax */
+  var sc = String(sh.state_code || String(sh.gstin || '').trim().slice(0, 2) || '');
+  var cust = custKnown(), g = cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '';
+  var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
+    seller: { Gstin: sh.gstin || '', LglNm: sh.legal_name || sh.name || '', TrdNm: sh.name || '', Addr1: sh.address || '',
+              Ph: sh.phone || '', State: sc, Country: sh.country || '', RegType: sh.reg_type || 'regular' },
+    buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
+             Gstin: g, State: /^\d{2}/.test(g) ? g.slice(0, 2) : '', RegType: g ? 'regular' : 'unregistered',
+             Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY }, sc) },
+    lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
+      qty: Number(c.qty) || 0, unit_price: c.unitPrice != null ? c.unitPrice : (Number(c.price) || 0), discount: c.save || 0,
+      gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0 }; }),
+    priceIncludesTax: taxed && inclusive, zeroRated: !taxed
+  }) : null;
+  var m = moneyOf(inv);
+  /* ⭐ each cart line shows its own figures — READ off its ItemList entry, the same row the invoice carries */
+  CART.forEach(function(c, n){ var l = m.lines[n] || {}; c.taxable = l.taxable; c.tax = l.tax; c.cgst = l.cgst; c.sgst = l.sgst; c.igst = l.igst; });
+  m.taxed = taxed; m.inclusive = inclusive; m.invoice = inv;
+  return m;
+}
+/**
+ * ⭐⭐⭐ WHAT A BILL SAYS, READ OFF ITS INVOICE — the engine's CBTax.moneyOf, with the counter's display names put on its
+ * fields. A mapping only: no sum, no rounding, nothing worked out here. The bill on the screen (billMoney) and the duplicate
+ * from "Earlier bills" (slipOfRow) both read through here, and the server reads the same function for summary_json.money
+ * (routes/chits.js moneyOfInvoice → lib/tax.js moneyOf), so the screen, the paper and the chit cannot disagree.
+ *   net = total · base = taxable · save = savings · round = round_off · byRate = by_rate (base = taxable; a rate of 0 has no
+ *   row on the slip) · heads, supply, pos_state and each line's figures as the engine names them
+ * ⚠️ No engine (or no invoice) → zeros and no lines, never a figure of its own; finish() then refuses the sale.
+ */
+function moneyOf(inv){
+  var e = (inv && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(inv) : null;
+  if (!e) return { gross:0, save:0, net:0, base:0, tax:0, round:0, byRate:{}, heads:[], supply:'unknown', pos_state:null, lines:[] };
+  var byRate = {};
+  Object.keys(e.by_rate).forEach(function(rt){ var x = e.by_rate[rt];
+    if (Number(rt)) byRate[rt] = { base:x.taxable, tax:x.tax, cgst:x.cgst, sgst:x.sgst, igst:x.igst }; });
+  return { gross:e.gross, save:e.savings, net:e.total, base:e.taxable, tax:e.tax, round:e.round_off, byRate:byRate,
+           heads:e.heads, supply:e.supply, pos_state:e.pos_state,
+           lines: e.lines.map(function(l){ return { gross:l.gross, taxable:l.taxable, cgst:l.cgst, sgst:l.sgst, igst:l.igst, tax:l.tax }; }) };
 }
 /**
  * ── ⭐⭐⭐ WHAT IS ON THIS BILL, COUNTED THE WAY EACH LINE IS SOLD ([TILL-104]) ──────────────────
@@ -17598,7 +17582,7 @@ function paintShop(){
   var sh = S.shop, tx = shopTax();
   var doc = tx.kind === 'tax' ? 'a TAX INVOICE' : (tx.kind === 'supply' ? 'a BILL OF SUPPLY' : 'a cash memo');
   var split = !sh.state_code ? 'cannot be split'
-    : ((window.CBTax && CBTax.supplyType(String(sh.state_code), String(sh.state_code)) === 'intra') ? 'CGST + SGST' : 'IGST');
+    : ((window.CBTax && CBTax.supplyType(String(sh.state_code), CBTax.placeOfSupply(null, String(sh.state_code))) === 'intra') ? 'CGST + SGST' : 'IGST');
   /**
    * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
    * *"service tax not registered."* A shop below the threshold is correctly unregistered, and the line says so.
@@ -20087,6 +20071,9 @@ async function finish(){
   if (!CART.length) return;
   if (await tillStopped()) return;   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
   var m = billMoney();
+  /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
+     a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
+  if (!m.invoice) { say('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return; }
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();
@@ -20156,7 +20143,10 @@ async function finish(){
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
     /* ⚠️ THE SPLIT IS RECORDED, NOT RE-DERIVED. A reprint months later must show the heads this bill was ISSUED with —
        the shop's registration can change, and a slip that recomputes would quietly restate a filed return. */
-    heads: m.heads, supply: m.supply,
+    heads: m.heads, supply: m.supply, pos_state: m.pos_state, round_off: m.round, delivery: BILL_DELIVERY || null,
+    /* ⭐⭐⭐ THE INVOICE — CBTax.determine()'s own result, from billMoney(); every figure above was read off it. The chit
+       carries this object unchanged (chitOf) and the server stores and posts it as it is. */
+    invoice: m.invoice,
     /* ⭐ the rate-wise summary the printed bill shows at the foot — recorded with the bill for the same reason
        the heads are, so a reprint states what was issued rather than what today's slabs would say */
     by_rate: m.byRate || {},
@@ -20206,7 +20196,7 @@ async function finish(){
   CFD.done(r.bill && r.bill.no, r.bill && money(r.bill.total));
   showSlip(r.bill, m);
   autoPrint(r.bill);
-  ageClear(); CART = []; PARTS = []; paintParts();
+  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; paintParts();
   /* ⚠️ the balance on screen belonged to the customer who just left */
   RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
   document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
@@ -21325,7 +21315,10 @@ function slipHTML(bill, m){
      * ⚠️ IT FALLS BACK, because bills saved before by_rate existed still get reprinted, and a reprint that
      * dropped the tax block would be worse than one that shows it the old way.
      */
-    + (bill.kind === 'tax' ? taxSummaryHTML(bill, t, dash) : '')
+    /* ⚠️ a reprint of a bill whose tax was never kept says so — never "GST 0.00" on a TAX INVOICE (slipOfRow) */
+    + (bill.kind === 'tax' ? (bill.tax_lost ? t('Tax detail not kept for this bill', '') : taxSummaryHTML(bill, t, dash)) : '')
+    /* ⭐ Rule 46(n): a tax invoice names its place of supply */
+    + (bill.kind === 'tax' && bill.pos_state ? t('Place of supply', esc(String(bill.pos_state))) : '')
     + solid + t('TOTAL', money(bill.total), true) + solid
     + (bill.payments||[]).map(function(p){ return t(esc(p.how), money(p.amount)); }).join('')
     + (bill.change > 0 ? t('Change', money(bill.change)) : '') + dash
@@ -21365,16 +21358,21 @@ function taxSummaryHTML(bill, t, dash){
     return '<div style="font-size:.88em' + (bold ? ';font-weight:700' : '') + '">'
       + cell(a, '18%') + cell(b, '32%', true) + cell(c, '25%', true) + cell(d, '25%', true) + '</div>';
   };
+  /**
+   * ⭐⭐⭐ A BILL THAT CARRIES ITS INVOICE PRINTS THE INVOICE (2026-10-02): each rate's row is its slab, the foot is ValDtls —
+   * read, never added up here. ⚠️ Only a bill saved before the invoice travelled with it (an older bill on this counter)
+   * still adds its rows up, and halves a rate it never split — the shape it was saved in.
+   */
+  var v = bill.invoice && bill.invoice.ValDtls;
   var tb = 0, t1 = 0, t2 = 0;
   var body = rates.map(function(rt){
-    /* ⭐ the printed heads are the SUM of the lines' heads (billMoney, CBTax.lineHeads) — the slip, the invoice and the
-       ledger then carry the same paise; a rate's half is only the fallback for a bill saved before tax v1.9.0 */
     var b = by[rt].base, tx = by[rt].tax, half = (by[rt].cgst != null) ? by[rt].cgst : r2(tx / 2);
-    tb = r2(tb + b);
-    if (inter) { t1 = r2(t1 + tx); return row(rt + '%', money(b), money(tx), ''); }
-    t1 = r2(t1 + half); t2 = r2(t2 + r2(tx - half));
-    return row(rt + '%', money(b), money(half), money(r2(tx - half)));
+    var sg = (by[rt].sgst != null) ? by[rt].sgst : r2(tx - half);
+    if (!v) { tb = r2(tb + b); t1 = r2(t1 + (inter ? tx : half)); t2 = r2(t2 + sg); }
+    if (inter) return row(rt + '%', money(b), money(by[rt].igst != null ? by[rt].igst : tx), '');
+    return row(rt + '%', money(b), money(half), money(sg));
   }).join('');
+  if (v) { tb = v.AssVal; t1 = inter ? v.IgstVal : v.CgstVal; t2 = v.SgstVal; }
   return dash
     + '<div style="font-weight:700;font-size:.9em">' + (inter ? 'IGST SUMMARY' : 'GST SUMMARY') + '</div>'
     + row('Rate', 'Taxable', inter ? 'IGST' : 'CGST', inter ? '' : 'SGST', true)
@@ -23701,8 +23699,24 @@ function reprintOld(no){
   var b = EARLIER.filter(function(x){ return x.no === no; })[0];
   if (!b) return;
   document.getElementById('billsdlg').close();
+  b = slipOfRow(b);
   LAST = b;
-  showSlip(b, { gross: r2((b.total||0) + (b.saved||0)) });
+  showSlip(b, { gross: b.gross != null ? b.gross : r2((b.total||0) + (b.saved||0)) });
+}
+/**
+ * ⭐⭐⭐ A DUPLICATE IS THE SAME DOCUMENT AS THE ORIGINAL (2026-10-02). The row ChitBridge kept carries the stored invoice —
+ * CBTax.determine()'s result as the counter issued it (GET /api/till/bills) — and the slip reads it through the SAME
+ * mapping the bill was printed from (moneyOf): total, taxable, tax, rate-wise summary, heads, place of supply, and each
+ * line's gross and taxable value. Bill C2/26-27/0007, reprinted from the server copy, said taxable ₹1,118.15, GST ₹0.00
+ * and "Gross ₹0.00" on a TAX INVOICE. A row with no stored invoice (a bill from before) says so on the paper.
+ */
+function slipOfRow(b){
+  var inv = (b && b.invoice && typeof b.invoice === 'object' && b.invoice.ValDtls) ? b.invoice : null;
+  if (!inv) return Object.assign({}, b, { tax_lost: true });
+  var m = moneyOf(inv);
+  return Object.assign({}, b, { total: m.net, taxable: m.base, tax: m.tax, saved: m.save, gross: m.gross, by_rate: m.byRate,
+                                heads: m.heads, supply: m.supply, pos_state: m.pos_state, round_off: m.round,
+                                lines: (b.lines || []).map(function(l, n){ return Object.assign({}, l, m.lines[n] || {}); }) });
 }
 async function reprint(no){
   var rows = (HOST && HOST.bills) ? (await HOST.bills()) : [];
@@ -23710,8 +23724,10 @@ async function reprint(no){
   var b = rows.filter(function(x){ return x.no === no || x.printed_as === no; })[0];
   if (!b) return;
   document.getElementById('billsdlg').close();
+  /* ⭐ a bill that carries its invoice is reprinted from it (slipOfRow); an older one in the shape it was saved in */
+  if (b.invoice) b = slipOfRow(b);
   LAST = b;
-  showSlip(b, { gross: r2((b.total||0) + (b.saved||0)) });
+  showSlip(b, { gross: b.gross != null ? b.gross : r2((b.total||0) + (b.saved||0)) });
 }
 /** the rest of ChitBridge is a different job — one door, never a panel (Athi, 2026-09-07) */
 function cbHome(){ var api = (HOST && HOST.mode === 'cloud' && CloudHost.api) ? CloudHost.api : '';

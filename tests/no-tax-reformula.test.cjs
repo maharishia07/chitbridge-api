@@ -36,7 +36,9 @@ const src = fs.readFileSync(TILL, 'utf8');
    make the guard blind and a genuinely different computation does not trip it. */
 const SPLIT_SHAPE = /\*\s*100\s*\/\s*\(\s*100\s*\+/g;
 
-const PERMITTED_FALLBACKS = 3;   // billMoney(), the day-close report, rcvLineTax() — each beside its own CBTax.splitLineTax() call
+// ⭐ 2026-10-02: billMoney() lost its fallback — it IS CBTax.determine() now (the one computation; Athi: "the computation should
+// happen in only one place like billing"), and with no engine the counter refuses to sell rather than adding up its own.
+const PERMITTED_FALLBACKS = 2;   // the day-close report, rcvLineTax() — each beside its own CBTax.splitLineTax() call
 
 t('splitLineTax has exactly the permitted fallback copies of its own formula, and no new one crept in', () => {
   const hits = (src.match(SPLIT_SHAPE) || []).length;
@@ -86,8 +88,16 @@ function bodyOf(at) {
   return src.slice(at);
 }
 
-t('billMoney(), dayCloseSheet() and rcvLineTax() each call CBTax.splitLineTax(), not their own arithmetic', () => {
-  ['function billMoney(', 'function dayCloseSheet(', 'function rcvLineTax('].forEach((sig) => {
+t('billMoney() calls CBTax.determine() — the whole invoice — and holds no split of its own', () => {
+  const at = src.indexOf('function billMoney(');
+  if (at < 0) throw new Error('function billMoney( not found — this guard is stale, or the function was renamed');
+  const body = bodyOf(at);
+  if (!/CBTax\.determine\(/.test(body)) throw new Error('billMoney() no longer asks CBTax.determine() for the bill');
+  if (/splitLineTax|lineHeads|\*\s*100\s*\/\s*\(/.test(body)) throw new Error('billMoney() is working the tax out itself again');
+});
+
+t('dayCloseSheet() and rcvLineTax() each call CBTax.splitLineTax(), not their own arithmetic', () => {
+  ['function dayCloseSheet(', 'function rcvLineTax('].forEach((sig) => {
     const at = src.indexOf(sig);
     if (at < 0) throw new Error(sig + ' not found — this guard is stale, or the function was renamed');
     const body = bodyOf(at);

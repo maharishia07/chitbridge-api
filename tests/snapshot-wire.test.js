@@ -751,12 +751,13 @@ it('⭐⭐ the bill says how many products and how many items, on screen and on 
 it('⭐⭐ the GST is split into its heads, by the engine that already decides that', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
   const bm = page.slice(page.indexOf('function billMoney(){'), page.indexOf('function paintTotals'));
-  assert.ok(bm.indexOf('CBTax.supplyType(') > 0, 'the counter decides intra vs inter itself instead of asking the engine');
-  assert.ok(bm.indexOf("heads.push({ name:'CGST'") > 0 && bm.indexOf("heads.push({ name:'SGST'") > 0
-    && bm.indexOf("heads.push({ name:'IGST'") > 0, 'the heads are not all built');
-  /* ⭐ the engine's rounding rule: CGST takes the rounded half, SGST the remainder, so the pair sums to the tax exactly */
-  assert.ok(bm.indexOf('r2(t - half)') > 0, 'SGST is not the remainder — the halves can fail to sum to the tax');
-  assert.ok(bm.indexOf("supply !== 'unknown'") > 0, 'a shop with no state code would be given an invented split');
+  /* ⭐ 2026-10-02: the decision AND the split are CBTax.determine()'s — billMoney passes the place of supply in (the engine's
+     CBTax.placeOfSupply) and reads the heads off the invoice with the engine's own CBTax.moneyOf (CGST and SGST each as the
+     engine summed them per slab, IGST for inter-state, none for an unknown supply) — the counter builds no head itself */
+  assert.ok(bm.indexOf('CBTax.determine(') > 0, 'the counter decides intra vs inter itself instead of asking the engine');
+  assert.ok(bm.indexOf('CBTax.placeOfSupply(') > 0, 'the counter decides its place of supply with a rule of its own');
+  assert.ok(bm.indexOf('CBTax.moneyOf(') > 0 && bm.indexOf('heads:e.heads') > 0, 'the heads are not read off the invoice by the engine');
+  assert.ok(bm.indexOf('heads.push(') < 0, 'the counter builds its own heads again — the halves can fail to sum to the tax');
   /* it must reach both the screen and the paper, and be RECORDED on the bill so a reprint shows what was issued */
   assert.ok(page.indexOf("'<div class=\"t head\">'") > 0 || page.indexOf('class="t head"') > 0, 'the screen shows no heads');
   const slip = page.slice(page.indexOf('function slipHTML(bill, m){'), page.indexOf('function showSlip'));

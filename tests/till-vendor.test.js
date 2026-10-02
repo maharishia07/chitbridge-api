@@ -66,7 +66,9 @@ function load() {
    * ⭐ AND MONEY FIRST OF ALL (2026-09-28): the page's r2 no longer carries its own copy of the rounding rule — it
    * rounds through MONEY(), i.e. the adopted money engine, exactly as the counter does in a browser and on a PC.
    */
-  for (const eng of ['money.js', 'units.js', 'qty.js']) {
+  /* ⭐⭐ AND THE TAX ENGINE (2026-10-02): billMoney() IS CBTax.determine() now — the one computation, with no formula of its
+     own to fall back on — so the sandbox loads the same bundle the page is served as /engine/tax.js (packs + slab + tax). */
+  for (const eng of ['money.js', 'units.js', 'qty.js', 'tax-engine.browser.js']) {
     const f = path.join(__dirname, '..', 'lib', eng);
     if (!fs.existsSync(f)) throw new Error(eng + ' is missing — run scripts/vendor-till.cjs');
     vm.runInContext(fs.readFileSync(f, 'utf8'), sandbox);
@@ -121,7 +123,10 @@ it('⭐⭐⭐ [SPLIT-01] mixed rates and a zero-rated line, to the paisa — wit
    * name for this paisa: "Round off" — lib/tax.js declares it as RndOffAmt, and billMoney() now declares it too.
    */
   assert.strictEqual(m.net, 731.01, 'the total reconciles to its own components, the way an invoice does');
-  assert.strictEqual(m.round, 0.01, 'the paisa is NAMED — a "Round off" line, never folded silently into the total');
+  /* ⚠️ 2026-10-02: m.round IS the invoice's RndOffAmt now (billMoney reads CBTax.determine). India's pack rounds the total to
+     the PAISA (tax-packs v1.10.0, Athi), so taxable + tax is already the total and nothing is rounded off: the paisa between
+     the shelf prices (₹731.00) and the invoice (₹731.01) is the tax by rate, stated in the heads, not a round-off. */
+  assert.strictEqual(m.round, 0, 'the invoice\'s own round-off (RndOffAmt), to the paisa');
   assert.strictEqual(Math.round((m.base + m.tax) * 100) / 100, 731.01, 'taxable plus tax is the total, always');
   assert.ok(m.byRate['5'] && m.byRate['18'], 'each rate is reported on its own, as a slip must show it');
 });
@@ -639,7 +644,8 @@ it('⭐ a pinned key holds its place whatever the hour says', async () => {
 const finds = (h, word) => h.filter((x) => (x.what + ' ' + x.means).toLowerCase().indexOf(word.toLowerCase()) >= 0);
 
 it('⭐⭐ THE ONE HE ASKED FOR: a shop that charges GST, with products that carry no rate', () => {
-  P.CBTax = { slab: require(path.join(API, 'lib', 'tax-slab.js')) };   /* the engine the browser loads as /engine/tax.js */
+  /* the engine the browser loads as /engine/tax.js — determine() and the slab together (billMoney needs the first) */
+  P.CBTax = Object.assign({}, P.CBTax, { slab: require(path.join(API, 'lib', 'tax-slab.js')) });
   P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' }, face: {}, policy: {},
     slabs: [{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 }], categories: [],
     items: [{ item_id: 'a', name: 'Rice', price: 60, tax_slab: 'gst-5' },
