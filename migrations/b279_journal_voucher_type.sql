@@ -11,8 +11,7 @@
 -- Existing entries keep their numbers (JV/…); their series is 'JV' already, so nothing is renumbered. Safe to re-run.
 
 ALTER TABLE journal_entry ADD COLUMN IF NOT EXISTS voucher_type text;
--- backfill from the series prefix (a manual MJ entry written before this column stays NULL — derived as Journal)
-UPDATE journal_entry SET voucher_type = CASE series
-  WHEN 'SV' THEN 'Sales' WHEN 'PV' THEN 'Purchase' WHEN 'RV' THEN 'Receipt' WHEN 'PY' THEN 'Payment'
-  WHEN 'CV' THEN 'Contra' WHEN 'CN' THEN 'Credit note' WHEN 'DN' THEN 'Debit note' WHEN 'JV' THEN 'Journal' END
- WHERE voucher_type IS NULL AND series <> 'MJ';
+-- ⚠️ NO BACKFILL (2026-10-03, Athi ran the first draft and it was refused: "The books are insert-only: UPDATE on journal_entry is
+-- refused — correct with a reversing entry (Rule 3 audit trail)"). That refusal is RIGHT: journal_entry is insert-only (books_insert_only()),
+-- and filling a column on old rows is an UPDATE. So existing entries keep voucher_type NULL, and the reader derives their type from the series
+-- prefix (lib/books.js voucherTypeOfEntry: JV → Journal, SV → Sales …). Only entries written after this column exists carry it.
