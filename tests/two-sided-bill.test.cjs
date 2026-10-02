@@ -32,7 +32,14 @@ const ROWS = {
   [STRANGER]: { identity_id: STRANGER, bridge_id: 'CB-STRG', display_name: 'Some Other Business', country: 'IN', status: 'active' },
 };
 /* the shop's customer list, and who on it is a business on the rail (OUTSIDE is on the list, but a local ~ record) */
-const LIST = { [CUST]: { rail: true }, [OUTSIDE]: { rail: false } };
+const OTHERWORLD = '55555555-5555-4555-8555-555555555555';   /* on the list, on the rail, in the TEST sandbox */
+const LIST = { [CUST]: { rail: true }, [OUTSIDE]: { rail: false }, [OTHERWORLD]: { rail: true, sandbox: 'test' } };
+/* lib/istest mayTrade's answer per party — what the database would say about each */
+const TRADE = {
+  [STRANGER]: { display_name: 'Some Other Business', status: 'active', user_id: 'strg', on_rail: true, same_world: true },
+  [OUTSIDE]: { display_name: 'Corner Store', status: 'active', user_id: '~mayur.cus-0001', on_rail: false, same_world: true },
+  [OTHERWORLD]: { display_name: 'Test Bakery', status: 'active', user_id: 'testbakery', on_rail: true, same_world: false, theirs: 'test', mine: 'live' },
+};
 let REPLAY = null, SQL = [];
 
 let LISTED = [];
@@ -44,8 +51,11 @@ function rowsFor(sql, p) {
   if (/business_json->>'client_ref' = \$2/.test(s)) return REPLAY ? [REPLAY] : [];
   if (/FROM customer_list/.test(s) && /customer_identity_id = \$2/.test(s)) {
     const l = LIST[p && p[1]];
-    return l && l.rail && /identity_type = 'entity'/.test(s) ? [{ ok: 1 }] : [];
+    /* the gate's question: listed AND on the rail AND the same sandbox (lib/istest mayTradeSql) */
+    if (/identity_type = 'entity'/.test(s)) return l && l.rail && !(l.sandbox && /population/.test(s)) ? [{ ok: 1 }] : [];
+    return l ? [{ ok: 1 }] : [];   /* the second look: is it on the list at all */
   }
+  if (/AS same_world/.test(s)) { const t = TRADE[p && p[1]]; return t ? [t] : []; }
   if (/FROM supplier_list/.test(s)) return [];
   if (/SELECT self_copy_pref/.test(s)) return [{ self_copy_pref: null }];
   if (/FROM identities/.test(s) && /identity_id = \$1/.test(s)) { const r = ROWS[p && p[0]]; return r ? [r] : []; }
@@ -140,11 +150,22 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('…the SHOP sells it: only the shop\'s shelf is read for rates, never the customer\'s', SHELVES.length >= 1 && SHELVES.every((e) => e === SHOP), JSON.stringify(SHELVES));
     ok('…and the shop is never written into the CUSTOMER\'s customer list (that is what an order to a seller does)', !LISTED.some((x) => x[0] === CUST), JSON.stringify(LISTED));
 
-    /* the gate: a till key sends a bill to its own customer on the rail, and to nobody else */
+    /* the gate: a till key sends a bill's COPY to its own customer on the rail, and to nobody else.
+       ⭐ ONE-SIDED, NOT REFUSED (Athi, 2026-10-02): when the copy cannot go, the sale is still the shop's own record and is
+       recorded with its ledger — only the customer's copy is dropped, and the answer says why. */
+    const noCopyFor = (id) => !(COPIES || []).some((c) => c.entity_id === id);
+    const shopKept = () => (COPIES || []).some((c) => c.entity_id === SHOP);
+    COPIES = null;
     const notList = await send(bill('C1/26-27/0042', Object.assign({}, chola, { entity_id: STRANGER, identity_id: STRANGER }), { recipients: [SELF, Object.assign({}, toCust, { entity_id: STRANGER })] }));
-    ok('a till key cannot send to a business that is NOT on this shop\'s customer list (403)', notList.status === 403 && !COPIES, notList.status + ' ' + JSON.stringify(notList.body));
+    ok('a bill to a business NOT on this shop\'s customer list is RECORDED one-sided (200) — no copy goes to them', notList.status === 200 && noCopyFor(STRANGER) && shopKept(), notList.status + ' ' + JSON.stringify(notList.body).slice(0, 200));
+    ok('…and the answer says why the copy did not go (one_sided.why names the customer list)', notList.body && notList.body.one_sided && /customer list/.test(notList.body.one_sided.why || ''), JSON.stringify(notList.body && notList.body.one_sided));
+    COPIES = null;
     const local = await send(bill('C1/26-27/0043', Object.assign({}, chola, { entity_id: OUTSIDE, identity_id: OUTSIDE }), { recipients: [SELF, Object.assign({}, toCust, { entity_id: OUTSIDE })] }));
-    ok('…nor to a customer on the list who is not on the rail (a local record) (403)', local.status === 403 && !COPIES, local.status + ' ' + JSON.stringify(local.body));
+    ok('…a customer on the list who is not on ChitBridge (a local record): recorded one-sided, "not on ChitBridge"', local.status === 200 && noCopyFor(OUTSIDE) && shopKept() && /not on ChitBridge/.test(((local.body || {}).one_sided || {}).why || ''), local.status + ' ' + JSON.stringify(local.body && local.body.one_sided));
+    COPIES = null;
+    const world = await send(bill('C1/26-27/0049', Object.assign({}, chola, { name: 'Test Bakery', entity_id: OTHERWORLD, identity_id: OTHERWORLD }), { recipients: [SELF, Object.assign({}, toCust, { name: 'Test Bakery', entity_id: OTHERWORLD })] }));
+    ok('…a customer in ANOTHER SANDBOX: recorded one-sided, and the answer names the sandbox', world.status === 200 && noCopyFor(OTHERWORLD) && shopKept() && /test sandbox/.test(((world.body || {}).one_sided || {}).why || ''), world.status + ' ' + JSON.stringify(world.body && world.body.one_sided));
+    ok('…and a bill whose copy DID go says nothing about being one-sided', a.body && !a.body.one_sided, JSON.stringify(a.body && a.body.one_sided));
     const other = await send(bill('C1/26-27/0044', Object.assign({}, chola, { entity_id: null }), { recipients: [SELF, toCust] }));
     ok('…nor to anyone the bill itself does not name as its customer (403)', other.status === 403 && !COPIES, other.status + ' ' + JSON.stringify(other.body));
     const two = await send(bill('C1/26-27/0045', chola, { recipients: [SELF, toCust, Object.assign({}, toCust, { entity_id: STRANGER })] }));

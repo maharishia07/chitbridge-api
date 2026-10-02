@@ -209,8 +209,9 @@ router.get('/snapshot', auth, async (req, res) => {
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
                 to_regclass('party_item') IS NOT NULL AS has_party_item,
                 /* ⭐ THE TWO-SIDED COUNTER BILL (2026-10-01): a customer who is a business ON THE RAIL can be sent their copy
-                   of a bill — lib/local-identity onRailSql, the same test the send route's till gate makes */
-                CASE WHEN ${require('../lib/local-identity').onRailSql('i')} THEN i.identity_id END AS rail_entity_id
+                   of a bill — lib/istest mayTradeSql (on the rail AND the same sandbox), the same test the send route's
+                   till gate makes, so the counter never offers a copy the gate would drop (Athi, 2026-10-02) */
+                CASE WHEN ${require('../lib/istest').mayTradeSql('i', '$1')} THEN i.identity_id END AS rail_entity_id
            FROM customer_list c
            JOIN identities i ON i.identity_id = c.customer_identity_id
           WHERE c.owner_entity_id = $1
