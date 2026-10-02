@@ -375,7 +375,7 @@ router.get('/bs', auth, on, async (req, res) => {
   try {
     const e = ctx(req), asOf = dateQ(req.query.asOf, today());
     const out = await withEntity(e, async (h) => {
-      const bs = await B.balanceSheet(h, e, asOf);
+      const bs = await B.balanceSheet(h, e, asOf, B.entityBasisOf(req.books));   /* undefined until the entity-type decision is taken → Schedule III */
       const nature = new Map((await S.accounts(h, e)).map((a) => [String(a.code), a.nature]));
       const left = flat(bs.liabilities);
       return { assets: flat(bs.assets), liabilities: left.filter((r) => r.code && nature.get(String(r.code)) !== 'equity'),

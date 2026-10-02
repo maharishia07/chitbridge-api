@@ -60,7 +60,7 @@ const SUPP = '33333333-3333-4333-8333-333333333333';
   const sale = { type: 'sale_bill', date: '2026-09-10', currency: 'INR', party: CUST, source_chit_id: 'c0000000-0000-4000-8000-000000000001', source_ref: 'chit:c1',
     by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: { cash: 180 }, round_off: 0 };
   const r1 = await B.postEntry(db, SHOP, sale);
-  ok('a credit sale posts', r1.ok && r1.entry_no === 'JV/2026-27/000001', JSON.stringify(r1));
+  ok('a credit sale posts', r1.ok && r1.entry_no === 'SV/2026-27/000001', JSON.stringify(r1));   // v1.16.0: a sale is a Sales voucher, series SV
   const ls = T.lines.filter((l) => l.entry_id === r1.entry_id);
   eq('…Σ debit = Σ credit (1180.00)', [ls.reduce((t, l) => t + l.dr_minor, 0), ls.reduce((t, l) => t + l.cr_minor, 0)], [118000, 118000]);
   const deb = T.accounts.find((a) => a.role === 'debtors');
@@ -82,7 +82,9 @@ const SUPP = '33333333-3333-4333-8333-333333333333';
   ok('the same source posts once (duplicate, same entry)', again.duplicate === true && again.entry_id === r1.entry_id);
   await throws('a refused event (unknown rule) posts nothing…', () => B.postEntry(db, SHOP, { type: 'nonsense', date: '2026-09-11', currency: 'INR', source_ref: 'x1' }), /no posting rule/);
   const r2 = await B.postEntry(db, SHOP, { type: 'expense', date: '2026-09-11', currency: 'INR', class: 'rent', amount: 500, paid_from: 'cash', source_ref: 'chit:e1' });
-  eq('…and takes no number: the next is 000002', r2.entry_no, 'JV/2026-27/000002');
+  eq('…and takes no number: the first Payment voucher is PY/…/000001 (v1.16.0: an expense paid in cash is series PY)', r2.entry_no, 'PY/2026-27/000001');
+  const r2b = await B.postEntry(db, SHOP, Object.assign({}, sale, { source_ref: 'chit:c1b', source_chit_id: undefined }));
+  eq('…and the refused event took no SV number either: the next sale is SV/…/000002 (gap-free per series)', r2b.entry_no, 'SV/2026-27/000002');
 
   /* ── locked months ── */
   await B.setPeriod(db, SHOP, '2026-27', 5, 'soft_locked', SHOP, 'GSTR-1 filed');

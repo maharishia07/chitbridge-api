@@ -54,7 +54,11 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
 
   const cess = K.classify({ chit: { chit_id: 'c2', created_at: '2026-09-29T05:00:00Z', purpose: 'order', business_json: { bill_no: 'x', till: { id: 'C1' }, payment: { parts: [{ how: 'Cash', amount: 130 }] } } },
     entry: { sells: true, invoice: { ItemList: [{ GstRt: 28, AssAmt: 100, CgstAmt: 14, SgstAmt: 14, IgstAmt: 0, CesAmt: 2 }] } }, setting: S });
-  eq('cess on a bill is queued (the rules do not post it yet) — never folded into another line', cess.kind, 'queue');
+  /* v1.16.0: cess POSTS (2203 / 2213) — read per rate from the frozen invoice's CesAmt, never recomputed; only a non-GST tax (TaxAmt) still queues */
+  eq('cess on a bill is posted (a walk-in line), carried per rate from CesAmt — never folded into another line', [cess.kind, cess.bill && cess.bill.taxes], ['walkin', [{ rate: 28, taxable: 100, cgst: 14, sgst: 14, igst: 0, cess: 2 }]]);
+  const vat = K.classify({ chit: { chit_id: 'c2v', created_at: '2026-09-29T05:00:00Z', purpose: 'order', business_json: { bill_no: 'x', till: { id: 'C1' }, payment: { parts: [{ how: 'Cash', amount: 130 }] } } },
+    entry: { sells: true, invoice: { ItemList: [{ GstRt: 28, AssAmt: 100, CgstAmt: 14, SgstAmt: 14, IgstAmt: 0, TaxAmt: 3 }] } }, setting: S });
+  eq('a genuinely unknown non-GST tax (TaxAmt) is still queued, with its reason', [vat.kind, /non-GST tax \(3\)/.test(vat.why || '')], ['queue', true]);
   const sent = K.classify({ chit: { chit_id: 'c3', created_at: '2026-09-29T05:00:00Z', purpose: 'invoice', business_json: {} }, entry: { sells: true, buyer: { entity_id: CUST }, invoice: inv([[5, 200, 5]], 210) }, setting: S });
   eq('an invoice I send → sale_bill, the buyer owes all of it', [sent.event.type, sent.event.party, sent.event.paid, sent.event.source_ref], ['sale_bill', CUST, {}, 'chit:c3']);
   const got = K.classify({ chit: { chit_id: 'c4', created_at: '2026-09-29T05:00:00Z', purpose: 'invoice', business_json: {} }, entry: { sells: false, seller: { entity_id: SUPP }, invoice: inv([[12, 1000, 60]], 1120) }, setting: S, status: 'accepted' });
