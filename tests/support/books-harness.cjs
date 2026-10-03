@@ -35,7 +35,7 @@ function load(opt) {
   const E = require(path.join(API, 'lib', 'books-engines'));
   E.reset();
   const src = o.engines === false ? { dir: null, why: 'asked for none' } : enginesSrc();
-  for (const [name, file] of [['posting', 'posting'], ['packs', 'accounts-packs'], ['receivables', 'receivables'], ['ledger', 'ledger'], ['bookpack', 'bookpack']])
+  for (const [name, file] of [['posting', 'posting'], ['packs', 'accounts-packs'], ['receivables', 'receivables'], ['ledger', 'ledger'], ['bookpack', 'bookpack'], ['period', 'period']])
     E.inject(name, src.dir ? require(path.join(src.dir, file)) : null);
   const B = require(path.join(API, 'lib', 'books'));
   return { API, store, T: store.T, E, B, db: M.fakeDb, src, dbStub };

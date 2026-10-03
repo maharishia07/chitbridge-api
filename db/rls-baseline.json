@@ -565,6 +565,12 @@
    "policies": 1,
    "app_reads": true
   },
+  "recurring_entry": {
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true
+  },
   "region_layer": {
    "rls": false,
    "forced": false,

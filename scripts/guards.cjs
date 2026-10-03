@@ -184,6 +184,10 @@ const GUARDS = [
   'books-dates-tz.test.cjs',    // ⭐⭐ a date read back from Postgres is the same date under Asia/Kolkata and UTC (it runs itself in both)
   'books-period.test.cjs',      // ⭐⭐ v1.14–v1.16: asset register (b280 draft), depreciation, closing stock, GST close + challan, loans, accruals, contra — the engine's lines, once, locked, owner-only
   'books-preview.test.cjs',     // ⭐⭐ ＋ Entry: the preview's lines ARE the posted lines (one composeEntry), Dr = Cr, type + golden rule per line, locked month, blocked credit, writes nothing
+  'books-rcm.test.cjs',         // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
+  'books-year.test.cjs',        // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
+  'books-recurring.test.cjs',   // ⭐ b281 draft: recurring entries — 503 until migrated, proposed by default, a re-run never posts twice, the daily sweep reverses a due accrual once
+  'books-todo.test.cjs',        // ⭐ the To-do feed: each kind from a real check, only what needs doing, and each row gone when it is done
   'books-manual-events.test.cjs', // ⭐⭐ expense / other income / capital / drawings / staff advance + recovery: hand-worked lines, MJ + voucher type, double tap once, owner-only, the system gives a ledger's code
   'books-voucher-type-write.test.cjs', // ⭐ b279 ran 2026-10-03: every new entry stores its voucher TYPE; a manual MJ Payment reads Payment
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order

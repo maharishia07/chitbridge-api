@@ -2,9 +2,9 @@
   "$comment": "The engines this platform ADOPTS from chitbridge-engines — ONE PIN PER ENGINE, so a rollout moves one engine at a time. Change a pin, then run: node ../chitbridge-engines/tools/adopt.cjs . — never edit an adopted file.",
   "pins": {
     "money": "1.0.0",
-    "tax-packs": "1.10.0",
+    "tax-packs": "1.20.0",
     "tax-slab": "1.2.0",
-    "tax": "1.12.0",
+    "tax": "1.20.0",
     "pricing": "1.3.0",
     "offers": "1.3.0",
     "variant": "1.4.0",
@@ -29,11 +29,13 @@
     "orderhub": "1.5.0",
     "rollup": "1.5.0",
     "convert": "1.5.0",
-    "accounts-packs": "1.16.0",
-    "receivables": "1.16.0",
-    "posting": "1.16.0",
-    "ledger": "1.16.0",
-    "bookpack": "1.16.0"
+    "accounts-packs": "1.20.0",
+    "receivables": "1.20.0",
+    "posting": "1.20.0",
+    "ledger": "1.20.0",
+    "bookpack": "1.20.0",
+    "period": "1.20.0",
+    "gst-returns": "1.20.0"
   },
   "adopt": {
     "money": [
@@ -139,6 +141,12 @@
     ],
     "bookpack": [
       "lib/bookpack.js"
+    ],
+    "period": [
+      "lib/period.js"
+    ],
+    "gst-returns": [
+      "lib/gst-returns.js"
     ]
   },
   "bundles": {
@@ -150,9 +158,9 @@
   },
   "sha256": {
     "money": "1d27c14c8a7240e035e916537fbd77ce945b9083c6efa9d9ec2f579f9ba58e5a",
-    "tax-packs": "7bdc62041052fbd37552bab185ba30936072c609744648eab163ab9f7638fc15",
+    "tax-packs": "3ef519adebb1da0de7b6ced61f0d728c8075bb9b0251a20099ae31d826cb272e",
     "tax-slab": "439500a95910ff8bd55d4a1c422e2c4e810f509c7a6af2f1cd4e34aa239bc98d",
-    "tax": "3fb9c58465bac6550014ea77c6084bae9056b9476471ec863b3948b315dad80a",
+    "tax": "38523910daabd85398684729e4faa397c711e983368149b48b4a5d2bd63f3f36",
     "pricing": "8fa9a3ec7cae3c049222706433c6fcfac7aaa33cae27d4a259ed60359ba208fd",
     "offers": "b90632d3ffa35196adcee8722269468dc83255edd327e2ff28e3cb07f5d82dee",
     "variant": "2b82dcbaba8ad8590623ef72d41979894d4390468abf74d862f158d7d4e48946",
@@ -177,10 +185,12 @@
     "orderhub": "c70a78a6839c10d41f6c43901f0557bd782463460e4af3f2e99d369a5012e9e5",
     "rollup": "caa165589a6c658cc6a8cbd83c743576f287d6397bc4f9fca20ad4b5f7d51662",
     "convert": "31b4b4d40a211f0a437ad1b5f4ff394bfb6f63637f05c24323b9846a1e51a5ba",
-    "accounts-packs": "6b28f3c9cc7f6a039baf586616dd55e42e11821d52b236c52cf1cc698e2ccb7e",
+    "accounts-packs": "8754b62d01fc07c597f711c2794c38278d4306e07cf79c8a1aa69b96adcbf5f3",
     "receivables": "4b9b3d41b9c3d1f35525fe84bd6efc6d8766666aca8d7117b0c8fa518c727026",
-    "posting": "716650c4ff4e1f7642481b0f58699b1c09aaa164ac7ceca41dfa6867d278506f",
+    "posting": "254ebb57365cbc4c97ef61c7678e3a03354c1a5d93b82d47d6fc43a3df09a911",
     "ledger": "175d836b79d339b3cb8894347ff3c6249434ab12125afb6575e5a2a3829e3838",
-    "bookpack": "1021a12646ad9a3ce224f90ae2ca0c7e96ae346640e7e77b1694cbe32956ae58"
+    "bookpack": "1021a12646ad9a3ce224f90ae2ca0c7e96ae346640e7e77b1694cbe32956ae58",
+    "period": "bfe2c30d4803526d0120ed9fcab9f44845302efb29b3b85b75192d8ae31acc9a",
+    "gst-returns": "3390556dca61965ed41f0431d409521c08509c74e5c2447aa936d42db4ae509e"
   }
 }

@@ -176,6 +176,8 @@ const NOT_MONEY = [
   ['csv-preflight.js', 'confidence: Math.round(best.score', 'a header-match SCORE'],
   ['till.html', 'n.items', 'a COUNT of items on a summary'],
   ['till.html', 'left / Math.max(1, w - left)', 'a layout RATIO'],
+  /* the ADOPTED gst-returns engine (v1.20.0, written only by adopt.cjs): s.50 interest calls money.round first; the Math.round is its own fallback for a host with no money engine, which the API always has. Fix upstream, not here. */
+  ['gst-returns.js', 'M && M.round ? M.round(raw) : Math.round(raw * 100) / 100', 'the released engine fallback when money.round is absent'],
 ];
 it('⭐⭐⭐ no hand-written money rounding outside money.js', () => {
   const WEB = path.join(API, '..', 'chitbridge-web', 'public');
