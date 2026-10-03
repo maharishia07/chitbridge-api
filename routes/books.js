@@ -711,6 +711,30 @@ router.post('/packs/:id/ack', auth, owner, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
+/* ── recurring entries (b281, DRAFT) and the To-do ─────────────────────────────────────────────────────────── */
+const RC = () => require('../lib/books-recurring');
+/** GET /recurring → { recurring: [{ recurring_id, name, event, frequency, next_on, end_on, auto, active, last_done_on, due }] } · 503 BOOKS_NOT_MIGRATED until b281 runs */
+router.get('/recurring', auth, owner, on, async (req, res) => { try { res.json({ recurring: await RC().list(ctx(req)) }); } catch (err) { fail(res, err); } });
+/** POST /recurring { name, event: { kind, …fields as POST /events, no date }, frequency: monthly|quarterly|yearly, next_on, end_on?, auto? } */
+router.post('/recurring', auth, owner, on, async (req, res) => { try { res.json(await RC().create(ctx(req), req.books, req.body || {}, byOf(req))); } catch (err) { fail(res, err); } });
+/** PATCH /recurring/:id — a merge-patch: only the fields sent change */
+router.patch('/recurring/:id', auth, owner, on, async (req, res) => {
+  try { if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' }); res.json(await RC().patch(ctx(req), req.books, String(req.params.id), req.body || {}, byOf(req))); } catch (err) { fail(res, err); }
+});
+/** DELETE /recurring/:id — stops it (active: false); nothing is deleted, and what it posted stays */
+router.delete('/recurring/:id', auth, owner, on, async (req, res) => {
+  try { if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' }); res.json(await RC().stop(ctx(req), String(req.params.id))); } catch (err) { fail(res, err); }
+});
+/** POST /recurring/:id/post — accept the proposal: posts the due day as an MJ entry (client_ref = template + date) and moves it on · POST /recurring/:id/skip — let it pass */
+router.post('/recurring/:id/post', auth, owner, on, async (req, res) => {
+  try { if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' }); res.json(await RC().accept(ctx(req), req.books, String(req.params.id), byOf(req))); } catch (err) { fail(res, err); }
+});
+router.post('/recurring/:id/skip', auth, owner, on, async (req, res) => {
+  try { if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' }); res.json(await RC().skip(ctx(req), String(req.params.id))); } catch (err) { fail(res, err); }
+});
+/** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
+router.get('/todo', auth, noKey, on, async (req, res) => { try { res.json(await require('../lib/books-todo').todo(ctx(req), req.books)); } catch (err) { fail(res, err); } });
+
 module.exports = router;
 /* ── the period-end routes (engines v1.14–v1.16; lib/books-period.js builds each event THROUGH THE ENGINE) ─────────────
    Owner-only, switch on, idempotent (client_ref, or the entry's natural key), refused in a locked month (PERIOD_LOCKED, 409).

@@ -192,6 +192,8 @@ const INFRA_LIBS = [
   /* [BOOKS v2] the ledger's SQL (books-store), its nightly runner (books-nightly: retries, names mismatches, never fixes)
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',
+  /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
+  'books-recurring.js', 'books-todo.js',
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
   'crm.js', 'crm-followups.js',
   /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */
@@ -392,6 +394,8 @@ const ENGINE_OTHER = [
   /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
      tools/adopt.cjs, never edited here: the chart and roles, the debit/credit rules, open items, the reads, the pack. */
   'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'bookpack.js',
+  /* v1.20.0: the month lock and year close (period.js) and the GST returns (gst-returns.js — the API reads its dueDate), ADOPTED the same way */
+  'period.js', 'gst-returns.js',
   /**
    * ⭐⭐⭐ [capability: sign-in] identity-auth.js — CB's own decision about who needs an OTP and who needs a
    * PIN, extracted 2026-09-23 when routes/entities.js and routes/actors.js were found each answering that
