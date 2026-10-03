@@ -284,7 +284,7 @@
    },
    "optional": []
   },
-  "DELETE /api/crm/parties/:id #has-dues": {
+  "DELETE /api/crm/parties/:id #409": {
    "status": 409,
    "example": {
     "code": "HAS_DUES",
@@ -691,67 +691,9 @@
     ],
     "closing_minor": 118000
    },
-   "optional": []
-  },
-  "GET /api/books/ledger/:account #bank": {
-   "status": 200,
-   "example": {
-    "currency": "INR",
-    "account": {
-     "code": "1500",
-     "name": "Bank",
-     "nature": "asset"
-    },
-    "party": null,
-    "from": "2026-04-01",
-    "to": "2027-03-31",
-    "opening_minor": 0,
-    "lines": [
-     {
-      "date": "2026-10-02",
-      "doc_date": "2026-10-02",
-      "what": "Paid rent",
-      "ref": "MJ/2026-27/000001",
-      "source": null,
-      "party_id": null,
-      "dr_minor": 0,
-      "cr_minor": 500000,
-      "running_minor": -500000
-     }
-    ],
-    "closing_minor": 0
-   },
-   "optional": []
-  },
-  "GET /api/books/ledger/:account #stock": {
-   "status": 200,
-   "example": {
-    "currency": "INR",
-    "account": {
-     "code": "1200",
-     "name": "Stock-in-hand",
-     "nature": "asset"
-    },
-    "party": null,
-    "from": "2026-04-01",
-    "to": "2027-03-31",
-    "opening_minor": 0,
-    "lines": [
-     {
-      "date": "2026-09-30",
-      "doc_date": "2026-09-30",
-      "what": "Closing stock 2026-09-30",
-      "ref": "JV/2026-27/000001",
-      "source": null,
-      "party_id": null,
-      "dr_minor": 5000000,
-      "cr_minor": 0,
-      "running_minor": 5000000
-     }
-    ],
-    "closing_minor": 5000000
-   },
-   "optional": []
+   "optional": [
+    "lines[].source_chit_id"
+   ]
   },
   "GET /api/books/party/:id/statement": {
    "status": 200,
@@ -918,27 +860,6 @@
     "[].items[].recurring_id"
    ]
   },
-  "GET /api/books/todo #year-end": {
-   "status": 200,
-   "example": [
-    {
-     "kind": "year_close_possible",
-     "count": 1,
-     "words": "Financial year 2026-27 can be closed: every month is locked, Suspense is nil and the books balance. Closing carries it forward and locks it for good.",
-     "action": {
-      "label": "Close the year",
-      "screen": "year-close",
-      "call": "POST /api/books/year/2026-27/close"
-     },
-     "items": [
-      {
-       "fiscal_year": "2026-27"
-      }
-     ]
-    }
-   ],
-   "optional": []
-  },
   "GET /api/books/trial-balance": {
    "status": 200,
    "example": {
@@ -987,45 +908,18 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-02T02:41:22.214Z",
+      "due_at": "2026-10-02T02:45:45.402Z",
       "due_day": "2026-10-02",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
-      "done_at": null,
-      "created_at": "2026-10-03T02:41:22.216Z",
+      "done_at": "2026-09-09T00:00:00.000Z",
+      "created_at": "2026-10-03T02:45:45.403Z",
       "late": true,
       "today": false
      }
     ],
     "late": 1,
-    "today": 0
-   },
-   "optional": []
-  },
-  "GET /api/crm/followups #done": {
-   "status": 200,
-   "example": {
-    "followups": [
-     {
-      "followup_id": "f1",
-      "party_id": "10000000-0000-4000-8000-000000000002",
-      "party_no": "P-0002",
-      "party_name": "Name of 0002",
-      "party_listed": true,
-      "what": "Call back",
-      "due_at": "2026-10-01T02:41:22.092Z",
-      "due_day": "2026-10-01",
-      "assignee_user_id": "E1",
-      "assignee_name": "Who E1",
-      "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-09-08T01:00:00.000Z",
-      "late": false,
-      "today": false,
-      "source": "manual"
-     }
-    ],
-    "late": 0,
     "today": 0
    },
    "optional": [
@@ -1034,7 +928,7 @@
   },
   "GET /api/crm/parties": {
    "status": 200,
-   "note": "roles is an OBJECT, never a list. dues is one nested object (null when the Ledger is off). A walk-in is in walk_ins, not parties.",
+   "note": "roles is an OBJECT, never a list. dues is one nested object (null when the Ledger is off). A walk-in is in walk_ins, not parties. No unread count, no next follow-up, no late-dues flag, no per-kind counts are sent.",
    "example": {
     "parties": [
      {
@@ -1042,8 +936,8 @@
       "display_name": "Chola Auto Care",
       "user_id": "chola",
       "bridge_id": "CBX",
-      "email": null,
-      "phone": null,
+      "email": "meena@example.com",
+      "phone": "+919840099999",
       "otp_contact": null,
       "gstn": null,
       "city": "Madurai",
@@ -1052,7 +946,7 @@
       "on_chitbridge": true,
       "may_trade": {
        "ok": true,
-       "why": "local"
+       "why": "shopper"
       },
       "roles": {
        "customer": true,
@@ -1123,34 +1017,27 @@
       "last_activity": "2026-09-29T00:00:00Z"
      }
     ],
-    "count": 3,
+    "count": 4,
     "truncated": false
    },
    "optional": [
     "parties[].customer",
     "parties[].may_trade.why",
     "parties[].supplier",
-    "parties[].supplier.category",
     "parties[].terms.customer",
     "parties[].terms.supplier"
-   ],
-   "also_optional": [
-    "parties[].supplier",
-    "parties[].terms.supplier",
-    "parties[].customer",
-    "parties[].terms.customer",
-    "parties[].supplier.category"
    ]
   },
   "GET /api/crm/parties/:id": {
    "status": 200,
+   "note": "the list row + merged_from {party_id, party_no}|null + relationship + points {programme, points, worth}|null + migrated + followups[]. No contacts, prefs, timeline_head, counts.",
    "example": {
     "party_id": "10000000-0000-4000-8000-000000000002",
     "display_name": "Chola Auto Care",
     "user_id": "chola",
     "bridge_id": "CBX",
-    "email": null,
-    "phone": null,
+    "email": "meena@example.com",
+    "phone": "+919840099999",
     "otp_contact": null,
     "gstn": null,
     "city": "Madurai",
@@ -1158,7 +1045,8 @@
     "kind": "business",
     "on_chitbridge": true,
     "may_trade": {
-     "ok": true
+     "ok": true,
+     "why": "local"
     },
     "roles": {
      "customer": true,
@@ -1217,7 +1105,10 @@
      "differs": false
     },
     "name": "Chola",
-    "merged_from": null,
+    "merged_from": {
+     "party_id": "10000000-0000-4000-8000-000000000008",
+     "party_no": "P-0008"
+    },
     "relationship": {
      "relationship": {
       "first_at": "2026-09-01T00:00:00.000Z",
@@ -1243,108 +1134,13 @@
    },
    "optional": [
     "customer",
-    "supplier",
-    "terms.customer",
-    "terms.supplier"
-   ],
-   "also_optional": [
-    "customer",
+    "may_trade.why",
     "supplier",
     "terms.customer",
     "terms.supplier"
    ]
   },
-  "GET /api/crm/parties/:id #merged": {
-   "status": 200,
-   "example": {
-    "party_id": "10000000-0000-4000-8000-000000000001",
-    "display_name": "Agro Mills",
-    "user_id": "agromills",
-    "bridge_id": "CBX",
-    "email": null,
-    "phone": null,
-    "otp_contact": null,
-    "gstn": null,
-    "city": null,
-    "status": "active",
-    "kind": "business",
-    "on_chitbridge": true,
-    "may_trade": {
-     "ok": true
-    },
-    "roles": {
-     "customer": false,
-     "supplier": true
-    },
-    "party_no": "P-0001",
-    "last_activity": null,
-    "supplier": {
-     "list_id": "sl-1",
-     "category": "Raw",
-     "preferred": false,
-     "supply_kind": "goods",
-     "notes": null,
-     "added_via": "manual"
-    },
-    "legal_name": "Agro Mills Pvt Ltd",
-    "nickname": null,
-    "state_code": null,
-    "tax_ids": [],
-    "terms": {
-     "supplier": {
-      "credit_days": null,
-      "credit_limit_minor": null
-     }
-    },
-    "dues": {
-     "balance_minor": -48165,
-     "oldest_due": "2026-08-20",
-     "side": "supplier"
-    },
-    "gstin": {
-     "value": null,
-     "source": null,
-     "theirs": null,
-     "differs": false
-    },
-    "name": "Agro Mills",
-    "merged_from": {
-     "party_id": "10000000-0000-4000-8000-000000000008",
-     "party_no": "P-0008"
-    },
-    "relationship": {
-     "relationship": {
-      "first_at": null,
-      "last_at": null,
-      "you_sent": 0,
-      "you_received": 0,
-      "shape": "none"
-     },
-     "completion": {
-      "closed": 0,
-      "completed": 0,
-      "rejected_or_cancelled": 0,
-      "completion_rate_pct": null
-     }
-    },
-    "points": null,
-    "migrated": true,
-    "followups": []
-   },
-   "optional": [
-    "customer",
-    "supplier",
-    "terms.customer",
-    "terms.supplier"
-   ],
-   "also_optional": [
-    "customer",
-    "supplier",
-    "terms.customer",
-    "terms.supplier"
-   ]
-  },
-  "GET /api/crm/parties/:id #not-found": {
+  "GET /api/crm/parties/:id #404": {
    "status": 404,
    "example": {
     "code": "NOT_FOUND",
@@ -1353,95 +1149,9 @@
    },
    "optional": []
   },
-  "GET /api/crm/parties/:id #not-migrated": {
-   "status": 200,
-   "example": {
-    "party_id": "10000000-0000-4000-8000-000000000001",
-    "display_name": "Agro Mills",
-    "user_id": "agromills",
-    "bridge_id": "CBX",
-    "email": null,
-    "phone": null,
-    "otp_contact": null,
-    "gstn": null,
-    "city": null,
-    "status": "active",
-    "kind": "business",
-    "on_chitbridge": true,
-    "may_trade": {
-     "ok": true
-    },
-    "roles": {
-     "customer": false,
-     "supplier": true
-    },
-    "party_no": "P-0001",
-    "last_activity": null,
-    "supplier": {
-     "list_id": "sl-1",
-     "category": "Raw",
-     "preferred": false,
-     "supply_kind": "goods",
-     "notes": null,
-     "added_via": "manual"
-    },
-    "legal_name": "Agro Mills Pvt Ltd",
-    "nickname": null,
-    "state_code": null,
-    "tax_ids": [],
-    "terms": {
-     "supplier": {
-      "credit_days": null,
-      "credit_limit_minor": null
-     }
-    },
-    "dues": {
-     "balance_minor": -48165,
-     "oldest_due": "2026-08-20",
-     "side": "supplier"
-    },
-    "gstin": {
-     "value": null,
-     "source": null,
-     "theirs": null,
-     "differs": false
-    },
-    "name": "Agro Mills",
-    "merged_from": null,
-    "relationship": {
-     "relationship": {
-      "first_at": null,
-      "last_at": null,
-      "you_sent": 0,
-      "you_received": 0,
-      "shape": "none"
-     },
-     "completion": {
-      "closed": 0,
-      "completed": 0,
-      "rejected_or_cancelled": 0,
-      "completion_rate_pct": null
-     }
-    },
-    "points": null,
-    "migrated": false,
-    "followups": []
-   },
-   "optional": [
-    "customer",
-    "supplier",
-    "terms.customer",
-    "terms.supplier"
-   ],
-   "also_optional": [
-    "customer",
-    "supplier",
-    "terms.customer",
-    "terms.supplier"
-   ]
-  },
   "GET /api/crm/parties/:id/timeline": {
    "status": 200,
+   "note": "?before=<iso>&limit=<n> only (no kind / q); entries are kind-specific, money on a chit is MAJOR units (value), on a ledger item MINOR (amount_minor).",
    "example": {
     "party_id": "10000000-0000-4000-8000-000000000002",
     "entries": [
@@ -1450,7 +1160,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-01T02:41:22.092Z",
+      "due_at": "2026-10-01T02:45:45.295Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1548,13 +1258,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T02:41:22.214Z",
+     "due_at": "2026-10-02T02:45:45.402Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-03T02:41:22.226Z",
-     "created_at": "2026-10-03T02:41:22.216Z",
+     "done_at": "2026-10-03T02:45:45.411Z",
+     "created_at": "2026-10-03T02:45:45.403Z",
      "late": false,
      "today": false
     }
@@ -1676,7 +1386,7 @@
    },
    "optional": []
   },
-  "POST /api/books/closing-stock #locked": {
+  "POST /api/books/closing-stock #409": {
    "status": 409,
    "example": {
     "code": "PERIOD_LOCKED",
@@ -1689,10 +1399,12 @@
    "status": 200,
    "example": {
     "ok": true,
-    "fy": "2026-27",
+    "nothing_to_post": true,
+    "fy": "2025-26",
     "entity_basis": "proprietor",
     "basis_assumed": true,
     "entity_note": "The entity type is not set for this shop yet, so depreciation was worked as a proprietor (Income-tax Act written-down value). Set books.entity_basis to change it.",
+    "why": "There are no assets in the register for 2025-26.",
     "basis_rule": "it_act_wdv",
     "by_class": [
      {
@@ -1717,20 +1429,21 @@
     "items": 0,
     "note": null
    },
-   "optional": []
-  },
-  "POST /api/books/depreciation/run #nothing": {
-   "status": 200,
-   "example": {
-    "ok": true,
-    "nothing_to_post": true,
-    "fy": "2025-26",
-    "entity_basis": "proprietor",
-    "basis_assumed": true,
-    "entity_note": "The entity type is not set for this shop yet, so depreciation was worked as a proprietor (Income-tax Act written-down value). Set books.entity_basis to change it.",
-    "why": "There are no assets in the register for 2025-26."
-   },
-   "optional": []
+   "optional": [
+    "basis_rule",
+    "by_asset",
+    "by_class",
+    "doc_date",
+    "entry_id",
+    "entry_no",
+    "items",
+    "lines",
+    "moved",
+    "note",
+    "nothing_to_post",
+    "posting_date",
+    "why"
+   ]
   },
   "POST /api/books/enable": {
    "status": 200,
@@ -1870,28 +1583,6 @@
     "credit": null,
     "bill": null,
     "flags": [],
-    "refusals": [],
-    "code": null,
-    "duplicate": null
-   },
-   "optional": []
-  },
-  "POST /api/books/preview #refused": {
-   "status": 200,
-   "example": {
-    "ok": false,
-    "kind": null,
-    "voucher": null,
-    "date": null,
-    "lines": [],
-    "balanced": false,
-    "totals": {
-     "dr_minor": 0,
-     "cr_minor": 0
-    },
-    "credit": null,
-    "bill": null,
-    "flags": [],
     "refusals": [
      "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
     ],
@@ -2002,19 +1693,14 @@
      "retained_minor": 3370000,
      "profit_minor": 3370000,
      "balanced": true
-    }
+    },
+    "duplicate": true
    },
-   "optional": []
-  },
-  "POST /api/books/year/:fy/close #again": {
-   "status": 200,
-   "example": {
-    "ok": true,
-    "duplicate": true,
-    "fiscal_year": "2026-27",
-    "next": "2027-28"
-   },
-   "optional": []
+   "optional": [
+    "duplicate",
+    "locked",
+    "opening"
+   ]
   },
   "POST /api/crm/followups": {
    "status": 201,
@@ -2026,43 +1712,20 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T02:41:22.214Z",
+     "due_at": "2026-10-02T02:45:45.402Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-03T02:41:22.216Z",
+     "created_at": "2026-10-03T02:45:45.403Z",
      "late": true,
      "today": false
     }
    },
    "optional": []
   },
-  "POST /api/crm/followups #later": {
-   "status": 201,
-   "example": {
-    "followup": {
-     "followup_id": "00000000-0000-4000-8000-000000000003",
-     "party_id": "10000000-0000-4000-8000-000000000002",
-     "party_no": "P-0002",
-     "party_name": "Name of 0002",
-     "party_listed": true,
-     "what": "Ask for the cheque",
-     "due_at": "2026-10-08T02:41:22.218Z",
-     "due_day": "2026-10-08",
-     "assignee_user_id": "E1",
-     "assignee_name": "Who E1",
-     "source": "dues",
-     "done_at": null,
-     "created_at": "2026-10-03T02:41:22.220Z",
-     "late": false,
-     "today": false
-    }
-   },
-   "optional": []
-  },
-  "POST /api/crm/followups #not-migrated": {
+  "POST /api/crm/followups #503": {
    "status": 503,
    "example": {
     "code": "CRM_NOT_MIGRATED",
@@ -2080,9 +1743,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-03T02:41:22.213Z",
+     "at": "2026-10-03T02:45:45.401Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-03T02:41:22.213Z"
+     "created_at": "2026-10-03T02:45:45.401Z"
     }
    },
    "optional": []

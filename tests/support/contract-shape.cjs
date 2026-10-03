@@ -82,7 +82,7 @@ function generalise(values, path, optional) {
   }
   return first;
 }
-/** an answer body → { example, optional: [paths] } — lists are boiled down to one merged element */
-function exampleOf(body) { const optional = new Set(); const example = generalise([body], '', optional); return { example, optional: Array.from(optional).map((p) => p.replace(/^\./, '')).sort() }; }
+/** the answers one route gave (a list of bodies) → { example, optional: [paths] } — lists are boiled down to one merged element, a key some answers lack is optional */
+function exampleOf(bodies) { const optional = new Set(); const example = generalise(bodies.slice(), '', optional); return { example, optional: Array.from(optional).map((p) => p.replace(/^\./, '')).sort() }; }
 
 module.exports = { problems, exampleOf, kind };

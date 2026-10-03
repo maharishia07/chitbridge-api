@@ -66,10 +66,11 @@ async function captureBooks() {
   let DAY = '2027-04-10'; const realDay = K.dayOf;
   K.dayOf = (ts, c) => (ts instanceof Date && Math.abs(ts.getTime() - Date.now()) < 5000 ? DAY : realDay(ts, c));
   const got = {};
-  /** call the route; keep the answer under its route pattern (the first answer for a key stays, a suffix names another status) */
-  const q = async (m, p, b, key, tag) => {
+  /** call the route; keep the answer under its route pattern - answers with the same status are MERGED into one example (a refusal beside a success),
+   *  an answer with another status gets its own entry ("#409") */
+  const q = async (m, p, b, key) => {
     const r = await call(port, m, '/api/books' + p, b);
-    if (key) { const k = m + ' /api/books' + key + (tag ? ' #' + tag : ''); if (!got[k]) got[k] = { status: r.status, body: r.body }; }
+    if (key) { let k = m + ' /api/books' + key; if (got[k] && got[k].status !== r.status) k += ' #' + r.status; got[k] = got[k] || { status: r.status, bodies: [] }; got[k].bodies.push(r.body); }
     return r;
   };
   try {
@@ -88,14 +89,14 @@ async function captureBooks() {
     await q('GET', '/events', null, '/events');
     const evB = { event: 'expense', class: 'rent', amount_minor: 500000, paid_from: 'bank', date: '2026-10-02' };
     await q('POST', '/preview', evB, '/preview');
-    await q('POST', '/preview', { event: 'nothing' }, '/preview', 'refused');
+    await q('POST', '/preview', { event: 'nothing' }, '/preview');
     const ev = await q('POST', '/events', Object.assign({ client_ref: 'contract-1' }, evB), '/events');
     if (ev.body && ev.body.entry_id) await q('POST', '/entries/' + ev.body.entry_id + '/reverse', { client_ref: 'contract-rev', reason: 'Posted by mistake' }, '/entries/:id/reverse');
 
     /* ── the books' reads ── */
     await q('GET', '/daybook?from=2026-09-01&to=2026-10-31', null, '/daybook');
     await q('GET', '/ledger/1300?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
-    await q('GET', '/ledger/bank?from=2026-04-01&to=2027-03-31', null, '/ledger/:account', 'bank');
+    await q('GET', '/ledger/bank?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
     await q('GET', '/dues', null, '/dues');
     await q('GET', '/trial-balance?asOf=2027-03-31', null, '/trial-balance');
     await q('GET', '/pl?from=2026-04-01&to=2027-03-31', null, '/pl');
@@ -105,10 +106,10 @@ async function captureBooks() {
 
     /* ── the period end ── */
     await q('POST', '/closing-stock', { date: '2026-09-30', value_minor: 5000000, method: 'manual', client_ref: 'cs-sep' }, '/closing-stock');
-    await q('GET', '/ledger/stock?from=2026-04-01&to=2027-03-31', null, '/ledger/:account', 'stock');
+    await q('GET', '/ledger/stock?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
     await q('POST', '/assets', { name: 'Laptop', class: 'computers', cost_minor: 4200000, date: '2026-04-18', how: 'bank', client_ref: 'lap-1' }, '/assets');
     await q('GET', '/assets?asOf=2026-09-30', null, '/assets');
-    await q('POST', '/depreciation/run', { fy: '2025-26' }, '/depreciation/run', 'nothing');
+    await q('POST', '/depreciation/run', { fy: '2025-26' }, '/depreciation/run');
     await q('POST', '/depreciation/run', { fy: '2026-27', client_ref: 'dep-27' }, '/depreciation/run');
     const asset = ((await call(port, 'GET', '/api/books/assets?asOf=2027-03-31')).body.assets || [])[0];
     if (asset) await q('POST', '/assets/' + asset.asset_id + '/dispose', { date: '2027-04-05', proceeds_minor: 2000000, into: 'bank', client_ref: 'sell-1' }, '/assets/:id/dispose');
@@ -130,11 +131,11 @@ async function captureBooks() {
 
     /* ── the year ── */
     for (let p = 1; p <= 12; p++) await q('POST', '/periods/2026-27/' + p + '/lock', { reason: 'done' }, p === 1 ? '/periods/:fy/:p/lock' : null);
-    await q('POST', '/closing-stock', { date: '2026-10-31', value_minor: 100, method: 'manual', client_ref: 'cs-locked' }, '/closing-stock', 'locked');
+    await q('POST', '/closing-stock', { date: '2026-10-31', value_minor: 100, method: 'manual', client_ref: 'cs-locked' }, '/closing-stock');
     await q('GET', '/year/2026-27/status', null, '/year/:fy/status');
-    await q('GET', '/todo', null, '/todo', 'year-end');
+    await q('GET', '/todo', null, '/todo');
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
-    await q('POST', '/year/2026-27/close', {}, '/year/:fy/close', 'again');
+    await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
   } finally { srv.close(); }
   return got;
 }

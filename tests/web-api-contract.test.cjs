@@ -57,7 +57,7 @@ function capture(which) {
     const old = C.routes || {};
     const routes = {};
     Object.keys(got).sort().forEach((k) => {
-      const g = got[k], ex = S.exampleOf(g.body);
+      const g = got[k], ex = S.exampleOf(g.bodies);
       routes[k] = Object.assign({ status: g.status }, old[k] && old[k].note ? { note: old[k].note } : {}, { example: ex.example, optional: ex.optional.concat((old[k] && old[k].also_optional) || []).filter((v, i, a) => a.indexOf(v) === i).sort() });
       if (old[k] && old[k].also_optional) routes[k].also_optional = old[k].also_optional;
     });
@@ -85,8 +85,9 @@ function capture(which) {
     if (booksOff && /^[A-Z]+ \/api\/books/.test(k)) return;
     if (!g) { ok(k + ' answers in the scenario', false, 'the scenario no longer calls it - the contract and the test have drifted'); return; }
     const opt = new Set((want.optional || []).concat(want.also_optional || []));
-    const p = S.problems(want.example, g.body, opt);
-    ok(k + ' → ' + g.status + (g.status === want.status ? '' : ' (contract says ' + want.status + ')') + ' - same keys, nesting and types', g.status === want.status && p.length === 0, p.slice(0, 6).join(' | '));
+    const p = [];
+    g.bodies.forEach((b) => S.problems(want.example, b, opt).forEach((m) => { if (p.indexOf(m) < 0) p.push(m); }));
+    ok(k + ' → ' + g.status + (g.status === want.status ? '' : ' (contract says ' + want.status + ')') + ' - same keys, nesting and types' + (g.bodies.length > 1 ? ' (' + g.bodies.length + ' answers)' : ''), g.status === want.status && p.length === 0, p.slice(0, 6).join(' | '));
   });
   /* …and every route the scenario calls is in the contract (a route can't join the web's reads unrecorded) */
   Object.keys(got).forEach((k) => { if (!C.routes[k]) ok(k + ' is in the contract', false, 'the scenario calls it, the contract does not list it - run with --write'); });
@@ -96,7 +97,7 @@ function capture(which) {
   ok('GET /crm/parties: roles is an OBJECT { customer, supplier }, dues one nested object, walk-ins their own list',
     list && list.example.parties[0].roles && !Array.isArray(list.example.parties[0].roles) && 'customer' in list.example.parties[0].roles && list.example.parties[0].dues && Array.isArray(list.example.walk_ins));
   ok('GET /crm/parties/:id carries merged_from as { party_id, party_no } and points as { programme, points, worth }',
-    C.routes['GET /api/crm/parties/:id #merged'] && C.routes['GET /api/crm/parties/:id #merged'].example.merged_from && 'party_no' in C.routes['GET /api/crm/parties/:id #merged'].example.merged_from
+    C.routes['GET /api/crm/parties/:id'] && C.routes['GET /api/crm/parties/:id'].example.merged_from && 'party_no' in C.routes['GET /api/crm/parties/:id'].example.merged_from
     && C.routes['GET /api/crm/parties/:id'].example.points && 'worth' in C.routes['GET /api/crm/parties/:id'].example.points);
   ok('GET /books/todo is a LIST of { kind, count, words, action }', Array.isArray((C.routes['GET /api/books/todo'] || { example: null }).example));
   done();
