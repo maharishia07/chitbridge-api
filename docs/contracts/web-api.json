@@ -769,6 +769,19 @@
       "what": "Sale",
       "ref": "SV/2026-27/000001",
       "source_chit_id": "c0000000-0000-4000-8000-00000000000a",
+      "source": {
+       "chit_id": null,
+       "ref": null,
+       "kind": "bill",
+       "counter": null,
+       "by": null,
+       "count": null,
+       "how": null,
+       "how_ref": null,
+       "split": null,
+       "doc_at": null,
+       "recorded_at": "2026-09-29T10:00:03.000Z"
+      },
       "dr_minor": 118000,
       "cr_minor": 0,
       "running_minor": 118000
@@ -989,13 +1002,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-02T03:42:37.085Z",
+      "due_at": "2026-10-02T03:43:18.694Z",
       "due_day": "2026-10-02",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-03T03:42:37.086Z",
+      "created_at": "2026-10-03T03:43:18.695Z",
       "late": true,
       "today": false
      }
@@ -1241,7 +1254,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-01T03:42:37.031Z",
+      "due_at": "2026-10-01T03:43:18.630Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1343,13 +1356,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:42:37.085Z",
+     "due_at": "2026-10-02T03:43:18.694Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-03T03:42:37.091Z",
-     "created_at": "2026-10-03T03:42:37.086Z",
+     "done_at": "2026-10-03T03:43:18.701Z",
+     "created_at": "2026-10-03T03:43:18.695Z",
      "late": false,
      "today": false
     }
@@ -1876,13 +1889,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:42:37.085Z",
+     "due_at": "2026-10-02T03:43:18.694Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-03T03:42:37.086Z",
+     "created_at": "2026-10-03T03:43:18.695Z",
      "late": true,
      "today": false
     }
@@ -1907,9 +1920,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-03T03:42:37.084Z",
+     "at": "2026-10-03T03:43:18.694Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-03T03:42:37.084Z"
+     "created_at": "2026-10-03T03:43:18.694Z"
     }
    },
    "optional": []

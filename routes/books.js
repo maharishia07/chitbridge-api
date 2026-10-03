@@ -268,7 +268,7 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
-/** GET /party/:id/statement?from&to → CBLedger.partyStatement, as { currency, opening_minor, lines: [{ date, what, ref, source_chit_id, dr_minor, cr_minor, running_minor }], closing_minor } */
+/** GET /party/:id/statement?from&to → CBLedger.partyStatement, as { currency, party_id, from, to, code, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book's), dr_minor, cr_minor, running_minor }], closing_minor } */
 router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
@@ -277,9 +277,11 @@ router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
     const out = await withEntity(e, async (h) => {
       const st = E.ledger().partyStatement({ ...(await statementInput(h, e, id, from, to)), party: id, from, to });
       const meta = new Map((await S.ledgerLines(h, e, from, to, id)).map((l) => [String(l.entry_id), l]));
+      /* where each entry came from (its bill, how it was paid, the counter, who rang it) - the same `source` the day book and a ledger carry, so a party's own ledger reads like theirs */
+      const src = new Map(); (await S.entryLines(h, e, from, to, null, id)).forEach((l) => { if (!src.has(String(l.entry_id))) src.set(String(l.entry_id), l); });
       return { code: st.code, opening_minor: st.opening_minor, closing_minor: st.closing_minor,
         lines: st.rows.map((r) => { const m = meta.get(String(r.entry_id)) || {}; return { date: r.date, what: r.narration || WORD[m.event_type] || m.event_type || '', ref: r.jv_no,
-          source_chit_id: m.source_chit_id || null, dr_minor: r.dr_minor, cr_minor: r.cr_minor, running_minor: r.running_minor }; }) };
+          source_chit_id: m.source_chit_id || null, source: src.has(String(r.entry_id)) ? sourceOf(src.get(String(r.entry_id))) : null, dr_minor: r.dr_minor, cr_minor: r.cr_minor, running_minor: r.running_minor }; }) };
     });
     res.json(Object.assign({ currency: curOf(req), party_id: id, from, to }, out));
   } catch (err) { fail(res, err); }
