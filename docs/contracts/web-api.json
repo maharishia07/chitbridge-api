@@ -1,0 +1,2107 @@
+{
+ "_selftest": [
+  {
+   "name": "the same shape conforms",
+   "example": {
+    "a": 1,
+    "b": "x",
+    "c": true,
+    "l": [
+     {
+      "k": 1
+     }
+    ]
+   },
+   "actual": {
+    "a": 7,
+    "b": "y",
+    "c": false,
+    "l": [
+     {
+      "k": 2
+     },
+     {
+      "k": 3
+     }
+    ]
+   },
+   "conforms": true
+  },
+  {
+   "name": "a key the contract does not list is a failure",
+   "example": {
+    "a": 1
+   },
+   "actual": {
+    "a": 1,
+    "z": 2
+   },
+   "conforms": false
+  },
+  {
+   "name": "a key the contract lists and the answer lacks is a failure",
+   "example": {
+    "a": 1,
+    "b": 2
+   },
+   "actual": {
+    "a": 1
+   },
+   "conforms": false
+  },
+  {
+   "name": "...unless that path is optional",
+   "example": {
+    "a": 1,
+    "b": 2
+   },
+   "actual": {
+    "a": 1
+   },
+   "optional": [
+    "b"
+   ],
+   "conforms": true
+  },
+  {
+   "name": "a list where an object is expected fails (the roles bug)",
+   "example": {
+    "roles": {
+     "customer": true,
+     "supplier": false
+    }
+   },
+   "actual": {
+    "roles": [
+     "customer"
+    ]
+   },
+   "conforms": false
+  },
+  {
+   "name": "an object where a list is expected fails",
+   "example": {
+    "rows": [
+     {
+      "a": 1
+     }
+    ]
+   },
+   "actual": {
+    "rows": {
+     "a": 1
+    }
+   },
+   "conforms": false
+  },
+  {
+   "name": "a number where a string is expected fails",
+   "example": {
+    "a": "x"
+   },
+   "actual": {
+    "a": 5
+   },
+   "conforms": false
+  },
+  {
+   "name": "an empty answer list conforms",
+   "example": {
+    "rows": [
+     {
+      "a": 1
+     }
+    ]
+   },
+   "actual": {
+    "rows": []
+   },
+   "conforms": true
+  },
+  {
+   "name": "a null in the answer fits anything",
+   "example": {
+    "a": 1,
+    "o": {
+     "b": 1
+    }
+   },
+   "actual": {
+    "a": null,
+    "o": null
+   },
+   "conforms": true
+  },
+  {
+   "name": "a null in the contract accepts anything",
+   "example": {
+    "a": null
+   },
+   "actual": {
+    "a": {
+     "deep": [
+      1
+     ]
+    }
+   },
+   "conforms": true
+  },
+  {
+   "name": "a list of different kinds: an element may be any one of them",
+   "example": {
+    "e": [
+     {
+      "k": "a",
+      "x": 1
+     },
+     {
+      "k": "b",
+      "y": 2
+     }
+    ]
+   },
+   "actual": {
+    "e": [
+     {
+      "k": "a",
+      "x": 5
+     },
+     {
+      "k": "b",
+      "y": 6
+     }
+    ]
+   },
+   "conforms": true
+  },
+  {
+   "name": "...but not a mixture of two",
+   "example": {
+    "e": [
+     {
+      "k": "a",
+      "x": 1
+     },
+     {
+      "k": "b",
+      "y": 2
+     }
+    ]
+   },
+   "actual": {
+    "e": [
+     {
+      "k": "a",
+      "x": 5,
+      "y": 5
+     }
+    ]
+   },
+   "conforms": false
+  },
+  {
+   "name": "an optional path inside a list is written list[].key",
+   "example": {
+    "l": [
+     {
+      "a": 1,
+      "o": {
+       "c": 1
+      }
+     }
+    ]
+   },
+   "actual": {
+    "l": [
+     {
+      "a": 1,
+      "o": {}
+     }
+    ]
+   },
+   "optional": [
+    "l[].o.c"
+   ],
+   "conforms": true
+  },
+  {
+   "name": "a list of lists is checked inside",
+   "example": {
+    "m": [
+     [
+      1
+     ]
+    ]
+   },
+   "actual": {
+    "m": [
+     [
+      "x"
+     ]
+    ]
+   },
+   "conforms": false
+  }
+ ],
+ "routes": {
+  "DELETE /api/books/recurring/:id": {
+   "status": 200,
+   "example": {
+    "entity": "11111111-1111-4111-8111-111111111111",
+    "recurring_id": "66666666-6666-4666-8666-000000000002",
+    "name": "Insurance",
+    "event": {
+     "kind": "expense",
+     "class": "insurance",
+     "amount_minor": 90000,
+     "paid_from": "bank"
+    },
+    "frequency": "yearly",
+    "next_on": "2028-04-01",
+    "anchor_day": 1,
+    "end_on": null,
+    "auto": false,
+    "active": false,
+    "last_done_on": "2027-04-01",
+    "created_by": "11111111-1111-4111-8111-111111111111",
+    "due": false,
+    "stopped": true
+   },
+   "optional": []
+  },
+  "DELETE /api/crm/followups/:id": {
+   "status": 200,
+   "example": {
+    "ok": true
+   },
+   "optional": []
+  },
+  "DELETE /api/crm/parties/:id": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "party_id": "10000000-0000-4000-8000-000000000003"
+   },
+   "optional": []
+  },
+  "DELETE /api/crm/parties/:id #has-dues": {
+   "status": 409,
+   "example": {
+    "code": "HAS_DUES",
+    "error": "There are open dues on this party.",
+    "message": "There are open dues on this party."
+   },
+   "optional": []
+  },
+  "GET /api/books/accounts": {
+   "status": 200,
+   "example": {
+    "accounts": [
+     {
+      "account_id": "00000000-0000-4000-8000-000000000030",
+      "code": "1010",
+      "name": "Buildings",
+      "is_group": false,
+      "tally_group": "Fixed Assets",
+      "nature": "asset",
+      "role": "ppe_buildings",
+      "parent_code": "G1000",
+      "active": true
+     }
+    ]
+   },
+   "optional": []
+  },
+  "GET /api/books/assets": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "asOf": "2026-09-30",
+    "assets": [
+     {
+      "entity": "11111111-1111-4111-8111-111111111111",
+      "asset_id": "55555555-5555-4555-8555-000000000001",
+      "name": "Laptop",
+      "asset_class": "computers",
+      "cost_minor": 4200000,
+      "currency": "INR",
+      "put_to_use": "2026-04-18",
+      "source_entry_id": "00000000-0000-4000-8000-000000000115",
+      "source_chit_id": null,
+      "accumulated_minor": 0,
+      "last_dep_fy": null,
+      "disposed_on": null,
+      "disposal_entry_id": null,
+      "proceeds_minor": null,
+      "created_by": "11111111-1111-4111-8111-111111111111",
+      "wdv_minor": 4200000
+     }
+    ],
+    "net_block": [
+     {
+      "asset_class": "computers",
+      "count": 1,
+      "cost_minor": 4200000,
+      "accumulated_minor": 0,
+      "wdv_minor": 4200000,
+      "ledger_cost_minor": 4200000,
+      "ledger_accumulated_minor": 0,
+      "ledger_wdv_minor": 4200000,
+      "agrees": true
+     }
+    ],
+    "total_wdv_minor": 4200000
+   },
+   "optional": []
+  },
+  "GET /api/books/bs": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "asOf": "2027-03-31",
+    "assets": [
+     {
+      "code": "1300",
+      "name": "Customers (Sundry Debtors)",
+      "amount_minor": 118000,
+      "line": "Trade receivables"
+     }
+    ],
+    "liabilities": [
+     {
+      "code": "2100",
+      "name": "Suppliers (Sundry Creditors)",
+      "amount_minor": 59000,
+      "line": "Trade payables"
+     }
+    ],
+    "equity": [
+     {
+      "code": null,
+      "name": "Profit for the year to date",
+      "amount_minor": 50000,
+      "line": "Reserves and surplus"
+     }
+    ],
+    "total_assets_minor": 118000,
+    "total_liab_equity_minor": 118000,
+    "profit_to_date_minor": 50000,
+    "balanced": true,
+    "by_line": {
+     "assets": [
+      {
+       "line": "trade_receivables",
+       "label": "Trade receivables",
+       "side": "assets",
+       "amount_minor": 118000,
+       "accounts": [
+        {
+         "code": "1300",
+         "role": "debtors",
+         "name": "Customers (Sundry Debtors)",
+         "amount_minor": 118000
+        }
+       ]
+      }
+     ],
+     "liabilities": [
+      {
+       "line": "trade_payables",
+       "label": "Trade payables",
+       "side": "liabilities",
+       "amount_minor": 59000,
+       "accounts": [
+        {
+         "code": "2100",
+         "role": "creditors",
+         "name": "Suppliers (Sundry Creditors)",
+         "amount_minor": 59000
+        }
+       ]
+      }
+     ]
+    },
+    "schedule_iii": {
+     "equity_and_liabilities": {
+      "heads": [
+       {
+        "line": "reserves_surplus",
+        "label": "Reserves and surplus",
+        "total_minor": 50000,
+        "ledgers": [
+         {
+          "code": "2100",
+          "name": "Net profit",
+          "amount_minor": 50000,
+          "role": "profit_to_date"
+         }
+        ]
+       }
+      ],
+      "total_minor": 118000
+     },
+     "assets": {
+      "heads": [
+       {
+        "line": "trade_receivables",
+        "label": "Trade receivables",
+        "total_minor": 118000,
+        "ledgers": [
+         {
+          "code": "1300",
+          "name": "Customers (Sundry Debtors)",
+          "amount_minor": 118000
+         }
+        ]
+       }
+      ],
+      "total_minor": 118000
+     },
+     "balanced": true,
+     "difference_minor": 0
+    }
+   },
+   "optional": [
+    "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
+   ]
+  },
+  "GET /api/books/daybook": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "from": "2026-09-01",
+    "to": "2026-10-31",
+    "entries": [
+     {
+      "entry_id": "00000000-0000-4000-8000-000000000110",
+      "entry_no": "SV/2026-27/000001",
+      "posting_date": "2026-09-05",
+      "doc_date": "2026-09-05",
+      "event_type": "sale_bill",
+      "narration": "Sale",
+      "source_chit_id": "c0000000-0000-4000-8000-00000000000a",
+      "reverses_entry_id": "00000000-0000-4000-8000-000000000112",
+      "source": {
+       "chit_id": null,
+       "ref": null,
+       "kind": "bill",
+       "counter": null,
+       "by": null,
+       "count": null,
+       "how": null,
+       "how_ref": null,
+       "split": null,
+       "doc_at": null,
+       "recorded_at": "2026-09-29T10:00:03.000Z"
+      },
+      "lines": [
+       {
+        "code": "1300",
+        "name": "Customers (Sundry Debtors)",
+        "party_id": "22222222-2222-4222-8222-222222222222",
+        "party_name": "Ravi",
+        "dr_minor": 118000,
+        "cr_minor": 0,
+        "counter": null
+       }
+      ]
+     }
+    ],
+    "count": 4
+   },
+   "optional": [
+    "entries[].source_chit_id"
+   ]
+  },
+  "GET /api/books/dues": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "asOf": "2026-10-03",
+    "parties": [
+     {
+      "party_no": "P-00001",
+      "name": "Ravi",
+      "party_id": "22222222-2222-4222-8222-222222222222",
+      "side": "customer",
+      "balance_minor": 118000,
+      "oldest_due": "2026-09-15",
+      "disputed_minor": 0,
+      "buckets": {
+       "not_due": 0,
+       "lt_6m": 118000,
+       "m6_1y": 0,
+       "y1_2": 0,
+       "y2_3": 0,
+       "gt_3y": 0,
+       "lt_1y": 0
+      }
+     }
+    ],
+    "total_minor": 59000
+   },
+   "optional": [
+    "parties[].buckets.lt_1y",
+    "parties[].buckets.lt_6m",
+    "parties[].buckets.m6_1y"
+   ]
+  },
+  "GET /api/books/events": {
+   "status": 200,
+   "example": {
+    "events": [
+     {
+      "preview": true,
+      "post": "POST /events",
+      "kind": "expense",
+      "words": "Pay expense",
+      "icon": "receipt",
+      "band": "paid",
+      "voucher": "Payment",
+      "ledger_group": "expense",
+      "bill": true,
+      "fields": [
+       {
+        "key": "class",
+        "kind": "pick",
+        "pick": "expense_class",
+        "required": true,
+        "options": [
+         "cash"
+        ],
+        "default": "today",
+        "group": "loans_advances_asset"
+       }
+      ],
+      "route": "POST /assets"
+     }
+    ],
+    "picks": {
+     "mode": [
+      "cash"
+     ],
+     "expense_class": [
+      {
+       "role": "wages",
+       "code": "5100",
+       "name": "Wages"
+      }
+     ],
+     "income_class": [
+      {
+       "role": "interest_received",
+       "code": "4200",
+       "name": "Interest received"
+      }
+     ],
+     "blocked_credit": [
+      "food"
+     ]
+    },
+    "pending": [
+     {
+      "kind": "drawings_goods",
+      "why": "Goods taken out for the owner need an engine rule (stock side and GST on own use). Not composed here."
+     }
+    ],
+    "golden": {
+     "personal": {
+      "dr": "Dr the receiver",
+      "cr": "Cr the giver"
+     },
+     "real": {
+      "dr": "Dr what comes in",
+      "cr": "Cr what goes out"
+     },
+     "nominal": {
+      "dr": "Dr expenses and losses",
+      "cr": "Cr incomes and gains"
+     }
+    }
+   },
+   "optional": [
+    "events[].bill",
+    "events[].fields",
+    "events[].fields[].default",
+    "events[].fields[].group",
+    "events[].fields[].options",
+    "events[].fields[].pick",
+    "events[].post",
+    "events[].route",
+    "events[].voucher"
+   ]
+  },
+  "GET /api/books/health": {
+   "status": 200,
+   "example": {
+    "enabled": true,
+    "currency": "INR",
+    "walkin_grain": "day",
+    "last_check": null,
+    "engines": {
+     "posting": "injected",
+     "packs": "injected",
+     "receivables": "injected",
+     "ledger": "injected",
+     "bookpack": "injected",
+     "period": "injected"
+    },
+    "waiting": []
+   },
+   "optional": []
+  },
+  "GET /api/books/ledger/:account": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "account": {
+     "code": "1300",
+     "name": "Customers (Sundry Debtors)",
+     "nature": "asset"
+    },
+    "party": null,
+    "from": "2026-04-01",
+    "to": "2027-03-31",
+    "opening_minor": 0,
+    "lines": [
+     {
+      "date": "2026-09-05",
+      "doc_date": "2026-09-05",
+      "what": "Sale",
+      "ref": "SV/2026-27/000001",
+      "source_chit_id": "c0000000-0000-4000-8000-00000000000a",
+      "source": {
+       "chit_id": null,
+       "ref": null,
+       "kind": "bill",
+       "counter": null,
+       "by": null,
+       "count": null,
+       "how": null,
+       "how_ref": null,
+       "split": null,
+       "doc_at": null,
+       "recorded_at": "2026-09-29T10:00:03.000Z"
+      },
+      "party_id": "22222222-2222-4222-8222-222222222222",
+      "dr_minor": 118000,
+      "cr_minor": 0,
+      "running_minor": 118000
+     }
+    ],
+    "closing_minor": 118000
+   },
+   "optional": []
+  },
+  "GET /api/books/ledger/:account #bank": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "account": {
+     "code": "1500",
+     "name": "Bank",
+     "nature": "asset"
+    },
+    "party": null,
+    "from": "2026-04-01",
+    "to": "2027-03-31",
+    "opening_minor": 0,
+    "lines": [
+     {
+      "date": "2026-10-02",
+      "doc_date": "2026-10-02",
+      "what": "Paid rent",
+      "ref": "MJ/2026-27/000001",
+      "source": null,
+      "party_id": null,
+      "dr_minor": 0,
+      "cr_minor": 500000,
+      "running_minor": -500000
+     }
+    ],
+    "closing_minor": 0
+   },
+   "optional": []
+  },
+  "GET /api/books/ledger/:account #stock": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "account": {
+     "code": "1200",
+     "name": "Stock-in-hand",
+     "nature": "asset"
+    },
+    "party": null,
+    "from": "2026-04-01",
+    "to": "2027-03-31",
+    "opening_minor": 0,
+    "lines": [
+     {
+      "date": "2026-09-30",
+      "doc_date": "2026-09-30",
+      "what": "Closing stock 2026-09-30",
+      "ref": "JV/2026-27/000001",
+      "source": null,
+      "party_id": null,
+      "dr_minor": 5000000,
+      "cr_minor": 0,
+      "running_minor": 5000000
+     }
+    ],
+    "closing_minor": 5000000
+   },
+   "optional": []
+  },
+  "GET /api/books/party/:id/statement": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "party_id": "22222222-2222-4222-8222-222222222222",
+    "from": "2026-04-01",
+    "to": "2026-10-03",
+    "code": "1300",
+    "opening_minor": 0,
+    "closing_minor": 118000,
+    "lines": [
+     {
+      "date": "2026-09-05",
+      "what": "Sale",
+      "ref": "SV/2026-27/000001",
+      "source_chit_id": "c0000000-0000-4000-8000-00000000000a",
+      "dr_minor": 118000,
+      "cr_minor": 0,
+      "running_minor": 118000
+     }
+    ]
+   },
+   "optional": []
+  },
+  "GET /api/books/periods": {
+   "status": 200,
+   "example": {
+    "periods": [
+     {
+      "entity_id": "11111111-1111-4111-8111-111111111111",
+      "status": "open",
+      "fiscal_year": "2026-27",
+      "period": 0,
+      "start_date": "2026-04-01",
+      "end_date": "2026-04-01"
+     }
+    ]
+   },
+   "optional": []
+  },
+  "GET /api/books/pl": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "from": "2026-04-01",
+    "to": "2027-03-31",
+    "income": [
+     {
+      "code": "4000",
+      "name": "Sales",
+      "amount_minor": 100000,
+      "line": "Revenue from operations"
+     }
+    ],
+    "expense": [
+     {
+      "code": "5000",
+      "name": "Purchases",
+      "amount_minor": 50000,
+      "line": "Purchases of stock-in-trade"
+     }
+    ],
+    "total_income_minor": 100000,
+    "total_expense_minor": 50000,
+    "profit_minor": 50000,
+    "by_line": {
+     "income": [
+      {
+       "line": "revenue_operations",
+       "label": "Revenue from operations",
+       "side": "income",
+       "amount_minor": 100000,
+       "accounts": [
+        {
+         "code": "4000",
+         "role": "sales",
+         "name": "Sales",
+         "amount_minor": 100000
+        }
+       ]
+      }
+     ],
+     "expense": [
+      {
+       "line": "purchases_stock",
+       "label": "Purchases of stock-in-trade",
+       "side": "expense",
+       "amount_minor": 50000,
+       "accounts": [
+        {
+         "code": "5000",
+         "role": "purchases",
+         "name": "Purchases",
+         "amount_minor": 50000
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "optional": []
+  },
+  "GET /api/books/recurring": {
+   "status": 200,
+   "example": {
+    "recurring": [
+     {
+      "entity": "11111111-1111-4111-8111-111111111111",
+      "recurring_id": "66666666-6666-4666-8666-000000000001",
+      "name": "Shop rent",
+      "event": {
+       "kind": "expense",
+       "class": "rent",
+       "amount_minor": 500000,
+       "paid_from": "bank"
+      },
+      "frequency": "monthly",
+      "next_on": "2027-04-01",
+      "anchor_day": 1,
+      "end_on": null,
+      "auto": false,
+      "active": true,
+      "last_done_on": null,
+      "created_by": "11111111-1111-4111-8111-111111111111",
+      "due": true
+     }
+    ]
+   },
+   "optional": []
+  },
+  "GET /api/books/todo": {
+   "status": 200,
+   "example": [
+    {
+     "kind": "months_not_locked",
+     "count": 12,
+     "words": "12 months are over but still open: April 2026, May 2026, June 2026, July 2026 and more. Lock each once its books are done, so nothing changes behind you.",
+     "action": {
+      "label": "Lock the months",
+      "screen": "periods",
+      "call": "POST /api/books/periods/:fy/:period/lock"
+     },
+     "items": [
+      {
+       "fiscal_year": "2026-27",
+       "period": 1,
+       "month": "2026-04",
+       "recurring_id": "66666666-6666-4666-8666-000000000001",
+       "name": "Shop rent",
+       "due": "2027-04-01",
+       "auto": true
+      }
+     ]
+    }
+   ],
+   "optional": [
+    "[].items[].auto",
+    "[].items[].due",
+    "[].items[].fiscal_year",
+    "[].items[].month",
+    "[].items[].name",
+    "[].items[].period",
+    "[].items[].recurring_id"
+   ]
+  },
+  "GET /api/books/todo #year-end": {
+   "status": 200,
+   "example": [
+    {
+     "kind": "year_close_possible",
+     "count": 1,
+     "words": "Financial year 2026-27 can be closed: every month is locked, Suspense is nil and the books balance. Closing carries it forward and locks it for good.",
+     "action": {
+      "label": "Close the year",
+      "screen": "year-close",
+      "call": "POST /api/books/year/2026-27/close"
+     },
+     "items": [
+      {
+       "fiscal_year": "2026-27"
+      }
+     ]
+    }
+   ],
+   "optional": []
+  },
+  "GET /api/books/trial-balance": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "asOf": "2027-03-31",
+    "rows": [
+     {
+      "code": "1300",
+      "name": "Customers (Sundry Debtors)",
+      "group": "sundry_debtors",
+      "dr_minor": 118000,
+      "cr_minor": 0
+     }
+    ],
+    "total_dr_minor": 177000,
+    "total_cr_minor": 177000,
+    "balanced": true
+   },
+   "optional": []
+  },
+  "GET /api/books/year/:fy/status": {
+   "status": 200,
+   "example": {
+    "fiscal_year": "2026-27",
+    "closed": false,
+    "can_close": true,
+    "refusals": [],
+    "months": [
+     {
+      "period": 1,
+      "status": "soft_locked"
+     }
+    ],
+    "next": "2027-28"
+   },
+   "optional": []
+  },
+  "GET /api/crm/followups": {
+   "status": 200,
+   "example": {
+    "followups": [
+     {
+      "followup_id": "00000000-0000-4000-8000-000000000002",
+      "party_id": "10000000-0000-4000-8000-000000000002",
+      "party_no": "P-0002",
+      "party_name": "Name of 0002",
+      "party_listed": true,
+      "what": "Ring about the quote",
+      "due_at": "2026-10-02T02:41:22.214Z",
+      "due_day": "2026-10-02",
+      "assignee_user_id": "E1",
+      "assignee_name": "Who E1",
+      "source": "manual",
+      "done_at": null,
+      "created_at": "2026-10-03T02:41:22.216Z",
+      "late": true,
+      "today": false
+     }
+    ],
+    "late": 1,
+    "today": 0
+   },
+   "optional": []
+  },
+  "GET /api/crm/followups #done": {
+   "status": 200,
+   "example": {
+    "followups": [
+     {
+      "followup_id": "f1",
+      "party_id": "10000000-0000-4000-8000-000000000002",
+      "party_no": "P-0002",
+      "party_name": "Name of 0002",
+      "party_listed": true,
+      "what": "Call back",
+      "due_at": "2026-10-01T02:41:22.092Z",
+      "due_day": "2026-10-01",
+      "assignee_user_id": "E1",
+      "assignee_name": "Who E1",
+      "done_at": "2026-09-09T00:00:00.000Z",
+      "created_at": "2026-09-08T01:00:00.000Z",
+      "late": false,
+      "today": false,
+      "source": "manual"
+     }
+    ],
+    "late": 0,
+    "today": 0
+   },
+   "optional": [
+    "followups[].source"
+   ]
+  },
+  "GET /api/crm/parties": {
+   "status": 200,
+   "note": "roles is an OBJECT, never a list. dues is one nested object (null when the Ledger is off). A walk-in is in walk_ins, not parties.",
+   "example": {
+    "parties": [
+     {
+      "party_id": "10000000-0000-4000-8000-000000000002",
+      "display_name": "Chola Auto Care",
+      "user_id": "chola",
+      "bridge_id": "CBX",
+      "email": null,
+      "phone": null,
+      "otp_contact": null,
+      "gstn": null,
+      "city": "Madurai",
+      "status": "active",
+      "kind": "business",
+      "on_chitbridge": true,
+      "may_trade": {
+       "ok": true,
+       "why": "local"
+      },
+      "roles": {
+       "customer": true,
+       "supplier": true
+      },
+      "party_no": "P-0002",
+      "last_activity": "2026-09-30T10:00:00Z",
+      "customer": {
+       "list_id": "cl-2",
+       "segment": "regular",
+       "segment_override": null,
+       "txn_count": 4,
+       "last_txn_at": "2026-09-30T10:00:00Z",
+       "groups": [
+        "Dealers"
+       ],
+       "customer_type": "entity",
+       "added_via": "manual"
+      },
+      "supplier": {
+       "list_id": "sl-2",
+       "category": "Raw",
+       "preferred": false,
+       "supply_kind": "goods",
+       "notes": null,
+       "added_via": "manual"
+      },
+      "legal_name": "Chola Auto Care LLP",
+      "nickname": "Chola",
+      "state_code": "33",
+      "tax_ids": [
+       {
+        "scheme": "GSTIN",
+        "value": "33ABCDE1234F1Z5"
+       }
+      ],
+      "terms": {
+       "customer": {
+        "credit_days": 15,
+        "credit_limit_minor": null
+       },
+       "supplier": {
+        "credit_days": null,
+        "credit_limit_minor": null
+       }
+      },
+      "dues": {
+       "balance_minor": 38165,
+       "oldest_due": "2026-08-15",
+       "side": "both"
+      },
+      "gstin": {
+       "value": "33ABCDE1234F1Z5",
+       "source": "shop",
+       "theirs": null,
+       "differs": false
+      },
+      "name": "Chola"
+     }
+    ],
+    "walk_ins": [
+     {
+      "walk_in": true,
+      "party_id": null,
+      "kind": "walk-in",
+      "phone": "+919840012321",
+      "points": 120,
+      "last_activity": "2026-09-29T00:00:00Z"
+     }
+    ],
+    "count": 3,
+    "truncated": false
+   },
+   "optional": [
+    "parties[].customer",
+    "parties[].may_trade.why",
+    "parties[].supplier",
+    "parties[].supplier.category",
+    "parties[].terms.customer",
+    "parties[].terms.supplier"
+   ],
+   "also_optional": [
+    "parties[].supplier",
+    "parties[].terms.supplier",
+    "parties[].customer",
+    "parties[].terms.customer",
+    "parties[].supplier.category"
+   ]
+  },
+  "GET /api/crm/parties/:id": {
+   "status": 200,
+   "example": {
+    "party_id": "10000000-0000-4000-8000-000000000002",
+    "display_name": "Chola Auto Care",
+    "user_id": "chola",
+    "bridge_id": "CBX",
+    "email": null,
+    "phone": null,
+    "otp_contact": null,
+    "gstn": null,
+    "city": "Madurai",
+    "status": "active",
+    "kind": "business",
+    "on_chitbridge": true,
+    "may_trade": {
+     "ok": true
+    },
+    "roles": {
+     "customer": true,
+     "supplier": true
+    },
+    "party_no": "P-0002",
+    "last_activity": "2026-09-30T10:00:00Z",
+    "customer": {
+     "list_id": "cl-2",
+     "segment": "regular",
+     "segment_override": null,
+     "txn_count": 4,
+     "last_txn_at": "2026-09-30T10:00:00Z",
+     "groups": [
+      "Dealers"
+     ],
+     "customer_type": "entity",
+     "added_via": "manual"
+    },
+    "supplier": {
+     "list_id": "sl-2",
+     "category": "Raw",
+     "preferred": false,
+     "supply_kind": "goods",
+     "notes": null,
+     "added_via": "manual"
+    },
+    "legal_name": "Chola Auto Care LLP",
+    "nickname": "Chola",
+    "state_code": "33",
+    "tax_ids": [
+     {
+      "scheme": "GSTIN",
+      "value": "33ABCDE1234F1Z5"
+     }
+    ],
+    "terms": {
+     "customer": {
+      "credit_days": 15,
+      "credit_limit_minor": null
+     },
+     "supplier": {
+      "credit_days": null,
+      "credit_limit_minor": null
+     }
+    },
+    "dues": {
+     "balance_minor": 38165,
+     "oldest_due": "2026-08-15",
+     "side": "both"
+    },
+    "gstin": {
+     "value": "33ABCDE1234F1Z5",
+     "source": "shop",
+     "theirs": null,
+     "differs": false
+    },
+    "name": "Chola",
+    "merged_from": null,
+    "relationship": {
+     "relationship": {
+      "first_at": "2026-09-01T00:00:00.000Z",
+      "last_at": "2026-09-05T00:00:00.000Z",
+      "you_sent": 1,
+      "you_received": 1,
+      "shape": "both ways"
+     },
+     "completion": {
+      "closed": 1,
+      "completed": 1,
+      "rejected_or_cancelled": 0,
+      "completion_rate_pct": 100
+     }
+    },
+    "points": {
+     "programme": "Club",
+     "points": 120,
+     "worth": 60
+    },
+    "migrated": true,
+    "followups": []
+   },
+   "optional": [
+    "customer",
+    "supplier",
+    "terms.customer",
+    "terms.supplier"
+   ],
+   "also_optional": [
+    "customer",
+    "supplier",
+    "terms.customer",
+    "terms.supplier"
+   ]
+  },
+  "GET /api/crm/parties/:id #merged": {
+   "status": 200,
+   "example": {
+    "party_id": "10000000-0000-4000-8000-000000000001",
+    "display_name": "Agro Mills",
+    "user_id": "agromills",
+    "bridge_id": "CBX",
+    "email": null,
+    "phone": null,
+    "otp_contact": null,
+    "gstn": null,
+    "city": null,
+    "status": "active",
+    "kind": "business",
+    "on_chitbridge": true,
+    "may_trade": {
+     "ok": true
+    },
+    "roles": {
+     "customer": false,
+     "supplier": true
+    },
+    "party_no": "P-0001",
+    "last_activity": null,
+    "supplier": {
+     "list_id": "sl-1",
+     "category": "Raw",
+     "preferred": false,
+     "supply_kind": "goods",
+     "notes": null,
+     "added_via": "manual"
+    },
+    "legal_name": "Agro Mills Pvt Ltd",
+    "nickname": null,
+    "state_code": null,
+    "tax_ids": [],
+    "terms": {
+     "supplier": {
+      "credit_days": null,
+      "credit_limit_minor": null
+     }
+    },
+    "dues": {
+     "balance_minor": -48165,
+     "oldest_due": "2026-08-20",
+     "side": "supplier"
+    },
+    "gstin": {
+     "value": null,
+     "source": null,
+     "theirs": null,
+     "differs": false
+    },
+    "name": "Agro Mills",
+    "merged_from": {
+     "party_id": "10000000-0000-4000-8000-000000000008",
+     "party_no": "P-0008"
+    },
+    "relationship": {
+     "relationship": {
+      "first_at": null,
+      "last_at": null,
+      "you_sent": 0,
+      "you_received": 0,
+      "shape": "none"
+     },
+     "completion": {
+      "closed": 0,
+      "completed": 0,
+      "rejected_or_cancelled": 0,
+      "completion_rate_pct": null
+     }
+    },
+    "points": null,
+    "migrated": true,
+    "followups": []
+   },
+   "optional": [
+    "customer",
+    "supplier",
+    "terms.customer",
+    "terms.supplier"
+   ],
+   "also_optional": [
+    "customer",
+    "supplier",
+    "terms.customer",
+    "terms.supplier"
+   ]
+  },
+  "GET /api/crm/parties/:id #not-found": {
+   "status": 404,
+   "example": {
+    "code": "NOT_FOUND",
+    "error": "Not found",
+    "message": "Not your party."
+   },
+   "optional": []
+  },
+  "GET /api/crm/parties/:id #not-migrated": {
+   "status": 200,
+   "example": {
+    "party_id": "10000000-0000-4000-8000-000000000001",
+    "display_name": "Agro Mills",
+    "user_id": "agromills",
+    "bridge_id": "CBX",
+    "email": null,
+    "phone": null,
+    "otp_contact": null,
+    "gstn": null,
+    "city": null,
+    "status": "active",
+    "kind": "business",
+    "on_chitbridge": true,
+    "may_trade": {
+     "ok": true
+    },
+    "roles": {
+     "customer": false,
+     "supplier": true
+    },
+    "party_no": "P-0001",
+    "last_activity": null,
+    "supplier": {
+     "list_id": "sl-1",
+     "category": "Raw",
+     "preferred": false,
+     "supply_kind": "goods",
+     "notes": null,
+     "added_via": "manual"
+    },
+    "legal_name": "Agro Mills Pvt Ltd",
+    "nickname": null,
+    "state_code": null,
+    "tax_ids": [],
+    "terms": {
+     "supplier": {
+      "credit_days": null,
+      "credit_limit_minor": null
+     }
+    },
+    "dues": {
+     "balance_minor": -48165,
+     "oldest_due": "2026-08-20",
+     "side": "supplier"
+    },
+    "gstin": {
+     "value": null,
+     "source": null,
+     "theirs": null,
+     "differs": false
+    },
+    "name": "Agro Mills",
+    "merged_from": null,
+    "relationship": {
+     "relationship": {
+      "first_at": null,
+      "last_at": null,
+      "you_sent": 0,
+      "you_received": 0,
+      "shape": "none"
+     },
+     "completion": {
+      "closed": 0,
+      "completed": 0,
+      "rejected_or_cancelled": 0,
+      "completion_rate_pct": null
+     }
+    },
+    "points": null,
+    "migrated": false,
+    "followups": []
+   },
+   "optional": [
+    "customer",
+    "supplier",
+    "terms.customer",
+    "terms.supplier"
+   ],
+   "also_optional": [
+    "customer",
+    "supplier",
+    "terms.customer",
+    "terms.supplier"
+   ]
+  },
+  "GET /api/crm/parties/:id/timeline": {
+   "status": 200,
+   "example": {
+    "party_id": "10000000-0000-4000-8000-000000000002",
+    "entries": [
+     {
+      "kind": "followup_done",
+      "at": "2026-09-09T00:00:00.000Z",
+      "followup_id": "f1",
+      "what": "Call back",
+      "due_at": "2026-10-01T02:41:22.092Z",
+      "interaction_id": "i1",
+      "interaction_kind": "call",
+      "direction": "out",
+      "body": "Asked about payment",
+      "by": "E1",
+      "field": "credit_days",
+      "old": "0",
+      "new": "30",
+      "chit_id": "c2",
+      "who": "Chola",
+      "text": "Please send by Friday",
+      "status": "pending",
+      "purpose": "order",
+      "doc_kind": "bill",
+      "bill_no": "B-1",
+      "title": "Bill B-1",
+      "value": 48165,
+      "currency": "INR",
+      "open_disputes": 0,
+      "dispute_id": "d1",
+      "category": "price",
+      "ref": "B-1",
+      "ledger_kind": "bill",
+      "source": "sale",
+      "amount_minor": 48165,
+      "doc_date": "2026-09-01"
+     }
+    ],
+    "next_before": null,
+    "migrated": true
+   },
+   "optional": [
+    "entries[].amount_minor",
+    "entries[].bill_no",
+    "entries[].body",
+    "entries[].by",
+    "entries[].category",
+    "entries[].chit_id",
+    "entries[].currency",
+    "entries[].direction",
+    "entries[].dispute_id",
+    "entries[].doc_date",
+    "entries[].doc_kind",
+    "entries[].due_at",
+    "entries[].field",
+    "entries[].followup_id",
+    "entries[].interaction_id",
+    "entries[].interaction_kind",
+    "entries[].ledger_kind",
+    "entries[].new",
+    "entries[].old",
+    "entries[].open_disputes",
+    "entries[].purpose",
+    "entries[].ref",
+    "entries[].source",
+    "entries[].status",
+    "entries[].text",
+    "entries[].title",
+    "entries[].value",
+    "entries[].what",
+    "entries[].who"
+   ]
+  },
+  "PATCH /api/books/recurring/:id": {
+   "status": 200,
+   "example": {
+    "entity": "11111111-1111-4111-8111-111111111111",
+    "recurring_id": "66666666-6666-4666-8666-000000000001",
+    "name": "Shop rent",
+    "event": {
+     "kind": "expense",
+     "class": "rent",
+     "amount_minor": 500000,
+     "paid_from": "bank"
+    },
+    "frequency": "monthly",
+    "next_on": "2027-04-01",
+    "anchor_day": 1,
+    "end_on": null,
+    "auto": true,
+    "active": true,
+    "last_done_on": null,
+    "created_by": "11111111-1111-4111-8111-111111111111",
+    "due": true
+   },
+   "optional": []
+  },
+  "PATCH /api/crm/followups/:id": {
+   "status": 200,
+   "example": {
+    "followup": {
+     "followup_id": "00000000-0000-4000-8000-000000000002",
+     "party_id": "10000000-0000-4000-8000-000000000002",
+     "party_no": "P-0002",
+     "party_name": "Name of 0002",
+     "party_listed": true,
+     "what": "Ring about the quote",
+     "due_at": "2026-10-02T02:41:22.214Z",
+     "due_day": "2026-10-02",
+     "assignee_user_id": "E1",
+     "assignee_name": "Who E1",
+     "source": "manual",
+     "done_at": "2026-10-03T02:41:22.226Z",
+     "created_at": "2026-10-03T02:41:22.216Z",
+     "late": false,
+     "today": false
+    }
+   },
+   "optional": []
+  },
+  "POST /api/books/accruals": {
+   "status": 200,
+   "example": {
+    "ref": "ELEC-9",
+    "kind": "outstanding",
+    "reverses_on": "2026-10-01",
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000120",
+    "entry_no": "MJ/2026-27/000005",
+    "posting_date": "2026-09-30",
+    "doc_date": "2026-09-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   },
+   "optional": []
+  },
+  "POST /api/books/accruals/:ref/reverse": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000121",
+    "entry_no": "JV/2026-27/000004",
+    "posting_date": "2026-10-01",
+    "doc_date": "2026-10-01",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   },
+   "optional": []
+  },
+  "POST /api/books/assets": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000115",
+    "entry_no": "MJ/2026-27/000003",
+    "posting_date": "2026-04-18",
+    "doc_date": "2026-04-18",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null,
+    "asset": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "asset_id": "55555555-5555-4555-8555-000000000001",
+     "name": "Laptop",
+     "asset_class": "computers",
+     "cost_minor": 4200000,
+     "currency": "INR",
+     "put_to_use": "2026-04-18",
+     "source_entry_id": "00000000-0000-4000-8000-000000000115",
+     "source_chit_id": null,
+     "accumulated_minor": 0,
+     "last_dep_fy": null,
+     "disposed_on": null,
+     "disposal_entry_id": null,
+     "proceeds_minor": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "wdv_minor": 4200000
+    }
+   },
+   "optional": []
+  },
+  "POST /api/books/assets/:id/dispose": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000117",
+    "entry_no": "MJ/2027-28/000001",
+    "posting_date": "2027-04-05",
+    "doc_date": "2027-04-05",
+    "moved": false,
+    "lines": 4,
+    "items": 0,
+    "note": null,
+    "asset": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "asset_id": "55555555-5555-4555-8555-000000000001",
+     "name": "Laptop",
+     "asset_class": "computers",
+     "cost_minor": 4200000,
+     "currency": "INR",
+     "put_to_use": "2026-04-18",
+     "source_entry_id": "00000000-0000-4000-8000-000000000115",
+     "source_chit_id": null,
+     "accumulated_minor": 1680000,
+     "last_dep_fy": "2026-27",
+     "disposed_on": "2027-04-05",
+     "disposal_entry_id": "00000000-0000-4000-8000-000000000117",
+     "proceeds_minor": 2000000,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "wdv_minor": 0
+    }
+   },
+   "optional": []
+  },
+  "POST /api/books/closing-stock": {
+   "status": 200,
+   "example": {
+    "book_minor": 0,
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000114",
+    "entry_no": "JV/2026-27/000001",
+    "posting_date": "2026-09-30",
+    "doc_date": "2026-09-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   },
+   "optional": []
+  },
+  "POST /api/books/closing-stock #locked": {
+   "status": 409,
+   "example": {
+    "code": "PERIOD_LOCKED",
+    "error": "That month is locked. Open it again (with a reason) to record this.",
+    "message": "That month is locked. Open it again (with a reason) to record this."
+   },
+   "optional": []
+  },
+  "POST /api/books/depreciation/run": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "fy": "2026-27",
+    "entity_basis": "proprietor",
+    "basis_assumed": true,
+    "entity_note": "The entity type is not set for this shop yet, so depreciation was worked as a proprietor (Income-tax Act written-down value). Set books.entity_basis to change it.",
+    "basis_rule": "it_act_wdv",
+    "by_class": [
+     {
+      "class": "computers",
+      "rate": 40,
+      "amount": 16800
+     }
+    ],
+    "by_asset": [
+     {
+      "id": "55555555-5555-4555-8555-000000000001",
+      "class": "computers",
+      "amount": 16800
+     }
+    ],
+    "entry_id": "00000000-0000-4000-8000-000000000116",
+    "entry_no": "JV/2026-27/000002",
+    "posting_date": "2027-03-31",
+    "doc_date": "2027-03-31",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   },
+   "optional": []
+  },
+  "POST /api/books/depreciation/run #nothing": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "nothing_to_post": true,
+    "fy": "2025-26",
+    "entity_basis": "proprietor",
+    "basis_assumed": true,
+    "entity_note": "The entity type is not set for this shop yet, so depreciation was worked as a proprietor (Income-tax Act written-down value). Set books.entity_basis to change it.",
+    "why": "There are no assets in the register for 2025-26."
+   },
+   "optional": []
+  },
+  "POST /api/books/enable": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "accounts_added": 109,
+    "fiscal_year": "2026-27",
+    "parties_numbered": null
+   },
+   "optional": []
+  },
+  "POST /api/books/entries/:id/reverse": {
+   "status": 200,
+   "note": "needs { reason } - the Day book sheet must send one",
+   "example": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000113",
+    "entry_no": "MJ/2026-27/000002",
+    "posting_date": "2026-10-02",
+    "moved": false,
+    "reverses": "MJ/2026-27/000001",
+    "items": 0
+   },
+   "optional": []
+  },
+  "POST /api/books/events": {
+   "status": 200,
+   "example": {
+    "kind": "expense",
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000112",
+    "entry_no": "MJ/2026-27/000001",
+    "posting_date": "2026-10-02",
+    "doc_date": "2026-10-02",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   },
+   "optional": []
+  },
+  "POST /api/books/gst/close": {
+   "status": 200,
+   "example": {
+    "fy": "2026-27",
+    "period": 6,
+    "date": "2026-09-30",
+    "utilised": [
+     {
+      "from": "cgst",
+      "against": "cgst",
+      "amount_minor": 4500
+     }
+    ],
+    "payable_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "carried_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "pay_total_minor": 9000,
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000118",
+    "entry_no": "JV/2026-27/000003",
+    "posting_date": "2026-09-30",
+    "doc_date": "2026-09-30",
+    "moved": false,
+    "lines": 4,
+    "items": 0,
+    "note": null
+   },
+   "optional": []
+  },
+  "POST /api/books/gst/pay": {
+   "status": 200,
+   "example": {
+    "challan_no": "CPIN24100001",
+    "paid_minor": {
+     "cgst": 4500,
+     "sgst": 4500
+    },
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000119",
+    "entry_no": "MJ/2026-27/000004",
+    "posting_date": "2026-10-02",
+    "doc_date": "2026-10-02",
+    "moved": false,
+    "lines": 3,
+    "items": 0,
+    "note": null
+   },
+   "optional": []
+  },
+  "POST /api/books/periods/:fy/:p/lock": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 1,
+     "status": "soft_locked"
+    }
+   },
+   "optional": []
+  },
+  "POST /api/books/preview": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "kind": "expense",
+    "voucher": {
+     "series": "MJ",
+     "type": "Payment"
+    },
+    "date": "2026-10-02",
+    "lines": [
+     {
+      "code": "6010",
+      "ledger": "Rent",
+      "dr_minor": 500000,
+      "cr_minor": 0,
+      "type": "nominal",
+      "rule": "Dr expenses and losses"
+     }
+    ],
+    "balanced": true,
+    "totals": {
+     "dr_minor": 500000,
+     "cr_minor": 500000
+    },
+    "credit": null,
+    "bill": null,
+    "flags": [],
+    "refusals": [],
+    "code": null,
+    "duplicate": null
+   },
+   "optional": []
+  },
+  "POST /api/books/preview #refused": {
+   "status": 200,
+   "example": {
+    "ok": false,
+    "kind": null,
+    "voucher": null,
+    "date": null,
+    "lines": [],
+    "balanced": false,
+    "totals": {
+     "dr_minor": 0,
+     "cr_minor": 0
+    },
+    "credit": null,
+    "bill": null,
+    "flags": [],
+    "refusals": [
+     "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+    ],
+    "code": null,
+    "duplicate": null
+   },
+   "optional": []
+  },
+  "POST /api/books/recurring": {
+   "status": 200,
+   "example": {
+    "entity": "11111111-1111-4111-8111-111111111111",
+    "recurring_id": "66666666-6666-4666-8666-000000000001",
+    "name": "Shop rent",
+    "event": {
+     "kind": "expense",
+     "class": "rent",
+     "amount_minor": 500000,
+     "paid_from": "bank"
+    },
+    "frequency": "monthly",
+    "next_on": "2027-04-01",
+    "anchor_day": 1,
+    "end_on": null,
+    "auto": false,
+    "active": true,
+    "last_done_on": null,
+    "created_by": "11111111-1111-4111-8111-111111111111",
+    "due": true
+   },
+   "optional": []
+  },
+  "POST /api/books/recurring/:id/post": {
+   "status": 200,
+   "example": {
+    "posted": {
+     "kind": "expense",
+     "ok": true,
+     "entry_id": "00000000-0000-4000-8000-000000000122",
+     "entry_no": "MJ/2027-28/000002",
+     "posting_date": "2027-04-01",
+     "doc_date": "2027-04-01",
+     "moved": false,
+     "lines": 2,
+     "items": 0,
+     "note": null
+    },
+    "template": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "recurring_id": "66666666-6666-4666-8666-000000000001",
+     "name": "Shop rent",
+     "event": {
+      "kind": "expense",
+      "class": "rent",
+      "amount_minor": 500000,
+      "paid_from": "bank"
+     },
+     "frequency": "monthly",
+     "next_on": "2027-05-01",
+     "anchor_day": 1,
+     "end_on": null,
+     "auto": true,
+     "active": true,
+     "last_done_on": "2027-04-01",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "due": true
+    },
+    "date": "2027-04-01"
+   },
+   "optional": []
+  },
+  "POST /api/books/recurring/:id/skip": {
+   "status": 200,
+   "example": {
+    "skipped": "2027-04-01",
+    "template": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "recurring_id": "66666666-6666-4666-8666-000000000002",
+     "name": "Insurance",
+     "event": {
+      "kind": "expense",
+      "class": "insurance",
+      "amount_minor": 90000,
+      "paid_from": "bank"
+     },
+     "frequency": "yearly",
+     "next_on": "2028-04-01",
+     "anchor_day": 1,
+     "end_on": null,
+     "auto": false,
+     "active": true,
+     "last_done_on": "2027-04-01",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "due": true
+    }
+   },
+   "optional": []
+  },
+  "POST /api/books/year/:fy/close": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "fiscal_year": "2026-27",
+    "next": "2027-28",
+    "locked": 13,
+    "opening": {
+     "rows": 9,
+     "retained_minor": 3370000,
+     "profit_minor": 3370000,
+     "balanced": true
+    }
+   },
+   "optional": []
+  },
+  "POST /api/books/year/:fy/close #again": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "duplicate": true,
+    "fiscal_year": "2026-27",
+    "next": "2027-28"
+   },
+   "optional": []
+  },
+  "POST /api/crm/followups": {
+   "status": 201,
+   "example": {
+    "followup": {
+     "followup_id": "00000000-0000-4000-8000-000000000002",
+     "party_id": "10000000-0000-4000-8000-000000000002",
+     "party_no": "P-0002",
+     "party_name": "Name of 0002",
+     "party_listed": true,
+     "what": "Ring about the quote",
+     "due_at": "2026-10-02T02:41:22.214Z",
+     "due_day": "2026-10-02",
+     "assignee_user_id": "E1",
+     "assignee_name": "Who E1",
+     "source": "manual",
+     "done_at": null,
+     "created_at": "2026-10-03T02:41:22.216Z",
+     "late": true,
+     "today": false
+    }
+   },
+   "optional": []
+  },
+  "POST /api/crm/followups #later": {
+   "status": 201,
+   "example": {
+    "followup": {
+     "followup_id": "00000000-0000-4000-8000-000000000003",
+     "party_id": "10000000-0000-4000-8000-000000000002",
+     "party_no": "P-0002",
+     "party_name": "Name of 0002",
+     "party_listed": true,
+     "what": "Ask for the cheque",
+     "due_at": "2026-10-08T02:41:22.218Z",
+     "due_day": "2026-10-08",
+     "assignee_user_id": "E1",
+     "assignee_name": "Who E1",
+     "source": "dues",
+     "done_at": null,
+     "created_at": "2026-10-03T02:41:22.220Z",
+     "late": false,
+     "today": false
+    }
+   },
+   "optional": []
+  },
+  "POST /api/crm/followups #not-migrated": {
+   "status": 503,
+   "example": {
+    "code": "CRM_NOT_MIGRATED",
+    "error": "Not migrated yet",
+    "message": "CB CRM needs migration b276 — not run yet."
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/interactions": {
+   "status": 201,
+   "example": {
+    "interaction": {
+     "interaction_id": "00000000-0000-4000-8000-000000000001",
+     "party_id": "10000000-0000-4000-8000-000000000002",
+     "kind": "call",
+     "direction": "out",
+     "body": "Rang about the rate",
+     "at": "2026-10-03T02:41:22.213Z",
+     "by_user_id": "E1",
+     "created_at": "2026-10-03T02:41:22.213Z"
+    }
+   },
+   "optional": []
+  },
+  "POST /api/crm/walk-ins/add": {
+   "status": 201,
+   "example": {
+    "party": {
+     "party_id": "N1",
+     "user_id": "~acme.cus-0001",
+     "display_name": "Corner shop",
+     "party_no": "P-00099",
+     "kind": "local",
+     "on_chitbridge": false
+    },
+    "points_claimed": 120
+   },
+   "optional": []
+  }
+ },
+ "_about": "THE API'S COPY IS THE MASTER (chitbridge-api docs/contracts/web-api.json). chitbridge-web keeps e2e/fixtures/web-api.contract.json - the same file. tests/web-api-contract.test.cjs holds the API's real answers to it; chitbridge-web e2e/contract.cjs holds every stand-in to it. Change the shape of an answer here (node tests/web-api-contract.test.cjs --write), then copy the file across."
+}
