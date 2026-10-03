@@ -138,7 +138,9 @@ async function captureBooks() {
     await q('POST', '/recurring/' + rec2.body.recurring_id + '/skip', {}, '/recurring/:id/skip');
     await q('DELETE', '/recurring/' + rec2.body.recurring_id, null, '/recurring/:id');
 
-    /* ── the year ── */
+    /* ── the year: first refused (months still open), then closed ── */
+    await q('GET', '/year/2026-27/status', null, '/year/:fy/status');
+    await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
     for (let p = 1; p <= 12; p++) await q('POST', '/periods/2026-27/' + p + '/lock', { reason: 'done' }, p === 1 ? '/periods/:fy/:p/lock' : null);
     await q('POST', '/closing-stock', { date: '2026-10-31', value_minor: 100, method: 'manual', client_ref: 'cs-locked' }, '/closing-stock');
     await q('GET', '/year/2026-27/status', null, '/year/:fy/status');

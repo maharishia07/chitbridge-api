@@ -916,12 +916,17 @@
    "example": {
     "fiscal_year": "2026-27",
     "closed": false,
-    "can_close": true,
-    "refusals": [],
+    "can_close": false,
+    "refusals": [
+     {
+      "name": "months_open",
+      "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
+     }
+    ],
     "months": [
      {
       "period": 1,
-      "status": "soft_locked"
+      "status": "open"
      }
     ],
     "next": "2027-28"
@@ -939,13 +944,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-02T03:14:15.925Z",
+      "due_at": "2026-10-02T03:14:37.846Z",
       "due_day": "2026-10-02",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-03T03:14:15.927Z",
+      "created_at": "2026-10-03T03:14:37.847Z",
       "late": true,
       "today": false
      }
@@ -1191,7 +1196,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-01T03:14:15.858Z",
+      "due_at": "2026-10-01T03:14:37.775Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1289,13 +1294,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:14:15.925Z",
+     "due_at": "2026-10-02T03:14:37.846Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-03T03:14:15.932Z",
-     "created_at": "2026-10-03T03:14:15.927Z",
+     "done_at": "2026-10-03T03:14:37.853Z",
+     "created_at": "2026-10-03T03:14:37.847Z",
      "late": false,
      "today": false
     }
@@ -1713,6 +1718,22 @@
    "optional": []
   },
   "POST /api/books/year/:fy/close": {
+   "status": 422,
+   "example": {
+    "ok": false,
+    "fiscal_year": "2026-27",
+    "error": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+    "message": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+    "refusals": [
+     {
+      "name": "months_open",
+      "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
+     }
+    ]
+   },
+   "optional": []
+  },
+  "POST /api/books/year/:fy/close #200": {
    "status": 200,
    "example": {
     "ok": true,
@@ -1743,13 +1764,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:14:15.925Z",
+     "due_at": "2026-10-02T03:14:37.846Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-03T03:14:15.927Z",
+     "created_at": "2026-10-03T03:14:37.847Z",
      "late": true,
      "today": false
     }
@@ -1774,9 +1795,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-03T03:14:15.925Z",
+     "at": "2026-10-03T03:14:37.846Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-03T03:14:15.925Z"
+     "created_at": "2026-10-03T03:14:37.846Z"
     }
    },
    "optional": []
