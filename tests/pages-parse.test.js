@@ -68,6 +68,54 @@ for (const [name, file] of PAGES) {
   });
 }
 
+/* Blank the comments of a JS source, leaving strings, templates and regex literals untouched. Same length, same newlines. */
+function blankJsComments(s) {
+  let out = '', i = 0, prev = '';   /* prev = last significant char, to tell a regex from a division */
+  const blank = (t) => t.replace(/[^\r\n]/g, ' ');
+  while (i < s.length) {
+    const c = s[i], n = s[i + 1];
+    if (c === '/' && n === '*') { let e = s.indexOf('*/', i + 2); e = e < 0 ? s.length : e + 2; out += blank(s.slice(i, e)); i = e; continue; }
+    if (c === '/' && n === '/') { let e = s.indexOf('\n', i); if (e < 0) e = s.length; out += blank(s.slice(i, e)); i = e; continue; }
+    if (c === '"' || c === "'" || c === '`') {
+      let j = i + 1;
+      while (j < s.length && s[j] !== c) { if (s[j] === '\\') j++; else if (c !== '`' && s[j] === '\n') break; j++; }
+      out += s.slice(i, j + 1); i = j + 1; prev = c; continue;
+    }
+    if (c === '/' && (prev === '' || /[(,=:[!&|?{};+\-*%<>~^]/.test(prev) || /(?:^|[^\w$])(?:return|typeof|case|in|of)\s*$/.test(out.slice(-12)))) {
+      let j = i + 1, cls = false;
+      while (j < s.length && s[j] !== '\n' && (cls || s[j] !== '/')) { if (s[j] === '\\') j++; else if (s[j] === '[') cls = true; else if (s[j] === ']') cls = false; j++; }
+      out += s.slice(i, j + 1); i = j + 1; prev = '/'; continue;
+    }
+    out += c; i++;
+    if (!/\s/.test(c)) prev = c;
+  }
+  return out;
+}
+
+/* the controls an onclick-style attribute calls that nothing in the sources defines */
+function danglingHandlers(texts) {
+  const defined = new Set();
+  const blanked = texts.map((t) => blankJsComments(t));
+  blanked.forEach((s) => { let m; const d = /(?:^|\n)\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g; while ((m = d.exec(s))) defined.add(m[1]); });
+  const out = [];
+  blanked.forEach((s) => { let m; const c = /on(?:click|change|input|submit)\s*=\s*(["'])\s*([A-Za-z_$][\w$]*)\s*\(/g; while ((m = c.exec(s))) if (!defined.has(m[2]) && out.indexOf(m[2]) < 0) out.push(m[2]); });
+  return out;
+}
+
+it('the handler scanner: a "/*" inside a string is not a comment (cap-entry.js enSet, 2026-10-03)', () => {
+  const swallowed = 'var a = \'<input accept="image/*,application/pdf">\';\nfunction enSet(k) { return k; }\n/* a real comment */\nvar b = \'<b onclick="enSet(1)">\';';
+  assert.deepStrictEqual(danglingHandlers([swallowed]), [], 'the "/*" in a string swallowed the definition after it');
+  assert.ok(blankJsComments(swallowed).includes('function enSet'));
+  assert.ok(!blankJsComments(swallowed).includes('a real comment'), 'a real comment must still be blanked');
+  const rx = 'var r = /a\\/*x/;\nfunction g() {}\n/* c */ var b = \'<b onclick="g()">\';';
+  assert.deepStrictEqual(danglingHandlers([rx]), [], 'a "/*" inside a regex literal is not a comment either');
+});
+
+it('the handler scanner still catches a REAL missing function', () => {
+  assert.deepStrictEqual(danglingHandlers(['function here() {}\nvar b = \'<b onclick="gone(1)">\';']), ['gone']);
+  assert.deepStrictEqual(danglingHandlers(['// onclick="ghost()"\nvar x = 1;']), [], 'an illustration in a comment is not a control');
+});
+
 /**
  * ⭐⭐⭐ EVERY onclick NAMES A FUNCTION THAT EXISTS.
  *
@@ -109,13 +157,17 @@ it('⭐⭐⭐ every onclick in a capability calls a function that exists', () =>
    * ⭐ Replaced with spaces, not stripped: every offset and line number stays where it was, so any message
    * that quotes a position still points at the right place.
    */
-  const blankComments = (s) => s
+  /* STRING-AWARE (2026-10-03). The first version was two regexes, and cap-entry.js has `accept="image/*,application/pdf"`
+     inside a string: the `/*` opened a "comment" that ran to the next real star-slash and swallowed `function enSet`, so three
+     live buttons were reported missing. A comment marker only counts OUTSIDE a string, template or regex literal.
+     app.html is markup, not a script, so it keeps the plain pass. */
+  const blankComments = (s, isJs) => isJs ? blankJsComments(s) : s
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
     .replace(/(^|[^:\\])\/\/[^\n]*/g, (m) => m[0] + m.slice(1).replace(/[^\n]/g, ' '));
 
   const src = {};
   files.forEach((f) => {
-    const s = blankComments(fs.readFileSync(f, 'utf8')); src[f] = s;
+    const s = blankComments(fs.readFileSync(f, 'utf8'), f.endsWith('.js')); src[f] = s;
     let m; const decl = /(?:^|\n)\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g;
     while ((m = decl.exec(s))) defined.add(m[1]);
     const assign = /(?:^|\n)\s*(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function|\()/g;
