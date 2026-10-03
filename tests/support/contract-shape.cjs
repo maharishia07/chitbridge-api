@@ -11,15 +11,17 @@
  *     example array accepts any array, an empty answer is always fine;
  *   · a string is a string, a number a number, a boolean a boolean; an object is not an array (the roles bug: a list where an object came);
  *   · null in the example means "not decided by this example" — anything fits; null in the answer fits anything (an optional value);
- *   · paths are written  parties[].customer.segment  (an array element is []).
+ *   · paths are written  parties[].customer.segment  (an array element is []);
+ *   · a path listed in `free` is an object whose keys depend on something else (the event a repeating entry carries): only "it is an object" is held.
  */
 'use strict';
 
 const kind = (v) => (v === null || v === undefined ? 'null' : Array.isArray(v) ? 'array' : typeof v);
 
 /** → a list of plain problems ('parties[].roles: the contract has an object, the answer has a list'); empty = it conforms */
-function problems(example, actual, optional, path) {
+function problems(example, actual, optional, path, free) {
   const opt = optional instanceof Set ? optional : new Set(optional || []);
+  const fre = free instanceof Set ? free : new Set(free || []);
   const word = (k) => (k === 'array' ? 'a list' : k === 'object' ? 'an object' : 'a ' + k);
   function collect(ex, ac, p) {
     const ke = kind(ex), ka = kind(ac);
@@ -36,6 +38,7 @@ function problems(example, actual, optional, path) {
       return out;
     }
     if (ke === 'object') {
+      if (fre.has(p)) return [];                       /* a free-form object (a template's event: its keys depend on the kind): it must be an object, nothing more */
       const out = [];
       Object.keys(ac).forEach((k) => { if (!(k in ex)) out.push((p ? p + '.' : '') + k + ': the answer sends it, the contract does not list it'); });
       Object.keys(ex).forEach((k) => {

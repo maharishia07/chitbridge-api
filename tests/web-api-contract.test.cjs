@@ -60,6 +60,7 @@ function capture(which) {
       const g = got[k], ex = S.exampleOf(g.bodies);
       routes[k] = Object.assign({ status: g.status }, old[k] && old[k].note ? { note: old[k].note } : {}, { example: ex.example, optional: ex.optional.concat((old[k] && old[k].also_optional) || []).filter((v, i, a) => a.indexOf(v) === i).sort() });
       if (old[k] && old[k].also_optional) routes[k].also_optional = old[k].also_optional;
+      if (old[k] && old[k].free) routes[k].free = old[k].free;
     });
     if (booksOff) Object.keys(old).forEach((k) => { if (/^[A-Z]+ \/api\/books/.test(k)) routes[k] = old[k]; });   /* never lose the books half because the engines are away */
     const next = Object.assign({}, C, { routes });
@@ -72,7 +73,7 @@ function capture(which) {
 
   /* ── the matcher agrees with its own self-test (the web runs the same cases against its own copy of the matcher) ── */
   (C._selftest || []).forEach((c, i) => {
-    const p = S.problems(c.example, c.actual, c.optional || []);
+    const p = S.problems(c.example, c.actual, c.optional || [], '', c.free || []);
     ok('selftest ' + (i + 1) + ': ' + c.name, (p.length === 0) === c.conforms, JSON.stringify(p));
   });
   ok('the self-test has cases (the web checks its matcher with them)', (C._selftest || []).length >= 8);
@@ -86,7 +87,7 @@ function capture(which) {
     if (!g) { ok(k + ' answers in the scenario', false, 'the scenario no longer calls it - the contract and the test have drifted'); return; }
     const opt = new Set((want.optional || []).concat(want.also_optional || []));
     const p = [];
-    g.bodies.forEach((b) => S.problems(want.example, b, opt).forEach((m) => { if (p.indexOf(m) < 0) p.push(m); }));
+    g.bodies.forEach((b) => S.problems(want.example, b, opt, '', want.free || []).forEach((m) => { if (p.indexOf(m) < 0) p.push(m); }));
     ok(k + ' → ' + g.status + (g.status === want.status ? '' : ' (contract says ' + want.status + ')') + ' - same keys, nesting and types' + (g.bodies.length > 1 ? ' (' + g.bodies.length + ' answers)' : ''), g.status === want.status && p.length === 0, p.slice(0, 6).join(' | '));
   });
   /* …and every route the scenario calls is in the contract (a route can't join the web's reads unrecorded) */

@@ -241,11 +241,48 @@
     ]
    },
    "conforms": false
+  },
+  {
+   "name": "a free-form object only has to be an object",
+   "example": {
+    "ev": {
+     "kind": "x",
+     "a": 1
+    }
+   },
+   "actual": {
+    "ev": {
+     "kind": "y",
+     "zzz": "anything"
+    }
+   },
+   "free": [
+    "ev"
+   ],
+   "conforms": true
+  },
+  {
+   "name": "...but not a list",
+   "example": {
+    "ev": {
+     "kind": "x"
+    }
+   },
+   "actual": {
+    "ev": [
+     1
+    ]
+   },
+   "free": [
+    "ev"
+   ],
+   "conforms": false
   }
  ],
  "routes": {
   "DELETE /api/books/recurring/:id": {
    "status": 200,
+   "note": "event is the event the template was saved with: its keys depend on its kind.",
    "example": {
     "entity": "11111111-1111-4111-8111-111111111111",
     "recurring_id": "66666666-6666-4666-8666-000000000003",
@@ -267,7 +304,10 @@
     "due": false,
     "stopped": true
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "event"
+   ]
   },
   "DELETE /api/crm/followups/:id": {
    "status": 200,
@@ -502,7 +542,8 @@
         "party_name": "Ravi",
         "dr_minor": 118000,
         "cr_minor": 0,
-        "counter": null
+        "counter": null,
+        "rate": 18
        }
       ]
      }
@@ -816,6 +857,7 @@
   },
   "GET /api/books/recurring": {
    "status": 200,
+   "note": "event is the event the template was saved with: its keys depend on its kind.",
    "example": {
     "recurring": [
      {
@@ -840,7 +882,10 @@
      }
     ]
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "recurring[].event"
+   ]
   },
   "GET /api/books/todo": {
    "status": 200,
@@ -944,13 +989,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-02T03:28:09.710Z",
+      "due_at": "2026-10-02T03:42:37.085Z",
       "due_day": "2026-10-02",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-03T03:28:09.711Z",
+      "created_at": "2026-10-03T03:42:37.086Z",
       "late": true,
       "today": false
      }
@@ -1196,7 +1241,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-01T03:28:09.656Z",
+      "due_at": "2026-10-01T03:42:37.031Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1262,6 +1307,7 @@
   },
   "PATCH /api/books/recurring/:id": {
    "status": 200,
+   "note": "event is the event the template was saved with: its keys depend on its kind.",
    "example": {
     "entity": "11111111-1111-4111-8111-111111111111",
     "recurring_id": "66666666-6666-4666-8666-000000000002",
@@ -1282,7 +1328,10 @@
     "created_by": "11111111-1111-4111-8111-111111111111",
     "due": true
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "event"
+   ]
   },
   "PATCH /api/crm/followups/:id": {
    "status": 200,
@@ -1294,13 +1343,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:28:09.710Z",
+     "due_at": "2026-10-02T03:42:37.085Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-03T03:28:09.715Z",
-     "created_at": "2026-10-03T03:28:09.711Z",
+     "done_at": "2026-10-03T03:42:37.091Z",
+     "created_at": "2026-10-03T03:42:37.086Z",
      "late": false,
      "today": false
     }
@@ -1680,6 +1729,7 @@
   },
   "POST /api/books/recurring": {
    "status": 200,
+   "note": "event is the event the template was saved with: its keys depend on its kind.",
    "example": {
     "entity": "11111111-1111-4111-8111-111111111111",
     "recurring_id": "66666666-6666-4666-8666-000000000001",
@@ -1700,10 +1750,14 @@
     "created_by": "11111111-1111-4111-8111-111111111111",
     "due": true
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "event"
+   ]
   },
   "POST /api/books/recurring/:id/post": {
    "status": 200,
+   "note": "event is the event the template was saved with: its keys depend on its kind.",
    "example": {
     "posted": {
      "kind": "expense",
@@ -1739,10 +1793,14 @@
     },
     "date": "2027-04-01"
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "template.event"
+   ]
   },
   "POST /api/books/recurring/:id/skip": {
    "status": 200,
+   "note": "event is the event the template was saved with: its keys depend on its kind.",
    "example": {
     "skipped": "2027-04-01",
     "template": {
@@ -1766,7 +1824,10 @@
      "due": true
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "template.event"
+   ]
   },
   "POST /api/books/year/:fy/close": {
    "status": 422,
@@ -1815,13 +1876,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:28:09.710Z",
+     "due_at": "2026-10-02T03:42:37.085Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-03T03:28:09.711Z",
+     "created_at": "2026-10-03T03:42:37.086Z",
      "late": true,
      "today": false
     }
@@ -1846,9 +1907,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-03T03:28:09.709Z",
+     "at": "2026-10-03T03:42:37.084Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-03T03:28:09.710Z"
+     "created_at": "2026-10-03T03:42:37.084Z"
     }
    },
    "optional": []

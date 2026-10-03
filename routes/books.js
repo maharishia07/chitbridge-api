@@ -221,7 +221,7 @@ async function partyNames(h, e) {
 }
 
 /** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration,
- *  lines: [{ code, name, party_name, dr_minor, cr_minor }] }] } — `source` is sourceOf(), read in the same query as the lines */
+ *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 router.get('/daybook', auth, on, async (req, res) => {
   try {
     const e = ctx(req), from = dateQ(req.query.from, today()), to = dateQ(req.query.to, from);
@@ -236,7 +236,8 @@ router.get('/daybook', auth, on, async (req, res) => {
                         source: sourceOf(l), lines: [] }; at.set(l.entry_id, x); entries.push(x); }
         if (x.source && !x.source.counter && l.counter_id) x.source.counter = l.counter_id;
         const p = l.party_id ? names.get(String(l.party_id)) : null;
-        x.lines.push({ code: l.code, name: l.account_name, party_id: l.party_id, party_name: p ? (p.nickname || p.name) : null, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), counter: l.counter_id });
+        x.lines.push({ code: l.code, name: l.account_name, party_id: l.party_id, party_name: p ? (p.nickname || p.name) : null, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), counter: l.counter_id,
+          rate: l.tax_rate == null || l.tax_rate === '' ? null : Number(l.tax_rate) });   /* the tax rate the line was posted at - the Day book writes "@ 12%" beside it */
       }
       return entries;
     });
