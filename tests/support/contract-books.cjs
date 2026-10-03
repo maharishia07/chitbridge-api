@@ -83,6 +83,15 @@ async function captureBooks() {
     await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-06', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:b',
       by_rate: [{ rate: 18, taxable: 500, cgst: 45, sgst: 45, igst: 0 }], paid: {}, round_off: 0 });
 
+    /* ── the To-do on a day when every kind of thing is waiting (the books-todo test's own day): a supplier bill to accept, months open, no closing stock,
+          GST to pay, a repeating entry due, an accrual to turn back ── */
+    DAY = '2026-11-05';
+    await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:bill1', event: { job: 'chit', chit_id: 'bill1', waiting: 'acceptance' }, why: 'Waiting for you to confirm the goods (bill 7 from Kumar Traders)' });
+    await q('POST', '/accruals', { ref: 'ELEC-8', kind: 'outstanding', class: 'electricity', amount_minor: 120000, date: '2026-09-30', client_ref: 'acc-early' }, '/accruals');
+    await q('POST', '/recurring', { name: 'Early rent', event: { kind: 'expense', class: 'rent', amount_minor: 500000, paid_from: 'bank' }, frequency: 'monthly', next_on: '2026-11-01' }, '/recurring');
+    await q('GET', '/todo', null, '/todo');
+    DAY = '2027-04-10';
+
     /* ── the entry builder: the grid, a preview, a save, a reversal ── */
     await q('GET', '/health', null, '/health');
     await q('GET', '/accounts', null, '/accounts');
