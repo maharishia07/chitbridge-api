@@ -124,6 +124,17 @@ async function captureBooks() {
     if (asset) await q('POST', '/assets/' + asset.asset_id + '/dispose', { date: '2027-04-05', proceeds_minor: 2000000, into: 'bank', client_ref: 'sell-1' }, '/assets/:id/dispose');
     await q('POST', '/gst/close', { fy: '2026-27', period: 6, client_ref: 'gc-6' }, '/gst/close');
     await q('POST', '/gst/pay', { fy: '2026-27', period: 6, amounts: { cgst_minor: 4500, sgst_minor: 4500 }, bank: 'bank', challan_no: 'CPIN24100001', date: '2026-10-02' }, '/gst/pay');
+    /* the same taps again: each answers the first entry with duplicate: true */
+    await q('POST', '/gst/close', { fy: '2026-27', period: 6, client_ref: 'gc-6' }, '/gst/close');
+    await q('POST', '/depreciation/run', { fy: '2026-27', client_ref: 'dep-27' }, '/depreciation/run');
+    await q('POST', '/closing-stock', { date: '2026-09-30', value_minor: 5000000, method: 'manual', client_ref: 'cs-sep' }, '/closing-stock');
+    await q('POST', '/assets', { name: 'Laptop', class: 'computers', cost_minor: 4200000, date: '2026-04-18', how: 'bank', client_ref: 'lap-1' }, '/assets');
+    /* a month with a purchase under REVERSE CHARGE: the close answers rcm_minor and cash_minor too, and the challan takes the RCM amounts */
+    const rcmPost = await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-10-10', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-0000000000aa', source_ref: 'chit:rcm1',
+      by_rate: [{ rate: 0, taxable: 10000, cgst: 0, sgst: 0, igst: 0 }], rcm: [{ rate: 5, itc: false, taxable: 10000, cgst: 250, sgst: 250, igst: 0 }], paid: {} });
+    if (!rcmPost.ok) throw new Error('the reverse-charge purchase did not post: ' + JSON.stringify(rcmPost));
+    await q('POST', '/gst/close', { fy: '2026-27', period: 7, client_ref: 'gc-7' }, '/gst/close');
+    await q('POST', '/gst/pay', { fy: '2026-27', period: 7, amounts: {}, rcm: { cgst_minor: 25000, sgst_minor: 25000 }, bank: 'bank', challan_no: 'CPIN-RCM', date: '2026-11-02' }, '/gst/pay');
     await q('POST', '/accruals', { ref: 'ELEC-9', kind: 'outstanding', class: 'electricity', amount_minor: 120000, date: '2026-09-30' }, '/accruals');
     await q('POST', '/accruals/ELEC-9/reverse', {}, '/accruals/:ref/reverse');
 

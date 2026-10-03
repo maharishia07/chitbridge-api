@@ -944,13 +944,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-02T03:14:37.846Z",
+      "due_at": "2026-10-02T03:28:09.710Z",
       "due_day": "2026-10-02",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-03T03:14:37.847Z",
+      "created_at": "2026-10-03T03:28:09.711Z",
       "late": true,
       "today": false
      }
@@ -1196,7 +1196,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-01T03:14:37.775Z",
+      "due_at": "2026-10-01T03:28:09.656Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1294,13 +1294,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:14:37.846Z",
+     "due_at": "2026-10-02T03:28:09.710Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-03T03:14:37.853Z",
-     "created_at": "2026-10-03T03:14:37.847Z",
+     "done_at": "2026-10-03T03:28:09.715Z",
+     "created_at": "2026-10-03T03:28:09.711Z",
      "late": false,
      "today": false
     }
@@ -1329,7 +1329,7 @@
    "status": 200,
    "example": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000122",
+    "entry_id": "00000000-0000-4000-8000-000000000124",
     "entry_no": "JV/2026-27/000004",
     "posting_date": "2026-10-01",
     "doc_date": "2026-10-01",
@@ -1369,9 +1369,17 @@
      "proceeds_minor": null,
      "created_by": "11111111-1111-4111-8111-111111111111",
      "wdv_minor": 4200000
-    }
+    },
+    "duplicate": true
    },
-   "optional": []
+   "optional": [
+    "doc_date",
+    "duplicate",
+    "items",
+    "lines",
+    "moved",
+    "note"
+   ]
   },
   "POST /api/books/assets/:id/dispose": {
    "status": 200,
@@ -1418,9 +1426,17 @@
     "moved": false,
     "lines": 2,
     "items": 0,
-    "note": null
+    "note": null,
+    "duplicate": true
    },
-   "optional": []
+   "optional": [
+    "doc_date",
+    "duplicate",
+    "items",
+    "lines",
+    "moved",
+    "note"
+   ]
   },
   "POST /api/books/closing-stock #409": {
    "status": 409,
@@ -1463,13 +1479,15 @@
     "moved": false,
     "lines": 2,
     "items": 0,
-    "note": null
+    "note": null,
+    "duplicate": true
    },
    "optional": [
     "basis_rule",
     "by_asset",
     "by_class",
     "doc_date",
+    "duplicate",
     "entry_id",
     "entry_no",
     "items",
@@ -1555,9 +1573,34 @@
     "moved": false,
     "lines": 4,
     "items": 0,
-    "note": null
+    "note": null,
+    "duplicate": true,
+    "rcm_minor": {
+     "cgst": 25000,
+     "sgst": 25000,
+     "igst": 0
+    },
+    "cash_minor": {
+     "cgst": 25000,
+     "sgst": 25000,
+     "igst": 0
+    },
+    "nothing_to_set_off": true
    },
-   "optional": []
+   "optional": [
+    "cash_minor",
+    "doc_date",
+    "duplicate",
+    "entry_id",
+    "entry_no",
+    "items",
+    "lines",
+    "moved",
+    "note",
+    "nothing_to_set_off",
+    "posting_date",
+    "rcm_minor"
+   ]
   },
   "POST /api/books/gst/pay": {
    "status": 200,
@@ -1575,9 +1618,17 @@
     "moved": false,
     "lines": 3,
     "items": 0,
-    "note": null
+    "note": null,
+    "rcm_paid_minor": {
+     "cgst": 25000,
+     "sgst": 25000
+    }
    },
-   "optional": []
+   "optional": [
+    "paid_minor.cgst",
+    "paid_minor.sgst",
+    "rcm_paid_minor"
+   ]
   },
   "POST /api/books/periods/:fy/:p/lock": {
    "status": 200,
@@ -1657,7 +1708,7 @@
     "posted": {
      "kind": "expense",
      "ok": true,
-     "entry_id": "00000000-0000-4000-8000-000000000123",
+     "entry_id": "00000000-0000-4000-8000-000000000125",
      "entry_no": "MJ/2027-28/000002",
      "posting_date": "2027-04-01",
      "doc_date": "2027-04-01",
@@ -1742,8 +1793,8 @@
     "locked": 13,
     "opening": {
      "rows": 10,
-     "retained_minor": 3250000,
-     "profit_minor": 3250000,
+     "retained_minor": 2200000,
+     "profit_minor": 2200000,
      "balanced": true
     },
     "duplicate": true
@@ -1764,13 +1815,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:14:37.846Z",
+     "due_at": "2026-10-02T03:28:09.710Z",
      "due_day": "2026-10-02",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-03T03:14:37.847Z",
+     "created_at": "2026-10-03T03:28:09.711Z",
      "late": true,
      "today": false
     }
@@ -1795,9 +1846,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-03T03:14:37.846Z",
+     "at": "2026-10-03T03:28:09.709Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-03T03:14:37.846Z"
+     "created_at": "2026-10-03T03:28:09.710Z"
     }
    },
    "optional": []
