@@ -1272,8 +1272,10 @@ const server = http.createServer(async (req, res) => {
       const who = String(b.email || b.user_id || '').trim();
       if (!who) return json(res, 400, { ok: false, message: 'Type the email address or User ID you use for ChitBridge.' });
       try {
+        /* ⚠️ mode 'login' (2026-10-06, SW-0): without it the server REGISTERS an unknown e-mail as a new business — a typo
+           at the shop PC created a shop. A sign-in never registers; an unknown address is refused in words. */
         const out = await noKey('POST', '/api/entities/register',
-          who.indexOf('@') > 0 ? { email: who } : { user_id: who });
+          who.indexOf('@') > 0 ? { email: who, mode: 'login' } : { user_id: who, mode: 'login' });
         /**
          * ⚠️ THE SERVER DECIDES WHETHER A CODE WAS SENT, not this program. `dev_otp` comes back only from a
          * test server — lib/dev-otp.js refuses to leak it anywhere else — and passing it through is what lets

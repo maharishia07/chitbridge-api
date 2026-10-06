@@ -3365,9 +3365,16 @@
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
   <div class="slipbox" id="slipbox"></div>
+  <!-- ⭐⭐ SHARE AND FINDABLE (T67). navigator.share where the browser has it; wa.me / sms: / Copy where it does not — never a
+       receipt with no way off the screen it was shown on. Hidden outside showSlip() (the paid bill), so a KOT or a day-close
+       sheet, which share this one dialog, keep the words that belong to them. -->
+  <div class="dlgbtns" id="slipshare_alt" hidden></div>
   <div class="dlgbtns">
     <button onclick="document.getElementById('slipdlg').close()">Close</button>
-    <button class="pri" onclick="printSlip()">Print</button>
+    <button id="slipshare" data-testid="till-slip-share" onclick="shareSlip()" hidden>Share</button>
+    <!-- ⭐ Print is always offered (printerReady(), T67 — Athi: share AND print). Formerly hidden on a phone: a Print button a browser can only
+         fail to honour is worse than none (T67: "no print or share option" was the honest state, dressed up). -->
+    <button id="slipprint" class="pri" onclick="printSlip()">Print</button>
   </div>
 </div></dialog>
 
@@ -3448,7 +3455,7 @@
     </select>
   </div>
   <div id="billsbody" style="max-height:56vh;overflow:auto"></div>
-  <div class="dlgbtns"><button data-testid="till-dayclose" onclick="dayClose()">Day close sheet</button><button onclick="document.getElementById('billsdlg').close()">Close</button></div>
+  <div class="dlgbtns"><button data-testid="till-dayclose" onclick="dayClose()">Close the day</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close">✕</button></div>
 </div></dialog>
 
 <dialog id="setdlg" class="setdlg"><div class="dlg">
@@ -6262,6 +6269,8 @@ function refreshFailed(status){
    * maintenance" names nothing the shopkeeper has to interpret, and the button (keyWord(), now "Sign in
    * again") does the same pairAgain() re-sign-in either way — [[feedback-assume-they-cannot-read]].
    */
+  /* ⚠️ a 401/403 here IS the shop refusing this key — remembered, so the next sign-in by EITHER door re-enrols (usignShopMove) */
+  if (status === 401 || status === 403) KEY_OK = false;
   if (status === 401 || status === 403 || !sh)
     return flash('🔧', 'Due to maintenance', keyWord(), function(){ pairAgain(); });
   if (!status)
@@ -17080,9 +17089,21 @@ function paintCart(){
     ? '<div class="carthead" data-testid="till-cart-count">' + countWords() + billViewToggle() + '</div>'
       + (pics ? cartPicGrid()
               : cartHeadHTML() + CART.map(function(c,k){ return cartRowHTML(c,k); }).join(''))
-    : '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>');
+    : lastBillHTML());
   /* the keys show how many of each are on the bill — they follow it */
   try { paintQuick(); } catch (_) {}
+}
+/**
+ * ⭐⭐ NEVER A GREY PAY WITH NO REASON (T67). An empty bill used to say only "Nothing on this bill yet" even the
+ * moment after a sale — which reads as a counter that forgot what just happened. Once a bill has been rung this
+ * session, the empty bill names it and reopens it — the SAME view Today's bills › view opens (reprint), not a
+ * second one.
+ */
+function lastBillHTML(){
+  if (!LASTNO) return '<div style="padding:20px;color:var(--dim)">Nothing on this bill yet.</div>';
+  return '<div style="padding:20px;color:var(--dim)">Paid — start the next bill.<br>'
+    + '<button class="pill" data-testid="till-lastbill" onclick="reprint(\'' + esc(LASTNO) + '\')">'
+    + 'Last bill ' + esc(LASTNO) + (LAST ? ' · ' + money(LAST.total) : '') + '  ›</button></div>';
 }
 /** ⚠️ the heading carries a COUNT, so it changes on a quantity edit too — and paintCartRow is the in-place path */
 function paintCartHead(){
@@ -19939,6 +19960,7 @@ function kotPrint(lines){
   if (box) { box.className = 'slipbox'; box.innerHTML = html; }
   var t = document.getElementById('sliptitle');
   if (t) t.textContent = 'KOT ' + n + ' · ' + orderWords();
+  slipDocButtons(true, false);
   var d = document.getElementById('slipdlg'); if (d && d.showModal && !d.open) d.showModal();
   autoPrint(html);
   return n;
@@ -20424,6 +20446,7 @@ async function dayClose(){
      printSlip() copies this element's innerHTML into the print window, which would then print grey on charcoal. */
   document.getElementById('slipbox').classList.remove('screen');
   document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
+  slipDocButtons(true, false);
   document.getElementById('slipdlg').showModal();
 }
 /* ═══ 3b · RECEIVE and DESPATCH ══════════════════════════════════════════════════════════════════════════════
@@ -21229,6 +21252,7 @@ function showDoc(title, html){
   document.getElementById('sliptitle').textContent = title;
   document.getElementById('slipbox').classList.add('screen');
   document.getElementById('slipbox').innerHTML = html;
+  slipDocButtons(true, false);
   document.getElementById('slipdlg').showModal();
 }
 
@@ -21414,7 +21438,59 @@ function showSlip(bill, m){
   document.getElementById('sliptitle').textContent = 'Bill ' + bill.no + ' · ' + money(bill.total);
   document.getElementById('slipbox').classList.remove('screen');
   document.getElementById('slipbox').innerHTML = slipHTML(bill, m);
+  slipDocButtons(printerReady(), true);
   document.getElementById('slipdlg').showModal();
+}
+/**
+ * ⭐ PRINT IS ALWAYS OFFERED — SHARE BESIDE IT (T67, Athi 2026-10-04: "why can't we print from a phone — Bluetooth or
+ * a cable? share and print can be options"). A phone prints through its own print service (window.print → Android
+ * print, which many Bluetooth/USB thermal printers reach through a print plugin or helper app); a direct Bluetooth/USB
+ * "Connect printer" comes later (T67/T70). So the manual button is never hidden — only autoPrint() (silent printing)
+ * still needs the PC program.
+ */
+function printerReady(){ return true; }
+/** ⭐ ONE PLACE that shows or hides Print and Share on the one slip dialog every kind of slip shares (T67). */
+function slipDocButtons(printOn, shareOn){
+  var pr = document.getElementById('slipprint'); if (pr) pr.style.display = printOn ? '' : 'none';
+  var sh = document.getElementById('slipshare'); if (sh) sh.hidden = !shareOn;
+  var alt = document.getElementById('slipshare_alt'); if (alt) { alt.hidden = true; alt.innerHTML = ''; }
+}
+var SHARE_TEXT = '', SHARE_LINK = '';
+/** ⭐ the bill, in words a message can carry — the figures slipHTML already computed, not a second reading of them */
+function shareText(bill){
+  var shop = (S && S.shop) || {};
+  return (shop.name || 'Bill') + ' · ' + bill.no + ' · ' + money(bill.total)
+    + (bill.at ? ' · ' + new Date(bill.at).toLocaleString() : '');
+}
+/**
+ * ⭐⭐ SHARE, THEN FINDABLE (T67). navigator.share first — it is the one sheet that already knows every app on the
+ * phone that can take it. Where the browser has none, wa.me / sms: / Copy, so the bill is never stuck on the
+ * screen it was shown on. ⚠️ its own storefront link (shopPrevUrl) — the one web address this bill already has —
+ * not a new "view this bill online" page invented for the occasion.
+ */
+async function shareSlip(){
+  var bill = LAST; if (!bill) return;
+  SHARE_TEXT = shareText(bill); SHARE_LINK = shopPrevUrl() || cbHome();
+  var alt = document.getElementById('slipshare_alt'); if (alt) { alt.hidden = true; alt.innerHTML = ''; }
+  if (navigator.share) {
+    try { await navigator.share({ text: SHARE_TEXT, url: SHARE_LINK }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  shareFallback();
+}
+function shareFallback(){
+  var alt = document.getElementById('slipshare_alt'); if (!alt) return;
+  var full = SHARE_TEXT + '\n' + SHARE_LINK;
+  alt.innerHTML = '<a class="pill" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(full) + '">WhatsApp</a>'
+    + '<a class="pill" href="sms:?body=' + encodeURIComponent(full) + '">SMS</a>'
+    + '<button class="pill" onclick="shareCopy()">Copy</button>';
+  alt.hidden = false;
+}
+function shareCopy(){
+  var full = SHARE_TEXT + '\n' + SHARE_LINK;
+  (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(full) : Promise.reject())
+    .then(function(){ toastLine('Copied — paste it anywhere.'); })
+    .catch(function(){ toastLine('Could not copy — select and copy by hand.'); });
 }
 /**
  * ⭐ IT PRINTS ITSELF, OR IT SAYS NOTHING (2026-09-08). On the shop PC with a printer chosen, the paper is already coming out before
@@ -22575,6 +22651,16 @@ function billHow(b){
   });
   return order.map(function(how){ return { how: how, amount: m[how] }; });
 }
+/** ⭐ plain words, never "(s)" (T69): one bill, two bills, or a count — said the way a shopkeeper would say it */
+function reachedAllWords(n){
+  return n === 1 ? 'The bill reached the shop' : n === 2 ? 'Both bills reached the shop' : 'All ' + n + ' bills reached the shop';
+}
+/** ⭐ "8 pm – 9 pm", in the shop's own locale time format (T69) — not the 24-hour "20:00" nobody says out loud */
+function hourRangeWords(hh){
+  var mk = function(x){ return new Date(1970, 0, 1, ((x % 24) + 24) % 24).toLocaleTimeString([], { hour: 'numeric' }).toLowerCase(); };
+  return mk(Number(hh)) + ' – ' + mk(Number(hh) + 1);
+}
+function billsClose(){ var d = document.getElementById('billsdlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
 async function openBills(keepOpen){
   if (!keepOpen) BILLS_TAB = 'today';
   if (BILLS_TAB === 'earlier') return paintEarlier();
@@ -22651,7 +22737,7 @@ async function openBills(keepOpen){
          * `unknown` state: the counter holds no receipt for anything, because these bills were written before
          * it kept them. Not knowing is fine; sounding certain about it is not.
          */
-        : (rows.length ? (everAcked ? 'All ' + rows.length + ' bill(s) have reached the shop'
+        : (rows.length ? (everAcked ? reachedAllWords(rows.length)
                                     : rows.length + ' bill(s) were sent — this counter cannot confirm the shop has them')
                        : 'Nothing to send')) + '</b>'
       + ((nWait || nLost) ? '<button class="pill" data-testid="till-send-now" onclick="sendNow()">Send now</button>' : '')
@@ -22688,10 +22774,10 @@ async function openBills(keepOpen){
           return '<details data-testid="till-hour-' + esc(g.h) + '"' + (gi === 0 ? ' open' : '') + '>'
             + '<summary style="cursor:pointer;padding:8px 0;border-top:1px solid var(--line);'
               + 'display:flex;gap:10px;align-items:baseline;font-weight:600">'
-            + '<span style="flex:1">' + esc(g.h) + ':00 · <span class="u" style="font-weight:400">'
+            + '<span style="flex:1">' + esc(hourRangeWords(g.h)) + ' · <span class="u" style="font-weight:400">'
               + n + (n === 1 ? ' bill' : ' bills')
               + (odd ? ' · <b style="color:var(--warn)">' + odd + ' need looking at</b>' : '') + '</span></span>'
-            + '<span style="font-variant-numeric:tabular-nums">' + money(sum) + '</span></summary>'
+            + '<span style="font-variant-numeric:tabular-nums">· ' + money(sum) + '</span></summary>'
             /**
              * ⚠️⚠️ TEN ROWS TALL, THEN IT SCROLLS INSIDE ITSELF. Athi: *"within a frame say 10 chits give
              * scrollable option."* Without this an open hour with forty bills pushes every other hour off the
@@ -23381,6 +23467,7 @@ async function retIssue(){
   var boxEl = document.getElementById('slipbox');
   if (boxEl) { boxEl.className = 'slipbox'; boxEl.innerHTML = html; }
   var t = document.getElementById('sliptitle'); if (t) t.textContent = 'Credit note ' + (cn.no || '');
+  slipDocButtons(true, false);
   var sd = document.getElementById('slipdlg'); if (sd && sd.showModal && !sd.open) sd.showModal();
   autoPrint(html);
   toastLine('Credit note ' + (cn.no || '') + ' — ' + money(m.total) + ' back in ' + how);
@@ -24045,7 +24132,13 @@ async function usignVerify(){
  *           the old behaviour, never a new leak, because the server still scopes every call to the key held.
  */
 function usignShopMove(answer){
-  if (!paired() || (USIGN && USIGN.forceEnrol)) return 'pair';
+  /**
+   * ⚠️⚠️ [2026-10-04, a phone] A KEY THE SHOP HAS REFUSED IS NO KEY. Athi signed in through "nobody signed in" (the
+   * person door, no forceEnrol) on a phone holding a refused key: paired() said yes, so this answered 'same', the
+   * session was never spent on /api/till/enrol, and every refresh flashed "Due to maintenance" again — a loop no
+   * sign-in could break. KEY_OK is false once the shop answered 401/403 (refreshFailed, keyCheck): enrol afresh.
+   */
+  if (!paired() || (USIGN && USIGN.forceEnrol) || (typeof KEY_OK !== 'undefined' && KEY_OK === false)) return 'pair';
   var mine = S && S.entity_id;
   var theirs = ((answer && answer.identity) || {}).entity_id || null;
   if (mine && theirs && String(mine) !== String(theirs)) return 'other';
@@ -25425,6 +25518,54 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'Escape' && !document.querySelector('dialog[open]'))
     (MODE === 'receive' ? rcvClear() : (MODE === 'despatch' ? dspClear() : clearBill()));
 });
+/**
+ * ── ⭐⭐⭐ BACK MUST NEVER LEAVE THE TILL (T66, Athi's phone test 2026-10-04) ───────────────────────────────────
+ *
+ * Athi, on a phone: picked a product, pressed the phone's own Back — and the browser left till.html outright,
+ * because nothing had ever told it there was anything to come back TO. The fix asks the same question the
+ * Escape handler two blocks up already asks — "what, of ours, is open right now?" — on every `popstate` too,
+ * rather than keeping a second ledger of what was pushed and when that could drift from what the screen shows.
+ * ⚠️ ONE CUSHION ENTRY, KEPT TOPPED UP. `navGuard()` pushes a same-document history entry so the very first
+ * Back has somewhere of ours to land on instead of the page the till was opened from. `navCloseTop()` runs on
+ * every landing: it closes the one thing that is open (a dialog first, then the mode, then the phone step —
+ * the same priority Escape already uses) and says so by returning true, in which case the cushion is put back
+ * so the NEXT Back is caught the same way. Closing via Cancel/Add/✕ on the sheet itself needs none of this —
+ * the cushion just sits there unspent until a Back actually asks for it.
+ * ⚠️ ONLY WHEN NOTHING OF OURS IS OPEN does this ask about LEAVING: a bill with lines on it must not vanish
+ * because a thumb clipped the phone's Back gesture, so `sure()` — the one confirm this counter already has —
+ * asks first, and the cushion is restored before the question is even on screen, so the till is never actually
+ * gone while the person decides. An empty bill has nothing to lose, so it is let go exactly as a browser would.
+ */
+var NAV_DIALOGS = ['moddlg', 'billsdlg', 'slipdlg'];
+function navTopDialog(){
+  for (var i = 0; i < NAV_DIALOGS.length; i++) {
+    var d = document.getElementById(NAV_DIALOGS[i]);
+    if (d && d.open) return d;
+  }
+  return null;
+}
+function navCloseTop(){
+  var d = navTopDialog();
+  if (d) {
+    if (d.id === 'moddlg') modClose();
+    else if (d.id === 'billsdlg') billsClose();
+    else { try { d.close(); } catch (_) {} }
+    return true;
+  }
+  if (typeof MODE !== 'undefined' && MODE !== 'sell') { setMode('sell'); return true; }
+  if (document.body.classList.contains('steps') && document.body.dataset.step !== 'pick') { stepGo('pick'); return true; }
+  return false;
+}
+function navGuard(){ try { history.pushState({ cbNav: 1 }, '', location.href); } catch (_) {} }
+window.addEventListener('popstate', function(){
+  if (navCloseTop()) { navGuard(); return; }
+  if (!CART.length) return;   /* nothing on the bill — let Back leave, exactly as it would anywhere else */
+  navGuard();                 /* neutralise this one pop while the question is on screen */
+  sure('The bill in hand stays on this device.', 'Leave the counter', 'Leave the counter?').then(function(leave){
+    if (leave) { try { history.go(-2); } catch (_) {} }   /* past the cushion just put back, and the one it replaced */
+  });
+});
+try { navGuard(); } catch (_) {}
 /**
  * ⚠ A NET, NOT THE MECHANISM. The draft is already written after every change; this only catches a change
  * that arrived in the same instant the page went away. It does nothing for the power cut — which is exactly

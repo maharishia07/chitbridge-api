@@ -194,7 +194,13 @@ app.use((req, res, next) => {
 
 // Request logger (leveled — quiet with LOG_LEVEL=warn, verbose with LOG_LEVEL=debug)
 app.use((req, res, next) => {
-  log.info('request', { id: req.id, method: req.method, path: req.path, origin: req.headers.origin || null });
+  /* ⭐ 2026-10-06 (MASTER-BUILD M03): the line is written when the answer LEAVES, so it carries the status, the time
+     taken and any refusal code (res.locals.code) — a 401/403/409 is now visible in the log, not guessed at. */
+  const t0 = Date.now();
+  res.on('finish', () => {
+    log.info('request', { id: req.id, method: req.method, path: req.path, status: res.statusCode,
+                          ms: Date.now() - t0, code: (res.locals && res.locals.code) || null, origin: req.headers.origin || null });
+  });
   next();
 });
 
