@@ -96,8 +96,12 @@ t('boot: sealed without proven OTP delivery → fatal (else codes silently fall 
   assert.ok(d.errors.some((e) => /OTP_EMAIL_ENABLED/.test(e)), JSON.stringify(d.errors));
 });
 t('boot: a correctly sealed environment starts cleanly', () => {
-  const d = load({ NODE_ENV: 'production', DEV_OTP: '', OTP_EMAIL_ENABLED: 'true' });
+  const d = load({ NODE_ENV: 'production', DEV_OTP: '', OTP_EMAIL_ENABLED: 'true', RESEND_API_KEY: 're_x', FROM_EMAIL: 'a@b.co' });
   assert.deepStrictEqual(d.errors, []);
+});
+t('boot: M02 — sealed without RESEND_API_KEY / FROM_EMAIL refuses to start', () => {
+  const d = load({ NODE_ENV: 'production', DEV_OTP: '', OTP_EMAIL_ENABLED: 'true', RESEND_API_KEY: '', FROM_EMAIL: '' });
+  assert.ok(d.errors.some((e) => /RESEND_API_KEY/.test(e)), JSON.stringify(d.errors));
 });
 t('boot: dev is never blocked — we are still developing', () => {
   assert.deepStrictEqual(load({ NODE_ENV: 'development', DEV_OTP: '123456' }).errors, []);

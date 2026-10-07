@@ -195,11 +195,7 @@ function stripCosts(items) {
  * reaches this function at all.
  */
 async function safeCanSeeCosts(req, entity_id) {
-  try { return await cost.canRead(req, entity_id); }
-  catch (e) {
-    console.error('[OFFR-04] cost-visibility check failed:', e.message);
-    return !req.identity || req.identity.identity_type !== 'actor';
-  }
+  return cost.canReadSafe(req, entity_id);   /* the one safe wrapper lives in lib/cost.js */
 }
 
 async function defaultSchemaId(entity_id) {
@@ -667,7 +663,7 @@ router.get('/', auth, async (req, res) => {
  * Extracted from export.csv when the workbook became a second caller. Every step is load-bearing and the notes
  * say why; two copies would be two answers to "what is in my catalogue".
  */
-async function catalogueRows(entity_id) {
+async function catalogueRows(entity_id, canCost) {
   const r = await withEntity(entity_id, (db) => db.query(
     `SELECT item_data FROM catalogue_items
      WHERE entity_id=$1 AND is_active=true ORDER BY created_at DESC`, [entity_id]));
@@ -692,6 +688,12 @@ async function catalogueRows(entity_id) {
    * lib/sheet.js — available (yes/no) · qty · qty_as_of · qty_source, four plain cells, never one nested one.
    */
   const items = resolved.map(sheet.toSheet);
+  /* [OFFR-04] cost never leaves for a caller who may not read it: dropped from the rows AND the schema columns,
+     so the header does not even name it. Fails closed: only an explicit true keeps it. */
+  if (canCost !== true) {
+    items.forEach((it) => { if (it) Object.keys(it).forEach((k) => { if (/^cost(_|$)/.test(k)) delete it[k]; }); });
+    if (schema && schema.properties) delete schema.properties.cost;
+  }
   return { items, schema, columns: csv.columnsFor(items, schema) };
 }
 
@@ -722,7 +724,8 @@ router.get('/workbook.xlsx', auth, async (req, res) => {
     const cats = require('../lib/categories');
     const units = require('../lib/units');
 
-    const { items, columns } = await catalogueRows(entity_id);
+    const canCost = await safeCanSeeCosts(req, entity_id);
+    const { items, columns } = await catalogueRows(entity_id, canCost);
 
     /* ⚠️ THE HEADER ROW IS THE COLUMN ORDER csv.columnsFor DECIDED — the same one the .csv gets, so a shop
        that downloads both does not meet two different sheets. */
@@ -779,7 +782,7 @@ router.get('/export.csv', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
     /* ⭐ the projection lives in catalogueRows() — shared with the workbook, and every reason recorded there */
-    const { items, schema } = await catalogueRows(entity_id);
+    const { items, schema } = await catalogueRows(entity_id, await safeCanSeeCosts(req, entity_id));
     const body = csv.toCSV(items, { schema });
     const stamp = new Date().toISOString().slice(0, 10);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
@@ -1545,6 +1548,12 @@ router.get('/:id/versions', auth, async (req, res) => {
        would hold the connection open across serialisation, and an error thrown after the response had started
        would leave a half-written body with an open BEGIN behind it. Return a value; answer with it here. */
     if (out.notFound) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
+    /* [OFFR-04] the snapshot is the WHOLE item_data, cost included: same strip as the list */
+    if (!(await safeCanSeeCosts(req, entity_id))) {
+      const snap = (v) => { if (v && v.snapshot && typeof v.snapshot === 'object') stripCosts([{ item_data: v.snapshot }]); return v; };
+      if (out.asOf) snap(out.asOf);
+      if (out.rows) out.rows.forEach(snap);
+    }
     if (when) return res.json({ item_id: req.params.id, at: when.toISOString(), version: out.asOf });
     res.json({ item_id: req.params.id, count: out.rows.length,
       current: out.rows.find((x) => x.valid_to === null) || null, versions: out.rows });
