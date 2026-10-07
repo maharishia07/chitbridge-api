@@ -89,7 +89,8 @@ jobs:
             echo "::warning::guards not posted to the test board — the run wrote no test-results/guards.xml"; exit 0
           fi
           node ../chitbridge-web/e2e/post-results.cjs --file "$PWD/test-results/guards.xml" --keys name \
-            --kind unit --layer engine --label "guards ${GITHUB_SHA::7}" --build "${GITHUB_SHA::7}" --warn
+            --kind unit --layer engine --label "guards ${GITHUB_SHA::7}" --build "${GITHUB_SHA::7}" --warn \
+            --project "${{ vars.CB_BOARD_PROJECT }}"
 
   integration:
     name: integration (smoke + isolation) — DB-backed
