@@ -178,6 +178,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'network-view.js',
   'conformance.js', 'instruments.js', 'kyb.js', 'readiness.js', 'reference.js', 'verify.js', 'profile.js',
   'boilerplate.js', 'plans.js', 'forms.js',
+  'entity-header.js', 'licence-rules.js',   // ADOPTION (N19): the shell's header sheet and the country-keyed licence rules it reads - a presentation of what the shop holds, no engine rule
   // Beckn is a WIRE PROTOCOL — adoption by definition. Classified BEFORE it was written, so the guard existed
   // before the thing it guards. The engine may never import it; vocabulary drift is how a distinct thing becomes
   // a client of someone else's model.
@@ -194,6 +195,8 @@ const INFRA_LIBS = [
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js',
+  /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */
+  'home-facts.js', 'till-summary.js',
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
   'crm.js', 'crm-followups.js',
   /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */
@@ -212,7 +215,7 @@ const INFRA_LIBS = [
      a feature flag and ChitBridge is unchanged, which is what makes it plumbing. (2026-09-14) */
   'istest.js',
   'trips.js',          // INFRA: counts the database round trips one request makes, when CB_TRIPS=1 asks it to (2026-09-07)      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
-  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js', 'employee-code.js',
+  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js', 'employee-code.js', 'iddoc-verify.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
   /* INFRA by this file's own test: it holds no rule and decides nothing. It says "the shop moved" down the pipe
      lib/events already owned, so a counter and a television stop waiting out a timer. Swap the transport and
@@ -356,6 +359,7 @@ const INFRA_LIBS = [
   'policy.js',             // reads policy flags; the flags are the governance, this is the reader
   'reqctx.js',             // request-scoped actor context (AsyncLocalStorage)
   'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
+  'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
   'person-session.js',     // M05: a person signed in on a device — policy_flags.devices listing, 60 s jti cache, renew/logout/revoke
   'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
   'select.js',             // shaped SELECT builders

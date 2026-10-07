@@ -1,0 +1,111 @@
+name: Governance
+
+# E04 — THE NIGHTLY GOVERNANCE REPORT (FIT shell-enterprise, 2026-10-07).
+# Gathers: branch protection of main (both repos) · open Dependabot/audit alerts · CI status of main · the posture
+# /health reports ("environment"). scripts/governance-report.cjs turns them into ONE test-board case, `governance.nightly`;
+# red names each failing line. ⭐ It never passes while main is unprotected or /health says development.
+#
+# ⚠️ WHAT THE DEFAULT TOKEN CAN READ. GITHUB_TOKEN is scoped to THIS repo and has no `administration: read`, so it
+# usually cannot read branch protection (and never reads chitbridge-web's). That is recorded as
+# "protection: unknown (needs a token)" — a RED line, never a pass. Add a fine-grained read-only token as the
+# GOVERNANCE_TOKEN secret (Administration: read, Dependabot alerts: read, Actions: read, on both repos) to turn it green.
+on:
+  schedule:
+    - cron: '0 21 * * *'   # 02:30 IST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  governance:
+    name: governance report
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GOVERNANCE_TOKEN || github.token }}
+      API_REPO: maharishia07/chitbridge-api
+      WEB_REPO: maharishia07/chitbridge-web
+      HEALTH_URL: https://chitbridge-api-production.up.railway.app/health
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: chitbridge-api
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-web
+          path: chitbridge-web
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: gather the facts
+        working-directory: chitbridge-api
+        run: |
+          # protection <repo> → "protected|enforce" · "unprotected|unknown" · "unknown|unknown". Only a plain
+          # "Branch not protected" answer is "unprotected"; a refused read (403/404 for lack of rights) is "unknown".
+          protection() {
+            if out=$(gh api "repos/$1/branches/main/protection" 2>&1); then
+              echo "protected|$(echo "$out" | jq -r '.enforce_admins.enabled // "unknown"')"
+            elif echo "$out" | grep -qi "branch not protected"; then
+              echo "unprotected|unknown"
+            else
+              echo "::warning::protection: unknown (needs a token) for $1 — $(echo "$out" | head -c 200)"
+              echo "unknown|unknown"
+            fi
+          }
+          alerts() {
+            if n=$(gh api --paginate "repos/$1/dependabot/alerts?state=open&per_page=100" --jq 'length' 2>/dev/null); then
+              echo "$n" | paste -sd+ - | bc
+            else
+              echo unknown
+            fi
+          }
+          ci() {
+            gh api "repos/$1/actions/workflows/ci.yml/runs?branch=main&status=completed&per_page=1" \
+              --jq '.workflow_runs[0].conclusion // "unknown"' 2>/dev/null || echo unknown
+          }
+          IFS='|' read -r pa ea <<< "$(protection "$API_REPO")"
+          IFS='|' read -r pw ew <<< "$(protection "$WEB_REPO")"
+          aa=$(alerts "$API_REPO"); aw=$(alerts "$WEB_REPO")
+          if [ "$aa" = unknown ] || [ "$aw" = unknown ]; then al=unknown; else al=$((aa + aw)); fi
+          ca=$(ci "$API_REPO"); cw=$(ci "$WEB_REPO")
+          if [ "$ca" = success ] && [ "$cw" = success ]; then cm=success; elif [ "$ca" != success ]; then cm="api $ca"; else cm="web $cw"; fi
+          # the raw string, leading space and all — the report compares it exactly
+          if body=$(curl -fsS --max-time 20 "$HEALTH_URL"); then he=$(echo "$body" | jq -r '.environment // "unreachable"'); else he=unreachable; fi
+          {
+            echo "GOV_PROTECT_API=$pa"; echo "GOV_ENFORCE_API=$ea"
+            echo "GOV_PROTECT_WEB=$pw"; echo "GOV_ENFORCE_WEB=$ew"
+            echo "GOV_ALERTS=$al"; echo "GOV_CI_MAIN=$cm"
+            echo "GOV_HEALTH_ENV=$he"
+          } >> "$GITHUB_ENV"
+
+      - name: write the report
+        id: report
+        working-directory: chitbridge-api
+        continue-on-error: true
+        run: node scripts/governance-report.cjs --out test-results/governance.xml
+
+      # THE BOARD HEARS ABOUT IT — the same ONE poster ci.yml uses (chitbridge-web/e2e/post-results.cjs), same secret.
+      # ⚠️ It never fails the run: no secret, no report or a refused post is a ::warning:: that names why.
+      - name: post to the test board
+        if: ${{ always() }}
+        continue-on-error: true
+        working-directory: chitbridge-api
+        env:
+          CB_BOARD_TOKEN: ${{ secrets.CB_BOARD_TOKEN }}
+        run: |
+          if [ -z "$CB_BOARD_TOKEN" ]; then
+            echo "::warning::governance not posted to the test board — add the CB_BOARD_TOKEN secret (a key with the testing scope)"; exit 0
+          fi
+          if [ ! -f test-results/governance.xml ]; then
+            echo "::warning::governance not posted to the test board — the run wrote no test-results/governance.xml"; exit 0
+          fi
+          node ../chitbridge-web/e2e/post-results.cjs --file "$PWD/test-results/governance.xml" --keys name \
+            --kind unit --layer engine --label "governance ${GITHUB_SHA::7}" --build "${GITHUB_SHA::7}" --warn \
+            --project "${{ vars.CB_BOARD_PROJECT }}"
+
+      # the nightly run itself is red when the report is red
+      - name: governance verdict
+        if: ${{ always() && steps.report.outcome == 'failure' }}
+        run: echo "::error::governance.nightly is red — see the report step"; exit 1

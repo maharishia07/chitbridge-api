@@ -82,7 +82,9 @@ and replaces only this key (`jsonb_set(…, '{devices}', …)`). One engine: `li
 | `.by` · `.first_seen` · `.seen` · `.ua` | identity_id · ISO time · ISO time · string ≤ 160 | who first signed in on it · when · last sign-in or renew · its user agent. |
 | `.revoked_at` · `.revoked_by` | ISO time · identity_id | set by the owner (`POST /api/signin/sessions/revoke { device_id }`). A revoked device refuses every token (401 `DEVICE_REVOKED`) and every new sign-in (403 `DEVICE_REVOKED`). |
 | `.sessions[]` | `{ jti, iat, exp, surface, by, renewed_from? }` | one per live session on the device (≤ 10; expired ones dropped on the next write). Logout/revoke/renew remove the jti. `renewed_from` = the jti this one replaced. |
-| `.till` | `{ prefix, assigned_at }` | reserved for M11 (the device's bill series); read into `req.till.counter`. |
+| `.till` | `{ prefix, assigned_at, at, issued, counter?, engines? }` | M11: the phone's bill series. Written ONLY by `routes/keys.js claimSeries` (claimDevice) at `GET /api/till/snapshot`: `prefix` = the assigned counter label (D9, PHONE match) else the kept prefix else the next free `TILL_IDS`; `assigned_at` = when this prefix was first given; `counter` = the registered counter it holds; `issued` / `engines` as on a key's `till`. Read into `req.till.counter`. A revoked device's prefix stays reserved. |
+| `chit_header.business_json.till.device_id` · `.by` · `.sent_by` | string · identity_id · identity_id | M11, on a bill sent by a PHONE session (`lib/holder.js tillClaimOf`, asked by `POST /api/chits/send` before the dedupe). `device_id` must be the session's device (else 400 `TILL_CLAIM_MISMATCH`); `by` = the person who MADE the bill on that device, kept as written; `sent_by` = the signed-in person who sent it, written (merge-patch) only when it differs from `by` — the request log then says `kind: 'sent_by_other'`. Missing `device_id` / `by` are filled from the session. A key's (shop PC's) bill is not checked or stamped. |
+| `policy_flags.counters[id].assigned` | `{ phone, at, by }` or null | M11 (D9): the counter label is assigned to a PHONE NUMBER (`POST /api/counters/:id/assign`, owner only; `phone` normalised as the PHONE document is). Matched against the signed-in person's VERIFIED PHONE identity document (`identity_documents.value_hash`, `docHash`). `GET /api/counters` shows it masked. While a phone holds the label, `counters[id].held_by` = `'dev:'+device_id`. |
 
 **Token claims a person session adds** (`lib/identity-auth.js issueToken / signToken`, only when the sign-in named a device):
 
@@ -105,3 +107,49 @@ first_seen, seen, revoked_at, till_prefix, sessions }] }` (`sessions` = live cou
 `{ ok, revoked: 'session'|'device', removed? }`. Refusal codes: `DEVICE_MISMATCH` · `SESSION_EXPIRED` · `DEVICE_REVOKED` ·
 `KEY_CANNOT_SIGN_IN` · `NO_DEVICE`. `req.till` gains `session: { jti, device_id, surface }` (null otherwise) and the holder
 `'dev:'+device_id`.
+
+## Home facts · `GET /api/facts/:card` (N18, 2026-10-08)
+
+One read per Home card, behind auth, signed-in people only (a key gets 403). Built in `lib/home-facts.js` from the libs the old per-page reads used. **A figure the server cannot compute is omitted, never 0.** Cost never travels.
+
+| Route | Answer | Omitted, and why |
+|---|---|---|
+| `/api/facts/till` | `{ lines:[{text,value?}], figures:{ day, bills, takings, currency, counters_open } }` — newest day sent up (named "today" only when it is the shop's day), and counters open | "bills not sent up" (the queue is on the counter's PC); `day`/`bills`/`takings` when no day summary exists |
+| `/api/facts/accounts` | `{ lines, figures:{ last_check, waiting } }` — `tone:'dn'` on a difference or waiting posts | everything (`lines:[]`, `unavailable`) when the ledger is off or not provisioned |
+| `/api/facts/product-lab` | `{ lines, figures:{ items, no_cost } }` — a COUNT of items whose cost is unknown | `no_cost` for an actor without `can_see_costs`; no cost value is ever selected |
+| `/api/facts/combo-lab` | `{ lines, figures:{ saved } }` — saved sets in the library | the combos/modifiers split (one table, one shape) |
+| `/api/facts/offer-lab` | `{ lines, figures:{ drafts, live } }` | — |
+| `/api/facts/rail` | `{ suppliers, customers, in, out, stuck }` — in/out = open chits to you / from you, stuck = open past the shop's `overdue_days` | `in`/`out`/`stuck` when the shop holds 5,000+ chit copies (a truncated count is a wrong one) |
+
+`lines[i]` = `{ text, value?, tone? }` (`tone` is `'dn'` or absent); the shell draws the first two. Unknown card: 404. Trips: till 1 · accounts 1 · product-lab 1 (2 for an actor) · combo-lab 1 · offer-lab 1 · rail 2.
+## GET /api/identity/documents · POST /api/identity/documents/:scheme/code · /verify (M18, 2026-10-07)
+
+A phone or e-mail identity document is confirmed by a code sent to it (`lib/iddoc-verify.js`, on `lib/otp.js`). Written by: `POST .../verify` (stamps the existing `identity_documents` row; `PUT` clears it). Read by: the profile screen; N19's trade-ready check ("identity-docs verified PHONE/EMAIL/PAN").
+
+| Key | Shape | Meaning |
+|---|---|---|
+| `documents[].verified` | boolean | `status === 'verified'` AND `verified_at` set. True for a PHONE/EMAIL only after its code was entered; true for PAN etc. only when the verifier stamped it. Changing the value (`PUT`) makes it false again. |
+| `documents[].verified_at` | ISO time or null | When it was confirmed (already returned; null while unverified). `verified_by` says how: `otp:email` · `otp:phone` · `nsdl` · `manual:<actor>`. |
+| `.../code` → `delivery` · `sent_to` · `expires_in` | `'sent'`/`'not_sent'` · masked · `'10 minutes'` | The code is never in the body of a sealed environment (`dev_otp` only where `mayExposeOtp()`). Refusals: `PHONE_DELIVERY_NOT_CONFIGURED` · `EMAIL_DELIVERY_NOT_CONFIGURED` (503) · `IDOC_NOT_CODE_VERIFIED` · `IDOC_NOT_FOUND`. |
+| `.../verify` → `verified` · `verified_at` | true · ISO time | Refusals: `OTP_WRONG` (400) · `OTP_LOCKED` (429, after 5) · `OTP_EXPIRED` · `IDOC_NO_CODE`. |
+
+The pending code is held on the row's existing `verification_ref` (hashed, with expiry and wrong-attempt count); it is never returned.
+
+## GET /api/entities/header (N19, 2026-10-07)
+
+The shell's header sheet in ONE read (`lib/entity-header.js`; one `readBatch` over the shop row, profile, `entity_compliance` and the identity-document verdicts; cold 3 trips with two cached schema probes, warm 1). Written by: nobody (derived). Read by: `public/app/shell.js` (N17). Bands, penalty words and which licences are core come from `lib/licence-rules.js` (data, country-keyed); the page computes none of them. The identity-document verdicts are read through `lib/iddoc-verify.js` only. `kyb.yourself()` is not called (it is many trips); the licence rows are the same `entity_compliance` rows, with `kyb.daysUntil`.
+
+| Key | Shape | Meaning |
+|---|---|---|
+| `business` | `{ name, legal_name, address, phone }` | `name` = `identities.display_name`; `legal_name` / `address` / `phone` = the profile vault's Business-identity tags, else the `identities` column. Any may be null. |
+| `licences[]` | one row per gathered `entity_compliance` row, plus one per CORE scheme not yet held | Core rows not held have `days_left: null`, `valid_until: null`, `band: null` ("not added"). |
+| `licences[].scheme` · `label` | string | The rule's scheme and label; for a row with no rule, its `standard_key` and humanised `doc_key`. |
+| `licences[].number_masked` | string or null | `verification.number_masked` when the verifier stored one; else null. |
+| `licences[].valid_until` · `days_left` | `YYYY-MM-DD` · integer, negative = expired, or null | `kyb.daysUntil` of `valid_until`. |
+| `licences[].band` | `ok` · `due` · `soon` · `gone` or null | From the scheme rule's bands (default >120 ok, 91-120 due, 0-90 soon, expired gone). **null when no rule matches: days only.** |
+| `licences[].core` | boolean | The scheme is in `core_by_vertical` for the shop's vertical (`lotfields.packFor` over `identities.vertical` and the profile sectors). |
+| `licences[].renew_url` | string or null | From the rule; null without one. |
+| `licences[].note` | string or null | The rule's late-fee sentence, only for the bands the rule names (FSSAI: `gone`). Carries no amount and no start day. Null when no rule. |
+| `licences[].rule_verified` | boolean or null | `false` = the rule's source is not cited yet ("verify"); every rule is false today. Null when no rule. |
+| `trade_ready.checks[]` | `{ key, label, done }` x 4 | `address` (an address whose rung is at least `copied`: profile provenance or vault row, not just typed) · `phone` (the PHONE identity document is `verified`) · `pan` (a PAN identity document is held, or the PAN is read from the GSTIN) · `gstin` (a GSTIN is on file). |
+| `trade_ready.done` | boolean | All four are done. |

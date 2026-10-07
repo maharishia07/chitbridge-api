@@ -20,7 +20,7 @@
  * Read their own orders, read their own copy of a document they submitted, and delete that copy. Nothing else.
  * Every read is scoped to `identity_id` (their own per-copy rows under RLS) — never to the shop's copies.
  */
-const jwt = require('jsonwebtoken');
+const { verifyJwt } = require('../lib/jwt-verify');   // E10 — the ONE verifier
 
 module.exports = function customerAuth(req, res, next) {
   const header = req.headers.authorization || '';
@@ -28,7 +28,7 @@ module.exports = function customerAuth(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Unauthorised', message: 'Sign in to view this' });
   try {
     // Same algorithm pin as auth.js — never trust the token's own `alg`.
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    const decoded = verifyJwt(token).claims;
     // FAIL CLOSED: this surface is for customers ONLY. An entity or actor token is rejected here on purpose, so the
     // two surfaces can never be confused for one another.
     if (!decoded.identity_id || decoded.identity_type !== 'customer') {

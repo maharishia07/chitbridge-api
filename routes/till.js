@@ -129,9 +129,10 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     let till = null;
     try {
-      const jti = req.till && req.till.key && req.till.key.jti;
-      if (jti) {
-        const c = await keys.claimTill(entity_id, jti, {
+      /* ⭐ M11: a counter PC (key) and a person's phone (dev) claim through ONE allocator — keys.claimSeries */
+      const holds = req.till && ((req.till.key && req.till.key.jti) || req.till.device_id);
+      if (holds) {
+        const c = await keys.claimSeries(entity_id, req.till, {
           id: req.query.till, issued: req.query.issued === '1' || req.query.issued === 'true',
           /* ⭐ the engine releases this counter runs — kept on its key (keys.cleanEngines) */
           engines: req.query.eng });
@@ -144,6 +145,8 @@ router.get('/snapshot', auth, async (req, res) => {
                    /* ⭐ a named counter, and where its series stopped — see claimTill */
                    counter: c.counter || null, counter_name: c.name || null,
                    resume_next: c.resume_next || null, resume_period: c.resume_period || null };
+          /* M11: a phone is told once, in words, which label it bills under ("This phone bills as C4.") */
+          if (c.said) till.said = c.said;
         }
       }
     } catch (_) { /* ⚠ best effort — a counter must open whatever this says */ }

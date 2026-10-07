@@ -222,7 +222,29 @@ const authLimiter = rateLimit({
 /* M06: the new sign-in doors share the same budget (one IP, one 30/15 min) — renew/logout/sessions stay outside it, so a
    busy counter refreshing its session is never refused for it. check-login / pair-claim / storefront join in PR 7. */
 app.use(['/api/entities/register', '/api/entities/verify', '/api/actors/login', '/api/actors/set-pin',
-         '/api/signin/ask', '/api/signin/verify', '/api/signin/pin'], authLimiter);
+         '/api/signin/ask', '/api/signin/verify', '/api/signin/pin',
+         /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
+            so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
+            sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
+         '/api/till/pair/claim', '/api/catalogue/:bridge_id/login/verify'], authLimiter);
+
+/* M07 — check-login has its OWN budget: app.html asks it before EVERY sign-in and a shop's staff share one Wi-Fi IP, so it must not
+   share (or halve) the 30 that guard code/PIN guessing. 120 per 15 min per IP, same factory. */
+const checkLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.CHECK_LOGIN_RATE_LIMIT_MAX || '120'),
+  message: { error: 'Too many requests', message: 'Too many sign-in checks — please try again in a few minutes' }
+});
+app.use('/api/actors/check-login', checkLoginLimiter);
+
+/* M07 — the remaining doors that need no sign-in: a looser, per-caller limiter (240 per minute, the services' own style,
+   keyed like serviceLimiter() so a signed-in caller counts against its own key, never against the next caller's).
+   tests/limiter-paths.test.cjs walks the real app and fails if a public door is ever added without one. */
+const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false,
+  keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64) });
+app.use(['/.well-known', '/api/ctp/.well-known', '/api/openapi.json', '/api/entities/constitutions', '/api/events/stream',
+         '/api/simulator', '/api/testing/vocabulary', '/api/connectors/ingest', '/api/connectors/erp-ingest', '/api/capture/webhook'],
+        publicLimiter);
 
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
@@ -357,6 +379,7 @@ app.use('/api/tax', require('./routes/tax'));
 /* ⭐ THE LEDGER (SPEC-books-v2, b272–b274) — a record kept by double-entry principle; every route 404s until a shop's
    switch is on. ⚠️ Never called "accounting" on a screen (Athi). */
 app.use('/api/books', require('./routes/books'));
+app.use('/api/facts', require('./routes/facts'));   // N18 — what each Home card says (lib/home-facts.js): counts the server computes, never a cost value
 app.use('/api/crm', require('./routes/crm'));   // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
 /* ⭐ what a shop buys to USE — its own list, never products, never priced, and structurally unable to
    reach a storefront because a storefront query would have to JOIN a table it has no reason to know. */

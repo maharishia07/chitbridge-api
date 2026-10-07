@@ -96,6 +96,10 @@ const t = (name, cond, extra) => {
   else { fail++; console.log('  FAIL ' + name + (extra ? '   ' + extra : '')); }
 };
 
+/* A route the client calls WITHOUT the registry (the shell's direct get('/api/entities/header'), N19) is invisible to the scanner. Its budget line
+   says `extra: true` and it is added to the list HERE, BEFORE the mount loop (or its file is never mounted), so it is still fired / checked and the "no longer called" check does not drop it. */
+for (const k of Object.keys(budget.routes)) if (budget.routes[k].extra && !called.some((r) => r.route === k)) called.push({ route: k, file: budget.routes[k].file });
+
 const express = require('express');
 const app = express();
 app.use(require(path.join(API, 'lib', 'trips')).middleware());
@@ -108,6 +112,10 @@ for (const f of [...new Set(called.map((r) => r.file))].sort()) {
   try { app.use(base, require(path.join(API, 'routes', f))); mountedFiles.add(f); }
   catch (e) { mountErr[f] = 'would not load: ' + String(e && e.message).slice(0, 60); }
 }
+
+/* A route the client calls WITHOUT the registry (the shell's direct get('/api/entities/header'), N19) is invisible to the scanner. Its budget line
+   says `extra: true` and it is added to the list here, so it is still fired / checked and the "no longer called" check does not drop it. */
+for (const k of Object.keys(budget.routes)) if (budget.routes[k].extra && !called.some((r) => r.route === k)) called.push({ route: k, file: budget.routes[k].file });
 
 const ID = '00000000-0000-4000-8000-000000000001';
 async function fire(port, route) {
@@ -144,11 +152,11 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       const row = { route: r.route, file: r.file, status: m.status, trips: m.trips, wire: m.wire };
       if (m.error) {
         notFired.push(Object.assign(row, { why: m.error }));
-        next.routes[r.route] = { file: r.file, trips: b && b.fired === false ? b.trips : UNFIRED_CEILING, wire: null, fired: false, why: m.error };
+        next.routes[r.route] = { file: r.file, trips: b && b.fired === false ? b.trips : UNFIRED_CEILING, wire: null, fired: false, why: m.error, ...(b && b.extra ? { extra: true } : {}) };
         continue;
       }
       (m.status >= 400 ? shallow : fired).push(row);
-      next.routes[r.route] = { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status };
+      next.routes[r.route] = { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(b && b.extra ? { extra: true } : {}) };
       if (!WRITE) {
         t(r.route + ' has a budget line (I19)', !!b);
         if (b && b.fired !== false) {

@@ -288,6 +288,70 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/entities/header": {
+      "file": "entities.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map entitiesRouter); measured by tests/entities-header.test.cjs: 3 cold (two cached schema probes + one readBatch), 1 warm"
+    },
+    "GET /api/entities/me": {
+      "file": "entities.js",
+      "trips": 6,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map entitiesRouter): read by CBAvatar on every page. Measured on the empty stub, which answers 404 early: 2 trips cold, 1 warm - a FLOOR; 6 is a placeholder ceiling for the full path until a fixture can run it"
+    },
+    "GET /api/facts/accounts": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/combo-lab": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/offer-lab": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/product-lab": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/rail": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/till": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/integrations/catalogue": {
       "file": "integrations.js",
       "trips": 0,

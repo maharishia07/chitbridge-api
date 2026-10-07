@@ -675,7 +675,7 @@ router.get('/network/:bridge_id', async (req, res) => {
 function ownerOf(req, entity) {
   try {
     const h = req.headers.authorization || ''; if (!h.startsWith('Bearer ')) return false;
-    const d = require('jsonwebtoken').verify(h.slice(7), process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    const d = require('../lib/jwt-verify').verifyJwt(h.slice(7)).claims;   // E10 — the ONE verifier
     if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
     const mine = d.parent_entity_id || d.identity_id;
     return String(mine) === String(entity.identity_id);

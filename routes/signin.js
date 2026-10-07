@@ -511,6 +511,14 @@ async function verify(req, res) {
     res.json({
       message: 'Verified successfully',
       token,
+      /**
+       * ⭐ THE SET-PIN SIGNAL ON EVERY DOOR (2026-10-08, Athi: an employee's first sign-in "does NOT ask them to set a
+       * PIN"). /api/actors/login has always answered `requires_pin_setup` for a first-time co-assist; this door — which
+       * the stored `.br` id reaches from every page, because its dot after the '@' reads as an e-mail — signed the
+       * same person in and said nothing, so no page could show the step. Same word, same meaning, additive: present
+       * only when a co-assist just signed in by code and holds no PIN yet.
+       */
+      ...(identity.identity_type === 'actor' && !identity.pin_hash ? { requires_pin_setup: true } : {}),
       entity: {
         identity_id: identity.identity_id,
         bridge_id: identity.bridge_id,

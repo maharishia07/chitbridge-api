@@ -49,7 +49,9 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * two engines, the manifest — and serves them when the network is not there. Bills and the shop's own data live in IndexedDB, which is
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
-const SW = `${GEN}const SHELF = 'cb-till-v1';
+/* ⚠️ bump SHELF with every change to the page's boot path (M08: 'cb-till-v2') — activate drops the old shelf, nothing else:
+   the worker holds no bill, no setting and no store, so a bump can never clear history */
+const SW = `${GEN}const SHELF = 'cb-till-v2';
 const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
@@ -127,7 +129,9 @@ const VERSIONS = () => {
     const m = head.match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/);
     out[n.replace(/\.js$/, '')] = m ? m[1] : 'unversioned';
   });
-  return JSON.stringify({ engines: out }, null, 2) + '\n';
+  /* ⭐ M08: the PAGE's own build, read off the master — till.html's pageStale() compares it with the copy it is running */
+  const page = (norm(fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8')).match(/var TILL_BUILD = '([^']+)'/) || [])[1] || null;
+  return JSON.stringify({ engines: out, page }, null, 2) + '\n';
 };
 
 const COPIES = () => [

@@ -1,5 +1,5 @@
 {
- "recorded_from": "pre-move api (origin/main cf349d2)",
+ "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug",
  "scenarios": {
   "ask.entity.email": {
    "responses": [
@@ -1471,6 +1471,7 @@
         "parent_bridge_id": "B-SHOP1"
        }
       },
+      "requires_pin_setup": true,
       "entity": {
        "identity_id": "mala",
        "bridge_id": "B-MALA",
