@@ -4,6 +4,9 @@
 // All endpoints for create login manage actors
 
 const express = require('express');
+const empCode = require('../lib/employee-code');   // M02: the one place an employee's first code is minted, e-mailed and shown
+/** The e-mail on file for an employee (identities.email), or '' — a read that can never fail the request. */
+const actorEmail = async (id) => { try { const r = await db('SELECT email FROM identities WHERE identity_id = $1', [id]); return (r.rows[0] && r.rows[0].email) || ''; } catch (_) { return ''; } };
 const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on process.env.DEV_OTP directly
 const identityAuth = require('../lib/identity-auth');   // [capability: sign-in] the one token issuer, entity or coassist
 const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
@@ -288,8 +291,11 @@ router.post('/',
       const bridge_id   = generateBridgeId();
       // ⭐ [capability: sign-in] fixedOtp('entity') closes the isSealed() gap generateOTP() never checked —
       // see lib/identity-auth.js. Same 123456 in dev as an entity's own OTP; a real code once sealed.
-      const otp         = devOtp.fixedOtp('entity') || generateOTP();
-      const otp_expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      // M02: 24 h, and refused up front in a sealed env with no Resend / no e-mail (nothing is written then).
+      const toEmail = typeof req.body.email === 'string' ? req.body.email.trim() : '';
+      const refused = empCode.refusal(toEmail);
+      if (refused) return res.status(refused.status).json(refused.body);
+      const { otp, expires: otp_expires } = empCode.mint();
 
       /**
        * ── ⭐⭐⭐ THE EMPLOYEE ID IS STORED, from 2026-09-15 ─────────────────────────────────────────────────────
@@ -325,7 +331,7 @@ router.post('/',
          otp, otp_expires, hat, employee_id]
       );
 
-      console.log(`Actor created: ${actor_key}@${entity_name} — OTP: ${otp}`);
+      console.log(`Actor created: ${actor_key}@${entity_name}` + (devOtp.isSealed() ? '' : ` — OTP: ${otp}`));
 
       /**
        * ⭐ A CO-ASSIST IS A SEAT, and seats are the most conventional thing a platform bills. b99 names
@@ -346,10 +352,9 @@ router.post('/',
           login_format: `${actor_key}@${entity_name}`,
           parent_entity: entity_name,
         },
-        otp,
-        // Always return dev_otp when DEV_OTP env is set
+        ...(await empCode.deliver({ to: toEmail, name: display_name, otp })),
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-        login_instruction: `Ask ${display_name} to login with:\nUsername: ${actor_key}@${entity_name}\nOTP: ${otp}`
+        login_instruction: `Ask ${display_name} to login with:\nUsername: ${actor_key}@${entity_name}` + (devOtp.isSealed() ? '\nThe first code was sent to their e-mail.' : `\nOTP: ${otp}`)
       });
 
     } catch (err) {
@@ -673,8 +678,10 @@ router.delete('/:id/pin',
       // Clear the PIN AND issue a fresh OTP. The actor's original OTP was consumed at first login, so without
       // a new one they'd have no way back in. One admin action = full re-onboard: new OTP -> they set a new PIN.
       // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
-      const otp     = devOtp.fixedOtp('entity') || generateOTP();
-      const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const toEmail = await actorEmail(actor_id);
+      const refused = empCode.refusal(toEmail);
+      if (refused) return res.status(refused.status).json(refused.body);
+      const { otp, expires } = empCode.mint();
       await db(
         `UPDATE identities
          SET pin_hash = NULL, pin_set_at = NULL, pin_attempts = 0, pin_locked_at = NULL,
@@ -685,7 +692,7 @@ router.delete('/:id/pin',
       res.json({
         message: 'PIN reset — share the new one-time code; they set a new PIN on next login',
         actor_name: actor.rows[0].display_name,
-        otp,
+        ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp })),
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
         login_format: await loginIdFor(actor.rows[0].actor_key, req)
       });
@@ -1031,8 +1038,10 @@ router.post('/:id/otp',
       }
 
       // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
-      const otp     = devOtp.fixedOtp('entity') || generateOTP();
-      const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const toEmail = await actorEmail(actor_id);
+      const refused = empCode.refusal(toEmail);
+      if (refused) return res.status(refused.status).json(refused.body);
+      const { otp, expires } = empCode.mint();
 
       await db(
         `UPDATE identities
@@ -1044,7 +1053,7 @@ router.post('/:id/otp',
       res.json({
         message: 'OTP reset successfully',
         actor_name: actor.rows[0].display_name,
-        otp,
+        ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp })),
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
         login_format: await loginIdFor(actor.rows[0].actor_key, req),
         expires_in: '7 days'
@@ -1117,8 +1126,10 @@ router.put('/:id/status',
       // Reactivate is a single write (no task routing) — handle and return.
       if (action === 'reactivate') {
         // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
-        const otp     = devOtp.fixedOtp('entity') || generateOTP();
-        const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        const toEmail = await actorEmail(actor_id);
+        const refused = empCode.refusal(toEmail);
+        if (refused) return res.status(refused.status).json(refused.body);
+        const { otp, expires } = empCode.mint();
         await db(
           `UPDATE identities
            SET break_status = 'active',
@@ -1131,7 +1142,7 @@ router.put('/:id/status',
         );
         return res.json({
           message: 'Actor reactivated',
-          otp,
+          ...(await empCode.deliver({ to: toEmail, name: a.display_name, otp })),
           ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
           login_format: await loginIdFor(a.actor_key, req)
         });

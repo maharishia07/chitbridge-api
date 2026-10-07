@@ -220,6 +220,7 @@ const GUARDS = [
   /* ⭐⭐⭐ DISPUTE CONFIDENTIALITY — THE USP RULE (N02, 2026-10-07): written before any extraction; per-copy RLS modelled, definers transcribed */
   'dispute-scoping.test.cjs',   // roster-only visibility · no notice to a non-party · per-party resolve; KNOWN BREAKS printed loud (section 5)
   'agent-signin-body.test.cjs', // M01: the shop-PC agent sends mode:'login' via CBSignin.ask()/verify() — a login never creates an identity
+  'employee-code.test.cjs',     // M02: first code e-mailed, never shown in a sealed env (Resend required), single-use, 24 h
 ];
 
 const all = process.argv.indexOf('--all') >= 0;
