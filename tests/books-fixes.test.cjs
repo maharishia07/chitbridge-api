@@ -264,7 +264,7 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     ok('a payment to a supplier on the list, dated inside the ledger, still records', good.status === 200 && good.body.payment && good.body.payment.status === 'recorded', good.status + ' ' + JSON.stringify(good.body));
     srv.close();
     /* the second fence: a key-bearing request that somehow reached the route is refused there too */
-    const keyAuth = Object.assign((req, res, next) => { req.identity = OWNER; req.api_key = { scopes: ['till'] }; next(); }, { entityOf: authStub.entityOf, requireScope: authStub.requireScope });
+    const keyAuth = Object.assign((req, res, next) => { req.identity = OWNER; req.api_key = { scopes: ['till'] }; req.till = require('../lib/holder').holderOf({ kind: 'api_key', scopes: ['till'] }, null); next(); }, { entityOf: authStub.entityOf, requireScope: authStub.requireScope });
     const Xk = H.load({ auth: keyAuth }); parties(Xk);
     await Xk.B.enable(Xk.db, SHOP, { by: SHOP, today: '2026-09-29' });
     const k = serve(Xk);

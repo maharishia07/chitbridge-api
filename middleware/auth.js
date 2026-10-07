@@ -2,8 +2,20 @@
 const jwt = require('jsonwebtoken');
 const { query } = require('../db');
 const schema = require('../lib/schema');   // b173 — ask the DB what it has before naming a column
+const { holderOf } = require('../lib/holder');   // M04 — req.till, one shape for key / person / actor
+
+/**
+ * ⭐⭐ DECIDED ONCE PER REQUEST (M04, 2026-10-07). A route whose body must not be read before the caller is known
+ * (server.js → middleware/auth-first.js, today POST /api/chits/send) is authenticated BEFORE the body parser, and its
+ * route then calls auth again as every route does. The second call does not re-verify or re-read the database — the
+ * decision already made is kept — it only re-enters the actor scope and the hat gate, which answer the same thing for the
+ * same request. So: one token check and one revocation read per request, exactly as before.
+ */
+const DECIDED = new WeakSet();
 
 const auth = async (req, res, next) => {
+  if (req && DECIDED.has(req))
+    return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => require('./hat-gate')(req, res, next));
   try {
     // Get token from Authorization header
     /* ⭐ AN API KEY FOR ANOTHER SYSTEM travels as X-Api-Key or as a Bearer — same verification, then the listing check below */
@@ -30,8 +42,9 @@ const auth = async (req, res, next) => {
     }
     /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
        the token's own expiry says. One read per request, cached a minute per jti. */
+    let keyRec = null;
     if (decoded.kind === 'api_key') {
-      const rec = await keyListed(decoded.identity_id, decoded.jti, req);
+      const rec = keyRec = await keyListed(decoded.identity_id, decoded.jti, req);
       if (!rec) return res.status(401).json({ error: 'Unauthorised', message: 'API key revoked or unknown' });
       /* ⚠️ A CLOSED COUNTER IS HISTORY (POST /api/till/close) — its record stays so its series can be explained, but the
          key behind it no longer opens anything */
@@ -59,6 +72,9 @@ const auth = async (req, res, next) => {
       parent_entity_id: decoded.parent_entity_id || null,
       owner_scope:      decoded.owner_scope || null,
     };
+    /* ⭐ WHO HOLDS THIS REQUEST — one shape for a key, a person and an actor (lib/holder.js). Routes ask req.till, not
+       req.api_key.scopes, whether a counter is speaking. */
+    req.till = holderOf(decoded, keyRec);
 
     // Revalidate actor status — a removed/deactivated co-assist must lose access
     // immediately on their next request, not whenever the JWT happens to expire.
@@ -141,6 +157,7 @@ const auth = async (req, res, next) => {
      * FOR its parent, so the entity is the business and the actor is the person. Using entityOf here would
      * write "the business changed it" into a column that exists to name someone.
      */
+    DECIDED.add(req);
     return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => gate(req, res, next));
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
@@ -352,6 +369,7 @@ function keyAlive(list, jti) {
   return rec;
 }
 auth.keyAlive = keyAlive;
+auth.holderOf = holderOf;   /* the ONE holder builder lives in lib/holder.js (M04) — re-exported for readers of auth */
 async function keyListed(entity_id, jti, req) {
   if (!jti) return false;
   if (req) noteSeen(entity_id, jti, req);

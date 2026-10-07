@@ -283,6 +283,10 @@ async function autoAssignReceived(entity_id, chit_id) {
 // ─── POST /chits/send ─────────────────────────────────────────
 // Send a chit from sender to one or more receivers
 router.post('/send',
+  /* ⭐ M04 (IAM §35): WHO before WHAT. auth runs ahead of the validator chain, so an unauthenticated or refused caller never
+     has its body examined — and server.js (middleware/auth-first.js) authenticates this route before the body is even
+     parsed. The second auth here keeps the route self-guarding; it reuses the decision, it does not repeat it. */
+  auth,
   [
     // Accept legacy `receivers` (all = To) OR fan-out `recipients` [{..., role:'to'|'cc'|'for'}];
     // a draft may have no recipients. (ATH-119)
@@ -323,7 +327,6 @@ router.post('/send',
     body('line_items').optional().isArray(),
     body('business_json').optional().isObject(),
   ],
-  auth,
   validate,
   async (req, res) => {
     try {
@@ -535,7 +538,8 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
        * record and never addresses another business. The scope opens the send route; this closes it to one shape.
        */
       let oneSided = null;   /* { why } when a counter bill is recorded without its customer's copy — see tillMaySend */
-      if (req.api_key && Array.isArray(req.api_key.scopes) && req.api_key.scopes.indexOf('till') >= 0 && !req.api_key.scopes.includes('connector')) {
+      const tk = req.till && req.till.key;   /* M04 — the holder says whether a key is speaking (middleware/auth holderOf) */
+      if (tk && tk.scopes.indexOf('till') >= 0 && !tk.scopes.includes('connector')) {
         const rl = (Array.isArray(req.body.recipients) ? req.body.recipients : (Array.isArray(req.body.receivers) ? req.body.receivers : []));
         const outward = rl.filter((r) => r && r.self !== true && String(r.entity_id || '') !== String(sender_id));
         const gate = outward.length ? await tillMaySend(sender_id, outward, req.body) : null;

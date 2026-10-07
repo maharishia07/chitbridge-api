@@ -354,6 +354,7 @@ const INFRA_LIBS = [
   'numerals.js',           // digit shaping
   'policy.js',             // reads policy flags; the flags are the governance, this is the reader
   'reqctx.js',             // request-scoped actor context (AsyncLocalStorage)
+  'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
   'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
   'select.js',             // shaped SELECT builders
   'storage-object.js',     // object-store key/put/get

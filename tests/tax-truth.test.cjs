@@ -70,7 +70,8 @@ require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
 } };
 const authPath = require.resolve(path.join(API, 'middleware', 'auth'));
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: Object.assign(
-  (req, res, next) => { req.identity = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CB-SHOP', display_name: 'Tally Test' }; req.api_key = { scopes: ['till'] }; next(); },
+  (req, res, next) => { req.identity = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CB-SHOP', display_name: 'Tally Test' }; req.api_key = { scopes: ['till'] };
+    req.till = require(path.join(API, 'lib', 'holder')).holderOf({ kind: 'api_key', scopes: ['till'] }, null); next(); },   /* M04 — as middleware/auth sets it */
   { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id, requireScope: () => (q, s, n) => n(),
     userOf: (req) => req.identity, forgetKey: () => {}, keyAlive: async () => true }) };
 const mint = require(path.join(API, 'lib', 'mint'));

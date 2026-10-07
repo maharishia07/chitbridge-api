@@ -216,5 +216,70 @@ const sign = (claims, opts) => jwt.sign(claims, process.env.JWT_SECRET, Object.a
     assert.ok(/split\('\?'\)/.test(gateSrc), 'the query string is no longer stripped — /assist?x=1 will not match /assist');
   });
 
+  console.log('\n— who holds the request: req.till, one shape for a key, a person and an actor (M04) —');
+
+  const SHAPE = ['holder', 'kind', 'key', 'counter', 'device_id', 'by'];
+  const shapeOf = (h) => Object.keys(h || {}).sort().join(',');
+  const KEY_ROW = [{ policy_flags: { api_keys: [{ jti: 'j-m04', scopes: ['till'], till: { id: 'C2' } }] } }];
+  const keyTok = () => sign({ identity_id: 'e1', identity_type: 'entity', kind: 'api_key', jti: 'j-m04', scopes: ['till'] });
+
+  await ita('⭐⭐ a KEY request: req.till.holder === "key:" + jti, with its scopes and its counter', async () => {
+    DB_ROWS = KEY_ROW;
+    const { req, out } = await call(keyTok(), { method: 'POST', url: '/api/chits/send' });
+    assert.strictEqual(out.nexted, true, 'the listed till key was refused: ' + JSON.stringify(out.body));
+    assert.strictEqual(req.till.holder, 'key:' + 'j-m04');
+    assert.strictEqual(req.till.kind, 'key');
+    assert.deepStrictEqual(req.till.key, { jti: 'j-m04', scopes: ['till'] });
+    assert.strictEqual(req.till.counter, 'C2', 'the key’s claimed series did not reach the holder');
+    assert.strictEqual(req.till.device_id, null);
+    /* ⚠️ the holder must answer exactly what req.api_key answered — the readers were switched to it on that promise */
+    assert.strictEqual(req.till.key.jti, req.api_key.jti);
+    assert.deepStrictEqual(req.till.key.scopes, req.api_key.scopes);
+  });
+
+  await ita('⭐⭐ a PERSON (owner session): holder "person:" + identity_id, no key', async () => {
+    const { req, out } = await call(sign({ identity_id: 'e7', identity_type: 'entity' }));
+    assert.strictEqual(out.nexted, true);
+    assert.deepStrictEqual(req.till, { holder: 'person:e7', kind: 'person', key: null, counter: null, device_id: null, by: 'e7' });
+    assert.strictEqual(req.api_key, undefined, 'a session grew a req.api_key');
+  });
+
+  await ita('⭐⭐ an ACTOR (co-assist): holder "actor:" + identity_id — the person, not the business it acts for', async () => {
+    DB_ROWS = [{ break_status: 'active', hat: 'act', access_level: 'editor' }];
+    const { req, out } = await call(sign({ identity_id: 'a9', identity_type: 'actor', parent_entity_id: 'e1' }));
+    assert.strictEqual(out.nexted, true);
+    assert.deepStrictEqual(req.till, { holder: 'actor:a9', kind: 'actor', key: null, counter: null, device_id: null, by: 'a9' });
+  });
+
+  await ita('⭐ ONE shape: key, person and actor holders carry the same fields, from ONE builder (M05 only adds)', async () => {
+    DB_ROWS = KEY_ROW;
+    const k = (await call(keyTok(), { method: 'POST', url: '/api/chits/send' })).req.till;
+    const p = (await call(sign({ identity_id: 'e7', identity_type: 'entity' }))).req.till;
+    DB_ROWS = [{ break_status: 'active', hat: 'act' }];
+    const a = (await call(sign({ identity_id: 'a9', identity_type: 'actor', parent_entity_id: 'e1' }))).req.till;
+    const want = SHAPE.slice().sort().join(',');
+    assert.strictEqual(shapeOf(k), want); assert.strictEqual(shapeOf(p), want); assert.strictEqual(shapeOf(a), want);
+    assert.strictEqual(auth.holderOf, require('../lib/holder').holderOf, 'auth builds its holder somewhere other than lib/holder.js');
+  });
+
+  await ita('⚠️ a refused request gets no holder', async () => {
+    const { req } = await call(null);
+    assert.strictEqual(req.till, undefined);
+  });
+
+  await ita('⭐⭐ decided ONCE per request: a second auth on the same request does not re-read the database', async () => {
+    /* server.js authenticates POST /api/chits/send before its body is parsed (middleware/auth-first.js) and the route
+       calls auth again — that second call must reuse the decision, or the revocation read doubles on the busiest route */
+    DB_ROWS = [{ break_status: 'active', hat: 'act' }];
+    const { req } = await call(sign({ identity_id: 'a9', identity_type: 'actor', parent_entity_id: 'e1' }));
+    const first = req.till;
+    asked.length = 0;
+    let nexted = false;
+    await auth(req, { status() { return this; }, json() { return this; } }, () => { nexted = true; });
+    assert.strictEqual(nexted, true, 'the second auth on an admitted request did not let it through');
+    assert.strictEqual(asked.length, 0, 'the second auth asked the database again');
+    assert.strictEqual(req.till, first, 'the second auth rebuilt the holder');
+  });
+
   console.log('\n  ' + pass + ' checks\n');
 })();
