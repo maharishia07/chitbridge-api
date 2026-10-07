@@ -3905,6 +3905,75 @@ var ls = { last:null,
                                    var ok = localStorage.getItem(p)==='1'; localStorage.removeItem(p); return ok; }
                              catch(e){ return false; } } };
 /**
+ * ── ⭐⭐⭐ M08 · A PHONE IS A PERSON ON A DEVICE (DESIGN-person-signin §2.4, SPEC-iam-build PR 8, 2026-10-07) ────────
+ *
+ * Athi, 2026-10-04: *"solve it for good — or remove the concept of counter: each user logs in with their own ID,
+ * no key mapping."* DECIDED: a phone is a person session (ID + PIN), not a device key. So a browser counter now
+ * keeps the SESSION the sign-in answers (30 days on surface 'till', D3) and never spends it on /api/till/enrol.
+ * The shop PC is untouched: its program still trades the sign-in for a key (becomeShop's agent half).
+ *
+ *   cb_device_id   a random id made once per BROWSER, device-wide, never per shop. Sent as X-Device-Id on every
+ *                  cloud call; the server binds the session to it (M05: a lifted token is useless elsewhere).
+ *                  It is a name, not a secret — knowing it grants nothing without the session.
+ *   cb_till_person the session this device holds: { token, entity_id, by, by_name, exp… }. Written ONLY by
+ *                  becomeShop() (G1 — tests/counter-gates.test.cjs), exactly like cb_till_key.
+ *
+ * ⚠️⚠️ AN OLD KEY STORE IS NEVER TOUCHED. A phone that already holds cb_till_key keeps reading its key store as
+ * today; a person session opens a store of its own ('cb-till-' + shop + '-' + device) BESIDE it. Nothing here
+ * clears, renames or moves a store — moving the old key stores is M10. [[project-till-store-per-key]]
+ */
+function deviceId(){
+  var d = ls.get('cb_device_id', '');
+  if (/^[A-Za-z0-9_.:-]{8,80}$/.test(d)) return d;      /* the server's own shape (lib/person-session deviceIdOf) */
+  try { d = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null; } catch (_) { d = null; }
+  if (!d) { d = 'd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10); }
+  ls.set('cb_device_id', d);
+  return d;
+}
+/**
+ * ⭐ THE PREFIX A PERSON'S DEVICE BILLS UNDER UNTIL THE SHOP GIVES IT ONE (M11 assigns a label per device server-side).
+ * Per DEVICE, never per person or per label alone ([[project-till-series-prefix]]: two devices both "C1" absorbed a
+ * real sale as a retry). 'D' + three base-36 characters of the device id — never C1, which is the shop PC's.
+ */
+function deviceLabel(){
+  var k = deviceId(), h = 5381;
+  for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0);
+  return 'D' + ('000' + (h % 46656).toString(36)).slice(-3).toUpperCase();
+}
+/** is this browser billing as a PERSON (a kept session), rather than as a keyed counter or the shop PC */
+function personOn(){
+  if (typeof AgentHost !== 'undefined' && typeof HOST !== 'undefined' && HOST === AgentHost) return false;
+  return !!(typeof CloudHost !== 'undefined' && CloudHost && CloudHost.person && CloudHost.person.token);
+}
+/** the session kept on this device, read once at start-up (pickHost) — null when there is none or it is malformed */
+function personLoad(){
+  var p = null; try { p = JSON.parse(ls.get('cb_till_person', '') || 'null'); } catch (_) { p = null; }
+  return (p && p.token && p.entity_id) ? p : null;
+}
+/** the session to keep, from the sign-in's own answer — the shop it opens comes from the identity the server named */
+function personOf(token, idn, who){
+  var ent = (idn && idn.entity_id) || (who && who.entity) || null;
+  if (!token || !ent) return null;
+  var claims = {};
+  try { claims = JSON.parse(atob(String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) || {}; } catch (_) { claims = {}; }
+  return { token: String(token), entity_id: String(ent), bridge_id: (idn && idn.bridge_id) || null,
+           by: (who && who.id) || (idn && (idn.user_id || idn.identity_id)) || null, by_name: (who && who.name) || (idn && idn.display_name) || null,
+           kind: (who && who.kind) || null, device_id: deviceId(), jti: claims.jti || null,
+           exp: claims.exp ? Number(claims.exp) * 1000 : null, at: Date.now() };
+}
+/**
+ * ⭐ WORDS PER CODE for a person session the shop refused — never "Due to maintenance", which is the key holder's
+ * story (the shop PC page). A 401 on a person is one of three things, and each has its own line and button.
+ */
+function personRefused(code, queued){
+  var n = Number(queued || 0);
+  if (code === 'DEVICE_REVOKED' || code === 'DEVICE_MISMATCH')
+    return { ico: '🔒', line: 'The shop removed this phone', means: (n ? 'Your ' + n + ' bill' + (n > 1 ? 's are' : ' is') + ' kept here; ask the owner.' : 'Ask the owner.'),
+             fix: 'What is kept here', act: 'openStorage' };
+  return { ico: '🔒', line: n ? ('Sign in to send ' + n + ' bill' + (n > 1 ? 's' : '')) : 'Sign in to continue',
+           means: 'Your sign-in has ended. The bills are safe on this phone.', fix: 'Sign in', act: 'pairAgain' };
+}
+/**
  * ⭐⭐ WHICH OF THESE BELONG TO THE DEVICE, AND WHICH TO THE SHOP (2026-09-08). Athi, on finding a counter holding two shops at
  * once: *"this is the worst failure I was worried about."* The audit that followed found four more of the same shape.
  *
@@ -3925,7 +3994,7 @@ var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_ti
   'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
   'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
   'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock', 'cb_till_autolock',
-  'cb_till_keep_days', 'cb_till_keep_bills', 'cb_till_keep_mb', 'cb_till_retained', 'cb_till_unproven'];
+  'cb_till_keep_days', 'cb_till_keep_bills', 'cb_till_keep_mb', 'cb_till_retained', 'cb_till_unproven', 'cb_till_pid'];
 /**
  * ⚠️ ONCE, ON THE FIRST START OF THIS CODE ON A SHOP PC: the values it kept under plain names before S1b belong to
  * the shop it held then, which is the shop it holds now — they are MOVED into that shop's slot. Only into an EMPTY
@@ -4063,6 +4132,13 @@ function tillStore(){
     var b = STATE && STATE.shop && STATE.shop.bridge_id;
     return b ? 'cb-till-pc-' + String(b).replace(/[^A-Za-z0-9_-]/g, '') : 'cb-till';
   }
+  /**
+   * ⭐⭐⭐ M08 — A PERSON'S DEVICE: ONE STORE PER SHOP PER DEVICE, named by what the server said (the shop's entity id)
+   * and what this browser made (the device id). Never by the token: a renewed session would orphan a queue again
+   * ([[project-till-store-per-key]]). A key this device also holds keeps its own store beside this one, untouched.
+   */
+  if (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.person && CloudHost.person.token && CloudHost.person.entity_id)
+    return 'cb-till-' + String(CloudHost.person.entity_id).replace(/[^A-Za-z0-9_-]/g, '') + '-' + String(deviceId()).replace(/[^A-Za-z0-9_-]/g, '');
   var k = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) ? String(CloudHost.key) : '';
   if (!k) return 'cb-till';                       /* no key — nothing belongs to a shop yet */
   var h = 5381;                                    /* djb2 — a name, not a secret: the key itself never goes near a store name */
@@ -4437,6 +4513,11 @@ function whoAmI(){
       store: tillStore(),                                    /* the IndexedDB this shop's copy lives in */
       opened_for: ls.get(shopLs('cb_till_shop'), '') || null, /* the shop the ADDRESS said, when opened from the app */
     },
+    /* ⭐ M08: a phone is a PERSON on a DEVICE — which device this is, and whose session it bills under (never the token) */
+    device: { id: onAgent() ? null : deviceId(), bills_as: onAgent() ? 'shop PC' : (CloudHost.cred() || 'nothing yet'),
+              person: (CloudHost.person && !onAgent()) ? { by: CloudHost.person.by, name: CloudHost.person.by_name, shop: CloudHost.person.entity_id,
+                        until: CloudHost.person.exp ? new Date(CloudHost.person.exp).toISOString() : null } : null,
+              prefix: tillId(), page: TILL_BUILD },
     /* ⭐ which release of each engine this counter bills with — false = not on this device (2026-09-28) */
     engines: (onAgent() ? (STATE && STATE.engines) : ENGINE_V) || 'not read yet',
     signed_in_here: sess ? {
@@ -4788,6 +4869,15 @@ async function fetchBy_(url, opts, ms){
   var to = ac ? setTimeout(function(){ try { ac.abort(); } catch (_) {} }, ms || DEADLINE) : null;
   var o = Object.assign({}, opts || {});
   if (ac) o.signal = ac.signal;
+  /**
+   * ⭐ M08 — THIS DEVICE NAMES ITSELF on every call to ChitBridge (an absolute URL, never the shop PC's own program on a
+   * relative one: the program's sign-in must keep minting the legacy token it has always had, or /api/till/enrol would
+   * answer DEVICE_MISMATCH and knock the PC off). A key request ignores the header; a person session is bound by it.
+   */
+  if (/^https?:\/\//i.test(String(url)) && String(url).indexOf('/api/') >= 0) {
+    o.headers = Object.assign({}, o.headers || {});
+    if (!o.headers['X-Device-Id']) o.headers['X-Device-Id'] = deviceId();
+  }
   return fetch(url, o).finally(function(){ if (to) clearTimeout(to); });
 }
 var AgentHost = {
@@ -4863,16 +4953,31 @@ var AgentHost = {
 var CloudHost = {
   mode:'cloud',
   key: null, api: null,
+  /** M08 — the person session this device keeps (personLoad at start-up; becomeShop is its only writer) */
+  person: null,
+  /** which credential this browser speaks with: 'person' (a kept session) · 'key' (a pasted/enrolled key) · null */
+  cred: function(){ return (this.person && this.person.token) ? 'person' : (this.key ? 'key' : null); },
+  /**
+   * ⭐ ONE PLACE THAT SIGNS A CALL. Thirteen call sites used to write `'X-Api-Key': this.key` by hand; a person
+   * session sends `Authorization: Bearer` instead, and the device id rides on fetchBy_ for both. A second shape
+   * of header anywhere else is the fault this helper exists to prevent ([[feedback-no-duplicate-functions]]).
+   */
+  auth: function(extra){
+    var h = Object.assign({}, extra || {});
+    if (this.person && this.person.token) h['Authorization'] = 'Bearer ' + this.person.token;
+    else if (this.key) h['X-Api-Key'] = this.key;
+    return h;
+  },
   /**
    * ⚠️ A BROWSER COUNTER HAS NO SUMMARY FOLDER, so it asks the shop — and gets something BETTER: the server's
    * fold is across every counter, which is the one thing no single till can compute. The two answers differ in
    * scope and the screen says which it is showing rather than pretending they are the same.
    */
   summary: async function(period, n){
-    if (!this.key) return { rows: [], offline: true };
+    if (!this.cred()) return { rows: [], offline: true };
     try {
       var r = await fetchBy(this.api + '/api/till/summary?period=' + encodeURIComponent(period) + '&n=' + (n || 12),
-                            { headers: { 'X-Api-Key': this.key } });
+                            { headers: this.auth() });
       var j = await r.json();
       return { period: period, rows: (j && (j.rows || j.summaries)) || [], shopWide: true };
     } catch (e) { return { rows: [], offline: true }; }
@@ -4919,9 +5024,9 @@ var CloudHost = {
       return { count: count2, total: total2, by: by2, refunds: back2, expenses: exp2 };
     })();
     var by = t.by, total = t.total, count = t.count, back = t.refunds;
-    return { snapshot: snap || null, online: lineUp() && !!this.key, queued: queue.length,
+    return { snapshot: snap || null, online: lineUp() && !!this.cred(), queued: queue.length,
              today: { count: count, total: total, by: by, returns: r2(back), expenses: r2(t.expenses || 0) },
-             till: { id: ls.get('cb_till_id','C1'), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
+             till: { id: tillId(), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
              engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots, nums: !!window.CBNums, rewards: !!window.CBRewards } };
   },
   /**
@@ -4932,7 +5037,7 @@ var CloudHost = {
    * re-created in the same window ends up present rather than missing.
    */
   async refresh(){
-    if (!this.key) return { ok:false, need:'key' };
+    if (!this.cred()) return { ok:false, need:'key' };
     /**
      * ⚠️⚠️ READ THE OWNER FROM DISK EVERY TIME, never from the variable. Caching it was wrong in BOTH directions and [TILL-06]
      * caught the first: a forged owner on disk was ignored because memory still held the old one, so a foreign catalogue would
@@ -4946,8 +5051,9 @@ var CloudHost = {
     /* ⭐ what this counter numbers under, and whether it has already issued anything — see tillClaim() */
     var claim = await tillClaimQuery();
     var r = await fetchBy(this.api + '/api/till/snapshot' + (since ? since + '&' : '?') + claim,
-                          { headers:{ 'X-Api-Key': this.key } }, SLOW);
-    if (!r.ok) return { ok:false, status:r.status };
+                          { headers: this.auth() }, SLOW);
+    /* ⭐ M08: the server's CODE travels with the refusal — refreshFailed() picks the words from it, not from the status */
+    if (!r.ok) { var rc = null; try { rc = (await r.json()).code || null; } catch (_) { rc = null; } return { ok:false, status:r.status, code: rc }; }
     /**
      * ⭐⭐ COUNTED AS IT ARRIVES. Athi, 2026-09-09: *"when we try to reload, no message is appearing — an image of the progress
      * would be good."* Ten thousand products is about five megabytes, which on a shop line is several seconds of a screen doing
@@ -5020,7 +5126,7 @@ var CloudHost = {
        * check that heals a cause nobody predicted.
        */
       if (snap.total != null && snap.items.length !== snap.total) {
-        var full = await fetchBy(this.api + '/api/till/snapshot', { headers:{ 'X-Api-Key': this.key } }, SLOW);
+        var full = await fetchBy(this.api + '/api/till/snapshot', { headers: this.auth() }, SLOW);
         if (full.ok) { snap = await full.json(); snap.rebuilt = true; }
       }
     }
@@ -5043,9 +5149,9 @@ var CloudHost = {
     return all.filter(function(b){ return String(b.at||'').slice(0,10) >= since; }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
   },
   async history(days){
-    if (!this.key || !lineUp()) return { bills: [], offline: true };
+    if (!this.cred() || !lineUp()) return { bills: [], offline: true };
     try {
-      var r = await fetchBy(this.api + '/api/till/bills?days=' + (days||30) + '&limit=200', { headers:{ 'X-Api-Key': this.key } }, SLOW);
+      var r = await fetchBy(this.api + '/api/till/bills?days=' + (days||30) + '&limit=200', { headers: this.auth() }, SLOW);
       if (!r.ok) return { bills: [], offline: true, why: 'HTTP ' + r.status };
       return await r.json();
     } catch (e) { return { bills: [], offline: true, why: e.message }; }
@@ -5066,9 +5172,9 @@ var CloudHost = {
   },
   /** the open orders, straight from ChitBridge — a device holds no copy of them, because an order changes while you are packing it */
   async tasks(kind){
-    if (!this.key || !lineUp()) return { tasks: [], offline: true };
+    if (!this.cred() || !lineUp()) return { tasks: [], offline: true };
     try {
-      var r = await fetchBy(this.api + '/api/till/tasks?kind=' + encodeURIComponent(kind), { headers: { 'X-Api-Key': this.key } });
+      var r = await fetchBy(this.api + '/api/till/tasks?kind=' + encodeURIComponent(kind), { headers: this.auth() });
       if (!r.ok) return { tasks: [], offline: true, why: 'HTTP ' + r.status };
       return await r.json();
     } catch (e) { return { tasks: [], offline: true, why: e.message }; }
@@ -5081,19 +5187,19 @@ var CloudHost = {
    */
   /** remembering what a supplier calls a product needs the line — it is a fact about the shop, not about this device */
   async alias(a){
-    if (!this.key || !lineUp()) return { ok:false, why:'this needs the internet — the count is not affected' };
+    if (!this.cred() || !lineUp()) return { ok:false, why:'this needs the internet — the count is not affected' };
     try {
       var r = await fetchBy(this.api + '/api/till/alias', { method:'POST',
-        headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(a) });
+        headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(a) });
       return r.ok ? await r.json() : { ok:false, why:'HTTP ' + r.status };
     } catch (e) { return { ok:false, why:e.message }; }
   },
   /** what was just said, as words — the audio goes up, nothing comes back but text, and nothing is kept anywhere */
   async listen(b){
-    if (!this.key || !lineUp()) return { ok:false, why:'this needs the internet' };
+    if (!this.cred() || !lineUp()) return { ok:false, why:'this needs the internet' };
     try {
       var r = await fetchBy(this.api + '/api/till/listen', { method:'POST',
-        headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(b) });
+        headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(b) });
       return r.ok ? await r.json() : { ok:false, why:'HTTP ' + r.status };
     } catch (e) { return { ok:false, why:e.message }; }
   },
@@ -5106,9 +5212,9 @@ var CloudHost = {
    */
   /** ⚠️ NOT QUEUED. A read has nothing to replay, and a suggestion computed from last week is worse than none. */
   async tillGet(path){
-    if (!this.key || !lineUp()) return { ok:false, why:'offline' };
+    if (!this.cred() || !lineUp()) return { ok:false, why:'offline' };
     try {
-      var r = await fetchBy(this.api + path, { headers:{ 'X-Api-Key': this.key } });
+      var r = await fetchBy(this.api + path, { headers: this.auth() });
       if (!r.ok) return { ok:false, why:'ChitBridge refused it (' + r.status + ')', status:r.status };
       return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
     } catch (e) { return { ok:false, why:e.message }; }
@@ -5120,11 +5226,11 @@ var CloudHost = {
    */
   async tillPost(path, body, opts){
     var noQueue = !!(opts && opts.noQueue);
-    if (!this.key) return { ok:false, why:'this counter is not paired' };
+    if (!this.cred()) return { ok:false, why:'this counter is not paired' };
     if (lineUp()) {
       try {
         var r = await fetchBy(this.api + path, { method:'POST',
-          headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(body) });
+          headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(body) });
         if (r.ok) return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
         /* a refusal is FINAL — queueing a 400 would retry a mistake for ever */
         var said = ''; try { var j = await r.json(); said = (j && (j.message || j.error)) || ''; } catch (_) {}
@@ -5142,10 +5248,12 @@ var CloudHost = {
     return { ok:true, queued:true };
   },
   async verify(){
-    if (!this.key || !lineUp()) return { ok:false, why:'this needs the internet' };
+    if (!this.cred() || !lineUp()) return { ok:false, why:'this needs the internet' };
     try {
-      var r = await fetchBy(this.api + '/api/till/verify', { headers:{ 'X-Api-Key': this.key } });
-      return r.ok ? Object.assign({ ok:true }, await r.json()) : { ok:false, why:'HTTP ' + r.status };
+      var r = await fetchBy(this.api + '/api/till/verify', { headers: this.auth() });
+      if (r.ok) return Object.assign({ ok:true }, await r.json());
+      var vc = null; try { vc = (await r.json()).code || null; } catch (_) { vc = null; }
+      return { ok:false, why:'HTTP ' + r.status, status: r.status, code: vc };
     } catch (e) { return { ok:false, why:e.message }; }
   },
   async doc(d){
@@ -5169,7 +5277,7 @@ var CloudHost = {
   async creditNote(cn){
     LAST_SERIES = null;
     var no = await nextNumber('CN');
-    var doc = Object.assign({ at: new Date().toISOString(), till: ls.get('cb_till_id', 'C1'),
+    var doc = Object.assign({ at: new Date().toISOString(), till: tillId(),
                               catalogue_version: S && S.version }, cn, { no: no });
     doc.chitBody = chitOfCN(doc);
     await DB.put('bills', doc);
@@ -5190,7 +5298,7 @@ var CloudHost = {
   async payment(p){
     LAST_SERIES = null;
     var no = await nextNumber('R');
-    var doc = Object.assign({ at: new Date().toISOString(), till: ls.get('cb_till_id', 'C1') }, p, { kind: 'payment', no: no });
+    var doc = Object.assign({ at: new Date().toISOString(), till: tillId() }, p, { kind: 'payment', no: no });
     doc.chitBody = chitOfPayment(doc);
     var key = 'payments-' + doc.at.slice(0, 10);
     var list = (await DB.get(key)) || [];
@@ -5203,7 +5311,7 @@ var CloudHost = {
   async expense(e){
     LAST_SERIES = null;
     var no = await nextNumber('EXP');
-    var doc = Object.assign({ at: new Date().toISOString(), till: ls.get('cb_till_id', 'C1') }, e,
+    var doc = Object.assign({ at: new Date().toISOString(), till: tillId() }, e,
                              { kind: 'expense', no: no });
     doc.chitBody = chitOfExpense(doc);
     await DB.put('bills', doc);
@@ -5219,7 +5327,7 @@ var CloudHost = {
   async subscription(s){
     LAST_SERIES = null;
     var no = await nextNumber('SUB');
-    var doc = Object.assign({ at: new Date().toISOString(), till: ls.get('cb_till_id', 'C1') }, s,
+    var doc = Object.assign({ at: new Date().toISOString(), till: tillId() }, s,
                              { kind: 'subscription', no: no });
     doc.chitBody = chitOfSubscription(doc);
     await DB.put('bills', doc);
@@ -5230,7 +5338,7 @@ var CloudHost = {
   async bill(b){
     LAST_SERIES = null;
     var no = await nextNumber();
-    var bill = Object.assign({ no: no, at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
+    var bill = Object.assign({ no: no, at: new Date().toISOString(), till: tillId(),
                                catalogue_version: S && S.version, series: LAST_SERIES }, b);
     await DB.put('bills', bill);
     await DB.put('queue', bill);
@@ -5309,7 +5417,7 @@ var CloudHost = {
       } else return;
     }
     this._busyAt = Date.now();
-    if (!this.key) { this.last = { at: Date.now(), tried: 0, sent: 0,
+    if (!this.cred()) { this.last = { at: Date.now(), tried: 0, sent: 0,
       why: 'This counter has no key yet — pair it from the shop, then the bills will go.' };
       try { await queueTally(); paintStatus(); } catch (_) {} return; }
     if (!lineUp()) { this.last = { at: Date.now(), tried: 0, sent: 0,
@@ -5317,7 +5425,7 @@ var CloudHost = {
       try { await queueTally(); paintStatus(); } catch (_) {} return; }
     this._busy = true;
     /* ⚠️ hoisted, because the finally below reports them and DB.all can throw before the loop begins */
-    var why = null, tried = 0, sent = 0;
+    var why = null, tried = 0, sent = 0, code = null;
     try {
       var rows = (await DB.all('queue')) || [];
       /**
@@ -5360,7 +5468,7 @@ var CloudHost = {
              identical to a hung one, and the cure for a hung one is a second drain over the top of this one. */
           this._busyAt = Date.now();
           var r = await fetchBy(url, { method:'POST',
-            headers:{ 'Content-Type':'application/json', 'X-Api-Key': this.key }, body: JSON.stringify(payload) });
+            headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(payload) });
           if (r.ok) {
             /**
              * ⭐⭐ THE SERVER CHECKS THE NUMBER WE PRINTED, and answers `number_check` only when something is
@@ -5412,10 +5520,13 @@ var CloudHost = {
              "the key was refused" stopped every bill behind it and named the wrong cause. That bill now keeps the
              server's words below, like any other refusal, and the rest of the queue goes. */
           else if ((r.status === 403 || r.status === 401)
-                   && (await r.clone().json().then(function(j){ return j && j.code; }, function(){ return ''; })) !== 'TILL_SEND_REFUSED') {
+                   && (code = await r.clone().json().then(function(j){ return (j && j.code) || ''; }, function(){ return ''; })) !== 'TILL_SEND_REFUSED') {
             /* ⚠️ A KEY PROBLEM IS NOT FIXED BY TRYING HARDER, and it is also not fixed by saying nothing. This is
                the one failure a shopkeeper can actually act on — and until now it was the most invisible. */
-            why = 'The shop refused this counter\'s key (' + r.status + '). It may have been changed or removed — '
+            /* ⭐ M08: a PERSON's refusal is never "the key" — its words come from the code (personRefused), and the
+               rows stay exactly where they are: nothing is deleted or re-stamped on a 4xx, ever. */
+            if (personOn()) { var pr = personRefused(code, rows.length - sent); why = pr.line + '. ' + pr.means; }
+            else why = 'The shop refused this counter\'s key (' + r.status + '). It may have been changed or removed — '
                 + 'pair this counter again and the bills will go.';
             break;
           } else {
@@ -5481,7 +5592,7 @@ var CloudHost = {
         why = 'Nothing was even attempted — tell us this, it is not normal.';
       /* ⭐ and the exact moment the earliest one comes due is booked — see drainSoon() */
       try { drainSoon(rows); } catch (_) {}
-      this.last = { at: Date.now(), tried: tried, sent: sent, why: why };
+      this.last = { at: Date.now(), tried: tried, sent: sent, why: why, code: code || null };
       /**
        * ⚠️⚠️ THE BAR MUST NOT LIE ABOUT MONEY. drain() sent the bills and never told the screen, so the counter went on saying
        * "1 bill(s) waiting" over an empty queue — and to a shopkeeper that reads as a sale that has not reached the server. It
@@ -5503,7 +5614,14 @@ function fyOf(d){ var y=d.getFullYear(), apr=d.getMonth()>=3, a=apr?y:y-1; retur
 /** the shop's jurisdiction — the pivot every numbering rule hangs from. Defaults to India, which is where
  *  this counter has actually been built and tested. */
 function docCountry(){ return (S && S.shop && S.shop.country) || 'IN'; }
-function tillId(){ return ls.get('cb_till_id','C1'); }
+/**
+ * ⭐ WHICH PREFIX THIS COUNTER NUMBERS UNDER. A keyed counter / the shop PC: the device-wide answer the shop gave it
+ * (cb_till_id, C1 until told otherwise). ⭐ M08 — a PERSON's device: its own label under the shop's slot, never C1
+ * (the shop PC's) and never the key's old number — deviceLabel() until the shop assigns one (M11, via tillClaim).
+ */
+function tillId(){ return personOn() ? ls.get(shopLs('cb_till_pid'), deviceLabel()) : ls.get('cb_till_id', 'C1'); }
+/** the one writer of that prefix — tillClaim() (the shop's answer) and nothing else */
+function tillIdSet(v){ if (personOn()) ls.set(shopLs('cb_till_pid'), String(v)); else ls.set('cb_till_id', String(v)); }
 /**
  * ── ⭐⭐⭐ ONE PREFIX PER COUNTER (Athi, 2026-09-17) ────────────────────────────────────────────────────────────
  *
@@ -5580,10 +5698,33 @@ async function tillClaimQuery(){
  * (C:\dev\DESIGN-engine-canary.md), not this one's.
  */
 var ENGINE_V = null;
+/**
+ * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
+ * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
+ */
+var TILL_BUILD = '2026-10-07.m08';
+/**
+ * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
+ * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
+ * re-reads its page. When the served versions.json names a newer page, the worker is asked to update and the page
+ * reloads ONCE (sessionStorage remembers which version it reloaded for, so a lagging CDN cannot loop it).
+ * ⚠️⚠️ IT TOUCHES NOTHING THE SHOP KEEPS: no localStorage key, no IndexedDB store — history is never cleared by a
+ * version check. Only the browser's copy of the page is refreshed. Browser only: the shop PC's program serves and
+ * updates its own copy (core.kitUpdate).
+ */
+function pageStale(j){
+  if (onAgent() || !j || !j.page || j.page === TILL_BUILD) return false;
+  var mark = null; try { mark = sessionStorage.getItem('cb_till_reloaded_for'); } catch (_) { mark = null; }
+  if (mark === j.page) return false;                       /* already reloaded for this one — do not loop */
+  try { sessionStorage.setItem('cb_till_reloaded_for', j.page); } catch (_) {}
+  try { if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(function(r){ if (r) r.update(); }).catch(function(){}); } catch (_) {}
+  setTimeout(function(){ try { location.reload(); } catch (_) {} }, 600);
+  return true;
+}
 async function engineVersionsLoad(){
   if (onAgent()) { if (STATE && STATE.engines) ENGINE_V = STATE.engines; return ENGINE_V; }
   if (ENGINE_V) return ENGINE_V;
-  try { var r = await fetch('/engine/versions.json'); if (r.ok) { var j = await r.json(); ENGINE_V = (j && j.engines) || null; } } catch (_) {}
+  try { var r = await fetch('/engine/versions.json'); if (r.ok) { var j = await r.json(); ENGINE_V = (j && j.engines) || null; try { pageStale(j); } catch (_) {} } } catch (_) {}
   return ENGINE_V;
 }
 function engineQueryOf(v){
@@ -5624,7 +5765,7 @@ async function tillClaim(t){
   var moved = !!t.moved_from;
   /* ⚠️ a NAMED counter's number is the counter's, so it is always taken — whatever this PC billed under before */
   if (!moved && !t.counter && (await tillIssued())) return;
-  ls.set('cb_till_id', want);
+  tillIdSet(want);
   if (t.counter) { toastLine('This PC is now counter ' + want + (t.counter_name ? ' — ' + t.counter_name : '') + '.'); try { paintStatus(); } catch (_) {} return; }
   toastLine(moved
     ? ('This counter now numbers its bills as ' + want + '. ' + (t.held_by || 'Another counter')
@@ -5991,6 +6132,8 @@ async function pickHost(){
   } catch (_) {}
   CloudHost.api = ls.get('cb_till_api', (location.origin.indexOf('localhost') >= 0 ? 'https://chitbridge-api-production.up.railway.app' : (window.CB_API || 'https://chitbridge-api-production.up.railway.app')));
   CloudHost.key = ls.get('cb_till_key', null);
+  /* M08: and the person session this device keeps — read once here, written only by becomeShop() (G1) */
+  CloudHost.person = personLoad();
   /* a key may be handed over once in the address: .../till.html#key=… — it is stored and the address is cleaned */
   if (location.hash.indexOf('key=') >= 0) {
     var hv = hashVal;                                     /* ⚠️ one reader — see hashVal(), also used by the paste handler */
@@ -6145,6 +6288,9 @@ async function load(){
   if (!HOST._whoNext) { try { HOST._whoNext = !!whoAdoptPending(); } catch (_) {} }
   /* ⭐ M15: the day's retention, once — see retainDaily() */
   if (!HOST._retained) { HOST._retained = true; try { retainDaily(); } catch (_) {} }
+  /* ⭐ M08: a browser reads engine/versions.json once per open — the engines it bills with, and whether this page is
+     the one the server now serves (pageStale) — not only when somebody presses ↻ */
+  if (!HOST._verRead && !onAgent() && lineUp()) { HOST._verRead = true; try { engineVersionsLoad().catch(function(){}); } catch (_) {} }
   /**
    * ⚠️⚠️⚠️ THE COUNTER CLAIMS ITS NUMBER HERE, FOR BOTH HOSTS ([TILL-130]).
    *
@@ -6157,13 +6303,16 @@ async function load(){
    * ⚠️ load() is where the snapshot ARRIVES for both hosts, which is the only place that can be right for
    * both. It is idempotent — tillClaim() writes the same id again — and silent when there is no till block.
    */
-  try { if (S && S.till) await tillClaim(S.till); } catch (_) {}
+  try { if (S && S.till) await tillClaim(S.till);
+        /* ⭐ M08: a person's device numbers under its own label until the shop assigns one (M11) — the same claim
+           path, so tillGivenOK() is the same gate for both and nothing blocks a sale on a phone that has its shop */
+        else if (S && personOn() && !ls.get(tillGivenKey(), '')) await tillClaim({ assigned_id: tillId() }); } catch (_) {}
   /* ⚠️ the stored count is a memory; the queue is the fact. Re-count on every load, never trust the number back. */
   try { await queueTally(); } catch (_) {}
   var bad = wrongShop();
   if (bad) return stopWrongShop(bad);
   applyLook();
-  document.getElementById('shopname').textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.key ? 'Not paired yet' : 'This shop');
+  document.getElementById('shopname').textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.cred() ? 'Not signed in yet' : 'This shop');
   /* ⭐ said beside the shop's own name, because "which shop is this?" is the question it answers */
   try {
     var wb = document.getElementById('whosebar');
@@ -6175,7 +6324,7 @@ async function load(){
   /* ⚠️ A NEW COUNTER READS ITS SHOP BY ITSELF (2026-09-17). A counter opened for the first time, online and keyed, used to sit on
      "No copy of the shop yet — press ↻" — a button to press for the one thing it obviously has to do. Once per page, so a shop
      that cannot be read does not loop; refresh() calls load() again. */
-  if (!S && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.key && lineUp()) { FIRST_READ = true; refresh().catch(function(){}); }
+  if (!S && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.cred() && lineUp()) { FIRST_READ = true; refresh().catch(function(){}); }
   /**
    * ⭐⭐⭐ R1 · "YOU HAD A BILL OPEN…" — HERE, not at boot. load() is where the shop arrives, and the lines have
    * to be re-priced through the offers engine before anybody is shown a total. Once per page (DRAFT_ASKED):
@@ -6261,8 +6410,18 @@ function flashHide(){ var el = document.getElementById('flash'); if (el) { el.hi
  * comfortable answer: it is never wrong, and it never helps. A key that has stopped working and a line that
  * is down look identical from the footer and need completely different things done about them.
  */
-function refreshFailed(status){
+function refreshFailed(status, code){
   var sh = paired();
+  /**
+   * ⭐⭐ M08 — A PERSON IS NEVER TOLD "DUE TO MAINTENANCE". That story belongs to a KEY holder (the shop PC page,
+   * a pasted key). For a kept session a 401 is one of three named things (SESSION_EXPIRED · DEVICE_REVOKED ·
+   * DEVICE_MISMATCH) and the words and the button come from the code — personRefused(). The queue is untouched.
+   */
+  if (personOn() && (status === 401 || status === 403)) {
+    KEY_OK = false;
+    var pr = personRefused(code, STATE && STATE.queued);
+    return flash(pr.ico, pr.line, pr.fix, function(){ fromMenu(window[pr.act]); });
+  }
   /**
    * ⚠️⚠️⚠️ [TILL-193] NEITHER THE ICON NOR THE HEADLINE SAYS "KEY" ANY MORE. Athi: "we cannot showcase paste
    * a key at all to the user, he will not understand... if it is not mapping, then say that due to
@@ -6296,7 +6455,7 @@ async function refresh(){
     if (r && r.need === 'key') { busyDone(); return openSettings('device'); }
     if (r && r.rejected) { busyDone(); return; }        /* the refusal has already said its piece on the bar */
     /* ⚠️ A REFUSAL FROM THE SERVER IS STILL A FAILED READ, and must never toast "up to date" */
-    if (r && r.ok === false) return refreshFailed(Number(r.status) || 0);
+    if (r && r.ok === false) return refreshFailed(Number(r.status) || 0, r.code || null);
     busyAt(1, 1, 'Sorting it out…');
     await load();
     var n = ((S && S.items) || []).length;
@@ -14945,7 +15104,8 @@ async function queueTally(){
  */
 function paired(){
   if (typeof AgentHost !== 'undefined' && HOST === AgentHost) return !!(STATE && STATE.paired);
-  return !!(typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key);
+  /* M08: a browser is paired by a key OR by the person session it keeps — either one names a shop */
+  return !!(typeof CloudHost !== 'undefined' && CloudHost && (CloudHost.key || (CloudHost.person && CloudHost.person.token)));
 }
 /** the shop this counter belongs to, as far as it can tell OFFLINE — name and bridge id, never the key */
 function pairedShop(){
@@ -14995,9 +15155,14 @@ function shopReady(){
    * a shop PC (DOOR.act === 'connect') keeps its own wording, a real one-time setup step, not a fault.
    */
   if (!paired()) {
+    /**
+     * ⭐ M08: a browser with NOTHING on it (no key, no person session) is a fresh phone, not a fault — "Due to
+     * maintenance" is the KEY holder's story and is said only where a key was refused (refreshFailed, keyWatch).
+     * The person signs in; the phone then bills as that person on this device.
+     */
     stops.push(DOOR.act === 'key'
-      ? { why: 'Due to maintenance, this counter needs to sign in again.',
-          means: 'Nothing can be sold until it does.', fix: DOOR.label, act: 'pairAgain' }
+      ? { why: 'Nobody has signed in on this phone yet.',
+          means: 'Sign in with your user ID; this phone then bills as you.', fix: DOOR.label, act: 'pairAgain' }
       : { why: 'This counter is not signed in to a shop yet.',
           means: 'It has no key, so there is nothing to sell and nowhere to send a bill.',
           fix: DOOR.label, act: 'pairAgain' });
@@ -15129,8 +15294,13 @@ function queueStuck(){
 function queueBlock(){
   var w = (STATE && STATE.queue_why) || null;
   var say = String((w && w.say) || (HOST && HOST.last && HOST.last.why) || '');
-  var code = (w && w.code) || null;
+  var code = (w && w.code) || (HOST && HOST.last && HOST.last.code) || null;
   if (!say) return null;
+  /* ⭐ M08: a PERSON's refusal has its own words per code — and never "the key" (personRefused) */
+  if (personOn() && (code === 'SESSION_EXPIRED' || code === 'DEVICE_REVOKED' || code === 'DEVICE_MISMATCH' || /\b40[13]\b/.test(say))) {
+    var pr = personRefused(code, STATE && STATE.queued);
+    return { line: pr.line, fix: pr.fix, act: pr.act };
+  }
   if (code === 'COUNTER_CLOSED')
     return { line: 'This counter was opened somewhere else', fix: 'Take it back', act: 'pairAgain' };
   /* ⚠️ a 401, a revoked key and a key of the wrong kind are three causes and ONE thing to do about them */
@@ -17188,7 +17358,7 @@ function health(){
       + 'the series must restart each year, how long a number may be and which characters are allowed have not '
       + 'been confirmed for ' + c + ' \u2014 only for India.',
       'Show a bill to your accountant once, and tell us if the shape has to change.',
-      [window.CBDoc.compose({ country: c, prefix: ls.get('cb_till_id','C1'), at: new Date(), seq: 41 })]);
+      [window.CBDoc.compose({ country: c, prefix: tillId(), at: new Date(), seq: 41 })]);
   })();
 
   /**
@@ -17769,7 +17939,7 @@ async function workbookGet(){
   try {
     /* ⚠️⚠️ fetchBy, NEVER bare fetch — a counter request that can hang for ever is a dialog a shopkeeper
        cannot get out of on a bad line. snapshot-wire enforces this across the whole page, and caught it here. */
-    var r = await fetchBy(url, key ? { headers: { 'X-Api-Key': key } } : {}, SLOW);
+    var r = await fetchBy(url, (HOST && HOST.auth) ? { headers: HOST.auth() } : (key ? { headers: { 'X-Api-Key': key } } : {}), SLOW);
     if (!r.ok) throw new Error('ChitBridge answered ' + r.status);
     var blob = await r.blob();
     var href = URL.createObjectURL(blob);
@@ -18140,7 +18310,7 @@ function signoutCloud(){
   document.getElementById('signinbody').innerHTML =
       '<p class="note">Sign this counter out of the shop?</p>'
     + (q ? '<p class="note"><b>' + q + ' bill' + (q > 1 ? 's have' : ' has') + ' not reached the shop yet.</b>'
-           + ' Press ↻ first while online, or they stay on this device until the same key is pasted back in.</p>'
+           + ' Press ↻ first while online, or they stay on this device until this shop is signed in here again.</p>'
          : '<p class="note">Everything this counter took has reached the shop.</p>')
     + '<div class="dlgbtns"><button onclick="signinClose()">Stay signed in · Esc</button>'
     + '<button class="' + (q ? '' : 'pri') + '" data-testid="till-signout-cloud" onclick="signoutCloudDo()">'
@@ -18418,7 +18588,7 @@ function lineSince(){
 var KEY_OK = true, KEY_ASKED = 0, KEY_EVERY_MS = 600000;
 async function keyWatch(){
   try {
-    if (!HOST || !HOST.verify || !HOST.key) return;
+    if (!HOST || !HOST.verify || !(HOST.cred ? HOST.cred() : HOST.key)) return;
     if (!lineUp()) return;                 /* nothing to learn from a dead line */
     if (Date.now() - KEY_ASKED < KEY_EVERY_MS) return;
     KEY_ASKED = Date.now();
@@ -18432,7 +18602,11 @@ async function keyWatch(){
     var was = KEY_OK;
     KEY_OK = refused ? false : (v && v.ok ? true : KEY_OK);
     /* ⚠️ [TILL-193] same plain framing as refreshFailed()'s flash — one story, not two — see its comment. */
-    if (was && !KEY_OK) flash('🔧', 'Due to maintenance', keyWord(), function(){ pairAgain(); });
+    if (was && !KEY_OK) {
+      /* ⭐ M08: a person hears the code's own words; "Due to maintenance" stays the key holder's */
+      if (personOn()) { var pr = personRefused(v && v.code, STATE && STATE.queued); flash(pr.ico, pr.line, pr.fix, function(){ fromMenu(window[pr.act]); }); }
+      else flash('🔧', 'Due to maintenance', keyWord(), function(){ pairAgain(); });
+    }
   } catch (_) { /* a check that cannot run is not a verdict */ }
 }
 
@@ -21030,7 +21204,7 @@ async function rcvConfirm(){
   }
   var landed = rcvLanded();
   var doc = {
-    kind: 'receipt', at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
+    kind: 'receipt', at: new Date().toISOString(), till: tillId(),
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     vendor: { name: (RCV.vendor || '').trim() || 'Not named' },
@@ -21186,7 +21360,7 @@ async function dspConfirm(){
   var shortNoReason = DSP.lines.filter(function(l){ return !l.dropped && l.picked > 0 && l.picked < l.ordered && !l.reason; });
   if (shortNoReason.length) { say('Say why ' + shortNoReason[0].name + ' is short. The customer should hear it today, not at delivery.'); return; }
   var doc = {
-    kind: 'despatch', at: new Date().toISOString(), till: ls.get('cb_till_id','C1'),
+    kind: 'despatch', at: new Date().toISOString(), till: tillId(),
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     against: DSP.task ? { chit_id: DSP.task.chit_id, party: DSP.task.party, subject: DSP.task.subject } : null,
@@ -23900,6 +24074,19 @@ var USIGN = { sent: false, refused: '', person: null, who: '', busy: false, useP
 function usignApiBase(){
   return (typeof AgentHost !== 'undefined' && HOST === AgentHost) ? '' : (CloudHost.api || '');
 }
+/**
+ * ⭐ M08 — WHICH DOOR, AND WHAT RIDES WITH THE SIGN-IN. A browser asks the sign-in routes themselves
+ * (/api/signin/ask · /verify, M06) and names its device and surface so the server mints a LISTED 30-day session
+ * (M05, D3). The shop PC's page keeps posting the old paths to its own program, which forwards them unchanged
+ * and gets the legacy token its enrol has always needed — nothing about the PC's sign-in moves.
+ */
+function usignPath(step){
+  if (onAgent()) return step === 'ask' ? '/api/entities/register' : '/api/entities/verify';
+  return step === 'ask' ? '/api/signin/ask' : '/api/signin/verify';
+}
+function usignBody(b){
+  return onAgent() ? b : Object.assign({}, b, { device_id: deviceId(), surface: 'till' });
+}
 async function usignPost(path, body){
   try {
     /* ⚠️ fetchBy, not fetch — a real cloud round-trip with no deadline is the exact fault
@@ -23918,8 +24105,10 @@ async function usignPost(path, body){
 /** [TILL-192] forceEnrol: true only when pairAgain() called this — see its own comment. A routine sign-in
  * (whoAct()'s 'signin' door) passes nothing, and paired()'s existing key is trusted as it always was. */
 function usignOpen(forceEnrol){
-  USIGN = { sent: false, refused: '', person: (typeof WHO !== 'undefined' && WHO && WHO.id) ? WHO : null,
-            who: '', busy: false, usePin: false, forceEnrol: !!forceEnrol };
+  /* ⭐ M08: opened BECAUSE the shop refused this device (forceEnrol) → start at the user-ID box, and only the LINE can
+     mend it — the counter's own PIN would put a name on the counter without renewing anything. WHO is untouched (G2). */
+  USIGN = { sent: false, refused: '', person: (!forceEnrol && typeof WHO !== 'undefined' && WHO && WHO.id) ? WHO : null,
+            who: '', busy: false, usePin: false, forceEnrol: !!forceEnrol, noLocal: !!forceEnrol };
   usignPaint();
   var d = document.getElementById('usigndlg');
   if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
@@ -23953,16 +24142,13 @@ function usignPaint(){
       + '<p class="note u">Taking it here stops that device from sending. Anything it has already taken stays'
       + ' on it and goes when it signs in again — nothing is lost either way.</p>'
       + '<div class="dlgbtns"><button class="pri" onclick="usignClose()">Leave it alone · Esc</button>'
-      + '<button data-testid="till-signin-takeover" onclick="USIGN.held=null;usignBecome(true)">Take counter ' + c + ' here</button></div>'
       /**
-       * ⚠️⚠️ A PHONE BESIDE A WORKING PC (2026-10-01). Athi, on a phone never paired: *"i couldn't login at all in
-       * the mobile."* A fresh browser always asks for C1, and C1 was open on the shop's own PC — so the only two
-       * ways on were "nobody signed in" or knocking the PC off. The third is the one he wanted: this device as
-       * ANOTHER counter, with its own numbers. The PC is not touched. Browser only — the shop PC's program
-       * claims its own number.
+       * ⭐ M08: "Take counter … here" is a SHOP-PC decision only — one PC taking a number from another PC. A browser
+       * never reaches this stage any more (it keeps a person session and claims no counter), so a phone can never be
+       * offered the button that used to knock the shop PC off ([[project-counter-identity]], DESIGN §1.1).
        */
-      + (onAgent() ? '' : '<div class="dlgbtns"><button data-testid="till-usign-newcounter" onclick="usignNewCounter()">'
-         + 'Open as another counter</button></div><p class="note u">Its own bill numbers. ' + c + ' stays where it is.</p>');
+      + (onAgent() ? '<button data-testid="till-signin-takeover" onclick="USIGN.held=null;usignBecome(true)">Take counter ' + c + ' here</button>' : '')
+      + '</div>';
     body.innerHTML = h; return;
   }
 
@@ -24069,7 +24255,7 @@ async function usignAsk(again){
     usignPaint(); return;
   }
   USIGN.who = String(typed).trim(); USIGN.busy = true; USIGN.refused = '';
-  var r = await usignPost('/api/entities/register', a.body);
+  var r = await usignPost(usignPath('ask'), usignBody(a.body));
   USIGN.busy = false;
   if (!r.ok) { USIGN.refused = SIGN().refusal({ status: r.status, message: r.body && (r.body.message || r.body.error) }); usignPaint(); return; }
   /**
@@ -24093,7 +24279,7 @@ async function usignVerify(){
   var v = SIGN().verify(USIGN.who, otp);
   if (!v.ok) { USIGN.refused = v.why; usignPaint(); return; }
   USIGN.busy = true; USIGN.refused = '';
-  var r = await usignPost('/api/entities/verify', v.body);
+  var r = await usignPost(usignPath('verify'), usignBody(v.body));
   USIGN.busy = false;
   if (!r.ok) { USIGN.refused = SIGN().refusal({ status: r.status, message: r.body && (r.body.message || r.body.error) }); usignPaint(); return; }
   /* ⭐⭐ THE ENGINE TAKES THE IDENTITY AND DROPS THE TOKEN. 'counter', not 'session' — deliberately. */
@@ -24116,6 +24302,16 @@ async function usignVerify(){
                          who: '', busy: false, usePin: false }; usignPaint(); return; }
   }
   if (move !== 'same') { USIGN.pending = { token: r.body.token, person: k.person, idn: r.body.identity || null }; return usignBecome(false); }
+  /**
+   * ⭐ M08: on a browser that bills as a PERSON of this shop, the fresh session is KEPT (becomeShop, the one writer;
+   * same shop → no reload) — a shift change hands the next person their own session, and a sign-in after
+   * SESSION_EXPIRED lets the queue go again under the same client_refs. A keyed browser whose key works is left
+   * exactly as it was: identity only, no session, its store untouched.
+   */
+  if (personOn() && r.body.token) {
+    var kept = await becomeShop({ token: r.body.token, who: k.person, idn: r.body.identity || null });
+    if (kept && kept.ok && KEY_OK === false) { KEY_OK = true; flashHide(); try { refresh().catch(function(){}); } catch (_) {} }
+  }
   USIGN.person = k.person;
   personIn(k.person);
   usignAfterIn(k.person, r.body.identity || null);
@@ -24139,9 +24335,15 @@ function usignShopMove(answer){
    * session was never spent on /api/till/enrol, and every refresh flashed "Due to maintenance" again — a loop no
    * sign-in could break. KEY_OK is false once the shop answered 401/403 (refreshFailed, keyCheck): enrol afresh.
    */
+  var theirs = ((answer && answer.identity) || {}).entity_id || null;
+  /**
+   * ⭐ M08: a browser already billing as a PERSON of this very shop — the new session REPLACES the kept one in place
+   * (same shop, same store, no reload): a shift change, a renewed sign-in after SESSION_EXPIRED, or the same person
+   * again. usignVerify() hands the token to becomeShop() for that; the shop does not change, so this is 'same'.
+   */
+  if (personOn() && theirs && String(CloudHost.person.entity_id) === String(theirs)) return 'same';
   if (!paired() || (USIGN && USIGN.forceEnrol) || (typeof KEY_OK !== 'undefined' && KEY_OK === false)) return 'pair';
   var mine = S && S.entity_id;
-  var theirs = ((answer && answer.identity) || {}).entity_id || null;
   if (mine && theirs && String(mine) !== String(theirs)) return 'other';
   return 'same';
 }
@@ -24161,16 +24363,8 @@ async function usignBecome(takeover, counter){
   USIGN.opening = (r.shop && (r.shop.name || r.shop.bridge_id)) || 'your shop';
   usignPaint();                                   /* "Opening …" — the reload or the restart follows */
 }
-/** the held stage's third way: a free counter number for this browser, then the same enrol — the holder untouched */
-async function usignNewCounter(){
-  var p = USIGN.pending; if (!p) return;
-  var not = USIGN.held && USIGN.held.counter;
-  USIGN.busy = true;
-  var f = await counterFree(p.token, not);
-  USIGN.busy = false; USIGN.held = null;
-  if (!f.ok) { USIGN.pending = null; USIGN.refused = f.message; usignPaint(); return; }
-  return usignBecome(false, f.id);
-}
+/* M08: usignNewCounter() / counterFree() / enrolBrowser() are GONE — a browser claims no counter and mints no key.
+   The shop PC's program still enrols through becomeShop()'s agent half (/api/signin/finish), exactly as before. */
 
 function onAgent(){ return typeof AgentHost !== 'undefined' && HOST === AgentHost; }
 
@@ -24212,69 +24406,40 @@ async function becomeShop(to){
                            : function(st){ return !(st && st.paired); }, to.gaveUp);
     return Object.assign({ restarting: true }, r);
   }
-  var key = to.key || null, shop = null;
+  var key = to.key || null, shop = null, same = false;
   if (to.token) {
-    var en = await enrolBrowser(to.token, to.takeover, to.counter);
-    if (!en.ok) return en;
-    key = en.key; shop = en.shop;
-    /* ⭐ the counter number the shop gave THIS browser — a device value, read by the next start-up's claim */
-    if (en.counter && String(en.counter).toUpperCase() !== String(tillId()).toUpperCase()) ls.set('cb_till_id', String(en.counter).toUpperCase());
+    /**
+     * ── ⭐⭐⭐ M08 · A BROWSER KEEPS THE PERSON SESSION — it never spends it on /api/till/enrol ──────────────────
+     * DECIDED (2026-10 cycle): a phone is a person session, not a device key. The token the sign-in answered is
+     * kept under cb_till_person (device-wide, like the key was) and names the shop the person belongs to; the
+     * store is per shop + device (tillStore). No counter is asked for, so a phone can never be offered
+     * "Take counter C1 here" and the shop PC can never close it ([[project-counter-identity]], DESIGN §1.1).
+     * ⚠️⚠️ AN OLD KEY ON THIS DEVICE IS LEFT WHERE IT IS, and so is its store — nothing is cleared, renamed or
+     * moved here (M10 does the move). The session simply takes precedence from the next start-up.
+     */
+    var person = personOf(to.token, to.idn, to.who);
+    if (!person) return { ok: false, message: 'Signed in, but the shop did not say which shop you belong to.' };
+    shop = { entity_id: person.entity_id, bridge_id: person.bridge_id || null };
+    same = !!(CloudHost.person && String(CloudHost.person.entity_id) === String(person.entity_id));
+    if (!ls.set('cb_till_person', JSON.stringify(person))) return { ok: false, message: 'This phone could not keep the sign-in (its storage refused). Free some space and try again.' };
+    CloudHost.person = person;                       /* ⚠️ FIRST — shopLs() names this shop's slot from it */
+    if (to.who) whoPending(to.who, shop, to.idn);
+    /* the same shop again is not a change of shop — the store is the same, nothing to reopen */
+    if (!same) location.reload();
+    return { ok: true, same: same, shop: shop };
   }
-  var same = !!key && key === CloudHost.key;
+  same = !!key && key === CloudHost.key;
   try { if (key) ls.set('cb_till_key', key); else { if (ls.del) ls.del('cb_till_key'); localStorage.removeItem('cb_till_key'); } } catch (_) {}
   CloudHost.key = key;                             /* ⚠️ FIRST — shopLs() below names the NEW shop's slot from it */
+  /* M08: a key handed over makes this a KEYED counter again, and a sign-out ends the person session too — one door */
+  try { localStorage.removeItem('cb_till_person'); } catch (_) {}
+  CloudHost.person = null;
   if (key && to.marker && to.marker.shop) { ls.set(shopLs('cb_till_shop'), to.marker.shop); ls.set(shopLs('cb_till_shopname'), to.marker.name || ''); }
   if (to.who) whoPending(to.who, shop, to.idn);
   if (location.hash.indexOf('key=') >= 0) history.replaceState(null, '', location.pathname + location.search);
   /* the same key again is not a change of shop — nothing to reopen, and reloading a boot into itself would loop */
   if (!same) location.reload();
   return { ok: true, same: same, shop: shop };
-}
-
-/** the browser's half of an enrol: a session in, this shop's key out. Held elsewhere is reported, not decided. */
-async function enrolBrowser(token, takeover, counter){
-  var id = counter || tillId();
-  var r = await fetchBy(CloudHost.api + '/api/till/enrol', { method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ name: 'Browser counter', counter: id, takeover: !!takeover }) })
-    .then(function(x){ return x.json().then(function(j){ return { status: x.status, ok: x.ok, body: j }; }); })
-    .catch(function(){ return { status: 0, ok: false, body: {} }; });
-  if (!r.ok && r.status === 409 && r.body && r.body.code === 'COUNTER_HELD') {
-    var c = r.body.counter || {};
-    return { ok: false, held: true, counter: c.id || id, held_by: (c.held_by && c.held_by.name) || null, seen: c.seen || null };
-  }
-  /**
-   * ⚠️⚠️ NO COUNTER BY THAT NUMBER — a shop that has never opened one has none at all, and a fresh browser always
-   * asks for C1 (2026-10-01, a phone: "Signed in, but the shop did not issue a counter key. There is no counter C1
-   * in this shop."). Nobody holds anything, so there is nothing to decide: ask the shop for a free one, once.
-   * ⚠️ And the code has been SPENT by now — sending the person back to type 123456 again could only be refused.
-   */
-  if (!r.ok && r.status === 404 && !counter) {
-    var f = await counterFree(token, null);
-    if (f.ok) return enrolBrowser(token, takeover, f.id);
-    return { ok: false, message: 'Signed in, but the shop did not issue a counter key. ' + f.message };
-  }
-  if (!r.ok || !r.body || !r.body.key)
-    return { ok: false, message: 'Signed in, but the shop did not issue a counter key.' + (r.body && r.body.message ? ' ' + r.body.message : '') };
-  return { ok: true, key: r.body.key, shop: r.body.shop || null, counter: r.body.counter || id };
-}
-/**
- * ⭐ A COUNTER NUMBER THIS SHOP CAN GIVE A NEW BROWSER — the lowest one no device holds, else a new one. The same
- * /api/counters the back office uses (session only: the sign-in's token is still in hand here, and only here).
- * `not` is the number just refused as held, never offered back.
- */
-async function counterFree(token, not){
-  var h = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
-  var read = function(x){ return x.json().then(function(j){ return { ok: x.ok, body: j || {} }; }, function(){ return { ok: x.ok, body: {} }; }); };
-  var none = function(){ return { ok: false, body: {} }; };
-  var l = await fetchBy(CloudHost.api + '/api/counters', { headers: h }).then(read).catch(none);
-  var free = ((l.body && l.body.counters) || []).filter(function(c){
-    return c && c.id && c.state === 'closed' && String(c.id).toUpperCase() !== String(not || '').toUpperCase(); })[0];
-  if (free) return { ok: true, id: String(free.id).toUpperCase() };
-  var m = await fetchBy(CloudHost.api + '/api/counters', { method: 'POST', headers: h, body: JSON.stringify({ name: 'Browser counter' }) })
-    .then(read).catch(none);
-  if (m.ok && m.body.counter && m.body.counter.id) return { ok: true, id: String(m.body.counter.id).toUpperCase() };
-  return { ok: false, message: (m.body && m.body.message) || 'The shop could not give this device a counter number. Check the line and try again.' };
 }
 
 /**
@@ -24789,7 +24954,7 @@ async function handOver(){
   var cash = r2((by.Cash || 0) + (WHO && WHO.float ? WHO.float : 0));
   SHIFT = { by: { id: WHO.id, name: WHO.name }, from: WHO.since, to: new Date().toISOString(),
             bills: mine.length, total: mine.reduce(function(a,b){ return r2(a + (b.total||0)); }, 0),
-            float: (WHO && WHO.float) || 0, modes: by, expected_cash: cash, till: ls.get('cb_till_id','C1'),
+            float: (WHO && WHO.float) || 0, modes: by, expected_cash: cash, till: tillId(),
             /* ⭐ breaks taken during the shift — minutes each, so the shift record is a record of the time too */
             breaks: (WHO && WHO.breaks) || [] };
   document.getElementById('whodlg').close();
@@ -25082,7 +25247,7 @@ function settingsFilter(q){
 }
 function openSettings(tab){
   var find = document.getElementById('set_find'); if (find) { find.value = ''; settingsFilter(''); }
-  document.getElementById('set_till').value = ls.get('cb_till_id','C1');
+  document.getElementById('set_till').value = tillId();
   var kb = document.getElementById('set_kot'); if (kb) kb.checked = (tillOpt().kot === true);
   /* ⚠️ set_fs and set_rows went with the Screen tab ([TILL-81]) — text size lives in the hub, density in
      Screen style. Reading them here would be a third place that thinks it owns them. */
@@ -25394,10 +25559,10 @@ var BELL = null, BELL_AT = 0;
 async function bellUp(){
   try {
     if (BELL || !lineUp()) return;
-    if (!(HOST && HOST.mode === 'cloud' && CloudHost.key)) return;   /* the desktop kit refreshes on its own schedule */
+    if (!(HOST && HOST.mode === 'cloud' && CloudHost.cred())) return;   /* the desktop kit refreshes on its own schedule */
     if (Date.now() - BELL_AT < 20000) return;                        /* do not thrash a server that is refusing */
     BELL_AT = Date.now();
-    var r = await fetchBy(CloudHost.api + '/api/events/ticket', { method:'POST', headers:{ 'X-Api-Key': CloudHost.key } });
+    var r = await fetchBy(CloudHost.api + '/api/events/ticket', { method:'POST', headers: CloudHost.auth() });
     if (!r.ok) return;
     var t = (await r.json()).ticket; if (!t) return;
     BELL = new EventSource(CloudHost.api + '/api/events/stream?t=' + encodeURIComponent(t));
