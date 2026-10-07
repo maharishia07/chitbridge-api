@@ -31,7 +31,8 @@ const REG = require(COPY);   /* the SAME object mint.page() reads (the require c
 const RE = new RegExp(REG.grammar);
 const MASTER = process.env.CB_WEB ? path.join(process.env.CB_WEB, 'public', 'app', 'pages.json')
   : path.join(API, '..', 'chitbridge-web', 'public', 'app', 'pages.json');
-if (fs.existsSync(MASTER)) ok('data/pages.json is a byte copy of the master (' + MASTER + ')', fs.readFileSync(MASTER, 'utf8') === raw, 'stale copy — cp the web\'s public/app/pages.json to data/pages.json');
+const lf = (t) => t.split(String.fromCharCode(13)).join('');   /* the same bytes, whatever line endings each checkout chose */
+if (fs.existsSync(MASTER)) ok('data/pages.json is a byte copy of the master (' + MASTER + ')', lf(fs.readFileSync(MASTER, 'utf8')) === lf(raw), 'stale copy — cp the web\'s public/app/pages.json to data/pages.json');
 else console.log('   --   skipped: the master is not here (' + MASTER + ') — set CB_WEB to the web checkout to compare');
 const ids = REG.pages.map((r) => r.name + '@' + r.version);
 ok('the registry has no two rows for one name@version', new Set(ids).size === ids.length, JSON.stringify(ids));
