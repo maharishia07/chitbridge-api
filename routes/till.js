@@ -2051,6 +2051,8 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
       const b = by[id];
       out[id] = { qty: b.qty, avg_cost: b.qty ? inv.m2(b.value / b.qty) : 0 };
     }
+    /* [OFFR-04] the average cost is the shop's buying price: an actor without can_see_costs gets the qty only */
+    if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
     res.json({ balances: out, at: new Date().toISOString() });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
@@ -2527,6 +2529,9 @@ router.get('/match', auth, async (req, res) => {
       }
       return orders;
     });
+    /* [OFFR-04] landed = goods + freight etc. as the shop paid it: cost, so owner / can_see_costs only */
+    if (!(await require('../lib/cost').canReadSafe(req, entity_id)))
+      out.forEach((o) => (o.receipts || []).forEach((r) => { delete r.landed; }));
     res.json({ days, count: out.length, orders: out });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
