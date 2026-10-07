@@ -76397,6 +76397,34 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-08-09T02:29:40+05:30"
+  },
+  {
+   "case_key": "governance.nightly",
+   "module_key": "governance",
+   "module_name": "Governance",
+   "intro": "",
+   "title": "THE NIGHTLY GOVERNANCE REPORT IS GREEN",
+   "claim": "main is protected on both repos, admins are held to the rules, no open alerts, main CI is green, and /health says production. Red names each failing line.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "Hand case (E04). Posted nightly by .github/workflows/governance.yml with key_from name. Offline proof: chitbridge-api/tests/governance-report.test.cjs.",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "governance",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [
+    "scripts/governance-report.cjs",
+    ".github/workflows/governance.yml"
+   ],
+   "run_by": "the nightly governance workflow, unattended",
+   "changed_at": "2026-10-08T00:00:00+05:30"
   }
  ]
 }
