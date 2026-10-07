@@ -16,8 +16,9 @@
  *   3  per-party resolve: A clears B → B resolved, D still open, A still open; then A clears D → closed for all
  *   4  the doors that read the same rows: the ledger's buyer gate (lib/books-store openDisputes, read by lib/books-hooks
  *      buyerGate) and the RAIDA escalation link (POST /:chit_id/raida/:raida_id/dispute → lib/raida linkDispute)
- *   5  ⚠️ KNOWN BREAKS — today's code breaks I2 in two places. They are asserted AS BROKEN (the test stays green while the
- *      break is there, and goes red the day it is fixed, so the case is promoted, not forgotten). See KNOWN below.
+ *   5  the two doors that used to break I2 (were KNOWN BREAKS, fixed and promoted): a dispute reply's timeline line + bell go
+ *      to the roster only; a resolve naming a non-party target is refused 400 DISPUTE_TARGET_NOT_PARTY. KNOWN() stays for the
+ *      next break found: assert it AS BROKEN, and promote it to ok() the day it is fixed.
  *
  * ⭐ THE DATABASE IS MODELLED, NOT MOCKED FLAT. Disputes are per-copy under FORCE RLS (b68), so a flat stub would prove
  * nothing. The in-memory store below holds one row per (dispute, entity) and every read inside withEntity(me) sees only
@@ -340,10 +341,10 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('…C linking that id to its own issue does not make the dispute visible to C', gc2.body.disputes.length === 0 && disputesOf(C).length === 0 && logOf(C).length === 0, 'link ' + lc.status + ' ' + JSON.stringify(gc2.body));
     sch.hasTable = _ht; sch.hasColumn = _hc;
 
-    console.log('\n══ 5 · ⚠️ KNOWN BREAKS of I2 in today\'s code (USP rule — STOP for the build) ══\n');
+    console.log('\n══ 5 · I2 at the two doors that used to leak (fixed in fix/dispute-confidentiality) ══\n');
     /* (a) a dispute REPLY. The UI's dispute composer (chitbridge-web cap-dispute.js:229) posts thread_type 'external' with
-       is_dispute. The message copies are roster-only (correct), but the route then logs 'message_sent' with the first 100
-       characters of the text into EVERY chit participant's state_log via chit_log_all, and rings every other party's bell. */
+       is_dispute. The message copies are roster-only, and since the fix so are the 'message_sent' timeline line
+       (chit_log_targets to the roster, not chit_log_all) and the bell (the roster, not the chit header's parties). */
     reset();
     const k1 = await as(A, 'POST', U + '/disputes', { category: 'quality', reason: 'Brake pads arrived cracked, 4 of 10', target_entity_id: B });
     const DK = k1.body.dispute_id;
@@ -352,23 +353,30 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('B replies inside the dispute (200); the message copies go to the roster only (A, B)', rep.status === 200
       && MSGS.filter((x) => x.dispute_id === DK && /replace the 4/.test(x.message_text)).map((x) => x.entity_id).sort().join() === [A, B].sort().join(), JSON.stringify(rep));
     const leakLog = logOf(C, /^message_sent$/).filter((x) => /cracked pads/.test(x.detail || ''));
-    KNOWN('I2: a dispute reply writes a message_sent row WITH THE REPLY TEXT into C\'s state_log (C is not on the roster)',
-      leakLog.length === 1, 'routes/chits.js:3659-3673 (thread_type external → chit_log_all to every chit participant; no is_dispute check)');
+    ok('I2: a dispute reply writes NO message_sent row into C\'s state_log (C is not on the roster)', leakLog.length === 0, JSON.stringify(logOf(C)));
+    ok('…while A and B (the roster) each get the reply line on their own timeline',
+      logOf(A, /^message_sent$/).length === 1 && logOf(B, /^message_sent$/).length === 1 && logOf(D).length === 0, JSON.stringify(LOG.map((x) => [x.entity_id, x.action])));
     const nk = await as(C, 'GET', '/api/notifications');
-    KNOWN('I2: …so C\'s GET /notifications shows it', /cracked pads/.test(JSON.stringify(nk.body)), 'routes/notifications.js FEED_FROM reads that row (action_by <> me)');
-    KNOWN('I2: …and C\'s bell rings for it', rang(C), 'routes/chits.js:3679-3688 (notifyAfter to sender + all_recipients; no is_dispute check)');
+    ok('I2: …so C\'s GET /notifications does not show it', nk.status === 200 && !/cracked pads/.test(JSON.stringify(nk.body)), JSON.stringify(nk.body).slice(0, 300));
+    ok('I2: …and C\'s bell does not ring for it (nor D\'s); A\'s does', !rang(C) && !rang(D) && rang(A), JSON.stringify(BELL));
+    BELL = []; const before = logOf(C).length;
+    const plain = await as(B, 'POST', U + '/messages', { message_text: 'Plain note to everyone on the order', thread_type: 'external' });
+    ok('…a plain (non-dispute) external message still reaches every participant\'s timeline and bell, as before',
+      plain.status === 200 && logOf(C).length === before + 1 && rang(C) && rang(A), JSON.stringify(BELL));
 
-    /* (b) a per-party resolve naming someone NOT on the roster. The route trusts body.target_entity_id for the notice list;
-       chit_log_targets only checks the target is a CHIT participant, not a dispute party. */
+    /* (b) a per-party resolve naming someone NOT on the roster. The route used to trust body.target_entity_id for the
+       notice list (chit_log_targets only checks CHIT membership); it now refuses a target that is not a roster party. */
     reset();
     const k2 = await as(A, 'POST', U + '/disputes', { category: 'quality', reason: 'Brake pads arrived cracked, 4 of 10', target_entity_id: B });
     const DK2 = k2.body.dispute_id;
     const mis = await as(A, 'PUT', U + '/disputes/' + DK2 + '/resolve', { resolution_note: 'Settled: credit note CN-17 for 4 pads', target_entity_id: C });
-    ok('A "resolves" for C, who is not on the roster: B\'s copy stays open (I3 holds)', mis.status === 200 && disputesOf(B)[0].status === 'open' && disputesOf(C).length === 0, JSON.stringify(mis.body));
-    KNOWN('I2: …but C receives a dispute_resolved notice carrying the category and resolution note',
-      logOf(C, /^dispute_resolved$/).filter((x) => /CN-17/.test(x.detail || '')).length === 1,
-      'routes/chits.js:4057 (resolvedPartyIds = [targetParty] from the body, not checked against the roster) → :4077 chit_log_targets');
-    ok('…and the response claims C was a resolved party', (mis.body.resolved_parties || []).indexOf(C) >= 0);
+    ok('A "resolves" for C, who is not on the roster → 400 DISPUTE_TARGET_NOT_PARTY',
+      mis.status === 400 && mis.body.code === 'DISPUTE_TARGET_NOT_PARTY' && mis.body.error && mis.body.message, JSON.stringify(mis));
+    ok('…B\'s copy stays open (I3 holds) and C has no copy', disputesOf(B)[0].status === 'open' && disputesOf(C).length === 0);
+    ok('I2: …C receives no dispute_resolved notice (no category, no resolution note)',
+      logOf(C).length === 0 && !MSGS.some((x) => /CN-17/.test(x.message_text) && x.entity_id === C), JSON.stringify(logOf(C)));
+    ok('…and nothing is resolved or announced at all (no [resolved] message, no notice to anyone)',
+      !MSGS.some((x) => /CN-17/.test(x.message_text)) && logOf(A, /^dispute_resolved$/).length === 0 && logOf(B, /^dispute_resolved$/).length === 0);
   } catch (e) { fail++; console.log('   FAIL threw: ' + (e && e.stack)); }
   console.log('\n' + pass + ' passed, ' + fail + ' failed' + (known ? ' (' + known + ' of the passes are KNOWN BREAKS — see section 5)' : '') + ' · ' + (pass + fail) + ' checks\n');
   srv.close(); process.exit(fail ? 1 : 0);
