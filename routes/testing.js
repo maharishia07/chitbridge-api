@@ -46,6 +46,7 @@ const { withEntity, query } = require('../db');
  * "only your own calls are timed" is a promise the panel makes in as many words.
  */
 const testboard = require('../lib/testboard');
+const junitresults = require('../lib/junitresults');
 
 /* The two axes, in one place. The server is the authority so a screen cannot offer a value the CHECK refuses. */
 const RUN_KINDS = ['manual', 'unit', 't0', 't1', 't2', 't3', 'regression'];
@@ -916,8 +917,14 @@ function badResult(r) {
  * code, so they cannot drift into being two different kinds of record on one board.
  */
 async function recordResults(entity_id, who, b) {
-  const list = Array.isArray(b.results) ? b.results : [b];
-  for (const r of list) { const bad = badResult(r); if (bad) return { status: 422, body: { error: 'Not recorded', message: bad } }; }
+  const given = Array.isArray(b.results) ? b.results : [b];
+  for (const r of given) { const bad = badResult(r); if (bad) return { status: 422, body: { error: 'Not recorded', message: bad } }; }
+  /**
+   * ⚠️⚠️ ONE ROW PER (run, case, layer) IS THE LEDGER'S SHAPE (uq_test_result_once), so a batch naming a case
+   * twice is FOLDED here, worst result first — never left to ON CONFLICT DO NOTHING, which kept the first and
+   * dropped the rest silently, so a fail after a pass vanished (N01). A single result passes through as it was.
+   */
+  const list = junitresults.fold(given);
   {
     /* ⭐ ONE run id for the whole post unless the caller supplies one — a sitting is a sitting. */
     const run_id = b.run_id || require('crypto').randomUUID();
@@ -973,11 +980,18 @@ async function recordResults(entity_id, who, b) {
          norm.map((r) => r.layer), norm.map((r) => r.tester_name), norm.map((r) => r.note),
          norm.map((r) => r.evidence),
          who.id, run_id, run_label, build]);
-      return ins.rows;
+      return { rows: ins.rows, missing: norm.filter((r) => !r.definition_id).map((r) => r.key).slice(0, 50) };
     });
 
-    return { status: 200, body: { run_id, run_label, recorded: saved.length,
-      skipped: list.length - saved.length, results: saved } };
+    /**
+     * ⚠️ SAID, NOT SWALLOWED: a key with no case on this board is still recorded (its history survives the day
+     * the case is added — an untracked test file is invisible to the board until it is committed and the board
+     * rebuilt), but nothing on testing.html can show it, so the caller is told which ones.
+     * `skipped` is only what was ALREADY on this run (a replay); `folded` is how many results became one.
+     */
+    return { status: 200, body: { run_id, run_label, recorded: saved.rows.length,
+      skipped: list.length - saved.rows.length, folded: given.length - list.length,
+      not_on_board: saved.missing, results: saved.rows } };
   }
 }
 
@@ -1103,82 +1117,21 @@ router.post('/results/junit', auth, async (req, res) => {
 
     const run_kind = RUN_KINDS.indexOf(req.body.run_kind) >= 0 ? req.body.run_kind : 't1';
     const layer = LAYERS.indexOf(req.body.layer) >= 0 ? req.body.layer : 'web';
-    /* ⚠ opt-in: see the note beside `key` below */
-    const keyFromName = (req.body && req.body.key_from) === 'name';
 
-    /* ⚠️ A REGEX, NOT AN XML PARSER, AND THAT IS A DELIBERATE LIMIT. JUnit XML is flat — testcase elements with a
-       name, and a child element when something went wrong. Pulling in a parser to read four attributes would add
-       a dependency to a route that has none. If a report ever needs real nesting this becomes wrong, and the
-       unmatched list below is what will say so. */
-    const cases = [...xml.matchAll(/<testcase\b([^>]*)>([\s\S]*?)<\/testcase>|<testcase\b([^>]*)\/>/g)];
     /**
-     * ⚠️⚠️ THE BOUNDARY IS THE WHOLE FIX, AND WITHOUT IT THIS ROUTE QUIETLY DESTROYED EVERY GUARD RUN.
-     *
-     * JUnit writes `<testcase classname="test.guard" name="chitbridge-api/tests/handle.test.js">`. Asking for
-     * `name="…"` without a boundary matches **classname** first, because it contains the word. So 185 results
-     * all came back keyed `test.guard` / `test.unit` — three rows instead of a hundred and eighty-five, each one
-     * overwriting the last, and the board would have shown a healthy history of a case that does not exist.
-     *
-     * ⭐ Found 2026-09-11 by a number that was obviously wrong: a report with 185 tests in it produced 2.
-     * ⚠️ Nothing had ever been posted through this route, so no data was lost — but it would have been on the
-     * first real run, and silently.
+     * ⭐ THE READING LIVES IN lib/junitresults.js (N01) — the boundary on `name=` (2026-09-11), the two
+     * legitimate ways to name a case (a bracket key, a guard's path) and now the third: the spec FILE, which is
+     * how the board lists every Playwright spec. ⚠ The layer is still the CASE's where we know it, the
+     * caller's only where we do not — post-suite.cjs once stamped "engine" on 235 browser files.
      */
-    const attr = (s, k) => {
-      const m = String(s || '').match(new RegExp('(?:^|\\s)' + k + '="([^"]*)"'));
-      return m ? m[1] : '';
-    };
-
-    const results = [], unmatched = [];
-    for (const c of cases) {
-      const head = c[1] || c[3] || '', body = c[2] || '';
-      const name = attr(head, 'name');
-      /**
-       * ⭐⭐ TWO WAYS TO NAME A CASE, AND BOTH ARE LEGITIMATE.
-       *
-       * A SPEC carries a key in brackets — `[CTR-05] a single click chooses` — because it is written against a
-       * case somebody authored. A GUARD FILE has no such case and never will: `chitbridge-api/tests/handle.test.js`
-       * is its own identity, and the file path is the only name that survives its assertions being rewritten.
-       * A synthetic `GRD-001` would shift the moment a file was added beside it.
-       *
-       * ⚠ `key_from: 'name'` IS OPT-IN, deliberately. The default still REPORTS anything it cannot place rather
-       * than inventing a key for it — a board that silently accepts every test title as a case would fill with
-       * hundreds of one-off rows and the history would mean nothing.
-       */
-      const key = keyFromName
-        ? name.trim().slice(0, 120)
-        : (name.match(/\[([A-Z]{2,6}-\d{1,3})\]/) || [])[1];
-      const failed = /<failure|<error/.test(body);
-      const skipped = /<skipped/.test(body);
-      if (!key) { unmatched.push(name); continue; }
-      const why = (body.match(/message="([^"]*)"/) || [])[1] || '';
-      /**
-       * ── ⚠️⚠️ THE LAYER IS THE CASE'S, NOT THE POSTER'S GUESS ──────────────────────────────────────────────
-       *
-       * Athi, 2026-09-11, on the Reliability tab: *"everything shows as engine — what does this tab refer to?"*
-       *
-       * It did, because the caller sends ONE layer for a whole report and post-suite.cjs defaults it to
-       * "engine" — written when the only thing posting was a suite of pure functions. 235 of the files in that
-       * report drive a browser. ⭐ A column carrying one value on every row is worse than an empty one: it
-       * still reads as information.
-       *
-       * ⚠️ The case already knows, by measurement rather than by assumption — classify-tests.cjs reads what each
-       * file requires, opens and calls. So the posted layer is now the case's own area where we have it, and
-       * the caller's value only where we do not.
-       */
-      results.push({ case_key: key, run_kind, layer: layerOfCase(key) || layer,
-        /**
-         * ⭐ A PATH-NAMED CASE GROUPS BY ITS DIRECTORY, WHICH IS THE CATEGORY THE PATH ALREADY CARRIES.
-         *
-         * Athi, 2026-09-11: *"through category we can filter or see as a summary?"* The repo alone gives two
-         * buckets for 185 guards, which is not a filter — it is a label. Two segments give the groups people
-         * actually mean: `chitbridge-api/tests` (the API's guards), `chitbridge-web/e2e` (the browser probes),
-         * `chitbridge-api/scripts` (the one-off checks). ⚠️ The directory is not a taxonomy somebody designed;
-         * it is where the files were already put, which is why it needs no maintenance to stay true.
-         */
-        module_key: keyFromName ? String(key).split('/').slice(0, 2).join('/').slice(0, 40) : undefined,
-        status: failed ? 'fail' : (skipped ? 'skipped' : 'pass'),
-        note: failed ? why.slice(0, 500) : null, evidence: name.slice(0, 200) });
-    }
+    const kf = req.body.key_from;
+    let read;
+    try {
+      read = junitresults.read(xml, {
+        keyFrom: kf === 'name' || kf === 'file' ? kf : 'bracket',
+        keyPrefix: req.body.key_prefix, runKind: run_kind, layer, layerOf: layerOfCase });
+    } catch (e) { return res.status(400).json({ error: 'Not read', message: e.message }); }
+    const results = read.results, unmatched = read.unmatched;
     if (!results.length) {
       return res.status(422).json({ error: 'Nothing recognisable', unmatched,
         message: 'No test in that report carries a case key in brackets, e.g. "[CTR-05] a single click chooses".' });
