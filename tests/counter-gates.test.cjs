@@ -109,6 +109,62 @@ it('the shop PC has ONE sign-in: its own connect dialog is retired, "sign in aga
   assert.ok(/function pairAgain\(\)\{[\s\S]{0,400}return usignOpen\(true\);\n\}/.test(PAGE), 'pairAgain opens something else on some host');
 });
 
+console.log('\nM08 · A PHONE IS A PERSON ON A DEVICE — the session is kept, never spent on a key\n');
+
+it('⭐⭐⭐ the person session (cb_till_person) is written only by the door, and read once at start-up', () => {
+  const w = outside(PAGE, /ls\.set\(\s*'cb_till_person'|localStorage\.setItem\(\s*'cb_till_person'/, G1);
+  assert.deepStrictEqual(w, [], 'another writer of the person session — a second door:\n      ' + w.join('\n      '));
+  const r = outside(PAGE, /CloudHost\.person\s*=(?!=)/, G1, ['CloudHost.person = personLoad();']);
+  assert.deepStrictEqual(r, [], 'the session held in memory is changed outside the door:\n      ' + r.join('\n      '));
+  assert.ok(/ls\.set\('cb_till_person'/.test(G1.text), 'becomeShop no longer keeps the session — the door is empty');
+});
+
+it('⭐⭐⭐ a browser never calls /api/till/enrol and never asks for a counter — only the shop-PC program enrols', () => {
+  assert.ok(!/['"`]\/api\/till\/enrol['"`]/.test(PAGE), 'the page still reaches /api/till/enrol');
+  assert.ok(!/function enrolBrowser\(|function counterFree\(|function usignNewCounter\(/.test(PAGE), 'the browser enrol helpers are back');
+  assert.ok(!/'\/api\/counters'/.test(PAGE), 'the page still asks /api/counters for a number');
+  assert.ok(/\/api\/till\/enrol/.test(PROG), 'the program no longer enrols — the shop PC path moved');
+});
+
+it('⭐⭐ "Take counter … here" is painted for the shop PC only — a phone can never knock the PC off', () => {
+  const m = PAGE.match(/onAgent\(\) \? '<button data-testid="till-signin-takeover"/);
+  assert.ok(m, 'the takeover button is offered on a browser');
+  assert.strictEqual((PAGE.match(/till-signin-takeover/g) || []).length, 1, 'a second takeover button');
+});
+
+it('⭐ the device id is device-wide and made once; every cloud call carries it; the store is per shop + device', () => {
+  assert.ok(/ls\.get\('cb_device_id'/.test(body(PAGE, 'function deviceId(').text), 'deviceId() does not read cb_device_id');
+  assert.ok(/o\.headers\['X-Device-Id'\] = deviceId\(\)/.test(body(PAGE, 'async function fetchBy_(').text), 'fetchBy_ does not send X-Device-Id');
+  const ts = body(PAGE, 'function tillStore(').text;
+  assert.ok(/CloudHost\.person\.entity_id[\s\S]{0,120}deviceId\(\)/.test(ts), 'the person store is not named per shop + device');
+  assert.ok(ts.indexOf('CloudHost.person') < ts.indexOf("'cb-till-' + h.toString(36)"), 'the key store is tried before the person store');
+  assert.ok(/'cb-till-' \+ h\.toString\(36\)/.test(ts), 'the OLD key store name changed — every phone holding a key loses its queue');
+});
+
+it('⭐ one place signs a cloud call (CloudHost.auth) — no hand-written key header is left', () => {
+  const hand = (PAGE.match(/'X-Api-Key': this\.key \}/g) || []).length;
+  assert.strictEqual(hand, 0, hand + ' hand-written X-Api-Key header(s) beside CloudHost.auth()');
+  assert.ok(/h\['Authorization'\] = 'Bearer ' \+ this\.person\.token/.test(PAGE), 'a person session is not sent as Bearer');
+});
+
+it('⭐ a person is never told "Due to maintenance" — words per code, and nothing is deleted on a 4xx', () => {
+  const rf = body(PAGE, 'function refreshFailed(').text;
+  assert.ok(/if \(personOn\(\) && \(status === 401 \|\| status === 403\)\)/.test(rf) && rf.indexOf('personOn()') < rf.indexOf("'Due to maintenance'"), 'refreshFailed asks the key story before the person one');
+  const pr = body(PAGE, 'function personRefused(').text;
+  ['DEVICE_REVOKED', 'DEVICE_MISMATCH', 'Sign in to send '].forEach((w) => assert.ok(pr.indexOf(w) >= 0, 'personRefused lost ' + w));
+  assert.ok(!/maintenance/i.test(pr), 'personRefused says "maintenance"');
+  const dr = PAGE.slice(PAGE.indexOf('async drain('), PAGE.indexOf('async drain(') + 20000);
+  assert.ok(/if \(personOn\(\)\) \{ var pr = personRefused\(code/.test(dr), 'drain names a person refusal as "the key"');
+});
+
+it('⭐ the page checks its own build and the check touches no store (history is never cleared by a version check)', () => {
+  const ps = body(PAGE, 'function pageStale(').text;
+  assert.ok(/TILL_BUILD/.test(ps) && /location\.reload\(\)/.test(ps), 'pageStale does not compare and reload');
+  assert.ok(!/localStorage\.(removeItem|clear)|indexedDB|deleteDatabase|caches\./.test(ps), 'the version check touches what the shop keeps');
+  assert.ok(/sessionStorage\.getItem\('cb_till_reloaded_for'\)/.test(ps), 'a lagging CDN could loop the reload');
+  assert.ok(/var TILL_BUILD = '\d{4}-\d{2}-\d{2}[^']*'/.test(PAGE), 'TILL_BUILD is not a dated build mark');
+});
+
 console.log('\nS1b · WHAT BELONGS TO A SHOP IS STORED UNDER THE SHOP — on the shop PC too\n');
 
 it('the shop PC names its slot after the shop the program reports (it holds no key to hash)', () => {
@@ -195,7 +251,7 @@ it('⚠️⚠️ what goes into the book comes from the engine (pinEntry / pinAf
 
 it('⭐ the counter\'s own PIN is tried FIRST, and it works with the line down', () => {
   const ask = body(PAGE, 'async function usignAsk(').text;
-  const pinAt = ask.indexOf('SIGN().pinFind('), netAt = ask.indexOf("usignPost('/api/entities/register'");
+  const pinAt = ask.indexOf('SIGN().pinFind('), netAt = ask.indexOf("usignPost(usignPath('ask')");
   assert.ok(pinAt > 0 && netAt > pinAt, 'the network is asked before this counter\'s own PIN');
   assert.ok(/if \(!lineUp\(\)\)/.test(ask.slice(pinAt, netAt)), 'offline with no PIN is not refused in words');
 });
