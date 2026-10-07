@@ -66,12 +66,8 @@ BEGIN
   IF clash > 0 THEN RAISE EXCEPTION 'b292: % case names already exist on the new entity — it has pressed Load cases; stop', clash; END IF;
 END $$;
 
--- the board's business is a TEST business (b246: one-way, real → test only)
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'identities' AND column_name = 'is_test') THEN
-    EXECUTE 'UPDATE identities SET is_test = true WHERE identity_id = (SELECT new_e FROM _b292) AND identity_type = ''entity'' AND is_test = false';
-  END IF;
-END $$;
+-- is_test is not set here: on production it is a GENERATED column (computed by the database), so it
+-- cannot be written. STEP 1's preview shows its value for cbinctest.
 
 -- the project column, before the move so the backfill covers every row once
 ALTER TABLE test_result ADD COLUMN IF NOT EXISTS project text;
