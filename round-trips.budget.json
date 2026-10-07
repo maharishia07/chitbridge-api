@@ -1,0 +1,950 @@
+{
+  "_doc": "DB10: round-trip ceiling per route the web client calls. trips = X-DB-Trips, wire = statements sent. Lower it when a route gets cheaper (node tests/round-trips-all.test.cjs --write); never raise without saying why. fired:false = placeholder ceiling, the route could not be fired offline (see why).",
+  "routes": {
+    "DELETE /api/books/recurring/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/channels/:id": {
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/crm/followups/:id": {
+      "file": "crm.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 503 on the stub"
+    },
+    "DELETE /api/crm/parties/:id": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 10,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/definitions/:id": {
+      "file": "definitions.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/keys/:jti": {
+      "file": "keys.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/adopt/:chit_id": {
+      "file": "adopt.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/assist/catalogue-mine": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401
+    },
+    "GET /api/assist/catalogue-sources": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/assist/questions": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/assist/standards": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/assist/whoami": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/books/accounts": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/assets": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/bs": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/cheques": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/daybook": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/dues": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/events": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/health": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/ledger/:account": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/packs": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/packs/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/party/:id/statement": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/periods": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/pl": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/recurring": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/status": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/books/todo": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/trial-balance": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/books/year/:fy/status": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/capture/pending": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/catalogue-face": {
+      "file": "catalogue-face.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/channels": {
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/counters": {
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/crm/followups": {
+      "file": "crm.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 503 on the stub"
+    },
+    "GET /api/crm/parties": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 13,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/crm/parties/:id": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 10,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/crm/parties/:id/timeline": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 10,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/definitions": {
+      "file": "definitions.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/definitions/:id": {
+      "file": "definitions.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/integrations/catalogue": {
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/integrations/profile-map": {
+      "file": "integrations.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/integrations/reconcile": {
+      "file": "integrations.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/integrations/status": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/integrations/streams": {
+      "file": "integrations.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/keys": {
+      "file": "keys.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/network-offers": {
+      "file": "network-offers.js",
+      "trips": 9,
+      "wire": 15,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/notifications": {
+      "file": "notifications.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/service/:chit_id": {
+      "file": "service.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/supplies": {
+      "file": "supplies.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/tax/gstr": {
+      "file": "tax.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/tax/ledger": {
+      "file": "tax.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/cases": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/coverage": {
+      "file": "testing.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/incidents": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/requirements": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/results": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/stale": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/testing/trace": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/till/match": {
+      "file": "till.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "PATCH /api/books/recurring/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "PATCH /api/crm/followups/:id": {
+      "file": "crm.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 503 on the stub"
+    },
+    "PATCH /api/testing/incidents/:id": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/testing/requirements/:id": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/adopt/:chit_id": {
+      "file": "adopt.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/assist": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/assist/catalogue-adopt": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401
+    },
+    "POST /api/assist/catalogue-structure": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/assist/conform": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/assist/publish": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/accounts": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/cheques/:id/status": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/enable": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 136,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/books/entries/:id/reverse": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/opening": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/outbox/retry": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/packs": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/packs/:id/ack": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/payments": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/payments/:id/confirm": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/payments/:id/propose": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/preview": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/recurring": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/setting": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/books/year/:fy/close": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/capture/:id/convert": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/capture/:id/dismiss": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/capture/:id/raise": {
+      "file": "capture.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/capture/:id/structure": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/capture/simulate": {
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/channels": {
+      "file": "channels.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/channels/:id/auto-raise": {
+      "file": "channels.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/channels/:id/template": {
+      "file": "channels.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/counters": {
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 8,
+      "fired": true,
+      "status": 201
+    },
+    "POST /api/counters/:id/open": {
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/counters/:id/release": {
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/crm/followups": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/crm/parties/:id/interactions": {
+      "file": "crm.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 503 on the stub"
+    },
+    "POST /api/crm/walk-ins/add": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/definitions": {
+      "file": "definitions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/definitions/freeze": {
+      "file": "definitions.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/integrations/:actor_id/approve": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/integrations/books/skip": {
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/keys": {
+      "file": "keys.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 500 on the stub"
+    },
+    "POST /api/network-offers/:id/choice": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/network-offers/:id/release": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/network-offers/:id/withdraw": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/network-offers/catalogue/cancel": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 409
+    },
+    "POST /api/network-offers/catalogue/price": {
+      "file": "network-offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/network-offers/catalogue/publish": {
+      "file": "network-offers.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/notifications/dismiss": {
+      "file": "notifications.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/notifications/seen": {
+      "file": "notifications.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/service/:chit_id/pause": {
+      "file": "service.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/service/:chit_id/pause/:pause_id/answer": {
+      "file": "service.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/service/:chit_id/pause/:pause_id/end": {
+      "file": "service.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/service/:chit_id/resolve": {
+      "file": "service.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/service/:chit_id/respond": {
+      "file": "service.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/supplies": {
+      "file": "supplies.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/supplies/:id/issue": {
+      "file": "supplies.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/supplies/purchase": {
+      "file": "supplies.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/cases/close": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/cases/import": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/cases/seed": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/testing/evidence": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/incidents": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/requirements": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/testing/results": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/testing/trace": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/till/pair": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "PUT /api/catalogue-face": {
+      "file": "catalogue-face.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/definitions/:id": {
+      "file": "definitions.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "PUT /api/integrations/streams": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/network-offers/policy": {
+      "file": "network-offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/service/:chit_id": {
+      "file": "service.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    }
+  }
+}
