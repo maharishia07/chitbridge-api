@@ -7,6 +7,10 @@ on:
   push:
     branches: ["**"]
   pull_request:
+  # nightly, so the test board updates even when nobody pushes (Athi, 2026-10-07: "the test engine can exist" without us)
+  schedule:
+    - cron: '30 20 * * *'   # 02:00 IST
+  workflow_dispatch:
 
 jobs:
   static:
@@ -76,7 +80,7 @@ jobs:
       # ⚠️ It never fails the build: no secret, no report or a refused post is a ::warning:: that names why.
       # ⚠️ main only — the board's "latest word" on a case is about main, not about somebody's branch.
       - name: post the guards to the test board
-        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        if: ${{ always() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
         continue-on-error: true
         working-directory: chitbridge-api
         env:
