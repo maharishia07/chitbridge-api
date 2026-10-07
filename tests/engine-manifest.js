@@ -679,6 +679,10 @@ const ENGINE_OTHER = [
                           // for offline replay, optimistic-lock versioning, and screen-config resolution order
                           // (counter overrides the shop default) are Athi's own rules (2026-09-18 decisions),
                           // not a borrowed format. Tier B in spirit (needs a db handle) but not curated-core.
+  /* ⭐⭐ R01 (2026-10-07) — the rail kernel. rail.js is ADOPTED from chitbridge-engines (engines.lock.json): may I accept,
+     reject, complete, dispute, assign, amend or message on my copy of this chit, with one refusal word — CB's own rules about
+     what a chit holder may do. rail-actions.js gathers its two inputs from a request (level, my copy) and says its refusal. */
+  'rail.js', 'rail-actions.js',
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [
