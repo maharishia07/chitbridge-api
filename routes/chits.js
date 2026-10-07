@@ -3635,11 +3635,23 @@ router.post('/:chit_id/messages',
       // THIS dispute, and the dispute must belong to THIS chit. RLS makes it one query — under withEntity(sender) the
       // policy returns only the sender's OWN chit_disputes copy, so a returned row proves BOTH roster membership AND
       // chit-ownership. No row → 403 (blocks non-party injection AND cross-chit dispute_id injection via the definer).
+      /* ⭐ N02 / I2 — a DISPUTE message's timeline line and bell go to the dispute's ROSTER only, exactly the audience its
+         per-copy message already has (chit_message_deliver: targeted → roster). A chit_wide dispute is deliberately the whole
+         chit, so it keeps the plain-external audience. null = not a roster-scoped message (plain external, or chit_wide). */
+      let disputeRoster = null;
       if (isDispute && disputeId) {
         const party = await withEntity(entity_id, (db) => db.query(
-          `SELECT 1 FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id]));
+          `SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id]));
         if (party.rows.length === 0) {
           return res.status(403).json({ error: 'Forbidden', message: 'Not a party to this dispute' });
+        }
+        if ((party.rows[0].scope || 'targeted') !== 'chit_wide') {
+          // fail closed: a roster that cannot be read means the poster's own timeline only, and no bell
+          disputeRoster = [entity_id];
+          try {
+            const rr = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [disputeId]));
+            disputeRoster = [...new Set([entity_id].concat(rr.rows.map((r) => String(r.entity_id))))];
+          } catch (_) { /* keep [me] */ }
         }
       }
       // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
@@ -3656,7 +3668,20 @@ router.post('/:chit_id/messages',
 
       // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
       // (validated: caller must be a participant). Fallback = the legacy per-participant loop when b50 isn't applied.
-      if (thread_type === 'external') {
+      if (thread_type === 'external' && disputeRoster) {
+        // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
+        await crossing(entity_id,
+          `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
+          [chit_id, disputeRoster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
+          async (db) => {
+            for (const pid of disputeRoster) {
+              await db.query(
+                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+                 VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
+                [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]);
+            }
+          });
+      } else if (thread_type === 'external') {
         await crossing(entity_id,
           `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
           [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
@@ -3681,7 +3706,7 @@ router.post('/:chit_id/messages',
           const aud = await withEntity(entity_id, (db) => db.query(
             `SELECT sender_entity_id, all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]));
           const h = aud.rows[0] || {};
-          const others = [h.sender_entity_id].concat((Array.isArray(h.all_recipients) ? h.all_recipients : []).map((x) => x && x.entity_id))
+          const others = (disputeRoster || [h.sender_entity_id].concat((Array.isArray(h.all_recipients) ? h.all_recipients : []).map((x) => x && x.entity_id)))
             .filter((x) => x && String(x) !== String(entity_id));
           if (others.length) require('../lib/events').notifyAfter(res, others, { kind: 'message', id: chit_id, who: display_name || null });
         } catch (_) { /* the message is sent; only the push is lost */ }
@@ -4048,6 +4073,16 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
       if (d.status !== 'open') return res.status(400).json({ error: 'Dispute already resolved' });
       if (d.raised_by_entity_id !== entity_id) {
         return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it' });
+      }
+
+      /* ⭐ N02 / I2 — the body's target_entity_id becomes the notice list below, so it must be a PARTY on this dispute's roster.
+         The definer only checks chit membership; an unchecked id would hand an outsider "Dispute resolved — <category>: <note>". */
+      if (targetParty) {
+        const ros = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [dispute_id]));
+        if (!ros.rows.some((r) => r.role === 'party' && String(r.entity_id) === String(targetParty))) {
+          return res.status(400).json({ error: 'Invalid target', code: 'DISPUTE_TARGET_NOT_PARTY',
+            message: 'That business is not a party to this dispute' });
+        }
       }
 
       const ready = await definersReady();
