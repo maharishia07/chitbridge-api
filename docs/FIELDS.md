@@ -105,3 +105,18 @@ first_seen, seen, revoked_at, till_prefix, sessions }] }` (`sessions` = live cou
 `{ ok, revoked: 'session'|'device', removed? }`. Refusal codes: `DEVICE_MISMATCH` · `SESSION_EXPIRED` · `DEVICE_REVOKED` ·
 `KEY_CANNOT_SIGN_IN` · `NO_DEVICE`. `req.till` gains `session: { jti, device_id, surface }` (null otherwise) and the holder
 `'dev:'+device_id`.
+
+## Home facts · `GET /api/facts/:card` (N18, 2026-10-08)
+
+One read per Home card, behind auth, signed-in people only (a key gets 403). Built in `lib/home-facts.js` from the libs the old per-page reads used. **A figure the server cannot compute is omitted, never 0.** Cost never travels.
+
+| Route | Answer | Omitted, and why |
+|---|---|---|
+| `/api/facts/till` | `{ lines:[{text,value?}], figures:{ day, bills, takings, currency, counters_open } }` — newest day sent up (named "today" only when it is the shop's day), and counters open | "bills not sent up" (the queue is on the counter's PC); `day`/`bills`/`takings` when no day summary exists |
+| `/api/facts/accounts` | `{ lines, figures:{ last_check, waiting } }` — `tone:'dn'` on a difference or waiting posts | everything (`lines:[]`, `unavailable`) when the ledger is off or not provisioned |
+| `/api/facts/product-lab` | `{ lines, figures:{ items, no_cost } }` — a COUNT of items whose cost is unknown | `no_cost` for an actor without `can_see_costs`; no cost value is ever selected |
+| `/api/facts/combo-lab` | `{ lines, figures:{ saved } }` — saved sets in the library | the combos/modifiers split (one table, one shape) |
+| `/api/facts/offer-lab` | `{ lines, figures:{ drafts, live } }` | — |
+| `/api/facts/rail` | `{ suppliers, customers, in, out, stuck }` — in/out = open chits to you / from you, stuck = open past the shop's `overdue_days` | `in`/`out`/`stuck` when the shop holds 5,000+ chit copies (a truncated count is a wrong one) |
+
+`lines[i]` = `{ text, value?, tone? }` (`tone` is `'dn'` or absent); the shell draws the first two. Unknown card: 404. Trips: till 1 · accounts 1 · product-lab 1 (2 for an actor) · combo-lab 1 · offer-lab 1 · rail 2.

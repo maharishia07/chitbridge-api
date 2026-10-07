@@ -494,10 +494,7 @@ router.get('/customers', auth, async (req, res) => {
        FROM customer_list cl
        JOIN identities i ON i.identity_id = cl.customer_identity_id
        WHERE cl.owner_entity_id = $1
-         AND NOT EXISTS (
-           SELECT 1 FROM supplier_list sl
-           WHERE sl.owner_entity_id = $1 AND sl.supplier_entity_id = cl.customer_identity_id
-         )
+         AND ${customerGroups.NOT_A_SUPPLIER_SQL}
        ORDER BY cl.last_txn_at DESC NULLS LAST`, [owner]));
     /* no party_item yet (42P01) → the segment without high_value, as before b273 */
     let r; for (let _t = 0; !r && _t < 3; _t++) { try { r = await _run(); } catch (e) { if (e && e.code === '42703' && _g) _g = false; else if (e && e.code === '42P01' && _seg !== customerGroups.SEGMENT_SQL_BASE) _seg = customerGroups.SEGMENT_SQL_BASE; else throw e; } }

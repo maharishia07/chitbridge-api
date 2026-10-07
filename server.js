@@ -357,6 +357,7 @@ app.use('/api/tax', require('./routes/tax'));
 /* ⭐ THE LEDGER (SPEC-books-v2, b272–b274) — a record kept by double-entry principle; every route 404s until a shop's
    switch is on. ⚠️ Never called "accounting" on a screen (Athi). */
 app.use('/api/books', require('./routes/books'));
+app.use('/api/facts', require('./routes/facts'));   // N18 — what each Home card says (lib/home-facts.js): counts the server computes, never a cost value
 app.use('/api/crm', require('./routes/crm'));   // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
 /* ⭐ what a shop buys to USE — its own list, never products, never priced, and structurally unable to
    reach a storefront because a storefront query would have to JOIN a table it has no reason to know. */
