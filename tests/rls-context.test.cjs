@@ -116,7 +116,7 @@ const EXPECTED = {
      `FOR INSERT WITH CHECK (true)`, deliberately — the row is written during sign-up, BEFORE the entity being
      signed up exists, so a policy keyed on app.current_entity would block signing up at all. No SELECT/UPDATE/
      DELETE policy exists, so FORCE RLS makes the table write-only through cb_app regardless of context. */
-  'routes/entities.js:signup_context': 'append-only audit row, written before the entity exists — b265 makes the table insert-only by design, not by context',
+  'routes/signin.js:signup_context': 'append-only audit row, written before the entity exists — b265 makes the table insert-only by design, not by context',
 };
 
 const offenders = [];

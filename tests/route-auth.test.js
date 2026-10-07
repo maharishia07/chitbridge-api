@@ -45,6 +45,9 @@ const PUBLIC = {
   'actors POST /login': 'signing in — a credential cannot be required to obtain one',
   'entities POST /register': 'registration — the same',
   'entities POST /verify': 'the one-time code that completes registration',
+  /* M06 — the same two handlers on their new door (the three above are now aliases of them) */
+  'signin POST /ask': 'signing in — asks for a code, or says a PIN is needed; never creates (routes/signin.js)',
+  'signin POST /verify': 'signing in — the code or PIN that becomes a token',
   'catalogue POST /:bridge_id/login/verify': 'a customer proving a phone number at a storefront',
   'catalogue POST /:bridge_id/order/start': 'a walk-in ordering from a public storefront',
   /* ⭐ declared 2026-09-27 (they were public and unlisted — the guard's exact point). Read before listing: */

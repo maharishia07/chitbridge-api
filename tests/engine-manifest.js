@@ -261,6 +261,7 @@ const INFRA_LIBS = [
    */
   'rates.js',              // the stamped rate card — what CB charges, not what a chit means
   'access-events.js',      // writes the access audit trail — a record OF governance, not governance itself
+  'signin-events.js',      // M06: writes the sign-in log (b282) — a record of who came in, not a rule about it
   'access.js',             // reads role/permission; the rules it enforces live in IAM, not here
   'bridgeid.js',           // id formatting
   'channels.js',           // channel binding lookup — plumbing for an inbound number
