@@ -2801,6 +2801,7 @@
   @media (max-width:520px){ .srow{grid-template-columns:1fr;gap:4px} }
   .dlgbtns{display:flex;gap:8px;margin-top:14px}
   .dlgbtns{border-top:1px solid var(--line);padding-top:12px}
+  .dlgbtns[hidden]{display:none}   /* ⚠️ [hidden] MUST WIN — #slipshare_alt is a .dlgbtns toggled by hidden (till-hidden.test.js) */
   .dlgbtns button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--edge);background:var(--paper);
                   color:var(--ink);font-weight:600;cursor:pointer}
   .dlgbtns button:hover{border-color:var(--ok);color:var(--ok)}
