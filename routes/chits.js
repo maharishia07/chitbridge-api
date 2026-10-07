@@ -3,7 +3,7 @@ const express = require('express');
 const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
-const access = require('../lib/access');   // b173 — viewer / commenter / editor
+const railActions = require('../lib/rail-actions');   // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
@@ -2372,7 +2372,11 @@ router.get('/:chit_id', auth, async (req, res) => {
              LEFT JOIN chit_line_delivery d
                     ON d.entity_id = l.entity_id AND d.chit_id = l.chit_id AND d.line_id = l.line_id
             WHERE l.entity_id = $1 AND l.chit_id = $2
-            ORDER BY l.seq, l.line_id, d.delivered_at) x)                                                AS deliveries`;
+            ORDER BY l.seq, l.line_id, d.delivered_at) x)                                                AS deliveries,
+        -- ⭐ R01: the status of MY RECEIVED copy (null when I hold only the sent one) — the fact rail.actions steps on. A scalar
+        -- in the same statement, so the actions answer costs no round trip. The same row PUT /status reads and moves.
+        (SELECT cs.current_status FROM chit_status cs
+          WHERE cs.chit_id = $2 AND cs.entity_id = $1 AND cs.direction = 'received' LIMIT 1)            AS my_received`;
 
     let bundle = null;
     try {
@@ -2385,6 +2389,7 @@ router.get('/:chit_id', auth, async (req, res) => {
           rows: _lines0 ? await amend.readLines(entity_id, chit_id, db, g.lines || []) : null,
           assigned: _lines0 ? await assign.current(entity_id, chit_id, db, g.assignments || []) : null,
           prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
+          my_received: g.my_received || null,
           /**
            * ⭐ THE ATTACHMENT LIST RIDES ALONG — it cost a whole transaction of its own, measured at 1074ms,
            * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
@@ -2431,7 +2436,11 @@ router.get('/:chit_id', auth, async (req, res) => {
       const assigned = _lines0 ? await trySavepoint(db, () => assign.current(entity_id, chit_id, db), null) : null;
       const prog = _lines0 ? await trySavepoint(db, () => deliverline.progress(entity_id, chit_id, db), null) : null;
 
-      return { participants: participants2, amd, rows, assigned, prog };
+      /* R01 — my received copy's status, as the one-shot reads it (null = none, or not readable here) */
+      const my_received = await trySavepoint(db, (c) => c.query(
+        `SELECT cs.current_status FROM chit_status cs WHERE cs.chit_id = $1 AND cs.entity_id = $2 AND cs.direction = 'received' LIMIT 1`,
+        [chit_id, entity_id]).then((r) => (r.rows[0] && r.rows[0].current_status) || null), null);
+      return { participants: participants2, amd, rows, assigned, prog, my_received };
     });
 
     _mark('bundle_6_reads');
@@ -2529,6 +2538,11 @@ router.get('/:chit_id', auth, async (req, res) => {
       /* ⚠️ THE UI GATES THE ✎ ON THIS. Without it the pen renders on every line before b138 is applied, and the
          only way to discover that is to tap it and get a 503 — an affordance that exists solely to fail. */
       amendments_migrated: amd.migrated !== false,
+      /* ⭐⭐ R01 — MAY I DO X ON THIS COPY, answered by the rail engine (lib/rail.js) over the facts of MY copy: one verdict per
+         action, { ok:true } or { ok:false, why } with why from the engine's vocabulary. The writing routes ask the same
+         engine before they write, so a ✓ here is never refused there. A host paints this; it never computes it. */
+      actions: railActions.actions({ held: true, received: bundle.my_received || null,
+        sender: !!(data.header.rows[0] && String(data.header.rows[0].sender_entity_id) === String(entity_id)) }, railActions.meOf(req)),
       /* ⭐ THE LIVE SET — one entry per ORIGINAL line, carrying what it is now and everything it has been.
          Removed lines are PRESENT with live:null: they must stay visible as evidence while counting nowhere.
          Sent whenever lines exist, amended or not, so the client has exactly one shape to render. */
@@ -2990,7 +3004,7 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
         const mine = await taxCopy.copyOf(chit_id, entity_id);
         if (mine && taxCopy.billReceived(mine, entity_id) && /^(pending|delivered|read)$/.test(String(mine.current_status || ''))) {
           const mv = await moveStatus(entity_id, chit_id, 'accepted',
-            { id: req.identity.identity_id, name: req.identity.display_name }, 'Goods received in full — accepted at goods-in');
+            { id: req.identity.identity_id, name: req.identity.display_name }, 'Goods received in full — accepted at goods-in', railActions.meOf(req));
           if (mv.moved) out.accepted = true;
         }
       }
@@ -3017,7 +3031,9 @@ router.post('/:chit_id/assign-lines', auth, async (req, res) => {
        party to — RLS would keep the row mine and harmless, but it would still be a record of someone else's job. */
     const mine = await withEntity(entity_id, (db) => db.query(
       `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
-    if (!mine.rows.length) return res.status(404).json({ error: 'Not found', message: 'Chit not found or you do not have access' });
+    /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
+    const _v = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'assign');
+    if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
 
     const out = await assign.assign(entity_id, chit_id, req.body.edits || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name });
@@ -3061,7 +3077,9 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
        document I was never party to. */
     const mine = await withEntity(entity_id, (db) => db.query(
       `SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
-    if (!mine.rows.length) return res.status(404).json({ error: 'Not found', message: 'Chit not found or you do not have access' });
+    /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
+    const _v = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
+    if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
 
     const out = await amend.record(entity_id, chit_id, req.body.edits || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name });
@@ -3262,20 +3280,12 @@ router.post('/:chit_id/books-request', auth, async (req, res) => {
  * SAME validation, timeline row, ledger hook and cancel legs as Intake — never a second status writer.
  * → { code, body, moved?, noop? }  — the caller answers with code/body; `moved` = a status actually changed.
  */
-async function moveStatus(entity_id, chit_id, new_status, by, note) {
+async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       const action_by_id = by.id, action_by_name = by.name;
       let disputeWarning = null;
-      const validTransitions = {
-        'pending':     ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled'],
-        'delivered':   ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled', 'pending'],
-        'read':        ['in_progress', 'completed', 'accepted', 'rejected', 'cancelled', 'pending'],
-        'accepted':    ['in_progress', 'completed', 'pending', 'rejected', 'cancelled'],
-        'in_progress': ['partial', 'completed', 'pending', 'accepted', 'cancelled'],
-        'partial':     ['in_progress', 'completed', 'pending', 'cancelled'],
-        'completed':   ['in_progress', 'pending'],
-        'rejected':    ['accepted', 'pending', 'in_progress', 'completed'],
-        'cancelled':   ['accepted', 'pending', 'in_progress', 'completed'],
-      };
+      /* ⭐ R01: the transition table that lived here (validTransitions) is the rail engine's TRANSITIONS now, verbatim, and the
+         decision is rail.move — the same function GET /chits/:id answers `actions` with. `me` = railActions.meOf(req). */
+      if (!me) throw new Error('moveStatus: who is moving it (railActions.meOf(req)) is required');
 
       // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
       // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
@@ -3288,15 +3298,19 @@ async function moveStatus(entity_id, chit_id, new_status, by, note) {
           `SELECT current_status FROM chit_status
             WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received'`,
           [chit_id, entity_id]);
-        if (current.rows.length === 0) return { stop: 'missing' };
+        /* ⭐ R01 — THE ENGINE DECIDES (lib/rail.js move): level → my received copy → the transition table. This route reads
+           ONLY my received copy, so "no copy" and "only the sent copy" are one answer here: not_received, said as the 404 it
+           always was. */
+        const previous_status = current.rows.length ? current.rows[0].current_status : null;
+        const verdict = railActions.move({ held: true, received: previous_status }, me, new_status);
+        if (!verdict.ok && verdict.why === 'not_received') return { stop: 'missing', why: verdict.why };
+        if (!verdict.ok && verdict.why !== 'wrong_step') return { stop: 'level', why: verdict.why };
 
-        const previous_status = current.rows[0].current_status;
         /* Idempotent: advancing to the status it is already in is a no-op success, not a 400. Fixes the
            "Cannot move from accepted to accepted" error when a self-chit's displayed copy diverges. */
-        if (new_status === previous_status) return { stop: 'noop', previous_status };
+        if (verdict.noop) return { stop: 'noop', previous_status };
 
-        const allowed = validTransitions[previous_status] || [];
-        if (!allowed.includes(new_status)) return { stop: 'invalid', previous_status, allowed };
+        if (!verdict.ok) return { stop: 'invalid', previous_status, allowed: verdict.allowed, why: verdict.why };
 
         const openCount = _checkDisputes
           ? (((await db.query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
@@ -3330,7 +3344,11 @@ async function moveStatus(entity_id, chit_id, new_status, by, note) {
 
       /* ⭐ the early returns, OUTSIDE the transaction — see the note above on why they are markers */
       if (_pre.stop === 'missing') {
-        return { code: 404, body: { error: 'Not found', message: 'Chit not found' } };
+        return { code: 404, body: { error: 'Not found', message: 'Chit not found', why: _pre.why } };
+      }
+      /* the hat gate refuses a viewer / commenter before this route runs; the engine says the same if one ever gets here */
+      if (_pre.stop === 'level') {
+        return { code: 403, body: { error: 'Not permitted', message: railActions.WHY[_pre.why], why: _pre.why } };
       }
       if (_pre.stop === 'noop') {
         return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
@@ -3340,6 +3358,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note) {
           error: 'Invalid transition',
           message: `Cannot move from ${_pre.previous_status} to ${new_status}`,
           allowed_transitions: _pre.allowed,
+          why: _pre.why,
         } };
       }
       const previous_status = _pre.previous_status;
@@ -3522,7 +3541,7 @@ router.put('/:chit_id/status',
        * schema.hasTable costs one query per process.
        */
 
-      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note);
+      const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req));
       res.status(_moved.code).json(_moved.body);
       if (!_moved.moved) return;
 
@@ -3625,24 +3644,30 @@ router.post('/:chit_id/messages',
      * read-only silently gains EXTERNAL messaging until this arrives — and widening is the failure direction
      * that never announces itself.
      */
-    if (!access.canMessage(req.identity, thread_type)) {
-      return res.status(403).json({
+    /* ⭐ R01 — THE ENGINE DECIDES (lib/rail.js): the level first, before any read (as this route always did), then the copy.
+       The words below are the ones this route always said; the engine's refusal word rides along as `why`. */
+    const _me = railActions.meOf(req);
+    const _act = thread_type === 'external' ? 'message_external' : 'message_internal';
+    const _lvl = railActions.can({ held: true }, _me, _act);   // the copy is not read yet — this verdict is the level's alone
+    if (!_lvl.ok) {
+      return railActions.refuse(res, _lvl, 403, {
         error: 'Not permitted',
-        message: access.levelOf(req.identity) === access.VIEWER
+        message: _lvl.why === 'read_only'
           ? 'Your access is view-only. You can read this conversation but not post to it.'
           : 'Your access is comment-only. You can reply internally, but not to the other party.',
-        access_level: access.levelOf(req.identity),
+        access_level: _me.level,
       });
     }
 
     try {
       // B1 RLS: participant access check on own copy -> withEntity(me).
-      const access = await withEntity(entity_id, (db) => db.query(
+      const held = await withEntity(entity_id, (db) => db.query(
         `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
         [chit_id, entity_id]
       ));
-      if (access.rows.length === 0) {
-        return res.status(403).json({ error: 'Forbidden', message: 'Not a participant on this chit' });
+      const _v = railActions.can({ held: held.rows.length > 0 }, _me, _act);
+      if (!_v.ok) {
+        return railActions.refuse(res, _v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' });
       }
 
       // D4: dispute-tagged message — stays filterable in the thread even after the dispute resolves.

@@ -35,7 +35,8 @@
     "ledger": "1.20.0",
     "bookpack": "1.20.0",
     "period": "1.20.0",
-    "gst-returns": "1.20.0"
+    "gst-returns": "1.20.0",
+    "rail": "1.29.0"
   },
   "adopt": {
     "money": [
@@ -147,6 +148,9 @@
     ],
     "gst-returns": [
       "lib/gst-returns.js"
+    ],
+    "rail": [
+      "lib/rail.js"
     ]
   },
   "bundles": {
@@ -191,6 +195,7 @@
     "ledger": "175d836b79d339b3cb8894347ff3c6249434ab12125afb6575e5a2a3829e3838",
     "bookpack": "1021a12646ad9a3ce224f90ae2ca0c7e96ae346640e7e77b1694cbe32956ae58",
     "period": "bfe2c30d4803526d0120ed9fcab9f44845302efb29b3b85b75192d8ae31acc9a",
-    "gst-returns": "3390556dca61965ed41f0431d409521c08509c74e5c2447aa936d42db4ae509e"
+    "gst-returns": "3390556dca61965ed41f0431d409521c08509c74e5c2447aa936d42db4ae509e",
+    "rail": "62146650c1ae4e0aa47c16625026f2d29039c4d05261c191f899bd0213f1b698"
   }
 }
