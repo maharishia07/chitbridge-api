@@ -102,9 +102,9 @@ const sign = (claims, opts) => jwt.sign(claims, process.env.JWT_SECRET, Object.a
      * ⭐ So the intent is asserted in the SOURCE as well. A behavioural test proves the outcome today; this
      * protects the decision.
      */
-    const src = require("fs").readFileSync(path.join(__dirname, "..", "middleware", "auth.js"), "utf8");
+    const src = require("fs").readFileSync(path.join(__dirname, "..", "lib", "jwt-verify.js"), "utf8");
     assert.ok(/algorithms:\s*\[\'HS256\'\]/.test(src),
-      "the algorithm pin is gone from auth.js — the verifier now accepts whatever the token claims");
+      "the algorithm pin is gone from lib/jwt-verify.js (the one verifier, E10) — the verifier now accepts whatever the token claims");
   });
 
   await ita('⚠️ an EXPIRED token is refused, and says so as its own case', async () => {

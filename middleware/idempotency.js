@@ -28,7 +28,7 @@ function scope(req) {
   try {
     const h = req.headers.authorization;
     if (!h || !h.startsWith('Bearer ')) return null;
-    const d = jwt.verify(h.split(' ')[1], process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    const d = require('../lib/jwt-verify').verifyJwt(h.split(' ')[1]).claims;   // E10 — the ONE verifier
     if (!d.identity_id) return null;
     return d.parent_entity_id || d.identity_id;
   } catch (_) { return null; }
