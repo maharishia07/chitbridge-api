@@ -288,6 +288,14 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/entities/header": {
+      "file": "entities.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map entitiesRouter); measured by tests/entities-header.test.cjs: 3 cold (two cached schema probes + one readBatch), 1 warm"
+    },
     "GET /api/integrations/catalogue": {
       "file": "integrations.js",
       "trips": 0,

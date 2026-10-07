@@ -93,7 +93,10 @@ router.get('/documents', auth, async (req, res) => {
       `SELECT scheme, country, value_masked, status, verified_at, verified_by, submitted_by, consent_at
          FROM identity_documents WHERE identity_id = $1 ORDER BY scheme`,
       [subject.id]));
-    res.json({ documents: r.rows, catalogue: schemesFor(req.query.country || 'IN').map(s => ({
+    /* M18: a plain `verified` (+ `verified_at`) per document — what N19's trade-ready check reads. Only status 'verified'
+       WITH a stamp counts; the pending-code counterfoil (verification_ref) is never selected, so it cannot leak. */
+    const documents = r.rows.map(d => ({ ...d, verified: d.status === 'verified' && !!d.verified_at }));
+    res.json({ documents, catalogue: schemesFor(req.query.country || 'IN').map(s => ({
       scheme: s.scheme, label: s.label, verify: s.verify, stored: s.store,
       /* the client renders an input only where this is true — the server refuses the rest either way */
       selfServe: !!s.selfServe,
@@ -240,7 +243,7 @@ router.put('/documents/:scheme', auth, async (req, res) => {
             SET value_masked = EXCLUDED.value_masked, value_hash = EXCLUDED.value_hash,
                 value_enc = EXCLUDED.value_enc, status = 'pending', country = EXCLUDED.country,
                 submitted_by = EXCLUDED.submitted_by, consent_at = EXCLUDED.consent_at,
-                verified_at = NULL, verified_by = NULL, updated_at = NOW()
+                verified_at = NULL, verified_by = NULL, verification_ref = NULL, updated_at = NOW()
        RETURNING scheme, value_masked, status, submitted_by`,
       [subject.id, entity_id, cc, want, spec.mask(raw), hash, enc, filedBy, consent]));
 
@@ -252,6 +255,61 @@ router.put('/documents/:scheme', auth, async (req, res) => {
        resolveSubject throws with a status, so honour it rather than flattening every refusal to 500. */
     res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) });
   }
+});
+
+/**
+ * M18 — confirm a phone / e-mail by a code. POST /documents/:scheme/code sends one to the value on file;
+ * POST /documents/:scheme/verify takes it. Subject rules are the same resolveSubject as the write.
+ * Changing the value (PUT) clears the verification, so a new number is unverified until its own code is entered.
+ * The logic is lib/iddoc-verify.js (on lib/otp.js); these handlers only load the row and hand it the store.
+ */
+async function loadDoc(req, scheme) {
+  const subject = await resolveSubject(req, req.body.identity_id || req.query.identity_id);
+  const entity_id = auth.entityOf(req);
+  const r = await withEntity(entity_id, (db) => db.query(
+    `SELECT value_enc, status, verification_ref FROM identity_documents WHERE identity_id = $1 AND scheme = $2`, [subject.id, scheme]));
+  const row = r.rows[0];
+  let value = null;
+  if (row && row.value_enc) { try { value = (vault.decryptVault(JSON.parse(row.value_enc)) || {}).v || null; } catch (_) { value = null; } }
+  return { subject, entity_id, row, value };
+}
+const stores = (entity_id, identity_id, scheme) => ({
+  save: (ref) => withEntity(entity_id, (db) => db.query(
+    `UPDATE identity_documents SET verification_ref = $3, updated_at = NOW() WHERE identity_id = $1 AND scheme = $2`, [identity_id, scheme, ref])),
+  verified: async (by) => (await withEntity(entity_id, (db) => db.query(
+    `UPDATE identity_documents SET status = 'verified', verified_at = NOW(), verified_by = $3, verification_ref = NULL, updated_at = NOW()
+      WHERE identity_id = $1 AND scheme = $2 RETURNING verified_at`, [identity_id, scheme, by]))).rows[0].verified_at,
+});
+const idocGate = async (res) => {
+  if (await schema.hasTable('identity_documents')) return false;
+  res.status(503).json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message: 'Identity records are not switched on yet.' });
+  return true;
+};
+const sendCode = (channel, to, code) => channel === 'email'
+  ? require('../lib/notify').sendOtpEmail(to, '', code, { ttl: '10 minutes' })
+  : require('../lib/notify').sendOtpSms(to, code);
+const codeScheme = (req) => String(req.params.scheme || '').toUpperCase();
+router.post('/documents/:scheme/code', auth, async (req, res) => {
+  try {
+    if (await idocGate(res)) return;
+    const scheme = codeScheme(req);
+    const { subject, entity_id, row, value } = await loadDoc(req, scheme);
+    if (!row) return res.status(404).json({ error: 'Not found', code: 'IDOC_NOT_FOUND', message: 'Add that document first, then ask for a code.' });
+    const out = await require('../lib/iddoc-verify').start({
+      doc: { identity_id: subject.id, scheme, value }, store: stores(entity_id, subject.id, scheme), send: sendCode });
+    res.status(out.status).json(out.body);
+  } catch (e) { res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) }); }
+});
+router.post('/documents/:scheme/verify', auth, async (req, res) => {
+  try {
+    if (await idocGate(res)) return;
+    const scheme = codeScheme(req);
+    const { subject, entity_id, row } = await loadDoc(req, scheme);
+    if (!row) return res.status(404).json({ error: 'Not found', code: 'IDOC_NOT_FOUND', message: 'Add that document first.' });
+    const out = await require('../lib/iddoc-verify').confirm({
+      doc: { identity_id: subject.id, scheme, verification_ref: row.verification_ref }, code: req.body.code, store: stores(entity_id, subject.id, scheme) });
+    res.status(out.status).json(out.body);
+  } catch (e) { res.status(e.status || 500).json({ error: e.code || 'Server error', message: e.status ? e.message : safeErr(e) }); }
 });
 
 module.exports = router;

@@ -232,6 +232,34 @@ router.patch('/policy', auth, async (req, res) => {
   catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 
+/**
+ * GET /entities/header — N19: the shell's header sheet in ONE read: { business, licences[], trade_ready }. Built by lib/entity-header.js
+ * from the shop's row, profile, gathered licences and identity-document verdicts, sent as one readBatch (one trip). Bands, penalty words
+ * and which licences are core come from lib/licence-rules.js (data), never from the page. The entity's own header: an actor reads its employer's.
+ */
+router.get('/header', auth, async (req, res) => {
+  try {
+    const eh = require('../lib/entity-header');
+    const { readBatch } = require('../db');
+    const entity_id = auth.entityOf(req);
+    /* two cached probes: the batch aborts whole on a missing table / column (deploy-before-migration) */
+    const [docsOn, cols] = await Promise.all([require('../lib/iddoc-verify').available(), schema.hasColumns('identities', ['policy_flags'])]);
+    const st = eh.statements(entity_id, { policyFlags: !!cols.policy_flags });
+    const stmts = docsOn ? st : st.slice(0, 3);
+    const out = await readBatch(entity_id, req.identity.identity_id, stmts);
+    const iddoc = require('../lib/iddoc-verify');
+    const prof = (out[1].rows || [])[0] || {};
+    let vault = null;
+    try { vault = require('../lib/profile').sanitizeVault(require('../lib/vaultcrypto').decryptVault(prof.vault || null)); } catch (_) { vault = null; }
+    res.json(eh.build({
+      me: (out[0].rows || [])[0], profile: prof, vault,
+      compliance: out[2].rows || [], docs: docsOn ? iddoc.docsState(out[3].rows) : {},
+    }));
+  } catch (err) {
+    res.status(500).json({ error: 'Header read failed', message: safeErr(err) });
+  }
+});
+
 router.get('/me', auth, async (req, res) => {
   try {
     /* ⚠️⚠️ THE PROBE BELONGS IN THIS FUNCTION. I first put it above the /search query — a different route —

@@ -178,6 +178,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'network-view.js',
   'conformance.js', 'instruments.js', 'kyb.js', 'readiness.js', 'reference.js', 'verify.js', 'profile.js',
   'boilerplate.js', 'plans.js', 'forms.js',
+  'entity-header.js', 'licence-rules.js',   // ADOPTION (N19): the shell's header sheet and the country-keyed licence rules it reads - a presentation of what the shop holds, no engine rule
   // Beckn is a WIRE PROTOCOL — adoption by definition. Classified BEFORE it was written, so the guard existed
   // before the thing it guards. The engine may never import it; vocabulary drift is how a distinct thing becomes
   // a client of someone else's model.
@@ -212,7 +213,7 @@ const INFRA_LIBS = [
      a feature flag and ChitBridge is unchanged, which is what makes it plumbing. (2026-09-14) */
   'istest.js',
   'trips.js',          // INFRA: counts the database round trips one request makes, when CB_TRIPS=1 asks it to (2026-09-07)      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
-  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js', 'employee-code.js',
+  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js', 'employee-code.js', 'iddoc-verify.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
   /* INFRA by this file's own test: it holds no rule and decides nothing. It says "the shop moved" down the pipe
      lib/events already owned, so a counter and a television stop waiting out a timer. Swap the transport and
