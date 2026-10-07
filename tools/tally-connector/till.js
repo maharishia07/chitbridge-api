@@ -83,6 +83,7 @@ const rollup = require('./rollup');   /* the slip, on paper — raw ESC/POS thro
  * lib/orders.js; this program only puts a socket in front of them. [[feedback-ui-replaceable-logic-in-engines]]
  */
 const orderhub = require('./orderhub');
+const CBSignin = require('./signin');   /* the ONE sign-in body (mode:'login'); staged with the kit — see STAGED */
 
 const argv = process.argv.slice(2);
 const flag = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? (argv[i + 1] && !argv[i + 1].startsWith('--') ? argv[i + 1] : true) : d; };
@@ -1274,8 +1275,10 @@ const server = http.createServer(async (req, res) => {
       try {
         /* ⚠️ mode 'login' (2026-10-06, SW-0): without it the server REGISTERS an unknown e-mail as a new business — a typo
            at the shop PC created a shop. A sign-in never registers; an unknown address is refused in words. */
-        const out = await noKey('POST', '/api/entities/register',
-          who.indexOf('@') > 0 ? { email: who, mode: 'login' } : { user_id: who, mode: 'login' });
+        /* M01: the body is built by CBSignin.ask() — the one place that adds mode:'login' — never by hand here. */
+        const asked = CBSignin.ask(who);
+        if (!asked.ok) return json(res, 200, { ok: false, message: asked.why });
+        const out = await noKey('POST', '/api/entities/register', asked.body);
         /**
          * ⚠️ THE SERVER DECIDES WHETHER A CODE WAS SENT, not this program. `dev_otp` comes back only from a
          * test server — lib/dev-otp.js refuses to leak it anywhere else — and passing it through is what lets
@@ -1301,8 +1304,9 @@ const server = http.createServer(async (req, res) => {
       const given = typeof b.token === 'string' && b.token ? b.token : null;
       if (!given && otp.length !== 6) return json(res, 400, { ok: false, message: 'The code is six digits.' });
       try {
-        const vr = given ? { token: given } : await noKey('POST', '/api/entities/verify',
-          Object.assign({ otp: otp }, who.indexOf('@') > 0 ? { email: who } : { user_id: who }));
+        let vbody = null;
+        if (!given) { const v = CBSignin.verify(who, otp); if (!v.ok) return json(res, 200, { ok: false, message: v.why }); vbody = v.body; }
+        const vr = given ? { token: given } : await noKey('POST', '/api/entities/verify', vbody);
         const token = vr && (vr.token || vr.access_token);
         if (!token) return json(res, 200, { ok: false, message: 'That code was not accepted. Ask for a new one.' });
         /* ⭐ the session is spent HERE and kept nowhere — one call, and the counter holds a key instead */
