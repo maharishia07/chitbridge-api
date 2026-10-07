@@ -412,3 +412,31 @@ it('over the limit, only the OWNER\'s counter PIN allows it', () => {
 });
 
 console.log('\n' + pass + ' checks passed\n');
+
+console.log('\nM09 · EVERY ROW SAYS WHERE AND BY WHOM IT WAS MADE — and a session older than a day is renewed through the door\n');
+
+it('⭐⭐⭐ business_json.till has ONE writer (tillStamp) — no builder writes the shape by hand', () => {
+  const w = outside(PAGE, /till: \{ id: [a-z.]+, name: ls\.get\('cb_till_name'/, body(PAGE, 'function tillStamp('));
+  assert.deepStrictEqual(w, [], 'a row builder writes till by hand (it would leave without device_id/by):\n      ' + w.join('\n      '));
+  const n = (PAGE.match(/till: tillStamp\(/g) || []).length;
+  assert.ok(n >= 7, 'only ' + n + ' builders stamp through tillStamp — a bill, credit note, expense, subscription, note, payment and shift make 7');
+});
+
+it('⭐⭐ a stamp names the device and the person: device_id off cb_device_id, by = the identity the server knows, by_name beside it', () => {
+  const ts = body(PAGE, 'function tillStamp(').text;
+  assert.ok(/t\.device_id = deviceId\(\)/.test(ts), 'the stamp does not carry the device id');
+  assert.ok(/p\.identity_id/.test(ts) && /t\.by_name/.test(ts), 'the stamp does not name the person the way lib/holder.js checks (identity_id) with by_name beside it');
+  assert.ok(/if \(!onAgent\(\)\) t\.device_id/.test(ts), 'the shop PC program is given a device id it does not have');
+  const po = body(PAGE, 'function personOf(').text;
+  assert.ok(/identity_id: claims\.identity_id/.test(po) && /iat: claims\.iat/.test(po), 'the kept session no longer records identity_id and iat');
+});
+
+it('⭐ renew is asked once per good snapshot, only after a day, and the new token goes through becomeShop (the one writer)', () => {
+  const pr = body(PAGE, 'async function personRenew(').text;
+  assert.ok(/RENEW_AFTER_MS/.test(pr) && /'\/api\/signin\/renew'/.test(pr), 'personRenew does not call /api/signin/renew after RENEW_AFTER_MS');
+  assert.ok(/becomeShop\(\{ token: a\.token/.test(pr), 'personRenew keeps the token itself instead of handing it to the door');
+  assert.ok(!/ls\.set\('cb_till_person'/.test(pr) && !/CloudHost\.person\s*=/.test(pr), 'personRenew writes the session beside the door');
+  const w = outside(PAGE, /'\/api\/signin\/renew'/, body(PAGE, 'async function personRenew('));
+  assert.deepStrictEqual(w, [], 'renew is called from somewhere else too:\n      ' + w.join('\n      '));
+  assert.ok(/await DB\.set\('snapshot', snap\);\n\s*\/\*[^\n]*\n\s*if \(this\.person\) \{ try \{ await personRenew\(\); \}/.test(PAGE), 'renew does not follow a successful snapshot');
+});

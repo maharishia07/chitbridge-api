@@ -11,7 +11,8 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
-const WEB = path.join(API, '..', 'chitbridge-web', 'public');
+/* ⭐ M09: a worktree stack vendors into ITS web worktree, never the main checkout beside it — CB_WEB_DIR names it */
+const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public');
 /**
  * ⚠️ THE @stage IS PART OF THE HEADER, NOT AN AFTERTHOUGHT. tests/engine-boundary insists that anything no route calls declares
  * a stage — "being uncalled is fine; being uncalled and unlabelled is not, that is how an experiment gets mistaken for a

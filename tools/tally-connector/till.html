@@ -3958,8 +3958,34 @@ function personOf(token, idn, who){
   try { claims = JSON.parse(atob(String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) || {}; } catch (_) { claims = {}; }
   return { token: String(token), entity_id: String(ent), bridge_id: (idn && idn.bridge_id) || null,
            by: (who && who.id) || (idn && (idn.user_id || idn.identity_id)) || null, by_name: (who && who.name) || (idn && idn.display_name) || null,
-           kind: (who && who.kind) || null, device_id: deviceId(), jti: claims.jti || null,
+           /* ⭐ M09: the identity id the SERVER knows this person by — what a bill's till.by must say (tillStamp, lib/holder.js) */
+           identity_id: claims.identity_id || (idn && idn.identity_id) || null,
+           kind: (who && who.kind) || (idn && idn.kind) || null, device_id: deviceId(), jti: claims.jti || null,
+           /* ⭐ M09: when it was issued — personRenew() trades a session older than a day for a fresh one while the line is up */
+           iat: claims.iat ? Number(claims.iat) * 1000 : Date.now(),
            exp: claims.exp ? Number(claims.exp) * 1000 : null, at: Date.now() };
+}
+/**
+ * ⭐ M09 · RENEW WHILE THE LINE IS UP (DESIGN-person-signin §2.2, SPEC-iam-build PR 9). After a successful snapshot, a
+ * session issued more than a day ago is traded for a fresh jti (POST /api/signin/renew — same device, same shop, the old
+ * jti forgotten server-side). A phone that bills every day never meets SESSION_EXPIRED; one that was away for a month
+ * does, and its queue waits for a sign-in (§3.3). The new token goes through the ONE door — becomeShop({ token }) for the
+ * same shop keeps it in place: no reload, same store (tillStore names it by shop + device, never by token). A refusal
+ * changes nothing: the session we hold is the one the server answered the snapshot with a moment ago.
+ */
+var RENEW_AFTER_MS = 24 * 3600 * 1000;
+async function personRenew(){
+  if (!personOn() || !lineUp()) return { ok: false, why: 'not a person session, or no line' };
+  var p = CloudHost.person, since = Number(p.iat || p.at || 0);
+  if (since && (Date.now() - since) < RENEW_AFTER_MS) return { ok: false, why: 'fresh' };
+  var r = await fetchBy(CloudHost.api + '/api/signin/renew', { method: 'POST',
+    headers: CloudHost.auth({ 'Content-Type': 'application/json' }), body: JSON.stringify({ surface: 'till' }) });
+  if (!r.ok) return { ok: false, status: r.status };
+  var a = null; try { a = await r.json(); } catch (_) { a = null; }
+  if (!a || !a.token) return { ok: false, why: 'no token in the answer' };
+  var kept = await becomeShop({ token: a.token, idn: { entity_id: p.entity_id, bridge_id: p.bridge_id, identity_id: p.identity_id,
+                                                      user_id: p.by, display_name: p.by_name, kind: p.kind } });
+  return (kept && kept.ok) ? { ok: true, jti: (CloudHost.person || {}).jti || null } : { ok: false, why: (kept && kept.message) || 'not kept' };
 }
 /**
  * ⭐ WORDS PER CODE for a person session the shop refused — never "Due to maintenance", which is the key holder's
@@ -5134,6 +5160,8 @@ var CloudHost = {
        nothing to save by shortening the one value the audit is about, and a prefix can collide. */
     if (snap.entity_id) (snap.items || []).forEach(function(i){ i._shop = String(snap.entity_id); });
     await DB.set('snapshot', snap);
+    /* ⭐ M09: the shop answered, so the line and the session are good — a session older than a day is renewed now */
+    if (this.person) { try { await personRenew(); } catch (_) { /* the session we hold still works — nothing to do */ } }
     this.drain();
     return { ok:true, at: snap.at };
   },
@@ -5163,7 +5191,7 @@ var CloudHost = {
       subject: 'Shift — ' + sh.by.name + ' — ' + String(sh.to).slice(0,10),
       manual_subject: 'Shift — ' + sh.by.name + ' — ' + String(sh.to).slice(0,10),
       client_ref: 'SHIFT/' + sh.till + '/' + sh.from,
-      business_json: { shift: sh, till: { id: sh.till, name: ls.get('cb_till_name','Counter 1'), by: sh.by } },
+      business_json: { shift: sh, till: tillStamp(sh.till, sh.by) },
       line_items: [],
     };
     await DB.put('queue', Object.assign({ no: body.client_ref, at: sh.to, shiftBody: body }, {}));
@@ -5702,7 +5730,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-10-07.m08';
+var TILL_BUILD = '2026-10-08.m09';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -5911,6 +5939,37 @@ function docTagOf(kind){
  */
 /** which counter wrote a chit — the shop PC's program or a browser (both build credit notes and expenses now) */
 function tillHostWord(){ return (typeof HOST !== 'undefined' && HOST && HOST.mode === 'agent') ? 'agent' : 'browser'; }
+/**
+ * ── ⭐⭐ M09 · WHAT EVERY ROW SAYS ABOUT WHERE AND BY WHOM IT WAS MADE — one writer ───────────────────────────
+ * (DESIGN-person-signin §2.6, SPEC-iam-build PR 9). `business_json.till = { id, name, host, device_id, by, by_name }`.
+ * Seven builders wrote this shape by hand (a bill, a credit note, an expense, a subscription, a receipt/despatch note,
+ * a payment, a shift) — the second-call-site rule made it a helper, so no row can leave without its device and person.
+ *   id         the counter label the ROW was numbered under — its own, never today's (a queued bill keeps its prefix)
+ *   device_id  this browser's cb_device_id (M08). The server checks it against the session a bill arrives on (M11:
+ *              400 TILL_CLAIM_MISMATCH for another phone's bill). The shop PC's program has no device id and sends none.
+ *   by         on a PERSON's device, the identity id the server knows (req.till.by is the session's identity_id —
+ *              lib/holder.js tillClaimOf): a row made by the signed-in person passes as their own; one made by somebody
+ *              else on the same phone (a counter-PIN shift change) is accepted with till.sent_by beside it, `by` kept.
+ *              A key holder keeps the { id, name, kind } it always sent — a key cannot vouch for the person on shift,
+ *              and routes/books.js reads both shapes.
+ *   by_name    the person's display name for the books and the receipt, whatever shape `by` has.
+ */
+function tillStamp(id, by){
+  var who = (by && typeof by === 'object') ? by : null;
+  var t = { id: id, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord() };
+  if (!onAgent()) t.device_id = deviceId();
+  var p = personOn() ? CloudHost.person : null;
+  if (p) {
+    var same = !who || (p.by != null && String(who.id) === String(p.by))
+      || (who.identity_id && p.identity_id && String(who.identity_id) === String(p.identity_id));
+    t.by = same ? (p.identity_id || p.by || null) : (who.identity_id || who.id || null);
+    t.by_name = (who && who.name) || p.by_name || null;
+  } else {
+    t.by = who || null;
+    t.by_name = (who && who.name) || null;
+  }
+  return t;
+}
 function chitOfCN(cn){
   return {
     recipients: [{ self: true, name: 'self' }],
@@ -5919,7 +5978,7 @@ function chitOfCN(cn){
     client_ref: cn.no,
     business_json: {
       customer: cn.customer || { name: 'Walk-in' },
-      till: { id: cn.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: cn.by || null },
+      till: tillStamp(cn.till, cn.by),
       doc: 'credit_note', slip: 'credit_note',
       bill_no: cn.no, billed_at: cn.at,
       catalogue_version: cn.catalogue_version || null,
@@ -5958,7 +6017,7 @@ function chitOfExpense(e){
     subject: subject, manual_subject: subject,
     client_ref: e.no,
     business_json: {
-      till: { id: e.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: e.by || null },
+      till: tillStamp(e.till, e.by),
       doc: 'expense', slip: 'expense',
       bill_no: e.no, billed_at: e.at,
       /* ⭐ money OUT, named as its own thing — same reasoning as a credit note's `refund` above */
@@ -5999,7 +6058,7 @@ function chitOfSubscription(s){
     client_ref: s.no,
     business_json: {
       customer: s.customer || { name: 'Walk-in' },
-      till: { id: s.till, name: ls.get('cb_till_name', 'Counter 1'), host: 'browser', by: s.by || null },
+      till: tillStamp(s.till, s.by),
       doc: 'subscription', slip: 'subscription',
       bill_no: s.no, billed_at: s.at,
       payment: { mode: s.mode, paid: s.total, parts: s.payments || [] },
@@ -6027,7 +6086,7 @@ function chitOfDoc(d){
     client_ref: d.no,
     business_json: {
       doc: d.kind, doc_no: d.no, doc_at: d.at,
-      till: { id: d.till, name: ls.get('cb_till_name','Counter 1'), by: d.by || null },
+      till: tillStamp(d.till, d.by),
       party: { name: who },
       against: d.against || null,
       their_bill: d.their_bill || null,
@@ -6088,7 +6147,7 @@ function chitOf(bill){
     client_ref: bill.no,
     business_json: {
       customer: (bill.customer && bill.customer.name) ? bill.customer : { name:'Walk-in' },
-      till: { id: bill.till, name: ls.get('cb_till_name','Counter 1'), host: 'browser', by: bill.by || null },
+      till: tillStamp(bill.till, bill.by),
       bill_no: bill.no, billed_at: bill.at, catalogue_version: bill.catalogue_version || null,
       /* ⭐ the number on the customer's paper, when the shop had to record the sale under another — see renumberBill */
       printed_as: bill.printed_as || null,
@@ -6801,7 +6860,7 @@ function chitOfPayment(p){
       payment_received: { no: p.no, at: p.at, party: p.party, amount: p.amount, currency: p.currency, mode: p.mode,
                           cheque: p.cheque || null, status: p.status || 'cleared' },
       customer: p.party ? { name: p.party.name, phone: p.party.phone || null, identity_id: p.party.identity_id } : null,
-      till: { id: p.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: p.by || null },
+      till: tillStamp(p.till, p.by),
     },
     line_items: [],
   };
