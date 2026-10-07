@@ -560,8 +560,15 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
          ("the one you selected comes as the last record"). Done here because this is where a chit is born;
          mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
       let line_items = mint.lines(req.body.line_items || []);   // `let`: rated below, once the sender is known
-      const business_json = req.body.business_json
+      /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
+      let business_json = req.body.business_json
         || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
+      /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
+         before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
+         refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
+      const pageAsked = business_json && typeof business_json === 'object' ? business_json.page : undefined;
+      let pageStamp = mint.page(pageAsked);
+      if (!pageStamp.ok) return res.status(400).json({ error: 'Unknown page', code: pageStamp.code, message: pageStamp.message });
       /**
        * ⚠️⚠️ THE SAME FAULT, LATENT. `currency_code` was declared ~90 lines below the tax-invoice block that reads
        * it as `currency: currency_code`. Same scope, proven by brace depth over source with strings blanked (a
@@ -1002,9 +1009,12 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
       //    and other send-time rules will plug in here when we build Suppliers.) ──
       if (promote_draft_id) {
-        const dchk = await withEntity(sender_id, (db) => db.query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id]));
+        const dchk = await withEntity(sender_id, (db) => db.query(`SELECT role, business_json->>'page' AS page FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id]));
         if (dchk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
         if (dchk.rows[0].role !== 'Draft') return res.status(400).json({ error: 'Not a draft', message: 'This chit has already been sent' });
+        /* the draft's page goes with it when the resend does not name one — a draft resumed through a form that does not
+           carry business_json.page must not quietly become a base-page chit (N03) */
+        if (pageAsked == null && dchk.rows[0].page) { const kept = mint.page(dchk.rows[0].page); if (kept.ok) pageStamp = kept; }
       }
       // Generate chit_id — same for ALL participants (reuse the draft's id when promoting, so the draft BECOMES the order)
       const chit_id = promote_draft_id || uuidv4();
@@ -1269,6 +1279,9 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       /* ⚠️ SHAPE from lib/mint.js — and ONLY the shape. Everything above this line (recipient resolution, the caps,
          copy_policy, retention, freeze-at-send, the trace edge) is this route's POLICY and has not moved: it is
          engine-locked and is the reference implementation the other three paths were imitating badly. */
+      /* ⭐ THE PAGE STAMP (N03): on the header of every copy that carries business data — sender, receivers, a bill copy.
+         Added onto what the sender sent, never a rewrite of it; set ONCE here and written by no route afterwards. */
+      business_json = Object.assign({}, business_json && typeof business_json === 'object' ? business_json : {}, { page: pageStamp.page });
       const headerCommon = mint.header({
         sender_entity_id: sender_id, sender_entity_bridge_id: sender_bridge_id,
         sender_entity_display_name: sender_display_name, all_recipients, purpose,

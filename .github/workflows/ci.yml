@@ -69,7 +69,27 @@ jobs:
         run: npm ci
       - name: scripts/guards.cjs
         working-directory: chitbridge-api
-        run: node scripts/guards.cjs
+        run: node scripts/guards.cjs --junit test-results/guards.xml
+      # ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07). The gate went green on every push and the test board read 0 results.
+      # The guards now write JUnit keyed by the board's own case key; this posts it with the ONE poster we have
+      # (chitbridge-web/e2e/post-results.cjs, already checked out above), on a key minted with the `testing` scope.
+      # ⚠️ It never fails the build: no secret, no report or a refused post is a ::warning:: that names why.
+      # ⚠️ main only — the board's "latest word" on a case is about main, not about somebody's branch.
+      - name: post the guards to the test board
+        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        continue-on-error: true
+        working-directory: chitbridge-api
+        env:
+          CB_BOARD_TOKEN: ${{ secrets.CB_BOARD_TOKEN }}
+        run: |
+          if [ -z "$CB_BOARD_TOKEN" ]; then
+            echo "::warning::guards not posted to the test board — add the CB_BOARD_TOKEN secret (a key with the testing scope)"; exit 0
+          fi
+          if [ ! -f test-results/guards.xml ]; then
+            echo "::warning::guards not posted to the test board — the run wrote no test-results/guards.xml"; exit 0
+          fi
+          node ../chitbridge-web/e2e/post-results.cjs --file "$PWD/test-results/guards.xml" --keys name \
+            --kind unit --layer engine --label "guards ${GITHUB_SHA::7}" --build "${GITHUB_SHA::7}" --warn
 
   integration:
     name: integration (smoke + isolation) — DB-backed
