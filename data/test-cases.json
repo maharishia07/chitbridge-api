@@ -241,7 +241,7 @@
   {
    "key": "M-A-COUNTER",
    "name": "Its own app › Counter — till.html",
-   "count": 264
+   "count": 263
   },
   {
    "key": "M-A-STOREFRONT",
@@ -387,6 +387,41 @@
    "key": "S1BRD",
    "name": "Stage 1 · The test board works again",
    "count": 6
+  },
+  {
+   "key": "S1ACT",
+   "name": "Stage 1 · One press, one write",
+   "count": 2
+  },
+  {
+   "key": "S1SHL",
+   "name": "Stage 1 · The shell: one header, five areas, nothing made up",
+   "count": 2
+  },
+  {
+   "key": "S1GOV",
+   "name": "Stage 1 · The nightly governance check",
+   "count": 1
+  },
+  {
+   "key": "S1HOM",
+   "name": "Stage 1 · The home page is the shell",
+   "count": 2
+  },
+  {
+   "key": "S1PHN",
+   "name": "Stage 1 · A phone is a person on a device",
+   "count": 2
+  },
+  {
+   "key": "S1PIN",
+   "name": "Stage 1 · An employee sets a PIN the first time",
+   "count": 1
+  },
+  {
+   "key": "S1RPT",
+   "name": "Stage 1 · The report compares the plan with what ran",
+   "count": 1
   }
  ],
  "engine": {
@@ -521,9 +556,9 @@
    }
   ],
   "other": {
-   "engine_adjacent": 79,
-   "adoption": 32,
-   "infrastructure": 77
+   "engine_adjacent": 81,
+   "adoption": 34,
+   "infrastructure": 84
   }
  },
  "maturity": [
@@ -745,15 +780,15 @@
   }
  ],
  "notes": {
-  "engine": "The rules, as declared in tests/engine-manifest.js. · Tier A never has dependencies; Tier B is bound. · engine-boundary.test.js fails if a Tier A rule grows a require. · 189 other lib/ files are adoption or infrastructure.",
+  "engine": "The rules, as declared in tests/engine-manifest.js. · Tier A never has dependencies; Tier B is bound. · engine-boundary.test.js fails if a Tier A rule grows a require. · 200 other lib/ files are adoption or infrastructure.",
   "middleware": "What decides who may do what, before a route sees the request. · Its database half is RLS — see Database.",
-  "web": "What a person touches: 31 capabilities loaded on demand, plus 36 shared files. ⚠ Co-assist is here under its old name, cap-workforce.js. ⚠ The src/ React pages and the standalone screens are counted nowhere.",
+  "web": "What a person touches: 31 capabilities loaded on demand, plus 38 shared files. ⚠ Co-assist is here under its old name, cap-workforce.js. ⚠ The src/ React pages and the standalone screens are counted nowhere.",
   "api": "Every endpoint a client can call, sized in COSMIC function points (ISO/IEC 19761). ⭐ ACTOR is the model underneath: a person, a co-assist and a connector are each one. · integrations.js homes the connectors; connectors.js is the actor and its connections. ⚠ assist.js is the tier-1 LLM proxy, not the co-assist — no model key reaches the browser.",
-  "database": "Where results rest — every table the 255 migrations create. The migrations ARE the schema. ⭐ RLS is the column that matters, and says one of three things. · POLICY — the database keeps one entity’s rows from another’s. · SHARED — no entity column, so nothing to isolate. Correct, not a gap: 43. ⚠ UNGUARDED — holds entity rows with no policy: 16. The only one of the three that is a finding. ⚠ An inventory, not a live schema dump.",
+  "database": "Where results rest — every table the 256 migrations create. The migrations ARE the schema. ⭐ RLS is the column that matters, and says one of three things. · POLICY — the database keeps one entity’s rows from another’s. · SHARED — no entity column, so nothing to isolate. Correct, not a gap: 43. ⚠ UNGUARDED — holds entity rows with no policy: 16. The only one of the three that is a finding. ⚠ An inventory, not a live schema dump.",
   "bridge": "The crossing — what the layers DO, not a place, so every file here also sits on another row. ⭐ IDENTIFY — a typed name resolves to one identity, or 404. Never best-effort. ⭐ CROSS — one copy per participant, never shared, with clearances, governance and the retention floor frozen onto each. ⭐ PROTECT — RLS then refuses rows that are not yours. ⚠ KNOWN GAP — not tamper-evident. Ownership is proven; byte-identity is not, and that is what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "How a chit leaves the building. routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)\" ⭐ IoT and ERP are two shapes of one connection — which is why co-assist, IoT, ERP and Tally all land here. · The files are ADAPTER (one per foreign system), KIT (the spine) and CHANNEL (how a chit reaches a person). ⚠ IoT has no adapter yet — its 3 file(s) are the signal blueprint and lifecycle scripts."
  },
- "foot": "These six rows are the ARCHITECTURE, not a file inventory. 132 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 804 cases read from a test file, plus 1371 written by hand for the journeys no file covers.",
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 133 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 823 cases read from a test file, plus 1381 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
@@ -871,10 +906,17 @@
   ],
   "middleware": [
    {
+    "name": "auth-first",
+    "file": "chitbridge-api/middleware/auth-first.js",
+    "purpose": "WHO YOU ARE is decided before WHAT YOU SENT is read (M04, IAM §35, 2026-10-07).",
+    "note": "51 lines",
+    "stage": null
+   },
+   {
     "name": "auth",
     "file": "chitbridge-api/middleware/auth.js",
     "purpose": "JWT validation middleware",
-    "note": "398 lines",
+    "note": "455 lines",
     "stage": null
    },
    {
@@ -888,7 +930,7 @@
     "name": "hat-gate",
     "file": "chitbridge-api/middleware/hat-gate.js",
     "purpose": "make the co-assist HAT actually govern writes, by default, everywhere.",
-    "note": "176 lines",
+    "note": "179 lines",
     "stage": null
    },
    {
@@ -911,7 +953,7 @@
     "name": "chits",
     "file": "chitbridge-api/routes/chits.js",
     "purpose": "Chit send, inbox, detail, status update",
-    "note": "752 function points",
+    "note": "751 function points",
     "stage": null
    },
    {
@@ -967,14 +1009,14 @@
     "name": "entities",
     "file": "chitbridge-api/routes/entities.js",
     "purpose": "Entity registration, login, search",
-    "note": "136 function points",
+    "note": "134 function points",
     "stage": null
    },
    {
     "name": "relationships",
     "file": "chitbridge-api/routes/relationships.js",
     "purpose": "B3.6 Supplier List + Customer List + Promotions",
-    "note": "115 function points",
+    "note": "117 function points",
     "stage": null
    },
    {
@@ -988,7 +1030,7 @@
     "name": "actors",
     "file": "chitbridge-api/routes/actors.js",
     "purpose": "B3 Actor model API All endpoints for create login manage actors",
-    "note": "112 function points",
+    "note": "106 function points",
     "stage": null
    },
    {
@@ -1090,6 +1132,13 @@
     "stage": null
    },
    {
+    "name": "signin",
+    "file": "chitbridge-api/routes/signin.js",
+    "purpose": "/api/signin — A PERSON'S SESSIONS: renew · logout · list · revoke (M05, SPEC-iam-build §4.2, D3, D14).",
+    "note": "33 function points",
+    "stage": null
+   },
+   {
     "name": "supplies",
     "file": "chitbridge-api/routes/supplies.js",
     "purpose": "WHAT A SHOP BUYS TO USE",
@@ -1111,6 +1160,20 @@
     "stage": null
    },
    {
+    "name": "identity-docs",
+    "file": "chitbridge-api/routes/identity-docs.js",
+    "purpose": "a person's own identity record: phone, email, and government IDs.",
+    "note": "20 function points",
+    "stage": null
+   },
+   {
+    "name": "counters",
+    "file": "chitbridge-api/routes/counters.js",
+    "purpose": "/api/counters — THE SHOP'S COUNTERS, AS STANDING IDENTITIES (2026-09-17).",
+    "note": "18 function points",
+    "stage": null
+   },
+   {
     "name": "offers",
     "file": "chitbridge-api/routes/offers.js",
     "purpose": "/api/offers — THE OFFER ENGINE AS A SERVICE.",
@@ -1125,9 +1188,9 @@
     "stage": null
    },
    {
-    "name": "counters",
-    "file": "chitbridge-api/routes/counters.js",
-    "purpose": "/api/counters — THE SHOP'S COUNTERS, AS STANDING IDENTITIES (2026-09-17).",
+    "name": "keys",
+    "file": "chitbridge-api/routes/keys.js",
+    "purpose": "/api/keys — API KEYS FOR OTHER SYSTEMS (Athi, 2026-09-05: \"create the entire offer as a capability and attach it to any other systems … an api or micro service\").",
     "note": "15 function points",
     "stage": null
    },
@@ -1153,20 +1216,6 @@
     "stage": null
    },
    {
-    "name": "identity-docs",
-    "file": "chitbridge-api/routes/identity-docs.js",
-    "purpose": "a person's own identity record: phone, email, and government IDs.",
-    "note": "13 function points",
-    "stage": null
-   },
-   {
-    "name": "keys",
-    "file": "chitbridge-api/routes/keys.js",
-    "purpose": "/api/keys — API KEYS FOR OTHER SYSTEMS (Athi, 2026-09-05: \"create the entire offer as a capability and attach it to any other systems … an api or micro service\").",
-    "note": "13 function points",
-    "stage": null
-   },
-   {
     "name": "notifications",
     "file": "chitbridge-api/routes/notifications.js",
     "purpose": "derived notification feed (no notifications table).",
@@ -1177,6 +1226,13 @@
     "name": "catalogue-face",
     "file": "chitbridge-api/routes/catalogue-face.js",
     "purpose": "CATALOGUE FACE persistence: the catalogue setup config (purpose · method · units · facets · tax · ERP mapping), stored per entity so the SAME setup follows the user across machines/browsers (was browser-localStorage only). The catalogue ITEMS live in catalogue_items (real products); this holds only the face.",
+    "note": "10 function points",
+    "stage": null
+   },
+   {
+    "name": "facts",
+    "file": "chitbridge-api/routes/facts.js",
+    "purpose": "/api/facts — WHAT EACH HOME CARD SAYS (N18, 2026-10-08).",
     "note": "10 function points",
     "stage": null
    },
@@ -1239,7 +1295,7 @@
     "name": "cap-books",
     "file": "chitbridge-web/public/app/cap-books.js",
     "purpose": "THE LEDGER: parties, statements, payments, day book, trial balance, P&L, balance sheet, dues, month lock, handover packs. Loaded on demand (ensureCap('books')). Contract: C:\\dev\\SPEC-books-v2.md §4–§5.",
-    "note": "1834 lines",
+    "note": "1840 lines",
     "stage": null
    },
    {
@@ -1263,7 +1319,7 @@
     "name": "cap-chit2",
     "file": "chitbridge-web/public/app/cap-chit2.js",
     "purpose": "DESIGN 2: the chit as LINE-LEVEL work (lazy; ensureCap('chit2')).",
-    "note": "1403 lines",
+    "note": "1405 lines",
     "stage": null
    },
    {
@@ -1415,7 +1471,7 @@
     "name": "cap-standards",
     "file": "chitbridge-web/public/app/cap-standards.js",
     "purpose": "THE REGISTER OF STANDARDS, and the argument for following them.",
-    "note": "688 lines",
+    "note": "687 lines",
     "stage": null
    },
    {
@@ -1463,7 +1519,7 @@
     "name": "accounts-shell",
     "file": "chitbridge-web/public/app/accounts-shell.js",
     "purpose": "the small shared floor under every page that shows the Ledger (app.html, accounts.html, and the Ledger tile on index.html). Loaded by app.html right after core.js and BEFORE its inline script; by accounts.html before cap-books.js. Nothing here was written for CB Accounts alone: each piece was already in app.html and is MOVED here, so that the app and the CB Accounts page run ONE implementation, not two copies (2026-10-01, docs/design/ cb-accounts/CLOUD-TASK.md).",
-    "note": "234 lines",
+    "note": "342 lines",
     "stage": null
    },
    {
@@ -1612,6 +1668,14 @@
    },
    {
     "tier": "shared",
+    "name": "page",
+    "file": "chitbridge-web/public/app/page.js",
+    "purpose": "CBPage: WHICH DETAIL PAGE OPENS A CHIT (N03, 2026-10-07 · decisions M-D6 / M-D7).",
+    "note": "66 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
     "name": "pick",
     "file": "chitbridge-web/public/app/pick.js",
     "purpose": "CBPick: open the catalogue over any screen and hand the selection back.",
@@ -1648,6 +1712,14 @@
     "file": "chitbridge-web/public/app/search.js",
     "purpose": "HOW A SHOPKEEPER FINDS A PRODUCT. (classic script, shared global scope)",
     "note": "253 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "shell",
+    "file": "chitbridge-web/public/app/shell.js",
+    "purpose": "── ⭐ CBShell — THE FRAME EVERY UTILITY APP LIVES IN: HEADER · SHEET · FIVE AREAS · KURAL ──────────────────────────────────────",
+    "note": "473 lines",
     "stage": null
    },
    {
@@ -2717,6 +2789,14 @@
     "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
    },
    {
+    "name": "signin_events",
+    "purpose": "event_id · entity_id · identity_id · person_id · action · method · device_id · jti · +5 more",
+    "note": "13 cols",
+    "stage": "proven",
+    "tier": "policy",
+    "file": "chitbridge-api/chitbridge-api/migrations/b282_signin_events.sql"
+   },
+   {
     "name": "signup_context",
     "purpose": "signup_context_id · identity_id · claimed_country · claimed_currency · claimed_timezone · claimed_locale · claimed_languages · device · +4 more",
     "note": "12 cols",
@@ -3012,7 +3092,7 @@
     "name": "chits",
     "file": "chitbridge-api/routes/chits.js",
     "purpose": "Resolution in order of how STABLE an identifier is, never how convenient: entity_id, then bridge_id, then user_id (the handle), and display_name only as a LAST resort — a display name is a VIEW name, free to change. ⚠ Two guards stop a chit reaching the wrong party: status must be active, and a minted party (user_id ~) can NEVER be resolved by name, because minted suppliers carry ordinary shop names and a name typed by any business could otherwise reach another business's private supplier record. Nothing resolves → 404 and the send is refused.",
-    "note": "4968 lines",
+    "note": "5007 lines",
     "stage": null,
     "tier": "identify"
    },
@@ -3060,7 +3140,7 @@
     "name": "auth",
     "file": "chitbridge-api/middleware/auth.js",
     "purpose": "Who is asking, before any route sees the request.",
-    "note": "398 lines",
+    "note": "455 lines",
     "stage": null,
     "tier": "protect"
    },
@@ -15615,7 +15695,7 @@
      "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right. When you know, replace this line with the expectation."
     ]
    ],
-   "note": "⚠ GENERATED from the control go (“Change”) in cap-network.js. It asserts only that the control EXISTS — the expectation is missing and must be written by somebody who has used it. A pass here proves nothing until then. ⭐ Its handler go() is a SHARED HELPER (step-flow.js), so every screen that calls it runs the same code — and a change here changes all of them. ⚠⚠ THE SAME NAME APPEARS ELSEWHERE, WIRED TO DIFFERENT CODE: cap-catsetup.js (declareVariants()), cap-network.js (netSetNetworkName()). DOES THIS ONE WORK THE SAME WAY? Operate both and compare — two controls a person reads as one thing, kept in step by nothing but habit, is exactly where behaviour drifts. ⚠ COULD NOT BE PROVEN YET (2026-09-12): the door opened and the screen was EMPTY — the test account holds no data, so this control was never drawn. That is the account, not the product. Prove it by hand, or walk again against an entity that has chits.",
+   "note": "⚠ GENERATED from the control go (“Change”) in cap-network.js. It asserts only that the control EXISTS — the expectation is missing and must be written by somebody who has used it. A pass here proves nothing until then. ⚠⚠ go() is declared in 2 files (shell.js, step-flow.js). Declarations HOIST, so the last one wins and the rest are silently discarded — which of them this control runs is not obvious from the screen. ⚠⚠ THE SAME NAME APPEARS ELSEWHERE, WIRED TO DIFFERENT CODE: cap-catsetup.js (declareVariants()), cap-network.js (netSetNetworkName()). DOES THIS ONE WORK THE SAME WAY? Operate both and compare — two controls a person reads as one thing, kept in step by nothing but habit, is exactly where behaviour drifts. ⚠ COULD NOT BE PROVEN YET (2026-09-12): the door opened and the screen was EMPTY — the test account holds no data, so this control was never drawn. That is the account, not the product. Prove it by hand, or walk again against an entity that has chits.",
    "layer": null,
    "test_type": "acceptance",
    "automated": false,
@@ -42837,42 +42917,6 @@
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
-   "title": "the control tagged till-usign-newcounter — what does it do?",
-   "priority": "Medium",
-   "pre": "In till.html — the Counter, which is its OWN page, not a screen inside the app. Open it the way a person would: Counter on the rail, then “use this device”. The control is drawn by usignPaint().",
-   "data": "—",
-   "steps": [
-    [
-     "Find the control tagged till-usign-newcounter.",
-     "It is on the page and can be operated."
-    ],
-    [
-     "Use it.",
-     "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right."
-    ]
-   ],
-   "note": "⚠ GENERATED from the control usignNewCounter in till.html. ⚠ PATH NOT PROVEN: the walk did not reach this door — it is an action, a panel or its own page. The route below was read from the source, not walked.",
-   "layer": null,
-   "test_type": "acceptance",
-   "automated": false,
-   "areas": [
-    "web"
-   ],
-   "seq": 118,
-   "step": "118",
-   "run_by": "a person on the board (a customer, and it is UAT)",
-   "menu": "Its own app › Counter",
-   "screen_code": "OWN001",
-   "generated": true,
-   "cites": null,
-   "screen_purpose": null,
-   "generic": false
-  },
-  {
-   "case_key": "M-A-COUNTER-246",
-   "module_key": "M-A-COUNTER",
-   "module_name": "Its own app › Counter — till.html",
-   "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
    "title": "“Save PIN” — what does it do?",
    "priority": "Medium",
    "pre": "In till.html — the Counter, which is its OWN page, not a screen inside the app. Open it the way a person would: Counter on the rail, then “use this device”. The control is drawn by usignPaint().",
@@ -42905,7 +42949,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-247",
+   "case_key": "M-A-COUNTER-246",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -42941,7 +42985,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-248",
+   "case_key": "M-A-COUNTER-247",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -42977,7 +43021,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-249",
+   "case_key": "M-A-COUNTER-248",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43013,7 +43057,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-250",
+   "case_key": "M-A-COUNTER-249",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43049,7 +43093,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-251",
+   "case_key": "M-A-COUNTER-250",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43085,7 +43129,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-252",
+   "case_key": "M-A-COUNTER-251",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43121,7 +43165,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-253",
+   "case_key": "M-A-COUNTER-252",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43157,7 +43201,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-254",
+   "case_key": "M-A-COUNTER-253",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43193,7 +43237,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-255",
+   "case_key": "M-A-COUNTER-254",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43229,7 +43273,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-256",
+   "case_key": "M-A-COUNTER-255",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43265,7 +43309,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-257",
+   "case_key": "M-A-COUNTER-256",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43301,7 +43345,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-258",
+   "case_key": "M-A-COUNTER-257",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43337,7 +43381,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-259",
+   "case_key": "M-A-COUNTER-258",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43373,7 +43417,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-260",
+   "case_key": "M-A-COUNTER-259",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43409,7 +43453,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-261",
+   "case_key": "M-A-COUNTER-260",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43445,7 +43489,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-262",
+   "case_key": "M-A-COUNTER-261",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43481,7 +43525,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-263",
+   "case_key": "M-A-COUNTER-262",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -43517,7 +43561,7 @@
    "generic": false
   },
   {
-   "case_key": "M-A-COUNTER-264",
+   "case_key": "M-A-COUNTER-263",
    "module_key": "M-A-COUNTER",
    "module_name": "Its own app › Counter — till.html",
    "intro": "till.html — bill at a counter — offline-first, with its own store and its own sync back to the rail. ⭐ A PAGE OF ITS OWN, reached from the rail but not part of app.html, which is why it had no case until 2026-09-12. ⚠⚠ THE CONTROLS BELOW ARE ONLY HALF OF IT: what this page does when nobody is touching it — holding a bill offline, queueing, syncing back to the rail, resolving what changed while it was away — is the reason it exists and CANNOT be swept from markup. Those cases have to be written by a person, and their absence is a stated gap rather than a silence.",
@@ -53539,6 +53583,426 @@
    "generic": false
   },
   {
+   "case_key": "S1ACT-01",
+   "module_key": "S1ACT",
+   "module_name": "Stage 1 · One press, one write",
+   "intro": "A button that writes cannot fire twice, and an irreversible one asks first (M64, CBAction).",
+   "title": "One press, one payment",
+   "priority": "High",
+   "pre": "CB Accounts, signed in as the owner.",
+   "data": "A customer with an open bill, e.g. Ravi Stores.",
+   "steps": [
+    [
+     "Customers → the customer → Receive → type 4000.",
+     "The amount shows."
+    ],
+    [
+     "Double-click Next.",
+     "⭐ ONE payment is recorded. Next is greyed while it works."
+    ],
+    [
+     "Look at the bills.",
+     "They match the payment once, with Confirm."
+    ]
+   ],
+   "note": "Automated: chitbridge-web/e2e/action-state.cjs.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1ACT-02",
+   "module_key": "S1ACT",
+   "module_name": "Stage 1 · One press, one write",
+   "intro": "A button that writes cannot fire twice, and an irreversible one asks first (M64, CBAction).",
+   "title": "Close a month for good asks first",
+   "priority": "High",
+   "pre": "CB Accounts → Month lock, a month that is Locked.",
+   "data": "Any reason text.",
+   "steps": [
+    [
+     "Type a reason and press Close for good.",
+     "⭐ The shop's own dialog says it will never open again. Not a browser pop-up."
+    ],
+    [
+     "Press Cancel.",
+     "Nothing changes. The month stays Locked."
+    ],
+    [
+     "Press it again and choose Yes.",
+     "The row says Closed for good and offers nothing more."
+    ]
+   ],
+   "note": "A failed write says \"Could not change it\", with no technical text, and the button works again.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1SHL-01",
+   "module_key": "S1SHL",
+   "module_name": "Stage 1 · The shell: one header, five areas, nothing made up",
+   "intro": "The frame every utility app will live in (N17). Until N18 it is only on /shell-lab.html.",
+   "title": "The header bar and its sheet",
+   "priority": "High",
+   "pre": "Signed in as a test shop on a laptop.",
+   "data": "Open /shell-lab.html.",
+   "steps": [
+    [
+     "Look at the top bar.",
+     "Green mark, the shop name with ▼, and your avatar. Nothing else."
+    ],
+    [
+     "Press the shop name.",
+     "A strip opens: The business, and \"Licences and trade checks are not available yet.\" No numbers."
+    ],
+    [
+     "Press Esc.",
+     "The strip closes."
+    ]
+   ],
+   "note": "Automated: chitbridge-web/e2e/shell.cjs. Licences and checks fill in when N19 ships.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1SHL-02",
+   "module_key": "S1SHL",
+   "module_name": "Stage 1 · The shell: one header, five areas, nothing made up",
+   "intro": "The frame every utility app will live in (N17). Until N18 it is only on /shell-lab.html.",
+   "title": "On a phone: bottom tabs, one area at a time",
+   "priority": "High",
+   "pre": "A phone or a 390 px window, signed in.",
+   "data": "/shell-lab.html",
+   "steps": [
+    [
+     "Look at the screen.",
+     "Five tabs at the bottom. Nothing slides sideways."
+    ],
+    [
+     "Press Selling.",
+     "Only Selling shows, as rows."
+    ],
+    [
+     "Look for Catalogue or Stock.",
+     "Dashed chips marked WORKSHOP or LATER. They do not open."
+    ]
+   ],
+   "note": "",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "governance.nightly",
+   "module_key": "S1GOV",
+   "module_name": "Stage 1 · The nightly governance check",
+   "intro": "Every night a workflow checks how the platform is run and posts ONE case (E04).",
+   "title": "Branch protection, alerts, CI and the live server are as they should be",
+   "priority": "High",
+   "pre": "The governance workflow has run (nightly 21:00 UTC, or by hand).",
+   "data": "None.",
+   "steps": [
+    [
+     "Open testing.html and search \"governance\".",
+     "One case, with last night's result."
+    ],
+    [
+     "If it is red, read its note.",
+     "Each failing line in plain words, e.g. the live server says \"development\", not \"production\"."
+    ]
+   ],
+   "note": "Automated: chitbridge-api/.github/workflows/governance.yml + scripts/governance-report.cjs. It can never pass while main is unprotected or the server says development.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1HOM-01",
+   "module_key": "S1HOM",
+   "module_name": "Stage 1 · The home page is the shell",
+   "intro": "The index (/) is the shell Home (N18). A figure on a card is the server’s, or it is not there.",
+   "title": "Every card opens its own app, with real figures",
+   "priority": "High",
+   "pre": "Signed in as a test shop on a laptop.",
+   "data": "Open /.",
+   "steps": [
+    [
+     "Look at the page.",
+     "Green mark, shop name, avatar; five areas; the kural at the foot."
+    ],
+    [
+     "Read the Till card.",
+     "Bills and takings for the shop day, and counters open, if the server has them."
+    ],
+    [
+     "Press Till, come back, press CB Accounts.",
+     "Each opens its own page, never the workshop (app.html)."
+    ],
+    [
+     "Press a dashed chip (Catalogue).",
+     "Nothing opens."
+    ]
+   ],
+   "note": "Automated: chitbridge-web/e2e/index-page.cjs; figures from GET /api/facts/*.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1HOM-02",
+   "module_key": "S1HOM",
+   "module_name": "Stage 1 · The home page is the shell",
+   "intro": "The index (/) is the shell Home (N18). A figure on a card is the server’s, or it is not there.",
+   "title": "On a phone",
+   "priority": "High",
+   "pre": "A phone or a 390 px window, signed in.",
+   "data": "/",
+   "steps": [
+    [
+     "Look at the screen.",
+     "Five tabs at the bottom; nothing slides sideways."
+    ],
+    [
+     "Press Selling.",
+     "One area at a time, as rows."
+    ]
+   ],
+   "note": "",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1PHN-01",
+   "module_key": "S1PHN",
+   "module_name": "Stage 1 · A phone is a person on a device",
+   "intro": "M08: a phone signs in as a person; the PC counter is untouched; old bills are kept.",
+   "title": "A phone that already holds bills keeps them",
+   "priority": "High",
+   "pre": "A phone that was paired with a counter key and has unsent bills.",
+   "data": "Open the till on it.",
+   "steps": [
+    [
+     "Open the till.",
+     "The same bills are listed."
+    ],
+    [
+     "Let it send.",
+     "Each bill reaches the shop once."
+    ]
+   ],
+   "note": "",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1PHN-02",
+   "module_key": "S1PHN",
+   "module_name": "Stage 1 · A phone is a person on a device",
+   "intro": "M08: a phone signs in as a person; the PC counter is untouched; old bills are kept.",
+   "title": "A fresh phone signs in as a person",
+   "priority": "High",
+   "pre": "A phone that never used the till.",
+   "data": "The owner user id.",
+   "steps": [
+    [
+     "Enter the user id, then the code.",
+     "Signed in. It never asks to take a counter."
+    ],
+    [
+     "Make a bill while the shop PC has Counter 1 open.",
+     "The bill goes; the phone has its own bill numbers; the PC keeps Counter 1."
+    ]
+   ],
+   "note": "",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1PIN-01",
+   "module_key": "S1PIN",
+   "module_name": "Stage 1 · An employee sets a PIN the first time",
+   "intro": "Every sign-in door now tells the page when an employee must set a PIN.",
+   "title": "First sign-in asks for a PIN",
+   "priority": "High",
+   "pre": "An employee who has never signed in.",
+   "data": "Their first-time code.",
+   "steps": [
+    [
+     "Sign in with the employee id and the first-time code.",
+     "Signed in, then asked to set a 4-digit PIN."
+    ],
+    [
+     "Set the PIN, sign out, sign in with the PIN.",
+     "Signed in."
+    ]
+   ],
+   "note": "API part shipped in batch 3; the screens follow in M14 (CBSignin) on index, CB Accounts, CB CRM, then the till.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1RPT-01",
+   "module_key": "S1RPT",
+   "module_name": "Stage 1 · The report compares the plan with what ran",
+   "intro": "N07: section 5a counts planned · executed · passed per level from the board itself.",
+   "title": "Section 5a matches the board",
+   "priority": "Medium",
+   "pre": "testing.html, signed in.",
+   "data": "None.",
+   "steps": [
+    [
+     "Open Report.",
+     "Section 5a lists each level with Planned, Executed and Passed, and an All levels row."
+    ],
+    [
+     "Read section 5.",
+     "Only its question; no sentence the app wrote."
+    ]
+   ],
+   "note": "",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
    "case_key": "chitbridge-api/scripts/_proof.js",
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
@@ -56562,6 +57026,37 @@
    "changed_at": "2026-08-22T07:31:03+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/auth-first.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "M04 (IAM §35): POST /api/chits/send decides WHO before it reads WHAT.",
+   "claim": "M04 (IAM §35): POST /api/chits/send decides WHO before it reads WHAT.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 192 lines. Run: node chitbridge-api/tests/auth-first.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/base.js",
+    "middleware/idempotency.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-07T21:22:34+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/auth-middleware.test.js",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -56572,7 +57067,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · security · 221 lines. Run: node chitbridge-api/tests/auth-middleware.test.js",
+   "note": "test.unit · security · 286 lines. Run: node chitbridge-api/tests/auth-middleware.test.js",
    "layer": "engine",
    "test_type": "security",
    "group": "test.unit",
@@ -56581,14 +57076,17 @@
    "step": "",
    "areas": [
     "api",
+    "engine",
     "middleware"
    ],
    "subjects": [
+    "lib/holder.js",
+    "lib/jwt-verify.js",
     "middleware/auth.js",
     "middleware/hat-gate.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-11T15:21:12+05:30",
+   "changed_at": "2026-10-08T03:36:46+05:30",
    "needs": [
     "a database (via auth.js)"
    ]
@@ -56948,10 +57446,11 @@
     "engine"
    ],
    "subjects": [
-    "lib/books-store.js"
+    "lib/books-store.js",
+    "lib/holder.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-03T00:23:41+05:30",
+   "changed_at": "2026-10-07T21:22:34+05:30",
    "needs": [
     "a database (via books-harness.cjs)"
    ]
@@ -57212,7 +57711,7 @@
     "lib/books-store.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-01T14:30:07+05:30",
+   "changed_at": "2026-10-08T04:10:00+05:30",
    "needs": [
     "a database"
    ]
@@ -57684,6 +58183,33 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/claim-series.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "M11: ONE SERIES ALLOCATOR FOR A COUNTER PC (key) AND A PERSON'S PHONE (device).",
+   "claim": "M11: ONE SERIES ALLOCATOR FOR A COUNTER PC (key) AND A PERSON'S PHONE (device).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · static · 281 lines. Run: node chitbridge-api/tests/claim-series.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database",
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-07T22:51:34+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/cmdb.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -58033,7 +58559,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · static · 359 lines. Run: node chitbridge-api/tests/counter-gates.test.cjs",
+   "note": "test.guard · static · 415 lines. Run: node chitbridge-api/tests/counter-gates.test.cjs",
    "layer": "engine",
    "test_type": "static",
    "group": "test.guard",
@@ -58047,7 +58573,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-30T19:29:17+05:30"
+   "changed_at": "2026-10-08T03:43:56+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/crm-followups.test.cjs",
@@ -58745,7 +59271,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 103 lines. Run: node chitbridge-api/tests/employee-code.test.cjs",
+   "note": "test.guard · unit · 105 lines. Run: node chitbridge-api/tests/employee-code.test.cjs",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.guard",
@@ -58758,11 +59284,38 @@
    "subjects": [
     "lib/dev-otp.js",
     "lib/employee-code.js",
+    "lib/identity-auth.js",
     "lib/notify.js",
     "lib/otp.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-07T20:56:27+05:30"
+   "changed_at": "2026-10-07T22:22:54+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/employee-first-signin.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "Athi's case, 2026-10-08 (production, unsealed, DEV_OTP=123456): an EMPLOYEE's first sign-in with the first-time code must end SIGNED IN and ASKED TO SET A PIN, on every door; the PIN must then work. A sealed environment never accepts the fixed code.",
+   "claim": "Athi's case, 2026-10-08 (production, unsealed, DEV_OTP=123456): an EMPLOYEE's first sign-in with the first-time code must end SIGNED IN and ASKED TO SET A PIN, on every door; the PIN must then work. A sealed environment never accepts the fixed code.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 165 lines. Run: node chitbridge-api/tests/employee-first-signin.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-08T04:15:48+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/engine-boundary.test.js",
@@ -58804,7 +59357,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.harness · support · 788 lines. Run: node chitbridge-api/tests/engine-manifest.js",
+   "note": "test.harness · support · 799 lines. Run: node chitbridge-api/tests/engine-manifest.js",
    "layer": "engine",
    "test_type": "support",
    "group": "test.harness",
@@ -58826,7 +59379,7 @@
     "engine/qr.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-07T20:56:27+05:30"
+   "changed_at": "2026-10-08T04:10:00+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/engine-versions.test.cjs",
@@ -58856,7 +59409,7 @@
     "lib/money.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-28T22:41:46+05:30"
+   "changed_at": "2026-10-07T22:47:49+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/engines-pinned.test.js",
@@ -58882,6 +59435,39 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-09-28T11:13:52+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/entities-header.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "N19: GET /api/entities/header is ONE read, bands and words come from data.",
+   "claim": "N19: GET /api/entities/header is ONE read, bands and words come from data.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 114 lines. Run: node chitbridge-api/tests/entities-header.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/licence-rules.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-07T23:04:20+05:30",
+   "needs": [
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/entity-cast-guard.test.cjs",
@@ -59201,6 +59787,33 @@
    "changed_at": "2026-09-19T09:01:37+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/governance-report.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "E04: the nightly governance report is red for exactly the reasons it says.",
+   "claim": "E04: the nightly governance report is red for exactly the reasons it says.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 57 lines. Run: node chitbridge-api/tests/governance-report.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/junitresults.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-08T03:36:04+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/governed-currency.test.js",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -59256,10 +59869,11 @@
    ],
    "subjects": [
     "lib/govresolve.js",
+    "lib/signin.js",
     "lib/workpattern.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-16T06:42:21+05:30"
+   "changed_at": "2026-10-07T22:22:54+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/groupsum-selection.test.js",
@@ -59368,6 +59982,36 @@
    "changed_at": "2026-09-28T23:42:36+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/home-facts.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "GET /api/facts/:card (N18): what each Home card says, from the server, or not at all.",
+   "claim": "GET /api/facts/:card (N18): what each Home card says, from the server, or not at all.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 172 lines. Run: node chitbridge-api/tests/home-facts.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/books-hooks.js",
+    "lib/policy.js",
+    "routes/facts.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-08T04:10:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/iam-access.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -59402,6 +60046,36 @@
    "changed_at": "2026-09-25T16:12:36+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/iddocs-verify.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "M18: a phone / e-mail identity document is verified by a code.",
+   "claim": "M18: a phone / e-mail identity document is verified by a code.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 96 lines. Run: node chitbridge-api/tests/iddocs-verify.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/iddoc-verify.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-07T22:50:38+05:30",
+   "needs": [
+    "a database (via schema.js)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/identity-auth.test.js",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -59426,7 +60100,10 @@
     "lib/identity-auth.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-23T21:07:33+05:30"
+   "changed_at": "2026-09-23T21:07:33+05:30",
+   "needs": [
+    "a database (via identity-auth.js)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/identity.test.js",
@@ -59535,6 +60212,41 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-09-12T20:30:16+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/iso8601.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "NO TIMESTAMP LEAVES STORAGE OR TRANSPORT IN ANY OTHER FORM THAN RFC 3339 (N11).",
+   "claim": "NO TIMESTAMP LEAVES STORAGE OR TRANSPORT IN ANY OTHER FORM THAN RFC 3339 (N11).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 215 lines. Run: node chitbridge-api/tests/iso8601.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "connector",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/junitresults.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-08T03:36:11+05:30",
+   "needs": [
+    "a database",
+    "the API running"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/item-cost.test.js",
@@ -59680,6 +60392,40 @@
    "changed_at": "2026-09-11T22:07:53+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/jwt-rotation.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "E10: the signing secret can be rotated without signing anybody out.",
+   "claim": "E10: the signing secret can be rotated without signing anybody out.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 122 lines. Run: node chitbridge-api/tests/jwt-rotation.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/identity-auth.js",
+    "lib/jwt-verify.js",
+    "middleware/auth.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-08T03:36:46+05:30",
+   "needs": [
+    "a database (via auth.js)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/key-scopes.test.js",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -59690,7 +60436,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · security · 319 lines. Run: node chitbridge-api/tests/key-scopes.test.js",
+   "note": "test.unit · security · 320 lines. Run: node chitbridge-api/tests/key-scopes.test.js",
    "layer": "engine",
    "test_type": "security",
    "group": "test.unit",
@@ -59707,7 +60453,7 @@
     "middleware/auth.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-30T19:44:34+05:30"
+   "changed_at": "2026-10-07T21:22:34+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/kit-update.test.js",
@@ -59769,6 +60515,32 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-09-28T08:55:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/limiter-paths.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "M07 (IAM §35): EVERY PUBLIC DOOR HAS A LIMITER.",
+   "claim": "M07 (IAM §35): EVERY PUBLIC DOOR HAS A LIMITER.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 171 lines. Run: node chitbridge-api/tests/limiter-paths.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-07T22:50:25+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/line-complete.test.cjs",
@@ -60769,6 +61541,36 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/person-session.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "M05: a person session is LISTED, BOUND to one device, and REVOCABLE (D3, D14).",
+   "claim": "M05: a person session is LISTED, BOUND to one device, and REVOCABLE (D3, D14).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 291 lines. Run: node chitbridge-api/tests/person-session.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/signin.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-07T22:22:54+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/points.test.js",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -61072,6 +61874,37 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-08-31T10:01:06+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/rail-actions.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "MAY I DO X ON THIS COPY: THE ANSWER AND THE DOOR ARE ONE ENGINE (R01, MASTER-BUILD-2026-10 row 10).",
+   "claim": "MAY I DO X ON THIS COPY: THE ANSWER AND THE DOOR ARE ONE ENGINE (R01, MASTER-BUILD-2026-10 row 10).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 250 lines. Run: node chitbridge-api/tests/rail-actions.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "connector",
+    "database",
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-07T22:05:12+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/read-batch.test.js",
@@ -61388,7 +62221,7 @@
    "areas": [],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-03T06:34:59+05:30"
+   "changed_at": "2026-10-07T22:22:54+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/rls-guard-baseline.test.cjs",
@@ -61507,7 +62340,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · integration · 180 lines. Run: node chitbridge-api/tests/round-trips-all.test.cjs",
+   "note": "test.guard · integration · 188 lines. Run: node chitbridge-api/tests/round-trips-all.test.cjs",
    "layer": "engine",
    "test_type": "integration",
    "group": "test.guard",
@@ -61522,7 +62355,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-07T20:30:28+05:30",
+   "changed_at": "2026-10-08T04:10:00+05:30",
    "needs": [
     "a database"
    ]
@@ -61628,7 +62461,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · security · 198 lines. Run: node chitbridge-api/tests/route-auth.test.js",
+   "note": "test.unit · security · 201 lines. Run: node chitbridge-api/tests/route-auth.test.js",
    "layer": "engine",
    "test_type": "security",
    "group": "test.unit",
@@ -61641,7 +62474,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-28T05:53:26+05:30"
+   "changed_at": "2026-10-07T22:22:54+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/run-tests-exit.test.cjs",
@@ -62141,6 +62974,32 @@
    "changed_at": "2026-10-01T19:27:09Z"
   },
   {
+   "case_key": "chitbridge-api/tests/signin-routes.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "M06 (SPEC-iam-build PR 6 \"SW-5\"): /api/signin/ask · verify · pin, the MOVED handlers.",
+   "claim": "M06 (SPEC-iam-build PR 6 \"SW-5\"): /api/signin/ask · verify · pin, the MOVED handlers.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · static · 431 lines. Run: node chitbridge-api/tests/signin-routes.test.cjs",
+   "layer": "engine",
+   "test_type": "static",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-07T22:22:54+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/signin.test.js",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -62190,9 +63049,11 @@
     "api",
     "database"
    ],
-   "subjects": [],
+   "subjects": [
+    "lib/signin.js"
+   ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-19T10:41:03+05:30"
+   "changed_at": "2026-10-07T22:22:54+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/slab-cites.test.js",
@@ -62384,7 +63245,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · static · 97 lines. Run: node chitbridge-api/tests/supplier-list-scope.test.cjs",
+   "note": "test.guard · static · 101 lines. Run: node chitbridge-api/tests/supplier-list-scope.test.cjs",
    "layer": "engine",
    "test_type": "static",
    "group": "test.guard",
@@ -62396,7 +63257,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-28T23:18:09+05:30"
+   "changed_at": "2026-10-08T04:10:00+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/support-desks.test.cjs",
@@ -62496,7 +63357,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 148 lines. Run: node chitbridge-api/tests/support/books-memory.cjs",
+   "note": "test.guard · unit · 149 lines. Run: node chitbridge-api/tests/support/books-memory.cjs",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.guard",
@@ -62508,7 +63369,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-01T14:30:07+05:30"
+   "changed_at": "2026-10-08T04:10:00+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/support/contract-books.cjs",
@@ -62805,7 +63666,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · integration · 399 lines. Run: node chitbridge-api/tests/tax-truth.test.cjs",
+   "note": "test.guard · integration · 400 lines. Run: node chitbridge-api/tests/tax-truth.test.cjs",
    "layer": "engine",
    "test_type": "integration",
    "group": "test.guard",
@@ -62826,7 +63687,7 @@
     "lib/tax.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-02T12:45:03+05:30",
+   "changed_at": "2026-10-07T21:22:34+05:30",
    "needs": [
     "a database",
     "the API running"
@@ -63003,7 +63864,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · unit · 196 lines. Run: node chitbridge-api/tests/tier2-record.test.js",
+   "note": "test.unit · unit · 197 lines. Run: node chitbridge-api/tests/tier2-record.test.js",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.unit",
@@ -63017,13 +63878,14 @@
    ],
    "subjects": [
     "lib/conformance.js",
+    "lib/jwt-verify.js",
     "lib/kyb.js",
     "lib/order-input.js",
     "lib/storage.js",
     "middleware/customer-auth.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-28T05:59:16+05:30"
+   "changed_at": "2026-10-08T03:36:46+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/till-agent-says.test.js",
@@ -63429,7 +64291,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · integration · 204 lines. Run: node chitbridge-api/tests/two-sided-bill.test.cjs",
+   "note": "test.guard · integration · 206 lines. Run: node chitbridge-api/tests/two-sided-bill.test.cjs",
    "layer": "engine",
    "test_type": "integration",
    "group": "test.guard",
@@ -63444,7 +64306,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-02T13:37:35+05:30",
+   "changed_at": "2026-10-07T21:22:34+05:30",
    "needs": [
     "a database",
     "the API running"
@@ -64030,6 +64892,37 @@
    "changed_at": "2026-10-03T04:12:42+05:30"
   },
   {
+   "case_key": "chitbridge-web/e2e/action-state.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "M64 T1: ONE PRESS, ONE WRITE; AN IRREVERSIBLE WRITE ASKS FIRST; THE OUTCOME IS SAID WHERE IT HAPPENED.",
+   "claim": "M64 T1: ONE PRESS, ONE WRITE; AN IRREVERSIBLE WRITE ASKS FIRST; THE OUTCOME IS SAID WHERE IT HAPPENED.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · system · 145 lines. Run: node chitbridge-web/e2e/action-state.cjs",
+   "layer": "web",
+   "test_type": "system",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine",
+    "web"
+   ],
+   "subjects": [
+    "lib/serve.js"
+   ],
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-10-07T22:19:17+05:30",
+   "needs": [
+    "a browser"
+   ]
+  },
+  {
    "case_key": "chitbridge-web/e2e/api-dedupe.test.cjs",
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
@@ -64423,6 +65316,35 @@
    "changed_at": "2026-09-19T17:00:05+05:30"
   },
   {
+   "case_key": "chitbridge-web/e2e/board-ran.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "the test board says how many ran in the LAST run, in its header and in the area table's Ran column.",
+   "claim": "the test board says how many ran in the LAST run, in its header and in the area table's Ran column.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · system · 162 lines. Run: node chitbridge-web/e2e/board-ran.cjs",
+   "layer": "web",
+   "test_type": "system",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "web"
+   ],
+   "subjects": [],
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-10-07T21:06:56+05:30",
+   "needs": [
+    "a browser"
+   ]
+  },
+  {
    "case_key": "chitbridge-web/e2e/books-web-breaks.cjs",
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
@@ -64653,7 +65575,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 112 lines. Run: node chitbridge-web/e2e/cb-accounts-breaks.cjs",
+   "note": "test.guard · unit · 104 lines. Run: node chitbridge-web/e2e/cb-accounts-breaks.cjs",
    "layer": "web",
    "test_type": "unit",
    "group": "test.guard",
@@ -64665,7 +65587,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-03T05:09:30Z"
+   "changed_at": "2026-10-08T03:50:13+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/cb-accounts.cjs",
@@ -65371,6 +66293,38 @@
    "changed_at": "2026-09-13T08:51:35+05:30"
   },
   {
+   "case_key": "chitbridge-web/e2e/detail-page.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "A CHIT OPENS ON THE PAGE IT WAS MADE WITH, OR ON THE BASE PAGE WITH A NOTE (N03 · decisions M-D6 / M-D7).",
+   "claim": "A CHIT OPENS ON THE PAGE IT WAS MADE WITH, OR ON THE BASE PAGE WITH A NOTE (N03 · decisions M-D6 / M-D7).",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · system · 141 lines. Run: node chitbridge-web/e2e/detail-page.cjs",
+   "layer": "web",
+   "test_type": "system",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine",
+    "web"
+   ],
+   "subjects": [
+    "lib/serve.js"
+   ],
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-10-07T20:34:06+05:30",
+   "needs": [
+    "a browser"
+   ]
+  },
+  {
    "case_key": "chitbridge-web/e2e/detail-shot.cjs",
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
@@ -65877,13 +66831,13 @@
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
    "intro": "",
-   "title": "*/ // break each index-page guard once, run the harness, restore FROM A COPY (never git checkout)",
-   "claim": "*/ // break each index-page guard once, run the harness, restore FROM A COPY (never git checkout)",
+   "title": "break each index-page guard once, run the harness, restore FROM A COPY (never git checkout).",
+   "claim": "break each index-page guard once, run the harness, restore FROM A COPY (never git checkout).",
    "priority": "Medium",
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 43 lines. Run: node chitbridge-web/e2e/index-page-breaks.cjs",
+   "note": "test.guard · unit · 39 lines. Run: node chitbridge-web/e2e/index-page-breaks.cjs",
    "layer": "web",
    "test_type": "unit",
    "group": "test.guard",
@@ -65895,20 +66849,20 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-01T18:15:19Z"
+   "changed_at": "2026-10-08T03:50:13+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/index-page.cjs",
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
    "intro": "",
-   "title": "THE INDEX PAGE AT /, PROVED (docs/design/index-page/cb-index.md · docs/design/SYSTEM.md §4).",
-   "claim": "THE INDEX PAGE AT /, PROVED (docs/design/index-page/cb-index.md · docs/design/SYSTEM.md §4).",
+   "title": "THE INDEX PAGE IS THE SHELL'S HOME, PROVED (index.html · public/app/manifest.json · plan row N18 · FIT §D Q1 Q3 Q5 Q10).",
+   "claim": "THE INDEX PAGE IS THE SHELL'S HOME, PROVED (index.html · public/app/manifest.json · plan row N18 · FIT §D Q1 Q3 Q5 Q10).",
    "priority": "High",
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 340 lines. Run: node chitbridge-web/e2e/index-page.cjs",
+   "note": "test.guard · system · 266 lines. Run: node chitbridge-web/e2e/index-page.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -65925,7 +66879,7 @@
     "lib/contract.js"
    ],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-03T09:26:18+05:30",
+   "changed_at": "2026-10-08T03:50:13+05:30",
    "needs": [
     "a browser"
    ]
@@ -65966,7 +66920,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 308 lines. Run: node chitbridge-web/e2e/kural-footer.cjs",
+   "note": "test.guard · system · 309 lines. Run: node chitbridge-web/e2e/kural-footer.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -65982,7 +66936,7 @@
     "lib/contrast.js"
    ],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-03T04:33:20Z",
+   "changed_at": "2026-10-08T03:50:13+05:30",
    "needs": [
     "a browser"
    ]
@@ -66071,7 +67025,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 656 lines. Run: node chitbridge-web/e2e/labs-flow.cjs",
+   "note": "test.guard · system · 655 lines. Run: node chitbridge-web/e2e/labs-flow.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -66084,7 +67038,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-01T20:20:30+05:30",
+   "changed_at": "2026-10-08T03:50:13+05:30",
    "needs": [
     "a browser"
    ]
@@ -67533,7 +68487,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 476 lines. Run: node chitbridge-web/e2e/one-person.cjs",
+   "note": "test.guard · system · 478 lines. Run: node chitbridge-web/e2e/one-person.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -67547,7 +68501,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-01T20:21:28Z",
+   "changed_at": "2026-10-08T03:50:13+05:30",
    "needs": [
     "a browser"
    ]
@@ -67748,17 +68702,17 @@
    ]
   },
   {
-   "case_key": "chitbridge-web/e2e/phone-signin.cjs",
+   "case_key": "chitbridge-web/e2e/person-signin.cjs",
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
    "intro": "",
-   "title": "⚠️⚠️ A PHONE THAT HAS NEVER BEEN PAIRED MUST BE ABLE TO SIGN IN, AS A PERSON WOULD",
-   "claim": "⚠️⚠️ A PHONE THAT HAS NEVER BEEN PAIRED MUST BE ABLE TO SIGN IN, AS A PERSON WOULD",
+   "title": "⭐⭐⭐ M08 · A PHONE IS A PERSON ON A DEVICE (MASTER-BUILD row 47 · SPEC-iam-build PR 8 · DESIGN-person-signin)",
+   "claim": "⭐⭐⭐ M08 · A PHONE IS A PERSON ON A DEVICE (MASTER-BUILD row 47 · SPEC-iam-build PR 8 · DESIGN-person-signin)",
    "priority": "High",
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 305 lines. Run: node chitbridge-web/e2e/phone-signin.cjs",
+   "note": "test.guard · system · 380 lines. Run: node chitbridge-web/e2e/person-signin.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -67771,7 +68725,36 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-04T20:31:29+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
+   "needs": [
+    "a browser"
+   ]
+  },
+  {
+   "case_key": "chitbridge-web/e2e/phone-signin.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "⚠️⚠️ A PHONE THAT HAS NEVER BEEN PAIRED MUST BE ABLE TO SIGN IN, AS A PERSON WOULD",
+   "claim": "⚠️⚠️ A PHONE THAT HAS NEVER BEEN PAIRED MUST BE ABLE TO SIGN IN, AS A PERSON WOULD",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · system · 311 lines. Run: node chitbridge-web/e2e/phone-signin.cjs",
+   "layer": "web",
+   "test_type": "system",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "web"
+   ],
+   "subjects": [],
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "a browser"
    ]
@@ -67869,7 +68852,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 101 lines. Run: node chitbridge-web/e2e/post-results.cjs",
+   "note": "test.guard · system · 127 lines. Run: node chitbridge-web/e2e/post-results.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -67881,7 +68864,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-07T19:38:05+05:30",
+   "changed_at": "2026-10-07T21:06:56+05:30",
    "needs": [
     "the API running",
     "a browser"
@@ -68592,6 +69575,38 @@
    ]
   },
   {
+   "case_key": "chitbridge-web/e2e/shell.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "THE SHELL UNIT, PROVED (public/app/shell.js · plan row N17 · decisions FIT §D Q1–Q10).",
+   "claim": "THE SHELL UNIT, PROVED (public/app/shell.js · plan row N17 · decisions FIT §D Q1–Q10).",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · system · 252 lines. Run: node chitbridge-web/e2e/shell.cjs",
+   "layer": "web",
+   "test_type": "system",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine",
+    "web"
+   ],
+   "subjects": [
+    "lib/serve.js"
+   ],
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-10-07T22:26:31+05:30",
+   "needs": [
+    "a browser"
+   ]
+  },
+  {
    "case_key": "chitbridge-web/e2e/shot-rows.cjs",
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
@@ -68841,7 +69856,7 @@
     "lib/theme-measure.js"
    ],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-03T11:46:02+05:30",
+   "changed_at": "2026-10-08T03:50:13+05:30",
    "needs": [
     "a browser"
    ]
@@ -69014,6 +70029,35 @@
    "changed_at": "2026-09-28T09:52:05+05:30",
    "needs": [
     "the API running"
+   ]
+  },
+  {
+   "case_key": "chitbridge-web/e2e/testing-report.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "N07: the Report's section 5 compares the PLAN (the board's case definitions) with what ran.",
+   "claim": "N07: the Report's section 5 compares the PLAN (the board's case definitions) with what ran.",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · system · 99 lines. Run: node chitbridge-web/e2e/testing-report.cjs",
+   "layer": "web",
+   "test_type": "system",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "web"
+   ],
+   "subjects": [],
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-10-08T03:49:19+05:30",
+   "needs": [
+    "a browser"
    ]
   },
   {
@@ -73891,7 +74935,7 @@
     "lib/posting.js"
    ],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-01T14:13:44+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "the API running",
     "a browser"
@@ -74175,7 +75219,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-09-29T00:02:07+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "a browser"
    ]
@@ -74549,7 +75593,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-09-29T00:17:31+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "a browser"
    ]
@@ -74944,7 +75988,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-09-28T20:47:38+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "a browser"
    ]
@@ -74960,7 +76004,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 69 lines. Run: node chitbridge-web/e2e/till-plain-signin.cjs",
+   "note": "test.guard · system · 70 lines. Run: node chitbridge-web/e2e/till-plain-signin.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -74972,7 +76016,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-09-25T17:01:26+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "a browser"
    ]
@@ -75048,7 +76092,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 89 lines. Run: node chitbridge-web/e2e/till-reenrol.cjs",
+   "note": "test.guard · system · 94 lines. Run: node chitbridge-web/e2e/till-reenrol.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -75060,7 +76104,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-09-28T20:22:32+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "a browser"
    ]
@@ -75149,7 +76193,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-09-29T00:02:07+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "a browser"
    ]
@@ -75434,7 +76478,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 176 lines. Run: node chitbridge-web/e2e/till-shop-switch.cjs",
+   "note": "test.guard · system · 181 lines. Run: node chitbridge-web/e2e/till-shop-switch.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -75447,7 +76491,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-09-28T22:41:57+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "a browser"
    ]
@@ -75673,7 +76717,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-01T15:38:02+05:30",
+   "changed_at": "2026-10-08T03:43:57+05:30",
    "needs": [
     "a browser"
    ]
@@ -76397,34 +77441,6 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-08-09T02:29:40+05:30"
-  },
-  {
-   "case_key": "governance.nightly",
-   "module_key": "governance",
-   "module_name": "Governance",
-   "intro": "",
-   "title": "THE NIGHTLY GOVERNANCE REPORT IS GREEN",
-   "claim": "main is protected on both repos, admins are held to the rules, no open alerts, main CI is green, and /health says production. Red names each failing line.",
-   "priority": "High",
-   "pre": "",
-   "data": "",
-   "steps": [],
-   "note": "Hand case (E04). Posted nightly by .github/workflows/governance.yml with key_from name. Offline proof: chitbridge-api/tests/governance-report.test.cjs.",
-   "layer": "engine",
-   "test_type": "integration",
-   "group": "governance",
-   "automated": true,
-   "seq": 90,
-   "step": "",
-   "areas": [
-    "api"
-   ],
-   "subjects": [
-    "scripts/governance-report.cjs",
-    ".github/workflows/governance.yml"
-   ],
-   "run_by": "the nightly governance workflow, unattended",
-   "changed_at": "2026-10-08T00:00:00+05:30"
   }
  ]
 }
