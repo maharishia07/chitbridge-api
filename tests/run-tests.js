@@ -651,10 +651,17 @@ function writeBoardArtefacts(aborted) {
     /* ⚠️ SAID OUT LOUD, because a runner that skips a step in silence is the thing board-day.cjs exists to end. */
     console.log(`  ${C.yellow}conditions NOT written — this run stopped early and knows only ${total} of them.`
       + `${C.reset}\n  A short list would delete the rest from the board and look deliberate.`);
-  } else {
-    const f = writeConditions(conditionsOfRun());
-    console.log(`  conditions: ${total} written to ${f}`);
+    /**
+     * ⚠️⚠️ AND NO RESULT EITHER (N01). The JUnit used to be written here regardless, and it counts only what
+     * ran: a run that died at scenario 2 with scenario 1 green wrote failures="0" — a PASS on the board for a
+     * suite that never finished. The previous run's file is removed too, so it cannot be posted as today's.
+     */
+    try { fs.unlinkSync(JUNIT_FILE); } catch (_) { /* none there */ }
+    console.log(`  result:     NOT written — an aborted run has no verdict to post.\n`);
+    return;
   }
+  const f = writeConditions(conditionsOfRun());
+  console.log(`  conditions: ${total} written to ${f}`);
   const j = writeJunit(passed, total, failures);
   console.log(`  result:     ${j}`);
   console.log(`  ⭐ to put it on the live board:  node C:\\dev\\post-suite.cjs <token> --file `
@@ -709,4 +716,4 @@ async function main() {
    directly for its verdict in each of the four states. */
 if (require.main === module) main();
 
-module.exports = { printResults, state, steady, CASE_KEY };
+module.exports = { printResults, state, steady, CASE_KEY, writeBoardArtefacts, JUNIT_FILE };

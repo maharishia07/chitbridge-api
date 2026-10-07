@@ -455,6 +455,9 @@ const ENGINE_OTHER = [
      is in, from its own history. That is a rule, and a rule is an engine: swap it and the board, the screen
      and the report all change their minds together, which is exactly why it is one file. (2026-09-13) */
   'teststatus.js',
+  /* ENGINE, not adoption, though it reads somebody else's format: fold() DECIDES a case's verdict for a run
+     when a report names it many times (worst wins). Swap that rule and the board changes its mind. (N01) */
+  'junitresults.js',
   /**
    * ⚠️ ENGINE BY THIS FILE'S OWN TEST, and it is worth saying why, because it looks like a config read.
    * INFRA is "holds no rule and decides nothing — swap it and ChitBridge is unchanged". testboard decides

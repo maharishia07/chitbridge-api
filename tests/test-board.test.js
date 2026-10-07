@@ -463,10 +463,9 @@ it('⚠️⚠️ the JUnit ingest reads `name`, not `classname` — the bug that
    * exist, and the Reliability tab would have called it settled. Nothing had been posted yet, so nothing was
    * lost — but it would have been on the first real run, silently. That is the whole argument for this guard.
    */
-  const m = route.match(/const attr = \(s, k\) => \{[\s\S]*?\n {4}\};/);
-  assert.ok(m, 'the JUnit attribute reader has changed shape — re-check it reads name, not classname');
-  /* eslint-disable no-eval */
-  const attr = eval('(' + m[0].replace('const attr = ', '').replace(/;$/, '') + ')');
+  /* ⭐ the reader moved to lib/junitresults.js (N01), so it is required rather than cut out of the route */
+  const attr = require(path.join(API, 'lib', 'junitresults.js')).attr;
+  assert.ok(/junitresults\.read\(/.test(route), 'the JUnit route no longer reads through lib/junitresults.js');
   const head = ' classname="test.guard" name="chitbridge-api/tests/handle.test.js" time="0"';
   assert.strictEqual(attr(head, 'name'), 'chitbridge-api/tests/handle.test.js',
     'the ingest is reading classname as the case key — every posted run would collapse into three rows');
@@ -505,7 +504,10 @@ it('⚠️⚠️ the loader and the run-poster are always reachable, not only on
    * requires a copied token and a command line is evidence nobody ever posts, which is why the board held 608
    * cases and zero results.
    */
-  const toolbar = board.slice(0, board.indexOf('</div>\n\n<!--') > 0 ? board.indexOf('<script>') : board.indexOf('<script>'));
+  /* ⚠️ the CHROME ends where the page's own script block opens on a line of its own — not at the first
+     `<script>` anywhere: CBAvatar mounts with a one-line inline script in the header (d222d3b6), and cutting
+     there left the toolbar outside the slice, so this guard went red while both controls were on the page. */
+  const toolbar = board.slice(0, board.search(/\r?\n<script>\s*\r?\n/));
   ['onclick="seed()"', 'id="f_res"'].forEach((ctl) => {
     assert.ok(toolbar.indexOf(ctl) >= 0,
       ctl + ' is not in the page chrome — if it only renders inside a conditional, it is a control that '
