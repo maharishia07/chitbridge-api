@@ -118,3 +118,22 @@ A phone or e-mail identity document is confirmed by a code sent to it (`lib/iddo
 | `.../verify` → `verified` · `verified_at` | true · ISO time | Refusals: `OTP_WRONG` (400) · `OTP_LOCKED` (429, after 5) · `OTP_EXPIRED` · `IDOC_NO_CODE`. |
 
 The pending code is held on the row's existing `verification_ref` (hashed, with expiry and wrong-attempt count); it is never returned.
+
+## GET /api/entities/header (N19, 2026-10-07)
+
+The shell's header sheet in ONE read (`lib/entity-header.js`; one `readBatch` over the shop row, profile, `entity_compliance` and the identity-document verdicts; cold 3 trips with two cached schema probes, warm 1). Written by: nobody (derived). Read by: `public/app/shell.js` (N17). Bands, penalty words and which licences are core come from `lib/licence-rules.js` (data, country-keyed); the page computes none of them. The identity-document verdicts are read through `lib/iddoc-verify.js` only. `kyb.yourself()` is not called (it is many trips); the licence rows are the same `entity_compliance` rows, with `kyb.daysUntil`.
+
+| Key | Shape | Meaning |
+|---|---|---|
+| `business` | `{ name, legal_name, address, phone }` | `name` = `identities.display_name`; `legal_name` / `address` / `phone` = the profile vault's Business-identity tags, else the `identities` column. Any may be null. |
+| `licences[]` | one row per gathered `entity_compliance` row, plus one per CORE scheme not yet held | Core rows not held have `days_left: null`, `valid_until: null`, `band: null` ("not added"). |
+| `licences[].scheme` · `label` | string | The rule's scheme and label; for a row with no rule, its `standard_key` and humanised `doc_key`. |
+| `licences[].number_masked` | string or null | `verification.number_masked` when the verifier stored one; else null. |
+| `licences[].valid_until` · `days_left` | `YYYY-MM-DD` · integer, negative = expired, or null | `kyb.daysUntil` of `valid_until`. |
+| `licences[].band` | `ok` · `due` · `soon` · `gone` or null | From the scheme rule's bands (default >120 ok, 91-120 due, 0-90 soon, expired gone). **null when no rule matches: days only.** |
+| `licences[].core` | boolean | The scheme is in `core_by_vertical` for the shop's vertical (`lotfields.packFor` over `identities.vertical` and the profile sectors). |
+| `licences[].renew_url` | string or null | From the rule; null without one. |
+| `licences[].note` | string or null | The rule's late-fee sentence, only for the bands the rule names (FSSAI: `gone`). Carries no amount and no start day. Null when no rule. |
+| `licences[].rule_verified` | boolean or null | `false` = the rule's source is not cited yet ("verify"); every rule is false today. Null when no rule. |
+| `trade_ready.checks[]` | `{ key, label, done }` x 4 | `address` (an address whose rung is at least `copied`: profile provenance or vault row, not just typed) · `phone` (the PHONE identity document is `verified`) · `pan` (a PAN identity document is held, or the PAN is read from the GSTIN) · `gstin` (a GSTIN is on file). |
+| `trade_ready.done` | boolean | All four are done. |
