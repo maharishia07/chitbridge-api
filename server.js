@@ -226,7 +226,16 @@ app.use(['/api/entities/register', '/api/entities/verify', '/api/actors/login', 
          /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
             so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
-         '/api/till/pair/claim', '/api/actors/check-login', '/api/catalogue/:bridge_id/login/verify'], authLimiter);
+         '/api/till/pair/claim', '/api/catalogue/:bridge_id/login/verify'], authLimiter);
+
+/* M07 — check-login has its OWN budget: app.html asks it before EVERY sign-in and a shop's staff share one Wi-Fi IP, so it must not
+   share (or halve) the 30 that guard code/PIN guessing. 120 per 15 min per IP, same factory. */
+const checkLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.CHECK_LOGIN_RATE_LIMIT_MAX || '120'),
+  message: { error: 'Too many requests', message: 'Too many sign-in checks — please try again in a few minutes' }
+});
+app.use('/api/actors/check-login', checkLoginLimiter);
 
 /* M07 — the remaining doors that need no sign-in: a looser, per-caller limiter (240 per minute, the services' own style,
    keyed like serviceLimiter() so a signed-in caller counts against its own key, never against the next caller's).

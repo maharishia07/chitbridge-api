@@ -127,13 +127,22 @@ it('the exemptions are real doors (a stale exemption would quietly permit whatev
 });
 
 it('device pairing, key@Name lookup and storefront sign-in sit behind the STRICT auth budget (<= 30 per 15 min)', () => {
-  ['POST /api/till/pair/claim', 'GET /api/actors/check-login', 'POST /api/catalogue/:bridge_id/login/verify',
+  ['POST /api/till/pair/claim', 'POST /api/catalogue/:bridge_id/login/verify',
    'POST /api/signin/ask', 'POST /api/signin/verify', 'POST /api/signin/pin', 'POST /api/entities/register',
    'POST /api/entities/verify', 'POST /api/actors/login', 'POST /api/actors/set-pin'].forEach((k) => {
     const [m, p] = [k.split(' ')[0], k.slice(k.indexOf(' ') + 1)];
     const l = find(m, p); assert.ok(l, k + ' not found');
     assert.ok(limitersFor(l).some((e) => e.fn.__limiter.max <= 30 && e.fn.__limiter.windowMs === 15 * 60 * 1000), k + ' has no strict limiter: ' + maxOf(l));
   });
+});
+
+it('check-login has its OWN 120 per 15 min limiter and is NOT on the shared auth budget', () => {
+  const l = find('GET', '/api/actors/check-login'); assert.ok(l);
+  const ls = limitersFor(l).map((e) => e.fn.__limiter);
+  assert.strictEqual(ls.length, 1, 'expected exactly one limiter: ' + maxOf(l));
+  assert.ok(ls[0].max === 120 && ls[0].windowMs === 900000);
+  const ask = limitersFor(find('POST', '/api/signin/ask'))[0];
+  assert.notStrictEqual(limitersFor(l)[0].fn, ask.fn, 'check-login shares the auth limiter instance');
 });
 
 it('limits that already existed are unchanged: auth 30/15min, catalogue 60/15min, assist 40/15min, services 240/min', () => {
