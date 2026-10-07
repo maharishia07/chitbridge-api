@@ -1,0 +1,9 @@
+{
+  "$comment": "THE DETAIL-PAGE REGISTRY (N03, decisions M-D6/M-D7). One row per name@version; rows are KEPT when a new version ships, so an old chit still finds its page. minor = a compatible body change, major = a header or action change. The api refuses an unknown name at mint (PAGE_UNKNOWN); the app opens an unknown name or version on the base page with a note. MASTER: chitbridge-web/public/app/pages.json. chitbridge-api/data/pages.json is a byte copy (tests/page-name.test.cjs checks it).",
+  "grammar": "^[a-z][a-z0-9_]*[.][a-z][a-z0-9_]*[.][a-z][a-z0-9_]*@[0-9]+[.][0-9]+$",
+  "base": "chit.base.detail@1.0",
+  "pages": [
+    { "name": "chit.base.detail", "version": "1.0", "script": "app.html", "says": "the detail pane built into the app (design 1, and design 2 from app/cap-chit2.js); B0 gives it its own file (M53)" }
+  ],
+  "reserved": ["sale.restaurant.table", "service.repair.job"]
+}

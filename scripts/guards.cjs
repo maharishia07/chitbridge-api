@@ -194,6 +194,7 @@ const GUARDS = [
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
   'tax-copy.test.cjs',          // who sells on each copy: a counter bill I RECEIVED is my purchase, never in my GSTR-1
+  'page-name.test.cjs',         // ⭐ N03: every chit names its detail page at mint (base by default); an unknown name is refused; nothing rewrites it
   'two-sided-bill.test.cjs',    // a till sends its own on-rail customer their copy — and nobody else; one shop row; replay-safe
   'goods-in-accepts.test.cjs',  // goods-in, every line in → accepted through the SAME transition as Intake
   'two-sided-books.test.cjs',   // one bill, two ledgers: sale at save, purchase on acceptance
