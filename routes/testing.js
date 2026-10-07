@@ -2383,7 +2383,8 @@ router.get('/report', auth, async (req, res) => {
        */
       const kinds = await db.query(
         `WITH cases AS (
-           SELECT d.name AS case_key, COALESCE(v.rules->>'test_type','(untyped)') AS test_type
+           SELECT d.name AS case_key, COALESCE(v.rules->>'test_type','(untyped)') AS test_type,
+                  COALESCE(v.rules->>'layer','(not set)') AS layer
              FROM definition d
              JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
@@ -2391,15 +2392,25 @@ router.get('/report', auth, async (req, res) => {
            SELECT DISTINCT ON (case_key) case_key, status FROM test_result
             WHERE entity_id = $1 AND ${projectWhere(has, 2)} ORDER BY case_key, at DESC
          )
-         SELECT c.test_type, count(*)::int AS total,
+         SELECT c.test_type, c.layer, count(*)::int AS total,
                 count(l.case_key)::int                            AS run,
                 count(*) FILTER (WHERE l.status='pass')::int       AS passed,
                 count(*) FILTER (WHERE l.status='fail')::int       AS failed
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
-          GROUP BY c.test_type ORDER BY count(*) DESC`, [entity_id, pj.project]);
+          GROUP BY c.test_type, c.layer ORDER BY count(*) DESC`, [entity_id, pj.project]);
+
+      /* ⭐ ONE READ, TWO FOLDS (N07): the same rows give the per-kind table and the §5 plan-by-level table, so the
+         plan comparison costs no extra trip. Planned = cases DEFINED; executed = defined cases with a latest word. */
+      const fold = (key) => { const m = {};
+        kinds.rows.forEach((r) => { const k = r[key]; const a = m[k] || (m[k] = { total: 0, run: 0, passed: 0, failed: 0 });
+          ['total', 'run', 'passed', 'failed'].forEach((x) => { a[x] += Number(r[x] || 0); }); });
+        return m; };
+      const byKind = fold('test_type'), byLayer = fold('layer');
 
       return { cover: cover.rows, bad: bad.rows, runs: runs.rows, people: people.rows,
-        kinds: kinds.rows, stale: stale.rows[0] ? stale.rows[0].n : 0 };
+        kinds: Object.keys(byKind).map((k) => Object.assign({ test_type: k }, byKind[k])).sort((a, b) => b.total - a.total),
+        plan: Object.keys(byLayer).map((k) => ({ layer: k, planned: byLayer[k].total, executed: byLayer[k].run, passed: byLayer[k].passed }))
+          .sort((a, b) => b.planned - a.planned), stale: stale.rows[0] ? stale.rows[0].n : 0 };
     });
 
     /**
@@ -2669,9 +2680,20 @@ router.get('/report', auth, async (req, res) => {
           body: { blocked: data.bad.filter((r) => r.status === 'blocked').length,
             items: data.bad.filter((r) => r.status === 'blocked') } },
 
+        /* ⭐ N07 — 29119-3 §5 "comparison against plan". The plan IS the board's case definitions (cases =
+           definitions), so these are COUNTS lifted from the same rows as §2 — never typed, never a sentence. */
+        { id: '5a', title: 'Comparison against the plan', source: 'measured',
+          body: { levels: data.plan,
+            planned: data.plan.reduce((t, x) => t + x.planned, 0),
+            executed: data.plan.reduce((t, x) => t + x.executed, 0),
+            passed: data.plan.reduce((t, x) => t + x.passed, 0),
+            note: 'Planned = cases defined on the board. Executed = defined cases with a recorded result. '
+              + 'Passed = executed cases whose latest word is pass.' } },
+
+        /* ⚠️ A JUDGEMENT HEADING: the app never fills it. It asks; a person answers. */
         { id: '5', title: 'Deviations from the test plan', source: 'needs a person',
-          asks: 'What was planned that did not happen, and why? No plan is declared anywhere in this system, so '
-              + 'nothing can be compared against one.' },
+          asks: 'What was planned that did not happen, and why? The counts above show how far the defined cases '
+              + 'were run; the reasons are yours to give.' },
 
         { id: '6', title: 'Test completion evaluation', source: 'needs a person',
           asks: 'Were the exit criteria met? No exit criteria are declared, so this cannot be measured — the '
