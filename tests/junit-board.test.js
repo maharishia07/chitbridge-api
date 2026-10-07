@@ -11,6 +11,8 @@
  *   · a fail anywhere in a case is the case's result — never dropped behind an earlier pass
  *   · a key the board does not list is RECORDED and SAID (`not_on_board`), never silent
  *   · nothing is written on an aborted run (the API harness writes no JUnit when it stopped early)
+ *   · a run carries its PROJECT (b292) when the column is there, and is written WITHOUT it — never refused,
+ *     never silent — while it is not; every result read narrows to ?project=
  *
  * Run: node tests/junit-board.test.js   · no network, no DB.
  */
@@ -50,17 +52,23 @@ const XML = `<testsuites id="" name="" tests="7" failures="1" skipped="1" errors
 </testsuites>`;
 
 /* ── the database and the token, stood in for; everything else is the shipped code ── */
-const sent = [];
+const sent = [], reads = [];
+/* ⭐ b292 stood in: is test_result.project there? The INSERT refuses the column (42703) exactly as Postgres would. */
+const COLS = { project: false };
 const KNOWN = { 'chitbridge-web/e2e/tests/one-board.spec.js': 1, 'chitbridge-web/e2e/tests/disputes.spec.js': 1 };
 function fakeDb() {
   return {
     query: async (sql, params) => {
-      if (/FROM definition/.test(sql)) {
+      if (/information_schema\.columns/.test(sql)) return { rows: COLS.project ? [{ one: 1 }] : [] };
+      if (/FROM definition/.test(sql) && /name = ANY/.test(sql)) {
         return { rows: params[1].filter((k) => KNOWN[k]).map((k) => (
           { definition_id: '00000000-0000-4000-8000-00000000000' + KNOWN[k], name: k, sub_kind: 'e2e', current_version: 3 })) };
       }
       if (/INSERT INTO test_result/.test(sql)) {
-        sent.push(params);
+        if (/, project\)/.test(sql) && !COLS.project) {
+          const e = new Error('column "project" of relation "test_result" does not exist'); e.code = '42703'; throw e;
+        }
+        sent.push(params); sent.sql = sql;
         const seen = new Set();
         /* uq_test_result_once, honestly: (run, case, COALESCE(layer,'')) — a duplicate is DO NOTHING */
         const rows = params[3].map((k, i) => ({ k, layer: params[8][i] || '', status: params[5][i] }))
@@ -68,6 +76,7 @@ function fakeDb() {
           .map((r, i) => ({ result_id: i + 1, case_key: r.k, status: r.status, at: new Date().toISOString() }));
         return { rows };
       }
+      if (/FROM test_result/.test(sql)) reads.push({ sql, params });
       return { rows: [] };
     },
   };
@@ -85,10 +94,12 @@ const fakeAuth = (req, _res, next) => {
 fakeAuth.entityOf = (req) => req.identity.parent_entity_id;
 stub('../middleware/auth', fakeAuth);
 
-function post(port, body) {
+/* POST to the JUnit door by default; another path with `where`, and a GET when there is no body */
+function post(port, body, where) {
   return new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const rq = http.request({ host: '127.0.0.1', port, path: '/api/testing/results/junit', method: 'POST',
+    const data = body === undefined ? '' : JSON.stringify(body);
+    const rq = http.request({ host: '127.0.0.1', port, path: where || '/api/testing/results/junit',
+      method: body === undefined ? 'GET' : 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, (rs) => {
       let t = ''; rs.on('data', (c) => { t += c; });
       rs.on('end', () => { try { resolve({ status: rs.statusCode, body: JSON.parse(t) }); } catch (e) { reject(e); } });
@@ -190,13 +201,16 @@ function post(port, body) {
     assert.ok(/always\(\)/.test(step) && /continue-on-error: true/.test(step), 'the post is skipped on red, or can fail the build');
     assert.ok(/secrets\.CB_BOARD_TOKEN/.test(step) && /::warning::/.test(step), 'no secret must be a warning, not silence');
     assert.ok(/post-results\.cjs/.test(step) && /--keys name/.test(step) && /--warn/.test(step), 'not the one poster, keyed by name');
+    assert.ok(/--project "\$\{\{ vars\.CB_BOARD_PROJECT \}\}"/.test(step) && !/secrets\.CB_BOARD_PROJECT/.test(step),
+      'the project is a repo VARIABLE passed with --project, not a secret');
   });
 
   console.log('— a planted T1 run, through the route —');
   const express = require('express');
   const app = express();
   app.use(express.json({ limit: '5mb' }));
-  app.use('/api/testing', require('../routes/testing'));
+  const testingRoute = require('../routes/testing');
+  app.use('/api/testing', testingRoute);
   const srv = app.listen(0, '127.0.0.1');
   await new Promise((r) => srv.once('listening', r));
   const port = srv.address().port;
@@ -238,6 +252,81 @@ function post(port, body) {
       assert.strictEqual(r.status, 200);
       assert.strictEqual(r.body.folded, 1, 'DISP-01 under two projects is one result');
     });
+
+    console.log('— the project a run belongs to (b292) —');
+    const P = '2026-10 build \u00b7 Stage 1';
+    const TAP = { results: [{ case_key: 'CTR-05', status: 'pass', run_kind: 'manual' }] };
+    const warned = []; const realWarn = console.warn; console.warn = (m) => warned.push(String(m));
+    try {
+      await it('⚠️⚠️ before b292: a post with a project is RECORDED without it, said back, logged once', async () => {
+        sent.length = 0;
+        const r = await post(port, { xml: GXML, key_from: 'name', run_kind: 'unit', layer: 'engine', project: P });
+        assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+        assert.strictEqual(r.body.recorded, 3, 'the run was lost because a column is missing');
+        assert.strictEqual(r.body.project, null);
+        assert.ok(/b292/.test(r.body.project_not_written || ''), 'the dropped project was not said back');
+        assert.ok(!/project/.test(sent.sql), 'the INSERT named a column that is not there');
+        const t = await post(port, Object.assign({ project: P }, TAP), '/api/testing/results');
+        assert.strictEqual(t.status, 200, 'a tap broke on the missing column');
+        assert.strictEqual(warned.filter((w) => /test_result\.project/.test(w)).length, 1, 'warned ' + warned.length + ' times, not once');
+      });
+
+      await it('⚠️ before b292: ?project= reads answer (nothing matches), never a 500', async () => {
+        reads.length = 0;
+        const r = await post(port, undefined, '/api/testing/runs?project=' + encodeURIComponent(P));
+        assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+        assert.deepStrictEqual(r.body.projects, []);
+        assert.ok(reads.length && reads.every((q) => !/project =|max\(project\)/.test(q.sql)), 'a read named the missing column');
+      });
+
+      await it('⚠️ the column vanishing under the cache (42703) still records the run, without the project', async () => {
+        testingRoute._proj.has = true; sent.length = 0;
+        const r = await post(port, Object.assign({ project: P }, TAP), '/api/testing/results');
+        assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+        assert.strictEqual(r.body.recorded, 1);
+        assert.ok(r.body.project_not_written, 'the 42703 retry dropped the project quietly');
+        assert.strictEqual(testingRoute._proj.has, false);
+      });
+
+      await it('⭐⭐ after b292: the tap and the JUnit post both WRITE the project, trimmed', async () => {
+        COLS.project = true; testingRoute._proj.has = null;
+        sent.length = 0;
+        let r = await post(port, Object.assign({ project: '  ' + P + ' ' }, TAP), '/api/testing/results');
+        assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+        assert.strictEqual(r.body.project, P);
+        assert.ok(/, project\)/.test(sent.sql) && sent[0][sent[0].length - 1] === P, 'the tap did not write the project');
+        sent.length = 0;
+        r = await post(port, { xml: GXML, key_from: 'name', run_kind: 'unit', layer: 'engine', project: P });
+        assert.strictEqual(r.body.project, P);
+        assert.strictEqual(r.body.project_not_written, undefined);
+        assert.strictEqual(sent[0][sent[0].length - 1], P, 'the JUnit post did not write the project');
+        sent.length = 0;
+        r = await post(port, Object.assign({ project: '   ' }, TAP), '/api/testing/results');
+        assert.ok(!/, project\)/.test(sent.sql) && r.body.project === null, 'a blank project is no project');
+      });
+
+      await it('⚠️ a project over 80 characters is refused and SAID, never cut short quietly', async () => {
+        const r = await post(port, Object.assign({ project: 'x'.repeat(81) }, TAP), '/api/testing/results');
+        assert.strictEqual(r.status, 422);
+        assert.ok(/80/.test(r.body.message));
+      });
+
+      await it('⭐⭐ ?project= narrows /results, /runs, /coverage and /report — every test_result read', async () => {
+        for (const u of ['/api/testing/results', '/api/testing/runs', '/api/testing/coverage', '/api/testing/report']) {
+          reads.length = 0;
+          const r = await post(port, undefined, u + '?project=' + encodeURIComponent(P));
+          assert.strictEqual(r.status, 200, u + ' ' + JSON.stringify(r.body).slice(0, 200));
+          const list = reads.filter((q) => !/project IS NOT NULL/.test(q.sql));
+          const loose = list.filter((q) => !/\$\d+::text IS NULL OR project = \$\d+/.test(q.sql) || q.params.indexOf(P) < 0);
+          assert.ok(list.length, u + ' read no results');
+          assert.strictEqual(loose.length, 0, u + ': a result read ignored the project: ' + (loose[0] || {}).sql);
+          assert.strictEqual(r.body.project, P, u + ' does not say which project it answered for');
+        }
+        reads.length = 0;
+        await post(port, undefined, '/api/testing/runs');
+        assert.ok(reads.some((q) => q.params.indexOf(null) >= 0), 'no ?project= must pass null — all projects');
+      });
+    } finally { console.warn = realWarn; COLS.project = false; }
   } finally { srv.close(); }
 
   console.log('— nothing is written on an aborted run —');

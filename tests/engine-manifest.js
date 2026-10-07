@@ -212,7 +212,7 @@ const INFRA_LIBS = [
      a feature flag and ChitBridge is unchanged, which is what makes it plumbing. (2026-09-14) */
   'istest.js',
   'trips.js',          // INFRA: counts the database round trips one request makes, when CB_TRIPS=1 asks it to (2026-09-07)      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
-  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js',
+  'logger.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js', 'employee-code.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
   /* INFRA by this file's own test: it holds no rule and decides nothing. It says "the shop moved" down the pipe
      lib/events already owned, so a counter and a television stop waiting out a timer. Swap the transport and

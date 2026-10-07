@@ -48,6 +48,60 @@ const { withEntity, query } = require('../db');
 const testboard = require('../lib/testboard');
 const junitresults = require('../lib/junitresults');
 
+/**
+ * ── ⭐⭐ THE PROJECT A RUN BELONGS TO (b292) ─────────────────────────────────────────────────────────────────
+ *
+ * Athi, 2026-10-07: *"it has to run against a project or something so we can group against a sprint or project."*
+ * `test_result.project` is written with the run, exactly like run_label, and every read takes `?project=`.
+ *
+ * ⚠️⚠️ THE COLUMN ARRIVES BY HAND (b292 is run in the SQL editor), so this code ships BEFORE it exists. Asked once
+ * of information_schema and remembered; until it is there results are written WITHOUT a project and the log says
+ * so once — a sign-in or a CI post must never break on a column somebody has not added yet. A "no" is asked again
+ * after five minutes, so running b292 is picked up without a redeploy. A 42703 on the INSERT also flips it.
+ */
+const PROJECT_MAX = 80;
+const _proj = { has: null, at: 0, warned: false };
+function projectMissing(why) {
+  _proj.has = false; _proj.at = Date.now();
+  if (!_proj.warned) {
+    _proj.warned = true;
+    console.warn('[testing] test_result.project is not there yet (' + why + ') — results are written WITHOUT a project until b292 is run');
+  }
+}
+/**
+ * ⭐ A READ ASKS ONLY WHEN IT IS FILTERING. With no ?project= the filter is a no-op whatever the answer, so the
+ * read takes what is already known instead of paying a statement for it (round-trips.budget.json holds the line).
+ * /runs always asks — it lists the projects.
+ */
+async function projectReady(db, project) { return project ? hasProject(db) : _proj.has === true; }
+async function hasProject(db) {
+  if (_proj.has === true) return true;
+  if (_proj.has === false && Date.now() - _proj.at < 5 * 60 * 1000) return false;
+  try {
+    const r = await db.query(
+      `SELECT 1 FROM information_schema.columns
+        WHERE table_schema = current_schema() AND table_name = 'test_result' AND column_name = 'project' LIMIT 1`);
+    if (r.rows.length) { _proj.has = true; return true; }
+    projectMissing('information_schema');
+  } catch (e) { projectMissing('could not ask: ' + (e.message || e)); }
+  return false;
+}
+/** ⭐ ONE reading of a project name — the tap, the JUnit post and every ?project= filter. '' is no project. */
+function projectOf(v) {
+  if (v == null) return { project: null };
+  const s = String(v).trim();
+  if (!s) return { project: null };
+  if (s.length > PROJECT_MAX) return { error: 'The project name is longer than ' + PROJECT_MAX + ' characters.' };
+  return { project: s };
+}
+/**
+ * ⭐ THE ONE FILTER on test_result for `?project=`, given the $ index its value is passed at (always passed,
+ * null when no filter). Without the column a named project matches nothing — which is true: no row has one.
+ */
+function projectWhere(has, i) {
+  return has ? `($${i}::text IS NULL OR project = $${i})` : `($${i}::text IS NULL)`;
+}
+
 /* The two axes, in one place. The server is the authority so a screen cannot offer a value the CHECK refuses. */
 const RUN_KINDS = ['manual', 'unit', 't0', 't1', 't2', 't3', 'regression'];
 const LAYERS = ['engine', 'transport', 'web', 'capability', 'db', 'connector'];
@@ -924,6 +978,8 @@ async function recordResults(entity_id, who, b) {
    * twice is FOLDED here, worst result first — never left to ON CONFLICT DO NOTHING, which kept the first and
    * dropped the rest silently, so a fail after a pass vanished (N01). A single result passes through as it was.
    */
+  const pj = projectOf(b.project);
+  if (pj.error) return { status: 422, body: { error: 'Not recorded', message: pj.error } };
   const list = junitresults.fold(given);
   {
     /* ⭐ ONE run id for the whole post unless the caller supplies one — a sitting is a sitting. */
@@ -931,7 +987,8 @@ async function recordResults(entity_id, who, b) {
     const run_label = b.run_label || null;
     const build = b.build || null;
 
-    const saved = await withEntity(entity_id, async (db) => {
+    const write = (askProject) => withEntity(entity_id, async (db) => {
+      const withProject = askProject && pj.project !== null && await hasProject(db);
       /* the case's identity and CURRENT VERSION, read once for the whole batch — see the round-trip note above */
       const keys = list.map((r) => String(r.case_key).trim());
       const known = await db.query(
@@ -966,9 +1023,9 @@ async function recordResults(entity_id, who, b) {
       const ins = await db.query(
         `INSERT INTO test_result
            (entity_id, definition_id, case_version, case_key, module_key, status, run_kind, layer,
-            tested_by, tester_name, run_id, run_label, note, evidence, build)
+            tested_by, tester_name, run_id, run_label, note, evidence, build${withProject ? ', project' : ''})
          SELECT $1, t.did::uuid, t.cver::int, t.key, t.mod, t.status, t.kind, t.layer,
-                $12, t.tester, $13::uuid, $14, t.note, t.evidence, $15
+                $12, t.tester, $13::uuid, $14, t.note, t.evidence, $15${withProject ? ', $16' : ''}
            FROM unnest($2::text[], $3::int[], $4::text[], $5::text[], $6::text[], $7::text[], $8::text[],
                        $9::text[], $10::text[], $11::text[])
              AS t(did, cver, key, mod, status, kind, layer, tester, note, evidence)
@@ -979,9 +1036,17 @@ async function recordResults(entity_id, who, b) {
          norm.map((r) => r.module_key), norm.map((r) => r.status), norm.map((r) => r.run_kind),
          norm.map((r) => r.layer), norm.map((r) => r.tester_name), norm.map((r) => r.note),
          norm.map((r) => r.evidence),
-         who.id, run_id, run_label, build]);
-      return { rows: ins.rows, missing: norm.filter((r) => !r.definition_id).map((r) => r.key).slice(0, 50) };
+         who.id, run_id, run_label, build].concat(withProject ? [pj.project] : []));
+      return { rows: ins.rows, project: withProject ? pj.project : null,
+        missing: norm.filter((r) => !r.definition_id).map((r) => r.key).slice(0, 50) };
     });
+    /* ⚠️ a 42703 means the column went away under the cache — write the run WITHOUT it rather than lose it */
+    let saved;
+    try { saved = await write(true); }
+    catch (e) {
+      if (e && e.code === '42703' && /project/.test(String(e.message || ''))) { projectMissing('42703'); saved = await write(false); }
+      else throw e;
+    }
 
     /**
      * ⚠️ SAID, NOT SWALLOWED: a key with no case on this board is still recorded (its history survives the day
@@ -989,9 +1054,14 @@ async function recordResults(entity_id, who, b) {
      * rebuilt), but nothing on testing.html can show it, so the caller is told which ones.
      * `skipped` is only what was ALREADY on this run (a replay); `folded` is how many results became one.
      */
-    return { status: 200, body: { run_id, run_label, recorded: saved.rows.length,
+    /* ⚠️ SAID: a project asked for and not written (b292 not run yet) is named back, never dropped quietly */
+    const body = { run_id, run_label, project: saved.project };
+    if (pj.project !== null && saved.project === null) {
+      body.project_not_written = 'test_result.project is not there yet (b292) — recorded without "' + pj.project + '"';
+    }
+    return { status: 200, body: Object.assign(body, { recorded: saved.rows.length,
       skipped: list.length - saved.rows.length, folded: given.length - list.length,
-      not_on_board: saved.missing, results: saved.rows } };
+      not_on_board: saved.missing, results: saved.rows }) };
   }
 }
 
@@ -1015,14 +1085,17 @@ router.get('/results', auth, async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const q = req.query || {};
+    const pj = projectOf(q.project);
+    if (pj.error) return res.status(400).json({ error: 'Not read', message: pj.error });
 
     if (q.case_key || q.run_id) {
       const where = q.case_key ? 'AND case_key = $2' : 'AND run_id = $2::uuid';
-      const r = await withEntity(entity_id, (db) => db.query(
-        `SELECT * FROM test_result WHERE entity_id = $1 ${where} ORDER BY at DESC LIMIT 500`,
-        [entity_id, q.case_key || q.run_id]));
+      const r = await withEntity(entity_id, async (db) => db.query(
+        `SELECT * FROM test_result WHERE entity_id = $1 ${where} AND ${projectWhere(await projectReady(db, pj.project), 3)}
+          ORDER BY at DESC LIMIT 500`,
+        [entity_id, q.case_key || q.run_id, pj.project]));
       /* ⚠️ `history` named which branch answered and no caller read it — dropped by the envelope besides */
-      return res.json({ results: r.rows, count: r.rows.length });
+      return res.json({ results: r.rows, count: r.rows.length, project: pj.project });
     }
 
     /**
@@ -1030,11 +1103,12 @@ router.get('/results', auth, async (req, res) => {
      * arithmetic by a unit test AND by a person at the counter — and collapsing those would let a green unit test
      * hide a red counter, which is precisely the pair of facts worth keeping apart.
      */
-    const r = await withEntity(entity_id, (db) => db.query(
+    /* ⭐ with ?project= it is the latest word per case WITHIN that project — "where did this sprint leave it" */
+    const r = await withEntity(entity_id, async (db) => db.query(
       `SELECT DISTINCT ON (case_key, COALESCE(layer,'')) *
-         FROM test_result WHERE entity_id = $1
-        ORDER BY case_key, COALESCE(layer,''), at DESC`, [entity_id]));
-    res.json({ results: r.rows, count: r.rows.length });
+         FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, pj.project), 2)}
+        ORDER BY case_key, COALESCE(layer,''), at DESC`, [entity_id, pj.project]));
+    res.json({ results: r.rows, count: r.rows.length, project: pj.project });
   } catch (err) {
     res.status(500).json({ error: 'Could not read the results', message: String(err.message || err) });
   }
@@ -1044,8 +1118,23 @@ router.get('/results', auth, async (req, res) => {
 router.get('/runs', auth, async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT run_id, max(run_label) AS run_label, max(build) AS build,
+    const pj = projectOf((req.query || {}).project);
+    if (pj.error) return res.status(400).json({ error: 'Not read', message: pj.error });
+    /**
+     * ⭐ `projects` — every project the board has seen, newest first, with its run count. It is what the page's
+     * Project filter offers; read from the whole ledger, not the 50 runs below, so an old sprint stays choosable.
+     */
+    let projects = [];
+    const r = await withEntity(entity_id, async (db) => {
+      const has = await hasProject(db);
+      if (has) {
+        projects = (await db.query(
+          `SELECT project, count(DISTINCT run_id)::int AS runs, max(at) AS last_at FROM test_result
+            WHERE entity_id = $1 AND project IS NOT NULL GROUP BY project ORDER BY max(at) DESC LIMIT 200`,
+          [entity_id])).rows;
+      }
+      return db.query(
+      `SELECT run_id, max(run_label) AS run_label, max(build) AS build, ${has ? 'max(project)' : 'NULL::text'} AS project,
               min(at) AS started, max(at) AS finished,
               string_agg(DISTINCT run_kind, ', ') AS kinds,
               string_agg(DISTINCT tester_name, ', ') AS testers,
@@ -1054,9 +1143,10 @@ router.get('/runs', auth, async (req, res) => {
               count(*) FILTER (WHERE status = 'fail')    AS failed,
               count(*) FILTER (WHERE status = 'blocked') AS blocked,
               count(*) FILTER (WHERE status = 'skipped') AS skipped
-         FROM test_result WHERE entity_id = $1
-        GROUP BY run_id ORDER BY max(at) DESC LIMIT 50`, [entity_id]));
-    res.json({ runs: r.rows, count: r.rows.length });
+         FROM test_result WHERE entity_id = $1 AND ${projectWhere(has, 2)}
+        GROUP BY run_id ORDER BY max(at) DESC LIMIT 50`, [entity_id, pj.project]);
+    });
+    res.json({ runs: r.rows, count: r.rows.length, project: pj.project, projects });
   } catch (err) {
     res.status(500).json({ error: 'Could not read the runs', message: String(err.message || err) });
   }
@@ -1139,7 +1229,8 @@ router.post('/results/junit', auth, async (req, res) => {
 
     /* ⭐ the SAME recorder a person's tap goes through — one write path, one shape of row */
     const out = await recordResults(testboard.entityFor(auth.entityOf(req)), testerOf(req), {
-      results, run_id: req.body.run_id, run_label: req.body.run_label || 'automated', build: req.body.build });
+      results, run_id: req.body.run_id, run_label: req.body.run_label || 'automated', build: req.body.build,
+      project: req.body.project });
     return res.status(out.status).json(Object.assign({ unmatched }, out.body));
   } catch (err) {
     res.status(500).json({ error: 'Could not read that report', message: String(err.message || err) });
@@ -2025,8 +2116,11 @@ router.get('/coverage', auth, async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
+    const pj = projectOf((req.query || {}).project);
+    if (pj.error) return res.status(400).json({ error: 'Not read', message: pj.error });
+    /* ⭐ ?project= narrows every RESULT read below to that project's rows; the cases are the board's either way */
 
-    const r = await withEntity(entity_id, (db) => db.query(
+    const r = await withEntity(entity_id, async (db) => db.query(
       `WITH cases AS (
          SELECT d.definition_id, d.name AS case_key, COALESCE(d.sub_kind, '-') AS module_key,
                 COALESCE(v.rules->>'priority', 'Medium') AS priority,
@@ -2040,7 +2134,7 @@ router.get('/coverage', auth, async (req, res) => {
           would otherwise count five times and a module could report more coverage than it has cases. */
        latest AS (
          SELECT DISTINCT ON (case_key) case_key, status, at
-           FROM test_result WHERE entity_id = $1
+           FROM test_result WHERE entity_id = $1 AND ${projectWhere(await projectReady(db, pj.project), 3)}
           ORDER BY case_key, at DESC
        ),
        inrun AS (
@@ -2063,7 +2157,7 @@ router.get('/coverage', auth, async (req, res) => {
         GROUP BY c.module_key
         ORDER BY count(*) FILTER (WHERE l.case_key IS NULL AND c.priority = 'High') DESC,
                  count(*) FILTER (WHERE l.case_key IS NULL) DESC,
-                 c.module_key`, [entity_id, run_id]));
+                 c.module_key`, [entity_id, run_id, pj.project]));
 
     /**
      * ⭐⭐ THE SAME QUESTION, ASKED FOUR WAYS. Athi, 2026-09-11: *"any graph / chart according to group?"*
@@ -2077,6 +2171,7 @@ router.get('/coverage', auth, async (req, res) => {
      * ⚠ One transaction, four aggregates. Not one query per group in a loop.
      */
     const groups = await withEntity(entity_id, async (db) => {
+      const has = await projectReady(db, pj.project);
       const latest = `WITH cases AS (
            SELECT d.name AS case_key, COALESCE(d.sub_kind,'-') AS module_key,
                   COALESCE(v.rules->>'priority','Medium') AS priority,
@@ -2086,7 +2181,7 @@ router.get('/coverage', auth, async (req, res) => {
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
          ), latest AS (
            SELECT DISTINCT ON (case_key) case_key, status FROM test_result
-            WHERE entity_id = $1 ORDER BY case_key, at DESC
+            WHERE entity_id = $1 AND ${projectWhere(has, 2)} ORDER BY case_key, at DESC
          )`;
       const tally = (col) => `${latest}
          SELECT c.${col} AS key, count(*) AS total,
@@ -2097,8 +2192,8 @@ router.get('/coverage', auth, async (req, res) => {
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
           GROUP BY c.${col} ORDER BY c.${col}`;
 
-      const byLayer = await db.query(tally('layer'), [entity_id]);
-      const byPriority = await db.query(tally('priority'), [entity_id]);
+      const byLayer = await db.query(tally('layer'), [entity_id, pj.project]);
+      const byPriority = await db.query(tally('priority'), [entity_id, pj.project]);
 
       /* ⚠ THE TREND IS A DIFFERENT SHAPE, and must be: it counts RESULTS in a sitting, not the latest word per
          case. "What happened on Tuesday" and "where do we stand" are different questions and a chart that
@@ -2109,8 +2204,8 @@ router.get('/coverage', auth, async (req, res) => {
                 count(*) FILTER (WHERE status='fail')    AS failed,
                 count(*) FILTER (WHERE status='blocked') AS blocked,
                 count(*) AS total
-           FROM test_result WHERE entity_id = $1
-          GROUP BY run_id ORDER BY max(at) DESC LIMIT 12`, [entity_id]);
+           FROM test_result WHERE entity_id = $1 AND ${projectWhere(has, 2)}
+          GROUP BY run_id ORDER BY max(at) DESC LIMIT 12`, [entity_id, pj.project]);
 
       const num = (rows) => rows.map((x) => ({ key: x.key, total: Number(x.total), passed: Number(x.passed),
         failed: Number(x.failed), blocked: Number(x.blocked), untested: Number(x.untested) }));
@@ -2133,6 +2228,7 @@ router.get('/coverage', auth, async (req, res) => {
 
     res.json({
       areas: areas,
+      project: pj.project,
       groups: groups,
       /* ⭐ the panel opens on this when no focus has been chosen — the gap, named, rather than a dropdown */
       suggest: worst ? worst.module_key : null,
@@ -2171,8 +2267,12 @@ router.get('/report', auth, async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
+    const pj = projectOf((req.query || {}).project);
+    if (pj.error) return res.status(400).json({ error: 'Not read', message: pj.error });
 
     const data = await withEntity(entity_id, async (db) => {
+      /* ⭐ ?project= — every RESULT read below is that project's rows only; the cases stay the board's */
+      const has = await projectReady(db, pj.project);
       /* ⚠️ THE LATEST WORD PER CASE for the board-wide picture; the RUN's own rows when one is named. Mixing
          them would be the classic report fault: totals that answer a different question from the detail. */
       const cover = await db.query(
@@ -2189,7 +2289,7 @@ router.get('/report', auth, async (req, res) => {
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
          ), latest AS (
            SELECT DISTINCT ON (case_key) case_key, status FROM test_result
-            WHERE entity_id = $1 ORDER BY case_key, at DESC
+            WHERE entity_id = $1 AND ${projectWhere(has, 2)} ORDER BY case_key, at DESC
          )
          SELECT c.module_key, max(c.module_name) AS module_name, count(*) AS total,
                 count(*) FILTER (WHERE l.status='pass')    AS passed,
@@ -2201,15 +2301,15 @@ router.get('/report', auth, async (req, res) => {
                 count(*) FILTER (WHERE l.case_key IS NULL AND c.swept=1) AS untested_swept,
                 count(*) FILTER (WHERE l.case_key IS NULL AND c.swept=0) AS untested_written
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
-          GROUP BY c.module_key ORDER BY c.module_key`, [entity_id]);
+          GROUP BY c.module_key ORDER BY c.module_key`, [entity_id, pj.project]);
 
       /* the incidents: what actually went wrong, latest word only, worst first */
       const bad = await db.query(
         `SELECT DISTINCT ON (case_key) case_key, module_key, status, note, evidence,
                 tester_name, run_kind, layer, at, case_version
            FROM test_result
-          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid)
-          ORDER BY case_key, at DESC`, [entity_id, run_id]);
+          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(has, 3)}
+          ORDER BY case_key, at DESC`, [entity_id, run_id, pj.project]);
 
       /**
        * ── ⭐⭐⭐ WHO DID WHAT, PER PERSON ────────────────────────────────────────────────────────────────────
@@ -2234,7 +2334,7 @@ router.get('/report', auth, async (req, res) => {
         `WITH latest AS (
            SELECT DISTINCT ON (case_key) case_key, status, tested_by, tester_name, at
              FROM test_result
-            WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid)
+            WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(has, 3)}
             ORDER BY case_key, at DESC
          )
          SELECT tested_by, max(tester_name) AS tester_name, count(*)::int AS recorded,
@@ -2245,17 +2345,17 @@ router.get('/report', auth, async (req, res) => {
                 min(at) AS first_at, max(at) AS last_at
            FROM latest
           GROUP BY tested_by
-          ORDER BY count(*) DESC`, [entity_id, run_id]);
+          ORDER BY count(*) DESC`, [entity_id, run_id, pj.project]);
 
       const runs = await db.query(
-        `SELECT run_id, max(run_label) AS run_label, max(build) AS build,
+        `SELECT run_id, max(run_label) AS run_label, max(build) AS build, ${has ? 'max(project)' : 'NULL::text'} AS project,
                 min(at) AS started, max(at) AS finished,
                 string_agg(DISTINCT run_kind, ', ') AS kinds,
                 string_agg(DISTINCT tester_name, ', ') AS testers,
                 string_agg(DISTINCT layer, ', ') AS layers, count(*) AS total
            FROM test_result
-          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid)
-          GROUP BY run_id ORDER BY max(at) DESC LIMIT $3`, [entity_id, run_id, run_id ? 1 : 12]);
+          WHERE entity_id = $1 AND ($2::uuid IS NULL OR run_id = $2::uuid) AND ${projectWhere(has, 4)}
+          GROUP BY run_id ORDER BY max(at) DESC LIMIT $3`, [entity_id, run_id, run_id ? 1 : 12, pj.project]);
 
       /* ⚠️ cases written against wording that has since changed — a PASS on one of these is not evidence about
          what the spec says today, and a completion report that stays silent about it overstates its own case */
@@ -2289,14 +2389,14 @@ router.get('/report', auth, async (req, res) => {
             WHERE d.entity_id = $1 AND d.kind = 'testcase' AND d.status <> 'retired'
          ), latest AS (
            SELECT DISTINCT ON (case_key) case_key, status FROM test_result
-            WHERE entity_id = $1 ORDER BY case_key, at DESC
+            WHERE entity_id = $1 AND ${projectWhere(has, 2)} ORDER BY case_key, at DESC
          )
          SELECT c.test_type, count(*)::int AS total,
                 count(l.case_key)::int                            AS run,
                 count(*) FILTER (WHERE l.status='pass')::int       AS passed,
                 count(*) FILTER (WHERE l.status='fail')::int       AS failed
            FROM cases c LEFT JOIN latest l ON l.case_key = c.case_key
-          GROUP BY c.test_type ORDER BY count(*) DESC`, [entity_id]);
+          GROUP BY c.test_type ORDER BY count(*) DESC`, [entity_id, pj.project]);
 
       return { cover: cover.rows, bad: bad.rows, runs: runs.rows, people: people.rows,
         kinds: kinds.rows, stale: stale.rows[0] ? stale.rows[0].n : 0 };
@@ -2441,7 +2541,8 @@ router.get('/report', auth, async (req, res) => {
       /* ⚠️ named so a reader can check it, and because IEEE 829 is the one most people expect */
       supersedes: 'IEEE 829 (withdrawn 2013)',
       generated_at: new Date().toISOString(),
-      scope: run_id ? 'one run' : 'the whole board',
+      scope: (run_id ? 'one run' : 'the whole board') + (pj.project ? ' · project ' + pj.project : ''),
+      project: pj.project,
 
       sections: [
         { id: '1', title: 'Overview', source: 'measured',
@@ -3104,4 +3205,6 @@ router.get('/releases', auth, async (req, res) => {
 });
 
 
+/* the project-column cache, for tests/junit-board.test.js only — the route never reads it from outside */
+router._proj = _proj;
 module.exports = router;
