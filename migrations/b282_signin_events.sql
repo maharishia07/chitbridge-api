@@ -20,8 +20,8 @@ BEGIN;
 
 CREATE TABLE IF NOT EXISTS signin_events (
   event_id     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  entity_id    uuid NOT NULL REFERENCES identities(identity_id),   -- the shop slot signed into
-  identity_id  uuid REFERENCES identities(identity_id),            -- the membership row (null = unknown id)
+  entity_id    uuid NOT NULL,                                      -- the shop slot signed into (FK below)
+  identity_id  uuid,                                               -- the membership row (null = unknown id) (FK below)
   person_id    uuid,                                               -- FK added by b283
   action       text NOT NULL CHECK (action IN ('ask','in','fail','locked','renew','out','revoke','link','unlink','device_new','device_revoke')),
   method       text CHECK (method IN ('otp','pin','passkey','google','apple','microsoft','key')),
@@ -33,6 +33,15 @@ CREATE TABLE IF NOT EXISTS signin_events (
   surface      text,                                               -- index|till|accounts|crm|standards|shop|promo|agent
   at           timestamptz NOT NULL DEFAULT now()
 );
+-- foreign keys added apart from CREATE TABLE IF NOT EXISTS, so a pre-existing table still gets them (migration-lint)
+DO $fk$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'signin_events_entity_fkey') THEN
+    ALTER TABLE signin_events ADD CONSTRAINT signin_events_entity_fkey FOREIGN KEY (entity_id) REFERENCES identities (identity_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'signin_events_identity_fkey') THEN
+    ALTER TABLE signin_events ADD CONSTRAINT signin_events_identity_fkey FOREIGN KEY (identity_id) REFERENCES identities (identity_id);
+  END IF;
+END $fk$;
 CREATE INDEX IF NOT EXISTS ix_signin_events_entity_at ON signin_events (entity_id, at DESC);
 
 ALTER TABLE signin_events ENABLE ROW LEVEL SECURITY;
