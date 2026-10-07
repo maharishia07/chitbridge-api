@@ -12,7 +12,8 @@
  * Invariants of the row:
  *   I-1  two devices never mint the same bill number — no prefix is ever held by two holders (key or phone), across a
  *        200-step mixed sequence of PC claims, phone claims, assignments, reassignments and revokes
- *   I-2  a bill's till.by is the signed-in person (lib/holder tillClaimOf; routes/chits.js asks it before the dedupe)
+ *   I-2  a bill's till.by is the person who MADE it on this device (lib/holder tillClaimOf; routes/chits.js asks it before the
+ *        dedupe): another device → 400; same device, another person signed in → accepted, till.sent_by beside it
  * STOP condition: a pre-M11 key claims EXACTLY the prefix it claims today — same answer, same record written.
  *
  * Run: node tests/claim-series.test.cjs · no DB, no network.
@@ -243,8 +244,13 @@ function dupes() {
   t('phone bill that names nobody → stamped with the session\'s device and person', bj.till.device_id === 'dev-aaaa-1111' && bj.till.by === 'p1');
   const m1 = tillClaimOf(phoneH, { till: { id: 'C7', device_id: 'dev-zzzz-9999', by: 'p1' } });
   t('another device → 400 TILL_CLAIM_MISMATCH (device_id)', !m1.ok && m1.code === 'TILL_CLAIM_MISMATCH' && m1.field === 'device_id');
-  const m2 = tillClaimOf(phoneH, { till: { id: 'C7', device_id: 'dev-aaaa-1111', by: 'someone-else' } });
-  t('another person → 400 TILL_CLAIM_MISMATCH (by)', !m2.ok && m2.code === 'TILL_CLAIM_MISMATCH' && m2.field === 'by');
+  const bj2 = { till: { id: 'C7', device_id: 'dev-aaaa-1111', by: 'someone-else' } };
+  const m2 = tillClaimOf(phoneH, bj2); if (m2.stamp) Object.assign(bj2.till, m2.stamp);
+  t('same phone, another person signed in → ACCEPTED (never stranded), marked sentByOther', m2.ok && m2.sentByOther === true && !m2.code);
+  t('  till.by kept as the person who MADE the bill; till.sent_by = the session person', bj2.till.by === 'someone-else' && bj2.till.sent_by === 'p1' && bj2.till.device_id === 'dev-aaaa-1111');
+  const bj3 = { till: { id: 'C7', by: 'someone-else' } }; const m3 = tillClaimOf(phoneH, bj3); if (m3.stamp) Object.assign(bj3.till, m3.stamp);
+  t('  a missing device_id is still filled from the session', m3.ok && bj3.till.device_id === 'dev-aaaa-1111' && bj3.till.by === 'someone-else');
+  t('  same-person bill carries no sent_by and no sentByOther', !ok1.sentByOther && !('sent_by' in ok1.stamp));
   const k1 = tillClaimOf(keyH, { till: { id: 'C1', by: 'shift-person', device_id: 'anything' } });
   t('a KEY\'s bill (shop PC) is not checked and not stamped — bills exactly as before', k1.ok && !k1.stamp);
   t('a bill with no till (not a counter bill) is untouched', tillClaimOf(phoneH, { schema_values: {} }).ok && !tillClaimOf(phoneH, {}).stamp);
@@ -257,6 +263,9 @@ function dupes() {
   t('T9 · /api/till/snapshot claims through keys.claimSeries(entity, req.till) for a key AND a device',
     /keys\.claimSeries\(entity_id, req\.till,/.test(TILL) && /req\.till\.device_id/.test(TILL) && !/keys\.claimTill\(/.test(TILL));
   const send = CHITS.slice(CHITS.indexOf("router.post('/send'"));
+  t('/api/chits/send logs kind sent_by_other and still refuses only another device (400)',
+    send.indexOf("if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other';") > 0
+    && send.indexOf("return res.status(400).json({ error: 'Bill claim mismatch'") > 0);
   t('T9 · /api/chits/send asks tillClaimOf(req.till, …) BEFORE the client_ref dedupe',
     send.indexOf('tillClaimOf(req.till') > 0 && send.indexOf('tillClaimOf(req.till') < send.indexOf('await sameRefLook(sender_id, client_ref)'));
   t('one allocator: claimTill is claimSeries asked as a key; one bookedPrefixes (counters.js reads keys\')',

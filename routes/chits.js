@@ -482,7 +482,8 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         res.locals.code = tillClaim.code;
         return res.status(400).json({ error: 'Bill claim mismatch', code: tillClaim.code, field: tillClaim.field, client_ref, message: tillClaim.message });
       }
-      if (tillClaim.stamp) Object.assign(req.body.business_json.till, tillClaim.stamp);
+      if (tillClaim.stamp) Object.assign(req.body.business_json.till, tillClaim.stamp);   /* merge-patch: `by` is never overwritten by sent_by */
+      if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other';   /* the request log line names it */
       if (client_ref) {
         try {
           const seen = await sameRefLook(sender_id, client_ref);
