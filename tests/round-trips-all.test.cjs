@@ -96,6 +96,10 @@ const t = (name, cond, extra) => {
   else { fail++; console.log('  FAIL ' + name + (extra ? '   ' + extra : '')); }
 };
 
+/* A route the client calls WITHOUT the registry (the shell's direct get('/api/entities/header'), N19) is invisible to the scanner. Its budget line
+   says `extra: true` and it is added to the list HERE, BEFORE the mount loop (or its file is never mounted), so it is still fired / checked and the "no longer called" check does not drop it. */
+for (const k of Object.keys(budget.routes)) if (budget.routes[k].extra && !called.some((r) => r.route === k)) called.push({ route: k, file: budget.routes[k].file });
+
 const express = require('express');
 const app = express();
 app.use(require(path.join(API, 'lib', 'trips')).middleware());

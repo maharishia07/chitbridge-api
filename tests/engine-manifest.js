@@ -195,6 +195,8 @@ const INFRA_LIBS = [
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js',
+  /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */
+  'home-facts.js', 'till-summary.js',
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
   'crm.js', 'crm-followups.js',
   /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */

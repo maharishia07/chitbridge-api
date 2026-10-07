@@ -122,6 +122,7 @@ function create() {
     async payment(db, e, pid) { const p = T.payments.find((x) => x.entity_id === e && x.payment_id === pid); return p ? clone(p) : null; },
     async queue(db, e, o) { T.outbox.push(Object.assign({ id: T.outbox.length + 1, entity_id: e, tries: 0, created_at: now(), done_at: null }, clone(o))); },
     async waiting(db, e, limit) { return clone(T.outbox.filter((o) => o.entity_id === e && !o.done_at).sort((a, b) => a.tries - b.tries || a.id - b.id).slice(0, limit || 100)); },
+    async waitingCount(db, e) { return T.outbox.filter((o) => o.entity_id === e && !o.done_at).length; },
     async outboxDone(db, e, oid, ok, why) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else o.why = why; },
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
