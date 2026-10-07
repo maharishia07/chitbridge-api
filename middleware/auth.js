@@ -1,5 +1,5 @@
 // middleware/auth.js — JWT validation middleware
-const jwt = require('jsonwebtoken');
+const { verifyJwt, rotating } = require('../lib/jwt-verify');   // E10 — JWT_SECRET, then JWT_SECRET_PREV
 const { query } = require('../db');
 const schema = require('../lib/schema');   // b173 — ask the DB what it has before naming a column
 const { holderOf } = require('../lib/holder');   // M04 — req.till, one shape for key / person / actor
@@ -32,7 +32,7 @@ const auth = async (req, res, next) => {
     // Verify token
     // Pin the algorithm: tokens are signed HS256, so only accept HS256 — closes any
     // algorithm-confusion ambiguity (e.g. a token claiming a different alg).
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+    const { claims: decoded, rotated } = verifyJwt(token);   // E10 — the ONE verifier (lib/jwt-verify.js)
 
     // S1 (reviewer 2026-07-13) — FAIL CLOSED on any token that is not a REAL identity. The signature being valid is not
     // enough: a non-identity token (e.g. a marketing `sim_lead` token that happened to be signed with JWT_SECRET) must NOT
@@ -93,6 +93,8 @@ const auth = async (req, res, next) => {
     } else if (decoded.kind !== 'api_key') {
       mark(res, 'kind', 'legacy');
     }
+    /* E10: verified by the PREVIOUS secret — the rotation window is still carrying this person. Visible so the day nobody holds one is too. */
+    if (rotated) mark(res, 'kind', 'rotated');
 
     // Attach identity to request
     req.identity = {
@@ -211,7 +213,8 @@ const auth = async (req, res, next) => {
      * argues for the wrong one. A database fault is a 500 — ours, not the caller's — and it gets logged.
      */
     if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
-      return res.status(401).json({ error: 'Unauthorised', message: 'Invalid token' });
+      /* E10: the code is added ONLY while a rotation is open — with JWT_SECRET_PREV unset the body is byte-for-byte what it was */
+      return res.status(401).json(rotating() ? { error: 'Unauthorised', code: 'TOKEN_INVALID', message: 'Invalid token' } : { error: 'Unauthorised', message: 'Invalid token' });
     }
     console.error('auth: non-JWT failure —', err.code || '', err.message);
     return res.status(500).json({

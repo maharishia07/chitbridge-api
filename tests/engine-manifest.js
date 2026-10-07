@@ -357,6 +357,7 @@ const INFRA_LIBS = [
   'policy.js',             // reads policy flags; the flags are the governance, this is the reader
   'reqctx.js',             // request-scoped actor context (AsyncLocalStorage)
   'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
+  'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
   'person-session.js',     // M05: a person signed in on a device — policy_flags.devices listing, 60 s jti cache, renew/logout/revoke
   'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
   'select.js',             // shaped SELECT builders

@@ -172,7 +172,8 @@ t('3.10 · the in-tx helper exists and sets the entity context per participant',
 t('2.4 · customerAuth accepts ONLY identity_type customer', () => {
   const mw = fs.readFileSync(path.join(__dirname, '..', 'middleware', 'customer-auth.js'), 'utf8');
   assert.match(mw, /decoded\.identity_type !== 'customer'/, 'an entity or actor token must be refused here');
-  assert.match(mw, /algorithms: \['HS256'\]/, 'the algorithm must be pinned, as in auth.js');
+  assert.match(mw, /verifyJwt/, 'it must verify through the one verifier (lib/jwt-verify.js, E10)');
+  assert.match(fs.readFileSync(path.join(__dirname, '..', 'lib', 'jwt-verify.js'), 'utf8'), /algorithms: \['HS256'\]/, 'the algorithm must be pinned');
 });
 t('2.4 · the customer routes use customerAuth, never the business `auth`', () => {
   for (const r of ['my-orders', 'my-documents']) {
