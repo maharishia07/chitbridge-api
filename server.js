@@ -222,7 +222,20 @@ const authLimiter = rateLimit({
 /* M06: the new sign-in doors share the same budget (one IP, one 30/15 min) — renew/logout/sessions stay outside it, so a
    busy counter refreshing its session is never refused for it. check-login / pair-claim / storefront join in PR 7. */
 app.use(['/api/entities/register', '/api/entities/verify', '/api/actors/login', '/api/actors/set-pin',
-         '/api/signin/ask', '/api/signin/verify', '/api/signin/pin'], authLimiter);
+         '/api/signin/ask', '/api/signin/verify', '/api/signin/pin',
+         /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
+            so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
+            sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
+         '/api/till/pair/claim', '/api/actors/check-login', '/api/catalogue/:bridge_id/login/verify'], authLimiter);
+
+/* M07 — the remaining doors that need no sign-in: a looser, per-caller limiter (240 per minute, the services' own style,
+   keyed like serviceLimiter() so a signed-in caller counts against its own key, never against the next caller's).
+   tests/limiter-paths.test.cjs walks the real app and fails if a public door is ever added without one. */
+const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false,
+  keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64) });
+app.use(['/.well-known', '/api/ctp/.well-known', '/api/openapi.json', '/api/entities/constitutions', '/api/events/stream',
+         '/api/simulator', '/api/testing/vocabulary', '/api/connectors/ingest', '/api/connectors/erp-ingest', '/api/capture/webhook'],
+        publicLimiter);
 
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
