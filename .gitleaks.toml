@@ -6,4 +6,10 @@ useDefault = true
 [allowlist]
 description = "Named dev/test fixtures only"
 paths = [
+  # CI-only throwaway JWT secret + DEV_OTP for the throwaway Postgres (integration job env block)
+  '''^\.github/workflows/ci\.yml$''',
+  # test-case definitions: "case_key" identifiers (e.g. names of cases), not credentials
+  '''^data/test-cases\.json$''',
+  # installation_key identifiers ('platform-0' ...) in the governance seed, not credentials
+  '''^migrations/b74_platform_governance\.sql$''',
 ]
