@@ -194,7 +194,7 @@ router.put('/documents/:scheme', auth, async (req, res) => {
 
     /* The hash answers "is this the same document" without holding the document — and it is salted with the
        scheme so the same digits under two schemes do not collide into one identity. */
-    const hash = crypto.createHash('sha256').update(want + ':' + raw).digest('hex');
+    const hash = docHash(want, raw);
     const entity_id = auth.entityOf(req);
     const subject   = await resolveSubject(req, req.body.identity_id);
     const filedBy   = subject.onBehalf ? String(req.identity.identity_id) : 'self';
@@ -254,4 +254,13 @@ router.put('/documents/:scheme', auth, async (req, res) => {
   }
 });
 
+/**
+ * docHash(scheme, normalisedValue) — "is this the same document" without holding it: sha256 of SCHEME:value, salted with the
+ * scheme so the same digits under two schemes never collide. ⭐ ONE HASH, TWO READERS (M11): the PUT above stores it, and
+ * routes/keys.js claimSeries matches a counter assigned to a phone number against the signed-in person's verified PHONE.
+ */
+function docHash(scheme, raw) { return crypto.createHash('sha256').update(String(scheme) + ':' + String(raw)).digest('hex'); }
+/** the PHONE normaliser the PUT uses (DIGITS: a leading + survives) — so a number typed by the owner hashes as the person's did */
+router.normPhone = (v) => DIGITS(String(v == null ? '' : v).trim());
+router.docHash = docHash;
 module.exports = router;

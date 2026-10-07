@@ -15,6 +15,7 @@
  *   PATCH  /api/counters/:id           { name }        → renamed
  *   POST   /api/counters/:id/open                      → { key, counter } — refused while another PC holds it
  *   POST   /api/counters/:id/release                   → the holding PC's key is closed and the counter is free
+ *   POST   /api/counters/:id/assign    { phone }       → M11: the label is assigned to a phone NUMBER (owner only; '' unassigns)
  *
  * ⚠️⚠️ ONE PC AT A TIME IS THE WHOLE POINT. Two PCs holding one counter is two devices issuing one series, which is
  * exactly the fault of 2026-09-17. Every open decides under a row lock.
@@ -35,6 +36,7 @@ const sessionOnly = (req, res, next) => {
 };
 const PENDING_MS = 2 * 60 * 1000;
 const isPending = (h) => typeof h === 'string' && h.indexOf('pending:') === 0;
+const isDevice = (h) => typeof h === 'string' && h.indexOf('dev:') === 0;
 const pendingLive = (c) => isPending(c && c.held_by) && (Date.now() - new Date(c.held_at || 0).getTime()) < PENDING_MS;
 
 /** set one counter's record in one statement — shallow merge into policy_flags.counters[id] */
@@ -49,21 +51,9 @@ async function patchCounter(db, entity_id, id, patch) {
 }
 router.patchCounter = patchCounter;
 
-/** every prefix that has ever appeared on a recorded counter bill — never handed to a NEW counter */
-async function bookedPrefixes(db, entity_id) {
-  const out = new Set();
-  await db.query('SAVEPOINT booked');
-  try {
-    await db.query("SELECT set_config('app.current_entity', $1, true)", [String(entity_id)]);
-    const r = await db.query(
-      `SELECT DISTINCT upper(business_json->'till'->>'id') AS id FROM chit_header
-        WHERE entity_id = $1 AND business_json->>'client_ref' IS NOT NULL AND business_json->'till'->>'id' IS NOT NULL`,
-      [entity_id]);
-    r.rows.forEach((x) => { if (x.id) out.add(x.id); });
-    await db.query('RELEASE SAVEPOINT booked');
-  } catch (_) { try { await db.query('ROLLBACK TO SAVEPOINT booked'); } catch (__) {} }
-  return out;
-}
+/** every prefix that has ever appeared on a recorded counter bill — never handed to a NEW counter. ONE copy, in routes/keys.js (M11:
+    claimSeries reads it for a key and for a phone alike) */
+const bookedPrefixes = (db, entity_id) => keys.bookedPrefixes(db, entity_id);
 
 /**
  * ⭐ THE REGISTER, READ UNDER A LOCK — and the pairings that predate it adopted into it.
@@ -86,12 +76,20 @@ async function readLocked(db, entity_id) {
     }
     if (!k.counter) await keys.patchKeyWith(db, entity_id, k.jti, { counter: id });
   }
-  return { counters, list, tills };
+  /* M11: phones listed on this shop — a counter assigned to a phone is held by 'dev:'+device_id (keys.claimSeries) */
+  const devices = (pf.devices && typeof pf.devices === 'object') ? pf.devices : {};
+  return { counters, list, tills, devices, pf };
 }
 
 /** the shop-facing view of one counter: who holds it now, from where, and where its series stands */
-function view(c, list) {
-  const holder = c.held_by && !isPending(c.held_by) ? list.find((k) => k && String(k.jti) === String(c.held_by)) : null;
+function view(c, list, devices) {
+  /* ⭐ M11: a counter assigned to a phone number is held by that phone ('dev:'+device_id) while the phone holds its prefix */
+  const dev = isDevice(c.held_by) ? (devices || {})[String(c.held_by).slice(4)] : null;
+  if (dev && !dev.revoked_at && dev.till && String(dev.till.prefix || '').toUpperCase() === String(c.id).toUpperCase()) {
+    return Object.assign(baseView(c), { state: 'open', held_by: { name: dev.label || 'a phone', phone: true, since: c.held_at || null,
+      seen: dev.seen ? { at: dev.seen } : null, diag: null } });
+  }
+  const holder = c.held_by && !isPending(c.held_by) && !isDevice(c.held_by) ? list.find((k) => k && String(k.jti) === String(c.held_by)) : null;
   const open = !!(holder && !keys.isClosed(holder));
   return {
     id: c.id, name: c.name || ('Counter ' + c.id), created_at: c.created_at || null,
@@ -102,7 +100,20 @@ function view(c, list) {
                       diag: holder.diag || null } : null,
     next: c.next || null, period: c.period || null, last_no: c.last_no || null,
     last_at: c.last_at || null, closed_at: c.closed_at || null,
+    assigned: assignedView(c),
   };
+}
+/** what every view says whoever holds it — the series and the phone it is assigned to */
+function baseView(c) {
+  return { id: c.id, name: c.name || ('Counter ' + c.id), created_at: c.created_at || null, break_since: null, break_by: null,
+           next: c.next || null, period: c.period || null, last_no: c.last_no || null, last_at: c.last_at || null,
+           closed_at: c.closed_at || null, assigned: assignedView(c) };
+}
+/** ⚠️ the number is shown MASKED (last four) — the counters list is read by every signed-in person, not only the owner */
+function assignedView(c) {
+  const a = c && c.assigned;
+  if (!a || !a.phone) return null;
+  return { phone: '•••••' + String(a.phone).slice(-4), at: a.at || null };
 }
 
 /**
@@ -121,9 +132,9 @@ router.get('/', auth, sessionOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const out = await withTransaction(async (db) => {
-      const { counters, list } = await readLocked(db, entity_id);
+      const { counters, list, devices } = await readLocked(db, entity_id);
       return Object.values(counters).sort((a, b) => keys.TILL_IDS.indexOf(a.id) - keys.TILL_IDS.indexOf(b.id))
-        .map((c) => view(c, list));
+        .map((c) => view(c, list, devices));
     });
     res.json({ counters: out, free: out.filter((c) => c.state === 'closed').length });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
@@ -135,9 +146,11 @@ router.post('/', auth, sessionOnly, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const name = String((req.body && req.body.name) || '').trim().slice(0, 40);
     const made = await withTransaction(async (db) => {
-      const { counters } = await readLocked(db, entity_id);
+      const { counters, pf } = await readLocked(db, entity_id);
       const booked = await bookedPrefixes(db, entity_id);
-      const id = keys.TILL_IDS.find((x) => !counters[x] && !booked.has(x));
+      /* M11: nor one a phone bills under — a counter made on it would hand a PC the phone's numbers */
+      const phones = keys.devicePrefixes(pf, null);
+      const id = keys.TILL_IDS.find((x) => !counters[x] && !booked.has(x) && !phones.has(x));
       if (!id) { const e = new Error('There is no counter number left to give.'); e.status = 400; throw e; }
       const c = { id, name: name || ('Counter ' + id), created_at: new Date().toISOString(), held_by: null };
       await patchCounter(db, entity_id, id, c);
@@ -165,6 +178,34 @@ router.patch('/:id', auth, sessionOnly, async (req, res) => {
 });
 
 /**
+ * ── ⭐⭐ ASSIGN A COUNTER LABEL TO A PHONE NUMBER (M11, D9) ──────────────────────────────────────────────────────
+ * POST /api/counters/:id/assign { phone } → policy_flags.counters[id].assigned = { phone, at, by }. `phone: ''` unassigns.
+ * The phone of a person whose VERIFIED PHONE document is this number then bills as this counter (keys.claimSeries); an
+ * unassigned phone bills under the next free label. OWNER only (lib/owner) — who bills under which series is the shop's call.
+ * ⚠️ A label still held by another phone is NOT taken from it here: that phone may be billing under it offline right now.
+ * It moves off at its next sign-in/snapshot, and the newly assigned phone takes the label after that (`held_by` says who).
+ */
+router.post('/:id/assign', auth, sessionOnly, async (req, res) => {
+  try {
+    if (!require('../lib/owner').isOwner(req)) return res.status(403).json({ error: 'Forbidden', code: 'OWNER_ONLY', message: 'Only the owner can assign a counter.' });
+    const entity_id = auth.entityOf(req);
+    const id = String(req.params.id || '').toUpperCase();
+    const raw = req.body && req.body.phone;
+    const phone = raw == null || raw === '' ? null : require('./identity-docs').normPhone(raw);
+    if (phone !== null && !/^[+]?[0-9]{10,15}$/.test(phone)) return res.status(400).json({ error: 'validation', code: 'BAD_PHONE', message: 'Type the mobile number with its country code — 10 to 15 digits.' });
+    const out = await withTransaction(async (db) => {
+      const { counters, list, devices } = await readLocked(db, entity_id);
+      if (!counters[id]) return null;
+      const assigned = phone ? { phone, at: new Date().toISOString(), by: (req.identity && req.identity.identity_id) || null } : null;
+      await patchCounter(db, entity_id, id, { assigned });
+      return view(Object.assign({}, counters[id], { assigned }), list, devices);
+    });
+    if (!out) return res.status(404).json({ error: 'Not found' });
+    res.json({ ok: true, counter: out });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
  * ── ⭐⭐⭐ OPEN — ONE PC AT A TIME ───────────────────────────────────────────────────────────────────────────
  * The counter is HELD under the lock first (a short-lived "pending" marker), the key is minted outside it — minting
  * writes the same row, so doing it inside the lock would wait on itself — and then the key is bound. Two people
@@ -176,10 +217,10 @@ router.post('/:id/open', auth, sessionOnly, async (req, res) => {
   const nonce = 'pending:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   try {
     const got = await withTransaction(async (db) => {
-      const { counters, list } = await readLocked(db, entity_id);
+      const { counters, list, devices } = await readLocked(db, entity_id);
       const c = counters[id];
       if (!c) return { status: 404, body: { error: 'Not found', message: 'There is no counter ' + id + ' in this shop.' } };
-      const v = view(c, list);
+      const v = view(c, list, devices);
       if (v.state === 'open' || v.state === 'break' || v.state === 'opening') {
         return { status: 409, body: { error: 'Counter already open', code: 'COUNTER_HELD', counter: v,
           message: 'Counter ' + id + ' is already open' + (v.held_by ? ' on ' + v.held_by.name
@@ -294,10 +335,10 @@ router.claim = async ({ entity_id, identity, id, label, takeover }) => {
   const want = String(id || 'C1').toUpperCase();
 
   const got = await withTransaction(async (db) => {
-    const { counters, list } = await readLocked(db, entity_id);
+    const { counters, list, devices } = await readLocked(db, entity_id);
     const c = counters[want];
     if (!c) return { status: 404, body: { error: 'Not found', message: 'There is no counter ' + want + ' in this shop.' } };
-    const v = view(c, list);
+    const v = view(c, list, devices);
 
     /**
      * ⚠️⚠️ HELD MEANS HELD. A counter that is open somewhere is not available, and taking it must be a DECIDED
