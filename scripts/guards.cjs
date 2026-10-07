@@ -15,6 +15,9 @@
  *
  *   node scripts/guards.cjs         the offline set — safe anywhere, seconds
  *   node scripts/guards.cjs --all   every test file, including the ones that need a server or a database
+ *   node scripts/guards.cjs --junit test-results/guards.xml
+ *                                   also write a JUnit report, one <testcase> per file, named by the board's key
+ *                                   (`chitbridge-api/tests/<file>`) — CI posts it to the test board (ci.yml)
  */
 'use strict';
 const fs = require('fs'), path = require('path'), { spawnSync } = require('child_process');
@@ -195,6 +198,7 @@ const GUARDS = [
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
   'tax-copy.test.cjs',          // who sells on each copy: a counter bill I RECEIVED is my purchase, never in my GSTR-1
+  'page-name.test.cjs',         // ⭐ N03: every chit names its detail page at mint (base by default); an unknown name is refused; nothing rewrites it
   'two-sided-bill.test.cjs',    // a till sends its own on-rail customer their copy — and nobody else; one shop row; replay-safe
   'goods-in-accepts.test.cjs',  // goods-in, every line in → accepted through the SAME transition as Intake
   'two-sided-books.test.cjs',   // one bill, two ledgers: sale at save, purchase on acceptance
@@ -219,6 +223,9 @@ const GUARDS = [
   'crm-remove-walkin.test.cjs', // "Remove from my parties" (owner, no dues, hides, deletes nothing); walk-in → party moves the points by rewards.claim
   /* ⭐⭐⭐ DISPUTE CONFIDENTIALITY — THE USP RULE (N02, 2026-10-07): written before any extraction; per-copy RLS modelled, definers transcribed */
   'dispute-scoping.test.cjs',   // roster-only visibility · no notice to a non-party · per-party resolve; KNOWN BREAKS printed loud (section 5)
+  /* ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07) — offline: the real route over a stand-in db */
+  'junit-board.test.js',        // a report folds to one row per (run, case, layer); the guards' own JUnit reads back by the board's key; the testing scope; CI posts after red
+  'cost-never-to-employees.test.cjs', // [OFFR-04] cost off every export/history/till/supplies read for an actor without can_see_costs
   'agent-signin-body.test.cjs', // M01: the shop-PC agent sends mode:'login' via CBSignin.ask()/verify() — a login never creates an identity
   'employee-code.test.cjs',     // M02: first code e-mailed, never shown in a sealed env (Resend required), single-use, 24 h
 ];
@@ -246,6 +253,18 @@ const NEEDS_ENGINES = ['engines-pinned.test.js', 'tax-vendor.test.js',
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
 
+/**
+ * ⭐⭐ THE BOARD HEARS ABOUT IT (2026-10-07). Athi opened the test board and saw 0 results, while this gate ran green on
+ * every push. `--junit <file>` writes what ran as JUnit — lib/junitresults.write, the same module that READS it on the
+ * server — and CI posts that file (ci.yml, guards job). ⚠️ The testcase NAME is the board's case key, exactly as
+ * data/test-cases.json spells it (`chitbridge-api/tests/<file>`), so the post uses key_from 'name' and nothing is guessed.
+ * A skip is written as a skip, never a pass; a failure carries the lines this script already prints for it.
+ */
+const ji = process.argv.indexOf('--junit');
+const JUNIT = ji >= 0 ? path.resolve(process.argv[ji + 1] || 'test-results/guards.xml') : null;
+const KEY = (f) => 'chitbridge-api/tests/' + f;
+const report = [];
+
 let total = 0, failed = [], started = Date.now();
 console.log(all ? '— every test file (some need a server) —' : '— the guards —');
 
@@ -253,8 +272,10 @@ for (const f of files) {
   if (SKIP_ENGINES && NEEDS_ENGINES.indexOf(f) >= 0) {
     console.log('  skip  ' + f.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   — needs chitbridge-engines (private; set ENGINES_READ_TOKEN)');
     console.log('::warning::' + f + ' skipped — chitbridge-engines is not checked out (add the ENGINES_READ_TOKEN secret)');
+    report.push({ name: KEY(f), status: 'skipped', message: 'needs chitbridge-engines (private), not checked out' });
     continue;
   }
+  const t0 = Date.now();
   const r = spawnSync(process.execPath, [path.join(TESTS, f)], { encoding: 'utf8', timeout: 120000 });
   const out = (r.stdout || '') + (r.stderr || '');
   /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */
@@ -265,8 +286,18 @@ for (const f of files) {
   total += n;
   if (bad) failed.push(f);
   console.log('  ' + (bad ? 'FAIL' : ' ok ') + '  ' + f.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(n).padStart(4) + ' checks');
-  if (bad) console.log(out.split('\n').filter((l) => /FAIL|Error|expected/i.test(l)).slice(0, 5)
-    .map((l) => '          ' + l.trim()).join('\n'));
+  const why = bad ? out.split('\n').filter((l) => /FAIL|Error|expected/i.test(l)).slice(0, 5).map((l) => l.trim()) : [];
+  if (bad) console.log(why.map((l) => '          ' + l).join('\n'));
+  report.push({ name: KEY(f), status: bad ? 'fail' : 'pass', time: (Date.now() - t0) / 1000,
+    /* ⚠️ never an empty reason: a red row on the board with no words is a question nobody can answer */
+    message: bad ? (why.length ? why.join('\n') : (n === 0 ? 'counted no checks' : 'exit ' + r.status)) : '',
+    output: bad ? out.split('\n').slice(-40).join('\n') : '' });
+}
+
+if (JUNIT) {
+  fs.mkdirSync(path.dirname(JUNIT), { recursive: true });
+  fs.writeFileSync(JUNIT, require('../lib/junitresults').write('guards', report));
+  console.log('  JUnit → ' + path.relative(process.cwd(), JUNIT) + ' (' + report.length + ' files)');
 }
 
 console.log('  ' + '─'.repeat(40));

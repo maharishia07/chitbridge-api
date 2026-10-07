@@ -25,7 +25,10 @@ const fail = (res, e, what) => res.status(500).json({ error: what, message: Stri
 /** the shop's own list of things it uses — never products, never priced */
 router.get('/', auth, async (req, res) => {
   try {
-    res.json({ supplies: await supplies.list(ctx(req), withEntity, { all: req.query.all === '1' }) });
+    const list = await supplies.list(ctx(req), withEntity, { all: req.query.all === '1' });
+    /* [OFFR-04] last_cost is what the shop paid: an actor without can_see_costs does not get it */
+    if (!(await require('../lib/cost').canReadSafe(req, ctx(req)))) list.forEach((s) => { delete s.last_cost; });
+    res.json({ supplies: list });
   } catch (e) {
     /* ⚠️ BEFORE b217 THE TABLE DOES NOT EXIST, and a screen must not break because a migration is pending */
     if (e && e.code === '42P01') return res.json({ supplies: [], not_ready: 'supplies are not switched on yet (b217)' });

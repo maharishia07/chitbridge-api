@@ -174,7 +174,7 @@ not_identities:
   - key: version_ref
     label: A thing, at a version
     example: gst-india@v1  ·  iso-29119@v1  ·  container-abc@v2
-    shape: key + "@" + "v" + digits
+    shape: key + "@" + ("v" + digits | "code" | major.minor)
     used_by:
       - routes/entities.js        # constitution_key@version
       - lib/govresolve.js         # constitution_key@version
@@ -182,9 +182,11 @@ not_identities:
       - lib/container.js          # container_id@version
       - lib/regional.js           # container_id@version
       - lib/workpattern.js        # facet key@version
+      - lib/mint.js               # detail page name@major.minor — chit.base.detail@1.0 (N03), business_json.page
     told_apart_by: >
       a business handle is at least MIN_ROOT (8) characters and a version is "v" followed by digits alone, so
       nothing legal is both. "ravi@v1shop" is a person at a business called v1shop, not a version.
+      major.minor is at most four digits before the dot, so it can never be an 8-character entity root either.
     sendable: false
     status: in-code
   - key: connector_kit
