@@ -268,9 +268,8 @@ async function phoneHashesOf(db, entity_id, by) {
   await db.query('SAVEPOINT phone_doc');
   try {
     await db.query("SELECT set_config('app.current_entity', $1, true)", [String(entity_id)]);
-    const r = await db.query(
-      `SELECT value_hash FROM identity_documents
-        WHERE identity_id = $1 AND scheme = 'PHONE' AND verified_at IS NOT NULL`, [String(by)]);
+    const st = require('../lib/iddoc-verify').verifiedPhoneHashesStatement(String(by));
+    const r = await db.query(st.text, st.params);
     r.rows.forEach((x) => { if (x.value_hash) out.add(String(x.value_hash)); });
     await db.query('RELEASE SAVEPOINT phone_doc');
   } catch (_) { try { await db.query('ROLLBACK TO SAVEPOINT phone_doc'); } catch (__) {} }
