@@ -213,10 +213,185 @@ function cleanEngines(raw) {
 }
 router.cleanEngines = cleanEngines;
 
-router.claimTill = async (entity_id, jti, ask) => withTransaction(async (db) => {
+/**
+ * bookedPrefixes(db, entity_id) → Set — every prefix that has ever appeared on a recorded counter bill. Never handed to a NEW
+ * holder (a key with nothing yet, a phone, a new counter). ONE copy: claimSeries and routes/counters.js both read it here.
+ * ⚠️ A SAVEPOINT: a failed statement aborts the whole Postgres transaction, and the claim would fail with it. A lookup that
+ * cannot run must cost the lookup, not the counter its prefix.
+ */
+async function bookedPrefixes(db, entity_id) {
+  const out = new Set();
+  await db.query('SAVEPOINT booked');
+  try {
+    await db.query("SELECT set_config('app.current_entity', $1, true)", [String(entity_id)]);
+    const r = await db.query(
+      `SELECT DISTINCT upper(business_json->'till'->>'id') AS id FROM chit_header
+        WHERE entity_id = $1 AND business_json->>'client_ref' IS NOT NULL AND business_json->'till'->>'id' IS NOT NULL`,
+      [entity_id]);
+    r.rows.forEach((x) => { if (x.id) out.add(x.id); });
+    await db.query('RELEASE SAVEPOINT booked');
+  } catch (_) { try { await db.query('ROLLBACK TO SAVEPOINT booked'); } catch (__) {} }
+  return out;
+}
+router.bookedPrefixes = bookedPrefixes;
+
+/** holderParts(req.till | 'key:..' | 'dev:..') → { jti } | { device_id, by, jti_session } | {} */
+function holderParts(h) {
+  if (!h) return {};
+  const s = typeof h === 'string' ? h : String(h.holder || '');
+  if (s.indexOf('key:') === 0) return { jti: (h.key && h.key.jti) || s.slice(4) };
+  if (s.indexOf('dev:') === 0) return { device_id: (h.device_id || s.slice(4)), by: h.by || null, session: (h.session && h.session.jti) || null };
+  return {};
+}
+/** devicePrefixes(pf, except) → Set of the prefixes phones hold (policy_flags.devices[d].till.prefix), but `except`'s own.
+ *  ⚠️ A REVOKED phone keeps its prefix reserved: its unsent bills are kept on it and still carry that number. */
+function devicePrefixes(pf, except) {
+  const devices = (pf && pf.devices && typeof pf.devices === 'object') ? pf.devices : {};
+  const out = new Set();
+  Object.keys(devices).forEach((id) => {
+    const t = devices[id] && devices[id].till;
+    if (id !== except && t && t.prefix) out.add(String(t.prefix).toUpperCase());
+  });
+  return out;
+}
+router.devicePrefixes = devicePrefixes;
+
+/**
+ * phoneHashesOf(db, entity_id, by) → Set — the value_hash of every VERIFIED PHONE document of the person signed in. D9: a
+ * counter label is assigned to a phone NUMBER, and matched against the person's PHONE identity document (routes/identity-docs
+ * docHash) — never against a number the phone itself claims. ⚠️ A typed phone that was never verified does not match.
+ * Savepoint, same reason as bookedPrefixes: a missing table costs the match, not the claim (the phone gets a free label).
+ */
+async function phoneHashesOf(db, entity_id, by) {
+  const out = new Set();
+  if (!by) return out;
+  await db.query('SAVEPOINT phone_doc');
+  try {
+    await db.query("SELECT set_config('app.current_entity', $1, true)", [String(entity_id)]);
+    const r = await db.query(
+      `SELECT value_hash FROM identity_documents
+        WHERE identity_id = $1 AND scheme = 'PHONE' AND verified_at IS NOT NULL`, [String(by)]);
+    r.rows.forEach((x) => { if (x.value_hash) out.add(String(x.value_hash)); });
+    await db.query('RELEASE SAVEPOINT phone_doc');
+  } catch (_) { try { await db.query('ROLLBACK TO SAVEPOINT phone_doc'); } catch (__) {} }
+  return out;
+}
+/** the hashes an assigned number may have been filed under — with and without its leading '+', since both are allowed */
+function assignedHashes(phone) {
+  const docs = require('./identity-docs');
+  const d = docs.normPhone(phone);
+  if (!d) return [];
+  const bare = d.replace(/^\+/, '');
+  return [docs.docHash('PHONE', bare), docs.docHash('PHONE', '+' + bare)];
+}
+router.assignedHashes = assignedHashes;
+
+/**
+ * ── ⭐⭐⭐ claimDevice — A PHONE'S SERIES (M11, D9) ──────────────────────────────────────────────────────────────────────
+ *
+ * A phone is a PERSON on a DEVICE, never a counter key (SPEC-iam-build §1). Its series is kept on its device listing,
+ * policy_flags.devices[d].till = { prefix, assigned_at, issued, at, counter?, engines? } — no SQL.
+ *   1. ASSIGNED — the shop gave a counter label to a phone NUMBER (POST /api/counters/:id/assign). If the signed-in person's
+ *      verified PHONE document is that number, and no live key and no other phone holds that counter, the phone bills as
+ *      it and continues its run (resume_next). The counter register records the phone as its holder ('dev:'+id), so a PC
+ *      cannot open it on top (routes/counters.js view()).
+ *   2. KEPT — the prefix this phone already has, if no key and no other phone holds it and it is not a registered counter
+ *      (a registered label belongs to whoever the shop assigns it to).
+ *   3. NEXT FREE — the lowest TILL_IDS prefix no key holds (closed ones included — their numbers are history), no phone
+ *      holds, nothing was billed under, and no registered counter owns. Said once: "This phone bills as C4."
+ * ⚠️ MOVED, NOT STOPPED, as for a PC: a phone that loses its label (reassigned, taken over) is given a free prefix and told
+ * `moved_from`; its old run ends whole (GST rule 46, multiple series).
+ */
+async function claimDevice(db, entity_id, pf, who, ask) {
+  const devices = (pf.devices && typeof pf.devices === 'object') ? pf.devices : {};
+  const me = Object.prototype.hasOwnProperty.call(devices, who.device_id) ? devices[who.device_id] : null;
+  if (!me || me.revoked_at) return null;
+  const now = new Date().toISOString();
+  const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
+  const tills = keys.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);
+  const keyHeld = new Set(tills.map((k) => k.till && String(k.till.id || '').toUpperCase()).filter(Boolean));
+  const liveKeyHeld = new Set(tills.filter((k) => !isClosed(k)).map((k) => k.till && String(k.till.id || '').toUpperCase()).filter(Boolean));
+  const phoneHeld = devicePrefixes(pf, who.device_id);
+  const counters = pf.counters || {};
+  const mine = 'dev:' + who.device_id;
+  const had = me.till && me.till.prefix ? String(me.till.prefix).toUpperCase() : null;
+  const using = String((ask && ask.id) || '').trim().toUpperCase() || null;
+  const engines = cleanEngines(ask && ask.engines);
+  const order = (a, b) => TILL_IDS.indexOf(a.id) - TILL_IDS.indexOf(b.id);
+  /* a registered counter a live key holds (or is opening) is not this phone's to take */
+  const keyHolds = (c) => liveKeyHeld.has(c.id) || (c.held_by && String(c.held_by).indexOf('dev:') !== 0
+    && (String(c.held_by).indexOf('pending:') === 0 || tills.some((k) => String(k.jti) === String(c.held_by) && !isClosed(k))));
+
+  /* 1 · assigned by phone number */
+  let pick = null, counter = null;
+  const assigned = Object.keys(counters).map((id) => Object.assign({ id: String(id).toUpperCase() }, counters[id]))
+    .filter((c) => c.assigned && c.assigned.phone).sort(order);
+  if (assigned.length) {
+    const hashes = await phoneHashesOf(db, entity_id, who.by);
+    counter = assigned.find((c) => assignedHashes(c.assigned.phone).some((h) => hashes.has(h))
+      && !keyHolds(c) && !phoneHeld.has(c.id)) || null;
+    if (counter) pick = counter.id;
+  }
+  /* 2 · kept */
+  if (!pick && had && !keyHeld.has(had) && !phoneHeld.has(had) && !counters[had]) pick = had;
+  /* 3 · next free */
+  let booked = null;
+  if (!pick) {
+    booked = await bookedPrefixes(db, entity_id);
+    pick = TILL_IDS.find((x) => !keyHeld.has(x) && !phoneHeld.has(x) && !booked.has(x) && !counters[x]) || null;
+  }
+  const till = Object.assign({}, me.till || {}, {
+    prefix: pick, at: now, issued: !!(ask && ask.issued) && pick === (using || had),
+    assigned_at: pick && pick === had && me.till && me.till.assigned_at ? me.till.assigned_at : now });
+  if (counter) till.counter = counter.id; else delete till.counter;
+  if (engines) till.engines = engines;
+  await db.query(
+    `UPDATE identities SET policy_flags = jsonb_set(policy_flags, ARRAY['devices', $2::text, 'till'], $3::jsonb, true)
+      WHERE identity_id = $1`, [entity_id, String(who.device_id), JSON.stringify(till)]);
+  /* the register: this phone holds its assigned counter, and lets go of any it held before */
+  const counterPatch = (id, patch) => db.query(
+    `UPDATE identities
+        SET policy_flags = jsonb_set(COALESCE(policy_flags, '{}'::jsonb), '{counters}',
+              COALESCE(policy_flags->'counters', '{}'::jsonb)
+              || jsonb_build_object($2::text, COALESCE(policy_flags->'counters'->$2, '{}'::jsonb) || $3::jsonb))
+      WHERE identity_id = $1`, [entity_id, String(id), JSON.stringify(patch)]);
+  for (const id of Object.keys(counters)) {
+    const c = counters[id];
+    if (c && c.held_by === mine && (!counter || String(id).toUpperCase() !== counter.id))
+      await counterPatch(id, { held_by: null, held_at: null, closed_at: now });
+  }
+  if (counter && counter.held_by !== mine) await counterPatch(counter.id, { held_by: mine, held_at: now, opened_at: now, closed_at: null, released: null });
+  if (who.session) { try { require('../lib/person-session').forget(who.session); } catch (_) {} }
+
+  const from = using || had;
+  const out = { id: pick, clash: pick ? null : { id: from, held_by: 'every prefix is taken' },
+                said: pick ? 'This phone bills as ' + pick + '.' : null };
+  if (from && pick && from !== pick && (had || (ask && ask.issued))) out.moved_from = from;
+  if (counter) {
+    out.counter = counter.id; out.name = counter.name || null;
+    out.resume_next = Number(counter.next) > 0 ? Number(counter.next) : null; out.resume_period = counter.period || null;
+  }
+  return out;
+}
+
+/**
+ * ── ⭐⭐⭐ claimSeries(entity_id, holder, ask) — ONE SERIES ALLOCATOR, FOR A KEY AND FOR A PHONE (M11, SPEC-iam-build PR 11) ──
+ *
+ * claimTill widened. `holder` is req.till (lib/holder.js) or its holder string: 'key:'+jti (a counter PC — the body below,
+ * UNCHANGED) or 'dev:'+device_id (a person signed in on a phone — claimDevice). Anything else holds no series → null.
+ * Both read the SAME locked row and hand out from the SAME TILL_IDS, and each excludes what the other holds — so a key and
+ * a phone can never be given one prefix. tests/claim-series.test.cjs.
+ * ⚠️ A KEY'S OWN PREFIX IS NEVER DECIDED BY A PHONE: devices only narrow what is FREE for a key with nothing yet; a key
+ * that holds a prefix keeps it exactly as before M11 (the STOP condition of the row).
+ */
+router.claimSeries = async (entity_id, holder, ask) => withTransaction(async (db) => {
   /* ⚠️ FOR UPDATE — two counters opening at the same moment must not both be handed the same free prefix */
   const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
   const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
+  const who = holderParts(holder);
+  if (who.device_id) return claimDevice(db, entity_id, pf, who, ask);
+  if (!who.jti) return null;
+  const jti = who.jti;
   const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
   const me = keys.find((x) => x && String(x.jti) === String(jti));
   if (!me) return null;
@@ -257,21 +432,12 @@ router.claimTill = async (entity_id, jti, ask) => withTransaction(async (db) => 
    * ⚠️ A SAVEPOINT: a failed statement aborts the whole Postgres transaction, and the claim would fail with it. A
    * lookup that cannot run must cost the lookup, not the counter its prefix.
    */
-  const booked = new Set();
-  await db.query('SAVEPOINT till_used');
-  try {
-    await db.query("SELECT set_config('app.current_entity', $1, true)", [String(entity_id)]);
-    const used = await db.query(
-      `SELECT DISTINCT upper(business_json->'till'->>'id') AS id
-         FROM chit_header
-        WHERE entity_id = $1 AND business_json->>'client_ref' IS NOT NULL
-          AND business_json->'till'->>'id' IS NOT NULL`, [entity_id]);
-    used.rows.forEach((r) => { if (r.id) booked.add(r.id); });
-    await db.query('RELEASE SAVEPOINT till_used');
-  } catch (_) {
-    try { await db.query('ROLLBACK TO SAVEPOINT till_used'); } catch (__) {}
-  }
-  const free = (except) => TILL_IDS.find((x) => !held.has(x) && !booked.has(x) && x !== except) || null;
+  const booked = await bookedPrefixes(db, entity_id);
+  /* M11: a prefix a PHONE holds is not free either, nor a REGISTERED counter's label (opening that counter on a PC would hand
+     its key the same prefix) — both only narrow a FRESH pick; `held` (keys) still decides what a key keeps */
+  const phones = devicePrefixes(pf, null);
+  const registered = pf.counters || {};
+  const free = (except) => TILL_IDS.find((x) => !held.has(x) && !phones.has(x) && !registered[x] && !booked.has(x) && x !== except) || null;
   let out;
 
   if (issued && using) {
@@ -312,6 +478,8 @@ router.claimTill = async (entity_id, jti, ask) => withTransaction(async (db) => 
   return out;
 });
 router.TILL_IDS = TILL_IDS;
+/** claimTill(entity_id, jti, ask) — the pre-M11 name, kept for its readers: the same allocator, asked as a key */
+router.claimTill = (entity_id, jti, ask) => router.claimSeries(entity_id, 'key:' + jti, ask);
 /** patchTill — replace one key's `till` record in one statement (see patchKey). Used by POST /api/till/close. */
 router.patchTill = (entity_id, jti, till) => patchKey(entity_id, jti, { till });
 /** patchKeyWith — the same one-statement merge, on a transaction's own client (routes/counters.js) */

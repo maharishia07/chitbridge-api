@@ -9,6 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const storage = require('../lib/storage');
 const docnumber = require('../lib/docnumber');   // what a document number may look like, per country
+const { tillClaimOf } = require('../lib/holder');   // M11 — a phone's bill names its device and person; checked against the session
 
 /**
  * ⭐ THE SHOP'S JURISDICTION, MEMOISED FOR FIVE MINUTES.
@@ -474,6 +475,15 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
        * till's own bill number — asked for FIRST, before anything is created, and answered with the chit that already exists.
        * ⚠️ Scoped to this entity: a bill number is unique to the shop that issued it, not to the platform.
        */
+      /* ⭐ M11: a PHONE's bill names its device and its person, and both must be the session's (lib/holder tillClaimOf) — checked
+         BEFORE the dedupe, so a bill from another phone is never answered as somebody's retry. A key's bill: unchanged. */
+      const tillClaim = tillClaimOf(req.till, req.body && req.body.business_json);
+      if (!tillClaim.ok) {
+        res.locals.code = tillClaim.code;
+        return res.status(400).json({ error: 'Bill claim mismatch', code: tillClaim.code, field: tillClaim.field, client_ref, message: tillClaim.message });
+      }
+      if (tillClaim.stamp) Object.assign(req.body.business_json.till, tillClaim.stamp);   /* merge-patch: `by` is never overwritten by sent_by */
+      if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other';   /* the request log line names it */
       if (client_ref) {
         try {
           const seen = await sameRefLook(sender_id, client_ref);
