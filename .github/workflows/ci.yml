@@ -134,3 +134,40 @@ jobs:
         run: API_BASE=http://localhost:3000 bash scripts/smoke-review-fixes.sh
       - name: Isolation suite (A4)
         run: API_BASE=http://localhost:3000 bash scripts/isolation-suite.sh
+
+  scan:
+    # E02 — dependency + secret scanning on every push/PR.
+    #  1) npm audit: shipped (production) dependencies must carry no high/critical advisory. Dev-only tooling is
+    #     listed in RETIRED.md instead of gating (a dev tool is never deployed).
+    #  2) gitleaks-action: the commits this push/PR adds.
+    #  3) gitleaks on the WHOLE working tree (not history). .gitleaks.toml names the only allowed files.
+    name: scan (npm audit + gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: npm audit (production dependencies, high and above)
+        run: npm audit --omit=dev --audit-level=high
+      - name: gitleaks (commits in this push / PR)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+      - name: gitleaks (whole working tree, no history)
+        env:
+          GITLEAKS_VERSION: "8.24.3"
+        run: |
+          set -e
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          curl -sSfL -o "$RUNNER_TEMP/gl.tgz" "$base/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL -o "$RUNNER_TEMP/gl.sum" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz\$" "$RUNNER_TEMP/gl.sum" | sed "s|  .*|  $RUNNER_TEMP/gl.tgz|" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gl.tgz" -C "$RUNNER_TEMP" gitleaks
+          "$RUNNER_TEMP/gitleaks" detect --no-git --source . --config .gitleaks.toml --redact --verbose --exit-code 2

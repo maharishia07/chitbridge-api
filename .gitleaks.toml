@@ -1,0 +1,9 @@
+# E02 — secret scanning. Default ruleset plus an allow-list that NAMES FILES (no wildcards, no directories).
+# Add a file here only when it holds a documented dev/test fixture, with the reason beside it.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Named dev/test fixtures only"
+paths = [
+]
