@@ -78,7 +78,9 @@ it('a code is single-use: the first login clears it, then the same code is refus
   assert.strictEqual((await verifyOtp(async () => {}, row, otp)).ok, true);
   row.otp_code = null; row.otp_expires_at = null;   // what routes/actors.js login does on success (source-guarded next)
   assert.strictEqual((await verifyOtp(async () => {}, row, otp)).ok, false);
-  assert(/SET otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0/.test(read('routes', 'actors.js')), 'actor login no longer clears the code');
+  /* M06: actor login answers through the one engine (lib/identity-auth.js verifyCredential) — that is where the code is cleared */
+  assert(/SET otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0/.test(read('lib', 'identity-auth.js')), 'actor login no longer clears the code');
+  assert(/signin\.handlers\.verify/.test(read('routes', 'actors.js')), 'actor login is no longer the shared verify handler');
 });
 it('source guard: all four code-issuing routes use employee-code; no 7-day code; no bare otp in a response', () => {
   const src = read('routes', 'actors.js');

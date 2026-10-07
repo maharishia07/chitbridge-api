@@ -1,0 +1,3059 @@
+{
+ "recorded_from": "pre-move api (origin/main cf349d2)",
+ "scenarios": {
+  "ask.entity.email": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Dev mode — verification code issued",
+      "email": "owner@shop.test",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.entity.email.nomode": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Dev mode — verification code issued",
+      "email": "owner@shop.test",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.entity.userid": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Dev mode — verification code issued",
+      "email": "owner@shop.test",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.entity.name": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Dev mode — verification code issued",
+      "email": "owner@shop.test",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.unknown.email": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Not registered",
+      "message": "No account found — please register first"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.unknown.name": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Not found",
+      "message": "Entity not found — check your name, User ID, or email address"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.ambiguous": {
+   "responses": [
+    {
+     "status": 409,
+     "body": {
+      "error": "Ambiguous name",
+      "message": "More than one business is called \"Twin\". Sign in with your email address or your User ID instead.",
+      "code": "AMBIGUOUS_NAME"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.store.noinbox": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "This store signs in with the code its network operator issued.",
+      "handle": "net.store",
+      "operator_issued": true
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.actor.pin": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Enter your PIN.",
+      "use_pin": true,
+      "user_id": "ravi@shopone.br"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.actor.display": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Enter your PIN.",
+      "use_pin": true,
+      "user_id": "ravi@shopone.br"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.actor.first": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.",
+      "user_id": "mala@shopone.br",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "123456",
+     "otp_expires_at": "T+60m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "ask.empty": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "message": "Send your email address or your User ID."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "register.new": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Dev mode — verification code issued",
+      "email": "new@shop.test",
+      "dev_otp": "123456"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 1
+  },
+  "verify.entity.ok": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Verified successfully",
+      "token": {
+       "claims": {
+        "identity_id": "shop1",
+        "bridge_id": "B-SHOP1",
+        "display_name": "Shop One",
+        "email": "owner@shop.test",
+        "identity_type": "entity",
+        "owner_scope": "entity"
+       }
+      },
+      "entity": {
+       "identity_id": "shop1",
+       "bridge_id": "B-SHOP1",
+       "display_name": "Shop One",
+       "email": "owner@shop.test"
+      },
+      "identity": {
+       "identity_id": "shop1",
+       "bridge_id": "B-SHOP1",
+       "display_name": "Shop One",
+       "email": "owner@shop.test",
+       "user_id": "shopone",
+       "identity_type": "entity",
+       "entity_id": "shop1"
+      },
+      "constitution": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": null,
+     "otp_expires_at": null,
+     "otp_attempts": 0,
+     "status": "active",
+     "email_verified": true,
+     "last_active_at": "NOW"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.entity.userid.ok": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Verified successfully",
+      "token": {
+       "claims": {
+        "identity_id": "shop1",
+        "bridge_id": "B-SHOP1",
+        "display_name": "Shop One",
+        "email": "owner@shop.test",
+        "identity_type": "entity",
+        "owner_scope": "entity"
+       }
+      },
+      "entity": {
+       "identity_id": "shop1",
+       "bridge_id": "B-SHOP1",
+       "display_name": "Shop One",
+       "email": "owner@shop.test"
+      },
+      "identity": {
+       "identity_id": "shop1",
+       "bridge_id": "B-SHOP1",
+       "display_name": "Shop One",
+       "email": "owner@shop.test",
+       "user_id": "shopone",
+       "identity_type": "entity",
+       "entity_id": "shop1"
+      },
+      "constitution": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": null,
+     "otp_expires_at": null,
+     "otp_attempts": 0,
+     "status": "active",
+     "email_verified": true,
+     "last_active_at": "NOW"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.entity.wrong": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Incorrect code — 4 attempts left."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 1,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.entity.wrong.x6": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Incorrect code — 4 attempts left."
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Incorrect code — 3 attempts left."
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Incorrect code — 2 attempts left."
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Incorrect code — 1 attempt left."
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Too many incorrect attempts — request a new code."
+     }
+    },
+    {
+     "status": 429,
+     "body": {
+      "error": "Verification failed",
+      "message": "Too many incorrect attempts — request a new code."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 5,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.unknown": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Email not found — please register first"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.none": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Send your email address or your User ID."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.otp.5digits": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "otp",
+        "message": "OTP must be 6 digits"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.pin.ok": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Verified successfully",
+      "token": {
+       "claims": {
+        "identity_id": "ravi",
+        "bridge_id": "B-RAVI",
+        "display_name": "Ravi",
+        "email": "ravi@mail.test",
+        "identity_type": "actor",
+        "owner_scope": "scope-from-row",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "entity": {
+       "identity_id": "ravi",
+       "bridge_id": "B-RAVI",
+       "display_name": "Ravi",
+       "email": "ravi@mail.test"
+      },
+      "identity": {
+       "identity_id": "ravi",
+       "bridge_id": "B-RAVI",
+       "display_name": "Ravi",
+       "email": "ravi@mail.test",
+       "user_id": "ravi@shopone.br",
+       "identity_type": "actor",
+       "entity_id": "shop1"
+      },
+      "constitution": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.pin.wrong.x5": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Incorrect PIN. 4 attempts left.",
+      "use_pin": true
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Incorrect PIN. 3 attempts left.",
+      "use_pin": true
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Incorrect PIN. 2 attempts left.",
+      "use_pin": true
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Incorrect PIN. 1 attempt left.",
+      "use_pin": true
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Account locked after 5 wrong attempts. Ask your admin to reset your PIN.",
+      "use_pin": true
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "NOW",
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.pin.missing": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Enter your PIN.",
+      "use_pin": true
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.pin.5digits": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.locked": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Verification failed",
+      "message": "Too many wrong attempts. Ask your admin to reset your PIN."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "verify.actor.first.otp": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Verified successfully",
+      "token": {
+       "claims": {
+        "identity_id": "mala",
+        "bridge_id": "B-MALA",
+        "display_name": "Mala",
+        "email": null,
+        "identity_type": "actor",
+        "owner_scope": "actor",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "entity": {
+       "identity_id": "mala",
+       "bridge_id": "B-MALA",
+       "display_name": "Mala",
+       "email": null
+      },
+      "identity": {
+       "identity_id": "mala",
+       "bridge_id": "B-MALA",
+       "display_name": "Mala",
+       "email": null,
+       "user_id": "mala@shopone.br",
+       "identity_type": "actor",
+       "entity_id": "shop1"
+      },
+      "constitution": null
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": null,
+     "otp_expires_at": null,
+     "otp_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.display": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Login successful",
+      "token": {
+       "claims": {
+        "identity_id": "ravi",
+        "bridge_id": "B-RAVI",
+        "display_name": "Ravi",
+        "email": null,
+        "identity_type": "actor",
+        "owner_scope": "actor",
+        "actor_key": "ravi",
+        "actor_role": "staff",
+        "actor_type": "human",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "requires_pin_setup": false,
+      "actor": {
+       "identity_id": "ravi",
+       "bridge_id": "B-RAVI",
+       "display_name": "Ravi",
+       "actor_key": "ravi",
+       "actor_role": "staff",
+       "login_format": "ravi@shop one",
+       "parent_entity": "Shop One",
+       "break_status": "active"
+      }
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.userid": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Login successful",
+      "token": {
+       "claims": {
+        "identity_id": "ravi",
+        "bridge_id": "B-RAVI",
+        "display_name": "Ravi",
+        "email": null,
+        "identity_type": "actor",
+        "owner_scope": "actor",
+        "actor_key": "ravi",
+        "actor_role": "staff",
+        "actor_type": "human",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "requires_pin_setup": false,
+      "actor": {
+       "identity_id": "ravi",
+       "bridge_id": "B-RAVI",
+       "display_name": "Ravi",
+       "actor_key": "ravi",
+       "actor_role": "staff",
+       "login_format": "ravi@shopone",
+       "parent_entity": "Shop One",
+       "break_status": "active"
+      }
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.wrong.x6": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Login failed",
+      "message": "Incorrect PIN. 4 attempts remaining."
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Login failed",
+      "message": "Incorrect PIN. 3 attempts remaining."
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Login failed",
+      "message": "Incorrect PIN. 2 attempts remaining."
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Login failed",
+      "message": "Incorrect PIN. 1 attempts remaining."
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Login failed",
+      "message": "Account locked after 5 wrong attempts. Contact your admin."
+     }
+    },
+    {
+     "status": 400,
+     "body": {
+      "error": "Account locked",
+      "message": "Too many wrong attempts. Contact your admin to reset."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "NOW",
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.missing": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "PIN required",
+      "message": "Enter your 4 digit PIN to login",
+      "use_pin": true
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.letters": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.pin.5digits": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.otp.first": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "Login successful",
+      "token": {
+       "claims": {
+        "identity_id": "mala",
+        "bridge_id": "B-MALA",
+        "display_name": "Mala",
+        "email": null,
+        "identity_type": "actor",
+        "owner_scope": "actor",
+        "actor_key": "mala",
+        "actor_role": "staff",
+        "actor_type": "human",
+        "parent_entity_id": "shop1",
+        "parent_entity_name": "Shop One",
+        "parent_bridge_id": "B-SHOP1"
+       }
+      },
+      "requires_pin_setup": true,
+      "actor": {
+       "identity_id": "mala",
+       "bridge_id": "B-MALA",
+       "display_name": "Mala",
+       "actor_key": "mala",
+       "actor_role": "staff",
+       "login_format": "mala@shop one",
+       "parent_entity": "Shop One",
+       "break_status": "active"
+      }
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": null,
+     "otp_expires_at": null,
+     "otp_attempts": 0,
+     "status": "active",
+     "last_active_at": "NOW"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.otp.wrong": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Login failed",
+      "message": "Incorrect code — 4 attempts left."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 1,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.otp.missing": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "OTP required",
+      "message": "Enter the OTP your admin shared with you",
+      "use_otp": true
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.removed": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Login failed",
+      "message": "This account has been removed. Contact your admin."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.locked": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Account locked",
+      "message": "Too many wrong attempts. Contact your admin to reset."
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.noat": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Invalid format",
+      "message": "Actor login format is: yourname@entityname"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.ambiguous": {
+   "responses": [
+    {
+     "status": 409,
+     "body": {
+      "error": "Ambiguous business",
+      "message": "More than one business is called \"twin\". Sign in with the business User ID after the @ instead — ask your admin for it.",
+      "code": "AMBIGUOUS_NAME"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.noentity": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Login failed",
+      "message": "Entity not found — check spelling after @"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.noactor": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Login failed",
+      "message": "Actor zz not found under shop one"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "login.nobody": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "username",
+        "message": "Username required"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.pin": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "valid": true,
+      "has_pin": true
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.first": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "valid": true,
+      "has_pin": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.removed": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "has_pin": false,
+      "valid": false,
+      "removed": true
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.userid": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "has_pin": false,
+      "valid": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.noat": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "has_pin": false,
+      "valid": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "check.noentity": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "has_pin": false,
+      "valid": false
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.set": {
+   "responses": [
+    {
+     "status": 200,
+     "body": {
+      "message": "PIN set successfully — use PIN for future logins"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:4321",
+     "pin_attempts": 0,
+     "pin_locked_at": null,
+     "pin_set_at": "NOW",
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.mismatch": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "confirm_pin",
+        "message": "PINs do not match"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.5digits": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "pin",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.owner": {
+   "responses": [
+    {
+     "status": 400,
+     "body": {
+      "error": "Only actors can set PIN"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  },
+  "pin.noauth": {
+   "responses": [
+    {
+     "status": 401,
+     "body": {
+      "error": "Unauthorised",
+      "message": "No token provided"
+     }
+    }
+   ],
+   "rows": {
+    "shop1": {
+     "otp_code": "111111",
+     "otp_expires_at": "T+30m",
+     "otp_attempts": 0,
+     "status": "active"
+    },
+    "twinA": {
+     "status": "active"
+    },
+    "twinB": {
+     "status": "active"
+    },
+    "store1": {
+     "status": "active"
+    },
+    "ravi": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "mala": {
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
+     "otp_attempts": 0,
+     "status": "pending"
+    },
+    "gone": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 0,
+     "status": "active"
+    },
+    "lockd": {
+     "pin_hash": "hash:1234",
+     "pin_attempts": 5,
+     "pin_locked_at": "PAST",
+     "status": "active"
+    }
+   },
+   "inserts": 0
+  }
+ }
+}

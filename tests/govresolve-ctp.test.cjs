@@ -151,7 +151,7 @@ function loadGov() {
     const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
     /* these WRITE the stamp (registration, boilerplate adoption) or LIST constitutions for a picker. They are not
        resolvers, and they are registered here so that a fourth one cannot arrive unnoticed. */
-    const WRITERS = ['entities.js', 'governance.js'];
+    const WRITERS = ['entities.js', 'governance.js', 'signin.js'];   // signin.js: verify's onboarding stamp, moved from entities.js (M06)
     const files = fs.readdirSync(path.join(API, 'routes')).filter((f) => f.endsWith('.js'));
     const offenders = [];
     for (const f of files) {

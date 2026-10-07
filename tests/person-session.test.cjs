@@ -132,10 +132,11 @@ const dec = (tok) => jwt.decode(tok);
     const fallback = dec(await identityAuth.issueToken(q, OWNER, { device_id: DEV_C }));
     FAIL_WRITES = false;
     t('⚠️ if the listing cannot be written the sign-in STILL succeeds — with a legacy token, never a refusal', !fallback.jti && fallback.identity_id === 'shop1');
-    const ent = fs.readFileSync(path.join(API, 'routes', 'entities.js'), 'utf8'), act = fs.readFileSync(path.join(API, 'routes', 'actors.js'), 'utf8');
+    /* M06: both sign-in doors now live in routes/signin.js (entities /verify and actors /login are aliases of its verify) */
+    const ent = fs.readFileSync(path.join(API, 'routes', 'signin.js'), 'utf8'), act = ent;
     t('both sign-in doors hand issueToken the device the page named (deviceOfSignin)',
-      /issueToken\(query, identity, require\('\.\.\/lib\/person-session'\)\.deviceOfSignin\(req\)\)/.test(ent)
-      && /issueToken\(db, a, require\('\.\.\/lib\/person-session'\)\.deviceOfSignin\(req\)\)/.test(act));
+      /issueToken\(query, identity, sessions\.deviceOfSignin\(req\)\)/.test(ent)
+      && /issueToken\(query, a, sessions\.deviceOfSignin\(req\)\)/.test(act));
     t('deviceOfSignin: body device_id or X-Device-Id; neither → null (legacy)',
       sessions.deviceOfSignin({ body: { device_id: DEV_A }, headers: {} }).device_id === DEV_A
       && sessions.deviceOfSignin({ body: {}, headers: { 'x-device-id': DEV_B } }).device_id === DEV_B
@@ -226,8 +227,11 @@ const dec = (tok) => jwt.decode(tok);
     r = await call('POST', '/api/signin/logout', { token: keyTok });
     t('a KEY on /api/signin/logout → 403 (a key cannot sign in or out)', r.status === 403);
     const sigSrc = fs.readFileSync(path.join(API, 'routes', 'signin.js'), 'utf8');
-    t('  …and every /api/signin route carries personOnly (KEY_CANNOT_SIGN_IN), whatever the key scopes say',
-      (sigSrc.match(/router\.(get|post)\(/g) || []).length === (sigSrc.match(/router\.(get|post)\('[^']+', auth, personOnly/g) || []).length);
+    /* M06: the sign-in doors themselves (ask, verify — public; pin — authed, actor-only) sit beside the session routes */
+    const sessionRoutes = (sigSrc.match(/router\.(get|post)\('\/(renew|logout|sessions|devices|sessions\/revoke)'/g) || []).length;
+    t('  …and every /api/signin SESSION route carries personOnly (KEY_CANNOT_SIGN_IN), whatever the key scopes say',
+      sessionRoutes === 5 && sessionRoutes === (sigSrc.match(/router\.(get|post)\('[^']+', auth, personOnly/g) || []).length
+      && (sigSrc.match(/router\.(get|post)\(/g) || []).length === sessionRoutes + 3);
 
     console.log('\n── I-a: a revoked jti is refused within 60 s (fake clock) ──');
     const tokR = await identityAuth.issueToken(q, OWNER, { device_id: 'devR-44444444', surface: 'till' });
@@ -267,7 +271,7 @@ const dec = (tok) => jwt.decode(tok);
     r = await call('GET', '/api/probe', { token: tokA, device: DEV_A });
     t('  …device A is untouched by another device\'s removal', r.status === 200);
     t('the doors answer a removed device 403 DEVICE_REVOKED in words (not a 500)',
-      /err\.code === 'DEVICE_REVOKED'/.test(ent) && /err\.code === 'DEVICE_REVOKED'/.test(act));
+      (ent.match(/err\.code === 'DEVICE_REVOKED'/g) || []).length === 2);
 
     console.log('\n── one shape ──');
     t('auth builds the session holder in lib/holder.js (one builder)', auth.holderOf === require(path.join(API, 'lib', 'holder')).holderOf);

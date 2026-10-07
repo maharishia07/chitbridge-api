@@ -219,7 +219,10 @@ const authLimiter = rateLimit({
   max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '30'),
   message: { error: 'Too many attempts', message: 'Too many login/OTP attempts — please try again in 15 minutes' }
 });
-app.use(['/api/entities/register', '/api/entities/verify', '/api/actors/login', '/api/actors/set-pin'], authLimiter);
+/* M06: the new sign-in doors share the same budget (one IP, one 30/15 min) — renew/logout/sessions stay outside it, so a
+   busy counter refreshing its session is never refused for it. check-login / pair-claim / storefront join in PR 7. */
+app.use(['/api/entities/register', '/api/entities/verify', '/api/actors/login', '/api/actors/set-pin',
+         '/api/signin/ask', '/api/signin/verify', '/api/signin/pin'], authLimiter);
 
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).

@@ -37,479 +37,73 @@ const identityAuth = require('../lib/identity-auth');
 
 // (F2) The OTP email sender now lives in lib/notify.js (`sendOtpEmail`), shared with the customer order flow.
 
-// POST /entities/register
-// Accepts email (athi@test.com) OR display name (Athi) for entity login
-router.post('/register',
-  [
-    body('display_name').optional().trim().isLength({ min: 2, max: 255 }),
+/**
+ * ── M06: SIGN-IN MOVED TO routes/signin.js — these two paths are ALIASES (the same handler functions) ─────────────────
+ *
+ *   POST /api/entities/register  = signin's ask (the login half), then — only for a NEW e-mail sent without mode:'login' —
+ *                                  registerNew below. Registration is the one thing that stays here: app.html#/welcome.
+ *   POST /api/entities/verify    = signin's verify, whole (OTP or PIN, the entity onboarding block, the token).
+ *
+ * ⚠️ Kept as aliases until PR 16 (SPEC-iam-build §4.2): every page and script that signs in calls these today, and each
+ * answers exactly what it answered before the move (tests/signin-routes.test.cjs, golden recorded pre-move).
+ */
+const signin = require('./signin');
+
+/**
+ * registerNew — a new e-mail at /register without mode:'login' becomes a new entity (ask() hands over with next()).
+ *
+ * ⭐⭐ THE USER ID IS CHOSEN AT REGISTRATION, AND ONLY HERE. Athi, 2026-08-19: *"through the registration page, only the
+ * entity registers. Employee or network or anyone else can never register through the registration screen."* ·
+ * *"the user id registered cannot be changed."* ⚠️ SET ONCE: this INSERT is the only place an entity's user_id is written
+ * from a person's input; PATCH /profile refuses to overwrite a value that exists.
+ */
+async function registerNew(req, res) {
+  try {
+    const input = String(req.body.email || req.body.user_id || req.body.id || '').trim();
+    const email = input.toLowerCase();
+    const display_name = sanitise(req.body.display_name || input);
+    const bridge_id = generateBridgeId();
+    const identity_id = uuidv4();
+    const wanted = String(req.body.user_id || '').trim() || handleLib.slug(display_name);
+    const verdict = handleLib.checkRoot(wanted);
+    if (!verdict.ok) {
+      return res.status(400).json({
+        error: 'Choose a User ID', code: 'USER_ID_INVALID', message: verdict.reason,
+        suggestion: handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null,
+      });
+    }
+    /* ⚠️ UNIQUE PLATFORM-WIDE, refused HERE — the unique index on lower(user_id) would raise a 500 that says nothing usable */
+    const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [verdict.value]);
+    if (taken.rows.length) {
+      return res.status(409).json({
+        error: 'That User ID is taken', code: 'USER_ID_TAKEN',
+        message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.',
+      });
+    }
     /**
-     * ⚠️⚠️⚠️ [capability: sign-in] REAL BUG, FOUND LIVE 2026-09-23 — Athi: *"even if i give the wrong id, it
-     * is not verifying the user id."* For a PLAIN user ID (no '@'), lib/signin.js's ask() correctly sends it
-     * as `{user_id: '...'}` — the field /verify has ALWAYS accepted — but `email` here was REQUIRED
-     * (`.trim().isLength(...)`, no `.optional()`), so express-validator refused the request with "Username
-     * required" before the handler ever ran, for every plain-user-ID login. Confirmed by sending the exact
-     * payload the client sends. Both optional now; the manual check below (same shape /verify already uses)
-     * refuses only when NEITHER arrived.
-     * ⚠️ `user_id` ALSO means "the desired handle of a BRAND NEW signup" later in this same handler — mode:
-     * 'login' never reaches that branch, so the two meanings never collide.
+     * ⚠️⚠️ A fixture registration is a CUSTOMER that is a TEST (b246 emptied entity_kind = 'test'). ⚠⚠ population, NOT
+     * is_test: b249 made is_test GENERATED ALWAYS, and naming it here failed every sign-up with 428C9.
      */
-    body('user_id').optional().trim(),
-    body('email').optional().trim(),
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const input = String(req.body.email || req.body.user_id || '').trim();
-      if (!input) {
-        return res.status(400).json({ error: 'Validation failed', message: 'Send your email address or your User ID.' });
-      }
-
-      /**
-       * ⭐⭐⭐ [capability: sign-in] A COASSIST TYPED INTO THE SAME BOX ([design: lib/identity-auth.js]).
-       *
-       * ⚠️⚠️⚠️ RETURNED EARLY, BEFORE isEmail EVEN EXISTS. A coassist's own user_id (`bala@mayurbhavan.br`,
-       * b260) contains '@' exactly like an email, and `input.includes('@')` below has no way to tell them
-       * apart — it would have sent every coassist down the entity email-login branch, found no matching
-       * `email` column, and on to REGISTERING A BRAND NEW ENTITY under a handle that already belongs to
-       * someone's coassist. identityAuth.findLoginIdentity() asks lib/resolveuserid.js's grammar instead of
-       * guessing from one character, so this can never happen.
-       * ⚠️ AMBIGUOUS is refused, never guessed — same rule the entity branch below already follows for a
-       * shared display name.
-       */
-      const found = await identityAuth.findLoginIdentity(query, input);
-      if (found.ambiguous) {
-        return res.status(409).json({
-          error: 'Ambiguous business', code: 'AMBIGUOUS_NAME',
-          message: 'More than one business matches that name. Ask your admin for the exact login.',
-        });
-      }
-      if (found.identity && found.identity.identity_type === 'actor') {
-        const a = found.identity;
-        if (identityAuth.needsPin(a)) {
-          return res.json({ message: 'Enter your PIN.', use_pin: true, user_id: a.user_id });
-        }
-        const otp = await identityAuth.issueOtp(query, a);
-        return res.json({
-          message: 'First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.',
-          user_id: a.user_id,
-          ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-        });
-      }
-
-      const isEmail = input.includes('@');
-
-      let email, display_name, identity_id, bridge_id;
-
-      if (isEmail) {
-        // Email login — existing flow
-        email = input.toLowerCase();
-        display_name = sanitise(req.body.display_name || input);
-
-        const existing = await query(
-          'SELECT identity_id, bridge_id FROM identities WHERE email = $1',
-          [email]
-        );
-
-        if (existing.rows.length > 0) {
-          identity_id = existing.rows[0].identity_id;
-          bridge_id = existing.rows[0].bridge_id;
-          console.log(`Existing entity login: ${email}`);
-        } else if (req.body.mode === 'login') {
-          return res.status(400).json({
-            error: 'Not registered',
-            message: 'No account found — please register first'
-          });
-        } else {
-          bridge_id = generateBridgeId();
-          identity_id = uuidv4();
-          /**
-           * ⭐⭐ THE USER ID IS CHOSEN AT REGISTRATION, AND ONLY HERE. Athi, 2026-08-19:
-           *
-           *   *"through the registration page, only the entity registers. Employee or network or anyone else can
-           *   never register through the registration screen."*  ·  *"the user id registered cannot be changed.
-           *   Once registered, through IAM they can change the display name — anything, any format."*
-           *
-           * ⚠️ IT USED TO BE LEFT NULL. Registration wrote display_name and nothing else, so EVERY entity began
-           * life without the one identifier its login, its network root and every supplier reference derive from.
-           * Screens then filled the empty slot with a guess made from the business name — and a guess rendered
-           * like an identifier gets read as one. That is the whole "platform-of-platform" confusion, at its source.
-           *
-           * ⚠️ SET ONCE. This INSERT is the only place an entity's user_id is ever written from a person's input;
-           * PATCH /profile refuses to overwrite a value that exists (see below). The Gmail rule, at the write.
-           */
-          const wanted = String(req.body.user_id || '').trim() || handleLib.slug(display_name);
-          const verdict = handleLib.checkRoot(wanted);
-          if (!verdict.ok) {
-            return res.status(400).json({
-              error: 'Choose a User ID', code: 'USER_ID_INVALID', message: verdict.reason,
-              suggestion: handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null,
-            });
-          }
-          /**
-           * ⚠️ UNIQUE PLATFORM-WIDE, and it must be REFUSED here rather than left to the index. The unique index on
-           * lower(user_id) would raise a 500 that says nothing a person can act on; this says who to be instead.
-           */
-          const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [verdict.value]);
-          if (taken.rows.length) {
-            return res.status(409).json({
-              error: 'That User ID is taken', code: 'USER_ID_TAKEN',
-              message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.',
-            });
-          }
-
-          /**
-           * ⚠️⚠️ THIS IS WHERE THE DRIFT WOULD HAVE COME BACK. b246 empties `entity_kind = 'test'`; if this
-           * line went on writing it, the very next e2e run would refill the partition and the axis would be
-           * wrong within a day — fixed in the morning, reintroduced by the afternoon, by code nobody thought
-           * to look at. A fixture registration is a CUSTOMER that is a TEST, which is what it always was.
-           */
-          const mark = require('../lib/istest')
-            .atRegistration(email, await require('../lib/istest').ready());
-          /* ⚠⚠ population, NOT is_test. b249 made is_test GENERATED ALWAYS and this INSERT kept naming it,
-             which Postgres refuses with 428C9 — so every sign-up failed from the moment b249 ran until this
-             was fixed. `population` null means “say nothing” and lets the DEFAULT and the inheritance trigger
-             answer. [[feedback-name-vs-behaviour]] */
-          await query(
-            `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind`
-            + (mark.population === null ? '' : ', population')
-            + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6`
-            + (mark.population === null ? '' : ', $7') + ')',
-            [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind]
-              .concat(mark.population === null ? [] : [mark.population])
-          );
-          console.log(`New entity registered: ${display_name} / ${bridge_id}`);
-        }
-      } else {
-        /**
-         * ── HANDLE OR NAME ───────────────────────────────────────────────────────────────────────────────────
-         *
-         * `user_id` FIRST, because it is the only unique one. It carries a UNIQUE index on lower(user_id), and it
-         * is what a network-minted store is given: `<network name>.<store>` — e.g. athi.clothing. Always exactly
-         * two levels, however deep the store sits on the tree (lib/handle.js).
-         * Athi, 2026-08-07: *"if you keep bridgeid.clothing, people cannot remember the id, so it has to be human
-         * readable names"* and *"if the network store needs to participate in another network, it can be used for
-         * adding it."* So the handle is the portable public reference, and the bridge id stays the identity.
-         *
-         * ⚠️ THEN display name — and it must be UNAMBIGUOUS. This used to take `found.rows[0]` with no ORDER BY,
-         * so two active entities sharing a name meant login silently picked one, generated an OTP on THAT account
-         * and mailed it to THAT owner. Not a takeover — the code still reaches the real inbox — but the wrong
-         * person is disturbed, their pending OTP is overwritten, and the legitimate owner of the other account
-         * simply cannot log in by name. Anyone could trigger it repeatedly by typing a name.
-         *
-         * It was latent only because names happened to be distinct. Minting a network of stores called Clothing,
-         * Pharmacy and Grocery is precisely what makes it likely — Athi asked about exactly this collision before
-         * a line of the network build was written.
-         *
-         * Ambiguity is now REFUSED and the person is told how to be specific. Guessing between two accounts is
-         * never the helpful answer.
-         */
-        let found = await query(
-          `SELECT identity_id, bridge_id, email, display_name FROM identities
-           WHERE LOWER(user_id) = LOWER($1) AND identity_type = 'entity' AND status = 'active'`,
-          [input]
-        );
-        if (!found.rows.length) {
-          found = await query(
-            `SELECT identity_id, bridge_id, email, display_name FROM identities
-             WHERE LOWER(display_name) = LOWER($1)
-             AND identity_type = 'entity'
-             AND status = 'active'`,
-            [input]
-          );
-          if (found.rows.length > 1) {
-            return res.status(409).json({
-              error: 'Ambiguous name',
-              message: `More than one business is called "${input}". Sign in with your email address or your User ID instead.`,
-              code: 'AMBIGUOUS_NAME',
-            });
-          }
-        }
-        if (found.rows.length === 0) {
-          return res.status(400).json({
-            error: 'Not found',
-            message: 'Entity not found — check your name, User ID, or email address'
-          });
-        }
-        identity_id   = found.rows[0].identity_id;
-        bridge_id     = found.rows[0].bridge_id;
-        email         = found.rows[0].email;
-        display_name  = found.rows[0].display_name;
-        console.log(`Display name login: ${display_name} → ${email}`);
-      }
-
-      /**
-       * ⚠️⚠️⚠️ [capability: sign-in] THIS WAS THE GAP ([lib/dev-otp.js]'s header, applied here 2026-09-23).
-       * generateOTP() reads process.env.DEV_OTP RAW, with no isSealed() check at all — if DEV_OTP were ever
-       * left set on a sealed (production) server by mistake, an entity's OTP would still be the predictable
-       * fixed value, with nothing to stop it. fixedOtp('entity') is the same 123456 in dev and unsealed, and
-       * genuinely null the moment the environment is sealed, so generateOTP()'s CSPRNG takes over instead.
-       */
-      const otp = devOtp.fixedOtp('entity') || generateOTP();
-      const expires = new Date(Date.now() + 60 * 60 * 1000);
-
-      await query(
-        `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,
-        [otp, expires, identity_id]
-      );
-
-      /**
-       * ⚠️ A NETWORK-MINTED STORE HAS NO INBOX. It is issued a handle (`<operator bridge>.<store>`) and a claim
-       * code; there is no address to send anything to. Calling the mailer with a null address would either throw or
-       * report "we couldn't send your code", which is a false failure — nothing was meant to be sent.
-       *
-       * Athi, 2026-08-07: *"it should be controlled by the network operator, so he can have the password similar to
-       * an actor and should be able to circulate the same like an actor."* So the credential travels through the
-       * OPERATOR, not through the store's mail — and when it expires the operator RE-ISSUES it, exactly as a
-       * connector's code is re-issued. That is the whole answer to "how does a store log in again": it does not
-       * self-serve, because it does not own itself yet.
-       */
-      if (!email) {
-        return res.json({
-          message: 'This store signs in with the code its network operator issued.',
-          user_id: display_name ? undefined : undefined,
-          handle: (await query('SELECT user_id FROM identities WHERE identity_id = $1', [identity_id])).rows[0]?.user_id || null,
-          operator_issued: true,
-        });
-      }
-
-      // ⚠ WAS GATED ON THE SENDER'S `dev` FLAG, which is a DELIVERY signal — it says the mail did not go
-      // out, and says nothing about who may read the code. Armed-and-unsealed is the state this product has
-      // been in every day, and in it that flag published the OTP to any unauthenticated caller for any email.
-      // One rule now, in lib/dev-otp.js, and it needs an explicit opt-in.
-      // a prod response. Soft message on a real send failure so we don't report success on failure.
-      const sent = await sendOtpEmail(email, display_name, otp);
-      res.json({
-        message: sent.delivered ? 'Verification code sent to your email'
-               : sent.dev       ? 'Dev mode — verification code issued'
-               :                  "We couldn't send your code — please try again.",
-        email,
-        ...(devOtp.mayExposeOtp() && { dev_otp: otp })
-      });
-
-    } catch (err) {
-      console.error('Register error:', err.message);
-      res.status(500).json({ error: 'Registration failed', message: safeErr(err) });
-    }
+    const mark = require('../lib/istest')
+      .atRegistration(email, await require('../lib/istest').ready());
+    await query(
+      `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind`
+      + (mark.population === null ? '' : ', population')
+      + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6`
+      + (mark.population === null ? '' : ', $7') + ')',
+      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind]
+        .concat(mark.population === null ? [] : [mark.population])
+    );
+    console.log(`New entity registered: ${display_name} / ${bridge_id}`);
+    return await signin.sendCode(req, res, { identity_id, email, display_name }, {});
+  } catch (err) {
+    console.error('Register error:', err.message);
+    res.status(500).json({ error: 'Registration failed', message: safeErr(err) });
   }
-);
+}
 
-// POST /entities/verify
-router.post('/verify',
-  [
-    // EMAIL OR HANDLE. A network-minted store is issued a `user_id` and no email, so requiring a valid address
-    // here would have made the handle unusable the moment it was issued — the login half of a credential that
-    // cannot log in. Either is accepted; exactly one is required (checked in the body, where the message is useful).
-    body('email').optional().trim(),
-    body('user_id').optional().trim(),
-    // ⚠️ [capability: sign-in] OPTIONAL, not required — an actor with a PIN already set sends `pin`, never
-    // `otp`. identityAuth.verifyCredential() decides which one this identity actually needs.
-    body('otp').optional().trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
-    body('pin').optional().trim().isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be 4 digits'),
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const otp = (req.body.otp || '').trim();
-      const pin = (req.body.pin || '').trim();
-      const email  = (req.body.email  || '').toLowerCase().trim();
-      const handle = (req.body.user_id || '').trim();
-      if (!email && !handle) {
-        return res.status(400).json({ error: 'Verification failed', message: 'Send your email address or your User ID.' });
-      }
-
-      /**
-       * ⚠️ [capability: sign-in] NO identity_type FILTER HERE, and none added — this already found a coassist
-       * by their b260 handle before today, since a handle carries a unique index whatever type it belongs to.
-       * The gap was never this lookup; it was that nothing after it knew what to do with an actor row.
-       */
-      const result = email
-        ? await query(
-            `SELECT identity_id, bridge_id, display_name, email, user_id, identity_type,
-                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope, parent_entity_id
-             FROM identities WHERE email = $1`, [email])
-        : await query(
-            `SELECT identity_id, bridge_id, display_name, email, user_id, identity_type,
-                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope, parent_entity_id
-             FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle]);
-
-      if (result.rows.length === 0) {
-        return res.status(400).json({ error: 'Verification failed',
-          message: email ? 'Email not found — please register first' : 'That User ID is not recognised.' });
-      }
-
-      const identity = result.rows[0];
-
-      // ⭐ [capability: sign-in] ONE verify, OTP or PIN — see lib/identity-auth.js. Replaces the OTP-only
-      // check and its manual cleanup UPDATE; verifyCredential does both, for either credential.
-      const check = await identityAuth.verifyCredential(query, identity, { otp, pin });
-      if (!check.ok) {
-        return res.status(check.status).json({
-          error: 'Verification failed', message: check.message, ...(check.use_pin ? { use_pin: true } : {}),
-        });
-      }
-
-      /**
-       * ⚠️⚠️ [capability: sign-in] EVERYTHING BELOW, UP TO THE TOKEN, IS ENTITY ONBOARDING — email_verified,
-       * the governance-context write, the constitution auto-mint, the default schema bootstrap, the root
-       * link. A coassist is not "an entity #2"; it belongs to a parent_entity_id that has already been
-       * through all of this. Running it again on an actor's own identity_id would mint a SECOND, bogus
-       * governance stamp under the wrong row, at best wastefully, at worst wrongly.
-       */
-      // ⚠️ declared OUTSIDE the entity-only block below — an actor's response also reads this, always null.
-      let mintedConstitution = null;
-      if (identity.identity_type !== 'actor') {
-      await query(`UPDATE identities SET email_verified = TRUE WHERE identity_id = $1`, [identity.identity_id]);
-
-      /**
-       * ⭐⭐ THE GOVERNANCE LAYER THE BROWSER WORKED OUT, and the person agreed to ([REG-2]/[REG-3]).
-       *
-       * ⚠️⚠️ COALESCE, NEVER OVERWRITE. This route runs on every owner sign-in, not only the first. A shop that
-       * has since set its country in Settings must not have a browser's guess written back over it tomorrow
-       * morning. A derived value fills a BLANK; it never corrects a choice. [[feedback-partial-writes-merge-patch]]
-       * ⚠️ BEST-EFFORT, like the mint below: nothing here may fail a verification. A shop that cannot sign in
-       * because its timezone would not store is a shop that cannot trade.
-       * ⚠️ The IP is read HERE because here is the only place it exists — the browser cannot see it, and the
-       * engine returns no `ip` field so there is no blank to mistake for a reading.
-       */
-      try {
-        const ctx = req.body.context && typeof req.body.context === 'object' ? req.body.context : null;
-        if (ctx) {
-          const cc = /^[A-Za-z]{2}$/.test(String(ctx.country || '')) ? String(ctx.country).toUpperCase() : null;
-          const cur = /^[A-Za-z]{3}$/.test(String(ctx.currency_code || '')) ? String(ctx.currency_code).toUpperCase() : null;
-          /* ⚠️ an IANA zone, not free text — anything else is somebody's typing and would break every date we print */
-          const tz = /^[A-Za-z][A-Za-z0-9_+\-]*(?:\/[A-Za-z0-9_+\-]+){1,2}$/.test(String(ctx.timezone || ''))
-            ? String(ctx.timezone) : null;
-          const langs = Array.isArray(ctx.languages)
-            ? ctx.languages.filter((x) => /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(String(x))).slice(0, 3) : [];
-          if (cc || cur || tz) {
-            await query(
-              `UPDATE identities
-                  SET country       = COALESCE(country, $2),
-                      currency_code = COALESCE(currency_code, $3),
-                      timezone      = COALESCE(timezone, $4)
-                WHERE identity_id = $1`,
-              [identity.identity_id, cc, cur, tz]
-            );
-          }
-          /* ⭐ the languages the browser declares, merged into locale_prefs without disturbing what is there */
-          if (langs.length) {
-            await query(
-              `UPDATE identities
-                  SET locale_prefs = COALESCE(locale_prefs, '{}'::jsonb) || jsonb_build_object('langs_seen', $2::jsonb)
-                WHERE identity_id = $1`,
-              [identity.identity_id, JSON.stringify(langs)]
-            );
-          }
-          /**
-           * ⭐⭐ THE EVIDENCE, AS AN AUDIT ROW (b264, run 2026-09-19). What the browser CLAIMED — before the
-           * COALESCE above decided whether to use it — plus the two things only the server can see, and the
-           * moment somebody agreed. Append-only: an owner verifies on every sign-in, and "what did this shop
-           * agree to on the day it signed up" is a different question from "last Tuesday".
-           * ⚠️ AN UNPARSEABLE IP IS NULL, NOT AN ERROR. A proxy chain can hand over anything at all, and a
-           * malformed header must never be the reason a shop cannot sign in.
-           */
-          const rawIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
-          const ip = /^[0-9a-fA-F:.]{3,45}$/.test(rawIp) ? rawIp : null;
-          const agreed = (typeof req.body.agreed_at === 'string' && !isNaN(Date.parse(req.body.agreed_at)))
-            ? req.body.agreed_at : null;
-          await query(
-            `INSERT INTO signup_context
-               (identity_id, claimed_country, claimed_currency, claimed_timezone, claimed_locale,
-                claimed_languages, device, ip, user_agent, agreed_at)
-             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10)`,
-            [identity.identity_id, cc, cur, tz,
-             (typeof ctx.locale === 'string' ? ctx.locale.slice(0, 40) : null),
-             JSON.stringify(langs),
-             JSON.stringify(ctx.device && typeof ctx.device === 'object' ? ctx.device : {}),
-             ip, String(req.headers['user-agent'] || '').slice(0, 400) || null, agreed]
-          );
-        }
-      } catch (e) {
-        /* ⚠️ STILL LOUD ON FAILURE. The sign-in continues either way, but a capture that drops what it
-           captured must say so — that did not stop being true when the table appeared. */
-        console.log('[signup-context] NOT STORED for ' + (identity && identity.identity_id) + ': '
-          + (e && e.message));
-      }
-
-      // AUTO-MINT the entity's governance stamp onto its CHOSEN vertical (else the default constitution). BEST-EFFORT —
-      // wrapped so it can NEVER fail verification; an un-stamped entity safely defaults to base at resolve time.
-      try {
-        const chosen = (req.body.constitution && String(req.body.constitution).trim()) || 'base';
-        let c = (await query(`SELECT constitution_key, version FROM constitution WHERE constitution_key = $1 AND active = true ORDER BY (is_default IS TRUE) DESC, minted_at DESC LIMIT 1`, [chosen])).rows[0];
-        if (!c) c = (await query(`SELECT constitution_key, version FROM constitution WHERE is_default = true AND active = true LIMIT 1`)).rows[0];
-        if (c) {
-          // place the entity on the INSTALLATION that serves its vertical (service-desk → the Mexico platform), else default
-          let installKey = 'platform-0';
-          try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY created_at LIMIT 1`, [c.constitution_key]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; } catch (_) {}
-          await withEntity(identity.identity_id, (cl) => cl.query(
-            `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
-             ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()`,
-            [identity.identity_id, c.constitution_key, c.version, installKey]));
-          mintedConstitution = versionref.format(c.constitution_key, c.version);
-          console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
-        }
-      } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }
-
-      // BOOTSTRAP the entity's default schema so its catalogue/compose works immediately (no 404 for entity #2).
-      // Reusable + non-fatal; the governed mint path will call the same fn once unification lands (Q2).
-      try { await require('../lib/schema-bootstrap').ensureDefaultSchema(identity.identity_id); } catch (_) {}
-
-      /**
-       * CONNECT the new entity to this deployment's root — it becomes the operator's customer, and the
-       * operator becomes its supplier. See lib/rootlink.js for why that is two one-sided rows and not a link.
-       *
-       * ⚠️ INERT WITHOUT A ROOT. PLATFORM_ROOT_ENTITY unset → returns immediately and registration is exactly
-       * what it was. ⚠️ AND IT CAN NEVER FAIL VERIFICATION — connect() never rejects, for the same reason the
-       * governance mint above is wrapped: losing a signup over a bookkeeping row is far worse than the row.
-       */
-      let rootLink = null;
-      try {
-        rootLink = await require('../lib/rootlink').connect(identity.identity_id, req.id);
-      } catch (e) { console.warn('root link skipped:', (e && e.message) || e); }
-      } // ⚠️ [capability: sign-in] end of the entity-only onboarding block opened above
-
-      /**
-       * ⚠️ [capability: sign-in] identity_type IS THE REAL ONE NOW, not hardcoded 'entity'. Nothing consumed
-       * this claim before today because nothing but an entity ever reached this line — an actor got here for
-       * the first time only once verifyCredential() above learned to accept one.
-       */
-      /**
-       * ⚠️⚠️⚠️ [capability: sign-in] THE TOKEN IS BUILT BY identity-auth.js, NOT HERE. Athi: *"it has to be
-       * part of identity auth js."* The first version of this fix hand-built the JWT in this file and left
-       * `parent_entity_id` out for a coassist — harmless for an entity, but every authed route after sign-in
-       * (starting with POST /api/till/enrol) then resolves "whose data is this" to the COASSIST's own id
-       * instead of their employer's. issueToken() is the one place that can no longer happen, because it is
-       * the only place a token is ever built, for either identity_type.
-       */
-      /* M05: a page that names its device (body device_id / X-Device-Id) gets a listed, revocable session; else today's token */
-      const token = await identityAuth.issueToken(query, identity, require('../lib/person-session').deviceOfSignin(req));
-
-      console.log(`${identity.identity_type === 'actor' ? 'Coassist' : 'Entity'} verified: ${identity.display_name}`);
-
-      res.json({
-        message: 'Verified successfully',
-        token,
-        entity: {
-          identity_id: identity.identity_id,
-          bridge_id: identity.bridge_id,
-          display_name: identity.display_name,
-          email: identity.email
-        },
-        // ⭐ [capability: sign-in] the ONE shape lib/signin.js's keep() actually reads (a.identity || a.user) —
-        // `entity:` above is kept for whatever else already reads it; this is additive, nothing removed.
-        identity: identityAuth.personShape(identity),
-        constitution: mintedConstitution
-      });
-
-    } catch (err) {
-      /* M05: the owner removed this device — the one sign-in refusal a session adds, in the shop's words */
-      if (err && err.code === 'DEVICE_REVOKED') { res.locals.code = 'DEVICE_REVOKED';
-        return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' }); }
-      console.error('Verify error:', err.message);
-      res.status(500).json({ error: 'Verification failed', message: safeErr(err) });
-    }
-  }
-);
+router.post('/register', signin.door('register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
+router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the
 // shared constitution catalogue. Empty (chooser hidden) if the catalogue isn't there yet.

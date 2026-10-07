@@ -42,40 +42,16 @@ async function loginIdFor(actor_key, req) {
   return `${actor_key}@${handle || require('../lib/handle').slug(req.identity.display_name || '')}`;
 }
 
-/**
- * ── ⭐⭐ ONE SPLITTER FOR WHAT SOMEBODY TYPES AT A SIGN-IN BOX ───────────────────────────────────────────────────
- *
- * Athi, 2026-09-15: *"can you ensure that no different place has another logic for naming convention."*
- *
- * ⚠️ THIS FILE HAD `username.split('@')` WRITTEN OUT TWICE, and it was the last place in the API composing or
- * splitting an identity by hand. `lib/resolveuserid` already knows every form; asking it means the login box
- * accepts the SUFFIXED form too the moment employee ids start being stored as `ravi@acmetraders.br` — without
- * this file learning anything new about the grammar.
- *
- * ⚠️ AND IT MUST NOT NARROW WHAT LOGIN ACCEPTS. People sign in as `key@Display Name` today, which is not a
- * legal handle at all — the resolver calls that `employee_typed` and still hands back both halves, so the
- * existing lookup (user_id first, display_name second, a few lines below) is unchanged.
- */
-function splitLogin(username) {
-  const c = require('../lib/resolveuserid').classify(username);
-  if (c.kind === 'employee' || c.kind === 'employee_typed') {
-    return { actor_key: c.actor_key, entity_name: c.at };
-  }
-  /* not a shape the grammar knows — hand back the halves anyway, exactly as split('@') did */
-  const s = String(username == null ? '' : username);
-  const at = s.indexOf('@');
-  return at < 0 ? { actor_key: s, entity_name: undefined }
-                : { actor_key: s.slice(0, at), entity_name: s.slice(at + 1) };
-}
+/* splitLogin — the ONE splitter for what somebody types at a sign-in box — moved to lib/identity-auth.js with the
+   sign-in itself (M06); nothing in this file splits a login any more. */
 const mintuserid = require('../lib/mintuserid');   /* the ONE builder for an employee id */
 const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
-const bcrypt  = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
-const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap (F5)
+const signin  = require('./signin');   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -533,74 +509,12 @@ router.patch('/:id',
   }
 );
 
-// ── POST /api/actors/login ───────────────────────────────────
-// ── GET /api/actors/check-login ─────────────────────────────
-// Check if actor has PIN set — frontend shows correct field
-router.get('/check-login', async (req, res) => {
-  try {
-    const username = (req.query.username || '').trim().toLowerCase();
-    if (!username.includes('@')) {
-      return res.json({ has_pin: false, valid: false });
-    }
-    const { actor_key, entity_name } = splitLogin(username);
-    const entity = await db(
-      `SELECT identity_id FROM identities
-       WHERE LOWER(display_name) = $1
-       AND identity_type = 'entity' AND status = 'active'`,
-      [entity_name]
-    );
-    if (entity.rows.length === 0) return res.json({ has_pin: false, valid: false });
-    const actor = await db(
-      `SELECT pin_hash, break_status FROM identities
-       WHERE actor_key = $1 AND parent_entity_id = $2
-       AND identity_type = 'actor'`,
-      [actor_key, entity.rows[0].identity_id]
-    );
-    if (actor.rows.length === 0) return res.json({ has_pin: false, valid: false });
-    const a = actor.rows[0];
-    if (a.break_status === 'removed') return res.json({ has_pin: false, valid: false, removed: true });
-    res.json({
-      valid: true,
-      has_pin: !!a.pin_hash,
-    });
-  } catch (err) {
-    res.json({ has_pin: false, valid: false });
-  }
-});
+// ── GET /api/actors/check-login — MOVED to routes/signin.js (checkLogin), answering exactly as before (M06) ─────────
+// ⚠️ NOT 410 YET: app.html#/login reads it before every key@Display Name sign-in, and app.html is untouched until PR 14.
+router.get('/check-login', signin.handlers.checkLogin);
 
-// ── POST /api/actors/set-pin ────────────────────────────────
-// Actor sets PIN after first OTP login
-router.post('/set-pin',
-  auth,
-  [
-    body('pin').isLength({ min: 4, max: 4 }).isNumeric()
-      .withMessage('PIN must be exactly 4 digits'),
-    body('confirm_pin').custom((val, { req }) => {
-      if (val !== req.body.pin) throw new Error('PINs do not match');
-      return true;
-    }),
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const identity_id = req.identity.identity_id;
-      if (req.identity.identity_type !== 'actor') {
-        return res.status(400).json({ error: 'Only actors can set PIN' });
-      }
-      const pin_hash = await bcrypt.hash(req.body.pin, 10);
-      await db(
-        `UPDATE identities
-         SET pin_hash = $1, pin_set_at = NOW(),
-             pin_attempts = 0, pin_locked_at = NULL
-         WHERE identity_id = $2`,
-        [pin_hash, identity_id]
-      );
-      res.json({ message: 'PIN set successfully — use PIN for future logins' });
-    } catch (err) {
-      res.status(500).json({ error: 'Set PIN failed', message: safeErr(err) });
-    }
-  }
-);
+// ── POST /api/actors/set-pin — ALIAS (M06): the SAME handler as POST /api/signin/pin ───────────────────────────────
+router.post('/set-pin', auth, signin.pinChecks, validate, signin.handlers.pin);
 
 // ── PUT /api/actors/change-pin ──────────────────────────────
 // Actor changes own PIN from profile page
@@ -636,14 +550,14 @@ router.put('/change-pin',
         });
       }
       // Verify current PIN
-      const match = await bcrypt.compare(req.body.current_pin, a.pin_hash);
+      const match = await identityAuth.pinMatches(req.body.current_pin, a.pin_hash);   // the one PIN engine
       if (!match) {
         return res.status(400).json({
           error: 'Incorrect PIN',
           message: 'Current PIN is incorrect'
         });
       }
-      const new_pin_hash = await bcrypt.hash(req.body.new_pin, 10);
+      const new_pin_hash = await identityAuth.hashPin(req.body.new_pin);
       await db(
         `UPDATE identities
          SET pin_hash = $1, pin_set_at = NOW(), pin_attempts = 0
@@ -702,229 +616,10 @@ router.delete('/:id/pin',
   }
 );
 
-// ── POST /api/actors/login ───────────────────────────────────
-// Actor login — OTP first time — PIN returning
-// Entity always generates OTP
-// Actor always manages PIN
-router.post('/login',
-  [
-    body('username').trim().notEmpty().withMessage('Username required'),
-    body('otp').optional().trim(),
-    body('pin').optional().trim().isLength({ min: 4, max: 4 }).isNumeric(),
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const username = req.body.username.trim().toLowerCase();
-
-      // Parse actor_key@entity_name
-      if (!username.includes('@')) {
-        return res.status(400).json({
-          error: 'Invalid format',
-          message: 'Actor login format is: yourname@entityname'
-        });
-      }
-
-      const { actor_key, entity_name } = splitLogin(username);
-
-      /**
-       * ⭐ user_id FIRST, display_name SECOND — and the ORDER is the fix.
-       *
-       * ⚠️ IT MUST ACCEPT BOTH OR IT IS AN OUTAGE. Everyone signing in today types `key@Display Name`; accepting
-       * only user_id would lock out every existing co-assist at their next login, with no way to discover the
-       * new form. The new handle is preferred; the old one still resolves.
-       *
-       * ⚠️⚠️ AND THE display_name PATH NOW REFUSES AMBIGUITY, which it never did. It took `entity.rows[0]` with
-       * no ORDER BY, so with two active businesses of one name an actor's login silently resolved to ONE of
-       * them, generated an OTP on that account and mailed it to that owner. Not a takeover — the code still
-       * reaches the real inbox — but the wrong owner is disturbed, their pending OTP is overwritten, and the
-       * legitimate co-assist cannot sign in while the product reports nothing wrong.
-       *
-       * ⭐ This is the SAME defect entity login had FIXED (routes/entities.js, AMBIGUOUS_NAME). That fix was
-       * made locally, in one file, while the identical bug carried on next door — the exact "local
-       * single-source-of-truth" failure this codebase has been paying down all week.
-       */
-      const _at = entity_name.toLowerCase();
-      let entity = await db(
-        `SELECT identity_id, display_name, bridge_id, user_id
-         FROM identities
-         WHERE LOWER(user_id) = $1 AND identity_type = 'entity' AND status = 'active'`,
-        [_at]
-      );
-      if (entity.rows.length === 0) {
-        entity = await db(
-          `SELECT identity_id, display_name, bridge_id, user_id
-           FROM identities
-           WHERE LOWER(display_name) = $1 AND identity_type = 'entity' AND status = 'active'`,
-          [_at]
-        );
-        if (entity.rows.length > 1) {
-          return res.status(409).json({
-            error: 'Ambiguous business',
-            message: 'More than one business is called "' + entity_name + '". Sign in with the business User ID '
-              + 'after the @ instead — ask your admin for it.',
-            code: 'AMBIGUOUS_NAME',
-          });
-        }
-      }
-
-      if (entity.rows.length === 0) {
-        return res.status(400).json({
-          error: 'Login failed',
-          message: 'Entity not found — check spelling after @'
-        });
-      }
-
-      const parent_entity = entity.rows[0];
-
-      // Find actor under entity
-      const actor = await db(
-        `SELECT identity_id, bridge_id, display_name, actor_key,
-                actor_role, actor_type, break_status,
-                otp_code, otp_expires_at, otp_attempts, max_tasks,
-                pin_hash, pin_attempts, pin_locked_at
-         FROM identities
-         WHERE actor_key = $1
-         AND parent_entity_id = $2
-         AND identity_type = 'actor'`,
-        [actor_key, parent_entity.identity_id]
-      );
-
-      if (actor.rows.length === 0) {
-        return res.status(400).json({
-          error: 'Login failed',
-          message: `Actor ${actor_key} not found under ${entity_name}`
-        });
-      }
-
-      const a = actor.rows[0];
-
-      // Check access not revoked (removed OR deactivated)
-      if (a.break_status === 'removed' || a.break_status === 'deactivated') {
-        return res.status(400).json({
-          error: 'Login failed',
-          message: a.break_status === 'removed'
-            ? 'This account has been removed. Contact your admin.'
-            : 'This account has been deactivated. Contact your admin.'
-        });
-      }
-
-      // ── PIN or OTP logic ────────────────────────────────────
-      // Entity always generates OTP
-      // Actor always manages PIN
-      // First login: OTP required (pin_hash is NULL)
-      // Return login: PIN required (pin_hash is set)
-
-      const otp = (req.body.otp || '').trim();
-      const pin = req.body.pin;
-
-      if (a.pin_hash) {
-        // ── RETURNING ACTOR — use PIN ──────────────────────────
-        if (!pin) {
-          return res.status(400).json({
-            error: 'PIN required',
-            message: 'Enter your 4 digit PIN to login',
-            use_pin: true
-          });
-        }
-        // Check PIN locked
-        if (a.pin_locked_at) {
-          return res.status(400).json({
-            error: 'Account locked',
-            message: 'Too many wrong attempts. Contact your admin to reset.'
-          });
-        }
-        const pinMatch = await bcrypt.compare(pin, a.pin_hash);
-        if (!pinMatch) {
-          // Increment attempts — lock after 5
-          const newAttempts = (a.pin_attempts || 0) + 1;
-          const lockNow = newAttempts >= 5;
-          await db(
-            `UPDATE identities
-             SET pin_attempts = $1
-             ${lockNow ? ', pin_locked_at = NOW()' : ''}
-             WHERE identity_id = $2`,
-            [newAttempts, a.identity_id]
-          );
-          return res.status(400).json({
-            error: 'Login failed',
-            message: lockNow
-              ? 'Account locked after 5 wrong attempts. Contact your admin.'
-              : `Incorrect PIN. ${5 - newAttempts} attempts remaining.`
-          });
-        }
-        // PIN correct — reset attempts
-        await db(
-          `UPDATE identities
-           SET pin_attempts = 0, last_active_at = NOW()
-           WHERE identity_id = $1`,
-          [a.identity_id]
-        );
-      } else {
-        // ── FIRST TIME ACTOR — use OTP ─────────────────────────
-        if (!otp) {
-          return res.status(400).json({
-            error: 'OTP required',
-            message: 'Enter the OTP your admin shared with you',
-            use_otp: true
-          });
-        }
-        // F5: per-account OTP attempt cap — verifyOtp increments otp_attempts on a wrong code and 429s once
-        // capped (MAX_OTP_ATTEMPTS). authLimiter (30/15m) still sits in front of this route too.
-        const otpCheck = await verifyOtp(db, a, otp);
-        if (!otpCheck.ok) {
-          return res.status(otpCheck.status).json({ error: 'Login failed', message: otpCheck.message });
-        }
-        // Clear OTP — one time use; reset the attempt counter
-        await db(
-          `UPDATE identities
-           SET otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0,
-               status = 'active', last_active_at = NOW()
-           WHERE identity_id = $1`,
-          [a.identity_id]
-        );
-      }
-
-      /**
-       * ⚠️⚠️ [capability: sign-in] THE TOKEN IS BUILT BY identity-auth.js, NOT HERE — the one place a coassist
-       * or an entity ever gets a JWT, whichever door they came through (see lib/identity-auth.js's issueToken,
-       * built the same day this route's own inline jwt.sign() became the second copy of the same shape).
-       * `a` does not carry parent_entity_id from its own SELECT above (it is a WHERE clause, not a column) —
-       * set it here so issueToken's own parent lookup resolves the row this route already found, not a second
-       * query that could in principle disagree with it.
-       */
-      a.parent_entity_id = parent_entity.identity_id;
-      a.identity_type = 'actor';
-      /* M05: a page that names its device (body device_id / X-Device-Id) gets a listed, revocable session; else today's token */
-      const token = await identityAuth.issueToken(db, a, require('../lib/person-session').deviceOfSignin(req));
-
-      console.log(`Actor login: ${actor_key}@${entity_name}`);
-
-      res.json({
-        message: 'Login successful',
-        token,
-        requires_pin_setup: !a.pin_hash,
-        actor: {
-          identity_id:    a.identity_id,
-          bridge_id:      a.bridge_id,
-          display_name:   a.display_name,
-          actor_key:      a.actor_key,
-          actor_role:     a.actor_role,
-          login_format:   `${actor_key}@${entity_name}`,
-          parent_entity:  parent_entity.display_name,
-          break_status:   a.break_status,
-        }
-      });
-
-    } catch (err) {
-      /* M05: the owner removed this device — the one sign-in refusal a session adds, in the shop's words */
-      if (err && err.code === 'DEVICE_REVOKED') { res.locals.code = 'DEVICE_REVOKED';
-        return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' }); }
-      console.error('Actor login error:', err.message);
-      res.status(500).json({ error: 'Login failed', message: safeErr(err) });
-    }
-  }
-);
+// ── POST /api/actors/login — ALIAS (M06): the SAME handler as POST /api/signin/verify, on its actor-login door ──────
+// key@Display Name or key@user-id · OTP the first time, PIN after. The lookup, the words and the token are unchanged;
+// the PIN check is lib/identity-auth.js verifyCredential() — this file's own hash-compare + lock copy is gone (one PIN engine).
+router.post('/login', signin.door('actor-login'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
