@@ -87,6 +87,12 @@ for (const f of fs.readdirSync(path.join(API, 'routes')).filter((x) => x.endsWit
 }
 
 const called = rows.filter((r) => r.calls > 0);
+
+/* ⭐ --json: the called routes as data, for tests/round-trips-all.test.cjs (DB10) — one scan, not a second copy of it */
+if (process.argv.indexOf('--json') >= 0) {
+  process.stdout.write(JSON.stringify({ called: called.map((r) => ({ file: r.file, route: r.route, calls: r.calls })), mounts }));
+  process.exit(0);
+}
 const known = rows.filter((r) => r.keys.length && r.calls === 0);
 const unknown = rows.filter((r) => !r.keys.length);
 
