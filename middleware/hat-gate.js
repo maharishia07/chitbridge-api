@@ -58,6 +58,9 @@ const SELF_SCOPED = [
   ['/identity', 'their own identity documents — the subject is always the caller (b174)'],
   ['/actors/break', 'their own break status — a person may say they are on a break'],
   ['/auth', 'signing in cannot require permission to sign in'],
+  /* M05: renew, sign out, list and end ONE'S OWN sessions. Ending someone else's session or removing a device is
+     owner-only, and routes/signin.js refuses it itself — an actor is never the owner. */
+  ['/signin', 'a person’s own sessions — signing out cannot require permission to sign out'],
   ['/notifications', 'clearing one\'s own notifications changes no record — b164 writes only a dismissal'],
   /* ⚠️⚠️ '/assist' WAS HERE, BY PREFIX — and five routes under it WRITE business records (external review
      2026-09-25, fixed 2026-09-28): catalogue-adopt, catalogue-source (PUT with an empty list wipes a brand's

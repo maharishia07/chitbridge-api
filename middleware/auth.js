@@ -61,6 +61,38 @@ const auth = async (req, res, next) => {
       const allowed = req.api_key.scopes.some((sc) => (KEY_ROUTES[sc] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
       if (!allowed) return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
     }
+    /**
+     * ⭐⭐ M05 — A PERSON SESSION IS AS ALIVE AS ITS LISTING, AND ONLY ON ITS OWN DEVICE (SPEC-iam-build §4.1, D3).
+     * A person token that carries a jti (issued by lib/identity-auth.js issueToken to a page that named its device):
+     *   · X-Device-Id must equal the token's device_id  → else 401 DEVICE_MISMATCH (a lifted token is useless elsewhere)
+     *   · the device must not be revoked                → else 401 DEVICE_REVOKED
+     *   · the jti must be listed under that device      → else 401 SESSION_EXPIRED (logout, revoke, renew)
+     * One read of the shop's policy_flags per jti per 60 s (lib/person-session.js deviceListed) — so a revoke reaches every
+     * server within 60 s.
+     * ⚠️⚠️ A TOKEN WITHOUT A jti IS LEGACY AND PASSES EXACTLY AS BEFORE — every token issued before M05, and every sign-in
+     * from a page that does not yet name its device. Unlisted, not revocable, honoured until its own exp (≤ 7 d). The
+     * request log marks it kind:'legacy' so the day nobody holds one is visible. Nobody is signed out by this change.
+     */
+    let sessRec = null;
+    if (decoded.kind !== 'api_key' && decoded.jti) {
+      const sent = String(req.headers['x-device-id'] || '').trim();
+      if (!decoded.device_id || sent !== String(decoded.device_id)) {
+        mark(res, 'code', 'DEVICE_MISMATCH');
+        return res.status(401).json({ error: 'Unauthorised', code: 'DEVICE_MISMATCH', message: 'This sign-in belongs to another device. Sign in on this one.' });
+      }
+      const v = sessRec = await require('../lib/person-session').deviceListed(query, decoded.parent_entity_id || decoded.identity_id,
+        String(decoded.device_id), decoded.jti);
+      const renewing = v.renewed_to && req.method === 'POST'
+        && /^\/api\/signin\/renew\/?$/.test(String(req.originalUrl || req.url || '').split('?')[0]);
+      if (!v.ok && !renewing) {
+        mark(res, 'code', v.code);
+        return res.status(401).json({ error: 'Unauthorised', code: v.code, message: v.code === 'DEVICE_REVOKED'
+          ? 'The shop removed this device. Your bills are kept here; ask the owner.' : 'Sign in to continue.' });
+      }
+      mark(res, 'kind', 'person');
+    } else if (decoded.kind !== 'api_key') {
+      mark(res, 'kind', 'legacy');
+    }
 
     // Attach identity to request
     req.identity = {
@@ -74,7 +106,9 @@ const auth = async (req, res, next) => {
     };
     /* ⭐ WHO HOLDS THIS REQUEST — one shape for a key, a person and an actor (lib/holder.js). Routes ask req.till, not
        req.api_key.scopes, whether a counter is speaking. */
-    req.till = holderOf(decoded, keyRec);
+    req.till = holderOf(decoded, keyRec, sessRec);
+    /* M05: the person session this request rides on ({ jti, device_id, surface }), for /api/signin/* — absent on legacy/key */
+    if (req.till.session) req.session = req.till.session;
 
     // Revalidate actor status — a removed/deactivated co-assist must lose access
     // immediately on their next request, not whenever the JWT happens to expire.
@@ -188,6 +222,8 @@ const auth = async (req, res, next) => {
 };
 
 module.exports = auth;
+/** res.locals.<k> = v for the request log (server.js) — a stub res in a test may have no locals */
+function mark(res, k, v) { try { (res.locals = res.locals || {})[k] = v; } catch (_) { /* a log field is never worth an error */ } }
 /**
  * ⚠️ THE GUARD, ASKED DIRECTLY. tests/key-scopes.test.js declares what each key SHOULD reach and checks it here — without a
  * network, and crucially without ever SENDING the request it is asserting must be refused. A security boundary written as data

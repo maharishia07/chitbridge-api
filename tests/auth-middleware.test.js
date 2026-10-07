@@ -218,7 +218,7 @@ const sign = (claims, opts) => jwt.sign(claims, process.env.JWT_SECRET, Object.a
 
   console.log('\n— who holds the request: req.till, one shape for a key, a person and an actor (M04) —');
 
-  const SHAPE = ['holder', 'kind', 'key', 'counter', 'device_id', 'by'];
+  const SHAPE = ['holder', 'kind', 'key', 'counter', 'device_id', 'by', 'session'];   /* M05 added session (null unless a listed person session) */
   const shapeOf = (h) => Object.keys(h || {}).sort().join(',');
   const KEY_ROW = [{ policy_flags: { api_keys: [{ jti: 'j-m04', scopes: ['till'], till: { id: 'C2' } }] } }];
   const keyTok = () => sign({ identity_id: 'e1', identity_type: 'entity', kind: 'api_key', jti: 'j-m04', scopes: ['till'] });
@@ -240,7 +240,7 @@ const sign = (claims, opts) => jwt.sign(claims, process.env.JWT_SECRET, Object.a
   await ita('⭐⭐ a PERSON (owner session): holder "person:" + identity_id, no key', async () => {
     const { req, out } = await call(sign({ identity_id: 'e7', identity_type: 'entity' }));
     assert.strictEqual(out.nexted, true);
-    assert.deepStrictEqual(req.till, { holder: 'person:e7', kind: 'person', key: null, counter: null, device_id: null, by: 'e7' });
+    assert.deepStrictEqual(req.till, { holder: 'person:e7', kind: 'person', key: null, counter: null, device_id: null, by: 'e7', session: null });
     assert.strictEqual(req.api_key, undefined, 'a session grew a req.api_key');
   });
 
@@ -248,7 +248,7 @@ const sign = (claims, opts) => jwt.sign(claims, process.env.JWT_SECRET, Object.a
     DB_ROWS = [{ break_status: 'active', hat: 'act', access_level: 'editor' }];
     const { req, out } = await call(sign({ identity_id: 'a9', identity_type: 'actor', parent_entity_id: 'e1' }));
     assert.strictEqual(out.nexted, true);
-    assert.deepStrictEqual(req.till, { holder: 'actor:a9', kind: 'actor', key: null, counter: null, device_id: null, by: 'a9' });
+    assert.deepStrictEqual(req.till, { holder: 'actor:a9', kind: 'actor', key: null, counter: null, device_id: null, by: 'a9', session: null });
   });
 
   await ita('⭐ ONE shape: key, person and actor holders carry the same fields, from ONE builder (M05 only adds)', async () => {

@@ -481,7 +481,8 @@ router.post('/verify',
        * instead of their employer's. issueToken() is the one place that can no longer happen, because it is
        * the only place a token is ever built, for either identity_type.
        */
-      const token = await identityAuth.issueToken(query, identity);
+      /* M05: a page that names its device (body device_id / X-Device-Id) gets a listed, revocable session; else today's token */
+      const token = await identityAuth.issueToken(query, identity, require('../lib/person-session').deviceOfSignin(req));
 
       console.log(`${identity.identity_type === 'actor' ? 'Coassist' : 'Entity'} verified: ${identity.display_name}`);
 
@@ -501,6 +502,9 @@ router.post('/verify',
       });
 
     } catch (err) {
+      /* M05: the owner removed this device — the one sign-in refusal a session adds, in the shop's words */
+      if (err && err.code === 'DEVICE_REVOKED') { res.locals.code = 'DEVICE_REVOKED';
+        return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' }); }
       console.error('Verify error:', err.message);
       res.status(500).json({ error: 'Verification failed', message: safeErr(err) });
     }

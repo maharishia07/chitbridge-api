@@ -67,3 +67,41 @@ Every key is a READ of what exists; nothing is stored and no money is computed h
 | `runs[].project` · `report runs[].project` | string or null | Derived: `max(project)` of the run's rows. |
 | `projects[]` on `GET /api/testing/runs` | `[{ project, runs, last_at }]`, newest first, ≤ 200 | Derived from the whole ledger (not the 50 runs), so an old sprint stays choosable. Read by testing.html's Project filter. |
 | `project` · `project_not_written` on the two POSTs | string or null · string | `project` = what was written. ⚠️ Before b292 the column is missing: the run is recorded WITHOUT the project, `project_not_written` says so, and the server logs one warning. Detected once from `information_schema` (a "no" is asked again after 5 minutes, so b292 is picked up without a redeploy); a 42703 on the INSERT also flips it and retries without. |
+
+## person sessions · `identities.policy_flags.devices` and the token claims (M05, 2026-10-07 · decisions D3 / D14)
+
+No SQL. `devices` is a new top-level key in the shop's `identities.policy_flags` jsonb, beside `api_keys` and `counters`. It
+lives on the SHOP's row (the entity; an employee's sessions sit under their parent). Every write locks the row (`FOR UPDATE`)
+and replaces only this key (`jsonb_set(…, '{devices}', …)`). One engine: `lib/person-session.js`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `policy_flags.devices` | `{ [device_id]: device }` | source. Written by `lib/person-session.js` (`open` at sign-in and renew · `close` at logout/revoke · `renew` · `revokeDevice`). Read by `middleware/auth.js` (`deviceListed`, cached ≤ 60 s per jti) and `/api/signin/sessions` · `/devices`. |
+| `device_id` (the key) | string, 8–80 of `A-Z a-z 0-9 _ . : -` | Made by the page (`localStorage.cb_device_id`), sent as body `device_id` at sign-in and as `X-Device-Id` on every request. |
+| `.label` · `.kind` | string or null · `'till'` \| `'web'` | `kind` from the first sign-in's surface (`till` → `'till'`, else `'web'`). `label` reserved for the owner's name for the device. |
+| `.by` · `.first_seen` · `.seen` · `.ua` | identity_id · ISO time · ISO time · string ≤ 160 | who first signed in on it · when · last sign-in or renew · its user agent. |
+| `.revoked_at` · `.revoked_by` | ISO time · identity_id | set by the owner (`POST /api/signin/sessions/revoke { device_id }`). A revoked device refuses every token (401 `DEVICE_REVOKED`) and every new sign-in (403 `DEVICE_REVOKED`). |
+| `.sessions[]` | `{ jti, iat, exp, surface, by, renewed_from? }` | one per live session on the device (≤ 10; expired ones dropped on the next write). Logout/revoke/renew remove the jti. `renewed_from` = the jti this one replaced. |
+| `.till` | `{ prefix, assigned_at }` | reserved for M11 (the device's bill series); read into `req.till.counter`. |
+
+**Token claims a person session adds** (`lib/identity-auth.js issueToken / signToken`, only when the sign-in named a device):
+
+| Claim | Shape | Meaning |
+|---|---|---|
+| `kind` | `'person'` | a listed person session (a key is `'api_key'`; a legacy token has no `kind`). |
+| `jti` | uuid | the session's id; alive only while listed under `device_id`. |
+| `device_id` | string | the device the token is bound to; `X-Device-Id` must equal it (else 401 `DEVICE_MISMATCH`). |
+| `surface` | `'till'` · `'index'` · `'app'` · … | where it was signed in; `till` lives 30 days, everything else 7 (D3). |
+| `iat` · `exp` | seconds | the same values as the listed session. |
+
+**Legacy tokens** (no `jti`): every token issued before M05, and every sign-in that names no device. Honoured exactly as
+before until their own `exp` (≤ 7 days); not listed, not revocable; the request log carries `kind: 'legacy'` (a session:
+`kind: 'person'`). `POST /api/signin/renew` with `X-Device-Id` turns one into a listed session.
+
+**Response keys** — `POST /api/signin/renew` → `{ token, jti, exp, device_id, surface }` · `POST /api/signin/logout` →
+`{ ok, removed, legacy? }` · `GET /api/signin/sessions` → `{ sessions: [{ jti, device_id, surface, iat, exp, current, device:
+{ label, kind, seen } }], legacy }` · `GET /api/signin/devices` (owner) → `{ devices: [{ device_id, label, kind, by,
+first_seen, seen, revoked_at, till_prefix, sessions }] }` (`sessions` = live count) · `POST /api/signin/sessions/revoke` →
+`{ ok, revoked: 'session'|'device', removed? }`. Refusal codes: `DEVICE_MISMATCH` · `SESSION_EXPIRED` · `DEVICE_REVOKED` ·
+`KEY_CANNOT_SIGN_IN` · `NO_DEVICE`. `req.till` gains `session: { jti, device_id, surface }` (null otherwise) and the holder
+`'dev:'+device_id`.

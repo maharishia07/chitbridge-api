@@ -895,7 +895,8 @@ router.post('/login',
        */
       a.parent_entity_id = parent_entity.identity_id;
       a.identity_type = 'actor';
-      const token = await identityAuth.issueToken(db, a);
+      /* M05: a page that names its device (body device_id / X-Device-Id) gets a listed, revocable session; else today's token */
+      const token = await identityAuth.issueToken(db, a, require('../lib/person-session').deviceOfSignin(req));
 
       console.log(`Actor login: ${actor_key}@${entity_name}`);
 
@@ -916,6 +917,9 @@ router.post('/login',
       });
 
     } catch (err) {
+      /* M05: the owner removed this device — the one sign-in refusal a session adds, in the shop's words */
+      if (err && err.code === 'DEVICE_REVOKED') { res.locals.code = 'DEVICE_REVOKED';
+        return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' }); }
       console.error('Actor login error:', err.message);
       res.status(500).json({ error: 'Login failed', message: safeErr(err) });
     }

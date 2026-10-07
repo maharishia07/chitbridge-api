@@ -107,7 +107,7 @@ const corsOptions = {
    */
   /* ⭐ X-Api-Key (2026-09-07): the counter page runs in a browser on the web origin and signs its calls with a till key, not a
      session. The very failure this comment block describes happened again on [TILL-01]'s first run — a bare 'Failed to fetch'. */
-  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key'],  // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
+  allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Api-Key', 'X-Device-Id'],  // Idempotency-Key: offline-outbox mutations (edit/delete/status/dispute/…) send it → CORS must allow it or the browser blocks the whole request
   credentials: true,
 };
 /* ⭐ MEASURE BEFORE CHANGING (Athi, 2026-09-07: "look at each of the API for round trips and enhance"). Off unless CB_TRIPS=1. */
@@ -199,7 +199,8 @@ app.use((req, res, next) => {
   const t0 = Date.now();
   res.on('finish', () => {
     log.info('request', { id: req.id, method: req.method, path: req.path, status: res.statusCode,
-                          ms: Date.now() - t0, code: (res.locals && res.locals.code) || null, origin: req.headers.origin || null });
+                          ms: Date.now() - t0, code: (res.locals && res.locals.code) || null,
+                          kind: (res.locals && res.locals.kind) || null /* M05: 'person' (listed session) · 'legacy' (no jti) */, origin: req.headers.origin || null });
   });
   next();
 });
@@ -290,6 +291,7 @@ app.use('/api',             require('./routes/openapi'));                     //
 app.use('/api/counters',    require('./routes/counters'));
 app.use('/api/quick-keys',  require('./routes/quick-keys'));   // Level 1 quick-key groups, back-office only (b262, 2026-09-18)
 app.use('/api/network-offers', require('./routes/network-offers'));   // a brand releases offers to its stores; a store takes them or not   // the shop's counters as standing identities — open / close / one PC at a time
+app.use('/api/signin',      require('./routes/signin'));   // M05: a person's sessions — renew · logout · list · revoke (routes/signin.js)
 app.use('/api/keys',        require('./routes/keys'));     // API keys another system uses to call the services (routes/keys.js)   // the mailbox bell — server push (SSE), lib/events.js
 app.use('/api/schemas',     schemasRouter);
 app.use('/api/actors',      actorsRouter);
