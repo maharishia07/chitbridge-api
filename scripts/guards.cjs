@@ -231,7 +231,13 @@ const files = all
  * (the CI job sets it) AND the repo is really absent, and each skip is printed as a CI warning, never a pass.
  * Locally the variable is unset, so a missing engines repo still FAILS as it always did.
  */
-const NEEDS_ENGINES = ['engines-pinned.test.js', 'tax-vendor.test.js'];
+/* 2026-10-07: the books guards (tests/support/books-harness.cjs) load the books engines from the sibling repo too, so
+ * without it they ran with no engine and failed with 0 checks (CI run 37414852968, red since 2026-10-06). Measured
+ * the same way: these are exactly the CI failures, and each passes locally with the engines present. */
+const NEEDS_ENGINES = ['engines-pinned.test.js', 'tax-vendor.test.js',
+  'books-fixes.test.cjs', 'books-dates-tz.test.cjs', 'books-period.test.cjs', 'books-preview.test.cjs', 'books-rcm.test.cjs',
+  'books-year.test.cjs', 'books-recurring.test.cjs', 'books-todo.test.cjs', 'books-manual-events.test.cjs',
+  'books-voucher-series.test.cjs', 'two-sided-books.test.cjs'];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
 
