@@ -24,6 +24,8 @@ const it = async (what, fn) => {
 };
 
 const J = require('../lib/junitresults');
+/* ⚠️ the REAL guard, taken before the stub below replaces it for the route — the scope is asked of the shipped map */
+const realAuth = require('../middleware/auth');
 const PREFIX = 'chitbridge-web/e2e/tests';
 const BOARD = 'c2837d52-47f2-47e2-9fcd-b98c68a49e45';
 
@@ -131,6 +133,65 @@ function post(port, body) {
     assert.strictEqual(J.fold([one])[0], one, 'a single tap passes through untouched');
   });
 
+  console.log('— the guards write JUnit the board reads (2026-10-07) —');
+  /* what scripts/guards.cjs hands write(): one entry per file, named by the board's key */
+  const GKEY = (f) => 'chitbridge-api/tests/' + f;
+  const GUARD_RUN = [
+    { name: GKEY('dispute-scoping.test.cjs'), status: 'pass', time: 1.2 },
+    { name: GKEY('pages-parse.test.js'), status: 'fail', message: 'FAIL <script> #3 & "quoted"\n\u001b[31mexpected 0\u001b[0m', output: 'x' },
+    { name: GKEY('tax-vendor.test.js'), status: 'skipped', message: 'needs chitbridge-engines (private), not checked out' },
+  ];
+  const GXML = J.write('guards', GUARD_RUN);
+
+  await it('⭐ write → read(key_from name): one result per guard file, keyed by the path, status kept', () => {
+    const r = J.read(GXML, { keyFrom: 'name', runKind: 'unit', layer: 'engine' });
+    assert.strictEqual(r.unmatched.length, 0);
+    assert.deepStrictEqual(r.results.map((x) => x.case_key), GUARD_RUN.map((x) => x.name));
+    assert.deepStrictEqual(r.results.map((x) => x.status), ['pass', 'fail', 'skipped'], 'a skip is never a pass');
+    assert.strictEqual(r.results[0].module_key, 'chitbridge-api/tests');
+  });
+
+  await it('⚠️ the failure reason survives escaping as one line; an ANSI colour cannot break the XML', () => {
+    assert.ok(!/\u001b/.test(GXML), 'a control character reached the XML');
+    const f = J.read(GXML, { keyFrom: 'name' }).results[1];
+    assert.strictEqual(f.note, 'FAIL <script> #3 & "quoted" | [31mexpected 0[0m');
+  });
+
+  await it('⚠️ a pass is written OPEN, not <testcase/> — read() would run a self-closed one into its neighbour', () => {
+    assert.ok(!/<testcase[^>]*\/>/.test(GXML), 'a self-closing testcase was written');
+    const two = J.write('g', [{ name: 'a', status: 'pass' }, { name: 'b', status: 'fail', message: 'boom' }]);
+    assert.deepStrictEqual(J.read(two, { keyFrom: 'name' }).results.map((x) => x.status), ['pass', 'fail']);
+  });
+
+  await it('⭐⭐ guards.cjs keys each file the way the board lists it — the guards ARE board cases', () => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'guards.cjs'), 'utf8');
+    assert.ok(src.indexOf("const KEY = (f) => 'chitbridge-api/tests/' + f;") >= 0, 'guards.cjs no longer keys by the board path');
+    assert.ok(/require\('\.\.\/lib\/junitresults'\)\.write\(/.test(src), 'guards.cjs writes its own JUnit instead of the one writer');
+    const list = src.slice(src.indexOf('const GUARDS'), src.indexOf('];', src.indexOf('const GUARDS')));
+    const files = [...list.matchAll(/'([^']+\.test\.c?js)'/g)].map((m) => m[1]);
+    const board = new Set(require('../data/test-cases.json').cases.map((c) => c.case_key));
+    const off = files.filter((f) => !board.has(GKEY(f)));
+    /* ⚠ said, not failed: a guard added since the board was rebuilt is recorded and named back as not_on_board */
+    if (off.length) console.log('       (not yet on the board: ' + off.join(', ') + ' — run C:\\dev\\board.cjs)');
+    assert.ok(files.length > 100 && off.length * 10 < files.length, off.length + ' of ' + files.length + ' guards are not board cases');
+  });
+
+  await it('⭐ the testing scope is mintable and reaches the JUnit door — and nothing a CI box should not', () => {
+    assert.ok(realAuth.SCOPE_NAMES.indexOf('testing') >= 0, 'POST /api/keys would refuse scopes:["testing"]');
+    assert.ok(realAuth.allowsKey(['testing'], 'POST', '/api/testing/results/junit'));
+    [['POST', '/api/keys'], ['POST', '/api/testing/cases/seed'], ['POST', '/api/testing/cases/import'], ['GET', '/api/products']]
+      .forEach(([m, u]) => assert.ok(!realAuth.allowsKey(['testing'], m, u), 'a testing key reaches ' + m + ' ' + u));
+  });
+
+  await it('⚠️ CI posts after a red run too, and a failed post can never fail the build', () => {
+    const ci = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'ci.yml'), 'utf8');
+    const step = ci.slice(ci.indexOf('- name: post the guards to the test board'), ci.indexOf('integration:'));
+    assert.ok(/node scripts\/guards\.cjs --junit test-results\/guards\.xml/.test(ci), 'the guards step writes no JUnit');
+    assert.ok(/always\(\)/.test(step) && /continue-on-error: true/.test(step), 'the post is skipped on red, or can fail the build');
+    assert.ok(/secrets\.CB_BOARD_TOKEN/.test(step) && /::warning::/.test(step), 'no secret must be a warning, not silence');
+    assert.ok(/post-results\.cjs/.test(step) && /--keys name/.test(step) && /--warn/.test(step), 'not the one poster, keyed by name');
+  });
+
   console.log('— a planted T1 run, through the route —');
   const express = require('express');
   const app = express();
@@ -162,6 +223,16 @@ function post(port, body) {
       assert.deepStrictEqual(r.body.not_on_board, [PREFIX + '/brand-new.spec.js']);
     });
 
+    await it('⭐ a guards report through the route: one row per file, unknown files named back', async () => {
+      sent.length = 0;
+      const r = await post(port, { xml: GXML, key_from: 'name', run_kind: 'unit', layer: 'engine', run_label: 'guards abc1234' });
+      assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+      assert.strictEqual(r.body.recorded, 3);
+      assert.deepStrictEqual(sent[0][3], GUARD_RUN.map((x) => x.name));
+      assert.deepStrictEqual(sent[0][5], ['pass', 'fail', 'skipped']);
+      assert.deepStrictEqual(r.body.not_on_board.sort(), GUARD_RUN.map((x) => x.name).sort(), 'the stand-in board knows none of them');
+    });
+
     await it('the default (bracket) door still reads a tagged report', async () => {
       const r = await post(port, { xml: XML, run_kind: 't1' });
       assert.strictEqual(r.status, 200);
@@ -180,5 +251,5 @@ function post(port, body) {
     assert.strictEqual(fs.existsSync(H.JUNIT_FILE), false, 'an aborted run left a report that would post as a pass');
   });
 
-  console.log('\n  ' + pass + ' passed' + (process.exitCode ? ' — RED' : ''));
+  console.log('\n  ' + pass + ' checks' + (process.exitCode ? ' — RED' : ''));
 })();
