@@ -181,9 +181,9 @@ app.use(helmet({
  */
 app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }));
 
-// Parse JSON
-app.use(express.json({ limit: '8mb' }));   // raised for base64 attachment uploads
-app.use(express.urlencoded({ extended: true, limit: '8mb' }));
+// Parse JSON — same parsers and limits (middleware/auth-first.js); an AUTH-FIRST route is parsed only after auth, below
+const authFirst = require('./middleware/auth-first');
+app.use(authFirst.parsers);
 
 // Request id for traceability — propagate an incoming id or mint one; echo it back; expose as req.id.
 app.use((req, res, next) => {
@@ -237,6 +237,10 @@ const assistLimiter = rateLimit({
   message: { error: 'Too many requests', message: 'Too many assistant requests — please try again shortly.' }
 });
 app.use('/api/assist', assistLimiter);
+
+/* ⭐ M04 (IAM §35) — WHO before WHAT: POST /api/chits/send is authenticated here, after the rate limiters and before its body
+   is parsed; an unidentified caller is refused without the server reading what it sent. middleware/auth-first.js */
+app.use(authFirst.authThenParse);
 
 // ── Idempotency (offline outbox, Phase 2) ─────────────────────
 // Opt-in per request (Idempotency-Key header) + self-healing (no-op until b109 is run). Placed before the routers so a

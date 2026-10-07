@@ -72,7 +72,9 @@ require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
 let KEY = { scopes: ['till'] };
 const authPath = require.resolve(path.join(API, 'middleware', 'auth'));
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: Object.assign(
-  (req, res, next) => { req.identity = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CB-SHOP', display_name: 'Mayur Traders' }; if (KEY) req.api_key = KEY; next(); },
+  (req, res, next) => { req.identity = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CB-SHOP', display_name: 'Mayur Traders' }; if (KEY) req.api_key = KEY;
+    /* M04 — the real holder builder, as middleware/auth sets it */
+    req.till = require(path.join(API, 'lib', 'holder')).holderOf(KEY ? { kind: 'api_key', jti: KEY.jti, scopes: KEY.scopes } : req.identity, null); next(); },
   { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id, requireScope: () => (q, s, n) => n(),
     userOf: (req) => req.identity, forgetKey: () => {}, keyAlive: async () => true }) };
 

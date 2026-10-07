@@ -113,8 +113,9 @@ it('⚠️⚠️ a counter’s pairing code yields a SCREEN key only, naming the
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
   const pair = src.slice(src.indexOf("router.post('/pair',"), src.indexOf("router.post('/enrol'"));
   const claim = src.slice(src.indexOf("router.post('/pair/claim'"), src.indexOf("router.get('/screens'"));
-  assert.ok(pair.includes("req.api_key.scopes.includes('till')"), '/pair no longer limits key-bearers to a COUNTER key');
-  assert.ok(pair.includes('parent: viaCounter ? req.api_key.jti'), '/pair does not remember which counter key asked');
+  /* M04 — the counter test reads the holder (req.till.key), the shape middleware/auth builds for every request */
+  assert.ok(pair.includes("tk.scopes.includes('till')") && pair.includes('const tk = req.till && req.till.key'), '/pair no longer limits key-bearers to a COUNTER key');
+  assert.ok(pair.includes('parent: viaCounter ? tk.jti'), '/pair does not remember which counter key asked');
   assert.ok(claim.includes("scopes: ['screen']"), '/pair/claim mints something other than a screen key');
   assert.ok(claim.includes('parent: got.parent'), '/pair/claim drops the parent — the screen would outlive its counter');
 });

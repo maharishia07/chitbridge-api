@@ -129,7 +129,7 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     let till = null;
     try {
-      const jti = req.api_key && req.api_key.jti;
+      const jti = req.till && req.till.key && req.till.key.jti;
       if (jti) {
         const c = await keys.claimTill(entity_id, jti, {
           id: req.query.till, issued: req.query.issued === '1' || req.query.issued === 'true',
@@ -924,7 +924,7 @@ router.post('/stock/bulk', auth, auth.requireScope('till'), async (req, res) => 
 router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const jti = req.api_key && req.api_key.jti;
+    const jti = req.till && req.till.key && req.till.key.jti;
     if (!jti) return res.status(400).json({ error: 'validation', message: 'Only a paired counter can report itself.' });
     const b = req.body || {};
     const num = (v, cap) => Math.max(0, Math.min(Number(v) || 0, cap || 100000));
@@ -968,7 +968,7 @@ router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => 
 router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const jti = req.api_key && req.api_key.jti;
+    const jti = req.till && req.till.key && req.till.key.jti;
     if (!jti) return res.status(400).json({ error: 'validation', message: 'Only a paired counter can close itself.' });
     const b = req.body || {};
     const list = await keys.listOf(entity_id);
@@ -1020,7 +1020,7 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
 router.post('/state', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const jti = req.api_key && req.api_key.jti;
+    const jti = req.till && req.till.key && req.till.key.jti;
     const b = req.body || {};
     const state = b.state === 'break' ? 'break' : 'billing';
     const list = await keys.listOf(entity_id);
@@ -1096,7 +1096,7 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
  * so there is one definition of a counter's business day, not two that can drift apart.
  */
 async function counterOfReq(req) {
-  const jti = req.api_key && req.api_key.jti;
+  const jti = req.till && req.till.key && req.till.key.jti;
   if (!jti) return null;
   const list = await keys.listOf(auth.entityOf(req));
   const me = list.find((k) => k && String(k.jti) === String(jti));
@@ -1626,15 +1626,16 @@ router.post('/pair', auth, async (req, res) => {
      * parent — middleware/auth keyAlive() refuses it the moment the counter key is revoked or closed.
      * ⚠️ Any other key is still refused: a screen key cannot pair a screen, a connector key cannot pair anything.
      */
-    const viaCounter = !!(req.api_key && req.api_key.scopes.includes('till'));
-    if (!req.identity || (req.api_key && !viaCounter))
+    const tk = req.till && req.till.key;   /* M04 — the holder, not req.api_key (middleware/auth holderOf) */
+    const viaCounter = !!(tk && tk.scopes.includes('till'));
+    if (!req.identity || (tk && !viaCounter))
       return res.status(403).json({ error: 'Forbidden', message: 'Sign in to pair a screen.' });
     const entity_id = auth.entityOf(req);
     const me = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const code = pairCode();
     const expires = Date.now() + PAIR_TTL_MS;
     PAIR.set(code, { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null, expires,
-                     parent: viaCounter ? req.api_key.jti : null });
+                     parent: viaCounter ? tk.jti : null });
     res.json({ code, expires_at: new Date(expires).toISOString(), minutes: Math.round(PAIR_TTL_MS / 60000) });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
