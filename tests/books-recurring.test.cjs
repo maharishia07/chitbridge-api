@@ -33,25 +33,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   r.end(b);
 });
 
-/** an in-memory template table with the real module's store functions (b281 stood in); `migrated` is the switch the 503 test flips */
-function memoryTemplates() {
-  const rows = []; let seq = 0; const m = { migrated: false, rows };
-  const clone = (x) => JSON.parse(JSON.stringify(x));
-  const gone = () => { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; };
-  m.store = {
-    async exists() { return m.migrated; },
-    async list(h, e) { if (!m.migrated) gone(); return clone(rows.filter((r) => r.entity === e)); },
-    async get(h, e, id) { if (!m.migrated) gone(); const r = rows.find((x) => x.entity === e && x.recurring_id === id); return r ? clone(r) : null; },
-    async insert(h, e, t) {
-      if (!m.migrated) gone();
-      const r = { entity: e, recurring_id: '66666666-6666-4666-8666-' + String(++seq).padStart(12, '0'), name: t.name, event: clone(t.event), frequency: t.frequency, next_on: t.next_on, anchor_day: t.anchor_day,
-        end_on: t.end_on || null, auto: !!t.auto, active: t.active !== false, last_done_on: null, created_by: t.created_by || null };
-      rows.push(r); return clone(r);
-    },
-    async update(h, e, id, p) { if (!m.migrated) gone(); const r = rows.find((x) => x.entity === e && x.recurring_id === id); if (!r) return null; Object.assign(r, clone(p)); return clone(r); },
-  };
-  return m;
-}
+const { memoryTemplates } = require('./support/books-recurring-memory.cjs');
 
 (async () => {
   console.log('\n══ /api/books — recurring entries and the daily sweep ══\n');
@@ -131,25 +113,25 @@ function memoryTemplates() {
   const c2 = await q('POST', '/recurring', { name: 'Insurance', event: { kind: 'expense', class: 'insurance', amount: 1200, how: 'bank', narration: 'Insurance' }, frequency: 'monthly', next_on: '2026-08-31', auto: true });
   ok('an auto template is created', c2.status === 200 && c2.body.auto === true && c2.body.anchor_day === 31, JSON.stringify(c2.body));
   const INS = c2.body.recurring_id;
-  const s2 = await R.sweep(SHOP, S, DAY);
+  const s2 = await R.sweep(SHOP, S, DAY, { autoPost: true });
   const insEntries = () => X.T.entries.filter((e) => String(e.source_ref || '').indexOf('ev:expense:rec:' + INS + ':') === 0);
   eq('the sweep posts every missed day, oldest first: 31 Aug, 30 Sep (the 31st clamps to the short month)', [s2.posted.map((x) => x.date), s2.posted.every((x) => /^MJ\//.test(x.entry_no))], [['2026-08-31', '2026-09-30'], true]);
   ok('…and the template waits at 31 Oct, the 31st again', mem.rows.find((r) => r.recurring_id === INS).next_on === '2026-10-31' && insEntries().length === 2);
-  const s3 = await R.sweep(SHOP, S, DAY);
+  const s3 = await R.sweep(SHOP, S, DAY, { autoPost: true });
   ok('…a second sweep posts nothing', s3.posted.length === 0 && insEntries().length === 2, JSON.stringify(s3));
   mem.rows.find((r) => r.recurring_id === INS).next_on = '2026-08-31';
-  const s4 = await R.sweep(SHOP, S, DAY);
+  const s4 = await R.sweep(SHOP, S, DAY, { autoPost: true });
   ok('…even with the template put back, the sweep answers the same two entries (duplicate) and posts none new', s4.posted.length === 2 && s4.posted.every((x) => x.duplicate) && insEntries().length === 2, JSON.stringify(s4));
 
   /* 6 · a locked month is named, never moved */
   const c3 = await q('POST', '/recurring', { name: 'Old auto', event: { kind: 'expense', class: 'rent', amount: 100, how: 'bank' }, frequency: 'monthly', next_on: '2026-05-15', auto: true });
   await q('POST', '/periods/2026-27/2/lock', { reason: 'May done' });
-  const s5 = await R.sweep(SHOP, S, DAY);
+  const s5 = await R.sweep(SHOP, S, DAY, { autoPost: true });
   const pr = s5.problems.find((p) => p.name === 'Old auto');
   ok('an auto template dated in a locked month is NAMED as a problem and does not move', pr && /locked/i.test(pr.why) && pr.date === '2026-05-15' && mem.rows.find((r) => r.recurring_id === c3.body.recurring_id).next_on === '2026-05-15', JSON.stringify(s5.problems));
   const st = await q('DELETE', '/recurring/' + c3.body.recurring_id);
   ok('DELETE stops it (active: false) — the row stays', st.status === 200 && st.body.stopped === true && st.body.active === false && mem.rows.some((r) => r.recurring_id === c3.body.recurring_id));
-  const s6 = await R.sweep(SHOP, S, DAY);
+  const s6 = await R.sweep(SHOP, S, DAY, { autoPost: true });
   ok('…a stopped template is not swept', !s6.problems.some((p) => p.name === 'Old auto'));
 
   /* 7 · the accrual reversal — once, on its day */
@@ -159,10 +141,10 @@ function memoryTemplates() {
   const r0 = await R.sweep(SHOP, S, '2026-09-30');
   ok('the sweep on 30 Sep does NOT reverse it (not due)', r0.reversed.length === 0 && posted('accrual-rev:').length === 0, JSON.stringify(r0.reversed));
   DAY = '2026-10-02';
-  const r1 = await R.sweep(SHOP, S, DAY);
+  const r1 = await R.sweep(SHOP, S, DAY, { autoPost: true });
   const rv = posted('accrual-rev:ELEC-9');
   ok('the sweep on 2 Oct posts the reversal, dated 1 Oct, by the system (JV)', r1.reversed.length === 1 && r1.reversed[0].ref === 'ELEC-9' && rv.length === 1 && rv[0].posting_date === '2026-10-01' && /^JV\//.test(rv[0].entry_no), JSON.stringify([r1.reversed, rv.map((e) => [e.entry_no, e.posting_date])]));
-  const r2 = await R.sweep(SHOP, S, DAY);
+  const r2 = await R.sweep(SHOP, S, DAY, { autoPost: true });
   ok('…and a second sweep posts it ONCE only', r2.reversed.length === 0 && posted('accrual-rev:ELEC-9').length === 1, JSON.stringify(r2.reversed));
 
   srv.close();

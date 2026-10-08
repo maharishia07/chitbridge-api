@@ -98,7 +98,7 @@ function memoryTemplates() {
   ok('the challan paid → "GST due" is gone', gp.ok && kinds(await todo()).indexOf('gst_due') < 0, JSON.stringify(gp));
   const acc = await q('POST', '/recurring/' + rec.body.recurring_id + '/post', {});
   ok('rent accepted → "repeating entry due" is gone', acc.status === 200 && kinds(await todo()).indexOf('recurring_due') < 0, JSON.stringify(acc.body).slice(0, 200));
-  const sw = await R.sweep(SHOP, S, DAY);
+  const sw = await R.sweep(SHOP, S, DAY, { autoPost: true });
   ok('the sweep turns the accrual back → that row is gone', sw.reversed.length === 1 && kinds(await todo()).indexOf('accrual_reversals_due') < 0, JSON.stringify(sw));
   for (let p = 1; p <= 7; p++) await q('POST', '/periods/2026-27/' + p + '/lock', { reason: 'done' });
   ok('the seven months locked → "months not locked" is gone', kinds(await todo()).indexOf('months_not_locked') < 0);
