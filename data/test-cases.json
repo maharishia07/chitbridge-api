@@ -432,6 +432,11 @@
    "key": "S1RPT",
    "name": "Stage 1 · The report compares the plan with what ran",
    "count": 1
+  },
+  {
+   "key": "S1LIM",
+   "name": "Stage 1 · Limits: too big, too slow, and the log says so",
+   "count": 3
   }
  ],
  "engine": {
@@ -568,7 +573,7 @@
   "other": {
    "engine_adjacent": 81,
    "adoption": 34,
-   "infrastructure": 84
+   "infrastructure": 86
   }
  },
  "maturity": [
@@ -790,7 +795,7 @@
   }
  ],
  "notes": {
-  "engine": "The rules, as declared in tests/engine-manifest.js. · Tier A never has dependencies; Tier B is bound. · engine-boundary.test.js fails if a Tier A rule grows a require. · 200 other lib/ files are adoption or infrastructure.",
+  "engine": "The rules, as declared in tests/engine-manifest.js. · Tier A never has dependencies; Tier B is bound. · engine-boundary.test.js fails if a Tier A rule grows a require. · 202 other lib/ files are adoption or infrastructure.",
   "middleware": "What decides who may do what, before a route sees the request. · Its database half is RLS — see Database.",
   "web": "What a person touches: 31 capabilities loaded on demand, plus 39 shared files. ⚠ Co-assist is here under its old name, cap-workforce.js. ⚠ The src/ React pages and the standalone screens are counted nowhere.",
   "api": "Every endpoint a client can call, sized in COSMIC function points (ISO/IEC 19761). ⭐ ACTOR is the model underneath: a person, a co-assist and a connector are each one. · integrations.js homes the connectors; connectors.js is the actor and its connections. ⚠ assist.js is the tier-1 LLM proxy, not the co-assist — no model key reaches the browser.",
@@ -798,7 +803,7 @@
   "bridge": "The crossing — what the layers DO, not a place, so every file here also sits on another row. ⭐ IDENTIFY — a typed name resolves to one identity, or 404. Never best-effort. ⭐ CROSS — one copy per participant, never shared, with clearances, governance and the retention floor frozen onto each. ⭐ PROTECT — RLS then refuses rows that are not yours. ⚠ KNOWN GAP — not tamper-evident. Ownership is proven; byte-identity is not, and that is what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "How a chit leaves the building. routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)\" ⭐ IoT and ERP are two shapes of one connection — which is why co-assist, IoT, ERP and Tally all land here. · The files are ADAPTER (one per foreign system), KIT (the spine) and CHANNEL (how a chit reaches a person). ⚠ IoT has no adapter yet — its 3 file(s) are the signal blueprint and lifecycle scripts."
  },
- "foot": "These six rows are the ARCHITECTURE, not a file inventory. 133 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 826 cases read from a test file, plus 1390 written by hand for the journeys no file covers.",
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 133 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 828 cases read from a test file, plus 1393 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
@@ -919,7 +924,7 @@
     "name": "auth-first",
     "file": "chitbridge-api/middleware/auth-first.js",
     "purpose": "WHO YOU ARE is decided before WHAT YOU SENT is read (M04, IAM §35, 2026-10-07).",
-    "note": "51 lines",
+    "note": "55 lines",
     "stage": null
    },
    {
@@ -3166,7 +3171,7 @@
     "name": "index",
     "file": "chitbridge-api/db/index.js",
     "purpose": "Sets app.current_entity on the transaction — the value every RLS policy reads. This is the seam the whole isolation model hangs on.",
-    "note": "343 lines",
+    "note": "361 lines",
     "stage": null,
     "tier": "protect"
    }
@@ -54385,6 +54390,110 @@
    "generic": false
   },
   {
+   "case_key": "S1LIM-01",
+   "module_key": "S1LIM",
+   "module_name": "Stage 1 · Limits: too big, too slow, and the log says so",
+   "intro": "E01 + E07: an address takes a body up to its budget, a request has a deadline, every log line is JSON and carries the request id. Off switches (env, no code change): REQUEST_TIMEOUT_MS=0 · DB_STATEMENT_TIMEOUT_MS=0 · BODY_LIMIT_DEFAULT=8mb.",
+   "title": "A product photo and a 2,000-row import still go through",
+   "priority": "High",
+   "pre": "A shop with a catalogue.",
+   "data": "A 3 MB photo. A CSV of 2,000 products.",
+   "steps": [
+    [
+     "Add the photo to a product.",
+     "It is saved and shown."
+    ],
+    [
+     "Import the 2,000-row CSV.",
+     "⭐ It finishes — no \"took too long\", however long it takes."
+    ]
+   ],
+   "note": "Automated: chitbridge-api/tests/limits.test.cjs (budgets; bulk routes have no request deadline).",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1LIM-02",
+   "module_key": "S1LIM",
+   "module_name": "Stage 1 · Limits: too big, too slow, and the log says so",
+   "intro": "E01 + E07: an address takes a body up to its budget, a request has a deadline, every log line is JSON and carries the request id. Off switches (env, no code change): REQUEST_TIMEOUT_MS=0 · DB_STATEMENT_TIMEOUT_MS=0 · BODY_LIMIT_DEFAULT=8mb.",
+   "title": "/health says how the database is and which version runs",
+   "priority": "Medium",
+   "pre": "Production.",
+   "data": "None.",
+   "steps": [
+    [
+     "Open https://chitbridge-api-production.up.railway.app/health.",
+     "It shows db: ok (or slow), db_ms, version 1.0.0, commit."
+    ]
+   ],
+   "note": "Automated: chitbridge-api/tests/request-log.test.cjs.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1LIM-03",
+   "module_key": "S1LIM",
+   "module_name": "Stage 1 · Limits: too big, too slow, and the log says so",
+   "intro": "E01 + E07: an address takes a body up to its budget, a request has a deadline, every log line is JSON and carries the request id. Off switches (env, no code change): REQUEST_TIMEOUT_MS=0 · DB_STATEMENT_TIMEOUT_MS=0 · BODY_LIMIT_DEFAULT=8mb.",
+   "title": "A reported failure can be found by its request id",
+   "priority": "Medium",
+   "pre": "Any signed-in screen.",
+   "data": "None.",
+   "steps": [
+    [
+     "Do anything that calls the server; note the X-Request-Id on the answer (browser dev tools, Network).",
+     "An id is there."
+    ],
+    [
+     "Search the Railway log for that id.",
+     "⭐ One JSON line: path, status, ms, code, entity, person."
+    ]
+   ],
+   "note": "Railway CLI shows only container start/stop for recent deploys; use the dashboard log search.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
    "case_key": "chitbridge-api/scripts/_proof.js",
    "module_key": "chitbridge-api/scripts",
    "module_name": "API scripts and proofs",
@@ -59739,7 +59848,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.harness · support · 799 lines. Run: node chitbridge-api/tests/engine-manifest.js",
+   "note": "test.harness · support · 805 lines. Run: node chitbridge-api/tests/engine-manifest.js",
    "layer": "engine",
    "test_type": "support",
    "group": "test.harness",
@@ -59761,7 +59870,7 @@
     "engine/qr.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-08T04:10:00+05:30"
+   "changed_at": "2026-10-08T11:48:15+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/engine-versions.test.cjs",
@@ -60923,6 +61032,37 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-07T22:50:25+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/limits.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "E01 · LIMITS AND TIMEOUTS — a body larger than its route's budget is refused 413 with a code, a request past its deadline answers 503 with a code (and the route's late answer goes nowhere, without crashing the process), and a statement past its deadline is cancelled by Postgres and answered 503 STATEMENT_TIMEOUT.",
+   "claim": "E01 · LIMITS AND TIMEOUTS — a body larger than its route's budget is refused 413 with a code, a request past its deadline answers 503 with a code (and the route's late answer goes nowhere, without crashing the process), and a statement past its deadline is cancelled by Postgres and answered 503 STATEMENT_TIMEOUT.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 119 lines. Run: node chitbridge-api/tests/limits.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-08T11:50:27+05:30",
+   "needs": [
+    "a database"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/line-complete.test.cjs",
@@ -62345,6 +62485,36 @@
    "changed_at": "2026-07-31T21:41:58+05:30",
    "needs": [
     "a database (via reporting.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/request-log.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "E07 · REQUEST ID + STRUCTURED LOG + SLOW-QUERY LOG — every log line is JSON; a request id travels response ↔ log; a slow statement logs ONE line with the request's id and a fingerprint — no SQL text, anywhere.",
+   "claim": "E07 · REQUEST ID + STRUCTURED LOG + SLOW-QUERY LOG — every log line is JSON; a request id travels response ↔ log; a slow statement logs ONE line with the request's id and a fingerprint — no SQL text, anywhere.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 119 lines. Run: node chitbridge-api/tests/request-log.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database",
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-08T11:48:15+05:30",
+   "needs": [
+    "a database"
    ]
   },
   {
@@ -64783,7 +64953,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · unit · 224 lines. Run: node chitbridge-api/tests/units-alias.test.js",
+   "note": "test.unit · unit · 230 lines. Run: node chitbridge-api/tests/units-alias.test.js",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.unit",
@@ -64799,7 +64969,7 @@
     "public/app/catalogue-model.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-16T12:13:24+05:30"
+   "changed_at": "2026-10-08T11:50:36+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/user-id-rule.test.cjs",
@@ -66535,7 +66705,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 209 lines. Run: node chitbridge-web/e2e/crm-themes.cjs",
+   "note": "test.guard · system · 211 lines. Run: node chitbridge-web/e2e/crm-themes.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -66548,10 +66718,13 @@
     "web"
    ],
    "subjects": [
+    "lib/books-api.js",
+    "lib/contract.js",
+    "lib/crm-api.js",
     "lib/theme-measure.js"
    ],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-03T05:31:10Z",
+   "changed_at": "2026-10-08T11:31:59+05:30",
    "needs": [
     "a browser"
    ]
@@ -66952,7 +67125,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.harness · support · 513 lines. Run: node chitbridge-web/e2e/fixtures.js",
+   "note": "test.harness · support · 517 lines. Run: node chitbridge-web/e2e/fixtures.js",
    "layer": "web",
    "test_type": "support",
    "group": "test.harness",
@@ -66964,7 +67137,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-28T23:28:08+05:30",
+   "changed_at": "2026-10-08T11:31:59+05:30",
    "needs": [
     "the API running",
     "a browser"
@@ -67327,7 +67500,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 309 lines. Run: node chitbridge-web/e2e/kural-footer.cjs",
+   "note": "test.guard · system · 313 lines. Run: node chitbridge-web/e2e/kural-footer.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -67340,10 +67513,13 @@
     "web"
    ],
    "subjects": [
-    "lib/contrast.js"
+    "lib/books-api.js",
+    "lib/contract.js",
+    "lib/contrast.js",
+    "lib/crm-api.js"
    ],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-08T03:50:13+05:30",
+   "changed_at": "2026-10-08T11:31:59+05:30",
    "needs": [
     "a browser"
    ]
