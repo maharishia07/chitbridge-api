@@ -31,6 +31,7 @@ function app() {
   a.post('/api/crm/parties', (req, res) => res.json({ ok: true, keys: Object.keys(req.body || {}).length }));
   a.post('/api/attachments', (req, res) => res.json({ ok: true }));
   a.get('/api/slow', async (req, res) => { await new Promise((r) => setTimeout(r, 600)); try { res.status(200).json({ late: true }); } catch (e) { res.status(500).json({ error: 'again' }); } });
+  a.get('/api/products/import-slow', async (req, res) => { await new Promise((r) => setTimeout(r, 600)); res.json({ imported: true }); });
   a.get('/api/events/stream', async (req, res) => { await new Promise((r) => setTimeout(r, 600)); res.json({ streamed: true }); });
   a.use((err, req, res, next) => { const k = K.known(err); if (k) { res.locals.code = k.body.code || null; return res.status(k.status).json(k.body); } res.status(500).json({ error: 'Server error' }); });
   return a;
@@ -82,6 +83,8 @@ const big = (bytes) => JSON.stringify({ pad: 'x'.repeat(bytes) });
   ok(!crashed, 'the route\'s late answer is swallowed — no ERR_HTTP_HEADERS_SENT, no crash' + (crashed ? ': ' + crashed.message : ''));
   r = await call(port, 'GET', '/api/events/stream');
   ok(r.status === 200 && r.body.streamed, 'the SSE stream has no deadline (got ' + r.status + ')');
+  r = await call(port, 'GET', '/api/products/import-slow');
+  ok(r.status === 200 && r.body.imported, 'a bulk route (large budget) has no request deadline — an import is never cut off mid-write (got ' + r.status + ')');
 
   srv.close();
 
