@@ -271,7 +271,7 @@ async function run(sc, door) {
 const strip = (x) => ({ responses: x.responses, rows: x.rows, inserts: x.inserts });
 /* the ONLY keys the new door may add to an old answer (routes/signin.js header): ask's kind + need, NO_ACCOUNT's code.
    Removed from the new door's answer only where the old answer lacks them — every other key and value must match. */
-const ADDED = ['kind', 'need', 'code'];
+const ADDED = ['kind', 'need', 'code', 'id'];   /* id: M14 — the stored id a mobile or e-mail resolved to */
 const withoutAdded = (n, o) => Object.assign({}, n, { responses: n.responses.map((r, i) => {
   const ob = (o.responses[i] || {}).body || {}, b = Object.assign({}, r.body);
   ADDED.forEach((k) => { if (!(k in ob)) delete b[k]; });
