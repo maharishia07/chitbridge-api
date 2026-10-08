@@ -411,7 +411,17 @@
   {
    "key": "S1PHN",
    "name": "Stage 1 · A phone is a person on a device",
+   "count": 4
+  },
+  {
+   "key": "S1MOV",
+   "name": "Stage 1 · A phone's old bills come along when it signs in",
    "count": 2
+  },
+  {
+   "key": "S1SGN",
+   "name": "Stage 1 · Sign in with a mobile number or an e-mail",
+   "count": 5
   },
   {
    "key": "S1PIN",
@@ -782,13 +792,13 @@
  "notes": {
   "engine": "The rules, as declared in tests/engine-manifest.js. · Tier A never has dependencies; Tier B is bound. · engine-boundary.test.js fails if a Tier A rule grows a require. · 200 other lib/ files are adoption or infrastructure.",
   "middleware": "What decides who may do what, before a route sees the request. · Its database half is RLS — see Database.",
-  "web": "What a person touches: 31 capabilities loaded on demand, plus 38 shared files. ⚠ Co-assist is here under its old name, cap-workforce.js. ⚠ The src/ React pages and the standalone screens are counted nowhere.",
+  "web": "What a person touches: 31 capabilities loaded on demand, plus 39 shared files. ⚠ Co-assist is here under its old name, cap-workforce.js. ⚠ The src/ React pages and the standalone screens are counted nowhere.",
   "api": "Every endpoint a client can call, sized in COSMIC function points (ISO/IEC 19761). ⭐ ACTOR is the model underneath: a person, a co-assist and a connector are each one. · integrations.js homes the connectors; connectors.js is the actor and its connections. ⚠ assist.js is the tier-1 LLM proxy, not the co-assist — no model key reaches the browser.",
   "database": "Where results rest — every table the 256 migrations create. The migrations ARE the schema. ⭐ RLS is the column that matters, and says one of three things. · POLICY — the database keeps one entity’s rows from another’s. · SHARED — no entity column, so nothing to isolate. Correct, not a gap: 43. ⚠ UNGUARDED — holds entity rows with no policy: 16. The only one of the three that is a finding. ⚠ An inventory, not a live schema dump.",
   "bridge": "The crossing — what the layers DO, not a place, so every file here also sits on another row. ⭐ IDENTIFY — a typed name resolves to one identity, or 404. Never best-effort. ⭐ CROSS — one copy per participant, never shared, with clearances, governance and the retention floor frozen onto each. ⭐ PROTECT — RLS then refuses rows that are not yours. ⚠ KNOWN GAP — not tamper-evident. Ownership is proven; byte-identity is not, and that is what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "How a chit leaves the building. routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1), holding its connection string (IoT: CB-issued ActorKey+endpoint, or your broker · ERP: base_url+auth_ref), owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)\" ⭐ IoT and ERP are two shapes of one connection — which is why co-assist, IoT, ERP and Tally all land here. · The files are ADAPTER (one per foreign system), KIT (the spine) and CHANNEL (how a chit reaches a person). ⚠ IoT has no adapter yet — its 3 file(s) are the signal blueprint and lifecycle scripts."
  },
- "foot": "These six rows are the ARCHITECTURE, not a file inventory. 133 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 823 cases read from a test file, plus 1381 written by hand for the journeys no file covers.",
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 133 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 826 cases read from a test file, plus 1390 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
@@ -1543,7 +1553,7 @@
     "name": "avatar",
     "file": "chitbridge-web/public/app/avatar.js",
     "purpose": "── ⭐⭐⭐ CBAvatar — THE AVATAR: ONE CONTROL ON EVERY CHITBRIDGE PAGE ──────────────────────────────────────────────",
-    "note": "440 lines",
+    "note": "446 lines",
     "stage": null
    },
    {
@@ -1719,7 +1729,15 @@
     "name": "shell",
     "file": "chitbridge-web/public/app/shell.js",
     "purpose": "── ⭐ CBShell — THE FRAME EVERY UTILITY APP LIVES IN: HEADER · SHEET · FIVE AREAS · KURAL ──────────────────────────────────────",
-    "note": "473 lines",
+    "note": "479 lines",
+    "stage": null
+   },
+   {
+    "tier": "shared",
+    "name": "signin-ui",
+    "file": "chitbridge-web/public/app/signin-ui.js",
+    "purpose": "CBSignin.mount: THE ONE SIGN-IN WINDOW, for every app (M14, DECISIONS 2026-10-08).",
+    "note": "364 lines",
     "stage": null
    },
    {
@@ -15695,7 +15713,7 @@
      "⚠ NOBODY HAS WRITTEN WHAT SHOULD HAPPEN. Record what it does, and whether that is right. When you know, replace this line with the expectation."
     ]
    ],
-   "note": "⚠ GENERATED from the control go (“Change”) in cap-network.js. It asserts only that the control EXISTS — the expectation is missing and must be written by somebody who has used it. A pass here proves nothing until then. ⚠⚠ go() is declared in 2 files (shell.js, step-flow.js). Declarations HOIST, so the last one wins and the rest are silently discarded — which of them this control runs is not obvious from the screen. ⚠⚠ THE SAME NAME APPEARS ELSEWHERE, WIRED TO DIFFERENT CODE: cap-catsetup.js (declareVariants()), cap-network.js (netSetNetworkName()). DOES THIS ONE WORK THE SAME WAY? Operate both and compare — two controls a person reads as one thing, kept in step by nothing but habit, is exactly where behaviour drifts. ⚠ COULD NOT BE PROVEN YET (2026-09-12): the door opened and the screen was EMPTY — the test account holds no data, so this control was never drawn. That is the account, not the product. Prove it by hand, or walk again against an entity that has chits.",
+   "note": "⚠ GENERATED from the control go (“Change”) in cap-network.js. It asserts only that the control EXISTS — the expectation is missing and must be written by somebody who has used it. A pass here proves nothing until then. ⚠⚠ go() is declared in 3 files (shell.js, signin-ui.js, step-flow.js). Declarations HOIST, so the last one wins and the rest are silently discarded — which of them this control runs is not obvious from the screen. ⚠⚠ THE SAME NAME APPEARS ELSEWHERE, WIRED TO DIFFERENT CODE: cap-catsetup.js (declareVariants()), cap-network.js (netSetNetworkName()). DOES THIS ONE WORK THE SAME WAY? Operate both and compare — two controls a person reads as one thing, kept in step by nothing but habit, is exactly where behaviour drifts. ⚠ COULD NOT BE PROVEN YET (2026-09-12): the door opened and the screen was EMPTY — the test account holds no data, so this control was never drawn. That is the account, not the product. Prove it by hand, or walk again against an entity that has chits.",
    "layer": null,
    "test_type": "acceptance",
    "automated": false,
@@ -53931,6 +53949,370 @@
    "generic": false
   },
   {
+   "case_key": "S1PHN-03",
+   "module_key": "S1PHN",
+   "module_name": "Stage 1 · A phone is a person on a device",
+   "intro": "M08: a phone signs in as a person; the PC counter is untouched; old bills are kept.",
+   "title": "Days with no line: the PIN still unlocks, the bills wait, one sign-in sends them",
+   "priority": "High",
+   "pre": "A phone signed in as a person (S1PHN-02), with a counter PIN set.",
+   "data": "Any items; 20 bills.",
+   "steps": [
+    [
+     "Turn on airplane mode. Lock the till, then unlock it with the counter PIN.",
+     "It unlocks with no line, as the same person."
+    ],
+    [
+     "Make 20 bills.",
+     "All 20 wait on the phone, each with this phone's bill number."
+    ],
+    [
+     "Leave it a day or more (the sign-in runs out). Turn the line back on.",
+     "⭐ It says \"Sign in to send 20 bills\" — never \"maintenance\"."
+    ],
+    [
+     "Sign in with the code.",
+     "⭐ All 20 reach the shop, once each. No bill twice."
+    ],
+    [
+     "Open one of those bills in the shop.",
+     "It names this phone and the person who made it."
+    ]
+   ],
+   "note": "Automated: chitbridge-web/e2e/person-signin.cjs T6.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1PHN-04",
+   "module_key": "S1PHN",
+   "module_name": "Stage 1 · A phone is a person on a device",
+   "intro": "M08: a phone signs in as a person; the PC counter is untouched; old bills are kept.",
+   "title": "One person, two phones",
+   "priority": "Medium",
+   "pre": "Two phones. The same person signs in on both.",
+   "data": "One bill on each.",
+   "steps": [
+    [
+     "Sign in on phone 1, then on phone 2.",
+     "Both stay signed in. Neither signs the other out."
+    ],
+    [
+     "Make a bill on each.",
+     "Each has its own bill numbers. In the shop, each bill names its own phone."
+    ],
+    [
+     "Open the list of signed-in devices.",
+     "Both phones are listed."
+    ]
+   ],
+   "note": "Automated: chitbridge-web/e2e/person-signin.cjs T8.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1MOV-01",
+   "module_key": "S1MOV",
+   "module_name": "Stage 1 · A phone's old bills come along when it signs in",
+   "intro": "M10: a phone that was paired with a counter key keeps its unsent bills. The sign-in copies them, checks the copy, marks the old store moved, and sends them. Nothing is deleted this release.",
+   "title": "Unsent bills on an old phone are sent once after sign-in",
+   "priority": "High",
+   "pre": "A phone paired the old way (counter key) with 1 sent and 3 unsent bills. Athi's phone is the real one.",
+   "data": "The owner user id.",
+   "steps": [
+    [
+     "Open the till.",
+     "It says \"Sign in once with your user ID\"."
+    ],
+    [
+     "Sign in with the user id and the code.",
+     "The till reloads as you. The 3 unsent bills are listed, with their old bill numbers."
+    ],
+    [
+     "Let it send.",
+     "⭐ The 3 reach the shop once each. The 1 already sent is not sent again."
+    ],
+    [
+     "Close and open the till again.",
+     "It does not ask to pair a counter. Nothing is listed twice."
+    ]
+   ],
+   "note": "Automated: chitbridge-web/e2e/person-signin.cjs T7 (also: a crash mid-move re-runs with no loss and no duplicate).",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1MOV-02",
+   "module_key": "S1MOV",
+   "module_name": "Stage 1 · A phone's old bills come along when it signs in",
+   "intro": "M10: a phone that was paired with a counter key keeps its unsent bills. The sign-in copies them, checks the copy, marks the old store moved, and sends them. Nothing is deleted this release.",
+   "title": "Another shop's bills on the same phone are left alone",
+   "priority": "Medium",
+   "pre": "One phone that has been used at two shops, A and B. Sign in for shop A.",
+   "data": "None.",
+   "steps": [
+    [
+     "Sign in for shop A.",
+     "Only shop A's bills move and send."
+    ],
+    [
+     "Open the till for shop B.",
+     "Shop B's bills are still there, untouched."
+    ]
+   ],
+   "note": "Automated: chitbridge-web/e2e/person-signin.cjs T7.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1SGN-01",
+   "module_key": "S1SGN",
+   "module_name": "Stage 1 · Sign in with a mobile number or an e-mail",
+   "intro": "M14: one sign-in window (index, CB Accounts, CB CRM). Type a mobile number or an e-mail; the app finds the account. Nobody types .br or .cr. The till gets this window next.",
+   "title": "The owner signs in by mobile number",
+   "priority": "High",
+   "pre": "A shop whose owner has a verified mobile number.",
+   "data": "The number, typed with spaces (98400 12345).",
+   "steps": [
+    [
+     "On index, type the mobile number and press Continue.",
+     "It says a code was sent."
+    ],
+    [
+     "Type the code.",
+     "Signed in to the shop."
+    ],
+    [
+     "Sign out. Sign in again with the e-mail instead.",
+     "Signed in to the same shop."
+    ]
+   ],
+   "note": "Automated: chitbridge-api/tests/signin-contact.test.cjs, chitbridge-web/tests/signin-ui.test.cjs.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1SGN-02",
+   "module_key": "S1SGN",
+   "module_name": "Stage 1 · Sign in with a mobile number or an e-mail",
+   "intro": "M14: one sign-in window (index, CB Accounts, CB CRM). Type a mobile number or an e-mail; the app finds the account. Nobody types .br or .cr. The till gets this window next.",
+   "title": "An employee signs in by mobile and sets a PIN",
+   "priority": "High",
+   "pre": "An employee who has never signed in, with a verified mobile number.",
+   "data": "Their mobile number.",
+   "steps": [
+    [
+     "Type the mobile number, press Continue, type the code.",
+     "Signed in, then asked for a 4-digit PIN, twice."
+    ],
+    [
+     "Set the PIN. Sign out.",
+     "Signed out."
+    ],
+    [
+     "Type the same mobile number.",
+     "⭐ It asks for the PIN, not a code. The PIN signs them in."
+    ]
+   ],
+   "note": "This is S1PIN-01 on the screen. Not on the till yet.",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1SGN-03",
+   "module_key": "S1SGN",
+   "module_name": "Stage 1 · Sign in with a mobile number or an e-mail",
+   "intro": "M14: one sign-in window (index, CB Accounts, CB CRM). Type a mobile number or an e-mail; the app finds the account. Nobody types .br or .cr. The till gets this window next.",
+   "title": "One mobile number, two people: it asks which",
+   "priority": "High",
+   "pre": "One mobile number verified on an owner at shop A and on an employee at shop B.",
+   "data": "That number.",
+   "steps": [
+    [
+     "Type the number and press Continue.",
+     "⭐ It shows both, each with its shop. It does not guess."
+    ],
+    [
+     "Pick the employee at shop B.",
+     "It asks for that employee's PIN (or code) and signs in at shop B."
+    ],
+    [
+     "Remove the employee at shop B. Type the number again.",
+     "No question: it goes straight to the owner."
+    ]
+   ],
+   "note": "",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1SGN-04",
+   "module_key": "S1SGN",
+   "module_name": "Stage 1 · Sign in with a mobile number or an e-mail",
+   "intro": "M14: one sign-in window (index, CB Accounts, CB CRM). Type a mobile number or an e-mail; the app finds the account. Nobody types .br or .cr. The till gets this window next.",
+   "title": "A customer signs in by e-mail",
+   "priority": "Medium",
+   "pre": "A customer of a shop.",
+   "data": "The customer's e-mail.",
+   "steps": [
+    [
+     "Type the e-mail, press Continue, type the code.",
+     "Signed in as the customer. No PIN step."
+    ]
+   ],
+   "note": "",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
+   "case_key": "S1SGN-05",
+   "module_key": "S1SGN",
+   "module_name": "Stage 1 · Sign in with a mobile number or an e-mail",
+   "intro": "M14: one sign-in window (index, CB Accounts, CB CRM). Type a mobile number or an e-mail; the app finds the account. Nobody types .br or .cr. The till gets this window next.",
+   "title": "Wrong or unknown: plain sentences, no second code by accident",
+   "priority": "Medium",
+   "pre": "The sign-in window.",
+   "data": "An unknown number; a wrong code.",
+   "steps": [
+    [
+     "Type a number no account has.",
+     "A sentence says there is no account. Nothing is created."
+    ],
+    [
+     "Type a real number. Press Continue twice fast.",
+     "⭐ Only one code is sent."
+    ],
+    [
+     "Type a wrong code.",
+     "It says the code is wrong. It does not send a new one."
+    ],
+    [
+     "Press \"Send a new code\".",
+     "A new code is sent. The old one no longer works."
+    ]
+   ],
+   "note": "",
+   "layer": null,
+   "test_type": "acceptance",
+   "automated": false,
+   "areas": [
+    "web"
+   ],
+   "seq": 99,
+   "step": "99",
+   "run_by": "a person on the board (a customer, and it is UAT)",
+   "menu": null,
+   "screen_code": null,
+   "generated": false,
+   "cites": null,
+   "screen_purpose": null,
+   "generic": false
+  },
+  {
    "case_key": "S1PIN-01",
    "module_key": "S1PIN",
    "module_name": "Stage 1 · An employee sets a PIN the first time",
@@ -53949,7 +54331,7 @@
      "Signed in."
     ]
    ],
-   "note": "API part shipped in batch 3; the screens follow in M14 (CBSignin) on index, CB Accounts, CB CRM, then the till.",
+   "note": "API in batch 3; screens live in batch 4 (M14) on index, CB Accounts, CB CRM — see S1SGN-02. The till is next.",
    "layer": null,
    "test_type": "acceptance",
    "automated": false,
@@ -58559,7 +58941,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · static · 415 lines. Run: node chitbridge-api/tests/counter-gates.test.cjs",
+   "note": "test.guard · static · 489 lines. Run: node chitbridge-api/tests/counter-gates.test.cjs",
    "layer": "engine",
    "test_type": "static",
    "group": "test.guard",
@@ -58573,7 +58955,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-08T03:43:56+05:30"
+   "changed_at": "2026-10-08T04:34:02+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/crm-followups.test.cjs",
@@ -60086,7 +60468,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · unit · 227 lines. Run: node chitbridge-api/tests/identity-auth.test.js",
+   "note": "test.unit · unit · 232 lines. Run: node chitbridge-api/tests/identity-auth.test.js",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.unit",
@@ -60100,7 +60482,7 @@
     "lib/identity-auth.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-09-23T21:07:33+05:30",
+   "changed_at": "2026-10-08T09:43:21+05:30",
    "needs": [
     "a database (via identity-auth.js)"
    ]
@@ -61476,7 +61858,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-03T09:34:17+05:30"
+   "changed_at": "2026-10-08T04:04:16+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/party-no-at-add.test.cjs",
@@ -62974,6 +63356,31 @@
    "changed_at": "2026-10-01T19:27:09Z"
   },
   {
+   "case_key": "chitbridge-api/tests/signin-contact.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "M14 (DECISIONS 2026-10-08): SIGN IN WITH A MOBILE NUMBER OR AN E-MAIL; the .br / .cr grammar is added BEHIND THE SCENES. The one lookup (lib/identity-auth.js findLoginIdentity) resolves a contact to the person behind it: · the account's own sign-in e-mail (owner) · a VERIFIED identity document, PHONE or EMAIL (owner, employee) · a customer's own contact (identities.phone / otp_contact) · one contact on several accounts → 409 CHOOSE_IDENTITY, never a guess and /api/signin/ask answers `id` — the stored id the page verifies with — so a person never types `ravi@shop.br`.",
+   "claim": "M14 (DECISIONS 2026-10-08): SIGN IN WITH A MOBILE NUMBER OR AN E-MAIL; the .br / .cr grammar is added BEHIND THE SCENES. The one lookup (lib/identity-auth.js findLoginIdentity) resolves a contact to the person behind it: · the account's own sign-in e-mail (owner) · a VERIFIED identity document, PHONE or EMAIL (owner, employee) · a customer's own contact (identities.phone / otp_contact) · one contact on several accounts → 409 CHOOSE_IDENTITY, never a guess and /api/signin/ask answers `id` — the stored id the page verifies with — so a person never types `ravi@shop.br`.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 201 lines. Run: node chitbridge-api/tests/signin-contact.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-08T09:43:21+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/signin-routes.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -62997,7 +63404,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-07T22:22:54+05:30"
+   "changed_at": "2026-10-08T09:43:21+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/signin.test.js",
@@ -63666,7 +64073,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · integration · 400 lines. Run: node chitbridge-api/tests/tax-truth.test.cjs",
+   "note": "test.guard · integration · 401 lines. Run: node chitbridge-api/tests/tax-truth.test.cjs",
    "layer": "engine",
    "test_type": "integration",
    "group": "test.guard",
@@ -63687,7 +64094,7 @@
     "lib/tax.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-07T21:22:34+05:30",
+   "changed_at": "2026-10-08T10:00:34+05:30",
    "needs": [
     "a database",
     "the API running"
@@ -64114,7 +64521,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.unit · static · 854 lines. Run: node chitbridge-api/tests/till-vendor.test.js",
+   "note": "test.unit · static · 855 lines. Run: node chitbridge-api/tests/till-vendor.test.js",
    "layer": "engine",
    "test_type": "static",
    "group": "test.unit",
@@ -64138,7 +64545,7 @@
     "engine/profilemap.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-03T09:37:20+05:30"
+   "changed_at": "2026-10-08T10:03:22+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/till-watch.test.js",
@@ -68712,7 +69119,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 380 lines. Run: node chitbridge-web/e2e/person-signin.cjs",
+   "note": "test.guard · system · 580 lines. Run: node chitbridge-web/e2e/person-signin.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -68725,7 +69132,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-08T03:43:57+05:30",
+   "changed_at": "2026-10-08T04:36:28+05:30",
    "needs": [
     "a browser"
    ]
@@ -68754,7 +69161,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-08T03:43:57+05:30",
+   "changed_at": "2026-10-08T04:36:28+05:30",
    "needs": [
     "a browser"
    ]
@@ -69634,6 +70041,38 @@
    "changed_at": "2026-09-06T09:56:32+05:30",
    "needs": [
     "the API running",
+    "a browser"
+   ]
+  },
+  {
+   "case_key": "chitbridge-web/e2e/signin-window.cjs",
+   "module_key": "chitbridge-web/e2e",
+   "module_name": "Browser probes",
+   "intro": "",
+   "title": "M14: THE ONE SIGN-IN WINDOW, DRIVEN THROUGH THE SCREEN (the T1 of plan row M14).",
+   "claim": "M14: THE ONE SIGN-IN WINDOW, DRIVEN THROUGH THE SCREEN (the T1 of plan row M14).",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · system · 294 lines. Run: node chitbridge-web/e2e/signin-window.cjs",
+   "layer": "web",
+   "test_type": "system",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine",
+    "web"
+   ],
+   "subjects": [
+    "lib/serve.js"
+   ],
+   "run_by": "a person, against a live environment — never unattended",
+   "changed_at": "2026-10-08T09:50:56+05:30",
+   "needs": [
     "a browser"
    ]
   },
@@ -75580,7 +76019,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 277 lines. Run: node chitbridge-web/e2e/till-lock.cjs",
+   "note": "test.guard · system · 280 lines. Run: node chitbridge-web/e2e/till-lock.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -75593,7 +76032,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-08T03:43:57+05:30",
+   "changed_at": "2026-10-08T04:36:28+05:30",
    "needs": [
     "a browser"
    ]
@@ -75975,7 +76414,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 190 lines. Run: node chitbridge-web/e2e/till-pin.cjs",
+   "note": "test.guard · system · 192 lines. Run: node chitbridge-web/e2e/till-pin.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -75988,7 +76427,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-08T03:43:57+05:30",
+   "changed_at": "2026-10-08T04:36:28+05:30",
    "needs": [
     "a browser"
    ]
@@ -76478,7 +76917,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 181 lines. Run: node chitbridge-web/e2e/till-shop-switch.cjs",
+   "note": "test.guard · system · 182 lines. Run: node chitbridge-web/e2e/till-shop-switch.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -76491,7 +76930,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-10-08T03:43:57+05:30",
+   "changed_at": "2026-10-08T04:36:28+05:30",
    "needs": [
     "a browser"
    ]
@@ -77441,6 +77880,35 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-08-09T02:29:40+05:30"
+  },
+  {
+   "case_key": "chitbridge-web/tests/signin-ui.test.cjs",
+   "module_key": "chitbridge-web/tests",
+   "module_name": "tests",
+   "intro": "",
+   "title": "M14: THE ONE SIGN-IN STATE MACHINE (public/app/signin-ui.js, CBSignin.machine), driven with no browser.",
+   "claim": "M14: THE ONE SIGN-IN STATE MACHINE (public/app/signin-ui.js, CBSignin.machine), driven with no browser.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 209 lines. Run: node chitbridge-web/tests/signin-ui.test.cjs",
+   "layer": "web",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine",
+    "web"
+   ],
+   "subjects": [
+    "lib/signin.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-08T09:50:56+05:30"
   }
  ]
 }
