@@ -170,7 +170,11 @@ function sourceOf(l) {
   if (!l.source_chit_id && !day) return null;
   const m = /^walkin:([^:]+):/.exec(String(l.source_ref || ''));
   const b = l.src_by;
-  const seller = b && typeof b === 'object' ? (b.name || null) : (typeof b === 'string' && b.trim() ? b.trim() : null);
+  /* ⭐ M09: a PHONE's bill says `till.by` as the identity id the session is checked against and the NAME beside it as
+     `till.by_name` (till.html tillStamp); a key's bill still sends { id, name, kind }. The books show the name either way. */
+  const seller = b && typeof b === 'object' ? (b.name || null)
+    : (l.src_by_name && String(l.src_by_name).trim()) ? String(l.src_by_name).trim()
+    : (typeof b === 'string' && b.trim() ? b.trim() : null);
   const pay = howOf(l, day);
   return { chit_id: l.src_chit_id || null, ref: l.src_ref || null, kind: day ? 'day' : (l.event_type === 'walkin_day' ? 'bill' : KIND[l.event_type] || l.event_type || null),
     counter: l.src_till || (m ? m[1] : null) || l.counter_id || null, by: day ? null : (seller || l.by_name || null),

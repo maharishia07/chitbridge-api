@@ -53,6 +53,11 @@ function fakeDb(rows) {
       if (row) { row.pin_attempts = 0; row.otp_code = null; row.otp_expires_at = null; row.otp_attempts = 0; }
       return { rows: [] };
     }
+    /* M14: the contact lookups (a customer's own contact; a verified document's identity by id) — nothing planted here matches */
+    if (/identity_type = 'customer'/.test(s))
+      return { rows: table.filter((r) => r.identity_type === 'customer' && (r.otp_contact === params[0] || r.phone === params[0] || r.phone === params[1])) };
+    if (/FROM identities WHERE identity_id = \$1$/.test(s.trim()))
+      return { rows: table.filter((r) => r.identity_id === params[0]) };
     if (/WHERE email = \$1 AND identity_type = 'entity'/.test(s))
       return { rows: table.filter((r) => r.email === params[0] && r.identity_type === 'entity') };
     if (/WHERE LOWER\(user_id\) = LOWER\(\$1\)/.test(s) && /identity_type = 'entity'/.test(s))

@@ -156,7 +156,7 @@ const { validate, sanitise } = require('../middleware/validate');
 const { safeErr } = require('../lib/respond');
 const devOtp = require('../lib/dev-otp');
 const { generateOTP } = require('../lib/otp');
-const { sendOtpEmail } = require('../lib/notify');
+const { sendOtpEmail, sendOtp } = require('../lib/notify');
 const events = require('../lib/signin-events');
 
 const door = (name) => function signinDoor(req, res, next) { req.signinDoor = name; next(); };
@@ -170,6 +170,15 @@ function note(req, identity, action, method, code, jti) {
   events.record(Object.assign(events.fromRequest(req), {
     entity_id: shopOfIdentity(identity), identity_id: identity.identity_id, action, method: method || null, code: code || null, jti: jti || null }));
 }
+/**
+ * ⭐ M14 — ONE CONTACT, SEVERAL PEOPLE: the door asks which, never guesses (DECISIONS 2026-10-08). `choices[].id` is the STORED
+ * id (grammar and all) the page sends back as `id`; the person only ever typed a number or an address.
+ */
+const chooseWhich = (req, res, choices) => {
+  res.locals.code = 'CHOOSE_IDENTITY';
+  return res.status(409).json({ error: 'Which account?', code: 'CHOOSE_IDENTITY',
+    message: 'That contact is on more than one account. Choose one.', choices });
+};
 const noAccount = (req, res, status, bodyOut) => {
   res.locals.code = 'NO_ACCOUNT';
   return res.status(status).json(Object.assign(bodyOut, isNewDoor(req) ? { code: 'NO_ACCOUNT' } : {}));
@@ -241,7 +250,8 @@ async function ask(req, res, next) {
     if (!input) {
       return res.status(400).json({ error: 'Validation failed', message: 'Send your email address or your User ID.' });
     }
-    const extra = (kind, need) => (isNewDoor(req) ? { kind, need } : {});
+    /* the new door also answers `id`: the stored id the page verifies with — a mobile or e-mail resolves ONCE (M14) */
+    const extra = (kind, need, id) => (isNewDoor(req) ? { kind, need, ...(id ? { id } : {}) } : {});
 
     /**
      * ⭐⭐⭐ A COASSIST TYPED INTO THE SAME BOX — answered FIRST, before anything splits on '@': a coassist's own user id
@@ -250,6 +260,7 @@ async function ask(req, res, next) {
      * ⚠️ AMBIGUOUS is refused, never guessed.
      */
     const found = await identityAuth.findLoginIdentity(query, input);
+    if (found.ambiguous && found.choices) return chooseWhich(req, res, found.choices);
     if (found.ambiguous) {
       res.locals.code = 'AMBIGUOUS_NAME';
       return res.status(409).json({
@@ -261,15 +272,46 @@ async function ask(req, res, next) {
       const a = found.identity;
       if (identityAuth.needsPin(a)) {
         note(req, a, 'ask', 'pin');
-        return res.json(Object.assign({ message: 'Enter your PIN.', use_pin: true, user_id: a.user_id }, extra('actor', 'pin')));
+        return res.json(Object.assign({ message: 'Enter your PIN.', use_pin: true, user_id: a.user_id }, extra('actor', 'pin', a.user_id)));
       }
       const otp = await identityAuth.issueOtp(query, a);
       note(req, a, 'ask', 'otp');
+      /* M14: an employee who signed in by a VERIFIED e-mail gets the code there — the one contact the shop proved is theirs */
+      const toMail = found.via === 'contact' && input.includes('@') && !identityAuth.mobileOf(input);
+      const sent = toMail ? await sendOtpEmail(input.toLowerCase(), a.display_name, otp) : null;
       return res.json(Object.assign({
-        message: 'First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.',
+        message: sent && sent.delivered ? 'Verification code sent to your email'
+               : 'First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.',
         user_id: a.user_id,
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-      }, extra('actor', 'code')));
+      }, extra('actor', 'code', a.user_id)));
+    }
+
+    /**
+     * ⭐ M14 — A CUSTOMER by the contact the storefront proved (identities.phone / otp_contact): the code goes back on the same
+     * channel, the customer's own fixed test code applies (lib/dev-otp.js 'customer'), the .cr handle travels as `id`.
+     * Customers are not person sessions (issueToken: no jti) — exactly the storefront's token.
+     */
+    if (found.identity && found.identity.identity_type === 'customer') {
+      const c = found.identity;
+      const row = (await query('SELECT otp_contact, phone FROM identities WHERE identity_id = $1', [c.identity_id])).rows[0] || {};
+      const to = row.otp_contact || row.phone || '';
+      const channel = to.includes('@') ? 'email' : 'phone';
+      const otp = await identityAuth.issueOtp(query, c, undefined, 'customer');
+      if (to) await sendOtp(channel, to, c.display_name, otp);
+      note(req, c, 'ask', 'otp');
+      return res.json(Object.assign({
+        message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
+        ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
+      }, extra('customer', 'code', c.email)));
+    }
+
+    /* ⭐ M14 — an OWNER found by a mobile number or a verified e-mail: the row is in hand; the lookups below would not find a number */
+    if (found.identity && found.via === 'contact') {
+      const e = found.identity;
+      note(req, { identity_id: e.identity_id }, 'ask', 'otp');
+      return await sendCode(req, res, { identity_id: e.identity_id, email: e.email, display_name: e.display_name },
+        extra('entity', 'code', e.user_id || e.email));
     }
 
     const isEmail = input.includes('@');
@@ -385,6 +427,7 @@ async function verify(req, res) {
     else {
       /* M06 { id }: the ONE lookup ask uses — an e-mail, a stored user id, or key@Display Name */
       const f = await identityAuth.findLoginIdentity(query, id);
+      if (f.ambiguous && f.choices) return chooseWhich(req, res, f.choices);
       if (f.ambiguous) {
         res.locals.code = 'AMBIGUOUS_NAME';
         return res.status(409).json({ error: 'Ambiguous business', code: 'AMBIGUOUS_NAME',
@@ -414,7 +457,7 @@ async function verify(req, res) {
      * through all of this; running it on the actor's own id would mint a second, bogus governance stamp.
      */
     let mintedConstitution = null;
-    if (identity.identity_type !== 'actor') {
+    if (identity.identity_type !== 'actor' && identity.identity_type !== 'customer') {
       await query(`UPDATE identities SET email_verified = TRUE WHERE identity_id = $1`, [identity.identity_id]);
 
       /**

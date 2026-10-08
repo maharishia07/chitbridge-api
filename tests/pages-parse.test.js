@@ -16,7 +16,7 @@
 'use strict';
 const assert = require('assert'), fs = require('fs'), path = require('path'), vm = require('vm');
 const API = path.join(__dirname, '..');
-const WEB = path.join(API, '..', 'chitbridge-web', 'public');
+const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public');   /* CB_WEB_DIR: the paired web worktree (vendor-till.cjs) */
 
 const PAGES = [
   ['the app',            path.join(WEB, 'app.html')],
