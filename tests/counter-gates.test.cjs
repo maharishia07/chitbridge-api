@@ -137,8 +137,8 @@ it('⭐ the device id is device-wide and made once; every cloud call carries it;
   assert.ok(/o\.headers\['X-Device-Id'\] = deviceId\(\)/.test(body(PAGE, 'async function fetchBy_(').text), 'fetchBy_ does not send X-Device-Id');
   const ts = body(PAGE, 'function tillStore(').text;
   assert.ok(/CloudHost\.person\.entity_id[\s\S]{0,120}deviceId\(\)/.test(ts), 'the person store is not named per shop + device');
-  assert.ok(ts.indexOf('CloudHost.person') < ts.indexOf("'cb-till-' + h.toString(36)"), 'the key store is tried before the person store');
-  assert.ok(/'cb-till-' \+ h\.toString\(36\)/.test(ts), 'the OLD key store name changed — every phone holding a key loses its queue');
+  assert.ok(ts.indexOf('CloudHost.person') < ts.indexOf('return keyStoreName(k)'), 'the key store is tried before the person store');
+  assert.ok(/return keyStoreName\(k\)/.test(ts) && /'cb-till-' \+ h\.toString\(36\)/.test(body(PAGE, 'function keyStoreName(').text), 'the OLD key store name changed — every phone holding a key loses its queue');
 });
 
 it('⭐ one place signs a cloud call (CloudHost.auth) — no hand-written key header is left', () => {
@@ -412,3 +412,77 @@ it('over the limit, only the OWNER\'s counter PIN allows it', () => {
 });
 
 console.log('\n' + pass + ' checks passed\n');
+
+console.log('\nM09 · EVERY ROW SAYS WHERE AND BY WHOM IT WAS MADE — and a session older than a day is renewed through the door\n');
+
+it('⭐⭐⭐ business_json.till has ONE writer (tillStamp) — no builder writes the shape by hand', () => {
+  const w = outside(PAGE, /till: \{ id: [a-z.]+, name: ls\.get\('cb_till_name'/, body(PAGE, 'function tillStamp('));
+  assert.deepStrictEqual(w, [], 'a row builder writes till by hand (it would leave without device_id/by):\n      ' + w.join('\n      '));
+  const n = (PAGE.match(/till: tillStamp\(/g) || []).length;
+  assert.ok(n >= 7, 'only ' + n + ' builders stamp through tillStamp — a bill, credit note, expense, subscription, note, payment and shift make 7');
+});
+
+it('⭐⭐ a stamp names the device and the person: device_id off cb_device_id, by = the identity the server knows, by_name beside it', () => {
+  const ts = body(PAGE, 'function tillStamp(').text;
+  assert.ok(/t\.device_id = deviceId\(\)/.test(ts), 'the stamp does not carry the device id');
+  assert.ok(/p\.identity_id/.test(ts) && /t\.by_name/.test(ts), 'the stamp does not name the person the way lib/holder.js checks (identity_id) with by_name beside it');
+  assert.ok(/if \(!onAgent\(\)\) t\.device_id/.test(ts), 'the shop PC program is given a device id it does not have');
+  const po = body(PAGE, 'function personOf(').text;
+  assert.ok(/identity_id: claims\.identity_id/.test(po) && /iat: claims\.iat/.test(po), 'the kept session no longer records identity_id and iat');
+});
+
+it('⭐ renew is asked once per good snapshot, only after a day, and the new token goes through becomeShop (the one writer)', () => {
+  const pr = body(PAGE, 'async function personRenew(').text;
+  assert.ok(/RENEW_AFTER_MS/.test(pr) && /'\/api\/signin\/renew'/.test(pr), 'personRenew does not call /api/signin/renew after RENEW_AFTER_MS');
+  assert.ok(/becomeShop\(\{ token: a\.token/.test(pr), 'personRenew keeps the token itself instead of handing it to the door');
+  assert.ok(!/ls\.set\('cb_till_person'/.test(pr) && !/CloudHost\.person\s*=/.test(pr), 'personRenew writes the session beside the door');
+  const w = outside(PAGE, /'\/api\/signin\/renew'/, body(PAGE, 'async function personRenew('));
+  assert.deepStrictEqual(w, [], 'renew is called from somewhere else too:\n      ' + w.join('\n      '));
+  assert.ok(/await DB\.set\('snapshot', snap\);\n\s*\/\*[^\n]*\n\s*if \(this\.person\) \{ try \{ await personRenew\(\); \}/.test(PAGE), 'renew does not follow a successful snapshot');
+});
+
+console.log('\nM10 · THE OLD KEY STORES COME ALONG — copy, prove, mark; nothing deleted; the key goes only through the door, only once its store is accounted for\n');
+
+it('⭐⭐⭐ a store is moved by ONE engine (storeMoveIn): it proves the copy before it marks, and it never deletes a database', () => {
+  const mv = body(PAGE, 'async function storeMoveIn(').text;
+  assert.ok(/missing\.push\('bill '/.test(mv) && /missing\.push\('queued '/.test(mv), 'the copy is not proven row by row before the mark');
+  assert.ok(mv.indexOf('missing.push') < mv.indexOf('ls.set(movedKey('), 'the moved note is written before the proof');
+  assert.ok(/if \(missing\.length\) return \{ ok: false/.test(mv), 'a missing row does not stop the mark');
+  assert.ok(/if \(q\._sent \|\| haveQ\[String\(q\.no\)\] \|\| \(kept && kept\._sent\)\)/.test(mv), 'a row already sent from here can be queued again — a bill sent twice');
+  for (const fn of ['async function storeMoveIn(', 'async function moveOldStores(', 'async function rescueOrphans(', 'async function keyRetire(']) {
+    assert.ok(!/deleteDatabase/.test(body(PAGE, fn).text), fn + ' deletes a store — the old copy must stay in this release');
+  }
+  /* allowed: peekStore undoing a database it created by peeking; closing the counter and a cold start, which clear THIS store (tillStore()) once the shop accepted */
+  const w = outside(PAGE, /indexedDB\.deleteDatabase\(/, body(PAGE, 'async function wipeDevice('), ['indexedDB.deleteDatabase(name); } catch (_) {} return res(null); }', 'var rq = indexedDB.deleteDatabase(name);']);
+  assert.deepStrictEqual(w, [], 'a store is deleted somewhere other than "Clear everything" (peekStore only undoes a database it created by peeking):\n      ' + w.join('\n      '));
+});
+
+it('⭐⭐ the automatic move touches only THIS shop\'s stores, skips a moved one, and is asked once per open after the shop is read', () => {
+  const mo = body(PAGE, 'async function moveOldStores(').text;
+  assert.ok(/if \(s\.moved\) continue;/.test(mo), 'a store already moved is moved again');
+  assert.ok(/if \(String\(s\.owner \|\| ''\) !== mine\) \{ if \(s\.bills \|\| s\.queue\) out\.strangers\+\+; continue; \}/.test(mo), 'a store of another shop is not left alone');
+  assert.ok(/if \(!personOn\(\) \|\| onAgent\(\)\) return out;/.test(mo), 'the move runs on a key holder or the shop PC');
+  assert.ok(/if \(this\.person && !this\._moved\) \{\n\s*this\._moved = true;\n\s*try \{ await moveOldStores\(\); \}/.test(PAGE), 'the move is not asked once per open from a successful snapshot');
+  assert.ok(/this\.drain\(\)\.then\(function\(\)\{ return keyRetire\(\); \}\)/.test(PAGE), 'the key is not retired after the drain that follows the move');
+});
+
+it('⭐⭐⭐ the key is removed only by the door (retireKey), and only keyRetire() asks — after every row of the key\'s store is sent or here', () => {
+  assert.ok(/if \(to\.retireKey\) \{[\s\S]{0,700}localStorage\.removeItem\('cb_till_key'\)/.test(G1.text), 'the door has no retireKey branch');
+  assert.ok(/if \(!\(CloudHost\.person && CloudHost\.person\.token\)\) return \{ ok: false/.test(G1.text), 'the door lets a key go with no person session kept');
+  const w = outside(PAGE, /becomeShop\(\{ retireKey: true \}\)/, body(PAGE, 'async function keyRetire('));
+  assert.deepStrictEqual(w, [], 'something other than keyRetire() asks the door to let the key go:\n      ' + w.join('\n      '));
+  const kr = body(PAGE, 'async function keyRetire(').text;
+  assert.ok(/keyStoreName\(String\(CloudHost\.key\)\)/.test(kr) && /missing\+\+/.test(kr) && kr.indexOf('missing') < kr.indexOf('becomeShop({ retireKey: true })'), 'keyRetire does not check the key\'s own store before asking');
+  assert.ok(/note && note\.to === tillStore\(\)/.test(kr), 'a moved note for ANOTHER store counts as this one\'s');
+});
+
+it('⭐ a browser holding a key keeps the person session on sign-in (the move follows the reload); the shop PC program does not', () => {
+  const kb = body(PAGE, 'function keyedBrowser(').text;
+  assert.ok(/!onAgent\(\)/.test(kb) && /!personOn\(\)/.test(kb), 'keyedBrowser() is not "a browser, a key, no person"');
+  assert.ok(/if \(\(personOn\(\) \|\| keyedBrowser\(\)\) && r\.body\.token\)/.test(body(PAGE, 'async function usignVerify(').text), 'a keyed browser\'s sign-in drops the session again');
+  assert.ok(/const SHELF = 'cb-till-v3'/.test(fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8')), 'the service-worker shelf was not bumped for the new boot path');
+});
+
+it('⭐ the move is also asked from load(), once the shop is known from the store itself — a reload mid-move finishes it without a line', () => {
+  assert.ok(/if \(!onAgent\(\) && HOST\.person && OWNER && !HOST\._moved\) \{\n\s*HOST\._moved = true;\n\s*try \{ await moveOldStores\(\); \}/.test(body(PAGE, 'async function load(').text), 'load() does not finish a move from what the store already holds');
+});

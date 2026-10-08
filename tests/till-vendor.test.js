@@ -755,7 +755,7 @@ JOBS.push(['⚠️⚠️ the page, the shop-PC program and the server name the s
 }]);
 
 JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over its global', () => {
-  const dir = path.join(API, '..', 'chitbridge-web', 'public', 'engine');
+  const dir = path.join(process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public'), 'engine');   /* CB_WEB_DIR: vendor-till.cjs */
   /* qr.js is the one third-party file and defines `qrcode` as a bare global, not on window — named, not skipped */
   const GLOBALS = { 'offers.js': 'CBOffers', 'tax.js': 'CBTax', 'search.js': 'CBSearch', 'gs1.js': 'CBGS1',
                     'lots.js': 'CBLots', 'nums.js': 'CBNums', 'pricing.js': 'CBPricing', 'locale.js': 'CBLocale',

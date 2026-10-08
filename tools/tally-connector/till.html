@@ -3958,8 +3958,34 @@ function personOf(token, idn, who){
   try { claims = JSON.parse(atob(String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) || {}; } catch (_) { claims = {}; }
   return { token: String(token), entity_id: String(ent), bridge_id: (idn && idn.bridge_id) || null,
            by: (who && who.id) || (idn && (idn.user_id || idn.identity_id)) || null, by_name: (who && who.name) || (idn && idn.display_name) || null,
-           kind: (who && who.kind) || null, device_id: deviceId(), jti: claims.jti || null,
+           /* ⭐ M09: the identity id the SERVER knows this person by — what a bill's till.by must say (tillStamp, lib/holder.js) */
+           identity_id: claims.identity_id || (idn && idn.identity_id) || null,
+           kind: (who && who.kind) || (idn && idn.kind) || null, device_id: deviceId(), jti: claims.jti || null,
+           /* ⭐ M09: when it was issued — personRenew() trades a session older than a day for a fresh one while the line is up */
+           iat: claims.iat ? Number(claims.iat) * 1000 : Date.now(),
            exp: claims.exp ? Number(claims.exp) * 1000 : null, at: Date.now() };
+}
+/**
+ * ⭐ M09 · RENEW WHILE THE LINE IS UP (DESIGN-person-signin §2.2, SPEC-iam-build PR 9). After a successful snapshot, a
+ * session issued more than a day ago is traded for a fresh jti (POST /api/signin/renew — same device, same shop, the old
+ * jti forgotten server-side). A phone that bills every day never meets SESSION_EXPIRED; one that was away for a month
+ * does, and its queue waits for a sign-in (§3.3). The new token goes through the ONE door — becomeShop({ token }) for the
+ * same shop keeps it in place: no reload, same store (tillStore names it by shop + device, never by token). A refusal
+ * changes nothing: the session we hold is the one the server answered the snapshot with a moment ago.
+ */
+var RENEW_AFTER_MS = 24 * 3600 * 1000;
+async function personRenew(){
+  if (!personOn() || !lineUp()) return { ok: false, why: 'not a person session, or no line' };
+  var p = CloudHost.person, since = Number(p.iat || p.at || 0);
+  if (since && (Date.now() - since) < RENEW_AFTER_MS) return { ok: false, why: 'fresh' };
+  var r = await fetchBy(CloudHost.api + '/api/signin/renew', { method: 'POST',
+    headers: CloudHost.auth({ 'Content-Type': 'application/json' }), body: JSON.stringify({ surface: 'till' }) });
+  if (!r.ok) return { ok: false, status: r.status };
+  var a = null; try { a = await r.json(); } catch (_) { a = null; }
+  if (!a || !a.token) return { ok: false, why: 'no token in the answer' };
+  var kept = await becomeShop({ token: a.token, idn: { entity_id: p.entity_id, bridge_id: p.bridge_id, identity_id: p.identity_id,
+                                                      user_id: p.by, display_name: p.by_name, kind: p.kind } });
+  return (kept && kept.ok) ? { ok: true, jti: (CloudHost.person || {}).jti || null } : { ok: false, why: (kept && kept.message) || 'not kept' };
 }
 /**
  * ⭐ WORDS PER CODE for a person session the shop refused — never "Due to maintenance", which is the key holder's
@@ -4141,7 +4167,11 @@ function tillStore(){
     return 'cb-till-' + String(CloudHost.person.entity_id).replace(/[^A-Za-z0-9_-]/g, '') + '-' + String(deviceId()).replace(/[^A-Za-z0-9_-]/g, '');
   var k = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) ? String(CloudHost.key) : '';
   if (!k) return 'cb-till';                       /* no key — nothing belongs to a shop yet */
-  var h = 5381;                                    /* djb2 — a name, not a secret: the key itself never goes near a store name */
+  return keyStoreName(k);
+}
+/** the store a KEY named — djb2, a name, not a secret: the key itself never goes near a store name (M10 reads it for the move) */
+function keyStoreName(k){
+  var h = 5381;
   for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0);
   return 'cb-till-' + h.toString(36);
 }
@@ -5134,6 +5164,21 @@ var CloudHost = {
        nothing to save by shortening the one value the audit is about, and a prefix can collide. */
     if (snap.entity_id) (snap.items || []).forEach(function(i){ i._shop = String(snap.entity_id); });
     await DB.set('snapshot', snap);
+    /* ⭐ M09: the shop answered, so the line and the session are good — a session older than a day is renewed now */
+    if (this.person) { try { await personRenew(); } catch (_) { /* the session we hold still works — nothing to do */ } }
+    /* ⭐ M10: once per open, with the shop known — earlier key stores of THIS shop come along (copy · prove · mark), the
+       queue drains with them in it, and then the key may go (keyRetire proves its store first; nothing is deleted) */
+    if (this.person && !this._moved) {
+      this._moved = true;
+      try { await moveOldStores(); } catch (_) { /* nothing marked, nothing lost — the next open tries again */ }
+      if (this.key) { this.drain().then(function(){ return keyRetire(); }).catch(function(){}); return { ok:true, at: snap.at }; }
+    }
+    /* ⭐ M10: a phone still on a KEY is asked, once per open, to sign in as itself — the key path ends with M13 (DESIGN §5 step 1);
+       it keeps billing under the key until then, so nothing here is lost by waiting */
+    if (keyedBrowser() && !this._nudged) {
+      this._nudged = true;
+      try { if (!sessionStorage.getItem('cb_till_nudged')) { sessionStorage.setItem('cb_till_nudged', '1'); flash('👤', 'Sign in once with your user ID — this phone then bills as you', 'Sign in', function(){ pairAgain(); }); } } catch (_) {}
+    }
     this.drain();
     return { ok:true, at: snap.at };
   },
@@ -5163,7 +5208,7 @@ var CloudHost = {
       subject: 'Shift — ' + sh.by.name + ' — ' + String(sh.to).slice(0,10),
       manual_subject: 'Shift — ' + sh.by.name + ' — ' + String(sh.to).slice(0,10),
       client_ref: 'SHIFT/' + sh.till + '/' + sh.from,
-      business_json: { shift: sh, till: { id: sh.till, name: ls.get('cb_till_name','Counter 1'), by: sh.by } },
+      business_json: { shift: sh, till: tillStamp(sh.till, sh.by) },
       line_items: [],
     };
     await DB.put('queue', Object.assign({ no: body.client_ref, at: sh.to, shiftBody: body }, {}));
@@ -5702,7 +5747,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-10-07.m08';
+var TILL_BUILD = '2026-10-08.m10';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -5911,6 +5956,37 @@ function docTagOf(kind){
  */
 /** which counter wrote a chit — the shop PC's program or a browser (both build credit notes and expenses now) */
 function tillHostWord(){ return (typeof HOST !== 'undefined' && HOST && HOST.mode === 'agent') ? 'agent' : 'browser'; }
+/**
+ * ── ⭐⭐ M09 · WHAT EVERY ROW SAYS ABOUT WHERE AND BY WHOM IT WAS MADE — one writer ───────────────────────────
+ * (DESIGN-person-signin §2.6, SPEC-iam-build PR 9). `business_json.till = { id, name, host, device_id, by, by_name }`.
+ * Seven builders wrote this shape by hand (a bill, a credit note, an expense, a subscription, a receipt/despatch note,
+ * a payment, a shift) — the second-call-site rule made it a helper, so no row can leave without its device and person.
+ *   id         the counter label the ROW was numbered under — its own, never today's (a queued bill keeps its prefix)
+ *   device_id  this browser's cb_device_id (M08). The server checks it against the session a bill arrives on (M11:
+ *              400 TILL_CLAIM_MISMATCH for another phone's bill). The shop PC's program has no device id and sends none.
+ *   by         on a PERSON's device, the identity id the server knows (req.till.by is the session's identity_id —
+ *              lib/holder.js tillClaimOf): a row made by the signed-in person passes as their own; one made by somebody
+ *              else on the same phone (a counter-PIN shift change) is accepted with till.sent_by beside it, `by` kept.
+ *              A key holder keeps the { id, name, kind } it always sent — a key cannot vouch for the person on shift,
+ *              and routes/books.js reads both shapes.
+ *   by_name    the person's display name for the books and the receipt, whatever shape `by` has.
+ */
+function tillStamp(id, by){
+  var who = (by && typeof by === 'object') ? by : null;
+  var t = { id: id, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord() };
+  if (!onAgent()) t.device_id = deviceId();
+  var p = personOn() ? CloudHost.person : null;
+  if (p) {
+    var same = !who || (p.by != null && String(who.id) === String(p.by))
+      || (who.identity_id && p.identity_id && String(who.identity_id) === String(p.identity_id));
+    t.by = same ? (p.identity_id || p.by || null) : (who.identity_id || who.id || null);
+    t.by_name = (who && who.name) || p.by_name || null;
+  } else {
+    t.by = who || null;
+    t.by_name = (who && who.name) || null;
+  }
+  return t;
+}
 function chitOfCN(cn){
   return {
     recipients: [{ self: true, name: 'self' }],
@@ -5919,7 +5995,7 @@ function chitOfCN(cn){
     client_ref: cn.no,
     business_json: {
       customer: cn.customer || { name: 'Walk-in' },
-      till: { id: cn.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: cn.by || null },
+      till: tillStamp(cn.till, cn.by),
       doc: 'credit_note', slip: 'credit_note',
       bill_no: cn.no, billed_at: cn.at,
       catalogue_version: cn.catalogue_version || null,
@@ -5958,7 +6034,7 @@ function chitOfExpense(e){
     subject: subject, manual_subject: subject,
     client_ref: e.no,
     business_json: {
-      till: { id: e.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: e.by || null },
+      till: tillStamp(e.till, e.by),
       doc: 'expense', slip: 'expense',
       bill_no: e.no, billed_at: e.at,
       /* ⭐ money OUT, named as its own thing — same reasoning as a credit note's `refund` above */
@@ -5999,7 +6075,7 @@ function chitOfSubscription(s){
     client_ref: s.no,
     business_json: {
       customer: s.customer || { name: 'Walk-in' },
-      till: { id: s.till, name: ls.get('cb_till_name', 'Counter 1'), host: 'browser', by: s.by || null },
+      till: tillStamp(s.till, s.by),
       doc: 'subscription', slip: 'subscription',
       bill_no: s.no, billed_at: s.at,
       payment: { mode: s.mode, paid: s.total, parts: s.payments || [] },
@@ -6027,7 +6103,7 @@ function chitOfDoc(d){
     client_ref: d.no,
     business_json: {
       doc: d.kind, doc_no: d.no, doc_at: d.at,
-      till: { id: d.till, name: ls.get('cb_till_name','Counter 1'), by: d.by || null },
+      till: tillStamp(d.till, d.by),
       party: { name: who },
       against: d.against || null,
       their_bill: d.their_bill || null,
@@ -6088,7 +6164,7 @@ function chitOf(bill){
     client_ref: bill.no,
     business_json: {
       customer: (bill.customer && bill.customer.name) ? bill.customer : { name:'Walk-in' },
-      till: { id: bill.till, name: ls.get('cb_till_name','Counter 1'), host: 'browser', by: bill.by || null },
+      till: tillStamp(bill.till, bill.by),
       bill_no: bill.no, billed_at: bill.at, catalogue_version: bill.catalogue_version || null,
       /* ⭐ the number on the customer's paper, when the shop had to record the sale under another — see renumberBill */
       printed_as: bill.printed_as || null,
@@ -6284,6 +6360,13 @@ async function load(){
   var st = await HOST.state().catch(function(){ return STATE; });
   /* ⚠️ the master decides the name — see catRestamp ([TILL-114]) */
   STATE = st || STATE; S = catRestamp((st && st.snapshot) || S);
+  /* ⭐ M10: once per open, as soon as the shop is KNOWN (OWNER from this store) — not only after a network refresh: a phone
+     that reloads mid-move, or opens with no line, finishes the move from what it already holds (same guard as refresh) */
+  if (!onAgent() && HOST.person && OWNER && !HOST._moved) {
+    HOST._moved = true;
+    try { await moveOldStores(); } catch (_) { /* nothing marked, nothing lost — the next open tries again */ }
+    if (HOST.key) HOST.drain().then(function(){ return keyRetire(); }).catch(function(){});
+  }
   /* ⭐ the person who just changed the shop (becomeShop → whoPending) is adopted by G2 now the shop is open — once */
   if (!HOST._whoNext) { try { HOST._whoNext = !!whoAdoptPending(); } catch (_) {} }
   /* ⭐ M15: the day's retention, once — see retainDaily() */
@@ -6801,7 +6884,7 @@ function chitOfPayment(p){
       payment_received: { no: p.no, at: p.at, party: p.party, amount: p.amount, currency: p.currency, mode: p.mode,
                           cheque: p.cheque || null, status: p.status || 'cleared' },
       customer: p.party ? { name: p.party.name, phone: p.party.phone || null, identity_id: p.party.identity_id } : null,
-      till: { id: p.till, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord(), by: p.by || null },
+      till: tillStamp(p.till, p.by),
     },
     line_items: [],
   };
@@ -21971,7 +22054,7 @@ async function closeCounter(already){
     if (unconfirmed > 0) why.push(unconfirmed + ' bill(s), credit note(s) or expense(s) never confirmed by ChitBridge');
     var absorbed = bills.filter(function(b){ return b && b._absorbed; }).length;
     if (absorbed) why.push(absorbed + ' credit note(s) or expense(s) recorded at ChitBridge under another counter\'s number — ask the shop before closing');
-    var left = 0; try { (await otherCounters()).forEach(function(s){ if (String(s.owner || '') === String(OWNER || '')) left += s.bills + s.queue; }); } catch (_) {}
+    var left = 0; try { (await otherCounters()).forEach(function(s){ if (!s.moved && String(s.owner || '') === String(OWNER || '')) left += s.bills + s.queue; }); } catch (_) {}
     if (left) why.push(left + ' bill(s) in an earlier copy of this counter on this PC — bring them in first (🩺 → 🗄)');
     if (why.length) {
       busyDone();
@@ -22074,7 +22157,7 @@ async function openStuck(){
    */
   try {
     (await otherCounters()).forEach(function(s){
-      if (String(s.owner || '') === String(OWNER || '')) { stranded += s.queue; leftBills += s.bills; }
+      if (!s.moved && String(s.owner || '') === String(OWNER || '')) { stranded += s.queue; leftBills += s.bills; }
     });
   } catch (_) {}
   var line = function(k, v, warn){
@@ -22446,10 +22529,117 @@ async function otherCounters(){
     var n = names[i];
     if (!n || String(n).indexOf('cb-till') !== 0 || n === here) continue;
     var p = await peekStore(n);
-    if (p) out.push(p);
+    /* ⭐ M10: a store already brought into this counter says so — it is listed, never counted as stranded, never moved twice */
+    if (p) { p.moved = movedNote(n); out.push(p); }
   }
   return out;
 }
+/**
+ * ── ⭐⭐⭐ M10 · ONE STORE INTO THIS ONE — copy, PROVE the copy, only then say it moved ──────────────────────
+ * (DESIGN-person-signin §5, SPEC-iam-build PR 10, MASTER-BUILD row 49). The engine under both callers: moveOldStores()
+ * (a phone that held a KEY, now billing as a person — automatic, once per open) and rescueOrphans() (🩺 → "Bring them in",
+ * by hand). Widened from rescueOrphans' own loop, which deleted the old database once the rows were written.
+ *
+ *   1 COPY     every bill row and every unsent queue row into THIS store, by `no` (= client_ref; DB.put upserts).
+ *              A row already here is left as it is; a queue row whose bill is already SENT from here is never queued again.
+ *   2 PROVE    read this store back: every old bill `no` is here; every old unsent queue `no` is queued here or sent here.
+ *              Anything missing → nothing is marked, both copies stay, the caller shows "What is kept here".
+ *   3 MARK     a note beside the old store (cb_till_moved@<name>: where, when, how many). ⚠️ THE OLD STORE IS NEVER DELETED
+ *              in this release — a queued sale is money, and the note is what lets the next open skip it.
+ * A crash between 1 and 3 re-runs 1 on the next open: the copy is idempotent, so no loss and no duplicate
+ * (e2e/person-signin.cjs T7 reloads the page mid-move and counts). [[project-till-store-per-key]]
+ */
+function movedKey(name){ return 'cb_till_moved@' + name; }
+function movedNote(name){ try { return JSON.parse(localStorage.getItem(movedKey(name)) || 'null'); } catch (_) { return null; } }
+async function storeMoveIn(s){
+  var here = tillStore();
+  if (!s || !s.rows || s.name === here) return { ok: false, why: 'that is this store' };
+  var byNo = function(rows){ var m = {}; (rows || []).forEach(function(r){ if (r && r.no != null) m[String(r.no)] = r; }); return m; };
+  var haveB = byNo(await DB.allRaw('bills')), haveQ = byNo(await DB.allRaw('queue'));
+  var bills = 0, queue = 0, skipped = 0;
+  for (var j = 0; j < s.rows.bills.length; j++) {
+    var b = s.rows.bills[j]; if (!b || b.no == null) continue;
+    if (haveB[String(b.no)]) { skipped++; continue; }
+    await DB.put('bills', b); bills++;
+  }
+  for (var k = 0; k < s.rows.queue.length; k++) {
+    var q = s.rows.queue[k]; if (!q || q.no == null) continue;
+    /* ⚠️ a row already acknowledged — in the old copy or in this one — must not be queued again: it is in the shop */
+    var kept = haveB[String(q.no)];
+    if (q._sent || haveQ[String(q.no)] || (kept && kept._sent)) { skipped++; continue; }
+    await DB.put('queue', q); queue++;
+  }
+  try { console.log('till-move: copied ' + s.name + ' → ' + here + ' (' + bills + ' bills, ' + queue + ' queued, ' + skipped + ' already here'
+    + (MEM.on ? '; ⚠️ localStorage fallback: ' + JSON.stringify(DB.lastErr()) : '') + ')'); } catch (_) {}
+  /* 2 · PROVE IT — what is actually in this store now, row by row, against what the old one holds */
+  var nowB = byNo(await DB.allRaw('bills')), nowQ = byNo(await DB.allRaw('queue')), missing = [];
+  s.rows.bills.forEach(function(b){ if (b && b.no != null && !nowB[String(b.no)]) missing.push('bill ' + b.no); });
+  s.rows.queue.forEach(function(q){
+    if (!q || q.no == null || q._sent) return;
+    var kb = nowB[String(q.no)];
+    if (!(nowQ[String(q.no)] || (kb && kb._sent))) missing.push('queued ' + q.no);
+  });
+  if (missing.length) return { ok: false, why: missing.length + ' row(s) could not be written here', missing: missing };
+  /* 3 · MARK — only now, and only beside the old store; it is not deleted */
+  var note = { to: here, at: new Date().toISOString(), bills: s.rows.bills.length, queue: s.rows.queue.length, copied: { bills: bills, queue: queue }, skipped: skipped };
+  if (!ls.set(movedKey(s.name), JSON.stringify(note))) return { ok: false, why: 'the note beside the old copy could not be written', missing: [] };
+  return { ok: true, bills: bills, queue: queue, skipped: skipped };
+}
+/**
+ * ── ⭐⭐⭐ M10 · THE OLD KEY STORES COME ALONG (DESIGN §5) ──────────────────────────────────────────────────
+ * A phone that held a KEY kept its bills in keyStoreName(key) — one store per key, so every re-pairing left one behind
+ * ([[project-till-store-per-key]]: five stores on Athi's phone). Now that it bills as a PERSON (M08) those bills belong in
+ * the person store: the key path ends (M13) and nothing would ever send them. Once per open, after the shop is read
+ * (OWNER known), every other cb-till-* store on this device whose owner is THIS shop and that carries no moved note is
+ * brought in by storeMoveIn(); the queue then drains under the session, and keyRetire() lets the key go — only once the
+ * key's own store is accounted for.
+ *   · a store of ANOTHER shop is never opened for writing, never moved, never marked — it stays listed under 🩺
+ *   · the old store is never deleted; the note beside it says where its rows went (openStorage)
+ *   · a copy that could not be proven keeps both stores and says so, with the way to look: "What is kept here"
+ * Returns what happened, for the screen and the tests: { moved:[{name,bills,queue}], kept:[{name,why}], strangers }.
+ */
+async function moveOldStores(){
+  var out = { moved: [], kept: [], strangers: 0 };
+  if (!personOn() || onAgent()) return out;
+  var mine = String(OWNER || (await DB.ownerRaw()) || '');
+  if (!mine) return out;
+  var others = await otherCounters();
+  try { console.log('till-move: looking from ' + tillStore() + ' (owner ' + mine + ', ' + ((await DB.allRaw('bills')) || []).length + ' bills here) at ' + others.map(function(o){ return o.name + ':' + o.bills + '/' + o.queue + (o.moved ? ':moved' : '') + ':' + (o.owner || '-'); }).join(' ')); } catch (_) {}
+  for (var i = 0; i < others.length; i++) {
+    var s = others[i];
+    if (s.moved) continue;
+    if (String(s.owner || '') !== mine) { if (s.bills || s.queue) out.strangers++; continue; }
+    var r = await storeMoveIn(s);
+    if (r.ok) out.moved.push({ name: s.name, bills: r.bills, queue: r.queue, skipped: r.skipped });
+    else out.kept.push({ name: s.name, why: r.why, missing: r.missing || [] });
+  }
+  var n = out.moved.reduce(function(a, m){ return a + m.queue; }, 0);
+  if (out.moved.length) toastLine(n ? n + ' bill(s) from before were found and will be sent.' : 'Earlier bills on this phone were brought in.');
+  if (out.kept.length) flash('🗄', 'Some earlier bills stay in their old copy', 'What is kept here', function(){ fromMenu(openStorage); });
+  return out;
+}
+/**
+ * ⭐⭐ M10 · THE KEY GOES ONLY WHEN ITS STORE IS ACCOUNTED FOR. cb_till_key stays beside the person session until every row of
+ * the key's own store (keyStoreName(key)) is either SENT (_sent) or PRESENT in this store — a moved note from storeMoveIn()
+ * says so for the whole store, else it is checked row by row (a store of another shop with unsent rows keeps the key).
+ * Then the door removes it (becomeShop({ retireKey }) — G1, the one writer). Returns { ok, why }.
+ */
+async function keyRetire(){
+  if (!personOn() || onAgent() || !CloudHost.key) return { ok: false, why: 'no key to retire' };
+  var ks = keyStoreName(String(CloudHost.key)), s = await peekStore(ks), note = movedNote(ks);
+  if (s && (s.bills || s.queue) && !(note && note.to === tillStore())) {
+    var byNo = function(rows){ var m = {}; (rows || []).forEach(function(r){ if (r && r.no != null) m[String(r.no)] = r; }); return m; };
+    var nowB = byNo(await DB.allRaw('bills')), nowQ = byNo(await DB.allRaw('queue')), missing = 0;
+    s.rows.bills.forEach(function(b){ if (b && b.no != null && !(b._sent || nowB[String(b.no)])) missing++; });
+    s.rows.queue.forEach(function(q){ var kb = q && q.no != null ? nowB[String(q.no)] : null;
+      if (q && q.no != null && !(q._sent || nowQ[String(q.no)] || (kb && kb._sent))) missing++; });
+    if (missing) return { ok: false, why: missing + ' row(s) of the key’s store are neither sent nor here' };
+  }
+  var r = await becomeShop({ retireKey: true });
+  return (r && r.ok) ? { ok: true } : { ok: false, why: (r && r.message) || 'the door refused' };
+}
+/** a browser still holding a KEY and no person session — the phone M10 moves along (never the shop PC's program) */
+function keyedBrowser(){ return !onAgent() && !!(typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) && !personOn(); }
 /**
  * ── ⭐⭐⭐ BRING THE STRANDED SALES BACK ───────────────────────────────────────────────────────────────────────
  *
@@ -22468,6 +22658,7 @@ async function rescueOrphans(){
   others.forEach(function(s){
     /* a row with no stamp is legacy and belongs to whoever the store belonged to */
     var owner = String(s.owner || '');
+    if (s.moved) return;                                    /* M10: already brought in — listed, never twice */
     if (owner && owner === mineNow) take.push(s); else if (s.bills || s.queue) strangers.push(s);
   });
   var n = take.reduce(function(a, s){ return a + s.queue + s.bills; }, 0);
@@ -22481,26 +22672,15 @@ async function rescueOrphans(){
     + 'They were left behind when the counter was paired again. Anything unsent will then be sent normally.\n\n'
     + 'Nothing belonging to another shop is touched.', 'Yes, bring them in', 'Stranded sales')) return;
 
-  var moved = 0, queued = 0;
+  /* ⭐ M10: the same engine as the automatic move — copy, prove, mark; the old copy is kept beside it, never deleted */
+  var moved = 0, queued = 0, kept = [];
   for (var i = 0; i < take.length; i++) {
-    var s = take[i];
-    for (var j = 0; j < s.rows.bills.length; j++) {
-      var b = s.rows.bills[j]; if (!b || !b.no) continue;
-      try { await DB.put('bills', b); moved++; } catch (_) {}
-    }
-    for (var k = 0; k < s.rows.queue.length; k++) {
-      var q = s.rows.queue[k]; if (!q || !q.no) continue;
-      /* ⚠️ a row already acknowledged must not be queued again — it is in the shop */
-      if (q._sent) continue;
-      try { await DB.put('queue', q); queued++; } catch (_) {}
-    }
-  }
-  /* only now is the old copy safe to remove */
-  for (var m = 0; m < take.length; m++) {
-    try { await new Promise(function(res){ var rq = indexedDB.deleteDatabase(take[m].name); rq.onsuccess = res; rq.onerror = res; rq.onblocked = res; }); } catch (_) {}
+    var r = null;
+    try { r = await storeMoveIn(take[i]); } catch (e) { r = { ok: false, why: (e && e.message) || 'refused' }; }
+    if (r && r.ok) { moved += r.bills; queued += r.queue; } else kept.push(take[i].name + ': ' + ((r && r.why) || 'not proven'));
   }
   try { await queueTally(); paintStatus(); } catch (_) {}
-  if (queued && HOST && HOST.key && lineUp()) { try { await HOST.drain(); } catch (_) {} }
+  if (queued && HOST && HOST.cred() && lineUp()) { try { await HOST.drain(); } catch (_) {} }
   /* ⭐ a brought-in bill that SAYS sent is checked now — an absorbed one is renumbered and sent (option a) */
   var chk = null;
   try { chk = await checkAbsorbed(true); } catch (_) {}
@@ -22510,6 +22690,7 @@ async function rescueOrphans(){
         + (chk.renumbered && chk.renumbered.length ? ', under new numbers (the printed number is kept on each)' : '') + '.\n\n' : '')
     + (left ? left + ' bill(s) are waiting now. Press "Get my bills moving" if they do not go.'
             : 'Everything has been sent.')
+    + (kept.length ? '\n\n' + kept.length + ' earlier copy(ies) could not be proven and stay as they were: ' + kept.join('; ') : '')
     + (strangers.length ? '\n\n' + strangers.length + ' counter(s) on this device belong to a different shop and were left alone.' : ''));
   openStorage();
 }
@@ -22556,19 +22737,23 @@ async function openStorage(){
   var others = await otherCounters();
   var mineNow = String(OWNER || '');
   var stranded = others.reduce(function(a, s){
-    return a + ((String(s.owner || '') === mineNow) ? s.queue : 0); }, 0);
+    return a + ((!s.moved && String(s.owner || '') === mineNow) ? s.queue : 0); }, 0);
   /* ⚠️ and bills that SAY sent — see the note in openStuck(); an absorbed sale reads exactly like a good one */
   var leftBills = others.reduce(function(a, s){
-    return a + ((String(s.owner || '') === mineNow) ? s.bills : 0); }, 0);
+    return a + ((!s.moved && String(s.owner || '') === mineNow) ? s.bills : 0); }, 0);
   h += '<div class="sec">Counters on this device — one copy per pairing, not per shop</div>'
     + line(tillStore() + '  ← in use now',
         m.rows ? (m.rows.bills + ' bill(s), ' + m.rows.queue + ' queued') : '—');
   others.forEach(function(s){
     var same = String(s.owner || '') === mineNow;
+    /* ⭐ M10: a copy already brought in says where it went — it is kept, and nothing in it is owed */
+    if (s.moved) { h += line(s.name + '  · moved into ' + (s.moved.to === tillStore() ? 'this counter' : s.moved.to), 'on ' + String(s.moved.at).slice(0, 10) + ' — ' + s.bills + ' bill(s) kept here as a copy'); return; }
     h += line(s.name + (same ? '  · THIS shop, left behind' : '  · another shop'),
       s.bills + ' bill(s), ' + s.queue + ' queued' + (same && s.queue ? '  — NOT SENT' : ''),
       same && s.queue > 0);
   });
+  /* ⭐ M10: a phone still holding a key beside its sign-in says why the key is kept */
+  if (personOn() && !onAgent() && CloudHost.key) h += line('An earlier key is still kept', 'its copy holds rows that are neither sent nor here yet — bring them in above', true);
   if (stranded || leftBills) {
     h += '<div style="color:var(--dim);font-size:.8em;padding:6px 0">Pairing this counter again starts a fresh '
       + 'copy and leaves the old one behind. ' + leftBills + ' bill(s) of this shop are in an earlier copy'
@@ -24308,8 +24493,11 @@ async function usignVerify(){
    * SESSION_EXPIRED lets the queue go again under the same client_refs. A keyed browser whose key works is left
    * exactly as it was: identity only, no session, its store untouched.
    */
-  if (personOn() && r.body.token) {
+  /* ⭐ M10: a browser still holding a KEY keeps this session too — the reload that follows opens the person store, and
+     the old key store comes along (moveOldStores); the key goes once its store is accounted for (keyRetire). DESIGN §5. */
+  if ((personOn() || keyedBrowser()) && r.body.token) {
     var kept = await becomeShop({ token: r.body.token, who: k.person, idn: r.body.identity || null });
+    if (kept && kept.ok && !kept.same) { USIGN.opening = (S && S.shop && S.shop.name) || 'your shop'; usignPaint(); return; }   /* the page is going away */
     if (kept && kept.ok && KEY_OK === false) { KEY_OK = true; flashHide(); try { refresh().catch(function(){}); } catch (_) {} }
   }
   USIGN.person = k.person;
@@ -24407,6 +24595,17 @@ async function becomeShop(to){
     return Object.assign({ restarting: true }, r);
   }
   var key = to.key || null, shop = null, same = false;
+  if (to.retireKey) {
+    /**
+     * ⭐⭐ M10 · THE KEY IS LET GO — asked only by keyRetire(), only after the key's own store is accounted for (every row
+     * sent or present in the person store). The person session stays, the store stays, nothing reloads: the phone was
+     * already billing as a person; the key was the leftover of how it used to pair. ⚠️ Never without a person session.
+     */
+    if (!(CloudHost.person && CloudHost.person.token)) return { ok: false, message: 'No sign-in is kept on this phone, so the key is still needed.' };
+    try { if (ls.del) ls.del('cb_till_key'); localStorage.removeItem('cb_till_key'); } catch (_) {}
+    CloudHost.key = null;
+    return { ok: true, same: true, retired: true };
+  }
   if (to.token) {
     /**
      * ── ⭐⭐⭐ M08 · A BROWSER KEEPS THE PERSON SESSION — it never spends it on /api/till/enrol ──────────────────
