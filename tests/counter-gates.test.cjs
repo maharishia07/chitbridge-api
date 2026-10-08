@@ -243,17 +243,23 @@ it('the PIN book is written in ONE place, under the shop', () => {
 });
 
 it('⚠️⚠️ what goes into the book comes from the engine (pinEntry / pinAfter) — a salt and a hash, never the PIN', () => {
-  const save = body(PAGE, 'async function usignPinSave(').text, loc = body(PAGE, 'async function usignVerifyLocal(').text;
-  assert.ok(/SIGN\(\)\.pinEntry\(/.test(save) && /await pinMake\(a\.value\)/.test(save), 'a PIN is saved without the engine\'s record');
+  /* 2026-10-08: the book is the window's LOCAL credential — save() and check() live in usignLocal(), the contract CBSignin.mount is handed */
+  const loc = body(PAGE, 'function usignLocal(').text;
+  assert.ok(/SIGN\(\)\.pinEntry\(/.test(loc) && /await pinMake\(pin\)/.test(loc), 'a PIN is saved without the engine\'s record');
   assert.ok(/SIGN\(\)\.pinAfter\(/.test(loc), 'a local PIN is judged here, not by the engine');
+  assert.ok(/local: usignLocal\(\)/.test(body(PAGE, 'function usignMount(').text), 'the book is not handed to the window as its local credential');
   assert.ok(/PBKDF2/.test(body(PAGE, 'async function pinDerive(').text), 'the PIN is no longer derived with PBKDF2');
 });
 
 it('⭐ the counter\'s own PIN is tried FIRST, and it works with the line down', () => {
-  const ask = body(PAGE, 'async function usignAsk(').text;
-  const pinAt = ask.indexOf('SIGN().pinFind('), netAt = ask.indexOf("usignPost(usignPath('ask')");
+  /* 2026-10-08: the ORDER is the window's (CBSignin.machine go(): the host's local credential before any post) — read off the kit's
+     byte copy of the window, which scripts/vendor-till.cjs holds equal to web public/app/signin-ui.js */
+  const WIN = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'signin-ui.js'), 'utf8').replace(/\r\n/g, '\n');
+  const go = body(WIN, 'function go(').text;
+  const pinAt = go.indexOf('L.find('), netAt = go.indexOf('return askFor(w.value)');
   assert.ok(pinAt > 0 && netAt > pinAt, 'the network is asked before this counter\'s own PIN');
-  assert.ok(/if \(!lineUp\(\)\)/.test(ask.slice(pinAt, netAt)), 'offline with no PIN is not refused in words');
+  const mnt = body(PAGE, 'function usignMount(').text;
+  assert.ok(mnt.indexOf('if (!lineUp())') > 0 && mnt.indexOf('if (!lineUp())') < mnt.indexOf('SIGN().transport(c)'), 'offline with no PIN is not refused in words');
 });
 
 console.log('\nS3/S4 · 🔒 LOCK · 🔓 UNLOCK — the lock is the one sign-in over a covered screen\n');
@@ -269,7 +275,8 @@ it('⭐ only a PROVED person lifts it: lockLift is called by personIn, and perso
      possible (line down, no usable PIN). The next check pins that it can only run in that state. */
   const w = outsideAll(PAGE, /\blockLift\(\)/, ['function personIn(', 'function lockLift(', 'async function lockStranded(']);
   assert.deepStrictEqual(w, [], 'the lock comes off without a sign-in:\n      ' + w.join('\n      '));
-  const w2 = outsideAll(PAGE, /\bpersonIn\(\w/, ['async function usignVerify(', 'async function usignVerifyLocal(', 'function personIn(']);
+  /* 2026-10-08: one caller — usignIn(), the mounted window's onIn (a code, a server PIN or the counter's own PIN all arrive there) */
+  const w2 = outsideAll(PAGE, /\bpersonIn\(\w/, ['async function usignIn(', 'function personIn(']);
   assert.deepStrictEqual(w2, [], 'something other than the sign-in lets a person in:\n      ' + w2.join('\n      '));
 });
 
@@ -479,8 +486,9 @@ it('⭐⭐⭐ the key is removed only by the door (retireKey), and only keyRetir
 it('⭐ a browser holding a key keeps the person session on sign-in (the move follows the reload); the shop PC program does not', () => {
   const kb = body(PAGE, 'function keyedBrowser(').text;
   assert.ok(/!onAgent\(\)/.test(kb) && /!personOn\(\)/.test(kb), 'keyedBrowser() is not "a browser, a key, no person"');
-  assert.ok(/if \(\(personOn\(\) \|\| keyedBrowser\(\)\) && r\.body\.token\)/.test(body(PAGE, 'async function usignVerify(').text), 'a keyed browser\'s sign-in drops the session again');
-  assert.ok(/const SHELF = 'cb-till-v3'/.test(fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8')), 'the service-worker shelf was not bumped for the new boot path');
+  /* 2026-10-08: the window's onIn (usignIn) holds the token as `answer.token`; the shelf moved to v4 when /app/signin-ui.js joined the boot path */
+  assert.ok(/if \(\(personOn\(\) \|\| keyedBrowser\(\)\) && answer\.token\)/.test(body(PAGE, 'async function usignIn(').text), 'a keyed browser\'s sign-in drops the session again');
+  assert.ok(/const SHELF = 'cb-till-v4'/.test(fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8')), 'the service-worker shelf was not bumped for the new boot path');
 });
 
 it('⭐ the move is also asked from load(), once the shop is known from the store itself — a reload mid-move finishes it without a line', () => {

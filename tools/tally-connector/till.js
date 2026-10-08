@@ -422,7 +422,8 @@ async function refresh() {
     }
     /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
     try {
-      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html'], staged: STAGED });
+      /* live: files only SERVED, written at once — the page and the sign-in window it mounts (a byte copy of the web's) */
+      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-ui.js'], staged: STAGED });
       if (up) {
         UPDATE.version = up.version;
         if (up.updated.length) { UPDATE.page_at = new Date().toISOString(); log('the counter screen was updated — reload the page in the browser (F5) when you are between customers'); }
@@ -663,17 +664,20 @@ function movesOfDoc(d) {
  * ⭐ A CALL WITH NO KEY — the only kind that can be made before there is one ([TILL-121]). core.CB always
  * sends X-Api-Key, which is right for every other call in this program and wrong for exactly these three.
  */
-async function noKey(method, p, body, bearer) {
+/* `extra` (2026-10-08): more headers to carry — X-Device-Id, so a device-bound person session (M05) passes the API's auth on the
+   enrol that spends it, and so the pass-through of the sign-in window's calls hands the API what the page sent. */
+async function noKey(method, p, body, bearer, extra) {
   const ac = new AbortController();
   const t = setTimeout(function () { ac.abort(); }, 20000);
   try {
-    const h = { 'Content-Type': 'application/json' };
+    const h = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
     if (bearer) h.Authorization = 'Bearer ' + bearer;
     const r = await fetch(String(cfg.api).replace(/\/$/, '') + p,
       { method: method, signal: ac.signal, headers: h, body: body ? JSON.stringify(body) : undefined });
     const txt = await r.text();
     let out = null; try { out = JSON.parse(txt); } catch (_) { out = { message: txt.slice(0, 200) }; }
-    if (!r.ok) throw Object.assign(new Error((out && out.message) || ('HTTP ' + r.status)), { status: r.status });
+    /* ⚠️ the refusal's BODY travels with the error — /api/signin/finish reads COUNTER_HELD off it, the pass-through relays it */
+    if (!r.ok) throw Object.assign(new Error((out && out.message) || ('HTTP ' + r.status)), { status: r.status, body: out });
     return out;
   } finally { clearTimeout(t); }
 }
@@ -1040,6 +1044,17 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html'))
       return send(res, 200, 'text/html; charset=utf-8', fs.readFileSync(PAGE, 'utf8'));
 
+    /**
+     * ⭐ THE ONE SIGN-IN WINDOW (2026-10-08, DECISIONS: CBSignin mounts on index · till · CB Accounts · CB CRM). The page loads it at
+     * the same path the web serves it from; here it is the kit's byte copy of web public/app/signin-ui.js (scripts/vendor-till.cjs),
+     * refreshed by the kit update like till.html (core.kitUpdate live:[]). Not an engine: nothing fetches it per shop.
+     */
+    if (req.method === 'GET' && url.pathname === '/app/signin-ui.js') {
+      const f = path.join(__dirname, 'signin-ui.js');
+      if (!fs.existsSync(f)) return send(res, 503, 'text/plain', '// the sign-in window is not in this kit yet — update the kit while online');
+      return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(f, 'utf8'));
+    }
+
     if (req.method === 'GET' && ENGINE_RE.test(url.pathname)) {
       const n = url.pathname.split('/')[2].replace('.js', '');
       /**
@@ -1238,32 +1253,35 @@ const server = http.createServer(async (req, res) => {
     }
 
     /**
-     * ── ⭐⭐⭐ A PERSON SIGNING IN, FORWARDED ([TILL-183]) ────────────────────────────────────────────────
+     * ── ⭐⭐⭐ A PERSON SIGNING IN, FORWARDED ([TILL-183] → CBSignin, 2026-10-08) ─────────────────────────
      *
      * Athi: *"yes please, it has to work end to end."*
      *
-     * The counter page signs a PERSON in against /api/entities/register and /verify. Served from the cloud
-     * those are same-origin and just work; served from this program they were nothing at all, so the sign-in
-     * screen opened on a shop PC and could never send a code. Two lines of forwarding, and the same screen
-     * works on both hosts — which is the whole point of there being one page.
+     * The counter page mounts the ONE sign-in window (CBSignin, /app/signin-ui.js), which posts /api/signin/ask,
+     * /verify and /pin. Served from the cloud those reach the API directly; served from this program the page's
+     * origin is 127.0.0.1, which the API's CORS allowlist refuses — so these three are PASSED THROUGH, byte for
+     * byte: the body as sent, the status as answered, Authorization and X-Device-Id carried, nothing decided here.
+     * (The old /api/entities/register|verify forwarding went with the page's own sign-in form.)
      *
-     * ⚠️ NOT THE SAME AS /api/signin/* BELOW. That pairs this DEVICE and walks away with a KEY ([TILL-121]).
-     * This carries a person's user id to the shop and brings back who they are. Different acts, different
-     * routes, and the counter must never confuse them — it did once, and the button lied for weeks.
+     * ⚠️ NOT THE SAME AS /api/signin/start|finish BELOW. Those pair this DEVICE and walk away with a KEY ([TILL-121]).
+     * These carry a person's id to the shop and bring back who they are. Different acts, different routes.
      * ⚠️⚠️ NO KEY IS ATTACHED, deliberately: signing in is what happens BEFORE anybody has one, and sending
      * this counter's key with somebody's user id would tie the two together in a record neither asked for.
+     * ⚠️ tests/till-origin.test.cjs: only the counter's own page may write to this program — same as every POST here.
      */
-    if (req.method === 'POST' && (url.pathname === '/api/entities/register' || url.pathname === '/api/entities/verify')) {
+    if (req.method === 'POST' && (url.pathname === '/api/signin/ask' || url.pathname === '/api/signin/verify' || url.pathname === '/api/signin/pin')) {
       let raw = ''; for await (const c of req) raw += c;
       let body = null;
       try { body = JSON.parse(raw || '{}'); } catch (_) { return json(res, 400, { message: 'That was not readable.' }); }
+      const bearer = String(req.headers.authorization || '').replace(/^Bearer\s+/i, '') || null;
+      const dev = String(req.headers['x-device-id'] || '').trim();
       try {
-        return json(res, 200, await noKey('POST', url.pathname, body));
+        return json(res, 200, await noKey('POST', url.pathname, body, bearer, dev ? { 'X-Device-Id': dev } : null));
       } catch (e) {
-        /* ⚠️ THE SHOP'S OWN REFUSAL MUST SURVIVE THE TRIP. A wrong code and a dead line are different
-           problems, and collapsing both into one message is what lib/signin.js exists to prevent. */
+        /* ⚠️ THE SHOP'S OWN REFUSAL MUST SURVIVE THE TRIP, status and body alike — CHOOSE_IDENTITY (409), NO_ACCOUNT, a wrong
+           code and a dead line are different answers, and the window (CBSignin) reads the code and the sentence the server chose. */
         const code = Number(e && e.status) || 0;
-        return json(res, code || 502, { message: (e && e.message) || 'Could not reach ChitBridge.' });
+        return json(res, code || 502, (e && e.body && typeof e.body === 'object') ? e.body : { message: (e && e.message) || 'Could not reach ChitBridge.' });
       }
     }
 
@@ -1317,8 +1335,12 @@ const server = http.createServer(async (req, res) => {
          */
         let en;
         try {
+          /* ⭐ a session the ONE sign-in window minted is bound to the page's device (M05): the enrol that spends it names the
+             same device, or auth answers 401 DEVICE_MISMATCH. The page hands device_id with the token; nothing is decided here. */
+          const dev = typeof b.device_id === 'string' ? b.device_id.trim() : '';
           en = await noKey('POST', '/api/till/enrol',
-            { name: require('os').hostname(), counter: tillCfg.id || 'C1', takeover: !!b.takeover }, token);
+            { name: require('os').hostname(), counter: tillCfg.id || 'C1', takeover: !!b.takeover }, token,
+            dev ? { 'X-Device-Id': dev } : null);
         } catch (e) {
           if (e && e.status === 409 && e.body && e.body.code === 'COUNTER_HELD') {
             return json(res, 200, { ok: false, held: true, counter: (e.body.counter && e.body.counter.id) || tillCfg.id,

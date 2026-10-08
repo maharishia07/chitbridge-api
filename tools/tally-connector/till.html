@@ -3424,9 +3424,14 @@
   <div id="rcvpaybody" data-testid="till-rp-body"></div>
 </div></dialog>
 
+<!-- ⭐⭐⭐ THE ONE SIGN-IN WINDOW (2026-10-08). #usignbody is CBSignin.mount's host — it paints the id box, the code or PIN
+     box, the chooser and the PIN-setting step; this page paints NOTHING of that (tests/till-vendor: no second id/code form).
+     #usignafter is the counter's own after-step — "Opening …", a counter number held elsewhere — and #usignbtns its own
+     buttons (Done · Sign out · Close). No <h3>: the window carries its title. -->
 <dialog id="usigndlg" class="setdlg"><div class="dlg">
-  <h3>Sign in</h3>
   <div id="usignbody" data-testid="till-usign-body"></div>
+  <div id="usignafter" data-testid="till-usign-after"></div>
+  <div id="usignbtns" class="dlgbtns"></div>
 </div></dialog>
 
 <dialog id="whodlg"><div class="dlg">
@@ -3784,6 +3789,10 @@
 <script src="/engine/orderhub.js" onerror="engineMissed('orderhub')"></script>
 <script src="/engine/dayopen.js" onerror="engineMissed('dayopen')"></script>
 <script src="/engine/signin.js" onerror="engineMissed('signin')"></script>
+<!-- ⭐⭐⭐ THE ONE SIGN-IN WINDOW (DECISIONS 2026-10-08): CBSignin.mount — the same file index, CB Accounts and CB CRM load. It
+     widens /engine/signin.js (so AFTER it, never before). The web serves its master (public/app/signin-ui.js); the shop PC
+     serves the kit's byte copy at the same path (scripts/vendor-till.cjs, till.js). The counter draws no sign-in form of its own. -->
+<script src="/app/signin-ui.js" onerror="engineMissed('signin-ui')"></script>
 <script src="/engine/qty.js" onerror="engineMissed('qty')"></script>
 <script src="/engine/scalecode.js" onerror="engineMissed('scalecode')"></script>
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
@@ -5747,7 +5756,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-10-08.m10';
+var TILL_BUILD = '2026-10-08.cbsignin';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -15398,7 +15407,7 @@ function queueBlock(){
  * *"no one will be able to understand pair key etc — login credential and key mapping should happen in the
  * background."* Until today a browser genuinely could not mint its own key, so the nearest real action was
  * the ⚙ Settings paste box — a manual step nobody arriving with only a user ID and a code could complete on
- * their own. `usignVerify()` now finishes it: sign in as a person, and if this browser has no key yet, the
+ * their own. `usignIn()` (the window's onIn) now finishes it: sign in as a person, and if this browser has no key yet, the
  * SAME verify hands back a session that is spent once, immediately, on POST /api/till/enrol — exactly what
  * the shop PC's own connect flow has always done. The manual key box in ⚙ Settings still exists, for the one
  * case that is not a person signing in at all: a kiosk an admin hands a specific pre-minted key to.
@@ -24242,176 +24251,151 @@ function SIGN(){
   return window.CBSignin;
 }
 
-var USIGN = { sent: false, refused: '', person: null, who: '', busy: false, usePin: false };
+/**
+ * ── ⭐⭐⭐ THE ONE SIGN-IN WINDOW, MOUNTED (DECISIONS 2026-10-08) ─────────────────────────────────────────────────
+ *
+ * Athi: *"the register, sign-in module should be a common module … the employee will login either in till or in
+ * accounts or in CRM"* · *"the first time pin setting should appear in any app across the board."*
+ *
+ * ⭐ THIS PAGE DRAWS NO SIGN-IN FORM. CBSignin.mount (/app/signin-ui.js — the same file index, CB Accounts and CB CRM
+ * load) owns the id box, the code and PIN boxes, the chooser (one mobile number, two people) and the first-time PIN
+ * step (requires_pin_setup → setpin → in). ONE state machine, there; what stays here is what only a COUNTER knows:
+ *   · the counter PIN book (G2) — handed to the window as its LOCAL credential (find · check · has · save), so a shift
+ *     change with the line down is the same window asking for four digits, and nothing is posted;
+ *   · what a sign-in MEANS for this counter — same shop, another shop, or the first pairing (usignShopMove → becomeShop,
+ *     the one door), a counter number held elsewhere ([TILL-138]), and "Opening …" while the page goes away;
+ *   · who is on (personIn → usignAdopt, the one writer of WHO), the drawer's float, the lock.
+ * ⚠️ The window keeps NO cb_sess here (io.store is a scratch): a browser keeps its person session through becomeShop
+ * (cb_till_person, M08) and the shop PC spends the token on its key (/api/signin/finish) — exactly as before.
+ * ⚠️ On the shop PC the page's origin is 127.0.0.1, which the API's CORS refuses: till.js passes /api/signin/ask·verify·pin
+ * through, byte for byte, with X-Device-Id. apiBase is '' there and the cloud API in a browser (usignApiBase).
+ * ⚠️⚠️ [TILL-190] a browser with no key spends this same sign-in's session, once, through becomeShop() — unchanged.
+ */
+var USIGN = usignFresh();
+function usignFresh(){
+  return { win: null, person: null, idn: null, pending: null, held: null, opening: '', busy: false,
+           forceEnrol: false, floatAsk: false, closeWhenIn: false, pinOffered: false, localPerson: null };
+}
+/* the window's own session keeping (cb_sess) goes nowhere on a counter — becomeShop() is the one writer of a session here */
+var USIGN_STORE = { getItem: function(){ return null; }, setItem: function(){}, removeItem: function(){} };
+
+/** where the window posts: the shop PC's program passes /api/signin/* through (CORS); a browser speaks to the cloud itself */
+function usignApiBase(){ return onAgent() ? '' : (CloudHost.api || ''); }
 
 /**
- * ⚠️⚠️⚠️ THIS WAS NEVER SAME-ORIGIN ON A BROWSER COUNTER — found live, 2026-09-23, the same session that
- * built the fix. A relative fetch('/api/entities/register') from a page served by chitbridge-web.vercel.app
- * goes to VERCEL, not to ChitBridge's API — Vercel has no route for it, only a catch-all SPA rewrite to
- * index.html, and a POST against that 405s before it ever reaches a server that could answer. On the shop
- * PC this was invisible: till.js serves till.html from ITS OWN local server and has explicit routes for
- * exactly these two paths (till.js:1082) that proxy them to the cloud — so AgentHost was never affected, and
- * nothing about testing there would have shown a browser counter's sign-in dialog had never actually reached
- * ChitBridge at all.
- * ⭐ EVERY OTHER FETCH IN THIS FILE ALREADY KNEW BETTER — CloudHost.api + '/api/events/ticket', + '/api/op',
- * and so on. Only this one, and enrolBrowser()'s enrol call, were still bare paths.
+ * ⭐⭐ THE COUNTER PIN BOOK AS THE WINDOW'S LOCAL CREDENTIAL (G2, SPEC-counter-identity §3). lib/signin.js decides what a PIN
+ * is, whose it is and when to stop trusting it (pinFind · pinLocked · pinAfter · pinEntry); this does the arithmetic and the
+ * storage (PBKDF2, the book under the shop). The window asks find() FIRST, so the counter's own PIN is tried before the line.
+ * ⚠️ forceEnrol (entered BECAUSE the shop refused this device, [TILL-192]): only the LINE can mend it — no local PIN is found.
  */
-function usignApiBase(){
-  return (typeof AgentHost !== 'undefined' && HOST === AgentHost) ? '' : (CloudHost.api || '');
-}
-/**
- * ⭐ M08 — WHICH DOOR, AND WHAT RIDES WITH THE SIGN-IN. A browser asks the sign-in routes themselves
- * (/api/signin/ask · /verify, M06) and names its device and surface so the server mints a LISTED 30-day session
- * (M05, D3). The shop PC's page keeps posting the old paths to its own program, which forwards them unchanged
- * and gets the legacy token its enrol has always needed — nothing about the PC's sign-in moves.
- */
-function usignPath(step){
-  if (onAgent()) return step === 'ask' ? '/api/entities/register' : '/api/entities/verify';
-  return step === 'ask' ? '/api/signin/ask' : '/api/signin/verify';
-}
-function usignBody(b){
-  return onAgent() ? b : Object.assign({}, b, { device_id: deviceId(), surface: 'till' });
-}
-async function usignPost(path, body){
-  try {
-    /* ⚠️ fetchBy, not fetch — a real cloud round-trip with no deadline is the exact fault
-       tests/snapshot-wire.test.js exists to catch; this call site predates that guard and this fix. */
-    var r = await fetchBy(usignApiBase() + path, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(body) });
-    var j = null;
-    try { j = await r.json(); } catch (_) { j = {}; }
-    return { status: r.status, ok: r.ok, body: j || {} };
-  } catch (e) {
-    /* ⚠️ status 0 is "could not reach", which lib/signin.js turns into its own sentence */
-    return { status: 0, ok: false, body: {} };
-  }
+function usignLocal(){
+  return {
+    find: function(id){
+      if (USIGN.forceEnrol) return null;
+      var e = SIGN().pinFind(pinBook(), id);
+      return (e && !SIGN().pinLocked(e)) ? e : null;
+    },
+    check: async function(e, pin){
+      var h = await pinDerive(pin, e.salt, e.iter);                /* throws its own sentence on an insecure page */
+      var book = pinBook();
+      var a = SIGN().pinAfter(book[e.id] || e, h === e.hash);
+      book[e.id] = a.entry; pinBookSave(book);
+      if (!a.ok) return { ok: false, why: a.why, locked: !!a.locked, entry: a.entry };
+      /* ⚠️ the book is per shop, so this cannot happen — and if it ever did, nobody is signed in */
+      if (a.person.entity && S && S.entity_id && String(a.person.entity) !== String(S.entity_id)) return { ok: false, why: 'That PIN belongs to another shop.', locked: true };
+      USIGN.localPerson = a.person;
+      return { ok: true, person: a.person };
+    },
+    has: function(){ return pinUsableFor(USIGN.person); },
+    save: async function(sess, pin){
+      var p = USIGN.person || {}, idn = USIGN.idn || {};
+      var v = await pinMake(pin);
+      var book = pinBook();
+      book[p.id] = SIGN().pinEntry({ id: p.id, user_id: idn.user_id, email: idn.email, identity_id: idn.identity_id,
+                                     name: p.name, kind: p.kind, entity: p.entity || idn.entity_id || (S && S.entity_id) || null },
+                                   v, new Date().toISOString());
+      pinBookSave(book);
+      toastLine('Counter PIN saved — ' + (p.name || p.id) + ' can sign in here without the internet.');
+      return { ok: true };
+    }
+  };
 }
 
 /** [TILL-192] forceEnrol: true only when pairAgain() called this — see its own comment. A routine sign-in
  * (whoAct()'s 'signin' door) passes nothing, and paired()'s existing key is trusted as it always was. */
 function usignOpen(forceEnrol){
-  /* ⭐ M08: opened BECAUSE the shop refused this device (forceEnrol) → start at the user-ID box, and only the LINE can
-     mend it — the counter's own PIN would put a name on the counter without renewing anything. WHO is untouched (G2). */
-  USIGN = { sent: false, refused: '', person: (!forceEnrol && typeof WHO !== 'undefined' && WHO && WHO.id) ? WHO : null,
-            who: '', busy: false, usePin: false, forceEnrol: !!forceEnrol, noLocal: !!forceEnrol };
-  usignPaint();
+  USIGN = usignFresh();
+  USIGN.forceEnrol = !!forceEnrol;
+  usignMount();
   var d = document.getElementById('usigndlg');
   if (d && d.showModal) { try { d.showModal(); } catch (_) {} }
 }
 function usignClose(){ var d = document.getElementById('usigndlg'); if (d && d.open) { try { d.close(); } catch (_) {} } }
 
-/** ⭐ every stage painted from the engine's own verdict — the screen remembers nothing the engine can tell it */
-function usignPaint(){
-  var body = document.getElementById('usignbody');
-  if (!body) return;
-  var at = SIGN().stage(USIGN);
-  var h = '';
+/** the window, mounted fresh into #usignbody — the ONLY place this page calls CBSignin.mount */
+function usignMount(){
+  var body = document.getElementById('usignbody'), after = document.getElementById('usignafter');
+  if (!body) return null;
+  if (USIGN.win) { try { USIGN.win.destroy(); } catch (_) {} USIGN.win = null; }
+  if (after) after.innerHTML = '';
+  body.style.display = '';
+  var c = { apiBase: usignApiBase(), surface: 'till', need: 'person', deviceId: deviceId, local: usignLocal(), online: lineUp,
+            io: { store: USIGN_STORE }, onIn: function(s, answer){ usignIn(s, answer); } };
+  /* ⚠️ said in words, not as a failed fetch: offline with no counter PIN is the LINE, not the person (the window's own transport otherwise) */
+  c.io.post = function(path, reqBody, token){
+    if (!lineUp()) return Promise.resolve({ status: 0, body: { code: 'OFFLINE',
+      message: 'There is no counter PIN for ' + ((reqBody && reqBody.id) || 'you') + ' on this counter yet. The first sign-in here needs the internet.' } });
+    return SIGN().transport(c)(path, reqBody, token);
+  };
+  USIGN.win = SIGN().mount(body, c);
+  USIGN.win.machine.onChange(function(st){
+    usignButtons();
+    /* the counter PIN was offered (or declined) after an unlock / the picker: the dialog has done its job */
+    if (st.at === 'in' && USIGN.pinOffered && USIGN.closeWhenIn) usignClose();
+  });
+  usignButtons();
+  return USIGN.win;
+}
 
-  if (USIGN.opening) {
-    /* ⭐ the shop is named before anything else happens — a person in the wrong account sees it here, not in the books */
-    h = '<p class="note" data-testid="till-usign-opening"><b>Opening ' + esc(USIGN.opening) + '…</b></p>';
-    body.innerHTML = h; return;
-  }
-  if (USIGN.held) {
-    /**
-     * ── ⚠️⚠️ THIS COUNTER NUMBER IS OPEN SOMEWHERE ELSE ([TILL-138]) — moved here from the shop PC's own connect
-     * dialog (retired 2026-09-28, one sign-in for both hosts). Athi: *"check that counter is active. if not
-     * active, offer to knock it off and then open here."* Who has it, when they were last seen, and what taking
-     * it costs — before the button. ⚠️ Leaving it alone is the DEFAULT; taking it is the quiet button.
-     */
-    var hd = USIGN.held, c = esc(hd.counter || tillId());
-    h = '<p class="note"><b>Counter ' + c + ' is already open on ' + esc(hd.held_by || 'another device') + '.</b>'
-      + (hd.seen ? '<span class="u"> · last seen ' + esc(new Date(hd.seen).toTimeString().slice(0, 5)) + '</span>' : '') + '</p>'
-      + '<p class="note">Two counters cannot share one number — their bills would end up with the same numbers'
-      + ' as yours. If that PC is still being used, close it there instead.</p>'
-      + '<p class="note u">Taking it here stops that device from sending. Anything it has already taken stays'
-      + ' on it and goes when it signs in again — nothing is lost either way.</p>'
-      + '<div class="dlgbtns"><button class="pri" onclick="usignClose()">Leave it alone · Esc</button>'
-      /**
-       * ⭐ M08: "Take counter … here" is a SHOP-PC decision only — one PC taking a number from another PC. A browser
-       * never reaches this stage any more (it keeps a person session and claims no counter), so a phone can never be
-       * offered the button that used to knock the shop PC off ([[project-counter-identity]], DESIGN §1.1).
-       */
-      + (onAgent() ? '<button data-testid="till-signin-takeover" onclick="USIGN.held=null;usignBecome(true)">Take counter ' + c + ' here</button>' : '')
-      + '</div>';
-    body.innerHTML = h; return;
-  }
-
-  if (USIGN.setPin) {
-    /**
-     * ⭐⭐ CHOOSE A COUNTER PIN (v1.6.0) — offered once, right after a real sign-in, while the line is up. It is
-     * what lets this person sign in here with the internet down. Separate from any online PIN on purpose
-     * (SPEC-counter-identity §3). "Not now" is honest: they can still sign in with a code while online.
-     */
-    h = '<p class="note"><b>Choose a counter PIN</b> — four digits, to sign in here without the internet.</p>'
-      + '<div class="srow"><span>PIN</span><input id="usign_pin1" data-testid="till-usign-pin1" type="password"'
-      + ' inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off"></div>'
-      + '<div class="srow"><span>Again</span><input id="usign_pin2" data-testid="till-usign-pin2" type="password"'
-      + ' inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off"'
-      + ' onkeydown="if(event.key===\'Enter\')usignPinSave()"></div>'
-      + (USIGN.refused ? '<p class="note bad" data-testid="till-usign-why">' + esc(USIGN.refused) + '</p>' : '')
-      + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-pinsave" onclick="usignPinSave()">Save PIN</button>'
-      + '<button data-testid="till-usign-pinlater" onclick="usignPinLater()">Not now</button></div>';
-    body.innerHTML = h;
-    var f1 = document.getElementById('usign_pin1'); if (f1) { try { f1.focus(); } catch (_) {} }
-    return;
-  }
-  if (at === 'in') {
-    var p = USIGN.person || {};
-    h = '<div class="nowbox" data-testid="till-usign-in"><b>' + esc(p.name || p.id) + '</b> is signed in'
-      + '<div class="u">' + esc(p.kind === 'entity' ? 'the shop itself' : 'user ID ' + (p.id || '')) + '</div></div>'
-      /* ⭐ and what it means for this counter, which is the next question anybody has */
-      + '<p class="note">' + esc(usignCounterLine()) + '</p>'
-      + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-done" onclick="usignClose()">Done</button>'
+/** the counter's own buttons beside the window: Done · Sign out once somebody is in; Close before */
+function usignButtons(){
+  var b = document.getElementById('usignbtns'), a = document.getElementById('usignafter');
+  if (!b) return;
+  if (USIGN.opening || USIGN.held) return;                           /* the after-step owns the dialog (usignNote) */
+  var at = USIGN.win ? USIGN.win.state().at : 'out';
+  if (at === 'in' && USIGN.person) {
+    /* ⭐ and what it means for this counter, which is the next question anybody has */
+    if (a) a.innerHTML = '<p class="note" data-testid="till-usign-in">' + esc(usignCounterLine()) + '</p>';
+    b.innerHTML = '<button class="pri" data-testid="till-usign-done" onclick="usignClose()">Done</button>'
       /**
        * ⚠️⚠️ SIGNING OUT DOES NOT CLOSE THE COUNTER. Athi: *"the person sign-out and another person sign-in,
        * continue the same counter number, it is like shift."* The counter keeps its number and its series; only
        * the person changes. [[project-till-series-prefix]]
        */
-      + '<button data-testid="till-usign-out" onclick="usignOut()" title="The counter keeps its number and the bill; it locks until somebody signs in">Sign out 🔒</button></div>';
-  } else if (at === 'code' || at === 'refused') {
-    /**
-     * ⚠️⚠️ [capability: sign-in] TWO CREDENTIALS, ONE BOX. USIGN.usePin is set by usignAsk() from the
-     * server's own answer (identityAuth.needsPin() decided it, not this page) — a coassist who already set
-     * a PIN never had a code "sent" to resend, so that branch says so rather than offering a dead button.
-     */
-    var pinMode = !!USIGN.usePin;
-    /* ⭐ v1.6.0: a PIN found in THIS counter's book is checked here, with or without the line */
-    h = '<p class="note">' + esc(USIGN.local ? ('Counter PIN for ' + (USIGN.local.name || USIGN.who) + '.')
-                                            : pinMode ? 'Enter your PIN.' : SIGN().say({ sent: true })) + '</p>'
-      + '<div class="srow"><span>' + (pinMode ? 'PIN' : 'Code') + '</span>'
-      + '<input id="usign_otp" data-testid="till-usign-otp" inputmode="numeric" maxlength="' + (pinMode ? 4 : 6)
-      + '" placeholder="' + (pinMode ? '0000' : '000000') + '"'
-      + ' autocomplete="one-time-code" onkeydown="if(event.key===\'Enter\')usignVerify()"></div>'
-      + (USIGN.refused ? '<p class="note bad" data-testid="till-usign-why">' + esc(USIGN.refused) + '</p>' : '')
-      + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-verify" onclick="usignVerify()">Sign in</button>'
-      + (pinMode ? '' : '<button data-testid="till-usign-again" onclick="usignAsk(true)">Send another code</button>')
-      + '<button onclick="usignClose()">Close</button></div>'
-      + (USIGN.local ? '<div class="dlgbtns"><button data-testid="till-usign-other" onclick="usignOther()">Someone else</button>'
-         + (lineUp() ? '<button data-testid="till-usign-code" onclick="usignByCode()">Use a code instead</button>' : '') + '</div>' : '')
-      + (USIGN.local ? '<p class="note u">Forgotten it? Sign in with a code while online, then choose a new one.</p>'
-         : pinMode ? '<p class="note u">Forgotten it? Ask your admin to reset it in Co-assists.</p>' : '');
+      + '<button data-testid="till-usign-out" onclick="usignOut()" title="The counter keeps its number and the bill; it locks until somebody signs in">Sign out 🔒</button>';
   } else {
-    /* ⚠️ ONE BOX FOR BOTH. The person typing does not know whether they have a user ID or an email, and a
-       network-minted store is issued a user_id and no email at all. */
-    h = '<p class="note">' + esc(SIGN().say({})) + '</p>'
-      + '<div class="srow"><span>You are</span>'
-      /* ⚠️ a phone keyboard capitalises and "corrects" what it does not know — a user ID is not a word (2026-10-01) */
-      + '<input id="usign_who" data-testid="till-usign-who" autocomplete="username" placeholder="user ID or email"'
-      + ' autocapitalize="none" autocorrect="off" spellcheck="false"'
-      + ' value="' + esc(USIGN.who || '') + '" onkeydown="if(event.key===\'Enter\')usignAsk()"></div>'
-      + (USIGN.refused ? '<p class="note bad" data-testid="till-usign-why">' + esc(USIGN.refused) + '</p>' : '')
-      + '<div class="dlgbtns"><button class="pri" data-testid="till-usign-ask" onclick="usignAsk()">Send me a code</button>'
-      + '<button onclick="usignClose()">Close</button></div>'
-      /* ⚠️ said once, at the bottom, because a person who cannot sign in needs to know it is the LINE and not them */
-      + '<p class="note u">Signing in needs the internet. Once this counter is set up it bills without it.</p>';
+    if (a) a.innerHTML = '';
+    b.innerHTML = '<button data-testid="till-usign-close" onclick="usignClose()">Close</button>';
   }
-  body.innerHTML = h;
-  var f = document.getElementById('usign_otp') || document.getElementById('usign_who');
-  if (f) { try { f.focus(); } catch (_) {} }
+}
+/** the counter's after-step takes the dialog over: "Opening …", a held counter number */
+function usignNote(h){
+  var body = document.getElementById('usignbody'), a = document.getElementById('usignafter'), b = document.getElementById('usignbtns');
+  if (body) body.style.display = 'none';
+  if (a) a.innerHTML = h;
+  if (b) b.innerHTML = '';
+}
+/** back to the window after a refused after-step, with the refusal on the box */
+function usignRestore(why){
+  var body = document.getElementById('usignbody'), a = document.getElementById('usignafter');
+  USIGN.opening = ''; USIGN.held = null; USIGN.pending = null;
+  if (a) a.innerHTML = '';
+  if (body) body.style.display = '';
+  if (USIGN.win) { USIGN.win.machine.back(); if (why) USIGN.win.machine.refuse(why); }
+  usignButtons();
 }
 
-/** ⭐ what this sign-in means for the counter number — read from the engine, never worked out here */
+/** what this sign-in means for the counter number — read from the engine, never worked out here */
 function usignCounterLine(){
   try {
     var a = DAY().assign(dayState());
@@ -24419,63 +24403,30 @@ function usignCounterLine(){
   } catch (_) { return ''; }
 }
 
-async function usignAsk(again){
-  if (USIGN.busy) return;
-  var typed = again ? USIGN.who : ((document.getElementById('usign_who') || {}).value || '');
-  var a = SIGN().ask(typed);
-  if (!a.ok) { USIGN.refused = a.why; usignPaint(); return; }
-  /**
-   * ⭐⭐ THE COUNTER'S OWN PIN FIRST (v1.6.0, SPEC-counter-identity §3). Somebody who set a counter PIN here signs
-   * in with it, line or no line — the shift change that happens forty times a day needs no code in a mailbox.
-   * ⚠️ Only if the PIN is not locked; a locked one sends them to the line, which is the only way to reset it.
-   */
-  var loc = USIGN.noLocal ? null : SIGN().pinFind(pinBook(), typed);
-  if (loc && !SIGN().pinLocked(loc)) {
-    USIGN.who = String(typed).trim(); USIGN.local = loc; USIGN.sent = true; USIGN.usePin = true; USIGN.refused = '';
-    usignPaint(); return;
+/**
+ * ⭐⭐⭐ onIn — THE WINDOW SAYS WHO; THE COUNTER DECIDES WHAT THAT MEANS. `answer` is the server's verify body as it came
+ * (token · identity); null when the counter's own PIN did the proving (no token, no session — an identity, as a counter keeps).
+ */
+async function usignIn(s, answer){
+  var m = USIGN.win && USIGN.win.machine;
+  if (!m) return;
+  if (!answer || !s.token) {
+    var lp = USIGN.localPerson; USIGN.localPerson = null;
+    if (!lp) return;
+    USIGN.person = lp;
+    personIn(lp);
+    usignButtons();
+    return usignAfterIn(lp, null);
   }
-  if (!lineUp()) {
-    USIGN.refused = loc ? SIGN().pinAfter(loc, true).why
-      : 'There is no counter PIN for ' + String(typed).trim() + ' on this counter yet. The first sign-in here needs the internet.';
-    usignPaint(); return;
-  }
-  USIGN.who = String(typed).trim(); USIGN.busy = true; USIGN.refused = '';
-  var r = await usignPost(usignPath('ask'), usignBody(a.body));
-  USIGN.busy = false;
-  if (!r.ok) { USIGN.refused = SIGN().refusal({ status: r.status, message: r.body && (r.body.message || r.body.error) }); usignPaint(); return; }
-  /**
-   * ⚠️⚠️ [capability: sign-in] A COASSIST WITH A PIN ALREADY SET NEVER GOT A CODE — identityAuth.needsPin()
-   * decided that server-side and said so with use_pin, so USIGN.sent still moves to the credential screen
-   * (stage() only asks "was the identity step done"), but usePin decides which box usignPaint() draws.
-   */
-  USIGN.sent = true;
-  USIGN.usePin = !!(r.body && r.body.use_pin);
-  usignPaint();
-  /* ⚠️ A TEST SERVER HANDS THE CODE BACK (lib/dev-otp.js refuses to do it anywhere else), so it is filled in
-     rather than making somebody find it in a log. Never for a PIN — nothing was issued to prefill. */
-  var dev = !USIGN.usePin && r.body && (r.body.dev_otp || r.body.otp);
-  if (dev) { var i = document.getElementById('usign_otp'); if (i) i.value = String(dev); }
-}
-
-async function usignVerify(){
-  if (USIGN.busy) return;
-  var otp = (document.getElementById('usign_otp') || {}).value || '';
-  if (USIGN.local) return usignVerifyLocal(otp);
-  var v = SIGN().verify(USIGN.who, otp);
-  if (!v.ok) { USIGN.refused = v.why; usignPaint(); return; }
-  USIGN.busy = true; USIGN.refused = '';
-  var r = await usignPost(usignPath('verify'), usignBody(v.body));
-  USIGN.busy = false;
-  if (!r.ok) { USIGN.refused = SIGN().refusal({ status: r.status, message: r.body && (r.body.message || r.body.error) }); usignPaint(); return; }
   /* ⭐⭐ THE ENGINE TAKES THE IDENTITY AND DROPS THE TOKEN. 'counter', not 'session' — deliberately. */
-  var k = SIGN().keep('counter', r.body);
-  if (!k.ok) { USIGN.refused = k.why; usignPaint(); return; }
+  var k = SIGN().keep('counter', answer);
+  if (!k.ok) { m.back(); m.refuse(k.why); return; }
   /**
    * ⚠️⚠️⚠️ THE TOKEN IS SPENT HERE, ONCE, OR NOT AT ALL ([TILL-190], one gate since 2026-09-28). A counter that
    * already belongs to this person's shop keeps no session — it takes the identity and drops the rest. Every
    * other case is a SHOP change, and a shop change has exactly one door: becomeShop().
    */
-  var move = usignShopMove(r.body);
+  var move = usignShopMove(answer);
   if (move === 'other') {
     var here = (S && S.shop && S.shop.name) || 'this shop';
     var q = Number((STATE && STATE.queued) || 0);
@@ -24483,10 +24434,9 @@ async function usignVerify(){
       + (q ? q + ' unsent bill' + (q > 1 ? 's stay' : ' stays') + ' with ' + here + ' until it signs in here again.'
            : 'Nothing of ' + here + ' is lost.'),
       'Switch to your shop', 'A different shop', 'Stay ' + here);
-    if (!ok) { USIGN = { sent: false, refused: 'Nobody signed in. This counter stays ' + here + '.', person: null,
-                         who: '', busy: false, usePin: false }; usignPaint(); return; }
+    if (!ok) { m.back(); m.refuse('Nobody signed in. This counter stays ' + here + '.'); return; }
   }
-  if (move !== 'same') { USIGN.pending = { token: r.body.token, person: k.person, idn: r.body.identity || null }; return usignBecome(false); }
+  if (move !== 'same') { USIGN.pending = { token: answer.token, person: k.person, idn: answer.identity || null }; return usignBecome(false); }
   /**
    * ⭐ M08: on a browser that bills as a PERSON of this shop, the fresh session is KEPT (becomeShop, the one writer;
    * same shop → no reload) — a shift change hands the next person their own session, and a sign-in after
@@ -24495,14 +24445,19 @@ async function usignVerify(){
    */
   /* ⭐ M10: a browser still holding a KEY keeps this session too — the reload that follows opens the person store, and
      the old key store comes along (moveOldStores); the key goes once its store is accounted for (keyRetire). DESIGN §5. */
-  if ((personOn() || keyedBrowser()) && r.body.token) {
-    var kept = await becomeShop({ token: r.body.token, who: k.person, idn: r.body.identity || null });
-    if (kept && kept.ok && !kept.same) { USIGN.opening = (S && S.shop && S.shop.name) || 'your shop'; usignPaint(); return; }   /* the page is going away */
+  if ((personOn() || keyedBrowser()) && answer.token) {
+    var kept = await becomeShop({ token: answer.token, who: k.person, idn: answer.identity || null });
+    if (kept && kept.ok && !kept.same) {
+      /* ⭐ the shop is named before anything else happens — a person in the wrong account sees it here, not in the books */
+      USIGN.opening = (S && S.shop && S.shop.name) || 'your shop';
+      usignNote('<p class="note" data-testid="till-usign-opening"><b>Opening ' + esc(USIGN.opening) + '…</b></p>'); return;   /* the page is going away */
+    }
     if (kept && kept.ok && KEY_OK === false) { KEY_OK = true; flashHide(); try { refresh().catch(function(){}); } catch (_) {} }
   }
   USIGN.person = k.person;
   personIn(k.person);
-  usignAfterIn(k.person, r.body.identity || null);
+  usignButtons();
+  usignAfterIn(k.person, answer.identity || null);
 }
 
 /**
@@ -24527,7 +24482,7 @@ function usignShopMove(answer){
   /**
    * ⭐ M08: a browser already billing as a PERSON of this very shop — the new session REPLACES the kept one in place
    * (same shop, same store, no reload): a shift change, a renewed sign-in after SESSION_EXPIRED, or the same person
-   * again. usignVerify() hands the token to becomeShop() for that; the shop does not change, so this is 'same'.
+   * again. usignIn() hands the token to becomeShop() for that; the shop does not change, so this is 'same'.
    */
   if (personOn() && theirs && String(CloudHost.person.entity_id) === String(theirs)) return 'same';
   if (!paired() || (USIGN && USIGN.forceEnrol) || (typeof KEY_OK !== 'undefined' && KEY_OK === false)) return 'pair';
@@ -24542,14 +24497,34 @@ function usignShopMove(answer){
  */
 async function usignBecome(takeover, counter){
   var p = USIGN.pending; if (!p) return;
-  USIGN.busy = true; usignPaint();
+  USIGN.busy = true;
   var r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover, counter: counter || null });
   USIGN.busy = false;
-  if (r && r.held) { USIGN.held = r; usignPaint(); return; }
-  if (!r || !r.ok) { USIGN.pending = null; USIGN.held = null;
-                     USIGN.refused = (r && r.message) || 'Signed in, but the shop did not issue a counter key.'; usignPaint(); return; }
+  if (r && r.held) { USIGN.held = r; usignNote(usignHeldHtml(r)); return; }
+  if (!r || !r.ok) { usignRestore((r && r.message) || 'Signed in, but the shop did not issue a counter key.'); return; }
   USIGN.opening = (r.shop && (r.shop.name || r.shop.bridge_id)) || 'your shop';
-  usignPaint();                                   /* "Opening …" — the reload or the restart follows */
+  usignNote('<p class="note" data-testid="till-usign-opening"><b>Opening ' + esc(USIGN.opening) + '…</b></p>');   /* the reload or the restart follows */
+}
+/**
+ * ── ⚠️⚠️ THIS COUNTER NUMBER IS OPEN SOMEWHERE ELSE ([TILL-138]) — moved here from the shop PC's own connect
+ * dialog (retired 2026-09-28, one sign-in for both hosts). Athi: *"check that counter is active. if not
+ * active, offer to knock it off and then open here."* Who has it, when they were last seen, and what taking
+ * it costs — before the button. ⚠️ Leaving it alone is the DEFAULT; taking it is the quiet button.
+ * ⭐ M08: "Take counter … here" is a SHOP-PC decision only — one PC taking a number from another PC. A browser
+ * never reaches this stage any more (it keeps a person session and claims no counter), so a phone can never be
+ * offered the button that used to knock the shop PC off ([[project-counter-identity]], DESIGN §1.1).
+ */
+function usignHeldHtml(hd){
+  var c = esc(hd.counter || tillId());
+  return '<p class="note"><b>Counter ' + c + ' is already open on ' + esc(hd.held_by || 'another device') + '.</b>'
+    + (hd.seen ? '<span class="u"> · last seen ' + esc(new Date(hd.seen).toTimeString().slice(0, 5)) + '</span>' : '') + '</p>'
+    + '<p class="note">Two counters cannot share one number — their bills would end up with the same numbers'
+    + ' as yours. If that PC is still being used, close it there instead.</p>'
+    + '<p class="note u">Taking it here stops that device from sending. Anything it has already taken stays'
+    + ' on it and goes when it signs in again — nothing is lost either way.</p>'
+    + '<div class="dlgbtns"><button class="pri" onclick="usignClose()">Leave it alone · Esc</button>'
+    + (onAgent() ? '<button data-testid="till-signin-takeover" onclick="USIGN.held=null;usignBecome(true)">Take counter ' + c + ' here</button>' : '')
+    + '</div>';
 }
 /* M08: usignNewCounter() / counterFree() / enrolBrowser() are GONE — a browser claims no counter and mints no key.
    The shop PC's program still enrols through becomeShop()'s agent half (/api/signin/finish), exactly as before. */
@@ -24663,7 +24638,13 @@ function whoAdoptPending(){
   usignAdopt(p);
   drop();
   /* ⭐ they proved who they are online a moment ago — the one time a counter PIN can be offered safely */
-  try { if (!pinUsableFor(p)) { usignOpen(); USIGN.person = p; usignAfterIn(p, raw.idn || null); } } catch (_) {}
+  try {
+    if (!pinUsableFor(p) && window.crypto && crypto.subtle) {
+      usignOpen(); USIGN.person = p; USIGN.idn = raw.idn || null; USIGN.pinOffered = true;
+      /* no token here (spent on the key, or kept by becomeShop) — the window is told who is in and offers the LOCAL PIN */
+      USIGN.win.machine.offerPin({ token: '', name: p.name || '', person: { id: p.id, kind: p.kind } });
+    }
+  } catch (_) {}
   return true;
 }
 
@@ -24731,41 +24712,10 @@ function pinUsableFor(p){
   return !!(e && !SIGN().pinLocked(e));
 }
 
-/** ⭐ a PIN from THIS counter's book, checked here — no network, whatever the line is doing */
-async function usignVerifyLocal(otp){
-  var e = USIGN.local, pin = String(otp || '').replace(/[^0-9]/g, '');
-  if (pin.length !== 4) { USIGN.refused = 'Your counter PIN is four digits.'; usignPaint(); return; }
-  USIGN.busy = true;
-  var h = null;
-  try { h = await pinDerive(pin, e.salt, e.iter); }
-  catch (x) { USIGN.busy = false; USIGN.refused = (x && x.message) || 'The PIN could not be checked.'; usignPaint(); return; }
-  USIGN.busy = false;
-  var book = pinBook();
-  var a = SIGN().pinAfter(book[e.id] || e, h === e.hash);
-  book[e.id] = a.entry; pinBookSave(book);
-  if (!a.ok) {
-    USIGN.refused = a.why;
-    /* locked: back to the user-ID box — the line is the only way on from here */
-    if (a.locked) { USIGN.local = null; USIGN.sent = false; USIGN.usePin = false; } else USIGN.local = a.entry;
-    usignPaint(); return;
-  }
-  /* ⚠️ the book is per shop, so this cannot happen — and if it ever did, nobody is signed in */
-  if (a.person.entity && S && S.entity_id && String(a.person.entity) !== String(S.entity_id)) {
-    USIGN.refused = 'That PIN belongs to another shop.'; USIGN.local = null; usignPaint(); return;
-  }
-  USIGN.local = null;
-  USIGN.person = a.person;
-  personIn(a.person);
-  usignAfterIn(a.person, null);
-}
-/** "Someone else" — back to the user-ID box, keeping whatever the dialog was opened for (an unlock, the picker) */
-function usignOther(){ USIGN.local = null; USIGN.sent = false; USIGN.usePin = false; USIGN.who = ''; USIGN.refused = ''; usignPaint(); }
-/** "Use a code instead" — the same person, through the line, e.g. to reset a forgotten counter PIN */
-function usignByCode(){ USIGN.local = null; USIGN.sent = false; USIGN.usePin = false; USIGN.noLocal = true; USIGN.refused = ''; usignAsk(true); }
-
 /**
  * ⭐ WHAT FOLLOWS A SIGN-IN, in one place: the drawer (when the picker started it — a new person counts their own
- * float), then a counter PIN if they have none and they just proved themselves online, then the dialog closes.
+ * float), then a counter PIN if they have none and they just proved themselves online (the window's own setpin
+ * screen, for the LOCAL book — CBSignin offerPin), then the dialog closes.
  */
 async function usignAfterIn(p, idn){
   if (USIGN.floatAsk) {
@@ -24774,32 +24724,14 @@ async function usignAfterIn(p, idn){
                            '', 'Cash in the drawer (' + curSym() + ')', 'Who is at this counter');
     whoFloat(Math.max(0, Number(float0) || 0));
   }
-  if (idn && !pinUsableFor(p) && window.crypto && crypto.subtle) {
-    USIGN.setPin = true; USIGN.idn = idn; USIGN.refused = '';
-    usignPaint();
+  if (idn && !pinUsableFor(p) && window.crypto && crypto.subtle && USIGN.win) {
+    USIGN.idn = idn; USIGN.pinOffered = true;
     var d = document.getElementById('usigndlg'); if (d && !d.open && d.showModal) { try { d.showModal(); } catch (_) {} }
+    USIGN.win.machine.offerPin();
     return;
   }
-  usignPaint();
   if (USIGN.closeWhenIn) usignClose();
 }
-async function usignPinSave(){
-  var a = SIGN().pinPair((document.getElementById('usign_pin1') || {}).value, (document.getElementById('usign_pin2') || {}).value);
-  if (!a.ok) { USIGN.refused = a.why; usignPaint(); return; }
-  var p = USIGN.person || {}, idn = USIGN.idn || {};
-  var v = null;
-  try { v = await pinMake(a.value); } catch (x) { USIGN.refused = (x && x.message) || 'The PIN could not be kept.'; usignPaint(); return; }
-  var book = pinBook();
-  book[p.id] = SIGN().pinEntry({ id: p.id, user_id: idn.user_id, email: idn.email, identity_id: idn.identity_id,
-                                 name: p.name, kind: p.kind, entity: p.entity || idn.entity_id || (S && S.entity_id) || null },
-                               v, new Date().toISOString());
-  pinBookSave(book);
-  USIGN.setPin = false; USIGN.refused = '';
-  toastLine('Counter PIN saved — ' + (p.name || p.id) + ' can sign in here without the internet.');
-  usignPaint();
-  if (USIGN.closeWhenIn) usignClose();
-}
-function usignPinLater(){ USIGN.setPin = false; USIGN.refused = ''; usignPaint(); if (USIGN.closeWhenIn) usignClose(); }
 /** the drawer's float, for the person just signed in — part of G2, the only writer of who is on */
 function whoFloat(amount){
   if (!WHO) return;
@@ -24813,9 +24745,10 @@ function usignOut(){
   var s = DAY().shiftChange(dayState(), null);
   WHO = null;
   try { ls.del ? ls.del(shopLs('cb_till_who')) : ls.set(shopLs('cb_till_who'), ''); } catch (_) {}
-  USIGN = { sent: false, refused: '', person: null, who: '', busy: false, usePin: false };
+  if (USIGN.win) { try { USIGN.win.destroy(); } catch (_) {} }
+  USIGN = usignFresh();
   try { paintWho(); paintStatus(); paintMenu(); } catch (_) {}
-  usignPaint();
+  usignClose();
   toastLine(s.say);
   /* ⭐ and the counter LOCKS (S3): nobody on it means nobody may bill on it — the next person signs in over the cover */
   lockNow();
@@ -24954,14 +24887,11 @@ function whoPick(id, name, kind){
   try { document.getElementById('whodlg').close(); } catch (_) {}
   usignOpen();
   USIGN.floatAsk = true; USIGN.closeWhenIn = true;
+  var m = USIGN.win && USIGN.win.machine;
   var loc = target ? SIGN().pinFind(pinBook(), target) : null;
-  if (loc && !SIGN().pinLocked(loc)) {
-    USIGN.who = target; USIGN.local = loc; USIGN.sent = true; USIGN.usePin = true;
-  } else {
-    USIGN.refused = (loc ? SIGN().pinAfter(loc, true).why + ' ' : '')
-      + (lineUp() ? name + ' — type your user ID to sign in.' : 'There is no counter PIN for ' + name + ' on this counter yet. The first sign-in here needs the internet.');
-  }
-  usignPaint();
+  if (m && loc && !SIGN().pinLocked(loc)) { m.typed(target); m.go(); }      /* the window finds the same entry and opens the PIN box */
+  else if (m) m.refuse((loc ? SIGN().pinAfter(loc, true).why + ' ' : '')
+      + (lineUp() ? name + ' — type your user ID to sign in.' : 'There is no counter PIN for ' + name + ' on this counter yet. The first sign-in here needs the internet.'));
 }
 /**
  * ── ⭐⭐⭐ FOUR DIFFERENT THINGS A COUNTER CAN "STOP" FOR (Athi, 2026-09-17) ─────────────────────────────────────
@@ -25050,12 +24980,11 @@ function lockNow(reason){
 function lockOpen(){
   if (!lockSafe()) return lockStranded();
   usignOpen();
-  /* ⚠️ usignOpen() starts from whoever is on — an unlock must ASK, never show "is signed in" */
-  USIGN.person = null; USIGN.closeWhenIn = true;
-  /* ⭐ the person who locked it, straight to their counter PIN; "Someone else" is one tap away */
-  var id = LOCK && LOCK.id, loc = id ? SIGN().pinFind(pinBook(), id) : null;
-  if (loc && !SIGN().pinLocked(loc)) { USIGN.who = String(id); USIGN.local = loc; USIGN.sent = true; USIGN.usePin = true; }
-  usignPaint();
+  /* ⚠️ an unlock must ASK, never show "is signed in" — the window opens at its box */
+  USIGN.closeWhenIn = true;
+  /* ⭐ the person who locked it, straight to their counter PIN; "Not you? Start again" is one tap away */
+  var id = LOCK && LOCK.id, loc = id ? SIGN().pinFind(pinBook(), id) : null, m = USIGN.win && USIGN.win.machine;
+  if (m && loc && !SIGN().pinLocked(loc)) { m.typed(String(id)); m.go(); }
 }
 /**
  * ⚠️ THE ONE WAY OUT WITHOUT A SIGN-IN, and only in the state that has no other (H1): the counter was locked while

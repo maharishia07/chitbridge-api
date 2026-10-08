@@ -50,10 +50,11 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
  * two engines, the manifest — and serves them when the network is not there. Bills and the shop's own data live in IndexedDB, which is
  * the page's business, not this file's. Nothing else is cached, so nothing else goes stale.
  */
-/* ⚠️ bump SHELF with every change to the page's boot path (M08: 'cb-till-v2', M10: 'cb-till-v3') — activate drops the old shelf, nothing else:
-   the worker holds no bill, no setting and no store, so a bump can never clear history */
-const SW = `${GEN}const SHELF = 'cb-till-v3';
-const KEEP = ['/till.html', '/promo.html', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
+/* ⚠️ bump SHELF with every change to the page's boot path (M08: 'cb-till-v2', M10: 'cb-till-v3', till-cbsignin: 'cb-till-v4') — activate
+   drops the old shelf, nothing else: the worker holds no bill, no setting and no store, so a bump can never clear history */
+/* ⭐ /app/signin-ui.js is on the shelf (2026-10-08): the till mounts CBSignin, and a counter PIN with the line down is a sign-in */
+const SW = `${GEN}const SHELF = 'cb-till-v4';
+const KEEP = ['/till.html', '/promo.html', '/app/signin-ui.js', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -151,6 +152,14 @@ const COPIES = () => [
   /* ⭐ THE SHOP'S SCREEN rides the same rail as the counter: one master, both hosts, the same engines and the same
      snapshot. It is the counter's data with a different job — advertising it instead of billing it. */
   [path.join(API, 'tools', 'tally-connector', 'promo.html'), path.join(WEB, 'promo.html'), 'copy'],
+  /**
+   * ⭐⭐⭐ THE ONE SIGN-IN WINDOW, INTO THE KIT (DECISIONS 2026-10-08: CBSignin mounts on index · till · CB Accounts · CB CRM).
+   * ⚠️⚠️ THE ONLY COPY THAT RUNS WEB → API. Its master is web public/app/signin-ui.js — the file index, Accounts and CRM load — and
+   * the shop PC has no web host, so the kit carries a byte copy and till.js serves it at the same path (/app/signin-ui.js).
+   * Edit the WEB file; this writes the kit's. The kit's update path (routes/integrations.js KIT_NAMES, till.js live:[]) refreshes
+   * it like till.html. The engine it widens (/engine/signin.js) is adopted on both sides by chitbridge-engines/tools/adopt.cjs.
+   */
+  [path.join(WEB, 'app', 'signin-ui.js'), path.join(API, 'tools', 'tally-connector', 'signin-ui.js'), 'copy'],
   /* offers: ADOPTED from chitbridge-engines (v1.3.0, 2026-09-28) — app/offers.js, engine/offers.js and lib/offers-engine.js are
      written only by chitbridge-engines/tools/adopt.cjs; the hand cp to the server and this copy are both retired. */
   /* tax: ADOPTED from chitbridge-engines (2026-09-28) — engine/tax.js is a bundle of the tax-slab + tax releases, written
