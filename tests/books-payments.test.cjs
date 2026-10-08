@@ -89,7 +89,10 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
 
   /* ═══ 1 · preview ═══ */
   await section('1 · POST /payments/preview — the proposal and W1–W4, each in words', async () => {
-    const w1 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 500000, currency: 'INR' });
+    const w0 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 500000, currency: 'INR' });
+    ok('nothing owed, no bills being settled → W1 stays silent (Athi 2026-10-08: W1 only with an allocation); the whole amount is an advance',
+      w0.status === 200 && codes(w0).join() === '' && w0.body.on_account_minor === 500000, JSON.stringify(w0.body.warnings));
+    const w1 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 500000, currency: 'INR', allocate: 'oldest_first' });
     ok('nothing owed yet → W1 nothing_owed, in words; nothing proposed; the whole amount would be an advance', w1.status === 200 && codes(w1).join() === 'nothing_owed'
       && w1.body.warnings[0].words === 'Nothing is owed to Kumar Traders.' && w1.body.proposal.length === 0 && w1.body.on_account_minor === 500000 && w1.body.open_minor === 0, JSON.stringify(w1.body));
     ok('…the party is named from the shop\'s list; the preview wrote nothing', w1.body.party && w1.body.party.name === 'Kumar Traders' && X.T.payments.length === 0 && X.T.items.length === 0);

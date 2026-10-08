@@ -419,7 +419,8 @@ function paymentQuestion(req, needMode) {
   const mode = MODES.indexOf(String(b.mode || '').toLowerCase()) >= 0 ? String(b.mode).toLowerCase() : null;
   if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — cash, bank, UPI, card or cheque?' } };
   const allocate = b.allocate === 'none' ? 'none' : b.allocate === 'oldest_first' ? 'oldest_first' : null;
-  return { party, direction: b.direction === 'out' ? 'out' : 'in', amount_minor, cur, mode, allocate, country: req.books && req.books.country };
+  const allocations = Array.isArray(b.allocations) && b.allocations.length ? b.allocations : null;
+  return { party, direction: b.direction === 'out' ? 'out' : 'in', amount_minor, cur, mode, allocate, allocations, country: req.books && req.books.country };
 }
 /** the party's name for the words — the display name, else the nickname the lists keep; "this party" when neither is known */
 async function partyWord(h, e, party) { const p = (await partyNames(h, e)).get(String(party)); return (p && (p.name || p.nickname)) || 'this party'; }
@@ -440,7 +441,7 @@ router.post('/payments/preview', auth, noKey, on, async (req, res) => {
     const out = await withEntity(e, async (h) => {
       const name = await partyWord(h, e, q.party);
       const prop = await B.proposeFor(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, currency: q.cur });
-      const warnings = await B.duplicateWarnings(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, allocate: q.allocate, country: q.country }, prop, name);
+      const warnings = await B.duplicateWarnings(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, allocate: q.allocate, allocations: q.allocations, country: q.country }, prop, name);
       return { currency: prop.currency, party: { party_id: q.party, name }, open_minor: prop.open_minor, proposal: prop.proposal, apply_minor: prop.apply_minor,
         on_account_minor: prop.on_account_minor, skipped: prop.skipped, why: prop.why, warnings, words: B.previewWords(prop, name, q.direction) };
     });
