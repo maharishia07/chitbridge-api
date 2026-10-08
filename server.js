@@ -178,16 +178,13 @@ app.use(helmet({
  * when it sees that flag, so JSON parsing is skipped for these two paths only and unchanged everywhere else.
  *
  * Found by the precondition in scripts/prove-channels.js — a wrong signature must be REJECTED, and it was not.
+ * (Mounted a few lines below, after the request id and the logger — E01.)
  */
-app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }));
-
-// Parse JSON — same parsers and limits (middleware/auth-first.js); an AUTH-FIRST route is parsed only after auth, below
-const authFirst = require('./middleware/auth-first');
-app.use(authFirst.parsers);
-
 // Request id for traceability — propagate an incoming id or mint one; echo it back; expose as req.id.
 app.use((req, res, next) => {
-  req.id = req.headers['x-request-id'] || require('crypto').randomBytes(8).toString('hex');
+  /* E07: a uuid when we mint it; a caller's id is kept only if it is a plain token (≤ 64 of [A-Za-z0-9._:-]) — it goes into every log line */
+  const given = String(req.headers['x-request-id'] || '');
+  req.id = /^[A-Za-z0-9._:-]{1,64}$/.test(given) ? given : require('crypto').randomUUID();
   res.setHeader('X-Request-Id', req.id);
   next();
 });
@@ -200,10 +197,26 @@ app.use((req, res, next) => {
   res.on('finish', () => {
     log.info('request', { id: req.id, method: req.method, path: req.path, status: res.statusCode,
                           ms: Date.now() - t0, code: (res.locals && res.locals.code) || null,
-                          kind: (res.locals && res.locals.kind) || null /* M05: 'person' (listed session) · 'legacy' (no jti) */, origin: req.headers.origin || null });
+                          kind: (res.locals && res.locals.kind) || null /* M05: 'person' (listed session) · 'legacy' (no jti) */, origin: req.headers.origin || null,
+                          /* E07: whose request — the business (entity) and who acted (person); the body's size, for E01's budgets */
+                          entity: (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
+                          person: (req.identity && req.identity.identity_id) || null,
+                          bytes: Number(req.headers['content-length']) || 0 });
   });
   next();
 });
+
+/* E01: the parsers sit BELOW the request id and the logger, so a body refused by the parser (413) still gets an id and a log line */
+app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }));
+
+// Parse JSON — same parsers and limits (middleware/auth-first.js); an AUTH-FIRST route is parsed only after auth, below
+const authFirst = require('./middleware/auth-first');
+app.use(authFirst.parsers);
+
+// E01 · every request has a deadline (REQUEST_TIMEOUT_MS, default 30 s) → 503 REQUEST_TIMEOUT; the SSE stream is exempt (lib/limits.js)
+app.use(require('./lib/limits').requestTimeout);
+// E07 · the request in scope for the database layer (slow-query lines carry its id) — after the parsers, whose stream callbacks drop the context
+app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.locals, next));
 
 // Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({
@@ -391,11 +404,20 @@ app.use('/api/adopt', require('./routes/adopt'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Health check ─────────────────────────────────────────────
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+  /* E07: one `SELECT 1`, given 2 s — db 'ok' under DB_SLOW_MS, 'slow' over it, 'down' when it fails or never answers.
+     The status stays 200 either way: this says how the database is, it does not take the API out of rotation. */
+  let db = 'down', db_ms = null;
+  try {
+    const t0 = Date.now();
+    await Promise.race([require('./db').query('SELECT 1'), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 2000).unref())]);
+    db_ms = Date.now() - t0; db = db_ms > require('./lib/dbwatch').slowMs() ? 'slow' : 'ok';
+  } catch (_) { /* 'down' */ }
   res.json({
     status: 'OK',
     platform: 'Chit and Bridge',
-    version: '1.0.0',
+    version: require('./package.json').version,   /* E07: from package.json, not a literal */
+    db, db_ms,
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     /* which build answers — Railway sets this; it is how a spec that fails right after a push tells 'not deployed yet' from 'broken' */
@@ -427,7 +449,7 @@ app.use((err, req, res, next) => {
   /* ⭐ the translation now lives in lib/knownerr.js, so the routes that CATCH their own errors — which is all of
      them; none calls next(err) — give the same answer (external review §23) */
   const _known = require('./lib/knownerr').known(err);
-  if (_known) return res.status(_known.status).json(_known.body);
+  if (_known) { res.locals.code = _known.body.code || null; return res.status(_known.status).json(_known.body); }   /* E01: the code reaches the request log */
   /**
    * ⭐ A DECISION THIS API MADE ANSWERS AS A DECISION. Only an error that declares this code reaches this
    * branch — an ordinary throw still gets the generic 500 below, so nothing new leaks. The origin is echoed
