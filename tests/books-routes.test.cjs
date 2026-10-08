@@ -167,8 +167,11 @@ const call = (port, method, p, body) => new Promise((done) => {
   const payH = src.slice(src.indexOf("router.post('/payments', "), src.indexOf("router.post('/payments/:id/propose'"));
   const bsrc = require('fs').readFileSync(path.join(H.API, 'lib', 'books.js'), 'utf8');
   const recP = bsrc.slice(bsrc.indexOf('async function recordPayment('), bsrc.indexOf('/** the payment\'s journal event'));
+  /* M26: the route's one withEntity now also asks the duplicate rule first and reads the outcome after — still ONE handle, still
+     one insertPayment and two postEntry in recordPayment (the bills are settled by settleBills on that same handle) */
+  const payTx = payH.slice(payH.indexOf('await withEntity(e, async (h) => {'), payH.indexOf('return rec;'));
   ok('…and the payment row and its entry are ONE transaction (the route hands recordPayment one handle; it inserts and posts on it)',
-    /withEntity\(e, \(h\) => B\.recordPayment\(h, e,/.test(payH) && /S\.insertPayment\(h, entity, p\)/.test(recP) && (recP.match(/postEntry\(h, entity,/g) || []).length === 2 && nP >= 0);
+    /B\.recordPayment\(h, e,/.test(payTx) && !/withEntity/.test(payTx.slice(10)) && /S\.insertPayment\(h, entity, p\)/.test(recP) && (recP.match(/postEntry\(h, entity,/g) || []).length === 2 && nP >= 0);
   const ul0 = await q('POST', '/periods/2026-27/5/unlock', {});
   ok('unlock without a reason is refused', ul0.status === 422);
   const ul = await q('POST', '/periods/2026-27/5/unlock', { reason: 'late supplier bill' });

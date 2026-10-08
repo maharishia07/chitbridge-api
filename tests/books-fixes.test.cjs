@@ -260,7 +260,9 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     /* a CHIT dated before the ledger began (a counter whose clock is wrong, a supplier's old invoice): the locked-month rule — the date moves, the document's own date is kept */
     const sys = await X.B.postEntry(X.db, SHOP, { type: 'expense', date: '2020-01-01', currency: 'INR', class: 'rent', amount: 10, paid_from: 'cash', source_ref: 'chit:old' });
     eq('a chit dated before the ledger began posts on the ledger\'s first day, its own date kept — and no old year appears', [sys.posting_date, sys.doc_date, sys.moved, X.T.periods.some((p) => p.fiscal_year === '2019-20')], ['2026-04-01', '2020-01-01', true, false]);
-    const good = await q('POST', '/payments', { party_id: SUPP, direction: 'out', amount_minor: 5000, mode: 'cash', received_at: '2026-09-20' });
+    /* M26: nothing is owed to Kumar Traders, so the duplicate rule (W1 nothing_owed) asks first — acknowledged here; the gates this
+       case holds (a party on a list, a date the ledger can hold) are judged BEFORE that rule (tests/books-payments.test.cjs §3) */
+    const good = await q('POST', '/payments', { party_id: SUPP, direction: 'out', amount_minor: 5000, mode: 'cash', received_at: '2026-09-20', acknowledge: ['nothing_owed'] });
     ok('a payment to a supplier on the list, dated inside the ledger, still records', good.status === 200 && good.body.payment && good.body.payment.status === 'recorded', good.status + ' ' + JSON.stringify(good.body));
     srv.close();
     /* the second fence: a key-bearing request that somehow reached the route is refused there too */

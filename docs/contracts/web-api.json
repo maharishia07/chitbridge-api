@@ -1692,6 +1692,161 @@
     "rcm_paid_minor"
    ]
   },
+  "POST /api/books/payments": {
+   "status": 200,
+   "note": "M26 (api #57) - one call: the payment and the bills it settles. allocation is null for a held cheque / no bills; outcome is absent on a replay (duplicate: true).",
+   "example": {
+    "ok": true,
+    "payment": {
+     "payment_id": "00000000-0000-4000-8000-000000000114",
+     "status": "recorded",
+     "duplicate": false
+    },
+    "posted": {
+     "ok": true,
+     "entry_id": "00000000-0000-4000-8000-000000000115",
+     "entry_no": "PY/2026-27/000001",
+     "posting_date": "2026-10-05",
+     "doc_date": "2026-10-05",
+     "moved": false,
+     "lines": 2,
+     "items": 1,
+     "note": null,
+     "duplicate": false
+    },
+    "allocation": {
+     "settled": [
+      {
+       "against_ref": "c0000000-0000-4000-8000-00000000000a",
+       "amount_minor": 112000
+      }
+     ],
+     "ok": true,
+     "items": 6,
+     "allocated_minor": 112000
+    },
+    "outcome": {
+     "words": "Paid ₹2,000 cash to Kumar Traders. Settled 3 bills (₹2,000).",
+     "settled": [
+      {
+       "against_ref": "c0000000-0000-4000-8000-00000000000a",
+       "bill_no": "KT-0007",
+       "amount_minor": 112000
+      }
+     ],
+     "applied_minor": 200000,
+     "on_account_minor": 0,
+     "balance_minor": -172012,
+     "balance_words": "you owe ₹1,720.12"
+    }
+   },
+   "optional": [
+    "posted.doc_date",
+    "posted.moved",
+    "posted.lines",
+    "posted.items",
+    "posted.note",
+    "posted.duplicate",
+    "allocation",
+    "allocation.settled",
+    "allocation.ok",
+    "allocation.items",
+    "allocation.allocated_minor",
+    "outcome",
+    "outcome.words",
+    "outcome.settled",
+    "outcome.applied_minor",
+    "outcome.on_account_minor",
+    "outcome.balance_minor",
+    "outcome.balance_words",
+    "posted.posting_date"
+   ]
+  },
+  "POST /api/books/payments #409": {
+   "status": 409,
+   "note": "M26 (api #57) - a duplicate-rule warning not named in acknowledge[]; nothing is written.",
+   "example": {
+    "code": "ALREADY_PAID",
+    "error": "Already paid?",
+    "message": "Already paid? ₹2,000 is more than the ₹1,720.12 open — ₹279.88 would stay with Kumar Traders as an advance. Pay ₹2,000 again as an advance?",
+    "warnings": [
+     {
+      "code": "excess",
+      "words": "₹2,000 is more than the ₹1,720.12 open — ₹279.88 would stay with Kumar Traders as an advance."
+     },
+     {
+      "code": "same_again",
+      "entry_no": "PY/2026-27/000001",
+      "payment_id": "00000000-0000-4000-8000-000000000114",
+      "words": "The same ₹2,000 was paid to Kumar Traders today (PY/2026-27/000001)."
+     }
+    ]
+   },
+   "optional": [
+    "warnings[].entry_no",
+    "warnings[].payment_id"
+   ]
+  },
+  "POST /api/books/payments #locked": {
+   "status": 409,
+   "note": "a payment dated in a locked month (routes/books.js fail: PERIOD_LOCKED)",
+   "example": {
+    "code": "PERIOD_LOCKED",
+    "error": "That month is locked. Open it again (with a reason) to record this.",
+    "message": "That month is locked. Open it again (with a reason) to record this."
+   },
+   "optional": []
+  },
+  "POST /api/books/payments/preview": {
+   "status": 200,
+   "note": "M26 (api #57) - no write. allocate \"oldest_first\"|\"none\"; W1 nothing_owed fires only when bills are being settled (owner 2026-10-08).",
+   "example": {
+    "currency": "INR",
+    "party": {
+     "party_id": "33333333-3333-4333-8333-333333333333",
+     "name": "Kumar Traders"
+    },
+    "open_minor": 172012,
+    "proposal": [
+     {
+      "against_ref": "c0000000-0000-4000-8000-00000000000c",
+      "bill_no": "KT-0010",
+      "due_date": "2026-10-10",
+      "open_minor": 73000,
+      "apply_minor": 73000,
+      "disputed": false
+     }
+    ],
+    "apply_minor": 172012,
+    "on_account_minor": 27988,
+    "skipped": [
+     {
+      "against_ref": "c0000000-0000-4000-8000-00000000000d",
+      "why": "In dispute"
+     }
+    ],
+    "why": "x",
+    "warnings": [
+     {
+      "code": "excess",
+      "words": "₹2,000 is more than the ₹1,720.12 open — ₹279.88 would stay with Kumar Traders as an advance."
+     },
+     {
+      "code": "same_again",
+      "entry_no": "PY/2026-27/000001",
+      "payment_id": "00000000-0000-4000-8000-000000000114",
+      "words": "The same ₹2,000 was paid to Kumar Traders today (PY/2026-27/000001)."
+     }
+    ],
+    "words": "₹1,720.12 settles 2 bills · ₹279.88 stays with Kumar Traders as an advance"
+   },
+   "optional": [
+    "warnings[].entry_no",
+    "warnings[].payment_id",
+    "skipped[].against_ref",
+    "skipped[].why"
+   ]
+  },
   "POST /api/books/periods/:fy/:p/lock": {
    "status": 200,
    "example": {

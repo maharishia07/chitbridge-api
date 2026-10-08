@@ -38,7 +38,7 @@ const CALLS = {
   insertItems: [E, [{ party_id: U, account_id: U, side: 'receivable', ref: 'r', against_ref: 'r', ref_kind: 'bill', amount_minor: 1, currency: 'INR' }]],
   periodSums: [E, '2026-27', 0, 5, true], lineSums: [E, '2026-04-01', '2026-04-30', true], firstYear: [E], balanceDrift: [E], unbalancedEntries: [E],
   items: [E, U, U], itemOwners: [E, U, ['r1', 'r2']], itemTotals: [E, U], accountNet: [E, U],
-  insertPayment: [E, { party_id: U, direction: 'in', amount_minor: 1, currency: 'INR', mode: 'cash', received_at: '2026-04-01', client_ref: 'c1' }], payment: [E, U], paymentByRef: [E, 'c1'], cheques: [E, false, 200],
+  insertPayment: [E, { party_id: U, direction: 'in', amount_minor: 1, currency: 'INR', mode: 'cash', received_at: '2026-04-01', client_ref: 'c1' }], payment: [E, U], paymentByRef: [E, 'c1'], paymentsSince: [E, U, 'in', '2026-04-01T00:00:00Z'], cheques: [E, false, 200],
   queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], waitingCount: [E], outboxDone: [E, 1, false, 'why'], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'],
   terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
   lastPack: [E], insertPack: [E, { pack_id: U, kind: 'month', sha256: 'x', manifest: {} }], packs: [E], pack: [E, U], ackPack: [E, U, U],

@@ -408,28 +408,92 @@ const MODES = ['cash', 'bank', 'upi', 'card', 'cheque'];
  * ⚠️ Refused in words (422): a party on neither of the shop's lists; a date before the ledger began or in the future.
  * A cheque posts only when it CLEARS (C3) — until then it is a status row, and there is nothing to propose.
  */
-router.post('/payments', auth, noKey, on, async (req, res) => {
+/** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
+function paymentQuestion(req, needMode) {
+  const b = req.body || {}, cur = String(curOf(req)).toUpperCase();
+  const party = String(b.party_id || b.party || '');
+  if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
+  if (b.currency && String(b.currency).toUpperCase() !== cur) return { refuse: { status: 422, words: 'This ledger is kept in ' + cur + '.' } };
+  const amount_minor = minorOf(b);
+  if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
+  const mode = MODES.indexOf(String(b.mode || '').toLowerCase()) >= 0 ? String(b.mode).toLowerCase() : null;
+  if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — cash, bank, UPI, card or cheque?' } };
+  const allocate = b.allocate === 'none' ? 'none' : b.allocate === 'oldest_first' ? 'oldest_first' : null;
+  const allocations = Array.isArray(b.allocations) && b.allocations.length ? b.allocations : null;
+  return { party, direction: b.direction === 'out' ? 'out' : 'in', amount_minor, cur, mode, allocate, allocations, country: req.books && req.books.country };
+}
+/** the party's name for the words — the display name, else the nickname the lists keep; "this party" when neither is known */
+async function partyWord(h, e, party) { const p = (await partyNames(h, e)).get(String(party)); return (p && (p.name || p.nickname)) || 'this party'; }
+/** POST /payments/preview — W1–W4 and the 409 share one shape: { code: 'ALREADY_PAID', error, message: words, warnings } */
+const alreadyPaid = (res, err) => res.status(409).json({ code: 'ALREADY_PAID', error: 'Already paid?', message: err.message, warnings: err.warnings || [] });
+
+/**
+ * POST /payments/preview { party_id, direction, amount_minor, currency, allocate?: 'oldest_first'|'none' } — NO WRITE (M26, SPEC-payments §4.1)
+ * → { currency, party: { party_id, name }, open_minor, proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }],
+ *     apply_minor, on_account_minor, skipped, warnings: [{ code, words, entry_no? }], words }
+ * The proposal is B.proposeFor (the one function /propose and the one-call record use); the warnings are the duplicate rule
+ * (PAY D5: W1–W4, 24 h). The web paints them; it composes none of the words.
+ */
+router.post('/payments/preview', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), b = req.body || {}, cur = String(curOf(req)).toUpperCase();
-    const party = String(b.party_id || b.party || '');
-    if (!UUID.test(party)) return res.status(400).json({ error: 'Which party?', message: 'Which party?' });
-    if (b.currency && String(b.currency).toUpperCase() !== cur) return res.status(422).json({ error: 'This ledger is kept in ' + cur + '.', message: 'This ledger is kept in ' + cur + '.' });
-    const direction = b.direction === 'out' ? 'out' : 'in';
-    const amount_minor = minorOf(b);
-    if (!(amount_minor > 0)) return res.status(400).json({ error: 'How much?', message: 'How much?' });
-    const mode = MODES.indexOf(String(b.mode || '').toLowerCase()) >= 0 ? String(b.mode).toLowerCase() : null;
-    if (!mode) return res.status(400).json({ error: 'Paid how — cash, bank, UPI, card or cheque?', message: 'Paid how — cash, bank, UPI, card or cheque?' });
-    const date = dateQ(b.received_at || b.date, today());
-    const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
-    /* ⭐ the payment row and its entry are ONE transaction (B.recordPayment) — a refusal leaves nothing half-recorded */
-    const out = await withEntity(e, (h) => B.recordPayment(h, e, { party_id: party, direction, amount_minor, currency: cur, mode, reference: b.reference,
-      cheque_no: chq.number || chq.no || b.cheque_no, cheque_bank: chq.bank || b.cheque_bank,
-      cheque_date: DATE.test(String(chq.date || chq.dated || b.cheque_date || '')) ? (chq.date || chq.dated || b.cheque_date) : null, received_at: date,
-      client_ref: b.client_ref ? String(b.client_ref).slice(0, 80) : null, by: byOf(req), strict_date: true }));
-    res.json(Object.assign({ ok: true }, out));
+    const e = ctx(req), q = paymentQuestion(req, false);
+    if (q.refuse) return res.status(q.refuse.status).json({ error: q.refuse.words, message: q.refuse.words });
+    const out = await withEntity(e, async (h) => {
+      const name = await partyWord(h, e, q.party);
+      const prop = await B.proposeFor(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, currency: q.cur });
+      const warnings = await B.duplicateWarnings(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, allocate: q.allocate, allocations: q.allocations, country: q.country }, prop, name);
+      return { currency: prop.currency, party: { party_id: q.party, name }, open_minor: prop.open_minor, proposal: prop.proposal, apply_minor: prop.apply_minor,
+        on_account_minor: prop.on_account_minor, skipped: prop.skipped, why: prop.why, warnings, words: B.previewWords(prop, name, q.direction) };
+    });
+    res.json(out);
   } catch (err) { fail(res, err); }
 });
-/** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } */
+/**
+ * POST /payments { party_id, direction: in|out, amount_minor, currency, mode, reference?, cheque?: { number, bank, date }, received_at?, client_ref?,
+ *                  allocations?: [{ against_ref, amount_minor }], allocate?: 'oldest_first'|'none', acknowledge?: [codes] }
+ * → { ok, payment: { payment_id, status: 'recorded' | 'cheque_received', duplicate }, posted, allocation: null | { settled, items, allocated_minor },
+ *     outcome: { words, settled: [{ against_ref, bill_no, amount_minor }], applied_minor, on_account_minor, balance_minor, balance_words } }
+ * ⭐ ONE CALL, ONE TRANSACTION (M26): the payment row, its entry and the bills it settles commit together or not at all — a refused
+ *   allocation (confirmItems) rolls the payment back with it. `allocate: 'oldest_first'` with no list = the server's own proposal.
+ * ⭐ client_ref: the same ref again → 200, the FIRST payment (duplicate: true) and its entry — never a second posting; a replay is
+ *   answered BEFORE the duplicate rule looks at the new body.
+ * ⭐ THE DUPLICATE RULE (PAY D5, W1–W4): a warning not named in `acknowledge` → 409 ALREADY_PAID with the words and the warnings;
+ *   nothing is written. The web's "Pay as advance" button is what sets `acknowledge`.
+ * ⚠️ Refused in words (422): a party on neither of the shop's lists; a date before the ledger began or in the future.
+ * A cheque posts only when it CLEARS (C3) — until then it is a status row, and there is nothing to propose.
+ */
+router.post('/payments', auth, noKey, on, async (req, res) => {
+  try {
+    const e = ctx(req), b = req.body || {}, q = paymentQuestion(req, true);
+    if (q.refuse) return res.status(q.refuse.status).json({ error: q.refuse.words, message: q.refuse.words });
+    const { party, direction, amount_minor, cur, mode, allocate } = q;
+    const date = dateQ(b.received_at || b.date, today());
+    const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
+    const client_ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
+    const ack = Array.isArray(b.acknowledge) ? b.acknowledge.map(String) : [];
+    const allocations = Array.isArray(b.allocations) ? b.allocations.filter((a) => a && typeof a === 'object').map((a) => ({ against_ref: String(a.against_ref || ''), amount_minor: Math.round(Number(a.amount_minor)) })) : null;
+    /* ⭐ the payment row and its entry are ONE transaction (B.recordPayment) — a refusal leaves nothing half-recorded */
+    const out = await withEntity(e, async (h) => {
+      const name = await partyWord(h, e, party);
+      /* the duplicate rule runs INSIDE recordPayment (p.warn), after its gates (a replay answers first; a stranger or a bad date is a 422) */
+      const rec = await B.recordPayment(h, e, { party_id: party, direction, amount_minor, currency: cur, mode, reference: b.reference,
+        cheque_no: chq.number || chq.no || b.cheque_no, cheque_bank: chq.bank || b.cheque_bank,
+        cheque_date: DATE.test(String(chq.date || chq.dated || b.cheque_date || '')) ? (chq.date || chq.dated || b.cheque_date) : null, received_at: date,
+        client_ref, by: byOf(req), strict_date: true, allocations, allocate, warn: { acknowledge: ack, country: q.country, name } });
+      if (!rec.payment.duplicate) rec.outcome = await B.paymentOutcome(h, e, { party_id: party, direction, amount_minor, currency: cur, mode }, rec.payment.payment_id, rec.allocation, name);
+      return rec;
+    });
+    /* a bill settled here is a step of R-1400 (lib/bill-privacy) — after the commit, best effort, as /confirm does for "Choose the bills" */
+    if (out.allocation && out.allocation.settled && out.allocation.settled.length) {
+      try {
+        const pay = await withEntity(e, (h) => S.payment(h, e, out.payment.payment_id));
+        await require('../lib/bill-privacy').moneySteps(e, pay, out.allocation.settled, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
+      } catch (e2) { console.error('bill money steps:', e2.message); }
+    }
+    res.json(Object.assign({ ok: true }, out));
+  } catch (err) { if (err && err.code === 'ALREADY_PAID') return alreadyPaid(res, err); fail(res, err); }
+});
+/** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } — B.proposeFor, the one function */
 router.post('/payments/:id/propose', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
@@ -437,18 +501,8 @@ router.post('/payments/:id/propose', auth, noKey, on, async (req, res) => {
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return null;
-      const acct = await B.controlOf(h, e, p.direction === 'in' ? 'customer' : 'supplier');
-      const items = await B.partyItems(h, e, p.party_id, acct.account_id);
-      if (!items.length) return { proposal: [], on_account_minor: 0 };
-      const R = E.receivables(), dpx = Math.pow(10, 2);
-      const sug = R.proposeItems(items, 'pay:' + id, {});
-      const apply = {}; (sug.allocations || []).forEach((a) => { apply[a.debit] = (apply[a.debit] || 0) + Math.round(Number(a.amount) * dpx); });
-      const o = R.outstanding(items).by_ref;
-      const bills = Object.keys(o).map((k) => o[k]).filter((d) => d.kind === 'bill' && d.outstanding_minor > 0)
-        .sort((a, b) => String(a.due_date || a.date || '').localeCompare(String(b.due_date || b.date || '')));
-      const nos = await S.billNos(h, e, bills.map((d) => d.ref));
-      return { proposal: bills.map((d) => ({ against_ref: d.ref, bill_no: nos[d.ref] || null, due_date: d.due_date || null, open_minor: d.outstanding_minor,
-        apply_minor: d.disputed ? 0 : (apply[d.ref] || 0), disputed: !!d.disputed })), on_account_minor: Math.round(Number(sug.on_account || 0) * dpx), why: sug.ok === false ? sug.why : null };
+      const prop = await B.proposeFor(h, e, { party: p.party_id, direction: p.direction, amount_minor: p.amount_minor, currency: p.currency, credit_ref: 'pay:' + id });
+      return { proposal: prop.proposal, open_minor: prop.open_minor, apply_minor: prop.apply_minor, on_account_minor: prop.items.length ? prop.on_account_minor : 0, skipped: prop.skipped, why: prop.why };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     res.json(Object.assign({ payment_id: id }, out));
@@ -779,3 +833,6 @@ route('post', '/contra', (req, e, s, b, by) => P().contra(e, s, b, by));
 
 module.exports = router;
 module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
+/* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
+module.exports.fail = fail;
+module.exports.alreadyPaid = alreadyPaid;
