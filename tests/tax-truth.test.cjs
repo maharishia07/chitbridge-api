@@ -101,7 +101,8 @@ function fnText(src, sig) {
 }
 const PAGE_FNS = ['function billMoney(', 'function moneyOf(', 'async function finish(', 'function chitOf(',
   'function billRecipients(', 'function billSendTo(', 'function isReturnRow(', 'function isExpenseRow(', 'function slipOfRow(',
-  'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded('];
+  'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded(',
+  'function tillStamp(', 'function tillHostWord('];
 
 /** one bill rung at the counter: the page's finish() over a cart, as it runs in a browser — returns what it saved and printed */
 async function ring(o) {
@@ -120,7 +121,7 @@ async function ring(o) {
     custKnown: () => (o.cust ? { identity_id: CUST, entity_id: CUST, name: o.cust.name, gstin: '29BBBBB0000B1Z5' } : null),
     creditSinceRefresh: async () => {}, creditLimitCheck: () => ({ known: false }), ownerApprove: async () => null,
     creditDaysOf: () => 15, dueDateFor: () => '2026-10-17', creditCust: () => null, say: (m) => { saved.said = m; },
-    ageRecord: () => null, kotOn: () => false, purposeHas: () => false, orderKind: () => 'counter', orderTable: () => null,
+    ageRecord: () => null, kotOn: () => false, onAgent: () => true, personOn: () => false, purposeHas: () => false, orderKind: () => 'counter', orderTable: () => null,
     rwProg: () => null, rwEarns: () => 0, rewardOnSlip: () => '', CFD: { done() {} }, autoPrint() {}, ageClear() {}, paintParts() {},
     paintRw() {}, price() {}, menuFresh() {}, load() {}, loadQuick() {}, stepGo() {},
     showSlip: (b, m) => { saved.slip = { bill: b, m }; },
