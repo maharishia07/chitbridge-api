@@ -49,6 +49,25 @@ Every key is a READ of what exists; nothing is stored and no money is computed h
 | bell event `followup` | — | derived by the sweep | `lib/crm-followups.sweep` | the app's bell: `{ kind: 'followup', for, today, late }` over SSE |
 | bell event `message` | — | derived | `POST /api/chits/:id/messages` (external only) | the app's bell: `{ kind: 'message', id: chit_id, who }` |
 
+## POST /api/books/payments/preview · POST /api/books/payments (M26, 2026-10-08 · SPEC-payments §2.4, §4.1, §4.2 · PAY D5 as written)
+
+No money is computed here: the proposal is `CBReceivables.propose` through ONE function, `lib/books.js proposeFor` (preview, the one-call record and `/payments/:id/propose` all call it); the figures are the engine's `outstanding`; the words are built server-side once (`paymentOutcome`, `duplicateWarnings`) and the web paints them.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| request `allocate` | `'oldest_first'` · `'none'` · absent | Source (the person's choice). `oldest_first` with no `allocations` = the server's own proposal is applied. `none` = keep as an advance on purpose (W2 is then not raised). Absent = as before M26: nothing allocated. |
+| request `allocations[]` | `[{ against_ref, amount_minor }]` | Source: the bills the person ticked. Judged by `confirmItems` inside the payment's own transaction; a refusal rolls the payment back (422, nothing recorded). Refused in words with a cheque (it settles bills when it clears). |
+| request `acknowledge[]` | `['nothing_owed' \| 'excess' \| 'same_again' \| 'just_settled']` | Source: set only by the web's **Pay as advance** button. Every warning the server would raise must be in it, else 409. |
+| preview `proposal[]` | `[{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }]` | Derived (`proposeFor`): every open bill of the party on that side, oldest due first; `apply_minor` what this amount takes; a disputed bill is listed with `apply_minor: 0`. Same shape as `/payments/:id/propose`. |
+| preview `open_minor` · `apply_minor` · `on_account_minor` · `skipped[]` · `why` | integers (minor units) · `[{ against_ref, why }]` · string or null | Derived: every open bill (disputed included) · what the proposal applies · what stays as an advance · bills the engine skipped with its words · the engine's refusal (an uncleared cheque) or null. |
+| preview `party` | `{ party_id, name }` | Read: the shop's list name (`on_rail` arrives with M30's `partyOnRail`). |
+| preview `warnings[]` · 409 `warnings[]` | `[{ code, words, entry_no?, payment_id? }]` | Derived (`duplicateWarnings`, PAY D5 = W1–W4, 24-hour window on `created_at`): `nothing_owed` · `excess` · `same_again` (names the earlier payment's entry) · `just_settled` (names the entry that settled the bills now at 0). Codes are stable strings; words are the shop's. |
+| preview `words` | string | Derived: "₹3,720.12 settles 4 bills · ₹1,279.88 stays with Kumar Traders as an advance" — the line under the bills table. |
+| 409 `{ code: 'ALREADY_PAID', error: 'Already paid?', message, warnings }` | — | `POST /payments` when a warning is not acknowledged. `message` is the whole sentence ("Already paid? … Pay ₹5,000 again as an advance?"). Nothing is written. A replay of a known `client_ref` is answered 200 BEFORE the rule looks. |
+| record `allocation` | `null` · `{ settled: [{ against_ref, amount_minor }], items, allocated_minor }` | Derived: what `settleBills` wrote in the same transaction as the entry. `null` when nothing was asked for, or a cheque is held. |
+| record `outcome` | `{ words, settled: [{ against_ref, bill_no, amount_minor }], applied_minor, on_account_minor, balance_minor, balance_words }` | Derived, read back from the rows just written (same transaction). `words`: "Paid ₹5,000 cash to Kumar Traders. Settled 2 bills (₹1,720.12). ₹3,279.88 left with Kumar Traders as an advance — they owe you this." `balance_minor` signed as `/dues` (+ they owe you); `balance_words` never a minus ("they owe you ₹X" · "you owe ₹X" · "settled"). Absent on a replay (`duplicate: true`). |
+| store read `paymentsSince` | `books_payment` rows by party · direction · `created_at >= since` | New read in `lib/books-store.js` (W3). The window is read from the real clock; W4 reads `party_item.payment_id` + `created_at`, already selected by `items`. |
+
 ## chit header · `business_json.page` (N03, 2026-10-07 · decisions M-D6 / M-D7)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

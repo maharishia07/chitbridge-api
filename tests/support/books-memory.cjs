@@ -108,8 +108,9 @@ function create() {
     async insertPayment(db, e, p) {
       const seen = p.client_ref ? T.payments.find((x) => x.entity_id === e && x.client_ref === p.client_ref) : null;
       if (seen) return { payment_id: seen.payment_id, duplicate: true };
-      const r = Object.assign({ payment_id: id(), entity_id: e }, clone(p)); T.payments.push(r); return { payment_id: r.payment_id, duplicate: false };
+      const r = Object.assign({ payment_id: id(), entity_id: e, created_at: now() }, clone(p)); T.payments.push(r); return { payment_id: r.payment_id, duplicate: false };
     },
+    async paymentsSince(db, e, party, direction, since) { return clone(T.payments.filter((p) => p.entity_id === e && p.party_id === party && p.direction === direction && String(p.created_at || '') >= String(since)).reverse()); },
     async paymentByRef(db, e, ref) { const p = T.payments.find((x) => x.entity_id === e && x.client_ref === String(ref)); return p ? { payment_id: p.payment_id, mode: p.mode } : null; },
     async cheques(db, e, all, limit) {
       const steps = ['received', 'deposited', 'cleared', 'bounced'];
