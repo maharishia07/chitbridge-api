@@ -153,3 +153,13 @@ The shell's header sheet in ONE read (`lib/entity-header.js`; one `readBatch` ov
 | `licences[].rule_verified` | boolean or null | `false` = the rule's source is not cited yet ("verify"); every rule is false today. Null when no rule. |
 | `trade_ready.checks[]` | `{ key, label, done }` x 4 | `address` (an address whose rung is at least `copied`: profile provenance or vault row, not just typed) · `phone` (the PHONE identity document is `verified`) · `pan` (a PAN identity document is held, or the PAN is read from the GSTIN) · `gstin` (a GSTIN is on file). |
 | `trade_ready.done` | boolean | All four are done. |
+
+## `policy_flags.books.auto_post` (M34, 2026-10-08 · DECISIONS: "Nothing posts by itself")
+
+No SQL: `books` is a key of the shop's `identities.policy_flags` jsonb, whitelisted in `lib/policy.js` FLAGS (type `switches`).
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `policy_flags.books.auto_post` | `'on'` or `'off'` (or `{ on: boolean }`); absent = OFF | source. Written by the OWNER only (`PATCH /api/entities/policy { books: { auto_post: 'on' } }`). Read by `lib/books-recurring.autoPostOn` (the nightly sweep) and `lib/books-todo`. OFF (the default, and on any failed read): the sweep posts nothing — an `auto` template and a due accrual reversal are only counted as proposals and show on the To-do. |
+| `books/todo` `recurring_due.items[].auto` | boolean | derived: the template's `auto` AND the flag on. False reads as "ask me". |
+| nightly `posted.recurring.proposed_reversals` | integer | derived: accrual reversals due that the sweep left for the To-do because the flag is OFF. |

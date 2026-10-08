@@ -228,6 +228,9 @@ router.patch('/policy', auth, async (req, res) => {
   if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'system_folders') && !require('../lib/owner').isOwner(req)) {
     return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may switch folders on or off.' });
   }
+  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'books') && !require('../lib/owner').isOwner(req)) {
+    return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may let the books post by themselves.' });
+  }
   try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
   catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
