@@ -787,6 +787,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
                     'orderhub.js': 'CBOrderHub',
                     'dayopen.js': 'CBDayOpen',
                     'signin.js': 'CBSignin',
+                    'rail.js': 'CBRail',
                     'scalecode.js': 'CBScaleCode',
                     'qty.js': 'CBQty',
                     'rewards.js': 'CBRewards', 'screen.js': 'CBScreen', 'qr.js': null,
