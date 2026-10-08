@@ -159,6 +159,8 @@ jobs:
         run: API_BASE=http://localhost:3000 bash scripts/smoke-review-fixes.sh
       - name: Isolation suite (A4)
         run: API_BASE=http://localhost:3000 bash scripts/isolation-suite.sh
+      - name: E01 limits, with a real database (a planted pg_sleep is cancelled by the statement deadline)
+        run: node tests/limits.test.cjs
 
   scan:
     # E02 — dependency + secret scanning on every push/PR.

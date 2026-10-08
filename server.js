@@ -178,13 +178,8 @@ app.use(helmet({
  * when it sees that flag, so JSON parsing is skipped for these two paths only and unchanged everywhere else.
  *
  * Found by the precondition in scripts/prove-channels.js — a wrong signature must be REJECTED, and it was not.
+ * (Mounted a few lines below, after the request id and the logger — E01.)
  */
-app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }));
-
-// Parse JSON — same parsers and limits (middleware/auth-first.js); an AUTH-FIRST route is parsed only after auth, below
-const authFirst = require('./middleware/auth-first');
-app.use(authFirst.parsers);
-
 // Request id for traceability — propagate an incoming id or mint one; echo it back; expose as req.id.
 app.use((req, res, next) => {
   req.id = req.headers['x-request-id'] || require('crypto').randomBytes(8).toString('hex');
@@ -204,6 +199,16 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+/* E01: the parsers sit BELOW the request id and the logger, so a body refused by the parser (413) still gets an id and a log line */
+app.use('/api/capture/webhook', express.raw({ type: () => true, limit: '2mb' }));
+
+// Parse JSON — same parsers and limits (middleware/auth-first.js); an AUTH-FIRST route is parsed only after auth, below
+const authFirst = require('./middleware/auth-first');
+app.use(authFirst.parsers);
+
+// E01 · every request has a deadline (REQUEST_TIMEOUT_MS, default 30 s) → 503 REQUEST_TIMEOUT; the SSE stream is exempt (lib/limits.js)
+app.use(require('./lib/limits').requestTimeout);
 
 // Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({
@@ -427,7 +432,7 @@ app.use((err, req, res, next) => {
   /* ⭐ the translation now lives in lib/knownerr.js, so the routes that CATCH their own errors — which is all of
      them; none calls next(err) — give the same answer (external review §23) */
   const _known = require('./lib/knownerr').known(err);
-  if (_known) return res.status(_known.status).json(_known.body);
+  if (_known) { res.locals.code = _known.body.code || null; return res.status(_known.status).json(_known.body); }   /* E01: the code reaches the request log */
   /**
    * ⭐ A DECISION THIS API MADE ANSWERS AS A DECISION. Only an error that declares this code reaches this
    * branch — an ordinary throw still gets the generic 500 below, so nothing new leaks. The origin is echoed

@@ -28,9 +28,13 @@ const auth = require('./auth');
 const AUTH_FIRST = /^\/api\/chits\/send\/?$/i;
 const isAuthFirst = (req) => req.method === 'POST' && AUTH_FIRST.test(req.path || '');
 
-/* the same parsers, same limits, as server.js always used */
-const json = express.json({ limit: '8mb' });   // raised for base64 attachment uploads
-const form = express.urlencoded({ extended: true, limit: '8mb' });
+/* E01: two budgets — the large one only where lib/limits.js lists the route (base64 files, bulk lists), the
+   default everywhere else; an oversized body is refused 413 BODY_TOO_LARGE by lib/knownerr.js */
+const limits = require('../lib/limits');
+const pair = (limit) => ({ json: express.json({ limit }), form: express.urlencoded({ extended: true, limit }) });
+const SMALL = pair(limits.BODY_DEFAULT), LARGE = pair(limits.BODY_LARGE);
+const json = (req, res, next) => (limits.isLarge(req) ? LARGE : SMALL).json(req, res, next);
+const form = (req, res, next) => (limits.isLarge(req) ? LARGE : SMALL).form(req, res, next);
 
 /** the global parsers — every request except an auth-first one, unchanged */
 const parsers = [

@@ -26,6 +26,21 @@ function sslForHost(hostname) {
   return ['localhost', '127.0.0.1', '::1'].includes(hostname) ? false : { rejectUnauthorized: false };
 }
 
+/**
+ * ⭐ E01 · NO STATEMENT RUNS PAST DB_STATEMENT_TIMEOUT_MS (default 15 s; 0 = off). Postgres cancels it (57014) and
+ * lib/knownerr.js answers 503 STATEMENT_TIMEOUT. Set TWICE, on purpose, because the pooler decides which holds:
+ *   · per connection, once, when the pool opens it — covers query() on a direct connection;
+ *   · SET LOCAL inside withTransaction's own BEGIN — the same trip, so it costs nothing, and it holds through
+ *     Supabase's transaction pooler, where a session SET is not guaranteed to land on the backend that runs the work.
+ * ⚠️ NOT a startup parameter (Pool's `statement_timeout` option): a transaction pooler may refuse unknown ones.
+ */
+function armPool(p) {
+  const ms = require('../lib/limits').statementTimeoutMs();
+  if (ms) p.on('connect', (c) => { c.query('SET statement_timeout = ' + Math.floor(ms)).catch((e) => console.warn('statement_timeout not set:', e.message)); });
+  return p;
+}
+const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return ms ? 'BEGIN; SET LOCAL statement_timeout = ' + Math.floor(ms) : 'BEGIN'; };
+
 async function createPool() {
   const rawUrl = process.env.DATABASE_URL || '';
   let parsed;
@@ -38,7 +53,7 @@ async function createPool() {
   try {
     await tryConnect({ connectionString: rawUrl, ssl: directSsl });
     console.log(`DB connected via DATABASE_URL: ${parsed.hostname}:${parsed.port || '5432'}`);
-    return new Pool({ connectionString: rawUrl, ssl: directSsl, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 });
+    return armPool(new Pool({ connectionString: rawUrl, ssl: directSsl, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
   } catch (e) {
     console.log(`Direct DATABASE_URL connect failed (${e.message}); trying Supabase pooler fallback…`);
   }
@@ -54,7 +69,7 @@ async function createPool() {
       try {
         await tryConnect(config);
         console.log(`DB connected via pooler: ${host} as ${user}`);
-        return new Pool({ ...config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 });
+        return armPool(new Pool({ ...config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
       } catch (e) {
         console.log(`Pooler ${region} user=${user} failed: ${e.message}`);
       }
@@ -206,7 +221,7 @@ const withTransaction = async (fn) => {
   try { require('../lib/trips').tick('tx'); } catch (_) {}
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    await client.query(beginSql());   /* E01: the statement deadline rides on BEGIN's own trip */
     const result = await fn(client);
     await client.query('COMMIT');
     return result;
