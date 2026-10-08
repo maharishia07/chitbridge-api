@@ -3234,35 +3234,73 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
  * ⭐ PAYMENT, LEVEL 1 (Athi, 2026-09-05: "or QR code and get the payment loop done"). The seller records that a chit was
  * paid — by UPI against the QR, by cash, or otherwise — on THEIR OWN copy (business_json.payment), the way the frozen
  * invoice rides business_json. Nothing moves money; a gateway (level 2) will write the same field from its webhook.
- *   POST /:chit_id/payment { method: 'upi'|'cash'|'card'|'bank'|'other', ref?, amount?, note? } → { payment }
- *   DELETE /:chit_id/payment → cleared (a mistake undone; the state log keeps the record of both)
+ * ⭐⭐ A DOOR INTO THE BOOKS, NOT A SECOND WRITER OF "PAID" (drift D1, TILES 2026-10-08; Athi: "Q4 redirect in M26"). This used
+ * to mark the copy, write a state_log row with columns that do not exist (swallowed — BACKLOG N16), ring the bell, and never
+ * post. Now, in ONE transaction: the copy carries the payment (the screen, the e2e and the connector's Receipt read it) AND the
+ * books record it through lib/books-hooks.chitPaid → lib/books.recordPayment, the one path — one payment row, one entry, the
+ * chit's bill allocated when the books hold it open (else an advance). client_ref 'chitpay:<chit_id>': the same chit marked
+ * twice posts nothing twice. The duplicate rule W1–W4 asks here as it does on POST /api/books/payments — 409 ALREADY_PAID, and
+ * `acknowledge: [codes]` answers it. No ledger → the copy says paid, `books: { off: true }`. A payer the shop does not know → the
+ * mark is kept and the payment WAITS, named (`books: { queued, why }`); the retry posts it once the customer is chosen.
+ *   POST /:chit_id/payment { method: 'upi'|'cash'|'card'|'bank'|'other', ref?, amount?, note?, acknowledge?: [codes] } → { message, payment, books }
+ *   DELETE /:chit_id/payment → the mark cleared; a payment the books recorded STAYS (reverse it there — the answer names the entry)
  */
-router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }) ], validate, async (req, res) => {
+router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }), body('acknowledge').optional().isArray() ], validate, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
+    const entity_id = auth.entityOf(req), chit_id = req.params.chit_id;
     const payment = { method: req.body.method, ref: req.body.ref || null, amount: req.body.amount != null ? Number(req.body.amount) : null, note: req.body.note || null, at: new Date().toISOString(), by: (req.identity && req.identity.identity_id) || entity_id };
-    /* an amount above the quoted total is a dispute, not a payment — unless the note says why (a tip, a rounding, an old balance) */
-    if (payment.amount != null && !payment.note) {
-      const q = await withEntity(entity_id, (db) => db.query(`SELECT COALESCE((summary_json->>'total_value')::numeric, (business_json->'invoice'->>'grand_total')::numeric) AS quoted FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [req.params.chit_id, entity_id])).catch(() => ({ rows: [] }));
-      const quoted = q.rows[0] && q.rows[0].quoted != null ? Number(q.rows[0].quoted) : null;
-      if (quoted != null && payment.amount > quoted * 1.005 + 1) return res.status(422).json({ error: 'Above the quoted amount', message: 'Received ' + payment.amount + ' against a quote of ' + quoted + '. Add a note saying why, or record the quoted amount.', quoted });
-    }
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('payment', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
-      [JSON.stringify(payment), req.params.chit_id, entity_id]));
-    if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
-    try { await withEntity(entity_id, (db) => db.query(`INSERT INTO state_log (chit_id, entity_id, from_status, to_status, note, created_at) VALUES ($1, $2, NULL, 'paid', $3, NOW())`, [req.params.chit_id, entity_id, 'Paid · ' + payment.method + (payment.ref ? ' · ' + payment.ref : '') + (payment.amount != null ? ' · ' + payment.amount : '')])); } catch (_) {}
+    const hooks = require('../lib/books-hooks');
+    const out = await withEntity(entity_id, async (db) => {
+      const copy = await taxCopy.copyOn(db, chit_id, entity_id);
+      if (!copy) return null;
+      const bj = copy.business_json || {};
+      /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
+      if (bj.payment && Array.isArray(bj.payment.parts)) return { parts: true };
+      /* an amount above the quoted total is a dispute, not a payment — unless the note says why (a tip, a rounding, an old balance) */
+      const sj = copy.summary_json || {};
+      const quoted = sj.total_value != null ? Number(sj.total_value) : (bj.invoice && bj.invoice.grand_total != null ? Number(bj.invoice.grand_total) : null);
+      if (payment.amount != null && !payment.note && quoted != null && payment.amount > quoted * 1.005 + 1) return { over: quoted };
+      /* the books first (a refusal throws — nothing marked), then the mark, on the same handle */
+      const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, bj, { payment }) }),
+        { by: payment.by, acknowledge: Array.isArray(req.body.acknowledge) ? req.body.acknowledge.map(String) : [], name: (bj.customer && bj.customer.name) || undefined });
+      const r = await db.query(
+        `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('payment', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
+        [JSON.stringify(payment), chit_id, entity_id]);
+      if (!r.rows.length) return null;
+      return { books };
+    });
+    if (!out) return res.status(404).json({ error: 'Not found' });
+    if (out.parts) return res.status(422).json({ error: 'The tender is on the bill', message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.' });
+    if (out.over != null) return res.status(422).json({ error: 'Above the quoted amount', message: 'Received ' + payment.amount + ' against a quote of ' + out.over + '. Add a note saying why, or record the quoted amount.', quoted: out.over });
+    /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
+    if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
     /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
-    try { require('../lib/events').emit([entity_id], { kind: 'paid', id: req.params.chit_id, method: payment.method }); } catch (_) {}
-    res.json({ message: 'Payment recorded', payment });
-  } catch (err) { res.status(500).json({ error: 'Payment failed', message: safeErr(err) }); }
+    try { require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method }); } catch (_) {}
+    res.json({ message: 'Payment recorded', payment, books: out.books });
+  } catch (err) {
+    const BR = require('./books');
+    if (err && err.code === 'ALREADY_PAID') return BR.alreadyPaid(res, err);
+    if (err && (err.refused || err.status === 409 || err.status === 422 || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) return BR.fail(res, err);
+    res.status(500).json({ error: 'Payment failed', message: safeErr(err) });
+  }
 });
 router.delete('/:chit_id/payment', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const r = await withEntity(entity_id, (db) => db.query(`UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`, [req.params.chit_id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
-    res.json({ message: 'Payment cleared' });
+    /* the books' record is not undone by clearing the mark (drift D1): name the entry, so the owner reverses it there — never silently */
+    let books = null;
+    try {
+      const S = require('../lib/books-store');
+      books = await withEntity(entity_id, async (db) => {
+        const p = await S.paymentByRef(db, entity_id, 'chitpay:' + req.params.chit_id);
+        if (!p) return null;
+        const en = await S.entryBySource(db, entity_id, 'pay:' + p.payment_id);
+        return { payment_id: p.payment_id, entry_no: en ? en.entry_no : null, words: 'The books still hold this payment' + (en ? ' (' + en.entry_no + ')' : '') + ' — reverse it there.' };
+      });
+    } catch (e) { if (!e || e.code !== '42P01') console.error('payment clear: books read failed:', e && e.message); }
+    res.json({ message: 'Payment cleared', books });
   } catch (err) { res.status(500).json({ error: 'Payment clear failed', message: safeErr(err) }); }
 });
 

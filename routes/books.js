@@ -833,3 +833,6 @@ route('post', '/contra', (req, e, s, b, by) => P().contra(e, s, b, by));
 
 module.exports = router;
 module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
+/* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
+module.exports.fail = fail;
+module.exports.alreadyPaid = alreadyPaid;

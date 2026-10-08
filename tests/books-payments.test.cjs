@@ -199,6 +199,89 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     ok('a NEW ref for the same ₹600 within the hour → 409: W3 same_again naming ' + p1.body.posted.entry_no + ' (and W2: only ₹450 is open now)', p3.status === 409 && codes(p3).join() === 'excess,same_again' && w3b && w3b.entry_no === p1.body.posted.entry_no, JSON.stringify(p3.body));
   });
 
+  /* ═══ 5 · drift D1: POST /chits/:id/payment is a DOOR into recordPayment (Athi, 2026-10-08: "Q4 redirect in M26") ═══ */
+  await section('5 · "Mark paid" on a chit records through the ONE path — one payment, one entry, the chit\'s bill allocated; a replay posts nothing', async () => {
+    const K = require(path.join(H.API, 'lib', 'books-hooks'));
+    const TCp = require(path.join(H.API, 'lib', 'tax-copy')); const wasEntryFor = TCp.entryFor;
+    /* the chit's parties, as tax-copy names them for an order the shop received (the shop sells; Mala sent it) */
+    TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+    const door = (copy, o) => X.dbStub.withEntity(SHOP, (db) => K.chitPaid(db, SHOP, copy, Object.assign({ by: SHOP, acknowledge: [], name: 'Mala' }, o || {})));
+    const AT = '2026-10-05T06:00:00Z';
+    const chitOf = (n, pay, more) => Object.assign({ chit_id: BILL(n), purpose: 'order', sender_entity_id: MALA, created_at: AT, currency_code: 'INR', summary_json: { total_value: 1180 },
+      business_json: { payment: Object.assign({ method: 'upi', ref: 'UPI-TXN-' + n, amount: null, note: null, at: AT, by: SHOP }, pay || {}) } }, more || {});
+    try {
+      stamp(X, AGO_2D());
+      /* the bill the chit IS, posted by the hook earlier: ₹1,180 open from Mala */
+      await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-25', currency: 'INR', party: MALA, source_chit_id: BILL('f'), source_ref: 'chit:f',
+        by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL('f'), bill_no: 'C1-0050', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'C1-0050' } });
+      const c0 = counts(X);
+      const r1 = await door(chitOf('f'));
+      ok('the door records: one payment row, one entry (payment_received), the chit itself allocated in full — through recordPayment, not a mark',
+        r1.payment && r1.payment.duplicate === false && r1.posted && r1.posted.ok === true && r1.allocation && JSON.stringify(r1.allocation.settled) === JSON.stringify([{ against_ref: BILL('f'), amount_minor: 118000 }])
+        && counts(X).payments - c0.payments === 1 && counts(X).entries - c0.entries === 1, JSON.stringify(r1));
+      const row = X.T.payments.find((p) => p.payment_id === r1.payment.payment_id);
+      eq('…the payment row is the chit\'s: client_ref chitpay:<chit_id>, the quoted total (no amount typed) in minor units, UPI, money IN, the chit\'s day',
+        [row.client_ref, row.amount_minor, row.mode, row.direction, row.party_id, row.received_at, row.reference], ['chitpay:' + BILL('f'), 118000, 'upi', 'in', MALA, '2026-10-05', 'UPI-TXN-f']);
+      eq('…the outcome in words: settled, nothing left over', [r1.outcome.words, r1.outcome.on_account_minor], ['Received ₹1,180 by UPI from Mala. Settled 1 bill (₹1,180).', 0]);
+      const c1 = counts(X);
+      const r2 = await door(chitOf('f'));
+      ok('the same chit marked paid again (a replay, a double tap) → the FIRST payment, duplicate: true; nothing posted twice; the rule never asked (same amount within the hour would be W3)',
+        r2.payment && r2.payment.duplicate === true && r2.payment.payment_id === r1.payment.payment_id && r2.posted && r2.posted.entry_no === r1.posted.entry_no
+        && counts(X).payments === c1.payments && counts(X).entries === c1.entries && counts(X).items === c1.items, JSON.stringify(r2));
+
+      /* an order the books do not hold yet (no bill posted): on account — W1 stays silent because nothing is being allocated */
+      X.T.chits.push({ chit_id: BILL('g'), bill_no: null, entity_id: SHOP, purpose: 'order', business_json: {} });
+      stamp(X, AGO_2D());
+      const r3 = await door(chitOf('g', { amount: 500 }));
+      ok('an order not yet in the books → recorded as an advance from Mala (allocation null, no W1 — the chit is the allocation only when its bill is open)',
+        r3.payment && r3.payment.duplicate === false && r3.allocation === null && r3.outcome.on_account_minor === 50000 && /kept as an advance from Mala/.test(r3.outcome.words), JSON.stringify(r3));
+
+      /* the duplicate rule at the door: a different chit, the same ₹500 within the hour → ALREADY_PAID (W3), nothing written; acknowledged → recorded */
+      X.T.chits.push({ chit_id: BILL('h'), bill_no: null, entity_id: SHOP, purpose: 'order', business_json: {} });
+      stamp(X, NOW());
+      const c3 = counts(X);
+      let thrown = null;
+      try { await door(chitOf('h', { amount: 500 })); } catch (e) { thrown = e; }
+      ok('W3 same_again at the door: 409 ALREADY_PAID in words naming ' + (r3.posted && r3.posted.entry_no) + '; the transaction wrote nothing',
+        thrown && thrown.code === 'ALREADY_PAID' && thrown.status === 409 && (thrown.warnings || []).some((w) => w.code === 'same_again' && w.entry_no === r3.posted.entry_no)
+        && counts(X).payments === c3.payments && counts(X).entries === c3.entries, thrown && (thrown.message + ' ' + JSON.stringify(thrown.warnings)));
+      const r4 = await door(chitOf('h', { amount: 500 }), { acknowledge: ['same_again', 'just_settled'] });
+      ok('…acknowledged (the web\'s "Pay as advance") → recorded', r4.payment && r4.payment.duplicate === false && counts(X).payments - c3.payments === 1, JSON.stringify(r4));
+
+      /* what the door cannot post says so — never a silent mark */
+      const c4 = counts(X);
+      const q1 = await door(chitOf('i', { method: 'other' }));
+      const q2 = await door(chitOf('j', { amount: 0 }, { summary_json: {} }));
+      TCp.entryFor = async () => ({ sells: true, buyer: {}, me: { entity_id: SHOP } });
+      const q3 = await door(chitOf('k'));
+      ok('"other" has no ledger · no amount and no quoted total · a payer the shop does not know → { queued, why } in words, nothing written (the route parks it, named)',
+        q1.queued === true && /no ledger yet/.test(q1.why) && q2.queued === true && /no amount/.test(q2.why) && q3.queued === true && /nobody the shop knows/.test(q3.why)
+        && counts(X).payments === c4.payments && counts(X).entries === c4.entries, JSON.stringify([q1, q2, q3]));
+      const off = await X.dbStub.withEntity(SUPP, (db) => K.chitPaid(db, SUPP, chitOf('f'), { by: SUPP }));
+      eq('a shop with no ledger → { off: true } (the copy still says paid, as the counter\'s money chit does; nothing to post into)', off, { off: true });
+    } finally { TCp.entryFor = wasEntryFor; }
+
+    /* the shape that makes it so: the chit route reads the copy, calls the door and marks the copy on ONE handle; no state_log row, no second "paid" */
+    const csrc = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
+    const route = csrc.slice(csrc.indexOf("router.post('/:chit_id/payment'"), csrc.indexOf("router.delete('/:chit_id/payment'"));
+    const tx = route.slice(route.indexOf('await withEntity(entity_id, async (db) => {'), route.indexOf('if (!out) return res.status(404)'));
+    ok('POST /chits/:id/payment: taxCopy.copyOn(db…) → hooks.chitPaid(db…) → UPDATE chit_header … payment, inside ONE withEntity; the books first (a refusal marks nothing)',
+      /taxCopy\.copyOn\(db, chit_id, entity_id\)/.test(tx) && /hooks\.chitPaid\(db, entity_id,/.test(tx) && tx.indexOf('hooks.chitPaid(') < tx.indexOf("jsonb_build_object('payment'")
+      && !/withEntity/.test(tx.slice(10)) && !/state_log/.test(route) && /ALREADY_PAID/.test(route) && /hooks\.park\(entity_id/.test(route), tx.slice(0, 200));
+    ok('the hook\'s own payment branch (the counter\'s money chit) and the door share recordChitPayment — one call site into recordPayment outside lib/books.js',
+      (fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8').match(/B\.recordPayment\(/g) || []).length === 1);
+    /* ⭐ THE GUARD: nothing in routes/ or lib/ but lib/books.js writes "paid" — a line that pairs a SQL write with the literal 'paid', or a state_log 'paid' row */
+    const offenders = [];
+    for (const dir of ['routes', 'lib']) for (const f of fs.readdirSync(path.join(H.API, dir)).filter((x) => /\.js$/.test(x))) {
+      if (dir === 'lib' && f === 'books.js') continue;
+      fs.readFileSync(path.join(H.API, dir, f), 'utf8').split('\n').forEach((line, i) => {
+        if (/(INSERT|UPDATE)[\s\S]*'paid'|'paid'[\s\S]*(INSERT|UPDATE)|state_log[\s\S]*'paid'/.test(line)) offenders.push(dir + '/' + f + ':' + (i + 1));
+      });
+    }
+    eq('no code path outside lib/books.js writes "paid" (routes/*.js, lib/*.js)', offenders, []);
+  });
+
   srv.close();
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
