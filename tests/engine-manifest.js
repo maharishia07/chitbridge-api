@@ -208,6 +208,9 @@ const INFRA_LIBS = [
   /* E01: the body budget per route, the request deadline and the statement deadline — transport limits, read from env;
      no business rule (2026-10-08) */
   'limits.js',
+  /* E07: times every statement on a pooled connection and logs the slow ones by fingerprint, never by text — a
+     transport watch; decides nothing (2026-10-08) */
+  'dbwatch.js',
   /* reads one entity uuid out of the environment and checks it is a uuid. Holds no rule and decides nothing —
      testboard.js and platformroot.js both use it so the read-and-warn exists once. (2026-09-14) */
   'namedentity.js',

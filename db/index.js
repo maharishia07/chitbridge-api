@@ -36,6 +36,7 @@ function sslForHost(hostname) {
  */
 function armPool(p) {
   const ms = require('../lib/limits').statementTimeoutMs();
+  p.on('connect', (c) => require('../lib/dbwatch').watch(c));   /* E07: every statement timed; slow ones logged by fingerprint */
   if (ms) p.on('connect', (c) => { c.query('SET statement_timeout = ' + Math.floor(ms)).catch((e) => console.warn('statement_timeout not set:', e.message)); });
   return p;
 }
@@ -203,11 +204,13 @@ const query = async (text, params) => {
      * every query" is a decision worth making explicitly rather than inheriting from a word.
      */
     if (String(process.env.DB_QUERY_LOG || '').trim() === 'true') {
-      console.log(`Query: ${text.substring(0, 50)} | ${Date.now() - start}ms | ${result.rowCount} rows`);
+      console.log(`Query: ${require('../lib/dbwatch').fingerprint(text)} | ${Date.now() - start}ms | ${result.rowCount} rows`);   /* E07: fingerprint, not text */
     }
     return result;
   } catch (err) {
-    console.error('Query error:', err.message, '\nQuery:', text);
+    /* E07: the statement's FINGERPRINT, never its text — SQL carries values (lib/dbwatch.js) */
+    { const r = require('../lib/reqctx').currentRequest(), w = require('../lib/dbwatch');
+      require('../lib/logger').error('query error', { id: r ? r.id : null, verb: w.verbOf(text), fp: w.fingerprint(text), code: err.code || null, err: err.message }); }
     throw err;
   }
 };
