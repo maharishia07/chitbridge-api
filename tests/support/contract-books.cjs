@@ -139,6 +139,12 @@ async function captureBooks() {
     await q('POST', '/accruals', { ref: 'ELEC-9', kind: 'outstanding', class: 'electricity', amount_minor: 120000, date: '2026-09-30' }, '/accruals');
     await q('POST', '/accruals/ELEC-9/reverse', {}, '/accruals/:ref/reverse');
 
+    /* ── M26 payments: preview, one-call record, then more than Ravi owes (W2 excess → 409 ALREADY_PAID; W2 needs no clock) ── */
+    const PAY = { party_id: SUPP, direction: 'out', amount_minor: 20000, currency: 'INR', mode: 'bank', received_at: '2026-10-12', allocate: 'oldest_first' };
+    await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 20000, currency: 'INR', allocate: 'oldest_first' }, '/payments/preview');
+    await q('POST', '/payments', Object.assign({ client_ref: 'pay-1' }, PAY), '/payments');
+    await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 500000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'oldest_first', client_ref: 'pay-2' }, '/payments');
+
     /* ── repeating entries ── */
     const rec = await q('POST', '/recurring', { name: 'Shop rent', event: { kind: 'expense', class: 'rent', amount_minor: 500000, paid_from: 'bank' }, frequency: 'monthly', next_on: '2027-04-01' }, '/recurring');
     const rid = rec.body && rec.body.recurring_id;
@@ -155,6 +161,8 @@ async function captureBooks() {
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
     for (let p = 1; p <= 12; p++) await q('POST', '/periods/2026-27/' + p + '/lock', { reason: 'done' }, p === 1 ? '/periods/:fy/:p/lock' : null);
     await q('POST', '/closing-stock', { date: '2026-10-31', value_minor: 100, method: 'manual', client_ref: 'cs-locked' }, '/closing-stock');
+    await q('POST', '/payments', { party_id: SUPP, direction: 'out', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-20', allocate: 'none',
+      client_ref: 'pay-locked', acknowledge: ['nothing_owed', 'excess', 'same_again', 'just_settled'] }, '/payments #locked');
     await q('GET', '/year/2026-27/status', null, '/year/:fy/status');
     await q('GET', '/todo', null, '/todo');
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
