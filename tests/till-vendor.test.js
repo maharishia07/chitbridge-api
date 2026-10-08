@@ -844,6 +844,47 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
   }
 }]);
 
+/**
+ * ⭐⭐⭐ THE TILL MOUNTS CBSignin (DECISIONS 2026-10-08: ONE sign-in window for every app). The page draws no id/code form of its
+ * own any more — the window (web public/app/signin-ui.js) does, on both hosts. Byte copy into the kit, served by the program at
+ * the web's path, on the service worker's shelf, in the kit zip; and the program passes the window's three calls through (CORS).
+ */
+say('— the sign-in window —');
+JOBS.push(['⭐⭐⭐ the page mounts CBSignin once and draws no sign-in form of its own', () => {
+  const page = fs.readFileSync(PAGE, 'utf8');
+  assert.ok(/<script src="\/app\/signin-ui\.js"/.test(page), 'the page does not load /app/signin-ui.js');
+  assert.ok(page.indexOf('<script src="/engine/signin.js"') < page.indexOf('<script src="/app/signin-ui.js"'), 'the window loads before the engine it widens');
+  assert.strictEqual((page.match(/SIGN\(\)\.mount\(|CBSignin\.mount\(/g) || []).length, 1, 'CBSignin.mount is called other than once');
+  /* no second id / code / PIN form: the old inputs, the old paint, the old ask/verify */
+  for (const gone of ['usign_who', 'usign_otp', 'usign_pin1', 'function usignPaint(', 'function usignAsk(', 'function usignVerify(',
+                      'function usignVerifyLocal(', 'function usignPinSave(', "usignPath('ask')", '/api/entities/register', '/api/entities/verify'])
+    assert.ok(page.indexOf(gone) < 0, 'a second sign-in form is back: ' + gone);
+  assert.ok(!/<input[^>]*(autocomplete="username"|autocomplete="one-time-code")/.test(page), 'the page draws its own id or code box');
+  /* the window is told it is the till, which device, and that cb_sess is not kept here */
+  assert.ok(/surface: 'till', need: 'person', deviceId: deviceId/.test(page), 'the mount contract is not the till\'s');
+  assert.ok(/io: \{ store: USIGN_STORE \}/.test(page), 'the window would write cb_sess on a counter');
+}]);
+JOBS.push(['⭐⭐ the window reaches both hosts: kit copy = web master, served by the program, on the shelf, in the kit', () => {
+  const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public');
+  const norm = (s) => s.replace(/\r\n/g, '\n');
+  const kit = path.join(API, 'tools', 'tally-connector', 'signin-ui.js');
+  assert.ok(fs.existsSync(kit), 'the kit has no signin-ui.js — run scripts/vendor-till.cjs');
+  assert.strictEqual(norm(fs.readFileSync(kit, 'utf8')), norm(fs.readFileSync(path.join(WEB, 'app', 'signin-ui.js'), 'utf8')), 'the kit copy drifted from web public/app/signin-ui.js');
+  const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  assert.ok(/url\.pathname === '\/app\/signin-ui\.js'/.test(prog), 'the program does not serve /app/signin-ui.js');
+  assert.ok(/live: \['till\.html', 'signin-ui\.js'\]/.test(prog), 'the kit update does not refresh the window');
+  assert.ok(/url\.pathname === '\/api\/signin\/ask' \|\| url\.pathname === '\/api\/signin\/verify' \|\| url\.pathname === '\/api\/signin\/pin'/.test(prog), 'the program does not pass the window\'s calls through');
+  assert.ok(!/url\.pathname === '\/api\/entities\/register'/.test(prog), 'the old /api/entities proxy is still there');
+  const vendor = fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8');
+  assert.ok(/'\/app\/signin-ui\.js'/.test(vendor.slice(vendor.indexOf('const KEEP ='), vendor.indexOf('self.addEventListener'))), 'the window is not on the service worker\'s shelf');
+  assert.ok(/const SHELF = 'cb-till-v4'/.test(vendor), 'the shelf was not bumped');
+  /* read, not required — requiring the route would open the database */
+  const kitNames = (fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '';
+  assert.ok(/'signin-ui\.js'/.test(kitNames), 'the kit zip does not carry the window');
+  const sw = fs.readFileSync(path.join(WEB, 'till-sw.js'), 'utf8');
+  assert.ok(/'\/app\/signin-ui\.js'/.test(sw) && /cb-till-v4/.test(sw), 'the vendored service worker is stale');
+}]);
+
 (async () => {
   for (const [what, fn] of JOBS) {
     if (!what) { await fn(); continue; }

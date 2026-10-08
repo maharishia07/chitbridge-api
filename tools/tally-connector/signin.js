@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.6.0 · signin · sha256 ef9bf38f24bde460f058fe75edaca186d97722fa385258b5258945b56a348470 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.30.0 · signin · sha256 9f08eee815ba780a0efcdce52539ded267af8ee0b725e5ae2dcd33a9f30f3c82 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · signin. Edited ONLY in chitbridge-engines/src/signin.js; every platform adopts a released version of it. */
 (function (root) {
 'use strict';
@@ -47,9 +47,22 @@ const STAGES = ['who', 'code', 'in', 'refused'];
  * have — a network-minted store is issued a user_id and no email at all, and requiring an address would make
  * that credential unable to log in. /api/entities/verify already accepts either; this decides which was typed.
  */
+/**
+ * ⭐ v1.30.0 — A MOBILE NUMBER IS THE THIRD THING A PERSON MAY TYPE (DECISIONS 2026-10-08, Athi: *"only the mobile
+ * number or email should be used for sign-in"* — the .br / .cr grammar is added behind the scenes, never typed).
+ * 8–15 digits once spaces, dashes and brackets are dropped, a leading + kept — the same DIGITS rule the identity
+ * documents store a phone with, so what is typed here hashes as what was verified there. It travels as `id`: the
+ * server resolves a number to the stored id (owner · employee · customer) and asks which one when it is several.
+ * ⚠️ Fewer than eight digits stays a user ID, exactly as before — nothing that signed in yesterday changes kind.
+ */
+const MOBILE = /^\+?[0-9]{8,15}$/;
+function mobileOf(v) { const d = String(v == null ? '' : v).replace(/[\s\-().]/g, ''); return MOBILE.test(d) ? d : null; }
+
 function who(input) {
   const v = String(input == null ? '' : input).trim();
   if (!v) return { kind: '', value: '', ok: false, why: 'Type your user ID or the email you signed up with.' };
+  const m = mobileOf(v);
+  if (m) return { kind: 'mobile', value: m, ok: true, field: 'id' };
   if (v.indexOf('@') >= 0) {
     /* ⚠️ not a full address grammar — the server owns that. This only decides which field to send it in. */
     if (!/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(v)) return { kind: 'email', value: v, ok: false, why: 'That email does not look complete.' };
@@ -80,8 +93,9 @@ function ask(input) {
   const body = { mode: 'login' };
   body[w.field] = w.value;
   return { ok: true, body: body, kind: w.kind,
-           say: w.kind === 'email' ? ('A code is on its way to ' + w.value + '.')
-                                   : ('A code is on its way to the address registered for ' + w.value + '.') };
+           say: w.kind === 'email'  ? ('A code is on its way to ' + w.value + '.')
+              : w.kind === 'mobile' ? ('A code is on its way for ' + w.value + '.')
+                                    : ('A code is on its way to the address registered for ' + w.value + '.') };
 }
 
 /**
@@ -310,17 +324,18 @@ function leave(state) {
 const PIN_TRIES = 5;
 const PIN_ITER = 150000;
 
-/** ⭐ is this a PIN worth keeping — four digits, and not one a stranger guesses first */
-function pinShape(input) {
+/** ⭐ is this a PIN worth keeping — four digits, and not one a stranger guesses first.
+ *  `label` (v1.30.0) names the PIN in the refusal — 'A counter PIN' unless the caller says ('Your PIN' for the online one). */
+function pinShape(input, label) {
   const d = String(input == null ? '' : input).replace(/[^0-9]/g, '');
-  if (d.length !== 4) return { ok: false, value: d, why: 'A counter PIN is four digits.' };
+  if (d.length !== 4) return { ok: false, value: d, why: (label || 'A counter PIN') + ' is four digits.' };
   if (/^(\d)\1{3}$/.test(d) || '0123456789'.indexOf(d) >= 0 || '9876543210'.indexOf(d) >= 0)
     return { ok: false, value: d, why: 'That one is too easy to guess. Choose four digits that are not a run or a repeat.' };
   return { ok: true, value: d };
 }
 /** the second typing must match the first — a PIN nobody can repeat is a PIN nobody can use */
-function pinPair(first, again) {
-  const a = pinShape(first); if (!a.ok) return a;
+function pinPair(first, again, label) {
+  const a = pinShape(first, label); if (!a.ok) return a;
   const b = String(again == null ? '' : again).replace(/[^0-9]/g, '');
   if (a.value !== b) return { ok: false, why: 'The two PINs are different. Type the same four digits twice.' };
   return { ok: true, value: a.value };
@@ -365,7 +380,7 @@ function pinAfter(entry, matched) {
                           : 'That PIN did not match. ' + left + (left === 1 ? ' try' : ' tries') + ' left.' };
 }
 
-const EXPORTS = { STAGES, ACTS, LEAVES, PIN_TRIES, PIN_ITER, who, ask, code, verify, keep, refusal, stage, say, door, leave,
+const EXPORTS = { STAGES, ACTS, LEAVES, PIN_TRIES, PIN_ITER, who, mobileOf, ask, code, verify, keep, refusal, stage, say, door, leave,
                   pinShape, pinPair, pinEntry, pinFind, pinLocked, pinAfter };
 
 /* ⭐ ONE FILE, EVERY HOST: node takes module.exports; a page, the TV and the shop PC take window.CBSignin. */
