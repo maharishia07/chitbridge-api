@@ -69,8 +69,11 @@ function create() {
     async ledgerLines(db, e, from, to, party) {
       return T.lines.filter((l) => l.entity_id === e && (!party || l.party_id === party)).map((l) => {
         const h = T.entries.find((x) => x.entry_id === l.entry_id), a = T.accounts.find((x) => x.account_id === l.account_id);
+        /* M29: the first entry that reverses this one (the real query's LEFT JOIN LATERAL … ORDER BY created_at LIMIT 1) */
+        const rv = T.entries.filter((x) => x.entity_id === e && x.reverses_entry_id === h.entry_id).sort((p, q) => String(p.created_at).localeCompare(String(q.created_at)))[0] || null;
         return { entry_id: h.entry_id, entry_no: h.entry_no, posting_date: h.posting_date, fiscal_year: h.fiscal_year, period: h.period, is_opening: h.is_opening, source_ref: h.source_ref,
-                 narration: h.narration, source_chit_id: h.source_chit_id, event_type: h.event_type, line_no: l.line_no, code: a.code, party_id: l.party_id, dr_minor: l.dr_minor, cr_minor: l.cr_minor, currency: l.currency };
+                 narration: h.narration, source_chit_id: h.source_chit_id, event_type: h.event_type, reverses_entry_id: h.reverses_entry_id || null, line_no: l.line_no, code: a.code, party_id: l.party_id,
+                 dr_minor: l.dr_minor, cr_minor: l.cr_minor, currency: l.currency, reversed_by: rv ? rv.entry_no : null, reversed_narration: rv ? rv.narration : null };
       }).filter((l) => l.posting_date >= from && l.posting_date <= to);
     },
     async years(db, e) { return Array.from(new Set(Array.from(T.balances.values()).filter((b) => b.entity_id === e).map((b) => b.fiscal_year))).sort(); },

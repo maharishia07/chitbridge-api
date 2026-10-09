@@ -558,7 +558,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
-    "asOf": "2026-10-03",
+    "asOf": "2026-10-09",
     "parties": [
      {
       "party_no": "P-00001",
@@ -575,7 +575,7 @@
        "y1_2": 0,
        "y2_3": 0,
        "gt_3y": 0,
-       "lt_1y": 0
+       "lt_1y": -59000
       }
      }
     ],
@@ -759,7 +759,7 @@
     "currency": "INR",
     "party_id": "22222222-2222-4222-8222-222222222222",
     "from": "2026-04-01",
-    "to": "2026-10-03",
+    "to": "2026-10-09",
     "code": "1300",
     "opening_minor": 0,
     "closing_minor": 118000,
@@ -784,7 +784,20 @@
       },
       "dr_minor": 118000,
       "cr_minor": 0,
-      "running_minor": 118000
+      "running_minor": 118000,
+      "entry_id": "00000000-0000-4000-8000-000000000110",
+      "entry_no": "SV/2026-27/000001",
+      "event_type": "sale_bill",
+      "reverses_entry_id": "00000000-0000-4000-8000-000000000126",
+      "reversed_by": "MJ/2026-27/000008",
+      "reversed_why": "Paid twice",
+      "payment_id": "00000000-0000-4000-8000-000000000125",
+      "unapplied_minor": 0,
+      "advice": {
+       "chit_id": null,
+       "state": "none",
+       "shared_at": null
+      }
      }
     ]
    },
@@ -1002,13 +1015,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-02T03:43:18.694Z",
-      "due_day": "2026-10-02",
+      "due_at": "2026-10-08T00:28:07.015Z",
+      "due_day": "2026-10-08",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-03T03:43:18.695Z",
+      "created_at": "2026-10-09T00:28:07.016Z",
       "late": true,
       "today": false
      }
@@ -1254,7 +1267,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-01T03:43:18.630Z",
+      "due_at": "2026-10-07T00:28:06.960Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1356,13 +1369,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:43:18.694Z",
-     "due_day": "2026-10-02",
+     "due_at": "2026-10-08T00:28:07.015Z",
+     "due_day": "2026-10-08",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-03T03:43:18.701Z",
-     "created_at": "2026-10-03T03:43:18.695Z",
+     "done_at": "2026-10-09T00:28:07.020Z",
+     "created_at": "2026-10-09T00:28:07.016Z",
      "late": false,
      "today": false
     }
@@ -1581,7 +1594,26 @@
     "posting_date": "2026-10-02",
     "moved": false,
     "reverses": "MJ/2026-27/000002",
-    "items": 0
+    "reverses_entry_id": "00000000-0000-4000-8000-000000000113",
+    "items": 0,
+    "reopened": [
+     {
+      "against_ref": "c0000000-0000-4000-8000-00000000000b",
+      "bill_no": null
+     }
+    ],
+    "words": "Reversed MJ/2026-27/000002 — ₹5,000 — by MJ/2026-27/000003."
+   },
+   "optional": []
+  },
+  "POST /api/books/entries/:id/reverse #409": {
+   "status": 409,
+   "example": {
+    "code": "ALREADY_REVERSED",
+    "error": "Already reversed",
+    "message": "This entry was already reversed by MJ/2026-27/000008.",
+    "entry_no": "MJ/2026-27/000008",
+    "entry_id": "00000000-0000-4000-8000-000000000127"
    },
    "optional": []
   },
@@ -1698,69 +1730,48 @@
    "example": {
     "ok": true,
     "payment": {
-     "payment_id": "00000000-0000-4000-8000-000000000114",
+     "payment_id": "00000000-0000-4000-8000-000000000125",
      "status": "recorded",
      "duplicate": false
     },
     "posted": {
      "ok": true,
-     "entry_id": "00000000-0000-4000-8000-000000000115",
+     "entry_id": "00000000-0000-4000-8000-000000000126",
      "entry_no": "PY/2026-27/000001",
-     "posting_date": "2026-10-05",
-     "doc_date": "2026-10-05",
+     "posting_date": "2026-10-12",
+     "doc_date": "2026-10-12",
      "moved": false,
      "lines": 2,
      "items": 1,
-     "note": null,
-     "duplicate": false
+     "note": null
     },
     "allocation": {
      "settled": [
       {
-       "against_ref": "c0000000-0000-4000-8000-00000000000a",
-       "amount_minor": 112000
+       "against_ref": "c0000000-0000-4000-8000-00000000000b",
+       "amount_minor": 20000
       }
      ],
      "ok": true,
-     "items": 6,
-     "allocated_minor": 112000
+     "items": 2,
+     "allocated_minor": 20000
     },
     "outcome": {
-     "words": "Paid ₹2,000 cash to Kumar Traders. Settled 3 bills (₹2,000).",
+     "words": "Paid ₹200 by bank to Kumar Traders. Settled 1 bill (₹200).",
      "settled": [
       {
-       "against_ref": "c0000000-0000-4000-8000-00000000000a",
-       "bill_no": "KT-0007",
-       "amount_minor": 112000
+       "against_ref": "c0000000-0000-4000-8000-00000000000b",
+       "bill_no": null,
+       "amount_minor": 20000
       }
      ],
-     "applied_minor": 200000,
+     "applied_minor": 20000,
      "on_account_minor": 0,
-     "balance_minor": -172012,
-     "balance_words": "you owe ₹1,720.12"
+     "balance_minor": -1039000,
+     "balance_words": "you owe ₹10,390"
     }
    },
-   "optional": [
-    "posted.doc_date",
-    "posted.moved",
-    "posted.lines",
-    "posted.items",
-    "posted.note",
-    "posted.duplicate",
-    "allocation",
-    "allocation.settled",
-    "allocation.ok",
-    "allocation.items",
-    "allocation.allocated_minor",
-    "outcome",
-    "outcome.words",
-    "outcome.settled",
-    "outcome.applied_minor",
-    "outcome.on_account_minor",
-    "outcome.balance_minor",
-    "outcome.balance_words",
-    "posted.posting_date"
-   ]
+   "optional": []
   },
   "POST /api/books/payments #409": {
    "status": 409,
@@ -1768,24 +1779,15 @@
    "example": {
     "code": "ALREADY_PAID",
     "error": "Already paid?",
-    "message": "Already paid? ₹2,000 is more than the ₹1,720.12 open — ₹279.88 would stay with Kumar Traders as an advance. Pay ₹2,000 again as an advance?",
+    "message": "Already paid? ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Receive ₹5,000 again as an advance?",
     "warnings": [
      {
       "code": "excess",
-      "words": "₹2,000 is more than the ₹1,720.12 open — ₹279.88 would stay with Kumar Traders as an advance."
-     },
-     {
-      "code": "same_again",
-      "entry_no": "PY/2026-27/000001",
-      "payment_id": "00000000-0000-4000-8000-000000000114",
-      "words": "The same ₹2,000 was paid to Kumar Traders today (PY/2026-27/000001)."
+      "words": "₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores."
      }
     ]
    },
-   "optional": [
-    "warnings[].entry_no",
-    "warnings[].payment_id"
-   ]
+   "optional": []
   },
   "POST /api/books/payments #locked": {
    "status": 409,
@@ -1806,46 +1808,25 @@
      "party_id": "33333333-3333-4333-8333-333333333333",
      "name": "Kumar Traders"
     },
-    "open_minor": 172012,
+    "open_minor": 1059000,
     "proposal": [
      {
-      "against_ref": "c0000000-0000-4000-8000-00000000000c",
-      "bill_no": "KT-0010",
-      "due_date": "2026-10-10",
-      "open_minor": 73000,
-      "apply_minor": 73000,
+      "against_ref": "c0000000-0000-4000-8000-00000000000b",
+      "bill_no": null,
+      "due_date": "2026-10-06",
+      "open_minor": 59000,
+      "apply_minor": 20000,
       "disputed": false
      }
     ],
-    "apply_minor": 172012,
-    "on_account_minor": 27988,
-    "skipped": [
-     {
-      "against_ref": "c0000000-0000-4000-8000-00000000000d",
-      "why": "In dispute"
-     }
-    ],
-    "why": "x",
-    "warnings": [
-     {
-      "code": "excess",
-      "words": "₹2,000 is more than the ₹1,720.12 open — ₹279.88 would stay with Kumar Traders as an advance."
-     },
-     {
-      "code": "same_again",
-      "entry_no": "PY/2026-27/000001",
-      "payment_id": "00000000-0000-4000-8000-000000000114",
-      "words": "The same ₹2,000 was paid to Kumar Traders today (PY/2026-27/000001)."
-     }
-    ],
-    "words": "₹1,720.12 settles 2 bills · ₹279.88 stays with Kumar Traders as an advance"
+    "apply_minor": 20000,
+    "on_account_minor": 0,
+    "skipped": [],
+    "why": null,
+    "warnings": [],
+    "words": "₹200 settles 1 bill"
    },
-   "optional": [
-    "warnings[].entry_no",
-    "warnings[].payment_id",
-    "skipped[].against_ref",
-    "skipped[].why"
-   ]
+   "optional": []
   },
   "POST /api/books/periods/:fy/:p/lock": {
    "status": 200,
@@ -1930,7 +1911,7 @@
     "posted": {
      "kind": "expense",
      "ok": true,
-     "entry_id": "00000000-0000-4000-8000-000000000125",
+     "entry_id": "00000000-0000-4000-8000-000000000128",
      "entry_no": "MJ/2027-28/000002",
      "posting_date": "2027-04-01",
      "doc_date": "2027-04-01",
@@ -2044,13 +2025,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-02T03:43:18.694Z",
-     "due_day": "2026-10-02",
+     "due_at": "2026-10-08T00:28:07.015Z",
+     "due_day": "2026-10-08",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-03T03:43:18.695Z",
+     "created_at": "2026-10-09T00:28:07.016Z",
      "late": true,
      "today": false
     }
@@ -2075,9 +2056,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-03T03:43:18.694Z",
+     "at": "2026-10-09T00:28:07.014Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-03T03:43:18.694Z"
+     "created_at": "2026-10-09T00:28:07.014Z"
     }
    },
    "optional": []

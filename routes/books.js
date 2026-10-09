@@ -272,7 +272,10 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 
-/** GET /party/:id/statement?from&to → CBLedger.partyStatement, as { currency, party_id, from, to, code, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book's), dr_minor, cr_minor, running_minor }], closing_minor } */
+/** GET /party/:id/statement?from&to → CBLedger.partyStatement, as { currency, party_id, from, to, code, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book's), dr_minor, cr_minor, running_minor,
+ *  M29 (docs/FIELDS.md): entry_id, entry_no, event_type, reverses_entry_id, reversed_by, reversed_why, payment_id, unapplied_minor, advice }], closing_minor }
+ *  ⭐ ONE read per table, never per row: the lines (with their reversal, in the same query), the sources, and — only when a payment line is present — the party's
+ *  items once, so each payment's unapplied part is the engine's `outstanding` (the figure the preview and the outcome already use). */
 router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
@@ -283,9 +286,18 @@ router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
       const meta = new Map((await S.ledgerLines(h, e, from, to, id)).map((l) => [String(l.entry_id), l]));
       /* where each entry came from (its bill, how it was paid, the counter, who rang it) - the same `source` the day book and a ledger carry, so a party's own ledger reads like theirs */
       const src = new Map(); (await S.entryLines(h, e, from, to, null, id)).forEach((l) => { if (!src.has(String(l.entry_id))) src.set(String(l.entry_id), l); });
+      const payIdOf = (m) => (/^pay:/.test(String(m.source_ref || '')) ? String(m.source_ref).slice(4) : null);
+      const anyPay = st.rows.some((r) => payIdOf(meta.get(String(r.entry_id)) || {}));
+      const byRef = anyPay ? E.receivables().outstanding((await B.partyItems(h, e, id, null))).by_ref : null;
       return { code: st.code, opening_minor: st.opening_minor, closing_minor: st.closing_minor,
-        lines: st.rows.map((r) => { const m = meta.get(String(r.entry_id)) || {}; return { date: r.date, what: r.narration || WORD[m.event_type] || m.event_type || '', ref: r.jv_no,
-          source_chit_id: m.source_chit_id || null, source: src.has(String(r.entry_id)) ? sourceOf(src.get(String(r.entry_id))) : null, dr_minor: r.dr_minor, cr_minor: r.cr_minor, running_minor: r.running_minor }; }) };
+        lines: st.rows.map((r) => { const m = meta.get(String(r.entry_id)) || {}, pid = payIdOf(m), mine = pid && byRef ? byRef['pay:' + pid] : null;
+          return { date: r.date, what: r.narration || WORD[m.event_type] || m.event_type || '', ref: r.jv_no,
+          source_chit_id: m.source_chit_id || null, source: src.has(String(r.entry_id)) ? sourceOf(src.get(String(r.entry_id))) : null, dr_minor: r.dr_minor, cr_minor: r.cr_minor, running_minor: r.running_minor,
+          entry_id: r.entry_id || null, entry_no: r.jv_no || null, event_type: m.event_type || null, reverses_entry_id: m.reverses_entry_id || null,
+          reversed_by: m.reversed_by || null, reversed_why: B.reversalWhy(m.reversed_narration), payment_id: pid,
+          unapplied_minor: pid ? (mine ? -Number(mine.outstanding_minor) : 0) : null,
+          /* the payment-advice state (SPEC-payments §4.4): 'none' until the advice columns land with PR 6 (b2xx) — the shape is here so the row reads the same then */
+          advice: pid ? { chit_id: null, state: 'none', shared_at: null } : null }; }) };
     });
     res.json(Object.assign({ currency: curOf(req), party_id: id, from, to }, out));
   } catch (err) { fail(res, err); }
@@ -611,10 +623,15 @@ router.post('/entries', auth, owner, on, async (req, res) => {
       lines: givenLines(b.lines), ref: b.ref || null, source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null, by: byOf(req) }));
   } catch (err) { fail(res, err); }
 });
+/** POST /entries/:id/reverse { reason } → the mirror entry (never an edit) and, in the SAME transaction, the party rows that reopen the bills it had settled:
+ *  { ok, entry_id, entry_no, posting_date, moved, reverses, reverses_entry_id, items, reopened: [{ against_ref, bill_no }], words }.
+ *  M29: an entry already reversed answers 409 ALREADY_REVERSED naming the reversal (a second Reverse is not a replay — it would be a second correction). */
 router.post('/entries/:id/reverse', auth, owner, on, async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
-    res.json(await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason }));
+    const r = await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason });
+    if (r && r.duplicate) { const m = 'This entry was already reversed by ' + r.entry_no + '.'; return res.status(409).json({ code: 'ALREADY_REVERSED', error: 'Already reversed', message: m, entry_no: r.entry_no, entry_id: r.entry_id }); }
+    res.json(r);
   } catch (err) { fail(res, err); }
 });
 router.post('/write-off', auth, owner, on, async (req, res) => {
