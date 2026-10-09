@@ -24499,6 +24499,8 @@ function usignShopMove(answer){
  */
 function shopMoveOf(o){
   var theirs = o.theirs ? String(o.theirs) : '', held = o.held ? String(o.held) : '';
+  /* M08: a browser already billing as a PERSON of this very shop - the new session REPLACES the kept one in place (shift change, renewed sign-in, pairAgain) */
+  if (o.personOn && theirs && held && theirs === held) return 'same';
   if (!o.paired || o.forceEnrol || o.keyRefused) return 'pair';
   if (!theirs) return 'pair';
   if (!held) return 'pair';

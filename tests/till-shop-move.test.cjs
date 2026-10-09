@@ -32,6 +32,7 @@ it('unknown key-shop but the marker says A, person of B -> other', () => assert.
 it('unknown key-shop but the marker says A, person of A -> same', () => assert.strictEqual(move({ S: null, marker: 'A' }, 'A'), 'same'));
 it('UNKNOWN person-shop -> pair, never same', () => assert.strictEqual(move({ S: shopA }, ''), 'pair'));
 it('no answer at all (nothing said) -> pair', () => assert.strictEqual(move({ S: shopA }, null), 'pair'));
+it('person session of A, person of A, key refused or pairAgain -> still same (the session is replaced in place)', () => { assert.strictEqual(move({ person: { token: 't', entity_id: 'A' }, keyOk: false }, 'A'), 'same'); assert.strictEqual(move({ person: { token: 't', entity_id: 'A' }, force: true }, 'A'), 'same'); });
 it('refused key (KEY_OK false) -> pair, even for the same shop', () => assert.strictEqual(move({ S: shopA, keyOk: false }, 'A'), 'pair'));
 it('forceEnrol -> pair', () => assert.strictEqual(move({ S: shopA, force: true }, 'A'), 'pair'));
 it('not paired -> pair', () => assert.strictEqual(move({ paired: false }, 'A'), 'pair'));
