@@ -102,7 +102,7 @@ function fnText(src, sig) {
 const PAGE_FNS = ['function billMoney(', 'function moneyOf(', 'async function finish(', 'function chitOf(',
   'function billRecipients(', 'function billSendTo(', 'function isReturnRow(', 'function isExpenseRow(', 'function slipOfRow(',
   'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded(',
-  'function tillStamp(', 'function tillHostWord('];
+  'function tillStamp(', 'function tillHostWord(', 'function unratedOnBill(', 'function billOrderRow(', 'function posWords('];
 
 /** one bill rung at the counter: the page's finish() over a cart, as it runs in a browser — returns what it saved and printed */
 async function ring(o) {
@@ -117,7 +117,7 @@ async function ring(o) {
     STATE: { till: { name: 'Counter 2' } }, ls: { get: (k, d) => d }, WHO: { id: 'u1', name: 'Athi', kind: 'entity' },
     CART: o.cart.map((c) => Object.assign({}, c)), PARTS: [], PAY_ASKED: false, PICKED: o.cust ? 'On credit' : 'Cash',
     BILL_DELIVERY: o.delivery || null, RW: { holder: null, points: 0, worth: 0, spend: 0, says: null, seq: 0 }, LAST: null, LASTNO: null, EARLIER: [],
-    shopTax: () => ({ charges: true, kind: 'tax' }), tillStopped: async () => false, booksOn: () => true,
+    shopTax: () => ({ charges: true, kind: 'tax' }), shopStateClash: () => null, counterName: () => 'Counter 2', O: () => ({ kindLabel: (k) => k }), modWordsPlain: (m) => m.map((x) => x.option).join(' · '), tillStopped: async () => false, booksOn: () => true,
     custKnown: () => (o.cust ? { identity_id: CUST, entity_id: CUST, name: o.cust.name, gstin: '29BBBBB0000B1Z5' } : null),
     creditSinceRefresh: async () => {}, creditLimitCheck: () => ({ known: false }), ownerApprove: async () => null,
     creditDaysOf: () => 15, dueDateFor: () => '2026-10-17', creditCust: () => null, say: (m) => { saved.said = m; },

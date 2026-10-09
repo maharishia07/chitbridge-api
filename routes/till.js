@@ -2293,6 +2293,8 @@ router.get('/bills', auth, async (req, res) => {
                saved: m.savings != null ? m.savings : null, taxable: m.taxable != null ? m.taxable : (m.net != null ? m.net : null),
                tax: m.tax != null ? m.tax : null,
                kind: b.slip || 'cash',
+               /* walk 2026-10-09 (BF3/BF8): where the order went and the chosen modifiers, so a reprint says them too */
+               order: (b.order && typeof b.order === 'object') ? b.order : null,
                payments: (b.payment && b.payment.parts) || [],
                /* ⭐⭐ THE STORED INVOICE, AS IT IS (2026-10-02) — the counter's CBTax.determine() result. The page reprints from it
                   (till.html slipOfRow → moneyOf), so a duplicate is the same document as the original: "Earlier bills → print"
@@ -2300,7 +2302,8 @@ router.get('/bills', auth, async (req, res) => {
                invoice: (b.invoice && typeof b.invoice === 'object' && b.invoice.ValDtls) ? b.invoice : null,
                lines: (Array.isArray(x.line_items) ? x.line_items : []).map((l) => ({
                  name: l.particulars || l.name, qty: l.quantity, unit: l.unit, price: l.price, net: l.total,
-                 save: (l.offer && l.offer.off) || 0, off: !!l.offer, off_label: (l.offer && l.offer.label) || '', gst_rate: l.gst_rate, hsn: l.hsn })) };
+                 save: (l.offer && l.offer.off) || 0, off: !!l.offer, off_label: (l.offer && l.offer.label) || '', gst_rate: l.gst_rate, hsn: l.hsn,
+                 mods: Array.isArray(l.mods) ? l.mods : null })) };
     }).filter((x) => x.no && (!by || (x.by && x.by.id === by)));
     res.json({ days, count: rows.length, bills: rows });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }

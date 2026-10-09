@@ -218,3 +218,10 @@ The advice is a CHIT the web sends (`POST /api/chits/send`, purpose `general`, `
 | statement `lines[].advice.state` | `none` · `sent` · `delivered` · `shared` · `disputed` | Derived (`adviceState`): `advice_chit_id` set → my copy's `chit_status.current_status` (one read, `adviceStates`) delivered/read/accepted → `delivered`, else `sent`; an open `chit_disputes` row on it → `disputed`; no chit but `advice_shared_at` → `shared`. `none` for every line while b285 has not run (`adviceReady`). The payer NEVER reads the payee's accept (CORE PRINCIPLE). |
 | PATCH 200 | `{ ok, payment_id, advice: { chit_id, state, shared_at } }` | The row after the merge-patch. Refusals: 400 (nothing named · not a uuid · not a date) · 403 `why` read_only/comment_only · 404 · 409 `code` ADVICE_EXISTS / OFF_RAIL / ON_RAIL / REVERSED / CHEQUE_HELD / NOT_POSTED · 503 BOOKS_NOT_MIGRATED, all with `message` in words. |
 | To-do `advices_to_send` | `{ kind, count, words, action: { label: 'Send advice', screen: 'ledgers', call: 'PATCH /api/books/payments/:id' }, items: [{ payment_id, party_id, name, direction, amount_minor, currency, received_at }] }` | Derived (`books-todo`, store `paymentsNeedingAdvice`, one read): payments with no advice sent or shared, party on rail, posted, not reversed, a cheque only once cleared. Words: "1 payment has no advice yet — Tally Test does not know you paid." Left out before b285 (the count cannot be read). |
+
+## GET /api/till/bills · counter bill chit (walk 2026-10-09, BF3/BF8)
+
+| Key | Shape | Source / who writes it / who reads it |
+|---|---|---|
+| `business_json.order` | `{ type: dine, take or deliver, table, kots[] }` or absent | The order bar of the counter (lib/orders KINDS), written once by the counter on the chit (`till.html chitOf`); only when the shop runs an order pad / KOT. Read back by `GET /api/till/bills` as `bills[].order` so a reprint prints Dine-in (table) / Takeaway / Delivery. |
+| `line_items[].mods` | `[{ group, option, price }]` or absent | The modifier choices on the sold line (lib/variant `clean()` shape), written by the counter, read back as `bills[].lines[].mods` and printed under the item on the slip. |

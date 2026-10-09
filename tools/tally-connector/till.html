@@ -3375,6 +3375,7 @@
     <button id="slipshare" data-testid="till-slip-share" onclick="shareSlip()" hidden>Share</button>
     <!-- ⭐ Print is always offered (printerReady(), T67 — Athi: share AND print). Formerly hidden on a phone: a Print button a browser can only
          fail to honour is worse than none (T67: "no print or share option" was the honest state, dressed up). -->
+    <button id="slipdayclose" data-testid="till-day-close-do" onclick="dayCloseDo()" hidden>Close the day</button>
     <button id="slipprint" class="pri" onclick="printSlip()">Print</button>
   </div>
 </div></dialog>
@@ -3461,7 +3462,7 @@
     </select>
   </div>
   <div id="billsbody" style="max-height:56vh;overflow:auto"></div>
-  <div class="dlgbtns"><button data-testid="till-dayclose" onclick="dayClose()">Close the day</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close">✕</button></div>
+  <div class="dlgbtns"><button data-testid="till-dayclose" onclick="dayClose()">Day report</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close">✕</button></div>
 </div></dialog>
 
 <dialog id="setdlg" class="setdlg"><div class="dlg">
@@ -3569,8 +3570,8 @@
     <div class="srow" title="Financial year: the tax year is readable. Date: changes daily, the tax year is not readable.">
       <span>Bill number<i class="scope counter">this counter</i></span>
       <select id="set_dating" data-testid="till-set-dating" onchange="tillSeriesSet({dating:this.value})">
-        <option value="fy">C1/26-27/0003 · financial year</option>
-        <option value="julian">C1/26259/0003 · date</option>
+        <option value="fy">financial year</option>
+        <option value="julian">date</option>
       </select>
     </div>
     <div class="srow" title="How often the running number goes back to 0001.">
@@ -4047,7 +4048,7 @@ function shopLs(k){ var st = tillStore(); return st === 'cb-till' ? k : (k + '@'
  */
 var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_till_catorder', 'cb_till_changed',
   'cb_till_counter_name', 'cb_till_dayicon', 'cb_till_dayimg', 'cb_till_daystart', 'cb_till_draft', 'cb_till_given',
-  'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
+  'cb_till_dayclosed', 'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
   'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
   'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock', 'cb_till_autolock',
   'cb_till_keep_days', 'cb_till_keep_bills', 'cb_till_keep_mb', 'cb_till_retained', 'cb_till_unproven', 'cb_till_pid'];
@@ -4565,7 +4566,7 @@ function whoAmI(){
       bridge_id: (S && S.shop && S.shop.bridge_id) || null,
       handle: (S && S.shop && S.shop.handle) || null,
       shop_name: (S && S.shop && S.shop.name) || null,      /* shown, never compared — it can be renamed */
-      till: (STATE && STATE.till && STATE.till.name) || null,
+      till: counterName(),
     },
     key: {
       held: !!k,
@@ -5086,7 +5087,7 @@ var CloudHost = {
     var by = t.by, total = t.total, count = t.count, back = t.refunds;
     return { snapshot: snap || null, online: lineUp() && !!this.cred(), queued: queue.length,
              today: { count: count, total: total, by: by, returns: r2(back), expenses: r2(t.expenses || 0) },
-             till: { id: tillId(), name: ls.get('cb_till_name','Counter 1'), host: 'this device' },
+             till: { id: tillId(), name: counterName(), host: 'this device' },
              engines: { offers: !!window.CBOffers, tax: !!window.CBTax, search: !!window.CBSearch, gs1: !!window.CBGS1, lots: !!window.CBLots, nums: !!window.CBNums, rewards: !!window.CBRewards } };
   },
   /**
@@ -6003,7 +6004,7 @@ function tillHostWord(){ return (typeof HOST !== 'undefined' && HOST && HOST.mod
  */
 function tillStamp(id, by){
   var who = (by && typeof by === 'object') ? by : null;
-  var t = { id: id, name: ls.get('cb_till_name', 'Counter 1'), host: tillHostWord() };
+  var t = { id: id, name: counterName(), host: tillHostWord() };
   if (!onAgent()) t.device_id = deviceId();
   var p = personOn() ? CloudHost.person : null;
   if (p) {
@@ -6210,12 +6211,15 @@ function chitOf(bill){
          ledgers post from (lib/tax-copy entryFor). A bill saved before it existed carries none; the server keeps its old path. */
       invoice: bill.invoice || undefined,
       delivery: bill.delivery || undefined,
+      /* ⭐ where the order went (Dine-in/table, Takeaway, Delivery) — a reprint from the server copy says it too (BF8) */
+      order: bill.order || undefined,
     },
     line_items: (bill.lines||[]).map(function(l){
       var o = { particulars:l.name, quantity:l.qty, unit:l.unit||'piece', price:l.price, total:l.net };
       if (l.item_id) o.item_id = l.item_id;
       if (l.hsn) o.hsn = l.hsn;
       if (l.gst_rate != null) o.gst_rate = l.gst_rate;
+      if (l.mods && l.mods.length) o.mods = l.mods;
       /* ⭐ THE CHIT CARRIES EVERY OFFER. `offer` stays exactly as it was so nothing downstream changes; `offers`
          is the full list, because one label over the sum of several is a record that cannot be checked. */
       if (l.off) {
@@ -6448,7 +6452,7 @@ async function load(){
     if (wb) wb.innerHTML = whoseShopSay();
   } catch (_) {}
   /* H21/T63: a phone is a person - the header says WHO, not "Counter 1" (a counter number belongs to the shop PC) */
-  document.getElementById('tillpill').textContent = personOn() ? ((WHO && WHO.name) || CloudHost.person.by_name || 'Till') : ((STATE.till && STATE.till.name) || 'Till');
+  document.getElementById('tillpill').textContent = personOn() ? ((WHO && WHO.name) || CloudHost.person.by_name || 'Till') : (counterName() || 'Till');
   paintStatus(); paintChips(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
   loadQuick().catch(function(){});
   /* ⚠️ A NEW COUNTER READS ITS SHOP BY ITSELF (2026-09-17). A counter opened for the first time, online and keyed, used to sit on
@@ -8235,7 +8239,7 @@ function menuShopBody(){
       ? (cbHome().replace(/\/app\.html.*$/, '') + '/shop.html?s=' + encodeURIComponent(sh.handle)) : '';
     if (k === 'gstin')    return tx.gstin || (noGst ? 'Not registered' : '');
     if (k === 'currency') return sh.currency || (S && S.currency) || 'INR';
-    if (k === 'counter')  return (STATE && STATE.till && STATE.till.name) || ls.get('cb_till_name', '');
+    if (k === 'counter')  return counterName();
     return sh[k] || '';
   };
   var filled = SHOP_ROWS.filter(function(r){ return !!val(r.k); }).length;
@@ -8816,7 +8820,7 @@ function idleShow(){
   var el = document.getElementById('tillidle'); if (!el) return;
   var img = dayImg();
   el.innerHTML = (img ? '<img src="' + esc(img) + '" alt="">' : '')
-    + '<div class="iname">' + esc(ls.get('cb_till_name', '') || (S && S.entity_name) || '') + '</div>'
+    + '<div class="iname">' + esc(counterName() || (S && S.entity_name) || '') + '</div>'
     + '<div class="iclock" id="idleclock">' + esc(new Date().toTimeString().slice(0, 5)) + '</div>'
     + '<div class="ifoot">Touch, or press any key, to go on billing</div>';
   el.hidden = false; el.setAttribute('aria-hidden', 'false');
@@ -9548,7 +9552,7 @@ function dayReportHTML(bills){
   var day = bizDayStart();
 
   var head = '<header class="drhead">'
-    + '<div class="drtitle"><h1>' + esc(ls.get('cb_till_name', 'Counter')) + ' \u2014 sales for the day</h1>'
+    + '<div class="drtitle"><h1>' + esc(counterName()) + ' \u2014 sales for the day</h1>'
     + '<div class="drsub">' + esc(day.toDateString())
     + ' \u00b7 ' + esc(ls.get('cb_till_counter', 'Counter'))
     + (WHO && WHO.name ? ' \u00b7 ' + esc(WHO.name) : '')
@@ -9869,11 +9873,21 @@ function hubHead(){
  * one of the two would have silently lost — the guard caught it. They are different questions and now have
  * different names. [[feedback-duplicate-function-hoisting]] [[feedback-no-duplicate-functions]]
  */
-function counterTitle(){
-  var n = ls.get('cb_till_name', '');
-  if (n) return n;
-  var id = (STATE && STATE.till && STATE.till.id) || ls.get('cb_till_id', '');
-  return id ? ('Counter ' + String(id).replace(/^C/i, '')) : 'Counter';
+function counterTitle(){ return counterName(); }
+/**
+ * ⭐⭐ ONE NAME FOR THIS COUNTER, FROM THE SAME PLACE AS ITS NUMBER (Athi's walk 2026-10-09, BF4/TB10: the slip said "Counter 1"
+ * while the bills were C5/26-27/…). ROOT CAUSE: the label was a stored text that DEFAULTED to "Counter 1" and nothing ever
+ * updated it when the shop assigned the counter another prefix (tillClaim), so the paper carried two answers. Now: a name the
+ * shop gave this counter (counter_name) wins; a stored name that is not just the default "Counter N" is the shop's own and
+ * stays; otherwise the label is built from the prefix the bills are numbered under — C5 -> "Counter 5".
+ */
+function counterName(){
+  var own = ''; try { own = String(ls.get(shopLs('cb_till_counter_name'), '') || '').trim(); } catch (_) {}
+  if (own) return own;
+  var stored = String(ls.get('cb_till_name', '') || '').trim();
+  if (stored && !/^Counter\s*\d*$/i.test(stored)) return stored;
+  var id = ''; try { id = String(tillId() || ''); } catch (_) {}
+  return id ? ('Counter ' + id.replace(/^C/i, '')) : 'Counter';
 }
 
 function hubWhoRow(){
@@ -10024,8 +10038,8 @@ function paintMenu(){
   /* ⚠ the finder is on BOTH shapes until Athi decides — no render has one, and MenuPalette (type-to-find) is
      listed as NOT CHOSEN, so it may be removed. Having it on one shape and not the other is the worst of both. */
   var head = menuRoomy() ? (hubHead() + hubFindBox()) : ('<div class="mhead">'
-    + '<span class="mwho"><b data-testid="till-m-counter">' + esc(ls.get('cb_till_name', 'Counter')) + '</b>'
-    + '<i>' + esc((S && S.entity_name) || (STATE && STATE.till && STATE.till.name) || '') + '</i></span>'
+    + '<span class="mwho"><b data-testid="till-m-counter">' + esc(counterName()) + '</b>'
+    + '<i>' + esc((S && S.entity_name) || counterName() || '') + '</i></span>'
     + '<span class="mdot ' + (online ? 'on' : 'off') + '" title="' + (online ? 'online' : 'offline — billing continues') + '"></span>'
     + '<span class="mtime">' + esc(new Date().toTimeString().slice(0, 5)) + '</span>'
     + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()">✕</button>'
@@ -10144,7 +10158,7 @@ function paintMenu(){
   /* ⚠ who is at the counter is PINNED AT THE TOP now (hubWhoRow) — it was here as well, and the hub spec's §7 is
      exactly that: one field, one place. The footer keeps the door that is its own. */
   var foot = '<div class="mfoot">'
-    + '<span class="u">' + esc(ls.get('cb_till_name', 'Counter')) + '</span>'
+    + '<span class="u">' + esc(counterName()) + '</span>'
     + '<a id="cblink" href="#" target="_blank" rel="noopener">ChitBridge ↗</a>'
     + '</div>';
   /* ⭐ ONE WIDTH TEST, TWO READERS — menuRoomy() decides both how many sections open and which shape the panel
@@ -11944,7 +11958,7 @@ function styleScreen(cfg, dev){
     + ghost;
 }
 /** ⚠️ the counter's own name, or a plain word — never a blank where a name should be */
-function tillName(){ return (STATE && STATE.till && STATE.till.name) || 'this counter'; }
+function tillName(){ return counterName() || 'this counter'; }
 /**
  * ── ⭐⭐ WHAT ACTUALLY CHANGES, IN CONSEQUENCES ────────────────────────────────────
  * Not "picker: bottomSheet" but *"Groups open in a bottom sheet — the bill stays visible behind it."* A setting
@@ -16128,6 +16142,10 @@ function modPaint(){
     testIdGroup: function (gi) { return 'till-modg-' + gi; },
     testIdOption: function (gi, oi) { return 'till-modopt-' + gi + '-' + oi; },
   });
+  /* ⭐ "in the combo" IS A COMBO'S WORDS (walk 2026-10-09, TB1/TS8). CBVariant.chooserHTML prints it for every free option; on a
+     single dish with choices (Mild · Medium · Hot) the sub-line is simply empty. The engine has no label option yet (see report),
+     so the till blanks the words it cannot stand behind rather than editing the engine copy. */
+  if (!cb) { try { [].forEach.call(box.querySelectorAll('.modopt .mw'), function(el){ if (el.textContent === 'in the combo') el.textContent = ''; }); } catch (_) {} }
   var miss = modMissing();
   var add = document.getElementById('modadd');
   if (add) {
@@ -16298,6 +16316,8 @@ function addItem(i, qty, mods){
                     */
                    station:i.station || null,
                    item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
+  /* ⭐ NO TAX RATE IS SAID WHERE IT IS SOLD (BF1), not found on the slip afterwards. The bill also carries the warning (billWarnHTML). */
+  try { if (shopTax().charges && rateOf(i) == null) toastLine('⚠ ' + i.name + ' has no tax rate. Set it in the catalogue.'); } catch (_) {}
 }
 /* ⚠️ NEVER REPAINT FROM INSIDE THE EVENT THAT CAUSED IT. Rebuilding the bill while the browser is still finishing the blur behind a
    quantity change throws "the node to be removed is no longer a child of this node" — and the bill silently stops updating. */
@@ -16387,8 +16407,14 @@ function parkBill(){
    */
   PARKED.push({ at: new Date().toISOString(), name: who || ('Bill ' + (PARKED.length + 1)),
                 phone: (document.getElementById('cphone').value || '').trim(),
-                ages: ageRecord(), cart: JSON.parse(JSON.stringify(CART)) });
+                ages: ageRecord(), cart: JSON.parse(JSON.stringify(CART)),
+                /* ⭐ ITS OWN PAYMENT AND ORDER TYPE travel with the parked bill (walk 2026-10-09, TB4): recalled, it came back
+                   as Card / Takeaway from the bill BEFORE it — a cashier could record cash as card without noticing. */
+                pay: { picked: PICKED, asked: !!PAY_ASKED, parts: JSON.parse(JSON.stringify(PARTS || [])),
+                       otype: orderKind(), table: orderTable() } });
   parkedSave();
+  /* and the next bill starts clean — parts taken on the parked one are not the next customer's */
+  PICKED = 'Cash'; PAY_ASKED = false; PARTS = []; try { paintParts(); } catch (_) {}
   ageClear(); CART = []; document.getElementById('cname').value = ''; document.getElementById('cphone').value = ''; document.getElementById('tendered').value = '';
   price(); focusSearch();
 }
@@ -16406,6 +16432,11 @@ function unpark(n){
   (p.ages || []).forEach(function(a){ if (a && a.age) AGE_OK[a.age] = { at: a.at, by: a.by }; });
   document.getElementById('cname').value = (p.name && p.name.indexOf('Bill ') !== 0) ? p.name : '';
   document.getElementById('cphone').value = p.phone || '';
+  /* ⭐ ITS OWN payment and order type — or the defaults for a bill parked before they were kept. NEVER the previous bill's. */
+  var pp = p.pay || {};
+  PICKED = pp.picked || 'Cash'; PAY_ASKED = !!pp.asked; PARTS = Array.isArray(pp.parts) ? pp.parts : [];
+  try { setOrderKind(pp.otype || 'dine'); setOrderTable(pp.table || ''); } catch (_) {}
+  try { paintParts(); } catch (_) {}
   PARKED.splice(n, 1); parkedSave(); price(); focusSearch();
 }
 function dropParked(n){ PARKED.splice(n, 1); parkedSave(); }
@@ -17425,6 +17456,58 @@ function shopTax(){
   var hasGstin = !!String(sh.gstin || '').trim();
   return { charges: (reg === 'regular' && hasGstin), reg: reg, gstin: hasGstin,
            kind: (reg === 'regular' && hasGstin) ? 'tax' : (reg === 'composition' && hasGstin ? 'supply' : 'cash') };
+}
+/**
+ * ⭐⭐⭐ WHICH LINES CARRY NO TAX RATE, IN A SHOP THAT CHARGES GST (walk 2026-10-09, BF1). The engine answers a line with no rate
+ * as nil-rated (billMoney sends 0) — fine for the arithmetic, never fine for the DOCUMENT: a slip headed TAX INVOICE with GST 0.00
+ * because "Poori" had no slab. So the counter asks it here, on the cart (before paying) and on a stored bill (a reprint), and says
+ * the product's name. null rate = "nobody said"; a real 0 (exempt) is a rate and is not listed. Names only — no figure is worked out.
+ */
+function unratedNames(lines){
+  if (!shopTax().charges) return [];
+  return (lines || CART).filter(function(l){ return l.gst_rate == null; }).map(function(l){ return l.name; });
+}
+/** the same question for a STORED bill: only a tax invoice can be wrong about it */
+function unratedOnBill(bill){
+  if (!bill || bill.kind !== 'tax') return [];
+  return (bill.lines || []).filter(function(l){ return l.gst_rate == null; }).map(function(l){ return l.name; });
+}
+/**
+ * ⭐⭐⭐ DOES THE SHOP'S OWN DATA CONTRADICT ITSELF? (walk 2026-10-09, BF2) A tax invoice names the supplier's GSTIN and the place of
+ * supply; the first two digits of a GSTIN ARE the state. If the address says another state — written out, or by its PIN code — the
+ * bill would print "Chennai, Tamil Nadu 600100 / GSTIN 29… / Place of supply 29 (Karnataka)": three facts, two states. The state
+ * table and the PIN table are lib/profile-map (CBProfileMap, the one the GSTIN checker above already reads) — nothing is kept here.
+ * Answers null when all agree (or when there is nothing to compare), else { gstin_state, says[], words, fix } in the shopkeeper's words.
+ */
+function shopStateClash(){
+  var sh = (S && S.shop) || {}, P = window.CBProfileMap;
+  if (!P || !sh.gstin || !P.stateOfGstin) return null;
+  var g = P.stateOfGstin(sh.gstin); if (!g) return null;
+  var names = P.STATE_NAMES || {}, says = [], seen = {};
+  function note(code, from){ if (code && code !== g && !seen[code + from]) { seen[code + from] = 1; says.push({ code: code, from: from, name: names[code] || code }); } }
+  var text = [sh.address, sh.street, sh.city, sh.state].filter(Boolean).join(', ');
+  if (sh.state) note(P.stateCodeOfName ? P.stateCodeOfName(sh.state) : null, 'the state');
+  Object.keys(names).forEach(function(code){
+    var nm = String(names[code]).replace(/[.*+?^$()|\[\]\\{}]/g, '\\$&');
+    if (new RegExp('(^|[^A-Za-z])' + nm + '([^A-Za-z]|$)', 'i').test(text)) note(code, 'the address');
+  });
+  var pin = String(sh.pincode || '').trim();
+  if (!/^\d{6}$/.test(pin)) { var m6 = /(^|\D)(\d{6})(\D|$)/.exec(text); pin = m6 ? m6[2] : ''; }
+  if (pin && P.stateOfPin) note(P.stateOfPin(pin), 'the PIN code ' + pin);
+  if (!says.length) return null;
+  var gn = names[g] || ('state ' + g);
+  return { gstin_state: g, gstin_state_name: gn, says: says,
+    words: 'This shop’s details disagree. Its GSTIN ' + sh.gstin + ' is a ' + gn + ' registration (state ' + g + '), but '
+      + says.map(function(x){ return x.from + ' says ' + x.name; }).join(' and ') + '. A tax invoice names one state, and the place of supply is ' + gn + '.',
+    fix: 'Correct the address or the GSTIN in Settings (the shop) or Know your business, then press ↻ here. Until then a tax invoice will not print.' };
+}
+/** what sits above the total when something about THIS bill is wrong — said where it is sold, in the words of the fix */
+function billWarnHTML(){
+  var out = [], un = unratedNames(), cl = shopTax().charges ? shopStateClash() : null;
+  if (un.length) out.push('<div class="t warnrow" data-testid="till-warn-norate"><span>' + esc(un.slice(0, 3).join(', ') + (un.length > 3 ? ' +' + (un.length - 3) + ' more' : ''))
+    + (un.length === 1 ? ' has no tax rate' : ' have no tax rate') + ' — no GST is charged on ' + (un.length === 1 ? 'it' : 'them') + ', and this slip will not say TAX INVOICE. Set the rate in the catalogue.</span><span></span></div>');
+  if (cl) out.push('<div class="t warnrow" data-testid="till-warn-state"><span>' + esc(cl.words + ' ' + cl.fix) + '</span><span></span></div>');
+  return out.join('');
 }
 /**
  * ⭐⭐⭐ WHAT WOULD GO WRONG TODAY (2026-09-08). Athi: *"if the tax is not there, the system should alert — couldn't find the tax
@@ -19715,8 +19798,8 @@ function paintTotals(){
   var toggle = detail.trim()
     ? '<div class="t foldrow"><button type="button" class="foldbtn" data-testid="till-sum-fold" onclick="toggleSum()">'
       + (SUMFOLD ? '▸ tax &amp; offer breakdown' : '▾ hide breakdown') + '</button></div>' : '';
-  document.getElementById('totals').innerHTML =
-      '<div class="totdetail" data-testid="till-sum-detail"' + (SUMFOLD ? ' hidden' : '') + '>' + detail + '</div>'
+  document.getElementById('totals').innerHTML = (CART.length ? billWarnHTML() : '')
+    + '<div class="totdetail" data-testid="till-sum-detail"' + (SUMFOLD ? ' hidden' : '') + '>' + detail + '</div>'
     + toggle
     + savedHead
     + '<div class="t big"><span>TOTAL</span><span data-testid="till-total">' + money(m.net) + '</span></div>'
@@ -20303,7 +20386,7 @@ function kotHTML(lines, n, at){
   return '<div style="font:13px/1.45 ui-monospace,monospace">'
     + '<div style="font-size:18px;font-weight:800">KOT ' + n + '</div>'
     + '<div style="font-size:15px;font-weight:700">' + esc(orderWords()) + '</div>'
-    + '<div>' + esc(at.toTimeString().slice(0, 5)) + ' · ' + esc(ls.get('cb_till_name', 'Counter'))
+    + '<div>' + esc(at.toTimeString().slice(0, 5)) + ' · ' + esc(counterName())
     + (WHO && WHO.name ? ' · ' + esc(WHO.name) : '') + '</div>'
     + '<hr>'
     + lines.map(function(c){
@@ -20418,6 +20501,9 @@ async function finish(){
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
   if (!m.invoice) { say('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return; }
+  /* ⚠️ A TAX INVOICE THAT CONTRADICTS ITSELF DOES NOT GO OUT (BF2). Said in words with the fix; the items stay on the screen. */
+  var clash = shopTax().charges ? shopStateClash() : null;
+  if (clash) { say(clash.words + '\n\n' + clash.fix, 'This bill cannot be a tax invoice yet'); return; }
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();
@@ -20476,6 +20562,8 @@ async function finish(){
                                             return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
                                                      off:r2(Math.abs(a.amount)), why:a.why||null }; }),
                                           save_unnamed:c.save_unnamed || 0,
+                                          /* ⭐ the CHOSEN modifiers ride the line (BF3) — the paper and the kitchen both name them */
+                                          mods:(c.mods && c.mods.length ? c.mods : null),
                                           hsn:c.hsn, gst_rate:c.gst_rate }; }),
     payments: parts, paid: paid,
     /* ⚠️ RECORDED, NOT INFERRED. The day close counts the bills nobody answered this for; working it out afterwards
@@ -20706,10 +20794,13 @@ function dayCloseHTML(d){
   var top = Object.keys(d.items).sort(function(a,b){ return d.items[b].net - d.items[a].net; }).slice(0, 10);
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
     + '<div style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name||'') + '</div>'
-    + solid + '<div style="text-align:center;font-weight:700">DAY CLOSE</div>' + dash
-    + t(esc(new Date().toLocaleDateString()), esc((STATE.till && STATE.till.name) || ''))
+    + solid + '<div style="text-align:center;font-weight:700">DAY CLOSE</div>'
+    + (d.closed
+        ? '<div data-testid="till-day-state" style="text-align:center;font-weight:700">DAY CLOSED at ' + esc(new Date(d.closed.at).toTimeString().slice(0, 5)) + '</div>'
+        : '<div data-testid="till-day-state" style="text-align:center">Report only — the day is NOT closed yet</div>') + dash
+    + t(esc(new Date().toLocaleDateString()), esc(counterName()))
     + t('Printed', esc(new Date().toTimeString().slice(0,5))) + dash
-    + t('Bills', String(d.bills))
+    + t(d.bills === 1 ? 'Bill' : 'Bills', String(d.bills))
     + (d.first ? t('From', esc(d.first)) + t('To', esc(d.last)) : '') + dash
     + (d.saved > 0 ? t('Before offers', money(d.gross)) + t('Given away', '-' + money(d.saved)) : '')
     + backBlock
@@ -20746,13 +20837,38 @@ async function dayClose(){
   try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) { rows = []; }
   var d = dayCloseSheet(rows);
   try { document.getElementById('billsdlg').close(); } catch (_) {}
-  document.getElementById('sliptitle').textContent = 'Day close · ' + d.bills + ' bill(s) · ' + money(d.total);
+  d.closed = dayClosedMark();
+  document.getElementById('sliptitle').textContent = (d.closed ? 'Day closed' : 'Day report — not closed yet') + ' · ' + d.bills + (d.bills === 1 ? ' bill' : ' bills') + ' · ' + money(d.total);
   /* ⚠️ OFF AGAIN. The box is shared, so a slip opened after a health check would inherit the screen colours — and
      printSlip() copies this element's innerHTML into the print window, which would then print grey on charcoal. */
   document.getElementById('slipbox').classList.remove('screen');
   document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
   slipDocButtons(true, false);
+  /* ⭐ CLOSING IS ITS OWN BUTTON, NOT A SIDE EFFECT OF LOOKING OR PRINTING (TB9) */
+  var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = !!d.closed;
+  DAY_D = d;
   document.getElementById('slipdlg').showModal();
+}
+var DAY_D = null;
+/** the shop's own mark that this counter's day was closed — { day, at, bills, total, by } for TODAY, else null */
+function dayClosedMark(){
+  try {
+    var m = JSON.parse(ls.get(shopLs('cb_till_dayclosed'), 'null'));
+    return (m && m.day === new Date().toLocaleDateString('en-CA')) ? m : null;
+  } catch (_) { return null; }
+}
+/** the explicit act: record the close, then show the sheet again saying so (and Print prints that) */
+function dayCloseDo(){
+  var d = DAY_D; if (!d) return;
+  var m = { day: new Date().toLocaleDateString('en-CA'), at: new Date().toISOString(), bills: d.bills, total: d.total,
+            by: (WHO && WHO.name) || null };
+  ls.set(shopLs('cb_till_dayclosed'), JSON.stringify(m));
+  d.closed = m;
+  document.getElementById('sliptitle').textContent = 'Day closed · ' + d.bills + (d.bills === 1 ? ' bill' : ' bills') + ' · ' + money(d.total);
+  document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
+  var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = true;
+  toastLine('Day closed at ' + new Date(m.at).toTimeString().slice(0, 5) + '.');
+  try { paintStatus(); } catch (_) {}
 }
 /* ═══ 3b · RECEIVE and DESPATCH ══════════════════════════════════════════════════════════════════════════════
  *
@@ -21561,9 +21677,23 @@ function showDoc(title, html){
   document.getElementById('slipdlg').showModal();
 }
 
+/** the order's place on the paper: "Dine-in · Table 4" / "Takeaway" / "Delivery" — the labels are lib/orders' own */
+function billOrderRow(bill, t){
+  var o = bill && bill.order; if (!o || !o.type) return '';
+  var w = o.type;
+  try { w = O().kindLabel(o.type) || w; } catch (_) {}
+  return '<div data-testid="till-slip-order" style="font-weight:700">' + esc(w) + (o.type === 'dine' && o.table ? ' · Table ' + esc(o.table) : '') + '</div>';
+}
+/** a state code with its name — "29 Karnataka" — from the one state table (CBProfileMap) */
+function posWords(code){
+  var c = String(code || ''), P = window.CBProfileMap, nm = P && P.STATE_NAMES && P.STATE_NAMES[c];
+  return nm ? (c + ' ' + nm) : c;
+}
 function slipHTML(bill, m){
   var shop = (S && S.shop) || {};
-  var title = bill.kind === 'tax' ? 'TAX INVOICE' : (bill.kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO');
+  var unrated = unratedOnBill(bill);
+  /* ⚠️ NEVER "TAX INVOICE" OVER A LINE THAT CHARGED NO TAX BECAUSE IT HAD NO RATE (BF1) — the paper says what it is */
+  var title = unrated.length ? 'BILL — NOT A TAX INVOICE' : bill.kind === 'tax' ? 'TAX INVOICE' : (bill.kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO');
   var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
@@ -21575,7 +21705,9 @@ function slipHTML(bill, m){
     + t('No ' + esc(bill.no), esc(new Date(bill.at).toLocaleString()))
     /* ⚠️ a REPRINT of a renumbered sale must carry both numbers — the customer's paper says the first one */
     + (bill.printed_as ? t('Printed as ' + esc(bill.printed_as), 'recorded as ' + esc(bill.no)) : '')
-    + t(esc((STATE.till && STATE.till.name) || '') + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in'))
+    + t(esc(counterName()) + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in'))
+    /* ⭐ DINE-IN (table 4) / TAKEAWAY / DELIVERY — the bill already carries it (BF8) */
+    + billOrderRow(bill, t)
     /* ⭐ BOOKS v2 — a credit bill says so on the paper, and when it is due */
     + (bill.terms ? t('<b>ON CREDIT</b>', bill.terms.due_date ? '<b>Due by ' + esc(bill.terms.due_date) + '</b>' : 'shop’s terms') : '')
     /* ⭐ the two-sided bill says so, in one line: the customer has their own copy on ChitBridge */
@@ -21614,6 +21746,8 @@ function slipHTML(bill, m){
          * because there is no tax to name.
          */
         return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + '</span><span>' + money(l.net) + '</span></div>'
+             /* ⭐ THE CHOSEN MODIFIERS, under the item they belong to (BF3) */
+             + (l.mods && l.mods.length ? '<div data-testid="till-slip-mods" style="font-size:.9em;padding-inline-start:8px">' + esc(modWordsPlain(l.mods)) + '</div>' : '')
              + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price)
              + (Number(l.mrp) > 0 ? '  MRP ' + money(l.mrp) : '')
              + (bill.kind === 'tax' && l.gst_rate ? '  GST ' + l.gst_rate + '%' : '') + '</div>'
@@ -21664,7 +21798,8 @@ function slipHTML(bill, m){
     /* ⚠️ a reprint of a bill whose tax was never kept says so — never "GST 0.00" on a TAX INVOICE (slipOfRow) */
     + (bill.kind === 'tax' ? (bill.tax_lost ? t('Tax detail not kept for this bill', '') : taxSummaryHTML(bill, t, dash)) : '')
     /* ⭐ Rule 46(n): a tax invoice names its place of supply */
-    + (bill.kind === 'tax' && bill.pos_state ? t('Place of supply', esc(String(bill.pos_state))) : '')
+    + (unrated.length ? '<div data-testid="till-slip-norate" style="font-size:.9em">No tax rate set, so no GST charged on: ' + esc(unrated.join(', ')) + '</div>' : '')
+    + (bill.kind === 'tax' && bill.pos_state ? t('Place of supply', esc(posWords(bill.pos_state))) : '')
     + solid + t('TOTAL', money(bill.total), true) + solid
     + (bill.payments||[]).map(function(p){ return t(esc(p.how), money(p.amount)); }).join('')
     + (bill.change > 0 ? t('Change', money(bill.change)) : '') + dash
@@ -21756,6 +21891,7 @@ function showSlip(bill, m){
 function printerReady(){ return true; }
 /** ⭐ ONE PLACE that shows or hides Print and Share on the one slip dialog every kind of slip shares (T67). */
 function slipDocButtons(printOn, shareOn){
+  var dc = document.getElementById('slipdayclose'); if (dc) dc.hidden = true;   /* only the day report turns it on (dayClose) */
   var pr = document.getElementById('slipprint'); if (pr) pr.style.display = printOn ? '' : 'none';
   var sh = document.getElementById('slipshare'); if (sh) sh.hidden = !shareOn;
   var alt = document.getElementById('slipshare_alt'); if (alt) { alt.hidden = true; alt.innerHTML = ''; }
@@ -23886,7 +24022,7 @@ async function retIssue(){
  * and an inspector are both entitled to see which sale this undoes.
  */
 function retSlipHTML(cn){
-  var shop = ls.get(shopLs('cb_till_shop'), '') || ls.get('cb_till_name', 'Counter');
+  var shop = ls.get(shopLs('cb_till_shop'), '') || counterName();
   return '<div style="font:13px/1.45 ui-monospace,monospace">'
     + '<div style="font-size:17px;font-weight:800">CREDIT NOTE</div>'
     + '<div>' + esc(shop) + '</div>'
@@ -25569,6 +25705,16 @@ function paintSetup(){
   /* ⭐ the bill-number scheme, and a WORKED EXAMPLE — the fastest way to see what a setting will actually print */
   var sc = tillScheme();
   set('set_dating', sc.dating); set('set_resets', sc.resets); set('set_dayroll', String(sc.dayRollHour));
+  /* ⭐ THE TWO WORKED EXAMPLES USE THIS COUNTER'S OWN PREFIX (walk 2026-10-09, TS2: the options were typed "C1/26-27/0003"
+     while the next bill said C5). One prefix on the screen, from tillId(), the same call the bill number is made from. */
+  try {
+    var dateOpts = { fy: document.querySelector('#set_dating option[value="fy"]'), julian: document.querySelector('#set_dating option[value="julian"]') };
+    if (window.CBDoc) ['fy', 'julian'].forEach(function(k){
+      if (!dateOpts[k]) return;
+      dateOpts[k].textContent = CBDoc.compose({ country: docCountry(), prefix: tillId(), kind: 'sale', at: new Date(), seq: 3,
+        scheme: Object.assign({}, sc, { dating: k }) }) + (k === 'fy' ? ' · financial year' : ' · date');
+    });
+  } catch (_) {}
   var note = document.getElementById('seriesnote');
   if (note) {
     var eg = '';
