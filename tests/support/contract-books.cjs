@@ -147,7 +147,7 @@ async function captureBooks() {
     const p2 = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 500000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'oldest_first', client_ref: 'pay-2' }, '/payments');
     /* ── M30 advice OUT: the read (on rail → the chit body; off rail → share), PATCH advice_chit_id (200 · the same again 200 · a different one 409), PATCH advice_shared_at ── */
     const pid1 = p1.body && p1.body.payment && p1.body.payment.payment_id, pid2 = p2.body && p2.body.payment && p2.body.payment.payment_id;
-    const p3 = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'none', client_ref: 'pay-3', acknowledge: ['nothing_owed', 'excess', 'same_again', 'just_settled'] });
+    const p3 = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'none', client_ref: 'pay-3', acknowledge: ['nothing_owed', 'excess', 'same_again', 'just_settled'] }, '/payments');   /* M30: an off-rail record, so the contract lists both may shapes */
     const pid3 = p3.body && p3.body.payment && p3.body.payment.payment_id;
     if (pid1 && pid3) {
       await q('GET', '/payments/' + pid1 + '/advice', null, '/payments/:id/advice');
