@@ -614,8 +614,9 @@ const PREF_SETS = {
    */
   ui: {
     column: 'ui_prefs',
-    keys: ['theme', 'fs', 'motion'],
+    keys: ['theme', 'fs', 'motion', 'stripes'],   /* stripes: row stripes off | light | strong (small-fixes round) */
     check(prefs) {
+      if (prefs.stripes && !['off', 'light', 'strong'].includes(prefs.stripes)) return 'Unknown row stripes setting';
       if (prefs.fs && !['s', 'm', 'l', 'xl'].includes(prefs.fs)) return 'Unknown text size';
       if (prefs.motion && !['auto', 'reduce', 'full'].includes(prefs.motion)) return 'Unknown motion setting';
       return null;
