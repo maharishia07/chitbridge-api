@@ -44,6 +44,8 @@ const CALLS = {
   lastPack: [E], insertPack: [E, { pack_id: U, kind: 'month', sha256: 'x', manifest: {} }], packs: [E], pack: [E, U], ackPack: [E, U, U],
   counterBills: [E, 'C1', '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'], countersBilling: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'],
   unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200], openDisputes: [E, U],
+  /* M30 · the payment advice (b285) */
+  adviceReady: [E], paymentsAdvice: [E, [U]], setAdvice: [E, U, { advice_chit_id: U, advice_shared_at: null }], adviceStates: [E, [U]], paymentsNeedingAdvice: [E, 50], shopName: [E],
 };
 
 (async () => {

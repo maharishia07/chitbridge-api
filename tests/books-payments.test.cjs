@@ -11,6 +11,11 @@
  *   3. ONE TRANSACTION: a refused allocation (confirmItems) leaves no books_payment row, no entry, no item, no number taken.
  *   4. The same client_ref twice → one payment, one entry, one allocation; the replay says duplicate: true and is answered
  *      BEFORE the duplicate rule looks at the new body.
+ *   7. M30 · advice OUT (SPEC §3 · §4.3 · §4.7; api tests 10–11): party.on_rail on the preview · the record answer carries the ready chit body
+ *      and MAY (send on rail · share off rail · the level's refusal in the rail engine's words) · PATCH /payments/:id is a merge-patch of the named
+ *      fields, first-wins (the same chit again → 200; a different one → 409 ADVICE_EXISTS) · the statement line's advice state none → sent →
+ *      delivered → disputed / shared · To-do advices_to_send counts and words · reversed / held cheque / not posted refuse · b285 not run → "not
+ *      available yet", never a 500 · one transaction, no per-row read.
  * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/books-payments.test.cjs
  */
 'use strict';
@@ -29,7 +34,8 @@ async function section(title, fn) {
 
 const SHOP = '11111111-1111-4111-8111-111111111111', MALA = '22222222-2222-4222-8222-222222222222', SUPP = '33333333-3333-4333-8333-333333333333';
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Chola Auto Care' };
-const authStub = Object.assign((req, res, next) => { req.identity = OWNER; next(); }, {
+let WHO = OWNER;   /* section 7 swaps in a viewer */
+const authStub = Object.assign((req, res, next) => { req.identity = WHO; next(); }, {
   entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
   requireScope: () => (req, res, next) => next(),
 });
@@ -340,6 +346,131 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       && X.T.entries.filter((h) => h.reverses_entry_id === entryId).length === 1, JSON.stringify(again.body));
     const twice = await q('POST', '/entries/' + rev.body.entry_id + '/reverse', { reason: 'oops' });
     ok('reversing the mirror itself is refused in words', twice.status === 422 && /itself a reversal/.test(twice.body.error), JSON.stringify(twice.body));
+  });
+
+  /* ═══ 7 · M30 advice OUT ═══ */
+  await section('7 · M30 advice OUT: on_rail, the ready body + may, PATCH first-wins, the statement state, To-do advices_to_send, the refusals, b285 not run', async () => {
+    const TT = '66666666-6666-4666-8666-666666666666', CH1 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', CH2 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
+    X.T.parties.push({ owner: SHOP, party_id: TT, party_no: 'P-00009', name: 'Tally Test', supplier: true, credit_days: 30, on_rail: true });
+    X.T.identities.push({ identity_id: SHOP, display_name: 'Chola Auto Care' });
+    require(path.join(H.API, 'lib', 'books-recurring')).use(require('./support/books-recurring-memory.cjs').memoryTemplates().store);   /* /todo reads the repeating entries too */
+    for (const [n, date, rate, no] of [['t', '2026-09-20', { rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }, 'TT-0001'], ['u', '2026-09-22', { rate: 12, taxable: 500, cgst: 30, sgst: 30, igst: 0 }, 'TT-0002']]) {
+      await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date, currency: 'INR', party: TT, source_chit_id: BILL(n), source_ref: 'chit:' + n, by_rate: [rate], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL(n), bill_no: no, entity_id: SHOP, purpose: 'order', business_json: { bill_no: no } });
+    }
+    stamp(X, AGO_2D());
+    const ACK = ['nothing_owed', 'excess', 'same_again', 'just_settled'];
+    /* ── on_rail on the preview ── */
+    const pv = await q('POST', '/payments/preview', { party_id: TT, direction: 'out', amount_minor: 200000, currency: 'INR', allocate: 'oldest_first' });
+    const pv2 = await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 100, currency: 'INR' });
+    eq('preview: party.on_rail — Tally Test can receive a chit, Kumar Traders (no handle) cannot', [pv.body.party.on_rail, pv2.body.party.on_rail], [true, false]);
+    /* ── the record answer carries the advice ── */
+    const rec = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 200000, currency: 'INR', mode: 'cash', received_at: '2026-10-05', allocate: 'oldest_first', client_ref: 'adv-1', acknowledge: ACK });
+    const payId = rec.body.payment && rec.body.payment.payment_id, A = rec.body.advice;
+    ok('record ₹2,000 to Tally Test → 200 with an advice block', rec.status === 200 && A && A.payment_id === payId, JSON.stringify(rec.body).slice(0, 400));
+    eq('…may: the owner may SEND (on rail); Share is for a party off the rail — refused with its sentence', [A.may.send_advice, A.may.share_advice],
+      [{ ok: true }, { ok: false, why: 'on_rail', say: 'Tally Test is on ChitBridge — send the advice instead.' }]);
+    eq('…the words a person reads (and the payee\'s To-do will show)', A.words, 'Chola Auto Care paid you ₹2,000 cash on 5 Oct 2026 for bills TT-0001, TT-0002 (₹1,680) · ₹320 as an advance.');
+    const bj = A.body && A.body.business_json, pa = bj && bj.payment_advice;
+    eq('…the chit send body (§3.2): to the payee, purpose general, kind payment_advice, client_ref advice:pay:<id>', [A.body.recipients, A.body.purpose, bj.kind, A.body.client_ref, A.body.manual_subject],
+      [[{ entity_id: TT, role: 'to' }], 'general', 'payment_advice', 'advice:pay:' + payId, 'Payment advice ' + rec.body.posted.entry_no]);
+    eq('…payment_advice: action paid, the adviser\'s payment and entry, minor-unit integers as the source, major beside them, the day, nothing of M31/M32 yet',
+      [pa.action, pa.adviser_payment_id, pa.adviser_entry_no, pa.amount_minor, pa.amount, pa.currency, pa.mode, pa.paid_on, pa.applied_minor, pa.on_account_minor, pa.on_account, pa.collected_by, pa.reverses_advice_chit_id, pa.words === A.words],
+      ['paid', payId, rec.body.posted.entry_no, 200000, 2000, 'INR', 'cash', '2026-10-05', 168000, 32000, 320, null, null, true]);
+    eq('…line_items = the bills settled, by the bill\'s own chit_id (the same id on both copies — what lets the payee settle the same bills)',
+      A.body.line_items.map((l) => [l.ref_chit_id, l.bill_no, l.applied_minor, l.applied, l.currency]), [[BILL('t'), 'TT-0001', 112000, 1120, 'INR'], [BILL('u'), 'TT-0002', 56000, 560, 'INR']]);
+    ok('…share is null on rail (never a chit to nowhere, never a copy-text for a party who can receive)', A.share === null && A.body !== null);
+    eq('…advice state before any send: none, no chit', A.advice, { chit_id: null, state: 'none', shared_at: null });
+    const rep = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 200000, currency: 'INR', mode: 'cash', received_at: '2026-10-05', allocate: 'oldest_first', client_ref: 'adv-1', acknowledge: ACK });
+    ok('a replay (same client_ref) carries no advice block — its row already answers', rep.body.payment.duplicate === true && rep.body.advice === null);
+    /* ── the read ── */
+    const trips = []; const wrapped = {};
+    const wrap = () => { Object.keys(X.store).forEach((k) => { if (typeof X.store[k] === 'function') { wrapped[k] = X.store[k]; X.store[k] = function () { trips.push(k); return wrapped[k].apply(this, arguments); }; } }); };
+    const unwrap = () => { Object.keys(wrapped).forEach((k) => { X.store[k] = wrapped[k]; }); trips.length = 0; };
+    wrap(); const g0 = await q('GET', '/payments/' + payId + '/advice'); const t0 = trips.slice(); unwrap();
+    console.log('          store calls for GET /payments/:id/advice: ' + t0.length + ' (' + t0.join(' ') + ')');
+    ok('GET /payments/:id/advice answers the same block (party · may · words · body) in ONE withEntity, never a per-row read: ≤ 12 store calls, items once',
+      g0.status === 200 && g0.body.party.on_rail === true && g0.body.words === A.words && JSON.stringify(g0.body.body) === JSON.stringify(A.body) && JSON.stringify(g0.body.may) === JSON.stringify(A.may)
+      && t0.length <= 12 && t0.filter((k) => k === 'items').length <= 1, g0.status + ' ' + JSON.stringify(g0.body).slice(0, 300));
+    ok('…an unknown payment is a 404 in words', (await q('GET', '/payments/' + CH2 + '/advice')).status === 404);
+    /* ── To-do: the advice not yet sent (test 10) ── */
+    const td0 = (await q('GET', '/todo')).body.find((x) => x.kind === 'advices_to_send');
+    ok('To-do advices_to_send: 1 payment, named in words, the action is the PATCH, the item names the payment', td0 && td0.count === 1 && td0.words === '1 payment has no advice yet — Tally Test does not know you paid.'
+      && td0.action.call === 'PATCH /api/books/payments/:id' && td0.items[0].payment_id === payId && td0.items[0].amount_minor === 200000, JSON.stringify(td0));
+    /* ── PATCH (test 11) ── */
+    const st0 = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.find((l) => l.payment_id === payId);
+    eq('the statement line before the send: advice none', st0.advice, { chit_id: null, state: 'none', shared_at: null });
+    wrap(); const p1 = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 }); const t1 = trips.slice(); unwrap();
+    console.log('          store calls for PATCH /payments/:id: ' + t1.length + ' (' + t1.join(' ') + ')');
+    eq('PATCH { advice_chit_id } → 200, state sent (my copy not readable yet), one transaction (≤ 12 store calls)', [p1.status, p1.body.ok, p1.body.advice, t1.length <= 12], [200, true, { chit_id: CH1, state: 'sent', shared_at: null }, true]);
+    X.T.chits.push({ chit_id: CH1, entity_id: SHOP, purpose: 'general', status: 'delivered', business_json: { kind: 'payment_advice' } });
+    const st1 = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.find((l) => l.payment_id === payId);
+    eq('…the statement line now: advice delivered (my sent copy stands at delivered), the chit named', st1.advice, { chit_id: CH1, state: 'delivered', shared_at: null });
+    const g1 = await q('GET', '/payments/' + payId + '/advice');
+    eq('…the read after the send: may.send_advice refused (already sent), no body', [g1.body.may.send_advice, g1.body.body, g1.body.advice.state], [{ ok: false, why: 'already_sent', say: 'An advice is already sent for this payment.' }, null, 'delivered']);
+    ok('…To-do: advices_to_send is gone', !(await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send'));
+    const p2 = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
+    ok('the same advice_chit_id again → 200 (a retry, first-wins; nothing changes)', p2.status === 200 && p2.body.advice.chit_id === CH1, JSON.stringify(p2.body));
+    const p3 = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH2 });
+    eq('a DIFFERENT advice_chit_id → 409 ADVICE_EXISTS in words; the row keeps the first', [p3.status, p3.body.code, p3.body.message, X.T.payments.find((p) => p.payment_id === payId).advice_chit_id],
+      [409, 'ADVICE_EXISTS', 'An advice is already recorded for this payment.', CH1]);
+    const p4 = await q('PATCH', '/payments/' + payId, {});
+    ok('an empty patch → 400 "Nothing to change"', p4.status === 400 && /Nothing to change/.test(p4.body.error), JSON.stringify(p4.body));
+    ok('a patch of a field not named (note, amount) changes nothing', (await q('PATCH', '/payments/' + payId, { amount_minor: 1 })).status === 400 && X.T.payments.find((p) => p.payment_id === payId).amount_minor === 200000);
+    X.T.disputes.push({ entity_id: SHOP, chit_id: CH1, status: 'open' });
+    const st2 = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.find((l) => l.payment_id === payId);
+    ok('a dispute open on the advice → the line reads disputed (co-held; the payer never reads the payee\'s accept)', st2.advice.state === 'disputed', JSON.stringify(st2.advice));
+    /* ── off rail: Share, never a chit ── */
+    const off = await q('POST', '/payments', { party_id: SUPP, direction: 'out', amount_minor: 50000, currency: 'INR', mode: 'upi', reference: 'UPI-77', received_at: '2026-10-05', allocate: 'none', client_ref: 'adv-off', acknowledge: ACK });
+    const O = off.body.advice, offId = off.body.payment.payment_id;
+    eq('off rail (Kumar Traders): send refused with its sentence, share allowed; no chit body, the share texts carry the words', [O.may.send_advice, O.may.share_advice, O.body, O.words],
+      [{ ok: false, why: 'off_rail', say: 'Kumar Traders is not on ChitBridge — share the advice instead.' }, { ok: true }, null, 'Chola Auto Care paid you ₹500 by UPI on 5 Oct 2026 · ₹500 as an advance. Ref UPI-77.']);
+    ok('…share: text = the words; wa.me and mailto carry them encoded', O.share.text === O.words && O.share.wa === 'https://wa.me/?text=' + encodeURIComponent(O.words) && /^mailto:\?subject=.*&body=/.test(O.share.mailto) && O.share.mailto.indexOf(encodeURIComponent(O.words)) > 0, JSON.stringify(O.share));
+    const o1 = await q('PATCH', '/payments/' + offId, { advice_chit_id: CH2 });
+    eq('…PATCH advice_chit_id for an off-rail party → 409 OFF_RAIL (the server refuses what the read greyed)', [o1.status, o1.body.code, o1.body.why], [409, 'OFF_RAIL', 'off_rail']);
+    const o2 = await q('PATCH', '/payments/' + offId, { advice_shared_at: true });
+    ok('…PATCH { advice_shared_at: true } → 200, state shared, the moment stamped', o2.status === 200 && o2.body.advice.state === 'shared' && /^\d{4}-\d{2}-\d{2}T/.test(o2.body.advice.shared_at) && o2.body.advice.chit_id === null, JSON.stringify(o2.body));
+    const sh = o2.body.advice.shared_at;
+    const o3 = await q('PATCH', '/payments/' + offId, { advice_shared_at: '2027-01-01T00:00:00.000Z' });
+    ok('…shared again keeps the FIRST moment', o3.status === 200 && o3.body.advice.shared_at === sh);
+    ok('…the statement line reads shared', (await q('GET', '/party/' + SUPP + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.find((l) => l.payment_id === offId).advice.state === 'shared');
+    ok('…To-do never counted an off-rail payment', !(await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send'));
+    /* ── a reversed payment, a held cheque: nothing to advise ── */
+    const r3 = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 10000, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'adv-rev', acknowledge: ACK });
+    ok('a second payment to Tally Test → To-do counts it', (await q('GET', '/todo')).body.find((x) => x.kind === 'advices_to_send').count === 1);
+    await q('POST', '/entries/' + r3.body.posted.entry_id + '/reverse', { reason: 'Paid by mistake' });
+    const g3 = await q('GET', '/payments/' + r3.body.payment.payment_id + '/advice');
+    eq('reversed → may refused "This payment was reversed." (send and share alike), no body; To-do drops it', [g3.body.may.send_advice.why, g3.body.may.send_advice.say, g3.body.may.share_advice.why, g3.body.body, (await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send')],
+      ['reversed', 'This payment was reversed.', 'reversed', null, false]);
+    const r4 = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 30000, currency: 'INR', mode: 'cheque', cheque: { number: '000123', bank: 'SBI' }, received_at: '2026-10-06', client_ref: 'adv-chq', acknowledge: ACK });
+    eq('a held cheque → "A cheque is advised when it clears." — nothing to send until then; To-do does not count it', [r4.status, r4.body.advice.may.send_advice.why, r4.body.advice.may.send_advice.say, (await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send')],
+      [200, 'cheque_held', 'A cheque is advised when it clears.', false]);
+    const c1 = await q('PATCH', '/payments/' + r4.body.payment.payment_id, { advice_chit_id: CH2 });
+    ok('…and the PATCH refuses the same way (409 CHEQUE_HELD)', c1.status === 409 && c1.body.code === 'CHEQUE_HELD', JSON.stringify(c1.body));
+    /* ── who may: a viewer reads, says nothing (the rail engine's ladder) ── */
+    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
+    const gv = await q('GET', '/payments/' + payId + '/advice');
+    const RAIL = require(path.join(H.API, 'lib', 'rail'));
+    eq('a viewer: may.send_advice / share_advice refused read_only, in the rail engine\'s own sentence; the words still name the shop (not the person)', [gv.status, gv.body.may.send_advice, gv.body.may.share_advice.why, /^Chola Auto Care paid you/.test(gv.body.words)],
+      [200, { ok: false, why: 'read_only', say: RAIL.say('read_only') }, 'read_only', true]);
+    const pvw = await q('PATCH', '/payments/' + offId, { advice_shared_at: true });
+    eq('…and the PATCH says 403 with the same word', [pvw.status, pvw.body.why, pvw.body.message], [403, 'read_only', RAIL.say('read_only')]);
+    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+    ok('an editor co-assist may (as record is allowed to a co-assist)', (await q('GET', '/payments/' + payId + '/advice')).body.may.send_advice.why === 'already_sent' && (await q('GET', '/payments/' + offId + '/advice')).body.may.share_advice.ok === true);
+    WHO = OWNER;
+    /* ── b285 not run yet: words, never a 500 ── */
+    X.T.adviceReady = false;
+    const na = await q('GET', '/payments/' + payId + '/advice');
+    eq('before b285: the read answers state none and may.*.why not_available with its words (no 42703, no 500)', [na.status, na.body.advice, na.body.may.send_advice.why, na.body.may.send_advice.say, na.body.body],
+      [200, { chit_id: null, state: 'none', shared_at: null }, 'not_available', 'Advice not available yet — the books need an update (b285).', null]);
+    const nb = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
+    eq('…the PATCH answers 503 BOOKS_NOT_MIGRATED in the same words', [nb.status, nb.body.code, nb.body.message], [503, 'BOOKS_NOT_MIGRATED', 'Advice not available yet — the books need an update (b285).']);
+    const ns = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.filter((l) => l.payment_id);
+    ok('…every statement payment line reads advice none (the shape is kept)', ns.length >= 2 && ns.every((l) => l.advice && l.advice.state === 'none' && l.advice.chit_id === null), JSON.stringify(ns.map((l) => l.advice)));
+    const nr = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 100, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'adv-na', acknowledge: ACK });
+    ok('…a payment still records; its advice block says not_available', nr.status === 200 && nr.body.advice && nr.body.advice.may.send_advice.why === 'not_available', JSON.stringify(nr.body.advice && nr.body.advice.may));
+    ok('…and the To-do leaves the kind out rather than guess', !(await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send'));
+    X.T.adviceReady = true;
   });
 
   srv.close();
