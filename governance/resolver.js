@@ -109,4 +109,23 @@ function driftStatus(mintedVersion, activeVersion) {
   return String(mintedVersion) !== String(activeVersion);
 }
 
-module.exports = { resolve, driftStatus, GovernanceError };
+/**
+ * driftOf — THE DRIFT QUESTION ASKED OF ANY MINTED THING (the CB Sides panel, 2026-10-09): what was this business minted on, what is
+ * active now, and do they differ? ONE rule for the constitution, a catalogue source, a boilerplate, a blueprint — they all stamp a
+ * version at mint and have an active one later. Built ON driftStatus (the comparison stays in one place), never beside it.
+ *
+ * NEVER A GUESS. If either side is not recorded the answer is { known:false, drift:null } — "we cannot tell" is a fact the panel
+ * prints ("not yet"), not a quiet "Current". Versions compare as text, as driftStatus does ('0.1' vs '0.1' is no drift).
+ *   driftOf('0.1', '0.2') -> { minted:'0.1', active:'0.2', known:true,  drift:true  }
+ *   driftOf('0.2', '0.2') -> { minted:'0.2', active:'0.2', known:true,  drift:false }
+ *   driftOf(null, '0.2')  -> { minted:null,  active:'0.2', known:false, drift:null  }
+ */
+function driftOf(mintedVersion, activeVersion) {
+  const has = (v) => v !== null && v !== undefined && String(v).trim() !== '';
+  const minted = has(mintedVersion) ? String(mintedVersion).trim() : null;
+  const active = has(activeVersion) ? String(activeVersion).trim() : null;
+  if (minted === null || active === null) return { minted, active, known: false, drift: null };
+  return { minted, active, known: true, drift: driftStatus(minted, active) };
+}
+
+module.exports = { resolve, driftStatus, driftOf, GovernanceError };
