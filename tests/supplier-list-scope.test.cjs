@@ -25,8 +25,6 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } c
 
 /** the one statement allowed on the bare pool, and why */
 const ALLOWED = [
-  { file: 'lib/home-facts.js', has: 'FROM supplier_list WHERE owner_entity_id = $1) AS suppliers',
-    why: 'the Home rail count runs in db.readBatch — BEGIN; set_config(app.current_entity) …; COMMIT as ONE message, entity-scoped exactly as withEntity is' },
   { file: 'lib/customer-groups.js', has: 'const NOT_A_SUPPLIER_SQL',
     why: 'a predicate FRAGMENT, not a statement — GET /relationships/customers and the Home rail count both interpolate it into a query that runs inside withEntity' },
   { file: 'routes/entities.js', has: '(SELECT count(*)::int FROM supplier_list s WHERE s.owner_entity_id = i.identity_id)',
