@@ -48,6 +48,10 @@ function chits() {
     { chit_id: 'cs1', direction: 'received', sender_entity_id: 'e1', current_status: 'pending', created_at: d(20), open_disputes: 0, manual_subject: 'Counter sale C1/26-27/0001' },
     { chit_id: 'cs2', direction: 'received', sender_entity_id: 'e1', current_status: 'completed', created_at: d(20), open_disputes: 0 },
   ] : [];
+  if (F.chits === 'advice') return [
+    { chit_id: 'adv', direction: 'sent', sender_entity_id: 'e1', current_status: 'pending', created_at: d(1), open_disputes: 0, purpose: 'general', biz_kind: 'payment_advice', alt_value: '1', value: '0',
+      counterparty_id: 'e2', counterparty_name: 'cbincroot', all_recipients: [{ display_name: 'Mayur Bhavan' }, { display_name: 'cbincroot' }], manual_subject: 'Payment advice PY/2026-27/000002' },
+    { chit_id: 'exp', direction: 'received', sender_entity_id: 'e1', current_status: 'pending', created_at: d(1), open_disputes: 0, purpose: 'expense', alt_value: '90', value: '0', manual_subject: 'Expense - rent' }];
   return own.concat([
     { chit_id: 'a', direction: 'received', current_status: 'pending', created_at: d(10), open_disputes: 0 },   /* in, and stuck (7-day default) */
     { chit_id: 'b', direction: 'received', current_status: 'pending', created_at: d(1), open_disputes: 0 },    /* in */
@@ -163,6 +167,12 @@ const get = (port, p) => new Promise((ok) => {
   t('rail: a chit the shop sent to itself is never stuck - an open one is "in", a closed one is nothing', r.json, { suppliers: 3, customers: 5, in: 3, out: 1, stuck: 1 });
   r = await get(port, '/api/facts/rail/chits');
   t('rail/chits: a note to self is listed (In tab) with stuck:false, self:true, no reason; stuck rows still number the rail', [r.json.items.filter((i) => i.stuck).map((i) => i.chit_id), r.json.items.find((i) => i.chit_id === 'cs1').self, r.json.items.find((i) => i.chit_id === 'cs1').why, r.json.items.some((i) => i.chit_id === 'cs2')], [['a'], true, null, false]);
+  F.chits = 'few';
+  /* small-fixes: a payment advice names the OTHER side (not the shop) and its own amount; an expense carries its amount; own chits are flagged */
+  F.chits = 'advice'; r = await get(port, '/api/facts/rail/chits');
+  const adv = r.json.items.find((i) => i.chit_id === 'adv'), exp = r.json.items.find((i) => i.chit_id === 'exp');
+  t('rail/chits: a payment advice is To the counterparty (not the shop), with the payment amount, kind payment_advice, not own', [adv.who, adv.value, adv.kind, adv.own], ['cbincroot', 1, 'payment_advice', false]);
+  t('rail/chits: an expense with no total shows its own amount and is flagged own (the list hides it by default)', [exp.value, exp.own], [90, true]);
   F.chits = 'few';
   F.chits = 'many'; r = await g('rail');
   t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number)', r.json, { suppliers: 3, customers: 5 });
