@@ -1234,6 +1234,9 @@
          overflow-y:auto;align-content:start}
   /* ⚠️ 'No keys' really means none — the floor above must not put the box back on screen */
   body.hide-quick .quick,.quick[hidden]{display:none}
+  body.srch-once .quick,body.srch-once .keysgrip{display:none}   /* search shown once — see paintQuick */
+  .chips.wrapped button.ovf{display:none}
+  .chips .chipmore{border-style:dashed;color:var(--ink)}
   /* ⚠️ nothing to size, nothing to drag — the bar goes with the box */
   .quick:empty,.quick:empty + .keysgrip{display:none}
   /**
@@ -6639,7 +6642,8 @@ function paintStatus(){
    * ⚠ A terminal is unchanged: nobody is looking over it, and the day total is the number its owner wants.
    */
   paintDayPill(d);
-  var note = queueWords();
+  /* one place for "not connected to a shop": the shelf line, with its Connect button (tidy 2026-10-09) */
+  var note = paired() ? queueWords() : '';
   /**
    * ⭐⭐ THE FIX, BESIDE THE FACT ([TILL-132]). Athi: *"do we have a mechanism of showcasing 'please sign in to
    * send'?"* — there was not one. Telling somebody their bills are refused and leaving them to find ⚙ is half
@@ -7778,7 +7782,11 @@ function stopWrongShop(bad){
  * and a direct reference would capture `undefined` at parse time. sideGo() resolves the name when it runs.
  */
 var TILL_OPS = [
-  { id: 'bills',    icon: '🧾', label: "Today's bills",      hint: 'print one again · F8',                          fn: 'openBills' },
+  { id: 'bills',    icon: '🧾', label: "Today's bills",      hint: 'print one again · F8',                          fn: 'openBills', rail: true },
+  /* ⭐ THE RAIL IS SIX, NOT FOURTEEN (tidy 2026-10-09, TM1): an op carries `rail: true` to stand on it; every other op is reached from the Menu. Check and Labs are
+     the rail's DOORS — they open the Menu already on the Check / Lab section, so there is one Check and one Labs, never a second panel. */
+  { id: 'check',    icon: '🩺', label: 'Check',               hint: 'what needs you · why a bill is stuck',          fn: 'openCheck', rail: true, door: 'alerts' },
+  { id: 'labs',     icon: '🧪', label: 'Labs',                hint: 'Product · Offer · Combo',                       fn: 'openLabs', rail: true, door: 'pricing' },
   /**
    * ⭐ TO DO ([TILL-79]) — its own operation, so it appears on the icon strip AND in the hub's list from one
    * declaration. It sits second because a shopkeeper opens it first thing and last thing, and because its
@@ -7786,7 +7794,7 @@ var TILL_OPS = [
    */
   { id: 'todo',     icon: '☑',  label: 'To do',              hint: 'this counter\u2019s own list \u00b7 a day or time becomes a reminder', fn: 'todoOpen' },
   { id: 'dayreport', icon: '📊', label: "Today's sales",      hint: 'the whole day, in a table you can print',       fn: 'dayReport' },
-  { id: 'screen',   icon: '📺', label: 'Shop screen',        hint: 'your offers as a sign for a TV',                fn: 'openScreen' },
+  { id: 'screen',   icon: '📺', label: 'Customer screen',    hint: 'your offers as a sign for a TV',                fn: 'openScreen' },
   { id: 'refresh',  icon: '↻',  label: 'Read the shop again', hint: 'new prices and products · F4',                 fn: 'refresh' },
   { id: 'stuck',    icon: '🩺', label: 'Counter health', hint: 'what is wrong, what is waiting, and what to do', fn: 'openHealth' },
   /**
@@ -7826,12 +7834,22 @@ var TILL_OPS = [
    * coldStartFromMenu() open the same live-figures sheet Counter health and the day card use.
    */
   { id: 'close',    icon: '🔒', label: 'Close this counter', hint: 'sends and checks everything first · it can be opened again', fn: 'closeFromMenu' },
-  { id: 'settings', icon: '⚙',  label: 'Settings',           hint: 'look, printer, this till',                      fn: 'openSettings' },
+  { id: 'settings', icon: '⚙',  label: 'Settings',           hint: 'look, printer, this till',                      fn: 'openSettings', rail: true },
   { id: 'coldstart-menu', icon: '↺', label: 'Repair this counter', hint: 'sends anything waiting, then clears this counter and reads the shop fresh', fn: 'coldStartFromMenu' },
   /* ⚠️ ONLY WHEN THE BROWSER OFFERS IT (beforeinstallprompt). A button that cannot install anything is worse
      than no button — the same rule the microphone follows on a browser with no speech. */
-  { id: 'install', icon: '⤓', label: 'Install as an app', hint: 'opens without a browser', fn: 'installApp', when: 'install' },
+  { id: 'install', icon: '⤓', label: 'Install as an app', hint: 'opens without a browser', fn: 'installApp', when: 'install', rail: true },
 ];
+/** ⭐ ONE DOOR TO A MENU SECTION — opens the Menu with that section open (never toggles it shut). Check and Labs are doors, not panels. */
+function openMenuAt(id){
+  var side = document.getElementById('tillside');
+  MENU_OPEN_MANY = menuRoomy() ? menuOpenSet().filter(function(x){ return x !== id; }).concat([id]) : [id];
+  MENU_OPEN_SEC = id;
+  if (side && !side.classList.contains('on')) toggleMenu(); else paintMenu();
+  try { var el = document.querySelector('[data-testid="till-msec-' + id + '"]'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }); } catch (_) {}
+}
+function openCheck(){ openMenuAt('alerts'); }
+function openLabs(){ openMenuAt('pricing'); }
 function tillOp(id){ for (var i = 0; i < TILL_OPS.length; i++) if (TILL_OPS[i].id === id) return TILL_OPS[i]; return null; }
 /**
  * ⭐⭐⭐ THE SECTIONS, IN THE ORDER THE DESIGN FIXES THEM (mobile-first-instructions.md §4, historical).
@@ -8355,6 +8373,7 @@ function menuHue(id){ return MENU_HUE[id] || '120,116,110'; }
  */
 function opHue(opId){
   if (MENU_HUE[opId]) return MENU_HUE[opId];
+  var dop = tillOp(opId); if (dop && dop.door) return menuHue(dop.door);   /* a door takes the hue of the section it opens */
   for (var i = 0; i < TILL_MENU.length; i++) {
     if ((TILL_MENU[i].ops || []).indexOf(opId) >= 0) return menuHue(TILL_MENU[i].id);
   }
@@ -8463,7 +8482,6 @@ var TILL_MENU = [
    */
   /* ⚠️ THE HEADING MUST NOT REPEAT ITS ONLY ROW. Both said 'your offers as a sign for a TV' — in a group
      of one that is the same sentence twice, and the reader has to check whether they are different. */
-  { id: 'show',    icon: '📣', title: 'Show the shop', sum: 'what a customer sees',                  ops: ['screen'] },
   /**
    * ⭐ "SCREEN", NOT "HOW IT LOOKS" ([TILL-88]). Athi: *"instead of how it looks, can we change to screen,
    * with screen icon, also state Preview as hyperlink there itself."* The section is named after the THING
@@ -8471,7 +8489,8 @@ var TILL_MENU = [
    * straight to the preview sits in the heading rather than one fold further in.
    */
   /* ⚠️ THREE NOUNS (§7.4) — 'room' dropped: it is the panel-sizing preset, one tap into this same dialog. */
-  { id: 'look',    icon: '🖥️', title: 'Screen',        sum: 'size · colours · what shows',
+  { id: 'look',    icon: '🖥️', title: 'Screen',        sum: 'size · colours · the customer screen',
+    ops: ['screen'],
     look: true, link: { label: 'Preview', fn: 'styleOpen', why: 'see the whole screen before anything changes' } },
   /* ⚠️ 'shopdet' and 'counter' are gone ([TILL-99]): the shop's particulars fold into the morning panel,
      where somebody opening the day is already looking, and the counter's own upkeep is 'Keep it running'. */
@@ -10027,7 +10046,7 @@ function hubChips(){
   if (queued) out += '<button class="hubchip warn" data-testid="till-hub-chip-queue"'
     + ' onclick="fromMenu(openHealth)">' + queued + ' waiting</button>';
   if (alerts) out += '<button class="hubchip warn" data-testid="till-hub-chip-alerts"'
-    + ' onclick="menuSection(\'alerts\')">' + alerts + ' need' + (alerts === 1 ? 's' : '') + ' you</button>';
+    + ' onclick="openCheck()">' + alerts + ' need' + (alerts === 1 ? 's' : '') + ' you</button>';
   return '<div class="hubchips" data-testid="till-hub-health">' + out + '</div>';
 }
 function paintMenu(){
@@ -10250,9 +10269,8 @@ function paintSide(){
    * two characters apart in the font — Athi read the strip as having two reloads, which is exactly the
    * mistake the arrangement invites. [[feedback-ui-placement-standards]]
    */
-  var CARE_OPS = ['close', 'coldstart-menu'];
   TILL_OPS.forEach(function(op){
-    if (CARE_OPS.indexOf(op.id) >= 0) return;
+    if (!op.rail) return;   /* the rail stands six; the rest are in the Menu */
     if (op.when === 'install' && !_install) return;
     /* ⭐ a strip icon may carry a count — today only To do does, because it is the only thing here counting
        something the shopkeeper wrote down themselves. Overdue turns it amber. */
@@ -10261,6 +10279,7 @@ function paintSide(){
       var left = todoLeft(), due = todoDueNow();
       if (left) badge = '<i class="sbadge' + (due ? ' due' : '') + '">' + left + '</i>';
     }
+    if (op.id === 'check' && alerts) badge = '<i class="sbadge due">' + alerts + '</i>';
     b.push('<button data-testid="till-side-' + op.id + '" title="' + esc(op.label + ' \u00b7 ' + op.hint) + '"'
       /* ⭐ THE SAME HUE THE HUB GIVES THIS ROW'S SECTION ([TILL-85]) — a colour is only worth having if it
          means the same thing in both halves of the menu. */
@@ -10543,7 +10562,8 @@ function paintChips(){
    * of them off the screen entirely, and nothing said so — the mask that fades the edge is the only hint, and
    * it reads as decoration. The selling screen keeps the one-line row: a cashier has four chips and a queue.
    */
-  el.className = 'chips' + (MODE === 'maintain' ? ' wrapped' : '');
+  /* ⭐ ALWAYS WRAPPED, AT MOST TWO LINES (tidy, TS10): a chip is whole or it is under "More ▾" — never cut at the edge */
+  el.className = 'chips wrapped';
   /* ⚠️ the worklists come FIRST in maintenance — they are what this screen is for, and they were past the fold */
   var jobChips = (MODE === 'maintain')
     ? maintJobs().map(function(j){
@@ -10579,9 +10599,24 @@ function paintChips(){
   chipsOverflow();
 }
 /** does the chip row actually run past its own edge? measured, never assumed — see the note on .chips */
+var CHIPS_ALL = false;
 function chipsOverflow(){
   var el = document.getElementById('chips'); if (!el) return;
-  el.classList.toggle('more', !el.classList.contains('wrapped') && el.scrollWidth > el.clientWidth + 2);
+  el.classList.remove('more');
+  [].forEach.call(el.querySelectorAll('.chipmore'), function(n){ n.remove(); });
+  var bs = [].slice.call(el.querySelectorAll('button'));
+  bs.forEach(function(b){ b.classList.remove('ovf'); });
+  if (!el.offsetParent || !bs.length || MODE === 'maintain') return;
+  var rows = []; bs.forEach(function(b){ if (rows.indexOf(b.offsetTop) < 0) rows.push(b.offsetTop); });
+  rows.sort(function(a, b){ return a - b; });
+  if (rows.length <= 2) return;
+  var more = document.createElement('button'); more.className = 'chipmore'; more.setAttribute('data-testid', 'till-chip-more');
+  more.onclick = function(){ CHIPS_ALL = !CHIPS_ALL; chipsOverflow(); };
+  if (CHIPS_ALL) { more.textContent = 'Fewer ▴'; el.appendChild(more); return; }
+  more.textContent = 'More ▾'; el.appendChild(more);
+  bs.forEach(function(b){ if (b.offsetTop > rows[1]) b.classList.add('ovf'); });
+  /* the "More" button itself must land on the second line: hide the last chip until it does */
+  for (var k = bs.length - 1; k > 0 && more.offsetTop > rows[1]; k--) bs[k].classList.add('ovf');
 }
 /**
  * ⭐ THE QUANTITY GOES IN FRONT OF THE NAME — "3*rice", "0.75 x tomato" (2026-09-08). It is how a counter has always entered three of
@@ -13163,6 +13198,9 @@ function quickShown(){
 }
 function paintQuick(){
   var el = document.getElementById('quick'); if (!el) return;
+  /* ⭐ SEARCH RESULTS ARE SHOWN ONCE (tidy 2026-10-09, TS6/TS11): while somebody types and the list is on, the list is the answer and the keys step aside — the SAME
+     seven items as tiles AND rows, in two boxes, left the list three rows tall. The user's own view choice (tillShow) is untouched: with the list switched off, the keys stay. */
+  try { document.body.classList.toggle('srch-once', !!typed().text && tillShow().list && !QK_ARRANGE && MODE === 'sell'); } catch (_) {}
   var o = tillOpt(), usesGroups = (o.quickSource === 'groups' || o.quickSource === 'both');
   /* ⚠️ THE BAR SURVIVES AN EMPTY GRID when groups are in use — a new group has nothing in it yet, and hiding the
      one control that fills it would make the feature unreachable the moment it is switched on. */
@@ -14766,7 +14804,9 @@ function priceBlock(i){
   var pay = (window.CBPricing ? (pricedAt(i, 1).amount) : Number(i.price)) || 0;
   var r = i.tax_rate;
   var per = 'per ' + esc(i.unit || 'piece');
-  if (shopTax().charges) per += (r != null ? ' · ' + (taxIncluded() ? 'incl. ' : 'with ') + r + '% GST' : ' · rate not set');
+  if (shopTax().charges) per += (r != null ? ' · ' + (taxIncluded() ? 'incl. ' : 'with ') + r + '% GST' : '');
+  /* the missing rate is warned ONCE, where the item is sold (BF1); the row stays quiet, the reason is in its tooltip (TS12) */
+  var perTip = (shopTax().charges && r == null) ? ' title="tax rate not set for this product"' : '';
   /**
    * ── ⚠️⚠️ THIS ROW USED TO SAY "save", AND IT WAS NOT AN OFFER ────────────────────────────────────────────────
    *
@@ -14793,7 +14833,7 @@ function priceBlock(i){
   var mrp = Number(i.mrp) || 0;
   var was = (mrp > pay)
     ? '<span class="was">MRP <s>' + money(mrp) + '</s>' + money(r2(mrp - pay)) + ' under</span>' : '';
-  return '<span class="p"><span class="pay">' + money(pay) + '</span><span class="per">' + per + '</span>' + was + '</span>';
+  return '<span class="p"><span class="pay">' + money(pay) + '</span><span class="per"' + perTip + '>' + per + '</span>' + was + '</span>';
 }
 /**
  * ⭐⭐⭐ THE ROW SAYS WHAT IS WRONG WITH IT ([TILL-58b]). png/MaintV2.png puts a pill on every row that needs
@@ -14897,7 +14937,7 @@ function paintHits(){
           ? '<button class="addbtn" data-testid="till-add-' + n + '" title="put this on the bill"'
             + ' aria-label="put this on the bill" onclick="event.stopPropagation();add(' + n + ')">+</button>' : '')
       + '</div>';
-  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : esc(blankWords())) + '</div>')
+  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? 'Nothing matches.' : '') + '</div>')
     /* ⚠️ AFTER THE ROWS, not before them. Sticky-to-the-bottom only works for an element the scroll would
        otherwise reach at the end; drawn first it was pushed out of view immediately, so it was stuck to the
        TOP instead and every tick shoved the shelf down by its height. */
@@ -17704,11 +17744,11 @@ function health(){
   if (STATE && STATE.queued > 3) {
     var lastWhy = (HOST && HOST.last && HOST.last.why) || '';
     if (lastWhy)
-      add('bad', STATE.queued + ' bills are waiting, and the last attempt failed',
+      add('bad', STATE.queued + ' bill' + (STATE.queued === 1 ? ' is' : 's are') + ' waiting, and the last attempt failed',
         lastWhy + ' They are safe on this device and it keeps trying.',
         'If it says the key was refused, pair this counter again. Otherwise tell us what it says.');
     else
-      add('warn', STATE.queued + ' bills are waiting to reach the shop',
+      add('warn', STATE.queued + ' bill' + (STATE.queued === 1 ? ' is' : 's are') + ' waiting to reach the shop',
         'They are safe on this device and go by themselves, once each. A queue this long usually means the line has been down a while.',
         'Nothing, unless it stays this way after the internet is back.');
   }
@@ -19850,7 +19890,7 @@ function paintOrderBar(){
         : '')
     + '<button class="kot" data-testid="till-kot" onclick="sendKOT()"'
     + ' title="' + (ORDER_ID ? ('send the new lines to this ' + says('subject') + ' and the kitchen') : 'send the new items to the kitchen') + ' (F3)">'
-    + '➕ ' + (ORDER_ID ? 'Send round · F3' : 'Kitchen · F3') + (kotPending().length ? ' <b>' + kotPending().length + '</b>' : '') + '</button>'
+    + '➕ ' + (ORDER_ID ? 'Send round · F3' : 'Kitchen · F3') + (kotPending().length ? ' <b data-testid="till-kot-badge" title="' + kotPending().length + ' on this bill not yet sent to the kitchen">' + kotPending().length + '</b>' : '') + '</button>'
     /**
      * ⭐⭐⭐ THE OTHER ICON, ON THE SAME TABLE ([TILL-187]). Athi: *"you add two or three icon, one is for
      * adding say +, another one = for summarising and bring it to the cart… in the same table number."* +
@@ -20815,7 +20855,7 @@ function dayCloseHTML(d){
     + dash + '<div style="font-weight:700">How it was paid</div>'
     + (Object.keys(d.modes).length ? Object.keys(d.modes).map(function(k){ return t(esc(k), money(d.modes[k])); }).join('') : '<div>nothing taken</div>')
     + ((d.unasked || 0) > 0
-        ? dash + t('Not asked how paid', String(d.unasked) + ' bills · ' + money(d.unasked_total))
+        ? dash + t('Not asked how paid', String(d.unasked) + (d.unasked === 1 ? ' bill · ' : ' bills · ') + money(d.unasked_total))
           + '<div style="font-size:.9em">Recorded as ' + esc(String((STATE.pickedDefault) || 'Cash'))
           + ' because nobody chose. If any of these were UPI or card, the drawer will be short by that much.</div>'
         : '')
@@ -23263,7 +23303,7 @@ async function openBills(keepOpen){
       + ' onclick="todayHow(\'' + esc(k) + '\')">' + esc(k) + ' ' + money(d.by[k]) + '</button>';
   }).join(' ');
   if (TODAY_HOW) rows = rows.filter(function(b){ return billHow(b).some(function(h){ return h.how === TODAY_HOW; }); });
-  document.getElementById('billstitle').textContent = 'Today — ' + (d.count||0) + ' bills · ' + money(d.total||0);
+  document.getElementById('billstitle').textContent = 'Today — ' + (d.count||0) + ((d.count||0) === 1 ? ' bill · ' : ' bills · ') + money(d.total||0);
   document.getElementById('billsbody').innerHTML =
     '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + (by || 'nothing taken yet')
       + (TODAY_HOW ? '<span data-testid="till-today-how-on">only ' + esc(TODAY_HOW) + '</span>' : '') + '</div>'
@@ -24328,7 +24368,7 @@ async function paintEarlier(){
   else if (!rows.length) body = '<div style="color:var(--dim);padding:10px">No counter bills in the last ' + days + ' days.</div>';
   else {
     var total = rows.reduce(function(a,b){ return r2(a + (b.total||0)); }, 0);
-    body = '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + rows.length + ' bills · ' + money(total)
+    body = '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + rows.length + (rows.length === 1 ? ' bill · ' : ' bills · ') + money(total)
       + (WHO ? ' · ' + esc(WHO.name) + ': ' + mine.length + ' bill(s) ' + money(mine.reduce(function(a,b){ return r2(a+(b.total||0)); },0)) : '') + '</div>'
       + rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-old-' + esc(b.no) + '">'

@@ -588,7 +588,8 @@ it('⭐⭐ the maintenance list wears each row\'s problem, and its chips all fit
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
   /* ⚠️⚠️ ELEVEN CHIPS IN A SIDEWAYS-SCROLLING ROW put "No photo" and "No price" off the right-hand edge, where
      nothing said they existed. Maintenance wraps; the selling screen keeps its one line and its four chips. */
-  assert.ok(/'chips' \+ \(MODE === 'maintain' \? ' wrapped' : ''\)/.test(page),
+  /* tidy 2026-10-09 (TS10): selling wraps too, at most two lines, the rest under More - a chip is whole or it is behind the button */
+  assert.ok(/el.className = 'chips wrapped'/.test(page) && page.indexOf('chipmore') > 0,
     'the maintenance chip row no longer wraps — chips past the fold are chips nobody can reach');
   /* ⚠️⚠️ AND NOT UNDER THE NAME `wrap`, which is this page's TOP-LEVEL TWO-PANE SPLIT and carries height:100dvh.
      class="chips wrap" made the chip row fill the pane and squeezed the product list to zero height. */
