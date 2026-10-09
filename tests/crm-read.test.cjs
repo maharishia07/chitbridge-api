@@ -147,6 +147,17 @@ const byId = (list, id) => list.parties.filter((p) => p.party_id === id);
   });
   await ita('an API key reaches nothing here (403)', async () => { t.as('E1', { key: true }); const r = await t.get('/parties'); assert.strictEqual(r.status, 403); t.as('E1'); });
 
+  await ita('an internal sign-in handle is never sent as an e-mail (O6/C9): a phone handle → null, a handle that carries an e-mail gives it back, a real address is untouched', async () => {
+    const H = require('../lib/handle');
+    assert.strictEqual(H.realEmail('9876512345@mayuri123.cr'), null);
+    assert.strictEqual(H.realEmail('meena.s=outlook.com@mayuri123.cr'), 'meena.s@outlook.com');
+    assert.strictEqual(H.realEmail('ravi@acmetraders.br'), null);
+    assert.strictEqual(H.realEmail('someone@firm.co.cr'), 'someone@firm.co.cr');
+    assert.strictEqual(H.realEmail('a@b.com'), 'a@b.com'); assert.strictEqual(H.realEmail(''), null); assert.strictEqual(H.realEmail(null), null);
+    const A = require('../lib/crm').assemble({ cust: [cs(row({ party_id: P(41), display_name: 'Handle Guest', user_id: '~shop.cus-0041', on_rail: false, party_no: 'P-0041', email: '9876512345@mayuri123.cr' }))], sup: [], walk: [] }, null);
+    assert.strictEqual(A.parties[0].email, null);
+  });
+
   t.close();
   console.log('  ' + pass + ' checks'); if (process.exitCode) console.log('FAILED');
 })();
