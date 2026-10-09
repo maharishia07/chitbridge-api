@@ -1044,10 +1044,19 @@ router.post('/:bridge_id/order/confirm',
       // Before this, a help-desk chit was stamped 'INR' with total_value 0, so lib/kyb.js counted every support
       // ticket as a zero-value TRADE and diluted the concentration ratio it exists to compute.
       const monetary = oi.pipeline === 'commerce';
+      /* O8 (black-box 2026-10-09): what the customer typed at the shop checkout rides ON THE CHIT - the full delivery address, the time asked for, the remark - so the shop
+         can act on the order. Bounded short strings, never spread from the body; the sheet reads summary_json.order_details (web chit-sheet.js). */
+      const _short = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : '');
+      const _rd = (req.body && req.body.requested_delivery && typeof req.body.requested_delivery === 'object') ? req.body.requested_delivery : null;
+      const _addr = _short(req.body && req.body.location, 300), _rem = _short(req.body && req.body.remark, 300);
+      const _when = _rd ? { date: _short(_rd.date, 10) || null, time: _short(_rd.time, 5) || null } : null;
+      const orderDetails = (oi.pipeline === 'commerce' && Array.isArray(req.body && req.body.line_items) && (_addr || _rem || _when))
+        ? { channel: 'online', fulfilment: 'delivery', address: _addr || null, requested_delivery: _when && (_when.date || _when.time) ? _when : null, remark: _rem || null } : null;
       const summary_json = { line_item_count: line_items.length, ...(offersApplied.length ? { offers: offersApplied } : {}),
                              total_value: (!monetary || negotiation) ? null : money.round(total),
                              currency_code: monetary ? (entity.currency_code || 'INR') : null, purpose, is_promotion: false,
                              customer_locality: custLocality || null,
+                             ...(orderDetails ? { order_details: orderDetails } : {}),
                              order_preset: oi.preset, pipeline: oi.pipeline,
                              ...(negotiation ? { negotiation: true, indicative_total: money.round(total) } : {}) };
       // Assimilate the governance SEAM + advisory conformance onto the storefront chit — parity with /chits/send, so a

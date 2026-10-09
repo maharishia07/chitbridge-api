@@ -54,6 +54,13 @@ function fail(res, e) {
   if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json({ error: e.message, message: e.message });
   if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
   if (e && e.code === '23505') return res.status(409).json({ error: 'That is already recorded.', message: 'That is already recorded.' });
+  /* ⭐ M30-2: the books are insert-only (b273: trigger + no UPDATE grant); a write the database refuses for that reason is the server's state (b295 not run), 503 in words — never a bare 500 */
+  if (e && (e.code === '42501' || /insert-only/.test(String(e.message || '')))) {
+    console.error('books route refused by the database:', e.code || '', String(e.message || e).slice(0, 300));
+    return res.status(503).json({ code: 'BOOKS_NOT_MIGRATED', error: 'Not available yet.', message: 'This cannot be saved yet — a database update (b295) is still to run.' });
+  }
+  /* silence is the bug: the 500 used to leave nothing in the Railway log */
+  console.error('books route failed:', (e && e.stack) || e);
   return res.status(500).json({ error: 'Failed', message: String((e && e.message) || e).slice(0, 300) });
 }
 /** a key-bearer (a counter, a TV, a connector) has no business in the ledger — the second fence behind KEY_ROUTES */
