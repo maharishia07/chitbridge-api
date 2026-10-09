@@ -1596,7 +1596,7 @@ router.get('/lists', auth, async (req, res) => {
     let mine = [];
     try {
       const r = await withEntity(entity_id, (db) => db.query(
-        `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit, item_data->'price' AS price
+        `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit, item_data->'price' AS price, is_active
            FROM catalogue_items WHERE entity_id = $1 LIMIT 5000`, [entity_id]));
       /**
        * ⭐ THE SHOP'S OWN PRICE TRAVELS TOO — Athi: *"can we have an icon / filter to see what is in my
@@ -1606,7 +1606,7 @@ router.get('/lists', auth, async (req, res) => {
        * file's own warning is that the front end's prevailing `+d.price || 0` idiom turns an absent price
        * into a confident zero — which here would read as "this shop sells tomatoes for nothing".
        */
-      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price) }));
+      mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price), active: x.is_active !== false }));
     } catch (_) { mine = []; }
 
     /**
@@ -1630,7 +1630,8 @@ router.get('/lists', auth, async (req, res) => {
     try { currency = (await regional.currencyFor(entity_id)) || 'INR'; } catch (_) { currency = 'INR'; }
 
     res.json({
-      have: mine.length,
+      /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */
+      have: mine.filter((x) => x.active).length,
       currency,
       /* ⚠️ THE ROWS THEMSELVES TRAVEL, not just a count — the lab is a spreadsheet the shopkeeper reads and
          ticks, so it needs every row's name, unit, price, category and local names to render at all. */
