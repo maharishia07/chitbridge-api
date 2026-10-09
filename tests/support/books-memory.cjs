@@ -131,7 +131,7 @@ function create() {
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
-    async parties(db, e) { return clone(T.parties.filter((p) => p.owner === e)); },
+    async parties(db, e) { return clone(T.parties.filter((p) => p.owner === e)).map((p) => Object.assign(p, { on_rail: p.on_rail === true })); },
     async partyOn(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },
     async partyNoOf(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return p ? p.party_no || null : null; },
     async setPartyNo(db, e, party, no) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); if (p && !p.party_no) p.party_no = no; },
@@ -143,6 +143,29 @@ function create() {
     async ackPack(db, e, pid) { const p = T.packs.find((x) => x.entity_id === e && x.pack_id === pid); if (!p) return null; p.acknowledged_at = p.acknowledged_at || now(); return { acknowledged_at: p.acknowledged_at }; },
     async counterBills() { return []; }, async countersBilling() { return []; }, async unpostedChits() { return []; },
     async openDisputes(db, e, chit) { return T.disputes.filter((d) => d.entity_id === e && d.chit_id === chit && d.status === 'open').length; },
+    /* ── M30 · the payment advice (b285): T.adviceReady = false stands in for "the migration has not run" ── */
+    async adviceReady() { return T.adviceReady !== false; },
+    async paymentsAdvice(db, e, ids) { return T.payments.filter((p) => p.entity_id === e && (ids || []).indexOf(p.payment_id) >= 0).map((p) => ({ payment_id: p.payment_id, advice_chit_id: p.advice_chit_id || null, advice_shared_at: p.advice_shared_at || null })); },
+    async setAdvice(db, e, pid, patch) {
+      const p = T.payments.find((x) => x.entity_id === e && x.payment_id === pid), q = patch || {}; if (!p) return null;
+      const pick = () => ({ payment_id: p.payment_id, advice_chit_id: p.advice_chit_id || null, advice_shared_at: p.advice_shared_at || null });
+      if (q.advice_chit_id && p.advice_chit_id && p.advice_chit_id !== q.advice_chit_id) return Object.assign({ conflict: true }, pick());
+      if (q.advice_chit_id && !p.advice_chit_id) p.advice_chit_id = q.advice_chit_id;
+      if (q.advice_shared_at && !p.advice_shared_at) p.advice_shared_at = q.advice_shared_at;
+      return pick();
+    },
+    async adviceStates(db, e, ids) { const o = {}; (ids || []).forEach((id) => { const c = T.chits.find((x) => x.chit_id === id && x.entity_id === e); if (c) o[id] = { status: c.status || 'delivered', disputed: T.disputes.some((d) => d.entity_id === e && d.chit_id === id && d.status === 'open') }; }); return o; },
+    async paymentsNeedingAdvice(db, e, limit) {
+      return T.payments.filter((p) => p.entity_id === e && !p.advice_chit_id && !p.advice_shared_at).filter((p) => {
+        const party = T.parties.find((x) => x.owner === e && x.party_id === p.party_id); if (!party || party.on_rail !== true) return false;
+        const o = T.entries.find((h) => h.entity_id === e && h.source_ref === 'pay:' + p.payment_id); if (!o) return false;
+        if (T.entries.some((h) => h.entity_id === e && h.reverses_entry_id === o.entry_id)) return false;
+        if (p.mode === 'cheque' && !T.items.some((i) => i.entity_id === e && i.payment_id === p.payment_id && i.ref_kind === 'status' && i.status === 'cleared')) return false;
+        return true;
+      }).map((p) => ({ payment_id: p.payment_id, party_id: p.party_id, name: (T.parties.find((x) => x.owner === e && x.party_id === p.party_id) || {}).name || null, direction: p.direction, amount_minor: p.amount_minor, currency: p.currency, mode: p.mode, received_at: p.received_at }))
+        .sort((a, b) => String(b.received_at).localeCompare(String(a.received_at))).slice(0, limit || 50);
+    },
+    async shopName(db, e) { const i = T.identities.find((x) => x.identity_id === e); return i ? i.display_name || null : null; },
   };
   return S;
 }

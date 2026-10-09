@@ -275,7 +275,9 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
 /** GET /party/:id/statement?from&to → CBLedger.partyStatement, as { currency, party_id, from, to, code, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book's), dr_minor, cr_minor, running_minor,
  *  M29 (docs/FIELDS.md): entry_id, entry_no, event_type, reverses_entry_id, reversed_by, reversed_why, payment_id, unapplied_minor, advice }], closing_minor }
  *  ⭐ ONE read per table, never per row: the lines (with their reversal, in the same query), the sources, and — only when a payment line is present — the party's
- *  items once, so each payment's unapplied part is the engine's `outstanding` (the figure the preview and the outcome already use). */
+ *  items once, so each payment's unapplied part is the engine's `outstanding` (the figure the preview and the outcome already use).
+ *  M30: `advice` = { chit_id, state: none·sent·delivered·shared·disputed, shared_at } from the payments' b285 columns (one read) and my copy's chit status
+ *  (one read) — 'none' for every line while b285 has not run (books-store adviceReady), never a 42703. */
 router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
@@ -289,6 +291,13 @@ router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
       const payIdOf = (m) => (/^pay:/.test(String(m.source_ref || '')) ? String(m.source_ref).slice(4) : null);
       const anyPay = st.rows.some((r) => payIdOf(meta.get(String(r.entry_id)) || {}));
       const byRef = anyPay ? E.receivables().outstanding((await B.partyItems(h, e, id, null))).by_ref : null;
+      /* M30: the advice columns of the payments on this statement (one read) and where their chits stand on my copy (one read) — only once b285 is in */
+      const payIds = st.rows.map((r) => payIdOf(meta.get(String(r.entry_id)) || {})).filter(Boolean);
+      const advReady = payIds.length ? await S.adviceReady(h, e) : false;
+      const adv = new Map(advReady ? (await S.paymentsAdvice(h, e, payIds)).map((x) => [String(x.payment_id), x]) : []);
+      const advChits = Array.from(adv.values()).map((x) => x.advice_chit_id).filter(Boolean);
+      const advCs = advChits.length ? await S.adviceStates(h, e, advChits) : {};
+      const adviceOf = (pid) => { const x = adv.get(String(pid)) || {}; return { chit_id: x.advice_chit_id || null, state: B.adviceState(x, x.advice_chit_id ? advCs[x.advice_chit_id] : null), shared_at: x.advice_shared_at ? new Date(x.advice_shared_at).toISOString() : null }; };
       return { code: st.code, opening_minor: st.opening_minor, closing_minor: st.closing_minor,
         lines: st.rows.map((r) => { const m = meta.get(String(r.entry_id)) || {}, pid = payIdOf(m), mine = pid && byRef ? byRef['pay:' + pid] : null;
           return { date: r.date, what: r.narration || WORD[m.event_type] || m.event_type || '', ref: r.jv_no,
@@ -296,8 +305,7 @@ router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
           entry_id: r.entry_id || null, entry_no: r.jv_no || null, event_type: m.event_type || null, reverses_entry_id: m.reverses_entry_id || null,
           reversed_by: m.reversed_by || null, reversed_why: B.reversalWhy(m.reversed_narration), payment_id: pid,
           unapplied_minor: pid ? (mine ? -Number(mine.outstanding_minor) : 0) : null,
-          /* the payment-advice state (SPEC-payments §4.4): 'none' until the advice columns land with PR 6 (b2xx) — the shape is here so the row reads the same then */
-          advice: pid ? { chit_id: null, state: 'none', shared_at: null } : null }; }) };
+          advice: pid ? adviceOf(pid) : null }; }) };
     });
     res.json(Object.assign({ currency: curOf(req), party_id: id, from, to }, out));
   } catch (err) { fail(res, err); }
@@ -434,8 +442,12 @@ function paymentQuestion(req, needMode) {
   const allocations = Array.isArray(b.allocations) && b.allocations.length ? b.allocations : null;
   return { party, direction: b.direction === 'out' ? 'out' : 'in', amount_minor, cur, mode, allocate, allocations, country: req.books && req.books.country };
 }
-/** the party's name for the words — the display name, else the nickname the lists keep; "this party" when neither is known */
-async function partyWord(h, e, party) { const p = (await partyNames(h, e)).get(String(party)); return (p && (p.name || p.nickname)) || 'this party'; }
+/** the party as the words and the advice need it — the display name (else the nickname the lists keep; "this party" when neither is known), whether it is ON the rail
+ *  (books-store parties: can it receive a chit), and the names map itself so the same read serves the outcome and the advice (M30) */
+async function partyOf(h, e, party) { const names = await partyNames(h, e), p = names.get(String(party)) || {}; return { names, name: p.name || p.nickname || 'this party', on_rail: p.on_rail === true }; }
+/** M30: who is asking (viewer · commenter · editor — lib/access, the rail ladder) and the shop's own name (the advice names its sender; a co-assist's token names the person) */
+const levelOf = (req) => require('../lib/access').levelOf(req.identity);
+async function meName(req, h, e) { return req.identity && req.identity.identity_type === 'entity' && req.identity.display_name ? req.identity.display_name : (await S.shopName(h, e)) || 'We'; }
 /** POST /payments/preview — W1–W4 and the 409 share one shape: { code: 'ALREADY_PAID', error, message: words, warnings } */
 const alreadyPaid = (res, err) => res.status(409).json({ code: 'ALREADY_PAID', error: 'Already paid?', message: err.message, warnings: err.warnings || [] });
 
@@ -451,10 +463,11 @@ router.post('/payments/preview', auth, noKey, on, async (req, res) => {
     const e = ctx(req), q = paymentQuestion(req, false);
     if (q.refuse) return res.status(q.refuse.status).json({ error: q.refuse.words, message: q.refuse.words });
     const out = await withEntity(e, async (h) => {
-      const name = await partyWord(h, e, q.party);
+      const who = await partyOf(h, e, q.party), name = who.name;
       const prop = await B.proposeFor(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, currency: q.cur });
       const warnings = await B.duplicateWarnings(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, allocate: q.allocate, allocations: q.allocations, country: q.country }, prop, name);
-      return { currency: prop.currency, party: { party_id: q.party, name }, open_minor: prop.open_minor, proposal: prop.proposal, apply_minor: prop.apply_minor,
+      /* M30: on_rail — the popup says "Tally Test is not on ChitBridge" before anything is recorded (SPEC §1.3) */
+      return { currency: prop.currency, party: { party_id: q.party, name, on_rail: who.on_rail }, open_minor: prop.open_minor, proposal: prop.proposal, apply_minor: prop.apply_minor,
         on_account_minor: prop.on_account_minor, skipped: prop.skipped, why: prop.why, warnings, words: B.previewWords(prop, name, q.direction) };
     });
     res.json(out);
@@ -464,7 +477,8 @@ router.post('/payments/preview', auth, noKey, on, async (req, res) => {
  * POST /payments { party_id, direction: in|out, amount_minor, currency, mode, reference?, cheque?: { number, bank, date }, received_at?, client_ref?,
  *                  allocations?: [{ against_ref, amount_minor }], allocate?: 'oldest_first'|'none', acknowledge?: [codes] }
  * → { ok, payment: { payment_id, status: 'recorded' | 'cheque_received', duplicate }, posted, allocation: null | { settled, items, allocated_minor },
- *     outcome: { words, settled: [{ against_ref, bill_no, amount_minor }], applied_minor, on_account_minor, balance_minor, balance_words } }
+ *     outcome: { words, settled: [{ against_ref, bill_no, amount_minor }], applied_minor, on_account_minor, balance_minor, balance_words },
+ *     advice: null (a replay) | the GET /payments/:id/advice answer (M30: party.on_rail · may.send_advice / share_advice · words · body — the ready chit send body · share) }
  * ⭐ ONE CALL, ONE TRANSACTION (M26): the payment row, its entry and the bills it settles commit together or not at all — a refused
  *   allocation (confirmItems) rolls the payment back with it. `allocate: 'oldest_first'` with no list = the server's own proposal.
  * ⭐ client_ref: the same ref again → 200, the FIRST payment (duplicate: true) and its entry — never a second posting; a replay is
@@ -486,13 +500,17 @@ router.post('/payments', auth, noKey, on, async (req, res) => {
     const allocations = Array.isArray(b.allocations) ? b.allocations.filter((a) => a && typeof a === 'object').map((a) => ({ against_ref: String(a.against_ref || ''), amount_minor: Math.round(Number(a.amount_minor)) })) : null;
     /* ⭐ the payment row and its entry are ONE transaction (B.recordPayment) — a refusal leaves nothing half-recorded */
     const out = await withEntity(e, async (h) => {
-      const name = await partyWord(h, e, party);
+      const who = await partyOf(h, e, party), name = who.name;
       /* the duplicate rule runs INSIDE recordPayment (p.warn), after its gates (a replay answers first; a stranger or a bad date is a 422) */
       const rec = await B.recordPayment(h, e, { party_id: party, direction, amount_minor, currency: cur, mode, reference: b.reference,
         cheque_no: chq.number || chq.no || b.cheque_no, cheque_bank: chq.bank || b.cheque_bank,
         cheque_date: DATE.test(String(chq.date || chq.dated || b.cheque_date || '')) ? (chq.date || chq.dated || b.cheque_date) : null, received_at: date,
         client_ref, by: byOf(req), strict_date: true, allocations, allocate, warn: { acknowledge: ack, country: q.country, name } });
       if (!rec.payment.duplicate) rec.outcome = await B.paymentOutcome(h, e, { party_id: party, direction, amount_minor, currency: cur, mode }, rec.payment.payment_id, rec.allocation, name);
+      /* M30: the advice, ready to send — from the facts just written (no second read of the bills); a replay carries none (its row already answers) */
+      rec.advice = rec.payment.duplicate ? null : await B.adviceFor(h, e, { payment_id: rec.payment.payment_id, party_id: party, direction, amount_minor, currency: cur, mode, reference: b.reference || null, received_at: date },
+        { level: levelOf(req), me: await meName(req, h, e), names: who.names, ready: await S.adviceReady(h, e), settled: rec.outcome.settled, on_account_minor: rec.outcome.on_account_minor,
+          entry_no: rec.posted && rec.posted.entry_no, entry_id: rec.posted && rec.posted.entry_id });
       return rec;
     });
     /* a bill settled here is a step of R-1400 (lib/bill-privacy) — after the commit, best effort, as /confirm does for "Choose the bills" */
@@ -504,6 +522,61 @@ router.post('/payments', auth, noKey, on, async (req, res) => {
     }
     res.json(Object.assign({ ok: true }, out));
   } catch (err) { if (err && err.code === 'ALREADY_PAID') return alreadyPaid(res, err); fail(res, err); }
+});
+/**
+ * GET /payments/:id/advice (M30, SPEC-payments §3 · §4.3) → { currency, payment_id, party: { party_id, name, on_rail }, advice: { chit_id, state, shared_at },
+ *   may: { send_advice: { ok } | { ok: false, why, say }, share_advice: … }, words, body: the POST /api/chits/send body | null, share: { text, wa, mailto } | null }
+ * ⭐ THE UNIT PAINTS, THE SERVER DECIDES: "Send advice" and "Share" are always shown; `may` says whether THIS login may press each, with the sentence
+ *   to grey it by — the same B.adviceMay the PATCH enforces. The web sends the chit (`body`, client_ref 'advice:pay:<id>' — /send dedupes) and then PATCHes
+ *   advice_chit_id. Before b285 runs: state 'none', may.*.why 'not_available' with its words — never a 500.
+ */
+router.get('/payments/:id/advice', auth, noKey, on, async (req, res) => {
+  try {
+    const e = ctx(req), id = String(req.params.id);
+    if (!UUID.test(id)) return res.status(404).json({ error: 'Not found', message: 'No such payment.' });
+    const out = await withEntity(e, async (h) => {
+      const p = await S.payment(h, e, id); if (!p) return null;
+      return B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready: await S.adviceReady(h, e) });
+    });
+    if (!out) return res.status(404).json({ error: 'Not found', message: 'No such payment.' });
+    res.json(Object.assign({ currency: curOf(req) }, out));
+  } catch (err) { fail(res, err); }
+});
+/**
+ * PATCH /payments/:id { advice_chit_id? | advice_shared_at?: true | ISO } (M30, SPEC §4.3) — a merge-patch of the NAMED fields only, after the chit was sent
+ *   (advice_chit_id) or the words were shared off-rail (advice_shared_at). → { ok, payment_id, advice: { chit_id, state, shared_at } }
+ * ⭐ ONE ADVICE PER PAYMENT: the same advice_chit_id again → 200 (first-wins, idempotent); a different one → 409 ADVICE_EXISTS "An advice is already recorded for this payment."
+ * ⭐ THE SAME RULE THE READ PAINTS (B.adviceMay): a viewer / commenter → 403 with the rail engine's sentence; reversed · a held cheque · not posted · off rail (send) /
+ *   on rail (share) → 409 with the words. Before b285 runs → 503 BOOKS_NOT_MIGRATED "Advice not available yet…". Co-assist allowed (as record is).
+ */
+router.patch('/payments/:id', auth, noKey, on, async (req, res) => {
+  try {
+    const e = ctx(req), id = String(req.params.id), b = req.body || {};
+    if (!UUID.test(id)) return res.status(404).json({ error: 'Not found', message: 'No such payment.' });
+    const chit = b.advice_chit_id != null ? String(b.advice_chit_id) : null;
+    if (chit && !UUID.test(chit)) return res.status(400).json({ error: 'Which advice chit?', message: 'Which advice chit?' });
+    let shared = null;
+    if (b.advice_shared_at === true) shared = new Date().toISOString();
+    else if (b.advice_shared_at != null) { const t = Date.parse(String(b.advice_shared_at)); if (!Number.isFinite(t)) return res.status(400).json({ error: 'When was it shared?', message: 'When was it shared?' }); shared = new Date(t).toISOString(); }
+    if (!chit && !shared) return res.status(400).json({ error: 'Nothing to change.', message: 'Nothing to change — advice_chit_id or advice_shared_at.' });
+    const out = await withEntity(e, async (h) => {
+      const p = await S.payment(h, e, id); if (!p) return { status: 404, error: 'Not found', words: 'No such payment.' };
+      const ready = await S.adviceReady(h, e);
+      if (!ready) return { status: 503, code: 'BOOKS_NOT_MIGRATED', words: B.adviceMay({ level: 'editor', ready: false }).send_advice.say };
+      const a = await B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready });
+      const v = chit ? a.may.send_advice : a.may.share_advice;
+      /* the same chit again is a replay (200), not a refusal; a DIFFERENT chit on a payment that sent one is the §4.3 409 */
+      if (chit && v.why === 'already_sent' && a.advice.chit_id && a.advice.chit_id !== chit) return { status: 409, code: 'ADVICE_EXISTS', words: 'An advice is already recorded for this payment.', advice_chit_id: a.advice.chit_id };
+      if (!v.ok && !(chit && v.why === 'already_sent' && a.advice.chit_id === chit)) return { status: /^(read_only|comment_only)$/.test(v.why) ? 403 : 409, code: v.why.toUpperCase(), why: v.why, words: v.say };
+      const r = await S.setAdvice(h, e, id, { advice_chit_id: chit, advice_shared_at: shared });
+      if (!r) return { status: 404, error: 'Not found', words: 'No such payment.' };
+      if (r.conflict) return { status: 409, code: 'ADVICE_EXISTS', words: 'An advice is already recorded for this payment.', advice_chit_id: r.advice_chit_id };
+      const cs = r.advice_chit_id ? (await S.adviceStates(h, e, [r.advice_chit_id]))[r.advice_chit_id] : null;
+      return { status: 200, body: { ok: true, payment_id: id, advice: { chit_id: r.advice_chit_id || null, state: B.adviceState(r, cs), shared_at: r.advice_shared_at ? new Date(r.advice_shared_at).toISOString() : null } } };
+    });
+    if (out.status !== 200) return res.status(out.status).json(Object.assign({ error: out.error || out.words, message: out.words }, out.code ? { code: out.code } : {}, out.why ? { why: out.why } : {}, out.advice_chit_id ? { advice_chit_id: out.advice_chit_id } : {}));
+    res.json(out.body);
+  } catch (err) { fail(res, err); }
 });
 /** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } — B.proposeFor, the one function */
 router.post('/payments/:id/propose', auth, noKey, on, async (req, res) => {

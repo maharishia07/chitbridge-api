@@ -169,6 +169,13 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/books/payments/:id/advice": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
     "GET /api/books/periods": {
       "file": "books.js",
       "trips": 1,
@@ -491,6 +498,13 @@
       "wire": 5,
       "fired": true,
       "status": 200
+    },
+    "PATCH /api/books/payments/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
     },
     "PATCH /api/books/recurring/:id": {
       "file": "books.js",

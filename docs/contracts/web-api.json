@@ -794,14 +794,101 @@
       "payment_id": "00000000-0000-4000-8000-000000000125",
       "unapplied_minor": 0,
       "advice": {
-       "chit_id": null,
-       "state": "none",
+       "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+       "state": "delivered",
        "shared_at": null
       }
      }
     ]
    },
    "optional": []
+  },
+  "GET /api/books/payments/:id/advice": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "payment_id": "00000000-0000-4000-8000-000000000125",
+    "party": {
+     "party_id": "33333333-3333-4333-8333-333333333333",
+     "name": "Kumar Traders",
+     "on_rail": true
+    },
+    "advice": {
+     "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+     "state": "none",
+     "shared_at": null
+    },
+    "may": {
+     "send_advice": {
+      "ok": true,
+      "why": "off_rail",
+      "say": "Ravi is not on ChitBridge — share the advice instead."
+     },
+     "share_advice": {
+      "ok": false,
+      "why": "on_rail",
+      "say": "Kumar Traders is on ChitBridge — send the advice instead."
+     }
+    },
+    "words": "Mayur Bhavan paid you ₹200 by bank on 12 Oct 2026 for bill c0000000-0000-4000-8000-00000000000b (₹200).",
+    "body": {
+     "recipients": [
+      {
+       "entity_id": "33333333-3333-4333-8333-333333333333",
+       "role": "to"
+      }
+     ],
+     "purpose": "general",
+     "manual_subject": "Payment advice PY/2026-27/000001",
+     "client_ref": "advice:pay:00000000-0000-4000-8000-000000000125",
+     "line_items": [
+      {
+       "particulars": "Bill c0000000-0000-4000-8000-00000000000b",
+       "quantity": 1,
+       "unit": "bill",
+       "price": 200,
+       "total": 200,
+       "currency": "INR",
+       "ref_chit_id": "c0000000-0000-4000-8000-00000000000b",
+       "bill_no": null,
+       "applied": 200,
+       "applied_minor": 20000
+      }
+     ],
+     "business_json": {
+      "kind": "payment_advice",
+      "currency": "INR",
+      "payment_advice": {
+       "action": "paid",
+       "adviser_payment_id": "00000000-0000-4000-8000-000000000125",
+       "adviser_entry_no": "PY/2026-27/000001",
+       "amount": 200,
+       "amount_minor": 20000,
+       "currency": "INR",
+       "mode": "bank",
+       "reference": null,
+       "paid_on": "2026-10-12",
+       "applied_minor": 20000,
+       "on_account": 0,
+       "on_account_minor": 0,
+       "collected_by": null,
+       "reverses_advice_chit_id": null,
+       "words": "Mayur Bhavan paid you ₹200 by bank on 12 Oct 2026 for bill c0000000-0000-4000-8000-00000000000b (₹200)."
+      }
+     }
+    },
+    "share": {
+     "text": "Mayur Bhavan received ₹10 cash from you on 12 Oct 2026 · ₹10 as an advance.",
+     "wa": "https://wa.me/?text=Mayur%20Bhavan%20received%20%E2%82%B910%20cash%20from%20you%20on%2012%20Oct%202026%20%C2%B7%20%E2%82%B910%20as%20an%20advance.",
+     "mailto": "mailto:?subject=Payment%20advice%20RV%2F2026-27%2F000001%20%E2%80%94%20Mayur%20Bhavan&body=Mayur%20Bhavan%20received%20%E2%82%B910%20cash%20from%20you%20on%2012%20Oct%202026%20%C2%B7%20%E2%82%B910%20as%20an%20advance."
+    }
+   },
+   "optional": [
+    "may.send_advice.say",
+    "may.send_advice.why",
+    "may.share_advice.say",
+    "may.share_advice.why"
+   ]
   },
   "GET /api/books/periods": {
    "status": 200,
@@ -1015,13 +1102,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-08T00:28:07.015Z",
+      "due_at": "2026-10-08T03:16:00.712Z",
       "due_day": "2026-10-08",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-09T00:28:07.016Z",
+      "created_at": "2026-10-09T03:16:00.715Z",
       "late": true,
       "today": false
      }
@@ -1267,7 +1354,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-07T00:28:06.960Z",
+      "due_at": "2026-10-07T03:16:00.601Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1331,6 +1418,29 @@
     "entries[].who"
    ]
   },
+  "PATCH /api/books/payments/:id": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "payment_id": "00000000-0000-4000-8000-000000000125",
+    "advice": {
+     "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+     "state": "sent",
+     "shared_at": "2026-10-09T03:16:01.762Z"
+    }
+   },
+   "optional": []
+  },
+  "PATCH /api/books/payments/:id #409": {
+   "status": 409,
+   "example": {
+    "error": "An advice is already recorded for this payment.",
+    "message": "An advice is already recorded for this payment.",
+    "code": "ADVICE_EXISTS",
+    "advice_chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1"
+   },
+   "optional": []
+  },
   "PATCH /api/books/recurring/:id": {
    "status": 200,
    "note": "event is the event the template was saved with: its keys depend on its kind.",
@@ -1369,13 +1479,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-08T00:28:07.015Z",
+     "due_at": "2026-10-08T03:16:00.712Z",
      "due_day": "2026-10-08",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-09T00:28:07.020Z",
-     "created_at": "2026-10-09T00:28:07.016Z",
+     "done_at": "2026-10-09T03:16:00.727Z",
+     "created_at": "2026-10-09T03:16:00.715Z",
      "late": false,
      "today": false
     }
@@ -1613,7 +1723,7 @@
     "error": "Already reversed",
     "message": "This entry was already reversed by MJ/2026-27/000008.",
     "entry_no": "MJ/2026-27/000008",
-    "entry_id": "00000000-0000-4000-8000-000000000127"
+    "entry_id": "00000000-0000-4000-8000-000000000129"
    },
    "optional": []
   },
@@ -1769,6 +1879,77 @@
      "on_account_minor": 0,
      "balance_minor": -1039000,
      "balance_words": "you owe ₹10,390"
+    },
+    "advice": {
+     "payment_id": "00000000-0000-4000-8000-000000000125",
+     "party": {
+      "party_id": "33333333-3333-4333-8333-333333333333",
+      "name": "Kumar Traders",
+      "on_rail": true
+     },
+     "advice": {
+      "chit_id": null,
+      "state": "none",
+      "shared_at": null
+     },
+     "may": {
+      "send_advice": {
+       "ok": true
+      },
+      "share_advice": {
+       "ok": false,
+       "why": "on_rail",
+       "say": "Kumar Traders is on ChitBridge — send the advice instead."
+      }
+     },
+     "words": "Mayur Bhavan paid you ₹200 by bank on 12 Oct 2026 for bill c0000000-0000-4000-8000-00000000000b (₹200).",
+     "body": {
+      "recipients": [
+       {
+        "entity_id": "33333333-3333-4333-8333-333333333333",
+        "role": "to"
+       }
+      ],
+      "purpose": "general",
+      "manual_subject": "Payment advice PY/2026-27/000001",
+      "client_ref": "advice:pay:00000000-0000-4000-8000-000000000125",
+      "line_items": [
+       {
+        "particulars": "Bill c0000000-0000-4000-8000-00000000000b",
+        "quantity": 1,
+        "unit": "bill",
+        "price": 200,
+        "total": 200,
+        "currency": "INR",
+        "ref_chit_id": "c0000000-0000-4000-8000-00000000000b",
+        "bill_no": null,
+        "applied": 200,
+        "applied_minor": 20000
+       }
+      ],
+      "business_json": {
+       "kind": "payment_advice",
+       "currency": "INR",
+       "payment_advice": {
+        "action": "paid",
+        "adviser_payment_id": "00000000-0000-4000-8000-000000000125",
+        "adviser_entry_no": "PY/2026-27/000001",
+        "amount": 200,
+        "amount_minor": 20000,
+        "currency": "INR",
+        "mode": "bank",
+        "reference": null,
+        "paid_on": "2026-10-12",
+        "applied_minor": 20000,
+        "on_account": 0,
+        "on_account_minor": 0,
+        "collected_by": null,
+        "reverses_advice_chit_id": null,
+        "words": "Mayur Bhavan paid you ₹200 by bank on 12 Oct 2026 for bill c0000000-0000-4000-8000-00000000000b (₹200)."
+       }
+      }
+     },
+     "share": null
     }
    },
    "optional": []
@@ -1806,7 +1987,8 @@
     "currency": "INR",
     "party": {
      "party_id": "33333333-3333-4333-8333-333333333333",
-     "name": "Kumar Traders"
+     "name": "Kumar Traders",
+     "on_rail": true
     },
     "open_minor": 1059000,
     "proposal": [
@@ -1911,7 +2093,7 @@
     "posted": {
      "kind": "expense",
      "ok": true,
-     "entry_id": "00000000-0000-4000-8000-000000000128",
+     "entry_id": "00000000-0000-4000-8000-000000000130",
      "entry_no": "MJ/2027-28/000002",
      "posting_date": "2027-04-01",
      "doc_date": "2027-04-01",
@@ -2002,7 +2184,7 @@
     "next": "2027-28",
     "locked": 13,
     "opening": {
-     "rows": 10,
+     "rows": 11,
      "retained_minor": 2200000,
      "profit_minor": 2200000,
      "balanced": true
@@ -2025,13 +2207,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-08T00:28:07.015Z",
+     "due_at": "2026-10-08T03:16:00.712Z",
      "due_day": "2026-10-08",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-09T00:28:07.016Z",
+     "created_at": "2026-10-09T03:16:00.715Z",
      "late": true,
      "today": false
     }
@@ -2056,9 +2238,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-09T00:28:07.014Z",
+     "at": "2026-10-09T03:16:00.711Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-09T00:28:07.014Z"
+     "created_at": "2026-10-09T03:16:00.711Z"
     }
    },
    "optional": []

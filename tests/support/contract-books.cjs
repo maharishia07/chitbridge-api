@@ -76,8 +76,9 @@ async function captureBooks() {
   try {
     await X.store.saveSetting(X.db, SHOP, { enabled: false });
     await q('POST', '/enable', {}, '/enable');
+    /* M30: the supplier is ON the rail (the advice can be sent — the richest shape); the customer is off it (share) */
     X.T.parties.push({ owner: SHOP, party_id: CUST, party_no: 'P-00001', name: 'Ravi Stores', nickname: 'Ravi', customer: true, credit_days: 10 },
-      { owner: SHOP, party_id: SUPP, party_no: 'P-00002', name: 'Kumar Traders', supplier: true, credit_days: 30 });
+      { owner: SHOP, party_id: SUPP, party_no: 'P-00002', name: 'Kumar Traders', supplier: true, credit_days: 30, on_rail: true });
     await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-05', currency: 'INR', party: CUST, source_chit_id: 'c0000000-0000-4000-8000-00000000000a', source_ref: 'chit:a',
       by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
     await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-06', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:b',
@@ -142,8 +143,21 @@ async function captureBooks() {
     /* ── M26 payments: preview, one-call record, then more than Ravi owes (W2 excess → 409 ALREADY_PAID; W2 needs no clock) ── */
     const PAY = { party_id: SUPP, direction: 'out', amount_minor: 20000, currency: 'INR', mode: 'bank', received_at: '2026-10-12', allocate: 'oldest_first' };
     await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 20000, currency: 'INR', allocate: 'oldest_first' }, '/payments/preview');
-    await q('POST', '/payments', Object.assign({ client_ref: 'pay-1' }, PAY), '/payments');
-    await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 500000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'oldest_first', client_ref: 'pay-2' }, '/payments');
+    const p1 = await q('POST', '/payments', Object.assign({ client_ref: 'pay-1' }, PAY), '/payments');
+    const p2 = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 500000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'oldest_first', client_ref: 'pay-2' }, '/payments');
+    /* ── M30 advice OUT: the read (on rail → the chit body; off rail → share), PATCH advice_chit_id (200 · the same again 200 · a different one 409), PATCH advice_shared_at ── */
+    const pid1 = p1.body && p1.body.payment && p1.body.payment.payment_id, pid2 = p2.body && p2.body.payment && p2.body.payment.payment_id;
+    const p3 = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'none', client_ref: 'pay-3', acknowledge: ['nothing_owed', 'excess', 'same_again', 'just_settled'] });
+    const pid3 = p3.body && p3.body.payment && p3.body.payment.payment_id;
+    if (pid1 && pid3) {
+      await q('GET', '/payments/' + pid1 + '/advice', null, '/payments/:id/advice');
+      await q('GET', '/payments/' + pid3 + '/advice', null, '/payments/:id/advice');
+      await q('PATCH', '/payments/' + pid1, { advice_chit_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1' }, '/payments/:id');
+      X.T.chits.push({ chit_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', entity_id: SHOP, purpose: 'general', status: 'delivered', business_json: { kind: 'payment_advice' } });
+      await q('PATCH', '/payments/' + pid1, { advice_chit_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2' }, '/payments/:id');
+      await q('PATCH', '/payments/' + pid3, { advice_shared_at: true }, '/payments/:id');
+      await q('GET', '/payments/' + pid1 + '/advice', null, '/payments/:id/advice');
+    }
     /* ── M29 reverse from the row: the statement's payment line (entry_id · payment_id · advice state), the reversal that reopens the bill, the line after, a second Reverse → 409 ── */
     const st = await q('GET', '/party/' + SUPP + '/statement?from=2026-04-01&to=2027-03-31', null, '/party/:id/statement');
     const payLine = ((st.body && st.body.lines) || []).find((l) => l.payment_id);
