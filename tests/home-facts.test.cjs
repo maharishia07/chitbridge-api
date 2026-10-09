@@ -3,7 +3,7 @@
  *
  * Offline: the real route and lib/home-facts over a stand-in db. Held here:
  *   · each card's shape ({ lines:[{text,value?,tone?}] }; rail = { suppliers, customers, in, out, stuck })
- *   · every answer costs at most 2 database trips (readBatch = 1, withEntity = 1, query = 1)
+ *   · every answer costs at most 3 database trips (the rail: overdue clock + CRM lists + chits, run together) (readBatch = 1, withEntity = 1, query = 1)
  *   · a figure the server cannot compute is OMITTED, never 0 (no summary today -> no bills line; a truncated read -> no in/out/stuck)
  *   · cost never travels: the stand-in returns hostile cost values and none reaches a body; no statement selects item_data
  *   · an actor without can_see_costs gets no no-cost line; takings are NOT cost (GET /api/till/summary never hid them) so they stay
@@ -39,7 +39,7 @@ let trips = 0, sent = [];
 const DAYS = 86400000;
 const H = require(API + '/lib/books-hooks');
 const todayKey = H.dayOf(new Date(), 'IN');
-const F = { summary: true, booksOn: true, chits: 'few', stale: false };
+const F = { crmSql: [], summary: true, booksOn: true, chits: 'few', stale: false };
 const summaryRow = (key) => ({ chit_id: 'c1', created_at: new Date(), business_json: { summary: { period: 'day', key, till: { id: 'C1' }, summarised_at: new Date().toISOString(), totals: { count: 12, returns: 0, gross: 4400, refunds: 79.5, expenseCount: 0, expenses: 0, total: 4320.5, by: {} } } } });
 function chits() {
   if (F.chits === 'many') return Array.from({ length: 5000 }, (_, i) => ({ chit_id: 'x' + i, direction: 'received', current_status: 'completed', created_at: new Date(Date.now() - 40 * DAYS), open_disputes: 0 }));
@@ -66,13 +66,18 @@ function answer(text, params) {
   if (/FROM catalogue_items/.test(sql)) return { rows: [{ items: 10, no_cost: 4, cost: SECRET, item_data: { cost: { value: SECRET } } }] };
   if (/FROM combo_templates/.test(sql)) return { rows: [{ n: 2 }] };
   if (/FROM definition WHERE/.test(sql)) return { rows: [{ drafts: 1, live: 5 }] };
-  if (/FROM supplier_list WHERE owner_entity_id/.test(sql)) return { rows: [{ suppliers: 3, customers: 7, overdue_days: 7 }] };
+  if (/policy_flags->'overdue_days'/.test(sql)) return { rows: [{ overdue_days: null }] };
+  /* CB CRM's two list reads (lib/crm.rows) - the rail counts what CRM lists: the hidden and the merged-away rows are not parties */
+  const party = (id, extra) => Object.assign({ party_id: id, display_name: 'P ' + id, user_id: 'u' + id, status: 'active', on_rail: true, same_world: true }, extra);
+  if (/FROM customer_list cl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('c1'), party('c2'), party('c3'), party('c4'), party('c5', { hidden_at: '2026-10-01' }), party('b1')] }; }
+  if (/FROM supplier_list sl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('s1'), party('s2'), party('s3', { merged_into: 's1' }), party('b1')] }; }
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
   return { rows: [] };
 }
 const db = {
   query: async (s, p) => { trips++; return answer(s, p); },
   withEntity: async (_id, fn) => { trips++; return fn({ query: async (s, p) => answer(s, p) }); },
+  trySavepoint: async (h, fn, fb) => { try { return await fn(h); } catch (_) { return fb; } },
   readBatch: async (_e, _a, stmts) => { trips++; return stmts.map((s) => answer(s.text, s.params)); },
   withTransaction: async (fn) => { trips++; return fn({ query: async (s, p) => answer(s, p) }); },
 };
@@ -147,10 +152,26 @@ const get = (port, p) => new Promise((ok) => {
 
   /* rail */
   r = await g('rail');
-  t('rail: { suppliers, customers, in, out, stuck }', r.json, { suppliers: 3, customers: 7, in: 2, out: 1, stuck: 1 });
-  t('rail: at most 2 trips', r.trips <= 2, true);
+  t('rail: { suppliers, customers, in, out, stuck } - the counts are CRM\'s (hidden and merged rows are not parties)', r.json, { suppliers: 3, customers: 5, in: 2, out: 1, stuck: 1 });
+  t('rail: at most 3 trips', r.trips <= 3, true);
+  t('rail: both CRM list reads leave the shop itself out (H3)', F.crmSql.length >= 2 && F.crmSql.every((q) => /<> \$1/.test(q)), true);
   F.chits = 'many'; r = await g('rail');
-  t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number)', r.json, { suppliers: 3, customers: 7 });
+  t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number)', r.json, { suppliers: 3, customers: 5 });
+  F.chits = 'few';
+
+  /* the chits behind the numbers (H1/H4/H10) */
+  r = await get(port, '/api/facts/rail/chits');
+  t('rail/chits: 200', r.status, 200);
+  t('rail/chits: only OPEN chits, stuck first', r.json.items.map((i) => [i.chit_id, i.tab, i.stuck]), [['a', 'in', true], ['b', 'in', false], ['c', 'out', false]]);
+  t('rail/chits: the stuck rows number the rail\'s stuck, in/out number its in/out', [r.json.items.filter((i) => i.stuck).length, r.json.items.filter((i) => i.tab === 'in').length, r.json.items.filter((i) => i.tab === 'out').length], [1, 2, 1]);
+  t('rail/chits: a stuck row says why in plain words', r.json.items[0].why, 'They sent it 10 days ago and you have not answered.');
+  t('rail/chits: a row that is not stuck has no reason', r.json.items[1].why, null);
+  t('rail/chits: at most 2 trips', r.trips <= 2, true);
+  F.chits = 'many'; r = await get(port, '/api/facts/rail/chits');
+  t('rail/chits: a truncated read lists nothing and says so', [r.json.truncated, r.json.items.length], [true, 0]);
+  KEY = true; r = await get(port, '/api/facts/rail/chits');
+  t('rail/chits: a key is 403', r.status, 403);
+  KEY = false;
   F.chits = 'few';
 
   /* refusals */

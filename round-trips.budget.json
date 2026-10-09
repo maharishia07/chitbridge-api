@@ -353,9 +353,17 @@
     },
     "GET /api/facts/rail": {
       "file": "facts.js",
+      "trips": 3,
+      "wire": 18,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/rail/chits": {
+      "file": "facts.js",
       "trips": 2,
       "wire": 5,
-      "fired": true,
+      "fired": false,
       "status": 200,
       "extra": true
     },

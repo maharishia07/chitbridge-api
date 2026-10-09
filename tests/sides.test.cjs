@@ -67,7 +67,8 @@ t('boilerplate drift shows once the mint version exists', B({ gov: Object.assign
 t('trade: customers carry open chits, suppliers carry open orders', rowOf(b.use, 'trade', 'customers').m === '24 chits open' && rowOf(b.use, 'trade', 'suppliers-out').m === '5 orders open');
 t('co-assists: what each sees', rowOf(b.use, 'act', 'actor:0').m === 'Co-assist · no costs' && rowOf(b.use, 'act', 'actor:1').m === 'Co-assist · sees costs');
 const pr = rowOf(b.use, 'cite', 'proof');
-t('trade proof is the header 3 of 4, with Finish and what is missing', pr.m === '3 of 4 shown' && pr.fix === 'Finish' && pr.t === 'GSTIN' && !!pr.href, JSON.stringify(pr));
+t('trade proof is ONE statement: the header 3 of 4, what is still to show, with Finish (H7)', /^3 of 4 shown · still to show: GSTIN$/.test(pr.m) && pr.fix === 'Finish' && pr.t === 'Incomplete' && !!pr.href, JSON.stringify(pr));
+t('jurisdiction: country known, version not recorded (H5), not "not yet" beside a country', rowOf(b.lean, 'rules', 'jurisdiction').m === 'Jurisdiction · version not recorded' && rowOf(b.lean, 'rules', 'jurisdiction').t !== 'not yet', JSON.stringify(rowOf(b.lean, 'rules', 'jurisdiction')));
 t('filings and inheriting shops are "not yet" rows, not numbers', rowOf(b.use, 'cite', 'filings').s === 'later' && rowOf(b.use, 'inherit', 'inherit').s === 'later');
 t('impact: businesses = partners + register hops; filings from the hop', b.impact.businesses === 4 && b.impact.filings === 1 && /4 businesses · 1 filing/.test(b.impact.m), JSON.stringify(b.impact));
 t('impact: who lists names', b.impact.who.length >= 3 && b.impact.who.some((w) => w.name === 'Asha Stores'));
