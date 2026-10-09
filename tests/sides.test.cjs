@@ -74,6 +74,49 @@ t('impact: businesses = partners + register hops; filings from the hop', b.impac
 t('impact: who lists names', b.impact.who.length >= 3 && b.impact.who.some((w) => w.name === 'Asha Stores'));
 const noEdges = B({ rows: { edges: [] } });
 t('impact: no filing source -> "filings not yet", never 0', noEdges.impact.filings === null && /filings not yet/.test(noEdges.impact.m), noEdges.impact.m);
+
+/* ── H31-r: the impact box reads CRM's parties, not the raw lists ── */
+{
+  const party = (id, name, roles) => ({ party_id: id, name, display_name: name, roles });
+  const raw3 = { suppliers: [{ id: 's1', name: 'Fresh Farm' }, { id: 's2', name: 'Hidden Co' }, { id: 's3', name: 'Merged Co' }], customers: [] };
+  const crmParties = [party('s1', 'Fresh Farm', { supplier: true, customer: false }), party('c1', 'Asha Stores', { supplier: false, customer: true })];
+  const withCrm = sides.build({ rows: Object.assign({}, rows, raw3, { edges: [] }), gov: null, rail: { suppliers: 1, customers: 1, in: 0, out: 0 }, header: null, entity_id: 'ME', parties: crmParties });
+  t('H31-r: the impact box counts CRM\'s parties (1 supplier + 1 customer = 2), not the raw supplier list (3)', withCrm.impact.businesses === 2, JSON.stringify(withCrm.impact));
+  t('H31-r: the same parties are named, hidden / merged rows are not', eq(withCrm.impact.who.map((w) => w.name).sort(), ['Asha Stores', 'Fresh Farm']));
+  t('H31-r: the impact count agrees with the rail (suppliers 1)', rowOf(withCrm.lean, 'buy', 'suppliers').n === '1 supplier');
+  const both = sides.build({ rows: Object.assign({}, rows, raw3, { edges: [] }), gov: null, rail: { suppliers: 1, customers: 1 }, header: null, entity_id: 'ME', parties: [party('b1', 'Both Ltd', { supplier: true, customer: true })] });
+  t('H31-r: a party on both lists is ONE business', both.impact.businesses === 1 && both.impact.who.length === 1);
+  const cut = sides.statements('ME', {}).map((s) => s.key);
+  t('H31-r: sides no longer sends its own raw customer / supplier list statements', !cut.includes('customers') && !cut.includes('suppliers'), cut.join());
+}
+
+/* ── H7-r: Trade proof - the line and its tag say the same thing, from the header's own four checks ── */
+{
+  const keys = [['address', 'Address proven'], ['phone', 'Phone verified'], ['pan', 'PAN on file'], ['gstin', 'GSTIN']];
+  let bad = [];
+  for (let m = 0; m < 16; m++) {
+    const checks = keys.map((k, i) => ({ key: k[0], label: k[1], done: !!(m & (1 << i)) }));
+    const row = rowOf(sides.build({ rows: { me: [{}], actors: [] }, gov: null, rail, header: { trade_ready: { checks } }, entity_id: 'ME' }).use, 'cite', 'proof');
+    const done = checks.filter((c) => c.done), missing = checks.filter((c) => !c.done);
+    const want = done.length + ' of 4 shown' + (missing.length ? ' · still to show: ' + missing.map((c) => c.label).join(', ') : '');
+    const named = (row.m.split('still to show: ')[1] || '').split(', ').filter(Boolean);
+    if (row.m !== want || row.t !== (missing.length ? 'Incomplete' : 'All') || row.s !== (missing.length ? 'wait' : 'ok')
+      || (row.t === 'Incomplete') !== (named.length > 0) || done.some((c) => named.includes(c.label))) bad.push(m + ':' + row.m + '/' + row.t);
+  }
+  t('H7-r: for all 16 combinations the line, its tag and the missing names agree with the checks (a done check is never listed as still to show)', bad.length === 0, bad.join(' | '));
+  const addr = rowOf(sides.build({ rows: { me: [{}], actors: [] }, gov: null, rail, header: { trade_ready: { checks: [{ key: 'address', label: 'Address proven', done: false }, { key: 'phone', label: 'Phone verified', done: false }, { key: 'pan', label: 'PAN on file', done: true }, { key: 'gstin', label: 'GSTIN', done: true }] } }, entity_id: 'ME' }).use, 'cite', 'proof');
+  t('H7-r: an address only typed (not proven) is "still to show", and the tag is Incomplete - never "Address proven"', /2 of 4 shown · still to show: Address proven, Phone verified/.test(addr.m) && addr.t === 'Incomplete' && !/^Address proven/.test(addr.t));
+}
+
+/* ── H7-r (source): what makes "Address proven" true in lib/entity-header - a typed address is NOT proof ── */
+{
+  const EH = require(path.join(API, 'lib', 'entity-header'));
+  const chk = (me, vault) => EH.build({ me, profile: {}, compliance: [], docs: {}, vault }).trade_ready.checks.find((c) => c.key === 'address').done;
+  const vault = (rung) => ({ sections: [{ rows: [{ tag: 'address', value: '12 Anna Salai, Chennai', rung }] }] });
+  t('H7-r: an address the owner typed (declared) is not proven', chk({ address: '12 Anna Salai' }, null) === false && chk({}, vault('declared')) === false);
+  t('H7-r: an address copied from the shop\'s own books (or better) is proven', chk({}, vault('copied')) === true && chk({}, vault('checked')) === true);
+  t('H7-r: no address at all is not proven', chk({}, null) === false);
+}
 const none = sides.build({ rows: { me: [{ country: 'IN' }], customers: [], suppliers: [], actors: [] }, gov: null, rail: { suppliers: 0, customers: 0, in: 0, out: 0 }, header: null, entity_id: 'ME' });
 t('a new business: no stamp row says so; empty groups are placeholders; impact says nobody', rowOf(none.lean, 'rules', 'constitution').s === 'later' && rowOf(none.use, 'trade', 'nobody').s === 'empty' && rowOf(none.use, 'act', 'noactor').s === 'empty' && none.impact.m === 'Nobody affected');
 t('header unreadable -> trade proof is a "not yet" row', rowOf(none.use, 'cite', 'proof').s === 'later');
