@@ -101,6 +101,7 @@ const GUARDS = [
   'entity-kind.test.cjs',      // every identity mint declares WHAT it is — a DELETE predicate depends on it
   'board-kinds.test.cjs',      // the shared board carries CASES and CMDB records, nothing else — findings stay with the raiser
   'cmdb.test.cjs',             // ⭐⭐ the CMDB: every shipped record fits, a way in + out + tests, only a board writer writes
+  'field-ledger.test.cjs',     // ⭐⭐ NO FIELD LEFT UNTURNED: a new product column / form input has a ledger row; a "not used" field gains no reader (2026-10-09)
   'engine-boundary.test.js',  // every lib declared engine or not; anything unreachable carries an @stage
   'adopt.test.js',            // what one shop may take into its catalogue from another's delivery
   'local-supplier.test.js',   // ~<user id>.sup-nnnn — one row per shop, never a recipient, never in the search

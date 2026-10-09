@@ -1,0 +1,2415 @@
+{
+ "ci": "CAP-FIELDS-PRODUCT-1",
+ "title": "Product fields (1 of 2)",
+ "type": "Field ledger",
+ "system": "ChitBridge API · catalogue_items",
+ "source": "hand",
+ "summary": "Part 1 of the product field ledger: 91 fields (catalogue_items.item_id … schema_fields.field_key). Index: CAP-FIELDS-PRODUCT.",
+ "raised_by": "Athi, 2026-10-09",
+ "fields": [
+  {
+   "key": "catalogue_items.item_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "gen_random_uuid() at INSERT (migrations/000_baseline.sql)",
+   "means": "The product's identity; every other table points at it.",
+   "source": "catalogue_items.item_id",
+   "set_by": "system, at mint (lib/mint-product.js, lib/catalogue-write.js)",
+   "validated_by": "primary key",
+   "shown_in": [
+    "Till › item row (item_id)",
+    "Workshop › row id (data attribute, not printed)",
+    "Bill line (id)"
+   ],
+   "used_by": [
+    "quick_key_group_item",
+    "counter_hidden_item",
+    "combo_templates",
+    "stock_balance",
+    "catalogue_item_version",
+    "chit lines"
+   ],
+   "test": "api: till-vendor.test.js, catalogue-read.test.js · web: till-catalogue.cjs, till-category-mostused.cjs",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "catalogue_items.entity_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "the shop that owns it; every read runs under RLS withEntity",
+   "means": "Which shop owns this product.",
+   "source": "catalogue_items.entity_id",
+   "set_by": "system (session entity)",
+   "validated_by": "RLS policy; withEntity",
+   "shown_in": [],
+   "used_by": [
+    "every query (RLS)",
+    "meter",
+    "shopChanged"
+   ],
+   "test": "api: rls-predicate.test.cjs, catalogue-columns.test.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Not shown anywhere on purpose (it is the tenant key)."
+  },
+  {
+   "key": "catalogue_items.schema_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "entity_schemas.schema_id (the shop's default product schema). Can dangle if the schema row is deleted: no FK found in the baseline",
+   "means": "Which column set (schema) this product was written under.",
+   "source": "catalogue_items.schema_id",
+   "set_by": "system (writeItems/mintProduct pick the default schema)",
+   "validated_by": "?",
+   "shown_in": [],
+   "used_by": [
+    "catalogue-view (columns)"
+   ],
+   "test": "api: catalogue-columns.test.js, catalogue-visibility.test.js",
+   "status": "no-meaning",
+   "also": [
+    "untested"
+   ],
+   "finding": "Every shop has ONE default schema and readers use the default, not this column; no reader of catalogue_items.schema_id found. Meaning is unclear (history of which schema?)."
+  },
+  {
+   "key": "catalogue_items.item_data",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a jsonb bag: every product fact below lives inside it; keys are declared in schema_fields but nothing binds them in the database",
+   "means": "All the facts about the product, as one document.",
+   "source": "catalogue_items.item_data",
+   "set_by": "Workshop product form, CSV import, adoption, Product Lab list adopt, connectors",
+   "validated_by": "schema_fields rules (required, number, min) via lib/catalogue-write.validateAgainst; declare-before-write in lib/catalogue-columns",
+   "shown_in": [
+    "Workshop catalogue › product detail"
+   ],
+   "used_by": [
+    "everything"
+   ],
+   "test": "api: catalogue-columns.test.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Free-form: the 100-field problem lives here. This ledger is the declaration the database does not hold."
+  },
+  {
+   "key": "catalogue_items.is_active",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "false = product removed (soft delete, routes/products.js DELETE /:id)",
+   "means": "Whether the product is still in the catalogue (false = removed).",
+   "source": "catalogue_items.is_active",
+   "set_by": "Workshop › Remove product (owner/staff: ?)",
+   "validated_by": "?",
+   "shown_in": [
+    "absence from every list"
+   ],
+   "used_by": [
+    "till snapshot onTheCounter",
+    "storefront",
+    "network_search",
+    "countItems"
+   ],
+   "test": "api: catalogue-columns.test.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Soft delete keeps media bytes in the object store (see garbage G1)."
+  },
+  {
+   "key": "catalogue_items.created_at",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "now() at INSERT",
+   "means": "When the product was first added.",
+   "source": "catalogue_items.created_at",
+   "set_by": "system",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [
+    "export newest-200 template sampling (?)"
+   ],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ],
+   "finding": "No screen found that prints it; only ordering. Candidate to mark \"kept for audit\"."
+  },
+  {
+   "key": "catalogue_items.updated_at",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "set to NOW() by the UPDATE statements in routes/products.js (not a trigger)",
+   "means": "When the product last changed.",
+   "source": "catalogue_items.updated_at",
+   "set_by": "system (every PATCH/media/availability write)",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [
+    "catalogue_item_version trigger ordering (?)"
+   ],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ],
+   "finding": "Written by hand in each UPDATE, so a writer that forgets it leaves it stale (two writers in routes/products.js set it; others unchecked)."
+  },
+  {
+   "key": "item_data.name",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "typed on the product form / sheet; schema-bootstrap declares it required",
+   "means": "What the product is called.",
+   "source": "catalogue_items.item_data.name",
+   "set_by": "Workshop product form (owner, staff), CSV import, adoption, till setup",
+   "validated_by": "schema_fields.required (name is required); LOCKED column (lib/column-rules)",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Till › item row",
+    "Bill slip line",
+    "Online shop card",
+    "Storefront list (cart.js)",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "search (trigram index b121)",
+    "message matcher (itemmatch)",
+    "offers",
+    "books lines"
+   ],
+   "test": "api: csv-preflight.test.js, catalogue-columns.test.js · web: till-catalogue.cjs",
+   "status": "ok",
+   "also": [],
+   "inputs": [
+    "ct_name"
+   ]
+  },
+  {
+   "key": "item_data.unit",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "typed/picked; canonicalised by lib/units.js (kg = KGM)",
+   "means": "What one sold unit is (kg, piece, plate…).",
+   "source": "catalogue_items.item_data.unit",
+   "set_by": "Workshop product form, import (default from the trade blueprint)",
+   "validated_by": "units.js alias table; LOCKED column; blank becomes \"unit\" in ctReadForm and \"piece\" at the till",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Till › item row",
+    "Bill slip qty line",
+    "Online shop card",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "quantity model (count vs measure)",
+    "tax UQC",
+    "stock",
+    "scale PLU"
+   ],
+   "test": "api: consolidate-units.test.js, catalogue-blueprint.test.js",
+   "status": "ok",
+   "also": [
+    "two-sources"
+   ],
+   "finding": "Three defaults for a blank unit: \"unit\" (form), \"piece\" (till), blueprint defaultUnit (import).",
+   "inputs": [
+    "ct_unit"
+   ]
+  },
+  {
+   "key": "item_data.price",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "typed; stored as { amount, currency } after money.stampItem (currency from the shop's region)",
+   "means": "The selling price of one unit before offers (tax treatment per the slab).",
+   "source": "catalogue_items.item_data.price",
+   "set_by": "Workshop product form, import, scheduled change, till setup, adoption (adopter's commercials overlay)",
+   "validated_by": "schema_fields number + min_value 0; a bare number or a money object both accepted; amountOf/priceOf readers",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Till › item row",
+    "Bill slip",
+    "Online shop card",
+    "Storefront",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "pricing engine",
+    "offers",
+    "tax",
+    "cart",
+    "books posting"
+   ],
+   "test": "api: csv-preflight.test.js · web: prod-pricing-cost.cjs, pricing-structure.spec.js",
+   "status": "ok",
+   "also": [
+    "two-sources"
+   ],
+   "finding": "Stored in two shapes (bare number and {amount,currency}); every reader must use money.priceOf.",
+   "inputs": [
+    "ct_price"
+   ]
+  },
+  {
+   "key": "item_data.code",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "typed, or minted from the blueprint code series (prefix + sequence)",
+   "means": "The shop's own short code or barcode text for the product.",
+   "source": "catalogue_items.item_data.code",
+   "set_by": "Workshop product form, import, blueprint mint",
+   "validated_by": "unique within the shop at import (preflight duplicates); no check on the form (?)",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Till › item row (code || sku)",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "till search",
+    "item matcher",
+    "goods-in match",
+    "trigram index b121"
+   ],
+   "test": "api: search-engine.test.js, csv-preflight.test.js",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Same fact as sku: the till reads code||sku, the CSV synonym table maps \"code\" onto sku, the form writes code. Two names, one meaning.",
+   "inputs": [
+    "ct_code"
+   ]
+  },
+  {
+   "key": "item_data.sku",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "CSV header synonyms (code, item code, barcode, ean, id…) all fold onto sku",
+   "means": "The identifier column of an uploaded sheet (same meaning as code).",
+   "source": "catalogue_items.item_data.sku",
+   "set_by": "CSV/Excel import, connectors; not on the product form",
+   "validated_by": "csv-preflight duplicate check",
+   "shown_in": [
+    "Till › item row (as code when code is empty)",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "trigram index b121",
+    "codesInUse (both spellings)",
+    "itemmatch"
+   ],
+   "test": "api: csv-preflight.test.js, catalogue-read.test.js · web: network-catalogue.spec.js",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Duplicate of code (see item_data.code). Propose: one key, the other kept as read-only alias until data is moved."
+  },
+  {
+   "key": "item_data.desc",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "free text; short form is what the live catalogue writes",
+   "means": "A sentence about the product, for the customer.",
+   "source": "catalogue_items.item_data.desc",
+   "set_by": "Workshop product form",
+   "validated_by": "text only; exposure switch \"description\" hides it from the public copy",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Storefront list facts line (cart.js d.description||d.desc)"
+   ],
+   "used_by": [
+    "exposure strip"
+   ],
+   "test": "none found",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "desc vs description: exposure.js strips both, cart.js reads both, the form writes desc only.",
+   "inputs": [
+    "ct_desc"
+   ]
+  },
+  {
+   "key": "item_data.description",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "long synonym of desc from imports",
+   "means": "Same as desc (long spelling).",
+   "source": "catalogue_items.item_data.description",
+   "set_by": "CSV import only (SYNONYMS maps description → desc, so normally folded)",
+   "validated_by": "?",
+   "shown_in": [
+    "Storefront list (cart.js)"
+   ],
+   "used_by": [
+    "exposure strip"
+   ],
+   "test": "api: exposure-cost.test.js",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Alias of desc kept only by readers; fold() should leave nothing here. Verify with the survey (rows where both exist)."
+  },
+  {
+   "key": "item_data.highlight",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "one line typed on the product form; empty clears it",
+   "means": "One short line the shop wants noticed on this product.",
+   "source": "catalogue_items.item_data.highlight",
+   "set_by": "Workshop product form (owner, staff)",
+   "validated_by": "none (trimmed text)",
+   "shown_in": [
+    "Workshop catalogue › product detail › \"Highlight\""
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "no-meaning",
+   "also": [
+    "untested"
+   ],
+   "finding": "Meant to be noticed, but settable and shown in the workshop only; not on the till, bill, online shop or export. A customer never sees it.",
+   "inputs": [
+    "ct_highlight"
+   ]
+  },
+  {
+   "key": "item_data.brand",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a starter column (retail) or typed column",
+   "means": "The maker's brand name.",
+   "source": "catalogue_items.item_data.brand",
+   "set_by": "Catalogue setup › Columns (declared), then the product form \"More about this product\"",
+   "validated_by": "text; type from schema_fields",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Till › item row (full row detail)",
+    "Online shop card (?)",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "network catalogue merge (network-catalogue)",
+    "till rowFacts"
+   ],
+   "test": "web: till-network-offers.spec.js, network-catalogue.spec.js",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "item_data.variant",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "declared column or typed; till falls back to grade",
+   "means": "Which variant of the product this row is (size, flavour).",
+   "source": "catalogue_items.item_data.variant",
+   "set_by": "Catalogue columns, imports",
+   "validated_by": "text",
+   "shown_in": [
+    "Till › item row (full row detail)",
+    "Cart row (cart.js)"
+   ],
+   "used_by": [
+    "itemmatch",
+    "consolidate",
+    "catalogue_item_version.variant"
+   ],
+   "test": "api: itemmatch-qualifier.test.cjs · web: variants.spec.js",
+   "status": "two-sources",
+   "also": [],
+   "finding": "variant vs grade: the till shows variant||grade; catalogue_item_version copies variant."
+  },
+  {
+   "key": "item_data.grade",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column (veg)",
+   "means": "Quality grade (A, B, extra-fancy).",
+   "source": "catalogue_items.item_data.grade",
+   "set_by": "Catalogue columns (veg starter)",
+   "validated_by": "text",
+   "shown_in": [
+    "Till › item row (as variant fallback)",
+    "Workshop catalogue › product detail › More about this product"
+   ],
+   "used_by": [
+    "itemmatch",
+    "lot fields"
+   ],
+   "test": "api: catalogue-columns.test.js",
+   "status": "ok",
+   "also": [
+    "two-sources"
+   ],
+   "finding": "Doubles as a variant label at the till."
+  },
+  {
+   "key": "item_data.barcode",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "typed on the Identifiers tab, imported, or minted as a 5-digit scale PLU by the blueprint (position in the starter list)",
+   "means": "The number a scanner or a weighing scale reads.",
+   "source": "catalogue_items.item_data.barcode",
+   "set_by": "Identifiers tab (prodBarcodeTab), import, blueprint mint",
+   "validated_by": "scalecode.js decodes scale barcodes; uniqueness: ?",
+   "shown_in": [
+    "Workshop catalogue › product detail › Identifiers",
+    "Till › item row (search by scan)"
+   ],
+   "used_by": [
+    "till scan lookup",
+    "scalecode (weighed items)",
+    "search-engine"
+   ],
+   "test": "api: search-engine.test.js · web: till-scale.cjs, scale-probe.cjs",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Till reads barcode||ean; csv synonyms fold barcode/ean onto sku. Three homes for \"the number on the pack\": code, sku, barcode."
+  },
+  {
+   "key": "item_data.ean",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "alias read by the till projection",
+   "means": "Same as barcode (EAN spelling).",
+   "source": "catalogue_items.item_data.ean",
+   "set_by": "Import only (no screen offers an ean input)",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row (as barcode)"
+   ],
+   "used_by": [
+    "till projection"
+   ],
+   "test": "none found",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Read as a fallback in routes/till.js only; csv SYNONYMS fold ean to sku, so a stored ean means the fold was bypassed."
+  },
+  {
+   "key": "item_data.names",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "per-language starter names {ta:[…],hi:[…]} copied from the blueprint pack at mint; flattened into synonyms per shop",
+   "means": "The product's local-language names, by language.",
+   "source": "blueprint pack (lib/catalogue-blueprint LOCAL_NAMES) → minted into synonyms",
+   "set_by": "system at blueprint mint",
+   "validated_by": "none",
+   "shown_in": [
+    "indirectly: synonyms"
+   ],
+   "used_by": [
+    "mintPlan flattens to synonyms"
+   ],
+   "test": "web: meat-blueprint.spec.js, veg-blueprint.spec.js",
+   "status": "no-meaning",
+   "also": [
+    "untested"
+   ],
+   "finding": "Intermediate: travels with starter rows (storeRows) but is not a stored product key after mint; confirm in the survey that no row keeps item_data.names."
+  },
+  {
+   "key": "item_data.synonyms",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "one per line on the product form; also seeded from blueprint local names",
+   "means": "The shop's own other words for the product (thakkali = tomato).",
+   "source": "catalogue_items.item_data.synonyms",
+   "set_by": "Workshop product form (Synonyms tab), blueprint mint, import",
+   "validated_by": "array of text; RESERVED from column-declaration",
+   "shown_in": [
+    "Workshop catalogue › product form",
+    "Storefront list facts line (when exposure.synonyms)"
+   ],
+   "used_by": [
+    "message matcher (itemmatch)",
+    "till search (synonym_text)"
+   ],
+   "test": "api: exposure-cost.test.js, itemmatch-qualifier.test.cjs",
+   "status": "ok",
+   "also": [],
+   "finding": "Hidden from export (HIDDEN) and public copy by default; a shop cannot round-trip them through a sheet.",
+   "inputs": [
+    "ct_synonyms"
+   ]
+  },
+  {
+   "key": "item_data.aliases",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "[{by,text,unit,factor}]: what a supplier calls it; capped at 20 in the till projection",
+   "means": "What each supplier calls this product, with a carton-to-piece factor.",
+   "source": "catalogue_items.item_data.aliases",
+   "set_by": "Goods-in adoption (lib/adopt.js); screen to edit: ?",
+   "validated_by": "slice(0,20) at the till; otherwise ?",
+   "shown_in": [],
+   "used_by": [
+    "goods-in scan match",
+    "till search (alias_text)"
+   ],
+   "test": "none found",
+   "status": "not-settable",
+   "also": [
+    "untested"
+   ],
+   "finding": "Written by goods-in; no catalogue input edits it (not found)."
+  },
+  {
+   "key": "item_data.image",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "the public URL of the FIRST image in media (routes/products.js sets it on upload, clears it on delete); or a pics/ path from the blueprint",
+   "means": "The picture shown on the tile, row and card.",
+   "source": "catalogue_items.item_data.media (first image)",
+   "set_by": "system on media upload; blueprint mint; import",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row picture",
+    "Online shop card",
+    "Cart/storefront thumb",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "till picOf",
+    "network catalogue"
+   ],
+   "test": "api: catalogue-blueprint.test.js · web: till-category.cjs, till-shelf-row.cjs",
+   "status": "two-sources",
+   "also": [],
+   "finding": "A copy of media[0] with the API host baked into the URL (PUBLIC_API_URL); if the host changes every stored URL is stale. exposure.media deletes media/images/image_url but not image."
+  },
+  {
+   "key": "item_data.media",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "[{id,key,name,mime,kind,size,at}] pictures in the object store; videos as links {provider,vid,embed,url}",
+   "means": "The pictures and video links of the product.",
+   "source": "catalogue_items.item_data.media + object store bytes",
+   "set_by": "Workshop › Media tab (upload, video link, remove)",
+   "validated_by": "MEDIA_MAX 8 MB; videoLink() accepts YouTube/Vimeo only",
+   "shown_in": [
+    "Workshop catalogue › product detail › Media",
+    "Storefront (cart.js)",
+    "Online shop (mediaOf)"
+   ],
+   "used_by": [
+    "image copy"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Bytes are not deleted when the PRODUCT is removed (soft delete) — garbage G1.",
+   "inputs": [
+    "ct_media_files",
+    "ct_media_link"
+   ]
+  },
+  {
+   "key": "item_data.xref",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "[{role,system,id,direction,source,at}] buyer/seller ids for this product",
+   "means": "The ids other parties use for this product (a buyer's item code).",
+   "source": "catalogue_items.item_data.xref",
+   "set_by": "Workshop › Identifiers tab (Add id; saved at once)",
+   "validated_by": "id required (client); server: none found",
+   "shown_in": [
+    "Workshop catalogue › product detail › Identifiers"
+   ],
+   "used_by": [
+    "? — no server reader found by grep; e2e identifiers.spec says \"it matches, it travels\""
+   ],
+   "test": "web: identifiers.spec.js",
+   "status": "no-meaning",
+   "also": [
+    "untested"
+   ],
+   "finding": "The screen promises \"an order quoting any of these ids lands on this product\". Grep finds NO reader in the API or other pages (only app.html + e2e). Either the match lives in a path not found, or the promise has no engine behind it. Verify before more screens lean on it.",
+   "inputs": [
+    "ct_xref_role",
+    "ct_xref_system",
+    "ct_xref_id",
+    "ct_xref_dir"
+   ]
+  },
+  {
+   "key": "item_data.hsn",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "typed (a declared column) or imported; HSN is its own canonical in csv-preflight",
+   "means": "The tax classification code of the goods (HSN) or service (SAC).",
+   "source": "catalogue_items.item_data.hsn",
+   "set_by": "Catalogue columns, product form \"More about this product\", import, Pricing & tax pane",
+   "validated_by": "format check: ? (none found on write); tax engine looks up slab by it",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Till › item row (hsn)",
+    "Bill slip › HSN table (tax invoice)",
+    "Storefront facts (when exposure.hsn)",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "tax engine (slab resolve)",
+    "GST returns",
+    "e-invoice",
+    "Tally/Zoho connectors"
+   ],
+   "test": "api: tax-lines.test.js, tax-slab.test.js · web: exposure.spec.js",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Also stored as hsn_code and hs_code; the till reads hsn||hs_code||hsn_code. Service uses sac_code (starter) too."
+  },
+  {
+   "key": "item_data.hsn_code",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "alias spelling",
+   "means": "Same as hsn.",
+   "source": "catalogue_items.item_data.hsn_code",
+   "set_by": "Import only",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row (as hsn)"
+   ],
+   "used_by": [
+    "tax engine",
+    "exposure strip"
+   ],
+   "test": "none found",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Alias read by tax and the till; no screen writes it."
+  },
+  {
+   "key": "item_data.hs_code",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column for gold/coffee/trade (international HS)",
+   "means": "The international customs code (HS).",
+   "source": "catalogue_items.item_data.hs_code",
+   "set_by": "Catalogue columns (trade starter)",
+   "validated_by": "none",
+   "shown_in": [
+    "Workshop catalogue › product detail › More about this product"
+   ],
+   "used_by": [
+    "till hsn fallback",
+    "tax-lines"
+   ],
+   "test": "none found",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Third spelling of the classification code."
+  },
+  {
+   "key": "item_data.sac_code",
+   "kinds": [
+    "service"
+   ],
+   "origin": "keyed",
+   "origin_detail": "service starter column",
+   "means": "The service accounting code (SAC) for tax.",
+   "source": "catalogue_items.item_data.sac_code",
+   "set_by": "Catalogue columns (service starter)",
+   "validated_by": "none",
+   "shown_in": [
+    "Workshop catalogue › product detail › More about this product"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "No reader: tax reads hsn (services.js uses hsn). SAC and HSN are one slot in the tax engine; this key is never read."
+  },
+  {
+   "key": "item_data.gst_rate",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "the travelling copy of the cited slab's rate, written together with tax_slab by CBTaxSlab.setOn; or typed from a sheet",
+   "means": "The tax percentage the product carries, copied for counterparties who cannot read our slab id.",
+   "source": "definition (tax slab) — this is a copy",
+   "set_by": "Pricing & tax pane (via setOn); import; typed column",
+   "validated_by": "number; stale if the slab's rate changes (refresh: ? — slab edit re-points via slab-cites.takeover, not this copy)",
+   "shown_in": [
+    "Workshop catalogue › product detail › Pricing & tax",
+    "Invoice line",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "tax engine (fallback when no slab)",
+    "connectors (Tally, Zoho, GoFrugal)",
+    "invoice"
+   ],
+   "test": "api: tax-slab.test.js, tax-lines.test.js · web: tax-takeover.spec.js, tax-slab.test.cjs",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Two sources with tax_slab: the slab and this copy. Not in the till projection (routes/till.js tillItem) — the counter derives the rate from tax_slab/category."
+  },
+  {
+   "key": "item_data.tax_slab",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "definition_id of a tax slab; may dangle if the slab is deleted (slab-cites.cites counts users first); blank = inherit category then catalogue default",
+   "means": "Which tax slab the product is taxed by.",
+   "source": "catalogue_items.item_data.tax_slab → definition",
+   "set_by": "Workshop › Pricing & tax pane (CBTaxSlab.setOn)",
+   "validated_by": "RESERVED from typed columns (cited by id only); slab must exist (UI picker)",
+   "shown_in": [
+    "Workshop catalogue › product detail › Pricing & tax",
+    "Invoice preview panel"
+   ],
+   "used_by": [
+    "tax engine",
+    "till (tax_slab → CBTax.slab.resolve)",
+    "bills"
+   ],
+   "test": "api: tax-slab.test.js, slab-cites.test.js · web: tax-slab.test.cjs, tax-takeover.spec.js",
+   "status": "ok",
+   "also": [],
+   "inputs": [
+    "ct_tax_slab"
+   ]
+  },
+  {
+   "key": "item_data.tax_slab_name",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "copy of the slab's name written with tax_slab",
+   "means": "The cited slab's name, for counterparties.",
+   "source": "definition (tax slab) — copy",
+   "set_by": "system (setOn)",
+   "validated_by": "none",
+   "shown_in": [
+    "Workshop catalogue › product detail › Pricing & tax"
+   ],
+   "used_by": [
+    "network partner reads"
+   ],
+   "test": "api: tax-slab.test.js, slab-cites.test.js · web: tax-slab.test.cjs",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Copy; refresh when slab is renamed: ? (not found)."
+  },
+  {
+   "key": "item_data.mrp",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "printed maximum retail price; its own canonical (never folded onto price)",
+   "means": "The price printed on the pack — the ceiling a consumer may be charged.",
+   "source": "catalogue_items.item_data.mrp",
+   "set_by": "Catalogue columns / product form \"More about this product\", import (blueprint carries it)",
+   "validated_by": "number; relation to price: not checked (price > mrp allowed?) — ?",
+   "shown_in": [
+    "Till › item row (MRP line, \"under MRP\")",
+    "Bill line (mrp)",
+    "Export CSV/XLSX",
+    "Online shop (?)"
+   ],
+   "used_by": [
+    "offers (discount vs MRP)",
+    "lot fields (batch MRP)"
+   ],
+   "test": "api: network-catalogue.test.cjs, till-vendor.test.js · web: network-catalogue.spec.js, till-verify.spec.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Batch MRP (lot fields) may differ from the product MRP: two sources by design, not resolved in the ledger."
+  },
+  {
+   "key": "item_data.cost",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "{ value, source: manual|rule|tally|zoho, updated_at, note }",
+   "means": "What one unit costs the shop (never shown to customers).",
+   "source": "catalogue_items.item_data.cost",
+   "set_by": "Offer Lab, product form (declared column), connectors (Tally/Zoho)",
+   "validated_by": "lib/item-cost.js shape; fold() never maps cost onto price",
+   "shown_in": [
+    "Workshop › product (owner)",
+    "Offer Lab"
+   ],
+   "used_by": [
+    "Offer Lab margin checks",
+    "books period cost",
+    "exposure strip (deleted from every public copy)"
+   ],
+   "test": "api: item-cost.test.js, exposure-cost.test.js · web: offer-lab-next-offline.cjs, offer-lab-next-pricelist.cjs",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "item_data.price_min",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "lower bound of a negotiable price band, stamped {amount,currency}",
+   "means": "The lowest price the seller will take (a band, not a price).",
+   "source": "catalogue_items.item_data.price_min",
+   "set_by": "Import / declared column; no dedicated input",
+   "validated_by": "csv-preflight canonical; band order min≤max: ?",
+   "shown_in": [
+    "Online shop (priceBand)",
+    "Cart \"seller's range\""
+   ],
+   "used_by": [
+    "cart.js (low-offer warning)"
+   ],
+   "test": "none found",
+   "status": "not-settable",
+   "also": [
+    "untested"
+   ],
+   "finding": "Read by shop and cart; no product-form input offers it."
+  },
+  {
+   "key": "item_data.price_max",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "upper bound of the band",
+   "means": "The highest price in the seller's band.",
+   "source": "catalogue_items.item_data.price_max",
+   "set_by": "Import / declared column; no dedicated input",
+   "validated_by": "as price_min",
+   "shown_in": [
+    "Online shop (priceBand)",
+    "Cart \"seller's range\""
+   ],
+   "used_by": [
+    "cart.js"
+   ],
+   "test": "none found",
+   "status": "not-settable",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "item_data.pricing_def",
+   "kinds": [
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "definition_id of a pricing structure (fixed / tiered / range); can dangle if the definition is deleted",
+   "means": "Which pricing structure (price breaks, band) the product cites.",
+   "source": "catalogue_items.item_data.pricing_def → definition (kind pricing)",
+   "set_by": "Workshop › Pricing & tax pane",
+   "validated_by": "pricing-engine copyOf; exists check: ?",
+   "shown_in": [
+    "Workshop catalogue › product detail › Pricing & tax"
+   ],
+   "used_by": [
+    "pricing engine unitPrice (product page, cart, till, server)"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "inputs": [
+    "ct_pricing_def"
+   ]
+  },
+  {
+   "key": "item_data.pricing_kind",
+   "kinds": [
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "travelling copy of the cited structure's kind",
+   "means": "Fixed, tiered or range — copied from the cited structure.",
+   "source": "definition (pricing) — copy",
+   "set_by": "system (pricing.copyOf)",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row (prices by it)"
+   ],
+   "used_by": [
+    "pricing engine at the till without the line"
+   ],
+   "test": "web: pricing-structure.spec.js",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Copy so the till can price offline; refresh on structure edit: ? (not found)."
+  },
+  {
+   "key": "item_data.pricing_tiers",
+   "kinds": [
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "travelling copy of the cited pricing structure (pricing_tiers)",
+   "means": "Copied from the cited pricing structure so the line is explainable offline and months later.",
+   "source": "definition (pricing) — copy",
+   "set_by": "system (pricing.copyOf)",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row (applied silently)"
+   ],
+   "used_by": [
+    "pricing engine"
+   ],
+   "test": "web: pricing-structure.spec.js",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Copy of the structure; two sources until refreshed."
+  },
+  {
+   "key": "item_data.pricing_amount",
+   "kinds": [
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "travelling copy of the cited pricing structure (pricing_amount)",
+   "means": "Copied from the cited pricing structure so the line is explainable offline and months later.",
+   "source": "definition (pricing) — copy",
+   "set_by": "system (pricing.copyOf)",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row (applied silently)"
+   ],
+   "used_by": [
+    "pricing engine"
+   ],
+   "test": "none found",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Copy of the structure; two sources until refreshed."
+  },
+  {
+   "key": "item_data.pricing_min",
+   "kinds": [
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "travelling copy of the cited pricing structure (pricing_min)",
+   "means": "Copied from the cited pricing structure so the line is explainable offline and months later.",
+   "source": "definition (pricing) — copy",
+   "set_by": "system (pricing.copyOf)",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row (applied silently)"
+   ],
+   "used_by": [
+    "pricing engine"
+   ],
+   "test": "none found",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Copy of the structure; two sources until refreshed."
+  },
+  {
+   "key": "item_data.pricing_max",
+   "kinds": [
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "travelling copy of the cited pricing structure (pricing_max)",
+   "means": "Copied from the cited pricing structure so the line is explainable offline and months later.",
+   "source": "definition (pricing) — copy",
+   "set_by": "system (pricing.copyOf)",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row (applied silently)"
+   ],
+   "used_by": [
+    "pricing engine"
+   ],
+   "test": "none found",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Copy of the structure; two sources until refreshed."
+  },
+  {
+   "key": "item_data.pricing_def_name",
+   "kinds": [
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "travelling copy of the cited pricing structure (pricing_def_name)",
+   "means": "Copied from the cited pricing structure so the line is explainable offline and months later.",
+   "source": "definition (pricing) — copy",
+   "set_by": "system (pricing.copyOf)",
+   "validated_by": "none",
+   "shown_in": [
+    "Workshop catalogue › product detail › Pricing & tax"
+   ],
+   "used_by": [
+    "pricing engine"
+   ],
+   "test": "web: pricing-structure.spec.js",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Copy of the structure; two sources until refreshed."
+  },
+  {
+   "key": "item_data.lead_time_days",
+   "kinds": [
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "csv canonical lead time; also a declared commercial of a network source (catalogue-build COMMERCIALS_FIELDS)",
+   "means": "How many days from order to dispatch.",
+   "source": "catalogue_items.item_data.lead_time_days",
+   "set_by": "Import / sheet column (TRADE_EXTRAS in the template) / declared column; no product-form input",
+   "validated_by": "number via schema type; none otherwise",
+   "shown_in": [],
+   "used_by": [
+    "catalogue-read CORE (travels on every adopted line)"
+   ],
+   "test": "api: csv.test.js",
+   "status": "shown-nowhere",
+   "also": [
+    "not-settable",
+    "untested"
+   ],
+   "finding": "Offered as a sheet column and carried on every line (lib/catalogue-read CORE), but no screen shows it and no engine decides on it. Decide: surface it on the order page or mark \"carried, not acted on\"."
+  },
+  {
+   "key": "item_data.min_order_qty",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "csv canonical MOQ",
+   "means": "The smallest quantity the seller will accept for this product.",
+   "source": "catalogue_items.item_data.min_order_qty",
+   "set_by": "Import / sheet column / declared column; no product-form input",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [
+    "catalogue-read CORE (travels on every adopted line)"
+   ],
+   "test": "api: csv.test.js",
+   "status": "shown-nowhere",
+   "also": [
+    "two-sources",
+    "untested"
+   ],
+   "finding": "Same as lead_time_days. The working equivalent is item_data.order min/max/step (the order model), so MOQ is a second source for the same limit."
+  },
+  {
+   "key": "item_data.categories",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "array of category definition ids; a deleted category can leave a dangling id (categories.js blocks delete while cited? ?)",
+   "means": "Which categories (shelves) the product sits in.",
+   "source": "catalogue_items.item_data.categories → definition (category)",
+   "set_by": "Workshop product form category picker; Categories screen; import by name",
+   "validated_by": "RESERVED from typed columns; ids resolved by categories.js",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Till › item row chips and By-category",
+    "Online shop",
+    "Export CSV/XLSX (as names)"
+   ],
+   "used_by": [
+    "till grouping",
+    "tax slab fallback (category slab)",
+    "quick keys"
+   ],
+   "test": "api: categories.test.js · web: tax-categories.spec.js, categories-attach.spec.js",
+   "status": "ok",
+   "also": [],
+   "inputs": [
+    "ct_categories"
+   ]
+  },
+  {
+   "key": "item_data.category_names",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "positional copy of the category names, written with categories",
+   "means": "The category names, for counterparties who cannot resolve our ids.",
+   "source": "definition (category) — copy",
+   "set_by": "system (categories.js)",
+   "validated_by": "none",
+   "shown_in": [
+    "Export CSV/XLSX (categories column)"
+   ],
+   "used_by": [
+    "till nameOf fallback",
+    "network partner reads"
+   ],
+   "test": "api: categories.test.js, sheet.test.js",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Copy; rename on Categories screen refreshes it (per comments); unverified in the survey."
+  },
+  {
+   "key": "item_data.category",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "legacy single-category key — \"read, never written again\"",
+   "means": "The old single category name.",
+   "source": "catalogue_items.item_data.category",
+   "set_by": "nobody (import of a legacy sheet still writes it?)",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row (fallback when categories is empty)"
+   ],
+   "used_by": [
+    "till nameOf fallback"
+   ],
+   "test": "api: categories.test.js · web: till-category-hide.cjs, till-category-mostused.cjs",
+   "status": "two-sources",
+   "also": [],
+   "finding": "Legacy; test categories.test.js says nothing writes it. Survey: rows still holding it."
+  },
+  {
+   "key": "item_data.status",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "available · unavailable · retired · redundant (itemstatus.js)",
+   "means": "Whether the product may be sold or matched right now.",
+   "source": "catalogue_items.item_data.status",
+   "set_by": "Workshop ◍ Status control; till Stock-out (POST /api/till/stock); bulk status route",
+   "validated_by": "enum in itemstatus.js; RESERVED column",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Till › item row (stock-out)",
+    "Online shop (hidden when not available)",
+    "Export CSV/XLSX (as available yes/no)"
+   ],
+   "used_by": [
+    "storefront filter",
+    "message matcher",
+    "offers isOfferable",
+    "catalogue_item_version.status"
+   ],
+   "test": "api: google-availability.test.cjs",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "item_data.avail",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "{ qty, source, as_of }",
+   "means": "How many are on hand, and the date that was true.",
+   "source": "catalogue_items.item_data.avail",
+   "set_by": "Workshop (\"report it\"), connectors, POST availability (bulk), sheet qty",
+   "validated_by": "availability.stamp (a count needs a date); absent ≠ 0",
+   "shown_in": [
+    "Workshop catalogue › product detail",
+    "Till › item row",
+    "Online shop badge (exposure.stock)",
+    "Export CSV/XLSX (qty, qty_as_of, qty_source)"
+   ],
+   "used_by": [
+    "availability",
+    "storefront",
+    "goods-in"
+   ],
+   "test": "api: sheet.test.js, google-availability.test.cjs",
+   "status": "ok",
+   "also": [
+    "two-sources"
+   ],
+   "finding": "Third quantity home next to stock_balance (ledger) and item_data.qty."
+  },
+  {
+   "key": "item_data.qty",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "blueprint rows carry qty (CARRIED list); the sheet import turns qty into avail.qty",
+   "means": "Quantity as typed in a starter list or a sheet.",
+   "source": "item_data.avail.qty (the reader's source)",
+   "set_by": "blueprint mint / import",
+   "validated_by": "sheet.fromSheet converts; blueprint path: ? (unverified)",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: availability.test.js, sheet.test.js · web: chit-sheet.cjs",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "If blueprint mint stores qty raw, it is a second quantity beside avail that nothing reads. Survey: rows with item_data.qty."
+  },
+  {
+   "key": "item_data.available",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "derived",
+   "origin_detail": "export-only projection of status (yes/no); on import it sets status and a fresh as_of",
+   "means": "Yes/no column of a spreadsheet for \"can be bought\".",
+   "source": "item_data.status",
+   "set_by": "sheet import (converted, not stored)",
+   "validated_by": "sheet.js YES/NO sets",
+   "shown_in": [
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "import"
+   ],
+   "test": "api: sheet.test.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Not a stored key; listed because it is a column a person sees."
+  },
+  {
+   "key": "item_data.batch_tracked",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "true/false; adoption can seed it from a lot pack",
+   "means": "Whether goods-in must record a batch/serial for this product.",
+   "source": "catalogue_items.item_data.batch_tracked",
+   "set_by": "Adoption (lib/adopt.js); screen: ? (no product input)",
+   "validated_by": "boolean",
+   "shown_in": [
+    "Goods-in screen (?)"
+   ],
+   "used_by": [
+    "lotfields.js",
+    "stock-from-chit"
+   ],
+   "test": "api: stock-cycle.test.js, adopt.test.js · web: adopt.spec.js, adopt-screen.spec.js",
+   "status": "two-sources",
+   "also": [
+    "not-settable"
+   ],
+   "finding": "Same question as pharma starter column tracking (none/lot/serial). Two names, two shapes."
+  },
+  {
+   "key": "item_data.tracking",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "pharma starter column: none | lot | serial",
+   "means": "Whether the product is tracked by lot or serial.",
+   "source": "catalogue_items.item_data.tracking",
+   "set_by": "Catalogue columns (pharma starter)",
+   "validated_by": "choice from schema",
+   "shown_in": [
+    "Workshop catalogue › product detail › More about this product"
+   ],
+   "used_by": [],
+   "test": "web: till-subscription.cjs",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Nothing reads it; lotfields reads batch_tracked. Looks like control but controls nothing."
+  },
+  {
+   "key": "item_data.modifiers",
+   "kinds": [
+    "dish",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "[{name, required, options:[{name, price}]}] normalised by variant.normalize",
+   "means": "The choices a dish has (size, spice) and what each adds to the price.",
+   "source": "catalogue_items.item_data.modifiers",
+   "set_by": "Workshop › Modifiers tab",
+   "validated_by": "variant.normalize strips unknown fields; groupsOf drops unsellable groups",
+   "shown_in": [
+    "Workshop catalogue › product detail › Modifiers",
+    "Till › item row (choices before adding)"
+   ],
+   "used_by": [
+    "till line price",
+    "kitchen note (?)"
+   ],
+   "test": "api: variant.test.js, combo-templates.test.cjs · web: prod-modifiers-tab.cjs, combo-lab.cjs",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "item_data.combo_of",
+   "kinds": [
+    "dish",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "parts a meal deal replaces",
+   "means": "The parts a combo stands for.",
+   "source": "catalogue_items.item_data.combo_of",
+   "set_by": "Combo templates / combo lab (product link b267); input on product form: ?",
+   "validated_by": "?",
+   "shown_in": [
+    "Till › item row"
+   ],
+   "used_by": [
+    "till combo pricing"
+   ],
+   "test": "none found",
+   "status": "not-settable",
+   "also": [
+    "untested"
+   ],
+   "finding": "Read by the till; the writer is combo-templates (product_item_id) — not a product-form input."
+  },
+  {
+   "key": "item_data.age_check",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "minimum age in years (COTPA, excise)",
+   "means": "The age a buyer must be to buy this.",
+   "source": "catalogue_items.item_data.age_check",
+   "set_by": "Declared column (no dedicated input found)",
+   "validated_by": "till floors to integer > 0",
+   "shown_in": [
+    "Till › item row (age prompt)"
+   ],
+   "used_by": [
+    "till ageAllow"
+   ],
+   "test": "web: till-agecheck.spec.js, till-queue.spec.js",
+   "status": "not-settable",
+   "also": [],
+   "finding": "Law-relevant and settable only as a hand-typed declared column."
+  },
+  {
+   "key": "item_data.offers_excluded",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "array of offer ids, or [\"*\"]",
+   "means": "Offers this product is kept out of.",
+   "source": "catalogue_items.item_data.offers_excluded",
+   "set_by": "Workshop › Offers switch; exposure.offers sets [\"*\"] on the public copy",
+   "validated_by": "strings",
+   "shown_in": [
+    "Workshop catalogue › product detail › Offers",
+    "Offer preview"
+   ],
+   "used_by": [
+    "offers engine (match)",
+    "till lineOf"
+   ],
+   "test": "web: exposure.spec.js",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "item_data.exposure",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "{ tax, offers, stock, synonyms, hsn, description, media } booleans overriding the shop's defaults",
+   "means": "What a customer may see of this item.",
+   "source": "catalogue_items.item_data.exposure",
+   "set_by": "Workshop › Shown to customers panel",
+   "validated_by": "KEYS in lib/exposure.js",
+   "shown_in": [
+    "Workshop catalogue › product detail › Shown to customers"
+   ],
+   "used_by": [
+    "exposure.apply on every public projection"
+   ],
+   "test": "api: exposure-cost.test.js · web: exposure.spec.js",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "item_data.screen",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "boolean: shown on the shop screen",
+   "means": "Whether the product was picked by hand for the shop screen.",
+   "source": "catalogue_items.item_data.screen",
+   "set_by": "till shop-screen picker",
+   "validated_by": "=== true",
+   "shown_in": [
+    "Shop screen (promo.html)"
+   ],
+   "used_by": [
+    "promo"
+   ],
+   "test": "web: promo-screen-key.cjs, promo-pick-next.cjs",
+   "status": "not-settable",
+   "also": [
+    "untested"
+   ],
+   "finding": "No catalogue input; set from the counter screen only."
+  },
+  {
+   "key": "item_data.order",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "{ref} citing a catalogue order model, or {kind,min,max,step} own model",
+   "means": "How the quantity is ordered (count, measure, pack, range).",
+   "source": "catalogue_items.item_data.order",
+   "set_by": "Workshop › Order model fields",
+   "validated_by": "catalogue-model quantity models; ref must exist: ?",
+   "shown_in": [
+    "Workshop catalogue › product detail › Order model preview",
+    "Cart/pick quantity control"
+   ],
+   "used_by": [
+    "orderInput.forItem",
+    "cart"
+   ],
+   "test": "web: mode-survives-order.spec.js",
+   "status": "ok",
+   "also": [],
+   "inputs": [
+    "ct_order_ref",
+    "ct_order_kind",
+    "ct_order_min",
+    "ct_order_max",
+    "ct_order_step"
+   ]
+  },
+  {
+   "key": "item_data.effective",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "intermediate",
+   "origin_detail": "form-only datetime: changes are queued as a schedule, not stored on the product",
+   "means": "When an edit should take effect.",
+   "source": "catalogue_item_schedule.effective_at",
+   "set_by": "Workshop product form \"Effective from\" (ct_effective)",
+   "validated_by": "future by 30 s or ignored (prodEffectiveAt)",
+   "shown_in": [
+    "Workshop catalogue › product form"
+   ],
+   "used_by": [
+    "POST /api/products/:id/schedule"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Not a stored key; applied rows stay in catalogue_item_schedule (garbage G3).",
+   "inputs": [
+    "ct_effective"
+   ]
+  },
+  {
+   "key": "item_data.commercials",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "an adopter's overlay (price, availability) on a line referenced from a brand catalogue",
+   "means": "What this shop changes on a product it adopts by reference.",
+   "source": "catalogue_adoption overlay (catalogue-build.resolve)",
+   "set_by": "Adopting shop (cap-adopt, network offers)",
+   "validated_by": "RESERVED; source rules",
+   "shown_in": [
+    "Adopted product rows"
+   ],
+   "used_by": [
+    "catalogue-build.resolve"
+   ],
+   "test": "api: network-catalogue.test.cjs · web: network-catalogue.spec.js, network-storefront.spec.js",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "item_data.source_ref",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "where a referenced line came from",
+   "means": "The system's bookkeeping of the origin of an adopted line.",
+   "source": "catalogue_items.item_data.source_ref",
+   "set_by": "system (adopt)",
+   "validated_by": "RESERVED",
+   "shown_in": [],
+   "used_by": [
+    "catalogue-build"
+   ],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ],
+   "finding": "Bookkeeping key, hidden from export on purpose; no view."
+  },
+  {
+   "key": "item_data.network_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a network a product belongs to",
+   "means": "?",
+   "source": "catalogue_items.item_data.network_id",
+   "set_by": "seed scripts only (akums-demo, gold-demo)",
+   "validated_by": "?",
+   "shown_in": [],
+   "used_by": [
+    "lib/reporting.js (operators of a network)"
+   ],
+   "test": "none found",
+   "status": "not-settable",
+   "also": [
+    "no-meaning",
+    "untested"
+   ],
+   "finding": "Read by reporting.js; no screen or route writes it."
+  },
+  {
+   "key": "item_data.operator",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "free text on a product row",
+   "means": "?",
+   "source": "catalogue_items.item_data.operator",
+   "set_by": "seed scripts only",
+   "validated_by": "?",
+   "shown_in": [],
+   "used_by": [
+    "lib/reporting.js"
+   ],
+   "test": "api: reporting.test.js",
+   "status": "not-settable",
+   "also": [
+    "no-meaning"
+   ],
+   "finding": "As network_id."
+  },
+  {
+   "key": "till.category_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "derived",
+   "origin_detail": "categories[0] of item_data",
+   "means": "First cited category id, so the counter can cite it back.",
+   "source": "item_data.categories",
+   "set_by": "system (tillItem)",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row chips"
+   ],
+   "used_by": [
+    "till By-category"
+   ],
+   "test": "web: till-catalogue.cjs",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "till.synonym_text",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "derived",
+   "origin_detail": "synonyms joined by space",
+   "means": "The shop's own words flattened for the counter's search.",
+   "source": "item_data.synonyms",
+   "set_by": "system",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [
+    "till search-engine"
+   ],
+   "test": "api: search-engine.test.js",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "till.alias_text",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "derived",
+   "origin_detail": "aliases[0..20].text joined",
+   "means": "Supplier names flattened for search.",
+   "source": "item_data.aliases",
+   "set_by": "system",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [
+    "till search-engine"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": []
+  },
+  {
+   "key": "till.facts",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "derived",
+   "origin_detail": "the FIRST THREE columns by display_order of the default schema, value trimmed to 40 chars",
+   "means": "The shop's declared facts shown under a till row.",
+   "source": "schema_fields + item_data",
+   "set_by": "system",
+   "validated_by": "skip objects and blanks",
+   "shown_in": [
+    "Till › item row (Row detail: full)"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "no-meaning",
+   "also": [
+    "untested"
+   ],
+   "finding": "By reading (not run): the starter order is name, unit, price, code, desc…, so the first three declared columns are name/unit/price and a pharmacy's composition or a paint shade (4th onward) never reaches the counter. The comment promises the opposite."
+  },
+  {
+   "key": "till._rate",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "intermediate",
+   "origin_detail": "tax rate cached on the in-memory item by rateOf() the first time it is asked",
+   "means": "The tax rate computed for this row, cached on the till item.",
+   "source": "derived from tax_slab/category/shop tax",
+   "set_by": "till.html rateOf()",
+   "validated_by": "none",
+   "shown_in": [
+    "Till › item row (price incl/excl tax)"
+   ],
+   "used_by": [
+    "till"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Intermediate on the counter's in-memory item; cleared when the snapshot reloads. Survey n/a (never stored)."
+  },
+  {
+   "key": "catalogue_item_version.version_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "written by the b146 trigger",
+   "means": "Id of the version row.",
+   "source": "catalogue_item_version.version_id",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_version.item_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "written by the b146 trigger",
+   "means": "Which product this version belongs to (catalogue_items.item_id); no FK found, so rows survive a hard delete.",
+   "source": "catalogue_item_version.item_id",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [
+    "itemmatch as-of",
+    "cb_item_as_of()"
+   ],
+   "test": "api: engine-versions.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_version.entity_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "written by the b146 trigger",
+   "means": "Owning shop (RLS).",
+   "source": "catalogue_item_version.entity_id",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_version.version_no",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "written by the b146 trigger",
+   "means": "Sequence number of the version.",
+   "source": "catalogue_item_version.version_no",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [
+    "itemmatch as-of",
+    "cb_item_as_of()"
+   ],
+   "test": "api: engine-versions.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_version.snapshot",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "cb_catalogue_version_cut() trigger on INSERT/UPDATE OF item_data (b146)",
+   "means": "The whole item_data as it was.",
+   "source": "catalogue_item_version.snapshot",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [
+    "GET /api/products/:id/versions (API only, no page found)"
+   ],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_version.name",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "cb_catalogue_version_cut() trigger on INSERT/UPDATE OF item_data (b146)",
+   "means": "Name at that time (cb_item_fields(item_data)).",
+   "source": "catalogue_item_version.name",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Denormalised copy of snapshot; same facts twice inside one row."
+  },
+  {
+   "key": "catalogue_item_version.variant",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "cb_catalogue_version_cut() trigger on INSERT/UPDATE OF item_data (b146)",
+   "means": "Variant at that time.",
+   "source": "catalogue_item_version.variant",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Denormalised copy of snapshot; same facts twice inside one row."
+  },
+  {
+   "key": "catalogue_item_version.unit",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "cb_catalogue_version_cut() trigger on INSERT/UPDATE OF item_data (b146)",
+   "means": "Unit at that time.",
+   "source": "catalogue_item_version.unit",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Denormalised copy of snapshot; same facts twice inside one row."
+  },
+  {
+   "key": "catalogue_item_version.price",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "cb_catalogue_version_cut() trigger on INSERT/UPDATE OF item_data (b146)",
+   "means": "Price at that time.",
+   "source": "catalogue_item_version.price",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Denormalised copy of snapshot; same facts twice inside one row."
+  },
+  {
+   "key": "catalogue_item_version.sku",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "cb_catalogue_version_cut() trigger on INSERT/UPDATE OF item_data (b146)",
+   "means": "Code/sku at that time.",
+   "source": "catalogue_item_version.sku",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Denormalised copy of snapshot; same facts twice inside one row."
+  },
+  {
+   "key": "catalogue_item_version.status",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "cb_catalogue_version_cut() trigger on INSERT/UPDATE OF item_data (b146)",
+   "means": "Status at that time.",
+   "source": "catalogue_item_version.status",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "two-sources",
+   "also": [
+    "untested"
+   ],
+   "finding": "Denormalised copy of snapshot; same facts twice inside one row."
+  },
+  {
+   "key": "catalogue_item_version.valid_from",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "written by the b146 trigger",
+   "means": "When this version began.",
+   "source": "catalogue_item_version.valid_from",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [
+    "GET /api/products/:id/versions (API only, no page found)"
+   ],
+   "used_by": [
+    "cb_item_as_of()"
+   ],
+   "test": "api: engine-versions.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_version.valid_to",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "written by the b146 trigger",
+   "means": "When it was superseded (null = current).",
+   "source": "catalogue_item_version.valid_to",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [
+    "cb_item_as_of()"
+   ],
+   "test": "api: engine-versions.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_version.changed_by",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "written by the b146 trigger",
+   "means": "Who made the change (?).",
+   "source": "catalogue_item_version.changed_by",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_version.created_at",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "written by the b146 trigger",
+   "means": "When the row was written.",
+   "source": "catalogue_item_version.created_at",
+   "set_by": "system (trigger)",
+   "validated_by": "trigger",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: engine-versions.test.cjs",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.field_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Id of the column definition.",
+   "source": "schema_fields.field_id",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [
+    "PATCH/DELETE by id"
+   ],
+   "test": "api: column-rules.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.schema_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Which schema (column set) it belongs to.",
+   "source": "schema_fields.schema_id",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [
+    "all"
+   ],
+   "test": "api: column-parity.test.js, catalogue-columns.test.js",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.field_name",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "The label people read.",
+   "source": "schema_fields.field_name",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "none",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "product form labels",
+    "export header"
+   ],
+   "test": "api: column-rules.test.cjs, catalogue-columns.test.js",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.field_key",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "The key written into item_data.",
+   "source": "schema_fields.field_key",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "column-rules (LOCKED name/unit/price; retypeWhy/why tighten on use)",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "everything"
+   ],
+   "test": "api: column-rules.test.cjs, catalogue-columns.test.js",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  }
+ ],
+ "relationships": [
+  {
+   "this": "CAP-FIELDS-PRODUCT-1",
+   "rel": "is part of",
+   "that": "CAP-FIELDS-PRODUCT"
+  }
+ ]
+}

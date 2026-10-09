@@ -1,0 +1,232 @@
+{
+ "ci": "CAP-FIELDS-PRODUCT",
+ "title": "Product field ledger",
+ "type": "Field ledger",
+ "system": "ChitBridge API · web app · till",
+ "source": "hand",
+ "summary": "141 fields of a product, each with its meaning, origin, the one source, who sets it, what checks it, every view that shows it, what reads it, and its test. ✓ complete 50 · findings on the rest. Plan: C:/dev/FIELD-LEDGER-PLAN.md. Human table: C:/dev/toolset/fields/FIELDS-product.md.",
+ "raised_by": "Athi, 2026-10-09 (\"create the ledger and connect to cmdb\")",
+ "entries": [
+  {
+   "id": "e1",
+   "t": "Product form (Workshop)",
+   "s": "app.html ct_… inputs · saveProduct",
+   "d": "A person types or picks the keyed fields; the form reads only the inputs on screen."
+  },
+  {
+   "id": "e2",
+   "t": "Catalogue setup › Columns and import",
+   "s": "cap-catsetup.js · POST /api/products/import",
+   "d": "Declares columns and bulk-writes fields from a sheet."
+  },
+  {
+   "id": "e3",
+   "t": "Adoption and blueprints",
+   "s": "lib/adopt.js · lib/catalogue-blueprint.js",
+   "d": "Starter catalogues and goods-in write fields no form shows."
+  },
+  {
+   "id": "e4",
+   "t": "Connectors",
+   "s": "Tally · Zoho · GoFrugal",
+   "d": "Cost, availability and stock arrive from the books."
+  }
+ ],
+ "process": [
+  {
+   "id": "p1",
+   "t": "catalogue_items.item_data",
+   "s": "lib/catalogue-write.js · lib/mint-product.js",
+   "d": "ONE jsonb bag; schema_fields declares the keys, nothing in the database binds them. This ledger is the declaration the database does not hold."
+  },
+  {
+   "id": "p2",
+   "t": "Projections",
+   "s": "routes/till.js tillItem · lib/exposure.js · lib/sheet.js",
+   "d": "The till, the customer copy and the export each read a different subset."
+  }
+ ],
+ "exits": [
+  {
+   "id": "x1",
+   "t": "Till row and bill slip",
+   "s": "till.html · bill-print.html",
+   "d": "What the shopkeeper and the customer see at the counter."
+  },
+  {
+   "id": "x2",
+   "t": "Online shop and storefront",
+   "s": "shop.html · cart.js",
+   "d": "What a customer sees, after exposure strips."
+  },
+  {
+   "id": "x3",
+   "t": "Export and connectors",
+   "s": "export.csv · workbook.xlsx · Tally/Zoho",
+   "d": "Fields leaving the platform."
+  },
+  {
+   "id": "x4",
+   "t": "The guard",
+   "s": "tests/field-ledger.test.cjs",
+   "d": "A new column, a new form input, or a reader of a not-used field fails the build until this ledger says why."
+  }
+ ],
+ "edges": [
+  [
+   "e1",
+   "p1"
+  ],
+  [
+   "e2",
+   "p1"
+  ],
+  [
+   "e3",
+   "p1"
+  ],
+  [
+   "e4",
+   "p1"
+  ],
+  [
+   "p1",
+   "p2"
+  ],
+  [
+   "p2",
+   "x1"
+  ],
+  [
+   "p2",
+   "x2"
+  ],
+  [
+   "p2",
+   "x3"
+  ],
+  [
+   "p1",
+   "x4"
+  ]
+ ],
+ "map": [
+  {
+   "title": "Part 1 · 91 fields",
+   "ci": "CAP-FIELDS-PRODUCT-1",
+   "state": "warn",
+   "note": "catalogue_items.item_id … schema_fields.field_key"
+  },
+  {
+   "title": "Part 2 · 50 fields",
+   "ci": "CAP-FIELDS-PRODUCT-2",
+   "state": "warn",
+   "note": "schema_fields.field_type … item_data.sla_hours"
+  },
+  {
+   "title": "Shown nowhere",
+   "state": "warn",
+   "note": "15 fields"
+  },
+  {
+   "title": "Not used",
+   "state": "warn",
+   "note": "7 fields — retire or mark"
+  },
+  {
+   "title": "Two sources",
+   "state": "warn",
+   "note": "36 fields"
+  },
+  {
+   "title": "Untested",
+   "state": "warn",
+   "note": "84 fields"
+  }
+ ],
+ "relationships": [
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is held in",
+   "that": "CAP-FIELDS-PRODUCT-1"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is held in",
+   "that": "CAP-FIELDS-PRODUCT-2"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-CATSETUP — sets the columns, import, tax-slab and pricing fields"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-CATEGORIES — sets categories / category_names"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-ADOPT — writes code, unit, price, aliases, batch_tracked on goods-in adoption"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-DEFINITIONS — owns the tax slab, pricing structure and category definitions that fields cite or copy"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-NETWORK — shows and merges adopted lines (commercials, source_ref)"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-MATCH — reads synonyms, code, sku, aliases to match a message to a product"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-CONNECTOR — feeds cost, avail and stock into fields"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-SUPPLIES — owns the supply items that share stock_balance with products"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-CHIT2 — shows product fields on the chit/bill detail"
+  },
+  {
+   "this": "CAP-FIELDS-PRODUCT",
+   "rel": "is shown or set by",
+   "that": "CAP-CMDB — draws this ledger"
+  }
+ ],
+ "tests": [
+  {
+   "file": "chitbridge-api/tests/field-ledger.test.cjs",
+   "kind": "guard",
+   "proves": "every product column and form input has a row; a not-used field gains no reader; every row obeys the shape.",
+   "checks": 0,
+   "result": "not run"
+  },
+  {
+   "file": "chitbridge-api/tests/cmdb.test.cjs",
+   "kind": "unit",
+   "proves": "the fields shape refuses a contradictory row; flags count shown-nowhere / not-used / untested.",
+   "checks": 0,
+   "result": "not run"
+  }
+ ],
+ "changes": [
+  {
+   "ref": "FIELDS-1",
+   "what": "first ledger: product, 141 fields, generated 2026-10-09"
+  }
+ ],
+ "descriptor": "Counts: ok 50 · shown-nowhere 15 · not-settable 8 · two-sources 31 · no-meaning 8 · untested 22 · not-used 7. Garbage: G1 Object-store bytes of a removed product; G2 catalogue_item_version rows (b146 trigger); G3 catalogue_item_schedule applied / cancelled rows; G4 counter_hidden_item and quick_key_group_item rows of removed products; G5 Alias and legacy keys left inside item_data (category, description, ean, hsn_code, names, qty); G6 Declared columns nobody uses (schema_fields rows with 0 products); G7 Copy fields: tax_slab_name, gst_rate, category_names, pricing_* travelling copies. Survey: migrations/READ-2026-10-09-product-field-survey.sql (Athi runs it; results go into each row as initialised % · dangling n · stale n)."
+}
