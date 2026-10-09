@@ -197,6 +197,8 @@ const INFRA_LIBS = [
   'books-recurring.js', 'books-todo.js',
   /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */
   'home-facts.js', 'till-summary.js',
+  /* [CB Sides] the two panels' read (sides: SQL + the reuses) and the impact walk shared with raida.walk (impact: pure graph rule, used by the register and the panel) (2026-10-09) */
+  'sides.js', 'impact.js',
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
   'crm.js', 'crm-followups.js',
   /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */

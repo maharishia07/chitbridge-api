@@ -42,17 +42,19 @@ const sides = require(path.join(API, 'lib', 'sides'));
 const rowOf = (side, key, id) => side.find((g) => g.key === key).rows.find((r) => r.id === id);
 const rows = {
   me: [{ display_name: 'Mayur Bhavan', country: 'IN', gstn: '33ABCDE1234F1Z5' }],
-  gov: [{ constitution_key: 'hotel', minted: '0.1', active: '0.2', boilerplate_key: 'hotel-bp', boilerplate_version: null, boilerplate_active: '3', boilerplate_label: 'Hotel', blueprint_key: null, blueprint_version: null }],
+  gov: [{ constitution_key: 'hotel', minted: '0.1', active: '0.2', boilerplate_key: 'hotel-bp', boilerplate_version: null, blueprint_key: null, blueprint_version: null }],
   adopt: [{ source_key: 'hotel-starter', minted: 'v5', active: 'v5', title: 'Hotel starter catalogue' }, { source_key: 'feed', minted: 'v8', active: 'v9', title: 'Feed' }],
   conn: [{ connector_type: 'tally', ref: 'x', enabled: true, status: 'green' }],
   actors: [{ display_name: 'Bala', actor_role: 'accountant', can_see_costs: false }, { display_name: 'Ravi', actor_role: 'x', can_see_costs: true }],
   customers: [{ id: 'c1', name: 'Asha Stores' }, { id: 'c2', name: 'Pooja Mart' }],
   suppliers: [{ id: 's1', name: 'Fresh Farm' }],
+  bp: [{ version: '3', label: 'Hotel' }],
   edges,
 };
 const header = { trade_ready: { checks: [{ key: 'address', label: 'Address proven', done: true }, { key: 'phone', label: 'Phone verified', done: true }, { key: 'pan', label: 'PAN on file', done: true }, { key: 'gstin', label: 'GSTIN', done: false }] } };
 const rail = { suppliers: 3, customers: 2, in: 24, out: 5 };
-const b = sides.build({ rows, rail, header, entity_id: 'ME' });
+const B = (o) => sides.build(Object.assign({ gov: rows.gov[0], rail, header, entity_id: 'ME' }, o, { rows: Object.assign({}, rows, (o && o.rows) || {}) }));
+const b = B();
 const con = rowOf(b.lean, 'rules', 'constitution');
 t('constitution drift: "Update" + Review, with the two versions in the detail', con.s === 'wait' && con.t === 'Update' && con.fix === 'Review' && /v0\.1/.test(con.detail) && /v0\.2/.test(con.detail), JSON.stringify(con));
 t('a current brand source says Current, a drifted one says Update + Review', rowOf(b.lean, 'content', 'src:hotel-starter').s === 'ok' && rowOf(b.lean, 'content', 'src:feed').fix === 'Review');
@@ -61,7 +63,7 @@ t('blueprint not recorded -> "not yet"', rowOf(b.lean, 'mould', 'blueprint').s =
 t('jurisdiction and standards are "not yet" rows (nothing stamps their version)', rowOf(b.lean, 'rules', 'jurisdiction').s === 'later' && rowOf(b.lean, 'rules', 'standards').s === 'later');
 t('jurisdiction names the country', rowOf(b.lean, 'rules', 'jurisdiction').n === 'India');
 t('a connector is Linked; suppliers are the rail count', rowOf(b.lean, 'systems', 'conn:0').t === 'Linked' && rowOf(b.lean, 'buy', 'suppliers').n === '3 suppliers');
-t('boilerplate drift shows once the mint version exists', sides.build({ rows: Object.assign({}, rows, { gov: [Object.assign({}, rows.gov[0], { boilerplate_version: '2' })] }), rail, header, entity_id: 'ME' }).lean[1].rows[0].fix === 'Review');
+t('boilerplate drift shows once the mint version exists', B({ gov: Object.assign({}, rows.gov[0], { boilerplate_version: '2' }) }).lean[1].rows[0].fix === 'Review');
 t('trade: customers carry open chits, suppliers carry open orders', rowOf(b.use, 'trade', 'customers').m === '24 chits open' && rowOf(b.use, 'trade', 'suppliers-out').m === '5 orders open');
 t('co-assists: what each sees', rowOf(b.use, 'act', 'actor:0').m === 'Co-assist · no costs' && rowOf(b.use, 'act', 'actor:1').m === 'Co-assist · sees costs');
 const pr = rowOf(b.use, 'cite', 'proof');
@@ -69,21 +71,22 @@ t('trade proof is the header 3 of 4, with Finish and what is missing', pr.m === 
 t('filings and inheriting shops are "not yet" rows, not numbers', rowOf(b.use, 'cite', 'filings').s === 'later' && rowOf(b.use, 'inherit', 'inherit').s === 'later');
 t('impact: businesses = partners + register hops; filings from the hop', b.impact.businesses === 4 && b.impact.filings === 1 && /4 businesses · 1 filing/.test(b.impact.m), JSON.stringify(b.impact));
 t('impact: who lists names', b.impact.who.length >= 3 && b.impact.who.some((w) => w.name === 'Asha Stores'));
-const noEdges = sides.build({ rows: Object.assign({}, rows, { edges: [] }), rail, header, entity_id: 'ME' });
+const noEdges = B({ rows: { edges: [] } });
 t('impact: no filing source -> "filings not yet", never 0', noEdges.impact.filings === null && /filings not yet/.test(noEdges.impact.m), noEdges.impact.m);
-const none = sides.build({ rows: { me: [{ country: 'IN' }], customers: [], suppliers: [], actors: [] }, rail: { suppliers: 0, customers: 0, in: 0, out: 0 }, header: null, entity_id: 'ME' });
+const none = sides.build({ rows: { me: [{ country: 'IN' }], customers: [], suppliers: [], actors: [] }, gov: null, rail: { suppliers: 0, customers: 0, in: 0, out: 0 }, header: null, entity_id: 'ME' });
 t('a new business: no stamp row says so; empty groups are placeholders; impact says nobody', rowOf(none.lean, 'rules', 'constitution').s === 'later' && rowOf(none.use, 'trade', 'nobody').s === 'empty' && rowOf(none.use, 'act', 'noactor').s === 'empty' && none.impact.m === 'Nobody affected');
 t('header unreadable -> trade proof is a "not yet" row', rowOf(none.use, 'cite', 'proof').s === 'later');
-const dead = sides.build({ rows: { me: [{}], customers: [], suppliers: [], actors: [] }, rail: null, header: null, entity_id: 'ME' });
+const dead = sides.build({ rows: { me: [{}], customers: [], suppliers: [], actors: [] }, gov: null, rail: null, header: null, entity_id: 'ME' });
 t('rail unreadable -> trade is one "not yet" row (no 0)', rowOf(dead.use, 'trade', 'trade').s === 'later');
 
 /* ── the route ── */
 let trips = 0, sent = [];
 const dbPath = require.resolve(path.join(API, 'db'));
 const realDb = require(dbPath);
-const present = (sql, params) => /information_schema\.columns/.test(sql) ? (params[1] || []).map((c) => ({ column_name: c })) : /information_schema\.tables/.test(sql) ? [{ '?column?': 1 }] : [];
+const present = (sql, params) => /FROM constitution/.test(sql) ? [{ constitution_key: 'hotel', version: '0.2' }] : /information_schema\.columns/.test(sql) ? (params[1] || []).map((c) => ({ column_name: c })) : /information_schema\.tables/.test(sql) ? [{ '?column?': 1 }] : [];
 const rowsFor = (s) => {
   if (/FROM identities WHERE identity_id/.test(s)) return rows.me;
+  if (/FROM boilerplate/.test(s)) return rows.bp;
   if (/FROM entity_governance/.test(s)) return rows.gov;
   if (/FROM catalogue_adoption/.test(s)) return rows.adopt;
   if (/FROM connector_connection/.test(s)) return rows.conn;
@@ -114,15 +117,15 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const get = async () => { trips = 0; sent = []; const r = await fetch(`http://127.0.0.1:${srv.address().port}/api/entities/sides`); const j = await r.json(); return { status: r.status, j, trips }; };
     const cold = await get();
     t('route: 200 with lean, use, impact', cold.status === 200 && Array.isArray(cold.j.lean) && Array.isArray(cold.j.use) && cold.j.impact, String(cold.status));
-    t('route: the constitution drift survives the wire', cold.j.lean[0].rows.some((r) => r.id === 'constitution' && r.fix === 'Review'));
+    t('route: the constitution drift survives the wire (stamp from govresolve.mintedOf, active from the constitution cache)', cold.j.lean[0].rows.some((r) => r.id === 'constitution' && r.fix === 'Review'));
     const warm = await get();
-    t('route: a warm read is ONE trip of its own (rail + header are the reuses, stubbed here)', warm.trips === 1, warm.trips + ' used');
+    t('route: a warm read is TWO trips of its own - the batch and the stamp (govresolve.mintedOf); rail + header are the reuses, stubbed here', warm.trips === 2, warm.trips + ' used');
     t('route: every statement is a SELECT (reads only)', sent.length > 0 && sent.every((s) => /^\s*SELECT/i.test(s)));
     t('route: a missing table is probed, not queried (no SAVEPOINT)', !sent.some((s) => /SAVEPOINT/i.test(s)));
     railMode = 'boom'; const dead2 = await get();
     t('route: rail failing -> 200, the trade row says "not yet"', dead2.status === 200 && dead2.j.use[0].rows[0].s === 'later');
   } catch (e) { fail++; console.log('  FAIL threw', e && e.stack); }
+  console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n  ' + (pass + fail) + ' checks');
+  process.exitCode = fail ? 1 : 0;
   srv.close();
-  console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==');
-  process.exit(fail ? 1 : 0);
 });
