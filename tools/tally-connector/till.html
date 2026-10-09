@@ -5756,7 +5756,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-10-08.cbsignin';
+var TILL_BUILD = '2026-10-09.signedshop';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -24293,6 +24293,8 @@ function usignLocal(){
     find: function(id){
       if (USIGN.forceEnrol) return null;
       var e = SIGN().pinFind(pinBook(), id);
+      /* ⚠️ a person who is not of THIS shop is not found here — they fall through to the line, never into this shop */
+      if (e && e.entity && S && S.entity_id && String(e.entity) !== String(S.entity_id)) return null;
       return (e && !SIGN().pinLocked(e)) ? e : null;
     },
     check: async function(e, pin){
@@ -24374,7 +24376,8 @@ function usignButtons(){
        */
       + '<button data-testid="till-usign-out" onclick="usignOut()" title="The counter keeps its number and the bill; it locks until somebody signs in">Sign out 🔒</button>';
   } else {
-    if (a) a.innerHTML = '';
+    /* ⭐ the door's promise, in words, WITHOUT naming the shop the page still holds: it is the person who opens a shop */
+    if (a) a.innerHTML = USIGN.opening || USIGN.held ? '' : '<p class="note u" data-testid="till-usign-whichshop">Signing in opens your own shop.</p>';
     b.innerHTML = '<button data-testid="till-usign-close" onclick="usignClose()">Close</button>';
   }
 }
@@ -24428,13 +24431,13 @@ async function usignIn(s, answer){
    */
   var move = usignShopMove(answer);
   if (move === 'other') {
+    /* ⭐ NO "Stay": the person signing in wins. This only SAYS what happens to the old shop — it is not a choice. */
     var here = (S && S.shop && S.shop.name) || 'this shop';
     var q = Number((STATE && STATE.queued) || 0);
-    var ok = await sure('This counter is ' + here + '. You signed in to a different shop.\n\n'
-      + (q ? q + ' unsent bill' + (q > 1 ? 's stay' : ' stays') + ' with ' + here + ' until it signs in here again.'
+    await _askOpen({ message: 'This counter was ' + here + '. You belong to a different shop, so it will open yours.\n\n'
+      + (q ? q + ' unsent bill' + (q > 1 ? 's stay' : ' stays') + ' safe in ' + here + '’s own store and go when ' + here + ' signs in here again.'
            : 'Nothing of ' + here + ' is lost.'),
-      'Switch to your shop', 'A different shop', 'Stay ' + here);
-    if (!ok) { m.back(); m.refuse('Nobody signed in. This counter stays ' + here + '.'); return; }
+      okWord: 'Open my shop', title: 'A different shop', cancelValue: true });   /* one button; Esc is the same answer */
   }
   if (move !== 'same') { USIGN.pending = { token: answer.token, person: k.person, idn: answer.identity || null }; return usignBecome(false); }
   /**
@@ -24473,22 +24476,33 @@ async function usignIn(s, answer){
  */
 function usignShopMove(answer){
   /**
-   * ⚠️⚠️ [2026-10-04, a phone] A KEY THE SHOP HAS REFUSED IS NO KEY. Athi signed in through "nobody signed in" (the
-   * person door, no forceEnrol) on a phone holding a refused key: paired() said yes, so this answered 'same', the
-   * session was never spent on /api/till/enrol, and every refresh flashed "Due to maintenance" again — a loop no
-   * sign-in could break. KEY_OK is false once the shop answered 401/403 (refreshFailed, keyCheck): enrol afresh.
+   * ⭐⭐⭐ THE PERSON SIGNING IN WINS (Athi, 2026-10-09: signed in as mayri123 and "veg shop" — the shop signed in
+   * earlier — came up). Each shop has its own store; the counter never carries the previous shop. So this gathers what
+   * is KNOWN and shopMoveOf() decides; an unknown on either side is never a reason to keep the old shop.
    */
   var theirs = ((answer && answer.identity) || {}).entity_id || null;
-  /**
-   * ⭐ M08: a browser already billing as a PERSON of this very shop — the new session REPLACES the kept one in place
-   * (same shop, same store, no reload): a shift change, a renewed sign-in after SESSION_EXPIRED, or the same person
-   * again. usignIn() hands the token to becomeShop() for that; the shop does not change, so this is 'same'.
-   */
-  if (personOn() && theirs && String(CloudHost.person.entity_id) === String(theirs)) return 'same';
-  if (!paired() || (USIGN && USIGN.forceEnrol) || (typeof KEY_OK !== 'undefined' && KEY_OK === false)) return 'pair';
-  var mine = S && S.entity_id;
-  if (mine && theirs && String(mine) !== String(theirs)) return 'other';
-  return 'same';
+  var held = null;                                   /* the shop this counter opens NOW — the person session's, else the key's */
+  if (personOn()) held = CloudHost.person.entity_id || null;
+  if (!held) held = (S && S.entity_id) || null;
+  if (!held && !onAgent()) { try { held = ls.get(shopLs('cb_till_shop'), '') || null; } catch (_) { held = null; } }   /* the shop ChitBridge opened this key for, kept for the offline start */
+  return shopMoveOf({ theirs: theirs, held: held, personOn: personOn(), paired: paired(),
+                      forceEnrol: !!(USIGN && USIGN.forceEnrol), keyRefused: (typeof KEY_OK !== 'undefined' && KEY_OK === false) });
+}
+/**
+ * The decision table, pure (tests/till-shop-move.test.cjs runs THIS text).
+ *   'same'  — the person belongs to the shop this counter opens, KNOWN on both sides.
+ *   'pair'  — no shop yet, or the key was refused ([TILL-192] / 2026-10-04: a key the shop has refused is no key),
+ *             or the shop this counter opens cannot be confirmed, or the person's own shop is not said: the sign-in
+ *             is spent on the one door, becomeShop(), which opens the shop the SERVER names for this person.
+ *   'other' — both known and different: the person's shop opens, this counter's old shop is left whole in its own store.
+ * ⚠️ NEVER 'same' by default. Unknown used to mean "keep the old shop" and that is how a person landed in the last one.
+ */
+function shopMoveOf(o){
+  var theirs = o.theirs ? String(o.theirs) : '', held = o.held ? String(o.held) : '';
+  if (!o.paired || o.forceEnrol || o.keyRefused) return 'pair';
+  if (!theirs) return 'pair';
+  if (!held) return 'pair';
+  return theirs === held ? 'same' : 'other';
 }
 
 /**
