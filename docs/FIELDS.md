@@ -182,3 +182,20 @@ No SQL: `books` is a key of the shop's `identities.policy_flags` jsonb, whitelis
 | `policy_flags.books.auto_post` | `'on'` or `'off'` (or `{ on: boolean }`); absent = OFF | source. Written by the OWNER only (`PATCH /api/entities/policy { books: { auto_post: 'on' } }`). Read by `lib/books-recurring.autoPostOn` (the nightly sweep) and `lib/books-todo`. OFF (the default, and on any failed read): the sweep posts nothing — an `auto` template and a due accrual reversal are only counted as proposals and show on the To-do. |
 | `books/todo` `recurring_due.items[].auto` | boolean | derived: the template's `auto` AND the flag on. False reads as "ask me". |
 | nightly `posted.recurring.proposed_reversals` | integer | derived: accrual reversals due that the sweep left for the To-do because the flag is OFF. |
+
+## GET /api/books/party/:id/statement · POST /api/books/entries/:id/reverse (M29 reverse from the row, 2026-10-09 · SPEC-payments §4.4, §4.5)
+
+Every statement line now names its entry, so a row can be reversed without opening the Day book; the reverse answer names the bills it reopened. All derived — written by nobody; read by the CB Accounts ledger (party view) and the CRM record's statement (`cap-books.js statementHTML`, `bkLgDetails`). One read per table, never per row (`routes/books.js`: lines with their reversal in one query, sources, the party's items once).
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `lines[].entry_id` · `entry_no` · `event_type` | uuid · `SV/2026-27/000001` · `payment_made` … | The line's own journal entry (`journal_entry`, via `books-store ledgerLines`). `entry_no` = `ref` (kept for the old reader). The web's Reverse action calls `POST /entries/:entry_id/reverse` with it. |
+| `lines[].reverses_entry_id` | uuid or null | Set on a mirror (reversal) line: the entry it cancels. A line with it is never offered Reverse. |
+| `lines[].reversed_by` · `reversed_why` | `MJ/2026-27/000012` or null · words or null | The FIRST entry whose `reverses_entry_id` is this line's entry (one `LEFT JOIN LATERAL … LIMIT 1` in `ledgerLines`), and the reason read back from its narration (`books.js reversalWhy` — the one writer's `'Reversal of <no> — <reason>'`). The row paints "reversed by MJ/… — reason"; a line with it is never offered Reverse. |
+| `lines[].payment_id` | uuid or null | Derived from the entry's `source_ref` `pay:<payment_id>` (no query). Null on a line that is not a payment. |
+| `lines[].unapplied_minor` | integer or null | `CBReceivables.outstanding(items).by_ref['pay:<id>']`, negated — the part of the payment still on account (the same figure the preview and the outcome use). 0 once reversed. Null on a non-payment line. |
+| `lines[].advice` | `{ chit_id, state: none·sent·delivered·shared·disputed, shared_at }` or null | The payment-advice state (§3.6). `none` until the advice columns land (PR 6, migration b2xx `books_payment.advice_chit_id / advice_shared_at`); the shape is sent now so the row reads the same then. Null on a non-payment line. |
+| reverse `reverses_entry_id` | uuid | The entry the mirror cancels (beside `reverses`, its number). |
+| reverse `reopened[]` | `[{ against_ref, bill_no }]` | `CBReceivables.reopenedBy(rows)` (engines v1.31.0) over the party rows written in the SAME transaction — the bills whose allocation halves were reversed, each once; `bill_no` from `billNos` (one read), null when the bill is not a chit here. |
+| reverse `words` | `Reversed PY/… — ₹1,500 — by MJ/…. Reopened 2 bills (KT-0007, KT-0008).` | The sentence a screen paints (`books.js writeReversal`); the web never composes it. |
+| reverse 409 `{ code: 'ALREADY_REVERSED', error, message, entry_no, entry_id }` | — | A second Reverse of an entry already reversed (the writer's `source_ref 'reverse:<id>'` found it, M11): names the reversal in words. Not a replay: a reversal has no client_ref of its own. |

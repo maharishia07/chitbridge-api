@@ -625,14 +625,7 @@
       "fired": true,
       "status": 404
     },
-    "POST /api/books/payments/:id/confirm": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 404
-    },
-    "POST /api/books/payments/:id/propose": {
+    "POST /api/books/payments/preview": {
       "file": "books.js",
       "trips": 1,
       "wire": 6,

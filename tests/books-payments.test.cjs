@@ -282,6 +282,66 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     eq('no code path outside lib/books.js writes "paid" (routes/*.js, lib/*.js)', offenders, []);
   });
 
+  /* ═══ 6 · spec test 5 (M29): reverse from the row — the statement line names its entry; the reversal mirrors, never edits; the bills reopen in the SAME transaction ═══ */
+  await section('6 · M29 reverse from the row: statement lines carry entry ids + advice state; POST /entries/:id/reverse reopens exactly the bills it had settled', async () => {
+    const SUPP2 = '44444444-4444-4444-8444-444444444444';
+    X.T.parties.push({ owner: SHOP, party_id: SUPP2, party_no: 'P-00003', name: 'Velan Steels', supplier: true, credit_days: 30 });
+    for (const [n, date, rate, no] of [['m', '2026-09-02', { rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }, 'VS-0020'], ['n', '2026-09-06', { rate: 5, taxable: 500, cgst: 12.5, sgst: 12.5, igst: 0 }, 'VS-0021']]) {
+      await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date, currency: 'INR', party: SUPP2, source_chit_id: BILL(n), source_ref: 'chit:' + n, by_rate: [rate], paid: {}, round_off: 0 });
+      X.T.chits.push({ chit_id: BILL(n), bill_no: no, entity_id: SHOP, purpose: 'order', business_json: { bill_no: no } });
+    }
+    stamp(X, AGO_2D());
+    const rec = await q('POST', '/payments', { party_id: SUPP2, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-06', amount_minor: 150000, allocate: 'oldest_first', client_ref: 'vs-1' });
+    ok('₹1,500 oldest first settles VS-0020 whole and part of VS-0021', rec.status === 200 && rec.body.allocation.settled.length === 2 && rec.body.outcome.on_account_minor === 0, JSON.stringify(rec.body));
+    const payNo = rec.body.posted.entry_no, payId = rec.body.payment.payment_id, entryId = rec.body.posted.entry_id;
+    /* the statement: the payment line names its entry and its payment, says it is not reversed, carries the advice state */
+    const st0 = await q('GET', '/party/' + SUPP2 + '/statement?from=2026-04-01&to=2027-03-31');
+    const pl0 = (st0.body.lines || []).find((l) => l.entry_no === payNo);
+    ok('each line carries entry_id · entry_no · event_type; the payment line its payment_id and unapplied_minor 0', !!pl0 && pl0.entry_id === entryId && pl0.event_type === 'payment_made' && pl0.payment_id === payId && pl0.unapplied_minor === 0
+      && st0.body.lines.every((l) => l.entry_id && l.entry_no && l.event_type), JSON.stringify(st0.body.lines));
+    eq('…not reversed yet: reversed_by / reversed_why null; the advice state is the shape PR 6 fills (none until the columns land)', [pl0 && pl0.reversed_by, pl0 && pl0.reversed_why, pl0 && pl0.advice], [null, null, { chit_id: null, state: 'none', shared_at: null }]);
+    ok('…a bill line is no payment: payment_id, unapplied_minor and advice are null', st0.body.lines.filter((l) => l.event_type === 'purchase_bill').every((l) => l.payment_id === null && l.unapplied_minor === null && l.advice === null));
+    const before = JSON.stringify(await X.store.entry(X.db, SHOP, entryId));
+    /* ⭐ ONE TRANSACTION: the party rows fail → no mirror entry, no number taken, the bills stay settled */
+    const c0 = counts(X), wasInsert = X.store.insertItems;
+    X.store.insertItems = async () => { throw new Error('disk full'); };
+    const broken = await q('POST', '/entries/' + entryId + '/reverse', { reason: 'Paid twice' });
+    X.store.insertItems = wasInsert;
+    ok('the reversal and the reopening commit together or not at all: a failed item write leaves NO mirror entry, NO number taken', broken.status >= 500 && JSON.stringify(counts(X)) === JSON.stringify(c0), broken.status + ' ' + JSON.stringify(counts(X)) + ' vs ' + JSON.stringify(c0));
+    const no = await q('POST', '/entries/' + entryId + '/reverse', {});
+    ok('no reason → 422 "A reversal needs a reason."', no.status === 422 && no.body.error === 'A reversal needs a reason.', JSON.stringify(no.body));
+    /* the trips the route makes, counted on the store (the harness has no X-DB-Trips: the in-memory store answers no SQL) */
+    const trips = []; const wrapped = {};
+    Object.keys(X.store).forEach((k) => { if (typeof X.store[k] === 'function') { wrapped[k] = X.store[k]; X.store[k] = function () { trips.push(k); return wrapped[k].apply(this, arguments); }; } });
+    const rev = await q('POST', '/entries/' + entryId + '/reverse', { reason: 'Paid twice' });
+    Object.keys(wrapped).forEach((k) => { X.store[k] = wrapped[k]; });
+    ok('200: the mirror entry, naming what it reverses and the bills it reopened by number', rev.status === 200 && rev.body.ok === true && rev.body.reverses === payNo && rev.body.reverses_entry_id === entryId && /^MJ\//.test(rev.body.entry_no)
+      && JSON.stringify(rev.body.reopened) === JSON.stringify([{ against_ref: BILL('m'), bill_no: 'VS-0020' }, { against_ref: BILL('n'), bill_no: 'VS-0021' }]), JSON.stringify(rev.body));
+    eq('…the words a screen paints', rev.body.words, 'Reversed ' + payNo + ' — ₹1,500 — by ' + rev.body.entry_no + '. Reopened 2 bills (VS-0020, VS-0021).');
+    console.log('          store calls for POST /entries/:id/reverse: ' + trips.length + ' (' + trips.join(' ') + ')');
+    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 14 store calls for a 2-bill payment', trips.length <= 14 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
+    /* ⭐ never edited, only mirrored */
+    ok('the original entry is byte-for-byte what it was', JSON.stringify(await X.store.entry(X.db, SHOP, entryId)) === before);
+    const mirror = await X.store.entry(X.db, SHOP, rev.body.entry_id), orig = JSON.parse(before);
+    ok('the mirror points at it and swaps every line (Dr ↔ Cr), same accounts, same party', mirror.reverses_entry_id === entryId && mirror.lines.length === orig.lines.length
+      && mirror.lines.every((l, i) => l.account_id === orig.lines[i].account_id && l.party_id === orig.lines[i].party_id && Number(l.dr_minor) === Number(orig.lines[i].cr_minor) && Number(l.cr_minor) === Number(orig.lines[i].dr_minor)), JSON.stringify(mirror.lines));
+    /* ⭐ exactly the allocations it closed, reopened: outstanding back to the bill amounts; nothing of the payment left on account */
+    const o = X.E.receivables().outstanding(await X.B.partyItems(X.db, SHOP, SUPP2, null));
+    eq('VS-0020 and VS-0021 owe their full amounts again; the payment nets to nothing', [o.by_ref[BILL('m')].outstanding_minor, o.by_ref[BILL('n')].outstanding_minor, o.by_ref['pay:' + payId].outstanding_minor], [112000, 52500, 0]);
+    ok('every reversal row names the row it reverses and hangs on the mirror entry', X.T.items.filter((i) => i.ref === 'pay:' + payId && i.ref_kind === 'reversal').every((i) => i.reverses != null && i.entry_id === rev.body.entry_id) && X.T.items.filter((i) => i.ref === 'pay:' + payId && i.ref_kind === 'reversal').length === 5);
+    /* the statement line now says so */
+    const st1 = await q('GET', '/party/' + SUPP2 + '/statement?from=2026-04-01&to=2027-03-31');
+    const pl1 = st1.body.lines.find((l) => l.entry_no === payNo), ml = st1.body.lines.find((l) => l.entry_no === rev.body.entry_no);
+    eq('the payment line: reversed_by names the mirror, reversed_why the reason; the mirror line names what it reverses; the payment has nothing unapplied', [pl1.reversed_by, pl1.reversed_why, ml.reverses_entry_id, ml.event_type, pl1.unapplied_minor], [rev.body.entry_no, 'Paid twice', entryId, 'reversal', 0]);
+    ok('the statement is one read per table: lines (with their reversal in the same query), sources, items once — never a query per row', (() => { const t = []; const w = {}; Object.keys(X.store).forEach((k) => { if (typeof X.store[k] === 'function') { w[k] = X.store[k]; X.store[k] = function () { t.push(k); return w[k].apply(this, arguments); }; } });
+      return q('GET', '/party/' + SUPP2 + '/statement?from=2026-04-01&to=2027-03-31').then(() => { Object.keys(w).forEach((k) => { X.store[k] = w[k]; }); console.log('          store calls for GET /party/:id/statement: ' + t.length + ' (' + t.join(' ') + ')'); return t.filter((k) => k === 'items').length === 1 && t.filter((k) => k === 'ledgerLines').length <= 2 && t.length <= 12; }); })());
+    const again = await q('POST', '/entries/' + entryId + '/reverse', { reason: 'Paid twice' });
+    ok('a second Reverse → 409 ALREADY_REVERSED naming ' + rev.body.entry_no + '; nothing written', again.status === 409 && again.body.code === 'ALREADY_REVERSED' && again.body.message === 'This entry was already reversed by ' + rev.body.entry_no + '.'
+      && X.T.entries.filter((h) => h.reverses_entry_id === entryId).length === 1, JSON.stringify(again.body));
+    const twice = await q('POST', '/entries/' + rev.body.entry_id + '/reverse', { reason: 'oops' });
+    ok('reversing the mirror itself is refused in words', twice.status === 422 && /itself a reversal/.test(twice.body.error), JSON.stringify(twice.body));
+  });
+
   srv.close();
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);

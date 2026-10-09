@@ -144,6 +144,14 @@ async function captureBooks() {
     await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 20000, currency: 'INR', allocate: 'oldest_first' }, '/payments/preview');
     await q('POST', '/payments', Object.assign({ client_ref: 'pay-1' }, PAY), '/payments');
     await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 500000, currency: 'INR', mode: 'cash', received_at: '2026-10-12', allocate: 'oldest_first', client_ref: 'pay-2' }, '/payments');
+    /* ── M29 reverse from the row: the statement's payment line (entry_id · payment_id · advice state), the reversal that reopens the bill, the line after, a second Reverse → 409 ── */
+    const st = await q('GET', '/party/' + SUPP + '/statement?from=2026-04-01&to=2027-03-31', null, '/party/:id/statement');
+    const payLine = ((st.body && st.body.lines) || []).find((l) => l.payment_id);
+    if (payLine) {
+      await q('POST', '/entries/' + payLine.entry_id + '/reverse', { reason: 'Paid twice' }, '/entries/:id/reverse');
+      await q('GET', '/party/' + SUPP + '/statement?from=2026-04-01&to=2027-03-31', null, '/party/:id/statement');
+      await q('POST', '/entries/' + payLine.entry_id + '/reverse', { reason: 'Paid twice' }, '/entries/:id/reverse');
+    }
 
     /* ── repeating entries ── */
     const rec = await q('POST', '/recurring', { name: 'Shop rent', event: { kind: 'expense', class: 'rent', amount_minor: 500000, paid_from: 'bank' }, frequency: 'monthly', next_on: '2027-04-01' }, '/recurring');
