@@ -44,12 +44,16 @@ const summaryRow = (key) => ({ chit_id: 'c1', created_at: new Date(), business_j
 function chits() {
   if (F.chits === 'many') return Array.from({ length: 5000 }, (_, i) => ({ chit_id: 'x' + i, direction: 'received', current_status: 'completed', created_at: new Date(Date.now() - 40 * DAYS), open_disputes: 0 }));
   const d = (n) => new Date(Date.now() - n * DAYS);
-  return [
+  const own = F.chits === 'own' ? [   /* the shop's own chits: a counter sale (closed by the books, or not yet) and a note to self - never stuck */
+    { chit_id: 'cs1', direction: 'received', sender_entity_id: 'e1', current_status: 'pending', created_at: d(20), open_disputes: 0, manual_subject: 'Counter sale C1/26-27/0001' },
+    { chit_id: 'cs2', direction: 'received', sender_entity_id: 'e1', current_status: 'completed', created_at: d(20), open_disputes: 0 },
+  ] : [];
+  return own.concat([
     { chit_id: 'a', direction: 'received', current_status: 'pending', created_at: d(10), open_disputes: 0 },   /* in, and stuck (7-day default) */
     { chit_id: 'b', direction: 'received', current_status: 'pending', created_at: d(1), open_disputes: 0 },    /* in */
     { chit_id: 'c', direction: 'sent', current_status: 'accepted', created_at: d(2), open_disputes: 0 },       /* out */
     { chit_id: 'd', direction: 'sent', current_status: 'completed', created_at: d(30), open_disputes: 0 },     /* closed */
-  ];
+  ]);
 }
 function answer(text, params) {
   sent.push(String(text));
@@ -155,6 +159,11 @@ const get = (port, p) => new Promise((ok) => {
   t('rail: { suppliers, customers, in, out, stuck } - the counts are CRM\'s (hidden and merged rows are not parties)', r.json, { suppliers: 3, customers: 5, in: 2, out: 1, stuck: 1 });
   t('rail: at most 3 trips', r.trips <= 3, true);
   t('rail: both CRM list reads leave the shop itself out (H3)', F.crmSql.length >= 2 && F.crmSql.every((q) => /<> \$1/.test(q)), true);
+  F.chits = 'own'; r = await g('rail');
+  t('rail: a chit the shop sent to itself is never stuck - an open one is "in", a closed one is nothing', r.json, { suppliers: 3, customers: 5, in: 3, out: 1, stuck: 1 });
+  r = await get(port, '/api/facts/rail/chits');
+  t('rail/chits: a note to self is listed (In tab) with stuck:false, self:true, no reason; stuck rows still number the rail', [r.json.items.filter((i) => i.stuck).map((i) => i.chit_id), r.json.items.find((i) => i.chit_id === 'cs1').self, r.json.items.find((i) => i.chit_id === 'cs1').why, r.json.items.some((i) => i.chit_id === 'cs2')], [['a'], true, null, false]);
+  F.chits = 'few';
   F.chits = 'many'; r = await g('rail');
   t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number)', r.json, { suppliers: 3, customers: 5 });
   F.chits = 'few';

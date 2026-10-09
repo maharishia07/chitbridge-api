@@ -5041,4 +5041,5 @@ router.get('/trace/networks', auth, async (req, res) => {
   }
 });
 
+router.moveStatus = moveStatus;   /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 module.exports = router;
