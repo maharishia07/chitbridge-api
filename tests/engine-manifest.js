@@ -190,6 +190,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* the field ledger's repo-reading helper (migration columns, form inputs, readers of a not-used field) — a build-time
+     tool for tests/field-ledger.test.cjs, not a rule of the platform. (2026-10-09) */
+  'field-ledger.js',
   /* [BOOKS v2] the ledger's SQL (books-store), its nightly runner (books-nightly: retries, names mismatches, never fixes)
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',

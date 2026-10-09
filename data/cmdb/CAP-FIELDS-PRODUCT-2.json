@@ -1,0 +1,1190 @@
+{
+ "ci": "CAP-FIELDS-PRODUCT-2",
+ "title": "Product fields (2 of 2)",
+ "type": "Field ledger",
+ "system": "ChitBridge API · catalogue_items",
+ "source": "hand",
+ "summary": "Part 2 of the product field ledger: 50 fields (schema_fields.field_type … item_data.sla_hours). Index: CAP-FIELDS-PRODUCT.",
+ "raised_by": "Athi, 2026-10-09",
+ "fields": [
+  {
+   "key": "schema_fields.field_type",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Datatype: text, number, choice, date.",
+   "source": "schema_fields.field_type",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "column-rules (LOCKED name/unit/price; retypeWhy/why tighten on use)",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "form input type",
+    "validateAgainst"
+   ],
+   "test": "api: catalogue-columns.test.js, column-parity.test.js",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.required",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Whether a product must have it.",
+   "source": "schema_fields.required",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "column-rules (LOCKED name/unit/price; retypeWhy/why tighten on use)",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "validateAgainst",
+    "column-rules.why"
+   ],
+   "test": "api: column-rules.test.cjs, column-parity.test.js",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.min_value",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Smallest allowed number.",
+   "source": "schema_fields.min_value",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "none",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "validateAgainst"
+   ],
+   "test": "api: column-rules.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.max_value",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Largest allowed number (intended).",
+   "source": "schema_fields.max_value",
+   "set_by": "nobody — no writer found (routes/schemas.js and ensureDeclared never name it)",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: column-rules.test.cjs",
+   "status": "not-used",
+   "also": [],
+   "finding": "No reader or writer of schema_fields.max_value found in the API, the web pages or the connectors (only the baseline migration names it). PROPOSE: retire (a migration drops it after a survey proves it empty) — or MARK \"not used — reserved for Largest allowed number\".",
+   "watch": [
+    "\\b(max_value|default_value)\\b"
+   ]
+  },
+  {
+   "key": "schema_fields.default_value",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "A value to fill when blank (intended).",
+   "source": "schema_fields.default_value",
+   "set_by": "nobody — no writer found (routes/schemas.js and ensureDeclared never name it)",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: column-rules.test.cjs",
+   "status": "not-used",
+   "also": [],
+   "finding": "No reader or writer of schema_fields.default_value found in the API, the web pages or the connectors (only the baseline migration names it). PROPOSE: retire (a migration drops it after a survey proves it empty) — or MARK \"not used — reserved for A value to fill when blank\".",
+   "watch": [
+    "\\b(max_value|default_value)\\b"
+   ]
+  },
+  {
+   "key": "schema_fields.options",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "The choices of a choice column (intended).",
+   "source": "schema_fields.options",
+   "set_by": "nobody — no writer found (routes/schemas.js and ensureDeclared never name it)",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: column-rules.test.cjs",
+   "status": "not-used",
+   "also": [],
+   "finding": "No reader or writer of schema_fields.options found in the API, the web pages or the connectors (only the baseline migration names it). PROPOSE: retire (a migration drops it after a survey proves it empty) — or MARK \"not used — reserved for The choices of a choice column\".",
+   "watch": [
+    "\\bschema_fields\\b[^;]{0,300}\\b(options|placeholder|xref)\\b"
+   ]
+  },
+  {
+   "key": "schema_fields.placeholder",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Hint text in the empty input (intended).",
+   "source": "schema_fields.placeholder",
+   "set_by": "nobody — no writer found (routes/schemas.js and ensureDeclared never name it)",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: column-rules.test.cjs",
+   "status": "not-used",
+   "also": [],
+   "finding": "No reader or writer of schema_fields.placeholder found in the API, the web pages or the connectors (only the baseline migration names it). PROPOSE: retire (a migration drops it after a survey proves it empty) — or MARK \"not used — reserved for Hint text in the empty input\".",
+   "watch": [
+    "\\bschema_fields\\b[^;]{0,300}\\b(options|placeholder|xref)\\b"
+   ]
+  },
+  {
+   "key": "schema_fields.display_order",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Position on the form and the Columns list.",
+   "source": "schema_fields.display_order",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "none",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "form order",
+    "till facts (first 3)"
+   ],
+   "test": "api: column-parity.test.js, column-rules.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.xref",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "An external cross reference (intended).",
+   "source": "schema_fields.xref",
+   "set_by": "nobody — no writer found (routes/schemas.js and ensureDeclared never name it)",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: column-rules.test.cjs",
+   "status": "not-used",
+   "also": [],
+   "finding": "No reader or writer of schema_fields.xref found in the API, the web pages or the connectors (only the baseline migration names it). PROPOSE: retire (a migration drops it after a survey proves it empty) — or MARK \"not used — reserved for An external cross reference\".",
+   "watch": [
+    "\\bschema_fields\\b[^;]{0,300}\\b(options|placeholder|xref)\\b"
+   ]
+  },
+  {
+   "key": "schema_fields.created_at",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "When the column was declared.",
+   "source": "schema_fields.created_at",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "none",
+   "shown_in": [],
+   "used_by": [],
+   "test": "api: column-rules.test.cjs",
+   "status": "not-used",
+   "also": [],
+   "finding": "Written by the default, never read or shown. PROPOSE: MARK \"not used — audit stamp, kept\" (cheap, and a column history is worth having); retire only with the table.",
+   "watch": []
+  },
+  {
+   "key": "schema_fields.unit",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "UN/ECE Rec 20 unit of the column's values.",
+   "source": "schema_fields.unit",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "routes/schemas.js PATCH validators; b200 columns",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "export headers (?)"
+   ],
+   "test": "api: column-rules.test.cjs, column-parity.test.js",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.leg",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Where the value should come from: cb, system, customer, compute, standard.",
+   "source": "schema_fields.leg",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "routes/schemas.js PATCH validators; b200 columns",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "catalogue-model routeChain (?)"
+   ],
+   "test": "api: column-rules.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "schema_fields.via",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "Which feed fills it: ERP, IoT, AI.",
+   "source": "schema_fields.via",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "routes/schemas.js PATCH validators; b200 columns",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "catalogue-model routeChain (?)"
+   ],
+   "test": "api: column-rules.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_schedule.schedule_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "Id of the queued change.",
+   "source": "catalogue_item_schedule.schedule_id",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_schedule.entity_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "Owning shop.",
+   "source": "catalogue_item_schedule.entity_id",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_schedule.item_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "The product it will change (no FK; can dangle).",
+   "source": "catalogue_item_schedule.item_id",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_schedule.effective_at",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "When the change applies.",
+   "source": "catalogue_item_schedule.effective_at",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [
+    "Workshop › scheduled changes list"
+   ],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": []
+  },
+  {
+   "key": "catalogue_item_schedule.patch",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "copied",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "RFC 7386 merge-patch of the keys that change.",
+   "source": "catalogue_item_schedule.patch",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [
+    "Workshop › scheduled changes list"
+   ],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": []
+  },
+  {
+   "key": "catalogue_item_schedule.created_by",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "Who queued it.",
+   "source": "catalogue_item_schedule.created_by",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_schedule.created_at",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "When queued.",
+   "source": "catalogue_item_schedule.created_at",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_schedule.applied_at",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "When applied (then history).",
+   "source": "catalogue_item_schedule.applied_at",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [
+    "Workshop › scheduled changes list"
+   ],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Applied rows are kept as history, never purged (garbage G3)."
+  },
+  {
+   "key": "catalogue_item_schedule.applied_rows",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "How many rows it touched.",
+   "source": "catalogue_item_schedule.applied_rows",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "shown-nowhere",
+   "also": [
+    "untested"
+   ]
+  },
+  {
+   "key": "catalogue_item_schedule.cancelled_at",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "system",
+   "origin_detail": "lib/schedule.js (b203)",
+   "means": "When cancelled.",
+   "source": "catalogue_item_schedule.cancelled_at",
+   "set_by": "Workshop › Effective from; applyDue (system)",
+   "validated_by": "future-dated only",
+   "shown_in": [
+    "Workshop › scheduled changes list"
+   ],
+   "used_by": [
+    "schedule.applyDue"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": []
+  },
+  {
+   "key": "quick_key_group_item.product_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "FK to catalogue_items(item_id) (b271 corrected)",
+   "means": "Which product sits on a quick-key group.",
+   "source": "quick_key_group_item.product_id",
+   "set_by": "Counter quick-key groups editor",
+   "validated_by": "FK",
+   "shown_in": [
+    "Till › item row quick keys"
+   ],
+   "used_by": [
+    "quick-keys.js"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "A removed product (is_active=false) keeps its row: it dangles in the sense of \"points at a product no list shows\" (survey)."
+  },
+  {
+   "key": "counter_hidden_item.product_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "FK ON DELETE CASCADE to catalogue_items",
+   "means": "A product hidden from one counter.",
+   "source": "counter_hidden_item.product_id",
+   "set_by": "Till › hide item (unhideItem deletes)",
+   "validated_by": "FK",
+   "shown_in": [
+    "Till › item row (hidden list)"
+   ],
+   "used_by": [
+    "till snapshot filter"
+   ],
+   "test": "api: till-hidden.test.js · web: till-lock.cjs, till-netsim.cjs",
+   "status": "ok",
+   "also": [],
+   "finding": "Soft delete never fires the CASCADE; rows for removed products stay (garbage G4)."
+  },
+  {
+   "key": "combo_templates.product_item_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "b267: the product a combo template prices as",
+   "means": "Which catalogue product a combo template is.",
+   "source": "combo_templates.product_item_id",
+   "set_by": "Combo lab",
+   "validated_by": "no FK declared in the migration",
+   "shown_in": [
+    "Combo lab"
+   ],
+   "used_by": [
+    "combo-templates"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "No FK: can dangle."
+  },
+  {
+   "key": "stock_balance.item_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "catalogue item or supply item (item_kind)",
+   "means": "Which item the on-hand figure belongs to.",
+   "source": "stock_balance.item_id",
+   "set_by": "system (stock-store from movements)",
+   "validated_by": "item_kind check",
+   "shown_in": [
+    "Stock screen"
+   ],
+   "used_by": [
+    "availability",
+    "books"
+   ],
+   "test": "api: stock-cycle.test.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Polymorphic id (item_kind catalogue|supply): a dangling id cannot be caught by an FK."
+  },
+  {
+   "key": "stock_movement.item_id",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "referenced",
+   "origin_detail": "as stock_balance",
+   "means": "Which item a stock movement moved.",
+   "source": "stock_movement.item_id",
+   "set_by": "system (goods-in, bills)",
+   "validated_by": "item_kind check",
+   "shown_in": [
+    "Stock movements list"
+   ],
+   "used_by": [
+    "stock_balance fold"
+   ],
+   "test": "api: stock-cycle.test.js",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "cb_catalogue_item.*",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "27 columns (name, price, currency_code, out_of_stock, section, category, offer, discounted_price, field_json_data … legacy_id) created in 000_baseline and net03_full_schema",
+   "means": "The pre-item_data price-list table.",
+   "source": "cb_catalogue_item",
+   "set_by": "nobody (no INSERT/UPDATE in lib, routes, scripts)",
+   "validated_by": "n/a",
+   "shown_in": [],
+   "used_by": [],
+   "test": "none found",
+   "status": "not-used",
+   "also": [],
+   "finding": "ARCHIVED 2026-08-06 (src/routes/catalogue.js: routes removed, \"tables are empty\", left dormant \"for a cycle\", then \"drop them in a gated migration\"). Only src/services/catalogue.js (unreferenced), jest.setup.js (truncate) and the schema files name it. PROPOSE: retire — a migration drops cb_catalogue_item and cb_catalogue_category after the survey shows 0 rows (copy kept in the migration; Athi runs it). If a price_type/offer model is wanted later it belongs on the price overlay, not here.",
+   "watch": [
+    "\\bcb_catalogue_item\\b"
+   ],
+   "allow": [
+    "src/routes/catalogue.js",
+    "src/services/catalogue.js",
+    "jest.setup.js"
+   ]
+  },
+  {
+   "key": "item_data.fineness",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the gold trade (lib/starter-fields.js), leg cb",
+   "means": "Fineness (number) — a column the gold starter declares.",
+   "source": "catalogue_items.item_data.fineness",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type number from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "api: column-rules.test.cjs, csv-preflight.test.js · web: cat03-probe.cjs, catalogue.spec.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.assay_cert",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the gold trade (lib/starter-fields.js), leg cb",
+   "means": "Assay certificate (text) — a column the gold starter declares.",
+   "source": "catalogue_items.item_data.assay_cert",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "api: column-rules.test.cjs, csv-preflight.test.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.bar_serial",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the gold trade (lib/starter-fields.js), leg cb",
+   "means": "Bar serial (text) — a column the gold starter declares.",
+   "source": "catalogue_items.item_data.bar_serial",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "api: csv-preflight.test.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.origin_farm",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the coffee trade (lib/starter-fields.js), leg cb",
+   "means": "Origin farm (text) — a column the coffee starter declares.",
+   "source": "catalogue_items.item_data.origin_farm",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.varietal",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the coffee trade (lib/starter-fields.js), leg cb",
+   "means": "Varietal (text) — a column the coffee starter declares.",
+   "source": "catalogue_items.item_data.varietal",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.cupping_score",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the coffee trade (lib/starter-fields.js), leg cb",
+   "means": "Cupping score (number) — a column the coffee starter declares.",
+   "source": "catalogue_items.item_data.cupping_score",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type number from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.moisture_pct",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the coffee trade (lib/starter-fields.js), leg system",
+   "means": "Moisture % (number) — a column the coffee starter declares.",
+   "source": "catalogue_items.item_data.moisture_pct",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"; intended to be fed by a connector (ERP/IoT), none built",
+   "validated_by": "type number from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.shelf_life_days",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the pharma trade (lib/starter-fields.js), leg cb",
+   "means": "Shelf life (days) (number) — a column the pharma starter declares.",
+   "source": "catalogue_items.item_data.shelf_life_days",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type number from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.active_ingredient",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the pharma trade (lib/starter-fields.js), leg cb",
+   "means": "Active ingredient (text) — a column the pharma starter declares.",
+   "source": "catalogue_items.item_data.active_ingredient",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.storage_temp",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the pharma trade (lib/starter-fields.js), leg system",
+   "means": "Storage temp (number) — a column the pharma starter declares.",
+   "source": "catalogue_items.item_data.storage_temp",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"; intended to be fed by a connector (ERP/IoT), none built",
+   "validated_by": "type number from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.texture_family",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the paint trade (lib/starter-fields.js), leg cb",
+   "means": "Texture family (text) — a column the paint starter declares.",
+   "source": "catalogue_items.item_data.texture_family",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "catalogue-build (network face facets)"
+   ],
+   "test": "api: catalogue-read.test.js",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "item_data.colour_combination",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the paint trade (lib/starter-fields.js), leg cb",
+   "means": "Colour combination (text) — a column the paint starter declares.",
+   "source": "catalogue_items.item_data.colour_combination",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.sheen",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the paint trade (lib/starter-fields.js), leg cb",
+   "means": "Sheen (text) — a column the paint starter declares.",
+   "source": "catalogue_items.item_data.sheen",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "catalogue-build (network face facets)"
+   ],
+   "test": "api: identity.test.js, catalogue-read.test.js",
+   "status": "ok",
+   "also": []
+  },
+  {
+   "key": "item_data.coverage_sqft_per_litre",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the paint trade (lib/starter-fields.js), leg cb",
+   "means": "Coverage (sq ft/L) (number) — a column the paint starter declares.",
+   "source": "catalogue_items.item_data.coverage_sqft_per_litre",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type number from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "api: csv-preflight.test.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.stock_litres",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the paint trade (lib/starter-fields.js), leg system via ERP",
+   "means": "Stock (litres) (number) — a column the paint starter declares.",
+   "source": "catalogue_items.item_data.stock_litres",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"; intended to be fed by a connector (ERP), none built",
+   "validated_by": "type number from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.source_farm",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the veg trade (lib/starter-fields.js), leg cb",
+   "means": "Source farm (text) — a column the veg starter declares.",
+   "source": "catalogue_items.item_data.source_farm",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "untested",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.origin_country",
+   "kinds": [
+    "packed good"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the trade trade (lib/starter-fields.js), leg cb",
+   "means": "Origin country (text) — a column the trade starter declares.",
+   "source": "catalogue_items.item_data.origin_country",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "api: identity.test.js",
+   "status": "ok",
+   "also": [],
+   "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
+  },
+  {
+   "key": "item_data.skill",
+   "kinds": [
+    "service"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the service trade (lib/starter-fields.js), leg cb",
+   "means": "Skill or trade (text) — a column the service starter declares.",
+   "source": "catalogue_items.item_data.skill",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type text from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [
+    "readiness (skill list)"
+   ],
+   "test": "none found",
+   "status": "untested",
+   "also": []
+  },
+  {
+   "key": "item_data.min_charge",
+   "kinds": [
+    "service"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the service trade (lib/starter-fields.js), leg cb",
+   "means": "Minimum charge (number) — a column the service starter declares.",
+   "source": "catalogue_items.item_data.min_charge",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type number from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "no-meaning",
+   "also": [
+    "untested"
+   ],
+   "finding": "The label promises behaviour (\"Minimum charge\") that nothing performs; no engine reads it. Either wire it or relabel it a plain note."
+  },
+  {
+   "key": "item_data.estimate_req",
+   "kinds": [
+    "service"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the service trade (lib/starter-fields.js), leg cb",
+   "means": "Estimate required (choice) — a column the service starter declares.",
+   "source": "catalogue_items.item_data.estimate_req",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type choice from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "no-meaning",
+   "also": [
+    "untested"
+   ],
+   "finding": "The label promises behaviour (\"Estimate required\") that nothing performs; no engine reads it. Either wire it or relabel it a plain note."
+  },
+  {
+   "key": "item_data.sla_hours",
+   "kinds": [
+    "service"
+   ],
+   "origin": "keyed",
+   "origin_detail": "starter column of the service trade (lib/starter-fields.js), leg cb",
+   "means": "Respond within (hours) (number) — a column the service starter declares.",
+   "source": "catalogue_items.item_data.sla_hours",
+   "set_by": "Catalogue setup › starter columns, then the product form \"More about this product\"",
+   "validated_by": "type number from schema_fields; nothing else",
+   "shown_in": [
+    "Workshop › product detail › More about this product",
+    "Export CSV/XLSX"
+   ],
+   "used_by": [],
+   "test": "none found",
+   "status": "no-meaning",
+   "also": [
+    "untested"
+   ],
+   "finding": "The label promises behaviour (\"Respond within (hours)\") that nothing performs; no engine reads it. Either wire it or relabel it a plain note."
+  }
+ ],
+ "relationships": [
+  {
+   "this": "CAP-FIELDS-PRODUCT-2",
+   "rel": "is part of",
+   "that": "CAP-FIELDS-PRODUCT"
+  }
+ ]
+}

@@ -139,4 +139,55 @@ it('a record is versioned only when it changes (the upsert compares before it wr
   assert.ok(/JSON\.stringify\(cur\.rows\[0\]\.rules \|\| \{\}\) === JSON\.stringify\(rules\)/.test(up.slice(0, 2500)), 'the no-change check is gone');
 });
 
+console.log('\nTHE FIELD LEDGER — a record may list the fields of an item kind; the shape refuses a row that does not fit\n');
+const fld = (o) => Object.assign({ key: 'item_data.hsn', kinds: ['packed good'], means: 'The tax code of the goods.', source: 'catalogue_items.item_data.hsn',
+  set_by: 'product form', validated_by: 'none', shown_in: ['Till row'], used_by: ['tax engine'], test: 'tax.test.js', status: 'ok', origin: 'keyed' }, o);
+const withFields = (...f) => Object.assign(good(), { fields: f });
+it('a well-formed fields list is accepted', () => { const v = cmdb.shape(withFields(fld({}))); assert.ok(v.ok, v.why); });
+it('a key twice, or a key that is not a path, is refused by name', () => {
+  assert.ok(/listed twice/.test(cmdb.shape(withFields(fld({}), fld({}))).why));
+  assert.ok(!cmdb.shape(withFields(fld({ key: 'has space' }))).ok);
+});
+it('a status or an origin outside the vocabulary is refused', () => {
+  assert.ok(!cmdb.shape(withFields(fld({ status: 'fine' }))).ok);
+  assert.ok(!cmdb.shape(withFields(fld({ origin: 'magic' }))).ok);
+});
+it('a derived / referenced / copied / intermediate field must say how (no origin_detail → refused)', () => {
+  for (const o of ['derived', 'referenced', 'copied', 'intermediate']) {
+    assert.ok(!cmdb.shape(withFields(fld({ origin: o }))).ok, o + ' without origin_detail was accepted');
+    assert.ok(cmdb.shape(withFields(fld({ origin: o, origin_detail: 'from X; refreshed on Y' }))).ok);
+  }
+});
+it('a row that contradicts itself is refused: ok but shown and used nowhere · shown-nowhere but shown · not-used but used', () => {
+  assert.ok(!cmdb.shape(withFields(fld({ shown_in: [], used_by: [] }))).ok);
+  assert.ok(!cmdb.shape(withFields(fld({ status: 'shown-nowhere' }))).ok);
+  assert.ok(!cmdb.shape(withFields(fld({ status: 'not-used' }))).ok);
+  assert.ok(cmdb.shape(withFields(fld({ status: 'not-used', shown_in: [], used_by: [] }))).ok);
+});
+it('ok needs a test; untested must not name one', () => {
+  assert.ok(!cmdb.shape(withFields(fld({ test: 'none found' }))).ok);
+  assert.ok(!cmdb.shape(withFields(fld({ status: 'untested' }))).ok);
+  assert.ok(cmdb.shape(withFields(fld({ status: 'untested', test: 'none found' }))).ok);
+});
+it('a field with no meaning must say "?" rather than be left blank (means is required)', () => { assert.ok(!cmdb.shape(withFields(fld({ means: '' }))).ok); assert.ok(cmdb.shape(withFields(fld({ means: '?', status: 'no-meaning' }))).ok); });
+it('a bad watch pattern is refused; a list over 400 rows is refused, not cut', () => {
+  assert.ok(!cmdb.shape(withFields(fld({ watch: ['(unclosed'] }))).ok);
+  const many = Array.from({ length: 401 }, (_, i) => fld({ key: 'a.f' + i }));
+  assert.ok(!cmdb.shape(withFields.apply(null, many)).ok);
+});
+it('flags(): "N fields shown nowhere", "N fields not used", "N fields untested" — also counted from `also`', () => {
+  const r = withFields(fld({ key: 'a.1', status: 'shown-nowhere', shown_in: [] }), fld({ key: 'a.2', status: 'not-used', shown_in: [], used_by: [] }),
+    fld({ key: 'a.3', status: 'untested', test: 'none found' }), fld({ key: 'a.4', status: 'two-sources', also: ['untested'], test: 'none found' }));
+  const f = cmdb.flags(r);
+  assert.ok(f.indexOf('1 fields shown nowhere') >= 0 && f.indexOf('1 fields not used') >= 0 && f.indexOf('2 fields untested') >= 0, f.join(' · '));
+  assert.deepStrictEqual(cmdb.flags(withFields(fld({}))).filter((x) => /fields/.test(x)), []);
+});
+it('⭐ the shipped product ledger (CAP-FIELDS-PRODUCT*) is on file, passes shape, and raises its findings as flags', () => {
+  const idx = files.filter((n) => /^CAP-FIELDS-PRODUCT-\d+\.json$/.test(n));
+  assert.ok(idx.length >= 1);
+  const all = idx.map((n) => JSON.parse(fs.readFileSync(path.join(DIR, n), 'utf8')));
+  all.forEach((r) => assert.ok(cmdb.shape(r).ok, r.ci));
+  assert.ok(all.some((r) => cmdb.flags(r).some((f) => /fields not used/.test(f))), 'no "fields not used" flag raised by the shipped ledger');
+});
+
 console.log('\n' + pass + ' checks passed\n');
