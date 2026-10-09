@@ -415,6 +415,18 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     eq('a DIFFERENT advice_chit_id → 409 ADVICE_EXISTS in words; the row keeps the first', [p3.status, p3.body.code, p3.body.message, X.T.payments.find((p) => p.payment_id === payId).advice_chit_id],
       [409, 'ADVICE_EXISTS', 'An advice is already recorded for this payment.', CH1]);
     const p4 = await q('PATCH', '/payments/' + payId, {});
+    /* ── M30-2 (Athi's black-box, 2026-10-09): the record step answered 500 on live — books_payment is insert-only (b273), b285 never opened the advice columns ── */
+    { const real = X.store.setAdvice, elog = console.error, logged = [];
+      X.store.setAdvice = async () => { const er = new Error('permission denied for table books_payment'); er.code = '42501'; throw er; };
+      console.error = (...a) => { logged.push(a.join(' ')); };
+      const pd = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
+      X.store.setAdvice = async () => { throw new Error('boom'); };
+      const pb = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
+      console.error = elog; X.store.setAdvice = real;
+      ok('an UPDATE the database refuses (insert-only, no grant) → 503 in words, logged, never a bare 500', pd.status === 503 && pd.body.code === 'BOOKS_NOT_MIGRATED' && /b295/.test(pd.body.message) && logged.some((l) => /refused by the database/.test(l)), JSON.stringify(pd.body));
+      ok('any other failure → 500 with the text, and the error is LOGGED (it logged nothing before)', pb.status === 500 && /boom/.test(pb.body.message) && logged.some((l) => /boom/.test(l)), JSON.stringify(pb.body) + ' ' + logged.join('|')); }
+    { const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'b295_books_payment_advice_update.sql'), 'utf8');
+      ok('b295 opens ONLY the two advice columns (column-level GRANT), keeps DELETE and every other column insert-only', /GRANT UPDATE \(advice_chit_id, advice_shared_at\) ON books_payment TO cb_app/.test(sql) && /TG_OP = 'UPDATE'/.test(sql) && /to_jsonb\(NEW\) - 'advice_chit_id' - 'advice_shared_at'/.test(sql) && !/GRANT UPDATE ON/.test(sql)); }
     ok('an empty patch → 400 "Nothing to change"', p4.status === 400 && /Nothing to change/.test(p4.body.error), JSON.stringify(p4.body));
     ok('a patch of a field not named (note, amount) changes nothing', (await q('PATCH', '/payments/' + payId, { amount_minor: 1 })).status === 400 && X.T.payments.find((p) => p.payment_id === payId).amount_minor === 200000);
     X.T.disputes.push({ entity_id: SHOP, chit_id: CH1, status: 'open' });

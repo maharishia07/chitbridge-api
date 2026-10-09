@@ -494,3 +494,13 @@ it('⭐ a browser holding a key keeps the person session on sign-in (the move fo
 it('⭐ the move is also asked from load(), once the shop is known from the store itself — a reload mid-move finishes it without a line', () => {
   assert.ok(/if \(!onAgent\(\) && HOST\.person && OWNER && !HOST\._moved\) \{\n\s*HOST\._moved = true;\n\s*try \{ await moveOldStores\(\); \}/.test(body(PAGE, 'async function load(').text), 'load() does not finish a move from what the store already holds');
 });
+
+console.log('\nH20/T1 · THE OWNER SIGNED IN ON HOME OPENS THE COUNTER SIGNED IN — through the one door, no second pairing path\n');
+
+it('⭐⭐ pickHost spends the apps\' session (cb_sess) through becomeShop({ token }) — once per sign-in, never when a key or the same shop\'s session is held', () => {
+  const ph = body(PAGE, 'async function pickHost(').text, ho = body(PAGE, 'function appSessionHandoff(').text;
+  assert.ok(/if \(!CloudHost\.key\) \{\s*var ho = appSessionHandoff\(CloudHost\.person\);[\s\S]{0,400}becomeShop\(ho\)/.test(ph), 'pickHost does not hand the app session to the door');
+  assert.ok(!/enrol|till\/key|ls\.set\('cb_till_person'/.test(ho), 'the hand-over mints a key or writes the session beside the door');
+  assert.ok(/cb_sess/.test(ho) && /exp\) \* 1000 < Date\.now\(\)/.test(ho) && /String\(have\.entity_id\) === String\(ent\)\) return null/.test(ho) && /cb_till_handoff/.test(ho), 'expired / same-shop / already-spent guards are missing');
+  assert.ok(/token: sess\.token,\s*idn:[\s\S]{0,400}who:/.test(ho), 'the hand-over does not name the person (the cashier must be adopted)');
+});

@@ -106,6 +106,9 @@ router.get('/', auth, async (req, res) => {
               sl.new_status, sl.detail, sl.created_at, cs.direction,
               cs.assigned_to_actor_id,
               ch.auto_subject, ch.manual_subject,
+              /* O3: a NEW order row says what it is and what it is worth - read from the header, never worked out */
+              ch.purpose, ch.summary_json->>'total_value' AS total_value, ch.summary_json->>'currency_code' AS currency_code,
+              ch.summary_json->'order_details'->>'channel' AS order_channel, ch.summary_json->'order_details'->>'fulfilment' AS order_fulfilment,
               (cs.assigned_to_actor_id = $2)                                           AS assigned_to_me,
               (sl.action IN ('dispute_raised','dispute_resolved') AND $2 = $3) AS dispute_for_me
         ${FEED_FROM}

@@ -3954,6 +3954,27 @@ function personOn(){
   if (typeof AgentHost !== 'undefined' && typeof HOST !== 'undefined' && HOST === AgentHost) return false;
   return !!(typeof CloudHost !== 'undefined' && CloudHost && CloudHost.person && CloudHost.person.token);
 }
+/**
+ * ⭐ H20/T1 - what the apps' own sign-in (cb_sess, written by CBSignin on Home / CB Accounts / CB CRM) hands this counter, as the argument
+ * becomeShop({ token, idn, who }) takes - or null when there is nothing honest to hand over: no session, an unreadable or expired token,
+ * no shop in it, or the counter already holds a session for that same shop. Reads; writes nothing (becomeShop is the one writer).
+ */
+function appSessionHandoff(have){
+  var sess = null; try { sess = JSON.parse(localStorage.getItem('cb_sess') || 'null'); } catch (_) { sess = null; }
+  if (!sess || !sess.token || (sess.role && sess.role !== 'entity' && sess.role !== 'actor')) return null;
+  var c = {};
+  try { c = JSON.parse(atob(String(sess.token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) || {}; } catch (_) { return null; }
+  if (c.exp && Number(c.exp) * 1000 < Date.now()) return null;
+  /* once per sign-in: if the person signs OUT here, the same app session must not sign them straight back in */
+  if (ls.get('cb_till_handoff', '') === String(sess.token).slice(-40)) return null;
+  var ent = c.parent_entity_id || c.identity_id; if (!ent) return null;
+  if (have && have.token && String(have.entity_id) === String(ent)) return null;       /* already this shop's person - keep its own session */
+  var name = sess.name || c.display_name || '';
+  return { token: sess.token,
+           idn: { entity_id: ent, bridge_id: sess.bridgeId || c.parent_bridge_id || c.bridge_id || null, identity_id: c.identity_id || null,
+                  user_id: c.identity_id || null, display_name: name, kind: sess.role === 'actor' ? 'employee' : 'owner' },
+           who: { id: c.identity_id || null, name: name, kind: sess.role === 'actor' ? 'employee' : 'owner', entity: ent } };
+}
 /** the session kept on this device, read once at start-up (pickHost) — null when there is none or it is malformed */
 function personLoad(){
   var p = null; try { p = JSON.parse(ls.get('cb_till_person', '') || 'null'); } catch (_) { p = null; }
@@ -6219,6 +6240,22 @@ async function pickHost(){
   CloudHost.key = ls.get('cb_till_key', null);
   /* M08: and the person session this device keeps — read once here, written only by becomeShop() (G1) */
   CloudHost.person = personLoad();
+  /**
+   * ⭐⭐ H20/T1 (Athi's black-box 2026-10-09): THE OWNER SIGNED IN ON HOME OPENS THE COUNTER SIGNED IN, WITH THAT SHOP — no second code.
+   * The apps keep the person's session in cb_sess on this very origin. A browser counter with no key and no session of its own (or one
+   * for ANOTHER shop than the person now signed in) spends that session through the ONE door, becomeShop({ token }) - exactly what a
+   * sign-in here would have done, so M08 stays: a phone is a person on a device; no second pairing path, no key minted, nothing else
+   * written. The reload that follows opens the person's shop. A session that is expired, unreadable or has no shop is NOT spent.
+   */
+  if (!CloudHost.key) {
+    var ho = appSessionHandoff(CloudHost.person);
+    if (ho) {
+      ls.set('cb_till_handoff', String(ho.token).slice(-40));
+      var hb = await becomeShop(ho);
+      if (hb && hb.ok && !hb.same) return new Promise(function(){});     /* the page is going away — boot no further */
+      if (hb && hb.ok) CloudHost.person = personLoad();
+    }
+  }
   /* a key may be handed over once in the address: .../till.html#key=… — it is stored and the address is cleaned */
   if (location.hash.indexOf('key=') >= 0) {
     var hv = hashVal;                                     /* ⚠️ one reader — see hashVal(), also used by the paste handler */
@@ -6410,7 +6447,8 @@ async function load(){
     var wb = document.getElementById('whosebar');
     if (wb) wb.innerHTML = whoseShopSay();
   } catch (_) {}
-  document.getElementById('tillpill').textContent = (STATE.till && STATE.till.name) || 'Till';
+  /* H21/T63: a phone is a person - the header says WHO, not "Counter 1" (a counter number belongs to the shop PC) */
+  document.getElementById('tillpill').textContent = personOn() ? ((WHO && WHO.name) || CloudHost.person.by_name || 'Till') : ((STATE.till && STATE.till.name) || 'Till');
   paintStatus(); paintChips(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
   loadQuick().catch(function(){});
   /* ⚠️ A NEW COUNTER READS ITS SHOP BY ITSELF (2026-09-17). A counter opened for the first time, online and keyed, used to sit on
