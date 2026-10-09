@@ -296,6 +296,14 @@
       "extra": true,
       "why": "no mount in server.js (the scanner cannot map entitiesRouter); measured by tests/entities-header.test.cjs: 3 cold (two cached schema probes + one readBatch), 1 warm"
     },
+    "GET /api/entities/sides": {
+      "file": "entities.js",
+      "trips": 10,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "not mapped by the scanner (entitiesRouter). Measured by tests/sides.test.cjs: ONE readBatch of its own (1 trip warm); cold adds 9 cached schema probes (7 hasTable + 2 hasColumns). It also runs the two reads it reuses: home-facts rail (2 trips) and entity-header.read (1 warm / 3 cold) — so a warm GET is about 4, a cold one about 10."
+    },
     "GET /api/entities/me": {
       "file": "entities.js",
       "trips": 6,

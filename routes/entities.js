@@ -242,24 +242,24 @@ router.patch('/policy', auth, async (req, res) => {
  */
 router.get('/header', auth, async (req, res) => {
   try {
-    const eh = require('../lib/entity-header');
-    const { readBatch } = require('../db');
     const entity_id = auth.entityOf(req);
-    /* two cached probes: the batch aborts whole on a missing table / column (deploy-before-migration) */
-    const [docsOn, cols] = await Promise.all([require('../lib/iddoc-verify').available(), schema.hasColumns('identities', ['policy_flags'])]);
-    const st = eh.statements(entity_id, { policyFlags: !!cols.policy_flags });
-    const stmts = docsOn ? st : st.slice(0, 3);
-    const out = await readBatch(entity_id, req.identity.identity_id, stmts);
-    const iddoc = require('../lib/iddoc-verify');
-    const prof = (out[1].rows || [])[0] || {};
-    let vault = null;
-    try { vault = require('../lib/profile').sanitizeVault(require('../lib/vaultcrypto').decryptVault(prof.vault || null)); } catch (_) { vault = null; }
-    res.json(eh.build({
-      me: (out[0].rows || [])[0], profile: prof, vault,
-      compliance: out[2].rows || [], docs: docsOn ? iddoc.docsState(out[3].rows) : {},
-    }));
+    res.json(await require('../lib/entity-header').read(entity_id, req.identity.identity_id));
   } catch (err) {
     res.status(500).json({ error: 'Header read failed', message: safeErr(err) });
+  }
+});
+
+/**
+ * GET /entities/sides — the CB Sides panels in ONE answer: { lean:[{g,rows}], use:[{g,rows}], impact }. What this business leans on, and
+ * what leans on it. Built by lib/sides.js (reads) from the stamp, the adoptions, the connectors, the lists, the header's trade proof and the
+ * register's edges. A source with no data yet comes back as a row in state 'later' ("not yet") — never a made-up number.
+ */
+router.get('/sides', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    res.json(await require('../lib/sides').read(entity_id, req.identity.identity_id, { req }));
+  } catch (err) {
+    res.status(500).json({ error: 'Sides read failed', message: safeErr(err) });
   }
 });
 
