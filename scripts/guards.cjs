@@ -225,6 +225,7 @@ const GUARDS = [
   'crm-sweep.test.cjs',         // the nightly sweep rings the bell once a day per assignee, nothing sensitive on the event
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
   'web-api-contract.test.cjs',  // every route the web reads, called for real (offline), held to docs/contracts/web-api.json: same keys, nesting and types
+  'crm-leads.test.cjs',        // L1: leads as parties, the memberships table's one writer (entity + group checks), 503 in words before b297, the b297 RLS lines
   'crm-remove-walkin.test.cjs', // "Remove from my parties" (owner, no dues, hides, deletes nothing); walk-in → party moves the points by rewards.claim
   /* ⭐⭐⭐ DISPUTE CONFIDENTIALITY — THE USP RULE (N02, 2026-10-07): written before any extraction; per-copy RLS modelled, definers transcribed */
   'dispute-scoping.test.cjs',   // roster-only visibility · no notice to a non-party · per-party resolve; KNOWN BREAKS printed loud (section 5)

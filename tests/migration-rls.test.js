@@ -41,6 +41,7 @@ const ALLOWED = {
   platform_config: 'platform-wide settings, readable by all tenants by design',
   country_rule: 'reference data — jurisdiction rules are not anybody\'s private data',
   currency_rule: 'reference data',
+  membership_kind: 'reference data — the dictionary of groupings (b297); the app may read it, never write it',
   language_rule: 'reference data',
   schema_migrations: 'migration bookkeeping',
   /**
