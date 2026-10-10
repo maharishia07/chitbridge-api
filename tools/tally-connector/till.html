@@ -19393,6 +19393,17 @@ function hhmm(d){
         return t.toLocaleTimeString('en-GB', tzOpt({ hour: '2-digit', minute: '2-digit', hour12: false })); }
   catch (_) { return ''; }
 }
+/** ⭐ "16:32" today, "yesterday 16:32" the day before, "09 Oct 16:32" older — a sign-in left from another day must say so (M192) */
+function sinceWord(d){
+  try {
+    var t = new Date(d); if (isNaN(t)) return '';
+    var day = function(x){ return x.toLocaleDateString('en-CA', tzOpt({})); };
+    var today = day(new Date()), then = day(t);
+    if (then === today) return hhmm(t);
+    if (then === day(new Date(Date.now() - 86400000))) return 'yesterday ' + hhmm(t);
+    return t.toLocaleDateString('en-GB', tzOpt({ day: '2-digit', month: 'short' })) + ' ' + hhmm(t);
+  } catch (_) { return ''; }
+}
 /** date + time in shop time: "09 Oct 4:35 pm" ('date' → "09 Oct 2026", 'time' → "4:35 pm") */
 function atShop(d, part){
   try {
@@ -21736,6 +21747,9 @@ function _askOpen(opts){
   if (opts.twoWays && !opts.field && pictureModeOn()) { try { voiceSay(String(opts.message || '').replace(/\n+/g, '. ')); } catch (_) {} }
   return new Promise(function(resolve){
     _askResolve = resolve;
+    /* ⭐ ONE TAP SAVES (M191). The first tap used to blur the field — the keyboard folded, the dialog moved, and the click landed on the
+       list behind. Holding focus on press keeps the layout still, so the tap that pressed Save is the tap that lands on it. */
+    okb.onmousedown = no.onmousedown = function(e){ e.preventDefault(); };
     okb.onclick = function(){ _askClose(opts.field ? input.value : true); };
     no.onclick = function(){ _askClose(opts.cancelValue); };
     /* Escape and the backdrop both mean "no" — a dialog you cannot leave is worse than a browser one */
@@ -25772,7 +25786,7 @@ function openWho(){
     '<div class="nowbox' + (WHO && WHO.name ? '' : ' none') + '" data-testid="till-who-now">'
     + (WHO && WHO.name
         ? '<b>' + esc(WHO.name) + '</b> is signed in at this counter'
-          + (WHO.since ? '<div class="u">since ' + esc(hhmm(WHO.since)) + '</div>' : '')
+          + (WHO.since ? '<div class="u">since ' + esc(sinceWord(WHO.since)) + '</div>' : '')
         : '<b>Nobody is signed in.</b><div class="u">Bills are being recorded as the shop itself, and the day close cannot say who took the money.</div>')
     + '</div>'
     /**
