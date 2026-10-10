@@ -2346,92 +2346,13 @@ router.get('/bills', auth, async (req, res) => {
 const deliverline = require('../lib/deliverline');
 const select = require('../lib/select');            /* ⭐ the shared selector: one definition of "my chits", counterparty included */
 
-/**
- * ⭐⭐ WHICH WAY DOES AN ORDER FACE? (2026-09-08)
- *
- * An order we SEND is a purchase; an order we RECEIVE is a sale. That held until the ordinary Indian case turned up: a supplier who
- * is not on ChitBridge cannot be a recipient of a chit, so a shop's own purchase order has to be recorded as a SELF chit — and a
- * self chit lands as direction 'received', exactly like a customer's order to us. Direction stopped being enough to tell them apart.
- *
- * ⚠️ SO IT IS DECLARED, NOT INFERRED. `business_json.side` says 'buy' or 'sell', written by whoever creates the order. A chit that
- * does not say keeps the old meaning, which is what every chit written before today meant.
- */
-function sideOf(head, bj) {
-  const said = (bj && typeof bj.side === 'string') ? bj.side.toLowerCase() : null;
-  if (said === 'buy' || said === 'sell') return said;
-  return head.direction === 'sent' ? 'buy' : 'sell';
-}
-/** M126: the storefront's own words for an order (summary_json.order_details) as the till needs them; null when it is not an online order */
-function orderOf(sum) {
-  const d = sum && typeof sum === 'object' ? sum.order_details : null;
-  if (!d || d.channel !== 'online') return null;
-  return { channel: 'online', fulfilment: d.fulfilment === 'pickup' ? 'pickup' : 'delivery',
-           address: d.address || null, requested_delivery: d.requested_delivery || null, remark: d.remark || null };
-}
+const { sideOf } = require('../lib/open-orders');   /* ONE definition of an open order: lib/open-orders (the till's list and Home's Orders card, M168) */
 router.get('/tasks', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const kind = String(req.query.kind || 'despatch') === 'receive' ? 'receive' : 'despatch';
-    const want = kind === 'receive' ? 'buy' : 'sell';
     const limit = Math.min(Math.max(parseInt(req.query.limit || '40', 10) || 40, 1), 100);
-    const since = new Date(Date.now() - 120 * 24 * 3600 * 1000).toISOString();
-
-    /* ⚠️ BOTH DIRECTIONS, and sideOf decides — a purchase order for an off-platform supplier arrives as 'received' and is still a purchase */
-    let heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300 });
-    /* ⭐ a supplier's counter bill reaches me as purpose 'invoice' + counter_bill (routes/chits.js billCopyFor) — goods to
-       count in, so goods-in reads those too (only those: an app invoice is not a counter's delivery) */
-    if (kind === 'receive') {
-      const bills = await select.rows(entity_id, { purpose: 'invoice', direction: 'received', since, limit: 300 });
-      heads = heads.concat(bills.map((h) => Object.assign({ _counterBillOnly: true }, h)))
-        .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
-    }
-    if (!heads.length) return res.json({ kind, count: 0, tasks: [] });
-
-    const { withEntity } = require('../db');
-    const out = await withEntity(entity_id, async (db) => {
-      const ids = heads.map((h) => h.chit_id);
-      const li = await db.query(
-        `SELECT h.chit_id, d.line_items, h.business_json
-           FROM chit_header h
-           LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
-          WHERE h.entity_id = $1 AND h.chit_id = ANY($2::uuid[])`, [entity_id, ids]);
-      const byId = new Map(li.rows.map((r) => [String(r.chit_id), r]));
-      const tasks = [];
-      for (const h of heads) {
-        const det = byId.get(String(h.chit_id)) || {};
-        const bj = det.business_json || {};
-        if (h._counterBillOnly && bj.counter_bill !== true) continue;
-        /* ⭐ A SUPPLIER'S COUNTER BILL SENT TO ME is goods to count in (the two-sided counter bill, 2026-10-01): a purchase,
-           whatever its direction says — and receiving every line accepts it (routes/chits.js deliver-lines) */
-        const theirBill = require('../lib/tax-copy').billReceived(Object.assign({}, h, { business_json: bj }), entity_id);
-        if (bj.bill_no && !theirBill) continue;       /* MY counter sale is a record, not a task */
-        if ((theirBill ? 'buy' : sideOf(h, bj)) !== want) continue;   /* the other way round belongs to the other screen */
-        if (tasks.length >= limit) break;
-        const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(() => null);
-        const lines = (Array.isArray(det.line_items) ? det.line_items : []).map((l) => {
-          const p = (prog && prog.get) ? prog.get(l.line_id) : null;
-          const ordered = Number(l.quantity) || 0;
-          const moved = (p && p.delivered != null) ? Number(p.delivered) : 0;
-          return { line_id: l.line_id || null,
-                   item_id: (l.item_data && l.item_data.item_id) || l.item_id || null,
-                   name: l.particulars || l.name || '', unit: l.unit || 'piece',
-                   rate: l.price == null ? null : Number(l.price),
-                   ordered, moved, remaining: Math.max(0, Math.round((ordered - moved) * 1000) / 1000) };
-        });
-        if (!lines.length) continue;
-        if (lines.every((l) => l.remaining <= 0)) continue;      /* nothing owed: not a task */
-        tasks.push({ chit_id: h.chit_id, at: h.created_at,
-                     subject: h.manual_subject || h.auto_subject || '',
-                     party: h.counterparty_name || (bj.party && bj.party.name) || '', party_id: h.counterparty_id || null,
-                     ref: bj.order_no || bj.ref || null,
-                     /* M74: the till's order list shows it (who · ₹ · age · STATUS) */
-                     status: h.current_status || null,
-                     /* M126: how an ONLINE order was placed (summary_json.order_details, written by the storefront) - the till bills it
-                        as ordered (Delivery / Pickup) instead of packing it; null for an order typed or sent in any other way */
-                     order: orderOf(h.summary_json), lines });
-      }
-      return tasks;
-    });
+    const out = await require('../lib/open-orders').tasks(entity_id, kind, limit);
     res.json({ kind, count: out.length, tasks: out });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });

@@ -345,8 +345,8 @@
     },
     "GET /api/facts/orders": {
       "file": "facts.js",
-      "trips": 1,
-      "wire": 4,
+      "trips": 3,
+      "wire": 6,
       "fired": true,
       "status": 200,
       "extra": true
@@ -369,16 +369,16 @@
     },
     "GET /api/facts/rail/chits": {
       "file": "facts.js",
-      "trips": 2,
-      "wire": 5,
+      "trips": 5,
+      "wire": 9,
       "fired": false,
       "status": 200,
       "extra": true
     },
     "GET /api/facts/till": {
       "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
+      "trips": 2,
+      "wire": 2,
       "fired": true,
       "status": 200,
       "extra": true
