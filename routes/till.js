@@ -77,6 +77,23 @@ function deltaPage(rows, cap) {
   return { rows: kept, more: true, cursor: new Date(kept[kept.length - 1].updated_at).toISOString() };
 }
 
+/**
+ * M127: DOES THIS SHOP HOLD STOCK? The shop's own DATA decides, never its trade (Athi: "the data decides, not the trade").
+ * Two signals, both already in the platform: the shop has RECEIVED stock (a stock_movement of reason opening or purchase - what a
+ * Receive / GRN posts, lib/stock-from-chit), or a product of its own says it is kept per batch (item_data.batch_tracked true - the
+ * product's word that lotfields.tracksBatch honours first). Neither => false. One read; a table not migrated yet, or a read that
+ * fails, answers null (unknown) and the counter then shows Receive and Despatch as usual - it never hides on a guess.
+ */
+async function holdsStockOf(entity_id) {
+  try {
+    if (!(await require('../lib/schema').hasTable('stock_movement'))) return null;
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT (EXISTS (SELECT 1 FROM stock_movement WHERE entity_id = $1 AND reason IN ('opening','purchase'))
+            OR EXISTS (SELECT 1 FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data->>'batch_tracked' = 'true')) AS held`,
+      [entity_id]));
+    return !!(r.rows[0] && r.rows[0].held);
+  } catch (_) { return null; }
+}
 router.get('/snapshot', auth, async (req, res) => {
   try {
     /**
@@ -724,6 +741,8 @@ router.get('/snapshot', auth, async (req, res) => {
         reg_type: String(flags.gst_registration || 'regular'),
         /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */
         country: cbCountry,
+        /* M127: does this shop hold stock? From its own data (holdsStockOf); null = unknown, shown as usual. The counter may override (till option stock). */
+        holds_stock: await holdsStockOf(entity_id),
         /**
          * ⭐⭐ THE WAYS THIS SHOP CAN BE PAID, decided by its COUNTRY and its declared payee addresses — not a
          * upi_id field, which is the India-shaped thing the jurisdiction work already ruled against.
@@ -1158,7 +1177,8 @@ router.get('/quick-keys/hidden', auth, auth.requireScope('till'), async (req, re
   try {
     const entity_id = auth.entityOf(req);
     const counter_id = await counterOfReq(req);
-    if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
+    /* M130: a shop login holds no counter, so it has nothing hidden: an empty list, never a 403 on a normal load */
+    if (!counter_id) return res.json({ hidden: [] });
     const hidden = await withEntity(entity_id, (db) => qk.listHidden(db, entity_id, counter_id));
     res.json({ hidden });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
@@ -2341,6 +2361,13 @@ function sideOf(head, bj) {
   if (said === 'buy' || said === 'sell') return said;
   return head.direction === 'sent' ? 'buy' : 'sell';
 }
+/** M126: the storefront's own words for an order (summary_json.order_details) as the till needs them; null when it is not an online order */
+function orderOf(sum) {
+  const d = sum && typeof sum === 'object' ? sum.order_details : null;
+  if (!d || d.channel !== 'online') return null;
+  return { channel: 'online', fulfilment: d.fulfilment === 'pickup' ? 'pickup' : 'delivery',
+           address: d.address || null, requested_delivery: d.requested_delivery || null, remark: d.remark || null };
+}
 router.get('/tasks', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2398,7 +2425,10 @@ router.get('/tasks', auth, async (req, res) => {
                      party: h.counterparty_name || (bj.party && bj.party.name) || '', party_id: h.counterparty_id || null,
                      ref: bj.order_no || bj.ref || null,
                      /* M74: the till's order list shows it (who · ₹ · age · STATUS) */
-                     status: h.current_status || null, lines });
+                     status: h.current_status || null,
+                     /* M126: how an ONLINE order was placed (summary_json.order_details, written by the storefront) - the till bills it
+                        as ordered (Delivery / Pickup) instead of packing it; null for an order typed or sent in any other way */
+                     order: orderOf(h.summary_json), lines });
       }
       return tasks;
     });
