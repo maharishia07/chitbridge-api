@@ -16777,7 +16777,6 @@ function bumpLast(d){
 /* ⚠️ the indexes below k all shift up, so a held selection would silently point at a different product */
 function drop(k){ CART.splice(k,1); if (CARTSEL === k) CARTSEL = -1; else if (CARTSEL > k) CARTSEL--; repaint(); }
 function clearBill(){
-  orderKindGiveBack(BILL_ORDER);
   BILL_ORDER = null;   /* M126: clearing the bill lets go of the online order on it - the order stays open */
   KOT_N = 0;   /* a new customer is a new set of tickets — see sendKOT */ ageClear(); CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); stepGo('pick'); focusSearch();
   /* ⭐ a screen style that was held back because a bill was in hand lands HERE ([TILL-84]) */
@@ -20345,7 +20344,7 @@ function paintOrderBar(){
     + '<button class="kot" data-ic="kitchen" data-testid="till-kot" onclick="sendKOT()"'
     + ' aria-label="' + (ORDER_ID ? 'Send round' : 'Kitchen') + '"'
     + ' title="' + (ORDER_ID ? ('send the new lines to this ' + says('subject') + ' and the kitchen') : 'send the new items to the kitchen') + ' (F3)">'
-    + '<span aria-hidden="true">🍳</span>' + (kotPending().length ? ' <b data-testid="till-kot-badge" title="' + kotPending().length + ' on this bill not yet sent to the kitchen">' + kotPending().length + '</b>' : '') + '</button>'
+    + '<span>' + (ORDER_ID ? 'Round' : 'Kitchen') + '</span>' + (kotPending().length ? ' <b data-testid="till-kot-badge" title="' + kotPending().length + ' on this bill not yet sent to the kitchen">' + kotPending().length + '</b>' : '') + '</button>'
     /**
      * ⭐⭐⭐ THE OTHER ICON, ON THE SAME TABLE ([TILL-187]). Athi: *"you add two or three icon, one is for
      * adding say +, another one = for summarising and bring it to the cart… in the same table number."* +
@@ -20821,9 +20820,12 @@ async function orderPick(id){
  * only the last one running. The live one is beside the other order seams and calls CBOrders.hold().
  */
 
-function orderKind(){ return ls.get(shopLs('cb_till_otype'), 'dine'); }
+/* ⚠️ M169 — an online order's kind (Delivery / Pickup) belongs to THAT bill only, in memory with BILL_ORDER; the saved
+   cb_till_otype is the COUNTER's own default and is never written while an order is on the bill (T2d gave it back
+   afterwards, which a reload, a park or a second order in a row defeated). */
+function orderKind(){ return (BILL_ORDER && BILL_ORDER.kind) || ls.get(shopLs('cb_till_otype'), 'dine'); }
 function orderTable(){ return ls.get(shopLs('cb_till_table'), ''); }
-function setOrderKind(v){ ls.set(shopLs('cb_till_otype'), v); paintOrderBar(); }
+function setOrderKind(v){ if (!BILL_ORDER) ls.set(shopLs('cb_till_otype'), v); paintOrderBar(); }
 function setOrderTable(v){ ls.set(shopLs('cb_till_table'), String(v || '').slice(0, 12)); paintOrderBar(); }
 /* ⚠️ ORDER_KINDS LEFT THIS FILE ([TILL-186]) — dine/takeaway/delivery is read by the KITCHEN, not just
    drawn, so it lives in lib/orders.js beside the registry that moved out for the same reason. */
@@ -21144,7 +21146,7 @@ async function finish(){
   CFD.done(r.bill && r.bill.no, r.bill && money(r.bill.total));
   showSlip(r.bill, m);
   autoPrint(r.bill);
-  if (BILL_ORDER) { var boDone = BILL_ORDER; BILL_ORDER = null; orderKindGiveBack(boDone); orderBilledDone(boDone, r.bill); }   /* M126 + M129 + M169 */
+  if (BILL_ORDER) { var boDone = BILL_ORDER; BILL_ORDER = null; paintOrderBar(); orderBilledDone(boDone, r.bill); }   /* M126 + M129 + M169 */
   ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; paintParts();
   /* ⚠️ the balance on screen belonged to the customer who just left */
   RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
@@ -26693,7 +26695,6 @@ async function onlineOrderPick(id){
  */
 var BILL_ORDER = null;   /* { chit_id, party, kind: 'deliver'|'take', lines: [{ line_id, quantity, unit }] } while an online order is on the bill */
 /** M169: the order's Delivery / Pickup was only for ITS bill - the next bill starts at the counter's own kind again */
-function orderKindGiveBack(bo){ try { if (bo && bo.prev_kind) setOrderKind(bo.prev_kind); } catch (_) {} }
 function orderToBill(t){
   if (MODE !== 'sell') setMode('sell');
   if (CART.length) { parkBill(); toastLine('The bill you had is parked.'); }
@@ -26711,8 +26712,8 @@ function orderToBill(t){
   });
   if (!got.length) { say('None of this order is on the counter’s shelf.\n\nRead the shop again (F4), then tap the order.'); return; }
   var pickup = !!(t.order && t.order.fulfilment === 'pickup');
-  BILL_ORDER = { chit_id: t.chit_id, party: t.party || '', kind: pickup ? 'take' : 'deliver', lines: got, prev_kind: orderKind() };   /* prev_kind: M169 - the counter's own Dine-in / Takeaway / Delivery, given back when this bill is done */
-  try { setOrderKind(BILL_ORDER.kind); } catch (_) {}   /* M160: the Dine-in / Takeaway / Delivery chip follows the order */
+  BILL_ORDER = { chit_id: t.chit_id, party: t.party || '', kind: pickup ? 'take' : 'deliver', lines: got };
+  try { paintOrderBar(); } catch (_) {}   /* M160: the Dine-in / Takeaway / Delivery chip follows the order (M169: for this bill only) */
   document.getElementById('cname').value = t.party || '';
   document.getElementById('cphone').value = '';
   price();
