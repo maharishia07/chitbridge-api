@@ -32,6 +32,7 @@
 -- the open own-sent copies this file would close, one row per chit, with WHICH rule matched
 DROP TABLE IF EXISTS public.b296_todo;
 CREATE TABLE public.b296_todo (entity_id uuid, chit_id uuid, rule text, subject text, created_at timestamp);
+ALTER TABLE public.b296_todo ENABLE ROW LEVEL SECURITY;   -- a work list for this file only; postgres (who runs it) is not bound by RLS; dropped at the end
 
 DO $$
 DECLARE
