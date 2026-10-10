@@ -1197,7 +1197,7 @@ it('⭐⭐ the bill says which way it will be recorded, and the day close counts
   assert.ok(fin.indexOf('PAY_ASKED') < 0 || fin.indexOf('return') < 0 || true, 'finish must not refuse on an unanswered payment');
   /* MOVED 2026-09-29 (BOOKS v2): the line now sits inside a block that first refuses a bill SHORT of its total — an
      EMPTY box is still "exactly the total", so the ordinary cash sale stays one keystroke; the window widens to reach it */
-  const fin2 = page.slice(page.indexOf('async function finish(){'), page.indexOf('async function finish(){') + 3000);
+  const fin2 = page.slice(page.indexOf('async function finish(){'), page.indexOf('async function finish(){') + 3400);   /* +400 (M49, 2026-10-10): the refusals now record why (saleStop) */
   assert.ok(fin2.indexOf('else if (!parts.length) {') > 0 && fin2.indexOf('parts = [{ how: PICKED, amount: Math.min(tendered || m.net, m.net) }];') > 0
     && fin2.indexOf('if (tendered > 0 && r2(m.net - tendered) >= 0.01)') > 0,
     'the one-keystroke path is gone — the ordinary cash sale must stay one keystroke');

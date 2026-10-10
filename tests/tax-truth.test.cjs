@@ -102,7 +102,11 @@ function fnText(src, sig) {
 const PAGE_FNS = ['function billMoney(', 'function moneyOf(', 'async function finish(', 'function chitOf(',
   'function billRecipients(', 'function billSendTo(', 'function isReturnRow(', 'function isExpenseRow(', 'function slipOfRow(',
   'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded(',
-  'function tillStamp(', 'function tillHostWord(', 'function unratedOnBill(', 'function billOrderRow(', 'function posWords('];
+  'function tillStamp(', 'function tillHostWord(', 'function unratedOnBill(', 'function billOrderRow(', 'function posWords(',
+  /* round T1 (2026-10-10): the slip's head is one function for the bill and the credit note (M45), its time is shop time (M43) */
+  'function slipHeadHTML(', 'function atShop(', 'function tzOpt(', 'function shopTz(',
+  /* …and a refused sale is written down before it is said (M49) */
+  'function saleStop(', 'function saleStopNote('];
 
 /** one bill rung at the counter: the page's finish() over a cart, as it runs in a browser — returns what it saved and printed */
 async function ring(o) {
