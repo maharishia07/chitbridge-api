@@ -333,6 +333,9 @@ async function statementInput(h, e, party, from, to) {
  */
 router.get('/dues', auth, noKey, on, async (req, res) => {
   try {
+    /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · over_limit · interest_minor · last_remind. Owner only — the server decides. */
+    const fin = req.query.finance === '1';
+    if (fin && !isOwner(req)) return res.status(403).json({ error: 'Only the owner may see collections.', message: 'Only the owner may see collections.' });
     const e = ctx(req), asOf = dateQ(req.query.asOf, today());
     const sides = req.query.side === 'customer' ? ['debtors'] : req.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
     const out = await withEntity(e, async (h) => {
@@ -352,7 +355,9 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
           const oldest = docs.map((x) => x.due_date || x.date).filter(Boolean).sort()[0] || null;
           const buckets = {}; Object.keys(ag.undisputed || {}).forEach((k) => { buckets[k] = sign * ((ag.undisputed[k] || 0) + ((ag.disputed || {})[k] || 0)); });
           const disputed = Object.keys(ag.disputed || {}).reduce((t, k) => t + (ag.disputed[k] || 0), 0);
-          per.set(pid + '|' + role, { party_id: pid, side: role === 'creditors' ? 'supplier' : 'customer', balance_minor: sign * open, oldest_due: oldest, disputed_minor: sign * disputed, buckets });
+          const row = { party_id: pid, side: role === 'creditors' ? 'supplier' : 'customer', balance_minor: sign * open, oldest_due: oldest, disputed_minor: sign * disputed, buckets };
+          if (fin && role === 'debtors') row.interest_minor = E.interestMinor(docs, asOf, curOf(req));
+          per.set(pid + '|' + role, row);
         });
       }
       /* one row per party: a party on both lists nets (what they owe you less what you owe them) */
@@ -360,9 +365,10 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
       for (const r of per.values()) {
         const p = names.get(String(r.party_id)) || {};
         const x = rows.get(r.party_id);
-        if (!x) rows.set(r.party_id, Object.assign({ party_no: p.party_no || null, name: p.nickname || p.name || null }, r));
+        if (!x) rows.set(r.party_id, Object.assign({ party_no: p.party_no || null, name: p.nickname || p.name || null }, r, fin ? E.limitView(p, r) : {}));
         else { x.balance_minor += r.balance_minor; x.disputed_minor += r.disputed_minor; x.side = 'both'; x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
-               Object.keys(r.buckets).forEach((k) => { x.buckets[k] = (x.buckets[k] || 0) + r.buckets[k]; }); }
+               Object.keys(r.buckets).forEach((k) => { x.buckets[k] = (x.buckets[k] || 0) + r.buckets[k]; });
+               if (fin) { x.interest_minor = (x.interest_minor || 0) + (r.interest_minor || 0); Object.assign(x, E.limitView(p, x)); } }
       }
       return Array.from(rows.values()).sort((a, b) => Math.abs(b.balance_minor) - Math.abs(a.balance_minor));
     });
