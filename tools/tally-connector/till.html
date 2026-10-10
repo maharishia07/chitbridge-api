@@ -1059,6 +1059,12 @@
      scrollbar and no hint they existed (critic pass, 2026-09-18). */
   .side .sicons{display:flex;flex-direction:column;gap:2px;overflow-y:auto;min-height:0}
   .side.on .sicons{display:none}
+  /* ⭐ T2i: the rail's foot holds the ONE avatar. Its popover is fixed beside the rail (the rail clips what it holds), never drawn by this page. */
+  .side .sfoot{margin-top:auto;padding-top:6px;display:flex;justify-content:center}
+  .side.on .sfoot{display:none}
+  .side .sfoot .cbav-pop{position:fixed;inset-inline-start:calc(var(--side,44px) + 8px);inset-inline-end:auto;top:auto;bottom:8px}
+  body[data-menuside="right"] .side .sfoot .cbav-pop{inset-inline-start:auto;inset-inline-end:calc(var(--side,44px) + 8px)}
+  .side .sicons button.off{opacity:.55}
   /* ⭐ .modeselwrap is a SIBLING of .sicons, not inside it (it wraps a real <select>, not a one-click op
      from TILL_OPS) — so every place .sicons hides or reappears on the rail, it must do the same, or the
      mode picker would float over an open menu on a narrow screen, or vanish from a rail that kept
@@ -1126,6 +1132,7 @@
     /* ⭐ and the strip stays — it is the CLOSED half of the same menu, not something the open half replaces */
     .side.on .sicons{display:flex}
     .side.on .modeselwrap{display:block}
+    .side.on .sfoot{display:flex}
   }
   /**
    * ⚠️⚠️ A CENTRED CARD NEEDS A SCRIM, or the counter behind it stays live: a press aimed at the card that
@@ -1150,6 +1157,7 @@
     .side{width:0;border:0;padding:0}
     .side.on{position:fixed;inset:0;width:100%;max-width:none}
     .side .sicons{display:none}
+    .side .sfoot{display:none}
   }
   .menu .mq label{display:flex;align-items:center;gap:4px;font-size:.85em;color:var(--dim)}
   .menu .mq select{padding:4px 6px;border:1px solid var(--edge);border-radius:7px;background:var(--paper);font:inherit;font-size:.95em}
@@ -2962,6 +2970,8 @@
     <span class="modeicon" id="modeicon" aria-hidden="true">🛍️</span>
   </div>
   <div class="sicons" id="tillsideicons"></div>
+  <!-- ⭐ T2i (M209): the ONE avatar (CBAvatar, app/avatar.js) at the rail's foot — person · theme · text size · bold · less motion · sign out. This page draws none of it; mountAvatar() hands it the slot. -->
+  <div class="sfoot" id="cb-avatar" data-testid="till-avatar-slot"></div>
   <!-- ⚠️ class="menu" IS LOAD-BEARING: .menu .vchip (the on/off colour of the view chips) and .menu .mq select
        (the look dropdowns' font) live on it. Dropping it when this moved into the drawer left an "on" chip
        looking exactly like an "off" one — found by a critic pass, 2026-09-18. -->
@@ -3865,6 +3875,7 @@
      one PC that needs it, an unpaired one that has fetched nothing. Found by e2e/till-shop-switch-pc.cjs. -->
 <script>var MISSING = []; function engineMissed(n){ MISSING.push(n); }</script>
 <script src="/engine/qr.js" onerror="engineMissed('qr')"></script>
+<script src="/app/avatar.js"></script>   <!-- CBAvatar: the one avatar control (T2i) — missing offline, and the rail simply shows none -->
 <script src="/app/embed-host.js"></script>   <!-- CBEmbed: opens the Employees form inside this page (P1) — missing offline, and whoAdd() says so -->
 <!-- ⭐ LOCALE FIRST OF ALL — every other engine's output is eventually shown as money or a date. -->
 <script src="/engine/money.js" onerror="engineMissed('money')"></script>
@@ -7964,10 +7975,12 @@ function stopWrongShop(bad){
  */
 var TILL_OPS = [
   { id: 'bills',    icon: '🧾', label: "Today's bills",      hint: 'print one again · F8',                          fn: 'openBills', rail: true },
-  /* ⭐ THE RAIL IS SIX, NOT FOURTEEN (tidy 2026-10-09, TM1): an op carries `rail: true` to stand on it; every other op is reached from the Menu. Check and Labs are
+  /* ⭐ THE RAIL IS SEVEN AT MOST (tidy 2026-10-09, TM1; Expense in and Labs out, T2i): an op carries `rail: true` to stand on it; every other op is reached from the Menu. Check and Labs are
      the rail's DOORS — they open the Menu already on the Check / Lab section, so there is one Check and one Labs, never a second panel. */
   { id: 'check',    icon: '🔔', label: 'Check',               hint: 'what needs you · why a bill is stuck',          fn: 'openCheck', rail: true, door: 'alerts' },
-  { id: 'labs',     icon: '🧪', label: 'Labs',                hint: 'Product · Offer · Combo',                       fn: 'openLabs', rail: true, door: 'pricing' },
+  /* ⭐ T2i (M207): the rail slot Labs held now holds the EXPENSE register — Labs is not opened many times a day, money paid out is. Labs stay reachable in the Menu (the Lab section, ☰ → Lab); only the rail slot moved. */
+  { id: 'expense',  icon: '💰', label: 'Expense',             hint: 'money paid out of the drawer',                  fn: 'expOpen', rail: true, door: 'moremoney' },
+  { id: 'labs',     icon: '🧪', label: 'Labs',                hint: 'Product · Offer · Combo',                       fn: 'openLabs', door: 'pricing' },
   /**
    * ⭐ TO DO ([TILL-79]) — its own operation, so it appears on the icon strip AND in the hub's list from one
    * declaration. It sits second because a shopkeeper opens it first thing and last thing, and because its
@@ -10518,14 +10531,70 @@ function paintSide(){
       if (left) badge = '<i class="sbadge' + (due ? ' due' : '') + '">' + left + '</i>';
     }
     if (op.id === 'check' && alerts) badge = '<i class="sbadge due">' + alerts + '</i>';
-    b.push('<button data-testid="till-side-' + op.id + '" title="' + esc(op.label + ' \u00b7 ' + op.hint) + '"'
+    /* \u2b50 a refused action is shown greyed WITH its sentence (BRIEF-RULES 4): the press still lands on expOpen(), which says the same words */
+    var why = (op.id === 'expense' && !expCanIssue()) ? EXP_WHYNOT : '';
+    b.push('<button data-testid="till-side-' + op.id + '" title="' + esc(op.label + ' \u00b7 ' + (why || op.hint)) + '"' + (why ? ' aria-disabled="true" class="off"' : '')
       /* ⭐ THE SAME HUE THE HUB GIVES THIS ROW'S SECTION ([TILL-85]) — a colour is only worth having if it
          means the same thing in both halves of the menu. */
       + ' data-mh="1" style="--mh:' + opHue(op.id) + '"'
       + ' aria-label="' + esc(op.label) + '" onclick="sideGo(&quot;' + op.fn + '&quot;,&quot;' + op.id + '&quot;)">'
       + op.icon + badge + '</button>');
   });
+  /* ⭐ T2i (M208): the layout switch — the SAME CBScreen layout Settings › Screen writes (modeSet → screenSet): one tap, three states, the icon is the CURRENT one */
+  var m = modeNow();
+  b.push('<button data-testid="till-side-layout" data-ic="layout-mode" title="' + esc('Layout: ' + m.label + ' · tap for ' + MODES[m.next].label) + '" aria-label="' + esc('Layout: ' + m.label + '. Tap for ' + MODES[m.next].label) + '" onclick="modeCycle()"><span aria-hidden="true">' + m.icon + '</span></button>');
   el.innerHTML = b.join('');
+}
+/**
+ * ⭐⭐ THE LAYOUT SWITCH ON THE RAIL (T2i, M208 — Athi: "i am trying to switch and check the mode, but couldn't"). Desktop · Tablet · Phone are three of
+ * the EXISTING CBScreen layouts (horizontal · tablet · phone) and this writes them through screenSet() — the very store Settings › Screen writes, so
+ * there is ONE value and two controls, never a second layout path. Any other layout (Vertical for a kiosk, Handheld, Compact…) stays a Settings choice:
+ * the rail says it in words and one tap returns to Desktop.
+ */
+var MODES = {
+  desktop: { layout: 'horizontal', icon: '💻', label: 'Desktop', next: 'tablet' },
+  tablet:  { layout: 'tablet',     icon: '▭',        label: 'Tablet',  next: 'phone' },
+  phone:   { layout: 'phone',      icon: '📱', label: 'Phone',   next: 'desktop' }
+};
+function modeNow(){
+  var L = ''; try { L = screenCfg().layout || ''; } catch (_) {}
+  var k = L === 'tablet' ? 'tablet' : (L === 'phone' || L === 'handheld') ? 'phone' : 'desktop';
+  var m = MODES[k], lab = m.label;
+  if (L && L !== m.layout && window.CBScreen && CBScreen.LAYOUTS && CBScreen.LAYOUTS[L]) lab = CBScreen.LAYOUTS[L].label;   /* Vertical, Compact… said in its own word */
+  return { key: k, icon: m.icon, label: lab, next: (L && L !== m.layout && L !== 'auto') ? 'desktop' : m.next };
+}
+function modeCycle(){ modeSet(MODES[modeNow().next].layout); }
+/** the one writer: a bill in hand waits (the same rule styleApply keeps), otherwise screenSet + the shape the layout declares */
+function modeSet(layout){
+  if (typeof CART !== 'undefined' && CART.length) {
+    STYLE_PEND = Object.assign({}, STYLE_PEND || {}, { layout: layout });
+    toastLine('Held — it lands when this bill is finished.');
+    return;
+  }
+  screenSet({ layout: layout });
+  layoutShapeFollow();
+  try { densityApply(); } catch (_) {}
+  try { paintSide(); } catch (_) {}
+  toastLine('Layout: ' + modeNow().label + '.');
+}
+/**
+ * ⭐ THE ONE AVATAR ON THE COUNTER (T2i, M209; decision 2026-10-02 "later the counter" — now). MOVED, not rebuilt: CBAvatar draws the person, the theme dots,
+ * text size, bold, less motion and Sign out, and stores them under the keys every page reads (cb_theme · cb_fs · cb_weight · cb_motion), so a look chosen here
+ * is the look of every page. Sign out is the counter's own shift sign-out (usignOut) — it locks the counter, it does not end the shop's session.
+ * No server sync from here (sync:false): the counter works offline and the look lives on this device.
+ */
+function mountAvatar(){
+  var slot = document.getElementById('cb-avatar');
+  if (!slot || typeof CBAvatar === 'undefined') return;
+  var who = (typeof WHO !== 'undefined' && WHO && WHO.name) ? { name: WHO.name, role: '', entity: '', owner: false } : null;
+  try { CBAvatar.mount(slot, { person: who, items: ['signout'], onSignOut: function(){ usignOut(); }, sync: false, testid: 'till-avatar' }); } catch (_) {}
+}
+/** ⭐ SHAPE FOLLOWS LAYOUT ([TILL-81]) — one place, for Settings › Screen and the rail's switch alike */
+function layoutShapeFollow(){
+  try {
+    var L = window.CBScreen && CBScreen.LAYOUTS[screenCfg().layout];
+    if (L && L.shape) tillOptSet({ shape: L.shape });
+  } catch (_) {}
 }
 /** run one operation from the strip — names, not functions, so nothing depends on declaration order */
 /**
@@ -12089,11 +12158,9 @@ function styleApply(){
    * question with one of them already known. Choosing a layout now settles both.
    * ⚠️ 'auto' IS A REAL ANSWER and is written as such, so the Automatic layout still means "decide by width".
    */
-  try {
-    var L = window.CBScreen && CBScreen.LAYOUTS[styleCfg().layout];
-    if (L && L.shape) tillOptSet({ shape: L.shape });
-  } catch (_) {}
+  layoutShapeFollow();
   try { densityApply(); } catch (_) {}
+  try { paintSide(); } catch (_) {}
   toastLine('Screen style applied to ' + tillName() + '.');
 }
 /** ⚠️ called from clearBill() — the one place a bill stops being in hand, whichever way it ended */
@@ -12104,7 +12171,9 @@ function stylePendFlush(){
   if (rm) { try { panelApply(rm); } catch (_) {} }
   if (!d) { try { densityApply(); } catch (_) {} toastLine('The new screen style is on now.'); return; }
   screenSet(d);
+  layoutShapeFollow();
   try { densityApply(); } catch (_) {}
+  try { paintSide(); } catch (_) {}
   toastLine('The new screen style is on now.');
 }
 /** ⚠️ IT LOADS THE DEFAULT INTO THE PREVIEW, IT DOES NOT APPLY IT. A button called Reset that resets the
@@ -25153,6 +25222,7 @@ function paintWho(){
      bills are then recorded as the shop itself, which is a fact worth knowing before a day's takings are attributed. */
   p.textContent = WHO && WHO.name ? ('👤 ' + whoWord()) : '👤 nobody signed in';
   p.className = 'pill' + (WHO && WHO.name ? '' : ' off');
+  try { mountAvatar(); } catch (_) {}   /* the rail's avatar names whoever is standing here */
 }
 /**
  * ── ⭐⭐⭐ SIGNING A PERSON IN AT THE COUNTER ([TILL-183]) ────────────────────────────────────────────────
