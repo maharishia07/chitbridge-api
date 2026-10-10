@@ -18,17 +18,22 @@
 -- NO money, NO journal entry, NO ledger row is written. Only chit_status.current_status/updated_at and state_log.
 --
 -- ⭐ LOOK FIRST: STEP 1 lists, per shop, what STEP 2 would close (nothing is changed by it). STEP 2 runs inside the same transaction;
---    the last line is COMMIT — change it to ROLLBACK to run the whole file as a rehearsal.
+--    see the 2026-10-10 note below for the rehearsal.
 -- SAFE TO RE-RUN: a closed chit is no longer open, so a second run matches nothing.
+-- ⚠️ 2026-10-10 (Athi ran it: "relation b296_todo does not exist"): the Supabase SQL editor does not keep a TEMP table between
+--    statements, so the work list is now an ordinary table public.b296_todo, made at the top and DROPPED at the end.
+--    REHEARSAL: run only up to and including STEP 1 (select those lines and Run) — nothing is changed by them; then run the whole file.
 -- RLS: chit_status and state_log are FORCE ROW LEVEL SECURITY (policy: entity_id = app.current_entity). This file sets app.current_entity
 --      to each shop in turn (transaction-local), so it works as the table owner AND as any role, and never reads across shops in one statement.
 -- Needs: b273 (journal_entry.source_chit_ids) - already live on the books shops.
 -- Run as postgres in the Supabase SQL editor (or `railway connect`).
 
-BEGIN;
 
 -- the open own-sent copies this file would close, one row per chit, with WHICH rule matched
-CREATE TEMP TABLE b296_todo (entity_id uuid, chit_id uuid, rule text, subject text, created_at timestamp) ON COMMIT DROP;
+DROP TABLE IF EXISTS public.b296_todo;
+CREATE TABLE public.b296_todo (entity_id uuid, chit_id uuid, rule text, subject text, created_at timestamp);
+ALTER TABLE public.b296_todo ENABLE ROW LEVEL SECURITY;   -- a work list for this file only; postgres (who runs it) is not bound by RLS; dropped at the end
+CREATE POLICY b296_todo_none ON public.b296_todo USING (false);   -- nobody but the owner running this file reads it
 
 DO $$
 DECLARE
@@ -37,7 +42,7 @@ BEGIN
   FOR e IN SELECT identity_id FROM identities WHERE identity_type = 'entity' LOOP
     shops := shops + 1;
     PERFORM set_config('app.current_entity', e::text, true);
-    INSERT INTO b296_todo (entity_id, chit_id, rule, subject, created_at)
+    INSERT INTO public.b296_todo (entity_id, chit_id, rule, subject, created_at)
     SELECT e, cs.chit_id,
            CASE WHEN ch.business_json ? 'summary' AND ch.purpose = 'general' THEN
                   CASE WHEN ch.business_json->'summary'->>'period' = 'day' THEN 'day summary posted' ELSE 'week/month summary' END
@@ -66,18 +71,18 @@ END $$;
 
 -- ═══ STEP 1 · PREVIEW — what STEP 2 closes. Read it; nothing has changed yet. ═══
 SELECT i.display_name AS shop, t.rule, count(*) AS chits, min(t.created_at)::date AS oldest, max(t.created_at)::date AS newest
-  FROM b296_todo t JOIN identities i ON i.identity_id = t.entity_id
+  FROM public.b296_todo t JOIN identities i ON i.identity_id = t.entity_id
  GROUP BY i.display_name, t.rule ORDER BY i.display_name, t.rule;
 
 -- ═══ STEP 2 · CLOSE ═══
 DO $$
 DECLARE e uuid; k int; total int := 0;
 BEGIN
-  FOR e IN SELECT DISTINCT entity_id FROM b296_todo LOOP
+  FOR e IN SELECT DISTINCT entity_id FROM public.b296_todo LOOP
     PERFORM set_config('app.current_entity', e::text, true);
     WITH moved AS (
       UPDATE chit_status cs SET current_status = 'completed', updated_at = NOW()
-        FROM b296_todo t
+        FROM public.b296_todo t
        WHERE t.entity_id = e AND cs.entity_id = e AND cs.chit_id = t.chit_id AND cs.direction = 'received'
          AND cs.current_status IN ('pending', 'delivered', 'read', 'accepted', 'in_progress', 'partial')
       RETURNING cs.chit_id, cs.entity_id
@@ -107,4 +112,5 @@ BEGIN
   RAISE NOTICE 'b296: own-sent chits still open: %', left_over;
 END $$;
 
-COMMIT;   -- change to ROLLBACK for a rehearsal
+
+DROP TABLE IF EXISTS public.b296_todo;
