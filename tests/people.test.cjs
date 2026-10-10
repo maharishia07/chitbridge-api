@@ -30,6 +30,7 @@ t('an off person: switch is "on", code and cover are greyed with a sentence', me
 t('an on person: switch is "off"', ravi.may.switch.to === 'off' && ravi.may.switch.ok);
 t('cover options are other editors who are on (not self, not the off, not a viewer)', ravi.cover_options.length === 0 && !ravi.may.cover.ok && ravi.may.cover.why === 'No one else to stand in.' && latha.cover_options.map((o) => o.id).join() === 'a1');
 t('who stands in is named', latha.cover && latha.cover.name === 'Ravi Kumar');
+t('the picker choices are the IAM presets', v.access_choices.length === require(path.join(API, 'lib', 'access')).PRESETS.length && v.access_choices.every((c) => c.key && c.label && c.level));
 const nonOwner = people.view(rows, { owner: false });
 t('a non-owner is greyed with the owner-only sentence on every action', nonOwner.may.add.ok === false && nonOwner.may.add.why === people.OWNER_ONLY
   && nonOwner.people.every((p) => ['access', 'reset_pin', 'switch', 'cover'].every((k) => p.may[k].ok === false && p.may[k].why === people.OWNER_ONLY)));
