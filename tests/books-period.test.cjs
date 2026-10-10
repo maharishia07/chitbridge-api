@@ -179,10 +179,13 @@ function memoryRegister() {
   eq('…an unknown asset is a 404', (await q('POST', '/assets/55555555-5555-4555-8555-0000000000ff/dispose', dsB)).status, 404);
 
   /* ── closing stock ── */
+  /* M158: a chart with no 5050 gets the ledger on first use from the template — never a refusal in machine words */
+  const gone5050 = X.T.accounts.findIndex((a) => a.code === '5050'); const had5050 = gone5050 >= 0 ? X.T.accounts.splice(gone5050, 1)[0] : null;
   const cs = await q('POST', '/closing-stock', { date: '2026-09-30', value_minor: 5000000, method: 'manual', client_ref: 'cs-sep' });
   const cse = entries('stock:cs-sep')[0];
   ok('POST /closing-stock → the difference from the books (book 0 → 50,000)', cs.status === 200 && cs.body.ok && cse && cs.body.book_minor === 0, JSON.stringify(cs.body));
   eq('…lines are the engine\'s: Dr 1200 Stock · Cr 5050 Changes in inventories', cse && stored(cse), engine({ type: 'closing_stock', mode: 'manual', book: 0, amount: 50000, date: '2026-09-30', currency: 'INR' }));
+  { const back = X.T.accounts.find((a) => a.code === '5050'); ok('M158: the missing 5050 was added on first use under its group', !!had5050 && back && back.role === 'changes_in_inventories' && !!back.parent_id); }
   ok('…system-computed: series JV', cse && seriesOf(cse) === 'JV');
   const cs2 = await q('POST', '/closing-stock', { date: '2026-09-30', value_minor: 5000000, method: 'manual', client_ref: 'cs-sep' });
   ok('…a double tap posts once', cs2.body.duplicate === true && X.T.entries.filter((x) => x.source_ref === 'stock:cs-sep').length === 1);
