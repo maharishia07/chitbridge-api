@@ -72,6 +72,17 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
   eq('an income chit → other_income by its class, into UPI', [inc.event.type, inc.event.class, inc.event.into], ['other_income', 'scrap_sales', 'upi']);
   const day = K.classify({ chit: { chit_id: 'c8', purpose: 'general', business_json: { summary: { period: 'day', key: 'day-2026-09-28', till: { id: 'C2' } } } }, entry: {}, setting: S });
   eq('a counter\'s day summary chit → post that counter\'s walk-in day', [day.kind, day.counter, day.day], ['day', 'C2', '2026-09-28']);
+  /* ⭐ M84 (2026-10-10): the browser till's Close the day queues EXACTLY CBRollup.chitOf(CBRollup.summary('day', …)) — the
+     chit as it leaves the counter (no chit_id yet, the key a bare date, the counter a tillStamp) must reach the same 'day' post */
+  {
+    const R = require(path.join(H.API, 'lib', 'rollup'));
+    const sum = R.summary('day', '2026-10-10', R.totals([{ no: 'C5/26-27/0004', total: 175, payments: [{ how: 'Cash', amount: 175 }] }]),
+      { till: { id: 'C5', name: 'Counter 5', host: 'browser' }, source: null, at: '2026-10-10T06:40:00Z' });
+    const body = R.chitOf(sum);
+    const k = K.classify({ chit: Object.assign({ chit_id: 'c8b', created_at: '2026-10-10T06:40:01Z' }, body), entry: {}, setting: S });
+    eq('the browser till\'s day-close chit (rollup.chitOf) → that counter\'s walk-in day', [body.purpose, body.client_ref, k.kind, k.counter, k.day],
+      ['general', 'SUM/D/C5/2026-10-10', 'day', 'C5', '2026-10-10']);
+  }
   /* the counter's own fields (books-counter 3e1c88f) */
   const rc = (p) => K.classify({ chit: { chit_id: 'r1', purpose: 'general', created_at: '2026-09-29T05:00:00Z', business_json: { kind: 'payment_received', till: { id: 'C1' },
     payment_received: Object.assign({ no: 'R/C1/0007', at: '2026-09-29T05:00:00Z', party: { identity_id: CUST, name: 'Ravi' }, amount: 250.5, currency: 'INR', mode: 'UPI', status: 'cleared' }, p) } }, entry: {}, setting: S });
