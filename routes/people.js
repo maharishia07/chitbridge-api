@@ -18,6 +18,8 @@ const { safeErr } = require('../lib/respond');
 
 router.get('/', auth, async (req, res) => {
   try {
+    /* ?for=add — the Add-a-person form only needs may/why + the picker: no list is read (no query past auth) */
+    if (req.query.for === 'add') return res.json(people.addView({ owner: isOwner(req) }));
     const entity_id = auth.entityOf(req);
     /* one statement: the shop's human people (not removed) and the owner's handle for the user-id fallback.
        access_level / whole_entity are b173 columns — the row is read with `to_jsonb` so a shop that has not had it yet
