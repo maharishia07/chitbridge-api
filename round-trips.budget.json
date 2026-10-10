@@ -25,7 +25,7 @@
     "DELETE /api/crm/parties/:id": {
       "file": "crm.js",
       "trips": 1,
-      "wire": 10,
+      "wire": 11,
       "fired": true,
       "status": 404
     },
@@ -263,21 +263,21 @@
     "GET /api/crm/parties": {
       "file": "crm.js",
       "trips": 1,
-      "wire": 13,
+      "wire": 14,
       "fired": true,
       "status": 200
     },
     "GET /api/crm/parties/:id": {
       "file": "crm.js",
       "trips": 1,
-      "wire": 10,
+      "wire": 11,
       "fired": true,
       "status": 404
     },
     "GET /api/crm/parties/:id/timeline": {
       "file": "crm.js",
       "trips": 1,
-      "wire": 10,
+      "wire": 11,
       "fired": true,
       "status": 404
     },
@@ -343,6 +343,14 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/orders": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/facts/product-lab": {
       "file": "facts.js",
       "trips": 2,
@@ -354,7 +362,7 @@
     "GET /api/facts/rail": {
       "file": "facts.js",
       "trips": 3,
-      "wire": 18,
+      "wire": 19,
       "fired": true,
       "status": 200,
       "extra": true
