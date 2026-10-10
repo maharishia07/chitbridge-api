@@ -664,10 +664,13 @@
   .idle{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;
         gap:14px;background:var(--paper);cursor:pointer;padding:24px;text-align:center}
   .idle[hidden]{display:none}
-  .idle img{max-width:min(560px,86vw);max-height:56vh;object-fit:contain;border-radius:16px;border:1px solid var(--line)}
-  .idle .iname{font-size:1.6em;font-weight:800}
-  .idle .iclock{font-size:3em;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .idle img,#lockface img{max-width:min(560px,86vw);max-height:46vh;object-fit:contain;border-radius:16px;border:1px solid var(--line)}
+  .idle .iname,#lockface .iname{font-size:1.6em;font-weight:800}
+  .idle .iclock,#lockface .iclock{font-size:3em;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .idle .idate,#lockface .idate{color:var(--dim)}
   .idle .ifoot{color:var(--dim);font-size:.9em}
+  /* ⭐ M30: the lock wears the screensaver's face (idleFace) — picture · name · clock · today — with Unlock under it */
+  #lockface{display:flex;flex-direction:column;align-items:center;gap:10px}
   /* today, read off this counter's own bills */
   .today{display:flex;flex-direction:column;gap:2px;padding:8px 8px 6px}
   .trow{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:3px 0;font-size:.9em}
@@ -1379,7 +1382,32 @@
   .quick .qbar{position:sticky;top:-12px;z-index:2;background:var(--panel);
                margin:-12px -12px 0;padding:12px 12px 6px}
   /* ⚠️ a phone shows its keys inside the Items step, where 42vh of a short screen is too little */
-  @media (max-width:600px){ .quick{max-height:56vh} }
+  /* ⭐ M58 (walk 2026-10-10): on a phone the keys are part of the page — ONE scroll, not a box scrolling inside the page */
+  @media (max-width:600px){ .quick{max-height:none;overflow-y:visible} }
+  body.shape-mobile .quick{max-height:none;overflow-y:visible}
+  /* ⭐ M58: the keys' bar is ONE row on a phone — what it is, the group, ⋯ for the rest */
+  .qbar .qmore{display:none}
+  body.shape-mobile .qbar .qmore{display:inline-flex}
+  body.shape-mobile .qbar:not(.open) .qopt{display:none}
+  body.shape-mobile .qbar .qcart{display:none}          /* the step bar already carries the bill's count */
+  .qcart.slot{visibility:hidden}
+  .qcart[hidden]{display:none}
+  /**
+   * ⭐⭐ THE PHONE'S CATEGORIES ARE A PANEL OVER THE ITEMS (Athi, 2026-10-10). Four rows of chips took half a phone; now one
+   * button, and the chips open OVER the items when asked. Tap a chip = filter. Hold it, or press its ▦, = see that category's
+   * items as tiles in the panel. Nothing needs the gesture: ▦ does the same, on every chip.
+   */
+  .chips.catbar{flex:0 0 auto;flex-wrap:nowrap;overflow:visible;padding-bottom:4px}
+  .chips.catbar .catopen{font-weight:700;color:var(--ink)}
+  .catpanel{position:fixed;inset-inline:8px;z-index:45;background:var(--card);border:1px solid var(--edge);border-radius:14px;
+            box-shadow:0 12px 32px rgba(20,18,14,.22);padding:10px;overflow:auto;overscroll-behavior:contain}
+  .catpanel[hidden]{display:none}
+  .catpanel .chips{padding:0}
+  .catpanel .cathint{font-size:.75em;color:var(--dim);margin:0 0 6px}
+  .catpanel .catpk{min-width:40px;justify-content:center}
+  .catpanel .catpeekhd{display:flex;gap:8px;align-items:center;margin:10px 0 4px;font-size:.9em}
+  .catpanel .catpeekhd button{margin-inline-start:auto}
+  body .catpanel .quick.catpeekgrid{display:grid;max-height:none;overflow:visible;margin:0;--key-min:120px;--key-gap:8px}
   /**
    * ⭐⭐ SELF SERVICE IS A DIFFERENT SCREEN (Athi, 2026-09-18: *"the same panel can be used as a self service
    * panel"*). On a counter the keys SHARE the screen with the shelf, the bill and the shortcuts, so they are
@@ -1432,6 +1460,8 @@
   body.steps .left,body.steps .right,body.steps #pane_sell{min-width:0;min-height:0}
   body.steps .cust{flex-wrap:wrap}
   body.steps .cust input{flex:1 1 130px;min-width:0;max-width:none!important}
+  /* ⭐ M59 (walk 2026-10-10): a lone 🎤 wrapped onto its own row — on a phone each box keeps its own mic beside it */
+  @media (max-width:600px){ body.steps .cust{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px} body.steps .cust input{grid-column:1} }
   body.steps .grip,body.steps .cartgrip{display:none}
   body.steps .left{order:1;border-right:none;border-top:none}
   body.steps .right{order:2}
@@ -2794,6 +2824,9 @@
   .dlg .schips label{display:flex;gap:6px;align-items:center;margin:0;color:inherit;font-size:.9em}
   .dlg input[type=checkbox]{width:auto;padding:0}
   .snote{color:var(--dim);font-size:.78em;margin:6px 0}
+  /* ⚠️ M57 (walk 2026-10-10): "Nothing here matches that." stood in Settings before anything was searched — [hidden] must win here
+     too, the same guard every display-setting class in this file carries */
+  .snote[hidden]{display:none!important}
   /**
    * ⭐⭐ READ-ONLY CARRIES A DASHED BORDER (§4: *"Read-only rows are drawn with a dashed border and carry a
    * way out"*) — a masked key or a shop-assigned prefix looks like a field you could edit until it is told
@@ -2838,6 +2871,8 @@
   @media (prefers-reduced-motion:reduce){ .busybar.unknown i{animation:none;width:100%;opacity:.5} }
 
   @media print{ .wrap,header{display:none!important} }
+  /* ⭐ M59 (walk 2026-10-10): a key name on a button ("Cancel · Esc", "Park · F6") is for a keyboard — a phone has none */
+  @media (hover:none) and (pointer:coarse){ .kh{display:none} }
 </style>
 </head>
 <body>
@@ -2897,7 +2932,7 @@
     <button class="pri" data-testid="till-todo-save" onclick="todoAdd(document.getElementById('todoin'))">Add</button>
   </div>
   <div id="todobody"></div>
-  <div class="dlgbtns"><button onclick="todoClose()">Close · Esc</button></div>
+  <div class="dlgbtns"><button onclick="todoClose()">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 <!--
   ⭐⭐⭐ SCREEN STYLE, ITS OWN ROOM ([TILL-84], design-style/png/StyleStudio.png). Athi: *"it has its own
@@ -2914,7 +2949,7 @@
     </div>
     <div class="sp">
       <span class="stpend" id="stypend" data-testid="till-style-pending"></span>
-      <button onclick="styleClose()">Close · Esc</button>
+      <button onclick="styleClose()">Close<span class="kh"> · Esc</span></button>
     </div>
   </div>
   <div class="stwrap">
@@ -2946,7 +2981,7 @@
   <div class="stfoot">
     <button data-testid="till-style-reset" onclick="styleReset()">Reset to the shop's style</button>
     <span class="sp">
-      <button onclick="styleClose()">Cancel · Esc</button>
+      <button onclick="styleClose()">Cancel<span class="kh"> · Esc</span></button>
       <!-- ⚠️⚠️ "Try it for 10 minutes" WITHDRAWN ([TILL-90]). Athi, the first person to use it: *"now i
            couldn't go back… the counter person will not know how to go back."* A safety net nobody can find
            is a trap with a timer. tryBoot() stays, so anyone mid-trial is put back on the next load. -->
@@ -2963,7 +2998,7 @@
   <h3>Your picture <span class="u">kept on this counter</span></h3>
   <div id="dayimgbig" class="dayimgbig"></div>
   <div class="dlgbtns">
-    <button onclick="dayImgClose()">Close · Esc</button>
+    <button onclick="dayImgClose()">Close<span class="kh"> · Esc</span></button>
     <button data-testid="till-day-img-replace" onclick="dayImgClose();dayImgPick()">Change it</button>
   </div>
 </dialog>
@@ -2993,7 +3028,7 @@
       <button class="pill" id="lvgrid" data-testid="till-line-view-grid" onclick="lineView('grid')">⊞</button>
     </div>
     <button class="pill" data-testid="till-line-health" onclick="lineClose();openHealth()" title="counter health">🩺</button>
-    <button class="pill" data-testid="till-line-close" onclick="lineClose()">Close · Esc</button></div>
+    <button class="pill" data-testid="till-line-close" onclick="lineClose()">Close<span class="kh"> · Esc</span></button></div>
   <div class="lbody" id="linebody"></div>
 </dialog>
 <dialog id="updlg" class="dlg wide" data-testid="till-upload-dlg">
@@ -3001,7 +3036,7 @@
   <div id="upbody" class="upbody"></div>
   <div id="upsay" class="shopsay"></div>
   <div class="dlgbtns">
-    <button onclick="upClose()">Cancel · Esc</button>
+    <button onclick="upClose()">Cancel<span class="kh"> · Esc</span></button>
     <button id="upgo" class="pri" data-testid="till-upload-go" onclick="upCommit()" disabled>Add these products</button>
   </div>
 </dialog>
@@ -3009,7 +3044,7 @@
   <h3>Start your shop <span class="u">pick what you sell — you can change every price and name afterwards</span></h3>
   <div id="startbody" class="startbody"></div>
   <div id="startsay" class="shopsay"></div>
-  <div class="dlgbtns"><button onclick="startClose()">Not now · Esc</button></div>
+  <div class="dlgbtns"><button onclick="startClose()">Not now<span class="kh"> · Esc</span></button></div>
 </dialog>
 <!-- ⭐⭐ WHY THIS COUNTER CANNOT DO THAT YET ([TILL-127]). Athi: *"it has to give a pop up message that store
      is not signed in yet, sign-in prompt has to showcase."* A quiet no-op is what this replaces. -->
@@ -3023,14 +3058,14 @@
   <h3>Connect this counter <span class="u">sign in once with your ChitBridge email — afterwards this counter bills with or without the internet</span></h3>
   <div id="signinbody" class="startbody"></div>
   <div id="signinsay" class="shopsay"></div>
-  <div class="dlgbtns"><button onclick="signinClose()">Not now · Esc</button></div>
+  <div class="dlgbtns"><button onclick="signinClose()">Not now<span class="kh"> · Esc</span></button></div>
 </dialog>
 <dialog id="shopdlg" class="dlg" data-testid="till-shop-dlg">
   <h3>Your shop <span class="u">what prints on every bill</span></h3>
   <div id="shopform" class="shopform"></div>
   <div id="shopsay" class="shopsay"></div>
   <div class="dlgbtns">
-    <button onclick="shopEditClose()">Cancel · Esc</button>
+    <button onclick="shopEditClose()">Cancel<span class="kh"> · Esc</span></button>
     <button class="pri" data-testid="till-shop-save" onclick="shopEditSave()">Save</button>
   </div>
 </dialog>
@@ -3043,7 +3078,7 @@
   <h3>Category order <span class="u">What the hand reaches first — on the chips, the keys and in maintenance.</span></h3>
   <div id="catbody"></div>
   <div class="dlgbtns">
-    <button onclick="catOrderClose()">Cancel · Esc</button>
+    <button onclick="catOrderClose()">Cancel<span class="kh"> · Esc</span></button>
     <button class="pri" data-testid="till-catorder-save" onclick="catOrderSave()">Save the order</button>
   </div>
 </dialog>
@@ -3071,18 +3106,18 @@
       <button class="pill" data-testid="till-quick-reset" onclick="quickReset();quickMaintPaint()">Show all again</button>
     </div>
   </div>
-  <div class="dlgbtns"><button onclick="quickMaintClose()">Close · Esc</button></div>
+  <div class="dlgbtns"><button onclick="quickMaintClose()">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 <dialog id="stylegal" class="dlg wide" data-testid="till-style-gallery">
   <h3>Pick a starting style <span class="u">Each one is a whole screen, not a colour — and you can change any part of it afterwards.</span></h3>
   <div class="stgal" id="stygal"></div>
-  <div class="dlgbtns"><button onclick="galClose()">Cancel · Esc</button></div>
+  <div class="dlgbtns"><button onclick="galClose()">Cancel<span class="kh"> · Esc</span></button></div>
 </dialog>
 <dialog id="moddlg" class="dlg" data-testid="till-mod">
   <h3 id="modtitle">Choose</h3>
   <div id="modbody"></div>
   <div class="dlgbtns">
-    <button onclick="modClose()">Cancel · Esc</button>
+    <button onclick="modClose()">Cancel<span class="kh"> · Esc</span></button>
     <!--
       ⭐ ADD, THEN ANOTHER ([TILL-75]) — a table of four ordering four different combinations is this button
       three times, with no trip back to the shelf in between. Hidden when the product has nothing to choose.
@@ -3098,6 +3133,8 @@
       <span class="pill" id="tillpill">till</span>
       <button class="pill" id="whopill" data-testid="till-who" onclick="whoAct()" title="who is signed in at this counter (F7 to hand over)">…</button>
       <button class="pill" id="lockbtn" data-testid="till-lock" onclick="lockNow()" title="Lock this counter — the bill stays; sign in to carry on">🔒</button>
+      <!-- ⭐ M74: online orders waiting — shown only when there is one (onlineOrdersPaint) -->
+      <button class="pill off" id="orderpill" data-testid="till-online-orders" hidden onclick="onlineOrdersOpen()"></button>
       <!--
         ⭐⭐ THE LINE PILL IS THE WAY IN TO "WHY IS A BILL STUCK?". Athi, 2026-09-17: *"do you have a chip called why is a bill
         stuck? I couldn't see that."* It lived only inside ☰, and this pill — the first place anyone looks when bills are not
@@ -3161,6 +3198,8 @@
     <!-- ⭐ the list's own settings, over the list — maintenance only (paintListTools) -->
     <div class="listtools" id="listtools" style="display:none"></div>
     <div class="chips" id="chips"></div>
+    <!-- ⭐ the phone's category panel (catPanelPaint) — over the items, no room taken while closed -->
+    <div class="catpanel" id="catpanel" data-testid="till-cat-panel" hidden></div>
     <div class="quick" id="quick"></div>
     <!--
       ⭐⭐ DRAG TO SIZE THE QUICK KEYS ([TILL-61]). Athi: *"need to have a control to adjust the sizing, drag
@@ -3191,7 +3230,7 @@
      painted over the GST note at the bottom of the screen. -->
    <div id="pane_sell" class="sellpane">
     <div class="cust">
-      <input id="cname" placeholder="Customer (optional)" autocomplete="off" list="custlist" oninput="rwTyped()">
+      <input id="cname" placeholder="Customer" title="optional" autocomplete="off" list="custlist" oninput="rwTyped()">
       <!-- ⭐ A NAME IS HARDER TO TYPE THAN A NUMBER, NOT EASIER. Athi, 2026-09-09: *"customer name can listen."* The phone box had
            a microphone and the name box did not, which is backwards: a phone is ten digits on a keypad, while "Kalaiselvi" typed
            with one hand at a counter is slow and usually wrong. Same seam, same chooser — nothing new to configure. -->
@@ -3205,6 +3244,8 @@
     <!-- ⭐⭐ what this customer holds, and what this bill will add. Empty and invisible for a shop with no programme,
          which is most shops — nothing on the counter is spent on a feature nobody switched on. -->
     <div class="rw" id="rw" data-testid="till-rw"></div>
+    <!-- ⭐ M60: parked bills sit ABOVE the bill — on a phone the foot of the Bill step is under the step bar -->
+    <div class="parked" id="parked"></div>
     <div class="cart" id="cart"></div>
     <!--
       ⭐⭐ THE CART IS RESIZABLE. Athi, observation 6, division E: *"the cart size should be movable — at the
@@ -3237,12 +3278,11 @@
     <div class="obar" id="obar"></div>
     <div class="parked" id="parts"></div>
     <div class="go">
-      <button onclick="clearBill()">Clear · Esc</button>
-      <button id="parkbtn" data-testid="till-park" onclick="parkBill()">Park · F6</button>
-      <button class="pri" id="save" onclick="finish()">Save &amp; print · F9</button>
+      <button onclick="clearBill()">Clear<span class="kh"> · Esc</span></button>
+      <button id="parkbtn" data-testid="till-park" onclick="parkBill()">Park<span class="kh"> · F6</span></button>
+      <button class="pri" id="save" onclick="finish()">Save &amp; print<span class="kh"> · F9</span></button>
     </div>
     </div><!-- /payzone -->
-    <div class="parked" id="parked"></div>
    </div>
 
    <!-- ⭐ RECEIVE — what actually came through the door. The bill they brought is FOUR fields; the lines are what we counted. -->
@@ -3267,9 +3307,9 @@
     <div class="bar" id="rcv_costs"></div>
     <div class="bar" id="rcv_sum"></div>
     <div class="go">
-      <button onclick="rcvClear()">Clear · Esc</button>
-      <button data-testid="rcv-costs-open" onclick="rcvCosts()">Freight &amp; costs · F5</button>
-      <button class="pri" id="rcv_save" data-testid="rcv-confirm" onclick="rcvConfirm()">Confirm receipt · F9</button>
+      <button onclick="rcvClear()">Clear<span class="kh"> · Esc</span></button>
+      <button data-testid="rcv-costs-open" onclick="rcvCosts()">Freight &amp; costs<span class="kh"> · F5</span></button>
+      <button class="pri" id="rcv_save" data-testid="rcv-confirm" onclick="rcvConfirm()">Confirm receipt<span class="kh"> · F9</span></button>
     </div>
    </div>
 
@@ -3283,9 +3323,9 @@
     <div class="lines" id="dsp_lines"></div>
     <div class="bar" id="dsp_sum"></div>
     <div class="go">
-      <button onclick="dspClear()">Clear · Esc</button>
-      <button data-testid="dsp-carton" onclick="dspCarton()">Next carton · F8</button>
-      <button class="pri" id="dsp_save" data-testid="dsp-confirm" onclick="dspConfirm()">Pack &amp; despatch · F9</button>
+      <button onclick="dspClear()">Clear<span class="kh"> · Esc</span></button>
+      <button data-testid="dsp-carton" onclick="dspCarton()">Next carton<span class="kh"> · F8</span></button>
+      <button class="pri" id="dsp_save" data-testid="dsp-confirm" onclick="dspConfirm()">Pack &amp; despatch<span class="kh"> · F9</span></button>
     </div>
    </div>
 
@@ -3404,9 +3444,9 @@
 </div></dialog>
 <div id="whosebar"></div>
 <div id="lockcover" hidden data-testid="till-lock-cover">
-  <div style="max-width:420px;width:100%;text-align:center;display:flex;flex-direction:column;gap:14px">
-    <div style="font-size:3em;line-height:1">🔒</div>
-    <div style="font-size:1.4em;font-weight:700" id="locktitle">Locked</div>
+  <div style="max-width:600px;width:100%;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
+    <div id="lockface" data-testid="till-lock-face"></div>
+    <div style="font-size:1.15em;font-weight:700" id="locktitle">🔒 Locked</div>
     <div style="color:var(--dim)" id="lockwho"></div>
     <button class="pill" style="font-size:1.1em;padding:12px 18px" data-testid="till-unlock" onclick="lockOpen()" title="Sign in to carry on — a counter PIN works without the internet"><b>🔓 Unlock</b></button>
   </div>
@@ -3701,7 +3741,7 @@
   <div class="dlgbtns">
     <!-- ⚠️ NEVER .pri — a lid is never dressed as the loud action (tests/till-exits.test.js), whatever it also
          quietly flushes on the way out (the printer choice, a pasted key — everything else already saved live). -->
-    <button onclick="saveSettings()">Close · Esc</button>
+    <button onclick="saveSettings()">Close<span class="kh"> · Esc</span></button>
   </div>
   <div id="setnote" class="snote">Everything saves as you change it. Nothing is lost by closing.</div>
 </div></dialog>
@@ -3721,7 +3761,7 @@
   <div class="sethead"><h3>Switches</h3>
     <button class="setx" onclick="document.getElementById('traydlg').close()" aria-label="Close" title="Close">✕</button></div>
   <div id="traybody"></div>
-  <div class="dlgbtns"><button onclick="document.getElementById('traydlg').close()">Close · Esc</button></div>
+  <div class="dlgbtns"><button onclick="document.getElementById('traydlg').close()">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 
 <!-- ⭐⭐ REVIEW BEFORE CLOSE (Phase 4, the order pad) — what is on it, and the one button that bills it -->
@@ -3731,7 +3771,7 @@
   <div id="orderdlgbody"></div>
   <div class="dlgbtns">
     <button class="pri" data-testid="till-order-settle" onclick="orderReviewSettle()">Bill this table</button>
-    <button onclick="document.getElementById('orderdlg').close()">Not yet · Esc</button>
+    <button onclick="document.getElementById('orderdlg').close()">Not yet<span class="kh"> · Esc</span></button>
   </div>
 </dialog>
 
@@ -4056,7 +4096,7 @@ var SHOP_KEYS = ['cb_till_break', 'cb_till_cathidden', 'cb_till_catmode', 'cb_ti
   'cb_till_dayclosed', 'cb_till_gst_answer', 'cb_till_idle', 'cb_till_opt', 'cb_till_orders', 'cb_till_otype', 'cb_till_parked',
   'cb_till_qhide', 'cb_till_qpin', 'cb_till_qsold', 'cb_till_resume', 'cb_till_shop', 'cb_till_shopgroups',
   'cb_till_shopname', 'cb_till_table', 'cb_till_thumbs', 'cb_till_todo', 'cb_till_trystyle', 'cb_till_who', 'cb_till_pins', 'cb_till_lock', 'cb_till_autolock',
-  'cb_till_keep_days', 'cb_till_keep_bills', 'cb_till_keep_mb', 'cb_till_retained', 'cb_till_unproven', 'cb_till_pid'];
+  'cb_till_keep_days', 'cb_till_keep_bills', 'cb_till_keep_mb', 'cb_till_retained', 'cb_till_unproven', 'cb_till_pid', 'cb_till_salestop'];
 /**
  * ⚠️ ONCE, ON THE FIRST START OF THIS CODE ON A SHOP PC: the values it kept under plain names before S1b belong to
  * the shop it held then, which is the shop it holds now — they are MOVED into that shop's slot. Only into an EMPTY
@@ -5783,7 +5823,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-10-10.nolostsale';
+var TILL_BUILD = '2026-10-10.t1';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -5868,7 +5908,9 @@ async function tillClaim(t){
  * exists to prove. The only thing that may change is the TAG, and only for a series that has issued nothing.
  */
 var LAST_SERIES = null;
-async function nextNumber(kind){
+/* ⭐ M54 (walk 2026-10-10): `peek` answers the SAME number finish() would get, and writes nothing — Settings › Bills said
+   "Next bill: C5/26-27/0003" from a worked example (seq 3) while the next sale correctly took 0004. */
+async function nextNumber(kind, peek){
   var country = docCountry();
   var D = window.CBDoc;
   var now = new Date();
@@ -5945,8 +5987,10 @@ async function nextNumber(kind){
   }
   var seq = s.next; s.next = seq + 1;
   /* ⭐ where this number sits in its counter's run — travels on the bill so the cloud can keep the high-water mark */
-  if (!tag) LAST_SERIES = { prefix: s.prefix, period: s.fy, seq: seq };
-  await DB.set(box, s);
+  if (!peek) {
+    if (!tag) LAST_SERIES = { prefix: s.prefix, period: s.fy, seq: seq };
+    await DB.set(box, s);
+  }
 
   if (!D) return (tag ? tag + '/' : '') + s.prefix + '/' + period + '/' + String(seq).padStart(4,'0');
   /* ⚠️ COMPOSED WITH THE SAME SCHEME THE PERIOD WAS KEYED ON, or the printed label and the reset would be
@@ -6459,9 +6503,13 @@ async function load(){
     if (wb) wb.innerHTML = whoseShopSay();
   } catch (_) {}
   /* H21/T63: a phone is a person - the header says WHO, not "Counter 1" (a counter number belongs to the shop PC) */
-  document.getElementById('tillpill').textContent = personOn() ? ((WHO && WHO.name) || CloudHost.person.by_name || 'Till') : (counterName() || 'Till');
+  /* ⭐ M38 (walk 2026-10-10): the shop's name was on the bar three times — #shopname, this pill (it printed WHO.name, and the
+     shop's own login IS the shop's name) and #whopill. One fact per pill: shop · counter · who. */
+  document.getElementById('tillpill').textContent = counterPill();
+  try { paintWho(); } catch (_) {}            /* whoWord() compares with the shop's name, which has only now arrived */
   paintStatus(); paintChips(); paintHits(); paintCart(); paintTotals(); paintPays(); paintCustomers();
   loadQuick().catch(function(){});
+  try { onlineOrdersLoad(); } catch (_) {}      /* M74 — the 🛒 flag, from the shop's open orders */
   /* ⚠️ A NEW COUNTER READS ITS SHOP BY ITSELF (2026-09-17). A counter opened for the first time, online and keyed, used to sit on
      "No copy of the shop yet — press ↻" — a button to press for the one thing it obviously has to do. Once per page, so a shop
      that cannot be read does not loop; refresh() calls load() again. */
@@ -6627,9 +6675,25 @@ function paintStatus(){
   if (!offline && waitingN) net.textContent = 'online · ' + waitingN + ' waiting';
   net.className = 'pill ' + ((offline || waitingN) ? 'off' : 'on');
   net.hidden = !(offline || waitingN);
+  /**
+   * ⭐ M51 (walk 2026-10-10) — "IS THE NETWORK SPEED OK?" ON THE MAIN SCREEN. Athi asked; the answer was measured all along
+   * (lineMeasuredMs: the round trip of this counter's own sends, and how many of the last 20 failed) but sat three clicks deep
+   * in the stuck-bill panel. A healthy line now shows a small chip — "Line good · 0.9 s" — and the same pill opens that panel.
+   * Nothing measured yet → nothing said (no guess). Slow (over 2 s) or any failed send → amber.
+   */
+  if (!offline && !waitingN) {
+    var ms = null, fl = 0;
+    try { ms = lineMeasuredMs(); fl = LINE_TRIES.filter(function(t){ return !t.ok; }).length; } catch (_) {}
+    if (ms != null) {
+      var slow = ms > 2000 || fl > 0;
+      net.textContent = (slow ? 'Line slow · ' : 'Line good · ') + (Math.round(ms / 100) / 10) + ' s';
+      net.className = 'pill ' + (slow ? 'off' : 'on');
+      net.hidden = false;
+    }
+  }
   var age = document.getElementById('agepill');
   if (S && S.at) { var mins = Math.round((Date.now() - new Date(S.at).getTime())/60000);
-    age.textContent = 'prices as at ' + new Date(S.at).toTimeString().slice(0,5) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
+    age.textContent = 'prices as at ' + hhmm(S.at) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
     age.className = 'pill' + (mins > 240 ? ' off' : '');
     age.hidden = mins <= 90; }
   else { age.textContent = 'no prices yet'; age.className = 'pill off'; age.hidden = false; }
@@ -8259,7 +8323,8 @@ function menuShopBody(){
      */
     if (k === 'storefront') return sh.handle
       ? (cbHome().replace(/\/app\.html.*$/, '') + '/shop.html?s=' + encodeURIComponent(sh.handle)) : '';
-    if (k === 'gstin')    return tx.gstin || (noGst ? 'Not registered' : '');
+    /* ⚠️ M33 (walk 2026-10-10): shopTax().gstin is a YES/NO — returning it printed "true" where the GSTIN goes */
+    if (k === 'gstin')    return (tx.gstin && String(sh.gstin || '').trim()) || (noGst ? 'Not registered' : '');
     if (k === 'currency') return sh.currency || (S && S.currency) || 'INR';
     if (k === 'counter')  return counterName();
     return sh[k] || '';
@@ -8286,7 +8351,7 @@ function menuShopBody(){
     if (v) return '<div class="shoprow" data-testid="till-shop-' + r.k + '"><span>' + esc(r.label) + '</span>'
       + '<span class="sv"><b>' + esc(v) + '</b>'
       + (r.k === 'counter' && r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span>'
-      + (editable[r.k] ? '<span class="sact"><button class="pill" data-testid="till-shop-edit-' + r.k + '" onclick="fromMenu(shopEditOpen)">Edit</button></span>' : '')
+      + (editable[r.k] ? '<span class="sact"><button class="pill" data-testid="till-shop-edit-' + r.k + '" onclick="fromMenuBack(shopEditOpen,\'shopdlg\',\'shopdet\')">Edit</button></span>' : '')
       + '</div>';
     /**
      * ⚠️⚠️ [2026-09-27] NO LONGER A DOOR OUT. Athi, looking at this row: "it is opening the backend app, it
@@ -8297,7 +8362,7 @@ function menuShopBody(){
      * a GSTIN that does not exist yet — stays reachable from "Open the shop's profile ↗" at the foot of this
      * section, for the shop that needs that, rather than being this row's default for every shop.
      */
-    var act = '<button class="pill" data-testid="till-shop-add-' + r.k + '" onclick="fromMenu(shopEditOpen)">Add</button>';
+    var act = '<button class="pill" data-testid="till-shop-add-' + r.k + '" onclick="fromMenuBack(shopEditOpen,\'shopdlg\',\'shopdet\')">Add</button>';
     return '<div class="shoprow empty" data-testid="till-shop-' + r.k + '"><span>' + esc(r.label) + '</span>'
       + '<span class="sv"><i class="warn">not set</i>'
       + (r.why ? '<i>' + esc(r.why) + '</i>' : '') + '</span>'
@@ -8319,13 +8384,15 @@ function menuShopBody(){
   };
 
   var when = '';
-  try { if (S && S.at) when = 'Read from ChitBridge at ' + clock12(S.at); } catch (_) {}
+  try { if (S && S.at) when = 'Read at ' + clock12(S.at); } catch (_) {}
   return '<div class="menusec" data-testid="till-shopdetails">'
     /* ⭐ a completeness COUNT, not a red dot — it says how much is left without calling the shop broken */
     + '<div class="sfill" data-testid="till-shop-filled">' + filled + ' of ' + SHOP_ROWS.length + ' filled</div>'
     + SHOP_ROWS.map(row).join('')
     /* ⚠️ said ONCE, at the bottom, with the time it was read — not on every row */
-    + '<div class="shoprow foot"><span class="u">' + esc(when) + ' · changed there, not here</span>'
+    /* ⭐ M35 (walk 2026-10-10): the foot said "changed there, not here" under rows that each had Edit — Edit saves through
+       POST /api/till/shop, so it names what Edit changes, and where the rest lives */
+    + '<div class="shoprow foot"><span class="u">' + esc(when) + (when ? ' · ' : '') + '✎ name, address, phone, GSTIN here · the rest in CB</span>'
     + '<button class="pill" data-testid="till-shop-profile" onclick="fromMenu(openGst)">Open the shop’s profile ↗</button></div>'
     + '</div>';
 }
@@ -8697,7 +8764,9 @@ function dayState(){
     device: 'me',
     currency_symbol: (typeof curSym === 'function') ? curSym() : '',
     who: (typeof WHO !== 'undefined' && WHO) ? WHO : null,
-    items: ((S && S.items) || []).length,
+    /* ⭐ M31 (walk 2026-10-10): the Menu said 116 products while the list and "Everything" said 114 — this counted every row,
+       the selling screen counts what can be sold (the 2 were off the shelf, which has its own chip). One rule: sellable. */
+    items: ((S && S.items) || []).filter(function(i){ return statusOf(i) !== 'unavailable'; }).length,
     prices_at: (S && S.at) || null,
     counter: mine ? { id: mine, name: ls.get(shopLs('cb_till_counter_name'), '') || null,
                       next: Number(t.resume_next) || null } : null,
@@ -8819,6 +8888,7 @@ function dayDone(){
   MENU_OPEN_SEC = 'day';
   try { paintMenu(); } catch (_) {}
   toastLine(DAY().done(dayState()));
+  try { paintTotals(); } catch (_) {}         /* M32: the bill's "Day not opened" line goes now */
 }
 
 function dayImg(){ return ls.get(shopLs('cb_till_dayimg'), ''); }
@@ -8841,12 +8911,20 @@ function idleShow(){
   if (document.querySelector('dialog[open]')) return;
   var m = document.getElementById('tillmenu'); if (m && !m.hidden) return;
   var el = document.getElementById('tillidle'); if (!el) return;
-  var img = dayImg();
-  el.innerHTML = (img ? '<img src="' + esc(img) + '" alt="">' : '')
-    + '<div class="iname">' + esc(counterName() || (S && S.entity_name) || '') + '</div>'
-    + '<div class="iclock" id="idleclock">' + esc(new Date().toTimeString().slice(0, 5)) + '</div>'
-    + '<div class="ifoot">Touch, or press any key, to go on billing</div>';
+  el.innerHTML = idleFace() + '<div class="ifoot">Touch, or press any key, to go on billing</div>';
   el.hidden = false; el.setAttribute('aria-hidden', 'false');
+}
+/**
+ * ⭐ M30 (walk 2026-10-10) — THE SHOP'S FACE, ONCE. Athi: the lock was "an empty page — any screensaver?" The screensaver already
+ * drew the shop's picture, its name and a big clock; the lock now draws the same thing (paintLock) instead of a lone padlock.
+ * The clock is shop time and keeps ticking (data-clock, the 20-second timer below).
+ */
+function idleFace(){
+  var img = dayImg();
+  return (img ? '<img src="' + esc(img) + '" alt="">' : '')
+    + '<div class="iname">' + esc((S && S.shop && S.shop.name) || (S && S.entity_name) || counterName() || '') + '</div>'
+    + '<div class="iclock" data-clock="1">' + esc(hhmm()) + '</div>'
+    + '<div class="idate">' + esc(atShop(Date.now(), 'date')) + '</div>';
 }
 /** wake, and hand the keystroke that woke us to the search box so a scan is not eaten */
 function idleWake(e){
@@ -8912,7 +8990,7 @@ function autoLockFire(){
 ['keydown', 'pointerdown', 'wheel', 'touchstart'].forEach(function(t){
   document.addEventListener(t, idleWake, true);
 });
-setInterval(function(){ var c = document.getElementById('idleclock'); if (c) c.textContent = new Date().toTimeString().slice(0, 5); }, 20000);
+setInterval(function(){ [].forEach.call(document.querySelectorAll('[data-clock]'), function(c){ if (c.offsetParent) c.textContent = hhmm(); }); }, 20000);
 /**
  * ── ⭐⭐ THE PICTURE IS RESIZED BEFORE IT IS KEPT ([TILL-100]) ──────────────────────────
  * A phone photograph is 3–8 MB and becomes a third bigger again as a data URL. Nothing on this counter needs
@@ -9005,7 +9083,17 @@ function dayImgClose(){ var d = document.getElementById('dayimgdlg'); if (d && d
  */
 var TREND_PERIOD = 'month', TREND_ROWS = null, TREND_WIDE = false, TREND_BUSY = false;
 
-function trendSet(p){ TREND_PERIOD = p; TREND_ROWS = null; trendLoad(); paintMenu(); }
+/**
+ * ⭐ M52 (walk 2026-10-10) — A TAB FLIPS IN PLACE. Tapping "Days" repainted the whole Menu and threw it back to the top, so the
+ * tab just tapped was out of sight. The panel is one element (data-testid till-trend): it is replaced, nothing else moves.
+ * [[feedback-repaint-locally]]
+ */
+function trendRepaint(){
+  var el = document.querySelector('[data-testid="till-trend"]');
+  if (!el) { try { paintMenu(); } catch (_) {} return; }
+  el.outerHTML = menuTrendBody();
+}
+function trendSet(p){ TREND_PERIOD = p; TREND_ROWS = null; trendRepaint(); }
 
 async function trendLoad(){
   if (TREND_BUSY) return;
@@ -9016,7 +9104,7 @@ async function trendLoad(){
     TREND_WIDE = !!(r && r.shopWide);
   } catch (_) { TREND_ROWS = []; }
   TREND_BUSY = false;
-  try { paintMenu(); } catch (_) {}
+  trendRepaint();
 }
 
 function menuTrendBody(){
@@ -9038,9 +9126,9 @@ function menuTrendBody(){
      * OVER — a shop in its first week has no week yet, and saying "nothing" without saying why is how a
      * shopkeeper concludes the feature is broken. [[feedback-silence-is-the-bug]]
      */
-    return out + '<p class="u" data-testid="till-trend-none">No ' + esc(label[TREND_PERIOD].toLowerCase())
-      + ' folded up yet. A ' + esc(TREND_PERIOD) + ' is summarised once it has finished'
-      + (TREND_PERIOD === 'year' ? ', which for a financial year is after 31 March.' : '.') + '</p></div>';
+    return out + '<p class="u" data-testid="till-trend-none" title="a ' + esc(TREND_PERIOD) + ' shows once it has finished'
+      + (TREND_PERIOD === 'year' ? ' (a financial year: after 31 March)' : '') + '">No finished ' + esc(label[TREND_PERIOD].toLowerCase())
+      + ' yet</p></div>';
   }
 
   /* ⭐ the biggest number is the bar, so a trend can be READ rather than compared digit by digit */
@@ -9431,7 +9519,11 @@ function menuTodayBody(){
   var back = bills.filter(isReturnRow);
   var spent = bills.filter(isExpenseRow);
   var n = bills.length - back.length - spent.length;
-  var total = bills.reduce(function(a, b){ return a + (Number(b.total) || 0); }, 0);
+  /* ⚠️ M48 (walk 2026-10-10): a return of YESTERDAY's bill showed "Today's sale −₹50.00 · Bills 0" — this summed every row,
+     credit notes and expenses included. A sale is never negative: Sales are the sale rows; Net is what is left after the rest. */
+  var net = bills.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0);
+  var total = bills.filter(function(b){ return !isReturnRow(b) && !isExpenseRow(b); })
+                   .reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0);
   var saved = bills.reduce(function(a, b){ return a + (Number(b.saved) || 0); }, 0);
   var returned = back.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
   var expensed = spent.reduce(function(a, b){ return r2(a + Math.abs(Number(b.total) || 0)); }, 0);
@@ -9452,7 +9544,7 @@ function menuTodayBody(){
   var top = Object.keys(moved).sort(function(a, b){ return moved[b] - moved[a]; }).slice(0, 5);
   /* the busiest hour, said as a range a person reads rather than a number */
   var hours = {};
-  bills.forEach(function(b){ var h = new Date(b.at).getHours(); hours[h] = (hours[h] || 0) + 1; });
+  bills.forEach(function(b){ var hs = hhmm(b.at), h = Number(hs.slice(0, 2)); if (hs && isFinite(h)) hours[h] = (hours[h] || 0) + 1; });
   var busiest = Object.keys(hours).sort(function(a, b){ return hours[b] - hours[a]; })[0];
   var soldOut = quickSold().length;
   var bohni = bohniOf(bills);
@@ -9461,10 +9553,11 @@ function menuTodayBody(){
     return '<div class="trow"><span>' + esc(label) + '</span><b' + (strong ? ' class="big"' : '') + '>' + value + '</b></div>';
   };
   var out = '<div class="today" data-testid="till-today">'
-    + row("Today's sale", money(total), true)
+    + row('Sales', money(total), true)
     + row('Bills', String(n))
-    + (returned ? row('Given back', '−' + money(returned)) : '')
+    + (returned ? row('Returns', '−' + money(returned)) : '')
     + (expensed ? row('Expenses paid', '−' + money(expensed)) : '')
+    + (returned || expensed ? row('Net', money(net), true) : '')
     + (n ? row('Average bill', money(r2(total / n))) : '')
     + (saved ? row('Taken off by offers', money(saved)) : '');
   Object.keys(by).sort().forEach(function(how){ out += row(how.charAt(0).toUpperCase() + how.slice(1), money(by[how])); });
@@ -9475,7 +9568,7 @@ function menuTodayBody(){
     + '<b>Bohni</b>'
     + (bohni
         ? '<span>' + esc(String(bohni.no || '')) + ' · ' + money(Number(bohni.total) || 0)
-          + ' · ' + esc(new Date(bohni.at).toTimeString().slice(0, 5)) + '</span>'
+          + ' · ' + esc(hhmm(bohni.at)) + '</span>'
         : '<span>the first sale of the day is still to come</span>')
     + '</div>';
 
@@ -9569,9 +9662,9 @@ function dayReportHTML(bills){
   var qty = Object.keys(agg.items).reduce(function(a, k){ return r2(a + agg.items[k].qty); }, 0);
   var bohni = bohniOf(bills);
   var hours = {};
-  bills.forEach(function(b){ var h = new Date(b.at).getHours(); hours[h] = (hours[h] || 0) + 1; });
+  bills.forEach(function(b){ var hs = hhmm(b.at), h = Number(hs.slice(0, 2)); if (hs && isFinite(h)) hours[h] = (hours[h] || 0) + 1; });
   var busiest = Object.keys(hours).sort(function(a, b){ return hours[b] - hours[a]; })[0];
-  var hhmm = function(d){ return new Date(d).toTimeString().slice(0, 5); };
+  var hhmm = function(d){ return hhmm(d); };
   var day = bizDayStart();
 
   var head = '<header class="drhead">'
@@ -9831,7 +9924,7 @@ function whoNow(){
 function clock12(d){
   /* ⚠️ hour12 EXPLICITLY. Asking for hour:'numeric' is not asking for a 12-hour clock — the locale decides,
      and en-GB/en-IN answer 22:55. The spec asks for a 12-hour clock, so it is stated rather than hoped for. */
-  try { return new Date(d || Date.now()).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase(); }
+  try { return new Date(d || Date.now()).toLocaleTimeString('en-US', tzOpt({ hour: 'numeric', minute: '2-digit', hour12: true })).toLowerCase(); }
   catch (_) { return ''; }
 }
 
@@ -9904,6 +9997,23 @@ function counterTitle(){ return counterName(); }
  * shop gave this counter (counter_name) wins; a stored name that is not just the default "Counter N" is the shop's own and
  * stays; otherwise the label is built from the prefix the bills are numbered under — C5 -> "Counter 5".
  */
+/**
+ * ⭐ M38 (walk 2026-10-10) — the top bar says shop · counter · who, each once. The counter pill is the COUNTER: the name the
+ * shop gave it, else its prefix ("Counter C5", the same C5 the bills are numbered under).
+ */
+function counterPill(){
+  var own = ''; try { own = String(ls.get(shopLs('cb_till_counter_name'), '') || '').trim(); } catch (_) {}
+  if (own) return own;
+  var id = ''; try { id = String(tillId() || ''); } catch (_) {}
+  return id ? ('Counter ' + id) : counterName();
+}
+/** who is on, in a word: the person — or "Shop login" when the shop's own account is signed in (its name is already on the bar) */
+function whoWord(){
+  if (!(WHO && WHO.name)) return '';
+  var shop = String((S && S.shop && S.shop.name) || (S && S.entity_name) || '').trim().toLowerCase();
+  if (WHO.kind === 'entity' || (shop && String(WHO.name).trim().toLowerCase() === shop)) return 'Shop login';
+  return WHO.name;
+}
 function counterName(){
   var own = ''; try { own = String(ls.get(shopLs('cb_till_counter_name'), '') || '').trim(); } catch (_) {}
   if (own) return own;
@@ -10064,7 +10174,7 @@ function paintMenu(){
     + '<span class="mwho"><b data-testid="till-m-counter">' + esc(counterName()) + '</b>'
     + '<i>' + esc((S && S.entity_name) || counterName() || '') + '</i></span>'
     + '<span class="mdot ' + (online ? 'on' : 'off') + '" title="' + (online ? 'online' : 'offline — billing continues') + '"></span>'
-    + '<span class="mtime">' + esc(new Date().toTimeString().slice(0, 5)) + '</span>'
+    + '<span class="mtime">' + esc(hhmm()) + '</span>'
     + '<button class="mx" data-testid="till-menu-close" aria-label="close" onclick="closeMenu()">✕</button>'
     + '</div>' + hubWhoRow() + hubChips())
     /* ⭐ pinned — see hubWhoRow() and hubChips(). They sit ABOVE the folding sections and never fold. */
@@ -10093,8 +10203,8 @@ function paintMenu(){
            store, in two places that could show different answers. It is now in the one group, with a preview. */
         /* ⭐ which edge the menu sits on — see applyHand(). Per device, like the two beside it. */
         /* ⭐ the idle screen — OFF by default; a till that blanks itself unasked is one a shopkeeper distrusts */
-        + '<label title="Show the shop picture after a quiet spell">🖼 <select id="mq_idle" data-testid="till-mq-idle" onchange="idleSet(this.value)">'
-        + '<option value="0">No idle screen</option><option value="3">After 3 min</option><option value="5">After 5 min</option><option value="10">After 10 min</option></select></label>'
+        + '<label title="Screensaver — the shop picture and the clock after a quiet spell">🖼 <select id="mq_idle" data-testid="till-mq-idle" onchange="idleSet(this.value)">'
+        + '<option value="0">No screensaver</option><option value="3">Screensaver 3 min</option><option value="5">Screensaver 5 min</option><option value="10">Screensaver 10 min</option></select></label>'
         /* ⭐ auto-lock (Athi, 2026-09-28: "auto-lock after 5 idle minutes, keep it as editable") — ON by default, 5 min */
         + '<label title="Lock this counter after a quiet spell — the bill stays; sign in to carry on">🔒 <select id="mq_lock" data-testid="till-mq-lock" onchange="autoLockSet(this.value)">'
         + '<option value="0">Never lock</option><option value="2">Lock after 2 min</option><option value="5">Lock after 5 min</option>'
@@ -10425,6 +10535,16 @@ function closeMenu(){
 }
 function fromMenu(fn){ closeMenu(); try { fn(); } catch (_) {} }
 /**
+ * ⭐ M37 (walk 2026-10-10): a form opened FROM the Menu hands you back to the Menu, at the same section, when it closes
+ * (Cancel, Esc or Save) — fromMenu() closed the Menu for good and you lost your place. The Menu still closes while the form
+ * is up: its outside-click listener would otherwise shut it on the first press inside the dialog.
+ */
+function fromMenuBack(fn, dlgId, sec){
+  closeMenu(); try { fn(); } catch (_) {}
+  var d = document.getElementById(dlgId); if (!d || !d.open) return;
+  d.addEventListener('close', function(){ try { openMenuAt(sec); } catch (_) {} }, { once: true });
+}
+/**
  * ⚠️⚠️ WHERE THE CLICK STARTED, DECIDED BEFORE ANYTHING CAN REPAINT. Every section header in the hub calls
  * paintMenu(), which replaces the menu's innerHTML — so by the time the listener below runs, e.target has been
  * DETACHED and side.contains(e.target) is false for a click that happened squarely inside the panel. The hub
@@ -10521,6 +10641,7 @@ function setFilter(what, val){
   /* ⚠️ a new question, so a new first page — otherwise a two-letter search inherits the depth of the last one */
   /* ⭐ THE KEYS FOLLOW THE CHIP TOO — see quickShown(). paintQuick(), never quickCompute(): the group has not
      changed, only how much of it is on screen, and quickCompute() goes to the network. */
+  CAT_OPEN = false; CAT_PEEK = null;            /* the phone's category panel: the answer is on screen now */
   SEL = 0; showAgain(); paintChips(); paintHits(); paintQuick();
 }
 /**
@@ -10544,7 +10665,9 @@ function paintChips(){
   var ranked = catsVisible();
   var cats = {};
   ranked.forEach(function(c){ cats[c.name] = c.n; });
-  var list = ranked.map(function(c){ return c.name; }).slice(0, 14);
+  var ov = catOverlayOn();
+  /* the panel has the room the row never had — every category, not the first fourteen */
+  var list = ranked.map(function(c){ return c.name; }).slice(0, ov ? ranked.length : 14);
   var none = !FILTER.offer && !FILTER.cat && !FILTER.off;
   /* ⚠️ THE COUNT IS SHOWN EVEN WHEN IT IS ZERO. A chip that appears only when something is out of stock is a chip nobody can
      find when they want to check — and "0" is itself the answer to "is anything off today?" */
@@ -10578,7 +10701,7 @@ function paintChips(){
           + ' <span class="u">' + jn + '</span></button>';
       }).join('')
     : '';
-  el.innerHTML = '<button class="' + (none ? 'on' : '') + '" data-testid="till-chip-all" onclick="setFilter(\'all\')">Everything <span class="u">' + allN + '</span></button>'
+  var allChips = el.innerHTML = '<button class="' + (none ? 'on' : '') + '" data-testid="till-chip-all" onclick="setFilter(\'all\')">Everything <span class="u">' + allN + '</span></button>'
     + jobChips
     + '<button class="' + (FILTER.offer ? 'on' : '') + '" data-testid="till-chip-offer" onclick="setFilter(\'offer\')">On offer <span class="u">' + offerN + '</span></button>'
     + '<button class="' + (FILTER.off ? 'on' : '') + '" data-testid="till-chip-off" onclick="setFilter(\'off\')">Off the shelf <span class="u">' + offN + '</span></button>'
@@ -10596,12 +10719,111 @@ function paintChips(){
           + ' data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '"'
           /* ⚠️ THE NAME TRAVELS IN AN ATTRIBUTE, INTACT (2026-09-28, M19): stripping apostrophes to fit it inside the
              onclick made "Baker's" filter on "Bakers" — a category with an apostrophe could never be chosen */
-          + ' data-cat="' + esc(c) + '" onclick="setFilter(\'cat\', this.dataset.cat)">'
-          + pic + esc(c) + ' <span class="u">' + cats[c] + '</span></button>';
+          + ' data-cat="' + esc(c) + '"'
+          /* ⭐ in the phone's panel a chip also HOLDS (catHold) — and its ▦ beside it does the same, so nothing needs the gesture */
+          + (ov ? ' onclick="catTap(this)" onpointerdown="catHold(this)" onpointerup="catHoldEnd()" onpointerleave="catHoldEnd()"'
+                + ' onpointercancel="catHoldEnd()" oncontextmenu="return false"'
+                : ' onclick="setFilter(\'cat\', this.dataset.cat)"') + '>'
+          + pic + esc(c) + ' <span class="u">' + cats[c] + '</span></button>'
+          + (ov ? '<button class="catpk" type="button" data-testid="till-cat-peek-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '"'
+                + ' data-cat="' + esc(c) + '" title="see its items" aria-label="see the items in ' + esc(c) + '"'
+                + ' onclick="catPeek(this.dataset.cat)">▦</button>' : '');
       }).join('')
     ;
+  if (ov) { catBarPaint(el, allChips); return; }
+  catPanelPaint('');
   chipsOverflow();
 }
+/**
+ * ── ⭐⭐ THE PHONE'S CATEGORIES: A BUTTON, AND A PANEL OVER THE ITEMS (Athi, 2026-10-10, with M58) ─────────────────────────────
+ * "Categories ▾" opens the same chips paintChips() draws, in a panel laid OVER the items — closed, it takes one row.
+ *   tap a chip          → filter (setFilter, as everywhere), and the panel closes
+ *   hold a chip, or ▦   → that category's items as tiles inside the panel; a tile adds (quickAdd — the choices dialog the
+ *                         keys use, so it behaves exactly like a key)
+ * ⚠️ THE GESTURE IS NEVER THE ONLY WAY — ▦ on every chip does what the hold does. ⚠️ A hold that fired swallows the click
+ * that follows it, so a hold never also filters.
+ * Phone only (phoneShape) and selling only: maintenance keeps its wrapped chips with the worklists first.
+ */
+var CAT_OPEN = false, CAT_PEEK = null, CAT_HOLD_T = null, CAT_HELD = false;
+function catOverlayOn(){ try { return MODE !== 'maintain' && phoneShape(); } catch (_) { return false; } }
+function catBarPaint(el, chipsHtml){
+  el.className = 'chips catbar';
+  el.innerHTML = '<button class="catopen' + (CAT_OPEN ? ' on' : '') + '" type="button" data-testid="till-cat-open"'
+      + ' aria-expanded="' + (CAT_OPEN ? 'true' : 'false') + '" aria-controls="catpanel" onclick="catPanelToggle()">'
+      + esc(FILTER.cat || 'Categories') + ' ▾</button>'
+    /* ⭐ a filter that is on can be taken off from the row itself */
+    + ((FILTER.cat || FILTER.offer || FILTER.off) ? '<button type="button" data-testid="till-cat-clear" title="show everything" onclick="setFilter(\'all\')">✕</button>' : '');
+  catPanelPaint(chipsHtml);
+}
+function catPanelPaint(chipsHtml){
+  var p = document.getElementById('catpanel'); if (!p) return;
+  if (!chipsHtml) { p.hidden = true; p.innerHTML = ''; return; }
+  p.innerHTML = '<div class="cathint">tap = filter · hold or ▦ = items</div>'
+    + '<div class="chips wrapped">' + chipsHtml + '</div>'
+    + '<div id="catpeek" data-testid="till-cat-peek">' + catPeekHtml() + '</div>';
+  catPanelPlace();
+}
+/** the panel sits just under the row, over the items, down to the step bar — measured when it opens, never assumed */
+function catPanelPlace(){
+  var p = document.getElementById('catpanel'), row = document.getElementById('chips'); if (!p) return;
+  p.hidden = !CAT_OPEN;
+  if (!CAT_OPEN || !row) return;
+  var top = Math.max(0, Math.round(row.getBoundingClientRect().bottom) + 4);
+  p.style.top = top + 'px';
+  p.style.maxHeight = 'calc(100dvh - ' + (top + 84) + 'px)';
+}
+function catPanelToggle(force){
+  CAT_OPEN = (typeof force === 'boolean') ? force : !CAT_OPEN;
+  if (!CAT_OPEN) CAT_PEEK = null;
+  var b = document.querySelector('[data-testid="till-cat-open"]');
+  if (b) { b.setAttribute('aria-expanded', CAT_OPEN ? 'true' : 'false'); b.classList.toggle('on', CAT_OPEN); }
+  var pk = document.getElementById('catpeek'); if (pk) pk.innerHTML = catPeekHtml();
+  catPanelPlace();
+}
+function catTap(b){
+  if (CAT_HELD) { CAT_HELD = false; return; }        /* the hold already answered — this is its trailing click */
+  setFilter('cat', b.dataset.cat);
+}
+function catHold(b){
+  CAT_HELD = false; if (CAT_HOLD_T) clearTimeout(CAT_HOLD_T);
+  var c = b.dataset.cat;
+  CAT_HOLD_T = setTimeout(function(){ CAT_HOLD_T = null; CAT_HELD = true; catPeek(c, true);
+    try { if (navigator.vibrate) navigator.vibrate(12); } catch (_) {} }, 500);
+}
+function catHoldEnd(){ if (CAT_HOLD_T) { clearTimeout(CAT_HOLD_T); CAT_HOLD_T = null; } }
+/** ▦ / a hold — that category's items, as tiles, inside the panel. The same ▦ again closes them. */
+function catPeek(cat, open){
+  CAT_PEEK = (open || CAT_PEEK !== cat) ? cat : null;
+  var pk = document.getElementById('catpeek'); if (pk) pk.innerHTML = catPeekHtml();
+}
+function catPeekHtml(){
+  if (!CAT_PEEK || !S) return '';
+  var items = (S.items || []).filter(function(i){ return byCatOf(i) === CAT_PEEK && statusOf(i) !== 'unavailable'; });
+  var K = window.CBScreen, cfg = {}; try { cfg = screenCfg(); } catch (_) {}
+  var inBill = {}; CART.forEach(function(c){ inBill[String(c.item_id)] = (inBill[String(c.item_id)] || 0) + (Number(c.qty) || 0); });
+  var tiles = items.map(function(i, n){
+    var attrs = 'type="button" data-testid="till-cat-item-' + n + '" onclick="catPeekAdd(\'' + esc(i.item_id) + '\')"';
+    if (K && K.tile) return K.tile(cfg.tile || 'classic', { name: i.name, price: money(i.price), unit: i.unit || 'piece',
+      image: null, showPhoto: false, qty: inBill[String(i.item_id)] || 0, attrs: attrs, tax: '', offer: '' });
+    return '<button ' + attrs + '><b>' + esc(i.name) + '</b><span>' + money(i.price) + '</span></button>';
+  }).join('');
+  return '<div class="catpeekhd"><b>' + esc(CAT_PEEK === '\u2014' ? 'Everything else' : CAT_PEEK) + '</b><span class="u">' + items.length + '</span>'
+    + '<button type="button" class="pill" data-testid="till-cat-peek-close" onclick="catPeek(null)">✕</button></div>'
+    + '<div class="quick catpeekgrid sk-style-' + esc(cfg.tile || 'classic') + '">' + (tiles || '<span class="u">—</span>') + '</div>';
+}
+/** a tile in the panel adds exactly as a key does, and the panel stays open for the next one */
+function catPeekAdd(id){
+  try { quickAdd(id); } catch (_) {}
+  setTimeout(function(){ var pk = document.getElementById('catpeek'); if (pk && CAT_PEEK) pk.innerHTML = catPeekHtml(); }, 0);
+}
+/* ⭐ a press anywhere outside the row and the panel puts the panel away — the same as every sheet on this counter */
+document.addEventListener('click', function(e){
+  if (!CAT_OPEN) return;
+  var row = document.getElementById('chips'), p = document.getElementById('catpanel');
+  if ((row && row.contains(e.target)) || (p && p.contains(e.target))) return;
+  if (e.target && e.target.closest && e.target.closest('dialog')) return;   /* the choices dialog a tile opened */
+  catPanelToggle(false);
+});
 /** does the chip row actually run past its own edge? measured, never assumed — see the note on .chips */
 var CHIPS_ALL = false;
 function chipsOverflow(){
@@ -12831,7 +13053,9 @@ function paintStepBar(){
   el.innerHTML = btn('pick', 'Items')
     /* ⚠️ countShort(), not n (2026-09-28): the cart chip already said "ONE COUNT FOR THE WHOLE COUNTER", and on a phone
        the chip read 3 while this button read 2 for the same bill (2 dosa + 1 coffee: 3 items, 2 lines) */
-    + btn('bill', 'Bill' + (n ? ' <b data-testid="till-step-count">' + countShort() + '</b> <span>' + money(net) + '</span>' : ''))
+    /* ⭐ M60 (walk 2026-10-10): a parked bill was nowhere on a phone — the Bill step now counts them (⏸ 1), and lists them first */
+    + btn('bill', 'Bill' + (n ? ' <b data-testid="till-step-count">' + countShort() + '</b> <span>' + money(net) + '</span>' : '')
+        + (PARKED.length ? ' <span data-testid="till-step-parked" title="parked bills">⏸' + PARKED.length + '</span>' : ''))
     /**
      * ⭐⭐ THE MONEY IS ON THE BUTTON ([TILL-44], 2026-09-18). Athi, on the kiosk shape: *"the pay panel is at
      * very bottom, so i was searching where it is, as my eyes are focusing on the top… can we introduce Pay
@@ -13255,7 +13479,7 @@ function paintQuick(){
       + (chipOn ? '<button class="qarr" data-testid="till-quick-catall" title="every key in this group again"'
            + ' onclick="setFilter(\'all\')">show all</button>' : '')
     : '';
-  var bar = '<div class="qbar" data-testid="till-quick-bar">'
+  var bar = '<div class="qbar' + (QK_MORE ? ' open' : '') + '" data-testid="till-quick-bar">'
     /* ⭐ §8's badge: the panel says what it is, and how many keys are on it (png/FullDesktop.png) */
     + '<span class="qbadge" data-testid="till-quick-badge">' + (QK_FULL ? '⌑ All products' : '⊞ Quick keys')
     + (baseTotal ? '<span class="n">' + baseTotal + '</span>' : '') + '</span>'
@@ -13265,16 +13489,16 @@ function paintQuick(){
      * with a picture where one exists and initials where it doesn't (screen-kit's own photoBox()) — never
      * empty just because nothing happened to be pinned or learned. Off: back to the curated shortlist.
      */
-    + '<button class="qarr' + (QK_FULL ? ' on' : '') + '" data-testid="till-quick-full"'
+    + '<button class="qarr qopt' + (QK_FULL ? ' on' : '') + '" data-testid="till-quick-full"'
     + ' title="every product on the shelf, as tiles — not just the pinned shortlist"'
     + ' onclick="qkFullToggle()">' + (QK_FULL ? '⊞ Quick keys only' : '▦ Show all as tiles') + '</button>'
     /* ⭐ what is already on the bill, one tap from being looked at — see cartChip() */
     + cartChip()
     /* ⭐ set the order by hand — see qkArrangeToggle(). Only meaningful on a group, and it says so if not. */
     + (QK_ARRANGE && o.group && shopGroups()[o.group] && (o.groups || {})[o.group]
-        ? '<button class="qarr" data-testid="till-quick-resetorder" title="back to the order the shop published"'
+        ? '<button class="qarr qopt" data-testid="till-quick-resetorder" title="back to the order the shop published"'
           + ' onclick="qkResetOrder()">↺ Shop order</button>' : '')
-    + '<button class="qarr' + (QK_ARRANGE ? ' on' : '') + '" data-testid="till-quick-arrange"'
+    + '<button class="qarr qopt' + (QK_ARRANGE ? ' on' : '') + '" data-testid="till-quick-arrange"'
     + ' title="drag the keys into the order you want" onclick="qkArrangeToggle()">'
     + (QK_ARRANGE ? '\u2713 Done' : '\u21C4 Arrange') + '</button>'
     /**
@@ -13287,7 +13511,7 @@ function paintQuick(){
      * they are a different surface with a different cost — a row is read, a key is aimed at.
      */
     /* ⭐ beside Photos, because both change how the KEYS look rather than what is on them ([TILL-71]) */
-    + '<button class="qarr' + (byCatOn() ? ' on' : '') + '" data-testid="till-bycat"'
+    + '<button class="qarr qopt' + (byCatOn() ? ' on' : '') + '" data-testid="till-bycat"'
     + ' title="gather the keys under their category, with a break between"'
     + ' onclick="byCatToggle()">\u2261 By category</button>'
     /**
@@ -13295,18 +13519,18 @@ function paintQuick(){
      * and so on."* A setting is easiest to find next to the thing it changes, and this is the one somebody
      * reaches for the instant they see their menu come out in the wrong order.
      */
-    + '<button class="qarr" data-testid="till-catorder"'
+    + '<button class="qarr qopt" data-testid="till-catorder"'
     + ' title="the order the categories are listed in, everywhere on this counter"'
     + ' onclick="catOrderOpen()">\u2195 Order them</button>'
     /* ⚠️ A SHORTCUT, NOT A SECOND ANSWER ([TILL-80]) — the same store Screen style writes, kept here because
        judging photos on keys is done while LOOKING at the keys. The title now says which surface it is. */
-    + '<label class="qphotos" data-testid="till-quick-photos"'
+    + '<label class="qphotos qopt" data-testid="till-quick-photos"'
     + ' title="pictures on the QUICK KEYS \u2014 the product list has its own, in Screen style">'
     + '<input type="checkbox"' + (cfg.photos ? ' checked' : '') + ' onchange="screenSet({photos:this.checked})">'
     + '<span>Photos</span></label>'
     /* ⭐ WHERE THESE KEYS COME FROM, said by the control that changes it. The same three sources as ⚙ Setup —
        one setting, two places to reach it, never two opinions about it (tillOptSet writes both). */
-    + '<select data-testid="till-quick-src" title="where these keys come from" onchange="tillOptSet({quickSource:this.value})">'
+    + '<select class="qopt" data-testid="till-quick-src" title="where these keys come from" onchange="tillOptSet({quickSource:this.value})">'
     + QUICK_SRC.map(function(s){ return '<option value="' + s[0] + '"' + (o.quickSource === s[0] ? ' selected' : '') + '>' + esc(s[1]) + '</option>'; }).join('')
     + '</select>'
     + (usesGroups
@@ -13316,8 +13540,11 @@ function paintQuick(){
         + '</select>'
       : '')
     /* ⭐ AND WHY IT LOOKS LIKE THIS. A dozen buttons that rearrange themselves without a word would feel like a fault. */
-    + (QUICK_WHY ? '<span class="qwhy" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</span>' : '')
+    + (QUICK_WHY ? '<span class="qwhy qopt" data-testid="till-quick-why">' + esc(QUICK_WHY) + '</span>' : '')
     + catNote
+    /* ⭐ M58: a phone keeps one row — the rest of these controls are one tap behind ⋯ (qkMoreToggle flips them in place) */
+    + '<button class="qarr qmore" type="button" data-testid="till-quick-more" aria-expanded="' + (QK_MORE ? 'true' : 'false') + '"'
+    + ' title="more key options" onclick="qkMoreToggle(this)">' + (QK_MORE ? '✕' : '⋯') + '</button>'
     + '</div>';
   /**
    * ⭐⭐ THE KEYS ARE DRAWN BY THE SCREEN LIBRARY (lib/screen-kit TILES) — the style this counter chose, in its group's
@@ -13560,6 +13787,14 @@ function cartPicGrid(){
  * a tap cannot sell anything, which is the whole safety of it.
  */
 var QK_ARRANGE = false, QK_FROM = null;
+/** ⭐ M58 — the phone's ⋯ on the keys' bar: flips the bar's own class in place, no repaint (the keys do not move) */
+var QK_MORE = false;
+function qkMoreToggle(b){
+  QK_MORE = !QK_MORE;
+  var bar = b && b.closest ? b.closest('.qbar') : null;
+  if (bar) bar.classList.toggle('open', QK_MORE);
+  if (b) { b.setAttribute('aria-expanded', QK_MORE ? 'true' : 'false'); b.textContent = QK_MORE ? '✕' : '⋯'; }
+}
 /**
  * ⭐⭐⭐ [found live, 2026-09-27] "quick keys can be very minimal, but when the filter is being tried the rest
  * should also appear even if image is not there... this gives me a clue, if list is off, then the quick key
@@ -13629,7 +13864,11 @@ var IB_OPEN = false;
 function ibToggle(){ IB_OPEN = !IB_OPEN; try { paintQuick(); } catch (_) {} }
 /** the count and the money, always visible; the pictures, on request */
 function cartChip(){
-  if (!CART.length) { IB_OPEN = false; return ''; }
+  /* ⚠️ M39 (walk 2026-10-10): the chip appeared on the FIRST add and pushed the keys down, so the next tap landed on a different key.
+     An empty bill keeps an invisible chip of the same shape in its place. */
+  if (!CART.length) { IB_OPEN = false;
+    return '<span class="qcart slot" aria-hidden="true" data-testid="till-cart-chip-slot"><span class="qcarti">\u{1F6D2}</span><b>0</b>'
+      + '<span class="qcartm">' + money(0) + '</span><span class="qcartc">\u25BE</span></span>'; }
   /* ⚠️ ONE COUNT FOR THE WHOLE COUNTER. This used to sum every qty itself and showed "5.25" for a bill the
      panel beside it described as "3 items · 2.25 kg". */
   var n = countShort();
@@ -13710,7 +13949,7 @@ function shelfLine(shown){
     return '<div class="shelfline" data-testid="till-shelf-count">Nothing to sell yet · '
       + '<button class="daylink" data-testid="till-start-shop" onclick="startOpen()">Start your shop</button></div>';
   }
-  var when = S.at ? new Date(S.at).toTimeString().slice(0, 5) : null;
+  var when = S.at ? hhmm(S.at) : null;
   var n = function(v){ return Number(v).toLocaleString('en-IN'); };
   var txt;
   if (FILTER.off)        txt = shown ? (n(shown) + ' off the shelf right now — tap one to put it back')
@@ -15432,7 +15671,7 @@ function needShop(doing){
     + (r.stops.length > 1
         ? '<p class="note u">' + (r.stops.length - 1) + ' more thing'
           + (r.stops.length > 2 ? 's need' : ' needs') + ' doing after this one.</p>' : '')
-    + '<div class="dlgbtns"><button onclick="needClose()">Not now · Esc</button>'
+    + '<div class="dlgbtns"><button onclick="needClose()">Not now<span class="kh"> · Esc</span></button>'
     + '<button class="pri" data-testid="till-need-fix" onclick="needClose();' + esc(st.act) + '()">'
     + esc(st.fix) + '</button></div>';
   if (!d.open) d.showModal();
@@ -16361,7 +16600,8 @@ function addItem(i, qty, mods){
                    station:i.station || null,
                    item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category } });
   /* ⭐ NO TAX RATE IS SAID WHERE IT IS SOLD (BF1), not found on the slip afterwards. The bill also carries the warning (billWarnHTML). */
-  try { if (shopTax().charges && rateOf(i) == null) toastLine('⚠ ' + i.name + ' has no tax rate. Set it in the catalogue.'); } catch (_) {}
+  /* ⚠️ M42 (walk 2026-10-10): this also wrote the footer line, which outlived the bill — after Park it still said
+     "Masala Dosa has no tax rate" over an empty bill. The bill's own row (billWarnHTML) says it, and clears with the bill. */
 }
 /* ⚠️ NEVER REPAINT FROM INSIDE THE EVENT THAT CAUSED IT. Rebuilding the bill while the browser is still finishing the blur behind a
    quantity change throws "the node to be removed is no longer a child of this node" — and the bill silently stops updating. */
@@ -16619,6 +16859,7 @@ function paintParked(){
     return '<button data-testid="till-parked-' + n + '" onclick="unpark(' + n + ')" title="bring this bill back">⏸ ' + esc(p.name) + ' · ' + money(total)
       + ' <span onclick="event.stopPropagation();dropParked(' + n + ')" title="throw it away">×</span></button>';
   }).join('');
+  try { paintStepBar(); } catch (_) {}         /* M60: the Bill step's ⏸ count follows */
 }
 /**
  * ⭐⭐ SPEAKING TO THE COUNTER. The browser's own recogniser: nothing to install, and it is already the thing a shopkeeper's phone
@@ -17550,18 +17791,31 @@ function shopStateClash(){
  * ⚠️ ONE LINE PER PROBLEM, A COUNT AND A Fix › (walk 2026-10-09, M40). It was a 7-line red paragraph on every sale, and the
  * dialog said it again. The full wording sits behind Fix › (billWarnFix), with the door to where it is fixed.
  */
-function billWarnLine(which, words){
+function billWarnLine(which, words, act){
   return '<div class="t warnrow" data-testid="till-warn-' + which + '"><span>⚠ ' + esc(words) + '</span><span>'
-    + '<button type="button" class="foldbtn" data-testid="till-warn-' + which + '-fix" onclick="billWarnFix(\'' + which + '\')">Fix ›</button></span></div>';
+    + '<button type="button" class="foldbtn" data-testid="till-warn-' + which + '-fix" onclick="billWarnFix(\'' + which + '\')">' + esc(act || 'Fix') + ' ›</button></span></div>';
+}
+/**
+ * ⭐ M32 (walk 2026-10-10) — A COUNTER BILLING ON YESTERDAY'S PRICES SAYS SO WHERE IT BILLS. The till let a whole sale go through
+ * with the day not opened and 13-hour-old prices, with only a red chip on the bar. One line on the bill, never a stop.
+ */
+function dayWarnWords(){
+  var open = true; try { open = dayOpened(); } catch (_) {}
+  var h = null; try { h = DAY().priceAge((S && S.at) || null, Date.now()); } catch (_) {}
+  var old = h != null && h >= 12;
+  if (open && !old) return '';
+  return (open ? '' : 'Day not opened') + (open || !old ? '' : ' · ') + (old ? 'prices ' + h + ' h old' : '');
 }
 function billWarnHTML(){
   var out = [], un = unratedNames(), cl = shopTax().charges ? shopStateClash() : null;
+  var dw = dayWarnWords(); if (dw) out.push(billWarnLine('day', dw, 'Open the day'));
   if (un.length) out.push(billWarnLine('norate', un.length + (un.length === 1 ? ' item has' : ' items have') + ' no tax rate'));
   if (cl) out.push(billWarnLine('state', 'GSTIN state ≠ address'));
   return out.join('');
 }
 /** ⭐ Fix › — the full wording, then the one door: the catalogue for a rate, the shop's profile for the GSTIN / address */
 async function billWarnFix(which){
+  if (which === 'day') { openMenuAt('day'); return; }
   var st = which === 'state', cl = st ? shopStateClash() : null, un = st ? [] : unratedNames();
   var msg = st ? (cl ? cl.words + '\n\n' + cl.fix : 'The shop’s details agree now.')
                : (un.length ? un.join(', ') + '\n\nNo GST is charged on ' + (un.length === 1 ? 'it' : 'them')
@@ -17683,7 +17937,7 @@ function health(){
   /* ⭐ what this counter is holding, and from when — the first thing to check when a catalogue change has not appeared */
   if (items.length)
     add('note', Number(items.length).toLocaleString('en-IN') + ' products on this counter',
-      'Read from ChitBridge' + (S.at ? ' at ' + new Date(S.at).toTimeString().slice(0, 5) + ' on ' + new Date(S.at).toDateString() : '')
+      'Read from ChitBridge' + (S.at ? ' at ' + hhmm(S.at) + ' on ' + new Date(S.at).toDateString() : '')
         + '. Anything added or repriced since then is not here yet.',
       'Press the arrow button while the internet is on to read it again.');
 
@@ -18069,15 +18323,20 @@ function paintShop(){
    * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
    * *"service tax not registered."* A shop below the threshold is correctly unregistered, and the line says so.
    */
-  var status = sh.gstin ? 'GSTIN ' + esc(String(sh.gstin))
+  var status = sh.gstin ? 'Registered · GSTIN ' + esc(String(sh.gstin))
     : 'Not registered' + (regWords() ? ' — ' + esc(regWords()) : ' — this shop does not charge GST');
+  /* ⭐ M56 (walk 2026-10-10) — ONE TRUTH. "every bill is a TAX INVOICE" stood over a bill that carried no tax and a details clash
+     that saves sales as NOT a tax invoice (M41). It now says the rule as the bill applies it, and the clash beside it (shopStateClash,
+     the bill's own check). */
+  var clash = tx.charges ? shopStateClash() : null;
   var docTax = tx.charges
-    ? ', every bill is ' + doc + ' (' + (sh.state_code ? split : 'tax cannot be split — no state on the GSTIN') + ')'
-    : ', every bill is ' + doc;
+    ? ' · ' + (tx.kind === 'tax' ? 'tax invoice' : doc) + ' when items carry GST' + (sh.state_code ? ' (' + split + ')' : '')
+      + (clash ? ' · <span class="upibad" data-testid="till-shop-clash">⚠ GSTIN state ≠ address</span>' : '')
+    : ' · every bill is ' + doc;
   el.innerHTML = '<div class="shopfacts">'
     + '<div class="shoptop"><b>' + esc(sh.name || 'This shop') + '</b> · ' + status + docTax + '</div>'
     + '<div class="src" title="Kept by ChitBridge so every counter and your storefront show the same thing.">From ChitBridge'
-    + (S.at ? ' · ' + esc(new Date(S.at).toTimeString().slice(0, 5)) : '')
+    + (S.at ? ' · ' + esc(hhmm(S.at)) : '')
     + ' · <button class="daylink" data-testid="till-shop-edit" onclick="shopEditOpen()">Change these</button>'
     /* ⭐ the address, phone, legal name and currency this panel deliberately does not repeat */
     + ' · <button class="daylink" data-testid="till-shop-openhub" onclick="openShopInHub()">More about the shop ↗</button></div>'
@@ -18533,7 +18792,7 @@ function signoutOpen(){
          : '<p class="note">Everything this counter took has reached the shop.</p>')
     + '<p class="note u">The shop’s own folder on this PC is kept either way. Signing back in to the same shop'
     + ' picks up exactly where this left off.</p>'
-    + '<div class="dlgbtns"><button onclick="signinClose()">Stay signed in · Esc</button>'
+    + '<div class="dlgbtns"><button onclick="signinClose()">Stay signed in<span class="kh"> · Esc</span></button>'
     + '<button class="pri" data-testid="till-signout-go" onclick="signoutDo(false)">Sign out</button></div>';
   if (!d.open) d.showModal();
 }
@@ -18585,7 +18844,7 @@ function signoutCloud(){
     + (q ? '<p class="note"><b>' + q + ' bill' + (q > 1 ? 's have' : ' has') + ' not reached the shop yet.</b>'
            + ' Press ↻ first while online, or they stay on this device until this shop is signed in here again.</p>'
          : '<p class="note">Everything this counter took has reached the shop.</p>')
-    + '<div class="dlgbtns"><button onclick="signinClose()">Stay signed in · Esc</button>'
+    + '<div class="dlgbtns"><button onclick="signinClose()">Stay signed in<span class="kh"> · Esc</span></button>'
     + '<button class="' + (q ? '' : 'pri') + '" data-testid="till-signout-cloud" onclick="signoutCloudDo()">'
     + (q ? 'Sign out and leave them here' : 'Sign out') + '</button></div>';
   if (!d.open) d.showModal();
@@ -18953,7 +19212,37 @@ function lineFaults(rows){
   return rows.filter(function(x){ return x.bucket === 'normal' && !x.ok; });
 }
 
-function hhmm(d){ try { return new Date(d).toTimeString().slice(0, 5); } catch (_) { return ''; } }
+/**
+ * ⭐⭐ SHOP TIME, EVERYWHERE (walk 2026-10-10, M43: Earlier bills printed 11:05 — UTC sliced out of an ISO string — while the
+ * return dialog said 16:35). Every clock on this counter is read in the SHOP's zone: India's for an Indian shop, whatever the
+ * PC's clock is set to; otherwise the zone CBLocale already answers (the person's override, else the device). No sums here —
+ * Intl does the zone arithmetic.
+ */
+function shopTz(){
+  var sh = (typeof S !== 'undefined' && S && S.shop) || {};
+  var c = String(sh.country || sh.country_code || '').toUpperCase();
+  var cur = String(sh.currency || (typeof S !== 'undefined' && S && S.currency) || '').toUpperCase();
+  if (c === 'IN' || c === 'IND' || c === 'INDIA' || (!c && cur === 'INR')) return 'Asia/Kolkata';
+  try { if (window.CBLocale && CBLocale.timezone) return CBLocale.timezone(); } catch (_) {}
+  return undefined;
+}
+function tzOpt(o){ var z = shopTz(); if (z) o.timeZone = z; return o; }
+/** 24-hour hh:mm in shop time — what the bar, the lock and the logs print */
+function hhmm(d){
+  try { var t = (d == null) ? new Date() : new Date(d); if (isNaN(t)) return '';
+        return t.toLocaleTimeString('en-GB', tzOpt({ hour: '2-digit', minute: '2-digit', hour12: false })); }
+  catch (_) { return ''; }
+}
+/** date + time in shop time: "09 Oct 4:35 pm" ('date' → "09 Oct 2026", 'time' → "4:35 pm") */
+function atShop(d, part){
+  try {
+    var t = new Date(d); if (isNaN(t)) return '';
+    var tm = t.toLocaleTimeString('en-US', tzOpt({ hour: 'numeric', minute: '2-digit', hour12: true })).toLowerCase();
+    if (part === 'time') return tm;
+    var dt = t.toLocaleDateString('en-GB', tzOpt(part === 'date' ? { day: '2-digit', month: 'short', year: 'numeric' } : { day: '2-digit', month: 'short' }));
+    return part === 'date' ? dt : dt + ' ' + tm;
+  } catch (_) { return ''; }
+}
 
 
 /**
@@ -19322,7 +19611,7 @@ function paintHealth(){
   var head = '<div class="hh"><h3>Counter health</h3><span class="u" style="flex:1">'
     + esc('Counter ' + String(r.till) + (sh && sh.name ? ' · serving ' + sh.name : '')) + '</span>'
     + '<button class="pill" data-testid="till-health-again" onclick="healthAgain()">Check again</button>'
-    + '<button class="pill" data-testid="till-health-close" onclick="healthClose()">Close · Esc</button></div>';
+    + '<button class="pill" data-testid="till-health-close" onclick="healthClose()">Close<span class="kh"> · Esc</span></button></div>';
 
   /**
    * ⭐⭐ THE VERDICT. One sentence, then whether anything is lost, then the single button that fixes the cause.
@@ -19414,10 +19703,13 @@ function paintHealth(){
    * ⚠️ THE TECHNICAL ACCOUNT LIVES HERE AND NOWHERE ELSE. Athi: *"any diagnostic should be a seperate page."*
    * This is that page; the selling screen carries the fix and the bill list carries neither.
    */
+  var stop = saleStopLast();
   var last = '<div class="hbox"><h4>The last try</h4>'
+    + (stop && stop.why
+        ? '<div data-testid="till-health-salestop" style="margin-bottom:6px">⛔ Sale not saved · ' + esc(atShop(stop.at)) + '<br><b>' + esc(stop.why) + '</b></div>' : '')
     + (v.detail
         ? '<div style="font-weight:600;margin-bottom:6px">“' + esc(v.detail) + '”</div>'
-        : '<p class="note">Nothing has been refused.</p>')
+        : (stop && stop.why ? '' : '<p class="note">Nothing has been refused.</p>'))
     + (r.queue_code
         ? '<div class="u" style="font-family:ui-monospace,Menlo,Consolas,monospace">' + esc(r.queue_code) + '</div>'
         : '')
@@ -20446,7 +20738,7 @@ function kotHTML(lines, n, at){
   return '<div style="font:13px/1.45 ui-monospace,monospace">'
     + '<div style="font-size:18px;font-weight:800">KOT ' + n + '</div>'
     + '<div style="font-size:15px;font-weight:700">' + esc(orderWords()) + '</div>'
-    + '<div>' + esc(at.toTimeString().slice(0, 5)) + ' · ' + esc(counterName())
+    + '<div>' + esc(hhmm(at)) + ' · ' + esc(counterName())
     + (WHO && WHO.name ? ' · ' + esc(WHO.name) : '') + '</div>'
     + '<hr>'
     + lines.map(function(c){
@@ -20554,13 +20846,30 @@ function payQr(link){
 function pickPay(h){ PICKED = h; PAY_ASKED = true; paintPays(); CFD.send(); draftSave(); voiceAnnounceCollect(); }   /* R1 · "tender picked" is a change to the bill */
 
 /* ═══ 4 · finishing a bill ═══════════════════════════════════════════════════════════════════════════════════ */
+/**
+ * ⭐ M49 (walk 2026-10-10) — A SALE THE COUNTER REFUSED IS WRITTEN DOWN. Counter health said "Nothing has been refused" minutes
+ * after a sale was stopped, because only the QUEUE kept a last reason. Now finish() leaves the last stop here (per shop, survives a
+ * reload) and "The last try" shows it with its time. A cashier's own prompt (money still to take) is not a refusal and is not kept.
+ */
+function saleStopNote(words){
+  var n = { at: new Date().toISOString(), why: String(words || '').split('\n')[0] };
+  try { ls.set(shopLs('cb_till_salestop'), JSON.stringify(n)); } catch (_) {}
+  return n;
+}
+function saleStop(words){
+  saleStopNote(words);
+  return say(words);
+}
+function saleStopLast(){
+  try { return JSON.parse(ls.get(shopLs('cb_till_salestop'), 'null')); } catch (_) { return null; }
+}
 async function finish(){
   if (!CART.length) return;
-  if (await tillStopped()) return;   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
+  if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
   var m = billMoney();
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
-  if (!m.invoice) { say('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return; }
+  if (!m.invoice) { saleStop('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return; }
   /* ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41: a details mismatch never costs
      a sale). A taxed bill saves as NOT a tax invoice (not_invoice, slipHTML); an untaxed one has nothing to contradict. */
   var clash = (shopTax().charges && Number(m.tax) > 0) ? shopStateClash() : null;
@@ -20664,7 +20973,7 @@ async function finish(){
   };
   var r = null;
   try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
-  if (!r || !r.ok){ say('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
+  if (!r || !r.ok){ saleStop('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
   LAST = r.bill; LASTNO = r.bill && r.bill.no; if (r.today) STATE.today = r.today;
   /**
    * ⭐⭐ THE POINTS, AFTER THE BILL EXISTS AND NOT BEFORE. The bill number is the ref that makes a replay harmless,
@@ -20858,10 +21167,10 @@ function dayCloseHTML(d){
     + '<div style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name||'') + '</div>'
     + solid + '<div style="text-align:center;font-weight:700">DAY CLOSE</div>'
     + (d.closed
-        ? '<div data-testid="till-day-state" style="text-align:center;font-weight:700">DAY CLOSED at ' + esc(new Date(d.closed.at).toTimeString().slice(0, 5)) + '</div>'
+        ? '<div data-testid="till-day-state" style="text-align:center;font-weight:700">DAY CLOSED at ' + esc(hhmm(d.closed.at)) + '</div>'
         : '<div data-testid="till-day-state" style="text-align:center">Report only — the day is NOT closed yet</div>') + dash
     + t(esc(new Date().toLocaleDateString()), esc(counterName()))
-    + t('Printed', esc(new Date().toTimeString().slice(0,5))) + dash
+    + t('Printed', esc(hhmm())) + dash
     + t(d.bills === 1 ? 'Bill' : 'Bills', String(d.bills))
     + (d.first ? t('From', esc(d.first)) + t('To', esc(d.last)) : '') + dash
     + (d.saved > 0 ? t('Before offers', money(d.gross)) + t('Given away', '-' + money(d.saved)) : '')
@@ -20929,7 +21238,7 @@ function dayCloseDo(){
   document.getElementById('sliptitle').textContent = 'Day closed · ' + d.bills + (d.bills === 1 ? ' bill' : ' bills') + ' · ' + money(d.total);
   document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
   var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = true;
-  toastLine('Day closed at ' + new Date(m.at).toTimeString().slice(0, 5) + '.');
+  toastLine('Day closed at ' + hhmm(m.at) + '.');
   try { paintStatus(); } catch (_) {}
 }
 /* ═══ 3b · RECEIVE and DESPATCH ══════════════════════════════════════════════════════════════════════════════
@@ -21751,6 +22060,18 @@ function posWords(code){
   var c = String(code || ''), P = window.CBProfileMap, nm = P && P.STATE_NAMES && P.STATE_NAMES[c];
   return nm ? (c + ' ' + nm) : c;
 }
+/**
+ * ⭐ M45 (walk 2026-10-10) — ONE HEAD FOR EVERY PAPER THIS COUNTER ISSUES. The credit note printed "Counter 5" and nothing else:
+ * no shop, no address, no GSTIN — the document that undoes a sale must name the same seller the sale did. The bill and the credit
+ * note both start here. A GSTIN prints on anything but a cash memo.
+ */
+function slipHeadHTML(kind){
+  var shop = (S && S.shop) || {};
+  return '<div data-testid="till-slip-head" style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name || counterName()) + '</div>'
+    + (shop.address ? '<div style="text-align:center">' + esc(shop.address) + '</div>' : '')
+    + (shop.phone ? '<div style="text-align:center">Ph ' + esc(shop.phone) + '</div>' : '')
+    + (kind !== 'cash' && shop.gstin ? '<div style="text-align:center">GSTIN ' + esc(shop.gstin) + '</div>' : '');
+}
 function slipHTML(bill, m){
   var shop = (S && S.shop) || {};
   var unrated = unratedOnBill(bill);
@@ -21760,12 +22081,9 @@ function slipHTML(bill, m){
   var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
-    + '<div style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name||'') + '</div>'
-    + (shop.address ? '<div style="text-align:center">' + esc(shop.address) + '</div>' : '')
-    + (shop.phone ? '<div style="text-align:center">Ph ' + esc(shop.phone) + '</div>' : '')
-    + (bill.kind !== 'cash' && shop.gstin ? '<div style="text-align:center">GSTIN ' + esc(shop.gstin) + '</div>' : '')
+    + slipHeadHTML(bill.kind)
     + solid + '<div style="text-align:center;font-weight:700">' + title + '</div>' + dash
-    + t('No ' + esc(bill.no), esc(new Date(bill.at).toLocaleString()))
+    + t('No ' + esc(bill.no), esc(atShop(bill.at)))
     /* ⚠️ a REPRINT of a renumbered sale must carry both numbers — the customer's paper says the first one */
     + (bill.printed_as ? t('Printed as ' + esc(bill.printed_as), 'recorded as ' + esc(bill.no)) : '')
     + t(esc(counterName()) + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in'))
@@ -21862,7 +22180,10 @@ function slipHTML(bill, m){
     + (bill.kind === 'tax' ? (bill.tax_lost ? t('Tax detail not kept for this bill', '') : taxSummaryHTML(bill, t, dash)) : '')
     /* ⭐ Rule 46(n): a tax invoice names its place of supply */
     + (unrated.length ? '<div data-testid="till-slip-norate" style="font-size:.9em">No tax rate set, so no GST charged on: ' + esc(unrated.join(', ')) + '</div>' : '')
-    + (bill.kind === 'tax' && bill.pos_state ? t('Place of supply', esc(posWords(bill.pos_state))) : '')
+    /* ⚠️ M66 (walk 2026-10-10): ONLY ON A REAL TAX INVOICE. A bill saved as NOT a tax invoice (no rate, or the shop's GSTIN and
+       address in two states) printed "Place of supply 29 Karnataka" on a Chennai takeaway — the GSTIN's state, under a title that
+       says it is not an invoice. The place itself is still CBTax.placeOfSupply's (the shop's state; a delivery moves it). */
+    + (bill.kind === 'tax' && bill.pos_state && !(unrated.length || bill.not_invoice) ? t('Place of supply', esc(posWords(bill.pos_state))) : '')
     + solid + t('TOTAL', money(bill.total), true) + solid
     + (bill.payments||[]).map(function(p){ return t(esc(p.how), money(p.amount)); }).join('')
     + (bill.change > 0 ? t('Change', money(bill.change)) : '') + dash
@@ -22028,8 +22349,6 @@ function autoPrint(doc){
 function dayRepPrint(how){
   var src = document.getElementById('dayrep');
   if (!src) { window.print(); return; }
-  var w = window.open('', 'dayrep', 'width=460,height=700');
-  if (!w) { window.print(); return; }
   var slip = (how === 'slip');
   var page = slip ? '@page{size:72mm auto;margin:0}'
                   : '@page{size:A4 ' + (how === 'landscape' ? 'landscape' : 'portrait') + ';margin:12mm}';
@@ -22047,9 +22366,7 @@ function dayRepPrint(how){
     'td:first-child:before{content:""}',
     'td:first-child{font-weight:700}',
   ].join('');
-  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'
-    + esc((S && S.shop && S.shop.name) || 'Today') + ' — today</title><style>'
-    + page
+  printDoc(((S && S.shop && S.shop.name) || 'Today') + ' — today', page
     + 'body{margin:0;padding:' + (slip ? '2mm' : '0') + ';font:' + (slip ? '11px' : '12px')
     + ' ui-monospace,SFMono-Regular,Menlo,monospace;color:#000}'
     + 'table{border-collapse:collapse;width:100%}'
@@ -22060,18 +22377,49 @@ function dayRepPrint(how){
     /* ⭐ THE REPORT ALREADY MARKS ITS OWN CONTROLS. `norip` is this page's existing word for "not on the
        paper" — honouring it here means the buttons cannot end up printed, and there is one convention. */
     + '.norip{display:none!important}'
-    + fold
-    + '</style></head><body>' + src.innerHTML + '</body></html>');
-  w.document.close(); w.focus(); w.print();
-  setTimeout(function(){ try { w.close(); } catch (_) {} }, 400);
+    + fold, src.innerHTML);
 }
 function printSlip(){
-  var w = window.open('', 'slip', 'width=420,height=640');
-  if (!w) { window.print(); return; }                   /* a blocked pop-up must not lose the slip */
-  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + esc(LAST?LAST.no:'bill') + '</title>'
-    + '<style>@page{size:72mm auto;margin:0}body{margin:0;padding:2mm}</style></head><body>'
-    + document.getElementById('slipbox').innerHTML + '</body></html>');
-  w.document.close(); w.focus(); w.print(); setTimeout(function(){ try{ w.close(); }catch(_){} }, 400);
+  var t = document.getElementById('sliptitle');
+  printDoc((t && t.textContent) || (LAST ? LAST.no : 'bill'), '@page{size:72mm auto;margin:0}body{margin:0;padding:2mm}',
+           document.getElementById('slipbox').innerHTML);
+}
+/**
+ * ── ⭐⭐⭐ PRINTING NEVER FREEZES THE COUNTER (walk 2026-10-10, M46) ─────────────────────────────────────────────────
+ * The credit note's Print froze the tab (renderer unresponsive > 30 s). Both papers were printed from a POP-UP window
+ * (window.open → document.write → w.print()) that was then CLOSED 400 ms later by a timer — while Chrome was still building
+ * the print preview of it, which is the hang; the preview could also open in a small window hidden behind the counter,
+ * holding the counter's own tab until somebody found it.
+ * ⭐ Now: a hidden frame INSIDE this page, printed on the next tick (the button returns at once), removed only after the
+ * browser says printing is over (afterprint, or a minute), and one at a time — a second press while one is up does nothing.
+ * ⚠️ A window.print that has been REPLACED (a test, a kiosk shell) means "do not print": it is called instead, so silencing
+ * window.print silences every paper this counter makes, not only the ones printed from the page itself.
+ */
+var PRINTING = false;
+function printDoc(title, css, html){
+  if (PRINTING) return;
+  try { if (String(Function.prototype.toString.call(window.print)).indexOf('[native code]') < 0) { window.print(); return; } } catch (_) {}
+  PRINTING = true;
+  setTimeout(function(){
+    var f = document.createElement('iframe'), gone = false;
+    f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1; f.setAttribute('data-testid', 'till-print-frame');
+    f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+    var over = function(){
+      if (gone) return; gone = true; PRINTING = false;
+      setTimeout(function(){ try { f.remove(); } catch (_) {} }, 2000);
+    };
+    try {
+      document.body.appendChild(f);
+      var w = f.contentWindow, d = w.document;
+      d.open();
+      d.write('<!doctype html><html><head><meta charset="utf-8"><title>' + esc(title || '') + '</title><style>' + (css || '')
+        + '</style></head><body>' + (html || '') + '</body></html>');
+      d.close();
+      w.addEventListener('afterprint', over);
+      setTimeout(over, 60000);
+      w.focus(); w.print();
+    } catch (_) { over(); toastLine('Not printed — this browser refused. Press Print again.'); }
+  }, 0);
 }
 
 /* ═══ 5 · this till: pairing, and the look ═══════════════════════════════════════════════════════════════════ */
@@ -22519,7 +22867,9 @@ async function openStuck(){
       + (ls.last ? ' (' + ls.last.why + ')' : '') + '. Bills themselves are safe — they are kept elsewhere — but '
       + 'the pairing, the settings and the parked bills cannot be written, so they come back or disappear. '
       + 'Usually the browser is out of space or is in a private window.';
-  else if (!(HOST && HOST.key)) verdict = 'This counter has no key, so nothing can be sent. Pair it from the shop.';
+  /* ⚠️ M50 (walk 2026-10-10): a counter that sends through a SIGNED-IN PERSON has no key and needs none — this said "nothing can
+     be sent" right above "All sent · 7 working". The key line is for a counter with neither (CloudHost.cred() is the one answer). */
+  else if (!(HOST && (HOST.key || (typeof HOST.cred === 'function' && HOST.cred())))) verdict = 'Nobody is signed in on this counter, so nothing can be sent. Sign in, or pair it from the shop.';
   else if (!lineUp()) verdict = 'No line to the shop. The bills are safe here and go as soon as it returns.';
   else if (qMine.length) verdict = qMine.length + ' bill(s) are waiting to go. The reason from the last attempt is below.';
   /**
@@ -23374,7 +23724,7 @@ async function openBills(keepOpen){
         var byHour = [];
         var seen = {};
         rows.forEach(function(b){
-          var h = new Date(b.at).toTimeString().slice(0, 2);
+          var h = hhmm(b.at).slice(0, 2);
           if (!(h in seen)) { seen[h] = byHour.length; byHour.push({ h: h, rows: [] }); }
           byHour[seen[h]].rows.push(b);
         });
@@ -23453,7 +23803,7 @@ async function openBills(keepOpen){
                 var hows = billHow(b);
                 var howSaid = hows.length > 1 ? hows.map(function(h){ return h.how + ' ' + money(h.amount); }).join(' · ')
                             : (hows.length ? hows[0].how : '');
-                return '<div class="u">' + esc(new Date(b.at).toTimeString().slice(0, 5))
+                return '<div class="u">' + esc(hhmm(b.at))
                   + (said ? ' · ' + esc(said) : '')
                   + (named ? ' · ' + esc(named) : '')
                   + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '')
@@ -23589,7 +23939,9 @@ async function retOpen(no){
   if (bill.kind === 'credit_note') { toastLine('That is already a credit note.'); return; }
   RET_PRIOR = await retPriorFor(no);
   RET_FOR = bill; RET_QTY = {}; RET_WHY = 'returned';
-  RET_HOW = ((bill.payments || [])[0] || {}).how || 'Cash';
+  /* ⭐ M44 (walk 2026-10-10): the refund starts as the bill was PAID — it took payments[0], which was Card on a cash bill */
+  RET_HOW = retPaidBy(bill);
+  if (retWays(bill).indexOf(RET_HOW) < 0) RET_HOW = 'Cash';
   try { document.getElementById('billsdlg').close(); } catch (_) {}
   retPaint();
   var d = document.getElementById('retdlg'); if (d && d.showModal && !d.open) d.showModal();
@@ -23605,6 +23957,27 @@ function retAll(){
   retPaint();
 }
 function retWhy(v){ RET_WHY = v; retPaint(); }
+/**
+ * ⭐ M44 (walk 2026-10-10) — HOW THAT BILL WAS PAID: the tender that took the most of it. Points and On credit are not money
+ * handed over, so a bill settled that way is refunded in cash unless somebody picks otherwise.
+ */
+function retPaidBy(bill){
+  var best = null;
+  ((bill && bill.payments) || []).forEach(function(p){
+    if (!p || !p.how || p.how === 'Points' || p.how === 'On credit') return;
+    if (!best || (Number(p.amount) || 0) > (Number(best.amount) || 0)) best = p;
+  });
+  return best ? best.how : 'Cash';
+}
+/** the ways money can go back: how this bill was paid, then the shop's own tenders (expWays — the list checkout offers, Cash first) */
+function retWays(bill){
+  var out = [];
+  var add = function(w){ if (w && w !== 'Points' && w !== 'On credit' && out.indexOf(w) < 0) out.push(w); };
+  add(retPaidBy(bill));
+  ((bill && bill.payments) || []).forEach(function(p){ add(p && p.how); });
+  expWays().forEach(add);
+  return out;
+}
 function retHow(v){ RET_HOW = v; retPaint(); }
 /**
  * ⭐ WHAT THE SHOP OWES BACK. Every figure is the ORIGINAL line's own, scaled by the share coming back — so a
@@ -23656,12 +24029,11 @@ function retMoney(){
 function retPaint(){
   var box = document.getElementById('retbody'); if (!box || !RET_FOR) return;
   var m = retMoney();
-  var ways = {};
-  (RET_FOR.payments || []).forEach(function(x){ ways[x.how] = true; });
-  ways.Cash = true;                                  /* a shop can always hand back cash */
+  var ways = {}; retWays(RET_FOR).forEach(function(w){ ways[w] = true; });
   box.innerHTML =
     '<div class="retagainst">Against <b>' + esc(RET_FOR.no) + '</b> · '
-      + esc(new Date(RET_FOR.at).toTimeString().slice(0, 5)) + ' · ' + money(Number(RET_FOR.total) || 0) + '</div>'
+      + esc(atShop(RET_FOR.at)) + ' · ' + money(Number(RET_FOR.total) || 0)
+      + (retPaidBy(RET_FOR) ? ' · paid by ' + esc(retPaidBy(RET_FOR)) : '') + '</div>'
     + '<div class="retlines">' + (RET_FOR.lines || []).map(function(l, n){
         var left = retLeft(RET_FOR, n), q = Number(RET_QTY[n]) || 0;
         return '<div class="retrow' + (left > 0 ? '' : ' none') + '" data-testid="till-ret-' + n + '">'
@@ -23724,6 +24096,8 @@ function expWays(){
   var ways = (S && S.shop && S.shop.pay && S.shop.pay.length) ? S.shop.pay.map(function(w){ return w.label || w.id; })
            : ['Cash', 'Card'];
   if (ways.indexOf('Cash') < 0) ways.unshift('Cash');
+  /* ⭐ M44 (walk 2026-10-10): and the counter's own UPI payee, the same one paintPays() offers at checkout */
+  try { var own = tillOpt().upi; if (own && own.payee && upiShapeOk(own.payee) && ways.indexOf(own.label || 'UPI') < 0) ways.push(own.label || 'UPI'); } catch (_) {}
   return ways;
 }
 /**
@@ -24092,12 +24466,15 @@ async function retIssue(){
  * and an inspector are both entitled to see which sale this undoes.
  */
 function retSlipHTML(cn){
-  var shop = ls.get(shopLs('cb_till_shop'), '') || counterName();
+  /* ⭐ the bill's own head (slipHeadHTML); a GSTIN when the bill it reverses carried tax */
+  var kind = (Number(cn.tax) || (cn.heads && cn.heads.length)) ? 'tax' : 'cash';
   return '<div style="font:13px/1.45 ui-monospace,monospace">'
-    + '<div style="font-size:17px;font-weight:800">CREDIT NOTE</div>'
-    + '<div>' + esc(shop) + '</div>'
+    + slipHeadHTML(kind)
+    + '<div style="border-top:1px solid #000;margin:4px 0"></div>'
+    + '<div style="font-size:17px;font-weight:800;text-align:center">CREDIT NOTE</div>'
+    + '<div>' + esc(counterName()) + (cn.by && cn.by.name ? ' · ' + esc(cn.by.name) : '') + '</div>'
     + '<div style="font-size:15px;font-weight:700">' + esc(cn.no || '') + '</div>'
-    + '<div>' + esc(new Date(cn.at || Date.now()).toLocaleString('en-IN')) + '</div>'
+    + '<div>' + esc(atShop(cn.at || Date.now())) + '</div>'
     + '<div>Against bill ' + esc((cn.against && cn.against.bill_no) || '') + '</div>'
     + '<div>Reason: ' + esc(cn.reason_words || cn.reason || '') + '</div><hr>'
     + (cn.lines || []).map(function(l){
@@ -24398,11 +24775,12 @@ async function paintEarlier(){
   else if (!rows.length) body = '<div style="color:var(--dim);padding:10px">No counter bills in the last ' + days + ' days.</div>';
   else {
     var total = rows.reduce(function(a,b){ return r2(a + (b.total||0)); }, 0);
-    body = '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px">' + rows.length + (rows.length === 1 ? ' bill · ' : ' bills · ') + money(total)
-      + (WHO ? ' · ' + esc(WHO.name) + ': ' + mine.length + ' bill(s) ' + money(mine.reduce(function(a,b){ return r2(a+(b.total||0)); },0)) : '') + '</div>'
+    /* ⭐ M47 (walk 2026-10-10): "Mayur Bhavan: 10 bill(s)" left the other 15 unexplained — the split is WHO billed them */
+    body = '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px" data-testid="till-earlier-head">' + rows.length + (rows.length === 1 ? ' bill · ' : ' bills · ') + money(total)
+      + (WHO && mine.length !== rows.length ? ' · ' + mine.length + ' by ' + esc(whoWord()) + ' ' + money(mine.reduce(function(a,b){ return r2(a+(b.total||0)); },0)) : '') + '</div>'
       + rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-old-' + esc(b.no) + '">'
-          + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(String(b.at).slice(0,10)) + ' ' + esc(String(b.at).slice(11,16)) + ' · '
+          + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(atShop(b.at)) + ' · '
           + esc(b.customer || 'Walk-in') + (b.by && b.by.name ? ' · ' + esc(b.by.name) : '') + '</div></span>'
           + '<span style="font-variant-numeric:tabular-nums">' + money(b.total) + '</span>'
           + '<button class="pill" onclick="reprintOld(\'' + esc(b.no) + '\')">print</button>'
@@ -24462,7 +24840,7 @@ function paintWho(){
   var p = document.getElementById('whopill'); if (!p) return;
   /* ⚠️ "who?" is a question, not an answer. Athi: *"show who has signed in now."* When nobody has, the pill must SAY that —
      bills are then recorded as the shop itself, which is a fact worth knowing before a day's takings are attributed. */
-  p.textContent = WHO && WHO.name ? ('👤 ' + WHO.name) : '👤 nobody signed in';
+  p.textContent = WHO && WHO.name ? ('👤 ' + whoWord()) : '👤 nobody signed in';
   p.className = 'pill' + (WHO && WHO.name ? '' : ' off');
 }
 /**
@@ -24777,12 +25155,12 @@ async function usignBecome(takeover, counter){
 function usignHeldHtml(hd){
   var c = esc(hd.counter || tillId());
   return '<p class="note"><b>Counter ' + c + ' is already open on ' + esc(hd.held_by || 'another device') + '.</b>'
-    + (hd.seen ? '<span class="u"> · last seen ' + esc(new Date(hd.seen).toTimeString().slice(0, 5)) + '</span>' : '') + '</p>'
+    + (hd.seen ? '<span class="u"> · last seen ' + esc(hhmm(hd.seen)) + '</span>' : '') + '</p>'
     + '<p class="note">Two counters cannot share one number — their bills would end up with the same numbers'
     + ' as yours. If that PC is still being used, close it there instead.</p>'
     + '<p class="note u">Taking it here stops that device from sending. Anything it has already taken stays'
     + ' on it and goes when it signs in again — nothing is lost either way.</p>'
-    + '<div class="dlgbtns"><button class="pri" onclick="usignClose()">Leave it alone · Esc</button>'
+    + '<div class="dlgbtns"><button class="pri" onclick="usignClose()">Leave it alone<span class="kh"> · Esc</span></button>'
     + (onAgent() ? '<button data-testid="till-signin-takeover" onclick="USIGN.held=null;usignBecome(true)">Take counter ' + c + ' here</button>' : '')
     + '</div>';
 }
@@ -25096,7 +25474,7 @@ function openWho(){
     '<div class="nowbox' + (WHO && WHO.name ? '' : ' none') + '" data-testid="till-who-now">'
     + (WHO && WHO.name
         ? '<b>' + esc(WHO.name) + '</b> is signed in at this counter'
-          + (WHO.since ? '<div class="u">since ' + esc(new Date(WHO.since).toTimeString().slice(0, 5)) + '</div>' : '')
+          + (WHO.since ? '<div class="u">since ' + esc(hhmm(WHO.since)) + '</div>' : '')
         : '<b>Nobody is signed in.</b><div class="u">Bills are being recorded as the shop itself, and the day close cannot say who took the money.</div>')
     + '</div>'
     /**
@@ -25209,13 +25587,13 @@ function paintLock(){
     var nb = ls.get(shopLs('cb_till_counter_name'), '');
     document.getElementById('breaktitle').textContent = 'Counter ' + tillId() + (nb ? ' · ' + nb : '') + ' — on break';
     document.getElementById('breakwho').textContent = (LOCK.by ? LOCK.by + ' · ' : '')
-      + 'since ' + new Date(LOCK.since).toTimeString().slice(0, 5);
+      + 'since ' + hhmm(LOCK.since);
     return;
   }
-  var nm = ls.get(shopLs('cb_till_counter_name'), '');
-  document.getElementById('locktitle').textContent = 'Counter ' + tillId() + (nm ? ' · ' + nm : '') + ' — locked';
+  var face = document.getElementById('lockface'); if (face) face.innerHTML = idleFace();
+  document.getElementById('locktitle').textContent = '🔒 ' + counterPill() + ' · locked';
   document.getElementById('lockwho').textContent = (LOCK.by ? LOCK.by + ' · ' : '')
-    + 'since ' + new Date(LOCK.since).toTimeString().slice(0, 5);
+    + 'since ' + hhmm(LOCK.since);
 }
 /** 🔒 — the only writer of a lock. `reason` 'break' paints the ☕ cover. */
 /**
@@ -25348,7 +25726,7 @@ async function handOver(){
   document.getElementById('whodlg').close();
   document.getElementById('shifttitle').textContent = 'Hand over — ' + WHO.name;
   document.getElementById('shiftbody').innerHTML =
-      '<div style="font-size:.9em;color:var(--dim)">' + esc(new Date(SHIFT.from).toTimeString().slice(0,5)) + ' to ' + esc(new Date(SHIFT.to).toTimeString().slice(0,5))
+      '<div style="font-size:.9em;color:var(--dim)">' + esc(hhmm(SHIFT.from)) + ' to ' + esc(hhmm(SHIFT.to))
     + ' · ' + SHIFT.bills + ' bill(s)</div>'
     + '<label>Count the cash in the drawer and type the total</label>'
     + '<input id="shift_counted" type="number" min="0" step="1" inputmode="decimal" placeholder="' + esc(curSym()) + '" autofocus>'
@@ -25785,8 +26163,11 @@ function paintSetup(){
         scheme: Object.assign({}, sc, { dating: k }) }) + (k === 'fy' ? ' · financial year' : ' · date');
     });
   } catch (_) {}
-  var note = document.getElementById('seriesnote');
-  if (note) {
+  /* ⚠️⚠️ M55 (walk 2026-10-10): this was `var note`, and so is the UPI note further down this same function — one function-scoped
+     variable. schemeTakesEffect() answers LATER, by which time `note` was the UPI box, so "· from at the next reset …" landed on
+     the end of the UPI warning. Its own name, so each note stays under its own setting. */
+  var snote = document.getElementById('seriesnote');
+  if (snote) {
     var eg = '';
     try {
       eg = window.CBDoc ? CBDoc.compose({ country: docCountry(), prefix: tillId(), kind: 'sale',
@@ -25804,8 +26185,16 @@ function paintSetup(){
       ? ' · <b class="upibad">⚠️ no tax year in the number</b> <button class="pill" type="button"'
         + ' data-testid="till-set-fixdating" onclick="tillSeriesSet({dating:\'fy\'});paintSetup()">Add 26-27</button>'
       : '';
-    note.innerHTML = esc((eg ? 'Next bill: ' + eg : '') + warn) + lost;
-    schemeTakesEffect().then(function(w){ if (w) note.innerHTML += esc(' · from ' + w); });
+    /* ⭐ M54: the REAL next number where this page numbers its own bills (nextNumber(…, peek)); the desktop program numbers
+       its own, so there the worked example stays — and says it is one */
+    var cloudNo = !(HOST && HOST.mode === 'agent');
+    var paintNote = function(head){
+      snote.innerHTML = esc(head + warn) + lost;
+      schemeTakesEffect().then(function(w){ if (w) snote.innerHTML += esc(' · from ' + w); });
+    };
+    if (!cloudNo) paintNote(eg ? 'e.g. ' + eg : '');
+    else nextNumber(undefined, true).then(function(no){ paintNote(no ? 'Next bill: ' + no : ''); })
+                                    .catch(function(){ paintNote(''); });
   }
   var cols = (o.cols || {});
   [['col_offer', 'offer'], ['col_disc', 'disc'], ['col_calc', 'calc'], ['col_value', 'value']].forEach(function(p){
@@ -25954,6 +26343,42 @@ function bellWatch(){
  * on yesterday's prices for ever.
  */
 var BELL = null, BELL_AT = 0;
+/**
+ * ── ⭐⭐ M74 (walk 2026-10-10) — AN ONLINE ORDER REACHES THE COUNTER AS A FLAG ─────────────────────────────────────────────
+ * Athi: "at least a flag should reach." An order from the shop's online shop landed in CRM and the bell, and the counter showed
+ * nothing. Now a pill on the bar — "🛒 1 order" — counts the shop's orders from customers that are not yet delivered, and a tap
+ * opens the order in ChitBridge (#/app/chit/<id>, the door CB Accounts already uses). No order queue here: that waits for the
+ * designer's brief.
+ * ⭐ REUSED, NOT NEW: GET /api/till/tasks?kind=despatch is the till's own read of "orders we owe" (sideOf + deliverline — a
+ * delivered order drops off by itself, the counter's own sales never appear). It is asked when the shop loads and when the BELL
+ * says a chit arrived — no new endpoint, no new timer. ⚠️ The desktop kit (AgentHost) is not covered yet: it has no bell in the page.
+ */
+var ONLINE = { list: [], at: 0, busy: false };
+async function onlineOrdersLoad(){
+  if (ONLINE.busy || !lineUp()) return;
+  if (!(HOST && HOST.mode === 'cloud' && CloudHost.cred())) return;
+  if (Date.now() - ONLINE.at < 15000) return;                       /* a burst of events is one read */
+  ONLINE.busy = true; ONLINE.at = Date.now();
+  try {
+    var r = await fetchBy(CloudHost.api + '/api/till/tasks?kind=despatch&limit=20', { headers: CloudHost.auth() });
+    if (r.ok) { var j = await r.json(); ONLINE.list = (j && Array.isArray(j.tasks)) ? j.tasks : []; }
+  } catch (_) { /* the pill keeps what it last knew — it is a flag, not a ledger */ }
+  ONLINE.busy = false;
+  onlineOrdersPaint();
+}
+function onlineOrdersPaint(){
+  var p = document.getElementById('orderpill'); if (!p) return;
+  var n = ONLINE.list.length;
+  p.hidden = !n;
+  if (!n) return;
+  p.textContent = '🛒 ' + n + (n === 1 ? ' order' : ' orders');
+  p.title = 'online orders not yet delivered — ' + ONLINE.list.slice(0, 5).map(function(t){ return t.party || t.subject || 'order'; }).join(', ');
+}
+/** one order → that order; several → the oldest waiting (the list is newest first), the rest one tap away in ChitBridge */
+function onlineOrdersOpen(){
+  var t = ONLINE.list[ONLINE.list.length - 1]; if (!t || !t.chit_id) return;
+  try { window.open(cbHome() + '#/app/chit/' + encodeURIComponent(t.chit_id), '_blank', 'noopener'); } catch (_) {}
+}
 async function bellUp(){
   try {
     if (BELL || !lineUp()) return;
@@ -25991,7 +26416,9 @@ async function bellUp(){
        * ⚠️ FIRES FOR EVERY KIND OF CHIT (order, quote, a captured WhatsApp message, a general note) — the event
        * itself does not say which, so the wording stays general rather than guessing "order" and being wrong.
        */
-      else if (d.kind === 'chit' || d.kind === 'capture') { toastLine('New in your mailbox' + (d.who ? (' — ' + d.who) : '') + '.'); }
+      else if (d.kind === 'chit' || d.kind === 'capture') { toastLine('New in your mailbox' + (d.who ? (' — ' + d.who) : '') + '.');
+        /* ⭐ M74: and if it is an order, the 🛒 flag on the bar says so (onlineOrdersLoad asks; the event carries no data) */
+        ONLINE.at = 0; onlineOrdersLoad(); }
     });
     BELL.onerror = function(){ try { BELL.close(); } catch (_) {} BELL = null; };   /* it reconnects on the next tick */
   } catch (_) { BELL = null; }
