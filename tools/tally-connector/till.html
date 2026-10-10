@@ -2896,12 +2896,33 @@
   .catpanel .catpill.on{border-color:var(--ok)}
   .catpanel .catpill > button{border:0;border-radius:0;margin:0}
   .catpanel .catpill > .catpk{border-inline-start:1px solid var(--line);min-width:40px}
+  /**
+   * ⭐⭐ M131 (walk 2026-10-10: "still it takes lot of space") - THE QUICK KEYS ARE COMPACT ON A PHONE. Photo tiles were 2 per row,
+   * ~150 px tall: 4 items on the first screen and the product list off-screen. Under 601 px: 3 per row, a small photo (or none -
+   * the Pictures / Names switch on the bar, the same words the bill side uses), name clamped to two lines, small print dropped.
+   * The tile library still draws the tile; this only sets its size. A screen set to a bigger look is overridden on a phone only.
+   */
+  .qpn{display:none}
+  @media (max-width:600px){
+    body .quick,body.shape-mobile .quick,body .quick.sk-photos,body .quick.sk-style-photo,body .quick.sk-style-compactRow{
+      grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;margin:6px 8px;padding:6px}
+    .quick .sk-tile{padding:4px 6px;min-height:0;font-size:.78em;line-height:1.15}
+    .quick .sk-tile .sk-ph,.quick .sk-tile .sk-ph-big,.quick .sk-card-ph{height:40px!important;max-height:40px!important;width:100%;object-fit:cover}
+    .quick .sk-tile .sk-facts,.quick .sk-tile small,.quick .sk-tile .sk-offer,.quick .sk-tile .sk-tax{display:none}
+    .quick .sk-name,.quick .sk-card-name{font-size:1em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .quick .qbar .qpn{display:inline-flex}
+  }
   /* ⭐ M74 — the online orders, a small list in the till */
   .olist{display:flex;flex-direction:column;gap:6px;margin:6px 0}
   .olist button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;text-align:start;padding:8px 10px;
     border:1px solid var(--edge);border-radius:10px;background:var(--paper);color:var(--ink);cursor:pointer;font:inherit}
   .olist button b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .olist button i{font-style:normal;color:var(--dim);font-size:.85em}
+  .olist button:disabled{opacity:.55;cursor:not-allowed}
+  .olist button[aria-current]{border-color:var(--ok)}
+  .pill[hidden]{display:none!important}
+  /* ⭐ M127: on a phone the bar is one row - the mode pill shows only when you are NOT selling (then it, and ← Sell, are the way back) */
+  @media (max-width:600px){ body.op-sell #modepill{display:none} #modepill,#modeback{padding:4px 8px} }
 </style>
 </head>
 <body>
@@ -3159,6 +3180,9 @@
   <section class="left">
     <header>
       <span class="shop" id="shopname">…</span>
+      <!-- ⭐ M127: WHAT YOU ARE DOING, in words, where the work starts. The pill names the mode and opens the list; ← Sell is one tap back from any other mode. -->
+      <button class="pill" id="modepill" data-testid="till-modepill" onclick="modeMenuOpen()" title="What you are doing. Tap to change.">🧾 Sell ▾</button>
+      <button class="pill" id="modeback" data-testid="till-mode-back" onclick="setMode('sell')" title="Back to selling" hidden>← Sell</button>
       <span class="pill" id="tillpill">till</span>
       <button class="pill" id="whopill" data-testid="till-who" onclick="whoAct()" title="who is signed in at this counter (F7 to hand over)">…</button>
       <button class="pill" id="lockbtn" data-testid="till-lock" onclick="lockNow()" title="Lock this counter — the bill stays; sign in to carry on">🔒</button>
@@ -3450,6 +3474,9 @@
     <!-- ⭐ Print is always offered (printerReady(), T67 — Athi: share AND print). Formerly hidden on a phone: a Print button a browser can only
          fail to honour is worse than none (T67: "no print or share option" was the honest state, dressed up). -->
     <button id="slipdayclose" data-testid="till-day-close-do" onclick="dayCloseDo()" hidden>Close the day</button>
+    <!-- ⭐ M84b: a day that was closed but never sent (closed by the old code, or sent while the line was down) can be sent again, or reopened -->
+    <button id="slipdaysend" data-testid="till-day-send" onclick="daySendAgain()" title="Send the day to the books" hidden>Send the day</button>
+    <button id="slipdayreopen" data-testid="till-day-reopen" onclick="dayReopenNow()" title="Reopen today" hidden>Reopen</button>
     <button id="slipprint" class="pri" onclick="printSlip()">Print</button>
   </div>
 </div></dialog>
@@ -3810,6 +3837,14 @@
     <button class="setx" onclick="document.getElementById('onlinedlg').close()" aria-label="Close" title="Close">✕</button></div>
   <div id="onlinedlgbody"></div>
   <div class="dlgbtns"><button onclick="document.getElementById('onlinedlg').close()">Close<span class="kh"> · Esc</span></button></div>
+</dialog>
+
+<!-- ⭐ M127: the modes, named. Receive and Despatch are shown to every shop and greyed WITH the reason when the shop holds no stock. -->
+<dialog id="modedlg" class="dlg" data-testid="till-mode-dlg">
+  <div class="sethead"><h3>What are you doing?</h3>
+    <button class="setx" onclick="document.getElementById('modedlg').close()" aria-label="Close" title="Close">✕</button></div>
+  <div id="modedlgbody"></div>
+  <div class="dlgbtns"><button onclick="document.getElementById('modedlg').close()">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 
 <div id="busy" hidden><div class="busybox">
@@ -5129,7 +5164,7 @@ var CloudHost = {
     var snap = await DB.get('snapshot');
     var bills = (await DB.all('bills')) || [], queue = (await DB.all('queue')) || [];
     var day = new Date().toISOString().slice(0,10);
-    var mine = bills.filter(function(b){ return String(b.at||'').slice(0,10) === day; });
+    var mine = bills.filter(function(b){ return String(b.at||'').slice(0,10) === day && !isDocRow(b); });   /* M128: bills only */
     /**
      * ⚠️⚠️ FOUR FIGURES ON FOUR SCREENS, AND THREE OF THEM DISAGREED (2026-09-18). A credit note is stored
      * negative, so the total netted by itself — but count was mine.length, which called a refund a bill, and
@@ -5298,13 +5333,13 @@ var CloudHost = {
   async bills(){
     var all = (await DB.all('bills')) || [];
     var day = new Date().toISOString().slice(0,10);
-    return all.filter(function(b){ return String(b.at||'').slice(0,10) === day; }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
+    return all.filter(function(b){ return String(b.at||'').slice(0,10) === day && !isDocRow(b); }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });   /* M128 */
   },
   /** ⭐ the bills THIS device still holds for the last N days — offline (M11: a return after midnight) */
   async local(days){
     var all = (await DB.all('bills')) || [];
     var since = new Date(Date.now() - (days || 1) * 86400000).toISOString().slice(0, 10);
-    return all.filter(function(b){ return String(b.at||'').slice(0,10) >= since; }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
+    return all.filter(function(b){ return String(b.at||'').slice(0,10) >= since && !isDocRow(b); }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
   },
   async history(days){
     if (!this.cred() || !lineUp()) return { bills: [], offline: true };
@@ -5436,6 +5471,19 @@ var CloudHost = {
     if (moves) await DB.put('queue', { no: no + '/moved', at: doc.at, deliver: moves });
     this.drain();
     return { ok: true, doc: doc };
+  },
+  /**
+   * ⭐⭐ M126 - AN ONLINE ORDER THAT WAS BILLED IS DONE. The bill is the delivery record for a shop that holds no stock: the same
+   * deliver-lines write a despatch makes (movesOfDoc), queued beside the bill with the bill's number as its reference, so the order
+   * leaves "open orders" (/api/till/tasks hides an order with nothing remaining) without a packing slip and without a D/ number.
+   */
+  async orderBilled(bo, bill){
+    var rows = ((bo && bo.lines) || []).filter(function(l){ return l.line_id && l.quantity > 0; })
+      .map(function(l){ return { line_id: l.line_id, quantity: l.quantity, unit: l.unit, reference: bill.no, note: 'billed' }; });
+    if (!rows.length) return { ok: false, why: 'the order has no lines to mark' };
+    await DB.put('queue', { no: bill.no + '/order', at: bill.at, deliver: { chit_id: bo.chit_id, rows: rows } });
+    this.drain();
+    return { ok: true };
   },
   /**
    * ⭐⭐ A CREDIT NOTE GOES THE WAY A BILL GOES — same store, same queue, same drain. It is a document the shop
@@ -5873,7 +5921,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-10-10.t1b';
+var TILL_BUILD = '2026-10-10.t2a';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -6713,6 +6761,7 @@ async function refresh(){
  * are the one notification surface now, not a second copy on the bar.
  */
 function paintStatus(){
+  try { modePaint(); } catch (_) {}   /* M127: the snapshot may have just told us whether this shop holds stock */
   var net = document.getElementById('netpill');
   var offline = !STATE.online;
   net.textContent = offline ? (HOST && HOST.mode === 'cloud' && !CloudHost.key ? 'no key yet' : 'offline — billing continues') : 'online';
@@ -13540,6 +13589,12 @@ function paintQuick(){
     /* ⭐ §8's badge: the panel says what it is, and how many keys are on it (png/FullDesktop.png) */
     + '<span class="qbadge" data-testid="till-quick-badge">' + (QK_FULL ? '⌑ All products' : '⊞ Quick keys')
     + (baseTotal ? '<span class="n">' + baseTotal + '</span>' : '') + '</span>'
+    /* ⭐ M131: Pictures / Names for the keys, on the bar of a phone (same words and look as the bill side's switch); it writes the Photos setting below - one setting, two doors */
+    + '<span class="bvtog qpn" data-testid="till-quick-pn">'
+    + [[true, 'Pictures'], [false, 'Names']].map(function(x){
+        return '<button type="button" class="' + (!!cfg.photos === x[0] ? 'on' : '') + '" data-testid="till-quick-pn-' + (x[0] ? 'pics' : 'names') + '"'
+          + ' onclick="screenSet({photos:' + x[0] + '})">' + x[1] + '</button>'; }).join('')
+    + '</span>'
     /**
      * ⭐⭐⭐ [found live, 2026-09-27] "can we bring a toggle to switch between quick keys and full list, when
      * the list is off?" — the toggle itself. On: every tile the shelf has, in whatever the current filter is,
@@ -16697,6 +16752,7 @@ function bumpLast(d){
 /* ⚠️ the indexes below k all shift up, so a held selection would silently point at a different product */
 function drop(k){ CART.splice(k,1); if (CARTSEL === k) CARTSEL = -1; else if (CARTSEL > k) CARTSEL--; repaint(); }
 function clearBill(){
+  BILL_ORDER = null;   /* M126: clearing the bill lets go of the online order on it - the order stays open */
   KOT_N = 0;   /* a new customer is a new set of tickets — see sendKOT */ ageClear(); CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); stepGo('pick'); focusSearch();
   /* ⭐ a screen style that was held back because a bill was in hand lands HERE ([TILL-84]) */
   try { stylePendFlush(); } catch (_) {}
@@ -16752,7 +16808,9 @@ function parkBill(){
                 /* ⭐ ITS OWN PAYMENT AND ORDER TYPE travel with the parked bill (walk 2026-10-09, TB4): recalled, it came back
                    as Card / Takeaway from the bill BEFORE it — a cashier could record cash as card without noticing. */
                 pay: { picked: PICKED, asked: !!PAY_ASKED, parts: JSON.parse(JSON.stringify(PARTS || [])),
-                       otype: orderKind(), table: orderTable() } });
+                       otype: orderKind(), table: orderTable() },
+                bo: BILL_ORDER ? JSON.parse(JSON.stringify(BILL_ORDER)) : null });   /* M126: an online order parked is still that order */
+  BILL_ORDER = null;
   parkedSave();
   /* and the next bill starts clean — parts taken on the parked one are not the next customer's */
   PICKED = 'Cash'; PAY_ASKED = false; PARTS = []; try { paintParts(); } catch (_) {}
@@ -16763,6 +16821,7 @@ function unpark(n){
   var p = PARKED[n]; if (!p) return;
   if (CART.length) { parkBill(); }                       /* never lose what is on the screen to bring one back */
   CART = p.cart || [];
+  BILL_ORDER = p.bo || null;
   /**
    * ⚠️ AND BRINGS IT BACK. A parked bill carries the checks that were made on it; without this the resumed bill
    * would finish with age_checks: null on lines that plainly needed one.
@@ -21026,7 +21085,8 @@ async function finish(){
     age_checks: ageRecord(),
     /* ⭐ where the order went, recorded WITH the bill — a reprint months later has to say Table 6, not guess
        ⚠️ an order pad needs this even when "send a KOT" was never turned on ([TILL-187]) */
-    order: (kotOn() || purposeHas('open_orders')) ? { type: orderKind(), table: orderTable() || null,
+    order: BILL_ORDER ? { type: BILL_ORDER.kind, table: null, kots: [], from: BILL_ORDER.chit_id }   /* M126: an online order, billed as ordered */
+         : (kotOn() || purposeHas('open_orders')) ? { type: orderKind(), table: orderTable() || null,
                        kots: CART.map(function(c){ return c.kot || 0; }).filter(Boolean) } : null,
   };
   var r = null;
@@ -21057,6 +21117,7 @@ async function finish(){
   CFD.done(r.bill && r.bill.no, r.bill && money(r.bill.total));
   showSlip(r.bill, m);
   autoPrint(r.bill);
+  if (BILL_ORDER) { var boDone = BILL_ORDER; BILL_ORDER = null; orderBilledDone(boDone, r.bill); }   /* M126 + M129 */
   ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; paintParts();
   /* ⚠️ the balance on screen belonged to the customer who just left */
   RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
@@ -21275,10 +21336,28 @@ async function dayClose(){
   slipDocButtons(true, false);
   /* ⭐ CLOSING IS ITS OWN BUTTON, NOT A SIDE EFFECT OF LOOKING OR PRINTING (TB9) */
   var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = !!d.closed;
+  dayClosedButtons(!!d.closed);
   DAY_D = d; DAY_ROWS = rows;
   document.getElementById('slipdlg').showModal();
 }
 var DAY_D = null, DAY_ROWS = [];
+/** M84b: a CLOSED day offers Send the day (again) and Reopen; an open one offers Close the day */
+function dayClosedButtons(closed){
+  var s = document.getElementById('slipdaysend'), r = document.getElementById('slipdayreopen');
+  if (s) s.hidden = !closed; if (r) r.hidden = !closed;
+}
+/** send the closed day to the books again - the same daySummarySend; the books de-duplicate by walkin:<counter>:<day> */
+async function daySendAgain(){
+  var d = DAY_D; if (!d || !d.closed) return;
+  if (await daySummarySend(d.closed)) toastLine('The day was sent to the books.');
+}
+/** reopen today (the same mark dayReopenAsk clears), then show the slip as an open day */
+function dayReopenNow(){
+  ls.set(shopLs('cb_till_dayclosed'), 'null');
+  toastLine('Today reopened - close the day again when you finish.');
+  try { paintStatus(); } catch (_) {}
+  dayClose();
+}
 /** the shop's own mark that this counter's day was closed — { day, at, bills, total, by } for TODAY, else null */
 function dayClosedMark(){
   try {
@@ -21297,6 +21376,7 @@ function dayCloseDo(){
   document.getElementById('sliptitle').textContent = 'Day closed · ' + d.bills + (d.bills === 1 ? ' bill' : ' bills') + ' · ' + money(d.total);
   document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
   var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = true;
+  dayClosedButtons(true);
   toastLine('Day closed at ' + hhmm(m.at) + '.');
   try { paintStatus(); } catch (_) {}
 }
@@ -21308,15 +21388,17 @@ function dayCloseDo(){
  * ⚠️ A failure is SAID, never swallowed: the mark stays (the drawer is closed) and the nightly job still posts the day.
  */
 async function daySummarySend(m){
-  if (!(HOST && HOST.daySummary)) return;
+  if (!(HOST && HOST.daySummary)) return false;
   try {
     if (!(window.CBRollup && CBRollup.summary && CBRollup.totals)) throw new Error('the day summary engine did not load');
     var sum = CBRollup.summary('day', m.day, CBRollup.totals(DAY_ROWS || []),
       { till: tillStamp(tillId(), WHO || null), source: null, at: m.at });
     var r = await HOST.daySummary(sum);
     if (!r || !r.ok) throw new Error((r && r.why) || 'it was not queued');
+    return true;
   } catch (e) {
     toastLine('Day closed — but the day was not sent to the books (' + ((e && e.message) || 'unknown') + '). It posts tonight instead.');
+    return false;
   }
 }
 /**
@@ -21391,7 +21473,52 @@ try {
   if (_phMq && _phMq.addEventListener) _phMq.addEventListener('change', _phRe);
   else if (_phMq && _phMq.addListener) _phMq.addListener(_phRe);
 } catch (_) {}
+/**
+ * ⭐⭐ M127 (walk 2026-10-10) - THE MODE MENU, WORKED OUT. Sell · Receive · Despatch · Maintenance lived in a native drop-down behind a
+ * 20 px icon; in Despatch, F10 did nothing and nothing said how to get back. Now: the header names the current mode in words
+ * (#modepill, opens the list), ← Sell is one tap back (#modeback), F10 (day close) and F8 (bills) work in every mode, and a key that
+ * belongs to Sell says so. Receive and Despatch are SHOWN to every shop and greyed with the reason when the shop holds no stock -
+ * the server says which (snapshot shop.holds_stock, from the trade), the counter may override it (tillOpt().stock), and a counter
+ * that keeps order tickets (kitchen / order pad) serves rather than stocks. PROPOSAL - Athi decides the final placement.
+ */
+var MODE_WORD = { sell: 'Sell', receive: 'Receive', despatch: 'Despatch', maintain: 'Maintenance' };
+var MODE_HINT = { sell: 'Ring up and print bills', receive: 'Count in goods that arrive', despatch: 'Pack and send an order', maintain: 'Change a product or its price' };
+function holdsStock(){
+  try {
+    var o = tillOpt() || {};
+    if (o.stock === true || o.stock === false) return o.stock;
+    if (kotOn() || purposeHas('open_orders')) return false;
+    return !(S && S.shop && S.shop.holds_stock === false);
+  } catch (_) { return true; }
+}
+function modeWhy(m){ return ((m === 'receive' || m === 'despatch') && !holdsStock()) ? 'This shop does not hold stock.' : ''; }
+function modePaint(){
+  var p = document.getElementById('modepill'); if (p) p.textContent = (MODE_ICON[MODE] || '') + ' ' + (MODE_WORD[MODE] || 'Sell') + ' ▾';
+  var b = document.getElementById('modeback'); if (b) b.hidden = (MODE === 'sell');
+  var sel = document.getElementById('modesel');
+  if (sel) Array.prototype.forEach.call(sel.options, function(o){
+    var why = modeWhy(o.value);
+    o.disabled = !!why;
+    o.textContent = (MODE_ICON[o.value] || '') + ' ' + (MODE_WORD[o.value] || o.value) + (why ? ' - not for this shop' : '');
+  });
+}
+function modeMenuOpen(){
+  document.getElementById('modedlgbody').innerHTML = '<div class="olist">' + OPS.map(function(m){
+    var why = modeWhy(m);
+    return '<button type="button" data-testid="till-mode-' + m + '"' + (m === MODE ? ' aria-current="true"' : '')
+      + (why ? ' disabled title="' + esc(why) + '"' : '') + ' onclick="modePick(\'' + m + '\')">'
+      + '<b>' + MODE_ICON[m] + ' ' + MODE_WORD[m] + '</b><b>' + (m === MODE ? '✓' : '') + '</b>'
+      + '<i>' + esc(why || MODE_HINT[m]) + '</i></button>';
+  }).join('') + '</div>';
+  document.getElementById('modedlg').showModal();
+}
+function modePick(m){
+  try { document.getElementById('modedlg').close(); } catch (_) {}
+  var why = modeWhy(m); if (why) { toastLine(why); return; }
+  setMode(m);
+}
 function setMode(m){
+  var whyNot = modeWhy(m); if (whyNot) { toastLine(whyNot); m = 'sell'; }   /* M127: a saved or typed mode this shop cannot use */
   MODE = OPS.indexOf(m) >= 0 ? m : 'sell';
   ls.set('cb_till_mode', MODE);
   OPS.forEach(function(k){
@@ -21399,6 +21526,7 @@ function setMode(m){
   });
   var sel = document.getElementById('modesel'); if (sel) sel.value = MODE;
   var mi = document.getElementById('modeicon'); if (mi) mi.textContent = MODE_ICON[MODE] || MODE_ICON.sell;
+  try { modePaint(); } catch (_) {}
   /* ⭐ the OPERATION on the body, so layout rules can differ by it — the phone puts the bill first while
      selling and the shelf first while maintaining, and that is a stylesheet's decision to make, not a
      painter's. [[feedback-ui-replaceable-logic-in-engines]] */
@@ -21436,6 +21564,7 @@ function paintKeys(){
       : (MODE === 'receive'
       ? '<span><b>F5</b> freight &amp; costs</span><span><b>F9</b> confirm receipt</span>'
       : '<span><b>F8</b> next carton</span><span><b>F9</b> pack &amp; despatch</span>')))
+    + (MODE !== 'sell' ? '<span><b>F10</b> day close</span>' + (MODE !== 'despatch' ? '<span><b>F8</b> bills</span>' : '') : '')
     + '<span><b>F4</b> re-read the shop</span><span><b>Esc</b> clear</span>';
 }
 
@@ -22373,6 +22502,7 @@ function printerReady(){ return true; }
 /** ⭐ ONE PLACE that shows or hides Print and Share on the one slip dialog every kind of slip shares (T67). */
 function slipDocButtons(printOn, shareOn){
   var dc = document.getElementById('slipdayclose'); if (dc) dc.hidden = true;   /* only the day report turns it on (dayClose) */
+  try { dayClosedButtons(false); } catch (_) {}
   var sw = document.getElementById('slipwarn'); if (sw) { sw.hidden = true; sw.innerHTML = ''; }   /* only showSlip turns it on (M41) */
   var pr = document.getElementById('slipprint'); if (pr) pr.style.display = printOn ? '' : 'none';
   var sh = document.getElementById('slipshare'); if (sh) sh.hidden = !shareOn;
@@ -22560,6 +22690,8 @@ async function resendBill(no){
  * 409 and re-sent by closeCounter() as though it were a bill. A list of what this IS cannot be wrong that way;
  * a list of what it is NOT is wrong the moment anything new exists. [[feedback-whitelist-drops-silently]]
  */
+/** M128: a despatch (D/..) or goods-received (GRN/..) note is stored beside the bills but is NOT one - the day's count, the slip's From-To and the Day book count bills only */
+function isDocRow(b){ return !!(b && (b.doc === true || b.kind === 'despatch' || b.kind === 'receipt')); }
 function isSaleRow(b){
   return !!(b && !b.tillPost && Array.isArray(b.lines) && (b.kind == null || b.kind === 'cash' || b.kind === 'tax' || b.kind === 'supply'));
 }
@@ -26458,7 +26590,7 @@ async function onlineOrdersLoad(){
   ONLINE.busy = true; ONLINE.at = Date.now();
   try {
     var r = await fetchBy(CloudHost.api + '/api/till/tasks?kind=despatch&limit=20', { headers: CloudHost.auth() });
-    if (r.ok) { var j = await r.json(); ONLINE.list = (j && Array.isArray(j.tasks)) ? j.tasks : []; }
+    if (r.ok) { var j = await r.json(); ONLINE.list = ((j && Array.isArray(j.tasks)) ? j.tasks : []).filter(function(t){ return !(ONLINE.billed && ONLINE.billed[t.chit_id]); }); }
   } catch (_) { /* the pill keeps what it last knew — it is a flag, not a ledger */ }
   ONLINE.busy = false;
   onlineOrdersPaint();
@@ -26508,11 +26640,60 @@ function onlineOrdersOpen(){
 async function onlineOrderPick(id){
   try { document.getElementById('onlinedlg').close(); } catch (_) {}
   if (!id) return;
+  /* M126: a shop that holds no stock has nothing to pack - the order is BILLED, on the Sell screen */
+  if (!holdsStock()) {
+    var ot = ONLINE.list.filter(function(t){ return t.chit_id === id; })[0];
+    if (ot) { orderToBill(ot); return; }
+  }
   setMode('despatch');
   await loadTasks('despatch');
   if (!taskById('despatch', id)) TASKS.despatch = (TASKS.despatch || []).concat(ONLINE.list.filter(function(t){ return t.chit_id === id; }));
   var sel = document.getElementById('dsp_task'); if (sel) sel.value = id;
   dspPickTask(id);
+}
+/**
+ * ⭐⭐ M126 (walk 2026-10-10) - AN ONLINE ORDER IS BILLED, NOT PACKED, on a shop that holds no stock. Tapping one in "N orders" opened
+ * Despatch ("Scan what you are packing", a packing slip with no price) and the order was never billed. Now its lines go on the
+ * bill (at the price the shopper was shown), the customer is the shopper, Delivery / Pickup is as ordered, and Save is the ordinary
+ * bill - normal series, normal tax, normal slip. finish() then marks the order done (HOST.orderBilled), so it leaves the open list (M129).
+ * ONE PATH: addItem, price(), finish() - the order adds nothing the counter does not already do. A bill already on the screen is parked first.
+ */
+var BILL_ORDER = null;   /* { chit_id, party, kind: 'deliver'|'take', lines: [{ line_id, quantity, unit }] } while an online order is on the bill */
+function orderToBill(t){
+  if (MODE !== 'sell') setMode('sell');
+  if (CART.length) { parkBill(); toastLine('The bill you had is parked.'); }
+  BILL_ORDER = null;
+  var got = [], missing = [];
+  (t.lines || []).forEach(function(l){
+    var q = Number(l.remaining) > 0 ? Number(l.remaining) : Number(l.ordered);
+    if (!(q > 0)) return;
+    var it = (S.items || []).filter(function(x){
+      return (l.item_id && String(x.item_id) === String(l.item_id)) || !!lineFor([l], x);
+    })[0];
+    if (!it) { missing.push(l.name || 'an item'); return; }
+    addItem(Object.assign({}, it, { price: l.rate != null ? Number(l.rate) : it.price }), q);
+    got.push({ line_id: l.line_id || null, quantity: q, unit: l.unit || 'piece' });
+  });
+  if (!got.length) { say('None of this order is on the counter’s shelf.\n\nRead the shop again (F4), then tap the order.'); return; }
+  var pickup = !!(t.order && t.order.fulfilment === 'pickup');
+  BILL_ORDER = { chit_id: t.chit_id, party: t.party || '', kind: pickup ? 'take' : 'deliver', lines: got };
+  document.getElementById('cname').value = t.party || '';
+  document.getElementById('cphone').value = '';
+  price();
+  toastLine('Order from ' + (t.party || 'a customer') + ' - ' + (pickup ? 'Pickup' : 'Delivery') + '. Save to bill it.'
+    + (missing.length ? ' Not on the shelf: ' + missing.join(', ') + '.' : ''));
+  try { stepGo('bill'); } catch (_) {}
+  focusSearch();
+}
+/** the bill is saved: the order is done, and leaves the open list now rather than at the next read */
+async function orderBilledDone(bo, bill){
+  ONLINE.billed = ONLINE.billed || {}; ONLINE.billed[bo.chit_id] = true;
+  ONLINE.list = ONLINE.list.filter(function(t){ return t.chit_id !== bo.chit_id; });
+  TASKS.despatch = (TASKS.despatch || []).filter(function(t){ return t.chit_id !== bo.chit_id; });
+  onlineOrdersPaint();
+  var r = null;
+  try { r = (HOST && HOST.orderBilled) ? await HOST.orderBilled(bo, bill) : null; } catch (_) { r = null; }
+  if (!r || !r.ok) toastLine('Billed ' + bill.no + '. The order is not marked done yet - open it in ChitBridge.');
 }
 async function bellUp(){
   try {
@@ -26612,10 +26793,10 @@ document.addEventListener('keydown', function(e){
   if (e.key === 'F3'){ sendKOT(); e.preventDefault(); return; }
   if (e.key === 'F9'){ (MODE === 'receive' ? rcvConfirm() : (MODE === 'despatch' ? dspConfirm() : finish())); e.preventDefault(); }
   if (e.key === 'F4'){ refresh(); e.preventDefault(); }
-  if (e.key === 'F8' && MODE === 'sell'){ openBills(); e.preventDefault(); }
+  if (e.key === 'F8' && MODE !== 'despatch'){ openBills(); e.preventDefault(); }   /* M127: bills are not a Sell-only thing (F8 packs the next carton in Despatch) */
   if (e.key === 'F7'){ whoAct(); e.preventDefault(); }
-  if (e.key === 'F6' && MODE === 'sell'){ parkBill(); e.preventDefault(); }
-  if (e.key === 'F10' && MODE === 'sell'){ dayClose(); e.preventDefault(); }
+  if (e.key === 'F6'){ if (MODE === 'sell') parkBill(); else toastLine('Park is for the Sell screen. Tap Sell.'); e.preventDefault(); }
+  if (e.key === 'F10'){ dayClose(); e.preventDefault(); }   /* M127: closing the day is not a Sell-only thing */
   if (e.key === 'F5' && MODE === 'receive'){ rcvCosts(); e.preventDefault(); }
   /**
    * ⭐⭐ VOICE, BY THE KEYBOARD (design-handoff corrections §1, §5.7: "F5 = hearing, Shift F5 = speaking" —
