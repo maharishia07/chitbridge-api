@@ -645,6 +645,7 @@
   .dayline{display:flex;gap:8px;align-items:flex-start;color:var(--dim);font-size:.88em;line-height:1.35}
   .dayline .yes{color:var(--ok);font-weight:700}
   .dayline .no{color:var(--warn);font-weight:700}
+  .dayline .pill{margin-inline-start:auto;flex:0 0 auto}
   .daybtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px}
   .daygo{flex:1;min-height:44px;border-radius:10px;border:1px solid var(--ok);background:var(--ok);
         color:var(--on-accent);font:inherit;font-weight:700;cursor:pointer}
@@ -1164,6 +1165,8 @@
    */
   .menu[hidden]{display:none}
   .menu button:hover,.menu a:hover{background:var(--paper)}
+  /* M155: .menu button's ink colour out-ranks .daygo, which left dark text on the green button — restate the pair, hover included */
+  .menu button.daygo,.menu button.daygo:hover{color:var(--on-accent);background:var(--ok)}
   .menu b{font-weight:700;margin-inline-start:6px}
   .menu i{display:block;font-style:normal;color:var(--dim);font-size:.82em;margin-inline-start:26px}
   /* ⚠️ a FACT, not a warning — it must never compete with the row a person is trying to read */
@@ -3542,7 +3545,7 @@
   <h3>Who is at the counter?</h3>
   <div id="whobody"></div>
   <div class="dlgbtns"><button onclick="document.getElementById('whodlg').close()">Close</button></div>
-  <div style="color:var(--dim);font-size:.8em;margin-top:10px">The name goes on every bill until somebody takes over. It is not a sign-in.</div>
+  <div style="color:var(--dim);font-size:.8em;margin-top:10px">Picking a name asks that person to sign in with their PIN. The name goes on every bill until somebody takes over.</div>
 </div></dialog>
 
 <dialog id="shiftdlg"><div class="dlg">
@@ -6386,6 +6389,8 @@ function chitOf(bill){
 /* ═══ 2 · starting up ════════════════════════════════════════════════════════════════════════════════════════ */
 async function pickHost(){
   try {
+    /* M135: the program serves over http on this PC or LAN; a page served over https is the web counter and has no /api/state — asking only logged a 404 */
+    if (location.protocol === 'https:') throw new Error('web counter');
     var r = await fetch('/api/state', { cache:'no-store' });
     if (r.ok) { var st = await r.json();
       /* ⚠️ the shop is learned HERE, before anything reads a shop-scoped value — tillStore() names the slot from it */
@@ -6596,7 +6601,7 @@ async function load(){
   var bad = wrongShop();
   if (bad) return stopWrongShop(bad);
   applyLook();
-  document.getElementById('shopname').textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.cred() ? 'Not signed in yet' : 'This shop');
+  paintShopName();
   /* ⭐ said beside the shop's own name, because "which shop is this?" is the question it answers */
   try {
     var wb = document.getElementById('whosebar');
@@ -6762,7 +6767,13 @@ async function refresh(){
  * is gone: the sidebar's own 🩺 (still openHealth() directly) and the ☰ badge (alertCount(), see paintSide())
  * are the one notification surface now, not a second copy on the bar.
  */
+/* M150: the shop's name and the who-pill are chips too — they repaint with every status paint, not only on a full repaint */
+function paintShopName(){
+  var el = document.getElementById('shopname'); if (!el || !HOST) return;
+  el.textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.cred() ? 'Not signed in yet' : 'This shop');
+}
 function paintStatus(){
+  try { paintShopName(); paintWho(); } catch (_) {}
   try { modePaint(); } catch (_) {}   /* M127: the snapshot may have just told us whether this shop holds stock */
   var net = document.getElementById('netpill');
   var offline = !STATE.online;
@@ -8883,6 +8894,14 @@ function dayState(){
  * ⚠️ A row that is RUNNING says what it is doing. That is the whole of what Athi asked for: the person watches
  * the counter set itself up instead of watching nothing.
  */
+/* M155: a row that is not settled carries its own button — who → pick them, products → read the shop (the words are the engine's) */
+function dayRowBtn(r){
+  if (r.done) return '';
+  if (r.id === 'who') return icoBtn({ ic: '👤', label: 'Pick who', cls: 'pill', tid: 'till-day-fix-who', on: 'fromMenu(whoAct)' });
+  if (r.id === 'products') return icoBtn({ ic: '↻', label: 'Read the shop again', cls: 'pill', tid: 'till-day-fix-products',
+    on: 'fromMenu(function(){ (HOST.mode===&quot;cloud&quot;?refresh():load()).catch(function(){}); })' });
+  return '';
+}
 function dayRow(r, running){
   var mark = running ? '<span class="spin" aria-hidden="true"></span>'
            : '<span class="' + (r.done ? 'yes' : (r.blocks ? 'stop' : 'no')) + '">'
@@ -8891,7 +8910,7 @@ function dayRow(r, running){
     + ' data-testid="till-day-step" data-step="' + esc(r.id) + '"'
     + ' data-state="' + (running ? 'doing' : (r.done ? 'done' : (r.blocks ? 'stop' : 'note'))) + '">'
     + mark + '<b>' + esc(running ? r.doing : r.title) + '</b>'
-    + '<i>' + esc(running ? '' : (r.say || '')) + '</i></div>'
+    + '<i>' + esc(running ? '' : (r.say || '')) + '</i>' + (running ? '' : dayRowBtn(r)) + '</div>'
     /* ⚠️ the WHY is only shown where it is needed — on the thing in the way. Everywhere else it is noise. */
     + ((!running && r.blocks && !r.done) ? '<div class="daywhy" data-testid="till-day-why">' + esc(r.why) + '</div>' : '');
 }
@@ -24804,9 +24823,22 @@ async function tvShare(){
   try { if (navigator.share) { await navigator.share({ title: 'Shop screen', text: text }); return; } } catch (_) { return; }
   try { await navigator.clipboard.writeText(text); toastLine('Copied: ' + text); } catch (_) { toastLine(text); }
 }
+/* M151: a screen with no name of its own is "Screen 1", "Screen 2"… in the order the list shows them */
+function tvName(sc){
+  var i = (TV.screens || []).indexOf(sc);
+  var n = String((sc && sc.name) || '').trim();
+  return n && n !== 'shop screen' ? n : 'Screen ' + (i + 1);
+}
+async function tvRename(jti){
+  var sc = (TV.screens || []).filter(function(x){ return x.jti === jti; })[0]; if (!sc) return;
+  var v = await ask('Name this screen', tvName(sc), 'Name', '📺'); if (v == null) return;
+  var r = await HOST.tillPost('/api/till/screens/rename', { jti: jti, name: v }, { noQueue: true });
+  if (!r || !r.ok) say((r && (r.why || r.message)) || 'ChitBridge could not be reached', 'Not renamed');
+  await loadTvScreens();
+}
 async function tvOff(jti){
   var sc = (TV.screens || []).filter(function(x){ return x.jti === jti; })[0];
-  if (!sc || !(await sure('Switch off ' + sc.name + ' (…' + (sc.last4 || '') + ')?', 'Switch off', '📺'))) { paintTv(); return; }
+  if (!sc || !(await sure('Switch off ' + tvName(sc) + ' (…' + (sc.last4 || '') + ')?', 'Switch off', '📺'))) { paintTv(); return; }
   var r = await HOST.tillPost('/api/till/screens/revoke', { jti: jti }, { noQueue: true });
   if (!r || !r.ok) say((r && r.why) || 'ChitBridge could not be reached', 'Not switched off');
   await loadTvScreens();
@@ -24818,7 +24850,7 @@ function paintTv(){
     h += '<div class="tvaddr" data-testid="till-tv-addr"><span>' + esc(tvAddr()) + '</span>'
       + '<button class="pill" data-testid="till-tv-share" onclick="tvShare()" title="Share the address and code">🔗</button></div>'
       + '<div class="tvcode" data-testid="till-tv-codebox">' + esc(TV.code) + '</div>'
-      + '<div class="tvwhen">⏱ ' + Math.max(1, Math.round((TV.expires - Date.now()) / 60000)) + ' min · 1 TV</div>';
+      + '<div class="tvwhen">⏱ ' + Math.max(1, Math.round((TV.expires - Date.now()) / 60000)) + ' min</div>';
   }
   if (TV.why) h += '<div class="tvwhen" data-testid="till-tv-why">⚠ ' + esc(TV.why) + '</div>';
   var list = TV.screens;
@@ -24827,9 +24859,9 @@ function paintTv(){
   (list || []).forEach(function(sc){
     var seen = sc.seen_at ? ('👁 ' + String(sc.seen_at).slice(0, 16).replace('T', ' ')) : '👁 —';
     var id = String(sc.jti).replace(/[^a-f0-9]/gi, '');
-    h += '<div class="tvrow" data-testid="till-tv-row"><div class="nm">' + esc(sc.name) + ' <small>…' + esc(sc.last4 || '')
+    h += '<div class="tvrow" data-testid="till-tv-row"><div class="nm"><button class="daylink" data-testid="till-tv-name" title="Rename" onclick="tvRename(&quot;' + id + '&quot;)">' + esc(tvName(sc)) + '</button> <small>…' + esc(sc.last4 || '')
       + ' · ' + seen + (sc.alive ? '' : ' · ✕') + '</small></div>'
-      + cardSwitch(!!sc.alive, 'till-tv-sw', "tvOff('" + id + "')", '') + '</div>';
+      + cardSwitch(!!sc.alive, 'till-tv-sw', "tvOff('" + id + "')", sc.alive ? 'Showing the sign' : 'Off') + '</div>';
   });
   box.innerHTML = h;
 }
@@ -25731,6 +25763,8 @@ function whoAct(){
   return openWho();                                /* handover — the picker's actual job, and always was */
 }
 
+/* M187: hat is a permission level ("act", "manager"), not a job — say it in words, or say nothing */
+function hatWord(h){ return String(h || '').toLowerCase() === 'manager' ? 'Manager' : ''; }
 function openWho(){
   var list = (S && S.staff) || [];
   /* ⭐ who it is RIGHT NOW, said first — the list underneath is for changing it */
@@ -25767,7 +25801,7 @@ function openWho(){
         var on = (WHO && String(WHO.id) === String(a.id));
         return '<button class="choice' + (on ? ' on' : '') + '" data-testid="till-who-' + esc(a.id) + '"'
           + ' onclick="whoPick(\'' + esc(a.id) + '\',\'' + esc(String(a.name).replace(/'/g, "")) + '\')">'
-          + esc(a.name) + (a.hat ? '<span class="u">' + esc(a.hat) + '</span>' : '') + '</button>';
+          + esc(a.name) + (hatWord(a.hat) ? '<span class="u">' + esc(hatWord(a.hat)) + '</span>' : '') + '</button>';
       }).join('')
     : '<div style="color:var(--dim)">No co-assists yet — add them in ChitBridge › Co-assists. Bills are recorded as the shop.</div>')
     + '<button class="choice" style="margin-top:12px" data-testid="till-break" onclick="takeBreak()">☕ Take a break<span class="u">the counter stays yours — nothing is closed or counted</span></button>'
