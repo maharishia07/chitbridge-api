@@ -8152,7 +8152,7 @@ function menuAlerts(){
         + '<button class="pill" data-testid="till-alert-stuck" onclick="fromMenu(openHealth)">Counter health</button>');
     }
   } catch (_) {}
-  try { if (typeof dayOpened === 'function' && !dayOpened())
+  try { if (typeof dayState === 'function' && dayState().state === 'new')
     add('day', 'time', 'The day has not been opened',
       'Selling works without it, but the drawer is not counted and the day has no start time.',
       '<button class="pill" data-testid="till-alert-open" onclick="menuSection(\'day\')">Open the day</button>');
@@ -8378,7 +8378,7 @@ function menuAlertsBody(){
    * in place so its absence is never read as a broken panel.
    */
   if (!rows.length) return '<div class="menusec allclear" data-testid="till-alerts-none">'
-    + 'All clear — ' + ((typeof dayOpened === 'function' && dayOpened()) ? 'the day is open and ' : '')
+    + 'All clear — ' + ({ closed: 'the day is closed and ', open: 'the day is open and ', 'new': '' }[(typeof dayState === 'function' && dayState().state) || 'new'])
     + 'everything has been sent.</div>';
   /* ⭐ the subtitle answers the only question worth asking at a glance (§3) */
   var head = '<div class="menusec alertsum" data-testid="till-alerts-sum">' + esc(alertWords()) + '</div>';
@@ -8764,14 +8764,14 @@ var MENU_OPEN_MANY = null;
 function menuOpenSet(){
   if (MENU_OPEN_MANY) return MENU_OPEN_MANY;
   /* ⭐ the spec's own defaults: the day first until it has been opened, then the three that matter while trading */
-  var started = ls.get(shopLs('cb_till_daystart'), '') === bizDay();
+  var started = dayState().state !== 'new';
   return menuRoomy() ? (started ? ['today', 'bills', 'alerts'] : ['day', 'today', 'bills'])
                      : [started ? 'bills' : 'day'];
 }
 function menuIsOpen(id){ return menuOpenSet().indexOf(id) >= 0; }
 function menuFirstSection(){
   if (MENU_OPEN_SEC !== null) return MENU_OPEN_SEC;
-  return (ls.get(shopLs('cb_till_daystart'), '') === bizDay()) ? 'bills' : 'day';
+  return (dayState().state !== 'new') ? 'bills' : 'day';
 }
 /**
  * ⭐ WHICH ELEMENT ACTUALLY SCROLLS in the hub — the two-column list when there is room, the panel itself when
@@ -8843,6 +8843,16 @@ function menuSection(id){
  * said "all well" without looking would be the same lie as a label that cannot be defended.
  */
 function dayOpened(){ return ls.get(shopLs('cb_till_daystart'), '') === bizDay(); }
+/**
+ * ⭐ M201 — ONE READER FOR THE DAY'S STATE. F10 said "Day closed", the Menu said "Start the day", Check said "the day is open":
+ * three readers, two answers. The closed mark (dayClosedMark) wins over the opened mark; everything that words the day asks here.
+ * Returns { state: 'closed' | 'open' | 'new', mark } — mark is { day, at, bills, total, by } when closed, else null.
+ */
+function dayState(){
+  var m = dayClosedMark();
+  if (m) return { state: 'closed', mark: m };
+  return { state: dayOpened() ? 'open' : 'new', mark: null };
+}
 /**
  * ── ⭐⭐⭐ THE MORNING, SAID OUT LOUD ([TILL-182]) ────────────────────────────────────────────────────────
  *
@@ -9301,7 +9311,7 @@ function menuTrendBody(){
 }
 
 function menuDayBody(){
-  var img = dayImg(), opened = dayOpened();
+  var img = dayImg(), ds = dayState(), opened = ds.state !== 'new';
   var when = new Date();
   var day = when.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
   /* the three checks, each read from something real */
@@ -9365,7 +9375,11 @@ function menuDayBody(){
      * button becomes Close the day — so the thing that ends the day lives where the thing that started it
      * lives, and not in a red strip at the foot of the screen beside a repair tool.
      */
-    + (opened
+    + (ds.state === 'closed'
+        ? '<span class="dayok" data-testid="till-day-open">Day closed · ' + ds.mark.bills + (ds.mark.bills === 1 ? ' bill' : ' bills')
+          + ' · ' + money(ds.mark.total) + '</span>'
+          + '<button class="pill" data-testid="till-day-reopen" onclick="fromMenu(dayReopenNow)">Reopen today</button>'
+      : opened
         ? '<span class="dayok" data-testid="till-day-open">Opened for today</span>'
           + '<button class="pill" data-testid="till-day-close"'
           + ' onclick="fromMenu(function(){ sureSheet(&quot;close&quot;); })">Close the day</button>'
@@ -18030,7 +18044,7 @@ function billWarnLine(which, words, act){
  * with the day not opened and 13-hour-old prices, with only a red chip on the bar. One line on the bill, never a stop.
  */
 function dayWarnWords(){
-  var open = true; try { open = dayOpened(); } catch (_) {}
+  var open = true; try { open = dayState().state !== 'new'; } catch (_) {}
   var h = null; try { h = DAY().priceAge((S && S.at) || null, Date.now()); } catch (_) {}
   var old = h != null && h >= 12;
   if (open && !old) return '';
@@ -21458,7 +21472,7 @@ async function dayClose(){
   if (tok !== DAY_TOK) return;
   var d = dayCloseSheet(rows);
   try { document.getElementById('billsdlg').close(); } catch (_) {}
-  d.closed = dayClosedMark();
+  d.closed = dayState().mark;
   document.getElementById('sliptitle').textContent = (d.closed ? 'Day closed' : 'Day report — not closed yet') + ' · ' + d.bills + (d.bills === 1 ? ' bill' : ' bills') + ' · ' + money(d.total);
   /* ⚠️ OFF AGAIN. The box is shared, so a slip opened after a health check would inherit the screen colours — and
      printSlip() copies this element's innerHTML into the print window, which would then print grey on charcoal. */
