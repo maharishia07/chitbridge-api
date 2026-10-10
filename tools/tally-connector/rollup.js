@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.5.0 · rollup · sha256 caa165589a6c658cc6a8cbd83c743576f287d6397bc4f9fca20ad4b5f7d51662 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.32.0 · rollup · sha256 85d79ab7b164e3683fad2b5c06ef5f97c31849d4b9ab7ec8095eb81cdfa67a2d — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · rollup. Edited ONLY in chitbridge-engines/src/rollup.js; every platform adopts a released version of it. */
 (function (root) {
 'use strict';
@@ -49,6 +49,14 @@ function isReturn(b) { return !!(b && b.kind === 'credit_note'); }
  * TAKEN everywhere else this engine reads) is the row's own money-out array, same shape as a return's
  * `refunds`.
  */
+/**
+ * ⭐ v1.32.0 (M144b) — A DESPATCH OR RECEIVE NOTE IS NOT A SALE. A chit whose `doc` (on the row, or in its business_json)
+ * is 'despatch' or 'receive' moves stock; it is no bill, so the day's bill count never includes it. A credit note stays a return.
+ */
+function isStockNote(b) {
+  const d = b && (b.doc || (b.business_json && b.business_json.doc));
+  return d === 'despatch' || d === 'receive';
+}
 function isExpense(b) { return !!(b && b.kind === 'expense'); }
 
 /* ⭐ money.round — THE one rounder (C:devSPEC-money-one-reader.md). CBMoney in a page; elsewhere the SAME rule.
@@ -87,6 +95,7 @@ function totals(rows) {
   const by = {};
   let count = 0, returns = 0, gross = 0, refunds = 0, expenseCount = 0, expenses = 0;
   for (const b of (rows || [])) {
+    if (isStockNote(b)) continue;
     if (isReturn(b)) {
       returns++;
       refunds = r2(refunds + Math.abs(Number(b.total) || 0));
@@ -414,7 +423,7 @@ function coverage(sum) {
   return { partial: true, parts: parts, from: src[0], to: to, say: say };
 }
 
-const EXPORTS = { coverage, isReturn, isExpense, totals, fold, dayKey, yearKey, weekKey, monthKey, keyOf, daysIn, isClosed, summary, chitOf, refOf, PERIODS, planPurge, FLOOR_DAYS, MAX_PER_RUN, acrossCounters };
+const EXPORTS = { coverage, isReturn, isExpense, isStockNote, totals, fold, dayKey, yearKey, weekKey, monthKey, keyOf, daysIn, isClosed, summary, chitOf, refOf, PERIODS, planPurge, FLOOR_DAYS, MAX_PER_RUN, acrossCounters };
 
 /**
  * ⚠️ NO SELF-ASSIGNED GLOBAL HERE, DELIBERATELY ([TILL-125]). scripts/vendor-till.cjs wrapForBrowser() turns

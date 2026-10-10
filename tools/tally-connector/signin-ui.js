@@ -59,7 +59,7 @@ if (!E || typeof E.who !== 'function' || typeof E.ask !== 'function') {
 /* ── the words, one place (copy budget: a label, a verb, a sentence) ────────────────────────────────────────────── */
 var WORDS = {
   title: 'Sign in',
-  id: 'Mobile number or e-mail',
+  id: 'Mobile, e-mail or user ID',
   go: 'Continue',
   code: 'The code we sent',
   pin: 'Your PIN',
