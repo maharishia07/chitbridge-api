@@ -1,4 +1,4 @@
--- b296_close_posted_counter_sales.sql — DRAFT — NOT RUN · Athi runs it. Round 2 of the walk, "STUCK = 0" (2026-10-09).
+-- b296_close_posted_counter_sales.sql — ✅ RUN 2026-10-10 by Athi (Supabase SQL editor): 8 chits closed. Round 2 of the walk, "STUCK = 0" (2026-10-09).
 --
 -- WHY: the till sends every counter sale — and every day / week / month summary — as a chit to its OWN shop. The sale reaches the books
 -- through the day's walk-in entry, but the chit's status was never closed, so after overdue_days (7) Home counted it "stuck". On Mayur
@@ -29,13 +29,17 @@
 -- Run as postgres in the Supabase SQL editor (or `railway connect`).
 
 
--- the open own-sent copies this file would close, one row per chit, with WHICH rule matched
+-- ⚠️ 2026-10-10 (2nd try): the SQL editor failed on "$$" / "?" / "%" ("unterminated quoted string at or near ', shops;"). This
+--    version uses named dollar tags, IS NOT NULL instead of the ? operator, and left()/right() instead of LIKE 'walkin:%'.
+--    Run as two parts: PART 1 (preview, changes nothing) then PART 2 (close + count).
+
+-- ═══ PART 1 · PREVIEW (changes nothing) ═══
 DROP TABLE IF EXISTS public.b296_todo;
 CREATE TABLE public.b296_todo (entity_id uuid, chit_id uuid, rule text, subject text, created_at timestamp);
-ALTER TABLE public.b296_todo ENABLE ROW LEVEL SECURITY;   -- a work list for this file only; postgres (who runs it) is not bound by RLS; dropped at the end
-CREATE POLICY b296_todo_none ON public.b296_todo USING (false);   -- nobody but the owner running this file reads it
+ALTER TABLE public.b296_todo ENABLE ROW LEVEL SECURITY;   -- a work list for this file only; dropped at the end
+CREATE POLICY b296_todo_none ON public.b296_todo USING (false);
 
-DO $$
+DO $b296$
 DECLARE
   e uuid; shops int := 0;
 BEGIN
@@ -44,7 +48,7 @@ BEGIN
     PERFORM set_config('app.current_entity', e::text, true);
     INSERT INTO public.b296_todo (entity_id, chit_id, rule, subject, created_at)
     SELECT e, cs.chit_id,
-           CASE WHEN ch.business_json ? 'summary' AND ch.purpose = 'general' THEN
+           CASE WHEN ch.business_json->'summary' IS NOT NULL AND ch.purpose = 'general' THEN
                   CASE WHEN ch.business_json->'summary'->>'period' = 'day' THEN 'day summary posted' ELSE 'week/month summary' END
                 ELSE 'counter sale posted in a walk-in entry' END,
            COALESCE(ch.manual_subject, ch.auto_subject), cs.created_at
@@ -54,29 +58,30 @@ BEGIN
        AND cs.current_status IN ('pending', 'delivered', 'read', 'accepted', 'in_progress', 'partial')
        AND (
             /* 3 · a week / month summary */
-            (ch.purpose = 'general' AND ch.business_json ? 'summary' AND ch.business_json->'summary'->>'period' IN ('week', 'month'))
+            (ch.purpose = 'general' AND ch.business_json->'summary' IS NOT NULL
+             AND ch.business_json->'summary'->>'period' IN ('week', 'month'))
             /* 2 · a day summary whose day entry exists */
-         OR (ch.purpose = 'general' AND ch.business_json ? 'summary' AND ch.business_json->'summary'->>'period' = 'day'
-             AND EXISTS (SELECT 1 FROM journal_entry j WHERE j.entity_id = e AND j.source_ref LIKE 'walkin:%:' ||
-                         substring(coalesce(ch.business_json->'summary'->>'key', '') from '[0-9]{4}-[0-9]{2}-[0-9]{2}')))
+         OR (ch.purpose = 'general' AND ch.business_json->'summary' IS NOT NULL
+             AND ch.business_json->'summary'->>'period' = 'day'
+             AND EXISTS (SELECT 1 FROM journal_entry j WHERE j.entity_id = e
+                         AND left(j.source_ref, 7) = 'walkin:'
+                         AND right(j.source_ref, 10) = substring(coalesce(ch.business_json->'summary'->>'key', '') from '[0-9]{4}-[0-9]{2}-[0-9]{2}')))
             /* 1 · a counter sale a walk-in entry covers */
-         OR (ch.business_json ? 'bill_no' AND NOT (ch.business_json ? 'summary')
+         OR (ch.business_json->'bill_no' IS NOT NULL AND ch.business_json->'summary' IS NULL
              AND EXISTS (SELECT 1 FROM journal_entry j WHERE j.entity_id = e
                          AND (j.source_ref IN ('bill:' || cs.chit_id::text, 'walkin-late:' || cs.chit_id::text)
                               OR cs.chit_id = ANY (j.source_chit_ids)))));
   END LOOP;
-  IF shops = 0 THEN RAISE EXCEPTION 'b296: no shop is visible (identities empty) - run as postgres / the owner'; END IF;
-  RAISE NOTICE 'b296: looked at % shops', shops;
-END $$;
+  IF shops = 0 THEN RAISE EXCEPTION USING MESSAGE = 'b296: no shop is visible - run as postgres'; END IF;
+END $b296$;
 
--- ═══ STEP 1 · PREVIEW — what STEP 2 closes. Read it; nothing has changed yet. ═══
 SELECT i.display_name AS shop, t.rule, count(*) AS chits, min(t.created_at)::date AS oldest, max(t.created_at)::date AS newest
   FROM public.b296_todo t JOIN identities i ON i.identity_id = t.entity_id
  GROUP BY i.display_name, t.rule ORDER BY i.display_name, t.rule;
 
--- ═══ STEP 2 · CLOSE ═══
-DO $$
-DECLARE e uuid; k int; total int := 0;
+-- ═══ PART 2 · CLOSE (after reading PART 1) ═══
+DO $b296c$
+DECLARE e uuid;
 BEGIN
   FOR e IN SELECT DISTINCT entity_id FROM public.b296_todo LOOP
     PERFORM set_config('app.current_entity', e::text, true);
@@ -86,31 +91,13 @@ BEGIN
        WHERE t.entity_id = e AND cs.entity_id = e AND cs.chit_id = t.chit_id AND cs.direction = 'received'
          AND cs.current_status IN ('pending', 'delivered', 'read', 'accepted', 'in_progress', 'partial')
       RETURNING cs.chit_id, cs.entity_id
-    ), logged AS (
-      INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, previous_status, new_status, detail)
-      SELECT m.chit_id, m.entity_id, 'status_completed', m.entity_id, 'The books', NULL, 'completed', 'Posted to the books - done (b296)'
-        FROM moved m
-      RETURNING 1
     )
-    SELECT count(*) INTO k FROM logged;
-    total := total + k;
+    INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, previous_status, new_status, detail)
+    SELECT m.chit_id, m.entity_id, 'status_completed', m.entity_id, 'The books', NULL, 'completed', 'Posted to the books - done (b296)'
+      FROM moved m;
   END LOOP;
-  RAISE NOTICE 'b296: closed % chits', total;
-END $$;
+END $b296c$;
 
--- ═══ AFTER · own-sent chits still open (should be notes to self, credit bills, and summaries whose day has not posted) ═══
-DO $$
-DECLARE e uuid; k int; left_over int := 0;
-BEGIN
-  FOR e IN SELECT identity_id FROM identities WHERE identity_type = 'entity' LOOP
-    PERFORM set_config('app.current_entity', e::text, true);
-    SELECT count(*) INTO k FROM chit_status cs JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id
-     WHERE cs.entity_id = e AND cs.direction = 'received' AND ch.sender_entity_id = e
-       AND cs.current_status IN ('pending', 'delivered', 'read', 'accepted', 'in_progress', 'partial');
-    left_over := left_over + k;
-  END LOOP;
-  RAISE NOTICE 'b296: own-sent chits still open: %', left_over;
-END $$;
-
+SELECT count(*) AS closed_by_b296 FROM state_log WHERE detail = 'Posted to the books - done (b296)';
 
 DROP TABLE IF EXISTS public.b296_todo;
