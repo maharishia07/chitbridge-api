@@ -467,8 +467,10 @@ app.use((err, req, res, next) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`Chit and Bridge API running on port ${PORT}`);
+/* HOST (optional): the address to listen on. Unset = every interface, as in production; the local test stack sets HOST=127.0.0.1 so the api is not reachable from the LAN. */
+const HOST = process.env.HOST || undefined;
+app.listen(PORT, HOST, () => {
+  console.log(`Chit and Bridge API running on port ${PORT}${HOST ? ' (' + HOST + ' only)' : ''}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Health: http://localhost:${PORT}/health`);
   /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
