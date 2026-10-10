@@ -528,6 +528,7 @@
        "counter": null,
        "by": null,
        "count": null,
+       "bills": null,
        "how": null,
        "how_ref": null,
        "split": null,
@@ -735,6 +736,7 @@
        "counter": null,
        "by": null,
        "count": null,
+       "bills": null,
        "how": null,
        "how_ref": null,
        "split": null,
@@ -776,6 +778,7 @@
        "counter": null,
        "by": null,
        "count": null,
+       "bills": null,
        "how": null,
        "how_ref": null,
        "split": null,
@@ -1112,15 +1115,16 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-09T05:13:53.429Z",
+      "due_at": "2026-10-09T05:16:52.300Z",
       "due_day": "2026-10-09",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-10T05:13:53.430Z",
+      "created_at": "2026-10-10T05:16:52.301Z",
       "late": true,
-      "today": false
+      "today": false,
+      "bucket": "late"
      }
     ],
     "late": 1,
@@ -1200,7 +1204,8 @@
       "dues": {
        "balance_minor": 38165,
        "oldest_due": "2026-08-15",
-       "side": "both"
+       "side": "both",
+       "overdue": true
       },
       "gstin": {
        "value": "33ABCDE1234F1Z5",
@@ -1222,7 +1227,10 @@
      }
     ],
     "count": 4,
-    "truncated": false
+    "truncated": false,
+    "alerts": {
+     "dues_overdue": 2
+    }
    },
    "optional": [
     "parties[].customer",
@@ -1300,7 +1308,8 @@
     "dues": {
      "balance_minor": 38165,
      "oldest_due": "2026-08-15",
-     "side": "both"
+     "side": "both",
+     "overdue": true
     },
     "gstin": {
      "value": "33ABCDE1234F1Z5",
@@ -1364,7 +1373,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-08T05:13:53.373Z",
+      "due_at": "2026-10-08T05:16:52.227Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1436,7 +1445,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-10T05:13:54.135Z"
+     "shared_at": "2026-10-10T05:16:53.216Z"
     }
    },
    "optional": []
@@ -1489,15 +1498,16 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-09T05:13:53.429Z",
+     "due_at": "2026-10-09T05:16:52.300Z",
      "due_day": "2026-10-09",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-10T05:13:53.434Z",
-     "created_at": "2026-10-10T05:13:53.430Z",
+     "done_at": "2026-10-10T05:16:52.307Z",
+     "created_at": "2026-10-10T05:16:52.301Z",
      "late": false,
-     "today": false
+     "today": false,
+     "bucket": "later"
     }
    },
    "optional": []
@@ -2228,15 +2238,16 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-09T05:13:53.429Z",
+     "due_at": "2026-10-09T05:16:52.300Z",
      "due_day": "2026-10-09",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-10T05:13:53.430Z",
+     "created_at": "2026-10-10T05:16:52.301Z",
      "late": true,
-     "today": false
+     "today": false,
+     "bucket": "late"
     }
    },
    "optional": []
@@ -2259,9 +2270,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-10T05:13:53.428Z",
+     "at": "2026-10-10T05:16:52.299Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-10T05:13:53.429Z"
+     "created_at": "2026-10-10T05:16:52.299Z"
     }
    },
    "optional": []

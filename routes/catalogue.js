@@ -1050,8 +1050,10 @@ router.post('/:bridge_id/order/confirm',
       const _rd = (req.body && req.body.requested_delivery && typeof req.body.requested_delivery === 'object') ? req.body.requested_delivery : null;
       const _addr = _short(req.body && req.body.location, 300), _rem = _short(req.body && req.body.remark, 300);
       const _when = _rd ? { date: _short(_rd.date, 10) || null, time: _short(_rd.time, 5) || null } : null;
-      const orderDetails = (oi.pipeline === 'commerce' && Array.isArray(req.body && req.body.line_items) && (_addr || _rem || _when))
-        ? { channel: 'online', fulfilment: 'delivery', address: _addr || null, requested_delivery: _when && (_when.date || _when.time) ? _when : null, remark: _rem || null } : null;
+      /* T2b (M67): the shopper chose Pickup or Delivery — only those two words are taken from the body; anything else stays 'delivery' as before */
+      const _fulfil = (req.body && req.body.fulfilment === 'pickup') ? 'pickup' : 'delivery';
+      const orderDetails = (oi.pipeline === 'commerce' && Array.isArray(req.body && req.body.line_items) && (_addr || _rem || _when || _fulfil === 'pickup'))
+        ? { channel: 'online', fulfilment: _fulfil, address: _fulfil === 'pickup' ? null : (_addr || null), requested_delivery: _when && (_when.date || _when.time) ? _when : null, remark: _rem || null } : null;
       const summary_json = { line_item_count: line_items.length, ...(offersApplied.length ? { offers: offersApplied } : {}),
                              total_value: (!monetary || negotiation) ? null : money.round(total),
                              currency_code: monetary ? (entity.currency_code || 'INR') : null, purpose, is_promotion: false,
