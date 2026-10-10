@@ -700,6 +700,9 @@ const ENGINE_OTHER = [
      reject, complete, dispute, assign, amend or message on my copy of this chit, with one refusal word — CB's own rules about
      what a chit holder may do. rail-actions.js gathers its two inputs from a request (level, my copy) and says its refusal. */
   'rail.js', 'rail-actions.js',
+  /* ⭐ TO1 (2026-10-10) — Tasks & Orders. workflow.js is ADOPTED from chitbridge-engines (engines.lock.json): which folder an order is in, its stage word,
+     and every action with a verdict (wraps rail). work-rows.js is the one row builder behind GET /api/work/* — SQL over select · open-orders · assign · deliverline, no rule of its own. */
+  'workflow.js', 'work-rows.js',
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [

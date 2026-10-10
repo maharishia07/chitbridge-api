@@ -1457,6 +1457,286 @@
     "entries[].who"
    ]
   },
+  "GET /api/work/:chit_id": {
+   "status": 200,
+   "example": {
+    "chit_id": "20000000-0000-4000-8000-000000000001",
+    "kind": "order_in",
+    "tab": "orders_in",
+    "stage": "new",
+    "word": "New",
+    "status": "pending",
+    "side": "sell",
+    "subject": "Order 1",
+    "ref": "SO-1",
+    "party": "Meena",
+    "party_id": "cust-1",
+    "channel": "online",
+    "fulfilment": "pickup",
+    "address": null,
+    "requested_for": "2026-10-12",
+    "remark": "Ring first",
+    "total_minor": 120050,
+    "currency": "INR",
+    "lines_n": 2,
+    "lines_open_n": 1,
+    "billed": false,
+    "despatched": false,
+    "assignee": {
+     "id": "A1",
+     "name": "Asha"
+    },
+    "lines_assigned_n": 1,
+    "created_at": "2026-10-10T08:20:03.339Z",
+    "age_days": 0,
+    "actions": {
+     "accept": {
+      "ok": true,
+      "why": "already_done",
+      "say": "This chit is already at that step."
+     },
+     "reject": {
+      "ok": true,
+      "needs": [
+       "reason"
+      ],
+      "why": "not_received",
+      "say": "Only the copy you received moves through these steps."
+     },
+     "complete": {
+      "ok": true,
+      "needs": [
+       "reason"
+      ],
+      "why": "not_received",
+      "say": "Only the copy you received moves through these steps."
+     },
+     "cancel": {
+      "ok": true,
+      "why": "not_received",
+      "say": "Only the copy you received moves through these steps."
+     },
+     "reopen": {
+      "ok": false,
+      "why": "wrong_step",
+      "say": "This chit cannot move to that step from where it is now."
+     },
+     "assign_task": {
+      "ok": true
+     },
+     "assign_line": {
+      "ok": true
+     },
+     "deliver_line": {
+      "ok": true
+     },
+     "amend": {
+      "ok": true
+     }
+    },
+    "lines": [
+     {
+      "line_id": "20000000-0000-4000-8000-000000000101",
+      "particulars": "Item 20000000-0000-4000-8000-000000000101",
+      "qty": 5,
+      "unit": "kg",
+      "price_minor": 10000,
+      "delivered": 5,
+      "remaining": 0,
+      "assignment": {
+       "assignee_actor_id": "A1",
+       "assignee_name": "Asha",
+       "assignee_type": "human",
+       "history": [
+        {
+         "seq": 1,
+         "assignee_name": "Ravi",
+         "task": "pick",
+         "due_date": "2026-10-11",
+         "state": "open",
+         "at": "2026-10-09T00:00:00Z"
+        }
+       ]
+      },
+      "settings": {
+       "due": "2026-10-12",
+       "task": "pack",
+       "note": "fragile",
+       "state": "open"
+      },
+      "actions": {
+       "assign_line": {
+        "ok": true
+       },
+       "deliver_line": {
+        "ok": true
+       },
+       "amend": {
+        "ok": true
+       }
+      }
+     }
+    ]
+   },
+   "optional": [
+    "actions.accept.say",
+    "actions.accept.why",
+    "actions.cancel.say",
+    "actions.cancel.why",
+    "actions.complete.needs",
+    "actions.complete.say",
+    "actions.complete.why",
+    "actions.reject.needs",
+    "actions.reject.say",
+    "actions.reject.why"
+   ]
+  },
+  "GET /api/work/:chit_id #404": {
+   "status": 404,
+   "example": {
+    "error": "Not found",
+    "message": "Chit not found or you do not have access"
+   },
+   "optional": []
+  },
+  "GET /api/work/facts": {
+   "status": 200,
+   "example": {
+    "truncated": false,
+    "counts": {
+     "orders_in": 1,
+     "orders_out": 3,
+     "tasks": 1,
+     "done": 2
+    },
+    "lines": [
+     {
+      "text": "1 new order",
+      "value": 1,
+      "tone": "dn"
+     }
+    ],
+    "figures": {
+     "orders_new": 1,
+     "tasks_mine": 1,
+     "orders_in": 1,
+     "orders_out": 3,
+     "tasks": 1,
+     "done": 2
+    }
+   },
+   "optional": [
+    "lines[].tone"
+   ]
+  },
+  "GET /api/work/list": {
+   "status": 200,
+   "example": {
+    "view": "orders_in",
+    "page": 1,
+    "limit": 50,
+    "truncated": false,
+    "counts": {
+     "orders_in": 1,
+     "orders_out": 3,
+     "tasks": 1,
+     "done": 2
+    },
+    "total": 1,
+    "rows": [
+     {
+      "chit_id": "20000000-0000-4000-8000-000000000001",
+      "kind": "order_in",
+      "tab": "orders_in",
+      "stage": "new",
+      "word": "New",
+      "status": "pending",
+      "side": "sell",
+      "subject": "Order 1",
+      "ref": "SO-1",
+      "party": "Meena",
+      "party_id": "cust-1",
+      "channel": "online",
+      "fulfilment": "pickup",
+      "address": null,
+      "requested_for": "2026-10-12",
+      "remark": "Ring first",
+      "total_minor": 120050,
+      "currency": "INR",
+      "lines_n": 2,
+      "lines_open_n": 1,
+      "billed": false,
+      "despatched": false,
+      "assignee": {
+       "id": "A1",
+       "name": "Asha"
+      },
+      "lines_assigned_n": 1,
+      "created_at": "2026-10-10T08:20:03.339Z",
+      "age_days": 0,
+      "actions": {
+       "accept": {
+        "ok": true,
+        "why": "already_done",
+        "say": "This chit is already at that step."
+       },
+       "reject": {
+        "ok": true,
+        "needs": [
+         "reason"
+        ],
+        "why": "not_received",
+        "say": "Only the copy you received moves through these steps."
+       },
+       "complete": {
+        "ok": true,
+        "needs": [
+         "reason"
+        ],
+        "why": "not_received",
+        "say": "Only the copy you received moves through these steps."
+       },
+       "cancel": {
+        "ok": true,
+        "why": "not_received",
+        "say": "Only the copy you received moves through these steps."
+       },
+       "reopen": {
+        "ok": false,
+        "why": "wrong_step",
+        "say": "This chit cannot move to that step from where it is now."
+       },
+       "assign_task": {
+        "ok": true
+       },
+       "assign_line": {
+        "ok": true
+       },
+       "deliver_line": {
+        "ok": true
+       },
+       "amend": {
+        "ok": true
+       }
+      }
+     }
+    ]
+   },
+   "optional": [
+    "rows[].actions.accept.say",
+    "rows[].actions.accept.why",
+    "rows[].actions.cancel.say",
+    "rows[].actions.cancel.why",
+    "rows[].actions.complete.needs",
+    "rows[].actions.complete.say",
+    "rows[].actions.complete.why",
+    "rows[].actions.reject.needs",
+    "rows[].actions.reject.say",
+    "rows[].actions.reject.why",
+    "rows[].actions.reopen.say",
+    "rows[].actions.reopen.why"
+   ]
+  },
   "PATCH /api/books/payments/:id": {
    "status": 200,
    "example": {

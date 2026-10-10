@@ -303,14 +303,6 @@
       "extra": true,
       "why": "no mount in server.js (the scanner cannot map entitiesRouter); measured by tests/entities-header.test.cjs: 3 cold (two cached schema probes + one readBatch), 1 warm"
     },
-    "GET /api/entities/sides": {
-      "file": "entities.js",
-      "trips": 11,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "not mapped by the scanner (entitiesRouter). Measured by tests/sides.test.cjs: two trips of its own warm (the batch + govresolve.mintedOf stamp read); cold adds 9 cached schema probes (7 hasTable + 2 hasColumns). It also runs the two reads it reuses: home-facts rail (2 trips) and entity-header.read (1 warm / 3 cold) — so a warm GET is about 5, a cold one about 11."
-    },
     "GET /api/entities/me": {
       "file": "entities.js",
       "trips": 6,
@@ -318,6 +310,14 @@
       "fired": false,
       "extra": true,
       "why": "no mount in server.js (the scanner cannot map entitiesRouter): read by CBAvatar on every page. Measured on the empty stub, which answers 404 early: 2 trips cold, 1 warm - a FLOOR; 6 is a placeholder ceiling for the full path until a fixture can run it"
+    },
+    "GET /api/entities/sides": {
+      "file": "entities.js",
+      "trips": 11,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "not mapped by the scanner (entitiesRouter). Measured by tests/sides.test.cjs: two trips of its own warm (the batch + govresolve.mintedOf stamp read); cold adds 9 cached schema probes (7 hasTable + 2 hasColumns). It also runs the two reads it reuses: home-facts rail (2 trips) and entity-header.read (1 warm / 3 cold) — so a warm GET is about 5, a cold one about 11."
     },
     "GET /api/facts/accounts": {
       "file": "facts.js",
@@ -530,6 +530,30 @@
       "wire": 5,
       "fired": true,
       "status": 200
+    },
+    "GET /api/work/:chit_id": {
+      "file": "work.js",
+      "trips": 8,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "TO1/A1, tests/work-rows.test.cjs: select.rows for the one chit (4) + the same ONE readBatch (1) = 5 warm; cold adds 3 cached schema.hasTable probes = 8."
+    },
+    "GET /api/work/facts": {
+      "file": "work.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "TO1/A1, tests/work-rows.test.cjs: select.rows only (1 transaction = 4 trips); the counts come from the same read, no batch."
+    },
+    "GET /api/work/list": {
+      "file": "work.js",
+      "trips": 8,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "TO1/A1, tests/work-rows.test.cjs: select.rows (1 transaction = 4 trips) + ONE readBatch for the page (header·lines, marks, delivery progress, line assignments) = 5 warm, whatever the row count; a cold process adds 3 cached schema.hasTable probes = 8. The empty stub answers before the batch (4)."
     },
     "PATCH /api/books/payments/:id": {
       "file": "books.js",
