@@ -128,7 +128,7 @@ const get = (port, p) => new Promise((ok) => {
   t('till: 200', r.status, 200);
   t('till: bills and takings on one line - the money is worded by the page ({money}), never "INR 4320.50"', [r.json.lines[0].text, r.json.lines[0].money], ['12 bills · {money}', { amount: 4320.5, currency: 'INR' }]);
   t('till: line value is the bill count', r.json.lines[0].value, 12);
-  t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: '1 counter open', value: 1 });
+  t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: 'C1 open', value: 1 });
   F.allShut = true; r = await g('till');
   t('till: every counter closed today -> "Counter C1 closed {time}" with the ISO moment (M144)', [r.json.lines[1].text, r.json.lines[1].at], ['Counter C1 closed {time}', SHUT_AT]);
   F.allShut = false; r = await g('till');
@@ -143,12 +143,12 @@ const get = (port, p) => new Promise((ok) => {
   F.booksBills = false;
   F.booksDay = false;
   F.allShut = true; F.c2open = true; r = await g('till');
-  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['12 bills · {money}', 'Counter C1 closed {time}', '1 other counter open']);
+  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['12 bills · {money}', 'Counter C1 closed {time}', 'C2 open']);
   F.allShut = false; F.c2open = false;
   F.stale = true; r = await g('till');
   t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, '12 bills on {date} · {money}');
   F.stale = false; F.summary = false; r = await g('till');
-  t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['1 counter open']);
+  t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['C1 open']);
   t('till: ...and no bills/takings figure', Object.keys(r.json.figures), ['counters_open']);
   F.summary = true;
   WHO = BLIND; r = await g('till');
