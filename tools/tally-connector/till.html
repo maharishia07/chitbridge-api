@@ -16752,6 +16752,7 @@ function bumpLast(d){
 /* ⚠️ the indexes below k all shift up, so a held selection would silently point at a different product */
 function drop(k){ CART.splice(k,1); if (CARTSEL === k) CARTSEL = -1; else if (CARTSEL > k) CARTSEL--; repaint(); }
 function clearBill(){
+  orderKindGiveBack(BILL_ORDER);
   BILL_ORDER = null;   /* M126: clearing the bill lets go of the online order on it - the order stays open */
   KOT_N = 0;   /* a new customer is a new set of tickets — see sendKOT */ ageClear(); CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); stepGo('pick'); focusSearch();
   /* ⭐ a screen style that was held back because a bill was in hand lands HERE ([TILL-84]) */
@@ -21117,7 +21118,7 @@ async function finish(){
   CFD.done(r.bill && r.bill.no, r.bill && money(r.bill.total));
   showSlip(r.bill, m);
   autoPrint(r.bill);
-  if (BILL_ORDER) { var boDone = BILL_ORDER; BILL_ORDER = null; orderBilledDone(boDone, r.bill); }   /* M126 + M129 */
+  if (BILL_ORDER) { var boDone = BILL_ORDER; BILL_ORDER = null; orderKindGiveBack(boDone); orderBilledDone(boDone, r.bill); }   /* M126 + M129 + M169 */
   ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; paintParts();
   /* ⚠️ the balance on screen belonged to the customer who just left */
   RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
@@ -21322,9 +21323,11 @@ function dayCloseHTML(d){
     + dash + '<div style="text-align:center;font-size:.85em">This counter, today. A shop with more than one counter closes each of them.</div>'
     + '<div style="text-align:center">Billed on ChitBridge</div><div style="height:10mm"></div></div>';
 }
+var DAY_TOK = 0;
 async function dayClose(){
-  var rows = [];
+  var tok = ++DAY_TOK, rows = [];   /* M170: F10 always opens the day report - the latest press wins, whatever slip was on screen */
   try { rows = (HOST && HOST.bills) ? (await HOST.bills()) : []; } catch (_) { rows = []; }
+  if (tok !== DAY_TOK) return;
   var d = dayCloseSheet(rows);
   try { document.getElementById('billsdlg').close(); } catch (_) {}
   d.closed = dayClosedMark();
@@ -21333,12 +21336,13 @@ async function dayClose(){
      printSlip() copies this element's innerHTML into the print window, which would then print grey on charcoal. */
   document.getElementById('slipbox').classList.remove('screen');
   document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
-  slipDocButtons(true, false);
-  /* ⭐ CLOSING IS ITS OWN BUTTON, NOT A SIDE EFFECT OF LOOKING OR PRINTING (TB9) */
-  var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = !!d.closed;
+  slipDocButtons(true, false, 'day');
+  /* ⭐ CLOSING IS ITS OWN BUTTON, NOT A SIDE EFFECT OF LOOKING OR PRINTING (TB9) - and only on the day report (M170) */
+  var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = !!d.closed || SLIP_DOC !== 'day';
   dayClosedButtons(!!d.closed);
   DAY_D = d; DAY_ROWS = rows;
-  document.getElementById('slipdlg').showModal();
+  var sd = document.getElementById('slipdlg'); if (sd.open) sd.close();   /* a bill slip still open: showModal on it would not repaint */
+  sd.showModal();
 }
 var DAY_D = null, DAY_ROWS = [];
 /** M84b: a CLOSED day offers Send the day (again) and Reopen; an open one offers Close the day */
@@ -22501,7 +22505,9 @@ function showSlip(bill, m){
  */
 function printerReady(){ return true; }
 /** ⭐ ONE PLACE that shows or hides Print and Share on the one slip dialog every kind of slip shares (T67). */
-function slipDocButtons(printOn, shareOn){
+var SLIP_DOC = 'bill';   /* what the one slip dialog holds NOW: 'bill' (a bill, a credit note, a KOT …) or 'day' (the day report) - per document, M170 */
+function slipDocButtons(printOn, shareOn, doc){
+  SLIP_DOC = doc === 'day' ? 'day' : 'bill';
   var dc = document.getElementById('slipdayclose'); if (dc) dc.hidden = true;   /* only the day report turns it on (dayClose) */
   try { dayClosedButtons(false); } catch (_) {}
   var sw = document.getElementById('slipwarn'); if (sw) { sw.hidden = true; sw.innerHTML = ''; }   /* only showSlip turns it on (M41) */
@@ -26660,6 +26666,8 @@ async function onlineOrderPick(id){
  * ONE PATH: addItem, price(), finish() - the order adds nothing the counter does not already do. A bill already on the screen is parked first.
  */
 var BILL_ORDER = null;   /* { chit_id, party, kind: 'deliver'|'take', lines: [{ line_id, quantity, unit }] } while an online order is on the bill */
+/** M169: the order's Delivery / Pickup was only for ITS bill - the next bill starts at the counter's own kind again */
+function orderKindGiveBack(bo){ try { if (bo && bo.prev_kind) setOrderKind(bo.prev_kind); } catch (_) {} }
 function orderToBill(t){
   if (MODE !== 'sell') setMode('sell');
   if (CART.length) { parkBill(); toastLine('The bill you had is parked.'); }
@@ -26677,7 +26685,7 @@ function orderToBill(t){
   });
   if (!got.length) { say('None of this order is on the counter’s shelf.\n\nRead the shop again (F4), then tap the order.'); return; }
   var pickup = !!(t.order && t.order.fulfilment === 'pickup');
-  BILL_ORDER = { chit_id: t.chit_id, party: t.party || '', kind: pickup ? 'take' : 'deliver', lines: got };
+  BILL_ORDER = { chit_id: t.chit_id, party: t.party || '', kind: pickup ? 'take' : 'deliver', lines: got, prev_kind: orderKind() };   /* prev_kind: M169 - the counter's own Dine-in / Takeaway / Delivery, given back when this bill is done */
   try { setOrderKind(BILL_ORDER.kind); } catch (_) {}   /* M160: the Dine-in / Takeaway / Delivery chip follows the order */
   document.getElementById('cname').value = t.party || '';
   document.getElementById('cphone').value = '';

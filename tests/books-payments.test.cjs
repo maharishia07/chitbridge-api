@@ -346,6 +346,10 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       && X.T.entries.filter((h) => h.reverses_entry_id === entryId).length === 1, JSON.stringify(again.body));
     const twice = await q('POST', '/entries/' + rev.body.entry_id + '/reverse', { reason: 'oops' });
     ok('reversing the mirror itself is refused in words', twice.status === 422 && /itself a reversal/.test(twice.body.error), JSON.stringify(twice.body));
+    /* M174: the Day book says which entry reversed this one (the screen shows "Reversed by …" as a link and no Reverse button) */
+    const dbk = await q('GET', '/daybook?from=2000-01-01&to=2100-01-01');
+    const dOrig = dbk.body.entries.find((x) => x.entry_id === entryId), dMirror = dbk.body.entries.find((x) => x.entry_id === rev.body.entry_id);
+    ok('M174: GET /daybook: the reversed entry carries reversed_by (no. + id); the mirror and a plain entry carry null', !!dOrig && dOrig.reversed_by === rev.body.entry_no && dOrig.reversed_by_id === rev.body.entry_id && dMirror.reversed_by === null, JSON.stringify(dOrig && [dOrig.reversed_by, dOrig.reversed_by_id]));
   });
 
   /* ═══ 7 · M30 advice OUT ═══ */
