@@ -6,7 +6,8 @@
 const assert = require('assert'), fs = require('fs'), path = require('path'), crypto = require('crypto');
 const API = path.join(__dirname, '..');
 const PAGE = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
-const ROUTE = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
+/* the open-orders read moved to lib/open-orders.js (M168: one helper for the till and Home) — read both */
+const ROUTE = ['routes/till.js', 'lib/open-orders.js'].map((p) => fs.readFileSync(path.join(API, p), 'utf8')).join('\n').replace(/\r\n/g, '\n');
 const { lineIdOf } = require('../lib/deliverline');
 let n = 0; const ok = (name, fn) => { fn(); n++; console.log('  ok  ' + name); };
 

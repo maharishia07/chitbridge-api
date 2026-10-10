@@ -40,7 +40,7 @@ const DAYS = 86400000;
 const H = require(API + '/lib/books-hooks');
 const todayKey = H.dayOf(new Date(), 'IN');
 const SHUT_AT = new Date().toISOString();
-const F = { crmSql: [], summary: true, booksOn: true, chits: 'few', stale: false };
+const F = { booksDay: false, crmSql: [], summary: true, booksOn: true, chits: 'few', stale: false };
 const summaryRow = (key) => ({ chit_id: 'c1', created_at: new Date(), business_json: { summary: { period: 'day', key, till: { id: 'C1' }, summarised_at: new Date().toISOString(), totals: { count: 12, returns: 0, gross: 4400, refunds: 79.5, expenseCount: 0, expenses: 0, total: 4320.5, by: {} } } } });
 function chits() {
   if (F.chits === 'many') return Array.from({ length: 5000 }, (_, i) => ({ chit_id: 'x' + i, direction: 'received', current_status: 'completed', created_at: new Date(Date.now() - 40 * DAYS), open_disputes: 0 }));
@@ -80,6 +80,11 @@ function answer(text, params) {
   const party = (id, extra) => Object.assign({ party_id: id, display_name: 'P ' + id, user_id: 'u' + id, status: 'active', on_rail: true, same_world: true }, extra);
   if (/FROM customer_list cl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('c1'), party('c2'), party('c3'), party('c4'), party('c5', { hidden_at: '2026-10-01' }), party('b1')] }; }
   if (/FROM supplier_list sl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('s1'), party('s2'), party('s3', { merged_into: 's1' }), party('b1')] }; }
+  if (/FROM journal_line l JOIN journal_entry h/.test(sql)) return { rows: F.booksDay ? [
+    { entry_id: 'd1', covers: 3, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 40000 }], line_no: 1 },   /* a day, closed once (reversed below) */
+    { entry_id: 'r1', covers: null, reverses_entry_id: 'd1', source_chit_id: null, tenders: null, line_no: 1 },
+    { entry_id: 'd2', covers: 5, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 30000 }, { role: 'upi', dr_minor: 21000 }], line_no: 1 },
+    { entry_id: 'd2', covers: 5, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 30000 }, { role: 'upi', dr_minor: 21000 }], line_no: 2 }] : [] };
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
   return { rows: [] };
 }
@@ -92,6 +97,9 @@ const db = {
 };
 mock('/db', db);
 require(API + '/lib/policy').get = async () => ({});
+/* M168: the orders card asks lib/open-orders - the till's own list - never its own query */
+const OO = { calls: [], list: [{ chit_id: 'o1' }, { chit_id: 'o2' }] };
+mock('/lib/open-orders', { tasks: async (e, kind, limit) => { OO.calls.push([e, kind]); return OO.list; } });
 
 const get = (port, p) => new Promise((ok) => {
   trips = 0; sent = [];
@@ -121,6 +129,10 @@ const get = (port, p) => new Promise((ok) => {
   t('till: figures carry the raw numbers', r.json.figures, { day: todayKey, bills: 12, takings: 4320.5, currency: 'INR', counters_open: 1 });
   t('till: at most 2 trips', r.trips <= 2, true);
   t('till: "bills not sent up" is not invented', /not sent|unsent/i.test(r.body), false);
+  /* M144: the day was closed AGAIN with 510 - the card reads the books day entry (the reversed one is left out), not the older summary chit; the counter that closed says so */
+  F.booksDay = true; F.allShut = false; r = await g('till');
+  t('till (M144): bills and takings are the books live day entry (5 bills, 510.00), the reversed closing left out', [r.json.figures.bills, r.json.figures.takings], [5, 510]);
+  F.booksDay = false;
   F.stale = true; r = await g('till');
   t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, '12 bills on {date} · {money}');
   F.stale = false; F.summary = false; r = await g('till');
@@ -134,8 +146,10 @@ const get = (port, p) => new Promise((ok) => {
   /* orders (M145): a live door with its count - one read, asked for orders that came to the shop, counted by lib/measure's OPEN set */
   r = await g('orders');
   t('orders: 200, one count line, the figure is a number', [r.status, r.json.lines.length, typeof r.json.figures.open, r.json.lines[0].value === r.json.figures.open], [200, 1, 'number', true]);
-  t('orders: the read asks for purpose order, received', sent.some((q) => /ch.purpose = /.test(q) && /cs.direction = /.test(q)), true);
-  t('orders: at most 1 trip', r.trips <= 1, true);
+  t('orders: the count is the till list (lib/open-orders, despatch): 2, not the whole In list', [r.json.figures.open, OO.calls[0] && OO.calls[0][1], r.json.lines[0].text], [2, 'despatch', '2 orders open']);
+  OO.list = []; r = await g('orders');
+  t('orders: none open says so in words', [r.json.lines[0].text, r.json.lines[0].value], ['No open orders', 0]);
+  t('orders: no trip of its own (the helper carries them)', r.trips <= 1, true);
 
   /* accounts */
   r = await g('accounts');

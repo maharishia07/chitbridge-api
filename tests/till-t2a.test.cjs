@@ -58,12 +58,12 @@ ok('a billed order never comes back from a read made before its mark reached the
   assert(PAGE.includes('ONLINE.billed && ONLINE.billed[t.chit_id]'));
 });
 ok('/api/till/tasks says how an online order was placed (orderOf), from summary_json.order_details', () => {
-  const orderOf = new Function(ROUTE.slice(ROUTE.indexOf('function orderOf('), ROUTE.indexOf('router.get(\'/tasks\'')) + '; return orderOf;')();
+  const orderOf = require(path.join(API, 'lib', 'open-orders')).orderOf;   /* M168: moved to the one helper the till and Home share */
   assert.strictEqual(orderOf(null), null);
   assert.strictEqual(orderOf({ order_details: { channel: 'online', fulfilment: 'delivery', address: 'Anna Nagar' } }).fulfilment, 'delivery');
   assert.strictEqual(orderOf({ order_details: { channel: 'online', fulfilment: 'pickup' } }).fulfilment, 'pickup');
   assert.strictEqual(orderOf({ order_details: { channel: 'whatsapp' } }), null);
-  assert(ROUTE.includes('order: orderOf(h.summary_json), lines'));
+  assert(fs.readFileSync(path.join(API, 'lib', 'open-orders.js'), 'utf8').includes('order: orderOf(h.summary_json), lines'));
 });
 
 console.log('- M127: the mode menu');
