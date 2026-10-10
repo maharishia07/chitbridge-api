@@ -2249,6 +2249,8 @@
   .pri:disabled{opacity:.45;cursor:not-allowed}
   .go button.pri{background:var(--ok);border-color:var(--ok);color:var(--on-accent)}
   .go button:disabled{opacity:.45;cursor:not-allowed}
+  /* M180: a picture on a big button is at the button's text size (>= 20px), full contrast - Clear 🗑 / Park ⏸ were 17px and faint. Every icoBtn / data-ic on a .go bar. */
+  .go button[data-ic]{font-size:22px;line-height:1;color:var(--ink);opacity:1}
   /* bills set aside — one line, always visible while any are waiting, so nobody forgets a customer standing at the side */
   .parked{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 8px}
   .parked:empty{display:none}

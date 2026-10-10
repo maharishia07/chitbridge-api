@@ -373,7 +373,7 @@ function paint(host, m, c) {
     var pin = S.need === 'pin', local = !!S.local;
     /* a LOCAL credential is named for what it is (the counter PIN); its one other way on is the line, offered only when there is one */
     h = '<h2>' + esc(W.title) + '</h2>' + (S.said ? '<p class="cbsi-said" data-testid="signin-said">' + esc(S.said) + '</p>' : '') + why +
-      '<label>' + esc(local ? W.localPin : pin ? W.pin : W.code) + '<input name="cred" data-testid="' + (pin ? 'signin-pin' : 'signin-code') + '" type="' + (pin ? 'password' : 'text') + '" inputmode="numeric" pattern="[0-9]*" maxlength="' + (pin ? 4 : 6) + '" autocomplete="' + (pin ? 'current-password' : 'one-time-code') + '" enterkeyhint="go"></label>' +
+      '<label>' + esc(local ? W.localPin : pin ? W.pin : W.code) + '<input name="cred" data-testid="' + (pin ? 'signin-pin' : 'signin-code') + '" type="' + (pin ? 'password' : 'text') + '" inputmode="numeric" pattern="[0-9]*" maxlength="' + (pin ? 4 : 6) + '" autocomplete="one-time-code" enterkeyhint="go"></label>' +
       '<button type="submit" class="cbsi-go" data-testid="signin-verify"' + busy + '>' + esc(S.busy ? W.working : W.verify) + '</button>' +
       '<div class="cbsi-row">' + (pin ? '' : '<button type="button" class="cbsi-ln" data-cbsi="again" data-testid="signin-again">' + esc(W.again) + '</button>') +
       (local && m.online() ? '<button type="button" class="cbsi-ln" data-cbsi="line" data-testid="signin-line">' + esc(W.line) + '</button>' : '') +
