@@ -211,6 +211,13 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/books/terms": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "why": "F2: one withEntity (shop default + party row + events) after a cached schema probe; ceiling until measured"
+    },
     "GET /api/books/trial-balance": {
       "file": "books.js",
       "trips": 1,
@@ -691,6 +698,13 @@
       "wire": 6,
       "fired": true,
       "status": 404
+    },
+    "POST /api/books/terms": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "why": "F2: owner write, one withEntity (read, update, one change row per changed key); ceiling until measured"
     },
     "POST /api/books/setting": {
       "file": "books.js",

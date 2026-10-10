@@ -400,7 +400,7 @@ const ENGINE_OTHER = [
      month is open, the gap-free number); books-hooks.js — which chit posts which event (classify(), pure, tested);
      party-fields.js — the party master's field rules and the duplicate-tax-id refusal. CB's own decisions, not an
      outside standard's; the debit/credit rules themselves stay in CBPosting. (2026-09-29) */
-  'books.js', 'books-hooks.js', 'party-fields.js',
+  'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
   /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
      books-hooks (which event) and stock-from-chit (whether it is stock). CB's own decision. (2026-10-01) */
   'bill-use.js',
