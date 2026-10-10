@@ -1779,7 +1779,7 @@ router.get('/screens', auth, auth.requireScope('till'), async (req, res) => {
     const entity_id = auth.entityOf(req);
     const list = await keys.listOf(entity_id);
     const screens = list.filter(isScreenKey).map((k) => ({
-      jti: k.jti, name: k.name || 'shop screen', last4: k.last4 || null, paired_at: k.created_at || null,
+      jti: k.jti, name: k.name || null, last4: k.last4 || null, paired_at: k.created_at || null,
       seen_at: (k.seen && k.seen.at) || null,
       /* ⭐ whether it would be refused right now — a TV paired by a counter that has since been closed */
       alive: !!auth.keyAlive(list, k.jti),
@@ -1809,6 +1809,36 @@ router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res)
     if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
     auth.forgetKey(jti);
     res.json({ ok: true, jti, message: 'That screen is switched off. It stops showing the sign within a minute.' });
+  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+});
+
+/**
+ * POST /api/till/screens/rename — { jti, name }: give a paired screen its own name (M151). Screen keys only, like revoke;
+ * one transaction, one lock + one write on the shop row. An empty name puts the default ("Screen 1/2…", said by the till) back.
+ */
+router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const jti = String((req.body && req.body.jti) || '');
+    const name = String((req.body && req.body.name) || '').trim().slice(0, 40);
+    if (!jti) return res.status(400).json({ error: 'validation', message: 'Which screen?' });
+    let found = false, refused = false;
+    await require('../db').withTransaction(async (db) => {
+      const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
+      const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
+      const list = Array.isArray(pf.api_keys) ? pf.api_keys : [];
+      const k = list.find((x) => x && String(x.jti) === jti);
+      if (!k) return;
+      if (!isScreenKey(k)) { refused = true; return; }
+      found = true;
+      const next = list.map((x) => (String(x.jti) === jti ? Object.assign({}, x, { name: name || null }) : x));
+      await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
+        [JSON.stringify({ api_keys: next }), entity_id]);
+    });
+    if (refused) return res.status(403).json({ error: 'Forbidden', message: 'Only a shop screen can be renamed from the counter.' });
+    if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
+    auth.forgetKey(jti);
+    res.json({ ok: true, jti, name: name || null });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
