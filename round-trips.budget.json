@@ -790,6 +790,22 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/crm/leads": {
+      "file": "crm.js",
+      "trips": 2,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "why": "L1: ONE transaction (mint + customer_list row + memberships row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm. The empty stub answers 400 early (a floor)"
+    },
+    "POST /api/crm/parties/:id/stage": {
+      "file": "crm.js",
+      "trips": 2,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "why": "L1: ONE transaction (lead check + item check + memberships row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm. The empty stub answers 400 early (a floor)"
+    },
     "POST /api/crm/parties/:id/interactions": {
       "file": "crm.js",
       "trips": 50,

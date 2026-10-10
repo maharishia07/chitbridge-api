@@ -12,6 +12,9 @@
  *   GET    /api/crm/followups                   ?scope=mine|all&done=0|1                                    (b276)
  *   POST   /api/crm/followups · PATCH /followups/:id · DELETE /followups/:id                                (b276)
  *   DELETE /api/crm/parties/:id                 "Remove from my parties" — owner, no open dues, hides the row, deletes no history (b276)
+ *   GET    /api/crm/parties?view=leads          only the leads (no trade yet), each with its stage; `leads_migrated` false until b297
+ *   POST   /api/crm/leads                       one lead = a local party (added_via 'lead') + its first stage                          (b297)
+ *   POST   /api/crm/parties/:id/stage           "Move to…" — a new memberships row (kind lead_stage); the old rows are the history      (b297)
  *   POST   /api/crm/walk-ins/add                a phone that holds points → a local customer; the points move to them
  *
  * ⭐ THIS FILE COMPUTES NO MONEY. Dues, totals and values are READ from what the Ledger and the chits stored (party-fields.decorate,
@@ -27,6 +30,7 @@ const { safeErr } = require('../lib/respond');
 const { isOwner } = require('../lib/owner');
 const crm = require('../lib/crm');
 const F = require('../lib/crm-followups');
+const M = require('../lib/memberships');
 
 const ctx = (req) => auth.entityOf(req);
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
@@ -38,6 +42,7 @@ function noKey(req, res, next) {
 /** a condition becomes a verdict with a code a screen maps to its own written line — the message is never shown as-is (design rule 1) */
 function fail(res, e) {
   if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) return res.status(503).json({ code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CB CRM needs migration b276 — not run yet.' });
+  if (e && e.code === 'LEADS_NOT_MIGRATED') return res.status(503).json({ code: 'LEADS_NOT_MIGRATED', error: e.message, message: e.message });
   if (e && e.status && e.status < 500) return res.status(e.status).json({ code: e.code || 'REFUSED', error: e.message, message: e.message });
   return res.status(500).json({ error: 'Failed', message: safeErr(e) });
 }
@@ -46,14 +51,14 @@ const idOf = (req) => { const id = String(req.params.id || ''); if (!UUID.test(i
 
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/parties', auth, noKey, async (req, res) => {
-  try { res.json(await crm.list(ctx(req))); } catch (e) { fail(res, e); }
+  try { res.json(await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null })); } catch (e) { fail(res, e); }
 });
 
 /** the record: the list row + the relationship line (the scorecard's own arithmetic) + points + open follow-ups */
 router.get('/parties/:id', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), id = idOf(req);
-    const found = await crm.one(owner, id);
+    const found = await crm.one(owner, id, { stages: true });
     if (!found) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'Not your party.' });
     const p = found.party;
     const rec = Object.assign({}, p, { merged_from: found.merged_from });
@@ -77,6 +82,8 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
     rec.migrated = true; rec.followups = [];
     try { rec.followups = await withEntity(owner, async (h) => F.list(h, owner, { party_id: p.party_id })); }
     catch (e) { if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) rec.migrated = false; else throw e; }
+    /* a lead's stage chip + "Move to…": the server says which moves, and may/why (b297 not run → greyed with its sentence) */
+    if (rec.lead) rec.lead = Object.assign({}, rec.lead, { moves: M.KINDS.lead_stage.groups.filter((g) => g !== rec.lead.stage), may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY } });
     res.json(rec);
   } catch (e) { fail(res, e); }
 });
@@ -214,6 +221,57 @@ router.delete('/parties/:id', auth, noKey, async (req, res) => {
       await h.query(`UPDATE supplier_list SET hidden_at = now() WHERE owner_entity_id = $1 AND supplier_entity_id = $2 AND hidden_at IS NULL`, [owner, id]);
     });
     res.json({ ok: true, party_id: id });
+  } catch (e) { fail(res, e); }
+});
+
+/**
+ * a lead: ONE local party (the one mint, kind 'cus') on the customer list as added_via 'lead', and its first stage — ONE transaction, no second contact list.
+ * Body { name, phone?, stage? }. The stage is a memberships row (lib/memberships — the one writer); b297 not run → 503 LEADS_NOT_MIGRATED, nothing created.
+ */
+router.post('/leads', auth, noKey, async (req, res) => {
+  try {
+    const owner = ctx(req), b = req.body || {};
+    const name = String(b.name || '').replace(/s+/g, ' ').trim();
+    if (!name) throw bad('Give the lead a name.', 400, 'BAD_NAME');
+    let phone = null;
+    if (String(b.phone || '').trim()) {
+      const from = require('../lib/rewards').holderOf({ phone: b.phone });
+      if (!from || from.scheme !== 'phone') throw bad('That phone number does not look right.', 400, 'BAD_PHONE');
+      phone = from.value;
+    }
+    const stage = b.stage == null || b.stage === '' ? 'lead' : String(b.stage);
+    if (M.KINDS.lead_stage.groups.indexOf(stage) < 0) throw bad('That is not one of the stages.', 400, 'BAD_GROUP');
+    await M.need();
+    const L = require('../lib/local-identity'), PF = require('../lib/party-fields');
+    const out = await withEntity(owner, async (h) => {
+      const local = await L.mint(owner, name, { query: h.query.bind(h), kind: 'cus' });
+      if (local.error) throw bad((local.error && local.error.message) || 'Could not add them.', local.status || 400, 'MINT_REFUSED');
+      if (local.created && phone) await h.query(`UPDATE identities SET otp_contact = $2 WHERE identity_id = $1 AND parent_entity_id = $3`, [local.identity_id, phone, owner]);
+      const ins = await h.query(
+        `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
+         VALUES ($1, $2, 'entity', 'lead', 0, NULL) ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING RETURNING customer_list_id`, [owner, local.identity_id]);
+      if (!ins.rows.length) throw bad('That name is already on your list.', 409, 'EXISTS');
+      const party_no = await require('../db').trySavepoint(h, () => PF.ensureNo(h, owner, local.identity_id), null);
+      const m = await M.add(h, owner, { kind: 'lead_stage', item_id: local.identity_id, group: stage, by: byOf(req) });
+      return { party: { party_id: local.identity_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false, lead: { stage, since: crm.iso(m.at) } } };
+    });
+    res.status(201).json(out);
+  } catch (e) { fail(res, e); }
+});
+
+/** "Move to…": the stage a lead is in now. Body { stage }. A new row — never an update; refused for a party that has traded (they are a customer). */
+router.post('/parties/:id/stage', auth, noKey, async (req, res) => {
+  try {
+    const owner = ctx(req), id = idOf(req), stage = String((req.body || {}).stage || '');
+    if (M.KINDS.lead_stage.groups.indexOf(stage) < 0) throw bad('That is not one of the stages.', 400, 'BAD_GROUP');
+    await M.need();
+    const row = await withEntity(owner, async (h) => {
+      const c = await h.query(`SELECT txn_count FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 AND added_via = 'lead'`, [owner, id]);
+      if (!c.rows.length) throw bad('Not one of your leads.', 404, 'NOT_FOUND');
+      if (Number(c.rows[0].txn_count) > 0) throw bad('They are a customer now.', 409, 'IS_CUSTOMER');
+      return M.add(h, owner, { kind: 'lead_stage', item_id: id, group: stage, by: byOf(req) });
+    });
+    res.json({ ok: true, party_id: id, lead: { stage: row.grp, since: crm.iso(row.at) } });
   } catch (e) { fail(res, e); }
 });
 

@@ -237,3 +237,15 @@ The advice is a CHIT the web sends (`POST /api/chits/send`, purpose `general`, `
 | `GET /api/till/tasks` · `tasks[].order` | `{ channel: 'online', fulfilment: 'delivery' or 'pickup', address, requested_delivery, remark }` or `null` | **M126**, derived (`orderOf`) from `summary_json.order_details`, which the storefront already writes (`routes/catalogue.js`). No new trip: `summary_json` is already in `select.rows`. Read by the till to bill an online order as ordered. |
 | `GET /api/till/snapshot` · `shop.holds_stock` | boolean or `null` | **M127**, derived from the shop's OWN DATA (`holdsStockOf`): true when a `stock_movement` of reason `opening` or `purchase` exists (a Receive was made) or an active product says `item_data.batch_tracked = true`; false when neither; `null` = unknown (table not migrated / read failed), shown as usual. Never from sector words. `false` greys Despatch (never Receive) at the counter with its reason; the counter may override with its option `stock`. One extra read (see the PR), skipped when the table is absent.
 | `GET /api/till/quick-keys/hidden` | `{ hidden: [] }` for a login that holds no counter | **M130**: was 403 for the shop login on every page load; now an empty list (a shop login has nothing hidden). Counter keys unchanged. |
+
+## Leads · GET /api/crm/parties?view=leads · POST /api/crm/leads · POST /api/crm/parties/:id/stage (CB CRM L1, 2026-10-10)
+
+A lead IS a party: a local identity on `customer_list` with `added_via = 'lead'`. Its stage is NOT a column: it is the latest row of the per-shop `memberships` table (b297, kind `lead_stage`). Written by: `lib/memberships.add` only. Read by: the CRM Leads tab and the record.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `parties[].lead` | `{ stage, since }` or null | Derived: null unless `added_via = 'lead'`. `stage` = the latest `memberships` row (`lead` · `demo` · `trial` · `parked` · `lost`), `lead` before any move, `customer` once the party has traded (`txn_count > 0` — the first trade flips it, nothing is stored). `since` = when that row was written. |
+| `leads_migrated` | boolean (only with `view=leads`) | false until b297 runs; the Leads tab then says "Lead stages arrive after the next update". |
+| `lead.moves` · `lead.may` (the record) | stages ≠ current · `{ ok }` or `{ ok: false, why }` | Server answer for "Move to…": greyed with `why` while b297 is not run. |
+| `memberships` row | entity_id · item_type · item_id · kind · grp · at · by_user_id | Append-only; RLS on entity_id; `membership_kind` is the dictionary of kinds and their groups. |
+| 503 `LEADS_NOT_MIGRATED` | `{ code, message }` | A write before b297: nothing is created. |

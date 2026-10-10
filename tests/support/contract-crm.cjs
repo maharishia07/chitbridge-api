@@ -38,14 +38,20 @@ async function captureCrm() {
   D.followups = [{ owner: 'E1', party_id: P(2), followup_id: 'f1', what: 'Call back', due_at: day(-2), created_at: '2026-09-08T01:00:00.000Z', done_at: '2026-09-09T00:00:00.000Z', assignee_user_id: 'E1' }];
   D.points = { programme: { name: 'Club' }, points: 120, worth: 60 };
   /* the walk-in mint reads and writes identities and customer_list: answered the way crm-remove-walkin.test.cjs answers them */
-  const ids = [{ identity_id: 'E1', user_id: 'acme', bridge_id: 'B1' }];
+  const ids = [{ identity_id: 'E1', user_id: 'acme', bridge_id: 'B1' }], mem = { on: false, rows: [] }, SC = require('../../lib/schema');
   D.extra = async (sql, p) => {
     if (/^SELECT user_id, bridge_id FROM identities WHERE identity_id/.test(sql)) return { rows: ids.filter((i) => i.identity_id === p[0]) };
     if (/FROM identities WHERE parent_entity_id = \$1 AND user_id LIKE/.test(sql)) return { rows: ids.filter((i) => i.parent_entity_id === p[0] && i.user_id.startsWith(p[1].replace('%', '')) && i.display_name.toLowerCase() === p[2]) };
     if (/^SELECT user_id FROM identities WHERE user_id LIKE/.test(sql)) return { rows: ids.filter((i) => i.user_id.startsWith(p[0].replace('%', ''))).slice(-1) };
     if (/^INSERT INTO identities/.test(sql)) { const r = { identity_id: 'N' + ids.length, bridge_id: p[0], display_name: p[1], user_id: p[2], parent_entity_id: p[3] }; ids.push(r); return { rows: [r] }; }
     if (/^UPDATE identities SET otp_contact/.test(sql)) { ids.find((i) => i.identity_id === p[0]).otp_contact = p[1]; return { rows: [] }; }
-    if (/^INSERT INTO customer_list/.test(sql)) return { rows: [{ customer_list_id: 'CL1' }] };
+    if (/^INSERT INTO customer_list/.test(sql)) { if (/'lead'/.test(sql)) D.cust.push(cs(row({ party_id: p[1], display_name: 'Ravi Jewellers', user_id: '~acme.cus-0001', on_rail: false }), { added_via: 'lead', txn_count: 0, last_txn_at: null, groups: [], segment: 'new' })); return { rows: [{ customer_list_id: 'CL1' }] }; }
+    /* L1 (b297): the memberships table, there only while mem.on — the scenario walks "not run yet" first and "run" after */
+    if (/FROM information_schema.tables/.test(sql)) return { rows: mem.on ? [{ '?column?': 1 }] : [] };
+    if (/^SELECT DISTINCT ON \(item_id\)/.test(sql)) return { rows: mem.rows.filter((m) => p[2].indexOf(m.item_id) >= 0).map((m) => ({ item_id: m.item_id, grp: m.grp, at: m.at })) };
+    if (/^INSERT INTO memberships/.test(sql)) { const r = { item_id: p[2], kind: p[3], grp: p[4], at: '2026-10-10T09:00:00.000Z', membership_id: 'mm1' }; mem.rows.push(r); return { rows: [r] }; }
+    if (/^SELECT EXISTS \(SELECT 1 FROM customer_list/.test(sql)) return { rows: [{ ok: D.cust.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
+    if (/^SELECT txn_count FROM customer_list/.test(sql)) { const r = D.cust.find((x) => x.owner === p[0] && x.party_id === p[1] && x.added_via === 'lead'); return { rows: r ? [{ txn_count: r.txn_count }] : [] }; }
     return null;
   };
   F.forget();
@@ -69,6 +75,19 @@ async function captureCrm() {
     if (other) keep('DELETE', '/followups/:id', await t.del('/followups/' + other.followup_id));
     keep('GET', '/followups', await t.get('/followups?scope=all&done=1'));
     keep('POST', '/walk-ins/add', await t.post('/walk-ins/add', { phone: '+91 98400 55555', name: 'Corner shop' }));
+    /* leads (L1): before b297 → 503 in words and leads_migrated:false; after → the lead, the Leads view, the record's chip, a move */
+    SC._reset();
+    keep('POST', '/leads', await t.post('/leads', { name: 'Ravi Jewellers' }));
+    keep('GET', '/parties', await t.get('/parties?view=leads'));
+    mem.on = true; SC._reset();
+    D.cust.push(cs(row({ party_id: P(12), display_name: 'Lead Lata', user_id: '~shop.cus-0012', on_rail: false, party_no: 'P-0012' }), { customer_list_id: 'cl-12', added_via: 'lead', txn_count: 0, last_txn_at: null, groups: [], segment: 'new' }));
+    mem.rows.push({ item_id: P(12), grp: 'lead', at: '2026-10-09T09:00:00.000Z' });
+    keep('POST', '/leads', await t.post('/leads', { name: 'Ravi Jewellers', phone: '+91 98400 77777', stage: 'lead' }));
+    keep('GET', '/parties', await t.get('/parties?view=leads'));
+    keep('GET', '/parties/:id', await t.get('/parties/' + P(12)));
+    keep('POST', '/parties/:id/stage', await t.post('/parties/' + P(12) + '/stage', { stage: 'demo' }));
+    keep('POST', '/parties/:id/stage', await t.post('/parties/' + P(2) + '/stage', { stage: 'demo' }));
+    mem.on = false; SC._reset();
     keep('DELETE', '/parties/:id', await t.del('/parties/' + P(3)));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(77)));
     keep('DELETE', '/parties/:id', await t.del('/parties/' + P(2)));
