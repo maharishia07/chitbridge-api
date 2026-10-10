@@ -64,9 +64,15 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     t('scoped to the shop by parent_entity_id', /parent_entity_id = \$1/.test(seen[0].sql) && seen[0].params[0] === 'e1');
     t('removed people are never listed', /IS DISTINCT FROM 'removed'/.test(seen[0].sql));
     t('people only (not connectors)', /actor_type, 'human'\) = 'human'/.test(seen[0].sql));
+    seen.length = 0;
+    const ra = await (await fetch('http://127.0.0.1:' + srv.address().port + '/api/people?for=add')).json();
+    t('?for=add: owner gets may.add + the picker, no people, no query', ra.may.add.ok === true && ra.access_choices.length > 0 && !ra.people && seen.length === 0);
     seen.length = 0; who = { identity_id: 'a9', identity_type: 'actor', parent_entity_id: 'e7' };
     r = await get();
     t('a colleague reads the list of THEIR shop, never their own id', seen[0].params[0] === 'e7');
+    const rb = await (await fetch('http://127.0.0.1:' + srv.address().port + '/api/people?for=add')).json();
+    t('?for=add: a person is refused WITH the owner-only sentence (the server answers why)', rb.may.add.ok === false && rb.may.add.why === people.OWNER_ONLY && seen.length === 1);
+    seen.length = 0;
     t('and every action is greyed for them', r.body.may.add.ok === false && r.body.people.every((p) => !p.may.access.ok));
   } catch (e) { fail++; console.log('  FAIL route ran  ' + (e && e.stack)); }
   srv.close(); console.log(`\n  ${pass} checks · ${fail} failed\n`); process.exitCode = fail ? 1 : 0; setTimeout(() => process.exit(fail ? 1 : 0), 50).unref();
