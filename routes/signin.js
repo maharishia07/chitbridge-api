@@ -259,7 +259,7 @@ async function ask(req, res, next) {
      * REGISTER a new entity under it. identityAuth.findLoginIdentity() asks lib/resolveuserid.js's grammar instead.
      * ⚠️ AMBIGUOUS is refused, never guessed.
      */
-    const found = await identityAuth.findLoginIdentity(query, input);
+    const found = await identityAuth.findLoginIdentity(query, input, { shop: req.body.shop });
     if (found.ambiguous && found.choices) return chooseWhich(req, res, found.choices);
     if (found.ambiguous) {
       res.locals.code = 'AMBIGUOUS_NAME';
@@ -426,7 +426,7 @@ async function verify(req, res) {
     else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows;
     else {
       /* M06 { id }: the ONE lookup ask uses — an e-mail, a stored user id, or key@Display Name */
-      const f = await identityAuth.findLoginIdentity(query, id);
+      const f = await identityAuth.findLoginIdentity(query, id, { shop: req.body.shop });
       if (f.ambiguous && f.choices) return chooseWhich(req, res, f.choices);
       if (f.ambiguous) {
         res.locals.code = 'AMBIGUOUS_NAME';
