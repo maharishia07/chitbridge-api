@@ -10,7 +10,8 @@ const PAGE = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.ht
 const ROUTE = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
 const CBRollup = require(path.join(API, 'tools', 'tally-connector', 'rollup.js'));
 let n = 0;
-const ok = (name, fn) => { fn(); n++; console.log('  ok  ' + name); };
+const PENDING = [];
+const ok = (name, fn) => { const r = fn(); n++; PENDING.push(Promise.resolve(r).then(() => console.log('  ok  ' + name))); };
 
 /** lift one top-level function out of the page, by name */
 function lift(name) {
@@ -86,11 +87,21 @@ ok('the current mode is a named pill; one tap back to Sell; F10 and F8 work in e
   assert(PAGE.includes("if (e.key === 'F8' && MODE !== 'despatch'){ openBills();"));
   assert(PAGE.includes("toastLine('Park is for the Sell screen. Tap Sell.')"));
 });
-ok('the snapshot says whether the shop holds stock (SERVES_RE over its sectors)', () => {
-  const re = new Function('return ' + ROUTE.match(/const SERVES_RE = (\/.*\/i);/)[1])();
-  ['Restaurant', 'Hotel', 'Cafe / Bakery cafe', 'Catering', 'Salon'].forEach((s) => assert(re.test(s), s));
-  ['Grocery', 'Pharma', 'Hardware', 'Spare parts', 'Textiles'].forEach((s) => assert(!re.test(s), s));
-  assert(ROUTE.includes("holds_stock: !SERVES_RE.test((Array.isArray(sectors) ? sectors : []).join(' '))"));
+ok('the snapshot says whether the shop holds stock from its OWN DATA, never its trade: a hotel with a stock-tracked packed product holds stock; a greengrocer with none does not', async () => {
+  assert(!/SERVES_RE|laundry/.test(ROUTE), 'no sector-word list');
+  const src = ROUTE.slice(ROUTE.indexOf('async function holdsStockOf('), ROUTE.indexOf("router.get('/snapshot'"));
+  const mk = (db, hasTable) => new Function('require', 'withEntity', src + '; return holdsStockOf;')(
+    () => ({ hasTable: async () => hasTable }), (id, fn) => fn(db))('e1');
+  /* a fake database that evaluates the two signals the query asks about */
+  const dbOf = (moves, items) => ({ query: async (sql, p) => {
+    assert(sql.includes("reason IN ('opening','purchase')") && sql.includes('batch_tracked'));
+    return { rows: [{ held: moves.some((m) => ['opening', 'purchase'].includes(m.reason)) || items.some((i) => i.item_data.batch_tracked === true) }] };
+  } });
+  assert.strictEqual(await mk(dbOf([], [{ item_data: { name: 'Packed juice', batch_tracked: true } }]), true), true, 'hotel + a batch-tracked packed product');
+  assert.strictEqual(await mk(dbOf([{ reason: 'purchase' }], []), true), true, 'a Receive was made');
+  assert.strictEqual(await mk(dbOf([{ reason: 'sale' }], [{ item_data: { name: 'Tomato' } }]), true), false, 'greengrocer: sales only, nothing tracked');
+  assert.strictEqual(await mk(dbOf([], []), false), null, 'table not migrated: unknown, shown as usual');
+  assert(ROUTE.includes('holds_stock: await holdsStockOf(entity_id),'));
 });
 
 console.log('- M130: no 403 on a normal load');

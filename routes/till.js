@@ -77,8 +77,23 @@ function deltaPage(rows, cap) {
   return { rows: kept, more: true, cursor: new Date(kept[kept.length - 1].updated_at).toISOString() };
 }
 
-/** M127: sectors whose business is serving, not stocking: Receive and Despatch are greyed for them */
-const SERVES_RE = /restaurant|hotel|cafe|café|catering|hospitality|food.?service|salon|\bspa\b|clinic|laundry/i;
+/**
+ * M127: DOES THIS SHOP HOLD STOCK? The shop's own DATA decides, never its trade (Athi: "the data decides, not the trade").
+ * Two signals, both already in the platform: the shop has RECEIVED stock (a stock_movement of reason opening or purchase - what a
+ * Receive / GRN posts, lib/stock-from-chit), or a product of its own says it is kept per batch (item_data.batch_tracked true - the
+ * product's word that lotfields.tracksBatch honours first). Neither => false. One read; a table not migrated yet, or a read that
+ * fails, answers null (unknown) and the counter then shows Receive and Despatch as usual - it never hides on a guess.
+ */
+async function holdsStockOf(entity_id) {
+  try {
+    if (!(await require('../lib/schema').hasTable('stock_movement'))) return null;
+    const r = await withEntity(entity_id, (db) => db.query(
+      `SELECT (EXISTS (SELECT 1 FROM stock_movement WHERE entity_id = $1 AND reason IN ('opening','purchase'))
+            OR EXISTS (SELECT 1 FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data->>'batch_tracked' = 'true')) AS held`,
+      [entity_id]));
+    return !!(r.rows[0] && r.rows[0].held);
+  } catch (_) { return null; }
+}
 router.get('/snapshot', auth, async (req, res) => {
   try {
     /**
@@ -726,9 +741,8 @@ router.get('/snapshot', auth, async (req, res) => {
         reg_type: String(flags.gst_registration || 'regular'),
         /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */
         country: cbCountry,
-        /* M127: does this shop hold goods (so Receive and Despatch mean something)? A trade that SERVES (a restaurant, a salon) does not; an undeclared
-           sector is general trade and does. The counter can override it (till option stock). */
-        holds_stock: !SERVES_RE.test((Array.isArray(sectors) ? sectors : []).join(' ')),
+        /* M127: does this shop hold stock? From its own data (holdsStockOf); null = unknown, shown as usual. The counter may override (till option stock). */
+        holds_stock: await holdsStockOf(entity_id),
         /**
          * ⭐⭐ THE WAYS THIS SHOP CAN BE PAID, decided by its COUNTRY and its declared payee addresses — not a
          * upi_id field, which is the India-shaped thing the jurisdiction work already ruled against.
