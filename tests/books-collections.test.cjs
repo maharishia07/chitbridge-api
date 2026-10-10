@@ -50,5 +50,5 @@ function serve(X) {
   ok('not the owner → 403 with the sentence', r.status === 403 && /owner/i.test(r.body.message || ''), r.status + ' ' + JSON.stringify(r.body));
   srv.close();
 
-  console.log('\n  ' + (fail ? '✗' : '✓') + ' ' + pass + ' passed · ' + fail + ' failed\n'); process.exit(fail ? 1 : 0);
+  console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n'); process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log(e && e.stack || e); process.exit(1); });
