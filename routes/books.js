@@ -791,9 +791,12 @@ router.get('/year/:fy/status', auth, on, async (req, res) => {
 router.get('/periods', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
-    const rows = await withEntity(e, (h) => S.periods(h, e, req.query.fy ? String(req.query.fy) : null));
+    const fy = req.query.fy ? String(req.query.fy) : null;
+    const { rows, figures, country } = await withEntity(e, async (h) => ({ rows: await S.periods(h, e, fy), figures: await S.periodFigures(h, e, fy), country: (await B.settingOf(h, e) || {}).country }));
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
-    res.json({ periods: rows.map((p) => Object.assign({}, p, { start_date: E.ymd(p.start_date), end_date: E.ymd(p.end_date) })) });
+    const dated = rows.map((p) => Object.assign({}, p, { start_date: E.ymd(p.start_date), end_date: E.ymd(p.end_date) }));
+    /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
+    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(new Date(), country)) });
   } catch (err) { fail(res, err); }
 });
 

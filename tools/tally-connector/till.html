@@ -13587,13 +13587,13 @@ function paintQuick(){
     : '';
   var bar = '<div class="qbar' + (QK_MORE ? ' open' : '') + '" data-testid="till-quick-bar">'
     /* ⭐ §8's badge: the panel says what it is, and how many keys are on it (png/FullDesktop.png) */
-    + '<span class="qbadge" data-testid="till-quick-badge">' + (QK_FULL ? '⌑ All products' : '⊞ Quick keys')
-    + (baseTotal ? '<span class="n">' + baseTotal + '</span>' : '') + '</span>'
+    + '<span class="qbadge" data-testid="till-quick-badge" role="img" aria-label="' + (QK_FULL ? 'All products' : 'Quick keys') + '" title="' + (QK_FULL ? 'All products' : 'Quick keys') + '">' + (QK_FULL ? '⌑' : '⊞')
+    + (baseTotal ? '<span class="n">' + baseTotal + '</span>' : '') + '</span>'   /* M163: a picture and the count - the name is the aria-label and the long-press title; never "QK" */
     /* ⭐ M131: Pictures / Names for the keys, on the bar of a phone (same words and look as the bill side's switch); it writes the Photos setting below - one setting, two doors */
     + '<span class="bvtog qpn" data-testid="till-quick-pn">'
-    + [[true, 'Pictures'], [false, 'Names']].map(function(x){
+    + [[true, '🖼', 'Pictures'], [false, '≡', 'Names']].map(function(x){   /* M164: two icons; the word is the aria-label and the long-press title */
         return '<button type="button" class="' + (!!cfg.photos === x[0] ? 'on' : '') + '" data-testid="till-quick-pn-' + (x[0] ? 'pics' : 'names') + '"'
-          + ' onclick="screenSet({photos:' + x[0] + '})">' + x[1] + '</button>'; }).join('')
+          + ' aria-label="' + x[2] + '" title="' + x[2] + '" onclick="screenSet({photos:' + x[0] + '})">' + x[1] + '</button>'; }).join('')
     + '</span>'
     /**
      * ⭐⭐⭐ [found live, 2026-09-27] "can we bring a toggle to switch between quick keys and full list, when
@@ -13863,9 +13863,9 @@ function billView(){
 function setBillView(v){ tillOptSet({ billView: v }); try { paintCart(); } catch (_) {} }
 function billViewToggle(){
   return '<div class="bvtog" data-testid="till-billview">'
-    + [['pics', 'Pictures'], ['names', 'Names']].map(function(x){
+    + [['pics', '🖼', 'Pictures'], ['names', '≡', 'Names']].map(function(x){   /* M164 */
         return '<button class="' + (billView() === x[0] ? 'on' : '') + '" data-testid="till-billview-' + x[0] + '"'
-          + ' onclick="setBillView(&quot;' + x[0] + '&quot;)">' + x[1] + '</button>'; }).join('')
+          + ' aria-label="' + x[2] + '" title="' + x[2] + '" onclick="setBillView(&quot;' + x[0] + '&quot;)">' + x[1] + '</button>'; }).join('')
     + '</div>';
 }
 function cartPicGrid(){
@@ -26678,6 +26678,7 @@ function orderToBill(t){
   if (!got.length) { say('None of this order is on the counter’s shelf.\n\nRead the shop again (F4), then tap the order.'); return; }
   var pickup = !!(t.order && t.order.fulfilment === 'pickup');
   BILL_ORDER = { chit_id: t.chit_id, party: t.party || '', kind: pickup ? 'take' : 'deliver', lines: got };
+  try { setOrderKind(BILL_ORDER.kind); } catch (_) {}   /* M160: the Dine-in / Takeaway / Delivery chip follows the order */
   document.getElementById('cname').value = t.party || '';
   document.getElementById('cphone').value = '';
   price();
