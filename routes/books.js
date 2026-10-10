@@ -166,7 +166,8 @@ function fyStart(req, d) { const pack = B.packOf(req.books); const A = E.packs()
  *     kind      bill · purchase · receipt · payment · credit_note · expense · income · day · write_off · reversal · …
  *     counter   the counter it was billed on (C2) — the chit's, else the day's source_ref, else a line's
  *     by        who was signed in at the counter (business_json.till.by), else who wrote the entry (created_by → identities)
- *     count     a walk-in day: how many bills it covers }
+ *     count     a walk-in day: how many bills it covers
+ *     bills     a walk-in day: [{ chit_id, ref }] — the bills it covers, each openable (null when the read was not of its first line) }
  * null for an entry with no chit behind it (a payment typed in the Ledger, an opening, a manual entry).
  * ⚠️ A walk-in day names no seller: many people sold those bills, and "by" on it would read as if one person sold them all.
  */
@@ -185,7 +186,7 @@ function sourceOf(l) {
   const pay = howOf(l, day);
   return { chit_id: l.src_chit_id || null, ref: l.src_ref || null, kind: day ? 'day' : (l.event_type === 'walkin_day' ? 'bill' : KIND[l.event_type] || l.event_type || null),
     counter: l.src_till || (m ? m[1] : null) || l.counter_id || null, by: day ? null : (seller || l.by_name || null),
-    count: day ? Number(l.covers) : null, how: pay.how, how_ref: pay.how_ref, split: pay.split,
+    count: day ? Number(l.covers) : null, bills: day && Array.isArray(l.day_bills) ? l.day_bills : null, how: pay.how, how_ref: pay.how_ref, split: pay.split,
     doc_at: day ? null : momentOf(l.src_billed_at) || momentOf(l.src_created_at), recorded_at: momentOf(l.recorded_at) };
 }
 /**
