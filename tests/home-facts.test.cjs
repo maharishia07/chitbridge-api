@@ -39,6 +39,7 @@ let trips = 0, sent = [];
 const DAYS = 86400000;
 const H = require(API + '/lib/books-hooks');
 const todayKey = H.dayOf(new Date(), 'IN');
+const SHUT_AT = new Date().toISOString();
 const F = { crmSql: [], summary: true, booksOn: true, chits: 'few', stale: false };
 const summaryRow = (key) => ({ chit_id: 'c1', created_at: new Date(), business_json: { summary: { period: 'day', key, till: { id: 'C1' }, summarised_at: new Date().toISOString(), totals: { count: 12, returns: 0, gross: 4400, refunds: 79.5, expenseCount: 0, expenses: 0, total: 4320.5, by: {} } } } });
 function chits() {
@@ -66,7 +67,7 @@ function answer(text, params) {
   if (/FROM identities WHERE identity_id = \$1/.test(sql) && /jsonb_agg/.test(sql)) {
     return { rows: [{ country: 'IN', currency_code: 'INR',
       counters: { C1: { id: 'C1', held_by: 'k1' }, C2: { id: 'C2', held_by: 'k2' } },
-      keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: '2026-10-01T10:00:00Z' } }] }] };
+      keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: F.allShut ? SHUT_AT : null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: '2026-10-01T10:00:00Z' } }] }] };
   }
   if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: params[0] === 'a2' }] };
   if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, last_check: { at: '2026-10-06T21:00:00Z', ok: true } }] };
@@ -111,25 +112,34 @@ const get = (port, p) => new Promise((ok) => {
   /* till */
   let r = await g('till');
   t('till: 200', r.status, 200);
-  t('till: bills and takings on one line, named today', r.json.lines[0].text, '12 bills today · INR 4320.50 taken');
+  t('till: bills and takings on one line - the money is worded by the page ({money}), never "INR 4320.50"', [r.json.lines[0].text, r.json.lines[0].money], ['12 bills · {money}', { amount: 4320.5, currency: 'INR' }]);
   t('till: line value is the bill count', r.json.lines[0].value, 12);
   t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: '1 counter open', value: 1 });
+  F.allShut = true; r = await g('till');
+  t('till: every counter closed today -> "Counter C1 closed {time}" with the ISO moment (M144)', [r.json.lines[1].text, r.json.lines[1].at], ['Counter C1 closed {time}', SHUT_AT]);
+  F.allShut = false; r = await g('till');
   t('till: figures carry the raw numbers', r.json.figures, { day: todayKey, bills: 12, takings: 4320.5, currency: 'INR', counters_open: 1 });
   t('till: at most 2 trips', r.trips <= 2, true);
   t('till: "bills not sent up" is not invented', /not sent|unsent/i.test(r.body), false);
   F.stale = true; r = await g('till');
-  t('till: an older newest day is named by its date, not called today', r.json.lines[0].text, '12 bills on 2026-01-01 · INR 4320.50 taken');
+  t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, '12 bills on {date} · {money}');
   F.stale = false; F.summary = false; r = await g('till');
   t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['1 counter open']);
   t('till: ...and no bills/takings figure', Object.keys(r.json.figures), ['counters_open']);
   F.summary = true;
   WHO = BLIND; r = await g('till');
-  t('till: an actor without can_see_costs still sees takings (the old read never hid them)', /4320\.50/.test(r.body), true);
+  t('till: an actor without can_see_costs still sees takings (the old read never hid them)', /"amount":4320\.5\b/.test(r.body), true);
   WHO = OWNER;
+
+  /* orders (M145): a live door with its count - one read, asked for orders that came to the shop, counted by lib/measure's OPEN set */
+  r = await g('orders');
+  t('orders: 200, one count line, the figure is a number', [r.status, r.json.lines.length, typeof r.json.figures.open, r.json.lines[0].value === r.json.figures.open], [200, 1, 'number', true]);
+  t('orders: the read asks for purpose order, received', sent.some((q) => /ch.purpose = /.test(q) && /cs.direction = /.test(q)), true);
+  t('orders: at most 1 trip', r.trips <= 1, true);
 
   /* accounts */
   r = await g('accounts');
-  t('accounts: checked date + waiting (tone dn)', r.json.lines, [{ text: 'Checked 2026-10-06' }, { text: '3 posts waiting', value: 3, tone: 'dn' }]);
+  t('accounts: checked date + waiting (tone dn)', r.json.lines, [{ text: 'Checked {when}', at: '2026-10-06T21:00:00.000Z' }, { text: '3 posts waiting', value: 3, tone: 'dn' }]);
   t('accounts: at most 2 trips', r.trips <= 2, true);
   F.booksOn = false; r = await g('accounts');
   t('accounts: ledger off -> no lines, and it says why', [r.status, r.json.lines, typeof r.json.unavailable], [200, [], 'string']);
