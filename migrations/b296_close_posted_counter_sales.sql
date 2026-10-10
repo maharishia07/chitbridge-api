@@ -33,6 +33,7 @@
 DROP TABLE IF EXISTS public.b296_todo;
 CREATE TABLE public.b296_todo (entity_id uuid, chit_id uuid, rule text, subject text, created_at timestamp);
 ALTER TABLE public.b296_todo ENABLE ROW LEVEL SECURITY;   -- a work list for this file only; postgres (who runs it) is not bound by RLS; dropped at the end
+CREATE POLICY b296_todo_none ON public.b296_todo USING (false);   -- nobody but the owner running this file reads it
 
 DO $$
 DECLARE
