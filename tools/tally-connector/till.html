@@ -21161,7 +21161,7 @@ function dayCloseHTML(d){
     : '';
   var shop = (S && S.shop) || {};
   var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
-  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
+  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid currentColor;margin:4px 0"></div>';
   var top = Object.keys(d.items).sort(function(a,b){ return d.items[b].net - d.items[a].net; }).slice(0, 10);
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
     + '<div style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name||'') + '</div>'
@@ -22001,7 +22001,7 @@ async function dspConfirm(){
 function docRow(a, b, big){ return '<div style="display:flex;justify-content:space-between' + (big ? ';font-weight:700;font-size:1.15em' : '') + '"><span>' + a + '</span><span>' + b + '</span></div>'; }
 function docPaper(title, body){
   var shop = (S && S.shop) || {};
-  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
+  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid currentColor;margin:4px 0"></div>';
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
     + '<div style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name || '') + '</div>'
     + solid + '<div style="text-align:center;font-weight:700">' + esc(title) + '</div>' + dash + body
@@ -22079,7 +22079,7 @@ function slipHTML(bill, m){
   /* ⚠️ …nor over a bill saved while the shop's own details disagreed (M41, bill.not_invoice) — the same title, no second path */
   var title = (unrated.length || bill.not_invoice) ? 'BILL — NOT A TAX INVOICE' : bill.kind === 'tax' ? 'TAX INVOICE' : (bill.kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO');
   var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
-  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
+  var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid currentColor;margin:4px 0"></div>';
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
     + slipHeadHTML(bill.kind)
     + solid + '<div style="text-align:center;font-weight:700">' + title + '</div>' + dash
@@ -24470,7 +24470,7 @@ function retSlipHTML(cn){
   var kind = (Number(cn.tax) || (cn.heads && cn.heads.length)) ? 'tax' : 'cash';
   return '<div style="font:13px/1.45 ui-monospace,monospace">'
     + slipHeadHTML(kind)
-    + '<div style="border-top:1px solid #000;margin:4px 0"></div>'
+    + '<div style="border-top:1px solid currentColor;margin:4px 0"></div>'
     + '<div style="font-size:17px;font-weight:800;text-align:center">CREDIT NOTE</div>'
     + '<div>' + esc(counterName()) + (cn.by && cn.by.name ? ' · ' + esc(cn.by.name) : '') + '</div>'
     + '<div style="font-size:15px;font-weight:700">' + esc(cn.no || '') + '</div>'
