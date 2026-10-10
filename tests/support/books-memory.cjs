@@ -32,6 +32,14 @@ function create() {
       T.accounts.push(r); return r.account_id;
     },
     async periods(db, e, fy) { return clone(T.periods.filter((p) => p.entity_id === e && (!fy || p.fiscal_year === fy))).sort((a, b) => a.fiscal_year.localeCompare(b.fiscal_year) || a.period - b.period); },
+    async periodFigures(db, e, fy) {
+      const m = new Map();
+      T.entries.filter((x) => x.entity_id === e && (!fy || x.fiscal_year === fy)).forEach((x) => {
+        const k = x.fiscal_year + '|' + x.period, r = m.get(k) || { fiscal_year: x.fiscal_year, period: Number(x.period), entries: 0, sales_minor: 0 };
+        r.entries += 1; if (x.series === 'SV') r.sales_minor += Number(x.total_minor) || 0; m.set(k, r);
+      });
+      return Array.from(m.values());
+    },
     async insertPeriod(db, e, p) { if (!T.periods.some((x) => x.entity_id === e && x.fiscal_year === p.fiscal_year && x.period === p.period)) T.periods.push(Object.assign({ entity_id: e, status: 'open' }, p)); },
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
     async nextNo(db, e, series, fy) { const k = e + '|' + series + '|' + (fy || '-'); const n = (T.counters.get(k) || 1); T.counters.set(k, n + 1); return n; },
