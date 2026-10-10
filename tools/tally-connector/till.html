@@ -2949,12 +2949,12 @@
        colour override in CSS) — nothing about the control's function changed, only what is drawn where. -->
   <div class="modeselwrap">
     <select class="modesel" id="modesel" data-testid="till-mode" onchange="setMode(this.value)" title="what are you doing?">
-      <option value="sell">🧾 Sell</option>
+      <option value="sell">🛍️ Sell</option>
       <option value="receive">📥 Receive</option>
       <option value="despatch">📦 Despatch</option>
       <option value="maintain">🛠️ Maintenance</option>
     </select>
-    <span class="modeicon" id="modeicon" aria-hidden="true">🧾</span>
+    <span class="modeicon" id="modeicon" aria-hidden="true">🛍️</span>
   </div>
   <div class="sicons" id="tillsideicons"></div>
   <!-- ⚠️ class="menu" IS LOAD-BEARING: .menu .vchip (the on/off colour of the view chips) and .menu .mq select
@@ -3075,9 +3075,9 @@
     <!-- ⭐ two views of one registry ([TILL-154]) — what is happening, and what works without a line -->
     <div class="lviews" style="flex:1">
       <button class="pill on" id="lvnow" data-testid="till-line-view-now" onclick="lineView('now')">Now</button>
-      <button class="pill" id="lvgrid" data-testid="till-line-view-grid" onclick="lineView('grid')">⊞</button>
+      <button class="pill" id="lvgrid" data-testid="till-line-view-grid" onclick="lineView('grid')" aria-label="Grid" title="Grid">▤</button>
     </div>
-    <button class="pill" data-testid="till-line-health" onclick="lineClose();openHealth()" title="counter health">🩺</button>
+    <button class="pill" data-testid="till-line-health" onclick="lineClose();openHealth()" title="Counter health" aria-label="Counter health">🩺</button>
     <button class="pill" data-testid="till-line-close" onclick="lineClose()">Close<span class="kh"> · Esc</span></button></div>
   <div class="lbody" id="linebody"></div>
 </dialog>
@@ -3181,8 +3181,8 @@
     <header>
       <span class="shop" id="shopname">…</span>
       <!-- ⭐ M127: WHAT YOU ARE DOING, in words, where the work starts. The pill names the mode and opens the list; ← Sell is one tap back from any other mode. -->
-      <button class="pill" id="modepill" data-testid="till-modepill" onclick="modeMenuOpen()" title="What you are doing. Tap to change.">🧾 Sell ▾</button>
-      <button class="pill" id="modeback" data-testid="till-mode-back" onclick="setMode('sell')" title="Back to selling" hidden>← Sell</button>
+      <button class="pill" id="modepill" data-testid="till-modepill" onclick="modeMenuOpen()" title="Sell · what you are doing. Tap to change." aria-label="Sell · what you are doing">🛍️ ▾</button>
+      <button class="pill" id="modeback" data-ic="sell-back" data-testid="till-mode-back" onclick="setMode('sell')" title="Back to selling" aria-label="Back to selling" hidden>← 🛍️</button>
       <span class="pill" id="tillpill">till</span>
       <button class="pill" id="whopill" data-testid="till-who" onclick="whoAct()" title="who is signed in at this counter (F7 to hand over)">…</button>
       <button class="pill" id="lockbtn" data-testid="till-lock" onclick="lockNow()" title="Lock this counter — the bill stays; sign in to carry on">🔒</button>
@@ -3331,8 +3331,8 @@
     <div class="obar" id="obar"></div>
     <div class="parked" id="parts"></div>
     <div class="go">
-      <button onclick="clearBill()">Clear<span class="kh"> · Esc</span></button>
-      <button id="parkbtn" data-testid="till-park" onclick="parkBill()">Park<span class="kh"> · F6</span></button>
+      <button data-ic="clear" onclick="clearBill()" aria-label="Clear the bill" title="Clear the bill · Esc">🗑</button>
+      <button id="parkbtn" data-ic="park" data-testid="till-park" onclick="parkBill()" aria-label="Park the bill" title="Park the bill · F6">⏸</button>
       <button class="pri" id="save" onclick="finish()">Save &amp; print<span class="kh"> · F9</span></button>
     </div>
     </div><!-- /payzone -->
@@ -3360,7 +3360,7 @@
     <div class="bar" id="rcv_costs"></div>
     <div class="bar" id="rcv_sum"></div>
     <div class="go">
-      <button onclick="rcvClear()">Clear<span class="kh"> · Esc</span></button>
+      <button data-ic="clear" onclick="rcvClear()" aria-label="Clear this receipt" title="Clear this receipt · Esc">🗑</button>
       <button data-testid="rcv-costs-open" onclick="rcvCosts()">Freight &amp; costs<span class="kh"> · F5</span></button>
       <button class="pri" id="rcv_save" data-testid="rcv-confirm" onclick="rcvConfirm()">Confirm receipt<span class="kh"> · F9</span></button>
     </div>
@@ -3376,7 +3376,7 @@
     <div class="lines" id="dsp_lines"></div>
     <div class="bar" id="dsp_sum"></div>
     <div class="go">
-      <button onclick="dspClear()">Clear<span class="kh"> · Esc</span></button>
+      <button data-ic="clear" onclick="dspClear()" aria-label="Clear this despatch" title="Clear this despatch · Esc">🗑</button>
       <button data-testid="dsp-carton" onclick="dspCarton()">Next carton<span class="kh"> · F8</span></button>
       <button class="pri" id="dsp_save" data-testid="dsp-confirm" onclick="dspConfirm()">Pack &amp; despatch<span class="kh"> · F9</span></button>
     </div>
@@ -3563,7 +3563,7 @@
     </select>
   </div>
   <div id="billsbody" style="max-height:56vh;overflow:auto"></div>
-  <div class="dlgbtns"><button data-testid="till-dayclose" onclick="dayClose()">Day report</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close">✕</button></div>
+  <div class="dlgbtns"><button data-ic="dayclose" data-testid="till-dayclose" onclick="dayClose()" aria-label="Day report" title="Day report">📊</button><button data-testid="till-bills-close" onclick="billsClose()" aria-label="Close">✕</button></div>
 </div></dialog>
 
 <dialog id="setdlg" class="setdlg"><div class="dlg">
@@ -7952,7 +7952,7 @@ var TILL_OPS = [
   { id: 'bills',    icon: '🧾', label: "Today's bills",      hint: 'print one again · F8',                          fn: 'openBills', rail: true },
   /* ⭐ THE RAIL IS SIX, NOT FOURTEEN (tidy 2026-10-09, TM1): an op carries `rail: true` to stand on it; every other op is reached from the Menu. Check and Labs are
      the rail's DOORS — they open the Menu already on the Check / Lab section, so there is one Check and one Labs, never a second panel. */
-  { id: 'check',    icon: '🩺', label: 'Check',               hint: 'what needs you · why a bill is stuck',          fn: 'openCheck', rail: true, door: 'alerts' },
+  { id: 'check',    icon: '🔔', label: 'Check',               hint: 'what needs you · why a bill is stuck',          fn: 'openCheck', rail: true, door: 'alerts' },
   { id: 'labs',     icon: '🧪', label: 'Labs',                hint: 'Product · Offer · Combo',                       fn: 'openLabs', rail: true, door: 'pricing' },
   /**
    * ⭐ TO DO ([TILL-79]) — its own operation, so it appears on the icon strip AND in the hub's list from one
@@ -8000,7 +8000,7 @@ var TILL_OPS = [
    * with the plain single-line dialog these two moved away from everywhere else; closeFromMenu()/
    * coldStartFromMenu() open the same live-figures sheet Counter health and the day card use.
    */
-  { id: 'close',    icon: '🔒', label: 'Close this counter', hint: 'sends and checks everything first · it can be opened again', fn: 'closeFromMenu' },
+  { id: 'close',    icon: '🚪', label: 'Close this counter', hint: 'sends and checks everything first · it can be opened again', fn: 'closeFromMenu' },
   { id: 'settings', icon: '⚙',  label: 'Settings',           hint: 'look, printer, this till',                      fn: 'openSettings', rail: true },
   { id: 'coldstart-menu', icon: '↺', label: 'Repair this counter', hint: 'sends anything waiting, then clears this counter and reads the shop fresh', fn: 'coldStartFromMenu' },
   /* ⚠️ ONLY WHEN THE BROWSER OFFERS IT (beforeinstallprompt). A button that cannot install anything is worse
@@ -8619,7 +8619,7 @@ var TILL_MENU = [
    */
   { id: 'trend',   icon: '📈', title: 'Weeks and months', sum: 'what this counter has taken, folded up',
     trend: true },
-  { id: 'alerts',  icon: '🩺', title: 'Check',         sum: 'what needs you · why a bill is stuck',
+  { id: 'alerts',  icon: '🔔', title: 'Check',         sum: 'what needs you · why a bill is stuck',
     alerts: true, ops: ['stuck', 'line'] },
   /* ⭐ MAINTENANCE — Athi: *"reload the shop is maintenance."* Everything that keeps this till current. */
   { id: 'upkeep',  icon: '🔄', title: 'Keep it running', sum: 'read the shop again · settings · a break',
@@ -10261,8 +10261,8 @@ function hubChips(){
   if (alerts) out += '<button class="hubchip warn" data-testid="till-hub-chip-alerts"'
     + ' onclick="openCheck()">' + alerts + ' need' + (alerts === 1 ? 's' : '') + ' you</button>';
   /* ⭐ M112: on a phone the bar is name · 🛒 · ☰ — the lock and the switches it dropped are here */
-  if (phoneShape()) out += '<button class="hubchip" data-testid="till-hub-chip-lock" onclick="fromMenu(lockNow)">🔒 Lock</button>'
-    + '<button class="hubchip" data-testid="till-hub-chip-tray" onclick="fromMenu(trayOpen)">⚡ Switches</button>';
+  if (phoneShape()) out += '<button class="hubchip" data-ic="lock" data-testid="till-hub-chip-lock" aria-label="Lock" title="Lock" onclick="fromMenu(lockNow)">🔒</button>'
+    + '<button class="hubchip" data-ic="switches" data-testid="till-hub-chip-tray" aria-label="Switches" title="Switches" onclick="fromMenu(trayOpen)">⚡</button>';
   return '<div class="hubchips" data-testid="till-hub-health">' + out + '</div>';
 }
 function paintMenu(){
@@ -13602,8 +13602,9 @@ function paintQuick(){
      * empty just because nothing happened to be pinned or learned. Off: back to the curated shortlist.
      */
     + '<button class="qarr qopt' + (QK_FULL ? ' on' : '') + '" data-testid="till-quick-full"'
-    + ' title="every product on the shelf, as tiles — not just the pinned shortlist"'
-    + ' onclick="qkFullToggle()">' + (QK_FULL ? '⊞ Quick keys only' : '▦ Show all as tiles') + '</button>'
+    + ' data-ic="qfull" aria-label="' + (QK_FULL ? 'Quick keys only' : 'Show all as tiles') + '"'
+    + ' title="' + (QK_FULL ? 'Quick keys only' : 'every product on the shelf, as tiles — not just the pinned shortlist') + '"'
+    + ' onclick="qkFullToggle()">' + (QK_FULL ? '⊞' : '▦') + '</button>'
     /* ⭐ what is already on the bill, one tap from being looked at — see cartChip() */
     + cartChip()
     /* ⭐ set the order by hand — see qkArrangeToggle(). Only meaningful on a group, and it says so if not. */
@@ -13611,8 +13612,8 @@ function paintQuick(){
         ? '<button class="qarr qopt" data-testid="till-quick-resetorder" title="back to the order the shop published"'
           + ' onclick="qkResetOrder()">↺ Shop order</button>' : '')
     + '<button class="qarr qopt' + (QK_ARRANGE ? ' on' : '') + '" data-testid="till-quick-arrange"'
-    + ' title="drag the keys into the order you want" onclick="qkArrangeToggle()">'
-    + (QK_ARRANGE ? '\u2713 Done' : '\u21C4 Arrange') + '</button>'
+    + ' data-ic="arrange" aria-label="' + (QK_ARRANGE ? 'Done' : 'Arrange') + '" title="' + (QK_ARRANGE ? 'Done arranging' : 'drag the keys into the order you want') + '" onclick="qkArrangeToggle()">'
+    + (QK_ARRANGE ? '✓' : '⇄') + '</button>'
     /**
      * ⭐ PHOTOS, WHERE THE DESIGNER PUT IT (png/FullDesktop.png has this switch on the quick-keys bar) and where
      * Athi asked for it: *"a radio button to on or off the images"*. Seeing the keys with and without pictures
@@ -13861,6 +13862,28 @@ function billView(){
   return v;
 }
 function setBillView(v){ tillOptSet({ billView: v }); try { paintCart(); } catch (_) {} }
+/**
+ * ⭐ M165 — ONE ICON BUTTON (docs/design/ICON-MAP.md, web). A picture, an optional digit where the picture counts,
+ * and the word as aria-label + title (long-press shows it on touch, see icoHold). Widens the M163/M164 pattern
+ * (qbadge, bvtog) rather than adding a second; static markup follows the same contract via data-ic.
+ * o: { ic, n, label, hint, cls, tid, on } — on is a ready-made onclick string.
+ */
+function icoBtn(o){
+  var w = o.label || '';
+  return '<button data-ic="' + esc(o.id || w) + '"' + (o.cls ? ' class="' + esc(o.cls) + '"' : '')
+    + (o.tid ? ' data-testid="' + esc(o.tid) + '"' : '') + ' aria-label="' + esc(w) + '" title="' + esc(o.hint || w) + '"'
+    + (o.on ? ' onclick="' + o.on + '"' : '') + '><span aria-hidden="true">' + o.ic + '</span>'
+    + (o.n ? '<b class="icn">' + o.n + '</b>' : '') + '</button>';
+}
+/* touch has no hover: a held press on a picture says its word (the title) in the footer line */
+(function icoHold(){
+  var t = null;
+  document.addEventListener('touchstart', function(e){
+    var b = e.target && e.target.closest && e.target.closest('[data-ic],[aria-label][title]'); if (!b) return;
+    t = setTimeout(function(){ try { toastLine(b.getAttribute('title') || b.getAttribute('aria-label')); } catch (_) {} }, 500);
+  }, { passive: true });
+  ['touchend', 'touchmove', 'touchcancel'].forEach(function(k){ document.addEventListener(k, function(){ clearTimeout(t); }, { passive: true }); });
+})();
 function billViewToggle(){
   return '<div class="bvtog" data-testid="till-billview">'
     + [['pics', '🖼', 'Pictures'], ['names', '≡', 'Names']].map(function(x){   /* M164 */
@@ -20317,9 +20340,10 @@ function paintOrderBar(){
         ? '<input id="otable" data-testid="till-table" placeholder="Table" value="' + esc(orderTable()) + '"'
           + ' onchange="setOrderTable(this.value)" onblur="setOrderTable(this.value)">'
         : '')
-    + '<button class="kot" data-testid="till-kot" onclick="sendKOT()"'
+    + '<button class="kot" data-ic="kitchen" data-testid="till-kot" onclick="sendKOT()"'
+    + ' aria-label="' + (ORDER_ID ? 'Send round' : 'Kitchen') + '"'
     + ' title="' + (ORDER_ID ? ('send the new lines to this ' + says('subject') + ' and the kitchen') : 'send the new items to the kitchen') + ' (F3)">'
-    + '➕ ' + (ORDER_ID ? 'Send round' : 'Kitchen') + '<span class="kh"> · F3</span>' + (kotPending().length ? ' <b data-testid="till-kot-badge" title="' + kotPending().length + ' on this bill not yet sent to the kitchen">' + kotPending().length + '</b>' : '') + '</button>'
+    + '<span aria-hidden="true">🍳</span>' + (kotPending().length ? ' <b data-testid="till-kot-badge" title="' + kotPending().length + ' on this bill not yet sent to the kitchen">' + kotPending().length + '</b>' : '') + '</button>'
     /**
      * ⭐⭐⭐ THE OTHER ICON, ON THE SAME TABLE ([TILL-187]). Athi: *"you add two or three icon, one is for
      * adding say +, another one = for summarising and bring it to the cart… in the same table number."* +
@@ -21447,7 +21471,7 @@ var OPS = ['sell','receive','despatch','maintain'];
 /* ⭐ the same icon each <option> already carries — read once here rather than re-typed, so #modeicon (the
    rail's own icon-only overlay, [TILL-179]) can never show a different symbol than opening the real
    dropdown would. */
-var MODE_ICON = { sell: '🧾', receive: '📥', despatch: '📦', maintain: '🛠️' };
+var MODE_ICON = { sell: '🛍️', receive: '📥', despatch: '📦', maintain: '🛠️' };
 var PLACEHOLDER = {
   sell:     'Item name, code or barcode…   ↓↑ to choose, Enter to add',
   receive:  'What arrived? Name, code or barcode — 3* for three',
@@ -21498,7 +21522,7 @@ function holdsStock(){
 /* Receive is NEVER greyed: a first Receive is how a shop starts holding stock. Only Despatch is, when the shop is known not to hold stock. */
 function modeWhy(m){ return (m === 'despatch' && !holdsStock()) ? 'This shop does not hold stock.' : ''; }
 function modePaint(){
-  var p = document.getElementById('modepill'); if (p) p.textContent = (MODE_ICON[MODE] || '') + ' ' + (MODE_WORD[MODE] || 'Sell') + ' ▾';
+  var p = document.getElementById('modepill'); if (p) { p.textContent = (MODE_ICON[MODE] || '') + ' ▾'; p.setAttribute('aria-label', (MODE_WORD[MODE] || 'Sell') + ' · what you are doing'); p.title = (MODE_WORD[MODE] || 'Sell') + ' · what you are doing. Tap to change.'; }
   var b = document.getElementById('modeback'); if (b) b.hidden = (MODE === 'sell');
   var sel = document.getElementById('modesel');
   if (sel) Array.prototype.forEach.call(sel.options, function(o){
