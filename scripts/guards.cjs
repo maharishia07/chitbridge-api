@@ -70,6 +70,7 @@ const GUARDS = [
   'till-exits.test.js',       // every screen has a lid, and it never sits in a row of ways to CHANGE things
   'tax-lines.test.js',          // ⭐⭐ the month's ledger and GSTR: a credit note REDUCES tax; cdnr · cdnur · b2cs netting · Table 13 (2026-09-28)
   'round-trips-all.test.cjs',  // ⭐⭐ every route the web client calls has a round-trip budget (round-trips.budget.json) — fired offline, I19 (DB10)
+  'people.test.cjs',           // ⭐ P1: GET /api/people — one statement, the caller's shop only, may/why per action, owner-only greyed with its sentence
   'round-trips-till.test.cjs', // ⭐⭐ the counter's snapshot has a trip budget: its own five tables in ONE transaction, 50 → 38 (M36, 2026-09-29)
   'rev16-delta-cursor-stamped-first.test.js', // ⭐⭐ a delta's cursor never skips a change — stamped before the read; past the cap sent in parts (2026-09-28)
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax

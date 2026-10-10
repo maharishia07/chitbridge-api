@@ -334,6 +334,7 @@ app.use('/api/keys',        require('./routes/keys'));     // API keys another s
 app.use('/api/schemas',     schemasRouter);
 app.use('/api/actors',      actorsRouter);
 app.use('/api/identity',    require('./routes/identity-docs'));   // b174 — a person's own documents + verification stamp
+app.use('/api/people',      require('./routes/people'));   // P1: the shop's people with may/why per action (routes/people.js)
 app.use('/api/connectors',  connectorsRouter);
 app.use('/api/folders',     foldersRouter);
 app.use('/api/relationships', relationshipsRouter);
