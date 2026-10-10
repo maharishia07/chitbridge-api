@@ -2396,6 +2396,11 @@ router.get('/tasks', auth, async (req, res) => {
            LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
           WHERE h.entity_id = $1 AND h.chit_id = ANY($2::uuid[])`, [entity_id, ids]);
       const byId = new Map(li.rows.map((r) => [String(r.chit_id), r]));
+      /* M129b: an order the OLD counter despatched (a D/… note against it, no movement ever written) is not open. ONE read for every order, not one per order. */
+      const despatched = new Set((await db.query(
+        `SELECT DISTINCT business_json->'against'->>'chit_id' AS against FROM chit_header
+          WHERE entity_id = $1 AND business_json->>'doc' = 'despatch' AND business_json->'against'->>'chit_id' = ANY($2::text[])`,
+        [entity_id, ids.map(String)]).catch(() => ({ rows: [] }))).rows.map((r) => String(r.against)));
       const tasks = [];
       for (const h of heads) {
         const det = byId.get(String(h.chit_id)) || {};
@@ -2408,11 +2413,13 @@ router.get('/tasks', auth, async (req, res) => {
         if ((theirBill ? 'buy' : sideOf(h, bj)) !== want) continue;   /* the other way round belongs to the other screen */
         if (tasks.length >= limit) break;
         const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(() => null);
-        const lines = (Array.isArray(det.line_items) ? det.line_items : []).map((l) => {
-          const p = (prog && prog.get) ? prog.get(l.line_id) : null;
+        const lines = (Array.isArray(det.line_items) ? det.line_items : []).map((l, i) => {
+          /* M162: the id the line has in chit_line (a storefront order's JSON carries none) - without it nothing could be written against the line */
+          const line_id = deliverline.lineIdOf(h.chit_id, l, i + 1);
+          const p = (prog && prog.get) ? prog.get(line_id) : null;
           const ordered = Number(l.quantity) || 0;
           const moved = (p && p.delivered != null) ? Number(p.delivered) : 0;
-          return { line_id: l.line_id || null,
+          return { line_id,
                    item_id: (l.item_data && l.item_data.item_id) || l.item_id || null,
                    name: l.particulars || l.name || '', unit: l.unit || 'piece',
                    rate: l.price == null ? null : Number(l.price),
@@ -2420,6 +2427,7 @@ router.get('/tasks', auth, async (req, res) => {
         });
         if (!lines.length) continue;
         if (lines.every((l) => l.remaining <= 0)) continue;      /* nothing owed: not a task */
+        if (despatched.has(String(h.chit_id)) && lines.every((l) => !(l.moved > 0))) continue;   /* M129b */
         tasks.push({ chit_id: h.chit_id, at: h.created_at,
                      subject: h.manual_subject || h.auto_subject || '',
                      party: h.counterparty_name || (bj.party && bj.party.name) || '', party_id: h.counterparty_id || null,
