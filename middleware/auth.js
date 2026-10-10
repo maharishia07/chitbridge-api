@@ -334,6 +334,7 @@ const KEY_ROUTES = {
               ['POST', /^\/api\/till\/pair$/],
               ['GET', /^\/api\/till\/screens$/],
               ['POST', /^\/api\/till\/screens\/revoke$/],
+              ['POST', /^\/api\/till\/screens\/rename$/],   /* T2g: name a paired screen — the same owner as revoke */
               /* ⭐⭐ REWARDS (2026-09-10). A counter AWARDS and ENCASHES points. It does not declare the programme — that is a
                  definition, and authoring the rule that decides what a point is worth is a signed-in decision, exactly like
                  authoring an offer. The blast radius of a stolen till key stays "gave somebody points at this one shop".
