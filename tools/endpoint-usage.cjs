@@ -57,7 +57,11 @@ try {
    * gets an empty base path, so none of its endpoints can ever match a registry entry — the tool then reports
    * its own blindness as "not called by the client".
    */
-  for (const m of app.matchAll(/app\.use\(\s*['"]([^'"]+)['"][\s\S]{0,120}?require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) {
+  /* ⚠️ [^;] not [\s\S]: a mount with no inline require (`app.use('/api/governance', governanceRouter);`)
+     let the old pattern run past the `;` and pair that path with the NEXT line's require — network-design
+     landed on /api/governance, events on /api/connections, identity-docs on /api/schemas, and every call to
+     their real paths was invisible to the budget. A single app.use() statement never contains a `;`. */
+  for (const m of app.matchAll(/app\.use\(\s*['"]([^'"]+)['"][^;]{0,120}?require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) {
     if (!mounts[m[2] + '.js']) mounts[m[2] + '.js'] = m[1];
   }
 } catch (_) { /* no server.js — paths degrade to the route file's own path */ }

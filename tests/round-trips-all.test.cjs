@@ -86,7 +86,7 @@ if (webHere) {
 if (!called) {
   /* the web client is not beside us: fire the budget's own list, with the mounts server.js declares */
   const src = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
-  for (const m of src.matchAll(/app\.use\(\s*['"]([^'"]+)['"][\s\S]{0,120}?require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) if (!mounts[m[2] + '.js']) mounts[m[2] + '.js'] = m[1];
+  for (const m of src.matchAll(/app\.use\(\s*['"]([^'"]+)['"][^;]{0,120}?require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) if (!mounts[m[2] + '.js']) mounts[m[2] + '.js'] = m[1];   /* [^;] — see tools/endpoint-usage.cjs: a routerless mount must not steal the next require */
   called = Object.keys(budget.routes).map((k) => ({ route: k, file: budget.routes[k].file }));
 }
 

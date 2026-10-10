@@ -842,7 +842,56 @@
     "POST /api/network-design/validate": {
       "file": "network-design.js",
       "trips": 3,
-      "wire": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/network-design": {
+      "file": "network-design.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/network-design/availability": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "GET /api/network-design/stores": {
+      "file": "network-design.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/network-design/build": {
+      "file": "network-design.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/network-design/reissue": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/network-design": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/events/ticket": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
       "fired": true,
       "status": 200
     },
