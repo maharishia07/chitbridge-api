@@ -245,6 +245,7 @@ router.get('/daybook', auth, on, async (req, res) => {
         let x = at.get(l.entry_id);
         if (!x) { x = { entry_id: l.entry_id, entry_no: l.entry_no, posting_date: E.ymd(l.posting_date), doc_date: E.ymd(l.doc_date), event_type: l.event_type,
                         narration: l.narration || WORD[l.event_type] || l.event_type, source_chit_id: l.source_chit_id, reverses_entry_id: l.reverses_entry_id,
+                        reversed_by: l.reversed_by || null, reversed_by_id: l.reversed_by_id || null,   /* M174: "Reversed by MJ/…" — a link, and no Reverse button */
                         source: sourceOf(l), lines: [] }; at.set(l.entry_id, x); entries.push(x); }
         if (x.source && !x.source.counter && l.counter_id) x.source.counter = l.counter_id;
         const p = l.party_id ? names.get(String(l.party_id)) : null;
@@ -793,11 +794,11 @@ router.get('/periods', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
-    const { rows, figures, country } = await withEntity(e, async (h) => ({ rows: await S.periods(h, e, fy), figures: await S.periodFigures(h, e, fy), country: (await B.settingOf(h, e) || {}).country }));
+    const { rows, figures, country } = await withEntity(e, async (h) => ({ rows: await S.periods(h, e, null), figures: await S.periodFigures(h, e, fy), country: (await B.settingOf(h, e) || {}).country }));
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((p) => Object.assign({}, p, { start_date: E.ymd(p.start_date), end_date: E.ymd(p.end_date) }));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
-    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(new Date(), country)) });
+    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(new Date(), country)).filter((p) => !fy || p.fiscal_year === fy) });
   } catch (err) { fail(res, err); }
 });
 

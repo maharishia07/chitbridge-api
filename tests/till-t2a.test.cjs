@@ -49,7 +49,7 @@ console.log('- M126 / M129: an online order is billed, then leaves the open list
 ok('a shop that holds no stock bills the order (orderToBill); the order rides the bill as order.from', () => {
   assert(/if \(!holdsStock\(\)\) \{[\s\S]{0,200}orderToBill\(ot\)/.test(PAGE));
   assert(PAGE.includes("order: BILL_ORDER ? { type: BILL_ORDER.kind, table: null, kots: [], from: BILL_ORDER.chit_id }"));
-  assert(/if \(BILL_ORDER\) \{ var boDone = BILL_ORDER; BILL_ORDER = null; orderBilledDone\(boDone, r\.bill\); \}/.test(PAGE));
+  assert(/if \(BILL_ORDER\) \{ var boDone = BILL_ORDER; BILL_ORDER = null; orderKindGiveBack\(boDone\); orderBilledDone\(boDone, r\.bill\); \}/.test(PAGE));
 });
 ok('the host marks the order done through the same deliver-lines queue a despatch uses, referenced by the BILL number', () => {
   assert(/async orderBilled\(bo, bill\)[\s\S]{0,600}reference: bill\.no[\s\S]{0,200}deliver: \{ chit_id: bo\.chit_id/.test(PAGE));

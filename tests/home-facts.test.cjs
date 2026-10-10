@@ -40,7 +40,7 @@ const DAYS = 86400000;
 const H = require(API + '/lib/books-hooks');
 const todayKey = H.dayOf(new Date(), 'IN');
 const SHUT_AT = new Date().toISOString();
-const F = { booksDay: false, crmSql: [], summary: true, booksOn: true, chits: 'few', stale: false };
+const F = { booksBills: false, c2open: false, booksDay: false, crmSql: [], summary: true, booksOn: true, chits: 'few', stale: false };
 const summaryRow = (key) => ({ chit_id: 'c1', created_at: new Date(), business_json: { summary: { period: 'day', key, till: { id: 'C1' }, summarised_at: new Date().toISOString(), totals: { count: 12, returns: 0, gross: 4400, refunds: 79.5, expenseCount: 0, expenses: 0, total: 4320.5, by: {} } } } });
 function chits() {
   if (F.chits === 'many') return Array.from({ length: 5000 }, (_, i) => ({ chit_id: 'x' + i, direction: 'received', current_status: 'completed', created_at: new Date(Date.now() - 40 * DAYS), open_disputes: 0 }));
@@ -67,7 +67,7 @@ function answer(text, params) {
   if (/FROM identities WHERE identity_id = \$1/.test(sql) && /jsonb_agg/.test(sql)) {
     return { rows: [{ country: 'IN', currency_code: 'INR',
       counters: { C1: { id: 'C1', held_by: 'k1' }, C2: { id: 'C2', held_by: 'k2' } },
-      keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: F.allShut ? SHUT_AT : null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: '2026-10-01T10:00:00Z' } }] }] };
+      keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: F.allShut ? SHUT_AT : null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: F.c2open ? null : '2026-10-01T10:00:00Z' } }] }] };
   }
   if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: params[0] === 'a2' }] };
   if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, last_check: { at: '2026-10-06T21:00:00Z', ok: true } }] };
@@ -84,7 +84,13 @@ function answer(text, params) {
     { entry_id: 'd1', covers: 3, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 40000 }], line_no: 1 },   /* a day, closed once (reversed below) */
     { entry_id: 'r1', covers: null, reverses_entry_id: 'd1', source_chit_id: null, tenders: null, line_no: 1 },
     { entry_id: 'd2', covers: 5, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 30000 }, { role: 'upi', dr_minor: 21000 }], line_no: 1 },
-    { entry_id: 'd2', covers: 5, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 30000 }, { role: 'upi', dr_minor: 21000 }], line_no: 2 }] : [] };
+    { entry_id: 'd2', covers: 5, source_chit_id: null, tenders: [{ role: 'cash', dr_minor: 30000 }, { role: 'upi', dr_minor: 21000 }], line_no: 2 }].concat(F.booksBills ? [
+    /* M144: two bills posted on their own after a reopen (one cash, one on credit) and a return paid out in cash */
+    { entry_id: 'b1', event_type: 'sale_bill', covers: null, source_chit_id: 's1', account_role: 'cash', dr_minor: 9000, cr_minor: 0, line_no: 1 },
+    { entry_id: 'b1', event_type: 'sale_bill', covers: null, source_chit_id: 's1', account_role: 'sales', dr_minor: 0, cr_minor: 9000, line_no: 2 },
+    { entry_id: 'b2', event_type: 'sale_bill', covers: null, source_chit_id: 's2', account_role: 'debtors', dr_minor: 4000, cr_minor: 0, line_no: 1 },
+    { entry_id: 'rt', event_type: 'return', covers: null, source_chit_id: 's3', account_role: 'cash', dr_minor: 0, cr_minor: 2000, line_no: 1 },
+    { entry_id: 'x1', event_type: 'reversal', covers: null, reverses_entry_id: 'b2', source_chit_id: 's2', account_role: 'debtors', dr_minor: 0, cr_minor: 4000, line_no: 1 }] : []) : [] };
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
   return { rows: [] };
 }
@@ -132,7 +138,13 @@ const get = (port, p) => new Promise((ok) => {
   /* M144: the day was closed AGAIN with 510 - the card reads the books day entry (the reversed one is left out), not the older summary chit; the counter that closed says so */
   F.booksDay = true; F.allShut = false; r = await g('till');
   t('till (M144): bills and takings are the books live day entry (5 bills, 510.00), the reversed closing left out', [r.json.figures.bills, r.json.figures.takings], [5, 510]);
+  F.booksBills = true; r = await g('till');
+  t('till (M144): the bills posted on their own count too (5 + 1 live bill; the reversed one and the return are not bills) - takings 510 + 90 - 20', [r.json.figures.bills, r.json.figures.takings], [6, 580]);
+  F.booksBills = false;
   F.booksDay = false;
+  F.allShut = true; F.c2open = true; r = await g('till');
+  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['12 bills · {money}', 'Counter C1 closed {time}', '1 other counter open']);
+  F.allShut = false; F.c2open = false;
   F.stale = true; r = await g('till');
   t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, '12 bills on {date} · {money}');
   F.stale = false; F.summary = false; r = await g('till');

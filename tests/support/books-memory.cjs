@@ -17,7 +17,7 @@ function create() {
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
   const now = () => new Date(clock += 1000).toISOString();
   const S = {
-    ZERO, T,
+    ZERO, BILL_EVENTS: ['sale_bill', 'credit_given'], T,
     async setting(db, e) { const s = T.setting.get(String(e)); return s ? clone(s) : null; },
     async saveSetting(db, e, s) { const cur = T.setting.get(String(e)) || {}; T.setting.set(String(e), Object.assign({}, cur, { entity_id: e, enabled: !!s.enabled, walkin_grain: s.walkin_grain || 'day',
       fy_start_month: s.fy_start_month || 4, functional_currency: s.functional_currency || 'INR', country: s.country || 'IN', pack_version: s.pack_version || cur.pack_version || null,
@@ -52,11 +52,13 @@ function create() {
     async entryLines(db, e, from, to, account_id, party_id) {
       return T.lines.filter((l) => l.entity_id === e && (!account_id || l.account_id === account_id) && (!party_id || l.party_id === party_id)).map((l) => {
         const h = T.entries.find((x) => x.entry_id === l.entry_id), a = T.accounts.find((x) => x.account_id === l.account_id);
+        const rvOf = (ent, x) => T.entries.filter((y) => y.entity_id === ent && y.reverses_entry_id === x.entry_id).sort((p, q) => String(p.created_at).localeCompare(String(q.created_at)))[0] || null;
         /* the real query's entity-scoped LEFT JOIN onto the shop's own chit (one copy) and the writer's identity */
         const c = h.source_chit_id ? T.chits.find((x) => x.chit_id === h.source_chit_id && x.entity_id === e) : null, bj = (c && c.business_json) || {};
         const who = h.created_by ? T.identities.find((x) => x.identity_id === h.created_by) : null;
         return Object.assign({}, l, { entry_no: h.entry_no, posting_date: h.posting_date, doc_date: h.doc_date, event_type: h.event_type, narration: h.narration, source_chit_id: h.source_chit_id,
           reverses_entry_id: h.reverses_entry_id, code: a.code, account_name: a.name, source_ref: h.source_ref || null,
+          reversed_by: (rvOf(e, h) || {}).entry_no || null, reversed_by_id: (rvOf(e, h) || {}).entry_id || null, account_role: a.role,
           covers: Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : null, src_chit_id: c ? c.chit_id : null, src_purpose: c ? c.purpose || null : null,
           src_ref: c ? (bj.printed_as || bj.bill_no || (bj.payment_received && bj.payment_received.no) || null) : null,
           src_till: c ? ((bj.till && bj.till.id) || (bj.summary && bj.summary.till && bj.summary.till.id) || null) : null,
