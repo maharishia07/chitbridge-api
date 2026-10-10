@@ -2293,6 +2293,8 @@ router.get('/bills', auth, async (req, res) => {
                saved: m.savings != null ? m.savings : null, taxable: m.taxable != null ? m.taxable : (m.net != null ? m.net : null),
                tax: m.tax != null ? m.tax : null,
                kind: b.slip || 'cash',
+               /* M41: a tax bill saved while the shop's details disagreed reprints as NOT a tax invoice, from any device */
+               not_invoice: b.not_invoice || null,
                /* walk 2026-10-09 (BF3/BF8): where the order went and the chosen modifiers, so a reprint says them too */
                order: (b.order && typeof b.order === 'object') ? b.order : null,
                payments: (b.payment && b.payment.parts) || [],
