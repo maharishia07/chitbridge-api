@@ -93,7 +93,11 @@ router.get('/', auth, sessionOnly, async (req, res) => {
     brand.catalogue = await ncat.brandView(me).catch(() => null);
     if (brand.catalogue) brand.is_brand = true;
     const price_notices = await ncat.storeNotices(me, ado.rows).catch(() => []);
-    res.json({ brand, store: { networks, price_notices } });
+    /* ⭐ may this login DESIGN a network? the same rule POST /api/network-design/build enforces (only the business itself, never a co-assist);
+       the member view's Design tab shows the action either way and greys it with this sentence (no query — read off the session) */
+    const may_design = (req.identity && req.identity.parent_entity_id)
+      ? { ok: false, why: 'Only the business owner designs a network. Sign in as the business itself.' } : { ok: true, why: null };
+    res.json({ brand, store: { networks, price_notices }, may_design });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
