@@ -188,6 +188,7 @@ const GUARDS = [
   'books-hooks.test.cjs',       // ⭐⭐ what a chit posts — and a failed post NEVER fails the chit (parked, named)
   'books-routes.test.cjs',      // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
   'books-tally.test.cjs',       // ⭐⭐ the pack's Tally files come from the connector's adapter — one Tally writer, Receipt byte-identical
+  'books-collections.test.cjs', // ⭐ CB Finance F1: /dues?finance=1 — limit · over_limit · interest SHOWN · owner only; plain /dues untouched
   'books-fixes.test.cjs',       // ⭐⭐⭐ the red-team findings of 2026-09-30 (M1–M12), each held by a check that was red before its fix
   'books-dates-tz.test.cjs',    // ⭐⭐ a date read back from Postgres is the same date under Asia/Kolkata and UTC (it runs itself in both)
   'books-period.test.cjs',      // ⭐⭐ v1.14–v1.16: asset register (b280 draft), depreciation, closing stock, GST close + challan, loans, accruals, contra — the engine's lines, once, locked, owner-only
@@ -270,7 +271,7 @@ const files = all
  * without it they ran with no engine and failed with 0 checks (CI run 37414852968, red since 2026-10-06). Measured
  * the same way: these are exactly the CI failures, and each passes locally with the engines present. */
 const NEEDS_ENGINES = ['engines-pinned.test.js', 'tax-vendor.test.js',
-  'books-fixes.test.cjs', 'books-dates-tz.test.cjs', 'books-period.test.cjs', 'books-preview.test.cjs', 'books-rcm.test.cjs',
+  'books-collections.test.cjs', 'books-fixes.test.cjs', 'books-dates-tz.test.cjs', 'books-period.test.cjs', 'books-preview.test.cjs', 'books-rcm.test.cjs',
   'books-year.test.cjs', 'books-recurring.test.cjs', 'books-todo.test.cjs', 'books-manual-events.test.cjs',
   'books-voucher-series.test.cjs', 'two-sided-books.test.cjs'];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
