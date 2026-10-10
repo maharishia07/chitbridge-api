@@ -76,8 +76,12 @@ ok('holdsStock: the server says, the counter may override, an order-ticket count
   assert.strictEqual(mk({ shop: { holds_stock: false } }, { stock: true }, false, false), true, 'the counter overrides');
   assert.strictEqual(mk({ shop: { holds_stock: true } }, {}, true, false), false, 'a kitchen-ticket counter serves');
 });
-ok('Receive / Despatch are shown to every shop and greyed WITH the reason; the saved mode cannot strand a restaurant in Despatch', () => {
-  assert(PAGE.includes("return ((m === 'receive' || m === 'despatch') && !holdsStock()) ? 'This shop does not hold stock.' : '';"));
+ok('Despatch is greyed WITH the reason when the shop holds no stock; Receive is never greyed (a new shop, nothing received yet, can start); the saved mode cannot strand a restaurant in Despatch', () => {
+  assert(PAGE.includes("return (m === 'despatch' && !holdsStock()) ? 'This shop does not hold stock.' : '';"));
+  const modeWhy = new Function('holdsStock', lift('modeWhy') + '; return modeWhy;')(() => false);
+  assert.strictEqual(modeWhy('receive'), '', 'new shop, nothing received: Receive enabled');
+  assert.strictEqual(modeWhy('despatch'), 'This shop does not hold stock.');
+  assert.strictEqual(new Function('holdsStock', lift('modeWhy') + '; return modeWhy;')(() => true)('despatch'), '');
   assert(PAGE.includes("(why ? ' disabled title=\"' + esc(why) + '\"' : '')"));
   assert(/var whyNot = modeWhy\(m\); if \(whyNot\) \{ toastLine\(whyNot\); m = 'sell'; \}/.test(PAGE));
 });

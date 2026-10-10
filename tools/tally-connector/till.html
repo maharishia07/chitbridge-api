@@ -21491,7 +21491,8 @@ function holdsStock(){
     return !(S && S.shop && S.shop.holds_stock === false);
   } catch (_) { return true; }
 }
-function modeWhy(m){ return ((m === 'receive' || m === 'despatch') && !holdsStock()) ? 'This shop does not hold stock.' : ''; }
+/* Receive is NEVER greyed: a first Receive is how a shop starts holding stock. Only Despatch is, when the shop is known not to hold stock. */
+function modeWhy(m){ return (m === 'despatch' && !holdsStock()) ? 'This shop does not hold stock.' : ''; }
 function modePaint(){
   var p = document.getElementById('modepill'); if (p) p.textContent = (MODE_ICON[MODE] || '') + ' ' + (MODE_WORD[MODE] || 'Sell') + ' ▾';
   var b = document.getElementById('modeback'); if (b) b.hidden = (MODE === 'sell');
