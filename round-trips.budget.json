@@ -839,6 +839,13 @@
       "fired": false,
       "why": "answered 500 on the stub"
     },
+    "POST /api/network-design/validate": {
+      "file": "network-design.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200
+    },
     "POST /api/network-offers/:id/choice": {
       "file": "network-offers.js",
       "trips": 1,

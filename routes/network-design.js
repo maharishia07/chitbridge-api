@@ -132,6 +132,52 @@ async function operatorCap(entityId) {
 }
 
 /**
+ * POST /api/network-design/validate   { draft?: { nodes: [...] }, root_handle?: string, ceiling?: 'public'|'network'|'private', sample?: bool }
+ *
+ * "What would break if I built this?" — the Network Lab and the app's Design tab ask it. It runs lib/network-build.validate (the same plan()
+ * Build runs) and POSTS NOTHING: no row is written, no handle claimed, no store touched.
+ *   · draft given  → that draft is checked (a sketch on a lab page, never saved); omitted → this entity's saved design is.
+ *   · sample: true → a lab sketch: no database read at all (0 trips); handles are checked only against each other.
+ *   · otherwise    → ONE read of the handles already taken under the root, so a name that is in use is named.
+ * RLS: network_design is entity-scoped (b111) and read through withEntity(caller); the taken-handle read is the same one Build makes, and
+ * returns handle strings only. No new table, no migration.
+ * Trips: sample → 0 · given draft + root_handle → 1 · saved design → 2 (design, taken) + 1 (own user_id when no root_handle).
+ */
+router.post('/validate', auth, async (req, res) => {
+  try {
+    const me = auth.entityOf(req);
+    const body = req.body || {};
+    const sample = body.sample === true;
+    let draft = body.draft;
+    if (draft !== undefined && draft !== null && (typeof draft !== 'object' || Array.isArray(draft))) {
+      return res.status(400).json({ error: 'Bad request', message: 'draft must be an object' });
+    }
+    if (draft && Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) {
+      return res.status(413).json({ error: 'Too large', message: 'design exceeds ' + MAX_BYTES + ' bytes' });
+    }
+    if (!draft && !sample) {
+      const d = await withEntity(me, (db) => db.query('SELECT draft FROM network_design WHERE entity_id = $1', [me]));
+      draft = d.rows.length ? d.rows[0].draft : null;
+    }
+    const nodes = (draft && Array.isArray(draft.nodes)) ? draft.nodes : [];
+    let rootHandle = String(body.root_handle || '').trim().toLowerCase();
+    if (!rootHandle && !sample) {
+      const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [me]);
+      rootHandle = String((r.rows[0] && r.rows[0].user_id) || '').trim().toLowerCase();
+    }
+    if (!rootHandle) rootHandle = 'sample';
+    let taken = [];
+    if (!sample && handleLib.check(rootHandle).ok) {
+      const t = await query(
+        'SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1', [rootHandle + '.%']);
+      taken = t.rows.map((x) => x.h);
+    }
+    const ceiling = visibilityCap.RANK[String(body.ceiling || '').toLowerCase()] !== undefined ? String(body.ceiling).toLowerCase() : 'public';
+    res.json(Object.assign({ dry_run: true, sample }, networkBuild.validate({ rootHandle, nodes, taken, ceiling })));
+  } catch (err) { res.status(500).json({ error: 'Check failed', message: safeErr(err) }); }
+});
+
+/**
  * POST /api/network-design/build   { dry_run?: bool, root_handle?: string }
  *
  * `dry_run` answers "what would this do" without doing it, and it is the same code path — a preview computed by
