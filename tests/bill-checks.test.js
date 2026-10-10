@@ -73,7 +73,7 @@ it('a stored tax invoice with an unrated line is flagged; a cash memo or a fully
 });
 it('the slip source titles an unrated bill "NOT A TAX INVOICE" before it can say TAX INVOICE', () => {
   const s = srcOf('slipHTML');
-  assert(/unrated\.length \? 'BILL — NOT A TAX INVOICE' : bill\.kind === 'tax' \? 'TAX INVOICE'/.test(s));
+  assert(/\(unrated\.length \|\| bill\.not_invoice\) \? 'BILL — NOT A TAX INVOICE' : bill\.kind === 'tax' \? 'TAX INVOICE'/.test(s));
 });
 
 console.log('BF2 · the state of the address must be the state of the GSTIN');
@@ -95,9 +95,56 @@ it('an address in the GSTIN\'s own state is fine, and so is a shop with no GSTIN
   assert.strictEqual(world({ S: { shop: Object.assign({}, reg, { address: 'MG Road, Bengaluru, Karnataka 560001' }) } }).shopStateClash(), null);
   assert.strictEqual(world({ S: { shop: { address: 'Chennai, Tamil Nadu 600100' } } }).shopStateClash(), null);
 });
-it('finish() refuses on a clash before any number is taken', () => {
-  const f = PAGE.slice(PAGE.indexOf('\nasync function finish('));
-  assert(f.indexOf('shopStateClash()') > 0 && f.indexOf('shopStateClash()') < f.indexOf('var body = {'));
+console.log('M41 · a details mismatch never costs a sale; a self-contradicting TAX INVOICE still never goes out');
+const finishSrc = () => { const a = PAGE.indexOf('\nasync function finish('); return PAGE.slice(a, PAGE.indexOf('\n}\n', a)); };
+const fixSrc = () => { const a = PAGE.indexOf('\nasync function billWarnFix('); return PAGE.slice(a, PAGE.indexOf('\n}\n', a)); };
+it('finish() no longer refuses on a clash: it records not_invoice and goes on to save', () => {
+  const f = finishSrc();
+  assert(!/This bill cannot be a tax invoice yet/.test(f), 'the refusal is back');
+  assert(f.indexOf("var clash = (shopTax().charges && Number(m.tax) > 0) ? shopStateClash() : null;") > 0, 'clash is asked only of a bill that charges tax');
+  assert(!/if \(clash\)[^\n]*return;/.test(f), 'a clash still returns before the bill is saved');
+  assert(f.indexOf("not_invoice: clash ? 'shop_details' : null") > 0, 'the bill records why it is not a tax invoice');
+  assert(f.indexOf('not_invoice') < f.indexOf('HOST.bill(body)'), 'recorded on the body that is saved');
+  assert(f.indexOf("if (!m.invoice) { say('Prices cannot be worked out") > 0, 'no invoice engine: still no sale');
+});
+it('the chit and GET /api/till/bills carry it, so a reprint from any device says the same', () => {
+  assert(srcOf('chitOf').indexOf('not_invoice: bill.not_invoice || undefined') > 0);
+  const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'till.js'), 'utf8');
+  assert(route.indexOf('not_invoice: b.not_invoice || null') > 0);
+});
+it('the slip titles a not_invoice bill BILL — NOT A TAX INVOICE (the BF1 title, one path), never TAX INVOICE', () => {
+  assert(srcOf('slipHTML').indexOf("(unrated.length || bill.not_invoice) ? 'BILL — NOT A TAX INVOICE' : bill.kind === 'tax' ? 'TAX INVOICE'") > 0);
+});
+it('the saved-bill dialog says it in one line with Fix ›, outside the printed slipbox', () => {
+  const s = srcOf('showSlip');
+  assert(s.indexOf('Not a tax invoice — shop details disagree') > 0 && s.indexOf("billWarnFix(\\'state\\')") > 0, s);
+  assert(/id="slipwarn"[^>]*hidden><\/div>\s*<div class="slipbox" id="slipbox">/.test(PAGE), 'the note sits outside the slipbox');
+  assert(srcOf('slipDocButtons').indexOf("getElementById('slipwarn'); if (sw) { sw.hidden = true;") > 0, 'other slips hide it');
+});
+
+console.log('M40 · one line per problem, a count and a Fix ›');
+function warnHtml(shop, cart) {
+  const w = world({ S: { shop }, CART: cart });
+  vm.runInContext(srcOf('billWarnLine'), w); vm.runInContext(srcOf('billWarnHTML'), w);
+  return w.billWarnHTML();
+}
+it('three unrated items are ONE line with a count, not their names and a paragraph', () => {
+  const h = warnHtml(reg, [{ name: 'Poori' }, { name: 'Vada' }, { name: 'Idli' }, { name: 'Dosa', gst_rate: 5 }]);
+  assert(/>⚠ 3 items have no tax rate</.test(h), h);
+  assert(!/Poori/.test(h) && !/catalogue/.test(h), 'the detail is on the bill again');
+  assert(/data-testid="till-warn-norate-fix"[^>]*>Fix ›</.test(h), h);
+  assert(/>⚠ 1 item has no tax rate</.test(warnHtml(reg, [{ name: 'Poori' }])));
+});
+it('the GSTIN/address clash is ONE line with Fix ›; the full words only behind it', () => {
+  const h = warnHtml(Object.assign({}, reg, { pincode: '600100' }), [{ name: 'Dosa', gst_rate: 5 }]);
+  assert(/>⚠ GSTIN state ≠ address</.test(h) && /data-testid="till-warn-state-fix"/.test(h), h);
+  assert(!/Karnataka|Tamil Nadu|disagree/.test(h), 'the paragraph is back on the bill');
+  const fx = fixSrc();
+  assert(fx.indexOf("cl.words + '\\n\\n' + cl.fix") > 0, 'Fix › shows the full wording');
+  assert(fx.indexOf('#/app/profile') > 0 && fx.indexOf('#/app/catalogue') > 0, 'Fix › opens where it is fixed');
+});
+it('a clean bill shows nothing', () => {
+  assert.strictEqual(warnHtml(Object.assign({}, reg, { pincode: '560001' }), [{ name: 'Dosa', gst_rate: 5 }]), '');
 });
 it('the place of supply prints with its state name', () => {
   assert.strictEqual(world().posWords('29'), '29 Karnataka');

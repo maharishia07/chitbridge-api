@@ -3368,6 +3368,8 @@
   </div></div></dialog>
 <dialog id="slipdlg"><div class="dlg">
   <h3 id="sliptitle">Bill</h3>
+  <!-- ⭐ M41: one line, OUTSIDE the slipbox so it never prints — this bill saved, but not as a tax invoice. Filled by showSlip(). -->
+  <div id="slipwarn" data-testid="till-slip-notinvoice" hidden></div>
   <div class="slipbox" id="slipbox"></div>
   <!-- ⭐⭐ SHARE AND FINDABLE (T67). navigator.share where the browser has it; wa.me / sms: / Copy where it does not — never a
        receipt with no way off the screen it was shown on. Hidden outside showSlip() (the paid bill), so a KOT or a day-close
@@ -5781,7 +5783,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-10-09.signedshop';
+var TILL_BUILD = '2026-10-10.nolostsale';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -6207,6 +6209,8 @@ function chitOf(bill){
       renumbered: bill.renumbered || null,
       payment: { mode: (bill.payments||[]).map(function(p){ return p.how; }).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments||[] },
       slip: bill.kind || 'cash',
+      /* ⭐ 'shop_details' when this tax bill went out as NOT a tax invoice (M41) — the server copy reprints it the same way */
+      not_invoice: bill.not_invoice || undefined,
       /* ⭐ BOOKS v2 — a credit bill's terms and any owner override, on the record both copies hold */
       terms: bill.terms || null,
       credit_override: bill.credit_override || null,
@@ -17541,13 +17545,29 @@ function shopStateClash(){
       + says.map(function(x){ return x.from + ' says ' + x.name; }).join(' and ') + '. A tax invoice names one state, and the place of supply is ' + gn + '.',
     fix: 'Correct the address or the GSTIN in Settings (the shop) or Know your business, then press ↻ here. Until then a tax invoice will not print.' };
 }
-/** what sits above the total when something about THIS bill is wrong — said where it is sold, in the words of the fix */
+/**
+ * what sits above the total when something about THIS bill is wrong — said where it is sold.
+ * ⚠️ ONE LINE PER PROBLEM, A COUNT AND A Fix › (walk 2026-10-09, M40). It was a 7-line red paragraph on every sale, and the
+ * dialog said it again. The full wording sits behind Fix › (billWarnFix), with the door to where it is fixed.
+ */
+function billWarnLine(which, words){
+  return '<div class="t warnrow" data-testid="till-warn-' + which + '"><span>⚠ ' + esc(words) + '</span><span>'
+    + '<button type="button" class="foldbtn" data-testid="till-warn-' + which + '-fix" onclick="billWarnFix(\'' + which + '\')">Fix ›</button></span></div>';
+}
 function billWarnHTML(){
   var out = [], un = unratedNames(), cl = shopTax().charges ? shopStateClash() : null;
-  if (un.length) out.push('<div class="t warnrow" data-testid="till-warn-norate"><span>' + esc(un.slice(0, 3).join(', ') + (un.length > 3 ? ' +' + (un.length - 3) + ' more' : ''))
-    + (un.length === 1 ? ' has no tax rate' : ' have no tax rate') + ' — no GST is charged on ' + (un.length === 1 ? 'it' : 'them') + ', and this slip will not say TAX INVOICE. Set the rate in the catalogue.</span><span></span></div>');
-  if (cl) out.push('<div class="t warnrow" data-testid="till-warn-state"><span>' + esc(cl.words + ' ' + cl.fix) + '</span><span></span></div>');
+  if (un.length) out.push(billWarnLine('norate', un.length + (un.length === 1 ? ' item has' : ' items have') + ' no tax rate'));
+  if (cl) out.push(billWarnLine('state', 'GSTIN state ≠ address'));
   return out.join('');
+}
+/** ⭐ Fix › — the full wording, then the one door: the catalogue for a rate, the shop's profile for the GSTIN / address */
+async function billWarnFix(which){
+  var st = which === 'state', cl = st ? shopStateClash() : null, un = st ? [] : unratedNames();
+  var msg = st ? (cl ? cl.words + '\n\n' + cl.fix : 'The shop’s details agree now.')
+               : (un.length ? un.join(', ') + '\n\nNo GST is charged on ' + (un.length === 1 ? 'it' : 'them')
+                              + ', and the slip will not say TAX INVOICE.' : 'Every item has a tax rate now.');
+  var go = await sure(msg, st ? 'Open the shop’s details' : 'Open the catalogue', st ? 'GSTIN state ≠ address' : 'No tax rate', 'Close');
+  if (go) { try { window.open(cbHome() + (st ? '#/app/profile' : '#/app/catalogue'), '_blank', 'noopener'); } catch (_) {} }
 }
 /**
  * ⭐⭐⭐ WHAT WOULD GO WRONG TODAY (2026-09-08). Athi: *"if the tax is not there, the system should alert — couldn't find the tax
@@ -20541,9 +20561,9 @@ async function finish(){
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
   if (!m.invoice) { say('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return; }
-  /* ⚠️ A TAX INVOICE THAT CONTRADICTS ITSELF DOES NOT GO OUT (BF2). Said in words with the fix; the items stay on the screen. */
-  var clash = shopTax().charges ? shopStateClash() : null;
-  if (clash) { say(clash.words + '\n\n' + clash.fix, 'This bill cannot be a tax invoice yet'); return; }
+  /* ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41: a details mismatch never costs
+     a sale). A taxed bill saves as NOT a tax invoice (not_invoice, slipHTML); an untaxed one has nothing to contradict. */
+  var clash = (shopTax().charges && Number(m.tax) > 0) ? shopStateClash() : null;
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();
@@ -20633,6 +20653,8 @@ async function finish(){
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     kind: shopTax().kind,
+    /* ⭐ WHY THIS TAX BILL IS NOT A TAX INVOICE, recorded with it (M41): a reprint after the shop is fixed must not turn it into one */
+    not_invoice: clash ? 'shop_details' : null,
     /* ⭐ WHO CHECKED WHAT, AND WHEN. A shop that is inspected must be able to show the check happened. */
     age_checks: ageRecord(),
     /* ⭐ where the order went, recorded WITH the bill — a reprint months later has to say Table 6, not guess
@@ -21733,7 +21755,8 @@ function slipHTML(bill, m){
   var shop = (S && S.shop) || {};
   var unrated = unratedOnBill(bill);
   /* ⚠️ NEVER "TAX INVOICE" OVER A LINE THAT CHARGED NO TAX BECAUSE IT HAD NO RATE (BF1) — the paper says what it is */
-  var title = unrated.length ? 'BILL — NOT A TAX INVOICE' : bill.kind === 'tax' ? 'TAX INVOICE' : (bill.kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO');
+  /* ⚠️ …nor over a bill saved while the shop's own details disagreed (M41, bill.not_invoice) — the same title, no second path */
+  var title = (unrated.length || bill.not_invoice) ? 'BILL — NOT A TAX INVOICE' : bill.kind === 'tax' ? 'TAX INVOICE' : (bill.kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO');
   var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid #000;margin:4px 0"></div>';
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
@@ -21919,6 +21942,12 @@ function showSlip(bill, m){
   document.getElementById('slipbox').classList.remove('screen');
   document.getElementById('slipbox').innerHTML = slipHTML(bill, m);
   slipDocButtons(printerReady(), true);
+  var sw = document.getElementById('slipwarn');
+  if (sw && bill.not_invoice === 'shop_details') {
+    sw.innerHTML = '<div class="t warnrow"><span>⚠ Not a tax invoice — shop details disagree</span><span><button type="button" class="foldbtn" '
+      + 'data-testid="till-slip-notinvoice-fix" onclick="billWarnFix(\'state\')">Fix ›</button></span></div>';
+    sw.hidden = false;
+  }
   document.getElementById('slipdlg').showModal();
 }
 /**
@@ -21932,6 +21961,7 @@ function printerReady(){ return true; }
 /** ⭐ ONE PLACE that shows or hides Print and Share on the one slip dialog every kind of slip shares (T67). */
 function slipDocButtons(printOn, shareOn){
   var dc = document.getElementById('slipdayclose'); if (dc) dc.hidden = true;   /* only the day report turns it on (dayClose) */
+  var sw = document.getElementById('slipwarn'); if (sw) { sw.hidden = true; sw.innerHTML = ''; }   /* only showSlip turns it on (M41) */
   var pr = document.getElementById('slipprint'); if (pr) pr.style.display = printOn ? '' : 'none';
   var sh = document.getElementById('slipshare'); if (sh) sh.hidden = !shareOn;
   var alt = document.getElementById('slipshare_alt'); if (alt) { alt.hidden = true; alt.innerHTML = ''; }
