@@ -624,4 +624,11 @@ it('⭐ a day cannot be short', () => {
   assert.strictEqual(R.coverage({ period: 'day', source: ['2026-09-21'] }).partial, false);
 });
 
+/** ⭐ M144b — a despatch or receive note is not a bill in the day count */
+it('⭐ a despatch note is not a bill: 3 bills + 1 despatch → count 3', () => {
+  const b = (n) => ({ total: n, payments: [{ how: 'cash', amount: n }] });
+  const t = R.totals([b(10), b(20), b(30), { total: 99, business_json: { doc: 'despatch' } }, { doc: 'receive', total: 7 }]);
+  assert.strictEqual(t.count, 3); assert.strictEqual(t.gross, 60);
+});
+
 console.log('\n' + pass + ' checks passed\n');

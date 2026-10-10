@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.30.0 · signin · sha256 9f08eee815ba780a0efcdce52539ded267af8ee0b725e5ae2dcd33a9f30f3c82 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.32.0 · signin · sha256 03f92852a564829744cc112af760aac27e0527e20f3708ee8eb57d23fb7b29dc — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · signin. Edited ONLY in chitbridge-engines/src/signin.js; every platform adopts a released version of it. */
 (function (root) {
 'use strict';
@@ -60,12 +60,16 @@ function mobileOf(v) { const d = String(v == null ? '' : v).replace(/[\s\-().]/g
 
 function who(input) {
   const v = String(input == null ? '' : input).trim();
-  if (!v) return { kind: '', value: '', ok: false, why: 'Type your user ID or the email you signed up with.' };
+  if (!v) return { kind: '', value: '', ok: false, why: 'Type your mobile number, e-mail or user ID.' };
   const m = mobileOf(v);
   if (m) return { kind: 'mobile', value: m, ok: true, field: 'id' };
   if (v.indexOf('@') >= 0) {
-    /* ⚠️ not a full address grammar — the server owns that. This only decides which field to send it in. */
-    if (!/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(v)) return { kind: 'email', value: v, ok: false, why: 'That email does not look complete.' };
+    /* ⚠️ v1.32.0 (M188): "@" with a dot after it is an e-mail; "@" with NO dot is a staff user ID (name@shop-handle,
+       e.g. asha01@mayur-restaurant) and goes as user_id. Not a full address grammar — the server owns that. */
+    const bad = { kind: 'email', value: v, ok: false, why: 'That email does not look complete.' };
+    if (/\s/.test(v) || !/^[^@]+@[^@]+$/.test(v)) return bad;
+    if (/^[^@]+@[^@.]+$/.test(v)) return { kind: 'user_id', value: v, ok: true, field: 'user_id' };
+    if (!/^[^@\s]+@[^@\s.]+\.[^@\s]+$/.test(v)) return bad;
     return { kind: 'email', value: v.toLowerCase(), ok: true, field: 'email' };
   }
   if (v.length < 3) return { kind: 'user_id', value: v, ok: false, why: 'A user ID is at least three characters.' };

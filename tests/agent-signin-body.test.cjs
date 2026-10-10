@@ -38,7 +38,7 @@ it('verify() carries mode:login with the otp; a PIN goes as pin', () => {
   assert.strictEqual(CBSignin.verify('kumar01', '1234').body.mode, 'login');
 });
 it('a typo is refused before any network call (no body to send)', () => {
-  assert.strictEqual(CBSignin.ask('a@b').ok, false);
+  assert.strictEqual(CBSignin.ask('a@').ok, false);
   assert.strictEqual(CBSignin.verify('a@b.co', '12').ok, false);
 });
 console.log(pass + ' checks');
