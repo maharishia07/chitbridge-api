@@ -2873,6 +2873,35 @@
   @media print{ .wrap,header{display:none!important} }
   /* ⭐ M59 (walk 2026-10-10): a key name on a button ("Cancel · Esc", "Park · F6") is for a keyboard — a phone has none */
   @media (hover:none) and (pointer:coarse){ .kh{display:none} }
+  /* ⭐ M59 ◐ (walk 2026-10-10): a narrow window with a mouse still showed "Park · F6" — P10 is by WIDTH too: no key names under 601 px */
+  @media (max-width:600px){ .kh{display:none} }
+  /**
+   * ⭐⭐ M112 — THE PHONE'S TOP BAR IS ONE ROW (P2): name · 🛒N · ☰. It was three rows (~95 px before the search box).
+   * Counter, who, lock, today and ⚡ live inside ☰ (paintMenu's head: counter name, hubWhoRow, hubChips — which grows a
+   * Lock and a Switches chip on a phone). The line pill shows only when something is wrong (paintStatus), and on a phone
+   * it is a dot beside ☰ that still opens the line.
+   */
+  @media (max-width:600px){
+    section.left > header{flex-wrap:nowrap;gap:6px;padding:6px 8px}
+    #tillpill,#whopill,#lockbtn,#agepill,#daypill,#traybtn{display:none!important}
+    section.left > header > span[style*="flex:1"]{display:none}
+    #shopname{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #netpill:not([hidden]){font-size:0;width:28px;height:28px;min-width:28px;padding:0;border-radius:50%;
+      background:radial-gradient(circle, var(--warn) 0 5px, transparent 6px);border-color:transparent}
+    /* ⭐ M114 — a chosen category on a phone: the shelf below is the answer; the keys box steps aside */
+    body.qk-catoff #quick,body.qk-catoff .keysgrip{display:none!important}
+  }
+  /* ⭐ M113 — the ▦ is INSIDE its chip's pill (one pill per category), so it can never wrap away from the chip it belongs to */
+  .catpanel .catpill{display:inline-flex;align-items:stretch;flex:0 0 auto;border:1px solid var(--edge);border-radius:999px;overflow:hidden;background:var(--paper)}
+  .catpanel .catpill.on{border-color:var(--ok)}
+  .catpanel .catpill > button{border:0;border-radius:0;margin:0}
+  .catpanel .catpill > .catpk{border-inline-start:1px solid var(--line);min-width:40px}
+  /* ⭐ M74 — the online orders, a small list in the till */
+  .olist{display:flex;flex-direction:column;gap:6px;margin:6px 0}
+  .olist button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;text-align:start;padding:8px 10px;
+    border:1px solid var(--edge);border-radius:10px;background:var(--paper);color:var(--ink);cursor:pointer;font:inherit}
+  .olist button b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .olist button i{font-style:normal;color:var(--dim);font-size:.85em}
 </style>
 </head>
 <body>
@@ -3773,6 +3802,14 @@
     <button class="pri" data-testid="till-order-settle" onclick="orderReviewSettle()">Bill this table</button>
     <button onclick="document.getElementById('orderdlg').close()">Not yet<span class="kh"> · Esc</span></button>
   </div>
+</dialog>
+
+<!-- ⭐ M74 ◐ — the 🛒 pill opens THIS: the shop's open online orders, in the till (who · ₹ · age · status); a row opens it in Despatch -->
+<dialog id="onlinedlg" class="dlg" data-testid="till-online-dlg">
+  <div class="sethead"><h3 id="onlinedlgtitle">Online orders</h3>
+    <button class="setx" onclick="document.getElementById('onlinedlg').close()" aria-label="Close" title="Close">✕</button></div>
+  <div id="onlinedlgbody"></div>
+  <div class="dlgbtns"><button onclick="document.getElementById('onlinedlg').close()">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 
 <div id="busy" hidden><div class="busybox">
@@ -5277,6 +5314,19 @@ var CloudHost = {
       return await r.json();
     } catch (e) { return { bills: [], offline: true, why: e.message }; }
   },
+  /**
+   * ⭐⭐ THE DAY SUMMARY, ON THE SAME QUEUE AS A BILL (M84, 2026-10-10). Close the day only wrote a local mark, so the
+   * books waited for the nightly job and the Day book told the shop to "close the day on the counter" — which did
+   * nothing. The books post a walk-in day from exactly this chit (books-hooks classify: purpose general +
+   * business_json.summary{period:'day'}). Built by CBRollup.chitOf — the shape the desktop program already queues
+   * (till.js queueSummary) — keyed by CBRollup.refOf, so a second close of the same day replaces the row, never adds one.
+   */
+  async daySummary(sum){
+    if (!(window.CBRollup && CBRollup.chitOf && CBRollup.refOf)) return { ok:false, why:'the day summary engine did not load' };
+    await DB.put('queue', { no: CBRollup.refOf(sum), at: sum.summarised_at || new Date().toISOString(), chitBody: CBRollup.chitOf(sum) });
+    this.drain();
+    return { ok:true };
+  },
   /** a shift is a chit of its own: who, when, what was taken, what was counted, and the difference */
   async shift(sh){
     var body = {
@@ -5823,7 +5873,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-10-10.t1';
+var TILL_BUILD = '2026-10-10.t1b';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -10161,6 +10211,9 @@ function hubChips(){
     + ' onclick="fromMenu(openHealth)">' + queued + ' waiting</button>';
   if (alerts) out += '<button class="hubchip warn" data-testid="till-hub-chip-alerts"'
     + ' onclick="openCheck()">' + alerts + ' need' + (alerts === 1 ? 's' : '') + ' you</button>';
+  /* ⭐ M112: on a phone the bar is name · 🛒 · ☰ — the lock and the switches it dropped are here */
+  if (phoneShape()) out += '<button class="hubchip" data-testid="till-hub-chip-lock" onclick="fromMenu(lockNow)">🔒 Lock</button>'
+    + '<button class="hubchip" data-testid="till-hub-chip-tray" onclick="fromMenu(trayOpen)">⚡ Switches</button>';
   return '<div class="hubchips" data-testid="till-hub-health">' + out + '</div>';
 }
 function paintMenu(){
@@ -10715,7 +10768,9 @@ function paintChips(){
         /* ⚠️ THE LIST'S SWITCH, NOT THE KEYS' ([TILL-80]). A chip row is part of browsing the shelf and sits
            directly above the list it filters; hanging it off the keys made it a hidden third surface. */
         try { if (thumbsOn()) pic = '<span class="cpic">' + catPic(c) + '</span>'; } catch (_) {}
-        return '<button class="' + (FILTER.cat === c ? 'on' : '') + (pic ? ' haspic' : '') + '"'
+        /* ⭐ M113: on the phone's panel the chip and its ▦ are ONE pill (.catpill) */
+        return (ov ? '<span class="catpill' + (FILTER.cat === c ? ' on' : '') + '">' : '')
+          + '<button class="' + (FILTER.cat === c ? 'on' : '') + (pic ? ' haspic' : '') + '"'
           + ' data-testid="till-chip-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '"'
           /* ⚠️ THE NAME TRAVELS IN AN ATTRIBUTE, INTACT (2026-09-28, M19): stripping apostrophes to fit it inside the
              onclick made "Baker's" filter on "Bakers" — a category with an apostrophe could never be chosen */
@@ -10727,7 +10782,7 @@ function paintChips(){
           + pic + esc(c) + ' <span class="u">' + cats[c] + '</span></button>'
           + (ov ? '<button class="catpk" type="button" data-testid="till-cat-peek-' + esc(c.replace(/[^a-z0-9]+/gi,'-').toLowerCase()) + '"'
                 + ' data-cat="' + esc(c) + '" title="see its items" aria-label="see the items in ' + esc(c) + '"'
-                + ' onclick="catPeek(this.dataset.cat)">▦</button>' : '');
+                + ' onclick="catPeek(this.dataset.cat)">▦</button></span>' : '');
       }).join('')
     ;
   if (ov) { catBarPaint(el, allChips); return; }
@@ -10758,7 +10813,7 @@ function catBarPaint(el, chipsHtml){
 function catPanelPaint(chipsHtml){
   var p = document.getElementById('catpanel'); if (!p) return;
   if (!chipsHtml) { p.hidden = true; p.innerHTML = ''; return; }
-  p.innerHTML = '<div class="cathint">tap = filter · hold or ▦ = items</div>'
+  p.innerHTML = '<div class="cathint">Hold to see tiles</div>'
     + '<div class="chips wrapped">' + chipsHtml + '</div>'
     + '<div id="catpeek" data-testid="till-cat-peek">' + catPeekHtml() + '</div>';
   catPanelPlace();
@@ -13429,6 +13484,8 @@ function paintQuick(){
   /* ⭐ SEARCH RESULTS ARE SHOWN ONCE (tidy 2026-10-09, TS6/TS11): while somebody types and the list is on, the list is the answer and the keys step aside — the SAME
      seven items as tiles AND rows, in two boxes, left the list three rows tall. The user's own view choice (tillShow) is untouched: with the list switched off, the keys stay. */
   try { document.body.classList.toggle('srch-once', !!typed().text && tillShow().list && !QK_ARRANGE && MODE === 'sell'); } catch (_) {}
+  /* ⭐ M114: on a phone a chosen category hides the keys box (CSS, max-width 600) — the shelf below is filtered already */
+  try { document.body.classList.toggle('qk-catoff', !!(FILTER && FILTER.cat) && !QK_ARRANGE && MODE === 'sell'); } catch (_) {}
   var o = tillOpt(), usesGroups = (o.quickSource === 'groups' || o.quickSource === 'both');
   /* ⚠️ THE BAR SURVIVES AN EMPTY GRID when groups are in use — a new group has nothing in it yet, and hiding the
      one control that fills it would make the feature unreachable the moment it is switched on. */
@@ -20202,7 +20259,7 @@ function paintOrderBar(){
         : '')
     + '<button class="kot" data-testid="till-kot" onclick="sendKOT()"'
     + ' title="' + (ORDER_ID ? ('send the new lines to this ' + says('subject') + ' and the kitchen') : 'send the new items to the kitchen') + ' (F3)">'
-    + '➕ ' + (ORDER_ID ? 'Send round · F3' : 'Kitchen · F3') + (kotPending().length ? ' <b data-testid="till-kot-badge" title="' + kotPending().length + ' on this bill not yet sent to the kitchen">' + kotPending().length + '</b>' : '') + '</button>'
+    + '➕ ' + (ORDER_ID ? 'Send round' : 'Kitchen') + '<span class="kh"> · F3</span>' + (kotPending().length ? ' <b data-testid="till-kot-badge" title="' + kotPending().length + ' on this bill not yet sent to the kitchen">' + kotPending().length + '</b>' : '') + '</button>'
     /**
      * ⭐⭐⭐ THE OTHER ICON, ON THE SAME TABLE ([TILL-187]). Athi: *"you add two or three icon, one is for
      * adding say +, another one = for summarising and bring it to the cart… in the same table number."* +
@@ -20866,6 +20923,7 @@ function saleStopLast(){
 async function finish(){
   if (!CART.length) return;
   if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
+  if (!(await dayReopenAsk())) return;   /* M115 — the day was closed on this counter */
   var m = billMoney();
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
@@ -21217,10 +21275,10 @@ async function dayClose(){
   slipDocButtons(true, false);
   /* ⭐ CLOSING IS ITS OWN BUTTON, NOT A SIDE EFFECT OF LOOKING OR PRINTING (TB9) */
   var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = !!d.closed;
-  DAY_D = d;
+  DAY_D = d; DAY_ROWS = rows;
   document.getElementById('slipdlg').showModal();
 }
-var DAY_D = null;
+var DAY_D = null, DAY_ROWS = [];
 /** the shop's own mark that this counter's day was closed — { day, at, bills, total, by } for TODAY, else null */
 function dayClosedMark(){
   try {
@@ -21228,18 +21286,51 @@ function dayClosedMark(){
     return (m && m.day === new Date().toLocaleDateString('en-CA')) ? m : null;
   } catch (_) { return null; }
 }
-/** the explicit act: record the close, then show the sheet again saying so (and Print prints that) */
+/** the explicit act: record the close, SEND the day (M84), then show the sheet again saying so (and Print prints that) */
 function dayCloseDo(){
   var d = DAY_D; if (!d) return;
   var m = { day: new Date().toLocaleDateString('en-CA'), at: new Date().toISOString(), bills: d.bills, total: d.total,
             by: (WHO && WHO.name) || null };
   ls.set(shopLs('cb_till_dayclosed'), JSON.stringify(m));
+  daySummarySend(m);
   d.closed = m;
   document.getElementById('sliptitle').textContent = 'Day closed · ' + d.bills + (d.bills === 1 ? ' bill' : ' bills') + ' · ' + money(d.total);
   document.getElementById('slipbox').innerHTML = dayCloseHTML(d);
   var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = true;
   toastLine('Day closed at ' + hhmm(m.at) + '.');
   try { paintStatus(); } catch (_) {}
+}
+/**
+ * ⭐⭐ M84 — CLOSING THE DAY SENDS THE DAY. The summary is CBRollup.summary over this counter's rows (the fold the desktop
+ * program and retainRun already use) with the counter stamped by tillStamp — the same id every bill of the day carries,
+ * which is how the books find that counter's walk-in day. It rides CloudHost's queue, so offline it waits like a bill.
+ * ⚠️ The shop PC's program rolls its own days up (till.js rollUp), so on the agent nothing is sent from the page.
+ * ⚠️ A failure is SAID, never swallowed: the mark stays (the drawer is closed) and the nightly job still posts the day.
+ */
+async function daySummarySend(m){
+  if (!(HOST && HOST.daySummary)) return;
+  try {
+    if (!(window.CBRollup && CBRollup.summary && CBRollup.totals)) throw new Error('the day summary engine did not load');
+    var sum = CBRollup.summary('day', m.day, CBRollup.totals(DAY_ROWS || []),
+      { till: tillStamp(tillId(), WHO || null), source: null, at: m.at });
+    var r = await HOST.daySummary(sum);
+    if (!r || !r.ok) throw new Error((r && r.why) || 'it was not queued');
+  } catch (e) {
+    toastLine('Day closed — but the day was not sent to the books (' + ((e && e.message) || 'unknown') + '). It posts tonight instead.');
+  }
+}
+/**
+ * ⭐ M115 — NO SILENT SALE INTO A CLOSED DAY. The next sale after Close the day asks once; reopening clears the mark
+ * (a later close sends the day again under the same reference). "Not now" keeps the bill on screen, unsaved.
+ */
+async function dayReopenAsk(){
+  var m = dayClosedMark(); if (!m) return true;
+  var yes = await sure('Day closed at ' + hhmm(m.at) + ' — reopen today?', 'Reopen today', 'Day closed', 'Not now');
+  if (!yes) return false;
+  ls.set(shopLs('cb_till_dayclosed'), 'null');
+  toastLine('Today reopened — close the day again when you finish.');
+  try { paintStatus(); } catch (_) {}
+  return true;
 }
 /* ═══ 3b · RECEIVE and DESPATCH ══════════════════════════════════════════════════════════════════════════════
  *
@@ -23615,7 +23706,10 @@ function billHow(b){
   return order.map(function(how){ return { how: how, amount: m[how] }; });
 }
 /** ⭐ plain words, never "(s)" (T69): one bill, two bills, or a count — said the way a shopkeeper would say it */
-function reachedAllWords(n){
+function reachedAllWords(n, rows){
+  /* ⭐ M116: with returns among them the sentence names both, so it agrees with the title — "2 bills + 1 return reached the shop" */
+  var r = rows ? rows.filter(isReturnRow).length : 0;
+  if (r) { var b = n - r; return b + (b === 1 ? ' bill + ' : ' bills + ') + r + (r === 1 ? ' return' : ' returns') + ' reached the shop'; }
   return n === 1 ? 'The bill reached the shop' : n === 2 ? 'Both bills reached the shop' : 'All ' + n + ' bills reached the shop';
 }
 /** ⭐ "8 pm – 9 pm", in the shop's own locale time format (T69) — not the 24-hour "20:00" nobody says out loud */
@@ -23683,7 +23777,10 @@ async function openBills(keepOpen){
       + ' onclick="todayHow(\'' + esc(k) + '\')">' + esc(k) + ' ' + money(d.by[k]) + '</button>';
   }).join(' ');
   if (TODAY_HOW) rows = rows.filter(function(b){ return billHow(b).some(function(h){ return h.how === TODAY_HOW; }); });
-  document.getElementById('billstitle').textContent = 'Today — ' + (d.count||0) + ((d.count||0) === 1 ? ' bill · ' : ' bills · ') + money(d.total||0);
+  /* ⭐ M116: ONE count — "2 bills + 1 return · ₹370 net"; a return is never counted as a bill (isReturnRow) */
+  var nRet = rows.filter(isReturnRow).length;
+  document.getElementById('billstitle').textContent = 'Today — ' + (d.count||0) + ((d.count||0) === 1 ? ' bill' : ' bills')
+    + (nRet ? ' + ' + nRet + (nRet === 1 ? ' return' : ' returns') : '') + ' · ' + money(d.total||0) + (nRet ? ' net' : '');
   document.getElementById('billsbody').innerHTML =
     '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + (by || 'nothing taken yet')
       + (TODAY_HOW ? '<span data-testid="till-today-how-on">only ' + esc(TODAY_HOW) + '</span>' : '') + '</div>'
@@ -23700,7 +23797,7 @@ async function openBills(keepOpen){
          * `unknown` state: the counter holds no receipt for anything, because these bills were written before
          * it kept them. Not knowing is fine; sounding certain about it is not.
          */
-        : (rows.length ? (everAcked ? reachedAllWords(rows.length)
+        : (rows.length ? (everAcked ? reachedAllWords(rows.length, rows)
                                     : rows.length + ' bill(s) were sent — this counter cannot confirm the shop has them')
                        : 'Nothing to send')) + '</b>'
       + ((nWait || nLost) ? '<button class="pill" data-testid="till-send-now" onclick="sendNow()">Send now</button>' : '')
@@ -26374,10 +26471,48 @@ function onlineOrdersPaint(){
   p.textContent = '🛒 ' + n + (n === 1 ? ' order' : ' orders');
   p.title = 'online orders not yet delivered — ' + ONLINE.list.slice(0, 5).map(function(t){ return t.party || t.subject || 'order'; }).join(', ');
 }
-/** one order → that order; several → the oldest waiting (the list is newest first), the rest one tap away in ChitBridge */
+/**
+ * ⭐⭐ M74 ◐ (walk 2026-10-10) — THE PILL OPENS A LIST, IN THE TILL. It opened ONE order (picked for you) in app.html, in a new
+ * tab. Now: every open order, one row each — who · ₹ · age · status — and a row opens that order HERE, in Despatch (the till's
+ * own order screen, fed by the same /api/till/tasks read), never app.html, never a new tab.
+ */
+function onlineOrderMoney(t){
+  return r2((t.lines || []).reduce(function(a, l){ return a + (Number(l.rate) || 0) * (Number(l.ordered) || 0); }, 0));
+}
+function onlineOrderAge(at){
+  var m = Math.max(0, Math.round((Date.now() - new Date(at).getTime()) / 60000));
+  if (!isFinite(m)) return '';
+  return m < 60 ? m + ' min' : (m < 1440 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' d');
+}
+function onlineOrderStatus(t){
+  if ((t.lines || []).some(function(l){ return Number(l.moved) > 0; })) return 'part packed';
+  var s = String(t.status || '');
+  return (s === 'accepted' || s === 'in_progress') ? 'accepted' : 'new';
+}
 function onlineOrdersOpen(){
-  var t = ONLINE.list[ONLINE.list.length - 1]; if (!t || !t.chit_id) return;
-  try { window.open(cbHome() + '#/app/chit/' + encodeURIComponent(t.chit_id), '_blank', 'noopener'); } catch (_) {}
+  var list = ONLINE.list.slice();
+  document.getElementById('onlinedlgtitle').textContent = list.length + (list.length === 1 ? ' online order' : ' online orders');
+  document.getElementById('onlinedlgbody').innerHTML = list.length
+    ? '<div class="olist">' + list.map(function(t, n){
+        var tot = onlineOrderMoney(t), k = (t.lines || []).length;
+        var ago = onlineOrderAge(t.at), items = k === 1 ? '1 item' : k + ' items';
+        return '<button type="button" data-testid="till-online-row-' + n + '" data-id="' + esc(t.chit_id) + '" onclick="onlineOrderPick(this.dataset.id)">'
+          + '<b>' + esc(t.party || t.subject || 'Customer') + '</b><b>' + (tot ? money(tot) : '') + '</b>'
+          + '<i>' + esc(ago) + ' ago · ' + items + '</i>'
+          + '<i>' + esc(onlineOrderStatus(t)) + '</i></button>';
+      }).join('') + '</div>'
+    : '<p>No online orders waiting.</p>';
+  document.getElementById('onlinedlg').showModal();
+}
+/** a row → that order, in place: Despatch with it chosen (the same list loadTasks reads) */
+async function onlineOrderPick(id){
+  try { document.getElementById('onlinedlg').close(); } catch (_) {}
+  if (!id) return;
+  setMode('despatch');
+  await loadTasks('despatch');
+  if (!taskById('despatch', id)) TASKS.despatch = (TASKS.despatch || []).concat(ONLINE.list.filter(function(t){ return t.chit_id === id; }));
+  var sel = document.getElementById('dsp_task'); if (sel) sel.value = id;
+  dspPickTask(id);
 }
 async function bellUp(){
   try {

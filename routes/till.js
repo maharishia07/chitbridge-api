@@ -2396,7 +2396,9 @@ router.get('/tasks', auth, async (req, res) => {
         tasks.push({ chit_id: h.chit_id, at: h.created_at,
                      subject: h.manual_subject || h.auto_subject || '',
                      party: h.counterparty_name || (bj.party && bj.party.name) || '', party_id: h.counterparty_id || null,
-                     ref: bj.order_no || bj.ref || null, lines });
+                     ref: bj.order_no || bj.ref || null,
+                     /* M74: the till's order list shows it (who · ₹ · age · STATUS) */
+                     status: h.current_status || null, lines });
       }
       return tasks;
     });
