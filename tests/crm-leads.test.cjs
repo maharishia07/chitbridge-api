@@ -114,5 +114,6 @@ D.extra = async (sql, p) => {
     assert.deepStrictEqual(require(path.join(API, 'lib/memberships')).KINDS.lead_stage.groups, ['lead', 'demo', 'trial', 'parked', 'lost']);
     assert.ok(/'lead', 'demo', 'trial', 'parked', 'lost'/.test(sql), 'code and dictionary list the same stages');
   });
-  console.log('\n' + pass + ' passed'); t.close();
+  /* guards.cjs counts the LAST "<n> checks" line; a guard that counts nothing reads as 0 and FAILS */
+  console.log('\n' + pass + ' checks'); t.close();
 })();
