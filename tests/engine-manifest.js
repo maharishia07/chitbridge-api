@@ -281,6 +281,7 @@ const INFRA_LIBS = [
   'channels.js',           // channel binding lookup — plumbing for an inbound number
   'cost.js',               // arithmetic over line costs
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
+  'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
   'owner.js',              // is this request the owner — one test for every owner-only switch
   /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —
      flexible while empty, tightened per column once used — and the routes and the screen both read it, so it

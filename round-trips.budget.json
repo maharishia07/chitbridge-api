@@ -439,6 +439,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/people": {
+      "file": "people.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/service/:chit_id": {
       "file": "service.js",
       "trips": 1,

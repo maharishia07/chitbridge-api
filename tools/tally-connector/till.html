@@ -3865,6 +3865,7 @@
      one PC that needs it, an unpaired one that has fetched nothing. Found by e2e/till-shop-switch-pc.cjs. -->
 <script>var MISSING = []; function engineMissed(n){ MISSING.push(n); }</script>
 <script src="/engine/qr.js" onerror="engineMissed('qr')"></script>
+<script src="/app/embed-host.js"></script>   <!-- CBEmbed: opens the Employees form inside this page (P1) — missing offline, and whoAdd() says so -->
 <!-- ⭐ LOCALE FIRST OF ALL — every other engine's output is eventually shown as money or a date. -->
 <script src="/engine/money.js" onerror="engineMissed('money')"></script>
 <!-- ⭐ what a document number may look like, per country. It is HERE and not only on the shop because the
@@ -25818,9 +25819,22 @@ function openWho(){
           + esc(a.name) + (hatWord(a.hat) ? '<span class="u">' + esc(hatWord(a.hat)) + '</span>' : '') + '</button>';
       }).join('')
     : '<div style="color:var(--dim)">No co-assists yet — add them in ChitBridge › Co-assists. Bills are recorded as the shop.</div>')
-    + '<button class="choice" style="margin-top:12px" data-testid="till-break" onclick="takeBreak()">☕ Take a break<span class="u">the counter stays yours — nothing is closed or counted</span></button>'
+    + '<button class="choice" style="margin-top:12px" data-testid="till-who-add" onclick="whoAdd()">＋ Add a person<span class="u">opens the Employees form here — needs the internet</span></button>'
+    + '<button class="choice" style="margin-top:6px" data-testid="till-break" onclick="takeBreak()">☕ Take a break<span class="u">the counter stays yours — nothing is closed or counted</span></button>'
     + (WHO ? '<button class="choice" style="margin-top:6px" data-testid="till-handover" onclick="handOver()">Hand over<span class="u">end ' + esc(WHO.name) + '\'s shift and close the drawer count</span></button>' : '');
   document.getElementById('whodlg').showModal();
+}
+/**
+ * ⭐ P1 — ＋ Add a person: the Employees form (employees.html?embed=1&view=add) opens in a dialog on top of the counter. The counter holds no form of its own:
+ * the page uses the owner's saved sign-in on this browser, tells us { cb:'employees', event:'added'|'changed' }, and the shop is read again so the new name is in the list.
+ */
+function whoAdd(){
+  try { document.getElementById('whodlg').close(); } catch (_) {}
+  if (!window.CBEmbed || !lineUp()) { say('Adding a person needs the internet. Try again when the line is back.'); return; }
+  var heard = false;
+  CBEmbed.open({ app: 'employees', view: 'add', title: 'Add a person',
+    onMessage: function(m){ if (m.event === 'added' || m.event === 'changed') heard = true; },
+    onClose: function(){ if (heard) { Promise.resolve(refresh()).then(openWho, openWho); } else openWho(); } });
 }
 /**
  * ── ⚠️⚠️⚠️ PICKING A NAME IS NO LONGER SIGNING IN (G2, 2026-09-28) ──────────────────────────────────────────
