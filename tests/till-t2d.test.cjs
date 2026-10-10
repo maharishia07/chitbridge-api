@@ -58,9 +58,8 @@ const year = (fy, status) => [{ fiscal_year: fy, period: 0, status: 'open', end_
   });
   console.log('\n-- M169 / M170 the till page --');
   const PAGE = require('fs').readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
-  await ok('M169: an order on the bill remembers the counter\'s own kind and gives it back when the bill is saved or cleared', () => {
-    assert(PAGE.includes('prev_kind: orderKind()'));
-    assert(PAGE.includes('orderKindGiveBack(boDone)') && /function clearBill\(\)\{\n  orderKindGiveBack\(BILL_ORDER\);/.test(PAGE));
+  await ok('M169 (T2f): the order kind is never written to the counter saved default - see till-t2f.test.cjs', () => {
+    assert(!PAGE.includes('orderKindGiveBack') && !PAGE.includes('prev_kind'));
   });
   await ok('M170: Close the day shows only on the day report; F10 repaints even over an open bill slip', () => {
     assert(PAGE.includes("function slipDocButtons(printOn, shareOn, doc){\n  SLIP_DOC = doc === 'day' ? 'day' : 'bill';"));
