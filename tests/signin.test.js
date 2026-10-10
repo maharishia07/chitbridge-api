@@ -35,12 +35,13 @@ it('⚠️⚠️ a user ID and an email go in the same box', () => {
 it('and an empty one says what to type', () => {
   const r = S.who('   ');
   assert.strictEqual(r.ok, false);
-  assert.ok(/user ID or the email/.test(r.why), r.why);
+  assert.ok(/mobile number, e-mail or user ID/.test(r.why), r.why);
 });
 
 it('a half-typed address is caught before it is sent', () => {
   assert.strictEqual(S.who('bala@').ok, false);
-  assert.strictEqual(S.who('bala@mayur').ok, false);
+  assert.strictEqual(S.who('bala@mayur').kind, 'user_id', 'no dot after @ is a staff user ID (M188)');
+  assert.strictEqual(S.who('asha01@mayur-restaurant').field, 'user_id');
   assert.ok(/does not look complete/.test(S.who('bala@').why));
 });
 
