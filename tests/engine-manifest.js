@@ -193,6 +193,8 @@ const INFRA_LIBS = [
   /* the field ledger's repo-reading helper (migration columns, form inputs, readers of a not-used field) — a build-time
      tool for tests/field-ledger.test.cjs, not a rule of the platform. (2026-10-09) */
   'field-ledger.js',
+  /* the shop's one settable clock (Y1) — the server's time source for posting; not a platform rule. (2026-10-10) */
+  'shop-clock.js',
   /* [BOOKS v2] the ledger's SQL (books-store), its nightly runner (books-nightly: retries, names mismatches, never fixes)
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',

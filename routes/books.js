@@ -2,6 +2,7 @@
 // @stage-note [BOOKS v2] /api/books — the ledger's reads (day book, ledgers, statement, dues, trial balance, P&L, balance
 // @stage-note sheet) and its few writes (payments, manual entries, reversals, month locks, opening, packs). 404 while off.
 'use strict';
+const CLOCK = require('../lib/shop-clock');
 /**
  * routes/books.js — SPEC-books-v2 §5, in the shapes the Ledger screen reads (chitbridge-web public/app/cap-books.js).
  *
@@ -33,7 +34,7 @@ const { isOwner } = require('../lib/owner');   /* one owner test — the folder 
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => CLOCK.now().toISOString().slice(0, 10);
 const dateQ = (v, d) => (DATE.test(String(v || '').slice(0, 10)) ? String(v).slice(0, 10) : d);
 /* minor units in; an amount in rupees is rounded by money.round (the one rounder) first, never by a copy of the rule */
 const minorOf = (b) => (b.amount_minor != null ? Math.round(Number(b.amount_minor)) : Math.round(require('../lib/money').round(Number(b.amount)) * 100));
@@ -571,7 +572,7 @@ router.patch('/payments/:id', auth, noKey, on, async (req, res) => {
     const chit = b.advice_chit_id != null ? String(b.advice_chit_id) : null;
     if (chit && !UUID.test(chit)) return res.status(400).json({ error: 'Which advice chit?', message: 'Which advice chit?' });
     let shared = null;
-    if (b.advice_shared_at === true) shared = new Date().toISOString();
+    if (b.advice_shared_at === true) shared = CLOCK.now().toISOString();
     else if (b.advice_shared_at != null) { const t = Date.parse(String(b.advice_shared_at)); if (!Number.isFinite(t)) return res.status(400).json({ error: 'When was it shared?', message: 'When was it shared?' }); shared = new Date(t).toISOString(); }
     if (!chit && !shared) return res.status(400).json({ error: 'Nothing to change.', message: 'Nothing to change — advice_chit_id or advice_shared_at.' });
     const out = await withEntity(e, async (h) => {
@@ -732,7 +733,7 @@ router.post('/write-off', auth, owner, on, async (req, res) => {
     const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
     res.json(await B.postEntry(null, ctx(req), { type: 'write_off', owner: true, party, amount: minorOf(b) / 100, reason: b.reason, currency: curOf(req), strict_date: true,
       date: dateQ(b.date, today()), against_ref: b.against_ref ? String(b.against_ref) : null, source_ref: ref ? 'wo:' + ref : null,
-      doc_ref: 'wo:' + party + ':' + (ref || Date.now()), by: byOf(req) }));
+      doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()), by: byOf(req) }));
   } catch (err) { fail(res, err); }
 });
 /**
@@ -804,7 +805,7 @@ router.get('/periods', auth, on, async (req, res) => {
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((p) => Object.assign({}, p, { start_date: E.ymd(p.start_date), end_date: E.ymd(p.end_date) }));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
-    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(new Date(), country)).filter((p) => !fy || p.fiscal_year === fy) });
+    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), country)).filter((p) => !fy || p.fiscal_year === fy) });
   } catch (err) { fail(res, err); }
 });
 
