@@ -847,7 +847,7 @@
     "POST /api/crm/parties/:id/outcome": {
       "file": "crm.js",
       "trips": 2,
-      "wire": 0,
+      "wire": 3,
       "fired": true,
       "status": 200,
       "why": "L2: ONE transaction (party check, last calls, close open follow-ups, interaction, next follow-up, stage row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm"
