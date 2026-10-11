@@ -27,6 +27,7 @@ const TESTS = path.join(__dirname, '..', 'tests');
 const GUARDS = [
   'pages-parse.test.js',      // every inline script in app.html, till.html and promo.html parses
   'till-vendor.test.js',      // the counter and its vendored engines agree, byte for byte
+  'shop-clock-guard.test.cjs',  // ⭐⭐ Y1: one shop clock — no raw new Date()/Date.now() in the ledger files; set/advance/reset proven
   'till-t2a.test.cjs',  // round T2a: bills-only count, an online order billed, the mode menu, no 403 on quick-keys/hidden
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
