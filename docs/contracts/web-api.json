@@ -561,7 +561,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
-    "asOf": "2026-10-10",
+    "asOf": "2026-10-11",
     "parties": [
      {
       "party_no": "P-00001",
@@ -763,7 +763,7 @@
     "currency": "INR",
     "party_id": "22222222-2222-4222-8222-222222222222",
     "from": "2026-04-01",
-    "to": "2026-10-10",
+    "to": "2026-10-11",
     "code": "1300",
     "opening_minor": 0,
     "closing_minor": 118000,
@@ -1129,11 +1129,11 @@
       "stage": "lead",
       "followup_id": "f-q1",
       "what": "Ring again",
-      "due_day": "2026-10-09",
+      "due_day": "2026-10-10",
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-08T15:11:52.240Z",
+      "last_at": "2026-10-09T01:25:25.640Z",
       "late": true,
       "today": false
      }
@@ -1169,13 +1169,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-09T15:11:52.201Z",
-      "due_day": "2026-10-09",
+      "due_at": "2026-10-10T01:25:25.591Z",
+      "due_day": "2026-10-10",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-10T15:11:52.202Z",
+      "created_at": "2026-10-11T01:25:25.594Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1445,7 +1445,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-08T15:11:52.074Z",
+      "due_at": "2026-10-09T01:25:25.438Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1539,7 +1539,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-10T08:20:03.339Z",
+    "created_at": "2026-10-11T00:25:26.402Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1724,7 +1724,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-10T08:20:03.339Z",
+      "created_at": "2026-10-11T00:25:26.402Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -1797,7 +1797,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-10T15:11:53.239Z"
+     "shared_at": "2026-10-11T01:25:27.586Z"
     }
    },
    "optional": []
@@ -1850,13 +1850,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-09T15:11:52.201Z",
-     "due_day": "2026-10-09",
+     "due_at": "2026-10-10T01:25:25.591Z",
+     "due_day": "2026-10-10",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-10T15:11:52.211Z",
-     "created_at": "2026-10-10T15:11:52.202Z",
+     "done_at": "2026-10-11T01:25:25.605Z",
+     "created_at": "2026-10-11T01:25:25.594Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2590,13 +2590,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-09T15:11:52.201Z",
-     "due_day": "2026-10-09",
+     "due_at": "2026-10-10T01:25:25.591Z",
+     "due_day": "2026-10-10",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-10T15:11:52.202Z",
+     "created_at": "2026-10-11T01:25:25.594Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2648,9 +2648,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-10T15:11:52.199Z",
+     "at": "2026-10-11T01:25:25.590Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-10T15:11:52.200Z"
+     "created_at": "2026-10-11T01:25:25.590Z"
     }
    },
    "optional": []
@@ -2665,9 +2665,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-10T15:11:52.243Z",
+     "at": "2026-10-11T01:25:25.645Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-10T15:11:52.243Z"
+     "created_at": "2026-10-11T01:25:25.645Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2676,13 +2676,13 @@
      "party_name": "Name of 0012",
      "party_listed": true,
      "what": "Demo",
-     "due_at": "2026-10-12T18:30:00.000Z",
-     "due_day": "2026-10-13",
+     "due_at": "2026-10-13T18:30:00.000Z",
+     "due_day": "2026-10-14",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-10T15:11:52.243Z",
+     "created_at": "2026-10-11T01:25:25.645Z",
      "late": false,
      "today": false,
      "bucket": "week"
