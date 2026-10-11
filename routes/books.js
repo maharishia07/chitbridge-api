@@ -54,6 +54,8 @@ function fail(res, e) {
   if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
   if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json({ error: e.message, message: e.message });
   if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
+  /* a terms field the owner can fix (lib/finance-terms): 400/404 in a sentence */
+  if (e && e.say && (e.status === 400 || e.status === 404)) return res.status(e.status).json({ error: e.say, message: e.say });
   if (e && e.code === '23505') return res.status(409).json({ error: 'That is already recorded.', message: 'That is already recorded.' });
   /* ⭐ M30-2: the books are insert-only (b273: trigger + no UPDATE grant); a write the database refuses for that reason is the server's state (b295 not run), 503 in words — never a bare 500 */
   if (e && (e.code === '42501' || /insert-only/.test(String(e.message || '')))) {
@@ -113,6 +115,38 @@ router.post('/setting', auth, owner, on, async (req, res) => {
     });
     require('../lib/books-hooks').forget(e);
     res.json({ ok: true, enabled, walkin_grain: grain });
+  } catch (err) { fail(res, err); }
+});
+/**
+ * ⭐ CB FINANCE · TERMS (F2) — GET /terms?party_id&side → { terms_migrated, may_set, why_not, default, party: { party_id, side, own, effective } | null, events }
+ * The shop's default terms and (with party_id) that party's own override + what applies (lib/finance-terms.resolve: its own value, else the shop's).
+ * Readable by any signed-in login of a shop with the ledger on (the CRM record, Accounts, the counter read it); `may_set` is the SERVER's answer for THIS login.
+ * Before b298 runs: terms_migrated false, the party's own days/limit still answered. POST /terms (owner) sets — { party_id?, side?, credit_days,
+ * credit_limit_minor, interest: { on, rate_pct, grace_days }|null, early: { pct, within_days }|null } — one change event per changed key; 503 TERMS_NOT_MIGRATED before b298.
+ */
+router.get('/terms', auth, noKey, on, async (req, res) => {
+  try {
+    const e = ctx(req), T = require('../lib/finance-terms'), pid = req.query.party_id ? String(req.query.party_id) : null, side = req.query.side === 'supplier' ? 'supplier' : 'customer';
+    const mig = await T.migrated(), may = isOwner(req);
+    const out = await withEntity(e, async (h) => {
+      const dflt = mig ? await T.shopTerms(h, e) : {};
+      const events = mig ? await (pid ? T.partyEvents(h, e, pid) : T.shopEvents(h, e)) : [];
+      let party = null;
+      if (pid) {
+        const row = await T.partyRow(h, e, pid, side, mig);
+        if (row) party = { party_id: pid, side, own: { credit_days: row.credit_days, credit_limit_minor: row.credit_limit_minor == null ? null : Number(row.credit_limit_minor), interest: (row.terms || {}).interest || null, early: (row.terms || {}).early || null }, effective: T.resolve(dflt, row) };
+      }
+      return { dflt, party, events };
+    });
+    res.json({ terms_migrated: mig, may_set: may, why_not: may ? null : 'Only the owner may set terms.', default: out.dflt, party: out.party, events: out.events });
+  } catch (err) { fail(res, err); }
+});
+router.post('/terms', auth, owner, on, async (req, res) => {
+  try {
+    const e = ctx(req), T = require('../lib/finance-terms'), b = req.body || {}, pid = b.party_id ? String(b.party_id) : null, side = b.side === 'supplier' ? 'supplier' : 'customer';
+    if (!(await T.migrated())) return res.status(503).json({ code: 'TERMS_NOT_MIGRATED', error: 'Terms arrive after the next update.', message: 'Terms arrive after the next update.' });
+    const out = await withEntity(e, (h) => (pid ? T.saveParty(h, e, pid, side, b, byOf(req)) : T.saveShop(h, e, b, byOf(req))));
+    res.json({ ok: true, terms: out });
   } catch (err) { fail(res, err); }
 });
 /**

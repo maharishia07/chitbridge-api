@@ -14,6 +14,8 @@
  *   DELETE /api/crm/parties/:id                 "Remove from my parties" — owner, no open dues, hides the row, deletes no history (b276)
  *   GET    /api/crm/parties?view=leads          only the leads (no trade yet), each with its stage; `leads_migrated` false until b297
  *   POST   /api/crm/leads                       one lead = a local party (added_via 'lead') + its first stage                          (b297)
+ *   GET    /api/crm/calls                       ?scope=mine|all — today's call queue (ONE query) + the outcome buttons       (b276; stage b297)
+ *   POST   /api/crm/parties/:id/outcome         one tap after a call: call logged + next follow-up + stage, ONE transaction (b276; b297 for a stage move)
  *   POST   /api/crm/parties/:id/stage           "Move to…" — a new memberships row (kind lead_stage); the old rows are the history      (b297)
  *   POST   /api/crm/walk-ins/add                a phone that holds points → a local customer; the points move to them
  *
@@ -256,6 +258,21 @@ router.post('/leads', auth, noKey, async (req, res) => {
       return { party: { party_id: local.identity_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false, lead: { stage, since: crm.iso(m.at) } } };
     });
     res.status(201).json(out);
+  } catch (e) { fail(res, e); }
+});
+
+/* ── L2: the call desk — the table of outcomes is lib/crm-calls (server); the web only labels it ─────────────────── */
+router.get('/calls', auth, noKey, async (req, res) => {
+  try {
+    const owner = ctx(req);
+    res.json(await withEntity(owner, (h) => require('../lib/crm-calls').queue(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', me: byOf(req) })));
+  } catch (e) { fail(res, e); }
+});
+/** Body { outcome, after?: today|tomorrow|3days, due_at?: YYYY-MM-DD }. 201 { interaction, followup, stage, suggest } */
+router.post('/parties/:id/outcome', auth, noKey, async (req, res) => {
+  try {
+    const owner = ctx(req), id = idOf(req);
+    res.status(201).json(await withEntity(owner, (h) => require('../lib/crm-calls').outcome(h, owner, id, req.body, byOf(req))));
   } catch (e) { fail(res, e); }
 });
 

@@ -37,8 +37,8 @@ const G = globalThis.CBGov;
 console.log('\n══ the governance context ══\n');
 
 console.log('— where the shop is —');
-it('a language tag with a region says the country: en-IN → India, and says so', () => {
-  const c = G.countryOf({ language: 'en-IN', timeZone: 'Asia/Kolkata' });
+it('a language tag with a region says the country when the zone cannot: en-IN, no zone → India, and says so', () => {
+  const c = G.countryOf({ language: 'en-IN' });
   assert.strictEqual(c.value, 'IN');
   assert.ok(/language/.test(c.from), 'it does not say where the answer came from');
 });
@@ -49,12 +49,15 @@ it('a bare language says nothing, so the time zone answers: "ta" in Asia/Kolkata
   assert.ok(/time zone/.test(c.from));
 });
 /**
- * ⭐ THE TAG BEATS THE ZONE, and the case that proves it is a real one: an Indian shopkeeper's laptop in Dubai
- * for a week still reports en-IN. A tag is what the reader CHOSE; a zone is where the machine is sitting.
+ * ⭐ THE ZONE BEATS THE TAG when it names a served country — REVERSED by M196 (engines v1.33, memory "country first"):
+ * an en-US browser in Asia/Calcutta started an Indian shop in dollars. Most browsers ship en-US whatever the country;
+ * the zone is set by the shop's own clock. The tag only speaks when the zone is ambiguous or unserved. Every answer
+ * is shown before sign-up with a one-tap change, so the travelling-laptop case is corrected by the person, not guessed.
  */
-it('⭐ the chosen language beats where the machine is sitting', () => {
-  assert.strictEqual(G.countryOf({ language: 'en-IN', timeZone: 'Asia/Dubai' }).value, 'IN');
-  assert.strictEqual(G.countryOf({ language: 'ar-AE', timeZone: 'Asia/Kolkata' }).value, 'AE');
+it('⭐ the time zone beats the language tag (M196: an en-US browser in India is an Indian shop)', () => {
+  assert.strictEqual(G.countryOf({ language: 'en-US', timeZone: 'Asia/Calcutta' }).value, 'IN');
+  assert.strictEqual(G.countryOf({ language: 'en-IN', timeZone: 'Asia/Dubai' }).value, 'AE');
+  assert.ok(/time zone/.test(G.countryOf({ language: 'en-US', timeZone: 'Asia/Kolkata' }).from));
 });
 it('a second language is tried before giving up: ["ta","en-LK"] → Sri Lanka', () => {
   const c = G.countryOf({ language: 'ta', languages: ['ta', 'en-LK'], timeZone: 'Europe/Zurich' });

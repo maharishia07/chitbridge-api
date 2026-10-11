@@ -9,7 +9,7 @@
     "offers": "1.3.0",
     "variant": "1.4.0",
     "search": "1.4.0",
-    "govcontext": "1.4.0",
+    "govcontext": "1.33.0",
     "locale": "1.4.0",
     "units": "1.5.0",
     "qty": "1.5.0",
@@ -36,7 +36,8 @@
     "bookpack": "1.20.0",
     "period": "1.20.0",
     "gst-returns": "1.20.0",
-    "rail": "1.29.0"
+    "rail": "1.29.0",
+    "workflow": "1.33.0"
   },
   "adopt": {
     "money": [
@@ -151,6 +152,9 @@
     ],
     "rail": [
       "lib/rail.js"
+    ],
+    "workflow": [
+      "lib/workflow.js"
     ]
   },
   "bundles": {
@@ -169,7 +173,7 @@
     "offers": "b90632d3ffa35196adcee8722269468dc83255edd327e2ff28e3cb07f5d82dee",
     "variant": "2b82dcbaba8ad8590623ef72d41979894d4390468abf74d862f158d7d4e48946",
     "search": "3e6b74d84e1fa082d5aa7d676f53421b263beafd8c455dfe9719f7d25cd841fa",
-    "govcontext": "b49816056f5284d60599004a4e65df388c61609bdc344a28baad169f58b86d87",
+    "govcontext": "23f0158addb22ea27f7453b59d7982b3435840aae97612320095a4e443e72ad6",
     "locale": "0f8c7bd83ec0190beb18731192fdde3c0b20dc93d0477bb52197887716aa3668",
     "units": "93626bcaf343cde1a56ca3fa554b8ed0a0e6cdf40e5ab6368fe3b332572b8219",
     "qty": "48f6fb0cc0338202b1b938193cff6e0e9b1ef1edc10cd36a27104e967d1b9fbe",
@@ -196,6 +200,7 @@
     "bookpack": "1021a12646ad9a3ce224f90ae2ca0c7e96ae346640e7e77b1694cbe32956ae58",
     "period": "bfe2c30d4803526d0120ed9fcab9f44845302efb29b3b85b75192d8ae31acc9a",
     "gst-returns": "3390556dca61965ed41f0431d409521c08509c74e5c2447aa936d42db4ae509e",
-    "rail": "62146650c1ae4e0aa47c16625026f2d29039c4d05261c191f899bd0213f1b698"
+    "rail": "62146650c1ae4e0aa47c16625026f2d29039c4d05261c191f899bd0213f1b698",
+    "workflow": "f8c7a43048bc1b8453a1c2ec43b6eed7f619feee4c67eaba046c6cea370f0a5b"
   }
 }

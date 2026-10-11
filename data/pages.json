@@ -3,7 +3,11 @@
   "grammar": "^[a-z][a-z0-9_]*[.][a-z][a-z0-9_]*[.][a-z][a-z0-9_]*@[0-9]+[.][0-9]+$",
   "base": "chit.base.detail@1.0",
   "pages": [
-    { "name": "chit.base.detail", "version": "1.0", "script": "app.html", "says": "the detail pane built into the app (design 1, and design 2 from app/cap-chit2.js); B0 gives it its own file (M53)" }
+    { "name": "chit.base.detail", "version": "1.0", "script": "app.html", "says": "the detail pane built into the app (design 1, and design 2 from app/cap-chit2.js); B0 gives it its own file (M53)" },
+    { "name": "showcase.designer.gallery", "version": "1.0", "script": "app/showcase-templates.js", "says": "gallery-first: photo grid, enquiry face (designer, cards); sections under one data contract (S2)" },
+    { "name": "showcase.food.menu", "version": "1.0", "script": "app/showcase-templates.js", "says": "menu: categories and rows, order face (food); sections under one data contract (S2)" },
+    { "name": "showcase.paint.specs", "version": "1.0", "script": "app/showcase-templates.js", "says": "spec wall: rows with unit/size chips, quote face (paint, hardware); sections under one data contract (S2)" },
+    { "name": "showcase.services.booking", "version": "1.0", "script": "app/showcase-templates.js", "says": "booking: service cards, booking face (services); sections under one data contract (S2)" }
   ],
   "reserved": ["sale.restaurant.table", "service.repair.job"]
 }

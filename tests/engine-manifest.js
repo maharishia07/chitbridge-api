@@ -205,7 +205,7 @@ const INFRA_LIBS = [
   /* [CB Sides] the two panels' read (sides: SQL + the reuses) and the impact walk shared with raida.walk (impact: pure graph rule, used by the register and the panel) (2026-10-09) */
   'sides.js', 'impact.js',
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
-  'crm.js', 'crm-followups.js', 'memberships.js',
+  'crm.js', 'crm-followups.js', 'memberships.js', 'crm-calls.js',
   /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */
   'books-tally.js',
   /* one translation of a refusal the database makes ON PURPOSE (b247's population boundary) into a 409 in words, used
@@ -402,7 +402,7 @@ const ENGINE_OTHER = [
      month is open, the gap-free number); books-hooks.js — which chit posts which event (classify(), pure, tested);
      party-fields.js — the party master's field rules and the duplicate-tax-id refusal. CB's own decisions, not an
      outside standard's; the debit/credit rules themselves stay in CBPosting. (2026-09-29) */
-  'books.js', 'books-hooks.js', 'party-fields.js',
+  'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
   /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
      books-hooks (which event) and stock-from-chit (whether it is stock). CB's own decision. (2026-10-01) */
   'bill-use.js',
@@ -702,6 +702,9 @@ const ENGINE_OTHER = [
      reject, complete, dispute, assign, amend or message on my copy of this chit, with one refusal word — CB's own rules about
      what a chit holder may do. rail-actions.js gathers its two inputs from a request (level, my copy) and says its refusal. */
   'rail.js', 'rail-actions.js',
+  /* ⭐ TO1 (2026-10-10) — Tasks & Orders. workflow.js is ADOPTED from chitbridge-engines (engines.lock.json): which folder an order is in, its stage word,
+     and every action with a verdict (wraps rail). work-rows.js is the one row builder behind GET /api/work/* — SQL over select · open-orders · assign · deliverline, no rule of its own. */
+  'workflow.js', 'work-rows.js',
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [
