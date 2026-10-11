@@ -7,6 +7,7 @@ const railActions = require('../lib/rail-actions');   // ⭐ R01 — the rail en
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
+const { isOwner } = require('../lib/owner');
 const storage = require('../lib/storage');
 const docnumber = require('../lib/docnumber');   // what a document number may look like, per country
 const { tillClaimOf } = require('../lib/holder');   // M11 — a phone's bill names its device and person; checked against the session
@@ -594,6 +595,21 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
        * transaction this product exists for.
        */
       const currency_code = (business_json && business_json.currency) || 'INR';
+
+      /* ⭐ CB FINANCE · TERMS (F2) — THE SERVER ENFORCES THE CREDIT LIMIT. A credit bill to a known customer that would take them past
+         the limit that applies (their own, else the shop's default) is refused with 409 OVER_LIMIT — unless the OWNER allowed it: the
+         counter carries business_json.credit_override = { by } (the owner's counter PIN, checked at the till), and only a counter key or
+         the owner's own login may carry it. An allowed bill is recorded (books_change_log 'credit_limit'). Not a credit bill, no named
+         customer, ledger off or no limit → no query at all. */
+      if (!req.body.is_draft && purpose === 'order' && business_json && typeof business_json === 'object') {
+        const F = require('../lib/finance-terms');
+        const chk = await F.creditSaleCheck(sender_id, business_json);
+        if (chk.over) {
+          const ov = business_json.credit_override, allowed = !!(ov && ov.by && (req.till || isOwner(req)));
+          if (!allowed) return res.status(409).json({ code: 'OVER_LIMIT', error: 'Over the credit limit.', message: F.overSentence(chk), limit_minor: chk.limit_minor, owed_minor: chk.owed_minor, after_minor: chk.after_minor, party_id: chk.party_id });
+          F.noteOverride(sender_id, chk, String(ov.by)).catch(() => {});
+        }
+      }
 
       /* the bill number the till issued travels ON the chit — it is what the dedupe above looks for on a replay (2026-09-07) */
       if (client_ref && business_json && typeof business_json === 'object') business_json.client_ref = client_ref;

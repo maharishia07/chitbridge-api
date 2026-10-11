@@ -109,6 +109,7 @@ async function captureBooks() {
     await q('GET', '/ledger/1300?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
     await q('GET', '/ledger/bank?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
     await q('GET', '/dues', null, '/dues');
+    await q('GET', '/terms', null, '/terms');   /* F2: before b298 runs — terms_migrated false, the shop default empty */
     await q('GET', '/trial-balance?asOf=2027-03-31', null, '/trial-balance');
     await q('GET', '/pl?from=2026-04-01&to=2027-03-31', null, '/pl');
     await q('GET', '/bs?asOf=2027-03-31', null, '/bs');

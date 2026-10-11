@@ -1015,6 +1015,18 @@
     "recurring[].event"
    ]
   },
+  "GET /api/books/terms": {
+   "status": 200,
+   "example": {
+    "terms_migrated": false,
+    "may_set": true,
+    "why_not": null,
+    "default": {},
+    "party": null,
+    "events": []
+   },
+   "optional": []
+  },
   "GET /api/books/todo": {
    "status": 200,
    "example": [
