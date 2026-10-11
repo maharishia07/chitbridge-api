@@ -253,6 +253,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/crm/calls": {
+      "file": "crm.js",
+      "trips": 2,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "why": "L2: ONE transaction; the queue is ONE statement for any number of leads (follow-ups + untouched leads + last call + stage by LATERAL, no per-row query), plus the memberships table probe, cached once present: 2 cold, 1 warm"
+    },
     "GET /api/crm/followups": {
       "file": "crm.js",
       "trips": 50,
@@ -821,6 +829,14 @@
       "fired": true,
       "status": 400,
       "why": "L1: ONE transaction (mint + customer_list row + memberships row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm. The empty stub answers 400 early (a floor)"
+    },
+    "POST /api/crm/parties/:id/outcome": {
+      "file": "crm.js",
+      "trips": 2,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "why": "L2: ONE transaction (party check, last calls, close open follow-ups, interaction, next follow-up, stage row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm"
     },
     "POST /api/crm/parties/:id/stage": {
       "file": "crm.js",

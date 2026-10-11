@@ -1106,6 +1106,46 @@
    },
    "optional": []
   },
+  "GET /api/crm/calls": {
+   "status": 200,
+   "example": {
+    "calls": [
+     {
+      "party_id": "10000000-0000-4000-8000-000000000012",
+      "party_name": "Lead Lata",
+      "phone": "+919840011111",
+      "stage": "lead",
+      "followup_id": "f-q1",
+      "what": "Ring again",
+      "due_day": "2026-10-09",
+      "assignee_user_id": "E1",
+      "new": false,
+      "last_outcome": "No answer",
+      "last_at": "2026-10-08T15:11:52.240Z",
+      "late": true,
+      "today": false
+     }
+    ],
+    "count": 2,
+    "late": 1,
+    "today": 0,
+    "outcomes": [
+     {
+      "key": "no_answer",
+      "label": "No answer",
+      "ask": false,
+      "presets": [
+       "today"
+      ],
+      "moves": "demo"
+     }
+    ],
+    "may": {
+     "ok": true
+    }
+   },
+   "optional": []
+  },
   "GET /api/crm/followups": {
    "status": 200,
    "example": {
@@ -1117,13 +1157,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-09T12:32:23.336Z",
+      "due_at": "2026-10-09T15:11:52.201Z",
       "due_day": "2026-10-09",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-10T12:32:23.337Z",
+      "created_at": "2026-10-10T15:11:52.202Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1393,7 +1433,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-08T12:32:23.278Z",
+      "due_at": "2026-10-08T15:11:52.074Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1745,7 +1785,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-10T12:32:24.016Z"
+     "shared_at": "2026-10-10T15:11:53.239Z"
     }
    },
    "optional": []
@@ -1798,13 +1838,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-09T12:32:23.336Z",
+     "due_at": "2026-10-09T15:11:52.201Z",
      "due_day": "2026-10-09",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-10T12:32:23.341Z",
-     "created_at": "2026-10-10T12:32:23.337Z",
+     "done_at": "2026-10-10T15:11:52.211Z",
+     "created_at": "2026-10-10T15:11:52.202Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2538,13 +2578,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-09T12:32:23.336Z",
+     "due_at": "2026-10-09T15:11:52.201Z",
      "due_day": "2026-10-09",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-10T12:32:23.337Z",
+     "created_at": "2026-10-10T15:11:52.202Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2596,10 +2636,68 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-10T12:32:23.336Z",
+     "at": "2026-10-10T15:11:52.199Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-10T12:32:23.336Z"
+     "created_at": "2026-10-10T15:11:52.200Z"
     }
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/outcome": {
+   "status": 201,
+   "example": {
+    "interaction": {
+     "interaction_id": "00000000-0000-4000-8000-000000000004",
+     "owner": "E1",
+     "party_id": "10000000-0000-4000-8000-000000000012",
+     "kind": "call",
+     "direction": "out",
+     "body": "Demo booked",
+     "at": "2026-10-10T15:11:52.243Z",
+     "by_user_id": "E1",
+     "created_at": "2026-10-10T15:11:52.243Z"
+    },
+    "followup": {
+     "followup_id": "00000000-0000-4000-8000-000000000005",
+     "party_id": "10000000-0000-4000-8000-000000000012",
+     "party_no": "P-0012",
+     "party_name": "Name of 0012",
+     "party_listed": true,
+     "what": "Demo",
+     "due_at": "2026-10-12T18:30:00.000Z",
+     "due_day": "2026-10-13",
+     "assignee_user_id": "E1",
+     "assignee_name": "Who E1",
+     "source": "interaction",
+     "done_at": null,
+     "created_at": "2026-10-10T15:11:52.243Z",
+     "late": false,
+     "today": false,
+     "bucket": "week"
+    },
+    "stage": {
+     "stage": "demo",
+     "since": "2026-10-10T09:00:00.000Z"
+    },
+    "suggest": null
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/outcome #400": {
+   "status": 400,
+   "example": {
+    "code": "BAD_OUTCOME",
+    "error": "Pick what happened on the call.",
+    "message": "Pick what happened on the call."
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/outcome #503": {
+   "status": 503,
+   "example": {
+    "code": "LEADS_NOT_MIGRATED",
+    "error": "Lead stages arrive after the next update.",
+    "message": "Lead stages arrive after the next update."
    },
    "optional": []
   },
