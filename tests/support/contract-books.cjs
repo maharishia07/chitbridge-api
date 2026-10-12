@@ -113,6 +113,9 @@ async function captureBooks() {
     const tbp = await q('POST', '/move-in/preflight', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv') }, '/move-in/preflight');
     const tbd = ((tbp.body && tbp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
     await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv'), decisions: tbd, confirm: true, as_at: '2026-04-01' }, '/move-in/import');
+    /* a balanced trial balance: the preview's totals / control keys and the import's entry (an Indian rig, so most rows skip — the SHAPES are what is held) */
+    await q('POST', '/move-in/preview', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, as_at: '2026-04-01' }, '/move-in/preview');
+    await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, confirm: true, as_at: '2026-04-01' }, '/move-in/import');
 
     /* ── the books' reads ── */
     await q('GET', '/daybook?from=2026-09-01&to=2026-10-31', null, '/daybook');
