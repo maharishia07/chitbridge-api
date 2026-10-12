@@ -28,6 +28,7 @@ const GUARDS = [
   'pages-parse.test.js',      // every inline script in app.html, till.html and promo.html parses
   'till-vendor.test.js',      // the counter and its vendored engines agree, byte for byte
   'shop-clock-guard.test.cjs',  // ⭐⭐ Y1: one shop clock — no raw new Date()/Date.now() in the ledger files; set/advance/reset proven
+  'shop-day-tz.test.cjs',       // ⭐⭐ M210: a midnight sale lands in the SHOP's day on every server clock, before and after b299; Sydney across DST
   'till-t2a.test.cjs',  // round T2a: bills-only count, an online order billed, the mode menu, no 403 on quick-keys/hidden
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
@@ -201,6 +202,7 @@ const GUARDS = [
   'books-todo.test.cjs',        // ⭐ the To-do feed: each kind from a real check, only what needs doing, and each row gone when it is done
   'books-manual-events.test.cjs', // ⭐⭐ expense / other income / capital / drawings / staff advance + recovery: hand-worked lines, MJ + voucher type, double tap once, owner-only, the system gives a ledger's code
   'books-voucher-type-write.test.cjs', // ⭐ b279 ran 2026-10-03: every new entry stores its voucher TYPE; a manual MJ Payment reads Payment
+  'country-setup.test.cjs',     // ⭐ CS1: register → Country setup → India pack on; a pack-less country refused with ITS sentence on every books route; existing Indian shops untouched; owner-only; 503 before b299
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
   'books-payments.test.cjs',    // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words

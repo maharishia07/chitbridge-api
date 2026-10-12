@@ -361,6 +361,38 @@ router.get('/profile/path', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Path failed', message: safeErr(err) }); }
 });
 
+/**
+ * ⭐ CS1 · COUNTRY SETUP (2026-10-12) — the entity's governance profile: country · currency · financial-year start · tax registration,
+ * completed by the OWNER after registration, before the books open (lib/country-setup.js; DECISIONS 2026-10-03: no silent India).
+ *   GET /api/governance/country-setup  — any signed-in login of the shop (the step paints; a co-assist reads it): the profile, with
+ *                                        `required` (the step is still to be done), `pack` { books, code, why } — the ONE sentence for a
+ *                                        pack-less country — and each field's `source`. 1 trip cold (+1 after b299), schema probe cached.
+ *   PUT /api/governance/country-setup  — OWNER ONLY (no key, no co-assist; the server decides): { country, currency, fy_start_month,
+ *                                        tax: { registered, number, scheme }, source: { field: words } } → the profile. One transaction.
+ *                                        400 in words · 409 a different country (a new entity) · 503 COUNTRY_SETUP_NOT_MIGRATED before b299.
+ * Trips: GET 2 (identities + entity_governance, inside one withEntity) · PUT 2 reads + 2 writes (+1 insert for a shop with no stamp row).
+ */
+router.get('/country-setup', auth, async (req, res) => {
+  try { const entity_id = auth.entityOf(req);
+    const CS = require('../lib/country-setup');
+    res.json(await withEntity(entity_id, (h) => CS.profile(h, entity_id)));
+  } catch (err) { res.status(err.status || 500).json({ code: err.code || undefined, error: err.say || 'Country setup could not be read', message: err.say || safeErr(err) }); }
+});
+router.put('/country-setup', auth, async (req, res) => {
+  try { const entity_id = auth.entityOf(req);
+    if (!require('../lib/owner').isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
+    const CS = require('../lib/country-setup');
+    const out = await withEntity(entity_id, (h) => CS.save(h, entity_id, req.body || {}));
+    /* the books gate's cached answer and the books-hooks switch cache both move with the country */
+    try { require('../lib/books-hooks').forget(entity_id); } catch (_) {}
+    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}
+    res.json(out);
+  } catch (err) {
+    if (err && err.say) return res.status(err.status || 422).json({ code: err.code, error: err.say, message: err.say });
+    res.status(err.status || 500).json({ error: 'Country setup could not be saved', message: safeErr(err) });
+  }
+});
+
 // ── AI CO-ASSIST — INVOKED (never autonomous). Drafts a clearance document from the order/product context; returns a
 // draft for the human to confirm (not evidence until accepted). Meters per-entity usage (b99). ──
 router.post('/ai-draft', auth, async (req, res) => {

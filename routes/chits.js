@@ -1744,8 +1744,20 @@ function chitFilters(req, where, params){
   const amin = num(req.query.amount_min), amax = num(req.query.amount_max);
   if (amin !== null) { params.push(amin); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`; }
   if (amax !== null) { params.push(amax); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) <= $${params.length}`; }
-  if (req.query.date_from) { params.push(req.query.date_from); where += ` AND ch.created_at >= $${params.length}::timestamptz`; }
-  if (req.query.date_to)   { params.push(req.query.date_to);   where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`; }
+  /* ⭐ a date filter is the SHOP's day (M210): midnight in the shop's own zone (identities.timezone, b176; India when unset) — the
+     same rule as books-hooks.dayBounds, spelt in SQL because this builder is synchronous and a trip to read the zone is not
+     affordable here. `timestamp AT TIME ZONE zone` names the instant that midnight is; it compares right against created_at
+     before b299 (naive, read as UTC by the pinned session zone) and after it (timestamptz). */
+  const dateQ = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '').trim());
+  if (dateQ(req.query.date_from) || dateQ(req.query.date_to)) {
+    params.push(entityId(req));                                     /* the SHOP (an actor's parent entity), whose zone it is */
+    const zone = `COALESCE((SELECT z.timezone FROM identities z WHERE z.identity_id = $${params.length}::uuid), 'Asia/Kolkata')`;
+    if (dateQ(req.query.date_from)) { params.push(String(req.query.date_from).trim()); where += ` AND ch.created_at >= ($${params.length}::date::timestamp AT TIME ZONE ${zone})`; }
+    if (dateQ(req.query.date_to))   { params.push(String(req.query.date_to).trim());   where += ` AND ch.created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE ${zone})`; }
+  } else {                                                          /* a full timestamp: as before, an instant */
+    if (req.query.date_from) { params.push(req.query.date_from); where += ` AND ch.created_at >= $${params.length}::timestamptz`; }
+    if (req.query.date_to)   { params.push(req.query.date_to);   where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`; }
+  }
   if (req.query.priority)  { params.push(req.query.priority);  where += ` AND cs.priority_flag = $${params.length}`; }
   if (req.query.fstatus)   {
     const B = { open:['pending','delivered','read'], act:['accepted','in_progress','partial'], close:['completed','cancelled','rejected'] };
