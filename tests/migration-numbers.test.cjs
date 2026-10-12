@@ -50,5 +50,6 @@ check('apply / dryrun / verify of one migration are one migration', !fx(['b180_p
 check('a bare VERIFY beside its migration is fine', !fx(['b198_VERIFY.sql', 'b198_declare_legacy_columns_APPLY.sql']));
 check('a lettered follow-on is its own number', !fx(['b105_retention_prep.sql', 'b105a_floor_trigger_definer.sql']));
 
-console.log('\n' + (fail ? '  ✗ FAIL' : '  ✓ migration numbers') + ' · ' + pass + ' passed, ' + fail + ' failed');
+/* the guard gate reads the LAST "<n> checks" (scripts/guards.cjs) — a guard that counts nothing proves nothing */
+console.log('\n' + (fail ? '  ✗ FAIL' : '  ✓ migration numbers') + ' · ' + fail + ' failed · ' + (pass + fail) + ' checks');
 process.exit(fail ? 1 : 0);
