@@ -859,7 +859,11 @@
       "wire": 0,
       "fired": true,
       "status": 400,
-      "why": "L3: ONE transaction of set-based statements for up to 500 rows (owner handle · the matching parties · mintMany 4 · contact update · customer_list insert · number block 3 · merges update · addMany 2 · notes insert = 1 trip, the same for 6 rows and for 500) plus three probes cached once present (memberships table, identities.city, customer_list.legal_name): 4 cold, 1 warm. A dry run is the probe + 1. The empty stub answers 400 NO_ROWS early (a floor)"
+      "why": "L3: ONE transaction of set-based statements for up to 500 rows (owner handle · the matching parties · mintMany 4 · contact update · customer_list insert · number block 3 · merges update · addMany 2 · notes insert = 1 trip, the same for 6 rows and for 500) plus three probes cached once present (memberships table, identities.city, customer_list.legal_name): 4 cold, 1 warm. A dry run is the probe + 1. The empty stub answers 400 NO_ROWS early (a floor)",
+      "awaiting_client": {
+        "pr": "web#149",
+        "since": "2026-10-12"
+      }
     },
     "POST /api/crm/parties/:id/outcome": {
       "file": "crm.js",
