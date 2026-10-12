@@ -216,7 +216,7 @@ function machine(c, io) {
       }
       if (r.status < 200 || r.status >= 300) return set({ busy: false, why: refusalOf(r) });
       var resolved = String(b.id || b.user_id || b.handle || a.body.id || a.body.email || a.body.user_id || typedId);
-      return set({ busy: false, at: 'credential', need: needOf(b), kind: kindOf(b), resolved: resolved,
+      return set({ busy: false, at: 'credential', need: needOf(b), kind: kindOf(b), resolved: resolved, local: null,
                    sent: needOf(b) === 'code' ? { id: resolved, typed: String(typedId), kind: kindOf(b), at: Date.now() } : null,
                    said: needOf(b) === 'pin' ? '' : (b.message || a.say || W.sent) });
     });
@@ -321,7 +321,9 @@ function machine(c, io) {
     return askFor(S.resolved, true);
   }
   /** back to the box. `sent` is KEPT: the code already on its way is remembered, so Continue with the same id does not ask twice */
-  function back() { return set({ at: 'out', typed: '', kind: '', need: '', resolved: '', choices: [], why: '', said: '', token: null }); }
+  /* ⚠️ W1 (2026-10-12): `local` is dropped too — "Not you? Start again" from somebody's counter-PIN box used to carry THEIR entry
+     into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. */
+  function back() { return set({ at: 'out', typed: '', kind: '', need: '', resolved: '', choices: [], why: '', said: '', token: null, local: null }); }
   return {
     state: function () { return S; },
     onChange: function (fn) { subs.push(fn); return function () { subs = subs.filter(function (x) { return x !== fn; }); }; },
