@@ -2302,7 +2302,11 @@
     "sample[].Expense Claims",
     "sample[].YTD Credit",
     "sample[].YTD Debit"
-   ]
+   ],
+   "free": [
+    "sample[]"
+   ],
+   "note": "IM1: sample[] rows are keyed by the file's own headers (free); guess[].field is null for a column not read"
   },
   "POST /api/books/move-in/preview": {
    "status": 200,
@@ -2344,7 +2348,11 @@
     "rows[].data.group_id",
     "rows[].data.group_name",
     "rows[].data.name"
-   ]
+   ],
+   "free": [
+    "rows[].data"
+   ],
+   "note": "IM1: rows[].data is the planned write and its keys depend on the kind (free); refusal is the sentence or null"
   },
   "POST /api/books/payments": {
    "status": 200,
