@@ -41,6 +41,7 @@ ok('no raw INSERT/UPDATE into a tenant table — bills, parties, products, the l
 ok('DATABASE_URL is set from --db before server.js loads (dotenv cannot redirect it)', src.indexOf('process.env.DATABASE_URL = DB') < src.indexOf("require(path.join(API, 'server.js'))"));
 ok('a sealed NODE_ENV is refused', /isSealed\(\)\) die\(/.test(src));
 ok('the schema step refuses a database that already has tables', /already has tables/.test(src));
+ok('the shop walks the Country setup door (CS1) before the books open — never a raw write to identities / entity_governance', /\/api\/governance\/country-setup/.test(src) && src.indexOf('/api/governance/country-setup') < src.indexOf('/api/books/enable'));
 
 /* 3 · one plan */
 const P = require(path.join(ROOT, 'tools', 'sim-plan.cjs'));

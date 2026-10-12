@@ -29,7 +29,7 @@ both in number order.
 
 | | |
 |---|---|
-| shop | **Simulated Stores** · user id `simstores` · `simstores@test.example` (a `@test.example` fixture — a TEST business) · GSTIN 33… (Tamil Nadu) |
+| shop | **Simulated Stores** · user id `simstores` · `simstores@test.example` (a `@test.example` fixture — a TEST business) · Country setup done (CS1: IN · INR · FY April · GSTIN 33… Tamil Nadu, regular) |
 | counter | C1 · bills `C1/26-27/0001` … one series per financial year |
 | shelf | 22 kirana items at 5 / 12 / 18 % (HSN on each), prices tax-inclusive (the shop's `price_includes_tax` default) |
 | parties | Kumar Traders (supplier) · Ravi Stores (customer, credit bills, 10 days) |

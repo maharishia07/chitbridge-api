@@ -5,7 +5,8 @@
  * The shop of tools/sim-plan.cjs — daily cash / UPI / credit bills, supplier purchases, expenses, month GST close + lock, the
  * year close — written into Postgres through THE SAME DOORS THE APP USES, with the api running in this process and the shop
  * clock (lib/shop-clock.js) set to each simulated day:
- *   · the shop: POST /api/entities/register + /verify (DEV_OTP) · the counter: POST /api/counters · the shelf: POST /api/products
+ *   · the shop: POST /api/entities/register + /verify (DEV_OTP) · Country setup: PUT /api/governance/country-setup (CS1) · the counter:
+ *     POST /api/counters · the shelf: POST /api/products
  *   · parties: POST /api/relationships/suppliers · /customers (the minted local identities every shop gets)
  *   · the ledger: POST /api/books/enable · /opening · month: /gst/close · /periods/:fy/:p/lock · /year/:fy/close
  *   · every bill: POST /api/chits/send in the counter's own shape (tools/tally-connector/till.js chitOf — bill_no, till, billed_at,
@@ -250,8 +251,15 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   const ver = must(await j('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: OTP } }), 'shop verify (is DEV_OTP armed?)');
   const token = ver.b.token; shopId = String((ver.b.entity && ver.b.entity.identity_id) || (ver.b.identity && ver.b.identity.identity_id) || '');
   if (!shopId) { const r = await sql(`SELECT identity_id FROM identities WHERE LOWER(email) = $1`, [EMAIL]); shopId = String(r.rows[0].identity_id); }
-  const gstn = COUNTRY === 'IN' ? '33AABCS1234A1Z5' : null;   /* Tamil Nadu (33) — the state the place-of-supply rule reads from the GSTIN */
-  must(await j('/api/entities/profile', { method: 'PATCH', token, body: Object.assign({ address: '12 Bazaar Street, Madurai' }, gstn ? { gstn } : {}) }), 'shop profile');
+  const gstn = COUNTRY === 'IN' ? '33AABCS1234A1Z8' : null;   /* Tamil Nadu (33) — the state the place-of-supply rule reads from the GSTIN; check digit 8 (profile-map.gstinChecksum) */
+  /* 1b · Country setup (CS1, M210's week): the step every owner completes after registration, before the books open — country ·
+     money · financial year · tax registration, through PUT /api/governance/country-setup (lib/country-setup.save writes identities.gstn,
+     the one home). 503 = b299_country_setup not run on this database: the gate then stays as it was, and the GSTIN goes in by the profile door. */
+  const cs = await j('/api/governance/country-setup', { method: 'PUT', token, body: { country: COUNTRY, currency: COUNTRY === 'AU' ? 'AUD' : 'INR', fy_start_month: COUNTRY === 'AU' ? 7 : 4,
+    tax: gstn ? { registered: true, number: gstn, scheme: 'regular' } : { registered: false }, source: { country: 'sim-load', currency: 'the pack', fy_start_month: 'the pack', tax: 'sim-load' } } });
+  if (cs.status === 503) say('country setup: ' + (cs.b.message || 'not migrated') + ' — b299_country_setup.sql is not on this database');
+  else must(cs, 'country setup');
+  must(await j('/api/entities/profile', { method: 'PATCH', token, body: Object.assign({ address: '12 Bazaar Street, Madurai' }, gstn && cs.status === 503 ? { gstn } : {}) }), 'shop profile');
   const me = must(await j('/api/entities/me', { token }), 'who am I').b;
   const meRow = me.entity || me.identity || me;
   say('shop ' + (meRow.display_name || 'Simulated Stores') + ' · user id ' + SHOP + ' · ' + (meRow.bridge_id || ''));
