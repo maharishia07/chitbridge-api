@@ -1133,7 +1133,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-10T23:17:38.503Z",
+      "last_at": "2026-10-10T23:36:15.056Z",
       "late": true,
       "today": false
      }
@@ -1169,13 +1169,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-11T23:17:38.483Z",
+      "due_at": "2026-10-11T23:36:15.034Z",
       "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-12T23:17:38.484Z",
+      "created_at": "2026-10-12T23:36:15.035Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1445,7 +1445,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-10T23:17:38.441Z",
+      "due_at": "2026-10-10T23:36:14.988Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1514,20 +1514,20 @@
    "example": {
     "agreements": [
      {
-      "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+      "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
       "entity_id": "11111111-1111-4111-8111-111111111111",
       "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
       "customer_entity_id": "22222222-2222-4222-8222-222222222222",
       "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
-      "every": 2,
+      "every": 1,
       "unit": "weekly",
       "anchor_day": 31,
-      "next_on": "2026-11-10",
+      "next_on": "2026-10-06",
       "end_on": null,
       "runs_max": 3,
-      "runs_done": 1,
+      "runs_done": 0,
       "mode": "draft",
-      "state": "ended",
+      "state": "proposed",
       "terms": {
        "lines": [
         {
@@ -1536,7 +1536,21 @@
         }
        ]
       },
-      "counter": null,
+      "counter": {
+       "note": "Fortnightly, fifteen",
+       "lines": [
+        {
+         "line_id": "L1",
+         "quantity": 15
+        }
+       ],
+       "every": 2,
+       "unit": "weekly",
+       "anchor_day": null,
+       "start_on": "2026-10-13",
+       "by": "22222222-2222-4222-8222-222222222222",
+       "at": "2026-10-05T06:00:00.000Z"
+      },
       "skips": [
        {
         "date": "2026-10-27",
@@ -1546,12 +1560,13 @@
        }
       ],
       "runs": {
-       "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
+       "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002",
+       "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
       },
       "last_run_on": "2026-10-13",
-      "state_by": "11111111-1111-4111-8111-111111111111",
-      "state_at": "2026-10-14T06:00:00.000Z",
-      "state_note": "Customer moved",
+      "state_by": "22222222-2222-4222-8222-222222222222",
+      "state_at": "2026-10-05T06:00:00.000Z",
+      "state_note": "Fortnightly, fifteen",
       "created_by": "11111111-1111-4111-8111-111111111111",
       "created_at": "2026-10-01T00:00:00Z",
       "updated_at": null,
@@ -1574,41 +1589,41 @@
       "actions": {
        "pause": {
         "ok": false,
-        "why": "ended",
-        "say": "This agreement has ended."
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
        },
        "resume": {
         "ok": false,
-        "why": "ended",
-        "say": "This agreement has ended."
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
        },
        "end": {
-        "ok": false,
+        "ok": true,
         "why": "ended",
         "say": "This agreement has ended."
        },
        "skip": {
         "ok": false,
-        "why": "ended",
-        "say": "This agreement has ended."
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
        },
        "run": {
         "ok": false,
-        "why": "ended",
-        "say": "This agreement has ended."
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
        },
        "agree": {
         "ok": false,
-        "why": "ended",
-        "say": "This agreement has ended."
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
        },
        "refuse": {
         "ok": false,
-        "why": "ended",
-        "say": "This agreement has ended."
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
        }
       },
-      "words": "Ended",
+      "words": "Waiting for the customer",
       "due": false
      }
     ],
@@ -1616,16 +1631,32 @@
     "message": "Repeat supply arrives after the next update."
    },
    "optional": [
+    "agreements[].actions.agree.say",
+    "agreements[].actions.agree.why",
+    "agreements[].actions.end.say",
+    "agreements[].actions.end.why",
+    "agreements[].actions.pause.say",
+    "agreements[].actions.pause.why",
+    "agreements[].actions.refuse.say",
+    "agreements[].actions.refuse.why",
+    "agreements[].actions.run.say",
+    "agreements[].actions.run.why",
+    "agreements[].actions.skip.say",
+    "agreements[].actions.skip.why",
     "agreements[].runs.2026-10-13",
+    "agreements[].runs.2026-10-31",
     "agreements[].terms.lines",
     "message"
+   ],
+   "free": [
+    "agreements[].runs"
    ]
   },
   "GET /api/repeat/:id": {
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -1639,14 +1670,37 @@
      "runs_done": 0,
      "mode": "draft",
      "state": "proposed",
-     "terms": {},
-     "counter": null,
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": {
+      "note": "Fortnightly, fifteen",
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ],
+      "every": 2,
+      "unit": "weekly",
+      "anchor_day": null,
+      "start_on": "2026-10-13",
+      "by": "22222222-2222-4222-8222-222222222222",
+      "at": "2026-10-05T06:00:00.000Z"
+     },
      "skips": [],
-     "runs": {},
-     "last_run_on": null,
-     "state_by": null,
-     "state_at": null,
-     "state_note": null,
+     "runs": {
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
+     },
+     "last_run_on": "2026-10-13",
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": "Fortnightly, fifteen",
      "created_by": "11111111-1111-4111-8111-111111111111",
      "created_at": "2026-10-01T00:00:00Z",
      "updated_at": null,
@@ -1701,7 +1755,9 @@
        "say": "This agreement is not at a step where that can be done."
       },
       "accept": {
-       "ok": true
+       "ok": true,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
       },
       "counter": {
        "ok": true
@@ -1716,14 +1772,29 @@
    },
    "optional": [
     "agreement.actions.accept",
+    "agreement.actions.accept.say",
+    "agreement.actions.accept.why",
     "agreement.actions.agree",
+    "agreement.actions.agree.say",
+    "agreement.actions.agree.why",
     "agreement.actions.counter",
     "agreement.actions.decline",
     "agreement.actions.end",
     "agreement.actions.pause",
+    "agreement.actions.pause.say",
+    "agreement.actions.pause.why",
     "agreement.actions.refuse",
+    "agreement.actions.refuse.say",
+    "agreement.actions.refuse.why",
     "agreement.actions.resume",
-    "agreement.actions.run"
+    "agreement.actions.run",
+    "agreement.actions.skip.say",
+    "agreement.actions.skip.why",
+    "agreement.runs.2026-10-13",
+    "agreement.terms.lines"
+   ],
+   "free": [
+    "agreement.runs"
    ]
   },
   "GET /api/work/:chit_id": {
@@ -1756,7 +1827,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-12T22:17:38.573Z",
+    "created_at": "2026-10-12T22:36:15.129Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1941,7 +2012,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-12T22:17:38.573Z",
+      "created_at": "2026-10-12T22:36:15.129Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2014,7 +2085,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-12T23:17:38.948Z"
+     "shared_at": "2026-10-12T23:36:15.497Z"
     }
    },
    "optional": []
@@ -2067,13 +2138,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-11T23:17:38.483Z",
+     "due_at": "2026-10-11T23:36:15.034Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-12T23:17:38.488Z",
-     "created_at": "2026-10-12T23:17:38.484Z",
+     "done_at": "2026-10-12T23:36:15.039Z",
+     "created_at": "2026-10-12T23:36:15.035Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2807,13 +2878,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-11T23:17:38.483Z",
+     "due_at": "2026-10-11T23:36:15.034Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-12T23:17:38.484Z",
+     "created_at": "2026-10-12T23:36:15.035Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2865,9 +2936,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-12T23:17:38.483Z",
+     "at": "2026-10-12T23:36:15.034Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-12T23:17:38.483Z"
+     "created_at": "2026-10-12T23:36:15.034Z"
     }
    },
    "optional": []
@@ -2882,9 +2953,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-12T23:17:38.504Z",
+     "at": "2026-10-12T23:36:15.057Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-12T23:17:38.504Z"
+     "created_at": "2026-10-12T23:36:15.057Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2899,7 +2970,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-12T23:17:38.504Z",
+     "created_at": "2026-10-12T23:36:15.057Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -2970,7 +3041,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3050,7 +3121,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat #503": {
    "status": 503,
@@ -3065,7 +3139,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3126,7 +3200,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/accept #422": {
    "status": 422,
@@ -3141,7 +3218,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3224,13 +3301,16 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/counter": {
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3309,13 +3389,16 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/decline": {
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "00895f6e-2e4a-4828-8fec-0b2b0271f759",
+     "agreement_id": "c09e091b-00e3-4903-811c-a0a2b9091883",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3323,17 +3406,19 @@
      "every": 1,
      "unit": "monthly",
      "anchor_day": 31,
-     "next_on": "2026-10-31",
+     "next_on": "2026-11-30",
      "end_on": null,
      "runs_max": null,
-     "runs_done": 0,
+     "runs_done": 1,
      "mode": "send",
      "state": "declined",
      "terms": {},
      "counter": null,
      "skips": [],
-     "runs": {},
-     "last_run_on": null,
+     "runs": {
+      "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
+     },
+     "last_run_on": "2026-10-31",
      "state_by": "22222222-2222-4222-8222-222222222222",
      "state_at": "2026-10-14T06:00:00.000Z",
      "state_note": "Too often",
@@ -3382,13 +3467,16 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/end": {
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3486,13 +3574,16 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/pause": {
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3575,15 +3666,18 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/refuse": {
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "a2e622d3-9753-4e7b-a21a-c910ed41fe12",
+     "agreement_id": "b1c3ce5a-b9dc-44e8-9bde-c2d26024b823",
      "entity_id": "11111111-1111-4111-8111-111111111111",
-     "chit_id": "aaaaaaaa-0000-4000-8000-000000000004",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
      "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
      "every": 2,
@@ -3663,13 +3757,16 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/resume": {
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3752,20 +3849,23 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/run": {
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
      "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
      "every": 2,
      "unit": "weekly",
-     "anchor_day": null,
+     "anchor_day": 31,
      "next_on": "2026-10-27",
      "end_on": null,
      "runs_max": 3,
@@ -3783,7 +3883,8 @@
      "counter": null,
      "skips": [],
      "runs": {
-      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002",
+      "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
      },
      "last_run_on": "2026-10-13",
      "state_by": "11111111-1111-4111-8111-111111111111",
@@ -3851,13 +3952,20 @@
     ],
     "problems": []
    },
-   "optional": []
+   "optional": [
+    "agreement.runs.2026-10-13",
+    "agreement.runs.2026-10-31",
+    "agreement.terms.lines"
+   ],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/skip": {
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "05c6b4e9-7438-4caa-81f3-5ef96df2b515",
+     "agreement_id": "d11a6b78-491c-48d3-bd14-e9a71962d8dc",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3934,7 +4042,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/sweep": {
    "status": 200,

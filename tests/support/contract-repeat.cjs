@@ -41,6 +41,7 @@ async function captureRepeat() {
     WHO = OWNER;
     const c1 = keep('POST', '', await q('POST', '/', { chit_id: INV, unit: 'weekly', every: 1, start_on: '2026-10-06', until: { runs: 3 }, mode: 'draft' }));
     const A = c1.body.agreement.agreement_id, AC = c1.body.agreement.chit_id;
+    keep('GET', '', await q('GET', '/'));                                                   /* proposed: run ✗ · end ✓ */
     keep('GET', '/:id', await q('GET', '/' + A));
     WHO = CUSTOMER;
     keep('GET', '/:id', await q('GET', '/' + A + '?chit=' + AC));
@@ -48,12 +49,18 @@ async function captureRepeat() {
     keep('POST', '/:id/counter', await q('POST', '/' + A + '/counter', { chit_id: AC, lines: [{ line_id: 'L1', quantity: 15 }], every: 2, unit: 'weekly', start_on: '2026-10-13', note: 'Fortnightly, fifteen' }));
     keep('POST', '/:id/accept', await q('POST', '/' + A + '/accept', { chit_id: AC }));          /* #422: a counter is open */
     WHO = OWNER;
+    keep('GET', '', await q('GET', '/'));                                                   /* countered: agree ✓ · refuse ✓ */
+    keep('GET', '/:id', await q('GET', '/' + A));                                           /* countered, as the seller: agree ✓ */
     keep('POST', '/:id/agree', await q('POST', '/' + A + '/agree', {}));
+    keep('GET', '', await q('GET', '/'));                                                   /* agreed */
     keep('POST', '/:id/pause', await q('POST', '/' + A + '/pause', { reason: 'Stock out' }));
     keep('POST', '/:id/resume', await q('POST', '/' + A + '/resume', {}));
     CLOCK.set('2026-10-14T06:00:00Z');
+    keep('GET', '', await q('GET', '/'));                                                   /* agreed and DUE: run ✓ */
     keep('POST', '/:id/run', await q('POST', '/' + A + '/run', {}));
+    keep('GET', '/:id', await q('GET', '/' + A));                                           /* ran once */
     WHO = CUSTOMER;
+    keep('GET', '/:id', await q('GET', '/' + A + '?chit=' + AC));                           /* agreed, as the customer: skip ✓ */
     keep('POST', '/:id/skip', await q('POST', '/' + A + '/skip', { chit_id: AC, reason: 'Shop shut for Diwali' }));
     WHO = OWNER;
     keep('POST', '/sweep', await q('POST', '/sweep', {}));
@@ -63,6 +70,11 @@ async function captureRepeat() {
     const B = c2.body.agreement.agreement_id, BC = c2.body.agreement.chit_id;
     WHO = CUSTOMER;
     keep('POST', '/:id/accept', await q('POST', '/' + B + '/accept', { chit_id: BC }));
+    WHO = OWNER;
+    CLOCK.set('2026-11-02T06:00:00Z');
+    keep('POST', '/:id/run', await q('POST', '/' + B + '/run', {}));                        /* a run with NO countered terms (terms.lines absent) */
+    CLOCK.set('2026-10-14T06:00:00Z');
+    WHO = CUSTOMER;
     keep('POST', '/:id/decline', await q('POST', '/' + B + '/decline', { chit_id: BC, reason: 'Too often' }));
     WHO = OWNER;
     const c3 = keep('POST', '', await q('POST', '/', { chit_id: INV, unit: 'daily', every: 2, start_on: '2026-10-15' }));
