@@ -402,10 +402,10 @@
     "GET /api/governance/country-setup": {
       "file": "governance.js",
       "trips": 3,
-      "wire": 3,
-      "fired": true,
-      "status": 200,
-      "why": "CS1: schema probe (cached) + identities + entity_governance, inside one withEntity"
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetup'), cap-country.js). CS1, measured by tests/country-setup.test.cjs: schema probe (cached) + identities + entity_governance, inside one withEntity"
     },
     "GET /api/integrations/catalogue": {
       "file": "integrations.js",
@@ -963,10 +963,10 @@
     "PUT /api/governance/country-setup": {
       "file": "governance.js",
       "trips": 7,
-      "wire": 7,
-      "fired": true,
-      "status": 503,
-      "why": "CS1 (owner only): probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run)"
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run)"
     },
     "PUT /api/network-design": {
       "file": "network-design.js",
