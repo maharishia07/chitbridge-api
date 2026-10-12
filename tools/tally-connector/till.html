@@ -3851,7 +3851,7 @@
   <div class="sethead"><h3 id="onlinedlgtitle">Online orders</h3>
     <button class="setx" onclick="document.getElementById('onlinedlg').close()" aria-label="Close" title="Close">✕</button></div>
   <div id="onlinedlgbody"></div>
-  <div class="dlgbtns"><button onclick="document.getElementById('onlinedlg').close()">Close<span class="kh"> · Esc</span></button></div>
+  <div class="dlgbtns"><button type="button" data-testid="till-online-tasks" onclick="tasksOpen()">All orders &amp; tasks</button><button onclick="document.getElementById('onlinedlg').close()">Close<span class="kh"> · Esc</span></button></div>
 </dialog>
 
 <!-- ⭐ M127: the modes, named. Receive and Despatch are shown to every shop and greyed WITH the reason when the shop holds no stock. -->
@@ -26836,6 +26836,21 @@ function onlineOrdersOpen(){
       }).join('') + '</div>'
     : '<p>No online orders waiting.</p>';
   document.getElementById('onlinedlg').showModal();
+}
+/**
+ * ⭐ TO1-UI — "All orders & tasks": the Tasks & Orders app (tasks.html?embed=1&view=orders_in) opens in a dialog on top of the counter, as the Employees
+ * form does (whoAdd). The counter holds no second list: the frame uses the person signed in HERE (CBEmbed's session handshake), tells us
+ * { cb:'tasks', event:'moved'|'assigned' } (docs/design/tasks-orders/EMBED.md in chitbridge-web), and the open orders are read again when it closes.
+ */
+function tasksOpen(){
+  try { document.getElementById('onlinedlg').close(); } catch (_) {}
+  if (!window.CBEmbed || !lineUp()) { say('Orders and tasks need the internet. Try again when the line is back.'); return; }
+  var heard = false;
+  CBEmbed.open({ app: 'tasks', view: 'orders_in', title: 'Orders & tasks',
+    session: function(){ return (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.person && CloudHost.person.token) || null; },
+    api: function(){ return (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.api) || null; },
+    onMessage: function(m){ if (m.event === 'moved' || m.event === 'assigned') heard = true; },
+    onClose: function(){ if (heard) { ONLINE.at = 0; Promise.resolve(onlineOrdersLoad()).then(onlineOrdersOpen, onlineOrdersOpen); } else onlineOrdersOpen(); } });
 }
 /** a row → that order, in place: Despatch with it chosen (the same list loadTasks reads) */
 async function onlineOrderPick(id){
