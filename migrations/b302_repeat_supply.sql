@@ -1,4 +1,4 @@
--- b300_repeat_supply.sql — RI1 (2026-10-12): REPEAT SUPPLY AS AN AGREEMENT BOTH PARTIES HOLD — the living schedule beside the
+-- b302_repeat_supply.sql — RI1 (2026-10-12): REPEAT SUPPLY AS AN AGREEMENT BOTH PARTIES HOLD — the living schedule beside the
 --   agreement chit. The agreement itself is a CHIT (purpose 'subscription', business_json.repeat) sent through the one send path, so
 --   both parties already hold the lines, the price and the terms, sealed. What a chit cannot carry is a thing that MOVES — the next
 --   date, the last run, paused, ended, the customer's open counter, the skips, which run minted which invoice — and that is this table.

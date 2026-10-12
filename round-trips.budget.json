@@ -1191,6 +1191,174 @@
       "wire": 4,
       "fired": true,
       "status": 404
+    },
+    "GET /api/repeat": {
+      "file": "repeat-supply.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the shop's zone (a minute's cache) + the list, one join to chit_header; on the empty stub the table is 'missing' → migrated:false",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "GET /api/repeat/:id": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: zone + row; the customer: the copy they hold (own RLS) + the row as the seller; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat": {
+      "file": "repeat-supply.js",
+      "trips": 0,
+      "wire": null,
+      "fired": true,
+      "status": 400,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the table check, the zone, the source bill read; the agreement is SENT over loopback (its own request: the send route's cost), then the row inserted and two history lines; the stub answers 400 early (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/sweep": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): every agreed row due: each run is one loopback send (its own request) + the row's move + two history lines; nothing due on the stub",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/accept": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the customer: the copy held + the row, the status writer's own trips (moveStatus), the row's move, two history lines; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/counter": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the customer: the copy held + the row, the row's move, two history lines; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/decline": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as accept (the status writer, best-effort) + the row's move; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/skip": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): either side: the row (+ the copy held for the customer), the move, two history lines; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/agree": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, the move, two history lines; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/refuse": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/pause": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/resume": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/end": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
+    },
+    "POST /api/repeat/:id/run": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, then per due day one loopback send (its own request) + the move + two history lines; on the stub: 404 (a floor)",
+      "awaiting_client": {
+        "pr": "web RI1 (#155)",
+        "since": "2026-10-13"
+      }
     }
   }
 }
