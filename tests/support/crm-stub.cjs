@@ -96,7 +96,7 @@ function make() {
       data.cust.forEach((r) => { if (r.owner === p[0] && r.party_id === p[1] && !r.hidden_at) r.hidden_at = new Date().toISOString(); }); return { rows: [] };
     }
     if (/^UPDATE supplier_list SET hidden_at/.test(sql)) { data.sup.forEach((r) => { if (r.owner === p[0] && r.party_id === p[1] && !r.hidden_at) r.hidden_at = new Date().toISOString(); }); return { rows: [] }; }
-    if (/^SELECT country FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: data.country || 'IN' }] };   /* the shop's day, for what is late */
+    if (/^SELECT COALESCE\(timezone, country\) AS zone FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ zone: data.timezone || data.country || 'IN' }] };   /* the shop's day, for what is late (its zone, else its country — M210) */
     if (data.extra) { const x = await data.extra(sql, p); if (x) return x; }
     throw new Error('crm-stub: unexpected SQL: ' + sql.slice(0, 120));
   }
