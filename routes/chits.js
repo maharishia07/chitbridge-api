@@ -1745,7 +1745,7 @@ function chitFilters(req, where, params){
   /* ⭐ a date filter is the SHOP's day (M210): midnight in the shop's own zone (identities.timezone, b176; India when unset) — the
      same rule as books-hooks.dayBounds, spelt in SQL because this builder is synchronous and a trip to read the zone is not
      affordable here. `timestamp AT TIME ZONE zone` names the instant that midnight is; it compares right against created_at
-     before b299 (naive, read as UTC by the pinned session zone) and after it (timestamptz). */
+     before b301 (naive, read as UTC by the pinned session zone) and after it (timestamptz). */
   const dateQ = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '').trim());
   if (dateQ(req.query.date_from) || dateQ(req.query.date_to)) {
     params.push(entityId(req));                                     /* the SHOP (an actor's parent entity), whose zone it is */

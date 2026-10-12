@@ -1,4 +1,4 @@
--- b299_created_at_timestamptz.sql — M210: the columns a shop's DAY is cut from become `timestamptz` (known fault "day-close breaks past midnight").
+-- b301_created_at_timestamptz.sql — M210: the columns a shop's DAY is cut from become `timestamptz` (known fault "day-close breaks past midnight").
 --
 -- ⚠️⚠️ DRAFT — NOT RUN · Athi runs it (Supabase SQL editor, AS postgres — ALTER TABLE needs the table owner, cb_app cannot).
 --    Written offline, read, never executed. Safe to re-run: each column is converted only while it is still

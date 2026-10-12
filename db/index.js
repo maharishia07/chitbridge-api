@@ -8,13 +8,13 @@ const { Pool } = pg;
  * and node-pg reads the value back in the SERVER's zone — two clocks that only agree when both happen to be UTC. On a server in
  * India a 00:05 IST sale read back as 00:05 IST (it was 18:35 UTC) and closed in the previous day.
  *   · READ:  a naive timestamp parses as UTC — through pg's OWN timestamptz parser, with '+00' appended. A timestamptz column
- *            (after b299) carries its offset and is untouched. The day a moment belongs to is then books-hooks.dayOf's alone.
+ *            (after b301) carries its offset and is untouched. The day a moment belongs to is then books-hooks.dayOf's alone.
  *   · WRITE: a JS Date parameter is sent as a UTC wall clock (+00:00) — into a naive column that stores the UTC clock,
  *            into timestamptz the same instant. Never the server's local clock.
  *   · DB:    the session zone is pinned to UTC (on connect, and SET LOCAL inside every BEGIN — the same trips as the statement
  *            deadline), so `now()` stamps UTC into a naive column and a naive→timestamptz cast reads UTC. The live database is
- *            UTC already; this makes it a rule instead of a coincidence, and it is the assumption b299's `AT TIME ZONE 'UTC'` rests on.
- * The code is right BEFORE b299 runs and after it; the migration only stops the type from needing the convention.
+ *            UTC already; this makes it a rule instead of a coincidence, and it is the assumption b301's `AT TIME ZONE 'UTC'` rests on.
+ * The code is right BEFORE b301 runs and after it; the migration only stops the type from needing the convention.
  */
 const naiveAsUtc = (() => {
   const tz = pg.types.getTypeParser(1184, 'text');                                   /* timestamptz — pg's own parser, reused */

@@ -1,7 +1,7 @@
 /**
- * shop-day-tz.test.cjs — A SALE AT MIDNIGHT LANDS IN THE SHOP'S DAY ON EVERY SERVER CLOCK, BEFORE AND AFTER b299 (M210).
+ * shop-day-tz.test.cjs — A SALE AT MIDNIGHT LANDS IN THE SHOP'S DAY ON EVERY SERVER CLOCK, BEFORE AND AFTER b301 (M210).
  *
- * chit_header.created_at is `timestamp WITHOUT time zone` until b299 converts it. The database stamps now() in ITS zone, node-pg
+ * chit_header.created_at is `timestamp WITHOUT time zone` until b301 converts it. The database stamps now() in ITS zone, node-pg
  * read the value back in the SERVER's zone, and the shop's day was cut from that — right only while both clocks were UTC. A
  * 00:05 IST sale on a server in India closed in the previous day; a 23:55 IST sale on a DB in India closed in the next.
  *
@@ -33,7 +33,7 @@ if (!process.env.SHOP_DAY_TZ_CHILD) {
   }
   const same = answers.UTC && answers.UTC === answers['Asia/Kolkata'];
   if (!same) { bad++; console.log('\n  FAIL the two server zones gave different days:\n    UTC          ' + answers.UTC + '\n    Asia/Kolkata ' + answers['Asia/Kolkata']); }
-  console.log('\n' + (bad ? '  ✗ FAIL — a server clock changed a shop day' : '  ✓ both server zones agree, before and after b299') + ' · ' + total + ' checks\n');
+  console.log('\n' + (bad ? '  ✗ FAIL — a server clock changed a shop day' : '  ✓ both server zones agree, before and after b301') + ' · ' + total + ' checks\n');
   process.exit(bad ? 1 : 0);
 }
 
@@ -47,7 +47,7 @@ const pg = require('pg');
 require(path.join(API, 'db'));                                   /* registers the naive-timestamp parser and the UTC input dates */
 const H = require(path.join(API, 'lib', 'books-hooks'));
 const naive = pg.types.getTypeParser(1114, 'text');             /* what a `timestamp without time zone` column hands the ledger */
-const withTz = pg.types.getTypeParser(1184, 'text');            /* what the column hands it after b299 */
+const withTz = pg.types.getTypeParser(1184, 'text');            /* what the column hands it after b301 */
 const iso = (d) => (d instanceof Date ? d.toISOString() : String(d));
 const answers = [];
 
@@ -69,8 +69,8 @@ const cases = [
 ];
 for (const c of cases) {
   const before = H.dayOf(naive(c.naive), shop), after = H.dayOf(withTz(c.tz), shop), raw = H.dayOf(c.naive, shop);
-  eq(c.name + ' · column WITHOUT tz (before b299)', before, c.day);
-  eq('…column WITH tz (after b299)', after, c.day);
+  eq(c.name + ' · column WITHOUT tz (before b301)', before, c.day);
+  eq('…column WITH tz (after b301)', after, c.day);
   eq('…the raw naive string, had it reached the rule unparsed', raw, c.day);
   const b = H.dayBounds(c.day, shop), at = iso(withTz(c.tz));
   ok('…and the day close window of ' + c.day + ' holds it (' + b.from + ' ≤ ' + at + ' < ' + b.to + ')', b.from <= at && at < b.to);
