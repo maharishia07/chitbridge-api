@@ -8306,7 +8306,8 @@ async function retainRun(){
  * The shop PC has its own folder purge ([TILL-123]); this is the browser's.
  */
 async function retainDaily(){
-  if (!(HOST && HOST.mode === 'cloud' && CloudHost.key)) return null;
+  /* ⭐ M10/W1: a browser bills as a PERSON after its first sign-in (the key is retired) — the day's retention runs on any credential */
+  if (!(HOST && HOST.mode === 'cloud' && CloudHost.cred())) return null;
   var day = bizDay(), k = shopLs('cb_till_retained');
   if (ls.get(k, '') === day) return null;
   var r = await retainAtClose();
@@ -9812,7 +9813,8 @@ function dayReportHTML(bills){
   var hours = {};
   bills.forEach(function(b){ var hs = hhmm(b.at), h = Number(hs.slice(0, 2)); if (hs && isFinite(h)) hours[h] = (hours[h] || 0) + 1; });
   var busiest = Object.keys(hours).sort(function(a, b){ return hours[b] - hours[a]; })[0];
-  var hhmm = function(d){ return hhmm(d); };
+  /* ⚠️ W1 (2026-10-12): a `var hhmm = function…` lived here (T1) — hoisted, it shadowed the page's hhmm() as undefined for the
+     whole report, so the first bill threw "hhmm is not a function" (till-returns-faults). The page's hhmm() is the one clock. */
   var day = bizDayStart();
 
   var head = '<header class="drhead">'
@@ -12302,6 +12304,9 @@ function styleFit(cfg, dev){
   var usable = Math.max(200, dev.w - stripW);
   var mainW = Math.max(120, Math.round(usable * (shape === 'wide' ? (1 - billPc / 100) : 1)) - PANEL_CHROME - railW);
   var per = Math.max(1, Math.floor((mainW + gap) / (kmin + gap)));
+  /* ⭐ M131 (walk 2026-10-10): under 601px the real grid is THREE per row whatever the size (the @media rule above, !important) —
+     the preview counts what the counter counts, so it says three too (till-keysize.cjs, round W1). */
+  if (dev.w <= 600) per = 3;
   var rows = room.cart ? 0 : Math.max(2, (shape === 'mobile' ? 4 : shape === 'tall' ? 5 : 3));
   /* ⭐ the drawing needs the same three numbers, so they are returned rather than worked out again */
   /* ⭐ shape too — the drawing must not work it out a second time and get a different answer */
@@ -22892,7 +22897,7 @@ async function renumberBill(bill, why){
  */
 var ABSORB_AT = 0;
 async function checkAbsorbed(force){
-  if (!(HOST && HOST.key) || !lineUp() || !HOST.tillPost) return null;
+  if (!(HOST && (HOST.cred ? HOST.cred() : HOST.key)) || !lineUp() || !HOST.tillPost) return null;   /* M10/W1: a person session checks too */
   if (!force && Date.now() - ABSORB_AT < 600000) return null;
   ABSORB_AT = Date.now();
   var cutoff = Date.now() - 30 * 86400000;
@@ -22974,7 +22979,9 @@ async function closeReadinessNow(){
 /** ⭐ the hub menu's own "Close this counter" — through the same live-figures sheet the day card uses, never closeCounter()'s own bare sure() (Phase 4.5) */
 function closeFromMenu(){ sureSheet('close'); }
 async function closeCounter(already){
-  if (!(HOST && HOST.key)) { say('This counter is not paired, so there is nothing to close.'); return; }
+  /* ⭐ M10/W1: a browser bills as a PERSON after its first sign-in (the key is retired) — the close reads the credential the
+     page reads everywhere else (HOST.cred, as the verify and the verdict do), not the key alone */
+  if (!(HOST && (HOST.cred ? HOST.cred() : HOST.key))) { say('This counter is not signed in, so there is nothing to close.'); return; }
   if (HOST === AgentHost) { say('This counter runs through the program on this PC. Close it from ChitBridge → Settings → Integrations → Counters.'); return; }
   if (!lineUp()) { say('Closing a counter needs the internet — ChitBridge has to be told, and every bill has to be checked first.\n\nNothing has changed. Try again when the line is back.'); return; }
   /**
@@ -25343,6 +25350,10 @@ function usignLocal(){
 /** [TILL-192] forceEnrol: true only when pairAgain() called this — see its own comment. A routine sign-in
  * (whoAct()'s 'signin' door) passes nothing, and paired()'s existing key is trusted as it always was. */
 function usignOpen(forceEnrol){
+  /* ⚠️ W1 (2026-10-12): the window still mounted from the last sign-in is taken DOWN first. usignFresh() dropped the handle and
+     usignMount() found nothing to destroy — the old window's document listeners (submit · click · input) lived on, so every
+     press from then on drove TWO machines: the picker's PIN signed nobody in, an unlock by the next person lost its PIN offer. */
+  if (USIGN && USIGN.win) { try { USIGN.win.destroy(); } catch (_) {} }
   USIGN = usignFresh();
   USIGN.forceEnrol = !!forceEnrol;
   usignMount();
@@ -25364,8 +25375,14 @@ function usignMount(){
   c.io.post = function(path, reqBody, token){
     /* M202: this counter names its shop, so a bare short id (asha01) is asked as asha01@<shop> behind the scenes — the server never looks in another shop */
     if (/\/api\/signin\/(ask|verify)$/.test(path) && S && S.shop && S.shop.handle && reqBody && !reqBody.shop) reqBody = Object.assign({}, reqBody, { shop: S.shop.handle });
-    if (!lineUp()) return Promise.resolve({ status: 0, body: { code: 'OFFLINE',
-      message: 'There is no counter PIN for ' + ((reqBody && reqBody.id) || 'you') + ' on this counter yet. The first sign-in here needs the internet.' } });
+    if (!lineUp()) {
+      /* ⚠️ W1 (2026-10-12): a PIN that IS here but LOCKED (five wrong) is not "no PIN yet" — the engine's own lock sentence, the way back named */
+      var typedId = reqBody ? (reqBody.id || reqBody.user_id || reqBody.email || '') : '';   /* lib/signin.js ask(): the field follows the shape typed */
+      var lk = null; try { lk = typedId ? SIGN().pinFind(pinBook(), typedId) : null; } catch (_) { lk = null; }
+      return Promise.resolve({ status: 0, body: { code: 'OFFLINE',
+        message: (lk && SIGN().pinLocked(lk)) ? SIGN().pinAfter(lk, false).why
+          : 'There is no counter PIN for ' + (typedId || 'you') + ' on this counter yet. The first sign-in here needs the internet.' } });
+    }
     return SIGN().transport(c)(path, reqBody, token);
   };
   USIGN.win = SIGN().mount(body, c);
