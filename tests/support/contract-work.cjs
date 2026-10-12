@@ -17,7 +17,13 @@ async function captureWork() {
     for (const v of ['orders_in', 'orders_out', 'tasks', 'done']) keep('GET', '/list', await S.get('/api/work/list?view=' + v));
     keep('GET', '/facts', await S.get('/api/work/facts'));
     for (const n of [1, 2, 3]) keep('GET', '/:chit_id', await S.get('/api/work/' + S.U(n)));
+    keep('GET', '/:chit_id', await S.get('/api/work/' + S.U(5)));   /* a closed order: reopen is the step that is OPEN (no why/say), the others refused */
     keep('GET', '/:chit_id', await S.get('/api/work/' + S.U(6)));
+    /* TO1-UI: a view-only login — EVERY action refused with its sentence, the assign / deliver / amend ones too (the page greys each with `say`) */
+    S.as({ level: 'viewer' });
+    keep('GET', '/list', await S.get('/api/work/list?view=orders_in'));
+    keep('GET', '/:chit_id', await S.get('/api/work/' + S.U(1)));
+    S.as({});
   } finally { S.stop(); }
   return got;
 }
