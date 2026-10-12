@@ -249,3 +249,9 @@ A lead IS a party: a local identity on `customer_list` with `added_via = 'lead'`
 | `lead.moves` · `lead.may` (the record) | stages ≠ current · `{ ok }` or `{ ok: false, why }` | Server answer for "Move to…": greyed with `why` while b297 is not run. |
 | `memberships` row | entity_id · item_type · item_id · kind · grp · at · by_user_id | Append-only; RLS on entity_id; `membership_kind` is the dictionary of kinds and their groups. |
 | 503 `LEADS_NOT_MIGRATED` | `{ code, message }` | A write before b297: nothing is created. |
+
+## GET /api/catalogue/:bridge_id (the storefront, WX-O2C 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `shop.price_includes_tax` | boolean | Source: the shop's policy flag `price_includes_tax` (lib/policy, default yes), read in `lib/catalogue-view.js` beside `unit_rules`. Written by: the owner (Profile › policy). Read by: `shop.html` → `CBCart.money({ priceIncludesTax })` so the basket's GST rows are split out of the price, never added on top (the server prices the order with `tax-lines.invoiceFor` the same way). |

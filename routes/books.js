@@ -34,7 +34,10 @@ const { isOwner } = require('../lib/owner');   /* one owner test — the folder 
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const today = () => CLOCK.now().toISOString().slice(0, 10);
+/* ⭐ WX-O2C (2026-10-13): "today" is the SHOP'S day — books-hooks.dayOf in the shop's zone (identities.timezone on the setting, else its
+   country's), never the server's UTC date. Found on the real stack: a bill made at 05:12 IST on the 13th was missing from the Day book,
+   Unpaid bills, Receivables and Collections until UTC caught up — every default (from · to · asOf) had asked for the 12th. */
+const today = (req) => { const H = require('../lib/books-hooks'); return H.dayOf(CLOCK.now(), H.zoneOf(req && req.books)); };
 const dateQ = (v, d) => (DATE.test(String(v || '').slice(0, 10)) ? String(v).slice(0, 10) : d);
 /* minor units in; an amount in rupees is rounded by money.round (the one rounder) first, never by a copy of the rule */
 const minorOf = (b) => (b.amount_minor != null ? Math.round(Number(b.amount_minor)) : Math.round(require('../lib/money').round(Number(b.amount)) * 100));
@@ -283,7 +286,7 @@ async function partyNames(h, e) {
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 router.get('/daybook', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), from = dateQ(req.query.from, today()), to = dateQ(req.query.to, from);
+    const e = ctx(req), from = dateQ(req.query.from, today(req)), to = dateQ(req.query.to, from);
     const out = await withEntity(e, async (h) => {
       const lines = await S.entryLines(h, e, from, to, null, null);
       const names = await partyNames(h, e);
@@ -309,7 +312,7 @@ router.get('/daybook', auth, on, async (req, res) => {
  *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], closing_minor } */
 router.get('/ledger/:account', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), to = dateQ(req.query.to, today()), from = dateQ(req.query.from, fyStart(req, to));
+    const e = ctx(req), to = dateQ(req.query.to, today(req)), from = dateQ(req.query.from, fyStart(req, to));
     const party = UUID.test(String(req.query.party || '')) ? String(req.query.party) : null;
     const out = await withEntity(e, async (h) => {
       const key = String(req.params.account);
@@ -338,7 +341,7 @@ router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
-    const to = dateQ(req.query.to, today()), from = dateQ(req.query.from, fyStart(req, to));
+    const to = dateQ(req.query.to, today(req)), from = dateQ(req.query.from, fyStart(req, to));
     const out = await withEntity(e, async (h) => {
       const st = E.ledger().partyStatement({ ...(await statementInput(h, e, id, from, to)), party: id, from, to });
       const meta = new Map((await S.ledgerLines(h, e, from, to, id)).map((l) => [String(l.entry_id), l]));
@@ -383,7 +386,7 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
     /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · over_limit · interest_minor · last_remind. Owner only — the server decides. */
     const fin = req.query.finance === '1';
     if (fin && !isOwner(req)) return res.status(403).json({ error: 'Only the owner may see collections.', message: 'Only the owner may see collections.' });
-    const e = ctx(req), asOf = dateQ(req.query.asOf, today());
+    const e = ctx(req), asOf = dateQ(req.query.asOf, today(req));
     const sides = req.query.side === 'customer' ? ['debtors'] : req.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
     const out = await withEntity(e, async (h) => {
       const chart = await S.accounts(h, e), names = await partyNames(h, e), per = new Map();
@@ -426,7 +429,7 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
 /** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced } */
 router.get('/trial-balance', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), asOf = dateQ(req.query.asOf, today());
+    const e = ctx(req), asOf = dateQ(req.query.asOf, today(req));
     const tb = await withEntity(e, (h) => B.trialBalance(h, e, asOf));
     res.json({ currency: curOf(req), asOf, rows: tb.rows.map((r) => ({ code: r.code, name: r.name, group: r.group, dr_minor: r.debit_minor, cr_minor: r.credit_minor })),
       total_dr_minor: tb.total_dr_minor, total_cr_minor: tb.total_cr_minor, balanced: tb.balanced });
@@ -437,7 +440,7 @@ function flat(lines) { const out = []; (lines || []).forEach((L) => (L.accounts 
 /** GET /pl?from&to → { currency, income: [{ code, name, amount_minor }], expense: [...], profit_minor } (inside one financial year) */
 router.get('/pl', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), to = dateQ(req.query.to, today()), from = dateQ(req.query.from, fyStart(req, to));
+    const e = ctx(req), to = dateQ(req.query.to, today(req)), from = dateQ(req.query.from, fyStart(req, to));
     const pl = await withEntity(e, (h) => B.profitAndLoss(h, e, from, to));
     res.json({ currency: curOf(req), from, to, income: flat(pl.income), expense: flat(pl.expenses), total_income_minor: pl.total_income_minor,
       total_expense_minor: pl.total_expenses_minor, profit_minor: pl.profit_minor, by_line: { income: pl.income, expense: pl.expenses } });
@@ -465,7 +468,7 @@ function sched3(bs, order) {
  *  schedule_iii: { equity_and_liabilities: { heads, total_minor }, assets: { heads, total_minor }, balanced, difference_minor } } */
 router.get('/bs', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), asOf = dateQ(req.query.asOf, today());
+    const e = ctx(req), asOf = dateQ(req.query.asOf, today(req));
     const out = await withEntity(e, async (h) => {
       const bs = await B.balanceSheet(h, e, asOf, B.entityBasisOf(req.books));   /* undefined until the entity-type decision is taken → Schedule III */
       const nature = new Map((await S.accounts(h, e)).map((a) => [String(a.code), a.nature]));
@@ -555,7 +558,7 @@ router.post('/payments', auth, noKey, on, async (req, res) => {
     const e = ctx(req), b = req.body || {}, q = paymentQuestion(req, true);
     if (q.refuse) return res.status(q.refuse.status).json({ error: q.refuse.words, message: q.refuse.words });
     const { party, direction, amount_minor, cur, mode, allocate } = q;
-    const date = dateQ(b.received_at || b.date, today());
+    const date = dateQ(b.received_at || b.date, today(req));
     const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
     const client_ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
     const ack = Array.isArray(b.acknowledge) ? b.acknowledge.map(String) : [];
@@ -688,7 +691,7 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
     const e = ctx(req), all = String(req.query.all || '') === '1';
     const out = await withEntity(e, async (h) => {
       const rows = await S.cheques(h, e, all, 200);
-      const names = await partyNames(h, e), chart = await S.accounts(h, e), R = E.receivables(), kept = new Map(), day = today();
+      const names = await partyNames(h, e), chart = await S.accounts(h, e), R = E.receivables(), kept = new Map(), day = today(req);
       const list = [];
       for (const c of rows) {
         const a = chart.find((x) => x.role === (c.direction === 'in' ? 'debtors' : 'creditors'));
@@ -718,7 +721,7 @@ router.post('/cheques/:id/status', auth, on, async (req, res) => {
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
     const to = ['deposited', 'cleared', 'bounced'].indexOf(b.status) >= 0 ? b.status : null;
     if (!to) return res.status(400).json({ error: 'Deposited, cleared or bounced?', message: 'Deposited, cleared or bounced?' });
-    res.json(await B.postEntry(null, e, { type: 'cheque_step', payment_id: id, to, date: dateQ(b.date, today()), strict_date: true, by: byOf(req) }));
+    res.json(await B.postEntry(null, e, { type: 'cheque_step', payment_id: id, to, date: dateQ(b.date, today(req)), strict_date: true, by: byOf(req) }));
   } catch (err) { fail(res, err); }
 });
 /** POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } — a disputed bill cannot take a payment (C4) */
@@ -754,7 +757,7 @@ const givenLines = (list) => require('../lib/books-manual').givenLines(list);   
 router.post('/entries', auth, owner, on, async (req, res) => {
   try {
     const b = req.body || {};
-    res.json(await B.postEntry(null, ctx(req), { type: 'manual', owner: true, narration: b.narration, date: dateQ(b.date, today()), currency: curOf(req), strict_date: true,
+    res.json(await B.postEntry(null, ctx(req), { type: 'manual', owner: true, narration: b.narration, date: dateQ(b.date, today(req)), currency: curOf(req), strict_date: true,
       lines: givenLines(b.lines), ref: b.ref || null, source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null, by: byOf(req) }));
   } catch (err) { fail(res, err); }
 });
@@ -778,7 +781,7 @@ router.post('/write-off', auth, owner, on, async (req, res) => {
        200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
     const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
     res.json(await B.postEntry(null, ctx(req), { type: 'write_off', owner: true, party, amount: minorOf(b) / 100, reason: b.reason, currency: curOf(req), strict_date: true,
-      date: dateQ(b.date, today()), against_ref: b.against_ref ? String(b.against_ref) : null, source_ref: ref ? 'wo:' + ref : null,
+      date: dateQ(b.date, today(req)), against_ref: b.against_ref ? String(b.against_ref) : null, source_ref: ref ? 'wo:' + ref : null,
       doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()), by: byOf(req) }));
   } catch (err) { fail(res, err); }
 });
@@ -803,7 +806,7 @@ router.post('/opening', auth, owner, on, async (req, res) => {
         lines.push({ account: String(r.code), dr: Number(r.dr_minor || 0) / 100, cr: Number(r.cr_minor || 0) / 100, party });
         refs.push({ party, bill_ref: r.bill_ref ? String(r.bill_ref).slice(0, 60) : null, due_date: DATE.test(String(r.due_date || '')) ? r.due_date : null });
       }
-      const r = await B.postEntry(h, e, { type: 'opening', date: dateQ(b.date, fyStart(req, today())), currency: cur, lines, line_refs: refs,
+      const r = await B.postEntry(h, e, { type: 'opening', date: dateQ(b.date, fyStart(req, today(req))), currency: cur, lines, line_refs: refs,
         source_ref: b.client_ref ? 'opening:' + String(b.client_ref).slice(0, 80) : null, narration: 'Opening balances', by: byOf(req) });
       const ent = r.entry_id ? await S.entry(h, e, r.entry_id) : null;
       const chart = await S.accounts(h, e); const sus = chart.find((a) => a.role === 'suspense');
@@ -961,7 +964,7 @@ const route = (method, p, fn) => router[method](p, auth, owner, on, async (req, 
 });
 /** GET /assets?asOf → { currency, asOf, assets: [{ asset_id, name, asset_class, cost_minor, put_to_use, accumulated_minor, wdv_minor, disposed_on }], net_block: [per class, with the ledger's figure beside], total_wdv_minor } */
 router.get('/assets', auth, owner, on, async (req, res) => {
-  try { res.json(await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today()))); } catch (err) { fail(res, err); }
+  try { res.json(await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req)))); } catch (err) { fail(res, err); }
 });
 /** POST /assets { name, class, cost, date, put_to_use?, how | party_id, client_ref } → the purchase entry (MJ) and the register row */
 route('post', '/assets', (req, e, s, b, by) => P().addAsset(e, s, b, by));

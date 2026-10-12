@@ -17,6 +17,9 @@ t('home-facts orders calls open-orders.tasks(despatch)', /open-orders'\)\.tasks\
 t('till /tasks calls open-orders.tasks', /open-orders'\)\.tasks\(entity_id, kind, limit\)/.test(till), true);
 t('home-facts orders no longer reads purpose order itself', /purpose: 'order', direction: 'received'/.test(home), false);
 t('till.js keeps no second copy of orderOf', /function orderOf\(/.test(till), false);
+/* WX-O2C: the counter's own bills are left out at the database, not after a 300-row read */
+t('open-orders asks select for own_bills:false (my counter sales never fill the read)', /purpose: 'order', since, limit: 300, own_bills: false/.test(src('lib/open-orders.js')), true);
+t('select.js own_bills:false is one SQL clause on bill_no + sender = me', /sel\.own_bills === false[\s\S]*business_json \? 'bill_no'[\s\S]*sender_entity_id = cs\.entity_id/.test(src('lib/select.js')), true);
 
 console.log('\n-- M132 a walk-in day names its bills --\n');
 const { sourceOf } = require(API + '/routes/books')._test;

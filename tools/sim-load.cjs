@@ -73,6 +73,14 @@ if (!loc.ok) die(loc.why);
 if (!/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die('--shop is the shop\'s user id: 3–20 letters or digits, starting with a letter (e.g. simstores)');
 if (!(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) die('--years 1..10 and --seed a whole number');
 if (COUNTRY !== 'IN' && COUNTRY !== 'AU') die('--country IN or AU');
+/* WX-O2C (2026-10-13): the AU run was "accepted, unproved" — and what it made was an IN ledger: the adopted books engines answer packFor('AU')
+   with the IN pack (INR, April year, GST close), every purchase was refused (an AUD entry in an INR ledger needs a rate), and the Ledger screens
+   printed ₹. Until an AU pack is adopted the loader refuses, in words, rather than load a shop that looks Australian and keeps Indian books. */
+if (COUNTRY === 'AU') {
+  let pk = null; try { pk = require(path.join(API, 'lib', 'books-engines')).packs().packFor('AU'); } catch (_) { pk = null; }
+  if (!pk || String(pk.code || pk.country || '').toUpperCase() !== 'AU' || String(pk.currency || '').toUpperCase() !== 'AUD')
+    die('--country AU: the adopted books engines have no AU pack (packFor("AU") answers the ' + ((pk && (pk.code || pk.country)) || 'no') + ' pack, ' + ((pk && pk.currency) || '—') + ') — the ledger would be kept in INR with an April year. Adopt an AU pack first.');
+}
 if (require(path.join(API, 'lib', 'dev-otp')).isSealed()) die('NODE_ENV is sealed (' + process.env.NODE_ENV + ') — the loader runs only with NODE_ENV=development (or test)');
 
 const PLAN_LIB = require(path.join(__dirname, 'sim-plan.cjs'));
@@ -305,7 +313,8 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   const buyerOf = (name) => ({ LglNm: name, Gstin: null, State: null, Country: seller.Country || COUNTRY, RegType: 'unregistered', Ph: null, Em: null, entity_id: null, Pos: seller.State });
   const basketOf = (rate, dayIx, i) => {
     const r = PLAN_LIB.rng(SEED * 1000003 + dayIx * 101 + i);
-    const pool0 = ITEMS.filter((it) => it.rate === rate), n = 1 + Math.floor(r() * 3), lines = [];
+    /* AU: every item is at 10 % — the plan still names the IN slab (5 · 12 · 18) of the day, so the pool is the whole shelf (WX-O2C: an empty pool read `.name` of nothing) */
+    const pool0 = ITEMS.filter((it) => COUNTRY === 'AU' || it.rate === rate), n = 1 + Math.floor(r() * 3), lines = [];
     for (let k = 0; k < n; k++) { const it = pool0[Math.floor(r() * pool0.length)], qty = 1 + Math.floor(r() * 3); if (lines.some((l) => l.item_id === it.id)) continue;
       lines.push({ particulars: it.name, quantity: qty, unit: it.unit, price: it.price, total: it.price * qty, item_id: it.id, hsn: it.hsn, gst_rate: it.rate }); }
     return lines;
