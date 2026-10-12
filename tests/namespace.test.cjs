@@ -288,7 +288,11 @@ ok('⭐⭐ only lib/versionref.js composes or splits a thing@version', () => {
   const offenders = [];
   for (const f of [].concat(walk('lib', []), walk('routes', []), walk('middleware', []))) {
     if (OWNERS.indexOf(f) >= 0) continue;
-    const code = strip(read(f));
+    const src = read(f);
+    /* ⭐ an ADOPTED engine (chitbridge-engines, a tagged release — engines-pinned.test.js holds it byte for byte) is not this repo's text to edit:
+       regulation.js names a pack as id@version in ITS refusal ("IN@1.0.0 is already registered"); the one builder here stays lib/versionref.js */
+    if (/^\/\* ADOPTED (BUNDLE )?from chitbridge-engines/.test(src)) continue;
+    const code = strip(src);
     /* the connector kit id is the one registered exception — see not_identities in namespace.yaml */
     if (f === 'routes/integrations.js') continue;
     if (/\+ *'@' *\+/.test(code) || /split\(['"]@['"]\)/.test(code)) offenders.push(f);

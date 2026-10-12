@@ -3,10 +3,11 @@
   "routes": {
     "DELETE /api/books/recurring/:id": {
       "file": "books.js",
-      "trips": 1,
+      "trips": 2,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 422,
+      "why": "CS1: the first books route a process fires pays the country gate's ONE read (identities, cached a minute per shop) before the switch — every later books route is unchanged; on the empty stub the gate answers 422 NO_COUNTRY before the 404"
     },
     "DELETE /api/channels/:id": {
       "file": "channels.js",
@@ -397,6 +398,14 @@
       "fired": true,
       "status": 200,
       "extra": true
+    },
+    "GET /api/governance/country-setup": {
+      "file": "governance.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetup'), cap-country.js). CS1, measured by tests/country-setup.test.cjs: schema probe (cached) + identities + entity_governance, inside one withEntity"
     },
     "GET /api/integrations/catalogue": {
       "file": "integrations.js",
@@ -950,6 +959,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PUT /api/governance/country-setup": {
+      "file": "governance.js",
+      "trips": 7,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run)"
     },
     "PUT /api/network-design": {
       "file": "network-design.js",

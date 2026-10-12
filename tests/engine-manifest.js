@@ -403,6 +403,8 @@ const ENGINE_OTHER = [
      party-fields.js — the party master's field rules and the duplicate-tax-id refusal. CB's own decisions, not an
      outside standard's; the debit/credit rules themselves stay in CBPosting. (2026-09-29) */
   'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
+  /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
+  'country-setup.js',
   /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
      books-hooks (which event) and stock-from-chit (whether it is stock). CB's own decision. (2026-10-01) */
   'bill-use.js',
@@ -415,6 +417,8 @@ const ENGINE_OTHER = [
   /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
      tools/adopt.cjs, never edited here: the chart and roles, the debit/credit rules, open items, the reads, the pack. */
   'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'bookpack.js',
+  /* ⭐ CS1 (2026-10-12): the registry of country packs, the India pack and the Australia pack (AU1), ADOPTED from chitbridge-engines v1.36.0 (engines.lock.json) — first adoption on the server */
+  'regulation.js', 'reg-in.js', 'reg-au.js',
   /* v1.20.0: the month lock and year close (period.js) and the GST returns (gst-returns.js — the API reads its dueDate), ADOPTED the same way */
   'period.js', 'gst-returns.js',
   /**

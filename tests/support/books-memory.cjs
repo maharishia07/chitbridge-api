@@ -180,6 +180,17 @@ function create() {
   return S;
 }
 /** a db handle that accepts the savepoint chatter and nothing else */
-const fakeDb = { query: async (text) => { if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(text) || /FROM identities WHERE identity_id = \$1$/.test(String(text).trim())) return { rows: [] }; throw new Error('the in-memory tests ran real SQL: ' + String(text).slice(0, 80)); } };
+/** ⭐ CS1: the country gate's two reads (lib/country-setup, marked country-setup) — this rig's shop is an INDIAN shop whose setup is done;
+ *  tests/country-setup.test.cjs stands in its own rows for the other countries. Reassign fakeDb.countryRow to change the answer. */
+const fakeDb = {
+  countryRow: { country: 'IN', currency_code: 'INR', gstn: '33AAAAA0000A1Z5', timezone: 'Asia/Kolkata', policy_flags: { gst_registration: 'regular' } },
+  query: async (text) => {
+    const t = String(text);
+    if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
+    if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
+    if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
+    throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
+  },
+};
 
 module.exports = { create, fakeDb, ZERO, ymd };
