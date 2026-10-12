@@ -111,7 +111,11 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "awaiting_client": {
+        "pr": "web#147",
+        "since": "2026-10-12"
+      }
     },
     "GET /api/books/cheques": {
       "file": "books.js",
