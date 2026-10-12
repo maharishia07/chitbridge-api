@@ -99,6 +99,10 @@ const t = (name, cond, extra) => {
 /* A route the client calls WITHOUT the registry (the shell's direct get('/api/entities/header'), N19) is invisible to the scanner. Its budget line
    says `extra: true` and it is added to the list HERE, BEFORE the mount loop (or its file is never mounted), so it is still fired / checked and the "no longer called" check does not drop it. */
 for (const k of Object.keys(budget.routes)) if (budget.routes[k].extra && !called.some((r) => r.route === k)) called.push({ route: k, file: budget.routes[k].file });
+/* what the WEB itself calls, before awaiting_client routes join the fired list below (the twin-landing check needs the difference) */
+const webCalled = new Set(called.map((r) => r.route));
+const webCalls = (k) => webCalled.has(k);
+for (const k of Object.keys(budget.routes)) if (budget.routes[k].awaiting_client && !called.some((r) => r.route === k)) called.push({ route: k, file: budget.routes[k].file });
 
 const express = require('express');
 const app = express();
@@ -152,11 +156,11 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       const row = { route: r.route, file: r.file, status: m.status, trips: m.trips, wire: m.wire };
       if (m.error) {
         notFired.push(Object.assign(row, { why: m.error }));
-        next.routes[r.route] = { file: r.file, trips: b && b.fired === false ? b.trips : UNFIRED_CEILING, wire: null, fired: false, why: m.error, ...(b && b.extra ? { extra: true } : {}) };
+        next.routes[r.route] = { file: r.file, trips: b && b.fired === false ? b.trips : UNFIRED_CEILING, wire: null, fired: false, why: m.error, ...(b && b.extra ? { extra: true } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) };
         continue;
       }
       (m.status >= 400 ? shallow : fired).push(row);
-      next.routes[r.route] = { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(b && b.extra ? { extra: true } : {}) };
+      next.routes[r.route] = { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(b && b.extra ? { extra: true } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) };
       if (!WRITE) {
         t(r.route + ' has a budget line (I19)', !!b);
         if (b && b.fired !== false) {
@@ -168,8 +172,18 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     if (!WRITE) {
       for (const n of notFired) t(n.route + ' has a budget line (I19, budgeted not fired)', !!budget.routes[n.route], n.why);
       if (webHere) {
-        const gone = Object.keys(budget.routes).filter((k) => !called.some((r) => r.route === k));
+        /* ⭐ TWIN LANDING (13 Oct): a NEW route lands in the api before the web screen that calls it — otherwise the api's check (reads web
+           main) and the web's contract check (reads api main) wait for each other forever. Its budget line says awaiting_client:
+           { pr: 'web#153', since: 'YYYY-MM-DD' }; it is fired and budgeted like any route (added to the list above), only the "no longer
+           called" check skips it. Once the web calls it the mark is a leftover (a note says remove it); a mark older than 14 days whose
+           route is still not called FAILS — the screen never came, so the route is dead weight. */
+        const awaiting = Object.keys(budget.routes).filter((k) => budget.routes[k].awaiting_client);
+        const gone = Object.keys(budget.routes).filter((k) => !called.some((r) => r.route === k) && !budget.routes[k].awaiting_client);
         t('no budget line for a route the client no longer calls', gone.length === 0, gone.slice(0, 3).join(' | '));
+        const stale = awaiting.filter((k) => { const a = budget.routes[k].awaiting_client; const age = (Date.now() - Date.parse((a && a.since) || '')) / 86400000;
+          return !webCalls(k) && !(age <= 14); });
+        t('an awaiting_client route is called within 14 days (or its mark has a valid since date)', stale.length === 0, stale.slice(0, 3).join(' | '));
+        for (const k of awaiting) if (webCalls(k)) console.log('  note: ' + k + ' is called by the web now — remove its awaiting_client mark (' + JSON.stringify(budget.routes[k].awaiting_client) + ')');
       } else console.log('  note: the web client is not beside this repo, so I19 is checked against the budget file\'s own list only');
     }
     if (WRITE) {
