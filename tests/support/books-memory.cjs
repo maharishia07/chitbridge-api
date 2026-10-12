@@ -180,6 +180,10 @@ function create() {
   return S;
 }
 /** a db handle that accepts the savepoint chatter and nothing else */
-const fakeDb = { query: async (text) => { if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(text) || /FROM identities WHERE identity_id = \$1$/.test(String(text).trim())) return { rows: [] }; throw new Error('the in-memory tests ran real SQL: ' + String(text).slice(0, 80)); } };
+const fakeDb = { query: async (text) => {
+  if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(text) || /FROM identities WHERE identity_id = \$1$/.test(String(text).trim())) return { rows: [] };
+  /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
+  if (/to_regclass\(/.test(String(text))) return { rows: [{ i: false, f: false }] };
+  throw new Error('the in-memory tests ran real SQL: ' + String(text).slice(0, 80)); } };
 
 module.exports = { create, fakeDb, ZERO, ymd };

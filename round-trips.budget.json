@@ -106,6 +106,13 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/books/cashflow": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
+    },
     "GET /api/books/cheques": {
       "file": "books.js",
       "trips": 1,
