@@ -20,8 +20,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const API = path.join(__dirname, '..');
-const WEB = path.join(API, '..', 'chitbridge-web', 'public');
+/* ⭐ KG1 (2026-10-12): CB_API_DIR / CB_WEB_DIR let another checkout (the web's tools/graph fixture) point this scanner at
+   its files — the same env names scripts/vendor-till.cjs uses. Unset, it reads the two repos side by side as before. */
+const API = process.env.CB_API_DIR ? path.resolve(process.env.CB_API_DIR) : path.join(__dirname, '..');
+const WEB = process.env.CB_WEB_DIR ? path.join(path.resolve(process.env.CB_WEB_DIR), 'public') : path.join(API, '..', 'chitbridge-web', 'public');
 
 /* ── 1 · the client's endpoint registry: key -> method + path ───────────────────────────────────────────── */
 const reg = {};
@@ -92,11 +94,19 @@ for (const f of fs.readdirSync(path.join(API, 'routes')).filter((x) => x.endsWit
 
 const called = rows.filter((r) => r.calls > 0);
 
-/* ⭐ --json: the called routes as data, for tests/round-trips-all.test.cjs (DB10) — one scan, not a second copy of it */
+/* ⭐ --json: the called routes as data, for tests/round-trips-all.test.cjs (DB10) — one scan, not a second copy of it.
+   KG1 (2026-10-12) widened it ADDITIVELY: `registry` (the client's key → method + path) and `routes` (every server row with
+   the keys that name it) are what the web's tools/graph/graph.cjs joins screens to routes with — the same scan, spawned. */
 if (process.argv.indexOf('--json') >= 0) {
-  process.stdout.write(JSON.stringify({ called: called.map((r) => ({ file: r.file, route: r.route, calls: r.calls })), mounts }));
-  process.exit(0);
-}
+  /* ⚠️ process.exit() straight after a write to a PIPE truncates at 64 KB (the pipe buffer; the rest is queued and lost) —
+     the widened output crossed that line on 2026-10-12 and the first reader got "Unterminated string in JSON". Exit from
+     the write's callback, after the bytes are out. */
+  process.stdout.write(JSON.stringify({
+    called: called.map((r) => ({ file: r.file, route: r.route, calls: r.calls })), mounts,
+    registry: reg,
+    routes: rows.map((r) => ({ file: r.file, route: r.route, keys: r.keys, calls: r.calls })),
+  }), () => process.exit(0));
+} else {
 const known = rows.filter((r) => r.keys.length && r.calls === 0);
 const unknown = rows.filter((r) => !r.keys.length);
 
@@ -115,3 +125,4 @@ if (process.argv.indexOf('--called') >= 0) {
     console.log('      ' + String(r.calls).padStart(3) + '  ' + r.route.padEnd(46) + r.keys.join(', ')));
 }
 console.log('\n  (--called lists the live ones by call count)\n');
+}
