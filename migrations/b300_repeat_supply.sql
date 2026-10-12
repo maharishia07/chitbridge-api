@@ -73,6 +73,7 @@ GRANT SELECT, INSERT, UPDATE ON repeat_supply TO cb_app;
 
 -- the one cross-shop read: WHICH shops have an agreed run due on or before `day` — ids only (as ops.f_books_enabled, b272)
 CREATE SCHEMA IF NOT EXISTS ops;
+DROP FUNCTION IF EXISTS ops.f_repeat_supply_due(date);   -- CREATE OR REPLACE cannot change a row type (42P13): drop first, grant after (tests/migration-rerunnable)
 CREATE OR REPLACE FUNCTION ops.f_repeat_supply_due(day date)
 RETURNS TABLE (entity_id uuid) LANGUAGE sql SECURITY DEFINER SET search_path = public AS $f$
   SELECT DISTINCT r.entity_id FROM repeat_supply r WHERE r.state = 'agreed' AND r.next_on <= day

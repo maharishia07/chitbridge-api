@@ -205,19 +205,19 @@
       "fired": true,
       "status": 200
     },
-    "GET /api/books/todo": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 404
-    },
     "GET /api/books/terms": {
       "file": "books.js",
       "trips": 3,
       "wire": null,
       "fired": false,
       "why": "F2: one withEntity (shop default + party row + events) after a cached schema probe; ceiling until measured"
+    },
+    "GET /api/books/todo": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404
     },
     "GET /api/books/trial-balance": {
       "file": "books.js",
@@ -449,6 +449,27 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/network-design": {
+      "file": "network-design.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/network-design/availability": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "GET /api/network-design/stores": {
+      "file": "network-design.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
     "GET /api/network-offers": {
       "file": "network-offers.js",
       "trips": 9,
@@ -470,6 +491,22 @@
       "fired": true,
       "status": 200,
       "extra": true
+    },
+    "GET /api/repeat": {
+      "file": "repeat-supply.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "why": "RI1 (by hand): the shop's zone (a minute's cache) + the list, one join to chit_header; on the empty stub the table is 'missing' → migrated:false"
+    },
+    "GET /api/repeat/:id": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): the seller: zone + row; the customer: the copy they hold (own RLS) + the row as the seller; on the stub: 404"
     },
     "GET /api/service/:chit_id": {
       "file": "service.js",
@@ -740,19 +777,19 @@
       "fired": true,
       "status": 404
     },
-    "POST /api/books/terms": {
-      "file": "books.js",
-      "trips": 3,
-      "wire": null,
-      "fired": false,
-      "why": "F2: owner write, one withEntity (read, update, one change row per changed key); ceiling until measured"
-    },
     "POST /api/books/setting": {
       "file": "books.js",
       "trips": 1,
       "wire": 6,
       "fired": true,
       "status": 404
+    },
+    "POST /api/books/terms": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "why": "F2: owner write, one withEntity (read, update, one change row per changed key); ceiling until measured"
     },
     "POST /api/books/year/:fy/close": {
       "file": "books.js",
@@ -853,6 +890,13 @@
       "status": 400,
       "why": "L1: ONE transaction (mint + customer_list row + memberships row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm. The empty stub answers 400 early (a floor)"
     },
+    "POST /api/crm/parties/:id/interactions": {
+      "file": "crm.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 503 on the stub"
+    },
     "POST /api/crm/parties/:id/outcome": {
       "file": "crm.js",
       "trips": 2,
@@ -868,13 +912,6 @@
       "fired": true,
       "status": 400,
       "why": "L1: ONE transaction (lead check + item check + memberships row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm. The empty stub answers 400 early (a floor)"
-    },
-    "POST /api/crm/parties/:id/interactions": {
-      "file": "crm.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
     },
     "POST /api/crm/walk-ins/add": {
       "file": "crm.js",
@@ -897,6 +934,13 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/events/ticket": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
     "POST /api/integrations/:actor_id/approve": {
       "file": "integrations.js",
       "trips": 1,
@@ -918,34 +962,6 @@
       "fired": false,
       "why": "answered 500 on the stub"
     },
-    "POST /api/network-design/validate": {
-      "file": "network-design.js",
-      "trips": 3,
-      "wire": 6,
-      "fired": true,
-      "status": 200
-    },
-    "GET /api/network-design": {
-      "file": "network-design.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": true,
-      "status": 200
-    },
-    "GET /api/network-design/availability": {
-      "file": "network-design.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 400
-    },
-    "GET /api/network-design/stores": {
-      "file": "network-design.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 404
-    },
     "POST /api/network-design/build": {
       "file": "network-design.js",
       "trips": 1,
@@ -960,25 +976,10 @@
       "fired": true,
       "status": 400
     },
-    "PUT /api/governance/country-setup": {
-      "file": "governance.js",
-      "trips": 7,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run)"
-    },
-    "PUT /api/network-design": {
+    "POST /api/network-design/validate": {
       "file": "network-design.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 400
-    },
-    "POST /api/events/ticket": {
-      "file": "events.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 3,
+      "wire": 6,
       "fired": true,
       "status": 200
     },
@@ -1037,6 +1038,112 @@
       "wire": 4,
       "fired": true,
       "status": 200
+    },
+    "POST /api/repeat": {
+      "file": "repeat-supply.js",
+      "trips": 0,
+      "wire": null,
+      "fired": true,
+      "status": 400,
+      "why": "RI1 (by hand): the table check, the zone, the source bill read; the agreement is SENT over loopback (its own request: the send route's cost), then the row inserted and two history lines"
+    },
+    "POST /api/repeat/:id/accept": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): the customer: the copy held + the row, the status writer's own trips (moveStatus), the row's move, two history lines; on the stub: 404",
+      "extra": true
+    },
+    "POST /api/repeat/:id/agree": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): the seller: the row, the move, two history lines; on the stub: 404",
+      "extra": true
+    },
+    "POST /api/repeat/:id/counter": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): the customer: the copy held + the row, the row's move, two history lines; on the stub: 404"
+    },
+    "POST /api/repeat/:id/decline": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): as accept (the status writer, best-effort) + the row's move; on the stub: 404",
+      "extra": true
+    },
+    "POST /api/repeat/:id/end": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): as agree; on the stub: 404",
+      "extra": true
+    },
+    "POST /api/repeat/:id/pause": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): as agree; on the stub: 404",
+      "extra": true
+    },
+    "POST /api/repeat/:id/refuse": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): as agree; on the stub: 404",
+      "extra": true
+    },
+    "POST /api/repeat/:id/resume": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): as agree; on the stub: 404",
+      "extra": true
+    },
+    "POST /api/repeat/:id/run": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): the seller: the row, then per due day one loopback send (its own request) + the move + two history lines; on the stub: 404",
+      "extra": true
+    },
+    "POST /api/repeat/:id/skip": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 404,
+      "why": "RI1 (by hand): either side: the row (+ the copy held for the customer), the move, two history lines; on the stub: 404",
+      "extra": true
+    },
+    "POST /api/repeat/sweep": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 200,
+      "why": "RI1 (by hand): every agreed row due: each run is one loopback send (its own request) + the row's move + two history lines; nothing due on the stub",
+      "extra": true
     },
     "POST /api/service/:chit_id/pause": {
       "file": "service.js",
@@ -1171,10 +1278,25 @@
       "fired": true,
       "status": 404
     },
+    "PUT /api/governance/country-setup": {
+      "file": "governance.js",
+      "trips": 7,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run)"
+    },
     "PUT /api/integrations/streams": {
       "file": "integrations.js",
       "trips": 1,
       "wire": 1,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/network-design": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
       "fired": true,
       "status": 400
     },
