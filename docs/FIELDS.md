@@ -249,3 +249,17 @@ A lead IS a party: a local identity on `customer_list` with `added_via = 'lead'`
 | `lead.moves` · `lead.may` (the record) | stages ≠ current · `{ ok }` or `{ ok: false, why }` | Server answer for "Move to…": greyed with `why` while b297 is not run. |
 | `memberships` row | entity_id · item_type · item_id · kind · grp · at · by_user_id | Append-only; RLS on entity_id; `membership_kind` is the dictionary of kinds and their groups. |
 | 503 `LEADS_NOT_MIGRATED` | `{ code, message }` | A write before b297: nothing is created. |
+
+## Leads from a CSV · POST /api/crm/leads/import (CB CRM L3, 2026-10-12)
+
+The browser parses the file and sends `rows` (≤ 500; more → 400 `TOO_MANY` "Import up to 500 leads at a time. Split the file."). No file reaches the server, no second contact list: a new row is the SAME party as Add lead makes (local-identity.mintMany · customer_list added_via 'lead' · memberships.addMany, the one writer). `lib/crm-leads.js`; who may: the owner or an editor-level login (lib/access.canEdit) — 403 `VIEW_ONLY` in words otherwise.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| body `rows[]` | `{ name, phone?, email?, business?, city?, source?, note? }` | Source: the CSV, after the Import sheet's column mapping (web cap-crm-leads.js). `phone` → rewards.holderOf (the one helper) → `identities.otp_contact` of the minted party; `business` → `customer_list.legal_name` (b274, when the column is there); `city` → `identities.city` (when there); `email` · `source` · `note` → ONE `party_interaction` note "Imported from …. Email …. …" (b276, when there) — never `identities.email` (a minted party has no account). |
+| body `dry` | boolean | true = the plan only (the preview): the one SELECT, nothing written, 200. Absent/false = the import, 201. |
+| `added` · `merged` | numbers | Derived by the server, once. `added` = new parties minted and listed; `merged` = parties the shop already had (same phone digits, or the same minted name) with no trade behind them, now leads: `customer_list.added_via` → 'lead' + a `lead` stage row. Read by the outcome card (large numbers). |
+| `skipped[]` | `{ row, name, phone, why }` | `row` = the file's row number (1-based). `why` ∈ No name · That looks like an email · Phone does not look right · Name too long · Same phone as row N · Same name as row N · Already a customer · Already a lead · Already a supplier. Read by the outcome card and its "Download skipped" CSV. |
+| `rows[]` | `{ row, name, phone, outcome, why, party_id }` | Every row's verdict: `outcome` ∈ add · merge · skip. The preview list paints this — it computes nothing. `party_id` = the matched party (merge/skip) or, after the import, the new one. |
+| `identities` set-based insert | mintMany | The same columns and constants as mint(); handles `~<shop>.cus-NNNN` numbered after the shop's top number, ONE insert. |
+| `books_counter` block | nextNo(…, count) | One move of the 'P' series by `count`; party numbers `P-NNNNN` assigned in that order (party-fields.ensureNos). |
