@@ -198,6 +198,14 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/books/returns": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 404,
+      "why": "BAS1, by hand: on the empty stub the switch is off, so the `on` guard answers 404 after its one read (the floor). With the ledger on: 2 trips — the guard's setting read, then ONE transaction (chart · years · the account_balance rows of the period's year(s)); no per-row query, no lines read"
+    },
     "GET /api/books/status": {
       "file": "books.js",
       "trips": 1,
