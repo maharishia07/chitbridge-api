@@ -85,7 +85,7 @@ async function captureRepeat() {
     keep('GET', '', await q('GET', '/'));
     mem.migrated = false;
     keep('GET', '', await q('GET', '/'));
-    keep('POST', '', await q('POST', '/', { chit_id: INV, unit: 'weekly', start_on: '2026-10-20' }));   /* 503 before b300 */
+    keep('POST', '', await q('POST', '/', { chit_id: INV, unit: 'weekly', start_on: '2026-10-20' }));   /* 503 before b302 */
   } finally { srv.close(); CLOCK.reset(); R.use(null); R.useSender(null); R.useMover(null); }
   return got;
 }

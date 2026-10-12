@@ -1,9 +1,9 @@
 /**
- * repeat-supply.test.cjs — REPEAT SUPPLY AS AN AGREEMENT BOTH PARTIES HOLD (round RI1, b300 DRAFT), through real Express, with a stand-in
+ * repeat-supply.test.cjs — REPEAT SUPPLY AS AN AGREEMENT BOTH PARTIES HOLD (round RI1, b302 DRAFT), through real Express, with a stand-in
  * auth, db and table (no database), a stand-in for the one send path (lib/autoraise.sendAs) and for the one status writer.
  *
  * Proves: the schedule math is lib/books-recurring's nextAfter, widened — the 31st meets February and comes back, every 2 weeks is 14 days,
- * a missed month runs once with its own date · the step table (may/why) for both sides · before b300 every route answers 503 in words ·
+ * a missed month runs once with its own date · the step table (may/why) for both sides · before b302 every route answers 503 in words ·
  * "Repeat this…" sends ONE agreement chit (purpose subscription, the invoice's lines, business_json.repeat) and nothing runs until the
  * customer agrees · the customer's Accept goes through the status writer · Counter puts the proposal on the agreement and the seller's
  * Agree makes it the terms (the next run carries the countered quantity with its frozen figures dropped for the send path to price) ·
@@ -76,9 +76,9 @@ const call = (port, method, p, body) => new Promise((done) => {
     R.runLines([{ line_id: 'a', quantity: 2, price: 100, total: 200 }, { line_id: 'b', quantity: 1, price: 50, total: 50 }, { line_id: 'c', quantity: 1, price: 10, total: 10 }], { lines: [{ line_id: 'a', quantity: 3 }, { line_id: 'c', quantity: 0 }] }),
     [{ line_id: 'a', quantity: 3, price: 100 }, { line_id: 'b', quantity: 1, price: 50, total: 50 }]);
 
-  /* 2 · before b300 */
+  /* 2 · before b302 */
   const g0 = await q('GET', '/');
-  ok('BEFORE b300: GET /api/repeat → 200 { agreements: [], migrated:false } with the sentence', g0.status === 200 && g0.body.migrated === false && /next update/.test(g0.body.message), JSON.stringify(g0.body));
+  ok('BEFORE b302: GET /api/repeat → 200 { agreements: [], migrated:false } with the sentence', g0.status === 200 && g0.body.migrated === false && /next update/.test(g0.body.message), JSON.stringify(g0.body));
   const p0 = await q('POST', '/', { chit_id: 'x', unit: 'weekly', start_on: '2026-10-06' });
   ok('…POST → 503 REPEAT_NOT_MIGRATED, nothing sent', p0.status === 503 && p0.body.code === 'REPEAT_NOT_MIGRATED' && mem.sent.length === 0, JSON.stringify(p0.body));
   eq('…the nightly sweepAll skips quietly', (await R.sweepAll()).skipped, true);

@@ -1,7 +1,7 @@
 'use strict';
 /**
  * tests/support/repeat-supply-memory.cjs — an in-memory repeat_supply table + chit_header stand-in with the real module's store functions
- * (b300 stood in; `migrated` is the switch the 503 test flips), and a stand-in for lib/autoraise.sendAs that records what the one send path
+ * (b302 stood in; `migrated` is the switch the 503 test flips), and a stand-in for lib/autoraise.sendAs that records what the one send path
  * would have been asked and answers like it (a chit id; the SAME client_ref answers the first chit, duplicate:true — the route's rule).
  */
 function memory() {

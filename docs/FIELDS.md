@@ -252,7 +252,7 @@ A lead IS a party: a local identity on `customer_list` with `added_via = 'lead'`
 
 ## /api/repeat (REPEAT SUPPLY as an agreement both parties hold, RI1 2026-10-12)
 
-Written by `lib/repeat-supply.js` (the table `repeat_supply`, b300 DRAFT); read by CB Finance › Repeat supply (`app/cap-repeat.js`) and the chit sheet. The agreement itself is a chit (purpose `subscription`): its lines, price and `summary_json.money` are the send path's own — nothing here computes money.
+Written by `lib/repeat-supply.js` (the table `repeat_supply`, b302 DRAFT); read by CB Finance › Repeat supply (`app/cap-repeat.js`) and the chit sheet. The agreement itself is a chit (purpose `subscription`): its lines, price and `summary_json.money` are the send path's own — nothing here computes money.
 
 | Key | Shape | Source / derived · who writes it · who reads it |
 |---|---|---|
@@ -262,8 +262,8 @@ Written by `lib/repeat-supply.js` (the table `repeat_supply`, b300 DRAFT); read 
 | `terms.lines[]` | `{ line_id, quantity }` | The AGREED quantities over the chit's lines (a counter the seller agreed to). A run carries them; a changed line's frozen figures are dropped so the send path prices it. |
 | `counter` | `{ lines?, every?, unit?, anchor_day?, start_on?, note, by, at }` or null | The customer's open proposal; cleared by agree · refuse · accept · decline. |
 | `runs` · `skips[]` | `{ 'YYYY-MM-DD': chit_id }` · `{ date, by_entity_id, reason, at }` | Which day minted which invoice (client_ref `rep:<agreement_id>:<date>` — one chit per day, ever); the days let pass and why. |
-| `migrated` (list) | boolean | false until b300 runs; the tab then says "Repeat supply arrives after the next update". |
+| `migrated` (list) | boolean | false until b302 runs; the tab then says "Repeat supply arrives after the next update". |
 | `ran[]` · `problems[]` (run · sweep) | `{ date, chit_id, duplicate }` · `{ agreement_id, date, why }` | What this press minted (a day already minted answers `duplicate: true`); a run the send path refused, named with its reason — the row stays put. |
-| 503 `REPEAT_NOT_MIGRATED` · 422 `REPEAT_<WHY>` · 403 `{ why }` | `{ code, message }` | Before b300 · the step table's refusal in words · the rail engine's own level/copy refusal (read_only · comment_only · not_participant). |
+| 503 `REPEAT_NOT_MIGRATED` · 422 `REPEAT_<WHY>` · 403 `{ why }` | `{ code, message }` | Before b302 · the step table's refusal in words · the rail engine's own level/copy refusal (read_only · comment_only · not_participant). |
 | chit `business_json.repeat` | `{ agreement_id, every, unit, anchor_day, start_on, until: { runs, on }, mode, source_chit_id }` | Stamped on the agreement chit at send (both copies) — how a holder finds the agreement; the schedule as PROPOSED (the row is what it became). |
 | chit `business_json.repeat_of` · `repeat_chit_id` · `repeat_run` | agreement_id · the agreement chit · `YYYY-MM-DD` | Stamped on each run's invoice: which agreement and which day minted it. |

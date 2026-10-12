@@ -12,7 +12,7 @@
  *   customer side — the entity the agreement names, HOLDING its received copy of the agreement chit (`?chit=<chit_id>` or body.chit_id
  *                   names it; the server checks the copy under the caller's own RLS), at editor level (lib/rail can). Anyone else: 404.
  *   every verb    — lib/repeat-supply may(): the agreement's own step table; a refusal is 422 { code: 'REPEAT_<WHY>', message }.
- * BEFORE b300 runs every route answers 503 { code: 'REPEAT_NOT_MIGRATED', message } — never a 500.
+ * BEFORE b302 runs every route answers 503 { code: 'REPEAT_NOT_MIGRATED', message } — never a 500.
  * ROUND TRIPS (tests/round-trips-all.test.cjs, by hand): list 2 (the zone, the join) · get 2–4 · a seller move 3 + 2 history lines ·
  *   the customer's accept = the status writer's own + 3 · create = the loopback send (its own request) + 3 · run = the sends + 2 each.
  */

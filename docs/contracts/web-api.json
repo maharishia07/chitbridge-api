@@ -1129,11 +1129,11 @@
       "stage": "lead",
       "followup_id": "f-q1",
       "what": "Ring again",
-      "due_day": "2026-10-12",
+      "due_day": "2026-10-11",
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-10T23:36:15.056Z",
+      "last_at": "2026-10-10T16:45:46.539Z",
       "late": true,
       "today": false
      }
@@ -1169,13 +1169,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-11T23:36:15.034Z",
-      "due_day": "2026-10-12",
+      "due_at": "2026-10-11T16:45:46.517Z",
+      "due_day": "2026-10-11",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-12T23:36:15.035Z",
+      "created_at": "2026-10-12T16:45:46.518Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1445,7 +1445,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-10T23:36:14.988Z",
+      "due_at": "2026-10-10T16:45:46.476Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1827,7 +1827,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-12T22:36:15.129Z",
+    "created_at": "2026-10-12T15:45:46.615Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1862,16 +1862,24 @@
       "say": "This chit cannot move to that step from where it is now."
      },
      "assign_task": {
-      "ok": true
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
      },
      "assign_line": {
-      "ok": true
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
      },
      "deliver_line": {
-      "ok": true
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
      },
      "amend": {
-      "ok": true
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
      }
     },
     "lines": [
@@ -1906,13 +1914,19 @@
       },
       "actions": {
        "assign_line": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "deliver_line": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "amend": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        }
       }
      }
@@ -1921,14 +1935,30 @@
    "optional": [
     "actions.accept.say",
     "actions.accept.why",
+    "actions.amend.say",
+    "actions.amend.why",
+    "actions.assign_line.say",
+    "actions.assign_line.why",
+    "actions.assign_task.say",
+    "actions.assign_task.why",
     "actions.cancel.say",
     "actions.cancel.why",
     "actions.complete.needs",
     "actions.complete.say",
     "actions.complete.why",
+    "actions.deliver_line.say",
+    "actions.deliver_line.why",
     "actions.reject.needs",
     "actions.reject.say",
-    "actions.reject.why"
+    "actions.reject.why",
+    "actions.reopen.say",
+    "actions.reopen.why",
+    "lines[].actions.amend.say",
+    "lines[].actions.amend.why",
+    "lines[].actions.assign_line.say",
+    "lines[].actions.assign_line.why",
+    "lines[].actions.deliver_line.say",
+    "lines[].actions.deliver_line.why"
    ]
   },
   "GET /api/work/:chit_id #404": {
@@ -2012,7 +2042,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-12T22:36:15.129Z",
+      "created_at": "2026-10-12T15:45:46.615Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2047,16 +2077,24 @@
         "say": "This chit cannot move to that step from where it is now."
        },
        "assign_task": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "assign_line": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "deliver_line": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "amend": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        }
       }
      }
@@ -2065,11 +2103,19 @@
    "optional": [
     "rows[].actions.accept.say",
     "rows[].actions.accept.why",
+    "rows[].actions.amend.say",
+    "rows[].actions.amend.why",
+    "rows[].actions.assign_line.say",
+    "rows[].actions.assign_line.why",
+    "rows[].actions.assign_task.say",
+    "rows[].actions.assign_task.why",
     "rows[].actions.cancel.say",
     "rows[].actions.cancel.why",
     "rows[].actions.complete.needs",
     "rows[].actions.complete.say",
     "rows[].actions.complete.why",
+    "rows[].actions.deliver_line.say",
+    "rows[].actions.deliver_line.why",
     "rows[].actions.reject.needs",
     "rows[].actions.reject.say",
     "rows[].actions.reject.why",
@@ -2085,7 +2131,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-12T23:36:15.497Z"
+     "shared_at": "2026-10-12T16:45:46.880Z"
     }
    },
    "optional": []
@@ -2138,13 +2184,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-11T23:36:15.034Z",
-     "due_day": "2026-10-12",
+     "due_at": "2026-10-11T16:45:46.517Z",
+     "due_day": "2026-10-11",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-12T23:36:15.039Z",
-     "created_at": "2026-10-12T23:36:15.035Z",
+     "done_at": "2026-10-12T16:45:46.522Z",
+     "created_at": "2026-10-12T16:45:46.518Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2878,13 +2924,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-11T23:36:15.034Z",
-     "due_day": "2026-10-12",
+     "due_at": "2026-10-11T16:45:46.517Z",
+     "due_day": "2026-10-11",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-12T23:36:15.035Z",
+     "created_at": "2026-10-12T16:45:46.518Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2936,9 +2982,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-12T23:36:15.034Z",
+     "at": "2026-10-12T16:45:46.516Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-12T23:36:15.034Z"
+     "created_at": "2026-10-12T16:45:46.516Z"
     }
    },
    "optional": []
@@ -2953,9 +2999,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-12T23:36:15.057Z",
+     "at": "2026-10-12T16:45:46.540Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-12T23:36:15.057Z"
+     "created_at": "2026-10-12T16:45:46.540Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2970,7 +3016,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-12T23:36:15.057Z",
+     "created_at": "2026-10-12T16:45:46.540Z",
      "late": false,
      "today": false,
      "bucket": "week"
