@@ -37,7 +37,9 @@
     "period": "1.20.0",
     "gst-returns": "1.20.0",
     "rail": "1.29.0",
-    "workflow": "1.33.0"
+    "workflow": "1.33.0",
+    "reg-in": "1.35.0",
+    "regulation": "1.35.0"
   },
   "adopt": {
     "money": [
@@ -155,6 +157,12 @@
     ],
     "workflow": [
       "lib/workflow.js"
+    ],
+    "reg-in": [
+      "lib/reg-in.js"
+    ],
+    "regulation": [
+      "lib/regulation.js"
     ]
   },
   "bundles": {
@@ -201,6 +209,8 @@
     "period": "bfe2c30d4803526d0120ed9fcab9f44845302efb29b3b85b75192d8ae31acc9a",
     "gst-returns": "3390556dca61965ed41f0431d409521c08509c74e5c2447aa936d42db4ae509e",
     "rail": "62146650c1ae4e0aa47c16625026f2d29039c4d05261c191f899bd0213f1b698",
-    "workflow": "f8c7a43048bc1b8453a1c2ec43b6eed7f619feee4c67eaba046c6cea370f0a5b"
+    "workflow": "f8c7a43048bc1b8453a1c2ec43b6eed7f619feee4c67eaba046c6cea370f0a5b",
+    "reg-in": "3d1e905873f75d7133d4a53e706035b2fcbeb4a2231358b3f12b7e3a53cf5875",
+    "regulation": "a1072d25cec6a0913e023192f6a7ef39011775e35351bbe9cb1eb95b7294c307"
   }
 }
