@@ -192,14 +192,15 @@ router.get('/accounts', auth, on, async (req, res) => {
       nature: a.nature, role: a.role, parent_code: a.parent_id ? codeOf.get(String(a.parent_id)) || null : null, active: a.active !== false })) });
   } catch (err) { fail(res, err); }
 });
-/** POST /accounts { name, parent_code | parent_id } → { account: { code, account_id, name } } — the code is the system's (engines nextCode, role null); one typed here is refused (422) */
+/** POST /accounts { name, parent_code | parent_id, source_code? } → { account: { code, account_id, name, source_code?, source_code_written? } } — the code is the system's (engines nextCode, role null); one typed here is refused (422).
+ *  IM1: `source_code` = the code the ledger had in Xero / QuickBooks, kept beside ours (b300); one another ledger already holds is refused (422, a code clash). */
 router.post('/accounts', auth, owner, on, async (req, res) => {
   try {
     const e = ctx(req), b = req.body || {};
     let parent = b.parent_id;
     if (!parent && b.parent_code) parent = ((await withEntity(e, (h) => S.accounts(h, e))).find((a) => String(a.code) === String(b.parent_code) && a.is_group) || {}).account_id;
-    const r = await B.addAccount(null, e, { name: b.name, parent_id: parent, code: b.code != null ? b.code : b.account_code, by: byOf(req) });
-    res.json({ ok: true, account: { code: r.code, account_id: r.account_id, name: r.name } });
+    const r = await B.addAccount(null, e, { name: b.name, parent_id: parent, code: b.code != null ? b.code : b.account_code, source_code: b.source_code, by: byOf(req) });
+    res.json({ ok: true, account: Object.assign({ code: r.code, account_id: r.account_id, name: r.name }, r.source_code !== undefined ? { source_code: r.source_code, source_code_written: r.source_code_written } : {}) });
   } catch (err) { fail(res, err); }
 });
 
@@ -794,21 +795,53 @@ router.post('/opening', auth, owner, on, async (req, res) => {
     if (!rows.length) return res.status(400).json({ error: 'No rows.', message: 'No rows.' });
     const bad = rows.map((r, i) => ((Number(r.dr_minor) > 0) === (Number(r.cr_minor) > 0) ? i + 1 : 0)).filter(Boolean);
     if (bad.length) return res.status(400).json({ error: 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.', message: 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.' });
+    /* ⭐ IM1: the entry itself is lib/books postOpening — the move-in importer posts a trial balance and the open bills through the same door */
+    const out = await withEntity(e, (h) => B.postOpening(h, e, { rows, date: dateQ(b.date, fyStart(req, today())), currency: cur, client_ref: b.client_ref, by: byOf(req) }));
+    res.json(out);
+  } catch (err) { fail(res, err); }
+});
+/* ── MOVE IN FROM XERO / QUICKBOOKS (IM1) — three doors, owner only, the ledger on: the columns guessed, the dry run, the import (lib/move-in) ── */
+const MI = require('../lib/move-in');
+/** what every move-in door reads from the body: the file (csv | xlsx + sheet / header_row), which export (kind), which system (source), the side, the move date */
+function moveInBody(req) {
+  const b = req.body || {};
+  const kind = MI.kindOf(b.kind), source = MI.sourceOf(b.source);
+  const as_at = dateQ(b.as_at, null) || fyStart(req, today());
+  const side = kind === 'contacts' ? (b.side === 'supplier' ? 'supplier' : 'customer') : kind === 'open_bills' ? (b.side === 'payable' || b.side === 'supplier' ? 'payable' : 'receivable') : null;
+  return { kind, source, side, as_at, parsed: MI.readFile(b), decisions: b.decisions, client_ref: b.client_ref ? String(b.client_ref).slice(0, 80) : null };
+}
+/** POST /move-in/preflight { kind, source, csv | xlsx, sheet?, header_row? } → { kind, source, headers, fields, guess: [{ incoming, field, how, confidence, why }], missing, ready, rows_total, sample, sheet, sheets, header_row } — reads nothing of the shop; nothing is written */
+router.post('/move-in/preflight', auth, owner, on, async (req, res) => {
+  try {
+    const { kind, source, parsed } = moveInBody(req);
+    const g = MI.guess(kind, parsed.headers);
+    res.json(Object.assign({ kind, source, headers: parsed.headers }, g, { rows_total: parsed.rows.length, sample: parsed.rows.slice(0, 5), sheet: parsed.sheet || null, sheets: parsed.sheets || null, header_row: parsed.headerRow || 1 }));
+  } catch (err) { fail(res, err); }
+});
+/** the plan for a confirmed file: the world read once (chart · parties · tax ids · phones · products), then the pure dry run */
+async function moveInPlan(req, h) {
+  const e = ctx(req), m = moveInBody(req);
+  const rows = MI.cells(m.kind, m.parsed, m.decisions);
+  const w = await MI.world(h, e, m.kind, req.books);
+  const pl = MI.plan(m.kind, { source: m.source, side: m.side, rows, world: w, currency: curOf(req), as_at: m.as_at });
+  return { m, pl, w };
+}
+/** POST /move-in/preview { kind, source, csv | xlsx, decisions: [{ incoming, field }], side?, as_at? } → { kind, source, side, as_at, counts: { add, merge, skip }, rows: [{ line, what, action, why, data }], refusal, notes } — the DRY RUN; nothing is written */
+router.post('/move-in/preview', auth, owner, on, async (req, res) => {
+  try {
+    const { m, pl } = await withEntity(ctx(req), (h) => moveInPlan(req, h));
+    res.json(Object.assign({ kind: m.kind, source: m.source, side: m.side, as_at: m.as_at }, pl));
+  } catch (err) { fail(res, err); }
+});
+/** POST /move-in/import { …as preview, confirm: true } → { kind, source, side, as_at, added, merged, skipped, rows: [the skipped, with why], notes, entry?, source_code_written? } — ONE transaction; a refusal writes nothing (422 with the sentence) */
+router.post('/move-in/import', auth, owner, on, async (req, res) => {
+  try {
+    if ((req.body || {}).confirm !== true) return res.status(400).json({ error: 'Not confirmed', message: 'Nothing was imported — this needs an explicit confirmation.' });
+    const e = ctx(req);
     const out = await withEntity(e, async (h) => {
-      const byNo = new Map((await S.parties(h, e)).filter((p) => p.party_no).map((p) => [String(p.party_no).toUpperCase(), p.party_id]));
-      const lines = [], refs = [];
-      for (const [i, r] of rows.entries()) {
-        const party = r.party_no ? byNo.get(String(r.party_no).toUpperCase()) : (UUID.test(String(r.party_id || '')) ? r.party_id : undefined);
-        if (r.party_no && !party) { const x = new Error('Row ' + (i + 1) + ': no party numbered ' + r.party_no + '.'); x.refused = true; throw x; }
-        lines.push({ account: String(r.code), dr: Number(r.dr_minor || 0) / 100, cr: Number(r.cr_minor || 0) / 100, party });
-        refs.push({ party, bill_ref: r.bill_ref ? String(r.bill_ref).slice(0, 60) : null, due_date: DATE.test(String(r.due_date || '')) ? r.due_date : null });
-      }
-      const r = await B.postEntry(h, e, { type: 'opening', date: dateQ(b.date, fyStart(req, today())), currency: cur, lines, line_refs: refs,
-        source_ref: b.client_ref ? 'opening:' + String(b.client_ref).slice(0, 80) : null, narration: 'Opening balances', by: byOf(req) });
-      const ent = r.entry_id ? await S.entry(h, e, r.entry_id) : null;
-      const chart = await S.accounts(h, e); const sus = chart.find((a) => a.role === 'suspense');
-      const sl = ent && sus ? ent.lines.filter((l) => String(l.account_id) === String(sus.account_id)) : [];
-      return Object.assign({}, r, { suspense_minor: sl.reduce((t, l) => t + Number(l.cr_minor) - Number(l.dr_minor), 0) });
+      const { m, pl, w } = await moveInPlan(req, h);
+      const r = await MI.apply(h, e, pl, { world: w, setting: req.books, by: byOf(req), as_at: m.as_at, currency: curOf(req), client_ref: m.client_ref });
+      return Object.assign({ side: m.side, as_at: m.as_at }, r);
     });
     res.json(out);
   } catch (err) { fail(res, err); }

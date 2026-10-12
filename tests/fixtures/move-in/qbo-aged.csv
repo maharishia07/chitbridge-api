@@ -1,0 +1,3 @@
+Date,Transaction Type,Num,Supplier,Due Date,Amount,Open Balance
+12/06/2026,Bill,B-1007,Kumar Traders,12/07/2026,"$1,650.00","$1,650.00"
+25/06/2026,Bill,B-1012,Kumar Traders,25/07/2026,$550.00,$550.00

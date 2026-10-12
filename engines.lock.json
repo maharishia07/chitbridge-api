@@ -39,7 +39,7 @@
     "rail": "1.29.0",
     "workflow": "1.33.0",
     "reg-in": "1.36.0",
-    "reg-au": "1.36.0",
+    "reg-au": "1.38.1",
     "regulation": "1.36.0"
   },
   "adopt": {
@@ -215,7 +215,7 @@
     "rail": "62146650c1ae4e0aa47c16625026f2d29039c4d05261c191f899bd0213f1b698",
     "workflow": "f8c7a43048bc1b8453a1c2ec43b6eed7f619feee4c67eaba046c6cea370f0a5b",
     "reg-in": "3d1e905873f75d7133d4a53e706035b2fcbeb4a2231358b3f12b7e3a53cf5875",
-    "reg-au": "878c0052b81d1e8d4515c3bdd5da07b6caa2b2ed824340afd1cc5fd485fbc47f",
+    "reg-au": "8e43716ed28877d544c9b9292ce9f80043f5bc35cba6f3e1e2d36bfbacf8d759",
     "regulation": "db5d800070494550ad94af7a519f4055805453ad0049e9b385ce1e5c412e20c6"
   }
 }
