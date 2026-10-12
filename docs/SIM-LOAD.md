@@ -18,9 +18,12 @@ start http://localhost:8124                           # 3 · sign in as simstore
 loader connects to **that** database only: a URL whose host is not `localhost`, `127.0.0.1`, `::1` or a bare docker service
 name (`db`, `postgres`) is refused before anything connects. The api's `.env` cannot redirect it.
 
-**Before the first load, run `migrations/b299_chit_deliver_clock.sql` on the local database** (as `postgres`, e.g.
-`node scripts/sql.cjs migrations/b299_chit_deliver_clock.sql --as-owner --write` with `DATABASE_URL` pointing at the local stack). It
-lets the chit writer stamp each bill with the simulated day; the loader refuses, in words, until it has run.
+**Before the first load, run `migrations/b300_chit_deliver_clock.sql` on the local database** (as `postgres`, e.g.
+`node scripts/sql.cjs migrations/b300_chit_deliver_clock.sql --as-owner --write` with `DATABASE_URL` pointing at the local stack). It
+lets the chit writer stamp each bill with the simulated day; the loader refuses, in words, until it has run. The stamp is an
+instant (M210): with `b299_created_at_timestamptz.sql` run too the column holds it as `timestamptz`; without it the column holds
+the UTC wall clock the api's pinned session zone writes — the shop's day (Asia/Kolkata) is the same either way. `--schema` applies
+both in number order.
 
 ## What you get
 

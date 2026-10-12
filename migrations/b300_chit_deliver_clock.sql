@@ -1,4 +1,4 @@
--- b299_chit_deliver_clock.sql — round Y1b: chit_deliver stamps a copy's sent_at / created_at from the COPY when it carries them,
+-- b300_chit_deliver_clock.sql — round Y1b: chit_deliver stamps a copy's sent_at / created_at from the COPY when it carries them,
 --                               NOW() as before when it does not. No new table, no new column, no data touched.
 --
 -- ⚠️⚠️ DRAFT — NOT RUN · Athi runs it (Supabase SQL editor, AS postgres — CREATE OR REPLACE FUNCTION on a SECURITY DEFINER
@@ -15,9 +15,13 @@
 --    (routes/chits.js: `const now = CLOCK.now()`), but the row's created_at came from SQL NOW(), so a bill the simulator sent on
 --    2027-08-10 landed on today — the counter's bill list, CRM's last-seen and the walk-in day's bounds (books-store.counterBills
 --    reads billed_at, else created_at) all read the wrong day. In life the clock IS the system clock: the stamp is the same moment
---    NOW() would have given, within the request. The known fault stays as it was: the column is `timestamp` (no zone), and the
---    value is cast through the session zone exactly as NOW() is — tools/simulate-years.cjs still names the dev-PC day shift; the
---    fix for THAT is the timestamptz migration DECISIONS "day-close breaks past midnight" asks for, not this file.
+--    NOW() would have given, within the request.
+--
+-- THE ZONE (M210, b299_created_at_timestamptz.sql — written the same week, numbered first): the copy's stamp is an ISO instant
+--    ('…Z', lib/mint.js isoOf) cast to timestamptz, so it names ONE moment whatever the session zone. Into the column it goes
+--    exactly as NOW() does: before b299 the column is naive and the cast uses the session zone, which db/index.js pins to UTC on
+--    connect and in every BEGIN (withEntity) — a UTC wall clock, the convention b299's `AT TIME ZONE 'UTC'` rests on; after b299
+--    the column is timestamptz and the instant is stored as it is. b299 and b300 may run in either order.
 
 CREATE OR REPLACE FUNCTION chit_deliver(p_chit_id uuid, p_clear_first boolean, p_copies jsonb)
 RETURNS void
@@ -59,7 +63,7 @@ BEGIN
        c->'summary_json', c->'business_json',
        c->>'schema_version', (c->>'schema_id')::uuid, (c->>'created_by_actor_id')::uuid,
        c->>'role', p_chit_id, c->>'direction',
-       -- ⭐ b299: the shop clock's moment when the copy carries it (routes/chits.js → lib/mint.js), NOW() otherwise
+       -- ⭐ b300: the shop clock's moment when the copy carries it (routes/chits.js → lib/mint.js), NOW() otherwise
        COALESCE(NULLIF(c->>'sent_at', '')::timestamptz, NOW()),
        COALESCE(NULLIF(c->>'created_at', '')::timestamptz, NOW()));
 
@@ -112,7 +116,7 @@ END $$;
 DO $$
 BEGIN
   IF position('created_at' in pg_get_functiondef('chit_deliver(uuid,boolean,jsonb)'::regprocedure)) = 0 THEN
-    RAISE EXCEPTION 'b299: chit_deliver was not replaced';
+    RAISE EXCEPTION 'b300: chit_deliver was not replaced';
   END IF;
-  RAISE NOTICE 'b299: chit_deliver honours a copy''s own sent_at / created_at (the shop clock); NOW() when absent. No data touched.';
+  RAISE NOTICE 'b300: chit_deliver honours a copy''s own sent_at / created_at (the shop clock); NOW() when absent. No data touched.';
 END $$;

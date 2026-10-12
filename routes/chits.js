@@ -1320,7 +1320,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         schema_version: frozen_schema_version, schema_id: frozen_schema_id, created_by_actor_id,
         detail_type: purpose, line_item_count: summary.line_item_count,
         total_value: summary.total_value, currency_code: summary_json.currency_code,
-        created_at: now, sent_at: now,   /* Y1b: the shop clock's moment (b299 reads it; before b299 the definer stamps NOW() as it always did) */
+        created_at: now, sent_at: now,   /* Y1b: the shop clock's moment (b300 reads it; before b300 the definer stamps NOW() as it always did) */
       });
       const mkCopy = (extra) => mint.party(headerCommon, Object.assign({
         // omitted -> SQL NULL (matches legacy): chit_deliver reads c->>'key', for which an absent key and a JSON

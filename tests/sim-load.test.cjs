@@ -6,8 +6,8 @@
  *      a Supabase host, a Railway host, a pooler, a public IP, anything with a dot — or a non-postgres URL;
  *   2. its header stops saying so, or it grows a raw INSERT into a tenant table (every write goes through the app's doors);
  *   3. the plan is not shared: tools/simulate-years.cjs stops reading tools/sim-plan.cjs, or the plan stops being deterministic;
- *   4. the chit writer stops carrying the shop clock's moment (routes/chits.js `now` → lib/mint.js header → chit_deliver, b299),
- *      or b299 stops honouring it;
+ *   4. the chit writer stops carrying the shop clock's moment (routes/chits.js `now` → lib/mint.js header → chit_deliver, b300),
+ *      or b300 stops honouring it;
  *   5. the loader's schema step would run a dry-run, a verify or a data script.
  * Run: node tests/sim-load.test.cjs
  */
@@ -56,19 +56,25 @@ ok('tools/simulate-years.cjs reads the plan (sim-plan.cjs), not its own dice', /
 ok('…and sim-load.cjs reads the same plan', /require\(path\.join\(__dirname, 'sim-plan\.cjs'\)\)/.test(src));
 
 /* 4 · one clock on the chit */
-const chits = read('routes/chits.js'), mint = read('lib/mint.js'), b299 = read('migrations/b299_chit_deliver_clock.sql');
+const chits = read('routes/chits.js'), mint = read('lib/mint.js'), b300 = read('migrations/b300_chit_deliver_clock.sql');
 ok('routes/chits.js stamps a chit with the shop clock (CLOCK.now()), never new Date() for `now`', /const now = CLOCK\.now\(\)/.test(chits) && !/const now = new Date\(\)/.test(chits));
 ok('…hands it to mint.header (created_at · sent_at)', /created_at: now, sent_at: now/.test(chits));
 ok('…and the legacy in-transaction inserts use it too (no NOW(),NOW() on chit_header)', !/NOW\(\),NOW\(\)\)`/.test(chits) && /'sent', now\]/.test(chits) && /'received', now\]/.test(chits));
 ok('lib/mint.js header carries created_at / sent_at when given, nothing when not', /created_at: isoOf\(x\.created_at\)/.test(mint) && /\.\.\.\(x\.created_at \?/.test(mint));
-ok('migrations/b299 honours the copy\'s stamps and falls back to NOW()', /COALESCE\(NULLIF\(c->>'created_at', ''\)::timestamptz, NOW\(\)\)/.test(b299) && /COALESCE\(NULLIF\(c->>'sent_at', ''\)::timestamptz, NOW\(\)\)/.test(b299));
-ok('b299 says who runs it and that RLS is unchanged', /NOT RUN/.test(b299) && /RLS: unchanged/.test(b299));
-ok('the loader refuses a database whose chit_deliver predates b299, in words', /run migrations\/b299_chit_deliver_clock\.sql/.test(src));
+ok('migrations/b300 honours the copy\'s stamps and falls back to NOW()', /COALESCE\(NULLIF\(c->>'created_at', ''\)::timestamptz, NOW\(\)\)/.test(b300) && /COALESCE\(NULLIF\(c->>'sent_at', ''\)::timestamptz, NOW\(\)\)/.test(b300));
+ok('b300 says who runs it and that RLS is unchanged', /NOT RUN/.test(b300) && /RLS: unchanged/.test(b300));
+ok('the loader refuses a database whose chit_deliver predates b300, in words', /run migrations\/b300_chit_deliver_clock\.sql/.test(src));
+/* M210 (b299): a naive timestamp is a UTC wall clock — the loader's own pool pins the session zone as db/index.js does, and the
+   proof cuts the shop's day with books-hooks.zoneOf, never the process offset */
+ok('the loader pins its session zone to UTC (M210), as db/index.js pins the api\'s', /SET TimeZone = 'UTC'/.test(src));
+ok('the proof reads the SHOP\'s day (books-hooks.zoneOf), not the process offset', /zoneOf\(COUNTRY\)/.test(src) && /created_at::timestamptz AT TIME ZONE \$2/.test(src) && !/getTimezoneOffset/.test(src));
+ok('the migration states the zone rule (an instant; UTC wall clock before b299, timestamptz after)', /b299_created_at_timestamptz/.test(b300) && /pins to UTC/.test(b300));
+ok('no second b299 beside M210\'s two — the Y1b file is b300', !fs.existsSync(path.join(ROOT, 'migrations', 'b299_chit_deliver_clock.sql')) && fs.existsSync(path.join(ROOT, 'migrations', 'b300_chit_deliver_clock.sql')));
 
 /* 5 · the schema step's skip list */
 for (const f of ['b171a_customer_purge_DRYRUN.sql', 'b179_currency_envelope_dryrun.sql', 'b180_chit_status_pulse_index_verify.sql', 'purge_test_entities_1_LIST.sql', 'b194c_schema_visibility_backfill_commit.sql', 'READ-2026-10-09-product-field-survey.sql'])
   ok('schema step skips ' + f, L.CHAIN_SKIP.test(f));
-for (const f of ['b272_books_ledger.sql', 'b299_chit_deliver_clock.sql', 'b179_currency_envelope_apply.sql']) ok('schema step applies ' + f, !L.CHAIN_SKIP.test(f));
+for (const f of ['b272_books_ledger.sql', 'b300_chit_deliver_clock.sql', 'b179_currency_envelope_apply.sql']) ok('schema step applies ' + f, !L.CHAIN_SKIP.test(f));
 
 console.log('\n' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + (pass + fail) + ' checks\n');
 process.exit(fail ? 1 : 0);

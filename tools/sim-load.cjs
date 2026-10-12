@@ -109,6 +109,9 @@ const SUPPLIER = 'Kumar Traders', CUSTOMER = 'Ravi Stores', CREDIT_DAYS = 10;
 /* ── a direct pool for the checks (reads) and --fresh ───────────────────────────────────────────────────────────── */
 const { Pool } = require(path.join(API, 'node_modules', 'pg'));
 const pool = new Pool({ connectionString: DB, max: 2, connectionTimeoutMillis: 5000 });
+/* M210's rule, here too: a naive timestamp is a UTC wall clock — the session zone is pinned as db/index.js pins the api's, so the
+   proof's `created_at::timestamptz` names the same instant before b299 (naive) and after it (timestamptz) */
+pool.on('connect', (c) => { c.query("SET TimeZone = 'UTC'").catch((e) => console.warn('session zone not set:', e.message)); });
 const sql = (t, p) => pool.query(t, p);
 
 async function hasTable(name) { return (await sql(`SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`, [name])).rows.length > 0; }
@@ -209,10 +212,10 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   if (SCHEMA) await applySchema();
   if (!await hasTable('identities')) die('this database has no schema — the local stack migrates its own; an empty TEST database takes --schema');
   if (!await hasTable('journal_entry')) die('the ledger tables (migrations b272–b274) are not in this database');
-  /* the delivery function must honour the shop clock (b299) — else three years of bills would all be dated today */
+  /* the delivery function must honour the shop clock (b300) — else three years of bills would all be dated today */
   const fn = await sql(`SELECT pg_get_functiondef(to_regprocedure('chit_deliver(uuid,boolean,jsonb)')) AS d`).catch(() => ({ rows: [{ d: null }] }));
   if (!fn.rows[0] || !fn.rows[0].d) die('chit_deliver (migrations/migration_b50 · b142) is not in this database');
-  if (fn.rows[0].d.indexOf("c->>'created_at'") < 0) die('chit_deliver does not honour the shop clock yet — run migrations/b299_chit_deliver_clock.sql on this local database (as postgres), then load');
+  if (fn.rows[0].d.indexOf("c->>'created_at'") < 0) die('chit_deliver does not honour the shop clock yet — run migrations/b300_chit_deliver_clock.sql on this local database (as postgres), then load');
 
   /* the shop so far: exists? loaded for this seed? */
   const who = await sql(`SELECT identity_id, user_id, email FROM identities WHERE LOWER(user_id) = $1 OR LOWER(email) = $2`, [SHOP, EMAIL]);
@@ -415,11 +418,13 @@ async function proof(shopId, quiet) {
     const r = c.rows[0], ok = BigInt(r.opening) + BigInt(r.flow) === BigInt(r.closing) && (fys.indexOf(fy) === 0 || BigInt(r.opening) > 0n);
     line(ok, fy + ' · cash opening ' + rup(r.opening) + ' (stored) + net flow ' + rup(r.flow) + ' (lines) = closing ' + rup(r.closing) + ' (stored)');
   }
-  /* created_at is a zone-less timestamp holding THIS process's wall clock (node-pg writes and reads it in the process zone) → shift it to the shop's day */
-  const shift = 330 + new Date().getTimezoneOffset();
+  /* created_at names an INSTANT (M210): timestamptz after b299, and before it a naive UTC wall clock — read as UTC because this
+     pool's session zone is pinned to UTC exactly as db/index.js pins the api's (the `::timestamptz` cast is then the same instant
+     either way). The day it belongs to is the SHOP's (books-hooks.zoneOf — IN → Asia/Kolkata), the one rule the day close uses. */
+  const zone = require(path.join(API, 'lib', 'books-hooks')).zoneOf(COUNTRY);
   const dated = await sql(`SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND business_json ? 'bill_no'
-                             AND ((business_json ->> 'billed_at')::timestamptz AT TIME ZONE 'UTC' + interval '330 minutes')::date <> (created_at + ($2 || ' minutes')::interval)::date`, [shopId, String(shift)]);
-  line(COUNTRY !== 'IN' || dated.rows[0].n === 0, 'every bill\'s created_at is its own simulated day, not today (' + dated.rows[0].n + ' off)');
+                             AND ((business_json ->> 'billed_at')::timestamptz AT TIME ZONE $2)::date <> (created_at::timestamptz AT TIME ZONE $2)::date`, [shopId, zone]);
+  line(dated.rows[0].n === 0, 'every bill\'s created_at is its own simulated day in ' + zone + ', not today (' + dated.rows[0].n + ' off)');
   const locked = await sql(`SELECT count(*)::int AS n FROM fiscal_period WHERE entity_id = $1 AND status IN ('soft_locked', 'hard_locked') AND period > 0`, [shopId]);
   line(locked.rows[0].n >= YEARS * 12, 'months locked (' + locked.rows[0].n + ' of ' + YEARS * 12 + ')');
   const waiting = await sql(`SELECT count(*)::int AS n FROM books_outbox WHERE entity_id = $1 AND done_at IS NULL`, [shopId]).catch(() => ({ rows: [{ n: 'n/a' }] }));
