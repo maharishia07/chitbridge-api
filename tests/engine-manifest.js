@@ -417,8 +417,8 @@ const ENGINE_OTHER = [
   /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
      tools/adopt.cjs, never edited here: the chart and roles, the debit/credit rules, open items, the reads, the pack. */
   'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'bookpack.js',
-  /* ⭐ CS1 (2026-10-12): the registry of country packs, the India pack and the Australia pack (AU1), ADOPTED from chitbridge-engines v1.36.0 (engines.lock.json) — first adoption on the server */
-  'regulation.js', 'reg-in.js', 'reg-au.js',
+  /* ⭐ CS1 (2026-10-12): the registry of country packs, the India pack, the Australia pack (AU1) and the UAE pack (AE1), ADOPTED from chitbridge-engines v1.37.0 (engines.lock.json) — first adoption on the server */
+  'regulation.js', 'reg-in.js', 'reg-au.js', 'reg-ae.js',
   /* v1.20.0: the month lock and year close (period.js) and the GST returns (gst-returns.js — the API reads its dueDate), ADOPTED the same way */
   'period.js', 'gst-returns.js',
   /**
