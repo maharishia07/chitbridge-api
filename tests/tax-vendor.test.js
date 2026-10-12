@@ -33,7 +33,9 @@ it('the copy on disk is exactly the release both sides pin (nobody edited one si
   }
 });
 
-const load = () => { const sandbox = { window: {} }; vm.createContext(sandbox); vm.runInContext(fs.readFileSync(COPY, 'utf8'), sandbox); return sandbox.window.CBTax; };
+/* ⭐ CL1 (2026-10-12): the sandbox's window IS its global, as a browser's is (till-vendor's load() does the same) — the bundle now carries the regulation packs
+   ahead of tax-packs, and regulation finds a pack by its GLOBAL (CBRegIN …) while each pack sets window.CBRegIN; a window that is a separate object hides them. */
+const load = () => { const sandbox = {}; sandbox.window = sandbox; vm.createContext(sandbox); vm.runInContext(fs.readFileSync(COPY, 'utf8'), sandbox); return sandbox.window.CBTax; };
 const T = load();
 
 it('it exposes the same names the server exports', () => {
