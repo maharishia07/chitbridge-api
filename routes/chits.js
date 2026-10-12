@@ -11,6 +11,7 @@ const { isOwner } = require('../lib/owner');
 const storage = require('../lib/storage');
 const docnumber = require('../lib/docnumber');   // what a document number may look like, per country
 const { tillClaimOf } = require('../lib/holder');   // M11 — a phone's bill names its device and person; checked against the session
+const CLOCK = require('../lib/shop-clock');   // ⭐ Y1b — a chit's sent_at/created_at are the SHOP CLOCK's moment (the system clock in life; set by tools/sim-load.cjs), never SQL NOW()
 
 /**
  * ⭐ THE SHOP'S JURISDICTION, MEMOISED FOR FIVE MINUTES.
@@ -1048,7 +1049,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       }
       // Generate chit_id — same for ALL participants (reuse the draft's id when promoting, so the draft BECOMES the order)
       const chit_id = promote_draft_id || uuidv4();
-      const now = new Date();
+      const now = CLOCK.now();   /* Y1b: the one clock — the day a bill lands on (books-hooks.dayOf) and the day it is listed under agree */
 
       // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
       /* ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js */
@@ -1319,6 +1320,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         schema_version: frozen_schema_version, schema_id: frozen_schema_id, created_by_actor_id,
         detail_type: purpose, line_item_count: summary.line_item_count,
         total_value: summary.total_value, currency_code: summary_json.currency_code,
+        created_at: now, sent_at: now,   /* Y1b: the shop clock's moment (b300 reads it; before b300 the definer stamps NOW() as it always did) */
       });
       const mkCopy = (extra) => mint.party(headerCommon, Object.assign({
         // omitted -> SQL NULL (matches legacy): chit_deliver reads c->>'key', for which an absent key and a JSON
@@ -1396,14 +1398,14 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
             sender_entity_display_name, all_recipients, purpose,
             auto_subject, manual_subject, summary_json, business_json,
             schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())`,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
           [chit_id, sender_id, sender_id, sender_bridge_id,
            sender_display_name, JSON.stringify(all_recipients), purpose,
            auto_subject, manual_subject || null,
            JSON.stringify(summary_json),
            business_json ? JSON.stringify(business_json) : null,
            frozen_schema_version, frozen_schema_id, created_by_actor_id,
-           is_draft ? 'Draft' : 'Act', chit_id, 'sent']
+           is_draft ? 'Draft' : 'Act', chit_id, 'sent', now]
         );
         await client.query(
           `INSERT INTO chit_detail
@@ -1446,7 +1448,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
               sender_entity_display_name, all_recipients, purpose,
               auto_subject, manual_subject, summary_json, business_json,
               schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())`,
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
             [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
              sender_display_name, JSON.stringify(all_recipients), rcvPurpose,
              auto_subject, (billCopy ? billCopy.manual_subject : manual_subject) || null,
@@ -1466,7 +1468,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
              JSON.stringify(rcvSummary),
              rcvBj ? JSON.stringify(rcvBj) : null,
              frozen_schema_version, frozen_schema_id, created_by_actor_id,
-             receiver.role, chit_id, 'received']
+             receiver.role, chit_id, 'received', now]
           );
           await client.query(
             `INSERT INTO chit_detail
@@ -1742,8 +1744,20 @@ function chitFilters(req, where, params){
   const amin = num(req.query.amount_min), amax = num(req.query.amount_max);
   if (amin !== null) { params.push(amin); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`; }
   if (amax !== null) { params.push(amax); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) <= $${params.length}`; }
-  if (req.query.date_from) { params.push(req.query.date_from); where += ` AND ch.created_at >= $${params.length}::timestamptz`; }
-  if (req.query.date_to)   { params.push(req.query.date_to);   where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`; }
+  /* ⭐ a date filter is the SHOP's day (M210): midnight in the shop's own zone (identities.timezone, b176; India when unset) — the
+     same rule as books-hooks.dayBounds, spelt in SQL because this builder is synchronous and a trip to read the zone is not
+     affordable here. `timestamp AT TIME ZONE zone` names the instant that midnight is; it compares right against created_at
+     before b301 (naive, read as UTC by the pinned session zone) and after it (timestamptz). */
+  const dateQ = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '').trim());
+  if (dateQ(req.query.date_from) || dateQ(req.query.date_to)) {
+    params.push(entityId(req));                                     /* the SHOP (an actor's parent entity), whose zone it is */
+    const zone = `COALESCE((SELECT z.timezone FROM identities z WHERE z.identity_id = $${params.length}::uuid), 'Asia/Kolkata')`;
+    if (dateQ(req.query.date_from)) { params.push(String(req.query.date_from).trim()); where += ` AND ch.created_at >= ($${params.length}::date::timestamp AT TIME ZONE ${zone})`; }
+    if (dateQ(req.query.date_to))   { params.push(String(req.query.date_to).trim());   where += ` AND ch.created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE ${zone})`; }
+  } else {                                                          /* a full timestamp: as before, an instant */
+    if (req.query.date_from) { params.push(req.query.date_from); where += ` AND ch.created_at >= $${params.length}::timestamptz`; }
+    if (req.query.date_to)   { params.push(req.query.date_to);   where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`; }
+  }
   if (req.query.priority)  { params.push(req.query.priority);  where += ` AND cs.priority_flag = $${params.length}`; }
   if (req.query.fstatus)   {
     const B = { open:['pending','delivered','read'], act:['accepted','in_progress','partial'], close:['completed','cancelled','rejected'] };

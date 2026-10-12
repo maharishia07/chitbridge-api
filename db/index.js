@@ -1,5 +1,28 @@
 // db/index.js — PostgreSQL connection pool
-const { Pool } = require('pg');
+const pg = require('pg');
+const { Pool } = pg;
+
+/**
+ * ⭐⭐ M210 · A NAIVE TIMESTAMP IS A UTC WALL CLOCK, WHATEVER CLOCK THE SERVER RUNS ON (known fault "day-close breaks past midnight").
+ * chit_header.created_at (and its siblings, 000_baseline) are `timestamp WITHOUT time zone`: the database stamps `now()` in ITS zone
+ * and node-pg reads the value back in the SERVER's zone — two clocks that only agree when both happen to be UTC. On a server in
+ * India a 00:05 IST sale read back as 00:05 IST (it was 18:35 UTC) and closed in the previous day.
+ *   · READ:  a naive timestamp parses as UTC — through pg's OWN timestamptz parser, with '+00' appended. A timestamptz column
+ *            (after b301) carries its offset and is untouched. The day a moment belongs to is then books-hooks.dayOf's alone.
+ *   · WRITE: a JS Date parameter is sent as a UTC wall clock (+00:00) — into a naive column that stores the UTC clock,
+ *            into timestamptz the same instant. Never the server's local clock.
+ *   · DB:    the session zone is pinned to UTC (on connect, and SET LOCAL inside every BEGIN — the same trips as the statement
+ *            deadline), so `now()` stamps UTC into a naive column and a naive→timestamptz cast reads UTC. The live database is
+ *            UTC already; this makes it a rule instead of a coincidence, and it is the assumption b301's `AT TIME ZONE 'UTC'` rests on.
+ * The code is right BEFORE b301 runs and after it; the migration only stops the type from needing the convention.
+ */
+const naiveAsUtc = (() => {
+  const tz = pg.types.getTypeParser(1184, 'text');                                   /* timestamptz — pg's own parser, reused */
+  return (s) => (s == null ? s : tz(/[zZ]$|[+-]\d\d(:?\d\d)?$/.test(s) || /infinity$/.test(s) ? s : s.replace(/( BC)?$/, '+00$1')));
+})();
+pg.types.setTypeParser(1114, naiveAsUtc);                                          /* timestamp without time zone */
+pg.defaults.parseInputDatesAsUTC = true;
+const SESSION_TZ = "SET TimeZone = 'UTC'";
 
 const POOLER_REGIONS = [
   'aws-1-ap-south-1',
@@ -37,10 +60,11 @@ function sslForHost(hostname) {
 function armPool(p) {
   const ms = require('../lib/limits').statementTimeoutMs();
   p.on('connect', (c) => require('../lib/dbwatch').watch(c));   /* E07: every statement timed; slow ones logged by fingerprint */
-  if (ms) p.on('connect', (c) => { c.query('SET statement_timeout = ' + Math.floor(ms)).catch((e) => console.warn('statement_timeout not set:', e.message)); });
+  /* one trip per NEW connection, not per request: the zone pin (M210) rides with the statement deadline */
+  p.on('connect', (c) => { c.query(SESSION_TZ + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : '')).catch((e) => console.warn('session settings not set:', e.message)); });
   return p;
 }
-const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return ms ? 'BEGIN; SET LOCAL statement_timeout = ' + Math.floor(ms) : 'BEGIN'; };
+const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return 'BEGIN; SET LOCAL ' + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
 
 async function createPool() {
   const rawUrl = process.env.DATABASE_URL || '';

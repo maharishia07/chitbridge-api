@@ -28,9 +28,11 @@ const GUARDS = [
   'pages-parse.test.js',      // every inline script in app.html, till.html and promo.html parses
   'till-vendor.test.js',      // the counter and its vendored engines agree, byte for byte
   'shop-clock-guard.test.cjs',  // ⭐⭐ Y1: one shop clock — no raw new Date()/Date.now() in the ledger files; set/advance/reset proven
+  'shop-day-tz.test.cjs',       // ⭐⭐ M210: a midnight sale lands in the SHOP's day on every server clock, before and after b299; Sydney across DST
   'till-t2a.test.cjs',  // round T2a: bills-only count, an online order billed, the mode menu, no 403 on quick-keys/hidden
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
+  'migration-numbers.test.cjs', // ⭐⭐ one number, one migration — two parallel rounds both wrote b299 (12 Oct); a clash fails here
   'engines-pinned.test.js',    // ⭐⭐⭐ every adopted engine is EXACTLY its chitbridge-engines release — no hand edit survives
   'money-round.test.js',       // one rounder (0 wrong in 1.74 M cases, per-currency decimals) and one price reader
   'google-availability.test.cjs', // one output shape: status → Google Merchant availability; nothing Google does not define (M53)
@@ -73,6 +75,7 @@ const GUARDS = [
   'round-trips-all.test.cjs',  // ⭐⭐ every route the web client calls has a round-trip budget (round-trips.budget.json) — fired offline, I19 (DB10)
   'people.test.cjs',           // ⭐ P1: GET /api/people — one statement, the caller's shop only, may/why per action, owner-only greyed with its sentence
   'network-validate.test.cjs', // P2: the dry-run validate of a designed network — names what would break, posts nothing
+  'sim-load.test.cjs',         // ⭐⭐⭐ Y1b: the simulator's loader refuses every non-local database; one plan for Y1 and Y1b; the chit carries the shop clock
   'round-trips-till.test.cjs', // ⭐⭐ the counter's snapshot has a trip budget: its own five tables in ONE transaction, 50 → 38 (M36, 2026-09-29)
   'rev16-delta-cursor-stamped-first.test.js', // ⭐⭐ a delta's cursor never skips a change — stamped before the read; past the cap sent in parts (2026-09-28)
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
@@ -200,6 +203,7 @@ const GUARDS = [
   'books-todo.test.cjs',        // ⭐ the To-do feed: each kind from a real check, only what needs doing, and each row gone when it is done
   'books-manual-events.test.cjs', // ⭐⭐ expense / other income / capital / drawings / staff advance + recovery: hand-worked lines, MJ + voucher type, double tap once, owner-only, the system gives a ledger's code
   'books-voucher-type-write.test.cjs', // ⭐ b279 ran 2026-10-03: every new entry stores its voucher TYPE; a manual MJ Payment reads Payment
+  'country-setup.test.cjs',     // ⭐ CS1: register → Country setup → India pack on; a pack-less country refused with ITS sentence on every books route; existing Indian shops untouched; owner-only; 503 before b299
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
   'books-payments.test.cjs',    // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words

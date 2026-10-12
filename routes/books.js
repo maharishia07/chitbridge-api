@@ -48,6 +48,8 @@ function fail(res, e) {
   if (e && e.code === 'YEAR_CLOSED') return res.status(409).json({ code: 'YEAR_CLOSED', error: e.message, message: e.message });
   if (e && e.code === 'SUSPENSE_NOT_NIL') return res.status(409).json({ code: 'SUSPENSE_NOT_NIL', error: e.message, message: e.message });
   if (e && e.code === 'BOOKS_NOT_FOUND') return res.status(404).json({ error: 'Not found', message: e.message });
+  /* ⭐ CS1: the country gate — a pack-less country, no country, or the setup still to do: 422 WITH its code and sentence (never the quiet 404) */
+  if (e && (e.code === 'NO_COUNTRY_PACK' || e.code === 'NO_COUNTRY' || e.code === 'COUNTRY_SETUP_PENDING')) return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   /* ⚠️ before the 422: "not migrated" is thrown as a refusal too, and read as 422 — missing tables are the server's state, 503 */
   if (e && (e.code === 'BOOKS_ENGINE' || e.code === 'BOOKS_NOT_MIGRATED')) return res.status(503).json({ code: e.code, error: e.message, message: e.message });
   /* a question the owner can answer (a missing field, a date that is not a date): 400, in words */
@@ -75,11 +77,17 @@ function owner(req, res, next) {
   if (!isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
   next();
 }
-/** the gate: the shop's ledger must be on, else a quiet 404 */
+/**
+ * the gate: the shop's ledger must be on, else a quiet 404.
+ * ⭐ CS1 (2026-10-12): BEFORE the switch, the COUNTRY — a shop whose country has no regulation pack (or no country, or the setup still to
+ * do) is refused with the sentence, 422 with a code, on every books route, on or off; never India's rules by default (DECISIONS
+ * 2026-10-03). lib/country-setup.gate: one cached read per shop per minute, inside the same withEntity.
+ */
+const CS = require('../lib/country-setup');
 async function on(req, res, next) {
   try {
     const e = ctx(req);
-    const s = await withEntity(e, (h) => B.settingOf(h, e));
+    const s = await withEntity(e, async (h) => { await CS.gate(h, e); return B.settingOf(h, e); });
     if (!s || !s.enabled) return res.status(404).json({ error: 'Not found' });
     req.books = s; next();
   } catch (err) { fail(res, err); }
@@ -90,13 +98,17 @@ const curOf = (req) => (req.books && req.books.functional_currency) || 'INR';
 router.get('/status', auth, owner, async (req, res) => {
   try {
     const e = ctx(req);
-    const s = await withEntity(e, (h) => B.settingOf(h, e));
-    res.json({ migrated: s !== null, enabled: !!(s && s.enabled), walkin_grain: s ? s.walkin_grain : null, engines: E.status() });
+    /* ⭐ CS1: `country` says whether the books MAY open here — { books, code, why, required, country } — so the switch is greyed WITH its sentence */
+    const r = await withEntity(e, async (h) => ({ s: await B.settingOf(h, e), country: await CS.status(h, e) }));
+    const s = r.s;
+    res.json({ migrated: s !== null, enabled: !!(s && s.enabled), walkin_grain: s ? s.walkin_grain : null, engines: E.status(), country: r.country });
   } catch (err) { fail(res, err); }
 });
 router.post('/enable', auth, owner, async (req, res) => {
   try {
     const b = req.body || {};
+    /* ⭐ CS1: the switch itself is refused for a pack-less country — the server decides, in the same sentence the screen shows */
+    await withEntity(ctx(req), (h) => CS.gate(h, ctx(req)));
     const grain = ['day', 'shift', 'bill'].indexOf(b.walkin_grain) >= 0 ? b.walkin_grain : undefined;
     const r = await B.enable(null, ctx(req), { by: byOf(req), walkin_grain: grain });
     require('../lib/books-hooks').forget(ctx(req));
@@ -379,7 +391,7 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
         const a = chart.find((x) => x.role === role); if (!a) continue;
         const side = role === 'creditors' ? 'payable' : 'receivable', sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
-        const items = (await S.items(h, e, null, a.account_id)).filter((i) => require('../lib/books-hooks').dayOf(i.created_at, req.books.country) <= asOf).map(E.itemOf);
+        const items = (await S.items(h, e, null, a.account_id)).filter((i) => require('../lib/books-hooks').dayOf(i.created_at, req.books) <= asOf).map(E.itemOf);
         const d = E.dues(items, asOf, side);
         const byRef = d.outstanding.by_ref || {};
         Object.keys(d.ageing.by_party || {}).concat(Object.keys(d.outstanding.by_party || {})).forEach((pid) => {
@@ -835,11 +847,11 @@ router.get('/periods', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
-    const { rows, figures, country } = await withEntity(e, async (h) => ({ rows: await S.periods(h, e, null), figures: await S.periodFigures(h, e, fy), country: (await B.settingOf(h, e) || {}).country }));
+    const { rows, figures, setting } = await withEntity(e, async (h) => ({ rows: await S.periods(h, e, null), figures: await S.periodFigures(h, e, fy), setting: await B.settingOf(h, e) }));
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((p) => Object.assign({}, p, { start_date: E.ymd(p.start_date), end_date: E.ymd(p.end_date) }));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
-    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), country)).filter((p) => !fy || p.fiscal_year === fy) });
+    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting)).filter((p) => !fy || p.fiscal_year === fy) });
   } catch (err) { fail(res, err); }
 });
 

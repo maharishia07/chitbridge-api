@@ -15,6 +15,7 @@
  * Then the KNOWN FAULT: chit_header.created_at is timezone-naive — sales at 23:55 and 00:05 IST across a day boundary, and SAY which day each landed on.
  *
  * node tools/simulate-years.cjs [--years 3] [--seed 7] [--json]      exit 1 when any line is RED (a FINDING is reported, never silent, and does not fail)
+ * The days themselves come from tools/sim-plan.cjs (Y1b) — tools/sim-load.cjs loads the SAME plan into a local Postgres.
  */
 'use strict';
 process.env.NODE_ENV = 'test';
@@ -31,9 +32,10 @@ const REPORT = [];
 const line = (status, name, detail) => { REPORT.push({ status, name, detail: detail || '' }); if (!AS_JSON) console.log((status === 'ok' ? '   ok      ' : status === 'FINDING' ? '   FINDING ' : '   RED     ') + name + (detail ? ' — ' + detail : '')); };
 const check = (name, cond, detail) => line(cond ? 'ok' : 'RED', name, cond ? '' : detail);
 
-function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-const rnd = rng(SEED), pick = (a) => a[Math.floor(rnd() * a.length)], between = (lo, hi) => lo + Math.floor(rnd() * (hi - lo + 1));
-const dayAdd = (d, k) => new Date(Date.parse(d + 'T00:00:00Z') + k * 86400000).toISOString().slice(0, 10);
+/* ⭐ Y1b: the days come from tools/sim-plan.cjs — the SAME plan tools/sim-load.cjs loads into a database, so the two agree on every count */
+const PLAN_LIB = require(path.join(__dirname, 'sim-plan.cjs'));
+const PLAN = PLAN_LIB.planDays({ start: '2026-04-01', years: YEARS, seed: SEED });
+const dayAdd = PLAN_LIB.dayAdd;
 const IST = (d, hh, mm) => d + 'T' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ':00+05:30';
 const fyOf = (d) => { const y = +d.slice(0, 4), m = +d.slice(5, 7), s = m >= 4 ? y : y - 1; return s + '-' + String((s + 1) % 100).padStart(2, '0'); };
 const monthNo = (d) => ((+d.slice(5, 7) + 8) % 12) + 1;            /* Apr = 1 … Mar = 12 */
@@ -58,7 +60,7 @@ const rup = (minor) => (minor / 100).toFixed(2);
   const entryOf = new Map();                                           /* entry_id → entry, built lazily for the line scans */
   const entryById = (id) => { if (!entryOf.has(id)) { const e = T.entries.find((x) => x.entry_id === id); if (e) entryOf.set(id, e); } return entryOf.get(id); };
 
-  const START = '2026-04-01', LAST = (+START.slice(0, 4) + YEARS) + '-03-31';
+  const START = PLAN.start, LAST = PLAN.last;
   CLOCK.set(IST(START, 9, 0));
   await X.store.saveSetting(X.db, SHOP, { enabled: false });
   check('the ledger switches on', (await q('POST', '/enable', {})).body.ok === true);
@@ -70,7 +72,7 @@ const rup = (minor) => (minor / 100).toFixed(2);
   /* what this script posted, day by day — the "sum of its days" the summaries are checked against */
   const DAYS = new Map();                                   /* day → { taxable_minor, total_minor, n } of the SALES posted that day */
   const dayRow = (d) => { if (!DAYS.has(d)) DAYS.set(d, { taxable_minor: 0, total_minor: 0, n: 0 }); return DAYS.get(d); };
-  const sale = (rate) => { const taxable = between(2, 60) * 100, half = taxable * rate / 100 / 2; return { taxable, half, total: taxable + half * 2, rate }; };
+  const sale = (s) => { const half = s.taxable * s.rate / 100 / 2; return { taxable: s.taxable, half, total: s.taxable + half * 2, rate: s.rate }; };   /* a planned sale's tax halves (one rule, sim-plan) */
   let posted = 0, refused = 0;
   const post = async (d, ev, asSale) => {
     try {
@@ -162,28 +164,27 @@ const rup = (minor) => (minor / 100).toFixed(2);
   };
 
   /* ── the days ── */
-  let day = START, daysRun = 0;
-  while (day <= LAST) {
+  let daysRun = 0, sales = 0;
+  for (const row of PLAN.days) {
+    const day = row.day;
     CLOCK.set(IST(day, 12, 0));
     const d = CLOCK.bizDay(undefined, 'IN');                       /* the shop's day, from the clock */
     if (d !== day) line('RED', 'the clock and the loop disagree on ' + day, 'clock says ' + d);
     if (d.slice(8) === '01' && d !== START) await closeMonth(dayAdd(d, -1));     /* the month just ended: GST set-off, lock, and at March the year close */
 
-    const nSales = between(2, 4);
-    for (let i = 0; i < nSales; i++) {
-      const s = sale(pick([5, 12, 18])), how = pick(['cash', 'cash', 'upi', 'upi', 'credit']);
+    for (let i = 0; i < row.sales.length; i++) {
+      const s = sale(row.sales[i]), how = row.sales[i].how;
       const ev = { type: 'sale_bill', source_ref: 'sim:' + d + ':s:' + i, by_rate: [{ rate: s.rate, taxable: s.taxable, cgst: s.half, sgst: s.half, igst: 0 }], round_off: 0 };
       if (how === 'credit') { ev.party = CUST; ev.paid = {}; } else ev.paid = { [how]: s.total };
-      await post(d, ev, s);
+      await post(d, ev, s); sales++;
     }
-    if (rnd() < 0.34) {
-      const p = sale(18);
-      await post(d, { type: 'purchase_bill', party: SUPP, source_ref: 'sim:' + d + ':p', by_rate: [{ rate: 18, taxable: p.taxable, cgst: p.half, sgst: p.half, igst: 0 }], paid: rnd() < 0.5 ? { bank: p.total } : {}, round_off: 0 });
+    if (row.purchase) {
+      const p = sale({ rate: 18, taxable: row.purchase.taxable });
+      await post(d, { type: 'purchase_bill', party: SUPP, source_ref: 'sim:' + d + ':p', by_rate: [{ rate: 18, taxable: p.taxable, cgst: p.half, sgst: p.half, igst: 0 }], paid: row.purchase.paid_bank ? { bank: p.total } : {}, round_off: 0 });
     }
-    if (rnd() < 0.5) await post(d, { type: 'expense', class: pick(['fuel', 'rent', 'fuel']), amount: between(1, 20) * 50, paid_from: 'cash', source_ref: 'sim:' + d + ':e' });
-    if (d.slice(8) === '05') await post(d, { type: 'expense', class: 'rent', amount: 20000, paid_from: 'bank', source_ref: 'sim:' + d + ':rent' });
+    if (row.expense) await post(d, { type: 'expense', class: row.expense.class, amount: row.expense.amount, paid_from: 'cash', source_ref: 'sim:' + d + ':e' });
+    if (row.rent) await post(d, { type: 'expense', class: 'rent', amount: 20000, paid_from: 'bank', source_ref: 'sim:' + d + ':rent' });
     daysRun++;
-    day = dayAdd(day, 1);
   }
   /* the last month and the last year: the clock passes the end, then the same close */
   CLOCK.set(IST(dayAdd(LAST, 1), 9, 0));
@@ -219,7 +220,7 @@ const rup = (minor) => (minor / 100).toFixed(2);
   }
   CLOCK.reset(); srv.close();
   const red = REPORT.filter((r) => r.status === 'RED').length, finds = REPORT.filter((r) => r.status === 'FINDING').length;
-  if (AS_JSON) console.log(JSON.stringify({ years: YEARS, seed: SEED, posted, red, findings: finds, report: REPORT }, null, 1));
-  else console.log('\n  ' + (red ? '✗ ' + red + ' RED' : '✓ all green') + ' · ' + REPORT.length + ' lines · ' + finds + ' finding(s) · ' + posted + ' postings · ' + YEARS + ' years\n');
+  if (AS_JSON) console.log(JSON.stringify({ years: YEARS, seed: SEED, posted, sales, plan: PLAN_LIB.countOf(PLAN), red, findings: finds, report: REPORT }, null, 1));
+  else console.log('\n  ' + (red ? '✗ ' + red + ' RED' : '✓ all green') + ' · ' + REPORT.length + ' lines · ' + finds + ' finding(s) · ' + posted + ' postings (' + sales + ' bills) · ' + YEARS + ' years\n');
   process.exit(red ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });
