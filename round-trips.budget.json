@@ -198,6 +198,18 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/books/returns": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "BAS1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard's one read (the floor; measured 1 trip · 3 statements). With the ledger on: 2 trips — the guard's setting read, then ONE transaction (chart · years · the account_balance rows of the period's year(s)); no per-row query, no lines read",
+      "awaiting_client": {
+        "pr": "web#153",
+        "since": "2026-10-12"
+      }
+    },
     "GET /api/books/status": {
       "file": "books.js",
       "trips": 1,
