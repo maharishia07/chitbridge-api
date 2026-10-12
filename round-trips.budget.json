@@ -684,9 +684,9 @@
       "fired": true,
       "status": 404
     },
-    "POST /api/books/move-in/import": {"file": "books.js", "trips": 1, "wire": 6, "fired": true, "status": 422, "why": "IM1: on the empty stub the country gate answers 422 before the switch (one read, cached a minute per shop); live, the route reads the shop's chart / parties / products ONCE per file (no per-row reads) and the import writes in one transaction"},
-  "POST /api/books/move-in/preflight": {"file": "books.js", "trips": 1, "wire": 6, "fired": true, "status": 422, "why": "IM1: on the empty stub the country gate answers 422 before the switch (one read, cached a minute per shop); live, the route reads the shop's chart / parties / products ONCE per file (no per-row reads) and the import writes in one transaction", "extra": true},
-  "POST /api/books/move-in/preview": {"file": "books.js", "trips": 1, "wire": 6, "fired": true, "status": 422, "why": "IM1: on the empty stub the country gate answers 422 before the switch (one read, cached a minute per shop); live, the route reads the shop's chart / parties / products ONCE per file (no per-row reads) and the import writes in one transaction", "extra": true},
+    "POST /api/books/move-in/import": {"file": "books.js", "trips": 1, "wire": 6, "fired": true, "status": 422, "why": "IM1: on the empty stub the country gate answers 422 before the switch (one read, cached a minute per shop); live, the route reads the shop's chart / parties / products ONCE per file (no per-row reads) and the import writes in one transaction", "awaiting_client": {"pr": "web IM1", "since": "2026-10-13"}},
+  "POST /api/books/move-in/preflight": {"file": "books.js", "trips": 1, "wire": 6, "fired": true, "status": 422, "why": "IM1: on the empty stub the country gate answers 422 before the switch (one read, cached a minute per shop); live, the route reads the shop's chart / parties / products ONCE per file (no per-row reads) and the import writes in one transaction", "extra": true, "awaiting_client": {"pr": "web IM1", "since": "2026-10-13"}},
+  "POST /api/books/move-in/preview": {"file": "books.js", "trips": 1, "wire": 6, "fired": true, "status": 422, "why": "IM1: on the empty stub the country gate answers 422 before the switch (one read, cached a minute per shop); live, the route reads the shop's chart / parties / products ONCE per file (no per-row reads) and the import writes in one transaction", "extra": true, "awaiting_client": {"pr": "web IM1", "since": "2026-10-13"}},
   "POST /api/books/opening": {
       "file": "books.js",
       "trips": 1,

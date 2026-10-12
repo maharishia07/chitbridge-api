@@ -209,13 +209,13 @@ t('dates and money: the readers refuse rather than guess', () => {
   await X.store.saveSetting(X.db, SHOP, { enabled: false });
   await X.B.enable(X.db, SHOP, { country: 'AU', today: '2026-07-05' });
   const setting = await X.B.settingOf(X.db, SHOP);
-  await ta('⭐ a Xero chart moved in: 5 ledgers added with the system\'s codes under their groups, 9 merged; before b300 the source code is not kept and the outcome says so', async () => {
+  await ta('⭐ a Xero chart moved in: 5 ledgers added with the system\'s codes under their groups, 9 merged; before b302 the source code is not kept and the outcome says so', async () => {
     const w = await MI.world(X.db, SHOP, 'accounts', setting);
     assert.strictEqual(w.chart.length, E.chartRows(w.pack).length);
     const pl = MI.plan('accounts', { source: 'xero', rows: rowsOf('accounts', 'xero-accounts.csv'), world: w });
     const out = await MI.apply(X.db, SHOP, pl, { world: w, setting, by: 'u1', as_at: '2026-07-01', currency: 'AUD' });
     assert.deepStrictEqual([out.added, out.merged, out.skipped], [6, 8, 1]);
-    assert.strictEqual(out.source_code_written, false); assert.ok(/b300/.test(out.notes.join(' ')), out.notes.join(' '));
+    assert.strictEqual(out.source_code_written, false); assert.ok(/b302/.test(out.notes.join(' ')), out.notes.join(' '));
     const chart = await X.store.accounts(X.db, SHOP);
     const bank = chart.find((a) => a.name === 'Business Savings Account'); assert.ok(bank && /^15\d\d$/.test(bank.code), 'a bank ledger under Bank Accounts (15xx): ' + (bank && bank.code));
     assert.ok(chart.some((a) => a.name === 'Cost of Goods Sold' && /^5[1-9]\d\d$/.test(a.code)));
@@ -231,7 +231,7 @@ t('dates and money: the readers refuse rather than guess', () => {
     assert.strictEqual(pl.refusal, null);
     const out = await MI.apply(X.db, SHOP, pl, { world: w, setting, by: 'u1', as_at: '2026-07-01', currency: 'AUD' });
     assert.ok(out.entry && out.entry.entry_no, JSON.stringify(out.entry));
-    /* posted: bank 15230.50 + inventory 8000 + drawings 1000 + COGS 7000 + advertising 1500 = 32730.50 Dr; GST (by the name their system gives the control, codes not kept before b300) 730.50 + retained 25700 + sales 12000 = 38430.50 Cr
+    /* posted: bank 15230.50 + inventory 8000 + drawings 1000 + COGS 7000 + advertising 1500 = 32730.50 Dr; GST (by the name their system gives the control, codes not kept before b302) 730.50 + retained 25700 + sales 12000 = 38430.50 Cr
        → Suspense carries the 5700 difference: the 2200 net the AR/AP rows would have added (4400 Dr − 2200 Cr) plus the unknown ledger's 3500 Dr */
     assert.strictEqual(out.entry.suspense_minor, -(3843050 - 3273050), 'suspense = the credit side\'s excess, in cents: ' + out.entry.suspense_minor);
     assert.strictEqual(out.added, 8); assert.strictEqual(out.skipped, 4);

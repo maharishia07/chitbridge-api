@@ -1,4 +1,4 @@
--- b300_ledger_account_source_code.sql — IM1 (2026-10-12): MOVE IN FROM XERO / QUICKBOOKS — the account code a ledger had in the system the
+-- b302_ledger_account_source_code.sql — IM1 (2026-10-12): MOVE IN FROM XERO / QUICKBOOKS — the account code a ledger had in the system the
 --   shop moved in from, kept ON the ledger so a trial balance and an open-bills file exported later still find it. NO new table.
 --
 -- ⚠️⚠️ DRAFT — NOT RUN · Athi runs it (Supabase SQL editor, AS postgres — ALTER TABLE needs the table owner, cb_app cannot).

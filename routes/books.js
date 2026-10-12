@@ -193,7 +193,7 @@ router.get('/accounts', auth, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 /** POST /accounts { name, parent_code | parent_id, source_code? } → { account: { code, account_id, name, source_code?, source_code_written? } } — the code is the system's (engines nextCode, role null); one typed here is refused (422).
- *  IM1: `source_code` = the code the ledger had in Xero / QuickBooks, kept beside ours (b300); one another ledger already holds is refused (422, a code clash). */
+ *  IM1: `source_code` = the code the ledger had in Xero / QuickBooks, kept beside ours (b302); one another ledger already holds is refused (422, a code clash). */
 router.post('/accounts', auth, owner, on, async (req, res) => {
   try {
     const e = ctx(req), b = req.body || {};
