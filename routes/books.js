@@ -391,7 +391,7 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
         const a = chart.find((x) => x.role === role); if (!a) continue;
         const side = role === 'creditors' ? 'payable' : 'receivable', sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
-        const items = (await S.items(h, e, null, a.account_id)).filter((i) => require('../lib/books-hooks').dayOf(i.created_at, req.books.country) <= asOf).map(E.itemOf);
+        const items = (await S.items(h, e, null, a.account_id)).filter((i) => require('../lib/books-hooks').dayOf(i.created_at, req.books) <= asOf).map(E.itemOf);
         const d = E.dues(items, asOf, side);
         const byRef = d.outstanding.by_ref || {};
         Object.keys(d.ageing.by_party || {}).concat(Object.keys(d.outstanding.by_party || {})).forEach((pid) => {
@@ -847,11 +847,11 @@ router.get('/periods', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
-    const { rows, figures, country } = await withEntity(e, async (h) => ({ rows: await S.periods(h, e, null), figures: await S.periodFigures(h, e, fy), country: (await B.settingOf(h, e) || {}).country }));
+    const { rows, figures, setting } = await withEntity(e, async (h) => ({ rows: await S.periods(h, e, null), figures: await S.periodFigures(h, e, fy), setting: await B.settingOf(h, e) }));
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((p) => Object.assign({}, p, { start_date: E.ymd(p.start_date), end_date: E.ymd(p.end_date) }));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
-    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), country)).filter((p) => !fy || p.fiscal_year === fy) });
+    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting)).filter((p) => !fy || p.fiscal_year === fy) });
   } catch (err) { fail(res, err); }
 });
 

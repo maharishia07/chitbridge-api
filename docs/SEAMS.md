@@ -194,6 +194,9 @@ of file each thing is; this says what already does the job.
 | 4 | `fmtMoney` | `helpers.js` | ONE money formatter, and it now asks the localisation layer. |
 | 4 | `sentence` | `one-person.js` | function shopName(o) { return (o && o.name) ·· 'another shop'; } |
 | 4 | `clean` | `variant.js` | a choice with no group is unsortable and unmergeable — |
+| 4 | `dayOf` | `books-hooks.js` | THE SHOP'S DAY (M210): the calendar day of a moment in the shop's zone — an IANA zone, a single-zone country, or the setting/identity row ({ timezone, country }); a zone-less string is a UTC wall clock |
+| 4 | `dayBounds` | `books-hooks.js` | [from, to) of a shop day as ISO instants — a DST day is 23/25 h, `to` is the next day's start |
+| 4 | `zoneOf` | `books-hooks.js` | the IANA zone a caller means (row → timezone, else country → the b176 map, else Asia/Kolkata) |
 | 4 | `dayOf` | `accounts-packs.js` | dayOf('2026-09-29') → the day number (days since 1970-01-01, no clock, no zone), or null when it is not a real |
 | 4 | `assign` | `assign.js` | claim to be the same step, and "who has it now" would then depend on row order rather than on what happened. |
 | 4 | `effective` | `bill-use.js` | invoice's ItemList in, so lines[i] is ItemList[i]. |
