@@ -1332,7 +1332,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-10T23:53:15.052Z",
+      "last_at": "2026-10-10T23:53:36.778Z",
       "late": true,
       "today": false
      }
@@ -1368,13 +1368,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-11T23:53:15.022Z",
+      "due_at": "2026-10-11T23:53:36.741Z",
       "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-12T23:53:15.024Z",
+      "created_at": "2026-10-12T23:53:36.742Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1644,7 +1644,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-10T23:53:14.955Z",
+      "due_at": "2026-10-10T23:53:36.672Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1738,7 +1738,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-12T22:53:15.164Z",
+    "created_at": "2026-10-12T22:53:36.889Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1953,7 +1953,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-12T22:53:15.164Z",
+      "created_at": "2026-10-12T22:53:36.889Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2042,7 +2042,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-12T23:53:15.537Z"
+     "shared_at": "2026-10-12T23:53:37.263Z"
     }
    },
    "optional": []
@@ -2095,13 +2095,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-11T23:53:15.022Z",
+     "due_at": "2026-10-11T23:53:36.741Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-12T23:53:15.030Z",
-     "created_at": "2026-10-12T23:53:15.024Z",
+     "done_at": "2026-10-12T23:53:36.749Z",
+     "created_at": "2026-10-12T23:53:36.742Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2835,13 +2835,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-11T23:53:15.022Z",
+     "due_at": "2026-10-11T23:53:36.741Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-12T23:53:15.024Z",
+     "created_at": "2026-10-12T23:53:36.742Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2884,6 +2884,69 @@
    },
    "optional": []
   },
+  "POST /api/crm/leads/import": {
+   "status": 201,
+   "example": {
+    "dry": false,
+    "added": 2,
+    "merged": 0,
+    "skipped": [
+     {
+      "row": 2,
+      "name": "Meena New",
+      "phone": "+919840099999",
+      "why": "Already a customer"
+     }
+    ],
+    "rows": [
+     {
+      "row": 1,
+      "name": "Kala Stores",
+      "phone": "+919840011111",
+      "outcome": "add",
+      "why": "Already a customer",
+      "party_id": "N3"
+     }
+    ]
+   },
+   "optional": []
+  },
+  "POST /api/crm/leads/import #200": {
+   "status": 200,
+   "example": {
+    "dry": true,
+    "added": 0,
+    "merged": 0,
+    "skipped": [
+     {
+      "row": 1,
+      "name": "Kala Stores",
+      "phone": "+919840011111",
+      "why": "Already a lead"
+     }
+    ],
+    "rows": [
+     {
+      "row": 1,
+      "name": "Kala Stores",
+      "phone": "+919840011111",
+      "outcome": "skip",
+      "why": "Already a lead",
+      "party_id": "N3"
+     }
+    ]
+   },
+   "optional": []
+  },
+  "POST /api/crm/leads/import #400": {
+   "status": 400,
+   "example": {
+    "code": "TOO_MANY",
+    "error": "Import up to 500 leads at a time. Split the file.",
+    "message": "Import up to 500 leads at a time. Split the file."
+   },
+   "optional": []
+  },
   "POST /api/crm/parties/:id/interactions": {
    "status": 201,
    "example": {
@@ -2893,9 +2956,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-12T23:53:15.021Z",
+     "at": "2026-10-12T23:53:36.740Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-12T23:53:15.022Z"
+     "created_at": "2026-10-12T23:53:36.740Z"
     }
    },
    "optional": []
@@ -2910,9 +2973,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-12T23:53:15.053Z",
+     "at": "2026-10-12T23:53:36.779Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-12T23:53:15.053Z"
+     "created_at": "2026-10-12T23:53:36.779Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2927,7 +2990,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-12T23:53:15.053Z",
+     "created_at": "2026-10-12T23:53:36.779Z",
      "late": false,
      "today": false,
      "bucket": "week"
