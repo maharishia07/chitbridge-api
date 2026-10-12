@@ -35,12 +35,12 @@
     "ledger": "1.20.0",
     "bookpack": "1.20.0",
     "period": "1.20.0",
-    "gst-returns": "1.20.0",
+    "gst-returns": "1.39.0",
     "rail": "1.29.0",
     "workflow": "1.33.0",
     "reg-in": "1.37.0",
-    "reg-au": "1.37.0",
-    "reg-ae": "1.37.0",
+    "reg-au": "1.39.0",
+    "reg-ae": "1.39.0",
     "regulation": "1.37.0"
   },
   "adopt": {
@@ -215,12 +215,12 @@
     "ledger": "175d836b79d339b3cb8894347ff3c6249434ab12125afb6575e5a2a3829e3838",
     "bookpack": "1021a12646ad9a3ce224f90ae2ca0c7e96ae346640e7e77b1694cbe32956ae58",
     "period": "bfe2c30d4803526d0120ed9fcab9f44845302efb29b3b85b75192d8ae31acc9a",
-    "gst-returns": "3390556dca61965ed41f0431d409521c08509c74e5c2447aa936d42db4ae509e",
+    "gst-returns": "d54313ccb3f11a89420365d6cffd57a719a5dd3a656ff7961b0dc7aa138ee182",
     "rail": "62146650c1ae4e0aa47c16625026f2d29039c4d05261c191f899bd0213f1b698",
     "workflow": "f8c7a43048bc1b8453a1c2ec43b6eed7f619feee4c67eaba046c6cea370f0a5b",
     "reg-in": "3d1e905873f75d7133d4a53e706035b2fcbeb4a2231358b3f12b7e3a53cf5875",
-    "reg-au": "878c0052b81d1e8d4515c3bdd5da07b6caa2b2ed824340afd1cc5fd485fbc47f",
-    "reg-ae": "069efc3fe694db163649de693d6fc7ee8f49dfdb2ecdf00f37d2967d9a3ecf03",
+    "reg-au": "8ab686107aca5c5edbcaf152e4c23e3d85cd3fc3a9b6c718fd90a1bd9ca0b769",
+    "reg-ae": "803c0550e277e1ee729c34c44ed10e0ecee78e26e8bde0c3e3b70b6a62e54153",
     "regulation": "38e3e8ff5a17dc3d1fa1f1212b5b4200aefbdc27f32bb8f379687bdba57c5870"
   }
 }

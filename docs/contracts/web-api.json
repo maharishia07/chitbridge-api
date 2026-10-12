@@ -561,7 +561,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
-    "asOf": "2026-10-11",
+    "asOf": "2026-10-12",
     "parties": [
      {
       "party_no": "P-00001",
@@ -763,7 +763,7 @@
     "currency": "INR",
     "party_id": "22222222-2222-4222-8222-222222222222",
     "from": "2026-04-01",
-    "to": "2026-10-11",
+    "to": "2026-10-12",
     "code": "1300",
     "opening_minor": 0,
     "closing_minor": 118000,
@@ -1015,6 +1015,101 @@
     "recurring[].event"
    ]
   },
+  "GET /api/books/returns": {
+   "status": 200,
+   "example": {
+    "currency": "AUD",
+    "pack": "AU",
+    "form": "BAS",
+    "name": "Business activity statement",
+    "short": "BAS",
+    "authority": "ATO",
+    "portal": "ATO Online services for business",
+    "prepared": "Prepared, not lodged",
+    "asked": {
+     "frequency": "quarterly",
+     "simpler": false,
+     "stagger": 1,
+     "emirate": "Dubai"
+    },
+    "periods": [
+     {
+      "period": "2025-Q1",
+      "label": "2025-26 Q1 (Jul–Sep 2025)",
+      "frequency": "quarterly",
+      "start": "2025-07-01",
+      "end": "2025-09-30",
+      "due": "2025-10-28",
+      "ended": true,
+      "stagger": 1,
+      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+     }
+    ],
+    "period": {
+     "period": "2026-Q1",
+     "label": "2026-27 Q1 (Jul–Sep 2026)",
+     "frequency": "quarterly",
+     "start": "2026-07-01",
+     "end": "2026-09-30",
+     "due": "2026-10-28",
+     "ended": true,
+     "stagger": 1,
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+    },
+    "boxes": [
+     {
+      "code": "G1",
+      "label": "Total sales",
+      "amount_minor": 11000,
+      "tax_minor": 1000,
+      "roles": [
+       "sales"
+      ],
+      "accounts": [
+       {
+        "code": "4000",
+        "name": "Sales"
+       }
+      ],
+      "note": "GST-exclusive (the ledgers hold all GST paid in one account)"
+     }
+    ],
+    "payable_minor": 0,
+    "refund_minor": 4000,
+    "net_minor": -4000,
+    "notes": [
+     "GST-exclusive (the ledgers hold all GST paid in one account)"
+    ],
+    "cite": "ato.gov.au › GST labels on your BAS; Simpler BAS (turnover under A$10 million)",
+    "needs": "stagger",
+    "why": "The FTA assigns the Tax Period (ER Art. 62): say which stagger — 1 (Feb–Apr …), 2 (Mar–May …), 3 (Apr–Jun …) or 4 (monthly) — as on the registration; it is never guessed.",
+    "emirates": [
+     "Abu Dhabi"
+    ]
+   },
+   "optional": [
+    "asked.emirate",
+    "asked.frequency",
+    "asked.simpler",
+    "asked.stagger",
+    "emirates",
+    "needs",
+    "period.due_rule",
+    "period.stagger",
+    "periods[].due_rule",
+    "periods[].stagger",
+    "why"
+   ]
+  },
+  "GET /api/books/returns #422": {
+   "status": 422,
+   "example": {
+    "code": "RETURN_FROM_RAIL",
+    "error": "India's GSTR-1 and GSTR-3B are read from the frozen invoices on the rail (GET /api/tax/gstr), not from the ledgers.",
+    "message": "India's GSTR-1 and GSTR-3B are read from the frozen invoices on the rail (GET /api/tax/gstr), not from the ledgers."
+   },
+   "optional": []
+  },
   "GET /api/books/terms": {
    "status": 200,
    "example": {
@@ -1129,11 +1224,11 @@
       "stage": "lead",
       "followup_id": "f-q1",
       "what": "Ring again",
-      "due_day": "2026-10-10",
+      "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-09T01:25:25.640Z",
+      "last_at": "2026-10-10T23:16:46.130Z",
       "late": true,
       "today": false
      }
@@ -1169,13 +1264,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-10T01:25:25.591Z",
-      "due_day": "2026-10-10",
+      "due_at": "2026-10-11T23:16:46.106Z",
+      "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-11T01:25:25.594Z",
+      "created_at": "2026-10-12T23:16:46.107Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1445,7 +1540,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-09T01:25:25.438Z",
+      "due_at": "2026-10-10T23:16:46.051Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1539,7 +1634,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-11T00:25:26.402Z",
+    "created_at": "2026-10-12T22:16:46.223Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1724,7 +1819,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-11T00:25:26.402Z",
+      "created_at": "2026-10-12T22:16:46.223Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -1797,7 +1892,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-11T01:25:27.586Z"
+     "shared_at": "2026-10-12T23:16:46.523Z"
     }
    },
    "optional": []
@@ -1850,13 +1945,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-10T01:25:25.591Z",
-     "due_day": "2026-10-10",
+     "due_at": "2026-10-11T23:16:46.106Z",
+     "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-11T01:25:25.605Z",
-     "created_at": "2026-10-11T01:25:25.594Z",
+     "done_at": "2026-10-12T23:16:46.112Z",
+     "created_at": "2026-10-12T23:16:46.107Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2590,13 +2685,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-10T01:25:25.591Z",
-     "due_day": "2026-10-10",
+     "due_at": "2026-10-11T23:16:46.106Z",
+     "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-11T01:25:25.594Z",
+     "created_at": "2026-10-12T23:16:46.107Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2648,9 +2743,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-11T01:25:25.590Z",
+     "at": "2026-10-12T23:16:46.105Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-11T01:25:25.590Z"
+     "created_at": "2026-10-12T23:16:46.105Z"
     }
    },
    "optional": []
@@ -2665,9 +2760,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-11T01:25:25.645Z",
+     "at": "2026-10-12T23:16:46.131Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-11T01:25:25.645Z"
+     "created_at": "2026-10-12T23:16:46.131Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2676,13 +2771,13 @@
      "party_name": "Name of 0012",
      "party_listed": true,
      "what": "Demo",
-     "due_at": "2026-10-13T18:30:00.000Z",
-     "due_day": "2026-10-14",
+     "due_at": "2026-10-14T18:30:00.000Z",
+     "due_day": "2026-10-15",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-11T01:25:25.645Z",
+     "created_at": "2026-10-12T23:16:46.131Z",
      "late": false,
      "today": false,
      "bucket": "week"
