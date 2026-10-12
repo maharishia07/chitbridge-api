@@ -15,3 +15,10 @@
 **(d) Risks** — trips on the empty stub are floors (every /:id route answers 404; POST /api/repeat 400) — said in each line's why. Web #155 keeps a byte copy of web-api.json: after this merge its copy must be re-synced (timestamps). Measured with #119's test copied in locally (not committed) since main cannot fire the routes yet.
 
 **(e) VERDICT: BUILD WITH CHANGES** — (1) renumber b300_repeat_supply → b302 (and its mentions); (2) resolve the contract conflict with main's captured values, re-verified by tests/web-api-contract.test.cjs; (3) awaiting_client, not extra, on the 14 lines.
+
+## Report (RI1b, 2026-10-13) — for the PR #120 body (the runner token cannot edit the PR or comment)
+**RI1b · VERDICT: BUILD WITH CHANGES** (docs/critique/RI1b.md): the budget is restored by hand + the migration renumbered — main took b300/b301 while RI1 was open.
+**RI1b (2026-10-13):** origin/main merged (contract conflict = captured timestamps only, main's kept; `tests/web-api-contract.test.cjs` passes). `round-trips.budget.json` = origin/main's file + 14 `/api/repeat` lines by hand, each `awaiting_client: { pr: "web RI1 (#155)", since: "2026-10-13" }`, trips as the test measured on the stub: list 3 (12 stmts) · get 1 · create 0 (400 early, a floor) · sweep 1 · every `/:id/*` move 1 (404 on the stub, a floor). Routes added by RI1 in routes/: only `routes/repeat-supply.js`.
+**Migration renumbered:** `migrations/b300_repeat_supply.sql` → **`migrations/b302_repeat_supply.sql`** (next free after main's b300_chit_deliver_clock + b301; `tests/migration-numbers.test.cjs` passes). The owner runs b302. Web #155 must re-copy `docs/contracts/web-api.json` after this merge.
+**Checks (foreground):** `node scripts/guards.cjs` 4987 checks · 165 files · 1 FAILED = `round-trips-all` (467 checks, 1 failed: "no budget line for a route the client no longer calls" lists the 14 repeat routes) — exactly what api #119 fixes; with #119's test copied in: 498 checks · 0 failed. **Landing order:** api #119 → this (#120) → web #155.
+
