@@ -11,6 +11,7 @@ const { isOwner } = require('../lib/owner');
 const storage = require('../lib/storage');
 const docnumber = require('../lib/docnumber');   // what a document number may look like, per country
 const { tillClaimOf } = require('../lib/holder');   // M11 — a phone's bill names its device and person; checked against the session
+const CLOCK = require('../lib/shop-clock');   // ⭐ Y1b — a chit's sent_at/created_at are the SHOP CLOCK's moment (the system clock in life; set by tools/sim-load.cjs), never SQL NOW()
 
 /**
  * ⭐ THE SHOP'S JURISDICTION, MEMOISED FOR FIVE MINUTES.
@@ -1048,7 +1049,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       }
       // Generate chit_id — same for ALL participants (reuse the draft's id when promoting, so the draft BECOMES the order)
       const chit_id = promote_draft_id || uuidv4();
-      const now = new Date();
+      const now = CLOCK.now();   /* Y1b: the one clock — the day a bill lands on (books-hooks.dayOf) and the day it is listed under agree */
 
       // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
       /* ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js */
@@ -1319,6 +1320,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         schema_version: frozen_schema_version, schema_id: frozen_schema_id, created_by_actor_id,
         detail_type: purpose, line_item_count: summary.line_item_count,
         total_value: summary.total_value, currency_code: summary_json.currency_code,
+        created_at: now, sent_at: now,   /* Y1b: the shop clock's moment (b299 reads it; before b299 the definer stamps NOW() as it always did) */
       });
       const mkCopy = (extra) => mint.party(headerCommon, Object.assign({
         // omitted -> SQL NULL (matches legacy): chit_deliver reads c->>'key', for which an absent key and a JSON
@@ -1396,14 +1398,14 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
             sender_entity_display_name, all_recipients, purpose,
             auto_subject, manual_subject, summary_json, business_json,
             schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())`,
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
           [chit_id, sender_id, sender_id, sender_bridge_id,
            sender_display_name, JSON.stringify(all_recipients), purpose,
            auto_subject, manual_subject || null,
            JSON.stringify(summary_json),
            business_json ? JSON.stringify(business_json) : null,
            frozen_schema_version, frozen_schema_id, created_by_actor_id,
-           is_draft ? 'Draft' : 'Act', chit_id, 'sent']
+           is_draft ? 'Draft' : 'Act', chit_id, 'sent', now]
         );
         await client.query(
           `INSERT INTO chit_detail
@@ -1446,7 +1448,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
               sender_entity_display_name, all_recipients, purpose,
               auto_subject, manual_subject, summary_json, business_json,
               schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW(),NOW())`,
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
             [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
              sender_display_name, JSON.stringify(all_recipients), rcvPurpose,
              auto_subject, (billCopy ? billCopy.manual_subject : manual_subject) || null,
@@ -1466,7 +1468,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
              JSON.stringify(rcvSummary),
              rcvBj ? JSON.stringify(rcvBj) : null,
              frozen_schema_version, frozen_schema_id, created_by_actor_id,
-             receiver.role, chit_id, 'received']
+             receiver.role, chit_id, 'received', now]
           );
           await client.query(
             `INSERT INTO chit_detail
