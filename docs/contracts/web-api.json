@@ -1852,6 +1852,9 @@
     "agreements[].runs.2026-10-31",
     "agreements[].terms.lines",
     "message"
+   ],
+   "free": [
+    "agreements[].runs"
    ]
   },
   "GET /api/repeat/:id": {
@@ -1994,6 +1997,9 @@
     "agreement.actions.skip.why",
     "agreement.runs.2026-10-13",
     "agreement.terms.lines"
+   ],
+   "free": [
+    "agreement.runs"
    ]
   },
   "GET /api/work/:chit_id": {
@@ -3597,7 +3603,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat #503": {
    "status": 503,
@@ -3673,7 +3682,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/accept #422": {
    "status": 422,
@@ -3771,7 +3783,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/counter": {
    "status": 200,
@@ -3856,7 +3871,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/decline": {
    "status": 200,
@@ -3931,7 +3949,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/end": {
    "status": 200,
@@ -4035,7 +4056,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/pause": {
    "status": 200,
@@ -4124,7 +4148,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/refuse": {
    "status": 200,
@@ -4212,7 +4239,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/resume": {
    "status": 200,
@@ -4301,7 +4331,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/:id/run": {
    "status": 200,
@@ -4405,6 +4438,9 @@
     "agreement.runs.2026-10-13",
     "agreement.runs.2026-10-31",
     "agreement.terms.lines"
+   ],
+   "free": [
+    "agreement.runs"
    ]
   },
   "POST /api/repeat/:id/skip": {
@@ -4488,7 +4524,10 @@
      "due": false
     }
    },
-   "optional": []
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
   },
   "POST /api/repeat/sweep": {
    "status": 200,
