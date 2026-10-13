@@ -85,6 +85,13 @@ const call = (port, method, p, body) => new Promise((done) => {
   await B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-06', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:b',
     by_rate: [{ rate: 12, taxable: 500, cgst: 30, sgst: 30, igst: 0 }], paid: {}, round_off: 0 });
 
+  /* WX-O2C (2026-10-13): with no dates the books answer for the SHOP's day (its zone), never the server's UTC date */
+  { const CLOCK = require(path.join(H.API, 'lib', 'shop-clock')); CLOCK.set('2026-10-12T22:30:00Z');   /* 04:00 on the 13th in Asia/Kolkata */
+    const d0 = await q('GET', '/daybook'), du0 = await q('GET', '/dues'), pl0 = await q('GET', '/pl');
+    ok('GET /daybook (no dates) → from = to = the shop\'s day, 2026-10-13 at 22:30 UTC on the 12th — not the UTC date', d0.body.from === '2026-10-13' && d0.body.to === '2026-10-13', JSON.stringify([d0.body.from, d0.body.to]));
+    ok('GET /dues (no asOf) → asOf is the shop\'s day too', du0.body.asOf === '2026-10-13', String(du0.body.asOf));
+    ok('GET /pl (no dates) → to is the shop\'s day', pl0.body.to === '2026-10-13', String(pl0.body.to));
+    CLOCK.reset(); }
   const db = await q('GET', '/daybook?from=2026-09-01&to=2026-09-30');
   const e0 = db.body.entries && db.body.entries[0];
   ok('GET /daybook → { entries: [{ entry_no, posting_date, source_chit_id, narration, lines: [{ code, name, party_name, dr_minor, cr_minor }] }] }',

@@ -69,7 +69,7 @@ ok('…a TaxAmt on an invoice that names no scheme is still "other" (queued, nev
 /* 6 · GET /api/books/health names the shop's year (the web paints it — an AU July year was asked as April and the P&L refused) */
 const routes = read('routes/books.js');
 ok('GET /books/health answers year { fiscal_year, from, start_month } from the setting\'s pack (fyStart — the reads\' own default)',
-  /year: \{ fiscal_year: fy, from: fyStart\(req, today\(\)\), start_month: Number\(pack\.fy_start_month\) \|\| null \}/.test(routes) && /const pack = B\.packOf\(req\.books\), A = E\.packs\(\), fy = A\.fiscalYearOf\(today\(\), pack\)/.test(routes));
+  /year: \{ fiscal_year: fy, from: fyStart\(req, today\(req\)\), start_month: Number\(pack\.fy_start_month\) \|\| null \}/.test(routes) && /const pack = B\.packOf\(req\.books\), A = E\.packs\(\), fy = A\.fiscalYearOf\(today\(req\), pack\)/.test(routes));
 const AP = require(path.join(ROOT, 'lib', 'books-engines')).packs(), BK = require(path.join(ROOT, 'lib', 'books'));
 const auPack = BK.packOf({ country: 'AU', fy_start_month: 7 });
 ok('…an AU shop on 13 Oct 2026 is in 2026-27, from 1 July', AP.fiscalYearOf('2026-10-13', auPack) === '2026-27' && AP.fyRange('2026-27', auPack).start === '2026-07-01');

@@ -186,9 +186,9 @@ router.get('/health', auth, on, async (req, res) => {
     const waiting = await withEntity(e, (h) => S.waiting(h, e, 50));
     /* ⭐ WX-R2R (2026-10-13): the shop's YEAR, as the reads below default it (fyStart — the pack's year on the setting's fy_start_month). The screens
        paint it (Day book "This FY", P&L, Month lock's months) instead of assuming April: an AU shop's July year was asked as April → refused. */
-    const pack = B.packOf(req.books), A = E.packs(), fy = A.fiscalYearOf(today(), pack);
+    const pack = B.packOf(req.books), A = E.packs(), fy = A.fiscalYearOf(today(req), pack);
     res.json({ enabled: true, currency: curOf(req), walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
-      year: { fiscal_year: fy, from: fyStart(req, today()), start_month: Number(pack.fy_start_month) || null },
+      year: { fiscal_year: fy, from: fyStart(req, today(req)), start_month: Number(pack.fy_start_month) || null },
       waiting: waiting.map(require('../lib/books-hooks').waitingRow) });
   } catch (err) { fail(res, err); }
 });
@@ -654,7 +654,7 @@ router.get('/payments/:id/advice', auth, noKey, on, async (req, res) => {
  */
 router.get('/bank/rail', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), to = dateQ(req.query.to, today()), from0 = dateQ(req.query.from, to);
+    const e = ctx(req), to = dateQ(req.query.to, today(req)), from0 = dateQ(req.query.from, to);
     const from = from0 > to ? to : from0;
     if ((Date.parse(to) - Date.parse(from)) / 86400000 > 400) return res.status(400).json({ error: 'Too long', message: 'Choose a statement of 400 days or fewer.' });
     const out = await withEntity(e, async (h) => {
