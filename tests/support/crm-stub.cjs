@@ -37,6 +37,11 @@ function make() {
     if (/FROM books_change_log/.test(sql)) return { rows: data.changes.filter((r) => r.entity === p[0] && r.row_id === p[1] && r.at < p[2]).slice(0, p[3]) };
     if (/FROM chit_messages/.test(sql)) return { rows: data.messages.filter((m) => p[0].indexOf(m.chit_id) >= 0 && m.created_at < p[1]) };
     if (/FROM chit_disputes/.test(sql)) return { rows: data.disputes.filter((d) => p[0].indexOf(d.chit_id) >= 0) };
+    /* b297: the stage trail the timeline reads (FX-L2C) — data.memberships rows { entity_id, item_id, kind, grp, at, by_user_id }, newest first */
+    if (/^SELECT membership_id, grp, at, by_user_id FROM memberships/.test(sql) && data.memberships !== undefined) {   /* undefined: a fixture's own extra answers (contract-crm) */
+      if (!data.memberships) throw gone('memberships');
+      return { rows: data.memberships.filter((m) => m.entity_id === p[0] && m.item_id === p[1] && m.kind === 'lead_stage' && m.at < p[2]).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, p[3]) };
+    }
     /* b276 tables */
     if (/^SELECT interaction_id, kind, direction, body, at, by_user_id FROM party_interaction/.test(sql)) {
       if (!data.migrated) throw gone('party_interaction');
@@ -118,8 +123,10 @@ function make() {
   stub('lib/policy', { get: async () => ({ overdue_days: 7 }) });
   stub('lib/reward-store', { balance: async () => data.points || { programme: null, points: 0, worth: 0, entries: [] }, append: async (o, holder, e, def) => { data.appended.push({ owner: o, holder, entry: e, def }); }, holderFrom: () => null });
 
-  const ref = { entity: 'E1', identity: null, api_key: false };
-  const authFn = (req, res, next) => { req.identity = ref.identity || { identity_id: ref.entity }; if (ref.api_key) req.api_key = true; next(); };
+  const ref = { entity: 'E1', identity: null, api_key: false, gate: false };
+  /* as(entity, { identity, gate: true }) runs the REAL hat gate (middleware/hat-gate.js) after the identity is set — what middleware/auth.js does
+     on every protected route — so a test can prove which writes a viewer's row reaches (FX-L2C). Off by default: the other tests are about the routes. */
+  const authFn = (req, res, next) => { req.identity = ref.identity || { identity_id: ref.entity }; if (ref.api_key) req.api_key = true; if (ref.gate) return require(path.join(API, 'middleware', 'hat-gate'))(req, res, next); next(); };
   authFn.entityOf = () => ref.entity;
   stub('middleware/auth', authFn);
 
@@ -136,7 +143,7 @@ function make() {
   }
   return {
     data, port, close: () => srv.close(), uid,
-    as(entity, o) { ref.entity = entity; ref.api_key = !!(o && o.key); ref.identity = (o && o.identity) || { identity_id: entity }; },
+    as(entity, o) { ref.entity = entity; ref.api_key = !!(o && o.key); ref.identity = (o && o.identity) || { identity_id: entity }; ref.gate = !!(o && o.gate); },
     get: (p) => call('GET', p), post: (p, b) => call('POST', p, b || {}), patch: (p, b) => call('PATCH', p, b || {}), del: (p) => call('DELETE', p),
   };
 }
