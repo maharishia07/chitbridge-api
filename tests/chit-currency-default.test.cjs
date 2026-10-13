@@ -12,6 +12,7 @@
  *   2. lib/books.enable() stops reading the Country setup (lib/country-setup.profile) for country · currency · year start;
  *   3. enable() takes the year from the UTC date instead of the shop's day (books-hooks.dayOf);
  *   4. lib/books-hooks COUNTRY_ZONE loses AU (an AU day closed on India's clock);
+ *   6. GET /api/books/health stops naming the shop's year (the web would go back to assuming April);
  *   5. books-hooks.byRateOf stops reading an AU line's TaxAmt as the scheme's one head `gst` (every AU bill queued as "a non-GST tax").
  * Run: node tests/chit-currency-default.test.cjs
  */
@@ -59,6 +60,14 @@ const inr = Z.byRateOf({ ItemList: [{ GstRt: 18, AssAmt: 100, CgstAmt: 9, SgstAm
 ok('…an India slab keeps its shape (no `gst` key, total 118)', !('gst' in inr.rows[0]) && inr.total === 118 && inr.other === 0);
 const bare = Z.byRateOf({ ItemList: [{ GstRt: 0, AssAmt: 100, TaxAmt: 5 }] });
 ok('…a TaxAmt on an invoice that names no scheme is still "other" (queued, never guessed)', bare.other === 5);
+
+/* 6 · GET /api/books/health names the shop's year (the web paints it — an AU July year was asked as April and the P&L refused) */
+const routes = read('routes/books.js');
+ok('GET /books/health answers year { fiscal_year, from, start_month } from the setting\'s pack (fyStart — the reads\' own default)',
+  /year: \{ fiscal_year: fy, from: fyStart\(req, today\(\)\), start_month: Number\(pack\.fy_start_month\) \|\| null \}/.test(routes) && /const pack = B\.packOf\(req\.books\), A = E\.packs\(\), fy = A\.fiscalYearOf\(today\(\), pack\)/.test(routes));
+const AP = require(path.join(ROOT, 'lib', 'books-engines')).packs(), BK = require(path.join(ROOT, 'lib', 'books'));
+const auPack = BK.packOf({ country: 'AU', fy_start_month: 7 });
+ok('…an AU shop on 13 Oct 2026 is in 2026-27, from 1 July', AP.fiscalYearOf('2026-10-13', auPack) === '2026-27' && AP.fyRange('2026-27', auPack).start === '2026-07-01');
 
 console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed\n');
 process.exit(fail ? 1 : 0);

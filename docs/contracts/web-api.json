@@ -508,10 +508,10 @@
   "GET /api/books/cashflow": {
    "status": 200,
    "example": {
-    "asOf": "2026-10-12",
+    "asOf": "2026-10-13",
     "days": 7,
-    "from": "2026-10-12",
-    "to": "2026-10-18",
+    "from": "2026-10-13",
+    "to": "2026-10-19",
     "currency": "INR",
     "opening_minor": 0,
     "opening": [
@@ -526,11 +526,11 @@
     "out_minor": 59000,
     "closing_minor": -59000,
     "lowest": {
-     "date": "2026-10-12",
+     "date": "2026-10-13",
      "balance_minor": -59000
     },
     "shortfall": {
-     "date": "2026-10-12",
+     "date": "2026-10-13",
      "short_minor": 59000,
      "balance_minor": -59000,
      "driver": {
@@ -557,7 +557,7 @@
     },
     "series": [
      {
-      "date": "2026-10-12",
+      "date": "2026-10-13",
       "in_minor": 0,
       "out_minor": 59000,
       "balance_minor": -59000,
@@ -568,7 +568,7 @@
         "party_id": "33333333-3333-4333-8333-333333333333",
         "name": "Kumar Traders",
         "amount_minor": 59000,
-        "date": "2026-10-12",
+        "date": "2026-10-13",
         "due_date": "2026-10-06",
         "promised": false,
         "overdue": true,
@@ -645,7 +645,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
-    "asOf": "2026-10-12",
+    "asOf": "2026-10-13",
     "parties": [
      {
       "party_no": "P-00001",
@@ -774,6 +774,11 @@
      "bookpack": "injected",
      "period": "injected"
     },
+    "year": {
+     "fiscal_year": "2026-27",
+     "from": "2026-04-01",
+     "start_month": 4
+    },
     "waiting": [
      {
       "id": 1,
@@ -847,7 +852,7 @@
     "currency": "INR",
     "party_id": "22222222-2222-4222-8222-222222222222",
     "from": "2026-04-01",
-    "to": "2026-10-12",
+    "to": "2026-10-13",
     "code": "1300",
     "opening_minor": 0,
     "closing_minor": 118000,
@@ -1332,7 +1337,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-10T23:53:36.778Z",
+      "last_at": "2026-10-11T05:01:23.378Z",
       "late": true,
       "today": false
      }
@@ -1368,13 +1373,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-11T23:53:36.741Z",
+      "due_at": "2026-10-12T05:01:23.342Z",
       "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-12T23:53:36.742Z",
+      "created_at": "2026-10-13T05:01:23.344Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1644,7 +1649,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-10T23:53:36.672Z",
+      "due_at": "2026-10-11T05:01:23.274Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1738,7 +1743,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-12T22:53:36.889Z",
+    "created_at": "2026-10-13T04:01:23.474Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1953,7 +1958,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-12T22:53:36.889Z",
+      "created_at": "2026-10-13T04:01:23.474Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2042,7 +2047,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-12T23:53:37.263Z"
+     "shared_at": "2026-10-13T05:01:23.820Z"
     }
    },
    "optional": []
@@ -2095,13 +2100,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-11T23:53:36.741Z",
+     "due_at": "2026-10-12T05:01:23.342Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-12T23:53:36.749Z",
-     "created_at": "2026-10-12T23:53:36.742Z",
+     "done_at": "2026-10-13T05:01:23.354Z",
+     "created_at": "2026-10-13T05:01:23.344Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2306,7 +2311,7 @@
    "example": {
     "ok": true,
     "accounts_added": 109,
-    "fiscal_year": "2026-27",
+    "fiscal_year": "2027-28",
     "parties_numbered": null
    },
    "optional": []
@@ -2835,13 +2840,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-11T23:53:36.741Z",
+     "due_at": "2026-10-12T05:01:23.342Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-12T23:53:36.742Z",
+     "created_at": "2026-10-13T05:01:23.344Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2956,9 +2961,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-12T23:53:36.740Z",
+     "at": "2026-10-13T05:01:23.342Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-12T23:53:36.740Z"
+     "created_at": "2026-10-13T05:01:23.342Z"
     }
    },
    "optional": []
@@ -2973,9 +2978,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-12T23:53:36.779Z",
+     "at": "2026-10-13T05:01:23.379Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-12T23:53:36.779Z"
+     "created_at": "2026-10-13T05:01:23.379Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2984,13 +2989,13 @@
      "party_name": "Name of 0012",
      "party_listed": true,
      "what": "Demo",
-     "due_at": "2026-10-14T18:30:00.000Z",
-     "due_day": "2026-10-15",
+     "due_at": "2026-10-15T18:30:00.000Z",
+     "due_day": "2026-10-16",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-12T23:53:36.779Z",
+     "created_at": "2026-10-13T05:01:23.379Z",
      "late": false,
      "today": false,
      "bucket": "week"

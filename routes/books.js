@@ -172,7 +172,11 @@ router.get('/health', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const waiting = await withEntity(e, (h) => S.waiting(h, e, 50));
+    /* ⭐ WX-R2R (2026-10-13): the shop's YEAR, as the reads below default it (fyStart — the pack's year on the setting's fy_start_month). The screens
+       paint it (Day book "This FY", P&L, Month lock's months) instead of assuming April: an AU shop's July year was asked as April → refused. */
+    const pack = B.packOf(req.books), A = E.packs(), fy = A.fiscalYearOf(today(), pack);
     res.json({ enabled: true, currency: curOf(req), walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
+      year: { fiscal_year: fy, from: fyStart(req, today()), start_month: Number(pack.fy_start_month) || null },
       waiting: waiting.map(require('../lib/books-hooks').waitingRow) });
   } catch (err) { fail(res, err); }
 });
