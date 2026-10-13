@@ -73,16 +73,17 @@ async function apply(url, opts) {
     await pool.query('SELECT 1');
     const fresh = !(await hasTable(pool, 'identities'));
     const hadLedger = await hasTable(pool, 'schema_migrations');
+    /* a database with tables and no (or an empty) ledger is somebody's live data whose history we cannot see: touch NOTHING */
+    if (!fresh && (!hadLedger || [...(await ledger(pool)).keys()].filter((f) => f !== LEDGER_FILE).length === 0)) {
+      say('the database has tables and ' + (hadLedger ? 'its ledger is empty' : 'no ledger (' + LEDGER_FILE + ')') + ' — nothing run. Record what it already has first:');
+      say('  run ' + LEDGER_FILE + ' as the owner, then: node tools/migrate.cjs --db <url> --record-through bNNN   (the last migration it has had)');
+      return { ran: [], failed: [], skipped: 0, fresh, left_alone: true };
+    }
     if (!hadLedger) {
       const x = psql(url, path.join(M, LEDGER_FILE), true);
       if (!x.ok) throw new Error(LEDGER_FILE + ' failed: ' + x.errs[0]);
     }
     let done = await ledger(pool);
-    if (!fresh && [...done.keys()].filter((f) => f !== LEDGER_FILE).length === 0) {
-      say('the database has tables and its ledger is empty — nothing run. Record what it already has first:');
-      say('  node tools/migrate.cjs --db <url> --record-through bNNN   (the last migration this database has had)');
-      return { ran: [], failed: [], skipped: 0, fresh, left_alone: true };
-    }
     const ran = [], failed = [];
     if (fresh) {
       say('schema: 000_baseline.sql');

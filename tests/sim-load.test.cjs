@@ -42,7 +42,7 @@ ok('DATABASE_URL is set from --db before server.js loads (dotenv cannot redirect
 ok('a sealed NODE_ENV is refused', /isSealed\(\)\) die\(/.test(src));
 /* HX1: the schema step is tools/migrate.cjs — a database with tables runs only what its ledger lacks, and one with an EMPTY ledger is left alone */
 ok('the schema step is tools/migrate.cjs (one chain, with the ledger)', /require\('\.\/migrate\.cjs'\)\.apply\(DB/.test(src));
-ok('migrate leaves a database with tables and an empty ledger alone', /has tables and its ledger is empty — nothing run/.test(fs.readFileSync(path.join(__dirname, '..', 'tools', 'migrate.cjs'), 'utf8')));
+ok('migrate leaves a database with tables and an empty ledger alone', /has tables and ' \+ \(hadLedger \? 'its ledger is empty'/.test(fs.readFileSync(path.join(__dirname, '..', 'tools', 'migrate.cjs'), 'utf8')));
 ok('--schema-only (HX0, the compose migrate job) is the same schema step and nothing else: no shop, no api', (() => {
   const body = (/async function schemaOnly\(\) \{([\s\S]*?)\n\}/.exec(src) || [])[1] || '';
   return /await applySchema\(\)/.test(body) && !/server\.js|startApi|\/api\//.test(body) && /if \(SCHEMA_ONLY\) return schemaOnly\(\)/.test(src);
