@@ -74,6 +74,14 @@ const byName = (lines, n) => lines.find((l) => l.name === n || l.their_name === 
     assert.strictEqual(PR.explain(-200000, [e('SV/1', 1000, true)], 'INR').cause, 'only_theirs');
     assert.match(PR.explain(77700, [e('SV/1', 1000, true)], 'INR').why, /open our 1 entries/);
   });
+  await ta('a CREDIT trial-balance line reads "more" on its own side: theirs Sales ₹1,000 Cr vs ours ₹90 Cr is THEIRS more (local walk, 14 Oct)', () => {
+    const e = (no, amt, rail) => ({ entry_id: no, entry_no: no, date: '2026-10-14', amount_minor: amt, rail, ref: null });
+    const sales = PR.explain(-9000 - (-100000), [e('SV/1', -9000, false)], 'INR', -1);   /* ours − theirs, Dr-signed */
+    assert.strictEqual(sales.cause, 'only_theirs'); assert.match(sales.why, /^Theirs is .* more/);
+    const extra = PR.explain(-105000 - (-100000), [e('SV/9', -5000, true)], 'INR', -1);  /* ours has one more credit entry */
+    assert.strictEqual(extra.cause, 'rail_later'); assert.strictEqual(extra.hit[0].entry_no, 'SV/9');
+    assert.strictEqual(PR.explain(91000, [e('SV/1', -9000, false)], 'INR').cause, 'unexplained', 'side +1 (a debit line) unchanged');
+  });
 
   /* ── through the routes ── */
   const app = require('express')(); app.use(require('express').json()); app.use('/api/books', require('../routes/books'));
