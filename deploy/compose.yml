@@ -1,0 +1,85 @@
+# deploy/compose.yml — ChitBridge on any machine with Docker (HX0). `docker compose -f deploy/compose.yml --env-file deploy/.env up -d`
+#   db       Postgres 16 (the data; a named volume)
+#   migrate  one shot: the repo's schema path (tools/sim-load.cjs --schema-only = 000_baseline → part2 → every bNNN); an existing
+#            database is left as it is
+#   api      this repo's Dockerfile, NODE_ENV=production — sealed: it refuses to boot without the e-mail sender (docs/HOSTING.md)
+#   web      ../chitbridge-web's Dockerfile (CB_WEB_DIR to move it) — the static site, pointed at CB_API_BASE
+#   mailsink (profile `proof` only) a stand-in for Resend so a walk can read the sign-in code — never in a real deployment
+# Ports bind to 127.0.0.1: put a TLS proxy (Caddy, a cloud load balancer) in front for anything public.
+name: chitbridge
+
+# the owner (schema, the migrate job, the loader) and the api's own role: cb_app is NOSUPERUSER NOBYPASSRLS (migration_b48), so
+# row-level security holds for every request — the superuser `postgres` would bypass it
+x-db-url: &db_url postgres://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}@db:5432/chitbridge?sslmode=disable
+x-app-url: &app_url postgres://cb_app:${CB_APP_PASSWORD:?set CB_APP_PASSWORD in deploy/.env}@db:5432/chitbridge?sslmode=disable
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: chitbridge
+    volumes: [cbdata:/var/lib/postgresql/data]
+    ports: ["127.0.0.1:${DB_PORT:-5432}:5432"]
+    healthcheck:
+      # over TCP: the image's first-boot init server listens on the socket only, so a socket check passes before the real server is up
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d chitbridge"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    build: { context: .., target: migrate }
+    image: chitbridge-migrate
+    environment:
+      DATABASE_URL: *db_url
+      CB_APP_PASSWORD: ${CB_APP_PASSWORD}
+    # the schema, then cb_app's password (b48 makes the role without one) — fed on stdin so it is never on a command line
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        node tools/sim-load.cjs --schema-only --db "$$DATABASE_URL" &&
+        echo "ALTER ROLE cb_app PASSWORD :'pw';" | psql -X -q -v ON_ERROR_STOP=1 -v pw="$$CB_APP_PASSWORD" -d "$$DATABASE_URL" &&
+        echo "migrate: cb_app can sign in"
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    build: { context: .., target: api }
+    image: chitbridge-api
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: *app_url
+      DB_POOLER_FALLBACK: "off"
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET (32+ characters) in deploy/.env}
+      OTP_EMAIL_ENABLED: "true"
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_BASE_URL: ${RESEND_BASE_URL:-}
+      FROM_EMAIL: ${FROM_EMAIL:-}
+      ALLOWED_ORIGINS: ${WEB_ORIGIN:-http://localhost:8080}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_KEY: ${S3_KEY:-}
+    ports: ["127.0.0.1:${API_PORT:-3000}:3000"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    restart: unless-stopped
+
+  web:
+    build: { context: "${CB_WEB_DIR:-../../chitbridge-web}" }
+    image: chitbridge-web
+    environment:
+      CB_API_BASE: ${CB_API_BASE:-http://localhost:3000}
+    ports: ["127.0.0.1:${WEB_PORT:-8080}:8080"]
+    restart: unless-stopped
+
+  mailsink:
+    profiles: [proof]
+    image: node:20-alpine
+    command: ["node", "/sink/mail-sink.cjs"]
+    volumes: ["./mail-sink.cjs:/sink/mail-sink.cjs:ro"]
+    ports: ["127.0.0.1:8025:8025"]
+
+volumes:
+  cbdata:

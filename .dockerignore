@@ -1,0 +1,15 @@
+# HX0 · what the image never carries: secrets, the git history, local installs, tests and design drafts.
+# The runtime reads lib/ routes/ middleware/ db/ src/ data/ governance/ tools/ docs/ public/ (and migrations/ for the migrate job).
+.git
+node_modules
+.env
+.env.*
+*.log
+tests
+test-media
+design-handoff
+design-style
+design-style2
+deploy
+Dockerfile
+.dockerignore
