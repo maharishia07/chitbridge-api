@@ -155,6 +155,13 @@ const byName = (lines, n) => lines.find((l) => l.name === n || l.their_name === 
       const t = ret.lines.find((l) => l.name.indexOf('3.1(a) Outward') === 0); assert.deepStrictEqual([t.status, t.diff_minor], ['different', 50000]);
       assert.strictEqual(ret.lines.find((l) => l.name.indexOf('4(C) CGST') === 0).status, 'equal');
     });
+    await ta('the balance sheet from a Tally report: Sundry Debtors (an asset, Dr) different by the rail bill; the total assets compared first', async () => {
+      const b = await q('POST', '/compare/snapshots', { snapshot_id: id, part: 'bs', xml: FIX('tally-bs-report.xml') });
+      assert.strictEqual(b.status, 200, JSON.stringify(b.body));
+      const bs = (await q('GET', '/compare/' + id)).body.parts.bs.lines;
+      assert.strictEqual(bs[0].name, 'Total assets');
+      const d = byName(bs, 'Sundry Debtors'); assert.deepStrictEqual([d.status, d.ours_minor, d.theirs_minor, d.cause], ['different', 177000, 118000, 'rail_later']);
+    });
     await ta('effort (PR2\'s hook): the period\'s entries by how they came — structured (the rail) vs keyed', async () => {
       assert.deepStrictEqual([C.effort.entries, C.effort.structured, C.effort.keyed], [3, 2, 1]);
       assert.deepStrictEqual(C.effort.by_kind, { sale_bill: 2, purchase_bill: 1 });

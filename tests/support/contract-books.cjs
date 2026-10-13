@@ -216,6 +216,7 @@ async function captureBooks() {
     const sid = snap.body && snap.body.snapshot_id;
     if (sid) {
       await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'pl', xml: px('tally-pl-report.xml') }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'bs', xml: px('tally-bs-report.xml') }, '/compare/snapshots');
       await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'ret', csv: px('tally-gstr3b.csv'), decisions: ((rp.body && rp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field })) }, '/compare/snapshots');
       await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'tb', xml: px('tally-tb-ledgers.xml') }, '/compare/snapshots');
       await q('GET', '/compare', null, '/compare');

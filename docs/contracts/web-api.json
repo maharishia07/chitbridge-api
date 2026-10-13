@@ -4571,16 +4571,16 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "ec10659a-a0a0-47ae-ab1a-da9054a3572f",
+      "snapshot_id": "1158120d-7f25-4c3a-8108-0857d8a2bac7",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
       "period_to": "2026-09-30",
       "currency": "INR",
       "parts": [
-       "pl"
+       "bs"
       ],
-      "lines": 19,
+      "lines": 22,
       "created_at": "2026-09-29T10:00:53.000Z"
      }
     ]
@@ -4589,21 +4589,75 @@
   },
   "GET /api/books/compare/:id": {
    "status": 200,
-   "note": "PR1: effort.by_kind is keyed by the entry kinds the period has (free); parts carries tb · pl · bs · ret as the snapshot has them",
+   "note": "PR1: parts carries only the parts the snapshot has (tb · pl · bs · ret); effort.by_kind is keyed by the entry kinds the period has (free)",
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "ec10659a-a0a0-47ae-ab1a-da9054a3572f",
+     "snapshot_id": "1158120d-7f25-4c3a-8108-0857d8a2bac7",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
      "period_from": "2026-04-01",
      "period_to": "2026-09-30",
      "parts": [
-      "pl"
+      "bs"
      ]
     },
     "parts": {
+     "bs": {
+      "part": "bs",
+      "title": "Balance sheet",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "file_name": null,
+      "source": "tally",
+      "lines": [
+       {
+        "key": "bs:total",
+        "total": true,
+        "their_line": 3,
+        "their_name": "Total assets",
+        "their_code": null,
+        "status": "different",
+        "name": "Total assets",
+        "our_codes": [
+         "1200"
+        ],
+        "ours_minor": 5118000,
+        "theirs_minor": 118000,
+        "diff_minor": 5000000,
+        "cause": "total",
+        "why": "The totals are ₹50,000.00 apart — the lines below say where.",
+        "entries": [
+         {
+          "entry_id": "00000000-0000-4000-8000-000000000115",
+          "entry_no": "JV/2026-27/000001",
+          "date": "2026-09-30",
+          "amount_minor": 5000000,
+          "chit_id": null,
+          "ref": null,
+          "kind": "closing_stock",
+          "rail": false
+         }
+        ],
+        "entries_n": 0,
+        "open": {
+         "code": "1200",
+         "from": "2026-04-01",
+         "to": "2026-09-30"
+        }
+       }
+      ],
+      "counts": {
+       "equal": 3,
+       "different": 0,
+       "gap": 0,
+       "only_ours": 5
+      },
+      "error": null,
+      "note": null,
+      "form": null
+     },
      "pl": {
       "part": "pl",
       "title": "Profit and loss",
@@ -4721,10 +4775,10 @@
      }
     },
     "counts": {
-     "equal": 5,
+     "equal": 8,
      "different": 7,
      "gap": 1,
-     "only_ours": 5
+     "only_ours": 10
     },
     "effort": {
      "from": "2026-04-01",
@@ -4742,8 +4796,13 @@
     }
    },
    "optional": [
+    "parts.bs.lines[].total",
     "parts.pl.lines[].total",
-    "parts.tb.lines[].total"
+    "parts.tb.lines[].total",
+    "parts.tb",
+    "parts.pl",
+    "parts.bs",
+    "parts.ret"
    ],
    "free": [
     "effort.by_kind"
@@ -4751,6 +4810,7 @@
   },
   "POST /api/books/compare/preflight": {
    "status": 200,
+   "note": "PR1: sample[] rows are keyed by the file own headers (free), as move-in",
    "example": {
     "part": "tb",
     "source": "tally",
@@ -4809,12 +4869,15 @@
     "sample[].side",
     "sheet",
     "sheets"
+   ],
+   "free": [
+    "sample[]"
    ]
   },
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "ec10659a-a0a0-47ae-ab1a-da9054a3572f",
+    "snapshot_id": "1158120d-7f25-4c3a-8108-0857d8a2bac7",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
