@@ -19,6 +19,11 @@
  *   POST   /api/crm/parties/:id/outcome         one tap after a call: call logged + next follow-up + stage, ONE transaction (b276; b297 for a stage move)
  *   POST   /api/crm/parties/:id/stage           "Move to…" — a new memberships row (kind lead_stage); the old rows are the history      (b297)
  *   POST   /api/crm/walk-ins/add                a phone that holds points → a local customer; the points move to them
+ *   GET    /api/crm/parties/:id/contact-prefs   CO1 K2: every consent row, newest first, + may/why per channel × purpose          (b306)
+ *   POST   /api/crm/parties/:id/contact-prefs   one new row: yes · no · withdraw (append-only — the old rows are the proof)        (b306)
+ *   GET    /api/crm/privacy-requests            CO1 K4/K11: the register of privacy requests and grievances, ?open=1              (b307)
+ *   POST   /api/crm/privacy-requests            log one: who · kind · when it came in → the due date the law sets                 (b307)
+ *   POST   /api/crm/privacy-requests/:id/answer the owner answers it, once (done · partly · refused + what was done)             (b307)
  *
  * ⭐ THIS FILE COMPUTES NO MONEY. Dues, totals and values are READ from what the Ledger and the chits stored (party-fields.decorate,
  *   summary_json, party_item) — "compute once, everyone reads". ⭐ Every read runs AS THE SHOP (withEntity): one shop never sees another's party.
@@ -45,6 +50,7 @@ function noKey(req, res, next) {
 /** a condition becomes a verdict with a code a screen maps to its own written line — the message is never shown as-is (design rule 1) */
 function fail(res, e) {
   if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) return res.status(503).json({ code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CB CRM needs migration b276 — not run yet.' });
+  if (e && e.code === 'PRIVACY_NOT_MIGRATED') return res.status(503).json({ code: e.code, error: 'Not migrated yet', message: e.message });
   if (e && e.code === 'LEADS_NOT_MIGRATED') return res.status(503).json({ code: 'LEADS_NOT_MIGRATED', error: e.message, message: e.message });
   if (e && e.status && e.status < 500) return res.status(e.status).json({ code: e.code || 'REFUSED', error: e.message, message: e.message });
   return res.status(500).json({ error: 'Failed', message: safeErr(e) });
@@ -345,6 +351,53 @@ router.post('/walk-ins/add', auth, noKey, async (req, res) => {
       if (c.ok) { for (const e of c.entries) await RS.append(owner, e.holder, e, bal.programme.definition_id, withEntity); claimed = c.points; }
     }
     res.status(201).json({ party: { party_id: local.identity_id, user_id: local.user_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false }, points_claimed: claimed });
+  } catch (e) { fail(res, e); }
+});
+
+/* ── CO1 privacy: contact consent (K2, b306) and the request register (K4 · K11, b307) — lib/privacy.js ────────────────────── */
+const PV = require('../lib/privacy');
+/** the party must be on this shop's list (the same test the log uses) */
+async function mine(h, owner, id) {
+  const on = await require('../lib/books-store').partyOn(h, owner, id);
+  if (!on.customer && !on.supplier) throw bad('Not your party.', 404, 'NOT_FOUND');
+}
+router.get('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
+  try {
+    const owner = ctx(req), id = idOf(req);
+    const out = await withEntity(owner, async (h) => { await mine(h, owner, id); return PV.prefs(h, owner, id); });
+    res.json(Object.assign({ party_id: id }, out));
+  } catch (e) { fail(res, e); }
+});
+router.post('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
+  try {
+    const owner = ctx(req), id = idOf(req);
+    const pref = await withEntity(owner, async (h) => { await mine(h, owner, id); return PV.notePref(h, owner, id, req.body, byOf(req)); });
+    res.status(201).json({ pref });
+  } catch (e) { fail(res, e); }
+});
+router.get('/privacy-requests', auth, noKey, async (req, res) => {
+  try {
+    const owner = ctx(req);
+    const list = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1' }));
+    res.json({ requests: list, open: list.filter((x) => !x.answered_at).length, late: list.filter((x) => x.late).length,
+      may_answer: isOwner(req), why: isOwner(req) ? null : 'Only the owner answers a privacy request.' });
+  } catch (e) { fail(res, e); }
+});
+router.post('/privacy-requests', auth, noKey, async (req, res) => {
+  try {
+    const owner = ctx(req), b = req.body || {};
+    if (b.party_id != null && !UUID.test(String(b.party_id))) throw bad('That is not a party id.', 400, 'BAD_ID');
+    const r = await withEntity(owner, async (h) => { if (b.party_id) await mine(h, owner, b.party_id); return PV.logRequest(h, owner, b, byOf(req)); });
+    res.status(201).json({ request: r });
+  } catch (e) { fail(res, e); }
+});
+router.post('/privacy-requests/:id/answer', auth, noKey, async (req, res) => {
+  try {
+    if (!isOwner(req)) throw bad('Only the owner answers a privacy request.', 403, 'OWNER_ONLY');
+    const owner = ctx(req), id = String(req.params.id || '');
+    if (!UUID.test(id)) throw bad('That is not a request id.', 400, 'BAD_ID');
+    const r = await withEntity(owner, (h) => PV.answerRequest(h, owner, id, req.body, byOf(req)));
+    res.json({ request: r });
   } catch (e) { fail(res, e); }
 });
 
