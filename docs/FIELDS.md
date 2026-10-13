@@ -381,9 +381,13 @@ Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, rou
 | `ui_prefs.fs` | `s` · `m` · `l` · `xl` | Source. Text size; same writer and readers as `theme`. |
 | `ui_prefs.motion` | `auto` · `reduce` · `full` | Source. Same writer and readers. |
 | `ui_prefs.stripes` | `off` · `light` · `strong` | Source. Row stripes; same writer and readers. |
+| `ui_prefs.font` | `default` · `grotesk` · `serif` · `wide` · `mono` | Source (CU3 — was device-only `cb_font`). Reading font; same writer and readers as `theme`. Closed list = avatar.js FONTS. |
+| `ui_prefs.weight` | `normal` · `bold` | Source (CU3 — was device-only `cb_weight`). Bold text; same writer and readers. |
 | `ui_prefs.product_rows` | array of product-page row keys | Source, the BUSINESS's choice (layer E, parked in the U column — to move to a policy flag with CU8's one writer). Written by app.html `prodRowsSave` → PATCH /profile `{ ui_prefs: { product_rows } }` (the patch only). Read by app.html `prodRowsPref`. Not writable through /me/prefs/ui. |
 | `locale_prefs.lang` · `.locale` | BCP 47 tag | Source. CBLocale.push → /me/prefs/locale. Read by CBLocale.hydrate. ICU checks the combination. |
 | `locale_prefs.langs` | up to 3 tags, comma-separated (RFC 4647 priority list) | Source. Same writer / reader. |
 | `locale_prefs.region` | region subtag | Source. Same writer / reader. |
 | `locale_prefs.nu` · `.hc` · `.ca` · `.fw` | UTS #35 keyword values | Source. Numbering system · hour cycle · calendar · first weekday. Same writer / reader. |
+| `locale_prefs.tz` | IANA zone, e.g. `Asia/Kolkata` | Source (CU3 — sent and dropped before). The PERSON's reading zone; absent = the device's. Same writer / reader; ICU checks it. Not the shop's `identities.timezone` (which a bill uses is not ruled yet — audit row 38). |
+| `locale_prefs.workdays` | ISO weekdays, comma-separated, e.g. `1,2,3,4,5,6` (1 = Monday) | Source (CU3 — sent and dropped before). Override of CLDR's week; absent = the region's. Same writer / reader (CBLocale.workdays · isWorkday). |
 | `locale_prefs.langs_seen` | array of ≤ 3 tags | Source. The browser's languages at sign-up (routes/signin.js, one-key merge). Read by nobody yet. Kept by every locale save since CU2 (the old whole-column save erased it). |

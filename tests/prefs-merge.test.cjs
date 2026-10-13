@@ -72,6 +72,24 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     t('the legacy /me/locale door merges too', !('nu' in row.locale_prefs) && row.locale_prefs.lang === 'ta');
     t('ui_prefs untouched by a locale save', row.ui_prefs.theme === 'dark');
 
+    /* CU3: timezone · workdays · reading font · bold reach the server (they were sent and dropped, or never sent) */
+    r = await patch('/me/prefs/locale', { tz: 'America/Argentina/Buenos_Aires', workdays: '1,2,3,4,5,6' });
+    t('CU3 tz and workdays are kept, beside the rest', r.status === 200 && row.locale_prefs.tz === 'America/Argentina/Buenos_Aires'
+      && row.locale_prefs.workdays === '1,2,3,4,5,6' && row.locale_prefs.lang === 'ta', JSON.stringify(row.locale_prefs));
+    const lp = JSON.stringify(row.locale_prefs);
+    r = await patch('/me/prefs/locale', { tz: 'Mars/Olympus', lang: 'en' });
+    t('CU3 a zone ICU does not know is a 400 and writes nothing', r.status === 400 && writes.length === 0 && JSON.stringify(row.locale_prefs) === lp, JSON.stringify(r.j));
+    r = await patch('/me/prefs/locale', { workdays: '1,9' });
+    t('CU3 a weekday outside 1–7 is a 400', r.status === 400 && writes.length === 0);
+    r = await patch('/me/prefs/locale', { tz: '', workdays: '' });
+    t("CU3 '' clears the override (back to the device zone / the region's week)", !('tz' in row.locale_prefs) && !('workdays' in row.locale_prefs) && row.locale_prefs.lang === 'ta');
+    r = await patch('/me/prefs/ui', { theme: 'dark', fs: 'm', motion: 'auto', stripes: 'strong', font: 'serif', weight: 'bold' });
+    t('CU3 reading font and bold are kept', row.ui_prefs.font === 'serif' && row.ui_prefs.weight === 'bold' && Array.isArray(row.ui_prefs.product_rows), JSON.stringify(row.ui_prefs));
+    r = await patch('/me/prefs/ui', { font: 'comic' });
+    t('CU3 an unknown font is a 400', r.status === 400 && row.ui_prefs.font === 'serif');
+    r = await patch('/me/prefs/ui', { weight: 'heavy' });
+    t('CU3 an unknown weight is a 400', r.status === 400 && row.ui_prefs.weight === 'bold');
+
     /* static: no writer of either column replaces the whole store */
     const files = ['routes', 'lib'].flatMap((d) => fs.readdirSync(path.join(API, d)).filter((f) => f.endsWith('.js')).map((f) => path.join(API, d, f)));
     const bad = [];
