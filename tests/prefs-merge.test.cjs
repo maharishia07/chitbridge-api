@@ -83,7 +83,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const pp = entities.prefPatch(entities.PREF_SETS.ui, { theme: 'dark', fs: '', x: 'y' });
     t('prefPatch splits set / drop and ignores unknown keys', same(pp, { set: { theme: 'dark' }, drop: ['fs'] }), JSON.stringify(pp));
   } catch (e) { fail++; console.log('  FAIL threw: ' + (e && e.stack)); }
-  console.log(`\nprefs-merge: ${pass} passed, ${fail} failed`);
+  console.log(`\nprefs-merge: ${pass + fail} checks · ${pass} passed, ${fail} failed`);
   process.exitCode = fail ? 1 : 0;
   srv.close();
 });
