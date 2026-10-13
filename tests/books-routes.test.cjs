@@ -254,7 +254,7 @@ const call = (port, method, p, body) => new Promise((done) => {
     if (/JOIN identities i ON i.identity_id = t.party_id/.test(t)) return { rows: [{ party_id: SUPP, display_name: 'Kumar Traders' }] };
     return { rows: [] };
   } };
-  let dup = null; try { await PF.patch(fdb, SHOP, 'customer', 'row1', { tax_ids: [{ scheme: 'GSTIN', value: '33abcde1234f1z5' }] }, SHOP); } catch (e) { dup = e; }
+  let dup = null; try { await PF.patch(fdb, SHOP, 'customer', 'row1', { tax_ids: [{ scheme: 'GSTIN', value: '27aapfu0939f1zv' }] }, SHOP); } catch (e) { dup = e; }
   ok('the same GSTIN on another party → 409 DUPLICATE_PARTY with the exact sentence, and who holds it', dup && dup.code === 'DUPLICATE_PARTY' && dup.status === 409
     && dup.message === 'Another party already has this tax id.' && dup.holder === 'Kumar Traders', dup && JSON.stringify({ m: dup.message, h: dup.holder }));
   let badS = null; try { PF.cleanTaxIds([{ scheme: 'SSN', value: '1' }]); } catch (e) { badS = e; }

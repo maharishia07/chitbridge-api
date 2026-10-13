@@ -422,3 +422,10 @@ Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, rou
 | Key | Shape | Source / derived · who writes it · who reads it |
 |---|---|---|
 | `orders[].shop_status` | rail status string or absent | Derived: the OTHER participant's (the shop's) `chit_status.current_status`, read through `chit_participants` (b50) in the same statement; absent before b50. The shopper's own `current_status` stays the rail's `delivered` (it reached the shop). Written by: the shop's status moves. Read by: `shop.html` My orders → `shopStatusWord(shop_status \|\| current_status)` (CBWorkflow.stageOf). |
+## The storefront's `shop` block · GET /api/c/:handle and every caller of `catalogue-view.buildPublicView` (CX4 · S1/S2, 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `shop.country` | ISO-3166 alpha-2 or null | Source: `identities.country`, read on the SAME row as `storefront_access · policy_flags` (no extra trip). Written by registration / Country setup. Read by shop.html (what the page knows of its country). |
+| `shop.tax_id_word` | `GSTIN` · `ABN` · `TRN` | Derived: `profile.taxIdWordOf(country)` — the pack's own tax id (reg-au `abn`, reg-ae `trn`), `GSTIN` for India and for no pack. Written by nobody. Read by shop.html for the label beside `gstn` (the generic registration column). |
+| `shop.upi_id` (changed) | string or null | Unchanged source (`profile.upiOf(policy_flags)`); now null when the shop's pack has no UPI mode (`pack.chart.paymentModes.upi`) — the storefront's "Pay by UPI" block is not drawn for an AU / AE shop. |

@@ -70,6 +70,14 @@ const CATALOGUE = {
   ],
 };
 const schemesFor = (cc) => CATALOGUE[cc] || CATALOGUE.IN.filter((s) => s.selfServe);   /* CX0: a country with no list gets the universal two (phone · email), never India's PAN / Aadhaar */
+/**
+ * CX4 (R3): WHICH COUNTRY'S LIST — the shop's own (identities.country), read here by the server. A country sent by the client was
+ * trusted before (default IN), so an Australian shop was offered PAN and Aadhaar and could file one. One read, the shop's row.
+ */
+async function shopCountry(entity_id) {
+  const r = await query('SELECT country FROM identities WHERE identity_id = $1', [entity_id]);
+  return String((r.rows[0] && r.rows[0].country) || '').trim().toUpperCase();
+}
 
 /** GET — the person's own record. Never returns a stored value, only the mask and the verdict. */
 router.get('/documents', auth, async (req, res) => {
@@ -96,7 +104,7 @@ router.get('/documents', auth, async (req, res) => {
     /* M18: a plain `verified` (+ `verified_at`) per document — what N19's trade-ready check reads. Only status 'verified'
        WITH a stamp counts; the pending-code counterfoil (verification_ref) is never selected, so it cannot leak. */
     const documents = r.rows.map(d => ({ ...d, verified: d.status === 'verified' && !!d.verified_at }));
-    res.json({ documents, catalogue: schemesFor(req.query.country || 'IN').map(s => ({
+    res.json({ documents, catalogue: schemesFor(await shopCountry(auth.entityOf(req))).map(s => ({
       scheme: s.scheme, label: s.label, verify: s.verify, stored: s.store,
       /* the client renders an input only where this is true — the server refuses the rest either way */
       selfServe: !!s.selfServe,
@@ -158,7 +166,7 @@ router.put('/documents/:scheme', auth, async (req, res) => {
       return res.status(503).json({ error: 'Not enabled', code: 'IDOC_NOT_MIGRATED',
         message: 'Identity records are not switched on yet — the b174 migration has not been run.' });
     }
-    const cc   = String(req.body.country || 'IN').toUpperCase();
+    const cc   = await shopCountry(auth.entityOf(req));   /* CX4: the shop's country, never the client's */
     const want = String(req.params.scheme || '').toUpperCase();
     const spec = schemesFor(cc).find(s => s.scheme === want);
     if (!spec) return res.status(400).json({ error: 'Unknown document', message: 'That document is not recognised for ' + cc + '.' });
