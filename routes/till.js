@@ -2319,6 +2319,9 @@ router.get('/bills', auth, async (req, res) => {
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
     const limit = Math.min(Math.max(parseInt(req.query.limit || '100', 10) || 100, 1), 500);
     const by = (typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by)) ? req.query.by : null;
+    /* ⭐ FX-CT1: ONE COUNTER'S BILLS — the day report asks what the server holds for THIS counter. Filtered in SQL, because the
+       LIMIT runs first: on a busy shop the other counters' bills would crowd this one's out of a JS filter. */
+    const till = (typeof req.query.till === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(req.query.till)) ? req.query.till : null;
     const { withEntity } = require('../db');
     const r = await withEntity(entity_id, (db) => db.query(
       /* ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08) */
@@ -2344,7 +2347,8 @@ router.get('/bills', auth, async (req, res) => {
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no'
           AND h.created_at > NOW() - ($2 || ' days')::interval
-        ORDER BY h.created_at DESC LIMIT $3`, [entity_id, String(days), limit]));
+          AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
+        ORDER BY h.created_at DESC LIMIT $3`, [entity_id, String(days), limit, till]));
     const rows = r.rows.map((x) => {
       const b = x.business_json || {}, t = b.till || {}, m = (x.summary_json || {}).money || {};
       return { chit_id: x.chit_id, no: b.bill_no || null, at: b.billed_at || x.created_at,
