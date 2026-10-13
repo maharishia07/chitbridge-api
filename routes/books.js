@@ -83,6 +83,14 @@ function owner(req, res, next) {
   if (!isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
   next();
 }
+/** ⚠️ WX-P2P-15 (2026-10-13, the real stack): a VIEW-ONLY co-assist recorded a payment from Payables › Pay — the writes a co-assist may reach
+ *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
+ *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
+function editor(req, res, next) {
+  const why = require('../lib/rail').byLevel(levelOf(req), 'amend');
+  if (why) { const say = require('../lib/rail').say(why); return res.status(403).json({ error: say, message: say, why, code: why.toUpperCase() }); }
+  next();
+}
 /**
  * the gate: the shop's ledger must be on, else a quiet 404.
  * ⭐ CS1 (2026-10-12): BEFORE the switch, the COUNTRY — a shop whose country has no regulation pack (or no country, or the setup still to
@@ -576,7 +584,7 @@ router.post('/payments/preview', auth, noKey, on, async (req, res) => {
  * ⚠️ Refused in words (422): a party on neither of the shop's lists; a date before the ledger began or in the future.
  * A cheque posts only when it CLEARS (C3) — until then it is a status row, and there is nothing to propose.
  */
-router.post('/payments', auth, noKey, on, async (req, res) => {
+router.post('/payments', auth, noKey, editor, on, async (req, res) => {
   try {
     const e = ctx(req), b = req.body || {}, q = paymentQuestion(req, true);
     if (q.refuse) return res.status(q.refuse.status).json({ error: q.refuse.words, message: q.refuse.words });
@@ -667,7 +675,7 @@ router.patch('/payments/:id', auth, noKey, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 /** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } — B.proposeFor, the one function */
-router.post('/payments/:id/propose', auth, noKey, on, async (req, res) => {
+router.post('/payments/:id/propose', auth, noKey, editor, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
@@ -682,7 +690,7 @@ router.post('/payments/:id/propose', auth, noKey, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 /** POST /payments/:id/confirm { allocations: [{ against_ref, amount_minor }] } — CBReceivables.confirmItems decides (disputed frozen, never more than open) */
-router.post('/payments/:id/confirm', auth, noKey, on, async (req, res) => {
+router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
@@ -746,7 +754,7 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
  *   bounced   → { ok, status: 'bounced', items: 1 }  (a cheque that never cleared never counted: no entry)
  * Out of order (received → deposited → cleared | bounced) → 422 with the engine's sentence; not a cheque → 404.
  */
-router.post('/cheques/:id/status', auth, on, async (req, res) => {
+router.post('/cheques/:id/status', auth, editor, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id), b = req.body || {};
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
@@ -756,7 +764,7 @@ router.post('/cheques/:id/status', auth, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 /** POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } — a disputed bill cannot take a payment (C4) */
-router.post('/parties/:id/dispute', auth, on, async (req, res) => {
+router.post('/parties/:id/dispute', auth, editor, on, async (req, res) => {
   try {
     const e = ctx(req), id = String(req.params.id), b = req.body || {};
     if (!UUID.test(id) || !b.against_ref) return res.status(400).json({ error: 'Which bill?', message: 'Which bill?' });
