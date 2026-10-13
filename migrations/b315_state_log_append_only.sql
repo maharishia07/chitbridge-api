@@ -51,7 +51,7 @@ DROP TRIGGER IF EXISTS state_log_append_only ON state_log;
 CREATE TRIGGER state_log_append_only BEFORE DELETE ON state_log
   FOR EACH ROW EXECUTE FUNCTION state_log_refuse_delete();
 
-DO $$ BEGIN RAISE NOTICE 'b303: state_log — UPDATE revoked from cb_app; DELETE only of a Draft copy''s rows.'; END $$;
+DO $$ BEGIN RAISE NOTICE 'b315: state_log — UPDATE revoked from cb_app; DELETE only of a Draft copy''s rows.'; END $$;
 COMMIT;
 
 -- ═════ STEP 3 · CHECK (read-only) — the evidence line for the Standards register (cap-standards.js, CO2 rows) ═══

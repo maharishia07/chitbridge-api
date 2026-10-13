@@ -3,7 +3,7 @@
  * The evidence a reviewer can RUN for two rows of the Standards register (web public/app/cap-standards.js):
  *   1  K5 · a critical line reaches a person: with CB_ALERT_WEBHOOK set, log.critical POSTs the record; warn/error do not; a
  *      webhook that fails never throws into the caller.
- *   2  K6 · state_log is append-only: b303 revokes UPDATE from cb_app and refuses DELETE unless the copy is a Draft — and no code
+ *   2  K6 · state_log is append-only: b315 revokes UPDATE from cb_app and refuses DELETE unless the copy is a Draft — and no code
  *      UPDATEs state_log, and the only DELETEs are the draft paths it was written around (a new one fails here, to be looked at).
  * Offline: no DB, no network (fetch is a stub).
  */
@@ -61,11 +61,11 @@ const read = (p) => fs.readFileSync(path.join(API, p), 'utf8');
   /* ── 2 · K6 state_log append-only ─────────────────────────────────────────────────────────────────────────── */
   const sql = read('migrations/b303_state_log_append_only.sql');
   const body = sql.replace(/--[^\n]*/g, '');
-  check('b303 revokes UPDATE on state_log from cb_app', /REVOKE\s+UPDATE\s+ON\s+state_log\s+FROM\s+cb_app/i.test(body));
-  check('b303 does NOT revoke DELETE (sending a draft clears its rows)', !/REVOKE[^;]*DELETE[^;]*state_log/i.test(body));
-  check('b303 guards DELETE with a BEFORE DELETE trigger that allows only a Draft copy',
+  check('b315 revokes UPDATE on state_log from cb_app', /REVOKE\s+UPDATE\s+ON\s+state_log\s+FROM\s+cb_app/i.test(body));
+  check('b315 does NOT revoke DELETE (sending a draft clears its rows)', !/REVOKE[^;]*DELETE[^;]*state_log/i.test(body));
+  check('b315 guards DELETE with a BEFORE DELETE trigger that allows only a Draft copy',
     /BEFORE\s+DELETE\s+ON\s+state_log/i.test(body) && /h\.role\s*=\s*'Draft'/.test(body) && /RAISE\s+EXCEPTION/i.test(body));
-  check('b303 is re-runnable (CREATE OR REPLACE · DROP TRIGGER IF EXISTS) and one transaction', /CREATE OR REPLACE FUNCTION/.test(body) && /DROP TRIGGER IF EXISTS/.test(body) && /BEGIN;[\s\S]*COMMIT;/.test(body));
+  check('b315 is re-runnable (CREATE OR REPLACE · DROP TRIGGER IF EXISTS) and one transaction', /CREATE OR REPLACE FUNCTION/.test(body) && /DROP TRIGGER IF EXISTS/.test(body) && /BEGIN;[\s\S]*COMMIT;/.test(body));
 
   const files = [];
   (function walk(d) { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) walk(p); else if (/\.js$/.test(f.name)) files.push(p); } })(path.join(API, 'lib'));
