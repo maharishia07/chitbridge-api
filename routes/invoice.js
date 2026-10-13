@@ -38,8 +38,8 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
     const rated = S.rateLines(withOffers, sh);
     const mine = await S.partyOfEntity(entity_id);
     const seller = S.party(body.seller, mine);
-    const buyer = S.party(body.buyer, { Country: seller.Country || null, RegType: 'regular' });
-    if (!buyer.State && !buyer.Pos && !buyer.Gstin && seller.State) buyer.Pos = seller.State;   /* a walk-in buyer: the supply is where the seller is */
+    /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
+    const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
     const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
     const invoice = Object.assign({ DocDtls: { Typ: 'INV', No: null, Dt: new Date().toISOString().slice(0, 10) }, currency: body.currency || 'INR' }, det);
     res.json({ engine: 'chitbridge-invoice', version: 1, order: ['pricing structure', 'offers', 'tax'],

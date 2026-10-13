@@ -19,7 +19,7 @@ const seen = [];
 const db = { query: async (text, params) => {
   const ph = (text.match(/\$(\d+)/g) || []).map((s) => Number(s.slice(1)));
   seen.push({ text, params: params || [], max: ph.length ? Math.max.apply(null, ph) : 0 });
-  if (/RETURNING next_no - 1/.test(text)) return { rows: [{ n: 1 }] };
+  if (/RETURNING next_no - (1|\$4::int)/.test(text)) return { rows: [{ n: 1 }] };   /* L3: nextNo reserves a block of $4 (1 by default) */
   if (/RETURNING entry_id/.test(text)) return { rows: [{ entry_id: U, created_at: new Date() }] };
   if (/RETURNING payment_id/.test(text)) return { rows: [{ payment_id: U }] };
   if (/RETURNING pack_id/.test(text)) return { rows: [{ pack_id: U, created_at: new Date() }] };

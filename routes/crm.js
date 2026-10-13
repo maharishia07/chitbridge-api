@@ -14,7 +14,8 @@
  *   DELETE /api/crm/parties/:id                 "Remove from my parties" — owner, no open dues, hides the row, deletes no history (b276)
  *   GET    /api/crm/parties?view=leads          only the leads (no trade yet), each with its stage; `leads_migrated` false until b297
  *   POST   /api/crm/leads                       one lead = a local party (added_via 'lead') + its first stage                          (b297)
- *   GET    /api/crm/calls                       ?scope=mine|all — today's call queue (ONE query) + the outcome buttons       (b276; stage b297)
+ *   POST   /api/crm/leads/import                ≤500 rows a browser parsed from a CSV → added · merged · skipped (why); `dry` previews  (b297)
+ *   GET    /api/crm/calls                      ?scope=mine|all — today's call queue (ONE query) + the outcome buttons       (b276; stage b297)
  *   POST   /api/crm/parties/:id/outcome         one tap after a call: call logged + next follow-up + stage, ONE transaction (b276; b297 for a stage move)
  *   POST   /api/crm/parties/:id/stage           "Move to…" — a new memberships row (kind lead_stage); the old rows are the history      (b297)
  *   POST   /api/crm/walk-ins/add                a phone that holds points → a local customer; the points move to them
@@ -273,6 +274,22 @@ router.post('/parties/:id/outcome', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), id = idOf(req);
     res.status(201).json(await withEntity(owner, (h) => require('../lib/crm-calls').outcome(h, owner, id, req.body, byOf(req))));
+  } catch (e) { fail(res, e); }
+});
+
+/**
+ * L3: the call-desk's first list — leads from a CSV the BROWSER parsed (no file reaches the server). Body { rows: [{ name, phone?, email?, business?,
+ * city?, source?, note? }], dry? }. ≤500 rows (more → 400 TOO_MANY in words); the phone through the one helper; deduped within the file and against the
+ * shop's parties; ONE transaction of set-based statements (lib/crm-leads.js). `dry: true` plans and writes nothing — the preview paints that answer.
+ * Who may: the owner, or a login whose access level is editor (lib/access.canEdit — the server decides; a viewer or commenter gets 403 in words).
+ * Before b297: 503 LEADS_NOT_MIGRATED, nothing created.
+ */
+router.post('/leads/import', auth, noKey, async (req, res) => {
+  try {
+    if (!require('../lib/access').canEdit(req.identity)) throw bad('Only an editor can import leads.', 403, 'VIEW_ONLY');
+    const b = req.body || {};
+    const out = await require('../lib/crm-leads').importLeads(ctx(req), b.rows, { by: byOf(req), dry: !!b.dry });
+    res.status(out.dry ? 200 : 201).json(out);
   } catch (e) { fail(res, e); }
 });
 
