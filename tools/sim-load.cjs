@@ -93,7 +93,12 @@ if (!SHOPS[COUNTRY]) die('--country IN, AU or AE (the registered packs: lib/regu
 if (require(path.join(API, 'lib', 'dev-otp')).isSealed()) die('NODE_ENV is sealed (' + process.env.NODE_ENV + ') — the loader runs only with NODE_ENV=development (or test)');
 
 const PLAN_LIB = require(path.join(__dirname, 'sim-plan.cjs'));
-const PLAN = PLAN_LIB.planDays({ start: '2026-04-01', years: YEARS, seed: SEED });
+require(path.join(API, 'lib', 'tax-packs'));           /* loads lib/regulation with the three packs registered */
+const PACK = require(path.join(API, 'lib', 'regulation')).packFor(COUNTRY);   /* currency · fiscalYear · taxHeads · tax.scheme · tax.standard_rate · chart.paymentModes */
+if (!PACK) die('no regulation pack is registered for ' + COUNTRY);
+/* ⭐ WX-R2R: the shop's CALENDAR is the pack's (IN an April year · AU a July year · AE a January year) — the plan starts on the pack's
+   first month; one reader for the bill series, the month close and the proof (lib/accounts-packs fiscalYearOf · periodOf · fyRange below). */
+const PLAN = PLAN_LIB.planDays({ start: '2026-' + String(PACK.fiscalYear.startMonth).padStart(2, '0') + '-01', years: YEARS, seed: SEED });
 const WANT = PLAN_LIB.countOf(PLAN);
 const MARK = 'sim/seed-' + SEED + '/years-' + YEARS;
 const EMAIL = SHOP + '@test.example';                 /* a fixture domain (lib/entitykind) — the shop is a TEST business, never a live one */
@@ -101,9 +106,6 @@ const OTP = process.env.DEV_OTP || '123456';
 const TILL = 'C1';
 const dayAdd = PLAN_LIB.dayAdd;
 const SHOPROW = SHOPS[COUNTRY];
-require(path.join(API, 'lib', 'tax-packs'));           /* loads lib/regulation with the three packs registered */
-const PACK = require(path.join(API, 'lib', 'regulation')).packFor(COUNTRY);   /* currency · fiscalYear · taxHeads · tax.scheme · tax.standard_rate · chart.paymentModes */
-if (!PACK) die('no regulation pack is registered for ' + COUNTRY);
 const CUR = PACK.currency;
 const AT = (d, hh, mm) => d + 'T' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ':00' + SHOPROW.offset;   /* the shop's own wall clock */
 /* the year and the month number THE API USES for this shop: lib/accounts-packs (the adopted engine) with the pack's start month — not a second rule here.
@@ -322,7 +324,8 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   const buyerOf = (name) => ({ LglNm: name, Gstin: null, State: null, Country: seller.Country || COUNTRY, RegType: 'unregistered', Ph: null, Em: null, entity_id: null, Pos: seller.State });
   const basketOf = (rate, dayIx, i) => {
     const r = PLAN_LIB.rng(SEED * 1000003 + dayIx * 101 + i);
-    const pool0 = ITEMS.filter((it) => it.rate === rate), n = 1 + Math.floor(r() * 3), lines = [];
+    /* the plan draws an IN slab (5 / 12 / 18); a one-rate pack (AU 10 % · AE 5 %) maps it to its standard rate, as the shelf was added (WX-R2R) */
+    const pool0 = ITEMS.filter((it) => it.rate === rateOf(rate)), n = 1 + Math.floor(r() * 3), lines = [];
     for (let k = 0; k < n; k++) { const it = pool0[Math.floor(r() * pool0.length)], qty = 1 + Math.floor(r() * 3); if (lines.some((l) => l.item_id === it.id)) continue;
       lines.push({ particulars: it.name, quantity: qty, unit: it.unit, price: it.price, total: it.price * qty, item_id: it.id, hsn: it.hsn, gst_rate: it.rate }); }
     return lines;

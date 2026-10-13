@@ -15,6 +15,12 @@ A new key needs its entry here, in the same change. This file is being built; en
 | `schedule_iii.balanced` | boolean | `assets.total_minor === equity_and_liabilities.total_minor`. |
 | `schedule_iii.difference_minor` | integer | `assets.total_minor - equity_and_liabilities.total_minor`. Never hidden; 0 when balanced. |
 
+## GET /api/books/health · `year` (WX-R2R, 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `year` | `{ fiscal_year, from, start_month }` | Derived, never stored: the shop's financial year today, from the pack on the books setting's `fy_start_month` (`B.packOf` · accounts-packs `fiscalYearOf` / `fyRange` — the same `fyStart` the TB / P&L / BS reads default to). `fiscal_year` "2026-27" (or "2026" for a January year) · `from` "YYYY-MM-DD", its first day · `start_month` 1–12. Written by: nobody. Read by: CB Accounts (`cap-books.js` bkYear — the Day book's "This FY", P&L / TB / BS default range, Month lock / GST close / Packs month names), so an AU (July) or calendar-year shop is never asked as April. |
+
 ## GET /api/crm/parties · /parties/:id (CB CRM, 2026-10-02)
 
 Every key is a READ of what exists; nothing is stored and no money is computed here (`lib/crm.js`). Written by: nobody (derived). Read by: the CB CRM page.

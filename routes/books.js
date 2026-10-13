@@ -184,7 +184,11 @@ router.get('/health', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const waiting = await withEntity(e, (h) => S.waiting(h, e, 50));
+    /* ⭐ WX-R2R (2026-10-13): the shop's YEAR, as the reads below default it (fyStart — the pack's year on the setting's fy_start_month). The screens
+       paint it (Day book "This FY", P&L, Month lock's months) instead of assuming April: an AU shop's July year was asked as April → refused. */
+    const pack = B.packOf(req.books), A = E.packs(), fy = A.fiscalYearOf(today(), pack);
     res.json({ enabled: true, currency: curOf(req), walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
+      year: { fiscal_year: fy, from: fyStart(req, today()), start_month: Number(pack.fy_start_month) || null },
       waiting: waiting.map(require('../lib/books-hooks').waitingRow) });
   } catch (err) { fail(res, err); }
 });
@@ -331,8 +335,8 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
       const chart = await S.accounts(h, e);
       const a = chart.find((x) => String(x.code) === key) || chart.find((x) => x.role === key) || chart.find((x) => String(x.account_id) === key);
       if (!a || a.is_group) return null;
-      const open = (await B.ledgerOf(h, e, a, party, from, to)).opening_minor;
-      const rows = await S.entryLines(h, e, from, to, a.account_id, party);
+      const lo = await B.ledgerOf(h, e, a, party, from, to), open = lo.opening_minor;
+      const rows = (await S.entryLines(h, e, from, to, a.account_id, party)).filter((l) => !(lo.period0 && Number(l.period) === 0));   /* period 0 is IN the opening (WX-R2R) */
       let run = open;
       const lines = rows.map((l) => { run += Number(l.dr_minor) - Number(l.cr_minor); return { date: E.ymd(l.posting_date), doc_date: E.ymd(l.doc_date), what: l.narration || WORD[l.event_type] || l.event_type,
         ref: l.entry_no, source_chit_id: l.source_chit_id, source: sourceOf(l), party_id: l.party_id, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), running_minor: run }; });
