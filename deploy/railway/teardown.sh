@@ -11,7 +11,7 @@ GQL=${RAILWAY_GRAPHQL:-https://backboard.railway.com/graphql/v2}
 RAILWAY_PROJECT_ID=${RAILWAY_PROJECT_ID:-plan-project-id}
 gql() { out '{"data":{"project":{"name":"cbspin-'"$CB_SPIN_ID"'"}}}' curl -fsS "$GQL" -H "Authorization: Bearer ${RAILWAY_API_TOKEN:-plan-token}" -H 'content-type: application/json' \
   -d "{\"query\":\"$1\",\"variables\":{\"id\":\"$RAILWAY_PROJECT_ID\"}}"; }
-say "teardown of spin $CB_SPIN_ID (Railway project $RAILWAY_PROJECT_ID)"
+say "teardown of spin $CB_SPIN_ID (Railway project $RAILWAY_PROJECT_ID, deleted only if named cbspin-$CB_SPIN_ID)"
 # shellcheck disable=SC2016  # $id is a GraphQL variable, not a shell one
 NAME=$(gql 'query($id:String!){project(id:$id){name}}' | node -e 'let s="";process.stdin.on("data",(c)=>s+=c).on("end",()=>{try{console.log(JSON.parse(s).data.project.name)}catch(_){console.log("")}})')
 # shellcheck disable=SC2016
