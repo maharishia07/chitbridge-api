@@ -55,7 +55,10 @@ ok('byRateOf(AU invoice) puts the line\'s TaxAmt on the scheme\'s head `gst` (10
   JSON.stringify(br));
 const k = Z.classify({ chit: { chit_id: 'au1', purpose: 'order', currency_code: 'AUD', business_json: { bill_no: 'C1/26-27/0001', till: { id: 'C1' }, billed_at: '2026-07-02T01:00:00Z',
   payment: { parts: [{ how: 'Cash', amount: 110 }] } } }, entry: { sells: true, invoice: au }, setting: { enabled: true, walkin_grain: 'bill', country: 'AU', functional_currency: 'AUD' } });
-ok('…and the AU counter bill posts (not queued) with by_rate[10].gst = 10', k.kind === 'post' && k.event && k.event.by_rate && k.event.by_rate[0].gst === 10, JSON.stringify(k).slice(0, 200));
+/* the api's adopted accounts-packs (v1.20.0) opens an AU ledger on India's chart: posting would DROP the gst head and still balance — so it waits, in words */
+const auPackCountry = require(path.join(ROOT, 'lib', 'books')).packOf({ country: 'AU' }).country;
+if (auPackCountry === 'AU') ok('…and the AU counter bill posts with by_rate[10].gst = 10 (the books are on the AU pack)', k.kind === 'post' && k.event && k.event.by_rate && k.event.by_rate[0].gst === 10, JSON.stringify(k).slice(0, 200));
+else ok('…and while AU books open on India\'s chart (accounts-packs v1.20 fallback), the AU bill WAITS — its GST is never dropped', k.kind === 'queue' && /GST \(10\) but these books were opened on a chart with no GST ledger/.test(k.why), JSON.stringify(k).slice(0, 220));
 const inr = Z.byRateOf({ ItemList: [{ GstRt: 18, AssAmt: 100, CgstAmt: 9, SgstAmt: 9, IgstAmt: 0, CesAmt: 0 }] });
 ok('…an India slab keeps its shape (no `gst` key, total 118)', !('gst' in inr.rows[0]) && inr.total === 118 && inr.other === 0);
 const bare = Z.byRateOf({ ItemList: [{ GstRt: 0, AssAmt: 100, TaxAmt: 5 }] });
