@@ -1428,8 +1428,8 @@
        "added_via": "manual"
       },
       "lead": {
-       "stage": "lead",
-       "since": "2026-10-09T09:00:00.000Z"
+       "stage": "demo",
+       "since": "2026-10-10T09:00:00.000Z"
       },
       "supplier": {
        "list_id": "sl-2",
@@ -1539,10 +1539,10 @@
      "added_via": "manual"
     },
     "lead": {
-     "stage": "lead",
-     "since": "2026-10-09T09:00:00.000Z",
+     "stage": "demo",
+     "since": "2026-10-10T09:00:00.000Z",
      "moves": [
-      "demo"
+      "lead"
      ],
      "may": {
       "ok": true
@@ -1670,7 +1670,10 @@
       "ledger_kind": "bill",
       "source": "sale",
       "amount_minor": 48165,
-      "doc_date": "2026-09-01"
+      "doc_date": "2026-09-01",
+      "membership_id": "mm0",
+      "stage": "demo",
+      "from": "lead"
      }
     ],
     "next_before": null,
@@ -1691,15 +1694,18 @@
     "entries[].due_at",
     "entries[].field",
     "entries[].followup_id",
+    "entries[].from",
     "entries[].interaction_id",
     "entries[].interaction_kind",
     "entries[].ledger_kind",
+    "entries[].membership_id",
     "entries[].new",
     "entries[].old",
     "entries[].open_disputes",
     "entries[].purpose",
     "entries[].ref",
     "entries[].source",
+    "entries[].stage",
     "entries[].status",
     "entries[].text",
     "entries[].title",
