@@ -8,7 +8,7 @@
  *   node index.js sync-profile   --config connector.json                              (the store's name · GSTIN · state · address … from its own system)
  *   node index.js watch          --config connector.json [--sync-minutes 30] [--stock-minutes 5] [--retry-minutes 5]
  *                                (catch-up, hold the push stream; re-read products every N min, stock every M min; answer the storefront's stock asks)
- * connector.json: { "api": "https://chitbridge-api-production.up.railway.app", "key": "<API key, scope connector>",
+ * connector.json: { "api": "https://<your ChitBridge api>", "web": "https://<your ChitBridge site>", "key": "<API key, scope connector>",
  *                   "adapter": "tally", "tally": { "url": "http://localhost:9000", "company": "…", "partyLedger": "Cash", "salesLedger": "Sales" } }
  */
 'use strict';

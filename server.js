@@ -425,6 +425,7 @@ app.get('/health', async (req, res) => {
     /* which build answers — Railway sets this; it is how a spec that fails right after a push tells 'not deployed yet' from 'broken' */
     commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.SOURCE_COMMIT || null,
     region: process.env.RAILWAY_REPLICA_REGION || process.env.RAILWAY_REGION || null,
+    web: require('./lib/public-base').webBase() || null,   /* HX1: the site this api serves (PUBLIC_WEB_BASE) — a counter learns it here */
   });
 });
 

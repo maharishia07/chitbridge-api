@@ -41,11 +41,23 @@ rem type the code, and it writes its own key. So all that is needed to get that
 rem far is a config naming the server, and we can write that ourselves.
 rem
 rem A counter that will not open cannot tell anybody why.
-if not exist connector.json (
-  echo First run on this PC - creating connector.json so the counter can open.
-  echo {"api":"https://chitbridge-api-production.up.railway.app"}> connector.json
-  echo Done. The counter will ask you to sign in.
+rem
+rem HX1: the server is NOT named in this file any more - a kit downloaded from
+rem ChitBridge always carries connector.json with its own api in it. A folder
+rem without one asks for the address once and writes it.
+if exist connector.json goto have_config
+echo First run on this PC - this folder has no connector.json.
+echo The kit downloaded from ChitBridge (Settings - Integrations) comes with one.
+set "CBAPI="
+set /p CBAPI=Or type your ChitBridge api address, starting https:// : 
+if "%CBAPI%"=="" (
+  echo Nothing typed - download the counter kit again from ChitBridge.
+  pause
+  exit /b 1
 )
+echo {"api":"%CBAPI%"}> connector.json
+echo Done. The counter will ask you to sign in.
+:have_config
 
 rem ALREADY UP? Then this is not a failure - open it. The scheduled task fires
 rem every five minutes, so a second start is an ordinary event, not a fault.

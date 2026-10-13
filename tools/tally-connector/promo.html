@@ -179,6 +179,7 @@
 </main>
 <div id="hint"></div>
 
+<script src="/config.js"></script>   <!-- HX1: window.CB_API — the deploy's one api address -->
 <script src="/engine/offers.js"></script>
 <script src="/engine/tax.js"></script>
 <!-- ⭐ THE MONEY RENDERER. The screen showed rupees whatever the shop dealt in because it never loaded this —
@@ -190,7 +191,7 @@
 var ls = { get:function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:v; }catch(_){ return d; } },
            set:function(k,v){ try{ localStorage.setItem(k,v); }catch(_){} } };
 
-var API = ls.get('cb_till_api', 'https://chitbridge-api-production.up.railway.app');
+var API = ls.get('cb_till_api', window.CB_API || '');   /* HX1: /config.js, never a host in code */
 /**
  * ── ⚠️⚠️⚠️ THE SCREEN'S OWN KEY, NEVER THE COUNTER'S (2026-09-27) ─────────────────────────────────────────────
  *

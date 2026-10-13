@@ -3874,6 +3874,7 @@
      engine, and MISSING stayed EMPTY — the counter's own "an engine is missing" report could never fire on the
      one PC that needs it, an unpaired one that has fetched nothing. Found by e2e/till-shop-switch-pc.cjs. -->
 <script>var MISSING = []; function engineMissed(n){ MISSING.push(n); }</script>
+<script src="/config.js"></script>   <!-- HX1: window.CB_API (+ CB_WEB) — the web's deploy config, or this PC's connector.json served by till.js -->
 <script src="/engine/qr.js" onerror="engineMissed('qr')"></script>
 <script src="/app/avatar.js"></script>   <!-- CBAvatar: the one avatar control (T2i) — missing offline, and the rail simply shows none -->
 <script src="/app/embed-host.js"></script>   <!-- CBEmbed: opens the Employees form inside this page (P1) — missing offline, and whoAdd() says so -->
@@ -6408,7 +6409,7 @@ async function pickHost(){
       /* ⚠️ the shop is learned HERE, before anything reads a shop-scoped value — tillStore() names the slot from it */
       if (st && ('queued' in st)) { STATE = st; HOST = AgentHost; shopSlotMove(); return AgentHost; } }
   } catch (_) {}
-  CloudHost.api = ls.get('cb_till_api', (location.origin.indexOf('localhost') >= 0 ? 'https://chitbridge-api-production.up.railway.app' : (window.CB_API || 'https://chitbridge-api-production.up.railway.app')));
+  CloudHost.api = ls.get('cb_till_api', window.CB_API || '');   /* HX1: the api from /config.js (the web's deploy config · connector.json) — never a host in code */
   CloudHost.key = ls.get('cb_till_key', null);
   /* M08: and the person session this device keeps — read once here, written only by becomeShop() (G1) */
   CloudHost.person = personLoad();
@@ -25242,8 +25243,11 @@ async function reprint(no){
   showSlip(b, { gross: b.gross != null ? b.gross : r2((b.total||0) + (b.saved||0)) });
 }
 /** the rest of ChitBridge is a different job — one door, never a panel (Athi, 2026-09-07) */
-function cbHome(){ var api = (HOST && HOST.mode === 'cloud' && CloudHost.api) ? CloudHost.api : '';
-  return (location.origin.indexOf('till') >= 0 || location.port === '7071') ? 'https://chitbridge-web.vercel.app/app.html' : (location.origin + '/app.html'); }
+function cbHome(){
+  /* HX1: on this PC (till.js) the site comes from /config.js — connector.json `web`, else the api's /health `web` (PUBLIC_WEB_BASE).
+     ⚠️ TRANSITION, named in api docs/HOSTING-COUPLING.md: a kit whose till.js predates HX1 serves no /config.js while this page arrives
+     live, so the old address stays as the fallback until every counter has restarted onto the new till.js (host-literal guard: allowed once). */
+  return (location.origin.indexOf('till') >= 0 || location.port === '7071') ? ((window.CB_WEB || 'https://chitbridge-web.vercel.app') + '/app.html') : (location.origin + '/app.html'); }
 /** ⭐ THE SHIFT (2026-09-07). Not a login: the key is what authorises this till. This says who is standing at it, on every bill. */
 function whoLoad(){
   try { var raw = ls.get(shopLs('cb_till_who'), ''); WHO = raw ? JSON.parse(raw) : null; } catch (_) { WHO = null; }
