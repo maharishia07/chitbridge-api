@@ -241,7 +241,7 @@ router.delete('/parties/:id', auth, noKey, async (req, res) => {
 router.post('/leads', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), b = req.body || {};
-    const name = String(b.name || '').replace(/s+/g, ' ').trim();
+    const name = String(b.name || '').replace(/\s+/g, ' ').trim();   /* \s — the letter s was being replaced ("Esai" → "E ai"), found by the FX-L2C real walk */
     if (!name) throw bad('Give the lead a name.', 400, 'BAD_NAME');
     let phone = null;
     if (String(b.phone || '').trim()) {
