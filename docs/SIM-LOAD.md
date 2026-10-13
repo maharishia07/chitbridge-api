@@ -65,7 +65,7 @@ stack migrates its own. The cloud round proved it on `docker run -d -p 5432:5432
 * Purchases from the local supplier post through `lib/books.postEntry` (the one writer the chit hook itself calls) — a
   minted local supplier has no rail copy to accept, exactly as Y1 posted them.
 * `--country AU` (WX-R2R, 2026-10-13): a second shop beside the first — `--shop austores --country AU` — on a JULY year (the plan runs
-  2026-07-01 → 2029-06-30; every item 10 %; AUD; Australia/Sydney days). Proved all green on the cloud runner. The calendar is the
+  2026-07-01 → 2029-06-30; every item 10 %; AUD; Australia/Sydney days). Loads and proves 10 of 11 green on the cloud runner (WX-R2R, after main's engines v1.34): the outbox line is RED — every AU bill WAITS, in words, because the api's adopted accounts-packs (v1.20.0, India only) opens the AU ledger on India's chart, which has no GST head (the bill is never posted with its tax dropped), and the engine's `posting.daySummary` folds only India's heads. Both are engine work (web docs/testing/WX-R2R-2026-10-13.md E1 · E2). The calendar is the
   pack's: `lib/accounts-packs` fiscalYearOf · periodOf · fyRange with the Country setup's `fy_start_month`, never an April of the
   loader's own. The three api fixes the AU proof needed (the chit's currency is the sender's; `enable()` opens on the Country
   setup's currency and year start, on the shop's day; AU in `books-hooks` COUNTRY_ZONE) are held by `tests/chit-currency-default.test.cjs`.
