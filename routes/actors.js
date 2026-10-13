@@ -301,7 +301,7 @@ router.post('/',
        * lib/access.levelOf, which reads the column before the hat, let a "view-only" co-assist through the hat gate
        * on EVERY mutating route (leads, stage moves, follow-ups, chits/send …). The walk WX-L2C hid it by PATCHing the
        * level after the POST. Now: the body's level, else the old hat's meaning (lib/access.FROM_HAT), else editor —
-       * the same answer PATCH /actors/:id writes. Before b173 the column is absent: not SELECTed, not written (lib/schema).
+       * the same answer PATCH /actors/:id writes. WX-P2P-18 found the same on the real stack and adds the reach (whole_entity) as chosen. Before b173 the column is absent: not SELECTed, not written (lib/schema).
        */
       const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : (access.FROM_HAT[hat] || access.EDITOR);
       const _lvlCol = await schema.hasColumn('identities', 'access_level');
@@ -310,11 +310,11 @@ router.post('/',
           identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          otp_code, otp_expires_at, hat, entity_kind${_lvlCol ? ', access_level' : ''}
-        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor'${_lvlCol ? ',$13' : ''})`,
+          otp_code, otp_expires_at, hat, entity_kind${_lvlCol ? ', access_level, whole_entity' : ''}
+        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor'${_lvlCol ? ',$13,$14' : ''})`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
-         otp, otp_expires, hat, employee_id].concat(_lvlCol ? [access_level] : [])
+         otp, otp_expires, hat, employee_id].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])
       );
 
       console.log(`Actor created: ${actor_key}@${entity_name}` + (devOtp.isSealed() ? '' : ` — OTP: ${otp}`));

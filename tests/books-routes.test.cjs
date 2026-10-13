@@ -103,6 +103,16 @@ const call = (port, method, p, body) => new Promise((done) => {
     du.status === 200 && du.body.currency === 'INR' && dc && has(dc, ['party_id', 'party_no', 'name', 'balance_minor', 'oldest_due', 'disputed_minor', 'buckets']), JSON.stringify(du.body).slice(0, 400));
   ok('…the customer owes (+1050.00, due 15 Sep, overdue < 6 months); the supplier is owed (−560.00)', dc && dc.balance_minor === 105000 && dc.oldest_due === '2026-09-15' && dc.buckets.lt_6m === 105000
     && ds && ds.balance_minor === -56000, JSON.stringify([dc, ds]));
+  /* WX-P2P-02 (2026-10-13): with no asOf, "today" is the SHOP's day — 20:00 UTC on 12 Oct is 01:30 IST on the 13th. The items are
+     filtered by the shop's day of created_at, so an asOf from the UTC clock left every bill recorded after midnight IST out of
+     Payables / Receivables ("You owe nobody") until the next UTC day. */
+  const CLOCK = require(path.join(H.API, 'lib', 'shop-clock'));
+  CLOCK.set('2026-10-12T20:00:00Z');
+  const dn = await q('GET', '/dues');
+  ok('GET /dues with no asOf → asOf is the shop\'s day (2026-10-13 IST at 20:00 UTC on the 12th), not the UTC date', dn.status === 200 && dn.body.asOf === '2026-10-13', JSON.stringify(dn.body).slice(0, 200));
+  const tbn = await q('GET', '/trial-balance');
+  ok('…and /trial-balance with no asOf reads the same day', tbn.status === 200 && tbn.body.asOf === '2026-10-13', JSON.stringify(tbn.body).slice(0, 120));
+  CLOCK.reset();
   const tb = await q('GET', '/trial-balance?asOf=2026-09-30');
   ok('GET /trial-balance → { rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor } and it balances',
     tb.status === 200 && has(tb.body.rows[0], ['code', 'name', 'dr_minor', 'cr_minor']) && tb.body.total_dr_minor === tb.body.total_cr_minor && tb.body.total_dr_minor > 0, JSON.stringify(tb.body).slice(0, 300));

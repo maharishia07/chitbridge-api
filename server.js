@@ -256,7 +256,7 @@ app.use('/api/actors/check-login', checkLoginLimiter);
 const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false,
   keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64) });
 app.use(['/.well-known', '/api/ctp/.well-known', '/api/openapi.json', '/api/entities/constitutions', '/api/events/stream',
-         '/api/simulator', '/api/testing/vocabulary', '/api/connectors/ingest', '/api/connectors/erp-ingest', '/api/capture/webhook'],
+         '/api/simulator', '/api/testing/vocabulary', '/api/connectors/ingest', '/api/connectors/erp-ingest', '/api/capture/webhook', '/api/privacy/facts'],
         publicLimiter);
 
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface
@@ -397,6 +397,7 @@ app.use('/api/facts', require('./routes/facts'));   // N18 — what each Home ca
 app.use('/api/work', require('./routes/work'));   // TO1 — Tasks & Orders, read: the list, the sheet, the counts (lib/work-rows.js; engines `workflow`)
 app.use('/api/crm', require('./routes/crm'));   // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
 app.use('/api/repeat', require('./routes/repeat-supply'));   // RI1 — repeat supply as an AGREEMENT both parties hold: accept · counter · skip · pause · end; each run a normal chit (lib/repeat-supply.js)
+app.use('/api/privacy', require('./routes/privacy'));   // CO1 — public privacy facts: sub-processors + regions, notice, contact (lib/privacy.js)
 /* ⭐ what a shop buys to USE — its own list, never products, never priced, and structurally unable to
    reach a storefront because a storefront query would have to JOIN a table it has no reason to know. */
 app.use('/api/supplies', require('./routes/supplies'));

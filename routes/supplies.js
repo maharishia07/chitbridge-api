@@ -79,9 +79,13 @@ router.post('/purchase', auth, async (req, res) => {
     const out = await supplies.purchase(ctx(req), req.body || {}, withEntity,
       { actor_id: req.identity && req.identity.identity_id });
     if (out.error) return res.status(400).json({ error: 'validation', message: out.error });
-    res.json(Object.assign({ message: 'Purchase recorded' }, out,
-      { says: out.recorded.length + ' line(s) recorded · ' + out.stocked + ' counted · '
-            + out.expensed + ' expensed on receipt' }));
+    /* WX-P2P-04 (2026-10-13): the toast read "1 line(s) recorded · 1 counted · 0 expensed on receipt" — never "(s)", never a zero that is
+       fine (SYSTEM rule 1: only a failing thing earns words); what happened, in a shopkeeper's words */
+    const n = out.recorded.length, parts = [n + (n === 1 ? ' line recorded' : ' lines recorded')];
+    if (out.stocked) parts.push(out.stocked + ' counted');
+    if (out.expensed) parts.push(out.expensed + ' expensed');
+    if (out.failed && out.failed.length) parts.push(out.failed.length + ' not recorded');
+    res.json(Object.assign({ message: 'Purchase recorded' }, out, { says: parts.join(' · ') }));
   } catch (e) {
     if (e && e.code === '42P01') return res.status(503).json({ error: 'Not ready', message: 'run b217 first' });
     fail(res, e, 'Could not record the purchase');

@@ -312,6 +312,22 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/crm/parties/:id/contact-prefs": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+    },
+    "GET /api/crm/privacy-requests": {
+      "file": "crm.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
+      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+    },
     "GET /api/definitions": {
       "file": "definitions.js",
       "trips": 1,
@@ -477,6 +493,14 @@
       "wire": 9,
       "fired": true,
       "status": 200
+    },
+    "GET /api/privacy/facts": {
+      "file": "privacy.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
     },
     "GET /api/people": {
       "file": "people.js",
@@ -924,6 +948,30 @@
       "wire": null,
       "fired": false,
       "why": "answered 503 on the stub"
+    },
+    "POST /api/crm/parties/:id/contact-prefs": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+    },
+    "POST /api/crm/privacy-requests": {
+      "file": "crm.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
+      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+    },
+    "POST /api/crm/privacy-requests/:id/answer": {
+      "file": "crm.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
+      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
     },
     "POST /api/crm/walk-ins/add": {
       "file": "crm.js",

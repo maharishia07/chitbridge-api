@@ -33,7 +33,9 @@ const GUARDS = [
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
   'hosting-neutral.test.cjs',   // ⭐⭐ HX1: the DB password goes only to configured URLs; SigV4 = AWS's examples; no platform host in shipped code
+  'records-keeping.test.cjs',   // ⭐⭐ CO3: the books' edit trail cannot be disabled (Rule 3(1)); no copy expires inside the 9-year records floor
   'migration-numbers.test.cjs', // ⭐⭐ one number, one migration — two parallel rounds both wrote b299 (12 Oct); a clash fails here
+  'co2-controls.test.cjs',      // ⭐ CO2: a critical line reaches CB_ALERT_WEBHOOK; state_log append-only (b315) — the Standards register's evidence
   'engines-pinned.test.js',    // ⭐⭐⭐ every adopted engine is EXACTLY its chitbridge-engines release — no hand edit survives
   'money-round.test.js',       // one rounder (0 wrong in 1.74 M cases, per-currency decimals) and one price reader
   'google-availability.test.cjs', // one output shape: status → Google Merchant availability; nothing Google does not define (M53)
@@ -230,6 +232,7 @@ const GUARDS = [
   'crm-segment.test.cjs',       // high_value in SEGMENT_SQL (top 10 %, >= 3 bills, override wins) and the fall-back before party_item exists
   'crm-read.test.cjs',          // a both-roles party is ONE row; a merged / hidden / other-population party is never listed; dues = the stored figures; no per-row fetch
   'crm-interactions.test.cjs',  // log a call / note (party_interaction stubbed); the 503 before b276
+  'privacy.test.cjs',           // CO1: consent append-only + may/why, the request register's legal clock + answered once, the public facts; 503 before b306/b307
   'crm-followups.test.cjs',     // follow-ups CRUD, assignment (owner or assignee), late in the SHOP's day, the 503 before b276
   'crm-sweep.test.cjs',         // the nightly sweep rings the bell once a day per assignee, nothing sensitive on the event
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
