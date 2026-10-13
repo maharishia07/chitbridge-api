@@ -136,7 +136,8 @@
       "wire": 6,
       "fired": true,
       "status": 422,
-      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: as GET /compare/:id (the same read, written as a .csv)."
+      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: as GET /compare/:id (the same read, written as a .csv). The web fetches it as a file (cap-compare.js cmpCsv, the session header), so the scanner does not see it: extra.",
+      "extra": true
     },
     "GET /api/books/cheques": {
       "file": "books.js",

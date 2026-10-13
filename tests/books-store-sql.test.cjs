@@ -28,7 +28,7 @@ const db = { query: async (text, params) => {
 } };
 
 const CALLS = {
-  setting: [E], saveSetting: [E, { enabled: true }], saveCheck: [E, { ok: true }], accounts: [E], insertAccount: [E, { code: '1300', name: 'x', nature: 'asset' }], setSourceCode: [E, U, '090'],
+  setting: [E], saveSetting: [E, { enabled: true }], saveCheck: [E, { ok: true }], accounts: [E], insertAccount: [E, { code: '1300', name: 'x', nature: 'asset' }], setSourceCode: [E, U, '090'], compareReady: [], compareSnapshots: [E], compareParts: [E, U], insertComparePart: [E, { snapshot_id: U, label: 'Tally H1', source: 'tally', part: 'tb', period_to: '2026-09-30', currency: 'INR', rows: [] }],
   periods: [E, '2026-27'], periodFigures: [E, '2026-27'], insertPeriod: [E, { fiscal_year: '2026-27', period: 1, start_date: '2026-04-01', end_date: '2026-04-30' }], setPeriodStatus: [E, '2026-27', 1, 'soft_locked', U, 'r'],
   nextNo: [E, 'JV', '2026-27'], entryBySource: [E, 'chit:x'], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U], entries: [E, '2026-04-01', '2026-04-30'],
   yearRows: [E, '2026-27'], ledgerLines: [E, '2026-04-01', '2026-04-30', U], years: [E],
