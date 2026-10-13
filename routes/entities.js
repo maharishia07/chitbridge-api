@@ -581,12 +581,19 @@ const PREF_SETS = {
      locale keywords, stored by their own subtag names so the column reads as the standard writes it. */
   locale: {
     column: 'locale_prefs',
-    keys: ['lang', 'langs', 'region', 'locale', 'nu', 'hc', 'ca', 'fw'],
+    keys: ['lang', 'langs', 'region', 'locale', 'nu', 'hc', 'ca', 'fw', 'tz', 'workdays'],
     /* ⚠️ `langs` IS A LIST, so it is the one key whose value may contain commas — RFC 4647 calls it a language
        priority list ("Tamil, then English, then Hindi"). Widening the generic pattern for every key to admit
        commas would have been the smaller edit and the wrong one: a comma has no business in a numbering system
        or an hour cycle, and a validator that accepts more than it needs to stops being a validator. */
-    patterns: { langs: /^[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*(,[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*){0,2}$/ },
+    /* CU3: `tz` is an IANA zone (`Asia/Kolkata`, `America/Argentina/Buenos_Aires`) and `workdays` an ISO weekday list
+       (`1,2,3,4,5,6`, 1 = Monday) — CBLocale sent both and the old key list dropped them silently. The generic pattern
+       admits neither `/` nor `,`, and one rejected key fails the whole save, so each carries its own. */
+    patterns: {
+      langs: /^[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*(,[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*){0,2}$/,
+      tz: /^[A-Za-z][A-Za-z0-9_+-]{0,30}(\/[A-Za-z0-9_+-]{1,30}){0,2}$/,
+      workdays: /^[1-7](,[1-7]){0,6}$/,
+    },
     /**
      * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. BCP 47 admits thousands of valid tags; a whitelist of
      * the nine the screen currently offers would reject the tenth the day someone needs it, and would drift out
@@ -600,10 +607,12 @@ const PREF_SETS = {
         const tag = (prefs.locale || prefs.lang || 'en') + (u.length ? '-u-' + u.join('-') : '');
         new Intl.NumberFormat(tag);
         new Intl.DateTimeFormat(tag);
-        return null;
       } catch (_) {
         return 'That combination is not a locale ICU recognises';
       }
+      /* the zone is ICU's to judge too (RangeError for one it does not know) — never a hand-kept list */
+      if (prefs.tz) { try { new Intl.DateTimeFormat('en', { timeZone: prefs.tz }); } catch (_) { return 'Unknown time zone'; } }
+      return null;
     },
   },
   /**
@@ -614,8 +623,10 @@ const PREF_SETS = {
    */
   ui: {
     column: 'ui_prefs',
-    keys: ['theme', 'fs', 'motion', 'stripes'],   /* stripes: row stripes off | light | strong (small-fixes round) */
+    keys: ['theme', 'fs', 'motion', 'stripes', 'font', 'weight'],   /* stripes: off | light | strong (small-fixes round) · font, weight: CU3 (were device-only) */
     check(prefs) {
+      if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font';   /* avatar.js FONTS */
+      if (prefs.weight && !['normal', 'bold'].includes(prefs.weight)) return 'Unknown text weight';
       if (prefs.stripes && !['off', 'light', 'strong'].includes(prefs.stripes)) return 'Unknown row stripes setting';
       if (prefs.fs && !['s', 'm', 'l', 'xl'].includes(prefs.fs)) return 'Unknown text size';
       if (prefs.motion && !['auto', 'reduce', 'full'].includes(prefs.motion)) return 'Unknown motion setting';
