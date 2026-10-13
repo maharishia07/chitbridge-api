@@ -24,11 +24,12 @@ function create() {
       enabled_at: cur.enabled_at || (s.enabled ? now() : null) /* the FIRST time it was switched on, kept (the real upsert's COALESCE) */ })); },
     async saveCheck(db, e, r) { const s = T.setting.get(String(e)); if (s) s.last_check = clone(r); },
     async accounts(db, e) { return clone(T.accounts.filter((a) => a.entity_id === e)).sort((a, b) => String(a.code).localeCompare(String(b.code))); },
+    async setSourceCode(db, e, id, code) { const a = T.accounts.find((x) => x.entity_id === e && x.account_id === id); if (!a) return false; a.source_code = String(code).trim().slice(0, 20); return true; },
     async insertAccount(db, e, a) {
       if (T.accounts.some((x) => x.entity_id === e && x.code === a.code)) return null;
       if (a.role && T.accounts.some((x) => x.entity_id === e && x.role === a.role)) throw Object.assign(new Error('dup role'), { code: '23505' });
       const r = { account_id: id(), entity_id: e, code: a.code, name: a.name, parent_id: a.parent_id || null, is_group: !!a.is_group, nature: a.nature, role: a.role || null,
-                  tally_group: a.tally_group || null, sch3_line: a.sch3_line || null, saft_grouping: a.saft_grouping || null, currency: null, active: true };
+                  tally_group: a.tally_group || null, sch3_line: a.sch3_line || null, saft_grouping: a.saft_grouping || null, currency: null, active: true, source_code: a.source_code ? String(a.source_code).trim().slice(0, 20) : null };
       T.accounts.push(r); return r.account_id;
     },
     async periods(db, e, fy) { return clone(T.periods.filter((p) => p.entity_id === e && (!fy || p.fiscal_year === fy))).sort((a, b) => a.fiscal_year.localeCompare(b.fiscal_year) || a.period - b.period); },
