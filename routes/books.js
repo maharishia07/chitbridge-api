@@ -628,7 +628,7 @@ router.get('/payments/:id/advice', auth, noKey, on, async (req, res) => {
 });
 /**
  * GET /bank/rail?from&to (BR1) — THE RAIL LEG of the bank reconciliation the device runs (DECISIONS: the statement never leaves the device; the
- *   page asks only for what the other party already TOLD us): → { currency, from, to, me, chits: [{ chit_id, direction, status, created_at,
+ *   page asks only for what the other party already TOLD us): → { currency, from, to, me, rail_chits: [{ chit_id, direction, status, created_at,
  *   party: { id, name }, business_json: { kind, currency, payment_advice | bank_query }, line_items: [{ ref_chit_id, bill_no, applied_minor }] }],
  *   parties: [{ party_id, name }] (on the rail — who may be ASKED), may: { ask: { ok } | { ok: false, why, say } } }
  *   ONE read of my advice + bank-question copies (S.bankRailChits, bounded) and the party list (one read). No money is computed here: the engine
@@ -647,7 +647,7 @@ router.get('/bank/rail', auth, noKey, on, async (req, res) => {
     });
     const R = require('../lib/rail'), lvl = R.byLevel(levelOf(req), 'ask');
     const li = (x) => ({ ref_chit_id: x.ref_chit_id || null, bill_no: x.bill_no || null, applied_minor: Number.isInteger(x.applied_minor) ? x.applied_minor : null });
-    const chits = out.rows.map((r) => {
+    const rail_chits = out.rows.map((r) => {
       const bj = r.business_json || {};
       return { chit_id: r.chit_id, direction: r.direction, status: r.status || null, created_at: r.created_at ? new Date(r.created_at).toISOString() : null,
         party: { id: r.party_id || null, name: r.party_name || null },
@@ -655,7 +655,8 @@ router.get('/bank/rail', auth, noKey, on, async (req, res) => {
         line_items: (Array.isArray(r.line_items) ? r.line_items : []).filter((x) => x && x.ref_chit_id).map(li) };
     });
     const parties = [...out.names.values()].filter((p) => p.on_rail).map((p) => ({ party_id: p.party_id, name: p.nickname || p.name || null }));
-    res.json({ currency: curOf(req), from, to, me: out.me, chits, parties, may: { ask: lvl ? { ok: false, why: lvl, say: R.say(lvl) } : { ok: true } } });
+    /* ⚠️ `rail_chits`, never `chits`: the web's api() collapses a `chits` array and would drop parties / may (core.js unwrap) */
+    res.json({ currency: curOf(req), from, to, me: out.me, rail_chits, parties, may: { ask: lvl ? { ok: false, why: lvl, say: R.say(lvl) } : { ok: true } } });
   } catch (err) { fail(res, err); }
 });
 /**

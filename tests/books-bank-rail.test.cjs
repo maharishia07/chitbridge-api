@@ -51,8 +51,8 @@ const call = (port, method, p) => new Promise((done) => {
   await call(port, 'POST', '/api/books/enable');
 
   const r = await q('/bank/rail?from=2026-10-01&to=2026-10-31');
-  eq('1 · 200 · my advice and my question, nothing else; the window echoed', [r.status, r.body.from, r.body.to, (r.body.chits || []).map((c) => c.chit_id)], [200, '2026-10-01', '2026-10-31', ['c1', 'q1']]);
-  const c1 = (r.body.chits || [])[0] || {};
+  eq('1 · 200 · my advice and my question, nothing else; the window echoed', [r.status, r.body.from, r.body.to, (r.body.rail_chits || []).map((c) => c.chit_id)], [200, '2026-10-01', '2026-10-31', ['c1', 'q1']]);
+  const c1 = (r.body.rail_chits || [])[0] || {};
   eq('1 · the advice: party, my side of the copy, the bills it settles (lines without a bill are left out), no other business_json key',
     [c1.direction, c1.party, c1.line_items, Object.keys(c1.business_json || {}).sort()],
     ['received', { id: RAVI, name: 'Ravi Stores' }, [{ ref_chit_id: 'bill-1', bill_no: 'S-1', applied_minor: 420000 }], ['currency', 'kind', 'payment_advice']]);
@@ -62,7 +62,7 @@ const call = (port, method, p) => new Promise((done) => {
   const RAIL = require(path.join(H.API, 'lib', 'rail'));
   WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
   const v = await q('/bank/rail?from=2026-10-01&to=2026-10-31');
-  eq('2 · a viewer reads the same chits; its Ask is refused read_only with the rail\'s sentence', [v.status, v.body.chits.length, v.body.may.ask], [200, 2, { ok: false, why: 'read_only', say: RAIL.say('read_only') }]);
+  eq('2 · a viewer reads the same chits; its Ask is refused read_only with the rail\'s sentence', [v.status, v.body.rail_chits.length, v.body.may.ask], [200, 2, { ok: false, why: 'read_only', say: RAIL.say('read_only') }]);
   WHO = Object.assign({}, WHO, { access_level: 'commenter' });
   eq('2 · a commenter: comment_only', (await q('/bank/rail?from=2026-10-01&to=2026-10-31')).body.may.ask.why, 'comment_only');
   WHO = Object.assign({}, WHO, { access_level: 'editor' });
@@ -76,8 +76,8 @@ const call = (port, method, p) => new Promise((done) => {
   const BR = require(path.join(H.enginesSrc().dir, 'bank-recon'));
   if (typeof BR.explain === 'function') {
     const stmt = [{ date: '2026-10-12', narration: 'NEFT-RAVI STORES', ref: 'N99912', debit_minor: 0, credit_minor: 420000 }];
-    const asks = r.body.chits.filter((c) => c.business_json.kind === 'bank_query').map((c) => ({ key: c.business_json.bank_query.key, chit_id: c.chit_id }));
-    const xp = BR.explain(stmt, [], BR.railPayments(r.body.chits), { asks });
+    const asks = r.body.rail_chits.filter((c) => c.business_json.kind === 'bank_query').map((c) => ({ key: c.business_json.bank_query.key, chit_id: c.chit_id }));
+    const xp = BR.explain(stmt, [], BR.railPayments(r.body.rail_chits), { asks });
     eq('4 · the line is told by Ravi\'s advice (by reference), with the bill it settles and the question it answered', [xp.rows[0].state, xp.rows[0].how, xp.rows[0].bills.map((b) => b.bill_no), xp.rows[0].asked.chit_id], ['told', 'ref', ['S-1'], 'q1']);
   } else console.log('   (engines below v1.44.0 here — section 4 needs bank-recon.explain)');
 
