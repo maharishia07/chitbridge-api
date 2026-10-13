@@ -8357,9 +8357,10 @@ function gstNotRegistered(){
  * reusing it is the fix, not inventing a second way to find it.
  */
 function openGst(){
-  var url = cbHome() + '#/app';
+  /* SET1 (2026-10-13): the shop's GST details are CB Settings › Your shop (settings.html) — a small app, never the workshop (docs/design/INDEX-NOT-APP.md) */
+  var url = cbRoot() + '/settings.html#/shop';
   try { window.open(url, '_blank', 'noopener'); } catch (_) {}
-  toastLine('ChitBridge is open in another tab — go to the shop, then its profile, to change this.');
+  toastLine('Your shop is open in another tab — change the GSTIN there, then press ↻ here.');
 }
 
 /** the number on the closed row — read by the badge and by the health chip, so they cannot disagree */
@@ -18034,7 +18035,7 @@ function shopStateClash(){
   return { gstin_state: g, gstin_state_name: gn, says: says,
     words: 'This shop’s details disagree. Its GSTIN ' + sh.gstin + ' is a ' + gn + ' registration (state ' + g + '), but '
       + says.map(function(x){ return x.from + ' says ' + x.name; }).join(' and ') + '. A tax invoice names one state, and the place of supply is ' + gn + '.',
-    fix: 'Correct the address or the GSTIN in Settings (the shop) or Know your business, then press ↻ here. Until then a tax invoice will not print.' };
+    fix: 'Correct the address or the GSTIN in CB Settings › Your shop, then press ↻ here. Until then a tax invoice will not print.' };
 }
 /**
  * what sits above the total when something about THIS bill is wrong — said where it is sold.
@@ -18071,7 +18072,8 @@ async function billWarnFix(which){
                : (un.length ? un.join(', ') + '\n\nNo GST is charged on ' + (un.length === 1 ? 'it' : 'them')
                               + ', and the slip will not say TAX INVOICE.' : 'Every item has a tax rate now.');
   var go = await sure(msg, st ? 'Open the shop’s details' : 'Open the catalogue', st ? 'GSTIN state ≠ address' : 'No tax rate', 'Close');
-  if (go) { try { window.open(cbHome() + (st ? '#/app/profile' : '#/app/catalogue'), '_blank', 'noopener'); } catch (_) {} }
+  /* the state half opens CB Settings › Your shop (SET1); the rate half still opens the workshop's catalogue until CAT1 builds catalogue.html */
+  if (go) { try { window.open(st ? cbRoot() + '/settings.html#/shop' : cbHome() + '#/app/catalogue', '_blank', 'noopener'); } catch (_) {} }
 }
 /**
  * ⭐⭐⭐ WHAT WOULD GO WRONG TODAY (2026-09-08). Athi: *"if the tax is not there, the system should alert — couldn't find the tax
