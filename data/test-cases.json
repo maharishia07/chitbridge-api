@@ -59991,6 +59991,35 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/prefs-merge.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CU2: every ui_prefs / locale_prefs write is an RFC 7386 merge-patch — a theme save keeps the shop's product rows.",
+   "claim": "CU2: every ui_prefs / locale_prefs write is an RFC 7386 merge-patch — a theme save keeps the shop's product rows.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 92 lines. Run: node chitbridge-api/tests/prefs-merge.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database"
+   ],
+   "subjects": [
+    "routes/entities.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-13T12:00:00+05:30",
+   "needs": []
+  },
+  {
    "case_key": "chitbridge-api/tests/entity-cast-guard.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

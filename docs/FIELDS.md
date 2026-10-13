@@ -371,3 +371,19 @@ The statement never reaches the server. The page asks only for what the other pa
 | Key | Number | Source or derived | Written by | Read by |
 |---|---|---|---|---|
 | `business_json.bank_query` `{ key, side, amount_minor, currency, date, ref, words }` | — (no migration; a chit's own JSON) | Derived on the device by `CBBankRecon.ask`. ONLY these facts travel: the date, the amount and the reference (never the narration). `key` = `lineKey` (date · side · amount · ref). `client_ref` = `bankask:<key>` (send dedupes). | web `cap-bank.js` through `POST /api/chits/send` (purpose `general`) | the receiver's thread (a message chit). The asker's `GET /bank/rail` → `explain` opts.asks (state `asked`). The ANSWER is the receiver's ordinary payment advice (M30) carrying the reference, so no new answer shape exists. |
+## The person's prefs · `identities.ui_prefs` · `identities.locale_prefs` (CU2, 2026-10-13)
+
+Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, routes/entities.js): a key not sent is untouched, a key sent as `null` (or `''` on /me/prefs) is removed, nothing replaces the whole store (`tests/prefs-merge.test.cjs`). Doors: `PATCH /api/entities/me/prefs/ui` · `/me/prefs/locale` · legacy `PATCH /me/locale` (all `savePrefSet`, whitelisted keys, the caller's own row) · `PATCH /api/entities/profile` body `ui_prefs` (the business row). Read back on `GET /api/entities/me` (`ui_prefs`, `locale_prefs`, `{}` when never chosen). Absent key = the default. Layer: the person (U), not governed (no GOV class) — except `product_rows`.
+
+| Key | Shape | Source · who writes it · who reads it |
+|---|---|---|
+| `ui_prefs.theme` | slug, e.g. `light` · `dark` · `device` | Source. avatar.js `push` (app, CB Accounts, till's avatar menu) via CBPrefs → /me/prefs/ui. Read by avatar.js `hydrate`, app.html `appearanceHydrate`. |
+| `ui_prefs.fs` | `s` · `m` · `l` · `xl` | Source. Text size; same writer and readers as `theme`. |
+| `ui_prefs.motion` | `auto` · `reduce` · `full` | Source. Same writer and readers. |
+| `ui_prefs.stripes` | `off` · `light` · `strong` | Source. Row stripes; same writer and readers. |
+| `ui_prefs.product_rows` | array of product-page row keys | Source, the BUSINESS's choice (layer E, parked in the U column — to move to a policy flag with CU8's one writer). Written by app.html `prodRowsSave` → PATCH /profile `{ ui_prefs: { product_rows } }` (the patch only). Read by app.html `prodRowsPref`. Not writable through /me/prefs/ui. |
+| `locale_prefs.lang` · `.locale` | BCP 47 tag | Source. CBLocale.push → /me/prefs/locale. Read by CBLocale.hydrate. ICU checks the combination. |
+| `locale_prefs.langs` | up to 3 tags, comma-separated (RFC 4647 priority list) | Source. Same writer / reader. |
+| `locale_prefs.region` | region subtag | Source. Same writer / reader. |
+| `locale_prefs.nu` · `.hc` · `.ca` · `.fw` | UTS #35 keyword values | Source. Numbering system · hour cycle · calendar · first weekday. Same writer / reader. |
+| `locale_prefs.langs_seen` | array of ≤ 3 tags | Source. The browser's languages at sign-up (routes/signin.js, one-key merge). Read by nobody yet. Kept by every locale save since CU2 (the old whole-column save erased it). |

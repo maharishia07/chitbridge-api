@@ -625,6 +625,28 @@ const PREF_SETS = {
   },
 };
 
+/**
+ * ⭐ RFC 7386 MERGE-PATCH FOR A PREFS COLUMN — the ONE expression every ui_prefs / locale_prefs write uses (CU2).
+ * $1 = the keys to set (jsonb) · $3 = the keys to remove (text[]). A key the caller did not send is left alone; a key
+ * sent as null or '' is removed ("follow the default"). `||` alone cannot remove, and `= $1` erased what it did not name.
+ */
+const MERGE_PATCH_SQL = (col) => `(COALESCE(${col}, '{}'::jsonb) - $3::text[]) || $1::jsonb`;
+
+/** prefPatch(set, body) → { set, drop } or { error }. Whitelisted keys only; '' / null = drop; a bad value = error. */
+function prefPatch(set, body) {
+  const out = {}, drop = [];
+  for (const k of set.keys) {
+    if (!(k in body)) continue;                             // not sent = not touched
+    const v = String(body[k] == null ? '' : body[k]).trim();
+    if (!v) { drop.push(k); continue; }                     // empty = "follow the default": removed
+    // Short alphanumeric-and-hyphen tokens. Anything else is not one of these values at all.
+    const pat = (set.patterns && set.patterns[k]) || /^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/;
+    if (!pat.test(v)) return { error: `${k} is not a valid value` };
+    out[k] = v;
+  }
+  return { set: out, drop };
+}
+
 async function savePrefSet(req, res, kind) {
   /**
    * ⚠️ hasOwnProperty, NOT A TRUTHY LOOKUP — found by red-teaming this endpoint rather than by a failure.
@@ -640,27 +662,19 @@ async function savePrefSet(req, res, kind) {
   const set = Object.prototype.hasOwnProperty.call(PREF_SETS, kind) ? PREF_SETS[kind] : null;
   if (!set || !set.column) return res.status(404).json({ error: 'Unknown preference set' });
   try {
-    const body = req.body || {};
-    const prefs = {};
-
-    for (const k of set.keys) {
-      if (!(k in body)) continue;
-      const v = String(body[k] == null ? '' : body[k]).trim();
-      if (!v) continue;                                     // empty = "follow the default"; simply absent
-      // Short alphanumeric-and-hyphen tokens. Anything else is not one of these values at all.
-      const pat = (set.patterns && set.patterns[k]) || /^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/;
-      if (!pat.test(v)) {
-        return res.status(400).json({ error: 'Bad preference', message: `${k} is not a valid value` });
-      }
-      prefs[k] = v;
-    }
+    const p = prefPatch(set, req.body || {});
+    if (p.error) return res.status(400).json({ error: 'Bad preference', message: p.error });
+    const prefs = p.set;
 
     const bad = set.check(prefs);
     if (bad) return res.status(400).json({ error: 'Bad preference', message: bad });
 
-    await query(`UPDATE identities SET ${set.column} = $1 WHERE identity_id = $2`,
-      [JSON.stringify(prefs), req.identity.identity_id]);
-    res.json({ ok: true, kind, prefs, [set.column]: prefs });
+    /* ⚠️ A MERGE-PATCH, NEVER THE WHOLE COLUMN (CU2). This UPDATE used to write `= $1`, so a theme push erased every
+       other key in ui_prefs — the shop's product-rows choice with it. Only the keys sent change; the rest stay. */
+    const r = await query(`UPDATE identities SET ${set.column} = ${MERGE_PATCH_SQL(set.column)} WHERE identity_id = $2 RETURNING ${set.column} AS v`,
+      [JSON.stringify(prefs), req.identity.identity_id, p.drop]);
+    const merged = (r && r.rows && r.rows[0] && r.rows[0].v) || prefs;
+    res.json({ ok: true, kind, prefs: merged, [set.column]: merged });
   } catch (err) {
     /* ⚠️ Before the migration runs, the column does not exist. The person's preference still works from
        localStorage and visibly applied, so this must degrade to "not synced yet" rather than surfacing an error
@@ -946,7 +960,10 @@ router.patch('/profile', auth,
       /* ui_prefs — the business's own UI choices (which product rows show, appearance). MERGED, never replaced, so two
          screens saving two keys do not erase each other. Guarded by the column probe: b166 may not have run. */
       if (req.body.ui_prefs && typeof req.body.ui_prefs === 'object' && !Array.isArray(req.body.ui_prefs)) {
-        try { if (await require('../lib/schema').hasColumn('identities', 'ui_prefs')) await query("UPDATE identities SET ui_prefs = COALESCE(ui_prefs, '{}'::jsonb) || $1::jsonb WHERE identity_id=$2", [JSON.stringify(req.body.ui_prefs), id]); } catch (_) {}
+        /* the same merge-patch as /me/prefs: a null value removes its key (RFC 7386), an absent key is untouched */
+        const _up = {}, _upDrop = [];
+        for (const [k, v] of Object.entries(req.body.ui_prefs)) { if (v === null) _upDrop.push(k); else _up[k] = v; }
+        try { if (await require('../lib/schema').hasColumn('identities', 'ui_prefs')) await query(`UPDATE identities SET ui_prefs = ${MERGE_PATCH_SQL('ui_prefs')} WHERE identity_id=$2`, [JSON.stringify(_up), id, _upDrop]); } catch (_) {}
       }
       // b114 (self-healing): CATALOGUE VISIBILITY — publishing is an explicit act. Whitelisted, never free text, and
       // saved separately so a normal profile save still works before b114 is applied.
@@ -2177,3 +2194,7 @@ router.get('/entitlements', auth, async (req, res) => {
 });
 
 module.exports = router;
+/* for tests/prefs-merge.test.cjs — the merge-patch split and its SQL */
+module.exports.prefPatch = prefPatch;
+module.exports.MERGE_PATCH_SQL = MERGE_PATCH_SQL;
+module.exports.PREF_SETS = PREF_SETS;
