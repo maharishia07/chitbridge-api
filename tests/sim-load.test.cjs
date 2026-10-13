@@ -42,6 +42,10 @@ ok('DATABASE_URL is set from --db before server.js loads (dotenv cannot redirect
 ok('a sealed NODE_ENV is refused', /isSealed\(\)\) die\(/.test(src));
 ok('the schema step refuses a database that already has tables', /already has tables/.test(src));
 ok('the shop walks the Country setup door (CS1) before the books open — never a raw write to identities / entity_governance', /\/api\/governance\/country-setup/.test(src) && src.indexOf('/api/governance/country-setup') < src.indexOf('/api/books/enable'));
+ok('CX0: the loader carries an IN, an AU and an AE shop, and reads currency · year · heads from the PACK (never a second table)',
+   /const SHOPS = \{[\s\S]*?\bIN:[\s\S]*?\bAU:[\s\S]*?\bAE:/.test(src) && /packFor\(COUNTRY\)/.test(src) && /PACK\.currency/.test(src) && /PACK\.fiscalYear\.startMonth/.test(src)
+   && /PACK\.taxHeads/.test(src) && !/COUNTRY === 'AU' \? 'AUD'/.test(src) && !/'\+05:30'\)/.test(src));
+ok('…and the year and month number come from lib/accounts-packs (the function the books routes use), not a rule of its own', /AP\.fiscalYearOf\(/.test(src) && /AP\.periodOf\(/.test(src) && !/m >= 4 \? y : y - 1/.test(src));
 
 /* 3 · one plan */
 const P = require(path.join(ROOT, 'tools', 'sim-plan.cjs'));
