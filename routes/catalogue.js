@@ -1058,7 +1058,7 @@ router.post('/:bridge_id/order/confirm',
         ? { channel: 'online', fulfilment: _fulfil, address: _fulfil === 'pickup' ? null : (_addr || null), requested_delivery: _when && (_when.date || _when.time) ? _when : null, remark: _rem || null, ...(_cname ? { name: _cname } : {}) } : null;
       const summary_json = { line_item_count: line_items.length, ...(offersApplied.length ? { offers: offersApplied } : {}),
                              total_value: (!monetary || negotiation) ? null : money.round(total),
-                             currency_code: monetary ? (entity.currency_code || 'INR') : null, purpose, is_promotion: false,
+                             currency_code: monetary ? (entity.currency_code || await regional.currencyFor(entity.identity_id)) : null,   /* CX4 (S4): the shop's own money (its country's region layer), never INR by name */ purpose, is_promotion: false,
                              customer_locality: custLocality || null,
                              ...(orderDetails ? { order_details: orderDetails } : {}),
                              order_preset: oi.preset, pipeline: oi.pipeline,

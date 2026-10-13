@@ -295,3 +295,11 @@ The browser parses the file and sends `rows` (≤ 500; more → 400 `TOO_MANY` "
 | body `timezone` (PUT) | IANA name or absent | What the owner picked of `zones` (a multi-zone country). Validated by constructing an Intl formatter (an unknown zone → 400 in words, never stored). Written to `identities.timezone` (b176) — the ONE home M210 `books-hooks.dayOf` reads. A single-zone pack sets it from the pack whatever the body says. 400 `COUNTRY_SETUP_ZONE` names the zones when a multi-zone country is saved without one. |
 | `rederived` (PUT, only when the country changed) | `{ from, to, chart, by, at }` | The country was CORRECTED before the shop was constituted: `derive()` set currency · fy · scheme · zone from the new pack; `chart` = ledgers seeded fresh by `books.reseedUnposted` (0 when no ledger row exists). `by` = the owner's identity id, `at` = now. The change is also logged to `books_change_log` (entity_governance · country / currency / timezone / fy_start_month) when the ledger tables exist. |
 | 409 `COUNTRY_CHANGE_IS_NEW_ENTITY` | `{ code, error, message }` | After constitution, a different country OR a different currency: "This shop is set up for <country> and <money> and already has <products / chits / books entries> — country and money never change. Register a new business for <country>." No conversion path exists (DECISIONS 2026-10-03). |
+
+## The storefront's `shop` block · GET /api/c/:handle and every caller of `catalogue-view.buildPublicView` (CX4 · S1/S2, 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `shop.country` | ISO-3166 alpha-2 or null | Source: `identities.country`, read on the SAME row as `storefront_access · policy_flags` (no extra trip). Written by registration / Country setup. Read by shop.html (what the page knows of its country). |
+| `shop.tax_id_word` | `GSTIN` · `ABN` · `TRN` | Derived: `profile.taxIdWordOf(country)` — the pack's own tax id (reg-au `abn`, reg-ae `trn`), `GSTIN` for India and for no pack. Written by nobody. Read by shop.html for the label beside `gstn` (the generic registration column). |
+| `shop.upi_id` (changed) | string or null | Unchanged source (`profile.upiOf(policy_flags)`); now null when the shop's pack has no UPI mode (`pack.chart.paymentModes.upi`) — the storefront's "Pay by UPI" block is not drawn for an AU / AE shop. |
