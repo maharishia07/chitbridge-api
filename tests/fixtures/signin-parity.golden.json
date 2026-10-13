@@ -706,7 +706,8 @@
        "email": "owner@shop.test",
        "user_id": "shopone",
        "identity_type": "entity",
-       "entity_id": "shop1"
+       "entity_id": "shop1",
+       "access_level": "editor"
       },
       "constitution": null
      }
@@ -784,7 +785,8 @@
        "email": "owner@shop.test",
        "user_id": "shopone",
        "identity_type": "entity",
-       "entity_id": "shop1"
+       "entity_id": "shop1",
+       "access_level": "editor"
       },
       "constitution": null
      }
@@ -1142,6 +1144,7 @@
         "email": "ravi@mail.test",
         "identity_type": "actor",
         "owner_scope": "scope-from-row",
+        "access_level": "editor",
         "parent_entity_id": "shop1",
         "parent_entity_name": "Shop One",
         "parent_bridge_id": "B-SHOP1"
@@ -1160,7 +1163,8 @@
        "email": "ravi@mail.test",
        "user_id": "ravi@shopone.br",
        "identity_type": "actor",
-       "entity_id": "shop1"
+       "entity_id": "shop1",
+       "access_level": "editor"
       },
       "constitution": null
      }
@@ -1466,6 +1470,7 @@
         "email": null,
         "identity_type": "actor",
         "owner_scope": "actor",
+        "access_level": "editor",
         "parent_entity_id": "shop1",
         "parent_entity_name": "Shop One",
         "parent_bridge_id": "B-SHOP1"
@@ -1485,7 +1490,8 @@
        "email": null,
        "user_id": "mala@shopone.br",
        "identity_type": "actor",
-       "entity_id": "shop1"
+       "entity_id": "shop1",
+       "access_level": "editor"
       },
       "constitution": null
      }
@@ -1550,6 +1556,7 @@
         "actor_key": "ravi",
         "actor_role": "staff",
         "actor_type": "human",
+        "access_level": "editor",
         "parent_entity_id": "shop1",
         "parent_entity_name": "Shop One",
         "parent_bridge_id": "B-SHOP1"
@@ -1628,6 +1635,7 @@
         "actor_key": "ravi",
         "actor_role": "staff",
         "actor_type": "human",
+        "access_level": "editor",
         "parent_entity_id": "shop1",
         "parent_entity_name": "Shop One",
         "parent_bridge_id": "B-SHOP1"
@@ -1957,6 +1965,7 @@
         "actor_key": "mala",
         "actor_role": "staff",
         "actor_type": "human",
+        "access_level": "editor",
         "parent_entity_id": "shop1",
         "parent_entity_name": "Shop One",
         "parent_bridge_id": "B-SHOP1"
