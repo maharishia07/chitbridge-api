@@ -39,6 +39,9 @@ process.env.NODE_ENV = 'production';
 const sealed = require(path.join(API, 'lib', 'dev-otp')).isSealed();
 if (sealed) t('sealed with no e-mail: reset is greyed with a sentence', !people.view([row({ has_email: false })], { owner: true }).people[0].may.reset_pin.ok);
 else console.log('  note sealed-environment case is not reachable here');
+/* CX6 (E1): every pack lists payroll as out of scope — the line is said for IN, AU, AE and an unknown country; the shop row with no people is not a person */
+for (const c of ['IN', 'AU', 'AE', null]) t('payroll said for ' + (c || 'no country'), people.view([], { owner: true, country: c }).payroll.said === people.payrollWord('IN').said && people.view([], { owner: true, country: c }).payroll.here === false);
+t('the line names no country and no statute', !/India|Australia|UAE|PAYG|ESI/.test(people.payrollWord('AU').said));
 process.env.NODE_ENV = 'test';
 
 /* ── the route ── */
@@ -61,7 +64,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     let r = await get();
     t('owner: 200 with people', r.status === 200 && r.body.people.length === 3 && r.body.may.add.ok === true);
     t('ONE statement for the whole list (one trip)', seen.length === 1);
-    t('scoped to the shop by parent_entity_id', /parent_entity_id = \$1/.test(seen[0].sql) && seen[0].params[0] === 'e1');
+    t('scoped to the shop by parent_entity_id', /e\.identity_id = \$1/.test(seen[0].sql) && /i\.parent_entity_id = e\.identity_id/.test(seen[0].sql) && seen[0].params[0] === 'e1');
+    t('CX6: the shop\'s country rides the same statement; payroll is said', /e\.country AS entity_country/.test(seen[0].sql) && r.body.payroll && r.body.payroll.here === false && !!r.body.payroll.said);
     t('removed people are never listed', /IS DISTINCT FROM 'removed'/.test(seen[0].sql));
     t('people only (not connectors)', /actor_type, 'human'\) = 'human'/.test(seen[0].sql));
     seen.length = 0;
