@@ -1125,7 +1125,7 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
         let floor = 90;
         try { const f = await policy.get(owner_id); if (Number.isFinite(+f.retention_floor_days)) floor = +f.retention_floor_days; }
         catch (_) { /* unreadable policy → keep the schema default; never shorten on an error */ }
-        return Math.max(floor, _reqDays || 0);
+        return Math.max(policy.RECORDS_FLOOR_DAYS, floor, _reqDays || 0);   /* CO3: the records-law floor sits under every copy */
       };
       // ── assimilation seam: resolve the boilerplate for this send — constitution + capability + pattern + the canonical
       //    SHARED standard (ISO 9000) — and stamp the lineage. Best-effort: never blocks the send. This is the mint
