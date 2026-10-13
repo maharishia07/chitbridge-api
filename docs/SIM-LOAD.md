@@ -64,4 +64,20 @@ stack migrates its own. The cloud round proved it on `docker run -d -p 5432:5432
 * Never a raw INSERT into a tenant table; never a remote database; never a sealed `NODE_ENV`.
 * Purchases from the local supplier post through `lib/books.postEntry` (the one writer the chit hook itself calls) — a
   minted local supplier has no rail copy to accept, exactly as Y1 posted them.
-* `--country AU` is accepted (the AU pack, 10 %) but unproved — IN is what the round checked.
+* `--country AU` and `--country AE` are accepted (CX0, 2026-10-13) but unproved — IN is what Y1b checked. The loader READS the
+  shop's currency, financial year, tax heads, scheme and rate menu from its regulation pack (`lib/regulation.packFor`), and types
+  only what no pack says (`SHOPS` in sim-load.cjs: a sample GSTIN · ABN · TRN that passes the pack's own check, the street, the
+  city's clock offset and zone). The plan's 5 · 12 · 18 % draws land on a one-rate scheme's standard rate (AU 10 %, AE 5 %); a `upi`
+  sale becomes `card` where the pack has no upi mode. ⚠️ Until the api adopts the books engines ≥ v1.41 (its `accounts-packs` is
+  v1.20 — `PACKS.IN` only, so `packFor('AU'|'AE')` is India's chart with `fallback: true`, and `posting` knows only cgst · sgst · igst ·
+  cess), an AU/AE load gets India's books: purchases carrying a `gst` / `vat` head post no tax and the proof is RED on them. The audit
+  and the fix order: chitbridge-web `docs/design/standards/COUNTRY-COVERAGE.md`.
+
+## The three shops the WX walks load (real-stack setup)
+
+```
+node tools/sim-load.cjs --db postgres://postgres:pw@127.0.0.1:5432/cb_sim --shop simstores --country IN --years 1
+node tools/sim-load.cjs --db postgres://postgres:pw@127.0.0.1:5432/cb_sim --shop simsydney --country AU --years 1
+node tools/sim-load.cjs --db postgres://postgres:pw@127.0.0.1:5432/cb_sim --shop simdubai  --country AE --years 1
+```
+Sign in as the shop's user id with the DEV_OTP code; each shop is its own entity (a country is fixed at registration — no conversion).
