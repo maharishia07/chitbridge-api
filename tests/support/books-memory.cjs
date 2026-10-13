@@ -111,8 +111,16 @@ function create() {
         T.items.push(Object.assign({ item_id: ++itemSeq, entity_id: e, created_at: now() }, clone(it)));
       }
     },
-    /* CS2: the chart and the periods of a never-posted ledger go, so a corrected country seeds them again (lib/books.reseedUnposted) */
-    async deleteChart(db, e) { T.accounts = T.accounts.filter((a) => a.entity_id !== e); T.periods = T.periods.filter((p) => p.entity_id !== e); },
+    /* CS2: a never-posted ledger is RE-CHARTED in place (no DELETE on the setup tables): parked, the new pack laid over the codes that exist, the year's periods re-labelled by number */
+    async parkChart(db, e) { T.accounts.forEach((a) => { if (a.entity_id === e) { a.role = null; a.active = false; } }); },
+    async rechart(db, e, rows, o) {
+      const byCode = new Map(T.accounts.filter((a) => a.entity_id === e).map((a) => [String(a.code), a]));
+      (rows || []).forEach((r) => { const a = byCode.get(String(r.code)); if (!a) return; const p = r.parent_code ? byCode.get(String(r.parent_code)) : null;
+        Object.assign(a, { name: r.name, is_group: !!r.is_group, nature: r.nature, role: r.role || null, tally_group: r.tally_group || null, sch3_line: r.sch3_line || null, saft_grouping: r.saft_grouping || null, active: true, parent_id: p ? p.account_id : null }); });
+    },
+    async relabelPeriods(db, e, fromFy, rows) {
+      (rows || []).forEach((r) => { const p = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fromFy && Number(x.period) === Number(r.period)); if (p) Object.assign(p, { fiscal_year: r.fiscal_year, start_date: r.start_date, end_date: r.end_date }); });
+    },
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { return clone(T.items.filter((i) => i.entity_id === e && (!party || i.party_id === party) && (!account || i.account_id === account))); },
