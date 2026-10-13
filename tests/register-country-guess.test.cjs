@@ -40,7 +40,9 @@ const run = (body) => new Promise((done) => {
 });
 const insertOf = () => SQL.find((q) => /^INSERT INTO identities/.test(q.sql.trim()));
 const colsOf = (q) => (/\(([^)]*)\) VALUES/.exec(q.sql) || [])[1].split(',').map((s) => s.trim());
-const valOf = (q, col) => q.params[colsOf(q).indexOf(col)];
+/* a column's value: the VALUES slot in the same position — a $N reads the params, a literal is itself */
+const valOf = (q, col) => { const v = (/VALUES \(([^)]*)\)/.exec(q.sql) || [])[1].split(',').map((x) => x.trim())[colsOf(q).indexOf(col)] || '';
+  return /^\$\d+$/.test(v) ? q.params[Number(v.slice(1)) - 1] : v; };
 const SYDNEY = { country: 'AU', currency_code: 'AUD', timezone: 'Australia/Sydney', locale: 'en-AU', languages: ['en-AU'], device: { type: 'desktop' } };
 
 (async () => {

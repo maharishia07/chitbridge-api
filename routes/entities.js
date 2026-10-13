@@ -95,13 +95,18 @@ async function registerNew(req, res) {
      */
     const CS = require('../lib/country-setup');
     const guess = CS.guessOf(req.body.context);
-    const cols = ['identity_id', 'bridge_id', 'display_name', 'email', 'identity_type', 'status', 'user_id', 'entity_kind'];
-    const vals = [identity_id, bridge_id, display_name, email, 'entity', 'pending', verdict.value, mark.entity_kind];
-    if (mark.population !== null) { cols.push('population'); vals.push(mark.population); }
-    if (guess && guess.country) { cols.push('country'); vals.push(guess.country); }
-    if (guess && guess.currency) { cols.push('currency_code'); vals.push(guess.currency); }
-    if (guess && guess.timezone && await schema.hasColumn('identities', 'timezone')) { cols.push('timezone'); vals.push(guess.timezone); }
-    await query(`INSERT INTO identities (${cols.join(', ')}) VALUES (${vals.map((_, i) => '$' + (i + 1)).join(', ')})`, vals);
+    const more = [];   /* [column, value] beyond the fixed six, each named only when known */
+    if (mark.population !== null) more.push(['population', mark.population]);
+    if (guess && guess.country) more.push(['country', guess.country]);
+    if (guess && guess.currency) more.push(['currency_code', guess.currency]);
+    if (guess && guess.timezone && await schema.hasColumn('identities', 'timezone')) more.push(['timezone', guess.timezone]);
+    await query(
+      `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind`
+      + more.map(([c]) => ', ' + c).join('')
+      + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6`
+      + more.map((_, i) => ', $' + (i + 7)).join('') + ')',
+      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind].concat(more.map(([, v]) => v))
+    );
     /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
     if (guess) {
       try { await withEntity(identity_id, (h) => CS.noteGuess(h, identity_id, guess)); }
