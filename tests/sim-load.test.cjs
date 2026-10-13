@@ -42,6 +42,9 @@ ok('DATABASE_URL is set from --db before server.js loads (dotenv cannot redirect
 /* WX-O2C: --start moves the three years (default unchanged) and keeps the default's "already loaded" mark */
 ok('--start feeds the plan (default 2026-04-01) and is refused unless it is a 1 April', /const START = String\(arg\('start', '2026-04-01'\)\)/.test(src) && /planDays\(\{ start: START,/.test(src) && /\^\\d\{4\}-04-01\$/.test(src));
 ok('the default load keeps its old idempotency mark (a shop loaded before --start is still "already loaded")', /START === '2026-04-01' \? '' : '\/from-' \+ START/.test(src));
+{ const bk = read('lib/books.js'), st = read('lib/books-store.js');
+  ok('the ledger\'s first moment is read off the SAME clock as its year (books.enable at: CLOCK when simulated; saveSetting COALESCE($9, now()))',
+    /at: CLOCK\.isSimulated && CLOCK\.isSimulated\(\) \? CLOCK\.now\(\)\.toISOString\(\) : null/.test(bk) && /COALESCE\(\$9::timestamptz, now\(\)\)/.test(st)); }
 ok('a sealed NODE_ENV is refused', /isSealed\(\)\) die\(/.test(src));
 ok('the schema step refuses a database that already has tables', /already has tables/.test(src));
 ok('the shop walks the Country setup door (CS1) before the books open — never a raw write to identities / entity_governance', /\/api\/governance\/country-setup/.test(src) && src.indexOf('/api/governance/country-setup') < src.indexOf('/api/books/enable'));
