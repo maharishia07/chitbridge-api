@@ -78085,6 +78085,35 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-08T09:50:56+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/books-bank-rail.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "BR1 · GET /api/books/bank/rail — the rail leg of the bank reconciliation the device runs, through real express over the in-memory books.",
+   "claim": "BR1 · GET /api/books/bank/rail — my payment-advice and bank-question copies, the on-rail parties, may.ask by the rail ladder; one read each; the engine settles a line from the answer.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 95 lines. Run: node chitbridge-api/tests/books-bank-rail.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-13T12:00:00+05:30",
+   "needs": [
+    "the books engines v1.44.0 (via books-harness.cjs)"
+   ]
   }
  ]
 }

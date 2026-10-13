@@ -394,6 +394,79 @@
    },
    "optional": []
   },
+  "GET /api/books/bank/rail": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "from": "2026-10-01",
+    "to": "2026-10-31",
+    "me": "Mayur Bhavan",
+    "chits": [
+     {
+      "chit_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+      "direction": "received",
+      "status": "delivered",
+      "created_at": "2026-10-12T05:00:00.000Z",
+      "party": {
+       "id": "22222222-2222-4222-8222-222222222222",
+       "name": "Ravi Stores"
+      },
+      "business_json": {
+       "kind": "payment_advice",
+       "currency": "INR",
+       "payment_advice": {
+        "action": "paid",
+        "adviser_payment_id": "cccccccc-cccc-4ccc-8ccc-ccccccccccc1",
+        "adviser_entry_no": "MJ/26-27/0009",
+        "amount": 4200,
+        "amount_minor": 420000,
+        "currency": "INR",
+        "mode": "bank",
+        "reference": "N55501",
+        "paid_on": "2026-10-12",
+        "applied_minor": 420000,
+        "on_account": 0,
+        "on_account_minor": 0,
+        "collected_by": null,
+        "reverses_advice_chit_id": null,
+        "words": "Ravi Stores paid you INR 4,200.00 by bank on 12 Oct 2026 for bill S-1."
+       },
+       "bank_query": {
+        "key": "2026-10-12|in|420000|N99912",
+        "side": "in",
+        "amount_minor": 420000,
+        "currency": "INR",
+        "date": "2026-10-12",
+        "ref": "N99912",
+        "words": "INR 4,200.00 came into our bank on 12 Oct 2026, ref N99912 — which bill is it for?"
+       }
+      },
+      "line_items": [
+       {
+        "ref_chit_id": "dddddddd-dddd-4ddd-8ddd-ddddddddddd1",
+        "bill_no": "S-1",
+        "applied_minor": 420000
+       }
+      ]
+     }
+    ],
+    "parties": [
+     {
+      "party_id": "33333333-3333-4333-8333-333333333333",
+      "name": "Kumar Traders"
+     }
+    ],
+    "may": {
+     "ask": {
+      "ok": true
+     }
+    }
+   },
+   "optional": [
+    "chits[].business_json.bank_query",
+    "chits[].business_json.payment_advice"
+   ]
+  },
   "GET /api/books/bs": {
    "status": 200,
    "example": {
@@ -1332,7 +1405,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-11T04:02:10.424Z",
+      "last_at": "2026-10-11T05:46:19.991Z",
       "late": true,
       "today": false
      }
@@ -1368,13 +1441,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-12T04:02:10.387Z",
+      "due_at": "2026-10-12T05:46:19.953Z",
       "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-13T04:02:10.388Z",
+      "created_at": "2026-10-13T05:46:19.954Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1644,7 +1717,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-11T04:02:10.315Z",
+      "due_at": "2026-10-11T05:46:19.881Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1744,7 +1817,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-13T03:02:10.542Z",
+    "created_at": "2026-10-13T04:46:20.105Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1959,7 +2032,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-13T03:02:10.542Z",
+      "created_at": "2026-10-13T04:46:20.105Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2048,7 +2121,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-13T04:02:10.928Z"
+     "shared_at": "2026-10-13T05:46:20.498Z"
     }
    },
    "optional": []
@@ -2101,13 +2174,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-12T04:02:10.387Z",
+     "due_at": "2026-10-12T05:46:19.953Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-13T04:02:10.395Z",
-     "created_at": "2026-10-13T04:02:10.388Z",
+     "done_at": "2026-10-13T05:46:19.961Z",
+     "created_at": "2026-10-13T05:46:19.954Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2841,13 +2914,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-12T04:02:10.387Z",
+     "due_at": "2026-10-12T05:46:19.953Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-13T04:02:10.388Z",
+     "created_at": "2026-10-13T05:46:19.954Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2878,7 +2951,7 @@
    "example": {
     "party": {
      "party_id": "N2",
-     "display_name": "Ravi Jeweller",
+     "display_name": "Ravi Jewellers",
      "party_no": "P-00099",
      "kind": "local",
      "on_chitbridge": false,
@@ -2962,9 +3035,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-13T04:02:10.386Z",
+     "at": "2026-10-13T05:46:19.952Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-13T04:02:10.386Z"
+     "created_at": "2026-10-13T05:46:19.952Z"
     }
    },
    "optional": []
@@ -2979,9 +3052,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-13T04:02:10.428Z",
+     "at": "2026-10-13T05:46:19.993Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-13T04:02:10.428Z"
+     "created_at": "2026-10-13T05:46:19.993Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2996,7 +3069,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-13T04:02:10.428Z",
+     "created_at": "2026-10-13T05:46:19.993Z",
      "late": false,
      "today": false,
      "bucket": "week"
