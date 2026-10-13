@@ -378,3 +378,6 @@ ${taxLines}
   };
 };
 module.exports.builders = BUILDERS;
+/* PR1 (2026-10-13): the XML READERS, for a caller that reads a Tally export FILE instead of the port (lib/parallel-run.js reads a trial balance / P&L / balance sheet
+   exported from Tally) — the same five functions this adapter reads Tally's answers with, so there is one Tally XML reader, not two */
+module.exports.readers = { tag, tags, dataOf, unesc, num };

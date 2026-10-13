@@ -100,6 +100,13 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/books/bank/rail": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422
+    },
     "GET /api/books/bs": {
       "file": "books.js",
       "trips": 1,
@@ -113,6 +120,31 @@
       "wire": 6,
       "fired": true,
       "status": 404
+    },
+    "GET /api/books/compare": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: 2 trips — the guard setting read, then ONE transaction (does b309 exist · the snapshot list, grouped in SQL). An auditor login adds lib/cost canRead (1)."
+    },
+    "GET /api/books/compare/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: 2 trips — the guard, then ONE transaction (the snapshot parts · chart · the period entry lines in one read · TB / P&L / BS / BAS-VAT201 through the engines, no per-row query). India with a return part: +1, the rail GSTR-3B (lib/tax-copy ledgerFor) after it."
+    },
+    "GET /api/books/compare/:id/csv": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: as GET /compare/:id (the same read, written as a .csv). The web fetches it as a file (cap-compare.js cmpCsv, the session header), so the scanner does not see it: extra.",
+      "extra": true
     },
     "GET /api/books/cheques": {
       "file": "books.js",
@@ -722,6 +754,22 @@
       "wire": 6,
       "fired": true,
       "status": 404
+    },
+    "POST /api/books/compare/preflight": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: 1 trip — the guard only; the file is read in memory, nothing of the shop is read, nothing written."
+    },
+    "POST /api/books/compare/snapshots": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: 2 trips — the guard, then ONE transaction (the snapshot parts when adding to one · ONE insert)."
     },
     "POST /api/books/move-in/import": {
       "file": "books.js",

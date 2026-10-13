@@ -28,7 +28,7 @@ const db = { query: async (text, params) => {
 } };
 
 const CALLS = {
-  setting: [E], saveSetting: [E, { enabled: true }], saveCheck: [E, { ok: true }], accounts: [E], insertAccount: [E, { code: '1300', name: 'x', nature: 'asset' }], setSourceCode: [E, U, '090'],
+  setting: [E], saveSetting: [E, { enabled: true }], saveCheck: [E, { ok: true }], accounts: [E], insertAccount: [E, { code: '1300', name: 'x', nature: 'asset' }], setSourceCode: [E, U, '090'], compareReady: [], compareSnapshots: [E], compareParts: [E, U], insertComparePart: [E, { snapshot_id: U, label: 'Tally H1', source: 'tally', part: 'tb', period_to: '2026-09-30', currency: 'INR', rows: [] }],
   periods: [E, '2026-27'], periodFigures: [E, '2026-27'], insertPeriod: [E, { fiscal_year: '2026-27', period: 1, start_date: '2026-04-01', end_date: '2026-04-30' }], setPeriodStatus: [E, '2026-27', 1, 'soft_locked', U, 'r'],
   /* CS2: a never-posted ledger re-charted in place (no DELETE on the setup tables) */
   parkChart: [E], rechart: [E, [{ code: '2200', name: 'GST collected', is_group: false, nature: 'liability', role: 'gst_collected', parent_code: '2200', tally_group: 'GST and Statutory Liabilities', sch3_line: 'x', saft_grouping: 'LIABILITY:x' }], { pack_code: 'AU', pack_version: null }],
@@ -48,7 +48,7 @@ const CALLS = {
   counterBills: [E, 'C1', '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'], countersBilling: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'],
   unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200], openDisputes: [E, U],
   /* M30 · the payment advice (b285) */
-  adviceReady: [E], paymentsAdvice: [E, [U]], setAdvice: [E, U, { advice_chit_id: U, advice_shared_at: null }], adviceStates: [E, [U]], paymentsNeedingAdvice: [E, 50], shopName: [E],
+  adviceReady: [E], paymentsAdvice: [E, [U]], setAdvice: [E, U, { advice_chit_id: U, advice_shared_at: null }], adviceStates: [E, [U]], paymentsNeedingAdvice: [E, 50], shopName: [E], bankRailChits: [E, '2026-10-01', '2026-10-31', 500],
 };
 
 (async () => {

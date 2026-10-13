@@ -227,3 +227,19 @@ Fixed in `compose.yml` (not inputs): `DATABASE_URL` ends `?sslmode=disable` (the
 `sslmode=no-verify`/`verify-full` for a managed database) · `OTP_EMAIL_ENABLED=true` · `PUBLIC_WEB_BASE` = `WEB_ORIGIN`.
 `migrate` records every file in `schema_migrations`; a second `up` runs only new files (and retries the ones that failed — ops roles,
 one-off data scripts — which are listed, not recorded).
+
+## Cloud spins — AWS · Azure · GCP · Railway (HX2)
+
+`deploy/<platform>/spin.sh` makes one isolated ChitBridge (Postgres, the api image, the web image, an object store where the platform
+has an S3 API, TLS on the platform's own name, a mail sink for the test) — `test.sh` runs `deploy/spin-test.sh` (migrate twice, the sim
+shop, `/health`, CTP manifest, the stack walk) — `teardown.sh` deletes what carries the spin's tag and prints the cost. The api's
+environment is `deploy/spin-lib.sh` `spin_api_env`: only names from the table above (`tests/spin-scripts.test.cjs` holds that). The
+owner's secrets, cost per day and limits: `deploy/<platform>/README.md`. Native vs portable per platform: `docs/HOSTING-COUPLING.md`.
+CI: `.github/workflows/spin-test.yml` (manual only) — `docs/patches/HX2-spin-test.patch`, the coordinator applies it.
+
+| Name | Where | What |
+|---|---|---|
+| `CB_SPIN_ID` | the scripts; `tools/sim-load.cjs` | the spin (`s` + 7 hex). sim-load accepts a remote host ONLY when it is set and the database is `cbspin_<id>` |
+| `MAIL_SINK_TOKEN` | `deploy/mail-sink.cjs` | a public sink answers only to `authorization: Bearer <token>`; the spin sets it = the api's `RESEND_API_KEY` |
+| `PLAN=1` · `PARSE=1` | every spin/test/teardown | print the commands · let aws/az/gcloud parse each one with no credentials (`deploy/spin-check.sh`) |
+| `SIM_YEARS` · `CTP_PEER_API` | `deploy/spin-test.sh` | years of the sim shop (1) · another spin's api for the CTP check |

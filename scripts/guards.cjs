@@ -32,6 +32,7 @@ const GUARDS = [
   'till-t2a.test.cjs',  // round T2a: bills-only count, an online order billed, the mode menu, no 403 on quick-keys/hidden
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
+  'spin-scripts.test.cjs',      // ⭐⭐ HX2: the cloud spin scripts — one env list (HOSTING.md), tagged, India by default, no secret printed
   'hosting-neutral.test.cjs',   // ⭐⭐ HX1: the DB password goes only to configured URLs; SigV4 = AWS's examples; no platform host in shipped code
   'records-keeping.test.cjs',   // ⭐⭐ CO3: the books' edit trail cannot be disabled (Rule 3(1)); no copy expires inside the 9-year records floor
   'migration-numbers.test.cjs', // ⭐⭐ one number, one migration — two parallel rounds both wrote b299 (12 Oct); a clash fails here
@@ -212,6 +213,7 @@ const GUARDS = [
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
   'books-payments.test.cjs',    // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words
+  'books-bank-rail.test.cjs',   // BR1: GET /bank/rail — my advice + bank-question copies, on-rail parties, may.ask by the rail ladder; one read each
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
   'tax-copy.test.cjs',          // who sells on each copy: a counter bill I RECEIVED is my purchase, never in my GSTR-1
   'page-name.test.cjs',         // ⭐ N03: every chit names its detail page at mint (base by default); an unknown name is refused; nothing rewrites it
@@ -260,6 +262,7 @@ const GUARDS = [
   'iddocs-verify.test.cjs',     // M18: phone/e-mail identity documents verified by a code (lib/otp.js engine); 5 wrong -> locked; PUT clears; an unverified contact is never used for recovery
   'sides.test.cjs',             // CB Sides: driftOf (resolver) + the impact walk (lib/impact, shared with raida.walk) + GET /api/entities/sides is ONE read; a source with no data is a 'not yet' row, never a number
   'entities-header.test.cjs',   // N19: GET /api/entities/header is ONE read (<= 3 trips); planted compliance rows -> bands from lib/licence-rules.js; unverified PHONE -> check false; no rule -> days only; no fee amount hard-coded
+  'prefs-merge.test.cjs',       // CU2: every ui_prefs / locale_prefs write is an RFC 7386 merge-patch — a theme save keeps product_rows and the keys it did not send; '' / null removes; no `= $n` whole-column write
   'limiter-paths.test.cjs',     // M07: every public door (walked from the real app) has a limiter of its own; pair/claim, check-login, storefront sign-in on the strict auth budget; existing limits unchanged
   'employee-first-signin.test.cjs', // 2026-10-08 Athi: employee's first code (unsealed, DEV_OTP) signs in AND answers requires_pin_setup on every door; PIN then works; sealed never takes 123456
   'limits.test.cjs',           // E01: 9 MB on a non-upload route -> 413 BODY_TOO_LARGE; 30 s request deadline -> 503 REQUEST_TIMEOUT (late answer swallowed); 57014 -> 503 STATEMENT_TIMEOUT; parsers after id+logger

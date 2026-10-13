@@ -59132,13 +59132,13 @@
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
    "intro": "",
-   "title": "CO1 privacy \u2014 contact consent (b306) append-only with may/why, the privacy-request register (b307) with the legal clock per country and answered once by the owner, and GET /api/privacy/facts; 503 before the migrations. Offline (crm-stub).",
-   "claim": "CO1 privacy \u2014 contact consent (b306) append-only with may/why, the privacy-request register (b307) with the legal clock per country and answered once by the owner, and GET /api/privacy/facts; 503 before the migrations. Offline (crm-stub).",
+   "title": "CO1 privacy — contact consent (b306) append-only with may/why, the privacy-request register (b307) with the legal clock per country and answered once by the owner, and GET /api/privacy/facts; 503 before the migrations. Offline (crm-stub).",
+   "claim": "CO1 privacy — contact consent (b306) append-only with may/why, the privacy-request register (b307) with the legal clock per country and answered once by the owner, and GET /api/privacy/facts; 503 before the migrations. Offline (crm-stub).",
    "priority": "Medium",
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard \u00b7 unit \u00b7 150 lines. Run: node chitbridge-api/tests/privacy.test.cjs",
+   "note": "test.guard · unit · 150 lines. Run: node chitbridge-api/tests/privacy.test.cjs",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.guard",
@@ -59989,6 +59989,35 @@
    "needs": [
     "the API running"
    ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/prefs-merge.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CU2: every ui_prefs / locale_prefs write is an RFC 7386 merge-patch — a theme save keeps the shop's product rows.",
+   "claim": "CU2: every ui_prefs / locale_prefs write is an RFC 7386 merge-patch — a theme save keeps the shop's product rows.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 92 lines. Run: node chitbridge-api/tests/prefs-merge.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "database"
+   ],
+   "subjects": [
+    "routes/entities.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-13T12:00:00+05:30",
+   "needs": []
   },
   {
    "case_key": "chitbridge-api/tests/entity-cast-guard.test.cjs",
@@ -78190,6 +78219,60 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-13T11:00:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/books-bank-rail.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "BR1 · GET /api/books/bank/rail — the rail leg of the bank reconciliation the device runs, through real express over the in-memory books.",
+   "claim": "BR1 · GET /api/books/bank/rail — my payment-advice and bank-question copies, the on-rail parties, may.ask by the rail ladder; one read each; the engine settles a line from the answer.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 95 lines. Run: node chitbridge-api/tests/books-bank-rail.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-13T12:00:00+05:30",
+   "needs": [
+    "the books engines v1.44.0 (via books-harness.cjs)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/spin-scripts.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE CLOUD SPIN SCRIPTS STAY HONEST WITHOUT AN ACCOUNT (HX2).",
+   "claim": "THE CLOUD SPIN SCRIPTS STAY HONEST WITHOUT AN ACCOUNT (HX2).",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.unit · unit · 130 lines. Run: node chitbridge-api/tests/spin-scripts.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.unit",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-13T15:00:00+05:30"
   }
  ]
 }

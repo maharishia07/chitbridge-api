@@ -161,6 +161,19 @@ async function captureBooks() {
       await q('PATCH', '/payments/' + pid3, { advice_shared_at: true }, '/payments/:id');
       await q('GET', '/payments/' + pid1 + '/advice', null, '/payments/:id/advice');
     }
+    /* ── BR1 · the rail leg of the bank reconciliation: a customer's advice I RECEIVED (the bills it settles) and the bank question I ASKED ── */
+    X.T.chits.push({ chit_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', entity_id: SHOP, direction: 'received', status: 'delivered', created_at: '2026-10-12T05:00:00.000Z', party_id: CUST, party_name: 'Ravi Stores',
+      business_json: { kind: 'payment_advice', currency: 'INR', payment_advice: { action: 'paid', adviser_payment_id: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', adviser_entry_no: 'MJ/26-27/0009', amount: 4200, amount_minor: 420000, currency: 'INR',
+        mode: 'bank', reference: 'N55501', paid_on: '2026-10-12', applied_minor: 420000, on_account: 0, on_account_minor: 0, collected_by: null, reverses_advice_chit_id: null, words: 'Ravi Stores paid you INR 4,200.00 by bank on 12 Oct 2026 for bill S-1.' } },
+      line_items: [{ particulars: 'Bill S-1', ref_chit_id: 'dddddddd-dddd-4ddd-8ddd-ddddddddddd1', bill_no: 'S-1', applied_minor: 420000 }] });
+    X.T.chits.push({ chit_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', entity_id: SHOP, direction: 'sent', status: 'delivered', created_at: '2026-10-13T05:00:00.000Z', party_id: SUPP, party_name: 'KV Traders',
+      business_json: { kind: 'bank_query', currency: 'INR', bank_query: { key: '2026-10-12|in|420000|N99912', side: 'in', amount_minor: 420000, currency: 'INR', date: '2026-10-12', ref: 'N99912', words: 'INR 4,200.00 came into our bank on 12 Oct 2026, ref N99912 — which bill is it for?' } } });
+    await q('GET', '/bank/rail?from=2026-10-01&to=2026-10-31', null, '/bank/rail');
+    /* …and as a view-only login: may.ask refused, with the rail's word and sentence (the contract lists both shapes) */
+    const was = Object.assign({}, OWNER);
+    Object.assign(OWNER, { identity_type: 'actor', access_level: 'viewer', parent_entity_id: SHOP });
+    await q('GET', '/bank/rail?from=2026-10-01&to=2026-10-31', null, '/bank/rail');
+    Object.keys(OWNER).forEach((k) => { delete OWNER[k]; }); Object.assign(OWNER, was);
     /* ── M29 reverse from the row: the statement's payment line (entry_id · payment_id · advice state), the reversal that reopens the bill, the line after, a second Reverse → 409 ── */
     const st = await q('GET', '/party/' + SUPP + '/statement?from=2026-04-01&to=2027-03-31', null, '/party/:id/statement');
     const payLine = ((st.body && st.body.lines) || []).find((l) => l.payment_id);
@@ -206,6 +219,22 @@ async function captureBooks() {
     await q('POST', '/move-in/preview', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, as_at: '2027-04-01' }, '/move-in/preview');
     await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, confirm: true, as_at: '2027-04-01' }, '/move-in/import');
 
+
+    /* ── PR1 the parallel-run compare: the list, a Tally XML read at once, a Tally CSV's columns guessed, a snapshot kept (and the same part again → 409), the compare ── */
+    const px = (f) => require('fs').readFileSync(path.join(H.API, 'tests', 'fixtures', 'parallel-run', f), 'utf8');
+    await q('GET', '/compare', null, '/compare');
+    await q('POST', '/compare/preflight', { part: 'tb', source: 'tally', xml: px('tally-tb-ledgers.xml') }, '/compare/preflight');
+    const rp = await q('POST', '/compare/preflight', { part: 'ret', source: 'tally', csv: px('tally-gstr3b.csv') }, '/compare/preflight');
+    const snap = await q('POST', '/compare/snapshots', { label: 'Tally H1', source: 'tally', part: 'tb', period_to: '2026-09-30', xml: px('tally-tb-ledgers.xml'), file_name: 'tb.xml' }, '/compare/snapshots');
+    const sid = snap.body && snap.body.snapshot_id;
+    if (sid) {
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'pl', xml: px('tally-pl-report.xml') }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'bs', xml: px('tally-bs-report.xml') }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'ret', csv: px('tally-gstr3b.csv'), decisions: ((rp.body && rp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field })) }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'tb', xml: px('tally-tb-ledgers.xml') }, '/compare/snapshots');
+      await q('GET', '/compare', null, '/compare');
+      await q('GET', '/compare/' + sid, null, '/compare/:id');
+    }
 
     /* ── BAS1: the shop's OWN return, prepared from its books — an Australian shop (BAS, full), a UAE shop (VAT201: first without the FTA stagger → `needs`, then with it),
           and the Indian shop, whose /returns is a 422 (its GSTR comes from the rail). The 200s merge into one example; the 422 is its own entry. ── */

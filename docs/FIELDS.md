@@ -323,6 +323,19 @@ The importer (`lib/move-in.js`) computes no money and no tax of its own: amounts
 | `item_data.cost.source` ∈ `xero` · `qbo` | — | source: `item-cost.SOURCES` widened; a purchase price moved in with the items file | the `items` import (`item-cost.setCost`) | Offer Lab (the only reader of cost) |
 | `item_data.source_system` · `source_ref` | — | source: the connector kit's own stamps (`core.js syncProducts` shape): `xero` / `qbo` and their item code | the `items` import | nobody yet (the kit's receipts) |
 
+## Parallel run · `books_compare_part` · GET /api/books/compare · /compare/:id(/csv) · POST /compare/{preflight,snapshots} (PR1, 2026-10-13 · migration b309, a FILE — Athi runs it)
+
+Their figures are kept as read and NEVER posted; ours come from the engines (trialBalance · profitAndLoss · balanceSheet · taxReturn · the rail's gstr3b). `lib/parallel-run.js` subtracts two minor-unit integers per line and names the reason — it computes no balance or tax. Who may: the owner, or the shop's auditor (whole entity + may see money); others 403 with the sentence.
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `books_compare_part` (snapshot_id · label · source · part · period_from · period_to · currency · file_name · rows · created_by) | **b309** | source: their period as read from a Tally / Xero / QBO export, one row per snapshot part (`tb` · `pl` · `bs` · `ret`); `rows[] { line, name, code, group, side, dr_minor, cr_minor, amount_minor, tax_minor }` in minor units of `currency`. Insert-only (no UPDATE / DELETE grant). | POST /compare/snapshots (`books-store.insertComparePart`) | GET /compare (`compareSnapshots`) · GET /compare/:id (`compareParts`) |
+| GET /compare → `ready` · `why` · `may.load { may, why }` · `parts[] { part, label }` · `sources[] { source, label }` · `snapshots[] { snapshot_id, label, source, period_from, period_to, currency, parts[], lines, created_at }` | — | derived: `ready` = b309 exists (`schema.hasTable`); `may.load` is the server's answer the screen greys with | the route | CB Accounts › Parallel run (`cap-compare.js`) |
+| preflight → `format` (`table` · `tally_xml`) + move-in's `headers · fields · guess · missing · ready · rows_total · sample` | — | derived: a table goes through move-in's matcher with this import's columns (`parallel-run.KINDS`); a Tally XML is read at once | the route | the Columns step |
+| GET /compare/:id → `snapshot { snapshot_id, label, source, source_word, period_from, period_to, parts[] }` · `parts.{tb,pl,bs,ret} { part, title, from, to, file_name, source, lines[], counts { equal, different, gap, only_ours }, error, note, form }` | — | derived, PURE (`parallel-run.compare`); `error` = ours could not be read for that part (in words) | the route | the compare list |
+| `lines[] { key, total?, status (equal · different · gap · only_ours), name, their_name, their_code, their_line, our_codes[], theirs_minor, ours_minor, diff_minor (ours − theirs), cause (rounding · rail_later · only_ours_entry · only_theirs · unexplained · mapping · total · box), why, entries[] { entry_id, entry_no, date, amount_minor, chit_id, ref, kind, rail }, entries_n, open { code, from, to } }` | — | derived: the map is move-in's chartIndex (their code → `source_code`, name, control role) + our group names + `tally_group`; their ledgers whose group maps are pooled per group. Trial-balance sign Dr +; P&L / balance sheet as printed. `entries[]` (≤ 5) are OUR entries behind the line, the matched ones first | the route | each row's next level; `open` opens the Ledgers view on that ledger for the period |
+| `effort { from, to, entries, structured, keyed, by_kind {} }` | — | derived: the period's entries — structured = brought by a chit on the rail or a counter's day; keyed = typed here. PR2's hook (the trail) | the route | the compare's foot line |
+
 ## /api/repeat (REPEAT SUPPLY as an agreement both parties hold, RI1 2026-10-12)
 
 Written by `lib/repeat-supply.js` (the table `repeat_supply`, b303 DRAFT); read by CB Finance › Repeat supply (`app/cap-repeat.js`) and the chit sheet. The agreement itself is a chit (purpose `subscription`): its lines, price and `summary_json.money` are the send path's own — nothing here computes money.
@@ -355,3 +368,39 @@ Written by `lib/repeat-supply.js` (the table `repeat_supply`, b303 DRAFT); read 
 | Key | Shape | Source / derived · who writes it · who reads it |
 |---|---|---|
 | `ui_prefs.edition` | slug (`full` · `auditor` · …, `^[a-z][a-z0-9-]{0,23}$`) | Source: the person's choice in the avatar menu's Edition group (web `public/app/avatar.js`, `CBAvatar.set('edition')`), sent with theme · fs · motion · stripes (the set is REPLACED, so every key rides every push). Read by web `public/app/edition.js` (CBEdition) to pick which manifest entries Home draws; the list of editions is the web manifest's `editions` map. HIDES doors only — no route reads it for access. Absent = `full`. No migration (ui_prefs is jsonb, b166). |
+## GET /api/books/bank/rail (BR1, 2026-10-13 · the rail leg of the bank reconciliation the DEVICE runs)
+
+The statement never reaches the server. The page asks only for what the other party already TOLD us. `lib/books-store.js bankRailChits` does ONE bounded read of my copies. The engine (`bank-recon railPayments · explain`, engines v1.44.0) matches them on the device. No money is computed here.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `rail_chits[]` | `{ chit_id, direction, status, created_at, party: { id, name }, business_json: { kind, currency, payment_advice? \| bank_query? }, line_items: [{ ref_chit_id, bill_no, applied_minor }] }` | Source: my chit copies with `business_json.kind` `payment_advice` (M30, written by `adviceBody`) or `bank_query`, created within [from − 10 d, to + 10 d], not drafts, not deleted. `party` is the sender on a received copy, else the first recipient that is not me. Read by web `cap-bank.js` → `CBBankRecon.railPayments / explain`. Named `rail_chits`, not `chits`: the web's `api()` collapses a `chits` array (core.js `unwrap`). |
+| `parties[]` | `{ party_id, name }` | Derived: `books-store parties()` filtered to `on_rail` (who may be ASKED on the rail). Read by the Ask picker. |
+| `may.ask` | `{ ok }` or `{ ok: false, why, say }` | Derived: `lib/rail byLevel(level, 'ask')`. A viewer gets `read_only` and a commenter `comment_only`, with the rail's sentence. `POST /api/chits/send` decides again. Read by the Ask button (greyed with `say`). |
+| `me` | string | The shop's name, the same one `meName` gives the advice. The ask's words name it. |
+
+### New chit kind `business_json.kind = 'bank_query'` (BR1)
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `business_json.bank_query` `{ key, side, amount_minor, currency, date, ref, words }` | — (no migration; a chit's own JSON) | Derived on the device by `CBBankRecon.ask`. ONLY these facts travel: the date, the amount and the reference (never the narration). `key` = `lineKey` (date · side · amount · ref). `client_ref` = `bankask:<key>` (send dedupes). | web `cap-bank.js` through `POST /api/chits/send` (purpose `general`) | the receiver's thread (a message chit). The asker's `GET /bank/rail` → `explain` opts.asks (state `asked`). The ANSWER is the receiver's ordinary payment advice (M30) carrying the reference, so no new answer shape exists. |
+## The person's prefs · `identities.ui_prefs` · `identities.locale_prefs` (CU2, 2026-10-13)
+
+Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, routes/entities.js): a key not sent is untouched, a key sent as `null` (or `''` on /me/prefs) is removed, nothing replaces the whole store (`tests/prefs-merge.test.cjs`). Doors: `PATCH /api/entities/me/prefs/ui` · `/me/prefs/locale` · legacy `PATCH /me/locale` (all `savePrefSet`, whitelisted keys, the caller's own row) · `PATCH /api/entities/profile` body `ui_prefs` (the business row). Read back on `GET /api/entities/me` (`ui_prefs`, `locale_prefs`, `{}` when never chosen). Absent key = the default. Layer: the person (U), not governed (no GOV class) — except `product_rows`.
+
+| Key | Shape | Source · who writes it · who reads it |
+|---|---|---|
+| `ui_prefs.theme` | slug, e.g. `light` · `dark` · `device` | Source. avatar.js `push` (app, CB Accounts, till's avatar menu) via CBPrefs → /me/prefs/ui. Read by avatar.js `hydrate`, app.html `appearanceHydrate`. |
+| `ui_prefs.fs` | `s` · `m` · `l` · `xl` | Source. Text size; same writer and readers as `theme`. |
+| `ui_prefs.motion` | `auto` · `reduce` · `full` | Source. Same writer and readers. |
+| `ui_prefs.stripes` | `off` · `light` · `strong` | Source. Row stripes; same writer and readers. |
+| `ui_prefs.font` | `default` · `grotesk` · `serif` · `wide` · `mono` | Source (CU3 — was device-only `cb_font`). Reading font; same writer and readers as `theme`. Closed list = avatar.js FONTS. |
+| `ui_prefs.weight` | `normal` · `bold` | Source (CU3 — was device-only `cb_weight`). Bold text; same writer and readers. |
+| `ui_prefs.product_rows` | array of product-page row keys | Source, the BUSINESS's choice (layer E, parked in the U column — to move to a policy flag with CU8's one writer). Written by app.html `prodRowsSave` → PATCH /profile `{ ui_prefs: { product_rows } }` (the patch only). Read by app.html `prodRowsPref`. Not writable through /me/prefs/ui. |
+| `locale_prefs.lang` · `.locale` | BCP 47 tag | Source. CBLocale.push → /me/prefs/locale. Read by CBLocale.hydrate. ICU checks the combination. |
+| `locale_prefs.langs` | up to 3 tags, comma-separated (RFC 4647 priority list) | Source. Same writer / reader. |
+| `locale_prefs.region` | region subtag | Source. Same writer / reader. |
+| `locale_prefs.nu` · `.hc` · `.ca` · `.fw` | UTS #35 keyword values | Source. Numbering system · hour cycle · calendar · first weekday. Same writer / reader. |
+| `locale_prefs.tz` | IANA zone, e.g. `Asia/Kolkata` | Source (CU3 — sent and dropped before). The PERSON's reading zone; absent = the device's. Same writer / reader; ICU checks it. Not the shop's `identities.timezone` (which a bill uses is not ruled yet — audit row 38). |
+| `locale_prefs.workdays` | ISO weekdays, comma-separated, e.g. `1,2,3,4,5,6` (1 = Monday) | Source (CU3 — sent and dropped before). Override of CLDR's week; absent = the region's. Same writer / reader (CBLocale.workdays · isWorkday). |
+| `locale_prefs.langs_seen` | array of ≤ 3 tags | Source. The browser's languages at sign-up (routes/signin.js, one-key merge). Read by nobody yet. Kept by every locale save since CU2 (the old whole-column save erased it). |

@@ -13,7 +13,7 @@ const ymd = (v) => (v ? String(v).slice(0, 10) : null);
 
 function create() {
   const T = { setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
-              outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [] };
+              outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [] };
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
   const now = () => new Date(clock += 1000).toISOString();
   const S = {
@@ -186,7 +186,28 @@ function create() {
       }).map((p) => ({ payment_id: p.payment_id, party_id: p.party_id, name: (T.parties.find((x) => x.owner === e && x.party_id === p.party_id) || {}).name || null, direction: p.direction, amount_minor: p.amount_minor, currency: p.currency, mode: p.mode, received_at: p.received_at }))
         .sort((a, b) => String(b.received_at).localeCompare(String(a.received_at))).slice(0, limit || 50);
     },
+    /* PR1: the parallel-run snapshots (b309 stood in; insert-only, one row per snapshot part) */
+    async compareReady() { return T.compareReady !== false; },
+    async compareSnapshots(db, e) {
+      const m = new Map();
+      T.compare.filter((x) => x.entity_id === e).forEach((x) => { const s = m.get(x.snapshot_id) || { snapshot_id: x.snapshot_id, label: x.label, source: x.source, period_from: x.period_from, period_to: x.period_to, currency: x.currency, parts: [], lines: 0, created_at: x.created_at };
+        s.parts.push(x.part); s.parts.sort(); s.lines += x.rows.length; m.set(x.snapshot_id, s); });
+      return clone(Array.from(m.values()).reverse());
+    },
+    async compareParts(db, e, sid) { return clone(T.compare.filter((x) => x.entity_id === e && x.snapshot_id === sid).sort((a, b) => a.part.localeCompare(b.part))); },
+    async insertComparePart(db, e, p) {
+      if (T.compare.some((x) => x.entity_id === e && x.snapshot_id === p.snapshot_id && x.part === p.part)) return null;
+      const r = { part_id: id(), entity_id: e, snapshot_id: p.snapshot_id, label: p.label, source: p.source, part: p.part, period_from: p.period_from || null, period_to: p.period_to, currency: p.currency,
+        file_name: p.file_name || null, rows: clone(p.rows || []), created_by: p.by || null, created_at: now() };
+      T.compare.push(r); return r.part_id;
+    },
     async shopName(db, e) { const i = T.identities.find((x) => x.identity_id === e); return i ? i.display_name || null : null; },
+    /* BR1 · the rail leg of the bank reconciliation: my advice + bank-question copies, as the SQL answers them */
+    async bankRailChits(db, e, from, to, limit) {
+      return clone(T.chits.filter((c) => c.entity_id === e && c.business_json && /^(payment_advice|bank_query)$/.test(c.business_json.kind) && c.direction))
+        .map((c) => ({ chit_id: c.chit_id, direction: c.direction, business_json: c.business_json, line_items: c.line_items || [], status: c.status || null, created_at: c.created_at || null,
+          party_id: c.party_id || null, party_name: c.party_name || null })).slice(0, limit || 500);
+    },
   };
   return S;
 }

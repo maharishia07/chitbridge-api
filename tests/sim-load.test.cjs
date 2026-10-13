@@ -30,7 +30,14 @@ const no = ['postgres://postgres:pw@db.bzacyrdrnzdbficjplcn.supabase.co:5432/pos
   'postgres://u:p@containers-us-west-1.railway.app:5432/railway', 'postgres://u:p@10.0.0.5:5432/cb', 'postgres://u:p@192.168.1.10/cb', 'postgres://u:p@localhost.evil.com/cb',
   'mysql://root@localhost/cb', 'http://localhost:5432', '', 'not a url', 'postgres://u:p@/cb'];
 for (const u of yes) ok('accepts ' + u, L.localOnly(u).ok === true, JSON.stringify(L.localOnly(u)));
-for (const u of no) ok('refuses ' + (u || '(empty)'), L.localOnly(u).ok === false, JSON.stringify(L.localOnly(u)));
+for (const u of no) ok('refuses ' + (u || '(empty)'), L.localOnly(u, {}).ok === false, JSON.stringify(L.localOnly(u, {})));
+/* HX2 · a test spin's database, and nothing else: the id must be set AND name the database; Supabase never */
+const S = { CB_SPIN_ID: 's1a2b3c' }, rds = 'postgres://postgres:pw@cbspin-s1a2b3c.abc.ap-south-1.rds.amazonaws.com:5432/cbspin_s1a2b3c?sslmode=no-verify';
+ok('a spin: the spin\'s own database on a cloud host is accepted', L.localOnly(rds, S).ok === true && L.localOnly(rds, S).spin === true);
+ok('a spin: without CB_SPIN_ID the same URL is refused', L.localOnly(rds, {}).ok === false);
+ok('a spin: another database name (postgres, railway, another spin) is refused', ['postgres', 'railway', 'cbspin_s9z9z9z', 'cbspin_s1a2b3c_x'].every((d) => L.localOnly(rds.replace(/\/cbspin_s1a2b3c\?/, '/' + d + '?'), S).ok === false));
+ok('a spin: a Supabase host is refused even with the spin\'s name', L.localOnly('postgres://postgres:pw@db.ref.supabase.co:5432/cbspin_s1a2b3c', S).ok === false && L.localOnly('postgres://p:pw@aws-0-ap-south-1.pooler.supabase.com:6543/cbspin_s1a2b3c', S).ok === false);
+ok('a spin: a malformed id (too short, capitals, symbols) opens nothing', ['s1', 'S1A2B3C', 's1a2b3c;', ''].every((id) => L.localOnly(rds.replace(/s1a2b3c/g, id), { CB_SPIN_ID: id }).ok === false));
 
 /* 2 · the file says it, and writes through the doors */
 const src = read('tools/sim-load.cjs');
