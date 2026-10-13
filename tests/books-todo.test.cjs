@@ -59,6 +59,7 @@ function memoryTemplates() {
   await X.store.saveSetting(X.db, SHOP, { enabled: false });
   ok('the ledger is on', (await q('POST', '/enable', {})).body.ok === true);
   X.T.parties.push({ owner: SHOP, party_id: CUST, party_no: 'P-00001', name: 'Ravi Stores', customer: true, credit_days: 10 });
+  X.T.setting.get(SHOP).enabled_at = '2026-04-01T04:00:00.000Z';   /* the ledger on since April (FX-UX1: the month-lock to-do starts at the ledger's month) */
   const S = await X.B.settingOf(X.db, SHOP);
   const sale = (date, ref) => X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date, currency: 'INR', party: CUST, source_ref: ref, by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: { cash: 1180 }, round_off: 0 });
   await sale('2026-08-05', 'chit:aug'); await sale('2026-09-05', 'chit:sep'); await sale('2026-10-05', 'chit:oct');
@@ -81,6 +82,10 @@ function memoryTemplates() {
   ok('bills to accept counts ONLY the ones waiting on acceptance (a disputed one is not "accept")', get(t1, 'bills_to_accept').count === 1 && /1 supplier bill is waiting/.test(get(t1, 'bills_to_accept').words), JSON.stringify(get(t1, 'bills_to_accept')));
   const ml = get(t1, 'months_not_locked');
   ok('months not locked: April to October are over and open (7), named in words', ml.count === 7 && /April 2026/.test(ml.words) && /and more/.test(ml.words) && ml.items.length === 7, JSON.stringify(ml));
+  X.T.setting.get(SHOP).enabled_at = '2026-10-13T04:00:00.000Z';
+  const late = get(await todo(), 'months_not_locked');
+  X.T.setting.get(SHOP).enabled_at = '2026-04-01T04:00:00.000Z';
+  ok('FX-UX1: a ledger switched on in October → only October is a month to lock (April–September had no books; never shown as work)', late && late.count === 1 && late.items[0].month === '2026-10' && !/April|September/.test(late.words), JSON.stringify(late));
   const gd = get(t1, 'gst_due');
   ok('GST due: the output tax of three months stands unpaid; the row is for October (the last month over), due the 20th of the next month (gst-returns.dueDate), not yet past',
     gd.count === 1 && gd.items[0].month === '2026-10' && gd.items[0].due === '2026-11-20' && gd.items[0].overdue === false && gd.items[0].owed_minor === 3 * 18000 && /20 Nov/.test(gd.words), JSON.stringify(gd));
