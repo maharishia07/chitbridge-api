@@ -3483,6 +3483,8 @@
   <!-- ⭐ M41: one line, OUTSIDE the slipbox so it never prints — this bill saved, but not as a tax invoice. Filled by showSlip(). -->
   <div id="slipwarn" data-testid="till-slip-notinvoice" hidden></div>
   <div class="slipbox" id="slipbox"></div>
+  <!-- ⭐ FX-CT1: does the server hold the same day? OUTSIDE the slipbox, so it never prints. Filled by dayCheckPaint(). -->
+  <div id="slipdaycheck" data-testid="till-day-check" role="status" hidden></div>
   <!-- ⭐⭐ SHARE AND FINDABLE (T67). navigator.share where the browser has it; wa.me / sms: / Copy where it does not — never a
        receipt with no way off the screen it was shown on. Hidden outside showSlip() (the paid bill), so a KOT or a day-close
        sheet, which share this one dialog, keep the words that belong to them. -->
@@ -5376,10 +5378,12 @@ var CloudHost = {
     var since = new Date(Date.now() - (days || 1) * 86400000).toISOString().slice(0, 10);
     return all.filter(function(b){ return String(b.at||'').slice(0,10) >= since && !isDocRow(b); }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
   },
-  async history(days){
+  /** FX-CT1: `till` asks for ONE counter's bills (the day report's check) — filtered by the server, before its limit */
+  async history(days, till){
     if (!this.cred() || !lineUp()) return { bills: [], offline: true };
     try {
-      var r = await fetchBy(this.api + '/api/till/bills?days=' + (days||30) + '&limit=200', { headers: this.auth() }, SLOW);
+      var r = await fetchBy(this.api + '/api/till/bills?days=' + (days||30) + '&limit=' + (till ? 500 : 200)
+        + (till ? '&till=' + encodeURIComponent(till) : ''), { headers: this.auth() }, SLOW);
       if (!r.ok) return { bills: [], offline: true, why: 'HTTP ' + r.status };
       return await r.json();
     } catch (e) { return { bills: [], offline: true, why: e.message }; }
@@ -6822,6 +6826,7 @@ async function refresh(){
     await load();
     var n = ((S && S.items) || []).length;
     toastLine(n ? (fmtCount(n) + ' products, up to date.') : 'Read the shop.');
+    dayReread(false).catch(function(){});   /* FX-CT1: and this counter's day, so a wiped browser gets its bills back */
   } finally { busyDone(); }
 }
 
@@ -21608,10 +21613,93 @@ async function dayClose(){
   var cb = document.getElementById('slipdayclose'); if (cb) cb.hidden = !!d.closed || SLIP_DOC !== 'day';
   dayClosedButtons(!!d.closed);
   DAY_D = d; DAY_ROWS = rows;
+  dayCheckPaint(d.closed ? null : { state: 'asking' });
   var sd = document.getElementById('slipdlg'); if (sd.open) sd.close();   /* a bill slip still open: showModal on it would not repaint */
   sd.showModal();
+  if (d.closed) return;
+  var chk = await dayServerCheck(rows);
+  if (tok !== DAY_TOK || DAY_D !== d) return;
+  d.server = chk;
+  dayCheckPaint(chk);
 }
 var DAY_D = null, DAY_ROWS = [];
+/**
+ * ⭐⭐ FX-CT1 — THE DAY REPORT ASKS THE SERVER BEFORE IT MAY CLOSE (walk 14 Oct, NIGHT-2026-10-13 F3). A counter opened in a
+ * browser whose storage was gone read "0 bills · ₹0.00" from its own empty store and offered Close the day — while the server
+ * held its ₹90 bill. The report now asks what the server holds for THIS counter (GET /api/till/bills?till=, the read "Earlier
+ * bills" already uses) and compares by BILL NUMBER: the count and the money of each side's extras are the sentence.
+ *   agree   → as before · differ → one line, the button that fixes it, Close the day greyed WITH that line
+ *   offline → the report says it could not check; closing is not held back (offline-first — the books still post tonight)
+ * ⚠️ Nothing here touches billing: only the close waits. Expenses never reach /bills, so they are left out of both sides.
+ */
+function dayKeyOf(at){ var t = new Date(at); return isNaN(t) ? String(at || '').slice(0, 10) : t.toISOString().slice(0, 10); }
+async function dayServerCheck(rows){
+  if (!(HOST && HOST.history && HOST.cred && HOST.cred())) return null;      /* the shop PC's program keeps its own day */
+  var h; try { h = await HOST.history(2, tillId()); } catch (e) { h = { offline: true }; }
+  if (!h || h.offline || !Array.isArray(h.bills)) return { state: 'offline' };
+  var day = dayKeyOf(Date.now()), counted = function(b){ return b && b.no && !isDocRow(b) && !isExpenseRow(b); };
+  var mine = {}, theirs = {};
+  (rows || []).filter(counted).forEach(function(b){ mine[String(b.no)] = b; });
+  h.bills.filter(function(b){ return counted(b) && dayKeyOf(b.at) === day; }).forEach(function(b){ theirs[String(b.no)] = b; });
+  var more = Object.keys(theirs).filter(function(k){ return !mine[k]; }).map(function(k){ return theirs[k]; });
+  var fewer = Object.keys(mine).filter(function(k){ return !theirs[k]; }).map(function(k){ return mine[k]; });
+  var sum = function(l){ return l.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0); };
+  return { state: (more.length || fewer.length) ? 'differ' : 'agree', more: more, fewer: fewer,
+           moreTotal: sum(more), fewerTotal: sum(fewer) };
+}
+/** the one line under the day report, and the close greyed WITH it while the two sides disagree */
+function dayCheckPaint(chk){
+  var el = document.getElementById('slipdaycheck'), cb = document.getElementById('slipdayclose');
+  var held = !!(chk && chk.state === 'differ');
+  if (cb) { cb.disabled = held; cb.title = held ? 'The server and this device disagree about today — fix that first' : ''; }
+  if (!el) return;
+  if (!chk) { el.hidden = true; el.innerHTML = ''; return; }
+  var bills = function(n){ return n + (n === 1 ? ' bill' : ' bills'); };
+  /* ⭐ the slip warning's own row (showSlip, M41): `.t.warnrow` + a `.foldbtn` fix — a quiet `.t.count` when there is nothing to fix */
+  var quiet = function(w){ return '<div class="t count"><span>' + w + '</span><span></span></div>'; };
+  var warn = function(id, w, bid, fn, label){
+    return '<div class="t warnrow"><span data-testid="' + id + '">' + w + '</span><span><button type="button" class="foldbtn" data-testid="'
+      + bid + '" onclick="' + fn + '">' + label + ' ›</button></span></div>'; };
+  var html;
+  if (chk.state === 'asking') html = quiet('Checking today with the server…');
+  else if (chk.state === 'offline') html = quiet('Could not check today with the server — the line is down.');
+  else if (chk.state === 'agree') html = quiet('The server holds the same bills as this device.');
+  else html = (chk.more.length ? warn('till-day-check-more', 'The server has ' + bills(chk.more.length) + ' · ' + money(chk.moreTotal)
+                 + ' from this counter today that this device does not.', 'till-day-reread', 'dayReread(true)', 'Read the day again') : '')
+            + (chk.fewer.length ? warn('till-day-check-fewer', 'This device has ' + bills(chk.fewer.length) + ' · ' + money(chk.fewerTotal)
+                 + ' the server does not have yet.', 'till-day-sendnow', 'daySendNow()', 'Send them now') : '')
+            + quiet('Close the day waits until the two agree.');
+  el.dataset.state = chk.state;
+  el.innerHTML = html;
+  el.hidden = false;
+}
+/**
+ * ⭐ FX-CT1 — READ THE DAY AGAIN: this counter's bills the server holds and this device does not are written into the device's
+ * store, as SENT and VERIFIED (they came from the server — they are never queued, so never sent twice). F4 (refresh) does the
+ * same after it reads the shop, so "read the shop again" also brings the day back to a wiped browser.
+ */
+async function dayReread(reopen){
+  if (!(HOST && HOST.history && HOST.cred && HOST.cred())) return 0;
+  var h; try { h = await HOST.history(2, tillId()); } catch (_) { h = null; }
+  if (!h || h.offline || !Array.isArray(h.bills)) { if (reopen) toastLine('Could not reach the server — try again when the line is back.'); return 0; }
+  var have = {}; try { ((await DB.all('bills')) || []).forEach(function(b){ if (b && b.no) have[String(b.no)] = 1; }); } catch (_) {}
+  var day = dayKeyOf(Date.now()), n = 0;
+  for (var i = 0; i < h.bills.length; i++) {
+    var b = h.bills[i];
+    if (!b || !b.no || have[String(b.no)] || dayKeyOf(b.at) !== day) continue;
+    var row = Object.assign({}, b, { customer: { name: b.customer || 'Walk-in' }, _sent: { chit_id: b.chit_id }, _verified: Date.now(),
+                                     _from_server: true });
+    try { await DB.put('bills', row); n++; } catch (_) {}
+  }
+  TODAY_BILLS = null;
+  if (reopen) { toastLine(n ? ('Read ' + n + (n === 1 ? ' bill' : ' bills') + ' back from the server.') : 'Nothing new on the server.'); dayClose(); }
+  return n;
+}
+/** the reverse: bills this device holds that the server does not — send the queue, then look again */
+async function daySendNow(){
+  try { if (HOST && HOST.drain) await HOST.drain({ force: true }); } catch (_) {}
+  dayClose();
+}
 /** M84b: a CLOSED day offers Send the day (again) and Reopen; an open one offers Close the day */
 function dayClosedButtons(closed){
   var s = document.getElementById('slipdaysend'), r = document.getElementById('slipdayreopen');
@@ -21639,6 +21727,8 @@ function dayClosedMark(){
 /** the explicit act: record the close, SEND the day (M84), then show the sheet again saying so (and Print prints that) */
 function dayCloseDo(){
   var d = DAY_D; if (!d) return;
+  /* FX-CT1: never close a day the server disagrees with — the button is greyed with its line; this is the same rule, held here too */
+  if (d.server && d.server.state === 'differ') { toastLine('The server and this device disagree about today — fix that first.'); return; }
   var m = { day: new Date().toLocaleDateString('en-CA'), at: new Date().toISOString(), bills: d.bills, total: d.total,
             by: (WHO && WHO.name) || null };
   ls.set(shopLs('cb_till_dayclosed'), JSON.stringify(m));
@@ -22799,6 +22889,7 @@ function slipDocButtons(printOn, shareOn, doc){
   var dc = document.getElementById('slipdayclose'); if (dc) dc.hidden = true;   /* only the day report turns it on (dayClose) */
   try { dayClosedButtons(false); } catch (_) {}
   var sw = document.getElementById('slipwarn'); if (sw) { sw.hidden = true; sw.innerHTML = ''; }   /* only showSlip turns it on (M41) */
+  try { dayCheckPaint(null); } catch (_) {}   /* FX-CT1: the server line belongs to the day report alone (dayClose) */
   var pr = document.getElementById('slipprint'); if (pr) pr.style.display = printOn ? '' : 'none';
   var sh = document.getElementById('slipshare'); if (sh) sh.hidden = !shareOn;
   var alt = document.getElementById('slipshare_alt'); if (alt) { alt.hidden = true; alt.innerHTML = ''; }
