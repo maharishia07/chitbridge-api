@@ -1279,7 +1279,8 @@
       "wire": null,
       "fired": true,
       "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the customer: the copy held + the row, the status writer's own trips (moveStatus), the row's move, two history lines; on the stub: 404 (a floor)"
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the customer: the copy held + the row, the status writer's own trips (moveStatus), the row's move, two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
     },
     "POST /api/repeat/:id/counter": {
       "file": "repeat-supply.js",
@@ -1295,7 +1296,8 @@
       "wire": null,
       "fired": true,
       "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as accept (the status writer, best-effort) + the row's move; on the stub: 404 (a floor)"
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as accept (the status writer, best-effort) + the row's move; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
     },
     "POST /api/repeat/:id/skip": {
       "file": "repeat-supply.js",
@@ -1303,7 +1305,8 @@
       "wire": null,
       "fired": true,
       "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): either side: the row (+ the copy held for the customer), the move, two history lines; on the stub: 404 (a floor)"
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): either side: the row (+ the copy held for the customer), the move, two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
     },
     "POST /api/repeat/:id/agree": {
       "file": "repeat-supply.js",
@@ -1311,7 +1314,8 @@
       "wire": null,
       "fired": true,
       "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, the move, two history lines; on the stub: 404 (a floor)"
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, the move, two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
     },
     "POST /api/repeat/:id/refuse": {
       "file": "repeat-supply.js",
@@ -1319,7 +1323,8 @@
       "wire": null,
       "fired": true,
       "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor)"
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
     },
     "POST /api/repeat/:id/pause": {
       "file": "repeat-supply.js",
@@ -1327,7 +1332,8 @@
       "wire": null,
       "fired": true,
       "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor)"
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
     },
     "POST /api/repeat/:id/resume": {
       "file": "repeat-supply.js",
@@ -1335,7 +1341,8 @@
       "wire": null,
       "fired": true,
       "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor)"
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
     },
     "POST /api/repeat/:id/end": {
       "file": "repeat-supply.js",
@@ -1343,7 +1350,8 @@
       "wire": null,
       "fired": true,
       "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor)"
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
     },
     "POST /api/repeat/:id/run": {
       "file": "repeat-supply.js",
@@ -1351,7 +1359,8 @@
       "wire": null,
       "fired": true,
       "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, then per due day one loopback send (its own request) + the move + two history lines; on the stub: 404 (a floor)"
+      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, then per due day one loopback send (its own request) + the move + two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
     }
   }
 }
