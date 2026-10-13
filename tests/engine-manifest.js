@@ -207,7 +207,8 @@ const INFRA_LIBS = [
   /* [CB Sides] the two panels' read (sides: SQL + the reuses) and the impact walk shared with raida.walk (impact: pure graph rule, used by the register and the panel) (2026-10-09) */
   'sides.js', 'impact.js',
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
-  'crm.js', 'crm-followups.js', 'memberships.js', 'crm-calls.js', 'crm-leads.js',   /* L3: leads from a CSV — SQL over the lists + the one phone helper; the pure half (normalise · plan) is tested, not an engine */
+  'crm.js', 'crm-followups.js', 'memberships.js', 'crm-calls.js', 'crm-leads.js',
+  'privacy.js',   /* CO1: consent rows (b306) + the request register (b307) — SQL through the CRM's handle; the gate (mayMessage) is pure but tiny, not an engine */   /* L3: leads from a CSV — SQL over the lists + the one phone helper; the pure half (normalise · plan) is tested, not an engine */
   /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */
   'books-tally.js',
   /* one translation of a refusal the database makes ON PURPOSE (b247's population boundary) into a 409 in words, used

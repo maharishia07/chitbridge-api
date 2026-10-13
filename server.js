@@ -256,7 +256,7 @@ app.use('/api/actors/check-login', checkLoginLimiter);
 const publicLimiter = rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false,
   keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64) });
 app.use(['/.well-known', '/api/ctp/.well-known', '/api/openapi.json', '/api/entities/constitutions', '/api/events/stream',
-         '/api/simulator', '/api/testing/vocabulary', '/api/connectors/ingest', '/api/connectors/erp-ingest', '/api/capture/webhook'],
+         '/api/simulator', '/api/testing/vocabulary', '/api/connectors/ingest', '/api/connectors/erp-ingest', '/api/capture/webhook', '/api/privacy/facts'],
         publicLimiter);
 
 // Customer-facing catalogue / order / OTP — rate-limit to blunt OTP spam + brute force on the no-login surface

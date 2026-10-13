@@ -51,6 +51,17 @@ Every key is a READ of what exists; nothing is stored and no money is computed h
 | bell event `followup` | — | derived by the sweep | `lib/crm-followups.sweep` | the app's bell: `{ kind: 'followup', for, today, late }` over SSE |
 | bell event `message` | — | derived | `POST /api/chits/:id/messages` (external only) | the app's bell: `{ kind: 'message', id: chit_id, who }` |
 
+## CO1 privacy — migrations b306 · b307 (DRAFT, Athi runs them) and the public facts (2026-10-13)
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `party_contact_pref.*` (pref_id · owner_entity_id · party_id · channel · purpose · allowed · basis · noted_at · noted_by · withdrawn_at) | b306 | source — append-only; the newest row per (party, channel, purpose) is the answer | `POST /api/crm/parties/:id/contact-prefs` | `GET` of the same; `lib/privacy.mayMessage` |
+| `party_contact_pref.notice_version` (new beside the DATA.md §5 design) | b306 | source: env `PRIVACY_NOTICE_VERSION` at the moment the row is written (NULL until the owner publishes a notice) | `lib/privacy.notePref` | the consent history (proof under DPDP s.6(10)) |
+| `may[channel][purpose]` = `{ may, why }` on GET contact-prefs | — | derived (`lib/privacy.mayMessage`) | nobody | any sender (none yet), the record's privacy block |
+| `privacy_request.*` (request_id · owner_entity_id · party_id · who · kind · country · received_at · due_at · answered_at · answered_by · outcome · answer · created_by · created_at) | b307 | source; `due_at` derived at insert from `lib/privacy.DUE_DAYS`; answered once (trigger) | `POST /api/crm/privacy-requests` · `/:id/answer` (owner) | `GET /api/crm/privacy-requests` |
+| `late` · `answered_late` · `open` · `late` (list) · `may_answer` · `why` | — | derived by the server | nobody | the register's reader |
+| `GET /api/privacy/facts` → `notice_version` · `notice` · `contact` · `contact_line` · `processors[]` (name · role · region · source · on) · `due_days` | — | `lib/privacy.FACTS` + env (`RAILWAY_REGION`, `PRIVACY_NOTICE_VERSION`, `PRIVACY_CONTACT`; a provider is `on` when its key is set) | nobody (config) | the Standards register's privacy rows (live check); web docs/compliance/ROPA.md |
+
 ## POST /api/books/payments/preview · POST /api/books/payments (M26, 2026-10-08 · SPEC-payments §2.4, §4.1, §4.2 · PAY D5 as written)
 
 No money is computed here: the proposal is `CBReceivables.propose` through ONE function, `lib/books.js proposeFor` (preview, the one-call record and `/payments/:id/propose` all call it); the figures are the engine's `outstanding`; the words are built server-side once (`paymentOutcome`, `duplicateWarnings`) and the web paints them.

@@ -1,4 +1,4 @@
-// @stage built
+// @stage tested
 // @stage-note [CO1] GET /api/privacy/facts — public: who processes the data, where, the notice in force and the privacy contact.
 'use strict';
 /**
