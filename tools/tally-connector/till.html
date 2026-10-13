@@ -5861,6 +5861,41 @@ function packSplitsByState(){ try { var p = shopPack(); return !p || !p.tax || !
 /** does the shop's pack carry UPI among its payment modes (reg-in chart.paymentModes.upi)? Elsewhere a counter's own UPI payee is not offered — an NPCI QR with cu=AUD pays nobody. */
 function packHasUpi(){ try { var p = shopPack(); return !p || !!(p.chart && p.chart.paymentModes && p.chart.paymentModes.upi); } catch (_) { return true; } }
 /**
+ * ⭐ CX1 (T1, 2026-10-13): WHAT THIS BILL MUST BE, BY THE SHOP'S LAW — the pack's own taxInvoice(total_minor, { buyer_registered }) (reg-au s.29-70:
+ * the buyer's identity or ABN from A$1,000 · reg-ae ER Art. 59: full or simplified, the buyer's TRN on a full one). India's pack has no such member
+ * (Rule 46 is the slip as it always was), so this answers null there and nothing on an Indian bill changes. `buyerId` = the buyer's tax id, if any.
+ */
+function invoiceRule(total, buyerId){
+  try { var p = shopPack(); return p && typeof p.taxInvoice === 'function' ? p.taxInvoice(shopMinor(total), { buyer_registered: !!buyerId }) : null; }
+  catch (_) { return null; }
+}
+/** the bill's buyer is NAMED (a typed name or their tax id) — what reg-au's buyer_identity asks for; "Walk-in" names nobody */
+function buyerNamed(c){ var n = String((c && c.name) || '').trim(); return !!(c && c.gstin) || (!!n && n !== 'Walk-in'); }
+/** ⭐ CX1 (T2): a COUNT written the way this shop writes its figures — the locale engine's one table (moneyTag: lakh grouping for the rupee
+ *  only, 1,234,567 elsewhere). An Indian shop reads exactly what toLocaleString('en-IN') gave it. */
+function shopCount(n){
+  var cur = (S && S.shop && S.shop.currency) || 'INR', tag = 'en-IN';
+  try { if (window.CBLocale && CBLocale.moneyTag) tag = CBLocale.moneyTag(cur); } catch (_) {}
+  return Number(n).toLocaleString(tag);
+}
+/**
+ * ⭐ CX1 (T4): THE LANGUAGES THE COUNTER HEARS, from the shop's country — the locale engine's region row (CBLocale.REGIONS[c].langs, the one list),
+ * each tagged with the country so the speech service hears that country's accent. India keeps the four it always offered (the static <select>);
+ * a country with no region row yet (Australia, until CX7's pack.locale) hears its own English. Default: English when the region speaks it.
+ */
+function voiceLangs(){
+  var c = docCountry();
+  if (c === 'IN') return null;   /* the page's own four options, untouched */
+  var r = null; try { r = window.CBLocale && CBLocale.REGIONS && CBLocale.REGIONS[c]; } catch (_) {}
+  var langs = (r && r.langs && r.langs.length) ? r.langs : ['en'];
+  return langs.map(function(l){ return l + '-' + c; });
+}
+function tillLang(){
+  var v = ls.get('cb_till_lang', ''), list = voiceLangs();
+  if (!list) return v || 'en-IN';
+  return v && list.indexOf(v) >= 0 ? v : (list.indexOf('en-' + docCountry()) >= 0 ? 'en-' + docCountry() : list[0]);
+}
+/**
  * ⭐ WHICH PREFIX THIS COUNTER NUMBERS UNDER. A keyed counter / the shop PC: the device-wide answer the shop gave it
  * (cb_till_id, C1 until told otherwise). ⭐ M08 — a PERSON's device: its own label under the shop's slot, never C1
  * (the shop PC's) and never the key's old number — deviceLabel() until the shop assigns one (M11, via tillClaim).
@@ -6775,7 +6810,7 @@ async function refresh(){
     busyAt(1, 1, 'Sorting it out…');
     await load();
     var n = ((S && S.items) || []).length;
-    toastLine(n ? (Number(n).toLocaleString('en-IN') + ' products, up to date.') : 'Read the shop.');
+    toastLine(n ? (shopCount(n) + ' products, up to date.') : 'Read the shop.');
   } finally { busyDone(); }
 }
 
@@ -6953,6 +6988,12 @@ function booksMajor(minor){
   var cur = (S && S.shop && S.shop.currency) || 'INR';
   var dec = (window.CBMoney && CBMoney.decimals) ? CBMoney.decimals(cur) : 2;
   return r2(Number(minor || 0) / Math.pow(10, dec));
+}
+/** an amount → minor units in the shop's own currency — booksMajor's inverse, the same decimals (CX1: the pack's taxInvoice takes minor) */
+function shopMinor(amount){
+  var cur = (S && S.shop && S.shop.currency) || 'INR';
+  var dec = (window.CBMoney && CBMoney.decimals) ? CBMoney.decimals(cur) : 2;
+  return Math.round(r2(amount) * Math.pow(10, dec));
 }
 function creditDaysOf(c){
   var d = c && c.credit_days;
@@ -14210,7 +14251,7 @@ function shelfLine(shown){
       + '<button class="daylink" data-testid="till-start-shop" onclick="startOpen()">Start your shop</button></div>';
   }
   var when = S.at ? hhmm(S.at) : null;
-  var n = function(v){ return Number(v).toLocaleString('en-IN'); };
+  var n = shopCount;   /* CX1 (T2): the shop's own grouping */
   var txt;
   if (FILTER.off)        txt = shown ? (n(shown) + ' off the shelf right now — tap one to put it back')
                                      : 'Nothing is off the shelf. Everything on this counter can be sold.';
@@ -17178,7 +17219,7 @@ function listenServer(into, btn){
       var names = ((S && S.items) || []).slice(0, 20).map(function(i){ return i.name; }).join(', ');
       var out = null;
       try { out = await HOST.listen({ audio: b64, mime: blob.type, format: (blob.type.indexOf('mp4') >= 0 ? 'mp4' : 'webm'),
-                                      lang: ls.get('cb_till_lang','en-IN'), hint: names }); } catch (e) { out = { ok:false, why:e.message }; }
+                                      lang: tillLang(), hint: names }); } catch (e) { out = { ok:false, why:e.message }; }
       if (!out || !out.ok) {
         toastLine('Could not make out what was said' + (out && out.why ? ' — ' + out.why : '') + '.');
         return;
@@ -17212,7 +17253,7 @@ function listen(into){
   if (_rec) { try { _rec.stop(); } catch (_) {} _rec = null; if (btn) btn.classList.remove('on'); return; }
   var R = window.SpeechRecognition || window.webkitSpeechRecognition;
   _rec = new R();
-  _rec.lang = ls.get('cb_till_lang', 'en-IN');
+  _rec.lang = tillLang();
   _rec.interimResults = true;
   _rec.maxAlternatives = 1;
   if (btn) btn.classList.add('on');
@@ -17279,7 +17320,7 @@ function voiceSay(text){
   try {
     window.speechSynthesis.cancel();                            /* one voice at a time, never queued behind the last */
     var u = new SpeechSynthesisUtterance(text);
-    u.lang = ls.get('cb_till_lang', 'en-IN');
+    u.lang = tillLang();
     /* ⭐ §5.6 "the header icon carries both" — the small speaker lights up for exactly as long as this utterance runs */
     var badge = document.getElementById('micspk');
     u.onstart = function(){ if (badge) badge.hidden = false; };
@@ -18073,16 +18114,32 @@ function dayWarnWords(){
   if (open && !old) return '';
   return (open ? '' : 'Day not opened') + (open || !old ? '' : ' · ') + (old ? 'prices ' + h + ' h old' : '');
 }
-function billWarnHTML(){
+function billWarnHTML(m){
   var out = [], un = unratedNames(), cl = shopTax().charges ? shopStateClash() : null;
   var dw = dayWarnWords(); if (dw) out.push(billWarnLine('day', dw, 'Open the day'));
   if (un.length) out.push(billWarnLine('norate', un.length + (un.length === 1 ? ' item has' : ' items have') + ' no tax rate'));
   if (cl) out.push(billWarnLine('state', 'GSTIN state ≠ address'));
+  var bw = buyerWarnWords(m); if (bw) out.push(billWarnLine('buyer', bw, 'Name them'));
   return out.join('');
 }
+/**
+ * ⭐ CX1 (T1): the pack says this bill must NAME ITS BUYER (reg-au: a tax invoice of A$1,000 or more shows the buyer's identity or ABN, s.29-70(1)(c)(ii))
+ * and nobody is named yet. One line on the bill, never a stop: the sale still goes, as a bill that is NOT a tax invoice (finish → not_invoice).
+ * India's pack has no taxInvoice member → never shown there.
+ */
+function buyerWarnWords(m){
+  if (!m || shopTax().kind !== 'tax' || !(Number(m.tax) > 0)) return '';
+  var cust = custKnown(), nm = String((document.getElementById('cname') || {}).value || '').trim();
+  var rule = invoiceRule(m.net, cust && cust.gstin);
+  if (!rule || !rule.buyer_identity || buyerNamed({ name: nm, gstin: cust && cust.gstin })) return '';
+  return 'Over ' + money(buyerFromMajor()) + ' a tax invoice names the buyer';
+}
+/** the amount from which the pack wants the buyer named (reg-au tax.taxInvoice.buyer_identity_from_minor), in the shop's money */
+function buyerFromMajor(){ try { var t = shopPack().tax.taxInvoice; return booksMajor(t.buyer_identity_from_minor); } catch (_) { return 0; } }
 /** ⭐ Fix › — the full wording, then the one door: the catalogue for a rate, the shop's profile for the GSTIN / address */
 async function billWarnFix(which){
   if (which === 'day') { openMenuAt('day'); return; }
+  if (which === 'buyer') { var cn = document.getElementById('cname'); if (cn) { try { cn.focus(); } catch (_) {} } return; }   /* CX1: the name box is the fix */
   var st = which === 'state', cl = st ? shopStateClash() : null, un = st ? [] : unratedNames();
   var msg = st ? (cl ? cl.words + '\n\n' + cl.fix : 'The shop’s details agree now.')
                : (un.length ? un.join(', ') + '\n\nNo GST is charged on ' + (un.length === 1 ? 'it' : 'them')
@@ -18203,7 +18260,7 @@ function health(){
 
   /* ⭐ what this counter is holding, and from when — the first thing to check when a catalogue change has not appeared */
   if (items.length)
-    add('note', Number(items.length).toLocaleString('en-IN') + ' products on this counter',
+    add('note', shopCount(items.length) + ' products on this counter',
       'Read from ChitBridge' + (S.at ? ' at ' + hhmm(S.at) + ' on ' + new Date(S.at).toDateString() : '')
         + '. Anything added or repriced since then is not here yet.',
       'Press the arrow button while the internet is on to read it again.');
@@ -20453,7 +20510,7 @@ function paintTotals(){
   var toggle = detail.trim()
     ? '<div class="t foldrow"><button type="button" class="foldbtn" data-testid="till-sum-fold" onclick="toggleSum()">'
       + (SUMFOLD ? '▸ tax &amp; offer breakdown' : '▾ hide breakdown') + '</button></div>' : '';
-  document.getElementById('totals').innerHTML = (CART.length ? billWarnHTML() : '')
+  document.getElementById('totals').innerHTML = (CART.length ? billWarnHTML(m) : '')
     + '<div class="totdetail" data-testid="till-sum-detail"' + (SUMFOLD ? ' hidden' : '') + '>' + detail + '</div>'
     + toggle
     + savedHead
@@ -21182,6 +21239,8 @@ async function finish(){
   /* ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41: a details mismatch never costs
      a sale). A taxed bill saves as NOT a tax invoice (not_invoice, slipHTML); an untaxed one has nothing to contradict. */
   var clash = (shopTax().charges && Number(m.tax) > 0) ? shopStateClash() : null;
+  /* ⭐ CX1 (T1): …and a bill the shop's law says must name its buyer, with nobody named (buyerWarnWords) — the same honest title, not a stop */
+  var noBuyer = !clash && !!buyerWarnWords(m);
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();
@@ -21264,7 +21323,10 @@ async function finish(){
                             cust ? { identity_id: cust.identity_id } : {},
                             /* ⭐ a business on the rail: the bill is SENT to them too (billRecipients) — stamped now, from
                                the snapshot this bill was rung up against, so a queued bill keeps whom it was for */
-                            cust && cust.entity_id ? { entity_id: cust.entity_id } : {}),
+                            cust && cust.entity_id ? { entity_id: cust.entity_id } : {},
+                            /* ⭐ CX1 (T1): the buyer's ABN / TRN on the bill, under a pack whose tax invoice names it (invoiceRule; reg-au · reg-ae).
+                               The slot the chit already has — business_json.customer.gstin (lib/books-hooks, lib/tax-copy read it). India: unchanged. */
+                            cust && cust.gstin && invoiceRule(m.net, cust.gstin) ? { gstin: cust.gstin } : {}),
     /* ⭐ BOOKS v2 — the terms travel on the chit, so both copies carry the same due date (SPEC-credit-lifecycle §3) */
     terms: credit && cust ? { credit_days: creditDaysOf(cust), due_date: dueDateFor(cust) } : null,
     credit_override: override,
@@ -21272,7 +21334,7 @@ async function finish(){
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     kind: shopTax().kind,
     /* ⭐ WHY THIS TAX BILL IS NOT A TAX INVOICE, recorded with it (M41): a reprint after the shop is fixed must not turn it into one */
-    not_invoice: clash ? 'shop_details' : null,
+    not_invoice: clash ? 'shop_details' : (noBuyer ? 'buyer_identity' : null),
     /* ⭐ WHO CHECKED WHAT, AND WHEN. A shop that is inspected must be able to show the check happened. */
     age_checks: ageRecord(),
     /* ⭐ where the order went, recorded WITH the bill — a reprint months later has to say Table 6, not guess
@@ -22491,6 +22553,18 @@ function slipHeadHTML(kind){
     + (shop.phone ? '<div style="text-align:center">Ph ' + esc(shop.phone) + '</div>' : '')
     + (kind !== 'cash' && shop.gstin ? '<div style="text-align:center">' + taxIdLabel() + ' ' + esc(shop.gstin) + '</div>' : '');
 }
+/**
+ * ⭐ CX1 (T1): THE BUYER ON THE PAPER, where the shop's law asks for it — the buyer's ABN / TRN on a tax invoice (reg-au s.29-70(1)(c)(ii); reg-ae
+ * ER Art. 59(1)(c)), and, on a bill saved without a named buyer above the pack's line, why it is not a tax invoice. Only under a pack with a
+ * taxInvoice member, so an Indian slip prints exactly what it did.
+ */
+function slipBuyerHTML(bill, t){
+  if (!bill || bill.kind !== 'tax' || !invoiceRule(bill.total, bill.customer && bill.customer.gstin)) return '';
+  var g = bill.customer && bill.customer.gstin;
+  return (g ? t('Buyer ' + taxIdLabel(), esc(g)) : '')
+    + (bill.not_invoice === 'buyer_identity' ? '<div data-testid="till-slip-nobuyer" style="font-size:.9em">Over ' + money(buyerFromMajor())
+      + ' a tax invoice names the buyer or their ' + taxIdLabel() + ' — none was given.</div>' : '');
+}
 function slipHTML(bill, m){
   var shop = (S && S.shop) || {};
   var unrated = unratedOnBill(bill);
@@ -22508,6 +22582,7 @@ function slipHTML(bill, m){
     + t(esc(counterName()) + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in'))
     /* ⭐ DINE-IN (table 4) / TAKEAWAY / DELIVERY — the bill already carries it (BF8) */
     + billOrderRow(bill, t)
+    + slipBuyerHTML(bill, t)
     /* ⭐ BOOKS v2 — a credit bill says so on the paper, and when it is due */
     + (bill.terms ? t('<b>ON CREDIT</b>', bill.terms.due_date ? '<b>Due by ' + esc(bill.terms.due_date) + '</b>' : 'shop’s terms') : '')
     /* ⭐ the two-sided bill says so, in one line: the customer has their own copy on ChitBridge */
@@ -22688,6 +22763,9 @@ function showSlip(bill, m){
   if (sw && bill.not_invoice === 'shop_details') {
     sw.innerHTML = '<div class="t warnrow"><span>⚠ Not a tax invoice — shop details disagree</span><span><button type="button" class="foldbtn" '
       + 'data-testid="till-slip-notinvoice-fix" onclick="billWarnFix(\'state\')">Fix ›</button></span></div>';
+    sw.hidden = false;
+  } else if (sw && bill.not_invoice === 'buyer_identity') {   /* CX1 (T1) */
+    sw.innerHTML = '<div class="t warnrow" data-testid="till-slip-nobuyer-warn"><span>⚠ Not a tax invoice — no buyer named. Next time, type their name first.</span><span></span></div>';
     sw.hidden = false;
   }
   document.getElementById('slipdlg').showModal();
@@ -26405,7 +26483,7 @@ function settingsGoto(sec){
 var TRAY_SWITCHES = [
   { id: 'hear', label: 'Hearing you', shortcut: 'F5',
     on: function(){ return ls.get('cb_till_speech', 'auto') !== 'off'; },
-    words: function(){ return this.on() ? 'on · ' + esc(langLabel(ls.get('cb_till_lang', 'en-IN'))) : 'off'; },
+    words: function(){ return this.on() ? 'on · ' + esc(langLabel(tillLang())) : 'off'; },
     toggle: function(){ ls.set('cb_till_speech', this.on() ? 'off' : 'auto'); } },
   { id: 'speak', label: 'Speaking back', shortcut: 'Shift F5',
     on: function(){ return voiceSpeakOn(); },
@@ -26423,7 +26501,14 @@ var TRAY_SWITCHES = [
 /** ⭐ the language row's own words, without inventing a second list of language names */
 function langLabel(v){
   var m = { 'en-IN': 'English (India)', 'ta-IN': 'தமிழ்', 'hi-IN': 'हिन्दी', 'en-GB': 'English (UK)' };
+  /* CX1 (T4): another country's tag is named by the locale engine's one list of language names (CBLocale.langName) */
+  if (!m[v] && window.CBLocale && CBLocale.langName) { try { return CBLocale.langName(String(v || '').split('-')[0]); } catch (_) {} }
   return m[v] || v;
+}
+/** CX1 (T4): outside India the Language row offers the shop's region's languages (voiceLangs); India's four stay as the page wrote them */
+function langOptsPaint(){
+  var list = voiceLangs(), el = document.getElementById('set_lang'); if (!list || !el) return;
+  el.innerHTML = list.map(function(v){ return '<option value="' + esc(v) + '">' + esc(langLabel(v)) + '</option>'; }).join('');
 }
 function trayOpen(){
   trayPaint();
@@ -26493,7 +26578,8 @@ function openSettings(tab){
   var kb = document.getElementById('set_kot'); if (kb) kb.checked = (tillOpt().kot === true);
   /* ⚠️ set_fs and set_rows went with the Screen tab ([TILL-81]) — text size lives in the hub, density in
      Screen style. Reading them here would be a third place that thinks it owns them. */
-  document.getElementById('set_lang').value = ls.get('cb_till_lang','en-IN');
+  langOptsPaint();
+  document.getElementById('set_lang').value = tillLang();
   document.getElementById('set_speech').value = ls.get('cb_till_speech','auto');
   var canHear = speechOK() || recordOK();
   ['mic','micphone','micname'].forEach(function(id){

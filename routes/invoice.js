@@ -29,19 +29,21 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
       excluded: l.excluded.length ? l.excluded : ((prod && Array.isArray(prod.offers_excluded)) ? prod.offers_excluded.map(String) : []) }); });
     /* 1 · pricing structure */
     const priced = lines.map((l) => Object.assign({}, l, S.priceLine(l, sh.productOf(l))));
+    const mine = await S.partyOfEntity(entity_id);
+    const seller = S.party(body.seller, mine);
+    /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */
+    const currency = body.currency || T.currencyOf(seller);
     /* 2 · offers on the priced lines */
-    const off = await S.offerLines(entity_id, priced, body.offers, { currency: body.currency || 'INR' });
+    const off = await S.offerLines(entity_id, priced, body.offers, { currency });
     const gross = priced.reduce((t, l) => t + l.unit_price * l.qty, 0);
     const orderOff = (off.ev.adjustments || []).filter((a) => a.scope !== 'line' && a.scope !== 'note').reduce((t, a) => t + Math.abs(Number(a.amount) || 0), 0);
     const withOffers = priced.map((l) => { const p = off.per[l.key] || {}; const lineOff = Number(p.off) || 0; const share = gross > 0 ? orderOff * (l.unit_price * l.qty) / gross : 0; return Object.assign({}, l, { discount: S.R2((l.discount || 0) + lineOff + share), offer_label: p.label || null }); });
     /* 3 · tax rates, then the block */
     const rated = S.rateLines(withOffers, sh);
-    const mine = await S.partyOfEntity(entity_id);
-    const seller = S.party(body.seller, mine);
     /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
     const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
     const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
-    const invoice = Object.assign({ DocDtls: { Typ: 'INV', No: null, Dt: new Date().toISOString().slice(0, 10) }, currency: body.currency || 'INR' }, det);
+    const invoice = Object.assign({ DocDtls: { Typ: 'INV', No: null, Dt: new Date().toISOString().slice(0, 10) }, currency }, det);
     res.json({ engine: 'chitbridge-invoice', version: 1, order: ['pricing structure', 'offers', 'tax'],
       pricing: priced.map((l) => ({ key: l.key, unit_price: l.unit_price, list_price: l.list_price, structure: l.structure, why: l.why })),
       offers: { subtotal: off.ev.subtotal, total: off.ev.total, adjustments: off.ev.adjustments || [], notes: off.ev.notes || [], considered: off.offers_considered },
