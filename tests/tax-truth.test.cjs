@@ -107,6 +107,8 @@ const PAGE_FNS = ['function billMoney(', 'function moneyOf(', 'async function fi
   'function slipHeadHTML(', 'function atShop(', 'function tzOpt(', 'function shopTz(',
   /* CX0 (2026-10-13): the pack's words on the paper — tax-id label, scheme, credit-note title — read from CBRegulation when the page has it */
   'function docCountry(', 'function shopPack(', 'function taxIdLabel(', 'function schemeWord(', 'function creditNoteTitle(',
+  /* CX1 (2026-10-13): what the shop's law asks of the bill (pack.taxInvoice — none in India's pack, so nothing here changes) */
+  'function invoiceRule(', 'function buyerNamed(', 'function buyerWarnWords(', 'function buyerFromMajor(', 'function slipBuyerHTML(', 'function shopMinor(', 'function booksMajor(',
   /* …and a refused sale is written down before it is said (M49) */
   'function saleStop(', 'function saleStopNote('];
 

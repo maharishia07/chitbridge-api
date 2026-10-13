@@ -210,7 +210,7 @@ const call = (port, method, p, body) => new Promise((done) => {
 
   console.log('— CS2 · an AUSTRALIAN shop: the switch seeds the AU chart from the pack (never India\'s with a fallback flag); a country corrected before any posting re-seeds —');
   const AUS = '55555555-5555-4555-8555-555555555555';
-  M.fakeDb.countryRow = { country: 'AU', currency_code: 'AUD', gstn: null, timezone: 'Australia/Sydney', policy_flags: {} }; GOVROW = { fy_start_month: 7, tax_registration: { registered: false }, setup_source: { country: 'AU' }, country_setup_at: new Date() }; CS._reset(); CS.forget(AUS);   /* INT3: the AU shop's OWN setup row (July) — CX0 reads the year from the setup, so India's row must not carry over */
+  M.fakeDb.countryRow = { country: 'AU', currency_code: 'AUD', gstn: null, timezone: 'Australia/Sydney', policy_flags: {} }; CS._reset(); CS.forget(AUS);
   await X.B.enable(X.db, AUS, { by: AUS, today: '2026-08-01' });
   let acc = await X.store.accounts(X.db, AUS), st2 = await X.store.setting(X.db, AUS);
   ok('enable for Australia seeds GST collected · GST paid · Trade Debtors and NO CGST; the setting says AU · AUD · July; the year is 2026-27 (July)', acc.some((a) => a.role === 'gst_collected') && acc.some((a) => a.name === 'Trade Debtors' && a.is_group) && !acc.some((a) => a.role === 'output_cgst') && st2.country === 'AU' && st2.functional_currency === 'AUD' && st2.fy_start_month === 7 && (await X.store.periods(X.db, AUS))[0].fiscal_year === '2026-27', JSON.stringify({ n: acc.length, st2 }));
@@ -233,7 +233,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   const fs = require('fs');
   const booksSrc = fs.readFileSync(path.join(API, 'lib', 'books.js'), 'utf8'), periodSrc = fs.readFileSync(path.join(API, 'lib', 'books-period.js'), 'utf8');
   const tillSrc = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  ok('books.enable reads country-setup.profile (country · currency · fy_start_month from their one home) — never \'IN\' before the profile', /(require\('\.\/country-setup'\)|CSU)\.profile\(h, entity\b/.test(booksSrc) && /cs\.country && cs\.country\.code/.test(booksSrc) && /o\.currency \|\| own\.currency/.test(booksSrc));
+  ok('books.enable reads country-setup.profile (country · currency · fy_start_month from their one home) — never \'IN\' before the profile', /require\('\.\/country-setup'\)\.profile\(h, entity(, \{ constitution: false \})?\)/.test(booksSrc) && /cs\.country && cs\.country\.code/.test(booksSrc) && /o\.currency \|\| own\.currency/.test(booksSrc));
   ok('gstClose and gstPay refuse outside India\'s pack (NOT_FOR_COUNTRY, with a sentence), never an Indian close on a fallback chart', /function indiaOnly\(s, what\)/.test(periodSrc) && /p\.fallback \|\|/.test(periodSrc) && (periodSrc.match(/indiaOnly\(s, /g) || []).length >= 2 && /NOT_FOR_COUNTRY/.test(periodSrc));
   ok('the till snapshot reads a state off the tax number only under a state-split pack (tax-packs supply \'state\'), and bills in the pack\'s money', /const stateSplit = \(\(p\) => !p \|\| !p\.supply \|\| p\.supply === 'state'\)/.test(tillSrc) && /state_code: String\(gstin \|\| ''\)\.slice\(0, 2\) && stateSplit/.test(tillSrc) && /packFor\(cbCountry\) \|\| \{\}\)\.currency\) \|\| 'INR'/.test(tillSrc));
   ok('…and the setup\'s money and year count only when the profile row is THIS country\'s (a stub row of another country is not the shop\'s fact)', /String\(cs\.country\.code\)\.toUpperCase\(\) === country \? cs : \{\}/.test(booksSrc));
