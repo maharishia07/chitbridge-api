@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # deploy/railway/spin.sh — ONE ISOLATED CHITBRIDGE ON RAILWAY, the reference platform (HX2). Plain bash + the railway CLI (v4).
 #   ONE new project cbspin-<id> (its name is the tag: teardown deletes only a project of that name): Postgres (Railway's template) ·
-#   api (this repo's Dockerfile) · web (the web repo's Dockerfile) · mail sink — each on https://<name>.up.railway.app (TLS by Railway).
+#   api (this repo's Dockerfile) · web (the web repo's Dockerfile) · mail sink — each on Railway's generated https domain (TLS by Railway).
 #   Object store: none native — attachments stay in Postgres (STORAGE_ADAPTER=db) unless S3_* name an S3-compatible store.
 #   ⚠️ Railway has no India region (nearest: asia-southeast1, Singapore) and the CLI cannot choose one: the project takes the
 #   workspace's default region — this spin is the non-resident REFERENCE, not a place for Indian shops' data.
@@ -39,7 +39,7 @@ service() {
   rw add --service "$1" >&2
   rw variables --service "$1" --skip-deploys "${kv[@]}" >&2
   rw up "$3" --service "$1" --detach >&2
-  rwo "https://$N-$1.up.railway.app" domain --service "$1" | grep -oE 'https://[^ ]+' | head -1
+  rwo "https://$N-$1.plan.example" domain --service "$1" | grep -oE 'https://[^ ]+' | head -1
 }
 SINK=$(mktemp -d); cp "$SPIN_API_DIR/deploy/mail-sink.cjs" "$SINK/"; cp "$SPIN_API_DIR/deploy/mail-sink.Dockerfile" "$SINK/Dockerfile"
 MAIL_URL=$(spin_sink_env | service mailsink 8025 "$SINK")
