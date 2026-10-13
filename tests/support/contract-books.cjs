@@ -110,6 +110,8 @@ async function captureBooks() {
     await q('GET', '/ledger/bank?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
     await q('GET', '/dues', null, '/dues');
     await q('GET', '/terms', null, '/terms');   /* F2: before b298 runs — terms_migrated false, the shop default empty */
+    await q('GET', '/cashflow?days=7', null, '/cashflow');   /* F3: the cash position — a 7-day run from the shop's today: the September sale and purchase overdue, GST beyond it */
+    await q('GET', '/cheques', null, '/cheques');   /* F3: + pdc_reminders beside the held cheques (none held in this scenario) */
     await q('GET', '/trial-balance?asOf=2027-03-31', null, '/trial-balance');
     await q('GET', '/pl?from=2026-04-01&to=2027-03-31', null, '/pl');
     await q('GET', '/bs?asOf=2027-03-31', null, '/bs');
@@ -190,6 +192,24 @@ async function captureBooks() {
     await q('GET', '/todo', null, '/todo');
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
+
+    /* ── BAS1: the shop's OWN return, prepared from its books — an Australian shop (BAS, full), a UAE shop (VAT201: first without the FTA stagger → `needs`, then with it),
+          and the Indian shop, whose /returns is a 422 (its GSTR comes from the rail). The 200s merge into one example; the 422 is its own entry. ── */
+    const AU_SHOP = 'aaaaaaaa-1111-4111-8111-111111111111', AE_SHOP = 'eeeeeeee-1111-4111-8111-111111111111';
+    IDS[AU_SHOP] = { identity_id: AU_SHOP, gstn: null, display_name: 'Bondi Grocer', country: 'AU', policy_flags: {} };
+    IDS[AE_SHOP] = { identity_id: AE_SHOP, gstn: null, display_name: 'Deira Stores', country: 'AE', policy_flags: {} };
+    for (const [shop, country, cur, head, rate, d1, d2, query] of [[AU_SHOP, 'AU', 'AUD', 'gst', 10, '2026-07-01', '2026-09-06', '?simpler=0'], [AE_SHOP, 'AE', 'AED', 'vat', 5, '2026-03-01', '2026-04-02', '?stagger=1&emirate=Dubai']]) {
+      OWNER.identity_id = shop; DAY = country === 'AU' ? '2026-10-20' : '2026-06-10';
+      await X.store.saveSetting(X.db, shop, { enabled: false, country });
+      await q('POST', '/enable', {});
+      X.T.parties.push({ owner: shop, party_id: SUPP, party_no: 'P-00001', name: 'Kumar Traders', supplier: true, credit_days: 30 });
+      await X.B.postEntry(X.db, shop, { type: 'walkin_day', ref: 'D1', date: d1, currency: cur, modes: { cash: 1000 / rate * 1 + 10 }, by_rate: [Object.assign({ rate, taxable: 1000 / rate }, { [head]: 10 })], round_off: 0, source_ref: 'walkin:C1:' + d1 });
+      await X.B.postEntry(X.db, shop, { type: 'purchase_bill', ref: 'P1', date: d2, currency: cur, party: SUPP, by_rate: [Object.assign({ rate, taxable: 5000 / rate }, { [head]: 50 })], paid: {}, round_off: 0, source_ref: 'pur:P1' });
+      if (country === 'AE') await q('GET', '/returns', null, '/returns');        /* no stagger yet: `needs: 'stagger'`, nothing guessed */
+      await q('GET', '/returns' + query, null, '/returns');
+    }
+    OWNER.identity_id = SHOP; DAY = '2027-04-10';
+    await q('GET', '/returns', null, '/returns');                                   /* India: 422 RETURN_FROM_RAIL */
   } finally { srv.close(); }
   return got;
 }

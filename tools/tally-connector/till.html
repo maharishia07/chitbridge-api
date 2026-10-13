@@ -18460,17 +18460,29 @@ function billMoney(){
      read here too, so a copy that came without the field still states its supply rather than charging no tax */
   var sc = String(sh.state_code || String(sh.gstin || '').trim().slice(0, 2) || '');
   var cust = custKnown(), g = cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '';
+  /* ⭐⭐ BUY1 (2026-10-12): THE COUNTER'S BUYER IS INSIDE THE SHOP'S COUNTRY. A pack whose tax turns on the BORDER (Australia, the
+     UAE) answers a buyer with no country 'unknown' — no GST, no VAT — and a walk-in has no country on record, so an Australian or
+     UAE shop billed tax-free. The goods are handed over at the counter, inside the shop's country: the same rule placeOfSupply
+     already applies to the state (IGST Act s.10(1)(a)), now applied to the country. The engine is right to refuse the guess; the
+     counter knows the shop. The server's seam is lib/tax-lines walkIn (the same rule, the same note). */
+  var shopCountry = String(sh.country || '').trim().toUpperCase();
   var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
     seller: { Gstin: sh.gstin || '', LglNm: sh.legal_name || sh.name || '', TrdNm: sh.name || '', Addr1: sh.address || '',
-              Ph: sh.phone || '', State: sc, Country: sh.country || '', RegType: sh.reg_type || 'regular' },
+              Ph: sh.phone || '', State: sc, Country: shopCountry, RegType: sh.reg_type || 'regular' },
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
              Gstin: g, State: /^\d{2}/.test(g) ? g.slice(0, 2) : '', RegType: g ? 'regular' : 'unregistered',
+             Country: shopCountry,
              Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY }, sc) },
     lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
       qty: Number(c.qty) || 0, unit_price: c.unitPrice != null ? c.unitPrice : (Number(c.price) || 0), discount: c.save || 0,
       gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0 }; }),
     priceIncludesTax: taxed && inclusive, zeroRated: !taxed
   }) : null;
+  /* ⭐ BUY1: when the BORDER decided (supply 'domestic' — never a state pack's intra/inter), the frozen invoice SAYS the buyer was
+     taxed as inside the shop's country; the note travels on the chit (business_json.invoice) like every engine note */
+  if (inv && inv._cb && inv._cb.supply === 'domestic' && shopCountry) {
+    inv._cb.notes = (inv._cb.notes || []).concat('Walk-in: taxed as a sale inside ' + shopCountry + '.');
+  }
   var m = moneyOf(inv);
   /* ⭐ each cart line shows its own figures — READ off its ItemList entry, the same row the invoice carries */
   CART.forEach(function(c, n){ var l = m.lines[n] || {}; c.taxable = l.taxable; c.tax = l.tax; c.cgst = l.cgst; c.sgst = l.sgst; c.igst = l.igst; });

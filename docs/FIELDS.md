@@ -249,3 +249,35 @@ A lead IS a party: a local identity on `customer_list` with `added_via = 'lead'`
 | `lead.moves` · `lead.may` (the record) | stages ≠ current · `{ ok }` or `{ ok: false, why }` | Server answer for "Move to…": greyed with `why` while b297 is not run. |
 | `memberships` row | entity_id · item_type · item_id · kind · grp · at · by_user_id | Append-only; RLS on entity_id; `membership_kind` is the dictionary of kinds and their groups. |
 | 503 `LEADS_NOT_MIGRATED` | `{ code, message }` | A write before b297: nothing is created. |
+
+## GET /api/books/cashflow?days=7|30 · GET /api/books/cheques `pdc_reminders` (CB Finance F3 · cash position, 2026-10-12)
+
+Every key is DERIVED by `lib/books-cashflow.project()` from what the books already hold — nothing is stored, nothing posts. Written by: nobody. Read by: the Finance page's Cash tab (`web:public/app/cap-finance-cash.js`). Owner only; 404 while the ledger is off. All money is an integer of minor units.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `asOf` · `days` · `from` · `to` | date · 7 or 30 · date · date | The shop's today (lib/shop-clock) and the horizon: `series` runs `from` (today) to `to` inclusive, `days` rows. |
+| `opening_minor` · `opening[]` | integer · `[{ role, code, name, balance_minor }]` | `CBLedger.balanceAsAt` over `books.asAtInput` (the trial balance's input): the net of the cash ROLE ledgers (`cash · bank · upi · card`), one row per ledger the chart has. |
+| `in_minor` · `out_minor` · `closing_minor` | integers | Σ over the series. `closing_minor = opening_minor + in_minor − out_minor`. |
+| `lowest` | `{ date, balance_minor }` | The lowest running balance in the horizon (today counts). |
+| `shortfall` | `{ date, short_minor, balance_minor, driver: { kind, ref, name, amount_minor } or null, words }` or null | The FIRST day the running balance is below zero; `driver` = the largest outgoing item that day (null when the opening itself is below zero). `words`: "On 18 Oct 2026 you will be ₹12,400 short — Sri Traders’ ₹30,000 is due that day." |
+| `words` | string | `shortfall.words`, else "You stay above zero for the next 7 days. Lowest ₹X on 15 Oct 2026." The screen paints this sentence; it composes none. |
+| `uncounted` | `{ overdue_in_minor, overdue_parties, disputed_in_minor, disputed_out_minor, words }` | What is NOT in the running balance and why: a receivable overdue with no promise (not counted until promised or paid — honest numbers), a disputed bill either way (C4). `words` names the overdue figure; '' when nothing is left out. |
+| `gst` | `{ payable_minor, due_date, counted, why }` or null | `books-period.gstPayableAt`: the posted GST ledgers after `CBPosting.gstSetOff` (the set-off the month close posts) + reverse charge in cash. `due_date` = the 20th of the month after `asOf` (GSTR-3B, r.61(1) — `books-cashflow.GST_DUE_DAY`, the pack has no return calendar yet). `counted` = it falls inside the horizon and is in `series`. `why` = the engine's sentence when the set-off was refused (then `payable_minor` 0). |
+| `series[]` | `[{ date, in_minor, out_minor, balance_minor, items[] }]` | One row per day, today first; a quiet day is a row with no items. `balance_minor` is the running balance after that day. |
+| `series[].items[]` | `{ kind, ref, party_id, name, amount_minor, date, due_date, promised, overdue, cheque_no }` | `kind`: `due_in` (a customer's open bill, `CBReceivables.outstanding`, on its due date — or on the PROMISE day from the open Dues follow-up, `promised: true`) · `due_out` (a supplier's open bill on its due date; overdue → today, `overdue: true`) · `cheque_in` / `cheque_out` (a cheque still HELD, on its cheque date — C3; the bills it will settle are covered oldest-due-first by `CBReceivables.propose`, so nothing counts twice) · `gst`. `ref` = the bill's against_ref, `pay:<payment_id>`, or `gst:<date>`. |
+| `GET /cheques` → `pdc_reminders[]` | `[{ payment_id, cheque_no, cheque_date, amount_minor, state }]` | `CBReceivables.pdcReminders` over the same rows as `cheques` (direction in, still `received`): `state` = `deposit_today` · `overdue_for_deposit` · `not_yet` (only within `PDC_LEAD_DAYS` = 7). The cheques list itself is unchanged. |
+
+## Leads from a CSV · POST /api/crm/leads/import (CB CRM L3, 2026-10-12)
+
+The browser parses the file and sends `rows` (≤ 500; more → 400 `TOO_MANY` "Import up to 500 leads at a time. Split the file."). No file reaches the server, no second contact list: a new row is the SAME party as Add lead makes (local-identity.mintMany · customer_list added_via 'lead' · memberships.addMany, the one writer). `lib/crm-leads.js`; who may: the owner or an editor-level login (lib/access.canEdit) — 403 `VIEW_ONLY` in words otherwise.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| body `rows[]` | `{ name, phone?, email?, business?, city?, source?, note? }` | Source: the CSV, after the Import sheet's column mapping (web cap-crm-leads.js). `phone` → rewards.holderOf (the one helper) → `identities.otp_contact` of the minted party; `business` → `customer_list.legal_name` (b274, when the column is there); `city` → `identities.city` (when there); `email` · `source` · `note` → ONE `party_interaction` note "Imported from …. Email …. …" (b276, when there) — never `identities.email` (a minted party has no account). |
+| body `dry` | boolean | true = the plan only (the preview): the one SELECT, nothing written, 200. Absent/false = the import, 201. |
+| `added` · `merged` | numbers | Derived by the server, once. `added` = new parties minted and listed; `merged` = parties the shop already had (same phone digits, or the same minted name) with no trade behind them, now leads: `customer_list.added_via` → 'lead' + a `lead` stage row. Read by the outcome card (large numbers). |
+| `skipped[]` | `{ row, name, phone, why }` | `row` = the file's row number (1-based). `why` ∈ No name · That looks like an email · Phone does not look right · Name too long · Same phone as row N · Same name as row N · Already a customer · Already a lead · Already a supplier. Read by the outcome card and its "Download skipped" CSV. |
+| `rows[]` | `{ row, name, phone, outcome, why, party_id }` | Every row's verdict: `outcome` ∈ add · merge · skip. The preview list paints this — it computes nothing. `party_id` = the matched party (merge/skip) or, after the import, the new one. |
+| `identities` set-based insert | mintMany | The same columns and constants as mint(); handles `~<shop>.cus-NNNN` numbered after the shop's top number, ONE insert. |
+| `books_counter` block | nextNo(…, count) | One move of the 'P' series by `count`; party numbers `P-NNNNN` assigned in that order (party-fields.ensureNos). |
