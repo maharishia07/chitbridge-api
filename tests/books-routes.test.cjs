@@ -189,6 +189,13 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('POST /opening: a row with both debit and credit is refused (400)', both.status === 400);
   const op = await q('POST', '/opening', { rows: [{ code: '1400', dr_minor: 500000 }, { code: '1300', party_no: 'P-00001', dr_minor: 200000, bill_ref: 'OLD-7', due_date: '2026-05-01' }, { code: '3000', cr_minor: 600000 }] });
   ok('POST /opening { rows } → { entry_no, suspense_minor } (100000 short → Suspense)', op.status === 200 && /^JV\//.test(op.body.entry_no) && op.body.suspense_minor === 100000, JSON.stringify(op.body));
+  /* WX-R2R (2026-10-13): from the year's first day a ledger's opening IS period 0 — the opening entry (in period 0, dated that day) must not ride
+     the lines too. On the real three-year shop the Cash ledger closed at ₹10,07,689.62 against the trial balance's ₹5,07,689.62. */
+  const tbo = await q('GET', '/trial-balance?asOf=2027-03-31'), cashRow = ((tbo.body && tbo.body.rows) || []).find((r) => String(r.code) === '1400') || { dr_minor: 0, cr_minor: 0 };
+  const lgo = await q('GET', '/ledger/1400?from=2026-04-01&to=2027-03-31');
+  ok('GET /ledger/1400 from the year\'s first day: closing = the trial balance\'s Cash (the opening JV counted once)',
+    lgo.status === 200 && lgo.body.closing_minor === Number(cashRow.dr_minor) - Number(cashRow.cr_minor) && !(lgo.body.lines || []).some((l) => /^JV\//.test(l.ref) && lgo.body.opening_minor !== 0 && l.dr_minor === 500000),
+    'ledger opening ' + lgo.body.opening_minor + ' closing ' + lgo.body.closing_minor + ' · TB ' + JSON.stringify(cashRow));
   const nop = await q('POST', '/opening', { rows: [{ code: '1300', party_no: 'P-09999', dr_minor: 1 }] });
   ok('…an unknown party number is refused in words', nop.status === 422 && /P-09999/.test(nop.body.error), JSON.stringify(nop.body));
 
