@@ -281,3 +281,20 @@ The browser parses the file and sends `rows` (≤ 500; more → 400 `TOO_MANY` "
 | `rows[]` | `{ row, name, phone, outcome, why, party_id }` | Every row's verdict: `outcome` ∈ add · merge · skip. The preview list paints this — it computes nothing. `party_id` = the matched party (merge/skip) or, after the import, the new one. |
 | `identities` set-based insert | mintMany | The same columns and constants as mint(); handles `~<shop>.cus-NNNN` numbered after the shop's top number, ONE insert. |
 | `books_counter` block | nextNo(…, count) | One move of the 'P' series by `count`; party numbers `P-NNNNN` assigned in that order (party-fields.ensureNos). |
+
+## The person's prefs · `identities.ui_prefs` · `identities.locale_prefs` (CU2, 2026-10-13)
+
+Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, routes/entities.js): a key not sent is untouched, a key sent as `null` (or `''` on /me/prefs) is removed, nothing replaces the whole store (`tests/prefs-merge.test.cjs`). Doors: `PATCH /api/entities/me/prefs/ui` · `/me/prefs/locale` · legacy `PATCH /me/locale` (all `savePrefSet`, whitelisted keys, the caller's own row) · `PATCH /api/entities/profile` body `ui_prefs` (the business row). Read back on `GET /api/entities/me` (`ui_prefs`, `locale_prefs`, `{}` when never chosen). Absent key = the default. Layer: the person (U), not governed (no GOV class) — except `product_rows`.
+
+| Key | Shape | Source · who writes it · who reads it |
+|---|---|---|
+| `ui_prefs.theme` | slug, e.g. `light` · `dark` · `device` | Source. avatar.js `push` (app, CB Accounts, till's avatar menu) via CBPrefs → /me/prefs/ui. Read by avatar.js `hydrate`, app.html `appearanceHydrate`. |
+| `ui_prefs.fs` | `s` · `m` · `l` · `xl` | Source. Text size; same writer and readers as `theme`. |
+| `ui_prefs.motion` | `auto` · `reduce` · `full` | Source. Same writer and readers. |
+| `ui_prefs.stripes` | `off` · `light` · `strong` | Source. Row stripes; same writer and readers. |
+| `ui_prefs.product_rows` | array of product-page row keys | Source, the BUSINESS's choice (layer E, parked in the U column — to move to a policy flag with CU8's one writer). Written by app.html `prodRowsSave` → PATCH /profile `{ ui_prefs: { product_rows } }` (the patch only). Read by app.html `prodRowsPref`. Not writable through /me/prefs/ui. |
+| `locale_prefs.lang` · `.locale` | BCP 47 tag | Source. CBLocale.push → /me/prefs/locale. Read by CBLocale.hydrate. ICU checks the combination. |
+| `locale_prefs.langs` | up to 3 tags, comma-separated (RFC 4647 priority list) | Source. Same writer / reader. |
+| `locale_prefs.region` | region subtag | Source. Same writer / reader. |
+| `locale_prefs.nu` · `.hc` · `.ca` · `.fw` | UTS #35 keyword values | Source. Numbering system · hour cycle · calendar · first weekday. Same writer / reader. |
+| `locale_prefs.langs_seen` | array of ≤ 3 tags | Source. The browser's languages at sign-up (routes/signin.js, one-key merge). Read by nobody yet. Kept by every locale save since CU2 (the old whole-column save erased it). |
