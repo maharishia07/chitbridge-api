@@ -89,12 +89,13 @@ const CS = require('../lib/country-setup');
 async function on(req, res, next) {
   try {
     const e = ctx(req);
-    const s = await withEntity(e, async (h) => { await CS.gate(h, e); return B.settingOf(h, e); });
+    let st = null;
+    const s = await withEntity(e, async (h) => { st = await CS.gate(h, e); return B.settingOf(h, e); });
     if (!s || !s.enabled) return res.status(404).json({ error: 'Not found' });
-    req.books = s; next();
+    req.books = s; req.booksCountry = st || null; next();
   } catch (err) { fail(res, err); }
 }
-const curOf = (req) => (req.books && req.books.functional_currency) || 'INR';
+const curOf = (req) => B.curOf(req.books);   /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/status', auth, owner, async (req, res) => {
@@ -172,7 +173,10 @@ router.get('/health', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const waiting = await withEntity(e, (h) => S.waiting(h, e, 50));
-    res.json({ enabled: true, currency: curOf(req), walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
+    /* CX2 (A4): `country` = the CS1 status the gate just read (accounts.html sets SESSION.country from it — CX0's reader, never fed until now) and
+       `fy_start_month` = the ledger's year start (the setting's, else its pack's), so the month pickers start in July / January, not April. 0 new trips. */
+    res.json({ enabled: true, currency: curOf(req), fy_start_month: B.packOf(req.books).fy_start_month, country: req.booksCountry || null,
+      walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
       waiting: waiting.map(require('../lib/books-hooks').waitingRow) });
   } catch (err) { fail(res, err); }
 });

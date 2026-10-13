@@ -764,6 +764,19 @@
    "example": {
     "enabled": true,
     "currency": "INR",
+    "fy_start_month": 4,
+    "country": {
+     "books": true,
+     "code": null,
+     "why": null,
+     "required": false,
+     "country": {
+      "code": "IN",
+      "name": "India"
+     },
+     "pack": "IN",
+     "version": "1.0.0"
+    },
     "walkin_grain": "day",
     "last_check": null,
     "engines": {
@@ -1332,7 +1345,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-11T04:02:10.424Z",
+      "last_at": "2026-10-11T15:58:29.003Z",
       "late": true,
       "today": false
      }
@@ -1368,13 +1381,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-12T04:02:10.387Z",
+      "due_at": "2026-10-12T15:58:28.964Z",
       "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-13T04:02:10.388Z",
+      "created_at": "2026-10-13T15:58:28.965Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1644,7 +1657,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-11T04:02:10.315Z",
+      "due_at": "2026-10-11T15:58:28.889Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1744,7 +1757,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-13T03:02:10.542Z",
+    "created_at": "2026-10-13T14:58:29.114Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1959,7 +1972,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-13T03:02:10.542Z",
+      "created_at": "2026-10-13T14:58:29.114Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2048,7 +2061,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-13T04:02:10.928Z"
+     "shared_at": "2026-10-13T15:58:29.494Z"
     }
    },
    "optional": []
@@ -2101,13 +2114,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-12T04:02:10.387Z",
+     "due_at": "2026-10-12T15:58:28.964Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-13T04:02:10.395Z",
-     "created_at": "2026-10-13T04:02:10.388Z",
+     "done_at": "2026-10-13T15:58:28.971Z",
+     "created_at": "2026-10-13T15:58:28.965Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2841,13 +2854,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-12T04:02:10.387Z",
+     "due_at": "2026-10-12T15:58:28.964Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-13T04:02:10.388Z",
+     "created_at": "2026-10-13T15:58:28.965Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2878,7 +2891,7 @@
    "example": {
     "party": {
      "party_id": "N2",
-     "display_name": "Ravi Jeweller",
+     "display_name": "Ravi Jewellers",
      "party_no": "P-00099",
      "kind": "local",
      "on_chitbridge": false,
@@ -2962,9 +2975,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-13T04:02:10.386Z",
+     "at": "2026-10-13T15:58:28.962Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-13T04:02:10.386Z"
+     "created_at": "2026-10-13T15:58:28.962Z"
     }
    },
    "optional": []
@@ -2979,9 +2992,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-13T04:02:10.428Z",
+     "at": "2026-10-13T15:58:29.004Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-13T04:02:10.428Z"
+     "created_at": "2026-10-13T15:58:29.004Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2996,7 +3009,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-13T04:02:10.428Z",
+     "created_at": "2026-10-13T15:58:29.004Z",
      "late": false,
      "today": false,
      "bucket": "week"

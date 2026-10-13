@@ -15,6 +15,13 @@ A new key needs its entry here, in the same change. This file is being built; en
 | `schedule_iii.balanced` | boolean | `assets.total_minor === equity_and_liabilities.total_minor`. |
 | `schedule_iii.difference_minor` | integer | `assets.total_minor - equity_and_liabilities.total_minor`. Never hidden; 0 when balanced. |
 
+## GET /api/books/health · `fy_start_month` · `country` (CX2, 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `fy_start_month` | integer 1-12 | Derived: `B.packOf(setting).fy_start_month` — the books setting's own month, else its country pack's `fiscalYear.startMonth` (IN 4 · AU 7 · AE 1). Written by nobody here (the setting by `enable`/country setup). Read by web `accounts.html` → `BK_FY0`, so the month pickers and "This FY" name the shop's own year. |
+| `country` | the CS1 status object `{ books, code, why, required, country: { code, name }, pack, version }` (the same shape as `GET /api/books/status` `country`), or null | Derived: the `CS.gate` answer the `on` middleware already read (cached; 0 new queries). Read by web `accounts.html` → `SESSION.country` (CX0's reader), so the page's pack words (`shopReg`) are the shop's. |
+
 ## GET /api/crm/parties · /parties/:id (CB CRM, 2026-10-02)
 
 Every key is a READ of what exists; nothing is stored and no money is computed here (`lib/crm.js`). Written by: nobody (derived). Read by: the CB CRM page.
