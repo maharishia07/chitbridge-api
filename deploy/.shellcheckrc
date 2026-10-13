@@ -1,0 +1,5 @@
+# HX2 · shellcheck for the deploy scripts: follow `. ../spin-lib.sh` from each script's folder; SC2034 is off because the spin's
+# variables are read by name (spin_save · mask · spin_api_env use ${!name}), which shellcheck cannot see.
+source-path=SCRIPTDIR
+external-sources=true
+disable=SC2034
