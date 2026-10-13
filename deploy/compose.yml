@@ -1,7 +1,7 @@
 # deploy/compose.yml — ChitBridge on any machine with Docker (HX0). `docker compose -f deploy/compose.yml --env-file deploy/.env up -d`
 #   db       Postgres 16 (the data; a named volume)
-#   migrate  one shot: the repo's schema path (tools/sim-load.cjs --schema-only = 000_baseline → part2 → every bNNN); an existing
-#            database is left as it is
+#   migrate  one shot: tools/migrate.cjs — an empty database gets 000_baseline → part2 → every bNNN; later runs only the files the
+#            schema_migrations ledger (b304) does not name, and record each one (HX1)
 #   api      this repo's Dockerfile, NODE_ENV=production — sealed: it refuses to boot without the e-mail sender (docs/HOSTING.md)
 #   web      ../chitbridge-web's Dockerfile (CB_WEB_DIR to move it) — the static site, pointed at CB_API_BASE
 #   mailsink (profile `proof` only) a stand-in for Resend so a walk can read the sign-in code — never in a real deployment
@@ -39,7 +39,7 @@ services:
       - sh
       - -c
       - >-
-        node tools/sim-load.cjs --schema-only --db "$$DATABASE_URL" &&
+        node tools/migrate.cjs --db "$$DATABASE_URL" &&
         echo "ALTER ROLE cb_app PASSWORD :'pw';" | psql -X -q -v ON_ERROR_STOP=1 -v pw="$$CB_APP_PASSWORD" -d "$$DATABASE_URL" &&
         echo "migrate: cb_app can sign in"
     depends_on:

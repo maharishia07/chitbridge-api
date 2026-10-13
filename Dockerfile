@@ -1,6 +1,6 @@
 # ChitBridge api — one image for any host (HX0, docs/HOSTING.md is the configuration contract).
 #   docker build -t chitbridge-api .                    the api (default target)
-#   docker build --target migrate -t chitbridge-migrate .   the one-shot schema job deploy/compose.yml runs (sim-load --schema-only)
+#   docker build --target migrate -t chitbridge-migrate .   the one-shot schema job deploy/compose.yml runs (tools/migrate.cjs, HX1 ledger)
 # No secret is baked in: every key arrives as an environment variable at run time. Runs as the image's `node` user; the code
 # is owned by root and only read (the api writes no file at run time — uploads go to the database or the object store).
 FROM node:20-alpine AS base
@@ -9,12 +9,12 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 COPY . .
 
-# the migrate job: the repo's own schema path (tools/sim-load.cjs applySchema) — needs psql, the api image does not
+# the migrate job: the repo's own schema path with its ledger (tools/migrate.cjs → schema_migrations) — needs psql, the api image does not
 FROM base AS migrate
 RUN apk add --no-cache postgresql16-client
 USER node
-# NODE_ENV left unset: the loader refuses a sealed environment, and this job starts no api
-ENTRYPOINT ["sh", "-c", "exec node tools/sim-load.cjs --schema-only --db \"$DATABASE_URL\""]
+# this job starts no api; it runs each pending migrations/ file once and records it (an existing database with an empty ledger: nothing)
+ENTRYPOINT ["sh", "-c", "exec node tools/migrate.cjs --db \"$DATABASE_URL\""]
 
 FROM base AS api
 ENV NODE_ENV=production PORT=3000
