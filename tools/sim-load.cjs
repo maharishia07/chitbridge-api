@@ -30,6 +30,8 @@
  *                           [--fresh] [--schema]
  *   --schema   an EMPTY test database gets the repo's schema first (migrations/000_baseline + part2 + bNNN in number order; needs
  *              psql on PATH). Never on a database that already has tables — the local stack's database is migrated by the stack.
+ *   --schema-only   the same schema step and nothing else — no shop, no api (HX0: deploy/compose.yml's one-shot `migrate` job). A
+ *              database that already has tables is left as it is (exit 0).
  *   --years    financial years from 2026-04-01 (3) · --seed the plan's seed (7) · --country IN (proved) | AU (accepted, unproved)
  *   Env it sets for the in-process api when unset: NODE_ENV=development, DEV_OTP=123456, a local JWT_SECRET, SHOP_CLOCK_ALLOW=1,
  *   RATE_LIMIT_MAX (the 15-minute window would refuse a year of bills), LOG_LEVEL=warn.
@@ -65,12 +67,12 @@ if (require.main !== module) { module.exports = { localOnly, CHAIN_SKIP }; retur
 /* ── arguments ─────────────────────────────────────────────────────────────────────────────────────────────────── */
 const DB = arg('db', process.env.SIM_DB || ''), SHOP = String(arg('shop', '')).trim().toLowerCase();
 const YEARS = Number(arg('years', 3)), SEED = Number(arg('seed', 7)), COUNTRY = String(arg('country', 'IN')).toUpperCase();
-const FRESH = has('fresh'), SCHEMA = has('schema');
+const FRESH = has('fresh'), SCHEMA_ONLY = has('schema-only'), SCHEMA = has('schema') || SCHEMA_ONLY;
 const die = (m, code) => { console.error('\n  REFUSED: ' + m + '\n'); process.exit(code || 3); };
 const loc = localOnly(DB);
 if (!DB) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
 if (!loc.ok) die(loc.why);
-if (!/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die('--shop is the shop\'s user id: 3–20 letters or digits, starting with a letter (e.g. simstores)');
+if (!SCHEMA_ONLY && !/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die('--shop is the shop\'s user id: 3–20 letters or digits, starting with a letter (e.g. simstores)');
 if (!(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) die('--years 1..10 and --seed a whole number');
 if (COUNTRY !== 'IN' && COUNTRY !== 'AU') die('--country IN or AU');
 if (require(path.join(API, 'lib', 'dev-otp')).isSealed()) die('NODE_ENV is sealed (' + process.env.NODE_ENV + ') — the loader runs only with NODE_ENV=development (or test)');
@@ -150,6 +152,14 @@ async function applySchema() {
   for (const t of ['identities', 'chit_header', 'journal_entry', 'books_setting', 'customer_list', 'catalogue_items']) if (!await hasTable(t)) die('table ' + t + ' is missing after --schema');
 }
 
+/** --schema-only: the schema step alone (the compose stack's migrate job), then exit */
+async function schemaOnly() {
+  console.log('\n── sim-load --schema-only · ' + loc.host + (loc.docker ? ' (docker service)' : '') + ' ──');
+  try { await sql('SELECT 1'); } catch (e) { die('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message); }
+  await applySchema();
+  await pool.end(); process.exit(0);
+}
+
 /* ── --fresh: the shop and everything it owns, removed (local database, as its owner) ───────────────────────────── */
 async function wipeShop(ids) {
   const c = await pool.connect();
@@ -208,6 +218,7 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
 
 /* ── main ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 (async () => {
+  if (SCHEMA_ONLY) return schemaOnly();
   console.log('\n── sim-load · ' + SHOP + ' · ' + YEARS + ' year(s) from ' + PLAN.start + ' · seed ' + SEED + ' · ' + COUNTRY + ' · ' + loc.host + (loc.docker ? ' (docker service)' : '') + ' ──');
   try { await sql('SELECT 1'); } catch (e) { die('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message); }
   if (SCHEMA) await applySchema();

@@ -84,6 +84,11 @@ async function createPool() {
   }
 
   // 2) Supabase pooler fallback (managed dev/prod). Project ref is env-overridable; default kept for back-compat.
+  //    HX0: DB_POOLER_FALLBACK=off stops here — on any other host (compose, AWS, Azure, GCP) a failed direct connect must not
+  //    send this database's password to *.pooler.supabase.com. Unset = unchanged (docs/HOSTING-COUPLING.md).
+  if (String(process.env.DB_POOLER_FALLBACK || '').trim().toLowerCase() === 'off') {
+    throw new Error('Direct DATABASE_URL connect failed and DB_POOLER_FALLBACK=off — no pooler fallback');
+  }
   const password = decodeURIComponent(parsed.password);
   const ref = process.env.SUPABASE_REF || 'bzacyrdrnzdbficjplcn';
   const sslConfig = { rejectUnauthorized: false };
