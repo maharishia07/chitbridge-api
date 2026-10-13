@@ -505,6 +505,90 @@
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
    ]
   },
+  "GET /api/books/cashflow": {
+   "status": 200,
+   "example": {
+    "asOf": "2026-10-12",
+    "days": 7,
+    "from": "2026-10-12",
+    "to": "2026-10-18",
+    "currency": "INR",
+    "opening_minor": 0,
+    "opening": [
+     {
+      "role": "bank",
+      "code": "1500",
+      "name": "Bank",
+      "balance_minor": 0
+     }
+    ],
+    "in_minor": 0,
+    "out_minor": 59000,
+    "closing_minor": -59000,
+    "lowest": {
+     "date": "2026-10-12",
+     "balance_minor": -59000
+    },
+    "shortfall": {
+     "date": "2026-10-12",
+     "short_minor": 59000,
+     "balance_minor": -59000,
+     "driver": {
+      "kind": "due_out",
+      "ref": "c0000000-0000-4000-8000-00000000000b",
+      "name": "Kumar Traders",
+      "amount_minor": 59000
+     },
+     "words": "Today you are ₹590 short — Kumar Traders’ ₹590 is due that day."
+    },
+    "words": "Today you are ₹590 short — Kumar Traders’ ₹590 is due that day.",
+    "uncounted": {
+     "overdue_in_minor": 118000,
+     "overdue_parties": 1,
+     "disputed_in_minor": 0,
+     "disputed_out_minor": 0,
+     "words": "₹1,180 overdue from 1 party is not counted until it is promised or paid."
+    },
+    "gst": {
+     "payable_minor": 9000,
+     "due_date": "2026-11-20",
+     "counted": false,
+     "why": null
+    },
+    "series": [
+     {
+      "date": "2026-10-12",
+      "in_minor": 0,
+      "out_minor": 59000,
+      "balance_minor": -59000,
+      "items": [
+       {
+        "kind": "due_out",
+        "ref": "c0000000-0000-4000-8000-00000000000b",
+        "party_id": "33333333-3333-4333-8333-333333333333",
+        "name": "Kumar Traders",
+        "amount_minor": 59000,
+        "date": "2026-10-12",
+        "due_date": "2026-10-06",
+        "promised": false,
+        "overdue": true,
+        "cheque_no": null
+       }
+      ]
+     }
+    ]
+   },
+   "optional": []
+  },
+  "GET /api/books/cheques": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "cheques": [],
+    "pdc_reminders": []
+   },
+   "optional": []
+  },
   "GET /api/books/daybook": {
    "status": 200,
    "example": {
@@ -561,7 +645,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
-    "asOf": "2026-10-11",
+    "asOf": "2026-10-12",
     "parties": [
      {
       "party_no": "P-00001",
@@ -763,7 +847,7 @@
     "currency": "INR",
     "party_id": "22222222-2222-4222-8222-222222222222",
     "from": "2026-04-01",
-    "to": "2026-10-11",
+    "to": "2026-10-12",
     "code": "1300",
     "opening_minor": 0,
     "closing_minor": 118000,
@@ -1015,6 +1099,121 @@
     "recurring[].event"
    ]
   },
+  "GET /api/books/returns": {
+   "status": 200,
+   "example": {
+    "currency": "AUD",
+    "pack": "AU",
+    "form": "BAS",
+    "name": "Business activity statement",
+    "short": "BAS",
+    "authority": "ATO",
+    "portal": "ATO Online services for business",
+    "prepared": "Prepared, not lodged",
+    "asked": {
+     "frequency": "quarterly",
+     "simpler": false,
+     "stagger": 1,
+     "emirate": "Dubai"
+    },
+    "periods": [
+     {
+      "period": "2025-Q1",
+      "label": "2025-26 Q1 (Jul–Sep 2025)",
+      "frequency": "quarterly",
+      "start": "2025-07-01",
+      "end": "2025-09-30",
+      "due": "2025-10-28",
+      "ended": true,
+      "stagger": 1,
+      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+     }
+    ],
+    "period": {
+     "period": "2026-Q1",
+     "label": "2026-27 Q1 (Jul–Sep 2026)",
+     "frequency": "quarterly",
+     "start": "2026-07-01",
+     "end": "2026-09-30",
+     "due": "2026-10-28",
+     "ended": true,
+     "stagger": 1,
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+    },
+    "boxes": [
+     {
+      "code": "G1",
+      "label": "Total sales",
+      "amount_minor": 11000,
+      "tax_minor": 1000,
+      "roles": [
+       "sales"
+      ],
+      "accounts": [
+       {
+        "code": "4000",
+        "name": "Sales"
+       }
+      ],
+      "note": "GST-exclusive (the ledgers hold all GST paid in one account)"
+     }
+    ],
+    "payable_minor": 0,
+    "refund_minor": 4000,
+    "net_minor": -4000,
+    "notes": [
+     "GST-exclusive (the ledgers hold all GST paid in one account)"
+    ],
+    "cite": "ato.gov.au › GST labels on your BAS; Simpler BAS (turnover under A$10 million)",
+    "needs": "stagger",
+    "why": "The FTA assigns the Tax Period (ER Art. 62): say which stagger — 1 (Feb–Apr …), 2 (Mar–May …), 3 (Apr–Jun …) or 4 (monthly) — as on the registration; it is never guessed.",
+    "emirates": [
+     "Abu Dhabi"
+    ],
+    "staggers": {
+     "1": {
+      "first_month": 2,
+      "tax_year_end": "January"
+     },
+     "2": {
+      "first_month": 3,
+      "tax_year_end": "February"
+     },
+     "3": {
+      "first_month": 4,
+      "tax_year_end": "March"
+     },
+     "4": {
+      "first_month": 1,
+      "tax_year_end": "December",
+      "monthly": true
+     }
+    }
+   },
+   "optional": [
+    "asked.emirate",
+    "asked.frequency",
+    "asked.simpler",
+    "asked.stagger",
+    "emirates",
+    "needs",
+    "period.due_rule",
+    "period.stagger",
+    "periods[].due_rule",
+    "periods[].stagger",
+    "staggers",
+    "why"
+   ]
+  },
+  "GET /api/books/returns #422": {
+   "status": 422,
+   "example": {
+    "code": "RETURN_FROM_RAIL",
+    "error": "India's GSTR-1 and GSTR-3B are read from the frozen invoices on the rail (GET /api/tax/gstr), not from the ledgers.",
+    "message": "India's GSTR-1 and GSTR-3B are read from the frozen invoices on the rail (GET /api/tax/gstr), not from the ledgers."
+   },
+   "optional": []
+  },
   "GET /api/books/terms": {
    "status": 200,
    "example": {
@@ -1129,11 +1328,11 @@
       "stage": "lead",
       "followup_id": "f-q1",
       "what": "Ring again",
-      "due_day": "2026-10-10",
+      "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-09T01:25:25.640Z",
+      "last_at": "2026-10-10T23:53:36.778Z",
       "late": true,
       "today": false
      }
@@ -1169,13 +1368,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-10T01:25:25.591Z",
-      "due_day": "2026-10-10",
+      "due_at": "2026-10-11T23:53:36.741Z",
+      "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-11T01:25:25.594Z",
+      "created_at": "2026-10-12T23:53:36.742Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1445,7 +1644,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-09T01:25:25.438Z",
+      "due_at": "2026-10-10T23:53:36.672Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1539,7 +1738,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-11T00:25:26.402Z",
+    "created_at": "2026-10-12T22:53:36.889Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1574,16 +1773,24 @@
       "say": "This chit cannot move to that step from where it is now."
      },
      "assign_task": {
-      "ok": true
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
      },
      "assign_line": {
-      "ok": true
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
      },
      "deliver_line": {
-      "ok": true
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
      },
      "amend": {
-      "ok": true
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
      }
     },
     "lines": [
@@ -1618,13 +1825,19 @@
       },
       "actions": {
        "assign_line": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "deliver_line": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "amend": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        }
       }
      }
@@ -1633,14 +1846,30 @@
    "optional": [
     "actions.accept.say",
     "actions.accept.why",
+    "actions.amend.say",
+    "actions.amend.why",
+    "actions.assign_line.say",
+    "actions.assign_line.why",
+    "actions.assign_task.say",
+    "actions.assign_task.why",
     "actions.cancel.say",
     "actions.cancel.why",
     "actions.complete.needs",
     "actions.complete.say",
     "actions.complete.why",
+    "actions.deliver_line.say",
+    "actions.deliver_line.why",
     "actions.reject.needs",
     "actions.reject.say",
-    "actions.reject.why"
+    "actions.reject.why",
+    "actions.reopen.say",
+    "actions.reopen.why",
+    "lines[].actions.amend.say",
+    "lines[].actions.amend.why",
+    "lines[].actions.assign_line.say",
+    "lines[].actions.assign_line.why",
+    "lines[].actions.deliver_line.say",
+    "lines[].actions.deliver_line.why"
    ]
   },
   "GET /api/work/:chit_id #404": {
@@ -1724,7 +1953,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-11T00:25:26.402Z",
+      "created_at": "2026-10-12T22:53:36.889Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -1759,16 +1988,24 @@
         "say": "This chit cannot move to that step from where it is now."
        },
        "assign_task": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "assign_line": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "deliver_line": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        },
        "amend": {
-        "ok": true
+        "ok": true,
+        "why": "read_only",
+        "say": "Your access is view-only. You can read this chit but not change it."
        }
       }
      }
@@ -1777,11 +2014,19 @@
    "optional": [
     "rows[].actions.accept.say",
     "rows[].actions.accept.why",
+    "rows[].actions.amend.say",
+    "rows[].actions.amend.why",
+    "rows[].actions.assign_line.say",
+    "rows[].actions.assign_line.why",
+    "rows[].actions.assign_task.say",
+    "rows[].actions.assign_task.why",
     "rows[].actions.cancel.say",
     "rows[].actions.cancel.why",
     "rows[].actions.complete.needs",
     "rows[].actions.complete.say",
     "rows[].actions.complete.why",
+    "rows[].actions.deliver_line.say",
+    "rows[].actions.deliver_line.why",
     "rows[].actions.reject.needs",
     "rows[].actions.reject.say",
     "rows[].actions.reject.why",
@@ -1797,7 +2042,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-11T01:25:27.586Z"
+     "shared_at": "2026-10-12T23:53:37.263Z"
     }
    },
    "optional": []
@@ -1850,13 +2095,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-10T01:25:25.591Z",
-     "due_day": "2026-10-10",
+     "due_at": "2026-10-11T23:53:36.741Z",
+     "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-11T01:25:25.605Z",
-     "created_at": "2026-10-11T01:25:25.594Z",
+     "done_at": "2026-10-12T23:53:36.749Z",
+     "created_at": "2026-10-12T23:53:36.742Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2590,13 +2835,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-10T01:25:25.591Z",
-     "due_day": "2026-10-10",
+     "due_at": "2026-10-11T23:53:36.741Z",
+     "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-11T01:25:25.594Z",
+     "created_at": "2026-10-12T23:53:36.742Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2639,6 +2884,69 @@
    },
    "optional": []
   },
+  "POST /api/crm/leads/import": {
+   "status": 201,
+   "example": {
+    "dry": false,
+    "added": 2,
+    "merged": 0,
+    "skipped": [
+     {
+      "row": 2,
+      "name": "Meena New",
+      "phone": "+919840099999",
+      "why": "Already a customer"
+     }
+    ],
+    "rows": [
+     {
+      "row": 1,
+      "name": "Kala Stores",
+      "phone": "+919840011111",
+      "outcome": "add",
+      "why": "Already a customer",
+      "party_id": "N3"
+     }
+    ]
+   },
+   "optional": []
+  },
+  "POST /api/crm/leads/import #200": {
+   "status": 200,
+   "example": {
+    "dry": true,
+    "added": 0,
+    "merged": 0,
+    "skipped": [
+     {
+      "row": 1,
+      "name": "Kala Stores",
+      "phone": "+919840011111",
+      "why": "Already a lead"
+     }
+    ],
+    "rows": [
+     {
+      "row": 1,
+      "name": "Kala Stores",
+      "phone": "+919840011111",
+      "outcome": "skip",
+      "why": "Already a lead",
+      "party_id": "N3"
+     }
+    ]
+   },
+   "optional": []
+  },
+  "POST /api/crm/leads/import #400": {
+   "status": 400,
+   "example": {
+    "code": "TOO_MANY",
+    "error": "Import up to 500 leads at a time. Split the file.",
+    "message": "Import up to 500 leads at a time. Split the file."
+   },
+   "optional": []
+  },
   "POST /api/crm/parties/:id/interactions": {
    "status": 201,
    "example": {
@@ -2648,9 +2956,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-11T01:25:25.590Z",
+     "at": "2026-10-12T23:53:36.740Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-11T01:25:25.590Z"
+     "created_at": "2026-10-12T23:53:36.740Z"
     }
    },
    "optional": []
@@ -2665,9 +2973,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-11T01:25:25.645Z",
+     "at": "2026-10-12T23:53:36.779Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-11T01:25:25.645Z"
+     "created_at": "2026-10-12T23:53:36.779Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2676,13 +2984,13 @@
      "party_name": "Name of 0012",
      "party_listed": true,
      "what": "Demo",
-     "due_at": "2026-10-13T18:30:00.000Z",
-     "due_day": "2026-10-14",
+     "due_at": "2026-10-14T18:30:00.000Z",
+     "due_day": "2026-10-15",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-11T01:25:25.645Z",
+     "created_at": "2026-10-12T23:53:36.779Z",
      "late": false,
      "today": false,
      "bucket": "week"

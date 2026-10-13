@@ -79,8 +79,9 @@ router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
     const sh = needShelf ? await S.shelfOf(entity_id) : null;
     const rated = sh ? S.rateLines(lines, sh) : lines;
     const mine = await S.partyOfEntity(entity_id);
-    const seller = S.party(body.seller, mine); const buyer = S.party(body.buyer, { Country: seller.Country || null, RegType: 'regular' });
-    if (!buyer.State && !buyer.Pos && !buyer.Gstin && seller.State) buyer.Pos = seller.State;
+    const seller = S.party(body.seller, mine);
+    /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
+    const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
     const det = S.computeTax({ seller, buyer, lines: rated.map((l) => Object.assign({}, l, { unit_price: l.listPrice })), priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
     res.json({ engine: 'chitbridge-tax', version: 1, seller: { Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType }, buyer: { Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country }, invoice: det, heads: T.heads(det) });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }

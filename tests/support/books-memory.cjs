@@ -189,6 +189,8 @@ const fakeDb = {
     if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
     if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
+    /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
+    if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] };
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };
