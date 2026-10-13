@@ -45,7 +45,6 @@ function open(url) {
   const { Pool } = require(path.join(API, 'node_modules', 'pg'));
   const ssl = require('../db/connect-config').sslFor(url, process.env);
   const pool = new Pool(Object.assign({ connectionString: url, max: 2, connectionTimeoutMillis: 5000 }, ssl === undefined ? {} : { ssl }));
-  pool.on('connect', (c) => { c.query("SET TimeZone = 'UTC'").catch(() => {}); });   /* M210, as db/index.js pins it */
   return pool;
 }
 async function hasTable(pool, name) {

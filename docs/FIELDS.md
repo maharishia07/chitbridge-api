@@ -281,3 +281,12 @@ The browser parses the file and sends `rows` (≤ 500; more → 400 `TOO_MANY` "
 | `rows[]` | `{ row, name, phone, outcome, why, party_id }` | Every row's verdict: `outcome` ∈ add · merge · skip. The preview list paints this — it computes nothing. `party_id` = the matched party (merge/skip) or, after the import, the new one. |
 | `identities` set-based insert | mintMany | The same columns and constants as mint(); handles `~<shop>.cus-NNNN` numbered after the shop's top number, ONE insert. |
 | `books_counter` block | nextNo(…, count) | One move of the 'P' series by `count`; party numbers `P-NNNNN` assigned in that order (party-fields.ensureNos). |
+
+## HX1 hosting keys (2026-10-13 · docs/HOSTING.md)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| table `schema_migrations` (b304, DRAFT — Athi runs it) | `filename text PK · sha256 text · applied_at timestamptz · applied_by text · source 'migrate'\|'recorded'\|'manual'` | Source. Written by `tools/migrate.cjs` (apply = `migrate`, `--record` = `recorded`) or the owner's INSERT (`manual`). Read by `tools/migrate.cjs` (`--status`, skip what is done). RLS on, no policy, no grant to cb_app. |
+| `GET /health` → `web` | string or null | Derived from env `PUBLIC_WEB_BASE` (`lib/public-base.webBase`). Written by: nobody. Read by the counter program (`till.js`) when its `connector.json` has no `web`. |
+| kit `connector.json` → `web` | string or null | Written by `GET /api/integrations/download/:id`: `PUBLIC_WEB_BASE`, else the requesting page's `Origin`. Read by `till.js` → `/config.js` `window.CB_WEB` → till.html `cbHome()`. |
+| web `/config.js` → `window.CB_API` · `window.CB_WEB` | string · string or null | The web's `public/config.js` (committed value; the container writes it from `CB_API_BASE`) or `till.js` (from `connector.json`). Read by every page's api-base resolution (`CBShell.apiBase`, app.html `STAGES.dev.base`, stand-alone pages, till.html `CloudHost.api`). |

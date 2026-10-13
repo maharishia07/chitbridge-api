@@ -37,6 +37,6 @@ async function it(name, fn) { try { await fn(); pass++; console.log('  ok  ' + n
       { env: Object.assign({}, process.env, { S3_SECRET_ACCESS_KEY: 'not-the-secret' }), encoding: 'utf8' });
     assert.match(r.stdout, /put 403/);
   });
-  console.log('\n' + pass + ' passed, ' + fail + ' failed  (' + process.env.S3_ENDPOINT + ' bucket ' + store.BUCKET + ')');
+  console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks  (' + process.env.S3_ENDPOINT + ' bucket ' + store.BUCKET + ')');
   process.exit(fail ? 1 : 0);
 })();

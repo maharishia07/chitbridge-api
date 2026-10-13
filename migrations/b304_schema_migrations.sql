@@ -16,9 +16,9 @@
 --    ran — null when recorded by hand; a later edit shows as "changed since it ran") · applied_at · applied_by (current_user) ·
 --    source ('migrate' = tools/migrate.cjs ran it · 'recorded' = --record, the owner ran it · 'manual' = an INSERT by hand).
 --
--- RLS: ENABLED with NO policy — platform bookkeeping, no tenant's data, and on Supabase a public table without RLS is readable through
---    its REST api by `anon`. The owner (postgres) bypasses; cb_app gets no grant and reads nothing. tests/migration-rls.test.js lists
---    schema_migrations as bookkeeping.
+-- RLS: ENABLED + FORCED with ONE policy — platform bookkeeping, no tenant's data, and on Supabase a public table without RLS is
+--    readable through its REST api by `anon`. The policy admits only the role that ran this file (the owner who runs migrations — FORCE
+--    would otherwise lock the owner out too); cb_app and anon get no grant and no row. tests/migration-rls.test.js lists it as bookkeeping.
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
   filename    text        PRIMARY KEY,
@@ -28,5 +28,11 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
   source      text        NOT NULL DEFAULT 'migrate' CHECK (source IN ('migrate', 'recorded', 'manual'))
 );
 ALTER TABLE schema_migrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schema_migrations FORCE ROW LEVEL SECURITY;
 REVOKE ALL ON schema_migrations FROM PUBLIC;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'schema_migrations' AND policyname = 'schema_migrations_owner') THEN
+    EXECUTE format('CREATE POLICY schema_migrations_owner ON schema_migrations USING (pg_has_role(current_user, %L, ''MEMBER'')) WITH CHECK (pg_has_role(current_user, %L, ''MEMBER''))', current_user, current_user);
+  END IF;
+END $$;
 COMMENT ON TABLE schema_migrations IS 'HX1 migration ledger: one row per migrations/ file this database has had (tools/migrate.cjs)';

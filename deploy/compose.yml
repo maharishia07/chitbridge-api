@@ -54,7 +54,6 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       DATABASE_URL: *app_url
-      DB_POOLER_FALLBACK: "off"
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET (32+ characters) in deploy/.env}
       OTP_EMAIL_ENABLED: "true"
       RESEND_API_KEY: ${RESEND_API_KEY:-}

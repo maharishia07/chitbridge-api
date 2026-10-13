@@ -138,5 +138,5 @@ it('⭐ no *.railway.app / *.vercel.app literal in the runtime, the kit or the w
   assert.deepStrictEqual(bad, [], 'name the api through config (PUBLIC_API_BASE / PUBLIC_WEB_BASE / connector.json / vars.API_URL): ' + bad.join('; '));
 });
 
-console.log('\n' + pass + ' passed, ' + fail + ' failed');
+console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
 process.exit(fail ? 1 : 0);

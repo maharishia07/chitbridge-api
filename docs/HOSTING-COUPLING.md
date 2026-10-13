@@ -13,6 +13,15 @@ any non-loopback host, then a Supabase pooler fallback that sends the DB passwor
 store (named S3, speaks Supabase Storage REST only), and (3) the web, which names the Railway host as a literal in 28 files.
 No migration uses a Supabase-only role or schema.
 
+**HX1 (2026-10-13) — the 🔴 rows below are removed in code** (each row keeps its HX0 text as the record of what was):
+DB connect = `DATABASE_URL` then an explicit `DB_POOLER_URL`, TLS from `sslmode`/`PGSSLMODE`/the env (`db/connect-config.js`; the
+password goes only to configured URLs — `tests/hosting-neutral.test.cjs` records the sockets) · object store = real S3 API, SigV4,
+proved on MinIO (`lib/storage-object.js`; Supabase REST kept for `S3_KEY`) · ONE api base: web `public/config.js`, counter `connector.json`
+via till.js `/config.js`, `lib/public-base.js` for the api's own links, seeded pictures relative or `PUBLIC_WEB_BASE`, workflows
+`vars.API_URL` (patch in `docs/patches/`, the token could not push workflows) · `/.well-known/` excluded from both web rewrites ·
+migration ledger `schema_migrations` (b304, `tools/migrate.cjs`). Named exceptions left (guarded): `public/config.js`'s value, till.html
+cbHome's fallback for pre-HX1 kits, the CORS default (🟡). Prod env values: `docs/HOSTING.md` › Production stays identical.
+
 ---
 
 ## Database

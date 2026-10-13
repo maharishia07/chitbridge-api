@@ -25,7 +25,8 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `PORT` | optional | `3000` | no | Listen port (default 3000). |
 | `HOST` | optional | `127.0.0.1` | no | Listen address; unset = all interfaces. |
 | `ALLOWED_ORIGINS` | in production | `https://app.example.com` | no | CORS allowlist, comma-separated; default is the Vercel origin. |
-| `PUBLIC_API_BASE` | optional | `https://api.example.com` | no | Public api URL for OpenAPI and connector downloads. |
+| `PUBLIC_API_BASE` | optional | `https://api.example.com` | no | Public api URL for OpenAPI, connector downloads and the IoT provisioning endpoint (`lib/public-base.js`); unset = the request's own host. |
+| `PUBLIC_WEB_BASE` | in production | `https://app.example.com` | no | HX1: the site people open — seeded catalogue pictures (`<base>/pics/…`; unset = relative `/pics/…`), the counter kit's `web`, `/health` `web`. |
 | `PUBLIC_API_URL` | optional | `https://api.example.com` | no | Public api URL for product media links. |
 | `CB_SELF_URL` | optional | `http://127.0.0.1:3000` | no | How auto-raise calls this api; default loopback. |
 | `INSTALLATION_KEY` | optional | `platform-0` | no | Which `installation` row this deployment is. |
@@ -38,10 +39,10 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `CTP_PRIVATE_KEY` | optional | `<Ed25519 PKCS#8 PEM>` | yes | Signs cross-installation envelopes; unset = unsigned. |
 | `NETWORK_WRITE_ENABLED` | optional | `true` | no | `false` makes `/api/network` read-only. |
 | **Database** | | | | |
-| `DATABASE_URL` | always | `postgres://cb_app:<password>@db.example:5432/chitbridge?sslmode=disable` | yes | The Postgres DSN; `sslmode` in it overrides the code's SSL guess. |
-| `DB_POOLER_FALLBACK` | in production (off-Supabase) | `off` | no | `off` stops the Supabase pooler retry on connect failure. |
-| `SUPABASE_REF` | optional | `<supabase project ref>` | no | Project ref used by the pooler fallback. |
-| `PGSSL` | optional | `disable` | no | `disable` turns SSL off for the `src/` network pool. |
+| `DATABASE_URL` | always | `postgres://cb_app:<password>@db.example:5432/chitbridge?sslmode=disable` | yes | The Postgres DSN, tried first. Its `sslmode` decides TLS (`disable` · `no-verify` · `require` · `verify-full`). |
+| `DB_POOLER_URL` | optional | `postgres://<user>:<password>@<pooler-host>:6543/postgres?sslmode=no-verify` | yes | HX1: a second DSN, tried only when `DATABASE_URL` fails — carries its OWN credentials; nothing else is ever tried (`db/connect-config.js`). |
+| `PGSSLMODE` | optional | `no-verify` | no | TLS when the URL has no `sslmode`. Neither set: a sealed env uses TLS without verification (every host); any other env no TLS. |
+| `PGSSL` | optional | `disable` | no | Old switch, still honoured: `disable` = no TLS when neither `sslmode` nor `PGSSLMODE` says otherwise. |
 | `DB_BOOT_WAIT_MS` | optional | `15000` | no | How long a request waits for the pool at boot. |
 | `DB_STATEMENT_TIMEOUT_MS` | optional | `15000` | no | Per-statement deadline; 0 = off. |
 | `DB_SLOW_MS` | optional | `500` | no | Logs statements slower than this. |
@@ -105,9 +106,12 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `KYB_STRUCTURAL` | optional | `<JSON>` | no | Overrides structural KYB rules. |
 | **Storage** | | | | |
 | `STORAGE_ADAPTER` | optional | `db` | no | `object` sends attachments to the object store. |
-| `S3_ENDPOINT` | optional | `https://<ref>.supabase.co` | no | Object store base — Supabase Storage REST only today. |
-| `S3_KEY` | optional | `<service key>` | yes | Object store bearer key. |
-| `S3_BUCKET` | optional | `cb-attach` | no | Object store bucket. |
+| `S3_ENDPOINT` | optional | `https://s3.ap-south-1.amazonaws.com` · `https://<acct>.r2.cloudflarestorage.com` · `http://minio:9000` · `https://<ref>.supabase.co/storage/v1/s3` | no | Object store base. With the key pair below: the S3 API, SigV4 (HX1). With `S3_KEY`: Supabase Storage REST (`https://<ref>.supabase.co`). |
+| `S3_ACCESS_KEY_ID` · `S3_SECRET_ACCESS_KEY` | optional | `<access key>` · `<secret>` | secret: yes | HX1: S3 API credentials — the secret signs requests and is never sent. |
+| `S3_REGION` | optional | `us-east-1` | no | SigV4 region (R2: `auto`; MinIO: `us-east-1`; Supabase: the project's region). |
+| `S3_PATH_STYLE` | optional | `true` | no | `false` = `<bucket>.<host>` (AWS virtual-hosted); default path-style (`<endpoint>/<bucket>/<key>`). |
+| `S3_KEY` | optional | `<service key>` | yes | Supabase Storage REST bearer key — used only when no access key pair is set (production before HX1). |
+| `S3_BUCKET` | optional | `cb-attach` | no | Object store bucket (private). |
 | **Limits & tuning** | | | | |
 | `RATE_LIMIT_MAX` | optional | `500` | no | General `/api` requests per window per client. |
 | `AUTH_RATE_LIMIT_MAX` | optional | `30` | no | Sign-in attempts per window. |
@@ -144,23 +148,58 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 
 Not read anywhere: `mysql2` is a dependency with no `require`. The `/health` `environment` field echoes `NODE_ENV`.
 
-## web — how a deploy points the site at its api
+## web — how a deploy points the site at its api (HX1: ONE runtime config)
 
-| Mechanism | Where | Today | Notes |
+| Mechanism | Where | Notes |
+|---|---|---|
+| `/config.js` → `window.CB_API` | `public/config.js`; loaded first by every page that calls the api (e2e/guard-static.cjs §17 checks both) | THE one place. The committed value is the production api, because Vercel serves the file as it is. |
+| `CB_API_BASE` (container) | `deploy/40-cb-api-base.sh` | writes `/config.js` at start; unset = the committed value. |
+| Vercel | — | to point a Vercel deploy elsewhere, change `public/config.js` (one line) — or add a build step that writes it from `CB_API_BASE`. |
+| `localStorage.cb_api_base` | `public/app/shell.js` `apiBase()`, app.html `CFG.API_BASE` | per-browser override (`'stage'` = `window.CB_API`); `localhost` ⇒ `http://localhost:3000` (dev). |
+| Counter on a shop PC | `tools/tally-connector/till.js` serves `/config.js` from `connector.json` (`api`, `web`; `web` else the api's `/health` `web`) | the kit download writes both (`PUBLIC_API_BASE`/request host · `PUBLIC_WEB_BASE`/the page's Origin). |
+| api side | `ALLOWED_ORIGINS` must list the web origin | otherwise browser calls get 403 `ORIGIN_NOT_ALLOWED`. |
+| Guard | web `e2e/guard-static.cjs` §17 · api `tests/hosting-neutral.test.cjs` | fail on any new `*.railway.app` / `*.vercel.app` literal in shipped code. Named exceptions: `public/config.js` (the value), `till.html` cbHome's fallback for pre-HX1 kits, `server.js` CORS default (🟡), the two workflows until the patch below is applied. |
+
+## Production stays identical — the values the owner sets (HX1; set BEFORE the api of round HX1 is deployed)
+
+| Where | Name | Value | Why |
 |---|---|---|---|
-| Hard-coded literal | `https://chitbridge-api-production.up.railway.app` in 28 files / 33 places under `public/` (e.g. `public/app/shell.js:58-61`, `public/store.html:56`, `public/tasks.html:82`, `public/app.html:1723`, `public/app/cap-connector.js:279`) | the only deploy-wide setting | Vercel serves files as-is; there is no build-time injection. |
-| `CB_API_BASE` (container only) | `deploy/40-cb-api-base.sh`, `Dockerfile` | rewrites the literal in every `.html`/`.js` at container start | unset = pages keep Railway. Not available on Vercel. |
-| `localStorage.cb_api_base` | `public/app/shell.js:57-62` | per-browser override (`'stage'` = Railway) | a person's setting, not a deploy setting. |
-| `localhost` / `127.0.0.1` | `public/app/shell.js:60` | ⇒ `http://localhost:3000` | dev only. |
-| Counter (till) | `public/till.html:6411` (vendored from api `tools/tally-connector/till.html`) | `localStorage.cb_till_api` → `window.CB_API` → Railway | `window.CB_API` is not set by any page. |
-| api side | `ALLOWED_ORIGINS` must list the web origin | — | otherwise browser calls get 403 `ORIGIN_NOT_ALLOWED`. |
+| Railway (api) | `DATABASE_URL` | today's value **with `sslmode=no-verify` appended** (`…/postgres?sslmode=no-verify`) | the code no longer guesses TLS from the host. (Sealed env without it also keeps TLS-unverified — this makes it explicit.) |
+| Railway (api) | `DB_POOLER_URL` | the pooler the api uses today: Railway's deploy log line `DB connected via pooler: <host> as <user>` names it → `postgres://<user>:<the same password>@<host>:6543/postgres?sslmode=no-verify` (e.g. user `postgres.<project-ref>`, host `aws-1-ap-south-1.pooler.supabase.com`) | ⚠️ the hard-coded pooler retry is GONE. If the log says `DB connected via DATABASE_URL`, leave this unset. Simpler alternative: put that pooler URL in `DATABASE_URL` itself and leave `DB_POOLER_URL` unset. |
+| Railway (api) | `PUBLIC_WEB_BASE` | `https://chitbridge-web.vercel.app` | seeded catalogue pictures keep their absolute address; the counter kit and `/health` name the site. |
+| Railway (api) | `DB_POOLER_FALLBACK`, `SUPABASE_REF` | delete (no longer read) | — |
+| Railway (api) | `S3_ENDPOINT` · `S3_KEY` · `S3_BUCKET` | unchanged | `S3_KEY` without an access key pair keeps Supabase Storage REST exactly. To move to Supabase's S3 endpoint instead: `S3_ENDPOINT=https://<ref>.supabase.co/storage/v1/s3`, `S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY` from Supabase › Storage › S3 access keys, `S3_REGION=<project region>`. |
+| Supabase | run `migrations/b304_schema_migrations.sql` (as postgres), then once: `node tools/migrate.cjs --db "<owner url>" --record-through b304` | — | the ledger, backfilled with what production already has. Each later manual run: `--record <file>`. `--status` lists pending files. |
+| GitHub (api repo) | apply `docs/patches/HX1-workflows-api-url.patch` (this round's token may not push workflows) · Settings › Variables › `API_URL` = `https://chitbridge-api-production.up.railway.app` | — | uptime/governance read the api from the variable; uptime fails loudly while it is unset. |
+| Vercel (web) | nothing | — | `public/config.js` already names the production api. |
+
+## CTP — what a cross-installation exchange needs (HX1)
+
+The manifest `GET /.well-known/ctp.json` is served by the **api** (`routes/ctp.js`, mounted at `/`, before any static or 404); the web
+never answers it — `vercel.json` rewrites everything EXCEPT `/.well-known/`, and `deploy/nginx.conf` returns the file or 404 there
+(deploy/proof.sh checks both: api 200 JSON · web 404). Peers fetch `https://<installation.domain>/.well-known/ctp.json` with no redirect
+(`lib/ctpdirectory.js`, `redirect:'error'`), so:
+- **DNS**: a public name for the API (e.g. `api.your-domain`) — not the web's name. That name goes in `installation.domain` (and `ctp_endpoint`) on both sides.
+- **TLS**: a certificate from a public CA on that name (peers use Node's default CA store; http only for loopback).
+- **Keys**: `CTP_PRIVATE_KEY` (Ed25519 PKCS#8 PEM — `lib/ctpkeys.js` has the keygen helper) and `INSTALLATION_KEY` on each side; the manifest publishes the public key.
+- **Peer row**: the other installation with `hosted_locally = false`, and the population's `ctp_peers` naming it (default-deny).
+- If the domain must stay on the web's name: proxy `/.well-known/ctp.json` (only) from the web host to the api — never a redirect.
+
+## The migration ledger (HX1)
+
+`schema_migrations` (b304) — one row per `migrations/` file a database has had: `filename · sha256 · applied_at · applied_by · source`
+(`migrate` = the tool ran it · `recorded` = `--record` · `manual` = a hand INSERT). `tools/migrate.cjs` (moved from sim-load's schema
+step): `--db <url>` applies an empty database's chain or only what the ledger lacks, recording each file; a populated database with an
+EMPTY ledger is left alone. `--status` reads; `--record <file…>` / `--record-through bNNN` write rows without running SQL. Nothing runs
+it on production: the owner runs the SQL, then records it.
 
 ## Running it anywhere — deploy/compose.yml
 
-The stack (HX0): `db` Postgres 16 · `migrate` one shot (`tools/sim-load.cjs --schema-only` = `000_baseline` → `part2` → every
-`bNNN`, then `cb_app`'s password) · `api` this repo's `Dockerfile` (`node:20-alpine`, user `node`, `/health` healthcheck,
+The stack (HX0): `db` Postgres 16 · `migrate` one shot (`tools/migrate.cjs` = `000_baseline` → `part2` → every `bNNN` on an empty
+database, only the unrecorded ones later — HX1 ledger; then `cb_app`'s password) · `api` this repo's `Dockerfile` (`node:20-alpine`, user `node`, `/health` healthcheck,
 `NODE_ENV=production`) · `web` chitbridge-web's `Dockerfile` (unprivileged nginx, the `vercel.json` rewrite) · `mailsink` (profile
-`proof` only: a Resend stand-in so a walk can read the sign-in code). Ports bind to 127.0.0.1 — put TLS in front for anything public.
+`proof` only: a Resend stand-in so a walk can read the sign-in code) · `minio` + `minio-bucket` (profiles `minio`/`proof`: an
+S3-compatible store; the api reaches it over SigV4). Ports bind to 127.0.0.1 — put TLS in front for anything public.
 
 ```
 cp deploy/env.example deploy/.env      # fill it (the variables below)
@@ -179,11 +218,12 @@ What a platform script fills (`deploy/.env`; the compose file maps them onto the
 | `RESEND_BASE_URL` | proof only | `http://mailsink:8025` | no | the Resend SDK endpoint |
 | `WEB_ORIGIN` | always | `https://app.your-domain.example` | no | api `ALLOWED_ORIGINS` |
 | `CB_API_BASE` | always | `https://api.your-domain.example` | no | web container: the api the pages call |
-| `S3_ENDPOINT` · `S3_KEY` | optional | — | key: yes | object store (Supabase Storage only today) |
+| `S3_ENDPOINT` · `S3_ACCESS_KEY_ID` · `S3_SECRET_ACCESS_KEY` · `S3_BUCKET` · `S3_REGION` | optional | `http://minio:9000` · … | secret: yes | object store (SigV4); with profile `minio` the same key pair is MinIO's root login. `STORAGE_ADAPTER=object` puts attachments there too |
 | `NODE_ENV` | optional | `production` | no | api; default `production` |
 | `DB_PORT` · `API_PORT` · `WEB_PORT` | optional | `5432` · `3000` · `8080` | no | host ports (127.0.0.1) |
 | `CB_WEB_DIR` | optional | `../../chitbridge-web` | no | where the web checkout is, for its image build |
 
 Fixed in `compose.yml` (not inputs): `DATABASE_URL` ends `?sslmode=disable` (the compose network is private; use
-`sslmode=no-verify`/`verify-full` for a managed database) · `DB_POOLER_FALLBACK=off` · `OTP_EMAIL_ENABLED=true`.
-⚠️ `migrate` applies the schema to an EMPTY database only (there is no migration ledger — a later `bNNN` is run by hand, as today).
+`sslmode=no-verify`/`verify-full` for a managed database) · `OTP_EMAIL_ENABLED=true` · `PUBLIC_WEB_BASE` = `WEB_ORIGIN`.
+`migrate` records every file in `schema_migrations`; a second `up` runs only new files (and retries the ones that failed — ops roles,
+one-off data scripts — which are listed, not recorded).
