@@ -72,6 +72,7 @@ const GUARDS = [
   'till-hidden.test.js',      // [hidden] must win — a class that sets display draws a closed panel anyway
   'till-exits.test.js',       // every screen has a lid, and it never sits in a row of ways to CHANGE things
   'tax-lines.test.js',          // ⭐⭐ the month's ledger and GSTR: a credit note REDUCES tax; cdnr · cdnur · b2cs netting · Table 13 (2026-09-28)
+  'walk-in-buyer.test.cjs',     // ⭐⭐ BUY1: a buyer with no country / place of supply is taxed INSIDE the shop (tax-lines.walkIn) — AU 10% · AE 5% · IN intra; a foreign buyer stays export
   'round-trips-all.test.cjs',  // ⭐⭐ every route the web client calls has a round-trip budget (round-trips.budget.json) — fired offline, I19 (DB10)
   'people.test.cjs',           // ⭐ P1: GET /api/people — one statement, the caller's shop only, may/why per action, owner-only greyed with its sentence
   'network-validate.test.cjs', // P2: the dry-run validate of a designed network — names what would break, posts nothing
@@ -233,6 +234,7 @@ const GUARDS = [
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
   'web-api-contract.test.cjs',  // every route the web reads, called for real (offline), held to docs/contracts/web-api.json: same keys, nesting and types
   'crm-leads.test.cjs',        // L1: leads as parties, the memberships table's one writer (entity + group checks), 503 in words before b297, the b297 RLS lines
+  'crm-leads-import.test.cjs', // L3: leads from a CSV — the one phone helper, dedupe in the file and against the shop, the cap, who may, set-based (300 rows = 6 rows in statements), 503 before b297
   'crm-remove-walkin.test.cjs', // "Remove from my parties" (owner, no dues, hides, deletes nothing); walk-in → party moves the points by rewards.claim
   /* ⭐⭐⭐ DISPUTE CONFIDENTIALITY — THE USP RULE (N02, 2026-10-07): written before any extraction; per-copy RLS modelled, definers transcribed */
   'dispute-scoping.test.cjs',   // roster-only visibility · no notice to a non-party · per-party resolve; KNOWN BREAKS printed loud (section 5)

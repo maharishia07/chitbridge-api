@@ -200,12 +200,14 @@ const INFRA_LIBS = [
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js',
+  /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
+  'books-cashflow.js',
   /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */
   'home-facts.js', 'till-summary.js', 'open-orders.js',   /* M168: the till's order list and Home's Orders card, one query (2026-10-10) */
   /* [CB Sides] the two panels' read (sides: SQL + the reuses) and the impact walk shared with raida.walk (impact: pure graph rule, used by the register and the panel) (2026-10-09) */
   'sides.js', 'impact.js',
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
-  'crm.js', 'crm-followups.js', 'memberships.js', 'crm-calls.js',
+  'crm.js', 'crm-followups.js', 'memberships.js', 'crm-calls.js', 'crm-leads.js',   /* L3: leads from a CSV — SQL over the lists + the one phone helper; the pure half (normalise · plan) is tested, not an engine */
   /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */
   'books-tally.js',
   /* one translation of a refusal the database makes ON PURPOSE (b247's population boundary) into a 409 in words, used
@@ -417,7 +419,9 @@ const ENGINE_OTHER = [
   /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
      tools/adopt.cjs, never edited here: the chart and roles, the debit/credit rules, open items, the reads, the pack. */
   'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'bookpack.js',
-  /* ⭐ CS1 (2026-10-12): the registry of country packs, the India pack, the Australia pack (AU1) and the UAE pack (AE1), ADOPTED from chitbridge-engines v1.37.0 (engines.lock.json) — first adoption on the server */
+  /* ⭐ CS1 (2026-10-12): the registry of country packs, the India pack and the Australia pack (AU1), ADOPTED from chitbridge-engines (engines.lock.json) — first adoption on the server;
+     CL1 (2026-10-12): the UAE pack (AE1) with them, reg-in · regulation at v1.37.0 — the tax bundle below carries the packs ahead of tax-packs, which reads the registry;
+     BAS1 (2026-10-12): reg-au · reg-ae at v1.39.0 (the BAS / VAT201 labels carry their ledger roles) */
   'regulation.js', 'reg-in.js', 'reg-au.js', 'reg-ae.js',
   /* v1.20.0: the month lock and year close (period.js) and the GST returns (gst-returns.js — the API reads its dueDate), ADOPTED the same way */
   'period.js', 'gst-returns.js',

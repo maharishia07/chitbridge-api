@@ -14,7 +14,8 @@
  *   DELETE /api/crm/parties/:id                 "Remove from my parties" — owner, no open dues, hides the row, deletes no history (b276)
  *   GET    /api/crm/parties?view=leads          only the leads (no trade yet), each with its stage; `leads_migrated` false until b297
  *   POST   /api/crm/leads                       one lead = a local party (added_via 'lead') + its first stage                          (b297)
- *   GET    /api/crm/calls                       ?scope=mine|all — today's call queue (ONE query) + the outcome buttons       (b276; stage b297)
+ *   POST   /api/crm/leads/import                ≤500 rows a browser parsed from a CSV → added · merged · skipped (why); `dry` previews  (b297)
+ *   GET    /api/crm/calls                      ?scope=mine|all — today's call queue (ONE query) + the outcome buttons       (b276; stage b297)
  *   POST   /api/crm/parties/:id/outcome         one tap after a call: call logged + next follow-up + stage, ONE transaction (b276; b297 for a stage move)
  *   POST   /api/crm/parties/:id/stage           "Move to…" — a new memberships row (kind lead_stage); the old rows are the history      (b297)
  *   POST   /api/crm/walk-ins/add                a phone that holds points → a local customer; the points move to them
@@ -92,7 +93,8 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
 
 /**
  * the timeline: every source asked for `limit` rows older than `before`, merged newest-first, cut to `limit`.
- * { entries: [{ kind, at, … }], next_before, migrated }. kinds: chit · message · dispute · ledger · interaction · followup · followup_done · change.
+ * { entries: [{ kind, at, … }], next_before, migrated }. kinds: chit · message · dispute · ledger · interaction · followup · followup_done · change · stage.
+ * stage (FX-L2C): a lead's move as memberships holds it — { stage, from, by, at }; from is null on the first row (the lead's start).
  * Money on an entry is the stored figure (summary_json total_value; party_item amount_minor) — never recomputed.
  */
 router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
@@ -149,6 +151,12 @@ router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
           if (x.done_at && new Date(x.done_at).getTime() < before) entries.push({ kind: 'followup_done', at: crm.iso(x.done_at), followup_id: x.followup_id, what: x.what });
         }
       }
+      /* the stage trail (F7, FX-L2C): memberships IS the append-only history of every move (lib/memberships — the one writer), so the trail is a
+         READ of it, never a second log: who · when · to, and "from" = the older row (one statement, LIMIT + 1 so the oldest row shown has its from).
+         Before b297 the table is absent — its savepoint answers no rows (soft), exactly as the other optional sources. */
+      const st = await soft(() => h.query(`SELECT membership_id, grp, at, by_user_id FROM memberships WHERE entity_id = $1 AND item_type = 'party' AND item_id = $2 AND kind = 'lead_stage' AND at < $3
+                                            ORDER BY at DESC, membership_id DESC LIMIT $4`, [owner, party, beforeIso, limit + 1]));
+      st.rows.slice(0, limit).forEach((x, i) => entries.push({ kind: 'stage', at: crm.iso(x.at), membership_id: x.membership_id, stage: x.grp, from: st.rows[i + 1] ? st.rows[i + 1].grp : null, by: x.by_user_id || null }));
     });
     entries.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
     const page = entries.slice(0, limit);
@@ -233,7 +241,7 @@ router.delete('/parties/:id', auth, noKey, async (req, res) => {
 router.post('/leads', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), b = req.body || {};
-    const name = String(b.name || '').replace(/s+/g, ' ').trim();
+    const name = String(b.name || '').replace(/\s+/g, ' ').trim();   /* \s — the letter s was being replaced ("Esai" → "E ai"), found by the FX-L2C real walk */
     if (!name) throw bad('Give the lead a name.', 400, 'BAD_NAME');
     let phone = null;
     if (String(b.phone || '').trim()) {
@@ -273,6 +281,22 @@ router.post('/parties/:id/outcome', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), id = idOf(req);
     res.status(201).json(await withEntity(owner, (h) => require('../lib/crm-calls').outcome(h, owner, id, req.body, byOf(req))));
+  } catch (e) { fail(res, e); }
+});
+
+/**
+ * L3: the call-desk's first list — leads from a CSV the BROWSER parsed (no file reaches the server). Body { rows: [{ name, phone?, email?, business?,
+ * city?, source?, note? }], dry? }. ≤500 rows (more → 400 TOO_MANY in words); the phone through the one helper; deduped within the file and against the
+ * shop's parties; ONE transaction of set-based statements (lib/crm-leads.js). `dry: true` plans and writes nothing — the preview paints that answer.
+ * Who may: the owner, or a login whose access level is editor (lib/access.canEdit — the server decides; a viewer or commenter gets 403 in words).
+ * Before b297: 503 LEADS_NOT_MIGRATED, nothing created.
+ */
+router.post('/leads/import', auth, noKey, async (req, res) => {
+  try {
+    if (!require('../lib/access').canEdit(req.identity)) throw bad('Only an editor can import leads.', 403, 'VIEW_ONLY');
+    const b = req.body || {};
+    const out = await require('../lib/crm-leads').importLeads(ctx(req), b.rows, { by: byOf(req), dry: !!b.dry });
+    res.status(out.dry ? 200 : 201).json(out);
   } catch (e) { fail(res, e); }
 });
 

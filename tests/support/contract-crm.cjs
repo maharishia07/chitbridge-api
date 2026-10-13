@@ -49,9 +49,33 @@ async function captureCrm() {
     /* L1 (b297): the memberships table, there only while mem.on — the scenario walks "not run yet" first and "run" after */
     if (/FROM information_schema.tables/.test(sql)) return { rows: mem.on ? [{ '?column?': 1 }] : [] };
     if (/^SELECT DISTINCT ON \(item_id\)/.test(sql)) return { rows: mem.rows.filter((m) => p[2].indexOf(m.item_id) >= 0).map((m) => ({ item_id: m.item_id, grp: m.grp, at: m.at })) };
+    /* the stage trail the timeline reads (FX-L2C): newest first, LIMIT + 1 */
+    if (/^SELECT membership_id, grp, at, by_user_id FROM memberships/.test(sql)) { if (!mem.on) throw Object.assign(new Error('relation "memberships" does not exist'), { code: '42P01' }); return { rows: mem.rows.filter((m) => m.item_id === p[1] && m.at < p[2]).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, p[3]).map((m, i) => ({ membership_id: m.membership_id || 'mm' + i, grp: m.grp, at: m.at, by_user_id: 'E1' })) }; }
     if (/^INSERT INTO memberships/.test(sql)) { const r = { item_id: p[2], kind: p[3], grp: p[4], at: '2026-10-10T09:00:00.000Z', membership_id: 'mm1' }; mem.rows.push(r); return { rows: [r] }; }
     if (/^SELECT EXISTS \(SELECT 1 FROM customer_list/.test(sql)) return { rows: [{ ok: D.cust.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
     if (/^SELECT txn_count FROM customer_list/.test(sql)) { const r = D.cust.find((x) => x.owner === p[0] && x.party_id === p[1] && x.added_via === 'lead'); return { rows: r ? [{ txn_count: r.txn_count }] : [] }; }
+    return null;
+  };
+  /* L3 (the import): the set-based statements of lib/crm-leads.js, answered BEFORE the per-row ones above (they share prefixes) */
+  const dg = (s) => String(s || '').replace(/[^0-9]/g, ''), mems = [];
+  D.pre = async (sql, p) => {
+    if (/^SELECT i\.identity_id, i\.display_name, i\.user_id, regexp_replace/.test(sql)) {
+      const prefix = p[3].replace('%', ''), all = D.cust.map((r) => Object.assign({ _c: true }, r)).concat(D.sup.map((r) => Object.assign({ _s: true }, r)));
+      const hit = all.filter((r) => r.owner === p[0] && (p[1].indexOf(dg(r.otp_contact)) >= 0 || p[1].indexOf(dg(r.phone)) >= 0 || (r.user_id.startsWith(prefix) && p[2].indexOf(r.display_name.toLowerCase()) >= 0)));
+      return { rows: hit.map((r) => ({ identity_id: r.party_id, display_name: r.display_name, user_id: r.user_id, d1: dg(r.otp_contact), d2: dg(r.phone), minted: r.user_id.startsWith(prefix), on_customer: !!r._c, added_via: r._c ? r.added_via : null, txn_count: r._c ? r.txn_count : 0, supplier: !!r._s })) };
+    }
+    if (/^SELECT identity_id, bridge_id, display_name, user_id FROM identities WHERE parent_entity_id = \$1 AND user_id LIKE \$2 AND lower\(btrim\(display_name\)\) = ANY/.test(sql)) return { rows: ids.filter((i) => i.parent_entity_id === p[0] && i.user_id.startsWith(p[1].replace('%', '')) && p[2].indexOf(String(i.display_name).toLowerCase()) >= 0) };
+    if (/^INSERT INTO identities \(.*\) SELECT v\.b, v\.n, v\.u/.test(sql)) { const out = p[1].map((b, i) => ({ identity_id: 'N' + (ids.length + i), bridge_id: b, display_name: p[2][i], user_id: p[3][i], parent_entity_id: p[0] })); out.forEach((r) => ids.push(r)); return { rows: out }; }
+    if (/^UPDATE identities i SET otp_contact = COALESCE/.test(sql)) { p[1].forEach((id, i) => { const r = ids.find((x) => x.identity_id === id); if (r) r.otp_contact = r.otp_contact || p[2][i]; }); return { rows: [] }; }
+    if (/^INSERT INTO customer_list \(.*\) SELECT \$1, v\.id, 'entity', 'lead'/.test(sql)) {
+      const fresh = p[1].filter((id) => !D.cust.some((r) => r.owner === p[0] && r.party_id === id));
+      fresh.forEach((id) => { const x = ids.find((y) => y.identity_id === id); D.cust.push(cs(row({ party_id: id, display_name: x.display_name, user_id: x.user_id, otp_contact: x.otp_contact || null, on_rail: false }), { customer_list_id: 'cl-' + id, added_via: 'lead', txn_count: 0, last_txn_at: null, groups: [], segment: 'new' })); });
+      return { rows: fresh.map((id) => ({ customer_identity_id: id })) };
+    }
+    if (/^UPDATE customer_list SET added_via = 'lead' WHERE/.test(sql)) { const done = []; D.cust.forEach((r) => { if (r.owner === p[0] && p[1].indexOf(r.party_id) >= 0 && r.txn_count === 0 && r.added_via !== 'lead') { r.added_via = 'lead'; done.push(r.party_id); } }); return { rows: done.map((id) => ({ customer_identity_id: id })) }; }
+    if (/^SELECT customer_identity_id AS id FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = ANY/.test(sql)) return { rows: D.cust.filter((r) => r.owner === p[0] && p[1].indexOf(r.party_id) >= 0).map((r) => ({ id: r.party_id })) };
+    if (/^INSERT INTO memberships \(.*\) SELECT \$1, \$2, v\.id/.test(sql)) { const out = p[4].map((id, i) => ({ membership_id: 'mm' + (mems.length + i), item_id: id, kind: p[2], grp: p[5][i], at: '2026-10-12T09:00:00.000Z' })); out.forEach((r) => { mems.push(r); mem.rows.push(r); }); return { rows: out }; }
+    if (/^INSERT INTO party_interaction \(.*\) SELECT \$1, v\.pid, 'note'/.test(sql)) return { rows: [], rowCount: p[1].length };
     return null;
   };
   F.forget();
@@ -82,11 +106,19 @@ async function captureCrm() {
     mem.on = true; SC._reset();
     D.cust.push(cs(row({ party_id: P(12), display_name: 'Lead Lata', user_id: '~shop.cus-0012', on_rail: false, party_no: 'P-0012' }), { customer_list_id: 'cl-12', added_via: 'lead', txn_count: 0, last_txn_at: null, groups: [], segment: 'new' }));
     mem.rows.push({ item_id: P(12), grp: 'lead', at: '2026-10-09T09:00:00.000Z' });
+    mem.rows.push({ item_id: P(12), grp: 'demo', at: '2026-10-10T09:00:00.000Z' });   /* one move: the timeline's stage entry carries { stage, from, by } (FX-L2C) */
+    keep('GET', '/parties/:id/timeline', await t.get('/parties/' + P(12) + '/timeline'));
     keep('POST', '/leads', await t.post('/leads', { name: 'Ravi Jewellers', phone: '+91 98400 77777', stage: 'lead' }));
     keep('GET', '/parties', await t.get('/parties?view=leads'));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(12)));
     keep('POST', '/parties/:id/stage', await t.post('/parties/' + P(12) + '/stage', { stage: 'demo' }));
     keep('POST', '/parties/:id/stage', await t.post('/parties/' + P(2) + '/stage', { stage: 'demo' }));
+    /* the import (L3): the real run, the dry run (the preview), the cap — one file with an add, a merge (Meena's phone) and the skips */
+    const FILE = [{ name: 'Kala Stores', phone: '+91 98400 11111', email: 'kala@example.com', business: 'Kala Stores', city: 'Madurai', source: 'Expo', note: 'Stall 4' },
+      { name: 'Meena New', phone: '+91 98400 99999' }, { name: 'Lata Again', phone: '+919840077777' }, { name: 'Kala Stores', phone: '9000000000' }, { name: 'Bad', phone: 'call me' }, { name: '' }];
+    keep('POST', '/leads/import', await t.post('/leads/import', { rows: FILE }));
+    keep('POST', '/leads/import', await t.post('/leads/import', { rows: FILE, dry: true }));
+    keep('POST', '/leads/import', await t.post('/leads/import', { rows: Array.from({ length: 501 }, (_, i) => ({ name: 'N' + i })) }));
     mem.on = false; SC._reset();
     mem.on = true; SC._reset();
     /* the call desk (L2): the queue, then an outcome that moves a stage, one that only schedules, a refused pick, and "b297 not run" for a stage move */
