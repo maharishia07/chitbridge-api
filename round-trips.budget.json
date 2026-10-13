@@ -472,10 +472,11 @@
     },
     "GET /api/integrations/catalogue": {
       "file": "integrations.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 1,
       "fired": true,
-      "status": 200
+      "status": 200,
+      "why": "CX6 (2026-10-13): signed in, ONE read of identities.country so each connector carries may/why from the shop's pack (Tally/GoFrugal/Zoho greyed outside a GST state-split pack); anonymous stays 0 (fired here anonymously)"
     },
     "GET /api/integrations/profile-map": {
       "file": "integrations.js",
