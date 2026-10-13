@@ -69,6 +69,8 @@ D.extra = async (sql, p) => {
   });
   await ita('POST /leads: no name → 400; a bad phone → 400; a bad stage → 400; an api key → 403', async () => {
     assert.strictEqual((await t.post('/leads', {})).body.code, 'BAD_NAME'); assert.strictEqual((await t.post('/leads', { name: 'X', phone: 'abc' })).body.code, 'BAD_PHONE');
+    /* FX-L2C: the name's WHITESPACE is squeezed, its letters kept — /s+/ (no backslash) once turned "Esai" into "E ai" on the real stack */
+    const sv = await t.post('/leads', { name: '  Selvi   Stores ' }); assert.strictEqual(sv.status, 201, JSON.stringify(sv.body)); assert.strictEqual(sv.body.party.display_name, 'Selvi Stores');
     assert.strictEqual((await t.post('/leads', { name: 'X', stage: 'customer' })).body.code, 'BAD_GROUP');
     t.as('E1', { key: true }); assert.strictEqual((await t.post('/leads', { name: 'X' })).status, 403); t.as('E1');
   });
