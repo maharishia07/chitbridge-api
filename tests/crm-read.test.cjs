@@ -137,6 +137,23 @@ const byId = (list, id) => list.parties.filter((p) => p.party_id === id);
     do { const r = await t.get('/parties/' + C + '/timeline?limit=3' + (before ? '&before=' + encodeURIComponent(before) : '')); assert.strictEqual(r.status, 200); r.body.entries.forEach((e) => seen.push(e.kind + '@' + e.at)); before = r.body.next_before; } while (before && ++guard < 10);
     assert.strictEqual(seen.length, 9); assert.strictEqual(new Set(seen).size, 9);
   });
+  await ita('timeline: a stage move leaves a trail — kind stage { stage, from, by, at } read from memberships (F7, FX-L2C); the first row has no from', async () => {
+    const C = P(2);
+    D.memberships = [{ membership_id: 'm1', entity_id: 'E1', item_id: C, kind: 'lead_stage', grp: 'lead', at: '2026-09-10T00:00:00.000Z', by_user_id: 'E1' },
+      { membership_id: 'm2', entity_id: 'E1', item_id: C, kind: 'lead_stage', grp: 'demo', at: '2026-09-11T00:00:00.000Z', by_user_id: 'A1' },
+      { membership_id: 'm3', entity_id: 'E1', item_id: C, kind: 'lead_stage', grp: 'trial', at: '2026-09-12T00:00:00.000Z', by_user_id: 'A1' },
+      { membership_id: 'm9', entity_id: 'E1', item_id: P(3), kind: 'lead_stage', grp: 'lost', at: '2026-09-12T00:00:00.000Z', by_user_id: 'A1' }];
+    const r = await t.get('/parties/' + C + '/timeline'); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    const st = r.body.entries.filter((e) => e.kind === 'stage');
+    assert.deepStrictEqual(st.map((e) => [e.stage, e.from, e.by]), [['trial', 'demo', 'A1'], ['demo', 'lead', 'A1'], ['lead', null, 'E1']], JSON.stringify(st));
+    assert.strictEqual(r.body.entries[0].kind, 'stage', 'newest first across sources: the trial move (12 Sep) tops the 9 Sep follow-up');
+    /* paging keeps the from: limit 1 before the trial row → the demo row still says from lead (LIMIT + 1) */
+    const r2 = await t.get('/parties/' + C + '/timeline?limit=1&before=' + encodeURIComponent('2026-09-11T12:00:00.000Z'));
+    assert.deepStrictEqual(r2.body.entries.map((e) => [e.kind, e.stage, e.from]), [['stage', 'demo', 'lead']]);
+    D.memberships = null;   /* b297 not run: the source is quiet, the rest of the timeline answers */
+    const r3 = await t.get('/parties/' + C + '/timeline'); assert.strictEqual(r3.status, 200); assert.ok(!r3.body.entries.some((e) => e.kind === 'stage'));
+    D.memberships = [];
+  });
   await ita('timeline: "History of changes" is the owner\'s only (a co-assist sees none)', async () => {
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });
     const r = await t.get('/parties/' + P(2) + '/timeline'); assert.ok(!r.body.entries.some((e) => e.kind === 'change')); t.as('E1');

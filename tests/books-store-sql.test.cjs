@@ -30,6 +30,9 @@ const db = { query: async (text, params) => {
 const CALLS = {
   setting: [E], saveSetting: [E, { enabled: true }], saveCheck: [E, { ok: true }], accounts: [E], insertAccount: [E, { code: '1300', name: 'x', nature: 'asset' }],
   periods: [E, '2026-27'], periodFigures: [E, '2026-27'], insertPeriod: [E, { fiscal_year: '2026-27', period: 1, start_date: '2026-04-01', end_date: '2026-04-30' }], setPeriodStatus: [E, '2026-27', 1, 'soft_locked', U, 'r'],
+  /* CS2: a never-posted ledger re-charted in place (no DELETE on the setup tables) */
+  parkChart: [E], rechart: [E, [{ code: '2200', name: 'GST collected', is_group: false, nature: 'liability', role: 'gst_collected', parent_code: '2200', tally_group: 'GST and Statutory Liabilities', sch3_line: 'x', saft_grouping: 'LIABILITY:x' }], { pack_code: 'AU', pack_version: null }],
+  relabelPeriods: [E, '2026-27', [{ period: 1, fiscal_year: '2026', start_date: '2026-01-01', end_date: '2026-01-31' }]],
   nextNo: [E, 'JV', '2026-27'], entryBySource: [E, 'chit:x'], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U], entries: [E, '2026-04-01', '2026-04-30'],
   yearRows: [E, '2026-27'], ledgerLines: [E, '2026-04-01', '2026-04-30', U], years: [E],
   insertEntry: [E, { entry_no: 'JV/2026-27/000001', posting_date: '2026-04-01', fiscal_year: '2026-27', period: 1, event_type: 'manual', currency: 'INR', total_minor: 1 }],

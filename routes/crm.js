@@ -93,7 +93,8 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
 
 /**
  * the timeline: every source asked for `limit` rows older than `before`, merged newest-first, cut to `limit`.
- * { entries: [{ kind, at, … }], next_before, migrated }. kinds: chit · message · dispute · ledger · interaction · followup · followup_done · change.
+ * { entries: [{ kind, at, … }], next_before, migrated }. kinds: chit · message · dispute · ledger · interaction · followup · followup_done · change · stage.
+ * stage (FX-L2C): a lead's move as memberships holds it — { stage, from, by, at }; from is null on the first row (the lead's start).
  * Money on an entry is the stored figure (summary_json total_value; party_item amount_minor) — never recomputed.
  */
 router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
@@ -150,6 +151,12 @@ router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
           if (x.done_at && new Date(x.done_at).getTime() < before) entries.push({ kind: 'followup_done', at: crm.iso(x.done_at), followup_id: x.followup_id, what: x.what });
         }
       }
+      /* the stage trail (F7, FX-L2C): memberships IS the append-only history of every move (lib/memberships — the one writer), so the trail is a
+         READ of it, never a second log: who · when · to, and "from" = the older row (one statement, LIMIT + 1 so the oldest row shown has its from).
+         Before b297 the table is absent — its savepoint answers no rows (soft), exactly as the other optional sources. */
+      const st = await soft(() => h.query(`SELECT membership_id, grp, at, by_user_id FROM memberships WHERE entity_id = $1 AND item_type = 'party' AND item_id = $2 AND kind = 'lead_stage' AND at < $3
+                                            ORDER BY at DESC, membership_id DESC LIMIT $4`, [owner, party, beforeIso, limit + 1]));
+      st.rows.slice(0, limit).forEach((x, i) => entries.push({ kind: 'stage', at: crm.iso(x.at), membership_id: x.membership_id, stage: x.grp, from: st.rows[i + 1] ? st.rows[i + 1].grp : null, by: x.by_user_id || null }));
     });
     entries.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
     const page = entries.slice(0, limit);
@@ -234,7 +241,7 @@ router.delete('/parties/:id', auth, noKey, async (req, res) => {
 router.post('/leads', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), b = req.body || {};
-    const name = String(b.name || '').replace(/s+/g, ' ').trim();
+    const name = String(b.name || '').replace(/\s+/g, ' ').trim();   /* \s — the letter s was being replaced ("Esai" → "E ai"), found by the FX-L2C real walk */
     if (!name) throw bad('Give the lead a name.', 400, 'BAD_NAME');
     let phone = null;
     if (String(b.phone || '').trim()) {
