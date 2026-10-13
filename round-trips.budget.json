@@ -693,6 +693,15 @@
       "fired": true,
       "status": 200
     },
+    "POST /api/books/entries": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "awaiting_client": { "pr": "web round/F4-38425769608", "since": "2026-10-13" },
+      "why": "F4 (by hand): newly CALLED by the web — CB Finance · Payables' Record discount sends the server's ready journal (against_ref). The route is unchanged in cost (postEntry, one transaction); the offline stub refuses early, so the line is the floor."
+    },
     "POST /api/books/entries/:id/reverse": {
       "file": "books.js",
       "trips": 1,
