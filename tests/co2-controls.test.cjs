@@ -59,7 +59,7 @@ const read = (p) => fs.readFileSync(path.join(API, p), 'utf8');
   delete require.cache[P];
 
   /* ── 2 · K6 state_log append-only ─────────────────────────────────────────────────────────────────────────── */
-  const sql = read('migrations/b303_state_log_append_only.sql');
+  const sql = read('migrations/b315_state_log_append_only.sql');
   const body = sql.replace(/--[^\n]*/g, '');
   check('b315 revokes UPDATE on state_log from cb_app', /REVOKE\s+UPDATE\s+ON\s+state_log\s+FROM\s+cb_app/i.test(body));
   check('b315 does NOT revoke DELETE (sending a draft clears its rows)', !/REVOKE[^;]*DELETE[^;]*state_log/i.test(body));

@@ -1,4 +1,4 @@
--- b303_state_log_append_only.sql — round CO2 (security controls, K6): a chit's history (state_log) can be added to, never rewritten.
+-- b315_state_log_append_only.sql — round CO2 (security controls, K6): a chit's history (state_log) can be added to, never rewritten.
 --
 -- ⚠️⚠️ DRAFT — NOT RUN · Athi runs it (Supabase SQL editor, AS postgres — REVOKE and CREATE TRIGGER need the owner). Written offline,
 --    never executed here. Safe to re-run (REVOKE is idempotent; CREATE OR REPLACE FUNCTION; DROP TRIGGER IF EXISTS before CREATE).
