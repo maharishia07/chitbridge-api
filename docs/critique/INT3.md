@@ -16,3 +16,5 @@
 **(d) Risks** — tax 1.43.0 changes inclusive-line rounding: `tests/tax-truth` + `tax-vendor` decide, plus the till vendor check. HX1 rewrites db/index.js connect config (HX0's pooler-fallback off) — HX1's version wins where both edited, by meaning. Web HX1 adds guard 17 (no platform host in the site): pages merged from INT2 must pass it. Twin landing api → web (contract master first). Never merged, never force-pushed.
 
 **(e) VERDICT: BUILD AS BRIEFED** — plus STEP 0 (CX0 into the api branch first).
+
+**Found while building** — (1) two ABN checks after INT2 (main's CS2 `party-fields.TAX_ID_CHECK` · INT2's `checkTaxId`): main's kept, `checkTaxId` dropped (no other caller). (2) CX0's own branch was red 2/54 in `tests/country-setup` (main 50/50): the AU case inherited India's setup row (fy 4) and a source regex missed the `CSU` alias — test fixture fixed, CX0's code unchanged. (3) HX0 · HX1 also conflicted with CX0 in `tools/sim-load.cjs` usage text (both kept) and HX1 with IX0 in till `cbHome` (HX1's config read + IX0's `cbRoot`).
