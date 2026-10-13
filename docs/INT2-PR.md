@@ -1,0 +1,9 @@
+**VERDICT: BUILD WITH CHANGES** (web `docs/critique/INT2.md`) — `integrate/1013b` = main + #121 (IM1) + #120 (RI1), both `--no-ff`, in that order. **Land this api PR first, then web `integrate/1013b`** (twin, same branch name).
+- Resolved by meaning: `docs/FIELDS.md` union; `lib/party-fields.js` keeps L3 `ensureNos` AND IM1 `checkTaxId`; `tests/engine-manifest.js` keeps F3 `books-cashflow.js` AND RI1 `repeat-supply.js`.
+- Engines: per-engine max → reg-au **1.40.0** (v1.39.0 ⊂ v1.40.0, so BAS1's `returnFor` is inside), reg-ae stays 1.39.0; re-adopted with `tools/adopt.cjs`, `--check` passes; nothing here needs v1.41.0. Till untouched by both → no re-vendor.
+- ⚠️ **Migration renumbered: RI1's `migrations/b302_repeat_supply.sql` → `migrations/b303_repeat_supply.sql`** (IM1 holds `b302_ledger_account_source_code.sql`; both were b302). Every mention follows (lib · routes · tests · FIELDS · RI1b critique). Owner runs b302 then b303 — NOT run here.
+- Contract regenerated from the merged routes (`--write`, 97 routes = main ∪ IM1 ∪ RI1, no shape lost) and byte-copied to the web fixture. IM1's capture block moved after the year close in `tests/support/contract-books.cjs` (its trial balance parks a difference on Suspense, which refused the close and dropped the `#200` example main holds).
+- Budget by HAND (never `--write`): union keeps every why/extra; all 17 `awaiting_client` marks removed (the callers land in web integrate/1013b); the nine `/api/repeat/:id/<verb>` lines are `extra: true` because `cap-repeat.js rpEpOf` invokes them by the server's action name (scanner-invisible, as IM1's preflight/preview).
+- Checks (foreground, web integrate/1013b beside): `node scripts/guards.cjs` → 5087 checks · 167 files · all passed (incl. round-trips-all 516, web-api-contract 118, migration-numbers).
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
