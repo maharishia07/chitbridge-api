@@ -23,3 +23,15 @@
 - No migration: identities.timezone (b176) and the b299 columns already exist. New response keys get their docs/FIELDS.md rows.
 
 (e) Changes to the brief: (1) the constituted check is `isConstituted(h, entity)` on a db handle (it reads tables), not `(entity)`; (2) item 3 is an adoption + the adapter widening, not a new chart reader; (3) item 5 is done on the till (vendored from api tools/tally-connector/till.html) and the web's shared helpers; the rest is the PR's row list, not rewritten this round; (4) the country list on the step comes from the server (`countries` = `regulation.list()`), which is CS1's rule, with CBLocale.REGIONS only as the offline fallback.
+
+## PR body (the token could not open the PR; open it from the compare link with this body)
+
+**VERDICT: BUILD WITH CHANGES** (docs/critique/CS2.md, first commit). Lands after engines v1.42.0 (adopted here), before web. No SQL migration.
+- THE CONSTITUTION: `country-setup.isConstituted(h, entity)` — ONE EXISTS over catalogue_items · chit_header · journal_entry (schema.hasTable). Before it the owner may CORRECT the country: `derive()` re-sets currency · FY · scheme · zone from the new pack, `books.reseedUnposted` re-charts a never-posted ledger IN PLACE, who/when → books_change_log; after it a different country or currency → 409 "Register a new business for <country>". No conversion path, by decision.
+- ZONE: the pack's one zone is set; several → 400 COUNTRY_SETUP_ZONE names them; written to identities.timezone (M210 dayOf reads it). `countries[]` on GET = regulation.list() (CS1's rule). FIELDS.md rows added.
+- CHART: accounts-packs ADOPTED (v1.42.0 facade over the packs, + chart) — lib/accounts-packs.js is no longer a second chart table; AU/AE seed from reg-au / reg-ae. ABN · TRN in party-fields via reg-au abn.check / reg-ae trn.check (reused). The till's counts through CBLocale (fmtCount).
+- Trips (by hand): GET country-setup 3→4, PUT 7→9 (+ the once-per-shop re-seed, outside the ceiling). Owner only on PUT. Contract unchanged (web-api.json = web copy).
+- Checks: country-setup (50) · books-store-sql · engine-manifest · web-api-contract · guards.cjs (5032; till-vendor + pages-parse green once the web copy is vendored).
+- Flow step: Accounts · step "country". Better than QuickBooks because the ledger refuses a country change the moment a transaction exists instead of letting "home currency" drift under posted entries.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
