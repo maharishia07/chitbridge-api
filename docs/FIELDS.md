@@ -281,3 +281,9 @@ The browser parses the file and sends `rows` (≤ 500; more → 400 `TOO_MANY` "
 | `rows[]` | `{ row, name, phone, outcome, why, party_id }` | Every row's verdict: `outcome` ∈ add · merge · skip. The preview list paints this — it computes nothing. `party_id` = the matched party (merge/skip) or, after the import, the new one. |
 | `identities` set-based insert | mintMany | The same columns and constants as mint(); handles `~<shop>.cus-NNNN` numbered after the shop's top number, ONE insert. |
 | `books_counter` block | nextNo(…, count) | One move of the 'P' series by `count`; party numbers `P-NNNNN` assigned in that order (party-fields.ensureNos). |
+
+## `identities.ui_prefs.edition` · PATCH /api/entities/me/prefs/ui (AX1, 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `ui_prefs.edition` | slug (`full` · `auditor` · …, `^[a-z][a-z0-9-]{0,23}$`) | Source: the person's choice in the avatar menu's Edition group (web `public/app/avatar.js`, `CBAvatar.set('edition')`), sent with theme · fs · motion · stripes (the set is REPLACED, so every key rides every push). Read by web `public/app/edition.js` (CBEdition) to pick which manifest entries Home draws; the list of editions is the web manifest's `editions` map. HIDES doors only — no route reads it for access. Absent = `full`. No migration (ui_prefs is jsonb, b166). |
