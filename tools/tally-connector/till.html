@@ -26841,16 +26841,30 @@ function onlineOrdersOpen(){
  * ⭐ TO1-UI — "All orders & tasks": the Tasks & Orders app (tasks.html?embed=1&view=orders_in) opens in a dialog on top of the counter, as the Employees
  * form does (whoAdd). The counter holds no second list: the frame uses the person signed in HERE (CBEmbed's session handshake), tells us
  * { cb:'tasks', event:'moved'|'assigned' } (docs/design/tasks-orders/EMBED.md in chitbridge-web), and the open orders are read again when it closes.
+ * ⭐ TO1b (the designer brief, §4 Accept → BILL IT → Delivered; §6 "Bill it there turns it into the bill on the till"): the frame's Bill it tells us
+ * { event:'bill', chit_id } — the frame bills nothing. We close it and put the order on the bill through the ONE path an online order already
+ * takes from the 🛒 list (orderToBill: the shopper's prices, Delivery / Pickup as ordered, normal series, tax and slip; finish() marks it done).
  */
 function tasksOpen(){
   try { document.getElementById('onlinedlg').close(); } catch (_) {}
   if (!window.CBEmbed || !lineUp()) { say('Orders and tasks need the internet. Try again when the line is back.'); return; }
-  var heard = false;
-  CBEmbed.open({ app: 'tasks', view: 'orders_in', title: 'Orders & tasks',
+  var heard = false, billing = false, h = null;
+  h = CBEmbed.open({ app: 'tasks', view: 'orders_in', title: 'Orders & tasks',
     session: function(){ return (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.person && CloudHost.person.token) || null; },
     api: function(){ return (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.api) || null; },
-    onMessage: function(m){ if (m.event === 'moved' || m.event === 'assigned') heard = true; },
-    onClose: function(){ if (heard) { ONLINE.at = 0; Promise.resolve(onlineOrdersLoad()).then(onlineOrdersOpen, onlineOrdersOpen); } else onlineOrdersOpen(); } });
+    onMessage: function(m){
+      if (m.event === 'moved' || m.event === 'assigned') heard = true;
+      if (m.event === 'bill' && m.chit_id) { billing = true; try { if (h) h.close(); } catch (_) {} tasksBill(String(m.chit_id)); }
+    },
+    onClose: function(){ if (billing) return; if (heard) { ONLINE.at = 0; Promise.resolve(onlineOrdersLoad()).then(onlineOrdersOpen, onlineOrdersOpen); } else onlineOrdersOpen(); } });
+}
+/** the frame said Bill it: the order from the till's own open-orders read (the shape orderToBill takes), read again if it is not held yet */
+async function tasksBill(id){
+  var find = function(){ return ONLINE.list.filter(function(t){ return String(t.chit_id) === id; })[0] || null; };
+  var t = find();
+  if (!t) { ONLINE.at = 0; try { await onlineOrdersLoad(); } catch (_) {} t = find(); }
+  if (!t) { say('That order is not on the counter’s list yet.\n\nRead the shop again (F4), then tap 🛒 and the order.'); return; }
+  orderToBill(t);
 }
 /** a row → that order, in place: Despatch with it chosen (the same list loadTasks reads) */
 async function onlineOrderPick(id){
