@@ -5850,6 +5850,12 @@ function fyOf(d){ var y=d.getFullYear(), apr=d.getMonth()>=3, a=apr?y:y-1; retur
 /** the shop's jurisdiction — the pivot every numbering rule hangs from. Defaults to India, which is where
  *  this counter has actually been built and tested. */
 function docCountry(){ return (S && S.shop && S.shop.country) || 'IN'; }
+/* ⭐ CX0 (2026-10-13): THE PACK'S OWN WORDS on the paper — the tax-id label (GSTIN · ABN · TRN), the scheme (GST · VAT), the credit note's title.
+   Read from the registered pack of the shop's country (CBRegulation, bundled in /engine/tax.js); a page without the registry keeps India's words. */
+function shopPack(){ try { return (window.CBRegulation && CBRegulation.packFor(docCountry())) || null; } catch (_) { return null; } }
+function taxIdLabel(){ var p = shopPack(); return p && p.abn ? 'ABN' : p && p.trn ? 'TRN' : 'GSTIN'; }
+function schemeWord(){ var p = shopPack(); return (p && p.tax && p.tax.scheme) || 'GST'; }
+function creditNoteTitle(){ var p = shopPack(); return p && p.creditNote && p.creditNote.title ? String(p.creditNote.title).toUpperCase() : 'CREDIT NOTE'; }
 /**
  * ⭐ WHICH PREFIX THIS COUNTER NUMBERS UNDER. A keyed counter / the shop PC: the device-wide answer the shop gave it
  * (cb_till_id, C1 until told otherwise). ⭐ M08 — a PERSON's device: its own label under the shop's slot, never C1
@@ -18458,7 +18464,10 @@ function billMoney(){
   var inclusive = taxIncluded();   /* ⭐ one answer, shared with the shelf row — they must never disagree */
   /* ⚠️ the shop's state is the first two digits of its GSTIN — the rule the snapshot sends state_code by (routes/till.js),
      read here too, so a copy that came without the field still states its supply rather than charging no tax */
-  var sc = String(sh.state_code || String(sh.gstin || '').trim().slice(0, 2) || '');
+  /* ⭐ CX0: a STATE exists only under a pack whose tax turns on the state (India). Under a border pack (Australia, the UAE) the first two
+     digits of an ABN or a TRN are not a state — they printed "Place of supply 51" on an Australian slip. No pack known → India's rule, as before. */
+  var stateTax = (function(){ try { var p = window.CBTaxPacks && CBTaxPacks.packFor(String(sh.country || '').trim().toUpperCase()); return !p || !p.supply || p.supply === 'state'; } catch (_) { return true; } })();
+  var sc = stateTax ? String(sh.state_code || String(sh.gstin || '').trim().slice(0, 2) || '') : '';
   var cust = custKnown(), g = cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '';
   /* ⭐⭐ BUY1 (2026-10-12): THE COUNTER'S BUYER IS INSIDE THE SHOP'S COUNTRY. A pack whose tax turns on the BORDER (Australia, the
      UAE) answers a buyer with no country 'unknown' — no GST, no VAT — and a walk-in has no country on record, so an Australian or
@@ -22457,7 +22466,7 @@ function slipHeadHTML(kind){
   return '<div data-testid="till-slip-head" style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name || counterName()) + '</div>'
     + (shop.address ? '<div style="text-align:center">' + esc(shop.address) + '</div>' : '')
     + (shop.phone ? '<div style="text-align:center">Ph ' + esc(shop.phone) + '</div>' : '')
-    + (kind !== 'cash' && shop.gstin ? '<div style="text-align:center">GSTIN ' + esc(shop.gstin) + '</div>' : '');
+    + (kind !== 'cash' && shop.gstin ? '<div style="text-align:center">' + taxIdLabel() + ' ' + esc(shop.gstin) + '</div>' : '');
 }
 function slipHTML(bill, m){
   var shop = (S && S.shop) || {};
@@ -22518,7 +22527,7 @@ function slipHTML(bill, m){
              + (l.mods && l.mods.length ? '<div data-testid="till-slip-mods" style="font-size:.9em;padding-inline-start:8px">' + esc(modWordsPlain(l.mods)) + '</div>' : '')
              + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price)
              + (Number(l.mrp) > 0 ? '  MRP ' + money(l.mrp) : '')
-             + (bill.kind === 'tax' && l.gst_rate ? '  GST ' + l.gst_rate + '%' : '') + '</div>'
+             + (bill.kind === 'tax' && l.gst_rate ? '  ' + schemeWord() + ' ' + l.gst_rate + '%' : '') + '</div>'
              /* ⚠️ only when something came off — on a line with no offer, "Gross ₹9.00" over "₹9.00" is a row
                 that says nothing twice, and rows that say nothing are how a bill becomes unreadable. */
              + (offs.length || Number(l.save_unnamed) > 0.004 ? sub('Gross', money(l.gross)) : '')
@@ -22595,13 +22604,15 @@ function slipHTML(bill, m){
 function taxSummaryHTML(bill, t, dash){
   var by = bill.by_rate || {};
   var rates = Object.keys(by).sort(function(a, b){ return Number(a) - Number(b); });
-  /* ⚠️ an older bill, or one with no rate-wise detail — say the same thing in the simpler shape it was saved in */
-  if (!rates.length) {
+  /* ⚠️ an older bill, or one with no rate-wise detail — say the same thing in the simpler shape it was saved in.
+     ⭐ CX0: and EVERY bill under a one-head scheme (supply 'domestic' — the border decided: GST in Australia, VAT in the UAE): its heads are
+     the engine's (GST 10 % · VAT 5 %), never a CGST/SGST grid that printed 0.00 twice and the tax nowhere. */
+  if (!rates.length || bill.supply === 'domestic') {
     return t('Taxable', money(bill.taxable))
       + ((bill.heads && bill.heads.length)
           ? bill.heads.map(function(h){ return t(h.name + ' ' + h.rate + '%', money(h.amount)); }).join('')
-            + t('GST total', money(bill.tax))
-          : t('GST', money(bill.tax)));
+            + t(schemeWord() + ' total', money(bill.tax))
+          : t(schemeWord(), money(bill.tax)));
   }
   var inter = bill.supply === 'inter';
   var cell = function(v, w, end){ return '<span style="display:inline-block;width:' + w
@@ -24871,7 +24882,7 @@ function retSlipHTML(cn){
   return '<div style="font:13px/1.45 ui-monospace,monospace">'
     + slipHeadHTML(kind)
     + '<div style="border-top:1px solid currentColor;margin:4px 0"></div>'
-    + '<div style="font-size:17px;font-weight:800;text-align:center">CREDIT NOTE</div>'
+    + '<div style="font-size:17px;font-weight:800;text-align:center">' + creditNoteTitle() + '</div>'
     + '<div>' + esc(counterName()) + (cn.by && cn.by.name ? ' · ' + esc(cn.by.name) : '') + '</div>'
     + '<div style="font-size:15px;font-weight:700">' + esc(cn.no || '') + '</div>'
     + '<div>' + esc(atShop(cn.at || Date.now())) + '</div>'

@@ -105,6 +105,8 @@ const PAGE_FNS = ['function billMoney(', 'function moneyOf(', 'async function fi
   'function tillStamp(', 'function tillHostWord(', 'function unratedOnBill(', 'function billOrderRow(', 'function posWords(',
   /* round T1 (2026-10-10): the slip's head is one function for the bill and the credit note (M45), its time is shop time (M43) */
   'function slipHeadHTML(', 'function atShop(', 'function tzOpt(', 'function shopTz(',
+  /* CX0 (2026-10-13): the pack's words on the paper — tax-id label, scheme, credit-note title — read from CBRegulation when the page has it */
+  'function docCountry(', 'function shopPack(', 'function taxIdLabel(', 'function schemeWord(', 'function creditNoteTitle(',
   /* …and a refused sale is written down before it is said (M49) */
   'function saleStop(', 'function saleStopNote('];
 

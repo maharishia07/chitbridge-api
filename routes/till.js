@@ -2023,12 +2023,20 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
      */
     if (typeof b.gstin === 'string' && b.gstin.trim()) {
       const g = b.gstin.trim().toUpperCase();
-      const chk = require('../lib/profile-map').gstinChecksum(g);
-      if (!chk.ok) {
-        return res.status(400).json({ error: 'validation', field: 'gstin',
-          message: chk.reason === 'format'
-            ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
-            : 'That GSTIN\u2019s last character does not match the rest of it, so one character is mistyped.' });
+      /* ⭐ CX0: the shop's COUNTRY picks the check — India's GSTIN checksum, else the pack's own (reg-au abn.check · reg-ae trn.check) */
+      const cc = String(before.country || 'IN').toUpperCase();
+      if (cc !== 'IN') {
+        const p = require('../lib/regulation').packFor(cc), id = p && (p.abn || p.trn);
+        const ck = id && typeof id.check === 'function' ? id.check(g) : { ok: true };
+        if (!ck.ok) return res.status(400).json({ error: 'validation', field: 'gstin', message: ck.why || 'That tax number does not check out.' });
+      } else {
+        const chk = require('../lib/profile-map').gstinChecksum(g);
+        if (!chk.ok) {
+          return res.status(400).json({ error: 'validation', field: 'gstin',
+            message: chk.reason === 'format'
+              ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
+              : 'That GSTIN\u2019s last character does not match the rest of it, so one character is mistyped.' });
+        }
       }
       b.gstin = g;   /* stored upper-cased, the one form every reader already assumes */
     }
