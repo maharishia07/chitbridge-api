@@ -5,6 +5,8 @@
 #   api      this repo's Dockerfile, NODE_ENV=production — sealed: it refuses to boot without the e-mail sender (docs/HOSTING.md)
 #   web      ../chitbridge-web's Dockerfile (CB_WEB_DIR to move it) — the static site, pointed at CB_API_BASE
 #   mailsink (profile `proof` only) a stand-in for Resend so a walk can read the sign-in code — never in a real deployment
+#   minio    (profiles `minio` · `proof`) an S3-compatible object store for attachments, media and books packs (HX1: lib/storage-object.js
+#            signs SigV4 — the same env points it at AWS S3, Cloudflare R2 or Supabase's S3 endpoint instead)
 # Ports bind to 127.0.0.1: put a TLS proxy (Caddy, a cloud load balancer) in front for anything public.
 name: chitbridge
 
@@ -59,8 +61,15 @@ services:
       RESEND_BASE_URL: ${RESEND_BASE_URL:-}
       FROM_EMAIL: ${FROM_EMAIL:-}
       ALLOWED_ORIGINS: ${WEB_ORIGIN:-http://localhost:8080}
+      # the object store (docs/HOSTING.md, Storage): unset = bytes in the database. SigV4 when the access key pair is set
       S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_BUCKET: ${S3_BUCKET:-cb-attach}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
       S3_KEY: ${S3_KEY:-}
+      STORAGE_ADAPTER: ${STORAGE_ADAPTER:-db}
+      PUBLIC_WEB_BASE: ${WEB_ORIGIN:-http://localhost:8080}
     ports: ["127.0.0.1:${API_PORT:-3000}:3000"]
     depends_on:
       migrate: { condition: service_completed_successfully }
@@ -81,5 +90,34 @@ services:
     volumes: ["./mail-sink.cjs:/sink/mail-sink.cjs:ro"]
     ports: ["127.0.0.1:8025:8025"]
 
+  minio:
+    profiles: [minio, proof]
+    # MinIO's own registry images are not pullable anonymously any more; Chainguard's build of the same server ships `mc` beside it
+    image: cgr.dev/chainguard/minio:latest
+    command: ["server", "/data", "--address", ":9000"]
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-}
+      MC_HOST_local: http://${S3_ACCESS_KEY_ID:-}:${S3_SECRET_ACCESS_KEY:-}@127.0.0.1:9000
+    volumes: [cbobjects:/data]
+    ports: ["127.0.0.1:${S3_PORT:-9000}:9000"]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  minio-bucket:
+    profiles: [minio, proof]
+    image: cgr.dev/chainguard/minio:latest
+    environment:
+      MC_HOST_local: http://${S3_ACCESS_KEY_ID:-}:${S3_SECRET_ACCESS_KEY:-}@minio:9000
+      S3_BUCKET: ${S3_BUCKET:-cb-attach}
+    entrypoint: ["sh", "-c", "mc mb --ignore-existing local/$$S3_BUCKET && echo \"bucket $$S3_BUCKET ready (private)\""]
+    depends_on:
+      minio: { condition: service_healthy }
+    restart: "no"
+
 volumes:
   cbdata:
+  cbobjects:
