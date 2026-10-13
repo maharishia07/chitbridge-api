@@ -41,3 +41,6 @@ tools/seed/tallytest-10k.json
 # a run artefact, not a document: the JUnit the harness writes for the board (C:\dev ignores its own)
 test-results/
 .bak
+
+# HX2: a cloud spin's state (its URLs and generated secrets) — deploy/spin-lib.sh
+deploy/.spin/

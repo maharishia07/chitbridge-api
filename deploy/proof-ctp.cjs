@@ -1,6 +1,7 @@
 // deploy/proof-ctp.cjs — run by deploy/proof.sh (HX1): CTP discovery answers on the api's name and is never the web app; /config.js names CB_API_BASE
 'use strict';
-const API = 'http://127.0.0.1:' + process.env.API_PORT, WEB = 'http://127.0.0.1:' + process.env.WEB_PORT;
+// HX2: API_BASE / WEB_BASE (a cloud spin's URLs) stand in for the local ports
+const API = (process.env.API_BASE || 'http://127.0.0.1:' + process.env.API_PORT).replace(/\/+$/, ''), WEB = (process.env.WEB_BASE || 'http://127.0.0.1:' + process.env.WEB_PORT).replace(/\/+$/, '');
 (async () => {
   const a = await fetch(API + '/.well-known/ctp.json'), aj = a.ok ? await a.json() : null;
   const w = await fetch(WEB + '/.well-known/ctp.json'), wt = await w.text();
