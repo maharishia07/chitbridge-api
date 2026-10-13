@@ -165,7 +165,8 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "F4 (by hand): ?side=supplier&finance=1 adds 3 reads inside the same transaction — cheques written (1) · Udyam ids (1) · supplier terms (1), + the terms-column check (lib/schema, cached). Nothing per party. The offline stub answers 404 (ledger off), so the line stays the floor."
     },
     "GET /api/books/events": {
       "file": "books.js",
@@ -748,6 +749,14 @@
       "wire": 136,
       "fired": true,
       "status": 200
+    },
+    "POST /api/books/entries": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "F4 (by hand): newly CALLED by the web — CB Finance · Payables' Record discount sends the server's ready journal (against_ref). The route is unchanged in cost (postEntry, one transaction); the offline stub refuses early, so the line is the floor."
     },
     "POST /api/books/entries/:id/reverse": {
       "file": "books.js",

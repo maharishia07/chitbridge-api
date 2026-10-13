@@ -109,6 +109,13 @@ async function captureBooks() {
     await q('GET', '/ledger/1300?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
     await q('GET', '/ledger/bank?from=2026-04-01&to=2027-03-31', null, '/ledger/:account');
     await q('GET', '/dues', null, '/dues');
+    /* F4 Payables: + payable per supplier row (bills aged, MSME day 45, early-pay) and payables.total_minor — Kumar has a Udyam number and his own early-pay
+       terms, so every slot of the shape is filled (the in-memory store has no party_tax_id / supplier_list tables: their two reads are stood in here) */
+    const qd = X.db.query;
+    X.db.query = async (t, p) => /scheme = 'UDYAM'/.test(String(t)) ? { rows: [{ party_id: SUPP }] }
+      : /FROM supplier_list WHERE owner_entity_id/.test(String(t)) ? { rows: [{ party_id: SUPP, credit_days: 30, terms: { early: { pct: 2, within_days: 3650 } } }] } : qd(t, p);
+    await q('GET', '/dues?side=supplier&finance=1', null, '/dues');
+    X.db.query = qd;
     await q('GET', '/terms', null, '/terms');   /* F2: before b298 runs — terms_migrated false, the shop default empty */
     await q('GET', '/cashflow?days=7', null, '/cashflow');   /* F3: the cash position — a 7-day run from the shop's today: the September sale and purchase overdue, GST beyond it */
     await q('GET', '/cheques', null, '/cheques');   /* F3: + pdc_reminders beside the held cheques (none held in this scenario) */
