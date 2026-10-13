@@ -5,8 +5,8 @@ From web `docs/research/COMPLIANCE-OBLIGATIONS-2026-10.md` controls K3 · K7 · 
 ## 1 · The books' edit trail cannot be disabled — Companies (Accounts) Rules r.3(1) proviso · CGST r.56(8)
 | Claim | Where | Run it |
 |---|---|---|
-| Five books tables refuse UPDATE/DELETE by trigger | `migrations/b273_books_journal.sql:201-213`, `b295` (books_payment: only the two advice columns, once) | `node tests/records-keeping.test.cjs` (A1–A2) · on the database: b303 **P3** |
-| …and by grant; the app role owns none of them (only an owner can disable a trigger) | b273 `REVOKE UPDATE, DELETE … FROM cb_app` | b303 **P4** (expect 0 rows) |
+| Five books tables refuse UPDATE/DELETE by trigger | `migrations/b273_books_journal.sql:201-213`, `b295` (books_payment: only the two advice columns, once) | `node tests/records-keeping.test.cjs` (A1–A2) · on the database: b305 **P3** |
+| …and by grant; the app role owns none of them (only an owner can disable a trigger) | b273 `REVOKE UPDATE, DELETE … FROM cb_app` | b305 **P4** (expect 0 rows) |
 | No runtime code stands a trigger aside; no setting turns the log off | lib · routes · db · middleware · scripts · tools · server.js; `lib/policy.js` FLAGS; `books_setting` | test A3–A5 (one named exception: `tools/sim-load.cjs`, local-only by refusal) |
 | Every master change is logged: who · when · field · old → new | one writer `lib/books-store.js` `logChange` → `books_change_log` (insert-only); callers: ledgers, periods, settings, terms, party fields | test A6 · screen: Day book › Audit trail |
 | A correction is a reversal, never an edit | `journal_entry.reverses_entry_id`; chits: amendments beside the original (b137) | — |

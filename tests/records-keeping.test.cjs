@@ -5,7 +5,7 @@
  *
  *   A · Companies (Accounts) Rules r.3(1) proviso / CGST r.56(8): the books' edit trail CANNOT BE DISABLED.
  *       Five tables refuse UPDATE/DELETE by trigger AND by grant; no runtime code can stand a trigger aside; no setting turns the log off;
- *       the masters' writers log every change. (The live twin of A is b303's PROOFS P3/P4 — run on the database.)
+ *       the masters' writers log every change. (The live twin of A is b305's PROOFS P3/P4 — run on the database.)
  *   B · Retention floors (IN 8 FY / 72 months GST · AU 5–7 y · AE 5–7 y): ONE floor, lib/policy.js RECORDS_FLOOR_YEARS, at least as long
  *       as every registered pack asks; the mint applies it under every copy; the sweep never lists a copy younger than it.
  */
@@ -58,7 +58,7 @@ for (const f of migs) {
 }
 check('A3 no later migration disables or drops a books trigger', dropped.length === 0, dropped.join(' · '));
 
-/* no runtime code can stand the triggers aside (only an owner/superuser could; cb_app owns none — b303 P4) */
+/* no runtime code can stand the triggers aside (only an owner/superuser could; cb_app owns none — b305 P4) */
 const RUNTIME = ['lib', 'routes', 'db', 'middleware', 'scripts', 'tools', 'server.js'];
 /* the ONE known use, allowed with its reason: a dev loader that refuses any dotted (remote) host and any sealed NODE_ENV */
 const ALLOWED = { 'tools/sim-load.cjs': 'LOCAL ONLY: refuses a non-localhost --db and a sealed NODE_ENV; wipes a simulated shop' };
@@ -109,10 +109,10 @@ const retainDays = (shopFloor, requested) => Math.max(policy.RECORDS_FLOOR_DAYS,
 check('B3 a shop floor of 0 and a sender asking 1 day still keep 9 years', retainDays(0, 1) === policy.RECORDS_FLOOR_DAYS);
 check('B3 a longer ask is honoured', retainDays(90, 5000) === 5000);
 
-const b303 = read('migrations/b303_records_floor.sql');
-check('B4 b303 sets the schema default to the same 9 years', /SET DEFAULT \(now\(\) \+ interval '9 years'\)/.test(b303));
-check('B4 b303 only lengthens (every UPDATE is guarded by "< created_at + 9 years")', (b303.match(/UPDATE chit_status/g) || []).length === 2 &&
-  (b303.match(/< created_at \+ interval '9 years'/g) || []).length >= 4 && !/DELETE FROM/i.test(b303));
+const b305 = read('migrations/b303_records_floor.sql');
+check('B4 b305 sets the schema default to the same 9 years', /SET DEFAULT \(now\(\) \+ interval '9 years'\)/.test(b305));
+check('B4 b305 only lengthens (every UPDATE is guarded by "< created_at + 9 years")', (b305.match(/UPDATE chit_status/g) || []).length === 2 &&
+  (b305.match(/< created_at \+ interval '9 years'/g) || []).length >= 4 && !/DELETE FROM/i.test(b305));
 
 /* the sweep: stub the db and read the SQL it would run */
 (async () => {
