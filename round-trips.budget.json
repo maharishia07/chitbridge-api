@@ -1121,7 +1121,15 @@
       "wire": null,
       "fired": false,
       "extra": true,
-      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run). CS2 (2026-10-13): each profile also makes the ONE EXISTS read (+2 = 9). When the COUNTRY CHANGED before the shop was constituted, the same transaction also re-seeds a switched-on never-posted ledger (books.reseedUnposted: setting + entries read, 2 DELETEs, enable()'s inserts — one per chart row, as the switch itself costs) and logs who/when to books_change_log (one INSERT per changed fact, savepointed) — a once-per-shop correction, outside this ceiling by design"
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run). CS2 (2026-10-13): each profile also makes the ONE EXISTS read (+2 = 9). When the COUNTRY CHANGED before the shop was constituted, the same transaction also re-seeds a switched-on never-posted ledger (books.reseedUnposted: setting + entries read, 2 DELETEs, enable()'s inserts — one per chart row, as the switch itself costs) and logs who/when to books_change_log (one INSERT per changed fact, savepointed) — a once-per-shop correction, outside this ceiling by design. FX-AU1 (2026-10-14): the re-seed is no longer in a swallowing savepoint (a failed re-seed fails the correction — one transaction) and the year is re-laid by ONE set-based UPDATE when its DATES differ (IN→AU, both \"2026-27\") — the ceiling is unchanged"
+    },
+    "POST /api/entities/register": {
+      "file": "entities.js",
+      "trips": 8,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (entitiesRouter is mounted by variable) — the client DOES call it (api('register'), app.html doRegister). Measured by hand, FX-AU1 (2026-10-14): signin ask (identity lookup) + the user_id taken check + istest probe (cached) + ONE INSERT identities (the browser guess is NAMED in it — no extra trip) + the identities.timezone column probe (cached) + ONE withEntity upsert of entity_governance.setup_source (only when a guess came: +1) + sendCode (the code row + the mail). tests/register-country-guess.test.cjs drives it"
     },
     "PUT /api/network-design": {
       "file": "network-design.js",
