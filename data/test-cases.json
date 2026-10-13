@@ -59128,6 +59128,36 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/privacy.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "CO1 privacy \u2014 contact consent (b306) append-only with may/why, the privacy-request register (b307) with the legal clock per country and answered once by the owner, and GET /api/privacy/facts; 503 before the migrations. Offline (crm-stub).",
+   "claim": "CO1 privacy \u2014 contact consent (b306) append-only with may/why, the privacy-request register (b307) with the legal clock per country and answered once by the owner, and GET /api/privacy/facts; 503 before the migrations. Offline (crm-stub).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard \u00b7 unit \u00b7 150 lines. Run: node chitbridge-api/tests/privacy.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/privacy.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-13T08:00:00Z",
+   "needs": [
+    "a database (via crm-stub.cjs)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/crm-maytrade.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
