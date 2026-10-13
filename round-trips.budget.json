@@ -621,6 +621,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/till/bills": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "FX-CT1: the counter's day report asks this (?till=<counter>&days=2) — ONE withEntity read; the till filter is in the same SQL."
+    },
     "GET /api/till/match": {
       "file": "till.js",
       "trips": 2,

@@ -101,6 +101,12 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('GET /ledger/:acc → { currency, opening_minor, lines: [{ date, what, ref, source_chit_id, dr_minor, cr_minor, running_minor }], closing_minor }',
     lg.status === 200 && lg.body.currency === 'INR' && has(lg.body, ['opening_minor', 'lines', 'closing_minor']) && has(lg.body.lines[0], ['date', 'what', 'ref', 'source_chit_id', 'dr_minor', 'cr_minor', 'running_minor'])
     && lg.body.closing_minor === 105000, JSON.stringify(lg.body).slice(0, 300));
+  /* ⚠️ local walk 14 Oct: a ledger FROM the day of a month's first entry (its month has no line before it, only its whole-month row) was 422
+     "A balance on … needs the lines of its month" — every ledger, Bank rec, TB as at that day. The opening must read that month from lines. */
+  const firstSep = (db.body.entries || []).map((e) => String(e.posting_date).slice(0, 10)).sort()[0];
+  const mid = await q('GET', '/ledger/1300?from=' + firstSep + '&to=2026-09-30');
+  ok('GET /ledger/:acc from the day of the month\'s first entry (' + firstSep + ', mid-month, no earlier line) → 200, same closing',
+    firstSep > '2026-09-01' && mid.status === 200 && mid.body.opening_minor === 0 && mid.body.closing_minor === 105000, mid.status + ' ' + JSON.stringify(mid.body).slice(0, 200));
   const sm = await q('GET', '/party/' + CUST + '/statement');
   ok('GET /party/:id/statement → the same shape; closing = 1050.00 owed', sm.status === 200 && has(sm.body, ['currency', 'opening_minor', 'lines', 'closing_minor']) && sm.body.closing_minor === 105000
     && has(sm.body.lines[0], ['date', 'what', 'ref', 'source_chit_id', 'dr_minor', 'cr_minor', 'running_minor']), JSON.stringify(sm.body).slice(0, 300));
