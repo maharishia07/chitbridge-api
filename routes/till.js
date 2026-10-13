@@ -737,7 +737,9 @@ router.get('/snapshot', auth, async (req, res) => {
          * page already resolves (cbHome()) and the API does not know which front end asked.
          */
         handle: row.user_id || null,
-        state_code: String(gstin || '').slice(0, 2) || null,
+        /* CX0: a state is read off the tax number only under a pack whose tax turns on the state (India's GST) — the same rule as lib/tax-lines.js:62.
+           An ABN's or a TRN's first two digits are not a state; they reached the counter as one and the shop panel said "CGST + SGST" in Sydney. */
+        state_code: ((p) => (!p || !p.supply || p.supply === 'state') ? String(gstin || '').slice(0, 2) || null : null)(require('../lib/tax-packs').packFor(cbCountry)),
         reg_type: String(flags.gst_registration || 'regular'),
         /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */
         country: cbCountry,
@@ -753,7 +755,7 @@ router.get('/snapshot', auth, async (req, res) => {
          * acquirer, and there is nothing honest for us to generate.
          */
         pay: cbProfile.payWays({ country: cbCountry, policy_flags: row.policy_flags }),
-        currency: party.currency || 'INR',
+        currency: party.currency || ((require('../lib/regulation').packFor(cbCountry) || {}).currency) || 'INR',   /* CX0: a shop with no currency on record bills in its PACK's money, not INR by name */
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
       /**

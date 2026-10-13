@@ -5856,6 +5856,10 @@ function shopPack(){ try { return (window.CBRegulation && CBRegulation.packFor(d
 function taxIdLabel(){ var p = shopPack(); return p && p.abn ? 'ABN' : p && p.trn ? 'TRN' : 'GSTIN'; }
 function schemeWord(){ var p = shopPack(); return (p && p.tax && p.tax.scheme) || 'GST'; }
 function creditNoteTitle(){ var p = shopPack(); return p && p.creditNote && p.creditNote.title ? String(p.creditNote.title).toUpperCase() : 'CREDIT NOTE'; }
+/** does the shop's tax turn on the STATE (India's CGST/SGST · IGST — pack.tax.supply 'state')? A border pack (Australia, the UAE) has one head and no state. No pack known → India's rule, as before. */
+function packSplitsByState(){ try { var p = shopPack(); return !p || !p.tax || !p.tax.supply || p.tax.supply === 'state'; } catch (_) { return true; } }
+/** does the shop's pack carry UPI among its payment modes (reg-in chart.paymentModes.upi)? Elsewhere a counter's own UPI payee is not offered — an NPCI QR with cu=AUD pays nobody. */
+function packHasUpi(){ try { var p = shopPack(); return !p || !!(p.chart && p.chart.paymentModes && p.chart.paymentModes.upi); } catch (_) { return true; } }
 /**
  * ⭐ WHICH PREFIX THIS COUNTER NUMBERS UNDER. A keyed counter / the shop PC: the device-wide answer the shop gave it
  * (cb_till_id, C1 until told otherwise). ⭐ M08 — a PERSON's device: its own label under the shop's slot, never C1
@@ -6857,8 +6861,8 @@ function paintStatus(){
      rather than left wondering where the tax column went. */
   var tx0 = shopTax();
   if (S && !tx0.charges) note = (tx0.reg === 'composition' ? 'Composition dealer — no GST on a bill, and the slip says so.'
-      : (!tx0.gstin ? 'No GSTIN on this shop, so no GST is charged or shown (Settings → Profile).'
-                    : 'This shop is registered as ' + esc(tx0.reg) + ', so no GST is charged.'))
+      : (!tx0.gstin ? 'No ' + taxIdLabel() + ' on this shop, so no ' + schemeWord() + ' is charged or shown (Settings → Profile).'
+                    : 'This shop is registered as ' + esc(tx0.reg) + ', so no ' + schemeWord() + ' is charged.'))
     /* ⚠️ THE SAME WORDS WHEREVER IT APPEARS. An unregistered shop took a different branch and got the short form, "1 bill(s)
        waiting" — waiting for what? A shopkeeper should not learn two phrasings for one fact because of how they are registered. */
     + (STATE.queued ? '  ·  ' + queueWords() : '');
@@ -9878,12 +9882,17 @@ function dayReportHTML(bills){
 
   var rateRows = Object.keys(agg.byRate).sort(function(a, b){ return Number(a) - Number(b); }).map(function(k){
     var r = agg.byRate[k];
-    /* ⚠️ HALVED FOR THE TWO HEADS, NOT RECOMPUTED — the bill recorded the total tax at this rate */
-    return [esc(k) + '%', money(r.taxable), money(r2(r.tax / 2)), money(r2(r.tax / 2)), money(r.tax)];
+    /* ⚠️ HALVED FOR THE TWO HEADS, NOT RECOMPUTED — the bill recorded the total tax at this rate.
+       CX0: only under a state-split pack (India); a one-head scheme (GST in Australia, VAT in the UAE) has one Tax column, never two invented halves */
+    return packSplitsByState() ? [esc(k) + '%', money(r.taxable), money(r2(r.tax / 2)), money(r2(r.tax / 2)), money(r.tax)]
+                               : [esc(k) + '%', money(r.taxable), money(r.tax)];
   });
-  var rate = dayRepTable('Tax by rate', [{ label: 'Rate' }, { label: 'Taxable', num: true },
-    { label: 'CGST', num: true }, { label: 'SGST', num: true }, { label: 'Tax', num: true }], rateRows,
-    rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '', '', '<b>' + money(tax) + '</b>'] : null);
+  var rate = packSplitsByState()
+    ? dayRepTable('Tax by rate', [{ label: 'Rate' }, { label: 'Taxable', num: true },
+        { label: 'CGST', num: true }, { label: 'SGST', num: true }, { label: 'Tax', num: true }], rateRows,
+        rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '', '', '<b>' + money(tax) + '</b>'] : null)
+    : dayRepTable(schemeWord() + ' by rate', [{ label: 'Rate' }, { label: 'Taxable', num: true }, { label: schemeWord(), num: true }], rateRows,
+        rateRows.length ? ['<b>Total</b>', '<b>' + money(taxable) + '</b>', '<b>' + money(tax) + '</b>'] : null);
 
   /* ⭐ GROSS · OFFERS · TAX · NET, in that order ([TILL-101]) — Athi named the four, and they read left to
      right as the arithmetic happens: what it listed at, what came off, what the state takes, what is left. */
@@ -18021,6 +18030,9 @@ function unratedOnBill(bill){
  */
 function shopStateClash(){
   var sh = (S && S.shop) || {}, P = window.CBProfileMap;
+  /* CX0: a state clash exists only where the tax turns on the state (India). Under a border pack a TRN "10…" plus a six-digit PO Box read as an
+     Indian state and a clash — and every Dubai bill printed "BILL — NOT A TAX INVOICE". */
+  if (!packSplitsByState()) return null;
   if (!P || !sh.gstin || !P.stateOfGstin) return null;
   var g = P.stateOfGstin(sh.gstin); if (!g) return null;
   var names = P.STATE_NAMES || {}, says = [], seen = {};
@@ -18466,7 +18478,7 @@ function billMoney(){
      read here too, so a copy that came without the field still states its supply rather than charging no tax */
   /* ⭐ CX0: a STATE exists only under a pack whose tax turns on the state (India). Under a border pack (Australia, the UAE) the first two
      digits of an ABN or a TRN are not a state — they printed "Place of supply 51" on an Australian slip. No pack known → India's rule, as before. */
-  var stateTax = (function(){ try { var p = window.CBTaxPacks && CBTaxPacks.packFor(String(sh.country || '').trim().toUpperCase()); return !p || !p.supply || p.supply === 'state'; } catch (_) { return true; } })();
+  var stateTax = packSplitsByState();
   var sc = stateTax ? String(sh.state_code || String(sh.gstin || '').trim().slice(0, 2) || '') : '';
   var cust = custKnown(), g = cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '';
   /* ⭐⭐ BUY1 (2026-10-12): THE COUNTER'S BUYER IS INSIDE THE SHOP'S COUNTRY. A pack whose tax turns on the BORDER (Australia, the
@@ -18587,20 +18599,21 @@ function paintShop(){
   if (!S || !S.shop) { el.innerHTML = '<div class="shopfacts">No copy of the shop yet — press ↻ once, while online.</div>'; return; }
   var sh = S.shop, tx = shopTax();
   var doc = tx.kind === 'tax' ? 'a TAX INVOICE' : (tx.kind === 'supply' ? 'a BILL OF SUPPLY' : 'a cash memo');
-  var split = !sh.state_code ? 'cannot be split'
+  /* CX0: the split is India's (a state-split pack); a one-head scheme names its head — GST 10 % in Australia, VAT 5 % in the UAE */
+  var split = !packSplitsByState() ? schemeWord() : !sh.state_code ? 'cannot be split'
     : ((window.CBTax && CBTax.supplyType(String(sh.state_code), CBTax.placeOfSupply(null, String(sh.state_code))) === 'intra') ? 'CGST + SGST' : 'IGST');
   /**
    * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
    * *"service tax not registered."* A shop below the threshold is correctly unregistered, and the line says so.
    */
-  var status = sh.gstin ? 'Registered · GSTIN ' + esc(String(sh.gstin))
-    : 'Not registered' + (regWords() ? ' — ' + esc(regWords()) : ' — this shop does not charge GST');
+  var status = sh.gstin ? 'Registered · ' + taxIdLabel() + ' ' + esc(String(sh.gstin))
+    : 'Not registered' + (regWords() ? ' — ' + esc(regWords()) : ' — this shop does not charge ' + schemeWord());
   /* ⭐ M56 (walk 2026-10-10) — ONE TRUTH. "every bill is a TAX INVOICE" stood over a bill that carried no tax and a details clash
      that saves sales as NOT a tax invoice (M41). It now says the rule as the bill applies it, and the clash beside it (shopStateClash,
      the bill's own check). */
   var clash = tx.charges ? shopStateClash() : null;
   var docTax = tx.charges
-    ? ' · ' + (tx.kind === 'tax' ? 'tax invoice' : doc) + ' when items carry GST' + (sh.state_code ? ' (' + split + ')' : '')
+    ? ' · ' + (tx.kind === 'tax' ? 'tax invoice' : doc) + ' when items carry ' + schemeWord() + (sh.state_code || !packSplitsByState() ? ' (' + split + ')' : '')
       + (clash ? ' · <span class="upibad" data-testid="till-shop-clash">⚠ GSTIN state ≠ address</span>' : '')
     : ' · every bill is ' + doc;
   el.innerHTML = '<div class="shopfacts">'
@@ -20180,10 +20193,19 @@ function shopCheck(){
    */
   if (!v) {
     var kind0 = (window.CBTax && S && S.shop && shopTax && shopTax().kind === 'supply') ? 'BILL OF SUPPLY' : 'CASH MEMO';
-    shopSay(shopSlipBadge(kind0) + ' · not registered for GST, so no tax goes on any bill'
+    shopSay(shopSlipBadge(kind0) + ' · not registered for ' + schemeWord() + ', so no tax goes on any bill'
       + ' <button type="button" class="linklike" data-testid="till-shop-why" onclick="shopWhyToggle()">'
       + (SHOP_WHY ? 'Hide' : 'Why?') + '</button>'
       + (SHOP_WHY ? '<div class="shopwhy">' + esc(regWords()) + '</div>' : ''), false, true);
+    return true;
+  }
+  /* ⭐ CX0: under a pack that names its own tax id (reg-au `abn` · reg-ae `trn`) the PACK's check decides — the same one routes/till.js runs
+     on save. The GSTIN checksum below refused every ABN and TRN ("not the shape of a GSTIN") and the counter's shop form could not be saved. */
+  var pk0 = shopPack(), tid = pk0 && (pk0.abn || pk0.trn);
+  if (tid && typeof tid.check === 'function') {
+    var c0 = tid.check(v);
+    if (!c0.ok) { shopSay(esc(c0.why || ('That is not the shape of ' + (pk0.abn ? 'an ABN' : 'a TRN') + '.')), true); return false; }
+    shopSay(shopSlipBadge('TAX INVOICE') + ' · ' + taxIdLabel() + ' ' + esc(v) + ' checks out — its shape and check digit; whether it is live is the registry\'s answer, not this box\'s.', false, true);
     return true;
   }
   if (!window.CBProfileMap || !CBProfileMap.gstinChecksum) {
@@ -20424,9 +20446,9 @@ function paintTotals(){
         /* ⚠️ SAY WHY, do not silently show one figure. A bill headed TAX INVOICE with an unsplit GST line is not a
            formatting choice — the buyer cannot claim the credit off it. */
         + (m.supply === 'unknown'
-            ? '<div class="t warnrow"><span>GST</span><span>' + money(m.tax) + '</span></div>'
-              + '<div class="t warnrow"><span colspan="2">No state on the GSTIN, so CGST/SGST cannot be split</span><span></span></div>'
-            : '<div class="t"><span>GST total</span><span>' + money(m.tax) + '</span></div>') : '');
+            ? '<div class="t warnrow"><span>' + schemeWord() + '</span><span>' + money(m.tax) + '</span></div>'
+              + '<div class="t warnrow"><span colspan="2">No state on the ' + taxIdLabel() + ', so CGST/SGST cannot be split</span><span></span></div>'
+            : '<div class="t"><span>' + schemeWord() + ' total</span><span>' + money(m.tax) + '</span></div>') : '');
   /* the toggle appears only when there IS detail to fold — an empty cart or a plain cash sale needs no control */
   var toggle = detail.trim()
     ? '<div class="t foldrow"><button type="button" class="foldbtn" data-testid="till-sum-fold" onclick="toggleSum()">'
@@ -21054,6 +21076,7 @@ function paintPays(){
   /* ⚠️ A MALFORMED PAYEE IS NOT OFFERED. Drawing a QR from it hands the customer an error instead of a payment;
      the Pay tab in ⚙ Setup says what is wrong, which is where somebody can actually fix it. */
   if (own && own.payee && !upiShapeOk(own.payee)) own = null;
+  if (!packHasUpi()) own = null;   /* CX0: UPI is India's mode (reg-in chart.paymentModes.upi) — not offered under another country's pack */
   if (own && own.payee && !ways.some(function(w){ return String(w.payee || '') === String(own.payee); })) {
     ways.push({ id:'upi-local', label:(own.label || 'UPI'), qr:'upi-deeplink', payee:own.payee });
   }
@@ -22575,7 +22598,7 @@ function slipHTML(bill, m){
     /* ⚠️ a reprint of a bill whose tax was never kept says so — never "GST 0.00" on a TAX INVOICE (slipOfRow) */
     + (bill.kind === 'tax' ? (bill.tax_lost ? t('Tax detail not kept for this bill', '') : taxSummaryHTML(bill, t, dash)) : '')
     /* ⭐ Rule 46(n): a tax invoice names its place of supply */
-    + (unrated.length ? '<div data-testid="till-slip-norate" style="font-size:.9em">No tax rate set, so no GST charged on: ' + esc(unrated.join(', ')) + '</div>' : '')
+    + (unrated.length ? '<div data-testid="till-slip-norate" style="font-size:.9em">No tax rate set, so no ' + schemeWord() + ' charged on: ' + esc(unrated.join(', ')) + '</div>' : '')
     /* ⚠️ M66 (walk 2026-10-10): ONLY ON A REAL TAX INVOICE. A bill saved as NOT a tax invoice (no rate, or the shop's GSTIN and
        address in two states) printed "Place of supply 29 Karnataka" on a Chennai takeaway — the GSTIN's state, under a title that
        says it is not an invoice. The place itself is still CBTax.placeOfSupply's (the shop's state; a delivery moves it). */
@@ -24508,7 +24531,7 @@ function expWays(){
            : ['Cash', 'Card'];
   if (ways.indexOf('Cash') < 0) ways.unshift('Cash');
   /* ⭐ M44 (walk 2026-10-10): and the counter's own UPI payee, the same one paintPays() offers at checkout */
-  try { var own = tillOpt().upi; if (own && own.payee && upiShapeOk(own.payee) && ways.indexOf(own.label || 'UPI') < 0) ways.push(own.label || 'UPI'); } catch (_) {}
+  try { var own = tillOpt().upi; if (packHasUpi() && own && own.payee && upiShapeOk(own.payee) && ways.indexOf(own.label || 'UPI') < 0) ways.push(own.label || 'UPI'); } catch (_) {}
   return ways;
 }
 /**
