@@ -338,3 +338,9 @@ Written by `lib/repeat-supply.js` (the table `repeat_supply`, b303 DRAFT); read 
 | `GET /health` → `web` | string or null | Derived from env `PUBLIC_WEB_BASE` (`lib/public-base.webBase`). Written by: nobody. Read by the counter program (`till.js`) when its `connector.json` has no `web`. |
 | kit `connector.json` → `web` | string or null | Written by `GET /api/integrations/download/:id`: `PUBLIC_WEB_BASE`, else the requesting page's `Origin`. Read by `till.js` → `/config.js` `window.CB_WEB` → till.html `cbHome()`. |
 | web `/config.js` → `window.CB_API` · `window.CB_WEB` | string · string or null | The web's `public/config.js` (committed value; the container writes it from `CB_API_BASE`) or `till.js` (from `connector.json`). Read by every page's api-base resolution (`CBShell.apiBase`, app.html `STAGES.dev.base`, stand-alone pages, till.html `CloudHost.api`). |
+
+## `identities.ui_prefs.edition` · PATCH /api/entities/me/prefs/ui (AX1, 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `ui_prefs.edition` | slug (`full` · `auditor` · …, `^[a-z][a-z0-9-]{0,23}$`) | Source: the person's choice in the avatar menu's Edition group (web `public/app/avatar.js`, `CBAvatar.set('edition')`), sent with theme · fs · motion · stripes (the set is REPLACED, so every key rides every push). Read by web `public/app/edition.js` (CBEdition) to pick which manifest entries Home draws; the list of editions is the web manifest's `editions` map. HIDES doors only — no route reads it for access. Absent = `full`. No migration (ui_prefs is jsonb, b166). |

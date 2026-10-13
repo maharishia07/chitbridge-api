@@ -614,11 +614,12 @@ const PREF_SETS = {
    */
   ui: {
     column: 'ui_prefs',
-    keys: ['theme', 'fs', 'motion', 'stripes'],   /* stripes: row stripes off | light | strong (small-fixes round) */
+    keys: ['theme', 'fs', 'motion', 'stripes', 'edition'],   /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants */
     check(prefs) {
       if (prefs.stripes && !['off', 'light', 'strong'].includes(prefs.stripes)) return 'Unknown row stripes setting';
       if (prefs.fs && !['s', 'm', 'l', 'xl'].includes(prefs.fs)) return 'Unknown text size';
       if (prefs.motion && !['auto', 'reduce', 'full'].includes(prefs.motion)) return 'Unknown motion setting';
+      if (prefs.edition && !/^[a-z][a-z0-9-]{0,23}$/.test(prefs.edition)) return 'Unknown edition';
       return null;
     },
   },
