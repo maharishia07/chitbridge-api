@@ -4544,6 +4544,294 @@
     "problems": []
    },
    "optional": []
+  },
+  "GET /api/books/compare": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "ready": true,
+    "why": null,
+    "may": {
+     "load": {
+      "may": true,
+      "why": null
+     }
+    },
+    "parts": [
+     {
+      "part": "tb",
+      "label": "Trial balance"
+     }
+    ],
+    "sources": [
+     {
+      "source": "tally",
+      "label": "Tally"
+     }
+    ],
+    "snapshots": [
+     {
+      "snapshot_id": "ec10659a-a0a0-47ae-ab1a-da9054a3572f",
+      "label": "Tally H1",
+      "source": "tally",
+      "period_from": "2026-04-01",
+      "period_to": "2026-09-30",
+      "currency": "INR",
+      "parts": [
+       "pl"
+      ],
+      "lines": 19,
+      "created_at": "2026-09-29T10:00:53.000Z"
+     }
+    ]
+   },
+   "optional": []
+  },
+  "GET /api/books/compare/:id": {
+   "status": 200,
+   "note": "PR1: effort.by_kind is keyed by the entry kinds the period has (free); parts carries tb · pl · bs · ret as the snapshot has them",
+   "example": {
+    "currency": "INR",
+    "snapshot": {
+     "snapshot_id": "ec10659a-a0a0-47ae-ab1a-da9054a3572f",
+     "label": "Tally H1",
+     "source": "tally",
+     "source_word": "Tally",
+     "period_from": "2026-04-01",
+     "period_to": "2026-09-30",
+     "parts": [
+      "pl"
+     ]
+    },
+    "parts": {
+     "pl": {
+      "part": "pl",
+      "title": "Profit and loss",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "file_name": null,
+      "source": "tally",
+      "lines": [
+       {
+        "key": "pl:total",
+        "total": true,
+        "their_line": 2,
+        "their_name": "Net profit",
+        "their_code": null,
+        "status": "different",
+        "name": "Net profit",
+        "our_codes": [
+         "5000"
+        ],
+        "ours_minor": 4810000,
+        "theirs_minor": -150000,
+        "diff_minor": 4960000,
+        "cause": "total",
+        "why": "The totals are ₹49,600.00 apart — the lines below say where.",
+        "entries": [
+         {
+          "entry_id": "00000000-0000-4000-8000-000000000115",
+          "entry_no": "JV/2026-27/000001",
+          "date": "2026-09-30",
+          "amount_minor": -5000000,
+          "chit_id": null,
+          "ref": null,
+          "kind": "closing_stock",
+          "rail": false
+         }
+        ],
+        "entries_n": 0,
+        "open": null
+       }
+      ],
+      "counts": {
+       "equal": 1,
+       "different": 2,
+       "gap": 0,
+       "only_ours": 0
+      },
+      "error": null,
+      "note": null,
+      "form": null
+     },
+     "ret": {
+      "part": "ret",
+      "title": "Return",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "file_name": null,
+      "source": "tally",
+      "lines": [],
+      "counts": null,
+      "error": "Our GSTR-3B for 2026-09 could not be read from the rail."
+     },
+     "tb": {
+      "part": "tb",
+      "title": "Trial balance",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "file_name": "tb.xml",
+      "source": "tally",
+      "lines": [
+       {
+        "key": "tb:total",
+        "total": true,
+        "their_line": 9,
+        "their_name": "Total debits",
+        "their_code": null,
+        "status": "different",
+        "name": "Total debits",
+        "our_codes": [
+         "6010"
+        ],
+        "ours_minor": 9608000,
+        "theirs_minor": 377000,
+        "diff_minor": 9231000,
+        "cause": "total",
+        "why": "The totals are ₹92,310.00 apart — the lines below say where.",
+        "entries": [
+         {
+          "entry_id": "00000000-0000-4000-8000-000000000112",
+          "entry_no": "MJ/2026-27/000001",
+          "date": "2026-09-30",
+          "amount_minor": 120000,
+          "chit_id": null,
+          "ref": null,
+          "kind": "accrual",
+          "rail": false
+         }
+        ],
+        "entries_n": 0,
+        "open": {
+         "code": "2210",
+         "from": "2026-04-01",
+         "to": "2026-09-30"
+        }
+       }
+      ],
+      "counts": {
+       "equal": 4,
+       "different": 5,
+       "gap": 1,
+       "only_ours": 5
+      },
+      "error": null,
+      "note": null,
+      "form": null
+     }
+    },
+    "counts": {
+     "equal": 5,
+     "different": 7,
+     "gap": 1,
+     "only_ours": 5
+    },
+    "effort": {
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "entries": 7,
+     "structured": 2,
+     "keyed": 5,
+     "by_kind": {
+      "purchase_bill": 2,
+      "sale_bill": 1,
+      "closing_stock": 1,
+      "gst_setoff": 1,
+      "accrual": 2
+     }
+    }
+   },
+   "optional": [
+    "parts.pl.lines[].total",
+    "parts.tb.lines[].total"
+   ],
+   "free": [
+    "effort.by_kind"
+   ]
+  },
+  "POST /api/books/compare/preflight": {
+   "status": 200,
+   "example": {
+    "part": "tb",
+    "source": "tally",
+    "format": "tally_xml",
+    "headers": [
+     "Box"
+    ],
+    "fields": [
+     {
+      "key": "box",
+      "label": "Box",
+      "required": true
+     }
+    ],
+    "guess": [
+     {
+      "incoming": "Box",
+      "field": "box",
+      "how": "known",
+      "confidence": 1,
+      "why": "\"Box\" is what return exports call box"
+     }
+    ],
+    "missing": [],
+    "ready": true,
+    "rows_total": 10,
+    "sample": [
+     {
+      "line": 1,
+      "name": "Ravi Stores",
+      "code": null,
+      "group": "Sundry Debtors",
+      "side": null,
+      "dr_minor": 118000,
+      "cr_minor": 0,
+      "amount_minor": 118000,
+      "Box": "3.1(a) Taxable value",
+      "Amount": "1000.00"
+     }
+    ],
+    "sheet": null,
+    "sheets": null,
+    "header_row": 1
+   },
+   "optional": [
+    "header_row",
+    "sample[].Amount",
+    "sample[].Box",
+    "sample[].amount_minor",
+    "sample[].code",
+    "sample[].cr_minor",
+    "sample[].dr_minor",
+    "sample[].group",
+    "sample[].line",
+    "sample[].name",
+    "sample[].side",
+    "sheet",
+    "sheets"
+   ]
+  },
+  "POST /api/books/compare/snapshots": {
+   "status": 200,
+   "example": {
+    "snapshot_id": "ec10659a-a0a0-47ae-ab1a-da9054a3572f",
+    "label": "Tally H1",
+    "source": "tally",
+    "period_from": "2026-04-01",
+    "period_to": "2026-09-30",
+    "part": "tb",
+    "rows": 10,
+    "skipped": []
+   },
+   "optional": []
+  },
+  "POST /api/books/compare/snapshots #409": {
+   "status": 409,
+   "example": {
+    "error": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
+    "message": "This snapshot already has their trial balance — start a new snapshot for a fresh file."
+   },
+   "optional": []
   }
  },
  "_about": "THE API'S COPY IS THE MASTER (chitbridge-api docs/contracts/web-api.json). chitbridge-web keeps e2e/fixtures/web-api.contract.json - the same file. tests/web-api-contract.test.cjs holds the API's real answers to it; chitbridge-web e2e/contract.cjs holds every stand-in to it. Change the shape of an answer here (node tests/web-api-contract.test.cjs --write), then copy the file across."
