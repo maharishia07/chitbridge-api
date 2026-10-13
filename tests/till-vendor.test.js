@@ -798,7 +798,9 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
    * sandbox both would be `undefined`: the file would load without a murmur and throw on the first sum instead.
    * Naming the order HERE is what makes a page that gets the order wrong a test failure rather than a bug report.
    */
-  const DEPS = { 'convert.js': ['money.js', 'units.js'] };
+  /* bank-recon (engines v1.28+, adopted by the web at v1.44.1 in BR1) reads the pack registry at load: engine/tax.js bundles regulation
+     and the packs, as app/tax.js does ahead of it on accounts.html */
+  const DEPS = { 'convert.js': ['money.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'] };
   const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
   assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');
   for (const name of files) {
@@ -828,7 +830,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
      * it is called. So the one engine that stands on others is made to ANSWER, in the sandbox, with its deps
      * wired the way a page would wire them.
      */
-    if (DEPS[name]) {
+    if (name === 'convert.js') {                  /* the smoke below is convert's; bank-recon's deps are proved by its load (it reads the pack at its top) */
       let answered;
       try {
         answered = vm.runInContext(
