@@ -84,7 +84,8 @@ t('⭐ INCLUSIVE PRICING is declared and worked backwards, never guessed', () =>
 t('the same price NOT declared inclusive is taxed on top — the 5% difference', () => {
   const r = T.determine({ seller: SELLER, buyer: { State: '29', Pos: '29' },
     lines: [{ ...LINE, qty: 1, unit_price: 105, rate: 5 }] });
-  assert.strictEqual(r.ItemList[0].TotItemVal, 110.25);
+  /* engines v1.12.0: each head is at its own rate, rounded once (105 × 2.5% = 2.625 → 2.63 each), so the 5.25 tax is 5.26 */
+  assert.strictEqual(r.ItemList[0].TotItemVal, 110.26);
 });
 
 console.log('\ntax · INV-01 vocabulary');
@@ -120,7 +121,10 @@ t('⭐⭐ ROUNDED ONCE AT THE INVOICE, and the round-off is DECLARED', () => {
   const r = T.determine({ seller: SELLER, buyer: { State: '27', Pos: '27' },
     lines: [{ ...LINE, qty: 3, unit_price: 99.99, rate: 18 }] });
   const v = r.ValDtls;
-  assert.strictEqual(v.TotInvVal, Math.round(v.TotInvVal), 'the payable is a whole rupee');
+  /* tax-packs IN.invoice_round_to is 0.01 since v1.20-era ("to the paisa", Athi 2026-10-02): the total is the sum of its
+     components, never rupee-rounded; the round-off is declared and is 0 here (299.97 + IGST 53.99) */
+  assert.strictEqual(v.TotInvVal, 353.96, 'the payable is the sum to the paisa');
+  assert.strictEqual(v.RndOffAmt, 0);
   assert.strictEqual(T.r2(v.AssVal + v.IgstVal + v.RndOffAmt), v.TotInvVal,
     'the round-off must reconcile — a paise gap is why a counterparty rejects an invoice');
 });
@@ -145,7 +149,10 @@ t('CGST and SGST always sum to the tax — an odd rate cannot lose a paisa', () 
   const r = T.determine({ seller: SELLER, buyer: { State: '29', Pos: '29' },
     lines: [{ ...LINE, qty: 1, unit_price: 33.33, rate: 5 }] });
   const it = r.ItemList[0];
-  assert.strictEqual(T.r2(it.CgstAmt + it.SgstAmt), T.r2(it.AssAmt * 5 / 100));
+  /* engines v1.12.0: CGST = SGST = taxable × (rate/2)/100 each rounded once (0.83325 → 0.83), so the sum is 1.66, not r2(1.6665) */
+  assert.strictEqual(it.CgstAmt, it.SgstAmt, 'the two heads are equal');
+  assert.strictEqual(it.CgstAmt, T.r2(it.AssAmt * 2.5 / 100));
+  assert.strictEqual(T.r2(it.CgstAmt + it.SgstAmt), 1.66);
 });
 
 console.log('\ntax · the provider seam');
@@ -191,5 +198,5 @@ t('a zero-rated line records no tax, whichever way the price was quoted', () => 
 
 function r2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
 
-console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed\n');
+console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');
 process.exit(fail ? 1 : 0);
