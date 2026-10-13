@@ -55,6 +55,13 @@ ok('every sale is 2–4 a day at 5 / 12 / 18 %, paid cash · upi · credit', a.d
 const sim = read('tools/simulate-years.cjs');
 ok('tools/simulate-years.cjs reads the plan (sim-plan.cjs), not its own dice', /require\(path\.join\(__dirname, 'sim-plan\.cjs'\)\)/.test(sim) && !/function rng\(/.test(sim));
 ok('…and sim-load.cjs reads the same plan', /require\(path\.join\(__dirname, 'sim-plan\.cjs'\)\)/.test(src));
+/* 3b · WX-R2R: the shop's calendar is the pack's — a July start (AU) ends on 30 June, and the loader asks lib/accounts-packs for the year and the month, never its own April */
+const au = P.planDays({ start: '2026-07-01', years: 1, seed: 7 });
+ok('a July year is 365 days from 2026-07-01 to 2027-06-30', au.days.length === 365 && au.days[0].day === '2026-07-01' && au.last === '2027-06-30' && au.days[364].day === '2027-06-30');
+ok('the loader takes the year and the month from lib/accounts-packs (fiscalYearOf · periodOf · fyRange), not an April of its own',
+  /AP\.fiscalYearOf\(d, CAL\)/.test(src) && /AP\.periodOf\(d, CAL\)/.test(src) && /AP\.fyRange\(fy, CAL\)/.test(src) && !/m >= 4 \? y : y - 1/.test(src) && !/\+ 8\) % 12\) \+ 1/.test(src));
+ok('the plan starts on the pack\'s first month (April IN · July AU)', /FY_START = COUNTRY === 'AU' \? 7 : 4/.test(src) && /start: '2026-' \+ String\(FY_START\)/.test(src));
+ok('an AU basket draws from the whole shelf (every item 10 %), an IN basket from its slab', /COUNTRY === 'AU' \|\| it\.rate === rate/.test(src));
 
 /* 4 · one clock on the chit */
 const chits = read('routes/chits.js'), mint = read('lib/mint.js'), b300 = read('migrations/b300_chit_deliver_clock.sql');

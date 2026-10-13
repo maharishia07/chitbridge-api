@@ -76,7 +76,14 @@ if (COUNTRY !== 'IN' && COUNTRY !== 'AU') die('--country IN or AU');
 if (require(path.join(API, 'lib', 'dev-otp')).isSealed()) die('NODE_ENV is sealed (' + process.env.NODE_ENV + ') — the loader runs only with NODE_ENV=development (or test)');
 
 const PLAN_LIB = require(path.join(__dirname, 'sim-plan.cjs'));
-const PLAN = PLAN_LIB.planDays({ start: '2026-04-01', years: YEARS, seed: SEED });
+/* ⭐ WX-R2R: the shop's CALENDAR is the pack's (IN an April year · AU a July year — the fy_start_month the Country setup below saves,
+   lib/books.js reads). One reader for the plan's start, the bill series, the month close and the proof: lib/accounts-packs
+   fiscalYearOf · periodOf · fyRange (the api's own helpers, never a second April). Before this the AU load crashed (a basket drawn
+   from the IN slab pool) and closed April as month 1 of a July year. */
+const FY_START = COUNTRY === 'AU' ? 7 : 4;
+const CAL = { fy_start_month: FY_START };
+const AP = require(path.join(API, 'lib', 'accounts-packs'));
+const PLAN = PLAN_LIB.planDays({ start: '2026-' + String(FY_START).padStart(2, '0') + '-01', years: YEARS, seed: SEED });
 const WANT = PLAN_LIB.countOf(PLAN);
 const MARK = 'sim/seed-' + SEED + '/years-' + YEARS;
 const EMAIL = SHOP + '@test.example';                 /* a fixture domain (lib/entitykind) — the shop is a TEST business, never a live one */
@@ -84,9 +91,9 @@ const OTP = process.env.DEV_OTP || '123456';
 const TILL = 'C1';
 const dayAdd = PLAN_LIB.dayAdd;
 const IST = (d, hh, mm) => d + 'T' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ':00' + (COUNTRY === 'AU' ? '+10:00' : '+05:30');
-const fyOf = (d) => { const y = +d.slice(0, 4), m = +d.slice(5, 7), s = m >= 4 ? y : y - 1; return s + '-' + String((s + 1) % 100).padStart(2, '0'); };
+const fyOf = (d) => AP.fiscalYearOf(d, CAL);          /* '2026-27' — the pack's year of a day (IN from April · AU from July) */
 const fyShort = (d) => fyOf(d).slice(2);              /* 26-27 — the counter's own year label */
-const monthNo = (d) => ((+d.slice(5, 7) + 8) % 12) + 1;
+const monthNo = (d) => AP.periodOf(d, CAL);           /* the month's number in that year (1..12) */
 const rup = (minor) => (Number(minor) / 100).toFixed(2);
 const ZERO = '00000000-0000-0000-0000-000000000000';   /* books-store.ZERO — the party_key of a ledger's own (non-party) summary row */
 const say = (s) => console.log('  · ' + s);
@@ -305,7 +312,8 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   const buyerOf = (name) => ({ LglNm: name, Gstin: null, State: null, Country: seller.Country || COUNTRY, RegType: 'unregistered', Ph: null, Em: null, entity_id: null, Pos: seller.State });
   const basketOf = (rate, dayIx, i) => {
     const r = PLAN_LIB.rng(SEED * 1000003 + dayIx * 101 + i);
-    const pool0 = ITEMS.filter((it) => it.rate === rate), n = 1 + Math.floor(r() * 3), lines = [];
+    /* the plan draws an IN slab (5 / 12 / 18); under the AU pack every item is 10 %, so the whole shelf is the pool */
+    const pool0 = ITEMS.filter((it) => COUNTRY === 'AU' || it.rate === rate), n = 1 + Math.floor(r() * 3), lines = [];
     for (let k = 0; k < n; k++) { const it = pool0[Math.floor(r() * pool0.length)], qty = 1 + Math.floor(r() * 3); if (lines.some((l) => l.item_id === it.id)) continue;
       lines.push({ particulars: it.name, quantity: qty, unit: it.unit, price: it.price, total: it.price * qty, item_id: it.id, hsn: it.hsn, gst_rate: it.rate }); }
     return lines;
@@ -416,7 +424,7 @@ async function proof(shopId, quiet) {
   /* cash, each FY: opening (the STORED summaries of the years before) + net flow (this year's LINES) = closing (the stored summaries up to this year) */
   const fys = [...new Set(tb.rows.map((r) => r.fiscal_year))].sort();
   for (const fy of fys) {
-    const y = Number(fy.slice(0, 4)), from = y + '-04-01', to = (y + 1) + '-03-31';
+    const rg = AP.fyRange(fy, CAL), from = rg.start, to = rg.end;   /* the pack's year, not April's */
     const c = await sql(`SELECT (SELECT COALESCE(SUM(b.dr_minor - b.cr_minor), 0) FROM account_balance b JOIN ledger_account a ON a.account_id = b.account_id
                                   WHERE b.entity_id = $1 AND a.role = 'cash' AND b.party_key = $4 AND b.fiscal_year < $5)::bigint AS opening,
                                 (SELECT COALESCE(SUM(l.dr_minor - l.cr_minor), 0) FROM journal_line l JOIN journal_entry e ON e.entry_id = l.entry_id JOIN ledger_account a ON a.account_id = l.account_id

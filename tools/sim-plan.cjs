@@ -27,7 +27,7 @@ const EXPENSES = ['fuel', 'rent', 'fuel'];
 function planDays(opt) {
   const o = opt || {};
   const START = o.start || '2026-04-01', YEARS = Number(o.years || 3), SEED = Number(o.seed == null ? 7 : o.seed);
-  const LAST = (+START.slice(0, 4) + YEARS) + '-03-31';
+  const LAST = dayAdd((+START.slice(0, 4) + YEARS) + START.slice(4), -1);   /* the day before the start's anniversary: an April year ends 31 March, a July year (AU) 30 June */
   const rnd = rng(SEED), pick = (a) => a[Math.floor(rnd() * a.length)], between = (lo, hi) => lo + Math.floor(rnd() * (hi - lo + 1));
   /* a sale: the rate first, then the taxable amount — the draw order Y1 proved with (do not reorder: the seed's days would change) */
   const sale = (rate) => { const taxable = between(2, 60) * 100, half = taxable * rate / 100 / 2; return { rate, taxable, half, total: taxable + half * 2 }; };

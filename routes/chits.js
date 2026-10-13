@@ -595,7 +595,11 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
        * it — so the first thing to break would have been a real invoice to a real counterparty, which is the exact
        * transaction this product exists for.
        */
-      const currency_code = (business_json && business_json.currency) || 'INR';
+      /* ⭐ WX-R2R (2026-10-13): a chit that names no currency is in the SENDER's money — identities.currency_code, the Country setup's
+         answer — never INR by default. The counter sends no currency: an AU shop's every bill was minted as INR, and the ledger hook then
+         refused each one ("an entry in INR needs its rate to AUD"), so no sale ever posted. Decided below from the sender's row that
+         the self-copy preference already reads (one query, not two). */
+      let currency_code = (business_json && business_json.currency) || null;
 
       /* ⭐ CB FINANCE · TERMS (F2) — THE SERVER ENFORCES THE CREDIT LIMIT. A credit bill to a known customer that would take them past
          the limit that applies (their own, else the shop's default) is refused with 409 OVER_LIMIT — unless the OWNER allowed it: the
@@ -702,7 +706,9 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       }
 
       // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
-      const prefRow = await query(`SELECT self_copy_pref FROM identities WHERE identity_id = $1`, [sender_id]);
+      const prefRow = await query(`SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1`, [sender_id]);
+      /* the sender's money (WX-R2R, above): the row's own code; a row without one asks lib/regional.currencyFor — the ONE resolver (its regional layer, its fallback) */
+      currency_code = String(currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || await require('../lib/regional').currencyFor(sender_id)).toUpperCase();
       /**
        * ⭐ A SELF-CHIT MAKES ONE COPY, AND IT IS THE TASK — Athi, 2026-08-14: *"self should create one copy only,
        * no two copies, and you would be very specific about direction."*
