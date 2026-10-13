@@ -4038,8 +4038,14 @@ var money = function(n){
 };
 /* ⭐ CS2 (2026-10-13): a COUNT ("1,234 products") reads in the shop's own locale through the same engine — CBLocale.number is hydrated from the shop's
    country (CBLocale.hydrate → REGIONS[country].format), so an Australian counter groups 1,234,567 and an Indian one 12,34,567. Three places pinned
-   'en-IN' by hand before this; none decides a figure, so the fallback is the plain digits. */
+   'en-IN' by hand before this; none decides a figure, so the fallback is the plain digits.
+   ⚠️ 13 Oct night: REGIONS has no AU or AE row yet, so the hydrated number() grouped an Australian count 1,00,000. The grouping is read from the
+   SHOP'S MONEY first — the locale engine's moneyTag (lakh for the rupee only, 1,234,567 elsewhere; what CX1's shopCount did) — then number(). */
 var fmtCount = function(n){
+  try {
+    var cur = (typeof S !== 'undefined' && S && S.shop && S.shop.currency) || '';
+    if (cur && window.CBLocale && CBLocale.moneyTag) return Number(n).toLocaleString(CBLocale.moneyTag(cur));
+  } catch (_) {}
   if (window.CBLocale && CBLocale.number) { try { return CBLocale.number(n); } catch (_) {} }
   return String(Math.round(Number(n) || 0));
 };
