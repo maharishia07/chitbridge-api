@@ -49,6 +49,8 @@ async function captureCrm() {
     /* L1 (b297): the memberships table, there only while mem.on — the scenario walks "not run yet" first and "run" after */
     if (/FROM information_schema.tables/.test(sql)) return { rows: mem.on ? [{ '?column?': 1 }] : [] };
     if (/^SELECT DISTINCT ON \(item_id\)/.test(sql)) return { rows: mem.rows.filter((m) => p[2].indexOf(m.item_id) >= 0).map((m) => ({ item_id: m.item_id, grp: m.grp, at: m.at })) };
+    /* the stage trail the timeline reads (FX-L2C): newest first, LIMIT + 1 */
+    if (/^SELECT membership_id, grp, at, by_user_id FROM memberships/.test(sql)) { if (!mem.on) throw Object.assign(new Error('relation "memberships" does not exist'), { code: '42P01' }); return { rows: mem.rows.filter((m) => m.item_id === p[1] && m.at < p[2]).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, p[3]).map((m, i) => ({ membership_id: m.membership_id || 'mm' + i, grp: m.grp, at: m.at, by_user_id: 'E1' })) }; }
     if (/^INSERT INTO memberships/.test(sql)) { const r = { item_id: p[2], kind: p[3], grp: p[4], at: '2026-10-10T09:00:00.000Z', membership_id: 'mm1' }; mem.rows.push(r); return { rows: [r] }; }
     if (/^SELECT EXISTS \(SELECT 1 FROM customer_list/.test(sql)) return { rows: [{ ok: D.cust.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
     if (/^SELECT txn_count FROM customer_list/.test(sql)) { const r = D.cust.find((x) => x.owner === p[0] && x.party_id === p[1] && x.added_via === 'lead'); return { rows: r ? [{ txn_count: r.txn_count }] : [] }; }
@@ -104,6 +106,8 @@ async function captureCrm() {
     mem.on = true; SC._reset();
     D.cust.push(cs(row({ party_id: P(12), display_name: 'Lead Lata', user_id: '~shop.cus-0012', on_rail: false, party_no: 'P-0012' }), { customer_list_id: 'cl-12', added_via: 'lead', txn_count: 0, last_txn_at: null, groups: [], segment: 'new' }));
     mem.rows.push({ item_id: P(12), grp: 'lead', at: '2026-10-09T09:00:00.000Z' });
+    mem.rows.push({ item_id: P(12), grp: 'demo', at: '2026-10-10T09:00:00.000Z' });   /* one move: the timeline's stage entry carries { stage, from, by } (FX-L2C) */
+    keep('GET', '/parties/:id/timeline', await t.get('/parties/' + P(12) + '/timeline'));
     keep('POST', '/leads', await t.post('/leads', { name: 'Ravi Jewellers', phone: '+91 98400 77777', stage: 'lead' }));
     keep('GET', '/parties', await t.get('/parties?view=leads'));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(12)));
