@@ -640,6 +640,39 @@ router.get('/payments/:id/advice', auth, noKey, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 /**
+ * GET /bank/rail?from&to (BR1) — THE RAIL LEG of the bank reconciliation the device runs (DECISIONS: the statement never leaves the device; the
+ *   page asks only for what the other party already TOLD us): → { currency, from, to, me, rail_chits: [{ chit_id, direction, status, created_at,
+ *   party: { id, name }, business_json: { kind, currency, payment_advice | bank_query }, line_items: [{ ref_chit_id, bill_no, applied_minor }] }],
+ *   parties: [{ party_id, name }] (on the rail — who may be ASKED), may: { ask: { ok } | { ok: false, why, say } } }
+ *   ONE read of my advice + bank-question copies (S.bankRailChits, bounded) and the party list (one read). No money is computed here: the engine
+ *   (bank-recon railPayments · explain) does it on the device. `may.ask` is the rail ladder (lib/rail byLevel) — POST /api/chits/send decides again.
+ *   Who may call: any login of the shop with the Ledger on (a viewer reads; its Ask is greyed with the sentence). A key (counter) may not (noKey).
+ */
+router.get('/bank/rail', auth, noKey, on, async (req, res) => {
+  try {
+    const e = ctx(req), to = dateQ(req.query.to, today()), from0 = dateQ(req.query.from, to);
+    const from = from0 > to ? to : from0;
+    if ((Date.parse(to) - Date.parse(from)) / 86400000 > 400) return res.status(400).json({ error: 'Too long', message: 'Choose a statement of 400 days or fewer.' });
+    const out = await withEntity(e, async (h) => {
+      const rows = await S.bankRailChits(h, e, from, to, 500);
+      const names = await partyNames(h, e);
+      return { rows, names, me: await meName(req, h, e) };
+    });
+    const R = require('../lib/rail'), lvl = R.byLevel(levelOf(req), 'ask');
+    const li = (x) => ({ ref_chit_id: x.ref_chit_id || null, bill_no: x.bill_no || null, applied_minor: Number.isInteger(x.applied_minor) ? x.applied_minor : null });
+    const rail_chits = out.rows.map((r) => {
+      const bj = r.business_json || {};
+      return { chit_id: r.chit_id, direction: r.direction, status: r.status || null, created_at: r.created_at ? new Date(r.created_at).toISOString() : null,
+        party: { id: r.party_id || null, name: r.party_name || null },
+        business_json: { kind: bj.kind, currency: bj.currency || null, payment_advice: bj.payment_advice || undefined, bank_query: bj.bank_query || undefined },
+        line_items: (Array.isArray(r.line_items) ? r.line_items : []).filter((x) => x && x.ref_chit_id).map(li) };
+    });
+    const parties = [...out.names.values()].filter((p) => p.on_rail).map((p) => ({ party_id: p.party_id, name: p.nickname || p.name || null }));
+    /* ⚠️ `rail_chits`, never `chits`: the web's api() collapses a `chits` array and would drop parties / may (core.js unwrap) */
+    res.json({ currency: curOf(req), from, to, me: out.me, rail_chits, parties, may: { ask: lvl ? { ok: false, why: lvl, say: R.say(lvl) } : { ok: true } } });
+  } catch (err) { fail(res, err); }
+});
+/**
  * PATCH /payments/:id { advice_chit_id? | advice_shared_at?: true | ISO } (M30, SPEC §4.3) — a merge-patch of the NAMED fields only, after the chit was sent
  *   (advice_chit_id) or the words were shared off-rail (advice_shared_at). → { ok, payment_id, advice: { chit_id, state, shared_at } }
  * ⭐ ONE ADVICE PER PAYMENT: the same advice_chit_id again → 200 (first-wins, idempotent); a different one → 409 ADVICE_EXISTS "An advice is already recorded for this payment."

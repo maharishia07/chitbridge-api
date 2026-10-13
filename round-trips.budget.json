@@ -100,6 +100,13 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/books/bank/rail": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422
+    },
     "GET /api/books/bs": {
       "file": "books.js",
       "trips": 1,

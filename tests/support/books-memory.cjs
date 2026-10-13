@@ -187,6 +187,12 @@ function create() {
         .sort((a, b) => String(b.received_at).localeCompare(String(a.received_at))).slice(0, limit || 50);
     },
     async shopName(db, e) { const i = T.identities.find((x) => x.identity_id === e); return i ? i.display_name || null : null; },
+    /* BR1 · the rail leg of the bank reconciliation: my advice + bank-question copies, as the SQL answers them */
+    async bankRailChits(db, e, from, to, limit) {
+      return clone(T.chits.filter((c) => c.entity_id === e && c.business_json && /^(payment_advice|bank_query)$/.test(c.business_json.kind) && c.direction))
+        .map((c) => ({ chit_id: c.chit_id, direction: c.direction, business_json: c.business_json, line_items: c.line_items || [], status: c.status || null, created_at: c.created_at || null,
+          party_id: c.party_id || null, party_name: c.party_name || null })).slice(0, limit || 500);
+    },
   };
   return S;
 }

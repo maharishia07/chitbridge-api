@@ -355,3 +355,19 @@ Written by `lib/repeat-supply.js` (the table `repeat_supply`, b303 DRAFT); read 
 | Key | Shape | Source / derived · who writes it · who reads it |
 |---|---|---|
 | `ui_prefs.edition` | slug (`full` · `auditor` · …, `^[a-z][a-z0-9-]{0,23}$`) | Source: the person's choice in the avatar menu's Edition group (web `public/app/avatar.js`, `CBAvatar.set('edition')`), sent with theme · fs · motion · stripes (the set is REPLACED, so every key rides every push). Read by web `public/app/edition.js` (CBEdition) to pick which manifest entries Home draws; the list of editions is the web manifest's `editions` map. HIDES doors only — no route reads it for access. Absent = `full`. No migration (ui_prefs is jsonb, b166). |
+## GET /api/books/bank/rail (BR1, 2026-10-13 · the rail leg of the bank reconciliation the DEVICE runs)
+
+The statement never reaches the server. The page asks only for what the other party already TOLD us. `lib/books-store.js bankRailChits` does ONE bounded read of my copies. The engine (`bank-recon railPayments · explain`, engines v1.44.0) matches them on the device. No money is computed here.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `rail_chits[]` | `{ chit_id, direction, status, created_at, party: { id, name }, business_json: { kind, currency, payment_advice? \| bank_query? }, line_items: [{ ref_chit_id, bill_no, applied_minor }] }` | Source: my chit copies with `business_json.kind` `payment_advice` (M30, written by `adviceBody`) or `bank_query`, created within [from − 10 d, to + 10 d], not drafts, not deleted. `party` is the sender on a received copy, else the first recipient that is not me. Read by web `cap-bank.js` → `CBBankRecon.railPayments / explain`. Named `rail_chits`, not `chits`: the web's `api()` collapses a `chits` array (core.js `unwrap`). |
+| `parties[]` | `{ party_id, name }` | Derived: `books-store parties()` filtered to `on_rail` (who may be ASKED on the rail). Read by the Ask picker. |
+| `may.ask` | `{ ok }` or `{ ok: false, why, say }` | Derived: `lib/rail byLevel(level, 'ask')`. A viewer gets `read_only` and a commenter `comment_only`, with the rail's sentence. `POST /api/chits/send` decides again. Read by the Ask button (greyed with `say`). |
+| `me` | string | The shop's name, the same one `meName` gives the advice. The ask's words name it. |
+
+### New chit kind `business_json.kind = 'bank_query'` (BR1)
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `business_json.bank_query` `{ key, side, amount_minor, currency, date, ref, words }` | — (no migration; a chit's own JSON) | Derived on the device by `CBBankRecon.ask`. ONLY these facts travel: the date, the amount and the reference (never the narration). `key` = `lineKey` (date · side · amount · ref). `client_ref` = `bankask:<key>` (send dedupes). | web `cap-bank.js` through `POST /api/chits/send` (purpose `general`) | the receiver's thread (a message chit). The asker's `GET /bank/rail` → `explain` opts.asks (state `asked`). The ANSWER is the receiver's ordinary payment advice (M30) carrying the reference, so no new answer shape exists. |
