@@ -243,6 +243,9 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('Issued — waiting on payment: B-1300 · Issued', i1.step === 'issued' && i1.code === 'B-1300' && i1.open, JSON.stringify(i1));
     ok('paid in full in MY ledger → Closed', i2.step === 'closed' && !i2.open && i2.paid, JSON.stringify(i2));
     ok('a walk-in bill: Closed when issued', i3.step === 'closed' && !i3.open);
+    /* WX-O2C: a walk-in ON CREDIT (a local customer, no rail copy) — my ledger has money open on it: it stays Issued, open, in Unpaid bills */
+    const i5 = I({ waiting: false, owed: true });
+    ok('a walk-in bill on credit (my ledger has it open): Issued, open — not Closed', i5.step === 'issued' && i5.open, JSON.stringify(i5));
     ok('Disputed → Disputed (DSP)', i4.step === 'disputed' && i4.open && i4.code === 'DSP');
     ok('money on an issued bill reads R-1400 · Received ₹118 of ₹118 (my own receipt)', I({ waiting: false, money: { settled: true, at: T3 }, lines: [{ step: 'received', code: 'R-1400', label: 'Received ₹118 of ₹118', by: 'tallytest', at: T3 }] }).history.some((h) => h.code === 'R-1400' && h.label === 'Received ₹118 of ₹118' && h.by === 'tallytest'));
 
