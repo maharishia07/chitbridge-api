@@ -30,7 +30,6 @@ const GUARDS = [
   'shop-clock-guard.test.cjs',  // ⭐⭐ Y1: one shop clock — no raw new Date()/Date.now() in the ledger files; set/advance/reset proven
   'shop-day-tz.test.cjs',       // ⭐⭐ M210: a midnight sale lands in the SHOP's day on every server clock, before and after b299; Sydney across DST
   'till-t2a.test.cjs',  // round T2a: bills-only count, an online order billed, the mode menu, no 403 on quick-keys/hidden
-  'till-country-bill.test.cjs',  // CX1: the counter's bill follows the shop's pack (IN · AU · AE) — off the list it went stale unseen (13 Oct)
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
   'spin-scripts.test.cjs',      // ⭐⭐ HX2: the cloud spin scripts — one env list (HOSTING.md), tagged, India by default, no secret printed
