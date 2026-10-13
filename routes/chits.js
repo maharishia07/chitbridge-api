@@ -1381,7 +1381,19 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
       //    op (writes each participant's copy, incl. receivers) -> the b50 SECURITY DEFINER fn chit_deliver, run in
       //    withEntity(sender). Fallback to the legacy in-tx fan-out when b50 isn't applied. ──
       if (await definersReady()) {
-        await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id });
+        /**
+         * ⭐ THE FIRST BILL ENDS THE LEAD — IN THE BILL'S OWN TRANSACTION (L2C step 5, FX-L2C 2026-10-13). A counter bill is sent to
+         * SELF and names its customer in business_json.customer; the post-commit auto-add below counts RECIPIENTS, so the named
+         * party's txn_count never moved (a billed lead stayed "Trial"; Ravi Stores read 0 trades after three years). One withEntity
+         * holds chit_deliver AND the bump (lib/crm.traded: one UPDATE, never an insert); the bump sits in a SAVEPOINT so a CRM
+         * write can never fail a guaranteed chit (D-065). A named party that is also a recipient is left to the recipient block.
+         */
+        const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
+        const isRecipient = namedParty && receiverDetails.some((r) => String(r.entity_id) === String(namedParty));
+        await withEntity(sender_id, async (c) => {
+          await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: c });
+          if (namedParty && !isRecipient) await trySavepoint(c, () => require('../lib/crm').traded(c, sender_id, namedParty, now), null);
+        });
       } else {
       await withTransaction(async (client) => {
         if (promote_draft_id) {   // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
