@@ -481,6 +481,9 @@ router.get('/snapshot', auth, async (req, res) => {
     /* ⚠️ ONE DERIVATION, read by the shop block AND by payWays — two answers about which country a shop is in would
        eventually mean one screen offering a payment method another refuses. */
     const cbCountry = cbProfile.countryOf({ country: row.country, gstin, profile });
+    /* CX0: a state is read off the tax number only under a pack whose tax turns on the state (India's GST) — the same rule as lib/tax-lines.js:62.
+       An ABN's or a TRN's first two digits are not a state; they reached the counter as one and the shop panel said "CGST + SGST" in Sydney. */
+    const stateSplit = ((p) => !p || !p.supply || p.supply === 'state')(require('../lib/tax-packs').packFor(cbCountry));
     /* ⭐ ONE MAPPING from a product's data to a counter row — owned rows and network lines both go through it, so a field
        added for one can never be missing from the other */
     /**
@@ -737,9 +740,7 @@ router.get('/snapshot', auth, async (req, res) => {
          * page already resolves (cbHome()) and the API does not know which front end asked.
          */
         handle: row.user_id || null,
-        /* CX0: a state is read off the tax number only under a pack whose tax turns on the state (India's GST) — the same rule as lib/tax-lines.js:62.
-           An ABN's or a TRN's first two digits are not a state; they reached the counter as one and the shop panel said "CGST + SGST" in Sydney. */
-        state_code: ((p) => (!p || !p.supply || p.supply === 'state') ? String(gstin || '').slice(0, 2) || null : null)(require('../lib/tax-packs').packFor(cbCountry)),
+        state_code: String(gstin || '').slice(0, 2) && stateSplit ? String(gstin).slice(0, 2) : null,   /* CX0: only under a state-split pack (stateSplit above) */
         reg_type: String(flags.gst_registration || 'regular'),
         /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */
         country: cbCountry,
