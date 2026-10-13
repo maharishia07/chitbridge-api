@@ -1461,7 +1461,11 @@
   .stepbar button{min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);
     display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;cursor:pointer}
   .stepbar button b{background:var(--ok);color:var(--paper);border-radius:999px;padding:0 7px;font-size:.85em}
-  .stepbar button span{font-variant-numeric:tabular-nums;font-weight:700}
+  .stepbar button span{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+  /* CX1 (2026-10-13): a wider money sign (A$ · AED) pushed "Pay A$1,200.00 ›" past a 390 px phone and cut it. A button may shrink to its
+     column and put the figure under its word; one that fits (every rupee bill so far) draws exactly as before. */
+  .stepbar button{min-width:0;flex-wrap:wrap;white-space:normal;row-gap:0;line-height:1.15}
+  @media (max-width:480px){ body.steps .stepbar{grid-template-columns:auto minmax(0,1fr) minmax(0,1.15fr)} body.steps .stepbar button{padding-inline:8px} }
   .stepbar button.on{border-color:var(--ok);background:var(--ok-tint);color:var(--ok);font-weight:700}
   .stepbar button.go{background:var(--ok);border-color:var(--ok);color:var(--paper);font-weight:700}
   .stepbar button:disabled{opacity:.45;cursor:default}
@@ -7990,7 +7994,7 @@ function rateOf(i){
   return r;
 }
 /** ⭐ the tile's own tax fact, same rate as rateOf() — '' for an unregistered shop, never a claim it cannot make. */
-function taxWords(i){ var r = rateOf(i); return r != null ? (r + '% GST') : ''; }
+function taxWords(i){ var r = rateOf(i); return r != null ? (r + '% ' + schemeWord()) : ''; }   /* CX1: the pack's scheme word — VAT in Dubai */
 /** ⭐ the tile's own offer fact — the CLEAN promise only, regardless of MODE (a key is glanced at, never read
  *  closely; offerNames()'s maintain-mode raw name belongs on the detailed row, never on a tile this small). */
 function offerPromiseFor(i){
@@ -14901,7 +14905,7 @@ function cardTaxWords(i){
   try {
     var r = CBTax.slab.resolve({ item_data:{ name:i.name, tax_slab:i.tax_slab, hsn:i.hsn, category:i.category },
       face:S.face || {}, slabs:S.slabs || [], categories:S.categories || [] });
-    return (r && r.rate != null) ? (r.rate + '% GST') : 'no GST slab set';
+    return (r && r.rate != null) ? (r.rate + '% ' + schemeWord()) : 'no ' + schemeWord() + ' slab set';   /* CX1: the pack's word */
   } catch (_) { return ''; }
 }
 function cardForGood(i){
@@ -15348,7 +15352,7 @@ function priceBlock(i){
   var pay = (window.CBPricing ? (pricedAt(i, 1).amount) : Number(i.price)) || 0;
   var r = i.tax_rate;
   var per = 'per ' + esc(i.unit || 'piece');
-  if (shopTax().charges) per += (r != null ? ' · ' + (taxIncluded() ? 'incl. ' : 'with ') + r + '% GST' : '');
+  if (shopTax().charges) per += (r != null ? ' · ' + (taxIncluded() ? 'incl. ' : 'with ') + r + '% ' + schemeWord() : '');   /* CX1: the pack's word */
   /* the missing rate is warned ONCE, where the item is sold (BF1); the row stays quiet, the reason is in its tooltip (TS12) */
   var perTip = (shopTax().charges && r == null) ? ' title="tax rate not set for this product"' : '';
   /**
@@ -17746,7 +17750,7 @@ function cartLineNote(c){
    * (Athi, 2026-09-16: *"on the header, #, item, offer can be brought in"*), because an offer crammed under the
    * product name is the one thing on the row with no heading telling you what it is.
    */
-  var bits = (c.unit ? 'per ' + esc(c.unit) : '') + (c.gst_rate ? ' · GST ' + c.gst_rate + '%' : '') + tierWords;
+  var bits = (c.unit ? 'per ' + esc(c.unit) : '') + (c.gst_rate ? ' · ' + schemeWord() + ' ' + c.gst_rate + '%' : '')   /* CX1: the pack's word */ + tierWords;
   if (bits.indexOf(' · ') === 0) bits = bits.slice(3);
   CART_OFFER_CELL = offs + pending;                 /* handed to the Offer column, built in the same pass */
   /**
