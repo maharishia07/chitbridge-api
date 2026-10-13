@@ -1,0 +1,21 @@
+# HX2 critique — spin / test / teardown per platform (written before any code, 2026-10-13)
+**(a) What the brief assumes, checked** (base = api `round/HX1-38349249624`, not yet on main)
+- HOSTING.md is a complete env contract and compose shows the mapping — TRUE (`docs/HOSTING.md` › api table + "What a platform script fills"; `deploy/compose.yml:44-66`).
+- the migrate job can run against any Postgres — TRUE (`Dockerfile` target `migrate`, `tools/migrate.cjs` apply + ledger); it needs psql → run the migrate IMAGE, not the runner's psql.
+- "load a sim shop (sim-load)" against a cloud DB — FALSE as is: `tools/sim-load.cjs:51-63` `localOnly` refuses every dotted host (the Y1b never-production rule, `tests/sim-load.test.cjs` §1). A cloud spin's DB is always dotted.
+- "the real-api walks" — ONE exists: web `e2e/stack-walk.cjs` (HX0). It reads the sign-in code from `deploy/mail-sink.cjs`, which has no auth and is only reachable on 127.0.0.1 in compose; a cloud sink is public → it must demand a token. The sink is not in the api image (`.dockerignore` drops `deploy`).
+- "object store" on every platform — AWS S3 and GCS (XML/HMAC interop) speak SigV4 → TRUE via `lib/storage-object.js`; **Azure Blob does NOT speak S3** → FALSE without a new transport; Railway: no S3 store the CLI can make that I can verify offline → UNKNOWN.
+- India regions — TRUE for AWS ap-south-1, Azure centralindia, GCP asia-south1; Railway has NO India region (asia-southeast1 Singapore) → the Railway spin is the non-resident reference only.
+- dry-run without accounts — `terraform` is not on this runner and cannot be fetched (no web) → plain CLI scripts. aws/az/gcloud ARE installed: their argument parsers run before the credential check, so a command run with an empty credential config proves its flags offline. Railway CLI is absent → shellcheck + printed plan only.
+**(b) Conflicts with rules / constructs**
+- one place per thing: the env every platform sets is written ONCE (`deploy/spin-lib.sh` `spin_api_env`, from HOSTING.md's names); a test checks every name is in HOSTING.md. Health/web/CTP checks reuse `deploy/proof-ctp.cjs` (widened to take URLs), not a copy.
+- the never-production rule stays: widen `localOnly` ADDITIVELY — a remote host only when `CB_SPIN_ID` is set AND the database is named `cbspin_<id>` (production's is `postgres`) AND the host is not Supabase; tested.
+- no money, tax, chit, rail, UI or route change; no migration (b316–b318 unused); no engines change.
+**(c) Simpler way**: run the web as the SAME nginx image everywhere (its rewrite + `/.well-known` 404 + `/config.js` are already proved) instead of four native static hosts (S3+CloudFront / Static Web Apps / Firebase each need their own rewrite and config injection) — native static hosting is listed as an option in HOSTING-COUPLING, not built.
+**(d) Risks**
+- security: test spins expose Postgres publicly with TLS + a 32-byte random password (AWS SG 5432 open: App Runner egress has no fixed IP; Azure: "Azure services" + the runner IP; GCP: Cloud Run reaches Cloud SQL via its socket, authorized network = the runner IP). Production must use private networking — README says so.
+- time: sim-load from a runner to Mumbai is round-trip bound — `SIM_YEARS=1` default; an in-platform loader job is a follow-up.
+- migrations needing a real superuser (RDS/Azure/Cloud SQL `postgres` is not one) are listed by migrate, not hidden; Azure needs `azure.extensions=PGCRYPTO,LTREE,PG_TRGM` first.
+- cost leaks: every resource is tagged `cb-spin=<id>`; teardown finds by tag/group/project, and the CI job runs teardown `if: always()`.
+- twin landing: api first (HX1 → HX2), then web HX2 (stack-walk sends the sink token; harmless without it). Workflow = patch file.
+**(e) VERDICT: BUILD WITH CHANGES** — (1) sim-load gets the spin-only remote rule; (2) the mail sink takes a token and ships in the api image; (3) Azure's object store = in-database (`STORAGE_ADAPTER=db`) until a Blob transport exists (debt, named); Railway's = MinIO as a service; (4) web = the nginx image on every platform; (5) proof = shellcheck + `PLAN=1` (prints every command) + `PARSE=1` (aws/az/gcloud parse each command with no credentials); CTP exchange = manifest reachability only (HX4 runs the exchange).
