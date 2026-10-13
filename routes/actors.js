@@ -11,6 +11,7 @@ const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on proces
 const identityAuth = require('../lib/identity-auth');   // [capability: sign-in] the one token issuer, entity or coassist
 const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
 const schema = require('../lib/schema');   // b173 — deploy-before-migration column probe
+const access = require('../lib/access');   // WX-O2C — the level a new employee is created with (LEVELS · FROM_HAT)
 const router  = express.Router();
 
 /**
@@ -294,17 +295,22 @@ router.post('/',
         ? mintuserid.employee(actor_key, entity_row).handle
         : null;                      /* no parent row readable → store nothing rather than store a guess */
 
+      /* ⚠️⚠️ WX-O2C (2026-10-13): THE LEVEL IS WRITTEN. The body's access_level was validated and then DROPPED — only `hat` was inserted,
+         and the column's default ('editor') beat it in access.levelOf, so every employee the owner made "View-only" could bill and send.
+         The level asked for, else the hat's (access.FROM_HAT), else editor — the same order levelOf reads. Pre-b173: the column is absent. */
+      const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : (access.FROM_HAT[hat] || access.EDITOR);
+      const _lvlCol = await schema.hasColumn('identities', 'access_level');
       // Create actor
       await db(
         `INSERT INTO identities (
           identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          otp_code, otp_expires_at, hat, entity_kind
-        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor')`,
+          otp_code, otp_expires_at, hat, entity_kind${_lvlCol ? ', access_level' : ''}
+        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor'${_lvlCol ? ',$13' : ''})`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
-         otp, otp_expires, hat, employee_id]
+         otp, otp_expires, hat, employee_id].concat(_lvlCol ? [access_level] : [])
       );
 
       console.log(`Actor created: ${actor_key}@${entity_name}` + (devOtp.isSealed() ? '' : ` — OTP: ${otp}`));
