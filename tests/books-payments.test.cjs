@@ -471,6 +471,17 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       [200, { ok: false, why: 'read_only', say: RAIL.say('read_only') }, 'read_only', true]);
     const pvw = await q('PATCH', '/payments/' + offId, { advice_shared_at: true });
     eq('…and the PATCH says 403 with the same word', [pvw.status, pvw.body.why, pvw.body.message], [403, 'read_only', RAIL.say('read_only')]);
+    /* WX-P2P-15 (2026-10-13): a view-only co-assist RECORDED a payment on the real stack — the write itself must answer the ladder's word, nothing written */
+    const before = (await q('GET', '/dues')).body;
+    const pvp = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'viewer-pay', acknowledge: ACK });
+    eq('a viewer: POST /payments is 403 read_only in the rail engine\'s sentence (the preview stays a read)', [pvp.status, pvp.body.why, pvp.body.message, (await q('POST', '/payments/preview', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR' })).status],
+      [403, 'read_only', RAIL.say('read_only'), 200]);
+    ok('…and nothing was written (the dues read the same)', JSON.stringify((await q('GET', '/dues')).body) === JSON.stringify(before));
+    const pvc = await q('POST', '/parties/' + TT + '/dispute', { against_ref: 'x', disputed: true, side: 'supplier' });
+    ok('…a dispute from a viewer is refused the same way', pvc.status === 403 && pvc.body.why === 'read_only', JSON.stringify(pvc.body));
+    WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'commenter', display_name: 'Auditor' };
+    const pcm = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 1000, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'commenter-pay', acknowledge: ACK });
+    eq('a commenter: 403 comment_only, its own sentence', [pcm.status, pcm.body.why, pcm.body.message], [403, 'comment_only', RAIL.say('comment_only')]);
     WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
     ok('an editor co-assist may (as record is allowed to a co-assist)', (await q('GET', '/payments/' + payId + '/advice')).body.may.send_advice.why === 'already_sent' && (await q('GET', '/payments/' + offId + '/advice')).body.may.share_advice.ok === true);
     WHO = OWNER;
