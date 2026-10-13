@@ -201,12 +201,46 @@ function levelCases() {
  * through the real routes instead.
  */
 
+/* ── WX-P2P-18 · the level the owner picks on CREATE is the level saved ─────────────────────────────────── */
+async function createLevelCases() {
+  console.log('\n-- WX-P2P-18 . POST /actors writes the chosen level (b173 default "editor" never wins) --\n');
+  const INSERTS = [];
+  const q = async (sql, params) => {
+    if (/information_schema/.test(sql)) return { rows: [{ '?column?': 1 }] };
+    if (/INSERT INTO identities/.test(sql)) INSERTS.push({ sql, params });
+    return { rows: [] };
+  };
+  require.cache[require.resolve(API + '/middleware/auth')] = {
+    exports: Object.assign((req, res, next) => { req.identity = { identity_id: 'e1', identity_type: 'entity', display_name: 'E' }; next(); }, {
+      entityOf: (req) => req.identity.identity_id,
+    }),
+  };
+  require.cache[require.resolve(API + '/db')] = { exports: { query: q, withEntity: async (_i, fn) => fn({ query: q }), withTransaction: async (fn) => fn({ query: q }) } };
+  require.cache[require.resolve(API + '/lib/schema')] = { exports: { hasColumn: async () => true, hasTable: async () => true } };
+  delete require.cache[require.resolve(API + '/routes/actors')];
+  const app = express(); app.use(express.json()); app.use('/api/actors', require(API + '/routes/actors'));
+  const srv = app.listen(0), port = srv.address().port;
+  const post = (body) => new Promise((ok) => {
+    const b = JSON.stringify(body);
+    const r = http.request({ host: '127.0.0.1', port, path: '/api/actors', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+      (res) => { res.resume(); res.on('end', () => ok(res.statusCode)); });
+    r.end(b);
+  });
+  const levelSaved = async (body) => { INSERTS.length = 0; await post(body); const i = INSERTS[0]; return i && /access_level/.test(i.sql) ? i.params[12] + ' ' + i.params[13] : 'no level written'; };
+  t('Viewer picked            -> viewer saved', await levelSaved({ display_name: 'Viewer Vani', actor_key: 'vani', access_level: 'viewer', hat: 'view_only' }), 'viewer false');
+  t('Commenter, whole shop    -> commenter, reach', await levelSaved({ display_name: 'Audit Anu', actor_key: 'anua', access_level: 'commenter', hat: 'audit', whole_entity: true }), 'commenter true');
+  t('only an old hat          -> the hat\'s level', await levelSaved({ display_name: 'Old Client', actor_key: 'oldc', hat: 'view_only' }), 'commenter false');
+  t('nothing                  -> editor', await levelSaved({ display_name: 'New Person', actor_key: 'newp' }), 'editor false');
+  srv.close();
+}
+
 (async () => {
   levelCases();
   await visibilityCases();
   gateCases();
   await routeCases();
   await provisioningCases();
+  await createLevelCases();
   console.log('\n  ' + pass + ' passed · ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
 })();

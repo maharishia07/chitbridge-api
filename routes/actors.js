@@ -294,17 +294,22 @@ router.post('/',
         ? mintuserid.employee(actor_key, entity_row).handle
         : null;                      /* no parent row readable → store nothing rather than store a guess */
 
+      /* ⚠️ WX-P2P-18 (2026-10-13, the real stack): this INSERT wrote no access_level, so b173's column default 'editor' won over the
+         level the owner picked — "Viewer" in Employees › Add saved an EDITOR who recorded a payment. The level is written as chosen
+         (else the hat's, lib/access.levelOf — the one decider), and the reach with it; before b173 the hat alone carries it. */
+      const _lvlCols = await schema.hasColumn('identities', 'access_level');
+      const level = require('../lib/access').levelOf({ identity_type: 'actor', access_level: req.body.access_level, hat });
       // Create actor
       await db(
         `INSERT INTO identities (
           identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          otp_code, otp_expires_at, hat, entity_kind
-        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor')`,
+          otp_code, otp_expires_at, hat, entity_kind${_lvlCols ? ', access_level, whole_entity' : ''}
+        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor'${_lvlCols ? ',$13,$14' : ''})`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
-         otp, otp_expires, hat, employee_id]
+         otp, otp_expires, hat, employee_id].concat(_lvlCols ? [level, req.body.whole_entity === true] : [])
       );
 
       console.log(`Actor created: ${actor_key}@${entity_name}` + (devOtp.isSealed() ? '' : ` — OTP: ${otp}`));
