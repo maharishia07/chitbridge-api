@@ -22,6 +22,9 @@
  * connects — tests/sim-load.test.cjs holds that rule. The api's own .env cannot redirect it: DATABASE_URL is set from --db
  * BEFORE server.js loads, and dotenv never overrides a variable already set. The local connection is proved with a direct
  * connect first, so db/index.js's pooler fallback is never reached.
+ * HX2 — ONE remote exception, a cloud TEST SPIN (deploy/<platform>/test.sh): a dotted host is accepted only when CB_SPIN_ID is set
+ * AND the URL's database is exactly `cbspin_<that id>` (production's is `postgres`) AND the host is not Supabase's. A spin's database
+ * is made empty by its spin.sh and deleted by its teardown.sh; nothing else is ever named cbspin_….
  *
  * Idempotent per (shop, seed): the opening entry carries source_ref `opening:sim/seed-<n>/years-<y>`; a second run finds it and
  * says "already loaded" (the counts, the login) and writes nothing. `--fresh` removes that shop (and its minted parties) first.
@@ -51,8 +54,8 @@ const has = (k) => process.argv.includes('--' + k);
 
 /* ── the one rule: a local database or nothing ─────────────────────────────────────────────────────────────────── */
 const LOCAL_HOSTS = ['localhost', '127.0.0.1', '::1'];
-/** localOnly(url) → { ok, host, docker? } or { ok: false, why } — a host with a dot in it is never local */
-function localOnly(url) {
+/** localOnly(url, env) → { ok, host, docker?, spin? } or { ok: false, why } — a host with a dot in it is never local (HX2: but a test spin's) */
+function localOnly(url, env) {
   let u;
   try { u = new URL(String(url || '')); } catch (_) { return { ok: false, why: 'not a URL' }; }
   if (!/^postgres(ql)?:$/.test(u.protocol)) return { ok: false, why: 'not a postgres:// URL' };
@@ -60,6 +63,8 @@ function localOnly(url) {
   if (!host) return { ok: false, why: 'no host in the URL' };
   if (LOCAL_HOSTS.includes(host)) return { ok: true, host };
   if (/^[a-z][a-z0-9_-]*$/.test(host)) return { ok: true, host, docker: true };
+  const spin = String((env || process.env).CB_SPIN_ID || '');
+  if (/^[a-z][a-z0-9]{5,15}$/.test(spin) && decodeURIComponent(u.pathname.slice(1)) === 'cbspin_' + spin && !/supabase\.(co|com)$/.test(host)) return { ok: true, host, spin: true };
   return { ok: false, why: '"' + host + '" is not localhost, 127.0.0.1 or a docker service name — this loader never touches a remote database' };
 }
 /** a migration file the schema step skips — the chain and its ledger live in tools/migrate.cjs (HX1) */
@@ -155,7 +160,7 @@ async function applySchema() {
 
 /** --schema-only: the schema step alone (the compose stack's migrate job), then exit */
 async function schemaOnly() {
-  console.log('\n── sim-load --schema-only · ' + loc.host + (loc.docker ? ' (docker service)' : '') + ' ──');
+  console.log('\n── sim-load --schema-only · ' + loc.host + (loc.docker ? ' (docker service)' : loc.spin ? ' (test spin ' + process.env.CB_SPIN_ID + ')' : '') + ' ──');
   try { await sql('SELECT 1'); } catch (e) { die('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message); }
   await applySchema();
   await pool.end(); process.exit(0);
@@ -220,7 +225,7 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
 /* ── main ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 (async () => {
   if (SCHEMA_ONLY) return schemaOnly();
-  console.log('\n── sim-load · ' + SHOP + ' · ' + YEARS + ' year(s) from ' + PLAN.start + ' · seed ' + SEED + ' · ' + COUNTRY + ' · ' + loc.host + (loc.docker ? ' (docker service)' : '') + ' ──');
+  console.log('\n── sim-load · ' + SHOP + ' · ' + YEARS + ' year(s) from ' + PLAN.start + ' · seed ' + SEED + ' · ' + COUNTRY + ' · ' + loc.host + (loc.docker ? ' (docker service)' : loc.spin ? ' (test spin ' + process.env.CB_SPIN_ID + ')' : '') + ' ──');
   try { await sql('SELECT 1'); } catch (e) { die('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message); }
   if (SCHEMA) await applySchema();
   if (!await hasTable('identities')) die('this database has no schema — the local stack migrates its own; an empty TEST database takes --schema');

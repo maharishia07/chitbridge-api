@@ -78248,6 +78248,31 @@
    "needs": [
     "the books engines v1.44.0 (via books-harness.cjs)"
    ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/spin-scripts.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE CLOUD SPIN SCRIPTS STAY HONEST WITHOUT AN ACCOUNT (HX2).",
+   "claim": "THE CLOUD SPIN SCRIPTS STAY HONEST WITHOUT AN ACCOUNT (HX2).",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.unit · unit · 130 lines. Run: node chitbridge-api/tests/spin-scripts.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.unit",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-13T15:00:00+05:30"
   }
  ]
 }
