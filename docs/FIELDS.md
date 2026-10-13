@@ -292,3 +292,17 @@ The browser parses the file and sends `rows` (≤ 500; more → 400 `TOO_MANY` "
 | `rows[]` | `{ row, name, phone, outcome, why, party_id }` | Every row's verdict: `outcome` ∈ add · merge · skip. The preview list paints this — it computes nothing. `party_id` = the matched party (merge/skip) or, after the import, the new one. |
 | `identities` set-based insert | mintMany | The same columns and constants as mint(); handles `~<shop>.cus-NNNN` numbered after the shop's top number, ONE insert. |
 | `books_counter` block | nextNo(…, count) | One move of the 'P' series by `count`; party numbers `P-NNNNN` assigned in that order (party-fields.ensureNos). |
+
+## GET · PUT /api/governance/country-setup (CS2 · the constitution, the zone, the countries offered — 2026-10-13)
+
+`lib/country-setup.js`. Owner only on PUT. Every key below is beside CS1's (`country · currency · fy_start_month · tax · timezone · source · pack · done · required`), none of which changes shape.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `constituted` | boolean (null on the gate's cached read) | Derived, once per read: `isConstituted(h, entity)` — ONE EXISTS over `catalogue_items` · `chit_header` · `journal_entry` (the last only once b273 exists, `schema.hasTable`). true = the shop holds a product or a transaction, so country and money are FIXED. Written by nobody. Read by the Country setup step (greys Country and Money with the reason) and by `save()` (the refusal). |
+| `constituted_by` | `{ products, chits, entries }` booleans | The same read, per table — what fixed it; the refusal names it ("already has products"). |
+| `zones` | `string[]` IANA names | The current pack's `timeZones` (engines v1.42.0; [] for a pack-less country or an older pack). One → the step sets it silently; several → the step ASKS, the browser's zone preselected when it is one of them. |
+| `countries[]` | `[{ code, name, currency, fy_start_month, zones, locale, books }]` | `regulation.list()` — EXACTLY the registered packs (CS1's rule), whatever the browser's locale; `name` = Intl's region name (`nameOf`), `locale` = the pack's `locale.format` tag. The step's country picker reads this; CBLocale.REGIONS is only the offline fallback. |
+| body `timezone` (PUT) | IANA name or absent | What the owner picked of `zones` (a multi-zone country). Validated by constructing an Intl formatter (an unknown zone → 400 in words, never stored). Written to `identities.timezone` (b176) — the ONE home M210 `books-hooks.dayOf` reads. A single-zone pack sets it from the pack whatever the body says. 400 `COUNTRY_SETUP_ZONE` names the zones when a multi-zone country is saved without one. |
+| `rederived` (PUT, only when the country changed) | `{ from, to, chart, by, at }` | The country was CORRECTED before the shop was constituted: `derive()` set currency · fy · scheme · zone from the new pack; `chart` = ledgers seeded fresh by `books.reseedUnposted` (0 when no ledger row exists). `by` = the owner's identity id, `at` = now. The change is also logged to `books_change_log` (entity_governance · country / currency / timezone / fy_start_month) when the ledger tables exist. |
+| 409 `COUNTRY_CHANGE_IS_NEW_ENTITY` | `{ code, error, message }` | After constitution, a different country OR a different currency: "This shop is set up for <country> and <money> and already has <products / chits / books entries> — country and money never change. Register a new business for <country>." No conversion path exists (DECISIONS 2026-10-03). |

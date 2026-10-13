@@ -41,12 +41,14 @@ const schema = require(path.join(API, 'lib', 'schema'));
 const CS = require(path.join(API, 'lib', 'country-setup'));
 const setMigrated = (v) => { MIGRATED = v; schema._reset(); CS._reset(); };
 /* the governance half's shop row + stamp row, and what the writes did */
-let ID = null, GOV = null, WRITES = [];
+/* CONST = what the shop holds (CS2: a product or a transaction fixes the country and the money for good) */
+let ID = null, GOV = null, WRITES = [], CONST = { products: false, chits: false, entries: false };
 const GOV_H = { query: async (sql, params) => {
   const t = String(sql);
+  if (/country-setup constituted/.test(t)) return { rows: [CONST], rowCount: 1 };
   if (/FROM identities/.test(t)) return { rows: ID ? [ID] : [], rowCount: ID ? 1 : 0 };
   if (/FROM entity_governance/.test(t)) return { rows: GOV ? [GOV] : [], rowCount: GOV ? 1 : 0 };
-  if (/^UPDATE identities/.test(t.trim())) { WRITES.push('identities'); if (ID) { ID.country = params[1]; ID.currency_code = params[2]; ID.gstn = params[3]; ID.policy_flags = Object.assign({}, ID.policy_flags || {}, JSON.parse(params[4])); } return { rows: [], rowCount: ID ? 1 : 0 }; }
+  if (/^UPDATE identities/.test(t.trim())) { WRITES.push('identities'); if (ID) { ID.country = params[1]; ID.currency_code = params[2]; ID.gstn = params[3]; ID.policy_flags = Object.assign({}, ID.policy_flags || {}, JSON.parse(params[4])); ID.timezone = params[5] || ID.timezone; } return { rows: [], rowCount: ID ? 1 : 0 }; }
   if (/^UPDATE entity_governance/.test(t.trim())) { WRITES.push('entity_governance'); if (GOV) { GOV.fy_start_month = params[1]; GOV.tax_registration = JSON.parse(params[2]); GOV.setup_source = JSON.parse(params[3]); GOV.country_setup_at = new Date(); } return { rows: [], rowCount: GOV ? 1 : 0 }; }
   if (/^INSERT INTO entity_governance/.test(t.trim())) { WRITES.push('insert'); GOV = { fy_start_month: params[1], tax_registration: JSON.parse(params[2]), setup_source: JSON.parse(params[3]), country_setup_at: new Date() }; return { rows: [], rowCount: 1 }; }
   throw new Error('country-setup test ran unexpected SQL: ' + t.slice(0, 80));
@@ -83,9 +85,14 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('PUT before b299 → 503 COUNTRY_SETUP_NOT_MIGRATED in words, nothing written', r.status === 503 && r.body.code === 'COUNTRY_SETUP_NOT_MIGRATED' && /next update/.test(r.body.message) && WRITES.length === 0, JSON.stringify(r.body));
 
   console.log('— after b299: a NEW Indian shop registers (M196 wrote IN from the time zone) and completes the step —');
-  setMigrated(true); ID = { country: 'IN', currency_code: 'INR', gstn: null, timezone: 'Asia/Kolkata', policy_flags: {} }; GOV = { fy_start_month: null, tax_registration: null, setup_source: null, country_setup_at: null }; WRITES = [];
+  setMigrated(true); ID = { country: 'IN', currency_code: 'INR', gstn: null, timezone: 'Europe/London', policy_flags: {} }; GOV = { fy_start_month: null, tax_registration: null, setup_source: null, country_setup_at: null }; WRITES = [];
   r = await g('GET', '/country-setup');
   ok('GET: required true (the step is still to do), prefilled IN · INR · April · not registered', r.status === 200 && r.body.required === true && r.body.done === false && r.body.country.code === 'IN' && r.body.currency === 'INR' && r.body.fy_start_month === 4 && r.body.tax.registered === false, JSON.stringify(r.body));
+  /* CS2: the step is told whether the country may still change, the pack's zones, and the countries it may offer — exactly the registered packs */
+  ok('CS2 GET: constituted false (no product, no transaction) with what was looked at; the India pack names ONE zone; countries = the registered packs with what each derives',
+    r.body.constituted === false && JSON.stringify(r.body.constituted_by) === JSON.stringify({ products: false, chits: false, entries: false }) && JSON.stringify(r.body.zones) === '["Asia/Kolkata"]'
+    && r.body.countries.map((c) => c.code).join() === 'IN,AU,AE' && r.body.countries[1].currency === 'AUD' && r.body.countries[1].fy_start_month === 7 && r.body.countries[1].zones.length === 11 && r.body.countries[1].name === 'Australia' && r.body.countries[2].zones[0] === 'Asia/Dubai' && r.body.countries[0].locale === 'en-IN',
+    JSON.stringify({ c: r.body.constituted, z: r.body.zones, countries: r.body.countries }));
   WHO = STAFF; r = await g('PUT', '/country-setup', { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false } });
   ok('PUT by a co-assist → 403 (the server decides who may set the country)', r.status === 403); WHO = OWNER;
   r = await g('PUT', '/country-setup', { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '33AAAAA0000A1Z5', scheme: 'regular' } });
@@ -94,9 +101,30 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('PUT with month 13 → 400 in words', r.status === 400 && /month/.test(r.body.message), JSON.stringify(r.body));
   r = await g('PUT', '/country-setup', { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '33AAAAA0000A1Z9', scheme: 'composition' }, source: { country: 'your time zone', currency: 'the usual currency in India', fy_start_month: 'the India pack', tax: 'typed' } });
   ok('PUT by the owner (India, GSTIN, composition) → 200: done, India pack active, each source kept', r.status === 200 && r.body.done === true && r.body.required === false && r.body.pack.id === 'IN' && r.body.pack.books === true && r.body.tax.scheme === 'composition' && r.body.tax.number === '33AAAAA0000A1Z9' && r.body.source.country === 'your time zone', JSON.stringify(r.body));
-  ok('…one transaction wrote both homes: identities (country · currency · gstn · scheme) and entity_governance (fy · tax · sources · the mark)', WRITES.join(',') === 'identities,entity_governance' && ID.gstn === '33AAAAA0000A1Z9' && ID.policy_flags.gst_registration === 'composition' && GOV.fy_start_month === 4 && GOV.tax_registration.registered === true && !!GOV.country_setup_at, WRITES.join(','));
-  r = await g('PUT', '/country-setup', { country: 'AE', currency: 'AED', fy_start_month: 1, tax: { registered: false } });
-  ok('PUT a DIFFERENT country after setup → 409: a country change is a new entity (Athi, 2026-10-03)', r.status === 409 && r.body.code === 'COUNTRY_CHANGE_IS_NEW_ENTITY' && /new registration/.test(r.body.message), JSON.stringify(r.body));
+  ok('…one transaction wrote both homes: identities (country · currency · gstn · scheme · the zone) and entity_governance (fy · tax · sources · the mark)', WRITES.join(',') === 'identities,entity_governance' && ID.gstn === '33AAAAA0000A1Z9' && ID.policy_flags.gst_registration === 'composition' && GOV.fy_start_month === 4 && GOV.tax_registration.registered === true && !!GOV.country_setup_at, WRITES.join(','));
+  ok('CS2: the India pack names one zone, so the step SET it without asking — identities.timezone Europe/London (the browser at register) → Asia/Kolkata (M210 reads it)', ID.timezone === 'Asia/Kolkata' && r.body.timezone === 'Asia/Kolkata', ID.timezone);
+
+  console.log('— CS2 · the constitution: before any product or transaction the country may be CORRECTED and everything derived is set again; after, never —');
+  WRITES = [];
+  r = await g('PUT', '/country-setup', { country: 'AE', currency: 'INR', fy_start_month: 4, tax: { registered: true, number: '100123456700003', scheme: 'composition' } });
+  ok('an EMPTY shop (setup done, nothing held yet) moves IN → AE → 200: the UAE pack re-derives AED · January · regular · Asia/Dubai, whatever the body carried; the number typed stays; who/when said',
+    r.status === 200 && r.body.country.code === 'AE' && r.body.currency === 'AED' && r.body.fy_start_month === 1 && r.body.tax.scheme === 'regular' && r.body.tax.number === '100123456700003' && r.body.timezone === 'Asia/Dubai'
+    && r.body.pack.id === 'AE' && r.body.rederived && r.body.rederived.from === 'IN' && r.body.rederived.to === 'AE' && r.body.rederived.by === SHOP && /T/.test(r.body.rederived.at) && ID.currency_code === 'AED' && ID.timezone === 'Asia/Dubai' && ID.policy_flags.gst_registration === 'regular',
+    JSON.stringify(r.body));
+  ok('…the EXISTS read is a read: the same two writes, in the same transaction; no products, chits or entries were touched (nothing exists to convert)', WRITES.join(',') === 'identities,entity_governance', WRITES.join(','));
+  CONST = { products: true, chits: false, entries: false }; WRITES = [];
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false }, timezone: 'Australia/Sydney' });
+  ok('ONE PRODUCT → fixed: AE → AU is refused 409 with the sentence + "Register a new business for Australia"; nothing written', r.status === 409 && r.body.code === 'COUNTRY_CHANGE_IS_NEW_ENTITY' && /already has products/.test(r.body.message) && /Register a new business for Australia\./.test(r.body.message) && WRITES.length === 0, JSON.stringify(r.body));
+  CONST = { products: false, chits: true, entries: false };
+  r = await g('PUT', '/country-setup', { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false } });
+  ok('ONE CHIT (of any kind) → fixed the same way, naming chits', r.status === 409 && /already has chits/.test(r.body.message) && /Register a new business for India\./.test(r.body.message), JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AE', currency: 'USD', fy_start_month: 1, tax: { registered: false } });
+  ok('…and the CURRENCY never changes either once fixed: AE stays, AED → USD refused 409', r.status === 409 && /country and money never change/.test(r.body.message) && ID.currency_code === 'AED', JSON.stringify(r.body));
+  CONST = { products: false, chits: false, entries: true }; WRITES = [];
+  r = await g('PUT', '/country-setup', { country: 'AE', currency: 'AED', fy_start_month: 1, tax: { registered: true, number: '100123456700003' } });
+  ok('a books entry fixes it too — but the SAME country and money may still be re-saved (tax corrected): 200, the mark moves, constituted true in the answer', r.status === 200 && r.body.constituted === true && r.body.constituted_by.entries === true && r.body.tax.number === '100123456700003' && WRITES.join(',') === 'identities,entity_governance', JSON.stringify(r.body));
+  ok('GET says constituted: the step greys country and money with the reason', (await g('GET', '/country-setup')).body.constituted === true);
+  CONST = { products: false, chits: false, entries: false };
 
   console.log('— a shop in a country with NO pack (a Japanese browser: Asia/Tokyo) —');
   ID = { country: 'JP', currency_code: 'JPY', gstn: null, timezone: 'Asia/Tokyo', policy_flags: {} }; GOV = { fy_start_month: null, tax_registration: null, setup_source: null, country_setup_at: null }; WRITES = []; CS._reset();
@@ -104,13 +132,34 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('GET: the step says it in shop words — pack null, books false, the sentence names Japan', r.status === 200 && r.body.pack.id === null && r.body.pack.books === false && r.body.pack.code === 'NO_COUNTRY_PACK' && r.body.pack.why === SENTENCE_JP && r.body.country.name === 'Japan', JSON.stringify(r.body.pack));
   r = await g('PUT', '/country-setup', { country: 'JP', currency: 'JPY', fy_start_month: 4, tax: { registered: true, number: 'T1234567890123' } });
   ok('PUT (generic: registered for tax? number) → 200: the step completes, the books stay OFF with the sentence, selling continues', r.status === 200 && r.body.done === true && r.body.pack.books === false && r.body.pack.why === SENTENCE_JP && r.body.fy_start_month === 4 && r.body.tax.number === 'T1234567890123' && r.body.tax.scheme === 'regular', JSON.stringify(r.body));
+  ok('CS2: a pack-less country names no zone, so the zone registration wrote stays (Asia/Tokyo) and the step offers none', ID.timezone === 'Asia/Tokyo' && r.body.zones.length === 0, ID.timezone);
   r = await g('PUT', '/country-setup', { country: 'JP', currency: 'JPY', fy_start_month: 4, tax: { registered: true, number: 'T1234567890123' } });
   ok('a shop with no stamp row gets one on save (the row the b254 trigger would have written)', (() => { return true; })());
 
   console.log('— a shop in Australia (AU1): the pack is there, so the step prefills AUD and July and the books may open —');
-  ID = { country: 'AU', currency_code: null, gstn: null, timezone: 'Australia/Sydney', policy_flags: {} }; GOV = { fy_start_month: null, tax_registration: null, setup_source: null, country_setup_at: null }; WRITES = []; CS._reset();
+  ID = { country: 'AU', currency_code: null, gstn: null, timezone: 'Asia/Kolkata', policy_flags: {} }; GOV = { fy_start_month: null, tax_registration: null, setup_source: null, country_setup_at: null }; WRITES = []; CS._reset();   /* an Indian browser registering an Australian shop: the zone it wrote is not one of AU's, so the step must ASK */
   r = await g('GET', '/country-setup');
   ok('GET: Australia opens books — pack AU, books true, no sentence; AUD and FY July come from the pack', r.status === 200 && r.body.pack.id === 'AU' && r.body.pack.books === true && r.body.pack.why === null && r.body.currency === 'AUD' && r.body.fy_start_month === 7 && r.body.country.name === 'Australia', JSON.stringify(r.body));
+  ok('CS2 GET: Australia is MULTI-ZONE — the step is handed the eleven zones to ASK with (Sydney first)', r.body.zones.length === 11 && r.body.zones[0] === 'Australia/Sydney' && r.body.zones.indexOf('Australia/Perth') > 0, JSON.stringify(r.body.zones));
+  WRITES = [];
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false } });
+  ok('PUT AU with NO zone → 400 COUNTRY_SETUP_ZONE naming the zones to pick from; nothing written', r.status === 400 && r.body.code === 'COUNTRY_SETUP_ZONE' && /Australia\/Sydney/.test(r.body.message) && /Australia\/Perth/.test(r.body.message) && WRITES.length === 0, JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false }, timezone: 'Asia/Kolkata' });
+  ok('PUT AU with a zone that is not Australian → 400 in the same words', r.status === 400 && r.body.code === 'COUNTRY_SETUP_ZONE', JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false }, timezone: 'Europe/Mars' });
+  ok('PUT with a zone Intl does not know → 400 in words (it must never reach identities.timezone, where it would blank every date)', r.status === 400 && /time zone/.test(r.body.message), JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: true, number: '51 824 753 556' }, timezone: 'Australia/Perth', source: { timezone: 'picked' } });
+  ok('PUT AU with Australia/Perth → 200: the zone the owner picked is written to identities.timezone and said back with its source', r.status === 200 && ID.timezone === 'Australia/Perth' && r.body.timezone === 'Australia/Perth' && r.body.source.timezone === 'picked' && r.body.pack.id === 'AU', JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false } });
+  ok('a later re-save of the same country without a zone keeps the one chosen (never asks twice)', r.status === 200 && ID.timezone === 'Australia/Perth', JSON.stringify(r.body));
+  /* the chart the switch will seed: from the PACK, through accounts-packs (the engines' facade, v1.42.0) — never a second chart table */
+  const E = require(path.join(API, 'lib', 'books-engines'));
+  const au = E.chartRows(E.packs().packFor('AU')), ae = E.chartRows(E.packs().packFor('AE')), ind = E.chartRows(E.packs().packFor('IN'));
+  ok('CS2 chart: AU rows carry GST collected / GST paid and no CGST; AE rows Output VAT; IN rows Output CGST — each from its own pack, with its statement line filled',
+    au.some((x) => x.role === 'gst_collected' && x.code === '2200' && x.sch3_line === 'GST and other statutory liabilities') && !au.some((x) => x.role === 'output_cgst')
+    && ae.some((x) => x.role === 'output_vat') && ind.some((x) => x.role === 'output_cgst' && x.sch3_line === 'Other current liabilities') && au.filter((x) => x.is_group).every((x) => x.sch3_line),
+    JSON.stringify(au.find((x) => x.role === 'gst_collected')));
+  ok('CS2 chart: the legacy year twin is filled by the ONE door (fy_start_month 7 for AU, 1 for AE) so the v1.20.0 core reads the pack\'s year; India unchanged', E.packs().packFor('AU').fy_start_month === 7 && E.packs().packFor('AE').fy_start_month === 1 && E.packs().packFor('IN').fy_start_month === 4 && E.packs().fiscalYearOf('2026-08-01', E.packs().packFor('AU')) === '2026-27' && E.packs().fiscalYearOf('2026-08-01', E.packs().packFor('AE')) === '2026');
 
   /* ── B · the BOOKS routes refuse a pack-less entity with the sentence (through the real router, the in-memory rig) ── */
   const H = require(path.join(API, 'tests', 'support', 'books-harness.cjs'));
@@ -155,9 +204,23 @@ const call = (port, method, p, body) => new Promise((done) => {
   st = await b('GET', '/status');
   ok('an EXISTING Indian shop (b299 backfilled its mark): books may open, pack IN — unaffected', st.status === 200 && st.body.country.books === true && st.body.country.required === false, JSON.stringify(st.body.country));
   en = await b('POST', '/enable', {});
-  ok('…and the switch goes on exactly as before (seeds the India chart)', en.status === 200 && (await X.store.setting(X.db, SHOP)).enabled === true, JSON.stringify(en.body).slice(0, 120));
+  ok('…and the switch goes on exactly as before (seeds the India chart)', en.status === 200 && (await X.store.setting(X.db, SHOP)).enabled === true && (await X.store.accounts(X.db, SHOP)).some((a) => a.role === 'output_cgst'), JSON.stringify(en.body).slice(0, 120));
   const hl = await b('GET', '/health');
   ok('…GET /health answers 200 with the ledger on', hl.status === 200 && hl.body.enabled !== false, String(hl.status));
+
+  console.log('— CS2 · an AUSTRALIAN shop: the switch seeds the AU chart from the pack (never India\'s with a fallback flag); a country corrected before any posting re-seeds —');
+  const AUS = '55555555-5555-4555-8555-555555555555';
+  M.fakeDb.countryRow = { country: 'AU', currency_code: 'AUD', gstn: null, timezone: 'Australia/Sydney', policy_flags: {} }; CS._reset(); CS.forget(AUS);
+  await X.B.enable(X.db, AUS, { by: AUS, today: '2026-08-01' });
+  let acc = await X.store.accounts(X.db, AUS), st2 = await X.store.setting(X.db, AUS);
+  ok('enable for Australia seeds GST collected · GST paid · Trade Debtors and NO CGST; the setting says AU · AUD · July; the year is 2026-27 (July)', acc.some((a) => a.role === 'gst_collected') && acc.some((a) => a.name === 'Trade Debtors' && a.is_group) && !acc.some((a) => a.role === 'output_cgst') && st2.country === 'AU' && st2.functional_currency === 'AUD' && st2.fy_start_month === 7 && (await X.store.periods(X.db, AUS))[0].fiscal_year === '2026-27', JSON.stringify({ n: acc.length, st2 }));
+  const re = await X.B.reseedUnposted(X.db, AUS, { country: 'AE', by: AUS });
+  acc = await X.store.accounts(X.db, AUS); st2 = await X.store.setting(X.db, AUS);
+  ok('reseedUnposted (the country corrected to AE before any posting): the AU chart is gone, the UAE chart is seeded — Output VAT, no GST collected; AED · January; the year 2026', re && re.accounts_added > 0 && acc.some((a) => a.role === 'output_vat') && !acc.some((a) => a.role === 'gst_collected') && st2.country === 'AE' && st2.functional_currency === 'AED' && st2.fy_start_month === 1 && st2.enabled === true && (await X.store.periods(X.db, AUS)).every((p) => p.fiscal_year === '2026'), JSON.stringify({ re, st2 }));
+  X.T.entries.push({ entity_id: AUS, posting_date: '2026-08-02', entry_no: 'SV/2026/000001' });
+  let refused = null; try { await X.B.reseedUnposted(X.db, AUS, { country: 'IN', by: AUS }); } catch (e) { refused = e; }
+  ok('…with ONE entry posted it is refused by name (BOOKS_CONSTITUTED) — a chart is never converted; the UAE chart stands', refused && refused.code === 'BOOKS_CONSTITUTED' && (await X.store.accounts(X.db, AUS)).some((a) => a.role === 'output_vat'), refused && refused.message);
+  M.fakeDb.countryRow = { country: 'IN', currency_code: 'INR', gstn: null, timezone: 'Asia/Kolkata', policy_flags: {} };
 
   console.log('— the gate is cached a minute, and a read that throws keeps the ledger open (a blip is not a country) —');
   const before = Date.now(); const n0 = pass;
