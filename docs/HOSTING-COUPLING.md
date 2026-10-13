@@ -216,3 +216,31 @@ fetch/cache, transport, catalogue/resolve query. **Design only:** status flowing
 - `lib/storage-object.js` speaks Supabase Storage REST under S3 names; books packs and product media switch to it on `S3_ENDPOINT`+`S3_KEY` alone.
 - Operational habit "run as postgres in the SQL editor" (`b272`, `b273`, `b198`) and `cb_metrics`/`cb_ops`/`cb_app` passwords set by hand there; production connects as whichever role the URL names (verify with `npm run db:role`).
 - Statement deadline via `SET LOCAL` per transaction exists for the transaction pooler (`db/index.js:57-67`); harmless elsewhere but it is two code paths for one setting.
+
+---
+
+## Per platform — what is native, what is portable (HX2: the spin scripts, `deploy/<platform>/`)
+
+The api and the web are the SAME two images everywhere (`Dockerfile`, web `Dockerfile`); the schema is the same ledger chain
+(`tools/migrate.cjs`); the env is ONE list (`deploy/spin-lib.sh` `spin_api_env`, names from `docs/HOSTING.md`). What changes per
+platform is only the wiring below — that wiring is the tech debt we carry, one row per platform. ✅ portable (config only) ·
+🟡 works, platform-flavoured · 🔴 a gap (code or a manual step needed).
+
+| Concern | AWS (ap-south-1) | Azure (centralindia) | GCP (asia-south1) | Railway (no India region) |
+|---|---|---|---|---|
+| Postgres | 🟡 RDS 16; `postgres` is `rds_superuser`, not a superuser; public endpoint (App Runner has no fixed egress) | 🟡 Flexible Server 16; admin not superuser; **extensions must be allow-listed** (`azure.extensions`); "Azure services" firewall | 🟡 Cloud SQL 16; `cloudsqlsuperuser`; the api via the Cloud Run socket (`?host=/cloudsql/…` in `DATABASE_URL`) | ✅ plain Postgres container (real superuser); private network host `postgres.railway.internal` |
+| Migrations needing a superuser | 🔴 listed by migrate, not recorded | 🔴 same | 🔴 same | ✅ |
+| Object store | ✅ S3, SigV4 (`S3_PATH_STYLE=false`); 🟡 a static IAM-user key (no instance-role support in `lib/storage-object.js`) | 🔴 **none** — Blob is not S3; attachments in Postgres (`STORAGE_ADAPTER=db`) or an external S3 (R2) | ✅ GCS XML API + HMAC key (`S3_ENDPOINT=https://storage.googleapis.com`, `S3_REGION=auto`); 🟡 HMAC keys are a service-account secret, not workload identity | 🔴 none native (same as Azure) |
+| Containers | 🟡 App Runner (min 1 instance, no jobs) | ✅ Container Apps | ✅ Cloud Run (`--min-instances` for the in-process timers) | ✅ Railway builds the Dockerfile itself |
+| Registry | ECR | ACR (admin user — 🟡 a managed identity is the native way) | Artifact Registry | none (Railway builds from source) |
+| TLS + DNS | ✅ `*.awsapprunner.com`; custom domain not scripted | ✅ `*.azurecontainerapps.io`; custom domain + managed cert not scripted | ✅ `*.run.app`; domain mapping / LB not scripted | ✅ Railway's generated https domain; custom domain not scripted |
+| Scheduler (books nightly, CRM sweep) | 🟡 in-process timers (`server.js:479-481`): run per instance — keep the api at ONE instance, or move them to EventBridge Scheduler → an endpoint (debt, unchanged from HX0) | 🟡 same (Container Apps jobs would be native) | 🟡 same (Cloud Scheduler) | 🟡 same (Railway cron services) |
+| Logs (CERT-In: 180 days, in India) | 🟡 App Runner → CloudWatch Logs in ap-south-1; default retention = never expire — set 180 d | 🟡 Log Analytics in centralindia; default retention 30 d — raise to 180 | 🟡 Cloud Logging, `_Default` bucket = 30 d and global — a regional asia-south1 bucket with 180 d is needed | 🔴 Railway's log window is short and not in India — ship logs out (debt) |
+| Backups (Companies Act: daily, in India) | ✅ RDS automated backups in-region (the TEST spin turns them off) | ✅ Flexible Server backups in-region (7 d on the spin) | ✅ Cloud SQL backups (the TEST spin turns them off) | 🔴 not in India — `backup-restore.yml` `pg_dump` to an India bucket |
+| Secrets | 🟡 plain env on App Runner (Secrets Manager refs are native) | 🟡 plain env (`secretref:` is native) | 🟡 plain env (Secret Manager is native) | ✅ variables are Railway's secret store |
+| Mail (sign-in codes) | ✅ Resend over `RESEND_API_KEY` everywhere; the test spin points `RESEND_BASE_URL` at its token-guarded sink | ✅ same | ✅ same | ✅ same |
+| Teardown handle | tag `cb-spin=<id>` (Tagging API) + IAM tags | the resource group (tagged) | labels + the service account's display name | the project's name |
+
+Offline proof of the scripts: `bash deploy/spin-check.sh` (shellcheck + every aws/az/gcloud command parsed by its own CLI with no
+credentials) and `node tests/spin-scripts.test.cjs` (in the guards). Not proved until the owner's accounts exist: anything a cloud
+decides at run time (quotas, org policies, a migration a non-superuser cannot run, the Railway CLI's flags).
