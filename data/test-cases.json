@@ -65355,6 +65355,31 @@
    "changed_at": "2026-09-19T21:30:13+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/co2-controls.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "A CRITICAL LINE WAKES A PERSON; A CHIT'S HISTORY IS APPEND-ONLY (CO2).",
+   "claim": "A CRITICAL LINE WAKES A PERSON; A CHIT'S HISTORY IS APPEND-ONLY (CO2).",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.unit · unit · 86 lines. Run: node chitbridge-api/tests/co2-controls.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.unit",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-13T12:00:00+05:30"
+  },
+  {
    "case_key": "chitbridge-web/e2e/_healthlook.cjs",
    "module_key": "chitbridge-web/e2e",
    "module_name": "Browser probes",
