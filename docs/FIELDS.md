@@ -255,3 +255,9 @@ A lead IS a party: a local identity on `customer_list` with `added_via = 'lead'`
 | Key | Shape | Source / derived · who writes it · who reads it |
 |---|---|---|
 | `shop.price_includes_tax` | boolean | Source: the shop's policy flag `price_includes_tax` (lib/policy, default yes), read in `lib/catalogue-view.js` beside `unit_rules`. Written by: the owner (Profile › policy). Read by: `shop.html` → `CBCart.money({ priceIncludesTax })` so the basket's GST rows are split out of the price, never added on top (the server prices the order with `tax-lines.invoiceFor` the same way). |
+
+## GET /api/catalogue/:bridge_id/my-orders (the shopper's own orders, WX-O2C 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `orders[].shop_status` | rail status string or absent | Derived: the OTHER participant's (the shop's) `chit_status.current_status`, read through `chit_participants` (b50) in the same statement; absent before b50. The shopper's own `current_status` stays the rail's `delivered` (it reached the shop). Written by: the shop's status moves. Read by: `shop.html` My orders → `shopStatusWord(shop_status \|\| current_status)` (CBWorkflow.stageOf). |
