@@ -208,7 +208,10 @@ router.get('/accounts', auth, on, async (req, res) => {
     const e = ctx(req);
     const chart = await withEntity(e, (h) => S.accounts(h, e));
     const codeOf = new Map(chart.map((a) => [String(a.account_id), a.code]));
-    res.json({ accounts: chart.map((a) => ({ account_id: a.account_id, code: a.code, name: a.name, is_group: !!a.is_group, tally_group: a.tally_group,
+    /* FX-AU1: a PARKED row (active false — only books-store.parkChart writes it, when the country was corrected before anything posted) is
+       the old country's ledger the new pack did not lay over: never posted to, kept only because cb_app has no DELETE (b272). It is not the
+       shop's chart and is not shown — India's CGST/SGST/IGST beside Australia's GST was the F8 finding. Code allocation still sees it (S.accounts). */
+    res.json({ accounts: chart.filter((a) => a.active !== false).map((a) => ({ account_id: a.account_id, code: a.code, name: a.name, is_group: !!a.is_group, tally_group: a.tally_group,
       nature: a.nature, role: a.role, parent_code: a.parent_id ? codeOf.get(String(a.parent_id)) || null : null, active: a.active !== false })) });
   } catch (err) { fail(res, err); }
 });

@@ -46,6 +46,9 @@ let ID = null, GOV = null, WRITES = [], CONST = { products: false, chits: false,
 const GOV_H = { query: async (sql, params) => {
   const t = String(sql);
   if (/country-setup constituted/.test(t)) return { rows: [CONST], rowCount: 1 };
+  /* FX-AU1: the re-seed is no longer swallowed by a savepoint — this governance half has no ledger, so books_setting is "not there" (42P01 → null) */
+  if (/^(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT) /.test(t.trim())) return { rows: [], rowCount: 0 };
+  if (/FROM books_setting/.test(t)) throw Object.assign(new Error('relation "books_setting" does not exist'), { code: '42P01' });
   if (/FROM identities/.test(t)) return { rows: ID ? [ID] : [], rowCount: ID ? 1 : 0 };
   if (/FROM entity_governance/.test(t)) return { rows: GOV ? [GOV] : [], rowCount: GOV ? 1 : 0 };
   if (/^UPDATE identities/.test(t.trim())) { WRITES.push('identities'); if (ID) { ID.country = params[1]; ID.currency_code = params[2]; ID.gstn = params[3]; ID.policy_flags = Object.assign({}, ID.policy_flags || {}, JSON.parse(params[4])); ID.timezone = params[5] || ID.timezone; } return { rows: [], rowCount: ID ? 1 : 0 }; }
@@ -220,6 +223,26 @@ const call = (port, method, p, body) => new Promise((done) => {
   X.T.entries.push({ entity_id: AUS, posting_date: '2026-08-02', entry_no: 'SV/2026/000001' });
   let refused = null; try { await X.B.reseedUnposted(X.db, AUS, { country: 'IN', by: AUS }); } catch (e) { refused = e; }
   ok('…with ONE entry posted it is refused by name (BOOKS_CONSTITUTED) — a chart is never converted; the UAE chart stands', refused && refused.code === 'BOOKS_CONSTITUTED' && (await X.store.accounts(X.db, AUS)).some((a) => a.role === 'output_vat'), refused && refused.message);
+
+  console.log('— FX-AU1 (F8): IN → AU before anything posted — the SAME year label "2026-27", different months; only AU\'s tax ledgers are the chart —');
+  const IN2 = '66666666-6666-4666-8666-666666666666';
+  M.fakeDb.countryRow = { country: 'IN', currency_code: 'INR', gstn: null, timezone: 'Asia/Kolkata', policy_flags: {} }; CS._reset(); CS.forget(IN2);
+  await X.B.enable(X.db, IN2, { by: IN2, country: 'IN', today: '2026-10-14' });
+  const inPer = await X.store.periods(X.db, IN2);
+  ok('the Indian ledger opened on April: 2026-27, 13 months, period 1 = 2026-04-01', inPer.length === 13 && inPer.every((p) => p.fiscal_year === '2026-27') && inPer.find((p) => p.period === 1).start_date === '2026-04-01', JSON.stringify(inPer[1]));
+  M.fakeDb.countryRow = { country: 'AU', currency_code: 'AUD', gstn: null, timezone: 'Australia/Sydney', policy_flags: {} }; CS._reset(); CS.forget(IN2);
+  await X.B.reseedUnposted(X.db, IN2, { country: 'AU', by: IN2, today: '2026-10-14' });
+  const auPer = await X.store.periods(X.db, IN2);
+  ok('…corrected to AU: still 13 months of 2026-27, now July-to-June — period 0 and 1 = 2026-07-01, period 12 ends 2027-06-30 (India\'s April–March is gone)',
+    auPer.length === 13 && auPer.every((p) => p.fiscal_year === '2026-27') && auPer.find((p) => p.period === 0).start_date === '2026-07-01' && auPer.find((p) => p.period === 1).start_date === '2026-07-01' && auPer.find((p) => p.period === 12).end_date === '2027-06-30', JSON.stringify(auPer.map((p) => p.period + ':' + p.start_date)));
+  WHO = { identity_id: IN2, identity_type: 'entity', display_name: 'Sydney Corner' };
+  GOVROW = { fy_start_month: 7, tax_registration: { registered: false }, setup_source: { country: 'typed' }, country_setup_at: new Date() };
+  const shown = await b('GET', '/accounts');
+  const taxShown = ((shown.body && shown.body.accounts) || []).filter((a) => /GST/i.test(a.name) && !a.is_group && !/free/i.test(a.name));
+  ok('GET /accounts shows ONLY Australia\'s tax ledgers (GST collected · GST paid) — no CGST · SGST · IGST · RCM row, parked or not',
+    shown.status === 200 && taxShown.map((a) => a.name).sort().join() === 'GST collected,GST paid' && !shown.body.accounts.some((a) => /CGST|SGST|IGST|RCM/.test(a.name)), JSON.stringify(taxShown.map((a) => a.code + ' ' + a.name)));
+  ok('…while the parked rows stay in the table (no DELETE on ledger_account, b272) so a code is never handed out twice', (await X.store.accounts(X.db, IN2)).some((a) => a.active === false && /SGST/.test(a.name)));
+  WHO = OWNER;
   M.fakeDb.countryRow = { country: 'IN', currency_code: 'INR', gstn: null, timezone: 'Asia/Kolkata', policy_flags: {} };
 
   console.log('— the gate is cached a minute, and a read that throws keeps the ledger open (a blip is not a country) —');

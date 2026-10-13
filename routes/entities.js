@@ -86,14 +86,32 @@ async function registerNew(req, res) {
      */
     const mark = require('../lib/istest')
       .atRegistration(email, await require('../lib/istest').ready());
+    /**
+     * ⭐⭐ FX-AU1: THE GUESS THE OWNER WAS SHOWN IS STORED IN THE WRITE THAT CREATES THE SHOP. The governance panel showed a Sydney browser
+     * Australia · AUD · Australia/Sydney; until this the INSERT named no country, the column default ('IN') landed, and verify's
+     * COALESCE could never correct it — an owner who left before Continue had an Indian shop. Each guessed value is NAMED here, so the
+     * default never decides it. No guess (an API fixture, an old page) → the column is not named, as before, and no source is stored:
+     * the setup step then says "not confirmed yet", never "your registration" (the DEFAULT stays — owner decision GOV-AU1).
+     */
+    const CS = require('../lib/country-setup');
+    const guess = CS.guessOf(req.body.context);
+    const more = [];   /* [column, value] beyond the fixed six, each named only when known */
+    if (mark.population !== null) more.push(['population', mark.population]);
+    if (guess && guess.country) more.push(['country', guess.country]);
+    if (guess && guess.currency) more.push(['currency_code', guess.currency]);
+    if (guess && guess.timezone && await schema.hasColumn('identities', 'timezone')) more.push(['timezone', guess.timezone]);
     await query(
       `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind`
-      + (mark.population === null ? '' : ', population')
+      + more.map(([c]) => ', ' + c).join('')
       + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6`
-      + (mark.population === null ? '' : ', $7') + ')',
-      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind]
-        .concat(mark.population === null ? [] : [mark.population])
+      + more.map((_, i) => ', $' + (i + 7)).join('') + ')',
+      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind].concat(more.map(([, v]) => v))
     );
+    /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
+    if (guess) {
+      try { await withEntity(identity_id, (h) => CS.noteGuess(h, identity_id, guess)); }
+      catch (e) { console.log('[register] guess source NOT STORED for ' + identity_id + ': ' + (e && e.message)); }
+    }
     console.log(`New entity registered: ${display_name} / ${bridge_id}`);
     return await signin.sendCode(req, res, { identity_id, email, display_name }, {});
   } catch (err) {
@@ -2209,3 +2227,4 @@ module.exports = router;
 module.exports.prefPatch = prefPatch;
 module.exports.MERGE_PATCH_SQL = MERGE_PATCH_SQL;
 module.exports.PREF_SETS = PREF_SETS;
+module.exports.registerNew = registerNew;   /* FX-AU1: tests/register-country-guess.test.cjs drives it with a stand-in db */
