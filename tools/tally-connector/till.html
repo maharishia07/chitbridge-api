@@ -21637,7 +21637,7 @@ async function dayServerCheck(rows){
   if (!(HOST && HOST.history && HOST.cred && HOST.cred())) return null;      /* the shop PC's program keeps its own day */
   var h; try { h = await HOST.history(2, tillId()); } catch (e) { h = { offline: true }; }
   if (!h || h.offline || !Array.isArray(h.bills)) return { state: 'offline' };
-  var day = dayKeyOf(Date.now()), counted = function(b){ return b && b.no && !isDocRow(b) && !isExpenseRow(b); };
+  var day = dayKeyOf(Date.now()), counted = function(b){ return !!(b && b.no) && !(isDocRow(b) || isExpenseRow(b)); };
   var mine = {}, theirs = {};
   (rows || []).filter(counted).forEach(function(b){ mine[String(b.no)] = b; });
   h.bills.filter(function(b){ return counted(b) && dayKeyOf(b.at) === day; }).forEach(function(b){ theirs[String(b.no)] = b; });
