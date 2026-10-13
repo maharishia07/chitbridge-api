@@ -133,7 +133,8 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "F4 (by hand): ?side=supplier&finance=1 adds 3 reads inside the same transaction — cheques written (1) · Udyam ids (1) · supplier terms (1), + the terms-column check (lib/schema, cached). Nothing per party. The offline stub answers 404 (ledger off), so the line stays the floor."
     },
     "GET /api/books/events": {
       "file": "books.js",

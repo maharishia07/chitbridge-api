@@ -663,15 +663,125 @@
        "y2_3": 0,
        "gt_3y": 0,
        "lt_1y": -59000
+      },
+      "credit_limit_minor": null,
+      "over_limit": false,
+      "last_remind": null,
+      "payable": {
+       "total_minor": 59000,
+       "buckets": {
+        "0_30": 0,
+        "31_45": 59000,
+        "46_60": 0,
+        "60_plus": 0
+       },
+       "msme": true,
+       "msme_risk": true,
+       "msme_words": "Day 45 was 6 Oct 2026 — this bill is an expense only in the year you pay it (Income-tax s.43B(h)).",
+       "pay_by": "2026-10-06",
+       "group": "msme",
+       "terms": {
+        "credit_days": 30,
+        "early": {
+         "pct": 2,
+         "within_days": 3650
+        }
+       },
+       "early": {
+        "ref": "c0000000-0000-4000-8000-00000000000b",
+        "pct": 2,
+        "within_days": 3650,
+        "by": "2036-09-03",
+        "valid": true,
+        "save_minor": 1180,
+        "pay_minor": 57820,
+        "words": "2% off if paid by 3 Sep 2036 — saves ₹11.80",
+        "record": {
+         "ok": true,
+         "body": {
+          "narration": "Early-pay discount from Kumar Traders (2%)",
+          "against_ref": "c0000000-0000-4000-8000-00000000000b",
+          "client_ref": "early:c0000000-0000-4000-8000-00000000000b",
+          "lines": [
+           {
+            "account": "2100",
+            "party": "33333333-3333-4333-8333-333333333333",
+            "dr_minor": 1180,
+            "cr_minor": 0
+           }
+          ]
+         }
+        },
+        "gst_note": {
+         "ok": false,
+         "why": "owner_confirms",
+         "say": "Ask Kumar Traders for a GST credit note. You confirm it when it comes."
+        }
+       },
+       "bills": [
+        {
+         "ref": "c0000000-0000-4000-8000-00000000000b",
+         "date": "2026-09-06",
+         "due_date": "2026-10-06",
+         "open_minor": 59000,
+         "age_days": 37,
+         "bucket": "31_45",
+         "overdue": true,
+         "msme_day45": "2026-10-06",
+         "msme_days_left": -7,
+         "msme_risk": true,
+         "msme_words": "Day 45 was 6 Oct 2026 — this bill is an expense only in the year you pay it (Income-tax s.43B(h)).",
+         "early": {
+          "pct": 2,
+          "within_days": 3650,
+          "by": "2036-09-03",
+          "valid": true,
+          "save_minor": 1180,
+          "pay_minor": 57820,
+          "words": "2% off if paid by 3 Sep 2036 — saves ₹11.80",
+          "record": {
+           "ok": true,
+           "body": {
+            "narration": "Early-pay discount from Kumar Traders (2%)",
+            "against_ref": "c0000000-0000-4000-8000-00000000000b",
+            "client_ref": "early:c0000000-0000-4000-8000-00000000000b",
+            "lines": [
+             {
+              "account": "2100",
+              "party": "33333333-3333-4333-8333-333333333333",
+              "dr_minor": 1180,
+              "cr_minor": 0
+             }
+            ]
+           }
+          },
+          "gst_note": {
+           "ok": false,
+           "why": "owner_confirms",
+           "say": "Ask Kumar Traders for a GST credit note. You confirm it when it comes."
+          }
+         }
+        }
+       ]
       }
      }
     ],
-    "total_minor": 59000
+    "total_minor": 59000,
+    "payables": {
+     "total_minor": 59000
+    }
    },
    "optional": [
     "parties[].buckets.lt_1y",
     "parties[].buckets.lt_6m",
-    "parties[].buckets.m6_1y"
+    "parties[].buckets.m6_1y",
+    "parties[].credit_limit_minor",
+    "parties[].last_remind",
+    "parties[].over_limit",
+    "parties[].payable",
+    "parties[].payable.bills[].early.record.body.lines[].party",
+    "parties[].payable.early.record.body.lines[].party",
+    "payables"
    ]
   },
   "GET /api/books/events": {
