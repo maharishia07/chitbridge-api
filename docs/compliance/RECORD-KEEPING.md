@@ -16,7 +16,7 @@ One floor: **9 years from the day a copy is minted** (`lib/policy.js` `RECORDS_F
 laws counted from the mint (IN: a record from the first day of a financial year is kept to the end of the eighth year after it).
 - The mint: `routes/chits.js` `retainDaysFor` = MAX(records floor, the shop's `retention_floor_days`, the sender's ask). No flag lowers it.
 - The sweep: `lib/retention.js` `planRetirement` never lists a copy younger than the floor (and is still a dry run; nothing deletes).
-- The schema: `migrations/b303_records_floor.sql` (owner runs) — default `now() + 9 years`, existing copies lengthened, never shortened. Proof P1 = 0.
+- The schema: `migrations/b305_records_floor.sql` (owner runs) — default `now() + 9 years`, existing copies lengthened, never shortened. Proof P1 = 0.
 - **Engines request (not built here; engines are serial):** `chitbridge-engines/src/reg-in.js` add `retentionYears: 8` (s.128(5));
   `reg-au.js` 5 → note 7 for companies (s.286); `reg-ae.js` 5 → note 7 for corporate tax (Art.56). Then the floor may become per pack.
 - Privacy laws (DPDP s.8(7), APP 11.2, PDPL Art.5) ask for deletion when no longer needed; each excepts records the law requires — the floor is that exception.

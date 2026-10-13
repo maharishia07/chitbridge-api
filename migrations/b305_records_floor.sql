@@ -1,4 +1,4 @@
--- b303_records_floor.sql — round CO3 (2026-10-13): NO COPY OF A BUSINESS RECORD EXPIRES BEFORE RECORDS LAW ALLOWS.
+-- b305_records_floor.sql — round CO3 (2026-10-13): NO COPY OF A BUSINESS RECORD EXPIRES BEFORE RECORDS LAW ALLOWS.
 --   The schema default for chit_status.retention_expires_at was now() + 90 days (000_baseline; b105 repeated it). Records law asks
 --   for years: IN Companies Act s.128(5) eight financial years + CGST s.36 72 months · AU TAA Sch 1 s.382-5 5 y, Corporations Act
 --   s.286 7 y · AE TPL 5 y, CT DL 47/2022 Art.56 7 y. Counted from the mint, the longest is 9 years — lib/policy.js
