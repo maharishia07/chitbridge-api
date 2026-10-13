@@ -310,8 +310,10 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     console.log('\n── variants ──\n');
     /* a delivery to another state → IGST everywhere */
     const D = await sixWays(port, { no: 'C2/26-27/0011', cart: CART_0007, cust: { name: 'Chola Auto Care' }, delivery: { state_code: '29', address: 'Bengaluru' } });
-    const wantD = { by: { 12: { taxable: 995.77, cgst: 0, sgst: 0, igst: 119.51 }, 18: { taxable: 2.44, cgst: 0, sgst: 0, igst: 0.44 } },
-                    taxable: 998.21, tax: 119.95, total: 1118.16, supply: 'inter', pos: '29' };
+    /* tax v1.43.0 (ENG-R1): an inclusive line totals exactly what was paid — the IGST is unchanged and the cent lands in the 12% taxable value
+       (995.77 → 995.76), so the bill is the line nets 1118.15 again; until v1.43.0 it was 998.21 + 119.95 = 1118.16, a paisa over the price */
+    const wantD = { by: { 12: { taxable: 995.76, cgst: 0, sgst: 0, igst: 119.51 }, 18: { taxable: 2.44, cgst: 0, sgst: 0, igst: 0.44 } },
+                    taxable: 998.2, tax: 119.95, total: 1118.15, supply: 'inter', pos: '29' };
     const fD = [figOfBill(D.r.bill),
       Object.assign(figOfPost(D.sPost.event), { supply: D.sEntry.invoice._cb.supply, pos: D.sEntry.invoice.BuyerDtls.Pos }),
       Object.assign(figOfPost(D.cPost.event), { supply: D.cEntry.invoice._cb.supply, pos: D.cEntry.invoice.BuyerDtls.Pos }),
@@ -368,6 +370,19 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       && zd.some((d) => d.what === 'total' && d.issued === 1118.17 && d.server === 1118.15)
       && Z.shopCopy.business_json.tax_check && Z.shopCopy.business_json.tax_check.kept === 'issued'
       && Z.shopCopy.business_json.tax_check.differences.some((d) => d.what === 'tax at 12%'), J([zd, Z.shopCopy && Z.shopCopy.business_json.tax_check]));
+
+    /* ⭐ tax v1.43.0 (ENG-R1, the P2P walk WX-P2P-16): an inclusive line is exactly qty × price on the bill, the slip and the reprint —
+       the slip used to say 2 × 65.00 = 130.01 and 3 × 40.00 = 119.99 (the line re-added a rounded taxable value and rounded heads) */
+    const P2 = await sixWays(port, { no: 'C2/26-27/0016', cust: { name: 'Chola Auto Care' },
+      cart: [line('p1', 'Ghee 200ml', 65, 2, 0, 5, '0405'), line('p2', 'Soap bar', 40, 3, 0, 18, '3401')] });
+    const p2 = P2.r.bill, p2Lines = (p2.invoice.ItemList || []).map((it) => it.TotItemVal), p2Slip = text(P2.r.slip), p2Re = text(P2.reprint.html);
+    ok('an inclusive line is exactly qty × price: 2 × 65.00 = 130.00 and 3 × 40.00 = 120.00 on the bill (taxable + tax = the line), total 250.00',
+      J(p2Lines) === J([130, 120]) && P2.r.m.lines.every((l, n) => r2(l.taxable + l.tax) === [130, 120][n]) && p2.total === 250
+      && J(P2.r.m.lines.map((l) => [l.taxable, l.cgst, l.sgst])) === J([[123.8, 3.1, 3.1], [101.7, 9.15, 9.15]]), J([p2Lines, P2.r.m.lines]));
+    /* the slip's GST summary row per rate is taxable · CGST · SGST — it printed 123.81 · 3.10 · 3.10 (= 130.01) and 101.69 · 9.15 · 9.15 (= 119.99) */
+    ok('…and the PRINTED slip and the reprint: each rate row adds up to its lines (5%: 123.80 + 3.10 + 3.10 = 130.00 · 18%: 101.70 + 9.15 + 9.15 = 120.00), TOTAL 250.00',
+      [p2Slip, p2Re].every((s) => /5%₹123\.80₹3\.10₹3\.10/.test(s) && /18%₹101\.70₹9\.15₹9\.15/.test(s) && /₹130\.00/.test(s) && /₹120\.00/.test(s)
+        && /TOTAL₹250\.00/.test(s) && !/123\.81|101\.69/.test(s)), p2Slip.slice(0, 700));
 
     console.log('\n── one computation, one rule, one shape ──\n');
     const BM = fnText(PAGE, 'function billMoney('), MO = fnText(PAGE, 'function moneyOf(');

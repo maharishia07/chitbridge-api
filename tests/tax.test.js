@@ -173,16 +173,16 @@ t('⚠️⚠️ THE DEFAULT PROVIDER SHIPS NO RATES — a line with no rate is t
  * indirectly, by every determine() case) calls it too. Pinning the shortcut a UI must NOT reinvent:
  * `net − assessable` looks identical to `assessable × rate ÷ 100` and is NOT, once assessable itself has rounded.
  */
-t('⭐⭐⭐ splitLineTax is the one formula an inclusive preview must call, not "net − assessable"', () => {
-  /* ⚠️ ₹10 at 18% inclusive — an entirely ordinary counter line, not a contrived edge case */
+t('⭐⭐⭐ splitLineTax is the one formula an inclusive preview must call — the tax from the rate, the taxable value the rest (tax v1.43.0)', () => {
+  /* ⚠️ ₹10 at 18% inclusive — an entirely ordinary counter line. Base 8.47, tax 1.52; until v1.43.0 the taxable value was 8.47 and the
+     line summed to 9.99 — now it is 10 − 1.52 = 8.48 and the line is the ₹10 paid (ENG-R1) */
   const net = 10, rate = 18;
-  const { assessable, tax } = T.splitLineTax({ net, rate, priceIncludesTax: true });
-  const shortcut = r2(net - assessable);
-  assert.notStrictEqual(tax, shortcut, 'the case only proves something if the two methods actually disagree here');
-  assert.strictEqual(tax, r2(assessable * rate / 100), 'splitLineTax must derive tax from the rate, the way an invoice justifies it');
+  const { assessable, tax, base } = T.splitLineTax({ net, rate, priceIncludesTax: true });
+  assert.strictEqual(tax, r2(base * rate / 100), 'splitLineTax must derive tax from the rate, the way an invoice justifies it');
+  assert.strictEqual(r2(assessable + tax), net, 'taxable + tax = the price paid');
 });
 t('exclusive pricing: assessable is the net itself, tax is added on top', () => {
-  assert.deepStrictEqual(T.splitLineTax({ net: 100, rate: 18, priceIncludesTax: false }), { assessable: 100, tax: 18 });
+  assert.deepStrictEqual(T.splitLineTax({ net: 100, rate: 18, priceIncludesTax: false }), { assessable: 100, tax: 18, base: 100 });
 });
 t('a zero-rated line records no tax, whichever way the price was quoted', () => {
   assert.strictEqual(T.splitLineTax({ net: 118, rate: 18, priceIncludesTax: true, zeroRate: true }).tax, 0);
