@@ -11,6 +11,7 @@ const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on proces
 const identityAuth = require('../lib/identity-auth');   // [capability: sign-in] the one token issuer, entity or coassist
 const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
 const schema = require('../lib/schema');   // b173 — deploy-before-migration column probe
+const access = require('../lib/access');   // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
 const router  = express.Router();
 
 /**
@@ -294,17 +295,26 @@ router.post('/',
         ? mintuserid.employee(actor_key, entity_row).handle
         : null;                      /* no parent row readable → store nothing rather than store a guess */
 
-      // Create actor
+      /**
+       * ⚠️⚠️ THE LEVEL IS WRITTEN HERE, OR THE "VIEWER" IS AN EDITOR (FX-L2C, 2026-10-13). This INSERT validated
+       * `access_level` (above) and then never stored it, so the column took b173's default — `editor` — and
+       * lib/access.levelOf, which reads the column before the hat, let a "view-only" co-assist through the hat gate
+       * on EVERY mutating route (leads, stage moves, follow-ups, chits/send …). The walk WX-L2C hid it by PATCHing the
+       * level after the POST. Now: the body's level, else the old hat's meaning (lib/access.FROM_HAT), else editor —
+       * the same answer PATCH /actors/:id writes. Before b173 the column is absent: not SELECTed, not written (lib/schema).
+       */
+      const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : (access.FROM_HAT[hat] || access.EDITOR);
+      const _lvlCol = await schema.hasColumn('identities', 'access_level');
       await db(
         `INSERT INTO identities (
           identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          otp_code, otp_expires_at, hat, entity_kind
-        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor')`,
+          otp_code, otp_expires_at, hat, entity_kind${_lvlCol ? ', access_level' : ''}
+        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor'${_lvlCol ? ',$13' : ''})`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
-         otp, otp_expires, hat, employee_id]
+         otp, otp_expires, hat, employee_id].concat(_lvlCol ? [access_level] : [])
       );
 
       console.log(`Actor created: ${actor_key}@${entity_name}` + (devOtp.isSealed() ? '' : ` — OTP: ${otp}`));
