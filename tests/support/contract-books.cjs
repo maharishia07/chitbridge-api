@@ -169,6 +169,11 @@ async function captureBooks() {
     X.T.chits.push({ chit_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', entity_id: SHOP, direction: 'sent', status: 'delivered', created_at: '2026-10-13T05:00:00.000Z', party_id: SUPP, party_name: 'KV Traders',
       business_json: { kind: 'bank_query', currency: 'INR', bank_query: { key: '2026-10-12|in|420000|N99912', side: 'in', amount_minor: 420000, currency: 'INR', date: '2026-10-12', ref: 'N99912', words: 'INR 4,200.00 came into our bank on 12 Oct 2026, ref N99912 — which bill is it for?' } } });
     await q('GET', '/bank/rail?from=2026-10-01&to=2026-10-31', null, '/bank/rail');
+    /* …and as a view-only login: may.ask refused, with the rail's word and sentence (the contract lists both shapes) */
+    const was = Object.assign({}, OWNER);
+    Object.assign(OWNER, { identity_type: 'actor', access_level: 'viewer', parent_entity_id: SHOP });
+    await q('GET', '/bank/rail?from=2026-10-01&to=2026-10-31', null, '/bank/rail');
+    Object.keys(OWNER).forEach((k) => { delete OWNER[k]; }); Object.assign(OWNER, was);
     /* ── M29 reverse from the row: the statement's payment line (entry_id · payment_id · advice state), the reversal that reopens the bill, the line after, a second Reverse → 409 ── */
     const st = await q('GET', '/party/' + SUPP + '/statement?from=2026-04-01&to=2027-03-31', null, '/party/:id/statement');
     const payLine = ((st.body && st.body.lines) || []).find((l) => l.payment_id);
