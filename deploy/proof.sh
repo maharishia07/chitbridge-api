@@ -11,8 +11,8 @@ WEB_DIR="${CB_WEB_DIR:-$(cd .. && pwd)/chitbridge-web}"
 ENVF=deploy/.env
 if [ ! -f "$ENVF" ]; then
   umask 077
-  printf 'POSTGRES_PASSWORD=%s\nJWT_SECRET=%s\nRESEND_API_KEY=re_proof_not_a_key\nRESEND_BASE_URL=http://mailsink:8025\nFROM_EMAIL=noreply@proof.example\nWEB_ORIGIN=http://localhost:8080\nCB_API_BASE=http://localhost:3000\n' \
-    "$(openssl rand -hex 16)" "$(openssl rand -hex 32)" > "$ENVF"
+  printf 'POSTGRES_PASSWORD=%s\nCB_APP_PASSWORD=%s\nJWT_SECRET=%s\nRESEND_API_KEY=re_proof_not_a_key\nRESEND_BASE_URL=http://mailsink:8025\nFROM_EMAIL=noreply@proof.example\nWEB_ORIGIN=http://localhost:8080\nCB_API_BASE=http://localhost:3000\n' \
+    "$(openssl rand -hex 16)" "$(openssl rand -hex 16)" "$(openssl rand -hex 32)" > "$ENVF"
   echo "· wrote a throwaway $ENVF"
 fi
 C="docker compose -f deploy/compose.yml --env-file $ENVF --profile proof"
@@ -21,7 +21,9 @@ down() { [ "${KEEP:-}" = 1 ] && { echo "· KEEP=1 — the stack stays up ($C dow
 trap down EXIT
 
 echo "· 1 up"; CB_WEB_DIR="$WEB_DIR" $C up -d --build --wait db api web mailsink
-$C logs migrate | grep -E 'schema:' | head -4 | sed 's/^/    /'
+$C logs migrate | grep -E 'schema: [0-9]|cb_app' | sed 's/^/    /'
+node -e "require('pg');" 2>/dev/null || { echo 'npm ci first (the loader needs pg)'; exit 1; }
+echo "    api signs in as: $(docker exec chitbridge-db-1 psql -U postgres -d chitbridge -Atc "SELECT usename || CASE WHEN r.rolsuper OR r.rolbypassrls THEN ' (BYPASSES row-level security)' ELSE ' (row-level security holds)' END FROM pg_stat_activity a JOIN pg_roles r ON r.rolname = a.usename WHERE a.application_name = '' AND a.usename <> 'postgres' LIMIT 1")"
 echo "· 2 load"; node tools/sim-load.cjs --db "postgres://postgres:$PW@127.0.0.1:${DB_PORT:-5432}/chitbridge" --shop simstores --years 1 2>&1 | grep -E '^  (·|✓|✗|  ok|  RED)' | tail -14
 echo "· 3+4 health and web"
 node -e "

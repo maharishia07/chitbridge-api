@@ -8,7 +8,10 @@
 # Ports bind to 127.0.0.1: put a TLS proxy (Caddy, a cloud load balancer) in front for anything public.
 name: chitbridge
 
+# the owner (schema, the migrate job, the loader) and the api's own role: cb_app is NOSUPERUSER NOBYPASSRLS (migration_b48), so
+# row-level security holds for every request — the superuser `postgres` would bypass it
 x-db-url: &db_url postgres://postgres:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}@db:5432/chitbridge?sslmode=disable
+x-app-url: &app_url postgres://cb_app:${CB_APP_PASSWORD:?set CB_APP_PASSWORD in deploy/.env}@db:5432/chitbridge?sslmode=disable
 
 services:
   db:
@@ -19,7 +22,8 @@ services:
     volumes: [cbdata:/var/lib/postgresql/data]
     ports: ["127.0.0.1:${DB_PORT:-5432}:5432"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d chitbridge"]
+      # over TCP: the image's first-boot init server listens on the socket only, so a socket check passes before the real server is up
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d chitbridge"]
       interval: 3s
       timeout: 3s
       retries: 30
@@ -29,6 +33,15 @@ services:
     image: chitbridge-migrate
     environment:
       DATABASE_URL: *db_url
+      CB_APP_PASSWORD: ${CB_APP_PASSWORD}
+    # the schema, then cb_app's password (b48 makes the role without one) — fed on stdin so it is never on a command line
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        node tools/sim-load.cjs --schema-only --db "$$DATABASE_URL" &&
+        echo "ALTER ROLE cb_app PASSWORD :'pw';" | psql -X -q -v ON_ERROR_STOP=1 -v pw="$$CB_APP_PASSWORD" -d "$$DATABASE_URL" &&
+        echo "migrate: cb_app can sign in"
     depends_on:
       db: { condition: service_healthy }
     restart: "no"
@@ -38,7 +51,7 @@ services:
     image: chitbridge-api
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      DATABASE_URL: *db_url
+      DATABASE_URL: *app_url
       DB_POOLER_FALLBACK: "off"
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET (32+ characters) in deploy/.env}
       OTP_EMAIL_ENABLED: "true"
