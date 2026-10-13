@@ -481,6 +481,9 @@ router.get('/snapshot', auth, async (req, res) => {
     /* ⚠️ ONE DERIVATION, read by the shop block AND by payWays — two answers about which country a shop is in would
        eventually mean one screen offering a payment method another refuses. */
     const cbCountry = cbProfile.countryOf({ country: row.country, gstin, profile });
+    /* CX0: a state is read off the tax number only under a pack whose tax turns on the state (India's GST) — the same rule as lib/tax-lines.js:62.
+       An ABN's or a TRN's first two digits are not a state; they reached the counter as one and the shop panel said "CGST + SGST" in Sydney. */
+    const stateSplit = ((p) => !p || !p.supply || p.supply === 'state')(require('../lib/tax-packs').packFor(cbCountry));
     /* ⭐ ONE MAPPING from a product's data to a counter row — owned rows and network lines both go through it, so a field
        added for one can never be missing from the other */
     /**
@@ -737,7 +740,7 @@ router.get('/snapshot', auth, async (req, res) => {
          * page already resolves (cbHome()) and the API does not know which front end asked.
          */
         handle: row.user_id || null,
-        state_code: String(gstin || '').slice(0, 2) || null,
+        state_code: String(gstin || '').slice(0, 2) && stateSplit ? String(gstin).slice(0, 2) : null,   /* CX0: only under a state-split pack (stateSplit above) */
         reg_type: String(flags.gst_registration || 'regular'),
         /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */
         country: cbCountry,
@@ -753,7 +756,7 @@ router.get('/snapshot', auth, async (req, res) => {
          * acquirer, and there is nothing honest for us to generate.
          */
         pay: cbProfile.payWays({ country: cbCountry, policy_flags: row.policy_flags }),
-        currency: party.currency || 'INR',
+        currency: party.currency || ((require('../lib/regulation').packFor(cbCountry) || {}).currency) || 'INR',   /* CX0: a shop with no currency on record bills in its PACK's money, not INR by name */
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
       /**
@@ -2023,12 +2026,20 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
      */
     if (typeof b.gstin === 'string' && b.gstin.trim()) {
       const g = b.gstin.trim().toUpperCase();
-      const chk = require('../lib/profile-map').gstinChecksum(g);
-      if (!chk.ok) {
-        return res.status(400).json({ error: 'validation', field: 'gstin',
-          message: chk.reason === 'format'
-            ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
-            : 'That GSTIN\u2019s last character does not match the rest of it, so one character is mistyped.' });
+      /* ⭐ CX0: the shop's COUNTRY picks the check — India's GSTIN checksum, else the pack's own (reg-au abn.check · reg-ae trn.check) */
+      const cc = String(before.country || 'IN').toUpperCase();
+      if (cc !== 'IN') {
+        const p = require('../lib/regulation').packFor(cc), id = p && (p.abn || p.trn);
+        const ck = id && typeof id.check === 'function' ? id.check(g) : { ok: true };
+        if (!ck.ok) return res.status(400).json({ error: 'validation', field: 'gstin', message: ck.why || 'That tax number does not check out.' });
+      } else {
+        const chk = require('../lib/profile-map').gstinChecksum(g);
+        if (!chk.ok) {
+          return res.status(400).json({ error: 'validation', field: 'gstin',
+            message: chk.reason === 'format'
+              ? 'That is not the shape of a GSTIN — 15 characters: two digits, five letters, four digits, a letter, then three more.'
+              : 'That GSTIN\u2019s last character does not match the rest of it, so one character is mistyped.' });
+        }
       }
       b.gstin = g;   /* stored upper-cased, the one form every reader already assumes */
     }

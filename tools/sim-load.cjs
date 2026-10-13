@@ -30,7 +30,10 @@
  *                           [--fresh] [--schema]
  *   --schema   an EMPTY test database gets the repo's schema first (migrations/000_baseline + part2 + bNNN in number order; needs
  *              psql on PATH). Never on a database that already has tables — the local stack's database is migrated by the stack.
- *   --years    financial years from 2026-04-01 (3) · --seed the plan's seed (7) · --country IN (proved) | AU (accepted, unproved)
+ *   --years    financial years from 2026-04-01 (3) · --seed the plan's seed (7) · --country IN (proved) | AU | AE (CX0: accepted, unproved —
+ *              the shop's currency · year · tax heads · rate menu are READ from its pack (lib/regulation.packFor); the loader types only
+ *              what no pack says: SHOPS below. ⚠️ Until the api adopts the books engines ≥ v1.41 (accounts-packs is v1.20: PACKS.IN only),
+ *              an AU/AE shop's chart is India's fallback and the proof is expected RED on purchases — web docs/design/standards/COUNTRY-COVERAGE.md)
  *   Env it sets for the in-process api when unset: NODE_ENV=development, DEV_OTP=123456, a local JWT_SECRET, SHOP_CLOCK_ALLOW=1,
  *   RATE_LIMIT_MAX (the 15-minute window would refuse a year of bills), LOG_LEVEL=warn.
  *   A sealed NODE_ENV (production · uat · staging · live) is refused.
@@ -72,7 +75,14 @@ if (!DB) die('say which local database: --db postgres://postgres:pw@127.0.0.1:54
 if (!loc.ok) die(loc.why);
 if (!/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die('--shop is the shop\'s user id: 3–20 letters or digits, starting with a letter (e.g. simstores)');
 if (!(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) die('--years 1..10 and --seed a whole number');
-if (COUNTRY !== 'IN' && COUNTRY !== 'AU') die('--country IN or AU');
+/* ── the three simulated shops, one per registered pack (CX0): ONLY what the pack does not say — a sample tax number that passes the pack's
+   own check, the street, the city's clock offset and IANA zone, the phone. Currency · fiscal year · heads · rate menu come from the pack. */
+const SHOPS = {
+  IN: { taxNo: '33AABCS1234A1Z8', address: '12 Bazaar Street, Madurai', offset: '+05:30', zone: 'Asia/Kolkata', phone: '9876543210' },   /* Tamil Nadu (33) — the state the place-of-supply rule reads from the GSTIN; check digit 8 (profile-map.gstinChecksum) */
+  AU: { taxNo: '51824753556', address: '12 Market Street, Parramatta NSW 2150', offset: '+10:00', zone: 'Australia/Sydney', phone: '0412345678' },   /* the ATO's published example ABN — passes reg-au abn.check */
+  AE: { taxNo: '100000000000003', address: 'Shop 12, Al Fahidi Street, Bur Dubai', offset: '+04:00', zone: 'Asia/Dubai', phone: '0501234567' },   /* 15 digits — reg-ae trn.check is a format check only (AE0 §14) */
+};
+if (!SHOPS[COUNTRY]) die('--country IN, AU or AE (the registered packs: lib/regulation)');
 if (require(path.join(API, 'lib', 'dev-otp')).isSealed()) die('NODE_ENV is sealed (' + process.env.NODE_ENV + ') — the loader runs only with NODE_ENV=development (or test)');
 
 const PLAN_LIB = require(path.join(__dirname, 'sim-plan.cjs'));
@@ -83,10 +93,26 @@ const EMAIL = SHOP + '@test.example';                 /* a fixture domain (lib/e
 const OTP = process.env.DEV_OTP || '123456';
 const TILL = 'C1';
 const dayAdd = PLAN_LIB.dayAdd;
-const IST = (d, hh, mm) => d + 'T' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ':00' + (COUNTRY === 'AU' ? '+10:00' : '+05:30');
-const fyOf = (d) => { const y = +d.slice(0, 4), m = +d.slice(5, 7), s = m >= 4 ? y : y - 1; return s + '-' + String((s + 1) % 100).padStart(2, '0'); };
-const fyShort = (d) => fyOf(d).slice(2);              /* 26-27 — the counter's own year label */
-const monthNo = (d) => ((+d.slice(5, 7) + 8) % 12) + 1;
+const SHOPROW = SHOPS[COUNTRY];
+require(path.join(API, 'lib', 'tax-packs'));           /* loads lib/regulation with the three packs registered */
+const PACK = require(path.join(API, 'lib', 'regulation')).packFor(COUNTRY);   /* currency · fiscalYear · taxHeads · tax.scheme · tax.standard_rate · chart.paymentModes */
+if (!PACK) die('no regulation pack is registered for ' + COUNTRY);
+const CUR = PACK.currency;
+const AT = (d, hh, mm) => d + 'T' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ':00' + SHOPROW.offset;   /* the shop's own wall clock */
+/* the year and the month number THE API USES for this shop: lib/accounts-packs (the adopted engine) with the pack's start month — not a second rule here.
+   ⚠️ accounts-packs v1.20 labels a January year '2026' and every other '2026-27'; the books routes read the same function, so the two always agree. */
+const AP = require(path.join(API, 'lib', 'accounts-packs'));
+const FYPACK = { fy_start_month: PACK.fiscalYear.startMonth };
+const fyOf = (d) => AP.fiscalYearOf(d, FYPACK);
+const fyShort = (d) => { const f = fyOf(d); return f.length > 4 ? f.slice(2) : f; };   /* 26-27 — the counter's own year label; '2026' for a January year */
+const monthNo = (d) => AP.periodOf(d, FYPACK);
+/* the plan's three GST slabs (5 · 12 · 18) land on the pack's rate menu: a one-rate scheme (AU 10 % · AE 5 %) bills everything at its standard rate */
+const rateOf = (r) => (PACK.tax && PACK.tax.standard_rate != null ? PACK.tax.standard_rate : r);
+/* a purchase's tax row in the pack's OWN heads: India splits an in-state purchase CGST + SGST; a one-head scheme (gst · vat) carries the whole tax on that head */
+const taxRow = (rate, taxable) => { const tax = taxable * rate / 100, heads = PACK.taxHeads || [], row = { rate, taxable };
+  if (heads.indexOf('cgst') >= 0 && heads.indexOf('sgst') >= 0) { row.cgst = tax / 2; row.sgst = tax / 2; row.igst = 0; } else if (heads.length) row[heads[0]] = tax; return row; };
+/* the plan pays cash · upi · credit; a pack without upi among its payment modes (AU · AE) takes the same sale by card */
+const howOf = (how) => (how === 'upi' && !(PACK.chart && PACK.chart.paymentModes && PACK.chart.paymentModes.upi) ? 'card' : how);
 const rup = (minor) => (Number(minor) / 100).toFixed(2);
 const ZERO = '00000000-0000-0000-0000-000000000000';   /* books-store.ZERO — the party_key of a ledger's own (non-party) summary row */
 const say = (s) => console.log('  · ' + s);
@@ -244,22 +270,22 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   const TL = require(path.join(API, 'lib', 'tax-lines'));
   const RU = require(path.join(API, 'lib', 'rollup'));
   const started = Date.now();
-  CLOCK.set(IST(PLAN.start, 9, 0));
+  CLOCK.set(AT(PLAN.start, 9, 0));
 
   /* 1 · the shop — register is also sign-in (the code is the dev one) */
   must(await j('/api/entities/register', { method: 'POST', body: { email: EMAIL, display_name: 'Simulated Stores', user_id: SHOP } }), 'shop register');
   const ver = must(await j('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: OTP } }), 'shop verify (is DEV_OTP armed?)');
   const token = ver.b.token; shopId = String((ver.b.entity && ver.b.entity.identity_id) || (ver.b.identity && ver.b.identity.identity_id) || '');
   if (!shopId) { const r = await sql(`SELECT identity_id FROM identities WHERE LOWER(email) = $1`, [EMAIL]); shopId = String(r.rows[0].identity_id); }
-  const gstn = COUNTRY === 'IN' ? '33AABCS1234A1Z8' : null;   /* Tamil Nadu (33) — the state the place-of-supply rule reads from the GSTIN; check digit 8 (profile-map.gstinChecksum) */
+  const gstn = SHOPROW.taxNo;                           /* the shop's tax registration number (GSTIN · ABN · TRN) — SHOPS above */
   /* 1b · Country setup (CS1, M210's week): the step every owner completes after registration, before the books open — country ·
      money · financial year · tax registration, through PUT /api/governance/country-setup (lib/country-setup.save writes identities.gstn,
      the one home). 503 = b299_country_setup not run on this database: the gate then stays as it was, and the GSTIN goes in by the profile door. */
-  const cs = await j('/api/governance/country-setup', { method: 'PUT', token, body: { country: COUNTRY, currency: COUNTRY === 'AU' ? 'AUD' : 'INR', fy_start_month: COUNTRY === 'AU' ? 7 : 4,
-    tax: gstn ? { registered: true, number: gstn, scheme: 'regular' } : { registered: false }, source: { country: 'sim-load', currency: 'the pack', fy_start_month: 'the pack', tax: 'sim-load' } } });
+  const cs = await j('/api/governance/country-setup', { method: 'PUT', token, body: { country: COUNTRY, currency: CUR, fy_start_month: PACK.fiscalYear.startMonth,
+    tax: Object.assign({ registered: true, number: gstn }, COUNTRY === 'IN' ? { scheme: 'regular' } : {}), source: { country: 'sim-load', currency: 'the pack', fy_start_month: 'the pack', tax: 'sim-load' } } });
   if (cs.status === 503) say('country setup: ' + (cs.b.message || 'not migrated') + ' — b299_country_setup.sql is not on this database');
   else must(cs, 'country setup');
-  must(await j('/api/entities/profile', { method: 'PATCH', token, body: Object.assign({ address: '12 Bazaar Street, Madurai' }, gstn && cs.status === 503 ? { gstn } : {}) }), 'shop profile');
+  must(await j('/api/entities/profile', { method: 'PATCH', token, body: Object.assign({ address: SHOPROW.address }, gstn && cs.status === 503 ? { gstn } : {}) }), 'shop profile');
   const me = must(await j('/api/entities/me', { token }), 'who am I').b;
   const meRow = me.entity || me.identity || me;
   say('shop ' + (meRow.display_name || 'Simulated Stores') + ' · user id ' + SHOP + ' · ' + (meRow.bridge_id || ''));
@@ -267,7 +293,7 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   /* 2 · the ledger on, the opening balances */
   let en;
   if (COUNTRY === 'IN') en = must(await j('/api/books/enable', { method: 'POST', token, body: {} }), 'ledger on').b;
-  else { en = await B.enable(null, shopId, { country: COUNTRY }); require(path.join(API, 'lib', 'books-hooks')).forget(shopId); }   /* the route takes no country (IN); AU goes through the same enable() */
+  else { en = await B.enable(null, shopId, { country: COUNTRY }); require(path.join(API, 'lib', 'books-hooks')).forget(shopId); }   /* the route takes no country (IN); AU · AE go through the same enable() */
   const chart = must(await j('/api/books/accounts', { token }), 'chart').b;
   const accounts = chart.accounts || chart.rows || chart.items || (Array.isArray(chart) ? chart : []);
   const codeOfRole = (role) => (accounts.find((a) => a.role === role) || {}).code;
@@ -279,7 +305,7 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   /* 3 · parties, the counter, the shelf */
   const sup = await j('/api/relationships/suppliers', { method: 'POST', token, body: { name: SUPPLIER } });
   if (sup.status !== 409) must(sup, 'supplier');
-  const cus = await j('/api/relationships/customers', { method: 'POST', token, body: { name: CUSTOMER, phone: '9876543210' } });
+  const cus = await j('/api/relationships/customers', { method: 'POST', token, body: { name: CUSTOMER, phone: SHOPROW.phone } });
   if (cus.status !== 409) must(cus, 'customer');
   const parties = (await sql(`SELECT identity_id, display_name FROM identities WHERE parent_entity_id = $1`, [shopId])).rows;
   const SUPP = (parties.find((p) => p.display_name === SUPPLIER) || {}).identity_id, CUST = (parties.find((p) => p.display_name === CUSTOMER) || {}).identity_id;
@@ -291,9 +317,9 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   const byName = new Map(rows.map((x) => [String((x.item_data || x).name || '').toLowerCase(), x.item_id || x.id]));
   const ITEMS = [];
   for (const [rate, name, unit, price, category, hsn] of SHELF) {
-    const r0 = COUNTRY === 'AU' ? 10 : rate;
+    const r0 = rateOf(rate);
     let id = byName.get(name.toLowerCase());
-    if (!id) { const r = must(await j('/api/products', { method: 'POST', token, body: { item_data: { name, unit, price, category, hsn, tax_slab: COUNTRY + '-GST-' + r0, gst_rate: r0 } } }), 'add ' + name); id = (r.b.item || r.b).item_id || r.b.item_id; }
+    if (!id) { const r = must(await j('/api/products', { method: 'POST', token, body: { item_data: { name, unit, price, category, hsn, tax_slab: COUNTRY + '-' + PACK.tax.scheme + '-' + r0, gst_rate: r0 } } }), 'add ' + name); id = (r.b.item || r.b).item_id || r.b.item_id; }
     ITEMS.push({ id, rate: r0, name, unit, price, hsn });
   }
   say('supplier ' + SUPPLIER + ' · customer ' + CUSTOMER + ' · counter ' + TILL + ' · ' + ITEMS.length + ' products');
@@ -328,25 +354,25 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   };
   for (let dayIx = 0; dayIx < PLAN.days.length; dayIx++) {
     const row = PLAN.days[dayIx], d = row.day;
-    CLOCK.set(IST(d, 9, 0));
+    CLOCK.set(AT(d, 9, 0));
     if (d.slice(8) === '01' && d !== PLAN.start) await closeMonth(dayAdd(d, -1));
     if (fyOf(d) !== curFy) { curFy = fyOf(d); seq = 0; }
     const todays = [];
     for (let i = 0; i < row.sales.length; i++) {
-      const s = row.sales[i], at = IST(d, 10 + Math.floor(i * 9 / row.sales.length), (dayIx * 7 + i * 13) % 60);
+      const s = row.sales[i], at = AT(d, 10 + Math.floor(i * 9 / row.sales.length), (dayIx * 7 + i * 13) % 60);
       CLOCK.set(at);
       const lines = basketOf(s.rate, dayIx, i);
-      const inv = TL.invoiceFor({ lines, seller, buyer: buyerOf(s.how === 'credit' ? CUSTOMER : 'Walk-in'), currency: COUNTRY === 'AU' ? 'AUD' : 'INR', at, priceIncludesTax }).invoice;
+      const inv = TL.invoiceFor({ lines, seller, buyer: buyerOf(s.how === 'credit' ? CUSTOMER : 'Walk-in'), currency: CUR, at, priceIncludesTax }).invoice;
       const total = Number(inv.ValDtls && inv.ValDtls.TotInvVal) || 0;
       const no = TILL + '/' + fyShort(d) + '/' + String(++seq).padStart(4, '0');
-      const credit = s.how === 'credit';
+      const credit = s.how === 'credit', how = howOf(s.how);
       const body = {
         recipients: [{ self: true, name: 'self' }], purpose: 'order', subject: 'Counter sale ' + no, manual_subject: 'Counter sale ' + no, client_ref: no,
         business_json: {
           customer: credit ? { name: CUSTOMER, party_id: CUST } : { name: 'Walk-in' },
           till: { id: TILL, name: 'Counter 1', host: 'sim-load', by: null },
           bill_no: no, billed_at: at, catalogue_version: null,
-          payment: { mode: s.how, paid: credit ? 0 : total, change: 0, parts: [{ how: s.how, amount: total }] },
+          payment: { mode: how, paid: credit ? 0 : total, change: 0, parts: [{ how, amount: total }] },
           slip: credit ? 'credit' : 'cash',
           terms: credit ? { due_date: dayAdd(d, CREDIT_DAYS), credit_days: CREDIT_DAYS } : null, credit_override: null,
           invoice: inv,
@@ -356,32 +382,32 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
       const r = await j('/api/chits/send', { method: 'POST', token, body });
       if (r.status >= 300) { refusedBills++; if (refusedBills <= 5) console.log('   RED  bill ' + no + ' refused: HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300)); continue; }
       bills++;
-      todays.push({ no, total, kind: credit ? 'credit' : 'cash', payments: [{ how: s.how, amount: total }], at });
+      todays.push({ no, total, kind: credit ? 'credit' : 'cash', payments: [{ how, amount: total }], at });
     }
     /* the counter's day summary — the record the shop's folder shows; its hook posts the walk-in day */
     if (todays.length) {
       await drain();
-      CLOCK.set(IST(d, 21, 0));
+      CLOCK.set(AT(d, 21, 0));
       const sum = RU.summary('day', d, RU.totals(todays), { till: { id: TILL, name: 'Counter 1' }, bills_from: todays[0].no, bills_to: todays[todays.length - 1].no, at: CLOCK.now().toISOString() });
       const r = await j('/api/chits/send', { method: 'POST', token, body: RU.chitOf(sum) });
       if (r.status >= 300) console.log('   RED  day summary ' + d + ' refused: ' + JSON.stringify(r.b).slice(0, 200));
       dayRows.push({ day: d, bills: todays.length });
     }
     if (row.purchase) {
-      CLOCK.set(IST(d, 16, 0));
-      const taxable = row.purchase.taxable, half = taxable * 18 / 100 / 2, ptotal = taxable + half * 2;
-      const r = await B.postEntry(null, shopId, { type: 'purchase_bill', party: SUPP, date: d, currency: COUNTRY === 'AU' ? 'AUD' : 'INR', source_ref: 'sim:' + d + ':p', ref: 'KT/' + d.replace(/-/g, '') + '/' + (purchases + 1),
-        by_rate: [{ rate: 18, taxable, cgst: half, sgst: half, igst: 0 }], paid: row.purchase.paid_bank ? { bank: ptotal } : {}, round_off: 0, due_date: dayAdd(d, 30) }).catch((e) => ({ ok: false, why: String(e && e.message) }));
+      CLOCK.set(AT(d, 16, 0));
+      const taxable = row.purchase.taxable, prate = rateOf(18), ptotal = taxable + taxable * prate / 100;
+      const r = await B.postEntry(null, shopId, { type: 'purchase_bill', party: SUPP, date: d, currency: CUR, source_ref: 'sim:' + d + ':p', ref: 'KT/' + d.replace(/-/g, '') + '/' + (purchases + 1),
+        by_rate: [taxRow(prate, taxable)], paid: row.purchase.paid_bank ? { bank: ptotal } : {}, round_off: 0, due_date: dayAdd(d, 30) }).catch((e) => ({ ok: false, why: String(e && e.message) }));
       if (r && r.ok) purchases++; else console.log('   RED  purchase on ' + d + ' refused — ' + JSON.stringify(r).slice(0, 200));
     }
     const spend = async (cls, amount, from, ref) => {
       const r = await j('/api/books/events', { method: 'POST', token, body: { event: 'expense', class: cls, amount, paid_from: from, date: d, client_ref: ref } });
       if (r.status === 200) expenses++; else console.log('   RED  expense ' + ref + ' refused — ' + JSON.stringify(r.b).slice(0, 200));
     };
-    if (row.expense) { CLOCK.set(IST(d, 17, 0)); await spend(row.expense.class, row.expense.amount, 'cash', 'sim:' + d + ':e'); }
-    if (row.rent) { CLOCK.set(IST(d, 17, 30)); await spend('rent', 20000, 'bank', 'sim:' + d + ':rent'); }
+    if (row.expense) { CLOCK.set(AT(d, 17, 0)); await spend(row.expense.class, row.expense.amount, 'cash', 'sim:' + d + ':e'); }
+    if (row.rent) { CLOCK.set(AT(d, 17, 30)); await spend('rent', 20000, 'bank', 'sim:' + d + ':rent'); }
   }
-  CLOCK.set(IST(dayAdd(PLAN.last, 1), 9, 0));
+  CLOCK.set(AT(dayAdd(PLAN.last, 1), 9, 0));
   await closeMonth(PLAN.last);
   await drain();
   CLOCK.reset();
@@ -416,7 +442,7 @@ async function proof(shopId, quiet) {
   /* cash, each FY: opening (the STORED summaries of the years before) + net flow (this year's LINES) = closing (the stored summaries up to this year) */
   const fys = [...new Set(tb.rows.map((r) => r.fiscal_year))].sort();
   for (const fy of fys) {
-    const y = Number(fy.slice(0, 4)), from = y + '-04-01', to = (y + 1) + '-03-31';
+    const range = AP.fyRange(fy, FYPACK), from = range.start, to = range.end;   /* the pack's year, not April's */
     const c = await sql(`SELECT (SELECT COALESCE(SUM(b.dr_minor - b.cr_minor), 0) FROM account_balance b JOIN ledger_account a ON a.account_id = b.account_id
                                   WHERE b.entity_id = $1 AND a.role = 'cash' AND b.party_key = $4 AND b.fiscal_year < $5)::bigint AS opening,
                                 (SELECT COALESCE(SUM(l.dr_minor - l.cr_minor), 0) FROM journal_line l JOIN journal_entry e ON e.entry_id = l.entry_id JOIN ledger_account a ON a.account_id = l.account_id
@@ -428,8 +454,9 @@ async function proof(shopId, quiet) {
   }
   /* created_at names an INSTANT (M210): timestamptz after b299, and before it a naive UTC wall clock — read as UTC because this
      pool's session zone is pinned to UTC exactly as db/index.js pins the api's (the `::timestamptz` cast is then the same instant
-     either way). The day it belongs to is the SHOP's (books-hooks.zoneOf — IN → Asia/Kolkata), the one rule the day close uses. */
-  const zone = require(path.join(API, 'lib', 'books-hooks')).zoneOf(COUNTRY);
+     either way). The day it belongs to is the SHOP's (books-hooks.zoneOf of the shop's IANA zone — SHOPS above; zoneOf(COUNTRY) falls back to
+     India for AU, whose zones neither COUNTRY_ZONE nor the pack carries yet), the one rule the day close uses. */
+  const zone = require(path.join(API, 'lib', 'books-hooks')).zoneOf(SHOPROW.zone);
   const dated = await sql(`SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND business_json ? 'bill_no'
                              AND ((business_json ->> 'billed_at')::timestamptz AT TIME ZONE $2)::date <> (created_at::timestamptz AT TIME ZONE $2)::date`, [shopId, zone]);
   line(dated.rows[0].n === 0, 'every bill\'s created_at is its own simulated day in ' + zone + ', not today (' + dated.rows[0].n + ' off)');

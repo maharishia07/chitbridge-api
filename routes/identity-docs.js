@@ -69,7 +69,7 @@ const CATALOGUE = {
     { scheme: 'AADHAAR',  label: 'Aadhaar',        pattern: /^[0-9]{12}$/,               mask: v => 'XXXX XXXX ' + v.slice(-4), store: false, verify: 'uidai-offline', norm: DIGITS },
   ],
 };
-const schemesFor = (cc) => CATALOGUE[cc] || CATALOGUE.IN;
+const schemesFor = (cc) => CATALOGUE[cc] || CATALOGUE.IN.filter((s) => s.selfServe);   /* CX0: a country with no list gets the universal two (phone · email), never India's PAN / Aadhaar */
 
 /** GET — the person's own record. Never returns a stored value, only the mask and the verdict. */
 router.get('/documents', auth, async (req, res) => {
