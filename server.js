@@ -396,6 +396,7 @@ app.use('/api/books', require('./routes/books'));
 app.use('/api/facts', require('./routes/facts'));   // N18 — what each Home card says (lib/home-facts.js): counts the server computes, never a cost value
 app.use('/api/work', require('./routes/work'));   // TO1 — Tasks & Orders, read: the list, the sheet, the counts (lib/work-rows.js; engines `workflow`)
 app.use('/api/crm', require('./routes/crm'));   // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
+app.use('/api/repeat', require('./routes/repeat-supply'));   // RI1 — repeat supply as an AGREEMENT both parties hold: accept · counter · skip · pause · end; each run a normal chit (lib/repeat-supply.js)
 /* ⭐ what a shop buys to USE — its own list, never products, never priced, and structurally unable to
    reach a storefront because a storefront query would have to JOIN a table it has no reason to know. */
 app.use('/api/supplies', require('./routes/supplies'));
@@ -425,6 +426,7 @@ app.get('/health', async (req, res) => {
     /* which build answers — Railway sets this; it is how a spec that fails right after a push tells 'not deployed yet' from 'broken' */
     commit: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.SOURCE_COMMIT || null,
     region: process.env.RAILWAY_REPLICA_REGION || process.env.RAILWAY_REGION || null,
+    web: require('./lib/public-base').webBase() || null,   /* HX1: the site this api serves (PUBLIC_WEB_BASE) — a counter learns it here */
   });
 });
 

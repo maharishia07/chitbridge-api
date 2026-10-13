@@ -1,6 +1,7 @@
 // db/index.js — PostgreSQL connection pool
 const pg = require('pg');
 const { Pool } = pg;
+const { connectPlan } = require('./connect-config');
 
 /**
  * ⭐⭐ M210 · A NAIVE TIMESTAMP IS A UTC WALL CLOCK, WHATEVER CLOCK THE SERVER RUNS ON (known fault "day-close breaks past midnight").
@@ -24,14 +25,6 @@ pg.types.setTypeParser(1114, naiveAsUtc);                                       
 pg.defaults.parseInputDatesAsUTC = true;
 const SESSION_TZ = "SET TimeZone = 'UTC'";
 
-const POOLER_REGIONS = [
-  'aws-1-ap-south-1',
-  'aws-0-ap-south-1',
-  'aws-0-ap-southeast-1',
-  'aws-0-us-east-1',
-  'aws-0-eu-west-1',
-];
-
 async function tryConnect(config) {
   return new Promise((resolve, reject) => {
     const p = new Pool({ ...config, max: 1, connectionTimeoutMillis: 5000 });
@@ -42,11 +35,6 @@ async function tryConnect(config) {
       resolve(true);
     });
   });
-}
-
-// SSL: off for local/CI Postgres, relaxed-verify for managed hosts (Supabase).
-function sslForHost(hostname) {
-  return ['localhost', '127.0.0.1', '::1'].includes(hostname) ? false : { rejectUnauthorized: false };
 }
 
 /**
@@ -66,41 +54,26 @@ function armPool(p) {
 }
 const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return 'BEGIN; SET LOCAL ' + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
 
+/**
+ * ⭐ HX1 · THE ATTEMPTS COME FROM CONFIG, NOTHING ELSE (db/connect-config.js): DATABASE_URL, then DB_POOLER_URL when it is set.
+ * No host is guessed, no pooler is invented, and each attempt carries only the credentials written in its own URL — a failed
+ * connect never sends this database's password anywhere else (tests/hosting-neutral.test.cjs). TLS: the URL's sslmode, else
+ * PGSSLMODE, else a sealed env keeps TLS-without-verification. The values production needs: docs/HOSTING.md, Database.
+ */
 async function createPool() {
-  const rawUrl = process.env.DATABASE_URL || '';
-  let parsed;
-  try { parsed = new URL(rawUrl); } catch (e) { throw new Error('Invalid DATABASE_URL'); }
-
-  // 1) Try the DATABASE_URL exactly as given — a standard DSN. This honours a plain Postgres (CI / local / any
-  //    direct connection) instead of forcing the Supabase pooler. On failure it falls through to the pooler
-  //    discovery below, so the managed dev/prod path is preserved unchanged.
-  const directSsl = sslForHost(parsed.hostname);
-  try {
-    await tryConnect({ connectionString: rawUrl, ssl: directSsl });
-    console.log(`DB connected via DATABASE_URL: ${parsed.hostname}:${parsed.port || '5432'}`);
-    return armPool(new Pool({ connectionString: rawUrl, ssl: directSsl, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
-  } catch (e) {
-    console.log(`Direct DATABASE_URL connect failed (${e.message}); trying Supabase pooler fallback…`);
-  }
-
-  // 2) Supabase pooler fallback (managed dev/prod). Project ref is env-overridable; default kept for back-compat.
-  const password = decodeURIComponent(parsed.password);
-  const ref = process.env.SUPABASE_REF || 'bzacyrdrnzdbficjplcn';
-  const sslConfig = { rejectUnauthorized: false };
-  for (const region of POOLER_REGIONS) {
-    const host = `${region}.pooler.supabase.com`;
-    for (const user of [`postgres.${ref}`, 'postgres']) {
-      const config = { host, port: 6543, user, password, database: 'postgres', ssl: sslConfig };
-      try {
-        await tryConnect(config);
-        console.log(`DB connected via pooler: ${host} as ${user}`);
-        return armPool(new Pool({ ...config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
-      } catch (e) {
-        console.log(`Pooler ${region} user=${user} failed: ${e.message}`);
-      }
+  const plan = connectPlan(process.env);
+  const why = [];
+  for (const a of plan) {
+    try {
+      await tryConnect(a.config);
+      console.log(`DB connected via ${a.label}: ${a.where}`);
+      return armPool(new Pool({ ...a.config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
+    } catch (e) {
+      why.push(`${a.label} ${a.where}: ${e.message}`);
+      console.log(`${a.label} connect failed (${a.where}: ${e.message})` + (a === plan[plan.length - 1] ? '' : ' — trying the next configured URL'));
     }
   }
-  throw new Error('All connection attempts failed (direct DATABASE_URL + Supabase pooler regions)');
+  throw new Error('All configured connections failed (' + why.join(' · ') + ')' + (plan.length < 2 ? ' — DB_POOLER_URL is not set' : ''));
 }
 
 // ── COLD-START RACE (fixed 2026-07-29) ────────────────────────────────────────────────────────────────────
@@ -116,7 +89,7 @@ async function createPool() {
 // Also makes the old comment true: it claimed "queries will retry" but `pool` simply stayed undefined forever, so
 // a failed init was permanent until redeploy. A failed init now clears itself and the next query retries.
 const BOOT_WAIT_MS = Number(process.env.DB_BOOT_WAIT_MS || 15000);
-const NOT_CONNECTED = 'Database not connected — check DATABASE_URL in Railway environment variables';
+const NOT_CONNECTED = 'Database not connected — check DATABASE_URL (and DB_POOLER_URL) in the environment';
 let pool;
 let initPromise = null;
 
@@ -381,4 +354,4 @@ const readBatch = async (entityId, actorId, statements) => {
   /* results: BEGIN, set_config, …statements…, COMMIT — hand back the middle */
   return arr.slice(2, 2 + statements.length);
 };
-module.exports = { query, withTransaction, withEntity, onEntity, trySavepoint, sslForHost, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };
+module.exports = { query, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };

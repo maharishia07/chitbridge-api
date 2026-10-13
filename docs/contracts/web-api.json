@@ -1332,7 +1332,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-11T04:02:10.424Z",
+      "last_at": "2026-10-11T16:21:34.052Z",
       "late": true,
       "today": false
      }
@@ -1368,13 +1368,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-12T04:02:10.387Z",
+      "due_at": "2026-10-12T16:21:34.017Z",
       "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-13T04:02:10.388Z",
+      "created_at": "2026-10-13T16:21:34.018Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1644,7 +1644,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-11T04:02:10.315Z",
+      "due_at": "2026-10-11T16:21:33.953Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1714,6 +1714,294 @@
     "entries[].who"
    ]
   },
+  "GET /api/repeat": {
+   "status": 200,
+   "example": {
+    "agreements": [
+     {
+      "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+      "entity_id": "11111111-1111-4111-8111-111111111111",
+      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+      "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+      "every": 1,
+      "unit": "weekly",
+      "anchor_day": 31,
+      "next_on": "2026-10-06",
+      "end_on": null,
+      "runs_max": 3,
+      "runs_done": 0,
+      "mode": "draft",
+      "state": "proposed",
+      "terms": {
+       "lines": [
+        {
+         "line_id": "L1",
+         "quantity": 15
+        }
+       ]
+      },
+      "counter": {
+       "note": "Fortnightly, fifteen",
+       "lines": [
+        {
+         "line_id": "L1",
+         "quantity": 15
+        }
+       ],
+       "every": 2,
+       "unit": "weekly",
+       "anchor_day": null,
+       "start_on": "2026-10-13",
+       "by": "22222222-2222-4222-8222-222222222222",
+       "at": "2026-10-05T06:00:00.000Z"
+      },
+      "skips": [
+       {
+        "date": "2026-10-27",
+        "by_entity_id": "22222222-2222-4222-8222-222222222222",
+        "reason": "Shop shut for Diwali",
+        "at": "2026-10-14T06:00:00.000Z"
+       }
+      ],
+      "runs": {
+       "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002",
+       "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
+      },
+      "last_run_on": "2026-10-13",
+      "state_by": "22222222-2222-4222-8222-222222222222",
+      "state_at": "2026-10-05T06:00:00.000Z",
+      "state_note": "Fortnightly, fifteen",
+      "created_by": "11111111-1111-4111-8111-111111111111",
+      "created_at": "2026-10-01T00:00:00Z",
+      "updated_at": null,
+      "customer": {
+       "entity_id": "22222222-2222-4222-8222-222222222222",
+       "name": "Ravi Stores"
+      },
+      "money": {
+       "gross": 1000,
+       "savings": 0,
+       "net": 1000,
+       "tax": 180,
+       "total": 1180,
+       "currency_code": "INR",
+       "provisional": true
+      },
+      "currency": "INR",
+      "subject": "Repeat supply · every week",
+      "side": "seller",
+      "actions": {
+       "pause": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "resume": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "end": {
+        "ok": true,
+        "why": "ended",
+        "say": "This agreement has ended."
+       },
+       "skip": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "run": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "agree": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       },
+       "refuse": {
+        "ok": false,
+        "why": "wrong_state",
+        "say": "This agreement is not at a step where that can be done."
+       }
+      },
+      "words": "Waiting for the customer",
+      "due": false
+     }
+    ],
+    "migrated": true,
+    "message": "Repeat supply arrives after the next update."
+   },
+   "optional": [
+    "agreements[].actions.agree.say",
+    "agreements[].actions.agree.why",
+    "agreements[].actions.end.say",
+    "agreements[].actions.end.why",
+    "agreements[].actions.pause.say",
+    "agreements[].actions.pause.why",
+    "agreements[].actions.refuse.say",
+    "agreements[].actions.refuse.why",
+    "agreements[].actions.run.say",
+    "agreements[].actions.run.why",
+    "agreements[].actions.skip.say",
+    "agreements[].actions.skip.why",
+    "agreements[].runs.2026-10-13",
+    "agreements[].runs.2026-10-31",
+    "agreements[].terms.lines",
+    "message"
+   ],
+   "free": [
+    "agreements[].runs"
+   ]
+  },
+  "GET /api/repeat/:id": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-06",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "proposed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": {
+      "note": "Fortnightly, fifteen",
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ],
+      "every": 2,
+      "unit": "weekly",
+      "anchor_day": null,
+      "start_on": "2026-10-13",
+      "by": "22222222-2222-4222-8222-222222222222",
+      "at": "2026-10-05T06:00:00.000Z"
+     },
+     "skips": [],
+     "runs": {
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
+     },
+     "last_run_on": "2026-10-13",
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": "Fortnightly, fifteen",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "run": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "accept": {
+       "ok": true,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "counter": {
+       "ok": true
+      },
+      "decline": {
+       "ok": true
+      }
+     },
+     "words": "Waiting for the customer",
+     "due": false
+    }
+   },
+   "optional": [
+    "agreement.actions.accept",
+    "agreement.actions.accept.say",
+    "agreement.actions.accept.why",
+    "agreement.actions.agree",
+    "agreement.actions.agree.say",
+    "agreement.actions.agree.why",
+    "agreement.actions.counter",
+    "agreement.actions.decline",
+    "agreement.actions.end",
+    "agreement.actions.pause",
+    "agreement.actions.pause.say",
+    "agreement.actions.pause.why",
+    "agreement.actions.refuse",
+    "agreement.actions.refuse.say",
+    "agreement.actions.refuse.why",
+    "agreement.actions.resume",
+    "agreement.actions.run",
+    "agreement.actions.skip.say",
+    "agreement.actions.skip.why",
+    "agreement.runs.2026-10-13",
+    "agreement.terms.lines"
+   ],
+   "free": [
+    "agreement.runs"
+   ]
+  },
   "GET /api/work/:chit_id": {
    "status": 200,
    "example": {
@@ -1744,7 +2032,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-13T03:02:10.542Z",
+    "created_at": "2026-10-13T15:21:34.156Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -1959,7 +2247,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-13T03:02:10.542Z",
+      "created_at": "2026-10-13T15:21:34.156Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2048,7 +2336,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-13T04:02:10.928Z"
+     "shared_at": "2026-10-13T16:21:34.697Z"
     }
    },
    "optional": []
@@ -2101,13 +2389,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-12T04:02:10.387Z",
+     "due_at": "2026-10-12T16:21:34.017Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-13T04:02:10.395Z",
-     "created_at": "2026-10-13T04:02:10.388Z",
+     "done_at": "2026-10-13T16:21:34.025Z",
+     "created_at": "2026-10-13T16:21:34.018Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2455,6 +2743,174 @@
     "paid_minor.cgst",
     "paid_minor.sgst",
     "rcm_paid_minor"
+   ]
+  },
+  "POST /api/books/move-in/import": {
+   "status": 200,
+   "example": {
+    "side": null,
+    "as_at": "2026-04-01",
+    "kind": "accounts",
+    "source": "xero",
+    "added": 3,
+    "merged": 5,
+    "skipped": 7,
+    "rows": [
+     {
+      "line": 5,
+      "what": "Other Revenue",
+      "why": "Your chart has no group \"sales\" for Xero type REVENUE — add it under Shop ledgers."
+     }
+    ],
+    "notes": [
+     "Their account codes could not be kept yet (a database update, b302, is still to run) — a trial balance will match on names."
+    ],
+    "source_code_written": false,
+    "entry": {
+     "entry_no": "JV/2027-28/000001",
+     "entry_id": "00000000-0000-4000-8000-000000000135",
+     "posting_date": "2027-04-01",
+     "suspense_minor": 400000,
+     "duplicate": false
+    }
+   },
+   "optional": [
+    "entry",
+    "source_code_written"
+   ]
+  },
+  "POST /api/books/move-in/import #422": {
+   "status": 422,
+   "example": {
+    "error": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account.",
+    "message": "The trial balance does not balance: debits ₹15,230.50, credits ₹12,000.00 — the difference is ₹3,230.50. Export it again as at the move date, with every account."
+   },
+   "optional": []
+  },
+  "POST /api/books/move-in/preflight": {
+   "status": 200,
+   "example": {
+    "kind": "accounts",
+    "source": "xero",
+    "headers": [
+     "*Code"
+    ],
+    "fields": [
+     {
+      "key": "code",
+      "label": "Their code",
+      "required": false
+     }
+    ],
+    "guess": [
+     {
+      "incoming": "*Code",
+      "field": "code",
+      "how": "known",
+      "confidence": 1,
+      "why": "\"*Code\" is what chart of accounts exports call their code"
+     }
+    ],
+    "missing": [],
+    "ready": true,
+    "rows_total": 15,
+    "sample": [
+     {
+      "*Code": "090",
+      "*Name": "Business Bank Account",
+      "*Type": "BANK",
+      "*Tax Code": "BAS Excluded",
+      "Description": "",
+      "Dashboard": "Yes",
+      "Expense Claims": "No",
+      "Enable Payments": "No",
+      "Balance": "",
+      "Account": "Business Bank Account (090)",
+      "Debit": "15,230.50",
+      "Credit": "",
+      "YTD Debit": "15,230.50",
+      "YTD Credit": ""
+     }
+    ],
+    "sheet": null,
+    "sheets": null,
+    "header_row": 1
+   },
+   "optional": [
+    "sample[].*Code",
+    "sample[].*Name",
+    "sample[].*Tax Code",
+    "sample[].*Type",
+    "sample[].Account",
+    "sample[].Balance",
+    "sample[].Credit",
+    "sample[].Dashboard",
+    "sample[].Debit",
+    "sample[].Description",
+    "sample[].Enable Payments",
+    "sample[].Expense Claims",
+    "sample[].YTD Credit",
+    "sample[].YTD Debit"
+   ]
+  },
+  "POST /api/books/move-in/preview": {
+   "status": 200,
+   "example": {
+    "kind": "accounts",
+    "source": "xero",
+    "side": null,
+    "as_at": "2026-04-01",
+    "counts": {
+     "add": 3,
+     "merge": 5,
+     "skip": 7
+    },
+    "refusal": null,
+    "notes": [
+     "Suspense will hold ₹6,600.00 until the open invoices and bills are moved in."
+    ],
+    "rows": [
+     {
+      "line": 2,
+      "what": "Business Bank Account",
+      "action": "add",
+      "why": "Under Bank Accounts, keeping Xero code 090.",
+      "data": {
+       "name": "Business Bank Account",
+       "group_code": "G1500",
+       "group_id": "00000000-0000-4000-8000-000000000016",
+       "group_name": "Bank Accounts",
+       "source_code": "090",
+       "note": "default tax BAS Excluded = no GST — not kept",
+       "account_id": "00000000-0000-4000-8000-000000000074",
+       "code": "4000",
+       "dr_minor": 1523050,
+       "cr_minor": 0
+      }
+     }
+    ],
+    "totals": {
+     "dr_minor": 4063050,
+     "cr_minor": 4063050
+    },
+    "control": {
+     "debtors_minor": 440000,
+     "creditors_minor": -220000
+    }
+   },
+   "optional": [
+    "control",
+    "rows[].data.account_id",
+    "rows[].data.code",
+    "rows[].data.cr_minor",
+    "rows[].data.dr_minor",
+    "rows[].data.group_code",
+    "rows[].data.group_id",
+    "rows[].data.group_name",
+    "rows[].data.name",
+    "rows[].data.note",
+    "rows[].data.source_code",
+    "totals"
    ]
   },
   "POST /api/books/payments": {
@@ -2841,13 +3297,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-12T04:02:10.387Z",
+     "due_at": "2026-10-12T16:21:34.017Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-13T04:02:10.388Z",
+     "created_at": "2026-10-13T16:21:34.018Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -2878,7 +3334,7 @@
    "example": {
     "party": {
      "party_id": "N2",
-     "display_name": "Ravi Jeweller",
+     "display_name": "Ravi Jewellers",
      "party_no": "P-00099",
      "kind": "local",
      "on_chitbridge": false,
@@ -2962,9 +3418,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-13T04:02:10.386Z",
+     "at": "2026-10-13T16:21:34.016Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-13T04:02:10.386Z"
+     "created_at": "2026-10-13T16:21:34.016Z"
     }
    },
    "optional": []
@@ -2979,9 +3435,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-13T04:02:10.428Z",
+     "at": "2026-10-13T16:21:34.055Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-13T04:02:10.428Z"
+     "created_at": "2026-10-13T16:21:34.055Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -2996,7 +3452,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-13T04:02:10.428Z",
+     "created_at": "2026-10-13T16:21:34.055Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -3060,6 +3516,1024 @@
      "on_chitbridge": false
     },
     "points_claimed": 120
+   },
+   "optional": []
+  },
+  "POST /api/repeat": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "weekly",
+     "anchor_day": 31,
+     "next_on": "2026-10-06",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "proposed",
+     "terms": {},
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": null,
+     "state_at": null,
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "run": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Waiting for the customer",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat #503": {
+   "status": 503,
+   "example": {
+    "code": "REPEAT_NOT_MIGRATED",
+    "error": "Repeat supply arrives after the next update.",
+    "message": "Repeat supply arrives after the next update."
+   },
+   "optional": []
+  },
+  "POST /api/repeat/:id/accept": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "weekly",
+     "anchor_day": 31,
+     "next_on": "2026-10-06",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {},
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "customer",
+     "actions": {
+      "accept": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "counter": {
+       "ok": true
+      },
+      "decline": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/accept #422": {
+   "status": 422,
+   "example": {
+    "code": "REPEAT_WRONG_STATE",
+    "error": "This agreement is not at a step where that can be done.",
+    "message": "This agreement is not at a step where that can be done."
+   },
+   "optional": []
+  },
+  "POST /api/repeat/:id/agree": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-13",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": true
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      },
+      "run": {
+       "ok": false,
+       "why": "not_due",
+       "say": "The next run is not due yet."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/counter": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-06",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "countered",
+     "terms": {},
+     "counter": {
+      "note": "Fortnightly, fifteen",
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ],
+      "every": 2,
+      "unit": "weekly",
+      "anchor_day": null,
+      "start_on": "2026-10-13",
+      "by": "22222222-2222-4222-8222-222222222222",
+      "at": "2026-10-05T06:00:00.000Z"
+     },
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": "Fortnightly, fifteen",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "customer",
+     "actions": {
+      "accept": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "counter": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "decline": {
+       "ok": true
+      },
+      "skip": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Customer proposed a change",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/decline": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "fe0fb8db-caa3-4060-9fa1-0a7b9e26d916",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 1,
+     "unit": "monthly",
+     "anchor_day": 31,
+     "next_on": "2026-11-30",
+     "end_on": null,
+     "runs_max": null,
+     "runs_done": 1,
+     "mode": "send",
+     "state": "declined",
+     "terms": {},
+     "counter": null,
+     "skips": [],
+     "runs": {
+      "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
+     },
+     "last_run_on": "2026-10-31",
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-14T06:00:00.000Z",
+     "state_note": "Too often",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every month",
+     "side": "customer",
+     "actions": {
+      "accept": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "counter": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "decline": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "skip": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      }
+     },
+     "words": "Declined",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/end": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-11-10",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 1,
+     "mode": "draft",
+     "state": "ended",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [
+      {
+       "date": "2026-10-27",
+       "by_entity_id": "22222222-2222-4222-8222-222222222222",
+       "reason": "Shop shut for Diwali",
+       "at": "2026-10-14T06:00:00.000Z"
+      }
+     ],
+     "runs": {
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
+     },
+     "last_run_on": "2026-10-13",
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-14T06:00:00.000Z",
+     "state_note": "Customer moved",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "resume": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "end": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "skip": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "run": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "agree": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      }
+     },
+     "words": "Ended",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/pause": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-13",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "paused",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": "Stock out",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "resume": {
+       "ok": true
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      },
+      "run": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Paused",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/refuse": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "3ad69b2a-1ef6-4885-8acb-b06f1454f2fa",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "daily",
+     "anchor_day": null,
+     "next_on": "2026-10-15",
+     "end_on": null,
+     "runs_max": null,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "declined",
+     "terms": {},
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-14T06:00:00.000Z",
+     "state_note": "Two days or nothing",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every 2 days",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "resume": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "end": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "skip": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "run": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "agree": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "ended",
+       "say": "This agreement has ended."
+      }
+     },
+     "words": "Declined",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/resume": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-10-13",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 0,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [],
+     "runs": {},
+     "last_run_on": null,
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": true
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      },
+      "run": {
+       "ok": false,
+       "why": "not_due",
+       "say": "The next run is not due yet."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/run": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": 31,
+     "next_on": "2026-10-27",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 1,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [],
+     "runs": {
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002",
+      "2026-10-31": "aaaaaaaa-0000-4000-8000-000000000004"
+     },
+     "last_run_on": "2026-10-13",
+     "state_by": "11111111-1111-4111-8111-111111111111",
+     "state_at": "2026-10-05T06:00:00.000Z",
+     "state_note": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "seller",
+     "actions": {
+      "pause": {
+       "ok": true
+      },
+      "resume": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "end": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      },
+      "run": {
+       "ok": false,
+       "why": "not_due",
+       "say": "The next run is not due yet."
+      },
+      "agree": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "refuse": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    },
+    "ran": [
+     {
+      "date": "2026-10-13",
+      "chit_id": "aaaaaaaa-0000-4000-8000-000000000002",
+      "duplicate": false
+     }
+    ],
+    "problems": []
+   },
+   "optional": [
+    "agreement.runs.2026-10-13",
+    "agreement.runs.2026-10-31",
+    "agreement.terms.lines"
+   ],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/:id/skip": {
+   "status": 200,
+   "example": {
+    "agreement": {
+     "agreement_id": "20969ade-a1b4-418e-bc05-13ecb5d23b55",
+     "entity_id": "11111111-1111-4111-8111-111111111111",
+     "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
+     "customer_entity_id": "22222222-2222-4222-8222-222222222222",
+     "source_chit_id": "bbbbbbbb-0000-4000-8000-000000000001",
+     "every": 2,
+     "unit": "weekly",
+     "anchor_day": null,
+     "next_on": "2026-11-10",
+     "end_on": null,
+     "runs_max": 3,
+     "runs_done": 1,
+     "mode": "draft",
+     "state": "agreed",
+     "terms": {
+      "lines": [
+       {
+        "line_id": "L1",
+        "quantity": 15
+       }
+      ]
+     },
+     "counter": null,
+     "skips": [
+      {
+       "date": "2026-10-27",
+       "by_entity_id": "22222222-2222-4222-8222-222222222222",
+       "reason": "Shop shut for Diwali",
+       "at": "2026-10-14T06:00:00.000Z"
+      }
+     ],
+     "runs": {
+      "2026-10-13": "aaaaaaaa-0000-4000-8000-000000000002"
+     },
+     "last_run_on": "2026-10-13",
+     "state_by": "22222222-2222-4222-8222-222222222222",
+     "state_at": "2026-10-14T06:00:00.000Z",
+     "state_note": "Shop shut for Diwali",
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "created_at": "2026-10-01T00:00:00Z",
+     "updated_at": null,
+     "customer": {
+      "entity_id": "22222222-2222-4222-8222-222222222222",
+      "name": "Ravi Stores"
+     },
+     "money": {
+      "gross": 1000,
+      "savings": 0,
+      "net": 1000,
+      "tax": 180,
+      "total": 1180,
+      "currency_code": "INR",
+      "provisional": true
+     },
+     "currency": "INR",
+     "subject": "Repeat supply · every week",
+     "side": "customer",
+     "actions": {
+      "accept": {
+       "ok": false,
+       "why": "wrong_state",
+       "say": "This agreement is not at a step where that can be done."
+      },
+      "counter": {
+       "ok": true
+      },
+      "decline": {
+       "ok": true
+      },
+      "skip": {
+       "ok": true
+      }
+     },
+     "words": "Agreed",
+     "due": false
+    }
+   },
+   "optional": [],
+   "free": [
+    "agreement.runs"
+   ]
+  },
+  "POST /api/repeat/sweep": {
+   "status": 200,
+   "example": {
+    "ran": [],
+    "problems": []
    },
    "optional": []
   }

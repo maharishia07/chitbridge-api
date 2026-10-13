@@ -28,8 +28,10 @@
  *
  *   node tools/sim-load.cjs --db postgres://postgres:pw@127.0.0.1:5432/cb_sim --shop simstores [--years 3] [--seed 7] [--country IN]
  *                           [--fresh] [--schema]
- *   --schema   an EMPTY test database gets the repo's schema first (migrations/000_baseline + part2 + bNNN in number order; needs
- *              psql on PATH). Never on a database that already has tables — the local stack's database is migrated by the stack.
+ *   --schema   the repo's schema first, through tools/migrate.cjs (HX1): an EMPTY database gets the chain (000_baseline + part2 +
+ *              bNNN in number order; needs psql on PATH), a database with a schema_migrations ledger gets only what it lacks.
+ *   --schema-only   the same schema step and nothing else — no shop, no api. (deploy/compose.yml's `migrate` job now calls
+ *              tools/migrate.cjs directly.) A database with tables and an empty ledger is left as it is (exit 0).
  *   --years    financial years from 2026-04-01 (3) · --seed the plan's seed (7) · --country IN (proved) | AU | AE (CX0: accepted, unproved —
  *              the shop's currency · year · tax heads · rate menu are READ from its pack (lib/regulation.packFor); the loader types only
  *              what no pack says: SHOPS below. ⚠️ Until the api adopts the books engines ≥ v1.41 (accounts-packs is v1.20: PACKS.IN only),
@@ -60,20 +62,20 @@ function localOnly(url) {
   if (/^[a-z][a-z0-9_-]*$/.test(host)) return { ok: true, host, docker: true };
   return { ok: false, why: '"' + host + '" is not localhost, 127.0.0.1 or a docker service name — this loader never touches a remote database' };
 }
-/** a migration file the fresh-schema step skips: a dry run, a verify, a one-off data script, a purge */
-const CHAIN_SKIP = /dryrun|verify|_LIST|COMMIT|purge|^READ-|^sim01|^net0/i;
+/** a migration file the schema step skips — the chain and its ledger live in tools/migrate.cjs (HX1) */
+const { CHAIN_SKIP } = require('./migrate.cjs');
 
 if (require.main !== module) { module.exports = { localOnly, CHAIN_SKIP }; return; }
 
 /* ── arguments ─────────────────────────────────────────────────────────────────────────────────────────────────── */
 const DB = arg('db', process.env.SIM_DB || ''), SHOP = String(arg('shop', '')).trim().toLowerCase();
 const YEARS = Number(arg('years', 3)), SEED = Number(arg('seed', 7)), COUNTRY = String(arg('country', 'IN')).toUpperCase();
-const FRESH = has('fresh'), SCHEMA = has('schema');
+const FRESH = has('fresh'), SCHEMA_ONLY = has('schema-only'), SCHEMA = has('schema') || SCHEMA_ONLY;
 const die = (m, code) => { console.error('\n  REFUSED: ' + m + '\n'); process.exit(code || 3); };
 const loc = localOnly(DB);
 if (!DB) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
 if (!loc.ok) die(loc.why);
-if (!/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die('--shop is the shop\'s user id: 3–20 letters or digits, starting with a letter (e.g. simstores)');
+if (!SCHEMA_ONLY && !/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die('--shop is the shop\'s user id: 3–20 letters or digits, starting with a letter (e.g. simstores)');
 if (!(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) die('--years 1..10 and --seed a whole number');
 /* ── the three simulated shops, one per registered pack (CX0): ONLY what the pack does not say — a sample tax number that passes the pack's
    own check, the street, the city's clock offset and IANA zone, the phone. Currency · fiscal year · heads · rate menu come from the pack. */
@@ -143,37 +145,20 @@ const sql = (t, p) => pool.query(t, p);
 
 async function hasTable(name) { return (await sql(`SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`, [name])).rows.length > 0; }
 
-/* ── --schema: an empty database gets the repo's schema, the fresh-build order migrations/MANIFEST.md names ─────── */
-function psql(file, stopOnError) {
-  const a = ['-X', '-q', '-d', DB, '-f', file].concat(stopOnError ? ['-v', 'ON_ERROR_STOP=1'] : []);
-  const r = spawnSync('psql', a, { encoding: 'utf8', cwd: API });
-  if (r.error) die('psql is needed for --schema and was not found on PATH (' + r.error.message + ')');
-  const errs = (r.stderr || '').split('\n').filter((l) => /ERROR/.test(l));
-  return { ok: r.status === 0, errs };
-}
+/* ── --schema: the repo's schema through tools/migrate.cjs (HX1: the same chain, now with the schema_migrations ledger) ─────── */
 async function applySchema() {
-  if (await hasTable('identities')) { say('schema: the database already has tables — --schema skipped (the stack migrates its own)'); return; }
-  const M = path.join(API, 'migrations');
-  say('schema: 000_baseline.sql');
-  let r = psql(path.join(M, '000_baseline.sql'), true);
-  if (!r.ok) die('000_baseline.sql failed: ' + r.errs[0]);
-  /* part2 lists constraints alphabetically — a FOREIGN KEY to identities comes before identities' PRIMARY KEY — so it is
-     run in passes until the only errors left are "already exists" (each pass adds what the last one could not) */
-  let left = Infinity;
-  for (let pass = 1; pass <= 6; pass++) {
-    r = psql(path.join(M, '000_baseline_part2.sql'), false);
-    const real = r.errs.filter((l) => !/already exists|multiple primary keys|already a primary/.test(l));
-    say('schema: 000_baseline_part2.sql pass ' + pass + ' — ' + real.length + ' statement(s) still waiting');
-    if (real.length === 0 || real.length >= left) break;
-    left = real.length;
-  }
-  const files = fs.readdirSync(M).filter((f) => /^(migration_b(4[2-9]|5[0-7])|b\d+)_.*\.sql$/.test(f) && !CHAIN_SKIP.test(f))
-    .sort((a, b) => Number(/b(\d+)/.exec(a)[1]) - Number(/b(\d+)/.exec(b)[1]) || a.localeCompare(b));
-  const failed = [];
-  for (const f of files) { const x = psql(path.join(M, f), true); if (!x.ok) failed.push(f + ' — ' + String(x.errs[0] || '').replace(/^psql:[^ ]+ /, '').slice(0, 110)); }
-  say('schema: ' + (files.length - failed.length) + ' of ' + files.length + ' migrations applied');
-  if (failed.length) { say('schema: not applied (ops roles, one-off data scripts, the register) —'); failed.forEach((f) => console.log('      ' + f)); }
+  let r;
+  try { r = await require('./migrate.cjs').apply(DB, { say }); } catch (e) { die(e.message); }
+  if (!r.fresh) return;
   for (const t of ['identities', 'chit_header', 'journal_entry', 'books_setting', 'customer_list', 'catalogue_items']) if (!await hasTable(t)) die('table ' + t + ' is missing after --schema');
+}
+
+/** --schema-only: the schema step alone (the compose stack's migrate job), then exit */
+async function schemaOnly() {
+  console.log('\n── sim-load --schema-only · ' + loc.host + (loc.docker ? ' (docker service)' : '') + ' ──');
+  try { await sql('SELECT 1'); } catch (e) { die('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message); }
+  await applySchema();
+  await pool.end(); process.exit(0);
 }
 
 /* ── --fresh: the shop and everything it owns, removed (local database, as its owner) ───────────────────────────── */
@@ -234,6 +219,7 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
 
 /* ── main ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 (async () => {
+  if (SCHEMA_ONLY) return schemaOnly();
   console.log('\n── sim-load · ' + SHOP + ' · ' + YEARS + ' year(s) from ' + PLAN.start + ' · seed ' + SEED + ' · ' + COUNTRY + ' · ' + loc.host + (loc.docker ? ' (docker service)' : '') + ' ──');
   try { await sql('SELECT 1'); } catch (e) { die('cannot connect to ' + DB.replace(/:[^:@/]+@/, ':***@') + ' — ' + e.message); }
   if (SCHEMA) await applySchema();

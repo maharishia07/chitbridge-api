@@ -1,0 +1,13 @@
+Account,Debit,Credit,YTD Debit,YTD Credit
+Business Bank Account (090),"15,230.50",,"15,230.50",
+Accounts Receivable (610),"4,400.00",,"4,400.00",
+Inventory (630),"8,000.00",,"8,000.00",
+Accounts Payable (800),,"2,200.00",,"2,200.00"
+GST (820),,730.50,,730.50
+Owner A Drawings (880),"1,000.00",,"1,000.00",
+Retained Earnings (960),,"25,700.00",,"25,700.00"
+Sales (200),,"12,000.00",,"12,000.00"
+Cost of Goods Sold (300),"7,000.00",,"7,000.00",
+Advertising (400),"1,500.00",,"1,500.00",
+Unknown Ledger (777),"3,500.00",,"3,500.00",
+Total,"40,630.50","40,630.50","40,630.50","40,630.50"

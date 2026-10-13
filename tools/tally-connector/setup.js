@@ -24,7 +24,8 @@ const cfgFile = path.join(here, 'connector.json');
 (async () => {
   console.log('\nChitBridge connector — setup\n');
   let cfg = {}; try { cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8')); } catch (_) {}
-  const api = await ask('ChitBridge API', cfg.api || 'https://chitbridge-api-production.up.railway.app');
+  let api = await ask('ChitBridge API (https://…)', cfg.api || '');   /* HX1: the kit's connector.json names it; a hand-made folder asks */
+  while (!/^https?:\/\//.test(api)) api = await ask('ChitBridge API — the address your ChitBridge api answers on, e.g. https://api.your-domain', '');
   const adapter = (await ask('Which system (tally / zoho / gofrugal / csv)', cfg.adapter || 'tally')).toLowerCase();
   let key = cfg.key && !/PASTE/.test(cfg.key) ? cfg.key : '';
   if (key && cfg.configured === false) console.log('Your key came inside the download (…' + key.slice(-4) + ').');

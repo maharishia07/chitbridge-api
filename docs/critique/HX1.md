@@ -1,0 +1,20 @@
+# HX1 critique — remove the 🔴 platform couplings (written before any code, 2026-10-13)
+**(a) What the brief assumes, checked**
+- DB connect guesses SSL by hostname and falls back to a hard-coded Supabase pooler — TRUE (`db/index.js:47` sslForHost, `:27-33` regions, `:93` ref, `:96` host). `src/db.js:4` forces TLS too (PGSSL=disable only). Prod may well LIVE on that fallback (Railway → Supabase direct is IPv6-only) — UNKNOWN from code; the log line "DB connected via pooler: <host> as <user>" says which.
+- object store "S3" is Supabase REST — TRUE (`lib/storage-object.js:81-86`, Bearer + apikey). Callers only use put/get/del/available/mode/objectKey (`lib/storage.js`, `lib/books-pack.js:115`, `routes/products.js:1380`).
+- 33 Railway literals in 28 web files — TRUE for `public/` (grep). Plus `vercel.app` in `public/till.html:25246` (cbHome), `lib/catalogue-blueprint.js:795`, `routes/connectors.js:445`, tally-connector ×6, `uptime.yml` ×3 and `governance.yml:29` (not in the brief's list — same fix). e2e/ and api scripts/ name prod on purpose (test harnesses with env overrides) — out of scope.
+- "till/installers: their existing config file" — TRUE: the kit's `connector.json` (`routes/integrations.js:150` writes `api` from PUBLIC_API_BASE/the request host); `till.js` serves the page but no config to it today.
+- `/.well-known/ctp.json` served by the api — TRUE (`routes/ctp.js:89`, mounted at `/`, `server.js:313`); swallowed by `vercel.json` `/(.*)` and `deploy/nginx.conf` try_files — TRUE.
+- no migration ledger — TRUE (`docs/DEPLOY-RUNBOOK.md:30`); `tests/migration-rls.test.js:46` already names `schema_migrations` as RLS-exempt bookkeeping. b302/b303 are taken on other branches → **b304**.
+**(b) Conflicts with rules / constructs**
+- one place per thing: the API base becomes ONE file per artifact — web `public/config.js` (`window.CB_API`, the name `till.html:6411` already reads), counter `connector.json` (served by till.js as `/config.js`). The committed default in `public/config.js` IS the production address (Vercel has no per-deploy config step today) — the one allow-listed literal.
+- widen, not copy: the ledger is the existing schema path (`tools/sim-load.cjs` applySchema) MOVED into `tools/migrate.cjs` and widened; sim-load keeps `--schema`/`--schema-only` by calling it. SigV4 lives inside `lib/storage-object.js` as a sibling transport, same put/get/del. Two public-base env names (`PUBLIC_API_BASE`, `PUBLIC_API_URL`) read in one helper.
+- no money, tax, chit, rail or UI change; no new route (the CTP manifest exists; /health gains `web`).
+**(c) Simpler way**: the owner could point DATABASE_URL straight at the pooler and drop the fallback entirely — offered in HOSTING.md as the recommended prod value; DB_POOLER_URL keeps "direct first, then pooler" identical for those who want it.
+**(d) Risks**
+- 🔴 PROD DB: after this lands, a prod that reached the DB through the guessed pooler has NO fallback until `DB_POOLER_URL` (or a pooler DATABASE_URL) is set → the owner sets the env BEFORE merging api. TLS default: sealed env with no `sslmode` keeps today's TLS-unverified for every host (no host guess); dev defaults to pg's (no TLS); the URL's `sslmode`/`PGSSLMODE` always wins.
+- counter: existing kits' `connector.json` has no `web`, and an old till.js serves no /config.js while the new till.html arrives live → cbHome keeps its vercel default ONE more round as the named exception (guard baseline, debt).
+- uptime/governance workflows read repo variable `API_URL` — red until the owner sets it (named).
+- seeded pictures become relative `/pics/…` unless `PUBLIC_WEB_BASE` is set (prod value given).
+- twin landing: api first (env set before), then web. No engines change.
+**(e) VERDICT: BUILD WITH CHANGES** — (1) the till's back-office link keeps one guarded vercel default (old kits); (2) `governance.yml` fixed with uptime; (3) migration is b304; (4) the ledger runner is `tools/migrate.cjs` (moved from sim-load); (5) the guard covers shipped code (web `public/`+`index.html`, api runtime + kit + workflows), not e2e/dev scripts.

@@ -94,7 +94,8 @@ const big = (bytes) => JSON.stringify({ pad: 'x'.repeat(bytes) });
   ok(K.known(Object.assign(new Error('x'), { type: 'entity.too.large', status: 413, limit: 262144 })).body.message.indexOf('256 KB') >= 0, 'the 413 says the budget in KB');
   const dbSrc = fs.readFileSync(path.join(API, 'db', 'index.js'), 'utf8');
   ok(/client\.query\(beginSql\(\)\)/.test(dbSrc) && /SET LOCAL statement_timeout/.test(dbSrc), 'withTransaction sets the statement deadline on BEGIN\'s own trip');
-  ok((dbSrc.match(/armPool\(new Pool\(/g) || []).length === 2, 'both pools (direct and pooler) are armed');
+  /* HX1: ONE pool site serves every configured attempt (DATABASE_URL, then DB_POOLER_URL) — so one armPool covers both */
+  ok((dbSrc.match(/armPool\(new Pool\(/g) || []).length === 1 && /for \(const a of plan\)/.test(dbSrc), 'every pool (DATABASE_URL or DB_POOLER_URL) is armed — one site');
 
   /* ── server.js wiring order ── */
   const s = fs.readFileSync(path.join(API, 'server.js'), 'utf8');

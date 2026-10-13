@@ -78085,6 +78085,31 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-08T09:50:56+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/hosting-neutral.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "NOTHING IN THE SHIPPED CODE IS BOUND TO ONE PLATFORM BY ACCIDENT (HX1).",
+   "claim": "NOTHING IN THE SHIPPED CODE IS BOUND TO ONE PLATFORM BY ACCIDENT (HX1).",
+   "priority": "High",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.unit · unit · 150 lines. Run: node chitbridge-api/tests/hosting-neutral.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.unit",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-13T11:00:00+05:30"
   }
  ]
 }

@@ -147,7 +147,10 @@ router.get('/download/:id', authIfOffered, async (req, res) => {
   const c = CATALOGUE.find((x) => x.id === req.params.id);
   if (!c) return res.status(404).json({ error: 'Not found' });
   const adapter = c.adapters.includes(String(req.query.adapter || '')) ? String(req.query.adapter) : c.default_adapter;
-  const base = process.env.PUBLIC_API_BASE || (req.protocol + '://' + req.get('host'));
+  const base = require('../lib/public-base').apiBase(req);
+  /* HX1: the site the counter's "open ChitBridge" link opens — PUBLIC_WEB_BASE, else the page that asked for the kit (its Origin) */
+  const origin = String(req.get('origin') || '');
+  const web = require('../lib/public-base').webBase() || (/^https?:\/\/[^/\s]+$/.test(origin) ? origin : null);
   /* ⭐ THE KEY IS INSIDE (Athi, 2026-09-06: "download option should autofill everything"): a session download mints a connector key named
      for this kit and writes it into connector.json — the "shown once" is the zip itself. `configured:false` sends start.cmd through setup
      (Tally port, company, ledgers) before it ever watches. An anonymous download, or the 20-key limit, falls back to the placeholder. */
@@ -160,7 +163,7 @@ router.get('/download/:id', authIfOffered, async (req, res) => {
     try { minted = await require('./keys').mint(auth.entityOf(req), req.identity, { name: 'kit ' + c.id + ' · ' + new Date().toISOString().slice(0, 10), scopes: scopes }); key = minted.key; }
     catch (e) { console.log('kit download: key not minted —', e && e.message); }
   }
-  const cfg = { api: base, key, configured: false, adapter, name: c.name,
+  const cfg = { api: base, web, key, configured: false, adapter, name: c.name,
                 tally: { url: 'http://localhost:9000', company: null, partyLedger: 'Cash', salesLedger: 'Sales', voucherType: 'Sales' }, csv: { products: 'products.csv', orders: 'orders' },
                 zoho: { base: 'https://www.zohoapis.in', org: '', token: '', customer_name: 'Walk-in' }   /* blank, never a placeholder: setup fills these and a placeholder would pass for an answer */ };
   const files = kitFiles(adapter).concat([{ name: 'chitbridge-connector/connector.json', data: JSON.stringify(cfg, null, 2) + '\n' },

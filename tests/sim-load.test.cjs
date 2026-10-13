@@ -40,7 +40,13 @@ const WRITE_RE = /\b(INSERT\s+INTO|UPDATE)\s+(chit_header|chit_detail|chit_statu
 ok('no raw INSERT/UPDATE into a tenant table — bills, parties, products, the ledger all go through the app', !WRITE_RE.test(src), (WRITE_RE.exec(src) || [''])[0]);
 ok('DATABASE_URL is set from --db before server.js loads (dotenv cannot redirect it)', src.indexOf('process.env.DATABASE_URL = DB') < src.indexOf("require(path.join(API, 'server.js'))"));
 ok('a sealed NODE_ENV is refused', /isSealed\(\)\) die\(/.test(src));
-ok('the schema step refuses a database that already has tables', /already has tables/.test(src));
+/* HX1: the schema step is tools/migrate.cjs — a database with tables runs only what its ledger lacks, and one with an EMPTY ledger is left alone */
+ok('the schema step is tools/migrate.cjs (one chain, with the ledger)', /require\('\.\/migrate\.cjs'\)\.apply\(DB/.test(src));
+ok('migrate leaves a database with tables and an empty ledger alone', /has tables and ' \+ \(hadLedger \? 'its ledger is empty'/.test(fs.readFileSync(path.join(__dirname, '..', 'tools', 'migrate.cjs'), 'utf8')));
+ok('--schema-only (HX0, the compose migrate job) is the same schema step and nothing else: no shop, no api', (() => {
+  const body = (/async function schemaOnly\(\) \{([\s\S]*?)\n\}/.exec(src) || [])[1] || '';
+  return /await applySchema\(\)/.test(body) && !/server\.js|startApi|\/api\//.test(body) && /if \(SCHEMA_ONLY\) return schemaOnly\(\)/.test(src);
+})());
 ok('the shop walks the Country setup door (CS1) before the books open — never a raw write to identities / entity_governance', /\/api\/governance\/country-setup/.test(src) && src.indexOf('/api/governance/country-setup') < src.indexOf('/api/books/enable'));
 ok('CX0: the loader carries an IN, an AU and an AE shop, and reads currency · year · heads from the PACK (never a second table)',
    /const SHOPS = \{[\s\S]*?\bIN:[\s\S]*?\bAU:[\s\S]*?\bAE:/.test(src) && /packFor\(COUNTRY\)/.test(src) && /PACK\.currency/.test(src) && /PACK\.fiscalYear\.startMonth/.test(src)

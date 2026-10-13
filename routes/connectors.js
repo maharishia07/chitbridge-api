@@ -442,7 +442,7 @@ router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').i
     const cfg = actor.connector_config || {};
     if (actor.connector_type === 'iot') {
       return res.json({ type: 'iot', mode: cfg.mode || 'push',
-        endpoint: cfg.endpoint || 'https://chitbridge-api-production.up.railway.app  (HTTPS · POST /api/connectors/ingest)',
+        endpoint: cfg.endpoint || (require('../lib/public-base').apiBase(req) + '  (HTTPS · POST /api/connectors/ingest)'),   /* HX1: this api's own address */
         note: 'ActorKey is shown once at creation — Regenerate to re-issue. Flash Endpoint + ActorKey on the Pi; it publishes these BridgeIds.',
         publishes: conns.rows.map(c => ({ bridge_id: c.bridge_id, ref: c.ref, topic: (c.conn_config || {}).topic || null })) });
     }
