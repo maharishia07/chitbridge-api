@@ -3,7 +3,8 @@
   "grammar": "^[a-z][a-z0-9_]*[.][a-z][a-z0-9_]*[.][a-z][a-z0-9_]*@[0-9]+[.][0-9]+$",
   "base": "chit.base.detail@1.0",
   "pages": [
-    { "name": "chit.base.detail", "version": "1.0", "script": "app.html", "says": "the detail pane built into the app (design 1, and design 2 from app/cap-chit2.js); B0 gives it its own file (M53)" },
+    { "name": "chit.base.detail", "version": "1.0", "script": "crm.html", "says": "the chit page in CB CRM (crm.html#/chit/<id>): the chit sheet mounted full-page (app/chit-sheet.js CBSheet.mount, CRM2); the workshop's Task pane (app.html design 1, design 2 from app/cap-chit2.js) still opens it there until M53 is designed" }
+,
     { "name": "showcase.designer.gallery", "version": "1.0", "script": "app/showcase-templates.js", "says": "gallery-first: photo grid, enquiry face (designer, cards); sections under one data contract (S2)" },
     { "name": "showcase.food.menu", "version": "1.0", "script": "app/showcase-templates.js", "says": "menu: categories and rows, order face (food); sections under one data contract (S2)" },
     { "name": "showcase.paint.specs", "version": "1.0", "script": "app/showcase-templates.js", "says": "spec wall: rows with unit/size chips, quote face (paint, hardware); sections under one data contract (S2)" },
