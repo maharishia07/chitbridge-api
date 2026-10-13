@@ -157,4 +157,33 @@ Not read anywhere: `mysql2` is a dependency with no `require`. The `/health` `en
 
 ## Running it anywhere — deploy/compose.yml
 
-<!-- compose section: filled by the round -->
+The stack (HX0): `db` Postgres 16 · `migrate` one shot (`tools/sim-load.cjs --schema-only` = `000_baseline` → `part2` → every
+`bNNN`, then `cb_app`'s password) · `api` this repo's `Dockerfile` (`node:20-alpine`, user `node`, `/health` healthcheck,
+`NODE_ENV=production`) · `web` chitbridge-web's `Dockerfile` (unprivileged nginx, the `vercel.json` rewrite) · `mailsink` (profile
+`proof` only: a Resend stand-in so a walk can read the sign-in code). Ports bind to 127.0.0.1 — put TLS in front for anything public.
+
+```
+cp deploy/env.example deploy/.env      # fill it (the variables below)
+docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build --wait
+bash deploy/proof.sh                    # or: up → load a shop → /health → web → stack walk → down -v (≈ 90 s on a runner)
+```
+
+What a platform script fills (`deploy/.env`; the compose file maps them onto the api variables above):
+
+| Name | Required? | Example | Secret? | Goes to |
+|---|---|---|---|---|
+| `POSTGRES_PASSWORD` | always | `<long random>` | yes | the `postgres` owner (schema, migrate, the loader) |
+| `CB_APP_PASSWORD` | always | `<long random>` | yes | the api's `DATABASE_URL` as `cb_app` — NOSUPERUSER NOBYPASSRLS, so row-level security holds |
+| `JWT_SECRET` | always | `<64 random chars>` | yes | api `JWT_SECRET` |
+| `RESEND_API_KEY` · `FROM_EMAIL` | always (sealed) | `re_<key>` · `noreply@your-domain.example` | key: yes | api sign-in mail |
+| `RESEND_BASE_URL` | proof only | `http://mailsink:8025` | no | the Resend SDK endpoint |
+| `WEB_ORIGIN` | always | `https://app.your-domain.example` | no | api `ALLOWED_ORIGINS` |
+| `CB_API_BASE` | always | `https://api.your-domain.example` | no | web container: the api the pages call |
+| `S3_ENDPOINT` · `S3_KEY` | optional | — | key: yes | object store (Supabase Storage only today) |
+| `NODE_ENV` | optional | `production` | no | api; default `production` |
+| `DB_PORT` · `API_PORT` · `WEB_PORT` | optional | `5432` · `3000` · `8080` | no | host ports (127.0.0.1) |
+| `CB_WEB_DIR` | optional | `../../chitbridge-web` | no | where the web checkout is, for its image build |
+
+Fixed in `compose.yml` (not inputs): `DATABASE_URL` ends `?sslmode=disable` (the compose network is private; use
+`sslmode=no-verify`/`verify-full` for a managed database) · `DB_POOLER_FALLBACK=off` · `OTP_EMAIL_ENABLED=true`.
+⚠️ `migrate` applies the schema to an EMPTY database only (there is no migration ledger — a later `bNNN` is run by hand, as today).

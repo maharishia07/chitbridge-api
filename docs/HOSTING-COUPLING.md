@@ -1,6 +1,6 @@
 # Hosting coupling — every place ChitBridge is bound to Railway, Vercel or Supabase
 
-Audit by reading code, 2026-10-13 (branch `round/HX0`). Scope: api runtime (`server.js`, `lib/`, `routes/`, `middleware/`,
+Audit by reading code, 2026-10-13 (round HX0). Scope: api runtime (`server.js`, `lib/`, `routes/`, `middleware/`,
 `db/`, `src/`), the migrations, the ops scripts/workflows the team depends on, and the web (`index.html`, `public/`,
 `vercel.json`). The configuration contract (every env var, required or not) is `docs/HOSTING.md`.
 
@@ -28,7 +28,7 @@ No migration uses a Supabase-only role or schema.
 | Error text names Railway | `db/index.js:124` `NOT_CONNECTED` | code | "check DATABASE_URL in Railway environment variables" | Platform (cosmetic) | "check DATABASE_URL" |
 | Statement deadline via SET LOCAL (for Supabase's transaction pooler) | `db/index.js:57-67`, `lib/limits.js:47` | `DB_STATEMENT_TIMEOUT_MS` | 15000 | neutral (works direct or pooled) | — |
 | Session TZ pinned to UTC | `db/index.js:24`, `:63` | code | UTC | neutral | — |
-| App DB role | `migrations/migration_b48_cb_app_role.sql:22-36` | `DATABASE_URL` user | whatever the URL names | 🟡 RLS bites only for a NOSUPERUSER NOBYPASSRLS role (`cb_app`). The compose URL (`deploy/compose.yml` `x-db-url`) logs in as `postgres` = superuser → **RLS bypassed** | create `cb_app` with a password out of band; point `DATABASE_URL` at it; `npm run db:role` (`scripts/check-db-role.js`) proves it |
+| App DB role | `migrations/migration_b48_cb_app_role.sql:22-36` | `DATABASE_URL` user | whatever the URL names | 🟡 RLS bites only for a NOSUPERUSER NOBYPASSRLS role (`cb_app`). The compose api logs in as `cb_app` (`deploy/compose.yml` `x-app-url`; the migrate job sets its password) — proved: the stack walk is green with RLS holding. Production's role is not visible from code | `npm run db:role` (`scripts/check-db-role.js`) on each platform |
 | Unused driver | `package.json` `mysql2` | — | — | dead dependency (no `require` anywhere) | drop |
 
 **T1 — does `?sslmode=disable` win? Yes.** `node_modules/pg@8.22.0/lib/connection-parameters.js:59-60` does
