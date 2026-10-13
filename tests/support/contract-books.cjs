@@ -220,6 +220,22 @@ async function captureBooks() {
     await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, confirm: true, as_at: '2027-04-01' }, '/move-in/import');
 
 
+    /* ── PR1 the parallel-run compare: the list, a Tally XML read at once, a Tally CSV's columns guessed, a snapshot kept (and the same part again → 409), the compare ── */
+    const px = (f) => require('fs').readFileSync(path.join(H.API, 'tests', 'fixtures', 'parallel-run', f), 'utf8');
+    await q('GET', '/compare', null, '/compare');
+    await q('POST', '/compare/preflight', { part: 'tb', source: 'tally', xml: px('tally-tb-ledgers.xml') }, '/compare/preflight');
+    const rp = await q('POST', '/compare/preflight', { part: 'ret', source: 'tally', csv: px('tally-gstr3b.csv') }, '/compare/preflight');
+    const snap = await q('POST', '/compare/snapshots', { label: 'Tally H1', source: 'tally', part: 'tb', period_to: '2026-09-30', xml: px('tally-tb-ledgers.xml'), file_name: 'tb.xml' }, '/compare/snapshots');
+    const sid = snap.body && snap.body.snapshot_id;
+    if (sid) {
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'pl', xml: px('tally-pl-report.xml') }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'bs', xml: px('tally-bs-report.xml') }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'ret', csv: px('tally-gstr3b.csv'), decisions: ((rp.body && rp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field })) }, '/compare/snapshots');
+      await q('POST', '/compare/snapshots', { snapshot_id: sid, part: 'tb', xml: px('tally-tb-ledgers.xml') }, '/compare/snapshots');
+      await q('GET', '/compare', null, '/compare');
+      await q('GET', '/compare/' + sid, null, '/compare/:id');
+    }
+
     /* ── BAS1: the shop's OWN return, prepared from its books — an Australian shop (BAS, full), a UAE shop (VAT201: first without the FTA stagger → `needs`, then with it),
           and the Indian shop, whose /returns is a 422 (its GSTR comes from the rail). The 200s merge into one example; the 422 is its own entry. ── */
     const AU_SHOP = 'aaaaaaaa-1111-4111-8111-111111111111', AE_SHOP = 'eeeeeeee-1111-4111-8111-111111111111';

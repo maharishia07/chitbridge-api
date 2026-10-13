@@ -921,6 +921,113 @@ router.post('/move-in/import', auth, owner, on, async (req, res) => {
     res.json(out);
   } catch (err) { fail(res, err); }
 });
+/* ── PARALLEL RUN (PR1) — an auditor's Tally / Xero / QBO period beside ours, line by line (lib/parallel-run). Their figures are a SNAPSHOT: read from export
+   files, kept insert-only (b309 books_compare_part), NEVER posted. Who may: the owner, or the shop's auditor (a whole-entity login that may see money —
+   lib/access seesWholeEntity + lib/cost canRead); the server answers may + why, the screen greys with the sentence. ── */
+const PR = require('../lib/parallel-run');
+const COMPARE_NOT_READY = 'Comparing needs a database update (b309) that is still to run.';
+async function compareMay(req, e) {
+  if (req.api_key) return { may: false, why: 'Sign in to compare the books.' };
+  if (isOwner(req)) return { may: true, why: null };
+  if (require('../lib/access').seesWholeEntity(req.identity) && await require('../lib/cost').canRead(req, e)) return { may: true, why: null };
+  return { may: false, why: 'Only the owner or the shop\'s auditor may compare the books.' };
+}
+async function comparer(req, res, next) {
+  try { const m = await compareMay(req, ctx(req)); if (!m.may) return res.status(403).json({ error: m.why, message: m.why }); next(); } catch (err) { fail(res, err); }
+}
+const notMigrated = () => { const x = new Error(COMPARE_NOT_READY); x.code = 'BOOKS_NOT_MIGRATED'; return x; };
+/** GET /compare → { currency, ready, why, may: { load: { may, why } }, snapshots: [{ snapshot_id, label, source, period_from, period_to, currency, parts, lines, created_at }] } — one transaction */
+router.get('/compare', auth, noKey, on, comparer, async (req, res) => {
+  try {
+    const e = ctx(req);
+    const out = await withEntity(e, async (h) => { const ready = await S.compareReady(); return { ready, snapshots: ready ? await S.compareSnapshots(h, e) : [] }; });
+    res.json({ currency: curOf(req), ready: out.ready, why: out.ready ? null : COMPARE_NOT_READY, may: { load: { may: out.ready, why: out.ready ? null : COMPARE_NOT_READY } },
+      parts: PR.PARTS.map((k) => ({ part: k, label: PR.PART_WORD[k] })), sources: PR.SOURCES.map((k) => ({ source: k, label: PR.SOURCE_WORD[k] })), snapshots: out.snapshots });
+  } catch (err) { fail(res, err); }
+});
+/** POST /compare/preflight { part, source, csv | xlsx | xml, sheet?, header_row? } → { part, source, format: table | tally_xml, headers, fields, guess, missing, ready, rows_total, sample } — nothing is read of the shop, nothing written */
+router.post('/compare/preflight', auth, noKey, on, comparer, async (req, res) => {
+  try {
+    const b = req.body || {}, part = PR.partOf(b.part), source = PR.sourceOf(b.source);
+    if (b.xml && source !== 'tally') throw Object.assign(new Error('Only a Tally export comes as XML — export ' + PR.SOURCE_WORD[source] + '\'s report as CSV or Excel.'), { code: 'BOOKS_BAD_REQUEST' });
+    res.json(Object.assign({ part, source }, PR.preflight(b, part, curOf(req))));
+  } catch (err) { fail(res, err); }
+});
+/** POST /compare/snapshots { snapshot_id?, label, source, part, period_from?, period_to, file_name?, csv | xlsx | xml, decisions? } → { snapshot_id, part, label, source, period_from, period_to, rows, skipped }
+ *  A new snapshot with its first part, or one more part on a snapshot (its label, source and period are kept). Insert-only: a part it already has → 409. One transaction. */
+router.post('/compare/snapshots', auth, noKey, on, comparer, async (req, res) => {
+  try {
+    const b = req.body || {}, e = ctx(req), part = PR.partOf(b.part), cur = curOf(req);
+    const out = await withEntity(e, async (h) => {
+      if (!(await S.compareReady())) throw notMigrated();
+      let head;
+      if (b.snapshot_id) {
+        if (!UUID.test(String(b.snapshot_id))) throw Object.assign(new Error('Which snapshot?'), { code: 'BOOKS_BAD_REQUEST' });
+        const have = await S.compareParts(h, e, String(b.snapshot_id));
+        if (!have.length) { const x = new Error('That snapshot is not here.'); x.code = 'BOOKS_NOT_FOUND'; throw x; }
+        if (have.some((p) => p.part === part)) throw Object.assign(new Error('This snapshot already has their ' + PR.PART_WORD[part].toLowerCase() + ' — start a new snapshot for a fresh file.'), { status: 409 });
+        head = { snapshot_id: String(b.snapshot_id), label: have[0].label, source: have[0].source, period_from: have[0].period_from, period_to: have[0].period_to };
+      } else {
+        const to = dateQ(b.period_to, null), from = dateQ(b.period_from, null);
+        if (!to) throw Object.assign(new Error('Pick the last day of their period.'), { code: 'BOOKS_BAD_REQUEST' });
+        if (from && from > to) throw Object.assign(new Error('The period starts after it ends.'), { code: 'BOOKS_BAD_REQUEST' });
+        const label = String(b.label || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+        if (!label) throw Object.assign(new Error('Give the snapshot a name.'), { code: 'BOOKS_BAD_REQUEST' });
+        head = { snapshot_id: require('crypto').randomUUID(), label, source: PR.sourceOf(b.source), period_from: from || fyStart(req, to), period_to: to };
+      }
+      if (b.xml && head.source !== 'tally') throw Object.assign(new Error('Only a Tally export comes as XML.'), { code: 'BOOKS_BAD_REQUEST' });
+      const r = PR.read(b, part, cur);
+      if (!r.rows.length) throw Object.assign(new Error('Nothing to compare in that file — every row was skipped or blank.'), { refused: true });
+      const id = await S.insertComparePart(h, e, Object.assign({}, head, { part, currency: cur, file_name: b.file_name ? String(b.file_name).slice(0, 120) : null, rows: r.rows, by: byOf(req) }));
+      if (!id) throw Object.assign(new Error('This snapshot already has their ' + PR.PART_WORD[part].toLowerCase() + '.'), { status: 409 });
+      return Object.assign({}, head, { part, rows: r.rows.length, skipped: r.skipped });
+    });
+    res.json(out);
+  } catch (err) { fail(res, err); }
+});
+/** the compare for one snapshot: its parts and our figures for its period in ONE transaction (chart · the period's entry lines · TB / P&L / BS · the BAS / VAT201);
+ *  India's GSTR-3B is the rail's own read (lib/tax-copy ledgerFor) after it — the one second read. Each of our parts that cannot be read is said, not thrown. */
+async function compareRead(req) {
+  const e = ctx(req), id = String(req.params.id);
+  if (!UUID.test(id)) { const x = new Error('Not found'); x.code = 'BOOKS_NOT_FOUND'; throw x; }
+  const pack = B.packOf(req.books), cur = curOf(req);
+  const got = await withEntity(e, async (h) => {
+    if (!(await S.compareReady())) throw notMigrated();
+    const parts = await S.compareParts(h, e, id);
+    if (!parts.length) { const x = new Error('That snapshot is not here.'); x.code = 'BOOKS_NOT_FOUND'; throw x; }
+    const to = parts[0].period_to, from = parts[0].period_from || fyStart(req, to), has = (k) => parts.some((p) => p.part === k), ours = {};
+    /* an engine's refusal (a P&L across two years, a return period not known) is said on that part; a database error is not swallowed */
+    const tsp = async (fn) => { try { return await fn(); } catch (err) { if (err && /^[0-9A-Z]{5}$/.test(String(err.code || '')) && !err.refused) throw err; return err instanceof Error ? err : new Error(String(err)); } };
+    const chart = await S.accounts(h, e), lines = await S.entryLines(h, e, from, to, null, null);
+    if (has('tb')) ours.tb = await tsp(() => B.trialBalance(h, e, to));
+    if (has('pl')) ours.pl = await tsp(() => B.profitAndLoss(h, e, from, to));
+    if (has('bs')) ours.bs = await tsp(() => B.balanceSheet(h, e, to, B.entityBasisOf(req.books)));
+    if (has('ret') && pack.id !== 'IN') {
+      const ret = parts.find((p) => p.part === 'ret'), full = (ret.rows || []).some((r) => /^G(2|3|10|11)\b/i.test(String(r.name)));
+      ours.ret = await tsp(() => P().taxReturn(e, req.books, { on: to, simpler: full ? '0' : undefined }, h));
+    }
+    return { parts, chart, lines, ours, from, to };
+  });
+  if (got.parts.some((p) => p.part === 'ret') && pack.id === 'IN') {
+    try { const C = require('../lib/tax-copy'), T = require('../lib/tax-lines'), l = await C.ledgerFor(e, got.to.slice(0, 7)); got.ours.ret = Object.assign(PR.gstr3bBoxes(T.gstr3b(l.ledger, l.me, l.bounds.period)), { short: 'GSTR-3B' }); }
+    catch (err) { got.ours.ret = new Error('Our GSTR-3B for ' + got.to.slice(0, 7) + ' could not be read from the rail.'); got.ours.ret.refused = true; }
+  }
+  const r = PR.compare({ parts: got.parts, chart: got.chart, ours: got.ours, lines: got.lines, currency: cur, from: got.from, to: got.to });
+  const p0 = got.parts[0];
+  return Object.assign({ currency: cur, snapshot: { snapshot_id: p0.snapshot_id, label: p0.label, source: p0.source, source_word: PR.SOURCE_WORD[p0.source], period_from: got.from, period_to: got.to, parts: got.parts.map((p) => p.part) } }, r);
+}
+/** GET /compare/:id → { currency, snapshot, parts: { tb|pl|bs|ret: { part, title, from, to, file_name, lines: [{ key, status, name, their_name, their_code, their_line, our_codes, theirs_minor,
+ *  ours_minor, diff_minor, cause, why, entries: [{ entry_id, entry_no, date, amount_minor, chit_id, ref, kind, rail }], entries_n, open }], counts, error } }, counts, effort } — differences first */
+router.get('/compare/:id', auth, noKey, on, comparer, async (req, res) => { try { res.json(await compareRead(req)); } catch (err) { fail(res, err); } });
+/** GET /compare/:id/csv → the same compare as a .csv for the auditor's file */
+router.get('/compare/:id/csv', auth, noKey, on, comparer, async (req, res) => {
+  try {
+    const r = await compareRead(req);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="parallel-run-' + r.snapshot.period_to + '.csv"');
+    res.send(PR.csv(r, r.currency));
+  } catch (err) { fail(res, err); }
+});
 /** POST /periods/:fy/:p/lock { reason, hard } · /unlock { reason } → { period: { fiscal_year, period, status } } */
 router.post('/periods/:fy/:p/:act', auth, owner, on, async (req, res) => {
   try {

@@ -659,6 +659,265 @@
    },
    "optional": []
   },
+  "GET /api/books/compare": {
+   "status": 200,
+   "example": {
+    "currency": "INR",
+    "ready": true,
+    "why": null,
+    "may": {
+     "load": {
+      "may": true,
+      "why": null
+     }
+    },
+    "parts": [
+     {
+      "part": "tb",
+      "label": "Trial balance"
+     }
+    ],
+    "sources": [
+     {
+      "source": "tally",
+      "label": "Tally"
+     }
+    ],
+    "snapshots": [
+     {
+      "snapshot_id": "6e48afb3-ea03-4e8e-a984-d66d7bd90a5f",
+      "label": "Tally H1",
+      "source": "tally",
+      "period_from": "2026-04-01",
+      "period_to": "2026-09-30",
+      "currency": "INR",
+      "parts": [
+       "bs"
+      ],
+      "lines": 22,
+      "created_at": "2026-09-29T10:00:53.000Z"
+     }
+    ]
+   },
+   "optional": []
+  },
+  "GET /api/books/compare/:id": {
+   "status": 200,
+   "note": "PR1: parts carries only the parts the snapshot has (tb · pl · bs · ret); effort.by_kind is keyed by the entry kinds the period has (free)",
+   "example": {
+    "currency": "INR",
+    "snapshot": {
+     "snapshot_id": "6e48afb3-ea03-4e8e-a984-d66d7bd90a5f",
+     "label": "Tally H1",
+     "source": "tally",
+     "source_word": "Tally",
+     "period_from": "2026-04-01",
+     "period_to": "2026-09-30",
+     "parts": [
+      "bs"
+     ]
+    },
+    "parts": {
+     "bs": {
+      "part": "bs",
+      "title": "Balance sheet",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "file_name": null,
+      "source": "tally",
+      "lines": [
+       {
+        "key": "bs:total",
+        "total": true,
+        "their_line": 3,
+        "their_name": "Total assets",
+        "their_code": null,
+        "status": "different",
+        "name": "Total assets",
+        "our_codes": [
+         "1200"
+        ],
+        "ours_minor": 5118000,
+        "theirs_minor": 118000,
+        "diff_minor": 5000000,
+        "cause": "total",
+        "why": "The totals are ₹50,000.00 apart — the lines below say where.",
+        "entries": [
+         {
+          "entry_id": "00000000-0000-4000-8000-000000000115",
+          "entry_no": "JV/2026-27/000001",
+          "date": "2026-09-30",
+          "amount_minor": 5000000,
+          "chit_id": null,
+          "ref": null,
+          "kind": "closing_stock",
+          "rail": false
+         }
+        ],
+        "entries_n": 0,
+        "open": {
+         "code": "1200",
+         "from": "2026-04-01",
+         "to": "2026-09-30"
+        }
+       }
+      ],
+      "counts": {
+       "equal": 3,
+       "different": 0,
+       "gap": 0,
+       "only_ours": 5
+      },
+      "error": null,
+      "note": null,
+      "form": null
+     },
+     "pl": {
+      "part": "pl",
+      "title": "Profit and loss",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "file_name": null,
+      "source": "tally",
+      "lines": [
+       {
+        "key": "pl:total",
+        "total": true,
+        "their_line": 2,
+        "their_name": "Net profit",
+        "their_code": null,
+        "status": "different",
+        "name": "Net profit",
+        "our_codes": [
+         "5000"
+        ],
+        "ours_minor": 4810000,
+        "theirs_minor": -150000,
+        "diff_minor": 4960000,
+        "cause": "total",
+        "why": "The totals are ₹49,600.00 apart — the lines below say where.",
+        "entries": [
+         {
+          "entry_id": "00000000-0000-4000-8000-000000000115",
+          "entry_no": "JV/2026-27/000001",
+          "date": "2026-09-30",
+          "amount_minor": -5000000,
+          "chit_id": null,
+          "ref": null,
+          "kind": "closing_stock",
+          "rail": false
+         }
+        ],
+        "entries_n": 0,
+        "open": null
+       }
+      ],
+      "counts": {
+       "equal": 1,
+       "different": 2,
+       "gap": 0,
+       "only_ours": 0
+      },
+      "error": null,
+      "note": null,
+      "form": null
+     },
+     "ret": {
+      "part": "ret",
+      "title": "Return",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "file_name": null,
+      "source": "tally",
+      "lines": [],
+      "counts": null,
+      "error": "Our GSTR-3B for 2026-09 could not be read from the rail."
+     },
+     "tb": {
+      "part": "tb",
+      "title": "Trial balance",
+      "from": "2026-04-01",
+      "to": "2026-09-30",
+      "file_name": "tb.xml",
+      "source": "tally",
+      "lines": [
+       {
+        "key": "tb:total",
+        "total": true,
+        "their_line": 9,
+        "their_name": "Total debits",
+        "their_code": null,
+        "status": "different",
+        "name": "Total debits",
+        "our_codes": [
+         "6010"
+        ],
+        "ours_minor": 9608000,
+        "theirs_minor": 377000,
+        "diff_minor": 9231000,
+        "cause": "total",
+        "why": "The totals are ₹92,310.00 apart — the lines below say where.",
+        "entries": [
+         {
+          "entry_id": "00000000-0000-4000-8000-000000000112",
+          "entry_no": "MJ/2026-27/000001",
+          "date": "2026-09-30",
+          "amount_minor": 120000,
+          "chit_id": null,
+          "ref": null,
+          "kind": "accrual",
+          "rail": false
+         }
+        ],
+        "entries_n": 0,
+        "open": {
+         "code": "2210",
+         "from": "2026-04-01",
+         "to": "2026-09-30"
+        }
+       }
+      ],
+      "counts": {
+       "equal": 4,
+       "different": 5,
+       "gap": 1,
+       "only_ours": 5
+      },
+      "error": null,
+      "note": null,
+      "form": null
+     }
+    },
+    "counts": {
+     "equal": 8,
+     "different": 7,
+     "gap": 1,
+     "only_ours": 10
+    },
+    "effort": {
+     "from": "2026-04-01",
+     "to": "2026-09-30",
+     "entries": 7,
+     "structured": 2,
+     "keyed": 5,
+     "by_kind": {
+      "purchase_bill": 2,
+      "sale_bill": 1,
+      "closing_stock": 1,
+      "gst_setoff": 1,
+      "accrual": 2
+     }
+    }
+   },
+   "optional": [
+    "parts.bs.lines[].total",
+    "parts.pl.lines[].total",
+    "parts.tb.lines[].total"
+   ],
+   "free": [
+    "effort.by_kind"
+   ]
+  },
   "GET /api/books/daybook": {
    "status": 200,
    "example": {
@@ -1402,7 +1661,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-11T17:47:30.159Z",
+      "last_at": "2026-10-11T17:49:06.820Z",
       "late": true,
       "today": false
      }
@@ -1438,13 +1697,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-12T17:47:30.121Z",
+      "due_at": "2026-10-12T17:49:06.781Z",
       "due_day": "2026-10-12",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-13T17:47:30.123Z",
+      "created_at": "2026-10-13T17:49:06.783Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -1714,7 +1973,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-11T17:47:30.047Z",
+      "due_at": "2026-10-11T17:49:06.710Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -1789,7 +2048,7 @@
    "example": {
     "agreements": [
      {
-      "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+      "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
       "entity_id": "11111111-1111-4111-8111-111111111111",
       "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
       "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -1931,7 +2190,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -2102,7 +2361,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-13T16:47:30.275Z",
+    "created_at": "2026-10-13T16:49:06.939Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -2317,7 +2576,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-13T16:47:30.275Z",
+      "created_at": "2026-10-13T16:49:06.939Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2406,7 +2665,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-13T17:47:30.887Z"
+     "shared_at": "2026-10-13T17:49:07.576Z"
     }
    },
    "optional": []
@@ -2459,13 +2718,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-12T17:47:30.121Z",
+     "due_at": "2026-10-12T17:49:06.781Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-13T17:47:30.130Z",
-     "created_at": "2026-10-13T17:47:30.123Z",
+     "done_at": "2026-10-13T17:49:06.790Z",
+     "created_at": "2026-10-13T17:49:06.783Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -2610,6 +2869,94 @@
     "code": "PERIOD_LOCKED",
     "error": "That month is locked. Open it again (with a reason) to record this.",
     "message": "That month is locked. Open it again (with a reason) to record this."
+   },
+   "optional": []
+  },
+  "POST /api/books/compare/preflight": {
+   "status": 200,
+   "note": "PR1: sample[] rows are keyed by the file own headers (free), as move-in",
+   "example": {
+    "part": "tb",
+    "source": "tally",
+    "format": "tally_xml",
+    "headers": [
+     "Box"
+    ],
+    "fields": [
+     {
+      "key": "box",
+      "label": "Box",
+      "required": true
+     }
+    ],
+    "guess": [
+     {
+      "incoming": "Box",
+      "field": "box",
+      "how": "known",
+      "confidence": 1,
+      "why": "\"Box\" is what return exports call box"
+     }
+    ],
+    "missing": [],
+    "ready": true,
+    "rows_total": 10,
+    "sample": [
+     {
+      "line": 1,
+      "name": "Ravi Stores",
+      "code": null,
+      "group": "Sundry Debtors",
+      "side": null,
+      "dr_minor": 118000,
+      "cr_minor": 0,
+      "amount_minor": 118000,
+      "Box": "3.1(a) Taxable value",
+      "Amount": "1000.00"
+     }
+    ],
+    "sheet": null,
+    "sheets": null,
+    "header_row": 1
+   },
+   "optional": [
+    "header_row",
+    "sample[].Amount",
+    "sample[].Box",
+    "sample[].amount_minor",
+    "sample[].code",
+    "sample[].cr_minor",
+    "sample[].dr_minor",
+    "sample[].group",
+    "sample[].line",
+    "sample[].name",
+    "sample[].side",
+    "sheet",
+    "sheets"
+   ],
+   "free": [
+    "sample[]"
+   ]
+  },
+  "POST /api/books/compare/snapshots": {
+   "status": 200,
+   "example": {
+    "snapshot_id": "6e48afb3-ea03-4e8e-a984-d66d7bd90a5f",
+    "label": "Tally H1",
+    "source": "tally",
+    "period_from": "2026-04-01",
+    "period_to": "2026-09-30",
+    "part": "tb",
+    "rows": 10,
+    "skipped": []
+   },
+   "optional": []
+  },
+  "POST /api/books/compare/snapshots #409": {
+   "status": 409,
+   "example": {
+    "error": "This snapshot already has their trial balance — start a new snapshot for a fresh file.",
+    "message": "This snapshot already has their trial balance — start a new snapshot for a fresh file."
    },
    "optional": []
   },
@@ -2859,6 +3206,7 @@
   },
   "POST /api/books/move-in/preflight": {
    "status": 200,
+   "note": "IM1: sample[] rows are keyed by the file's own headers (free); guess[].field is null for a column not read",
    "example": {
     "kind": "accounts",
     "source": "xero",
@@ -2921,10 +3269,14 @@
     "sample[].Expense Claims",
     "sample[].YTD Credit",
     "sample[].YTD Debit"
+   ],
+   "free": [
+    "sample[]"
    ]
   },
   "POST /api/books/move-in/preview": {
    "status": 200,
+   "note": "IM1: rows[].data is the planned write and its keys depend on the kind (free); refusal is the sentence or null",
    "example": {
     "kind": "accounts",
     "source": "xero",
@@ -2981,6 +3333,9 @@
     "rows[].data.note",
     "rows[].data.source_code",
     "totals"
+   ],
+   "free": [
+    "rows[].data"
    ]
   },
   "POST /api/books/payments": {
@@ -3367,13 +3722,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-12T17:47:30.121Z",
+     "due_at": "2026-10-12T17:49:06.781Z",
      "due_day": "2026-10-12",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-13T17:47:30.123Z",
+     "created_at": "2026-10-13T17:49:06.783Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -3488,9 +3843,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-13T17:47:30.120Z",
+     "at": "2026-10-13T17:49:06.780Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-13T17:47:30.120Z"
+     "created_at": "2026-10-13T17:49:06.780Z"
     }
    },
    "optional": []
@@ -3505,9 +3860,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-13T17:47:30.161Z",
+     "at": "2026-10-13T17:49:06.824Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-13T17:47:30.161Z"
+     "created_at": "2026-10-13T17:49:06.824Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -3522,7 +3877,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-13T17:47:30.162Z",
+     "created_at": "2026-10-13T17:49:06.824Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -3593,7 +3948,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3691,7 +4046,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3770,7 +4125,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3862,7 +4217,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -3950,7 +4305,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6976f6e6-805d-4048-a34c-0a144a927ffd",
+     "agreement_id": "d55535ef-61f7-4443-a71c-b43069f4f569",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4028,7 +4383,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4135,7 +4490,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4227,7 +4582,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "17eb3801-f073-415b-9457-189802ae9b19",
+     "agreement_id": "4a6cf220-a2d1-4af4-8f11-3ad0285f8d77",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4318,7 +4673,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4410,7 +4765,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4517,7 +4872,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "4da5426b-89b6-4c36-b605-d089bde7ea33",
+     "agreement_id": "6304ab23-d738-434f-9d63-a22a23cb95a3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
