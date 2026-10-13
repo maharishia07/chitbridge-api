@@ -1,5 +1,6 @@
 {
-  "api": "https://chitbridge-api-production.up.railway.app",
+  "api": "https://<your ChitBridge api — the kit download fills this>",
+  "web": "https://<your ChitBridge site>",
   "key": "PASTE THE KEY FROM SETTINGS › INTEGRATIONS (scope: connector)",
   "adapter": "tally",
   "tally": { "url": "http://localhost:9000", "company": null, "partyLedger": "Cash", "salesLedger": "Sales", "voucherType": "Sales" },

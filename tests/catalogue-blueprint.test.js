@@ -123,7 +123,7 @@ it('⭐ the demo pictures land on real products, and a shop that adopts the list
   const named = ['Cabbage', 'Capsicum', 'Garlic', 'Beetroot', 'Tomato', 'Celery', 'Carrot', 'Onion', 'Potato'];
   /* a picture keyed to a name no row carries would be dropped in silence — so every one must be found */
   for (const n of named)
-    assert.ok(veg.starter.some((p) => p.name === n && /^https:\/\/.+\/pics\/veg\//.test(p.image || '')), n + ' has no picture');
+    assert.ok(veg.starter.some((p) => p.name === n && /^(https?:\/\/[^/]+)?\/pics\/veg\//.test(p.image || '')), n + ' has no picture');   /* HX1: relative, or under PUBLIC_WEB_BASE */
   const minted = B.mint('veg', []);
   assert.strictEqual(minted.filter((p) => p.image).length, veg.starter.filter((p) => p.image).length,
     'the mint dropped a picture on the way to the shop');

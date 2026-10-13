@@ -25,11 +25,17 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    env:
+      API_URL: ${{ vars.API_URL }}   # HX1: the api this watches is a repository variable (Settings › Variables), never a host in this file
     steps:
+      - name: Which api
+        run: |
+          test -n "$API_URL" || { echo "::error::set the repository variable API_URL (docs/HOSTING.md) — the api this watchdog checks"; exit 1; }
+          echo "watching $API_URL"
       - name: The server answers
         run: |
           set -euo pipefail
-          body=$(curl -sS --max-time 20 --retry 2 --retry-delay 5 https://chitbridge-api-production.up.railway.app/health)
+          body=$(curl -sS --max-time 20 --retry 2 --retry-delay 5 "$API_URL/health")
           echo "$body"
           echo "$body" | grep -q '"status":"OK"'
 
@@ -38,7 +44,7 @@ jobs:
           set -euo pipefail
           # a public storefront read — no key, and it cannot answer without Postgres
           code=$(curl -sS -o /tmp/cat.json -w '%{http_code}' --max-time 25 --retry 2 --retry-delay 5 \
-                 https://chitbridge-api-production.up.railway.app/api/catalogue/tallytest)
+                 "$API_URL/api/catalogue/tallytest")
           echo "HTTP $code"
           test "$code" = "200"
           head -c 300 /tmp/cat.json
@@ -46,7 +52,7 @@ jobs:
       - name: It is still in the region we put it in
         run: |
           set -euo pipefail
-          region=$(curl -sS --max-time 20 https://chitbridge-api-production.up.railway.app/health | sed -n 's/.*"region":"\([^"]*\)".*/\1/p')
+          region=$(curl -sS --max-time 20 "$API_URL/health" | sed -n 's/.*"region":"\([^"]*\)".*/\1/p')
           echo "region=$region"
           # moved to Singapore on 2026-09-07 to sit beside the database in Mumbai; a silent move back would cost 3x on every call
           case "$region" in asia-southeast1*|southeast-asia) echo ok ;; *) echo "unexpected region: $region"; exit 1 ;; esac

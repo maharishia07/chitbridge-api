@@ -190,6 +190,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* HX1: where this installation is reached from outside (PUBLIC_API_BASE / PUBLIC_WEB_BASE) — hosting config, not a rule. (2026-10-13) */
+  'public-base.js',
   /* the field ledger's repo-reading helper (migration columns, form inputs, readers of a not-used field) — a build-time
      tool for tests/field-ledger.test.cjs, not a rule of the platform. (2026-10-09) */
   'field-ledger.js',

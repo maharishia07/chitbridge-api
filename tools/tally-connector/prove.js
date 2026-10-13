@@ -16,7 +16,9 @@ const os = require('os');
 const { spawn } = require('child_process');
 const core = require('./core');
 
-const API = (process.argv[2] || process.env.CB_API || 'https://chitbridge-api-production.up.railway.app').replace(/\/$/, '');
+/* HX1: the api to prove — argv, CB_API, or this folder's connector.json; never a host in code */
+const API = (process.argv[2] || process.env.CB_API || (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'connector.json'), 'utf8')).api; } catch (_) { return ''; } })() || '').replace(/\/$/, '');
+if (!API) { console.error('say which api: node prove.js https://<your ChitBridge api> (or CB_API, or connector.json)'); process.exit(2); }
 const TOKEN = process.env.CB_TOKEN; if (!TOKEN) { console.error('CB_TOKEN (a session token) is required'); process.exit(2); }
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('PASS ' + m); } else { fail++; console.log('FAIL ' + m); } };

@@ -27,7 +27,7 @@ Do NOT force-push, do NOT push to `main`/`master`. Open PRs for review; do not a
   Keep web `CFG.ASSIST_LLM=false`. (Optional: `RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_MAX`, `CATALOGUE_RATE_LIMIT_MAX`.)
 
 ## 3. Run migrations on the DEV DB — BEFORE smoke
-No `schema_migrations` ledger yet, so applied-state is manual — apply any not-yet-applied, in order. The ones this
+Applied state: `node tools/migrate.cjs --db <url> --status` once b304 has run (HX1 ledger; `--record <file>` after each manual run — docs/HOSTING.md). Until then it is manual — apply any not-yet-applied, in order. The ones this
 session's features **depend on** (apply these for sure if absent):
 - `migration_chit_reads.sql`       — per-actor unread (the unread feature breaks without it)
 - `migration_dispute_routing.sql`  — entity dispute-handler routing

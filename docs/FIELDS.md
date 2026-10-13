@@ -329,3 +329,12 @@ Written by `lib/repeat-supply.js` (the table `repeat_supply`, b303 DRAFT); read 
 | 503 `REPEAT_NOT_MIGRATED` · 422 `REPEAT_<WHY>` · 403 `{ why }` | `{ code, message }` | Before b303 · the step table's refusal in words · the rail engine's own level/copy refusal (read_only · comment_only · not_participant). |
 | chit `business_json.repeat` | `{ agreement_id, every, unit, anchor_day, start_on, until: { runs, on }, mode, source_chit_id }` | Stamped on the agreement chit at send (both copies) — how a holder finds the agreement; the schedule as PROPOSED (the row is what it became). |
 | chit `business_json.repeat_of` · `repeat_chit_id` · `repeat_run` | agreement_id · the agreement chit · `YYYY-MM-DD` | Stamped on each run's invoice: which agreement and which day minted it. |
+
+## HX1 hosting keys (2026-10-13 · docs/HOSTING.md)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| table `schema_migrations` (b304, DRAFT — Athi runs it) | `filename text PK · sha256 text · applied_at timestamptz · applied_by text · source 'migrate'\|'recorded'\|'manual'` | Source. Written by `tools/migrate.cjs` (apply = `migrate`, `--record` = `recorded`) or the owner's INSERT (`manual`). Read by `tools/migrate.cjs` (`--status`, skip what is done). RLS on, no policy, no grant to cb_app. |
+| `GET /health` → `web` | string or null | Derived from env `PUBLIC_WEB_BASE` (`lib/public-base.webBase`). Written by: nobody. Read by the counter program (`till.js`) when its `connector.json` has no `web`. |
+| kit `connector.json` → `web` | string or null | Written by `GET /api/integrations/download/:id`: `PUBLIC_WEB_BASE`, else the requesting page's `Origin`. Read by `till.js` → `/config.js` `window.CB_WEB` → till.html `cbHome()`. |
+| web `/config.js` → `window.CB_API` · `window.CB_WEB` | string · string or null | The web's `public/config.js` (committed value; the container writes it from `CB_API_BASE`) or `till.js` (from `connector.json`). Read by every page's api-base resolution (`CBShell.apiBase`, app.html `STAGES.dev.base`, stand-alone pages, till.html `CloudHost.api`). |

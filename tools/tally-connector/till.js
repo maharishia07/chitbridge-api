@@ -699,6 +699,9 @@ function signinWhy(e) {
 }
 
 const PAGE = path.join(__dirname, 'till.html');
+/* HX1: the site this counter's links open — connector.json `web` (kits since HX1), else learned once from the api's /health `web` */
+let WEB_BASE = cfg.web ? String(cfg.web).replace(/\/+$/, '') : null;
+if (!WEB_BASE && cfg.api) fetch(String(cfg.api).replace(/\/+$/, '') + '/health').then((r) => r.json()).then((j) => { if (j && j.web) WEB_BASE = String(j.web).replace(/\/+$/, ''); }).catch(() => {});
 /**
  * ── ⭐⭐⭐ THE FLOOR'S MEMORY, ON THIS PC ([TILL-178b]) ──────────────────────────────────────────────────
  *
@@ -1043,6 +1046,12 @@ const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html'))
       return send(res, 200, 'text/html; charset=utf-8', fs.readFileSync(PAGE, 'utf8'));
+
+    /* ⭐ HX1 · THE PAGE'S CONFIG, FROM THIS PC'S connector.json — the same /config.js the web serves from its deploy config: the api
+       this counter talks to, and the site its "open ChitBridge" link opens (connector.json `web`, else what the api's /health says). */
+    if (req.method === 'GET' && url.pathname === '/config.js')
+      return send(res, 200, 'application/javascript; charset=utf-8',
+        'window.CB_API = ' + JSON.stringify(String(cfg.api || '').replace(/\/+$/, '')) + ';\nwindow.CB_WEB = ' + JSON.stringify(WEB_BASE || null) + ';\n');
 
     /**
      * ⭐ THE ONE SIGN-IN WINDOW (2026-10-08, DECISIONS: CBSignin mounts on index · till · CB Accounts · CB CRM). The page loads it at
