@@ -101,12 +101,13 @@ const CS = require('../lib/country-setup');
 async function on(req, res, next) {
   try {
     const e = ctx(req);
-    const s = await withEntity(e, async (h) => { await CS.gate(h, e); return B.settingOf(h, e); });
+    let st = null;
+    const s = await withEntity(e, async (h) => { st = await CS.gate(h, e); return B.settingOf(h, e); });
     if (!s || !s.enabled) return res.status(404).json({ error: 'Not found' });
-    req.books = s; next();
+    req.books = s; req.booksCountry = st || null; next();
   } catch (err) { fail(res, err); }
 }
-const curOf = (req) => (req.books && req.books.functional_currency) || 'INR';
+const curOf = (req) => B.curOf(req.books);   /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/status', auth, owner, async (req, res) => {
@@ -176,7 +177,7 @@ router.post('/terms', auth, owner, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 /**
- * GET /health → { enabled, currency, walkin_grain, last_check, engines, waiting: [{ id, chit_id, ref, reason, tries, since, job }] }
+ * GET /health → { enabled, currency, country, walkin_grain, last_check, engines, year: { fiscal_year, from, start_month }, waiting: [{ id, chit_id, ref, reason, tries, since, job }] }
  * — the web's probe (404 = off) and the to-do list: `waiting` is every post that failed or was parked, least-tried first,
  * each with the `reason` it could not post (lib/books-hooks waitingRow; POST /outbox/retry tries them again).
  */
@@ -184,10 +185,11 @@ router.get('/health', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const waiting = await withEntity(e, (h) => S.waiting(h, e, 50));
-    /* ⭐ WX-R2R (2026-10-13): the shop's YEAR, as the reads below default it (fyStart — the pack's year on the setting's fy_start_month). The screens
-       paint it (Day book "This FY", P&L, Month lock's months) instead of assuming April: an AU shop's July year was asked as April → refused. */
+    /* ⭐ WX-R2R + CX2 (2026-10-13): ONE health shape for the shop's year and country (INT5b) — `year` = the shop's YEAR, as the reads below default
+       it (fyStart — the pack's year on the setting's fy_start_month; the screens paint it instead of assuming April), and `country` = the CS1 status
+       the gate just read (accounts.html sets SESSION.country from it — CX0's reader). CX2's top-level fy_start_month is year.start_month. 0 new trips. */
     const pack = B.packOf(req.books), A = E.packs(), fy = A.fiscalYearOf(today(req), pack);
-    res.json({ enabled: true, currency: curOf(req), walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
+    res.json({ enabled: true, currency: curOf(req), country: req.booksCountry || null, walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
       year: { fiscal_year: fy, from: fyStart(req, today(req)), start_month: Number(pack.fy_start_month) || null },
       waiting: waiting.map(require('../lib/books-hooks').waitingRow) });
   } catch (err) { fail(res, err); }

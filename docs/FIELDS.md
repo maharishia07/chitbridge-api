@@ -15,11 +15,12 @@ A new key needs its entry here, in the same change. This file is being built; en
 | `schedule_iii.balanced` | boolean | `assets.total_minor === equity_and_liabilities.total_minor`. |
 | `schedule_iii.difference_minor` | integer | `assets.total_minor - equity_and_liabilities.total_minor`. Never hidden; 0 when balanced. |
 
-## GET /api/books/health · `year` (WX-R2R, 2026-10-13)
+## GET /api/books/health · `year` · `country` (WX-R2R + CX2, 2026-10-13 — one shape, INT5b)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
 |---|---|---|
-| `year` | `{ fiscal_year, from, start_month }` | Derived, never stored: the shop's financial year today, from the pack on the books setting's `fy_start_month` (`B.packOf` · accounts-packs `fiscalYearOf` / `fyRange` — the same `fyStart` the TB / P&L / BS reads default to). `fiscal_year` "2026-27" (or "2026" for a January year) · `from` "YYYY-MM-DD", its first day · `start_month` 1–12. Written by: nobody. Read by: CB Accounts (`cap-books.js` bkYear — the Day book's "This FY", P&L / TB / BS default range, Month lock / GST close / Packs month names), so an AU (July) or calendar-year shop is never asked as April. |
+| `year` | `{ fiscal_year, from, start_month }` | Derived, never stored: the shop's financial year today, from the pack on the books setting's `fy_start_month` (`B.packOf` · accounts-packs `fiscalYearOf` / `fyRange` — the same `fyStart` the TB / P&L / BS reads default to). `fiscal_year` "2026-27" (or "2026" for a January year) · `from` "YYYY-MM-DD", its first day · `start_month` 1–12 (the setting's own month, else its country pack's `fiscalYear.startMonth`: IN 4 · AU 7 · AE 1). Written by: nobody. Read by: CB Accounts (`cap-books.js` bkYear and `accounts.html` → `BK_FY0` — the Day book's "This FY", P&L / TB / BS default range, Month lock / GST close / Packs month names), so an AU (July) or calendar-year shop is never asked as April. CX2's top-level `fy_start_month` is this `start_month` (one slot). |
+| `country` | the CS1 status object `{ books, code, why, required, country: { code, name }, pack, version }` (the same shape as `GET /api/books/status` `country`), or null | Derived: the `CS.gate` answer the `on` middleware already read (cached; 0 new queries). Read by web `accounts.html` → `SESSION.country` (CX0's reader), so the page's pack words (`shopReg`) are the shop's. |
 
 ## GET /api/crm/parties · /parties/:id (CB CRM, 2026-10-02)
 
