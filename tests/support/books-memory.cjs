@@ -111,6 +111,8 @@ function create() {
         T.items.push(Object.assign({ item_id: ++itemSeq, entity_id: e, created_at: now() }, clone(it)));
       }
     },
+    /* CS2: the chart and the periods of a never-posted ledger go, so a corrected country seeds them again (lib/books.reseedUnposted) */
+    async deleteChart(db, e) { T.accounts = T.accounts.filter((a) => a.entity_id !== e); T.periods = T.periods.filter((p) => p.entity_id !== e); },
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { return clone(T.items.filter((i) => i.entity_id === e && (!party || i.party_id === party) && (!account || i.account_id === account))); },

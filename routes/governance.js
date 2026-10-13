@@ -382,7 +382,7 @@ router.put('/country-setup', auth, async (req, res) => {
   try { const entity_id = auth.entityOf(req);
     if (!require('../lib/owner').isOwner(req)) return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may do this.' });
     const CS = require('../lib/country-setup');
-    const out = await withEntity(entity_id, (h) => CS.save(h, entity_id, req.body || {}));
+    const out = await withEntity(entity_id, (h) => CS.save(h, entity_id, req.body || {}, req.identity && req.identity.identity_id));   /* CS2: who corrected the country is logged */
     /* the books gate's cached answer and the books-hooks switch cache both move with the country */
     try { require('../lib/books-hooks').forget(entity_id); } catch (_) {}
     try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}

@@ -4031,6 +4031,13 @@ var money = function(n){
   if (window.CBLocale && CBLocale.money) { try { return CBLocale.money(n, cur); } catch (_) {} }
   return r2(n).toFixed(2);
 };
+/* ⭐ CS2 (2026-10-13): a COUNT ("1,234 products") reads in the shop's own locale through the same engine — CBLocale.number is hydrated from the shop's
+   country (CBLocale.hydrate → REGIONS[country].format), so an Australian counter groups 1,234,567 and an Indian one 12,34,567. Three places pinned
+   'en-IN' by hand before this; none decides a figure, so the fallback is the plain digits. */
+var fmtCount = function(n){
+  if (window.CBLocale && CBLocale.number) { try { return CBLocale.number(n); } catch (_) {} }
+  return String(Math.round(Number(n) || 0));
+};
 var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
 /**
  * ⚠️⚠️ A WRITE THAT FAILS MUST BE ASKABLE ABOUT. This used to be `catch(_){}` and nothing else — a device whose
@@ -6765,7 +6772,7 @@ async function refresh(){
     busyAt(1, 1, 'Sorting it out…');
     await load();
     var n = ((S && S.items) || []).length;
-    toastLine(n ? (Number(n).toLocaleString('en-IN') + ' products, up to date.') : 'Read the shop.');
+    toastLine(n ? (fmtCount(n) + ' products, up to date.') : 'Read the shop.');
   } finally { busyDone(); }
 }
 
@@ -14195,7 +14202,7 @@ function shelfLine(shown){
       + '<button class="daylink" data-testid="till-start-shop" onclick="startOpen()">Start your shop</button></div>';
   }
   var when = S.at ? hhmm(S.at) : null;
-  var n = function(v){ return Number(v).toLocaleString('en-IN'); };
+  var n = function(v){ return fmtCount(v); };   /* CS2: the shop's locale, one helper (fmtCount) */
   var txt;
   if (FILTER.off)        txt = shown ? (n(shown) + ' off the shelf right now — tap one to put it back')
                                      : 'Nothing is off the shelf. Everything on this counter can be sold.';
@@ -18185,7 +18192,7 @@ function health(){
 
   /* ⭐ what this counter is holding, and from when — the first thing to check when a catalogue change has not appeared */
   if (items.length)
-    add('note', Number(items.length).toLocaleString('en-IN') + ' products on this counter',
+    add('note', fmtCount(items.length) + ' products on this counter',
       'Read from ChitBridge' + (S.at ? ' at ' + hhmm(S.at) + ' on ' + new Date(S.at).toDateString() : '')
         + '. Anything added or repriced since then is not here yet.',
       'Press the arrow button while the internet is on to read it again.');

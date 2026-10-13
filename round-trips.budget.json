@@ -416,11 +416,11 @@
     },
     "GET /api/governance/country-setup": {
       "file": "governance.js",
-      "trips": 3,
+      "trips": 4,
       "wire": null,
       "fired": false,
       "extra": true,
-      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetup'), cap-country.js). CS1, measured by tests/country-setup.test.cjs: schema probe (cached) + identities + entity_governance, inside one withEntity"
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetup'), cap-country.js). CS1, measured by tests/country-setup.test.cjs: schema probe (cached) + identities + entity_governance, inside one withEntity. CS2 (2026-10-13): + ONE EXISTS read (catalogue_items · chit_header · journal_entry — the constitution: may the country still change?); the table probe for journal_entry is cached"
     },
     "GET /api/integrations/catalogue": {
       "file": "integrations.js",
@@ -985,11 +985,11 @@
     },
     "PUT /api/governance/country-setup": {
       "file": "governance.js",
-      "trips": 7,
+      "trips": 9,
       "wire": null,
       "fired": false,
       "extra": true,
-      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run)"
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run). CS2 (2026-10-13): each profile also makes the ONE EXISTS read (+2 = 9). When the COUNTRY CHANGED before the shop was constituted, the same transaction also re-seeds a switched-on never-posted ledger (books.reseedUnposted: setting + entries read, 2 DELETEs, enable()'s inserts — one per chart row, as the switch itself costs) and logs who/when to books_change_log (one INSERT per changed fact, savepointed) — a once-per-shop correction, outside this ceiling by design"
     },
     "PUT /api/network-design": {
       "file": "network-design.js",
