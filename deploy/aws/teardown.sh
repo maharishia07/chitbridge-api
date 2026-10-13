@@ -28,7 +28,7 @@ tagged() {
   if dry; then run "${q[@]}"; return 0; fi; [ "$("${q[@]}" 2>/dev/null)" = "$CB_SPIN_ID" ]
 }
 if tagged user "$N-api"; then
-  for k in $(out AKIAPLAN aws iam list-access-keys --user-name "$N-api" --query 'AccessKeyMetadata[].AccessKeyId' --output text); do run aws iam delete-access-key --user-name "$N-api" --access-key-id "$k"; done
+  for k in $(out AKIAPLANPLANPLAN0000 aws iam list-access-keys --user-name "$N-api" --query 'AccessKeyMetadata[].AccessKeyId' --output text); do run aws iam delete-access-key --user-name "$N-api" --access-key-id "$k"; done
   run aws iam delete-user-policy --user-name "$N-api" --policy-name objects
   run aws iam delete-user --user-name "$N-api"
 fi

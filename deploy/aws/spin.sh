@@ -42,7 +42,7 @@ run aws s3api put-bucket-tagging "${R[@]}" --bucket "$S3_BUCKET" --tagging "TagS
 run aws iam create-user --user-name "$N-api" --tags "$TAG"
 run aws iam put-user-policy --user-name "$N-api" --policy-name objects --policy-document \
   "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\",\"s3:PutObject\",\"s3:DeleteObject\"],\"Resource\":\"arn:aws:s3:::$S3_BUCKET/*\"}]}"
-read -r S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY <<<"$(out 'AKIAPLAN plan-secret' aws iam create-access-key --user-name "$N-api" --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text)"
+read -r S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY <<<"$(out 'AKIAPLANPLANPLAN0000 plan-secret' aws iam create-access-key --user-name "$N-api" --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text)"
 
 say "App Runner: a role to pull from ECR, then mail sink → api → web, then the api learns the web's address"
 run aws iam create-role --role-name "$N-ecr" --tags "$TAG" --assume-role-policy-document \

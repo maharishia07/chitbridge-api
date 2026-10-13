@@ -36,13 +36,18 @@ run() {
 out() { local ph=$1; shift; if dry; then run "$@" >&2; printf '%s' "$ph"; else "$@"; fi; }
 
 spin_parse() {
+  # only a cloud CLI's call is parsed; anything else (docker, node, a local login helper) is NOT run in this mode
+  case "$1 ${2:-} ${3:-}" in
+    "gcloud auth configure-docker") printf '  skip %s (local: writes the docker config)\n' "$*"; return 0 ;;
+    aws\ *|az\ *|gcloud\ *) ;;
+    *) printf '  skip %s (not a cloud CLI: nothing to parse)\n' "$1"; return 0 ;;
+  esac
   local t o; t=$(mktemp -d)
   o=$(env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_SESSION_TOKEN -u AWS_PROFILE AWS_SHARED_CREDENTIALS_FILE="$t/none" \
       AWS_CONFIG_FILE="$t/none" AWS_EC2_METADATA_DISABLED=true AZURE_CONFIG_DIR="$t/az" CLOUDSDK_CONFIG="$t/gcloud" \
       CLOUDSDK_CORE_DISABLE_PROMPTS=1 timeout 120 "$@" 2>&1 </dev/null || true)
   rm -rf "$t"
-  case "$1" in aws|az|gcloud) ;; *) printf '  skip %s (not a cloud CLI: nothing to parse)\n' "$1"; return 0 ;; esac
-  if printf '%s' "$o" | grep -qE "Unable to locate credentials|NoCredentials|Please run 'az login'|az login|You do not currently have an active account|gcloud auth login|gcloud config set account"; then
+  if printf '%s' "$o" | grep -qE "Unable to locate credentials|NoCredentials|Please run 'az login'|az login|You do not currently have an active account|gcloud auth login|gcloud config set account|NoActiveAccountException"; then
     printf '  ok   %s\n' "$(mask "${*:1:4}")"
   else
     echo x >> "$SPIN_PARSE_LOG"; printf '  FAIL %s\n%s\n' "$(mask "$*")" "$(printf '%s' "$o" | tail -4 | sed 's/^/       /')"
