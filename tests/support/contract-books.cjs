@@ -201,7 +201,9 @@ async function captureBooks() {
     for (const [shop, country, cur, head, rate, d1, d2, query] of [[AU_SHOP, 'AU', 'AUD', 'gst', 10, '2026-07-01', '2026-09-06', '?simpler=0'], [AE_SHOP, 'AE', 'AED', 'vat', 5, '2026-03-01', '2026-04-02', '?stagger=1&emirate=Dubai']]) {
       OWNER.identity_id = shop; DAY = country === 'AU' ? '2026-10-20' : '2026-06-10';
       await X.store.saveSetting(X.db, shop, { enabled: false, country });
-      await q('POST', '/enable', {});
+      /* WX-R2R: /enable opens on the shop's Country setup (lib/country-setup.profile) — this shop's own row, not the stand-in's India one */
+      const inRow = X.db.countryRow; X.db.countryRow = { country, currency_code: cur, gstn: null, timezone: null, policy_flags: {} };
+      try { await q('POST', '/enable', {}); } finally { X.db.countryRow = inRow; }
       X.T.parties.push({ owner: shop, party_id: SUPP, party_no: 'P-00001', name: 'Kumar Traders', supplier: true, credit_days: 30 });
       await X.B.postEntry(X.db, shop, { type: 'walkin_day', ref: 'D1', date: d1, currency: cur, modes: { cash: 1000 / rate * 1 + 10 }, by_rate: [Object.assign({ rate, taxable: 1000 / rate }, { [head]: 10 })], round_off: 0, source_ref: 'walkin:C1:' + d1 });
       await X.B.postEntry(X.db, shop, { type: 'purchase_bill', ref: 'P1', date: d2, currency: cur, party: SUPP, by_rate: [Object.assign({ rate, taxable: 5000 / rate }, { [head]: 50 })], paid: {}, round_off: 0, source_ref: 'pur:P1' });

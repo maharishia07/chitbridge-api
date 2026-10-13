@@ -11,7 +11,8 @@
  *      (on the self-copy row it already reads: one query, not two) and fall back to lib/regional.currencyFor, the one resolver;
  *   2. lib/books.enable() stops reading the Country setup (lib/country-setup.profile) for country · currency · year start;
  *   3. enable() takes the year from the UTC date instead of the shop's day (books-hooks.dayOf);
- *   4. lib/books-hooks COUNTRY_ZONE loses AU (an AU day closed on India's clock).
+ *   4. lib/books-hooks COUNTRY_ZONE loses AU (an AU day closed on India's clock);
+ *   5. books-hooks.byRateOf stops reading an AU line's TaxAmt as the scheme's one head `gst` (every AU bill queued as "a non-GST tax").
  * Run: node tests/chit-currency-default.test.cjs
  */
 'use strict';
@@ -42,6 +43,22 @@ const hooks = read('lib/books-hooks.js');
 ok('lib/books-hooks COUNTRY_ZONE names AU (Australia/Sydney)', /AU: 'Australia\/Sydney'/.test(hooks));
 const Z = require(path.join(ROOT, 'lib', 'books-hooks'));
 ok('zoneOf(\'AU\') answers Australia/Sydney, not India\'s clock', Z.zoneOf('AU') === 'Australia/Sydney');
+
+/* 5 · an AU bill's GST (engines v1.34 freezes it as the line's TaxAmt, _cb.scheme 'GST') is the AU pack's ONE head `gst`, never "a non-GST tax" —
+   found on this runner after main's v1.34 adopt: all 3,256 AU bills sat in books_outbox. A real invoice from the one tax path (tax-lines.invoiceFor). */
+const TL = require(path.join(ROOT, 'lib', 'tax-lines'));
+const au = TL.invoiceFor({ lines: [{ particulars: 'Milk', quantity: 1, price: 110, total: 110, gst_rate: 10 }], seller: { Country: 'AU', LglNm: 'AU Shop' }, buyer: { Country: 'AU' },
+  currency: 'AUD', priceIncludesTax: true }).invoice;
+const br = Z.byRateOf(au);
+ok('byRateOf(AU invoice) puts the line\'s TaxAmt on the scheme\'s head `gst` (10.00 on 100.00), nothing left as "other"', br.other === 0 && br.rows.length === 1 && br.rows[0].gst === 10 && br.rows[0].taxable === 100 && br.total === 110,
+  JSON.stringify(br));
+const k = Z.classify({ chit: { chit_id: 'au1', purpose: 'order', currency_code: 'AUD', business_json: { bill_no: 'C1/26-27/0001', till: { id: 'C1' }, billed_at: '2026-07-02T01:00:00Z',
+  payment: { parts: [{ how: 'Cash', amount: 110 }] } } }, entry: { sells: true, invoice: au }, setting: { enabled: true, walkin_grain: 'bill', country: 'AU', functional_currency: 'AUD' } });
+ok('…and the AU counter bill posts (not queued) with by_rate[10].gst = 10', k.kind === 'post' && k.event && k.event.by_rate && k.event.by_rate[0].gst === 10, JSON.stringify(k).slice(0, 200));
+const inr = Z.byRateOf({ ItemList: [{ GstRt: 18, AssAmt: 100, CgstAmt: 9, SgstAmt: 9, IgstAmt: 0, CesAmt: 0 }] });
+ok('…an India slab keeps its shape (no `gst` key, total 118)', !('gst' in inr.rows[0]) && inr.total === 118 && inr.other === 0);
+const bare = Z.byRateOf({ ItemList: [{ GstRt: 0, AssAmt: 100, TaxAmt: 5 }] });
+ok('…a TaxAmt on an invoice that names no scheme is still "other" (queued, never guessed)', bare.other === 5);
 
 console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed\n');
 process.exit(fail ? 1 : 0);
