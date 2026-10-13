@@ -6,7 +6,8 @@ const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const h = fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8').replace(/\r\n/g, '\n');
 /** a function's source by brace count — one-liners and long bodies alike */
 function grab(n) {
-  const at = h.indexOf('function ' + n + '(');
+  let at = h.indexOf('function ' + n + '(');
+  if (at < 0) at = h.indexOf('var ' + n + ' = function');   /* fmtCount is a var-function (one count helper since 13 Oct) */
   assert.ok(at >= 0, n + ' is gone from till.html');
   let i = h.indexOf('{', at), d = 0;
   for (; i < h.length; i++) { if (h[i] === '{') d++; else if (h[i] === '}' && --d === 0) break; }
@@ -14,7 +15,7 @@ function grab(n) {
 }
 const MONEY = require('../lib/money');
 const FNS = ['docCountry', 'shopPack', 'taxIdLabel', 'invoiceRule', 'buyerNamed', 'buyerWarnWords', 'buyerFromMajor', 'slipBuyerHTML', 'shopMinor',
-  'booksMajor', 'shopCount', 'voiceLangs', 'tillLang', 'langLabel'];
+  'booksMajor', 'fmtCount', 'voiceLangs', 'tillLang', 'langLabel'];
 function page(country, currency, o) {
   o = o || {};
   const store = Object.assign({}, o.ls || {});
@@ -68,10 +69,10 @@ ok('UAE: a registered buyer over AED 10,000 needs a FULL invoice with their TRN 
   assert.strictEqual(p.buyerWarnWords({ net: 12000, tax: 571.43 }), '');
   assert.strictEqual(p.slipBuyerHTML({ kind: 'tax', total: 12000, customer: { gstin: '100123456700003' } }, t), 'Buyer TRN=100123456700003;');
 });
-ok('counts: lakh grouping for the rupee only (T2)', () => {
-  assert.strictEqual(page('IN', 'INR').shopCount(100000), (100000).toLocaleString('en-IN'));
-  assert.strictEqual(page('AU', 'AUD').shopCount(100000), '100,000');
-  assert.strictEqual(page('AE', 'AED').shopCount(1234567), '1,234,567');
+ok('counts: lakh grouping for the rupee only (T2) — through the ONE helper fmtCount (moneyTag by the shop currency)', () => {
+  assert.strictEqual(page('IN', 'INR').fmtCount(100000), (100000).toLocaleString('en-IN'));
+  assert.strictEqual(page('AU', 'AUD').fmtCount(100000), '100,000');
+  assert.strictEqual(page('AE', 'AED').fmtCount(1234567), '1,234,567');
 });
 ok('voice: India keeps its four (the page\'s own list, en-IN by default); the UAE hears its region\'s languages, English first; Australia its English (T4)', () => {
   assert.strictEqual(page('IN', 'INR').voiceLangs(), null);
