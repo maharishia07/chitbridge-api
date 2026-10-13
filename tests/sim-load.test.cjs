@@ -46,6 +46,12 @@ ok('the url is checked BEFORE anything connects (localOnly runs before the pool 
 const WRITE_RE = /\b(INSERT\s+INTO|UPDATE)\s+(chit_header|chit_detail|chit_status|journal_entry|journal_line|account_balance|party_item|identities|customer_list|supplier_list|catalogue_items|books_setting|fiscal_period)\b/i;
 ok('no raw INSERT/UPDATE into a tenant table — bills, parties, products, the ledger all go through the app', !WRITE_RE.test(src), (WRITE_RE.exec(src) || [''])[0]);
 ok('DATABASE_URL is set from --db before server.js loads (dotenv cannot redirect it)', src.indexOf('process.env.DATABASE_URL = DB') < src.indexOf("require(path.join(API, 'server.js'))"));
+/* WX-O2C: --start moves the three years (default unchanged) and keeps the default's "already loaded" mark */
+ok('--start feeds the plan (default the pack\'s first month of 2026) and is refused unless it is the first day of the pack\'s year', /const START_ARG = arg\('start', ''\)/.test(src) && /planDays\(\{ start: START,/.test(src) && /Number\(START\.slice\(5, 7\)\) !== PACK\.fiscalYear\.startMonth/.test(src));
+ok('the default load keeps its old idempotency mark (a shop loaded before --start is still "already loaded")', /START_ARG \? '\/from-' \+ START : ''/.test(src));
+{ const bk = read('lib/books.js'), st = read('lib/books-store.js');
+  ok('the ledger\'s first moment is read off the SAME clock as its year (books.enable at: CLOCK when simulated; saveSetting COALESCE($9, now()))',
+    /at: CLOCK\.isSimulated && CLOCK\.isSimulated\(\) \? CLOCK\.now\(\)\.toISOString\(\) : null/.test(bk) && /COALESCE\(\$9::timestamptz, now\(\)\)/.test(st)); }
 ok('a sealed NODE_ENV is refused', /isSealed\(\)\) die\(/.test(src));
 /* HX1: the schema step is tools/migrate.cjs — a database with tables runs only what its ledger lacks, and one with an EMPTY ledger is left alone */
 ok('the schema step is tools/migrate.cjs (one chain, with the ledger)', /require\('\.\/migrate\.cjs'\)\.apply\(DB/.test(src));
@@ -72,6 +78,13 @@ ok('every sale is 2–4 a day at 5 / 12 / 18 %, paid cash · upi · credit', a.d
 const sim = read('tools/simulate-years.cjs');
 ok('tools/simulate-years.cjs reads the plan (sim-plan.cjs), not its own dice', /require\(path\.join\(__dirname, 'sim-plan\.cjs'\)\)/.test(sim) && !/function rng\(/.test(sim));
 ok('…and sim-load.cjs reads the same plan', /require\(path\.join\(__dirname, 'sim-plan\.cjs'\)\)/.test(src));
+/* 3b · WX-R2R: the shop's calendar is the pack's — a July start (AU) ends on 30 June, and the loader asks lib/accounts-packs for the year and the month, never its own April */
+const au = P.planDays({ start: '2026-07-01', years: 1, seed: 7 });
+ok('a July year is 365 days from 2026-07-01 to 2027-06-30', au.days.length === 365 && au.days[0].day === '2026-07-01' && au.last === '2027-06-30' && au.days[364].day === '2027-06-30');
+ok('the loader takes the year and the month from lib/accounts-packs (fiscalYearOf · periodOf · fyRange), not an April of its own',
+  /AP\.fiscalYearOf\(d, FYPACK\)/.test(src) && /AP\.periodOf\(d, FYPACK\)/.test(src) && /AP\.fyRange\(fy, FYPACK\)/.test(src) && !/m >= 4 \? y : y - 1/.test(src) && !/\+ 8\) % 12\) \+ 1/.test(src));
+ok('the plan starts on the pack\'s first month (April IN · July AU · January AE)', /START_ARG \|\| \('2026-' \+ String\(PACK\.fiscalYear\.startMonth\)/.test(src));
+ok('a one-rate pack\'s basket draws at its standard rate (AU 10 % · AE 5 %), an IN basket from its slab', /it\.rate === rateOf\(rate\)/.test(src));
 
 /* 4 · one clock on the chit */
 const chits = read('routes/chits.js'), mint = read('lib/mint.js'), b300 = read('migrations/b300_chit_deliver_clock.sql');

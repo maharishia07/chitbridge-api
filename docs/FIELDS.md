@@ -15,6 +15,13 @@ A new key needs its entry here, in the same change. This file is being built; en
 | `schedule_iii.balanced` | boolean | `assets.total_minor === equity_and_liabilities.total_minor`. |
 | `schedule_iii.difference_minor` | integer | `assets.total_minor - equity_and_liabilities.total_minor`. Never hidden; 0 when balanced. |
 
+## GET /api/books/health · `year` · `country` (WX-R2R + CX2, 2026-10-13 — one shape, INT5b)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `year` | `{ fiscal_year, from, start_month }` | Derived, never stored: the shop's financial year today, from the pack on the books setting's `fy_start_month` (`B.packOf` · accounts-packs `fiscalYearOf` / `fyRange` — the same `fyStart` the TB / P&L / BS reads default to). `fiscal_year` "2026-27" (or "2026" for a January year) · `from` "YYYY-MM-DD", its first day · `start_month` 1–12 (the setting's own month, else its country pack's `fiscalYear.startMonth`: IN 4 · AU 7 · AE 1). Written by: nobody. Read by: CB Accounts (`cap-books.js` bkYear and `accounts.html` → `BK_FY0` — the Day book's "This FY", P&L / TB / BS default range, Month lock / GST close / Packs month names), so an AU (July) or calendar-year shop is never asked as April. CX2's top-level `fy_start_month` is this `start_month` (one slot). |
+| `country` | the CS1 status object `{ books, code, why, required, country: { code, name }, pack, version }` (the same shape as `GET /api/books/status` `country`), or null | Derived: the `CS.gate` answer the `on` middleware already read (cached; 0 new queries). Read by web `accounts.html` → `SESSION.country` (CX0's reader), so the page's pack words (`shopReg`) are the shop's. |
+
 ## GET /api/crm/parties · /parties/:id (CB CRM, 2026-10-02)
 
 Every key is a READ of what exists; nothing is stored and no money is computed here (`lib/crm.js`). Written by: nobody (derived). Read by: the CB CRM page.
@@ -279,6 +286,18 @@ Every key is DERIVED by `lib/books-cashflow.project()` from what the books alrea
 | `series[].items[]` | `{ kind, ref, party_id, name, amount_minor, date, due_date, promised, overdue, cheque_no }` | `kind`: `due_in` (a customer's open bill, `CBReceivables.outstanding`, on its due date — or on the PROMISE day from the open Dues follow-up, `promised: true`) · `due_out` (a supplier's open bill on its due date; overdue → today, `overdue: true`) · `cheque_in` / `cheque_out` (a cheque still HELD, on its cheque date — C3; the bills it will settle are covered oldest-due-first by `CBReceivables.propose`, so nothing counts twice) · `gst`. `ref` = the bill's against_ref, `pay:<payment_id>`, or `gst:<date>`. |
 | `GET /cheques` → `pdc_reminders[]` | `[{ payment_id, cheque_no, cheque_date, amount_minor, state }]` | `CBReceivables.pdcReminders` over the same rows as `cheques` (direction in, still `received`): `state` = `deposit_today` · `overdue_for_deposit` · `not_yet` (only within `PDC_LEAD_DAYS` = 7). The cheques list itself is unchanged. |
 
+## GET /api/books/dues?side=supplier&finance=1 `payable` · `payables` · POST /api/books/entries `against_ref` (CB Finance F4 · payables, 2026-10-13)
+
+Every key is DERIVED by `lib/books-payables.view()` — nothing is stored, nothing posts. Written by: nobody. Read by: the Finance page's Payables tab (`web:public/app/cap-finance-pay.js`) and the pay sheet (`web:public/app/cap-books.js payOpen`, its offer). Owner only (403 "Only the owner may see what you owe."); 404 while the ledger is off. Only on `side=supplier&finance=1` — Collections' answer is unchanged. All money is an integer of minor units.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `payables` | `{ total_minor }` | Σ `payable.total_minor`. The bills are F3's own (`books-cashflow.datedSide('out')`: undisputed, net of cheques written), so this IS the cash view's outgoing dues (`tests/books-payables.test.cjs` holds them equal). |
+| `parties[].payable` | `{ total_minor, buckets, msme, msme_risk, msme_words, pay_by, group, terms, early, bills[] }` or null | One supplier's open bills. `buckets` `{ 0_30, 31_45, 46_60, 60_plus }` by the bill's age from its own date. `msme`: the supplier has a `UDYAM` id in `party_tax_id` AND the shop's pack carries `checks.msme` (India; a fallback pack never). `group`: `msme` (a bill at risk) · `overdue` · `week` (due in 7 days) · `later`. `pay_by`: the earliest of each bill's day 45 / due date. `terms`: `{ credit_days, early }` — the supplier's OWN (`supplier_list`, b298); the shop default is not a supplier's offer. `early`: the best valid offer (a bill's `early` + `ref`) or null. |
+| `payable.bills[]` | `{ ref, date, due_date, open_minor, age_days, bucket, overdue, msme_day45, msme_days_left, msme_risk, msme_words, early }` | `msme_day45` = bill date + `limit_days` from `CBReceivables.msmeFlags` (min(agreed days, 45)); `msme_risk` = 7 days or less left (or past). `msme_words`: "Pay by 16 Oct 2026 — after that this bill cannot be claimed as an expense this year (Income-tax s.43B(h))." / "Day 45 was … — this bill is an expense only in the year you pay it …". |
+| `bills[].early` | `{ pct, within_days, by, valid, save_minor, pay_minor, words, record, gst_note }` or null | `CBReceivables.earlyDiscount` on the open amount. `by` = bill date + within_days. `words`: "2% off if paid by 15 Oct 2026 — saves ₹600" / "Early-pay ended on 30 Sep 2026". `record` (valid only): `{ ok: true, body }` — the READY owner journal for POST /entries (Dr creditors · the supplier, against the bill · Cr `discount_received`, `client_ref` `early:<ref>`) — or `{ ok: false, why: 'no_ledger', say }`. `gst_note`: always `{ ok: false, why: 'owner_confirms', say }` — the supplier issues the credit note; the owner confirms it; nothing posts it here. |
+| POST /entries body `against_ref` | string or absent | The bill a journal's party line settles (`books.itemsFor` → `CBReceivables.confirmItems`, as a write-off). Refused by the engine (disputed, already settled) → left on account, said in `note`. |
+
 ## Leads from a CSV · POST /api/crm/leads/import (CB CRM L3, 2026-10-12)
 
 The browser parses the file and sends `rows` (≤ 500; more → 400 `TOO_MANY` "Import up to 500 leads at a time. Split the file."). No file reaches the server, no second contact list: a new row is the SAME party as Add lead makes (local-identity.mintMany · customer_list added_via 'lead' · memberships.addMany, the one writer). `lib/crm-leads.js`; who may: the owner or an editor-level login (lib/access.canEdit) — 403 `VIEW_ONLY` in words otherwise.
@@ -404,3 +423,21 @@ Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, rou
 | `locale_prefs.tz` | IANA zone, e.g. `Asia/Kolkata` | Source (CU3 — sent and dropped before). The PERSON's reading zone; absent = the device's. Same writer / reader; ICU checks it. Not the shop's `identities.timezone` (which a bill uses is not ruled yet — audit row 38). |
 | `locale_prefs.workdays` | ISO weekdays, comma-separated, e.g. `1,2,3,4,5,6` (1 = Monday) | Source (CU3 — sent and dropped before). Override of CLDR's week; absent = the region's. Same writer / reader (CBLocale.workdays · isWorkday). |
 | `locale_prefs.langs_seen` | array of ≤ 3 tags | Source. The browser's languages at sign-up (routes/signin.js, one-key merge). Read by nobody yet. Kept by every locale save since CU2 (the old whole-column save erased it). |
+## GET /api/catalogue/:bridge_id (the storefront, WX-O2C 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `shop.price_includes_tax` | boolean | Source: the shop's policy flag `price_includes_tax` (lib/policy, default yes), read in `lib/catalogue-view.js` beside `unit_rules`. Written by: the owner (Profile › policy). Read by: `shop.html` → `CBCart.money({ priceIncludesTax })` so the basket's GST rows are split out of the price, never added on top (the server prices the order with `tax-lines.invoiceFor` the same way). |
+
+## GET /api/catalogue/:bridge_id/my-orders (the shopper's own orders, WX-O2C 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `orders[].shop_status` | rail status string or absent | Derived: the OTHER participant's (the shop's) `chit_status.current_status`, read through `chit_participants` (b50) in the same statement; absent before b50. The shopper's own `current_status` stays the rail's `delivered` (it reached the shop). Written by: the shop's status moves. Read by: `shop.html` My orders → `shopStatusWord(shop_status \|\| current_status)` (CBWorkflow.stageOf). |
+## The storefront's `shop` block · GET /api/c/:handle and every caller of `catalogue-view.buildPublicView` (CX4 · S1/S2, 2026-10-13)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `shop.country` | ISO-3166 alpha-2 or null | Source: `identities.country`, read on the SAME row as `storefront_access · policy_flags` (no extra trip). Written by registration / Country setup. Read by shop.html (what the page knows of its country). |
+| `shop.tax_id_word` | `GSTIN` · `ABN` · `TRN` | Derived: `profile.taxIdWordOf(country)` — the pack's own tax id (reg-au `abn`, reg-ae `trn`), `GSTIN` for India and for no pack. Written by nobody. Read by shop.html for the label beside `gstn` (the generic registration column). |
+| `shop.upi_id` (changed) | string or null | Unchanged source (`profile.upiOf(policy_flags)`); now null when the shop's pack has no UPI mode (`pack.chart.paymentModes.upi`) — the storefront's "Pay by UPI" block is not drawn for an AU / AE shop. |

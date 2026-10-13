@@ -24,18 +24,21 @@ router.get('/', auth, async (req, res) => {
     /* one statement: the shop's human people (not removed) and the owner's handle for the user-id fallback.
        access_level / whole_entity are b173 columns — the row is read with `to_jsonb` so a shop that has not had it yet
        still answers (the level then comes from the old hat, lib/access.js). */
+    /* CX6 (E1): the shop row is the left side, so its country comes back even with no people yet (one row, identity_id null) */
     const r = await query(
       `SELECT i.identity_id, i.display_name, i.actor_key, i.user_id, i.actor_role, i.phone, i.hat, i.break_status,
               i.can_see_costs, i.current_task_count, i.last_active_at, i.delegate_actor_id,
               (to_jsonb(i)->>'access_level') AS access_level, ((to_jsonb(i)->>'whole_entity')::boolean) AS whole_entity,
               (i.email IS NOT NULL AND i.email <> '') AS has_email,
-              (SELECT e.user_id FROM identities e WHERE e.identity_id = $1) AS entity_handle
-         FROM identities i
-        WHERE i.parent_entity_id = $1 AND i.identity_type = 'actor'
+              e.user_id AS entity_handle, e.country AS entity_country
+         FROM identities e
+         LEFT JOIN identities i ON i.parent_entity_id = e.identity_id AND i.identity_type = 'actor'
           AND COALESCE(i.actor_type, 'human') = 'human' AND i.break_status IS DISTINCT FROM 'removed'
+        WHERE e.identity_id = $1
         ORDER BY (i.break_status = 'deactivated'), i.display_name`,
       [entity_id]);
-    res.json(people.view(r.rows, { owner: isOwner(req) }));
+    const country = r.rows[0] && r.rows[0].entity_country;
+    res.json(people.view(r.rows.filter((x) => x.identity_id), { owner: isOwner(req), country }));
   } catch (err) {
     console.error('List people error:', err.message);
     res.status(500).json({ error: 'Failed to list people', message: safeErr(err) });

@@ -27,7 +27,7 @@ const { generateBridgeId } = require('../lib/bridgeid');
 
 const KIT = path.join(__dirname, '..', 'tools', 'tally-connector');
 const CATALOGUE = [
-  { id: 'tally', name: 'Tally connector', adapters: ['tally', 'csv'], default_adapter: 'tally', runs_on: 'the store PC (node ≥ 18, no dependencies, outbound internet only)',
+  { id: 'tally', name: 'Tally connector', adapters: ['tally', 'csv'], default_adapter: 'tally', fits: 'tally', runs_on: 'the store PC (node ≥ 18, no dependencies, outbound internet only)',
     does: 'Products up from Tally into the catalogue (matched by code, receipts); offers back at billing time; orders down into Tally as Sales vouchers the moment the bell rings — once, never twice.',
     status: 'LIVE on TallyPrime (2026-09-05): products, stock and profile up; Sales and Receipt vouchers down; registered buyers with GSTIN; the buyer side books Purchase vouchers with ITC (role both)',
     steps: ['In Tally: F1 › Settings › Connectivity › TallyPrime acts as Both · Enable ODBC · port 9000; keep the company open', 'Download (your key is inside), unzip on the Tally PC, double-click start.cmd — it installs Node.js if needed, asks a few questions, tests Tally, syncs your products and registers itself to run on its own', 'This row turns live; your items appear under Catalogue'],
@@ -36,7 +36,7 @@ const CATALOGUE = [
                 'The GSTIN is read off vouchers, so a change shows only after the next voucher is written.',
                 'TallyPrime Educational accepts vouchers dated 1st, 2nd or 31st only — the kit snaps to the 2nd.',
                 '"Could not connect" — Tally is closed or the port is not 9000. The connector keeps trying and starts by itself.'] },
-  { id: 'gofrugal', name: 'GoFrugal connector', adapters: ['gofrugal'], default_adapter: 'gofrugal', runs_on: 'the store PC or server (node ≥ 18; GoFrugal\'s WebReporter API with an API key)',
+  { id: 'gofrugal', name: 'GoFrugal connector', adapters: ['gofrugal'], default_adapter: 'gofrugal', fits: 'gstin', runs_on: 'the store PC or server (node ≥ 18; GoFrugal\'s WebReporter API with an API key)',
     does: 'Items with sale price, MRP, GST % and stock per location into the catalogue; every order becomes a GoFrugal Sales Order with our reference — your billing raises the invoice. No profile, receipt or purchase API is published, so those steps are skipped and say so.',
     status: 'written from GoFrugal\'s published knowledge base, proven against a stand-in; the API is enabled per retailer by GoFrugal (terms theirs)',
     steps: ['Ask GoFrugal to enable the WebReporter API on your server; note the API key', 'Settings › Integrations › mint a key, scope connector', 'Download the kit; node setup.js → gofrugal; node index.js watch --stock-minutes 5'],
@@ -44,7 +44,7 @@ const CATALOGUE = [
     watch_out: ['No profile, receipt or purchase API is published — those streams stay empty and say so.',
                 'An order becomes a Sales Order, not an invoice: your billing raises the invoice against it.',
                 'Proven against a stand-in only — the first live run may need a field name corrected.'] },
-  { id: 'zoho', name: 'Zoho Books connector', adapters: ['zoho'], default_adapter: 'zoho', runs_on: 'any PC with node ≥ 18 (REST, an OAuth token)',
+  { id: 'zoho', name: 'Zoho Books connector', adapters: ['zoho'], default_adapter: 'zoho', fits: 'gstin', runs_on: 'any PC with node ≥ 18 (REST, an OAuth token)',
     does: 'Items from Zoho Books into the catalogue; offers back at billing; every ChitBridge order becomes a Zoho invoice the moment it arrives — once, never twice.',
     status: 'written from the published Zoho Books API, proven against a stand-in; the first live run may need customer_id / item_id corrected in adapters/zoho.js (docs)',
     steps: ['Zoho API console › Self Client: copy Client ID + Secret; Generate Code with scope ZohoBooks.fullaccess.all (10 minutes)', 'Download (your key is inside), unzip, double-click start.cmd — system zoho, region, the id, the secret, the code; it keeps a refresh token, lists your organisations, reads your items', 'Approve this PC once under Running connectors; this row turns live'],
@@ -139,13 +139,39 @@ router.get('/docs/:id', (req, res) => {
   const p = path.join(KIT, 'docs', c.id + '.md'); if (!fs.existsSync(p)) return res.status(404).json({ error: 'No document' });
   res.setHeader('Content-Type', 'text/markdown; charset=utf-8'); res.end(fs.readFileSync(p, 'utf8'));
 });
-router.get('/catalogue', (req, res) => res.json({ connectors: CATALOGUE.map((c) => Object.assign({}, c, { download: '/api/integrations/download/' + c.id, docs: '/api/integrations/docs/' + c.id })) }));
+/**
+ * ⭐ CX6 (K1) · A CONNECTOR OFFERED ONLY WHERE IT WORKS — the shop's country pack decides, never a country name here. `fits` names what the
+ * connector's kit is built on: 'tally' = Tally's books import (the pack's `export.tallyXml`, reg-in only); 'gstin' = India-shaped GST (the
+ * GSTIN handshake, CGST/SGST · IGST — the pack's `tax.supply === 'state'`, as web helpers.packSplitsByState). No `fits` = every pack (Till, CSV).
+ * An unknown country (no pack, or not signed in) = offered, never a guess. The catalogue says may/why; the download refuses the same.
+ */
+const FITS = {
+  tally: { ok: (p) => !!(p.export && p.export.tallyXml), why: 'The Tally connector is built on Tally\'s Indian GST books, so it is not offered for a {country} shop. Use the File connector (CSV) or the Counter.' },
+  gstin: { ok: (p) => !!(p.tax && p.tax.supply === 'state'), why: 'This connector is built on India\'s GST (GSTIN, CGST/SGST/IGST), so it is not offered for a {country} shop yet. Use the File connector (CSV) or the Counter.' },
+};
+function mayFor(c, country) {
+  const f = c.fits && FITS[c.fits]; if (!f || !country) return { ok: true, why: null };
+  const p = require('../lib/regulation').packFor(country); if (!p) return { ok: true, why: null };
+  return f.ok(p) ? { ok: true, why: null } : { ok: false, why: f.why.replace('{country}', require('../lib/country-setup').nameOf(country)) };
+}
+/** the signed-in shop's country (identities.country) — one read; null when anonymous or unset */
+async function countryOf(req) {
+  if (!req.identity) return null;
+  const r = await query('SELECT country FROM identities WHERE identity_id = $1', [auth.entityOf(req)]).catch(() => ({ rows: [] }));
+  return r.rows[0] && r.rows[0].country ? String(r.rows[0].country).toUpperCase() : null;
+}
 
 /* signed in → the zip carries a key; anonymous (a bare link) → the placeholder, as before. auth only runs when credentials are offered. */
 const authIfOffered = (req, res, next) => ((req.headers.authorization || req.headers['x-api-key']) ? auth(req, res, next) : next());
+router.get('/catalogue', authIfOffered, async (req, res) => {
+  const country = await countryOf(req);
+  res.json({ connectors: CATALOGUE.map((c) => { const o = Object.assign({}, c, { download: '/api/integrations/download/' + c.id, docs: '/api/integrations/docs/' + c.id, may: mayFor(c, country) }); delete o.fits; return o; }) });
+});
 router.get('/download/:id', authIfOffered, async (req, res) => {
   const c = CATALOGUE.find((x) => x.id === req.params.id);
   if (!c) return res.status(404).json({ error: 'Not found' });
+  const may = mayFor(c, await countryOf(req));
+  if (!may.ok) return res.status(409).json({ error: may.why, code: 'NOT_FOR_COUNTRY' });
   const adapter = c.adapters.includes(String(req.query.adapter || '')) ? String(req.query.adapter) : c.default_adapter;
   const base = require('../lib/public-base').apiBase(req);
   /* HX1: the site the counter's "open ChitBridge" link opens — PUBLIC_WEB_BASE, else the page that asked for the kit (its Origin) */

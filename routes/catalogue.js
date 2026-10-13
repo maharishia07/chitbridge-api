@@ -6,7 +6,7 @@ const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const crypto = require('crypto');   // 6b: hash the ERP handoff payload (receipt, not raw payload)
-const { query, withTransaction, withEntity } = require('../db');
+const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customer-auth');   // T2.4 — the storefront customer's OWN surface
@@ -1058,7 +1058,7 @@ router.post('/:bridge_id/order/confirm',
         ? { channel: 'online', fulfilment: _fulfil, address: _fulfil === 'pickup' ? null : (_addr || null), requested_delivery: _when && (_when.date || _when.time) ? _when : null, remark: _rem || null, ...(_cname ? { name: _cname } : {}) } : null;
       const summary_json = { line_item_count: line_items.length, ...(offersApplied.length ? { offers: offersApplied } : {}),
                              total_value: (!monetary || negotiation) ? null : money.round(total),
-                             currency_code: monetary ? (entity.currency_code || 'INR') : null, purpose, is_promotion: false,
+                             currency_code: monetary ? (entity.currency_code || await regional.currencyFor(entity.identity_id)) : null,   /* CX4 (S4): the shop's own money (its country's region layer), never INR by name */ purpose, is_promotion: false,
                              customer_locality: custLocality || null,
                              ...(orderDetails ? { order_details: orderDetails } : {}),
                              order_preset: oi.preset, pipeline: oi.pipeline,
@@ -1318,12 +1318,16 @@ router.get('/:bridge_id/my-orders', customerAuth, async (req, res) => {
   try {
     const me = req.customer.identity_id;
     // B1 RLS: the customer's OWN copies -> withEntity(me). Never the shop's copies.
-    const r = await withEntity(me, (db) => db.query(
-      `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status
+    /* ⚠️ WX-O2C (2026-10-13): MY copy stays 'delivered' (the rail: it reached the shop) — the shop's Accept / Close moves THEIR copy. So
+       `shop_status` is the other party's status, read in the same statement through chit_participants (b50, SECURITY DEFINER: the caller must
+       be a participant — RLS as me). Before b50 the function is absent (42883): the list still answers, without shop_status. */
+    const sql = (withShop) => `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status${withShop
+        ? `, (SELECT p.current_status FROM chit_participants(ch.chit_id) p WHERE p.entity_id <> ch.entity_id LIMIT 1) AS shop_status` : ''}
        FROM chit_header ch
        JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
        WHERE ch.entity_id = $1 AND ch.purpose IN ('order', 'offer')
-       ORDER BY ch.created_at DESC`, [me]));
+       ORDER BY ch.created_at DESC`;
+    const r = await withEntity(me, async (db) => (await trySavepoint(db, (h) => h.query(sql(true), [me]), null)) || db.query(sql(false), [me]));
     res.json({ orders: r.rows, count: r.rows.length });
   } catch (err) { res.status(500).json({ error: 'Orders failed', message: safeErr(err) }); }
 });

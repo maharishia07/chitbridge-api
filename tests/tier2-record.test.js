@@ -192,5 +192,10 @@ t('2.4 · my-orders lists OFFERS too, not just orders', () => {
   assert.match(ROUTE, /ch\.purpose IN \('order', 'offer'\)/);
 });
 
+t('WX-O2C · my-orders carries the SHOP\'s status (my copy stays the rail\'s delivered) — one statement, pre-b50 safe', () => {
+  assert.match(ROUTE, /SELECT p\.current_status FROM chit_participants\(ch\.chit_id\) p WHERE p\.entity_id <> ch\.entity_id LIMIT 1\) AS shop_status/);
+  assert.match(ROUTE, /trySavepoint\(db, \(h\) => h\.query\(sql\(true\), \[me\]\), null\)\) \|\| db\.query\(sql\(false\), \[me\]\)/);
+});
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

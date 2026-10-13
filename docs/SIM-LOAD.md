@@ -47,6 +47,9 @@ own simulated day. Exit 1 when a line is red.
 * Same shop, another `--seed` / `--years`: refused — `--fresh` first.
 * `--fresh`: removes that shop and its minted parties (a local database, as its owner), then loads.
 * `--seed 11 --shop otherstores`: a second, different shop beside the first.
+* `--start 2023-04-01 --shop pastStores`: the three years END before today (2023-24 · 2024-25 · 2025-26), so today is an open year after
+  them — what a walk does today is the newest record, in an unlocked month. The default (2026-04-01) runs into 2029 with every month locked:
+  a bill made today then posts on the first open day (1 Apr 2029) and sits under 2½ years of newer rows (WX-O2C, 2026-10-13).
 
 ## RAM
 
@@ -81,3 +84,8 @@ node tools/sim-load.cjs --db postgres://postgres:pw@127.0.0.1:5432/cb_sim --shop
 node tools/sim-load.cjs --db postgres://postgres:pw@127.0.0.1:5432/cb_sim --shop simdubai  --country AE --years 1
 ```
 Sign in as the shop's user id with the DEV_OTP code; each shop is its own entity (a country is fixed at registration — no conversion).
+* `--country AU` (WX-R2R, 2026-10-13): a second shop beside the first — `--shop austores --country AU` — on a JULY year (the plan runs
+  2026-07-01 → 2029-06-30; every item 10 %; AUD; Australia/Sydney days). Loads and proves 10 of 11 green on the cloud runner (WX-R2R, after main's engines v1.34): the outbox line is RED — every AU bill WAITS, in words, because the api's adopted accounts-packs (v1.20.0, India only) opens the AU ledger on India's chart, which has no GST head (the bill is never posted with its tax dropped), and the engine's `posting.daySummary` folds only India's heads. Both are engine work (web docs/testing/WX-R2R-2026-10-13.md E1 · E2). The calendar is the
+  pack's: `lib/accounts-packs` fiscalYearOf · periodOf · fyRange with the Country setup's `fy_start_month`, never an April of the
+  loader's own. The three api fixes the AU proof needed (the chit's currency is the sender's; `enable()` opens on the Country
+  setup's currency and year start, on the shop's day; AU in `books-hooks` COUNTRY_ZONE) are held by `tests/chit-currency-default.test.cjs`.

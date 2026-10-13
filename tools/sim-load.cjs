@@ -39,6 +39,8 @@
  *              the shop's currency · year · tax heads · rate menu are READ from its pack (lib/regulation.packFor); the loader types only
  *              what no pack says: SHOPS below. ⚠️ Until the api adopts the books engines ≥ v1.41 (accounts-packs is v1.20: PACKS.IN only),
  *              an AU/AE shop's chart is India's fallback and the proof is expected RED on purchases — web docs/design/standards/COUNTRY-COVERAGE.md)
+ *   --start    the first financial year's first day (default 2026-<the pack's first month>-01). WX-O2C: `--start 2023-04-01` ends the three
+ *              years on 2026-03-31, so TODAY sits in an open year after them — a walk's own bills are then the newest, in an unlocked month.
  *   Env it sets for the in-process api when unset: NODE_ENV=development, DEV_OTP=123456, a local JWT_SECRET, SHOP_CLOCK_ALLOW=1,
  *   RATE_LIMIT_MAX (the 15-minute window would refuse a year of bills), LOG_LEVEL=warn.
  *   A sealed NODE_ENV (production · uat · staging · live) is refused.
@@ -76,6 +78,7 @@ if (require.main !== module) { module.exports = { localOnly, CHAIN_SKIP }; retur
 const DB = arg('db', process.env.SIM_DB || ''), SHOP = String(arg('shop', '')).trim().toLowerCase();
 const YEARS = Number(arg('years', 3)), SEED = Number(arg('seed', 7)), COUNTRY = String(arg('country', 'IN')).toUpperCase();
 const FRESH = has('fresh'), SCHEMA_ONLY = has('schema-only'), SCHEMA = has('schema') || SCHEMA_ONLY;
+const START_ARG = arg('start', '');   /* WX-O2C — checked against the pack's first month once the pack is read */
 const die = (m, code) => { console.error('\n  REFUSED: ' + m + '\n'); process.exit(code || 3); };
 const loc = localOnly(DB);
 if (!DB) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
@@ -93,17 +96,21 @@ if (!SHOPS[COUNTRY]) die('--country IN, AU or AE (the registered packs: lib/regu
 if (require(path.join(API, 'lib', 'dev-otp')).isSealed()) die('NODE_ENV is sealed (' + process.env.NODE_ENV + ') — the loader runs only with NODE_ENV=development (or test)');
 
 const PLAN_LIB = require(path.join(__dirname, 'sim-plan.cjs'));
-const PLAN = PLAN_LIB.planDays({ start: '2026-04-01', years: YEARS, seed: SEED });
+require(path.join(API, 'lib', 'tax-packs'));           /* loads lib/regulation with the three packs registered */
+const PACK = require(path.join(API, 'lib', 'regulation')).packFor(COUNTRY);   /* currency · fiscalYear · taxHeads · tax.scheme · tax.standard_rate · chart.paymentModes */
+if (!PACK) die('no regulation pack is registered for ' + COUNTRY);
+/* ⭐ WX-R2R: the shop's CALENDAR is the pack's (IN an April year · AU a July year · AE a January year) — the plan starts on the pack's
+   first month; one reader for the bill series, the month close and the proof (lib/accounts-packs fiscalYearOf · periodOf · fyRange below). */
+const START = String(START_ARG || ('2026-' + String(PACK.fiscalYear.startMonth).padStart(2, '0') + '-01'));
+if (!/^\d{4}-\d{2}-01$/.test(START) || Number(START.slice(5, 7)) !== PACK.fiscalYear.startMonth) die('--start is a financial year\'s first day for ' + COUNTRY + ' (month ' + PACK.fiscalYear.startMonth + '): e.g. 2023-' + String(PACK.fiscalYear.startMonth).padStart(2, '0') + '-01');
+const PLAN = PLAN_LIB.planDays({ start: START, years: YEARS, seed: SEED });
 const WANT = PLAN_LIB.countOf(PLAN);
-const MARK = 'sim/seed-' + SEED + '/years-' + YEARS;
+const MARK = 'sim/seed-' + SEED + '/years-' + YEARS + (START_ARG ? '/from-' + START : '');   /* the default keeps its old mark — a shop loaded before --start is still "already loaded" */
 const EMAIL = SHOP + '@test.example';                 /* a fixture domain (lib/entitykind) — the shop is a TEST business, never a live one */
 const OTP = process.env.DEV_OTP || '123456';
 const TILL = 'C1';
 const dayAdd = PLAN_LIB.dayAdd;
 const SHOPROW = SHOPS[COUNTRY];
-require(path.join(API, 'lib', 'tax-packs'));           /* loads lib/regulation with the three packs registered */
-const PACK = require(path.join(API, 'lib', 'regulation')).packFor(COUNTRY);   /* currency · fiscalYear · taxHeads · tax.scheme · tax.standard_rate · chart.paymentModes */
-if (!PACK) die('no regulation pack is registered for ' + COUNTRY);
 const CUR = PACK.currency;
 const AT = (d, hh, mm) => d + 'T' + String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ':00' + SHOPROW.offset;   /* the shop's own wall clock */
 /* the year and the month number THE API USES for this shop: lib/accounts-packs (the adopted engine) with the pack's start month — not a second rule here.
@@ -322,7 +329,8 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
   const buyerOf = (name) => ({ LglNm: name, Gstin: null, State: null, Country: seller.Country || COUNTRY, RegType: 'unregistered', Ph: null, Em: null, entity_id: null, Pos: seller.State });
   const basketOf = (rate, dayIx, i) => {
     const r = PLAN_LIB.rng(SEED * 1000003 + dayIx * 101 + i);
-    const pool0 = ITEMS.filter((it) => it.rate === rate), n = 1 + Math.floor(r() * 3), lines = [];
+    /* the plan draws an IN slab (5 / 12 / 18); a one-rate pack (AU 10 % · AE 5 %) maps it to its standard rate, as the shelf was added (WX-R2R) */
+    const pool0 = ITEMS.filter((it) => it.rate === rateOf(rate)), n = 1 + Math.floor(r() * 3), lines = [];
     for (let k = 0; k < n; k++) { const it = pool0[Math.floor(r() * pool0.length)], qty = 1 + Math.floor(r() * 3); if (lines.some((l) => l.item_id === it.id)) continue;
       lines.push({ particulars: it.name, quantity: qty, unit: it.unit, price: it.price, total: it.price * qty, item_id: it.id, hsn: it.hsn, gst_rate: it.rate }); }
     return lines;

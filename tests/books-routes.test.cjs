@@ -85,6 +85,13 @@ const call = (port, method, p, body) => new Promise((done) => {
   await B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-06', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:b',
     by_rate: [{ rate: 12, taxable: 500, cgst: 30, sgst: 30, igst: 0 }], paid: {}, round_off: 0 });
 
+  /* WX-O2C (2026-10-13): with no dates the books answer for the SHOP's day (its zone), never the server's UTC date */
+  { const CLOCK = require(path.join(H.API, 'lib', 'shop-clock')); CLOCK.set('2026-10-12T22:30:00Z');   /* 04:00 on the 13th in Asia/Kolkata */
+    const d0 = await q('GET', '/daybook'), du0 = await q('GET', '/dues'), pl0 = await q('GET', '/pl');
+    ok('GET /daybook (no dates) → from = to = the shop\'s day, 2026-10-13 at 22:30 UTC on the 12th — not the UTC date', d0.body.from === '2026-10-13' && d0.body.to === '2026-10-13', JSON.stringify([d0.body.from, d0.body.to]));
+    ok('GET /dues (no asOf) → asOf is the shop\'s day too', du0.body.asOf === '2026-10-13', String(du0.body.asOf));
+    ok('GET /pl (no dates) → to is the shop\'s day', pl0.body.to === '2026-10-13', String(pl0.body.to));
+    CLOCK.reset(); }
   const db = await q('GET', '/daybook?from=2026-09-01&to=2026-09-30');
   const e0 = db.body.entries && db.body.entries[0];
   ok('GET /daybook → { entries: [{ entry_no, posting_date, source_chit_id, narration, lines: [{ code, name, party_name, dr_minor, cr_minor }] }] }',
@@ -199,6 +206,13 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('POST /opening: a row with both debit and credit is refused (400)', both.status === 400);
   const op = await q('POST', '/opening', { rows: [{ code: '1400', dr_minor: 500000 }, { code: '1300', party_no: 'P-00001', dr_minor: 200000, bill_ref: 'OLD-7', due_date: '2026-05-01' }, { code: '3000', cr_minor: 600000 }] });
   ok('POST /opening { rows } → { entry_no, suspense_minor } (100000 short → Suspense)', op.status === 200 && /^JV\//.test(op.body.entry_no) && op.body.suspense_minor === 100000, JSON.stringify(op.body));
+  /* WX-R2R (2026-10-13): from the year's first day a ledger's opening IS period 0 — the opening entry (in period 0, dated that day) must not ride
+     the lines too. On the real three-year shop the Cash ledger closed at ₹10,07,689.62 against the trial balance's ₹5,07,689.62. */
+  const tbo = await q('GET', '/trial-balance?asOf=2027-03-31'), cashRow = ((tbo.body && tbo.body.rows) || []).find((r) => String(r.code) === '1400') || { dr_minor: 0, cr_minor: 0 };
+  const lgo = await q('GET', '/ledger/1400?from=2026-04-01&to=2027-03-31');
+  ok('GET /ledger/1400 from the year\'s first day: closing = the trial balance\'s Cash (the opening JV counted once)',
+    lgo.status === 200 && lgo.body.closing_minor === Number(cashRow.dr_minor) - Number(cashRow.cr_minor) && !(lgo.body.lines || []).some((l) => /^JV\//.test(l.ref) && lgo.body.opening_minor !== 0 && l.dr_minor === 500000),
+    'ledger opening ' + lgo.body.opening_minor + ' closing ' + lgo.body.closing_minor + ' · TB ' + JSON.stringify(cashRow));
   const nop = await q('POST', '/opening', { rows: [{ code: '1300', party_no: 'P-09999', dr_minor: 1 }] });
   ok('…an unknown party number is refused in words', nop.status === 422 && /P-09999/.test(nop.body.error), JSON.stringify(nop.body));
 
@@ -240,7 +254,7 @@ const call = (port, method, p, body) => new Promise((done) => {
     if (/JOIN identities i ON i.identity_id = t.party_id/.test(t)) return { rows: [{ party_id: SUPP, display_name: 'Kumar Traders' }] };
     return { rows: [] };
   } };
-  let dup = null; try { await PF.patch(fdb, SHOP, 'customer', 'row1', { tax_ids: [{ scheme: 'GSTIN', value: '33abcde1234f1z5' }] }, SHOP); } catch (e) { dup = e; }
+  let dup = null; try { await PF.patch(fdb, SHOP, 'customer', 'row1', { tax_ids: [{ scheme: 'GSTIN', value: '27aapfu0939f1zv' }] }, SHOP); } catch (e) { dup = e; }
   ok('the same GSTIN on another party → 409 DUPLICATE_PARTY with the exact sentence, and who holds it', dup && dup.code === 'DUPLICATE_PARTY' && dup.status === 409
     && dup.message === 'Another party already has this tax id.' && dup.holder === 'Kumar Traders', dup && JSON.stringify({ m: dup.message, h: dup.holder }));
   let badS = null; try { PF.cleanTaxIds([{ scheme: 'SSN', value: '1' }]); } catch (e) { badS = e; }

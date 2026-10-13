@@ -101,12 +101,13 @@ const CS = require('../lib/country-setup');
 async function on(req, res, next) {
   try {
     const e = ctx(req);
-    const s = await withEntity(e, async (h) => { await CS.gate(h, e); return B.settingOf(h, e); });
+    let st = null;
+    const s = await withEntity(e, async (h) => { st = await CS.gate(h, e); return B.settingOf(h, e); });
     if (!s || !s.enabled) return res.status(404).json({ error: 'Not found' });
-    req.books = s; next();
+    req.books = s; req.booksCountry = st || null; next();
   } catch (err) { fail(res, err); }
 }
-const curOf = (req) => (req.books && req.books.functional_currency) || 'INR';
+const curOf = (req) => B.curOf(req.books);   /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/status', auth, owner, async (req, res) => {
@@ -176,7 +177,7 @@ router.post('/terms', auth, owner, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 /**
- * GET /health → { enabled, currency, walkin_grain, last_check, engines, waiting: [{ id, chit_id, ref, reason, tries, since, job }] }
+ * GET /health → { enabled, currency, country, walkin_grain, last_check, engines, year: { fiscal_year, from, start_month }, waiting: [{ id, chit_id, ref, reason, tries, since, job }] }
  * — the web's probe (404 = off) and the to-do list: `waiting` is every post that failed or was parked, least-tried first,
  * each with the `reason` it could not post (lib/books-hooks waitingRow; POST /outbox/retry tries them again).
  */
@@ -184,7 +185,12 @@ router.get('/health', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const waiting = await withEntity(e, (h) => S.waiting(h, e, 50));
-    res.json({ enabled: true, currency: curOf(req), walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
+    /* ⭐ WX-R2R + CX2 (2026-10-13): ONE health shape for the shop's year and country (INT5b) — `year` = the shop's YEAR, as the reads below default
+       it (fyStart — the pack's year on the setting's fy_start_month; the screens paint it instead of assuming April), and `country` = the CS1 status
+       the gate just read (accounts.html sets SESSION.country from it — CX0's reader). CX2's top-level fy_start_month is year.start_month. 0 new trips. */
+    const pack = B.packOf(req.books), A = E.packs(), fy = A.fiscalYearOf(today(req), pack);
+    res.json({ enabled: true, currency: curOf(req), country: req.booksCountry || null, walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
+      year: { fiscal_year: fy, from: fyStart(req, today(req)), start_month: Number(pack.fy_start_month) || null },
       waiting: waiting.map(require('../lib/books-hooks').waitingRow) });
   } catch (err) { fail(res, err); }
 });
@@ -331,8 +337,8 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
       const chart = await S.accounts(h, e);
       const a = chart.find((x) => String(x.code) === key) || chart.find((x) => x.role === key) || chart.find((x) => String(x.account_id) === key);
       if (!a || a.is_group) return null;
-      const open = (await B.ledgerOf(h, e, a, party, from, to)).opening_minor;
-      const rows = await S.entryLines(h, e, from, to, a.account_id, party);
+      const lo = await B.ledgerOf(h, e, a, party, from, to), open = lo.opening_minor;
+      const rows = (await S.entryLines(h, e, from, to, a.account_id, party)).filter((l) => !(lo.period0 && Number(l.period) === 0));   /* period 0 is IN the opening (WX-R2R) */
       let run = open;
       const lines = rows.map((l) => { run += Number(l.dr_minor) - Number(l.cr_minor); return { date: E.ymd(l.posting_date), doc_date: E.ymd(l.doc_date), what: l.narration || WORD[l.event_type] || l.event_type,
         ref: l.entry_no, source_chit_id: l.source_chit_id, source: sourceOf(l), party_id: l.party_id, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), running_minor: run }; });
@@ -392,22 +398,30 @@ async function statementInput(h, e, party, from, to) {
  * you, − you owe them), oldest_due, disputed_minor, buckets }], total_minor } — CBReceivables.outstanding → CBLedger.ageing.
  * Without `side`: both, one row per party (a party on both lists nets). ⚠️ A supplier's buckets are Schedule III's
  * PAYABLE ones (not_due · lt_1y · y1_2 · y2_3 · gt_3y) — the six receivable columns do not apply to them.
+ * ⭐ ?side=supplier&finance=1 (CB Finance · Payables, F4 — lib/books-payables.view): each supplier row + `payable` { total_minor, buckets (0_30 · 31_45 ·
+ *   46_60 · 60_plus), msme, msme_risk, msme_words, pay_by, group (msme · overdue · week · later), terms, early, bills[] }, and `payables` { total_minor }
+ *   beside the parties — the bills are F3's own (books-cashflow.datedSide 'out'), so the total IS the cash view's outgoing dues. Owner only, as Collections.
+ *   Trips added: cheques 1 · Udyam ids 1 · supplier terms 1 (+ the terms-column check, cached). Nothing per party.
  */
 router.get('/dues', auth, noKey, on, async (req, res) => {
   try {
     /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · over_limit · interest_minor · last_remind. Owner only — the server decides. */
     const fin = req.query.finance === '1';
-    if (fin && !isOwner(req)) return res.status(403).json({ error: 'Only the owner may see collections.', message: 'Only the owner may see collections.' });
+    if (fin && !isOwner(req)) { const no = req.query.side === 'supplier' ? 'Only the owner may see what you owe.' : 'Only the owner may see collections.'; return res.status(403).json({ error: no, message: no }); }
     const e = ctx(req), asOf = dateQ(req.query.asOf, today(req));
     const sides = req.query.side === 'customer' ? ['debtors'] : req.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
+    const pay = fin && req.query.side === 'supplier';   /* F4 Payables: the supplier side of CB Finance */
+    let payables = null;
     const out = await withEntity(e, async (h) => {
       const chart = await S.accounts(h, e), names = await partyNames(h, e), per = new Map();
+      let payableItems = [];
       for (const role of sides) {
         const a = chart.find((x) => x.role === role); if (!a) continue;
         const side = role === 'creditors' ? 'payable' : 'receivable', sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
         const items = (await S.items(h, e, null, a.account_id)).filter((i) => require('../lib/books-hooks').dayOf(i.created_at, req.books) <= asOf).map(E.itemOf);
         const d = E.dues(items, asOf, side);
+        if (role === 'creditors') payableItems = items;
         const byRef = d.outstanding.by_ref || {};
         Object.keys(d.ageing.by_party || {}).concat(Object.keys(d.outstanding.by_party || {})).forEach((pid) => {
           if (per.has(pid + '|' + role)) return;
@@ -432,9 +446,15 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
                Object.keys(r.buckets).forEach((k) => { x.buckets[k] = (x.buckets[k] || 0) + r.buckets[k]; });
                if (fin) { x.interest_minor = (x.interest_minor || 0) + (r.interest_minor || 0); Object.assign(x, E.limitView(p, x)); } }
       }
+      if (pay) {
+        const P = require('../lib/books-payables'), more = await P.read(h, e);
+        const v = P.view({ asOf, currency: curOf(req), country: req.books && req.books.country, payable_items: payableItems, cheques: more.cheques, names, msme: more.msme, terms: more.terms, chart });
+        for (const r of rows.values()) r.payable = v.by_party[String(r.party_id)] || null;
+        payables = { total_minor: v.total_minor };
+      }
       return Array.from(rows.values()).sort((a, b) => Math.abs(b.balance_minor) - Math.abs(a.balance_minor));
     });
-    res.json({ currency: curOf(req), asOf, parties: out, total_minor: out.reduce((t, p) => t + p.balance_minor, 0) });
+    res.json(Object.assign({ currency: curOf(req), asOf, parties: out, total_minor: out.reduce((t, p) => t + p.balance_minor, 0) }, payables ? { payables } : {}));
   } catch (err) { fail(res, err); }
 });
 
@@ -650,7 +670,7 @@ router.get('/payments/:id/advice', auth, noKey, on, async (req, res) => {
  */
 router.get('/bank/rail', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), to = dateQ(req.query.to, today()), from0 = dateQ(req.query.from, to);
+    const e = ctx(req), to = dateQ(req.query.to, today(req)), from0 = dateQ(req.query.from, to);
     const from = from0 > to ? to : from0;
     if ((Date.parse(to) - Date.parse(from)) / 86400000 > 400) return res.status(400).json({ error: 'Too long', message: 'Choose a statement of 400 days or fewer.' });
     const out = await withEntity(e, async (h) => {
@@ -830,8 +850,11 @@ const givenLines = (list) => require('../lib/books-manual').givenLines(list);   
 router.post('/entries', auth, owner, on, async (req, res) => {
   try {
     const b = req.body || {};
+    /* against_ref (F4): the bill this journal settles — postEntry sets the party line against it (itemsFor → confirmItems), as a write-off does.
+       CB Finance · Payables sends the early-pay discount this way: Dr the supplier against the bill · Cr Discount received (books-payables.view `record`). */
     res.json(await B.postEntry(null, ctx(req), { type: 'manual', owner: true, narration: b.narration, date: dateQ(b.date, today(req)), currency: curOf(req), strict_date: true,
-      lines: givenLines(b.lines), ref: b.ref || null, source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null, by: byOf(req) }));
+      lines: givenLines(b.lines), ref: b.ref || null, source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null, by: byOf(req),
+      against_ref: b.against_ref ? String(b.against_ref).slice(0, 120) : null }));
   } catch (err) { fail(res, err); }
 });
 /** POST /entries/:id/reverse { reason } → the mirror entry (never an edit) and, in the SAME transaction, the party rows that reopen the bills it had settled:

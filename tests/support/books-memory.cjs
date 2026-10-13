@@ -57,7 +57,7 @@ function create() {
         /* the real query's entity-scoped LEFT JOIN onto the shop's own chit (one copy) and the writer's identity */
         const c = h.source_chit_id ? T.chits.find((x) => x.chit_id === h.source_chit_id && x.entity_id === e) : null, bj = (c && c.business_json) || {};
         const who = h.created_by ? T.identities.find((x) => x.identity_id === h.created_by) : null;
-        return Object.assign({}, l, { entry_no: h.entry_no, posting_date: h.posting_date, doc_date: h.doc_date, event_type: h.event_type, narration: h.narration, source_chit_id: h.source_chit_id,
+        return Object.assign({}, l, { entry_no: h.entry_no, posting_date: h.posting_date, doc_date: h.doc_date, period: h.period, event_type: h.event_type, narration: h.narration, source_chit_id: h.source_chit_id,
           reverses_entry_id: h.reverses_entry_id, code: a.code, account_name: a.name, source_ref: h.source_ref || null,
           reversed_by: (rvOf(e, h) || {}).entry_no || null, reversed_by_id: (rvOf(e, h) || {}).entry_id || null, account_role: a.role,
           covers: Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : null, src_chit_id: c ? c.chit_id : null, src_purpose: c ? c.purpose || null : null,
