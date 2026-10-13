@@ -8449,7 +8449,7 @@ function menuShopBody(){
      * rather than trusting that a URL built from two known-good halves is a known-good URL.
      */
     if (k === 'storefront') return sh.handle
-      ? (cbHome().replace(/\/app\.html.*$/, '') + '/shop.html?s=' + encodeURIComponent(sh.handle)) : '';
+      ? (cbRoot() + '/shop.html?s=' + encodeURIComponent(sh.handle)) : '';
     /* ⚠️ M33 (walk 2026-10-10): shopTax().gstin is a YES/NO — returning it printed "true" where the GSTIN goes */
     if (k === 'gstin')    return (tx.gstin && String(sh.gstin || '').trim()) || (noGst ? 'Not registered' : '');
     if (k === 'currency') return sh.currency || (S && S.currency) || 'INR';
@@ -10509,7 +10509,8 @@ function paintMenu(){
        */
     : '<div class="msecs">' + secs + '</div>';
   m.innerHTML = head + inner + foot;
-  try { var cl = document.getElementById('cblink'); if (cl) cl.href = cbHome(); } catch (_) {}
+  /* IX0 (2026-10-13): the link in the counter's menu goes HOME — the index page and its small apps — never the workshop (app.html) */
+  try { var cl = document.getElementById('cblink'); if (cl) cl.href = cbRoot() + '/'; } catch (_) {}
   paintMenuQuick();
 }
 /**
@@ -24906,7 +24907,7 @@ function retSlipHTML(cn){
  * /pair, middleware/auth keyAlive). It can list and switch off SCREENS only, never another counter.
  */
 var TV = { code: null, expires: 0, screens: null, why: '' };
-function tvAddr(){ return cbHome().replace(/\/app\.html.*$/, '') + '/promo.html'; }
+function tvAddr(){ return cbRoot() + '/promo.html'; }
 function openScreen(){
   if (!(TV.expires > Date.now())) TV.code = null;
   TV.why = '';
@@ -25015,7 +25016,7 @@ function shopPrevCan(i){ return !!(i && i.item_id && S && S.shop && S.shop.handl
 function shopPrevUrl(i, one){
   var h = (S && S.shop && S.shop.handle) || '';
   if (!h) return '';
-  var base = cbHome().replace(/\/app\.html.*$/, '') + '/shop.html?s=' + encodeURIComponent(h);
+  var base = cbRoot() + '/shop.html?s=' + encodeURIComponent(h);
   return one && i && i.item_id ? (base + '&item=' + encodeURIComponent(i.item_id) + '&preview=1') : base;
 }
 function shopPrevOpen(){
@@ -25244,6 +25245,8 @@ async function reprint(no){
 /** the rest of ChitBridge is a different job — one door, never a panel (Athi, 2026-09-07) */
 function cbHome(){ var api = (HOST && HOST.mode === 'cloud' && CloudHost.api) ? CloudHost.api : '';
   return (location.origin.indexOf('till') >= 0 || location.port === '7071') ? 'https://chitbridge-web.vercel.app/app.html' : (location.origin + '/app.html'); }
+/** the web ROOT (Home, the small apps, the storefront) — the one trim of cbHome(), where three inline copies were (IX0) */
+function cbRoot(){ return cbHome().replace(/\/app\.html.*$/, ''); }
 /** ⭐ THE SHIFT (2026-09-07). Not a login: the key is what authorises this till. This says who is standing at it, on every bill. */
 function whoLoad(){
   try { var raw = ls.get(shopLs('cb_till_who'), ''); WHO = raw ? JSON.parse(raw) : null; } catch (_) { WHO = null; }
