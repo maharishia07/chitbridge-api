@@ -39,6 +39,9 @@ ok('the url is checked BEFORE anything connects (localOnly runs before the pool 
 const WRITE_RE = /\b(INSERT\s+INTO|UPDATE)\s+(chit_header|chit_detail|chit_status|journal_entry|journal_line|account_balance|party_item|identities|customer_list|supplier_list|catalogue_items|books_setting|fiscal_period)\b/i;
 ok('no raw INSERT/UPDATE into a tenant table — bills, parties, products, the ledger all go through the app', !WRITE_RE.test(src), (WRITE_RE.exec(src) || [''])[0]);
 ok('DATABASE_URL is set from --db before server.js loads (dotenv cannot redirect it)', src.indexOf('process.env.DATABASE_URL = DB') < src.indexOf("require(path.join(API, 'server.js'))"));
+/* WX-O2C: --start moves the three years (default unchanged) and keeps the default's "already loaded" mark */
+ok('--start feeds the plan (default 2026-04-01) and is refused unless it is a 1 April', /const START = String\(arg\('start', '2026-04-01'\)\)/.test(src) && /planDays\(\{ start: START,/.test(src) && /\^\\d\{4\}-04-01\$/.test(src));
+ok('the default load keeps its old idempotency mark (a shop loaded before --start is still "already loaded")', /START === '2026-04-01' \? '' : '\/from-' \+ START/.test(src));
 ok('a sealed NODE_ENV is refused', /isSealed\(\)\) die\(/.test(src));
 ok('the schema step refuses a database that already has tables', /already has tables/.test(src));
 ok('the shop walks the Country setup door (CS1) before the books open — never a raw write to identities / entity_governance', /\/api\/governance\/country-setup/.test(src) && src.indexOf('/api/governance/country-setup') < src.indexOf('/api/books/enable'));

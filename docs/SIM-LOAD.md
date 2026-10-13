@@ -47,6 +47,9 @@ own simulated day. Exit 1 when a line is red.
 * Same shop, another `--seed` / `--years`: refused — `--fresh` first.
 * `--fresh`: removes that shop and its minted parties (a local database, as its owner), then loads.
 * `--seed 11 --shop otherstores`: a second, different shop beside the first.
+* `--start 2023-04-01 --shop pastStores`: the three years END before today (2023-24 · 2024-25 · 2025-26), so today is an open year after
+  them — what a walk does today is the newest record, in an unlocked month. The default (2026-04-01) runs into 2029 with every month locked:
+  a bill made today then posts on the first open day (1 Apr 2029) and sits under 2½ years of newer rows (WX-O2C, 2026-10-13).
 
 ## RAM
 

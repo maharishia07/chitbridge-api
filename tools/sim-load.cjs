@@ -31,6 +31,8 @@
  *   --schema   an EMPTY test database gets the repo's schema first (migrations/000_baseline + part2 + bNNN in number order; needs
  *              psql on PATH). Never on a database that already has tables — the local stack's database is migrated by the stack.
  *   --years    financial years from 2026-04-01 (3) · --seed the plan's seed (7) · --country IN (proved) | AU (accepted, unproved)
+ *   --start    the first financial year's 1 April (2026-04-01). WX-O2C: `--start 2023-04-01` ends the three years on 2026-03-31, so TODAY sits in
+ *              an open year after them — a walk's own bills are then the newest, in an unlocked month (the default runs into 2029, all locked).
  *   Env it sets for the in-process api when unset: NODE_ENV=development, DEV_OTP=123456, a local JWT_SECRET, SHOP_CLOCK_ALLOW=1,
  *   RATE_LIMIT_MAX (the 15-minute window would refuse a year of bills), LOG_LEVEL=warn.
  *   A sealed NODE_ENV (production · uat · staging · live) is refused.
@@ -66,12 +68,14 @@ if (require.main !== module) { module.exports = { localOnly, CHAIN_SKIP }; retur
 const DB = arg('db', process.env.SIM_DB || ''), SHOP = String(arg('shop', '')).trim().toLowerCase();
 const YEARS = Number(arg('years', 3)), SEED = Number(arg('seed', 7)), COUNTRY = String(arg('country', 'IN')).toUpperCase();
 const FRESH = has('fresh'), SCHEMA = has('schema');
+const START = String(arg('start', '2026-04-01'));
 const die = (m, code) => { console.error('\n  REFUSED: ' + m + '\n'); process.exit(code || 3); };
 const loc = localOnly(DB);
 if (!DB) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
 if (!loc.ok) die(loc.why);
 if (!/^[a-z][a-z0-9]{2,19}$/.test(SHOP)) die('--shop is the shop\'s user id: 3–20 letters or digits, starting with a letter (e.g. simstores)');
 if (!(YEARS >= 1 && YEARS <= 10) || !Number.isInteger(SEED)) die('--years 1..10 and --seed a whole number');
+if (!/^\d{4}-04-01$/.test(START)) die('--start is a financial year\'s first day, 1 April: e.g. 2023-04-01');
 if (COUNTRY !== 'IN' && COUNTRY !== 'AU') die('--country IN or AU');
 /* WX-O2C (2026-10-13): the AU run was "accepted, unproved" — and what it made was an IN ledger: the adopted books engines answer packFor('AU')
    with the IN pack (INR, April year, GST close), every purchase was refused (an AUD entry in an INR ledger needs a rate), and the Ledger screens
@@ -84,9 +88,9 @@ if (COUNTRY === 'AU') {
 if (require(path.join(API, 'lib', 'dev-otp')).isSealed()) die('NODE_ENV is sealed (' + process.env.NODE_ENV + ') — the loader runs only with NODE_ENV=development (or test)');
 
 const PLAN_LIB = require(path.join(__dirname, 'sim-plan.cjs'));
-const PLAN = PLAN_LIB.planDays({ start: '2026-04-01', years: YEARS, seed: SEED });
+const PLAN = PLAN_LIB.planDays({ start: START, years: YEARS, seed: SEED });
 const WANT = PLAN_LIB.countOf(PLAN);
-const MARK = 'sim/seed-' + SEED + '/years-' + YEARS;
+const MARK = 'sim/seed-' + SEED + '/years-' + YEARS + (START === '2026-04-01' ? '' : '/from-' + START);   /* the default keeps its old mark — a shop loaded before --start is still "already loaded" */
 const EMAIL = SHOP + '@test.example';                 /* a fixture domain (lib/entitykind) — the shop is a TEST business, never a live one */
 const OTP = process.env.DEV_OTP || '123456';
 const TILL = 'C1';
