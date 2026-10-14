@@ -273,9 +273,7 @@ async function autoAssignReceived(entity_id, chit_id) {
               assigned_at = NOW(), assignment_type = 'auto', current_status = 'pending', updated_at = NOW()
         WHERE chit_id = $3 AND entity_id = $4 AND direction = 'received'`,
       [t.identity_id, t.display_name, chit_id, entity_id]);
-    await client.query(
-      `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW() WHERE identity_id = $1`,
-      [t.identity_id]);
+    await require('../lib/assign-chit').taskCount(client, t.identity_id, 'take');   /* TA1 */
     await client.query(
       `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
        VALUES ($1, $2, 'assigned', NULL, 'System (auto-assign)', 'pending', $3)`,
@@ -4820,13 +4818,13 @@ router.post('/assign-bulk',
           const already = cs.rows[0].assigned_to_actor_id;
           if (already === t.identity_id) { assigned.push(chit_id); continue; }              // already theirs — no change, no cost
           if (load >= cap) { skipped.push({ chit_id, reason: `at capacity (${cap})` }); continue; }   // (e) capacity gate
-          if (already) { await client.query(`UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1) WHERE identity_id = $1`, [already]); }
+          if (already) { await require('../lib/assign-chit').taskCount(client, already, 'release'); }
           await client.query(
             `UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
                     assigned_at = NOW(), assignment_type = 'push', current_status = 'pending', updated_at = NOW()
               WHERE chit_id = $3 AND entity_id = $4`,
             [t.identity_id, t.display_name, chit_id, entity_id]);
-          await client.query(`UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW() WHERE identity_id = $1`, [t.identity_id]);
+          await require('../lib/assign-chit').taskCount(client, t.identity_id, 'take');   /* TA1 */
           load++;
           await client.query(
             // F3: assignment is INTERNAL — write ONLY the assigning entity's own row. The assignee sees it via the
