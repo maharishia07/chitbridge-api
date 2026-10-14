@@ -243,6 +243,22 @@ const tally = {};
     t('access.canMessage / canRaiseDispute answer as before for a ' + lvl,
       acc.canMessage(id, 'internal') === (lvl !== 'viewer') && acc.canMessage(id, 'external') === (lvl === 'editor') && acc.canRaiseDispute(id) === (lvl === 'editor'));
   }
+  /* ── D · STD1: a BILL's Accept is answered on the read — its level from the rail, then what the books wait on (books_wait) ── */
+  console.log('\n— D · a bill I received: the read answers Accept (rail level + the books\' wait) —');
+  const RA = require(path.join(API, 'lib', 'rail-actions'));
+  const railNo = { accept: { ok: false, why: 'not_received' }, reject: { ok: false, why: 'not_received' } };
+  const gap = { todo: 'record', why: 'Their bill SG-101 says ₹1,300, the lines counted come to ₹1,180 — ₹120 apart.' };
+  t('a captured receipt (bill_received, no received copy): the rail\'s step facts do not apply → Accept ok, other verdicts untouched',
+    JSON.stringify(RA.forBill('bill_received', null, railNo)) === JSON.stringify({ accept: { ok: true }, reject: { ok: false, why: 'not_received' } }));
+  t('…the books wait on something else (a gap) → Accept refused WITH the books\' sentence and its todo',
+    JSON.stringify(RA.forBill('bill_received', gap, railNo).accept) === JSON.stringify({ ok: false, why: 'books_waiting', say: gap.why, todo: 'record' }));
+  t('…a supplier to add → refused, todo add_supplier', RA.forBill('bill_received', { todo: 'add_supplier', why: 'Who is X?' }, railNo).accept.todo === 'add_supplier');
+  t('…the books wait on acceptance itself → Accept ok', RA.forBill('bill_received', { todo: 'accept', why: 'Waiting for you to confirm' }, railNo).accept.ok === true);
+  t('…a viewer stays refused by the rail (level wins over everything)', RA.forBill('bill_received', null, { accept: { ok: false, why: 'read_only' } }).accept.why === 'read_only');
+  const task = { accept: { ok: true } };
+  t('not a bill (a task, an order, a bill I issued) → the rail\'s answer, the same object', RA.forBill('bill_issued', gap, task) === task && RA.forBill(null, gap, task) === task);
+  t('the chit read composes it (routes/chits.js: railActions.forBill over docOf + books_wait)', /railActions\.forBill\(_doc, bundle\.books_wait,/.test(SRC) && /doc: _doc,/.test(SRC) && /books_wait: bundle\.books_wait \|\| null/.test(SRC));
+
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);

@@ -179,21 +179,26 @@ router.post('/terms', auth, owner, on, async (req, res) => {
   } catch (err) { fail(res, err); }
 });
 /**
- * GET /health → { enabled, currency, country, walkin_grain, last_check, engines, year: { fiscal_year, from, start_month }, waiting: [{ id, chit_id, ref, reason, tries, since, job }] }
+ * GET /health → { enabled, currency, country, walkin_grain, last_check, engines, year: { fiscal_year, from, start_month }, waiting: [{ id, chit_id, ref, reason, tries, since, job, todo, name, candidates }],
+ *               total, page, limit, todo: { accept, add_supplier, record } }
  * — the web's probe (404 = off) and the to-do list: `waiting` is every post that failed or was parked, least-tried first,
  * each with the `reason` it could not post (lib/books-hooks waitingRow; POST /outbox/retry tries them again).
  */
 router.get('/health', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
-    const waiting = await withEntity(e, (h) => S.waiting(h, e, 50));
+    /* STD1: the waiting list is a PAGE (50, least-tried first) with its total; `todo` is the ONE count by what each row asks (books-store
+       waitingCount, GROUP BY over every open row) — Home, the Accounts card and Books' To do say the same numbers. Same transaction. */
+    const LIMIT = 50;
+    const [waiting, counts] = await withEntity(e, async (h) => [await S.waiting(h, e, LIMIT), await S.waitingCount(h, e)]);
     /* ⭐ WX-R2R + CX2 (2026-10-13): ONE health shape for the shop's year and country (INT5b) — `year` = the shop's YEAR, as the reads below default
        it (fyStart — the pack's year on the setting's fy_start_month; the screens paint it instead of assuming April), and `country` = the CS1 status
        the gate just read (accounts.html sets SESSION.country from it — CX0's reader). CX2's top-level fy_start_month is year.start_month. 0 new trips. */
     const pack = B.packOf(req.books), A = E.packs(), fy = A.fiscalYearOf(today(req), pack);
     res.json({ enabled: true, currency: curOf(req), country: req.booksCountry || null, walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
       year: { fiscal_year: fy, from: fyStart(req, today(req)), start_month: Number(pack.fy_start_month) || null },
-      waiting: waiting.map(require('../lib/books-hooks').waitingRow) });
+      waiting: waiting.map(require('../lib/books-hooks').waitingRow), total: counts.total, page: 1, limit: LIMIT,
+      todo: { accept: counts.accept, add_supplier: counts.add_supplier, record: counts.record } });
   } catch (err) { fail(res, err); }
 });
 router.post('/check', auth, owner, on, async (req, res) => {

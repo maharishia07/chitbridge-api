@@ -2434,7 +2434,10 @@ router.get('/:chit_id', auth, async (req, res) => {
         -- ⭐ R01: the status of MY RECEIVED copy (null when I hold only the sent one) — the fact rail.actions steps on. A scalar
         -- in the same statement, so the actions answer costs no round trip. The same row PUT /status reads and moves.
         (SELECT cs.current_status FROM chit_status cs
-          WHERE cs.chit_id = $2 AND cs.entity_id = $1 AND cs.direction = 'received' LIMIT 1)            AS my_received`;
+          WHERE cs.chit_id = $2 AND cs.entity_id = $1 AND cs.direction = 'received' LIMIT 1)            AS my_received,
+        -- ⭐ STD1: what the books wait on for THIS chit (books_outbox, b273: todo · name · why · candidates) — a scalar, no round trip;
+        -- the bill's Accept verdict below is composed from it (the server's may/why), never from a list the page happens to hold.
+        ${require('../lib/books-store').waitOfChitSql('$1', '$2')}                                        AS books_wait`;
 
     let bundle = null;
     try {
@@ -2448,6 +2451,7 @@ router.get('/:chit_id', auth, async (req, res) => {
           assigned: _lines0 ? await assign.current(entity_id, chit_id, db, g.assignments || []) : null,
           prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
           my_received: g.my_received || null,
+          books_wait: g.books_wait || null,
           /**
            * ⭐ THE ATTACHMENT LIST RIDES ALONG — it cost a whole transaction of its own, measured at 1074ms,
            * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
@@ -2498,7 +2502,10 @@ router.get('/:chit_id', auth, async (req, res) => {
       const my_received = await trySavepoint(db, (c) => c.query(
         `SELECT cs.current_status FROM chit_status cs WHERE cs.chit_id = $1 AND cs.entity_id = $2 AND cs.direction = 'received' LIMIT 1`,
         [chit_id, entity_id]).then((r) => (r.rows[0] && r.rows[0].current_status) || null), null);
-      return { participants: participants2, amd, rows, assigned, prog, my_received };
+      /* STD1 — the books' wait on this chit, as the one-shot reads it (null = none, or not readable here) */
+      const books_wait = await trySavepoint(db, (c) => c.query(`SELECT ${require('../lib/books-store').waitOfChitSql('$1', '$2')} AS w`, [entity_id, chit_id])
+        .then((r) => (r.rows[0] && r.rows[0].w) || null), null);
+      return { participants: participants2, amd, rows, assigned, prog, my_received, books_wait };
     });
 
     _mark('bundle_6_reads');
@@ -2584,6 +2591,7 @@ router.get('/:chit_id', auth, async (req, res) => {
     } catch (_) {}
 
     _mark('assemble');
+    const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
     res.json({
       ...(_wantTiming ? { _timing: _T } : {}),
       header: data.header.rows[0],
@@ -2599,8 +2607,12 @@ router.get('/:chit_id', auth, async (req, res) => {
       /* ⭐⭐ R01 — MAY I DO X ON THIS COPY, answered by the rail engine (lib/rail.js) over the facts of MY copy: one verdict per
          action, { ok:true } or { ok:false, why } with why from the engine's vocabulary. The writing routes ask the same
          engine before they write, so a ✓ here is never refused there. A host paints this; it never computes it. */
-      actions: railActions.actions({ held: true, received: bundle.my_received || null,
-        sender: !!(data.header.rows[0] && String(data.header.rows[0].sender_entity_id) === String(entity_id)) }, railActions.meOf(req)),
+      actions: railActions.forBill(_doc, bundle.books_wait, railActions.actions({ held: true, received: bundle.my_received || null,
+        sender: !!(data.header.rows[0] && String(data.header.rows[0].sender_entity_id) === String(entity_id)) }, railActions.meOf(req))),
+      /* ⭐ STD1: WHAT DOCUMENT THIS COPY IS, said by the server (lib/folder-inventory docOf — the Bills folders' own classification), so the popup
+         never guesses whether it holds a bill; and what the books wait on for it (books_wait: todo · name · why · candidates, or null) */
+      doc: _doc,
+      books_wait: bundle.books_wait || null,
       /* ⭐ THE LIVE SET — one entry per ORIGINAL line, carrying what it is now and everything it has been.
          Removed lines are PRESENT with live:null: they must stay visible as evidence while counting nowhere.
          Sent whenever lines exist, amended or not, so the client has exactly one shape to render. */

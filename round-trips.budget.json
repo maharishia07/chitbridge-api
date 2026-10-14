@@ -225,7 +225,8 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "STD1, by hand: live it is the gate read, then ONE withEntity transaction — the 50-row page AND the one count (waitingCount, GROUP BY todo over every open row): 2 statements in the same trip, 0 new trips."
     },
     "GET /api/books/ledger/:account": {
       "file": "books.js",
@@ -1416,6 +1417,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PUT /api/chits/:id/use": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "FX-F10W, by hand: lib/bill-use.set — taxCopy.copyOf (1 trip) + ONE withEntity transaction (1 trip): the use UPDATE, and with { party } the supplier read (books-store supplierByName, STD1: the one resolver) + the party UPDATE (5 statements: BEGIN · set_config · SELECT · UPDATE · COMMIT; + the use UPDATE when both are sent). The chits router is not mounted by this scanner. GET /api/chits/:chit_id (STD1): books_wait is one more scalar in the ONE_SHOT statement — 0 new trips."
     },
     "PUT /api/service/:chit_id": {
       "file": "service.js",
