@@ -76,7 +76,7 @@ const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via:
       return { rows: ids.filter((i) => i.parent_entity_id === p[0] && i.user_id.startsWith(p[1].replace('%', '')) && p[2].indexOf(String(i.display_name).toLowerCase()) >= 0) };
     }
     if (/^SELECT user_id FROM identities WHERE user_id LIKE \$1 ORDER BY length/.test(sql)) return { rows: ids.filter((i) => i.user_id.startsWith(p[0].replace('%', ''))).sort((a, b) => a.user_id.localeCompare(b.user_id)).slice(-1) };
-    if (/^INSERT INTO identities \(bridge_id, display_name, user_id, identity_type, parent_entity_id, status, created_by, entity_kind\) SELECT/.test(sql)) {
+    if (/^INSERT INTO identities \(bridge_id, display_name, user_id, identity_type, parent_entity_id, status, created_by, entity_kind, country\) SELECT/.test(sql)) {
       const out = p[1].map((b, i) => { const r = { identity_id: 'N' + (ids.length + i), bridge_id: b, display_name: p[2][i], user_id: p[3][i], parent_entity_id: p[0] }; return r; });
       out.forEach((r) => ids.push(r)); inserted.push(out.length); return { rows: out };
     }

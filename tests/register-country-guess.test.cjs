@@ -65,8 +65,9 @@ const SYDNEY = { country: 'AU', currency_code: 'AUD', timezone: 'Australia/Sydne
   SQL = [];
   r = await run({ user_id: 'api-fixture-shop', display_name: 'api-fixture-shop', email: 'fixture@example.com' });
   ins = insertOf();
-  ok('NO guess (an API fixture): the INSERT names no country, currency or zone, and no source label is stored',
-    r.status === 200 && ins && colsOf(ins).indexOf('country') < 0 && colsOf(ins).indexOf('currency_code') < 0 && colsOf(ins).indexOf('timezone') < 0 && !SQL.some((q) => /entity_governance/.test(q.sql)), ins && ins.sql);
+  /* GOV-AU1 (b376): the column has no default now, so the INSERT always NAMES country — NULL when nobody guessed, never 'IN' */
+  ok('NO guess (an API fixture): the INSERT names country NULL (never India), no currency or zone, and no source label is stored',
+    r.status === 200 && ins && valOf(ins, 'country') === null && colsOf(ins).indexOf('currency_code') < 0 && colsOf(ins).indexOf('timezone') < 0 && !SQL.some((q) => /entity_governance/.test(q.sql)), ins && ins.sql);
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
