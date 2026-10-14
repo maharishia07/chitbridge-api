@@ -12,6 +12,9 @@ let pass = 0;
 const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + (e.stack || e.message).split('\n').slice(0, 4).join('\n      ')); process.exitCode = 1; } };
 D.cust = [Object.assign(row({ party_id: P(2), display_name: 'Chola' }), { customer_type: 'entity', added_via: 'manual', txn_count: 1, segment: 'new' })];
 D.sup = [Object.assign(row({ party_id: P(1), display_name: 'Agro' }), {})];
+/* INT6d-GREEN: the shop STATES its country — since T2-NATDEF an unstated country means the UTC day, and this test's days are India's (day() below).
+ * Between 18:30 and 00:00 UTC (the 04:00 IST batch) the two days differ, so "late" went red by the clock, not by the code. */
+D.country = 'IN';
 const day = (n) => H.dayOf(new Date(Date.now() + n * 86400000).toISOString(), 'IN');   /* the shop's calendar day, n days from today */
 const asCo = (id) => t.as('E1', { identity: { identity_id: id, parent_entity_id: 'E1' } });
 

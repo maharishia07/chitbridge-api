@@ -72,7 +72,9 @@ function answer(text, params) {
   if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: params[0] === 'a2' }] };
   if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, country: 'IN', last_check: { at: '2026-10-06T21:00:00Z', ok: true }, terms: F.terms || null }] };
   /* T3-P1-MONEY: the cheques held (books-store.cheques) — a post-dated one for tomorrow, one overdue for deposit, one already deposited, one written OUT */
-  if (/FROM books_payment p/.test(sql)) { F.chqSql = sql; const d = (n) => new Date(Date.now() + n * DAYS).toISOString().slice(0, 10); return { rows: F.cheques === 'none' ? [] : [
+  /* INT6d-GREEN: the cheque dates are the SHOP's days (country IN above — the same day shop-clock.today(s) gives the card), never the runner's UTC date:
+   * between 18:30 and 00:00 UTC (the 04:00 IST batch) "tomorrow" in UTC is already today in India and the post-dated cheque counted as due */
+  if (/FROM books_payment p/.test(sql)) { F.chqSql = sql; const d = (n) => require('../lib/books-hooks').dayOf(new Date(Date.now() + n * DAYS).toISOString(), 'IN'); return { rows: F.cheques === 'none' ? [] : [
     { payment_id: 'p1', party_id: 'c1', direction: 'in', amount_minor: 500000, currency: 'INR', cheque_no: '000777', cheque_bank: 'SBI', cheque_date: d(1), received_at: d(-3), status: 'received' },
     { payment_id: 'p2', party_id: 'c2', direction: 'in', amount_minor: 120000, currency: 'INR', cheque_no: '000778', cheque_bank: 'HDFC', cheque_date: d(-2), received_at: d(-5), status: 'received' },
     { payment_id: 'p3', party_id: 'c3', direction: 'in', amount_minor: 90000, currency: 'INR', cheque_no: '000779', cheque_bank: 'HDFC', cheque_date: d(-9), received_at: d(-9), status: 'deposited' },
