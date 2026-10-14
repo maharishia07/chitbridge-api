@@ -1213,6 +1213,27 @@
       "fired": true,
       "status": 400
     },
+    "GET /api/events/stats": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
+      "extra": true,
+      "why": "SEC3 (by hand): platform root only — lib/platformroot.refuseUnlessRoot reads env, no statement; the counts are in memory"
+    },
+    "POST /api/connectors/ingest": {
+      "file": "connectors.js",
+      "trips": 50,
+      "wire": 50,
+      "extra": true,
+      "why": "SEC3 (by hand): device key, no session. Key + the shop's capability switch in ONE statement (was a key-only read); `to` → ONE withEntity (party + mayTrade) and a second look only on a refusal; then as before (heartbeat 1-2, work pattern, the signal chit's reads + deliver; the shop row now also carries currency_code/country — no new trip). Placeholder ceiling until a fixture runs it"
+    },
+    "POST /api/connectors/erp-ingest": {
+      "file": "connectors.js",
+      "trips": 50,
+      "wire": 50,
+      "extra": true,
+      "why": "SEC3 (by hand): key + switch in ONE statement; `to` → ONE withEntity (+1 only on a refusal); then the receipt claim + chit as before. Placeholder ceiling until a fixture runs it"
+    },
     "POST /api/events/ticket": {
       "file": "events.js",
       "trips": 0,

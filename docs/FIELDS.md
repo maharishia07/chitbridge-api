@@ -4,6 +4,16 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## POST /api/connectors/ingest · /erp-ingest · GET /api/events/stats — device keys in their shop and switch (SEC3, 2026-10-14)
+
+Derived per call, never stored. Written by `routes/connectors.js` (deviceActor · deviceMayAddress · the ingest catch) and `lib/platformroot.refuseUnlessRoot`. Read by: the generated Pi agent (web `public/app/cap-connector.js` `_agentJs` — it branches on the HTTP status, logs the code) and `scripts/connector-gateway-sim.js`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `code` on a refusal (new) | `NO_KEY` · `KEY_UNKNOWN` (401) · `CAPABILITY_OFF` · `DEVICE_TO_REFUSED` (403) · `CHIT_NOT_DELIVERED` (503) · a knownerr code (e.g. `POPULATION_BOUNDARY` 409) | Derived. Anything but 2xx = the device keeps the event and retries. `message` is the sentence a person reads; nothing branches on it. |
+| `money_why` on a 200 ingest (new) | `{ code: 'NO_MONEY', why }` or null | Derived: set only when the shop states no money and its country has no pack (`country-setup.shopMoney` → null); `why` = `MONEY_UNSTATED`. The signal chit's `summary_json.currency_code` is then null (was always `INR`). |
+| `GET /api/events/stats` refusal `code` (new) | `NOT_PLATFORM_ROOT` (403) · `NO_PLATFORM_ROOT` (404) | Derived from `PLATFORM_ROOT_ENTITY`. The same door now answers the entities.js operator routes (same codes added there). |
+
 ## POST /api/governance/ai-draft (skill `line-item-draft`) · POST /api/capture/:id/raise — the quantity guard (T1-AI, 2026-10-14)
 
 Derived, never stored by the guard. Written by `lib/line-guard.js` (calls the engines' `numerals.verifyQuantity` / `negationIn`) over an AI reading. Read by: compose "✨ Fill" (app.html `ccAiFill`) and the raise screen.
