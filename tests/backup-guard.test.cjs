@@ -93,5 +93,5 @@ else {
   fs.rmSync(tmp, { recursive: true, force: true });
 }
 
-console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
+console.log('\n' + (pass + fail) + ' checks · ' + pass + ' passed, ' + fail + ' failed\n');
 process.exit(fail ? 1 : 0);

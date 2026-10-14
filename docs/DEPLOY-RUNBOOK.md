@@ -80,3 +80,36 @@ Apply the same migrations on the prod DB. Only after dev is green + must-fixes l
 Subscription/quota enforcement (+9 open product questions), dead actor-settings, MIS server rollup, CSP,
 token revocation/short TTL, `error_log`/critical-alert sink, `?limit=` cap + `statement_timeout`, isolation
 regression test, AI-assisted schema building, real screen clips, turning the Haiku assistant on (needs a key).
+
+## Nightly backup (BKP1, 2026-10-14)
+**Where:** the PRIVATE repo `maharishia07/chitbridge-engines`, `.github/workflows/backup-nightly.yml`, 20:30 UTC daily. It runs this repo's
+`deploy/backup.sh` (pinned commit): `pg_dump | openssl aes-256-cbc -pbkdf2 -iter 200000` → `cb-YYYY-MM-DD.enc`, then decrypts it into a
+throwaway Postgres and counts chit_header · journal_entry · identities · catalogue_items · books_setting. Red if any is missing or
+identities is empty. The `.enc` is kept 14 days as an artifact of that private repo. This public repo only dry-runs the path (`backup-restore.yml`).
+**Never set the backup secrets in this (public) repo** — `tests/backup-guard.test.cjs` fails if a workflow here reads them.
+
+**1 · A read-only role** (Supabase → SQL editor, as `postgres`; choose the password there, never paste it anywhere else):
+```sql
+CREATE ROLE cb_backup LOGIN PASSWORD '<long random>' BYPASSRLS;   -- BYPASSRLS: pg_dump refuses tables with RLS otherwise
+GRANT USAGE ON SCHEMA public TO cb_backup;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO cb_backup;
+GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO cb_backup;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT ON TABLES TO cb_backup;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT ON SEQUENCES TO cb_backup;
+```
+If Supabase refuses `BYPASSRLS`, use the `postgres` role's URI instead and say so in the board — the job still only reads.
+
+**2 · The two secrets** — github.com/maharishia07/chitbridge-engines → Settings → Secrets and variables → Actions:
+- `BACKUP_DATABASE_URL` = Session pooler URI (IPv4; runners have no IPv6) with user `cb_backup.<project-ref>` and that password.
+- `BACKUP_PASSPHRASE` = 20+ random characters (`openssl rand -base64 32`). **Athi keeps a copy OFFLINE (paper / password manager).
+  Without it every backup is unreadable — by us too. Nobody can recover it.** Changing it later only affects new backups.
+Missing either → the job is red and nothing is dumped. Run it once by hand: Actions → backup-nightly → Run workflow.
+
+**3 · Restore by hand** (Postgres 17 client, a NEW empty database — never production unless that is the decision):
+```bash
+# download cb-YYYY-MM-DD.enc from the run's artifacts (chitbridge-engines → Actions → backup-nightly), unzip it, then:
+export BACKUP_PASSPHRASE='<the offline copy>'
+bash deploy/backup.sh prove cb-YYYY-MM-DD.enc "postgresql://postgres:<pw>@<host>:5432/<empty db>"   # decrypt → restore → counts
+# or by hand: openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE -in cb-….enc | pg_restore --no-owner --no-privileges -d "<url>"
+```
+The plaintext is never written to disk on the way; `prove` creates the Supabase roles/extensions the dump refers to first.
