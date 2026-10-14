@@ -194,7 +194,16 @@ t('2.4 · my-orders lists OFFERS too, not just orders', () => {
 
 t('WX-O2C · my-orders carries the SHOP\'s status (my copy stays the rail\'s delivered) — one statement, pre-b50 safe', () => {
   assert.match(ROUTE, /SELECT p\.current_status FROM chit_participants\(ch\.chit_id\) p WHERE p\.entity_id <> ch\.entity_id LIMIT 1\) AS shop_status/);
-  assert.match(ROUTE, /trySavepoint\(db, \(h\) => h\.query\(sql\(true\), \[me\]\), null\)\) \|\| db\.query\(sql\(false\), \[me\]\)/);
+  assert.match(ROUTE, /trySavepoint\(db, \(h\) => h\.query\(sql\(true\), args\), null\)\) \|\| db\.query\(sql\(false\), args\)/);
+});
+
+t('SH-MY1 · my-orders and my-documents answer the pager contract (top-level total · page · limit), the server caps the page', () => {
+  assert.match(ROUTE, /const MY_PAGE_MAX = 50;/);
+  assert.match(ROUTE, /Math\.min\(MY_PAGE_MAX, parseInt\(req\.query\.limit, 10\) \|\| 20\)/);
+  assert.match(ROUTE, /res\.json\(\{ orders, count: orders\.length, total: myTotal\(r\.rows\), page: pg\.page, limit: pg\.limit \}\)/);
+  assert.match(ROUTE, /res\.json\(\{ documents, count: documents\.length, total: myTotal\(r\.rows\), page: pg\.page, limit: pg\.limit \}\)/);
+  assert.equal((ROUTE.match(/COUNT\(\*\) OVER \(\) AS _total/g) || []).length, 2, 'the total rides the same statement in both — no second trip');
+  assert.ok(!/LIMIT 200/.test(ROUTE.slice(ROUTE.indexOf('/my-documents'))), 'the old fixed cap is gone');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
