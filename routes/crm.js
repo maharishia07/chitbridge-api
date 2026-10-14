@@ -25,6 +25,10 @@
  *   GET    /api/crm/privacy-requests            CO1 K4/K11: the register of privacy requests and grievances, ?open=1              (b307)
  *   POST   /api/crm/privacy-requests            log one: who · kind · when it came in → the due date the law sets                 (b307)
  *   POST   /api/crm/privacy-requests/:id/answer the owner answers it, once (done · partly · refused + what was done)             (b307)
+ *   GET    /api/crm/segments                    T3-P2-CRM: segments (the one SQL rule) + named groups, each with count · offers · who may be sent offers
+ *   POST   /api/crm/groups                      { name, add[], remove[] } — a named group written on customer_list.groups (b205), one transaction
+ *   DELETE /api/crm/groups/:name                the owner takes a group off every customer
+ *   POST   /api/crm/segments/:key/send          { text, dry? } — a message to a segment or a group through the one gate; dry = the count, by code
  *
  * ⭐ THIS FILE COMPUTES NO MONEY. Dues, totals and values are READ from what the Ledger and the chits stored (party-fields.decorate,
  *   summary_json, party_item) — "compute once, everyone reads". ⭐ Every read runs AS THE SHOP (withEntity): one shop never sees another's party.
@@ -416,6 +420,37 @@ router.post('/privacy-requests/:id/answer', auth, noKey, async (req, res) => {
     if (!UUID.test(id)) throw bad('That is not a request id.', 400, 'BAD_ID');
     const r = await withEntity(owner, (h) => PV.answerRequest(h, owner, id, req.body, byOf(req)));
     res.json({ request: r });
+  } catch (e) { fail(res, e); }
+});
+
+/* ── T3-P2-CRM: segments & groups (lib/crm-groups.js) — the ONE segment definition counted, named groups written, a set messaged through the one gate ── */
+const CG = require('../lib/crm-groups');
+const whoIs = (req) => ({ owner: isOwner(req), editor: require('../lib/access').canEdit(req.identity) });
+/** who may: anyone signed in to the shop reads it (a viewer sees every action greyed with the server's sentence — `may`) */
+router.get('/segments', auth, noKey, async (req, res) => {
+  try { res.json(await CG.overview(ctx(req), whoIs(req))); } catch (e) { fail(res, e); }
+});
+/** who may: the owner or an editor (hat-gate refuses a viewer first; this is the sentence) — { name, add[], remove[] }, ONE transaction */
+router.post('/groups', auth, noKey, async (req, res) => {
+  try {
+    if (!whoIs(req).editor) throw bad('Your login can only view.', 403, 'VIEW_ONLY');
+    const owner = ctx(req);
+    res.status(201).json(await withEntity(owner, (h) => CG.setGroup(h, owner, req.body)));
+  } catch (e) { fail(res, e); }
+});
+/** who may: the owner only — the group leaves every customer; the offers that named it are the warning GET /segments carried */
+router.delete('/groups/:name', auth, noKey, async (req, res) => {
+  try {
+    if (!isOwner(req)) throw bad('Only the owner deletes a group.', 403, 'OWNER_ONLY');
+    const owner = ctx(req);
+    res.json(await withEntity(owner, (h) => CG.dropGroup(h, owner, req.params.name)));
+  } catch (e) { fail(res, e); }
+});
+/** who may: the owner or an editor — { channel?, purpose?, text, dry? }: dry = the count and who is refused (by code); real = the one sender per allowed member */
+router.post('/segments/:key/send', auth, noKey, async (req, res) => {
+  try {
+    if (!whoIs(req).editor) throw bad('Your login can only view.', 403, 'VIEW_ONLY');
+    res.json(await CG.send(ctx(req), req.params.key, req.body));
   } catch (e) { fail(res, e); }
 });
 

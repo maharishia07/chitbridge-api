@@ -1321,6 +1321,42 @@
       "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
       "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
     },
+    "GET /api/crm/segments": {
+      "file": "crm.js",
+      "trips": 3,
+      "wire": 28,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P2-CRM, by hand: the Parties list's own transaction with ?with=consent (lib/crm.list — the same rows, the same statements, 1 trip) + ONE transaction (the shop's high-value rule · the offers that name a group, ONE grouped statement over definition_version) + the group names (customer-groups.namesOf, 1). Counts are made in memory from those rows; no per-row statement.",
+      "awaiting_client": { "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)", "since": "2026-10-14" }
+    },
+    "POST /api/crm/groups": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 7,
+      "fired": true,
+      "status": 400,
+      "why": "T3-P2-CRM, by hand: ONE transaction — array_append over ANY(add[]) · array_remove over ANY(remove[]) · the count after (3 statements, however many ids, ≤ 500). The empty stub answers 400 (no name) early: a floor.",
+      "awaiting_client": { "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)", "since": "2026-10-14" }
+    },
+    "DELETE /api/crm/groups/:name": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 404,
+      "why": "T3-P2-CRM, by hand: ONE transaction, ONE statement (array_remove across the shop's customers). Owner only. The empty stub answers 404 (no such group).",
+      "awaiting_client": { "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)", "since": "2026-10-14" }
+    },
+    "POST /api/crm/segments/:key/send": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "why": "T3-P2-CRM, by hand: dry = the Parties list's transaction (1 trip; the verdict per member is lib/privacy.mayAll's, in memory). A real send adds the shop's WhatsApp line (1) and then the ONE sender per allowed member (lib/whatsapp-out.notify: the gate read · the window read · the outbound log = 3 small transactions each) — a provider send is one call per recipient by nature, so the set is CAPPED at 100 (TOO_MANY in words above it). The empty stub answers 400 (no text) early: a floor.",
+      "awaiting_client": { "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)", "since": "2026-10-14" }
+    },
     "POST /api/crm/walk-ins/add": {
       "file": "crm.js",
       "trips": 0,
