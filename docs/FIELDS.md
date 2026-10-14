@@ -655,3 +655,11 @@ No SQL, no new stored key. Who WRITES changed; what is stored did not.
 | `FLAGS[key].may` · `.may_why` | `'owner'` · sentence | derived (code). `system_folders`, `books`. Read by `policy.refusalFor` in `PATCH /api/entities/policy` (403 `POLICY_OWNER_ONLY`). |
 | `bound_schema` (GET /api/entities/policy) | `{ dispute_scope: { type, options, def, ui } }` | derived (code). Read by the card for its locked row. |
 | `identities.gstn` · `identities.address` (the shop's own row) | text | source. Written ONLY through `lib/profile.js` `setShopIdentity` / `shopIdentitySql` (PATCH /entities/profile · country setup · the profile sync · a network store's place · the vault save's write-through). The tax number is checked by `profile.taxIdRefusal(country, number)` — the pack `taxIdWordOf` names (GSTIN checksum · ABN · TRN · ≤ 40 for no pack). A party's row (`parent_entity_id`) is the counterparty's, not this. |
+
+## RCM-POST (2026-10-14) · `line_items[].rcm_category` — a line says it is under reverse charge
+
+No SQL, no route. One new line key; the invoice keys it switches on exist since engines v1.20.0 (INV-01 `RcmCd` · `RcmItc` · `RcmCgstAmt/RcmSgstAmt/RcmIgstAmt`, `TranDtls.RegRev`, `_cb.rcm[]`, `moneyOf(inv).rcm`).
+
+| key | shape | source / derived · writer · readers |
+|---|---|---|
+| `line_items[].rcm_category` | string — the pack's category id (reg-in `rcm.categories[].id`: `gta` · `legal` · `rent_unregistered` · `cashew` …) | source. Written by whoever writes the line (a supplier's send, a captured bill's lines, later a catalogue item that carries it); nothing writes it yet by UI. Read by `lib/tax-lines.invoiceFor` (`rcmCategoryOf` → the engine's `rcm_category`, and `rcm: true` for the bill when any line names one) → `tax.determine` resolves it against the pack (`tax-packs.rcmCategoryFor`) and applies the registration tests. Frozen on `business_json.invoice` as the line's `RcmCd`; the books read `moneyOf(inv).rcm.rows` (books-hooks `rcmOf`), the sheet reads `moneyOf(inv).rcm` (web chit-sheet.js). Tests: tests/rcm-post.test.cjs. |
