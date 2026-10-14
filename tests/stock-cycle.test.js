@@ -464,5 +464,40 @@ await ita('⭐ but a despatch against an order that was NEVER billed does move s
   assert.strictEqual((await store.balanceOf(SHOP, B2B, withEntity)).qty, 18);
 });
 
+console.log('— the counter receive walk: one item, two batches (STK-FIX1) —');
+
+await ita('⭐⭐⭐ each received batch is its OWN lot with its OWN expiry — never one "[OBJECT OBJECT]"', async () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const SYRUP = '44444444-4444-4444-4444-444444444444';
+  /* ⚠️ THE SHAPE THE COUNTER SENDS — till.html chitOfDoc puts lotSet's object at item_data.lot */
+  const line = (n, lot) => ({ particulars: 'Cough syrup', quantity: 6, unit: 'bottle', price: 40,
+    item_data: { item_id: SYRUP, line_id: 'L' + n, lot, unit_cost: 42 } });
+  const chit = { purpose: 'receipt', business_json: { doc: 'receipt', doc_no: 'GRN-LOT' }, created_at: at(20),
+    line_items: [line(1, { batch: 'B24A', expiry: '2027-03-31' }), line(2, { batch: 'B24C', expiry: '2026-12-31' })] };
+
+  const wanted = fromChit.movementsFor(chit);
+  assert.deepStrictEqual(wanted.map((m) => [m.lot, m.expires_at]),
+    [['B24A', '2027-03-31'], ['B24C', '2026-12-31']], 'the lot object was not read: ' + JSON.stringify(wanted));
+
+  const r = await fromChit.postFor(SHOP, chit, withEntity, { sectors: ['Pharmaceuticals'] });
+  assert.strictEqual(r.moved, 2, JSON.stringify(r));
+  const lots = await store.lotsOf(SHOP, SYRUP, withEntity);
+  assert.ok(!lots.some((l) => /OBJECT/.test(l.lot)), 'a batch was stored as "[OBJECT OBJECT]": ' + JSON.stringify(lots));
+  assert.deepStrictEqual(lots.map((l) => [l.lot, l.expires_at, l.qty]),
+    [['B24C', '2026-12-31', 6], ['B24A', '2027-03-31', 6]], 'two batches, each with its expiry, FEFO-ordered');
+  /* and a sale with no batch now picks the batch that dies first — the reason the expiry has to survive */
+  const sold = await store.issue(SHOP, { item_id: SYRUP, reason: 'sale', qty: 2, ref: 'C1/LOT', line_ref: '1', tracked: true, at: at(21) }, withEntity);
+  assert.strictEqual(sold.ok, true);
+  assert.strictEqual((await store.lotsOf(SHOP, SYRUP, withEntity)).find((l) => l.lot === 'B24C').qty, 4, 'FEFO did not take the earlier expiry');
+});
+
+await ita('⚠️ the older string shape still reads as the batch, with its expiry beside it', () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  assert.deepStrictEqual(fromChit.lotOfLine({ lot: 'OLD-7', expiry: '2027-01-01' }), { lot: 'OLD-7', expires_at: '2027-01-01' });
+  assert.deepStrictEqual(fromChit.lotOfLine({ batch: 9 }), { lot: '9', expires_at: null });
+  assert.deepStrictEqual(fromChit.lotOfLine({ lot: { serial: 'SN1' } }), { lot: 'SN1', expires_at: null });
+  assert.deepStrictEqual(fromChit.lotOfLine({}), { lot: null, expires_at: null });
+});
+
 console.log(pass + ' checks');
 })();
