@@ -138,6 +138,6 @@ const srcOf = (rel) => blank(fs.readFileSync(path.join(API, rel), 'utf8').replac
     } finally { await c.query('ROLLBACK').catch(() => {}); await c.end(); }
   } else console.log('  (GOV_AU1_DB not set — the database checks are skipped)');
 
-  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
