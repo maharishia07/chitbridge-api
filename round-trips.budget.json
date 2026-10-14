@@ -2007,6 +2007,66 @@
       "fired": false,
       "extra": true,
       "why": "T3-FIXES, by hand: 0 new trips — a cut workbook is refused (413 WORKBOOK_CUT) before any read. Placeholder ceiling."
+    },
+    "GET /api/signin/sessions": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: one read of the shop's devices (lib/person-session devicesOf), may.devices derived from req — CB Settings › Account › Sessions"
+    },
+    "GET /api/signin/devices": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: the same one read, owner only (lib/owner.gate) — CB Settings › Account › Every device"
+    },
+    "POST /api/signin/sessions/revoke": {
+      "file": "signin.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: one read to find whose session it is, one locked write (person-session close / revokeDevice) — Sign out this device"
+    },
+    "GET /api/folders/mis": {
+      "file": "folders.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: policy.get + select.rows (one transaction), measured once by lib/measure — CB Finance › Reports (cap-mis.js api('misMetrics')) and the workshop MIS (cap-admin.js). extra: routes/folders.js is mounted without an inline require, so tools/endpoint-usage.cjs cannot place its paths (its own note) — invisible to the called list, fired here",
+      "extra": true
+    },
+    "GET /api/facts/counters": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "why": "T3-SETTINGS card (the till card's REGISTER_SQL, one trip) — line added by hand in T3-P4-ACCOUNT, it was missing",
+      "extra": true
+    },
+    "GET /api/facts/account": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: the register read widened by the devices column — one trip",
+      "extra": true
+    },
+    "GET /api/facts/reports": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: railScope (overdue_days + select.rows, together) through lib/measure — the rail card's read without the CRM lists",
+      "extra": true
     }
   }
 }

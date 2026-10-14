@@ -4,7 +4,7 @@
  *
  *   POST /api/signin/renew              (person)  → { token, jti, exp, device_id } — new jti, same device, old jti gone
  *   POST /api/signin/logout             (person)  → { ok, removed } — removes this session's jti; 200 even if already gone
- *   GET  /api/signin/sessions           (person)  → { sessions:[…] } — my own sessions on every device in this shop
+ *   GET  /api/signin/sessions           (person)  → { sessions:[…], legacy, may:{ devices } } — my own sessions on every device in this shop; may.devices = owner (T3-P4-ACCOUNT)
  *   GET  /api/signin/devices            (owner)   → { devices:[…] } — every device listed in this shop
  *   POST /api/signin/sessions/revoke    { jti }        — my own session, or (owner) anyone's
  *                                       { device_id }  — (owner) the device: revoked_at, every session on it ends
@@ -33,14 +33,18 @@ const auth = require('../middleware/auth');
 const { query, withTransaction, withEntity } = require('../db');
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
-const { isOwner, ownerOnly: ownerGate } = require('../lib/owner');
+const owner = require('../lib/owner');
+const { isOwner } = owner;
 
 const personOnly = (req, res, next) => {
   if (req.api_key) { res.locals.code = 'KEY_CANNOT_SIGN_IN';
     return res.status(403).json({ error: 'Forbidden', code: 'KEY_CANNOT_SIGN_IN', message: 'A key cannot sign in — sign in.' }); }
   next();
 };
-const ownerOnly = ownerGate();   // SEC2: the one owner gate (lib/owner.js)
+/* T3-P4-ACCOUNT: the ONE owner gate (lib/owner.gate = SEC2's ownerOnly, with the sentence) — the refusal carries code OWNER_ONLY and the sentence GET /sessions says in `may.devices`,
+   so CB Settings › Account greys "Every device" and "Remove this device" with the words the server would refuse with (never a regex over prose). */
+const DEVICES_WHY = 'Only the owner may see or remove every device.';
+const ownerOnly = owner.gate(DEVICES_WHY);
 const fail = (res, e) => {
   const status = (e && e.status) || 500;
   if (e && e.code) res.locals.code = e.code;
@@ -92,7 +96,8 @@ router.get('/sessions', auth, personOnly, async (req, res) => {
                    device: { label: d.label || null, kind: d.kind || null, seen: d.seen || null } });
       }
     }
-    res.json({ sessions: out, legacy: !req.session });
+    /* T3-P4-ACCOUNT: may.devices — whether THIS sign-in may read GET /devices and revoke a device (the owner); a co-assist sees the list greyed with this sentence */
+    res.json({ sessions: out, legacy: !req.session, may: { devices: owner.may(req, DEVICES_WHY) } });
   } catch (e) { fail(res, e); }
 });
 
@@ -111,7 +116,7 @@ router.post('/sessions/revoke', auth, personOnly, async (req, res) => {
   try {
     const b = req.body || {}, shop = shopOf(req);
     if (b.device_id) {
-      if (!isOwner(req)) return res.status(403).json({ error: 'Forbidden', message: 'Only the owner may remove a device.' });
+      if (!isOwner(req)) return res.status(403).json({ error: 'Forbidden', code: owner.OWNER_ONLY, message: DEVICES_WHY });
       const device_id = sessions.deviceIdOf(b.device_id);
       if (!device_id) return res.status(400).json({ error: 'Refused', message: 'device_id is not a device id.' });
       const out = await sessions.revokeDevice(withTransaction, shop, device_id, me(req));

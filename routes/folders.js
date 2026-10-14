@@ -776,14 +776,18 @@ router.get('/mis', auth, async (req, res) => {
     const rows = await select.rows(me, { limit: 5000, since });
     const received = rows.filter((r) => r.direction === 'received');
     const sent = rows.filter((r) => r.direction === 'sent');
+    /* T3-P4-ACCOUNT: `overdue` follows the rail's one rule (lib/home-facts railMeasure — the shop's own notes are never overdue), so CB Finance › Reports'
+       overdue opens CB CRM's stuck list and counts the same chits as Home's rail. Every other figure is lib/measure's own, as before. */
+    const M = (xs) => require('../lib/home-facts').railMeasure(xs, me, opts);
     res.json({
       overdue_days: flags.overdue_days,
       /* ⚠️ Echoed back so the caller can prove the window it asked for is the window it got — an ignored `since`
          would otherwise be indistinguishable from an empty one. */
       since: since || null,
-      all: measure.measure(rows, opts),
-      received: measure.measure(received, opts),
-      sent: measure.measure(sent, opts),
+      truncated: rows.length >= 5000,   /* T3-P4-ACCOUNT: a count over a cut read is said, never painted as the whole */
+      all: M(rows),
+      received: M(received),
+      sent: M(sent),
     });
   } catch (err) { console.error('mis:', err.message); res.status(500).json({ error: 'MIS failed', message: safeErr(err) }); }
 });
