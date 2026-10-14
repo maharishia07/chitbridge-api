@@ -85,7 +85,15 @@ function run(sql, p, ctx) {
   SQL.push({ s, p, ctx });
   p = p || [];
   /* the two reads whose text also names other tables — matched first */
-  if (/FROM chit_disputes cd WHERE cd.status = 'open'/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.status === 'open');   // the queue
+  /* the queue (T3-DISPUTES-ASSIST: one page + COUNT(*) OVER () + the open count in one statement; ?status picks the WHERE) */
+  if (/FROM chit_disputes cd WHERE (cd.status = 'open'|cd.status <> 'open'|TRUE)/.test(s)) {
+    const w = /cd.status <> 'open'/.test(s) ? (d) => d.status !== 'open' : /WHERE TRUE/.test(s) ? () => true : (d) => d.status === 'open';
+    const all = mine(DISPUTES, ctx).filter(w), open = mine(DISPUTES, ctx).filter((d) => d.status === 'open').length;
+    return all.slice(p[2] || 0, (p[2] || 0) + (p[1] || 100)).map((d) => Object.assign({}, d, { _total: all.length, _open: open }));
+  }
+  /* the queue's ONE roster read for its page (unnest + chit_dispute_roster) — the definer reads every copy */
+  if (/unnest\(\$1::uuid\[\]\) AS u\(dispute_id\) CROSS JOIN LATERAL chit_dispute_roster/.test(s))
+    return DISPUTES.filter((d) => (p[0] || []).indexOf(d.dispute_id) >= 0).map((d) => ({ dispute_id: d.dispute_id, entity_id: d.entity_id, status: d.status }));
   /* ── the bell's feed (routes/notifications.js FEED_FROM) — state_log under RLS = my own rows ── */
   if (/FROM state_log sl/.test(s)) return mine(LOG, ctx).filter((l) => l.chit_id === CH && (l.action_by_identity_id !== p[1] || /^dispute_|^voided$/.test(l.action)))
     .map((l) => Object.assign({ log_id: 'l' + LOG.indexOf(l), created_at: new Date().toISOString() }, l));
@@ -276,6 +284,13 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('C: GET /disputes/queue is empty', q.status === 200 && q.body.total_open === 0, JSON.stringify(q.body));
     const qb = await as(B, 'GET', '/api/chits/disputes/queue');
     ok('…B\'s queue holds 3, two of them "against me" (other_disputes)', qb.body.total_open === 3 && qb.body.other_disputes.length === 2 && qb.body.my_disputes.length === 1, JSON.stringify(qb.body));
+    /* T3-DISPUTES-ASSIST: the page's shape — top-level total · page · limit, each row's side (the code a screen splits on) and may.resolve (raiser-only, with its why) */
+    ok('…the queue is a page: total 3 · page 1 · limit 100 · rows 3', qb.body.total === 3 && qb.body.page === 1 && qb.body.limit === 100 && qb.body.rows.length === 3, JSON.stringify({ total: qb.body.total, page: qb.body.page, limit: qb.body.limit }));
+    ok('…B may resolve what B raised, and is greyed not_raiser on the two raised against it',
+      qb.body.rows.every((d) => d.side === 'mine' ? d.may.resolve.ok === true : (d.may.resolve.ok === false && d.may.resolve.why === 'not_raiser' && !!d.may.resolve.say)),
+      JSON.stringify(qb.body.rows.map((d) => [d.side, d.may])));
+    ok('…the roster rides each row (one read for the page, not one per dispute)', qb.body.rows.every((d) => Array.isArray(d.participants) && d.participants.length > 0)
+      && SQL.filter((x) => /chit_dispute_roster/.test(x.s) && /unnest/.test(x.s)).length >= 1);
     const mc = await as(C, 'GET', U + '/messages?dispute=1');
     ok('C: no dispute message copy in its thread', mc.status === 200 && (mc.body.messages || []).length === 0 && msgsOf(C).length === 0, JSON.stringify(mc.body));
     ok('C: no state_log row about any dispute (the notification source)', logOf(C).length === 0, JSON.stringify(logOf(C)));

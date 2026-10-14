@@ -4593,10 +4593,21 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
 );
 
 // ─── GET /chits/disputes/queue ────────────────────────────────
-// All open disputes across all chits for this entity — used by DisputesPage sidebar
+// The disputes this entity holds a copy of — the workshop's Disputes screen and CB Tasks & Orders › Disputes (T3-DISPUTES-ASSIST).
 // Safe: /disputes/queue has 2 segments; /:chit_id matches 1 segment only — no conflict
+// ⭐ T3-DISPUTES-ASSIST — widened ADDITIVELY (the workshop's call, with no query, gets what it always got: the open ones, oldest first):
+//   ?status=open (default) | resolved | all  ·  ?page · ?limit (100, at most 200)
+//   → top-level total · page · limit (DISCIPLINES §2) · total_open · rows (this page) · and, as before, disputes / my_disputes / other_disputes
+//   each row: participants (one roster read for the whole page — it was one query PER dispute) · side 'mine' | 'theirs' (the code a screen
+//   splits on, never a name match) · may.resolve (lib/rail-actions forDispute: the resolve route's own rule, with its code and sentence).
+// Who may call: any signed-in login; RLS returns only the caller's OWN dispute copies (a copy exists only for a participant).
+// Trips: 1 (the page, its total and the open count in one statement) + 1 (the page's roster) = 2.
+const QUEUE_STATUS = { open: `cd.status = 'open'`, resolved: `cd.status <> 'open'`, all: `TRUE` };
 router.get('/disputes/queue', auth, async (req, res) => {
   const entity_id = entityId(req);
+  const status = Object.prototype.hasOwnProperty.call(QUEUE_STATUS, req.query.status) ? req.query.status : 'open';
+  const page  = PAGE_LIMIT.pageOf(req.query.page);
+  const limit = PAGE_LIMIT.limitOf(req.query.limit, 100, LIST_MAX);
 
   try {
     // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me).
@@ -4605,38 +4616,56 @@ router.get('/disputes/queue', auth, async (req, res) => {
               (SELECT ch.auto_subject FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS auto_subject,
               (SELECT ch.purpose      FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS purpose,
               (SELECT se.display_name FROM chit_header ch LEFT JOIN identities se ON se.identity_id=ch.sender_entity_id
-                WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS sender_display_name
+                WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS sender_display_name,
+              COUNT(*) OVER () AS _total,
+              (SELECT COUNT(*) FROM chit_disputes o WHERE o.status = 'open') AS _open
        FROM chit_disputes cd
-       WHERE cd.status = 'open'
-       ORDER BY cd.created_at ASC`,
-      [entity_id]
-    ));   // per-copy: RLS returns only MY OWN open dispute copies (I have one only if I'm a participant)
+       WHERE ${QUEUE_STATUS[status]}
+       ORDER BY cd.created_at ASC
+       LIMIT $2 OFFSET $3`,
+      [entity_id, limit, (page - 1) * limit]
+    ));   // per-copy: RLS returns only MY OWN dispute copies (I have one only if I'm a participant)
 
+    const total = result.rows.length ? Number(result.rows[0]._total) || 0 : 0;
+    const total_open = result.rows.length ? Number(result.rows[0]._open) || 0 : 0;
     // evidence_snapshot is PII — expose presence only, never its contents
-    const rows = result.rows.map(({ evidence_snapshot, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null }));
-    // attach the per-party roster (live status per party) so the raiser can resolve each party independently
-    for (const d of rows) {
+    const rows = result.rows.map(({ evidence_snapshot, _total, _open, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null }));
+    // the per-party roster (live status per party) so the raiser can resolve each party independently — ONE read for the page
+    const statusBy = {};
+    if (rows.length) {
       try {
-        const rr = await query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [d.dispute_id]);
-        const statusBy = {}; rr.rows.forEach(r => { statusBy[r.entity_id] = r.status; });
-        d.participants = (d.roster || []).map(p => ({ dispute_id: d.dispute_id, entity_id: p.entity_id,
-          display_name: p.display_name, role: p.role, dispute_status: statusBy[p.entity_id] || 'open' }));
-      } catch (_) { d.participants = d.roster || []; }
+        const rr = await query(
+          `SELECT u.dispute_id, r.entity_id, r.status
+             FROM unnest($1::uuid[]) AS u(dispute_id) CROSS JOIN LATERAL chit_dispute_roster(u.dispute_id) r`,
+          [rows.map((d) => d.dispute_id)]);
+        rr.rows.forEach((r) => { (statusBy[r.dispute_id] = statusBy[r.dispute_id] || {})[r.entity_id] = r.status; });
+      } catch (e) {
+        log.warn('disputes.queue roster', { id: req.id, err: e.message });   // the parties still show, each as its copy's snapshot says
+      }
+    }
+    const me = railActions.meOf(req);
+    for (const d of rows) {
+      const by = statusBy[d.dispute_id] || {};
+      d.participants = (d.roster || []).map(p => ({ dispute_id: d.dispute_id, entity_id: p.entity_id,
+        display_name: p.display_name, role: p.role, dispute_status: by[p.entity_id] || 'open' }));
       delete d.roster;
+      d.side = d.raised_by_entity_id === entity_id ? 'mine' : 'theirs';
+      d.may = railActions.forDispute(d, me, entity_id);
     }
     // "other" now means disputes targeting me (untargeted ones no longer leak)
-    const myDisputes    = rows.filter(d => d.raised_by_entity_id === entity_id);
-    const otherDisputes = rows.filter(d => d.raised_by_entity_id !== entity_id);
+    const myDisputes    = rows.filter(d => d.side === 'mine');
+    const otherDisputes = rows.filter(d => d.side !== 'mine');
 
     res.json({
       disputes:       rows,
       my_disputes:    myDisputes,
       other_disputes: otherDisputes,
-      total_open:     rows.length,
+      total_open,
+      rows, total, page, limit, status,
     });
   } catch (err) {
     if (err.message.includes('chit_disputes')) {
-      return res.json({ disputes: [], my_disputes: [], other_disputes: [], total_open: 0 });
+      return res.json({ disputes: [], my_disputes: [], other_disputes: [], total_open: 0, rows: [], total: 0, page, limit, status });
     }
     res.status(500).json({ error: 'Get dispute queue failed', message: safeErr(err) });
   }

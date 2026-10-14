@@ -567,8 +567,14 @@ router.get('/whoami', auth, async (req, res) => {
     const entity = auth.entityOf(req);
     const r = await query(
       `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [entity]);
-    res.json({ ok: true, is_helpdesk: r.rows.length > 0 });
-  } catch (_) { res.json({ ok: true, is_helpdesk: false }); }
+    const yes = r.rows.length > 0;
+    /* T3-DISPUTES-ASSIST: Publish is SHOWN to everyone (CB Tasks & Orders › CB Assist) and greyed with this answer — the code it greys on, the
+       sentence it paints; POST /publish refuses the same caller the same way (403 'Only a help desk can publish to its catalogue.') */
+    res.json({ ok: true, is_helpdesk: yes, may: { publish: yes ? { ok: true } : { ok: false, why: 'not_helpdesk', say: 'Only a help desk publishes answers. Ask yours with Send to help desk.' } } });
+  } catch (e) {
+    log.warn('assist/whoami failed', { id: req.id, err: e.message });   /* said as "not a help desk": Publish stays greyed with the reason */
+    res.json({ ok: true, is_helpdesk: false, may: { publish: { ok: false, why: 'not_helpdesk', say: 'Only a help desk publishes answers. Ask yours with Send to help desk.' } } });
+  }
 });
 
 module.exports = router;

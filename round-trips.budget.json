@@ -474,6 +474,15 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/disputes": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "T3-DISPUTES-ASSIST, by hand: the Home card for Disputes — one withEntity transaction (its BEGIN · scope · the one count statement · COMMIT): open and raised-by-you counted together over my own dispute copies."
+    },
     "GET /api/facts/orders": {
       "file": "facts.js",
       "trips": 3,
@@ -998,6 +1007,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "GET /api/chits/disputes/queue": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-DISPUTES-ASSIST, by hand: 2 trips (was 1 + one roster query PER dispute) — the page, its total and the open count in one withEntity statement, then ONE roster read for the whole page (unnest + chit_dispute_roster). The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
     },
     "POST /api/chits/assign-bulk": {
       "file": "chits.js",
