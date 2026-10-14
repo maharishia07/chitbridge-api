@@ -260,6 +260,7 @@ const GUARDS = [
   'auth-first.test.cjs',       // M04: POST /api/chits/send — auth before the body is read (401 not 400/413, validators never run); before/after matrix: no allow/deny change
   'person-session.test.cjs',    // M05: a person session is listed, bound to one device (DEVICE_MISMATCH), revocable within 60 s (fake clock); sign-in on B never revokes A; legacy tokens unchanged
   'rail-actions.test.cjs',     // ⭐⭐ R01: GET /chits/:id `actions` and the writing doors are ONE engine (lib/rail.js) — 14 situations; before/after: same outcome, `why` added
+  'rail-status.test.cjs',      // ⭐⭐ T1-RAIL: every status change goes through lib/rail-status statusGate (the one write); void of a completed chit 409s; no SQL writes current_status elsewhere
   'claim-series.test.cjs',     // M11: ONE series allocator for a counter PC (key) and a phone (device); label by PHONE number (D9); no prefix ever on two holders; a pre-M11 key claims the prefix it has today; a phone's till.by/device_id = the session
   'signin-routes.test.cjs',     // M06: every old sign-in path answers as before the move (golden) and IS the new door's handler; one signin_events row per attempt; b282 missing never blocks
   'home-facts.test.cjs',        // N18: GET /api/facts/:card — each Home card's shape, <= 2 trips, a figure the server cannot compute is omitted (never 0), cost never travels, unknown card 404

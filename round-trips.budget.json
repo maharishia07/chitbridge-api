@@ -999,6 +999,14 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/chits/assign-bulk": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T1-RAIL, by hand: 0 new trips — inside the one withEntity transaction, +1 statement per chit (statusGate reads the received copy before moving it to pending; the assignment UPDATE no longer sets current_status). The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
+    },
     "POST /api/counters": {
       "file": "counters.js",
       "trips": 1,
@@ -1174,6 +1182,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PUT /api/actors/assign/:chit_id": {
+      "file": "actors.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T1-RAIL, by hand: 0 new trips — inside the one withEntity transaction, pull/push +1 statement (statusGate reads the received copy, then the gated UPDATE); the status_pending timeline row is written only when the copy actually moved. The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
     },
     "PUT /api/governance/country-setup": {
       "file": "governance.js",
@@ -1423,6 +1439,22 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PUT /api/chits/:chit_id/status": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T1-RAIL, by hand: 0 new trips, 0 new statements — moveStatus's read and UPDATE are lib/rail-status statusGate's, in the same transaction; a sender's cancel gates its sent copy (+1 SELECT in the transaction it already opened). The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
+    },
+    "PUT /api/chits/:chit_id/void": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T1-RAIL, by hand: 0 new trips — the one withEntity transaction now reads each own copy (sent · received) and asks the rail before the UPDATE(s): +2 statements. A refused void (completed) answers 409 after that one transaction, writing nothing. The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
     },
     "PUT /api/chits/:id/use": {
       "file": "chits.js",
