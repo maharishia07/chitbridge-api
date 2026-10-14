@@ -94,7 +94,9 @@ async function registerNew(req, res) {
      * then ASKS, never "your registration" (GOV-AU1, Athi 14 Oct: "drop the DEFAULT 'IN' too" — b376; unknown is NULL, never India).
      */
     const CS = require('../lib/country-setup');
-    const guess = CS.guessOf(req.body.context);
+    /* ⭐ GOV-SPIN: a regional spin STATES its country (installation.country, b382) — that is OFFERED first, the browser's guess only when the
+       installation states none. The offer is stored here (as FX-AU1 stored the guess); the registrant ACCEPTS or changes it at verify (reg-agree). */
+    const guess = CS.offerOf(CS.guessOf(req.body.context), await CS.atSignup());
     const more = [];   /* [column, value] beyond the fixed seven (country among them, NULL when no guess), each named only when known */
     if (mark.population !== null) more.push(['population', mark.population]);
     if (guess && guess.currency) more.push(['currency_code', guess.currency]);
@@ -124,12 +126,18 @@ router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, valida
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the
 // shared constitution catalogue. Empty (chooser hidden) if the catalogue isn't there yet.
+// GOV-SPIN (additive): `installation { key, country, name }` (the country this ChitBridge states, b382, else null), `allowed_countries`
+// (the constitution's tighten-only list, null = every pack) and `countries` (the packs a registrant may choose, with what each applies:
+// currency · year · tax · format · languages) — the register panel paints these; it computes nothing. Same public door, no new route.
 router.get('/constitutions', async (req, res) => {
+  const at = await require('../lib/country-setup').atSignup();
+  const spin = { installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null },
+                 allowed_countries: at.allowed, countries: at.countries };
   try {
     const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
       FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
-    res.json({ constitutions: r.rows });
-  } catch (_) { res.json({ constitutions: [] }); }
+    res.json(Object.assign({ constitutions: r.rows }, spin));
+  } catch (_) { res.json(Object.assign({ constitutions: [] }, spin)); }
 });
 
 // GET /entities/search

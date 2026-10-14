@@ -240,6 +240,7 @@ CI: `.github/workflows/spin-test.yml` (manual only) — `docs/patches/HX2-spin-t
 | Name | Where | What |
 |---|---|---|
 | `CB_SPIN_ID` | the scripts; `tools/sim-load.cjs` | the spin (`s` + 7 hex). sim-load accepts a remote host ONLY when it is set and the database is `cbspin_<id>` |
+| `CB_SPIN_COUNTRY` | the scripts (`deploy/spin-lib.sh` spin_installation) | GOV-SPIN: ISO-2 (e.g. `AU`) — the spin's own `installation` row (`cbspin-<id>`) STATES this country (b382), so registration offers it first and the registrant accepts it. Unset → no country stated (registration asks) |
 | `MAIL_SINK_TOKEN` | `deploy/mail-sink.cjs` | a public sink answers only to `authorization: Bearer <token>`; the spin sets it = the api's `RESEND_API_KEY` |
 | `PLAN=1` · `PARSE=1` | every spin/test/teardown | print the commands · let aws/az/gcloud parse each one with no credentials (`deploy/spin-check.sh`) |
 | `SIM_YEARS` · `CTP_PEER_API` | `deploy/spin-test.sh` | years of the sim shop (1) · another spin's api for the CTP check |

@@ -498,17 +498,35 @@ async function verify(req, res) {
           const ip = /^[0-9a-fA-F:.]{3,45}$/.test(rawIp) ? rawIp : null;
           const agreed = (typeof req.body.agreed_at === 'string' && !isNaN(Date.parse(req.body.agreed_at)))
             ? req.body.agreed_at : null;
-          await query(
+          /**
+           * ⭐ GOV-SPIN: THE COUNTRY THE REGISTRANT ACCEPTED with reg-agree (the register panel sends `country_source` only then). The server
+           * decides the source from the facts and moves the stored country only while nothing exists (CS.acceptAtSignup) — a later sign-in
+           * that sends the same keys changes nothing on a shop that trades. Its own try: a refusal here never costs the audit row below.
+           */
+          let accepted = null;
+          if (agreed && ctx.country_source) {
+            try {
+              const CS = require('../lib/country-setup');
+              const at = await CS.atSignup();
+              accepted = await withEntity(identity.identity_id, (h) => CS.acceptAtSignup(h, identity.identity_id, ctx, at));
+            } catch (e) { console.log('[signup-country] NOT ACCEPTED for ' + identity.identity_id + ': ' + (e && e.message)); }
+          }
+          const audit = await query(
             `INSERT INTO signup_context
                (identity_id, claimed_country, claimed_currency, claimed_timezone, claimed_locale,
                 claimed_languages, device, ip, user_agent, agreed_at)
-             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10)`,
+             VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10) RETURNING signup_context_id`,
             [identity.identity_id, cc, cur, tz,
              (typeof ctx.locale === 'string' ? ctx.locale.slice(0, 40) : null),
              JSON.stringify(langs),
              JSON.stringify(ctx.device && typeof ctx.device === 'object' ? ctx.device : {}),
              ip, String(req.headers['user-agent'] || '').slice(0, 400) || null, agreed]
           );
+          /* GOV-SPIN: the accepted country's source code onto THIS audit row (b383) — named only once the column exists */
+          const row = audit && audit.rows && audit.rows[0];
+          if (accepted && row && await require('../lib/schema').hasColumn('signup_context', 'country_source')) {
+            await query(`UPDATE signup_context SET country_source = $2 WHERE signup_context_id = $1`, [row.signup_context_id, accepted.source]);
+          }
         }
       } catch (e) {
         /* ⚠️ STILL LOUD ON FAILURE: the sign-in continues, but a capture that drops what it captured says so */
@@ -523,7 +541,8 @@ async function verify(req, res) {
         if (!c) c = (await query(`SELECT constitution_key, version FROM constitution WHERE is_default = true AND active = true LIMIT 1`)).rows[0];
         if (c) {
           // place the entity on the INSTALLATION that serves its vertical (service-desk → the Mexico platform), else default
-          let installKey = 'platform-0';
+          /* GOV-SPIN: else THIS installation (INSTALLATION_KEY) — a spin's shops were stamped India's platform-0 */
+          let installKey = require('../lib/country-setup').installationKey();
           try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY created_at LIMIT 1`, [c.constitution_key]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; } catch (_) {}
           await withEntity(identity.identity_id, (cl) => cl.query(
             `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)

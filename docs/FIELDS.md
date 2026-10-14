@@ -4,6 +4,23 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## GET /api/entities/constitutions · `installation` · `allowed_countries` · `countries` (GOV-SPIN, 2026-10-14)
+
+PUBLIC (pre-auth), the register panel's one read. Additive beside `constitutions`. Written by: nobody (derived) — the installation row by migration / `deploy/spin-lib.sh` (CB_SPIN_COUNTRY) / `scripts/seed-local-installations.sql` (local only). Read by: web `app/register-form.js` (the gov panel).
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `installation` | `{ key, country, name }` | `key` = INSTALLATION_KEY (else `platform-0`). `country` = `installation.country` (b382, ISO-2) through govresolve's cascade (`basics.country`: null when none is stated or the constitution's `allowed.countries` excludes it — never a default). `name` = its English name (Intl), null with no country. |
+| `allowed_countries` | `[ISO-2]` or null | The constitution's optional `governance.allowed.countries` (tighten-only, the `allowed` envelope's new key). null = every registered country pack. |
+| `countries[]` | `country-setup.countries()` rows, filtered by `allowed_countries` | `{ code, name, currency, fy_start_month, zones, locale, books, tax: { scheme, id, return }, languages }` — every value from the engines pack (`tax.scheme` · the tax-ID name `tax.idName` when engines carries it, else IN `export.taxScheme` / AU `abn` / AE `trn` · `returns.name` · `locale.langs`). `tax` and `languages` added by GOV-SPIN; the Country setup screen's `countries` (GET /api/governance/country-setup) carries the same rows. |
+
+## Columns · `installation.country` (b382) · `signup_context.country_source` (b383) (GOV-SPIN)
+
+| Column | Shape | Source · who writes it · who reads it |
+|---|---|---|
+| `installation.country` | varchar(2) ISO-2 or NULL | Stated, never derived. Layer: installation (L1), class bound — tighten-only under the constitution's `allowed.countries`. Written by a migration, `deploy/spin-lib.sh` spin_installation (CB_SPIN_COUNTRY) or the local seed. `platform-0` stays NULL. Read by `lib/govresolve` (cascade) → `country-setup.atSignup` → registerNew (the offer) · verify (acceptAtSignup) · GET /entities/constitutions. |
+| `signup_context.country_source` | `installation` · `browser` · `chosen` or NULL | The SERVER's call at verify (`country-setup.acceptAtSignup`), from the facts — the installation's own country · the device zone's country · another allowed one. Written by verify only when reg-agree was ticked. Read by support only (b264: no tenant route). The shopkeeper's words for the same fact stay in `entity_governance.setup_source.country`. |
+
 ## GET /api/books/bs
 
 | Key | Shape | Meaning |
