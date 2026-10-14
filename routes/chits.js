@@ -4923,7 +4923,7 @@ router.get('/:id/trace', auth, async (req, res) => {
       // ── Mass-balance invariant (Fragment 3): at each node, what goes OUT (sum of its children's base_qty) must not
       //    exceed what came IN (its own base_qty), in the same base unit. out > in ⇒ RED — more claimed out than
       //    received = theft / dilution / counterfeit, caught with no investigation. Only compares like base units.
-      const flagged = traceBalance(nodeArr, g);
+      const flagged = traceBalance(nodeArr, (n) => edges.filter((e) => e.from === n.chit_id).map((e) => nodes.get(e.to)).filter(Boolean));
       return res.json({ dir, start: id, reachable_count: nodeArr.length,
         depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0),
         flagged,
@@ -4988,12 +4988,11 @@ async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
   }
 }
 
-/** the mass balance on every node of a forward walk — returns how many are RED */
-function traceBalance(nodeArr, g) {
-  const { nodes, edges } = g;
+/** the mass balance on every node — the walk's AND by-batch's (one rule; `kidsOf(n)` → its child nodes). Returns how many are RED. */
+function traceBalance(nodeArr, kidsOf) {
   let flagged = 0;
   for (const n of nodeArr) {
-    const kids = edges.filter((e) => e.from === n.chit_id).map((e) => nodes.get(e.to)).filter(Boolean);
+    const kids = kidsOf(n);
     if (!kids.length || n.base_qty == null) { n.balance = null; continue; }         // a leaf, or no quantity to balance
     if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
     const out = kids.reduce((s, k) => s + k.base_qty, 0);
@@ -5060,73 +5059,11 @@ router.get('/trace/by-batch', auth, async (req, res) => {
     const me = entityId(req);
     const q = String(req.query.q || '').trim();
     if (!q) return res.status(400).json({ error: 'Bad request', message: 'A batch value (q) is required' });
-    const recipientOf = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
-      a = Array.isArray(a) ? a : []; return a.find((x) => x.role === 'receiver') || a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null; };
-    /**
-     * ── ⚠️ THIS ENDPOINT DID NOT MATCH ON A BATCH ─────────────────────────────────────────────────────────────
-     * It matched `summary_json->'trace'->>'product'` — the product NAME — while being called `by-batch`, and the
-     * trace object has never carried a batch at all. So a recall for lot "24B" returned every customer who ever
-     * received that product, at every depth, and the answer looked exactly like a correct one. In a recall that
-     * is not a slightly wide net: it is telling forty customers to destroy stock that was never affected, and
-     * failing to tell the six who hold the bad lot which lot it was.
-     *
-     * ⭐ NOW IT LOOKS FOR A REAL LOT FIRST — `chit_line.flags->'lot'->>'batch'`, GS1 (10), written on the movement
-     * by lib/gs1.lotOf. Serial (21) counts too: a recall by serial is the same question, one unit narrower.
-     *
-     * ⚠️ AND IT STILL FALLS BACK TO PRODUCT CORRELATION, RATHER THAN RETURNING NOTHING. Every chit raised before
-     * lots existed has no batch on any line, and a traceability screen that suddenly answered "no results" for
-     * data it happily walked yesterday would read as data loss. But the fallback ANNOUNCES ITSELF — `matched_on`
-     * travels in the response — because the difference between "these six shipments carried lot 24B" and "these
-     * forty shipments were of this product" is the entire value of the answer, and a screen that cannot tell them
-     * apart will present the second as the first.
-     */
-    let matched_on = 'batch';
-    let r = await withEntity(me, (db) => db.query(
-      `SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients,
-              h.summary_json->'trace' AS trace
-         FROM chit_header h
-         JOIN chit_line   l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id
-        WHERE h.summary_json->'trace' IS NOT NULL
-          AND l.removed = false
-          AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))`,
-      [q])).catch(() => ({ rows: [] }));   // pre-b142 there is no chit_line to join — fall through, do not fail
-
-    if (!r.rows.length) {
-      matched_on = 'product';
-      r = await withEntity(me, (db) => db.query(
-        `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-           FROM chit_header
-          WHERE summary_json->'trace' IS NOT NULL
-            AND lower(summary_json->'trace'->>'product') = lower($1)`, [q]));
-    }
-    const seen = new Set(); const items = [];
-    for (const row of r.rows) {
-      if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
-      const rec = recipientOf(row); const t = row.trace || {};
-      items.push({ chit_id: row.chit_id, sender_entity_id: row.sender_entity_id, sender_name: row.sender_entity_display_name || null,
-        to_entity_id: rec ? rec.entity_id : null, to_name: rec ? rec.display_name : null,
-        product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null, base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null });
-    }
-    // rebuild edges: X → Y when receiver(X) === sender(Y). Pure data correlation, no links.
-    const bySender = {}; items.forEach((it) => { (bySender[it.sender_entity_id] = bySender[it.sender_entity_id] || []).push(it); });
-    const edges = []; const hasParent = new Set();
-    items.forEach((x) => (bySender[x.to_entity_id] || []).forEach((y) => { if (y.chit_id !== x.chit_id) { edges.push({ from: x.chit_id, to: y.chit_id }); hasParent.add(y.chit_id); } }));
-    const nmap = {}; items.forEach((it) => { nmap[it.chit_id] = Object.assign({}, it, { depth: 0, is_origin: !hasParent.has(it.chit_id) }); });
-    // BFS depth from the roots
-    const kidsMap = {}; edges.forEach((e) => { (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to); });
-    let frontier = items.filter((it) => !hasParent.has(it.chit_id)).map((it) => it.chit_id);
-    const seenD = new Set(frontier); let d = 0;
-    while (frontier.length && d < 60) { const next = []; frontier.forEach((id) => (kidsMap[id] || []).forEach((k) => { if (!seenD.has(k)) { seenD.add(k); nmap[k].depth = d + 1; next.push(k); } })); frontier = next; d++; }
-    const nodeArr = Object.values(nmap);
-    // mass-balance, same invariant as the walk
-    let flagged = 0;
-    for (const n of nodeArr) {
-      const kids = (kidsMap[n.chit_id] || []).map((id) => nmap[id]).filter(Boolean);
-      if (!kids.length || n.base_qty == null) { n.balance = null; continue; }
-      if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
-      const out = kids.reduce((s, k) => s + k.base_qty, 0); const delta = out - n.base_qty; const red = delta > 1e-9; if (red) flagged++;
-      n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
-    }
+    const { r, matched_on } = await batchRows(me, q);
+    const items = batchItems(r.rows);
+    const { edges, nodeArr, kidsMap, nmap } = batchChain(items);
+    // mass-balance, same invariant as the walk — the ONE rule (traceBalance)
+    const flagged = traceBalance(nodeArr, (n) => (kidsMap[n.chit_id] || []).map((id) => nmap[id]).filter(Boolean));
     const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
     res.json({ dir: 'forward', by_batch: q, reconstructed: true,
       /* ⚠️ THE CALLER MUST BE ABLE TO TELL THESE APART. 'batch' = these shipments carried this lot. 'product' =
@@ -5143,6 +5080,87 @@ router.get('/trace/by-batch', auth, async (req, res) => {
     res.status(500).json({ error: 'Batch trace failed', message: safeErr(err) });
   }
 });
+
+/* ═══ BY-BATCH'S NAMED STEPS (T2-SPLIT, 2026-10-14) — the rows · the items · the chain; the balance is the walk's own. ═══ */
+
+/** the receiver of a handoff (by-batch chains on it): the 'receiver' row, else the first party that is not sender or operator */
+function traceRecipientOf(row) {
+  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
+  a = Array.isArray(a) ? a : []; return a.find((x) => x.role === 'receiver') || a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
+}
+
+/**
+ * ── ⚠️ THIS ENDPOINT DID NOT MATCH ON A BATCH ─────────────────────────────────────────────────────────────
+ * It matched `summary_json->'trace'->>'product'` — the product NAME — while being called `by-batch`, and the
+ * trace object has never carried a batch at all. So a recall for lot "24B" returned every customer who ever
+ * received that product, at every depth, and the answer looked exactly like a correct one. In a recall that
+ * is not a slightly wide net: it is telling forty customers to destroy stock that was never affected, and
+ * failing to tell the six who hold the bad lot which lot it was.
+ *
+ * ⭐ NOW IT LOOKS FOR A REAL LOT FIRST — `chit_line.flags->'lot'->>'batch'`, GS1 (10), written on the movement
+ * by lib/gs1.lotOf. Serial (21) counts too: a recall by serial is the same question, one unit narrower.
+ *
+ * ⚠️ AND IT STILL FALLS BACK TO PRODUCT CORRELATION, RATHER THAN RETURNING NOTHING. Every chit raised before
+ * lots existed has no batch on any line, and a traceability screen that suddenly answered "no results" for
+ * data it happily walked yesterday would read as data loss. But the fallback ANNOUNCES ITSELF — `matched_on`
+ * travels in the response — because the difference between "these six shipments carried lot 24B" and "these
+ * forty shipments were of this product" is the entire value of the answer, and a screen that cannot tell them
+ * apart will present the second as the first.
+ */
+async function batchRows(me, q) {
+  let matched_on = 'batch';
+  let r = await withEntity(me, (db) => db.query(
+    `SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients,
+            h.summary_json->'trace' AS trace
+       FROM chit_header h
+       JOIN chit_line   l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id
+      WHERE h.summary_json->'trace' IS NOT NULL
+        AND l.removed = false
+        AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))`,
+    [q])).catch((e) => {   // pre-b142 there is no chit_line to join — fall through, do not fail
+      require('../lib/logger').warn('trace.by-batch-no-lines', { err: e && e.message });
+      return { rows: [] };
+    });
+
+  if (!r.rows.length) {
+    matched_on = 'product';
+    r = await withEntity(me, (db) => db.query(
+      `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+         FROM chit_header
+        WHERE summary_json->'trace' IS NOT NULL
+          AND lower(summary_json->'trace'->>'product') = lower($1)`, [q]));
+  }
+  return { r, matched_on };
+}
+
+/** one item per chit (the lot join can return a chit once per matching line) */
+function batchItems(rows) {
+  const seen = new Set(); const items = [];
+  for (const row of rows) {
+    if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
+    const rec = traceRecipientOf(row); const t = row.trace || {};
+    items.push({ chit_id: row.chit_id, sender_entity_id: row.sender_entity_id, sender_name: row.sender_entity_display_name || null,
+      to_entity_id: rec ? rec.entity_id : null, to_name: rec ? rec.display_name : null,
+      product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null, base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null });
+  }
+  return items;
+}
+
+/** the chain rebuilt from the data alone, and each node's depth from the roots */
+function batchChain(items) {
+  // rebuild edges: X → Y when receiver(X) === sender(Y). Pure data correlation, no links.
+  const bySender = {}; items.forEach((it) => { (bySender[it.sender_entity_id] = bySender[it.sender_entity_id] || []).push(it); });
+  const edges = []; const hasParent = new Set();
+  items.forEach((x) => (bySender[x.to_entity_id] || []).forEach((y) => { if (y.chit_id !== x.chit_id) { edges.push({ from: x.chit_id, to: y.chit_id }); hasParent.add(y.chit_id); } }));
+  const nmap = {}; items.forEach((it) => { nmap[it.chit_id] = Object.assign({}, it, { depth: 0, is_origin: !hasParent.has(it.chit_id) }); });
+  // BFS depth from the roots
+  const kidsMap = {}; edges.forEach((e) => { (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to); });
+  let frontier = items.filter((it) => !hasParent.has(it.chit_id)).map((it) => it.chit_id);
+  const seenD = new Set(frontier); let d = 0;
+  while (frontier.length && d < 60) { const next = []; frontier.forEach((id) => (kidsMap[id] || []).forEach((k) => { if (!seenD.has(k)) { seenD.add(k); nmap[k].depth = d + 1; next.push(k); } })); frontier = next; d++; }
+  const nodeArr = Object.values(nmap);
+  return { edges, nodeArr, kidsMap, nmap };
+}
 
 // ─── GET /chits/trace/networks ──────────────────────────────────────────────────────────────────────────────
 // The networks the caller participates in (derived from the edges it co-holds — migration-free registry seed).
