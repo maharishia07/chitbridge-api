@@ -2281,6 +2281,23 @@
     "entries[].who"
    ]
   },
+  "GET /api/facts/tax-lab": {
+   "status": 200,
+   "example": {
+    "lines": [
+     {
+      "text": "1 product has no tax slab",
+      "value": 1,
+      "tone": "dn"
+     }
+    ],
+    "figures": {
+     "products": 2,
+     "no_slab": 1
+    }
+   },
+   "optional": []
+  },
   "GET /api/repeat": {
    "status": 200,
    "example": {
@@ -5252,6 +5269,222 @@
    "example": {
     "ran": [],
     "problems": []
+   },
+   "optional": []
+  },
+  "POST /api/tax/compute": {
+   "status": 200,
+   "example": {
+    "engine": "chitbridge-tax",
+    "version": 1,
+    "seller": {
+     "Gstin": "33AAAAA0000A1Z5",
+     "State": "33",
+     "Country": "IN",
+     "RegType": "regular"
+    },
+    "buyer": {
+     "Pos": "33",
+     "Country": "IN"
+    },
+    "price_includes_tax": {
+     "value": true,
+     "source": "shop"
+    },
+    "priced": [
+     {
+      "key": "0",
+      "unit_price": 118,
+      "source": "shelf",
+      "structure": null,
+      "why": "list price"
+     }
+    ],
+    "currency": "INR",
+    "pack": {
+     "id": "IN",
+     "version": "1.0.0",
+     "code": null,
+     "why": null
+    },
+    "money": {
+     "gross": 266,
+     "savings": 0,
+     "net": 266,
+     "taxable": 230,
+     "tax": 36,
+     "total": 266,
+     "round_off": 0,
+     "cgst": 18,
+     "sgst": 18,
+     "igst": 0,
+     "cess": 0,
+     "vat": 0,
+     "supply": "intra",
+     "pos_state": "33",
+     "currency_code": "INR",
+     "by_rate": {
+      "0": {
+       "taxable": 30,
+       "cgst": 0,
+       "sgst": 0,
+       "igst": 0,
+       "tax": 0
+      },
+      "10": {
+       "taxable": 5,
+       "cgst": 0,
+       "sgst": 0,
+       "igst": 0,
+       "tax": 0.5,
+       "gst": 0.5
+      },
+      "18": {
+       "taxable": 200,
+       "cgst": 18,
+       "sgst": 18,
+       "igst": 0,
+       "tax": 36
+      }
+     },
+     "heads": [
+      {
+       "name": "CGST",
+       "rate": 9,
+       "base": 200,
+       "amount": 18
+      }
+     ],
+     "lines": [
+      {
+       "gross": 236,
+       "discount": 0,
+       "taxable": 200,
+       "cgst": 18,
+       "sgst": 18,
+       "igst": 0,
+       "cess": 0,
+       "tax": 36,
+       "total": 236
+      }
+     ]
+    },
+    "invoice": {
+     "TranDtls": {
+      "TaxSch": "GST",
+      "SupTyp": "B2C",
+      "RegRev": "N",
+      "IgstOnIntra": "N"
+     },
+     "SellerDtls": {
+      "Gstin": "33AAAAA0000A1Z5",
+      "LglNm": "Ponni Stores",
+      "State": "33"
+     },
+     "BuyerDtls": {
+      "Pos": "33"
+     },
+     "ItemList": [
+      {
+       "SlNo": "1",
+       "PrdDesc": "Ponni Rice",
+       "IsServc": "N",
+       "HsnCd": "",
+       "Qty": 2,
+       "Unit": "",
+       "UnitPrice": 118,
+       "TotAmt": 236,
+       "Discount": 0,
+       "AssAmt": 200,
+       "GstRt": 18,
+       "IgstAmt": 0,
+       "CgstAmt": 18,
+       "SgstAmt": 18,
+       "TaxAmt": 0,
+       "CesRt": 0,
+       "CesAmt": 0,
+       "TotItemVal": 236,
+       "_line_id": "0"
+      }
+     ],
+     "ValDtls": {
+      "AssVal": 230,
+      "CgstVal": 18,
+      "SgstVal": 18,
+      "IgstVal": 0,
+      "CesVal": 0,
+      "StCesVal": 0,
+      "Discount": 0,
+      "RndOffAmt": 0,
+      "TotInvVal": 266,
+      "TaxVal": 0
+     },
+     "_cb": {
+      "scheme": "GST",
+      "supply": "intra",
+      "place_of_supply": "33",
+      "seller_state": "33",
+      "slabs": [
+       {
+        "GstRt": 0,
+        "AssVal": 30,
+        "CgstVal": 0,
+        "SgstVal": 0,
+        "IgstVal": 0,
+        "CesVal": 0,
+        "TaxVal": 0.5
+       }
+      ],
+      "amount_payable": 266,
+      "reverse_charge": false,
+      "price_includes_tax": true,
+      "notes": [
+       "Your prices include tax, so the taxable value was worked back out of each price."
+      ]
+     }
+    },
+    "heads": {
+     "taxable": 230,
+     "cgst": 18,
+     "sgst": 18,
+     "igst": 0,
+     "cess": 0,
+     "vat": 0,
+     "total": 266,
+     "tax": 36
+    }
+   },
+   "optional": [
+    "buyer.Pos",
+    "invoice.SellerDtls.State",
+    "invoice._cb.slabs[].TaxVal",
+    "money.by_rate.0",
+    "money.by_rate.10",
+    "money.by_rate.18",
+    "priced[].structure",
+    "priced[].why"
+   ],
+   "free": [
+    "money.by_rate"
+   ],
+   "note": "TAX-SRV1: the Tax Lab reads it. money.by_rate is keyed by the RATE (data) - free."
+  },
+  "POST /api/tax/compute #400": {
+   "status": 400,
+   "example": {
+    "error": "Bad request",
+    "code": "BAD_QTY",
+    "message": "Line \"A\" needs a quantity above 0."
+   },
+   "optional": []
+  },
+  "POST /api/tax/compute #422": {
+   "status": 422,
+   "example": {
+    "error": "Cannot compute",
+    "code": "ITEM_NOT_FOUND",
+    "message": "Line \"NOPE\" names an item this shop does not sell.",
+    "line": "0"
    },
    "optional": []
   }

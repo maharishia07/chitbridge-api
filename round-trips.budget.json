@@ -570,6 +570,15 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/tax-lab": {
+      "file": "facts.js",
+      "trips": 6,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "TAX-SRV1 G7 (by hand): one shelf read (services.shelfOf: the definitions + gstn + items transaction, the face, the governed slabs), counted in Node by the slab rule. Measured 5 on the empty stub (no GSTIN: + the items-only read); 6 is the ceiling."
+    },
     "GET /api/facts/rail": {
       "file": "facts.js",
       "trips": 3,
@@ -688,6 +697,15 @@
       "wire": 4,
       "fired": true,
       "status": 200
+    },
+    "POST /api/tax/compute": {
+      "file": "tax.js",
+      "trips": 6,
+      "wire": null,
+      "fired": true,
+      "status": 400,
+      "extra": true,
+      "why": "TAX-SRV1 (by hand): identities (shopOf, 1) + the shelf read (as GET /api/facts/tax-lab, 5) only when a line needs a rate or a price. Fired body-less here: 400 NO_LINES, 0 trips."
     },
     "GET /api/tax/gstr": {
       "file": "tax.js",

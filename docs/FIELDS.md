@@ -36,6 +36,20 @@ Derived per call, never stored. Written by `routes/connectors.js` (deviceActor �
 | `enquiries[]` · `total` · `page` · `limit` | `{ item_id, item_name, about_mine, messages, askers, last_text, last_from_name, last_from_me, last_at }`, latest first; `?side=in\|out`; `migrated:false` before b161 | Derived per read from MY `chit_messages` copies (subject_type product, external), one row per product, plus `catalogue_items` name. Read by: the enquiry list screen (next round). |
 | event `{ kind: 'enquiry', id: item_id, who }` | SSE `cb` event | Emitted by POST /api/catalogue/enquiry/:item_id to the product's OWNER (external, not my own item). Read by the bell (rail-bell.js / core.js re-read on any `cb`). |
 
+## POST /api/tax/compute · GET /api/facts/tax-lab (TAX-SRV1, 2026-10-14)
+
+Derived per call, never stored. Written by routes/tax.js (compute) and lib/home-facts.js taxLab. Read by: API-key callers; the Tax Lab screen (coming).
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `price_includes_tax` | `{ value: bool, source: 'caller'\|'shop' }` | The caller's flag when it said one, else the shop's policy `price_includes_tax` (services.shopOf → policy.flagOf — the counter's taxIncluded). |
+| `priced[]` | `{ key, unit_price, source: 'caller'\|'shelf', structure?, why? }` | `source` `caller` (price sent) or `shelf` (services.priceLine — the one price reader, the product's structure at the qty). |
+| `money` | the `summary_json.money` shape (tax.moneyOf) | gross · savings · net · taxable · tax · total · `by_rate` (keyed by RATE — contract `free`) · heads · `currency_code`. Same function as the chit and the counter. |
+| `currency` | ISO code \| null | The seller's pack currency (tax-lines.currencyOf) — null when no pack, never the default's INR. |
+| `pack` | `{ id, version, code, why }` | regulation.status(seller country): id + version, or `NO_COUNTRY_PACK` + its sentence. |
+| `code` (400/422/500) | `NO_LINES` · `BAD_QTY` · `BAD_PRICE` · `BAD_RATE` · `NO_PRICE` · `BAD_FLAG` · `NO_COUNTRY` · `ITEM_NOT_FOUND` · `TAX_FAILED` (+ knownerr's) | A caller branches on `code`; `message` is for a person; `line` names the refused line's key. |
+| facts `tax-lab` → `figures.products` · `figures.no_slab` | numbers | Derived: active catalogue items, and those whose slab resolves to `none` (tax-lines.resolveItem → tax-slab.resolve). Omitted (`unavailable`) for a GST shop with no GSTIN. |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

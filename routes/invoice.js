@@ -30,8 +30,8 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
       excluded: l.excluded.length ? l.excluded : ((prod && Array.isArray(prod.offers_excluded)) ? prod.offers_excluded.map(String) : []) }); });
     /* 1 · pricing structure */
     const priced = lines.map((l) => Object.assign({}, l, S.priceLine(l, sh.productOf(l))));
-    const mine = await S.partyOfEntity(entity_id);
-    const seller = S.party(body.seller, mine);
+    const shop = await S.shopOf(entity_id);
+    const seller = S.party(body.seller, shop.party);
     /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */
     const currency = body.currency || T.currencyOf(seller);
     /* 2 · offers on the priced lines */
@@ -43,7 +43,7 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
     const rated = S.rateLines(withOffers, sh);
     /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
     const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
-    const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
+    const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: S.saidInclusive(body) != null ? S.saidInclusive(body) : shop.priceIncludesTax /* TAX-SRV1 G2: left out = the shop's own setting */, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
     const invoice = Object.assign({ DocDtls: { Typ: 'INV', No: null, Dt: require('../lib/shop-clock').today(seller && seller.Country) }   /* the seller's day (dayOf), not the server's UTC */, currency }, det);
     res.json({ engine: 'chitbridge-invoice', version: 1, order: ['pricing structure', 'offers', 'tax'],
       pricing: priced.map((l) => ({ key: l.key, unit_price: l.unit_price, list_price: l.list_price, structure: l.structure, why: l.why })),

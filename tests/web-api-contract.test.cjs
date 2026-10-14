@@ -26,7 +26,7 @@ const FILE = path.join(__dirname, '..', 'docs', 'contracts', 'web-api.json');
 /* ── child mode: capture one half into a file (the two halves stub the database differently, so each gets its own process) ── */
 if (process.argv[2] === '--capture') {
   const which = process.argv[3], out = process.argv[4];
-  const run = which === 'crm' ? require('./support/contract-crm.cjs').captureCrm : which === 'work' ? require('./support/contract-work.cjs').captureWork : which === 'repeat' ? require('./support/contract-repeat.cjs').captureRepeat : require('./support/contract-books.cjs').captureBooks;
+  const run = which === 'crm' ? require('./support/contract-crm.cjs').captureCrm : which === 'work' ? require('./support/contract-work.cjs').captureWork : which === 'repeat' ? require('./support/contract-repeat.cjs').captureRepeat : which === 'tax' ? require('./support/contract-tax.cjs').captureTax : require('./support/contract-books.cjs').captureBooks;
   run().then((g) => { fs.writeFileSync(out, JSON.stringify(g)); process.exit(0); }).catch((e) => { console.error(e); process.exit(1); });
   return;
 }
@@ -48,10 +48,10 @@ function capture(which) {
   try { C = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch (e) { if (!WRITE) { ok('the contract file is there and is JSON', false, e.message); return done(); } }
   C = C || { routes: {} };
 
-  const crm = capture('crm'), work = capture('work'), repeat = capture('repeat'), books = capture('books');   /* repeat: /api/repeat (RI1), the in-memory table + stand-in send */
+  const crm = capture('crm'), work = capture('work'), repeat = capture('repeat'), tax = capture('tax'), books = capture('books');   /* tax: the Tax Lab's reads (TAX-SRV1) */   /* repeat: /api/repeat (RI1), the in-memory table + stand-in send */
   const booksOff = !!(books && books.skipped);
   if (booksOff) console.log('   SKIP the books half: ' + books.skipped);
-  const got = Object.assign({}, crm, work, repeat, booksOff ? {} : books);
+  const got = Object.assign({}, crm, work, repeat, tax, booksOff ? {} : books);
 
   if (WRITE) {
     const old = C.routes || {};
