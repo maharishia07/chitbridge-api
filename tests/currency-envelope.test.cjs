@@ -85,23 +85,27 @@ const t = (name, got, want) => {
    */
   console.log('\n\u2500\u2500 every writer of the column asks \u2500\u2500');
   const fs = require('fs');
+  /* T2-SPLIT (2026-10-14): POST /build's body is the named steps in lib/network-build-run.js — read where it now lives */
   const writers = [
     ['routes/entities.js',       'PATCH /profile'],
-    ['routes/network-design.js', 'POST /build'],
+    [['routes/network-design.js', 'lib/network-build-run.js'], 'POST /build'],
   ];
   for (const [f, what] of writers) {
-    const src = fs.readFileSync(API + '/' + f, 'utf8');
+    const src = [].concat(f).map((x) => fs.readFileSync(API + '/' + x, 'utf8')).join('\n');
     const writes = /currency_code\s*=|currency_code,/.test(src);
     t(what + ' writes the column', writes, 'true');
     t('  \u2026and calls currencyRefusal', /currencyRefusal\s*\(/.test(src), 'true');
   }
   /* ⚠️ BOTH LOOPS, NOT ONE. The create path and the update path each write currency_code; guarding only the
      create would leave a store able to acquire a refused currency by MOVING. */
-  const nd = fs.readFileSync(API + '/routes/network-design.js', 'utf8');
+  const nd = fs.readFileSync(API + '/lib/network-build-run.js', 'utf8');
   t('network build guards BOTH create and update', (nd.match(/currencyRefusal\s*\(/g) || []).length, 2);
   /* ⚠️ AND IT RESOLVES THE ENTITY, NOT THE CALLER. A co-assist's own row carries no governance stamp, so
-     currencyRefusal(me, …) would quietly fall back to `base` and skip the business's real constitution. */
-  t('  \u2026against the entity, not the acting co-assist', /currencyRefusal\(auth\.entityOf\(req\)/.test(nd), 'true');
+     currencyRefusal(me, …) would quietly fall back to `base` and skip the business's real constitution.
+     The steps ask `x.entity`, and the route hands run.execute `entity: auth.entityOf(req)` — both halves checked. */
+  const route = fs.readFileSync(API + '/routes/network-design.js', 'utf8');
+  t('  \u2026against the entity, not the acting co-assist',
+    (nd.match(/currencyRefusal\(x\.entity,/g) || []).length === 2 && /run\.execute\(\{[^}]*entity: auth\.entityOf\(req\)/.test(route), 'true');
 
   console.log('\n  \u2550\u2550 ' + pass + ' passed \u00b7 ' + fail + ' failed \u2550\u2550\n');
   process.exit(fail ? 1 : 0);
