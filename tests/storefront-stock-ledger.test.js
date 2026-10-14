@@ -117,6 +117,6 @@ t('ONE reader: stock-store.onHand sums batches the same way for the counter (GET
     try { await fn(); console.log('\x1b[32mok\x1b[0m  ' + name); pass++; }
     catch (e) { console.log('\x1b[31mXX\x1b[0m  ' + name + ' — ' + e.message); fail++; }
   }
-  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })();
