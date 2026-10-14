@@ -635,16 +635,18 @@
     "GET /api/testing/incidents": {
       "file": "testing.js",
       "trips": 1,
-      "wire": 4,
+      "wire": 5,
       "fired": true,
-      "status": 200
+      "status": 200,
+      "why": "T2-PAGING: +1 statement in the SAME transaction — the per-state counts (GROUP BY over every row) beside the page, which is now cut AFTER the order; before, 500 rows were read and an old High/Sev-1 could be cut off"
     },
     "GET /api/testing/requirements": {
       "file": "testing.js",
       "trips": 1,
-      "wire": 4,
+      "wire": 5,
       "fired": true,
-      "status": 200
+      "status": 200,
+      "why": "T2-PAGING: +1 statement in the SAME transaction — the per-state counts (GROUP BY over every row) beside the page, which is now cut AFTER the order; before, 500 rows were read and an old High/Sev-1 could be cut off"
     },
     "GET /api/testing/results": {
       "file": "testing.js",

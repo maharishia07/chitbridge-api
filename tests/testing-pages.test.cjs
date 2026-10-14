@@ -110,5 +110,5 @@ const ROUTES = [
     assert.ok(/FROM \(SELECT DISTINCT ON \(case_key, COALESCE\(layer,''\)\) \*/.test(pageStmt().sql), pageStmt().sql);
   });
 
-  console.log('\n' + pass + ' passed' + (process.exitCode ? ' — FAILURES above' : ''));
+  console.log('\n' + pass + ' checks' + (process.exitCode ? ' — FAILURES above' : ''));
 })();
