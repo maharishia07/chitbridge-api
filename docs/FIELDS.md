@@ -520,3 +520,15 @@ A rate is EVIDENCE the owner types or imports — never fetched, never assumed (
 | a foreign event's refusal `code: FX_RATE_MISSING` | — | derived: "No USD rate for 14 Oct — add it in Accounts › Rates." — the hooks park it on Waiting with that sentence; it posts on the retry once the rate exists | composeEntry (`fx-rates.forEvent`) | Waiting · the payment sheet |
 
 Limits (said, not hidden): a foreign PAYMENT settles at the party's open foreign balance's average carried rate (the booked rate of each bill when only one is open); one larger than what they owe in that currency is refused (record the extra as an advance). A foreign BANK ledger is not told apart from the shop's own bank yet, so revaluation covers debtors and creditors only.
+
+## T2-POLICY (2026-10-14) · one writer of `identities.policy_flags`; one of the shop's `gstn` · `address`
+
+No SQL, no new stored key. Who WRITES changed; what is stored did not.
+
+| key | shape | source / derived · writer · readers |
+|---|---|---|
+| `identities.policy_flags` (every key) | jsonb | source. Written ONLY by `lib/policy.js` — `set()` for FLAGS keys, `patchKey(db, entity, path, value, { op })` / `patchSql` for everything else (api_keys · counters · devices · network_* · profile_provenance · storefront_exposure). Guard: tests/policy-one-writer.test.cjs (0 direct writers). Readers unchanged. |
+| `FLAGS[key].ui` | `{ order, label, level, gov, help, labels?, options?, scale?, suffix?, step? }` | derived (code, lib/policy.js `CARD`). Not stored. Sent by `GET /api/entities/policy` as `schema[key].ui`; read by the web's Business rules card (cap-admin.js) — its former POLICY_FLAGS copy is gone. |
+| `FLAGS[key].may` · `.may_why` | `'owner'` · sentence | derived (code). `system_folders`, `books`. Read by `policy.refusalFor` in `PATCH /api/entities/policy` (403 `POLICY_OWNER_ONLY`). |
+| `bound_schema` (GET /api/entities/policy) | `{ dispute_scope: { type, options, def, ui } }` | derived (code). Read by the card for its locked row. |
+| `identities.gstn` · `identities.address` (the shop's own row) | text | source. Written ONLY through `lib/profile.js` `setShopIdentity` / `shopIdentitySql` (PATCH /entities/profile · country setup · the profile sync · a network store's place · the vault save's write-through). The tax number is checked by `profile.taxIdRefusal(country, number)` — the pack `taxIdWordOf` names (GSTIN checksum · ABN · TRN · ≤ 40 for no pack). A party's row (`parent_entity_id`) is the counterparty's, not this. |

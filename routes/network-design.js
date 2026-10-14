@@ -516,6 +516,9 @@ router.post('/build', auth, async (req, res) => {
         // -1 is the sentinel for "clear it": a null parameter already means "leave the column alone", so there has
         // to be some other way to say "this store is no longer arranged".
         const nextOrder = u.order ? (u.order.to === null ? -1 : u.order.to) : null;
+        /* T2-POLICY (SET4): a store's address through the ONE writer's fragment (profile.shopIdentitySql, $7) — written only when the place
+           moved, with the rest of the place in this same statement (the place still moves as a unit) */
+        const _uId = require('../lib/profile').shopIdentitySql(u.place ? { address: (u.place.to && u.place.to.address) || null } : {}, 7);
         const r = await db.query(
           `UPDATE identities
               SET catalogue_visibility = COALESCE($1, catalogue_visibility),
@@ -530,7 +533,7 @@ router.post('/build', auth, async (req, res) => {
                                     WHEN $5::int = -1 THEN NULL ELSE $5::int END,
                   -- b119 · PLACE. One jsonb parameter rather than six scalars: the place moves as a unit, and six
                   -- independent COALESCEs would let a half-applied place through if one ever went missing.
-                  address    = CASE WHEN $6::jsonb IS NULL THEN address    ELSE $6->>'address' END,
+                  ${_uId.sql ? _uId.sql + ',' : ''}
                   city       = CASE WHEN $6::jsonb IS NULL THEN city       ELSE $6->>'city' END,
                   country    = CASE WHEN $6::jsonb IS NULL THEN country    ELSE COALESCE($6->>'country', country) END,
                   lat        = CASE WHEN $6::jsonb IS NULL THEN lat        ELSE ($6->>'lat')::numeric END,
@@ -544,7 +547,7 @@ router.post('/build', auth, async (req, res) => {
             WHERE bridge_id = $2 AND created_by = $3
             RETURNING bridge_id`,
           [nextVis, u.bridge_id, me, nextPurpose, nextOrder,
-           u.place ? JSON.stringify(u.place.to) : null]);
+           u.place ? JSON.stringify(u.place.to) : null].concat(_uId.params));
         // `created_by = me` is the authority check, and it is in the WHERE rather than a prior SELECT so there is
         // no gap between checking and writing. A store this operator did not mint simply does not match.
         if (!r.rows.length) {

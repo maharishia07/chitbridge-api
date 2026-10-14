@@ -251,19 +251,17 @@ router.get('/search', auth, async (req, res) => {
 const policy = require('../lib/policy');
 const policyEntity = (req) => auth.entityOf(req);
 
+/* T2-POLICY (POL1): `schema[key].ui` is the Business rules card (label · help · level · gov · order) and `bound_schema` its locked rows —
+   the web paints from these, it holds no copy. 1 trip. */
 router.get('/policy', auth, async (req, res) => {
-  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND }); }
+  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA }); }
   catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
 });
 
 router.patch('/policy', auth, async (req, res) => {
-  /* ⚠️ the folder inventory's switches are the OWNER's (routes/folders.js PUT /inventory/:code) — not a back door for a co-assist or a key */
-  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'system_folders') && !require('../lib/owner').isOwner(req)) {
-    return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may switch folders on or off.' });
-  }
-  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'books') && !require('../lib/owner').isOwner(req)) {
-    return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may let the books post by themselves.' });
-  }
+  /* ⚠️ who may change a flag is on the flag (policy.FLAGS[k].may — system_folders, books): the owner's, not a back door for a co-assist or a key */
+  const refused = policy.refusalFor(req.body, require('../lib/owner').isOwner(req));
+  if (refused) return res.status(403).json({ error: 'Only the owner may do this.', code: 'POLICY_OWNER_ONLY', message: refused });
   try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
   catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
@@ -741,7 +739,7 @@ router.patch('/me/exposure', auth, async (req, res) => {
     const body = req.body || {}; const out = {};
     for (const k of X.KEYS) if (k in body) out[k] = !!body[k];
     if (!Object.keys(out).length) return res.status(400).json({ error: 'validation', message: 'switches required — keys: ' + X.KEYS.join(', ') });
-    await query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || jsonb_build_object('storefront_exposure', COALESCE(policy_flags->'storefront_exposure','{}'::jsonb) || $1::jsonb) WHERE identity_id = $2`, [JSON.stringify(out), entity_id]);
+    await policy.patchKey(null, entity_id, ['storefront_exposure'], out, { op: 'merge' });   /* T2-POLICY: the one writer */
     const r = await query(`SELECT policy_flags->'storefront_exposure' AS x FROM identities WHERE identity_id = $1`, [entity_id]);
     res.json({ message: 'Defaults saved', exposure: Object.assign({}, X.DEFAULTS, (r.rows[0] && r.rows[0].x) || {}) });
   } catch (err) { res.status(500).json({ error: 'Exposure save failed', message: safeErr(err) }); }
@@ -833,8 +831,8 @@ router.patch('/profile', auth,
      */
     body('display_name').optional().trim().isLength({ min: 2, max: 255 })
       .withMessage('A business name is 2 characters or more.'),
-    body('gstn').optional().trim().isLength({ max: 15 })
-      .withMessage('A GSTIN is 15 characters — check for a missing or extra digit.'),
+    /* T2-POLICY (SET4): no "15 characters" here — the tax number is checked in the handler by profile.taxIdRefusal, from the shop's pack */
+    body('gstn').optional().trim(),
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
     body('business_status').optional().isIn(['open','closed','away']),
@@ -984,21 +982,33 @@ router.patch('/profile', auth,
           Object.assign({ error: 'Currency not permitted' }, refusal));
         _cur = String(req.body.currency_code).toUpperCase();
       }
+      /* ⭐ T2-POLICY (SET4): the tax number and address through the ONE writer's fragment (profile.shopIdentitySql), in this statement —
+         only what was sent (an absent or empty field leaves the column alone, as COALESCE did). The number is checked against the
+         shop's pack first (the country read only when a number was sent). */
+      const P = require('../lib/profile'); const idFields = {};
+      if (req.body.gstn) {
+        const c = await query('SELECT country FROM identities WHERE identity_id = $1', [id]);
+        const bad = P.taxIdRefusal(c.rows[0] && c.rows[0].country, req.body.gstn);
+        if (bad) return res.status(400).json({ error: 'Tax number not accepted', code: bad.code, message: bad.why });
+        idFields.tax_id = req.body.gstn;
+      }
+      if (req.body.address) idFields.address = req.body.address;
+      const idSql = P.shopIdentitySql(idFields, 10);
       await query(
-        `UPDATE identities SET display_name=COALESCE($9,display_name), gstn=COALESCE($1,gstn), logo_url=COALESCE($2,logo_url), address=COALESCE($3,address),
-                business_status=COALESCE($4,business_status),
-                user_id=COALESCE(user_id,$5),
-                self_copy_pref=COALESCE($6,self_copy_pref),
-                dispute_handler_actor_id=COALESCE($7,dispute_handler_actor_id),
-                currency_code=COALESCE($10,currency_code),
-                supplies=COALESCE($11,supplies)
-         WHERE identity_id=$8`,
-        [req.body.gstn || null, req.body.logo_url || null, req.body.address || null,
+        `UPDATE identities SET display_name=COALESCE($7,display_name), logo_url=COALESCE($1,logo_url)${idSql.sql ? ', ' + idSql.sql : ''},
+                business_status=COALESCE($2,business_status),
+                user_id=COALESCE(user_id,$3),
+                self_copy_pref=COALESCE($4,self_copy_pref),
+                dispute_handler_actor_id=COALESCE($5,dispute_handler_actor_id),
+                currency_code=COALESCE($8,currency_code),
+                supplies=COALESCE($9,supplies)
+         WHERE identity_id=$6`,
+        [req.body.logo_url || null,
          req.body.business_status || null, userId, req.body.self_copy_pref || null, handler, id,
-         /* $10 — validated against the constitution above; null leaves it alone. */
-         /* $9 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
+         /* $7 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
          (req.body.display_name ? sanitise(req.body.display_name) : null),
-         _cur, req.body.supplies || null]);
+         /* $8 — validated against the constitution above; null leaves it alone. */
+         _cur, req.body.supplies || null].concat(idSql.params));
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (_) {} }
       /* ui_prefs — the business's own UI choices (which product rows show, appearance). MERGED, never replaced, so two

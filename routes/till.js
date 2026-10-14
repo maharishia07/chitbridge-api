@@ -1840,8 +1840,7 @@ router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res)
       if (!k) return;
       if (!isScreenKey(k)) { refused = true; return; }
       found = true;
-      await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
-        [JSON.stringify({ api_keys: list.filter((x) => String(x.jti) !== jti) }), entity_id]);
+      await policy.patchKey(db, entity_id, [], { api_keys: list.filter((x) => String(x.jti) !== jti) }, { op: 'merge' });
     });
     if (refused) return res.status(403).json({ error: 'Forbidden', message: 'Only a shop screen can be switched off from the counter.' });
     if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
@@ -1870,8 +1869,7 @@ router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res)
       if (!isScreenKey(k)) { refused = true; return; }
       found = true;
       const next = list.map((x) => (String(x.jti) === jti ? Object.assign({}, x, { name: name || null }) : x));
-      await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
-        [JSON.stringify({ api_keys: next }), entity_id]);
+      await policy.patchKey(db, entity_id, [], { api_keys: next }, { op: 'merge' });
     });
     if (refused) return res.status(403).json({ error: 'Forbidden', message: 'Only a shop screen can be renamed from the counter.' });
     if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
