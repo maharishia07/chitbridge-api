@@ -799,6 +799,23 @@ router.post('/:id/otp',
   }
 );
 
+/**
+ * recordBreak(entity_id, subject, before, after, by, reason) → { recorded, failed } — PEOPLE-SRV1 (compliance, 2026-10-14):
+ * THE OWNER'S ACTS ON A PERSON'S ACCESS GO ON THE IAM TRAIL. lib/access-events (b172, IAM-SPEC §29) already names
+ * break_status → break_changed and PATCH /:id records it, but switch off · remove · back on (PUT /:id/status) and away · back
+ * (PUT /break — now the owner's act too, G6) wrote no event: the trail missed exactly the acts a reviewer asks about.
+ * One helper, both routes. It runs AFTER the action's COMMIT, in its own withEntity (access_events is under RLS, like the
+ * PATCH's): a refused INSERT inside the action's transaction would abort the action, and the trail must never fail the act.
+ * A lost row is SAID — access-events logs it, this warns, and the answer carries `audit` (as the PATCH's does).
+ */
+async function recordBreak(entity_id, subject, before, after, by, reason) {
+  if (before === after) return { recorded: 0, failed: 0 };
+  const out = await withEntity(entity_id, (edb) => accessEvents.recordChanges((sql, args) => edb.query(sql, args), {
+    entity_id, subject_identity_id: subject, before: { break_status: before || null }, after: { break_status: after }, changed_by: by, reason }));
+  if (out.failed) logger.warn('actors: the person\'s state changed but the access event was not written — the trail has a gap', { subject, after, reason });
+  return { recorded: out.written, failed: out.failed };
+}
+
 // ── PUT /api/actors/:id/status ───────────────────────────────
 // Deactivate or remove actor — admin only
 router.put('/:id/status',
@@ -874,8 +891,10 @@ router.put('/:id/status',
            WHERE identity_id = $3`,
           [otp, expires, actor_id]
         );
+        const audit = await recordBreak(entity_id, actor_id, a.break_status, 'active', req.identity.identity_id, 'reactivate');
         return res.json({
           message: 'Actor reactivated',
+          audit,
           ...(await empCode.deliver({ to: toEmail, name: a.display_name, otp })),
           ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
           login_format: await loginIdFor(a.actor_key, req)
@@ -958,10 +977,14 @@ router.put('/:id/status',
         });
       } catch (e) { logger.fellBack('actors PUT /:id/status: the write failed — carried on without it', e); }
 
+      /* PEOPLE-SRV1 (compliance): switched off / removed goes on the IAM trail — by whom, from what state */
+      const audit = await recordBreak(entity_id, actor_id, a.break_status, action === 'remove' ? 'removed' : 'deactivated', req.identity.identity_id, action);
+
       res.json({
         message: `Actor ${action}d successfully`,
         actor_name: a.display_name,
         action,
+        audit,
         tasks_routed,
         task_action: task_action || null,
         return_date: return_date || null,
@@ -982,22 +1005,21 @@ router.put('/:id/status',
 /**
  * breakSubject(req) — PEOPLE-SRV1 (G6): WHOSE break this is. A person says their own (no actor_id, or their own id); the OWNER
  * marks someone away or back by naming them (`actor_id`) — owner only (ownerWrite, before this runs), one of the shop's own
- * people, not switched off or removed. → { id, name|null, other } or { status, body } to refuse with (a code on every refusal).
+ * people, not switched off or removed. → { id, name|null, other, before } or { status, body } to refuse with (a code on every
+ * refusal). ONE read serves both paths (compliance): `before` is the state the access event says the person was in — a person's
+ * own break reads their row too (+1 trip, counted by hand) rather than writing "was null" on the trail.
  */
 async function breakSubject(req) {
-  const asked = req.body.actor_id;
-  if (!asked || asked === req.identity.identity_id) {
-    if (req.identity.identity_type !== 'actor') return { status: 400, body: { error: 'Name the person', code: 'NAME_THE_PERSON', message: 'Say who is away — pick the person.' } };
-    return { id: req.identity.identity_id, name: null, other: false };
-  }
+  const asked = req.body.actor_id, own = !asked || asked === req.identity.identity_id;
+  if (own && req.identity.identity_type !== 'actor') return { status: 400, body: { error: 'Name the person', code: 'NAME_THE_PERSON', message: 'Say who is away — pick the person.' } };
   const r = await db(
     `SELECT identity_id, display_name, break_status FROM identities
       WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-    [asked, auth.entityOf(req)]);
+    [own ? req.identity.identity_id : asked, auth.entityOf(req)]);
   const t = r.rows[0];
   if (!t || t.break_status === 'removed') return { status: 404, body: { error: 'Not found', code: 'NOT_FOUND', message: 'That person is not in your shop.' } };
-  if (t.break_status === 'deactivated') return { status: 400, body: { error: 'Switched off', code: 'SWITCHED_OFF', message: t.display_name + ' is switched off. Switch them on first.' } };
-  return { id: t.identity_id, name: t.display_name, other: true };
+  if (!own && t.break_status === 'deactivated') return { status: 400, body: { error: 'Switched off', code: 'SWITCHED_OFF', message: t.display_name + ' is switched off. Switch them on first.' } };
+  return { id: t.identity_id, name: own ? null : t.display_name, other: !own, before: t.break_status };
 }
 /* the owner gate only when somebody ELSE is named — a person's own break stays theirs (hat-gate lets it through) */
 const ownerWhenOther = (req, res, next) => (req.body && req.body.actor_id && req.body.actor_id !== req.identity.identity_id ? ownerWrite(req, res, next) : next());
@@ -1023,6 +1045,8 @@ router.put('/break',
       if (who.status) return res.status(who.status).json(who.body);
       const actor_id = who.id;
       const you = who.other ? who.name : 'You', youre = who.other ? who.name + ' is' : "You're";
+      /* compliance: every break goes on the IAM trail — whose act (the owner's or the person's own), from what state */
+      const trail = (after) => recordBreak(entity_id, actor_id, who.before, after, req.identity.identity_id, (who.other ? 'owner: ' : 'own: ') + break_type);
 
       // Buddy-cover concurrency: don't leave anyone uncovered when going off (both directions; skip on end_break).
       if (break_type !== 'end_break') {
@@ -1045,7 +1069,7 @@ router.put('/break',
            WHERE identity_id = $1`,
           [actor_id]
         );
-        return res.json({ message: who.other ? who.name + ' is back' : 'Break ended — you are now active', actor_id, state: 'on' });
+        return res.json({ message: who.other ? who.name + ' is back' : 'Break ended — you are now active', actor_id, state: 'on', audit: await trail('active') });
       }
 
       if (break_type === 'short_break') {
@@ -1062,7 +1086,8 @@ router.put('/break',
           message: who.other ? who.name + ' is on a short break — their tasks are held' : 'Short break started — your tasks are held',
           actor_id, state: 'away',
           break_type: 'short_break',
-          tasks: 'held — nobody else can pull them'
+          tasks: 'held — nobody else can pull them',
+          audit: await trail('short_break')
         });
       }
 
@@ -1126,7 +1151,8 @@ router.put('/break',
           actor_id, state: 'away',
           break_type: 'leave',
           task_action: task_action || null,
-          tasks_routed: count
+          tasks_routed: count,
+          audit: await trail('leave')
         });
       }
 
