@@ -464,11 +464,14 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
         const d = E.dues(items, asOf, side);
         if (role === 'creditors') payableItems = items;
         const byRef = d.outstanding.by_ref || {};
+        /* PERF1: each party's open documents, grouped ONCE — the filter over every document ran once per party (251 × 15k at 100k lines) */
+        const docsOf = new Map();
+        Object.keys(byRef).forEach((k) => { const x = byRef[k]; if (!(x.outstanding_minor > 0)) return; const p = String(x.party); if (!docsOf.has(p)) docsOf.set(p, []); docsOf.get(p).push(x); });
         Object.keys(d.ageing.by_party || {}).concat(Object.keys(d.outstanding.by_party || {})).forEach((pid) => {
           if (per.has(pid + '|' + role)) return;
           const ag = d.ageing.by_party[pid] || { undisputed: {}, disputed: {}, total_minor: 0 };
           const open = Number((d.outstanding.by_party || {})[pid] || 0);
-          const docs = Object.keys(byRef).map((k) => byRef[k]).filter((x) => String(x.party) === String(pid) && x.outstanding_minor > 0);
+          const docs = docsOf.get(String(pid)) || [];
           const oldest = docs.map((x) => x.due_date || x.date).filter(Boolean).sort()[0] || null;
           const buckets = {}; Object.keys(ag.undisputed || {}).forEach((k) => { buckets[k] = sign * ((ag.undisputed[k] || 0) + ((ag.disputed || {})[k] || 0)); });
           const disputed = Object.keys(ag.disputed || {}).reduce((t, k) => t + (ag.disputed[k] || 0), 0);

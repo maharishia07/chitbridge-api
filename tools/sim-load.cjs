@@ -41,7 +41,7 @@
  *              an AU/AE shop's chart is India's fallback and the proof is expected RED on purchases — web docs/design/standards/COUNTRY-COVERAGE.md)
  *   --scale    10k | 50k | 100k (PERF1): after the plan, grow the shop to that many journal lines (+ 500 customers · ≤ 5,000 open items · 10,000
  *              products) in the open year after it, then time every hot read 20× — p50 / p95 · rows · X-DB-Trips (tools/sim-scale.cjs).
- *              --scale-reads: time only (the shop already grown). Use with --start 2023-04-01 so the plan's years end before the grown one.
+ *              --scale-reads: time only (the shop already grown) · --scale-only <word>: only the reads whose name has it. Use with --start 2023-04-01 so the plan's years end before the grown one.
  *   --start    the first financial year's first day (default 2026-<the pack's first month>-01). WX-O2C: `--start 2023-04-01` ends the three
  *              years on 2026-03-31, so TODAY sits in an open year after them — a walk's own bills are then the newest, in an unlocked month.
  *   Env it sets for the in-process api when unset: NODE_ENV=development, DEV_OTP=123456, a local JWT_SECRET, SHOP_CLOCK_ALLOW=1,
@@ -244,7 +244,7 @@ async function scaleThen(shopId) {
   const start = dayAdd(PLAN.last, 1), end = dayAdd(start, 195);   /* the open year after the plan: 1 Apr → 13 Oct with --start 2023-04-01 */
   try {
     await require('./sim-scale.cjs').run({ base: BASE, sql, B: require(path.join(API, 'lib', 'books')), CLOCK: require(path.join(API, 'lib', 'shop-clock')), shopId, token,
-      cur: CUR, scale: SCALE, readsOnly: SCALE_READS, say, start, end });
+      cur: CUR, scale: SCALE, readsOnly: SCALE_READS, only: arg('scale-only', ''), say, start, end });
   } catch (e) { console.error('\n  sim-load --scale stopped: ' + (e && e.stack || e) + '\n'); return 1; }
   await pool.end();
   return 0;

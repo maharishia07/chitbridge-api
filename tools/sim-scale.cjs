@@ -122,10 +122,18 @@ async function run(ctx) {
     ['Till snapshot · since', '/api/till/snapshot?since=' + encodeURIComponent(since), 'items'],
   ];
   const out = [];
-  for (const [name, p, key] of READS) {
+  for (const [name, p, key] of READS.filter((r) => !ctx.only || r[0].toLowerCase().indexOf(String(ctx.only).toLowerCase()) >= 0)) {
     const ms = []; let last = null;
     for (let i = 0; i < 20; i++) { last = await call(p); ms.push(last.ms); if (last.ms > 3000 || last.status >= 500) break; }   /* a read past 3 s (or failing) is said once — 20 timeouts add nothing */
     out.push({ name, status: last.status, n: ms.length, p50: pct(ms, 50), p95: pct(ms, 95), rows: key ? (Array.isArray(last.b[key]) ? last.b[key].length : null) : rowsOf(last.b), trips: last.trips, kb: Math.round(last.bytes / 1024) });
+  }
+  /* the proof on the real database: the cash ledger walked in pages of 500 = the whole ledger, line for line and balance for balance */
+  if (!ctx.only) {
+    const whole = await call('/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today), got = []; let after = null, pages = 0;
+    do { const r = await call('/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today + '&limit=500' + (after ? '&after=' + encodeURIComponent(after) : '')); (r.b.lines || []).forEach((l) => got.push(l)); after = r.b.next; pages++; } while (after && pages < 1000);
+    const same = got.length === (whole.b.lines || []).length && got.every((l, i) => l.running_minor === whole.b.lines[i].running_minor && l.ref === whole.b.lines[i].ref);
+    console.log('\n  ' + (same ? 'ok  ' : 'RED ') + ' cash ledger in ' + pages + ' pages of 500 = the whole ledger (' + got.length + ' lines, every running balance equal)');
+    if (!same) process.exitCode = 1;
   }
   const f = (x) => (x == null ? '—' : x < 10 ? x.toFixed(1) : String(Math.round(x)));
   console.log('\n  scale ' + ctx.scale + ' · ' + facts.lines + ' journal lines · ' + facts.entries + ' entries · ' + facts.items + ' party items (' + facts.open_items + ' open) · '
