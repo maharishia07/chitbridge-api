@@ -4,6 +4,24 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## POST /api/governance/ai-draft (skill `line-item-draft`) · POST /api/capture/:id/raise — the quantity guard (T1-AI, 2026-10-14)
+
+Derived, never stored by the guard. Written by `lib/line-guard.js` (calls the engines' `numerals.verifyQuantity` / `negationIn`) over an AI reading. Read by: compose "✨ Fill" (app.html `ccAiFill`) and the raise screen.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `data.quantity_check` (ai-draft, line-item-draft only) | `{ code: 'QTY_OK'\|'QTY_NEEDS_CHECK', needs_human: n, quantity_rejected[], quantity_unverified[], refused[], unclear[] }` | Derived per call by `guardLines`. A screen branches on `code` / `needs_human`, never on the sentences. |
+| `line_items[].raw_phrase` (line-item-draft, new) | string | The model's pointer at the words of the description (same contract as message-to-chit, b141). |
+| `line_items[].qty_rejected` · `phrase_says` · `qty_unverified` · `needs_human` (line-item-draft, new; raise as before) | string · number · true · true | Same keys the raise already wrote; `qty` is null when rejected — never corrected. |
+| `line_items[].refused` (ai-draft and raise, new) | true | The line's own words refuse it ("venam", "வேணாம்"). Flagged, never dropped. |
+| `line_items[].negation_unclear` (ai-draft and raise, new) | string | `illa` — "or" and "not" both; the reason sentence (display only). |
+
+## Column · `ai_skill.model` (b433, T1-AI)
+
+| Column | Shape | Source · who writes it · who reads it |
+|---|---|---|
+| `ai_skill.model` | text or NULL | Stated by the platform owner per skill (slot). NULL = env `AI_MODEL`, else `lib/ai.js DEFAULT_MODEL`. Read only by `lib/ai.js modelFor()`; recorded per call in `usage_ledger.meta.model`. |
+
 ## GET /api/entities/constitutions · `installation` · `allowed_countries` · `countries` (GOV-SPIN, 2026-10-14)
 
 PUBLIC (pre-auth), the register panel's one read. Additive beside `constitutions`. Written by: nobody (derived) — the installation row by migration / `deploy/spin-lib.sh` (CB_SPIN_COUNTRY) / `scripts/seed-local-installations.sql` (local only). Read by: web `app/register-form.js` (the gov panel).
