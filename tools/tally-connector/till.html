@@ -11680,7 +11680,7 @@ function scanned(){
   if (w) {
     SCAN_AT = Date.now();
     /* ⚠️ K2b: addWeighed() is async (it awaits ageAllow) — price() here ran BEFORE the line landed, so the line sat in CART while
-       the screen said "Nothing on this bill yet · ₹0.00" until something else repainted. Price once it is on the bill. */
+       the screen said "Nothing on this bill yet", total zero, until something else repainted. Price once it is on the bill. */
     addWeighed(w).then(function(){ price(); });
     clearSearch(); focusSearch();
     return true;
