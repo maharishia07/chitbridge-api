@@ -209,16 +209,23 @@ async function disconnect({ edgeId, settle = false }, actor) {
   });
 }
 // ---- reads ----
-/** a node may be read by a business in the same network (same root) — its own network, not somebody else's */
+/**
+ * a node may be read by a business in the same network (same root) — its own network, not somebody else's.
+ * ⭐ TOP-CORRECT (2026-10-14): and the reader must be IN STANDING — suspend changes only cb_edge.state, never the path, so the
+ * root alone let a suspended member go on reading the whole tree. The edge-state read is lib/network-membership.standingSql,
+ * the same one the catalogue's `network` tier asks. A member's OWN node stays readable to it (it sees where it was suspended).
+ */
 async function _sameRoot(nodeId, actor) {
   if (!actor) return false;
+  const standing = require("../../lib/network-membership").standingSql("$2::ltree");
   const { rows: [r] } = await pool.query(
-    `select subpath(e.path,0,1) = subpath($2::ltree,0,1) as same from cb_entity e where e.id = $1`, [nodeId, actor.path]);
+    `select (subpath(e.path,0,1) = subpath($2::ltree,0,1) and (e.id = $3 or ${standing})) as same from cb_entity e where e.id = $1`,
+    [nodeId, actor.path, actor.id]);
   return !!(r && r.same);
 }
 async function subtree(entityId, actor) {
   const e = await getById(entityId); if (!e) throw err(404, "not found", "NOT_FOUND");
-  if (!(await _sameRoot(e.id, actor))) throw err(403, "that is not your network", "NOT_ALLOWED");
+  if (!(await _sameRoot(e.id, actor))) throw err(403, "that is not your network — or your membership is suspended; ask the network to resume it", "NOT_ALLOWED");
   // b117: the PURPOSE joined in, so a member reading the tree sees why each branch exists rather than a list of
   // bare names. One LEFT JOIN on the same query — never a lookup per node, which at any real depth is the O(1)
   // rule broken in the least visible way.

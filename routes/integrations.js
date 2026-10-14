@@ -482,9 +482,21 @@ async function entityOfHandle(h) {
   const r = await query(`SELECT identity_id FROM identities WHERE (user_id = $1 OR bridge_id = $1) AND identity_type = 'entity' AND status = 'active' LIMIT 1`, [String(h || '')]);
   return r.rows[0] ? r.rows[0].identity_id : null;
 }
+/**
+ * ⭐ TOP-CORRECT (2026-10-14): the shop behind a PUBLIC handle, or null — null alike for "no such shop" and "its storefront is not open to
+ * an anonymous caller", so a private shop is indistinguishable from none. The rule is the storefront's own reader, lib/catalogue-view
+ * catalogueVisibility (viewer null = the anonymous storefront; `network` resolves to private for it; closed overrides; the operator's cap
+ * binds) — routes/network-design.js reads stock by the same rule. These two doors answered any active shop, whatever it had chosen.
+ */
+async function publicEntityOfHandle(h) {
+  const entity_id = await entityOfHandle(h);
+  if (!entity_id) return null;
+  const vis = await require('../lib/catalogue-view').catalogueVisibility({ entity_id, query, visibilityCap: require('../lib/visibility-cap'), viewer: null });
+  return vis === 'private' ? null : entity_id;
+}
 router.post('/ask/:handle/stock', async (req, res) => {
   try {
-    const entity_id = await entityOfHandle(req.params.handle); if (!entity_id) return res.status(404).json({ error: 'Not found' });
+    const entity_id = await publicEntityOfHandle(req.params.handle); if (!entity_id) return res.status(404).json({ error: 'Not found' });
     const ask_id = uuidv4();
     const n = require('../lib/events').emit([entity_id], { kind: 'ask', what: 'stock', ask_id, codes: Array.isArray(req.body && req.body.codes) ? req.body.codes.slice(0, 200) : [] });
     res.json({ asked: n > 0, listeners: n, ask_id, note: n ? 'a connector is listening — re-read the stock in a few seconds' : 'no connector is listening now — the last stamped figures stand' });
@@ -492,7 +504,7 @@ router.post('/ask/:handle/stock', async (req, res) => {
 });
 router.get('/stock/:handle', async (req, res) => {
   try {
-    const entity_id = await entityOfHandle(req.params.handle); if (!entity_id) return res.status(404).json({ error: 'Not found' });
+    const entity_id = await publicEntityOfHandle(req.params.handle); if (!entity_id) return res.status(404).json({ error: 'Not found' });
     const r = await require('../db').withEntity(entity_id, (db) => db.query(`SELECT item_id, item_data->'avail' AS avail FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data ? 'avail'`, [entity_id]));
     res.json({ stock: r.rows.map((x) => ({ item_id: x.item_id, avail: x.avail })), at: new Date().toISOString() });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }

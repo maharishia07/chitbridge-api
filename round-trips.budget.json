@@ -624,6 +624,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/integrations/stock/:handle": {
+      "file": "integrations.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": false,
+      "why": "TOP-CORRECT (2026-10-14), counted by hand: anonymous. The handle lookup (identities) + the storefront's visibility read (lib/catalogue-view catalogueVisibility: ONE identities read; viewer null, so `network` never asks the tree) + the stock read in one withEntity transaction (BEGIN/SET · SELECT · COMMIT). A private/closed shop stops after the second statement with the same 404 as no shop.",
+      "extra": true
+    },
     "GET /api/integrations/status": {
       "file": "integrations.js",
       "trips": 1,
@@ -1206,6 +1214,14 @@
       "wire": 1,
       "fired": true,
       "status": 404
+    },
+    "POST /api/integrations/ask/:handle/stock": {
+      "file": "integrations.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": false,
+      "why": "TOP-CORRECT (2026-10-14), counted by hand: anonymous. The handle lookup + the storefront's visibility read (lib/catalogue-view catalogueVisibility, one identities read); the bell itself is in memory. A private/closed shop is 404 after the second statement.",
+      "extra": true
     },
     "POST /api/integrations/books/skip": {
       "file": "integrations.js",
