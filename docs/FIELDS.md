@@ -715,3 +715,11 @@ No SQL, no new column. The ONE "is this a lab shop" rule is b249's population ax
 | `GET /api/facts/rail` `may_sample` (new) | `{ ok: true }` · `{ ok: false, why: 'live_shop', say }` | derived (code, `lib/istest.maySample` over the population read in `home-facts.railScope` — the overdue_days statement, no extra trip). Always present. Read by the Rail Lab (web, to come): the action shown, greyed with `say`; branches on `why`, never the words. |
 | `summary_json.lab` (new rider) | `true` — absent on every other chit | derived from what the sender declares as `business_json.lab: true` (the `is_promotion` path). Written ONLY by routes/chits.js `sendSummary` through `mint.summary` (whitelist `lab`), after `sendLab` proved the shop may. Rides every co-held copy. Readers: the Rail Lab's own list (to come); the CRM / Task lists ignore it today. |
 | 409 of `POST /api/chits/send` (new) | `{ error, code: 'LAB_CHIT_LIVE_SHOP', may: false, why: 'live_shop', message }` | derived: `sendLab` — a lab chit declared from a live shop, refused before anything is written (one identities read, only when `lab` is declared). `message` = `istest.LAB_WHY.live_shop`, the same sentence the facts card says. |
+
+## RCM-POST (2026-10-14) · `line_items[].rcm_category` — a line says it is under reverse charge
+
+No SQL, no route. One new line key; the invoice keys it switches on exist since engines v1.20.0 (INV-01 `RcmCd` · `RcmItc` · `RcmCgstAmt/RcmSgstAmt/RcmIgstAmt`, `TranDtls.RegRev`, `_cb.rcm[]`, `moneyOf(inv).rcm`).
+
+| key | shape | source / derived · writer · readers |
+|---|---|---|
+| `line_items[].rcm_category` | string — the pack's category id (reg-in `rcm.categories[].id`: `gta` · `legal` · `rent_unregistered` · `cashew` …) | source. Written by whoever writes the line (a supplier's send, a captured bill's lines, later a catalogue item that carries it); nothing writes it yet by UI. Read by `lib/tax-lines.invoiceFor` (`rcmCategoryOf` → the engine's `rcm_category`, and `rcm: true` for the bill when any line names one) → `tax.determine` resolves it against the pack (`tax-packs.rcmCategoryFor`) and applies the registration tests. Frozen on `business_json.invoice` as the line's `RcmCd`; the books read `moneyOf(inv).rcm.rows` (books-hooks `rcmOf`), the sheet reads `moneyOf(inv).rcm` (web chit-sheet.js). Tests: tests/rcm-post.test.cjs. |
