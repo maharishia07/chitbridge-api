@@ -252,7 +252,8 @@ CI: `.github/workflows/spin-test.yml` (manual only) — `docs/patches/HX2-spin-t
 ## Testers' sign-in code (SEC1, 14 Oct)
 Set `TESTER_CODE` (and optionally `TESTER_NAMES`) in Railway → Variables; share the code with testers privately (never in a chat
 that is logged, a ticket or the repo); change it any time — no deploy, the api reads it on every sign-in. Testers keep today's ease:
-any sign-in name, one remembered code, as many shops as they like. The fixed local codes no longer work on Railway. The answer and
+any sign-in name, one remembered code, as many shops as they like. Choose 8+ DIGITS: phones open the number pad on the code box
+(letters work on a keyboard). The fixed local codes no longer work on Railway. The answer and
 the logs never say whether a tester code exists; guessing is capped by the sign-in rate limiter (30 tries / 15 min per IP,
 `AUTH_RATE_LIMIT_MAX`) and by 5 wrong codes per account (`MAX_OTP_ATTEMPTS`). The cloud e2e reads it from the GitHub secret
 `E2E_TESTER_CODE` (web repo) and skips with a warning while that is unset.
