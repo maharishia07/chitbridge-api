@@ -435,7 +435,9 @@ router.get('/snapshot', auth, async (req, res) => {
         const o = { party_id: String(x.id), name: String(x.name) };
         if (x.nickname) o.nickname = String(x.nickname);
         const g = x.gstn ? String(x.gstn).trim().toUpperCase() : '';
-        if (/^\d{2}/.test(g) && (!x.country || String(x.country).toUpperCase() === 'IN')) o.state = g.slice(0, 2);
+        /* STD2: the state read off the tax number only under the pack's supply rule (tax-lines.stateUnder) — a supplier with no country is the shop's (walkIn's rule) */
+        const st = require('../lib/tax-lines').stateUnder(g, x.country || row.country);
+        if (st) o.state = st;
         if (x.party_no) o.party_no = String(x.party_no);
         return o;
       });
@@ -509,7 +511,9 @@ router.get('/snapshot', auth, async (req, res) => {
     const cbCountry = cbProfile.countryOf({ country: row.country, gstin, profile });
     /* CX0: a state is read off the tax number only under a pack whose tax turns on the state (India's GST) — the same rule as lib/tax-lines.js:62.
        An ABN's or a TRN's first two digits are not a state; they reached the counter as one and the shop panel said "CGST + SGST" in Sydney. */
-    const stateSplit = ((p) => !p || !p.supply || p.supply === 'state')(require('../lib/tax-packs').packFor(cbCountry));
+    const stateSplit = require('../lib/tax-lines').splitsByState(cbCountry);
+    /* CX0 + STD2: the money the counter bills in — the shop's own, else its PACK's; neither → null and the ONE sentence (country-setup.MONEY_UNSTATED) */
+    const shopMoney = party.currency || ((require('../lib/regulation').packFor(cbCountry) || {}).currency) || null;
     /* ⭐ ONE MAPPING from a product's data to a counter row — owned rows and network lines both go through it, so a field
        added for one can never be missing from the other */
     /**
@@ -782,7 +786,11 @@ router.get('/snapshot', auth, async (req, res) => {
          * acquirer, and there is nothing honest for us to generate.
          */
         pay: cbProfile.payWays({ country: cbCountry, policy_flags: row.policy_flags }),
-        currency: party.currency || ((require('../lib/regulation').packFor(cbCountry) || {}).currency) || 'INR',   /* CX0: a shop with no currency on record bills in its PACK's money, not INR by name */
+        currency: shopMoney,
+        /* STD2: no money stated and no pack to read it from → the ONE sentence with its code; the counter paints it beside "Money is …" */
+        money_why: shopMoney ? null : { code: 'NO_MONEY', why: require('../lib/country-setup').MONEY_UNSTATED },
+        /* STD2: the pack's word for the tax number (profile.taxIdWordOf — the ONE reader); null = no pack, the counter says "Tax number" */
+        tax_id_word: cbProfile.taxIdWordOf(cbCountry),
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
       /**

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS identities (
   email_verified     BOOLEAN DEFAULT FALSE,
   phone              VARCHAR(20),
   country            VARCHAR(2),               -- no default (b376, GOV-AU1): a country nobody stated is NULL, never India
-  currency_code      VARCHAR(3) DEFAULT 'INR',
+  currency_code      VARCHAR(3),               -- no default (b400, STD2): a money nobody stated is NULL, never INR
   identity_type      VARCHAR(20) DEFAULT 'entity',
   -- entity | actor | customer | device | process
   -- MVP: entity only

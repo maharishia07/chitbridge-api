@@ -129,15 +129,23 @@ router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, valida
 // GOV-SPIN (additive): `installation { key, country, name }` (the country this ChitBridge states, b382, else null), `allowed_countries`
 // (the constitution's tighten-only list, null = every pack) and `countries` (the packs a registrant may choose, with what each applies:
 // currency · year · tax · format · languages) — the register panel paints these; it computes nothing. Same public door, no new route.
+// STD2: `?tz=<the device's IANA zone>` (optional) → each country row carries `offer { timezone, from, source }` — the zone the server WILL store
+// and the source it WILL record if that country is accepted (country-setup.offered: offerOf + sourceOf, the rules registerNew/verify use).
+// Who may call: anyone (pre-auth, read-only, nothing per-person stored). Round trips: 1 (constitution) + the cached installation read.
 router.get('/constitutions', async (req, res) => {
-  const at = await require('../lib/country-setup').atSignup();
+  const CS = require('../lib/country-setup');
+  const at = await CS.atSignup();
   const spin = { installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null, timezone: at.timezone },
-                 allowed_countries: at.allowed, countries: at.countries };
+                 allowed_countries: at.allowed, countries: CS.offered(at, req.query && req.query.tz) };
   try {
     const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
       FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
     res.json(Object.assign({ constitutions: r.rows }, spin));
-  } catch (_) { res.json(Object.assign({ constitutions: [] }, spin)); }
+  } catch (e) {
+    /* STD2: never silent — the person sees no vertical chooser (the default setup applies); the countries still paint */
+    require('../lib/logger').warn('entities.constitutions: catalogue unread — the vertical chooser is hidden', { why: String(e && e.message) });
+    res.json(Object.assign({ constitutions: [] }, spin));
+  }
 });
 
 // GET /entities/search

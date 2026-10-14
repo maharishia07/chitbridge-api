@@ -3,8 +3,8 @@
 --
 -- ⚠️⚠️ DRAFT — NOT RUN · Athi runs it (Supabase SQL editor, AS postgres — ALTER TABLE needs the table owner, cb_app cannot).
 --    Written offline, never executed here. Safe to re-run (ADD COLUMN IF NOT EXISTS; the CHECK is added only when absent).
---    Until it runs nothing breaks: lib/govresolve.readInstallation selects `country` only once schema.hasColumn says it exists, and the
---    register panel then simply has no installation line (the browser's guess, as today).
+--    Until it runs nothing breaks: lib/govresolve reads `country` through to_jsonb(i) — the SAME query answers null before this runs and
+--    the stated country after (no schema probe) — and the register panel then simply has no installation line (the browser's guess).
 --
 -- RLS: unchanged — `installation` is shared reference WITHOUT RLS (b74 §5, SELECT-only for cb_app); no grant or policy changes.
 --    Existing rows are NOT touched: 'platform-0' stays NULL = "no country stated, ask" (GOV-AU1: a country nobody stated is unknown).

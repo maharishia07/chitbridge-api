@@ -509,7 +509,10 @@ async function verify(req, res) {
               const CS = require('../lib/country-setup');
               const at = await CS.atSignup();
               accepted = await withEntity(identity.identity_id, (h) => CS.acceptAtSignup(h, identity.identity_id, ctx, at));
-            } catch (e) { console.log('[signup-country] NOT ACCEPTED for ' + identity.identity_id + ': ' + (e && e.message)); }
+            } catch (e) {
+              /* STD2: through the logger — the shop keeps the country registration stored; Country setup shows it and lets the owner correct it */
+              require('../lib/logger').warn('signin.verify: accepted country NOT recorded — the registered country stands', { identity_id: identity.identity_id, why: String(e && e.message) });
+            }
           }
           const audit = await query(
             `INSERT INTO signup_context
@@ -544,7 +547,8 @@ async function verify(req, res) {
           /* GOV-SPIN: else THIS installation (INSTALLATION_KEY) — a spin's shops were stamped India's platform-0 */
           let installKey = require('../lib/country-setup').installationKey();
           /* …and THIS installation first when it serves the vertical — platform-0 also serves 'base', and created_at alone picked it on every spin */
-          try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY (installation_key = $2) DESC, created_at LIMIT 1`, [c.constitution_key, installKey]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; } catch (_) {}
+          try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY (installation_key = $2) DESC, created_at LIMIT 1`, [c.constitution_key, installKey]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; }
+          catch (e) { require('../lib/logger').warn('signin.verify: installation lookup failed — the shop is stamped on this installation', { installKey, why: String(e && e.message) }); }
           await withEntity(identity.identity_id, (cl) => cl.query(
             `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
              ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()`,
