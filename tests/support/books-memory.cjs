@@ -19,6 +19,7 @@ const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev 
 function create() {
   const T = { setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
               outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [], fxRates: [], fxReady: true, fxLines: true };
+  fakeDb.T = T;   /* the terms reads (finance-terms.customerTerms) answer from THIS store's parties + T.shopTerms */
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
   const now = () => new Date(clock += 1000).toISOString();
   /* the whole range's lines (the real query without a page) — entryLines, entryPage and pageSums read it */
@@ -295,13 +296,20 @@ function create() {
  *  tests/country-setup.test.cjs stands in its own rows for the other countries. Reassign fakeDb.countryRow to change the answer. */
 const fakeDb = {
   countryRow: { country: 'IN', currency_code: 'INR', gstn: '33AAAAA0000A1Z5', timezone: 'Asia/Kolkata', policy_flags: { gst_registration: 'regular' } },
-  query: async (text) => {
+  query: async (text, v) => {
     const t = String(text);
     if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
     if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
     /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] };
+    /* FIN-R1: the shop's default terms and every customer's own (lib/finance-terms.customerTerms) — T.shopTerms · T.parties[].terms */
+    const T = fakeDb.T || { parties: [] };
+    if (/^SELECT terms FROM books_setting/.test(t.trim())) return { rows: [{ terms: T.shopTerms || null }] };
+    if (/FROM customer_list WHERE owner_entity_id = \$1$/.test(t.trim()) && /customer_identity_id AS party_id/.test(t)) {
+      return { rows: T.parties.filter((p) => p.customer && p.owner === (v || [])[0]).map((p) => ({ party_id: p.party_id, credit_days: p.credit_days == null ? null : p.credit_days,
+        credit_limit_minor: p.credit_limit_minor == null ? null : String(p.credit_limit_minor), terms: p.terms || null })) };
+    }
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };
