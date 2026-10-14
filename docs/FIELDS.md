@@ -26,6 +26,16 @@ Derived per call, never stored. Written by `routes/connectors.js` (deviceActor �
 | `money_why` on a 200 ingest (new) | `{ code: 'NO_MONEY', why }` or null | Derived: set only when the shop states no money and its country has no pack (`country-setup.shopMoney` → null); `why` = `MONEY_UNSTATED`. The signal chit's `summary_json.currency_code` is then null (was always `INR`). |
 | `GET /api/events/stats` refusal `code` (new) | `NOT_PLATFORM_ROOT` (403) · `NO_PLATFORM_ROOT` (404) | Derived from `PLATFORM_ROOT_ENTITY`. The same door now answers the entities.js operator routes (same codes added there). |
 
+## GET /api/catalogue/:bridge_id `sign_in` · POST /chits/:id/deliver-lines `why` · GET /api/catalogue/enquiry · event `enquiry` (SEC4, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `sign_in` | `{ code: 'sign_in_first', say }` — present ONLY when the answer is cut to the card; the body is then `{ shop, sign_in }` and nothing else | Derived per read by routes/catalogue.js `signInFirst` from `identities.storefront_access = 'login'` when the reader is not this shop's customer, its owner/staff or a signed-in business. Same cut on the CTP pull (`want:'catalogue'`). Read by web shop.html `shopLoad` (sign-in gate) and embed.html — they branch on `code`, never `say`. |
+| `shop` (card form) | `{ bridge_id, display_name, logo_url, address, is_verified, business_status, storefront_access, country }` | The same keys as the full `shop`, minus payment id, units, tax word and currency. |
+| `why` (deliver-lines 403/404) | a rail WHY word: `read_only` · `comment_only` · `not_participant` | lib/rail-actions `canDeliver` (rail.byLevel + "I hold a copy"); `message` = the rail's sentence. |
+| `enquiries[]` · `total` · `page` · `limit` | `{ item_id, item_name, about_mine, messages, askers, last_text, last_from_name, last_from_me, last_at }`, latest first; `?side=in\|out`; `migrated:false` before b161 | Derived per read from MY `chit_messages` copies (subject_type product, external), one row per product, plus `catalogue_items` name. Read by: the enquiry list screen (next round). |
+| event `{ kind: 'enquiry', id: item_id, who }` | SSE `cb` event | Emitted by POST /api/catalogue/enquiry/:item_id to the product's OWNER (external, not my own item). Read by the bell (rail-bell.js / core.js re-read on any `cb`). |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

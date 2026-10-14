@@ -3245,10 +3245,19 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
+    /* ⭐ SEC4 — the server decides, not the page's grey: the level first (no read, nothing written for a viewer), then "I hold a copy",
+       through the rail's words (lib/rail-actions canDeliver). A copy read that FAILS is logged and left to the delivery definer's own
+       participant gate, as before — only a read that answers "no copy" refuses here (404, the answer an id in the URL always got). */
+    const _me = railActions.meOf(req);
+    const _lv = railActions.canDeliver({ held: true }, _me);
+    if (!_lv.ok) return railActions.refuseOwnCopy(res, _lv);
+    let _mineCopy = null, _copyRead = true;
+    try { _mineCopy = await taxCopy.copyOf(chit_id, entity_id); }
+    catch (e) { _copyRead = false; log.warn('deliver.copy-unread', { chit_id, entity_id, err: e && e.message, then: 'the delivery definer checks the participant' }); }
+    if (_copyRead) { const _v = railActions.canDeliver({ held: !!_mineCopy }, _me); if (!_v.ok) return railActions.refuseOwnCopy(res, _v); }
     const useSaid = await deliverUse(req, entity_id, chit_id);
     /* ⭐⭐ ON A BILL, GOODS-IN IS MY OWN STEP (lib/bill-privacy): recorded on my copy only, and its line is written at my bill
        folder's level — never replicated into, or announced to, the other shop */
-    const _mineCopy = await taxCopy.copyOf(chit_id, entity_id).catch(cbLog.orElse('chits POST /:chit_id/deliver-lines: failed — answered with nothing', null));
     const _bill = !!(_mineCopy && billPrivacy.isBill(_mineCopy, entity_id));
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name, private: _bill });

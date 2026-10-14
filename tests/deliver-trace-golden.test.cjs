@@ -67,7 +67,8 @@ deliverline.record = async (eid, cid, rowsIn, o) => {
 };
 deliverline.progress = async (eid, cid) => { h.note('deliverline.progress', { eid, cid }); if (h.state.ctx.progressThrows) throw new Error('x'); return new Map(h.state.ctx.progress || [['L1', { ordered: 2, delivered: 2, complete: true }]]); };
 const taxCopy = require(path.join(API, 'lib', 'tax-copy'));
-taxCopy.copyOf = async (cid, eid) => { h.note('taxCopy.copyOf', { cid, eid }); return h.state.ctx.copy || null; };
+/* SEC4: the route now asks "do I hold a copy" first, so a scenario holds one by default — an ordinary order copy (not a bill); ctx.copy: null is the stranger */
+taxCopy.copyOf = async (cid, eid) => { h.note('taxCopy.copyOf', { cid, eid }); return 'copy' in h.state.ctx ? h.state.ctx.copy : ORDER_COPY; };
 const billPrivacy = require(path.join(API, 'lib', 'bill-privacy'));
 billPrivacy.writeStep = async (...a) => { h.note('billPrivacy.writeStep', a); return { written: true }; };
 require(path.join(API, 'lib', 'bill-use')).set = async (...a) => { h.note('billUse.set', a); return h.state.ctx.useRefused ? { ok: false, message: 'already accepted' } : { ok: true, use: 'resale' }; };
@@ -75,6 +76,7 @@ require(path.join(API, 'lib', 'bill-use')).set = async (...a) => { h.note('billU
 const app = h.app('/api/chits', require(path.join(API, 'routes', 'chits')));
 const ME = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CBSHOP0001', display_name: 'Mayur Traders' };
 const ROWS_IN = [{ line_id: 'L1', quantity: 2 }];
+const ORDER_COPY = { chit_id: A, entity_id: SHOP, sender_entity_id: SHOP, purpose: 'order', direction: 'sent', current_status: 'delivered', business_json: {} };
 const BILL_COPY = { chit_id: A, entity_id: SHOP, sender_entity_id: SUPP, purpose: 'invoice', direction: 'received', current_status: 'pending', business_json: {} };
 
 const SCENARIOS = [
@@ -84,6 +86,7 @@ const SCENARIOS = [
   ['deliver · a bill, partly in → no accept', { method: 'POST', url: '/' + A + '/deliver-lines', body: { rows: ROWS_IN }, ctx: { copy: BILL_COPY, progress: [['L1', { ordered: 2, delivered: 1, complete: false }], ['L2', { ordered: 1, delivered: 1, complete: true }]] } }],
   ['deliver · the use refused, the delivery still records', { method: 'POST', url: '/' + A + '/deliver-lines', body: { rows: ROWS_IN, use_lines: [{ line_id: 'L1', use: 'own' }] }, ctx: { useRefused: true } }],
   ['deliver · progress unreadable, the write stands', { method: 'POST', url: '/' + A + '/deliver-lines', body: { rows: ROWS_IN }, ctx: { progressThrows: true } }],
+  ['deliver · SEC4 a business holding no copy → 404 not_participant, nothing written', { method: 'POST', url: '/' + A + '/deliver-lines', body: { rows: ROWS_IN, use: 'resale' }, ctx: { copy: null } }],
   ['deliver · the recorder refuses → its status', { method: 'POST', url: '/' + A + '/deliver-lines', body: { rows: [] }, ctx: { recordThrows: true } }],
   ['trace · a bad id → 400', { method: 'GET', url: '/not-a-uuid/trace' }],
   ['trace · not visible → 404', { method: 'GET', url: '/' + X + '/trace' }],
