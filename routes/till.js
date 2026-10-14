@@ -2160,17 +2160,10 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
     const entity_id = auth.entityOf(req);
     const stockStore = require('../lib/stock-store');
     const inv = require('../lib/inventory');   /* ⭐ its own q3/m2 rounding — a total here must never disagree with the ledger it reads */
-    const sheet = await stockStore.sheet(entity_id, withEntity, {});
     /* ⭐ COLLAPSED TO ONE ROW PER PRODUCT — a tracked item's batches sum into the figure the Receive screen
        actually asks for; the till does not show stock in v1 (Athi, 2026-09-10) and a per-batch breakdown
-       would be exactly that. */
-    const by = {};
-    for (const r of sheet.rows) {
-      const id = String(r.item_id);
-      const cur = by[id] || { qty: 0, value: 0 };
-      cur.qty = inv.q3(cur.qty + r.qty); cur.value = inv.m2(cur.value + r.value);
-      by[id] = cur;
-    }
+       would be exactly that. The ONE stock reader (stock-store.onHand, T1-INV) — the storefront reads the same. */
+    const by = await stockStore.onHand(entity_id, withEntity, {});
     const out = {};
     for (const id of Object.keys(by)) {
       const b = by[id];
