@@ -13,7 +13,7 @@ const ymd = (v) => (v ? String(v).slice(0, 10) : null);
 
 function create() {
   const T = { setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
-              outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [] };
+              outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [], fxRates: [], fxReady: true, fxLines: true };
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
   const now = () => new Date(clock += 1000).toISOString();
   const S = {
@@ -97,6 +97,36 @@ function create() {
     async insertLines(db, e, entry_id, lines) {
       for (const l of lines) { if (!((l.dr_minor > 0 && !l.cr_minor) || (l.cr_minor > 0 && !l.dr_minor))) throw new Error('journal_line_side_chk'); T.lines.push(Object.assign({ line_id: ++lineSeq, entry_id, entity_id: e }, clone(l))); }
     },
+    /* ── FX1: the rate table (b391) and the foreign balance (b392) — T.fxReady / T.fxLines say whether each migration "ran" ── */
+    async fxLinesReady() { return !!T.fxLines; },
+    async fxRatesReady() { return !!T.fxReady; },
+    async fxRates(db, e, q) {
+      const o = q || {};
+      return clone(T.fxRates.filter((r) => r.entity_id === e && (!o.from || r.from_ccy === o.from)).sort((a, b) => b.rate_date.localeCompare(a.rate_date) || b.rate_id - a.rate_id).slice(0, o.limit || 500));
+    },
+    async insertFxRates(db, e, rows, by) {
+      return rows.map((x) => { const r = Object.assign({ rate_id: T.fxRates.length + 1, entity_id: e, entered_by: by || null, created_at: now() }, clone(x)); T.fxRates.push(r); return clone(r); });
+    },
+    async fxRateOn(db, e, from, to, date, since) {
+      const hit = T.fxRates.filter((r) => r.entity_id === e && r.from_ccy === from && r.to_ccy === to && (since ? r.rate_date >= since && r.rate_date <= date : r.rate_date === date))
+        .sort((a, b) => b.rate_date.localeCompare(a.rate_date) || b.rate_id - a.rate_id)[0];
+      return hit ? clone(hit) : null;
+    },
+    async foreignBalances(db, e, q) {
+      const o = q || {}, m = new Map();
+      for (const l of T.lines) {
+        const h = T.entries.find((x) => x.entry_id === l.entry_id);
+        if (l.entity_id !== e || !h || ymd(h.posting_date) > (o.asOf || '9999-12-31') || !l.txn_currency || l.txn_currency === o.functional) continue;
+        if (o.party && l.party_id !== o.party) continue;
+        if (o.account_ids && o.account_ids.length && o.account_ids.indexOf(l.account_id) < 0) continue;
+        if (o.currency && l.txn_currency !== o.currency) continue;
+        const k = [l.account_id, l.party_id || '', l.txn_currency].join('|');
+        const r = m.get(k) || { account_id: l.account_id, party_id: l.party_id || null, txn_currency: l.txn_currency, fn_minor: 0, txn_minor: 0 };
+        r.fn_minor += l.dr_minor - l.cr_minor; r.txn_minor += (l.dr_minor > 0 ? 1 : -1) * (l.amount_txn_minor || 0); m.set(k, r);
+      }
+      return Array.from(m.values()).filter((r) => r.txn_minor !== 0);
+    },
+    async partyNames(db, e, ids) { const out = {}; (ids || []).forEach((i) => { const p = T.parties.find((x) => x.party_id === i); if (p) out[i] = p.name; }); return out; },
     async addBalances(db, e, rows) {
       for (const b of rows) {
         const k = [e, b.account_id, b.party_key || ZERO, b.currency, b.fiscal_year, b.period].join('|');
