@@ -2,7 +2,12 @@
  * /api/network-offers — A BRAND RELEASES OFFERS TO ITS STORES; A STORE TAKES THEM OR NOT (2026-09-17).
  * The rules and the reasons live in lib/network-offers.js; this file is only the doors.
  *
- *   GET  /api/network-offers                  → { brand: {policy, stores, offers[]}, store: { networks[] } }
+ *   GET  /api/network-offers                  → { brand: {policy, stores, members[] (each with may), offers[]},
+ *                                                 store: { networks[] (each: membership, may, brand_bridge_id, root_bridge_id) }, may_design }
+ *   ⭐ NET-SRV1 (2026-10-14): every membership row — the store's networks and the brand's members — carries `may` { request ·
+ *   approve · decline · suspend · resume · disconnect: { ok, why } } from lib/network-membership.mayOf (one rule table), and a
+ *   store's row names the brand's and its network root's bridge id so the app links to the network store. A store sees every
+ *   brand it holds an edge with, including the one it asked and does not sell for yet.
  *   PUT  /api/network-offers/policy           { policy: 'opt_in' | 'opt_out' }              (brand)
  *   POST /api/network-offers/:id/release      { at?: iso | 'now', until?: iso }             (brand)
  *   POST /api/network-offers/:id/withdraw     { at?: iso | 'now' }                          (brand)
@@ -52,18 +57,18 @@ router.get('/', auth, sessionOnly, async (req, res) => {
       src.rows.forEach((r) => { if (r.owner_entity_id && String(r.owner_entity_id) !== String(me)) owners.push(String(r.owner_entity_id)); });
     }
     const choices = ((await net.flagsOf(me)).flags.network_choices) || {};
-    /* ⭐ where this store stands with each brand it sells for — in, asked, invited, suspended, or not yet asked */
-    const standing = await require('../lib/network-membership').standing(me, owners);
-    /* ⭐ and the brands that INVITED this store without it selling their catalogue yet */
-    const invites = await query(
-      `SELECT i.identity_id::text AS brand_id, e.id::text AS edge_id
-         FROM identities mi JOIN cb_entity mc ON mc.bridge_id = mi.bridge_id
-         JOIN cb_edge e ON e.child_id = mc.id AND e.type = 'commercial' AND e.state = 'requested' AND e.requested_by = e.parent_id
-         JOIN cb_entity bc ON bc.id = e.parent_id JOIN identities i ON i.bridge_id = bc.bridge_id AND i.identity_type = 'entity'
-        WHERE mi.identity_id = $1`, [me]).catch(() => ({ rows: [] }));
+    const membership = require('../lib/network-membership');
+    /* ⭐ and every brand this store holds a commercial edge with — the one it ASKED, the one that invited it, a paused one —
+       whether or not it sells that brand's catalogue (NET-SRV1 · G1: a store's own request to a brand it does not adopt was in
+       neither list, so the store could not see it) */
+    const edges = await membership.edgesOf(me);
+    const brands = [...new Set(owners.concat(edges.map((x) => x.brand_id)))];
+    /* ⭐ where this store stands with each of them — in, asked, invited, suspended, or not yet asked — and the brand's bridge ids */
+    const standing = await membership.standing(me, brands);
     const networks = [];
-    for (const brand_id of [...new Set(owners.concat(invites.rows.map((x) => x.brand_id)))]) {
-      const st = standing[brand_id] || { state: 'invited', via: 'joined', edge_id: (invites.rows.find((x) => x.brand_id === brand_id) || {}).edge_id, asked_by: 'brand' };
+    for (const brand_id of brands) {
+      const edge = edges.find((x) => x.brand_id === brand_id) || null;
+      const st = standing[brand_id] || (edge ? { state: edge.state, via: 'joined', edge_id: edge.edge_id, asked_by: edge.asked_by } : { state: 'none', via: null, edge_id: null, asked_by: null });
       const inside = st.state === 'active';
       const { name, flags } = await net.flagsOf(brand_id);
       const no = flags.network_offers || {};
@@ -78,9 +83,15 @@ router.get('/', auth, sessionOnly, async (req, res) => {
         rows = r.rows;
       }
       networks.push({ brand_id, brand_name: await net.brandName(brand_id, name), policy,
+        /* ⭐ the network store's address (NET-SRV1 · G3): the brand's own bridge id, and the root of its tree — the one
+           GET /api/catalogue/network/:bridge_id and network-shop.html?bridge= take. null when the brand has no node yet. */
+        brand_bridge_id: st.brand_bridge_id || null, root_bridge_id: st.root_bridge_id || null,
         /* in | requested (asked_by says who must answer) | suspended | none — the store half of lib/network-membership */
         membership: { state: st.state === 'requested' ? (st.asked_by === 'brand' ? 'invited' : 'asked') : st.state,
                       via: st.via, edge_id: st.edge_id || null, brand_node: st.brand_node || null },
+        /* ⭐ what THIS store may do about it, each with its sentence (NET-SRV1 · G2) — the server decides, from the one rule
+           table the POST routes refuse with (src/services/network.mayAct); the screen greys a refused action WITH its why */
+        may: membership.mayOf(st, 'store'),
         /* a store outside the network is told nothing of its offers */
         offers: (inside ? rows : []).map((d) => {
           const c = choices[d.definition_id] || null;
