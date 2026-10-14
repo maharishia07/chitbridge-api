@@ -24,7 +24,7 @@ Detailed smoke steps: `MANUAL-TEST-SCRIPT.md`.
   - [ ] `NODE_ENV=development`
   - [ ] `JWT_SECRET=<strong, ≥32 chars>`
   - [ ] `ALLOWED_ORIGINS=<the dev web origin>` (else the browser is CORS-blocked)
-  - [ ] `DEV_OTP=123456` (dev/UAT testing OTP — fine here; the boot guard blocks it in prod)
+  - [ ] `TESTER_CODE=<8+ characters, shared privately>` (the testers' code — SEC1; `DEV_OTP` works on a local stack only)
   - [ ] leave `ASSIST_LLM_PROVIDER` / `ASSIST_LLM_API_KEY` **unset** → assistant runs on the free library floor
   - [ ] leave `NETWORK_WRITE_ENABLED` **unset** → network/cb_* writes return 503 (expected)
 
@@ -39,7 +39,7 @@ Apply any not-yet-applied, in order (no `schema_migrations` ledger yet — appli
 
 ## 5. Smoke the DEV build (use `MANUAL-TEST-SCRIPT.md` for detail)
 Core lifecycle:
-- [ ] Register → OTP `123456` → in.
+- [ ] Register → the tester code (`TESTER_CODE`) → in.
 - [ ] Compose → send → appears in **Order** (sent) and counterparty/self **Task** (received) with independent status.
 - [ ] Task lifecycle: Accept → In progress → Complete; message on record; My/All toggle; **per-actor unread** shows.
 - [ ] Co-assists: add A1/A2 → A1 login (PIN/OTP) → push/pull → **bulk-assign** (atomic) → A1 break returns work to pool.
