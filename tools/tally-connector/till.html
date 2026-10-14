@@ -3887,6 +3887,9 @@
 <script src="/app/embed-host.js"></script>   <!-- CBEmbed: opens the Employees form inside this page (P1) — missing offline, and whoAdd() says so -->
 <!-- ⭐ LOCALE FIRST OF ALL — every other engine's output is eventually shown as money or a date. -->
 <script src="/engine/money.js" onerror="engineMissed('money')"></script>
+<!-- ⭐ FX-F10W2: DOES THEIR BILL AGREE — the ONE comparison the books' Waiting row makes too (api lib/their-bill.js; the web serves its byte copy,
+     the shop PC the kit's, both written by scripts/vendor-till.cjs). It rounds with CBMoney, so it loads AFTER money. -->
+<script src="/app/their-bill.js" onerror="engineMissed('their-bill')"></script>
 <!-- ⭐ what a document number may look like, per country. It is HERE and not only on the shop because the
      counter numbers its own bills offline — the moment a number is issued is the moment there may be no server. -->
 <script src="/engine/docnumber.js" onerror="engineMissed('docnumber')"></script>
@@ -22409,17 +22412,30 @@ function paintRcvCosts(){
     ? 'Freight <b>' + money(c.freight) + '</b> · loading <b>' + money(c.loading) + '</b> · duty <b>' + money(c.duty) + '</b> · other <b>' + money(c.other) + '</b> — spread across the lines by value'
     : 'No freight or other costs added. <b>F5</b> to add them — they become part of what each item actually cost you.';
 }
+/**
+ * ⭐⭐ FX-F10W2: DOES THEIR BILL AGREE — asked of the ONE rule the books' Waiting row asks (CBTheirBill.check, api lib/their-bill.js): their total
+ * against what they CHARGE, taxable + tax as the tax engine split each line (rcvTax). It used to compare their total with the goods BEFORE tax,
+ * so SG-201 "agreed" here at ₹420 while Books said "₹21 apart". The sentence is the rule's own; the colour follows its code. → { code, sentence }
+ * ⚠️ A counter whose kit has no /app/their-bill.js yet gives no verdict and says why — never a second formula.
+ */
+function rcvBillCheck(total, taxable, tax, no){
+  if (total == null || total === '') return { code: 'no_total', sentence: '' };
+  if (!window.CBTheirBill) return { code: 'no_engine', sentence: 'Their bill says ' + money(total) + ' — this counter cannot check it yet (press ↻ while online).' };
+  var cur = (S && S.shop && S.shop.currency) || 'INR';
+  var c = CBTheirBill.check({ total: total, taxable: taxable, tax: tax, currency: cur, no: no, say: money });
+  if (c.code === 'no_engine') c.sentence = 'Their bill says ' + money(total) + ' — this counter cannot check it yet (press ↻ while online).';
+  return c;
+}
 function paintRcvSum(){
   var el = document.getElementById('rcv_sum'); if (!el) return;
   var goods = rcvGoods(), extra = rcvExtras(), landed = r2(goods + extra);
-  var theirs = RCV.bill_total;
-  var gap = (theirs == null) ? null : r2(goods - theirs);
   /**
    * ⭐⭐ THE TAX PAID IS SHOWN SEPARATELY FROM THE GOODS, always. It is not part of what the stock cost — it is
    * money the shop can set against what it collects — and adding it into the landed cost would overstate every
    * margin in the shop by the tax rate.
    */
   var tx = rcvTax();
+  var bc = rcvBillCheck(RCV.bill_total, tx.taxable, tx.tax, (RCV.bill_no || '').trim());
   var taxLine = '';
   if (shopTax().charges && tx.tax > 0) {
     taxLine = '<div style="margin-top:4px">GST paid <b data-testid="rcv-tax">' + money(tx.tax) + '</b>'
@@ -22428,10 +22444,9 @@ function paintRcvSum(){
       + ' <span class="u">· to set against what you collect, not part of the cost</span></div>';
   }
   el.innerHTML = 'Counted <b>' + money(goods) + '</b>' + (extra > 0 ? ' + costs <b>' + money(extra) + '</b> = landed <b>' + money(landed) + '</b>' : '')
-    + (gap === null ? '' : (gap === 0
-        ? ' · <b style="color:var(--ok)">their bill agrees</b>'
-        : ' · <b style="color:var(--warn)" data-testid="rcv-gap">their bill says ' + money(theirs) + ' — ' + (gap > 0 ? 'we counted ' + money(gap) + ' more' : 'we counted ' + money(-gap) + ' less') + '</b>'))
-    + taxLine;
+    + taxLine
+    + (bc.sentence ? '<div style="margin-top:4px"><b style="color:var(' + (bc.code === 'agrees' || bc.code === 'round_off' ? '--ok' : '--warn') + ')" data-testid="rcv-check" data-code="' + bc.code + '">'
+        + esc(bc.sentence) + '</b>' + (bc.code === 'apart' ? ' <span class="u">· it waits in the books until it is corrected or rejected</span>' : '') + '</div>' : '');
 }
 
 /**
@@ -22662,6 +22677,9 @@ function receiveSlipHTML(d){
     + (d.extras > 0 ? docRow('Freight and costs', money(d.extras)) : '')
     + docRow('LANDED', money(d.landed_total), true)
     + (d.their_bill && d.their_bill.total != null ? dash + docRow('Their bill says', money(d.their_bill.total)) : '')
+    /* FX-F10W2: the slip says what the Waiting row says — the ONE comparison (rcvBillCheck → CBTheirBill), over the tax this receipt recorded */
+    + (function(){ var it = d.input_tax || {}, c = d.their_bill ? rcvBillCheck(d.their_bill.total, it.taxable != null ? it.taxable : d.goods, it.tax || 0, d.their_bill.no) : null;
+        return c && c.sentence ? '<div style="font-size:.85em" data-testid="rcv-slip-check" data-code="' + c.code + '">' + esc(c.sentence) + '</div>' : ''; })()
     /* F10: a receipt with their bill no. and total IS their bill — it waits in the books for the owner to accept */
     + (d.their_bill && d.their_bill.no && d.their_bill.total != null ? '<div style="text-align:center;font-size:.85em" data-testid="rcv-slip-books">Their bill waits in the books for you to accept.</div>' : '')
     + dash + '<div style="text-align:center;font-size:.85em">What we counted. Differences above are ours to settle with the supplier.</div>');
