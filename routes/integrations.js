@@ -90,7 +90,7 @@ const CATALOGUE = [
  * tests/connector-kit.test.js now holds this list against what the programs actually require.
  */
 /* ⭐ signin-ui.js (2026-10-08): the one sign-in window, a byte copy of web public/app/signin-ui.js (scripts/vendor-till.cjs) — the till mounts CBSignin */
-const KIT_NAMES = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'counter.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'signin-ui.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js', 'signin.js', 'money.js', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
+const KIT_NAMES = ['core.js', 'index.js', 'setup.js', 'start.cmd', 'counter.cmd', 'run-hidden.vbs', 'till.js', 'till.html', 'signin-ui.js', 'their-bill.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js', 'signin.js', 'money.js', 'fake-tally.js', 'fake-zoho.js', 'fake-gofrugal.js', 'prove.js', 'README.md', 'adapters/tally.js', 'adapters/csv.js', 'adapters/zoho.js', 'adapters/gofrugal.js', 'docs/tally.md', 'docs/zoho.md', 'docs/csv.md', 'docs/gofrugal.md', 'samples/products.csv', 'samples/profile.csv'];
 function kitFiles(adapter) {
   const names = KIT_NAMES;
   const out = [];
