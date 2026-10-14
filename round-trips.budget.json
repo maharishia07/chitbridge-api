@@ -474,6 +474,15 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/operations": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "T3-OPS: CB Operations' Home card — the ledger check (schema.hasTable, cached) + ONE stock-store.onHand read"
+    },
     "GET /api/facts/orders": {
       "file": "facts.js",
       "trips": 3,
@@ -679,6 +688,14 @@
       "fired": false,
       "extra": true,
       "why": "FX-CT1: the counter's day report asks this (?till=<counter>&days=2) — ONE withEntity read; the till filter is in the same SQL."
+    },
+    "GET /api/till/stock": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "why": "T3-OPS: fired WITHOUT ?lots (the counter's read: ONE stock-store.onHand withEntity). CB Operations › Stock (?lots=1) — the ledger check (schema.hasTable, cached) · ONE stock-store.onHand read · the cost gate (cost.canReadSafe) · one catalogue_items read for the names (only when the shelf has rows)"
     },
     "GET /api/till/match": {
       "file": "till.js",

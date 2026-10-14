@@ -2163,7 +2163,11 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
     /* ⭐ COLLAPSED TO ONE ROW PER PRODUCT — a tracked item's batches sum into the figure the Receive screen
        actually asks for; the till does not show stock in v1 (Athi, 2026-09-10) and a per-batch breakdown
        would be exactly that. The ONE stock reader (stock-store.onHand, T1-INV) — the storefront reads the same. */
-    const by = await stockStore.onHand(entity_id, withEntity, {});
+    const lots = req.query.lots === '1' || req.query.lots === 'true';
+    /* ⚠️ a server whose ledger is not migrated (b214) answers in words with a code, never a 500 (T3-OPS: the Operations page reads it) */
+    if (lots && !(await require('../lib/schema').hasTable('stock_balance')))
+      return res.status(503).json({ error: 'not ready', code: 'STOCK_NOT_READY', message: 'Stock is not switched on for this server yet.' });
+    const by = await stockStore.onHand(entity_id, withEntity, { lots });
     const out = {};
     for (const id of Object.keys(by)) {
       const b = by[id];
@@ -2171,7 +2175,17 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
     }
     /* [OFFR-04] the average cost is the shop's buying price: an actor without can_see_costs gets the qty only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
-    res.json({ balances: out, at: new Date().toISOString() });
+    if (!lots) return res.json({ balances: out, at: new Date().toISOString() });
+    /* ⭐ T3-OPS (CB Operations › Stock): ?lots=1 adds the shelf as a LIST — name · unit · on hand · the batches it was summed from (earliest
+       expiry first) — fewest on hand first, below zero at the top: the server's own "low", since no reorder level is kept (no figure invented).
+       ⚠️ NO VALUE, NO COST in items[] — what the shelf is worth is the books' answer, and cost is gated above. One read for the names. */
+    const ids = Object.keys(by);
+    const nm = ids.length ? await withEntity(entity_id, (db) => db.query(
+      `SELECT item_id::text AS id, item_data->>'name' AS name FROM catalogue_items WHERE entity_id = $1 AND item_id::text = ANY($2::text[])`, [entity_id, ids])) : { rows: [] };
+    const names = {}; for (const x of nm.rows) names[x.id] = x.name;
+    const items = ids.map((id) => ({ item_id: id, name: names[id] || null, unit: by[id].unit || null, qty: by[id].qty, below_zero: by[id].qty < 0, lots: by[id].lots }))
+      .sort((a, b) => a.qty - b.qty || String(a.name || '').localeCompare(String(b.name || '')));
+    res.json({ balances: out, items, below_zero: items.filter((x) => x.below_zero).length, at: new Date().toISOString() });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
