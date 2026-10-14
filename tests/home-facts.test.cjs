@@ -93,6 +93,9 @@ function answer(text, params) {
     { entry_id: 'rt', event_type: 'return', covers: null, source_chit_id: 's3', account_role: 'cash', dr_minor: 0, cr_minor: 2000, line_no: 1 },
     { entry_id: 'x1', event_type: 'reversal', covers: null, reverses_entry_id: 'b2', source_chit_id: 's2', account_role: 'debtors', dr_minor: 0, cr_minor: 4000, line_no: 1 }] : []) : [] };
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
+  /* T3-DISPUTES-ASSIST: the disputes card's one count (RLS = my copies) and CB Assist's library count */
+  if (/FROM chit_disputes WHERE status = 'open'/.test(sql)) return { rows: [F.disputes || { mine: 0, against: 0 }] };
+  if (/FROM assist_qa WHERE active = true/.test(sql)) return { rows: [{ n: F.answers == null ? 0 : F.answers }] };
   return { rows: [] };
 }
 const db = {
@@ -234,6 +237,16 @@ const get = (port, p) => new Promise((ok) => {
   F.chits = 'few';
 
   /* refusals */
+  /* T3-DISPUTES-ASSIST: the Disputes and CB Assist cards — one read each, the work in words, none open said in words (never a bare 0) */
+  F.disputes = { mine: 1, against: 2 }; trips = 0; r = await g('disputes');
+  t('disputes: against you first (the work to answer), then you raised · one trip', [JSON.parse(r.body).lines, JSON.parse(r.body).figures, trips],
+    [[{ text: '2 disputes against you', value: 2, tone: 'dn' }, { text: '1 dispute you raised', value: 1 }], { open: 3, mine: 1, against: 2 }, 1]);
+  F.disputes = { mine: 0, against: 0 }; r = await g('disputes');
+  t('disputes: none open is said in words', JSON.parse(r.body).lines, [{ text: 'No open disputes', value: 0 }]);
+  F.answers = 7; trips = 0; r = await g('assist');
+  t('assist: the live answers counted · one trip', [JSON.parse(r.body).lines, trips], [[{ text: '7 answers live', value: 7 }], 1]);
+  F.answers = 0; r = await g('assist');
+  t('assist: none yet is said in words', JSON.parse(r.body).lines, [{ text: 'No answers published yet', value: 0 }]);
   r = await g('nonsense');
   t('unknown card -> 404', r.status, 404);
   r = await g('toString');

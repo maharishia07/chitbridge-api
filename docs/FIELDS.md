@@ -18,6 +18,8 @@ All derived per read, never stored. Read by: web tasks.html › Disputes and CB 
 | `rows[]` / `disputes[]` `.actions.resolve` | `{ ok }` \| `{ ok:false, why, say }` | lib/dispute-may.resolve: the rail's `dispute` level/held verdict, then `already_resolved`, then `not_raiser` — the same verdict PUT …/resolve refuses with (its 400/403 now carry `why`). |
 | chit disputes `actions.raise` | `{ ok }` \| `{ ok:false, why, say }` | lib/dispute-may.raise = rail.can(`dispute`). |
 | chit disputes `raise_parties` | `[{ entity_id, display_name, role }]` | The chit's `all_recipients` (my header copy) minus me, once each — who a new dispute may name (`participant_entity_ids`). |
+| GET /api/facts/disputes `lines` · `figures` | `{ open, mine, against }` | lib/home-facts `disputes`: one count of my open dispute copies (RLS). Read by Home's Disputes card (manifest `disputes`). |
+| GET /api/facts/assist `lines` · `figures` | `{ answers }` | lib/home-facts `assist`: active rows of assist_qa (the platform's library). Read by Home's CB Assist card (manifest `coassist`). |
 | whoami `actions.publish` | `{ ok }` \| `{ ok:false, why: 'not_helpdesk'\|'not_read', say }` | The same entity_schemas test POST /assist/publish refuses with (its 403 now carries `why: 'not_helpdesk'`). |
 
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)

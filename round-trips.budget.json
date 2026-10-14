@@ -467,6 +467,22 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/disputes": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": false,
+      "extra": true,
+      "why": "T3-DISPUTES-ASSIST, by hand: 1 trip — ONE withEntity transaction (BEGIN · set_config · the two FILTER counts on chit_disputes · COMMIT)."
+    },
+    "GET /api/facts/assist": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": false,
+      "extra": true,
+      "why": "T3-DISPUTES-ASSIST, by hand: 1 trip — one count over assist_qa (the platform's library, no shop context)."
+    },
     "GET /api/facts/offer-lab": {
       "file": "facts.js",
       "trips": 1,
