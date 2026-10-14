@@ -5,7 +5,7 @@
  * the hat gate had (20/20 green while the gate read the wrong property). This drives express.
  */
 const path = require('path');
-const API = 'C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..');   /* was 'C:/dev/chitbridge-api' — ran on one PC only */
 const DB = { envelope: null, user_id: null, taken: new Set(['acmetraders']) };
 
 require.cache[require.resolve(API + '/db')] = { exports: { query: async (sql, p) => {
@@ -19,7 +19,7 @@ require.cache[require.resolve(API + '/db')] = { exports: { query: async (sql, p)
   }
   if (/FROM identities WHERE LOWER\(user_id\)/.test(sql)) return { rows: DB.taken.has(p[0]) ? [{ '?column?': 1 }] : [] };
   if (/SELECT user_id FROM identities WHERE identity_id/.test(sql)) return { rows: [{ user_id: DB.user_id }] };
-  if (/^\s*UPDATE identities SET display_name/.test(sql)) { DB.wrote = p[4]; return { rows: [] }; }
+  if (/^\s*UPDATE identities SET display_name/.test(sql)) { DB.wrote = p[4]; DB.row = p[7]; return { rows: [] }; }
   if (/INSERT INTO identities/.test(sql)) { DB.inserted = p[4]; return { rows: [] }; }
   return { rows: [] };
 } } };
@@ -32,7 +32,11 @@ app.use(express.json());
    permanently, so every entity-only gate in this route was tested from the ONE side that passes. Both
    USER_ID_ENTITY_ONLY and CURRENCY_ENTITY_ONLY refuse ACTORS — the branch that matters was unreachable. */
 let AS = 'entity';
-require.cache[require.resolve(API + '/middleware/auth')] = { exports: (req,res,next)=>{ req.identity={identity_id:'11111111-1111-1111-1111-111111111111',identity_type:AS}; next(); } };
+const SHOP_ID = '11111111-1111-1111-1111-111111111111', ACTOR_ID = '22222222-2222-2222-2222-222222222222';
+require.cache[require.resolve(API + '/middleware/auth')] = { exports: Object.assign((req,res,next)=>{
+  req.identity = AS === 'actor' ? { identity_id: ACTOR_ID, identity_type: 'actor', parent_entity_id: SHOP_ID }
+                                : { identity_id: SHOP_ID, identity_type: AS }; next(); },
+  { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }) };
 app.use('/api/entities', require(API + '/routes/entities'));
 
 const post = (p, body) => new Promise((ok) => {
@@ -135,6 +139,8 @@ const srv = app.listen(0, async () => {
      the refusal has widened past what Athi asked for: phone and email are his to change. */
   t('  …but the route itself is still open to them',
     (await patch('/api/entities/profile',{ display_name:'Ravi K' })).status, 200);
+  /* ⭐ CAT-FIX1 (2026-10-14): and what they save lands on the SHOP's row — never on their own actor row */
+  t('  …and the save writes the SHOP, not the co-assist', DB.row, SHOP_ID);
   AS = 'entity';
   /* ══ THE ENVELOPE, BOTH WAYS ═══════════════════════════════════════════════════════════════
    * ⚠️ THE MECHANISM STAYS — b179 lifts the cap off 'base', it does not delete the ability to restrict. A

@@ -879,7 +879,14 @@ router.patch('/profile', auth,
   validate,
   async (req, res) => {
     try {
-      const id = req.identity.identity_id;
+      /**
+       * ⚠️⚠️ THE SHOP'S ROW, NOT THE CALLER'S (CAT-FIX1, 2026-10-14). Every field here — name, GSTIN, address, logo,
+       * catalogue visibility, the dispute handler — is a fact about the BUSINESS. This wrote `req.identity.identity_id`,
+       * so a co-assist's save landed on their own actor row where nothing reads it: "Profile updated", and the shop
+       * unchanged (the same hole user_id and currency were refused for below). auth.entityOf is the parent for a
+       * co-assist and the entity itself for the owner; hat-gate still refuses the restricted hats a write.
+       */
+      const id = auth.entityOf(req);
       /**
        * ⚠️⚠️ SET ONCE. Athi, 2026-08-19: *"the registered user id cannot be changed. Are you able to change your
        * Gmail id? The same way here."*
