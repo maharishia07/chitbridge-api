@@ -4,6 +4,8 @@ const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — 
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions');   // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
+const railStatus = require('../lib/rail-status');   // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
+const log = require('../lib/logger');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
@@ -239,7 +241,7 @@ async function autoAssignReceived(entity_id, chit_id) {
 
     // Idempotency + scope: only the actionable received copy, still unassigned.
     const cs = (await client.query(
-      `SELECT assigned_to_actor_id FROM chit_status
+      `SELECT assigned_to_actor_id, current_status FROM chit_status
          WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received' AND deleted_at IS NULL`,
       [chit_id, entity_id])).rows[0];
     if (!cs || cs.assigned_to_actor_id) return;
@@ -270,9 +272,14 @@ async function autoAssignReceived(entity_id, chit_id) {
 
     await client.query(
       `UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
-              assigned_at = NOW(), assignment_type = 'auto', current_status = 'pending', updated_at = NOW()
+              assigned_at = NOW(), assignment_type = 'auto', updated_at = NOW()
         WHERE chit_id = $3 AND entity_id = $4 AND direction = 'received'`,
       [t.identity_id, t.display_name, chit_id, entity_id]);
+    /* ⭐ T1-RAIL: the copy goes back to pending through the ONE status write (the rail's table), never a bare SET.
+       The status was read with the row above, in this transaction — no second read. The shop's own automation = SYSTEM. */
+    const g = await railStatus.statusGate(client, entity_id, chit_id, 'pending', railStatus.SYSTEM, { from: cs.current_status });
+    if (g.ok) await g.write();
+    else log.warn('auto-assign: status not moved to pending', { chit_id, from: g.from, why: g.why });
     await client.query(
       `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW() WHERE identity_id = $1`,
       [t.identity_id]);
@@ -3402,15 +3409,11 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
 
       const _pre = await withEntity(entity_id, async (db) => {
         /* B1 RLS: own received-copy read — and the gate for everything below it */
-        const current = await db.query(
-          `SELECT current_status FROM chit_status
-            WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received'`,
-          [chit_id, entity_id]);
         /* ⭐ R01 — THE ENGINE DECIDES (lib/rail.js move): level → my received copy → the transition table. This route reads
            ONLY my received copy, so "no copy" and "only the sent copy" are one answer here: not_received, said as the 404 it
-           always was. */
-        const previous_status = current.rows.length ? current.rows[0].current_status : null;
-        const verdict = railActions.move({ held: true, received: previous_status }, me, new_status);
+           always was. ⭐ T1-RAIL: the read, the verdict and the write are lib/rail-status statusGate — the same one every door uses. */
+        const verdict = await railStatus.statusGate(db, entity_id, chit_id, new_status, me);
+        const previous_status = verdict.from;
         if (!verdict.ok && verdict.why === 'not_received') return { stop: 'missing', why: verdict.why };
         if (!verdict.ok && verdict.why !== 'wrong_step') return { stop: 'level', why: verdict.why };
 
@@ -3442,11 +3445,8 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
               /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
               `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
               [chit_id, entity_id]);
-        // Update chit_status — the caller's OWN received copy.
-        await db.query(
-          `UPDATE chit_status SET current_status = $1, updated_at = NOW()
-            WHERE chit_id = $2 AND entity_id = $3 AND direction = 'received'`,
-          [new_status, chit_id, entity_id]);
+        // Update chit_status — the caller's OWN received copy (the gate above said yes).
+        await verdict.write();
         return { previous_status, openCount, header: hdr, copy };
       });
 
@@ -3526,9 +3526,14 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       // Sender cancel = a REQUEST, never a cross-entity write (Athi): the sender cancels ITS OWN copy and delivers a
       // flagged "[cancel requested]" message to the recipients; each recipient cancels its own copy at its own will.
       if (isSender && new_status === 'cancelled') {
-        await withEntity(entity_id, (db) => db.query(
-          `UPDATE chit_status SET current_status = 'cancelled', updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`,
-          [chit_id, entity_id]));   // own copy only
+        /* ⭐ T1-RAIL: my SENT copy too, through the same gate (the received copy moved above); a sent copy the rail will not
+           cancel stays where it is, said in the log — the withdrawal message still goes */
+        const sent = await withEntity(entity_id, async (db) => {
+          const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', me, { copy: 'sent' });
+          if (g.ok) await g.write();
+          return g;
+        });
+        if (!sent.ok && sent.why !== 'not_received') log.warn('sent copy not cancelled', { chit_id, from: sent.from, why: sent.why });
         await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: action_by_name,
           thread_type: 'external', msg_type: 'action',
           message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}` });
@@ -4667,7 +4672,8 @@ router.put('/:chit_id/void',
 
       // Void = the sender withdraws ITS OWN copy and REQUESTS cancellation from the recipients — never a cross-entity
       // write. Each recipient acts on its own copy at its own will (it sees the flagged message below).
-      await withEntity(entity_id, async (db) => {
+      const me = railActions.meOf(req);
+      const gate = await withEntity(entity_id, async (db) => {
         /**
          * ⭐⭐ `cancelled`, NOT `void` — Athi, 2026-09-02: *"go with cancelled, retire void."*
          *
@@ -4686,12 +4692,34 @@ router.put('/:chit_id/void',
          * happened would falsify the record this table exists to keep. b196 converts the stored statuses; the log
          * keeps saying what the code was called on the day.
          */
-        await db.query(`UPDATE chit_status SET current_status = 'cancelled', updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);   // own copy only
+        /* ⭐⭐ T1-RAIL — THROUGH THE ONE STATUS WRITE. This was a bare SET for every own copy, so a COMPLETED chit could be
+           withdrawn though the rail has no completed → cancelled step. Each copy I hold (the sent one; a self-chit also its
+           received one) asks lib/rail-status statusGate; if ANY copy may not be cancelled, nothing is written and the sender is
+           told why. Own copies only, as before. */
+        const gates = [];
+        for (const copy of railStatus.COPIES) {
+          const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', me, { copy });
+          if (g.from) gates.push(g);   // a copy I do not hold has nothing to move
+        }
+        const refusedBy = gates.find((g) => !g.ok);
+        if (refusedBy) return { refused: refusedBy };
+        for (const g of gates) await g.write();
         await db.query(
           `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
           [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]);   // own timeline only
+        return { refused: null };
       });
+      if (gate.refused) {
+        const g = gate.refused;
+        if (g.why !== 'wrong_step') {
+          return railActions.refuse(res, g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] });
+        }
+        /* what happened · what it means · what to do — `why` is the code a screen branches on, never this sentence */
+        return railActions.refuse(res, g, 409, { error: 'Cannot withdraw',
+          message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
+          from: g.from, allowed_transitions: g.allowed });
+      }
       // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
       await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
         thread_type: 'external', msg_type: 'action', message_text: `[cancel requested] ${reason}` });
@@ -4781,6 +4809,7 @@ router.post('/assign-bulk',
       const action_by_id   = req.identity.identity_id;
       const action_by_name = req.identity.display_name;
       const { chit_ids, target_actor_id } = req.body;
+      const me = railActions.meOf(req);   // T1-RAIL: who moves each copy back to pending (the rail's level ladder)
       if (chit_ids.length > 200) return res.status(400).json({ error: 'Too many', message: 'Assign at most 200 chits at once.' });   // F4: bound the batch (long tx / lock contention)
 
       // Atomic: the whole batch (counts + chit_status + state_log) commits together or rolls back —
@@ -4815,9 +4844,14 @@ router.post('/assign-bulk',
           if (already) { await client.query(`UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1) WHERE identity_id = $1`, [already]); }
           await client.query(
             `UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
-                    assigned_at = NOW(), assignment_type = 'push', current_status = 'pending', updated_at = NOW()
+                    assigned_at = NOW(), assignment_type = 'push', updated_at = NOW()
               WHERE chit_id = $3 AND entity_id = $4`,
             [t.identity_id, t.display_name, chit_id, entity_id]);
+          /* ⭐ T1-RAIL: back to pending through the ONE status write — only my received copy moves (the rail's rule); a sent
+             copy keeps its status. The assignment stands either way; a refusal is logged, never silent. */
+          const g = await railStatus.statusGate(client, entity_id, chit_id, 'pending', me);
+          if (g.ok) await g.write();
+          else if (g.why !== 'not_received') log.warn('assign-bulk: status not moved to pending', { chit_id, from: g.from, why: g.why });
           await client.query(`UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW() WHERE identity_id = $1`, [t.identity_id]);
           load++;
           await client.query(
