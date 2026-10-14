@@ -630,10 +630,13 @@ function chitOfDoc(d) {
     business_json: {
       doc: d.kind, doc_no: d.no, doc_at: d.at,
       till: { id: d.till, name: tillCfg.name, by: d.by || null },
-      party: { name: who },
+      /* F11: the supplier the door picked, by id — the books' supplier for their bill (F10) */
+      party: (receipt && d.vendor && d.vendor.party_id) ? { name: who, party_id: d.vendor.party_id } : { name: who },
       against: d.against || null,
       their_bill: d.their_bill || null,
       costs: d.costs || null, goods: d.goods, extras: d.extras, landed_total: d.landed_total,
+      /* the input tax, as the page sends it (lib/tax-lines reads chits) */
+      input_tax: d.input_tax || null,
       ref: d.ref || null, cartons: d.cartons || null, weight: d.weight || null,
       differences: (d.lines || []).filter((l) => (receipt ? l.difference : l.short > 0))
                                   .map((l) => ({ name: l.name, by: receipt ? l.difference : -l.short, reason: l.reason || null })),
@@ -642,6 +645,8 @@ function chitOfDoc(d) {
       particulars: l.name, quantity: receipt ? l.counted : l.picked, unit: l.unit,
       price: receipt ? (l.rate == null ? null : l.rate) : null,
       total: receipt ? (l.value == null ? null : l.value) : null,
+      /* F10: the GST rate on THEIR bill — tax-lines.invoiceFor's line key, so the books tax their bill with the one engine */
+      gst_rate: (receipt && l.gst_rate != null && l.gst_rate !== '') ? Number(l.gst_rate) : undefined,
       item_data: { item_id: l.item_id || null, line_id: l.line_id || null, lot: l.lot || null, ordered: l.ordered,
                    difference: receipt ? l.difference : (l.short ? -l.short : 0), reason: l.reason || null,
                    landed: receipt ? l.landed : null, unit_cost: receipt ? l.unit_cost : null,

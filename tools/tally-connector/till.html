@@ -3361,7 +3361,8 @@
    <div id="pane_receive" style="display:none;flex-direction:column;flex:1;min-height:0">
     <div class="doc">
       <select id="rcv_task" onchange="rcvPickTask(this.value)" class="wide" data-testid="rcv-task"><option value="">No order — goods at the door</option></select>
-      <input id="rcv_vendor" placeholder="Who it came from" autocomplete="off" data-testid="rcv-vendor" oninput="RCV.vendor=this.value">
+      <input id="rcv_vendor" placeholder="Who it came from" autocomplete="off" list="suplist" data-testid="rcv-vendor" oninput="RCV.vendor=this.value; rcvVendorPick()">
+      <datalist id="suplist"></datalist>
       <input id="rcv_billno" placeholder="Their bill / challan no" autocomplete="off" data-testid="rcv-billno" oninput="RCV.bill_no=this.value">
       <input id="rcv_billdate" type="date" data-testid="rcv-billdate" oninput="RCV.bill_date=this.value">
       <input id="rcv_billtotal" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Their bill total" data-testid="rcv-billtotal" oninput="RCV.bill_total=this.value===''?null:Number(this.value); paintReceive()">
@@ -6359,7 +6360,8 @@ function chitOfDoc(d){
     business_json: {
       doc: d.kind, doc_no: d.no, doc_at: d.at,
       till: tillStamp(d.till, d.by),
-      party: { name: who },
+      /* F11: party_id when the door picked a known supplier (rcvSupplierKnown) — the books' supplier for their bill (F10) */
+      party: (d.vendor && d.vendor.party_id && receipt) ? { name: who, party_id: d.vendor.party_id } : { name: who },
       against: d.against || null,
       their_bill: d.their_bill || null,
       costs: d.costs || null, goods: d.goods, extras: d.extras, landed_total: d.landed_total,
@@ -6375,6 +6377,9 @@ function chitOfDoc(d){
       return { particulars: l.name, quantity: qty, unit: l.unit,
                price: receipt ? (l.rate == null ? null : l.rate) : null,
                total: receipt ? (l.value == null ? null : l.value) : null,
+               /* ⭐ F10: the GST rate on THEIR bill, on the line — the key tax-lines.invoiceFor reads, so the server taxes their bill with
+                  the one engine (it died on the device before: the receipt's lines reached the books with no rate) */
+               gst_rate: (receipt && l.gst_rate != null && l.gst_rate !== '') ? Number(l.gst_rate) : undefined,
                item_data: { item_id: l.item_id || null, line_id: l.line_id || null, lot: l.lot || null,
                             ordered: l.ordered, difference: receipt ? l.difference : (l.short ? -l.short : 0),
                             reason: l.reason || null, landed: receipt ? l.landed : null, unit_cost: receipt ? l.unit_cost : null,
@@ -6959,6 +6964,36 @@ function paintCustomers(){
   var list = (S && S.customers) || [];
   document.getElementById('custlist').innerHTML = list.slice(0, 500).map(function(c){ return '<option value="' + esc(c.name) + '">'; }).join('');
   try { paintRcvPayBtn(); } catch (_) {}
+  paintSuppliers();
+}
+/**
+ * ⭐ F11 (Athi, 14 Oct) — THE DOOR SUGGESTS THE SHOP'S OWN SUPPLIERS. Typing "Sri Ganesh" offered nothing, so the receipt carried a typed
+ * name and the bill reached the books as nobody. The snapshot now carries the supplier NAMES (routes/till.js OWN.suppliers — who, never
+ * what is owed); the same native list the customer box uses (custlist) suggests them as the door types.
+ */
+function paintSuppliers(){
+  var el = document.getElementById('suplist'); if (!el) return;
+  el.innerHTML = ((S && S.suppliers) || []).slice(0, 500).map(function(x){ return '<option value="' + esc(x.name) + '">'; }).join('');
+}
+/**
+ * the supplier the door named — exactly ONE whose name (or the shop's nickname for them) is what was typed, case and spaces aside; two
+ * of the same name is nobody (custKnown's rule). A pick carries the party's id on the receipt, and their GSTIN's state fills the state
+ * box when it is empty (CGST/SGST vs IGST), never over what someone typed.
+ */
+function rcvSupplierKnown(name){
+  var nm = String(name == null ? '' : name).trim().toLowerCase(); if (!nm) return null;
+  var hits = ((S && S.suppliers) || []).filter(function(x){
+    return x && x.party_id && (String(x.name || '').trim().toLowerCase() === nm || String(x.nickname || '').trim().toLowerCase() === nm); });
+  return hits.length === 1 ? hits[0] : null;
+}
+function rcvVendorPick(){
+  var k = rcvSupplierKnown(RCV.vendor);
+  RCV.vendor_party = k ? k.party_id : null;
+  if (k && k.state && !String(RCV.vendor_state || '').trim()) {
+    RCV.vendor_state = String(k.state);
+    var st = document.getElementById('rcv_vstate'); if (st) st.value = RCV.vendor_state;
+    paintReceive();
+  }
 }
 /**
  * ── ⭐⭐⭐ BOOKS v2 AT THE COUNTER — the customer ON the sale, On credit, and money received (2026-09-29) ─────────────
@@ -21795,7 +21830,7 @@ var RCV = null, DSP = null;
  *   vendor_state — theirs against ours is what makes a purchase intra-state or inter-state, and therefore whether
  *     the credit sits under CGST+SGST or under IGST. We often do not know it, and unknown is recorded as unknown.
  */
-function rcvBlank(){ return { task:null, vendor:'', vendor_state:'', bill_no:'', bill_date:'', bill_total:null,
+function rcvBlank(){ return { task:null, vendor:'', vendor_party:null, vendor_state:'', bill_no:'', bill_date:'', bill_total:null,
                               tax_inclusive:false, lines:[], costs:{ freight:0, loading:0, duty:0, other:0 } }; }
 function dspBlank(){ return { task:null, ref:'', weight:null, carton:1, lines:[] }; }
 RCV = rcvBlank(); DSP = dspBlank();
@@ -22129,6 +22164,7 @@ function rcvPickTask(id){
   if (t){
     RCV.vendor = t.party || '';
     var v = document.getElementById('rcv_vendor'); if (v) v.value = RCV.vendor;
+    rcvVendorPick();
     RCV.lines = t.lines.map(function(l){
       return { line_id:l.line_id, item_id:l.item_id, name:l.name, unit:l.unit, ordered:l.remaining, counted:null,
                rate:l.rate, reason:'', lot:null };   /* ⚠️ lot: the seam the batch layer will fill — see the spec, §0 */
@@ -22409,7 +22445,8 @@ async function rcvConfirm(){
     kind: 'receipt', at: new Date().toISOString(), till: tillId(),
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
-    vendor: { name: (RCV.vendor || '').trim() || 'Not named' },
+    /* F11: the supplier the door picked travels by id — their bill (F10) reaches the books as THAT supplier, never as a typed name */
+    vendor: { name: (RCV.vendor || '').trim() || 'Not named', party_id: RCV.vendor_party || null },
     their_bill: { no: (RCV.bill_no || '').trim() || null, date: RCV.bill_date || null, total: RCV.bill_total },
     against: RCV.task ? { chit_id: RCV.task.chit_id, party: RCV.task.party, subject: RCV.task.subject } : null,
     costs: RCV.costs, goods: rcvGoods(), extras: rcvExtras(), landed_total: r2(rcvGoods() + rcvExtras()),
@@ -22609,6 +22646,8 @@ function receiveSlipHTML(d){
     + (d.extras > 0 ? docRow('Freight and costs', money(d.extras)) : '')
     + docRow('LANDED', money(d.landed_total), true)
     + (d.their_bill && d.their_bill.total != null ? dash + docRow('Their bill says', money(d.their_bill.total)) : '')
+    /* F10: a receipt with their bill no. and total IS their bill — it waits in the books for the owner to accept */
+    + (d.their_bill && d.their_bill.no && d.their_bill.total != null ? '<div style="text-align:center;font-size:.85em" data-testid="rcv-slip-books">Their bill waits in the books for you to accept.</div>' : '')
     + dash + '<div style="text-align:center;font-size:.85em">What we counted. Differences above are ours to settle with the supplier.</div>');
 }
 function despatchSlipHTML(d){
