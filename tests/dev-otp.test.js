@@ -20,7 +20,8 @@ const load = (env) => {
   const p = require.resolve('../lib/dev-otp.js');
   delete require.cache[p];
   const saved = { ...process.env };
-  Object.assign(process.env, env);
+  // SEC1: the fixed codes need a LOCAL stack — a local database unless the case names another
+  Object.assign(process.env, { DATABASE_URL: 'postgres://cb@127.0.0.1:5432/cb_test' }, env);
   const m = require(p);
   // snapshot the answers while the env is applied, then restore
   const out = { isSealed: m.isSealed(), armed: m.armed(), mayExpose: m.mayExposeOtp(),

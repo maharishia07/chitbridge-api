@@ -64,9 +64,13 @@ merge this branch and re-smoke:
 Apply on the DEV DB together with the §3 list: **`migration_otp_attempts.sql`** (adds `identities.otp_attempts`).
 
 ### ⚠️ Before PROD (enforced at boot)
-`DEV_OTP` pins every OTP to a fixed value (`123456`) for testing. It's allowed in dev/UAT, but the server now
-**aborts boot in production if `DEV_OTP` is set** (alongside the `JWT_SECRET` guard). **Unset `DEV_OTP` for prod**
-so OTPs are random.
+`DEV_OTP` pins every OTP to a fixed value for testing — on a LOCAL stack only (SEC1: DATABASE_URL host 127.0.0.1 / localhost /
+::1 and `NODE_ENV=development`); on Railway it does nothing. The server **aborts boot in production if `DEV_OTP` is set**
+(alongside the `JWT_SECRET` guard). **Unset `DEV_OTP` for prod** so OTPs are random.
+
+### Testers' sign-in code (SEC1)
+Set `TESTER_CODE` (8+ characters; and optionally `TESTER_NAMES`) in Railway → Variables; share it with testers privately; change it
+any time — no deploy. Details: docs/HOSTING.md "Testers' sign-in code".
 
 ## 6. Promote to PROD — separate, conscious, reviewed step
 Re-check `TECH-HARDENING-BACKLOG.md` "Re-check before UAT/Prod". Set prod env (strong secret, prod CORS origin).
