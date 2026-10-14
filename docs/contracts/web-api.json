@@ -685,7 +685,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "77d480ac-8b6a-4e95-9ad3-0cbb63d011bf",
+      "snapshot_id": "9d7d7efb-7ae1-46f5-8bff-54ecb437ba5b",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -707,7 +707,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "77d480ac-8b6a-4e95-9ad3-0cbb63d011bf",
+     "snapshot_id": "9d7d7efb-7ae1-46f5-8bff-54ecb437ba5b",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -1004,6 +1004,7 @@
        "lt_1y": -59000
       },
       "credit_limit_minor": null,
+      "credit_limit_from": null,
       "over_limit": false,
       "last_remind": null,
       "payable": {
@@ -1121,6 +1122,7 @@
     "parties[].buckets.lt_1y",
     "parties[].buckets.lt_6m",
     "parties[].buckets.m6_1y",
+    "parties[].credit_limit_from",
     "parties[].credit_limit_minor",
     "parties[].foreign",
     "parties[].last_remind",
@@ -1892,7 +1894,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-12T01:24:43.092Z",
+      "last_at": "2026-10-12T04:36:51.070Z",
       "late": true,
       "today": false
      }
@@ -1928,13 +1930,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-13T01:24:43.053Z",
+      "due_at": "2026-10-13T04:36:51.046Z",
       "due_day": "2026-10-13",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-14T01:24:43.055Z",
+      "created_at": "2026-10-14T04:36:51.046Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -2204,7 +2206,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-12T01:24:42.979Z",
+      "due_at": "2026-10-12T04:36:50.999Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -2279,7 +2281,7 @@
    "example": {
     "agreements": [
      {
-      "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+      "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
       "entity_id": "11111111-1111-4111-8111-111111111111",
       "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
       "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -2421,7 +2423,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -2592,7 +2594,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-14T00:24:43.194Z",
+    "created_at": "2026-10-14T03:36:51.137Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -2807,7 +2809,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-14T00:24:43.194Z",
+      "created_at": "2026-10-14T03:36:51.137Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2896,7 +2898,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-14T01:24:43.760Z"
+     "shared_at": "2026-10-14T04:36:51.507Z"
     }
    },
    "optional": []
@@ -2949,13 +2951,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-13T01:24:43.053Z",
+     "due_at": "2026-10-13T04:36:51.046Z",
      "due_day": "2026-10-13",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-14T01:24:43.061Z",
-     "created_at": "2026-10-14T01:24:43.055Z",
+     "done_at": "2026-10-14T04:36:51.050Z",
+     "created_at": "2026-10-14T04:36:51.046Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -3172,7 +3174,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "77d480ac-8b6a-4e95-9ad3-0cbb63d011bf",
+    "snapshot_id": "9d7d7efb-7ae1-46f5-8bff-54ecb437ba5b",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -4008,13 +4010,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-13T01:24:43.053Z",
+     "due_at": "2026-10-13T04:36:51.046Z",
      "due_day": "2026-10-13",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-14T01:24:43.055Z",
+     "created_at": "2026-10-14T04:36:51.046Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -4129,9 +4131,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-14T01:24:43.053Z",
+     "at": "2026-10-14T04:36:51.045Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-14T01:24:43.053Z"
+     "created_at": "2026-10-14T04:36:51.045Z"
     }
    },
    "optional": []
@@ -4146,9 +4148,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-14T01:24:43.094Z",
+     "at": "2026-10-14T04:36:51.071Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-14T01:24:43.094Z"
+     "created_at": "2026-10-14T04:36:51.071Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -4163,7 +4165,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-14T01:24:43.094Z",
+     "created_at": "2026-10-14T04:36:51.071Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -4234,7 +4236,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4332,7 +4334,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4411,7 +4413,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4503,7 +4505,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4591,7 +4593,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "bb6d3d1a-1354-4a21-8342-f854f40bdf06",
+     "agreement_id": "33c32c6c-59ff-4876-aa88-69fc6f73a952",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4669,7 +4671,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4776,7 +4778,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4868,7 +4870,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "f6ca3e4d-bd81-4a6a-bdfc-2231eb595971",
+     "agreement_id": "9c2e29ab-4f39-4444-bf66-addc1811a7b9",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4959,7 +4961,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5051,7 +5053,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5158,7 +5160,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6aea1d16-c3a9-47dc-9243-5ceca101d5ad",
+     "agreement_id": "bd6494b0-4768-4b8c-81aa-8f06dce4695e",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",

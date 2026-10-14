@@ -211,7 +211,7 @@
       "wire": 6,
       "fired": true,
       "status": 404,
-      "why": "F4 (by hand): ?side=supplier&finance=1 adds 3 reads inside the same transaction — cheques written (1) · Udyam ids (1) · supplier terms (1), + the terms-column check (lib/schema, cached). Nothing per party. FX1: + 1 read — the open foreign balances of the debtors / creditors in ONE grouped read (b392; the column check cached), so a party shows USD 1,000 · ₹83,250. The offline stub answers 404 (ledger off), so the line stays the floor."
+      "why": "F4 (by hand): ?side=supplier&finance=1 adds 3 reads inside the same transaction — cheques written (1) · Udyam ids (1) · supplier terms (1), + the terms-column check (lib/schema, cached). Nothing per party. FX1: + 1 read — the open foreign balances of the debtors / creditors in ONE grouped read (b392; the column check cached), so a party shows USD 1,000 · ₹83,250. T1-FINREW FIN-R1 (by hand): ?finance=1 with the customer side + 1 read — every customer's own days · limit · terms (customer_list, ONE grouped read) — and, once b298 has run, + 1 for the shop default terms (books_setting), both inside the same transaction; nothing per party. The offline stub answers 404 (ledger off), so the line stays the floor."
     },
     "GET /api/books/events": {
       "file": "books.js",
@@ -1090,7 +1090,8 @@
       "trips": 0,
       "wire": 0,
       "fired": true,
-      "status": 400
+      "status": 400,
+      "why": "T1-FINREW REW-L1 (by hand): the points claim is ONE withEntity transaction (lib/reward-store.claim: 2 advisory locks · the SUM read · the expiry read when the programme expires · 2 inserts) after the programme read; before it, 2 withEntity reads (programme · a 500-row fold) + 2 separate inserts. The stub answers 400 first, so the line stays the floor."
     },
     "POST /api/definitions": {
       "file": "definitions.js",

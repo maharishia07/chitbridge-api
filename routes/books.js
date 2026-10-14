@@ -415,7 +415,9 @@ async function statementInput(h, e, party, from, to) {
  */
 router.get('/dues', auth, noKey, on, async (req, res) => {
   try {
-    /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · over_limit · interest_minor · last_remind. Owner only — the server decides. */
+    /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · credit_limit_from · over_limit · interest_minor · interest_state · last_remind.
+       Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
+       not set — credit_limit_from null / interest_state 'not_set' (interest_minor null) is the code the screen paints "Not set" from. */
     const fin = req.query.finance === '1';
     if (fin && !isOwner(req)) { const no = req.query.side === 'supplier' ? 'Only the owner may see what you owe.' : 'Only the owner may see collections.'; return res.status(403).json({ error: no, message: no }); }
     const e = ctx(req), asOf = dateQ(req.query.asOf, today(req));
@@ -424,6 +426,10 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
     let payables = null;
     const out = await withEntity(e, async (h) => {
       const chart = await S.accounts(h, e), names = await partyNames(h, e), per = new Map();
+      /* FIN-R1: interest and limit come from the customer's TERMS (finance-terms.resolve: own, else the shop default, else not set) — one grouped read */
+      const T = require('../lib/finance-terms');
+      const terms = fin && sides.includes('debtors') ? await T.customerTerms(h, e) : null;
+      const effOf = (pid) => { const own = terms && terms.by_party.get(String(pid)); return own ? T.resolve(terms.shop, own) : null; };
       let payableItems = [];
       for (const role of sides) {
         const a = chart.find((x) => x.role === role); if (!a) continue;
@@ -442,7 +448,7 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
           const buckets = {}; Object.keys(ag.undisputed || {}).forEach((k) => { buckets[k] = sign * ((ag.undisputed[k] || 0) + ((ag.disputed || {})[k] || 0)); });
           const disputed = Object.keys(ag.disputed || {}).reduce((t, k) => t + (ag.disputed[k] || 0), 0);
           const row = { party_id: pid, side: role === 'creditors' ? 'supplier' : 'customer', balance_minor: sign * open, oldest_due: oldest, disputed_minor: sign * disputed, buckets };
-          if (fin && role === 'debtors') row.interest_minor = E.interestMinor(docs, asOf, curOf(req));
+          if (fin && role === 'debtors') { const eff = effOf(pid); row.interest_minor = E.interestMinor(docs, asOf, curOf(req), eff && eff.interest.value); row.interest_state = E.interestState(eff); }
           per.set(pid + '|' + role, row);
         });
       }
@@ -451,10 +457,10 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
       for (const r of per.values()) {
         const p = names.get(String(r.party_id)) || {};
         const x = rows.get(r.party_id);
-        if (!x) rows.set(r.party_id, Object.assign({ party_no: p.party_no || null, name: p.nickname || p.name || null }, r, fin ? E.limitView(p, r) : {}));
+        if (!x) rows.set(r.party_id, Object.assign({ party_no: p.party_no || null, name: p.nickname || p.name || null }, r, fin ? E.limitView(effOf(r.party_id), r) : {}));
         else { x.balance_minor += r.balance_minor; x.disputed_minor += r.disputed_minor; x.side = 'both'; x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
                Object.keys(r.buckets).forEach((k) => { x.buckets[k] = (x.buckets[k] || 0) + r.buckets[k]; });
-               if (fin) { x.interest_minor = (x.interest_minor || 0) + (r.interest_minor || 0); Object.assign(x, E.limitView(p, x)); } }
+               if (fin) { if (r.interest_minor != null) { x.interest_minor = (x.interest_minor || 0) + r.interest_minor; x.interest_state = r.interest_state; } Object.assign(x, E.limitView(effOf(r.party_id), x)); } }
       }
       /* FX1: a party with a foreign-currency balance shows it beside the books' figure — "USD 1,000 · ₹83,250" (b392; one grouped read; absent before b392 and for a party with none) */
       if (await S.fxLinesReady()) {
