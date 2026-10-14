@@ -482,6 +482,14 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/operations": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-OPS, by hand (tests/ops-stock.test.cjs): lib/home-facts operations — schema.hasTable('stock_balance') (cached) + ONE withEntity read: stock-store.onHand (the one stock reader, sheet()). Nothing per item."
+    },
     "GET /api/facts/product-lab": {
       "file": "facts.js",
       "trips": 2,
@@ -679,6 +687,14 @@
       "fired": false,
       "extra": true,
       "why": "FX-CT1: the counter's day report asks this (?till=<counter>&days=2) — ONE withEntity read; the till filter is in the same SQL."
+    },
+    "GET /api/till/stock": {
+      "file": "till.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-OPS, by hand (tests/ops-stock.test.cjs): CB Operations › Stock asks ?detail=1 — stock-store.onHand { lots } (1 withEntity) + the names ONE read (catalogue-read.ITEM_NAMES_SQL, 1 withEntity) + lib/cost.canReadSafe (1, the counter's call pays it too); schema.hasTable cached. Without detail: 2 (no names read). Nothing per item."
     },
     "GET /api/till/match": {
       "file": "till.js",
