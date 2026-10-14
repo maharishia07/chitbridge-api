@@ -28,15 +28,33 @@ const PROG = { definition_id: 'def-1', name: 'Shop points',
                redeem: [{ kind: 'money', points: 100, amount: 1 }],
                expires_months: 12, walk_in_earns: false, min_balance_to_spend: 100 };
 
-/* ── the stub: an append-only table and the two statements the store issues against it ── */
+/* ── the stub: an append-only table, a TRANSACTION per withEntity (a throw undoes its inserts, as Postgres would),
+ *    and the statements the store issues against it ── */
 const TABLE = [];
-const withEntity = async (entity_id, fn) => fn({
-  query: async (sql, args) => {
+const LOCKS = [];
+const mine = (eid, scheme, value) => (r) => r.entity_id === eid && r.holder_scheme === scheme && r.holder_value === value;
+const withEntity = async (entity_id, fn) => {
+  const mark = TABLE.length;
+  try { return await fn({ query: run }); }
+  catch (e) { TABLE.length = mark; throw e; }          /* ROLLBACK: nothing this transaction wrote survives */
+};
+async function run(sql, args) {
     if (/^\s*SELECT d\.definition_id/.test(sql)) return { rows: [{ definition_id: 'def-1', name: 'Shop points', rules: PROG }] };
-    if (/FROM reward_ledger/.test(sql)) {
-      const [eid, scheme, value] = args;
-      return { rows: TABLE.filter((r) => r.entity_id === eid && r.holder_scheme === scheme && r.holder_value === value)
-                          .slice().sort((a, b) => String(b.at).localeCompare(String(a.at))) };
+    if (/pg_advisory_xact_lock/.test(sql)) { LOCKS.push(args[0]); return { rows: [{}] }; }
+    if (/SUM\(points\) OVER \(\)/.test(sql)) {
+      const [eid, scheme, value, limit] = args;
+      const all = TABLE.filter(mine(eid, scheme, value));
+      const total = all.reduce((a, r) => a + r.points, 0);
+      return { rows: all.slice().sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, limit).map((r) => Object.assign({ total: String(total) }, r)) };
+    }
+    if (/NOT EXISTS/.test(sql) && /why = 'earned'/.test(sql)) {
+      const [eid, scheme, value, months] = args;
+      const all = TABLE.filter(mine(eid, scheme, value));
+      return { rows: all.filter((e) => {
+        if (e.why !== 'earned' || !(e.points > 0)) return false;
+        const due = new Date(e.at); due.setUTCMonth(due.getUTCMonth() + months);
+        return due.getTime() <= Date.now() && !all.some((x) => x.why === 'expired' && x.ref === e.ref);
+      }) };
     }
     if (/^\s*INSERT INTO reward_ledger/.test(sql)) {
       const [entity_id, holder_scheme, holder_value, points, why, ref, note, definition_id, at] = args;
@@ -47,13 +65,13 @@ const withEntity = async (entity_id, fn) => fn({
         return { rows: [] };
       TABLE.push({ entity_id, holder_scheme, holder_value, points: Number(points), why, ref, note,
                    definition_id, at: at || new Date().toISOString() });
-      return { rows: [] };
+      return { rows: [{ entry_id: 'e' + TABLE.length }] };
     }
     if (/^\s*UPDATE reward_ledger|^\s*DELETE FROM reward_ledger/i.test(sql))
       throw new Error('reward_ledger is append-only by GRANT — cb_app may not UPDATE or DELETE');
+    if (/FROM reward_ledger/.test(sql)) throw new Error('the store read the ledger a way this stub does not know: ' + sql.slice(0, 80));
     return { rows: [] };
-  },
-});
+}
 
 /** the award path, as routes/till.js performs it — kept in one place so the visits below read as visits */
 async function bill(holder, ref, net, spend) {
@@ -61,14 +79,13 @@ async function bill(holder, ref, net, spend) {
   const walkIn = holder.scheme === 'phone';
   const mayEarn = !walkIn || prog.walk_in_earns !== false;
   const added = mayEarn ? rewards.earnedOn(prog, { net, count: 1, lines: [] }) : 0;
-  const before = await store.balance(SHOP, holder, withEntity, prog);
-  const rows = before.expired.slice();
-  if (spend > 0) rows.push(rewards.entry({ points: -spend, why: 'spent', ref, note: 'encashed on this bill' }));
-  if (added > 0) rows.push(rewards.entry({ points: added, why: 'earned', ref, note: 'bill ' + ref }));
-  for (const e of rows.filter(Boolean)) await store.append(SHOP, holder, e, prog.definition_id, withEntity);
+  const before = await store.settle(SHOP, holder, prog, { ref, spend: spend || 0, added }, withEntity);
   return { added, spent: spend || 0, points: before.points - (spend || 0) + added,
            overspent: (spend || 0) > before.points ? (spend || 0) - before.points : 0 };
 }
+/** one stored row, written straight into the stand-in table (history the test needs to exist) */
+const put = (holder, points, why, ref, at) => TABLE.push({ entity_id: SHOP, holder_scheme: holder.scheme, holder_value: holder.value,
+  points, why, ref, note: null, definition_id: 'def-1', at: at || new Date().toISOString() });
 
 (async () => {
 console.log('— a walk-in with no number —');
@@ -152,17 +169,64 @@ await ita('⭐⭐ points expire twelve months after they were earned, as an ENTR
   assert.strictEqual(b.expired[0].why, 'expired', 'expiry must be readable in the ledger, not a silent filter');
 });
 
+await ita('⭐⭐ T1-FINREW: an expiry once WRITTEN is counted once — the next read does not expire the same earning again', async () => {
+  const OLD2 = { scheme: 'identity', value: 'cust-old2' };
+  put(OLD2, 500, 'earned', 'B-OLD2', '2024-06-01T00:00:00.000Z');
+  put(OLD2, 80, 'earned', 'B-NEW2');
+  const prog = await store.programme(SHOP, withEntity);
+  await store.settle(SHOP, OLD2, prog, { ref: 'B-NEXT', spend: 0, added: 0 }, withEntity);   /* the next touch writes the expiry */
+  assert.strictEqual(TABLE.filter((r) => r.holder_value === 'cust-old2' && r.why === 'expired').length, 1, 'the expiry was not written');
+  const b = await store.balance(SHOP, OLD2, withEntity);
+  assert.strictEqual(b.expired.length, 0, 'an expiry already in the ledger was produced again');
+  assert.strictEqual(b.points, 80, 'got ' + b.points + ' — the written expiry was counted twice');
+});
+
 console.log('— the walk-in who registers —');
 
 await ita('⭐⭐ a phone balance moves onto the account as two entries netting to zero', async () => {
   const PH = { scheme: 'phone', value: '9000011111' }, ID = { scheme: 'identity', value: 'cust-new' };
-  await store.append(SHOP, PH, rewards.entry({ points: 340, why: 'earned', ref: 'B-W1' }), 'def-1', withEntity);
-  const from = await store.balance(SHOP, PH, withEntity);
-  const c = rewards.claim(from, PH, ID, 'CLAIM-1');
+  put(PH, 340, 'earned', 'B-W1');
+  const c = await store.claim(SHOP, PH, ID, 'CLAIM-1', PROG, withEntity);
   assert.strictEqual(c.ok, true);
-  for (const e of c.entries) await store.append(SHOP, e.holder, e, 'def-1', withEntity);
+  assert.strictEqual(c.points, 340);
   assert.strictEqual((await store.balance(SHOP, PH, withEntity)).points, 0, 'the phone still holds points');
   assert.strictEqual((await store.balance(SHOP, ID, withEntity)).points, 340, 'the account did not receive them');
+});
+
+await ita('⭐⭐ T1-FINREW: a claim is ALL OR NOTHING — a half that cannot land undoes the other half', async () => {
+  const PH = { scheme: 'phone', value: '9000022222' }, A = { scheme: 'identity', value: 'cust-a' }, B = { scheme: 'identity', value: 'cust-b' };
+  put(PH, 100, 'earned', 'B-W2');
+  assert.strictEqual((await store.claim(SHOP, PH, A, 'CLAIM-2', PROG, withEntity)).points, 100);
+  put(PH, 70, 'earned', 'B-W3');                                      /* the same phone earns again… */
+  const rows = TABLE.length;
+  /* …and the SAME ref is used for a second claim onto another account: the phone's minus half meets the unique index */
+  await assert.rejects(() => store.claim(SHOP, PH, B, 'CLAIM-2', PROG, withEntity), (e) => e.code === 'CLAIM_RECORDED' && e.status === 409);
+  assert.strictEqual(TABLE.length, rows, 'a half of the refused claim was left in the ledger');
+  assert.strictEqual((await store.balance(SHOP, B, withEntity)).points, 0, 'points were created on the second account');
+  assert.strictEqual((await store.balance(SHOP, PH, withEntity)).points, 70, 'the phone lost points it still holds');
+  assert.ok(LOCKS.some((k) => /9000022222/.test(k)) && LOCKS.some((k) => /cust-b/.test(k)), 'both holders are locked for the claim');
+});
+
+await ita('⭐ nothing to claim → refused, nothing written', async () => {
+  const rows = TABLE.length;
+  const c = await store.claim(SHOP, { scheme: 'phone', value: '9000099999' }, { scheme: 'identity', value: 'cust-z' }, 'CLAIM-9', PROG, withEntity);
+  assert.strictEqual(c.ok, false); assert.strictEqual(TABLE.length, rows);
+});
+
+console.log('— a long-standing customer —');
+
+await ita('⭐⭐ T1-FINREW: 650 entries — the balance is the SUM of all of them, not of the newest 500', async () => {
+  const LOYAL = { scheme: 'identity', value: 'cust-loyal' };
+  const t0 = Date.now() - 650 * 60000;
+  for (let n = 0; n < 650; n++) put(LOYAL, n % 10 === 9 ? -3 : 2, n % 10 === 9 ? 'spent' : 'earned', 'L-' + n, new Date(t0 + n * 60000).toISOString());
+  const want = TABLE.filter((r) => r.holder_value === 'cust-loyal').reduce((a, r) => a + r.points, 0);
+  const b = await store.balance(SHOP, LOYAL, withEntity);
+  assert.strictEqual(want, 585 * 2 - 65 * 3);
+  assert.strictEqual(b.points, want, 'got ' + b.points + ', the ledger holds ' + want);
+  assert.strictEqual(b.entries.length, store.RECENT, 'the screen gets the newest page only');
+  assert.strictEqual(b.entries[0].ref, 'L-649', 'newest first');
+  const r = await bill(LOYAL, 'L-SPEND', 0, want);
+  assert.strictEqual(r.overspent, 0, 'a spend of the whole (true) balance was called an overspend');
 });
 
 console.log('— what the ledger will not let anyone do —');

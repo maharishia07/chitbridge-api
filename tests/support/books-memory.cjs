@@ -19,11 +19,35 @@ const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev 
 function create() {
   const T = { setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
               outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [], fxRates: [], fxReady: true, fxLines: true };
+  fakeDb.T = T;   /* the terms reads (finance-terms.customerTerms) answer from THIS store's parties + T.shopTerms */
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
   const now = () => new Date(clock += 1000).toISOString();
+  /* the whole range's lines (the real query without a page) — entryLines, entryPage and pageSums read it */
+  async function allLines(e, from, to, account_id, party_id) {
+      return T.lines.filter((l) => l.entity_id === e && (!account_id || l.account_id === account_id) && (!party_id || l.party_id === party_id)).map((l) => {
+        const h = T.entries.find((x) => x.entry_id === l.entry_id), a = T.accounts.find((x) => x.account_id === l.account_id);
+        const rvOf = (ent, x) => T.entries.filter((y) => y.entity_id === ent && y.reverses_entry_id === x.entry_id).sort((p, q) => String(p.created_at).localeCompare(String(q.created_at)))[0] || null;
+        /* the real query's entity-scoped LEFT JOIN onto the shop's own chit (one copy) and the writer's identity */
+        const c = h.source_chit_id ? T.chits.find((x) => x.chit_id === h.source_chit_id && x.entity_id === e) : null, bj = (c && c.business_json) || {};
+        const who = h.created_by ? T.identities.find((x) => x.identity_id === h.created_by) : null;
+        return Object.assign({}, l, { entry_no: h.entry_no, posting_date: h.posting_date, doc_date: h.doc_date, period: h.period, event_type: h.event_type, narration: h.narration, source_chit_id: h.source_chit_id,
+          reverses_entry_id: h.reverses_entry_id, code: a.code, account_name: a.name, source_ref: h.source_ref || null,
+          reversed_by: (rvOf(e, h) || {}).entry_no || null, reversed_by_id: (rvOf(e, h) || {}).entry_id || null, account_role: a.role,
+          covers: Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : null, src_chit_id: c ? c.chit_id : null, src_purpose: c ? c.purpose || null : null,
+          src_ref: c ? (bj.printed_as || bj.bill_no || (bj.payment_received && bj.payment_received.no) || null) : null,
+          src_till: c ? ((bj.till && bj.till.id) || (bj.summary && bj.summary.till && bj.summary.till.id) || null) : null,
+          src_by: c && bj.till && bj.till.by !== undefined ? clone(bj.till.by) : null, by_name: who ? who.display_name : null,
+          src_parts: c ? clone((bj.payment && bj.payment.parts) || (bj.refund && bj.refund.parts) || null) : null,
+          recorded_at: h.created_at || null, src_created_at: c ? c.created_at || null : null,
+          src_billed_at: c ? (bj.billed_at || (bj.payment_received && bj.payment_received.at) || null) : null,
+          src_mode: c && bj.payment_received ? bj.payment_received.mode || null : null, src_cheque: c && bj.payment_received ? clone(bj.payment_received.cheque || null) : null,
+          tenders: Array.isArray(h.source_chit_ids) ? (() => { const t = T.lines.filter((x) => x.entry_id === h.entry_id && x.dr_minor > 0).sort((p, q) => p.line_no - q.line_no)
+            .map((x) => ({ role: (T.accounts.find((y) => y.account_id === x.account_id) || {}).role, dr_minor: x.dr_minor })).filter((x) => ['cash', 'upi', 'card', 'bank'].indexOf(x.role) >= 0); return t.length ? t : null; })() : null });
+      }).filter((l) => l.posting_date >= from && l.posting_date <= to).sort((x, y) => x.posting_date.localeCompare(y.posting_date) || x.entry_no.localeCompare(y.entry_no) || x.line_no - y.line_no);
+  }
   const S = {
     TODO_SQL: "'record'", NAME_SQL: 'NULL', waitOfChitSql: () => 'NULL',   /* STD1: the SQL fragments (no database here) */
-    ZERO, BILL_EVENTS: ['sale_bill', 'credit_given'], T,
+    ZERO, BILL_EVENTS: ['sale_bill', 'credit_given'], T, PAGE_MAX: 500, PAGE_DEFAULT: 100,
     async setting(db, e) { const s = T.setting.get(String(e)); return s ? clone(s) : null; },
     async saveSetting(db, e, s) { const cur = T.setting.get(String(e)) || {}; T.setting.set(String(e), Object.assign({}, cur, { entity_id: e, enabled: !!s.enabled, walkin_grain: s.walkin_grain || 'day',
       fy_start_month: s.fy_start_month || 4, functional_currency: s.functional_currency || 'INR', country: s.country || 'IN', pack_version: s.pack_version || cur.pack_version || null,
@@ -56,31 +80,34 @@ function create() {
       const h = T.entries.find((x) => x.entity_id === e && x.entry_id === eid); if (!h) return null;
       return Object.assign(clone(h), { lines: clone(T.lines.filter((l) => l.entry_id === eid)), items: clone(T.items.filter((i) => i.entry_id === eid)) });
     },
-    async entryLines(db, e, from, to, account_id, party_id) {
-      return T.lines.filter((l) => l.entity_id === e && (!account_id || l.account_id === account_id) && (!party_id || l.party_id === party_id)).map((l) => {
-        const h = T.entries.find((x) => x.entry_id === l.entry_id), a = T.accounts.find((x) => x.account_id === l.account_id);
-        const rvOf = (ent, x) => T.entries.filter((y) => y.entity_id === ent && y.reverses_entry_id === x.entry_id).sort((p, q) => String(p.created_at).localeCompare(String(q.created_at)))[0] || null;
-        /* the real query's entity-scoped LEFT JOIN onto the shop's own chit (one copy) and the writer's identity */
-        const c = h.source_chit_id ? T.chits.find((x) => x.chit_id === h.source_chit_id && x.entity_id === e) : null, bj = (c && c.business_json) || {};
-        const who = h.created_by ? T.identities.find((x) => x.identity_id === h.created_by) : null;
-        return Object.assign({}, l, { entry_no: h.entry_no, posting_date: h.posting_date, doc_date: h.doc_date, period: h.period, event_type: h.event_type, narration: h.narration, source_chit_id: h.source_chit_id,
-          reverses_entry_id: h.reverses_entry_id, code: a.code, account_name: a.name, source_ref: h.source_ref || null,
-          reversed_by: (rvOf(e, h) || {}).entry_no || null, reversed_by_id: (rvOf(e, h) || {}).entry_id || null, account_role: a.role,
-          covers: Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : null, src_chit_id: c ? c.chit_id : null, src_purpose: c ? c.purpose || null : null,
-          src_ref: c ? (bj.printed_as || bj.bill_no || (bj.payment_received && bj.payment_received.no) || null) : null,
-          src_till: c ? ((bj.till && bj.till.id) || (bj.summary && bj.summary.till && bj.summary.till.id) || null) : null,
-          src_by: c && bj.till && bj.till.by !== undefined ? clone(bj.till.by) : null, by_name: who ? who.display_name : null,
-          src_parts: c ? clone((bj.payment && bj.payment.parts) || (bj.refund && bj.refund.parts) || null) : null,
-          recorded_at: h.created_at || null, src_created_at: c ? c.created_at || null : null,
-          src_billed_at: c ? (bj.billed_at || (bj.payment_received && bj.payment_received.at) || null) : null,
-          src_mode: c && bj.payment_received ? bj.payment_received.mode || null : null, src_cheque: c && bj.payment_received ? clone(bj.payment_received.cheque || null) : null,
-          tenders: Array.isArray(h.source_chit_ids) ? (() => { const t = T.lines.filter((x) => x.entry_id === h.entry_id && x.dr_minor > 0).sort((p, q) => p.line_no - q.line_no)
-            .map((x) => ({ role: (T.accounts.find((y) => y.account_id === x.account_id) || {}).role, dr_minor: x.dr_minor })).filter((x) => ['cash', 'upi', 'card', 'bank'].indexOf(x.role) >= 0); return t.length ? t : null; })() : null });
-      }).filter((l) => l.posting_date >= from && l.posting_date <= to).sort((x, y) => x.posting_date.localeCompare(y.posting_date) || x.entry_no.localeCompare(y.entry_no) || x.line_no - y.line_no);
+    /* PERF1: pg = { entries } | { limit, after, noOpening } — the real query's page (books-store pageSql): one entry more than asked, keyset (date, no) */
+    async entryLines(db, e, from, to, account_id, party_id, pg) {
+      const all = await allLines(e, from, to, account_id, party_id);
+      if (!pg) return all;
+      if (Array.isArray(pg.entries)) return all.filter((l) => pg.entries.indexOf(l.entry_id) >= 0);
+      const ids = [];
+      all.forEach((l) => { if (pg.noOpening && Number(l.period) === 0) return; if (pg.after && (l.posting_date < pg.after.date || (l.posting_date === pg.after.date && l.entry_no <= pg.after.no))) return; if (ids.indexOf(l.entry_id) < 0) ids.push(l.entry_id); });
+      const keep = ids.slice(0, Number(pg.limit || S.PAGE_DEFAULT) + 1);
+      return all.filter((l) => keep.indexOf(l.entry_id) >= 0);
+    },
+    async entryPage(db, e, from, to, account_id, party_id, pg) {
+      const lim = Math.min(S.PAGE_MAX, Math.max(1, Math.floor(Number(pg.limit) || S.PAGE_DEFAULT)));
+      const rows = await S.entryLines(db, e, from, to, account_id, party_id, Object.assign({}, pg, { limit: lim, entries: null }));
+      const ids = []; rows.forEach((l) => { if (ids[ids.length - 1] !== l.entry_id) ids.push(l.entry_id); });
+      if (ids.length <= lim) return { rows, next: null, limit: lim };
+      const keep = rows.filter((l) => l.entry_id !== ids[lim]), last = keep[keep.length - 1];
+      return { rows: keep, next: last ? { date: last.posting_date, no: last.entry_no } : null, limit: lim };
+    },
+    async pageSums(db, e, from, to, account_id, party_id, after, noOpening) {
+      const all = (await allLines(e, from, to, account_id, party_id)).filter((l) => !(noOpening && Number(l.period) === 0));
+      const before = (l) => after && after.date && (l.posting_date < after.date || (l.posting_date === after.date && l.entry_no <= String(after.no)));
+      const sum = (rows, k) => rows.reduce((t, l) => t + Number(l[k] || 0), 0), b = all.filter(before);
+      return { entries: new Set(all.map((l) => l.entry_id)).size, dr: sum(all, 'dr_minor'), cr: sum(all, 'cr_minor'), before_dr: sum(b, 'dr_minor'), before_cr: sum(b, 'cr_minor'), by_line: !!(account_id || party_id) };
     },
     async entries(db, e, from, to) { return clone(T.entries.filter((h) => h.entity_id === e && h.posting_date >= from && h.posting_date <= to)); },
     async yearRows(db, e, fy) {
-      return Array.from(T.balances.values()).filter((b) => b.entity_id === e && b.fiscal_year === fy)
+      const want = Array.isArray(fy) ? fy : [fy];   /* PERF1: one read for many years */
+      return Array.from(T.balances.values()).filter((b) => b.entity_id === e && want.indexOf(b.fiscal_year) >= 0)
         .map((b) => ({ fiscal_year: b.fiscal_year, period: b.period, code: T.accounts.find((a) => a.account_id === b.account_id).code, party_key: b.party_key, dr_minor: b.dr_minor, cr_minor: b.cr_minor }));
     },
     async ledgerLines(db, e, from, to, party) {
@@ -160,7 +187,7 @@ function create() {
     },
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
-    async items(db, e, party, account) { return clone(T.items.filter((i) => i.entity_id === e && (!party || i.party_id === party) && (!account || i.account_id === account))); },
+    async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
     async itemOwners(db, e, account, refs) { const seen = new Set(), out = []; T.items.filter((i) => i.entity_id === e && i.account_id === account && i.ref === i.against_ref && (refs || []).indexOf(i.ref) >= 0)
       .forEach((i) => { const k = i.ref + '|' + i.party_id; if (!seen.has(k)) { seen.add(k); out.push({ ref: i.ref, party_id: i.party_id }); } }); return out; },
     async itemTotals(db, e, account) { const m = {}; T.items.filter((i) => i.entity_id === e && i.account_id === account).forEach((i) => { m[i.party_id] = (m[i.party_id] || 0) + i.amount_minor; }); return Object.keys(m).map((k) => ({ party_id: k, total_minor: m[k] })); },
@@ -205,7 +232,7 @@ function create() {
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
-    async parties(db, e) { return clone(T.parties.filter((p) => p.owner === e)).map((p) => Object.assign(p, { on_rail: p.on_rail === true })); },
+    async parties(db, e, ids) { return clone(T.parties.filter((p) => p.owner === e && (!Array.isArray(ids) || ids.map(String).indexOf(String(p.party_id)) >= 0))).map((p) => Object.assign(p, { on_rail: p.on_rail === true })); },
     async partyOn(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },
     async partyNoOf(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return p ? p.party_no || null : null; },
     async setPartyNo(db, e, party, no) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); if (p && !p.party_no) p.party_no = no; },
@@ -269,13 +296,20 @@ function create() {
  *  tests/country-setup.test.cjs stands in its own rows for the other countries. Reassign fakeDb.countryRow to change the answer. */
 const fakeDb = {
   countryRow: { country: 'IN', currency_code: 'INR', gstn: '33AAAAA0000A1Z5', timezone: 'Asia/Kolkata', policy_flags: { gst_registration: 'regular' } },
-  query: async (text) => {
+  query: async (text, v) => {
     const t = String(text);
     if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
     if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
     /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] };
+    /* FIN-R1: the shop's default terms and every customer's own (lib/finance-terms.customerTerms) — T.shopTerms · T.parties[].terms */
+    const T = fakeDb.T || { parties: [] };
+    if (/^SELECT terms FROM books_setting/.test(t.trim())) return { rows: [{ terms: T.shopTerms || null }] };
+    if (/FROM customer_list WHERE owner_entity_id = \$1$/.test(t.trim()) && /customer_identity_id AS party_id/.test(t)) {
+      return { rows: T.parties.filter((p) => p.customer && p.owner === (v || [])[0]).map((p) => ({ party_id: p.party_id, credit_days: p.credit_days == null ? null : p.credit_days,
+        credit_limit_minor: p.credit_limit_minor == null ? null : String(p.credit_limit_minor), terms: p.terms || null })) };
+    }
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };

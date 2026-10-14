@@ -196,14 +196,16 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "PERF1, by hand: live = the gate read + ONE transaction — cheques · the listed parties' names (S.parties(ids), from the shop's two lists) · chart · the listed parties' items in ONE read per control account (≤ 2). It was one items read PER PARTY inside the loop (N+1). The offline stub answers 404 (ledger off): the floor."
     },
     "GET /api/books/daybook": {
       "file": "books.js",
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "PERF1, by hand: live = the gate read + ONE transaction — the lines (the reversals joined once per statement, not a LATERAL per line) · the page's parties' names (S.parties(ids)). With ?limit/?after: + 1 statement (S.pageSums — total · Σ Dr · Σ Cr of the range) in the same trip; ?entries=: none. 0 new trips."
     },
     "GET /api/books/dues": {
       "file": "books.js",
@@ -211,7 +213,7 @@
       "wire": 6,
       "fired": true,
       "status": 404,
-      "why": "F4 (by hand): ?side=supplier&finance=1 adds 3 reads inside the same transaction — cheques written (1) · Udyam ids (1) · supplier terms (1), + the terms-column check (lib/schema, cached). Nothing per party. FX1: + 1 read — the open foreign balances of the debtors / creditors in ONE grouped read (b392; the column check cached), so a party shows USD 1,000 · ₹83,250. The offline stub answers 404 (ledger off), so the line stays the floor."
+      "why": "F4 (by hand): ?side=supplier&finance=1 adds 3 reads inside the same transaction — cheques written (1) · Udyam ids (1) · supplier terms (1), + the terms-column check (lib/schema, cached). Nothing per party. FX1: + 1 read — the open foreign balances of the debtors / creditors in ONE grouped read (b392; the column check cached), so a party shows USD 1,000 · ₹83,250. T1-FINREW FIN-R1 (by hand): ?finance=1 with the customer side + 1 read — every customer's own days · limit · terms (customer_list, ONE grouped read) — and, once b298 has run, + 1 for the shop default terms (books_setting), both inside the same transaction; nothing per party. The offline stub answers 404 (ledger off), so the line stays the floor."
     },
     "GET /api/books/events": {
       "file": "books.js",
@@ -233,7 +235,8 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "PERF1, by hand: live = the gate read + ONE transaction — chart · the opening (B.ledgerOf: the year's month rows, every year in ONE read) · the lines. With ?limit/?after: + 1 statement (S.pageSums — the SUM before the cursor, the range's Σ and count) in the same trip. 0 new trips."
     },
     "GET /api/books/packs": {
       "file": "books.js",
@@ -318,7 +321,8 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "PERF1, by hand: the carry-forward reads every year it walks back through in ONE statement (books.yearBalances → S.yearRows([years])) — it was one statement per past year (≤ 30). 0 new trips."
     },
     "GET /api/books/year/:fy/status": {
       "file": "books.js",
@@ -375,7 +379,8 @@
       "trips": 1,
       "wire": 14,
       "fired": true,
-      "status": 200
+      "status": 200,
+      "why": "PERF1, by hand: party-fields.decorate reads the list rows, tax ids and open items of the parties ON THIS LIST only (ANY($2)) — same statements, 0 new trips."
     },
     "GET /api/crm/parties/:id": {
       "file": "crm.js",
@@ -994,6 +999,14 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/chits/assign-bulk": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T1-RAIL, by hand: 0 new trips — inside the one withEntity transaction, +1 statement per chit (statusGate reads the received copy before moving it to pending; the assignment UPDATE no longer sets current_status). The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
+    },
     "POST /api/counters": {
       "file": "counters.js",
       "trips": 1,
@@ -1090,7 +1103,8 @@
       "trips": 0,
       "wire": 0,
       "fired": true,
-      "status": 400
+      "status": 400,
+      "why": "T1-FINREW REW-L1 (by hand): the points claim is ONE withEntity transaction (lib/reward-store.claim: 2 advisory locks · the SUM read · the expiry read when the programme expires · 2 inserts) after the programme read; before it, 2 withEntity reads (programme · a 500-row fold) + 2 separate inserts. The stub answers 400 first, so the line stays the floor."
     },
     "POST /api/definitions": {
       "file": "definitions.js",
@@ -1168,6 +1182,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PUT /api/actors/assign/:chit_id": {
+      "file": "actors.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T1-RAIL, by hand: 0 new trips — inside the one withEntity transaction, pull/push +1 statement (statusGate reads the received copy, then the gated UPDATE); the status_pending timeline row is written only when the copy actually moved. The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
     },
     "PUT /api/governance/country-setup": {
       "file": "governance.js",
@@ -1417,6 +1439,22 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PUT /api/chits/:chit_id/status": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T1-RAIL, by hand: 0 new trips, 0 new statements — moveStatus's read and UPDATE are lib/rail-status statusGate's, in the same transaction; a sender's cancel gates its sent copy (+1 SELECT in the transaction it already opened). The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
+    },
+    "PUT /api/chits/:chit_id/void": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T1-RAIL, by hand: 0 new trips — the one withEntity transaction now reads each own copy (sent · received) and asks the rail before the UPDATE(s): +2 statements. A refused void (completed) answers 409 after that one transaction, writing nothing. The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
     },
     "PUT /api/chits/:id/use": {
       "file": "chits.js",

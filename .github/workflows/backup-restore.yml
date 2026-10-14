@@ -1,87 +1,84 @@
-# backup-restore.yml — A BACKUP NOBODY HAS RESTORED IS A RUMOUR (Athi, 2026-09-07: gap #2).
+# backup-restore.yml — THE BACKUP PATH, PROVEN ON A STAND-IN. A backup nobody has restored is a rumour (Athi, 2026-09-07: gap #2).
 #
-# Every night this takes a real dump of the production database, RESTORES IT into a throwaway Postgres in the same job, and counts what
-# came back. So the thing we prove is not "a file exists" but "the file can bring the business back". The dump is kept as a build
-# artifact, off Supabase and off Railway, which is the point of an off-platform copy.
+# ⚠️⚠️ THIS REPO IS PUBLIC — anyone signed in to GitHub can download its artifacts. Until 14 Oct (BKP1) this job dumped production and
+#    uploaded the dump UNENCRYPTED as an artifact here. It never ran (the secret was never set), so nothing leaked.
+#    The REAL nightly now lives in the PRIVATE repo maharishia07/chitbridge-engines (.github/workflows/backup-nightly.yml) and its
+#    secrets are set THERE — never here. docs/DEPLOY-RUNBOOK.md "Nightly backup" says how.
 #
-# ⚠️ IT NEEDS ONE SECRET, and it does nothing until it is set:
-#     GitHub → this repository → Settings → Secrets and variables → Actions → New repository secret
-#     Name:  BACKUP_DATABASE_URL
-#     Value: Supabase → Project Settings → Database → Connection string → **Session pooler** (IPv4; the direct host is IPv6-only
-#            and GitHub runners have no IPv6). A read-only role is enough and is the better choice.
-# ⚠️ THE SECRET IS NOT THE APP'S DATABASE_URL COPIED BLINDLY — the app connects through Railway's network; this one has to work from a
-#    public runner, which is why the pooler URI is named above.
-# ⚠️ Nothing here ever writes to production. It reads, and it restores into a container that is destroyed with the job.
+# What this job proves, with no secret and no upload: deploy/backup.sh (the one path, run by both repos) refuses without a
+# passphrase, encrypts a stand-in database (deploy/backup-dryrun.sql), cannot be read with the wrong passphrase, restores with the
+# right one into a throwaway Postgres, and counts the five key tables. tests/backup-guard.test.cjs fails any workflow that uploads a
+# plaintext dump.
 name: backup-restore
 
 on:
-  schedule:
-    - cron: '30 20 * * *'       # 20:30 UTC = 02:00 IST, the quietest hour for an Indian shop
+  push:
+    paths: ['deploy/backup*', '.github/workflows/**', 'tests/backup-guard.test.cjs']
+  pull_request:
+    paths: ['deploy/backup*', '.github/workflows/**', 'tests/backup-guard.test.cjs']
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  prove-the-backup:
+  dry-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     services:
       scratch:
-        image: postgres:16
+        image: postgres:17
         env:
           POSTGRES_PASSWORD: scratch
-          POSTGRES_DB: restored
         ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      PGPASSWORD: scratch
+      PG: postgresql://postgres@localhost:5432
     steps:
-      - name: Is the secret set?
-        run: |
-          if [ -z "${{ secrets.BACKUP_DATABASE_URL }}" ]; then
-            echo "BACKUP_DATABASE_URL is not set — see the header of this file. Nothing was backed up."
-            exit 1
-          fi
+      - uses: actions/checkout@v4
 
-      - name: Postgres 16 client (the server is 15+; an older pg_dump refuses)
+      - name: No workflow uploads a plaintext dump (the guard)
+        run: node tests/backup-guard.test.cjs
+
+      - name: Postgres 17 client (the same as the nightly — pg_dump refuses a newer server)
         run: |
           set -euo pipefail
           sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/pgdg.gpg
           sudo sed -i 's|deb |deb [signed-by=/usr/share/keyrings/pgdg.gpg] |' /etc/apt/sources.list.d/pgdg.list
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
 
-      - name: Take the dump
+      - name: A stand-in production database
+        run: |
+          set -euo pipefail
+          for d in source restored wrong empty; do psql -q "$PG/postgres" -c "CREATE DATABASE $d"; done
+          bash deploy/backup.sh prepare "$PG/source"
+          psql -q -v ON_ERROR_STOP=1 "$PG/source" -f deploy/backup-dryrun.sql
+
+      - name: Refuses without a passphrase — and keeps nothing
         env:
-          URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_DATABASE_URL: ${{ env.PG }}/source
+        run: |
+          if bash deploy/backup.sh take "$RUNNER_TEMP/none.enc"; then echo "took a backup with no passphrase"; exit 1; fi
+          [ ! -e "$RUNNER_TEMP/none.enc" ] && [ ! -e "$RUNNER_TEMP/none.enc.part" ] || { echo "a file was left behind"; exit 1; }
+
+      - name: Encrypt → wrong key fails → decrypt → restore → count
+        env:
+          BACKUP_DATABASE_URL: ${{ env.PG }}/source
         run: |
           set -euo pipefail
-          stamp=$(date -u +%Y-%m-%d)
-          pg_dump --no-owner --no-privileges --schema=public --format=custom --file="cb-$stamp.dump" "$URL"
-          ls -lh "cb-$stamp.dump"
-          echo "STAMP=$stamp" >> $GITHUB_ENV
-
-      - name: Restore it into a throwaway database
-        run: |
-          set -euo pipefail
-          export PGPASSWORD=scratch
-          pg_restore --no-owner --no-privileges --dbname "postgresql://postgres@localhost:5432/restored" "cb-$STAMP.dump" 2>&1 | tail -20 || true
-          psql "postgresql://postgres@localhost:5432/restored" -c "\dt" | head -30
-
-      - name: Count what came back — the actual proof
-        run: |
-          set -euo pipefail
-          export PGPASSWORD=scratch
-          DB="postgresql://postgres@localhost:5432/restored"
-          for t in identities chit_header chit_status products; do
-            n=$(psql "$DB" -tAc "SELECT count(*) FROM $t" 2>/dev/null || echo "MISSING")
-            echo "$t: $n"
-            [ "$n" = "MISSING" ] && { echo "table $t did not come back"; exit 1; }
-          done
-          # a restore that brings back an empty shell passes a row count of zero; refuse that too
-          n=$(psql "$DB" -tAc "SELECT count(*) FROM identities")
-          [ "$n" -gt 0 ] || { echo "identities restored empty — the dump is not usable"; exit 1; }
-
-      - name: Keep the dump off-platform
-        uses: actions/upload-artifact@v4
-        with:
-          name: cb-backup-${{ env.STAMP }}
-          path: cb-*.dump
-          retention-days: 30
+          BACKUP_PASSPHRASE="$(openssl rand -base64 32)"; export BACKUP_PASSPHRASE
+          cd "$RUNNER_TEMP"
+          bash "$GITHUB_WORKSPACE/deploy/backup.sh" take cb-dry.enc
+          if grep -q PGDMP cb-dry.enc; then echo "the dump is readable in the file"; exit 1; fi
+          if BACKUP_PASSPHRASE=not-the-key-not-the-key bash "$GITHUB_WORKSPACE/deploy/backup.sh" prove cb-dry.enc "$PG/wrong"; then
+            echo "decrypted with the wrong passphrase"; exit 1; fi
+          bash "$GITHUB_WORKSPACE/deploy/backup.sh" prove cb-dry.enc "$PG/restored"
+          # an empty shell restores too; the proof must refuse it
+          psql -q "$PG/source" -c "TRUNCATE public.identities CASCADE"
+          bash "$GITHUB_WORKSPACE/deploy/backup.sh" take cb-empty.enc
+          if bash "$GITHUB_WORKSPACE/deploy/backup.sh" prove cb-empty.enc "$PG/empty"; then echo "an empty backup passed"; exit 1; fi
+          echo "dry run: OK — nothing uploaded"
