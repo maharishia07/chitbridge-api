@@ -4,6 +4,13 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## lib/stock-from-chit `postFor` → `skipped[].code` · log `stock.from-chit` `refused[]` (STK-FIX1b, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `skipped[].code` (new) | `batch_unreadable` · `expiry_unreadable` · `no_cost` · `not_stock_use` · `not_stock_asset` | Derived per line by `movementsFor` (the sentence stays in `why`; a caller branches on `code`, never on the words). Written by: `stock-from-chit.lotOf` (the two unreadable codes) · the use / cost checks. Read by: `routes/chits.js` sendStock's log (`refused[]` = the two unreadable codes with `line_ref · item_id · code · why`). The postFor result is not a route answer today — the chit route posts stock after it has replied, so a refusal is in the log, not on the counter (the standing trade stated in stock-from-chit.js). |
+| `stock_movement.lot` · `stock_balance.lot` (unchanged slot, corrected value) | the batch CODE, `lotfields.lotKey`-normalised (trimmed, upper-cased, ≤ 64); `''` for untracked stock | Written only by `stock-store.post` from `movementsFor`'s `lot`, a string from `gs1.lotOf` (door shape `item_data.lot.{batch,expiry}` · serial · bare code · typed GS1 `(10)…(17)…` · flat `item_data.batch/expiry`). Never an object. `expires_at` = the line's ISO expiry (or best-before), captured once (b215). Migrations b598 (report) · b599 (repair) for rows the old reader keyed `[OBJECT OBJECT]`. |
+
 ## /api/actors · /api/people · `pin_state` · `email` · the owner refusal (SEC2, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

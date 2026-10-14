@@ -1913,6 +1913,9 @@ async function sendStock(st, req, res) {
             require('../lib/logger').warn('stock.from-chit', {
               chit_id, entity_id: sender_id, moved: r.moved, duplicate: r.duplicate,
               skipped: r.skipped.length, failed: r.failed,
+              /* STK-FIX1b: a REFUSED line (an unreadable batch or expiry) is named with its sentence and code — a count alone is silence */
+              refused: r.skipped.filter((s) => s.code === 'batch_unreadable' || s.code === 'expiry_unreadable')
+                                .map((s) => ({ line_ref: s.line_ref, item_id: s.item_id, code: s.code, why: s.why })),
             });
           } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
         })
