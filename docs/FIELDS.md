@@ -698,3 +698,13 @@ No SQL, no new stored key. Who WRITES changed; what is stored did not.
 | `FLAGS[key].may` · `.may_why` | `'owner'` · sentence | derived (code). `system_folders`, `books`. Read by `policy.refusalFor` in `PATCH /api/entities/policy` (403 `OWNER_ONLY`). |
 | `bound_schema` (GET /api/entities/policy) | `{ dispute_scope: { type, options, def, ui } }` | derived (code). Read by the card for its locked row. |
 | `identities.gstn` · `identities.address` (the shop's own row) | text | source. Written ONLY through `lib/profile.js` `setShopIdentity` / `shopIdentitySql` (PATCH /entities/profile · country setup · the profile sync · a network store's place · the vault save's write-through). The tax number is checked by `profile.taxIdRefusal(country, number)` — the pack `taxIdWordOf` names (GSTIN checksum · ABN · TRN · ≤ 40 for no pack). A party's row (`parent_entity_id`) is the counterparty's, not this. |
+
+## RAIL-LAB-SRV1 (2026-10-14) · the Rail Lab's may/why and the lab chit — `GET /api/facts/rail` · `POST /api/chits/send`
+
+No SQL, no new column. The ONE "is this a lab shop" rule is b249's population axis (`lib/istest.js` `isLab` · `maySample`): a lab shop is a shop whose `identities.population` is not `live`; an unstated population is live (fail safe).
+
+| key | shape | source / derived · writer · readers |
+|---|---|---|
+| `GET /api/facts/rail` `may_sample` (new) | `{ ok: true }` · `{ ok: false, why: 'live_shop', say }` | derived (code, `lib/istest.maySample` over the population read in `home-facts.railScope` — the overdue_days statement, no extra trip). Always present. Read by the Rail Lab (web, to come): the action shown, greyed with `say`; branches on `why`, never the words. |
+| `summary_json.lab` (new rider) | `true` — absent on every other chit | derived from what the sender declares as `business_json.lab: true` (the `is_promotion` path). Written ONLY by routes/chits.js `sendSummary` through `mint.summary` (whitelist `lab`), after `sendLab` proved the shop may. Rides every co-held copy. Readers: the Rail Lab's own list (to come); the CRM / Task lists ignore it today. |
+| 409 of `POST /api/chits/send` (new) | `{ error, code: 'LAB_CHIT_LIVE_SHOP', may: false, why: 'live_shop', message }` | derived: `sendLab` — a lab chit declared from a live shop, refused before anything is written (one identities read, only when `lab` is declared). `message` = `istest.LAB_WHY.live_shop`, the same sentence the facts card says. |

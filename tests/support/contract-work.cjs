@@ -24,6 +24,12 @@ async function captureWork() {
     keep('GET', '/list', await S.get('/api/work/list?view=orders_in'));
     keep('GET', '/:chit_id', await S.get('/api/work/' + S.U(1)));
     S.as({});
+    /* RAIL-LAB-SRV1: the Home rail card — may_sample is the server's may/why: a live shop refused with why + say, a lab (test) shop { ok: true }
+       (both fired, so `why` / `say` are optional in the example and a client sees each shape) */
+    const rail = (r) => { const k = 'GET /api/facts/rail'; got[k] = got[k] || { status: r.status, bodies: [] }; got[k].bodies.push(r.body); return r; };
+    S.D.population = 'live'; rail(await S.get('/api/facts/rail'));
+    S.D.population = 'test'; rail(await S.get('/api/facts/rail'));
+    S.D.population = undefined;
   } finally { S.stop(); }
   return got;
 }

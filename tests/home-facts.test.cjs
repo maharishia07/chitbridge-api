@@ -76,7 +76,8 @@ function answer(text, params) {
   if (/FROM catalogue_items/.test(sql)) return { rows: [{ items: 10, no_cost: 4, cost: SECRET, item_data: { cost: { value: SECRET } } }] };
   if (/FROM combo_templates/.test(sql)) return { rows: [{ n: 2 }] };
   if (/FROM definition WHERE/.test(sql)) return { rows: [{ drafts: 1, live: 5 }] };
-  if (/policy_flags->'overdue_days'/.test(sql)) return { rows: [{ overdue_days: null }] };
+  /* RAIL-LAB-SRV1: the population rides the overdue_days statement (to_jsonb: null before b249 = live) */
+  if (/policy_flags->'overdue_days'/.test(sql)) { F.railSql = sql; return { rows: [{ overdue_days: null, population: F.population === undefined ? null : F.population }] }; }
   /* CB CRM's two list reads (lib/crm.rows) - the rail counts what CRM lists: the hidden and the merged-away rows are not parties */
   const party = (id, extra) => Object.assign({ party_id: id, display_name: 'P ' + id, user_id: 'u' + id, status: 'active', on_rail: true, same_world: true }, extra);
   if (/FROM customer_list cl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('c1'), party('c2'), party('c3'), party('c4'), party('c5', { hidden_at: '2026-10-01' }), party('b1')] }; }
@@ -211,14 +212,23 @@ const get = (port, p) => new Promise((ok) => {
 
   /* rail */
   r = await g('rail');
-  t('rail: { suppliers, customers, in, out, tasks, stuck } - parties are CRM\'s (hidden and merged rows are not parties); in/out/tasks are the Tasks folders', r.json, { suppliers: 3, customers: 5, in: 1, out: 1, tasks: 1, stuck: 1 });
+  /* RAIL-LAB-SRV1 (G1): may_sample is the SERVER's may/why - a live shop (population null = the default, live) is refused with a code and a sentence */
+  const LIVE_NO = { ok: false, why: 'live_shop', say: 'This is a live shop, so a lab chit cannot be sent from it. Try it in a test shop.' };
+  t('rail: { suppliers, customers, may_sample, in, out, tasks, stuck } - parties are CRM\'s (hidden and merged rows are not parties); in/out/tasks are the Tasks folders; may_sample the lab rule', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 1, stuck: 1 });
+  t('rail: the population rides the overdue_days statement (to_jsonb - no failed query before b249, no second identities read)', /to_jsonb\(i\)->>'population'/.test(F.railSql) && sent.filter((q) => /policy_flags->'overdue_days'/.test(q)).length === 1, true);
   /* ⭐ TOUR-FIX1 (Home said 187 in, Tasks › Orders in said 0): the rail and Tasks & Orders answer from ONE reader — the same numbers, asked both ways */
   const wf = await get(port, '/api/work/facts'), wl = await get(port, '/api/work/list?view=orders_in');
   t('rail in / out / tasks === GET /api/work/facts counts (orders_in · orders_out · tasks) === the Orders in list\'s own total', [r.json.in, r.json.out, r.json.tasks, wl.json.total], [wf.json.counts.orders_in, wf.json.counts.orders_out, wf.json.counts.tasks, wf.json.counts.orders_in]);
   t('rail: at most 3 trips', r.trips <= 3, true);
+  F.population = 'live'; r = await g('rail');
+  t('rail: a shop whose population is stated live is refused the same way', r.json.may_sample, LIVE_NO);
+  F.population = 'test'; r = await g('rail');
+  t('rail: a lab (test) shop may sample - { ok: true }, the counts unchanged', r.json, { suppliers: 3, customers: 5, may_sample: { ok: true }, in: 1, out: 1, tasks: 1, stuck: 1 });
+  t('rail: the answer is lib/istest.maySample - one rule for the card and the send door', JSON.stringify(require(API + '/lib/istest').maySample('test')) === JSON.stringify(r.json.may_sample) && JSON.stringify(require(API + '/lib/istest').maySample(null)) === JSON.stringify(LIVE_NO), true);
+  F.population = undefined;
   t('rail: both CRM list reads leave the shop itself out (H3)', F.crmSql.length >= 2 && F.crmSql.every((q) => /<> \$1/.test(q)), true);
   F.chits = 'own'; r = await g('rail');
-  t('rail: a chit the shop sent to itself is never stuck - an open one is a task, a closed one is nothing', r.json, { suppliers: 3, customers: 5, in: 1, out: 1, tasks: 2, stuck: 1 });
+  t('rail: a chit the shop sent to itself is never stuck - an open one is a task, a closed one is nothing', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 2, stuck: 1 });
   r = await get(port, '/api/facts/rail/chits');
   t('rail/chits: a note to self is listed (In tab) with stuck:false, self:true, no reason; stuck rows still number the rail', [r.json.items.filter((i) => i.stuck).map((i) => i.chit_id), r.json.items.find((i) => i.chit_id === 'cs1').self, r.json.items.find((i) => i.chit_id === 'cs1').why, r.json.items.some((i) => i.chit_id === 'cs2')], [['a'], true, null, false]);
   F.chits = 'few';
@@ -229,7 +239,7 @@ const get = (port, p) => new Promise((ok) => {
   t('rail/chits: an expense with no total shows its own amount and is flagged own (the list hides it by default)', [exp.value, exp.own], [90, true]);
   F.chits = 'few';
   F.chits = 'many'; r = await g('rail');
-  t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number)', r.json, { suppliers: 3, customers: 5 });
+  t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number) - may_sample is still answered', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO });
   F.chits = 'few';
 
   /* the chits behind the numbers (H1/H4/H10) */
