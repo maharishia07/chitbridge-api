@@ -4,6 +4,16 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## GET /api/counters · `may.manage` · GET /api/entities/policy · `may` · GET /api/facts/counters (T3-SETTINGS, 2026-10-14)
+
+CB Settings › Counters & keys / Policy greys an action with the server's answer; the client branches on `ok` / `code`, never on `why`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `may.manage` (GET /api/counters, new) | `{ ok, code: null\|'OWNER_ONLY', why: string\|null }` | Derived per read by `lib/owner.may` — the same test and sentence as `lib/owner.gate`, which refuses every counters write (POST · PATCH · open · release · assign) with 403 `code:'OWNER_ONLY'`. Written by nobody. Read by web cap-settings.js (Add · Open on this PC · Release · Save the name). |
+| `may[flag]` (GET /api/entities/policy, new) | `{ [flag]: { ok, code: null\|'OWNER_ONLY'\|'PLATFORM_BOUND', why } }` — one per `lib/policy` FLAGS key + each BOUND key | Derived per read by `policyMay` (routes/entities.js) from `POLICY_OWNER_ONLY` (the map the PATCH refuses from, 403 `code:'OWNER_ONLY'`) and `policy.BOUND`. Read by web cap-settings.js (Policy · the connectors-in-use switch). |
+| `lines` · `figures` (GET /api/facts/counters, new card) | `{ lines:[{ text, value }], figures:{ counters, counters_open, keys } }` | Derived by `lib/home-facts.counters` from the till card's REGISTER_SQL (one trip) and its open rule. `keys` counts open non-till keys. Read by web shell.js (the manifest row `counters`). |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
