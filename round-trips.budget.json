@@ -453,14 +453,15 @@
       "wire": 14,
       "fired": true,
       "status": 200,
-      "why": "PERF1, by hand: party-fields.decorate reads the list rows, tax ids and open items of the parties ON THIS LIST only (ANY($2)) — same statements, 0 new trips."
+      "why": "PERF1, by hand: party-fields.decorate reads the list rows, tax ids and open items of the parties ON THIS LIST only (ANY($2)) — same statements, 0 new trips. MKT-SRV1 by hand: ?with=consent adds ONE statement (the newest b306 row per party × channel × purpose, in a savepoint) inside lib/crm.rows' own transaction — 0 new trips; total/page/limit slice in memory."
     },
     "GET /api/crm/parties/:id": {
       "file": "crm.js",
       "trips": 1,
-      "wire": 11,
+      "wire": 14,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "MKT-SRV1 G5 (raised 11 → 14 statements, 0 new trips): contact_prefs is the newest b306 rows for this party, read inside lib/crm.rows' own transaction in a savepoint (SAVEPOINT · SELECT · RELEASE) so a shop before b306 still opens the record"
     },
     "GET /api/crm/parties/:id/timeline": {
       "file": "crm.js",
@@ -482,7 +483,7 @@
       "trips": 50,
       "wire": null,
       "fired": false,
-      "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
+      "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip. MKT-SRV1 G4: the counts and one page are ONE statement (WITH c … LEFT JOIN LATERAL) — still 1 trip",
       "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
     },
     "GET /api/definitions": {
@@ -562,6 +563,14 @@
       "fired": false,
       "extra": true,
       "why": "T3-DISPUTES-ASSIST, by hand: 1 trip — one count over assist_qa (the platform's library, no shop context)."
+    },
+    "GET /api/facts/marketing": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": null,
+      "fired": false,
+      "why": "MKT-SRV1 G3, by hand: ONE withEntity, ONE statement (the newest b306 marketing row per party × channel, counted). Before b306: 42P01 → `unavailable` in words, still 1 trip",
+      "awaiting_client": { "pr": "MKT web round: the Marketing card on Home / CB CRM", "since": "2026-10-14" }
     },
     "GET /api/facts/offer-lab": {
       "file": "facts.js",
@@ -1212,7 +1221,7 @@
       "trips": 50,
       "wire": null,
       "fired": false,
-      "why": "answered 503 on the stub"
+      "why": "answered 503 on the stub. MKT-SRV1 G2 by hand: an OUT call/message asks privacy.gate inside the SAME withEntity (to_regclass once per process + one SELECT … LIMIT 1) — 0 new trips; the route stays 1 trip"
     },
     "POST /api/crm/parties/:id/contact-prefs": {
       "file": "crm.js",

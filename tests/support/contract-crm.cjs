@@ -52,6 +52,9 @@ async function captureCrm() {
     /* the stage trail the timeline reads (FX-L2C): newest first, LIMIT + 1 */
     if (/^SELECT membership_id, grp, at, by_user_id FROM memberships/.test(sql)) { if (!mem.on) throw Object.assign(new Error('relation "memberships" does not exist'), { code: '42P01' }); return { rows: mem.rows.filter((m) => m.item_id === p[1] && m.at < p[2]).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, p[3]).map((m, i) => ({ membership_id: m.membership_id || 'mm' + i, grp: m.grp, at: m.at, by_user_id: 'E1' })) }; }
     if (/^INSERT INTO memberships/.test(sql)) { const r = { item_id: p[2], kind: p[3], grp: p[4], at: '2026-10-10T09:00:00.000Z', membership_id: 'mm1' }; mem.rows.push(r); return { rows: [r] }; }
+    /* CO1 · MKT-SRV1: b306 not run here (a fresh install) — the consent gate reads no rows; the record's contact_prefs says migrated: false */
+    if (/^SELECT to_regclass\(\$1\) IS NOT NULL AS ok/.test(sql)) return { rows: [{ ok: false }] };
+    if (/^SELECT DISTINCT ON \(party_id, channel, purpose\)/.test(sql)) throw Object.assign(new Error('relation "party_contact_pref" does not exist'), { code: '42P01' });
     if (/^SELECT EXISTS \(SELECT 1 FROM customer_list/.test(sql)) return { rows: [{ ok: D.cust.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
     if (/^SELECT txn_count FROM customer_list/.test(sql)) { const r = D.cust.find((x) => x.owner === p[0] && x.party_id === p[1] && x.added_via === 'lead'); return { rows: r ? [{ txn_count: r.txn_count }] : [] }; }
     return null;
@@ -81,6 +84,7 @@ async function captureCrm() {
   F.forget();
   try {
     keep('GET', '/parties', await t.get('/parties'));
+    keep('GET', '/parties', await t.get('/parties?with=consent'));   /* MKT-SRV1 G1: each party's contact_prefs { migrated, may } + consent_migrated */
     keep('GET', '/parties/:id', await t.get('/parties/' + P(2)));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(8)));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(3)));
