@@ -8,14 +8,12 @@
 // this file only executes it. Owned nodes are created; partners are invited and never created.
 const express = require('express');
 const router  = express.Router();
-const crypto  = require('crypto');
-const { v4: uuidv4 } = require('uuid');
 const { query, withEntity } = require('../db');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
-const { currencyRefusal } = require('../lib/govresolve');   // may this entity price in this currency?
 const handleLib = require('../lib/handle');
 const networkBuild = require('../lib/network-build');
+const run = require('../lib/network-build-run');          // the build's steps that read and write (T2-SPLIT)
 const visibilityCap = require('../lib/visibility-cap');
 const devOtp = require('../lib/dev-otp');
 const money = require('../lib/money');                    // a price is {amount,currency} — never a bare number
@@ -65,10 +63,8 @@ router.put('/', auth, async (req, res) => {
      *
      * Re-attached BY KEY, so "start over" — which mints fresh keys — still starts over.
      */
-    const prev = await withEntity(e, (db) => db.query(
-      'SELECT draft FROM network_design WHERE entity_id = $1', [e]));
-    const prevNodes = (prev.rows[0] && prev.rows[0].draft && Array.isArray(prev.rows[0].draft.nodes))
-      ? prev.rows[0].draft.nodes : [];
+    const prevDraft = await run.designOf(e);
+    const prevNodes = (prevDraft && Array.isArray(prevDraft.nodes)) ? prevDraft.nodes : [];
     if (prevNodes.length && Array.isArray(draft.nodes)) {
       const receipts = new Map();
       prevNodes.forEach((n) => { if (n && n.key && (n.built || n.invited)) receipts.set(n.key, n); });
@@ -109,27 +105,7 @@ router.put('/', auth, async (req, res) => {
  *  then failed to record that it had would offer to create them again.
  * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
-const BRIDGE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // no I/O/0/1 — these get read out over the phone
-const newBridgeId = () => 'CB' + Array.from({ length: 8 }, () => BRIDGE_CHARS[crypto.randomInt(BRIDGE_CHARS.length)]).join('');
-// devOtp.fixedOtp() and NEVER process.env.DEV_OTP directly: a sealed environment must degrade to a real random
-// code even if the variable somehow survived deploy. That is the whole reason lib/dev-otp.js exists.
-const newClaimCode = () => devOtp.fixedOtp('entity') || String(crypto.randomInt(100000, 1000000));
-const CLAIM_DAYS = 7;
-
-/** ltree labels allow [A-Za-z0-9_] only. Bridge ids already qualify; the guard is for anything that ever won't. */
-const label = (bridgeId) => String(bridgeId).toUpperCase().replace(/[^A-Z0-9_]/g, '_');
-
-/** The cap on what the OPERATOR may choose. A minted node can never be more open than the network that minted it. */
-async function operatorCap(entityId) {
-  let plan = null, paramsOverride = {};
-  try {
-    const r = await query('SELECT plan, params_override FROM identities WHERE identity_id = $1', [entityId]);
-    if (r.rows[0]) { plan = r.rows[0].plan; paramsOverride = r.rows[0].params_override || {}; }
-  } catch (_) { /* pre-governance schema — capOf() then reports unenforced */ }
-  let planMenu = null;
-  try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (_) {}
-  return visibilityCap.capOf({ plan, planMenu, paramsOverride });
-}
+const { newClaimCode, CLAIM_DAYS } = run;   // the claim code and its life — one minting place (lib/network-build-run.js), /reissue uses it too
 
 /**
  * POST /api/network-design/validate   { draft?: { nodes: [...] }, root_handle?: string, ceiling?: 'public'|'network'|'private', sample?: bool }
@@ -155,10 +131,7 @@ router.post('/validate', auth, async (req, res) => {
     if (draft && Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) {
       return res.status(413).json({ error: 'Too large', message: 'design exceeds ' + MAX_BYTES + ' bytes' });
     }
-    if (!draft && !sample) {
-      const d = await withEntity(me, (db) => db.query('SELECT draft FROM network_design WHERE entity_id = $1', [me]));
-      draft = d.rows.length ? d.rows[0].draft : null;
-    }
+    if (!draft && !sample) draft = await run.designOf(me);
     const nodes = (draft && Array.isArray(draft.nodes)) ? draft.nodes : [];
     let rootHandle = String(body.root_handle || '').trim().toLowerCase();
     if (!rootHandle && !sample) {
@@ -166,12 +139,7 @@ router.post('/validate', auth, async (req, res) => {
       rootHandle = String((r.rows[0] && r.rows[0].user_id) || '').trim().toLowerCase();
     }
     if (!rootHandle) rootHandle = 'sample';
-    let taken = [];
-    if (!sample && handleLib.check(rootHandle).ok) {
-      const t = await query(
-        'SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1', [rootHandle + '.%']);
-      taken = t.rows.map((x) => x.h);
-    }
+    const taken = (!sample && handleLib.check(rootHandle).ok) ? await run.takenUnder(rootHandle) : [];
     const ceiling = visibilityCap.RANK[String(body.ceiling || '').toLowerCase()] !== undefined ? String(body.ceiling).toLowerCase() : 'public';
     res.json(Object.assign({ dry_run: true, sample }, networkBuild.validate({ rootHandle, nodes, taken, ceiling })));
   } catch (err) { res.status(500).json({ error: 'Check failed', message: safeErr(err) }); }
@@ -194,147 +162,32 @@ router.post('/build', auth, async (req, res) => {
     const me = req.identity.identity_id;
     const dryRun = req.body && req.body.dry_run === true;
 
-    const meRow = (await query(
-      `SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility
-         FROM identities WHERE identity_id = $1`, [me])).rows[0];
+    const meRow = await run.meRowOf(me);
     if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
 
-    // ── 1 · THE ROOT NAME ────────────────────────────────────────────────────────────────────────────────────
-    // Every handle in the network is built from it, so it is settled before anything else is considered.
-    const askedRoot = String((req.body && req.body.root_handle) || '').trim().toLowerCase();
-    let rootHandle = String(meRow.user_id || '').trim().toLowerCase();
-    let rootClaimed = false;
+    // ── 1 · THE ROOT NAME — every handle in the network is built from it, so it is settled first (run.rootOf)
+    const root = await run.rootOf(meRow, req.body && req.body.root_handle);
+    if (root.refuse) return res.status(root.refuse.status).json(root.refuse.body);
+    const { rootHandle, rootClaimed } = root;
 
-    if (rootHandle) {
-      const rc = handleLib.check(rootHandle);
-      if (!rc.ok) {
-        // They already have a User ID that cannot be a network root (an email address, most likely). Changing it
-        // would break every reference anyone already holds to them, so this is theirs to decide, not ours.
-        return res.status(409).json({ error: 'Root name unusable', code: 'ROOT_HANDLE_UNUSABLE',
-          message: `Your User ID "${meRow.user_id}" cannot be a network name: ${rc.reason} Change your User ID in Settings first — every store in the network is named from it.`,
-          suggestion: handleLib.slug(meRow.display_name) || null });
-      }
-    } else {
-      /**
-       * ⭐⭐ CLAIMING A USER ID IS A DECISION, NOT A SIDE EFFECT OF DESIGNING A NETWORK.
-       *
-       * Athi, 2026-08-19: *"where from key@platform-of-platform — this platform came from? This is the name I
-       * gave in network screen while trying to design the network. The original user id for this network is
-       * mytest."*
-       *
-       * ⚠️⚠️ HE HAD FOUND A REAL ONE. With no User ID set, this branch took the DESIGN LABEL he typed on the
-       * network screen — or, failing that, a slug of his display name — and wrote it to identities.user_id as
-       * his permanent platform identity. `slug("Platform of Platform")` → `platform-of-platform`, which is
-       * exactly what he saw. The disclosure existed, as one clause mid-sentence in a confirm dialog.
-       *
-       * ⚠️ AND ONCE STORES EXIST IT CANNOT BE TAKEN BACK. Every store below is named `<root>.<store>`, so
-       * changing the User ID afterwards orphans them from their root. Athi had NOT built when he reported this
-       * — nothing was written, and the value he saw was the SCREEN'S GUESS. That is the narrower and more
-       * interesting version of the bug: the guess is displayed in enough places to read as a fact, and this
-       * branch is where a fact is what it would have become.
-       *
-       * ⭐ A value that cannot be taken back must not be inferred from a label someone typed while sketching a
-       * diagram — whether or not anyone has reached that point yet.
-       *
-       * ⭐ SO IT NOW REFUSES AND ASKS. A slug of the display name is offered as a SUGGESTION — never applied —
-       * because display_name is not unique and is not an identifier; it is a name, and the two are the
-       * distinction this whole area keeps getting wrong.
-       *
-       * ⚠️ EXPLICIT INTENT STILL WORKS: a caller that sends `root_handle` has chosen. What is refused is the
-       * INFERENCE — a build with no User ID and no stated root.
-       */
-      if (!askedRoot) {
-        return res.status(409).json({
-          error: 'User ID needed',
-          code: 'ROOT_HANDLE_NEEDED',
-          message: 'Set your User ID before building a network. Every store below is named from it '
-            + '(<your-user-id>.store), and it cannot be changed afterwards without orphaning them — so it is '
-            + 'yours to choose, not ours to guess from a diagram label.',
-          suggestion: handleLib.slug(meRow.display_name) || null,
-          where: 'Profile › IAM',
-        });
-      }
-      const want = askedRoot;
-      const rc = handleLib.check(want);
-      if (!rc.ok) {
-        return res.status(400).json({ error: 'Root name unusable', code: 'ROOT_HANDLE_NEEDED',
-          message: `Choose a network name. "${want || meRow.display_name}" will not do: ${rc.reason}` });
-      }
-      const clash = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [want]);
-      if (clash.rows.length) {
-        return res.status(409).json({ error: 'Root name taken', code: 'ROOT_HANDLE_TAKEN',
-          message: `"${want}" is already taken. Choose another network name.` });
-      }
-      rootHandle = want;
-      rootClaimed = true;   // written inside the transaction below, not here
-    }
-
-    // ── 2 · THE DESIGN ───────────────────────────────────────────────────────────────────────────────────────
-    const design = await withEntity(me, (db) => db.query(
-      'SELECT draft FROM network_design WHERE entity_id = $1', [me]));
-    const draft = design.rows.length ? design.rows[0].draft : null;
+    // ── 2 · THE DESIGN
+    const draft = await run.designOf(me);
     const nodes = (draft && Array.isArray(draft.nodes)) ? draft.nodes : [];
     if (!nodes.length) {
       return res.status(400).json({ error: 'Nothing designed',
         message: 'Draw the network first — add the branches and units you want, then build.' });
     }
+    const taken = await run.takenUnder(rootHandle);
+    const live = await run.liveOf(nodes);
 
-    // Only handles under this root can collide with a child of this root, so this stays one small query however
-    // many entities exist on the platform.
-    const takenRows = await query(
-      `SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1`,
-      [rootHandle + '.%']);
-    const taken = takenRows.rows.map((r) => r.h);
-
-    // What the already-built stores are ACTUALLY set to. Read fresh, never taken from the draft: a design that has
-    // drifted must not be able to assert its way back over a live store. One query for all of them.
-    const live = {};
-    const builtBridges = nodes.map((n) => n && n.built && n.built.bridge_id).filter(Boolean);
-    if (builtBridges.length) {
-      const lr = await query(
-        'SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)', [builtBridges]);
-      // The whole row: the planner compares visibility, purpose, order AND place against it.
-      lr.rows.forEach((r) => { live[r.bridge_id] = r; });
-    }
-
-    // ── 3 · THE CAP ──────────────────────────────────────────────────────────────────────────────────────────
-    // Resolved BEFORE planning: it is now the top of a cascade that runs the whole depth of the tree, not a filter
-    // applied to each node afterwards. Every node's ceiling is its parent's effective visibility, and the root's
-    // ceiling is this.
-    let cap = await operatorCap(me);
-    /**
-     * ── A PRIVATE NETWORK CANNOT CONTAIN A PUBLIC STORE ─────────────────────────────────────────────────────
-     * Athi, 2026-08-07: *"what if the network is private? Then each store can have only network or private
-     * options."*
-     *
-     * Right, and nothing enforced it. The cap was read from the operator's params_override — what somebody ELSE
-     * capped the operator at — and ignored the operator's OWN choice. So a network that had declared itself
-     * closed could still mint public shops under it, and `/api/catalogue/network/:root` would front them on a
-     * public page the operator never meant to have.
-     *
-     * `network` narrows it too: an operator that is itself only visible to its own network cannot put a member
-     * in front of the public either.
-     *
-     * ⚠️ This bounds only what the NETWORK BUILD may set. An entity that publishes itself directly is unaffected
-     * — that is its own business, and this is a cascade from an operator to the nodes it provisions.
-     */
-    const netVis = String(meRow.catalogue_visibility || '').toLowerCase();
-    if ((netVis === 'private' || netVis === 'network') && visibilityCap.RANK[cap.max] > visibilityCap.RANK.network) {
-      cap = { max: 'network', by: 'network', enforced: true,
-        reason: netVis === 'private'
-          ? 'This network is private, so a store under it can be visible to the network or to nobody — not to the public.'
-          : 'This network is visible to its own network only, so a store under it cannot be public.' };
-    }
+    // ── 3 · THE CAP — resolved BEFORE planning: it is the top of a cascade that runs the whole depth of the tree
+    const cap = await run.capOf(me, meRow);
     // ── 4 · THE PLAN ─────────────────────────────────────────────────────────────────────────────────────────
     // The cap goes IN as the root ceiling. Every node under it inherits its PARENT's effective visibility, so a
     // closed department closes its own sub-units — the same rule at every level, which is the only version of it
     // that can be explained to anyone.
     const plan = networkBuild.plan({ rootHandle, nodes, taken, live, ceiling: cap.max });
-
-    // Every narrowing is REPORTED. A store that quietly came out less open than it was drawn is the kind of
-    // surprise that makes a person stop trusting the screen.
-    const notes = plan.narrowed.map((n) =>
-      `"${n.name}" was set to ${n.from} but is being built ${n.to}: ${cap.reason || 'what it sits inside is not that open'}`);
+    const notes = networkBuild.narrowNotes(plan, cap);
     /**
      * ── CLOSING SOMETHING CLOSES WHAT IS ALREADY OPEN UNDER IT ──────────────────────────────────────────────
      * Athi, 2026-08-07: *"even if they select public initially and then change to protected, need to switch
@@ -360,323 +213,9 @@ router.post('/build', auth, async (req, res) => {
         message: plan.problems.length ? 'Nothing could be built — see the reasons.' : 'The network already matches this design.' });
     }
 
-    // ── 4 · DO IT — one transaction ──────────────────────────────────────────────────────────────────────────
-    const result = await withEntity(me, async (db) => {
-      const created = [], updated = [], invited = [], failedInvites = [];
-
-      if (rootClaimed) {
-        // Unique index on lower(user_id): a concurrent second build would 23505 here and roll the whole thing back,
-        // which is the correct outcome — two networks must not share a root.
-        await db.query('UPDATE identities SET user_id = $1 WHERE identity_id = $2 AND user_id IS NULL',
-          [rootHandle, me]);
-        /**
-         * ── ⭐⭐⭐ AND RE-STAMP THIS BUSINESS'S PEOPLE, because their ids hang off the name it just claimed ───────
-         *
-         * Athi, 2026-09-15, on the stored employee id: *"which cannot be drifted."*
-         *
-         * ⚠️ THIS IS THE ONLY PLACE A BUSINESS GAINS A HANDLE AFTER IT WAS CREATED. An entity registered before
-         * b170 has a NULL `user_id`, so every employee minted under it was stored as `ravi@CBZQK5DAH9.br` — the
-         * bridge-id fallback. The line above gives the business a readable name; without this the next line,
-         * its people would keep pointing at the old one for ever, and the two would disagree about who they
-         * work for. That is exactly the drift he named.
-         *
-         * ⚠️ ONLY ROWS THAT STILL CARRY THE OLD FORM. An employee whose id already names the new handle is left
-         * alone, and `WHERE user_id IS NOT NULL` keeps this from inventing ids for actors the backfill has not
-         * reached — b260 owns that, and doing it twice in two places is how two rules appear.
-         */
-        /* ⚠️ THE FORM IS NOT SPELLED HERE. `ops.f_employee_user_id()` (b260) is SQL's one builder, exactly as
-           lib/mintuserid is JavaScript's — so this says WHICH rows to re-stamp and never WHAT an employee id
-           looks like. tests/namespace.test.cjs fails any file outside the grammar modules that writes ".br". */
-        await db.query(
-          `UPDATE identities a
-              SET user_id = ops.f_employee_user_id(a.actor_key, $1, e.bridge_id)
-            FROM identities e
-           WHERE a.parent_entity_id = $2 AND a.identity_type = 'actor'
-             AND a.actor_key IS NOT NULL AND a.user_id IS NOT NULL
-             AND e.identity_id = $2
-             AND a.user_id = ops.f_employee_user_id(a.actor_key, NULL, e.bridge_id)`,
-          [rootHandle, me]);
-      }
-
-      // The root's own place on the tree. DO NOTHING, never overwrite: if this entity already sits inside somebody
-      // else's network, that placement is theirs and its children hang below wherever it actually is.
-      await db.query(
-        `INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed)
-         VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)
-         ON CONFLICT (bridge_id) DO NOTHING`,
-        [meRow.bridge_id, meRow.display_name, label(meRow.bridge_id)]);
-      const rootPathRow = await db.query('SELECT path::text AS path FROM cb_entity WHERE bridge_id = $1', [meRow.bridge_id]);
-      const rootPath = rootPathRow.rows[0] && rootPathRow.rows[0].path;
-      if (!rootPath) throw new Error('the network root could not be placed on the tree');
-
-      // Where each node sits, by design key. Already-built nodes contribute their REAL path, read back rather than
-      // recomputed — a node moved by hand stays where it was moved to.
-      const pathOf = new Map();
-      const builtBridges = plan.skip.map((s) => s.bridge_id).filter(Boolean);
-      if (builtBridges.length) {
-        const r = await db.query('SELECT bridge_id, path::text AS path FROM cb_entity WHERE bridge_id = ANY($1)', [builtBridges]);
-        const byBridge = new Map(r.rows.map((x) => [x.bridge_id, x.path]));
-        for (const s of plan.skip) if (byBridge.has(s.bridge_id)) pathOf.set(s.key, byBridge.get(s.bridge_id));
-      }
-
-      const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
-
-      for (const c of plan.create) {
-        /**
-         * ⚠⚠ THE SECOND PLACE THAT SETS currency_code, AND IT HAD NO ENVELOPE CHECK. PATCH /entities/profile
-         * validated against the constitution; this route — added later — wrote whatever the design plan said. A
-         * network operator could therefore mint a store in a currency the same platform refused one screen away.
-         * Not a loophole anyone opened: a new write path that did not inherit the old one's guard.
-         *
-         * ⚠️ CHECKED AGAINST THE OPERATOR'S ENTITY, because the store does not exist yet and has no governance
-         * of its own — it will inherit the operator's. Checking the store would mean creating it first and
-         * asking afterwards, which is the wrong order for a refusal.
-         *
-         * ⚠️ auth.entityOf(req), NOT the local `me`. `me` is req.identity.identity_id, which for a co-assist is
-         * the ACTOR's row — it carries no governance stamp, so the lookup would quietly resolve `base` instead of
-         * the business's own constitution. `me` is the right answer for created_by and the wrong one for whose
-         * rules apply; the same variable cannot be both.
-         *
-         * ⭐ IT BECOMES A `problem`, NOT A THROWN ERROR. The build is a batch: one bad currency must not abandon
-         * the other nodes, and the operator needs a repair naming the store, exactly like an absent parent above.
-         */
-        const _wantCur = c.place && c.place.currency;
-        if (_wantCur) {
-          const _bad = await currencyRefusal(auth.entityOf(req), _wantCur);
-          if (_bad) { plan.problems.push({ key: c.key, name: c.name, reason: _bad.message }); continue; }
-        }
-        const parentPath = c.parent_key ? pathOf.get(c.parent_key) : rootPath;
-        if (!parentPath) {
-          // Its parent was built in an earlier run and is not on the tree. Creating it anyway would put a store in
-          // no network at all, which is silently wrong; refusing names the repair.
-          plan.problems.push({ key: c.key, name: c.name,
-            reason: 'Its parent is not on the network tree yet. Rebuild the parent first.' });
-          continue;
-        }
-        const identity_id = uuidv4();
-        const bridge_id = newBridgeId();
-        const claim = newClaimCode();
-
-        await db.query(
-          `INSERT INTO identities
-             (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility,
-              params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order,
-              address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days, entity_kind)
-           VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13,
-                   $14, $15, $16, $17, $18, $19, $20, $21, 'network')`,
-          [identity_id, bridge_id, c.name, c.handle, c.visibility,
-           // The provisioning cap. visibility-cap.js: "a node provisioned BY A NETWORK is not its own business —
-           // the operator decided, and the entity must not be able to undo that from its own profile screen."
-           JSON.stringify({ caps: { catalogue_visibility: c.visibility } }),
-           // The store's own country if the design stated one, else the operator's. There is exactly ONE country
-           // column and it was very nearly listed twice — Postgres refuses that outright, which is the good case.
-           // GOV-AU1: neither stated → NULL (the store's Country setup asks), never India.
-           (c.place && c.place.country) || meRow.country || null,
-           // The store's OWN currency when the design set one — a store trading in another country is stamped
-           // in ITS currency, and money is never converted afterwards. Otherwise the network's.
-           // STD2 (GOV-AU1 for MONEY): neither stated → NULL; the store's Country setup asks (country-setup.MONEY_UNSTATED), never INR by name.
-           (c.place && c.place.currency) || meRow.currency_code || null, claim, expires, me,
-           // The purpose, carried onto the store itself. Empty becomes NULL rather than '' so "never said" and
-           // "deliberately blank" are not the same value in the column.
-           c.purpose || null, c.sort_order,
-           // b119 — where it is. A place the design never stated stays NULL rather than becoming an empty string.
-           (c.place && c.place.address) || null, (c.place && c.place.city) || null,
-           c.place ? c.place.lat : null, c.place ? c.place.lng : null, c.place ? c.place.service_km : null,
-           c.place ? c.place.dispatch_days : null, c.place ? c.place.ship_within_days : null,
-           c.place ? c.place.ship_beyond_days : null]);
-
-        const myPath = parentPath + '.' + label(bridge_id);
-        await db.query(
-          `INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed)
-           VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)`,
-          [bridge_id, c.name, myPath]);
-
-        pathOf.set(c.key, myPath);
-        created.push({ key: c.key, name: c.name, handle: c.handle, bridge_id, visibility: c.visibility,
-                       purpose: c.purpose || null, sort_order: c.sort_order, place: c.place || null,
-                       claim_code: claim, expires_at: expires, path: myPath });
-      }
-
-      // ── UPDATES — bring an existing store into line with the design ────────────────────────────────────────
-      // The cap moves WITH the choice: the operator decided, so the operator's cap is restated at the same value.
-      // Leaving the old cap behind would let a store that was opened to `public` be narrowed back by nobody, or a
-      // store closed to `private` still carry a cap that permits publishing.
-      for (const u of plan.update) {
-        /* ⚠️ THE SAME COLUMN, THE SAME OMISSION. A store's place can MOVE, and the place carries a currency —
-           so the update path writes currency_code as surely as the insert does. Both or neither. */
-        const _uCur = u.place && u.place.to && u.place.to.currency;
-        if (_uCur) {
-          const _uBad = await currencyRefusal(auth.entityOf(req), _uCur);
-          if (_uBad) { plan.problems.push({ key: u.key, name: u.name, reason: _uBad.message }); continue; }
-        }
-        // Visibility and purpose move independently — a node can be in `update` for either or both — so each is
-        // written only when it actually changed. COALESCE on a null parameter leaves the column untouched.
-        const nextVis = u.to || null;
-        const nextPurpose = u.purpose ? (u.purpose.to || '') : null;
-        // -1 is the sentinel for "clear it": a null parameter already means "leave the column alone", so there has
-        // to be some other way to say "this store is no longer arranged".
-        const nextOrder = u.order ? (u.order.to === null ? -1 : u.order.to) : null;
-        const r = await db.query(
-          `UPDATE identities
-              SET catalogue_visibility = COALESCE($1, catalogue_visibility),
-                  params_override = CASE WHEN $1::text IS NULL THEN params_override ELSE
-                                    COALESCE(params_override, '{}'::jsonb)
-                                    || jsonb_build_object('caps',
-                                         COALESCE(params_override->'caps', '{}'::jsonb)
-                                         || jsonb_build_object('catalogue_visibility', $1::text)) END,
-                  purpose = CASE WHEN $4::text IS NULL THEN purpose
-                                 WHEN $4::text = '' THEN NULL ELSE $4::text END,
-                  sort_order = CASE WHEN $5::int IS NULL THEN sort_order
-                                    WHEN $5::int = -1 THEN NULL ELSE $5::int END,
-                  -- b119 · PLACE. One jsonb parameter rather than six scalars: the place moves as a unit, and six
-                  -- independent COALESCEs would let a half-applied place through if one ever went missing.
-                  address    = CASE WHEN $6::jsonb IS NULL THEN address    ELSE $6->>'address' END,
-                  city       = CASE WHEN $6::jsonb IS NULL THEN city       ELSE $6->>'city' END,
-                  country    = CASE WHEN $6::jsonb IS NULL THEN country    ELSE COALESCE($6->>'country', country) END,
-                  lat        = CASE WHEN $6::jsonb IS NULL THEN lat        ELSE ($6->>'lat')::numeric END,
-                  lng        = CASE WHEN $6::jsonb IS NULL THEN lng        ELSE ($6->>'lng')::numeric END,
-                  service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END,
-                  dispatch_days    = CASE WHEN $6::jsonb IS NULL THEN dispatch_days    ELSE ($6->>'dispatch_days')::smallint END,
-                  ship_within_days = CASE WHEN $6::jsonb IS NULL THEN ship_within_days ELSE ($6->>'ship_within_days')::smallint END,
-                  ship_beyond_days = CASE WHEN $6::jsonb IS NULL THEN ship_beyond_days ELSE ($6->>'ship_beyond_days')::smallint END,
-                  currency_code = CASE WHEN $6::jsonb IS NULL THEN currency_code
-                                       ELSE COALESCE($6->>'currency', currency_code) END
-            WHERE bridge_id = $2 AND created_by = $3
-            RETURNING bridge_id`,
-          [nextVis, u.bridge_id, me, nextPurpose, nextOrder,
-           u.place ? JSON.stringify(u.place.to) : null]);
-        // `created_by = me` is the authority check, and it is in the WHERE rather than a prior SELECT so there is
-        // no gap between checking and writing. A store this operator did not mint simply does not match.
-        if (!r.rows.length) {
-          plan.problems.push({ key: u.key, name: u.name,
-            reason: `"${u.name}" was not changed — you did not create that store.` });
-          continue;
-        }
-        /**
-         * ⭐⭐ AND THE SAME ANSWER ON THE SCHEMA — the second half of the publish act, which this route was
-         * missing. There are two visibility fields and the storefront reads the OTHER one:
-         *   · `identities.catalogue_visibility` — the publish act, written above, and the b114 gate
-         *   · `entity_schemas.visibility`       — what buildPublicView requires, and what the b49 RLS policy on
-         *                                         catalogue_items keys off with no tenant context
-         *
-         * ⚠️ PATCH /profile has mirrored these since 2026-08-18. THIS ROUTE NEVER DID, so flipping a store to
-         * public from the Network builder left its schema private and the store went on hiding every product it
-         * owned — serving its ADOPTED catalogue to the world while its own shelf stayed dark, with no error.
-         * b193 measured it live on 2026-09-01: 129 of 182 public shops mis-aligned, and the affected list is
-         * full of Cascade / Depot / Outlet / North — the names this route mints.
-         *
-         * ⭐ schemaVisibilityFor, not a third copy of the rule. Two places deciding this differently is the bug
-         * one layer down, and writing the expression out again here would have been the same mistake a third
-         * time. Only when the visibility actually moved: `nextVis` is null when this node changed for some
-         * other reason, and a null must leave the schema alone exactly as the COALESCE above leaves the column.
-         */
-        if (nextVis) {
-          const { schemaVisibilityFor } = require('../lib/schema-bootstrap');
-          try {
-            await db.query(
-              `UPDATE entity_schemas SET visibility = $1
-                WHERE entity_id = (SELECT identity_id FROM identities WHERE bridge_id = $2)
-                  AND status = 'active' AND is_default = true`,
-              [schemaVisibilityFor(nextVis), u.bridge_id]);
-          } catch (e) {
-            /* A store with no default schema yet is not an error — ensureDefaultSchema bootstraps one at first
-               sign-in and reads catalogue_visibility when it does, which is the path that already works. */
-            if (!(e && (e.code === '42703' || e.code === '42P01'))) throw e;
-          }
-        }
-        updated.push({ key: u.key, name: u.name, handle: u.handle, bridge_id: u.bridge_id, from: u.from, to: u.to, purpose: u.purpose, order: u.order, place: u.place });
-      }
-
-      // ── PARTNERS — a request, never a placement ────────────────────────────────────────────────────────────
-      for (const inv of plan.invite) {
-        const ref = inv.ref;
-        const found = await db.query(
-          `SELECT identity_id, bridge_id, display_name FROM identities
-            WHERE (LOWER(user_id) = LOWER($1) OR UPPER(bridge_id) = UPPER($1))
-              AND identity_type = 'entity' AND status = 'active'`, [ref]);
-        if (!found.rows.length) {
-          failedInvites.push({ key: inv.key, name: inv.name, reason: `No business found with the handle "${ref}".` });
-          continue;
-        }
-        const them = found.rows[0];
-        if (them.identity_id === me) {
-          failedInvites.push({ key: inv.key, name: inv.name, reason: 'That is your own handle.' });
-          continue;
-        }
-        /**
-         * ⭐ THE INVITATION IS THE NETWORK'S OWN (2026-09-17). It used to be a row in `connections`, which nothing reads as
-         * membership — a partner who accepted was still outside the network. It is now a `commercial` edge from this root
-         * to the partner (src/services/network.js): the partner accepts it, and lib/network-membership counts it.
-         */
-        const netsvc = require('../src/services/network');
-        const partnerNode = await netsvc.nodeOf(them.identity_id, { ensure: true }, db);
-        const rootNode = (await db.query('SELECT * FROM cb_entity WHERE bridge_id = $1', [meRow.bridge_id])).rows[0];
-        const existing = (partnerNode && rootNode) ? await db.query(
-          `SELECT id, state FROM cb_edge WHERE parent_id = $1 AND child_id = $2 AND type = 'commercial'
-             AND state IN ('requested', 'active', 'suspended')`, [rootNode.id, partnerNode.id]) : { rows: [] };
-        if (existing.rows.length) {
-          invited.push({ key: inv.key, name: inv.name, handle: ref, bridge_id: them.bridge_id,
-                         status: existing.rows[0].state === 'requested' ? 'pending' : 'accepted', edge_id: existing.rows[0].id, already: true });
-          continue;
-        }
-        if (!partnerNode || !rootNode) {
-          failedInvites.push({ key: inv.key, name: inv.name, reason: 'That business has no bridge id to invite.' });
-          continue;
-        }
-        const edge = await db.query(
-          `INSERT INTO cb_edge (parent_id, child_id, type, state, requested_by)
-           VALUES ($1, $2, 'commercial', 'requested', $1) RETURNING id`, [rootNode.id, partnerNode.id]);
-        invited.push({ key: inv.key, name: inv.name, handle: ref, bridge_id: them.bridge_id,
-                       status: 'pending', edge_id: edge.rows[0].id });
-      }
-
-      // ── WRITE THE RESULT BACK INTO THE DESIGN ──────────────────────────────────────────────────────────────
-      // Same transaction as the creation. This is what makes a second Build a no-op instead of a duplicate.
-      const byKey = new Map(created.map((c) => [c.key, c]));
-      const invByKey = new Map(invited.map((i) => [i.key, i]));
-      const nextNodes = nodes.map((n) => {
-        const c = byKey.get(n.key);
-        // `visibility` is part of the receipt: it is what the store is ACTUALLY set to, so the design page can
-        // tell a drawing that has moved from a shop that has. Without it the tree redraws and a person quite
-        // reasonably assumes the live shops moved with it.
-        if (c) return Object.assign({}, n, { built: { bridge_id: c.bridge_id, user_id: c.handle, visibility: c.visibility, at: new Date().toISOString() } });
-        const up = updated.find((x) => x.key === n.key);
-        if (up) return Object.assign({}, n, { built: Object.assign({}, n.built,
-          up.to ? { visibility: up.to } : {}, { at: new Date().toISOString() }) });
-        const i = invByKey.get(n.key);
-        if (i) return Object.assign({}, n, { invited: { bridge_id: i.bridge_id, status: i.status, at: new Date().toISOString() } });
-        return n;
-      });
-      const nextDraft = Object.assign({}, draft, { nodes: nextNodes, root_handle: rootHandle });
-      await db.query(
-        `INSERT INTO network_design (entity_id, draft, updated_at) VALUES ($1, $2, now())
-           ON CONFLICT (entity_id) DO UPDATE SET draft = EXCLUDED.draft, updated_at = now()`,
-        [me, nextDraft]);
-
-      return { created, updated, invited, failedInvites };
-    });
-
-    const problems = plan.problems.concat(result.failedInvites);
-    res.json({
-      ok: true,
-      root: rootHandle,
-      root_claimed: rootClaimed,
-      created: result.created,
-      updated: result.updated,
-      invited: result.invited,
-      skipped: plan.skip,
-      problems,
-      notes,
-      // Said once, where the operator will read it. The codes are in `created[].claim_code` and this response is
-      // the only time they are handed out in full — after this, re-issue.
-      claim_note: result.created.length
-        ? `Each new store signs in with its handle and the code shown here. The codes expire in ${CLAIM_DAYS} days — re-issue one from the network page if it lapses.`
-        : '',
-      message: `${result.created.length} store${result.created.length === 1 ? '' : 's'} created`
-             + (result.updated.length ? `, ${result.updated.length} updated` : '')
-             + (result.invited.length ? `, ${result.invited.length} partner invitation${result.invited.length === 1 ? '' : 's'} sent` : '')
-             + (problems.length ? `, ${problems.length} not built` : ''),
-    });
+    // ── 4 · DO IT — one transaction (run.execute)
+    const result = await run.execute({ me, entity: auth.entityOf(req), meRow, plan, nodes, draft, rootHandle, rootClaimed });
+    res.json(networkBuild.answer({ rootHandle, rootClaimed, plan, notes, result, claimDays: run.CLAIM_DAYS }));
   } catch (err) {
     if (err && err.code === '23505') {
       return res.status(409).json({ error: 'Name taken',
