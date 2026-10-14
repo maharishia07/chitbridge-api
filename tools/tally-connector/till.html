@@ -4066,7 +4066,9 @@ var fmtCount = function(n){
   if (window.CBLocale && CBLocale.number) { try { return CBLocale.number(n); } catch (_) {} }
   return String(Math.round(Number(n) || 0));
 };
-var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
+/* T2-WEBPRIMS (14 Oct): the counter's ONE esc — the shop PC does not serve the web's app/helpers.js, so the till keeps this copy, and it escapes what that one
+   does: & < > " ' (the "'" was missing). The web guard (e2e/prim-homes.cjs) allows exactly this one; avatar.js and signin-ui.js call it here. */
+var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); };
 /**
  * ⚠️⚠️ A WRITE THAT FAILS MUST BE ASKABLE ABOUT. This used to be `catch(_){}` and nothing else — a device whose
  * storage was full or blocked went on looking normal while every setting, every parked bill and the shop's own

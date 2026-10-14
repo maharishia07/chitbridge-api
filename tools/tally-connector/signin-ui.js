@@ -106,7 +106,6 @@ function methodsOn(c) {
 }
 
 /* ── small helpers ──────────────────────────────────────────────────────────────────────────────────────────────── */
-function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function jwtClaims(t) {
   try { var p = String(t || '').split('.')[1]; if (!p) return {}; p = p.replace(/-/g, '+').replace(/_/g, '/'); while (p.length % 4) p += '=';
     var s = typeof root.atob === 'function' ? root.atob(p) : Buffer.from(p, 'base64').toString('utf8');
