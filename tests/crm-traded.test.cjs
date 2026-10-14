@@ -28,7 +28,9 @@ it('the shop itself, or a name that is not an id → no statement at all (a shop
 });
 it('routes/chits.js: the bump runs INSIDE the delivery\'s withEntity, on deliver\'s own client, in a savepoint, skipping a recipient', () => {
   const s = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
-  const i = s.indexOf("await withEntity(sender_id, async (c) => {\n          await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: c });");
+  /* T2-SPLIT (2026-10-14): the write is the sendWrite step now — the same two lines, so matched whatever their indent */
+  const m = /await withEntity\(sender_id, async \(c\) => \{\r?\n\s*await mint\.deliver\(sender_id, chit_id, copies, \{ is_draft: !!promote_draft_id, client: c \}\);/.exec(s);
+  const i = m ? m.index : -1;
   assert.ok(i > 0, 'deliver runs on the route\'s own withEntity client');
   const block = s.slice(i, i + 600);
   assert.ok(/trySavepoint\(c, \(\) => require\('\.\.\/lib\/crm'\)\.traded\(c, sender_id, namedParty, now\), null\)/.test(block), 'traded in a savepoint, the shop clock\'s moment');
