@@ -274,7 +274,9 @@ async function ask(req, res, next) {
         note(req, a, 'ask', 'pin');
         return res.json(Object.assign({ message: 'Enter your PIN.', use_pin: true, user_id: a.user_id }, extra('actor', 'pin', a.user_id)));
       }
-      const otp = await identityAuth.issueOtp(query, a);
+      /* ⭐ TOP-CORRECT: the code the admin shared is KEPT while it is live (identityAuth.heldOtp) — this line used to re-issue and
+         overwrite it, so the employee typed a code that was no longer in the row. A new code only when none is held. */
+      const otp = identityAuth.heldOtp(a) || await identityAuth.issueOtp(query, a);
       note(req, a, 'ask', 'otp');
       /* M14: an employee who signed in by a VERIFIED e-mail gets the code there — the one contact the shop proved is theirs */
       const toMail = found.via === 'contact' && input.includes('@') && !identityAuth.mobileOf(input);

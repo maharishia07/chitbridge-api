@@ -148,6 +148,25 @@ async function firstDay(name, { ask, verify, pin, setPin }) {
     const wrong = await call('POST', '/api/entities/verify', { user_id: ID, otp: '000000' });
     t('a wrong first code is refused (400) and carries no signal', wrong.status === 400 && !('requires_pin_setup' in wrong.body), JSON.stringify(wrong.body));
 
+    /* ⭐ TOP-CORRECT item 6 (2026-10-14): off the local stack the admin's code is a REAL one (lib/employee-code mint → a random six digits),
+       and the first sign-in's ask used to re-issue and overwrite it — the employee typed what the admin read out, and it was gone.
+       The fixed code hid this (invite = DEV_OTP = re-issue). Here the invite is a different code, as production has it. */
+    say('\n── the admin\'s code is KEPT: an invite that is not the fixed code survives ask, on both doors ──');
+    for (const [door, ask, verify] of [
+      ['old door', () => call('POST', '/api/entities/register', { display_name: ID, email: ID, mode: 'login' }), (otp) => call('POST', '/api/entities/verify', { user_id: ID, otp })],
+      ['new door', () => call('POST', '/api/signin/ask', { id: ID }), (otp) => call('POST', '/api/signin/verify', { id: ID, otp })],
+    ]) {
+      reset(); DB.bala.otp_code = '246810'; DB.bala.otp_expires_at = FUT(24 * 60);
+      const a = await ask();
+      t(door + ': ask wants the first-time code (200, not a PIN)', a.status === 200 && !a.body.use_pin, JSON.stringify(a.body));
+      t('   ⭐ …and the admin\'s code 246810 is STILL the stored code', DB.bala.otp_code === '246810', String(DB.bala.otp_code));
+      const v = await verify('246810');
+      t('   the code the admin shared signs the employee in (200) and asks for a PIN', v.status === 200 && isBala(v.body.token) && v.body.requires_pin_setup === true, v.status + ' ' + JSON.stringify(v.body).slice(0, 160));
+    }
+    reset(); DB.bala.otp_code = '246810'; DB.bala.otp_expires_at = new Date(Date.now() - 60000);
+    const ex = await call('POST', '/api/signin/ask', { id: ID });
+    t('an EXPIRED invite is replaced by a fresh code (ask 200, the row no longer holds 246810)', ex.status === 200 && DB.bala.otp_code && DB.bala.otp_code !== '246810', String(DB.bala.otp_code));
+
     say('\n── sealed: the fixed code never exists and is never accepted ──');
     process.env.NODE_ENV = 'production';
     reset();

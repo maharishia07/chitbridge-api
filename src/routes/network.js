@@ -63,17 +63,21 @@ router.get ("/place", auth, h(async (req) => {
   const rootLabel = path ? String(path).split(".")[0] : "";
   const rootBridge = rootLabel ? rootLabel.replace(/_/g, "-") : "";
 
-  let nodes = nodes0;
+  let nodes = nodes0, refused = null;
   if (rootBridge && rootBridge !== String(me.bridgeId || me.bridge_id || "")) {
     const rc = await net.lookup(rootBridge);
     const root = rc && (rc.entity || rc);
     if (root && root.id) {
-      const whole = await net.subtree(root.id, actor);
+      /* ⭐ TOP-CORRECT: a SUSPENDED member is refused the network's tree (net.subtree, NOT_ALLOWED) — its own subtree still answers,
+         with the refusal as a code + sentence the screen can branch on, never a 403 that reads like an outage */
+      let whole = null;
+      try { whole = await net.subtree(root.id, actor); }
+      catch (e) { if (e.code !== "NOT_ALLOWED") throw e; refused = { code: e.code, message: e.message }; }
       const w = Array.isArray(whole) ? whole : (whole && whole.nodes) || null;
       if (w && w.length) nodes = w;
     }
   }
-  return { found: true, entity: me, rootBridge, nodes };
+  return Object.assign({ found: true, entity: me, rootBridge, nodes }, refused ? { refused } : {});
 }));
 
 /* ⚠️ every write and scoped read acts AS the signed-in business — anything in the body that claims to be the actor is ignored */
