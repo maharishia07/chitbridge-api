@@ -420,12 +420,7 @@ router.post('/status/bulk', auth,
        how the bulk answer and the single answer start disagreeing about what "unavailable" recorded. */
     const rec = itemstatus.stamp({ status: req.body.status }, { actor_name: req.identity.display_name });
 
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE catalogue_items
-          SET item_data = COALESCE(item_data, '{}'::jsonb) || $1::jsonb, updated_at = NOW()
-        WHERE entity_id = $2 AND item_id = ANY($3::uuid[])
-      RETURNING item_id, item_data`,
-      [JSON.stringify(rec), entity_id, ids]));
+    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, { ids, merge: rec }, { returning: 'item_id, item_data' }));
 
     /* ⚠️ SAY WHICH ONES DID NOT MOVE. An id that is not in this catalogue simply does not match, and a bulk
        action that reports "done" while three rows never changed is the reason nobody trusts bulk actions. */
@@ -482,16 +477,10 @@ router.post('/bulk-update', auth, [ body('items').isArray({ min: 1 }) ], validat
     }
 
     const ids = items.map((it) => it.id);
-    const datas = items.map((it) => JSON.stringify(money.stampItem(it.item_data, currency)));
 
-    /* One statement for the lot: unnest pairs each id with its own new item_data. */
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE catalogue_items AS c
-          SET item_data = u.data::jsonb, updated_at = NOW()
-         FROM unnest($1::uuid[], $2::text[]) AS u(id, data)
-        WHERE c.item_id = u.id AND c.entity_id = $3
-      RETURNING c.item_id`,
-      [ids, datas, entity_id]));
+    /* One statement for the lot: the one product writer pairs each id with its own new item_data. */
+    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id,
+      items.map((it) => ({ item_id: it.id, replace: money.stampItem(it.item_data, currency) }))));
 
     const done = r.rows.map((x) => x.item_id);
     const missed = ids.filter((i) => done.indexOf(i) < 0);
@@ -978,7 +967,7 @@ router.post('/import', auth, importLimiter,
     }
     const idLabel = ident.key.join(' + ');
 
-    const outcome = [];
+    const outcome = [], updates = [], inserts = [];
     for (let i = 0; i < applied.items.length; i++) {
       /**
        * ⭐⭐ THE ANSWERS BECOME RECORDS HERE. `available: yes` becomes a status AND a fresh stamp; `qty` becomes
@@ -1017,19 +1006,25 @@ router.post('/import', auth, importLimiter,
         if (verr) { outcome.push({ line, sku, action: 'failed', name: item.name, message: verr }); continue; }
         const stamped = money.stampItem(merged, currency);
         if (prior) {
-          await withEntity(entity_id, (db) => db.query(
-            `UPDATE catalogue_items SET item_data=$1, updated_at=NOW() WHERE item_id=$2 AND entity_id=$3`,
-            [JSON.stringify(stamped), prior.item_id, entity_id]));
+          updates.push({ item_id: prior.item_id, replace: stamped });
           outcome.push({ line, sku, action: 'updated', name: item.name || prior.item_data.name, warning });
         } else {
-          await withEntity(entity_id, (db) => db.query(
-            `INSERT INTO catalogue_items (entity_id, schema_id, item_data) VALUES ($1,$2,$3)`,
-            [entity_id, sid, JSON.stringify(stamped)]));
+          inserts.push(JSON.stringify(stamped));
           outcome.push({ line, sku, action: 'created', name: item.name, warning });
         }
       } catch (e) {
         outcome.push({ line, sku, action: 'failed', name: item.name, message: e.message });
       }
+    }
+
+    /* ⭐⭐ CAT-W1: THE ROWS LAND IN ONE TRANSACTION, through the one product writer. They committed one connection per row,
+       so a dropped connection at row 600 left 599 written and the sheet's second run doubled nothing but proved nothing.
+       A line refused above is still reported per line, as before; a DATABASE failure now lands none of them. */
+    if (updates.length || inserts.length) {
+      await withEntity(entity_id, async (db) => {
+        if (updates.length) await catwrite.patchItems(db, entity_id, updates);
+        if (inserts.length) await catwrite.insertStamped(db, entity_id, sid, inserts);
+      });
     }
 
     const failed = outcome.filter((o) => o.action === 'failed');
@@ -1203,10 +1198,7 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
     // STAMP on edit too — a round-trip that read `{amount,currency}` and writes it back is accepted only while the
     // currency still agrees with the entity's; a different one is refused (see money.stampPrice).
     const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE catalogue_items SET item_data=$1, updated_at=NOW()
-       WHERE item_id=$2 AND entity_id=$3 RETURNING *`,
-      [JSON.stringify(item_data), req.params.id, entity_id]));
+    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     shopChanged(entity_id, 'product updated');
     res.json({ message: 'Product updated', item: r.rows[0] });
@@ -1270,14 +1262,17 @@ router.post('/availability/bulk', auth, [ body('items').isArray({ min: 1, max: 2
       const byId = new Map(rows.map((r) => [String(r.item_id), r])), byCode = new Map();
       for (const r of rows) { const c = String(r.code || r.sku || '').trim().toLowerCase(); if (c && !byCode.has(c)) byCode.set(c, r); }
       let written = 0, unknown = 0, bad = 0;
+      const edits = [];
       for (const it of req.body.items) {
         const row = (it.item_id && byId.get(String(it.item_id))) || (it.code && byCode.get(String(it.code).trim().toLowerCase())) || null;
         if (!row) { unknown++; continue; }
         const rec = availability.stamp({ qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location });
         if (!rec) { bad++; continue; }
-        await db.query(`UPDATE catalogue_items SET item_data = COALESCE(item_data,'{}'::jsonb) || jsonb_build_object('avail', $1::jsonb), updated_at = NOW() WHERE item_id = $2 AND entity_id = $3`, [JSON.stringify(rec), row.item_id, entity_id]);
+        edits.push({ item_id: row.item_id, merge: { avail: rec } });
         written++;
       }
+      /* ⭐ ONE statement for the feed (was one per item), through the one product writer */
+      await catwrite.patchItems(db, entity_id, edits);
       return { written, unknown, bad };
     });
     res.json(Object.assign({ message: 'Availability updated' }, out));
@@ -1296,13 +1291,7 @@ router.put('/:id/availability', auth,
           message: 'A quantity must be zero or more. A negative figure means the feed is wrong, and storing it '
                  + 'would make a full shelf look empty.' });
       }
-      const r = await withEntity(entity_id, (db) => db.query(
-        `UPDATE catalogue_items
-            SET item_data = COALESCE(item_data, '{}'::jsonb) || jsonb_build_object('avail', $1::jsonb),
-                updated_at = NOW()
-          WHERE item_id = $2 AND entity_id = $3
-        RETURNING item_id, item_data`,
-        [JSON.stringify(rec), req.params.id, entity_id]));
+      const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: { avail: rec } }], { returning: 'item_id, item_data' }));
       if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
       res.json({ message: 'Availability updated', availability: rec });
     } catch (e) { fail(res, e, 'Availability update failed'); }
@@ -1325,12 +1314,7 @@ router.put('/:id/status', auth, [ body('status').isString() ], validate, async (
   try {
     const entity_id = ctx(req);
     const rec = itemstatus.stamp(req.body, { actor_name: req.identity.display_name });
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE catalogue_items
-          SET item_data = COALESCE(item_data, '{}'::jsonb) || $1::jsonb, updated_at = NOW()
-        WHERE item_id = $2 AND entity_id = $3
-      RETURNING item_id, item_data`,
-      [JSON.stringify(rec), req.params.id, entity_id]));
+    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, merge: rec }], { returning: 'item_id, item_data' }));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such item in your catalogue.' });
     const d = r.rows[0].item_data || {};
     res.json({ message: 'Status updated', status: itemstatus.statusOf(d), reads_as: itemstatus.explain(d),
@@ -1351,10 +1335,7 @@ router.put('/:id/status', auth, [ body('status').isString() ], validate, async (
 router.delete('/:id', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE catalogue_items SET is_active=false
-       WHERE item_id=$1 AND entity_id=$2 RETURNING item_id`,
-      [req.params.id, entity_id]));
+    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, active: false }]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     shopChanged(entity_id, 'product removed');
     res.json({ message: 'Product removed' });
@@ -1426,7 +1407,7 @@ router.post('/:id/media', auth, async (req, res) => {
         if (!cur.rows.length) return null;
         const d = Object.assign({}, cur.rows[0].item_data || {});
         d.media = (Array.isArray(d.media) ? d.media : []).concat([{ id: mid, kind: 'video', provider: v.provider, vid: v.vid, embed: v.embed, url: String(url).slice(0, 500), name: String(name || v.provider + ' video').slice(0, 200), at: new Date().toISOString() }]);
-        const u = await db.query(`UPDATE catalogue_items SET item_data = $1, updated_at = NOW() WHERE item_id = $2 AND entity_id = $3 RETURNING item_data`, [JSON.stringify(d), req.params.id, entity_id]);
+        const u = await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }], { returning: 'item_data' });
         return u.rows[0];
       });
       if (!out) return res.status(404).json({ error: 'Not found' });
@@ -1449,7 +1430,7 @@ router.post('/:id/media', auth, async (req, res) => {
       d.media = media;
       const firstImg = media.find((x) => x.kind === 'image');
       if (firstImg) d.image = mediaUrl(req, req.params.id, firstImg.id);
-      const u = await db.query(`UPDATE catalogue_items SET item_data = $1, updated_at = NOW() WHERE item_id = $2 AND entity_id = $3 RETURNING item_data`, [JSON.stringify(d), req.params.id, entity_id]);
+      const u = await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }], { returning: 'item_data' });
       return u.rows[0];
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
@@ -1468,7 +1449,7 @@ router.delete('/:id/media/:mid', auth, async (req, res) => {
       d.media = media.filter((x) => x !== gone);
       const firstImg = d.media.find((x) => x.kind === 'image');
       if (firstImg) d.image = mediaUrl(req, req.params.id, firstImg.id); else delete d.image;
-      await db.query(`UPDATE catalogue_items SET item_data = $1, updated_at = NOW() WHERE item_id = $2 AND entity_id = $3`, [JSON.stringify(d), req.params.id, entity_id]);
+      await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }]);
       return { gone, media: d.media };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
