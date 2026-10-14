@@ -146,6 +146,51 @@
       "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: as GET /compare/:id (the same read, written as a .csv). The web fetches it as a file (cap-compare.js cmpCsv, the session header), so the scanner does not see it: extra.",
       "extra": true
     },
+    "GET /api/books/fx-rates": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard setting read, then ONE transaction (the rate list, newest first, LIMIT 500); b391 asked once (lib/schema, cached).",
+      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+    },
+    "POST /api/books/fx-rates": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard, then ONE transaction (ONE insert). Owner only.",
+      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+    },
+    "POST /api/books/fx-rates/import": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard, then ONE transaction (ONE multi-row insert, however many rows; the CSV is read in memory). Owner only.",
+      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+    },
+    "GET /api/books/fx-revalue": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips + 1 per foreign currency — the guard, then ONE transaction (chart · the open foreign balances in ONE grouped read · the closing rate per currency · party names in one read · the entry by source). Owner only.",
+      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+    },
+    "POST /api/books/fx-revalue": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 422,
+      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: as GET /fx-revalue, then two postEntry writes on the same handle (the revaluation and its reversal) — one transaction. Owner only.",
+      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+    },
     "GET /api/books/cheques": {
       "file": "books.js",
       "trips": 1,
@@ -166,7 +211,7 @@
       "wire": 6,
       "fired": true,
       "status": 404,
-      "why": "F4 (by hand): ?side=supplier&finance=1 adds 3 reads inside the same transaction — cheques written (1) · Udyam ids (1) · supplier terms (1), + the terms-column check (lib/schema, cached). Nothing per party. The offline stub answers 404 (ledger off), so the line stays the floor."
+      "why": "F4 (by hand): ?side=supplier&finance=1 adds 3 reads inside the same transaction — cheques written (1) · Udyam ids (1) · supplier terms (1), + the terms-column check (lib/schema, cached). Nothing per party. FX1: + 1 read — the open foreign balances of the debtors / creditors in ONE grouped read (b392; the column check cached), so a party shows USD 1,000 · ₹83,250. The offline stub answers 404 (ledger off), so the line stays the floor."
     },
     "GET /api/books/events": {
       "file": "books.js",
@@ -180,7 +225,8 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "STD1, by hand: live it is the gate read, then ONE withEntity transaction — the 50-row page AND the one count (waitingCount, GROUP BY todo over every open row): 2 statements in the same trip, 0 new trips."
     },
     "GET /api/books/ledger/:account": {
       "file": "books.js",
@@ -1371,6 +1417,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PUT /api/chits/:id/use": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "FX-F10W, by hand: lib/bill-use.set — taxCopy.copyOf (1 trip) + ONE withEntity transaction (1 trip): the use UPDATE, and with { party } the supplier read (books-store supplierByName, STD1: the one resolver) + the party UPDATE (5 statements: BEGIN · set_config · SELECT · UPDATE · COMMIT; + the use UPDATE when both are sent). The chits router is not mounted by this scanner. GET /api/chits/:chit_id (STD1): books_wait is one more scalar in the ONE_SHOT statement — 0 new trips."
     },
     "PUT /api/service/:chit_id": {
       "file": "service.js",

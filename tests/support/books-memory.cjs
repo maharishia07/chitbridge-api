@@ -11,12 +11,18 @@ let uid = 0; const id = () => '00000000-0000-4000-8000-' + String(++uid).padStar
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const ymd = (v) => (v ? String(v).slice(0, 10) : null);
 
+/* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */
+const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
+  return ev.waiting === 'acceptance' ? 'accept' : ev.waiting === 'party' && /^Who is /.test(String(o.why || '')) ? 'add_supplier' : 'record'; };
+const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev = o.event || {}; if (ev.name) return ev.name;
+  const m = /^Who is (.+)\? Add them as a supplier/.exec(String(o.why || '')); return m ? m[1] : null; };
 function create() {
   const T = { setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
-              outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [] };
+              outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [], fxRates: [], fxReady: true, fxLines: true };
   let itemSeq = 0, lineSeq = 0, clock = Date.parse('2026-09-29T10:00:00Z');
   const now = () => new Date(clock += 1000).toISOString();
   const S = {
+    TODO_SQL: "'record'", NAME_SQL: 'NULL', waitOfChitSql: () => 'NULL',   /* STD1: the SQL fragments (no database here) */
     ZERO, BILL_EVENTS: ['sale_bill', 'credit_given'], T,
     async setting(db, e) { const s = T.setting.get(String(e)); return s ? clone(s) : null; },
     async saveSetting(db, e, s) { const cur = T.setting.get(String(e)) || {}; T.setting.set(String(e), Object.assign({}, cur, { entity_id: e, enabled: !!s.enabled, walkin_grain: s.walkin_grain || 'day',
@@ -97,6 +103,36 @@ function create() {
     async insertLines(db, e, entry_id, lines) {
       for (const l of lines) { if (!((l.dr_minor > 0 && !l.cr_minor) || (l.cr_minor > 0 && !l.dr_minor))) throw new Error('journal_line_side_chk'); T.lines.push(Object.assign({ line_id: ++lineSeq, entry_id, entity_id: e }, clone(l))); }
     },
+    /* ── FX1: the rate table (b391) and the foreign balance (b392) — T.fxReady / T.fxLines say whether each migration "ran" ── */
+    async fxLinesReady() { return !!T.fxLines; },
+    async fxRatesReady() { return !!T.fxReady; },
+    async fxRates(db, e, q) {
+      const o = q || {};
+      return clone(T.fxRates.filter((r) => r.entity_id === e && (!o.from || r.from_ccy === o.from)).sort((a, b) => b.rate_date.localeCompare(a.rate_date) || b.rate_id - a.rate_id).slice(0, o.limit || 500));
+    },
+    async insertFxRates(db, e, rows, by) {
+      return rows.map((x) => { const r = Object.assign({ rate_id: T.fxRates.length + 1, entity_id: e, entered_by: by || null, created_at: now() }, clone(x)); T.fxRates.push(r); return clone(r); });
+    },
+    async fxRateOn(db, e, from, to, date, since) {
+      const hit = T.fxRates.filter((r) => r.entity_id === e && r.from_ccy === from && r.to_ccy === to && (since ? r.rate_date >= since && r.rate_date <= date : r.rate_date === date))
+        .sort((a, b) => b.rate_date.localeCompare(a.rate_date) || b.rate_id - a.rate_id)[0];
+      return hit ? clone(hit) : null;
+    },
+    async foreignBalances(db, e, q) {
+      const o = q || {}, m = new Map();
+      for (const l of T.lines) {
+        const h = T.entries.find((x) => x.entry_id === l.entry_id);
+        if (l.entity_id !== e || !h || ymd(h.posting_date) > (o.asOf || '9999-12-31') || !l.txn_currency || l.txn_currency === o.functional) continue;
+        if (o.party && l.party_id !== o.party) continue;
+        if (o.account_ids && o.account_ids.length && o.account_ids.indexOf(l.account_id) < 0) continue;
+        if (o.currency && l.txn_currency !== o.currency) continue;
+        const k = [l.account_id, l.party_id || '', l.txn_currency].join('|');
+        const r = m.get(k) || { account_id: l.account_id, party_id: l.party_id || null, txn_currency: l.txn_currency, fn_minor: 0, txn_minor: 0 };
+        r.fn_minor += l.dr_minor - l.cr_minor; r.txn_minor += (l.dr_minor > 0 ? 1 : -1) * (l.amount_txn_minor || 0); m.set(k, r);
+      }
+      return Array.from(m.values()).filter((r) => r.txn_minor !== 0);
+    },
+    async partyNames(db, e, ids) { const out = {}; (ids || []).forEach((i) => { const p = T.parties.find((x) => x.party_id === i); if (p) out[i] = p.name; }); return out; },
     async addBalances(db, e, rows) {
       for (const b of rows) {
         const k = [e, b.account_id, b.party_key || ZERO, b.currency, b.fiscal_year, b.period].join('|');
@@ -146,9 +182,25 @@ function create() {
     },
     async payment(db, e, pid) { const p = T.payments.find((x) => x.entity_id === e && x.payment_id === pid); return p ? clone(p) : null; },
     async queue(db, e, o) { T.outbox.push(Object.assign({ id: T.outbox.length + 1, entity_id: e, tries: 0, created_at: now(), done_at: null }, clone(o))); },
-    async waiting(db, e, limit) { return clone(T.outbox.filter((o) => o.entity_id === e && !o.done_at).sort((a, b) => a.tries - b.tries || a.id - b.id).slice(0, limit || 100)); },
-    async waitingCount(db, e) { return T.outbox.filter((o) => o.entity_id === e && !o.done_at).length; },
-    async outboxDone(db, e, oid, ok, why) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else o.why = why; },
+    /* STD1: `todo` · `name` as the real store reads them — the row's data, else TODO_SQL's reading of a row parked before they existed */
+    async waiting(db, e, limit) { return clone(T.outbox.filter((o) => o.entity_id === e && !o.done_at).sort((a, b) => a.tries - b.tries || a.id - b.id).slice(0, limit || 100))
+      .map((o) => Object.assign(o, { todo: todoOf(o), name: nameOf(o) })); },
+    async waitingCount(db, e) { const out = { total: 0, accept: 0, add_supplier: 0, record: 0 };
+      T.outbox.filter((o) => o.entity_id === e && !o.done_at).forEach((o) => { out[todoOf(o)]++; out.total++; }); return out; },
+    async backfillTodo(db, e) { let n = 0; T.outbox.filter((o) => o.entity_id === e && !o.done_at && !(o.event && 'todo' in o.event)).forEach((o) => {
+      o.event = Object.assign({}, o.event || {}, { todo: todoOf(o) }, nameOf(o) ? { name: nameOf(o) } : {}); n++; }); return n; },
+    /* STD1: the one supplier-by-name resolver, over the parties table (supplier rows): exactly one by name / nickname; else ≤ 3 near */
+    async supplierByName(db, e, P) {
+      const no = P && P.party_no != null ? String(P.party_no).trim() : '', nm = P && P.name != null ? String(P.name).trim().toLowerCase() : '';
+      if (!no && !nm) return { one: null, near: [] };
+      const sup = T.parties.filter((x) => x.owner === e && x.supplier), low = (v) => String(v || '').trim().toLowerCase();
+      const exact = no ? sup.filter((x) => x.party_no === no) : sup.filter((x) => low(x.name) === nm || low(x.nickname) === nm);
+      const one = exact.length === 1 ? { party_id: String(exact[0].party_id), name: String(exact[0].name || ''), party_no: exact[0].party_no || null } : null;
+      const near = one || no ? [] : sup.filter((x) => low(x.name).indexOf(nm) >= 0 || low(x.nickname).indexOf(nm) >= 0)
+        .sort((a, b) => (low(b.name).startsWith(nm) - low(a.name).startsWith(nm)) || String(a.name).localeCompare(String(b.name))).slice(0, 3).map((x) => ({ name: String(x.name), party_no: x.party_no || null }));
+      return { one, near };
+    },
+    async outboxDone(db, e, oid, ok, why, ev) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else { o.why = why; if (ev && typeof ev === 'object') o.event = Object.assign({}, o.event || {}, clone(ev)); } },
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },

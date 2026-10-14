@@ -69,6 +69,7 @@ function memoryTemplates() {
 
   /* a supplier bill waiting for acceptance, a repeating entry due, an accrual to turn back */
   await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:bill1', event: { job: 'chit', chit_id: 'bill1', waiting: 'acceptance' }, why: 'Waiting for you to confirm the goods (bill 7 from Kumar Traders)' });
+  await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:rcpt1', event: { job: 'chit', chit_id: 'rcpt1', waiting: 'party' }, why: 'Who is Sri Ganesh? Add them as a supplier — then bill SG-102 waits for you to accept it.' });
   await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:bill2', event: { job: 'chit', chit_id: 'bill2', waiting: 'dispute' }, why: 'Disputed' });
   const rec = await q('POST', '/recurring', { name: 'Shop rent', event: { kind: 'expense', class: 'rent', amount: 5000, how: 'bank' }, frequency: 'monthly', next_on: '2026-11-01' });
   DAY = '2026-09-30';
@@ -79,6 +80,7 @@ function memoryTemplates() {
   ok('GET /todo → an array of { kind, count, words, action }', Array.isArray(t1) && t1.length > 0 && t1.every((x) => x.kind && x.count > 0 && typeof x.words === 'string' && x.action && x.action.label && x.action.screen && x.action.call), JSON.stringify(t1).slice(0, 300));
   ok('every kind this shop needs is there: ' + kinds(t1).join(', '), ['bills_to_accept', 'months_not_locked', 'closing_stock_missing', 'gst_due', 'recurring_due', 'accrual_reversals_due'].every((k) => kinds(t1).indexOf(k) >= 0), JSON.stringify(kinds(t1)));
   ok('…and no year can be closed yet (the year is running)', kinds(t1).indexOf('year_close_possible') < 0);
+  ok('FX-F10W · a bill naming a supplier the books do not know is its own row (suppliers_to_add), never "to accept"', get(t1, 'suppliers_to_add') && get(t1, 'suppliers_to_add').count === 1 && get(t1, 'suppliers_to_add').action.screen === 'waiting', JSON.stringify(get(t1, 'suppliers_to_add')));
   ok('bills to accept counts ONLY the ones waiting on acceptance (a disputed one is not "accept")', get(t1, 'bills_to_accept').count === 1 && /1 supplier bill is waiting/.test(get(t1, 'bills_to_accept').words), JSON.stringify(get(t1, 'bills_to_accept')));
   const ml = get(t1, 'months_not_locked');
   ok('months not locked: April to October are over and open (7), named in words', ml.count === 7 && /April 2026/.test(ml.words) && /and more/.test(ml.words) && ml.items.length === 7, JSON.stringify(ml));
@@ -93,6 +95,12 @@ function memoryTemplates() {
   ok('recurring due names the template; the accrual reversal names its reference', get(t1, 'recurring_due').items[0].name === 'Shop rent' && get(t1, 'accrual_reversals_due').items[0].ref === 'ELEC-9', JSON.stringify([get(t1, 'recurring_due'), get(t1, 'accrual_reversals_due')]));
 
   /* each one goes when the thing is done */
+  /* STD1: ONE count — 205 more bills to accept (as park writes them: todo on the event) → the row says 206, never the 200-row page's count */
+  for (let i = 0; i < 205; i++) await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:many' + i, event: { job: 'chit', chit_id: 'many' + i, waiting: 'acceptance', todo: 'accept' }, why: 'Waiting for you to confirm the goods (bill M' + i + ')' });
+  const many = get(await todo(), 'bills_to_accept');
+  ok('STD1 · > 200 rows: the count is the one count (books-store waitingCount, every open row) — 206, the same number Home and /health say',
+    many && many.count === 206 && /^206 supplier bills are waiting/.test(many.words) && (await X.store.waitingCount(X.db, SHOP)).accept === 206, JSON.stringify(many && [many.count, many.words]));
+  X.T.outbox.forEach((o) => { if (/^chit:many/.test(o.source_ref)) o.done_at = new Date().toISOString(); });
   X.T.outbox.forEach((o) => { if (o.source_ref === 'chit:bill1') o.done_at = new Date().toISOString(); });
   ok('accepted → "bills to accept" is gone', kinds(await todo()).indexOf('bills_to_accept') < 0);
   const stk = await BP.closingStock(SHOP, S, { date: '2026-10-31', value: 500 }, SHOP);
