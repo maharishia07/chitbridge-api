@@ -25806,7 +25806,7 @@ async function usignIn(s, answer){
   /* ⭐ M10: a browser still holding a KEY keeps this session too — the reload that follows opens the person store, and
      the old key store comes along (moveOldStores); the key goes once its store is accounted for (keyRetire). DESIGN §5. */
   if ((personOn() || keyedBrowser()) && answer.token) {
-    var kept = await becomeShop({ token: answer.token, who: k.person, idn: answer.identity || null });
+    var kept = await becomeShop({ token: answer.token, who: k.person, idn: answer.identity || null, via: 'window' });
     if (kept && kept.ok && !kept.same) {
       /* ⭐ the shop is named before anything else happens — a person in the wrong account sees it here, not in the books */
       USIGN.opening = (S && S.shop && S.shop.name) || 'your shop';
@@ -25871,7 +25871,7 @@ function shopMoveOf(o){
 async function usignBecome(takeover, counter){
   var p = USIGN.pending; if (!p) return;
   USIGN.busy = true;
-  var r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover, counter: counter || null });
+  var r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover, counter: counter || null, via: 'window' });
   USIGN.busy = false;
   if (r && r.held) { USIGN.held = r; usignNote(usignHeldHtml(r)); return; }
   if (!r || !r.ok) { usignRestore((r && r.message) || 'Signed in, but the shop did not issue a counter key.'); return; }
@@ -25936,7 +25936,7 @@ async function becomeShop(to){
     if (!r) return { ok: false, message: 'This PC could not reach the counter program. Is it still running?' };
     if (r.held) return { ok: false, held: true, counter: r.counter || tillId(), held_by: r.held_by || null, seen: r.seen || null };
     if (!r.ok) return r;
-    if (to.who) whoPending(to.who, r.shop, to.idn);
+    if (to.who) whoPending(to.who, r.shop, to.idn, to.via);
     var was = JSON.stringify((STATE && STATE.shop) || null);
     counterRestarted(enrol ? function(st){ return JSON.stringify((st && st.shop) || null) !== was; }
                            : function(st){ return !(st && st.paired); }, to.gaveUp);
@@ -25970,7 +25970,7 @@ async function becomeShop(to){
     same = !!(CloudHost.person && String(CloudHost.person.entity_id) === String(person.entity_id));
     if (!ls.set('cb_till_person', JSON.stringify(person))) return { ok: false, message: 'This phone could not keep the sign-in (its storage refused). Free some space and try again.' };
     CloudHost.person = person;                       /* ⚠️ FIRST — shopLs() names this shop's slot from it */
-    if (to.who) whoPending(to.who, shop, to.idn);
+    if (to.who) whoPending(to.who, shop, to.idn, to.via);
     /* the same shop again is not a change of shop — the store is the same, nothing to reopen */
     if (!same) location.reload();
     return { ok: true, same: same, shop: shop };
@@ -25982,7 +25982,7 @@ async function becomeShop(to){
   try { localStorage.removeItem('cb_till_person'); } catch (_) {}
   CloudHost.person = null;
   if (key && to.marker && to.marker.shop) { ls.set(shopLs('cb_till_shop'), to.marker.shop); ls.set(shopLs('cb_till_shopname'), to.marker.name || ''); }
-  if (to.who) whoPending(to.who, shop, to.idn);
+  if (to.who) whoPending(to.who, shop, to.idn, to.via);
   if (location.hash.indexOf('key=') >= 0) history.replaceState(null, '', location.pathname + location.search);
   /* the same key again is not a change of shop — nothing to reopen, and reloading a boot into itself would loop */
   if (!same) location.reload();
@@ -25995,8 +25995,10 @@ async function becomeShop(to){
  * (whoAdoptPending). Writing WHO here directly would be a second writer, and the shop it would be written for
  * is not open yet.
  */
-function whoPending(person, shop, idn){
-  try { ls.set('cb_till_whonext', JSON.stringify({ person: person, idn: idn || null, shop: shop || null, at: Date.now() })); } catch (_) {}
+/* TOUR-FIX1: `via` 'window' = the person typed this sign-in into the window, so the counter PIN is offered in the window again after the reload;
+   anything else (the apps' own session handed over — appSessionHandoff) carries the offer on "Who is at the counter?" instead */
+function whoPending(person, shop, idn, via){
+  try { ls.set('cb_till_whonext', JSON.stringify({ person: person, idn: idn || null, shop: shop || null, at: Date.now(), via: via || null })); } catch (_) {}
 }
 function whoAdoptPending(){
   var raw = null; try { raw = JSON.parse(ls.get('cb_till_whonext', '') || 'null'); } catch (_) { raw = null; }
@@ -26011,9 +26013,18 @@ function whoAdoptPending(){
   usignAdopt(p);
   drop();
   /* ⭐ they proved who they are online a moment ago — the one time a counter PIN can be offered safely. TOUR-FIX1: offered, not imposed — the
-     window no longer opens over the counter by itself; "Who is at the counter?" carries the offer (pinLaterOffer → usignPinNow). */
-  try { if (!pinUsableFor(p) && window.crypto && crypto.subtle) pinLaterOffer(p, raw.idn || null); }
-  catch (e) { toastLine('A counter PIN could not be offered yet: ' + ((e && e.message) || e)); }   /* the engines not fetched yet (a PC just restarted) — said, the sign-in stands */
+     window reopens only for a sign-in typed into it; a handed-over app session gets the offer on "Who is at the counter?" (pinLaterOffer). */
+  try {
+    if (!pinUsableFor(p) && window.crypto && crypto.subtle) {
+      if (raw.via !== 'window') pinLaterOffer(p, raw.idn || null);
+      else {
+        /* they were in the sign-in window a moment ago — the window comes back to finish that sign-in with its LOCAL PIN offer */
+        usignOpen(); USIGN.person = p; USIGN.idn = raw.idn || null; USIGN.pinOffered = true;
+        /* no token here (spent on the key, or kept by becomeShop) — the window is told who is in and offers the LOCAL PIN */
+        USIGN.win.machine.offerPin({ token: '', name: p.name || '', person: { id: p.id, kind: p.kind } });
+      }
+    }
+  } catch (e) { toastLine('A counter PIN could not be offered yet: ' + ((e && e.message) || e)); }   /* the engines not fetched yet (a PC just restarted) — said, the sign-in stands */
   return true;
 }
 /**
@@ -26028,7 +26039,7 @@ function pinLaterOffer(p, idn){
 function usignPinNow(){
   var x = PIN_LATER; if (!x || !x.person) return;
   var w = document.getElementById('whodlg'); if (w && w.open) w.close();
-  usignOpen(); USIGN.person = x.person; USIGN.idn = x.idn; USIGN.pinOffered = true; USIGN.closeWhenIn = true;
+  usignOpen(); USIGN.person = x.person; USIGN.idn = x.idn; USIGN.pinOffered = true;
   /* no token here (spent on the key, or kept by becomeShop) — the window is told who is in and offers the LOCAL PIN */
   USIGN.win.machine.offerPin({ token: '', name: x.person.name || '', person: { id: x.person.id, kind: x.person.kind } });
 }
