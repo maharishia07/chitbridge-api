@@ -6,7 +6,7 @@
  * every box is a READ of the posted books — BAS 1A − 1B equals the GST ledgers' net movement for the quarter, summed here from the journal lines themselves (the
  * brief's proof, on real postings) · a month outside the period does not count · Simpler BAS by default, the full BAS on request · every box names the ledgers it
  * counts (roles → the shop's chart) · VAT201 Boxes 1 · 9 · 14 from AED postings, the Emirate said, the FTA's boxes null and said · refusals in words (no stagger,
- * a bad Emirate) · owner only (a co-assist 403) · India 422 RETURN_FROM_RAIL.
+ * a bad Emirate) · owner only (a co-assist 403) · India 200 form:null RETURN_FROM_RAIL (TOUR-FIX1).
  * Needs the books engines (the sibling ../chitbridge-engines/src at v1.39.0, or BOOKS_ENGINES_SRC). Run: node tests/books-returns.test.cjs
  */
 'use strict';
@@ -139,7 +139,8 @@ const call = (port, method, p, body) => new Promise((done) => {
   await X.store.saveSetting(X.db, IN, { enabled: false });
   await q('POST', '/enable', {});
   r = await q('GET', '/returns');
-  ok('IN → 422 RETURN_FROM_RAIL, in words (GSTR-1 / 3B come from the frozen invoices on the rail: GET /api/tax/gstr)', r.status === 422 && r.body.code === 'RETURN_FROM_RAIL' && /GET \/api\/tax\/gstr/.test(r.body.message), JSON.stringify(r.body));
+  /* TOUR-FIX1: an answer, not a refusal — the GST page read a 422 on every visit (42 failed requests on the tour) */
+  ok('IN → 200 { form: null, code RETURN_FROM_RAIL, pack IN, why in a shopkeeper\'s words, rail: GET /api/tax/gstr } — never a 422', r.status === 200 && r.body.form === null && r.body.code === 'RETURN_FROM_RAIL' && r.body.pack === 'IN' && /made from your bills/.test(r.body.why) && r.body.rail === '/api/tax/gstr', JSON.stringify(r.body));
 
   srv.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');

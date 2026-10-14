@@ -261,7 +261,7 @@ async function captureBooks() {
       await q('GET', '/returns' + query, null, '/returns');
     }
     OWNER.identity_id = SHOP; DAY = '2027-04-10';
-    await q('GET', '/returns', null, '/returns');                                   /* India: 422 RETURN_FROM_RAIL */
+    await q('GET', '/returns', null, '/returns #rail');                             /* India: 200 form:null RETURN_FROM_RAIL (TOUR-FIX1), its own contract row */
 
     /* ── FX1: the rates (one typed, a CSV imported), a USD sale to the customer at its day's rate, /dues with its foreign figure, the revaluation at April's end ── */
     await q('GET', '/fx-rates', null, '/fx-rates');

@@ -222,7 +222,7 @@ One read per Home card, behind auth, signed-in people only (a key gets 403). Bui
 | `/api/facts/product-lab` | `{ lines, figures:{ items, no_cost } }` — a COUNT of items whose cost is unknown | `no_cost` for an actor without `can_see_costs`; no cost value is ever selected |
 | `/api/facts/combo-lab` | `{ lines, figures:{ saved } }` — saved sets in the library | the combos/modifiers split (one table, one shape) |
 | `/api/facts/offer-lab` | `{ lines, figures:{ drafts, live } }` | — |
-| `/api/facts/rail` | `{ suppliers, customers, in, out, stuck }` — in/out = open chits to you / from you, stuck = open past the shop's `overdue_days` | `in`/`out`/`stuck` when the shop holds 5,000+ chit copies (a truncated count is a wrong one) |
+| `/api/facts/rail` | `{ suppliers, customers, in, out, tasks, stuck }` — in / out / tasks = Tasks & Orders' folder counts (Orders in · Orders out · Tasks; derived by lib/work-rows classify · countsOf over the rail's own select read — written by lib/home-facts.rail, read by index.html's rail, TOUR-FIX1), stuck = open past the shop's `overdue_days` | `in`/`out`/`tasks`/`stuck` when the shop holds 5,000+ chit copies (a truncated count is a wrong one) |
 
 `lines[i]` = `{ text, value?, tone? }` (`tone` is `'dn'` or absent); the shell draws the first two. Unknown card: 404. Trips: till 1 · accounts 1 · product-lab 1 (2 for an actor) · combo-lab 1 · offer-lab 1 · rail 2.
 ## GET /api/identity/documents · POST /api/identity/documents/:scheme/code · /verify (M18, 2026-10-07)
