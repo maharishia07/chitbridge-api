@@ -153,7 +153,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard setting read, then ONE transaction (the rate list, newest first, LIMIT 500); b391 asked once (lib/schema, cached).",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "POST /api/books/fx-rates": {
       "file": "books.js",
@@ -162,7 +165,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard, then ONE transaction (ONE insert). Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "POST /api/books/fx-rates/import": {
       "file": "books.js",
@@ -171,7 +177,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard, then ONE transaction (ONE multi-row insert, however many rows; the CSV is read in memory). Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "GET /api/books/fx-revalue": {
       "file": "books.js",
@@ -180,7 +189,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips + 1 per foreign currency — the guard, then ONE transaction (chart · the open foreign balances in ONE grouped read · the closing rate per currency · party names in one read · the entry by source). Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "POST /api/books/fx-revalue": {
       "file": "books.js",
@@ -189,7 +201,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: as GET /fx-revalue, then two postEntry writes on the same handle (the revaluation and its reversal) — one transaction. Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "GET /api/books/cheques": {
       "file": "books.js",
@@ -402,7 +417,10 @@
       "wire": 4,
       "fired": true,
       "status": 404,
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "GET /api/crm/privacy-requests": {
       "file": "crm.js",
@@ -410,7 +428,10 @@
       "wire": null,
       "fired": false,
       "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "GET /api/definitions": {
       "file": "definitions.js",
@@ -585,7 +606,10 @@
       "wire": 0,
       "fired": true,
       "status": 200,
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "GET /api/people": {
       "file": "people.js",
@@ -1080,7 +1104,10 @@
       "wire": 4,
       "fired": true,
       "status": 404,
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "POST /api/crm/privacy-requests": {
       "file": "crm.js",
@@ -1088,7 +1115,10 @@
       "wire": null,
       "fired": false,
       "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "POST /api/crm/privacy-requests/:id/answer": {
       "file": "crm.js",
@@ -1096,7 +1126,10 @@
       "wire": null,
       "fired": false,
       "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "POST /api/crm/walk-ins/add": {
       "file": "crm.js",
@@ -1221,7 +1254,7 @@
       "wire": null,
       "fired": false,
       "extra": true,
-      "why": "no mount in server.js (entitiesRouter is mounted by variable) — alias of signin verify (api('ownerVerify'), app/register-form.js). A placeholder CEILING until a fixture runs the whole onboarding path (OTP check · identity · the governance-context COALESCE · signup_context · the auto-mint · schema bootstrap · root link · the token). GOV-SPIN (2026-10-14) adds, ONLY when the register panel sent country_source with agreed_at (a registration, never an ordinary sign-in): CS.atSignup (+3 cold memo'd, 0 warm) + ONE withEntity: identities read (1), and only when the accepted country differs — the setup mark (1) + the ONE EXISTS read (1) + UPDATE identities (1) — then the setup_source UPDATE (1); + the b383 column probe (cached) + ONE UPDATE of that verify's own signup_context row (RETURNING id, no search). tests/register-spin-country.test.cjs drives acceptAtSignup"
+      "why": "no mount in server.js (entitiesRouter is mounted by variable) — alias of signin verify (api('ownerVerify'), app/register-form.js). A placeholder CEILING until a fixture runs the whole onboarding path (OTP check · identity · the governance-context COALESCE · signup_context · the auto-mint · schema bootstrap · root link · the token). GOV-SPIN (2026-10-14) adds, ONLY when the register panel sent country_source with agreed_at (a registration, never an ordinary sign-in): CS.atSignup (+3 cold memo'd, 0 warm) + ONE withEntity: identities read (1), and only when the accepted country differs — the setup mark (1) + the ONE EXISTS read (1) + UPDATE identities (1) — then the setup_source UPDATE (1); + the b383 column probe (cached) + ONE UPDATE of that verify's own signup_context row (RETURNING id, no search). tests/register-spin-country.test.cjs drives acceptAtSignup · SIGNIN-CONST (2026-10-14, by hand): an owner sign-in that names no constitution reads entity_governance ONCE (one withEntity) and, when the shop is already stamped, skips the constitution read, the installation read and the upsert — fewer trips for every returning owner, one more only for a never-stamped shop"
     },
     "PUT /api/network-design": {
       "file": "network-design.js",

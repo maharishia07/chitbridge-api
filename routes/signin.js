@@ -539,9 +539,19 @@ async function verify(req, res) {
 
       // AUTO-MINT the governance stamp onto the CHOSEN vertical (else the default). BEST-EFFORT — can never fail verification.
       try {
-        const chosen = (req.body.constitution && String(req.body.constitution).trim()) || 'base';
-        let c = (await query(`SELECT constitution_key, version FROM constitution WHERE constitution_key = $1 AND active = true ORDER BY (is_default IS TRUE) DESC, minted_at DESC LIMIT 1`, [chosen])).rows[0];
-        if (!c) c = (await query(`SELECT constitution_key, version FROM constitution WHERE is_default = true AND active = true LIMIT 1`)).rows[0];
+        /**
+         * ⚠️⚠️ AN OWNER SIGN-IN NEVER RE-STAMPS (SIGNIN-CONST, 2026-10-14). This runs on EVERY owner sign-in, and only the
+         * registration form sends `constitution`; an ordinary sign-in fell back to 'base' and the upsert overwrote the
+         * shop's chosen vertical (and its installation) each time it signed in. Nothing named → a shop already stamped
+         * keeps its stamp and is reported as it stands; only an unstamped shop gets the default.
+         */
+        const named = req.body.constitution && String(req.body.constitution).trim();
+        const had = named ? null : (await withEntity(identity.identity_id, (cl) => cl.query(
+          `SELECT constitution_key, constitution_version FROM entity_governance WHERE entity_id = $1`, [identity.identity_id]))).rows[0];
+        if (had && had.constitution_key) mintedConstitution = require('../lib/versionref').format(had.constitution_key, had.constitution_version);
+        const chosen = named || 'base';
+        let c = (had && had.constitution_key) ? null : (await query(`SELECT constitution_key, version FROM constitution WHERE constitution_key = $1 AND active = true ORDER BY (is_default IS TRUE) DESC, minted_at DESC LIMIT 1`, [chosen])).rows[0];
+        if (!c && !(had && had.constitution_key)) c = (await query(`SELECT constitution_key, version FROM constitution WHERE is_default = true AND active = true LIMIT 1`)).rows[0];
         if (c) {
           // place the entity on the INSTALLATION that serves its vertical (service-desk → the Mexico platform), else default
           /* GOV-SPIN: else THIS installation (INSTALLATION_KEY) — a spin's shops were stamped India's platform-0 */

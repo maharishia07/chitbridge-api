@@ -59,9 +59,11 @@ const SEED = () => ({
            bridge_id: 'B-LOCK', break_status: 'active', status: 'active', pin_hash: H1234, pin_attempts: 5, pin_locked_at: 'PAST' },
 });
 let DB = {}, EVENTS = [], INSERTS = [], B282 = true, EVENT_FAIL = null;
+/* SIGNIN-CONST: the governance stamp. CONST off (the golden runs) = no constitution rows, exactly as before */
+let GOV = {}, GOV_WRITES = [], CONST = false;
 const reset = () => {
   DB = SEED(); Object.keys(DB).forEach((k) => { DB[k].identity_id = k; });
-  EVENTS = []; INSERTS = []; B282 = true; EVENT_FAIL = null;
+  EVENTS = []; INSERTS = []; B282 = true; EVENT_FAIL = null; GOV = {}; GOV_WRITES = []; CONST = false;
 };
 const lc = (v) => (v == null ? v : String(v).toLowerCase());
 const splitTop = (s, sep) => {            // split on `sep` outside parentheses
@@ -109,7 +111,18 @@ async function q(sql, params) {
     EVENTS.push(row); return { rows: [], rowCount: 1 };
   }
   if (/^INSERT INTO identities/i.test(s)) { INSERTS.push(params); return { rows: [], rowCount: 1 }; }
-  if (/FROM (constitution|installation)\b/i.test(s)) return { rows: [] };
+  if (/^SELECT constitution_key, constitution_version FROM entity_governance WHERE entity_id = \$1$/i.test(s))
+    return { rows: GOV[params[0]] ? [GOV[params[0]]] : [] };
+  if (/^INSERT INTO entity_governance/i.test(s)) {
+    GOV_WRITES.push(params); GOV[params[0]] = { constitution_key: params[1], constitution_version: params[2] };
+    return { rows: [], rowCount: 1 };
+  }
+  if (/FROM constitution\b/i.test(s)) {
+    if (!CONST) return { rows: [] };
+    const want = /constitution_key = \$1/.test(s) ? params[0] : 'base';
+    return { rows: ['base', 'pharma'].includes(want) ? [{ constitution_key: want, version: '1.0.0' }] : [] };
+  }
+  if (/FROM installation\b/i.test(s)) return { rows: [] };
   if ((m = s.match(/^SELECT (.+?) FROM identities WHERE (.+)$/i))) {
     const cols = m[1].split(',').map((x) => x.trim());
     /* projected to the columns the statement names — a column it did not SELECT is not in the row (as in Postgres) */
@@ -410,6 +423,25 @@ const firstDiff = (a, b) => {
     const b282 = fs.readFileSync(path.join(API, 'migrations', 'b282_signin_events.sql'), 'utf8');
     const list = (col) => (b282.match(new RegExp(col + "\\s+text[^\\n]*CHECK \\(" + col + " IN \\(([^)]*)\\)")) || [])[1].split(',').map((x) => x.trim().replace(/'/g, ''));
     t('the writer\'s lists ARE the migration\'s CHECK lists', same(events.ACTIONS, list('action')) && same(events.METHODS, list('method')));
+
+    say('\n── 6b · an owner sign-in never re-stamps the constitution (SIGNIN-CONST) ──');
+    reset(); CONST = true;
+    GOV.shop1 = { constitution_key: 'pharma', constitution_version: '1.0.0' };
+    const sc1 = await call('POST', '/api/signin/verify', { body: { email: 'owner@shop.test', otp: '111111' } });
+    t('a stamped shop signs in → its stamp is untouched (no write)', sc1.status === 200 && GOV_WRITES.length === 0
+      && GOV.shop1.constitution_key === 'pharma', JSON.stringify({ w: GOV_WRITES, g: GOV.shop1 }));
+    t('  …and the answer names the stamp it HAS, not base', /^pharma/.test(String(sc1.body && sc1.body.constitution)), String(sc1.body && sc1.body.constitution));
+    reset(); CONST = true;
+    const sc2 = await call('POST', '/api/signin/verify', { body: { email: 'owner@shop.test', otp: '111111' } });
+    t('an unstamped shop still gets the default stamp once', sc2.status === 200 && GOV_WRITES.length === 1 && GOV.shop1.constitution_key === 'base',
+      JSON.stringify(GOV_WRITES));
+    reset(); CONST = true;
+    GOV.shop1 = { constitution_key: 'base', constitution_version: '1.0.0' };
+    await call('POST', '/api/signin/verify', { body: { email: 'owner@shop.test', otp: '111111', constitution: 'pharma' } });
+    t('a vertical NAMED by the registration form is still written', GOV_WRITES.length === 1 && GOV.shop1.constitution_key === 'pharma', JSON.stringify(GOV_WRITES));
+    reset(); CONST = true;
+    await call('POST', '/api/signin/verify', { body: { user_id: 'ravi@shopone.br', pin: '1234' } });
+    t('a co-assist sign-in reads and writes no stamp', GOV_WRITES.length === 0);
 
     say('\n── 7 · one PIN engine, and the doors that are guarded ──');
     const src = (f) => fs.readFileSync(path.join(API, f), 'utf8');
