@@ -4,6 +4,14 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `items[].item_data.avail` (changed) | `{ qty, source, as_of }` — unchanged shape; `source` gains `ledger`; `qty` keeps 3 decimals | Derived per read (never written back) by `availability.withLedger` from `stock-store.onHand` (stock_balance summed across batches) when `availability.sourceOf(policy)` = `ledger` — i.e. no connector owns the shop's `stock` stream (`stream_owner.stock`). Otherwise the connector's stamp as before. Absent = unknown (never moved, or below zero). Read by web cart.js stock chip (`shop-stock`), qty_zero_hides. |
+| `from_ledger` | `{ value_minor, lines, movements }` | Only on `method:'automatic'`. Derived: `stock-store.asAt` (the movement log replayed to the end of the shop's day, weighted average). Written by: nobody (answer only). Read by: the closing-stock screen (not yet). |
+| `code` · `items` (422) | `STOCK_LEDGER_MISSING` · `STOCK_LEDGER_EMPTY` · `STOCK_BELOW_ZERO` · `STOCK_UNCOSTED` · `STOCK_UNREADABLE`; `items` = up to 20 product names | Derived by `books-period.ledgerValue` — a screen branches on `code`, never on the sentence. |
+
 ## GET /api/entities/constitutions · `installation` · `allowed_countries` · `countries` (GOV-SPIN, 2026-10-14)
 
 PUBLIC (pre-auth), the register panel's one read. Additive beside `constitutions`. Written by: nobody (derived) — the installation row by migration / `deploy/spin-lib.sh` (CB_SPIN_COUNTRY) / `scripts/seed-local-installations.sql` (local only). Read by: web `app/register-form.js` (the gov panel).
