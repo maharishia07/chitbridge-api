@@ -78305,6 +78305,40 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-13T15:00:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/books-pages.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "PERF1: the Day book and a Ledger answer in PAGES, and the pages add up to the whole.",
+   "claim": "PERF1: the Day book and a Ledger answer in PAGES (keyset, a server-side maximum, the server's totals), and the pages add up to the whole.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 100 lines. Run: node chitbridge-api/tests/books-pages.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 92,
+   "step": "",
+   "areas": [
+    "api",
+    "connector",
+    "engine"
+   ],
+   "subjects": [
+    "lib/books-store.js",
+    "routes/books.js",
+    "lib/page-limit.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-14T10:00:00+05:30",
+   "needs": [
+    "a database (via books-harness.cjs)"
+   ]
   }
  ]
 }

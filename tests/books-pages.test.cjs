@@ -34,7 +34,7 @@ const call = (port, p) => new Promise((done) => {
   ok('page-limit: a page is a whole number ≥ 1', L.pageOf('-3') === 1 && L.pageOf('7') === 7 && L.pageOf(undefined) === 1);
 
   const X = H.load({ auth: authStub });
-  if (!X.src.dir) { console.log('\n   SKIP the books half: ' + X.src.why); console.log('\n  ✓ ' + pass + ' passed'); return process.exit(fail ? 1 : 0); }
+  if (!X.src.dir) { console.log('\n   SKIP the books half: ' + X.src.why); console.log('\n  ✓ ' + pass + ' passed · ' + pass + ' checks'); return process.exit(fail ? 1 : 0); }
   require.cache[require.resolve(path.join(H.API, 'lib', 'storage-object'))] = { exports: { available: async () => false } };
   const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
   const srv = app.listen(0); const port = srv.address().port;
@@ -87,6 +87,6 @@ const call = (port, p) => new Promise((done) => {
   ok('…every line names its entry (entry_id) — the journal it opens is read by ?entries=', lw.body.lines.every((l) => !!l.entry_id));
 
   srv.close();
-  console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed');
+  console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
