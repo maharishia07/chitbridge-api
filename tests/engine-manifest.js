@@ -301,6 +301,7 @@ const INFRA_LIBS = [
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
   'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
   'owner.js',              // is this request the owner — one test for every owner-only switch
+  'trade-may.js',          // TRADE-SRV1 G8: may this caller write a trade record — reads access.canEdit + the key flag; the GET says it, the write refuses with it. Decides nothing new
   /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —
      flexible while empty, tightened per column once used — and the routes and the screen both read it, so it
      sits here rather than being re-decided at either end. */
