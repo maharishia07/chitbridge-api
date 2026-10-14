@@ -98,29 +98,34 @@ async function run(ctx) {
   const since = new Date(Date.now() - 60 * 1000).toISOString();
   const fy = ctx.start, today = ctx.end;
   const rowsOf = (b) => { for (const k of ['entries', 'lines', 'rows', 'parties', 'chits', 'customers', 'items', 'list', 'cheques']) if (Array.isArray(b[k])) return b[k].length; return Array.isArray(b) ? b.length : null; };
-  const READS = [
-    ['Day book · today', '/api/books/daybook'],
-    ['Day book · FY, page 1 (limit 100)', '/api/books/daybook?from=' + fy + '&to=' + today + '&limit=100'],
-    ['Ledger · cash FY (whole)', '/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today],
-    ['Ledger · cash FY, page 1 (limit 100)', '/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today + '&limit=100'],
-    ['Party statement · busiest', '/api/books/party/' + busy + '/statement'],
-    ['Trial balance', '/api/books/trial-balance'],
-    ['P&L', '/api/books/pl'],
-    ['Balance sheet', '/api/books/bs'],
-    ['Dues', '/api/books/dues'],
-    ['Cheques', '/api/books/cheques'],
-    ['CRM list', '/api/crm/parties'],
-    ['Customers list', '/api/relationships/customers'],
-    ['Inbox p1', '/api/chits/inbox?page=1&limit=20'],
-    ['Inbox p50', '/api/chits/inbox?page=50&limit=20'],
-    ['Till snapshot · full', '/api/till/snapshot'],
-    ['Till snapshot · since', '/api/till/snapshot?since=' + encodeURIComponent(since)],
+  /* the clock back to the real one: the items' created_at are real moments, and /dues counts those on or before its day */
+  CLOCK.reset();
+  const p49 = await call('/api/chits/inbox?page=49&limit=20'), after49 = p49.b && p49.b.next;
+  const READS = [   /* [name, path, the array the rows are counted in] */
+    ['Day book · one day (' + today + ')', '/api/books/daybook?from=' + today + '&to=' + today, 'entries'],
+    ['Day book · FY (whole)', '/api/books/daybook?from=' + fy + '&to=' + today, 'entries'],
+    ['Day book · FY, page 1 (limit 100)', '/api/books/daybook?from=' + fy + '&to=' + today + '&limit=100', 'entries'],
+    ['Ledger · cash FY (whole)', '/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today, 'lines'],
+    ['Ledger · cash FY, page 1 (limit 100)', '/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today + '&limit=100', 'lines'],
+    ['Party statement · busiest', '/api/books/party/' + busy + '/statement', 'lines'],
+    ['Trial balance', '/api/books/trial-balance', 'rows'],
+    ['P&L', '/api/books/pl', null],
+    ['Balance sheet', '/api/books/bs', null],
+    ['Dues', '/api/books/dues', 'parties'],
+    ['Cheques', '/api/books/cheques', 'cheques'],
+    ['CRM list', '/api/crm/parties', 'parties'],
+    ['Customers list', '/api/relationships/customers', 'customers'],
+    ['Inbox p1', '/api/chits/inbox?page=1&limit=20', 'chits'],
+    ['Inbox p50 (OFFSET)', '/api/chits/inbox?page=50&limit=20', 'chits'],
+    ['Inbox p50 (keyset ?after)', '/api/chits/inbox?page=50&limit=20' + (after49 ? '&after=' + encodeURIComponent(after49) : ''), 'chits'],
+    ['Till snapshot · full', '/api/till/snapshot', 'items'],
+    ['Till snapshot · since', '/api/till/snapshot?since=' + encodeURIComponent(since), 'items'],
   ];
   const out = [];
-  for (const [name, p] of READS) {
+  for (const [name, p, key] of READS) {
     const ms = []; let last = null;
     for (let i = 0; i < 20; i++) { last = await call(p); ms.push(last.ms); if (last.ms > 3000 || last.status >= 500) break; }   /* a read past 3 s (or failing) is said once — 20 timeouts add nothing */
-    out.push({ name, status: last.status, n: ms.length, p50: pct(ms, 50), p95: pct(ms, 95), rows: rowsOf(last.b), trips: last.trips, kb: Math.round(last.bytes / 1024) });
+    out.push({ name, status: last.status, n: ms.length, p50: pct(ms, 50), p95: pct(ms, 95), rows: key ? (Array.isArray(last.b[key]) ? last.b[key].length : null) : rowsOf(last.b), trips: last.trips, kb: Math.round(last.bytes / 1024) });
   }
   const f = (x) => (x == null ? '—' : x < 10 ? x.toFixed(1) : String(Math.round(x)));
   console.log('\n  scale ' + ctx.scale + ' · ' + facts.lines + ' journal lines · ' + facts.entries + ' entries · ' + facts.items + ' party items (' + facts.open_items + ' open) · '

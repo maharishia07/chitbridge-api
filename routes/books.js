@@ -452,12 +452,15 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
     let payables = null;
     const out = await withEntity(e, async (h) => {
       const chart = await S.accounts(h, e), per = new Map();
+      /* PERF1: "recorded on or before asOf (the shop's day)" is ONE moment — the start of the shop's next day (books-hooks.dayBounds) — compared per item;
+         it was dayOf() per item, a zone conversion each (≈ 0.6 s of 0.9 s on 24k items at 100k lines) */
+      const cut = Date.parse(require('../lib/books-hooks').dayBounds(asOf, req.books).to);
       let payableItems = [];
       for (const role of sides) {
         const a = chart.find((x) => x.role === role); if (!a) continue;
         const side = role === 'creditors' ? 'payable' : 'receivable', sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
-        const items = (await S.items(h, e, null, a.account_id)).filter((i) => require('../lib/books-hooks').dayOf(i.created_at, req.books) <= asOf).map(E.itemOf);
+        const items = (await S.items(h, e, null, a.account_id)).filter((i) => new Date(i.created_at).getTime() < cut).map(E.itemOf);
         const d = E.dues(items, asOf, side);
         if (role === 'creditors') payableItems = items;
         const byRef = d.outstanding.by_ref || {};
