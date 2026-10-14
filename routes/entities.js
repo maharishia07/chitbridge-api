@@ -131,7 +131,7 @@ router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, valida
 // currency · year · tax · format · languages) — the register panel paints these; it computes nothing. Same public door, no new route.
 router.get('/constitutions', async (req, res) => {
   const at = await require('../lib/country-setup').atSignup();
-  const spin = { installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null },
+  const spin = { installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null, timezone: at.timezone },
                  allowed_countries: at.allowed, countries: at.countries };
   try {
     const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default

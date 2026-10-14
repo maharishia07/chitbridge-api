@@ -10,7 +10,7 @@ PUBLIC (pre-auth), the register panel's one read. Additive beside `constitutions
 
 | Key | Shape | Source / derived · who writes it · who reads it |
 |---|---|---|
-| `installation` | `{ key, country, name }` | `key` = INSTALLATION_KEY (else `platform-0`). `country` = `installation.country` (b382, ISO-2) through govresolve's cascade (`basics.country`: null when none is stated or the constitution's `allowed.countries` excludes it — never a default). `name` = its English name (Intl), null with no country. |
+| `installation` | `{ key, country, name, timezone }` | `key` = INSTALLATION_KEY (else `platform-0`). `country` = `installation.country` (b382, ISO-2) through govresolve's cascade (`basics.country`: null when none is stated or the constitution's `allowed.countries` excludes it — never a default). `name` = its English name (Intl), null with no country. `timezone` = the installation's zone (govresolve `basics.timezone`) — the zone registerNew stores for a several-zone country when the device's is not one of its own. |
 | `allowed_countries` | `[ISO-2]` or null | The constitution's optional `governance.allowed.countries` (tighten-only, the `allowed` envelope's new key). null = every registered country pack. |
 | `countries[]` | `country-setup.countries()` rows, filtered by `allowed_countries` | `{ code, name, currency, fy_start_month, zones, locale, books, tax: { scheme, id, return }, languages }` — every value from the engines pack (`tax.scheme` · the tax-ID name `tax.idName` when engines carries it, else IN `export.taxScheme` / AU `abn` / AE `trn` · `returns.name` · `locale.langs`). `tax` and `languages` added by GOV-SPIN; the Country setup screen's `countries` (GET /api/governance/country-setup) carries the same rows. |
 
