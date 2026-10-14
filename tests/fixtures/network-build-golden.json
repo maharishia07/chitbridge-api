@@ -1,0 +1,2413 @@
+{
+ "build · a co-assist may not build → 403": {
+  "status": 403,
+  "body": {
+   "error": "Not permitted",
+   "message": "Only the business owner can build a network. Sign in as the business itself."
+  },
+  "calls": []
+ },
+ "build · the account cannot be read → 404": {
+  "status": 404,
+  "body": {
+   "error": "Not found",
+   "message": "Your account could not be read."
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   }
+  ]
+ },
+ "build · a User ID that cannot be a root → 409": {
+  "status": 409,
+  "body": {
+   "error": "Root name unusable",
+   "code": "ROOT_HANDLE_UNUSABLE",
+   "message": "Your User ID \"a@b.com\" cannot be a network name: A handle is not an email address. Change your User ID in Settings first — every store in the network is named from it.",
+   "suggestion": "athi-group"
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   }
+  ]
+ },
+ "build · no User ID and no root named → 409 ROOT_HANDLE_NEEDED": {
+  "status": 409,
+  "body": {
+   "error": "User ID needed",
+   "code": "ROOT_HANDLE_NEEDED",
+   "message": "Set your User ID before building a network. Every store below is named from it (<your-user-id>.store), and it cannot be changed afterwards without orphaning them — so it is yours to choose, not ours to guess from a diagram label.",
+   "suggestion": "athi-group",
+   "where": "Profile › IAM"
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   }
+  ]
+ },
+ "build · a named root that will not do → 400": {
+  "status": 400,
+  "body": {
+   "error": "Root name unusable",
+   "code": "ROOT_HANDLE_NEEDED",
+   "message": "Choose a network name. \"a b\" will not do: \"a b\" must be letters, numbers and dashes, starting with a letter or number."
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   }
+  ]
+ },
+ "build · a named root already taken → 409": {
+  "status": 409,
+  "body": {
+   "error": "Root name taken",
+   "code": "ROOT_HANDLE_TAKEN",
+   "message": "\"athi\" is already taken. Choose another network name."
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT 1 FROM identities WHERE LOWER(user_id) = $1",
+    "params": [
+     "athi"
+    ]
+   }
+  ]
+ },
+ "build · nothing designed → 400": {
+  "status": 400,
+  "body": {
+   "error": "Nothing designed",
+   "message": "Draw the network first — add the branches and units you want, then build."
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   }
+  ]
+ },
+ "build · dry run of the full design": {
+  "status": 200,
+  "body": {
+   "ok": true,
+   "dry_run": true,
+   "root": "athi",
+   "root_claimed": false,
+   "create": [
+    {
+     "key": "a",
+     "name": "Clothing",
+     "handle": "athi.clothing",
+     "parent_key": null,
+     "visibility": "public",
+     "asked": "public",
+     "purpose": "Retail",
+     "sort_order": null,
+     "place": {
+      "address": null,
+      "city": "Chennai",
+      "country": null,
+      "currency": "INR",
+      "tz": null,
+      "dispatch_days": null,
+      "ship_within_days": null,
+      "ship_beyond_days": null,
+      "lat": 13,
+      "lng": 80,
+      "service_km": 20
+     }
+    },
+    {
+     "key": "c",
+     "name": "Warehouse",
+     "handle": "athi.warehouse",
+     "parent_key": null,
+     "visibility": "private",
+     "asked": "private",
+     "purpose": "",
+     "sort_order": null,
+     "place": {
+      "address": null,
+      "city": null,
+      "country": null,
+      "currency": "ZZZ",
+      "tz": null,
+      "dispatch_days": null,
+      "ship_within_days": null,
+      "ship_beyond_days": null,
+      "lat": null,
+      "lng": null,
+      "service_km": null
+     }
+    }
+   ],
+   "update": [
+    {
+     "key": "d",
+     "name": "Outlet",
+     "handle": "athi.outlet",
+     "bridge_id": "CBBUILT0001",
+     "from": "public",
+     "to": "network",
+     "purpose": {
+      "from": "Retail",
+      "to": "Factory outlet"
+     },
+     "order": {
+      "from": 1,
+      "to": null
+     },
+     "place": {
+      "from": {
+       "address": null,
+       "city": null,
+       "country": "IN",
+       "currency": "INR",
+       "lat": null,
+       "lng": null,
+       "service_km": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null
+      },
+      "to": {
+       "address": null,
+       "city": "Madurai",
+       "country": null,
+       "currency": null,
+       "tz": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null,
+       "lat": null,
+       "lng": null,
+       "service_km": null
+      }
+     }
+    },
+    {
+     "key": "e",
+     "name": "Kiosk",
+     "handle": "athi.kiosk",
+     "bridge_id": "CBBUILT0002",
+     "from": "public",
+     "to": "private"
+    },
+    {
+     "key": "g",
+     "name": "Export desk",
+     "handle": "athi.export",
+     "bridge_id": "CBBUILT0003",
+     "order": {
+      "from": 1,
+      "to": null
+     },
+     "place": {
+      "from": {
+       "address": null,
+       "city": null,
+       "country": "IN",
+       "currency": "INR",
+       "lat": null,
+       "lng": null,
+       "service_km": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null
+      },
+      "to": {
+       "address": null,
+       "city": null,
+       "country": null,
+       "currency": "ZZZ",
+       "tz": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null,
+       "lat": null,
+       "lng": null,
+       "service_km": null
+      }
+     }
+    }
+   ],
+   "invite": [
+    {
+     "key": "p",
+     "name": "Ravi Timbers",
+     "ref": "ravi.timbers"
+    },
+    {
+     "key": "q",
+     "name": "Ghost",
+     "ref": "nobody.here"
+    },
+    {
+     "key": "s",
+     "name": "Myself",
+     "ref": "athi"
+    }
+   ],
+   "skip": [],
+   "problems": [
+    {
+     "key": "b",
+     "name": "Mens",
+     "reason": "\"athi.mens\" is already taken. Rename this node."
+    },
+    {
+     "key": "t",
+     "name": "No ref",
+     "reason": "A partner is invited, not created — add their handle or User ID (e.g. ravi.timbers) to invite them."
+    }
+   ],
+   "notes": [],
+   "counts": {
+    "create": 2,
+    "update": 3,
+    "invite": 3,
+    "skip": 0,
+    "problems": 2,
+    "narrowed": 0
+   }
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1",
+    "params": [
+     "athi.%"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)",
+    "params": [
+     [
+      "CBBUILT0001",
+      "CBBUILT0002",
+      "CBBUILT0003"
+     ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT plan, params_override FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT pc.version, pc.params, pc.plan_menu, pc.root_id FROM platform_constitution pc JOIN platform_root pr ON pr.root_id = pc.root_id WHERE pc.is_active LIMIT 1",
+    "params": null
+   }
+  ]
+ },
+ "build · dry run under a private network (the cap narrows)": {
+  "status": 200,
+  "body": {
+   "ok": true,
+   "dry_run": true,
+   "root": "athi",
+   "root_claimed": false,
+   "create": [
+    {
+     "key": "a",
+     "name": "Clothing",
+     "handle": "athi.clothing",
+     "parent_key": null,
+     "visibility": "network",
+     "asked": "public",
+     "purpose": "Retail",
+     "sort_order": null,
+     "place": {
+      "address": null,
+      "city": "Chennai",
+      "country": null,
+      "currency": "INR",
+      "tz": null,
+      "dispatch_days": null,
+      "ship_within_days": null,
+      "ship_beyond_days": null,
+      "lat": 13,
+      "lng": 80,
+      "service_km": 20
+     }
+    },
+    {
+     "key": "b",
+     "name": "Mens",
+     "handle": "athi.mens",
+     "parent_key": "a",
+     "visibility": "network",
+     "asked": "network",
+     "purpose": "",
+     "sort_order": null,
+     "place": null
+    },
+    {
+     "key": "c",
+     "name": "Warehouse",
+     "handle": "athi.warehouse",
+     "parent_key": null,
+     "visibility": "private",
+     "asked": "private",
+     "purpose": "",
+     "sort_order": null,
+     "place": {
+      "address": null,
+      "city": null,
+      "country": null,
+      "currency": "ZZZ",
+      "tz": null,
+      "dispatch_days": null,
+      "ship_within_days": null,
+      "ship_beyond_days": null,
+      "lat": null,
+      "lng": null,
+      "service_km": null
+     }
+    }
+   ],
+   "update": [
+    {
+     "key": "d",
+     "name": "Outlet",
+     "handle": "athi.outlet",
+     "bridge_id": "CBBUILT0001",
+     "from": "public",
+     "to": "network",
+     "purpose": {
+      "from": "Retail",
+      "to": "Factory outlet"
+     },
+     "order": {
+      "from": 1,
+      "to": null
+     },
+     "place": {
+      "from": {
+       "address": null,
+       "city": null,
+       "country": "IN",
+       "currency": "INR",
+       "lat": null,
+       "lng": null,
+       "service_km": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null
+      },
+      "to": {
+       "address": null,
+       "city": "Madurai",
+       "country": null,
+       "currency": null,
+       "tz": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null,
+       "lat": null,
+       "lng": null,
+       "service_km": null
+      }
+     }
+    },
+    {
+     "key": "e",
+     "name": "Kiosk",
+     "handle": "athi.kiosk",
+     "bridge_id": "CBBUILT0002",
+     "from": "public",
+     "to": "private"
+    },
+    {
+     "key": "g",
+     "name": "Export desk",
+     "handle": "athi.export",
+     "bridge_id": "CBBUILT0003",
+     "from": "public",
+     "to": "network",
+     "order": {
+      "from": 1,
+      "to": null
+     },
+     "place": {
+      "from": {
+       "address": null,
+       "city": null,
+       "country": "IN",
+       "currency": "INR",
+       "lat": null,
+       "lng": null,
+       "service_km": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null
+      },
+      "to": {
+       "address": null,
+       "city": null,
+       "country": null,
+       "currency": "ZZZ",
+       "tz": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null,
+       "lat": null,
+       "lng": null,
+       "service_km": null
+      }
+     }
+    }
+   ],
+   "invite": [
+    {
+     "key": "p",
+     "name": "Ravi Timbers",
+     "ref": "ravi.timbers"
+    },
+    {
+     "key": "q",
+     "name": "Ghost",
+     "ref": "nobody.here"
+    },
+    {
+     "key": "s",
+     "name": "Myself",
+     "ref": "athi"
+    }
+   ],
+   "skip": [],
+   "problems": [
+    {
+     "key": "t",
+     "name": "No ref",
+     "reason": "A partner is invited, not created — add their handle or User ID (e.g. ravi.timbers) to invite them."
+    }
+   ],
+   "notes": [
+    "\"Clothing\" was set to public but is being built network: This network is private, so a store under it can be visible to the network or to nobody — not to the public.",
+    "\"Export desk\" was set to public but is being built network: This network is private, so a store under it can be visible to the network or to nobody — not to the public."
+   ],
+   "counts": {
+    "create": 3,
+    "update": 3,
+    "invite": 3,
+    "skip": 0,
+    "problems": 1,
+    "narrowed": 2
+   }
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1",
+    "params": [
+     "athi.%"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)",
+    "params": [
+     [
+      "CBBUILT0001",
+      "CBBUILT0002",
+      "CBBUILT0003"
+     ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT plan, params_override FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   }
+  ]
+ },
+ "build · the network already matches": {
+  "status": 200,
+  "body": {
+   "ok": true,
+   "root": "athi",
+   "root_claimed": false,
+   "created": [],
+   "updated": [],
+   "invited": [],
+   "skipped": [],
+   "problems": [
+    {
+     "key": "d",
+     "name": "Outlet",
+     "reason": "\"Outlet\" was not changed — you did not create that store."
+    }
+   ],
+   "notes": [],
+   "claim_note": "",
+   "message": "0 stores created, 1 not built"
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1",
+    "params": [
+     "athi.%"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)",
+    "params": [
+     [
+      "CBBUILT0001"
+     ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT plan, params_override FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true) ON CONFLICT (bridge_id) DO NOTHING",
+    "params": [
+     "CBROOT00001",
+     "Athi Group",
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT path::text AS path FROM cb_entity WHERE bridge_id = $1",
+    "params": [
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE identities SET catalogue_visibility = COALESCE($1, catalogue_visibility), params_override = CASE WHEN $1::text IS NULL THEN params_override ELSE COALESCE(params_override, '{}'::jsonb) || jsonb_build_object('caps', COALESCE(params_override->'caps', '{}'::jsonb) || jsonb_build_object('catalogue_visibility', $1::text)) END, purpose = CASE WHEN $4::text IS NULL THEN purpose WHEN $4::text = '' THEN NULL ELSE $4::text END, sort_order = CASE WHEN $5::int IS NULL THEN sort_order WHEN $5::int = -1 THEN NULL ELSE $5::int END, -- b119 · PLACE. One jsonb parameter rather than six scalars: the place moves as a unit, and six -- independent COALESCEs would let a half-applied place through if one ever went missing. address = CASE WHEN $6::jsonb IS NULL THEN address ELSE $6->>'address' END, city = CASE WHEN $6::jsonb IS NULL THEN city ELSE $6->>'city' END, country = CASE WHEN $6::jsonb IS NULL THEN country ELSE COALESCE($6->>'country', country) END, lat = CASE WHEN $6::jsonb IS NULL THEN lat ELSE ($6->>'lat')::numeric END, lng = CASE WHEN $6::jsonb IS NULL THEN lng ELSE ($6->>'lng')::numeric END, service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END, dispatch_days = CASE WHEN $6::jsonb IS NULL THEN dispatch_days ELSE ($6->>'dispatch_days')::smallint END, ship_within_days = CASE WHEN $6::jsonb IS NULL THEN ship_within_days ELSE ($6->>'ship_within_days')::smallint END, ship_beyond_days = CASE WHEN $6::jsonb IS NULL THEN ship_beyond_days ELSE ($6->>'ship_beyond_days')::smallint END, currency_code = CASE WHEN $6::jsonb IS NULL THEN currency_code ELSE COALESCE($6->>'currency', currency_code) END WHERE bridge_id = $2 AND created_by = $3 RETURNING bridge_id",
+    "params": [
+     null,
+     "CBBUILT0001",
+     "ME",
+     null,
+     -1,
+     null
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO network_design (entity_id, draft, updated_at) VALUES ($1, $2, now()) ON CONFLICT (entity_id) DO UPDATE SET draft = EXCLUDED.draft, updated_at = now()",
+    "params": [
+     "ME",
+     {
+      "nodes": [
+       {
+        "key": "r",
+        "name": "Athi",
+        "root": true,
+        "owned": true,
+        "parent_key": null,
+        "holds": []
+       },
+       {
+        "key": "d",
+        "name": "Outlet",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "public",
+        "purpose": "Retail",
+        "sort_order": 1,
+        "built": {
+         "bridge_id": "CBBUILT0001",
+         "user_id": "athi.outlet",
+         "visibility": "public"
+        }
+       }
+      ],
+      "root_handle": "athi"
+     }
+    ]
+   }
+  ]
+ },
+ "build · the full design, root claimed": {
+  "status": 200,
+  "body": {
+   "ok": true,
+   "root": "athi",
+   "root_claimed": true,
+   "created": [
+    {
+     "key": "a",
+     "name": "Clothing",
+     "handle": "athi.clothing",
+     "bridge_id": "CBHQX6DLT2",
+     "visibility": "public",
+     "purpose": "Retail",
+     "sort_order": null,
+     "place": {
+      "address": null,
+      "city": "Chennai",
+      "country": null,
+      "currency": "INR",
+      "tz": null,
+      "dispatch_days": null,
+      "ship_within_days": null,
+      "ship_beyond_days": null,
+      "lat": 13,
+      "lng": 80,
+      "service_km": 20
+     },
+     "claim_code": "171271",
+     "expires_at": "TS",
+     "path": "CBROOT00001.CBHQX6DLT2"
+    },
+    {
+     "key": "b",
+     "name": "Mens",
+     "handle": "athi.mens",
+     "bridge_id": "CBGPW5CKSZ",
+     "visibility": "network",
+     "purpose": null,
+     "sort_order": null,
+     "place": null,
+     "claim_code": "242542",
+     "expires_at": "TS",
+     "path": "CBROOT00001.CBHQX6DLT2.CBGPW5CKSZ"
+    }
+   ],
+   "updated": [
+    {
+     "key": "d",
+     "name": "Outlet",
+     "handle": "athi.outlet",
+     "bridge_id": "CBBUILT0001",
+     "from": "public",
+     "to": "network",
+     "purpose": {
+      "from": "Retail",
+      "to": "Factory outlet"
+     },
+     "order": {
+      "from": 1,
+      "to": null
+     },
+     "place": {
+      "from": {
+       "address": null,
+       "city": null,
+       "country": "IN",
+       "currency": "INR",
+       "lat": null,
+       "lng": null,
+       "service_km": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null
+      },
+      "to": {
+       "address": null,
+       "city": "Madurai",
+       "country": null,
+       "currency": null,
+       "tz": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null,
+       "lat": null,
+       "lng": null,
+       "service_km": null
+      }
+     }
+    }
+   ],
+   "invited": [
+    {
+     "key": "p",
+     "name": "Ravi Timbers",
+     "handle": "ravi.timbers",
+     "bridge_id": "CBPART0001",
+     "status": "pending",
+     "edge_id": "edge-new"
+    }
+   ],
+   "skipped": [],
+   "problems": [
+    {
+     "key": "t",
+     "name": "No ref",
+     "reason": "A partner is invited, not created — add their handle or User ID (e.g. ravi.timbers) to invite them."
+    },
+    {
+     "key": "c",
+     "name": "Warehouse",
+     "reason": "ZZZ is not a currency this business may price in."
+    },
+    {
+     "key": "e",
+     "name": "Kiosk",
+     "reason": "\"Kiosk\" was not changed — you did not create that store."
+    },
+    {
+     "key": "g",
+     "name": "Export desk",
+     "reason": "ZZZ is not a currency this business may price in."
+    },
+    {
+     "key": "q",
+     "name": "Ghost",
+     "reason": "No business found with the handle \"nobody.here\"."
+    },
+    {
+     "key": "s",
+     "name": "Myself",
+     "reason": "That is your own handle."
+    }
+   ],
+   "notes": [],
+   "claim_note": "Each new store signs in with its handle and the code shown here. The codes expire in 7 days — re-issue one from the network page if it lapses.",
+   "message": "2 stores created, 1 updated, 1 partner invitation sent, 6 not built"
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT 1 FROM identities WHERE LOWER(user_id) = $1",
+    "params": [
+     "athi"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1",
+    "params": [
+     "athi.%"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)",
+    "params": [
+     [
+      "CBBUILT0001",
+      "CBBUILT0002",
+      "CBBUILT0003"
+     ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT plan, params_override FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE identities SET user_id = $1 WHERE identity_id = $2 AND user_id IS NULL",
+    "params": [
+     "athi",
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE identities a SET user_id = ops.f_employee_user_id(a.actor_key, $1, e.bridge_id) FROM identities e WHERE a.parent_entity_id = $2 AND a.identity_type = 'actor' AND a.actor_key IS NOT NULL AND a.user_id IS NOT NULL AND e.identity_id = $2 AND a.user_id = ops.f_employee_user_id(a.actor_key, NULL, e.bridge_id)",
+    "params": [
+     "athi",
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true) ON CONFLICT (bridge_id) DO NOTHING",
+    "params": [
+     "CBROOT00001",
+     "Athi Group",
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT path::text AS path FROM cb_entity WHERE bridge_id = $1",
+    "params": [
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO identities (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility, params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order, address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days, entity_kind) VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'network')",
+    "params": [
+     "UUID#1",
+     "CBHQX6DLT2",
+     "Clothing",
+     "athi.clothing",
+     "public",
+     "{\"caps\":{\"catalogue_visibility\":\"public\"}}",
+     "IN",
+     "INR",
+     "171271",
+     "TS",
+     "ME",
+     "Retail",
+     null,
+     null,
+     "Chennai",
+     13,
+     80,
+     20,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)",
+    "params": [
+     "CBHQX6DLT2",
+     "Clothing",
+     "CBROOT00001.CBHQX6DLT2"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO identities (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility, params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order, address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days, entity_kind) VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'network')",
+    "params": [
+     "UUID#2",
+     "CBGPW5CKSZ",
+     "Mens",
+     "athi.mens",
+     "network",
+     "{\"caps\":{\"catalogue_visibility\":\"network\"}}",
+     "IN",
+     "INR",
+     "242542",
+     "TS",
+     "ME",
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)",
+    "params": [
+     "CBGPW5CKSZ",
+     "Mens",
+     "CBROOT00001.CBHQX6DLT2.CBGPW5CKSZ"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE identities SET catalogue_visibility = COALESCE($1, catalogue_visibility), params_override = CASE WHEN $1::text IS NULL THEN params_override ELSE COALESCE(params_override, '{}'::jsonb) || jsonb_build_object('caps', COALESCE(params_override->'caps', '{}'::jsonb) || jsonb_build_object('catalogue_visibility', $1::text)) END, purpose = CASE WHEN $4::text IS NULL THEN purpose WHEN $4::text = '' THEN NULL ELSE $4::text END, sort_order = CASE WHEN $5::int IS NULL THEN sort_order WHEN $5::int = -1 THEN NULL ELSE $5::int END, -- b119 · PLACE. One jsonb parameter rather than six scalars: the place moves as a unit, and six -- independent COALESCEs would let a half-applied place through if one ever went missing. address = CASE WHEN $6::jsonb IS NULL THEN address ELSE $6->>'address' END, city = CASE WHEN $6::jsonb IS NULL THEN city ELSE $6->>'city' END, country = CASE WHEN $6::jsonb IS NULL THEN country ELSE COALESCE($6->>'country', country) END, lat = CASE WHEN $6::jsonb IS NULL THEN lat ELSE ($6->>'lat')::numeric END, lng = CASE WHEN $6::jsonb IS NULL THEN lng ELSE ($6->>'lng')::numeric END, service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END, dispatch_days = CASE WHEN $6::jsonb IS NULL THEN dispatch_days ELSE ($6->>'dispatch_days')::smallint END, ship_within_days = CASE WHEN $6::jsonb IS NULL THEN ship_within_days ELSE ($6->>'ship_within_days')::smallint END, ship_beyond_days = CASE WHEN $6::jsonb IS NULL THEN ship_beyond_days ELSE ($6->>'ship_beyond_days')::smallint END, currency_code = CASE WHEN $6::jsonb IS NULL THEN currency_code ELSE COALESCE($6->>'currency', currency_code) END WHERE bridge_id = $2 AND created_by = $3 RETURNING bridge_id",
+    "params": [
+     "network",
+     "CBBUILT0001",
+     "ME",
+     "Factory outlet",
+     -1,
+     "{\"address\":null,\"city\":\"Madurai\",\"country\":null,\"currency\":null,\"tz\":null,\"dispatch_days\":null,\"ship_within_days\":null,\"ship_beyond_days\":null,\"lat\":null,\"lng\":null,\"service_km\":null}"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE entity_schemas SET visibility = $1 WHERE entity_id = (SELECT identity_id FROM identities WHERE bridge_id = $2) AND status = 'active' AND is_default = true",
+    "params": [
+     "public",
+     "CBBUILT0001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE identities SET catalogue_visibility = COALESCE($1, catalogue_visibility), params_override = CASE WHEN $1::text IS NULL THEN params_override ELSE COALESCE(params_override, '{}'::jsonb) || jsonb_build_object('caps', COALESCE(params_override->'caps', '{}'::jsonb) || jsonb_build_object('catalogue_visibility', $1::text)) END, purpose = CASE WHEN $4::text IS NULL THEN purpose WHEN $4::text = '' THEN NULL ELSE $4::text END, sort_order = CASE WHEN $5::int IS NULL THEN sort_order WHEN $5::int = -1 THEN NULL ELSE $5::int END, -- b119 · PLACE. One jsonb parameter rather than six scalars: the place moves as a unit, and six -- independent COALESCEs would let a half-applied place through if one ever went missing. address = CASE WHEN $6::jsonb IS NULL THEN address ELSE $6->>'address' END, city = CASE WHEN $6::jsonb IS NULL THEN city ELSE $6->>'city' END, country = CASE WHEN $6::jsonb IS NULL THEN country ELSE COALESCE($6->>'country', country) END, lat = CASE WHEN $6::jsonb IS NULL THEN lat ELSE ($6->>'lat')::numeric END, lng = CASE WHEN $6::jsonb IS NULL THEN lng ELSE ($6->>'lng')::numeric END, service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END, dispatch_days = CASE WHEN $6::jsonb IS NULL THEN dispatch_days ELSE ($6->>'dispatch_days')::smallint END, ship_within_days = CASE WHEN $6::jsonb IS NULL THEN ship_within_days ELSE ($6->>'ship_within_days')::smallint END, ship_beyond_days = CASE WHEN $6::jsonb IS NULL THEN ship_beyond_days ELSE ($6->>'ship_beyond_days')::smallint END, currency_code = CASE WHEN $6::jsonb IS NULL THEN currency_code ELSE COALESCE($6->>'currency', currency_code) END WHERE bridge_id = $2 AND created_by = $3 RETURNING bridge_id",
+    "params": [
+     "private",
+     "CBBUILT0002",
+     "ME",
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR UPPER(bridge_id) = UPPER($1)) AND identity_type = 'entity' AND status = 'active'",
+    "params": [
+     "ravi.timbers"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "select identity_id, bridge_id, display_name from identities where identity_id = $1 and identity_type = 'entity'",
+    "params": [
+     "PARTNER"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "select * from cb_entity where bridge_id = $1",
+    "params": [
+     "CBPART0001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT * FROM cb_entity WHERE bridge_id = $1",
+    "params": [
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT id, state FROM cb_edge WHERE parent_id = $1 AND child_id = $2 AND type = 'commercial' AND state IN ('requested', 'active', 'suspended')",
+    "params": [
+     "node-CBROOT00001",
+     "node-CBPART0001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_edge (parent_id, child_id, type, state, requested_by) VALUES ($1, $2, 'commercial', 'requested', $1) RETURNING id",
+    "params": [
+     "node-CBROOT00001",
+     "node-CBPART0001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR UPPER(bridge_id) = UPPER($1)) AND identity_type = 'entity' AND status = 'active'",
+    "params": [
+     "nobody.here"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR UPPER(bridge_id) = UPPER($1)) AND identity_type = 'entity' AND status = 'active'",
+    "params": [
+     "athi"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO network_design (entity_id, draft, updated_at) VALUES ($1, $2, now()) ON CONFLICT (entity_id) DO UPDATE SET draft = EXCLUDED.draft, updated_at = now()",
+    "params": [
+     "ME",
+     {
+      "nodes": [
+       {
+        "key": "r",
+        "name": "Athi",
+        "root": true,
+        "owned": true,
+        "parent_key": null,
+        "holds": []
+       },
+       {
+        "key": "a",
+        "name": "Clothing",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "public",
+        "purpose": "Retail",
+        "place": {
+         "city": "Chennai",
+         "currency": "INR",
+         "lat": 13,
+         "lng": 80,
+         "km": 20
+        },
+        "built": {
+         "bridge_id": "CBHQX6DLT2",
+         "user_id": "athi.clothing",
+         "visibility": "public",
+         "at": "TS"
+        }
+       },
+       {
+        "key": "b",
+        "name": "Mens",
+        "parent_key": "a",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "protected",
+        "built": {
+         "bridge_id": "CBGPW5CKSZ",
+         "user_id": "athi.mens",
+         "visibility": "network",
+         "at": "TS"
+        }
+       },
+       {
+        "key": "c",
+        "name": "Warehouse",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "private",
+        "place": {
+         "currency": "zzz"
+        }
+       },
+       {
+        "key": "d",
+        "name": "Outlet",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "protected",
+        "purpose": "Factory outlet",
+        "place": {
+         "city": "Madurai"
+        },
+        "built": {
+         "bridge_id": "CBBUILT0001",
+         "user_id": "athi.outlet",
+         "visibility": "network",
+         "at": "TS"
+        }
+       },
+       {
+        "key": "e",
+        "name": "Kiosk",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "private",
+        "built": {
+         "bridge_id": "CBBUILT0002",
+         "user_id": "athi.kiosk",
+         "visibility": "public"
+        }
+       },
+       {
+        "key": "g",
+        "name": "Export desk",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "public",
+        "purpose": "Retail",
+        "sort_order": 1,
+        "place": {
+         "currency": "zzz"
+        },
+        "built": {
+         "bridge_id": "CBBUILT0003",
+         "user_id": "athi.export",
+         "visibility": "public"
+        }
+       },
+       {
+        "key": "p",
+        "name": "Ravi Timbers",
+        "parent_key": "r",
+        "owned": false,
+        "partner_ref": "ravi.timbers",
+        "holds": [
+         "catalogue"
+        ],
+        "invited": {
+         "bridge_id": "CBPART0001",
+         "status": "pending",
+         "at": "TS"
+        }
+       },
+       {
+        "key": "q",
+        "name": "Ghost",
+        "parent_key": "r",
+        "owned": false,
+        "partner_ref": "nobody.here",
+        "holds": [
+         "catalogue"
+        ]
+       },
+       {
+        "key": "s",
+        "name": "Myself",
+        "parent_key": "r",
+        "owned": false,
+        "partner_ref": "athi",
+        "holds": [
+         "catalogue"
+        ]
+       },
+       {
+        "key": "t",
+        "name": "No ref",
+        "parent_key": "r",
+        "owned": false,
+        "partner_ref": "",
+        "holds": [
+         "catalogue"
+        ]
+       }
+      ],
+      "root_handle": "athi"
+     }
+    ]
+   }
+  ]
+ },
+ "build · the full design, partner already asked": {
+  "status": 200,
+  "body": {
+   "ok": true,
+   "root": "athi",
+   "root_claimed": false,
+   "created": [
+    {
+     "key": "a",
+     "name": "Clothing",
+     "handle": "athi.clothing",
+     "bridge_id": "CBHQX6DLT2",
+     "visibility": "public",
+     "purpose": "Retail",
+     "sort_order": null,
+     "place": {
+      "address": null,
+      "city": "Chennai",
+      "country": null,
+      "currency": "INR",
+      "tz": null,
+      "dispatch_days": null,
+      "ship_within_days": null,
+      "ship_beyond_days": null,
+      "lat": 13,
+      "lng": 80,
+      "service_km": 20
+     },
+     "claim_code": "171271",
+     "expires_at": "TS",
+     "path": "CBROOT00001.CBHQX6DLT2"
+    },
+    {
+     "key": "b",
+     "name": "Mens",
+     "handle": "athi.mens",
+     "bridge_id": "CBGPW5CKSZ",
+     "visibility": "network",
+     "purpose": null,
+     "sort_order": null,
+     "place": null,
+     "claim_code": "242542",
+     "expires_at": "TS",
+     "path": "CBROOT00001.CBHQX6DLT2.CBGPW5CKSZ"
+    }
+   ],
+   "updated": [
+    {
+     "key": "d",
+     "name": "Outlet",
+     "handle": "athi.outlet",
+     "bridge_id": "CBBUILT0001",
+     "from": "public",
+     "to": "network",
+     "purpose": {
+      "from": "Retail",
+      "to": "Factory outlet"
+     },
+     "order": {
+      "from": 1,
+      "to": null
+     },
+     "place": {
+      "from": {
+       "address": null,
+       "city": null,
+       "country": "IN",
+       "currency": "INR",
+       "lat": null,
+       "lng": null,
+       "service_km": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null
+      },
+      "to": {
+       "address": null,
+       "city": "Madurai",
+       "country": null,
+       "currency": null,
+       "tz": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null,
+       "lat": null,
+       "lng": null,
+       "service_km": null
+      }
+     }
+    },
+    {
+     "key": "e",
+     "name": "Kiosk",
+     "handle": "athi.kiosk",
+     "bridge_id": "CBBUILT0002",
+     "from": "public",
+     "to": "private"
+    }
+   ],
+   "invited": [
+    {
+     "key": "p",
+     "name": "Ravi Timbers",
+     "handle": "ravi.timbers",
+     "bridge_id": "CBPART0001",
+     "status": "accepted",
+     "edge_id": "edge-old",
+     "already": true
+    }
+   ],
+   "skipped": [],
+   "problems": [
+    {
+     "key": "t",
+     "name": "No ref",
+     "reason": "A partner is invited, not created — add their handle or User ID (e.g. ravi.timbers) to invite them."
+    },
+    {
+     "key": "c",
+     "name": "Warehouse",
+     "reason": "ZZZ is not a currency this business may price in."
+    },
+    {
+     "key": "g",
+     "name": "Export desk",
+     "reason": "ZZZ is not a currency this business may price in."
+    },
+    {
+     "key": "q",
+     "name": "Ghost",
+     "reason": "No business found with the handle \"nobody.here\"."
+    },
+    {
+     "key": "s",
+     "name": "Myself",
+     "reason": "That is your own handle."
+    }
+   ],
+   "notes": [],
+   "claim_note": "Each new store signs in with its handle and the code shown here. The codes expire in 7 days — re-issue one from the network page if it lapses.",
+   "message": "2 stores created, 2 updated, 1 partner invitation sent, 5 not built"
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1",
+    "params": [
+     "athi.%"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)",
+    "params": [
+     [
+      "CBBUILT0001",
+      "CBBUILT0002",
+      "CBBUILT0003"
+     ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT plan, params_override FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true) ON CONFLICT (bridge_id) DO NOTHING",
+    "params": [
+     "CBROOT00001",
+     "Athi Group",
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT path::text AS path FROM cb_entity WHERE bridge_id = $1",
+    "params": [
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO identities (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility, params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order, address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days, entity_kind) VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'network')",
+    "params": [
+     "UUID#1",
+     "CBHQX6DLT2",
+     "Clothing",
+     "athi.clothing",
+     "public",
+     "{\"caps\":{\"catalogue_visibility\":\"public\"}}",
+     "IN",
+     "INR",
+     "171271",
+     "TS",
+     "ME",
+     "Retail",
+     null,
+     null,
+     "Chennai",
+     13,
+     80,
+     20,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)",
+    "params": [
+     "CBHQX6DLT2",
+     "Clothing",
+     "CBROOT00001.CBHQX6DLT2"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO identities (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility, params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order, address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days, entity_kind) VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'network')",
+    "params": [
+     "UUID#2",
+     "CBGPW5CKSZ",
+     "Mens",
+     "athi.mens",
+     "network",
+     "{\"caps\":{\"catalogue_visibility\":\"network\"}}",
+     "IN",
+     "INR",
+     "242542",
+     "TS",
+     "ME",
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)",
+    "params": [
+     "CBGPW5CKSZ",
+     "Mens",
+     "CBROOT00001.CBHQX6DLT2.CBGPW5CKSZ"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE identities SET catalogue_visibility = COALESCE($1, catalogue_visibility), params_override = CASE WHEN $1::text IS NULL THEN params_override ELSE COALESCE(params_override, '{}'::jsonb) || jsonb_build_object('caps', COALESCE(params_override->'caps', '{}'::jsonb) || jsonb_build_object('catalogue_visibility', $1::text)) END, purpose = CASE WHEN $4::text IS NULL THEN purpose WHEN $4::text = '' THEN NULL ELSE $4::text END, sort_order = CASE WHEN $5::int IS NULL THEN sort_order WHEN $5::int = -1 THEN NULL ELSE $5::int END, -- b119 · PLACE. One jsonb parameter rather than six scalars: the place moves as a unit, and six -- independent COALESCEs would let a half-applied place through if one ever went missing. address = CASE WHEN $6::jsonb IS NULL THEN address ELSE $6->>'address' END, city = CASE WHEN $6::jsonb IS NULL THEN city ELSE $6->>'city' END, country = CASE WHEN $6::jsonb IS NULL THEN country ELSE COALESCE($6->>'country', country) END, lat = CASE WHEN $6::jsonb IS NULL THEN lat ELSE ($6->>'lat')::numeric END, lng = CASE WHEN $6::jsonb IS NULL THEN lng ELSE ($6->>'lng')::numeric END, service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END, dispatch_days = CASE WHEN $6::jsonb IS NULL THEN dispatch_days ELSE ($6->>'dispatch_days')::smallint END, ship_within_days = CASE WHEN $6::jsonb IS NULL THEN ship_within_days ELSE ($6->>'ship_within_days')::smallint END, ship_beyond_days = CASE WHEN $6::jsonb IS NULL THEN ship_beyond_days ELSE ($6->>'ship_beyond_days')::smallint END, currency_code = CASE WHEN $6::jsonb IS NULL THEN currency_code ELSE COALESCE($6->>'currency', currency_code) END WHERE bridge_id = $2 AND created_by = $3 RETURNING bridge_id",
+    "params": [
+     "network",
+     "CBBUILT0001",
+     "ME",
+     "Factory outlet",
+     -1,
+     "{\"address\":null,\"city\":\"Madurai\",\"country\":null,\"currency\":null,\"tz\":null,\"dispatch_days\":null,\"ship_within_days\":null,\"ship_beyond_days\":null,\"lat\":null,\"lng\":null,\"service_km\":null}"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE entity_schemas SET visibility = $1 WHERE entity_id = (SELECT identity_id FROM identities WHERE bridge_id = $2) AND status = 'active' AND is_default = true",
+    "params": [
+     "public",
+     "CBBUILT0001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE identities SET catalogue_visibility = COALESCE($1, catalogue_visibility), params_override = CASE WHEN $1::text IS NULL THEN params_override ELSE COALESCE(params_override, '{}'::jsonb) || jsonb_build_object('caps', COALESCE(params_override->'caps', '{}'::jsonb) || jsonb_build_object('catalogue_visibility', $1::text)) END, purpose = CASE WHEN $4::text IS NULL THEN purpose WHEN $4::text = '' THEN NULL ELSE $4::text END, sort_order = CASE WHEN $5::int IS NULL THEN sort_order WHEN $5::int = -1 THEN NULL ELSE $5::int END, -- b119 · PLACE. One jsonb parameter rather than six scalars: the place moves as a unit, and six -- independent COALESCEs would let a half-applied place through if one ever went missing. address = CASE WHEN $6::jsonb IS NULL THEN address ELSE $6->>'address' END, city = CASE WHEN $6::jsonb IS NULL THEN city ELSE $6->>'city' END, country = CASE WHEN $6::jsonb IS NULL THEN country ELSE COALESCE($6->>'country', country) END, lat = CASE WHEN $6::jsonb IS NULL THEN lat ELSE ($6->>'lat')::numeric END, lng = CASE WHEN $6::jsonb IS NULL THEN lng ELSE ($6->>'lng')::numeric END, service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END, dispatch_days = CASE WHEN $6::jsonb IS NULL THEN dispatch_days ELSE ($6->>'dispatch_days')::smallint END, ship_within_days = CASE WHEN $6::jsonb IS NULL THEN ship_within_days ELSE ($6->>'ship_within_days')::smallint END, ship_beyond_days = CASE WHEN $6::jsonb IS NULL THEN ship_beyond_days ELSE ($6->>'ship_beyond_days')::smallint END, currency_code = CASE WHEN $6::jsonb IS NULL THEN currency_code ELSE COALESCE($6->>'currency', currency_code) END WHERE bridge_id = $2 AND created_by = $3 RETURNING bridge_id",
+    "params": [
+     "private",
+     "CBBUILT0002",
+     "ME",
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE entity_schemas SET visibility = $1 WHERE entity_id = (SELECT identity_id FROM identities WHERE bridge_id = $2) AND status = 'active' AND is_default = true",
+    "params": [
+     "private",
+     "CBBUILT0002"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR UPPER(bridge_id) = UPPER($1)) AND identity_type = 'entity' AND status = 'active'",
+    "params": [
+     "ravi.timbers"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "select identity_id, bridge_id, display_name from identities where identity_id = $1 and identity_type = 'entity'",
+    "params": [
+     "PARTNER"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "select * from cb_entity where bridge_id = $1",
+    "params": [
+     "CBPART0001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT * FROM cb_entity WHERE bridge_id = $1",
+    "params": [
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT id, state FROM cb_edge WHERE parent_id = $1 AND child_id = $2 AND type = 'commercial' AND state IN ('requested', 'active', 'suspended')",
+    "params": [
+     "node-CBROOT00001",
+     "node-CBPART0001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR UPPER(bridge_id) = UPPER($1)) AND identity_type = 'entity' AND status = 'active'",
+    "params": [
+     "nobody.here"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR UPPER(bridge_id) = UPPER($1)) AND identity_type = 'entity' AND status = 'active'",
+    "params": [
+     "athi"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO network_design (entity_id, draft, updated_at) VALUES ($1, $2, now()) ON CONFLICT (entity_id) DO UPDATE SET draft = EXCLUDED.draft, updated_at = now()",
+    "params": [
+     "ME",
+     {
+      "nodes": [
+       {
+        "key": "r",
+        "name": "Athi",
+        "root": true,
+        "owned": true,
+        "parent_key": null,
+        "holds": []
+       },
+       {
+        "key": "a",
+        "name": "Clothing",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "public",
+        "purpose": "Retail",
+        "place": {
+         "city": "Chennai",
+         "currency": "INR",
+         "lat": 13,
+         "lng": 80,
+         "km": 20
+        },
+        "built": {
+         "bridge_id": "CBHQX6DLT2",
+         "user_id": "athi.clothing",
+         "visibility": "public",
+         "at": "TS"
+        }
+       },
+       {
+        "key": "b",
+        "name": "Mens",
+        "parent_key": "a",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "protected",
+        "built": {
+         "bridge_id": "CBGPW5CKSZ",
+         "user_id": "athi.mens",
+         "visibility": "network",
+         "at": "TS"
+        }
+       },
+       {
+        "key": "c",
+        "name": "Warehouse",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "private",
+        "place": {
+         "currency": "zzz"
+        }
+       },
+       {
+        "key": "d",
+        "name": "Outlet",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "protected",
+        "purpose": "Factory outlet",
+        "place": {
+         "city": "Madurai"
+        },
+        "built": {
+         "bridge_id": "CBBUILT0001",
+         "user_id": "athi.outlet",
+         "visibility": "network",
+         "at": "TS"
+        }
+       },
+       {
+        "key": "e",
+        "name": "Kiosk",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "private",
+        "built": {
+         "bridge_id": "CBBUILT0002",
+         "user_id": "athi.kiosk",
+         "visibility": "private",
+         "at": "TS"
+        }
+       },
+       {
+        "key": "g",
+        "name": "Export desk",
+        "parent_key": "r",
+        "owned": true,
+        "holds": [
+         "catalogue",
+         "storefront"
+        ],
+        "exposure": "public",
+        "purpose": "Retail",
+        "sort_order": 1,
+        "place": {
+         "currency": "zzz"
+        },
+        "built": {
+         "bridge_id": "CBBUILT0003",
+         "user_id": "athi.export",
+         "visibility": "public"
+        }
+       },
+       {
+        "key": "p",
+        "name": "Ravi Timbers",
+        "parent_key": "r",
+        "owned": false,
+        "partner_ref": "ravi.timbers",
+        "holds": [
+         "catalogue"
+        ],
+        "invited": {
+         "bridge_id": "CBPART0001",
+         "status": "accepted",
+         "at": "TS"
+        }
+       },
+       {
+        "key": "q",
+        "name": "Ghost",
+        "parent_key": "r",
+        "owned": false,
+        "partner_ref": "nobody.here",
+        "holds": [
+         "catalogue"
+        ]
+       },
+       {
+        "key": "s",
+        "name": "Myself",
+        "parent_key": "r",
+        "owned": false,
+        "partner_ref": "athi",
+        "holds": [
+         "catalogue"
+        ]
+       },
+       {
+        "key": "t",
+        "name": "No ref",
+        "parent_key": "r",
+        "owned": false,
+        "partner_ref": "",
+        "holds": [
+         "catalogue"
+        ]
+       }
+      ],
+      "root_handle": "athi"
+     }
+    ]
+   }
+  ]
+ },
+ "build · the root cannot be placed → 500": {
+  "status": 500,
+  "body": {
+   "error": "Build failed",
+   "message": "Something went wrong — please try again."
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1",
+    "params": [
+     "athi.%"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)",
+    "params": [
+     [
+      "CBBUILT0001",
+      "CBBUILT0002",
+      "CBBUILT0003"
+     ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT plan, params_override FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true) ON CONFLICT (bridge_id) DO NOTHING",
+    "params": [
+     "CBROOT00001",
+     "Athi Group",
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT path::text AS path FROM cb_entity WHERE bridge_id = $1",
+    "params": [
+     "CBROOT00001"
+    ]
+   }
+  ]
+ },
+ "build · a name taken mid-build → 409": {
+  "status": 409,
+  "body": {
+   "error": "Name taken",
+   "message": "One of these names was taken while the network was being built. Nothing was created — try again."
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1",
+    "params": [
+     "athi.%"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)",
+    "params": [
+     [
+      "CBBUILT0001",
+      "CBBUILT0002",
+      "CBBUILT0003"
+     ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT plan, params_override FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true) ON CONFLICT (bridge_id) DO NOTHING",
+    "params": [
+     "CBROOT00001",
+     "Athi Group",
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT path::text AS path FROM cb_entity WHERE bridge_id = $1",
+    "params": [
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT bridge_id, path::text AS path FROM cb_entity WHERE bridge_id = ANY($1)",
+    "params": [
+     [
+      "CBBUILT0001",
+      "CBBUILT0002",
+      "CBBUILT0003"
+     ]
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO identities (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility, params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order, address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days, entity_kind) VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'network')",
+    "params": [
+     "UUID#1",
+     "CBHQX6DLT2",
+     "Clothing",
+     "athi.clothing",
+     "public",
+     "{\"caps\":{\"catalogue_visibility\":\"public\"}}",
+     "IN",
+     "INR",
+     "171271",
+     "TS",
+     "ME",
+     "Retail",
+     null,
+     null,
+     "Chennai",
+     13,
+     80,
+     20,
+     null,
+     null,
+     null
+    ]
+   }
+  ]
+ },
+ "build · network visibility not migrated → 409": {
+  "status": 409,
+  "body": {
+   "error": "Migration needed",
+   "code": "VISIBILITY_NOT_MIGRATED",
+   "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+  },
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT identity_id, bridge_id, display_name, user_id, country, currency_code, catalogue_visibility FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1",
+    "params": [
+     "athi.%"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT bridge_id, catalogue_visibility, purpose, sort_order, address, city, country, currency_code, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days FROM identities WHERE bridge_id = ANY($1)",
+    "params": [
+     [
+      "CBBUILT0001",
+      "CBBUILT0002",
+      "CBBUILT0003"
+     ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT plan, params_override FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true) ON CONFLICT (bridge_id) DO NOTHING",
+    "params": [
+     "CBROOT00001",
+     "Athi Group",
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT path::text AS path FROM cb_entity WHERE bridge_id = $1",
+    "params": [
+     "CBROOT00001"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO identities (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility, params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order, address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days, entity_kind) VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'network')",
+    "params": [
+     "UUID#1",
+     "CBHQX6DLT2",
+     "Clothing",
+     "athi.clothing",
+     "public",
+     "{\"caps\":{\"catalogue_visibility\":\"public\"}}",
+     "IN",
+     "INR",
+     "171271",
+     "TS",
+     "ME",
+     "Retail",
+     null,
+     null,
+     "Chennai",
+     13,
+     80,
+     20,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)",
+    "params": [
+     "CBHQX6DLT2",
+     "Clothing",
+     "CBROOT00001.CBHQX6DLT2"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO identities (identity_id, bridge_id, display_name, user_id, identity_type, status, catalogue_visibility, params_override, country, currency_code, otp_code, otp_expires_at, otp_attempts, created_by, purpose, sort_order, address, city, lat, lng, service_km, dispatch_days, ship_within_days, ship_beyond_days, entity_kind) VALUES ($1, $2, $3, $4, 'entity', 'active', $5, $6::jsonb, $7, $8, $9, $10, 0, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, 'network')",
+    "params": [
+     "UUID#2",
+     "CBGPW5CKSZ",
+     "Mens",
+     "athi.mens",
+     "network",
+     "{\"caps\":{\"catalogue_visibility\":\"network\"}}",
+     "IN",
+     "INR",
+     "242542",
+     "TS",
+     "ME",
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed) VALUES ($1, $2, 'b2b', 'entity', $3::ltree, true)",
+    "params": [
+     "CBGPW5CKSZ",
+     "Mens",
+     "CBROOT00001.CBHQX6DLT2.CBGPW5CKSZ"
+    ]
+   },
+   {
+    "via": "withEntity:ME",
+    "sql": "UPDATE identities SET catalogue_visibility = COALESCE($1, catalogue_visibility), params_override = CASE WHEN $1::text IS NULL THEN params_override ELSE COALESCE(params_override, '{}'::jsonb) || jsonb_build_object('caps', COALESCE(params_override->'caps', '{}'::jsonb) || jsonb_build_object('catalogue_visibility', $1::text)) END, purpose = CASE WHEN $4::text IS NULL THEN purpose WHEN $4::text = '' THEN NULL ELSE $4::text END, sort_order = CASE WHEN $5::int IS NULL THEN sort_order WHEN $5::int = -1 THEN NULL ELSE $5::int END, -- b119 · PLACE. One jsonb parameter rather than six scalars: the place moves as a unit, and six -- independent COALESCEs would let a half-applied place through if one ever went missing. address = CASE WHEN $6::jsonb IS NULL THEN address ELSE $6->>'address' END, city = CASE WHEN $6::jsonb IS NULL THEN city ELSE $6->>'city' END, country = CASE WHEN $6::jsonb IS NULL THEN country ELSE COALESCE($6->>'country', country) END, lat = CASE WHEN $6::jsonb IS NULL THEN lat ELSE ($6->>'lat')::numeric END, lng = CASE WHEN $6::jsonb IS NULL THEN lng ELSE ($6->>'lng')::numeric END, service_km = CASE WHEN $6::jsonb IS NULL THEN service_km ELSE ($6->>'service_km')::int END, dispatch_days = CASE WHEN $6::jsonb IS NULL THEN dispatch_days ELSE ($6->>'dispatch_days')::smallint END, ship_within_days = CASE WHEN $6::jsonb IS NULL THEN ship_within_days ELSE ($6->>'ship_within_days')::smallint END, ship_beyond_days = CASE WHEN $6::jsonb IS NULL THEN ship_beyond_days ELSE ($6->>'ship_beyond_days')::smallint END, currency_code = CASE WHEN $6::jsonb IS NULL THEN currency_code ELSE COALESCE($6->>'currency', currency_code) END WHERE bridge_id = $2 AND created_by = $3 RETURNING bridge_id",
+    "params": [
+     "network",
+     "CBBUILT0001",
+     "ME",
+     "Factory outlet",
+     -1,
+     "{\"address\":null,\"city\":\"Madurai\",\"country\":null,\"currency\":null,\"tz\":null,\"dispatch_days\":null,\"ship_within_days\":null,\"ship_beyond_days\":null,\"lat\":null,\"lng\":null,\"service_km\":null}"
+    ]
+   }
+  ]
+ },
+ "validate · a lab sketch (no reads)": {
+  "status": 200,
+  "body": {
+   "dry_run": true,
+   "sample": true,
+   "ok": false,
+   "root": "sample",
+   "would": {
+    "create": [
+     {
+      "key": "a",
+      "name": "Clothing",
+      "handle": "sample.clothing",
+      "parent_key": null,
+      "visibility": "public",
+      "asked": "public",
+      "purpose": "Retail",
+      "sort_order": null,
+      "place": {
+       "address": null,
+       "city": "Chennai",
+       "country": null,
+       "currency": "INR",
+       "tz": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null,
+       "lat": 13,
+       "lng": 80,
+       "service_km": 20
+      }
+     },
+     {
+      "key": "b",
+      "name": "Mens",
+      "handle": "sample.mens",
+      "parent_key": "a",
+      "visibility": "network",
+      "asked": "network",
+      "purpose": "",
+      "sort_order": null,
+      "place": null
+     },
+     {
+      "key": "c",
+      "name": "Warehouse",
+      "handle": "sample.warehouse",
+      "parent_key": null,
+      "visibility": "private",
+      "asked": "private",
+      "purpose": "",
+      "sort_order": null,
+      "place": {
+       "address": null,
+       "city": null,
+       "country": null,
+       "currency": "ZZZ",
+       "tz": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null,
+       "lat": null,
+       "lng": null,
+       "service_km": null
+      }
+     }
+    ],
+    "update": [],
+    "invite": [
+     {
+      "key": "p",
+      "name": "Ravi Timbers",
+      "ref": "ravi.timbers"
+     },
+     {
+      "key": "q",
+      "name": "Ghost",
+      "ref": "nobody.here"
+     },
+     {
+      "key": "s",
+      "name": "Myself",
+      "ref": "athi"
+     }
+    ],
+    "skip": [
+     {
+      "key": "d",
+      "name": "Outlet",
+      "handle": "athi.outlet",
+      "bridge_id": "CBBUILT0001",
+      "visibility": null,
+      "reason": "already built"
+     },
+     {
+      "key": "e",
+      "name": "Kiosk",
+      "handle": "athi.kiosk",
+      "bridge_id": "CBBUILT0002",
+      "visibility": null,
+      "reason": "already built"
+     },
+     {
+      "key": "g",
+      "name": "Export desk",
+      "handle": "athi.export",
+      "bridge_id": "CBBUILT0003",
+      "visibility": null,
+      "reason": "already built"
+     }
+    ]
+   },
+   "breaks": [
+    {
+     "key": "t",
+     "name": "No ref",
+     "reason": "A partner is invited, not created — add their handle or User ID (e.g. ravi.timbers) to invite them."
+    }
+   ],
+   "notes": [],
+   "counts": {
+    "create": 3,
+    "update": 0,
+    "invite": 3,
+    "skip": 3,
+    "problems": 1,
+    "narrowed": 0
+   },
+   "says": "1 thing would break — see below. Nothing has been made."
+  },
+  "calls": []
+ },
+ "validate · the saved design": {
+  "status": 200,
+  "body": {
+   "dry_run": true,
+   "sample": false,
+   "ok": false,
+   "root": "athi",
+   "would": {
+    "create": [
+     {
+      "key": "c",
+      "name": "Warehouse",
+      "handle": "athi.warehouse",
+      "parent_key": null,
+      "visibility": "private",
+      "asked": "private",
+      "purpose": "",
+      "sort_order": null,
+      "place": {
+       "address": null,
+       "city": null,
+       "country": null,
+       "currency": "ZZZ",
+       "tz": null,
+       "dispatch_days": null,
+       "ship_within_days": null,
+       "ship_beyond_days": null,
+       "lat": null,
+       "lng": null,
+       "service_km": null
+      }
+     }
+    ],
+    "update": [],
+    "invite": [
+     {
+      "key": "p",
+      "name": "Ravi Timbers",
+      "ref": "ravi.timbers"
+     },
+     {
+      "key": "q",
+      "name": "Ghost",
+      "ref": "nobody.here"
+     },
+     {
+      "key": "s",
+      "name": "Myself",
+      "ref": "athi"
+     }
+    ],
+    "skip": [
+     {
+      "key": "d",
+      "name": "Outlet",
+      "handle": "athi.outlet",
+      "bridge_id": "CBBUILT0001",
+      "visibility": null,
+      "reason": "already built"
+     },
+     {
+      "key": "e",
+      "name": "Kiosk",
+      "handle": "athi.kiosk",
+      "bridge_id": "CBBUILT0002",
+      "visibility": null,
+      "reason": "already built"
+     },
+     {
+      "key": "g",
+      "name": "Export desk",
+      "handle": "athi.export",
+      "bridge_id": "CBBUILT0003",
+      "visibility": null,
+      "reason": "already built"
+     }
+    ]
+   },
+   "breaks": [
+    {
+     "key": "a",
+     "name": "Clothing",
+     "reason": "\"athi.clothing\" is already taken. Rename this node."
+    },
+    {
+     "key": "b",
+     "name": "Mens",
+     "reason": "Its parent could not be built, so this cannot be placed."
+    },
+    {
+     "key": "t",
+     "name": "No ref",
+     "reason": "A partner is invited, not created — add their handle or User ID (e.g. ravi.timbers) to invite them."
+    }
+   ],
+   "notes": [
+    "\"Export desk\" was set to public but would be built network: what it sits inside is not that open."
+   ],
+   "counts": {
+    "create": 1,
+    "update": 0,
+    "invite": 3,
+    "skip": 3,
+    "problems": 3,
+    "narrowed": 1
+   },
+   "says": "3 things would break — see below. Nothing has been made."
+  },
+  "calls": [
+   {
+    "via": "withEntity:ME",
+    "sql": "SELECT draft FROM network_design WHERE entity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT user_id FROM identities WHERE identity_id = $1",
+    "params": [
+     "ME"
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT LOWER(user_id) AS h FROM identities WHERE user_id IS NOT NULL AND LOWER(user_id) LIKE $1",
+    "params": [
+     "athi.%"
+    ]
+   }
+  ]
+ },
+ "validate · a draft that is not an object → 400": {
+  "status": 400,
+  "body": {
+   "error": "Bad request",
+   "message": "draft must be an object"
+  },
+  "calls": []
+ }
+}

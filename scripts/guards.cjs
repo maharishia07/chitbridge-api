@@ -51,6 +51,12 @@ const GUARDS = [
   'counter-gates.test.cjs',     // ⭐⭐⭐ ONE door to a shop (becomeShop), ONE for a person (sign-in, offline PIN), lock/break = that sign-in
   /* ⚠️ "A GUARD NOBODY RUNS" (BACKLOG, 2026-09-18) — the suite ran it, the gate never did. Added 2026-09-28. */
   'tdz-guard.test.js',          // no const/let read above its declaration in the same function (node -c cannot see a TDZ)
+  /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
+  'fn-size.test.cjs',           // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
+  'send-golden.test.cjs',       // POST /chits/send: 40 scenarios, every SQL · copy · hook · answer = the trace frozen before the split
+  'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
+  'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
+  'ctp-door.test.cjs',          // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
   /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
   'migration-lint.test.cjs',     // no NEW migration hides a FOREIGN KEY inside CREATE TABLE IF NOT EXISTS
   'entity-cast-guard.test.cjs',  // no NEW RLS policy casts an unset current_setting straight to ::uuid
