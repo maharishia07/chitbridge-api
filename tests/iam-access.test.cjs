@@ -226,7 +226,7 @@ async function createLevelCases() {
       (res) => { res.resume(); res.on('end', () => ok(res.statusCode)); });
     r.end(b);
   });
-  const levelSaved = async (body) => { INSERTS.length = 0; await post(body); const i = INSERTS[0]; return i && /access_level/.test(i.sql) ? i.params[12] + ' ' + i.params[13] : 'no level written'; };
+  const levelSaved = async (body) => { INSERTS.length = 0; await post(body); const i = INSERTS[0]; return i && /access_level/.test(i.sql) ? i.params[13] + ' ' + i.params[14] : 'no level written'; };   /* SEC2: $13 is the e-mail now (PEOPLE-EMAIL) */
   t('Viewer picked            -> viewer saved', await levelSaved({ display_name: 'Viewer Vani', actor_key: 'vani', access_level: 'viewer', hat: 'view_only' }), 'viewer false');
   t('Commenter, whole shop    -> commenter, reach', await levelSaved({ display_name: 'Audit Anu', actor_key: 'anua', access_level: 'commenter', hat: 'audit', whole_entity: true }), 'commenter true');
   t('only an old hat          -> the hat\'s level', await levelSaved({ display_name: 'Old Client', actor_key: 'oldc', hat: 'view_only' }), 'commenter false');

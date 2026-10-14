@@ -21,7 +21,7 @@ const { verifyOtp } = require('../lib/otp');
 // Reissue step-up code. On a LOCAL stack (DEV_OTP set) a FIXED connector code — distinct from the entity code so the two
 // are unmistakable during testing (lib/dev-otp.js). In prod it's a fresh random 6-digit code.
 const devOtp = require('../lib/dev-otp');   // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
-const genOtp = () => devOtp.fixedOtp('connector') || require('crypto').randomInt(100000, 1000000).toString();
+const genOtp = () => require('../lib/otp').generateOTP('connector');   // SEC2: the one generator, through the one door
 
 // Step-up authorisation for the destructive key reissue: ONLY the entity admin, or a MANAGER-hat delegate.
 async function canReissue(req) {
@@ -92,7 +92,7 @@ router.post('/', auth, requireConnector,
       const bridge_id    = generateBridgeId();
       /* ⚠️ SECURITY FIX BY CONSOLIDATION. A predictable OTP that stays valid for SEVEN DAYS (see otp_expires
          below) is the worst of the three copies. One generator now, from a CSPRNG (lib/otp.js). */
-      const otp          = require('../lib/otp').generateOTP();
+      const otp          = genOtp();   // SEC2: the CONNECTOR code (was the entity one), the same generator as the step-up code
       const otp_expires  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       // Issue the ActorKey now, store only its hash, return the raw ONCE. IoT push needs it to provision the Pi;
       // ERP needs it to authenticate its document pushes to /erp-ingest (the ERP's own credential, not a user JWT).
