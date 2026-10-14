@@ -140,6 +140,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   /* ADOPTION, not engine: network-membership.js answers "is this store in that brand's network" from the network's own
      tree and edges — a relationship question, no pricing (2026-09-17). */
   'network-membership.js',
+  /* ADOPTION, not engine: network-build-run.js EXECUTES the plan network-build.js (ENGINE) decides — the identity rows, the tree
+     placement, the invitation edges, in one transaction. Every rule it applies is decided elsewhere (the plan, the currency
+     envelope, the created_by authority in the WHERE); it was the body of POST /network-design/build until T2-SPLIT (2026-10-14). */
+  'network-build-run.js',
   /* NOT ENGINE: screen-kit.js decides what a counter LOOKS like — themes, tiles, pickers, layouts, presets. Pure and vendored,
      but it judges nothing about money or trade; a price reaches it already formatted (2026-09-17). */
   'screen-kit.js',

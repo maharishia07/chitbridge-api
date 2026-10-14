@@ -32,6 +32,7 @@ const { query } = require('../db');
 const envelope = require('../lib/ctpenvelope');
 const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
+const addressBook = require('../lib/ctpaddress');   /* peerByKey — the ONE "do we deal with this installation?" */
 const mint = require('../lib/mint');
 
 /* ⚠️ its own limiter. This door is open to the internet and is not covered by the session limiters. */
@@ -121,23 +122,13 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
     /* ── who is this claiming to be, and do we know them? */
     const ik = String((env.from || {}).installation_key || '');
     if (!ik) return no(400, 'the envelope does not say which installation sent it');
-    let peer = null;
-    try {
-      const r = await query(
-        `SELECT installation_key, domain, hosted_locally, active FROM installation WHERE installation_key = $1`,
-        [ik]);
-      peer = r.rows[0] || null;
-    } catch (_) { peer = null; }
     /**
-     * ⚠️⚠️ "IS HE A MEMBER OF ME" — Athi's phrase, and this is the line that answers it. Discovery is open;
-     * DELIVERY IS NOT. A stranger can read our manifest and still be refused here, because being findable and
-     * being dealt with are different things.
+     * ⚠️⚠️ "IS HE A MEMBER OF ME" — Athi's phrase, and lib/ctpaddress peerByKey is the line that answers it, for both
+     * doors (T2-SPLIT lifted the copy /query carried). Discovery is open; DELIVERY IS NOT.
      */
-    if (!peer || !peer.active) return no(403, 'installation ' + ik + ' is not one we deal with');
-    if (peer.hosted_locally) {
-      return no(409, 'installation ' + ik + ' is hosted here — a local copy must not arrive over the wire');
-    }
-    if (!peer.domain) return no(403, 'no domain recorded for ' + ik + ', so its key cannot be found');
+    const member = await addressBook.peerByKey(ik, 'a local copy must not arrive over the wire');
+    if (!member.peer) return no(member.status, member.why);
+    const peer = member.peer;
 
     /**
      * ── ⭐⭐ THE SENDER'S GOVERNANCE, RESOLVED FROM ITS INSTALLATION — an annotation, never a gate ──────────────
@@ -311,15 +302,10 @@ router.post('/query', ctpLimiter, async (req, res) => {
 
     const ik = String((q.from || {}).installation_key || '');
     if (!ik) return no(400, 'the question does not say which installation is asking');
-    let peer = null;
-    try {
-      const r = await query(
-        `SELECT installation_key, domain, hosted_locally, active FROM installation WHERE installation_key = $1`, [ik]);
-      peer = r.rows[0] || null;
-    } catch (_) { peer = null; }
-    if (!peer || !peer.active) return no(403, 'installation ' + ik + ' is not one we deal with');
-    if (peer.hosted_locally) return no(409, 'installation ' + ik + ' is hosted here — ask locally');
-    if (!peer.domain) return no(403, 'no domain recorded for ' + ik + ', so its key cannot be found');
+    /* the same door-keeping as deliver — the ONE peer lookup (lib/ctpaddress peerByKey) */
+    const member = await addressBook.peerByKey(ik, 'ask locally');
+    if (!member.peer) return no(member.status, member.why);
+    const peer = member.peer;
 
     const pk = await directory.publicKeyFor(peer.domain, ik);
     if (!pk.ok) return no(403, 'could not read the asker’s manifest: ' + pk.why);
