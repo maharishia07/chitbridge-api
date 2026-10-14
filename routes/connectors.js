@@ -21,7 +21,6 @@ const { verifyOtp } = require('../lib/otp');
 // Reissue step-up code. On a LOCAL stack (DEV_OTP set) a FIXED connector code — distinct from the entity code so the two
 // are unmistakable during testing (lib/dev-otp.js). In prod it's a fresh random 6-digit code.
 const devOtp = require('../lib/dev-otp');   // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
-const genOtp = () => devOtp.fixedOtp('connector') || require('crypto').randomInt(100000, 1000000).toString();
 
 // Step-up authorisation for the destructive key reissue: ONLY the entity admin, or a MANAGER-hat delegate.
 async function canReissue(req) {
@@ -462,7 +461,7 @@ router.post('/reissue-code', auth, requireConnector, async (req, res) => {
     const entity_id = ownerEntityId(req);
     const e = await db(`SELECT email, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
     const ent = e.rows[0]; if (!ent || !ent.email) return res.status(400).json({ error: 'No email', message: 'The entity has no registered email to send a code to.' });
-    const otp = genOtp(); const expires = new Date(Date.now() + 10 * 60 * 1000);
+    const otp = require('../lib/otp').generateOTP('connector'); const expires = new Date(Date.now() + 10 * 60 * 1000);
     await db(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [otp, expires, entity_id]);
     const sent = await sendOtpEmail(ent.email, ent.display_name, otp);
     res.json({ message: sent.delivered ? 'Code sent to the account email.' : sent.dev ? 'Dev mode — code issued.' : 'Could not send the code — try again.',

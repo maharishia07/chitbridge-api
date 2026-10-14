@@ -113,7 +113,7 @@ const BRIDGE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // no I/O/0/1 — the
 const newBridgeId = () => 'CB' + Array.from({ length: 8 }, () => BRIDGE_CHARS[crypto.randomInt(BRIDGE_CHARS.length)]).join('');
 // devOtp.fixedOtp() and NEVER process.env.DEV_OTP directly: a sealed environment must degrade to a real random
 // code even if the variable somehow survived deploy. That is the whole reason lib/dev-otp.js exists.
-const newClaimCode = () => devOtp.fixedOtp('entity') || String(crypto.randomInt(100000, 1000000));
+const newClaimCode = () => require('../lib/otp').generateOTP('entity');   /* SH-OTP1: the one generator */
 const CLAIM_DAYS = 7;
 
 /** ltree labels allow [A-Za-z0-9_] only. Bridge ids already qualify; the guard is for anything that ever won't. */
