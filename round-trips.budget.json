@@ -522,6 +522,14 @@
       "extra": true,
       "why": "not mapped by the scanner (entitiesRouter). Measured by tests/sides.test.cjs: two trips of its own warm (the batch + govresolve.mintedOf stamp read); cold adds 9 cached schema probes (7 hasTable + 2 hasColumns). It also runs the two reads it reuses: home-facts rail (2 trips) and entity-header.read (1 warm / 3 cold) — so a warm GET is about 5, a cold one about 11."
     },
+    "PATCH /api/entities/profile": {
+      "file": "entities.js",
+      "trips": 12,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map entitiesRouter). T2-POLICY (2026-10-14): the tax number and address go through profile.shopIdentitySql INSIDE the one profile UPDATE (no extra write); a tax number sent costs ONE read (the shop's country, for the pack's check — profile.taxIdRefusal). Worst path: user_id read + taken check + handler check + currency envelope + country read + UPDATE + storefront_access + ui_prefs probe/merge + visibility cap/write — a ceiling, not measured on a fixture"
+    },
     "GET /api/facts/accounts": {
       "file": "facts.js",
       "trips": 1,
@@ -1270,6 +1278,14 @@
       "fired": false,
       "extra": true,
       "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run). CS2 (2026-10-13): each profile also makes the ONE EXISTS read (+2 = 9). When the COUNTRY CHANGED before the shop was constituted, the same transaction also re-seeds a switched-on never-posted ledger (books.reseedUnposted: setting + entries read, 2 DELETEs, enable()'s inserts — one per chart row, as the switch itself costs) and logs who/when to books_change_log (one INSERT per changed fact, savepointed) — a once-per-shop correction, outside this ceiling by design. FX-AU1 (2026-10-14): the re-seed is no longer in a swallowing savepoint (a failed re-seed fails the correction — one transaction) and the year is re-laid by ONE set-based UPDATE when its DATES differ (IN→AU, both \"2026-27\") — the ceiling is unchanged"
+    },
+    "PUT /api/governance/profile/vault": {
+      "file": "governance.js",
+      "trips": 7,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (governanceRouter by variable). T2-POLICY (2026-10-14): held-vault read + UPI mirror (policy.patchKey, 1) + vault upsert in withEntity (set_config + INSERT) + — only when a Business identity row carries a tax number or address — the identities read (country, gstn, address) and at most ONE write through profile.setShopIdentity"
     },
     "POST /api/entities/register": {
       "file": "entities.js",
