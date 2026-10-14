@@ -34,12 +34,18 @@ D.extra = async (sql, p) => {
     T.prefs.push(r); return { rows: [r] };
   }
   if (/^SELECT country FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: D.shopCountry || 'IN' }] };
+  /* T3-P3-CONSENT: the shopper route's two identity rows at once, and the shopper's own name line */
+  if (/^SELECT identity_id, display_name, phone, email, otp_contact, country FROM identities WHERE identity_id = ANY/.test(sql)) {
+    return { rows: p[0].map((id) => (id === 'E1' ? { identity_id: 'E1', display_name: 'Mayur Bhavan', phone: null, email: 'shop@x.in', otp_contact: null, country: D.shopCountry || 'IN' }
+      : { identity_id: id, display_name: 'Chola', phone: '+91 98000 00002', email: null, otp_contact: '9800000002', country: null })) };
+  }
+  if (/^SELECT display_name, phone, otp_contact, email FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ display_name: 'Chola', phone: '+91 98000 00002', otp_contact: null, email: null }] };
   if (/^INSERT INTO privacy_request/.test(sql)) {
     const r = { request_id: uid(), owner: p[0], party_id: p[1], who: p[2], kind: p[3], country: p[4], received_at: p[5], due_at: p[6], created_by: p[7], answered_at: null, outcome: null, answer: null };
     T.reqs.push(r); return { rows: [r] };
   }
   if (/^WITH c AS \(SELECT count\(\*\)::int AS total/.test(sql)) {   /* G4: the counts over the whole (or open) register + one page, open first by due date */
-    const all = T.reqs.filter((r) => r.owner === p[0] && (!/AND answered_at IS NULL\)/.test(sql.split('SELECT c.total')[0]) || !r.answered_at))
+    const all = T.reqs.filter((r) => r.owner === p[0] && (!/AND answered_at IS NULL/.test(sql.split('SELECT c.total')[0]) || !r.answered_at) && (!/party_id = \$4/.test(sql) || r.party_id === p[3]))
       .sort((a, b) => ((!!a.answered_at) - (!!b.answered_at)) || (Date.parse(a.due_at) - Date.parse(b.due_at)));
     const head = { total: all.length, n_open: all.filter((r) => !r.answered_at).length, n_late: all.filter((r) => !r.answered_at && Date.parse(r.due_at) < Date.now()).length };
     const page = all.slice(p[2], p[2] + p[1]);
@@ -268,6 +274,74 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     const n = await H.BUILD.marketing({ entity: 'E1' }); T.have.party_contact_pref = true;
     assert.deepStrictEqual(n.lines, []); assert.ok(/b306/.test(n.unavailable));
   });
+
+  console.log('\n-- T3-P3-CONSENT · the law\u2019s words, the shopper\u2019s own answer --');
+  await ita('lawOf: IN · AU · AE each name their law and the request kinds that law gives; an unstated or unknown country says so and is NEVER India', () => {
+    assert.ok(/Digital Personal Data Protection/.test(PV.lawOf('IN').law) && PV.lawOf('in').kinds.indexOf('nominate') >= 0);
+    assert.ok(/Privacy Act 1988/.test(PV.lawOf('AU').law) && PV.lawOf('AU').kinds.indexOf('erase') < 0, 'the APPs give access and correction, not erasure');
+    assert.ok(/45\/2021/.test(PV.lawOf('AE').law) && PV.lawOf('AE').kinds.indexOf('erase') >= 0);
+    for (const c of [null, 'NZ']) { const L = PV.lawOf(c); assert.strictEqual(L.known, false); assert.strictEqual(L.law, null); assert.ok(L.note && !/India|DPDP/.test(JSON.stringify(L)), JSON.stringify(L)); assert.deepStrictEqual(L.kinds, PV.KINDS); }
+    assert.strictEqual(PV.lawOf('NZ').due_days, 30);
+    assert.ok(Object.values(PV.LAW).every((L) => [L.consent, L.rights].every((x) => x.split(/\s+/).length <= 20)), 'every sentence within the 20-word budget');
+  });
+  await ita('GET contact-prefs carries the SHOP\u2019s country\u2019s law (AU shop: Privacy Act), read in the same transaction', async () => {
+    D.shopCountry = 'AU';
+    const r = await t.get(prefs()); assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.ok(/Privacy Act/.test(r.body.law.law)); assert.strictEqual(r.body.law.country, 'AU');
+    D.shopCountry = null;
+  });
+  /* the shopper's surface: routes/privacy.js on a storefront token (middleware/customer-auth — a real JWT, so an owner token is refused) */
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-privacy-me';
+  const jwt = require('jsonwebtoken'), express = require('express'), http = require('http');
+  const papp = express(); papp.use(express.json()); papp.use('/api/privacy', require('../routes/privacy')); const psrv = papp.listen(0);
+  const pcall = (method, p, body, token) => new Promise((ok, no) => {
+    const d = body == null ? null : JSON.stringify(body);
+    const rq = http.request({ port: psrv.address().port, method, path: p, headers: Object.assign({ authorization: 'Bearer ' + token }, d ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(d) } : {}) },
+      (res) => { let b = ''; res.on('data', (c) => (b += c)); res.on('end', () => ok({ status: res.statusCode, body: b ? JSON.parse(b) : {} })); });
+    rq.on('error', no); rq.end(d || undefined);
+  });
+  const shopperTok = jwt.sign({ identity_id: P(2), identity_type: 'customer', parent_entity_id: 'E1', display_name: 'Chola' }, process.env.JWT_SECRET, { algorithm: 'HS256' });
+  const ownerTok = jwt.sign({ identity_id: 'E1', identity_type: 'entity' }, process.env.JWT_SECRET, { algorithm: 'HS256' });
+  await ita('an owner\u2019s token is refused on /api/privacy/me (401) \u2014 the shopper\u2019s surface is the shopper\u2019s only', async () => {
+    assert.strictEqual((await pcall('GET', '/api/privacy/me', null, ownerTok)).status, 401);
+    assert.strictEqual((await pcall('POST', '/api/privacy/me/consent', { channel: 'whatsapp', purpose: 'marketing', allowed: true }, ownerTok)).status, 401);
+  });
+  await ita('GET /me: what the shop holds (a null is said, never dropped), the shop\u2019s law, THIS shopper\u2019s consent only, may_consent / may_request', async () => {
+    const r = await pcall('GET', '/api/privacy/me', null, shopperTok); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(r.body.shop.name, 'Mayur Bhavan'); assert.strictEqual(r.body.law.country, 'IN'); assert.ok(/DPDP/.test(r.body.law.short));
+    assert.ok(r.body.held.some((h) => h.key === 'phone' && /98000/.test(h.value))); assert.ok(r.body.held.every((h) => 'value' in h));
+    assert.strictEqual(r.body.consent.migrated, true); assert.ok(r.body.consent.history.every((h) => h.channel && h.purpose));
+    assert.strictEqual(r.body.consent.may.whatsapp.marketing.may, false, 'the withdrawal above stands'); assert.ok(r.body.consent.may.whatsapp.marketing.code);
+    assert.strictEqual(r.body.may_consent.may, true); assert.strictEqual(r.body.may_request.may, true);
+    assert.ok(!JSON.stringify(r.body).match(/P\(3\)|10000000-0000-4000-8000-000000000003/), 'no other party\u2019s rows');
+  });
+  await ita('POST /me/consent: a yes to offers on e-mail is ONE new b306 row noted_by the SHOPPER (how given: by them); the CRM\u2019s GET sees it; the gate now lets an e-mail offer through', async () => {
+    const n = T.prefs.length;
+    const r = await pcall('POST', '/api/privacy/me/consent', { channel: 'email', purpose: 'marketing', allowed: true }, shopperTok);
+    assert.strictEqual(r.status, 201, JSON.stringify(r.body)); assert.strictEqual(T.prefs.length, n + 1); assert.strictEqual(r.body.pref.noted_by, P(2)); assert.strictEqual(r.body.may.email.marketing.may, true);
+    const g = (await t.get(prefs())).body; assert.strictEqual(g.history[0].noted_by, P(2)); assert.strictEqual(g.may.email.marketing.code, 'CONSENT');
+    const v = await PV.gate({ query: async (q, a) => (await D.extra(String(q).replace(/\s+/g, ' ').trim(), a)) || { rows: [] } }, 'E1', { party_id: P(2) }, 'email', 'marketing'); assert.strictEqual(v.may, true);
+  });
+  await ita('POST /me/consent refused in words: legitimate use can never be the shopper\u2019s basis for offers; an unknown channel', async () => {
+    const n = T.prefs.length;
+    for (const b of [{ channel: 'fax', purpose: 'service', allowed: true }, { channel: 'email', purpose: 'marketing' }]) { const r = await pcall('POST', '/api/privacy/me/consent', b, shopperTok); assert.strictEqual(r.status, 400, JSON.stringify(r.body)); assert.ok(r.body.message); }
+    assert.strictEqual(T.prefs.length, n);
+  });
+  await ita('POST /me/requests: "a copy" and "erase" are RECORDED on the shop\u2019s register (party_id = the shopper, the shop\u2019s clock) \u2014 nothing is erased; GET /me lists only theirs; the owner sees them on /privacy-requests', async () => {
+    const n = T.reqs.length;
+    for (const kind of ['access', 'erase']) { const r = await pcall('POST', '/api/privacy/me/requests', { kind }, shopperTok); assert.strictEqual(r.status, 201, JSON.stringify(r.body)); assert.strictEqual(r.body.request.party_id, P(2)); assert.strictEqual(r.body.request.country, 'IN'); assert.strictEqual(r.body.request.answered_at, null); }
+    assert.strictEqual(T.reqs.length, n + 2); assert.ok(!D.queries.some((q) => /is_erased|DELETE FROM identities|erased_at/.test(q)), 'no erase statement from the page\u2019s route');
+    const me = (await pcall('GET', '/api/privacy/me', null, shopperTok)).body; assert.ok(me.requests.requests.length >= 2 && me.requests.requests.every((x) => x.party_id === P(2)));
+    const owner = (await t.get('/privacy-requests?open=1')).body; assert.ok(owner.requests.some((x) => x.party_id === P(2) && x.kind === 'erase'));
+    const bad = await pcall('POST', '/api/privacy/me/requests', { kind: 'forget-me' }, shopperTok); assert.strictEqual(bad.status, 400);
+  });
+  await ita('before b306 / b307: GET /me still answers 200 \u2014 consent and requests say NOT MIGRATED in a code the page greys on; a POST answers 503 in words', async () => {
+    T.have.party_contact_pref = false; T.have.privacy_request = false; PV.forget();
+    const r = await pcall('GET', '/api/privacy/me', null, shopperTok); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(r.body.consent.migrated, false); assert.strictEqual(r.body.may_consent.code, 'PRIVACY_NOT_MIGRATED'); assert.ok(r.body.may_consent.why); assert.strictEqual(r.body.may_request.may, false);
+    const w = await pcall('POST', '/api/privacy/me/consent', { channel: 'email', purpose: 'marketing', allowed: false }, shopperTok); assert.strictEqual(w.status, 503); assert.ok(/b306/.test(w.body.message));
+    T.have.party_contact_pref = true; T.have.privacy_request = true; PV.forget();
+  });
+  psrv.close();
 
   console.log('\n-- K9 · the public facts --');
   await ita('facts: every sub-processor has a role and a region-or-null; the database region is India; unpublished notice/contact said in words', () => {
