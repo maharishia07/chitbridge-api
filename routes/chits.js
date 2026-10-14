@@ -58,6 +58,7 @@ const taxLines = require('../lib/tax-lines');
 const taxEngine = require('../lib/tax');   // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 const localIdentity = require('../lib/local-identity');   /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
+const istest = require('../lib/istest');   /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
    live in the Bills folders. The SAME classification the folders read through lib/select.js, so the two can never disagree. */
 const FOLDER_INV = require('../lib/folder-inventory');
@@ -405,7 +406,7 @@ router.post('/send',
    lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
 const SEND_STEPS = [
-  sendSender, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
+  sendSender, sendLab, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
   sendBody, sendCredit, sendSource, sendFanOut, sendTrace,
   sendPrefs, sendRecipients, sendSeller, sendOffers, sendMoney,
   sendIssued, sendCopyPolicy, sendPromote, sendParticipants, sendRetention,
@@ -451,6 +452,26 @@ async function sendSender(st, req, res) {
              + 'Open ChitBridge → Settings and set the shop\'s bridge id, then send this bill again.' });
   }
   Object.assign(st, { sender_id, sender_bridge_id, sender_display_name });
+}
+
+/**
+ * ⭐ RAIL-LAB-SRV1 (2026-10-14) · A LAB CHIT IS REFUSED ON A LIVE SHOP, IN WORDS, BEFORE ANYTHING IS WRITTEN.
+ * The sender declares a lab chit as `business_json.lab: true` (the is_promotion path; sendSummary echoes it onto summary_json.lab so
+ * every co-held copy says what it is). The ONE rule is lib/istest's (b249's axis: a lab shop is a shop whose population is not live) —
+ * the same answer GET /api/facts/rail gives as `may_sample`, so the Rail Lab can never be told "yes" here and "no" there.
+ * ⚠️ ONE identities read, ONLY when a lab chit is declared: an ordinary send runs no statement here and is byte-identical
+ * (tests/send-golden.test.cjs). This is the one door: a lab chit cannot reach a live shop by delivery either — b247's population
+ * boundary and istest.mayTrade already refuse a copy across populations. A population the database cannot state is LIVE (fail safe).
+ * The refusal carries a CODE the client branches on (`code`, `why`); the sentence is for the person.
+ */
+async function sendLab(st, req, res) {
+  const bj = req.body && req.body.business_json;
+  if (!istest.isLabChit(bj)) return;
+  const r = await query(`SELECT to_jsonb(i)->>'population' AS population FROM identities i WHERE identity_id = $1`, [st.sender_id]);
+  const population = r.rows[0] && r.rows[0].population != null ? String(r.rows[0].population) : null;
+  const may = istest.maySample(population);
+  if (!may.ok) return res.status(409).json({ error: 'Lab chit on a live shop', code: 'LAB_CHIT_LIVE_SHOP', may: false, why: may.why, message: may.say });
+  st.lab = true;
 }
 
 /** the bill number on the paper, checked against this shop's country rule — recorded, never refused */
@@ -1482,6 +1503,8 @@ async function sendSummary(st, req, res) {
     priority_external: ext_priority,
     purpose,
     is_promotion: !!(business_json && business_json.is_promotion),
+    /* RAIL-LAB-SRV1: a lab chit says so on every copy (sendLab proved the shop may; mint.summary keeps the rider only when true) */
+    lab: st.lab ? true : undefined,
     // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
     forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
     copy_policy: copyPolicy,
