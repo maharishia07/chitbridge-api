@@ -725,6 +725,13 @@
       "fired": true,
       "status": 404
     },
+    "PATCH /api/counters/:id": {
+      "file": "counters.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400
+    },
     "PATCH /api/crm/followups/:id": {
       "file": "crm.js",
       "trips": 50,
