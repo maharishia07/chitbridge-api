@@ -1598,6 +1598,65 @@
       "status": 404,
       "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, then per due day one loopback send (its own request) + the move + two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
       "extra": true
+    },
+    "GET /api/signin/sessions": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: one read of the shop's devices (lib/person-session devicesOf), may.devices derived from req — CB Settings › Account › Sessions"
+    },
+    "GET /api/signin/devices": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: the same one read, owner only (lib/owner.gate) — CB Settings › Account › Every device"
+    },
+    "POST /api/signin/sessions/revoke": {
+      "file": "signin.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: one read to find whose session it is, one locked write (person-session close / revokeDevice) — Sign out this device"
+    },
+    "GET /api/folders/mis": {
+      "file": "folders.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: policy.get + select.rows (one transaction), measured once by lib/measure — CB Finance › Reports; the workshop MIS read it before under cap-admin.js"
+    },
+    "GET /api/facts/counters": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "why": "T3-SETTINGS card (the till card's REGISTER_SQL, one trip) — line added by hand in T3-P4-ACCOUNT, it was missing",
+      "extra": true
+    },
+    "GET /api/facts/account": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: the register read widened by the devices column — one trip",
+      "extra": true
+    },
+    "GET /api/facts/reports": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "why": "T3-P4-ACCOUNT: railScope (overdue_days + select.rows, together) through lib/measure — the rail card's read without the CRM lists",
+      "extra": true
     }
   }
 }

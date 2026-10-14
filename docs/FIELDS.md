@@ -4,6 +4,18 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## GET /api/signin/sessions · `may.devices` · GET /api/facts/account · GET /api/facts/reports (T3-P4-ACCOUNT, 2026-10-14)
+
+CB Settings › Account (Sessions · API keys · Vault) and CB Finance › Reports. A client branches on `ok` / `code` / `current`, never on `why`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `may.devices` (GET /api/signin/sessions, new) | `{ ok, code: null\|'OWNER_ONLY', why: string\|null }` | Derived per read by `lib/owner.may` — the same test and sentence as the `lib/owner.gate` on GET /api/signin/devices and on POST /api/signin/sessions/revoke `{ device_id }` (403 `code:'OWNER_ONLY'`, the same sentence). Written by nobody. Read by web cap-settings.js `account` (the Every device list and Remove this device are greyed with it). |
+| `sessions[].current` (GET /api/signin/sessions, existing) | boolean | The session this request came with. Read by cap-settings.js: "Sign out" on the current row is greyed with the page's sentence (use the menu's Sign out) — a field, not prose. |
+| `lines` · `figures` (GET /api/facts/account, new card) | `{ lines:[{ text, value }], figures:{ devices, keys } }` | Derived by `lib/home-facts.account` from the till card's REGISTER_SQL widened by `policy_flags->'devices'` (one trip): devices = not revoked and holding a session whose exp is ahead (GET /devices' own test); keys = the counters card's rule. Read by the Home card of manifest entry `account`. |
+| `all.overdue` · `received.overdue` · `sent.overdue` (GET /api/folders/mis, changed) · `truncated` (new) | number · boolean | Derived by `lib/home-facts.railMeasure` (lib/measure + the rail's one rule: the shop's own notes are never overdue) — the same count as Home's rail `stuck` and CB CRM › Chits › Stuck. Before, the shop's own open notes counted as overdue here. `truncated` = the 5,000-row read was cut. Read by web cap-mis.js (CB Finance › Reports) and the workshop MIS (cap-admin.js). |
+| `lines` · `figures` (GET /api/facts/reports, new card) | `{ lines:[{ text, value, tone? }], figures:{ open, overdue, overdue_days } }` | Derived by `lib/home-facts.reports`: the rail card's `railScope` read (overdue_days + select.rows, one batch) through `lib/measure` — the same engine GET /api/folders/mis answers CB Finance › Reports with; the shop's own notes are left out of the measure as the rail leaves them out. Omitted (`unavailable`) when the read is truncated. Read by the Home card of manifest entry `reports`. |
+
 ## GET /api/counters · `may.manage` · GET /api/entities/policy · `may` · GET /api/facts/counters (T3-SETTINGS, 2026-10-14)
 
 CB Settings › Counters & keys / Policy greys an action with the server's answer; the client branches on `ok` / `code`, never on `why`.
