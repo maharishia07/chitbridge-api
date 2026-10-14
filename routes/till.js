@@ -1515,10 +1515,8 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
  * decides what a counter may do.
  */
 const store = require('../lib/reward-store');
-const ledgerOf = (entity_id, holder, limit) => store.entriesOf(entity_id, holder, withEntity, limit);
 const progOf = (entity_id) => store.programme(entity_id, withEntity);
 const holderFrom = store.holderFrom;
-const ledgerWrite = (entity_id, holder, e, definition_id) => store.append(entity_id, holder, e, definition_id, withEntity);
 
 /**
  * GET /api/till/reward?scheme=phone&value=9840012345  → what this customer holds, and what it is worth
@@ -1534,16 +1532,15 @@ router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
     if (!holder) return res.status(400).json({ error: 'validation', message: 'scheme (identity|phone) and value required' });
     const prog = await progOf(entity_id);
     if (!prog) return res.json({ ok: true, holder, programme: null, points: 0, entries: [] });
-    const entries = await ledgerOf(entity_id, holder);
-    const gone = rewards.expired(prog, entries);
-    const bal = rewards.balanceOf(entries.concat(gone));
+    /* the balance is the SUM of every entry (lib/reward-store.balanceOn), never a fold of the newest page */
+    const bal = await store.balance(entity_id, holder, withEntity, prog), gone = bal.expired;
     res.json({ ok: true, holder,
                programme: { name: prog.name, earns: rewards.describeEarn(prog, {}),
                             expires_months: prog.expires_months || null },
                points: bal.points, negative: bal.negative,
-               worth: rewards.liability(prog, bal.points),
+               worth: bal.worth,
                expiring: gone.length ? gone.reduce((a, e) => a + Math.abs(e.points), 0) : 0,
-               entries: entries.slice(0, 50) });
+               entries: bal.entries });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
@@ -1578,14 +1575,8 @@ router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
     const added = mayEarn ? rewards.earnedOn(prog, basket) : 0;
     const spend = Math.max(0, Math.trunc(Number(b.spend) || 0));
 
-    const before = await ledgerOf(entity_id, holder);
-    const gone = rewards.expired(prog, before);
-    const bal = rewards.balanceOf(before.concat(gone));
-
-    const rows = gone.slice();
-    if (spend > 0) rows.push(rewards.entry({ points: -spend, why: 'spent', ref: ref, note: 'encashed on this bill' }));
-    if (added > 0) rows.push(rewards.entry({ points: added, why: 'earned', ref: ref, note: 'bill ' + ref }));
-    for (const e of rows.filter(Boolean)) await ledgerWrite(entity_id, holder, e, prog.definition_id);
+    /* ⭐ ONE transaction: the holder locked, the balance read (a SUM of every entry), the due expiries + spend + earning written together */
+    const bal = await store.settle(entity_id, holder, prog, { ref, spend, added }, withEntity);
 
     const after = bal.points - spend + added;
     res.json({ ok: true, holder: holder, programme: prog.name, added: added, spent: spend,
@@ -1612,17 +1603,15 @@ router.post('/reward/claim', auth, auth.requireScope('till'), async (req, res) =
     if (!from || !to) return res.status(400).json({ error: 'validation', message: 'from and to holders required' });
     const prog = await progOf(entity_id);
     if (!prog) return res.status(400).json({ error: 'validation', message: 'this shop runs no programme' });
-    const entries = await ledgerOf(entity_id, from);
-    const gone = rewards.expired(prog, entries);
-    const bal = rewards.balanceOf(entries.concat(gone));
     const ref = String(b.ref || ('claim-' + Date.now())).slice(0, 64);
-    const c = rewards.claim(bal, from, to, ref);
+    /* ⭐ ALL OR NOTHING (lib/reward-store.claim): both holders locked, the balance read, both halves written in ONE transaction */
+    const c = await store.claim(entity_id, from, to, ref, prog, withEntity);
     if (!c.ok) return res.status(400).json({ error: 'validation', message: c.why });
-    for (const e of gone) await ledgerWrite(entity_id, from, e, prog.definition_id);
-    /* ⚠️ each half of a claim lands under ITS OWN holder — the entry carries it, the loop must not assume one */
-    for (const e of c.entries) await ledgerWrite(entity_id, e.holder || from, e, prog.definition_id);
     res.json({ ok: true, moved: c.points, from: from, to: to });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) {
+    if (e && e.code === 'CLAIM_RECORDED') return res.status(409).json({ error: 'conflict', code: e.code, message: e.say });
+    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+  }
 });
 
 /**
