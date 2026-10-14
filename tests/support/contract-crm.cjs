@@ -79,8 +79,13 @@ async function captureCrm() {
     return null;
   };
   F.forget();
+  /* CO1 b306 (MKT-SRV1): the consent table, present — Chola agreed to offers on WhatsApp and asked not to be texted; the record's prefs, the list's ?with=consent, the gate's 403 */
+  D.prefs = [{ pref_id: '20000000-0000-4000-8000-000000000001', owner: 'E1', party_id: P(2), channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'consent', notice_version: null, noted_by: 'E1', noted_at: '2026-10-01T09:00:00.000Z', withdrawn_at: null },
+             { pref_id: '20000000-0000-4000-8000-000000000002', owner: 'E1', party_id: P(2), channel: 'sms', purpose: 'service', allowed: false, basis: 'legitimate_use', notice_version: null, noted_by: 'E1', noted_at: '2026-10-02T09:00:00.000Z', withdrawn_at: null }];
+  require('../../lib/privacy').forget();
   try {
     keep('GET', '/parties', await t.get('/parties'));
+    keep('GET', '/parties', await t.get('/parties?with=consent&limit=3&page=1'));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(2)));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(8)));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(3)));
@@ -89,6 +94,7 @@ async function captureCrm() {
     const ix = await t.post('/parties/' + P(2) + '/interactions', { kind: 'call', direction: 'out', body: 'Rang about the rate' });
     if (ix.body && ix.body.interaction) delete ix.body.interaction.owner;   /* the stand-in keeps the shop on the row; the real INSERT ... RETURNING does not */
     keep('POST', '/parties/:id/interactions', ix);
+    keep('POST', '/parties/:id/interactions', await t.post('/parties/' + P(2) + '/interactions', { kind: 'message', direction: 'out', channel: 'sms', body: 'Order ready' }));   /* 403 { code, why }: she asked not to be texted (CO1-GATE) */
     keep('POST', '/followups', await t.post('/followups', { party_id: P(2), what: 'Ring about the quote', due_at: day(-1), source: 'manual' }));
     keep('POST', '/followups', await t.post('/followups', { party_id: P(2), what: 'Ask for the cheque', due_at: day(5), source: 'dues' }));
     const open = (await t.get('/followups?scope=all&done=0')).body;

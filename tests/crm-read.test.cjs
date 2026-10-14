@@ -57,6 +57,17 @@ const byId = (list, id) => list.parties.filter((p) => p.party_id === id);
   await ita('another population is never listed', async () => { assert.strictEqual(byId(list, P(7)).length, 0); });
   await ita('a removed (hidden) party is never listed', async () => { assert.strictEqual(byId(list, P(9)).length, 0); });
   await ita('the count says what is shown: 6 parties (Agro, Chola, Ravi sup, Meena, Big Buyer, Ravi cus)', async () => { assert.strictEqual(list.count, 6); assert.strictEqual(list.parties.length, 6); });
+  await ita('G4 (MKT-SRV1): total · page · limit on top — the whole list by default (limit = CAP); ?limit=2&page=2 is one page, total · count · alerts stay the whole list; a limit over the cap or a page under 1 is clamped', async () => {
+    const CAP = require('../lib/crm').CAP;
+    assert.strictEqual(list.total, 6); assert.strictEqual(list.page, 1); assert.strictEqual(list.limit, CAP);
+    const r = await t.get('/parties?limit=2&page=2'); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(r.body.parties.length, 2); assert.strictEqual(r.body.total, 6); assert.strictEqual(r.body.count, 6); assert.strictEqual(r.body.page, 2); assert.strictEqual(r.body.limit, 2);
+    assert.deepStrictEqual(r.body.parties.map((p) => p.party_id), list.parties.slice(2, 4).map((p) => p.party_id), 'page 2 of 2 = rows 3 and 4 of the one ordering');
+    assert.deepStrictEqual(r.body.alerts, list.alerts);
+    const big = await t.get('/parties?limit=99999&page=0'); assert.strictEqual(big.body.limit, CAP); assert.strictEqual(big.body.page, 1); assert.strictEqual(big.body.parties.length, 6);
+    const far = await t.get('/parties?limit=5&page=9'); assert.strictEqual(far.body.parties.length, 0); assert.strictEqual(far.body.total, 6);
+    assert.ok(!('prefs' in r.body.parties[0]) && !('prefs_migrated' in r.body), 'consent rides only on ?with=consent (tests/privacy.test.cjs)');
+  });
   await ita('on ChitBridge is the one verdict: on-rail business ok · minted → why "local" · shopper → why "shopper"', async () => {
     assert.deepStrictEqual(byId(list, P(1))[0].may_trade, { ok: true }); assert.strictEqual(byId(list, P(1))[0].on_chitbridge, true);
     assert.deepStrictEqual(byId(list, P(3))[0].may_trade, { ok: false, why: 'local' }); assert.strictEqual(byId(list, P(3))[0].kind, 'local');

@@ -70,6 +70,10 @@ function answer(text, params) {
       keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: F.allShut ? SHUT_AT : null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: F.c2open ? null : '2026-10-01T10:00:00Z' } }] }] };
   }
   if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: params[0] === 'a2' }] };
+  /* MKT-SRV1 G3: the marketing card — schema.hasTable probes (b306 · b307 are drafts), then ONE batch of two counts */
+  if (/information_schema\.tables/.test(sql)) return { rows: F.consent && (params[0] === 'party_contact_pref' || (params[0] === 'privacy_request' && !F.noRequests)) ? [{ '?column?': 1 }] : [] };
+  if (/FROM party_contact_pref/.test(sql)) { F.consentSql = sql; return { rows: [F.nobodyAsked ? { asked: 0, agreed: 0, said_no: 0 } : { asked: 7, agreed: 5, said_no: 2 }] }; }
+  if (/FROM privacy_request/.test(sql)) return { rows: [{ open: 3, late: F.late ? 1 : 0 }] };
   if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, last_check: { at: '2026-10-06T21:00:00Z', ok: true } }] };
   /* STD1: the ONE count — GROUP BY todo over every open row (211 here: more than any page of 50 or 200) */
   if (/FROM books_outbox/.test(sql)) { F.outboxSql = sql; return { rows: [{ todo: 'accept', n: 120 }, { todo: 'add_supplier', n: 90 }, { todo: 'record', n: 1 }] }; }
@@ -233,6 +237,35 @@ const get = (port, p) => new Promise((ok) => {
   KEY = false;
   F.chits = 'few';
 
+  /* marketing (MKT-SRV1 G3): consent first — who agreed to offers, the privacy register; never a 500 or a 0 for a table that is not there */
+  /* lib/schema bound the REAL db.query before this file's mock (books-hooks loads it first): the probe is stood in here with the real one's memory — a yes is kept, a no is asked again (one trip per ask) */
+  const SCH = require(API + '/lib/schema'), HF = require(API + '/lib/home-facts'), PV = require(API + '/lib/privacy');
+  const known = new Set();
+  SCH.hasTable = async (table) => { if (known.has(table)) return true; trips++; const r = answer(`SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`, [table]); const present = r.rows.length > 0; if (present) known.add(table); return present; };
+  SCH._reset = () => known.clear();
+  SCH._reset(); r = await g('marketing');
+  t('marketing: before b306 / b307 -> 200, no lines, unavailable said in words (b306 · b307 named)', [r.status, r.json.lines, /not provisioned.*b306/.test(r.json.unavailable)], [200, [], true]);
+  F.consent = true; SCH._reset(); r = await g('marketing');
+  t('marketing: 200', r.status, 200);
+  t('marketing: parties who agreed to offers; the open privacy requests', r.json.lines, [{ text: '5 parties agreed to offers', value: 5 }, { text: '3 privacy requests open', value: 3 }]);
+  t('marketing: figures carry the raw counts', r.json.figures, { asked: 7, agreed: 5, said_no: 2, requests_open: 3, requests_late: 0 });
+  t('marketing: at most 3 trips cold (two table probes, cached once present, + ONE batch for both counts)', r.trips <= 3, true);
+  r = await g('marketing');
+  t('marketing: 1 trip warm (the probes are remembered; the counts are one batch)', r.trips, 1);
+  t('marketing: the agreed count is the NEWEST row per (party, channel, purpose) - DISTINCT ON, newest first - never every row', /DISTINCT ON \(party_id, channel, purpose\)/.test(F.consentSql) && /noted_at DESC/.test(F.consentSql), true);
+  F.late = true; r = await g('marketing');
+  t('marketing: a late request is the line, tone dn', r.json.lines[1], { text: '1 privacy request late', value: 1, tone: 'dn' });
+  F.late = false; F.nobodyAsked = true; r = await g('marketing');
+  t('marketing: nobody asked yet -> "No consent noted yet" (dn), never "0 parties agreed"', r.json.lines[0], { text: 'No consent noted yet', value: 0, tone: 'dn' });
+  F.nobodyAsked = false; F.noRequests = true; SCH._reset(); r = await g('marketing');
+  t('marketing: b306 run, b307 not -> the consent line alone, no request line invented', r.json.lines.length, 1);
+  F.noRequests = false; SCH._reset();
+  /* ONE RULE: the SQL predicate the card counts with IS mayMessage's marketing rule (basis = consent is b306's CHECK) */
+  const sample = [[{ channel: 'sms', purpose: 'marketing', allowed: true }], [{ channel: 'email', purpose: 'marketing', allowed: false }], [{ channel: 'sms', purpose: 'service', allowed: true }], [{ channel: 'whatsapp', purpose: 'marketing', allowed: true }, { channel: 'sms', purpose: 'marketing', allowed: false }], []];
+  const bySql = sample.map((rows) => rows.some((x) => x.purpose === 'marketing' && x.allowed));
+  const byEngine = sample.map((rows) => PV.CHANNELS.some((c) => PV.mayMessage(rows, c, 'marketing').may));
+  t('marketing: ONE rule - the SQL predicate for "agreed to offers" says what lib/privacy.mayMessage says, row set by row set', [HF.MAY_OFFERS_SQL, bySql], ["purpose = 'marketing' AND allowed", byEngine]);
+
   /* refusals */
   r = await g('nonsense');
   t('unknown card -> 404', r.status, 404);
@@ -242,7 +275,7 @@ const get = (port, p) => new Promise((ok) => {
   t('a key is not a person -> 403', r.status, 403);
   KEY = false;
   const bodies = [];
-  for (const c of ['till', 'accounts', 'product-lab', 'combo-lab', 'offer-lab', 'rail']) bodies.push((await g(c)).body);
+  for (const c of ['till', 'accounts', 'product-lab', 'combo-lab', 'offer-lab', 'rail', 'marketing']) bodies.push((await g(c)).body);
   t('no answer anywhere carries a cost value', bodies.some((b) => b.includes('4242')), false);
 
   srv.close();
