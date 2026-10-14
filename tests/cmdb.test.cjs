@@ -130,7 +130,7 @@ it('reading is open to every signed-in user: GET /cmdb and GET /cmdb/:ci use aut
 it('⚠️⚠️ both writes check the gate BEFORE anything is written', () => {
   for (const [v, r] of [['put', '/cmdb/:ci'], ['post', '/cmdb/seed']]) {
     const h = handler(v, r);
-    const gate = h.indexOf('cmdbRefused(req, res)'), write = h.indexOf('upsertVersioned(');
+    const gate = h.indexOf('boardRefused(req, res)'), write = h.indexOf('upsertVersioned(');
     assert.ok(gate > 0 && write > gate, v.toUpperCase() + ' ' + r + ' writes without asking canWrite first');
   }
 });

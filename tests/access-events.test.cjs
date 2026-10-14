@@ -71,6 +71,15 @@ const ok = (n, c, x) => { if (c) { pass++; console.log('  ✓ ' + n); } else { f
   ok('the caller is never failed by the audit', !threw);
   ok('it reports what was lost: { written: 0, failed: 2 }', res && res.written === 0 && res.failed === 2, JSON.stringify(res));
   ok('and says so in the log, with the code', logged.length === 2 && logged.every((l) => /audit row NOT written/.test(l)), JSON.stringify(logged));
+  /* SEC-SMALL item 1 (2026-10-14): through lib/logger at ERROR (a JSON line with a level), the event KIND and the code — and nobody's id */
+  const lines = logged.map((l) => { try { return JSON.parse(l); } catch (_) { return null; } });
+  ok('⭐ the line is lib/logger at level error (not a bare console line)', lines.every((j) => j && j.level === 'error'), JSON.stringify(logged));
+  ok('⭐ it names the event kind and the code', lines.every((j) => j && /_changed$/.test(j.action) && j.code === '42501'), JSON.stringify(lines));
+  ok('⭐ and no PII: no subject id, no changed_by, no reason, no message text',
+     logged.every((l) => !/subject|changed_by|reason|row-level security/.test(l)) && lines.every((j) => j && !('why' in j)), JSON.stringify(logged));
+  ok('⭐ the counter /health exposes counts both (lostCount)', ev.lostCount() === 2, String(ev.lostCount()));
+  ok('/health carries it as audit_lost', /audit_lost: require\('\.\/lib\/access-events'\)\.lostCount\(\)/.test(
+    require('fs').readFileSync(require('path').join(__dirname, '..', 'server.js'), 'utf8')));
   ok('the route puts it in its answer (routes/actors.js)', /audit: \{ recorded: \(audit && audit\.written\)/.test(
     require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'actors.js'), 'utf8')));
 

@@ -19,7 +19,7 @@ const API = path.join(__dirname, '..');
 const pgDate = require('pg').types.getTypeParser(1082);
 
 let queries = [];
-let ON = false, MISSING = false, BROKEN = false, LOGGED = [];
+let ON = false, MISSING = false, BROKEN = false, DUES_CUT = false, LOGGED = [];
 const norm = (s) => String(s).replace(/\s+/g, ' ').trim();
 function rowsFor(sql) {
   if (/FROM books_setting/.test(sql)) {
@@ -34,9 +34,13 @@ function rowsFor(sql) {
   if (/FROM customer_list/.test(sql)) return [
     { identity_id: 'c1', display_name: 'Kumar', phone: '9', groups: [], last_txn_at: null, credit_days: '10', credit_limit_minor: '500000', has_party_item: true, rail_entity_id: 'c1' },
     { identity_id: 'c2', display_name: 'Mala', phone: '8', groups: [], last_txn_at: null, credit_days: null, credit_limit_minor: null, has_party_item: true }];
-  if (/FROM party_item/.test(sql)) return [
+  if (/FROM party_item/.test(sql)) {
+    /* SEC-SMALL item 5: the route asks for DELTA_CAP + 1 rows; one more than the cap is the cut case */
+    if (DUES_CUT) return Array.from({ length: 20001 }, (_, i) => ({ party_id: 'c1', against_ref: 'bill-' + i, balance_minor: '100', due_date: pgDate('2026-10-05'), doc_date: pgDate('2026-09-25'), disputed: false }));
+    return [
     { party_id: 'c1', against_ref: 'bill-1', balance_minor: '11800', due_date: pgDate('2026-10-05'), doc_date: pgDate('2026-09-25'), disputed: false },
     { party_id: 'c1', against_ref: 'bill-2', balance_minor: '5000', due_date: pgDate('2026-10-01'), doc_date: pgDate('2026-09-21'), disputed: true }];
+  }
   return [];
 }
 const dbPath = require.resolve(path.join(API, 'db'));
@@ -92,12 +96,22 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     t('…over the RECEIVABLE side only (what the shop owes a party is not what the party owes)', dq.length === 1 && /WHERE entity_id = \$1 AND side = 'receivable'/.test(dq[0]), dq[0]);
     t('…a bill is disputed only while its LATEST dispute row says so — never BOOL_OR, which no "undisputed" row could clear',
       dq.length === 1 && !/BOOL_OR/i.test(dq[0]) && /array_agg\(status ORDER BY item_id DESC\) FILTER \(WHERE status IN \('disputed', 'undisputed'\)\)\)\[1\] = 'disputed'/.test(dq[0]), dq[0]);
-    t('…in a stated order before the limit (a LIMIT with no ORDER BY cuts arbitrarily)', dq.length === 1 && /ORDER BY .* LIMIT 20000/.test(dq[0]), dq[0]);
+    /* SEC-SMALL item 5 (2026-10-14): the cap is a parameter (DELTA_CAP + 1), no longer a literal 20000 — see the cut case below */
+    t('…in a stated order before the limit (a LIMIT with no ORDER BY cuts arbitrarily)', dq.length === 1 && /ORDER BY .* LIMIT \$2/.test(dq[0]), dq[0]);
     const k = on.body.customers.find((c) => c.identity_id === 'c1'), m = on.body.customers.find((c) => c.identity_id === 'c2');
     t('…Kumar owes ₹168.00 over two open bills, oldest due first', k && k.balance_minor === 16800 && k.open_bills.length === 2 && k.open_bills[0].ref === 'bill-2' && k.open_bills[0].disputed === true, JSON.stringify(k));
     t('…the dates are the dates (due 1 Oct, billed 21 Sep) — not the day before, on a server east of UTC',
       k && k.open_bills[0].due_date === '2026-10-01' && k.open_bills[0].date === '2026-09-21' && k.open_bills[1].due_date === '2026-10-05', JSON.stringify(k && k.open_bills));
     t('…a customer with nothing open owes 0 — known, because the ledger is on', m && m.balance_minor === 0 && Array.isArray(m.open_bills) && m.open_bills.length === 0, JSON.stringify(m));
+
+    /* ── SEC-SMALL item 5: more open dues than one answer carries — balances UNKNOWN (absent), never a short sum, and said ── */
+    DUES_CUT = true;
+    const cut = await snap();
+    DUES_CUT = false;
+    t('dues past the cap: the snapshot still answers 200 with books: true', cut.status === 200 && cut.body.books === true, String(cut.status));
+    t('…and NO customer carries a balance or open bills (a sum of a cut list would be a wrong balance that passes a credit check)',
+      Array.isArray(cut.body.customers) && cut.body.customers.length === 2 && cut.body.customers.every((c) => !('balance_minor' in c) && !('open_bills' in c)), JSON.stringify(cut.body.customers));
+    t('…and the cut is SAID: a warn line names the shop', cut.logged.some((m) => m === 'till.snapshot.dues.cut'), JSON.stringify(cut.logged));
 
     /* ── before b272 (the table is not there): the counter still opens, and is told nothing about a ledger ── */
     ON = false; MISSING = true;

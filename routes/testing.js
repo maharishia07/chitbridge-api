@@ -195,6 +195,7 @@ const TEST_TYPES = ['unit', 'integration', 'system', 'acceptance', 'screen', 'pe
  */
 router.post('/cases/close', auth, async (req, res) => {
   try {
+    if (boardRefused(req, res)) return;   /* SEC-SMALL item 3: closing a shared case is authoring the board */
     const entity_id = testboard.entityFor(auth.entityOf(req));
     if (!entity_id) return res.status(401).json({ error: 'Unauthorised' });
     const key = String((req.body && req.body.case_key) || '').trim();
@@ -697,6 +698,7 @@ async function importCases(entity_id, who, rows, mode) {
 
 router.post('/cases/import', auth, async (req, res) => {
   try {
+    if (boardRefused(req, res)) return;   /* SEC-SMALL item 3: a rebuild of the shared suite is the board writer's act */
     const rows = Array.isArray(req.body && req.body.cases) ? req.body.cases : [];
     if (!rows.length) return res.status(400).json({ error: 'Nothing to import', message: 'Send { cases: [...] }.' });
     /* ⚠️ shape-checked, not trusted: anything but the exact word means a rebuild, which is the safe default
@@ -757,6 +759,7 @@ router.get('/engine', auth, (req, res) => {
 
 router.post('/cases/seed', auth, async (req, res) => {
   try {
+    if (boardRefused(req, res)) return;   /* SEC-SMALL item 3: "Load cases" reseeds what every shop reads */
     const file = require('path').join(__dirname, '..', 'data', 'test-cases.json');
     /* ⚠ A MISSING FILE MUST SAY SO PLAINLY. It means the API shipped without the document — a deploy problem, not
        something the person pressing the button can act on, and they must not be left staring at an empty board
@@ -849,10 +852,16 @@ async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, ru
 const cmdb = require('../lib/cmdb');
 const CMDB_DIR = require('path').join(__dirname, '..', 'data', 'cmdb');
 
-function cmdbRefused(req, res) {
+/**
+ * ⭐ THE ONE GATE ON WRITING WHAT EVERY SHOP READS (was cmdbRefused; SEC-SMALL item 3, 2026-10-14 widened it to the
+ * case-authoring writes — seed · import · gherkin · close). The SERVER decides: testboard.canWrite = the board's own
+ * entity, TEST_BOARD_WRITERS, or the platform root. A refused caller gets the sentence and a code the screen can
+ * branch on; nothing of theirs is read or written first. Reads, results and the per-raiser kinds never come here.
+ */
+function boardRefused(req, res) {
   if (testboard.canWrite(auth.entityOf(req))) return false;
-  res.status(403).json({ error: 'Not a writer of the shared board',
-    message: 'CMDB records are read by every shop, so only the board’s own account (or one named in '
+  res.status(403).json({ error: 'Not a writer of the shared board', code: 'NOT_BOARD_WRITER',
+    message: 'Cases and CMDB records are read by every shop, so only the board’s own account (or one named in '
       + 'TEST_BOARD_WRITERS) can change them.' });
   return true;
 }
@@ -895,7 +904,7 @@ router.get('/cmdb/:ci', auth, async (req, res) => {
 /** PUT /api/testing/cmdb/:ci — save one record; a new version only when it actually changed */
 router.put('/cmdb/:ci', auth, async (req, res) => {
   try {
-    if (cmdbRefused(req, res)) return;
+    if (boardRefused(req, res)) return;
     const rec = Object.assign({}, req.body || {}, { ci: String(req.params.ci || '') });
     const v = cmdb.shape(rec);
     if (!v.ok) return res.status(400).json({ error: 'That record does not fit', message: v.why });
@@ -909,7 +918,7 @@ router.put('/cmdb/:ci', auth, async (req, res) => {
 /** POST /api/testing/cmdb/seed — load every record shipped in data/cmdb/*.json, the way cases/seed loads cases */
 router.post('/cmdb/seed', auth, async (req, res) => {
   try {
-    if (cmdbRefused(req, res)) return;
+    if (boardRefused(req, res)) return;
     const fs = require('fs');
     if (!fs.existsSync(CMDB_DIR)) {
       return res.status(500).json({ error: 'The CMDB records are not on this server',
@@ -1328,6 +1337,7 @@ router.get('/cases/gherkin', auth, async (req, res) => {
  */
 router.post('/cases/gherkin', auth, async (req, res) => {
   try {
+    if (boardRefused(req, res)) return;   /* SEC-SMALL item 3: a feature file authors shared cases */
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const who = testerOf(req);
     const gherkin = require('../lib/gherkin');
