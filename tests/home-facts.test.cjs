@@ -156,6 +156,13 @@ const get = (port, p) => new Promise((ok) => {
   t('till: an actor without can_see_costs still sees takings (the old read never hid them)', /"amount":4320\.5\b/.test(r.body), true);
   WHO = OWNER;
 
+  /* counters (T3-SETTINGS): CB Settings › Counters & keys - the till card's register read and open rule, one trip */
+  r = await g('counters');
+  t('counters: 200, "2 counters · 1 open" (C1 held by a live key, C2 closed)', [r.status, r.json.lines[0]], [200, { text: '2 counters · 1 open', value: 2 }]);
+  t('counters: till keys are counters, not "keys for other systems" - no keys line', r.json.lines.length, 1);
+  t('counters: figures carry the raw numbers', r.json.figures, { counters: 2, counters_open: 1, keys: 0 });
+  t('counters: at most 1 trip', r.trips <= 1, true);
+
   /* orders (M145): a live door with its count - one read, asked for orders that came to the shop, counted by lib/measure's OPEN set */
   r = await g('orders');
   t('orders: 200, one count line, the figure is a number', [r.status, r.json.lines.length, typeof r.json.figures.open, r.json.lines[0].value === r.json.figures.open], [200, 1, 'number', true]);
@@ -242,7 +249,7 @@ const get = (port, p) => new Promise((ok) => {
   t('a key is not a person -> 403', r.status, 403);
   KEY = false;
   const bodies = [];
-  for (const c of ['till', 'accounts', 'product-lab', 'combo-lab', 'offer-lab', 'rail']) bodies.push((await g(c)).body);
+  for (const c of ['till', 'counters', 'accounts', 'product-lab', 'combo-lab', 'offer-lab', 'rail']) bodies.push((await g(c)).body);
   t('no answer anywhere carries a cost value', bodies.some((b) => b.includes('4242')), false);
 
   srv.close();

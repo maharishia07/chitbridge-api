@@ -273,7 +273,7 @@ function dupes() {
     && (KEYS.match(/FROM chit_header/g) || []).length === 1 && !/FROM chit_header/.test(COUNTERS)
     && /keys\.bookedPrefixes\(db, entity_id\)/.test(COUNTERS));
   t('moved-not-stopped kept (rival, older, moved_from, held_by)', /MOVED, NOT STOPPED/.test(KEYS) && /moved_from: using, held_by: rival\.name/.test(KEYS));
-  t('POST /api/counters/:id/assign exists, owner only', /router\.post\('\/:id\/assign'/.test(COUNTERS) && /isOwner\(req\)/.test(COUNTERS));
+  t('POST /api/counters/:id/assign exists, owner only (the one gate, lib/owner.gate)', /router\.post\('\/:id\/assign'[^\n]*require\('..\/lib\/owner'\)\.gate\(/.test(COUNTERS));
 
   console.log('\n  ' + pass + ' passed · ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);

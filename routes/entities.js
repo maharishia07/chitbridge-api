@@ -251,19 +251,27 @@ router.get('/search', auth, async (req, res) => {
 const policy = require('../lib/policy');
 const policyEntity = (req) => auth.entityOf(req);
 
+/* T3-SETTINGS: WHO MAY CHANGE EACH FLAG, said by the server (CB Settings › Policy greys a row with it). One map, read by the GET's
+   `may` and by the PATCH's refusal, so the sentence a screen shows is the sentence the server refuses with. */
+const POLICY_OWNER_ONLY = { system_folders: 'Only the owner may switch folders on or off.', books: 'Only the owner may let the books post by themselves.' };
+const POLICY_BOUND_WHY = 'Set by the platform for every shop.';
+function policyMay(req) {
+  const owner = require('../lib/owner'), out = {};
+  for (const k of Object.keys(policy.FLAGS)) out[k] = POLICY_OWNER_ONLY[k] ? owner.may(req, POLICY_OWNER_ONLY[k]) : { ok: true, code: null, why: null };
+  for (const k of Object.keys(policy.BOUND)) out[k] = { ok: false, code: 'PLATFORM_BOUND', why: POLICY_BOUND_WHY };
+  return out;
+}
+
 router.get('/policy', auth, async (req, res) => {
-  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND }); }
+  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND, may: policyMay(req) }); }
   catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
 });
 
 router.patch('/policy', auth, async (req, res) => {
   /* ⚠️ the folder inventory's switches are the OWNER's (routes/folders.js PUT /inventory/:code) — not a back door for a co-assist or a key */
-  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'system_folders') && !require('../lib/owner').isOwner(req)) {
-    return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may switch folders on or off.' });
-  }
-  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'books') && !require('../lib/owner').isOwner(req)) {
-    return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may let the books post by themselves.' });
-  }
+  const isOwner = require('../lib/owner').isOwner(req);
+  const refused = Object.keys(POLICY_OWNER_ONLY).find((k) => req.body && Object.prototype.hasOwnProperty.call(req.body, k) && !isOwner);
+  if (refused) return res.status(403).json({ error: 'Only the owner may do this.', code: 'OWNER_ONLY', message: POLICY_OWNER_ONLY[refused] });
   try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
   catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });

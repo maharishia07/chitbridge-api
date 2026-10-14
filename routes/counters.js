@@ -10,7 +10,8 @@
  * carries on across every open and close: the cloud keeps where it stopped (`next`, per `period`), and the next PC
  * to open it continues from there.
  *
- *   GET    /api/counters               → { counters:[…], free: n }
+ *   GET    /api/counters               → { counters:[…], free: n, may:{ manage:{ ok, code, why } } }   (read by any signed-in person)
+ *   ⚠️ every write below is OWNER only — one gate (lib/owner.gate, T3-SETTINGS 2026-10-14); a co-assist gets 403 code OWNER_ONLY
  *   POST   /api/counters               { name }        → the new counter (ONLINE by construction — this is the web)
  *   PATCH  /api/counters/:id           { name }        → renamed
  *   POST   /api/counters/:id/open                      → { key, counter } — refused while another PC holds it
@@ -34,6 +35,9 @@ const sessionOnly = (req, res, next) => {
   if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Counters are managed by a signed-in person, not by a key.' });
   next();
 };
+/* T3-SETTINGS: ONE owner gate on every counters write (lib/owner) — which PC bills under which series is the shop's call. GET says it as `may`. */
+const OWNER_SAYS = 'Only the owner can change the counters.';
+const ownerOnly = require('../lib/owner').gate(OWNER_SAYS);
 const PENDING_MS = 2 * 60 * 1000;
 const isPending = (h) => typeof h === 'string' && h.indexOf('pending:') === 0;
 const isDevice = (h) => typeof h === 'string' && h.indexOf('dev:') === 0;
@@ -136,12 +140,12 @@ router.get('/', auth, sessionOnly, async (req, res) => {
       return Object.values(counters).sort((a, b) => keys.TILL_IDS.indexOf(a.id) - keys.TILL_IDS.indexOf(b.id))
         .map((c) => view(c, list, devices));
     });
-    res.json({ counters: out, free: out.filter((c) => c.state === 'closed').length });
+    res.json({ counters: out, free: out.filter((c) => c.state === 'closed').length, may: { manage: require('../lib/owner').may(req, OWNER_SAYS) } });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
 /** ⭐ CREATE — online by construction (this is the web). The id is the lowest one no counter holds and nothing was billed under. */
-router.post('/', auth, sessionOnly, async (req, res) => {
+router.post('/', auth, sessionOnly, ownerOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const name = String((req.body && req.body.name) || '').trim().slice(0, 40);
@@ -160,7 +164,7 @@ router.post('/', auth, sessionOnly, async (req, res) => {
   } catch (e) { res.status(e.status || 500).json({ error: e.status ? 'validation' : 'Failed', message: String(e && e.message) }); }
 });
 
-router.patch('/:id', auth, sessionOnly, async (req, res) => {
+router.patch('/:id', auth, sessionOnly, ownerOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();
@@ -185,9 +189,8 @@ router.patch('/:id', auth, sessionOnly, async (req, res) => {
  * ⚠️ A label still held by another phone is NOT taken from it here: that phone may be billing under it offline right now.
  * It moves off at its next sign-in/snapshot, and the newly assigned phone takes the label after that (`held_by` says who).
  */
-router.post('/:id/assign', auth, sessionOnly, async (req, res) => {
+router.post('/:id/assign', auth, sessionOnly, require('../lib/owner').gate('Only the owner can assign a counter.'), async (req, res) => {
   try {
-    if (!require('../lib/owner').isOwner(req)) return res.status(403).json({ error: 'Forbidden', code: 'OWNER_ONLY', message: 'Only the owner can assign a counter.' });
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();
     const raw = req.body && req.body.phone;
@@ -211,7 +214,7 @@ router.post('/:id/assign', auth, sessionOnly, async (req, res) => {
  * writes the same row, so doing it inside the lock would wait on itself — and then the key is bound. Two people
  * pressing Open at the same moment: one gets the counter, the other is told who has it.
  */
-router.post('/:id/open', auth, sessionOnly, async (req, res) => {
+router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
   const entity_id = auth.entityOf(req);
   const id = String(req.params.id || '').toUpperCase();
   const nonce = 'pending:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -259,7 +262,7 @@ router.post('/:id/open', auth, sessionOnly, async (req, res) => {
  * CLOSE, from the counter. If that PC ever comes back, its key is refused, and its bills are recovered by pairing
  * it and bringing them in (the clash guard and renumbering then keep the books unique).
  */
-router.post('/:id/release', auth, sessionOnly, async (req, res) => {
+router.post('/:id/release', auth, sessionOnly, ownerOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();
