@@ -3,6 +3,7 @@
 // owning CONNECTIONS (devices/endpoints) each with its own bridge_id + config. Health is last_seen-based and
 // CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the
 // pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)
+const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const express = require('express');
 const router  = express.Router();
 const crypto  = require('crypto');
@@ -104,7 +105,7 @@ router.post('/', auth, requireConnector,
             site, connector_config, provision_key_hash, entity_kind, country)
          /* a connector actor is a CONNECTOR (or a device), never 'human · 10 tasks' — the co-assist card said human/editor for a Tally kit (2026-09-06) */
          VALUES ($1,$2,$3,$4,$12,$5,NULL,NULL,0,'actor','active','active',$6,$7,'act',$8,$9,$10,$11,'actor',
-                 (SELECT country FROM identities WHERE identity_id = $5))`   /* GOV-AU1: the owning shop's country */,
+                 ${shopCountrySql(5)})`   /* GOV-AU1: the owning shop's country */,
         [identity_id, bridge_id, display_name, actor_key, entity_id, otp, otp_expires, type,
          site, JSON.stringify(config), key_hash, (/iot|device|pi|sensor/i.test(String(type || '')) ? 'iot_device' : 'connector')]);
       res.json({ message: 'Connector created',
