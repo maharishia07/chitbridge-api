@@ -4,7 +4,7 @@
  * worst cyclomatic complexity. Round T2-SPLIT (2026-10-14) — the counter the ratchet (tests/fn-size.test.cjs) reads.
  *
  *   node scripts/fn-size.cjs            the two numbers + the twenty worst functions
- *   node scripts/fn-size.cjs --json     every function over the limit, per file (what tests/fixtures/fn-size.json holds)
+ *   node scripts/fn-size.cjs --json     every function over the limit, by file and name (what tests/fixtures/fn-size.json holds)
  *   node scripts/fn-size.cjs --write    rewrite tests/fixtures/fn-size.json — ONLY after the count went DOWN
  *
  * Reads with tests/support/js-scan.cjs (no parser dependency — the offline gate allows none).
@@ -38,7 +38,8 @@ function measure() {
   const long = all.filter((f) => f.lines > LIMIT);
   const worst = all.reduce((a, f) => (!a || f.complexity > a.complexity ? f : a), null);
   const perFile = {};
-  long.forEach((f) => { perFile[f.file] = (perFile[f.file] || 0) + 1; });
+  long.forEach((f) => { (perFile[f.file] = perFile[f.file] || []).push(f.name); });
+  Object.keys(perFile).forEach((k) => perFile[k].sort());
   return { all, long, worst, perFile };
 }
 
@@ -46,7 +47,8 @@ if (require.main === module) {
   const m = measure();
   const arg = process.argv[2];
   if (arg === '--json' || arg === '--write') {
-    const out = { limit: LIMIT, long_functions: m.long.length, worst_complexity: m.worst.complexity, per_file: m.perFile };
+    const out = { limit: LIMIT, long_functions: m.long.length, worst_complexity: m.worst.complexity,
+                  worst_at: m.worst.file + ' ' + m.worst.name, long: m.perFile };
     const text = JSON.stringify(out, null, 2) + '\n';
     if (arg === '--write') { fs.writeFileSync(FIXTURE, text); console.log('wrote ' + path.relative(API, FIXTURE)); }
     else process.stdout.write(text);

@@ -1,0 +1,352 @@
+{
+  "limit": 80,
+  "long_functions": 160,
+  "worst_complexity": 188,
+  "worst_at": "lib/books-hooks.js classify",
+  "long": {
+    "lib/accounts-packs.js": [
+      "(anonymous)"
+    ],
+    "lib/ai.js": [
+      "invokeSkill"
+    ],
+    "lib/amend.js": [
+      "(anonymous)",
+      "record"
+    ],
+    "lib/assign.js": [
+      "byPerson"
+    ],
+    "lib/bill-steps.js": [
+      "facts"
+    ],
+    "lib/bookpack.js": [
+      "(anonymous)"
+    ],
+    "lib/books-hooks.js": [
+      "classify",
+      "postChit"
+    ],
+    "lib/books-nightly.js": [
+      "check"
+    ],
+    "lib/books-pack.js": [
+      "build"
+    ],
+    "lib/books-todo.js": [
+      "todo"
+    ],
+    "lib/capture.js": [
+      "(anonymous)",
+      "raisePayload"
+    ],
+    "lib/catalogue-view.js": [
+      "buildPublicView"
+    ],
+    "lib/chart.js": [
+      "(anonymous)"
+    ],
+    "lib/consolidate.js": [
+      "consolidate"
+    ],
+    "lib/convert.js": [
+      "(anonymous)"
+    ],
+    "lib/crm-leads.js": [
+      "importLeads"
+    ],
+    "lib/csv-preflight.js": [
+      "applyDecisions",
+      "matchHeader",
+      "preflight"
+    ],
+    "lib/dayopen.js": [
+      "(anonymous)"
+    ],
+    "lib/deliverline.js": [
+      "progress",
+      "record"
+    ],
+    "lib/docnumber.js": [
+      "(anonymous)"
+    ],
+    "lib/gherkin.js": [
+      "parseFeature"
+    ],
+    "lib/govcontext.browser.js": [
+      "(anonymous)"
+    ],
+    "lib/groupsum.js": [
+      "requirement"
+    ],
+    "lib/gs1.js": [
+      "(anonymous)"
+    ],
+    "lib/gst-returns.js": [
+      "(anonymous)",
+      "gstr1",
+      "gstr3b"
+    ],
+    "lib/inventory.js": [
+      "(anonymous)"
+    ],
+    "lib/itemmatch.js": [
+      "loadCatalogue",
+      "match"
+    ],
+    "lib/jurisdiction.js": [
+      "(anonymous)"
+    ],
+    "lib/ledger.js": [
+      "(anonymous)"
+    ],
+    "lib/locale.browser.js": [
+      "(anonymous)"
+    ],
+    "lib/lotfields.js": [
+      "(anonymous)"
+    ],
+    "lib/mint.js": [
+      "deliver"
+    ],
+    "lib/money.js": [
+      "(anonymous)"
+    ],
+    "lib/network-build.js": [
+      "plan",
+      "walk"
+    ],
+    "lib/network-offers.js": [
+      "(anonymous)",
+      "forStore"
+    ],
+    "lib/numerals.js": [
+      "(anonymous)"
+    ],
+    "lib/offers-engine.js": [
+      "(anonymous)",
+      "apply",
+      "evaluate",
+      "terms"
+    ],
+    "lib/offers-live.js": [
+      "applyLiveOffers"
+    ],
+    "lib/orderhub.js": [
+      "(anonymous)"
+    ],
+    "lib/orders.js": [
+      "(anonymous)"
+    ],
+    "lib/period.js": [
+      "(anonymous)"
+    ],
+    "lib/policy.js": [
+      "coerce"
+    ],
+    "lib/posting.js": [
+      "(anonymous)"
+    ],
+    "lib/pricing-engine.js": [
+      "(anonymous)"
+    ],
+    "lib/profile-map.js": [
+      "(anonymous)"
+    ],
+    "lib/qty.js": [
+      "(anonymous)"
+    ],
+    "lib/raida.js": [
+      "(anonymous)",
+      "add",
+      "report"
+    ],
+    "lib/rail.js": [
+      "(anonymous)"
+    ],
+    "lib/raiseticket.js": [
+      "raise"
+    ],
+    "lib/receivables.js": [
+      "(anonymous)"
+    ],
+    "lib/reg-ae.js": [
+      "(anonymous)"
+    ],
+    "lib/reg-au.js": [
+      "(anonymous)"
+    ],
+    "lib/reg-in.js": [
+      "(anonymous)"
+    ],
+    "lib/regulation.js": [
+      "(anonymous)"
+    ],
+    "lib/resolveuserid.js": [
+      "classify"
+    ],
+    "lib/rewards.js": [
+      "(anonymous)"
+    ],
+    "lib/rollup.js": [
+      "(anonymous)"
+    ],
+    "lib/scalecode.js": [
+      "(anonymous)"
+    ],
+    "lib/screen-kit.js": [
+      "(anonymous)"
+    ],
+    "lib/search-engine.js": [
+      "(anonymous)"
+    ],
+    "lib/sides.js": [
+      "build"
+    ],
+    "lib/signin.js": [
+      "(anonymous)"
+    ],
+    "lib/stock-store.js": [
+      "post"
+    ],
+    "lib/tax-copy.js": [
+      "partiesFor"
+    ],
+    "lib/tax-engine.browser.js": [
+      "(anonymous)",
+      "(anonymous)",
+      "(anonymous)",
+      "(anonymous)",
+      "(anonymous)",
+      "(anonymous)",
+      "determine"
+    ],
+    "lib/tax-slab.js": [
+      "(anonymous)"
+    ],
+    "lib/tax.js": [
+      "(anonymous)",
+      "determine"
+    ],
+    "lib/units.js": [
+      "(anonymous)"
+    ],
+    "lib/variant.browser.js": [
+      "(anonymous)"
+    ],
+    "lib/verdict.js": [
+      "(anonymous)"
+    ],
+    "lib/workflow.js": [
+      "(anonymous)"
+    ],
+    "lib/workroute.js": [
+      "routeFor"
+    ],
+    "lib/xlsx-read.js": [
+      "sheetRows"
+    ],
+    "routes/actors.js": [
+      "GET /",
+      "PATCH /:id",
+      "POST /",
+      "PUT /:id/status",
+      "PUT /:id/tasks/route",
+      "PUT /:id/tasks/route",
+      "PUT /assign/:chit_id",
+      "PUT /assign/:chit_id",
+      "PUT /break"
+    ],
+    "routes/catalogue.js": [
+      "(anonymous)",
+      "POST /:bridge_id/order/confirm",
+      "POST /network-store/:networkId/order",
+      "repriceAgainstCatalogue"
+    ],
+    "routes/chits.js": [
+      "GET /:chit_id",
+      "GET /:chit_id",
+      "GET /inbox",
+      "POST /:chit_id/disputes",
+      "POST /:chit_id/messages",
+      "PUT /:chit_id/disputes/:dispute_id/resolve",
+      "PUT /:chit_id/status",
+      "PUT /:chit_id/void",
+      "moveStatus"
+    ],
+    "routes/connections.js": [
+      "POST /request"
+    ],
+    "routes/connectors.js": [
+      "emitSignalChit"
+    ],
+    "routes/ctp.js": [
+      "POST /deliver"
+    ],
+    "routes/definitions.js": [
+      "GET /"
+    ],
+    "routes/entities.js": [
+      "GET /me",
+      "GET /mis",
+      "GET /search",
+      "PATCH /profile"
+    ],
+    "routes/folders.js": [
+      "GET /messages"
+    ],
+    "routes/identity-docs.js": [
+      "PUT /documents/:scheme"
+    ],
+    "routes/integrations.js": [
+      "POST /heartbeat"
+    ],
+    "routes/keys.js": [
+      "(anonymous)"
+    ],
+    "routes/network-design.js": [
+      "GET /availability"
+    ],
+    "routes/notifications.js": [
+      "GET /"
+    ],
+    "routes/products.js": [
+      "GET /",
+      "GET /:id/versions",
+      "POST /import",
+      "POST /lists/adopt",
+      "POST /starter-columns"
+    ],
+    "routes/relationships.js": [
+      "GET /suppliers/availability",
+      "POST /suppliers"
+    ],
+    "routes/signin.js": [
+      "actorLogin",
+      "ask",
+      "verify"
+    ],
+    "routes/testing.js": [
+      "(anonymous)",
+      "GET /coverage",
+      "GET /reliability",
+      "GET /report",
+      "GET /report",
+      "PATCH /incidents/:id",
+      "POST /incidents",
+      "POST /releases",
+      "POST /requirements",
+      "importCases",
+      "recordResults"
+    ],
+    "routes/till.js": [
+      "GET /match",
+      "GET /match",
+      "GET /snapshot",
+      "GET /worth-an-offer",
+      "POST /catalogue",
+      "POST /shop",
+      "tillItem"
+    ]
+  }
+}
