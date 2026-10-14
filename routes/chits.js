@@ -2033,6 +2033,9 @@ function chitFilters(req, where, params){
     if (req.query.date_from) { params.push(req.query.date_from); where += ` AND ch.created_at >= $${params.length}::timestamptz`; }
     if (req.query.date_to)   { params.push(req.query.date_to);   where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`; }
   }
+  /* ⭐ TRADE-SRV1 G3: ?abroad=1 → only the trades across a border (another currency, or a party in another country) — ONE fragment
+     (country-setup.abroadSql, beside shopCountrySql), so Task, Order and every folder answer the same */
+  if (req.query.abroad === '1' || req.query.abroad === 'true') { params.push(entityId(req)); where += ` AND ${require('../lib/country-setup').abroadSql('ch', params.length)}`; }
   if (req.query.priority)  { params.push(req.query.priority);  where += ` AND cs.priority_flag = $${params.length}`; }
   if (req.query.fstatus)   {
     const B = { open:['pending','delivered','read'], act:['accepted','in_progress','partial'], close:['completed','cancelled','rejected'] };
