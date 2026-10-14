@@ -22,6 +22,7 @@ const db = require(path.join(API, 'db'));
 let answer = () => ({ rows: [] });
 db.query = async (sql, params) => answer(sql, params);
 db.withEntity = async (_e, fn) => fn({ query: async (sql, params) => answer(sql, params) });
+db.readBatch = async (_e, _a, stmts) => Promise.all(stmts.map((st) => answer(st.text, st.params)));   /* EFF-TRIPS: the GET reads in batches — each statement meets the same stub */
 
 const membership = require(path.join(API, 'lib', 'network-membership.js'));
 const ok = { ok: true, code: null, why: null };
