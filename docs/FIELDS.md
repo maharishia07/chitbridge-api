@@ -4,6 +4,15 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## GET /health `audit_lost` · GET /api/till/snapshot `limit` · the shared-board write refusal (SEC-SMALL, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| GET /health `audit_lost` | integer ≥ 0 | Derived: `lib/access-events.lostCount()` — IAM audit rows this process could not write since boot (each one is also a lib/logger ERROR line with the event kind and the database code, never a person's id). The action that caused it still succeeded. Written by nobody; read by a reviewer (the Standards page: not yet). Resets on restart — the log line is the durable record. |
+| GET /api/till/snapshot `limit` | integer (DELTA_CAP, default 20000) | Source: `routes/till.js` DELTA_CAP. With `total` (sellable items right now), `more` (this answer stopped at `limit`) and `at` (the cursor: the LAST row carried when cut, else readAt) it is the snapshot's pager — a full read and a delta page by the one rule (deltaPage). Read by the till master `snapParts` (reads while `more`, then compares with `total`). |
+| GET /api/till/snapshot `customers[].balance_minor` · `open_bills` (changed) | absent when the shop's open receivable dues exceed `limit` | Derived: absent already meant "unknown" (no ledger, or not read); now also "more dues than one answer carries" — never a short sum. The warn line `till.snapshot.dues.cut` names the shop. |
+| 403 of POST /api/testing/cases/close · /cases/import · /cases/seed · /cases/gherkin · PUT /cmdb/:ci · POST /cmdb/seed | `{ error, code: 'NOT_BOARD_WRITER', message }` | `routes/testing.js boardRefused` → `lib/testboard.canWrite`: the board's own entity · TEST_BOARD_WRITERS · the platform root (lib/platformroot). Results, incidents, requirements, evidence, changes, releases and every GET are not gated. Read by the web test board (it shows `message`). |
+
 ## /api/actors · /api/people · `pin_state` · `email` · the owner refusal (SEC2, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

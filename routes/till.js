@@ -230,7 +230,11 @@ router.get('/snapshot', auth, async (req, res) => {
            LIMIT 20000 with the cursor at readAt: past the cap the OLDEST changes were cut and the cursor jumped over them,
            so a counter never received them. Now a cut delta hands back the LAST row sent as its cursor (see DELTA_CAP). */
         ? db.query('SELECT item_id, item_data, is_active, updated_at FROM catalogue_items WHERE entity_id = $1 AND updated_at > $2 ORDER BY updated_at ASC LIMIT $3', [entity_id, since, DELTA_CAP + 1])
-        : db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at DESC NULLS LAST LIMIT 20000', [entity_id])),
+        /* ⚠️⚠️ THE FULL READ PAGES THE SAME WAY (SEC-SMALL item 5, 2026-10-14). It was `ORDER BY updated_at DESC LIMIT 20000`, cut in
+           silence: a shop past the cap never received its oldest items, and its total check then pulled the whole shop again on
+           every refresh — for ever. Now oldest-first, one past the cap, through the same deltaPage: a cut full read says `more`
+           and hands back its last row as `at`, and the counter's next ?since= carries on from there (updated_at is NOT NULL). */
+        : db.query('SELECT item_id, item_data, is_active, updated_at FROM catalogue_items WHERE entity_id = $1 AND is_active = true ORDER BY updated_at ASC LIMIT $2', [entity_id, DELTA_CAP + 1])),
       /**
        * ⚠️⚠️ A DELETE IS INVISIBLE TO A DELTA, AND THAT IS WHY THE COUNTER KEPT SHOWING STOCK THAT NO LONGER EXISTS.
        *
@@ -412,9 +416,14 @@ router.get('/snapshot', auth, async (req, res) => {
        */
       let booksOn = false;
       try { booksOn = !!(await ownRead('books')); } catch (_) { booksOn = false; }
-      let dues = { rows: [] };
+      let dues = { rows: [] }, duesCut = false;
       if (booksOn && c.rows.some((x) => x.has_party_item)) {
         try {
+          /* ⚠️ ONE PAST THE CAP (SEC-SMALL item 5). It was LIMIT 20000 in silence, and a cut aggregate is a WRONG balance — the bills
+             with the furthest due dates fall off and every credit check after them passes. A balance is a sum, not a list: it cannot
+             be paged. So past the cap nothing is pretended: balances are left ABSENT (the slot's own word for "unknown", below),
+             the counter shows no figure, and the warn line names the shop. A shop with 20,000 open receivable bills is one Athi
+             should hear about, not one the counter should guess for. */
           dues = await withEntity(entity_id, (db) => db.query(
             `SELECT party_id, against_ref, SUM(amount_minor)::bigint AS balance_minor,
                     MIN(due_date) FILTER (WHERE ref_kind = 'bill') AS due_date,
@@ -425,7 +434,12 @@ router.get('/snapshot', auth, async (req, res) => {
               GROUP BY party_id, against_ref
              HAVING SUM(amount_minor) <> 0
               ORDER BY MIN(due_date) FILTER (WHERE ref_kind = 'bill') NULLS LAST, against_ref
-              LIMIT 20000`, [entity_id]));
+              LIMIT $2`, [entity_id, DELTA_CAP + 1]));
+          if (dues.rows.length > DELTA_CAP) {
+            duesCut = true; dues = { rows: [] };
+            require('../lib/logger').warn('till.snapshot.dues.cut', { entity_id, cap: DELTA_CAP,
+              says: 'more open receivable bills than one snapshot carries — customer balances sent as unknown, never as a short sum' });
+          }
         } catch (e) { try { require('../lib/logger').warn('till.snapshot.dues', { entity_id, why: String(e && e.message) }); } catch (_) {} }
       }
       const owe = {};
@@ -448,7 +462,7 @@ router.get('/snapshot', auth, async (req, res) => {
         if (x.gstn && String(x.gstn).trim()) out.gstin = String(x.gstn).trim().toUpperCase();
         if (num(x.credit_days) != null) out.credit_days = num(x.credit_days);
         if (num(x.credit_limit_minor) != null) out.credit_limit_minor = num(x.credit_limit_minor);
-        if (booksOn && x.has_party_item) {   /* absent = unknown (no ledger, or not read) — never a 0 that reads as "owes nothing" */
+        if (booksOn && x.has_party_item && !duesCut) {   /* absent = unknown (no ledger, not read, or more dues than one answer carries) — never a 0 that reads as "owes nothing" */
           out.balance_minor = o ? o.balance_minor : 0;
           out.open_bills = o ? o.open_bills.sort((a, b) => String(a.due_date || '').localeCompare(String(b.due_date || ''))).slice(0, 20) : [];
         }
@@ -505,7 +519,8 @@ router.get('/snapshot', auth, async (req, res) => {
      * rows sharing it may be sent twice: a repeat is a no-op merge by item_id, a skip would be permanent.
      */
     let deltaMore = false, deltaCursor = null;
-    if (since) { const pg = deltaPage(all, DELTA_CAP); all = pg.rows; deltaMore = pg.more; deltaCursor = pg.cursor; }
+    /* ⭐ a delta AND a full read: both asked for DELTA_CAP + 1 oldest-first, so both page by the one rule (SEC-SMALL item 5) */
+    { const pg = deltaPage(all, DELTA_CAP); all = pg.rows; deltaMore = pg.more; deltaCursor = pg.cursor; }
     /**
      * ⚠️ SELLABLE, NOT MERELY ALIVE. `is_active` says the row exists; itemstatus.isOfferable says a customer may take one — retired,
      * unavailable and redundant are all alive and all unsellable. Filtering on the wrong one put retired stock on the counter
@@ -755,6 +770,8 @@ router.get('/snapshot', auth, async (req, res) => {
       at: deltaCursor || readAt,   /* [REV-16] captured before the item SELECT ran — see the comment at the top of this handler;
                                       a delta sent in parts hands back its last row instead (see DELTA_CAP) */
       more: deltaMore,
+      /* ⭐ the most items one answer carries — with `total` and `more` · `at` this is the snapshot's pager, said (docs/FIELDS.md) */
+      limit: DELTA_CAP,
       /**
        * ⭐⭐ WHICH SHOP IS THIS, ANSWERED BY THE SERVER (2026-09-08). Athi: *"can we check is there any other user id sits in the
        * session layer, so we can open it correctly?"* A counter could not check, because nothing it held said whose shop it was —

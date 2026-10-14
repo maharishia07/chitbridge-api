@@ -5328,6 +5328,8 @@ var CloudHost = {
     /* ⭐⭐ WHICH PREFIX THIS COUNTER NUMBERS UNDER — decided by the shop, not by a text box (tillClaim) */
     try { await tillClaim(snap.till); } catch (_) {}
     if (REJECTED) { REJECTED = null; try { await DB.del('kv', 'rejected'); } catch (_) {} }
+    /* ⭐ a snapshot that says `more` is read to its end before anything is compared or stored (snapParts, below) */
+    snap = await snapParts.call(this, snap);
     /**
      * ⚠️⚠️ TWO SHOPS CAN NEVER BE MERGED INTO ONE COPY. Athi, 2026-09-09: *"can we confirm that the entity id is the same in each
      * product row in the counter catalogue — for some reason it mixed it?"*
@@ -5362,7 +5364,7 @@ var CloudHost = {
        */
       if (snap.total != null && snap.items.length !== snap.total) {
         var full = await fetchBy(this.api + '/api/till/snapshot', { headers: this.auth() }, SLOW);
-        if (full.ok) { snap = await full.json(); snap.rebuilt = true; }
+        if (full.ok) { snap = await snapParts.call(this, await full.json()); snap.rebuilt = true; }
       }
     }
     /* ⚠️ THE WHOLE ENTITY ID, not a fingerprint. It never crosses the wire — it is written as the rows are stored — so there is
@@ -6000,6 +6002,35 @@ async function tillStopped(){
 }
 async function tillIssued(){
   try { var s = await DB.get('series'); return !!(s && Number(s.next) > 1); } catch (_) { return false; }
+}
+/**
+ * ⭐ A SNAPSHOT IN PARTS IS READ TO ITS END (SEC-SMALL item 5, 2026-10-14). routes/till.js carries at most `limit` items in one
+ * answer (DELTA_CAP); past that it says `more: true` and hands back the LAST row's updated_at as `at`. Before this the counter
+ * stored the first part and compared it with `total` — they never agreed, so it pulled the whole shop again, and the whole
+ * shop was itself cut at the cap: a shop past 20,000 items never held its own catalogue. Each further part is a ?since= read
+ * from the cursor, merged here by item_id (a repeat is a no-op, a removal leaves); the parts' removals stay on the snapshot so
+ * the merge with the stored copy applies them too. A part that fails leaves the cursor where it is — the next refresh carries
+ * on from there; nothing is lost and nothing is invented. Fifty parts is a million items: past that something is wrong, stop.
+ * Called with `this` = the store (its api and auth), like refresh().
+ */
+async function snapParts(snap){
+  var parts = 0;
+  while (snap && snap.more && snap.at && parts < 50) {
+    var r = await fetchBy(this.api + '/api/till/snapshot?since=' + encodeURIComponent(snap.at), { headers: this.auth() }, SLOW);
+    if (!r.ok) break;                                   /* the cursor stays where it is — the next refresh continues */
+    var part = await r.json().catch(function(){ return null; });   /* an unreadable part: same — stop here, keep the cursor */
+    if (!part || (part.entity_id && snap.entity_id && String(part.entity_id) !== String(snap.entity_id))) break;
+    var byId = {};
+    (snap.items || []).forEach(function(i){ byId[i.item_id] = i; });
+    (part.removed || []).forEach(function(id){ delete byId[id]; });
+    (part.items || []).forEach(function(i){ byId[i.item_id] = i; });
+    snap.items = Object.keys(byId).map(function(k){ return byId[k]; });
+    snap.removed = (snap.removed || []).concat(part.removed || []);
+    snap.at = part.at; snap.more = !!part.more;
+    if (part.total != null) snap.total = part.total;
+    parts++;
+  }
+  return snap;
 }
 async function tillClaimQuery(){
   var issued = await tillIssued();
