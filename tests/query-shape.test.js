@@ -36,7 +36,9 @@ const API = path.join(__dirname, '..');
  *
  * routes/chits.js        the send fan-out and its per-participant reads — a chit genuinely touches each party
  * routes/products.js     the CSV import path — per-row writes; the RULES are already read once (schemaFieldsOf)
- * routes/network-design.js  per-store reads behind per-tenant RLS, now bounded to 4 in flight (mapLimit)
+ * routes/network-design.js  (budget gone 2026-10-14, T2-SPLIT) its three were the build's per-node writes — one write set per
+ *                        node inside the one transaction, now the named steps createNode · updateNode · inviteNode in
+ *                        lib/network-build-run.js (a step per node, so no query sits lexically in a loop any more)
  * routes/governance.js   one read per cascade level
  * lib/storage.js         per-file operations
  * src/services/*         the dormant cb_* model
@@ -97,7 +99,6 @@ const BUDGET = {
   /* 'lib/supply-store.js' — was KNOWN DEBT here (2 round trips per purchase line); batched 2026-09-28 (ensureMany + one
      last-cost UPDATE), so it has none left and its budget is gone. The stock postings stay per line: order-dependent. */
   'routes/governance.js': 1,
-  'routes/network-design.js': 3,
   'routes/products.js': 4,
   'lib/storage.js': 2,
   'src/services/chit.js': 2,
