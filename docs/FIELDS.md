@@ -4,6 +4,22 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## GET /api/chits/disputes/queue (widened) · GET /api/chits/:chit_id/disputes · GET /api/assist/whoami (T3-DISPUTES-ASSIST, 2026-10-14)
+
+All derived per read, never stored. Read by: web tasks.html › Disputes and CB Assist (app/cap-dispute.js CBDispute, app/cap-assist.js) and the chit sheet's dispute section.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| queue `rows` · `total` · `page` · `limit` | list · int · int · int | The page asked by `?status=open\|resolved\|all&side=mine\|against&q=&sort=old\|new&page=&limit=` (lib/page-limit: 50, max 200). No page/limit = every matching row (the old answer); `disputes` · `my_disputes` · `other_disputes` · `total_open` keep their meaning (`total_open` = the open count). |
+| queue `counts` | `{ open, resolved }` | My dispute copies by status (RLS = my copies). The tab counts; never the page's length. |
+| queue `code` | `DISPUTES_NOT_SET_UP` | Only when the chit_disputes table is missing — the screen says so in words. |
+| `rows[]` / `disputes[]` `.mine` | bool | `raised_by_entity_id` = me. |
+| `rows[]` / `disputes[]` `.others` | `[{ entity_id, display_name, role, dispute_status }]` | The roster minus me ("with whom") — decided by the server, not by the page. |
+| `rows[]` / `disputes[]` `.actions.resolve` | `{ ok }` \| `{ ok:false, why, say }` | lib/dispute-may.resolve: the rail's `dispute` level/held verdict, then `already_resolved`, then `not_raiser` — the same verdict PUT …/resolve refuses with (its 400/403 now carry `why`). |
+| chit disputes `actions.raise` | `{ ok }` \| `{ ok:false, why, say }` | lib/dispute-may.raise = rail.can(`dispute`). |
+| chit disputes `raise_parties` | `[{ entity_id, display_name, role }]` | The chit's `all_recipients` (my header copy) minus me, once each — who a new dispute may name (`participant_entity_ids`). |
+| whoami `actions.publish` | `{ ok }` \| `{ ok:false, why: 'not_helpdesk'\|'not_read', say }` | The same entity_schemas test POST /assist/publish refuses with (its 403 now carries `why: 'not_helpdesk'`). |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

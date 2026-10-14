@@ -84,7 +84,8 @@
       "trips": 1,
       "wire": 1,
       "fired": true,
-      "status": 200
+      "status": 200,
+      "why": "T3-DISPUTES-ASSIST, by hand: 0 new trips — actions.publish is derived from the same one read (entity_schemas)."
     },
     "GET /api/books/accounts": {
       "file": "books.js",
@@ -1439,6 +1440,30 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "GET /api/chits/disputes/queue": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-DISPUTES-ASSIST, by hand: 2 trips — ONE withEntity transaction (BEGIN · set_config · the page with count(*) OVER() · the open/resolved counts · COMMIT) + ONE roster read for the whole page (unnest + LATERAL chit_dispute_roster). Was 1 + one roster read PER ROW. The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
+    },
+    "GET /api/chits/:chit_id/disputes": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-DISPUTES-ASSIST, by hand: 2 trips — ONE withEntity transaction (the participant check · my dispute copies · the chit's all_recipients for raise_parties, +1 statement) + ONE roster read for every dispute on the chit (was one per dispute). The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
+    },
+    "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-DISPUTES-ASSIST, by hand: 0 new trips — the refusal is lib/dispute-may.resolve over the dispute copy the route already read (no statement added). The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
     },
     "PUT /api/chits/:chit_id/status": {
       "file": "chits.js",

@@ -4,6 +4,7 @@ const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — 
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions');   // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
+const disputeMay = require('../lib/dispute-may');   // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const railStatus = require('../lib/rail-status');   // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const log = require('../lib/logger');
 const { body } = require('express-validator');
@@ -4380,35 +4381,57 @@ router.post('/:chit_id/disputes',
 
 // ─── GET /chits/:chit_id/disputes ────────────────────────────
 // All participants see all disputes on a chit
+/**
+ * ⭐ T3-DISPUTES-ASSIST — every dispute row a screen paints, finished ONE way (this route and the queue below):
+ *   participants  the roster (names/roles from MY copy's snapshot) with each party's live status — ONE definer read for every row
+ *                 (was one read PER ROW); a failed read keeps the snapshot, logged, never a 500
+ *   others        the participants who are not me (the raiser too, when it is not me) — "with whom", decided here, not by the page
+ *   mine          I raised it
+ *   actions.resolve  { ok } | { ok:false, why, say } — lib/dispute-may.resolve, the same verdict PUT …/resolve refuses with
+ */
+async function finishDisputes(rows, entity_id, me) {
+  const ids = rows.map((d) => d.dispute_id);
+  const statusBy = {};
+  let rosterRead = false;
+  if (ids.length) {
+    try {
+      const rr = await query(`SELECT u.did AS dispute_id, r.entity_id, r.role, r.status FROM unnest($1::uuid[]) AS u(did) CROSS JOIN LATERAL chit_dispute_roster(u.did) r`, [ids]);
+      rr.rows.forEach((r) => { statusBy[r.dispute_id + '|' + r.entity_id] = r.status; });
+      rosterRead = true;
+    } catch (err) { log.warn('dispute roster read failed — the snapshot is shown', { err: err.message, n: ids.length }); }
+  }
+  const lvl = railActions.can({ held: true }, me, 'dispute');
+  return rows.map(({ evidence_snapshot, roster, ...d }) => {
+    const parts = (roster || d.participants || []).map((p) => ({ dispute_id: d.dispute_id, entity_id: p.entity_id, display_name: p.display_name, role: p.role,
+      dispute_status: (rosterRead && statusBy[d.dispute_id + '|' + p.entity_id]) || p.dispute_status || 'open' }));
+    const mine = d.raised_by_entity_id === entity_id;
+    return { ...d, has_evidence: evidence_snapshot != null, participants: parts, others: parts.filter((p) => p.entity_id !== entity_id), mine,
+      actions: { resolve: disputeMay.resolve(lvl, { open: d.status === 'open', raisedByMe: mine }) } };
+  });
+}
 router.get('/:chit_id/disputes', auth, async (req, res) => {
   const { chit_id } = req.params;
   const entity_id   = entityId(req);
 
   try {
-    // B1 RLS: participant access check on own copy -> withEntity(me).
-    const access = await withEntity(entity_id, (db) => db.query(
-      `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
-      [chit_id, entity_id]
-    ));
-    if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
-
-    // B3.10 + D4 — scoped: you see chit-wide disputes, ones you raised/target, or ones you're a listed party to
-    // per-copy (b68): RLS returns MY OWN dispute copies for this chit
-    const result = await withEntity(entity_id, (db) => db.query(
-      `SELECT * FROM chit_disputes WHERE chit_id = $1 ORDER BY created_at ASC`, [chit_id]));
-    // roster (names/roles from my copy's snapshot) + live per-party status via the definer (reads all parties' copies)
-    let partsByD = {};
-    for (const d of result.rows) {
-      try {
-        const rr = await query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [d.dispute_id]);
-        const statusBy = {}; rr.rows.forEach(r => { statusBy[r.entity_id] = r.status; });
-        partsByD[d.dispute_id] = (d.roster || []).map(p => ({ dispute_id: d.dispute_id, entity_id: p.entity_id,
-          display_name: p.display_name, role: p.role, dispute_status: statusBy[p.entity_id] || 'open' }));
-      } catch (_) { partsByD[d.dispute_id] = (d.roster || []); }
-    }
+    // B1 RLS: participant access check on own copy -> withEntity(me). T3: the chit's recipients ride the same transaction (who a dispute may name).
+    const own = await withEntity(entity_id, async (db) => {
+      const access = await db.query(`SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      if (access.rows.length === 0) return null;
+      // B3.10 + D4 — scoped: per-copy (b68): RLS returns MY OWN dispute copies for this chit
+      const result = await db.query(`SELECT * FROM chit_disputes WHERE chit_id = $1 ORDER BY created_at ASC`, [chit_id]);
+      const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
+      return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
+    });
+    if (!own) return res.status(403).json({ error: 'Forbidden' });
+    const me = railActions.meOf(req);
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
-    const disputes = result.rows.map(({ evidence_snapshot, roster, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null, participants: partsByD[d.dispute_id] || [] }));
-    res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length });
+    const disputes = await finishDisputes(own.rows, entity_id, me);
+    /* T3: who a new dispute may name — everyone on the chit but me, once each (the raise route ticks these as participant_entity_ids) */
+    const seen = {}, raise_parties = (Array.isArray(own.recipients) ? own.recipients : []).filter((r) => r && r.entity_id && r.entity_id !== entity_id && !seen[r.entity_id] && (seen[r.entity_id] = 1))
+      .map((r) => ({ entity_id: r.entity_id, display_name: r.display_name || null, role: r.role || null }));
+    res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length, raise_parties,
+      actions: { raise: disputeMay.raise(railActions.can({ held: true }, me, 'dispute')) } });
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
     res.status(500).json({ error: 'Get disputes failed', message: safeErr(err) });
@@ -4520,10 +4543,13 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
       if (dispute.rows.length === 0) return res.status(404).json({ error: 'Dispute not found' });
 
       const d = dispute.rows[0];
-      if (d.status !== 'open') return res.status(400).json({ error: 'Dispute already resolved' });
-      if (d.raised_by_entity_id !== entity_id) {
-        return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it' });
+      /* T3-DISPUTES-ASSIST: the SAME verdict GET answers as actions.resolve (lib/dispute-may) — the status codes and words unchanged, `why` added */
+      const may = disputeMay.resolve(railActions.can({ held: true }, railActions.meOf(req), 'dispute'), { open: d.status === 'open', raisedByMe: d.raised_by_entity_id === entity_id });
+      if (!may.ok && may.why === 'already_resolved') return res.status(400).json({ error: 'Dispute already resolved', why: may.why });
+      if (!may.ok && may.why === 'not_raiser') {
+        return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it', why: may.why });
       }
+      if (!may.ok) return res.status(403).json({ error: 'Not permitted', message: may.say, why: may.why });
 
       /* ⭐ N02 / I2 — the body's target_entity_id becomes the notice list below, so it must be a PARTY on this dispute's roster.
          The definer only checks chit membership; an unchecked id would hand an outsider "Dispute resolved — <category>: <note>". */
@@ -4595,35 +4621,50 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
 // ─── GET /chits/disputes/queue ────────────────────────────────
 // All open disputes across all chits for this entity — used by DisputesPage sidebar
 // Safe: /disputes/queue has 2 segments; /:chit_id matches 1 segment only — no conflict
+/**
+ * ⭐ T3-DISPUTES-ASSIST — WIDENED, never copied: the same route answers the small app's paged list (CB Tasks & Orders › Disputes).
+ *   ?status=open|resolved|all (open)  ?side=mine|against  ?q=<words>  ?sort=old|new (old: the oldest open one is the one rotting)
+ *   ?page=&limit= (lib/page-limit; no page/limit = every row, as before)
+ * The answer keeps every key it had (disputes · my_disputes · other_disputes · total_open — the workshop and MIS read them) and adds
+ * rows · total · page · limit · counts { open, resolved } and, per row, others · mine · actions.resolve (finishDisputes above).
+ * Trips: ONE withEntity transaction (the page + the counts) + ONE roster read for the whole page (was one per row).
+ */
 router.get('/disputes/queue', auth, async (req, res) => {
   const entity_id = entityId(req);
+  const qs = req.query || {};
+  const status = ['open', 'resolved', 'all'].includes(qs.status) ? qs.status : 'open';
+  const side = ['mine', 'against'].includes(qs.side) ? qs.side : null;
+  const words = typeof qs.q === 'string' ? qs.q.trim().slice(0, 100) : '';
+  const like = words ? '%' + words.replace(/[\\%_]/g, (c) => '\\' + c) + '%' : null;
+  const paged = qs.page != null || qs.limit != null;
+  const limit = paged ? PAGE_LIMIT.limitOf(qs.limit, 50, 200) : null;
+  const page = paged ? PAGE_LIMIT.pageOf(qs.page) : 1;
+  const dir = qs.sort === 'new' ? 'DESC' : 'ASC';
 
   try {
-    // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me).
-    const result = await withEntity(entity_id, (db) => db.query(
-      `SELECT cd.*,
-              (SELECT ch.auto_subject FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS auto_subject,
-              (SELECT ch.purpose      FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS purpose,
-              (SELECT se.display_name FROM chit_header ch LEFT JOIN identities se ON se.identity_id=ch.sender_entity_id
-                WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS sender_display_name
-       FROM chit_disputes cd
-       WHERE cd.status = 'open'
-       ORDER BY cd.created_at ASC`,
-      [entity_id]
-    ));   // per-copy: RLS returns only MY OWN open dispute copies (I have one only if I'm a participant)
-
-    // evidence_snapshot is PII — expose presence only, never its contents
-    const rows = result.rows.map(({ evidence_snapshot, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null }));
-    // attach the per-party roster (live status per party) so the raiser can resolve each party independently
-    for (const d of rows) {
-      try {
-        const rr = await query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [d.dispute_id]);
-        const statusBy = {}; rr.rows.forEach(r => { statusBy[r.entity_id] = r.status; });
-        d.participants = (d.roster || []).map(p => ({ dispute_id: d.dispute_id, entity_id: p.entity_id,
-          display_name: p.display_name, role: p.role, dispute_status: statusBy[p.entity_id] || 'open' }));
-      } catch (_) { d.participants = d.roster || []; }
-      delete d.roster;
-    }
+    // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me). per-copy: RLS returns only MY OWN dispute copies.
+    const got = await withEntity(entity_id, async (db) => {
+      const r = await db.query(
+        `SELECT x.*, count(*) OVER() AS _total FROM (
+           SELECT cd.*,
+                  (SELECT ch.auto_subject FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS auto_subject,
+                  (SELECT ch.purpose      FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS purpose,
+                  (SELECT se.display_name FROM chit_header ch LEFT JOIN identities se ON se.identity_id=ch.sender_entity_id
+                    WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS sender_display_name
+             FROM chit_disputes cd
+            WHERE ($2::text = 'all' OR ($2::text = 'open' AND cd.status = 'open') OR ($2::text = 'resolved' AND cd.status <> 'open'))
+              AND ($3::text IS NULL OR ($3::text = 'mine' AND cd.raised_by_entity_id = $1) OR ($3::text = 'against' AND cd.raised_by_entity_id <> $1))
+         ) x
+         WHERE ($4::text IS NULL OR concat_ws(' ', x.auto_subject, x.purpose, x.category, x.reason, x.raised_by_display_name, x.resolution_note) ILIKE $4::text)
+         ORDER BY x.created_at ${dir}, x.dispute_id
+         LIMIT $5 OFFSET $6`,
+        [entity_id, status, side, like, limit, paged ? (page - 1) * limit : 0]);
+      const c = await db.query(`SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes`);
+      return { rows: r.rows, counts: c.rows[0] || { open: 0, resolved: 0 } };
+    });
+    const total = got.rows.length ? Number(got.rows[0]._total) : 0;
+    // evidence_snapshot is PII — expose presence only, never its contents; the roster as participants (live status per party) so the raiser can resolve each party
+    const rows = await finishDisputes(got.rows.map(({ _total, ...d }) => d), entity_id, railActions.meOf(req));
     // "other" now means disputes targeting me (untargeted ones no longer leak)
     const myDisputes    = rows.filter(d => d.raised_by_entity_id === entity_id);
     const otherDisputes = rows.filter(d => d.raised_by_entity_id !== entity_id);
@@ -4632,11 +4673,12 @@ router.get('/disputes/queue', auth, async (req, res) => {
       disputes:       rows,
       my_disputes:    myDisputes,
       other_disputes: otherDisputes,
-      total_open:     rows.length,
+      total_open:     got.counts.open,
+      rows, total, page, limit: limit || total, counts: { open: got.counts.open, resolved: got.counts.resolved },
     });
   } catch (err) {
     if (err.message.includes('chit_disputes')) {
-      return res.json({ disputes: [], my_disputes: [], other_disputes: [], total_open: 0 });
+      return res.json({ disputes: [], my_disputes: [], other_disputes: [], total_open: 0, rows: [], total: 0, page: 1, limit: 0, counts: { open: 0, resolved: 0 }, code: 'DISPUTES_NOT_SET_UP' });
     }
     res.status(500).json({ error: 'Get dispute queue failed', message: safeErr(err) });
   }
