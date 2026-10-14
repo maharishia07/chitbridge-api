@@ -3480,6 +3480,9 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
               /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
               `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
               [chit_id, entity_id]);
+        /* ⭐ FX-F10W2: REJECTING A BILL SAYS WHY (lib/workflow needsOf: reject → reason; the chit read answers actions.reject.needs). The
+           reason is the note — it goes on the chit's history. Refused before the write, said; a task keeps its own ask. */
+        if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(hdr.rows[0], entity_id) === 'bill_received') return { stop: 'reason', previous_status };
         // Update chit_status — the caller's OWN received copy.
         await db.query(
           `UPDATE chit_status SET current_status = $1, updated_at = NOW()
@@ -3499,6 +3502,9 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       if (_pre.stop === 'noop') {
         return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
       }
+      if (_pre.stop === 'reason') {
+        return { code: 400, body: { error: 'Reason required', code: 'reason_required', message: 'Say why you are rejecting this bill — the reason goes on the bill.', why: 'reason_required' } };
+      }
       if (_pre.stop === 'invalid') {
         return { code: 400, body: {
           error: 'Invalid transition',
@@ -3517,8 +3523,10 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
        * able to fail the status change; off it is one cached read. Idempotent on the chit (source_ref chit:<id>), so a
        * second door firing the same acceptance posts nothing twice.
        */
-      if (/^(accepted|in_progress|completed)$/.test(new_status)) {
-        try { const hooks = require('../lib/books-hooks'); setImmediate(() => hooks.afterChit(entity_id, chit_id, action_by_id)); } catch (_) {}
+      /* FX-F10W2: a rejection / cancellation reaches the books too — it never posts, and the bill's Waiting row closes as "Rejected — not posted" */
+      if (/^(accepted|in_progress|completed|rejected|cancelled)$/.test(new_status)) {
+        try { const hooks = require('../lib/books-hooks'); setImmediate(() => hooks.afterChit(entity_id, chit_id, action_by_id)); }
+        catch (e) { require('../lib/logger').warn('books.hook-not-reached', { entity_id, chit_id, status: new_status, error: String((e && e.message) || e), then: 'the nightly sweep posts or closes it' }); }
       }
 
       if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
