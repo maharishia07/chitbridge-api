@@ -1591,6 +1591,38 @@
       "status": 404,
       "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, then per due day one loopback send (its own request) + the move + two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
       "extra": true
+    },
+    "POST /api/chits/:chit_id/deliver-lines": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "SEC4, by hand: 0 new trips — the copy read (taxCopy.copyOf, 1 trip) moved BEFORE the bill-use write so the rail answers first; a viewer / commenter is refused with no read at all (level first), a stranger after that one read (404 not_participant). Then as before: the delivery transaction, the fan-out, progress. The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
+    },
+    "GET /api/catalogue/:bridge_id": {
+      "file": "catalogue.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "SEC4, by hand: 0 new trips — the sign-in-first cut reads storefront_access from the view buildPublicView already built (its identities read), and the token is verified in memory. Called by shop.html / embed.html (not app.html): placeholder ceiling."
+    },
+    "GET /api/catalogue/enquiry": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": false,
+      "extra": true,
+      "why": "SEC4, new, by hand: ONE withEntity statement (BEGIN · set_config · SELECT · COMMIT) — the page of threads and the total in one SELECT (CTEs + json_agg); no per-row read."
+    },
+    "POST /api/catalogue/enquiry/:item_id": {
+      "file": "catalogue.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "SEC4, by hand: 0 new trips — the supplier bell is lib/events.notifyAfter, in-process after the response; the gate and the b162 definer are unchanged."
     }
   }
 }
