@@ -571,3 +571,20 @@ the whole range, exactly as before (the web adopts the pages in PERF2). Who may:
 | `/chits/inbox`, `/chits/sent` → `total` | — | derived: the COUNT, on page 1 only; `null` on a later page (app.html pgNext keeps page 1's) | routes/chits.js | the Task / Order pager |
 | … `next` | — | derived: `<created_at UTC, µs>\|<chit_id>` of the page's last row — the next page's `?after=` (newest-first order only; another sort keeps `page` + OFFSET); null on a short page | routes/chits.js (`keysetOf` · `afterOf`) | app.html fetchPage |
 | … `limit` | — | the server's: ≤ 200 (`LIST_MAX`) — `?limit=1000000` was obeyed before PERF1 | routes/chits.js | the pager |
+
+## Segments & groups · GET /api/crm/segments · POST /api/crm/groups · DELETE /groups/:name · POST /api/crm/segments/:key/send (T3-P2-CRM, 2026-10-14)
+
+No migration: a segment is `lib/customer-groups` SEGMENT_SQL (read by `lib/crm.rows`, b273 for high value); a named group is `customer_list.groups[]` (b205) —
+the SAME values an offer's "Only for" stores (`'group:<name>'` · `'<segment>'`). Who may: anyone signed in reads; the owner or an editor writes a group and
+sends; the owner deletes. Every figure here is counted from the rows GET /parties answers (one reading); nothing is a second rule.
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `segments[] { key, name, rule, count, overrides, offers, reach }` | — | derived (`lib/crm-groups.overview`): the four segments in order new · regular · high_value · inactive; `rule` = the shop's own high-value numbers in words (`lib/crm.shopRule`); `count` = customers (never a lead) the list puts there; `overrides` = those the owner set by hand; `offers` = offers (live or draft) whose `rules.customer_group` names it — ONE grouped statement over `definition_version` | nobody | CB CRM › Groups & segments |
+| `groups[] { key: 'group:<name>', name, count, offers, reach }` | — | derived: every name any customer carries (`customer-groups.namesOf` + the rows) | nobody | the same screen; `key` is what a send and an offer's "Only for" use |
+| `reach { may, not, refused_by[] { code, n } }` | — | derived: `lib/privacy.mayAll`'s verdict per member for `channel` × `purpose` (whatsapp · marketing), counted BY CODE — the client branches on the code, never on a sentence; before b306 every member is `NO_CONSENT` | nobody | the screen's "n may be sent offers · m not (why)" |
+| `groups_migrated` · `consent_migrated` · `customers` · `channel` · `purpose` | — | derived: b205 readable · b306 readable · how many customers were counted · the channel and purpose the reach was counted for | nobody | the screen says "not set up yet" in words |
+| `may { group, send, delete } = { may, code, why }` | — | derived (`lib/crm-groups.mays`): the server's answer for this login — `VIEW_ONLY` · `OWNER_ONLY` · `OK` | nobody | every action shown, greyed with `why` |
+| POST /groups → `{ name, added, removed, count }` | — | the group after the write: `added` / `removed` = rows actually changed (an id that is nobody's customer changes nothing); `count` = members now | `lib/crm-groups.setGroup` (ONE transaction; ≤ 500 ids; ≤ 20 groups per customer → `TOO_MANY_GROUPS`; before b205 → 409 `GROUPS_NOT_MIGRATED`) | the screen's refresh |
+| DELETE /groups/:name → `{ name, removed }` | — | how many customers the group left; 404 `NOT_FOUND` when none carried it | `lib/crm-groups.dropGroup` | the screen |
+| POST /segments/:key/send → `{ key, dry, channel, purpose, members, may, refused[] { party_id, name, code, why }, refused_by[], sent[] { party_id, name, status, reason }, sent_n, failed_n, refused_n }` | — | derived: `dry` = the verdict per member, nothing sent; a real send = `lib/whatsapp-out.notify` per allowed member (the ONE sender, which asks `lib/privacy.gate` again) — `status` sent · refused · failed with the sender's own `reason`; only WhatsApp is sendable today (`CHANNEL_NOT_SENDABLE`); > 100 allowed members → 400 `TOO_MANY` before any send | `lib/crm-groups.send` | the Send sheet: the count first, then the outcome per member |
