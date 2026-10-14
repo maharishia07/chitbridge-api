@@ -654,6 +654,46 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/forms/instances/all": {
+      "file": "forms.js",
+      "trips": 2,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "TRADE-SRV1 G5 (2026-10-14), measured by tests/trade-srv1.test.cjs: ONE form_instance read inside one withEntity, ?context_ref= narrows it in SQL (b108 index form_instance_ctx); may/why is pure."
+    },
+    "GET /api/governance/lanes": {
+      "file": "governance.js",
+      "trips": 11,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable) — the client DOES call it (api('lanes'/'readinessOwn'), cap-readiness.js). TRADE-SRV1 (2026-10-14), measured by tests/trade-srv1.test.cjs: with origin and sector named by the screen, 5 statements (jurisdiction · vertical_category · standard_source · entity_compliance · ONE standard_document read for every lane — it was one per lane); with either unstated, + the stated values: country-setup.status (identities + entity_governance, one withEntity, cached a minute per shop) and the governance profile (entity_profile + vault + invoice party) = 11. may/why is pure (lib/access.mayWrite, 0 trips)."
+    },
+    "GET /api/governance/readiness": {
+      "file": "governance.js",
+      "trips": 11,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable) — the client DOES call it (api('lanes'/'readinessOwn'), cap-readiness.js). TRADE-SRV1 (2026-10-14): ?destination= takes resolveForDestination — the same reads as /lanes for one lane (5, + the stated origin/sector when unstated = 11); with no destination, resolveReadiness as before. may/why is pure (0 trips)."
+    },
+    "POST /api/governance/compliance": {
+      "file": "governance.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "placeholder CEILING (UNFIRED_CEILING) — not fired offline. TRADE-SRV1 (2026-10-14) adds the write gate (lib/access.writeGate): pure, 0 trips; a viewer/commenter is refused 403 before any read."
+    },
+    "POST /api/governance/verify": {
+      "file": "governance.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "placeholder CEILING — not fired offline. TRADE-SRV1 adds the write gate (pure, 0 trips)."
+    },
     "GET /api/governance/country-setup": {
       "file": "governance.js",
       "trips": 4,

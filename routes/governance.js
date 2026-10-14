@@ -9,6 +9,7 @@ const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
+const { writeGate } = require('../lib/access');   /* TRADE-SRV1 G8: a trade write is the owner's or an editor's — the server says why not */
 const { memo } = require('../lib/confcache');   // the active constitution is read once a minute, not once a call
 
 const { resolve, driftStatus } = require('../governance/resolver');
@@ -267,7 +268,9 @@ router.get('/readiness', auth, async (req, res) => {
     const out = req.query.destination
       ? await R.resolveForDestination(entity_id, String(req.query.destination), req.query.vertical, req.query.origin)
       : await R.resolveReadiness(entity_id);
-    res.json(out);
+    /* G8: what this login may do here — the server answers, the screen greys a refused button WITH the sentence */
+    const m = require('../lib/access').mayWrite(req);
+    res.json({ ...out, may: { gather: m, verify: m } });
   } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
 });
 
@@ -275,7 +278,8 @@ router.get('/readiness', auth, async (req, res) => {
 router.get('/lanes', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin));
+    const m = require('../lib/access').mayWrite(req);   /* G8 */
+    res.json({ ...(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin)), may: { gather: m, verify: m } });
   } catch (err) { res.status(500).json({ error: 'Lanes failed', message: safeErr(err) }); }
 });
 
@@ -453,7 +457,7 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
 });
 
 // POST /api/governance/compliance — GATHER a clearance for the acting entity (the supplier records a document).
-router.post('/compliance', auth, async (req, res) => {
+router.post('/compliance', auth, writeGate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -468,7 +472,7 @@ router.post('/compliance', auth, async (req, res) => {
 // POST /api/governance/verify — MACHINE-VERIFY a registry ID (IEC/GSTN/PAN) → the "verified" rung. Un-fakeable once the
 // Registry verify: confirms the ID against a KYB provider when one is connected (→ VERIFIED); otherwise records it as a
 // format-checked claim (→ NOT verified, honest). A malformed ID or a registry "not-active" is refused with 422.
-router.post('/verify', auth, async (req, res) => {
+router.post('/verify', auth, writeGate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -498,7 +502,7 @@ module.exports.loadActiveConstitution = loadActiveConstitution;
  */
 
 /** POST /api/governance/supplier-acceptance — record that this entity accepted a supplier's readiness. */
-router.post('/supplier-acceptance', auth, async (req, res) => {
+router.post('/supplier-acceptance', auth, writeGate, async (req, res) => {
   try {
     if (!(await require('../lib/schema').hasTable('supplier_readiness_acceptance'))) {
       return res.status(503).json({ error: 'Not enabled', code: 'SRA_NOT_MIGRATED',

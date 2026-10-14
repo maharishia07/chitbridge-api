@@ -91,6 +91,20 @@ CB Settings › Counters & keys / Policy greys an action with the server's answe
 | `may[flag]` (GET /api/entities/policy, new) | `{ [flag]: { ok, code: null\|'OWNER_ONLY'\|'PLATFORM_BOUND', why } }` — one per `lib/policy` FLAGS key + each BOUND key | Derived per read by `policyMay` (routes/entities.js) from lib/policy `FLAGS[k].may · may_why` (the place the PATCH refuses from, 403 `code:'OWNER_ONLY'`) and `policy.BOUND`. Read by web cap-settings.js (Policy · the connectors-in-use switch). |
 | `lines` · `figures` (GET /api/facts/counters, new card) | `{ lines:[{ text, value }], figures:{ counters, counters_open, keys } }` | Derived by `lib/home-facts.counters` from the till card's REGISTER_SQL (one trip) and its open rule. `keys` counts open non-till keys. Read by web shell.js (the manifest row `counters`). |
 
+## GET /api/governance/lanes · /readiness · /api/forms · /forms/instances/all · chit lists `?abroad=1` (TRADE-SRV1, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `origin` · `vertical` (lanes, readiness?destination; changed) | ISO-2 \| null · sector \| null | Derived per read by `readiness.laneOf`: the query's value, else the shop's STATED country (`country-setup.status` — confirmed by Country setup; the column's 'IN' default is not a statement) and the governance profile's first sector (`entity_profile.sectors`). Never 'IN' / 'paint' by default. Read by web cap-readiness.js (next round: stop sending paint/IN). |
+| `asked` · `code` · `why` (lanes, readiness?destination, profile readiness/path) | `['origin'\|'sector'\|'markets']` · `ORIGIN_UNSTATED` \| `SECTOR_UNSTATED` \| null · sentence | Derived (`readiness.asks`). A screen branches on `code`, never the sentence. No origin → `lanes: []` / no clearances. |
+| `lanes[].domestic` · `domestic` (readiness?destination) | bool | Derived: the lane whose `dest_key` is the origin. Replaces the `jurisdiction.domestic` flag (it said India for every shop). |
+| `may` (lanes, readiness) | `{ gather, verify }` each `{ may, code, why }` | Derived per request by `lib/access.mayWrite` (owner or editor; else `read_only` / `comment_only` + the rail's sentence). The same answer refuses POST /compliance · /verify · /supplier-acceptance with 403. |
+| `may` (GET /api/forms, /forms/instances/all) | `{ issue, sign, attach }` each `{ may, code, why }` | As above; refuses POST issue · sign · attach. |
+| `instances[].context_ref` · `context_ref` (forms/instances/all) | chit_id \| null | Stored: `form_instance.context_ref` (b108), written by issueForm. `?context_ref=` narrows to one deal's papers (400 `FORMS_BAD_CONTEXT` if not a chit id). |
+| `fields[].note` · `fields[].code` (forms resolve, field `fx_rate` only) | sentence · `FX_RATE_OF_DAY` \| `FX_RATE_MISSING` | Derived by `forms.shopOf` from FX1 `fx-rates.rateOn` (the owner's rate for the invoice's day, deal currency → books' currency); missing = fx-rates' own sentence. Frozen into `form_instance.fields` when issued. |
+| form `packing-list` (registry, new) | 12 fields | `lib/forms.js` registry (config, FORMS_REGISTRY overrides). Read by GET /api/forms. |
+| chit lists `?abroad=1` (inbox · sent · folder; query, not a key) | filter | `country-setup.abroadSql`: the copy's `summary_json.currency_code` ≠ the shop's, or a party in `all_recipients` with `identities.country` ≠ the shop's. Unknown is never foreign. |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
