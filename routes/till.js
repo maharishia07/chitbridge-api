@@ -38,6 +38,7 @@ const booksHooks = require('../lib/books-hooks');
 const booksYmd = require('../lib/books-engines').ymd;
 const variantEngine = require('../lib/variant.browser.js');   /* the same shape-guard the Modifiers tab authors through */
 const keys = require('./keys');
+const { isScreenKey } = require('../lib/holder');   /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
 const { shopChanged } = require('../lib/shopchanged');
 const rateLimit = require('express-rate-limit');
 /**
@@ -94,6 +95,37 @@ async function holdsStockOf(entity_id) {
     return !!(r.rows[0] && r.rows[0].held);
   } catch (_) { return null; }
 }
+/**
+ * ⭐⭐⭐ screenView(body) — WHAT A SHOP SCREEN IS SENT (SNAP-SCREEN, 2026-10-14; counter reconciliation 14 Oct, case CFD-03).
+ *
+ * A TV hangs where the queue stands, often on a stick nobody locks. It was sent the counter's whole snapshot — every customer
+ * with phone and balance, every supplier, the staff, the reward programme, the policy, supplier aliases on each product.
+ * ⚠️ AN ALLOW-LIST, NOT A DENY-LIST: a field added to the snapshot tomorrow does NOT reach a screen until it is named here.
+ * What is named is exactly what promo.html paints: the shop's name, phone, address, money and words; each product's name,
+ * code, unit, price, MRP, category, picture and "show on screen" pick; the live offers. The bill itself never comes from
+ * here — the counter hands it to the screen on the same machine.
+ * ⚠️ ONLY WHAT IS ON THE SHELF. `avail` is a stock QUANTITY and does not travel; instead a screen is sent only items whose
+ * status is 'available' (lib/itemstatus) — a screen never sells, so an unavailable product has nothing to say on it. On a
+ * delta, an item that stopped being available travels as a removal, so it leaves the wall.
+ */
+const SCREEN_SHOP = ['name', 'address', 'phone', 'currency', 'country', 'tax_id_word', 'money_why'];
+const SCREEN_ITEM = ['item_id', 'name', 'code', 'unit', 'price', 'mrp', 'category', 'image', 'screen', 'status'];
+const pickKeys = (o, ks) => { const out = {}; ks.forEach((k) => { if (o && o[k] !== undefined) out[k] = o[k]; }); return out; };
+function screenView(body) {
+  const all = Array.isArray(body.items) ? body.items : [];
+  const shown = all.filter((i) => i && i.status === 'available');
+  const gone = body.delta ? all.filter((i) => i && i.status !== 'available').map((i) => i.item_id) : [];
+  return {
+    at: body.at, more: body.more, entity_id: body.entity_id,
+    shop: pickKeys(body.shop || {}, SCREEN_SHOP),
+    items: shown.map((i) => pickKeys(i, SCREEN_ITEM)),
+    removed: (Array.isArray(body.removed) ? body.removed : []).concat(gone),
+    delta: body.delta, since: body.since,
+    offers: Array.isArray(body.offers) ? body.offers : [],
+  };
+}
+router.screenView = screenView;   /* tests/screen-snapshot.test.cjs asserts the allow-list directly too */
+
 router.get('/snapshot', auth, async (req, res) => {
   try {
     /**
@@ -108,6 +140,8 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     const readAt = new Date().toISOString();
     const entity_id = auth.entityOf(req);
+    /* ⭐ SNAP-SCREEN: is a TV asking? Decided here, once, from the key — the answer is shaped by screenView at the end */
+    const screen = isScreenKey(req.till && req.till.key);
     /* the moment the till last read the shop — anything touched after it is what it does not have */
     const sinceRaw = typeof req.query.since === 'string' ? req.query.since.trim() : '';
     const since = (sinceRaw && !Number.isNaN(Date.parse(sinceRaw))) ? new Date(sinceRaw).toISOString() : null;
@@ -147,7 +181,8 @@ router.get('/snapshot', auth, async (req, res) => {
     let till = null;
     try {
       /* ⭐ M11: a counter PC (key) and a person's phone (dev) claim through ONE allocator — keys.claimSeries */
-      const holds = req.till && ((req.till.key && req.till.key.jti) || req.till.device_id);
+      /* ⚠️ SNAP-SCREEN: a screen never bills, so it never claims a bill series — it used to lock the shop row and stamp a prefix on itself */
+      const holds = !screen && req.till && ((req.till.key && req.till.key.jti) || req.till.device_id);
       if (holds) {
         const c = await keys.claimSeries(entity_id, req.till, {
           id: req.query.till, issued: req.query.issued === '1' || req.query.issued === 'true',
@@ -848,7 +883,7 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     if (snapshotBooksOn) body.books = true;
     body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
-    res.json(body);
+    res.json(screen ? screenView(body) : body);
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
@@ -1811,7 +1846,6 @@ router.post('/pair/claim', async (req, res) => {
  * nor revocable here, so a counter can never see or switch off another counter or a connector.
  * ⚠️ The key itself is never returned — only its name, dates and last four characters, as the keys screen shows.
  */
-const isScreenKey = (k) => k && Array.isArray(k.scopes) && k.scopes.length === 1 && k.scopes[0] === 'screen';
 router.get('/screens', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
