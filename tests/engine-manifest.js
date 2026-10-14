@@ -413,6 +413,7 @@ const ENGINE_OTHER = [
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
   'country-setup.js',
   'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
+  'fx-rates.js',              /* FX1: the shop's exchange rates (b391) and the foreign event's rate / settlement / revaluation — every figure is CBPosting's (fx_settlement · fx_revalue · fxRevaluation) */
   'parallel-run.js',          /* PR1: their Tally / Xero period beside ours — reads their files, compares PURELY over the engines' answers; writes nothing to the books */
   /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
      books-hooks (which event) and stock-from-chit (whether it is stock). CB's own decision. (2026-10-01) */

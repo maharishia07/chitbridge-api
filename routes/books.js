@@ -52,6 +52,8 @@ function fail(res, e) {
   if (e && e.code === 'YEAR_CLOSED') return res.status(409).json({ code: 'YEAR_CLOSED', error: e.message, message: e.message });
   if (e && e.code === 'SUSPENSE_NOT_NIL') return res.status(409).json({ code: 'SUSPENSE_NOT_NIL', error: e.message, message: e.message });
   if (e && e.code === 'BOOKS_NOT_FOUND') return res.status(404).json({ error: 'Not found', message: e.message });
+  /* FX1: a foreign entry whose day has no rate — 422 WITH the code, so a screen offers "Add rate" beside the sentence */
+  if (e && e.code === 'FX_RATE_MISSING') return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   /* ⭐ CS1: the country gate — a pack-less country, no country, or the setup still to do: 422 WITH its code and sentence (never the quiet 404) */
   if (e && (e.code === 'NO_COUNTRY_PACK' || e.code === 'NO_COUNTRY' || e.code === 'COUNTRY_SETUP_PENDING')) return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   /* BAS1: an Indian shop asking GET /returns — its GSTR is read from the rail, not the ledgers: 422 WITH the code, so the GST screen paints the GSTR close instead */
@@ -453,6 +455,16 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
         else { x.balance_minor += r.balance_minor; x.disputed_minor += r.disputed_minor; x.side = 'both'; x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
                Object.keys(r.buckets).forEach((k) => { x.buckets[k] = (x.buckets[k] || 0) + r.buckets[k]; });
                if (fin) { x.interest_minor = (x.interest_minor || 0) + (r.interest_minor || 0); Object.assign(x, E.limitView(p, x)); } }
+      }
+      /* FX1: a party with a foreign-currency balance shows it beside the books' figure — "USD 1,000 · ₹83,250" (b392; one grouped read; absent before b392 and for a party with none) */
+      if (await S.fxLinesReady()) {
+        const ids = sides.map((role) => (chart.find((x) => x.role === role) || {}).account_id).filter(Boolean);
+        const fx = ids.length ? await S.foreignBalances(h, e, { asOf, functional: curOf(req), account_ids: ids }) : [];
+        for (const f of fx) {
+          const r = rows.get(f.party_id); if (!r) continue;
+          const have = (r.foreign = r.foreign || []).find((x) => x.currency === f.txn_currency);
+          if (have) { have.balance_minor += f.txn_minor; have.carried_minor += f.fn_minor; } else r.foreign.push({ currency: f.txn_currency, balance_minor: f.txn_minor, carried_minor: f.fn_minor });
+        }
       }
       if (pay) {
         const P = require('../lib/books-payables'), more = await P.read(h, e);
@@ -1235,6 +1247,61 @@ route('post', '/accruals', (req, e, s, b, by) => P().accrue(e, s, b, by));
 route('post', '/accruals/:ref/reverse', (req, e, s, b, by) => P().reverseAccrual(e, s, String(req.params.ref).slice(0, 60), b, by));
 /** POST /contra { from, to, amount, date, client_ref } — cash ↔ bank ↔ UPI */
 route('post', '/contra', (req, e, s, b, by) => P().contra(e, s, b, by));
+
+/* ── FX1 · EXCHANGE RATES AND FOREIGN BALANCES (lib/fx-rates; b391 fx_rate, b392 journal_line txn_currency). A rate is evidence the OWNER types or imports —
+   never fetched, never assumed. Everyone who may read the books may read the rates (an auditor checks them); only the owner adds one or revalues. ── */
+const FXR = require('../lib/fx-rates');
+const FX_NOT_READY = 'Exchange rates need a database update (b391) that is still to run.';
+const FX_OWNER_ONLY = 'Only the owner may add a rate.';
+function fxMay(req, ready) {
+  if (!ready) return { may: false, why: FX_NOT_READY };
+  return isOwner(req) ? { may: true, why: null } : { may: false, why: FX_OWNER_ONLY };
+}
+/** GET /fx-rates?from=USD → { currency, ready, why, may: { add }, sources, rule: { standard, tax_rate_rule, official_name }, rates: [{ rate_id, date, from, to, rate, source, source_ref, created_at }] } — one transaction */
+router.get('/fx-rates', auth, noKey, on, async (req, res) => {
+  try {
+    const e = ctx(req), ready = await FXR.ready(), fx = B.packOf(req.books).fx || {};
+    const rates = ready ? await withEntity(e, (h) => FXR.list(h, e, { from: req.query.from })) : [];
+    res.json({ currency: curOf(req), ready, why: ready ? null : FX_NOT_READY, may: { add: fxMay(req, ready) }, sources: FXR.SOURCES,
+      rule: { standard: fx.standard || null, tax_rate_rule: fx.tax_rate_rule || null, official_name: fx.official_name || null }, rates });
+  } catch (err) { fail(res, err); }
+});
+/** POST /fx-rates { date, currency, rate, source?, source_ref? } → { rate } — owner; insert-only (a correction is a newer row for the same day). One transaction. */
+router.post('/fx-rates', auth, noKey, on, owner, async (req, res) => {
+  try {
+    const e = ctx(req);
+    res.status(201).json({ rate: await withEntity(e, (h) => FXR.add(h, e, req.books, req.body || {}, byOf(req))) });
+  } catch (err) { fail(res, err); }
+});
+/** POST /fx-rates/import { csv, file_name? } → { added, refused: [{ line, why }], rates } — owner; the good rows in ONE insert, source 'import'. One transaction. */
+router.post('/fx-rates/import', auth, noKey, on, owner, async (req, res) => {
+  try {
+    const e = ctx(req), b = req.body || {};
+    res.json(await withEntity(e, (h) => FXR.importCsv(h, e, req.books, b.csv, b.file_name ? String(b.file_name).slice(0, 120) : null, byOf(req))));
+  } catch (err) { fail(res, err); }
+});
+const fxPeriod = (q) => {
+  const fy = String(q.fiscal_year || ''), p = Number(q.period);
+  if (!/^\d{4}(-\d{2})?$/.test(fy) || !Number.isInteger(p) || p < 1 || p > 12) throw Object.assign(new Error('Which month? A financial year and a month 1 to 12.'), { code: 'BOOKS_BAD_REQUEST' });
+  return { fy, p };
+};
+/** GET /fx-revalue?fiscal_year&period → { ready, why, may: { post }, date, reverses_on, functional, rows, missing, gain_minor, posted } — Month lock's foreign-balances line. Owner (it shows what parties owe). One transaction. */
+router.get('/fx-revalue', auth, noKey, on, owner, async (req, res) => {
+  try {
+    const e = ctx(req), { fy, p } = fxPeriod(req.query || {});
+    const v = await withEntity(e, (h) => FXR.revaluation(h, e, req.books, fy, p));
+    const why = !v.ready ? 'Foreign balances need database updates (b391, b392) that are still to run.' : v.posted ? 'Revalued — ' + v.posted.entry_no + '.' : v.missing[0] || (v.event ? null : 'Nothing to revalue.');
+    res.json({ ready: v.ready, why, may: { post: { may: !!(v.ready && !v.posted && !v.missing.length && v.event), why } }, date: v.date, reverses_on: v.reverses_on, functional: v.functional,
+      rows: v.rows, missing: v.missing, gain_minor: v.gain_minor, posted: v.posted });
+  } catch (err) { fail(res, err); }
+});
+/** POST /fx-revalue { fiscal_year, period } → { ok, entry_no, reversal_no, gain_minor, date, reverses_on } — owner; the revaluation and its reversal in ONE transaction; idempotent */
+router.post('/fx-revalue', auth, noKey, on, owner, async (req, res) => {
+  try {
+    const e = ctx(req), { fy, p } = fxPeriod(req.body || {});
+    res.json(await withEntity(e, (h) => FXR.revalue(h, e, req.books, fy, p, byOf(req))));
+  } catch (err) { fail(res, err); }
+});
 
 module.exports = router;
 module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };

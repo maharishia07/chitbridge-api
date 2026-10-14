@@ -262,6 +262,19 @@ async function captureBooks() {
     }
     OWNER.identity_id = SHOP; DAY = '2027-04-10';
     await q('GET', '/returns', null, '/returns');                                   /* India: 422 RETURN_FROM_RAIL */
+
+    /* ── FX1: the rates (one typed, a CSV imported), a USD sale to the customer at its day's rate, /dues with its foreign figure, the revaluation at April's end ── */
+    await q('GET', '/fx-rates', null, '/fx-rates');
+    await q('POST', '/fx-rates', { date: '2027-04-05', currency: 'USD', rate: '83.25' }, '/fx-rates');
+    await q('POST', '/fx-rates/import', { csv: 'date,currency,rate,source\n2027-04-30,USD,84.00,official\n2027-04-30,EUR,x\n', file_name: 'rates.csv' }, '/fx-rates/import');
+    await q('GET', '/fx-rates', null, '/fx-rates');
+    await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2027-04-05', currency: 'USD', party: CUST, by_rate: [{ rate: 0, taxable: 1000 }], source_ref: 'chit:fx1', ref: 'EX-1' });
+    await q('GET', '/dues', null, '/dues');
+    await q('GET', '/fx-revalue?fiscal_year=2027-28&period=1', null, '/fx-revalue');
+    DAY = '2027-05-02';
+    await q('POST', '/fx-revalue', { fiscal_year: '2027-28', period: 1 }, '/fx-revalue');
+    await q('GET', '/fx-revalue?fiscal_year=2027-28&period=1', null, '/fx-revalue');
+    DAY = '2027-04-10';
   } finally { srv.close(); }
   return got;
 }

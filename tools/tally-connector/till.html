@@ -11694,9 +11694,10 @@ function scanned(){
   }
   if (w) {
     SCAN_AT = Date.now();
-    addWeighed(w);
-    clearSearch();
-    price(); focusSearch();
+    /* ⚠️ K2b: addWeighed() is async (it awaits ageAllow) — price() here ran BEFORE the line landed, so the line sat in CART while
+       the screen said "Nothing on this bill yet", total zero, until something else repainted. Price once it is on the bill. */
+    addWeighed(w).then(function(){ price(); });
+    clearSearch(); focusSearch();
     return true;
   }
   var exact = items.filter(function(i){ return String(i.barcode||'').toLowerCase() === q || String(i.code||'').toLowerCase() === q; });
@@ -27449,7 +27450,9 @@ lockLoad();
 /* ⚠ changedLoad() is NOT called here — it is shop-scoped and the key is not known yet. load() does it. */
 /* #cblink is painted with the menu now (paintMenu sets its own href), so there is nothing to set at boot —
    this threw on every load and the try/catch hid it. Kept as a note rather than a silent dead line. */
-load();
+/* ⭐ K2b: THE BOOT, NAMED — a harness that seeds the counter awaits TILL_BOOT first, because a boot load() landing after the
+   seed re-reads the key (pickHost) and replaces S (e2e/till-scale.cjs, TEST-LOG W2-1). Nothing in the page reads it. */
+var TILL_BOOT = load();
 gripInit();
 cartGripInit();
 /* ⚠️ the bill's columns depend on the width (cartCols), so the bill is repainted when the width changes —
