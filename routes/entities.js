@@ -879,7 +879,9 @@ router.patch('/profile', auth,
   validate,
   async (req, res) => {
     try {
-      const id = req.identity.identity_id;
+      /* ⚠️ THE SHOP'S ROW, never the caller's (T3-FIXES, CAT-FIX1): a co-assist's name/address/GSTIN save landed on its own actor
+         row, where nothing reads it, and the screen said saved. entityOf = parent for a co-assist, itself for the owner. */
+      const id = auth.entityOf(req);
       /**
        * ⚠️⚠️ SET ONCE. Athi, 2026-08-19: *"the registered user id cannot be changed. Are you able to change your
        * Gmail id? The same way here."*

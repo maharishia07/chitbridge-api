@@ -1497,6 +1497,9 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
     if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
     if (!Number.isFinite(price) || price < 0)
       return res.status(400).json({ error: 'validation', message: 'price must be a number, zero or more' });
+    /* [OFFR-04] a price typed at the counter is the same write as PATCH /products — the same gate (lib/cost.writeRefusal) */
+    const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['price']);
+    if (refused) return res.status(403).json(refused);
     const currency = await regional.currencyFor(entity_id).catch(() => 'INR');
     /**
      * ⚠️ A PRICE IS MONEY, NOT A NUMBER — the catalogue stores { amount, currency }, and reading only the bare figure once gave a

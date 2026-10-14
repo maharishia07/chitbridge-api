@@ -1591,6 +1591,54 @@
       "status": 404,
       "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, then per due day one loopback send (its own request) + the move + two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
       "extra": true
+    },
+    "POST /api/till/price": {
+      "file": "till.js",
+      "trips": 10,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: owner/till key 0 new trips (writeRefusal returns before any read); a co-assist +1 withEntity (BEGIN · set_config · can_see_costs · COMMIT) before the one price transaction. Placeholder ceiling: not fired by the scanner."
+    },
+    "POST /api/products/:id/schedule": {
+      "file": "products.js",
+      "trips": 20,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: owner 0 new trips; a co-assist +1 withEntity (the can_see_costs read) — a cost-blind one is refused BEFORE ensureDeclared and the item read. Placeholder ceiling."
+    },
+    "POST /api/combo-templates/:id/push": {
+      "file": "combo-templates.js",
+      "trips": 24,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: owner 0 new trips; a co-assist +1 withEntity (can_see_costs), refused before the template read when cost-blind. Placeholder ceiling."
+    },
+    "PATCH /api/entities/profile": {
+      "file": "entities.js",
+      "trips": 12,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: 0 new trips — the same statements, now keyed on auth.entityOf(req) (the shop) instead of the caller. Placeholder ceiling."
+    },
+    "POST /api/products/import/preflight": {
+      "file": "products.js",
+      "trips": 8,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: 0 new trips — the workbook-cut notice reads xlsx-read's own flag; the GTIN check is pure (gs1). Placeholder ceiling."
+    },
+    "POST /api/products/import": {
+      "file": "products.js",
+      "trips": 40,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: 0 new trips — a cut workbook is refused (413 WORKBOOK_CUT) before any read. Placeholder ceiling."
     }
   }
 }

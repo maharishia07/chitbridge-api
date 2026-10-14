@@ -160,6 +160,14 @@ async function productsCases() {
   const grantedPrice = await call(port, 'PATCH', '/api/products/i1', { item_data: { price: 80 } });
   t('once granted (on their OWN row), staff can change price like the owner can', grantedPrice.status, 200);
 
+  /* T3-FIXES (CAT-FIX1): a parked change is the same write, so the same gate — refused before anything is read */
+  WHO = STAFF_BLIND; CAN_SEE_COSTS = {};
+  const blindSched = await call(port, 'POST', '/api/products/i1/schedule', { effective_at: '2030-01-01T00:00:00Z', item_data: { price: 80 } });
+  t('cost-blind staff cannot SCHEDULE a price either — 403', blindSched.status, 403);
+  t('…and the refusal carries its code, not only a sentence', blindSched.body.code, 'COST_BLIND');
+  /* ⚠️ left as the case above left it: lib/cost holds THIS stub's withEntity (cached), so the next block reads these grants */
+  CAN_SEE_COSTS = { a2: true };
+
   srv.close();
 }
 

@@ -549,12 +549,24 @@ async function verify(req, res) {
           /* …and THIS installation first when it serves the vertical — platform-0 also serves 'base', and created_at alone picked it on every spin */
           try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY (installation_key = $2) DESC, created_at LIMIT 1`, [c.constitution_key, installKey]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; }
           catch (e) { require('../lib/logger').warn('signin.verify: installation lookup failed — the shop is stamped on this installation', { installKey, why: String(e && e.message) }); }
-          await withEntity(identity.identity_id, (cl) => cl.query(
+          /**
+           * ⚠️⚠️ A SIGN-IN NEVER RE-STAMPS A SHOP'S CONSTITUTION (T3-FIXES, SIGNIN-CONST). This runs on EVERY owner verify, and a
+           * plain sign-in names no constitution — so `chosen` fell to 'base' and a pharma shop was re-stamped base each morning.
+           * The stamp moves only when THIS request named the constitution it got ($5); otherwise an existing row is refreshed
+           * (version, installation) only while it is already on the same constitution — a different key is kept as chosen.
+           */
+          const named = !!(req.body.constitution && String(req.body.constitution).trim() === c.constitution_key);
+          const st = await withEntity(identity.identity_id, (cl) => cl.query(
             `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
-             ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()`,
-            [identity.identity_id, c.constitution_key, c.version, installKey]));
-          mintedConstitution = require('../lib/versionref').format(c.constitution_key, c.version);
-          console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
+             ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()
+             WHERE $5::boolean OR entity_governance.constitution_key = EXCLUDED.constitution_key`,
+            [identity.identity_id, c.constitution_key, c.version, installKey, named]));
+          if (st && st.rowCount === 0) {
+            require('../lib/logger').info('signin.verify: the shop keeps its own constitution — a sign-in does not re-stamp it', { entity: identity.identity_id, offered: c.constitution_key });
+          } else {
+            mintedConstitution = require('../lib/versionref').format(c.constitution_key, c.version);
+            console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
+          }
         }
       } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }
 
