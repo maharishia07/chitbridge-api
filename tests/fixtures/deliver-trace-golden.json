@@ -1,0 +1,1113 @@
+{
+ "deliver · an order line, the notification fans out": {
+  "status": 200,
+  "body": {
+   "delivered": [
+    {
+     "line_id": "L1",
+     "quantity": 2
+    }
+   ],
+   "progress": {
+    "L1": {
+     "ordered": 2,
+     "delivered": 2,
+     "complete": true
+    }
+   },
+   "summary": {
+    "lines": 1,
+    "complete": 1,
+    "started": 1,
+    "none": 0,
+    "partial": 0,
+    "accruing": 0,
+    "charged": 0,
+    "divergent": 0,
+    "unit_mismatch": 0,
+    "unacknowledged": 0
+   }
+  },
+  "calls": [
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
+    "via": "deliverline.record",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A",
+     "rows": [
+      {
+       "line_id": "L1",
+       "quantity": 2
+      }
+     ],
+     "o": {
+      "actor_id": "SHOP",
+      "actor_name": "Mayur Traders",
+      "private": false
+     }
+    }
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n",
+    "params": [
+     "A",
+     "delivered_line",
+     "SHOP",
+     "Mayur Traders",
+     "1 line(s) delivered: 2"
+    ]
+   },
+   {
+    "via": "deliverline.progress",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A"
+    }
+   },
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   }
+  ]
+ },
+ "deliver · pre-b158, the single-copy row instead": {
+  "status": 200,
+  "body": {
+   "delivered": [
+    {
+     "line_id": "L1",
+     "quantity": 2
+    }
+   ],
+   "progress": {
+    "L1": {
+     "ordered": 2,
+     "delivered": 2,
+     "complete": true
+    }
+   },
+   "summary": {
+    "lines": 1,
+    "complete": 1,
+    "started": 1,
+    "none": 0,
+    "partial": 0,
+    "accruing": 0,
+    "charged": 0,
+    "divergent": 0,
+    "unit_mismatch": 0,
+    "unacknowledged": 0
+   }
+  },
+  "calls": [
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
+    "via": "deliverline.record",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A",
+     "rows": [
+      {
+       "line_id": "L1",
+       "quantity": 2
+      }
+     ],
+     "o": {
+      "actor_id": "SHOP",
+      "actor_name": "Mayur Traders",
+      "private": false
+     }
+    }
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n",
+    "params": [
+     "A",
+     "delivered_line",
+     "SHOP",
+     "Mayur Traders",
+     "1 line(s) delivered: 2"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail) VALUES ($1,$2,'delivered_line',$3,$4,$5)",
+    "params": [
+     "A",
+     "SHOP",
+     "SHOP",
+     "Mayur Traders",
+     "1 line(s) delivered: 2"
+    ]
+   },
+   {
+    "via": "deliverline.progress",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A"
+    }
+   },
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   }
+  ]
+ },
+ "deliver · a bill I received, in full → private step + accept": {
+  "status": 200,
+  "body": {
+   "delivered": [
+    {
+     "line_id": "L1",
+     "quantity": 2
+    }
+   ],
+   "step": {
+    "written": true
+   },
+   "progress": {
+    "L1": {
+     "ordered": 2,
+     "delivered": 2,
+     "complete": true
+    }
+   },
+   "summary": {
+    "lines": 1,
+    "complete": 1,
+    "started": 1,
+    "none": 0,
+    "partial": 0,
+    "accruing": 0,
+    "charged": 0,
+    "divergent": 0,
+    "unit_mismatch": 0,
+    "unacknowledged": 0
+   },
+   "use": "resale"
+  },
+  "calls": [
+   {
+    "via": "billUse.set",
+    "payload": [
+     "SHOP",
+     "A",
+     {
+      "use": "resale"
+     },
+     {
+      "name": "Mayur Traders"
+     }
+    ]
+   },
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
+    "via": "deliverline.record",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A",
+     "rows": [
+      {
+       "line_id": "L1",
+       "quantity": 2
+      }
+     ],
+     "o": {
+      "actor_id": "SHOP",
+      "actor_name": "Mayur Traders",
+      "private": true
+     }
+    }
+   },
+   {
+    "via": "billPrivacy.writeStep",
+    "payload": [
+     "SHOP",
+     "A",
+     {
+      "code": "B-2100",
+      "step": "goods_checked",
+      "label": "Goods checked",
+      "lines": 1
+     },
+     {
+      "id": "SHOP",
+      "name": "Mayur Traders"
+     }
+    ]
+   },
+   {
+    "via": "deliverline.progress",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A"
+    }
+   },
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received'",
+    "params": [
+     "A",
+     "SHOP"
+    ]
+   }
+  ]
+ },
+ "deliver · a bill, partly in → no accept": {
+  "status": 200,
+  "body": {
+   "delivered": [
+    {
+     "line_id": "L1",
+     "quantity": 2
+    }
+   ],
+   "step": {
+    "written": true
+   },
+   "progress": {
+    "L1": {
+     "ordered": 2,
+     "delivered": 1,
+     "complete": false
+    },
+    "L2": {
+     "ordered": 1,
+     "delivered": 1,
+     "complete": true
+    }
+   },
+   "summary": {
+    "lines": 2,
+    "complete": 1,
+    "started": 2,
+    "none": 0,
+    "partial": 1,
+    "accruing": 0,
+    "charged": 0,
+    "divergent": 0,
+    "unit_mismatch": 0,
+    "unacknowledged": 0
+   }
+  },
+  "calls": [
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
+    "via": "deliverline.record",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A",
+     "rows": [
+      {
+       "line_id": "L1",
+       "quantity": 2
+      }
+     ],
+     "o": {
+      "actor_id": "SHOP",
+      "actor_name": "Mayur Traders",
+      "private": true
+     }
+    }
+   },
+   {
+    "via": "billPrivacy.writeStep",
+    "payload": [
+     "SHOP",
+     "A",
+     {
+      "code": "B-2100",
+      "step": "goods_checked",
+      "label": "Goods checked",
+      "lines": 1
+     },
+     {
+      "id": "SHOP",
+      "name": "Mayur Traders"
+     }
+    ]
+   },
+   {
+    "via": "deliverline.progress",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A"
+    }
+   }
+  ]
+ },
+ "deliver · the use refused, the delivery still records": {
+  "status": 200,
+  "body": {
+   "delivered": [
+    {
+     "line_id": "L1",
+     "quantity": 2
+    }
+   ],
+   "progress": {
+    "L1": {
+     "ordered": 2,
+     "delivered": 2,
+     "complete": true
+    }
+   },
+   "summary": {
+    "lines": 1,
+    "complete": 1,
+    "started": 1,
+    "none": 0,
+    "partial": 0,
+    "accruing": 0,
+    "charged": 0,
+    "divergent": 0,
+    "unit_mismatch": 0,
+    "unacknowledged": 0
+   },
+   "use": {
+    "refused": "already accepted"
+   }
+  },
+  "calls": [
+   {
+    "via": "billUse.set",
+    "payload": [
+     "SHOP",
+     "A",
+     {
+      "lines": [
+       {
+        "line_id": "L1",
+        "use": "own"
+       }
+      ]
+     },
+     {
+      "name": "Mayur Traders"
+     }
+    ]
+   },
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
+    "via": "deliverline.record",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A",
+     "rows": [
+      {
+       "line_id": "L1",
+       "quantity": 2
+      }
+     ],
+     "o": {
+      "actor_id": "SHOP",
+      "actor_name": "Mayur Traders",
+      "private": false
+     }
+    }
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n",
+    "params": [
+     "A",
+     "delivered_line",
+     "SHOP",
+     "Mayur Traders",
+     "1 line(s) delivered: 2"
+    ]
+   },
+   {
+    "via": "deliverline.progress",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A"
+    }
+   },
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   }
+  ]
+ },
+ "deliver · progress unreadable, the write stands": {
+  "status": 200,
+  "body": {
+   "delivered": [
+    {
+     "line_id": "L1",
+     "quantity": 2
+    }
+   ]
+  },
+  "calls": [
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
+    "via": "deliverline.record",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A",
+     "rows": [
+      {
+       "line_id": "L1",
+       "quantity": 2
+      }
+     ],
+     "o": {
+      "actor_id": "SHOP",
+      "actor_name": "Mayur Traders",
+      "private": false
+     }
+    }
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n",
+    "params": [
+     "A",
+     "delivered_line",
+     "SHOP",
+     "Mayur Traders",
+     "1 line(s) delivered: 2"
+    ]
+   },
+   {
+    "via": "deliverline.progress",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A"
+    }
+   }
+  ]
+ },
+ "deliver · the recorder refuses → its status": {
+  "status": 400,
+  "body": {
+   "error": "Failed to record delivery",
+   "message": "Something went wrong — please try again."
+  },
+  "calls": [
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
+    "via": "deliverline.record",
+    "payload": {
+     "eid": "SHOP",
+     "cid": "A",
+     "rows": [],
+     "o": {
+      "actor_id": "SHOP",
+      "actor_name": "Mayur Traders",
+      "private": false
+     }
+    }
+   }
+  ]
+ },
+ "trace · a bad id → 400": {
+  "status": 400,
+  "body": {
+   "error": "Bad request",
+   "message": "Invalid chit id"
+  },
+  "calls": []
+ },
+ "trace · not visible → 404": {
+  "status": 404,
+  "body": {
+   "error": "Not found",
+   "message": "Chit not visible to you"
+  },
+  "calls": [
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1",
+    "params": [
+     "X"
+    ]
+   }
+  ]
+ },
+ "trace · forward from the origin (a red balance, an unknown one)": {
+  "status": 200,
+  "body": {
+   "dir": "forward",
+   "start": "A",
+   "reachable_count": 5,
+   "depth_max": 2,
+   "flagged": 1,
+   "terminals": [
+    {
+     "chit_id": "D",
+     "product": "Rice"
+    },
+    {
+     "chit_id": "E",
+     "product": "Rice"
+    }
+   ],
+   "nodes": [
+    {
+     "chit_id": "A",
+     "entity_id": "SHOP",
+     "depth": 0,
+     "sender_name": "Sender of 1",
+     "to_name": "Mill",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 100,
+     "unit": "kg",
+     "base_qty": 100,
+     "base_unit": "kg",
+     "is_origin": true,
+     "parents": [],
+     "balance": {
+      "in": 100,
+      "out": 110,
+      "delta": 10,
+      "base_unit": "kg",
+      "status": "red"
+     }
+    },
+    {
+     "chit_id": "B",
+     "entity_id": "SHOP",
+     "depth": 1,
+     "sender_name": "Sender of 2",
+     "to_name": "Depot",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 60,
+     "unit": null,
+     "base_qty": 60,
+     "base_unit": "kg",
+     "is_origin": false,
+     "parents": [
+      "A"
+     ],
+     "balance": {
+      "in": 60,
+      "out": 60,
+      "delta": 0,
+      "base_unit": "kg",
+      "status": "ok"
+     }
+    },
+    {
+     "chit_id": "C",
+     "entity_id": "SHOP",
+     "depth": 1,
+     "sender_name": "Sender of 3",
+     "to_name": null,
+     "network": "net-2",
+     "product": "Rice",
+     "qty": 50,
+     "unit": null,
+     "base_qty": 50,
+     "base_unit": "kg",
+     "is_origin": false,
+     "parents": [
+      "A"
+     ],
+     "balance": {
+      "status": "unknown"
+     }
+    },
+    {
+     "chit_id": "D",
+     "entity_id": "SHOP",
+     "depth": 2,
+     "sender_name": "Sender of 4",
+     "to_name": "Shop",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 60,
+     "unit": null,
+     "base_qty": 60,
+     "base_unit": "kg",
+     "is_origin": false,
+     "parents": [
+      "B",
+      "X"
+     ],
+     "balance": null
+    },
+    {
+     "chit_id": "E",
+     "entity_id": "SHOP",
+     "depth": 2,
+     "sender_name": "Sender of 5",
+     "to_name": "Kiosk",
+     "network": null,
+     "product": "Rice",
+     "qty": 10,
+     "unit": null,
+     "base_qty": 10,
+     "base_unit": "bag",
+     "is_origin": false,
+     "parents": [
+      "C"
+     ],
+     "balance": null
+    }
+   ],
+   "edges": [
+    {
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "from": "A",
+     "to": "C"
+    },
+    {
+     "from": "B",
+     "to": "D"
+    },
+    {
+     "from": "C",
+     "to": "E"
+    }
+   ]
+  },
+  "calls": [
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1",
+    "params": [
+     "A"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))",
+    "params": [
+     [
+      "A"
+     ]
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))",
+    "params": [
+     [
+      "B",
+      "C"
+     ]
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))",
+    "params": [
+     [
+      "D",
+      "E"
+     ]
+    ]
+   }
+  ]
+ },
+ "trace · forward, one network only": {
+  "status": 200,
+  "body": {
+   "dir": "forward",
+   "start": "A",
+   "reachable_count": 3,
+   "depth_max": 2,
+   "flagged": 0,
+   "terminals": [
+    {
+     "chit_id": "D",
+     "product": "Rice"
+    }
+   ],
+   "nodes": [
+    {
+     "chit_id": "A",
+     "entity_id": "SHOP",
+     "depth": 0,
+     "sender_name": "Sender of 1",
+     "to_name": "Mill",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 100,
+     "unit": "kg",
+     "base_qty": 100,
+     "base_unit": "kg",
+     "is_origin": true,
+     "parents": [],
+     "balance": {
+      "in": 100,
+      "out": 60,
+      "delta": -40,
+      "base_unit": "kg",
+      "status": "ok"
+     }
+    },
+    {
+     "chit_id": "B",
+     "entity_id": "SHOP",
+     "depth": 1,
+     "sender_name": "Sender of 2",
+     "to_name": "Depot",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 60,
+     "unit": null,
+     "base_qty": 60,
+     "base_unit": "kg",
+     "is_origin": false,
+     "parents": [
+      "A"
+     ],
+     "balance": {
+      "in": 60,
+      "out": 60,
+      "delta": 0,
+      "base_unit": "kg",
+      "status": "ok"
+     }
+    },
+    {
+     "chit_id": "D",
+     "entity_id": "SHOP",
+     "depth": 2,
+     "sender_name": "Sender of 4",
+     "to_name": "Shop",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 60,
+     "unit": null,
+     "base_qty": 60,
+     "base_unit": "kg",
+     "is_origin": false,
+     "parents": [
+      "B",
+      "X"
+     ],
+     "balance": null
+    }
+   ],
+   "edges": [
+    {
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "from": "B",
+     "to": "D"
+    }
+   ]
+  },
+  "calls": [
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 AND summary_json->'trace'->'network'->>'id' = $2 LIMIT 1",
+    "params": [
+     "A",
+     "net-1"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[])) AND summary_json->'trace'->'network'->>'id' = $2",
+    "params": [
+     [
+      "A"
+     ],
+     "net-1"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[])) AND summary_json->'trace'->'network'->>'id' = $2",
+    "params": [
+     [
+      "B"
+     ],
+     "net-1"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[])) AND summary_json->'trace'->'network'->>'id' = $2",
+    "params": [
+     [
+      "D"
+     ],
+     "net-1"
+    ]
+   }
+  ]
+ },
+ "trace · backward to the origin (a dead-end parent recorded)": {
+  "status": 200,
+  "body": {
+   "dir": "backward",
+   "start": "D",
+   "hops": 2,
+   "path": [
+    "A",
+    "B",
+    "D"
+   ],
+   "nodes": [
+    {
+     "chit_id": "D",
+     "entity_id": "SHOP",
+     "depth": 0,
+     "sender_name": "Sender of 4",
+     "to_name": "Shop",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 60,
+     "unit": null,
+     "base_qty": 60,
+     "base_unit": "kg",
+     "is_origin": false,
+     "parents": [
+      "B",
+      "X"
+     ]
+    },
+    {
+     "chit_id": "B",
+     "entity_id": "SHOP",
+     "depth": 1,
+     "sender_name": "Sender of 2",
+     "to_name": "Depot",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 60,
+     "unit": null,
+     "base_qty": 60,
+     "base_unit": "kg",
+     "is_origin": false,
+     "parents": [
+      "A"
+     ]
+    },
+    {
+     "chit_id": "A",
+     "entity_id": "SHOP",
+     "depth": 2,
+     "sender_name": "Sender of 1",
+     "to_name": "Mill",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 100,
+     "unit": "kg",
+     "base_qty": 100,
+     "base_unit": "kg",
+     "is_origin": true,
+     "parents": []
+    }
+   ],
+   "edges": [
+    {
+     "from": "B",
+     "to": "D"
+    },
+    {
+     "from": "A",
+     "to": "B"
+    }
+   ]
+  },
+  "calls": [
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1",
+    "params": [
+     "D"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1",
+    "params": [
+     "B"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1",
+    "params": [
+     "X"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1",
+    "params": [
+     "A"
+    ]
+   }
+  ]
+ },
+ "trace · backward from the origin": {
+  "status": 200,
+  "body": {
+   "dir": "backward",
+   "start": "A",
+   "hops": 0,
+   "path": [
+    "A"
+   ],
+   "nodes": [
+    {
+     "chit_id": "A",
+     "entity_id": "SHOP",
+     "depth": 0,
+     "sender_name": "Sender of 1",
+     "to_name": "Mill",
+     "network": "net-1",
+     "product": "Rice",
+     "qty": 100,
+     "unit": "kg",
+     "base_qty": 100,
+     "base_unit": "kg",
+     "is_origin": true,
+     "parents": []
+    }
+   ],
+   "edges": []
+  },
+  "calls": [
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE chit_id = $1 LIMIT 1",
+    "params": [
+     "A"
+    ]
+   }
+  ]
+ },
+ "trace · the batches list (one label helper with the walk)": {
+  "status": 200,
+  "body": {
+   "count": 5,
+   "batches": [
+    {
+     "chit_id": "A",
+     "product": "Rice",
+     "qty": 100,
+     "unit": "kg",
+     "is_origin": true,
+     "network": "net-1",
+     "sender_name": "Sender of 1",
+     "to_name": "Mill"
+    },
+    {
+     "chit_id": "B",
+     "product": "Rice",
+     "qty": 60,
+     "unit": null,
+     "is_origin": false,
+     "network": "net-1",
+     "sender_name": "Sender of 2",
+     "to_name": "Depot"
+    },
+    {
+     "chit_id": "C",
+     "product": "Rice",
+     "qty": 50,
+     "unit": null,
+     "is_origin": false,
+     "network": "net-2",
+     "sender_name": "Sender of 3",
+     "to_name": null
+    },
+    {
+     "chit_id": "D",
+     "product": "Rice",
+     "qty": 60,
+     "unit": null,
+     "is_origin": false,
+     "network": "net-1",
+     "sender_name": "Sender of 4",
+     "to_name": "Shop"
+    },
+    {
+     "chit_id": "E",
+     "product": "Rice",
+     "qty": 10,
+     "unit": null,
+     "is_origin": false,
+     "network": null,
+     "sender_name": "Sender of 5",
+     "to_name": "Kiosk"
+    }
+   ]
+  },
+  "calls": [
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace, created_at FROM chit_header WHERE summary_json->'trace' IS NOT NULL ORDER BY ((summary_json->'trace'->>'is_origin') = 'true') DESC, created_at DESC LIMIT 200",
+    "params": null
+   }
+  ]
+ }
+}
