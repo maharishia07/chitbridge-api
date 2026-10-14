@@ -173,6 +173,8 @@ module.exports = function hatGate(req, res, next) {
     message: 'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. '
       + 'The account owner can change this in Co-assists.',
     access_level: lvl,
+    /* SEC4 — the rail's refusal word (read_only · comment_only): the code a screen branches on; the sentence above stays */
+    why: require('../lib/rail').byLevel(lvl, 'write'),
   });
 };
 module.exports.SELF_SCOPED = SELF_SCOPED;

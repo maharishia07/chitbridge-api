@@ -3246,10 +3246,15 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
-    const useSaid = await deliverUse(req, entity_id, chit_id);
     /* ⭐⭐ ON A BILL, GOODS-IN IS MY OWN STEP (lib/bill-privacy): recorded on my copy only, and its line is written at my bill
        folder's level — never replicated into, or announced to, the other shop */
-    const _mineCopy = await taxCopy.copyOf(chit_id, entity_id).catch(() => null);
+    const _mineCopy = await taxCopy.copyOf(chit_id, entity_id);
+    /* ⭐ SEC4 — THE SAME VERDICT THE PAGE GREYS WITH (workflow.can 'deliver_line', which work-rows sends as actions.deliver_line):
+       a viewer / commenter is refused 403 with the rail's sentence and `why`; a chit I do not hold is the 404 it always was.
+       Asked BEFORE any write — the `use` below included. */
+    const _v = require('../lib/workflow').can({ held: !!_mineCopy }, railActions.meOf(req), 'deliver_line');
+    if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
+    const useSaid = await deliverUse(req, entity_id, chit_id);
     const _bill = !!(_mineCopy && billPrivacy.isBill(_mineCopy, entity_id));
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name, private: _bill });

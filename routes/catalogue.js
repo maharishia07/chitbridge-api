@@ -647,6 +647,8 @@ router.get('/network/:bridge_id', async (req, res) => {
       const ent = await resolveEntity(bid);
       if (!ent) continue;
       const view = await publicViewFor(ent, {});
+      /* SEC4 — a sign-in-first department is not on the open network front: its items wait behind its own sign-in */
+      if (view.shop && view.shop.storefront_access === 'login') continue;
       departments.push({ entity: ent, view });
     }
 
@@ -672,14 +674,25 @@ router.get('/network/:bridge_id', async (req, res) => {
  * owner is not a stranger: with a valid session for THIS entity, the read bypasses the visibility gate and answers
  * with `preview: true`. Nothing changes for anyone else — a bad or foreign token is simply anonymous.
  */
+/** the bearer's claims on a PUBLIC route, or null: no token, or one that does not verify, is simply anonymous (said in the log) */
+function bearerOf(req) {
+  const h = req.headers.authorization || ''; if (!h.startsWith('Bearer ')) return null;
+  try { return require('../lib/jwt-verify').verifyJwt(h.slice(7)).claims || null; }   // E10 — the ONE verifier
+  catch (e) { require('../lib/logger').info('catalogue.bearer-anonymous', { why: e && e.message }); return null; }
+}
 function ownerOf(req, entity) {
-  try {
-    const h = req.headers.authorization || ''; if (!h.startsWith('Bearer ')) return false;
-    const d = require('../lib/jwt-verify').verifyJwt(h.slice(7)).claims;   // E10 — the ONE verifier
-    if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
-    const mine = d.parent_entity_id || d.identity_id;
-    return String(mine) === String(entity.identity_id);
-  } catch (_) { return false; }
+  const d = bearerOf(req);
+  if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
+  const mine = d.parent_entity_id || d.identity_id;
+  return String(mine) === String(entity.identity_id);
+}
+/**
+ * ⭐ SEC4 — a customer signed in AT THIS SHOP (POST /:bridge_id/login/verify issues the token; customer-auth.js reads the same
+ * claims). A customer of another shop is a stranger here: storefront identities are per shop (crHandle).
+ */
+function customerOf(req, entity) {
+  const d = bearerOf(req);
+  return !!(d && d.identity_id && d.identity_type === 'customer' && String(d.parent_entity_id || '') === String(entity.identity_id));
 }
 /**
  * ── ⭐⭐ THE PUBLIC VIEW OF ONE STORE, AS ONE FUNCTION ───────────────────────────────────────────────────────────
@@ -701,8 +714,21 @@ async function publicViewFor(entity, opts) {
     asOwner: !!o.asOwner, viewer: o.viewer });
 }
 
+/**
+ * ⭐ SEC4 — SIGN-IN FIRST IS KEPT BY THE SERVER. A shop set to `storefront_access: 'login'` (b77) used to send every item to
+ * anyone and leave shop.html to hide them; the embed and a CTP peer hid nothing. Until a customer of THIS shop signs in (or
+ * the owner previews), every door that trims here answers the shop card alone — `code: 'SIGNIN_REQUIRED'` is what a page
+ * branches on. The card is what the sign-in screen paints, nothing more (no items, offers, prices, payment id).
+ */
+const SHOP_CARD = ['bridge_id', 'display_name', 'logo_url', 'is_verified', 'address', 'business_status', 'storefront_access', 'country'];
+function signinCard(view) {
+  const card = {};
+  for (const k of SHOP_CARD) if (view.shop[k] !== undefined) card[k] = view.shop[k];
+  return { shop: card, signin_required: true, code: 'SIGNIN_REQUIRED' };
+}
 /** what a storefront visitor is SENT — the public response, trimmed from the raw view. One place. */
-function publicResponseFor(view, asOwner) {
+function publicResponseFor(view, asOwner, signedIn) {
+  if (view.shop && view.shop.storefront_access === 'login' && !asOwner && !signedIn) return signinCard(view);
   return { shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
     groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
     unpriced_hidden: view.unpriced_hidden,
@@ -718,7 +744,11 @@ router.get('/:bridge_id', async (req, res) => {
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
     const view = await publicViewFor(entity, { asOwner });
     if (!view.available) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
-    res.json(publicResponseFor(view, asOwner));
+    const out = publicResponseFor(view, asOwner, customerOf(req, entity));
+    if (out.signin_required) {
+      return res.status(401).json(Object.assign({ error: 'Sign in first', message: 'This shop shows its catalogue to signed-in customers. Sign in to see it.' }, out));
+    }
+    res.json(out);
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
 });
 
@@ -1434,6 +1464,37 @@ const enquiryLimitCheck = async (viewer, item_id) => {
   return (view && view.available !== false) ? { ok: true, owner_id } : { ok: false };
 };
 
+/**
+ * ⭐ SEC4 — THE ENQUIRIES ASKED OF ME, AS ONE PAGED LIST: GET /enquiry/inbox?page=&limit= → { enquiries, total, page, limit }.
+ * One row per (product, asker): the supplier's OWN copies (RLS, withEntity(me)) of external product messages someone else sent,
+ * newest first. Who may call: any login of the business (a read; the hat gate never gates a GET). One statement, one transaction.
+ * ⚠️ Declared BEFORE /enquiry/:item_id so 'inbox' is never read as an item id (an item id is a uuid).
+ */
+const ENQ_INBOX_SQL = `WITH g AS (
+    SELECT m.subject_id AS item_id, m.sender_entity_id AS from_entity_id, MAX(m.sender_display_name) AS from_name,
+           COUNT(*)::int AS messages, MAX(m.created_at) AS last_at,
+           (ARRAY_AGG(m.message_text ORDER BY m.created_at DESC))[1] AS last_text
+      FROM chit_messages m
+     WHERE m.entity_id = $1 AND m.subject_type = 'product' AND m.thread_type = 'external' AND m.sender_entity_id <> $1
+     GROUP BY m.subject_id, m.sender_entity_id)
+  SELECT g.*, ci.item_data->>'name' AS item_name, (SELECT COUNT(*)::int FROM g) AS total
+    FROM g LEFT JOIN catalogue_items ci ON ci.item_id = g.item_id AND ci.entity_id = $1
+   ORDER BY g.last_at DESC LIMIT $2 OFFSET $3`;
+router.get('/enquiry/inbox', auth, async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 25));
+  try {
+    const me = req.identity.parent_entity_id || req.identity.identity_id;
+    const r = await withEntity(me, (db) => db.query(ENQ_INBOX_SQL, [me, limit, (page - 1) * limit]));
+    const total = r.rows.length ? r.rows[0].total : 0;
+    res.json({ enquiries: r.rows.map(({ total: _t, ...row }) => row), total, page, limit });
+  } catch (err) {
+    /* b161/b162 not applied → an empty list said as such, not a broken screen (the same answer the thread read gives) */
+    if (err && (err.code === '42703' || err.code === '42883')) return res.json({ enquiries: [], total: 0, page, limit, migrated: false });
+    res.status(500).json({ error: 'Enquiries read failed', message: safeErr(err) });
+  }
+});
+
 router.get('/enquiry/:item_id', auth, async (req, res) => {
   try {
     const me = req.identity.parent_entity_id || req.identity.identity_id;
@@ -1472,6 +1533,11 @@ router.post('/enquiry/:item_id', auth,
         [message_id, req.params.item_id, me, req.identity.display_name || null,
          req.body.thread_type === 'internal' ? 'internal' : 'external',
          req.body.message_text, req.body.msg_type || 'info']));
+      /* ⭐ SEC4 — THE SUPPLIER'S BELL (lib/events, the one the storefront order rings): an external question about their product, told
+         after the answer has gone out. Nothing sensitive rides it — the item id and the asker's name; the list below is the read. */
+      if (req.body.thread_type !== 'internal' && String(gate.owner_id) !== String(me)) {
+        require('../lib/events').notifyAfter(res, [gate.owner_id], { kind: 'enquiry', id: req.params.item_id, who: req.identity.display_name || null });
+      }
       res.status(201).json({ message_id, created_at: r.rows[0] && r.rows[0].created_at });
     } catch (err) {
       if (err && err.code === '42883') {
