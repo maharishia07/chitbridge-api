@@ -49,11 +49,16 @@ const srcOf = (rel) => blank(fs.readFileSync(path.join(API, rel), 'utf8').replac
   });
 
   await it('a party a shop adds (local-identity mint · mintMany) and an actor or connector it creates take THE SHOP\'s country, in the same statement', () => {
+    /* STD2 (#164): the five read ONE fragment — country-setup.shopCountrySql(n) — and no other file types it */
+    const CS = require(path.join(API, 'lib', 'country-setup'));
+    assert.strictEqual(CS.shopCountrySql(4), '(SELECT country FROM identities WHERE identity_id = $4)', 'the fragment names the shop by its placeholder');
     const li = srcOf('lib/local-identity.js');
-    assert.ok(/'supplier', \(SELECT country FROM identities WHERE identity_id = \$4\)\)/.test(li), 'mint: the shop ($4) country');
-    assert.ok(/'supplier', \(SELECT country FROM identities WHERE identity_id = \$1\) FROM unnest/.test(li), 'mintMany: the shop ($1) country');
+    assert.ok(/'supplier', \$\{shopCountrySql\(4\)\}\)/.test(li), 'mint: the shop ($4) country');
+    assert.ok(/'supplier', \$\{shopCountrySql\(1\)\} FROM unnest/.test(li), 'mintMany: the shop ($1) country');
     for (const rel of ['routes/actors.js', 'routes/connectors.js', 'routes/integrations.js'])
-      assert.ok(/\(SELECT country FROM identities WHERE identity_id = \$5\)/.test(srcOf(rel)), rel + ': the parent shop ($5) country');
+      assert.ok(/\$\{shopCountrySql\(5\)\}/.test(srcOf(rel)), rel + ': the parent shop ($5) country');
+    const typed = files.filter((rel) => rel !== path.join('lib', 'country-setup.js') && /INSERT\s+INTO\s+identities\b[^`]*\(SELECT country FROM identities WHERE identity_id = \$\d\)/i.test(srcOf(rel)));
+    assert.deepStrictEqual(typed, [], 'an INSERT types the shop-country fragment itself — use country-setup.shopCountrySql(n)');
   });
 
   /* registration: the guess named, or NULL — the column is ALWAYS named (no default decides) */

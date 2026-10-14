@@ -474,7 +474,8 @@ router.post('/build', auth, async (req, res) => {
            (c.place && c.place.country) || meRow.country || null,
            // The store's OWN currency when the design set one — a store trading in another country is stamped
            // in ITS currency, and money is never converted afterwards. Otherwise the network's.
-           (c.place && c.place.currency) || meRow.currency_code || 'INR', claim, expires, me,
+           // STD2 (GOV-AU1 for MONEY): neither stated → NULL; the store's Country setup asks (country-setup.MONEY_UNSTATED), never INR by name.
+           (c.place && c.place.currency) || meRow.currency_code || null, claim, expires, me,
            // The purpose, carried onto the store itself. Empty becomes NULL rather than '' so "never said" and
            // "deliberately blank" are not the same value in the column.
            c.purpose || null, c.sort_order,

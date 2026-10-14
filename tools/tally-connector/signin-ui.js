@@ -443,6 +443,10 @@ function mount(host, c) {
 E.mount = mount;
 E.machine = machine;
 E.sessionOf = sessionOf;
+/* STD2: the ONE writer of the apps' session (cb_sess, with `duty`) — settings.html's New shop keeps it here too.
+   ⚠️ NOT E.keep: E is the ENGINE (engine/signin.js), whose keep(surface, answer) the counter calls; assigning over it broke every till
+   sign-in (14 Oct, till-pin and 10 more walks). [[feedback-namespace-after-assignment]] */
+E.keepSession = keep;
 E.jwtClaims = jwtClaims;
 E.transport = httpPost;          /* the default transport, for a host that wraps it (the till: "offline" said in words first) */
 E.METHODS = METHODS;

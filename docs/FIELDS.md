@@ -13,6 +13,8 @@ PUBLIC (pre-auth), the register panel's one read. Additive beside `constitutions
 | `installation` | `{ key, country, name, timezone }` | `key` = INSTALLATION_KEY (else `platform-0`). `country` = `installation.country` (b382, ISO-2) through govresolve's cascade (`basics.country`: null when none is stated or the constitution's `allowed.countries` excludes it — never a default). `name` = its English name (Intl), null with no country. `timezone` = the installation's zone (govresolve `basics.timezone`) — the zone registerNew stores for a several-zone country when the device's is not one of its own. |
 | `allowed_countries` | `[ISO-2]` or null | The constitution's optional `governance.allowed.countries` (tighten-only, the `allowed` envelope's new key). null = every registered country pack. |
 | `countries[]` | `country-setup.countries()` rows, filtered by `allowed_countries` | `{ code, name, currency, fy_start_month, zones, locale, books, tax: { scheme, id, return }, languages }` — every value from the engines pack (`tax.scheme` · the tax-ID name `tax.idName` when engines carries it, else IN `export.taxScheme` / AU `abn` / AE `trn` · `returns.name` · `locale.langs`). `tax` and `languages` added by GOV-SPIN; the Country setup screen's `countries` (GET /api/governance/country-setup) carries the same rows. |
+| `countries[].offer` (STD2, 2026-10-14) | `{ timezone, from, source }` | Derived per request: `country-setup.offered(at, ?tz)` — `timezone` = the zone the server WILL store if this country is accepted (offerOf: the device zone `?tz=` when it is the pack's, else the pack's one zone, else the installation's when it is the pack's, else null); `from` = its words (offerOf `source.timezone`); `source` = `installation` · `browser` · `chosen`, the code verify WILL record (sourceOf, the rule acceptAtSignup uses). Written by nobody. Read by web `app/register-form.js` (the Time zone row, and `country_source` in verify's payload). `?tz=` is optional and only validated (zoneOk), never stored. |
+| `countries[].tax.id` (changed, STD2) | string or null | Now `profile.taxIdWordOf(pack)` — the ONE tax-ID reader (country-setup.taxIdOf deleted). Same values (GSTIN · ABN · TRN), null when a pack names none. |
 
 ## Columns · `installation.country` (b382) · `signup_context.country_source` (b383) (GOV-SPIN)
 
@@ -480,6 +482,18 @@ Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, rou
 | `shop.country` | ISO-3166 alpha-2 or null | Source: `identities.country`, read on the SAME row as `storefront_access · policy_flags` (no extra trip). Written by registration / Country setup. Read by shop.html (what the page knows of its country). |
 | `shop.tax_id_word` | `GSTIN` · `ABN` · `TRN` | Derived: `profile.taxIdWordOf(country)` — the pack's own tax id (reg-au `abn`, reg-ae `trn`), `GSTIN` for India and for no pack. Written by nobody. Read by shop.html for the label beside `gstn` (the generic registration column). |
 | `shop.upi_id` (changed) | string or null | Unchanged source (`profile.upiOf(policy_flags)`); now null when the shop's pack has no UPI mode (`pack.chart.paymentModes.upi`) — the storefront's "Pay by UPI" block is not drawn for an AU / AE shop. |
+
+## STD2 · one reading per fact, no India for an unstated country (2026-10-14 · migration b400, a FILE — Athi runs it)
+
+| Key / column | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `shop.tax_id_word` (changed) | `GSTIN` · `ABN` · `TRN` or null | `profile.taxIdWordOf` now answers null for no pack (was `GSTIN`). shop.html paints "Tax number" for null. |
+| `GET /api/till/snapshot` · `shop.tax_id_word` (new) | `GSTIN` · `ABN` · `TRN` or null | Derived: `profile.taxIdWordOf(shop country)` — the counter's label for the tax number (was the till's own `taxIdLabel` copy). Written by nobody. Read by till.html `taxIdLabel()`; null → "Tax number". |
+| `GET /api/till/snapshot` · `shop.currency` (changed) | ISO-4217 or null | The shop's `identities.currency_code`, else its pack's; neither → null (was `INR`). |
+| `GET /api/till/snapshot` · `shop.money_why` (new) | `{ code: 'NO_MONEY', why }` or null | Derived: set only when `shop.currency` is null; `why` = `country-setup.MONEY_UNSTATED` (the one sentence). Read by till.html's shop dialog beside "Money is …". |
+| `profile.invoiceParty().currency` (changed) | ISO-4217 or null | `identities.currency_code`, else the pack's, else null (was `INR`). |
+| books refusal `NO_MONEY` (new code) | 422 `{ code, error, message }` | `books.enable` / `books-store.saveSetting` when neither Country setup nor the pack states the money or the year start (was `INR` / April). The sentence is `country-setup.MONEY_UNSTATED`. |
+| `identities.currency_code` · `cb_entity.currency_code` (b400) | varchar(3) or NULL | DEFAULT 'INR' dropped (b400): a money nobody stated is NULL — registration names it (offerOf / acceptAtSignup), Country setup asks for it. Layer: entity, class chosen-then-fixed (fixed once constituted). |
 
 ## F10 / F11 · the counter receipt that carries their bill (2026-10-14)
 

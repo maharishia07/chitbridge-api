@@ -15,6 +15,7 @@
  * counters, so the SAME health(last_seen) answers here and there. The API key stays the kit's credential (scoped,
  * revocable); the actor row is its identity. No migration: the columns b62 gave connectors.
  */
+const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -256,7 +257,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
                    /* ⚠️ WAS 'human' with 10 tasks (Athi, 2026-09-06, the co-assist card: "the type says human? and the hat says editor"). A kit is a
                       CONNECTOR: it takes no tasks (0), it has no login, and the hat stays 'act' — it writes products and stock. */
                    VALUES ($1,$2,$3,$4,'connector',$5,NULL,NULL,0,'actor','active','active','act','erp',$6,$7,NOW(),'actor',
-                           (SELECT country FROM identities WHERE identity_id = $5))`   /* GOV-AU1: the shop's country, never a default */,
+                           ${shopCountrySql(5)})`   /* GOV-AU1: the shop's country, never a default */,
                   [actor_id, generateBridgeId(), name, uuidv4(), entity_id, host || null, JSON.stringify(patchCfg)]);
     } else {
       /* self-healing: a kit actor minted as 'human · 10 tasks' before 2026-09-06 becomes a connector on its next heartbeat — no migration to run */
