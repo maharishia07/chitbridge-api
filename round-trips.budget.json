@@ -46,7 +46,15 @@
       "trips": 4,
       "wire": null,
       "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). reactivate: the actor read + its e-mail + ONE UPDATE + the login handle; deactivate/remove: the actor read + ONE withEntity transaction + the disputes withEntity (3).",
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). reactivate: the actor read + its e-mail + ONE UPDATE + the login handle; deactivate/remove: the actor read + ONE withEntity transaction + the disputes withEntity (3). PEOPLE-SRV1 (2026-10-14), counted by hand: the sign-out (person-session closeBy + keys endKeysBy: two FOR UPDATE reads of the shop row + at most two policy_flags writes) runs INSIDE the one withEntity transaction — 0 extra trips, up to 4 more statements on the wire.",
+      "extra": true
+    },
+    "PUT /api/actors/break": {
+      "file": "actors.js",
+      "trips": 7,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). PEOPLE-SRV1 (2026-10-14), counted by hand: the owner gate is 0 trips; the named person read (owner only, G6) + who they cover + their own cover (+ that cover's state, only when one is set) + ONE UPDATE for a short break or back; leave: + the open-jobs count (withEntity) + the stand-in read (only when routed to a person) + ONE withEntity transaction. Worst path 7.",
       "extra": true
     },
     "PUT /api/actors/settings": {
@@ -595,6 +603,15 @@
       "fired": false,
       "extra": true,
       "why": "T3-OPS, by hand (tests/ops-stock.test.cjs): lib/home-facts operations — schema.hasTable('stock_balance') (cached) + ONE withEntity read: stock-store.onHand (the one stock reader, sheet()). Nothing per item."
+    },
+    "GET /api/facts/people": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": null,
+      "fired": false,
+      "status": 200,
+      "extra": true,
+      "why": "PEOPLE-SRV1 (2026-10-14), counted by hand: ONE readBatch — a GROUP BY break_status count over lib/people.peopleSql."
     },
     "GET /api/facts/product-lab": {
       "file": "facts.js",

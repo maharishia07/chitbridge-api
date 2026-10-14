@@ -1,7 +1,7 @@
 /**
  * /api/facts — WHAT EACH HOME CARD SAYS (N18, 2026-10-08).
  *
- *   GET /api/facts/:card   card ∈ till · counters · accounts · orders · operations · product-lab · combo-lab · offer-lab · tax-lab · marketing (MKT-SRV1 G3: who agreed to offers) → { lines: [{ text, value?, tone? }], figures? }
+ *   GET /api/facts/:card   card ∈ till · counters · accounts · orders · operations · people · product-lab · combo-lab · offer-lab · tax-lab · marketing (MKT-SRV1 G3: who agreed to offers) → { lines: [{ text, value?, tone? }], figures? }
  *   GET /api/facts/rail/chits  -> { overdue_days, truncated, items:[{ chit_id, tab:in|out, stuck, why, ... }] } - the chits behind the rail's numbers
  *   GET /api/facts/rail                                                                    → { suppliers, customers, in, out, stuck }
  *
