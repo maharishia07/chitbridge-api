@@ -1249,6 +1249,8 @@
       "tries": 0,
       "since": "2026-09-29T10:00:07.000Z",
       "job": "chit",
+      "todo": "accept",
+      "candidates": [],
       "source": {
        "chit_id": "bill1",
        "ref": null,

@@ -69,6 +69,7 @@ function memoryTemplates() {
 
   /* a supplier bill waiting for acceptance, a repeating entry due, an accrual to turn back */
   await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:bill1', event: { job: 'chit', chit_id: 'bill1', waiting: 'acceptance' }, why: 'Waiting for you to confirm the goods (bill 7 from Kumar Traders)' });
+  await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:rcpt1', event: { job: 'chit', chit_id: 'rcpt1', waiting: 'party' }, why: 'Who is Sri Ganesh? Add them as a supplier — then bill SG-102 waits for you to accept it.' });
   await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:bill2', event: { job: 'chit', chit_id: 'bill2', waiting: 'dispute' }, why: 'Disputed' });
   const rec = await q('POST', '/recurring', { name: 'Shop rent', event: { kind: 'expense', class: 'rent', amount: 5000, how: 'bank' }, frequency: 'monthly', next_on: '2026-11-01' });
   DAY = '2026-09-30';
@@ -79,6 +80,7 @@ function memoryTemplates() {
   ok('GET /todo → an array of { kind, count, words, action }', Array.isArray(t1) && t1.length > 0 && t1.every((x) => x.kind && x.count > 0 && typeof x.words === 'string' && x.action && x.action.label && x.action.screen && x.action.call), JSON.stringify(t1).slice(0, 300));
   ok('every kind this shop needs is there: ' + kinds(t1).join(', '), ['bills_to_accept', 'months_not_locked', 'closing_stock_missing', 'gst_due', 'recurring_due', 'accrual_reversals_due'].every((k) => kinds(t1).indexOf(k) >= 0), JSON.stringify(kinds(t1)));
   ok('…and no year can be closed yet (the year is running)', kinds(t1).indexOf('year_close_possible') < 0);
+  ok('FX-F10W · a bill naming a supplier the books do not know is its own row (suppliers_to_add), never "to accept"', get(t1, 'suppliers_to_add') && get(t1, 'suppliers_to_add').count === 1 && get(t1, 'suppliers_to_add').action.screen === 'waiting', JSON.stringify(get(t1, 'suppliers_to_add')));
   ok('bills to accept counts ONLY the ones waiting on acceptance (a disputed one is not "accept")', get(t1, 'bills_to_accept').count === 1 && /1 supplier bill is waiting/.test(get(t1, 'bills_to_accept').words), JSON.stringify(get(t1, 'bills_to_accept')));
   const ml = get(t1, 'months_not_locked');
   ok('months not locked: April to October are over and open (7), named in words', ml.count === 7 && /April 2026/.test(ml.words) && /and more/.test(ml.words) && ml.items.length === 7, JSON.stringify(ml));

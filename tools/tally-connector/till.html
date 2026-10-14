@@ -6695,7 +6695,9 @@ async function load(){
   /* ⚠️ A NEW COUNTER READS ITS SHOP BY ITSELF (2026-09-17). A counter opened for the first time, online and keyed, used to sit on
      "No copy of the shop yet — press ↻" — a button to press for the one thing it obviously has to do. Once per page, so a shop
      that cannot be read does not loop; refresh() calls load() again. */
-  if (!S && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.cred() && lineUp()) { FIRST_READ = true; refresh().catch(function(){}); }
+  /* ⭐ FX-F10W: …and a copy stored by an OLDER counter, which lacks a key this build reads (SNAP_NEEDS — the Receive door's supplier list came
+     up empty until the 15-minute refresh), is read again the same way, once: the ordinary refresh, no new route, no new timer. */
+  if ((!S || snapLacks(S)) && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.cred() && lineUp()) { FIRST_READ = true; refresh().catch(function(){}); }
   /**
    * ⭐⭐⭐ R1 · "YOU HAD A BILL OPEN…" — HERE, not at boot. load() is where the shop arrives, and the lines have
    * to be re-priced through the offers engine before anybody is shown a total. Once per page (DRAFT_ASKED):
@@ -6723,6 +6725,9 @@ async function load(){
    */
 }
 var FIRST_READ = false;
+/* FX-F10W: the snapshot keys this build reads that an older copy may not carry (routes/till.js sends each on every snapshot, a delta too) */
+var SNAP_NEEDS = ['suppliers'];
+function snapLacks(snap){ return !!snap && SNAP_NEEDS.some(function(k){ return !(k in snap); }); }
 /* ⚠️ THE BUTTON MAY BE PRESSED BEFORE THE PAGE HAS FINISHED WAKING (caught by [TILL-01]): HOST is chosen asynchronously, and ↻ on
    the first frame called into nothing. Anything that needs the host asks for it. */
 /** show it, move it, and get out of the way — three calls, so no screen has to remember how the box works */

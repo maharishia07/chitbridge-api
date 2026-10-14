@@ -72,6 +72,30 @@ const BROOM = { line_id: 'l2', particulars: 'Shop broom', quantity: 1, unit: 'pi
   const s3 = await BU.set(SHOP, 'x', { use: 'resale' }, null, { taxCopy: { copyOf: async () => copyOf([PAD]), billReceived: TC.billReceived }, withEntity: deps().withEntity });
   ok('the SELLER cannot say what the buyer\'s goods are for (not a bill they received): 409', !s3.ok && s3.status === 409, JSON.stringify(s3));
 
+  /* ── FX-F10W: MY receipt of their bill is linked to a supplier already on my list (PUT /use { party }) — resolved by the server ── */
+  {
+    const SGP = '33333333-3333-4333-8333-333333333333';
+    const rc = (status) => ({ chit_id: 'r1', sender_entity_id: CUST, purpose: 'receipt', current_status: status || 'pending',
+      business_json: { their_bill: { no: 'SG-102', total: 45 }, party: { name: 'Sri Ganesh' } }, line_items: [PAD] });
+    let sql = [];
+    const pdeps = (status, rows) => ({ taxCopy: { copyOf: async () => rc(status), billReceived: TC.billReceived, capturedBill: TC.capturedBill },
+      withEntity: async (e, fn) => fn({ query: async (t, p) => { sql.push([String(t), p]); return /FROM supplier_list/.test(String(t)) ? { rows: rows } : { rows: [] }; } }) });
+    const one = [{ party_id: SGP, name: 'Sri Ganesh Provisions', party_no: 'P-00001' }];
+    const l1 = await BU.set(CUST, 'r1', { party: { party_no: 'P-00001' } }, null, pdeps('pending', one));
+    ok('FX-F10W · { party: { party_no } } → my supplier P-00001 resolved in MY list, written as business_json.party.party_id + name (one read, one UPDATE)',
+      l1.ok && l1.party.party_id === SGP && sql.length === 2 && /s\.party_no = \$2/.test(sql[0][0]) && sql[0][1][0] === CUST
+      && /jsonb_build_object\('party', COALESCE\(business_json->'party'/.test(sql[1][0]) && JSON.parse(sql[1][1][0]).party_id === SGP && sql[1][1][2] === CUST, JSON.stringify([l1, sql]));
+    sql = [];
+    const l2 = await BU.set(CUST, 'r1', { party: { party_no: 'P-09999' } }, null, pdeps('pending', []));
+    ok('FX-F10W · a number not on my list → 404 in words, nothing written', !l2.ok && l2.status === 404 && sql.length === 1, JSON.stringify(l2));
+    sql = [];
+    const l3 = await BU.set(CUST, 'r1', { party: { party_no: 'P-00001' } }, null, pdeps('accepted', one));
+    ok('FX-F10W · once accepted the supplier is settled: 409, nothing read or written', !l3.ok && l3.status === 409 && sql.length === 0, JSON.stringify(l3));
+    const l4 = await BU.set(CUST, 'x', { party: { party_no: 'P-00001' } }, null, deps('pending'));
+    ok('FX-F10W · only a receipt of their bill takes a party here (a received invoice names its sender): 409', !l4.ok && l4.status === 409, JSON.stringify(l4));
+    eq('FX-F10W · party must say a number or a name', [BU.validate({ party: {} }, rc()).ok, BU.validate({ party: { name: 'Sri Ganesh Provisions' } }, rc()).ok], [false, true]);
+  }
+
   /* ── the posting, on acceptance ── */
   if (!X.src.dir) { console.log('   SKIP the posting checks: ' + X.src.why); }
   else {

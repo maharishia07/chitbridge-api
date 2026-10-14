@@ -22,6 +22,20 @@ A new key needs its entry here, in the same change. This file is being built; en
 | `year` | `{ fiscal_year, from, start_month }` | Derived, never stored: the shop's financial year today, from the pack on the books setting's `fy_start_month` (`B.packOf` · accounts-packs `fiscalYearOf` / `fyRange` — the same `fyStart` the TB / P&L / BS reads default to). `fiscal_year` "2026-27" (or "2026" for a January year) · `from` "YYYY-MM-DD", its first day · `start_month` 1–12 (the setting's own month, else its country pack's `fiscalYear.startMonth`: IN 4 · AU 7 · AE 1). Written by: nobody. Read by: CB Accounts (`cap-books.js` bkYear and `accounts.html` → `BK_FY0` — the Day book's "This FY", P&L / TB / BS default range, Month lock / GST close / Packs month names), so an AU (July) or calendar-year shop is never asked as April. CX2's top-level `fy_start_month` is this `start_month` (one slot). |
 | `country` | the CS1 status object `{ books, code, why, required, country: { code, name }, pack, version }` (the same shape as `GET /api/books/status` `country`), or null | Derived: the `CS.gate` answer the `on` middleware already read (cached; 0 new queries). Read by web `accounts.html` → `SESSION.country` (CX0's reader), so the page's pack words (`shopReg`) are the shop's. |
 
+## GET /api/books/health · `waiting[].todo` · `waiting[].candidates` (FX-F10W, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `waiting[].todo` | `accept` · `add_supplier` · `record` | Derived, never stored: `books-hooks.todoOf(why)` over the row's sentence (buyerGate "Waiting for you to confirm …" → accept; receiptBill "Who is <name>? Add them as a supplier …" → add_supplier; anything else → record). Written by: nobody. Read by: CB Accounts `bkTodoCounts` (the Day book's To do), Home's alert (`index.html` booksAlert) — and the same function counts the Accounts card (`/api/facts/accounts` `figures.accept · add_supplier · record`). |
+| `waiting[].candidates` | `[{ name, party_no }]`, ≤ 3; `[]` on every row that is not `add_supplier` | Source: `books_outbox.event.candidates`, written by `postChit` (park) and refreshed by every retry (`outboxDone` merges the event) from `receiptFacts` — the shop's suppliers whose name or nickname CONTAINS the typed name, case aside, a prefix first (the counter's datalist rule). Names + party_no only — never an id or an amount. Read by: the Waiting row and the bill popup ("Is this Sri Ganesh Provisions (P-00001)?"), which link through `PUT /api/chits/:id/use { party: { party_no } }`. |
+
+## PUT /api/chits/:id/use · `party` (FX-F10W, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| body `party` | `{ party_no }` or `{ name }` | Which of MY suppliers my receipt of their bill is from. Resolved by the server in my `supplier_list` (exactly one, else 404); only on a captured receipt (`tax-copy.capturedBill`), only while it is still to accept. Writes `business_json.party.party_id` + `.name` (the slot the counter's pick fills). Answer `party: { party_id, name, party_no }`. Read by: `books-hooks.receiptFacts` on the next try. |
+| `/api/facts/accounts` `figures.accept · add_supplier · record` | integers | Derived: each waiting row's `todoOf`, counted (one read of the rows' sentences, `books-store.waitingWhys`). `figures.waiting` stays the total. |
+
 ## GET /api/crm/parties · /parties/:id (CB CRM, 2026-10-02)
 
 Every key is a READ of what exists; nothing is stored and no money is computed here (`lib/crm.js`). Written by: nobody (derived). Read by: the CB CRM page.
@@ -154,7 +168,7 @@ One read per Home card, behind auth, signed-in people only (a key gets 403). Bui
 | Route | Answer | Omitted, and why |
 |---|---|---|
 | `/api/facts/till` | `{ lines:[{text,value?}], figures:{ day, bills, takings, currency, counters_open } }` — newest day sent up (named "today" only when it is the shop's day), and counters open | "bills not sent up" (the queue is on the counter's PC); `day`/`bills`/`takings` when no day summary exists |
-| `/api/facts/accounts` | `{ lines, figures:{ last_check, waiting } }` — `tone:'dn'` on a difference or waiting posts | everything (`lines:[]`, `unavailable`) when the ledger is off or not provisioned |
+| `/api/facts/accounts` | `{ lines, figures:{ last_check, waiting, accept, add_supplier, record } }` — `tone:'dn'` on a difference or anything waiting; the waiting line in To do words (FX-F10W) | everything (`lines:[]`, `unavailable`) when the ledger is off or not provisioned |
 | `/api/facts/product-lab` | `{ lines, figures:{ items, no_cost } }` — a COUNT of items whose cost is unknown | `no_cost` for an actor without `can_see_costs`; no cost value is ever selected |
 | `/api/facts/combo-lab` | `{ lines, figures:{ saved } }` — saved sets in the library | the combos/modifiers split (one table, one shape) |
 | `/api/facts/offer-lab` | `{ lines, figures:{ drafts, live } }` | — |

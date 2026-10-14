@@ -219,6 +219,8 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     X.db.query = async (t, v) => {
       const s0 = String(t);
       if (/FROM identities WHERE identity_id = ANY/.test(s0)) return { rows: (v[0] || []).map((id) => ROWS[id]).filter(Boolean) };
+      /* FX-F10W: the near-match read (receiptFacts candidates) — the typed name inside a supplier's name, case aside */
+      if (/FROM supplier_list s JOIN identities/.test(s0) && /LIKE \$2/.test(s0)) { const n = String(v[1]).replace(/^%|%$/g, ''); return { rows: suppliers.filter((x) => x.name.toLowerCase().indexOf(n) >= 0).map((x) => ({ name: x.name, party_no: x.no || null })) }; }
       if (/FROM supplier_list s JOIN identities/.test(s0)) return { rows: suppliers.filter((x) => x.name.toLowerCase() === String(v[1]).toLowerCase()).map((x) => ({ supplier_entity_id: x.id })) };
       if (/purpose = 'invoice' AND sender_entity_id IS DISTINCT FROM/.test(s0)) return { rows: invoices.filter((x) => x.on === v[1]) };
       return q0(t, v);
@@ -292,6 +294,20 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
       copyNow = rcpt('h10', rbj({ party: { name: 'sri ganesh provisions ' } }), 'pending');
       const h1 = await K.postChit(SHOP, 'h10', {});
       eq('F10 hook · a typed name nobody knows → parked "Who is …", nothing posted', [h1.queued, /^Who is sri ganesh provisions\?/.test(h1.why), posted('h10').length], [true, true, 0]);
+      eq('FX-F10W · the Waiting row: todo add_supplier, no near match → no candidates', (() => { const r0 = K.waitingRow(waits('h10')[0]); return [r0.todo, r0.candidates]; })(), ['add_supplier', []]);
+      /* FX-F10W: "Sri Ganesh" typed, "Sri Ganesh Provisions" (P-00001) on the list → the wait carries the near match, names + party_no only */
+      suppliers = [{ id: SG, name: 'Sri Ganesh Provisions', no: 'P-00001' }, { id: 'x-2', name: 'Lakshmi Agencies', no: 'P-00002' }];
+      copyNow = rcpt('h12', rbj({ party: { name: 'Sri Ganesh' } }), 'pending');
+      const c1 = await K.postChit(SHOP, 'h12', {});
+      const crow = K.waitingRow(waits('h12')[0]);
+      eq('FX-F10W · a typed "Sri Ganesh" waits "Who is …" WITH the shop\'s near match (≤ 3, name + party_no, never an id)',
+        [c1.queued, crow.todo, crow.candidates], [true, 'add_supplier', [{ name: 'Sri Ganesh Provisions', party_no: 'P-00001' }]]);
+      /* the owner picks it: PUT /use { party } wrote party_id on the receipt (bill-use) — the retry now waits for acceptance, and the row's event follows */
+      copyNow = rcpt('h12', rbj({ party: { name: 'Sri Ganesh Provisions', party_id: SG } }), 'pending');
+      await K.retryOutbox(SHOP, 50);
+      const crow2 = K.waitingRow(waits('h12')[0]);
+      eq('FX-F10W · …linked, a retry moves it to "To accept": todo accept, candidates gone, the event\'s wait follows', [crow2.todo, crow2.candidates, waits('h12')[0].event.waiting], ['accept', [], 'acceptance']);
+      X.T.outbox.filter((o) => o.source_chit_id === 'h12').forEach((o) => { o.done_at = new Date().toISOString(); });
       suppliers = [{ id: SG, name: 'sri ganesh provisions' }];
       const h2 = await K.postChit(SHOP, 'h10', { retry: true });
       eq('F10 hook · …once they are on the supplier list, the same receipt waits for ACCEPTANCE (nothing re-typed)', [h2.queued, /^Waiting for you to confirm the goods were received \(bill SG-101 from Sri Ganesh Provisions\)/.test(h2.why)], [true, true]);
