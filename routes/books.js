@@ -378,7 +378,7 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
       const first = t ? open + t.before_dr - t.before_cr : open;
       let run = first;
       const lines = rows.map((l) => { run += Number(l.dr_minor) - Number(l.cr_minor); return { date: E.ymd(l.posting_date), doc_date: E.ymd(l.doc_date), what: l.narration || WORD[l.event_type] || l.event_type,
-        ref: l.entry_no, entry_id: l.entry_id, source_chit_id: l.source_chit_id, source: sourceOf(l), party_id: l.party_id, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), running_minor: run }; });
+        ref: l.entry_no, entry_id: l.entry_id, entry_no: l.entry_no, event_type: l.event_type, reverses_entry_id: l.reverses_entry_id || null, reversed_by: l.reversed_by || null, source_chit_id: l.source_chit_id, source: sourceOf(l), party_id: l.party_id, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), running_minor: run }; });
       const base = { account: { code: a.code, name: a.name, nature: a.nature }, party, from, to, opening_minor: open, lines, closing_minor: t ? open + t.dr - t.cr : run };
       return t ? Object.assign(base, { page_opening_minor: first, total: t.entries, page: pg.page, limit: p.limit, next: cursorOf(p.next), totals: { dr_minor: t.dr, cr_minor: t.cr } }) : base;
     });
