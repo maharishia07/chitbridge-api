@@ -5136,4 +5136,5 @@ router.get('/trace/networks', auth, async (req, res) => {
 });
 
 router.moveStatus = moveStatus;   /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
+router._autoAssignReceived = autoAssignReceived;   /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;

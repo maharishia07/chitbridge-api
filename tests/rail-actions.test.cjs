@@ -236,7 +236,10 @@ const tally = {};
   const SRC = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
   t('routes/chits.js no longer holds a transition table (validTransitions moved to the engine)', !/validTransitions\s*=/.test(SRC));
   t('routes/chits.js no longer asks access.canMessage — the message route asks the engine', !/access\.canMessage\(/.test(SRC));
-  t('PUT /status, /messages, /assign-lines and /amend each ask the engine', (SRC.match(/railActions\.(can|move)\(/g) || []).length >= 5);
+  /* T1-RAIL: PUT /status asks through lib/rail-status statusGate (the one status write, which asks railActions.move) */
+  t('PUT /status, /messages, /assign-lines and /amend each ask the engine',
+    (SRC.match(/railActions\.(can|move)\(|railStatus\.statusGate\(/g) || []).length >= 5
+    && /railActions\.move\(/.test(fs.readFileSync(path.join(API, 'lib', 'rail-status.js'), 'utf8')));
   const acc = require(path.join(API, 'lib', 'access'));
   for (const lvl of ['viewer', 'commenter', 'editor']) {
     const id = { identity_type: 'actor', access_level: lvl };
