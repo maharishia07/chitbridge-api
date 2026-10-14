@@ -41,8 +41,10 @@ try {
 const callsOf = (key) => {
   /* ⚠️ THE REGISTRY ENTRY ITSELF IS NOT A CALL. `defGet: {m:"GET", …}` mentions the name; only api('defGet')
      invokes it. Counting the declaration would have made every dead endpoint look used exactly once. */
+  /* ⚠️ INT6b (14 Oct): T2-PAGING's testEvery(ep, key) calls api(ep) with the key in a variable (every page of a list the test board
+     sums). Its first argument is a call too, or GET /api/testing/cases + /results read as "no longer called" and their budget lines fail. */
   let n = 0;
-  for (const re of [new RegExp("api\\(\\s*'" + key + "'", 'g'), new RegExp('api\\(\\s*"' + key + '"', 'g')]) {
+  for (const re of [new RegExp("(?:api|testEvery)\\(\\s*'" + key + "'", 'g'), new RegExp('(?:api|testEvery)\\(\\s*"' + key + '"', 'g')]) {
     n += (clientText.match(re) || []).length;
   }
   return n;

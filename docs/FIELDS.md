@@ -545,6 +545,18 @@ Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, rou
 | books refusal `NO_MONEY` (new code) | 422 `{ code, error, message }` | `books.enable` / `books-store.saveSetting` when neither Country setup nor the pack states the money or the year start (was `INR` / April). The sentence is `country-setup.MONEY_UNSTATED`. |
 | `identities.currency_code` · `cb_entity.currency_code` (b400) | varchar(3) or NULL | DEFAULT 'INR' dropped (b400): a money nobody stated is NULL — registration names it (offerOf / acceptAtSignup), Country setup asks for it. Layer: entity, class chosen-then-fixed (fixed once constituted). |
 
+## Pages · GET /api/testing/cases · results · runs · requirements · incidents (T2-PAGING, 2026-10-14 · no migration)
+
+DISCIPLINES §2's list contract on the test board's lists: `?page=` (≥ 1) and `?limit=` clamped by `lib/page-limit.limitOf` to the list's
+server max, which is also its default — the size it answered before (cases · results 5000, a case's/run's history 500, runs 50,
+requirements · incidents 500). Cut AFTER the order, in SQL (OFFSET). Who may: whoever may read the board — unchanged.
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `total` | integer | derived: rows the query (with its `?state=` / `?project=` / `?all=`) holds — `count(*) OVER ()` of the page read (routes/testing.js `readPage`). ⚠️ On /requirements and /incidents it USED to be every state; every state is now the sum of `counts` | the route | web `CBList.every` (the board reads every page) · PG (`testPgArm`) |
+| `page` · `limit` | integers | derived: the page asked (≥ 1) · the limit the SERVER applied | the route | the same |
+| /requirements · /incidents `counts` · `open` · `open_by_severity` | integers | derived: one `GROUP BY` over EVERY row (no cut) — before, they counted the 500 newest | the route | the view's filter chips; `Everything` = Σ `counts` (`testCountAll`) |
+
 ## F10 / F11 · the counter receipt that carries their bill (2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
