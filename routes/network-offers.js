@@ -57,18 +57,20 @@ router.get('/', auth, sessionOnly, async (req, res) => {
       src.rows.forEach((r) => { if (r.owner_entity_id && String(r.owner_entity_id) !== String(me)) owners.push(String(r.owner_entity_id)); });
     }
     const choices = ((await net.flagsOf(me)).flags.network_choices) || {};
-    /* ⭐ where this store stands with each brand it sells for — in, asked, invited, suspended, or not yet asked */
-    const standing = await membership.standing(me, owners);
-    /* ⭐ and the brands that INVITED this store without it selling their catalogue yet */
-    const invites = await query(
-      `SELECT i.identity_id::text AS brand_id, e.id::text AS edge_id
+    /* ⭐ every brand this store has a commercial edge with — invited, ASKED (NET-SRV1 G1: a store sees the request it sent even to a
+       brand whose catalogue it does not sell yet), in or suspended — so standing() below is asked about all of them, never guessed */
+    const edged = await query(
+      `SELECT DISTINCT i.identity_id::text AS brand_id
          FROM identities mi JOIN cb_entity mc ON mc.bridge_id = mi.bridge_id
-         JOIN cb_edge e ON e.child_id = mc.id AND e.type = 'commercial' AND e.state = 'requested' AND e.requested_by = e.parent_id
+         JOIN cb_edge e ON e.child_id = mc.id AND e.type = 'commercial' AND e.state IN ('requested', 'active', 'suspended')
          JOIN cb_entity bc ON bc.id = e.parent_id JOIN identities i ON i.bridge_id = bc.bridge_id AND i.identity_type = 'entity'
-        WHERE mi.identity_id = $1`, [me]).catch(log.orElse('network-offers GET /: the read failed — answered with none', ({ rows: [] })));
+        WHERE mi.identity_id = $1`, [me]).catch(log.orElse('network-offers GET /: edge read failed — the brands this store asked or joined are not listed', ({ rows: [] })));
+    const brandIds = [...new Set(owners.concat(edged.rows.map((x) => x.brand_id)))];
+    /* ⭐ where this store stands with each — in, asked, invited, suspended, or not yet asked — and the bridge ids that link to the network */
+    const standing = await membership.standing(me, brandIds);
     const networks = [];
-    for (const brand_id of [...new Set(owners.concat(invites.rows.map((x) => x.brand_id)))]) {
-      const st = standing[brand_id] || { state: 'invited', via: 'joined', edge_id: (invites.rows.find((x) => x.brand_id === brand_id) || {}).edge_id, asked_by: 'brand' };
+    for (const brand_id of brandIds) {
+      const st = standing[brand_id] || { state: 'none', via: null, edge_id: null, asked_by: null };
       const inside = st.state === 'active';
       const { name, flags } = await net.flagsOf(brand_id);
       const no = flags.network_offers || {};
@@ -83,9 +85,13 @@ router.get('/', auth, sessionOnly, async (req, res) => {
         rows = r.rows;
       }
       networks.push({ brand_id, brand_name: await net.brandName(brand_id, name), policy,
+        /* ⭐ G3: the brand's bridge id, and the network ROOT's — the network store reads by the root (GET /api/catalogue/network/:bridge_id) */
+        brand_bridge_id: st.brand_bridge_id || null, root_bridge_id: st.root_bridge_id || null,
         /* in | requested (asked_by says who must answer) | suspended | none — the store half of lib/network-membership */
         membership: { state: st.state === 'requested' ? (st.asked_by === 'brand' ? 'invited' : 'asked') : st.state,
                       via: st.via, edge_id: st.edge_id || null, brand_node: st.brand_node || null },
+        /* ⭐ G2: what THIS store may do on the row — the server's rule (mayAct), never re-derived on a screen */
+        may: membership.mayOn(st, st.store_node || me),
         /* a store outside the network is told nothing of its offers */
         offers: (inside ? rows : []).map((d) => {
           const c = choices[d.definition_id] || null;
