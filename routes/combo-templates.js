@@ -180,9 +180,8 @@ router.post('/:id/push', auth, async (req, res) => {
       });
       if (decl.error) return res.status(400).json({ error: 'Invalid product', message: decl.error });
       const stamped = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
-      const r = await withEntity(entity_id, (db) => db.query(
-        `UPDATE catalogue_items SET item_data=$1, updated_at=NOW() WHERE item_id=$2 AND entity_id=$3 RETURNING *`,
-        [JSON.stringify(stamped), existing.item_id, entity_id]));
+      const r = await withEntity(entity_id, (db) => require('../lib/catalogue-write').patchItems(db, entity_id,   /* CAT-W1: the one product writer */
+        [{ item_id: existing.item_id, replace: stamped }], { returning: '*' }));
       item = r.rows[0]; verb = 'updated';
     } else {
       if (t.price == null) return res.status(400).json({ error: 'Price is required',

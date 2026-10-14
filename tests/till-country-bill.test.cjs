@@ -14,7 +14,7 @@ function grab(n) {
   return h.slice(at, i + 1);
 }
 const MONEY = require('../lib/money');
-const FNS = ['docCountry', 'shopPack', 'taxIdLabel', 'invoiceRule', 'buyerNamed', 'buyerWarnWords', 'buyerFromMajor', 'slipBuyerHTML', 'shopMinor',
+const FNS = ['shopCur', 'curSym', 'docCountry', 'shopPack', 'taxIdLabel', 'invoiceRule', 'buyerNamed', 'buyerWarnWords', 'buyerFromMajor', 'slipBuyerHTML', 'shopMinor',
   'booksMajor', 'fmtCount', 'voiceLangs', 'tillLang', 'langLabel'];
 function page(country, currency, o) {
   o = o || {};
@@ -86,13 +86,28 @@ ok('voice: India keeps its four (the page\'s own list, en-IN by default); the UA
   assert.strictEqual(page('IN', 'INR').langLabel('ta-IN'), 'தமிழ்');
 });
 
+/* T2-NATDEF (TILL-NATDEF): a shop that stated no country and no money is not India — no INR, no Indian numbering, no Indian voices */
+ok('no country, no money stated → docCountry null, no pack, English voice, no symbol, two decimals — never India by default (T2-NATDEF)', () => {
+  const p = page(null, null);
+  assert.strictEqual(p.docCountry(), null);
+  assert.strictEqual(p.shopPack(), null);
+  assert.strictEqual(p.shopCur(), null);
+  assert.strictEqual(p.curSym(), '');
+  assert.deepStrictEqual(Array.from(p.voiceLangs()), ['en']);
+  assert.strictEqual(p.shopMinor(12.5), 1250);
+  assert.strictEqual(p.booksMajor(1250), 12.5);
+  const h = fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8');
+  assert.strictEqual((h.match(/(\|\||\?\?)\s*['"](INR|IN)['"]/g) || []).length, 0, 'no `|| \'INR\'` / `|| \'IN\'` left in the till master');
+});
+
 /* the api side of the same bill (T5 · T6) */
-ok('an invoice with no currency is in the SELLER\'s pack\'s money — AUD · AED; India (or no country) INR as before (T5)', () => {
+ok('an invoice with no currency is in the SELLER\'s pack\'s money — AUD · AED · INR; no country (or no pack) → none, never INR (T5 · T2-NATDEF)', () => {
   const T = require('../lib/tax-lines');
   assert.strictEqual(T.currencyOf({ Country: 'AU' }), 'AUD');
   assert.strictEqual(T.currencyOf({ Country: 'AE' }), 'AED');
   assert.strictEqual(T.currencyOf({ Country: 'IN' }), 'INR');
-  assert.strictEqual(T.currencyOf({}), 'INR');
+  assert.strictEqual(T.currencyOf({}), null);
+  assert.strictEqual(T.currencyOf({ Country: 'ZZ' }), null);
   assert.strictEqual(T.invoiceFor({ lines: [{ name: 'Tea', qty: 1, price: 11, gst_rate: 10 }], seller: { Country: 'AU' }, buyer: {} }).invoice.currency, 'AUD');
 });
 ok('a bill step label: lakh grouping for the rupee only — "AUD 100,000", never "AUD 1,00,000" (T6)', () => {

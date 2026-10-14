@@ -38,7 +38,7 @@ ok('A6 IN · Asia/Kolkata (unchanged)', H.zoneOf('IN') === 'Asia/Kolkata', H.zon
 ok('A6 AE · Asia/Dubai', H.zoneOf('AE') === 'Asia/Dubai', H.zoneOf('AE'));
 ok('A6 AU · the pack\'s first zone, never Kolkata', H.zoneOf('AU') === 'Australia/Sydney', H.zoneOf('AU'));
 ok('A6 · a saved zone still wins', H.zoneOf({ timezone: 'Australia/Perth', country: 'AU' }) === 'Australia/Perth');
-ok('A6 · a country with no pack keeps the b176 table', H.zoneOf('SG') === 'Asia/Singapore' && H.zoneOf('') === 'Asia/Kolkata');
+ok('A6 · a country with no pack keeps the b176 table', H.zoneOf('SG') === 'Asia/Singapore' && H.zoneOf('') === 'UTC');   /* T2-NATDEF: unstated → UTC, never India */
 /* 2026-01-15T14:30Z is 01:30 on the 16th in Sydney (AEDT), 20:00 on the 15th in India */
 ok('A6 AU · a sale at 01:30 Sydney lands on Sydney\'s day', H.dayOf('2026-01-15T14:30:00Z', { country: 'AU' }) === '2026-01-16', H.dayOf('2026-01-15T14:30:00Z', { country: 'AU' }));
 ok('A6 IN · the same moment is India\'s 15th', H.dayOf('2026-01-15T14:30:00Z', { country: 'IN' }) === '2026-01-15');

@@ -27,6 +27,7 @@ const API = path.join(__dirname, '..');
 
 /* ── the database: one shop row; every transaction waits for the one before it (FOR UPDATE) ───────────────────── */
 const clone = (x) => JSON.parse(JSON.stringify(x));
+const PP = require('./support/policy-patch.cjs');
 let ROW = null;            // { policy_flags }
 let BOOKED = [];           // prefixes with bills in chit_header
 let DOCS = {};             // identity_id → [{ value_hash, verified }]
@@ -39,24 +40,7 @@ const q = async (sql, params) => {
   if (/FROM identity_documents/.test(s)) {
     return { rows: (DOCS[params[0]] || []).filter((d) => d.verified).map((d) => ({ value_hash: d.value_hash })) };
   }
-  if (/'\{api_keys\}'/.test(s) && /jsonb_agg/.test(s)) {                      // keys.js patchKey — one key, shallow merge
-    const patch = JSON.parse(params[2]);
-    pf.api_keys = (pf.api_keys || []).map((k) => (String(k.jti) === String(params[1]) ? Object.assign({}, k, patch) : k));
-    return { rows: [] };
-  }
-  if (/ARRAY\['devices', \$2::text, 'till'\]/.test(s)) {                      // keys.js claimDevice — devices[d].till
-    pf.devices[params[1]].till = JSON.parse(params[2]);
-    return { rows: [] };
-  }
-  if (/'\{counters\}'/.test(s) && /jsonb_build_object/.test(s)) {             // counters.patchCounter / claimDevice
-    pf.counters = pf.counters || {};
-    pf.counters[params[1]] = Object.assign({}, pf.counters[params[1]] || {}, JSON.parse(params[2]));
-    return { rows: [] };
-  }
-  if (/policy_flags = COALESCE\(policy_flags,'\{\}'::jsonb\) \|\| \$1::jsonb/.test(s)) {   // keys.mint — top-level merge
-    Object.assign(pf, JSON.parse(params[0]));
-    return { rows: [] };
-  }
+  if (PP.isPatch(s)) return PP.apply(s, params, pf);                       // T2-POLICY: every policy_flags write is policy.patchKey
   throw new Error('unexpected SQL in the stub: ' + s.slice(0, 120));
 };
 let lock = Promise.resolve();

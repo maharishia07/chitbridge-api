@@ -45,7 +45,7 @@ async function captureCrm() {
     if (/^SELECT user_id FROM identities WHERE user_id LIKE/.test(sql)) return { rows: ids.filter((i) => i.user_id.startsWith(p[0].replace('%', ''))).slice(-1) };
     if (/^INSERT INTO identities/.test(sql)) { const r = { identity_id: 'N' + ids.length, bridge_id: p[0], display_name: p[1], user_id: p[2], parent_entity_id: p[3] }; ids.push(r); return { rows: [r] }; }
     if (/^UPDATE identities SET otp_contact/.test(sql)) { ids.find((i) => i.identity_id === p[0]).otp_contact = p[1]; return { rows: [] }; }
-    if (/^INSERT INTO customer_list/.test(sql)) { if (/'lead'/.test(sql)) D.cust.push(cs(row({ party_id: p[1], display_name: 'Ravi Jewellers', user_id: '~acme.cus-0001', on_rail: false }), { added_via: 'lead', txn_count: 0, last_txn_at: null, groups: [], segment: 'new' })); return { rows: [{ customer_list_id: 'CL1' }] }; }
+    if (/^INSERT INTO customer_list/.test(sql)) { if (/'lead'/.test(sql) || p[2] === 'lead') D.cust.push(cs(row({ party_id: p[1], display_name: 'Ravi Jewellers', user_id: '~acme.cus-0001', on_rail: false }), { added_via: 'lead', txn_count: 0, last_txn_at: null, groups: [], segment: 'new' })); return { rows: [{ customer_list_id: 'CL1' }] }; }
     /* L1 (b297): the memberships table, there only while mem.on — the scenario walks "not run yet" first and "run" after */
     if (/FROM information_schema.tables/.test(sql)) return { rows: mem.on ? [{ '?column?': 1 }] : [] };
     if (/^SELECT DISTINCT ON \(item_id\)/.test(sql)) return { rows: mem.rows.filter((m) => p[2].indexOf(m.item_id) >= 0).map((m) => ({ item_id: m.item_id, grp: m.grp, at: m.at })) };

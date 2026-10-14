@@ -6,7 +6,7 @@
  * COMMIT. At the measured ~500 ms floor for an authed round trip, forty items was twenty seconds — which is
  * exactly what Athi reported on 2026-09-01.
  */
-const API = 'C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..');   /* was C:/dev/… — the test ran on the dev PC only */
 const fs = require('fs');
 
 let pass = 0, fail = 0;
@@ -52,7 +52,7 @@ t('the route has no validator of its own — it uses the library\'s',
 t('the schema is resolved ONCE', (writer.match(/defaultSchemaId\(/g) || []).length === 1);
 t('the currency is resolved ONCE', (writer.match(/currencyFor\(/g) || []).length === 1);
 /* ⭐ One INSERT for the lot, not one per item — unnest, the same shape query-shape.test.js enforces elsewhere. */
-t('one INSERT covers every item', /unnest\(\$3::jsonb\[\]\)/.test(writer));
+t('one INSERT covers every item', /insertStamped\(db, entity_id, sid, stamped\)/.test(writer) && /unnest\(\$3::jsonb\[\]\)/.test(cw));
 t('  ...and there is no per-item insert loop',
   !/for\s*\([^)]*\)\s*\{[\s\S]{0,300}INSERT INTO catalogue_items/.test(writer));
 
@@ -60,7 +60,7 @@ console.log('\n-- ⚠️ nothing half-written --');
 /* The sequential version skipped a failing item and carried on, so a typo in item 30 left 29 created and no
    record of what went missing. */
 t('every item is validated before anything is written',
-  writer.indexOf('validateAgainst') > 0 && writer.indexOf('validateAgainst') < writer.indexOf('INSERT INTO catalogue_items'));
+  writer.indexOf('validateAgainst') > 0 && writer.indexOf('validateAgainst') < writer.indexOf('insertStamped('));
 t('  ...and a refusal names the failing indexes', /invalid: bad/.test(writer) && /index: i/.test(writer));
 t('  ...and writes nothing when any is bad',
   /if \(bad\.length\)[\s\S]{0,200}return \{ ok: false, status: 400/.test(writer));
@@ -88,7 +88,7 @@ console.log('\n-- ⚠️ and the caller no longer loops --');
  * wizard: it was "no front end adds products one request at a time in a loop". That is asserted across the whole web
  * app now — app.html and every app/*.js — so the next screen that adds many products cannot quietly loop either.
  */
-const WEBP = 'C:/dev/chitbridge-web/public';
+const WEBP = require('path').join(API, '..', 'chitbridge-web', 'public');
 const webFiles = [WEBP + '/app.html'].concat(fs.readdirSync(WEBP + '/app').filter((f) => /\.js$/.test(f)).map((f) => WEBP + '/app/' + f));
 const loops = [];
 for (const f of webFiles) {
@@ -112,7 +112,7 @@ t('  ...and the refusal says where the other two live',
 /* ⚠️ THE SAME LIBRARY CALL THE SINGLE ROUTE MAKES. A bulk path that re-implements the stamp is how the bulk
    answer and the single answer start disagreeing about what "unavailable" recorded. */
 t('it stamps through itemstatus, not a copy', /itemstatus\.stamp\(/.test(statusBulk));
-t('one UPDATE covers every id', /item_id = ANY\(\$3::uuid\[\]\)/.test(statusBulk));
+t('one UPDATE covers every id', /catwrite\.patchItems\(db, entity_id, \{ ids, merge: rec \}/.test(statusBulk));   /* CAT-W1: one statement in the one writer */
 t('  ...and it names the ids that did not move', /missed/.test(statusBulk));
 
 console.log('\n-- ⚠️ the loop that made categorising slow --');
@@ -121,13 +121,15 @@ t('the bulk update route exists', bulkUpdate.length > 0);
 t('the schema is resolved ONCE', (bulkUpdate.match(/defaultSchemaId/g) || []).length === 1);
 t('the currency is resolved ONCE', (bulkUpdate.match(/currencyFor/g) || []).length === 1);
 /* ⭐ unnest pairs each id with its OWN new item_data — one statement, not one per row. */
-t('one statement pairs each id with its own data', /unnest\(\$1::uuid\[\], \$2::text\[\]\)/.test(bulkUpdate));
+/* CAT-W1: the statement lives in the one product writer now (lib/catalogue-write.patchItems) */
+t('one statement pairs each id with its own data', /catwrite\.patchItems\(db, entity_id,\s*items\.map/.test(bulkUpdate)
+  && /unnest\(\$1::uuid\[\], \$2::text\[\]/.test(fs.readFileSync(API + '/lib/catalogue-write.js', 'utf8')));
 t('every item is validated before anything is written',
-  bulkUpdate.indexOf('validateItem') < bulkUpdate.indexOf('UPDATE catalogue_items'));
+  bulkUpdate.indexOf('validateItem') >= 0 && bulkUpdate.indexOf('validateItem') < bulkUpdate.indexOf('patchItems'));
 t('  ...and a refusal names the failing ids', /id: items\[i\]\.id/.test(bulkUpdate));
 
 console.log('\n-- ⚠️ and the caller no longer loops --');
-const web2 = fs.readFileSync('C:/dev/chitbridge-web/public/app.html', 'utf8');
+const web2 = fs.readFileSync(WEBP + '/app.html', 'utf8');
 const webCode2 = web2.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 const cat = webCode2.slice(webCode2.indexOf('async function prodCategoriseApply'),
                           webCode2.indexOf('function prodCatgFilter'));

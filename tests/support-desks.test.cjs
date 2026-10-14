@@ -193,7 +193,9 @@ ok('it reuses the ORDER path’s identity, not a second anonymous sender',
   'a second mechanism for who a shopper is ends up with two different answers');
 
 ok('the code is SPENT, so one code is one ticket',
-  /otp_code=NULL[\s\S]{0,120}WHERE identity_id=\$1`, \[c\.identity_id\]\);\s*\r?\n\s*\r?\n\s*const SEV/.test(cat),
+  /* SH-OTP1: the spend is lib/otp.js spendShopperOtp now — called before the ticket, and the helper clears the code */
+  /await spendShopperOtp\(query, c\.identity_id\);\s*\r?\n\s*\r?\n\s*const SEV/.test(cat)
+    && /otp_code=NULL[\s\S]{0,80}WHERE identity_id=\$1/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'otp.js'), 'utf8')),
   'verifyOtp does not clear it — without this one code posts tickets for fifteen minutes');
 
 /* ⚠️ THE RESOLVED SHOP'S OWN BRIDGE ID, not the URL param — the link may carry a handle, and resolveEntity has

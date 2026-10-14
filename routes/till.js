@@ -21,6 +21,7 @@ const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — 
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
+const catwrite = require('../lib/catalogue-write');   /* ⭐ CAT-W1: the one product writer (patchItems) */
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 /**
@@ -548,7 +549,7 @@ router.get('/snapshot', auth, async (req, res) => {
        An ABN's or a TRN's first two digits are not a state; they reached the counter as one and the shop panel said "CGST + SGST" in Sydney. */
     const stateSplit = require('../lib/tax-lines').splitsByState(cbCountry);
     /* CX0 + STD2: the money the counter bills in — the shop's own, else its PACK's; neither → null and the ONE sentence (country-setup.MONEY_UNSTATED) */
-    const shopMoney = party.currency || ((require('../lib/regulation').packFor(cbCountry) || {}).currency) || null;
+    const shopMoney = require('../lib/country-setup').shopMoney(party.currency, cbCountry);   /* SEC3: the one reader */
     /* ⭐ ONE MAPPING from a product's data to a counter row — owned rows and network lines both go through it, so a field
        added for one can never be missing from the other */
     /**
@@ -925,10 +926,7 @@ router.post('/stock', auth, auth.requireScope('till'), async (req, res) => {
     const rec = itemstatus.stamp({ status, until: (req.body && req.body.until) || undefined,
                                    note: (req.body && req.body.note) || undefined },
                                  { actor_name: (req.body && req.body.by) || 'the counter' });
-    const r = await withEntity(entity_id, (db) => db.query(
-      'UPDATE catalogue_items SET item_data = COALESCE(item_data, \'{}\'::jsonb) || $1::jsonb, updated_at = NOW()'
-      + ' WHERE entity_id = $2 AND item_id = $3 RETURNING item_id, item_data',
-      [JSON.stringify(rec), entity_id, item_id]));
+    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id, merge: rec }], { returning: 'item_id, item_data' }));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     shopChanged(entity_id, 'stock ' + status);
     const d = r.rows[0].item_data || {};
@@ -974,10 +972,7 @@ router.post('/stock/bulk', auth, auth.requireScope('till'), async (req, res) => 
 
     const rec = itemstatus.stamp({ status, note: b.note || undefined },
                                  { actor_name: b.by || 'the counter' });
-    const r = await withEntity(entity_id, (db) => db.query(
-      'UPDATE catalogue_items SET item_data = COALESCE(item_data, \'{}\'::jsonb) || $1::jsonb, updated_at = NOW()'
-      + ' WHERE entity_id = $2 AND item_id = ANY($3::uuid[]) RETURNING item_id',
-      [JSON.stringify(rec), entity_id, ids]));
+    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, { ids, merge: rec }));
 
     shopChanged(entity_id, 'stock ' + status + ' ×' + r.rows.length);
     const n = r.rows.length;
@@ -1143,32 +1138,26 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
     const item_id = String(b.item_id || '');
     if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
 
-    let sql, args;
-    if (b.offer_id != null) {
-      const offer_id = String(b.offer_id);
-      const excluded = b.excluded === true || b.excluded === 'true';
-      sql = "WITH kept AS ("
-          + "  SELECT COALESCE(jsonb_agg(x), '[]'::jsonb) AS ex"
-          + "  FROM catalogue_items ci"
-          + "  LEFT JOIN LATERAL jsonb_array_elements_text("
-          + "    CASE WHEN jsonb_typeof(ci.item_data->'offers_excluded') = 'array'"
-          + "         THEN ci.item_data->'offers_excluded' ELSE '[]'::jsonb END) x ON x <> $3"
-          + "  WHERE ci.entity_id = $1 AND ci.item_id = $2)"
-          + " UPDATE catalogue_items SET item_data = COALESCE(item_data, '{}'::jsonb)"
-          + "   || jsonb_build_object('offers_excluded',"
-          + "        CASE WHEN $4 THEN (SELECT ex FROM kept) || to_jsonb($3::text) ELSE (SELECT ex FROM kept) END),"
-          + "   updated_at = NOW()"
-          + " WHERE entity_id = $1 AND item_id = $2 RETURNING item_id, item_data";
-      args = [entity_id, item_id, offer_id, excluded];
-    } else if (b.screen !== undefined) {
-      sql = "UPDATE catalogue_items SET item_data = COALESCE(item_data, '{}'::jsonb) || jsonb_build_object('screen', $3::boolean),"
-          + " updated_at = NOW() WHERE entity_id = $1 AND item_id = $2 RETURNING item_id, item_data";
-      args = [entity_id, item_id, b.screen === true || b.screen === 'true'];
-    } else {
-      return res.status(400).json({ error: 'validation', message: 'nothing to set — pass screen, or offer_id with excluded' });
-    }
+    let merge;
+    if (b.offer_id != null) merge = null;   /* the list is read under the row lock below */
+    else if (b.screen !== undefined) merge = { screen: b.screen === true || b.screen === 'true' };
+    else return res.status(400).json({ error: 'validation', message: 'nothing to set — pass screen, or offer_id with excluded' });
 
-    const r = await withEntity(entity_id, (db) => db.query(sql, args));
+    const r = await withEntity(entity_id, async (db) => {
+      if (b.offer_id != null) {
+        /* the opt-out list, minus this offer, plus it again when excluded — read FOR UPDATE so two counters toggling at once
+           both land, then written by the one product writer (CAT-W1; the SQL that did both in one statement kept a [null]). */
+        const offer_id = String(b.offer_id);
+        const excluded = b.excluded === true || b.excluded === 'true';
+        const cur = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2 FOR UPDATE', [entity_id, item_id]);
+        if (!cur.rows.length) return { rows: [] };
+        const was = (cur.rows[0].item_data || {}).offers_excluded;
+        const kept = (Array.isArray(was) ? was : []).filter((x) => x != null)
+          .map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).filter((x) => x !== offer_id);
+        merge = { offers_excluded: excluded ? kept.concat([offer_id]) : kept };
+      }
+      return catwrite.patchItems(db, entity_id, [{ item_id, merge }], { returning: 'item_id, item_data' });
+    });
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     const d = r.rows[0].item_data || {};
     /* ⭐ the shop screen and every open counter hear about it on the same bell a price change rides */
@@ -1513,10 +1502,7 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
                       price_was: (was == null ? null : Number(was)),
                       price_changed_at: new Date().toISOString(),
                       price_changed_by: String((req.body && req.body.by) || 'the counter').slice(0, 80) };
-      const u = await db.query(
-        'UPDATE catalogue_items SET item_data = COALESCE(item_data, \'{}\'::jsonb) || $1::jsonb, updated_at = NOW()'
-        + ' WHERE entity_id = $2 AND item_id = $3 RETURNING item_data',
-        [JSON.stringify(patch), entity_id, item_id]);
+      const u = await catwrite.patchItems(db, entity_id, [{ item_id, merge: patch }], { returning: 'item_data' });
       return { was, now: price, name: (u.rows[0].item_data || {}).name || null };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
@@ -1863,8 +1849,7 @@ router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res)
       if (!k) return;
       if (!isScreenKey(k)) { refused = true; return; }
       found = true;
-      await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
-        [JSON.stringify({ api_keys: list.filter((x) => String(x.jti) !== jti) }), entity_id]);
+      await policy.patchKey(db, entity_id, [], { api_keys: list.filter((x) => String(x.jti) !== jti) }, { op: 'merge' });
     });
     if (refused) return res.status(403).json({ error: 'Forbidden', message: 'Only a shop screen can be switched off from the counter.' });
     if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
@@ -1893,8 +1878,7 @@ router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res)
       if (!isScreenKey(k)) { refused = true; return; }
       found = true;
       const next = list.map((x) => (String(x.jti) === jti ? Object.assign({}, x, { name: name || null }) : x));
-      await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
-        [JSON.stringify({ api_keys: next }), entity_id]);
+      await policy.patchKey(db, entity_id, [], { api_keys: next }, { op: 'merge' });
     });
     if (refused) return res.status(403).json({ error: 'Forbidden', message: 'Only a shop screen can be renamed from the counter.' });
     if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
@@ -2631,8 +2615,7 @@ router.post('/alias', auth, async (req, res) => {
       const same = (a) => String(a.text || '').toLowerCase() === text.toLowerCase() && String(a.by || '').toLowerCase() === by.toLowerCase();
       const kept = list.filter((a) => !same(a));                 /* saying it again replaces what was said before */
       kept.push({ by: by || null, text, unit, factor, at: new Date().toISOString() });
-      await db.query('UPDATE catalogue_items SET item_data = item_data || $3::jsonb, updated_at = NOW() WHERE entity_id = $1 AND item_id = $2',
-        [entity_id, item_id, JSON.stringify({ aliases: kept })]);
+      await catwrite.patchItems(db, entity_id, [{ item_id, merge: { aliases: kept } }]);
       return kept;
     });
     if (!out) return res.status(404).json({ error: 'no such product' });
