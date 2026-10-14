@@ -6,7 +6,7 @@ Detailed dispute change-log: `docs/HANDOFF-dispute-notifications-2026-06-28.md`.
 
 - Repo `chitbridge-api` — local **`C:\dev\chitbridge-api`** (moved off `Downloads` 2026-06-28 — see hazard note)
 - Web `chitbridge-web` — local **`C:\dev\chitbridge-web`** (moved off `Downloads` 2026-06-28)
-- DB: Supabase `bzacyrdrnzdbficjplcn` · API: Railway · "live" = the dev env
+- DB: Supabase `<project-ref>` (the ref is env only — SEC0, `.gitleaks.toml`) · API: Railway · "live" = the dev env
 - Backup repo: private `maharishia07/cb-context-backup`
 - **Web has two sides** (one SPA, switched by `CFG.STAGE`): **demo** (`web_demo`, mock, no-login — do NOT
   touch/wire) vs **dev/uat/live** (real API, the working model). Demo is contained in `DEMO`/`STORE`/
@@ -258,7 +258,7 @@ From the reviewing-Claude hand-off (`CB-REMAINING-FINDINGS-for-CLI.md`), each it
 
 ## DEPLOY RUNBOOK (when the push throttle lifts) — see `docs/DEPLOY-RUNBOOK.md` for the full current sequence
 
-1. Run `migration_dispute_routing.sql` on Supabase `bzacyrdrnzdbficjplcn` (1 additive column).
+1. Run `migration_dispute_routing.sql` on Supabase `<project-ref>` (1 additive column).
 2. Merge `feat/dispute-actor-routing` → `main`; tag `baseline-9-dispute-routing`; add a BASELINES.md row.
 3. Push `main` + tags `baseline-8-self-dispute`, `baseline-9-dispute-routing` → Railway auto-deploys.
 4. Sync `cb-context-backup` (memory + spine + docs/).

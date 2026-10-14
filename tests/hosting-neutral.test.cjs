@@ -6,6 +6,8 @@
  *   3 the object store signs with AWS SigV4: AWS's two published example signatures, byte for byte; the transport is picked by config.
  *   4 the migration ledger: the chain includes b304 (the ledger itself) and --record-through takes the baseline with it.
  *   5 no *.railway.app / *.vercel.app literal in the api's runtime, the counter kit or the workflows, beyond the named exceptions.
+ *   6 SEC0: no Supabase PROJECT REF in any tracked file — the rule is READ from .gitleaks.toml (id cb-supabase-project-ref), so gitleaks in
+ *     CI and this offline guard run the one regex; proved on the four shapes it was found in (built at run time, never written here).
  * Offline: no database, no network (the sockets in 1 go to closed loopback ports).
  */
 'use strict';
@@ -41,7 +43,7 @@ it('a missing or malformed DATABASE_URL is refused (a pooler alone is not a conf
 });
 it('db/index.js names no pooler host, no project ref and no region list', () => {
   const src = fs.readFileSync(path.join(API, 'db', 'index.js'), 'utf8');
-  assert.ok(!/pooler\.supabase|supabase\.com|bzacyrdrnzdbficjplcn|POOLER_REGIONS|sslForHost/.test(src));
+  assert.ok(!/pooler\.supabase|supabase\.com|POOLER_REGIONS|sslForHost/.test(src));   // the project ref itself: §6, repo-wide
 });
 /* the real thing: a child loads db/index.js with every socket connect recorded, and a query fails against closed ports */
 function socketsOf(env) {
@@ -136,6 +138,44 @@ it('⭐ no *.railway.app / *.vercel.app literal in the runtime, the kit or the w
     if (n > (ALLOWED[rel] || 0)) bad.push(rel + ' ×' + n);
   }
   assert.deepStrictEqual(bad, [], 'name the api through config (PUBLIC_API_BASE / PUBLIC_WEB_BASE / connector.json / vars.API_URL): ' + bad.join('; '));
+});
+
+/* ── 6 · SEC0: the Supabase project ref is env, never a literal ── */
+/** the ONE pattern: gitleaks' own rule in .gitleaks.toml, so CI and this guard cannot drift */
+function projectRefRule() {
+  const toml = fs.readFileSync(path.join(API, '.gitleaks.toml'), 'utf8');
+  const m = /\[\[rules\]\]\s*\nid = "cb-supabase-project-ref"[\s\S]*?\nregex = '''([^\n]+)'''/.exec(toml);
+  assert.ok(m, '.gitleaks.toml has no rule cb-supabase-project-ref');
+  return new RegExp(m[1], 'g');
+}
+it('⭐ .gitleaks.toml carries rule cb-supabase-project-ref and it catches every shape the ref was found in (SEC0)', () => {
+  const R = projectRefRule();
+  const REF = 'bcdfg'.repeat(4);                      // 20 lowercase letters, built here — never a literal ref in this file
+  const hits = (s) => (s.match(R) || []).length;
+  assert.ok(hits('DATABASE_URL=postgres://postgres:pw@db.' + REF + '.supabase.co:5432/postgres') >= 1, 'a *.supabase.co host');
+  assert.ok(hits('editor: https://supabase.com/dashboard/project/' + REF + '/sql') >= 1, 'the dashboard URL');
+  assert.ok(hits('--   user  cb_app.' + REF + '   (pooler format)') >= 1, 'the pooler user <role>.<ref>');
+  assert.ok(hits('- DB: Supabase `' + REF + '` · API: Railway') >= 1, 'after the word Supabase');
+  assert.ok(hits('`:93` ref `' + REF + '`, `:96`') >= 1, 'after the word ref');
+  assert.ok(hits('(project ' + REF + '). ONE result set') >= 1, 'after the word project');
+  /* the placeholders the docs and fixtures use must stay clean */
+  ['postgres://postgres:pw@db.example-host.supabase.co:5432/postgres', 'https://<ref>.supabase.co/storage/v1/s3', 'user `postgres.<project-ref>`',
+   'S3_ENDPOINT: https://ref.supabase.co', 'https://supabase.com/dashboard/project/<project-ref>/sql',
+   'the word ' + 'international' + 'ization' + ' alone']   // a 20-letter word with no context word — joined here so THIS line never trips the rule
+    .forEach((s) => assert.strictEqual(hits(s), 0, 'a placeholder trips the rule: ' + s));
+});
+it('⭐ no tracked file carries a Supabase project ref (SEC0 — it is the host in DATABASE_URL / S3_ENDPOINT, env only)', () => {
+  const R = projectRefRule();
+  const files = spawnSync('git', ['-C', API, 'ls-files', '-z'], { encoding: 'utf8', maxBuffer: 64 << 20 }).stdout.split('\0').filter(Boolean);
+  assert.ok(files.length > 100, 'git ls-files gave ' + files.length + ' files');
+  const bad = [];
+  for (const f of files) {
+    let s; try { s = fs.readFileSync(path.join(API, f), 'utf8'); } catch (_) { continue; }   // a path git tracks but the checkout lacks
+    if (s.indexOf('\0') >= 0) continue;                                                      // binary
+    const m = s.match(R);
+    if (m) bad.push(f + ' (' + m[0].slice(0, 40) + ')');
+  }
+  assert.deepStrictEqual(bad, [], 'write <ref> / <project-ref>, or db.example-host.supabase.co in a fixture: ' + bad.join('; '));
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');

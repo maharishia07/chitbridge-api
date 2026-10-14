@@ -26,7 +26,7 @@ console.log('\n══ sim-load: local only, one plan, one clock ══\n');
 const L = require(path.join(ROOT, 'tools', 'sim-load.cjs'));
 ok('exports localOnly and CHAIN_SKIP when required (not run)', typeof L.localOnly === 'function' && L.CHAIN_SKIP instanceof RegExp);
 const yes = ['postgres://postgres:pw@127.0.0.1:5432/cb_sim', 'postgresql://postgres:pw@localhost/cb', 'postgres://u:p@[::1]:5432/x', 'postgres://u:p@db:5432/cb', 'postgres://u:p@postgres/cb', 'postgres://u:p@cb-db_1/cb'];
-const no = ['postgres://postgres:pw@db.bzacyrdrnzdbficjplcn.supabase.co:5432/postgres', 'postgres://postgres.ref:pw@aws-0-ap-south-1.pooler.supabase.com:6543/postgres',
+const no = ['postgres://postgres:pw@db.example-host.supabase.co:5432/postgres', 'postgres://postgres.ref:pw@aws-0-ap-south-1.pooler.supabase.com:6543/postgres',
   'postgres://u:p@containers-us-west-1.railway.app:5432/railway', 'postgres://u:p@10.0.0.5:5432/cb', 'postgres://u:p@192.168.1.10/cb', 'postgres://u:p@localhost.evil.com/cb',
   'mysql://root@localhost/cb', 'http://localhost:5432', '', 'not a url', 'postgres://u:p@/cb'];
 for (const u of yes) ok('accepts ' + u, L.localOnly(u).ok === true, JSON.stringify(L.localOnly(u)));

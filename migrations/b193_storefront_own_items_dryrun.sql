@@ -29,7 +29,7 @@
 -- ⭐ I could not settle it from a test account: the pooled entity is private and owns no products, so it cannot
 -- show the asymmetry. This asks the live database instead. It writes NOTHING.
 --
--- Run in the Supabase SQL editor (project bzacyrdrnzdbficjplcn). ONE result set, no psql meta-commands.
+-- Run in the Supabase SQL editor (the project DATABASE_URL names — b188 says how to check). ONE result set, no psql meta-commands.
 -- WITHOUT RLS context: run as the owner role, so these counts are the true ones and not a filtered view.
 
 WITH shops AS (
