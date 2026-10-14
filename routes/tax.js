@@ -58,38 +58,71 @@ router.get('/gstr', auth, async (req, res) => {
 
 /* ── THE TAX ENGINE AS A SERVICE (rung 2) ──
  *   POST /api/tax/rate     (key: tax)  { lines:[{ item_id?|code?|name, hsn? }] } → the slab each line resolves to on THIS entity's shelf
- *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ name, qty, unit_price, discount?, rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax? }
- *                                       → the INV-01 block; a line without a rate takes the shelf's; seller omitted = this entity
+ *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ item_id?|code?|name, qty, unit_price?, discount?, gst_rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax?, currency? }
+ *                                       → the INV-01 block + money (by rate) · currency · pack · basis; a line without a rate takes the shelf's, without a price the shelf's;
+ *                                         seller omitted = this entity; priceIncludesTax omitted = this shop's setting
  * Global by scheme: GST (state decides intra/inter) or a VAT-type scheme (the border decides domestic/cross) — the line's
  * or the slab's scheme, the parties' Country. */
 const S = require('../lib/services');
 router.post('/rate', auth, auth.requireScope('tax'), async (req, res) => {
   try {
-    const lines = S.normLines(req.body); if (!lines.length) return res.status(400).json({ error: 'validation', message: 'lines[] required' });
+    const lines = S.normLines(req.body); if (!lines.length) throw S.refuse(400, 'NO_LINES', 'Send at least one line in lines[].');
     const sh = await S.shelfOf(auth.entityOf(req));
     const rated = S.rateLines(lines, sh);
     res.json({ engine: 'chitbridge-tax', version: 1, lines: rated.map((l) => ({ key: l.key, item_id: l.item_id, code: l.code, name: l.name, gst_rate: l.gst_rate, cess_rate: l.cess_rate, hsn: l.hsn, slab: l.tax_slab_name, source: l.tax_source, scheme: l.tax_scheme })) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { const f = S.quoteFailure(e, 'tax/rate'); res.status(f.status).json(f.body); }
 });
+/**
+ * ⭐ TAX-SRV1 — the quote agrees with the counter and explains itself. The SAME engine the counter bills by (tax.determine via
+ * services.computeTax; the counter's CBTax.determine → CBTax.moneyOf), and:
+ *   G2 · priceIncludesTax left out → the SHOP's setting (policy price_includes_tax, def 'yes' — the counter's taxIncluded), said in `basis`
+ *   G1 · `money` = tax.moneyOf (by_rate · heads · totals — what the counter's slip reads), `currency` (the seller's pack's), `pack` (id · version · scheme)
+ *   G3 · a line with only item_id / code is priced by the one price reader (services.priceLine — money.priceOf + the pricing structure)
+ *   G5 · a refusal is 400 / 422 with a `code` and one sentence (services.quoteFailure); never 500 + raw text
+ */
 router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
   try {
-    const body = req.body || {}; const lines = S.normLines(body); if (!lines.length) return res.status(400).json({ error: 'validation', message: 'lines[] required' });
+    const body = req.body || {}; const lines = S.normLines(body);
+    S.checkLines(lines);
     const entity_id = auth.entityOf(req);
-    const needShelf = lines.some((l) => l.gst_rate == null);
+    const shop = await S.shopOfEntity(entity_id);
+    const basis = S.priceBasis(body, shop);
+    const needShelf = lines.some((l) => l.gst_rate == null || l.listPrice == null);
     const sh = needShelf ? await S.shelfOf(entity_id) : null;
-    const rated = sh ? S.rateLines(lines, sh) : lines;
-    const mine = await S.partyOfEntity(entity_id);
-    const seller = S.party(body.seller, mine);
+    const pricing = [];
+    const priced = lines.map((l, i) => {
+      if (l.listPrice != null) return l;
+      const prod = sh && sh.productOf(l);
+      const p = (l.item_id || l.code) && prod ? S.priceLine(l, prod) : null;
+      if (!p || p.unit_price == null || !Number.isFinite(Number(p.unit_price))) {
+        throw S.refuse(422, 'NO_PRICE', (l.name ? '"' + String(l.name).slice(0, 60) + '"' : 'Line ' + (i + 1)) + (prod ? ' has no price on your shelf' : ' is not a product on your shelf') + ' — send its unit_price, or set the price on the product.');
+      }
+      pricing.push({ key: l.key, unit_price: p.unit_price, list_price: p.list_price, structure: p.structure, why: p.why });
+      return Object.assign({}, l, { listPrice: p.unit_price, name: l.name || p.name });
+    });
+    const rated = sh ? S.rateLines(priced, sh) : priced;
+    const seller = S.party(body.seller, shop.party);
     /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
     const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
-    const det = S.computeTax({ seller, buyer, lines: rated.map((l) => Object.assign({}, l, { unit_price: l.listPrice })), priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
-    res.json({ engine: 'chitbridge-tax', version: 1, seller: { Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType }, buyer: { Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country }, invoice: det, heads: T.heads(det) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+    let det;
+    try {
+      det = S.computeTax({ seller, buyer, lines: rated.map((l) => Object.assign({}, l, { unit_price: l.listPrice })), priceIncludesTax: basis.price_includes_tax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
+    } catch (e) {
+      require('../lib/logger').warn('tax/compute: engine refused', { err: e && e.message });
+      throw S.refuse(422, 'TAX_NOT_DECIDED', 'The tax could not be decided for these lines — check the scheme and both parties\' countries.');
+    }
+    const currency = body.currency ? String(body.currency).toUpperCase() : T.currencyOf(seller);
+    const pk = require('../lib/regulation').lookup(seller.Country);
+    res.json({ engine: 'chitbridge-tax', version: 1, seller: { Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType }, buyer: { Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country },
+      basis, currency, pack: { id: (pk && pk.id) || null, version: (pk && pk.version) || null, scheme: (det._cb && det._cb.scheme) || null, fallback: !!(pk && pk.fallback) },
+      pricing, rates: rated.map((l) => ({ key: l.key, gst_rate: l.gst_rate, cess_rate: l.cess_rate, hsn: l.hsn, slab: l.tax_slab_name || null, source: l.tax_source || (l.gst_rate != null ? 'caller' : null), scheme: l.tax_scheme || null })),
+      invoice: det, heads: T.heads(det), money: require('../lib/tax').moneyOf(det, currency) });
+  } catch (e) { const f = S.quoteFailure(e, 'tax/compute'); res.status(f.status).json(f.body); }
 });
 router.openapi = {
   paths: {
     '/api/tax/rate': { post: { summary: 'The tax slab each line resolves to on this entity\'s shelf', tags: ['tax'], security: [{ apiKey: [] }, { bearer: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['lines'], properties: { lines: { type: 'array', items: { type: 'object', properties: { key: { type: 'string' }, item_id: { type: 'string' }, code: { type: 'string' }, name: { type: 'string' }, hsn: { type: 'string' } } } } } } } } }, responses: { 200: { description: 'rated lines' } } } },
-    '/api/tax/compute': { post: { summary: 'Compute tax on lines (INV-01 block); GST by state, VAT-type by border', tags: ['tax'], security: [{ apiKey: [] }, { bearer: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['lines'], properties: { seller: { $ref: '#/components/schemas/Party' }, buyer: { $ref: '#/components/schemas/Party' }, lines: { type: 'array', items: { $ref: '#/components/schemas/InvoiceLine' } }, scheme: { type: 'string' }, priceIncludesTax: { type: 'boolean' }, reverseCharge: { type: 'boolean' } } } } } }, responses: { 200: { description: 'the INV-01 block and the heads' } } } },
+    '/api/tax/compute': { post: { summary: 'Compute tax on lines (INV-01 block); GST by state, VAT-type by border', tags: ['tax'], security: [{ apiKey: [] }, { bearer: [] }], requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['lines'], properties: { seller: { $ref: '#/components/schemas/Party' }, buyer: { $ref: '#/components/schemas/Party' }, lines: { type: 'array', items: { $ref: '#/components/schemas/InvoiceLine' } }, scheme: { type: 'string' }, priceIncludesTax: { type: 'boolean', description: 'left out = this shop\'s setting (the counter\'s)' }, reverseCharge: { type: 'boolean' }, currency: { type: 'string' } } } } } }, responses: { 200: { description: 'the INV-01 block, the heads, money (by rate), currency, pack, basis' }, 400: { description: 'refused: code NO_LINES · BAD_QTY · BAD_RATE · BAD_PRICE_BASIS' }, 422: { description: 'refused: code NO_PRICE · TAX_NOT_DECIDED' } } } },
     '/api/tax/invoice/{chit_id}': { get: { summary: 'The tax invoice of a chit (session)', tags: ['tax'], security: [{ bearer: [] }], parameters: [{ name: 'chit_id', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'invoice' } } } },
   },
   schemas: {},

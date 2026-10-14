@@ -73,7 +73,7 @@ function answer(text, params) {
   if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, last_check: { at: '2026-10-06T21:00:00Z', ok: true } }] };
   /* STD1: the ONE count — GROUP BY todo over every open row (211 here: more than any page of 50 or 200) */
   if (/FROM books_outbox/.test(sql)) { F.outboxSql = sql; return { rows: [{ todo: 'accept', n: 120 }, { todo: 'add_supplier', n: 90 }, { todo: 'record', n: 1 }] }; }
-  if (/FROM catalogue_items/.test(sql)) return { rows: [{ items: 10, no_cost: 4, cost: SECRET, item_data: { cost: { value: SECRET } } }] };
+  if (/FROM catalogue_items/.test(sql)) return { rows: [{ items: 10, no_cost: F.noCost != null ? F.noCost : 4, no_slab: F.noSlab || 0, charges_tax: F.chargesTax != null ? F.chargesTax : true, cost: SECRET, item_data: { cost: { value: SECRET } } }] };
   if (/FROM combo_templates/.test(sql)) return { rows: [{ n: 2 }] };
   if (/FROM definition WHERE/.test(sql)) return { rows: [{ drafts: 1, live: 5 }] };
   if (/policy_flags->'overdue_days'/.test(sql)) return { rows: [{ overdue_days: null }] };
@@ -180,7 +180,20 @@ const get = (port, p) => new Promise((ok) => {
   t('product-lab: owner gets items + no-cost COUNT', r.json.lines, [{ text: '10 items', value: 10 }, { text: '4 items with no cost', value: 4, tone: 'dn' }]);
   t('product-lab: at most 2 trips (owner)', r.trips <= 2, true);
   t('product-lab: no cost value anywhere in the body', r.body.includes('4242'), false);
-  t('product-lab: no statement selects item_data or a cost value', sent.some((s) => /SELECT[\s\S]*\bitem_data\b[\s\S]*FROM/i.test(s.replace(/\(item_data->'cost'->>'value'\) IS NULL/g, ''))), false);
+  /* the cost predicate and TAX-SRV1's no-slab predicate (lib/tax-shelf NO_SLAB_SQL) name item_data inside a FILTER — a count, never a value */
+  t('product-lab: no statement selects item_data or a cost value', sent.some((s) => /SELECT[\s\S]*\bitem_data\b[\s\S]*FROM/i.test(s.replace(/\(item_data->'cost'->>'value'\) IS NULL/g, '').split(require(path.join(API, 'lib', 'tax-shelf')).NO_SLAB_SQL).join(''))), false);
+  /* ⭐ TAX-SRV1 G7: "N items with no tax slab" — the shelf's rule (the counter's noslab job), counted in the SAME statement, only for a shop that charges tax */
+  F.noSlab = 3; r = await g('product-lab');
+  t('product-lab G7: no cost + no slab share the second line', r.json.lines, [{ text: '10 items', value: 10 }, { text: '4 items with no cost · 3 with no tax slab', value: 4, tone: 'dn' }]);
+  t('product-lab G7: figures.no_slab', r.json.figures.no_slab, 3);
+  t('product-lab G7: still at most 2 trips (the count rides in the same statement)', r.trips <= 2, true);
+  F.noCost = 0; r = await g('product-lab');
+  t('product-lab G7: only the no-slab problem', r.json.lines[1], { text: '3 items with no tax slab', value: 3, tone: 'dn' });
+  F.chargesTax = false; r = await g('product-lab');
+  t('product-lab G7: a shop that charges no tax is never told about slabs', [r.json.lines[1], 'no_slab' in r.json.figures], [{ text: 'Every item has a cost', value: 0 }, false]);
+  WHO = BLIND; F.chargesTax = true; r = await g('product-lab');
+  t('product-lab G7: an actor without costs still sees the no-slab line', r.json.lines, [{ text: '10 items', value: 10 }, { text: '3 items with no tax slab', value: 3, tone: 'dn' }]);
+  WHO = OWNER; F.noSlab = 0; F.noCost = null; F.chargesTax = null;
   WHO = BLIND; r = await g('product-lab');
   t('product-lab: an actor WITHOUT can_see_costs gets the item count only', r.json.lines, [{ text: '10 items', value: 10 }]);
   t('product-lab: ...and no no_cost figure', 'no_cost' in r.json.figures, false);

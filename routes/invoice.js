@@ -29,8 +29,9 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
       excluded: l.excluded.length ? l.excluded : ((prod && Array.isArray(prod.offers_excluded)) ? prod.offers_excluded.map(String) : []) }); });
     /* 1 · pricing structure */
     const priced = lines.map((l) => Object.assign({}, l, S.priceLine(l, sh.productOf(l))));
-    const mine = await S.partyOfEntity(entity_id);
-    const seller = S.party(body.seller, mine);
+    const shop = await S.shopOfEntity(entity_id);
+    const basis = S.priceBasis(body, shop);   /* ⭐ TAX-SRV1 G2: left out = this shop's setting (the counter's), never exclusive by default */
+    const seller = S.party(body.seller, shop.party);
     /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */
     const currency = body.currency || T.currencyOf(seller);
     /* 2 · offers on the priced lines */
@@ -42,15 +43,15 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
     const rated = S.rateLines(withOffers, sh);
     /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
     const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
-    const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
+    const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: basis.price_includes_tax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
     const invoice = Object.assign({ DocDtls: { Typ: 'INV', No: null, Dt: new Date().toISOString().slice(0, 10) }, currency }, det);
     res.json({ engine: 'chitbridge-invoice', version: 1, order: ['pricing structure', 'offers', 'tax'],
       pricing: priced.map((l) => ({ key: l.key, unit_price: l.unit_price, list_price: l.list_price, structure: l.structure, why: l.why })),
       offers: { subtotal: off.ev.subtotal, total: off.ev.total, adjustments: off.ev.adjustments || [], notes: off.ev.notes || [], considered: off.offers_considered },
       rates: rated.map((l) => ({ key: l.key, gst_rate: l.gst_rate, cess_rate: l.cess_rate, hsn: l.hsn, slab: l.tax_slab_name, source: l.tax_source, scheme: l.tax_scheme })),
       seller: { LglNm: seller.LglNm, Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType }, buyer: { LglNm: buyer.LglNm, Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country },
-      invoice, heads: T.heads(invoice) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+      basis, invoice, heads: T.heads(invoice) });
+  } catch (e) { const f = S.quoteFailure(e, 'invoice/build'); res.status(f.status).json(f.body); }
 });
 
 router.get('/:chit_id', auth, auth.requireScope('invoice', 'connector') /* the B2B voucher reads the buyer's GSTIN and the tax split from here */, async (req, res) => {
