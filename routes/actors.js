@@ -268,7 +268,7 @@ router.post('/',
       const identity_id = uuidv4();
       const bridge_id   = generateBridgeId();
       // ⭐ [capability: sign-in] fixedOtp('entity') closes the isSealed() gap generateOTP() never checked —
-      // see lib/identity-auth.js. Same 123456 in dev as an entity's own OTP; a real code once sealed.
+      // see lib/identity-auth.js. Same fixed code as an entity's own OTP on a LOCAL stack; a real code anywhere else (SEC1).
       // M02: 24 h, and refused up front in a sealed env with no Resend / no e-mail (nothing is written then).
       const toEmail = typeof req.body.email === 'string' ? req.body.email.trim() : '';
       const refused = empCode.refusal(toEmail);

@@ -1,5 +1,5 @@
 /**
- * tests/employee-first-signin.test.cjs — Athi's case, 2026-10-08 (production, unsealed, DEV_OTP=123456):
+ * tests/employee-first-signin.test.cjs — Athi's case, 2026-10-08 (production, unsealed, DEV_OTP armed):
  * an EMPLOYEE's first sign-in with the first-time code must end SIGNED IN and ASKED TO SET A PIN, on every door;
  * the PIN must then work. A sealed environment never accepts the fixed code.
  *
@@ -17,7 +17,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-Object.assign(process.env, { JWT_SECRET: 'test-only-secret-employee-first-signin', NODE_ENV: 'development', DEV_OTP: '123456' });
+Object.assign(process.env, { JWT_SECRET: 'test-only-secret-employee-first-signin', NODE_ENV: 'development', DEV_OTP: '123456', DATABASE_URL: 'postgres://cb@127.0.0.1:5432/cb_test' /* SEC1: the fixed codes work on a LOCAL stack only */ });
 ['OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'FROM_EMAIL', 'PLATFORM_ROOT_ENTITY', 'DEV_OTP_IN_RESPONSE'].forEach((k) => { delete process.env[k]; });
 
 const say = console.log.bind(console);
