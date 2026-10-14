@@ -1310,6 +1310,20 @@ router.post('/:bridge_id/login/verify',
     } catch (err) { res.status(500).json({ error: 'Sign-in failed', message: safeErr(err) }); }
   });
 
+/**
+ * ⭐ SH-MY1 (T1-ORD) — THE PAGER CONTRACT for the shopper's own lists (DISCIPLINES §2: top-level total · page · limit, latest
+ * first). One reader for both routes; the server caps the page (MY_PAGE_MAX) whatever the client asks. The total rides the same
+ * statement (COUNT(*) OVER ()) — no second trip.
+ */
+const MY_PAGE_MAX = 50;
+function myPage(req) {
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.max(1, Math.min(MY_PAGE_MAX, parseInt(req.query.limit, 10) || 20));
+  return { page, limit, offset: (page - 1) * limit };
+}
+const myTotal = (rows) => (rows.length ? Number(rows[0]._total) || 0 : 0);
+const myRows = (rows) => rows.map(({ _total, ...r }) => r);
+
 // ── CJ-F1: the signed-in customer's orders + live status ──
 // T2.4 · THE CUSTOMER'S OWN SURFACE. This route existed but was mounted on `auth`, which fails closed on
 // identity_type 'customer' — so its only intended caller could never reach it. It now uses customerAuth.
@@ -1321,14 +1335,17 @@ router.get('/:bridge_id/my-orders', customerAuth, async (req, res) => {
     /* ⚠️ WX-O2C (2026-10-13): MY copy stays 'delivered' (the rail: it reached the shop) — the shop's Accept / Close moves THEIR copy. So
        `shop_status` is the other party's status, read in the same statement through chit_participants (b50, SECURITY DEFINER: the caller must
        be a participant — RLS as me). Before b50 the function is absent (42883): the list still answers, without shop_status. */
-    const sql = (withShop) => `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status${withShop
+    const sql = (withShop) => `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status, COUNT(*) OVER () AS _total${withShop
         ? `, (SELECT p.current_status FROM chit_participants(ch.chit_id) p WHERE p.entity_id <> ch.entity_id LIMIT 1) AS shop_status` : ''}
        FROM chit_header ch
        JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
        WHERE ch.entity_id = $1 AND ch.purpose IN ('order', 'offer')
-       ORDER BY ch.created_at DESC`;
-    const r = await withEntity(me, async (db) => (await trySavepoint(db, (h) => h.query(sql(true), [me]), null)) || db.query(sql(false), [me]));
-    res.json({ orders: r.rows, count: r.rows.length });
+       ORDER BY ch.created_at DESC LIMIT $2 OFFSET $3`;
+    const pg = myPage(req), args = [me, pg.limit, pg.offset];
+    const r = await withEntity(me, async (db) => (await trySavepoint(db, (h) => h.query(sql(true), args), null)) || db.query(sql(false), args));
+    const orders = myRows(r.rows);
+    /* `count` = the rows on this page (kept for older readers); `total` = all of mine — the pager's end marker reads it */
+    res.json({ orders, count: orders.length, total: myTotal(r.rows), page: pg.page, limit: pg.limit });
   } catch (err) { res.status(500).json({ error: 'Orders failed', message: safeErr(err) }); }
 });
 
@@ -1336,10 +1353,12 @@ router.get('/:bridge_id/my-orders', customerAuth, async (req, res) => {
 router.get('/:bridge_id/my-documents', customerAuth, async (req, res) => {
   try {
     const me = req.customer.identity_id;
+    const pg = myPage(req);
     const r = await withEntity(me, (db) => db.query(
-      `SELECT id, chit_id, line_index, name, mime, size, created_at
-         FROM cb_attachment WHERE entity_id = $1 ORDER BY created_at DESC LIMIT 200`, [me]));
-    res.json({ documents: r.rows, count: r.rows.length });
+      `SELECT id, chit_id, line_index, name, mime, size, created_at, COUNT(*) OVER () AS _total
+         FROM cb_attachment WHERE entity_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`, [me, pg.limit, pg.offset]));
+    const documents = myRows(r.rows);
+    res.json({ documents, count: documents.length, total: myTotal(r.rows), page: pg.page, limit: pg.limit });
   } catch (err) { res.status(500).json({ error: 'Documents failed', message: safeErr(err) }); }
 });
 
