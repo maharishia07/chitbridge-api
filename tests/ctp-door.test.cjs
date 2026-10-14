@@ -4,7 +4,7 @@
  * POST /api/ctp/deliver and POST /api/ctp/query are unauthenticated on purpose — the signature, checked against the key
  * on the sender's OWN domain, stands in for a session — so the order and the wording of the refusals ARE the security.
  * Both doors asked "do we deal with this installation?" with the same query and the same three refusals, written out
- * twice; T2-SPLIT lifted that into ONE peer lookup (lib/ctpdirectory peerByKey). This file pins every answer each door
+ * twice; T2-SPLIT lifted that into ONE peer lookup (lib/ctpaddress peerByKey). This file pins every answer each door
  * gives — status, `why`, and that nothing was written — so the lift (and any later edit) cannot move one.
  *
  * The real router; db, the key directory, the envelope opener and the deliverer stubbed. No DB, no network.
