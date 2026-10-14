@@ -340,82 +340,168 @@ router.post('/send',
   validate,
   async (req, res) => {
     try {
-      // Uniform actor model: an actor acts FOR its entity, so the chit is ALWAYS owned by the entity, never the actor.
-      // (created_by_actor_id below records WHO pressed send — the only actor-specific bit, for audit.)
-      const sender_id = entityId(req);
-      let sender_bridge_id = req.identity.bridge_id;
-      let sender_display_name = req.identity.display_name;
+      /* ⭐ T2-SPLIT (2026-10-14): the 1,408 lines that stood here are the named steps below, in order, each under 80
+         lines — the same statements, the same order, the same answers (tests/send-golden.test.cjs, frozen before the split).
+         A step that has answered returns truthy and the send stops there. `st` carries what one step hands the next. */
+      const st = {};
+      for (const step of SEND_STEPS) if (await step(st, req, res)) return;
+    } catch (err) {
       /**
-       * ⚠️⚠️ THE TOKEN'S bridge_id IS A CACHE; THE DATABASE IS THE TRUTH — AND A KEY CACHES IT FOR A YEAR.
+       * ── ⭐⭐⭐ A LOST RACE IS A DUPLICATE, NOT A FAILURE (2026-09-18) ───────────────────────
        *
-       * Athi, 2026-09-16: *"how many chits I create, it is creating the receipt, but not able to sync."* On one PC
-       * only. An api key is minted with `bridge_id: identity.bridge_id || null` (routes/keys.js) and that claim is
-       * then FROZEN for the life of the key. Pair a counter before the shop has a bridge_id and every send from it
-       * puts NULL into sender_entity_bridge_id — `character varying(32) NOT NULL` — so it 500s, for ever, on that
-       * counter alone. The receipt prints because the counter prints locally; the sale never reaches ChitBridge and
-       * no amount of retrying will change that. A counter paired later works, which is what made it look like a
-       * sick PC rather than a stale claim.
+       * b263's unique index closed the hole the duplicate-bill fault came through: the check above is a SELECT,
+       * and two requests arriving together both see nothing and both write. The database now refuses the second
+       * — which is correct, and arrives here as a raw 23505 that would be reported as "Send failed". It is not a
+       * failure. It is the very duplicate we asked the database to catch, and the answer is the one the check
+       * above would have given had it won the race: the existing chit for a retry, or a named collision for two
+       * counters.
        *
-       * ⚠️ So the lookup is no longer an ACTOR special case. Anything missing the claim asks the database, which is
-       * one query on a path that already opens a transaction, and it cannot be wrong the way a year-old claim can.
+       * ⚠⚠ WHY NOT `INSERT … ON CONFLICT DO NOTHING`, which is the usual advice and what was first planned:
+       *   · DO NOTHING makes the INSERT SUCCEED with zero rows, and the transaction then carries on writing
+       *     chit_detail, chit_status and the recipient rows against a header that was never inserted. It turns a
+       *     clean refusal into a half-written chit — a worse fault than the one being fixed, and a silent one.
+       *   · The index is PARTIAL, so inference needs its predicate spelled out at every insert site; there are
+       *     two, and a mismatch there fails open rather than closed.
+       *   · Letting the constraint throw rolls the whole transaction back, which is exactly what should happen.
+       * So the mechanism is the same and the seam is different: the database refuses, nothing is written, and
+       * this translates the refusal into the answer.
+       *
+       * ⚠️ `client_ref` and `sender_id` are declared INSIDE the try and are not in scope here — block scoping,
+       * which is the same rule that made this file's temporal-dead-zone bug (tests/tdz-guard). They are asked of
+       * the request again, through the one reader both sides use.
        */
-      const staleClaim = !sender_bridge_id || !sender_display_name;
-      if (staleClaim || (req.identity.identity_type === 'actor' && req.identity.parent_entity_id)) {
-        const _ent = await query(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [sender_id]);
-        if (_ent.rows[0]) { sender_bridge_id = _ent.rows[0].bridge_id; sender_display_name = _ent.rows[0].display_name; }
+      const raceRef = refOf(req);
+      if (raceRef && err && (err.code === '23505')
+          && /client_ref/.test(String(err.constraint || err.detail || err.message || ''))) {
+        try {
+          const who = entityId(req);
+          const seen = await sameRefLook(who, raceRef);
+          if (seen.rows[0]) {
+            const _bj = req.body && req.body.business_json;
+            const mine = (_bj && _bj.till && _bj.till.id) || null;
+            const theirs = seen.rows[0].till_id || null;
+            const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
+            const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
+            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — via the one function both callers share, so this can no
+               longer drift from it (it used to: this branch had no sameName wording at all). */
+            const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, raceRef);
+            if (verdict.collision) return res.status(409).json(verdict.body);
+            /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
+            return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true,
+                                          client_ref: raceRef, raced: true });
+          }
+        } catch (_) { /* fall through to the ordinary failure — a bad answer here must not hide the real one */ }
       }
-      /**
-       * ⚠️ AND IF IT IS STILL MISSING, REFUSE IN WORDS. A 500 from a NOT NULL constraint tells a shopkeeper that
-       * "something went wrong" and tells the counter to keep retrying something that can never work. This says what
-       * is actually wrong and who can fix it, and the counter shows it on the bill that is stuck.
-       */
-      if (!sender_bridge_id) {
-        return res.status(409).json({ error: 'no_bridge_id',
-          message: 'This shop has no ChitBridge address yet, so a sale cannot be recorded against it. '
-                 + 'Open ChitBridge → Settings and set the shop\'s bridge id, then send this bill again.' });
-      }
-      /**
-       * ⭐⭐⭐ THE NUMBER ON THE PAPER, CHECKED AGAINST THE RULE FOR THIS SHOP'S COUNTRY.
-       *
-       * The counter now asks lib/docnumber for the shape it issues (vendored as /engine/docnumber.js), but the
-       * SERVER held the same rule and accepted anything — so a counter on older code, or one whose till id was
-       * set before the cap existed, could post a number that is too long and nothing would notice.
-       *
-       * ⚠️⚠️ IT RECORDS, IT DOES NOT REFUSE, and that is the whole judgement rather than a shortcut.
-       *
-       * A bill number is not a request — it is already printed and already in a customer's hand. Refusing it
-       * does not un-print it; it wedges the counter's queue forever and loses the sale from the books, which is
-       * strictly worse than a long number. The physical world happened first, and a server does not get a vote
-       * on it. What a server CAN do is say so, and put the finding where the shop will read it.
-       *
-       * ⚠️ ONLY FOR A COUNTER DOCUMENT. `client_ref` carries an ERP's own reference, a WhatsApp id, a connector's
-       * key — none of which are document numbers and none of which this rule governs. The till id is the marker
-       * that this one is a bill, and without it nothing is checked.
-       */
-      /**
-       * ⚠️⚠️ DECLARED HERE BECAUSE THE NUMBER CHECK BELOW READS IT. It used to be declared ~17 lines further down,
-       * and on 2026-09-11 the document-number check was added ABOVE it — so every POST to this route died in the
-       * temporal dead zone with "Cannot access 'client_ref' before initialization", and the screen showed nothing
-       * at all: no toast, no error, the composer simply stayed open.
-       *
-       * ⭐ FOUND BY PRESSING "Save draft" IN A REAL SHOP AND READING THE NETWORK TAB: 500, silently. A `const` read
-       * above its own declaration parses perfectly — `node -c` has nothing to say, because a TDZ violation is a
-       * RUNTIME error — which is why tests/tdz-guard.test.js now exists.
-       */
-      const client_ref = refOf(req);        /* ⚠️ one reader — the route's catch asks the same question again */
+      /* ⭐ a refusal the database made on purpose (b247's population boundary) answers as one — 409, in words — not
+         as "Send failed" (lib/knownerr, external review §23) */
+      const _known = require('../lib/knownerr').known(err);
+      if (_known) return res.status(_known.status).json(_known.body);
+      console.error('Send chit error:', err.message);
+      res.status(500).json({ error: 'Send failed', message: safeErr(err) });
+    }
+  }
+);
 
-      let number_check = null;
-      if (client_ref) {
-        const _b = req.body && req.body.business_json;
-        if (_b && _b.till && _b.till.id) {
-          const v = docnumber.check(client_ref, await countryOfEntity(sender_id));
-          /* ⚠ an unstudied country passes on the only rule everyone agrees on, and `verified` says so — a green
-             tick there would be the platform claiming something nobody checked. */
-          if (!v.ok) number_check = { ok: false, reason: v.reason, verified: v.verified, number: client_ref };
-        }
-      }
+/* ═══ POST /chits/send — THE NAMED STEPS (T2-SPLIT, 2026-10-14) ═════════════════════════════════════════════════════════
+   validate · resolve parties · money · copies · write · after-commit · answer. The policy is unchanged and engine-locked:
+   lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
-      /**
+const SEND_STEPS = [
+  sendSender, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
+  sendBody, sendCredit, sendSource, sendFanOut, sendTrace,
+  sendPrefs, sendRecipients, sendSeller, sendOffers, sendMoney,
+  sendIssued, sendCopyPolicy, sendPromote, sendParticipants, sendRetention,
+  sendFolds, sendDesigns, sendSummary, sendFreeze, sendCopies,
+  sendOperatorCopy, sendWrite, sendCustomers, sendAssign, sendMeter,
+  sendStock, sendBooks, sendAnswer,
+];
+
+/** who is sending — the entity (an actor acts FOR it), its bridge id and name, read fresh when the claim is stale */
+async function sendSender(st, req, res) {
+  // Uniform actor model: an actor acts FOR its entity, so the chit is ALWAYS owned by the entity, never the actor.
+  // (created_by_actor_id below records WHO pressed send — the only actor-specific bit, for audit.)
+  const sender_id = entityId(req);
+  let sender_bridge_id = req.identity.bridge_id;
+  let sender_display_name = req.identity.display_name;
+  /**
+   * ⚠️⚠️ THE TOKEN'S bridge_id IS A CACHE; THE DATABASE IS THE TRUTH — AND A KEY CACHES IT FOR A YEAR.
+   *
+   * Athi, 2026-09-16: *"how many chits I create, it is creating the receipt, but not able to sync."* On one PC
+   * only. An api key is minted with `bridge_id: identity.bridge_id || null` (routes/keys.js) and that claim is
+   * then FROZEN for the life of the key. Pair a counter before the shop has a bridge_id and every send from it
+   * puts NULL into sender_entity_bridge_id — `character varying(32) NOT NULL` — so it 500s, for ever, on that
+   * counter alone. The receipt prints because the counter prints locally; the sale never reaches ChitBridge and
+   * no amount of retrying will change that. A counter paired later works, which is what made it look like a
+   * sick PC rather than a stale claim.
+   *
+   * ⚠️ So the lookup is no longer an ACTOR special case. Anything missing the claim asks the database, which is
+   * one query on a path that already opens a transaction, and it cannot be wrong the way a year-old claim can.
+   */
+  const staleClaim = !sender_bridge_id || !sender_display_name;
+  if (staleClaim || (req.identity.identity_type === 'actor' && req.identity.parent_entity_id)) {
+    const _ent = await query(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [sender_id]);
+    if (_ent.rows[0]) { sender_bridge_id = _ent.rows[0].bridge_id; sender_display_name = _ent.rows[0].display_name; }
+  }
+  /**
+   * ⚠️ AND IF IT IS STILL MISSING, REFUSE IN WORDS. A 500 from a NOT NULL constraint tells a shopkeeper that
+   * "something went wrong" and tells the counter to keep retrying something that can never work. This says what
+   * is actually wrong and who can fix it, and the counter shows it on the bill that is stuck.
+   */
+  if (!sender_bridge_id) {
+    return res.status(409).json({ error: 'no_bridge_id',
+      message: 'This shop has no ChitBridge address yet, so a sale cannot be recorded against it. '
+             + 'Open ChitBridge → Settings and set the shop\'s bridge id, then send this bill again.' });
+  }
+  Object.assign(st, { sender_id, sender_bridge_id, sender_display_name });
+}
+
+/** the bill number on the paper, checked against this shop's country rule — recorded, never refused */
+async function sendNumberCheck(st, req, res) {
+  const { sender_id } = st;
+  /**
+   * ⭐⭐⭐ THE NUMBER ON THE PAPER, CHECKED AGAINST THE RULE FOR THIS SHOP'S COUNTRY.
+   *
+   * The counter now asks lib/docnumber for the shape it issues (vendored as /engine/docnumber.js), but the
+   * SERVER held the same rule and accepted anything — so a counter on older code, or one whose till id was
+   * set before the cap existed, could post a number that is too long and nothing would notice.
+   *
+   * ⚠️⚠️ IT RECORDS, IT DOES NOT REFUSE, and that is the whole judgement rather than a shortcut.
+   *
+   * A bill number is not a request — it is already printed and already in a customer's hand. Refusing it
+   * does not un-print it; it wedges the counter's queue forever and loses the sale from the books, which is
+   * strictly worse than a long number. The physical world happened first, and a server does not get a vote
+   * on it. What a server CAN do is say so, and put the finding where the shop will read it.
+   *
+   * ⚠️ ONLY FOR A COUNTER DOCUMENT. `client_ref` carries an ERP's own reference, a WhatsApp id, a connector's
+   * key — none of which are document numbers and none of which this rule governs. The till id is the marker
+   * that this one is a bill, and without it nothing is checked.
+   */
+  /**
+   * ⚠️⚠️ DECLARED HERE BECAUSE THE NUMBER CHECK BELOW READS IT. It used to be declared ~17 lines further down,
+   * and on 2026-09-11 the document-number check was added ABOVE it — so every POST to this route died in the
+   * temporal dead zone with "Cannot access 'client_ref' before initialization", and the screen showed nothing
+   * at all: no toast, no error, the composer simply stayed open.
+   *
+   * ⭐ FOUND BY PRESSING "Save draft" IN A REAL SHOP AND READING THE NETWORK TAB: 500, silently. A `const` read
+   * above its own declaration parses perfectly — `node -c` has nothing to say, because a TDZ violation is a
+   * RUNTIME error — which is why tests/tdz-guard.test.js now exists.
+   */
+  const client_ref = refOf(req);        /* ⚠️ one reader — the route's catch asks the same question again */
+
+  let number_check = null;
+  if (client_ref) {
+    const _b = req.body && req.body.business_json;
+    if (_b && _b.till && _b.till.id) {
+      const v = docnumber.check(client_ref, await countryOfEntity(sender_id));
+      /* ⚠ an unstudied country passes on the only rule everyone agrees on, and `verified` says so — a green
+         tick there would be the platform claiming something nobody checked. */
+      if (!v.ok) number_check = { ok: false, reason: v.reason, verified: v.verified, number: client_ref };
+    }
+  }
+  Object.assign(st, { client_ref, number_check });
+}
+
+/**
  * ⚠⚠ ONE LOOK-UP, TWO CALLERS. It is asked once BEFORE anything is written (the ordinary duplicate), and again
  * from the route's catch when the b263 unique index refuses an insert (the race the first ask lost). Two copies
  * of this query would be two opinions about what "already here" means. [[feedback-no-duplicate-functions]]
@@ -477,1276 +563,1416 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
     },
   };
 }
-// Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
-      /**
-       * ⭐⭐ THE SAME BILL TWICE IS THE SAME CHIT (the till, 2026-09-07). A counter queues its bills and replays them when the line
-       * comes back; a replay that arrived twice would bill the customer twice and put two vouchers in the books. 'client_ref' is the
-       * till's own bill number — asked for FIRST, before anything is created, and answered with the chit that already exists.
-       * ⚠️ Scoped to this entity: a bill number is unique to the shop that issued it, not to the platform.
-       */
-      /* ⭐ M11: a PHONE's bill names its device and its person, and both must be the session's (lib/holder tillClaimOf) — checked
-         BEFORE the dedupe, so a bill from another phone is never answered as somebody's retry. A key's bill: unchanged. */
-      const tillClaim = tillClaimOf(req.till, req.body && req.body.business_json);
-      if (!tillClaim.ok) {
-        res.locals.code = tillClaim.code;
-        return res.status(400).json({ error: 'Bill claim mismatch', code: tillClaim.code, field: tillClaim.field, client_ref, message: tillClaim.message });
-      }
-      if (tillClaim.stamp) Object.assign(req.body.business_json.till, tillClaim.stamp);   /* merge-patch: `by` is never overwritten by sent_by */
-      if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other';   /* the request log line names it */
-      if (client_ref) {
-        try {
-          const seen = await sameRefLook(sender_id, client_ref);
-          if (seen.rows[0]) {
-            /**
-             * ⭐⭐⭐ A RETRY AND A COLLISION LOOK IDENTICAL FROM HERE, AND THEY ARE OPPOSITES.
-             *
-             * Athi, 2026-09-11, planning two testers at once: *"we cannot have same receipt number if the same
-             * login opens from couple of places?"* — and the answer was that we could.
-             *
-             * The counter numbers its bills LOCALLY as `<till>/<FY>/<nnnn>`, and the till prefix defaults to
-             * `C1` and is only ever set by hand. So two counters nobody renamed both produce C1/26-27/0041.
-             * Returning the first chit is exactly right for a RETRY from the same device — which is what this
-             * guard was built for — and exactly wrong for two devices: the second shop's real sale is absorbed,
-             * the counter is told it succeeded, and it hands back somebody else's chit id.
-             *
-             * ⚠⚠ AND IT IS NOT MERELY A LOST RECORD. An invoice number must be a consecutive serial UNIQUE for
-             * the financial year, so two counters on one number is two tax invoices carrying one number.
-             *
-             * ⭐ THE TILL ID TELLS THEM APART, and it is already on the chit. Same till — or either side missing
-             * one, which is every chit that is not a counter bill — behaves exactly as before. Different tills
-             * is REFUSED AND NAMED, because a number that two devices both think is theirs is a thing a person
-             * has to settle, not something a server may quietly pick a winner for.
-             */
-             /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
-                here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
-            const _bj = req.body && req.body.business_json;
-            const mine = (_bj && _bj.till && _bj.till.id) || null;
-            const theirs = seen.rows[0].till_id || null;
-            /**
-             * ── ⚠️⚠️⚠️ THE GUARD ABOVE NEVER FIRED FOR THE ONE CASE ITS OWN COMMENT DESCRIBES ────────────────
-             *
-             * Athi, 2026-09-17: *"from this PC the bills are pushed, but still not happening from the other PC."*
-             * Only three counter bills had reached ChitBridge in five days — C1/26-27/0005, 0006, 0007 — and his
-             * two PCs, on 152.233.15.121 and .123, were BOTH counter `C1`, because nobody had renamed either.
-             *
-             * The comment above says, in so many words, "two counters nobody renamed both produce C1/26-27/0041".
-             * The code then compared TILL IDS — and two unrenamed counters have the SAME till id, so every
-             * collision between them read as a same-device RETRY. The second PC's real sale was absorbed, the
-             * server answered 200 with the FIRST PC's chit id, and the counter recorded that as its receipt and
-             * showed "✓ sent". Nothing failed anywhere, which is why no log, no queue and no panel caught it — and
-             * why the acknowledgement added on 2026-09-16 was fooled too: it received a real chit id, just
-             * somebody else's.
-             *
-             * ⭐ `billed_at` IS WHAT TELLS THEM APART, and every counter already sends it. A retry is the SAME
-             * bill, so it carries the same moment it was taken. Two devices issuing one number carry two different
-             * moments — they would have to be billed in the same millisecond. So: same moment → a retry, answered
-             * as before; different moments → a collision, refused and named, whatever the till ids say.
-             * ⚠️ Either side missing it — every chit that is not a counter bill, and anything older — behaves
-             * exactly as before. This only ever turns a silent absorption into a spoken refusal.
-             */
-            const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
-            const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
-            const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
-            if (verdict.collision) return res.status(409).json(verdict.body);
-            return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });
-          }
-        } catch (_) { /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */ }
-      }
-      /**
-       * ⚠️ A TILL KEY MAY ONLY BILL ITSELF. The key lives on a shop PC where anyone can pick it up; a counter sale is the shop's own
-       * record and never addresses another business. The scope opens the send route; this closes it to one shape.
-       */
-      let oneSided = null;   /* { why } when a counter bill is recorded without its customer's copy — see tillMaySend */
-      const tk = req.till && req.till.key;   /* M04 — the holder says whether a key is speaking (middleware/auth holderOf) */
-      if (tk && tk.scopes.indexOf('till') >= 0 && !tk.scopes.includes('connector')) {
-        const rl = (Array.isArray(req.body.recipients) ? req.body.recipients : (Array.isArray(req.body.receivers) ? req.body.receivers : []));
-        const outward = rl.filter((r) => r && r.self !== true && String(r.entity_id || '') !== String(sender_id));
-        const gate = outward.length ? await tillMaySend(sender_id, outward, req.body) : null;
-        if (gate && gate.refuse) {
-          /* ⚠️ code TILL_SEND_REFUSED: a refusal of THIS BILL's shape, not of the key — the counter keeps it and sends the rest */
-          return res.status(403).json({ error: 'Forbidden', code: 'TILL_SEND_REFUSED',
-            message: 'Not sent: ' + gate.refuse + '. Counter bills go only to listed customers on ChitBridge.' });
-        }
-        if (gate && gate.oneSided) {
-          /* ⭐ ONE-SIDED: the sale and its ledger are recorded; only the customer's copy is dropped. The bill keeps naming its
-             customer (business_json.customer) — it is still their bill, they simply do not receive a copy on ChitBridge. */
-          const keep = rl.filter((r) => !(r && r.self !== true && String(r.entity_id || '') !== String(sender_id)));
-          if (!keep.some((r) => r && r.self === true)) keep.push({ self: true, name: 'self' });
-          if (Array.isArray(req.body.recipients)) req.body.recipients = keep; else req.body.receivers = keep;
-          oneSided = { why: gate.oneSided };
-        }
-      }
-      const purpose = req.body.purpose || 'order';
-      const manual_subject = sanitise(req.body.manual_subject || req.body.subject || '');
-      /* ⭐ STAMP IDENTITY AND ORDER AT THE DOOR. Every line gets a `line_id` that survives editing and a `seq`
-         that states its position, instead of position being whatever order the array happened to be built in
-         ("the one you selected comes as the last record"). Done here because this is where a chit is born;
-         mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
-      let line_items = mint.lines(req.body.line_items || []);   // `let`: rated below, once the sender is known
-      /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
-      let business_json = req.body.business_json
-        || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
-      /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
-         before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
-         refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
-      const pageAsked = business_json && typeof business_json === 'object' ? business_json.page : undefined;
-      let pageStamp = mint.page(pageAsked);
-      if (!pageStamp.ok) return res.status(400).json({ error: 'Unknown page', code: pageStamp.code, message: pageStamp.message });
-      /**
-       * ⚠️⚠️ THE SAME FAULT, LATENT. `currency_code` was declared ~90 lines below the tax-invoice block that reads
-       * it as `currency: currency_code`. Same scope, proven by brace depth over source with strings blanked (a
-       * naive count is useless in this file — it is full of SQL braces).
-       *
-       * ⭐ IT HAS NOT BEEN FIRING DAILY, and the difference matters: that block needs a chit with LINES, a buyer
-       * different from the seller, and identity rows for both. Counter bills and self-addressed chits never reach
-       * it — so the first thing to break would have been a real invoice to a real counterparty, which is the exact
-       * transaction this product exists for.
-       */
-      /* ⭐ WX-R2R (2026-10-13): a chit that names no currency is in the SENDER's money — identities.currency_code, the Country setup's
-         answer — never INR by default. The counter sends no currency: an AU shop's every bill was minted as INR, and the ledger hook then
-         refused each one ("an entry in INR needs its rate to AUD"), so no sale ever posted. Decided below from the sender's row that
-         the self-copy preference already reads (one query, not two). */
-      let currency_code = (business_json && business_json.currency) || null;
 
-      /* ⭐ CB FINANCE · TERMS (F2) — THE SERVER ENFORCES THE CREDIT LIMIT. A credit bill to a known customer that would take them past
-         the limit that applies (their own, else the shop's default) is refused with 409 OVER_LIMIT — unless the OWNER allowed it: the
-         counter carries business_json.credit_override = { by } (the owner's counter PIN, checked at the till), and only a counter key or
-         the owner's own login may carry it. An allowed bill is recorded (books_change_log 'credit_limit'). Not a credit bill, no named
-         customer, ledger off or no limit → no query at all. */
-      if (!req.body.is_draft && purpose === 'order' && business_json && typeof business_json === 'object') {
-        const F = require('../lib/finance-terms');
-        const chk = await F.creditSaleCheck(sender_id, business_json);
-        if (chk.over) {
-          const ov = business_json.credit_override, allowed = !!(ov && ov.by && (req.till || isOwner(req)));
-          if (!allowed) return res.status(409).json({ code: 'OVER_LIMIT', error: 'Over the credit limit.', message: F.overSentence(chk), limit_minor: chk.limit_minor, owed_minor: chk.owed_minor, after_minor: chk.after_minor, party_id: chk.party_id });
-          F.noteOverride(sender_id, chk, String(ov.by)).catch(() => {});
-        }
-      }
+/** a phone's bill names its device and person — checked BEFORE the dedupe */
+async function sendTillClaim(st, req, res) {
+  const { client_ref } = st;
+  /**
+   * ⭐⭐ THE SAME BILL TWICE IS THE SAME CHIT (the till, 2026-09-07). A counter queues its bills and replays them when the line
+   * comes back; a replay that arrived twice would bill the customer twice and put two vouchers in the books. 'client_ref' is the
+   * till's own bill number — asked for FIRST, before anything is created, and answered with the chit that already exists.
+   * ⚠️ Scoped to this entity: a bill number is unique to the shop that issued it, not to the platform.
+   */
+  /* ⭐ M11: a PHONE's bill names its device and its person, and both must be the session's (lib/holder tillClaimOf) — checked
+     BEFORE the dedupe, so a bill from another phone is never answered as somebody's retry. A key's bill: unchanged. */
+  const tillClaim = tillClaimOf(req.till, req.body && req.body.business_json);
+  if (!tillClaim.ok) {
+    res.locals.code = tillClaim.code;
+    return res.status(400).json({ error: 'Bill claim mismatch', code: tillClaim.code, field: tillClaim.field, client_ref, message: tillClaim.message });
+  }
+  if (tillClaim.stamp) Object.assign(req.body.business_json.till, tillClaim.stamp);   /* merge-patch: `by` is never overwritten by sent_by */
+  if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other';   /* the request log line names it */
+}
 
-      /* the bill number the till issued travels ON the chit — it is what the dedupe above looks for on a replay (2026-09-07) */
-      if (client_ref && business_json && typeof business_json === 'object') business_json.client_ref = client_ref;
-      /* ⭐ ON THE CHIT, not only in the reply. The counter may be offline when the answer comes back, the person
-         who reads the books is not the person who pressed the key, and a finding that lives only in an HTTP
-         response is a finding nobody will ever see again. */
-      if (number_check && business_json && typeof business_json === 'object') business_json.number_check = number_check;
-
-      /**
-       * ── ⭐⭐⭐ THE SENDER'S TRADE TRAVELS WITH THE GOODS (2026-09-10) ──────────────────────────────────────
-       *
-       * Found by [ADOPT-01] going red on a batch number that was plainly on the delivery. The adopt route was
-       * LOOKING UP the sender's sector — and could not read it, because entity_profile is isolated per entity.
-       * That is not a bug in RLS; it is RLS working. A receiver has no business reading a supplier's profile.
-       *
-       * ⭐ So the requirement rides on the chit instead, which is the correct shape anyway and is what
-       * "source-governed distribution" has meant all along: a batch number is a fact about the MEDICINE, not
-       * about who is holding it, so a pharma supplier's despatch must carry "these need a batch and an expiry"
-       * with it. The receiver's own sector cannot make an expiry optional, and now it cannot fail to know.
-       *
-       * ⚠️ ONLY FOR GOODS. An ordinary message or an invoice does not need the sender's trade attached, and
-       * stamping every chit with it would be telling counterparties something they did not ask for on documents
-       * where it means nothing.
-       * ⚠️ AND IT IS WHAT THE SENDER HAS DECLARED PUBLICLY ABOUT THEIR TRADE — the sector already shown on their
-       * passport — never the profile itself, and never the vault.
-       */
-      if (business_json && typeof business_json === 'object'
-          && ['receipt', 'delivery_note', 'order'].indexOf(String(purpose)) >= 0 && !business_json.source) {
-        try {
-          /* ⚠️⚠️ withEntity, NOT query. entity_profile is RLS-isolated, and a bare query() runs with no
-             app.current_entity set — under which every policy is false and the read returns ZERO ROWS.
-             Not an error: an empty answer that looks exactly like a shop that declared no trade. This is
-             the quietest failure on the platform and it cost an hour here. */
-          const sp = await withEntity(sender_id, (db) => db.query(
-            `SELECT sectors FROM entity_profile WHERE entity_id = $1`, [sender_id]));
-          const row = sp.rows[0] || {};
-          const sectors = row.sectors || [];
-          if (sectors && sectors.length) {
-            business_json.source = { name: sender_display_name || null, sectors,
-                                     vertical: require('../lib/adopt').verticalOf(sectors) };
-          }
-        } catch (_) { /* a shop that has declared no trade sends goods that require nothing — the ordinary case */ }
-      }
-      const is_draft = !!req.body.is_draft;
-      // Promote/update a saved draft IN PLACE (same chit_id): Draft stays a draft until sent; sending flips it to
-      // Order + fans out to Task. is_draft:true + promote_draft_id => update the draft; is_draft:false => send it.
-      const promote_draft_id = (typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id) ? req.body.promote_draft_id : null;
-
-      // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
-      const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
-      const ROLE_MAP = { to: 'Act', cc: 'Info', for: 'For' };
-      const rawList = (Array.isArray(req.body.recipients) ? req.body.recipients
-                     : Array.isArray(req.body.receivers)  ? req.body.receivers
-                     : []
-                    ).map(r => ({ ...r, kind: String(r.role || 'to').toLowerCase() }));
-
-      // Server-side LIMITS re-check — never trust the client (ATH-120).
-      const counts = { to: 0, cc: 0, for: 0 };
-      for (const r of rawList) {
-        if (!(r.kind in counts)) {
-          return res.status(400).json({ error: 'Invalid recipient role', message: `role must be to|cc|for, got "${r.kind}"` });
-        }
-        counts[r.kind]++;
-      }
-      if (counts.to > LIMITS.to || counts.cc > LIMITS.cc || counts.for > LIMITS.for) {
-        return res.status(400).json({ error: 'Limit exceeded', message: `Recipient caps — to:${LIMITS.to}, cc:${LIMITS.cc}, for:${LIMITS.for}` });
-      }
-      if (line_items.length > LIMITS.items) {
-        return res.status(400).json({ error: 'Limit exceeded', message: `Max ${LIMITS.items} line items` });
-      }
-
-      // ── Traceability edge (Fragment 1): a doubly-linked, co-held, FROZEN handoff edge that rides in
-      //    summary_json.trace. Present ONLY when the sender declares `trace` — normal chits are untouched (every
-      //    existing send path behaves exactly as before). HARDENING on the new path: a non-origin handoff MUST carry
-      //    >=1 parent chit the sender CO-HOLDS (no silent holes; can't forge an edge to a chit you don't hold). ──
-      let traceEdge = null;
-      if (req.body.trace && !is_draft) {
-        const built = trace.buildEdge(req.body.trace);
-        if (built.error) return res.status(400).json({ error: 'Invalid handoff', message: built.error });
-        traceEdge = built.edge;
-        if (traceEdge && traceEdge.parents.length) {
-          const held = await withEntity(sender_id, (db) => db.query(
-            `SELECT chit_id FROM chit_header WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2`,
-            [traceEdge.parents, sender_id]));
-          const heldSet = new Set(held.rows.map((r) => r.chit_id));
-          const missing = traceEdge.parents.filter((p) => !heldSet.has(p));
-          if (missing.length) return res.status(400).json({ error: 'Invalid handoff', message: `Parent chit not co-held by sender: ${missing.join(', ')}` });
-        }
-      }
-
-      // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
-      const prefRow = await query(`SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1`, [sender_id]);
-      /* the sender's money (WX-R2R, above): the row's own code; a row without one asks lib/regional.currencyFor — the ONE resolver (its regional layer, its fallback) */
-      currency_code = String(currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || await require('../lib/regional').currencyFor(sender_id)).toUpperCase();
-      /**
-       * ⭐ A SELF-CHIT MAKES ONE COPY, AND IT IS THE TASK — Athi, 2026-08-14: *"self should create one copy only,
-       * no two copies, and you would be very specific about direction."*
-       *
-       * The default was 'both', so every self-chit wrote TWO rows for the SAME entity — a `sent` copy and a
-       * `received` copy. That is not a display quirk: it doubles chit_header, chit_detail AND chit_line, so every
-       * cross-chit read counts the same work twice. It is what made the worklist show four lines per person where
-       * two were assigned, and it made `due_on` and `actor_id` look broken when both were filtering correctly.
-       *
-       * ⚠️ WHY `received` AND NOT `sent`. A self-chit exists because there is work to do. The Order/Sent list is
-       * the record of obligations placed on SOMEONE ELSE, and a self-chit places none — filing it there asserts
-       * "I sent this to a counterparty", which is false. Task asserts "this is mine to act on", which is true. It
-       * is also what the capture path already does: a WhatsApp message becomes a Task, never an Order.
-       *
-       * ⚠️ NARROWED, NOT SILENT. The suppression is declared on the chit as `copy_policy` with its source, exactly
-       * as before — an absence that cannot be told from a gap is not governed. An entity that has explicitly set
-       * `self_copy_pref` keeps its choice; only the unset default moves. Inter-entity chits are untouched: both
-       * copies stay mandatory there, because the co-held transfer is the whole point.
-       */
-      const selfCopyPref = prefRow.rows[0]?.self_copy_pref || 'received';
-      const makeSelfReceiver = (k) => ({ entity_id: sender_id, bridge_id: sender_bridge_id,
-        display_name: sender_display_name, kind: k, role: ROLE_MAP[k], all_role: k === 'to' ? 'receiver' : k });
-      let hasSelf = false;
-
-      // Existence check — connection NOT required. Resolve + de-dupe (one row per entity per direction).
-      const receiverDetails = [];
-      const seen = new Set();
-      for (const r of rawList) {
-        // Self recipient ("+ Self" or your own name): always create the entity's 'received' (Task)
-        // copy here; the 'sent' (Order) copy is the SENDER block below. Two copies, always.
-        if (r.self === true || ['self','me'].includes(String(r.name || '').trim().toLowerCase())) {
-          if (!hasSelf) receiverDetails.push(makeSelfReceiver(r.kind));
-          hasSelf = true;
-          continue;
-        }
+/** the same bill twice is the same chit — a retry answered with the chit that exists, a collision refused and named */
+async function sendReplay(st, req, res) {
+  const { sender_id, client_ref } = st;
+  if (client_ref) {
+    try {
+      const seen = await sameRefLook(sender_id, client_ref);
+      if (seen.rows[0]) {
         /**
-         * ⚠️⚠️ A MINTED PARTY IS NOT A RECIPIENT. Athi, 2026-09-10: *"he is not a recipient, so you can't bring
-         * him to the rail or something."* `~acmetraders.sup-0001` is an ordinary active entity in every other
-         * respect — which was the whole design — so all four lookups below would resolve it happily, and the chit
-         * would then sit as sent for ever because nobody can sign in to open it. The sender would be waiting on an
-         * answer that cannot come.
-         * ⭐ One test on whatever was typed, before any lookup runs. The id path is fenced separately below,
-         * because a screen holding a supplier row would pass the uuid rather than the handle.
+         * ⭐⭐⭐ A RETRY AND A COLLISION LOOK IDENTICAL FROM HERE, AND THEY ARE OPPOSITES.
+         *
+         * Athi, 2026-09-11, planning two testers at once: *"we cannot have same receipt number if the same
+         * login opens from couple of places?"* — and the answer was that we could.
+         *
+         * The counter numbers its bills LOCALLY as `<till>/<FY>/<nnnn>`, and the till prefix defaults to
+         * `C1` and is only ever set by hand. So two counters nobody renamed both produce C1/26-27/0041.
+         * Returning the first chit is exactly right for a RETRY from the same device — which is what this
+         * guard was built for — and exactly wrong for two devices: the second shop's real sale is absorbed,
+         * the counter is told it succeeded, and it hands back somebody else's chit id.
+         *
+         * ⚠⚠ AND IT IS NOT MERELY A LOST RECORD. An invoice number must be a consecutive serial UNIQUE for
+         * the financial year, so two counters on one number is two tax invoices carrying one number.
+         *
+         * ⭐ THE TILL ID TELLS THEM APART, and it is already on the chit. Same till — or either side missing
+         * one, which is every chit that is not a counter bill — behaves exactly as before. Different tills
+         * is REFUSED AND NAMED, because a number that two devices both think is theirs is a thing a person
+         * has to settle, not something a server may quietly pick a winner for.
          */
-        const typedAny = String(r.user_id || r.bridge || r.bridge_id || r.display_name || r.name || '').trim();
-        if (require('../lib/handle').isMinted(typedAny)) {
-          return res.status(404).json({ error: 'Not found',
-            message: `"${typedAny}" cannot receive chits — that is a local record, not a ChitBridge business.` });
-        }
-        let rec;
-        if (r.entity_id) {
-          rec = await query(
-            `SELECT identity_id, bridge_id, display_name FROM identities
-             WHERE identity_id = $1 AND status = 'active'
-             AND COALESCE(user_id, '') NOT LIKE '~%'`,
-            [r.entity_id]
-          );
-        } else if (r.bridge || r.bridge_id) {
-          /* ⭐ BY IDENTITY BEFORE BY NAME (Athi, 2026-09-06: renamed tallytest to "Tally Test Shop" on the profile — "now I couldn't send the chit,
-             it says Tally Test Shop not found"). A display name is a VIEW name, free to change; the bridge id and the user id are set once
-             (project-user-id-rule). The Suppliers checkout and Compose now send the id; a name alone is the last resort, kept for typed recipients. */
-          rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE bridge_id = $1 AND status = 'active' AND identity_type = 'entity'`, [String(r.bridge || r.bridge_id).trim()]);
-        } else if (r.user_id) {
-          rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`, [String(r.user_id).trim()]);
-        } else if (r.display_name || r.name) {
-          const typed = (r.display_name || r.name).trim();
-          /* a typed handle may be a user id or a bridge id as easily as a name — try those first, then the name */
-          rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR bridge_id = $1) AND status = 'active' AND identity_type = 'entity' LIMIT 1`, [typed]);
-          if (!rec.rows.length) rec = await query(
-            `SELECT identity_id, bridge_id, display_name FROM identities
-             WHERE LOWER(display_name) = LOWER($1) AND status = 'active'
-             AND identity_type = 'entity'
-             /* ⚠️ never a minted party. Their display names are ordinary shop names — "Corner Hardware" — so
-                without this a name typed by ANY business could resolve to another one's private supplier record.
-                The typed-handle test above cannot catch this one: what was typed is a name, not a handle. */
-             AND COALESCE(user_id, '') NOT LIKE '~%'`,
-            [typed]
-          );
-        }
-
-        if (!rec || rec.rows.length === 0) {
-          if (is_draft) {   // a draft is WIP — keep the entered recipient name (unresolved); resolution is enforced only on send
-            receiverDetails.push({ entity_id: null, bridge_id: null, display_name: (r.display_name || r.name || '').toString().trim(),
-              kind: r.kind, role: ROLE_MAP[r.kind], all_role: r.kind === 'to' ? 'receiver' : r.kind });
-            continue;
-          }
-          return res.status(404).json({
-            error: 'Not found',
-            message: `Recipient "${r.entity_id || r.display_name || r.name}" not found in the platform`
-          });
-        }
-
-        const rid = rec.rows[0].identity_id;
-        // Resolved to self (you typed your own name): same as "+ Self" — create the received copy.
-        if (rid === sender_id) {
-          if (!hasSelf) receiverDetails.push(makeSelfReceiver(r.kind));
-          hasSelf = true;
-          continue;
-        }
-        if (seen.has(rid)) continue;   // de-dupe external recipients
-        seen.add(rid);
-
-        receiverDetails.push({
-          entity_id: rid,
-          bridge_id: rec.rows[0].bridge_id,
-          display_name: rec.rows[0].display_name,
-          kind: r.kind,                                   // to | cc | for
-          role: ROLE_MAP[r.kind],                         // Act | Info | For (chit_header.role)
-          all_role: r.kind === 'to' ? 'receiver' : r.kind // for the all_recipients snapshot
-        });
-      }
-
-      // ── self_copy_pref (policy-flag #1) — copy suppression is a SELF-CHIT-ONLY affordance. On any inter-entity chit
-      //    BOTH copies are mandatory (sender's Order + receiver's Task = the co-held transfer, cb-core-principle), so we
-      //    only ever suppress on a PURE self-chit (self is the sole recipient). Every suppression is DECLARED on the chit
-      //    via summary_json.copy_policy — the absence is governed + auditable, never a silent gap. ──
-      /**
-       * ⭐⭐ WHO SELLS. Athi, 2026-09-06 10:19 (Chola's order to tallytest: list prices, no offer, no rate — "it has to be the exact cart"):
-       * the rate and the live offers were read from the SENDER's shelf, and the offers only for self/counter/captured chits. An ORDER
-       * is sent by the buyer to the seller — the recipient's shelf and the recipient's offers are the ones that price it, exactly as
-       * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
-       */
-      const orderLike = /^(order|offer)$/.test(String(purpose || ''));
-      const toIds = receiverDetails.filter((r) => r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)).map((r) => String(r.entity_id));
-      /* ⚠️ A COUNTER BILL IS 'order' TOO, AND THE COUNTER SELLS IT (the two-sided counter bill, 2026-10-01). Sent to an on-rail
-         customer it has one 'to' recipient — read as an order, the CUSTOMER would have become the seller: their shelf, their
-         offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
-      const counterBill = taxCopy.counterIssued(business_json);
-      const sellerId = (orderLike && !counterBill && toIds.length === 1) ? toIds[0] : sender_id;
-      /**
-       * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
-       * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
-       * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
-       * the line keeps that rate for life. ⚠️ Fails open: no shelf, no rate, the chit still sends. Never touches
-       * price or total. Athi (asleep): "complete all on your own" — decision logged in BUILD_LOG.
-       */
-      try {
-        const shelf = await taxShelf.readShelf(sellerId, { withEntity, query, regionLayer: regional.regionLayer,
-          getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: true });
-        if (shelf) line_items = taxLines.decorate(line_items, { items: shelf.items, slabs: shelf.slabs, categories: shelf.categories, face: shelf.face });   /* the Map, as the storefront passes it — see slabOf */
-      } catch (_) { /* rate-less lines are what every chit carried until tonight */ }
-      /**
-       * ⭐ THE SELLER'S LIVE OFFERS, AT SEND, WHEN THE SENDER SELLS (Athi, 2026-09-05: "how does it become a chit when it comes
-       * through WhatsApp? check there also — the offer and tax applied correctly"). A counter bill (business_json.customer) and
-       * a captured message (business_json.via — WhatsApp, email, any channel) are sent BY the seller; the storefront applied
-       * the live offers to its orders and these two never did. The same function (lib/offers-live.js), the same engine, the
-       * same per-line result; lines a client already discounted are left alone. Fails open, like the rate.
-       *
-       * ⚠️⚠️ [REV-02] "a bill the customer has paid is re-priced at today's offers when it syncs." Send time is not
-       * always sale time — a till bill queued offline can reach here days later, after the shop launches a new
-       * offer. offers-live.js already skips a line that carries `it.offer` (an offer the till itself applied);
-       * what it never skipped was a PLAIN line with none, which is exactly what a later, unrelated offer attaches
-       * itself to — the customer's ₹500 slip becomes a server-side ₹450 chit, and a credit note for the same
-       * bill gets over-refunded the same way. `business_json.billed_at` is the tell: ONLY till.html/till.js ever
-       * set it (grep confirms — no compose/capture/storefront path does), so it names a document that was
-       * ALREADY priced and printed at a real moment in the past, not a sale being priced here for the first time.
-       * A captured/typed sale (no billed_at) still needs these live offers — that path is what this block exists
-       * for — so the guard is additive, not a new refusal.
-       */
-      let offersApplied = [];   /* what the seller's live offers did to these lines (line + cart scope) — recorded on the summary */
-      try {
-        const bj = business_json || {};
-        const alreadyBilled = require('../lib/offers-live').alreadyBilled(bj);
-        const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
-        /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
-        if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike)) {
-          const cur = await require('../lib/regional').currencyFor(sellerId).catch(() => 'INR');
-          const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity, viewer: orderLike ? sender_id : null });   /* an order's buyer may hold a customer-only offer with this seller */
-          if (r && r.items) { line_items = r.items; offersApplied = Array.isArray(r.applied) ? r.applied : []; }
-        }
-      } catch (_) { /* no offers, no change */ }
-      /**
-       * ⭐⭐ THE MONEY THE HEADER CARRIES (Athi, 2026-09-07). `total_value` is the net after offers and BEFORE tax — right, but alone
-       * on a list column called Amount it reads as the whole bill, and his Order list said ₹488.25 where Zoho's invoice said ₹531.
-       * So the header now carries the five figures a person actually compares: gross · savings · net · tax · total.
-       *   · gross and savings are free — the offers engine has just run and the line keeps its listed price beside its total.
-       *   · tax is `taxLines.invoiceFor`, a PURE function over the lines that `decorate` has already rated, plus one row per party.
-       *     ONE query for both identities (his "why do you need another query?"), never one per line.
-       * ⚠️ PROVISIONAL, AND IT SAYS SO. The invoice freezes at completed (G3); this is a display summary carrying the same
-       * caveat as the invoice tab, not a second source of truth. A tax we cannot compute is `null`, never 0 — a column showing
-       * "—" is honest, a column showing zero tax is a lie.
-       */
-      let moneyBlock = null;
-      try {
-        const r2m = (n) => roundMoney(Number(n) || 0);
-        const li = Array.isArray(line_items) ? line_items : [];
-        const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
-        const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
-        const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
-        const gross = r2m(li.reduce((a, l) => a + listOf(l) * qtyOf(l), 0));
-        const net = r2m(li.reduce((a, l) => a + netOf(l), 0));
-        let tax = null, total = null;
-        /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
-        const buyerId = counterBill ? null : orderLike ? String(sender_id) : (toIds.length === 1 ? toIds[0] : null);
-        if (li.length && buyerId && String(sellerId) !== String(buyerId)) {
-          const ids = [String(sellerId), String(buyerId)];
-          const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [ids]);
-          const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
-          const sRow = rowOf(sellerId), bRow = rowOf(buyerId);
-          if (sRow && bRow) {
-            /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent,
-               so priceIncludesTax arrived as undefined and !!undefined taxed a GST-inclusive shelf price as
-               if it were ex-tax. sRow already carries policy_flags from the query two lines up; flagOf() reads
-               the SELLER's own setting from it, no second query. */
-            const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax') === 'yes';
-            /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever
-               reaches DocDtls.Dt (metadata, no rate lookup keys on it), but a bill queued offline and sent days
-               later must say when it was actually billed, same reasoning as the offers guard just above. */
-            const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
-            const inv = taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: invAt, priceIncludesTax });
-            const h = taxLines.heads(inv.invoice);
-            if (h && Number.isFinite(h.tax)) { tax = r2m(h.tax); total = r2m(h.total || (net + tax)); }
-          }
-        }
-        moneyBlock = { gross, savings: r2m(gross - net), net, tax, total: total != null ? total : (tax != null ? r2m(net + tax) : null), currency_code, provisional: true };
-      } catch (_) { /* a chit never fails to send because its money summary could not be built */ }
-      /**
-       * ⭐⭐⭐ A COUNTER BILL CARRIES ITS INVOICE, AND THE SERVER ONLY READS IT (Athi, 2026-10-02: "the computation should happen
-       * in only one place like billing, rest all the places the value has to only read … recomputation can be done, but
-       * cannot rewrite what has been already wrote"). business_json.invoice is CBTax.determine()'s result from the counter's
-       * billMoney(), stored as it came. The header's money is MAPPED off it (moneyOfInvoice → the engine's moneyOf) — ₹1,118.16 for bill
-       * C2/26-27/0007, where the sum of its line nets said ₹1,118.15. The server's own computation runs ONLY to check it
-       * (lib/tax-copy entryFor → lib/issued-invoice check): a difference is named on the chit (business_json.tax_check) and in
-       * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
-       */
-      let issuedTotal = null;
-      const carried = business_json && business_json.invoice;
-      if (counterBill && !is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
-        moneyBlock = moneyOfInvoice(carried, currency_code);
-        issuedTotal = moneyBlock.total;
-        try {
-          const e = await taxCopy.entryFor({ chit_id: null, sender_entity_id: sender_id, purpose, business_json, line_items, currency_code,
-            all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(receiverDetails.filter((r) => r.entity_id)
-              .map((r) => ({ entity_id: r.entity_id, role: r.all_role || 'receiver' }))), sent_at: business_json.billed_at || null }, sender_id);
-          if (e && e.tax_check && !e.tax_check.ok) {
-            business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
-            require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
-          }
-        } catch (_) { /* the check never stops a bill — the stored invoice stands either way */ }
-      }
-      const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
-      /**
-       * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
-       *
-       * Athi, 2026-08-09: *"we can create a self chit and you can make the order copy none, it will create a task."*
-       * That is the right shape for an inbound request: the entity did NOT send it — someone outside asked — so a
-       * copy sitting in their Order/Sent list would be a lie about who asked. Task-only is the truthful record.
-       *
-       * The account-wide setting could not express this: it would have flipped EVERY self-chit they ever author.
-       * A single send needs to say it for itself.
-       *
-       * WHAT THIS DOES NOT DO — it lives INSIDE the pureSelfChit branch and nowhere else, so it cannot reach an
-       * inter-entity chit. Both copies stay mandatory there (cb-core-principle: the co-held transfer is the point),
-       * and both suppressed copies here belong to the SAME entity, so nobody loses a record they hold. The choice is
-       * DECLARED on the chit exactly as the setting's is, with `source` recording which of the two decided it — a
-       * suppression that cannot be told apart from a gap is not governed.
-       */
-      const reqSelfCopy = ['both', 'sent', 'received'].includes(String(req.body.self_copy || '')) ? String(req.body.self_copy) : null;
-      const effSelfCopy = reqSelfCopy || selfCopyPref;
-      const copySource = reqSelfCopy ? 'request' : 'setting';
-      let copyPolicy = null, suppressSentCopy = false;
-      if (pureSelfChit) {                          // every self-chit KEEPS its identity (scope:'self') — recorded, not showcased
-        if (effSelfCopy === 'sent') {             // ORDER-only → drop the self Task (received) copy
-          const si = receiverDetails.findIndex(r => r.entity_id === sender_id);
-          if (si >= 0) receiverDetails.splice(si, 1);
-          copyPolicy = { scope: 'self', kept: ['sent'], suppressed: ['received'], reason: 'Task copy suppressed — self-chit (Order only)', source: copySource };
-        } else if (effSelfCopy === 'received') {  // TASK-only → drop the sender Order (sent) copy
-          suppressSentCopy = true;
-          copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — self-chit (Task only)', source: copySource };
-        } else if (client_ref) {
-          /**
-           * ── ⚠⚠⚠ A NUMBERED DOCUMENT IS ONE ROW PER ENTITY, WHATEVER THE COPY SETTING SAYS ──────────
-           *
-           * b263 puts a UNIQUE INDEX on (entity_id, client_ref). 'both' writes the sender copy AND the recipient
-           * copy — and on a pure self-chit those are the SAME entity — so a shop whose self_copy_pref is 'both'
-           * would have every counter bill refused with a 23505 and **be unable to sell**. The column defaults to
-           * 'received' so nothing is broken today; this is the trap the index arms for the day somebody changes
-           * it, and it is armed silently, which is the worst kind.
-           *
-           * ⭐ AND IT IS THE RIGHT ANSWER ON ITS OWN MERITS, not merely a way round the constraint. Two rows in
-           * one shop's books both claiming to BE invoice C1/26-27/0033 is not a copy, it is a second voucher —
-           * the exact thing the index exists to prevent. A self-copy is a useful idea for a message; for a
-           * numbered tax document it is a duplicate with a nicer name.
-           * ⚠ DECLARED, NEVER SILENT — copyPolicy is how this file records a suppression, and `source` says who
-           * decided it. A suppression that cannot be told apart from a gap is not governed (see the note above).
-           */
-          suppressSentCopy = true;
-          copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'],
-                         reason: 'Order copy suppressed — ' + client_ref + ' is a numbered document, and a number '
-                               + 'may appear once in a shop\'s books (b263). The setting asked for both.',
-                         source: 'numbered-document' };
-        } else {                                  // BOTH → keep both copies, but STILL declare the self-chit identity
-          copyPolicy = { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: copySource };
-        }
-      } else if (client_ref && hasSelf && !is_draft && !promote_draft_id) {
+         /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
+            here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
+        const _bj = req.body && req.body.business_json;
+        const mine = (_bj && _bj.till && _bj.till.id) || null;
+        const theirs = seen.rows[0].till_id || null;
         /**
-         * ⚠️⚠️ THE SAME RULE WHEN THE NUMBERED DOCUMENT ALSO GOES OUT (the two-sided counter bill, 2026-10-01). A counter bill
-         * to an on-rail customer is self + the customer: not a PURE self chit, so the branch above never ran and the shop got
-         * TWO rows — its 'sent' Order copy and its self Task copy — both carrying client_ref, which b263's unique index refuses:
-         * the counter could not sell to a connected customer at all. The shop keeps the ONE row it keeps for every counter bill
-         * (the self copy); the customer holds their own. Declared, like every suppression here.
+         * ── ⚠️⚠️⚠️ THE GUARD ABOVE NEVER FIRED FOR THE ONE CASE ITS OWN COMMENT DESCRIBES ────────────────
+         *
+         * Athi, 2026-09-17: *"from this PC the bills are pushed, but still not happening from the other PC."*
+         * Only three counter bills had reached ChitBridge in five days — C1/26-27/0005, 0006, 0007 — and his
+         * two PCs, on 152.233.15.121 and .123, were BOTH counter `C1`, because nobody had renamed either.
+         *
+         * The comment above says, in so many words, "two counters nobody renamed both produce C1/26-27/0041".
+         * The code then compared TILL IDS — and two unrenamed counters have the SAME till id, so every
+         * collision between them read as a same-device RETRY. The second PC's real sale was absorbed, the
+         * server answered 200 with the FIRST PC's chit id, and the counter recorded that as its receipt and
+         * showed "✓ sent". Nothing failed anywhere, which is why no log, no queue and no panel caught it — and
+         * why the acknowledgement added on 2026-09-16 was fooled too: it received a real chit id, just
+         * somebody else's.
+         *
+         * ⭐ `billed_at` IS WHAT TELLS THEM APART, and every counter already sends it. A retry is the SAME
+         * bill, so it carries the same moment it was taken. Two devices issuing one number carry two different
+         * moments — they would have to be billed in the same millisecond. So: same moment → a retry, answered
+         * as before; different moments → a collision, refused and named, whatever the till ids say.
+         * ⚠️ Either side missing it — every chit that is not a counter bill, and anything older — behaves
+         * exactly as before. This only ever turns a silent absorption into a spoken refusal.
          */
-        suppressSentCopy = true;
-        copyPolicy = { scope: 'sender', kept: ['received'], suppressed: ['sent'],
-                       reason: 'One copy for the sender — ' + client_ref + ' is a numbered document, and a number may appear once '
-                             + 'in a shop\'s books (b263).', source: 'numbered-document' };
+        const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
+        const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
+        const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
+        if (verdict.collision) return res.status(409).json(verdict.body);
+        return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });
       }
-      /**
-       * ⚠️⚠️ client_ref IS THE SENDER'S REPLAY KEY, NOT A FACT ABOUT THE TRADE — so it stays on the sender's own row only.
-       * b263's unique index is (entity_id, client_ref) over EVERY row an entity holds, received ones included: a counter bill
-       * C1/26-27/0041 sent to a customer whose own counter has issued C1/26-27/0041 (two shops, both on the default prefix)
-       * would be refused on the CUSTOMER's row, and the whole send with it — retried for ever. The bill's number travels as
-       * bill_no on every copy; only the dedupe key is withheld.
-       */
-      const bjFor = (eid) => (client_ref && business_json && typeof business_json === 'object' && String(eid) !== String(sender_id))
-        ? (() => { const o = Object.assign({}, business_json); delete o.client_ref; return o; })()
-        : business_json;
-      /**
-       * ⭐⭐ THE CUSTOMER'S COPY OF A COUNTER BILL IS NAMED FOR WHAT IT IS (Athi, 2026-10-01). To them it is not an order to
-       * fulfil but a BILL to accept: purpose 'invoice' (the purpose an app-side supplier invoice already has, so the ledger's
-       * invoice reading and every purchase reader apply), marked `counter_bill: true` with the bill's number, till and terms
-       * kept, its own subject ("Bill C1/26-27/0041 from Mayur Traders") and, on its summary, what the list row shows — who
-       * it is from, the number, and what is owed. The SHOP's own copy is untouched. One chit, each copy in its holder's words.
-       */
-      const billCopyFor = (receiver) => {
-        if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
-        const bj = Object.assign({}, bjFor(receiver.entity_id), { counter_bill: true });
-        const parts = (bj.payment && Array.isArray(bj.payment.parts)) ? bj.payment.parts : [];
-        const total = roundMoney(parts.reduce((t, p) => t + (Number(p && p.amount) || 0), 0));
-        return { purpose: 'invoice', business_json: bj,
-                 manual_subject: 'Bill ' + bj.bill_no + ' from ' + (sender_display_name || 'the seller'),
-                 bill_received: { from: sender_display_name || null, no: String(bj.bill_no), total } };
-      };
+    } catch (_) { /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */ }
+  }
+}
 
-      // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
-      //    and other send-time rules will plug in here when we build Suppliers.) ──
-      if (promote_draft_id) {
-        const dchk = await withEntity(sender_id, (db) => db.query(`SELECT role, business_json->>'page' AS page FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id]));
-        if (dchk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
-        if (dchk.rows[0].role !== 'Draft') return res.status(400).json({ error: 'Not a draft', message: 'This chit has already been sent' });
-        /* the draft's page goes with it when the resend does not name one — a draft resumed through a form that does not
-           carry business_json.page must not quietly become a base-page chit (N03) */
-        if (pageAsked == null && dchk.rows[0].page) { const kept = mint.page(dchk.rows[0].page); if (kept.ok) pageStamp = kept; }
+/** a till key may only bill itself — or one listed customer (one-sided when their copy cannot go) */
+async function sendTillGate(st, req, res) {
+  const { sender_id } = st;
+  /**
+   * ⚠️ A TILL KEY MAY ONLY BILL ITSELF. The key lives on a shop PC where anyone can pick it up; a counter sale is the shop's own
+   * record and never addresses another business. The scope opens the send route; this closes it to one shape.
+   */
+  let oneSided = null;   /* { why } when a counter bill is recorded without its customer's copy — see tillMaySend */
+  const tk = req.till && req.till.key;   /* M04 — the holder says whether a key is speaking (middleware/auth holderOf) */
+  if (tk && tk.scopes.indexOf('till') >= 0 && !tk.scopes.includes('connector')) {
+    const rl = (Array.isArray(req.body.recipients) ? req.body.recipients : (Array.isArray(req.body.receivers) ? req.body.receivers : []));
+    const outward = rl.filter((r) => r && r.self !== true && String(r.entity_id || '') !== String(sender_id));
+    const gate = outward.length ? await tillMaySend(sender_id, outward, req.body) : null;
+    if (gate && gate.refuse) {
+      /* ⚠️ code TILL_SEND_REFUSED: a refusal of THIS BILL's shape, not of the key — the counter keeps it and sends the rest */
+      return res.status(403).json({ error: 'Forbidden', code: 'TILL_SEND_REFUSED',
+        message: 'Not sent: ' + gate.refuse + '. Counter bills go only to listed customers on ChitBridge.' });
+    }
+    if (gate && gate.oneSided) {
+      /* ⭐ ONE-SIDED: the sale and its ledger are recorded; only the customer's copy is dropped. The bill keeps naming its
+         customer (business_json.customer) — it is still their bill, they simply do not receive a copy on ChitBridge. */
+      const keep = rl.filter((r) => !(r && r.self !== true && String(r.entity_id || '') !== String(sender_id)));
+      if (!keep.some((r) => r && r.self === true)) keep.push({ self: true, name: 'self' });
+      if (Array.isArray(req.body.recipients)) req.body.recipients = keep; else req.body.receivers = keep;
+      oneSided = { why: gate.oneSided };
+    }
+  }
+  Object.assign(st, { oneSided });
+}
+
+/** what the chit says — purpose, subject, lines, business data, its page and its money */
+async function sendBody(st, req, res) {
+  // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
+  const purpose = req.body.purpose || 'order';
+  const manual_subject = sanitise(req.body.manual_subject || req.body.subject || '');
+  /* ⭐ STAMP IDENTITY AND ORDER AT THE DOOR. Every line gets a `line_id` that survives editing and a `seq`
+     that states its position, instead of position being whatever order the array happened to be built in
+     ("the one you selected comes as the last record"). Done here because this is where a chit is born;
+     mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
+  let line_items = mint.lines(req.body.line_items || []);   // `let`: rated below, once the sender is known
+  /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
+  let business_json = req.body.business_json
+    || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
+  /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
+     before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
+     refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
+  const pageAsked = business_json && typeof business_json === 'object' ? business_json.page : undefined;
+  let pageStamp = mint.page(pageAsked);
+  if (!pageStamp.ok) return res.status(400).json({ error: 'Unknown page', code: pageStamp.code, message: pageStamp.message });
+  /**
+   * ⚠️⚠️ THE SAME FAULT, LATENT. `currency_code` was declared ~90 lines below the tax-invoice block that reads
+   * it as `currency: currency_code`. Same scope, proven by brace depth over source with strings blanked (a
+   * naive count is useless in this file — it is full of SQL braces).
+   *
+   * ⭐ IT HAS NOT BEEN FIRING DAILY, and the difference matters: that block needs a chit with LINES, a buyer
+   * different from the seller, and identity rows for both. Counter bills and self-addressed chits never reach
+   * it — so the first thing to break would have been a real invoice to a real counterparty, which is the exact
+   * transaction this product exists for.
+   */
+  /* ⭐ WX-R2R (2026-10-13): a chit that names no currency is in the SENDER's money — identities.currency_code, the Country setup's
+     answer — never INR by default. The counter sends no currency: an AU shop's every bill was minted as INR, and the ledger hook then
+     refused each one ("an entry in INR needs its rate to AUD"), so no sale ever posted. Decided below from the sender's row that
+     the self-copy preference already reads (one query, not two). */
+  let currency_code = (business_json && business_json.currency) || null;
+  Object.assign(st, { purpose, manual_subject, line_items, business_json, pageAsked, pageStamp, currency_code });
+}
+
+/** the credit limit (F2) and the bill's own facts stamped on the chit */
+async function sendCredit(st, req, res) {
+  const { sender_id, client_ref, number_check, purpose, business_json } = st;
+  /* ⭐ CB FINANCE · TERMS (F2) — THE SERVER ENFORCES THE CREDIT LIMIT. A credit bill to a known customer that would take them past
+     the limit that applies (their own, else the shop's default) is refused with 409 OVER_LIMIT — unless the OWNER allowed it: the
+     counter carries business_json.credit_override = { by } (the owner's counter PIN, checked at the till), and only a counter key or
+     the owner's own login may carry it. An allowed bill is recorded (books_change_log 'credit_limit'). Not a credit bill, no named
+     customer, ledger off or no limit → no query at all. */
+  if (!req.body.is_draft && purpose === 'order' && business_json && typeof business_json === 'object') {
+    const F = require('../lib/finance-terms');
+    const chk = await F.creditSaleCheck(sender_id, business_json);
+    if (chk.over) {
+      const ov = business_json.credit_override, allowed = !!(ov && ov.by && (req.till || isOwner(req)));
+      if (!allowed) return res.status(409).json({ code: 'OVER_LIMIT', error: 'Over the credit limit.', message: F.overSentence(chk), limit_minor: chk.limit_minor, owed_minor: chk.owed_minor, after_minor: chk.after_minor, party_id: chk.party_id });
+      F.noteOverride(sender_id, chk, String(ov.by)).catch(() => {});
+    }
+  }
+
+  /* the bill number the till issued travels ON the chit — it is what the dedupe above looks for on a replay (2026-09-07) */
+  if (client_ref && business_json && typeof business_json === 'object') business_json.client_ref = client_ref;
+  /* ⭐ ON THE CHIT, not only in the reply. The counter may be offline when the answer comes back, the person
+     who reads the books is not the person who pressed the key, and a finding that lives only in an HTTP
+     response is a finding nobody will ever see again. */
+  if (number_check && business_json && typeof business_json === 'object') business_json.number_check = number_check;
+}
+
+/** the sender's declared trade travels with the goods */
+async function sendSource(st, req, res) {
+  const { sender_id, sender_display_name, purpose, business_json } = st;
+  /**
+   * ── ⭐⭐⭐ THE SENDER'S TRADE TRAVELS WITH THE GOODS (2026-09-10) ──────────────────────────────────────
+   *
+   * Found by [ADOPT-01] going red on a batch number that was plainly on the delivery. The adopt route was
+   * LOOKING UP the sender's sector — and could not read it, because entity_profile is isolated per entity.
+   * That is not a bug in RLS; it is RLS working. A receiver has no business reading a supplier's profile.
+   *
+   * ⭐ So the requirement rides on the chit instead, which is the correct shape anyway and is what
+   * "source-governed distribution" has meant all along: a batch number is a fact about the MEDICINE, not
+   * about who is holding it, so a pharma supplier's despatch must carry "these need a batch and an expiry"
+   * with it. The receiver's own sector cannot make an expiry optional, and now it cannot fail to know.
+   *
+   * ⚠️ ONLY FOR GOODS. An ordinary message or an invoice does not need the sender's trade attached, and
+   * stamping every chit with it would be telling counterparties something they did not ask for on documents
+   * where it means nothing.
+   * ⚠️ AND IT IS WHAT THE SENDER HAS DECLARED PUBLICLY ABOUT THEIR TRADE — the sector already shown on their
+   * passport — never the profile itself, and never the vault.
+   */
+  if (business_json && typeof business_json === 'object'
+      && ['receipt', 'delivery_note', 'order'].indexOf(String(purpose)) >= 0 && !business_json.source) {
+    try {
+      /* ⚠️⚠️ withEntity, NOT query. entity_profile is RLS-isolated, and a bare query() runs with no
+         app.current_entity set — under which every policy is false and the read returns ZERO ROWS.
+         Not an error: an empty answer that looks exactly like a shop that declared no trade. This is
+         the quietest failure on the platform and it cost an hour here. */
+      const sp = await withEntity(sender_id, (db) => db.query(
+        `SELECT sectors FROM entity_profile WHERE entity_id = $1`, [sender_id]));
+      const row = sp.rows[0] || {};
+      const sectors = row.sectors || [];
+      if (sectors && sectors.length) {
+        business_json.source = { name: sender_display_name || null, sectors,
+                                 vertical: require('../lib/adopt').verticalOf(sectors) };
       }
-      // Generate chit_id — same for ALL participants (reuse the draft's id when promoting, so the draft BECOMES the order)
-      const chit_id = promote_draft_id || uuidv4();
-      const now = CLOCK.now();   /* Y1b: the one clock — the day a bill lands on (books-hooks.dayOf) and the day it is listed under agree */
+    } catch (_) { /* a shop that has declared no trade sends goods that require nothing — the ordinary case */ }
+  }
+}
 
-      // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
-      /* ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js */
-      try { require('../lib/events').notifyAfter(res, receiverDetails.map(r => r.entity_id), { kind: 'chit', id: chit_id, who: sender_display_name || null, note: purpose || null }); } catch (_) {}
-      const all_recipients = [
-        {
-          entity_id: sender_id,
-          bridge_id: sender_bridge_id,
-          display_name: sender_display_name,
-          role: 'sender'
-        },
-        ...receiverDetails.map(r => ({
-          entity_id: r.entity_id, bridge_id: r.bridge_id,
-          display_name: r.display_name, role: r.all_role
-        }))
-      ];
+/** draft or send, and the recipient caps re-checked (To/CC/For) */
+async function sendFanOut(st, req, res) {
+  const { line_items } = st;
+  const is_draft = !!req.body.is_draft;
+  // Promote/update a saved draft IN PLACE (same chit_id): Draft stays a draft until sent; sending flips it to
+  // Order + fans out to Task. is_draft:true + promote_draft_id => update the draft; is_draft:false => send it.
+  const promote_draft_id = (typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id) ? req.body.promote_draft_id : null;
 
-      // ── Operator mandate (Fragment 2): a network handoff names an OPERATOR that is mandated to CO-HOLD the edge
-      //    for oversight, so it can walk its whole subtree (visibility ≡ co-holding — no god-view, no BYPASSRLS).
-      //    Resolve it here so the participant snapshot lists it; its REDACTED oversight copy (edge only, no
-      //    commercial terms — TR-6) is appended alongside the receiver copies below. Additive on the trace path. ──
-      let operatorInfo = null;
-      if (traceEdge && traceEdge.network && traceEdge.network.operator && !is_draft) {
-        const opId = traceEdge.network.operator;
-        if (opId !== sender_id && !receiverDetails.some((r) => r.entity_id === opId)) {
-          const opRow = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [opId]);
-          if (opRow.rows[0]) {
-            operatorInfo = opRow.rows[0];
-            all_recipients.push({ entity_id: operatorInfo.identity_id, bridge_id: operatorInfo.bridge_id, display_name: operatorInfo.display_name, role: 'operator' });
-          }
-        }
+  // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
+  const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
+  const ROLE_MAP = { to: 'Act', cc: 'Info', for: 'For' };
+  const rawList = (Array.isArray(req.body.recipients) ? req.body.recipients
+                 : Array.isArray(req.body.receivers)  ? req.body.receivers
+                 : []
+                ).map(r => ({ ...r, kind: String(r.role || 'to').toLowerCase() }));
+
+  // Server-side LIMITS re-check — never trust the client (ATH-120).
+  const counts = { to: 0, cc: 0, for: 0 };
+  for (const r of rawList) {
+    if (!(r.kind in counts)) {
+      return res.status(400).json({ error: 'Invalid recipient role', message: `role must be to|cc|for, got "${r.kind}"` });
+    }
+    counts[r.kind]++;
+  }
+  if (counts.to > LIMITS.to || counts.cc > LIMITS.cc || counts.for > LIMITS.for) {
+    return res.status(400).json({ error: 'Limit exceeded', message: `Recipient caps — to:${LIMITS.to}, cc:${LIMITS.cc}, for:${LIMITS.for}` });
+  }
+  if (line_items.length > LIMITS.items) {
+    return res.status(400).json({ error: 'Limit exceeded', message: `Max ${LIMITS.items} line items` });
+  }
+  Object.assign(st, { is_draft, promote_draft_id, ROLE_MAP, rawList, counts });
+}
+
+/** the traceability edge — only when the sender declares one, its parents co-held */
+async function sendTrace(st, req, res) {
+  const { sender_id, is_draft } = st;
+  // ── Traceability edge (Fragment 1): a doubly-linked, co-held, FROZEN handoff edge that rides in
+  //    summary_json.trace. Present ONLY when the sender declares `trace` — normal chits are untouched (every
+  //    existing send path behaves exactly as before). HARDENING on the new path: a non-origin handoff MUST carry
+  //    >=1 parent chit the sender CO-HOLDS (no silent holes; can't forge an edge to a chit you don't hold). ──
+  let traceEdge = null;
+  if (req.body.trace && !is_draft) {
+    const built = trace.buildEdge(req.body.trace);
+    if (built.error) return res.status(400).json({ error: 'Invalid handoff', message: built.error });
+    traceEdge = built.edge;
+    if (traceEdge && traceEdge.parents.length) {
+      const held = await withEntity(sender_id, (db) => db.query(
+        `SELECT chit_id FROM chit_header WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2`,
+        [traceEdge.parents, sender_id]));
+      const heldSet = new Set(held.rows.map((r) => r.chit_id));
+      const missing = traceEdge.parents.filter((p) => !heldSet.has(p));
+      if (missing.length) return res.status(400).json({ error: 'Invalid handoff', message: `Parent chit not co-held by sender: ${missing.join(', ')}` });
+    }
+  }
+  Object.assign(st, { traceEdge });
+}
+
+/** the sender's money and self-copy preference — one read */
+async function sendPrefs(st, req, res) {
+  const { sender_id, sender_bridge_id, sender_display_name, ROLE_MAP } = st;
+  let { currency_code } = st;
+  // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
+  const prefRow = await query(`SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1`, [sender_id]);
+  /* the sender's money (WX-R2R, above): the row's own code; a row without one asks lib/regional.currencyFor — the ONE resolver (its regional layer, its fallback) */
+  currency_code = String(currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || await require('../lib/regional').currencyFor(sender_id)).toUpperCase();
+  /**
+   * ⭐ A SELF-CHIT MAKES ONE COPY, AND IT IS THE TASK — Athi, 2026-08-14: *"self should create one copy only,
+   * no two copies, and you would be very specific about direction."*
+   *
+   * The default was 'both', so every self-chit wrote TWO rows for the SAME entity — a `sent` copy and a
+   * `received` copy. That is not a display quirk: it doubles chit_header, chit_detail AND chit_line, so every
+   * cross-chit read counts the same work twice. It is what made the worklist show four lines per person where
+   * two were assigned, and it made `due_on` and `actor_id` look broken when both were filtering correctly.
+   *
+   * ⚠️ WHY `received` AND NOT `sent`. A self-chit exists because there is work to do. The Order/Sent list is
+   * the record of obligations placed on SOMEONE ELSE, and a self-chit places none — filing it there asserts
+   * "I sent this to a counterparty", which is false. Task asserts "this is mine to act on", which is true. It
+   * is also what the capture path already does: a WhatsApp message becomes a Task, never an Order.
+   *
+   * ⚠️ NARROWED, NOT SILENT. The suppression is declared on the chit as `copy_policy` with its source, exactly
+   * as before — an absence that cannot be told from a gap is not governed. An entity that has explicitly set
+   * `self_copy_pref` keeps its choice; only the unset default moves. Inter-entity chits are untouched: both
+   * copies stay mandatory there, because the co-held transfer is the whole point.
+   */
+  const selfCopyPref = prefRow.rows[0]?.self_copy_pref || 'received';
+  const makeSelfReceiver = (k) => ({ entity_id: sender_id, bridge_id: sender_bridge_id,
+    display_name: sender_display_name, kind: k, role: ROLE_MAP[k], all_role: k === 'to' ? 'receiver' : k });
+  let hasSelf = false;
+  Object.assign(st, { currency_code, selfCopyPref, makeSelfReceiver, hasSelf });
+}
+
+/** every recipient resolved by id before name, de-duplicated; self becomes the Task copy */
+async function sendRecipients(st, req, res) {
+  const { sender_id, is_draft, ROLE_MAP, rawList, makeSelfReceiver } = st;
+  let { hasSelf } = st;
+  // Existence check — connection NOT required. Resolve + de-dupe (one row per entity per direction).
+  const receiverDetails = [];
+  const seen = new Set();
+  for (const r of rawList) {
+    // Self recipient ("+ Self" or your own name): always create the entity's 'received' (Task)
+    // copy here; the 'sent' (Order) copy is the SENDER block below. Two copies, always.
+    if (r.self === true || ['self','me'].includes(String(r.name || '').trim().toLowerCase())) {
+      if (!hasSelf) receiverDetails.push(makeSelfReceiver(r.kind));
+      hasSelf = true;
+      continue;
+    }
+    /**
+     * ⚠️⚠️ A MINTED PARTY IS NOT A RECIPIENT. Athi, 2026-09-10: *"he is not a recipient, so you can't bring
+     * him to the rail or something."* `~acmetraders.sup-0001` is an ordinary active entity in every other
+     * respect — which was the whole design — so all four lookups below would resolve it happily, and the chit
+     * would then sit as sent for ever because nobody can sign in to open it. The sender would be waiting on an
+     * answer that cannot come.
+     * ⭐ One test on whatever was typed, before any lookup runs. The id path is fenced separately below,
+     * because a screen holding a supplier row would pass the uuid rather than the handle.
+     */
+    const typedAny = String(r.user_id || r.bridge || r.bridge_id || r.display_name || r.name || '').trim();
+    if (require('../lib/handle').isMinted(typedAny)) {
+      return res.status(404).json({ error: 'Not found',
+        message: `"${typedAny}" cannot receive chits — that is a local record, not a ChitBridge business.` });
+    }
+    const rec = await sendLookupRecipient(r);
+
+    if (!rec || rec.rows.length === 0) {
+      if (is_draft) {   // a draft is WIP — keep the entered recipient name (unresolved); resolution is enforced only on send
+        receiverDetails.push({ entity_id: null, bridge_id: null, display_name: (r.display_name || r.name || '').toString().trim(),
+          kind: r.kind, role: ROLE_MAP[r.kind], all_role: r.kind === 'to' ? 'receiver' : r.kind });
+        continue;
       }
-
-      // Generate auto subject
-      const auto_subject = generateAutoSubject(purpose, sender_display_name, now);
-
-      // Calculate summary from line items
-      const summary = calculateSummary(line_items);
-      /* ⭐ a counter bill's value is its invoice's TotInvVal (above), never the sum of its line nets */
-      if (issuedTotal != null) summary.total_value = issuedTotal;
-      // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
-      const ext_priority = ['normal','high','urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
-      // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
-      //    or deletes yet (retire = Ph2, purge = Ph3, gated). Migration-free: rides summary_json.retention like copy_policy.
-      //    Per-chit override now; the governed DEFAULT lives in the governance channel (backlog), not a Settings toggle. ──
-      const DEFAULT_RETENTION_DAYS = null;   // governed default resolves from the cascade later
-      let retention = null;
-      {
-        const rd = (Number.isFinite(+req.body.retention_days) && +req.body.retention_days > 0) ? Math.floor(+req.body.retention_days) : null;
-        let exp = null, src = null, days = null;
-        if (typeof req.body.expires_at === 'string' && !isNaN(Date.parse(req.body.expires_at))) { exp = new Date(req.body.expires_at).toISOString(); src = 'manual'; }
-        else if (rd) { exp = new Date(Date.now() + rd * 86400000).toISOString(); src = 'manual'; days = rd; }
-        else if (DEFAULT_RETENTION_DAYS) { exp = new Date(Date.now() + DEFAULT_RETENTION_DAYS * 86400000).toISOString(); src = 'default'; days = DEFAULT_RETENTION_DAYS; }
-        if (exp) retention = { expires_at: exp, retention_days: days, source: src };
-      }
-      /**
-       * ⚠️⚠️ RETENTION IS PER COPY, AND EACH COPY'S OWNER SETS ITS FLOOR (backlog 11).
-       *
-       * `retention` above rides on the SHARED summary — it is the sender's DECLARATION, and until now that is
-       * all it was: nothing in the codebase wrote `chit_status.retention_expires_at`, so every copy silently
-       * took the schema default. Applying the declaration without a floor would have handed a sender the power
-       * to set an expiry on the RECEIVER's copy, which is the spoofing route this guards.
-       *
-       * ⚠️ MAX, NEVER MIN. A counterparty may ask you to keep a record longer than your floor and you will; they
-       * can never make your copy disappear sooner. And it is computed PER COPY on purpose — the two parties may
-       * legitimately differ, which is the entire point of a per-copy model.
-       *
-       * ⚠️ Nothing deletes yet (retire is Ph2, purge Ph3, both human-gated), so this ships the guard BEFORE the
-       * thing it guards — which is the only order in which it is worth building.
-       */
-      const _reqDays = (retention && retention.retention_days) ? +retention.retention_days : null;
-      const retainDaysFor = async (owner_id) => {
-        let floor = 90;
-        try { const f = await policy.get(owner_id); if (Number.isFinite(+f.retention_floor_days)) floor = +f.retention_floor_days; }
-        catch (_) { /* unreadable policy → keep the schema default; never shorten on an error */ }
-        return Math.max(policy.RECORDS_FLOOR_DAYS, floor, _reqDays || 0);   /* CO3: the records-law floor sits under every copy */
-      };
-      // ── assimilation seam: resolve the boilerplate for this send — constitution + capability + pattern + the canonical
-      //    SHARED standard (ISO 9000) — and stamp the lineage. Best-effort: never blocks the send. This is the mint
-      //    assimilating a per-brand context AND a shared source into one chit (routes send-chit through the seam). ──
-      let governed = null;
-      try {
-        const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: sender_id });
-        if (cfg) governed = { pattern: cfg._blueprint, capability: cfg._capability, constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
-      } catch (_) { /* seam is best-effort */ }
-      // ── ORDER-BINDING: fold the sender's HELD clearances into the chit (per-copy snapshot, FROZEN). The buyer sees, on
-      //    THIS order, exactly the supplier's clearances met + their assurance rung; later changes never alter this copy.
-      //    Best-effort — never blocks the send. ──
-      let folded_clearances = null;
-      try {
-        const rd = await require('../lib/readiness').resolveReadiness(sender_id);
-        const held = (rd.clearances || [])
-          .filter(c => c.status === 'gathered' || c.status === 'expiring')
-          .map(c => ({ standard: c.standard, doc: c.doc, title: c.title, rung: c.rung,
-            valid_until: c.valid_until || null, verified_at: c.verified_at || null, verified_by: c.verified_by || null }));
-        if (held.length) folded_clearances = { folded_at: new Date().toISOString(), items: held };
-      } catch (_) { /* best-effort */ }
-      // ── COMMERCIAL COVER fold — a trade order (one that carries clearances) also freezes its commercial-cover FRAMEWORK
-      //    onto the buyer's copy: payment/transit/currency/credit cover by risk, and which is already evidenced on-rail
-      //    (e.g. performance risk = the supplier's on-rail track record). Framework, not a secured instrument — honest.
-      //    Buyer sees "💳 Commercial cover" beside "🛡 Supplier clearances", frozen. Best-effort — never blocks the send. ──
-      let folded_commercial = null;
-      try {
-        if (folded_clearances) {
-          const inc = (summary && summary.incoterm) || 'CIF';
-          const ci = require('../lib/instruments').resolveInstruments({ cross_border: 1, incoterm: inc });
-          const areas = (ci.cluster || []).map(g => ({ label: g.label, frm_class: g.frm_class,
-            on_rail: !!g.covered_onrail, instruments: (g.instruments || []).map(i => i.name) }));
-          if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: inc, areas };
-        }
-      } catch (_) { /* best-effort */ }
-      /* The whitelist for the provenance rider above. A string field is trimmed and capped; `sender_verified` is
-         forced to a real boolean, because "the sender is verified" is a claim that must never arrive as a truthy
-         string. Unknown keys are dropped rather than carried. */
-      const via = (() => {
-        const v = business_json && business_json.via;
-        if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
-        const str = (x, n) => (x === null || x === undefined || x === '' ? null : String(x).slice(0, n || 120));
-        const out = {
-          channel: str(v.channel, 24), from: str(v.from, 64), from_name: str(v.from_name, 120),
-          to: str(v.to, 64), provider_msg_id: str(v.provider_msg_id, 128), capture_id: str(v.capture_id, 64),
-          received_at: str(v.received_at, 40), read_by: str(v.read_by, 40),
-          /* Order-level facts that have no column of their own. `unplaced` is what the reader could not place at
-             all — surfaced, never dropped: a request that quietly lost 'deliver at 7pm' looks correct and is not. */
-          delivery_at: str(v.delivery_at, 120), delivery_address: str(v.delivery_address, 300),
-          notes: str(v.notes, 800), unplaced: str(v.unplaced, 800),
-          sender_verified: v.sender_verified === true,
-          // What they actually wrote, capped — the full text rides as an attachment, not in every copy's summary.
-          raw_excerpt: str(v.raw_excerpt, 400),
-          media_count: Number.isFinite(+v.media_count) ? Math.max(0, Math.min(20, +v.media_count)) : 0,
-          label: str(v.label, 40),
-          /* How each line got its price. Re-read key by key rather than spread: the counts must be numbers and the
-             lists must be short, whatever a caller sends. */
-          priced: (() => {
-            const p = v.priced; if (!p || typeof p !== 'object') return undefined;
-            const n = (x) => (Number.isFinite(+x) ? Math.max(0, Math.min(999, Math.trunc(+x))) : 0);
-            const arr = (a, f) => (Array.isArray(a) ? a.slice(0, 5).map(f) : []);
-            return {
-              from_catalogue: n(p.from_catalogue), unpriced: n(p.unpriced), catalogue_used: p.catalogue_used !== false,
-              ambiguous: arr(p.ambiguous, (x) => ({ name: str(x && x.name, 200), matches: n(x && x.matches) })),
-              asked_differs: arr(p.asked_differs, (x) => ({ name: str(x && x.name, 200), asked: +x.asked || 0, ours: +x.ours || 0 })),
-            };
-          })(),
-        };
-        return out.channel ? out : null;      // no channel, no provenance — a `via` naming nothing is noise
-      })();
-      /**
-       * The sending entity's detail-page preference, resolved once and stamped below.
-       *
-       * ⚠️ `undefined` WHEN IT IS THE DEFAULT, deliberately: `mint.summary()` adds a rider only when it is
-       * neither undefined nor null, so an entity that never chose does not get a stamp claiming it did. That
-       * chit then falls back to whatever its reader prefers — which is the honest reading of "never chosen".
-       *
-       * ⚠️ Best-effort: a policy read that fails must not stop a chit being sent. No stamp is a recoverable
-       * state; a refused send is not.
-       */
-      let _detailDesign;
-      /**
-       * ⭐⭐ ONE LOOKUP PER PARTY, and each copy is stamped with ITS OWN owner's choice — see the note at the
-       * recipient insert. `detail_design` is the single key in summary_json that is allowed to differ between
-       * copies, because it is not a fact about the trade: it is how the holder reads their own work.
-       *
-       * ⚠️ Cached per send. A chit to eight recipients must not be eight extra round trips on the hottest
-       * write in the product, and two recipients are frequently the same entity in different roles.
-       */
-      const _designCache = new Map();
-      const _designFor = async (eid) => {
-        if (!eid) return undefined;
-        if (_designCache.has(eid)) return _designCache.get(eid);
-        let d;
-        try {
-          const _pf = await policy.get(eid);
-          if (_pf && _pf.detail_design && _pf.detail_design !== 'chit') d = _pf.detail_design;
-        } catch (e) { /* no stamp; Order level, which is the default anyway */ }
-        _designCache.set(eid, d);
-        return d;
-      };
-      _detailDesign = await _designFor(sender_id);
-      /* Resolved for every recipient BEFORE the transaction opens — an await inside it would hold a connection
-         open across a policy read for each party. */
-      if (!is_draft) for (const r of receiverDetails) await _designFor(r.entity_id);
-      /** The shared summary, with only this copy's reading swapped in. */
-      const _summaryFor = (eid) => {
-        const d = _designCache.get(eid);
-        if (d === _detailDesign) return summary_json;                 // identical — share the object
-        const s = Object.assign({}, summary_json);
-        if (d) s.detail_design = d; else delete s.detail_design;
-        return s;
-      };
-
-      /* ⚠️ The SKELETON comes from lib/mint.js; every rider below is still decided here. mint.summary() adds a rider
-         only when it is neither undefined nor null — the same test the conditional spreads made by hand, four
-         times, in four files. */
-      const summary_json = mint.summary({
-        line_item_count: summary.line_item_count,
-        total_value: summary.total_value,
-        money: moneyBlock,
-        offers: offersApplied,
-        currency_code,
-        priority_external: ext_priority,
-        purpose,
-        is_promotion: !!(business_json && business_json.is_promotion),
-        // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
-        forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
-        copy_policy: copyPolicy,
-        retention,
-        /**
-         * ⭐⭐ THE DESIGN IS STAMPED HERE AND KEPT FOR LIFE. Athi, 2026-08-24: *"attach design 1 or design 2 as
-         * per the choice in the settings, in the header record — so we avoid the complication of moving from
-         * one record type to another and both can be tested independently."*
-         *
-         * ⚠️ A STAMP, NOT A LOOKUP. Reading the preference at render time would mean every existing job silently
-         * changed shape the moment someone touched Settings — a chit reading one way on Monday and another on
-         * Tuesday, with no event to explain it. Written once, at creation, from whatever the preference then was.
-         *
-         * ⚠️ ONLY THE SENDER'S OWN COPY IS STAMPED, and that is a boundary, not an oversight: the design belongs
-         * to the entity that INTERPRETS the work, and one entity may not read another's settings. A recipient's
-         * copy carries no stamp and falls back to their own preference until they have one of their own.
-         *
-         * ⭐ Migration-free — it rides `summary_json` exactly as `copy_policy` and `retention` do.
-         */
-        detail_design: _detailDesign,
-        governed,
-        clearances: folded_clearances,
-        commercial: folded_commercial,
-        // Traceability edge — frozen onto every co-held copy (Fragment 1). parents is a SET (forward fan-out is the spread).
-        trace: traceEdge ? { ...traceEdge, sealed_at: now.toISOString() } : null,
-        /**
-         * ⚠️ ENGINE TOUCH #2, ADDITIVE — channel PROVENANCE, echoed onto the summary so it rides every copy and is
-         * readable from a list without opening the chit. Present only when declared, exactly like `trace`; a chit
-         * sent without it is byte-identical to before.
-         *
-         * It belongs on summary_json rather than only on business_json because provenance that has to be dug for is
-         * provenance nobody reads. Six weeks after a disputed order, "where did this come from" is the first
-         * question, and business_json is not on the list row.
-         *
-         * ⚠️ WHITELISTED, NOT COPIED. summary_json is ours; letting a caller spread arbitrary keys into it would
-         * make the chit's own summary a place strangers can write. Known keys, coerced, capped.
-         */
-        via,
+      return res.status(404).json({
+        error: 'Not found',
+        message: `Recipient "${r.entity_id || r.display_name || r.name}" not found in the platform`
       });
+    }
 
-      // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
-      const schemaRow = await query(
-        `SELECT schema_id, schema_version
-           FROM entity_schemas
-          WHERE entity_id = $1 AND status = 'active' AND is_default = true
-          ORDER BY created_at DESC
-          LIMIT 1`,
-        [sender_id]
-      );
-      const frozen_schema_id      = schemaRow.rows[0]?.schema_id      || null;
-      const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
-      const created_by_actor_id   = req.identity.identity_id;   // who actually pressed send
+    const rid = rec.rows[0].identity_id;
+    // Resolved to self (you typed your own name): same as "+ Self" — create the received copy.
+    if (rid === sender_id) {
+      if (!hasSelf) receiverDetails.push(makeSelfReceiver(r.kind));
+      hasSelf = true;
+      continue;
+    }
+    if (seen.has(rid)) continue;   // de-dupe external recipients
+    seen.add(rid);
 
-      // ── Compose the per-participant copies for the delivery layer (SENDER always; RECEIVERS unless draft).
-      //    Every copy carries the SAME sender = the caller, which is chit_deliver's isolation gate. ──
-      /* ⚠️ SHAPE from lib/mint.js — and ONLY the shape. Everything above this line (recipient resolution, the caps,
-         copy_policy, retention, freeze-at-send, the trace edge) is this route's POLICY and has not moved: it is
-         engine-locked and is the reference implementation the other three paths were imitating badly. */
-      /* ⭐ THE PAGE STAMP (N03): on the header of every copy that carries business data — sender, receivers, a bill copy.
-         Added onto what the sender sent, never a rewrite of it; set ONCE here and written by no route afterwards. */
-      business_json = Object.assign({}, business_json && typeof business_json === 'object' ? business_json : {}, { page: pageStamp.page });
-      const headerCommon = mint.header({
-        sender_entity_id: sender_id, sender_entity_bridge_id: sender_bridge_id,
-        sender_entity_display_name: sender_display_name, all_recipients, purpose,
-        auto_subject, manual_subject: manual_subject || null, summary_json,
-        schema_version: frozen_schema_version, schema_id: frozen_schema_id, created_by_actor_id,
-        detail_type: purpose, line_item_count: summary.line_item_count,
-        total_value: summary.total_value, currency_code: summary_json.currency_code,
-        created_at: now, sent_at: now,   /* Y1b: the shop clock's moment (b300 reads it; before b300 the definer stamps NOW() as it always did) */
-      });
-      const mkCopy = (extra) => mint.party(headerCommon, Object.assign({
-        // omitted -> SQL NULL (matches legacy): chit_deliver reads c->>'key', for which an absent key and a JSON
-        // null are indistinguishable, so passing them conditionally is the same write either way.
-        business_json: business_json || undefined,
-        line_items: line_items.length > 0 ? line_items : undefined,
-      }, extra));
-      const copies = suppressSentCopy ? [] : [ mkCopy({
-        entity_id: sender_id, direction: 'sent', role: is_draft ? 'Draft' : 'Act',
-        current_status: 'delivered', priority_flag: 'normal', payload_delivered: true,
-        log: { action: 'created', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
-               new_status: 'delivered', detail: `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}` },
-      }) ];
-      if (!is_draft) for (const receiver of receiverDetails) {
-        const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered';   // To acts; CC/For informational
-        const billCopy = billCopyFor(receiver);   /* the customer's copy of a counter bill — a bill, in their words */
-        copies.push(mkCopy(Object.assign({
-          /**
-           * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING — see _summaryFor above. Every other key
-           * here is the shared record and must not diverge; `detail_design` is the one exception, because it is
-           * not a fact about the trade but how the holder of THIS copy reads their own work.
-           *
-           * ⚠️ Set on the LIVE path as well as the legacy fan-out below. The operator's redacted copy proved
-           * per-copy summary_json was already a seam — this rides the same one rather than inventing another.
-           */
-          summary_json: _summaryFor(receiver.entity_id),
-          business_json: bjFor(receiver.entity_id) || undefined,   /* the sender's replay key stays on the sender's row (bjFor) */
-          entity_id: receiver.entity_id, direction: 'received', role: receiver.role,
-          current_status: rcv_status, priority_flag: 'normal',
-          log: { action: 'delivered', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
-                 new_status: rcv_status, detail: `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})` },
-        }, billCopy ? {
-          purpose: billCopy.purpose, detail_type: billCopy.purpose, manual_subject: billCopy.manual_subject,
-          business_json: billCopy.business_json,
-          summary_json: Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received }),
-        } : {})));
+    receiverDetails.push({
+      entity_id: rid,
+      bridge_id: rec.rows[0].bridge_id,
+      display_name: rec.rows[0].display_name,
+      kind: r.kind,                                   // to | cc | for
+      role: ROLE_MAP[r.kind],                         // Act | Info | For (chit_header.role)
+      all_role: r.kind === 'to' ? 'receiver' : r.kind // for the all_recipients snapshot
+    });
+  }
+  Object.assign(st, { hasSelf, receiverDetails });
+}
+
+/** one recipient → its identity row, by id, bridge id, user id, then typed name — never a minted party (sendRecipients) */
+async function sendLookupRecipient(r) {
+  let rec;
+  if (r.entity_id) {
+    rec = await query(
+      `SELECT identity_id, bridge_id, display_name FROM identities
+       WHERE identity_id = $1 AND status = 'active'
+       AND COALESCE(user_id, '') NOT LIKE '~%'`,
+      [r.entity_id]
+    );
+  } else if (r.bridge || r.bridge_id) {
+    /* ⭐ BY IDENTITY BEFORE BY NAME (Athi, 2026-09-06: renamed tallytest to "Tally Test Shop" on the profile — "now I couldn't send the chit,
+       it says Tally Test Shop not found"). A display name is a VIEW name, free to change; the bridge id and the user id are set once
+       (project-user-id-rule). The Suppliers checkout and Compose now send the id; a name alone is the last resort, kept for typed recipients. */
+    rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE bridge_id = $1 AND status = 'active' AND identity_type = 'entity'`, [String(r.bridge || r.bridge_id).trim()]);
+  } else if (r.user_id) {
+    rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`, [String(r.user_id).trim()]);
+  } else if (r.display_name || r.name) {
+    const typed = (r.display_name || r.name).trim();
+    /* a typed handle may be a user id or a bridge id as easily as a name — try those first, then the name */
+    rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR bridge_id = $1) AND status = 'active' AND identity_type = 'entity' LIMIT 1`, [typed]);
+    if (!rec.rows.length) rec = await query(
+      `SELECT identity_id, bridge_id, display_name FROM identities
+       WHERE LOWER(display_name) = LOWER($1) AND status = 'active'
+       AND identity_type = 'entity'
+       /* ⚠️ never a minted party. Their display names are ordinary shop names — "Corner Hardware" — so
+          without this a name typed by ANY business could resolve to another one's private supplier record.
+          The typed-handle test above cannot catch this one: what was typed is a name, not a handle. */
+       AND COALESCE(user_id, '') NOT LIKE '~%'`,
+      [typed]
+    );
+  }
+  return rec;
+}
+
+/** who sells (an order: the recipient; anything else: the sender) and the rate on every line the shelf can answer */
+async function sendSeller(st, req, res) {
+  const { sender_id, purpose, business_json, receiverDetails } = st;
+  let { line_items } = st;
+  // ── self_copy_pref (policy-flag #1) — copy suppression is a SELF-CHIT-ONLY affordance. On any inter-entity chit
+  //    BOTH copies are mandatory (sender's Order + receiver's Task = the co-held transfer, cb-core-principle), so we
+  //    only ever suppress on a PURE self-chit (self is the sole recipient). Every suppression is DECLARED on the chit
+  //    via summary_json.copy_policy — the absence is governed + auditable, never a silent gap. ──
+  /**
+   * ⭐⭐ WHO SELLS. Athi, 2026-09-06 10:19 (Chola's order to tallytest: list prices, no offer, no rate — "it has to be the exact cart"):
+   * the rate and the live offers were read from the SENDER's shelf, and the offers only for self/counter/captured chits. An ORDER
+   * is sent by the buyer to the seller — the recipient's shelf and the recipient's offers are the ones that price it, exactly as
+   * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
+   */
+  const orderLike = /^(order|offer)$/.test(String(purpose || ''));
+  const toIds = receiverDetails.filter((r) => r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)).map((r) => String(r.entity_id));
+  /* ⚠️ A COUNTER BILL IS 'order' TOO, AND THE COUNTER SELLS IT (the two-sided counter bill, 2026-10-01). Sent to an on-rail
+     customer it has one 'to' recipient — read as an order, the CUSTOMER would have become the seller: their shelf, their
+     offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
+  const counterBill = taxCopy.counterIssued(business_json);
+  const sellerId = (orderLike && !counterBill && toIds.length === 1) ? toIds[0] : sender_id;
+  /**
+   * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
+   * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
+   * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
+   * the line keeps that rate for life. ⚠️ Fails open: no shelf, no rate, the chit still sends. Never touches
+   * price or total. Athi (asleep): "complete all on your own" — decision logged in BUILD_LOG.
+   */
+  try {
+    const shelf = await taxShelf.readShelf(sellerId, { withEntity, query, regionLayer: regional.regionLayer,
+      getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: true });
+    if (shelf) line_items = taxLines.decorate(line_items, { items: shelf.items, slabs: shelf.slabs, categories: shelf.categories, face: shelf.face });   /* the Map, as the storefront passes it — see slabOf */
+  } catch (_) { /* rate-less lines are what every chit carried until tonight */ }
+  Object.assign(st, { line_items, orderLike, toIds, counterBill, sellerId });
+}
+
+/** the seller's live offers, when the sender sells — never on a bill already priced (REV-02) */
+async function sendOffers(st, req, res) {
+  const { sender_id, business_json, orderLike, sellerId } = st;
+  let { line_items } = st;
+  /**
+   * ⭐ THE SELLER'S LIVE OFFERS, AT SEND, WHEN THE SENDER SELLS (Athi, 2026-09-05: "how does it become a chit when it comes
+   * through WhatsApp? check there also — the offer and tax applied correctly"). A counter bill (business_json.customer) and
+   * a captured message (business_json.via — WhatsApp, email, any channel) are sent BY the seller; the storefront applied
+   * the live offers to its orders and these two never did. The same function (lib/offers-live.js), the same engine, the
+   * same per-line result; lines a client already discounted are left alone. Fails open, like the rate.
+   *
+   * ⚠️⚠️ [REV-02] "a bill the customer has paid is re-priced at today's offers when it syncs." Send time is not
+   * always sale time — a till bill queued offline can reach here days later, after the shop launches a new
+   * offer. offers-live.js already skips a line that carries `it.offer` (an offer the till itself applied);
+   * what it never skipped was a PLAIN line with none, which is exactly what a later, unrelated offer attaches
+   * itself to — the customer's ₹500 slip becomes a server-side ₹450 chit, and a credit note for the same
+   * bill gets over-refunded the same way. `business_json.billed_at` is the tell: ONLY till.html/till.js ever
+   * set it (grep confirms — no compose/capture/storefront path does), so it names a document that was
+   * ALREADY priced and printed at a real moment in the past, not a sale being priced here for the first time.
+   * A captured/typed sale (no billed_at) still needs these live offers — that path is what this block exists
+   * for — so the guard is additive, not a new refusal.
+   */
+  let offersApplied = [];   /* what the seller's live offers did to these lines (line + cart scope) — recorded on the summary */
+  try {
+    const bj = business_json || {};
+    const alreadyBilled = require('../lib/offers-live').alreadyBilled(bj);
+    const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
+    /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
+    if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike)) {
+      const cur = await require('../lib/regional').currencyFor(sellerId).catch(() => 'INR');
+      const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity, viewer: orderLike ? sender_id : null });   /* an order's buyer may hold a customer-only offer with this seller */
+      if (r && r.items) { line_items = r.items; offersApplied = Array.isArray(r.applied) ? r.applied : []; }
+    }
+  } catch (_) { /* no offers, no change */ }
+  Object.assign(st, { line_items, offersApplied });
+}
+
+/** the header's money — gross · savings · net · tax · total, provisional */
+async function sendMoney(st, req, res) {
+  const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
+  /**
+   * ⭐⭐ THE MONEY THE HEADER CARRIES (Athi, 2026-09-07). `total_value` is the net after offers and BEFORE tax — right, but alone
+   * on a list column called Amount it reads as the whole bill, and his Order list said ₹488.25 where Zoho's invoice said ₹531.
+   * So the header now carries the five figures a person actually compares: gross · savings · net · tax · total.
+   *   · gross and savings are free — the offers engine has just run and the line keeps its listed price beside its total.
+   *   · tax is `taxLines.invoiceFor`, a PURE function over the lines that `decorate` has already rated, plus one row per party.
+   *     ONE query for both identities (his "why do you need another query?"), never one per line.
+   * ⚠️ PROVISIONAL, AND IT SAYS SO. The invoice freezes at completed (G3); this is a display summary carrying the same
+   * caveat as the invoice tab, not a second source of truth. A tax we cannot compute is `null`, never 0 — a column showing
+   * "—" is honest, a column showing zero tax is a lie.
+   */
+  let moneyBlock = null;
+  try {
+    const r2m = (n) => roundMoney(Number(n) || 0);
+    const li = Array.isArray(line_items) ? line_items : [];
+    const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
+    const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
+    const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
+    const gross = r2m(li.reduce((a, l) => a + listOf(l) * qtyOf(l), 0));
+    const net = r2m(li.reduce((a, l) => a + netOf(l), 0));
+    let tax = null, total = null;
+    /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
+    const buyerId = counterBill ? null : orderLike ? String(sender_id) : (toIds.length === 1 ? toIds[0] : null);
+    if (li.length && buyerId && String(sellerId) !== String(buyerId)) {
+      const ids = [String(sellerId), String(buyerId)];
+      const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [ids]);
+      const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
+      const sRow = rowOf(sellerId), bRow = rowOf(buyerId);
+      if (sRow && bRow) {
+        /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent,
+           so priceIncludesTax arrived as undefined and !!undefined taxed a GST-inclusive shelf price as
+           if it were ex-tax. sRow already carries policy_flags from the query two lines up; flagOf() reads
+           the SELLER's own setting from it, no second query. */
+        const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax') === 'yes';
+        /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever
+           reaches DocDtls.Dt (metadata, no rate lookup keys on it), but a bill queued offline and sent days
+           later must say when it was actually billed, same reasoning as the offers guard just above. */
+        const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
+        const inv = taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: invAt, priceIncludesTax });
+        const h = taxLines.heads(inv.invoice);
+        if (h && Number.isFinite(h.tax)) { tax = r2m(h.tax); total = r2m(h.total || (net + tax)); }
       }
+    }
+    moneyBlock = { gross, savings: r2m(gross - net), net, tax, total: total != null ? total : (tax != null ? r2m(net + tax) : null), currency_code, provisional: true };
+  } catch (_) { /* a chit never fails to send because its money summary could not be built */ }
+  Object.assign(st, { moneyBlock });
+}
 
-      // Operator's REDACTED oversight copy — co-holds the EDGE (product/qty/topology) but NOT commercial terms:
-      // no business_json, no line_items, total_value nulled. That is TR-6 at write time — the operator physically
-      // never holds a rival deal's price, it only holds the traceable edge.
-      if (operatorInfo && !is_draft) {
-        /* ⚠️ NOT mint.summary() — DELIBERATELY. This is a REDACTED summary, and its whole purpose is to be missing
-           keys the real one has. Passing it through the skeleton builder would helpfully restore currency_code and
-           total_value, handing the operator the commercial terms this copy exists to withhold. A builder that fills
-           in defaults is the wrong tool for a record defined by what it leaves out. */
-        const opSummary = { line_item_count: summary_json.line_item_count, purpose: summary_json.purpose, trace: summary_json.trace, oversight: true };
-        copies.push(mint.party(headerCommon, {
-          summary_json: opSummary, total_value: null,
-          entity_id: operatorInfo.identity_id, direction: 'received', role: 'For',
-          current_status: 'delivered',
-          log: { action: 'oversight', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
-                 new_status: 'delivered', detail: `Network oversight co-hold (edge only) — ${operatorInfo.display_name}` },
-        }));
+/** a counter bill carries its invoice — the header maps it, the server only checks it */
+async function sendIssued(st, req, res) {
+  const { sender_id, purpose, line_items, business_json, currency_code, is_draft, receiverDetails, counterBill } = st;
+  let { moneyBlock } = st;
+  /**
+   * ⭐⭐⭐ A COUNTER BILL CARRIES ITS INVOICE, AND THE SERVER ONLY READS IT (Athi, 2026-10-02: "the computation should happen
+   * in only one place like billing, rest all the places the value has to only read … recomputation can be done, but
+   * cannot rewrite what has been already wrote"). business_json.invoice is CBTax.determine()'s result from the counter's
+   * billMoney(), stored as it came. The header's money is MAPPED off it (moneyOfInvoice → the engine's moneyOf) — ₹1,118.16 for bill
+   * C2/26-27/0007, where the sum of its line nets said ₹1,118.15. The server's own computation runs ONLY to check it
+   * (lib/tax-copy entryFor → lib/issued-invoice check): a difference is named on the chit (business_json.tax_check) and in
+   * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
+   */
+  let issuedTotal = null;
+  const carried = business_json && business_json.invoice;
+  if (counterBill && !is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
+    moneyBlock = moneyOfInvoice(carried, currency_code);
+    issuedTotal = moneyBlock.total;
+    try {
+      const e = await taxCopy.entryFor({ chit_id: null, sender_entity_id: sender_id, purpose, business_json, line_items, currency_code,
+        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(receiverDetails.filter((r) => r.entity_id)
+          .map((r) => ({ entity_id: r.entity_id, role: r.all_role || 'receiver' }))), sent_at: business_json.billed_at || null }, sender_id);
+      if (e && e.tax_check && !e.tax_check.ok) {
+        business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
+        require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
       }
+    } catch (_) { /* the check never stops a bill — the stored invoice stands either way */ }
+  }
+  Object.assign(st, { moneyBlock, issuedTotal });
+}
 
-      // ── Guaranteed write: every row for this chit commits together, or none do (INV-2). Delivery is a substrate
-      //    op (writes each participant's copy, incl. receivers) -> the b50 SECURITY DEFINER fn chit_deliver, run in
-      //    withEntity(sender). Fallback to the legacy in-tx fan-out when b50 isn't applied. ──
-      if (await definersReady()) {
-        /**
-         * ⭐ THE FIRST BILL ENDS THE LEAD — IN THE BILL'S OWN TRANSACTION (L2C step 5, FX-L2C 2026-10-13). A counter bill is sent to
-         * SELF and names its customer in business_json.customer; the post-commit auto-add below counts RECIPIENTS, so the named
-         * party's txn_count never moved (a billed lead stayed "Trial"; Ravi Stores read 0 trades after three years). One withEntity
-         * holds chit_deliver AND the bump (lib/crm.traded: one UPDATE, never an insert); the bump sits in a SAVEPOINT so a CRM
-         * write can never fail a guaranteed chit (D-065). A named party that is also a recipient is left to the recipient block.
-         */
-        const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
-        const isRecipient = namedParty && receiverDetails.some((r) => String(r.entity_id) === String(namedParty));
-        await withEntity(sender_id, async (c) => {
-          await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: c });
-          if (namedParty && !isRecipient) await trySavepoint(c, () => require('../lib/crm').traded(c, sender_id, namedParty, now), null);
-        });
-      } else {
-      await withTransaction(async (client) => {
-        if (promote_draft_id) {   // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
-          await client.query('DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
-          await client.query('DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
-          await client.query('DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
-          await client.query('DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
-        }
-        // SENDER (suppressed for a task-only self-chit — no Order copy needed)
-        if (!suppressSentCopy) {
-        await client.query(
-          `INSERT INTO chit_header
-           (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
-            sender_entity_display_name, all_recipients, purpose,
-            auto_subject, manual_subject, summary_json, business_json,
-            schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
-          [chit_id, sender_id, sender_id, sender_bridge_id,
-           sender_display_name, JSON.stringify(all_recipients), purpose,
-           auto_subject, manual_subject || null,
-           JSON.stringify(summary_json),
-           business_json ? JSON.stringify(business_json) : null,
-           frozen_schema_version, frozen_schema_id, created_by_actor_id,
-           is_draft ? 'Draft' : 'Act', chit_id, 'sent', now]
-        );
-        await client.query(
-          `INSERT INTO chit_detail
-           (chit_id, entity_id, detail_type, line_item_count,
-            total_value, currency_code, line_items, direction, payload_delivered_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())`,
-          [chit_id, sender_id, purpose,
-           summary.line_item_count, summary.total_value,
-           summary_json.currency_code,
-           line_items.length > 0 ? JSON.stringify(line_items) : null, 'sent']
-        );
-        await client.query(
-          `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag,
-                                    retention_expires_at, retire_at)
-           VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval)`,
-          // internal priority starts normal; each party sets its own (external rides on summary_json)
-          [chit_id, sender_id, 'normal', String(await retainDaysFor(sender_id))]
-        );
-        await client.query(
-          `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, new_status, detail)
-           VALUES ($1,$2,'created',$3,$4,'delivered',$5)`,
-          [chit_id, sender_id, sender_id, sender_display_name,
-           `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}`]
-        );
-        }
+/** which copies a self-chit or a numbered document keeps — declared, never silent */
+async function sendCopyPolicy(st, req, res) {
+  const { sender_id, client_ref, is_draft, promote_draft_id, selfCopyPref, hasSelf, receiverDetails } = st;
+  const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
+  /**
+   * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
+   *
+   * Athi, 2026-08-09: *"we can create a self chit and you can make the order copy none, it will create a task."*
+   * That is the right shape for an inbound request: the entity did NOT send it — someone outside asked — so a
+   * copy sitting in their Order/Sent list would be a lie about who asked. Task-only is the truthful record.
+   *
+   * The account-wide setting could not express this: it would have flipped EVERY self-chit they ever author.
+   * A single send needs to say it for itself.
+   *
+   * WHAT THIS DOES NOT DO — it lives INSIDE the pureSelfChit branch and nowhere else, so it cannot reach an
+   * inter-entity chit. Both copies stay mandatory there (cb-core-principle: the co-held transfer is the point),
+   * and both suppressed copies here belong to the SAME entity, so nobody loses a record they hold. The choice is
+   * DECLARED on the chit exactly as the setting's is, with `source` recording which of the two decided it — a
+   * suppression that cannot be told apart from a gap is not governed.
+   */
+  const reqSelfCopy = ['both', 'sent', 'received'].includes(String(req.body.self_copy || '')) ? String(req.body.self_copy) : null;
+  const effSelfCopy = reqSelfCopy || selfCopyPref;
+  const copySource = reqSelfCopy ? 'request' : 'setting';
+  let copyPolicy = null, suppressSentCopy = false;
+  if (pureSelfChit) {                          // every self-chit KEEPS its identity (scope:'self') — recorded, not showcased
+    if (effSelfCopy === 'sent') {             // ORDER-only → drop the self Task (received) copy
+      const si = receiverDetails.findIndex(r => r.entity_id === sender_id);
+      if (si >= 0) receiverDetails.splice(si, 1);
+      copyPolicy = { scope: 'self', kept: ['sent'], suppressed: ['received'], reason: 'Task copy suppressed — self-chit (Order only)', source: copySource };
+    } else if (effSelfCopy === 'received') {  // TASK-only → drop the sender Order (sent) copy
+      suppressSentCopy = true;
+      copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — self-chit (Task only)', source: copySource };
+    } else if (client_ref) {
+      /**
+       * ── ⚠⚠⚠ A NUMBERED DOCUMENT IS ONE ROW PER ENTITY, WHATEVER THE COPY SETTING SAYS ──────────
+       *
+       * b263 puts a UNIQUE INDEX on (entity_id, client_ref). 'both' writes the sender copy AND the recipient
+       * copy — and on a pure self-chit those are the SAME entity — so a shop whose self_copy_pref is 'both'
+       * would have every counter bill refused with a 23505 and **be unable to sell**. The column defaults to
+       * 'received' so nothing is broken today; this is the trap the index arms for the day somebody changes
+       * it, and it is armed silently, which is the worst kind.
+       *
+       * ⭐ AND IT IS THE RIGHT ANSWER ON ITS OWN MERITS, not merely a way round the constraint. Two rows in
+       * one shop's books both claiming to BE invoice C1/26-27/0033 is not a copy, it is a second voucher —
+       * the exact thing the index exists to prevent. A self-copy is a useful idea for a message; for a
+       * numbered tax document it is a duplicate with a nicer name.
+       * ⚠ DECLARED, NEVER SILENT — copyPolicy is how this file records a suppression, and `source` says who
+       * decided it. A suppression that cannot be told apart from a gap is not governed (see the note above).
+       */
+      suppressSentCopy = true;
+      copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'],
+                     reason: 'Order copy suppressed — ' + client_ref + ' is a numbered document, and a number '
+                           + 'may appear once in a shop\'s books (b263). The setting asked for both.',
+                     source: 'numbered-document' };
+    } else {                                  // BOTH → keep both copies, but STILL declare the self-chit identity
+      copyPolicy = { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: copySource };
+    }
+  } else if (client_ref && hasSelf && !is_draft && !promote_draft_id) {
+    /**
+     * ⚠️⚠️ THE SAME RULE WHEN THE NUMBERED DOCUMENT ALSO GOES OUT (the two-sided counter bill, 2026-10-01). A counter bill
+     * to an on-rail customer is self + the customer: not a PURE self chit, so the branch above never ran and the shop got
+     * TWO rows — its 'sent' Order copy and its self Task copy — both carrying client_ref, which b263's unique index refuses:
+     * the counter could not sell to a connected customer at all. The shop keeps the ONE row it keeps for every counter bill
+     * (the self copy); the customer holds their own. Declared, like every suppression here.
+     */
+    suppressSentCopy = true;
+    copyPolicy = { scope: 'sender', kept: ['received'], suppressed: ['sent'],
+                   reason: 'One copy for the sender — ' + client_ref + ' is a numbered document, and a number may appear once '
+                         + 'in a shop\'s books (b263).', source: 'numbered-document' };
+  }
+  Object.assign(st, { copyPolicy, suppressSentCopy });
+}
 
-        // RECIPIENTS (skipped for drafts — a draft is the author's copy only)
-        if (!is_draft) for (const receiver of receiverDetails) {
-          const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered'; // To acts; CC/For are informational
-          const billCopy = billCopyFor(receiver);   /* the same per-copy reading as the live path above */
-          const rcvPurpose = billCopy ? billCopy.purpose : purpose;
-          const rcvBj = billCopy ? billCopy.business_json : bjFor(receiver.entity_id);
-          const rcvSummary = billCopy ? Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received })
-                                      : _summaryFor(receiver.entity_id);
-          await client.query(
-            `INSERT INTO chit_header
-             (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
-              sender_entity_display_name, all_recipients, purpose,
-              auto_subject, manual_subject, summary_json, business_json,
-              schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
-            [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
-             sender_display_name, JSON.stringify(all_recipients), rcvPurpose,
-             auto_subject, (billCopy ? billCopy.manual_subject : manual_subject) || null,
-             /**
-              * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING. Athi, 2026-08-24: *"the customer copy
-              * and supplier copy should be the same, but the interpretation can be in another tab — how the
-              * customer request is interpreted can stay within the receiving end."*
-              *
-              * ⚠️⚠️ EVERY OTHER KEY IN summary_json IS THE SHARED RECORD AND MUST NOT DIVERGE — the value, the
-              * lines, the clearances, the provenance. `detail_design` is the one exception, because it is not a
-              * fact about the trade at all: it is how the holder of THIS copy reads their own work. Stamping
-              * the sender's choice here would let a customer decide how a workshop organises its mechanics.
-              *
-              * ⚠️ Read server-side, per copy. This is not one entity reading another's settings — no client
-              * ever sees it — it is the server writing each copy the way its own owner asked to read it.
-              */
-             JSON.stringify(rcvSummary),
-             rcvBj ? JSON.stringify(rcvBj) : null,
-             frozen_schema_version, frozen_schema_id, created_by_actor_id,
-             receiver.role, chit_id, 'received', now]
-          );
-          await client.query(
-            `INSERT INTO chit_detail
-             (chit_id, entity_id, detail_type, line_item_count,
-              total_value, currency_code, line_items, direction)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-            [chit_id, receiver.entity_id, rcvPurpose,
-             summary.line_item_count, summary.total_value,
-             summary_json.currency_code,
-             line_items.length > 0 ? JSON.stringify(line_items) : null, 'received']
-          );
-          await client.query(
-            /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's — resolved per receiver, so ten recipients with ten
-               different retention policies each keep their copy for their own minimum. */
-            `INSERT INTO chit_status (chit_id, entity_id, current_status, direction,
-                                      retention_expires_at, retire_at)
-             VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval)`,
-            [chit_id, receiver.entity_id, rcv_status, String(await retainDaysFor(receiver.entity_id))]
-          );
-          await client.query(
-            `INSERT INTO state_log
-             (chit_id, entity_id, action, action_by_identity_id,
-              action_by_display_name, new_status, detail)
-             VALUES ($1,$2,'delivered',$3,$4,$5,$6)`,
-            [chit_id, receiver.entity_id, sender_id, sender_display_name, rcv_status,
-             `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})`]
-          );
-        }
-      });
+/**
+ * ⚠️⚠️ client_ref IS THE SENDER'S REPLAY KEY, NOT A FACT ABOUT THE TRADE — so it stays on the sender's own row only.
+ * b263's unique index is (entity_id, client_ref) over EVERY row an entity holds, received ones included: a counter bill
+ * C1/26-27/0041 sent to a customer whose own counter has issued C1/26-27/0041 (two shops, both on the default prefix)
+ * would be refused on the CUSTOMER's row, and the whole send with it — retried for ever. The bill's number travels as
+ * bill_no on every copy; only the dedupe key is withheld.
+ */
+function sendBjFor(st, eid) {
+  const { client_ref, business_json, sender_id } = st;
+  return (client_ref && business_json && typeof business_json === 'object' && String(eid) !== String(sender_id))
+  ? (() => { const o = Object.assign({}, business_json); delete o.client_ref; return o; })()
+  : business_json;
+}
+
+/**
+ * ⭐⭐ THE CUSTOMER'S COPY OF A COUNTER BILL IS NAMED FOR WHAT IT IS (Athi, 2026-10-01). To them it is not an order to
+ * fulfil but a BILL to accept: purpose 'invoice' (the purpose an app-side supplier invoice already has, so the ledger's
+ * invoice reading and every purchase reader apply), marked `counter_bill: true` with the bill's number, till and terms
+ * kept, its own subject ("Bill C1/26-27/0041 from Mayur Traders") and, on its summary, what the list row shows — who
+ * it is from, the number, and what is owed. The SHOP's own copy is untouched. One chit, each copy in its holder's words.
+ */
+function sendBillCopyFor(st, receiver) {
+  const { counterBill, is_draft, sender_id, sender_display_name } = st;
+  if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
+  const bj = Object.assign({}, sendBjFor(st, receiver.entity_id), { counter_bill: true });
+  const parts = (bj.payment && Array.isArray(bj.payment.parts)) ? bj.payment.parts : [];
+  const total = roundMoney(parts.reduce((t, p) => t + (Number(p && p.amount) || 0), 0));
+  return { purpose: 'invoice', business_json: bj,
+           manual_subject: 'Bill ' + bj.bill_no + ' from ' + (sender_display_name || 'the seller'),
+           bill_received: { from: sender_display_name || null, no: String(bj.bill_no), total } };
+}
+
+/** promoting a draft: it must be this entity's draft, and its page goes with it */
+async function sendPromote(st, req, res) {
+  const { sender_id, pageAsked, promote_draft_id } = st;
+  let { pageStamp } = st;
+  // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
+  //    and other send-time rules will plug in here when we build Suppliers.) ──
+  if (promote_draft_id) {
+    const dchk = await withEntity(sender_id, (db) => db.query(`SELECT role, business_json->>'page' AS page FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id]));
+    if (dchk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
+    if (dchk.rows[0].role !== 'Draft') return res.status(400).json({ error: 'Not a draft', message: 'This chit has already been sent' });
+    /* the draft's page goes with it when the resend does not name one — a draft resumed through a form that does not
+       carry business_json.page must not quietly become a base-page chit (N03) */
+    if (pageAsked == null && dchk.rows[0].page) { const kept = mint.page(dchk.rows[0].page); if (kept.ok) pageStamp = kept; }
+  }
+  Object.assign(st, { pageStamp });
+}
+
+/** the chit id, the moment, the bell, and every participant (the operator too) */
+async function sendParticipants(st, req, res) {
+  const { sender_id, sender_bridge_id, sender_display_name, purpose, is_draft, promote_draft_id, traceEdge, receiverDetails } = st;
+  // Generate chit_id — same for ALL participants (reuse the draft's id when promoting, so the draft BECOMES the order)
+  const chit_id = promote_draft_id || uuidv4();
+  const now = CLOCK.now();   /* Y1b: the one clock — the day a bill lands on (books-hooks.dayOf) and the day it is listed under agree */
+
+  // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
+  /* ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js */
+  try { require('../lib/events').notifyAfter(res, receiverDetails.map(r => r.entity_id), { kind: 'chit', id: chit_id, who: sender_display_name || null, note: purpose || null }); } catch (_) {}
+  const all_recipients = [
+    {
+      entity_id: sender_id,
+      bridge_id: sender_bridge_id,
+      display_name: sender_display_name,
+      role: 'sender'
+    },
+    ...receiverDetails.map(r => ({
+      entity_id: r.entity_id, bridge_id: r.bridge_id,
+      display_name: r.display_name, role: r.all_role
+    }))
+  ];
+
+  // ── Operator mandate (Fragment 2): a network handoff names an OPERATOR that is mandated to CO-HOLD the edge
+  //    for oversight, so it can walk its whole subtree (visibility ≡ co-holding — no god-view, no BYPASSRLS).
+  //    Resolve it here so the participant snapshot lists it; its REDACTED oversight copy (edge only, no
+  //    commercial terms — TR-6) is appended alongside the receiver copies below. Additive on the trace path. ──
+  let operatorInfo = null;
+  if (traceEdge && traceEdge.network && traceEdge.network.operator && !is_draft) {
+    const opId = traceEdge.network.operator;
+    if (opId !== sender_id && !receiverDetails.some((r) => r.entity_id === opId)) {
+      const opRow = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [opId]);
+      if (opRow.rows[0]) {
+        operatorInfo = opRow.rows[0];
+        all_recipients.push({ entity_id: operatorInfo.identity_id, bridge_id: operatorInfo.bridge_id, display_name: operatorInfo.display_name, role: 'operator' });
       }
+    }
+  }
+  Object.assign(st, { chit_id, now, all_recipients, operatorInfo });
+}
 
-      // ── Best-effort CRM auto-add — AFTER commit; a CRM write must never fail a guaranteed chit (D-065) ──
-      // Q4: this post-commit write is OUTSIDE the delivery, so it runs in its OWN withEntity(sender) — customer_list
-      // is RLS-scoped on owner_entity_id, so a bare query() would fail closed under FORCE.
-      if (!is_draft) for (const receiver of receiverDetails) {
-        try {
-          await withEntity(sender_id, async (db) => {
-            const isSupplier = await db.query(
-              `SELECT 1 FROM supplier_list
-                WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
-              [sender_id, receiver.entity_id]
-            );
-            if (isSupplier.rows.length === 0) {
-              await db.query(
-                `INSERT INTO customer_list
-                   (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
-                 VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
-                 ON CONFLICT (owner_entity_id, customer_identity_id)
-                 DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
-                [sender_id, receiver.entity_id]
-              );
-            }
-          });
-        } catch (e) { console.log('customer auto-add skipped:', e.message); }
-      }
-      /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
-         RECEIVER as the SENDER's customer — right for a bill the seller sends, backwards for an order, where the BUYER sends. The seller
-         (the recipient who sells) gets the row, the way the storefront order path gives the shop one (CJ-06). Best-effort, after commit. */
-      if (!is_draft && orderLike) for (const receiver of receiverDetails) {
-        if (String(receiver.entity_id) !== String(sellerId) || String(sellerId) === String(sender_id)) continue;
-        try {
-          await withEntity(sellerId, (db) => db.query(
+/** the subject, the summary, the priority and the retention each copy keeps */
+async function sendRetention(st, req, res) {
+  const { sender_display_name, purpose, line_items, issuedTotal, now } = st;
+  // Generate auto subject
+  const auto_subject = generateAutoSubject(purpose, sender_display_name, now);
+
+  // Calculate summary from line items
+  const summary = calculateSummary(line_items);
+  /* ⭐ a counter bill's value is its invoice's TotInvVal (above), never the sum of its line nets */
+  if (issuedTotal != null) summary.total_value = issuedTotal;
+  // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
+  const ext_priority = ['normal','high','urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
+  // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
+  //    or deletes yet (retire = Ph2, purge = Ph3, gated). Migration-free: rides summary_json.retention like copy_policy.
+  //    Per-chit override now; the governed DEFAULT lives in the governance channel (backlog), not a Settings toggle. ──
+  const DEFAULT_RETENTION_DAYS = null;   // governed default resolves from the cascade later
+  let retention = null;
+  {
+    const rd = (Number.isFinite(+req.body.retention_days) && +req.body.retention_days > 0) ? Math.floor(+req.body.retention_days) : null;
+    let exp = null, src = null, days = null;
+    if (typeof req.body.expires_at === 'string' && !isNaN(Date.parse(req.body.expires_at))) { exp = new Date(req.body.expires_at).toISOString(); src = 'manual'; }
+    else if (rd) { exp = new Date(Date.now() + rd * 86400000).toISOString(); src = 'manual'; days = rd; }
+    else if (DEFAULT_RETENTION_DAYS) { exp = new Date(Date.now() + DEFAULT_RETENTION_DAYS * 86400000).toISOString(); src = 'default'; days = DEFAULT_RETENTION_DAYS; }
+    if (exp) retention = { expires_at: exp, retention_days: days, source: src };
+  }
+  /**
+   * ⚠️⚠️ RETENTION IS PER COPY, AND EACH COPY'S OWNER SETS ITS FLOOR (backlog 11).
+   *
+   * `retention` above rides on the SHARED summary — it is the sender's DECLARATION, and until now that is
+   * all it was: nothing in the codebase wrote `chit_status.retention_expires_at`, so every copy silently
+   * took the schema default. Applying the declaration without a floor would have handed a sender the power
+   * to set an expiry on the RECEIVER's copy, which is the spoofing route this guards.
+   *
+   * ⚠️ MAX, NEVER MIN. A counterparty may ask you to keep a record longer than your floor and you will; they
+   * can never make your copy disappear sooner. And it is computed PER COPY on purpose — the two parties may
+   * legitimately differ, which is the entire point of a per-copy model.
+   *
+   * ⚠️ Nothing deletes yet (retire is Ph2, purge Ph3, both human-gated), so this ships the guard BEFORE the
+   * thing it guards — which is the only order in which it is worth building.
+   */
+  const _reqDays = (retention && retention.retention_days) ? +retention.retention_days : null;
+  const retainDaysFor = async (owner_id) => {
+    let floor = 90;
+    try { const f = await policy.get(owner_id); if (Number.isFinite(+f.retention_floor_days)) floor = +f.retention_floor_days; }
+    catch (_) { /* unreadable policy → keep the schema default; never shorten on an error */ }
+    return Math.max(policy.RECORDS_FLOOR_DAYS, floor, _reqDays || 0);   /* CO3: the records-law floor sits under every copy */
+  };
+  Object.assign(st, { auto_subject, summary, ext_priority, retention, retainDaysFor });
+}
+
+/** the governed lineage, the held clearances and the commercial cover — folded, frozen */
+async function sendFolds(st, req, res) {
+  const { sender_id, summary } = st;
+  // ── assimilation seam: resolve the boilerplate for this send — constitution + capability + pattern + the canonical
+  //    SHARED standard (ISO 9000) — and stamp the lineage. Best-effort: never blocks the send. This is the mint
+  //    assimilating a per-brand context AND a shared source into one chit (routes send-chit through the seam). ──
+  let governed = null;
+  try {
+    const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: sender_id });
+    if (cfg) governed = { pattern: cfg._blueprint, capability: cfg._capability, constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
+  } catch (_) { /* seam is best-effort */ }
+  // ── ORDER-BINDING: fold the sender's HELD clearances into the chit (per-copy snapshot, FROZEN). The buyer sees, on
+  //    THIS order, exactly the supplier's clearances met + their assurance rung; later changes never alter this copy.
+  //    Best-effort — never blocks the send. ──
+  let folded_clearances = null;
+  try {
+    const rd = await require('../lib/readiness').resolveReadiness(sender_id);
+    const held = (rd.clearances || [])
+      .filter(c => c.status === 'gathered' || c.status === 'expiring')
+      .map(c => ({ standard: c.standard, doc: c.doc, title: c.title, rung: c.rung,
+        valid_until: c.valid_until || null, verified_at: c.verified_at || null, verified_by: c.verified_by || null }));
+    if (held.length) folded_clearances = { folded_at: new Date().toISOString(), items: held };
+  } catch (_) { /* best-effort */ }
+  // ── COMMERCIAL COVER fold — a trade order (one that carries clearances) also freezes its commercial-cover FRAMEWORK
+  //    onto the buyer's copy: payment/transit/currency/credit cover by risk, and which is already evidenced on-rail
+  //    (e.g. performance risk = the supplier's on-rail track record). Framework, not a secured instrument — honest.
+  //    Buyer sees "💳 Commercial cover" beside "🛡 Supplier clearances", frozen. Best-effort — never blocks the send. ──
+  let folded_commercial = null;
+  try {
+    if (folded_clearances) {
+      const inc = (summary && summary.incoterm) || 'CIF';
+      const ci = require('../lib/instruments').resolveInstruments({ cross_border: 1, incoterm: inc });
+      const areas = (ci.cluster || []).map(g => ({ label: g.label, frm_class: g.frm_class,
+        on_rail: !!g.covered_onrail, instruments: (g.instruments || []).map(i => i.name) }));
+      if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: inc, areas };
+    }
+  } catch (_) { /* best-effort */ }
+  Object.assign(st, { governed, folded_clearances, folded_commercial });
+}
+
+/* The whitelist for the provenance rider above. A string field is trimmed and capped; `sender_verified` is
+   forced to a real boolean, because "the sender is verified" is a claim that must never arrive as a truthy
+   string. Unknown keys are dropped rather than carried. */
+function sendViaOf(business_json) {
+  const v = business_json && business_json.via;
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const str = (x, n) => (x === null || x === undefined || x === '' ? null : String(x).slice(0, n || 120));
+  const out = {
+    channel: str(v.channel, 24), from: str(v.from, 64), from_name: str(v.from_name, 120),
+    to: str(v.to, 64), provider_msg_id: str(v.provider_msg_id, 128), capture_id: str(v.capture_id, 64),
+    received_at: str(v.received_at, 40), read_by: str(v.read_by, 40),
+    /* Order-level facts that have no column of their own. `unplaced` is what the reader could not place at
+       all — surfaced, never dropped: a request that quietly lost 'deliver at 7pm' looks correct and is not. */
+    delivery_at: str(v.delivery_at, 120), delivery_address: str(v.delivery_address, 300),
+    notes: str(v.notes, 800), unplaced: str(v.unplaced, 800),
+    sender_verified: v.sender_verified === true,
+    // What they actually wrote, capped — the full text rides as an attachment, not in every copy's summary.
+    raw_excerpt: str(v.raw_excerpt, 400),
+    media_count: Number.isFinite(+v.media_count) ? Math.max(0, Math.min(20, +v.media_count)) : 0,
+    label: str(v.label, 40),
+    /* How each line got its price. Re-read key by key rather than spread: the counts must be numbers and the
+       lists must be short, whatever a caller sends. */
+    priced: (() => {
+      const p = v.priced; if (!p || typeof p !== 'object') return undefined;
+      const n = (x) => (Number.isFinite(+x) ? Math.max(0, Math.min(999, Math.trunc(+x))) : 0);
+      const arr = (a, f) => (Array.isArray(a) ? a.slice(0, 5).map(f) : []);
+      return {
+        from_catalogue: n(p.from_catalogue), unpriced: n(p.unpriced), catalogue_used: p.catalogue_used !== false,
+        ambiguous: arr(p.ambiguous, (x) => ({ name: str(x && x.name, 200), matches: n(x && x.matches) })),
+        asked_differs: arr(p.asked_differs, (x) => ({ name: str(x && x.name, 200), asked: +x.asked || 0, ours: +x.ours || 0 })),
+      };
+    })(),
+  };
+  return out.channel ? out : null;      // no channel, no provenance — a `via` naming nothing is noise
+}
+
+/** each party's detail-page reading, resolved once per party */
+async function sendDesigns(st, req, res) {
+  const { sender_id, is_draft, receiverDetails } = st;
+  /**
+   * The sending entity's detail-page preference, resolved once and stamped below.
+   *
+   * ⚠️ `undefined` WHEN IT IS THE DEFAULT, deliberately: `mint.summary()` adds a rider only when it is
+   * neither undefined nor null, so an entity that never chose does not get a stamp claiming it did. That
+   * chit then falls back to whatever its reader prefers — which is the honest reading of "never chosen".
+   *
+   * ⚠️ Best-effort: a policy read that fails must not stop a chit being sent. No stamp is a recoverable
+   * state; a refused send is not.
+   */
+  let _detailDesign;
+  /**
+   * ⭐⭐ ONE LOOKUP PER PARTY, and each copy is stamped with ITS OWN owner's choice — see the note at the
+   * recipient insert. `detail_design` is the single key in summary_json that is allowed to differ between
+   * copies, because it is not a fact about the trade: it is how the holder reads their own work.
+   *
+   * ⚠️ Cached per send. A chit to eight recipients must not be eight extra round trips on the hottest
+   * write in the product, and two recipients are frequently the same entity in different roles.
+   */
+  const _designCache = new Map();
+  const _designFor = async (eid) => {
+    if (!eid) return undefined;
+    if (_designCache.has(eid)) return _designCache.get(eid);
+    let d;
+    try {
+      const _pf = await policy.get(eid);
+      if (_pf && _pf.detail_design && _pf.detail_design !== 'chit') d = _pf.detail_design;
+    } catch (e) { /* no stamp; Order level, which is the default anyway */ }
+    _designCache.set(eid, d);
+    return d;
+  };
+  _detailDesign = await _designFor(sender_id);
+  /* Resolved for every recipient BEFORE the transaction opens — an await inside it would hold a connection
+     open across a policy read for each party. */
+  if (!is_draft) for (const r of receiverDetails) await _designFor(r.entity_id);
+  Object.assign(st, { _detailDesign, _designCache });
+}
+
+/** The shared summary, with only this copy's reading swapped in. */
+function sendSummaryFor(st, eid) {
+  const { _designCache, _detailDesign, summary_json } = st;
+  const d = _designCache.get(eid);
+  if (d === _detailDesign) return summary_json;                 // identical — share the object
+  const s = Object.assign({}, summary_json);
+  if (d) s.detail_design = d; else delete s.detail_design;
+  return s;
+}
+
+/** the shared summary every copy carries */
+async function sendSummary(st, req, res) {
+  const { purpose, business_json, currency_code, traceEdge, offersApplied, moneyBlock, copyPolicy, now, summary, ext_priority, retention, governed, folded_clearances, folded_commercial, _detailDesign } = st;
+  /* the provenance rider, whitelisted (sendViaOf) */
+  const via = sendViaOf(business_json);
+  /* ⚠️ The SKELETON comes from lib/mint.js; every rider below is still decided here. mint.summary() adds a rider
+     only when it is neither undefined nor null — the same test the conditional spreads made by hand, four
+     times, in four files. */
+  const summary_json = mint.summary({
+    line_item_count: summary.line_item_count,
+    total_value: summary.total_value,
+    money: moneyBlock,
+    offers: offersApplied,
+    currency_code,
+    priority_external: ext_priority,
+    purpose,
+    is_promotion: !!(business_json && business_json.is_promotion),
+    // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
+    forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
+    copy_policy: copyPolicy,
+    retention,
+    /**
+     * ⭐⭐ THE DESIGN IS STAMPED HERE AND KEPT FOR LIFE. Athi, 2026-08-24: *"attach design 1 or design 2 as
+     * per the choice in the settings, in the header record — so we avoid the complication of moving from
+     * one record type to another and both can be tested independently."*
+     *
+     * ⚠️ A STAMP, NOT A LOOKUP. Reading the preference at render time would mean every existing job silently
+     * changed shape the moment someone touched Settings — a chit reading one way on Monday and another on
+     * Tuesday, with no event to explain it. Written once, at creation, from whatever the preference then was.
+     *
+     * ⚠️ ONLY THE SENDER'S OWN COPY IS STAMPED, and that is a boundary, not an oversight: the design belongs
+     * to the entity that INTERPRETS the work, and one entity may not read another's settings. A recipient's
+     * copy carries no stamp and falls back to their own preference until they have one of their own.
+     *
+     * ⭐ Migration-free — it rides `summary_json` exactly as `copy_policy` and `retention` do.
+     */
+    detail_design: _detailDesign,
+    governed,
+    clearances: folded_clearances,
+    commercial: folded_commercial,
+    // Traceability edge — frozen onto every co-held copy (Fragment 1). parents is a SET (forward fan-out is the spread).
+    trace: traceEdge ? { ...traceEdge, sealed_at: now.toISOString() } : null,
+    /**
+     * ⚠️ ENGINE TOUCH #2, ADDITIVE — channel PROVENANCE, echoed onto the summary so it rides every copy and is
+     * readable from a list without opening the chit. Present only when declared, exactly like `trace`; a chit
+     * sent without it is byte-identical to before.
+     *
+     * It belongs on summary_json rather than only on business_json because provenance that has to be dug for is
+     * provenance nobody reads. Six weeks after a disputed order, "where did this come from" is the first
+     * question, and business_json is not on the list row.
+     *
+     * ⚠️ WHITELISTED, NOT COPIED. summary_json is ours; letting a caller spread arbitrary keys into it would
+     * make the chit's own summary a place strangers can write. Known keys, coerced, capped.
+     */
+    via,
+  });
+  Object.assign(st, { summary_json });
+}
+
+/** freeze-at-send: the governing schema */
+async function sendFreeze(st, req, res) {
+  const { sender_id } = st;
+  // ── Freeze-at-send (A10): snapshot the governing schema = sender's active default schema ──
+  const schemaRow = await query(
+    `SELECT schema_id, schema_version
+       FROM entity_schemas
+      WHERE entity_id = $1 AND status = 'active' AND is_default = true
+      ORDER BY created_at DESC
+      LIMIT 1`,
+    [sender_id]
+  );
+  const frozen_schema_id      = schemaRow.rows[0]?.schema_id      || null;
+  const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
+  const created_by_actor_id   = req.identity.identity_id;   // who actually pressed send
+  Object.assign(st, { frozen_schema_id, frozen_schema_version, created_by_actor_id });
+}
+
+/** every participant's copy — the sender's, each receiver's in its holder's words */
+async function sendCopies(st, req, res) {
+  const { sender_id, sender_bridge_id, sender_display_name, purpose, manual_subject, line_items, pageStamp, is_draft, receiverDetails, now, all_recipients, auto_subject, summary, summary_json, frozen_schema_id, frozen_schema_version, created_by_actor_id, suppressSentCopy } = st;
+  let { business_json } = st;
+  // ── Compose the per-participant copies for the delivery layer (SENDER always; RECEIVERS unless draft).
+  //    Every copy carries the SAME sender = the caller, which is chit_deliver's isolation gate. ──
+  /* ⚠️ SHAPE from lib/mint.js — and ONLY the shape. Everything above this line (recipient resolution, the caps,
+     copy_policy, retention, freeze-at-send, the trace edge) is this route's POLICY and has not moved: it is
+     engine-locked and is the reference implementation the other three paths were imitating badly. */
+  /* ⭐ THE PAGE STAMP (N03): on the header of every copy that carries business data — sender, receivers, a bill copy.
+     Added onto what the sender sent, never a rewrite of it; set ONCE here and written by no route afterwards. */
+  business_json = Object.assign({}, business_json && typeof business_json === 'object' ? business_json : {}, { page: pageStamp.page });
+  st.business_json = business_json;   /* the page-stamped business data — what bjFor / billCopyFor read from here on */
+  const _summaryFor = (eid) => sendSummaryFor(st, eid), bjFor = (eid) => sendBjFor(st, eid), billCopyFor = (receiver) => sendBillCopyFor(st, receiver);
+  const headerCommon = mint.header({
+    sender_entity_id: sender_id, sender_entity_bridge_id: sender_bridge_id,
+    sender_entity_display_name: sender_display_name, all_recipients, purpose,
+    auto_subject, manual_subject: manual_subject || null, summary_json,
+    schema_version: frozen_schema_version, schema_id: frozen_schema_id, created_by_actor_id,
+    detail_type: purpose, line_item_count: summary.line_item_count,
+    total_value: summary.total_value, currency_code: summary_json.currency_code,
+    created_at: now, sent_at: now,   /* Y1b: the shop clock's moment (b300 reads it; before b300 the definer stamps NOW() as it always did) */
+  });
+  const mkCopy = (extra) => mint.party(headerCommon, Object.assign({
+    // omitted -> SQL NULL (matches legacy): chit_deliver reads c->>'key', for which an absent key and a JSON
+    // null are indistinguishable, so passing them conditionally is the same write either way.
+    business_json: business_json || undefined,
+    line_items: line_items.length > 0 ? line_items : undefined,
+  }, extra));
+  const copies = suppressSentCopy ? [] : [ mkCopy({
+    entity_id: sender_id, direction: 'sent', role: is_draft ? 'Draft' : 'Act',
+    current_status: 'delivered', priority_flag: 'normal', payload_delivered: true,
+    log: { action: 'created', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
+           new_status: 'delivered', detail: `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}` },
+  }) ];
+  if (!is_draft) for (const receiver of receiverDetails) {
+    const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered';   // To acts; CC/For informational
+    const billCopy = billCopyFor(receiver);   /* the customer's copy of a counter bill — a bill, in their words */
+    copies.push(mkCopy(Object.assign({
+      /**
+       * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING — see _summaryFor above. Every other key
+       * here is the shared record and must not diverge; `detail_design` is the one exception, because it is
+       * not a fact about the trade but how the holder of THIS copy reads their own work.
+       *
+       * ⚠️ Set on the LIVE path as well as the legacy fan-out below. The operator's redacted copy proved
+       * per-copy summary_json was already a seam — this rides the same one rather than inventing another.
+       */
+      summary_json: _summaryFor(receiver.entity_id),
+      business_json: bjFor(receiver.entity_id) || undefined,   /* the sender's replay key stays on the sender's row (bjFor) */
+      entity_id: receiver.entity_id, direction: 'received', role: receiver.role,
+      current_status: rcv_status, priority_flag: 'normal',
+      log: { action: 'delivered', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
+             new_status: rcv_status, detail: `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})` },
+    }, billCopy ? {
+      purpose: billCopy.purpose, detail_type: billCopy.purpose, manual_subject: billCopy.manual_subject,
+      business_json: billCopy.business_json,
+      summary_json: Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received }),
+    } : {})));
+  }
+  Object.assign(st, { business_json, headerCommon, copies });
+}
+
+/** the network operator's redacted oversight copy — the edge, never the terms */
+async function sendOperatorCopy(st, req, res) {
+  const { sender_id, sender_display_name, is_draft, operatorInfo, summary_json, headerCommon, copies } = st;
+  // Operator's REDACTED oversight copy — co-holds the EDGE (product/qty/topology) but NOT commercial terms:
+  // no business_json, no line_items, total_value nulled. That is TR-6 at write time — the operator physically
+  // never holds a rival deal's price, it only holds the traceable edge.
+  if (operatorInfo && !is_draft) {
+    /* ⚠️ NOT mint.summary() — DELIBERATELY. This is a REDACTED summary, and its whole purpose is to be missing
+       keys the real one has. Passing it through the skeleton builder would helpfully restore currency_code and
+       total_value, handing the operator the commercial terms this copy exists to withhold. A builder that fills
+       in defaults is the wrong tool for a record defined by what it leaves out. */
+    const opSummary = { line_item_count: summary_json.line_item_count, purpose: summary_json.purpose, trace: summary_json.trace, oversight: true };
+    copies.push(mint.party(headerCommon, {
+      summary_json: opSummary, total_value: null,
+      entity_id: operatorInfo.identity_id, direction: 'received', role: 'For',
+      current_status: 'delivered',
+      log: { action: 'oversight', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
+             new_status: 'delivered', detail: `Network oversight co-hold (edge only) — ${operatorInfo.display_name}` },
+    }));
+  }
+}
+
+/** the guaranteed write — every row commits together (the definer, or the legacy fan-out before b50) */
+async function sendWrite(st, req, res) {
+  const { sender_id, business_json, is_draft, promote_draft_id, receiverDetails, chit_id, now, copies } = st;
+  // ── Guaranteed write: every row for this chit commits together, or none do (INV-2). Delivery is a substrate
+  //    op (writes each participant's copy, incl. receivers) -> the b50 SECURITY DEFINER fn chit_deliver, run in
+  //    withEntity(sender). Fallback to the legacy in-tx fan-out when b50 isn't applied. ──
+  if (await definersReady()) {
+    /**
+     * ⭐ THE FIRST BILL ENDS THE LEAD — IN THE BILL'S OWN TRANSACTION (L2C step 5, FX-L2C 2026-10-13). A counter bill is sent to
+     * SELF and names its customer in business_json.customer; the post-commit auto-add below counts RECIPIENTS, so the named
+     * party's txn_count never moved (a billed lead stayed "Trial"; Ravi Stores read 0 trades after three years). One withEntity
+     * holds chit_deliver AND the bump (lib/crm.traded: one UPDATE, never an insert); the bump sits in a SAVEPOINT so a CRM
+     * write can never fail a guaranteed chit (D-065). A named party that is also a recipient is left to the recipient block.
+     */
+    const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
+    const isRecipient = namedParty && receiverDetails.some((r) => String(r.entity_id) === String(namedParty));
+    await withEntity(sender_id, async (c) => {
+      await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: c });
+      if (namedParty && !isRecipient) await trySavepoint(c, () => require('../lib/crm').traded(c, sender_id, namedParty, now), null);
+    });
+  } else {
+    await sendLegacyWrite(st);
+  }
+}
+
+/** the legacy fan-out (before b50's definer): every row in one transaction, the draft's own rows cleared first when promoting */
+async function sendLegacyWrite(st) {
+  const { promote_draft_id, chit_id, sender_id, suppressSentCopy, is_draft, receiverDetails } = st;
+  await withTransaction(async (client) => {
+    if (promote_draft_id) {   // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
+      await client.query('DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
+      await client.query('DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
+      await client.query('DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
+      await client.query('DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
+    }
+    // SENDER (suppressed for a task-only self-chit — no Order copy needed)
+    if (!suppressSentCopy) await sendLegacySenderRows(client, st);
+
+    // RECIPIENTS (skipped for drafts — a draft is the author's copy only)
+    if (!is_draft) for (const receiver of receiverDetails) await sendLegacyReceiverRows(client, st, receiver);
+  });
+}
+
+/** the legacy fan-out: the sender's own four rows */
+async function sendLegacySenderRows(client, st) {
+  const { chit_id, sender_id, sender_bridge_id, sender_display_name, all_recipients, purpose, auto_subject, manual_subject, summary_json,
+          business_json, frozen_schema_version, frozen_schema_id, created_by_actor_id, is_draft, now, summary, line_items, retainDaysFor, receiverDetails } = st;
+  await client.query(
+    `INSERT INTO chit_header
+     (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
+      sender_entity_display_name, all_recipients, purpose,
+      auto_subject, manual_subject, summary_json, business_json,
+      schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
+    [chit_id, sender_id, sender_id, sender_bridge_id,
+     sender_display_name, JSON.stringify(all_recipients), purpose,
+     auto_subject, manual_subject || null,
+     JSON.stringify(summary_json),
+     business_json ? JSON.stringify(business_json) : null,
+     frozen_schema_version, frozen_schema_id, created_by_actor_id,
+     is_draft ? 'Draft' : 'Act', chit_id, 'sent', now]
+  );
+  await client.query(
+    `INSERT INTO chit_detail
+     (chit_id, entity_id, detail_type, line_item_count,
+      total_value, currency_code, line_items, direction, payload_delivered_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())`,
+    [chit_id, sender_id, purpose,
+     summary.line_item_count, summary.total_value,
+     summary_json.currency_code,
+     line_items.length > 0 ? JSON.stringify(line_items) : null, 'sent']
+  );
+  await client.query(
+    `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag,
+                              retention_expires_at, retire_at)
+     VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval)`,
+    // internal priority starts normal; each party sets its own (external rides on summary_json)
+    [chit_id, sender_id, 'normal', String(await retainDaysFor(sender_id))]
+  );
+  await client.query(
+    `INSERT INTO state_log
+     (chit_id, entity_id, action, action_by_identity_id,
+      action_by_display_name, new_status, detail)
+     VALUES ($1,$2,'created',$3,$4,'delivered',$5)`,
+    [chit_id, sender_id, sender_id, sender_display_name,
+     `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}`]
+  );
+}
+
+/** the legacy fan-out: one receiver's four rows, in its holder's words */
+async function sendLegacyReceiverRows(client, st, receiver) {
+  const { chit_id, sender_id, sender_bridge_id, sender_display_name, all_recipients, purpose, auto_subject, manual_subject,
+          frozen_schema_version, frozen_schema_id, created_by_actor_id, now, summary, summary_json, line_items, retainDaysFor } = st;
+  const _summaryFor = (eid) => sendSummaryFor(st, eid), bjFor = (eid) => sendBjFor(st, eid), billCopyFor = (r) => sendBillCopyFor(st, r);
+  const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered'; // To acts; CC/For are informational
+  const billCopy = billCopyFor(receiver);   /* the same per-copy reading as the live path above */
+  const rcvPurpose = billCopy ? billCopy.purpose : purpose;
+  const rcvBj = billCopy ? billCopy.business_json : bjFor(receiver.entity_id);
+  const rcvSummary = billCopy ? Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received })
+                              : _summaryFor(receiver.entity_id);
+  await client.query(
+    `INSERT INTO chit_header
+     (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
+      sender_entity_display_name, all_recipients, purpose,
+      auto_subject, manual_subject, summary_json, business_json,
+      schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
+    [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
+     sender_display_name, JSON.stringify(all_recipients), rcvPurpose,
+     auto_subject, (billCopy ? billCopy.manual_subject : manual_subject) || null,
+     /**
+      * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING. Athi, 2026-08-24: *"the customer copy
+      * and supplier copy should be the same, but the interpretation can be in another tab — how the
+      * customer request is interpreted can stay within the receiving end."*
+      *
+      * ⚠️⚠️ EVERY OTHER KEY IN summary_json IS THE SHARED RECORD AND MUST NOT DIVERGE — the value, the
+      * lines, the clearances, the provenance. `detail_design` is the one exception, because it is not a
+      * fact about the trade at all: it is how the holder of THIS copy reads their own work. Stamping
+      * the sender's choice here would let a customer decide how a workshop organises its mechanics.
+      *
+      * ⚠️ Read server-side, per copy. This is not one entity reading another's settings — no client
+      * ever sees it — it is the server writing each copy the way its own owner asked to read it.
+      */
+     JSON.stringify(rcvSummary),
+     rcvBj ? JSON.stringify(rcvBj) : null,
+     frozen_schema_version, frozen_schema_id, created_by_actor_id,
+     receiver.role, chit_id, 'received', now]
+  );
+  await client.query(
+    `INSERT INTO chit_detail
+     (chit_id, entity_id, detail_type, line_item_count,
+      total_value, currency_code, line_items, direction)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [chit_id, receiver.entity_id, rcvPurpose,
+     summary.line_item_count, summary.total_value,
+     summary_json.currency_code,
+     line_items.length > 0 ? JSON.stringify(line_items) : null, 'received']
+  );
+  await client.query(
+    /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's — resolved per receiver, so ten recipients with ten
+       different retention policies each keep their copy for their own minimum. */
+    `INSERT INTO chit_status (chit_id, entity_id, current_status, direction,
+                              retention_expires_at, retire_at)
+     VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval)`,
+    [chit_id, receiver.entity_id, rcv_status, String(await retainDaysFor(receiver.entity_id))]
+  );
+  await client.query(
+    `INSERT INTO state_log
+     (chit_id, entity_id, action, action_by_identity_id,
+      action_by_display_name, new_status, detail)
+     VALUES ($1,$2,'delivered',$3,$4,$5,$6)`,
+    [chit_id, receiver.entity_id, sender_id, sender_display_name, rcv_status,
+     `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})`]
+  );
+}
+
+/** after the commit: the customer lists (the sender's, and an order's seller's) */
+async function sendCustomers(st, req, res) {
+  const { sender_id, is_draft, receiverDetails, orderLike, sellerId } = st;
+  // ── Best-effort CRM auto-add — AFTER commit; a CRM write must never fail a guaranteed chit (D-065) ──
+  // Q4: this post-commit write is OUTSIDE the delivery, so it runs in its OWN withEntity(sender) — customer_list
+  // is RLS-scoped on owner_entity_id, so a bare query() would fail closed under FORCE.
+  if (!is_draft) for (const receiver of receiverDetails) {
+    try {
+      await withEntity(sender_id, async (db) => {
+        const isSupplier = await db.query(
+          `SELECT 1 FROM supplier_list
+            WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
+          [sender_id, receiver.entity_id]
+        );
+        if (isSupplier.rows.length === 0) {
+          await db.query(
             `INSERT INTO customer_list
                (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
              VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
              ON CONFLICT (owner_entity_id, customer_identity_id)
              DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
-            [sellerId, sender_id]));
-        } catch (e) { console.log('seller customer auto-add skipped:', e.message); }
-      }
-
-      // ── Best-effort auto-assign on receipt (D1) — AFTER commit; never fails the guaranteed chit ──
-      // Only the actionable 'to' copy is auto-assigned; CC/For stay informational. Each receiver entity
-      // resolves against ITS OWN settings/roster (the receiver decides how its inbox auto-assigns).
-      if (!is_draft) for (const receiver of receiverDetails) {
-        if (receiver.kind !== 'to' || !receiver.entity_id) continue;
-        try { await autoAssignReceived(receiver.entity_id, chit_id); }
-        catch (e) { console.log('auto-assign skipped:', e.message); }
-      }
-
-      /**
-       * ⭐⭐ METER THE SEND. b99 named `chit.send` in its own header two months ago and nothing ever wrote it,
-       * so the ledger has billed AI drafts and KYB lookups while the platform's central act was free.
-       *
-       * ⚠️ AFTER THE WORK, NEVER BEFORE, AND IT CANNOT FAIL THE SEND — `meter()` swallows and warns. A chit
-       * that failed because its meter failed would lose a person's work to protect a fraction of a cent, and
-       * `chit_header` still evidences the send either way.
-       *
-       * ⚠️ DRAFTS ARE NOT METERED. A draft is not an act on the rail — nothing was sent, nobody received a
-       * copy, and billing for one would charge a person for changing their mind.
-       *
-       * ⚠️ NOT AWAITED, deliberately: the response should not wait on a billing row. The `.catch` is belt and
-       * braces — `meter()` already never rejects — but an unhandled rejection here would take the process
-       * down, and this is the hottest path in the product.
-       */
-      if (!is_draft) {
-        try {
-          /**
-           * ⭐ THE BASIS TRAVELS WITH THE CHARGE. Athi's reason for wanting cost recorded per chit was that a
-           * later model — profit share, percentage-of-value, tiered — needs the BASIS and the RATE together.
-           * The trade's value is right here at send; carrying it into the ledger row means switching model is
-           * a rate-card change rather than a data-archaeology exercise.
-           *
-           * ⚠️ It is what the value WAS at send, which is the only figure that can be charged against. A later
-           * amend changes the chit and must not retro-change what was billed.
-           */
-          require('../lib/meter').meter(sender_id, 'chit.send', {
-            detail: chit_id, quantity: 1, rid: req.id,
-            basis: (summary && summary.total_value != null) ? summary.total_value : null,
-            currency: (summary_json && summary_json.currency_code) || null,
-            meta: { purpose: purpose || undefined },
-          }).catch(() => {});
-        } catch (_) {}
-      }
-
-      /**
-       * ── ⭐⭐⭐ STOCK MOVES WHEN GOODS MOVE (2026-09-10) ─────────────────────────────────────────────────────
-       *
-       * Athi: *"wire goods-in and sales to post movements."* Goods received put stock IN at its landed cost; a
-       * counter bill takes it OUT. lib/stock-from-chit.js decides which chits qualify and returns [] for the
-       * great majority — an order is a promise, a draft is nothing, and a despatch note is deliberately not
-       * wired because for a counter shop it would take the same goods out twice.
-       *
-       * ⚠️⚠️ AFTER THE COMMIT, AND NOT AWAITED — the same posture as the meter above, for the same reason: this
-       * is the hottest path in the product and a sale that has already happened must not fail because a stock
-       * row could not be written. The trade is real and worth naming: a failure here is LOST until somebody
-       * notices. It is survivable only because the movements are re-derivable from the chit at any time, with
-       * the same ref and the same idempotency, so a backfill heals it — and because the balance is a cache that
-       * rebuild() can check against the log.
-       *
-       * ⚠️ Idempotent by (entity, ref, line_ref, reason), so the counter replaying its queue moves nothing twice.
-       */
-      if (!is_draft) {
-        try {
-          require('../lib/stock-from-chit')
-            .postFor(sender_id, { chit_id, purpose, is_draft, business_json, line_items, created_at: now },
-                     withEntity, { actor_id: req.identity && req.identity.identity_id })
-            .then((r) => {
-              if (!r || (!r.failed.length && !r.skipped.length)) return;
-              /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
-                 and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
-              try {
-                require('../lib/logger').warn('stock.from-chit', {
-                  chit_id, entity_id: sender_id, moved: r.moved, duplicate: r.duplicate,
-                  skipped: r.skipped.length, failed: r.failed,
-                });
-              } catch (_) {}
-            })
-            .catch(() => {});   /* postFor already never rejects; this is belt and braces on the hot path */
-        } catch (_) {}
-      }
-
-      /**
-       * ⭐⭐ THE LEDGER HEARS ABOUT IT (SPEC-books-v2 §3) — AFTER the commit, never awaited, never able to fail the chit:
-       * lib/books-hooks.afterChit swallows everything and parks what cannot post in books_outbox, named. Off (the
-       * default) it is one cached read. Each side that holds a copy posts its OWN view: the sender, and every 'to'
-       * receiver (a supplier's invoice is the receiving shop's purchase).
-       */
-      if (!is_draft) {
-        try {
-          const hooks = require('../lib/books-hooks');
-          const who = req.identity && req.identity.identity_id;
-          setImmediate(() => {
-            hooks.afterChit(sender_id, chit_id, who);
-            for (const r of receiverDetails) if (r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)) hooks.afterChit(r.entity_id, chit_id, null);
-          });
-        } catch (_) {}
-      }
-
-      res.json({
-        message: is_draft ? 'Draft saved' : 'Chit sent successfully',
-        chit_id,
-        auto_subject,
-        is_draft,
-        recipients: is_draft ? 0 : receiverDetails.length,
-        fan_out: { to: counts.to, cc: counts.cc, for: counts.for },
-        summary: summary_json,
-        /* ⚠ present only when something is wrong, so a caller can treat its absence as silence rather than as
-           a claim that the number was checked and approved. */
-        ...(number_check ? { number_check } : {}),
-        /* ⭐ present only when the customer's copy was not sent — the counter shows it on the bill */
-        ...(oneSided ? { one_sided: oneSided } : {}),
+            [sender_id, receiver.entity_id]
+          );
+        }
       });
-
-      /**
-       * ⭐⭐ THE COUNTER'S PLACE IN ITS SERIES, KEPT IN THE CLOUD (2026-09-17). Athi: *"the system should be updated
-       * with the next seq number whenever the sync completes."* A counter bill carries { prefix, period, seq }; a
-       * registered counter's high-water mark moves with it, so the next PC to open that counter continues from here.
-       * ⚠️ AFTER the answer, and never able to fail the send — a missed update costs nothing the counter's own
-       * count and its close do not already carry.
-       */
-      if (!is_draft && client_ref && business_json && business_json.series) {
-        setImmediate(() => {
-          require('./counters').noteBill(sender_id, business_json.series, business_json.billed_at, client_ref).catch(() => {});
-        });
-      }
-
-    } catch (err) {
-      /**
-       * ── ⭐⭐⭐ A LOST RACE IS A DUPLICATE, NOT A FAILURE (2026-09-18) ───────────────────────
-       *
-       * b263's unique index closed the hole the duplicate-bill fault came through: the check above is a SELECT,
-       * and two requests arriving together both see nothing and both write. The database now refuses the second
-       * — which is correct, and arrives here as a raw 23505 that would be reported as "Send failed". It is not a
-       * failure. It is the very duplicate we asked the database to catch, and the answer is the one the check
-       * above would have given had it won the race: the existing chit for a retry, or a named collision for two
-       * counters.
-       *
-       * ⚠⚠ WHY NOT `INSERT … ON CONFLICT DO NOTHING`, which is the usual advice and what was first planned:
-       *   · DO NOTHING makes the INSERT SUCCEED with zero rows, and the transaction then carries on writing
-       *     chit_detail, chit_status and the recipient rows against a header that was never inserted. It turns a
-       *     clean refusal into a half-written chit — a worse fault than the one being fixed, and a silent one.
-       *   · The index is PARTIAL, so inference needs its predicate spelled out at every insert site; there are
-       *     two, and a mismatch there fails open rather than closed.
-       *   · Letting the constraint throw rolls the whole transaction back, which is exactly what should happen.
-       * So the mechanism is the same and the seam is different: the database refuses, nothing is written, and
-       * this translates the refusal into the answer.
-       *
-       * ⚠️ `client_ref` and `sender_id` are declared INSIDE the try and are not in scope here — block scoping,
-       * which is the same rule that made this file's temporal-dead-zone bug (tests/tdz-guard). They are asked of
-       * the request again, through the one reader both sides use.
-       */
-      const raceRef = refOf(req);
-      if (raceRef && err && (err.code === '23505')
-          && /client_ref/.test(String(err.constraint || err.detail || err.message || ''))) {
-        try {
-          const who = entityId(req);
-          const seen = await sameRefLook(who, raceRef);
-          if (seen.rows[0]) {
-            const _bj = req.body && req.body.business_json;
-            const mine = (_bj && _bj.till && _bj.till.id) || null;
-            const theirs = seen.rows[0].till_id || null;
-            const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
-            const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
-            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — via the one function both callers share, so this can no
-               longer drift from it (it used to: this branch had no sameName wording at all). */
-            const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, raceRef);
-            if (verdict.collision) return res.status(409).json(verdict.body);
-            /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
-            return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true,
-                                          client_ref: raceRef, raced: true });
-          }
-        } catch (_) { /* fall through to the ordinary failure — a bad answer here must not hide the real one */ }
-      }
-      /* ⭐ a refusal the database made on purpose (b247's population boundary) answers as one — 409, in words — not
-         as "Send failed" (lib/knownerr, external review §23) */
-      const _known = require('../lib/knownerr').known(err);
-      if (_known) return res.status(_known.status).json(_known.body);
-      console.error('Send chit error:', err.message);
-      res.status(500).json({ error: 'Send failed', message: safeErr(err) });
-    }
+    } catch (e) { console.log('customer auto-add skipped:', e.message); }
   }
-);
+  /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
+     RECEIVER as the SENDER's customer — right for a bill the seller sends, backwards for an order, where the BUYER sends. The seller
+     (the recipient who sells) gets the row, the way the storefront order path gives the shop one (CJ-06). Best-effort, after commit. */
+  if (!is_draft && orderLike) for (const receiver of receiverDetails) {
+    if (String(receiver.entity_id) !== String(sellerId) || String(sellerId) === String(sender_id)) continue;
+    try {
+      await withEntity(sellerId, (db) => db.query(
+        `INSERT INTO customer_list
+           (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
+         VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
+         ON CONFLICT (owner_entity_id, customer_identity_id)
+         DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
+        [sellerId, sender_id]));
+    } catch (e) { console.log('seller customer auto-add skipped:', e.message); }
+  }
+}
+
+/** after the commit: auto-assign each actionable copy by its own entity */
+async function sendAssign(st, req, res) {
+  const { is_draft, receiverDetails, chit_id } = st;
+  // ── Best-effort auto-assign on receipt (D1) — AFTER commit; never fails the guaranteed chit ──
+  // Only the actionable 'to' copy is auto-assigned; CC/For stay informational. Each receiver entity
+  // resolves against ITS OWN settings/roster (the receiver decides how its inbox auto-assigns).
+  if (!is_draft) for (const receiver of receiverDetails) {
+    if (receiver.kind !== 'to' || !receiver.entity_id) continue;
+    try { await autoAssignReceived(receiver.entity_id, chit_id); }
+    catch (e) { console.log('auto-assign skipped:', e.message); }
+  }
+}
+
+/** meter the send — after the work, never able to fail it */
+async function sendMeter(st, req, res) {
+  const { sender_id, purpose, is_draft, chit_id, summary, summary_json } = st;
+  /**
+   * ⭐⭐ METER THE SEND. b99 named `chit.send` in its own header two months ago and nothing ever wrote it,
+   * so the ledger has billed AI drafts and KYB lookups while the platform's central act was free.
+   *
+   * ⚠️ AFTER THE WORK, NEVER BEFORE, AND IT CANNOT FAIL THE SEND — `meter()` swallows and warns. A chit
+   * that failed because its meter failed would lose a person's work to protect a fraction of a cent, and
+   * `chit_header` still evidences the send either way.
+   *
+   * ⚠️ DRAFTS ARE NOT METERED. A draft is not an act on the rail — nothing was sent, nobody received a
+   * copy, and billing for one would charge a person for changing their mind.
+   *
+   * ⚠️ NOT AWAITED, deliberately: the response should not wait on a billing row. The `.catch` is belt and
+   * braces — `meter()` already never rejects — but an unhandled rejection here would take the process
+   * down, and this is the hottest path in the product.
+   */
+  if (!is_draft) {
+    try {
+      /**
+       * ⭐ THE BASIS TRAVELS WITH THE CHARGE. Athi's reason for wanting cost recorded per chit was that a
+       * later model — profit share, percentage-of-value, tiered — needs the BASIS and the RATE together.
+       * The trade's value is right here at send; carrying it into the ledger row means switching model is
+       * a rate-card change rather than a data-archaeology exercise.
+       *
+       * ⚠️ It is what the value WAS at send, which is the only figure that can be charged against. A later
+       * amend changes the chit and must not retro-change what was billed.
+       */
+      require('../lib/meter').meter(sender_id, 'chit.send', {
+        detail: chit_id, quantity: 1, rid: req.id,
+        basis: (summary && summary.total_value != null) ? summary.total_value : null,
+        currency: (summary_json && summary_json.currency_code) || null,
+        meta: { purpose: purpose || undefined },
+      }).catch(() => {});
+    } catch (_) {}
+  }
+}
+
+/** stock moves when goods move — after the commit, not awaited */
+async function sendStock(st, req, res) {
+  const { sender_id, purpose, line_items, business_json, is_draft, chit_id, now } = st;
+  /**
+   * ── ⭐⭐⭐ STOCK MOVES WHEN GOODS MOVE (2026-09-10) ─────────────────────────────────────────────────────
+   *
+   * Athi: *"wire goods-in and sales to post movements."* Goods received put stock IN at its landed cost; a
+   * counter bill takes it OUT. lib/stock-from-chit.js decides which chits qualify and returns [] for the
+   * great majority — an order is a promise, a draft is nothing, and a despatch note is deliberately not
+   * wired because for a counter shop it would take the same goods out twice.
+   *
+   * ⚠️⚠️ AFTER THE COMMIT, AND NOT AWAITED — the same posture as the meter above, for the same reason: this
+   * is the hottest path in the product and a sale that has already happened must not fail because a stock
+   * row could not be written. The trade is real and worth naming: a failure here is LOST until somebody
+   * notices. It is survivable only because the movements are re-derivable from the chit at any time, with
+   * the same ref and the same idempotency, so a backfill heals it — and because the balance is a cache that
+   * rebuild() can check against the log.
+   *
+   * ⚠️ Idempotent by (entity, ref, line_ref, reason), so the counter replaying its queue moves nothing twice.
+   */
+  if (!is_draft) {
+    try {
+      require('../lib/stock-from-chit')
+        .postFor(sender_id, { chit_id, purpose, is_draft, business_json, line_items, created_at: now },
+                 withEntity, { actor_id: req.identity && req.identity.identity_id })
+        .then((r) => {
+          if (!r || (!r.failed.length && !r.skipped.length)) return;
+          /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
+             and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
+          try {
+            require('../lib/logger').warn('stock.from-chit', {
+              chit_id, entity_id: sender_id, moved: r.moved, duplicate: r.duplicate,
+              skipped: r.skipped.length, failed: r.failed,
+            });
+          } catch (_) {}
+        })
+        .catch(() => {});   /* postFor already never rejects; this is belt and braces on the hot path */
+    } catch (_) {}
+  }
+}
+
+/** the ledger hears about it — each side that holds a copy posts its own view */
+async function sendBooks(st, req, res) {
+  const { sender_id, is_draft, receiverDetails, chit_id } = st;
+  /**
+   * ⭐⭐ THE LEDGER HEARS ABOUT IT (SPEC-books-v2 §3) — AFTER the commit, never awaited, never able to fail the chit:
+   * lib/books-hooks.afterChit swallows everything and parks what cannot post in books_outbox, named. Off (the
+   * default) it is one cached read. Each side that holds a copy posts its OWN view: the sender, and every 'to'
+   * receiver (a supplier's invoice is the receiving shop's purchase).
+   */
+  if (!is_draft) {
+    try {
+      const hooks = require('../lib/books-hooks');
+      const who = req.identity && req.identity.identity_id;
+      setImmediate(() => {
+        hooks.afterChit(sender_id, chit_id, who);
+        for (const r of receiverDetails) if (r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)) hooks.afterChit(r.entity_id, chit_id, null);
+      });
+    } catch (_) {}
+  }
+}
+
+/** the answer, then the counter's place in its series */
+async function sendAnswer(st, req, res) {
+  const { sender_id, client_ref, number_check, oneSided, business_json, is_draft, counts, receiverDetails, chit_id, auto_subject, summary_json } = st;
+  res.json({
+    message: is_draft ? 'Draft saved' : 'Chit sent successfully',
+    chit_id,
+    auto_subject,
+    is_draft,
+    recipients: is_draft ? 0 : receiverDetails.length,
+    fan_out: { to: counts.to, cc: counts.cc, for: counts.for },
+    summary: summary_json,
+    /* ⚠ present only when something is wrong, so a caller can treat its absence as silence rather than as
+       a claim that the number was checked and approved. */
+    ...(number_check ? { number_check } : {}),
+    /* ⭐ present only when the customer's copy was not sent — the counter shows it on the bill */
+    ...(oneSided ? { one_sided: oneSided } : {}),
+  });
+
+  /**
+   * ⭐⭐ THE COUNTER'S PLACE IN ITS SERIES, KEPT IN THE CLOUD (2026-09-17). Athi: *"the system should be updated
+   * with the next seq number whenever the sync completes."* A counter bill carries { prefix, period, seq }; a
+   * registered counter's high-water mark moves with it, so the next PC to open that counter continues from here.
+   * ⚠️ AFTER the answer, and never able to fail the send — a missed update costs nothing the counter's own
+   * count and its close do not already carry.
+   */
+  if (!is_draft && client_ref && business_json && business_json.series) {
+    setImmediate(() => {
+      require('./counters').noteBill(sender_id, business_json.series, business_json.billed_at, client_ref).catch(() => {});
+    });
+  }
+}
 
 // ─── GET /chits/inbox ─────────────────────────────────────────
 // Lightweight inbox — my chit_status only — fast
@@ -3020,110 +3246,16 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
-    /* ⭐ goods-in may say what the goods are for (the same field Intake sets) — recorded BEFORE the lines, so the tick below
-       accepts with the answer in place; a bill already accepted refuses it, said, and the delivery still records */
-    let useSaid = null;
-    if (req.body && !Array.isArray(req.body) && (req.body.use !== undefined || req.body.use_lines !== undefined)) {
-      useSaid = await require('../lib/bill-use').set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines },
-        { name: req.identity && req.identity.display_name }).catch((e) => ({ ok: false, message: String(e && e.message) }));
-    }
+    const useSaid = await deliverUse(req, entity_id, chit_id);
     /* ⭐⭐ ON A BILL, GOODS-IN IS MY OWN STEP (lib/bill-privacy): recorded on my copy only, and its line is written at my bill
        folder's level — never replicated into, or announced to, the other shop */
     const _mineCopy = await taxCopy.copyOf(chit_id, entity_id).catch(() => null);
     const _bill = !!(_mineCopy && billPrivacy.isBill(_mineCopy, entity_id));
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name, private: _bill });
-    if (_bill) {
-      try {
-        out.step = await billPrivacy.writeStep(entity_id, chit_id, { code: billPrivacy.ownerCode(_mineCopy, entity_id), step: 'goods_checked',
-          label: 'Goods checked', lines: out.delivered.length }, { id: req.identity.identity_id, name: req.identity.display_name });
-      } catch (e) { console.error('bill step (goods-in) not written:', e.message); }
-    } else
-    try {
-      const d = out.delivered.map((x) => x.quantity).join(', ');
-      /**
-       * ⭐ THE NOTIFICATION FANS OUT TO EVERY PARTY, BECAUSE THE DELIVERY DOES.
-       *
-       * ⚠️ IT USED TO WRITE ONE ROW, INTO THE ACTING ENTITY'S COPY ONLY. So when the counterparty recorded a
-       * delivery against your order, the DELIVERY crossed — b144's definer puts it in every copy — and the
-       * NOTIFICATION did not. Found 2026-08-15 by checking b157 end to end: Karpagam recorded 5 kg, mytest's
-       * badge stayed at zero and the event never appeared in the feed at all.
-       *
-       * That is the most important event this product has. Goods moved, and the other side was not told.
-       *
-       * ⚠️ DISTINCT entity_id — one row per PARTY, not per chit_status row. A self-chit holds two status rows for
-       * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
-       * (b150 wrote every delivery twice for exactly this reason).
-       *
-       * ⚠️ IT NEEDS A SECURITY DEFINER, AND MY FIRST ATTEMPT DID NOT USE ONE. I wrote the fan-out as a plain
-       * INSERT … SELECT DISTINCT entity_id FROM chit_status inside withEntity(actor) and asserted a definer was
-       * unnecessary. The test disproved it in minutes: that subquery runs under RLS, sees only the actor's own
-       * chit_status row, and therefore wrote exactly the single row it had always written. It LOOKED like a
-       * fan-out and behaved like the bug. b158 does it properly — the audience is computed inside the definer
-       * from the chit's participants and is never a parameter.
-       *
-       * ⚠️ BEST-EFFORT, DELIBERATELY. It stays inside this try/catch: if the function is missing (pre-b158) or
-       * RLS refuses, the delivery still stands. A notification that fails must never undo a movement of goods.
-       */
-      await withEntity(entity_id, (db) => db.query(
-        'SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n',
-        [chit_id, 'delivered_line', req.identity.identity_id, req.identity.display_name,
-         out.delivered.length + ' line(s) delivered: ' + d]))
-        /* Pre-b158 the function does not exist — fall back to the single-copy row rather than losing the event
-           entirely. The counterparty is not notified until the migration runs, which is the status quo. */
-        .catch(async (e) => {
-          if (!(e && e.code === '42883')) throw e;
-          return withEntity(entity_id, (db) => db.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1,$2,'delivered_line',$3,$4,$5)`,
-            [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
-             out.delivered.length + ' line(s) delivered: ' + d]));
-        });
-    } catch (e) { console.error('deliver state_log skipped:', e.message); }
-    /**
-     * ⭐⭐ HAND BACK THE NEW STATE SO THE SCREEN NEED NOT ASK FOR IT. Measured 2026-08-23: recording a
-     * delivery cost ~3.5s, and the FULL CHIT RELOAD the UI ran straight afterwards cost ~4.9s — more than the
-     * write it was confirming. `GET /chits/:id` is twelve round trips and the screen needed one fact from it.
-     *
-     * ⚠️ `progress()` opens one more transaction, so this is not free — it is four trips instead of twelve,
-     * and it removes a whole request from the critical path. Additive: an older client that ignores the field
-     * behaves exactly as before.
-     */
-    try {
-      const _map = await deliverline.progress(entity_id, chit_id);
-      out.progress = Object.fromEntries(_map);
-      /**
-       * ⚠️⚠️ THE SUMMARY HAS TO COME BACK TOO, OR THE SCREEN CONTRADICTS ITSELF. Returning `progress` alone
-       * let the client update every LINE from the response while the HEADER kept whatever the last full read
-       * said — so both complaints on a job read "complete" under a header still saying *"0 of 2 lines
-       * delivered"*. Caught by the design-2 driver, which reads the header and the lines in the same breath.
-       *
-       * ⭐ It is free: the same map, through `summarise()` — the one function that already defines what
-       * "complete" counts as. Computing it a second time in JS would be a second definition, and the two
-       * would disagree the day either changes.
-       */
-      out.summary = deliverline.summarise(_map);
-    } catch (e) { /* the write succeeded; a stale screen is not worth failing it */ }
-    /**
-     * ⭐⭐ GOODS-IN TICKS THE SAME FACT (Athi, 2026-10-01: "one fact, three doors"). Every line of a bill I RECEIVED is now
-     * in → my copy is accepted, through moveStatus — the very function PUT /:chit_id/status runs for Intake: the same
-     * transition table, timeline row and ledger hook (the purchase posts behind acceptance). Before this, goods-in recorded
-     * the lines and the bill sat "waiting for you to confirm the goods were received".
-     * ⚠️ Only from pending / delivered / read: a bill I rejected, or already accepted, is never moved by a goods-in, and a
-     *   replayed or corrected delivery moves nothing twice. Only a bill I bought (tax-copy billReceived) — never the seller's
-     *   own despatch, never an order I am fulfilling. After the delivery, and never able to fail it.
-     */
-    try {
-      const s = out.summary;
-      if (s && s.lines > 0 && s.complete === s.lines) {
-        const mine = await taxCopy.copyOf(chit_id, entity_id);
-        if (mine && taxCopy.billReceived(mine, entity_id) && /^(pending|delivered|read)$/.test(String(mine.current_status || ''))) {
-          const mv = await moveStatus(entity_id, chit_id, 'accepted',
-            { id: req.identity.identity_id, name: req.identity.display_name }, 'Goods received in full — accepted at goods-in', railActions.meOf(req));
-          if (mv.moved) out.accepted = true;
-        }
-      }
-    } catch (e) { console.error('goods-in accept skipped:', e.message); }
+    await deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill);
+    await deliverProgress(entity_id, chit_id, out);
+    await goodsInAccept(req, entity_id, chit_id, out);
     if (useSaid) out.use = useSaid.ok ? useSaid.use : { refused: useSaid.message };
     res.json(out);
   } catch (err) {
@@ -3131,6 +3263,123 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
     res.status(err.status || 500).json({ error: 'Failed to record delivery', message: safeErr(err) });
   }
 });
+
+/* ═══ DELIVER-LINES' NAMED STEPS (T2-SPLIT, 2026-10-14) — the use · the announcement · the progress · the goods-in accept. ═══ */
+
+  /* ⭐ goods-in may say what the goods are for (the same field Intake sets) — recorded BEFORE the lines, so the tick below
+     accepts with the answer in place; a bill already accepted refuses it, said, and the delivery still records */
+async function deliverUse(req, entity_id, chit_id) {
+  let useSaid = null;
+  if (req.body && !Array.isArray(req.body) && (req.body.use !== undefined || req.body.use_lines !== undefined)) {
+    useSaid = await require('../lib/bill-use').set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines },
+      { name: req.identity && req.identity.display_name }).catch((e) => ({ ok: false, message: String(e && e.message) }));
+  }
+  return useSaid;
+}
+
+/** after the lines are recorded: a bill's private step, or the delivery announced to every party */
+async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
+  if (_bill) {
+    try {
+      out.step = await billPrivacy.writeStep(entity_id, chit_id, { code: billPrivacy.ownerCode(_mineCopy, entity_id), step: 'goods_checked',
+        label: 'Goods checked', lines: out.delivered.length }, { id: req.identity.identity_id, name: req.identity.display_name });
+    } catch (e) { console.error('bill step (goods-in) not written:', e.message); }
+  } else
+  try {
+    const d = out.delivered.map((x) => x.quantity).join(', ');
+    /**
+     * ⭐ THE NOTIFICATION FANS OUT TO EVERY PARTY, BECAUSE THE DELIVERY DOES.
+     *
+     * ⚠️ IT USED TO WRITE ONE ROW, INTO THE ACTING ENTITY'S COPY ONLY. So when the counterparty recorded a
+     * delivery against your order, the DELIVERY crossed — b144's definer puts it in every copy — and the
+     * NOTIFICATION did not. Found 2026-08-15 by checking b157 end to end: Karpagam recorded 5 kg, mytest's
+     * badge stayed at zero and the event never appeared in the feed at all.
+     *
+     * That is the most important event this product has. Goods moved, and the other side was not told.
+     *
+     * ⚠️ DISTINCT entity_id — one row per PARTY, not per chit_status row. A self-chit holds two status rows for
+     * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
+     * (b150 wrote every delivery twice for exactly this reason).
+     *
+     * ⚠️ IT NEEDS A SECURITY DEFINER, AND MY FIRST ATTEMPT DID NOT USE ONE. I wrote the fan-out as a plain
+     * INSERT … SELECT DISTINCT entity_id FROM chit_status inside withEntity(actor) and asserted a definer was
+     * unnecessary. The test disproved it in minutes: that subquery runs under RLS, sees only the actor's own
+     * chit_status row, and therefore wrote exactly the single row it had always written. It LOOKED like a
+     * fan-out and behaved like the bug. b158 does it properly — the audience is computed inside the definer
+     * from the chit's participants and is never a parameter.
+     *
+     * ⚠️ BEST-EFFORT, DELIBERATELY. It stays inside this try/catch: if the function is missing (pre-b158) or
+     * RLS refuses, the delivery still stands. A notification that fails must never undo a movement of goods.
+     */
+    await withEntity(entity_id, (db) => db.query(
+      'SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n',
+      [chit_id, 'delivered_line', req.identity.identity_id, req.identity.display_name,
+       out.delivered.length + ' line(s) delivered: ' + d]))
+      /* Pre-b158 the function does not exist — fall back to the single-copy row rather than losing the event
+         entirely. The counterparty is not notified until the migration runs, which is the status quo. */
+      .catch(async (e) => {
+        if (!(e && e.code === '42883')) throw e;
+        return withEntity(entity_id, (db) => db.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'delivered_line',$3,$4,$5)`,
+          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
+           out.delivered.length + ' line(s) delivered: ' + d]));
+      });
+  } catch (e) { console.error('deliver state_log skipped:', e.message); }
+}
+
+/**
+ * ⭐⭐ HAND BACK THE NEW STATE SO THE SCREEN NEED NOT ASK FOR IT. Measured 2026-08-23: recording a
+ * delivery cost ~3.5s, and the FULL CHIT RELOAD the UI ran straight afterwards cost ~4.9s — more than the
+ * write it was confirming. `GET /chits/:id` is twelve round trips and the screen needed one fact from it.
+ *
+ * ⚠️ `progress()` opens one more transaction, so this is not free — it is four trips instead of twelve,
+ * and it removes a whole request from the critical path. Additive: an older client that ignores the field
+ * behaves exactly as before.
+ */
+async function deliverProgress(entity_id, chit_id, out) {
+  try {
+    const _map = await deliverline.progress(entity_id, chit_id);
+    out.progress = Object.fromEntries(_map);
+    /**
+     * ⚠️⚠️ THE SUMMARY HAS TO COME BACK TOO, OR THE SCREEN CONTRADICTS ITSELF. Returning `progress` alone
+     * let the client update every LINE from the response while the HEADER kept whatever the last full read
+     * said — so both complaints on a job read "complete" under a header still saying *"0 of 2 lines
+     * delivered"*. Caught by the design-2 driver, which reads the header and the lines in the same breath.
+     *
+     * ⭐ It is free: the same map, through `summarise()` — the one function that already defines what
+     * "complete" counts as. Computing it a second time in JS would be a second definition, and the two
+     * would disagree the day either changes.
+     */
+    out.summary = deliverline.summarise(_map);
+  } catch (e) {
+    /* the write succeeded; a stale screen is not worth failing it — the reply simply carries no progress */
+    require('../lib/logger').warn('deliver.progress-unread', { chit_id, entity_id, err: e && e.message });
+  }
+}
+
+/**
+ * ⭐⭐ GOODS-IN TICKS THE SAME FACT (Athi, 2026-10-01: "one fact, three doors"). Every line of a bill I RECEIVED is now
+ * in → my copy is accepted, through moveStatus — the very function PUT /:chit_id/status runs for Intake: the same
+ * transition table, timeline row and ledger hook (the purchase posts behind acceptance). Before this, goods-in recorded
+ * the lines and the bill sat "waiting for you to confirm the goods were received".
+ * ⚠️ Only from pending / delivered / read: a bill I rejected, or already accepted, is never moved by a goods-in, and a
+ *   replayed or corrected delivery moves nothing twice. Only a bill I bought (tax-copy billReceived) — never the seller's
+ *   own despatch, never an order I am fulfilling. After the delivery, and never able to fail it.
+ */
+async function goodsInAccept(req, entity_id, chit_id, out) {
+  try {
+    const s = out.summary;
+    if (s && s.lines > 0 && s.complete === s.lines) {
+      const mine = await taxCopy.copyOf(chit_id, entity_id);
+      if (mine && taxCopy.billReceived(mine, entity_id) && /^(pending|delivered|read)$/.test(String(mine.current_status || ''))) {
+        const mv = await moveStatus(entity_id, chit_id, 'accepted',
+          { id: req.identity.identity_id, name: req.identity.display_name }, 'Goods received in full — accepted at goods-in', railActions.meOf(req));
+        if (mv.moved) out.accepted = true;
+      }
+    }
+  } catch (e) { console.error('goods-in accept skipped:', e.message); }
+}
 
 // ═══ b143 · PER-LINE ASSIGNMENT — division of labour, and it is PRIVATE ═════════════════════════════════════════
 //
@@ -4959,59 +5208,20 @@ router.get('/:id/trace', auth, async (req, res) => {
     // Optional network scope: when given, the walk follows ONLY edges tagged with this network id, so an entity in
     // several networks never bleeds one into another (the multi-network leak). Omit to walk all co-held edges.
     const net = (typeof req.query.network === 'string' && req.query.network.trim()) ? req.query.network.trim() : null;
-    const edgeOf = (t) => { t = t || {}; return { product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
-      base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null, is_origin: !!t.is_origin, parents: Array.isArray(t.parents) ? t.parents : [] }; };
-    // The chain is a graph of HANDOFFS: each node is one co-held edge. Label it by who it went to (to_name) and
-    // came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
-    // co-holds — not commercial terms — so this stays within the TR-6 lens.
-    const toName = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
-      a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null; };
-    const fetch1 = (cid) => withEntity(me, (db) => db.query(
-      `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-         FROM chit_header WHERE chit_id = $1${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''} LIMIT 1`, net ? [cid, net] : [cid]));
-
-    const seed = await fetch1(id);
+    const g = traceGraph(me, net);
+    const seed = await g.fetch1(id);
     if (!seed.rows[0]) return res.status(404).json({ error: 'Not found', message: 'Chit not visible to you' });
-    const nodes = new Map();
-    const edges = [];
-    const seenEdge = new Set();
-    const addEdge = (from, to) => { const k = `${from}|${to}`; if (!seenEdge.has(k)) { seenEdge.add(k); edges.push({ from, to }); } };
-    const put = (row, depth) => { if (!nodes.has(row.chit_id)) nodes.set(row.chit_id, { chit_id: row.chit_id, entity_id: row.entity_id, depth,
-      sender_name: row.sender_entity_display_name || null, to_name: toName(row), network: (row.trace && row.trace.network && row.trace.network.id) || null, ...edgeOf(row.trace) }); };
-    put(seed.rows[0], 0);
+    g.put(seed.rows[0], 0);
 
     if (dir === 'forward') {
-      let frontier = [id], depth = 0;
-      while (frontier.length && depth < MAX_DEPTH && nodes.size < MAX_NODES) {
-        const r = await withEntity(me, (db) => db.query(
-          `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-             FROM chit_header
-            WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
-          net ? [frontier, net] : [frontier]));
-        const next = [];
-        for (const row of r.rows) {
-          const parents = Array.isArray(row.trace && row.trace.parents) ? row.trace.parents : [];
-          for (const p of parents) if (frontier.includes(p)) addEdge(p, row.chit_id);
-          if (!nodes.has(row.chit_id)) { put(row, depth + 1); next.push(row.chit_id); }
-        }
-        frontier = next; depth++;
-      }
+      await traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH);
+      const { nodes, edges } = g;
       const nodeArr = [...nodes.values()];
       const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
       // ── Mass-balance invariant (Fragment 3): at each node, what goes OUT (sum of its children's base_qty) must not
       //    exceed what came IN (its own base_qty), in the same base unit. out > in ⇒ RED — more claimed out than
       //    received = theft / dilution / counterfeit, caught with no investigation. Only compares like base units.
-      let flagged = 0;
-      for (const n of nodeArr) {
-        const kids = edges.filter((e) => e.from === n.chit_id).map((e) => nodes.get(e.to)).filter(Boolean);
-        if (!kids.length || n.base_qty == null) { n.balance = null; continue; }         // a leaf, or no quantity to balance
-        if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
-        const out = kids.reduce((s, k) => s + k.base_qty, 0);
-        const delta = out - n.base_qty;
-        const red = delta > 1e-9;
-        if (red) flagged++;
-        n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
-      }
+      const flagged = traceBalance(nodeArr, (n) => edges.filter((e) => e.from === n.chit_id).map((e) => nodes.get(e.to)).filter(Boolean));
       return res.json({ dir, start: id, reachable_count: nodeArr.length,
         depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0),
         flagged,
@@ -5020,24 +5230,96 @@ router.get('/:id/trace', auth, async (req, res) => {
     }
 
     // backward: follow parents toward the origin (records every visible parent edge; advances along the first visible parent).
-    let current = id, depth = 0; const path = [id];
-    while (depth < MAX_DEPTH) {
-      const cur = nodes.get(current);
-      const parents = cur ? cur.parents : [];
-      if (!parents || !parents.length) break;   // origin — or an honest dead-end where provenance isn't co-held
-      let advanced = null;
-      for (const p of parents) {
-        const pr = await fetch1(p);
-        if (pr.rows[0]) { addEdge(p, current); put(pr.rows[0], depth + 1); if (!advanced) advanced = p; }
-      }
-      if (!advanced) break;
-      path.push(advanced); current = advanced; depth++;
-    }
-    return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...nodes.values()], edges });
+    const path = await traceBackward(g, id, MAX_DEPTH);
+    return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...g.nodes.values()], edges: g.edges });
   } catch (err) {
     res.status(500).json({ error: 'Trace walk failed', message: safeErr(err) });
   }
 });
+
+/* ═══ THE TRACE WALK'S NAMED STEPS (T2-SPLIT, 2026-10-14) — the graph · forward · the mass balance · backward. ═══ */
+
+// The chain is a graph of HANDOFFS: each node is one co-held edge. Label it by who it went to (to_name) and
+// came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
+// co-holds — not commercial terms — so this stays within the TR-6 lens.
+function traceToName(row) {
+  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
+  a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null;
+}
+/** a node's edge facts off its frozen summary_json.trace */
+function traceEdgeOf(t) {
+  t = t || {}; return { product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
+    base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null, is_origin: !!t.is_origin, parents: Array.isArray(t.parents) ? t.parents : [] };
+}
+
+/** the walk's graph: nodes by chit, each edge once, and the one RLS-scoped read a hop makes (`net` = one network only) */
+function traceGraph(me, net) {
+  const fetch1 = (cid) => withEntity(me, (db) => db.query(
+    `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+       FROM chit_header WHERE chit_id = $1${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''} LIMIT 1`, net ? [cid, net] : [cid]));
+  const nodes = new Map();
+  const edges = [];
+  const seenEdge = new Set();
+  const addEdge = (from, to) => { const k = `${from}|${to}`; if (!seenEdge.has(k)) { seenEdge.add(k); edges.push({ from, to }); } };
+  const put = (row, depth) => { if (!nodes.has(row.chit_id)) nodes.set(row.chit_id, { chit_id: row.chit_id, entity_id: row.entity_id, depth,
+    sender_name: row.sender_entity_display_name || null, to_name: traceToName(row), network: (row.trace && row.trace.network && row.trace.network.id) || null, ...traceEdgeOf(row.trace) }); };
+  return { nodes, edges, fetch1, addEdge, put };
+}
+
+/** forward = exposure / recall set (BFS; the visited set collapses diamonds and cycles) */
+async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
+  const { nodes, addEdge, put } = g;
+  let frontier = [id], depth = 0;
+  while (frontier.length && depth < MAX_DEPTH && nodes.size < MAX_NODES) {
+    const r = await withEntity(me, (db) => db.query(
+      `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+         FROM chit_header
+        WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
+      net ? [frontier, net] : [frontier]));
+    const next = [];
+    for (const row of r.rows) {
+      const parents = Array.isArray(row.trace && row.trace.parents) ? row.trace.parents : [];
+      for (const p of parents) if (frontier.includes(p)) addEdge(p, row.chit_id);
+      if (!nodes.has(row.chit_id)) { put(row, depth + 1); next.push(row.chit_id); }
+    }
+    frontier = next; depth++;
+  }
+}
+
+/** the mass balance on every node — the walk's AND by-batch's (one rule; `kidsOf(n)` → its child nodes). Returns how many are RED. */
+function traceBalance(nodeArr, kidsOf) {
+  let flagged = 0;
+  for (const n of nodeArr) {
+    const kids = kidsOf(n);
+    if (!kids.length || n.base_qty == null) { n.balance = null; continue; }         // a leaf, or no quantity to balance
+    if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
+    const out = kids.reduce((s, k) => s + k.base_qty, 0);
+    const delta = out - n.base_qty;
+    const red = delta > 1e-9;
+    if (red) flagged++;
+    n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
+  }
+  return flagged;
+}
+
+/** backward = provenance toward the origin — returns the path walked */
+async function traceBackward(g, id, MAX_DEPTH) {
+  const { nodes, fetch1, addEdge, put } = g;
+  let current = id, depth = 0; const path = [id];
+  while (depth < MAX_DEPTH) {
+    const cur = nodes.get(current);
+    const parents = cur ? cur.parents : [];
+    if (!parents || !parents.length) break;   // origin — or an honest dead-end where provenance isn't co-held
+    let advanced = null;
+    for (const p of parents) {
+      const pr = await fetch1(p);
+      if (pr.rows[0]) { addEdge(p, current); put(pr.rows[0], depth + 1); if (!advanced) advanced = p; }
+    }
+    if (!advanced) break;
+    path.push(advanced); current = advanced; depth++;
+  }
+  return path;
+}
 
 // ─── GET /chits/trace/batches ───────────────────────────────────────────────────────────────────────────────
 // List the trace-carrying chits the caller holds, so the screen can offer clickable batches (no pasting an id).
@@ -5045,8 +5327,7 @@ router.get('/:id/trace', auth, async (req, res) => {
 router.get('/trace/batches', auth, async (req, res) => {
   try {
     const me = entityId(req);
-    const toName = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
-      a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null; };
+    const toName = traceToName;   /* the ONE label for a handoff — shared with the walk (T2-SPLIT) */
     const r = await withEntity(me, (db) => db.query(
       `SELECT chit_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace, created_at
          FROM chit_header
@@ -5076,73 +5357,11 @@ router.get('/trace/by-batch', auth, async (req, res) => {
     const me = entityId(req);
     const q = String(req.query.q || '').trim();
     if (!q) return res.status(400).json({ error: 'Bad request', message: 'A batch value (q) is required' });
-    const recipientOf = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
-      a = Array.isArray(a) ? a : []; return a.find((x) => x.role === 'receiver') || a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null; };
-    /**
-     * ── ⚠️ THIS ENDPOINT DID NOT MATCH ON A BATCH ─────────────────────────────────────────────────────────────
-     * It matched `summary_json->'trace'->>'product'` — the product NAME — while being called `by-batch`, and the
-     * trace object has never carried a batch at all. So a recall for lot "24B" returned every customer who ever
-     * received that product, at every depth, and the answer looked exactly like a correct one. In a recall that
-     * is not a slightly wide net: it is telling forty customers to destroy stock that was never affected, and
-     * failing to tell the six who hold the bad lot which lot it was.
-     *
-     * ⭐ NOW IT LOOKS FOR A REAL LOT FIRST — `chit_line.flags->'lot'->>'batch'`, GS1 (10), written on the movement
-     * by lib/gs1.lotOf. Serial (21) counts too: a recall by serial is the same question, one unit narrower.
-     *
-     * ⚠️ AND IT STILL FALLS BACK TO PRODUCT CORRELATION, RATHER THAN RETURNING NOTHING. Every chit raised before
-     * lots existed has no batch on any line, and a traceability screen that suddenly answered "no results" for
-     * data it happily walked yesterday would read as data loss. But the fallback ANNOUNCES ITSELF — `matched_on`
-     * travels in the response — because the difference between "these six shipments carried lot 24B" and "these
-     * forty shipments were of this product" is the entire value of the answer, and a screen that cannot tell them
-     * apart will present the second as the first.
-     */
-    let matched_on = 'batch';
-    let r = await withEntity(me, (db) => db.query(
-      `SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients,
-              h.summary_json->'trace' AS trace
-         FROM chit_header h
-         JOIN chit_line   l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id
-        WHERE h.summary_json->'trace' IS NOT NULL
-          AND l.removed = false
-          AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))`,
-      [q])).catch(() => ({ rows: [] }));   // pre-b142 there is no chit_line to join — fall through, do not fail
-
-    if (!r.rows.length) {
-      matched_on = 'product';
-      r = await withEntity(me, (db) => db.query(
-        `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-           FROM chit_header
-          WHERE summary_json->'trace' IS NOT NULL
-            AND lower(summary_json->'trace'->>'product') = lower($1)`, [q]));
-    }
-    const seen = new Set(); const items = [];
-    for (const row of r.rows) {
-      if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
-      const rec = recipientOf(row); const t = row.trace || {};
-      items.push({ chit_id: row.chit_id, sender_entity_id: row.sender_entity_id, sender_name: row.sender_entity_display_name || null,
-        to_entity_id: rec ? rec.entity_id : null, to_name: rec ? rec.display_name : null,
-        product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null, base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null });
-    }
-    // rebuild edges: X → Y when receiver(X) === sender(Y). Pure data correlation, no links.
-    const bySender = {}; items.forEach((it) => { (bySender[it.sender_entity_id] = bySender[it.sender_entity_id] || []).push(it); });
-    const edges = []; const hasParent = new Set();
-    items.forEach((x) => (bySender[x.to_entity_id] || []).forEach((y) => { if (y.chit_id !== x.chit_id) { edges.push({ from: x.chit_id, to: y.chit_id }); hasParent.add(y.chit_id); } }));
-    const nmap = {}; items.forEach((it) => { nmap[it.chit_id] = Object.assign({}, it, { depth: 0, is_origin: !hasParent.has(it.chit_id) }); });
-    // BFS depth from the roots
-    const kidsMap = {}; edges.forEach((e) => { (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to); });
-    let frontier = items.filter((it) => !hasParent.has(it.chit_id)).map((it) => it.chit_id);
-    const seenD = new Set(frontier); let d = 0;
-    while (frontier.length && d < 60) { const next = []; frontier.forEach((id) => (kidsMap[id] || []).forEach((k) => { if (!seenD.has(k)) { seenD.add(k); nmap[k].depth = d + 1; next.push(k); } })); frontier = next; d++; }
-    const nodeArr = Object.values(nmap);
-    // mass-balance, same invariant as the walk
-    let flagged = 0;
-    for (const n of nodeArr) {
-      const kids = (kidsMap[n.chit_id] || []).map((id) => nmap[id]).filter(Boolean);
-      if (!kids.length || n.base_qty == null) { n.balance = null; continue; }
-      if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
-      const out = kids.reduce((s, k) => s + k.base_qty, 0); const delta = out - n.base_qty; const red = delta > 1e-9; if (red) flagged++;
-      n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
-    }
+    const { r, matched_on } = await batchRows(me, q);
+    const items = batchItems(r.rows);
+    const { edges, nodeArr, kidsMap, nmap } = batchChain(items);
+    // mass-balance, same invariant as the walk — the ONE rule (traceBalance)
+    const flagged = traceBalance(nodeArr, (n) => (kidsMap[n.chit_id] || []).map((id) => nmap[id]).filter(Boolean));
     const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
     res.json({ dir: 'forward', by_batch: q, reconstructed: true,
       /* ⚠️ THE CALLER MUST BE ABLE TO TELL THESE APART. 'batch' = these shipments carried this lot. 'product' =
@@ -5159,6 +5378,87 @@ router.get('/trace/by-batch', auth, async (req, res) => {
     res.status(500).json({ error: 'Batch trace failed', message: safeErr(err) });
   }
 });
+
+/* ═══ BY-BATCH'S NAMED STEPS (T2-SPLIT, 2026-10-14) — the rows · the items · the chain; the balance is the walk's own. ═══ */
+
+/** the receiver of a handoff (by-batch chains on it): the 'receiver' row, else the first party that is not sender or operator */
+function traceRecipientOf(row) {
+  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
+  a = Array.isArray(a) ? a : []; return a.find((x) => x.role === 'receiver') || a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
+}
+
+/**
+ * ── ⚠️ THIS ENDPOINT DID NOT MATCH ON A BATCH ─────────────────────────────────────────────────────────────
+ * It matched `summary_json->'trace'->>'product'` — the product NAME — while being called `by-batch`, and the
+ * trace object has never carried a batch at all. So a recall for lot "24B" returned every customer who ever
+ * received that product, at every depth, and the answer looked exactly like a correct one. In a recall that
+ * is not a slightly wide net: it is telling forty customers to destroy stock that was never affected, and
+ * failing to tell the six who hold the bad lot which lot it was.
+ *
+ * ⭐ NOW IT LOOKS FOR A REAL LOT FIRST — `chit_line.flags->'lot'->>'batch'`, GS1 (10), written on the movement
+ * by lib/gs1.lotOf. Serial (21) counts too: a recall by serial is the same question, one unit narrower.
+ *
+ * ⚠️ AND IT STILL FALLS BACK TO PRODUCT CORRELATION, RATHER THAN RETURNING NOTHING. Every chit raised before
+ * lots existed has no batch on any line, and a traceability screen that suddenly answered "no results" for
+ * data it happily walked yesterday would read as data loss. But the fallback ANNOUNCES ITSELF — `matched_on`
+ * travels in the response — because the difference between "these six shipments carried lot 24B" and "these
+ * forty shipments were of this product" is the entire value of the answer, and a screen that cannot tell them
+ * apart will present the second as the first.
+ */
+async function batchRows(me, q) {
+  let matched_on = 'batch';
+  let r = await withEntity(me, (db) => db.query(
+    `SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients,
+            h.summary_json->'trace' AS trace
+       FROM chit_header h
+       JOIN chit_line   l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id
+      WHERE h.summary_json->'trace' IS NOT NULL
+        AND l.removed = false
+        AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))`,
+    [q])).catch((e) => {   // pre-b142 there is no chit_line to join — fall through, do not fail
+      require('../lib/logger').warn('trace.by-batch-no-lines', { err: e && e.message });
+      return { rows: [] };
+    });
+
+  if (!r.rows.length) {
+    matched_on = 'product';
+    r = await withEntity(me, (db) => db.query(
+      `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+         FROM chit_header
+        WHERE summary_json->'trace' IS NOT NULL
+          AND lower(summary_json->'trace'->>'product') = lower($1)`, [q]));
+  }
+  return { r, matched_on };
+}
+
+/** one item per chit (the lot join can return a chit once per matching line) */
+function batchItems(rows) {
+  const seen = new Set(); const items = [];
+  for (const row of rows) {
+    if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
+    const rec = traceRecipientOf(row); const t = row.trace || {};
+    items.push({ chit_id: row.chit_id, sender_entity_id: row.sender_entity_id, sender_name: row.sender_entity_display_name || null,
+      to_entity_id: rec ? rec.entity_id : null, to_name: rec ? rec.display_name : null,
+      product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null, base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null });
+  }
+  return items;
+}
+
+/** the chain rebuilt from the data alone, and each node's depth from the roots */
+function batchChain(items) {
+  // rebuild edges: X → Y when receiver(X) === sender(Y). Pure data correlation, no links.
+  const bySender = {}; items.forEach((it) => { (bySender[it.sender_entity_id] = bySender[it.sender_entity_id] || []).push(it); });
+  const edges = []; const hasParent = new Set();
+  items.forEach((x) => (bySender[x.to_entity_id] || []).forEach((y) => { if (y.chit_id !== x.chit_id) { edges.push({ from: x.chit_id, to: y.chit_id }); hasParent.add(y.chit_id); } }));
+  const nmap = {}; items.forEach((it) => { nmap[it.chit_id] = Object.assign({}, it, { depth: 0, is_origin: !hasParent.has(it.chit_id) }); });
+  // BFS depth from the roots
+  const kidsMap = {}; edges.forEach((e) => { (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to); });
+  let frontier = items.filter((it) => !hasParent.has(it.chit_id)).map((it) => it.chit_id);
+  const seenD = new Set(frontier); let d = 0;
+  while (frontier.length && d < 60) { const next = []; frontier.forEach((id) => (kidsMap[id] || []).forEach((k) => { if (!seenD.has(k)) { seenD.add(k); nmap[k].depth = d + 1; next.push(k); } })); frontier = next; d++; }
+  const nodeArr = Object.values(nmap);
+  return { edges, nodeArr, kidsMap, nmap };
+}
 
 // ─── GET /chits/trace/networks ──────────────────────────────────────────────────────────────────────────────
 // The networks the caller participates in (derived from the edges it co-holds — migration-free registry seed).
