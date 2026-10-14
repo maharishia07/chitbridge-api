@@ -28,7 +28,7 @@ const db = { query: async (text, params) => {
 } };
 
 const CALLS = {
-  setting: [E], saveSetting: [E, { enabled: true }], saveCheck: [E, { ok: true }], accounts: [E], insertAccount: [E, { code: '1300', name: 'x', nature: 'asset' }], setSourceCode: [E, U, '090'], compareReady: [], fxLinesReady: [], fxRatesReady: [], fxRates: [E, { from: 'USD', limit: 10 }], insertFxRates: [E, [{ rate_date: '2026-10-14', from_ccy: 'USD', to_ccy: 'INR', rate: '83.25', source: 'manual', source_ref: null }], U],
+  setting: [E], saveSetting: [E, { enabled: true, fy_start_month: 7, functional_currency: 'AUD', country: 'AU' }]   /* STD2: money and year stated, or refused */, saveCheck: [E, { ok: true }], accounts: [E], insertAccount: [E, { code: '1300', name: 'x', nature: 'asset' }], setSourceCode: [E, U, '090'], compareReady: [], fxLinesReady: [], fxRatesReady: [], fxRates: [E, { from: 'USD', limit: 10 }], insertFxRates: [E, [{ rate_date: '2026-10-14', from_ccy: 'USD', to_ccy: 'INR', rate: '83.25', source: 'manual', source_ref: null }], U],
   fxRateOn: [E, 'USD', 'INR', '2026-10-31', '2026-10-01'], foreignBalances: [E, { asOf: '2026-10-31', functional: 'INR', party: U, account_ids: [U], currency: 'USD' }], partyNames: [E, [U]], compareSnapshots: [E], compareParts: [E, U], insertComparePart: [E, { snapshot_id: U, label: 'Tally H1', source: 'tally', part: 'tb', period_to: '2026-09-30', currency: 'INR', rows: [] }],
   periods: [E, '2026-27'], periodFigures: [E, '2026-27'], insertPeriod: [E, { fiscal_year: '2026-27', period: 1, start_date: '2026-04-01', end_date: '2026-04-30' }], setPeriodStatus: [E, '2026-27', 1, 'soft_locked', U, 'r'],
   /* CS2: a never-posted ledger re-charted in place (no DELETE on the setup tables) */

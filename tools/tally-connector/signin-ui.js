@@ -443,6 +443,7 @@ function mount(host, c) {
 E.mount = mount;
 E.machine = machine;
 E.sessionOf = sessionOf;
+E.keep = keep;                   /* STD2: the ONE writer of the apps' session (cb_sess, with `duty`) — settings.html's New shop keeps it here too */
 E.jwtClaims = jwtClaims;
 E.transport = httpPost;          /* the default transport, for a host that wraps it (the till: "offline" said in words first) */
 E.METHODS = METHODS;

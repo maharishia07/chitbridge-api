@@ -3,6 +3,7 @@
 // routes/actors.js — B3 Actor model API
 // All endpoints for create login manage actors
 
+const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const express = require('express');
 const empCode = require('../lib/employee-code');   // M02: the one place an employee's first code is minted, e-mailed and shown
 /** The e-mail on file for an employee (identities.email), or '' — a read that can never fail the request. */
@@ -311,7 +312,7 @@ router.post('/',
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
           otp_code, otp_expires_at, hat, entity_kind, country${_lvlCol ? ', access_level, whole_entity' : ''}
-        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor',(SELECT country FROM identities WHERE identity_id = $5)${_lvlCol ? ',$13,$14' : ''})`,
+        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor',${shopCountrySql(5)}${_lvlCol ? ',$13,$14' : ''})`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
          otp, otp_expires, hat, employee_id].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])

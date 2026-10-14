@@ -3,7 +3,7 @@
  *
  *   · R1 a party's GSTIN is checked with the one GSTIN check (profile-map.gstinChecksum) as ABN / TRN already were — a wrong one refused in words
  *   · R4 invoiceParty: a state and a PAN come off the number only under India's pack; the missing word is the pack's tax id; India unchanged
- *   · S1 taxIdWordOf: GSTIN · ABN · TRN from the pack (GSTIN with no pack, as before)
+ *   · S1 taxIdWordOf: GSTIN · ABN · TRN from the pack (null with no pack — STD2)
  *   · C4 a "VAT %" column maps to the one rate column
  * Run: node tests/country-crm-shop.test.cjs — no database, no network (the db module is a stand-in answering one identities row).
  */
@@ -35,7 +35,7 @@ require.cache[require.resolve(path.join(API, 'db'))] = { id: 'db', loaded: true,
   ok('R1 an ABN still goes through reg-au (unchanged)', !e3, e3 && e3.message);
 
   /* S1 */
-  ok('S1 taxIdWordOf: IN GSTIN · AU ABN · AE TRN · none GSTIN', P.taxIdWordOf('IN') === 'GSTIN' && P.taxIdWordOf('AU') === 'ABN' && P.taxIdWordOf('ae') === 'TRN' && P.taxIdWordOf('') === 'GSTIN');
+  ok('S1 taxIdWordOf: IN GSTIN · AU ABN · AE TRN · none null (STD2: never GSTIN for an unstated country)', P.taxIdWordOf('IN') === 'GSTIN' && P.taxIdWordOf('AU') === 'ABN' && P.taxIdWordOf('ae') === 'TRN' && P.taxIdWordOf('') === null && P.taxIdWordOf('US') === null);
 
   /* R4 */
   ROW = { display_name: 'Sim Stores', gstn: '33AAPFU0939F1ZV', address: 'Anna Salai', phone: '9876543210', country: 'IN', currency_code: 'INR' };

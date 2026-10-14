@@ -23,7 +23,7 @@ function page(country, currency, o) {
     window: { CBRegulation: require('../lib/regulation'), CBMoney: MONEY, CBLocale: { moneyTag: (c) => (c === 'INR' ? 'en-IN' : 'en-US'),
       REGIONS: { IN: { langs: ['en', 'hi', 'ta'] }, AE: { langs: ['ar', 'en', 'hi', 'ur', 'ml'] } }, langName: (l) => ({ en: 'English', ar: 'العربية' })[l] || l } },
     Number, String, Math, Object,
-    S: { shop: { country, currency, gstin: o.gstin || null } },
+    S: { shop: { country, currency, gstin: o.gstin || null, tax_id_word: require('../lib/profile').taxIdWordOf(country) } },   /* STD2: the snapshot's word, from the server's one reader */
     r2: (n) => MONEY.round(Number(n) || 0), esc: (v) => String(v == null ? '' : v), money: (v) => currency + ' ' + Number(v).toFixed(2),
     ls: { get: (k, d) => (k in store ? store[k] : d) },
     shopTax: () => ({ kind: 'tax', charges: true }),
