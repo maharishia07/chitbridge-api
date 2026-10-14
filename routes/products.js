@@ -1159,8 +1159,8 @@ router.defaultSchemaId = defaultSchemaId;
 router.validateAgainst = validateAgainst;
 /** [OFFR-04] all a cost-blind actor may touch through PATCH /:id — the "availability flag", nothing else.
  * Not price, not the modifiers, not the name — a person who cannot see what a change to any of those
- * would cost the margin should not be the one making it either. */
-const COST_BLIND_ALLOWED_FIELDS = ['status'];
+ * would cost the margin should not be the one making it either. The rule lives in lib/cost.writeRefusal
+ * (CAT-FIX1): the till's price, the schedule and the combo push ask the same one. */
 router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1170,14 +1170,8 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
      * change them, and checking post-merge would refuse a plain status flip for carrying fields the
      * caller never touched.
      */
-    if (req.identity && req.identity.identity_type === 'actor'
-        && !(await safeCanSeeCosts(req, entity_id))) {
-      const sent = Object.keys(req.body.item_data || {});
-      const blocked = sent.filter((k) => COST_BLIND_ALLOWED_FIELDS.indexOf(k) < 0);
-      if (blocked.length) return res.status(403).json({ error: 'Not permitted',
-        message: 'Your access does not include cost or price. You can change availability; the account '
-          + 'owner can grant "Sees costs" in Co-assists to change: ' + blocked.join(', ') + '.' });
-    }
+    const costNo = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
+    if (costNo) return res.status(403).json(costNo);
     /**
      * ⭐⭐ `merge: true` — WRITE ONLY WHAT YOU EDITED ([EXP-01], 2026-09-06). This route REPLACES item_data (it always did; a client
      * comment claimed it merged). The exposure pane sent the whole item_data it had loaded minutes earlier, so a rate set in between
@@ -1236,6 +1230,9 @@ router.get('/:id/schedule', auth, async (req, res) => {
 router.post('/:id/schedule', auth, [ body('effective_at').isString(), body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
+    /* ⚠️ a parked price is a price change on a date — the same "Sees costs" gate as an edit (CAT-FIX1) */
+    const costNo = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
+    if (costNo) return res.status(403).json(costNo);
     /* the patch goes through the SAME declaration gate as an edit — a scheduled key must be a declared column too */
     const decl = await catcols.ensureDeclared({
       query, entity_id, schema_id: await defaultSchemaId(entity_id), item_data: req.body.item_data,

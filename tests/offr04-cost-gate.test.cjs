@@ -214,9 +214,80 @@ async function canSeeCostsReadCases() {
   srv.close();
 }
 
+/**
+ * ⭐⭐ CAT-FIX1 (2026-10-14): THREE MORE DOORS TO A PRICE, ONE GATE. The till's price, a parked (scheduled) change and a
+ * combo pushed onto a product all wrote price past [OFFR-04]. Each is driven here through its real router, as above.
+ */
+async function otherDoorsCases() {
+  console.log('\n-- CAT-FIX1 · till price · schedule · combo push ask the SAME gate (lib/cost.writeRefusal) --\n');
+
+  let WHO = OWNER;
+  let CAN_SEE_COSTS = {};
+  const WROTE = [];
+  require.cache[require.resolve(API + '/middleware/auth')] = {
+    exports: Object.assign((req, res, next) => { req.identity = WHO; next(); }, {
+      entityOf: (req) => (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
+      requireScope: () => (req, res, next) => next(),
+    }),
+  };
+  require.cache[require.resolve(API + '/lib/schedule')] = {
+    exports: { enabled: async () => true, TABLE: 'x', pending: async () => [], applyDue: async () => {},
+               diff: (a, b) => b, schedule: async () => { WROTE.push('schedule'); return { row: { id: 's1' } }; } },
+  };
+  const ITEM = { item_id: 'i1', item_data: { name: 'Masala Dosa', price: 70, status: 'available' } };
+  const COMBO = { name: 'Thali', definition: [{ name: 'Side', max: 1, options: [{ name: 'Papad', price: 5 }] }], price: 120, product_item_id: 'i1' };
+  const db = {
+    query: async (sql, params) => {
+      if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: !!CAN_SEE_COSTS[params[0]] }] };
+      if (/FROM combo_templates/.test(sql)) return { rows: [Object.assign({}, COMBO)] };
+      if (/SELECT item_data FROM catalogue_items|SELECT item_id, item_data FROM catalogue_items/.test(sql))
+        return { rows: [{ item_id: 'i1', item_data: Object.assign({}, ITEM.item_data) }] };
+      if (/^\s*UPDATE (catalogue_items|combo_templates)/.test(sql)) { WROTE.push(sql.match(/UPDATE (\w+)/)[1]);
+        return { rows: [Object.assign({ id: 'c1' }, ITEM)] }; }
+      return { rows: [] };
+    },
+  };
+  require.cache[require.resolve(API + '/db')] = {
+    exports: { query: db.query, withEntity: async (_i, fn) => fn(db), withTransaction: async (fn) => fn(db),
+               readBatch: async () => [], pool: { query: db.query, connect: async () => Object.assign({ release() {} }, db) } },
+  };
+  ['/routes/products', '/routes/till', '/routes/combo-templates', '/lib/cost'].forEach((m) => { delete require.cache[require.resolve(API + m)]; });
+  const app = express();
+  app.use(express.json());
+  app.use('/api/products', require(API + '/routes/products'));
+  app.use('/api/till', require(API + '/routes/till'));
+  app.use('/api/combo-templates', require(API + '/routes/combo-templates'));
+  const srv = app.listen(0);
+  const port = srv.address().port;
+
+  const doors = [
+    ['POST /api/till/price', 'POST', '/api/till/price', { item_id: 'i1', price: 75 }],
+    ['POST /api/products/:id/schedule', 'POST', '/api/products/i1/schedule', { effective_at: '2026-11-01', item_data: { price: 75 } }],
+    ['POST /api/combo-templates/:id/push', 'POST', '/api/combo-templates/c1/push', {}],
+  ];
+  for (const [label, method, url, body] of doors) {
+    WHO = STAFF_BLIND; CAN_SEE_COSTS = {}; WROTE.length = 0;
+    const no = await call(port, method, url, body);
+    t(label + ' · cost-blind staff → 403', no.status, 403);
+    t('  …with the code a screen branches on, and nothing written', no.body.code + ' ' + WROTE.length, 'COSTS_HIDDEN 0');
+    WHO = STAFF_GRANTED; CAN_SEE_COSTS = { a2: true };
+    const yes = await call(port, method, url, body);
+    t('  …granted staff passes the gate', yes.status === 403 ? 'refused' : 'passed', 'passed');
+    WHO = OWNER;
+    const own = await call(port, method, url, body);
+    t('  …and the owner always passes it', own.status === 403 ? 'refused' : 'passed', 'passed');
+  }
+  WHO = STAFF_BLIND; CAN_SEE_COSTS = {}; WROTE.length = 0;
+  const parkStatus = await call(port, 'POST', '/api/products/i1/schedule', { effective_at: '2026-11-01', item_data: { status: 'unavailable' } });
+  t('a cost-blind co-assist may still park an availability change', parkStatus.status === 403 ? 'refused' : 'passed', 'passed');
+
+  srv.close();
+}
+
 (async () => {
   await productsCases();
   await canSeeCostsReadCases();
+  await otherDoorsCases();
   console.log('\n  ' + pass + ' passed · ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
 })();

@@ -1497,6 +1497,9 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
     if (!item_id) return res.status(400).json({ error: 'validation', message: 'item_id required' });
     if (!Number.isFinite(price) || price < 0)
       return res.status(400).json({ error: 'validation', message: 'price must be a number, zero or more' });
+    /* ⚠️ the SAME "Sees costs" gate as PATCH /api/products (CAT-FIX1) — a counter is not a side door round it */
+    const costNo = await require('../lib/cost').writeRefusal(req, entity_id, ['price']);
+    if (costNo) return res.status(403).json(costNo);
     const currency = await regional.currencyFor(entity_id).catch(() => 'INR');
     /**
      * ⚠️ A PRICE IS MONEY, NOT A NUMBER — the catalogue stores { amount, currency }, and reading only the bare figure once gave a

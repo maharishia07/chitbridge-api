@@ -160,6 +160,10 @@ router.post('/:id/push', auth, async (req, res) => {
 
     const wantedFields = { name: t.name, modifiers: t.definition };
     if (t.price != null) wantedFields.price = Number(t.price);
+    /* ⚠️ a push writes the product's name, price and modifiers — the SAME "Sees costs" gate as PATCH /api/products
+       (CAT-FIX1, lib/cost.writeRefusal), or a cost-blind co-assist reprices a product through a saved combo */
+    const costNo = await require('../lib/cost').writeRefusal(req, entity_id, Object.keys(wantedFields));
+    if (costNo) return res.status(403).json(costNo);
 
     let existing = null;
     if (t.product_item_id) {
