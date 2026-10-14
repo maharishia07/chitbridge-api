@@ -2975,110 +2975,16 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
-    /* ⭐ goods-in may say what the goods are for (the same field Intake sets) — recorded BEFORE the lines, so the tick below
-       accepts with the answer in place; a bill already accepted refuses it, said, and the delivery still records */
-    let useSaid = null;
-    if (req.body && !Array.isArray(req.body) && (req.body.use !== undefined || req.body.use_lines !== undefined)) {
-      useSaid = await require('../lib/bill-use').set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines },
-        { name: req.identity && req.identity.display_name }).catch((e) => ({ ok: false, message: String(e && e.message) }));
-    }
+    const useSaid = await deliverUse(req, entity_id, chit_id);
     /* ⭐⭐ ON A BILL, GOODS-IN IS MY OWN STEP (lib/bill-privacy): recorded on my copy only, and its line is written at my bill
        folder's level — never replicated into, or announced to, the other shop */
     const _mineCopy = await taxCopy.copyOf(chit_id, entity_id).catch(() => null);
     const _bill = !!(_mineCopy && billPrivacy.isBill(_mineCopy, entity_id));
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name, private: _bill });
-    if (_bill) {
-      try {
-        out.step = await billPrivacy.writeStep(entity_id, chit_id, { code: billPrivacy.ownerCode(_mineCopy, entity_id), step: 'goods_checked',
-          label: 'Goods checked', lines: out.delivered.length }, { id: req.identity.identity_id, name: req.identity.display_name });
-      } catch (e) { console.error('bill step (goods-in) not written:', e.message); }
-    } else
-    try {
-      const d = out.delivered.map((x) => x.quantity).join(', ');
-      /**
-       * ⭐ THE NOTIFICATION FANS OUT TO EVERY PARTY, BECAUSE THE DELIVERY DOES.
-       *
-       * ⚠️ IT USED TO WRITE ONE ROW, INTO THE ACTING ENTITY'S COPY ONLY. So when the counterparty recorded a
-       * delivery against your order, the DELIVERY crossed — b144's definer puts it in every copy — and the
-       * NOTIFICATION did not. Found 2026-08-15 by checking b157 end to end: Karpagam recorded 5 kg, mytest's
-       * badge stayed at zero and the event never appeared in the feed at all.
-       *
-       * That is the most important event this product has. Goods moved, and the other side was not told.
-       *
-       * ⚠️ DISTINCT entity_id — one row per PARTY, not per chit_status row. A self-chit holds two status rows for
-       * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
-       * (b150 wrote every delivery twice for exactly this reason).
-       *
-       * ⚠️ IT NEEDS A SECURITY DEFINER, AND MY FIRST ATTEMPT DID NOT USE ONE. I wrote the fan-out as a plain
-       * INSERT … SELECT DISTINCT entity_id FROM chit_status inside withEntity(actor) and asserted a definer was
-       * unnecessary. The test disproved it in minutes: that subquery runs under RLS, sees only the actor's own
-       * chit_status row, and therefore wrote exactly the single row it had always written. It LOOKED like a
-       * fan-out and behaved like the bug. b158 does it properly — the audience is computed inside the definer
-       * from the chit's participants and is never a parameter.
-       *
-       * ⚠️ BEST-EFFORT, DELIBERATELY. It stays inside this try/catch: if the function is missing (pre-b158) or
-       * RLS refuses, the delivery still stands. A notification that fails must never undo a movement of goods.
-       */
-      await withEntity(entity_id, (db) => db.query(
-        'SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n',
-        [chit_id, 'delivered_line', req.identity.identity_id, req.identity.display_name,
-         out.delivered.length + ' line(s) delivered: ' + d]))
-        /* Pre-b158 the function does not exist — fall back to the single-copy row rather than losing the event
-           entirely. The counterparty is not notified until the migration runs, which is the status quo. */
-        .catch(async (e) => {
-          if (!(e && e.code === '42883')) throw e;
-          return withEntity(entity_id, (db) => db.query(
-            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-             VALUES ($1,$2,'delivered_line',$3,$4,$5)`,
-            [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
-             out.delivered.length + ' line(s) delivered: ' + d]));
-        });
-    } catch (e) { console.error('deliver state_log skipped:', e.message); }
-    /**
-     * ⭐⭐ HAND BACK THE NEW STATE SO THE SCREEN NEED NOT ASK FOR IT. Measured 2026-08-23: recording a
-     * delivery cost ~3.5s, and the FULL CHIT RELOAD the UI ran straight afterwards cost ~4.9s — more than the
-     * write it was confirming. `GET /chits/:id` is twelve round trips and the screen needed one fact from it.
-     *
-     * ⚠️ `progress()` opens one more transaction, so this is not free — it is four trips instead of twelve,
-     * and it removes a whole request from the critical path. Additive: an older client that ignores the field
-     * behaves exactly as before.
-     */
-    try {
-      const _map = await deliverline.progress(entity_id, chit_id);
-      out.progress = Object.fromEntries(_map);
-      /**
-       * ⚠️⚠️ THE SUMMARY HAS TO COME BACK TOO, OR THE SCREEN CONTRADICTS ITSELF. Returning `progress` alone
-       * let the client update every LINE from the response while the HEADER kept whatever the last full read
-       * said — so both complaints on a job read "complete" under a header still saying *"0 of 2 lines
-       * delivered"*. Caught by the design-2 driver, which reads the header and the lines in the same breath.
-       *
-       * ⭐ It is free: the same map, through `summarise()` — the one function that already defines what
-       * "complete" counts as. Computing it a second time in JS would be a second definition, and the two
-       * would disagree the day either changes.
-       */
-      out.summary = deliverline.summarise(_map);
-    } catch (e) { /* the write succeeded; a stale screen is not worth failing it */ }
-    /**
-     * ⭐⭐ GOODS-IN TICKS THE SAME FACT (Athi, 2026-10-01: "one fact, three doors"). Every line of a bill I RECEIVED is now
-     * in → my copy is accepted, through moveStatus — the very function PUT /:chit_id/status runs for Intake: the same
-     * transition table, timeline row and ledger hook (the purchase posts behind acceptance). Before this, goods-in recorded
-     * the lines and the bill sat "waiting for you to confirm the goods were received".
-     * ⚠️ Only from pending / delivered / read: a bill I rejected, or already accepted, is never moved by a goods-in, and a
-     *   replayed or corrected delivery moves nothing twice. Only a bill I bought (tax-copy billReceived) — never the seller's
-     *   own despatch, never an order I am fulfilling. After the delivery, and never able to fail it.
-     */
-    try {
-      const s = out.summary;
-      if (s && s.lines > 0 && s.complete === s.lines) {
-        const mine = await taxCopy.copyOf(chit_id, entity_id);
-        if (mine && taxCopy.billReceived(mine, entity_id) && /^(pending|delivered|read)$/.test(String(mine.current_status || ''))) {
-          const mv = await moveStatus(entity_id, chit_id, 'accepted',
-            { id: req.identity.identity_id, name: req.identity.display_name }, 'Goods received in full — accepted at goods-in', railActions.meOf(req));
-          if (mv.moved) out.accepted = true;
-        }
-      }
-    } catch (e) { console.error('goods-in accept skipped:', e.message); }
+    await deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill);
+    await deliverProgress(entity_id, chit_id, out);
+    await goodsInAccept(req, entity_id, chit_id, out);
     if (useSaid) out.use = useSaid.ok ? useSaid.use : { refused: useSaid.message };
     res.json(out);
   } catch (err) {
@@ -3086,6 +2992,123 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
     res.status(err.status || 500).json({ error: 'Failed to record delivery', message: safeErr(err) });
   }
 });
+
+/* ═══ DELIVER-LINES' NAMED STEPS (T2-SPLIT, 2026-10-14) — the use · the announcement · the progress · the goods-in accept. ═══ */
+
+  /* ⭐ goods-in may say what the goods are for (the same field Intake sets) — recorded BEFORE the lines, so the tick below
+     accepts with the answer in place; a bill already accepted refuses it, said, and the delivery still records */
+async function deliverUse(req, entity_id, chit_id) {
+  let useSaid = null;
+  if (req.body && !Array.isArray(req.body) && (req.body.use !== undefined || req.body.use_lines !== undefined)) {
+    useSaid = await require('../lib/bill-use').set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines },
+      { name: req.identity && req.identity.display_name }).catch((e) => ({ ok: false, message: String(e && e.message) }));
+  }
+  return useSaid;
+}
+
+/** after the lines are recorded: a bill's private step, or the delivery announced to every party */
+async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
+  if (_bill) {
+    try {
+      out.step = await billPrivacy.writeStep(entity_id, chit_id, { code: billPrivacy.ownerCode(_mineCopy, entity_id), step: 'goods_checked',
+        label: 'Goods checked', lines: out.delivered.length }, { id: req.identity.identity_id, name: req.identity.display_name });
+    } catch (e) { console.error('bill step (goods-in) not written:', e.message); }
+  } else
+  try {
+    const d = out.delivered.map((x) => x.quantity).join(', ');
+    /**
+     * ⭐ THE NOTIFICATION FANS OUT TO EVERY PARTY, BECAUSE THE DELIVERY DOES.
+     *
+     * ⚠️ IT USED TO WRITE ONE ROW, INTO THE ACTING ENTITY'S COPY ONLY. So when the counterparty recorded a
+     * delivery against your order, the DELIVERY crossed — b144's definer puts it in every copy — and the
+     * NOTIFICATION did not. Found 2026-08-15 by checking b157 end to end: Karpagam recorded 5 kg, mytest's
+     * badge stayed at zero and the event never appeared in the feed at all.
+     *
+     * That is the most important event this product has. Goods moved, and the other side was not told.
+     *
+     * ⚠️ DISTINCT entity_id — one row per PARTY, not per chit_status row. A self-chit holds two status rows for
+     * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
+     * (b150 wrote every delivery twice for exactly this reason).
+     *
+     * ⚠️ IT NEEDS A SECURITY DEFINER, AND MY FIRST ATTEMPT DID NOT USE ONE. I wrote the fan-out as a plain
+     * INSERT … SELECT DISTINCT entity_id FROM chit_status inside withEntity(actor) and asserted a definer was
+     * unnecessary. The test disproved it in minutes: that subquery runs under RLS, sees only the actor's own
+     * chit_status row, and therefore wrote exactly the single row it had always written. It LOOKED like a
+     * fan-out and behaved like the bug. b158 does it properly — the audience is computed inside the definer
+     * from the chit's participants and is never a parameter.
+     *
+     * ⚠️ BEST-EFFORT, DELIBERATELY. It stays inside this try/catch: if the function is missing (pre-b158) or
+     * RLS refuses, the delivery still stands. A notification that fails must never undo a movement of goods.
+     */
+    await withEntity(entity_id, (db) => db.query(
+      'SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n',
+      [chit_id, 'delivered_line', req.identity.identity_id, req.identity.display_name,
+       out.delivered.length + ' line(s) delivered: ' + d]))
+      /* Pre-b158 the function does not exist — fall back to the single-copy row rather than losing the event
+         entirely. The counterparty is not notified until the migration runs, which is the status quo. */
+      .catch(async (e) => {
+        if (!(e && e.code === '42883')) throw e;
+        return withEntity(entity_id, (db) => db.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'delivered_line',$3,$4,$5)`,
+          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
+           out.delivered.length + ' line(s) delivered: ' + d]));
+      });
+  } catch (e) { console.error('deliver state_log skipped:', e.message); }
+}
+
+/**
+ * ⭐⭐ HAND BACK THE NEW STATE SO THE SCREEN NEED NOT ASK FOR IT. Measured 2026-08-23: recording a
+ * delivery cost ~3.5s, and the FULL CHIT RELOAD the UI ran straight afterwards cost ~4.9s — more than the
+ * write it was confirming. `GET /chits/:id` is twelve round trips and the screen needed one fact from it.
+ *
+ * ⚠️ `progress()` opens one more transaction, so this is not free — it is four trips instead of twelve,
+ * and it removes a whole request from the critical path. Additive: an older client that ignores the field
+ * behaves exactly as before.
+ */
+async function deliverProgress(entity_id, chit_id, out) {
+  try {
+    const _map = await deliverline.progress(entity_id, chit_id);
+    out.progress = Object.fromEntries(_map);
+    /**
+     * ⚠️⚠️ THE SUMMARY HAS TO COME BACK TOO, OR THE SCREEN CONTRADICTS ITSELF. Returning `progress` alone
+     * let the client update every LINE from the response while the HEADER kept whatever the last full read
+     * said — so both complaints on a job read "complete" under a header still saying *"0 of 2 lines
+     * delivered"*. Caught by the design-2 driver, which reads the header and the lines in the same breath.
+     *
+     * ⭐ It is free: the same map, through `summarise()` — the one function that already defines what
+     * "complete" counts as. Computing it a second time in JS would be a second definition, and the two
+     * would disagree the day either changes.
+     */
+    out.summary = deliverline.summarise(_map);
+  } catch (e) {
+    /* the write succeeded; a stale screen is not worth failing it — the reply simply carries no progress */
+    require('../lib/logger').warn('deliver.progress-unread', { chit_id, entity_id, err: e && e.message });
+  }
+}
+
+/**
+ * ⭐⭐ GOODS-IN TICKS THE SAME FACT (Athi, 2026-10-01: "one fact, three doors"). Every line of a bill I RECEIVED is now
+ * in → my copy is accepted, through moveStatus — the very function PUT /:chit_id/status runs for Intake: the same
+ * transition table, timeline row and ledger hook (the purchase posts behind acceptance). Before this, goods-in recorded
+ * the lines and the bill sat "waiting for you to confirm the goods were received".
+ * ⚠️ Only from pending / delivered / read: a bill I rejected, or already accepted, is never moved by a goods-in, and a
+ *   replayed or corrected delivery moves nothing twice. Only a bill I bought (tax-copy billReceived) — never the seller's
+ *   own despatch, never an order I am fulfilling. After the delivery, and never able to fail it.
+ */
+async function goodsInAccept(req, entity_id, chit_id, out) {
+  try {
+    const s = out.summary;
+    if (s && s.lines > 0 && s.complete === s.lines) {
+      const mine = await taxCopy.copyOf(chit_id, entity_id);
+      if (mine && taxCopy.billReceived(mine, entity_id) && /^(pending|delivered|read)$/.test(String(mine.current_status || ''))) {
+        const mv = await moveStatus(entity_id, chit_id, 'accepted',
+          { id: req.identity.identity_id, name: req.identity.display_name }, 'Goods received in full — accepted at goods-in', railActions.meOf(req));
+        if (mv.moved) out.accepted = true;
+      }
+    }
+  } catch (e) { console.error('goods-in accept skipped:', e.message); }
+}
 
 // ═══ b143 · PER-LINE ASSIGNMENT — division of labour, and it is PRIVATE ═════════════════════════════════════════
 //
@@ -4887,59 +4910,20 @@ router.get('/:id/trace', auth, async (req, res) => {
     // Optional network scope: when given, the walk follows ONLY edges tagged with this network id, so an entity in
     // several networks never bleeds one into another (the multi-network leak). Omit to walk all co-held edges.
     const net = (typeof req.query.network === 'string' && req.query.network.trim()) ? req.query.network.trim() : null;
-    const edgeOf = (t) => { t = t || {}; return { product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
-      base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null, is_origin: !!t.is_origin, parents: Array.isArray(t.parents) ? t.parents : [] }; };
-    // The chain is a graph of HANDOFFS: each node is one co-held edge. Label it by who it went to (to_name) and
-    // came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
-    // co-holds — not commercial terms — so this stays within the TR-6 lens.
-    const toName = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
-      a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null; };
-    const fetch1 = (cid) => withEntity(me, (db) => db.query(
-      `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-         FROM chit_header WHERE chit_id = $1${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''} LIMIT 1`, net ? [cid, net] : [cid]));
-
-    const seed = await fetch1(id);
+    const g = traceGraph(me, net);
+    const seed = await g.fetch1(id);
     if (!seed.rows[0]) return res.status(404).json({ error: 'Not found', message: 'Chit not visible to you' });
-    const nodes = new Map();
-    const edges = [];
-    const seenEdge = new Set();
-    const addEdge = (from, to) => { const k = `${from}|${to}`; if (!seenEdge.has(k)) { seenEdge.add(k); edges.push({ from, to }); } };
-    const put = (row, depth) => { if (!nodes.has(row.chit_id)) nodes.set(row.chit_id, { chit_id: row.chit_id, entity_id: row.entity_id, depth,
-      sender_name: row.sender_entity_display_name || null, to_name: toName(row), network: (row.trace && row.trace.network && row.trace.network.id) || null, ...edgeOf(row.trace) }); };
-    put(seed.rows[0], 0);
+    g.put(seed.rows[0], 0);
 
     if (dir === 'forward') {
-      let frontier = [id], depth = 0;
-      while (frontier.length && depth < MAX_DEPTH && nodes.size < MAX_NODES) {
-        const r = await withEntity(me, (db) => db.query(
-          `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-             FROM chit_header
-            WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
-          net ? [frontier, net] : [frontier]));
-        const next = [];
-        for (const row of r.rows) {
-          const parents = Array.isArray(row.trace && row.trace.parents) ? row.trace.parents : [];
-          for (const p of parents) if (frontier.includes(p)) addEdge(p, row.chit_id);
-          if (!nodes.has(row.chit_id)) { put(row, depth + 1); next.push(row.chit_id); }
-        }
-        frontier = next; depth++;
-      }
+      await traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH);
+      const { nodes, edges } = g;
       const nodeArr = [...nodes.values()];
       const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
       // ── Mass-balance invariant (Fragment 3): at each node, what goes OUT (sum of its children's base_qty) must not
       //    exceed what came IN (its own base_qty), in the same base unit. out > in ⇒ RED — more claimed out than
       //    received = theft / dilution / counterfeit, caught with no investigation. Only compares like base units.
-      let flagged = 0;
-      for (const n of nodeArr) {
-        const kids = edges.filter((e) => e.from === n.chit_id).map((e) => nodes.get(e.to)).filter(Boolean);
-        if (!kids.length || n.base_qty == null) { n.balance = null; continue; }         // a leaf, or no quantity to balance
-        if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
-        const out = kids.reduce((s, k) => s + k.base_qty, 0);
-        const delta = out - n.base_qty;
-        const red = delta > 1e-9;
-        if (red) flagged++;
-        n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
-      }
+      const flagged = traceBalance(nodeArr, g);
       return res.json({ dir, start: id, reachable_count: nodeArr.length,
         depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0),
         flagged,
@@ -4948,24 +4932,97 @@ router.get('/:id/trace', auth, async (req, res) => {
     }
 
     // backward: follow parents toward the origin (records every visible parent edge; advances along the first visible parent).
-    let current = id, depth = 0; const path = [id];
-    while (depth < MAX_DEPTH) {
-      const cur = nodes.get(current);
-      const parents = cur ? cur.parents : [];
-      if (!parents || !parents.length) break;   // origin — or an honest dead-end where provenance isn't co-held
-      let advanced = null;
-      for (const p of parents) {
-        const pr = await fetch1(p);
-        if (pr.rows[0]) { addEdge(p, current); put(pr.rows[0], depth + 1); if (!advanced) advanced = p; }
-      }
-      if (!advanced) break;
-      path.push(advanced); current = advanced; depth++;
-    }
-    return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...nodes.values()], edges });
+    const path = await traceBackward(g, id, MAX_DEPTH);
+    return res.json({ dir, start: id, hops: path.length - 1, path: path.slice().reverse(), nodes: [...g.nodes.values()], edges: g.edges });
   } catch (err) {
     res.status(500).json({ error: 'Trace walk failed', message: safeErr(err) });
   }
 });
+
+/* ═══ THE TRACE WALK'S NAMED STEPS (T2-SPLIT, 2026-10-14) — the graph · forward · the mass balance · backward. ═══ */
+
+// The chain is a graph of HANDOFFS: each node is one co-held edge. Label it by who it went to (to_name) and
+// came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
+// co-holds — not commercial terms — so this stays within the TR-6 lens.
+function traceToName(row) {
+  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
+  a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null;
+}
+/** a node's edge facts off its frozen summary_json.trace */
+function traceEdgeOf(t) {
+  t = t || {}; return { product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
+    base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null, is_origin: !!t.is_origin, parents: Array.isArray(t.parents) ? t.parents : [] };
+}
+
+/** the walk's graph: nodes by chit, each edge once, and the one RLS-scoped read a hop makes (`net` = one network only) */
+function traceGraph(me, net) {
+  const fetch1 = (cid) => withEntity(me, (db) => db.query(
+    `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+       FROM chit_header WHERE chit_id = $1${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''} LIMIT 1`, net ? [cid, net] : [cid]));
+  const nodes = new Map();
+  const edges = [];
+  const seenEdge = new Set();
+  const addEdge = (from, to) => { const k = `${from}|${to}`; if (!seenEdge.has(k)) { seenEdge.add(k); edges.push({ from, to }); } };
+  const put = (row, depth) => { if (!nodes.has(row.chit_id)) nodes.set(row.chit_id, { chit_id: row.chit_id, entity_id: row.entity_id, depth,
+    sender_name: row.sender_entity_display_name || null, to_name: traceToName(row), network: (row.trace && row.trace.network && row.trace.network.id) || null, ...traceEdgeOf(row.trace) }); };
+  return { nodes, edges, fetch1, addEdge, put };
+}
+
+/** forward = exposure / recall set (BFS; the visited set collapses diamonds and cycles) */
+async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
+  const { nodes, addEdge, put } = g;
+  let frontier = [id], depth = 0;
+  while (frontier.length && depth < MAX_DEPTH && nodes.size < MAX_NODES) {
+    const r = await withEntity(me, (db) => db.query(
+      `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+         FROM chit_header
+        WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
+      net ? [frontier, net] : [frontier]));
+    const next = [];
+    for (const row of r.rows) {
+      const parents = Array.isArray(row.trace && row.trace.parents) ? row.trace.parents : [];
+      for (const p of parents) if (frontier.includes(p)) addEdge(p, row.chit_id);
+      if (!nodes.has(row.chit_id)) { put(row, depth + 1); next.push(row.chit_id); }
+    }
+    frontier = next; depth++;
+  }
+}
+
+/** the mass balance on every node of a forward walk — returns how many are RED */
+function traceBalance(nodeArr, g) {
+  const { nodes, edges } = g;
+  let flagged = 0;
+  for (const n of nodeArr) {
+    const kids = edges.filter((e) => e.from === n.chit_id).map((e) => nodes.get(e.to)).filter(Boolean);
+    if (!kids.length || n.base_qty == null) { n.balance = null; continue; }         // a leaf, or no quantity to balance
+    if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
+    const out = kids.reduce((s, k) => s + k.base_qty, 0);
+    const delta = out - n.base_qty;
+    const red = delta > 1e-9;
+    if (red) flagged++;
+    n.balance = { in: n.base_qty, out, delta, base_unit: n.base_unit, status: red ? 'red' : 'ok' };
+  }
+  return flagged;
+}
+
+/** backward = provenance toward the origin — returns the path walked */
+async function traceBackward(g, id, MAX_DEPTH) {
+  const { nodes, fetch1, addEdge, put } = g;
+  let current = id, depth = 0; const path = [id];
+  while (depth < MAX_DEPTH) {
+    const cur = nodes.get(current);
+    const parents = cur ? cur.parents : [];
+    if (!parents || !parents.length) break;   // origin — or an honest dead-end where provenance isn't co-held
+    let advanced = null;
+    for (const p of parents) {
+      const pr = await fetch1(p);
+      if (pr.rows[0]) { addEdge(p, current); put(pr.rows[0], depth + 1); if (!advanced) advanced = p; }
+    }
+    if (!advanced) break;
+    path.push(advanced); current = advanced; depth++;
+  }
+  return path;
+}
 
 // ─── GET /chits/trace/batches ───────────────────────────────────────────────────────────────────────────────
 // List the trace-carrying chits the caller holds, so the screen can offer clickable batches (no pasting an id).
@@ -4973,8 +5030,7 @@ router.get('/:id/trace', auth, async (req, res) => {
 router.get('/trace/batches', auth, async (req, res) => {
   try {
     const me = entityId(req);
-    const toName = (row) => { let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
-      a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null; };
+    const toName = traceToName;   /* the ONE label for a handoff — shared with the walk (T2-SPLIT) */
     const r = await withEntity(me, (db) => db.query(
       `SELECT chit_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace, created_at
          FROM chit_header
