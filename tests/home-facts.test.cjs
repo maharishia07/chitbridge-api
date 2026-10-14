@@ -71,8 +71,8 @@ function answer(text, params) {
   }
   if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: params[0] === 'a2' }] };
   if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, last_check: { at: '2026-10-06T21:00:00Z', ok: true } }] };
-  if (/FROM books_outbox/.test(sql)) return { rows: [{ why: 'Waiting for you to confirm the goods were received (bill SG-103 from Sri Ganesh Provisions)' },
-    { why: 'Who is Sri Ganesh? Add them as a supplier — then bill SG-102 waits for you to accept it.' }, { why: 'Paid by "gpay", which has no ledger yet.' }] };
+  /* STD1: the ONE count — GROUP BY todo over every open row (211 here: more than any page of 50 or 200) */
+  if (/FROM books_outbox/.test(sql)) { F.outboxSql = sql; return { rows: [{ todo: 'accept', n: 120 }, { todo: 'add_supplier', n: 90 }, { todo: 'record', n: 1 }] }; }
   if (/FROM catalogue_items/.test(sql)) return { rows: [{ items: 10, no_cost: 4, cost: SECRET, item_data: { cost: { value: SECRET } } }] };
   if (/FROM combo_templates/.test(sql)) return { rows: [{ n: 2 }] };
   if (/FROM definition WHERE/.test(sql)) return { rows: [{ drafts: 1, live: 5 }] };
@@ -167,8 +167,9 @@ const get = (port, p) => new Promise((ok) => {
   /* accounts */
   r = await g('accounts');
   t('accounts: checked date + what waits, in To do words (FX-F10W: never "3 posts waiting")', r.json.lines, [{ text: 'Checked {when}', at: '2026-10-06T21:00:00.000Z' },
-    { text: '1 supplier bill to accept · 1 supplier to add · 1 waiting to be recorded', value: 3, tone: 'dn' }]);
-  t('accounts: the figures carry each count (books-hooks todoOf)', [r.json.figures.waiting, r.json.figures.accept, r.json.figures.add_supplier, r.json.figures.record], [3, 1, 1, 1]);
+    { text: '120 supplier bills to accept · 90 suppliers to add · 1 waiting to be recorded', value: 211, tone: 'dn' }]);
+  t('accounts: the figures carry each count (books-store waitingCount — the one count, > 200 rows)', [r.json.figures.waiting, r.json.figures.accept, r.json.figures.add_supplier, r.json.figures.record], [211, 120, 90, 1]);
+  t('accounts: STD1 — counted by ONE GROUP BY over every open row (no LIMIT, no sentence read)', [/GROUP BY 1/.test(F.outboxSql || ''), /LIMIT/.test(F.outboxSql || ''), /SELECT why FROM/.test(F.outboxSql || '')], [true, false, false]);
   t('accounts: at most 2 trips', r.trips <= 2, true);
   F.booksOn = false; r = await g('accounts');
   t('accounts: ledger off -> no lines, and it says why', [r.status, r.json.lines, typeof r.json.unavailable], [200, [], 'string']);

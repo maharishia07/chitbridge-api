@@ -6697,7 +6697,7 @@ async function load(){
      that cannot be read does not loop; refresh() calls load() again. */
   /* ⭐ FX-F10W: …and a copy stored by an OLDER counter, which lacks a key this build reads (SNAP_NEEDS — the Receive door's supplier list came
      up empty until the 15-minute refresh), is read again the same way, once: the ordinary refresh, no new route, no new timer. */
-  if ((!S || snapLacks(S)) && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.cred() && lineUp()) { FIRST_READ = true; refresh().catch(function(){}); }
+  if ((!S || snapLacks(S)) && !FIRST_READ && HOST.mode === 'cloud' && CloudHost.cred() && lineUp()) { FIRST_READ = true; refresh().catch(firstReadFailed); }
   /**
    * ⭐⭐⭐ R1 · "YOU HAD A BILL OPEN…" — HERE, not at boot. load() is where the shop arrives, and the lines have
    * to be re-priced through the offers engine before anybody is shown a total. Once per page (DRAFT_ASKED):
@@ -6725,6 +6725,11 @@ async function load(){
    */
 }
 var FIRST_READ = false;
+/* STD1: the first read threw past refresh()'s own answers — logged, and the person is told what to do (never silent) */
+function firstReadFailed(e){
+  if (window.console) console.error('till: the first read of the shop failed —', (e && e.message) || e);
+  flash('⚠', 'The shop did not answer', 'Try again', function(){ refresh().catch(firstReadFailed); });
+}
 /* FX-F10W: the snapshot keys this build reads that an older copy may not carry (routes/till.js sends each on every snapshot, a delta too) */
 var SNAP_NEEDS = ['suppliers'];
 function snapLacks(snap){ return !!snap && SNAP_NEEDS.some(function(k){ return !(k in snap); }); }
@@ -6981,16 +6986,21 @@ function paintSuppliers(){
   el.innerHTML = ((S && S.suppliers) || []).slice(0, 500).map(function(x){ return '<option value="' + esc(x.name) + '">'; }).join('');
 }
 /**
- * the supplier the door named — exactly ONE whose name (or the shop's nickname for them) is what was typed, case and spaces aside; two
- * of the same name is nobody (custKnown's rule). A pick carries the party's id on the receipt, and their GSTIN's state fills the state
- * box when it is empty (CGST/SGST vs IGST), never over what someone typed.
+ * ⭐ STD1 · THE ONE "WHO IS THIS NAME" RULE AT THE COUNTER — custKnown (a customer) and rcvSupplierKnown (a supplier) both ask it; the server's
+ * twin is books-store supplierByName. Exactly ONE party in `list` (carrying `idKey`) whose name, or the shop's nickname for them, IS what was
+ * typed — trimmed, case aside. Two of the same name is nobody: a bill addressed by a name that fits two people lands on the wrong account.
  */
-function rcvSupplierKnown(name){
+function oneByName(list, name, idKey){
   var nm = String(name == null ? '' : name).trim().toLowerCase(); if (!nm) return null;
-  var hits = ((S && S.suppliers) || []).filter(function(x){
-    return x && x.party_id && (String(x.name || '').trim().toLowerCase() === nm || String(x.nickname || '').trim().toLowerCase() === nm); });
+  var hits = (list || []).filter(function(x){
+    return x && x[idKey] && (String(x.name || '').trim().toLowerCase() === nm || String(x.nickname || '').trim().toLowerCase() === nm); });
   return hits.length === 1 ? hits[0] : null;
 }
+/**
+ * the supplier the door named — oneByName over the snapshot's suppliers. A pick carries the party's id on the receipt, and their GSTIN's
+ * state fills the state box when it is empty (CGST/SGST vs IGST), never over what someone typed.
+ */
+function rcvSupplierKnown(name){ return oneByName((S && S.suppliers) || [], name, 'party_id'); }
 function rcvVendorPick(){
   var k = rcvSupplierKnown(RCV.vendor);
   RCV.vendor_party = k ? k.party_id : null;
@@ -7023,7 +7033,7 @@ function custKnown(){
   var tail = function(p){ return String(p || '').replace(/[^0-9]/g, '').slice(-10); };
   var hits = [];
   if (ph.length >= 6) hits = list.filter(function(c){ return c && c.identity_id && tail(c.phone) && tail(c.phone) === tail(ph); });
-  if (!hits.length && nm) hits = list.filter(function(c){ return c && c.identity_id && String(c.name || '').trim().toLowerCase() === nm; });
+  if (!hits.length) return oneByName(list, nm, 'identity_id');   /* no phone match: the counter's one name rule (STD1) */
   return hits.length === 1 ? hits[0] : null;
 }
 /**

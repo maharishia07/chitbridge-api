@@ -42,8 +42,8 @@ const CALLS = {
   periodSums: [E, '2026-27', 0, 5, true], lineSums: [E, '2026-04-01', '2026-04-30', true], firstYear: [E], balanceDrift: [E], unbalancedEntries: [E],
   items: [E, U, U], itemOwners: [E, U, ['r1', 'r2']], itemTotals: [E, U], accountNet: [E, U],
   insertPayment: [E, { party_id: U, direction: 'in', amount_minor: 1, currency: 'INR', mode: 'cash', received_at: '2026-04-01', client_ref: 'c1' }], payment: [E, U], paymentByRef: [E, 'c1'], paymentsSince: [E, U, 'in', '2026-04-01T00:00:00Z'], cheques: [E, false, 200],
-  queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], waitingCount: [E], waitingWhys: [E], outboxDone: [E, 1, false, 'why', { waiting: 'acceptance', candidates: [] }], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'],
-  terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
+  queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], waitingCount: [E], backfillTodo: [E], outboxDone: [E, 1, false, 'why', { todo: 'accept', candidates: [] }], waitOfChitSql: [], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'],
+  terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], supplierByName: [E, { name: 'Sri 50%_Ganesh' }], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
   lastPack: [E], insertPack: [E, { pack_id: U, kind: 'month', sha256: 'x', manifest: {} }], packs: [E], pack: [E, U], ackPack: [E, U, U],
   counterBills: [E, 'C1', '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'], countersBilling: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'],
   unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200], openDisputes: [E, U],
@@ -71,6 +71,31 @@ const CALLS = {
   ok('no statement reaches another shop through a books table without entity_id / owner_entity_id', seen.every((q) => !/\b(journal_entry|journal_line|account_balance|party_item|ledger_account|books_\w+|fiscal_period)\b/.test(q.text)
     || /(entity_id|owner_entity_id)\s*=\s*\$1|VALUES \(\$1|INSERT INTO \w+ \((pack_id, )?entity_id/.test(q.text) || /WHERE \w+\.entity_id = \$1|WHERE l\.entity_id = \$1|WHERE b\.entity_id = \$1|WHERE h\.entity_id = \$1/.test(q.text)),
     seen.filter((q) => /\b(journal_entry|journal_line|account_balance|party_item)\b/.test(q.text) && !/entity_id/.test(q.text)).map((q) => q.text.slice(0, 80)).join(' | '));
+  /* ── STD1: the wait kind is data; old rows classified by ONE fragment; one count; one resolver ── */
+  {
+    seen.length = 0;
+    await S.waitingCount(db, E); const cnt = seen[0].text;
+    ok('STD1 · waitingCount: ONE GROUP BY over every open row (no LIMIT) by TODO_SQL', /GROUP BY 1/.test(cnt) && !/LIMIT/.test(cnt) && cnt.indexOf(S.TODO_SQL) >= 0, cnt);
+    seen.length = 0; await S.waiting(db, E, 50); const wq = seen[0].text;
+    ok('STD1 · waiting(): each row carries todo + name from the SAME fragments', wq.indexOf(S.TODO_SQL + ' AS todo') >= 0 && wq.indexOf(S.NAME_SQL + ' AS name') >= 0, wq.slice(0, 200));
+    seen.length = 0; await S.backfillTodo(db, E); const bf = seen[0].text;
+    ok('STD1 · backfillTodo: writes todo (+ name) ONCE, only on open rows that lack it, from the same fragment', /UPDATE books_outbox SET event/.test(bf) && /NOT \(COALESCE\(event, '\{\}'::jsonb\) \? 'todo'\)/.test(bf) && /done_at IS NULL/.test(bf) && bf.indexOf(S.TODO_SQL) >= 0, bf);
+    ok('STD1 · TODO_SQL: the row\'s own todo first; an old row by its parked kind (acceptance → accept · party "Who is" → add_supplier · else record)',
+      /^COALESCE\(event->>'todo'/.test(S.TODO_SQL) && /'acceptance' THEN 'accept'/.test(S.TODO_SQL) && /'party' AND why LIKE 'Who is %' THEN 'add_supplier' ELSE 'record'/.test(S.TODO_SQL), S.TODO_SQL);
+    ok('STD1 · the chit read\'s wait is the same fragments, for one chit', S.waitOfChitSql('$1', '$2').indexOf(S.TODO_SQL) >= 0 && /source_chit_id = \$2 AND done_at IS NULL/.test(S.waitOfChitSql('$1', '$2')));
+    seen.length = 0; await S.supplierByName(db, E, { name: ' Sri 50%_Ganesh ' }); const sb = seen[0];
+    ok('STD1 · supplierByName by name: ONE statement — exact name/nickname (trimmed) + near matches, LIKE escaped, prefix first', seen.length === 1 && sb.params[1] === 'Sri 50%_Ganesh'
+      && sb.params[2] === '%sri 50\\%\\_ganesh%' && sb.params[3] === 'sri 50\\%\\_ganesh%' && /AS exact/.test(sb.text) && /LIMIT 5/.test(sb.text), JSON.stringify(sb.params));
+    seen.length = 0; await S.supplierByName(db, E, { party_no: 'P-00001' });
+    ok('STD1 · supplierByName by party no.: that number on MY list only', seen.length === 1 && /s\.party_no = \$2/.test(seen[0].text) && seen[0].params[1] === 'P-00001');
+    const dbq = { query: async () => ({ rows: [{ party_id: U, name: 'Sri Ganesh Provisions', party_no: 'P-1', exact: true }, { party_id: 'x', name: 'Sri Ganesh Traders', party_no: 'P-2', exact: false }] }) };
+    const r1 = await S.supplierByName(dbq, E, { name: 'Sri Ganesh Provisions' });
+    const dbq2 = { query: async () => ({ rows: [{ party_id: U, name: 'Sri Ganesh', party_no: 'P-1', exact: true }, { party_id: 'x', name: 'Sri Ganesh', party_no: 'P-2', exact: true }, { party_id: 'y', name: 'Sri Ganesh Provisions', party_no: null, exact: false }] }) };
+    const r2 = await S.supplierByName(dbq2, E, { name: 'Sri Ganesh' });
+    ok('STD1 · exactly one exact → the party, no near list; two exact → nobody, the near list (≤ 3, names + party_no only)',
+      JSON.stringify([r1, r2]) === JSON.stringify([{ one: { party_id: U, name: 'Sri Ganesh Provisions', party_no: 'P-1' }, near: [] },
+        { one: null, near: [{ name: 'Sri Ganesh', party_no: 'P-1' }, { name: 'Sri Ganesh', party_no: 'P-2' }, { name: 'Sri Ganesh Provisions', party_no: null }] }]), JSON.stringify([r1, r2]));
+  }
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks (' + seen.length + ' statements)\n');
   process.exit(fail ? 1 : 0);
 })();

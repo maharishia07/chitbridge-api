@@ -95,6 +95,12 @@ function memoryTemplates() {
   ok('recurring due names the template; the accrual reversal names its reference', get(t1, 'recurring_due').items[0].name === 'Shop rent' && get(t1, 'accrual_reversals_due').items[0].ref === 'ELEC-9', JSON.stringify([get(t1, 'recurring_due'), get(t1, 'accrual_reversals_due')]));
 
   /* each one goes when the thing is done */
+  /* STD1: ONE count — 205 more bills to accept (as park writes them: todo on the event) → the row says 206, never the 200-row page's count */
+  for (let i = 0; i < 205; i++) await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:many' + i, event: { job: 'chit', chit_id: 'many' + i, waiting: 'acceptance', todo: 'accept' }, why: 'Waiting for you to confirm the goods (bill M' + i + ')' });
+  const many = get(await todo(), 'bills_to_accept');
+  ok('STD1 · > 200 rows: the count is the one count (books-store waitingCount, every open row) — 206, the same number Home and /health say',
+    many && many.count === 206 && /^206 supplier bills are waiting/.test(many.words) && (await X.store.waitingCount(X.db, SHOP)).accept === 206, JSON.stringify(many && [many.count, many.words]));
+  X.T.outbox.forEach((o) => { if (/^chit:many/.test(o.source_ref)) o.done_at = new Date().toISOString(); });
   X.T.outbox.forEach((o) => { if (o.source_ref === 'chit:bill1') o.done_at = new Date().toISOString(); });
   ok('accepted → "bills to accept" is gone', kinds(await todo()).indexOf('bills_to_accept') < 0);
   const stk = await BP.closingStock(SHOP, S, { date: '2026-10-31', value: 500 }, SHOP);
