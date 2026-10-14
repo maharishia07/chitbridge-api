@@ -17,7 +17,7 @@ const t = make(), D = t.data, PV = require('../lib/privacy');
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
 let pass = 0;
 const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + (e.stack || e.message).split('\n').slice(0, 4).join('\n      ')); process.exitCode = 1; } };
-D.cust = [Object.assign(row({ party_id: P(2), display_name: 'Chola' }), { customer_type: 'entity', added_via: 'manual', txn_count: 1, segment: 'new' })];
+D.cust = [Object.assign(row({ party_id: P(2), display_name: 'Chola', phone: '+91 98400 12345', email: 'chola@example.com' }), { customer_type: 'entity', added_via: 'manual', txn_count: 1, segment: 'new' })];
 D.sup = [];
 
 /* the two b306/b307 tables, in memory — append-only for prefs; requests answered once (what the trigger enforces in Postgres) */
@@ -28,6 +28,15 @@ D.extra = async (sql, p) => {
   if (/^SELECT to_regclass\(\$1\) IS NOT NULL AS ok/.test(sql)) return { rows: [{ ok: !!T.have[p[0]] }] };
   if (/^(UPDATE|DELETE) party_contact_pref/.test(sql)) { T.writes.push(sql); throw new Error('permission denied for table party_contact_pref'); }
   if (/^SELECT pref_id, .* FROM party_contact_pref/.test(sql)) return { rows: T.prefs.filter((r) => r.owner === p[0] && r.party_id === p[1]).slice().reverse() };
+  /* privacy.latest (MKT-SRV1): the newest row per (party, channel, purpose) — by party ids, by phone digits, or by e-mail (the senders' gate) */
+  if (/^SELECT DISTINCT ON \(p\.party_id, p\.channel, p\.purpose\)/.test(sql)) {
+    let rows = T.prefs.filter((r) => r.owner === p[0]);
+    if (/p\.party_id = ANY/.test(sql)) rows = rows.filter((r) => p[1].indexOf(r.party_id) >= 0);
+    else if (/i\.phone/.test(sql)) rows = rows.filter((r) => D.cust.some((x) => x.party_id === r.party_id && String(x.phone || '').replace(/[^0-9]/g, '') === p[1]));
+    else if (/lower\(i\.email\)/.test(sql)) rows = rows.filter((r) => D.cust.some((x) => x.party_id === r.party_id && String(x.email || '').toLowerCase() === p[1]));
+    const latest = new Map(); rows.slice().reverse().forEach((r) => { const k = r.party_id + '|' + r.channel + '|' + r.purpose; if (!latest.has(k)) latest.set(k, r); });
+    return { rows: Array.from(latest.values()) };
+  }
   if (/^INSERT INTO party_contact_pref/.test(sql)) {
     clock += 1000;
     const r = { pref_id: uid(), owner: p[0], party_id: p[1], channel: p[2], purpose: p[3], allowed: p[4], basis: p[5], notice_version: p[6], noted_by: p[7], noted_at: new Date(clock).toISOString(), withdrawn_at: /now\(\)\)\s*RETURNING/.test(sql) ? new Date(clock).toISOString() : null };
@@ -98,9 +107,56 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     assert.strictEqual((await t.get(prefs('nope'))).status, 400);
     t.as('E1', { key: true }); assert.strictEqual((await t.get(prefs())).status, 403); t.as('E1');
   });
-  await ita('the gate is one pure function: the newest row wins', () => {
+  await ita('G0: the gate is one pure function (the newest row wins) and every verdict carries a CODE the client branches on — never a regex over the sentence', async () => {
     const rows = [{ channel: 'email', purpose: 'marketing', allowed: true }, { channel: 'email', purpose: 'marketing', allowed: false }];
-    assert.strictEqual(PV.mayMessage(rows, 'email', 'marketing').may, true);
+    assert.deepStrictEqual(PV.mayMessage(rows, 'email', 'marketing'), { may: true, code: 'CONSENT_GIVEN', why: 'They agreed to offers on email.' });
+    assert.strictEqual(PV.mayMessage([], 'sms', 'marketing').code, 'NO_CONSENT');
+    assert.strictEqual(PV.mayMessage([{ channel: 'sms', purpose: 'marketing', allowed: false, withdrawn_at: '2026-10-01T00:00:00Z' }], 'sms', 'marketing').code, 'CONSENT_WITHDRAWN');
+    assert.strictEqual(PV.mayMessage([{ channel: 'sms', purpose: 'marketing', allowed: false }], 'sms', 'marketing').code, 'CONSENT_REFUSED');
+    assert.strictEqual(PV.mayMessage([{ channel: 'sms', purpose: 'service', allowed: false }], 'sms', 'service').code, 'OPTED_OUT');
+    assert.strictEqual(PV.mayMessage([], 'sms', 'service').code, 'LEGITIMATE_USE');
+    ['NO_CONSENT', 'CONSENT_WITHDRAWN', 'CONSENT_REFUSED', 'CONSENT_GIVEN', 'OPTED_OUT', 'LEGITIMATE_USE', 'CONSENT_UNKNOWN'].forEach((c) => assert.ok(PV.CODES[c], c + ' is listed'));
+    const g = (await t.get(prefs())).body;
+    PV.CHANNELS.forEach((c) => { assert.ok(g.may[c].marketing.code && g.may[c].service.code, 'the may map carries the code on ' + c); });
+    assert.strictEqual(g.may.whatsapp.marketing.code, 'CONSENT_WITHDRAWN'); assert.strictEqual(g.may.sms.service.code, 'OPTED_OUT');
+  });
+
+  console.log('\n-- CO1-GATE · the interaction log asks first (G2) · the record and the list carry the answer (G5 · G1) --');
+  const log = (b) => t.post('/parties/' + P(2) + '/interactions', b);
+  await ita('an offer logged as sent on WhatsApp → 403 { code: CONSENT_WITHDRAWN, why } and nothing written; on e-mail → NO_CONSENT', async () => {
+    const n = D.interactions.length;
+    const r = await log({ kind: 'message', direction: 'out', purpose: 'marketing', body: 'Diwali offer' });
+    assert.strictEqual(r.status, 403, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'CONSENT_WITHDRAWN'); assert.ok(/withdrew/.test(r.body.why), r.body.why);
+    const e = await log({ kind: 'message', direction: 'out', channel: 'email', purpose: 'marketing', body: 'Diwali offer' }); assert.strictEqual(e.status, 403); assert.strictEqual(e.body.code, 'NO_CONSENT');
+    assert.strictEqual(D.interactions.length, n);
+  });
+  await ita('a call out by phone goes through (legitimate use); a message out on SMS is OPTED_OUT; once they say no to phone, a call is refused too', async () => {
+    assert.strictEqual((await log({ kind: 'call', direction: 'out', body: 'rang' })).status, 201);
+    const s = await log({ kind: 'message', direction: 'out', channel: 'sms', body: 'order ready' }); assert.strictEqual(s.status, 403); assert.strictEqual(s.body.code, 'OPTED_OUT');
+    assert.strictEqual((await t.post(prefs(), { channel: 'phone', purpose: 'service', allowed: false })).status, 201);
+    const c = await log({ kind: 'call', direction: 'out', body: 'rang' }); assert.strictEqual(c.status, 403); assert.strictEqual(c.body.code, 'OPTED_OUT'); assert.ok(/not to be messaged on phone/.test(c.body.why));
+  });
+  await ita('never gated: a call IN, a visit, a note — nothing was sent; an unknown channel or purpose is 400 with its code', async () => {
+    for (const b of [{ kind: 'call', direction: 'in', body: 'they rang' }, { kind: 'visit', direction: 'out', body: 'went by' }, { kind: 'note', body: 'prefers mornings' }]) assert.strictEqual((await log(b)).status, 201, JSON.stringify(b));
+    assert.strictEqual((await log({ kind: 'message', direction: 'out', channel: 'fax', body: 'x' })).body.code, 'BAD_CHANNEL');
+    assert.strictEqual((await log({ kind: 'message', direction: 'out', purpose: 'spam', body: 'x' })).body.code, 'BAD_PURPOSE');
+  });
+  await ita('G5: the record carries prefs { history, may } — the same answer as GET contact-prefs — and prefs_migrated; before b306 prefs is null, the record still answers', async () => {
+    const r = await t.get('/parties/' + P(2)); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    const g = (await t.get(prefs())).body; assert.deepStrictEqual(r.body.prefs, { history: g.history, may: g.may }); assert.strictEqual(r.body.prefs_migrated, true);
+    T.have.party_contact_pref = false; PV.forget();
+    const b = await t.get('/parties/' + P(2)); assert.strictEqual(b.status, 200, JSON.stringify(b.body)); assert.strictEqual(b.body.prefs, null); assert.strictEqual(b.body.prefs_migrated, false);
+    T.have.party_contact_pref = true; PV.forget();
+  });
+  await ita('G1: GET /parties?with=consent — each row carries prefs.may (with codes), read for the page in ONE statement; without it no row does; before b306 prefs_migrated:false', async () => {
+    const n = D.queries.length; const r = await t.get('/parties?with=consent'); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(r.body.prefs_migrated, true); const p = r.body.parties.find((x) => x.party_id === P(2));
+    assert.strictEqual(p.prefs.may.phone.service.code, 'OPTED_OUT'); assert.strictEqual(p.prefs.may.whatsapp.marketing.code, 'CONSENT_WITHDRAWN'); assert.ok(p.prefs.may.email.marketing.why);
+    assert.strictEqual(D.queries.slice(n).filter((q) => /party_contact_pref/.test(q)).length, 1, 'one statement for the page');
+    const plain = await t.get('/parties'); assert.ok(!('prefs' in plain.body.parties[0])); assert.ok(!('prefs_migrated' in plain.body));
+    T.have.party_contact_pref = false; PV.forget();
+    const b = await t.get('/parties?with=consent'); assert.strictEqual(b.status, 200); assert.strictEqual(b.body.prefs_migrated, false); assert.ok(!('prefs' in b.body.parties[0]));
+    T.have.party_contact_pref = true; PV.forget();
   });
 
   console.log('\n-- K4 · K11 · the request register --');
@@ -129,6 +185,13 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     assert.strictEqual(r.body.may_answer, true); assert.strictEqual(r.body.why, null);
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });
     const c = await t.get('/privacy-requests'); t.as('E1'); assert.strictEqual(c.body.may_answer, false); assert.ok(/Only the owner/.test(c.body.why));
+  });
+  await ita('G4: the register is paged — total · page · limit on top (60 a page, 500 at most); open and late count the WHOLE register, not the page', async () => {
+    const r = (await t.get('/privacy-requests')).body; assert.strictEqual(r.total, 3); assert.strictEqual(r.page, 1); assert.strictEqual(r.limit, 60); assert.strictEqual(r.requests.length, 3);
+    const p2 = (await t.get('/privacy-requests?limit=1&page=2')).body;
+    assert.strictEqual(p2.requests.length, 1); assert.strictEqual(p2.total, 3); assert.strictEqual(p2.page, 2); assert.strictEqual(p2.limit, 1); assert.strictEqual(p2.open, 3);
+    assert.strictEqual(p2.requests[0].request_id, r.requests[1].request_id, 'page 2 of 1 is the second row');
+    const big = (await t.get('/privacy-requests?limit=99999&page=-3')).body; assert.strictEqual(big.limit, 500); assert.strictEqual(big.page, 1);
   });
   await ita('a co-assist cannot answer (403, in words); the owner answers once; a second answer is 409', async () => {
     t.as('E1', { identity: { identity_id: 'A1', parent_entity_id: 'E1' } });

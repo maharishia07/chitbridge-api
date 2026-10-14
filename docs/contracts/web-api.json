@@ -685,7 +685,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "f5af3a2b-8309-4b8c-9ee8-a0912ae8cad5",
+      "snapshot_id": "4812f4a7-7432-4ffc-95d4-a936f11eb2ef",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -707,7 +707,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "f5af3a2b-8309-4b8c-9ee8-a0912ae8cad5",
+     "snapshot_id": "4812f4a7-7432-4ffc-95d4-a936f11eb2ef",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -1899,7 +1899,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-12T05:21:30.299Z",
+      "last_at": "2026-10-12T15:33:22.985Z",
       "late": true,
       "today": false
      }
@@ -1935,13 +1935,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-13T05:21:30.243Z",
+      "due_at": "2026-10-13T15:33:22.948Z",
       "due_day": "2026-10-13",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-14T05:21:30.245Z",
+      "created_at": "2026-10-14T15:33:22.949Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -2037,7 +2037,71 @@
        "theirs": null,
        "differs": false
       },
-      "name": "Chola"
+      "name": "Chola",
+      "prefs": {
+       "may": {
+        "phone": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on phone. Ask them first."
+         }
+        },
+        "sms": {
+         "service": {
+          "may": false,
+          "code": "OPTED_OUT",
+          "why": "They asked not to be messaged on sms."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on sms. Ask them first."
+         }
+        },
+        "whatsapp": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": true,
+          "code": "CONSENT_GIVEN",
+          "why": "They agreed to offers on whatsapp."
+         }
+        },
+        "email": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on email. Ask them first."
+         }
+        },
+        "chitbridge": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on chitbridge. Ask them first."
+         }
+        }
+       }
+      }
      }
     ],
     "walk_ins": [
@@ -2051,10 +2115,14 @@
      }
     ],
     "count": 4,
+    "total": 4,
+    "page": 1,
+    "limit": 5000,
     "truncated": false,
     "alerts": {
      "dues_overdue": 2
     },
+    "prefs_migrated": true,
     "leads_migrated": false
    },
    "optional": [
@@ -2062,9 +2130,11 @@
     "parties[].customer",
     "parties[].lead",
     "parties[].may_trade.why",
+    "parties[].prefs",
     "parties[].supplier",
     "parties[].terms.customer",
-    "parties[].terms.supplier"
+    "parties[].terms.supplier",
+    "prefs_migrated"
    ]
   },
   "GET /api/crm/parties/:id": {
@@ -2180,7 +2250,85 @@
      "worth": 60
     },
     "migrated": true,
-    "followups": []
+    "followups": [],
+    "prefs": {
+     "history": [
+      {
+       "pref_id": "20000000-0000-4000-8000-000000000002",
+       "channel": "sms",
+       "purpose": "service",
+       "allowed": false,
+       "basis": "legitimate_use",
+       "notice_version": null,
+       "noted_at": "2026-10-02T09:00:00.000Z",
+       "noted_by": "E1",
+       "withdrawn_at": null
+      }
+     ],
+     "may": {
+      "phone": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on phone. Ask them first."
+       }
+      },
+      "sms": {
+       "service": {
+        "may": false,
+        "code": "OPTED_OUT",
+        "why": "They asked not to be messaged on sms."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on sms. Ask them first."
+       }
+      },
+      "whatsapp": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": true,
+        "code": "CONSENT_GIVEN",
+        "why": "They agreed to offers on whatsapp."
+       }
+      },
+      "email": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on email. Ask them first."
+       }
+      },
+      "chitbridge": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on chitbridge. Ask them first."
+       }
+      }
+     }
+    },
+    "prefs_migrated": true
    },
    "optional": [
     "customer",
@@ -2211,7 +2359,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-12T05:21:29.799Z",
+      "due_at": "2026-10-12T15:33:22.860Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -2286,7 +2434,7 @@
    "example": {
     "agreements": [
      {
-      "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+      "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
       "entity_id": "11111111-1111-4111-8111-111111111111",
       "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
       "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -2428,7 +2576,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -2599,7 +2747,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-14T04:21:30.939Z",
+    "created_at": "2026-10-14T14:33:23.111Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -2814,7 +2962,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-14T04:21:30.939Z",
+      "created_at": "2026-10-14T14:33:23.111Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2903,7 +3051,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-14T05:21:32.646Z"
+     "shared_at": "2026-10-14T15:33:23.753Z"
     }
    },
    "optional": []
@@ -2956,13 +3104,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-13T05:21:30.243Z",
+     "due_at": "2026-10-13T15:33:22.948Z",
      "due_day": "2026-10-13",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-14T05:21:30.255Z",
-     "created_at": "2026-10-14T05:21:30.245Z",
+     "done_at": "2026-10-14T15:33:22.955Z",
+     "created_at": "2026-10-14T15:33:22.949Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -3179,7 +3327,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "f5af3a2b-8309-4b8c-9ee8-a0912ae8cad5",
+    "snapshot_id": "4812f4a7-7432-4ffc-95d4-a936f11eb2ef",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -4015,13 +4163,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-13T05:21:30.243Z",
+     "due_at": "2026-10-13T15:33:22.948Z",
      "due_day": "2026-10-13",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-14T05:21:30.245Z",
+     "created_at": "2026-10-14T15:33:22.949Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -4136,10 +4284,20 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-14T05:21:30.242Z",
+     "at": "2026-10-14T15:33:22.945Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-14T05:21:30.242Z"
+     "created_at": "2026-10-14T15:33:22.945Z"
     }
+   },
+   "optional": []
+  },
+  "POST /api/crm/parties/:id/interactions #403": {
+   "status": 403,
+   "example": {
+    "code": "OPTED_OUT",
+    "error": "They asked not to be messaged on sms.",
+    "message": "They asked not to be messaged on sms.",
+    "why": "They asked not to be messaged on sms."
    },
    "optional": []
   },
@@ -4153,9 +4311,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-14T05:21:30.301Z",
+     "at": "2026-10-14T15:33:22.987Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-14T05:21:30.301Z"
+     "created_at": "2026-10-14T15:33:22.987Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -4170,7 +4328,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-14T05:21:30.301Z",
+     "created_at": "2026-10-14T15:33:22.987Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -4241,7 +4399,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4339,7 +4497,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4418,7 +4576,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4510,7 +4668,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4598,7 +4756,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6894fed3-3c5c-48bd-b030-760427e32570",
+     "agreement_id": "f02d42ae-9964-48d9-ab28-13b526a9332d",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4676,7 +4834,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4783,7 +4941,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4875,7 +5033,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "c5e7948d-fc85-4455-812f-36a9a86bbe43",
+     "agreement_id": "01358447-867f-4d49-8fcc-7f6adecfd3e6",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4966,7 +5124,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5058,7 +5216,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5165,7 +5323,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "df6fe09e-605a-45e2-8b4a-a571ab7b1de4",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",

@@ -546,6 +546,15 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/marketing": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "MKT-SRV1 G3, by hand: two schema.hasTable probes (b306 · b307 are drafts the owner runs; a yes is remembered) + ONE readBatch for both counts = 3 cold, 1 warm. On the empty stub both tables are absent, so only the two probes run and the card answers unavailable."
+    },
     "GET /api/facts/offer-lab": {
       "file": "facts.js",
       "trips": 1,
