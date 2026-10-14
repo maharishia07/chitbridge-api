@@ -23,7 +23,7 @@ function load(opt) {
   const M = require('./books-memory.cjs');
   const store = M.create();
   const dbStub = {
-    query: async (t) => M.fakeDb.query(t),
+    query: async (t, v) => M.fakeDb.query(t, v),
     withEntity: async (e, fn) => fn(M.fakeDb),
     trySavepoint: async (db, fn, fallback) => { try { return await fn(db); } catch (_) { return fallback; } },
     onEntity: async (e, fn) => fn(M.fakeDb),

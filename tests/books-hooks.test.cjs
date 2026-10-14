@@ -209,6 +209,110 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     TCb.copyOf = wasC; TCb.entryFor = wasE; await X.store.saveSetting(X.db, CUST, { enabled: false }); K.forget(CUST);
   }
 
+  /* ══ F10 · MY COUNTER RECEIPT OF THEIR BILL IS THE SUPPLIER BILL TO ACCEPT (Athi, 14 Oct) ══ */
+  {
+    const TCr = require(path.join(H.API, 'lib', 'tax-copy')), INV = require(path.join(H.API, 'lib', 'folder-inventory'));
+    const SG = SUPP, ROWS = {
+      [SHOP]: { identity_id: SHOP, gstn: '33AAAAA0000A1Z5', display_name: 'Mayur Stores', country: 'IN', policy_flags: {} },
+      [SG]: { identity_id: SG, gstn: '33BBBBB1111B1Z5', display_name: 'Sri Ganesh Provisions', country: 'IN', policy_flags: {} } };
+    const q0 = X.db.query; let suppliers = [], invoices = [];
+    X.db.query = async (t, v) => {
+      const s0 = String(t);
+      if (/FROM identities WHERE identity_id = ANY/.test(s0)) return { rows: (v[0] || []).map((id) => ROWS[id]).filter(Boolean) };
+      if (/FROM supplier_list s JOIN identities/.test(s0)) return { rows: suppliers.filter((x) => x.name.toLowerCase() === String(v[1]).toLowerCase()).map((x) => ({ supplier_entity_id: x.id })) };
+      if (/purpose = 'invoice' AND sender_entity_id IS DISTINCT FROM/.test(s0)) return { rows: invoices.filter((x) => x.on === v[1]) };
+      return q0(t, v);
+    };
+    const rbj = (more) => Object.assign({ doc: 'receipt', doc_no: 'R/0007', till: { id: 'C1' }, party: { name: 'Sri Ganesh Provisions', party_id: SG },
+      their_bill: { no: 'SG-101', date: '2026-10-13', total: 1180 }, input_tax: { inclusive: false, vendor_state: null } }, more || {});
+    const rcpt = (id, bjx, st, lines) => ({ chit_id: id, purpose: 'receipt', sender_entity_id: SHOP, created_at: '2026-10-13T05:00:00Z', current_status: st || 'pending',
+      currency_code: 'INR', business_json: bjx || rbj(), line_items: lines || [{ particulars: 'Rice 25kg', quantity: 10, unit: 'bag', price: 100, total: 1000, gst_rate: 18 }] });
+    const RCV = async (copy, more) => { const entry = await TCr.entryFor(copy, SHOP); return { entry, k: K.classify(Object.assign({ chit: copy, entry, setting: S, status: copy.current_status }, more || {})) }; };
+
+    eq('F10 · a receipt WITH their bill no. and total is a bill I received (folder: Bills · Received; tax-copy.billReceived)',
+      [INV.docOf(rcpt('r0'), SHOP), TCr.billReceived(rcpt('r0'), SHOP), INV.docOf(rcpt('r0', rbj({ their_bill: { no: 'SG-101', total: null } })), SHOP), INV.docOf(rcpt('r0', rbj({ their_bill: { no: '', total: 5 } })), SHOP)],
+      ['bill_received', true, 'receipt', 'receipt']);
+    ok('F10 · …and the folder SQL makes the same test (their_bill no AND total)', /their_bill'->>'no'.*their_bill'->>'total'/.test(INV.docSql('ch', 'cs')));
+
+    const a = await RCV(rcpt('r1'));
+    eq('F10 · the receipt is read as MY PURCHASE: the supplier sells (their GSTIN), the engine splits 18% intra-state into CGST + SGST',
+      [a.entry.sells, a.entry.seller.entity_id, a.entry.invoice.ItemList[0].CgstAmt, a.entry.invoice.ItemList[0].SgstAmt, a.entry.invoice.ItemList[0].IgstAmt], [false, SG, 90, 90, 0]);
+    eq('F10 · on arrival (born pending) it does NOT post — it waits for acceptance, in the Waiting list\'s words',
+      [a.k.kind, a.k.wait, a.k.why], ['queue', 'acceptance', 'Waiting for you to confirm the goods were received (bill SG-101 from Sri Ganesh Provisions)']);
+    const b = await RCV(rcpt('r2', rbj(), 'accepted'));
+    eq('F10 · accepted → purchase_bill to Sri Ganesh with the counted lines by rate (the builder a received invoice uses), supplier list checked',
+      [b.k.kind, b.k.supplier_check, b.k.event.type, b.k.event.party, b.k.event.ref, b.k.event.by_rate, b.k.event.round_off, b.k.event.source_ref, b.k.event.paid],
+      ['post', true, 'purchase_bill', SG, 'SG-101', [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], 0, 'chit:r2', {}]);
+    eq('F10 · a receipt WITHOUT their bill stays a goods receipt — posts nothing, accepted or not',
+      [(await RCV(rcpt('r3', rbj({ their_bill: { no: null, date: null, total: null } }), 'accepted'))).k.kind, (await RCV(rcpt('r3b', rbj({ their_bill: null }), 'completed'))).k.kind], ['none', 'none']);
+    eq('F10 · rejected → never posts', (await RCV(rcpt('r4', rbj(), 'rejected'))).k.kind, 'none');
+    const c = await RCV(rcpt('r5', rbj({ against: { chit_id: 'ord-1' } }), 'accepted'), { theirInvoice: { chit_id: 'inv-1', no: 'SGP/0042' } });
+    eq('F10 · against an order whose supplier SENT their invoice → no second bill: "Their invoice … is the bill"',
+      [c.k.kind, c.k.done, c.k.why], ['none', true, 'Their invoice SGP/0042 is the bill — this receipt is the goods record.']);
+    const d = await RCV(rcpt('r6', rbj({ party: { name: 'Sri Ganesh' } }), 'accepted'));
+    eq('F11 · a typed name the books do not know → waits, named, with the fix ("Who is … Add them as a supplier")',
+      [d.k.kind, d.k.wait, d.k.why], ['queue', 'party', 'Who is Sri Ganesh? Add them as a supplier — then bill SG-101 waits for you to accept it.']);
+    const g = await RCV(rcpt('r7', rbj({ their_bill: { no: 'SG-101', total: 1300 } }), 'accepted'));
+    eq('F10 · their total differs from the lines by more than a rupee → waits with BOTH figures and the gap (never a silent post of either)',
+      [g.k.kind, g.k.wait, g.k.why], ['queue', 'gap', 'Their bill SG-101 says ₹1,300, the lines counted come to ₹1,180 — ₹120 apart. Ask Sri Ganesh Provisions to correct it, or reject it and record their bill by hand.']);
+    const gp = await RCV(rcpt('r7p', rbj({ their_bill: { no: 'SG-101', total: 1300 } }), 'pending'));
+    eq('F10 · …and says so BEFORE acceptance, so the Accept popup can grey Accept with that sentence', [gp.k.kind, gp.k.wait], ['queue', 'gap']);
+    const ro = await RCV(rcpt('r8', rbj({ their_bill: { no: 'SG-101', total: 1180.6 } }), 'accepted'));
+    eq('F10 · …within the one-rupee tolerance it posts, the gap as the round-off (the counter-bill rule)', [ro.k.kind, ro.k.event && ro.k.event.round_off], ['post', 0.6]);
+    const ns = await RCV(rcpt('r9', rbj({ party: { name: 'Lakshmi Agencies' } }), 'accepted'), { party: SG });
+    ok('F10 · an Indian supplier with no state and no GSTIN: CGST/SGST vs IGST is never guessed — it waits (or, with the party known, uses its GSTIN)',
+      ns.k.kind === 'post' || ns.k.wait === 'state', JSON.stringify(ns.k).slice(0, 200));
+    const nostate = await RCV(Object.assign(rcpt('r9b', rbj({ party: { name: 'Lakshmi Agencies' } }), 'accepted')), { party: '44444444-4444-4444-8444-444444444444' });
+    eq('F10 · …a supplier the counter typed, no state given → waits in words', [nostate.k.kind, nostate.k.wait, /state is not known/.test(nostate.k.why || '')], ['queue', 'state', true]);
+    const st2 = await RCV(rcpt('r9c', rbj({ party: { name: 'Lakshmi Agencies' }, input_tax: { inclusive: false, vendor_state: '29' } }), 'accepted'), { party: '44444444-4444-4444-8444-444444444444' });
+    eq('F10 · …the state the counter typed (29 vs our 33) → IGST', st2.k.event && st2.k.event.by_rate, [{ rate: 18, taxable: 1000, cgst: 0, sgst: 0, igst: 180 }]);
+
+    /* an AU shop: the supplier charged GST at my door — ONE head, `gst`, never India's three */
+    ROWS[SHOP] = { identity_id: SHOP, gstn: '51824753556', display_name: 'Bondi Grocer', country: 'AU', policy_flags: {} };
+    const au = await RCV(rcpt('r10', rbj({ party: { name: 'Harbour Wholesale' }, their_bill: { no: 'HW-9', total: 110 } }), 'accepted', [{ particulars: 'Flour', quantity: 10, price: 10, total: 100, gst_rate: 10 }]),
+      { party: '55555555-5555-4555-8555-555555555555' });
+    const auIt = au.entry.invoice.ItemList[0];
+    eq('F10 · AU shop: the engine taxes the receipt under GST (one head, TaxAmt 10) — no CGST/SGST/IGST', [String(au.entry.invoice._cb.scheme), auIt.TaxAmt, auIt.CgstAmt, auIt.SgstAmt, auIt.IgstAmt], ['GST', 10, 0, 0, 0]);
+    ok('F10 · …and the books either post its `gst` head or wait in GST words — never an India-only entry',
+      (au.k.kind === 'post' && au.k.event.by_rate[0].gst === 10 && !au.k.event.by_rate[0].cgst) || (au.k.kind === 'queue' && /GST \(10\)/.test(au.k.why)), JSON.stringify(au.k).slice(0, 240));
+    const auP = await RCV(rcpt('r10b', rbj({ party: { name: 'Harbour Wholesale' }, their_bill: { no: 'HW-9', total: 110 } }), 'accepted', [{ particulars: 'Flour', quantity: 10, price: 10, total: 100, gst_rate: 10 }]),
+      { party: '55555555-5555-4555-8555-555555555555', setting: Object.assign({}, S, { country: 'AU' }) });
+    ok('F10 · AU · the waiting words (if any) say GST, never GSTIN/CGST', !/GSTIN|CGST|SGST|IGST/.test(String(auP.k.why || '')), String(auP.k.why));
+    ROWS[SHOP] = { identity_id: SHOP, gstn: '33AAAAA0000A1Z5', display_name: 'Mayur Stores', country: 'IN', policy_flags: {} };
+
+    if (X.src.dir) {
+      /* ── through the hook: arrival waits; the typed name resolves once they are on the list; their invoice closes the receipt ── */
+      const wasC = TCr.copyOf; let copyNow = null; TCr.copyOf = async () => copyNow;
+      const moves = []; K._mover.fn = async (e, id, to, by, note) => { moves.push([id, to, note]); return { code: 200, moved: true }; };
+      const qClose = X.db.query; X.db.query = async (t, v) => (/FROM chit_status cs JOIN chit_header h/.test(String(t)) ? { rows: v[1].map((id) => ({ chit_id: id })) } : qClose(t, v));
+      await X.store.saveSetting(X.db, SHOP, { enabled: true }); await X.B.enable(X.db, SHOP, { by: SHOP, today: '2026-10-01' }).catch(() => {}); K.forget(SHOP);
+      const posted = (id) => X.T.entries.filter((e) => e.entity_id === SHOP && e.source_ref === 'chit:' + id);
+      const waits = (id) => X.T.outbox.filter((o) => o.entity_id === SHOP && o.source_chit_id === id && !o.done_at);
+
+      copyNow = rcpt('h10', rbj({ party: { name: 'sri ganesh provisions ' } }), 'pending');
+      const h1 = await K.postChit(SHOP, 'h10', {});
+      eq('F10 hook · a typed name nobody knows → parked "Who is …", nothing posted', [h1.queued, /^Who is sri ganesh provisions\?/.test(h1.why), posted('h10').length], [true, true, 0]);
+      suppliers = [{ id: SG, name: 'sri ganesh provisions' }];
+      const h2 = await K.postChit(SHOP, 'h10', { retry: true });
+      eq('F10 hook · …once they are on the supplier list, the same receipt waits for ACCEPTANCE (nothing re-typed)', [h2.queued, /^Waiting for you to confirm the goods were received \(bill SG-101 from Sri Ganesh Provisions\)/.test(h2.why)], [true, true]);
+      const row = waits('h10')[0] && K.waitingRow(waits('h10')[0]);
+      eq('F10 hook · the Waiting row opens the receipt (kind purchase, their bill no.)', row && [row.source.chit_id, row.source.kind, row.source.ref], ['h10', 'purchase', 'SG-101']);
+      X.T.parties.push({ owner: SHOP, party_id: SG, name: 'Sri Ganesh Provisions', supplier: true });
+      copyNow = rcpt('h10', rbj({ party: { name: 'sri ganesh provisions ' } }), 'accepted');
+      const h3 = await K.postChit(SHOP, 'h10', {});
+      const pe = posted('h10')[0];
+      ok('F10 hook · accepted → ONE purchase_bill to Sri Ganesh (₹1,180 to Creditors), Σ Dr = Σ Cr', h3.ok && pe && pe.event_type === 'purchase_bill'
+        && X.T.lines.filter((l) => l.entry_id === pe.entry_id).some((l) => l.party_id === SG && l.cr_minor === 118000), JSON.stringify([h3, pe && pe.event_type]));
+      invoices = [{ on: 'ord-9', chit_id: 'inv-9', no: 'SGP/0042' }];
+      copyNow = rcpt('h11', rbj({ against: { chit_id: 'ord-9' } }), 'accepted');
+      const h4 = await K.postChit(SHOP, 'h11', {});
+      eq('F10 hook · their invoice for the order is the bill → nothing posts, the receipt is closed with the sentence',
+        [h4.none, posted('h11').length, moves.filter((m) => m[0] === 'h11').map((m) => [m[1], m[2]])], [true, 0, [['completed', 'Their invoice SGP/0042 is the bill — this receipt is the goods record.']]]);
+      TCr.copyOf = wasC; K._mover.fn = null; X.db.query = qClose; await X.store.saveSetting(X.db, SHOP, { enabled: false }); K.forget(SHOP);
+    }
+    X.db.query = q0;
+  }
+
   eq('an order (a promise) posts nothing', K.classify({ chit: { chit_id: 'c9', created_at: '2026-09-29T05:00:00Z', purpose: 'order', business_json: {} }, entry: { sells: true, invoice: inv([[5, 10, 0.25]], 10.5) }, setting: S }).kind, 'none');
   eq('a week summary posts nothing', K.classify({ chit: { purpose: 'general', business_json: { summary: { period: 'week' } } }, entry: {}, setting: S }).kind, 'none');
 
