@@ -215,11 +215,12 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     const SG = SUPP, ROWS = {
       [SHOP]: { identity_id: SHOP, gstn: '33AAAAA0000A1Z5', display_name: 'Mayur Stores', country: 'IN', policy_flags: {} },
       [SG]: { identity_id: SG, gstn: '33BBBBB1111B1Z5', display_name: 'Sri Ganesh Provisions', country: 'IN', policy_flags: {} } };
-    const q0 = X.db.query; let suppliers = [], invoices = [];
+    const q0 = X.db.query; let invoices = [];
+    /* STD1: the shop's suppliers live where the ONE resolver reads them (books-store supplierByName — the in-memory parties here) */
+    const setSuppliers = (list) => { X.T.parties = X.T.parties.filter((p) => !(p.owner === SHOP && p.supplier)); X.T.parties.push.apply(X.T.parties, list.map((x) => ({ owner: SHOP, party_id: x.id, name: x.name, party_no: x.no || null, supplier: true }))); };
     X.db.query = async (t, v) => {
       const s0 = String(t);
       if (/FROM identities WHERE identity_id = ANY/.test(s0)) return { rows: (v[0] || []).map((id) => ROWS[id]).filter(Boolean) };
-      if (/FROM supplier_list s JOIN identities/.test(s0)) return { rows: suppliers.filter((x) => x.name.toLowerCase() === String(v[1]).toLowerCase()).map((x) => ({ supplier_entity_id: x.id })) };
       if (/purpose = 'invoice' AND sender_entity_id IS DISTINCT FROM/.test(s0)) return { rows: invoices.filter((x) => x.on === v[1]) };
       return q0(t, v);
     };
@@ -292,12 +293,46 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
       copyNow = rcpt('h10', rbj({ party: { name: 'sri ganesh provisions ' } }), 'pending');
       const h1 = await K.postChit(SHOP, 'h10', {});
       eq('F10 hook · a typed name nobody knows → parked "Who is …", nothing posted', [h1.queued, /^Who is sri ganesh provisions\?/.test(h1.why), posted('h10').length], [true, true, 0]);
-      suppliers = [{ id: SG, name: 'sri ganesh provisions' }];
+      eq('FX-F10W · the Waiting row: todo add_supplier, no near match → no candidates', (() => { const r0 = K.waitingRow(waits('h10')[0]); return [r0.todo, r0.candidates]; })(), ['add_supplier', []]);
+      /* STD1: what the row asks is DATA on the parked event — park wrote todo + the typed name; the sentence is for people */
+      eq('STD1 · park() wrote todo add_supplier and the typed supplier name on the outbox row\'s event', [waits('h10')[0].event.todo, waits('h10')[0].event.name], ['add_supplier', 'sri ganesh provisions']);
+      const reworded = Object.assign({}, waits('h10')[0], { why: 'Somebody rewrote this sentence entirely.' });
+      eq('STD1 · …so a copy edit of the sentence changes nothing: the row still asks add_supplier, naming them', (() => { const r0 = K.waitingRow(reworded); return [r0.todo, r0.name]; })(), ['add_supplier', 'sri ganesh provisions']);
+      /* a row parked BEFORE todo existed: classified ONCE on the server (books-store backfillTodo, the retry path) — then it is data */
+      X.T.outbox.push({ id: 900, entity_id: SHOP, source_chit_id: 'old-1', source_ref: 'chit:old-1', event: { job: 'chit', chit_id: 'old-1', waiting: 'acceptance' }, why: 'Waiting for you to confirm the goods were received (bill X-1 from Old Co)', tries: 5, created_at: '2026-10-01T00:00:00Z', done_at: null },
+        { id: 901, entity_id: SHOP, source_chit_id: 'old-2', source_ref: 'chit:old-2', event: { job: 'chit', chit_id: 'old-2', waiting: 'party' }, why: 'Who is Old Supplier? Add them as a supplier — then bill X-2 waits for you to accept it.', tries: 5, created_at: '2026-10-01T00:00:00Z', done_at: null },
+        { id: 902, entity_id: SHOP, source_chit_id: null, source_ref: 'walkin:C1:2026-10-01', event: { job: 'day', counter: 'C1', day: '2026-10-01' }, why: 'Paid by "gpay", which has no ledger yet.', tries: 5, created_at: '2026-10-01T00:00:00Z', done_at: null });
+      eq('STD1 · an old row is read by the ONE server fragment before it is backfilled (never by a client)', (await X.store.waiting(X.db, SHOP, 100)).filter((w) => w.id >= 900).map((w) => [w.todo, w.name]),
+        [['accept', null], ['add_supplier', 'Old Supplier'], ['record', null]]);
+      await X.store.backfillTodo(X.db, SHOP);
+      eq('STD1 · backfillTodo wrote todo (+ name) onto each old row ONCE — data from then on', X.T.outbox.filter((o) => o.id >= 900).map((o) => [o.event.todo, o.event.name || null]),
+        [['accept', null], ['add_supplier', 'Old Supplier'], ['record', null]]);
+      eq('STD1 · …and a second run writes nothing', await X.store.backfillTodo(X.db, SHOP), 0);
+      X.T.outbox.forEach((o) => { if (o.id >= 900) o.event = { job: o.event.job, chit_id: o.event.chit_id, waiting: o.event.waiting, counter: o.event.counter, day: o.event.day }; });
+      const wasBf = X.store.backfillTodo; let bfCalls = 0; X.store.backfillTodo = async (db, e) => { bfCalls++; return wasBf(db, e); };
+      await K.retryOutbox(SHOP, 1);
+      X.store.backfillTodo = wasBf;
+      eq('STD1 · the retry path runs the backfill first (every old row, not only the page it tries)', [bfCalls, X.T.outbox.filter((o) => o.id >= 900).every((o) => o.event.todo)], [1, true]);
+      X.T.outbox.filter((o) => o.id >= 900).forEach((o) => { o.done_at = '2026-10-02T00:00:00Z'; });
+      /* FX-F10W: "Sri Ganesh" typed, "Sri Ganesh Provisions" (P-00001) on the list → the wait carries the near match, names + party_no only */
+      setSuppliers([{ id: SG, name: 'Sri Ganesh Provisions', no: 'P-00001' }, { id: 'x-2', name: 'Lakshmi Agencies', no: 'P-00002' }]);
+      copyNow = rcpt('h12', rbj({ party: { name: 'Sri Ganesh' } }), 'pending');
+      const c1 = await K.postChit(SHOP, 'h12', {});
+      const crow = K.waitingRow(waits('h12')[0]);
+      eq('FX-F10W · a typed "Sri Ganesh" waits "Who is …" WITH the shop\'s near match (≤ 3, name + party_no, never an id)',
+        [c1.queued, crow.todo, crow.candidates], [true, 'add_supplier', [{ name: 'Sri Ganesh Provisions', party_no: 'P-00001' }]]);
+      /* the owner picks it: PUT /use { party } wrote party_id on the receipt (bill-use) — the retry now waits for acceptance, and the row's event follows */
+      copyNow = rcpt('h12', rbj({ party: { name: 'Sri Ganesh Provisions', party_id: SG } }), 'pending');
+      await K.retryOutbox(SHOP, 50);
+      const crow2 = K.waitingRow(waits('h12')[0]);
+      eq('FX-F10W · …linked, a retry moves it to "To accept": todo accept, candidates gone, the event\'s wait follows', [crow2.todo, crow2.candidates, waits('h12')[0].event.waiting], ['accept', [], 'acceptance']);
+      X.T.outbox.filter((o) => o.source_chit_id === 'h12').forEach((o) => { o.done_at = new Date().toISOString(); });
+      setSuppliers([{ id: SG, name: 'sri ganesh provisions' }]);
       const h2 = await K.postChit(SHOP, 'h10', { retry: true });
       eq('F10 hook · …once they are on the supplier list, the same receipt waits for ACCEPTANCE (nothing re-typed)', [h2.queued, /^Waiting for you to confirm the goods were received \(bill SG-101 from Sri Ganesh Provisions\)/.test(h2.why)], [true, true]);
       const row = waits('h10')[0] && K.waitingRow(waits('h10')[0]);
       eq('F10 hook · the Waiting row opens the receipt (kind purchase, their bill no.)', row && [row.source.chit_id, row.source.kind, row.source.ref], ['h10', 'purchase', 'SG-101']);
-      X.T.parties.push({ owner: SHOP, party_id: SG, name: 'Sri Ganesh Provisions', supplier: true });
+      setSuppliers([{ id: SG, name: 'Sri Ganesh Provisions' }]);
       copyNow = rcpt('h10', rbj({ party: { name: 'sri ganesh provisions ' } }), 'accepted');
       const h3 = await K.postChit(SHOP, 'h10', {});
       const pe = posted('h10')[0];
