@@ -4833,7 +4833,7 @@
      "It does NOT appear on the customer screen."
     ]
    ],
-   "note": "The queue behind can read that screen.",
+   "note": "The queue behind can read that screen. Server side guarded by tests/screen-snapshot.test.cjs (SNAP-SCREEN): a screen key is sent no customer, supplier, staff or cost.",
    "layer": "web",
    "test_type": "acceptance",
    "automated": false,
