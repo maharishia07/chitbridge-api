@@ -16,6 +16,16 @@ A new key needs its entry here, in the same change. This file is being built; en
 | 409 of POST / · PATCH /:id | `{ error, code: 'EMAIL_TAKEN', message }` | identities_email_key (one e-mail per sign-in across the platform) — the owner's own address on a staff row is the usual case. |
 | write answers `otp` · `login_instruction` (changed) | `otp` only through dev-otp.mayExposeOtp | lib/employee-code.deliver: no longer "whenever not sealed". `login_instruction` never carries a code. `delivery_note` for `none` now says to add an e-mail and send a new code. |
 
+## POST /api/connectors/ingest · /erp-ingest · GET /api/events/stats — device keys in their shop and switch (SEC3, 2026-10-14)
+
+Derived per call, never stored. Written by `routes/connectors.js` (deviceActor · deviceMayAddress · the ingest catch) and `lib/platformroot.refuseUnlessRoot`. Read by: the generated Pi agent (web `public/app/cap-connector.js` `_agentJs` — it branches on the HTTP status, logs the code) and `scripts/connector-gateway-sim.js`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `code` on a refusal (new) | `NO_KEY` · `KEY_UNKNOWN` (401) · `CAPABILITY_OFF` · `DEVICE_TO_REFUSED` (403) · `CHIT_NOT_DELIVERED` (503) · a knownerr code (e.g. `POPULATION_BOUNDARY` 409) | Derived. Anything but 2xx = the device keeps the event and retries. `message` is the sentence a person reads; nothing branches on it. |
+| `money_why` on a 200 ingest (new) | `{ code: 'NO_MONEY', why }` or null | Derived: set only when the shop states no money and its country has no pack (`country-setup.shopMoney` → null); `why` = `MONEY_UNSTATED`. The signal chit's `summary_json.currency_code` is then null (was always `INR`). |
+| `GET /api/events/stats` refusal `code` (new) | `NOT_PLATFORM_ROOT` (403) · `NO_PLATFORM_ROOT` (404) | Derived from `PLATFORM_ROOT_ENTITY`. The same door now answers the entities.js operator routes (same codes added there). |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

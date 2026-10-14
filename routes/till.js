@@ -548,7 +548,7 @@ router.get('/snapshot', auth, async (req, res) => {
        An ABN's or a TRN's first two digits are not a state; they reached the counter as one and the shop panel said "CGST + SGST" in Sydney. */
     const stateSplit = require('../lib/tax-lines').splitsByState(cbCountry);
     /* CX0 + STD2: the money the counter bills in — the shop's own, else its PACK's; neither → null and the ONE sentence (country-setup.MONEY_UNSTATED) */
-    const shopMoney = party.currency || ((require('../lib/regulation').packFor(cbCountry) || {}).currency) || null;
+    const shopMoney = require('../lib/country-setup').shopMoney(party.currency, cbCountry);   /* SEC3: the one reader */
     /* ⭐ ONE MAPPING from a product's data to a counter row — owned rows and network lines both go through it, so a field
        added for one can never be missing from the other */
     /**
