@@ -2152,11 +2152,22 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
     /* ⭐ COLLAPSED TO ONE ROW PER PRODUCT — a tracked item's batches sum into the figure the Receive screen
        actually asks for; the till does not show stock in v1 (Athi, 2026-09-10) and a per-batch breakdown
        would be exactly that. The ONE stock reader (stock-store.onHand, T1-INV) — the storefront reads the same. */
-    const by = await stockStore.onHand(entity_id, withEntity, {});
+    /* ?detail=1 (T3-OPS, CB Operations › Stock): each balance also carries its name · unit (ONE read, catalogue-read.ITEM_NAMES_SQL) and its
+       batches with their expiry (onHand { lots }, the same read). Additive: the counter's call is unchanged. */
+    const detail = req.query.detail === '1';
+    if (detail && !(await require('../lib/schema').hasTable('stock_balance')))
+      return res.json({ balances: {}, at: new Date().toISOString(), not_ready: 'STOCK_LEDGER_MISSING', says: 'Stock is not switched on for this shop yet. Receive a delivery and it starts.' });
+    const by = await stockStore.onHand(entity_id, withEntity, detail ? { lots: true } : {});
     const out = {};
     for (const id of Object.keys(by)) {
       const b = by[id];
       out[id] = { qty: b.qty, avg_cost: b.qty ? inv.m2(b.value / b.qty) : 0 };
+      if (detail) out[id].lots = b.lots;
+    }
+    if (detail && Object.keys(out).length) {
+      const ids = Object.keys(out);
+      const r = await withEntity(entity_id, (db) => db.query(require('../lib/catalogue-read').ITEM_NAMES_SQL, [entity_id, ids]));
+      for (const x of r.rows) if (out[x.id]) { out[x.id].name = x.name || null; out[x.id].unit = x.unit || null; }
     }
     /* [OFFR-04] the average cost is the shop's buying price: an actor without can_see_costs gets the qty only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
