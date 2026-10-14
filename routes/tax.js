@@ -94,7 +94,8 @@ router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
       if (l.listPrice != null) return l;
       const prod = sh && sh.productOf(l);
       const p = (l.item_id || l.code) && prod ? S.priceLine(l, prod) : null;
-      if (!p || p.unit_price == null || !Number.isFinite(Number(p.unit_price))) {
+      /* no list price and no structure that names one = NO price (money.priceOf's null), never 0 — whatever unitPrice's fallback says */
+      if (!p || p.unit_price == null || !Number.isFinite(Number(p.unit_price)) || (p.list_price == null && !p.structure)) {
         throw S.refuse(422, 'NO_PRICE', (l.name ? '"' + String(l.name).slice(0, 60) + '"' : 'Line ' + (i + 1)) + (prod ? ' has no price on your shelf' : ' is not a product on your shelf') + ' — send its unit_price, or set the price on the product.');
       }
       pricing.push({ key: l.key, unit_price: p.unit_price, list_price: p.list_price, structure: p.structure, why: p.why });
