@@ -13,6 +13,9 @@ const identityAuth = require('../lib/identity-auth');   // [capability: sign-in]
 const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
 const schema = require('../lib/schema');   // b173 — deploy-before-migration column probe
 const access = require('../lib/access');   // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
+const railActions = require('../lib/rail-actions');   // T1-RAIL — who is moving the copy (the rail's level ladder)
+const railStatus = require('../lib/rail-status');     // T1-RAIL — the ONE status write; an assignment never SETs current_status itself
+const log = require('../lib/logger');
 const router  = express.Router();
 
 /**
@@ -268,7 +271,7 @@ router.post('/',
       const identity_id = uuidv4();
       const bridge_id   = generateBridgeId();
       // ⭐ [capability: sign-in] fixedOtp('entity') closes the isSealed() gap generateOTP() never checked —
-      // see lib/identity-auth.js. Same 123456 in dev as an entity's own OTP; a real code once sealed.
+      // see lib/identity-auth.js. Same fixed code as an entity's own OTP on a LOCAL stack; a real code anywhere else (SEC1).
       // M02: 24 h, and refused up front in a sealed env with no Resend / no e-mail (nothing is written then).
       const toEmail = typeof req.body.email === 'string' ? req.body.email.trim() : '';
       const refused = empCode.refusal(toEmail);
@@ -1101,6 +1104,18 @@ router.put('/break',
   }
 );
 
+/**
+ * ⭐ T1-RAIL — an assignment puts MY received copy back to pending through the ONE status write (lib/rail-status statusGate,
+ * the rail's table), inside the assignment's own transaction. A sent copy keeps its status (the rail moves only received
+ * copies); a refusal leaves the assignment standing and is logged, never silent. → { moved, from }
+ */
+async function toPending(client, entity_id, chit_id, me, kind) {
+  const g = await railStatus.statusGate(client, entity_id, chit_id, 'pending', me);
+  if (g.ok) return { moved: await g.write(), from: g.from };
+  if (g.why !== 'not_received') log.warn('assign ' + kind + ': status not moved to pending', { chit_id, from: g.from, why: g.why });
+  return { moved: false, from: g.from };
+}
+
 // ── PUT /api/actors/assign/:chit_id ─────────────────────────
 // Pull push or return a chit assignment
 router.put('/assign/:chit_id',
@@ -1148,18 +1163,17 @@ router.put('/assign/:chit_id',
             message: `Already assigned to ${cs.actor_name}`
           });
         }
-        const previousStatusOnPull = cs.current_status;
         await db(
           `UPDATE chit_status
            SET assigned_to_actor_id = $1,
                assigned_to_actor_display_name = $2,
                assigned_at = NOW(),
                assignment_type = 'pull',
-               current_status = 'pending',
                updated_at = NOW()
            WHERE chit_id = $3 AND entity_id = $4`,
           [action_by_id, action_by_name, chit_id, entity_id]
         );
+        const movedOnPull = await toPending(client, entity_id, chit_id, railActions.meOf(req), 'pull');
         await db(
           `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
            WHERE identity_id = $1`,
@@ -1175,15 +1189,15 @@ router.put('/assign/:chit_id',
           [chit_id, action_by_id, action_by_name,
            `Pulled by ${action_by_name}`, entity_id]
         );
-        // Log status reset to pending so it appears in Open tab for the new assignee
-        await db(
+        // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
+        if (movedOnPull.moved) await db(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
            SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
            FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
           [chit_id, action_by_id, action_by_name,
-           previousStatusOnPull,
+           movedOnPull.from,
            `Reset to pending — pulled by ${action_by_name}`, entity_id]
         );
         return res.json({
@@ -1223,18 +1237,17 @@ router.put('/assign/:chit_id',
           );
         }
 
-        const previousStatusOnPush = cs.current_status;
         await db(
           `UPDATE chit_status
            SET assigned_to_actor_id = $1,
                assigned_to_actor_display_name = $2,
                assigned_at = NOW(),
                assignment_type = 'push',
-               current_status = 'pending',
                updated_at = NOW()
            WHERE chit_id = $3 AND entity_id = $4`,
           [t.identity_id, t.display_name, chit_id, entity_id]
         );
+        const movedOnPush = await toPending(client, entity_id, chit_id, railActions.meOf(req), 'push');
         await db(
           `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
            WHERE identity_id = $1`,
@@ -1255,15 +1268,15 @@ router.put('/assign/:chit_id',
            isTransfer ? 'transferred' : 'assigned',
            action_by_id, action_by_name, assignDetail, entity_id]
         );
-        // Log status reset to pending so it appears in Open tab for the new assignee
-        await db(
+        // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
+        if (movedOnPush.moved) await db(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
            SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
            FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
           [chit_id, action_by_id, action_by_name,
-           previousStatusOnPush,
+           movedOnPush.from,
            `Reset to pending — assigned to ${t.display_name} by ${action_by_name}`, entity_id]
         );
         return res.json({

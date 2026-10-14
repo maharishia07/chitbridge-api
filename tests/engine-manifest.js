@@ -144,6 +144,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      but it judges nothing about money or trade; a price reaches it already formatted (2026-09-17). */
   'screen-kit.js',
   'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
+  /* ADOPTION, not engine (T1-AI): line-guard.js only CALLS the engines' nums (numerals.js) over an AI reading — the
+     judgement is the engine's; this file decides which line is flagged for a person. */
+  'line-guard.js',
   /* ADOPTION, not engine, and the split is the point: lib/rewards.js decides what a point is WORTH (pure, no DB,
      Tier A) while reward-store.js only knows where one is KEPT — four queries against an append-only table. Swap
      the store for another database and nothing about a customer's balance changes; swap the engine and it does. */
@@ -190,6 +193,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* PERF1: the one page-size clamp every list route reads (a default, a server-side maximum) — plumbing, not a rule of the platform. (2026-10-14) */
+  'page-limit.js',
   /* HX1: where this installation is reached from outside (PUBLIC_API_BASE / PUBLIC_WEB_BASE) — hosting config, not a rule. (2026-10-13) */
   'public-base.js',
   /* the field ledger's repo-reading helper (migration columns, form inputs, readers of a not-used field) — a build-time
@@ -418,6 +423,9 @@ const ENGINE_OTHER = [
   /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
      books-hooks (which event) and stock-from-chit (whether it is stock). CB's own decision. (2026-10-01) */
   'bill-use.js',
+  /* ⭐ FX-F10W2: does their bill agree — the ONE comparison of a supplier's total with taxable + tax (books-hooks receiptBill; the counter page by its
+     vendored copy). Pure; its home is the tax engine (CBTax) once an engines round lifts it. */
+  'their-bill.js',
   /* ⭐ THE BILLS FOLDER (2026-10-01): folder-inventory.js — the system folders numbered with the ledger, and the ONE document
      classification the inbox and the folders share; bill-steps.js — the bill lifecycle derived from existing records. CB's own
      decisions. folder-views.js — what a view folder holds (the rule's matches), plumbing over select + match. */
@@ -720,6 +728,9 @@ const ENGINE_OTHER = [
      reject, complete, dispute, assign, amend or message on my copy of this chit, with one refusal word — CB's own rules about
      what a chit holder may do. rail-actions.js gathers its two inputs from a request (level, my copy) and says its refusal. */
   'rail.js', 'rail-actions.js',
+  /* ⭐ T1-RAIL (2026-10-14) — rail-status.js is the ONE status write: read my copy → rail.move → UPDATE, on the caller's transaction.
+     moveStatus and every door that moves a status call it; tests/rail-status.test.cjs holds every other SET current_status out. */
+  'rail-status.js',
   /* ⭐ TO1 (2026-10-10) — Tasks & Orders. workflow.js is ADOPTED from chitbridge-engines (engines.lock.json): which folder an order is in, its stage word,
      and every action with a verdict (wraps rail). work-rows.js is the one row builder behind GET /api/work/* — SQL over select · open-orders · assign · deliverline, no rule of its own. */
   'workflow.js', 'work-rows.js',

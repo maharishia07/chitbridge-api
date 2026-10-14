@@ -874,17 +874,39 @@ JOBS.push(['⭐⭐ the window reaches both hosts: kit copy = web master, served 
   assert.strictEqual(norm(fs.readFileSync(kit, 'utf8')), norm(fs.readFileSync(path.join(WEB, 'app', 'signin-ui.js'), 'utf8')), 'the kit copy drifted from web public/app/signin-ui.js');
   const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
   assert.ok(/url\.pathname === '\/app\/signin-ui\.js'/.test(prog), 'the program does not serve /app/signin-ui.js');
-  assert.ok(/live: \['till\.html', 'signin-ui\.js'\]/.test(prog), 'the kit update does not refresh the window');
+  assert.ok(/live: \['till\.html', 'signin-ui\.js'(, '[a-z-]+\.js')*\]/.test(prog), 'the kit update does not refresh the window');
   assert.ok(/url\.pathname === '\/api\/signin\/ask' \|\| url\.pathname === '\/api\/signin\/verify' \|\| url\.pathname === '\/api\/signin\/pin'/.test(prog), 'the program does not pass the window\'s calls through');
   assert.ok(!/url\.pathname === '\/api\/entities\/register'/.test(prog), 'the old /api/entities proxy is still there');
   const vendor = fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8');
   assert.ok(/'\/app\/signin-ui\.js'/.test(vendor.slice(vendor.indexOf('const KEEP ='), vendor.indexOf('self.addEventListener'))), 'the window is not on the service worker\'s shelf');
-  assert.ok(/const SHELF = 'cb-till-v5'/.test(vendor), 'the shelf was not bumped');   /* v5: HX1 put /config.js on the boot path */
+  assert.ok(/const SHELF = 'cb-till-v6'/.test(vendor), 'the shelf was not bumped');   /* v5: HX1 put /config.js on the boot path · v6: FX-F10W2 /app/their-bill.js */
   /* read, not required — requiring the route would open the database */
   const kitNames = (fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '';
   assert.ok(/'signin-ui\.js'/.test(kitNames), 'the kit zip does not carry the window');
   const sw = fs.readFileSync(path.join(WEB, 'till-sw.js'), 'utf8');
-  assert.ok(/'\/app\/signin-ui\.js'/.test(sw) && /cb-till-v5/.test(sw) && /'\/config\.js'/.test(sw), 'the vendored service worker is stale');
+  assert.ok(/'\/app\/signin-ui\.js'/.test(sw) && /cb-till-v6/.test(sw) && /'\/config\.js'/.test(sw), 'the vendored service worker is stale');
+}]);
+/**
+ * ⭐⭐ FX-F10W2 · DOES THEIR BILL AGREE — ONE rule, both hosts and the books: the master is api lib/their-bill.js (books-hooks receiptBill
+ * requires it); the web and the kit carry byte copies; the program serves the kit's at the web's path; it is on the shelf and in the kit; the
+ * page loads it after money and asks it (never a second formula: no "goods − their total" left in the page).
+ */
+JOBS.push(['⭐⭐ the bill check reaches both hosts: web + kit copies = lib/their-bill.js, served, on the shelf, in the kit, asked by the page', () => {
+  const WEB = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR, 'public') : path.join(API, '..', 'chitbridge-web', 'public');
+  const norm = (s) => s.replace(/\r\n/g, '\n');
+  const master = norm(fs.readFileSync(path.join(API, 'lib', 'their-bill.js'), 'utf8'));
+  for (const copy of [path.join(WEB, 'app', 'their-bill.js'), path.join(API, 'tools', 'tally-connector', 'their-bill.js')])
+    assert.strictEqual(fs.existsSync(copy) ? norm(fs.readFileSync(copy, 'utf8')) : '', master, copy + ' drifted from lib/their-bill.js — run scripts/vendor-till.cjs');
+  assert.ok(/require\('\.\/their-bill'\)\.check\(/.test(fs.readFileSync(path.join(API, 'lib', 'books-hooks.js'), 'utf8')), 'the books do not ask lib/their-bill');
+  const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
+  assert.ok(/url\.pathname === '\/app\/their-bill\.js'/.test(prog), 'the program does not serve /app/their-bill.js');
+  assert.ok(/live: \[[^\]]*'their-bill\.js'/.test(prog), 'the kit update does not refresh the bill check');
+  const kitNames = (fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '';
+  assert.ok(/'their-bill\.js'/.test(kitNames), 'the kit zip does not carry the bill check');
+  assert.ok(/'\/app\/their-bill\.js'/.test(fs.readFileSync(path.join(WEB, 'till-sw.js'), 'utf8')), 'the bill check is not on the shelf');
+  const page = fs.readFileSync(PAGE, 'utf8');
+  assert.ok(page.indexOf('<script src="/engine/money.js"') < page.indexOf('<script src="/app/their-bill.js"'), 'the bill check loads before the money engine it rounds with');
+  assert.ok(/CBTheirBill\.check\(/.test(page) && !/r2\(goods - theirs\)/.test(page), 'the page compares their bill by its own formula');
 }]);
 
 (async () => {
