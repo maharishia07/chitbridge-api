@@ -28,6 +28,7 @@ function rowsFor(sql) {
   if (/FROM catalogue_items/.test(sql)) return [
     { item_id: 'i1', item_data: { name: 'Rice', price: 60, unit: 'kg' }, is_active: true, updated_at: '2026-09-29T10:00:00.000Z' },
     { item_id: 'i2', item_data: { name: 'Dal', price: 120, unit: 'kg' }, is_active: true, updated_at: '2026-09-29T10:00:01.000Z' }];
+  if (/FROM supplier_list/.test(sql)) return [{ id: 's1', name: 'Sri Ganesh Provisions', nickname: null, gstn: '33BBBBB1111B1Z5', country: 'IN', party_no: 'P-00001' }];
   if (/FROM customer_list/.test(sql)) return [{ identity_id: 'c1', display_name: 'Kumar', phone: '9', groups: [], last_txn_at: null }];
   return [];
 }
@@ -84,6 +85,8 @@ const t = (name, cond, extra) => {
  * transaction, in a savepoint (SAVEPOINT · SELECT · RELEASE = 3 trips) so a server before b272 cannot lose the whole shared
  * read to "table not there": 38 → 41, still two spare. The answer is cached 60 s per process (lib/books-hooks isOn), and the
  * dues transaction (4 trips once b273 exists) no longer runs for a shop whose ledger is off — for those this is a saving.
+ * ⚠️ F11 (2026-10-14): the shop's supplier NAMES ride the snapshot (the Receive form suggests them) — one statement in the same shared
+ * transaction, after the adoption read so the five above stay back to back: 42 → 43, AT the ceiling (not raised). The next read needs a cut first.
  */
 const BUDGET = Number(process.env.TILL_SNAPSHOT_BUDGET || 43);
 
@@ -105,6 +108,7 @@ srv = app.listen(0, '127.0.0.1', async () => {
     /* ⭐ the answer is still whole — a cheaper snapshot that dropped a section would pass the budget and break the counter */
     t('the items still arrive', Array.isArray(full.body.items) && full.body.items.length === 2, String(full.body.items && full.body.items.length));
     t('the customers still arrive', Array.isArray(full.body.customers) && full.body.customers.length === 1);
+    t('F11 · the supplier names arrive — name, id and the GSTIN\'s state, never a balance', JSON.stringify(full.body.suppliers) === JSON.stringify([{ party_id: 's1', name: 'Sri Ganesh Provisions', state: '33', party_no: 'P-00001' }]), JSON.stringify(full.body.suppliers));
     t('the live count still arrives', full.body.total === 2, String(full.body.total));
     t('the profile still arrives — a grocery shop is asked for a batch', !!(full.body.lot_fields && full.body.lot_fields.vertical === 'food'),
       JSON.stringify(full.body.lot_fields || null).slice(0, 60));

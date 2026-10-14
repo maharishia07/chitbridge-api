@@ -443,3 +443,12 @@ Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, rou
 | `shop.country` | ISO-3166 alpha-2 or null | Source: `identities.country`, read on the SAME row as `storefront_access · policy_flags` (no extra trip). Written by registration / Country setup. Read by shop.html (what the page knows of its country). |
 | `shop.tax_id_word` | `GSTIN` · `ABN` · `TRN` | Derived: `profile.taxIdWordOf(country)` — the pack's own tax id (reg-au `abn`, reg-ae `trn`), `GSTIN` for India and for no pack. Written by nobody. Read by shop.html for the label beside `gstn` (the generic registration column). |
 | `shop.upi_id` (changed) | string or null | Unchanged source (`profile.upiOf(policy_flags)`); now null when the shop's pack has no UPI mode (`pack.chart.paymentModes.upi`) — the storefront's "Pay by UPI" block is not drawn for an AU / AE shop. |
+
+## F10 / F11 · the counter receipt that carries their bill (2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `GET /api/till/snapshot` · `suppliers[]` | `{ party_id, name, nickname?, state?, party_no? }` | Source: `supplier_list ⋈ identities` (routes/till.js `OWN.suppliers`, in the snapshot's shared transaction). `state` = the GSTIN's first two digits, India only. Names only — never a balance (a counter never reads what the shop pays its suppliers). Written by: nobody (read). Read by: the till's Receive form (`paintSuppliers` · `rcvSupplierKnown`). |
+| receipt chit `business_json.party.party_id` | uuid, optional | Source: the supplier the door picked (`rcvSupplierKnown`: exactly one name / nickname match). Written by: till `chitOfDoc` (page and shop PC). Read by: `tax-copy.capturedPartyId` → `partiesFor` (the seller of their bill) · `books-hooks.receiptFacts`. Absent → the typed `party.name` is matched against the supplier list when it posts. |
+| receipt chit `line_items[].gst_rate` | number, optional | Source: the GST rate the door recorded from their bill (`rcvLineTax`). Written by: till `chitOfDoc`. Read by: `tax-lines.invoiceFor` (its existing line key) via `tax-copy.entryFor` — their bill is taxed by the one engine. |
+| folder rule `their_bill` (`folder-inventory` DOC_RULES) | — | Derived: `purpose = 'receipt'` with `business_json.their_bill.no` AND `.total` → doc `bill_received` (Bills · Received, B-2100). `tax-copy.capturedBill` / `billReceived` make the same test. |

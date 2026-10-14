@@ -240,6 +240,18 @@ router.get('/snapshot', auth, async (req, res) => {
       adoption: (db) => db.query(
         'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [entity_id]),
       /**
+       * ⭐ F11 (14 Oct): THE SHOP'S SUPPLIERS, BY NAME — the Receive form suggests them as the door types ("Sri Ganesh" → Sri Ganesh
+       * Provisions) and a pick carries the party's id on the receipt (business_json.party.party_id), so their bill reaches the books as
+       * THAT supplier. ⚠️ WHO, never what is owed: a counter device must never read what the shop pays its suppliers (see /match).
+       * The GSTIN rides only for its state (CGST/SGST vs IGST at the door). party_no through to_jsonb — absent before its column exists.
+       */
+      suppliers: (db) => db.query(
+        `SELECT s.supplier_entity_id AS id, i.display_name AS name, s.nickname, i.gstn, i.country, to_jsonb(s)->>'party_no' AS party_no
+           FROM supplier_list s JOIN identities i ON i.identity_id = s.supplier_entity_id
+          WHERE s.owner_entity_id = $1
+          ORDER BY i.display_name
+          LIMIT 2000`, [entity_id]),
+      /**
        * ⭐⭐ IS THIS SHOP'S LEDGER ON (critic M5, 2026-09-30). The counter offered "On credit" and "Received" to any shop with a
        * known customer; with the ledger off the server posts nothing, so the debt existed only as words on a chit.
        * lib/books-hooks isOn — the SAME cached answer the posting hook uses, read on this transaction's own handle inside a
@@ -414,6 +426,20 @@ router.get('/snapshot', auth, async (req, res) => {
        */
       try { require('../lib/logger').warn('till.customers', { entity_id, why: String(e && e.message) }); } catch (_) {}
     }
+
+    /* F11: the suppliers the Receive form suggests — { party_id, name, nickname?, state?, party_no? }; an unreadable list is none (said) */
+    let suppliers = [];
+    try {
+      const sr = await ownRead('suppliers');
+      suppliers = sr.rows.filter((x) => x.id && x.name).map((x) => {
+        const o = { party_id: String(x.id), name: String(x.name) };
+        if (x.nickname) o.nickname = String(x.nickname);
+        const g = x.gstn ? String(x.gstn).trim().toUpperCase() : '';
+        if (/^\d{2}/.test(g) && (!x.country || String(x.country).toUpperCase() === 'IN')) o.state = g.slice(0, 2);
+        if (x.party_no) o.party_no = String(x.party_no);
+        return o;
+      });
+    } catch (e) { try { require('../lib/logger').warn('till.suppliers', { entity_id, why: String(e && e.message) }); } catch (_) {} }
 
     /**
      * ⭐ THE PEOPLE WHO MAY STAND AT A COUNTER (2026-09-07). The shop's own co-assists — never the connectors, which are actors too
@@ -788,6 +814,7 @@ router.get('/snapshot', auth, async (req, res) => {
       slabs: (shelf && shelf.slabs instanceof Map) ? [...shelf.slabs.values()] : ((shelf && shelf.slabs) || []),
       categories: (shelf && shelf.categories) || [], face: (shelf && shelf.face) || {},
       customers,
+      suppliers,
       reward,                       /* ⚠️ null is the ordinary case — most shops run no programme, and the counter shows nothing */
       policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off',
                 /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
