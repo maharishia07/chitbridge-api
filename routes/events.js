@@ -2,7 +2,7 @@
  * /api/events — the mailbox bell (see lib/events.js).
  *   POST /ticket  (auth)      → { ticket, ttl_s }    one-time, 60 s
  *   GET  /stream?t=<ticket>   → text/event-stream    'hello' on open, 'cb' per arrival, and every 25 s BOTH ': ping' (a comment, for proxies) and a named 'ping' event — a comment fires no client listener, so only the named one lets a counter tell a quiet bell from a dead one ([TILL-167])
- *   GET  /stats   (auth)      → { entities, connections, tickets }   for the operator
+ *   GET  /stats   (auth · platform root only, SEC3) → { entities, connections, tickets }   platform-wide counts, the operator's
  */
 const express = require('express');
 const router = express.Router();
@@ -26,5 +26,6 @@ router.get('/stream', (req, res) => {
   if (!v) return res.status(401).json({ error: 'Unauthorised', message: 'ticket missing, spent or expired' });
   events.subscribe(v.entity_id, req, res, { screen: v.screen });
 });
-router.get('/stats', auth, (req, res) => res.json(events.stats()));
+/* ⚠️ SEC3: platform-wide connection counts are the OPERATOR's — any signed-in shop could read them. lib/platformroot is the one door. */
+router.get('/stats', auth, (req, res) => { if (!require('../lib/platformroot').refuseUnlessRoot(req, res)) return; res.json(events.stats()); });
 module.exports = router;

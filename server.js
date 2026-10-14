@@ -42,9 +42,14 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   const devOtp = require('./lib/dev-otp');
   const errs = devOtp.otpPostureErrors();
   if (errs.length) { errs.forEach((e) => log.critical('boot aborted', { reason: e })); process.exit(1); }
+  /* SEC2: the warning says what is TRUE — fixed codes work only on a local stack (fixedOtp), and are echoed only when that
+     stack also opted in (mayExposeOtp). DEV_OTP on any other host does nothing, and says so. */
   if (devOtp.armed()) {
-    log.warn('fixed test OTPs active', { reason: 'DEV_OTP is set — entity/customer/connector OTPs are FIXED and are '
-      + 'echoed in API responses. Dev/test ONLY. To seal: see the checklist at the top of lib/dev-otp.js.' });
+    const local = !!devOtp.fixedOtp('entity');
+    log.warn(local ? 'fixed test OTPs active' : 'DEV_OTP ignored', { reason: local
+      ? 'DEV_OTP is set on a local stack — entity/customer/connector OTPs are FIXED' + (devOtp.mayExposeOtp() ? ' and echoed in API responses (DEV_OTP_IN_RESPONSE).' : ', never echoed.')
+        + ' Dev/test ONLY. To seal: see the checklist at the top of lib/dev-otp.js.'
+      : 'DEV_OTP is set but this is not a local stack — every code is random. Testers use TESTER_CODE (lib/dev-otp.js). Delete DEV_OTP here.' });
   }
   devOtp.testerNotices().forEach((n) => log[n.level](n.msg, { reason: n.reason }));   // SEC1b: TEMPORARY tester code — never its value
 }

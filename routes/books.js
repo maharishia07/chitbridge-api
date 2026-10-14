@@ -38,7 +38,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
    /dues filtered its items by the shop's day of created_at but took asOf from the UTC clock: a bill recorded after midnight IST
    (18:30–24:00 UTC) was ahead of asOf and vanished from Payables / Receivables until the next UTC day — "You owe nobody" beside
    a supplier chip saying you owe lakhs. One day, from one helper, everywhere this file says today. */
-const today = (req) => require('../lib/books-hooks').dayOf(CLOCK.now(), req && req.books) || CLOCK.now().toISOString().slice(0, 10);
+const today = (req) => CLOCK.today(req && req.books);   /* the shop's day; dayOf of a moment is never null */
 const dateQ = (v, d) => (DATE.test(String(v || '').slice(0, 10)) ? String(v).slice(0, 10) : d);
 /* minor units in; an amount in rupees is rounded by money.round (the one rounder) first, never by a copy of the rule */
 const minorOf = (b) => (b.amount_minor != null ? Math.round(Number(b.amount_minor)) : Math.round(require('../lib/money').round(Number(b.amount)) * 100));

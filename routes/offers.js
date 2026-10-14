@@ -46,9 +46,9 @@ async function run(req, res, explain) {
     const lines = normLines(req.body || {});
     if (!lines.length) return res.status(400).json({ error: 'validation', message: 'lines[] required: { key, item_id?, qty, unitPrice }' });
     const offers = Array.isArray(req.body.offers) && req.body.offers.length ? req.body.offers : await ownOffers(req);
-    const ctx = Object.assign({ now: new Date(), currency: 'INR' }, req.body.ctx || {});
+    const ctx = Object.assign({ now: new Date(), currency: null }, req.body.ctx || {});   /* T2-NATDEF: the caller's stated money, never INR by name */
     /* the engine phrases every 'why' through ctx.money; a caller from another system need not know that */
-    if (typeof ctx.money !== 'function') ctx.money = (n) => String(ctx.currency || 'INR') + ' ' + roundMoney(Number(n) || 0).toFixed(2);
+    if (typeof ctx.money !== 'function') ctx.money = (n) => (ctx.currency ? String(ctx.currency) + ' ' : '') + roundMoney(Number(n) || 0).toFixed(2);
     const ev = eng.evaluate({ lines, offers, ctx });
     const out = { subtotal: ev.subtotal, total: ev.total, adjustments: ev.adjustments || [], notes: ev.notes || [], skipped: ev.skipped || [],
                   perLine: eng.perLine ? eng.perLine(ev, lines) : {}, offers_considered: offers.length, engine: 'chitbridge-offers', version: 1 };

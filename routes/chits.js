@@ -280,9 +280,7 @@ async function autoAssignReceived(entity_id, chit_id) {
     const g = await railStatus.statusGate(client, entity_id, chit_id, 'pending', railStatus.SYSTEM, { from: cs.current_status });
     if (g.ok) await g.write();
     else log.warn('auto-assign: status not moved to pending', { chit_id, from: g.from, why: g.why });
-    await client.query(
-      `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW() WHERE identity_id = $1`,
-      [t.identity_id]);
+    await require('../lib/assign-chit').taskCount(client, t.identity_id, 'take');   /* TA1 */
     await client.query(
       `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
        VALUES ($1, $2, 'assigned', NULL, 'System (auto-assign)', 'pending', $3)`,
@@ -5136,7 +5134,7 @@ router.post('/assign-bulk',
           const already = cs.rows[0].assigned_to_actor_id;
           if (already === t.identity_id) { assigned.push(chit_id); continue; }              // already theirs — no change, no cost
           if (load >= cap) { skipped.push({ chit_id, reason: `at capacity (${cap})` }); continue; }   // (e) capacity gate
-          if (already) { await client.query(`UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1) WHERE identity_id = $1`, [already]); }
+          if (already) { await require('../lib/assign-chit').taskCount(client, already, 'release'); }
           await client.query(
             `UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
                     assigned_at = NOW(), assignment_type = 'push', updated_at = NOW()
@@ -5147,7 +5145,7 @@ router.post('/assign-bulk',
           const g = await railStatus.statusGate(client, entity_id, chit_id, 'pending', me);
           if (g.ok) await g.write();
           else if (g.why !== 'not_received') log.warn('assign-bulk: status not moved to pending', { chit_id, from: g.from, why: g.why });
-          await client.query(`UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW() WHERE identity_id = $1`, [t.identity_id]);
+          await require('../lib/assign-chit').taskCount(client, t.identity_id, 'take');   /* TA1 */
           load++;
           await client.query(
             // F3: assignment is INTERNAL — write ONLY the assigning entity's own row. The assignee sees it via the

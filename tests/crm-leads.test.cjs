@@ -42,7 +42,7 @@ D.extra = async (sql, p) => {
   if (/^SELECT user_id FROM identities WHERE user_id LIKE/.test(sql)) return { rows: ids.filter((i) => i.user_id.startsWith(p[0].replace('%', ''))).slice(-1) };
   if (/^INSERT INTO identities/.test(sql)) { const r = { identity_id: 'N' + ids.length, bridge_id: p[0], display_name: p[1], user_id: p[2], parent_entity_id: p[3] }; ids.push(r); return { rows: [r] }; }
   if (/^UPDATE identities SET otp_contact/.test(sql)) { ids.find((i) => i.identity_id === p[0]).otp_contact = p[1]; return { rows: [] }; }
-  if (/^INSERT INTO customer_list/.test(sql)) { clInserts++; assert.ok(/'lead'/.test(sql), 'added_via is lead'); D.cust.push(cs(row({ party_id: p[1], display_name: 'new', user_id: 'n' }), 'lead', 0)); return { rows: [{ customer_list_id: 'CL' + clInserts }] }; }
+  if (/^INSERT INTO customer_list/.test(sql)) { clInserts++; assert.ok(/'lead'/.test(sql) || p[2] === 'lead', 'added_via is lead');   /* CRM-MINT1: lib/local-identity.addCustomer passes it as $3 */ D.cust.push(cs(row({ party_id: p[1], display_name: 'new', user_id: 'n' }), 'lead', 0)); return { rows: [{ customer_list_id: 'CL' + clInserts }] }; }
   return null;
 };
 

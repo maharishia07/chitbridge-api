@@ -1,7 +1,7 @@
 {
   "limit": 80,
-  "long_functions": 160,
-  "worst_complexity": 188,
+  "long_functions": 159,
+  "worst_complexity": 185,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
     "lib/accounts-packs.js": [
@@ -251,7 +251,6 @@
       "PATCH /:id",
       "POST /",
       "PUT /:id/status",
-      "PUT /:id/tasks/route",
       "PUT /:id/tasks/route",
       "PUT /assign/:chit_id",
       "PUT /assign/:chit_id",

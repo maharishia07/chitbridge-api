@@ -17,11 +17,13 @@ const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
 const mint    = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const { sendOtpEmail, sendEmail } = require('../lib/notify');
+const localIdentity = require('../lib/local-identity');   /* SEC3: mayTradeSql / mayTrade — the one "may this party receive?" */
+const CS = require('../lib/country-setup');               /* SEC3: shopMoney + MONEY_UNSTATED — the one "what money is this shop in" */
+const log = require('../lib/logger');
 const { verifyOtp } = require('../lib/otp');
 // Reissue step-up code. On a LOCAL stack (DEV_OTP set) a FIXED connector code — distinct from the entity code so the two
 // are unmistakable during testing (lib/dev-otp.js). In prod it's a fresh random 6-digit code.
 const devOtp = require('../lib/dev-otp');   // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
-const genOtp = () => devOtp.fixedOtp('connector') || require('crypto').randomInt(100000, 1000000).toString();
 
 // Step-up authorisation for the destructive key reissue: ONLY the entity admin, or a MANAGER-hat delegate.
 async function canReissue(req) {
@@ -52,15 +54,64 @@ function health(last_seen){ if (!last_seen) return 'offline'; const age = Date.n
 
 const ownerEntityId = (req) => auth.entityOf(req);
 
+/**
+ * ⭐ SEC3 · THE ONE CONNECTOR SWITCH READER. hasConnector(caps) answers "is the shop's connector capability ON" from its
+ * identities.capabilities; every connector door asks it — the owner's routes (requireConnector) AND the device's own key
+ * (/ingest, /erp-ingest), which before SEC3 kept working after the shop switched the capability off.
+ */
+function hasConnector(caps) { return Array.isArray(caps) && caps.indexOf('connector') >= 0; }
+const CAPABILITY_OFF = { error: 'Capability off', code: 'CAPABILITY_OFF',
+  message: 'This shop has switched its connector capability off, so its devices and connectors are refused. Turn it back on to resume.' };
+
 // capability gate — the entity must carry 'connector' (API-enforced, not just UI)
 async function requireConnector(req, res, next) {
   try {
     const eid = ownerEntityId(req);
     const r = await db('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
-    const caps = (r.rows[0] && r.rows[0].capabilities) || [];
-    if (Array.isArray(caps) && caps.indexOf('connector') >= 0) return next();
-    return res.status(403).json({ error: 'Capability off', message: 'The connector capability is not enabled for this entity.' });
+    if (hasConnector(r.rows[0] && r.rows[0].capabilities)) return next();
+    return res.status(403).json(CAPABILITY_OFF);
   } catch (err) { return res.status(500).json({ error: 'Gate check failed', message: safeErr(err) }); }
+}
+
+/**
+ * ⭐ SEC3 · WHO A DEVICE KEY IS. The ActorKey (X-Bridge-Key) → the connector actor, with its shop's capability switch read in the
+ * SAME statement (no extra trip). Answers the refusal itself and returns null: 401 no/unknown key · 403 CAPABILITY_OFF.
+ */
+async function deviceActor(req, res) {
+  const key = (req.get('X-Bridge-Key') || (req.body && req.body.key) || '').toString().trim();
+  if (!key) { res.status(401).json({ error: 'No key', code: 'NO_KEY', message: 'Send the ActorKey in the X-Bridge-Key header.' }); return null; }
+  const ar = await db(
+    `SELECT a.identity_id, a.parent_entity_id, a.display_name, a.connector_type, a.status, a.connector_config, p.capabilities AS shop_capabilities
+       FROM identities a LEFT JOIN identities p ON p.identity_id = a.parent_entity_id
+      WHERE a.provision_key_hash = $1 AND a.identity_type = 'actor' AND a.connector_type IS NOT NULL`, [hashKey(key)]);
+  const actor = ar.rows[0];
+  if (!actor || actor.status !== 'active') { res.status(401).json({ error: 'Bad key', code: 'KEY_UNKNOWN', message: 'ActorKey not recognised, or the connector is inactive.' }); return null; }
+  if (!hasConnector(actor.shop_capabilities)) { res.status(403).json(CAPABILITY_OFF); return null; }
+  return actor;
+}
+
+/**
+ * ⭐ SEC3 · WHOM A DEVICE MAY ADDRESS — its own shop, and that shop's own parties (on its customer OR supplier list) who can receive
+ * a chit (lib/local-identity mayTradeSql: on the rail, same sandbox). The till key's rule (routes/chits.js tillMaySend), widened to
+ * suppliers; a person's send has no such list. One statement; the second look runs only on a refusal, to say WHICH rule failed.
+ * → null (may) | { code: 'DEVICE_TO_REFUSED', message }
+ */
+async function deviceMayAddress(entity_id, cc) {
+  if (!cc || String(cc) === String(entity_id)) return null;
+  const no = (why) => ({ error: 'Forbidden', code: 'DEVICE_TO_REFUSED',
+    message: 'Not sent: ' + why + '. A device sends only to its own shop and the shop\u2019s own customers or suppliers.' });
+  if (!/^[0-9a-f-]{36}$/i.test(String(cc))) return no('the recipient is not a ChitBridge id');
+  const r = await withEntity(entity_id, (c) => c.query(
+    `SELECT i.display_name,
+            (EXISTS (SELECT 1 FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = i.identity_id)
+             OR EXISTS (SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = i.identity_id)) AS party,
+            ${localIdentity.mayTradeSql('i', '$1')} AS may
+       FROM identities i WHERE i.identity_id = $2`, [entity_id, cc]));
+  const row = r.rows[0];
+  if (!row || !row.party) return no('that recipient is not one of this shop\u2019s customers or suppliers');
+  if (row.may) return null;
+  const v = await localIdentity.mayTrade(entity_id, cc);
+  return no(v.ok ? (row.display_name || 'that party') + ' cannot receive it' : v.say);
 }
 
 // ownership guard — the connector actor must be an actor identities row under this entity
@@ -92,7 +143,7 @@ router.post('/', auth, requireConnector,
       const bridge_id    = generateBridgeId();
       /* ⚠️ SECURITY FIX BY CONSOLIDATION. A predictable OTP that stays valid for SEVEN DAYS (see otp_expires
          below) is the worst of the three copies. One generator now, from a CSPRNG (lib/otp.js). */
-      const otp          = require('../lib/otp').generateOTP();
+      const otp          = require('../lib/otp').generateOTP('connector');   // SEC2: the CONNECTOR code, the one generator (WRITERS: no private copy)
       const otp_expires  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       // Issue the ActorKey now, store only its hash, return the raw ONCE. IoT push needs it to provision the Pi;
       // ERP needs it to authenticate its document pushes to /erp-ingest (the ERP's own credential, not a user JWT).
@@ -118,8 +169,10 @@ router.post('/', auth, requireConnector,
 // reusing the SAME b50 `chit_deliver` primitive the /send route uses — no line items, the reading is the payload.
 // Throws if the delivery layer isn't installed or the counterparty is gone; the caller keeps the heartbeat regardless.
 async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, value, unit, device_id, bridge_id, kind, extra, default_assignee, lifecycle, notify_email, blueprint_ref, capability_ref, constitution_ref }) {
-  const ent = await db(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
+  const ent = await db(`SELECT bridge_id, display_name, currency_code, country FROM identities WHERE identity_id = $1`, [entity_id]);
   const self = ent.rows[0]; if (!self) throw new Error('owning entity not found');
+  /* SEC3: the shop's own money (else its pack's) — never 'INR' by default; unstated → null and the ONE sentence to the caller */
+  const currency_code = CS.shopMoney(self.currency_code, self.country);
   // Exceptions are SELF-CHITS filed into a named FOLDER (they stay inside the entity); CC = an optional partner who
   // co-holds the same sealed proof. An invalid CC is skipped, never fatal.
   let ccRow = null;
@@ -152,7 +205,7 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   /* ⚠️ SHAPE from lib/mint.js, POLICY still here. What an IoT chit MEANS — Task-only, no line items, filed into a
      folder — is this function's business and stays. What a summary and a header ARE is not, and was one of four
      hand-written copies. */
-  const summary_json = mint.summary({ line_item_count: 0, total_value: 0, currency_code: 'INR', purpose,
+  const summary_json = mint.summary({ line_item_count: 0, total_value: 0, currency_code, purpose,
     copy_policy: { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — IoT self-chit (Task only)', source: 'iot' } });
   const headerCommon = mint.header({
     sender_entity_id: entity_id, sender_entity_bridge_id: self.bridge_id, sender_entity_display_name: self.display_name,
@@ -220,7 +273,8 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
   }
   // participants = the entities that hold a copy (owner + CC if any) — for per-entity proof replication (b66).
   const participants = [entity_id]; if (ccRow) participants.push(ccRow.identity_id);
-  return { chit_id, folder_id: filedFolderId, folder_error: folderErr, participants, assigned_to };
+  return { chit_id, folder_id: filedFolderId, folder_error: folderErr, participants, assigned_to,
+    money_why: currency_code ? null : { code: 'NO_MONEY', why: CS.MONEY_UNSTATED } };
 }
 
 // Shared ERP process-then-forget CORE (used by both the key-authed /erp-ingest and the owner-authed /erp-test).
@@ -272,14 +326,8 @@ router.post('/ingest',
   validate,
   async (req, res) => {
     try {
-      const key = (req.get('X-Bridge-Key') || (req.body && req.body.key) || '').toString().trim();
-      if (!key) return res.status(401).json({ error: 'No key', message: 'Send the ActorKey in the X-Bridge-Key header.' });
-      const ar = await db(
-        `SELECT identity_id, parent_entity_id, display_name, connector_type, status, connector_config
-           FROM identities
-          WHERE provision_key_hash = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [hashKey(key)]);
-      const actor = ar.rows[0];
-      if (!actor || actor.status !== 'active') return res.status(401).json({ error: 'Bad key', message: 'ActorKey not recognised, or the connector is inactive.' });
+      const actor = await deviceActor(req, res);   /* SEC3: key + the shop's connector switch, one statement */
+      if (!actor) return;
 
       const entity_id = actor.parent_entity_id;
       const bridge_id = req.body.bridge_id ? String(req.body.bridge_id).trim() : null;
@@ -308,7 +356,12 @@ router.post('/ingest',
                      : (Array.isArray(cfg.classes) && cfg.classes.length === 1 ? cfg.classes[0] : null);
       const cc = wp.counterparty || (req.body.to ? String(req.body.to).trim() : null);
       const default_assignee = wp.default_assignee || null;
-      let chit_id = null, note = null, proof_id = null, filed = null, file_err = null, proof_err = null, assigned = null;
+      let chit_id = null, note = null, proof_id = null, filed = null, file_err = null, proof_err = null, assigned = null, money_why = null;
+      /* ⚠️ SEC3: `to` (or the configured counterparty) must be the shop or one of its own parties — before anything is minted */
+      if (!req.body.heartbeat_only) {
+        const refused = await deviceMayAddress(entity_id, cc);
+        if (refused) return res.status(403).json(refused);
+      }
       if (req.body.heartbeat_only) {
         note = 'Heartbeat only — health refreshed, no chit raised.';
       } else {
@@ -321,7 +374,7 @@ router.post('/ingest',
             device_id: req.body.device_id || (conn && conn.ref) || null,
             bridge_id,
           });
-          chit_id = emit.chit_id; filed = emit.folder_id; file_err = emit.folder_error; assigned = emit.assigned_to;   // filed = folder it landed in; assigned = resolved default-assignee (if any)
+          chit_id = emit.chit_id; filed = emit.folder_id; file_err = emit.folder_error; assigned = emit.assigned_to; money_why = emit.money_why;   // filed = folder it landed in; assigned = resolved default-assignee (if any)
           // PROOF — attach the edge image (base64) to the chit; bytes fetched on demand via GET /api/attachments/:id.
           if (chit_id && req.body.proof) {
             try {
@@ -334,9 +387,17 @@ router.post('/ingest',
               }
             } catch (e) { proof_err = (e && e.message) || String(e); console.warn('[connectors] proof attach failed:', proof_err); }
           }
-        } catch (e) { note = 'Health updated, but the exception chit could not be delivered: ' + safeErr(e); }
+        } catch (e) {
+          /* ⚠️ SEC3: NOT a 200. The agent moves a 2xx event to sent/ — a 200 here lost the event for good. The real status, with a
+             code; the device keeps the event and retries. A refusal the database makes on purpose keeps its own words (lib/knownerr). */
+          log.error('connectors.ingest: signal chit not delivered — the device keeps the event', { actor: actor.identity_id, why: String(e && e.message).slice(0, 200) });
+          const k = require('../lib/knownerr').known(e);
+          if (k) return res.status(k.status).json(Object.assign({ health: 'live' }, k.body));
+          return res.status(503).json({ error: 'Not delivered', code: 'CHIT_NOT_DELIVERED', health: 'live',
+            message: 'Health updated, but the signal chit could not be delivered. The device keeps the event and sends it again.' });
+        }
       }
-      res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, proof_id, filed, file_err, proof_err, note, assigned });
+      res.json({ message: 'ingested', health: 'live', last_seen: new Date().toISOString(), chit_id, proof_id, filed, file_err, proof_err, note, assigned, money_why });
     } catch (err) { res.status(500).json({ error: 'Ingest failed', message: safeErr(err) }); }
   });
 
@@ -352,14 +413,8 @@ router.post('/erp-ingest',
   validate,
   async (req, res) => {
     try {
-      const key = (req.get('X-Bridge-Key') || (req.body && req.body.key) || '').toString().trim();
-      if (!key) return res.status(401).json({ error: 'No key', message: 'Send the ActorKey in the X-Bridge-Key header.' });
-      const ar = await db(
-        `SELECT identity_id, parent_entity_id, display_name, connector_type, status, connector_config
-           FROM identities
-          WHERE provision_key_hash = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL`, [hashKey(key)]);
-      const actor = ar.rows[0];
-      if (!actor || actor.status !== 'active') return res.status(401).json({ error: 'Bad key', message: 'ActorKey not recognised, or the connector is inactive.' });
+      const actor = await deviceActor(req, res);   /* SEC3: key + the shop's connector switch, one statement */
+      if (!actor) return;
       if (actor.connector_type !== 'erp') return res.status(409).json({ error: 'Wrong type', message: 'This endpoint is for ERP connectors. IoT devices use /ingest.' });
 
       const entity_id = actor.parent_entity_id;
@@ -367,6 +422,8 @@ router.post('/erp-ingest',
       const doc_type  = req.body.doc_type ? String(req.body.doc_type).trim() : (req.body.payload.doc_type ? String(req.body.payload.doc_type).slice(0, 64) : 'document');
       const doc_ref   = req.body.doc_ref ? String(req.body.doc_ref).trim() : (req.body.payload.doc_ref ? String(req.body.payload.doc_ref).slice(0, 120) : null);
       const cc        = req.body.to ? String(req.body.to).trim() : (cfg.counterparty_entity_id || null);
+      const refused   = await deviceMayAddress(entity_id, cc);   /* SEC3: the shop or its own parties, nobody else */
+      if (refused) return res.status(403).json(refused);
 
       // Heartbeat — health goes live for the ERP connector (independent of processing below).
       await db(`UPDATE identities SET last_seen = NOW() WHERE identity_id = $1`, [actor.identity_id]);
@@ -462,7 +519,7 @@ router.post('/reissue-code', auth, requireConnector, async (req, res) => {
     const entity_id = ownerEntityId(req);
     const e = await db(`SELECT email, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
     const ent = e.rows[0]; if (!ent || !ent.email) return res.status(400).json({ error: 'No email', message: 'The entity has no registered email to send a code to.' });
-    const otp = genOtp(); const expires = new Date(Date.now() + 10 * 60 * 1000);
+    const otp = require('../lib/otp').generateOTP('connector'); const expires = new Date(Date.now() + 10 * 60 * 1000);
     await db(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [otp, expires, entity_id]);
     const sent = await sendOtpEmail(ent.email, ent.display_name, otp);
     res.json({ message: sent.delivered ? 'Code sent to the account email.' : sent.dev ? 'Dev mode — code issued.' : 'Could not send the code — try again.',
