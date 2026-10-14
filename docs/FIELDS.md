@@ -506,3 +506,22 @@ A rate is EVIDENCE the owner types or imports — never fetched, never assumed (
 | a foreign event's refusal `code: FX_RATE_MISSING` | — | derived: "No USD rate for 14 Oct — add it in Accounts › Rates." — the hooks park it on Waiting with that sentence; it posts on the retry once the rate exists | composeEntry (`fx-rates.forEvent`) | Waiting · the payment sheet |
 
 Limits (said, not hidden): a foreign PAYMENT settles at the party's open foreign balance's average carried rate (the booked rate of each bill when only one is open); one larger than what they owe in that currency is refused (record the extra as an advance). A foreign BANK ledger is not told apart from the shop's own bank yet, so revaluation covers debtors and creditors only.
+
+## Pages · GET /api/books/daybook · /ledger/:account · /api/chits/inbox · /sent (PERF1, 2026-10-14 · migration b406, FILE — Athi runs it)
+
+DISCIPLINES §2's list contract (top-level `total · page · limit`, a server-side maximum) on the books lists, keyset (never OFFSET). The page is
+asked with `?limit=1..500` (default 100; `lib/page-limit.limitOf` — the one clamp) and `?after=` (the `next` of the page before); no page asked =
+the whole range, exactly as before (the web adopts the pages in PERF2). Who may: whoever may read the books / the list — unchanged.
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `/daybook`, `/ledger/:account` → `total` | — | derived: how many entries [from, to] holds (a ledger: those with a line on it; period 0 left out where the opening holds it) — `books-store.pageSums` | the route, only when a page is asked | the pager (the count it shows) |
+| … `page` · `limit` | — | derived: the client's page number echoed · the limit the SERVER applied (≤ 500) | the route | the pager |
+| … `next` | — | derived: `YYYY-MM-DD\|ENTRY_NO` of the page's last entry — the next page's `?after=`; null on the last page (`books-store.entryPage` reads one entry more than asked) | the route | the pager |
+| … `totals { dr_minor, cr_minor }` | — | derived: Σ Dr · Σ Cr of the whole range (a ledger: its lines; the Day book: every line) — the server's figure, never the loaded rows added up | `pageSums` | the list's footer |
+| `/ledger/:account` → `page_opening_minor` | — | derived: the balance BEFORE this page's first line = `opening_minor` + Σ(Dr − Cr) of the range's lines before the cursor (one indexed SUM); `opening_minor` · `closing_minor` stay the RANGE's on every page | the route | the first running balance of a page |
+| `/ledger/:account` → `lines[].entry_id` | — | source: the line's journal entry (as the statement's M29 `entry_id`) | the route | the web: a line opens its journal by `/daybook?entries=` |
+| `/daybook?entries=<id>,…` | — | a READ of exactly those entries (≤ 500) — never the range's Day book for one line | — | the Ledger's opened line (cap-books.js bkLgJournal) |
+| `/chits/inbox`, `/chits/sent` → `total` | — | derived: the COUNT, on page 1 only; `null` on a later page (app.html pgNext keeps page 1's) | routes/chits.js | the Task / Order pager |
+| … `next` | — | derived: `<created_at UTC, µs>\|<chit_id>` of the page's last row — the next page's `?after=` (newest-first order only; another sort keeps `page` + OFFSET); null on a short page | routes/chits.js (`keysetOf` · `afterOf`) | app.html fetchPage |
+| … `limit` | — | the server's: ≤ 200 (`LIST_MAX`) — `?limit=1000000` was obeyed before PERF1 | routes/chits.js | the pager |
