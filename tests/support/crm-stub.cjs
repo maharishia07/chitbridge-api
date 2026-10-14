@@ -121,7 +121,11 @@ function make() {
     } });
   stub('lib/select', { rows: async (owner, sel) => data.chits.filter((c) => c.counterparty_id === sel.counterparty_id) });
   stub('lib/policy', { get: async () => ({ overdue_days: 7 }) });
-  stub('lib/reward-store', { balance: async () => data.points || { programme: null, points: 0, worth: 0, entries: [] }, append: async (o, holder, e, def) => { data.appended.push({ owner: o, holder, entry: e, def }); }, holderFrom: () => null });
+  /* the store's ONE claim path (T1-FINREW): the engine's claim over the stand-in balance; both halves recorded as one write */
+  stub('lib/reward-store', { balance: async () => data.points || { programme: null, points: 0, worth: 0, entries: [] }, holderFrom: () => null,
+    programme: async () => (data.points && data.points.programme) || null,
+    claim: async (o, from, to, ref, prog) => { const c = require(path.join(API, 'lib', 'rewards')).claim(data.points || { points: 0 }, from, to, ref);
+      if (!c.ok) return { ok: false, why: c.why, points: 0 }; c.entries.forEach((e) => data.appended.push({ owner: o, holder: e.holder, entry: e, def: prog.definition_id })); return { ok: true, points: c.points }; } });
 
   const ref = { entity: 'E1', identity: null, api_key: false, gate: false };
   /* as(entity, { identity, gate: true }) runs the REAL hat gate (middleware/hat-gate.js) after the identity is set — what middleware/auth.js does

@@ -38,6 +38,7 @@ const booksHooks = require('../lib/books-hooks');
 const booksYmd = require('../lib/books-engines').ymd;
 const variantEngine = require('../lib/variant.browser.js');   /* the same shape-guard the Modifiers tab authors through */
 const keys = require('./keys');
+const { isScreenKey } = require('../lib/holder');   /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
 const { shopChanged } = require('../lib/shopchanged');
 const rateLimit = require('express-rate-limit');
 /**
@@ -78,6 +79,37 @@ function deltaPage(rows, cap) {
 }
 
 /**
+ * ⭐⭐⭐ screenView(body) — WHAT A SHOP SCREEN IS SENT (SNAP-SCREEN, 2026-10-14; counter reconciliation 14 Oct, case CFD-03).
+ *
+ * A TV hangs where the queue stands, often on a stick nobody locks. It was sent the counter's whole snapshot — every customer
+ * with phone and balance, every supplier, the staff, the reward programme, the policy, supplier aliases on each product.
+ * ⚠️ AN ALLOW-LIST, NOT A DENY-LIST: a field added to the snapshot tomorrow does NOT reach a screen until it is named here.
+ * What is named is exactly what promo.html paints: the shop's name, phone, address, money and words; each product's name,
+ * code, unit, price, MRP, category, picture and "show on screen" pick; the live offers. The bill itself never comes from
+ * here — the counter hands it to the screen on the same machine.
+ * ⚠️ ONLY WHAT IS ON THE SHELF. `avail` is a stock QUANTITY and does not travel; instead a screen is sent only items whose
+ * status is 'available' (lib/itemstatus) — a screen never sells, so an unavailable product has nothing to say on it. On a
+ * delta, an item that stopped being available travels as a removal, so it leaves the wall.
+ */
+const SCREEN_SHOP = ['name', 'address', 'phone', 'currency', 'country', 'tax_id_word', 'money_why'];
+const SCREEN_ITEM = ['item_id', 'name', 'code', 'unit', 'price', 'mrp', 'category', 'image', 'screen', 'status'];
+const pickKeys = (o, ks) => { const out = {}; ks.forEach((k) => { if (o && o[k] !== undefined) out[k] = o[k]; }); return out; };
+function screenView(body) {
+  const all = Array.isArray(body.items) ? body.items : [];
+  const shown = all.filter((i) => i && i.status === 'available');
+  const gone = body.delta ? all.filter((i) => i && i.status !== 'available').map((i) => i.item_id) : [];
+  return {
+    at: body.at, more: body.more, entity_id: body.entity_id,
+    shop: pickKeys(body.shop || {}, SCREEN_SHOP),
+    items: shown.map((i) => pickKeys(i, SCREEN_ITEM)),
+    removed: (Array.isArray(body.removed) ? body.removed : []).concat(gone),
+    delta: body.delta, since: body.since,
+    offers: Array.isArray(body.offers) ? body.offers : [],
+  };
+}
+router.screenView = screenView;   /* tests/screen-snapshot.test.cjs asserts the allow-list directly too */
+
+/**
  * M127: DOES THIS SHOP HOLD STOCK? The shop's own DATA decides, never its trade (Athi: "the data decides, not the trade").
  * Two signals, both already in the platform: the shop has RECEIVED stock (a stock_movement of reason opening or purchase - what a
  * Receive / GRN posts, lib/stock-from-chit), or a product of its own says it is kept per batch (item_data.batch_tracked true - the
@@ -108,6 +140,8 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     const readAt = new Date().toISOString();
     const entity_id = auth.entityOf(req);
+    /* ⭐ SNAP-SCREEN: is a TV asking? Decided here, once, from the key — the answer is shaped by screenView at the end */
+    const screen = isScreenKey(req.till && req.till.key);
     /* the moment the till last read the shop — anything touched after it is what it does not have */
     const sinceRaw = typeof req.query.since === 'string' ? req.query.since.trim() : '';
     const since = (sinceRaw && !Number.isNaN(Date.parse(sinceRaw))) ? new Date(sinceRaw).toISOString() : null;
@@ -147,7 +181,8 @@ router.get('/snapshot', auth, async (req, res) => {
     let till = null;
     try {
       /* ⭐ M11: a counter PC (key) and a person's phone (dev) claim through ONE allocator — keys.claimSeries */
-      const holds = req.till && ((req.till.key && req.till.key.jti) || req.till.device_id);
+      /* ⚠️ SNAP-SCREEN: a screen never bills, so it never claims a bill series — it used to lock the shop row and stamp a prefix on itself */
+      const holds = !screen && req.till && ((req.till.key && req.till.key.jti) || req.till.device_id);
       if (holds) {
         const c = await keys.claimSeries(entity_id, req.till, {
           id: req.query.till, issued: req.query.issued === '1' || req.query.issued === 'true',
@@ -848,7 +883,7 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     if (snapshotBooksOn) body.books = true;
     body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
-    res.json(body);
+    res.json(screen ? screenView(body) : body);
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
@@ -1515,10 +1550,8 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
  * decides what a counter may do.
  */
 const store = require('../lib/reward-store');
-const ledgerOf = (entity_id, holder, limit) => store.entriesOf(entity_id, holder, withEntity, limit);
 const progOf = (entity_id) => store.programme(entity_id, withEntity);
 const holderFrom = store.holderFrom;
-const ledgerWrite = (entity_id, holder, e, definition_id) => store.append(entity_id, holder, e, definition_id, withEntity);
 
 /**
  * GET /api/till/reward?scheme=phone&value=9840012345  → what this customer holds, and what it is worth
@@ -1534,16 +1567,15 @@ router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
     if (!holder) return res.status(400).json({ error: 'validation', message: 'scheme (identity|phone) and value required' });
     const prog = await progOf(entity_id);
     if (!prog) return res.json({ ok: true, holder, programme: null, points: 0, entries: [] });
-    const entries = await ledgerOf(entity_id, holder);
-    const gone = rewards.expired(prog, entries);
-    const bal = rewards.balanceOf(entries.concat(gone));
+    /* the balance is the SUM of every entry (lib/reward-store.balanceOn), never a fold of the newest page */
+    const bal = await store.balance(entity_id, holder, withEntity, prog), gone = bal.expired;
     res.json({ ok: true, holder,
                programme: { name: prog.name, earns: rewards.describeEarn(prog, {}),
                             expires_months: prog.expires_months || null },
                points: bal.points, negative: bal.negative,
-               worth: rewards.liability(prog, bal.points),
+               worth: bal.worth,
                expiring: gone.length ? gone.reduce((a, e) => a + Math.abs(e.points), 0) : 0,
-               entries: entries.slice(0, 50) });
+               entries: bal.entries });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 
@@ -1578,14 +1610,8 @@ router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
     const added = mayEarn ? rewards.earnedOn(prog, basket) : 0;
     const spend = Math.max(0, Math.trunc(Number(b.spend) || 0));
 
-    const before = await ledgerOf(entity_id, holder);
-    const gone = rewards.expired(prog, before);
-    const bal = rewards.balanceOf(before.concat(gone));
-
-    const rows = gone.slice();
-    if (spend > 0) rows.push(rewards.entry({ points: -spend, why: 'spent', ref: ref, note: 'encashed on this bill' }));
-    if (added > 0) rows.push(rewards.entry({ points: added, why: 'earned', ref: ref, note: 'bill ' + ref }));
-    for (const e of rows.filter(Boolean)) await ledgerWrite(entity_id, holder, e, prog.definition_id);
+    /* ⭐ ONE transaction: the holder locked, the balance read (a SUM of every entry), the due expiries + spend + earning written together */
+    const bal = await store.settle(entity_id, holder, prog, { ref, spend, added }, withEntity);
 
     const after = bal.points - spend + added;
     res.json({ ok: true, holder: holder, programme: prog.name, added: added, spent: spend,
@@ -1612,17 +1638,15 @@ router.post('/reward/claim', auth, auth.requireScope('till'), async (req, res) =
     if (!from || !to) return res.status(400).json({ error: 'validation', message: 'from and to holders required' });
     const prog = await progOf(entity_id);
     if (!prog) return res.status(400).json({ error: 'validation', message: 'this shop runs no programme' });
-    const entries = await ledgerOf(entity_id, from);
-    const gone = rewards.expired(prog, entries);
-    const bal = rewards.balanceOf(entries.concat(gone));
     const ref = String(b.ref || ('claim-' + Date.now())).slice(0, 64);
-    const c = rewards.claim(bal, from, to, ref);
+    /* ⭐ ALL OR NOTHING (lib/reward-store.claim): both holders locked, the balance read, both halves written in ONE transaction */
+    const c = await store.claim(entity_id, from, to, ref, prog, withEntity);
     if (!c.ok) return res.status(400).json({ error: 'validation', message: c.why });
-    for (const e of gone) await ledgerWrite(entity_id, from, e, prog.definition_id);
-    /* ⚠️ each half of a claim lands under ITS OWN holder — the entry carries it, the loop must not assume one */
-    for (const e of c.entries) await ledgerWrite(entity_id, e.holder || from, e, prog.definition_id);
     res.json({ ok: true, moved: c.points, from: from, to: to });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) {
+    if (e && e.code === 'CLAIM_RECORDED') return res.status(409).json({ error: 'conflict', code: e.code, message: e.say });
+    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+  }
 });
 
 /**
@@ -1811,7 +1835,6 @@ router.post('/pair/claim', async (req, res) => {
  * nor revocable here, so a counter can never see or switch off another counter or a connector.
  * ⚠️ The key itself is never returned — only its name, dates and last four characters, as the keys screen shows.
  */
-const isScreenKey = (k) => k && Array.isArray(k.scopes) && k.scopes.length === 1 && k.scopes[0] === 'screen';
 router.get('/screens', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -2137,17 +2160,10 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
     const entity_id = auth.entityOf(req);
     const stockStore = require('../lib/stock-store');
     const inv = require('../lib/inventory');   /* ⭐ its own q3/m2 rounding — a total here must never disagree with the ledger it reads */
-    const sheet = await stockStore.sheet(entity_id, withEntity, {});
     /* ⭐ COLLAPSED TO ONE ROW PER PRODUCT — a tracked item's batches sum into the figure the Receive screen
        actually asks for; the till does not show stock in v1 (Athi, 2026-09-10) and a per-batch breakdown
-       would be exactly that. */
-    const by = {};
-    for (const r of sheet.rows) {
-      const id = String(r.item_id);
-      const cur = by[id] || { qty: 0, value: 0 };
-      cur.qty = inv.q3(cur.qty + r.qty); cur.value = inv.m2(cur.value + r.value);
-      by[id] = cur;
-    }
+       would be exactly that. The ONE stock reader (stock-store.onHand, T1-INV) — the storefront reads the same. */
+    const by = await stockStore.onHand(entity_id, withEntity, {});
     const out = {};
     for (const id of Object.keys(by)) {
       const b = by[id];
