@@ -5,10 +5,11 @@
 /**
  * routes/crm.js — docs/design/crm/PLAN.md Phases 3 and 4 (API side). The page is the browser's; this file shapes answers.
  *
- *   GET    /api/crm/parties                     the whole list, ONE row per party (a party on both lists is one row, two roles)
- *   GET    /api/crm/parties/:id                 the record; the id of a merged party opens the survivor
+ *   GET    /api/crm/parties                     the list, ONE row per party (a party on both lists is one row, two roles); ?page=&limit= → total · page · limit (G4);
+ *                                               ?with=consent → each row's prefs.may (G1, b306)
+ *   GET    /api/crm/parties/:id                 the record; the id of a merged party opens the survivor; + prefs { history, may } (G5, b306)
  *   GET    /api/crm/parties/:id/timeline        chits · disputes · messages · ledger · interactions · follow-ups · changes, newest first, paged
- *   POST   /api/crm/parties/:id/interactions    log a call / visit / message / note                         (b276)
+ *   POST   /api/crm/parties/:id/interactions    log a call / visit / message / note (b276); a call or message OUT is gated by consent → 403 { code, why } (G2)
  *   GET    /api/crm/followups                   ?scope=mine|all&done=0|1                                    (b276)
  *   POST   /api/crm/followups · PATCH /followups/:id · DELETE /followups/:id                                (b276)
  *   DELETE /api/crm/parties/:id                 "Remove from my parties" — owner, no open dues, hides the row, deletes no history (b276)
@@ -39,6 +40,7 @@ const { isOwner } = require('../lib/owner');
 const crm = require('../lib/crm');
 const F = require('../lib/crm-followups');
 const M = require('../lib/memberships');
+const PV = require('../lib/privacy');   /* CO1: consent (the gate, the prefs) and the request register */
 
 const ctx = (req) => auth.entityOf(req);
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
@@ -52,15 +54,16 @@ function fail(res, e) {
   if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) return res.status(503).json({ code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CB CRM needs migration b276 — not run yet.' });
   if (e && e.code === 'PRIVACY_NOT_MIGRATED') return res.status(503).json({ code: e.code, error: 'Not migrated yet', message: e.message });
   if (e && e.code === 'LEADS_NOT_MIGRATED') return res.status(503).json({ code: 'LEADS_NOT_MIGRATED', error: e.message, message: e.message });
-  if (e && e.status && e.status < 500) return res.status(e.status).json({ code: e.code || 'REFUSED', error: e.message, message: e.message });
+  if (e && e.status && e.status < 500) return res.status(e.status).json(Object.assign({ code: e.code || 'REFUSED', error: e.message, message: e.message }, e.why ? { why: e.why } : {}));   /* why: the consent gate's sentence (privacy.refuse) — the client branches on `code`, shows `why` */
   return res.status(500).json({ error: 'Failed', message: safeErr(e) });
 }
 const bad = F.bad;
 const idOf = (req) => { const id = String(req.params.id || ''); if (!UUID.test(id)) throw bad('That is not a party id.', 400, 'BAD_ID'); return id; };
 
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
+/** ?view=leads · ?page=&limit= (G4: total · page · limit on top; the default limit is the whole list) · ?with=consent (G1: each party's prefs.may) */
 router.get('/parties', auth, noKey, async (req, res) => {
-  try { res.json(await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null })); } catch (e) { fail(res, e); }
+  try { res.json(await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null, page: req.query.page, limit: req.query.limit, with: req.query.with === 'consent' ? 'consent' : null })); } catch (e) { fail(res, e); }
 });
 
 /** the record: the list row + the relationship line (the scorecard's own arithmetic) + points + open follow-ups */
@@ -87,10 +90,14 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
         if (b.programme) rec.points = { programme: b.programme.name, points: b.points, worth: b.worth };
       } catch (e) { if (!(e && e.code === '42P01')) throw e; }
     }
-    /* the follow-ups: soft — before b276 the record is complete without them and says so */
-    rec.migrated = true; rec.followups = [];
-    try { rec.followups = await withEntity(owner, async (h) => F.list(h, owner, { party_id: p.party_id })); }
-    catch (e) { if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) rec.migrated = false; else throw e; }
+    /* the follow-ups and the consent prefs (G5): one transaction, each soft — before b276 / b306 the record is complete without them and says so */
+    rec.migrated = true; rec.followups = []; rec.prefs = null; rec.prefs_migrated = true;
+    await withEntity(owner, async (h) => {
+      try { rec.followups = await F.list(h, owner, { party_id: p.party_id }); }
+      catch (e) { if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) rec.migrated = false; else throw e; }
+      try { rec.prefs = await PV.prefs(h, owner, p.party_id); }          /* { history, may } — exactly what GET contact-prefs answers; one read, no second shape */
+      catch (e) { if (e && e.code === 'PRIVACY_NOT_MIGRATED') rec.prefs_migrated = false; else throw e; }
+    });
     /* a lead's stage chip + "Move to…": the server says which moves, and may/why (b297 not run → greyed with its sentence) */
     if (rec.lead) rec.lead = Object.assign({}, rec.lead, { moves: M.KINDS.lead_stage.groups.filter((g) => g !== rec.lead.stage), may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY } });
     res.json(rec);
@@ -171,13 +178,28 @@ router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
 });
 
 /* ── Phase 4: log, follow up, remove, walk-in ───────────────────────────────────────────────────────────────────── */
+/**
+ * CO1-GATE (MKT-SRV1 G2): a call or a message that went OUT is checked against the party's consent before it is logged — 403 { code, why } and nothing
+ * written. Body may say `channel` (phone · sms · whatsapp · email · chitbridge; a call is phone, a message is whatsapp when unsaid — the Log sheet's own
+ * WhatsApp kind) and `purpose` (service · marketing; service when unsaid). An inbound line, a visit and a note are never gated: nothing was sent.
+ */
+function gateOf(b) {
+  const x = b || {}, kind = String(x.kind || '').toLowerCase(), dir = String(x.direction || '').toLowerCase();
+  if (dir !== 'out' || (kind !== 'call' && kind !== 'message')) return null;
+  const channel = x.channel == null || x.channel === '' ? (kind === 'call' ? 'phone' : 'whatsapp') : String(x.channel).toLowerCase();
+  if (PV.CHANNELS.indexOf(channel) < 0) throw bad('Channel is phone, sms, whatsapp, email or chitbridge.', 400, 'BAD_CHANNEL');
+  const purpose = x.purpose == null || x.purpose === '' ? 'service' : String(x.purpose).toLowerCase();
+  if (PV.PURPOSES.indexOf(purpose) < 0) throw bad('Purpose is service or marketing.', 400, 'BAD_PURPOSE');
+  return { channel, purpose };
+}
 router.post('/parties/:id/interactions', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req);
+    const owner = ctx(req), id = idOf(req), g = gateOf(req.body);
     const row = await withEntity(owner, async (h) => {
       await F.need(h);
       const on = await require('../lib/books-store').partyOn(h, owner, id);
       if (!on.customer && !on.supplier) throw bad('Not your party.', 404, 'NOT_FOUND');
+      if (g) { const v = await PV.gate(h, owner, { party_id: id }, g.channel, g.purpose); if (!v.may) throw PV.refuse(v); }
       return F.addInteraction(h, owner, id, req.body, byOf(req));
     });
     res.status(201).json({ interaction: row });
@@ -356,7 +378,6 @@ router.post('/walk-ins/add', auth, noKey, async (req, res) => {
 });
 
 /* ── CO1 privacy: contact consent (K2, b306) and the request register (K4 · K11, b307) — lib/privacy.js ────────────────────── */
-const PV = require('../lib/privacy');
 /** the party must be on this shop's list (the same test the log uses) */
 async function mine(h, owner, id) {
   const on = await require('../lib/books-store').partyOn(h, owner, id);
@@ -376,11 +397,13 @@ router.post('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
     res.status(201).json({ pref });
   } catch (e) { fail(res, e); }
 });
+/** ?open=1 · ?page=&limit= (G4: 60 a page, 500 at most; `open` and `late` count the WHOLE register, not the page) */
 router.get('/privacy-requests', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req);
     const list = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1' }));
-    res.json({ requests: list, open: list.filter((x) => !x.answered_at).length, late: list.filter((x) => x.late).length,
+    const pg = require('../lib/page-limit').cut(list, req.query, 60, 500);
+    res.json({ requests: pg.rows, total: pg.total, page: pg.page, limit: pg.limit, open: list.filter((x) => !x.answered_at).length, late: list.filter((x) => x.late).length,
       may_answer: isOwner(req), why: isOwner(req) ? null : 'Only the owner answers a privacy request.' });
   } catch (e) { fail(res, e); }
 });

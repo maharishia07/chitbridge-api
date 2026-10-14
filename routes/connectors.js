@@ -215,8 +215,9 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
         + (folder ? ('<p>Filed under: <b>' + e(folder) + '</b></p>') : '')
         + '<p style="color:#555;font-size:13px">This is a notice only. Sign in to Chit &amp; Bridge to view the full record.</p>'
         + '</div>';
-      await sendEmail(notify_email, subj, html);
-    } catch (_) { /* notice is best-effort — never fail the signal over an email */ }
+      const sent = await sendEmail(notify_email, subj, html, { entity_id, purpose: 'service' });   /* CO1-GATE: the shop's consent register is asked first (lib/notify) */
+      if (sent && sent.refused) require('../lib/logger').info('connector notice not sent', { entity_id, chit_id, code: sent.code });
+    } catch (e) { require('../lib/logger').warn('connector notice failed — the signal stands, the notice did not go', { entity_id, chit_id, error: String(e && e.message).slice(0, 200) }); }
   }
   // participants = the entities that hold a copy (owner + CC if any) — for per-entity proof replication (b66).
   const participants = [entity_id]; if (ccRow) participants.push(ccRow.identity_id);

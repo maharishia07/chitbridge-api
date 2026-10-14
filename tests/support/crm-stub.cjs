@@ -15,7 +15,7 @@ function make() {
   const data = {
     cust: [], sup: [], walk: [], stored: { customer: {}, supplier: {} }, chits: [], messages: [], disputes: [], ledger: [], changes: [],
     interactions: [], followups: [], migrated: true, hvMissing: false, hiddenColumn: true, team: ['E1', 'A1', 'A2'], country: null, points: null,
-    queries: [], appended: [],
+    queries: [], appended: [], prefs: null,
   };
   let seq = 0; const uid = () => '00000000-0000-4000-8000-' + String(++seq).padStart(12, '0');
   const norm = (s) => String(s).replace(/\s+/g, ' ').trim();
@@ -103,6 +103,30 @@ function make() {
     if (/^UPDATE supplier_list SET hidden_at/.test(sql)) { data.sup.forEach((r) => { if (r.owner === p[0] && r.party_id === p[1] && !r.hidden_at) r.hidden_at = new Date().toISOString(); }); return { rows: [] }; }
     if (/^SELECT COALESCE\(timezone, country\) AS zone FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ zone: data.timezone || data.country || 'IN' }] };   /* the shop's day, for what is late (its zone, else its country — M210) */
     if (data.extra) { const x = await data.extra(sql, p); if (x) return x; }
+    /* CO1 b306 — party_contact_pref, in memory, AFTER a test's own extra (privacy.test.cjs answers these itself): data.prefs = null → the table is absent
+       (every older scenario: a record says prefs_migrated:false, a gate lets a service message through); an array → rows { owner, party_id, channel, purpose,
+       allowed, basis, withdrawn_at, noted_at }. A phone / e-mail lookup (the senders' gate) matches the party rows of data.cust / data.sup. */
+    if (/^SELECT to_regclass\(\$1\) IS NOT NULL AS ok/.test(sql)) return { rows: [{ ok: p[0] === 'party_contact_pref' && Array.isArray(data.prefs) }] };
+    if (/^SELECT DISTINCT ON \(p\.party_id, p\.channel, p\.purpose\)/.test(sql)) {
+      if (!Array.isArray(data.prefs)) throw gone('party_contact_pref');
+      const dg = (s) => String(s || '').replace(/[^0-9]/g, ''), parties = data.cust.concat(data.sup).filter((r) => r.owner === p[0]);
+      let rows = data.prefs.filter((r) => r.owner === p[0]);
+      if (/p\.party_id = ANY/.test(sql)) rows = rows.filter((r) => p[1].indexOf(r.party_id) >= 0);
+      else if (/i\.phone/.test(sql)) rows = rows.filter((r) => parties.some((x) => x.party_id === r.party_id && (dg(x.phone) === p[1] || dg(x.otp_contact) === p[1])));
+      else if (/lower\(i\.email\)/.test(sql)) rows = rows.filter((r) => parties.some((x) => x.party_id === r.party_id && String(x.email || '').toLowerCase() === p[1]));
+      const latest = new Map();
+      rows.slice().sort((a, b) => (a.noted_at < b.noted_at ? 1 : -1)).forEach((r) => { const k = r.party_id + '|' + r.channel + '|' + r.purpose; if (!latest.has(k)) latest.set(k, r); });
+      return { rows: Array.from(latest.values()) };
+    }
+    if (/^SELECT pref_id, .* FROM party_contact_pref/.test(sql)) {
+      if (!Array.isArray(data.prefs)) throw gone('party_contact_pref');
+      return { rows: data.prefs.filter((r) => r.owner === p[0] && r.party_id === p[1]).slice().sort((a, b) => (a.noted_at < b.noted_at ? 1 : -1)) };
+    }
+    if (/^INSERT INTO party_contact_pref/.test(sql)) {
+      if (!Array.isArray(data.prefs)) throw gone('party_contact_pref');
+      const r = { pref_id: uid(), owner: p[0], party_id: p[1], channel: p[2], purpose: p[3], allowed: p[4], basis: p[5], notice_version: p[6], noted_by: p[7], noted_at: new Date(Date.now() + data.prefs.length).toISOString(), withdrawn_at: /now\(\)\)\s*RETURNING/.test(sql) ? new Date().toISOString() : null };
+      data.prefs.push(r); return { rows: [r] };
+    }
     throw new Error('crm-stub: unexpected SQL: ' + sql.slice(0, 120));
   }
   const handle = { query: run };
