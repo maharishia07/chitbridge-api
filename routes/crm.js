@@ -249,25 +249,18 @@ router.post('/leads', auth, noKey, async (req, res) => {
     const owner = ctx(req), b = req.body || {};
     const name = String(b.name || '').replace(/\s+/g, ' ').trim();   /* \s — the letter s was being replaced ("Esai" → "E ai"), found by the FX-L2C real walk */
     if (!name) throw bad('Give the lead a name.', 400, 'BAD_NAME');
-    let phone = null;
-    if (String(b.phone || '').trim()) {
-      const from = require('../lib/rewards').holderOf({ phone: b.phone });
-      if (!from || from.scheme !== 'phone') throw bad('That phone number does not look right.', 400, 'BAD_PHONE');
-      phone = from.value;
-    }
+    const L = require('../lib/local-identity');
+    const ph = L.phoneOf(b.phone);   /* the one phone check (CRM-MINT1) */
+    if (ph.bad) throw bad('That phone number does not look right.', 400, 'BAD_PHONE');
+    const phone = ph.phone;
     const stage = b.stage == null || b.stage === '' ? 'lead' : String(b.stage);
     if (M.KINDS.lead_stage.groups.indexOf(stage) < 0) throw bad('That is not one of the stages.', 400, 'BAD_GROUP');
     await M.need();
-    const L = require('../lib/local-identity'), PF = require('../lib/party-fields');
     const out = await withEntity(owner, async (h) => {
-      const local = await L.mint(owner, name, { query: h.query.bind(h), kind: 'cus' });
-      if (local.error) throw bad((local.error && local.error.message) || 'Could not add them.', local.status || 400, 'MINT_REFUSED');
-      if (local.created && phone) await h.query(`UPDATE identities SET otp_contact = $2 WHERE identity_id = $1 AND parent_entity_id = $3`, [local.identity_id, phone, owner]);
-      const ins = await h.query(
-        `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
-         VALUES ($1, $2, 'entity', 'lead', 0, NULL) ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING RETURNING customer_list_id`, [owner, local.identity_id]);
-      if (!ins.rows.length) throw bad('That name is already on your list.', 409, 'EXISTS');
-      const party_no = await require('../db').trySavepoint(h, () => PF.ensureNo(h, owner, local.identity_id), null);
+      const a = await L.addCustomer(h, owner, { name, phone, via: 'lead' });   /* ⭐ CRM-MINT1: the one add-customer */
+      if (a.refused) throw bad((a.refused.error && a.refused.error.message) || 'Could not add them.', a.refused.status || 400, 'MINT_REFUSED');
+      if (a.exists) throw bad('That name is already on your list.', 409, 'EXISTS');
+      const local = a.local, party_no = a.party_no;
       const m = await M.add(h, owner, { kind: 'lead_stage', item_id: local.identity_id, group: stage, by: byOf(req) });
       return { party: { party_id: local.identity_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false, lead: { stage, since: crm.iso(m.at) } } };
     });
@@ -329,27 +322,29 @@ router.post('/parties/:id/stage', auth, noKey, async (req, res) => {
 router.post('/walk-ins/add', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), b = req.body || {};
-    const rewards = require('../lib/rewards'), RS = require('../lib/reward-store'), L = require('../lib/local-identity'), PF = require('../lib/party-fields');
-    const from = rewards.holderOf({ phone: b.phone });
-    if (!from || from.scheme !== 'phone') throw bad('Give the phone number they used.', 400, 'BAD_PHONE');
+    const rewards = require('../lib/rewards'), RS = require('../lib/reward-store'), L = require('../lib/local-identity');
+    const ph = L.phoneOf(b.phone);   /* the one phone check (CRM-MINT1) */
+    if (!ph.phone) throw bad('Give the phone number they used.', 400, 'BAD_PHONE');
+    const from = rewards.holderOf({ phone: ph.phone });
     const digits = from.value.replace(/[^0-9]/g, '');
     const name = String(b.name || '').replace(/\s+/g, ' ').trim() || ('Customer ' + digits.slice(-4));
-    const local = await L.mint(owner, name, { query, kind: 'cus' });
-    if (local.error) throw bad(local.error.message || 'Could not add them.', local.status || 400, 'MINT_REFUSED');
-    if (local.created) await query(`UPDATE identities SET otp_contact = COALESCE($2, otp_contact) WHERE identity_id = $1 AND parent_entity_id = $3`, [local.identity_id, from.value, owner]);
-    const ins = await withEntity(owner, (h) => h.query(
-      `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
-       VALUES ($1, $2, 'entity', 'manual', 0, NULL) ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING RETURNING customer_list_id`, [owner, local.identity_id]));
-    if (!ins.rows.length) throw bad('That customer is already on your list.', 409, 'EXISTS');
-    const party_no = await withEntity(owner, (h) => require('../db').trySavepoint(h, () => PF.ensureNo(h, owner, local.identity_id), null)).catch(() => null);
-    /* the points: read through the ONE reader, claimed by the engine, appended by the ONE writer */
-    let claimed = 0;
-    const bal = await RS.balance(owner, from, withEntity);
-    if (bal.programme && bal.points > 0) {
-      const to = { scheme: 'identity', value: String(local.identity_id) };
-      const c = rewards.claim(bal, from, to, 'claim:' + digits);
-      if (c.ok) { for (const e of c.entries) await RS.append(owner, e.holder, e, bal.programme.definition_id, withEntity); claimed = c.points; }
-    }
+    /* ⭐⭐ CRM-MINT1: the five writes (mint · contact · list row · number · the points) are ONE transaction — a points claim that
+       fails no longer leaves a customer added without their points */
+    const inTx = (h) => (_entity, fn) => fn(h);   /* the reward store's withEntity, answered by the transaction already open */
+    const { local, party_no, claimed } = await withEntity(owner, async (h) => {
+      const a = await L.addCustomer(h, owner, { name, phone: from.value, via: 'manual' });
+      if (a.refused) throw bad((a.refused.error && a.refused.error.message) || 'Could not add them.', a.refused.status || 400, 'MINT_REFUSED');
+      if (a.exists) throw bad('That customer is already on your list.', 409, 'EXISTS');
+      /* the points: read through the ONE reader, claimed by the engine, appended by the ONE writer */
+      let got = 0;
+      const bal = await RS.balance(owner, from, inTx(h));
+      if (bal.programme && bal.points > 0) {
+        const to = { scheme: 'identity', value: String(a.local.identity_id) };
+        const c = rewards.claim(bal, from, to, 'claim:' + digits);
+        if (c.ok) { for (const e of c.entries) await RS.append(owner, e.holder, e, bal.programme.definition_id, inTx(h)); got = c.points; }
+      }
+      return { local: a.local, party_no: a.party_no, claimed: got };
+    });
     res.status(201).json({ party: { party_id: local.identity_id, user_id: local.user_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false }, points_claimed: claimed });
   } catch (e) { fail(res, e); }
 });
