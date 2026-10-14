@@ -77,7 +77,13 @@ module.exports = function zohoAdapter(cfg) {
           pct: Number(t.tax_percentage != null ? t.tax_percentage : t.tax_group_percentage),
           group: String(t.tax_type || '') === 'tax_group' || !!t.tax_group_id,
           igst: String(t.tax_specific_type || '').toLowerCase() === 'igst' || /^igst/i.test(String(t.tax_name || '')) }));
-      } catch (_) { _taxes = []; }
+      } catch (e) {
+        /* ⚠️ SEC3: a tax list that did not load is NOT "no taxes" — it booked every order untaxed without a word (and cached the
+           empty list for the run). Stop: the order waits (core.pushOrder keeps a 'failed' receipt and retries at the next catch-up). */
+        _taxes = null;
+        const x = new Error('Zoho tax list could not be read (' + e.message + ') — the order waits, untaxed booking refused; retried at the next catch-up');
+        x.code = 'ZOHO_TAX_LIST'; throw x;
+      }
     }
     const same = _taxes.filter((t) => t.pct === Number(rate));
     const hit = interstate ? (same.find((t) => t.igst) || same.find((t) => !t.group))

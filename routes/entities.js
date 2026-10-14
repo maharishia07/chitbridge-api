@@ -1258,20 +1258,8 @@ router.get('/usage', auth, async (req, res) => {
  * renaming its code would orphan them, and deleting it is already refused by the foreign key. The one thing
  * worse than not being able to remove a population is removing one that entities still point at.
  */
-function rootOnly(req, res) {
-  const platformroot = require('../lib/platformroot');
-  if (!platformroot.configured()) {
-    res.status(404).json({ error: 'No platform root',
-      message: 'PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.' });
-    return false;
-  }
-  if (!platformroot.isRoot(auth.entityOf(req))) {
-    res.status(403).json({ error: 'Not the platform root',
-      message: 'The platform report is available to the operator entity only.' });
-    return false;
-  }
-  return true;
-}
+/* SEC3: the one platform-staff door now lives in lib/platformroot (GET /api/events/stats asks it too) */
+function rootOnly(req, res) { return require('../lib/platformroot').refuseUnlessRoot(req, res); }
 
 /**
  * ── ⭐⭐⭐ WHERE WORK GOES — CONFIGURABLE, NOT A MIGRATION ───────────────────────────────────────────────────────
