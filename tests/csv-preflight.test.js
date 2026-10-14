@@ -434,6 +434,31 @@ t('a heading becomes a safe field key', () => {
   assert.strictEqual(P.toFieldKey('  3-Year Stock! '), 'year_stock');
 });
 
+console.log('\ncsv-preflight · the barcode check digit and a cut workbook (CAT-FIX1)');
+
+const GS1 = require('../lib/gs1');
+const BAR = CSV.templateFor({ orderInput: { preset: 'cart', pipeline: 'commerce' }, schema: { properties: { barcode: {} } } });
+t('⭐ a barcode that fails its GTIN check digit is named, with the digit to look at', () => {
+  const r = P.preflight({ headers: ['Item', 'Barcode'], template: BAR, gs1: GS1,
+    rows: [['Tea', '4006381333931'], ['Coffee', '4006381333932'], ['Rice', 'SHOP-77'], ['Dal', '12345']] });
+  const bad = r.issues.filter((i) => i.column === 'barcode');
+  assert.strictEqual(bad.length, 1, 'only the GTIN-shaped code with a wrong digit: ' + JSON.stringify(bad));
+  assert.strictEqual(bad[0].row, 3);
+  assert.strictEqual(bad[0].severity, 'warn', 'a typo is told, not a reason to refuse the file');
+  assert.ok(/should be 1/.test(bad[0].message), bad[0].message);
+});
+t('  …and without gs1 passed in, nothing changes (Tier A: it is injected, never required)', () => {
+  const r = P.preflight({ headers: ['Item', 'Barcode'], template: BAR, rows: [['Coffee', '4006381333932']] });
+  assert.strictEqual(r.issues.filter((i) => i.column === 'barcode').length, 0);
+});
+t('⚠️ a cut workbook is SAID and is never ready', () => {
+  const r = P.preflight({ headers: ['Item'], template: CART, rows: [['Tea']], truncated: 400000 });
+  assert.strictEqual(r.ready, false);
+  assert.strictEqual(r.truncated, true);
+  assert.ok(r.notes.some((n) => /too big to read in full/.test(n) && /400,000/.test(n)), JSON.stringify(r.notes));
+  assert.strictEqual(P.preflight({ headers: ['Item'], template: CART, rows: [['Tea']] }).truncated, false);
+});
+
 console.log('\nstarter-fields · an empty catalogue is not a blank page');
 
 const S = require('../lib/starter-fields');

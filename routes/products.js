@@ -844,7 +844,7 @@ router.post('/import/preflight', auth, preflightLimiter,
     catch (e) { return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) }); }
     // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, ...importChecks(parsed) });
 
     res.json({ report, accepted: template.columns, optional: template.optional, preset: oi.preset,
       identity: ident, identity_problems: identityProblems, dry_run: true,
@@ -855,6 +855,12 @@ router.post('/import/preflight', auth, preflightLimiter,
       header_row: parsed.headerRow || 1, preview: parsed.preview || null });
   } catch (e) { fail(res, e, 'Could not read the file'); }
 });
+
+/** what the preflight is handed beside the rows: the GS1 engine for the check digit (preflight stays zero-dependency,
+ *  so it is passed in) and whether the workbook reader cut the sheet at its cell cap (CAT-FIX1, 2026-10-14) */
+function importChecks(parsed) {
+  return { gs1: require('../lib/gs1'), truncated: parsed && parsed.truncated ? xlsxRead.MAX_CELLS : false };
+}
 
 /** How many rows one upload may carry. Stated, and reported when it bites — never a silent truncation. */
 const IMPORT_MAX_ROWS = 2000;
@@ -893,12 +899,18 @@ router.post('/import', auth, importLimiter,
     let parsed;
     try { parsed = readUpload(req.body); }
     catch (e) { return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) }); }
+    /* ⚠️ A CUT WORKBOOK IS NEVER HALF-IMPORTED (CAT-FIX1): the reader stopped at its cell cap, the rows past it were
+       never read, and the import is all-or-nothing by design. Said with a code a screen can branch on. */
+    if (parsed.truncated) {
+      return res.status(413).json({ error: 'Workbook too big', code: 'WORKBOOK_CUT',
+        message: `This workbook has more than ${xlsxRead.MAX_CELLS.toLocaleString('en')} cells, so only the first part could be read. Nothing was imported — send just the sheet with the products on it.` });
+    }
     if (parsed.rows.length > IMPORT_MAX_ROWS) {
       return res.status(413).json({ error: 'Too many rows',
         message: `This file has ${parsed.rows.length} rows and one upload can carry ${IMPORT_MAX_ROWS}. Nothing was imported — split the file and it will all go in.` });
     }
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, ...importChecks(parsed) });
     const rowErrors = report.issues.filter((i) => i.severity === 'error');
     if (rowErrors.length) {
       return res.status(409).json({ error: 'The file has problems', report,
