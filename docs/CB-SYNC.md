@@ -250,7 +250,7 @@ From the reviewing-Claude hand-off (`CB-REMAINING-FINDINGS-for-CLI.md`), each it
 3. **OTP attempt-counter** — `lib/otp.js` `verifyOtp()` caps wrong tries (`MAX_OTP_ATTEMPTS`, default 5) + locks;
    wired into `catalogue.js` + `entities.js`. Needs **`migration_otp_attempts.sql`**.
 4. **`assign-bulk` transactional** — wrapped in `withTransaction` (no partial assigns).
-5. **`server.js` boot guard** — aborts PROD if `DEV_OTP` is set. Fixed test OTP `123456` stays for dev/UAT;
+5. **`server.js` boot guard** — aborts PROD if `DEV_OTP` is set. Fixed test OTP stays for a LOCAL stack only (SEC1; testers elsewhere use `TESTER_CODE`);
    must be unset before prod (so OTPs become random).
 
 **Migrations to apply on DEV before smoke:** `chit_reads`, `dispute_routing`, `chit_direction`,

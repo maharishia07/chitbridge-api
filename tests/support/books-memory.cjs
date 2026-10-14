@@ -201,6 +201,7 @@ function create() {
         .sort((a, b) => (low(b.name).startsWith(nm) - low(a.name).startsWith(nm)) || String(a.name).localeCompare(String(b.name))).slice(0, 3).map((x) => ({ name: String(x.name), party_no: x.party_no || null }));
       return { one, near };
     },
+    async outboxClose(db, e, ids, why) { const l = (ids || []).map(String); let n = 0; T.outbox.forEach((o) => { if (o.entity_id === e && !o.done_at && l.indexOf(String(o.source_chit_id)) >= 0) { o.done_at = now(); o.why = why; n++; } }); return n; },
     async outboxDone(db, e, oid, ok, why, ev) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else { o.why = why; if (ev && typeof ev === 'object') o.event = Object.assign({}, o.event || {}, clone(ev)); } },
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
