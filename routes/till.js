@@ -2176,16 +2176,17 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
     /* [OFFR-04] the average cost is the shop's buying price: an actor without can_see_costs gets the qty only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
     if (!lots) return res.json({ balances: out, at: new Date().toISOString() });
-    /* ⭐ T3-OPS (CB Operations › Stock): ?lots=1 adds the shelf as a LIST — name · unit · on hand · the batches it was summed from (earliest
+    /* ⭐ T3-OPS (CB Operations › Stock): ?lots=1 adds `shelf`, a LIST — name · unit · on hand · the batches it was summed from (earliest
        expiry first) — fewest on hand first, below zero at the top: the server's own "low", since no reorder level is kept (no figure invented).
-       ⚠️ NO VALUE, NO COST in items[] — what the shelf is worth is the books' answer, and cost is gated above. One read for the names. */
+       ⚠️ NO VALUE, NO COST in shelf[] — what the shelf is worth is the books' answer, and cost is gated above. One read for the names. */
     const ids = Object.keys(by);
     const nm = ids.length ? await withEntity(entity_id, (db) => db.query(
       `SELECT item_id::text AS id, item_data->>'name' AS name FROM catalogue_items WHERE entity_id = $1 AND item_id::text = ANY($2::text[])`, [entity_id, ids])) : { rows: [] };
     const names = {}; for (const x of nm.rows) names[x.id] = x.name;
-    const items = ids.map((id) => ({ item_id: id, name: names[id] || null, unit: by[id].unit || null, qty: by[id].qty, below_zero: by[id].qty < 0, lots: by[id].lots }))
+    const shelf = ids.map((id) => ({ item_id: id, name: names[id] || null, unit: by[id].unit || null, qty: by[id].qty, below_zero: by[id].qty < 0, lots: by[id].lots }))
       .sort((a, b) => a.qty - b.qty || String(a.name || '').localeCompare(String(b.name || '')));
-    res.json({ balances: out, items, below_zero: items.filter((x) => x.below_zero).length, at: new Date().toISOString() });
+    /* ⚠️ `shelf`, NOT `items`: the web's api() unwrap collapses an answer holding an `items` array to that array alone (core.js), and below_zero would be lost */
+    res.json({ balances: out, shelf, below_zero: shelf.filter((x) => x.below_zero).length, at: new Date().toISOString() });
   } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
 });
 

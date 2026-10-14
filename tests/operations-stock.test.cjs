@@ -4,7 +4,7 @@
  * Offline: the real stock-store.onHand, the real GET /api/till/stock and lib/home-facts' `operations` builder over a stand-in db. Held here:
  *   · onHand({ lots }) is ADDITIVE — without it the answer is byte-for-byte what the counter and the storefront read
  *   · with it: unit + the batches each figure was summed from, earliest expiry first; the untracked pool is not a batch
- *   · ?lots=1 → items[] fewest-on-hand first, below zero at the top, a name from the catalogue, NO value and NO cost; below_zero counted
+ *   · ?lots=1 → shelf[] fewest-on-hand first, below zero at the top, a name from the catalogue, NO value and NO cost; below_zero counted
  *   · the ledger not migrated → 503 with code STOCK_NOT_READY (the page branches on the code, never the sentence)
  *   · the Home card: "N items on the shelf" + "M below zero" (tone dn), or words when nothing moved; no low-stock line (no reorder level)
  * Run: node tests/operations-stock.test.cjs
@@ -64,18 +64,18 @@ function serve() {
 function get(s, p) {
   return new Promise((res, rej) => http.get({ port: s.address().port, path: p }, (r) => { let b = ''; r.on('data', (c) => { b += c; }); r.on('end', () => res({ status: r.statusCode, body: JSON.parse(b || 'null') })); }).on('error', rej));
 }
-t('GET /api/till/stock?lots=1 → items fewest first (below zero on top), names, batches, below_zero — no value, no cost in items', async () => {
+t('GET /api/till/stock?lots=1 → shelf fewest first (below zero on top), names, batches, below_zero — no value, no cost in shelf', async () => {
   const s = await serve();
   try {
     const r = await get(s, '/api/till/stock?lots=1');
     assert.strictEqual(r.status, 200);
-    assert.deepStrictEqual(r.body.items.map((x) => x.name), ['Toor Dal', 'Groundnut Oil', 'Ponni Rice']);
+    assert.deepStrictEqual(r.body.shelf.map((x) => x.name), ['Toor Dal', 'Groundnut Oil', 'Ponni Rice']);
     assert.strictEqual(r.body.below_zero, 1);
-    assert.strictEqual(r.body.items[0].below_zero, true);
-    assert.ok(!/avg_cost|"value"/.test(JSON.stringify(r.body.items)), 'no cost or value in items');
-    assert.deepStrictEqual(r.body.items[2].lots[0], { lot: 'B1', expires_at: '2026-11-01', qty: 4 });
+    assert.strictEqual(r.body.shelf[0].below_zero, true);
+    assert.ok(!/avg_cost|"value"/.test(JSON.stringify(r.body.shelf)), 'no cost or value in items');
+    assert.deepStrictEqual(r.body.shelf[2].lots[0], { lot: 'B1', expires_at: '2026-11-01', qty: 4 });
     const plain = await get(s, '/api/till/stock');
-    assert.strictEqual(plain.body.items, undefined, 'the counter\'s answer is unchanged');
+    assert.strictEqual(plain.body.shelf, undefined, 'the counter\'s answer is unchanged');
     TABLE = false;
     const nr = await get(s, '/api/till/stock?lots=1');
     assert.deepStrictEqual([nr.status, nr.body.code], [503, 'STOCK_NOT_READY']);
