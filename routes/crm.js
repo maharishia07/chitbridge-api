@@ -31,6 +31,7 @@
  * ⚠️ BEFORE b276 the writers answer 503 { code: 'CRM_NOT_MIGRATED' }; the record and the timeline simply carry `migrated: false`.
  */
 const express = require('express');
+const logger = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { withEntity, query } = require('../db');

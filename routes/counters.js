@@ -25,6 +25,7 @@
  */
 'use strict';
 const express = require('express');
+const { safeErr } = require('../lib/respond');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction } = require('../db');
@@ -131,7 +132,7 @@ router.get('/', auth, sessionOnly, async (req, res) => {
         .map((c) => view(c, list, devices));
     });
     res.json({ counters: out, free: out.filter((c) => c.state === 'closed').length });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /** ⭐ CREATE — online by construction (this is the web). The id is the lowest one no counter holds and nothing was billed under. */
@@ -168,7 +169,7 @@ router.patch('/:id', auth, sessionOnly, async (req, res) => {
     });
     if (!done) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, id, name });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -196,7 +197,7 @@ router.post('/:id/assign', auth, sessionOnly, async (req, res) => {
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, counter: out });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -273,7 +274,7 @@ router.post('/:id/release', auth, sessionOnly, async (req, res) => {
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     res.json(Object.assign({ ok: true }, out));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**

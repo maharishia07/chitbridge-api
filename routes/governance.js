@@ -1,5 +1,6 @@
 'use strict';
 const versionref = require('../lib/versionref');
+const log = require('../lib/logger');
 // routes/governance.js — GOV-01 protected entity / constitution / governed inheritance.
 // Adapted to this codebase: Express router + query/withTransaction from ../db, identity_id PK,
 // parameterized SQL only (closes TD-006 for this surface), default-deny, read view leaks no PII.
@@ -326,7 +327,7 @@ router.put('/profile', auth, async (req, res) => {
     const saved = await require('../lib/profile').saveProfile(entity_id, req.body || {});
     /* ⚠ AFTER the save, not before it. Announcing a change that has not happened yet is a lie every open tab
        acts on, and it would fire even when saveProfile throws. */
-    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}
+    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile: the signal was not sent — carried on without it', e); }
     res.json(saved);
   } catch (err) { res.status(err.status || 500).json({ error: 'Save profile failed', message: safeErr(err) }); }
 });
@@ -344,7 +345,7 @@ router.put('/profile/vault', auth, async (req, res) => {
     const b = req.body || {};
     const saved = await require('../lib/profile').saveVault(entity_id, b.vault || b);
     /* ⭐ the Business identity rows are the counter's bill header (trade name, address, phone) — so open counters hear it */
-    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}
+    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e); }
     res.json(saved);
   } catch (err) { res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
@@ -384,8 +385,8 @@ router.put('/country-setup', auth, async (req, res) => {
     const CS = require('../lib/country-setup');
     const out = await withEntity(entity_id, (h) => CS.save(h, entity_id, req.body || {}, req.identity && req.identity.identity_id));   /* CS2: who corrected the country is logged */
     /* the books gate's cached answer and the books-hooks switch cache both move with the country */
-    try { require('../lib/books-hooks').forget(entity_id); } catch (_) {}
-    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}
+    try { require('../lib/books-hooks').forget(entity_id); } catch (e) { log.fellBack('governance PUT /country-setup: the helper failed — carried on without it', e); }
+    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /country-setup: the signal was not sent — carried on without it', e); }
     res.json(out);
   } catch (err) {
     if (err && err.say) return res.status(err.status || 422).json({ code: err.code, error: err.say, message: err.say });
@@ -446,7 +447,7 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
     /* ⭐ user_id RIDES ALONG so the caller can DISPLAY a handle rather than a key — invariant 3. bridge_id
        stays because it is what the UI keys the row by. */
     /* ⭐ the public facts with their rung — what they gave, what their books say, what we checked (lib/public-facts.js) */
-    let facts = null; try { facts = require('../lib/public-facts').factsOf(r.rows[0]); } catch (_) {}
+    let facts = null; try { facts = require('../lib/public-facts').factsOf(r.rows[0]); } catch (e) { log.fellBack('governance GET /readiness/:bridge_id: the helper failed — carried on without it', e); }
     res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...rd });
   } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
 });

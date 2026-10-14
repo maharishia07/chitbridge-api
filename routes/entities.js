@@ -477,7 +477,7 @@ router.get('/me', auth, async (req, res) => {
     // Resolve the entity's GOVERNANCE from attributes (constitution · installation · basics · allowances · jurisdiction).
     // Best-effort; rides INSIDE entity (unwrap() drops siblings) so the client can read it. Null if not resolvable yet.
     let governance = null;
-    try { governance = await resolveEntityGovernance(auth.entityOf(req)); } catch (_) {}
+    try { governance = await resolveEntityGovernance(auth.entityOf(req)); } catch (e) { log.fellBack('entities GET /me: failed — carried on without it', e); }
     /**
      * ⭐⭐ READ FROM THE ROW WE ALREADY HAVE — these were TWO EXTRA ROUND TRIPS against `identities` for the
      * SAME identity_id the main SELECT above just fetched. On the hottest endpoint on the platform.
@@ -509,10 +509,10 @@ router.get('/me', auth, async (req, res) => {
          for the same identity_id inside one request. */
       const row = _me;
       let planMenu = null;
-      try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (_) {}
+      try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (e) { log.fellBack('entities GET /me: the helper failed — carried on without it', e); }
       visibility_cap = visibilityCap.capOf({ plan: row.plan, planMenu, paramsOverride: row.params_override || {} });
       catalogue_visibility = visibilityCap.effective(row.catalogue_visibility, visibility_cap);
-    } catch (_) { /* pre-b114 → the default above */ }
+    } catch (e) { log.fellBack('entities GET /me: the read failed — carried on without it', e); /* pre-b114 → the default above */ }
     const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs, ui_prefs, policy_flags });
     /**
      * ⭐⭐ ?include= — ONE HTTP ROUND TRIP INSTEAD OF FOUR. Athi, 2026-08-21: *"why do we need a round trip,
@@ -803,9 +803,9 @@ async function visibilityCapFor(entityId) {
   try {
     const r = await query('SELECT plan, params_override FROM identities WHERE identity_id = $1', [entityId]);
     if (r.rows[0]) { plan = r.rows[0].plan; paramsOverride = r.rows[0].params_override || {}; }
-  } catch (_) { /* pre-governance schema — capOf() then reports unenforced */ }
+  } catch (e) { log.fellBack('entities visibilityCapFor: the read failed — carried on without it', e); /* pre-governance schema — capOf() then reports unenforced */ }
   let planMenu = null;
-  try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (_) {}
+  try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (e) { log.fellBack('entities visibilityCapFor: the helper failed — carried on without it', e); }
   return visibilityCap.capOf({ plan, planMenu, paramsOverride });
 }
 
@@ -1010,14 +1010,14 @@ router.patch('/profile', auth,
          /* $8 — validated against the constitution above; null leaves it alone. */
          _cur, req.body.supplies || null].concat(idSql.params));
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
-      if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (_) {} }
+      if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (e) { log.fellBack('entities: the write failed — carried on without it', e); } }
       /* ui_prefs — the business's own UI choices (which product rows show, appearance). MERGED, never replaced, so two
          screens saving two keys do not erase each other. Guarded by the column probe: b166 may not have run. */
       if (req.body.ui_prefs && typeof req.body.ui_prefs === 'object' && !Array.isArray(req.body.ui_prefs)) {
         /* the same merge-patch as /me/prefs: a null value removes its key (RFC 7386), an absent key is untouched */
         const _up = {}, _upDrop = [];
         for (const [k, v] of Object.entries(req.body.ui_prefs)) { if (v === null) _upDrop.push(k); else _up[k] = v; }
-        try { if (await require('../lib/schema').hasColumn('identities', 'ui_prefs')) await query(`UPDATE identities SET ui_prefs = ${MERGE_PATCH_SQL('ui_prefs')} WHERE identity_id=$2`, [JSON.stringify(_up), id, _upDrop]); } catch (_) {}
+        try { if (await require('../lib/schema').hasColumn('identities', 'ui_prefs')) await query(`UPDATE identities SET ui_prefs = ${MERGE_PATCH_SQL('ui_prefs')} WHERE identity_id=$2`, [JSON.stringify(_up), id, _upDrop]); } catch (e) { log.fellBack('entities: the write failed — carried on without it', e); }
       }
       // b114 (self-healing): CATALOGUE VISIBILITY — publishing is an explicit act. Whitelisted, never free text, and
       // saved separately so a normal profile save still works before b114 is applied.
@@ -1342,15 +1342,15 @@ router.get('/routing', auth, async (req, res) => {
         const t = await db.query(
           `SELECT kind, route_to_entity_id FROM entity_work_routing WHERE entity_id = $1`, [me]);
         for (const r of t.rows) teamsBy[r.kind] = r.route_to_entity_id;
-      } catch (_) { teamsBy = {}; }
+      } catch (e) { log.fellBack('entities GET /routing: the read failed — answered with an empty set', e); teamsBy = {}; }
 
       const folders = await db.query(
         `SELECT folder_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, lower(name)`, [me])
-        .catch(() => ({ rows: [] }));
+        .catch(log.orElse('entities GET /routing: the read failed — answered with none', ({ rows: [] })));
       const people = await db.query(
         `SELECT identity_id, display_name FROM identities
           WHERE parent_entity_id = $1 AND entity_kind = 'actor' AND coalesce(status,'active') = 'active'
-          ORDER BY lower(display_name)`, [me]).catch(() => ({ rows: [] }));
+          ORDER BY lower(display_name)`, [me]).catch(log.orElse('entities GET /routing: the read failed — answered with none', ({ rows: [] })));
       return { rows: rows.rows, teamsBy, folders: folders.rows, people: people.rows };
     });
 
@@ -1372,7 +1372,7 @@ router.get('/routing', auth, async (req, res) => {
             AND coalesce(i.status,'active') <> 'erased'
           ORDER BY c.path`, [me]);
       teams = t.rows;
-    } catch (_) { teams = []; }   /* no b243/root_path, or not in a network — then there are no teams */
+    } catch (e) { log.fellBack('entities GET /routing: the read failed — answered with none', e); teams = []; }   /* no b243/root_path, or not in a network — then there are no teams */
 
     const by = {};
     for (const r of out.rows) by[r.kind] = r;
@@ -1386,7 +1386,7 @@ router.get('/routing', auth, async (req, res) => {
     });
   } catch (e) {
     console.error('routing read:', e.code || '', e.message);
-    res.status(500).json({ error: 'Could not read where work goes', message: e.message });
+    res.status(500).json({ error: 'Could not read where work goes', message: safeErr(e) });
   }
 });
 
@@ -1411,7 +1411,7 @@ router.put('/routing', auth, async (req, res) => {
       [me, kind, nul(b.folder_id), nul(b.assignee_actor_id), nul(b.route_to_entity_id)]));
     /* ⚠️ the resolver memoises for 60s; without this a change looks like it did not save for a minute, which
        is exactly long enough for somebody to set it twice. */
-    try { require('../lib/workroute').invalidate(me); } catch (_) {}
+    try { require('../lib/workroute').invalidate(me); } catch (e) { log.fellBack('entities nul: the helper failed — carried on without it', e); }
     res.json({ ok: true, kind });
   } catch (e) {
     if (e.code === '42P01') return res.status(409).json({ error: 'Not available yet',
@@ -1422,7 +1422,7 @@ router.put('/routing', auth, async (req, res) => {
     if (e.code === '23503') return res.status(409).json({ error: 'Gone',
       message: 'That folder or person no longer exists. Pick another.' });
     console.error('routing write:', e.code || '', e.message);
-    res.status(500).json({ error: 'Could not save it', message: e.message });
+    res.status(500).json({ error: 'Could not save it', message: safeErr(e) });
   }
 });
 
@@ -1456,7 +1456,7 @@ router.get('/populations', auth, async (req, res) => {
          FROM identities
         WHERE identity_type = 'entity' AND coalesce(status,'active') = 'active'
           AND coalesce(population, 'live') IN (SELECT code FROM ops.population)
-        ORDER BY lower(display_name)`).catch(() => ({ rows: [] }));
+        ORDER BY lower(display_name)`).catch(log.orElse('entities GET /populations: the read failed — answered with none', ({ rows: [] })));
 
     res.json({ populations: r.rows, desk_candidates: cand.rows });
   } catch (e) {
@@ -1492,7 +1492,7 @@ router.put('/populations/:code/desk', auth, async (req, res) => {
       message: 'There is no population called ' + code + '.' });
     /* ⚠️ the resolver memoises for 60s; without this the change looks like it did not save for a minute,
        which is long enough for somebody to set it twice. */
-    try { require('../lib/platformroot').invalidateDesks(); } catch (_) {}
+    try { require('../lib/platformroot').invalidateDesks(); } catch (e) { log.fellBack('entities PUT /populations/:code/desk: the helper failed — carried on without it', e); }
     res.json({ ok: true, code, desk_entity_id: desk });
   } catch (e) {
     if (e.code === '42703' || e.code === '42P01') return res.status(409).json({ error: 'Not available yet',
@@ -1502,7 +1502,7 @@ router.put('/populations/:code/desk', auth, async (req, res) => {
     if (e.code === '23514') return res.status(409).json({ error: 'Not a desk for this population',
       message: e.message, hint: e.hint || null });
     console.error('population desk:', e.code || '', e.message);
-    res.status(500).json({ error: 'Could not set the desk', message: e.message });
+    res.status(500).json({ error: 'Could not set the desk', message: safeErr(e) });
   }
 });
 
@@ -1532,7 +1532,7 @@ router.post('/populations', auth, async (req, res) => {
     if (['42P01', '3F000', '42501'].includes(e.code)) return res.status(409).json({ error: 'Not available yet',
       message: 'Run migration b249 — the population registry does not exist in this database.' });
     console.error('population create:', e.code || '', e.message);
-    res.status(500).json({ error: 'Failed to add the population', message: e.message });
+    res.status(500).json({ error: 'Failed to add the population', message: safeErr(e) });
   }
 });
 
@@ -1562,7 +1562,7 @@ router.get('/mis', auth, async (req, res) => {
      * ⚠️ 'real' is still accepted: it is what the screen sent before b249 named the live population 'live'.
      */
     const popRows = (await query('SELECT code, is_live FROM ops.population')
-      .catch(() => ({ rows: [] }))).rows;
+      .catch(log.orElse('entities GET /mis: the read failed — answered with none', ({ rows: [] })))).rows;
     const liveCode = (popRows.find((p) => p.is_live) || {}).code || 'live';
     const asked = String(req.query.population || '').trim().toLowerCase();
     const pop = (asked === '' || asked === 'real') ? liveCode
@@ -1997,7 +1997,7 @@ router.get('/mis', auth, async (req, res) => {
         try {
           const who = await query('SELECT current_user AS u, current_setting(\'is_superuser\') AS su');
           counts_error += ' [connected as ' + who.rows[0].u + ', superuser=' + who.rows[0].su + ']';
-        } catch (_) { /* if even this fails the original error is the more useful one */ }
+        } catch (e) { log.fellBack('entities GET /mis: the read failed — carried on without it', e); /* if even this fails the original error is the more useful one */ }
       }
     }
     for (const r of rows) {
@@ -2167,7 +2167,7 @@ router.get('/mis', auth, async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not build the report', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not build the report', message: safeErr(err) });
   }
 });
 
@@ -2182,7 +2182,7 @@ router.get('/entitlements', auth, async (req, res) => {
         'SELECT plan, vertical, entity_kind, catalogue_visibility FROM identities WHERE identity_id = $1',
         [entity_id]);
       row = r.rows[0] || {};
-    } catch (_) { /* pre-b229/b230 schema — the defaults below still describe the tier honestly */ }
+    } catch (e) { log.fellBack('entities GET /entitlements: the read failed — carried on without it', e); /* pre-b229/b230 schema — the defaults below still describe the tier honestly */ }
 
     const code = row.plan || plans.DEFAULT_PLAN;
     const p = plans.plan(code);
@@ -2213,7 +2213,7 @@ router.get('/entitlements', auth, async (req, res) => {
         jurisdiction: gov.jurisdiction || null,
         capabilities: gov.capabilities || [],
       };
-    } catch (_) { /* governance unresolvable — reported as null rather than guessed */ }
+    } catch (e) { log.fellBack('entities GET /entitlements: the helper failed — carried on without it', e); /* governance unresolvable — reported as null rather than guessed */ }
 
     res.json({
       plan: code,
@@ -2231,7 +2231,7 @@ router.get('/entitlements', auth, async (req, res) => {
           + 'switched off after the outage its header records.',
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read entitlements', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read entitlements', message: safeErr(err) });
   }
 });
 

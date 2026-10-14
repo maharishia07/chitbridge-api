@@ -74,7 +74,7 @@ it('⚠️ the country is memoised — a sale must not pay a round trip for a co
 
 it('⚠️ a failed country lookup never fails the bill', () => {
   const fn = route.slice(route.indexOf('async function countryOfEntity'), route.indexOf('async function countryOfEntity') + 700);
-  assert.ok(/catch \(_\)/.test(fn), 'countryOfEntity can throw, and it is on the bill path');
+  assert.ok(/catch \((_|e)\)/.test(fn), 'countryOfEntity can throw, and it is on the bill path');   /* T2-HONEST: caught and logged */
 });
 
 console.log('— the rule it applies is the right one —');

@@ -16,6 +16,8 @@
  * revocable); the actor row is its identity. No migration: the columns b62 gave connectors.
  */
 const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
+const { safeErr } = require('../lib/respond');
+const logger = require('../lib/logger');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -158,7 +160,7 @@ function mayFor(c, country) {
 /** the signed-in shop's country (identities.country) — one read; null when anonymous or unset */
 async function countryOf(req) {
   if (!req.identity) return null;
-  const r = await query('SELECT country FROM identities WHERE identity_id = $1', [auth.entityOf(req)]).catch(() => ({ rows: [] }));
+  const r = await query('SELECT country FROM identities WHERE identity_id = $1', [auth.entityOf(req)]).catch(logger.orElse('integrations countryOf: the read failed — answered with none', ({ rows: [] })));
   return r.rows[0] && r.rows[0].country ? String(r.rows[0].country).toUpperCase() : null;
 }
 
@@ -202,7 +204,7 @@ router.get('/download/:id', authIfOffered, async (req, res) => {
   res.end(buf);
 });
 
-function health(last_seen) { if (!last_seen) return 'offline'; const age = Date.now() - new Date(last_seen).getTime(); return age > 15 * 60 * 1000 ? 'offline' : (age > 3 * 60 * 1000 ? 'slow' : 'live'); }
+const { health } = require('./connectors');   /* ⭐ the one health(last_seen) — the co-assist rail's (T2-HONEST) */
 const KIT_ROWS = `SELECT identity_id, display_name, site, last_seen, connector_type, connector_config, status, created_at
                     FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND status = 'active'`;
 function rowOut(a) { const c = a.connector_config || {}; return { id: c.kit_id || a.identity_id, actor_id: a.identity_id, name: a.display_name, adapter: c.adapter || (a.connector_type === 'erp' ? 'erp' : a.connector_type), host: a.site || '', version: c.version || '',
@@ -226,7 +228,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
       const list = await keysMod.listOf(entity_id); const rec = list.find((k) => k && String(k.jti) === String(jti)) || null;
       const prior = (rec && rec.enrol) || null; const t = (b.tally && typeof b.tally === 'object') ? b.tally : {};
       const norm = (g) => String(g || '').replace(/\s/g, '').toUpperCase();
-      const me = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]).catch(() => ({ rows: [] }));
+      const me = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]).catch(logger.orElse('integrations POST /heartbeat: the read failed — answered with none', ({ rows: [] })));
       const myG = norm(me.rows[0] && me.rows[0].gstn), theirG = norm(t.gstin); const sameHost = !!(prior && prior.host && host && prior.host === host);
       let approved, reason;
       /* ⚠️ the owner's approval is FOR ONE HOST (found by INT-01, run 30: the click on STORE-PC rode along to THIRD-PC and let a wrong GSTIN through) */
@@ -269,7 +271,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
     try { const pf = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]); const f = (pf.rows[0] && pf.rows[0].policy_flags) || {};
       if (/^(received|accepted|completed|manual)$/.test(String(f.books_at || ''))) books_at = String(f.books_at);
       if (Number(f.books_overdue_hours) > 0) overdue_hours = Number(f.books_overdue_hours);
-      if (f.stream_owner && typeof f.stream_owner === 'object') owner = f.stream_owner; } catch (_) {}
+      if (f.stream_owner && typeof f.stream_owner === 'object') owner = f.stream_owner; } catch (e) { logger.fellBack('integrations POST /heartbeat: the read failed — carried on without it', e); }
     /**
      * ⭐⭐ THE CLAIM (2026-09-07). A connector says which streams it can carry; an unowned stream becomes its, an owned one stays where
      * it is, and the answer tells it what it may do. First come, because the common account has ONE system and must never be asked a
@@ -289,7 +291,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
     }
     res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString(), approved: enrol ? enrol.approved : true, reason: enrol ? enrol.reason : null,
                policy: { books_at, books_overdue_hours: overdue_hours }, owns: mine.length ? owns : null, stream_owner: owner });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 /** the owner approves a PC (session only): the key behind that connector row may now do its work; a later heartbeat from the same host stays approved */
 router.post('/:actor_id/approve', auth, async (req, res) => {
@@ -304,7 +306,7 @@ router.post('/:actor_id/approve', auth, async (req, res) => {
     const enrol = await require('./keys').setEnrol(entity_id, c.key_jti, patch);
     await query(`UPDATE identities SET connector_config = COALESCE(connector_config,'{}'::jsonb) || $2::jsonb WHERE identity_id = $1`, [a.identity_id, JSON.stringify({ enrol: Object.assign({}, c.enrol || {}, patch) })]);
     res.json({ ok: true, enrol });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 /**
  * ⭐ THE BOOKS SAY SO ON THE TASK (Athi, 2026-09-06: "there must be a detail somewhere in the task that it has been written to Tally").
@@ -328,14 +330,14 @@ router.post('/books', auth, auth.requireScope('connector'), async (req, res) => 
     try { await require('../db').withEntity(entity_id, (db) => db.query(
       `UPDATE chit_header SET business_json = COALESCE(business_json,'{}'::jsonb) || jsonb_build_object('books_log',
          (COALESCE(business_json->'books_log','[]'::jsonb) || jsonb_build_array($1::jsonb)))
-        WHERE chit_id = $2 AND entity_id = $3`, [JSON.stringify(Object.assign({ kind }, rec)), b.chit_id, entity_id])); } catch (_) {}
-    try { require('../lib/events').emit([entity_id], { kind: 'chit', id: b.chit_id, note: 'books' }); } catch (_) {}
+        WHERE chit_id = $2 AND entity_id = $3`, [JSON.stringify(Object.assign({ kind }, rec)), b.chit_id, entity_id])); } catch (e) { logger.fellBack('Tally books: the answer is on the Task but was not added to books_log — reconciliation will not see this one', e); }
+    try { require('../lib/events').emit([entity_id], { kind: 'chit', id: b.chit_id, note: 'books' }); } catch (e) { logger.fellBack('Tally books: the bell did not ring — an open Task shows the books answer on its next refresh', e); }
     res.json({ ok: true, kind, books: rec });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.get('/status', auth, async (req, res) => {
   try { const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]); res.json({ connectors: r.rows.map(rowOut) }); }
-  catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 const SQL_RECONCILE = `SELECT ch.chit_id, ch.direction, ch.purpose, ch.auto_subject, ch.manual_subject, ch.created_at, ch.all_recipients,
               ch.business_json->'books' AS books, (ch.business_json ? 'books_request') AS asked, ch.business_json->'books_skip' AS skip,
@@ -369,7 +371,7 @@ router.get('/streams', auth, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const flags = await require('../lib/policy').get(entity_id);
     res.json({ streams: STREAM_LIST, owner: flags.stream_owner || {}, connectors: await connectorsOf(entity_id) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.put('/streams', auth, async (req, res) => {
   try {
@@ -418,7 +420,7 @@ router.post('/books/skip', auth, async (req, res) => {
       [JSON.stringify(rec), b.chit_id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, skipped: on });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /** a readable counterparty from all_recipients: the first entry that is not the sender, by whatever name it carries */
@@ -449,7 +451,7 @@ router.get('/reconcile', auth, async (req, res) => {
     /* ⭐ when did a connector first arrive? Nothing released before that could have been booked, so it is not late (2026-09-07). */
     let since = null;
     try { const c = await query("SELECT MIN(created_at) AS t FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL", [entity_id]);
-      since = c.rows[0] && c.rows[0].t ? new Date(c.rows[0].t).getTime() : null; } catch (_) {}
+      since = c.rows[0] && c.rows[0].t ? new Date(c.rows[0].t).getTime() : null; } catch (e) { logger.fellBack('integrations GET /reconcile: the read failed — carried on without it', e); }
     const now = Date.now();
     const out = rows.rows.map((r) => {
       const kind = r.direction === 'sent' ? 'purchase' : 'order';
@@ -472,7 +474,7 @@ router.get('/reconcile', auth, async (req, res) => {
     const counts = out.reduce((a, r) => { a[r.state] = (a[r.state] || 0) + 1; a.total++; return a; }, { total: 0 });
     const by_system = out.filter((r) => r.state === 'booked').reduce((a, r) => { const k = r.system || 'books'; a[k] = (a[k] || 0) + 1; return a; }, {});
     res.json({ days, books_at: at, overdue_hours: hrs, connector_since: since ? new Date(since).toISOString() : null, counts, by_system, rows: out });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /* ── ON DEMAND (Athi: "does it read on demand, for example availability?"): the storefront asks, the bell carries the
@@ -488,14 +490,14 @@ router.post('/ask/:handle/stock', async (req, res) => {
     const ask_id = uuidv4();
     const n = require('../lib/events').emit([entity_id], { kind: 'ask', what: 'stock', ask_id, codes: Array.isArray(req.body && req.body.codes) ? req.body.codes.slice(0, 200) : [] });
     res.json({ asked: n > 0, listeners: n, ask_id, note: n ? 'a connector is listening — re-read the stock in a few seconds' : 'no connector is listening now — the last stamped figures stand' });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.get('/stock/:handle', async (req, res) => {
   try {
     const entity_id = await entityOfHandle(req.params.handle); if (!entity_id) return res.status(404).json({ error: 'Not found' });
     const r = await require('../db').withEntity(entity_id, (db) => db.query(`SELECT item_id, item_data->'avail' AS avail FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data ? 'avail'`, [entity_id]));
     res.json({ stock: r.rows.map((x) => ({ item_id: x.item_id, avail: x.avail })), at: new Date().toISOString() });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 /* ── THE PROFILE FROM THEIR SYSTEM (Athi, 2026-09-05): what we look for · where it comes from · how trusted ── */
 const PM = require('../lib/profile-map');
@@ -504,7 +506,7 @@ router.get('/profile-map', auth, async (req, res) => {
     const tn = values.trade_name, norm = (x) => String(x == null ? '' : x).replace(/\s+/g, '').toLowerCase();
     if (tn && tn.other && norm(tn.other.value) !== norm(tn.value)) out.name_mismatch = { profile: tn.value, other: tn.other.value, source: tn.other.source };
     res.json(out); }
-  catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.post('/profile', auth, auth.requireScope('connector'), async (req, res) => {
   try {
@@ -519,7 +521,7 @@ router.post('/profile', auth, auth.requireScope('connector'), async (req, res) =
     for (const k of Object.keys(a.fields)) if (a.fields[k].derived && !m.values[k]) m.values[k] = { value: a.fields[k].value, source: a.fields[k].source, as_of, rung: a.fields[k].rung || 'declared' };
     const w = await P.applyProfileMap(entity_id, m.values, { source, as_of });
     res.json(Object.assign({ message: 'Profile updated from ' + source, written: m.written, kept: m.kept, rows: w.rows }, PM.assess(await P.profileValues(entity_id))));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.openapi = { paths: {
   '/api/integrations/profile-map': { get: { summary: 'What we look for about the store, where it comes from, how trusted — with the current values', tags: ['keys'], security: [{ bearer: [] }, { apiKey: [] }], responses: { 200: { description: 'the map' } } } },

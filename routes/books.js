@@ -3,6 +3,8 @@
 // @stage-note sheet) and its few writes (payments, manual entries, reversals, month locks, opening, packs). 404 while off.
 'use strict';
 const CLOCK = require('../lib/shop-clock');
+const { safeErr } = require('../lib/respond');
+const logger = require('../lib/logger');
 /**
  * routes/books.js — SPEC-books-v2 §5, in the shapes the Ledger screen reads (chitbridge-web public/app/cap-books.js).
  *
@@ -76,7 +78,7 @@ function fail(res, e) {
   }
   /* silence is the bug: the 500 used to leave nothing in the Railway log */
   console.error('books route failed:', (e && e.stack) || e);
-  return res.status(500).json({ error: 'Failed', message: String((e && e.message) || e).slice(0, 300) });
+  return res.status(500).json({ error: 'Failed', message: safeErr(e) });
 }
 /** a key-bearer (a counter, a TV, a connector) has no business in the ledger — the second fence behind KEY_ROUTES */
 function noKey(req, res, next) {
@@ -862,7 +864,7 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
         const a = chart.find((x) => x.role === (c.direction === 'in' ? 'debtors' : 'creditors'));
         const k = c.party_id + '|' + (a ? a.account_id : '');
         if (!kept.has(k)) kept.set(k, []);
-        const next = ['deposited', 'cleared', 'bounced'].filter((to) => { try { R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day); return true; } catch (_) { return false; } });
+        const next = ['deposited', 'cleared', 'bounced'].filter((to) => { try { R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day); return true; } catch (e) { logger.fellBack('books cheques: not a next step for this cheque — not offered', e, 'debug'); return false; } });
         const p = names.get(String(c.party_id)) || {};
         list.push({ payment_id: c.payment_id, party_id: c.party_id, party_no: p.party_no || null, name: p.nickname || p.name || null, direction: c.direction, amount_minor: Number(c.amount_minor),
           currency: c.currency, reference: c.reference || null, cheque_no: c.cheque_no || null, cheque_bank: c.cheque_bank || null, cheque_date: E.ymd(c.cheque_date), received_at: E.ymd(c.received_at),

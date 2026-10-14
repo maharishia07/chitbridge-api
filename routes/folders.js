@@ -2,6 +2,7 @@
 // entity; filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.
 // chit_status is RLS-protected -> any query touching it runs inside withEntity(caller). The folder table is entity-filtered.
 const express = require('express');
+const log = require('../lib/logger');
 const router  = express.Router();
 const { withEntity } = require('../db');   // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
 const { safeErr } = require('../lib/respond');
@@ -47,7 +48,7 @@ async function viewFolder(e, id) {
   const sys = await views.systemById(e, id);
   if (sys) return sys.on ? sys : false;
   const r = await withEntity(e, (db) => db.query(
-    `SELECT f.folder_id, f.name, to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [id, e])).catch(() => ({ rows: [] }));
+    `SELECT f.folder_id, f.name, to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [id, e])).catch(log.orElse('folders viewFolder: the read failed — answered with none', ({ rows: [] })));
   const f = r.rows[0];
   return f && f.kind === 'view' ? f : null;
 }
@@ -70,7 +71,7 @@ router.get('/', auth, async (req, res) => {
     catch (e1) { if (!missingCol(e1)) throw e1; r = await readFolders(false); }   // pre-b133 → retry in a FRESH tx
     /* a shop's own VIEW folder counts what its rules match, not what was filed into it (nothing can be) */
     const rows = r.rows;
-    for (const f of rows) if (f.kind === 'view') { try { f.count = (await views.members(e, f, {})).counts.open; } catch (_) { f.count = null; } }
+    for (const f of rows) if (f.kind === 'view') { try { f.count = (await views.members(e, f, {})).counts.open; } catch (e) { log.fellBack('folders GET /: failed — answered with nothing', e); f.count = null; } }
     /**
      * ⭐ THE SYSTEM FOLDERS FIRST — the inventory's ON rows (lib/folder-inventory), each with its code, its ledger and the count
      * of its OPEN items. ⚠️ A failure reading them never blanks the shop's own tree, and it is SAID (system_error), not swallowed.
@@ -228,7 +229,7 @@ router.post('/move', auth,
     if (fid && INV.byId(fid)) return res.status(400).json({ error: 'View folder', code: 'FOLDER_IS_VIEW',
       message: 'That folder shows what its rule matches — it is not a place to move chits into. The chit is already there if it matches.' });
     if (fid) {
-      const k = await withEntity(e, (db) => db.query(`SELECT to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [fid, e])).catch(() => ({ rows: [] }));
+      const k = await withEntity(e, (db) => db.query(`SELECT to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [fid, e])).catch(log.orElse('folders: the read failed — answered with none', ({ rows: [] })));
       if (k.rows[0] && k.rows[0].kind === 'view') return res.status(400).json({ error: 'View folder', code: 'FOLDER_IS_VIEW',
         message: 'That folder shows what its rules match — it is not a place to move chits into.' });
     }
@@ -349,7 +350,7 @@ router.get('/:id/metrics', auth, [ param('id').isUUID() ], validate, async (req,
     }
     /* The folder's own side scopes what it measures — a Task folder's arithmetic is over Task copies. */
     let fscope = null;
-    try { const f = await withEntity(me, (db) => db.query('SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2', [req.params.id, me])); fscope = (f.rows[0]||{}).scope || null; } catch (_) {}
+    try { const f = await withEntity(me, (db) => db.query('SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2', [req.params.id, me])); fscope = (f.rows[0]||{}).scope || null; } catch (e) { log.fellBack('folders GET /:id/metrics: the read failed — carried on without it', e); }
     const rows = await select.rows(me, { folder_id: req.params.id, archived: req.query.archived === '1',
       direction: fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : undefined });
     res.json(Object.assign({ folder_id: req.params.id, scope: fscope }, measure.measure(rows, { overdue_days: flags.overdue_days })));

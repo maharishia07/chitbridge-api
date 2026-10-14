@@ -28,6 +28,7 @@
  */
 'use strict';
 const express = require('express');
+const logger = require('../lib/logger');
 const router  = express.Router();
 const { body } = require('express-validator');
 const { query, withEntity, withTransaction, readBatch } = require('../db');
@@ -138,7 +139,7 @@ router.get('/', auth, async (req, res) => {
        * A shop with no stores gets nothing: the words would be about a network it does not have.
        */
       if (at.net !== undefined) require('../lib/network-offers').stampReleases(rows, res[at.net].rows[0]);
-    } catch (_) { rows = null; }
+    } catch (e) { logger.fellBack('definitions GET /: the read failed — answered with nothing', e); rows = null; }
     const r = rows === null ? await withEntity(entity_id, (db) => db.query(listSql, params)) : null;
     /**
      * ⭐⭐ THE JURISDICTION'S SLABS RIDE ALONG WITH THE ENTITY'S OWN. Athi, 2026-09-04: *"why each entity should

@@ -15,6 +15,7 @@
  */
 'use strict';
 const express = require('express');
+const { safeErr } = require('../lib/respond');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
@@ -31,7 +32,7 @@ router.get('/groups', auth, sessionOnly, async (req, res) => {
   try {
     const groups = await withEntity(auth.entityOf(req), (db) => qk.listGroups(db, auth.entityOf(req)));
     res.json({ groups });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.post('/groups', auth, sessionOnly, async (req, res) => {
@@ -41,7 +42,7 @@ router.post('/groups', auth, sessionOnly, async (req, res) => {
     res.status(201).json({ group });
   } catch (e) {
     if (e.code === 'validation') return res.status(400).json({ error: 'validation', message: e.message });
-    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
 });
 
@@ -54,7 +55,7 @@ router.patch('/groups/:id', auth, sessionOnly, async (req, res) => {
   } catch (e) {
     if (e.code === 'not_found') return res.status(404).json({ error: 'Not found' });
     if (e.code === 'conflict') return res.status(409).json({ error: 'conflict', message: e.message, current: e.current });
-    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
 });
 
@@ -67,7 +68,7 @@ router.delete('/groups/:id', auth, sessionOnly, async (req, res) => {
   } catch (e) {
     if (e.code === 'not_found') return res.status(404).json({ error: 'Not found' });
     if (e.code === 'conflict') return res.status(409).json({ error: 'conflict', message: e.message, current: e.current });
-    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
 });
 
@@ -80,7 +81,7 @@ router.post('/groups/:id/items', auth, sessionOnly, async (req, res) => {
     res.status(201).json({ item });
   } catch (e) {
     if (e.code === 'not_found') return res.status(404).json({ error: 'Not found' });
-    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
 });
 
@@ -89,7 +90,7 @@ router.delete('/groups/:id/items/:productId', auth, sessionOnly, async (req, res
     const entity_id = auth.entityOf(req);
     const r = await withEntity(entity_id, (db) => qk.removeItem(db, entity_id, req.params.id, req.params.productId, userOf(req)));
     res.json(r);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.patch('/groups/:id/items', auth, sessionOnly, async (req, res) => {
@@ -97,7 +98,7 @@ router.patch('/groups/:id/items', auth, sessionOnly, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const r = await withEntity(entity_id, (db) => qk.reorderItems(db, entity_id, req.params.id, (req.body || {}).items, userOf(req)));
     res.json(r);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.get('/screen-config/default', auth, sessionOnly, async (req, res) => {
@@ -105,7 +106,7 @@ router.get('/screen-config/default', auth, sessionOnly, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const cfg = await withEntity(entity_id, (db) => qk.getScreenConfig(db, entity_id, null));
     res.json(cfg);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.put('/screen-config/default', auth, sessionOnly, async (req, res) => {
@@ -113,7 +114,7 @@ router.put('/screen-config/default', auth, sessionOnly, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const cfg = await withEntity(entity_id, (db) => qk.setScreenConfig(db, entity_id, null, (req.body || {}).config, userOf(req)));
     res.json(cfg);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 module.exports = router;

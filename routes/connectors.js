@@ -4,6 +4,7 @@
 // CASCADES: a Pi/system offline => every connection under it reports no-signal (the sensors may be fine, the
 // pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)
 const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
+const logger = require('../lib/logger');
 const express = require('express');
 const router  = express.Router();
 const crypto  = require('crypto');
@@ -49,7 +50,10 @@ const CANON_MAX_DEPTH = require('../lib/canon').MAX_DEPTH;   /* ⭐ one bound, d
  */
 const stableStringify = (v) => require('../lib/canon').canon(v);
 const hashPayload = (v) => crypto.createHash('sha256').update(stableStringify(v)).digest('hex');
-// health from last_seen: never / stale >15m = offline, >3m = slow, else live
+/**
+ * ⭐ THE ONE health(last_seen) of a connector: never / stale >15m = offline, >3m = slow, else live. The co-assist rail (here) and the
+ * kit's status (routes/integrations.js) read THIS function — a second copy is how two screens disagree about one kit (T2-HONEST).
+ */
 function health(last_seen){ if (!last_seen) return 'offline'; const age = Date.now() - new Date(last_seen).getTime(); if (age > 15*60*1000) return 'offline'; if (age > 3*60*1000) return 'slow'; return 'live'; }
 
 const ownerEntityId = (req) => auth.entityOf(req);
@@ -253,7 +257,7 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
           assigned_to = default_assignee;
         }
       });
-    } catch (_) { /* assignment is best-effort — never fail the signal over it */ }
+    } catch (e) { logger.fellBack('connectors: the write failed — carried on without it', e); /* assignment is best-effort — never fail the signal over it */ }
   }
   // EXTERNAL NOTICE (off-rail): if a notify_email is resolved, send an email NUDGE to someone NOT in the system — a
   // notice, never the governed payload. Best-effort + gated (only delivers when email is configured); never blocks.
@@ -269,7 +273,7 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
         + '<p style="color:#555;font-size:13px">This is a notice only. Sign in to Chit &amp; Bridge to view the full record.</p>'
         + '</div>';
       await sendEmail(notify_email, subj, html);
-    } catch (_) { /* notice is best-effort — never fail the signal over an email */ }
+    } catch (e) { logger.fellBack('connectors e: the signal was not sent — carried on without it', e); /* notice is best-effort — never fail the signal over an email */ }
   }
   // participants = the entities that hold a copy (owner + CC if any) — for per-entity proof replication (b66).
   const participants = [entity_id]; if (ccRow) participants.push(ccRow.identity_id);
@@ -657,3 +661,4 @@ router.delete('/:actorId', auth, requireConnector, [param('actorId').isUUID()], 
 });
 
 module.exports = router;
+module.exports.health = health;

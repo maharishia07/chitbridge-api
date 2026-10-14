@@ -4,10 +4,11 @@
 // All endpoints for create login manage actors
 
 const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
+const logger = require('../lib/logger');
 const express = require('express');
 const empCode = require('../lib/employee-code');   // M02: the one place an employee's first code is minted, e-mailed and shown
 /** The e-mail on file for an employee (identities.email), or '' — a read that can never fail the request. */
-const actorEmail = async (id) => { try { const r = await db('SELECT email FROM identities WHERE identity_id = $1', [id]); return (r.rows[0] && r.rows[0].email) || ''; } catch (_) { return ''; } };
+const actorEmail = async (id) => { try { const r = await db('SELECT email FROM identities WHERE identity_id = $1', [id]); return (r.rows[0] && r.rows[0].email) || ''; } catch (e) { logger.fellBack('actors actorEmail: the read failed — left blank', e); return ''; } };
 const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on process.env.DEV_OTP directly
 const identityAuth = require('../lib/identity-auth');   // [capability: sign-in] the one token issuer, entity or coassist
 const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
@@ -51,7 +52,7 @@ async function loginIdFor(actor_key, req) {
   try {
     const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
     handle = r.rows[0] && r.rows[0].user_id;
-  } catch (_) { /* unreadable → fall through to the slug, never to a name with spaces in it */ }
+  } catch (e) { logger.fellBack('actors loginIdFor: the read failed — carried on without it', e); /* unreadable → fall through to the slug, never to a name with spaces in it */ }
   return `${actor_key}@${handle || require('../lib/handle').slug(req.identity.display_name || '')}`;
 }
 
@@ -254,7 +255,7 @@ router.post('/',
         const _u = await db('SELECT user_id, display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
         entity_row = _u.rows[0] || null;
         if (entity_row) entity_handle = entity_row.user_id || entity_row.display_name || entity_handle;
-      } catch (_) { /* fall back to the name we already have — never print an empty handle */ }
+      } catch (e) { logger.fellBack('actors: the read failed — carried on without it', e); /* fall back to the name we already have — never print an empty handle */ }
       const entity_name  = entity_handle;
       const display_name = sanitise(req.body.display_name);
       const actor_key    = req.body.actor_key.toLowerCase().trim();
@@ -338,7 +339,7 @@ router.post('/',
        * is a pricing question the ledger does not need to answer — it records that one was taken, and when.
        */
       try { require('../lib/meter').meter(entity_id, 'coassist.create', {
-        detail: identity_id, rid: req.id }).catch(() => {}); } catch (_) {}
+        detail: identity_id, rid: req.id }).catch(logger.orElse('actors: failed — carried on without it')); } catch (e) { logger.fellBack('actors: the helper failed — carried on without it', e); }
 
       res.json({
         message: 'Actor created successfully',
@@ -463,7 +464,7 @@ router.patch('/:id',
             WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
           [actor_id, entity_id]);
         beforeRow = _b.rows[0] || null;
-      } catch (_) { /* the audit trail must never be the reason a change fails */ }
+      } catch (e) { logger.fellBack('actors PATCH /:id: the read failed — carried on without it', e); /* the audit trail must never be the reason a change fails */ }
 
       const sets = [], vals = []; let n = 1;
       if ('display_name' in req.body) { sets.push(`display_name = $${n++}`); vals.push(sanitise(req.body.display_name)); }
@@ -952,7 +953,7 @@ router.put('/:id/status',
           const _dh = await client.query(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id]);
           disputes_cleared = (_dh && _dh.rowCount) || 0;
         });
-      } catch (_) {}
+      } catch (e) { logger.fellBack('actors PUT /:id/status: the write failed — carried on without it', e); }
 
       res.json({
         message: `Actor ${action}d successfully`,
