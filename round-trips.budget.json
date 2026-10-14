@@ -345,6 +345,30 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/catalogue/:bridge_id": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "extra": true,
+      "why": "SEC4, by hand: the sign-in-first gate adds 0 trips — it reads storefront_access off the view already built and verifies the bearer in memory. The stub finds no shop (404 after resolveEntity's one read); a real read costs what buildPublicView costs, unchanged."
+    },
+    "GET /api/catalogue/enquiry/inbox": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "extra": true,
+      "why": "SEC4, by hand: ONE withEntity (BEGIN · set_config · the grouped SELECT with its total · COMMIT) whatever the page size."
+    },
+    "POST /api/catalogue/enquiry/:item_id": {
+      "file": "catalogue.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "SEC4, by hand: the bell adds 0 trips (events.notifyAfter is in-process, after the response). Route otherwise unchanged; placeholder ceiling until a fixture lets it run."
+    },
     "GET /api/channels": {
       "file": "channels.js",
       "trips": 1,
@@ -1447,6 +1471,14 @@
       "fired": false,
       "extra": true,
       "why": "T1-RAIL, by hand: 0 new trips, 0 new statements — moveStatus's read and UPDATE are lib/rail-status statusGate's, in the same transaction; a sender's cancel gates its sent copy (+1 SELECT in the transaction it already opened). The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
+    },
+    "POST /api/chits/:chit_id/deliver-lines": {
+      "file": "chits.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "SEC4, by hand: 0 new trips, 0 new statements — the gate reads the copy taxCopy.copyOf already read (moved before the use write, its catch removed so a failed read refuses instead of guessing) and asks workflow.can in memory; a refused caller now costs 1 trip and writes nothing. The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
     },
     "PUT /api/chits/:chit_id/void": {
       "file": "chits.js",
