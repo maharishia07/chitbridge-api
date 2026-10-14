@@ -420,7 +420,7 @@ async function verify(req, res) {
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups — a handle carries a unique index whatever type owns it */
     const COLS = `identity_id, bridge_id, display_name, email, user_id, identity_type,
-                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
+                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope, parent_entity_id, email_verified`;
     let rows;
     if (email) rows = (await query(`SELECT ${COLS} FROM identities WHERE email = $1`, [email])).rows;
     else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows;
@@ -549,12 +549,19 @@ async function verify(req, res) {
           /* …and THIS installation first when it serves the vertical — platform-0 also serves 'base', and created_at alone picked it on every spin */
           try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY (installation_key = $2) DESC, created_at LIMIT 1`, [c.constitution_key, installKey]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; }
           catch (e) { require('../lib/logger').warn('signin.verify: installation lookup failed — the shop is stamped on this installation', { installKey, why: String(e && e.message) }); }
-          await withEntity(identity.identity_id, (cl) => cl.query(
-            `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
-             ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()`,
-            [identity.identity_id, c.constitution_key, c.version, installKey]));
-          mintedConstitution = require('../lib/versionref').format(c.constitution_key, c.version);
-          console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
+          /**
+           * ⭐ SIGNIN-CONST (2026-10-14): A SIGN-IN NEVER RESETS THE CONSTITUTION. This block runs on every owner verify, and its upsert
+           * used to re-stamp the shop to `base` each time. The ONE writer (lib/country-setup.stampConstitution) now applies the
+           * registrant's choice at registration's verify only (the identity not yet email_verified — COLS carries it), and on every later
+           * sign-in inserts only when the shop has no stamp at all. The answer below names the constitution the shop ACTUALLY holds.
+           */
+          const first = identity.email_verified !== true;
+          const stamp = await withEntity(identity.identity_id, (cl) => require('../lib/country-setup').stampConstitution(cl, identity.identity_id,
+            { key: c.constitution_key, version: c.version, installation_key: installKey, first }));
+          const held = stamp || { constitution_key: c.constitution_key, constitution_version: c.version, stamped: false };
+          mintedConstitution = require('../lib/versionref').format(held.constitution_key, held.constitution_version);
+          if (held.stamped) console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
+          else require('../lib/logger').info('signin.verify: the shop keeps its constitution — a sign-in never re-stamps', { identity_id: identity.identity_id, constitution: mintedConstitution, first });
         }
       } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }
 
