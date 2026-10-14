@@ -251,18 +251,22 @@ router.get('/search', auth, async (req, res) => {
 const policy = require('../lib/policy');
 const policyEntity = (req) => auth.entityOf(req);
 
+/* T3-SETTINGS: `may[key]` = { ok, code, why } for THIS caller (lib/policy.mayAll — the same table the PATCH refuses with): CB Settings › Policy greys a
+   control on the code and paints the sentence; a key is not a person, so every flag answers KEY (a key never writes policy). */
 router.get('/policy', auth, async (req, res) => {
-  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND }); }
-  catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
+  try {
+    const may = req.api_key ? Object.fromEntries(Object.keys(policy.mayAll(false)).map((k) => [k, { ok: false, code: 'KEY', why: 'A key reads policy; a signed-in person changes it.' }]))
+                            : policy.mayAll(require('../lib/owner').isOwner(req));
+    res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND, may });
+  } catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
 });
 
 router.patch('/policy', auth, async (req, res) => {
-  /* ⚠️ the folder inventory's switches are the OWNER's (routes/folders.js PUT /inventory/:code) — not a back door for a co-assist or a key */
-  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'system_folders') && !require('../lib/owner').isOwner(req)) {
-    return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may switch folders on or off.' });
-  }
-  if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'books') && !require('../lib/owner').isOwner(req)) {
-    return res.status(403).json({ error: 'Only the owner may do this.', message: 'Only the owner may let the books post by themselves.' });
+  /* ⚠️ the owner-only keys (the folder inventory's switches, the books' auto-post) refuse a co-assist or a key — ONE table, lib/policy.OWNER_ONLY */
+  const owner = require('../lib/owner').isOwner(req);
+  for (const k of Object.keys(req.body || {})) {
+    const m = policy.may(k, owner);
+    if (!m.ok && m.code === 'OWNER_ONLY') return res.status(403).json({ error: 'Only the owner may do this.', code: m.code, message: m.why });
   }
   try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
   catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }

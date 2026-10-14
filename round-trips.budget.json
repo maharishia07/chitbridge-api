@@ -466,6 +466,33 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/connectors": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "T3-SETTINGS: by hand — lib/connector-rows.connectorsOf, the one statement GET /api/integrations/status runs"
+    },
+    "GET /api/facts/counters": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "T3-SETTINGS: by hand — the till card's REGISTER_SQL in one readBatch"
+    },
+    "GET /api/facts/governance": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "T3-SETTINGS: by hand — lib/policy.get, one SELECT"
+    },
     "GET /api/facts/offer-lab": {
       "file": "facts.js",
       "trips": 1,
@@ -481,6 +508,15 @@
       "fired": true,
       "status": 200,
       "extra": true
+    },
+    "GET /api/facts/plan": {
+      "file": "facts.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "T3-SETTINGS: by hand — the plan column (readBatch) + the active constitution (cached after the first read) + countChitsToday (withEntity); warm = 2. Six statements: readBatch and withEntity each wrap their SELECT in the entity-scope SET (B1 RLS)"
     },
     "GET /api/facts/product-lab": {
       "file": "facts.js",

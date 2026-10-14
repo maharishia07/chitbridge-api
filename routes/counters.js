@@ -34,6 +34,16 @@ const sessionOnly = (req, res, next) => {
   if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Counters are managed by a signed-in person, not by a key.' });
   next();
 };
+/**
+ * ⭐ ONE OWNER GATE ON EVERY COUNTERS ROUTE (T3-SETTINGS, 2026-10-14). Until today only /assign asked lib/owner; a co-assist could add,
+ * rename, open and release the shop's counters — which series a shop bills under is the owner's call on every one of those, not only on
+ * the phone assignment. The code `OWNER_ONLY` is what CB Settings › Counters & keys greys its controls on, WITH this sentence.
+ */
+const ownerOnly = (req, res, next) => {
+  if (!require('../lib/owner').isOwner(req)) return res.status(403).json({ error: 'Forbidden', code: 'OWNER_ONLY', message: 'Only the owner manages the counters.' });
+  next();
+};
+const gate = [auth, sessionOnly, ownerOnly];
 const PENDING_MS = 2 * 60 * 1000;
 const isPending = (h) => typeof h === 'string' && h.indexOf('pending:') === 0;
 const isDevice = (h) => typeof h === 'string' && h.indexOf('dev:') === 0;
@@ -128,7 +138,7 @@ router.listNarrow = async (entity_id) => {
   return Object.keys(counters).map((id) => ({ id, name: (counters[id] && counters[id].name) || ('Counter ' + id) }));
 };
 
-router.get('/', auth, sessionOnly, async (req, res) => {
+router.get('/', gate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const out = await withTransaction(async (db) => {
@@ -141,7 +151,7 @@ router.get('/', auth, sessionOnly, async (req, res) => {
 });
 
 /** ⭐ CREATE — online by construction (this is the web). The id is the lowest one no counter holds and nothing was billed under. */
-router.post('/', auth, sessionOnly, async (req, res) => {
+router.post('/', gate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const name = String((req.body && req.body.name) || '').trim().slice(0, 40);
@@ -160,7 +170,7 @@ router.post('/', auth, sessionOnly, async (req, res) => {
   } catch (e) { res.status(e.status || 500).json({ error: e.status ? 'validation' : 'Failed', message: String(e && e.message) }); }
 });
 
-router.patch('/:id', auth, sessionOnly, async (req, res) => {
+router.patch('/:id', gate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();
@@ -181,13 +191,12 @@ router.patch('/:id', auth, sessionOnly, async (req, res) => {
  * ── ⭐⭐ ASSIGN A COUNTER LABEL TO A PHONE NUMBER (M11, D9) ──────────────────────────────────────────────────────
  * POST /api/counters/:id/assign { phone } → policy_flags.counters[id].assigned = { phone, at, by }. `phone: ''` unassigns.
  * The phone of a person whose VERIFIED PHONE document is this number then bills as this counter (keys.claimSeries); an
- * unassigned phone bills under the next free label. OWNER only (lib/owner) — who bills under which series is the shop's call.
+ * unassigned phone bills under the next free label. OWNER only (the one `gate` above) — who bills under which series is the shop's call.
  * ⚠️ A label still held by another phone is NOT taken from it here: that phone may be billing under it offline right now.
  * It moves off at its next sign-in/snapshot, and the newly assigned phone takes the label after that (`held_by` says who).
  */
-router.post('/:id/assign', auth, sessionOnly, async (req, res) => {
+router.post('/:id/assign', gate, async (req, res) => {
   try {
-    if (!require('../lib/owner').isOwner(req)) return res.status(403).json({ error: 'Forbidden', code: 'OWNER_ONLY', message: 'Only the owner can assign a counter.' });
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();
     const raw = req.body && req.body.phone;
@@ -211,7 +220,7 @@ router.post('/:id/assign', auth, sessionOnly, async (req, res) => {
  * writes the same row, so doing it inside the lock would wait on itself — and then the key is bound. Two people
  * pressing Open at the same moment: one gets the counter, the other is told who has it.
  */
-router.post('/:id/open', auth, sessionOnly, async (req, res) => {
+router.post('/:id/open', gate, async (req, res) => {
   const entity_id = auth.entityOf(req);
   const id = String(req.params.id || '').toUpperCase();
   const nonce = 'pending:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -259,7 +268,7 @@ router.post('/:id/open', auth, sessionOnly, async (req, res) => {
  * CLOSE, from the counter. If that PC ever comes back, its key is refused, and its bills are recovered by pairing
  * it and bringing them in (the clash guard and renumbering then keep the books unique).
  */
-router.post('/:id/release', auth, sessionOnly, async (req, res) => {
+router.post('/:id/release', gate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const id = String(req.params.id || '').toUpperCase();

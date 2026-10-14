@@ -67,8 +67,16 @@ function answer(text, params) {
   if (/FROM identities WHERE identity_id = \$1/.test(sql) && /jsonb_agg/.test(sql)) {
     return { rows: [{ country: 'IN', currency_code: 'INR',
       counters: { C1: { id: 'C1', held_by: 'k1' }, C2: { id: 'C2', held_by: 'k2' } },
-      keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: F.allShut ? SHUT_AT : null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: F.c2open ? null : '2026-10-01T10:00:00Z' } }] }] };
+      keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: F.allShut ? SHUT_AT : null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: F.c2open ? null : '2026-10-01T10:00:00Z' } }]
+        .concat(F.otherKeys ? [{ jti: 'k3', scopes: ['services'], till: { id: null, closed_at: null } }, { jti: 'k4', scopes: ['connector', 'services'], till: { id: null, closed_at: null } }] : []) }] };
   }
+  /* T3-SETTINGS: the four CB Settings cards' reads */
+  if (/connector_type IS NOT NULL/.test(sql)) return { rows: F.connectors ? [
+    { identity_id: 'k1', display_name: 'Tally on OFFICE-PC', site: 'OFFICE-PC', last_seen: new Date(Date.now() - 60000).toISOString(), connector_type: 'erp', connector_config: { kit_id: 'tally@OFFICE-PC', adapter: 'tally' }, status: 'active' },
+    { identity_id: 'k2', display_name: 'CSV folder', site: 'BACK-PC', last_seen: new Date(Date.now() - 3 * DAYS).toISOString(), connector_type: 'erp', connector_config: { kit_id: 'csv@BACK-PC', adapter: 'csv' }, status: 'active' }] : [] };
+  if (/SELECT plan FROM identities/.test(sql)) return { rows: F.plan === null ? [] : [{ plan: F.plan || 'free' }] };
+  if (/FROM platform_constitution pc/.test(sql)) return { rows: F.noMenu ? [] : [{ version: 2, params: {}, plan_menu: { free: { max_entities: 5, chits_per_day: 10, max_networks: 1, public_facing: false } }, root_id: 'r1' }] };
+  if (/count\(\*\)::int AS n FROM chit_header/.test(sql)) return { rows: [{ n: F.chitsToday == null ? 4 : F.chitsToday }] };
   if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: params[0] === 'a2' }] };
   if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, last_check: { at: '2026-10-06T21:00:00Z', ok: true } }] };
   /* STD1: the ONE count — GROUP BY todo over every open row (211 here: more than any page of 50 or 200) */
@@ -232,6 +240,43 @@ const get = (port, p) => new Promise((ok) => {
   t('rail/chits: a key is 403', r.status, 403);
   KEY = false;
   F.chits = 'few';
+
+  /* ── T3-SETTINGS: the four CB Settings doors ── */
+  r = await g('counters');
+  t('counters: the open ones named + the count, the till card\'s own test of open; no keys for other systems', r.json.lines.map((l) => [l.text, l.value]), [['C1 open · 2 counters', 1], ['No keys for other systems', 0]]);
+  t('counters: figures', r.json.figures, { counters: 2, counters_open: 1, keys: 1, keys_other: 0 });
+  t('counters: one trip', r.trips, 1);
+  F.otherKeys = true; r = await g('counters');
+  t('counters: the keys other systems hold are counted, a till key is not one of them', r.json.lines[1], { text: '2 keys for other systems', value: 2 });
+  F.otherKeys = false;
+  r = await g('connectors');
+  t('connectors: none checked in says so in words, never 0 alone', r.json.lines, [{ text: 'No connector has checked in', value: 0 }]);
+  F.connectors = true; r = await g('connectors');
+  t('connectors: the count + how many are live, and the most recent one with {when} (the page words the time)', [r.json.lines[0].text, r.json.lines[1].text, typeof r.json.lines[1].at], ['2 connectors · 1 live', 'Tally on OFFICE-PC seen {when}', 'string']);
+  t('connectors: one trip (lib/connector-rows, the status route\'s own statement)', r.trips, 1);
+  F.connectors = false;
+  r = await g('governance');
+  t('governance: nothing set away from the default says so', r.json.lines, [{ text: 'Every rule at its default', value: 0 }]);
+  const P = require(API + '/lib/policy'); const was = P.get;
+  P.get = async () => Object.assign(P.defaults(), { trade_side: 'receive', tol_rate_bp: 25, _migrated: true });
+  r = await g('governance');
+  t('governance: two rules set by the shop, counted against lib/policy.defaults', [r.json.lines[0], r.json.figures.changed], [{ text: '2 rules set by you', value: 2 }, 2]);
+  P.get = was;
+  r = await g('plan');
+  t('plan: the plan column + the constitution\'s limit + today\'s chits (the quota\'s own counter)', r.json.lines.map((l) => l.text), ['Free plan', '4 chits today of 10']);
+  t('plan: figures carry the declared limits and the use', [r.json.figures.plan, r.json.figures.limits.chits_per_day, r.json.figures.used], ['free', 10, { chits_today: 4 }]);
+  t('plan: at most 3 trips', r.trips <= 3, true);
+  F.chitsToday = 10; r = await g('plan');
+  t('plan: at the limit the line is marked dn', r.json.lines[1].tone, 'dn');
+  F.chitsToday = null;
+  F.plan = 'gold'; r = await g('plan');
+  t('plan: a plan the constitution does not declare says "limits not declared" — never 0, never unlimited', r.json.lines.map((l) => l.text), ['Gold plan', 'Limits not declared for this plan']);
+  F.plan = undefined; F.plan = null; r = await g('plan');
+  t('plan: no plan row says so', r.json.lines[0].text, 'No plan recorded');
+  F.plan = undefined;
+  KEY = true; r = await g('counters');
+  t('a key is refused on the settings cards too', r.status, 403);
+  KEY = false;
 
   /* refusals */
   r = await g('nonsense');

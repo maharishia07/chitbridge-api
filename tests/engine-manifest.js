@@ -217,6 +217,7 @@ const INFRA_LIBS = [
   'books-payables.js',   // F4: CB Finance · Payables — F3's datedSide('out') per bill + msmeFlags + earlyDiscount (reads only)
   /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */
   'home-facts.js', 'till-summary.js', 'open-orders.js',   /* M168: the till's order list and Home's Orders card, one query (2026-10-10) */
+  'connector-rows.js',   /* T3-SETTINGS (2026-10-14): the checked-in connectors — one statement, one row shape, one health rule — read by GET /integrations/status and the Connectors Home card */
   /* [CB Sides] the two panels' read (sides: SQL + the reuses) and the impact walk shared with raida.walk (impact: pure graph rule, used by the register and the panel) (2026-10-09) */
   'sides.js', 'impact.js',
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */

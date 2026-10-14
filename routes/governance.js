@@ -56,7 +56,7 @@ async function countChitsToday(entityId) {
     `SELECT count(*)::int AS n FROM chit_header
       WHERE sender_entity_id = $1
         AND sent_at >= date_trunc('day', now() AT TIME ZONE 'UTC')`, [entityId]));
-  return rows[0].n;
+  return rows[0] ? rows[0].n : 0;   /* T3-SETTINGS: a read that answered no row is no chits, never a throw (the Plan card reads this offline too) */
 }
 
 // ── GET /api/governance/entities/:id — read-only view, no PII ──
@@ -487,6 +487,7 @@ module.exports = router;
 module.exports.assertChitAllowed = assertChitAllowed;
 module.exports.assertPublicAllowed = assertPublicAllowed;
 module.exports.loadActiveConstitution = loadActiveConstitution;
+module.exports.countChitsToday = countChitsToday;   /* T3-SETTINGS: the Plan & usage card counts today's chits with the quota's own counter, never a second one */
 
 /**
  * ── SUPPLIER READINESS ACCEPTANCE (b177) ────────────────────────────────────────────────────────────────────

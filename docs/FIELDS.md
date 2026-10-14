@@ -565,3 +565,14 @@ the whole range, exactly as before (the web adopts the pages in PERF2). Who may:
 | `/chits/inbox`, `/chits/sent` → `total` | — | derived: the COUNT, on page 1 only; `null` on a later page (app.html pgNext keeps page 1's) | routes/chits.js | the Task / Order pager |
 | … `next` | — | derived: `<created_at UTC, µs>\|<chit_id>` of the page's last row — the next page's `?after=` (newest-first order only; another sort keeps `page` + OFFSET); null on a short page | routes/chits.js (`keysetOf` · `afterOf`) | app.html fetchPage |
 | … `limit` | — | the server's: ≤ 200 (`LIST_MAX`) — `?limit=1000000` was obeyed before PERF1 | routes/chits.js | the pager |
+
+## GET /api/entities/policy · `may` · GET /api/facts/counters · connectors · governance · plan (T3-SETTINGS, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `may` (GET /api/entities/policy, new) | `{ [flag]: { ok, code, why } }` — `code` ∈ `OWNER_ONLY` · `PLATFORM_BOUND` · `KEY` · null | Derived per call by `lib/policy.mayAll(isOwner)` from ONE table (`OWNER_ONLY` + `BOUND`) — the same table the PATCH refuses with (403 carries the same `code`). Written by: nobody (answer only). Read by: CB Settings › Policy (web `cap-policy.js`): a control is greyed on `ok === false` and `why` is painted; never a regex over the sentence. |
+| `code` (PATCH /api/entities/policy 403, new) | `OWNER_ONLY` | The refusal's code beside its sentence (the 14 Oct review: a sentence the client branches on ships with a code). |
+| `figures` (GET /api/facts/counters) | `{ counters, counters_open, keys, keys_other }` | Derived from the identity row's counter register + key list (the till card's `REGISTER_SQL`, `openCounterIds`). Read by Home's Counters & keys card (lines) and CB Settings › Counters & keys. |
+| `figures` (GET /api/facts/connectors) | `{ connectors, live }` | Derived by `lib/connector-rows.connectorsOf` — the statement GET /api/integrations/status answers with; `live` = its one `health` rule. |
+| `figures` (GET /api/facts/governance) | `{ changed, rules }` | Derived: `lib/policy.get` against `lib/policy.defaults` — how many flags the shop set away from the default. |
+| `figures` (GET /api/facts/plan) | `{ plan, limits, used: { chits_today } }` | `plan` = `identities.plan`; `limits` = the active constitution's `plan_menu[plan]` (null when not declared — the line says so, never 0); `chits_today` = `routes/governance.countChitsToday`, the quota's own counter. Read by Home's Plan & usage card and CB Settings › Plan & usage (web `cap-plan.js`). |
