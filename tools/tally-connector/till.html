@@ -201,6 +201,17 @@
   .lines .ln .nm{font-weight:600}
   .lines .ln .u{color:var(--dim);font-size:.78em}
   .lines .ln select{width:100%;padding:5px;border:1px solid var(--warn);border-radius:7px;background:var(--paper);color:var(--warn);font-size:.78em}
+  /* ⭐ FX-F10W2 (QA-W1 F10): RECEIVE AT 390 PX scrolled sideways and cut "Confirm receipt" off. Its line carries a sixth cell (their GST %) in a
+     five-column grid, and the name column could not shrink below the "what do they call it?" pill — the pane came out 451 px wide. On a narrow
+     screen the name takes its own row and the boxes share the next; the name column may shrink at every width. */
+  #rcv_lines .ln{grid-template-columns:minmax(0,1fr) 74px 74px auto 90px 30px}
+  #rcv_lines .ln .pill{white-space:normal}
+  @media (max-width:600px){
+    #rcv_lines .ln{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,.8fr) minmax(0,1.2fr) 30px}
+    #rcv_lines .ln > span:first-child{grid-column:1 / -1}
+    #rcv_lines .ln input.gstin{width:100%}
+    #pane_receive .go button{padding:12px 8px;min-width:0}
+  }
   .bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);font-size:.85em;color:var(--dim);flex-wrap:wrap}
   .bar b{color:var(--ink)}
   /**
