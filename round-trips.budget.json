@@ -153,7 +153,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard setting read, then ONE transaction (the rate list, newest first, LIMIT 500); b391 asked once (lib/schema, cached).",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "POST /api/books/fx-rates": {
       "file": "books.js",
@@ -162,7 +165,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard, then ONE transaction (ONE insert). Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "POST /api/books/fx-rates/import": {
       "file": "books.js",
@@ -171,7 +177,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard, then ONE transaction (ONE multi-row insert, however many rows; the CSV is read in memory). Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "GET /api/books/fx-revalue": {
       "file": "books.js",
@@ -180,7 +189,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips + 1 per foreign currency — the guard, then ONE transaction (chart · the open foreign balances in ONE grouped read · the closing rate per currency · party names in one read · the entry by source). Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "POST /api/books/fx-revalue": {
       "file": "books.js",
@@ -189,7 +201,10 @@
       "fired": true,
       "status": 422,
       "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: as GET /fx-revalue, then two postEntry writes on the same handle (the revaluation and its reversal) — one transaction. Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "GET /api/books/cheques": {
       "file": "books.js",
@@ -402,7 +417,10 @@
       "wire": 4,
       "fired": true,
       "status": 404,
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "GET /api/crm/privacy-requests": {
       "file": "crm.js",
@@ -410,7 +428,10 @@
       "wire": null,
       "fired": false,
       "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "GET /api/definitions": {
       "file": "definitions.js",
@@ -585,7 +606,10 @@
       "wire": 0,
       "fired": true,
       "status": 200,
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "GET /api/people": {
       "file": "people.js",
@@ -1080,7 +1104,10 @@
       "wire": 4,
       "fired": true,
       "status": 404,
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "POST /api/crm/privacy-requests": {
       "file": "crm.js",
@@ -1088,7 +1115,10 @@
       "wire": null,
       "fired": false,
       "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "POST /api/crm/privacy-requests/:id/answer": {
       "file": "crm.js",
@@ -1096,7 +1126,10 @@
       "wire": null,
       "fired": false,
       "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "POST /api/crm/walk-ins/add": {
       "file": "crm.js",
@@ -1590,6 +1623,91 @@
       "fired": true,
       "status": 404,
       "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, then per due day one loopback send (its own request) + the move + two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
+      "extra": true
+    },
+    "GET /api/governance/lanes": {
+      "file": "governance.js",
+      "trips": 6,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (governance is mounted through a variable the scanner cannot read). TRADE-SRV1 G2, by hand: the shop country (1) + its stated sector when ?vertical is absent (1) + jurisdiction (1) + standard_source (1) + entity_compliance (1) + standard_document ONCE for every lane (1) = 6; was N+5 with one document read per lane",
+      "extra": true
+    },
+    "GET /api/governance/readiness": {
+      "file": "governance.js",
+      "trips": 6,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (see lanes). TRADE-SRV1 G2, by hand: with ?destination the same 6 as lanes; without it the own roll-up as before (+ invoiceParty)",
+      "extra": true
+    },
+    "POST /api/governance/compliance": {
+      "file": "governance.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (see lanes). TRADE-SRV1 G8, by hand: may/why from the token, then as before (the evidence chit check, the upsert, the roll-up)",
+      "extra": true
+    },
+    "POST /api/governance/verify": {
+      "file": "governance.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (see lanes). TRADE-SRV1 G8, by hand: may/why from the token, then as before",
+      "extra": true
+    },
+    "PUT /api/governance/profile": {
+      "file": "governance.js",
+      "trips": 5,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (see lanes). TRADE-SRV1 G8, by hand: may/why from the token, then the upsert + getProfile as before",
+      "extra": true
+    },
+    "GET /api/forms": {
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "why": "TRADE-SRV1 G8, by hand: the registry is code; may/why from the token — no read",
+      "extra": true
+    },
+    "GET /api/forms/instances/all": {
+      "file": "forms.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "why": "TRADE-SRV1 G5, by hand: ONE statement (rows + COUNT(*) OVER()), by deal when ?context_ref",
+      "extra": true
+    },
+    "POST /api/forms/:key/issue": {
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "why": "TRADE-SRV1 G8, by hand: may/why from the token before any read; on the stub the unknown key answers 404. Live: profile + vault + party + order + the day rate reads, then ONE insert",
+      "extra": true
+    },
+    "POST /api/forms/instances/:id/sign": {
+      "file": "forms.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "why": "TRADE-SRV1 G8, by hand: may/why from the token; the instance read (404 on the stub), then one update",
+      "extra": true
+    },
+    "POST /api/forms/instances/:id/attach": {
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "why": "TRADE-SRV1 G8, by hand: may/why from the token; no chit_id answers 400 before any read",
       "extra": true
     }
   }

@@ -2051,6 +2051,14 @@ function chitFilters(req, where, params){
   if (req.query.dispute === 'open' || req.query.dispute === 'active') {
     where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.status = 'open')`;
   }
+  /* ⭐ TRADE-SRV1 G3 · ?abroad=1 — the chits whose OTHER party is registered in another country: the sender (my received copy) or any
+     recipient (my sent copy) whose identities.country differs from the SHOP's (country-setup.shopCountrySql — the one fragment). A party with
+     no country is not abroad (unknown ≠ abroad: the walk-in rule, tax-lines.walkIn); a shop with no country has nothing abroad. In the same
+     statement (no extra trip); Order · Task · folders all get it from this one line. */
+  if (req.query.abroad === '1' || req.query.abroad === 'true') {
+    params.push(entityId(req));
+    where += ` AND ${FOLDER_INV.abroadSql('ch', params.length)}`;
+  }
   return where;
 }
 

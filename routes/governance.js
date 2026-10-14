@@ -259,6 +259,10 @@ router.get('/source/:key', auth, async (req, res) => {
 
 // GET /api/governance/readiness — the CALLER's own trade readiness. ?destination=EU&vertical=paint → resolved FOR that
 // destination (spin the globe), with guidance on each gap; otherwise the entity's own standards.
+/* TRADE-SRV1: origin = the shop's own country, sector = its stated one (never IN / paint) — a lane with no origin answers 422 TRADE_ORIGIN_UNSTATED
+   in words; no sector → `asked` names it. `may` { gather, verify } is the server's answer the screen greys with (G8). Trips: +1 (the shop's country). */
+const TM = require('../lib/trade-may');
+const refusedLane = (res, err, label) => err && err.say ? res.status(err.status || 422).json({ code: err.code, error: err.say, message: err.say }) : res.status(500).json({ error: label, message: safeErr(err) });
 router.get('/readiness', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -266,16 +270,17 @@ router.get('/readiness', auth, async (req, res) => {
     const out = req.query.destination
       ? await R.resolveForDestination(entity_id, String(req.query.destination), req.query.vertical, req.query.origin)
       : await R.resolveReadiness(entity_id);
-    res.json(out);
-  } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
+    res.json(Object.assign(out, { may: TM.mayOf(req, ['gather', 'verify']) }));
+  } catch (err) { refusedLane(res, err, 'Readiness failed'); }
 });
 
 // GET /api/governance/lanes?vertical=paint — the CALLER's market-readiness MATRIX (readiness % per destination + gaps).
 router.get('/lanes', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin));
-  } catch (err) { res.status(500).json({ error: 'Lanes failed', message: safeErr(err) }); }
+    const out = await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin);
+    res.json(Object.assign(out, { may: TM.mayOf(req, ['gather', 'verify']) }));
+  } catch (err) { refusedLane(res, err, 'Lanes failed'); }
 });
 
 // GET /api/governance/track-record — the CALLER's SELF-PROVING REFERENCE (relationship rung of the trust ladder):
@@ -322,6 +327,7 @@ router.get('/profile', auth, async (req, res) => {
  * elsewhere kept showing the old supplier block until it was reloaded.
  */
 router.put('/profile', auth, async (req, res) => {
+  if (TM.refuse(req, res)) return;   /* G8: a trade record is a person's declaration — not an API key's, not a viewer's */
   try { const entity_id = auth.entityOf(req);
     const saved = await require('../lib/profile').saveProfile(entity_id, req.body || {});
     /* ⚠ AFTER the save, not before it. Announcing a change that has not happened yet is a lie every open tab
@@ -453,6 +459,7 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
 
 // POST /api/governance/compliance — GATHER a clearance for the acting entity (the supplier records a document).
 router.post('/compliance', auth, async (req, res) => {
+  if (TM.refuse(req, res)) return;   /* G8 */
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -468,6 +475,7 @@ router.post('/compliance', auth, async (req, res) => {
 // Registry verify: confirms the ID against a KYB provider when one is connected (→ VERIFIED); otherwise records it as a
 // format-checked claim (→ NOT verified, honest). A malformed ID or a registry "not-active" is refused with 422.
 router.post('/verify', auth, async (req, res) => {
+  if (TM.refuse(req, res)) return;   /* G8 */
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};

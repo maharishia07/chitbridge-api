@@ -1309,13 +1309,20 @@ function fxMay(req, ready) {
   if (!ready) return { may: false, why: FX_NOT_READY };
   return isOwner(req) ? { may: true, why: null } : { may: false, why: FX_OWNER_ONLY };
 }
-/** GET /fx-rates?from=USD → { currency, ready, why, may: { add }, sources, rule: { standard, tax_rate_rule, official_name }, rates: [{ rate_id, date, from, to, rate, source, source_ref, created_at }] } — one transaction */
+/** GET /fx-rates?from=USD&on=YYYY-MM-DD → { currency, ready, why, may: { add }, sources, rule: { standard, tax_rate_rule, official_name }, rates: [{ rate_id, date, from,
+ *  to, rate, source, source_ref, created_at }], day: { on, from, rate: { rate, source, date, source_ref } | null, why } } — one transaction.
+ *  TRADE-SRV1 G7: `day` is THE DAY'S RATE from the server (fx-rates.rateOn, the one FX1 reader — that day's newest row, never another day's): a trade
+ *  screen reads it here rather than picking through `rates`. Asked with both `on` and `from`; else { on: null, from: null, rate: null, why: null }. */
 router.get('/fx-rates', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), ready = await FXR.ready(), fx = B.packOf(req.books).fx || {};
-    const rates = ready ? await withEntity(e, (h) => FXR.list(h, e, { from: req.query.from })) : [];
-    res.json({ currency: curOf(req), ready, why: ready ? null : FX_NOT_READY, may: { add: fxMay(req, ready) }, sources: FXR.SOURCES,
-      rule: { standard: fx.standard || null, tax_rate_rule: fx.tax_rate_rule || null, official_name: fx.official_name || null }, rates });
+    const e = ctx(req), ready = await FXR.ready(), fx = B.packOf(req.books).fx || {}, cur = curOf(req);
+    const onDay = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.on || '')) ? String(req.query.on) : null, from = /^[A-Za-z]{3}$/.test(String(req.query.from || '')) ? String(req.query.from).toUpperCase() : null;
+    const { rates, dayRate } = await withEntity(e, async (h) => ({
+      rates: ready ? await FXR.list(h, e, { from: req.query.from }) : [],
+      dayRate: ready && onDay && from ? await FXR.rateOn(h, e, from, cur, onDay) : null }));
+    const day = onDay && from ? { on: onDay, from, rate: dayRate, why: dayRate ? null : (ready ? FXR.missingWords(from, onDay) : FX_NOT_READY) } : { on: null, from: null, rate: null, why: null };
+    res.json({ currency: cur, ready, why: ready ? null : FX_NOT_READY, may: { add: fxMay(req, ready) }, sources: FXR.SOURCES,
+      rule: { standard: fx.standard || null, tax_rate_rule: fx.tax_rate_rule || null, official_name: fx.official_name || null }, rates, day });
   } catch (err) { fail(res, err); }
 });
 /** POST /fx-rates { date, currency, rate, source?, source_ref? } → { rate } — owner; insert-only (a correction is a newer row for the same day). One transaction. */

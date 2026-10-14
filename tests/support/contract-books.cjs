@@ -267,7 +267,7 @@ async function captureBooks() {
     await q('GET', '/fx-rates', null, '/fx-rates');
     await q('POST', '/fx-rates', { date: '2027-04-05', currency: 'USD', rate: '83.25' }, '/fx-rates');
     await q('POST', '/fx-rates/import', { csv: 'date,currency,rate,source\n2027-04-30,USD,84.00,official\n2027-04-30,EUR,x\n', file_name: 'rates.csv' }, '/fx-rates/import');
-    await q('GET', '/fx-rates', null, '/fx-rates');
+    await q('GET', '/fx-rates?on=2027-04-30&from=USD', null, '/fx-rates');   /* TRADE-SRV1 G7: `day` — the day's rate from the server */
     await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2027-04-05', currency: 'USD', party: CUST, by_rate: [{ rate: 0, taxable: 1000 }], source_ref: 'chit:fx1', ref: 'EX-1' });
     await q('GET', '/dues', null, '/dues');
     await q('GET', '/fx-revalue?fiscal_year=2027-28&period=1', null, '/fx-revalue');

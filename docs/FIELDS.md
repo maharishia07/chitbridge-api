@@ -565,3 +565,21 @@ the whole range, exactly as before (the web adopts the pages in PERF2). Who may:
 | `/chits/inbox`, `/chits/sent` → `total` | — | derived: the COUNT, on page 1 only; `null` on a later page (app.html pgNext keeps page 1's) | routes/chits.js | the Task / Order pager |
 | … `next` | — | derived: `<created_at UTC, µs>\|<chit_id>` of the page's last row — the next page's `?after=` (newest-first order only; another sort keeps `page` + OFFSET); null on a short page | routes/chits.js (`keysetOf` · `afterOf`) | app.html fetchPage |
 | … `limit` | — | the server's: ≤ 200 (`LIST_MAX`) — `?limit=1000000` was obeyed before PERF1 | routes/chits.js | the pager |
+
+## Trade lanes for every country · papers by deal · the day's rate · may/why on trade writes (TRADE-SRV1, 2026-10-14 · migration b571, FILE — Athi runs it)
+
+Who may: the GETs — any signed-in login of the shop (an API key too, it reads); the writes (gather · verify · profile · issue · sign · attach) — a person with
+edit access (the owner, an editor co-assist): `lib/trade-may.js` is the ONE answer, the GET carries it, the write refuses with it (403).
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `GET /governance/lanes` · `/readiness?destination=` → `origin` | — | source: the SHOP's country (`identities.country`, `profile.homeOf`) or `?origin=`; never 'IN'. None → 422 `code: TRADE_ORIGIN_UNSTATED` + the sentence | `readiness.laneContext` | cap-readiness.js (the "from" word; the 422 paints the sentence with the Country setup button) |
+| … `vertical` | — | source: `?vertical=` else the shop's first stated sector (`entity_profile.sectors`); `null` when none — never 'paint' | `readiness.laneContext` | the sector select |
+| … `asked[]` | — | derived: `[{ field: 'sector', code: 'TRADE_SECTOR_UNSTATED', why }]` when no sector is stated; `[]` otherwise — the screen branches on the code | `readiness.laneContext` | cap-readiness.js (asks for the sector) |
+| … `lanes[].domestic` · `/readiness?destination=` → `domestic` | — | derived: `dest_key === origin` (b571: the stored b91 `jurisdiction.domestic` is India's and no longer read) | `resolveLaneMatrix` / `resolveForDestination` | the destination select ("home") |
+| … `may { gather, verify }` · `GET /forms` → `may { issue, sign, attach }` | — | derived from the token: `{ may, why, code }`; codes `TRADE_KEY_NOT_ALLOWED` · `TRADE_READ_ONLY` | `trade-may.mayOf` | the Gather / Verify / Issue / Sign / File buttons (greyed WITH the sentence) |
+| `GET /forms/instances/all?context_ref=&page=&limit=` → `total · page · limit · context_ref` · `instances[].context_ref` | — | derived: the papers of ONE deal when `context_ref` is a chit_id (else all); `total` = `COUNT(*) OVER()` in the same statement; limit ≤ 200 (`page-limit`) | `forms.listInstances` | authority-forms.html (the deal's papers) |
+| `POST /forms/commercial-invoice/resolve` → `fields[] id currency · exchange_rate` | — | `currency`: the chit's `chit_header.currency_code` (source `order`) else the shop's (`derive`); `exchange_rate`: the chit's `summary_json.fx_rate` else THE DAY'S RATE through `fx-rates.rateOn` on the invoice day, as words "84 USD to INR (official, 2027-04-30)" (`derive`, rung `derived`); same currency / no rate → empty, not required | `forms.dayRateFor` | the form |
+| … `fields[].label` for `seller_gstin` · `gstin` | — | derived: the PACK's tax-id word (`profile.taxIdWordOf`: GSTIN · ABN · TRN), "Tax number" for a pack-less or unstated country; `origin_country` derives the shop's own country name (`home_country`), never "India" | `forms.resolveField` | the form |
+| `GET /books/fx-rates?on=YYYY-MM-DD&from=USD` → `day { on, from, rate, why }` | — | derived: `rate` = `fx-rates.rateOn` for that day (`{ rate, source, date, source_ref }`) or null with `why` = the FX1 sentence ("No USD rate for 30 Apr — add it in Accounts › Rates."); not asked → all null | routes/books.js | a trade screen that wants one day's rate (G7) |
+| `GET /chits/inbox` · `/sent` · `/folder` `?abroad=1` | — | a FILTER (no key): the copies whose other party (sender ∪ recipients) has `identities.country` ≠ the shop's; unknown country ≠ abroad; `folder-inventory.abroadSql` in the list's own statement | — | app.html Advanced search "Abroad" |
