@@ -32,6 +32,7 @@ const GUARDS = [
   'till-t2a.test.cjs',  // round T2a: bills-only count, an online order billed, the mode menu, no 403 on quick-keys/hidden
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
+  'backup-guard.test.cjs',      // ⭐⭐⭐ BKP1: no workflow uploads a plaintext dump; backup.sh refuses without a passphrase; the nightly is never in this public repo
   'spin-scripts.test.cjs',      // ⭐⭐ HX2: the cloud spin scripts — one env list (HOSTING.md), tagged, India by default, no secret printed
   'hosting-neutral.test.cjs',   // ⭐⭐ HX1: the DB password goes only to configured URLs; SigV4 = AWS's examples; no platform host in shipped code
   'records-keeping.test.cjs',   // ⭐⭐ CO3: the books' edit trail cannot be disabled (Rule 3(1)); no copy expires inside the 9-year records floor
