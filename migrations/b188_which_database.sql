@@ -6,13 +6,17 @@
 -- migration errors followed — missing relations, and a `42704 role "cb_app" does not exist` that sent me
 -- chasing a systemic grant problem that was never there.
 --
--- ⭐ THE APP CONNECTS TO SUPABASE PROJECT  bzacyrdrnzdbficjplcn
---   host  aws-1-ap-south-1.pooler.supabase.com:6543   (transaction pooler)
---   user  cb_app.bzacyrdrnzdbficjplcn                 (pooler format: <role>.<project-ref>)
+-- ⭐ THE APP CONNECTS TO ONE SUPABASE PROJECT — its ref is the host of DATABASE_URL in the api's env (Railway variables),
+--    NOT written here: SEC0 (2026-10-14) took it out of the public repo (.gitleaks.toml rule cb-supabase-project-ref;
+--    tests/hosting-neutral.test.cjs §6). Read it from the env, then compare with the dashboard URL you are in.
+--   host  <region>.pooler.supabase.com:6543            (transaction pooler)
+--   user  cb_app.<project-ref>                         (pooler format: <role>.<project-ref>)
 --   db    postgres                                    (Supabase names every database this — the NAME does
 --                                                      not identify anything; the PROJECT REF does)
 --
--- The SQL editor for it is  https://supabase.com/dashboard/project/bzacyrdrnzdbficjplcn/sql
+-- The SQL editor for it is  https://supabase.com/dashboard/project/<project-ref>/sql
+-- (SEC0 changed only these comment lines; the SELECT below is unchanged — `migrate status` listing this file as
+--  changed is expected and needs no re-run.)
 --
 -- Run this whenever the editor and the app disagree about what exists. If has_chit_header comes back false,
 -- stop — that is not the app database and nothing else should be run against it.
