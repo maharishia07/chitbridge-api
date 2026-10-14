@@ -7,40 +7,18 @@
  * the input till.html billMoney() builds: the shop's taxIncluded() (price_includes_tax !== 'no'), a walk-in inside the shop's country.
  *   1 · compute == counter on the same bill, IN / AU / AE, inclusive and exclusive shops, the flag LEFT OUT (G2)
  *   2 · each gap: G1 money + currency + pack · G2 caller wins when it says · G3 item_id priced by the shelf · G5 codes, never raw text · G7 Home count
- * Run: node --test tests/tax-compute.test.cjs · no DB, no network.
+ * Run: node --test tests/tax-compute.test.cjs · no DB, no network (tests/support/tax-stub.cjs).
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
 const fs = require('fs');
 const vm = require('vm');
-const http = require('http');
-
-process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://u:p@127.0.0.1:5432/x';
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
-
-/* ── the shop, as the stubbed database holds it ── */
-const SHOP = { row: null, items: [], boom: null };
-const answer = async (sql, p) => {
-  if (SHOP.boom) throw SHOP.boom;
-  if (/SELECT identity_id, gstn, display_name, policy_flags, country FROM identities/.test(sql)) return { rows: SHOP.row ? [SHOP.row] : [] };
-  if (/SELECT gstn FROM identities/.test(sql)) return { rows: SHOP.row ? [{ gstn: SHOP.row.gstn }] : [] };
-  if (/FROM catalogue_items/.test(sql)) return { rows: SHOP.items };
-  return { rows: [] };
-};
-const db = { query: answer, withEntity: async (_id, fn) => fn({ query: answer }), readBatch: async () => [] };
-require.cache[require.resolve(path.join(__dirname, '..', 'db'))] = { exports: db };
-const authStub = (req, _res, next) => next();
-authStub.entityOf = () => 'E1';
-authStub.requireScope = () => (_q, _r, next) => next();
-require.cache[require.resolve(path.join(__dirname, '..', 'middleware', 'auth'))] = { exports: authStub };
-
-const express = require('express');
-const app = express(); app.use(express.json()); app.use('/api/tax', require('../routes/tax'));
-let server, base;
-test.before(async () => { server = http.createServer(app); await new Promise((r) => server.listen(0, '127.0.0.1', r)); base = 'http://127.0.0.1:' + server.address().port; });
-test.after(() => server && server.close());
-const post = async (body) => { const r = await fetch(base + '/api/tax/compute', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }); return { status: r.status, body: await r.json() }; };
+const X = require('./support/tax-stub.cjs');   /* the shop in a stubbed db + the REAL routers — before any lib */
+const { SHOP, shopRow } = X;
+test.before(X.start);
+test.after(X.stop);
+const post = (body) => X.call('POST', '/api/tax/compute', body);
 
 /* ── the counter's engine, loaded as a page loads it ── */
 const page = {}; vm.createContext(page); vm.runInContext('var window = globalThis;', page);   /* in a page, window IS the global */
@@ -58,7 +36,6 @@ function counter(shop, cart) {
     priceIncludesTax: inclusive, zeroRated: false,
   });
 }
-const shopRow = (s) => ({ identity_id: 'E1', gstn: s.gstin, display_name: s.name, country: s.country, policy_flags: s.policy || {} });
 
 const SHOPS = {
   IN: { gstin: '33AAAAA0000A1Z5', name: 'Ponni Stores', country: 'IN', scheme: undefined, rates: [18, 5, 0] },
@@ -163,6 +140,7 @@ test('G5: a fault inside is 500 with a code and a sentence — the raw error tex
 test('G7: Home\'s Tax Lab says how many products have no tax slab — the shelf\'s rule (0% is a slab; nothing is not)', async () => {
   const H = require('../lib/home-facts');
   SHOP.row = shopRow(SHOPS.IN);
+  assert.equal((await X.call('GET', '/api/facts/tax-lab')).status, 200, 'the card is served');
   SHOP.items = [{ item_id: 'P1', item_data: { name: 'Rice', gst_rate: 5 } }, { item_id: 'P2', item_data: { name: 'Milk', gst_rate: 0 } },
     { item_id: 'P3', item_data: { name: 'Pen', cost: { value: 4242 } } }, { item_id: 'P4', item_data: { name: 'Ink' } }];
   let f = await H.BUILD['tax-lab']({ entity: 'E1' });
