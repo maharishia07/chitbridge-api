@@ -11,7 +11,7 @@ if (!process.env.FX_TZ_CHILD) {
   let bad = 0;
   for (const tz of ['Asia/Kolkata', 'Australia/Sydney', 'UTC', 'America/Los_Angeles']) {
     const r = spawnSync(process.execPath, [__filename], { encoding: 'utf8', timeout: 60000, env: Object.assign({}, process.env, { TZ: tz, FX_TZ_CHILD: tz }) });
-    process.stdout.write(r.stdout || ''); if (r.status !== 0) { bad++; process.stdout.write(r.stderr || ''); }
+    process.stdout.write(r.stdout || ''); total += ((r.stdout || '').match(/^s+(ok|FAIL)s/mg) || []).length; if (r.status !== 0) { bad++; process.stdout.write(r.stderr || ''); }
   }
   console.log('\n' + (bad ? '  ✗ FAIL — a zone moved the day' : '  ✓ every zone keeps the day'));
   process.exit(bad ? 1 : 0);
