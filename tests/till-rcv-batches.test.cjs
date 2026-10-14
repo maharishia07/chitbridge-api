@@ -92,5 +92,5 @@ ok('two different products are still two lines (and a product not on the receipt
   assert.deepStrictEqual(c.RCV.lines.map((l) => l.item_id), ['p1', 'p3']);
 });
 
-console.log(NL + n + ' passed' + (bad ? ', ' + bad + ' FAILED' : '') + NL);
+console.log(NL + n + ' passed' + (bad ? ', ' + bad + ' FAILED' : '') + ' · ' + (n + bad) + ' checks' + NL);   /* "<n> checks" — the grammar scripts/guards.cjs counts by */
 process.exit(bad ? 1 : 0);
