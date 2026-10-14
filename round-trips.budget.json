@@ -1,84 +1,12 @@
 {
   "_doc": "DB10: round-trip ceiling per route the web client calls. trips = X-DB-Trips, wire = statements sent. Lower it when a route gets cheaper (node tests/round-trips-all.test.cjs --write); never raise without saying why. fired:false = placeholder ceiling, the route could not be fired offline (see why).",
   "routes": {
-    "GET /api/actors": {
-      "file": "actors.js",
-      "trips": 2,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the list SELECT (pin_state is a CASE in the same statement — no extra trip for dropping otp_code) + the summary COUNT.",
-      "extra": true
-    },
-    "POST /api/actors": {
-      "file": "actors.js",
-      "trips": 4,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the shop row (user_id) + the key-free check + ONE INSERT identities (the e-mail rides in it) + the seat meter; schema probe cached.",
-      "extra": true
-    },
-    "PATCH /api/actors/:id": {
-      "file": "actors.js",
-      "trips": 3,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the before-row (audit) + ONE UPDATE (email is one more SET, same statement) + ONE withEntity audit write.",
-      "extra": true
-    },
     "DELETE /api/actors/:id/pin": {
       "file": "actors.js",
-      "trips": 4,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the actor read + its e-mail + ONE UPDATE + the login handle read.",
-      "extra": true
-    },
-    "POST /api/actors/:id/otp": {
-      "file": "actors.js",
-      "trips": 4,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the actor read + its e-mail + ONE UPDATE + the login handle read.",
-      "extra": true
-    },
-    "PUT /api/actors/:id/status": {
-      "file": "actors.js",
-      "trips": 4,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). reactivate: the actor read + its e-mail + ONE UPDATE + the login handle; deactivate/remove: the actor read + ONE withEntity transaction + the disputes withEntity (3). PEOPLE-SRV1 (2026-10-14), counted by hand: the sign-out (person-session closeBy + keys endKeysBy: two FOR UPDATE reads of the shop row + at most two policy_flags writes) runs INSIDE the one withEntity transaction — 0 extra trips, up to 4 more statements on the wire.",
-      "extra": true
-    },
-    "PUT /api/actors/break": {
-      "file": "actors.js",
-      "trips": 7,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). PEOPLE-SRV1 (2026-10-14), counted by hand: the owner gate is 0 trips; the named person read (owner only, G6) + who they cover + their own cover (+ that cover's state, only when one is set) + ONE UPDATE for a short break or back; leave: + the open-jobs count (withEntity) + the stand-in read (only when routed to a person) + ONE withEntity transaction. Worst path 7.",
-      "extra": true
-    },
-    "PUT /api/actors/settings": {
-      "file": "actors.js",
-      "trips": 3,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the default-assignee check (only when one is named) + ONE upsert + the read-back.",
-      "extra": true
-    },
-    "PUT /api/actors/:id/delegate": {
-      "file": "actors.js",
-      "trips": 2,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the delegate check (only when one is named) + ONE UPDATE … RETURNING.",
-      "extra": true
-    },
-    "PUT /api/actors/:id/tasks/route": {
-      "file": "actors.js",
       "trips": 1,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). ONE withEntity transaction (the chit read, its UPDATE and the state_log row inside it).",
+      "wire": 1,
+      "fired": true,
+      "status": 404,
       "extra": true
     },
     "DELETE /api/books/recurring/:id": {
@@ -86,8 +14,7 @@
       "trips": 2,
       "wire": 6,
       "fired": true,
-      "status": 422,
-      "why": "CS1: the first books route a process fires pays the country gate's ONE read (identities, cached a minute per shop) before the switch — every later books route is unchanged; on the empty stub the gate answers 422 NO_COUNTRY before the 404"
+      "status": 422
     },
     "DELETE /api/channels/:id": {
       "file": "channels.js",
@@ -96,12 +23,51 @@
       "fired": true,
       "status": 404
     },
+    "DELETE /api/chits/:chit_id": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/chits/:chit_id/payment": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/chits/:chit_id/purge": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/connectors/:actorId": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
     "DELETE /api/crm/followups/:id": {
       "file": "crm.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/crm/groups/:name": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "awaiting_client": {
+        "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
+        "since": "2026-10-14"
+      }
     },
     "DELETE /api/crm/parties/:id": {
       "file": "crm.js",
@@ -117,12 +83,83 @@
       "fired": true,
       "status": 404
     },
+    "DELETE /api/folders/:id": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "DELETE /api/folders/rules/:rule_id": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
     "DELETE /api/keys/:jti": {
       "file": "keys.js",
       "trips": 1,
       "wire": 3,
       "fired": true,
       "status": 404
+    },
+    "DELETE /api/products/:id": {
+      "file": "products.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/products/:id/media/:mid": {
+      "file": "products.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/products/:id/schedule/:sid": {
+      "file": "products.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "DELETE /api/relationships/suppliers/:id": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "DELETE /api/schemas/fields/:field_key": {
+      "file": "schemas.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/actors": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/actors/check-login": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/actors/settings": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200
     },
     "GET /api/adopt/:chit_id": {
       "file": "adopt.js",
@@ -164,217 +201,184 @@
       "trips": 1,
       "wire": 1,
       "fired": true,
-      "status": 200,
-      "why": "T3-DISPUTES-ASSIST, by hand: 0 new trips — actions.publish is derived from the same one read (entity_schemas)."
+      "status": 200
     },
     "GET /api/books/accounts": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/assets": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/bank/rail": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
       "status": 422
     },
     "GET /api/books/bs": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/cashflow": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
-    },
-    "GET /api/books/compare": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 422,
-      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: 2 trips — the guard setting read, then ONE transaction (does b309 exist · the snapshot list, grouped in SQL). An auditor login adds lib/cost canRead (1)."
-    },
-    "GET /api/books/compare/:id": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 422,
-      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: 2 trips — the guard, then ONE transaction (the snapshot parts · chart · the period entry lines in one read · TB / P&L / BS / BAS-VAT201 through the engines, no per-row query). India with a return part: +1, the rail GSTR-3B (lib/tax-copy ledgerFor) after it."
-    },
-    "GET /api/books/compare/:id/csv": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 422,
-      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: as GET /compare/:id (the same read, written as a .csv). The web fetches it as a file (cap-compare.js cmpCsv, the session header), so the scanner does not see it: extra.",
-      "extra": true
-    },
-    "GET /api/books/fx-rates": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 422,
-      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard setting read, then ONE transaction (the rate list, newest first, LIMIT 500); b391 asked once (lib/schema, cached).",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
-    },
-    "POST /api/books/fx-rates": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 422,
-      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard, then ONE transaction (ONE insert). Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
-    },
-    "POST /api/books/fx-rates/import": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 422,
-      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips — the guard, then ONE transaction (ONE multi-row insert, however many rows; the CSV is read in memory). Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
-    },
-    "GET /api/books/fx-revalue": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 422,
-      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: 2 trips + 1 per foreign currency — the guard, then ONE transaction (chart · the open foreign balances in ONE grouped read · the closing rate per currency · party names in one read · the entry by source). Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
-    },
-    "POST /api/books/fx-revalue": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 422,
-      "why": "FX1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch. Live: as GET /fx-revalue, then two postEntry writes on the same handle (the revaluation and its reversal) — one transaction. Owner only.",
-      "awaiting_client": { "pr": "FX1 web: Accounts › Rates + Month lock foreign balances", "since": "2026-10-14" }
+      "status": 422
     },
     "GET /api/books/cheques": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404,
-      "why": "PERF1, by hand: live = the gate read + ONE transaction — cheques · the shop's stored terms (T3-P1-MONEY: the reminder switch, one statement, only once b298 ran) · the listed parties' names (S.parties(ids), from the shop's two lists) · chart · the listed parties' items in ONE read per control account (≤ 2). It was one items read PER PARTY inside the loop (N+1). The offline stub answers 404 (ledger off): the floor."
+      "status": 422
+    },
+    "GET /api/books/compare": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "GET /api/books/compare/:id": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "GET /api/books/compare/:id/csv": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
     },
     "GET /api/books/daybook": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404,
-      "why": "PERF1, by hand: live = the gate read + ONE transaction — the lines (the reversals joined once per statement, not a LATERAL per line) · the page's parties' names (S.parties(ids)). With ?limit/?after: + 1 statement (S.pageSums — total · Σ Dr · Σ Cr of the range) in the same trip; ?entries=: none. 0 new trips."
+      "status": 422
     },
     "GET /api/books/dues": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404,
-      "why": "F4 (by hand): ?side=supplier&finance=1 adds 3 reads inside the same transaction — cheques written (1) · Udyam ids (1) · supplier terms (1), + the terms-column check (lib/schema, cached). Nothing per party. FX1: + 1 read — the open foreign balances of the debtors / creditors in ONE grouped read (b392; the column check cached), so a party shows USD 1,000 · ₹83,250. T1-FINREW FIN-R1 (by hand): ?finance=1 with the customer side + 1 read — every customer's own days · limit · terms (customer_list, ONE grouped read) — and, once b298 has run, + 1 for the shop default terms (books_setting), both inside the same transaction; nothing per party. The offline stub answers 404 (ledger off), so the line stays the floor."
+      "status": 422
     },
     "GET /api/books/events": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
+    },
+    "GET /api/books/fx-rates": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
+    },
+    "GET /api/books/fx-revalue": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "GET /api/books/health": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404,
-      "why": "STD1, by hand: live it is the gate read, then ONE withEntity transaction — the 50-row page AND the one count (waitingCount, GROUP BY todo over every open row): 2 statements in the same trip, 0 new trips."
+      "status": 422
     },
     "GET /api/books/ledger/:account": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404,
-      "why": "PERF1, by hand: live = the gate read + ONE transaction — chart · the opening (B.ledgerOf: the year's month rows, every year in ONE read) · the lines. With ?limit/?after: + 1 statement (S.pageSums — the SUM before the cursor, the range's Σ and count) in the same trip. 0 new trips."
+      "status": 422
     },
     "GET /api/books/packs": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/packs/:id": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/party/:id/statement": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/payments/:id/advice": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/periods": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/pl": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/recurring": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/books/returns": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 422,
-      "why": "BAS1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard's one read (the floor; measured 1 trip · 3 statements). With the ledger on: 2 trips — the guard's setting read, then ONE transaction (chart · years · the account_balance rows of the period's year(s)); no per-row query, no lines read"
+      "status": 422
     },
     "GET /api/books/status": {
       "file": "books.js",
@@ -383,34 +387,33 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/books/terms": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
     "GET /api/books/todo": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
-    },
-    "GET /api/books/terms": {
-      "file": "books.js",
-      "trips": 3,
-      "wire": null,
-      "fired": false,
-      "why": "F2: one withEntity (shop default + party row + events) after a cached schema probe; ceiling until measured"
+      "status": 422
     },
     "GET /api/books/trial-balance": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404,
-      "why": "PERF1, by hand: the carry-forward reads every year it walks back through in ONE statement (books.yearBalances → S.yearRows([years])) — it was one statement per past year (≤ 30). 0 new trips."
+      "status": 422
     },
     "GET /api/books/year/:fy/status": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "GET /api/capture/pending": {
       "file": "capture.js",
@@ -426,12 +429,195 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/catalogue/:bridge_id": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/catalogue/enquiry": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "GET /api/channels": {
       "file": "channels.js",
       "trips": 1,
       "wire": 1,
       "fired": true,
       "status": 200
+    },
+    "GET /api/chits/:chit_id": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/chits/:chit_id/catalogue-overlay": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/:chit_id/disputes": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "GET /api/chits/:chit_id/messages": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/chits/:chit_id/raida": {
+      "file": "chits.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/:id/trace": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/chits/disputes/queue": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/chits/folder": {
+      "why": "answered 500 on the stub",
+      "file": "chits.js",
+      "trips": 3,
+      "wire": 7,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/inbox": {
+      "why": "answered 500 on the stub",
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/pulse": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/raida/report": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/register/attachables": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/register/subjects": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/register/walk/:from": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/rollup": {
+      "why": "answered 500 on the stub",
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/sent": {
+      "why": "answered 500 on the stub",
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/trace/batches": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/chits/trace/by-batch": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "GET /api/chits/unread": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/connectors": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/connectors/:actorId/connections": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/connectors/:actorId/provisioning": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "GET /api/connectors/:actorId/receipts": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
     },
     "GET /api/counters": {
       "file": "counters.js",
@@ -443,33 +629,41 @@
     "GET /api/crm/calls": {
       "file": "crm.js",
       "trips": 2,
-      "wire": 0,
+      "wire": 8,
       "fired": true,
-      "status": 200,
-      "why": "L2: ONE transaction; the queue is ONE statement for any number of leads (follow-ups + untouched leads + last call + stage by LATERAL, no per-row query), plus the memberships table probe, cached once present: 2 cold, 1 warm"
+      "status": 200
     },
     "GET /api/crm/followups": {
       "file": "crm.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "trips": 1,
+      "wire": 7,
+      "fired": true,
+      "status": 200
     },
     "GET /api/crm/parties": {
       "file": "crm.js",
       "trips": 1,
       "wire": 14,
       "fired": true,
-      "status": 200,
-      "why": "PERF1, by hand: party-fields.decorate reads the list rows, tax ids and open items of the parties ON THIS LIST only (ANY($2)) — same statements, 0 new trips. MKT-SRV1 by hand: ?with=consent adds ONE statement (the newest b306 row per party × channel × purpose, in a savepoint) inside lib/crm.rows' own transaction — 0 new trips; total/page/limit slice in memory."
+      "status": 200
     },
     "GET /api/crm/parties/:id": {
       "file": "crm.js",
       "trips": 1,
       "wire": 14,
       "fired": true,
+      "status": 404
+    },
+    "GET /api/crm/parties/:id/contact-prefs": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
       "status": 404,
-      "why": "MKT-SRV1 G5 (raised 11 → 14 statements, 0 new trips): contact_prefs is the newest b306 rows for this party, read inside lib/crm.rows' own transaction in a savepoint (SAVEPOINT · SELECT · RELEASE) so a shop before b306 still opens the record"
+      "awaiting_client": {
+        "pr": "CO1 web (contact prefs)",
+        "since": "2026-10-14"
+      }
     },
     "GET /api/crm/parties/:id/timeline": {
       "file": "crm.js",
@@ -478,21 +672,27 @@
       "fired": true,
       "status": 404
     },
-    "GET /api/crm/parties/:id/contact-prefs": {
+    "GET /api/crm/privacy-requests": {
       "file": "crm.js",
       "trips": 1,
       "wire": 5,
       "fired": true,
-      "status": 404,
-      "why": "T3-P3-CONSENT by hand (wire 4 → 5, 0 new trips): the shop's country (one SELECT on identities, same transaction) → `law`, the words the consent block paints. The web's CRM record consent block and the shopper's page now read it."
+      "status": 200,
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
-    "GET /api/crm/privacy-requests": {
+    "GET /api/crm/segments": {
       "file": "crm.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip. MKT-SRV1 G4: the counts and one page are ONE statement (WITH c … LEFT JOIN LATERAL) — still 1 trip",
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "trips": 3,
+      "wire": 28,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
+        "since": "2026-10-14"
+      }
     },
     "GET /api/definitions": {
       "file": "definitions.js",
@@ -508,37 +708,102 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/entities/constitutions": {
+      "file": "entities.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/entities/header": {
       "file": "entities.js",
       "trips": 3,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (the scanner cannot map entitiesRouter); measured by tests/entities-header.test.cjs: 3 cold (two cached schema probes + one readBatch), 1 warm"
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/entities/me": {
       "file": "entities.js",
-      "trips": 6,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (the scanner cannot map entitiesRouter): read by CBAvatar on every page. Measured on the empty stub, which answers 404 early: 2 trips cold, 1 warm - a FLOOR; 6 is a placeholder ceiling for the full path until a fixture can run it"
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/entities/mis": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/entities/policy": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/entities/populations": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/entities/routing": {
+      "file": "entities.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/entities/routing/preview": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/entities/search": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
     },
     "GET /api/entities/sides": {
       "file": "entities.js",
-      "trips": 11,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "not mapped by the scanner (entitiesRouter). Measured by tests/sides.test.cjs: two trips of its own warm (the batch + govresolve.mintedOf stamp read); cold adds 9 cached schema probes (7 hasTable + 2 hasColumns). It also runs the two reads it reuses: home-facts rail (2 trips) and entity-header.read (1 warm / 3 cold) — so a warm GET is about 5, a cold one about 11."
+      "trips": 15,
+      "wire": 31,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
-    "PATCH /api/entities/profile": {
+    "GET /api/entities/usage": {
       "file": "entities.js",
-      "trips": 12,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (the scanner cannot map entitiesRouter). T2-POLICY (2026-10-14): the tax number and address go through profile.shopIdentitySql INSIDE the one profile UPDATE (no extra write); a tax number sent costs ONE read (the shop's country, for the pack's check — profile.taxIdRefusal). Worst path: user_id read + taken check + handler check + currency envelope + country read + UPDATE + storefront_access + ui_prefs probe/merge + visibility cap/write — a ceiling, not measured on a fixture T3-FIXES, by hand: 0 new trips — the same statements, now keyed on auth.entityOf(req) (the shop) instead of the caller. Placeholder ceiling."
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/events/stats": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/facts/account": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/facts/accounts": {
       "file": "facts.js",
@@ -548,16 +813,23 @@
       "status": 200,
       "extra": true
     },
-    "GET /api/facts/finance": {
+    "GET /api/facts/assist": {
       "file": "facts.js",
-      "trips": 2,
-      "wire": 7,
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 200,
-      "extra": true,
-      "why": "T3-P1-MONEY, by hand: the Home card's cheques line — the cached b298 probe (lib/schema, one trip until it answers yes, as GET /books/terms) + ONE transaction: the setting (savepoint · read · release) · the shop's stored terms (the reminder switch, only once b298 ran) · the cheques held (books-store.cheques, the SAME read GET /books/cheques makes); the states are the engine's pdcReminders, no second query. The offline stub answers an empty ledger: the floor."
+      "extra": true
     },
     "GET /api/facts/combo-lab": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/counters": {
       "file": "facts.js",
       "trips": 1,
       "wire": 1,
@@ -569,25 +841,28 @@
       "file": "facts.js",
       "trips": 1,
       "wire": 4,
-      "fired": false,
-      "extra": true,
-      "why": "T3-DISPUTES-ASSIST, by hand: 1 trip — ONE withEntity transaction (BEGIN · set_config · the two FILTER counts on chit_disputes · COMMIT)."
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
-    "GET /api/facts/assist": {
+    "GET /api/facts/finance": {
       "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": false,
-      "extra": true,
-      "why": "T3-DISPUTES-ASSIST, by hand: 1 trip — one count over assist_qa (the platform's library, no shop context)."
+      "trips": 4,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/facts/marketing": {
       "file": "facts.js",
       "trips": 1,
-      "wire": null,
-      "fired": false,
-      "why": "MKT-SRV1 G3, by hand: ONE withEntity, ONE statement (the newest b306 marketing row per party × channel, counted). Before b306: 42P01 → `unavailable` in words, still 1 trip",
-      "awaiting_client": { "pr": "MKT web round: the Marketing card on Home / CB CRM", "since": "2026-10-14" }
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "MKT web round: the Marketing card on Home / CB CRM",
+        "since": "2026-10-14"
+      }
     },
     "GET /api/facts/offer-lab": {
       "file": "facts.js",
@@ -597,47 +872,37 @@
       "status": 200,
       "extra": true
     },
-    "GET /api/facts/orders": {
+    "GET /api/facts/operations": {
       "file": "facts.js",
-      "trips": 3,
-      "wire": 6,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 200,
       "extra": true
     },
-    "GET /api/facts/operations": {
+    "GET /api/facts/orders": {
       "file": "facts.js",
-      "trips": 1,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-OPS, by hand (tests/ops-stock.test.cjs): lib/home-facts operations — schema.hasTable('stock_balance') (cached) + ONE withEntity read: stock-store.onHand (the one stock reader, sheet()). Nothing per item."
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/facts/people": {
       "file": "facts.js",
       "trips": 1,
-      "wire": null,
-      "fired": false,
-      "status": 200,
-      "extra": true,
-      "why": "PEOPLE-SRV1 (2026-10-14), counted by hand: ONE readBatch — a GROUP BY break_status count over lib/people.peopleSql."
-    },
-    "GET /api/facts/product-lab": {
-      "file": "facts.js",
-      "trips": 2,
       "wire": 1,
       "fired": true,
       "status": 200,
       "extra": true
     },
-    "GET /api/facts/tax-lab": {
+    "GET /api/facts/product-lab": {
       "file": "facts.js",
-      "trips": 6,
-      "wire": 13,
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 200,
-      "extra": true,
-      "why": "TAX-SRV1 G7 (by hand): one shelf read (services.shelfOf: the definitions + gstn + items transaction, the face, the governed slabs), counted in Node by the slab rule. Measured 5 on the empty stub (no GSTIN: + the items-only read); 6 is the ceiling."
+      "extra": true
     },
     "GET /api/facts/rail": {
       "file": "facts.js",
@@ -649,75 +914,173 @@
     },
     "GET /api/facts/rail/chits": {
       "file": "facts.js",
-      "trips": 5,
-      "wire": 9,
-      "fired": false,
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/reports": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/tax-lab": {
+      "file": "facts.js",
+      "trips": 4,
+      "wire": 13,
+      "fired": true,
       "status": 200,
       "extra": true
     },
     "GET /api/facts/till": {
       "file": "facts.js",
-      "trips": 2,
-      "wire": 2,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/forms/instances/all": {
-      "file": "forms.js",
-      "trips": 2,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "TRADE-SRV1 G5 (2026-10-14), measured by tests/trade-srv1.test.cjs: ONE form_instance read inside one withEntity, ?context_ref= narrows it in SQL (b108 index form_instance_ctx); may/why is pure."
-    },
-    "GET /api/governance/lanes": {
-      "file": "governance.js",
-      "trips": 11,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable) — the client DOES call it (api('lanes'/'readinessOwn'), cap-readiness.js). TRADE-SRV1 (2026-10-14), measured by tests/trade-srv1.test.cjs: with origin and sector named by the screen, 5 statements (jurisdiction · vertical_category · standard_source · entity_compliance · ONE standard_document read for every lane — it was one per lane); with either unstated, + the stated values: country-setup.status (identities + entity_governance, one withEntity, cached a minute per shop) and the governance profile (entity_profile + vault + invoice party) = 11. may/why is pure (lib/access.mayWrite, 0 trips)."
-    },
-    "GET /api/governance/readiness": {
-      "file": "governance.js",
-      "trips": 11,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable) — the client DOES call it (api('lanes'/'readinessOwn'), cap-readiness.js). TRADE-SRV1 (2026-10-14): ?destination= takes resolveForDestination — the same reads as /lanes for one lane (5, + the stated origin/sector when unstated = 11); with no destination, resolveReadiness as before. may/why is pure (0 trips)."
-    },
-    "POST /api/governance/compliance": {
-      "file": "governance.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "placeholder CEILING (UNFIRED_CEILING) — not fired offline. TRADE-SRV1 (2026-10-14) adds the write gate (lib/access.writeGate): pure, 0 trips; a viewer/commenter is refused 403 before any read."
-    },
-    "POST /api/governance/verify": {
-      "file": "governance.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "placeholder CEILING — not fired offline. TRADE-SRV1 adds the write gate (pure, 0 trips)."
-    },
-    "GET /api/governance/country-setup": {
-      "file": "governance.js",
-      "trips": 4,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetup'), cap-country.js). CS1, measured by tests/country-setup.test.cjs: schema probe (cached) + identities + entity_governance, inside one withEntity. CS2 (2026-10-13): + ONE EXISTS read (catalogue_items · chit_header · journal_entry — the constitution: may the country still change?); the table probe for journal_entry is cached"
-    },
-    "GET /api/integrations/catalogue": {
-      "file": "integrations.js",
       "trips": 1,
       "wire": 1,
       "fired": true,
       "status": 200,
-      "why": "CX6 (2026-10-13): signed in, ONE read of identities.country so each connector carries may/why from the shop's pack (Tally/GoFrugal/Zoho greyed outside a GST state-split pack); anonymous stays 0 (fired here anonymously)"
+      "extra": true
+    },
+    "GET /api/folders": {
+      "file": "folders.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/:id/chits": {
+      "file": "folders.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/:id/metrics": {
+      "file": "folders.js",
+      "trips": 4,
+      "wire": 13,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/:id/rules": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/groupsum": {
+      "file": "folders.js",
+      "trips": 6,
+      "wire": 21,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/messages": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/mis": {
+      "file": "folders.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/folders/reconcile": {
+      "file": "folders.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/rules": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/folders/worklist": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/forms/instances/all": {
+      "file": "forms.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/country-setup": {
+      "file": "governance.js",
+      "trips": 2,
+      "wire": 7,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/instruments": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/governance/lanes": {
+      "file": "governance.js",
+      "trips": 5,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/profile": {
+      "file": "governance.js",
+      "trips": 4,
+      "wire": 10,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/governance/readiness": {
+      "file": "governance.js",
+      "trips": 8,
+      "wire": 20,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/readiness/:bridge_id": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/governance/supplier-acceptance/:handle": {
+      "file": "governance.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/integrations/catalogue": {
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
     },
     "GET /api/integrations/profile-map": {
       "file": "integrations.js",
@@ -733,20 +1096,20 @@
       "fired": true,
       "status": 200
     },
-    "GET /api/integrations/stock/:handle": {
-      "file": "integrations.js",
-      "trips": 3,
-      "wire": 6,
-      "fired": false,
-      "why": "TOP-CORRECT (2026-10-14), counted by hand: anonymous. The handle lookup (identities) + the storefront's visibility read (lib/catalogue-view catalogueVisibility: ONE identities read; viewer null, so `network` never asks the tree) + the stock read in one withEntity transaction (BEGIN/SET · SELECT · COMMIT). A private/closed shop stops after the second statement with the same 404 as no shop.",
-      "extra": true
-    },
     "GET /api/integrations/status": {
       "file": "integrations.js",
       "trips": 1,
       "wire": 1,
       "fired": true,
       "status": 200
+    },
+    "GET /api/integrations/stock/:handle": {
+      "file": "integrations.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "GET /api/integrations/streams": {
       "file": "integrations.js",
@@ -762,10 +1125,31 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/network-design": {
+      "file": "network-design.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/network-design/availability": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "GET /api/network-design/stores": {
+      "file": "network-design.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
     "GET /api/network-offers": {
       "file": "network-offers.js",
-      "trips": 9,
-      "wire": 15,
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 200
     },
@@ -776,38 +1160,6 @@
       "fired": true,
       "status": 200
     },
-    "GET /api/privacy/facts": {
-      "file": "privacy.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 200,
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
-    },
-    "GET /api/privacy/me": {
-      "file": "privacy.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": false,
-      "extra": true,
-      "why": "T3-P3-CONSENT by hand (extra: the web calls it from public/app/shop-privacy.js with fetch on the storefront token, not an EP map entry, so tools/endpoint-usage.cjs does not list it; a storefront token the stub cannot mint): ONE withEntity as the shop — the two identity rows (1), to_regclass b306 + the party's rows (2), to_regclass b307 + the WITH-counts page (2) = 5 statements, 6 as a ceiling. Before b306/b307: still 1 trip, said in may_consent / may_request."
-    },
-    "POST /api/privacy/me/consent": {
-      "file": "privacy.js",
-      "trips": 1,
-      "wire": 5,
-      "fired": false,
-      "extra": true,
-      "why": "T3-P3-CONSENT by hand (storefront token): ONE withEntity — to_regclass (1), the party's rows before (1), INSERT (1), the rows after for `may` (1) = 4 statements, 5 as a ceiling; the same notePref the CRM's POST contact-prefs uses."
-    },
-    "POST /api/privacy/me/requests": {
-      "file": "privacy.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": false,
-      "extra": true,
-      "why": "T3-P3-CONSENT by hand (storefront token): ONE withEntity — the shopper's name line (1), to_regclass b307 (1), the shop's country (1), INSERT (1) = 4 statements. Records the request only; no erase statement exists on this route."
-    },
     "GET /api/people": {
       "file": "people.js",
       "trips": 1,
@@ -815,6 +1167,117 @@
       "fired": true,
       "status": 200,
       "extra": true
+    },
+    "GET /api/privacy/facts": {
+      "file": "privacy.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
+    },
+    "GET /api/privacy/me": {
+      "file": "privacy.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "extra": true
+    },
+    "GET /api/products": {
+      "why": "answered 500 on the stub",
+      "file": "products.js",
+      "trips": 2,
+      "wire": 9,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/products/:id/versions": {
+      "file": "products.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/products/starter-columns": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/products/template": {
+      "file": "products.js",
+      "trips": 4,
+      "wire": 13,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/relationships/customers": {
+      "file": "relationships.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/relationships/customers/:id/rewards": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/relationships/customers/groups": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/relationships/suppliers": {
+      "file": "relationships.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/relationships/suppliers/availability": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/repeat": {
+      "file": "repeat-supply.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/repeat/:id": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/schemas/fields": {
+      "file": "schemas.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200
     },
     "GET /api/service/:chit_id": {
       "file": "service.js",
@@ -829,15 +1292,6 @@
       "wire": 4,
       "fired": true,
       "status": 200
-    },
-    "POST /api/tax/compute": {
-      "file": "tax.js",
-      "trips": 6,
-      "wire": null,
-      "fired": true,
-      "status": 400,
-      "extra": true,
-      "why": "TAX-SRV1 (by hand): identities (shopOf, 1) + the shelf read (as GET /api/facts/tax-lab, 5) only when a line needs a rate or a price. Fired body-less here: 400 NO_LINES, 0 trips."
     },
     "GET /api/tax/gstr": {
       "file": "tax.js",
@@ -872,16 +1326,14 @@
       "trips": 1,
       "wire": 5,
       "fired": true,
-      "status": 200,
-      "why": "T2-PAGING: +1 statement in the SAME transaction — the per-state counts (GROUP BY over every row) beside the page, which is now cut AFTER the order; before, 500 rows were read and an old High/Sev-1 could be cut off"
+      "status": 200
     },
     "GET /api/testing/requirements": {
       "file": "testing.js",
       "trips": 1,
       "wire": 5,
       "fired": true,
-      "status": 200,
-      "why": "T2-PAGING: +1 statement in the SAME transaction — the per-state counts (GROUP BY over every row) beside the page, which is now cut AFTER the order; before, 500 rows were read and an old High/Sev-1 could be cut off"
+      "status": 200
     },
     "GET /api/testing/results": {
       "file": "testing.js",
@@ -907,77 +1359,174 @@
     "GET /api/till/bills": {
       "file": "till.js",
       "trips": 1,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "FX-CT1: the counter's day report asks this (?till=<counter>&days=2) — ONE withEntity read; the till filter is in the same SQL."
-    },
-    "GET /api/till/stock": {
-      "file": "till.js",
-      "trips": 3,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-OPS, by hand (tests/ops-stock.test.cjs): CB Operations › Stock asks ?detail=1 — stock-store.onHand { lots } (1 withEntity) + the names ONE read (catalogue-read.ITEM_NAMES_SQL, 1 withEntity) + lib/cost.canReadSafe (1, the counter's call pays it too); schema.hasTable cached. Without detail: 2 (no names read). Nothing per item."
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/till/match": {
       "file": "till.js",
-      "trips": 2,
-      "wire": 5,
+      "trips": 3,
+      "wire": 11,
       "fired": true,
       "status": 200
     },
+    "GET /api/till/stock": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/work/:chit_id": {
       "file": "work.js",
-      "trips": 8,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "TO1/A1, tests/work-rows.test.cjs: select.rows for the one chit (4) + the same ONE readBatch (1) = 5 warm; cold adds 3 cached schema.hasTable probes = 8."
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "GET /api/work/facts": {
       "file": "work.js",
-      "trips": 4,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "TO1/A1, tests/work-rows.test.cjs: select.rows only (1 transaction = 4 trips); the counts come from the same read, no batch."
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/work/list": {
       "file": "work.js",
-      "trips": 8,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "TO1/A1, tests/work-rows.test.cjs: select.rows (1 transaction = 4 trips) + ONE readBatch for the page (header·lines, marks, delivery progress, line assignments) = 5 warm, whatever the row count; a cold process adds 3 cached schema.hasTable probes = 8. The empty stub answers before the batch (4)."
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "PATCH /api/actors/:id": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "PATCH /api/books/payments/:id": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "PATCH /api/books/recurring/:id": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
+    },
+    "PATCH /api/connectors/:actorId/connections/:connId": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
     },
     "PATCH /api/counters/:id": {
       "file": "counters.js",
-      "trips": 1,
-      "wire": 3,
+      "trips": 0,
+      "wire": 0,
       "fired": true,
-      "status": 400
+      "status": 400,
+      "awaiting_client": {
+        "pr": "T3-SETTINGS web (CB Settings renames a counter)",
+        "since": "2026-10-14"
+      }
     },
     "PATCH /api/crm/followups/:id": {
       "file": "crm.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "PATCH /api/entities/me/exposure": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/entities/me/prefs/:kind": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404
+    },
+    "PATCH /api/entities/policy": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "PATCH /api/entities/profile": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "PATCH /api/folders/:id": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/folders/rules/:rule_id": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/products/:id": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/relationships/customers/:id": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/relationships/suppliers/:id": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PATCH /api/schemas/fields/:field_key": {
+      "file": "schemas.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404
+    },
+    "PATCH /api/schemas/fields/order": {
+      "file": "schemas.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
     },
     "PATCH /api/testing/incidents/:id": {
       "file": "testing.js",
@@ -988,6 +1537,36 @@
     },
     "PATCH /api/testing/requirements/:id": {
       "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/actors": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/actors/:id/otp": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/actors/login": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/actors/set-pin": {
+      "file": "actors.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
@@ -1035,160 +1614,194 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/attachments": {
+      "file": "attachments.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
     "POST /api/books/accounts": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/books/cheques/:id/status": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
-    },
-    "POST /api/books/enable": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 136,
-      "fired": true,
-      "status": 200
-    },
-    "POST /api/books/entries": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 422,
-      "why": "F4 (by hand): newly CALLED by the web — CB Finance · Payables' Record discount sends the server's ready journal (against_ref). The route is unchanged in cost (postEntry, one transaction); the offline stub refuses early, so the line is the floor."
-    },
-    "POST /api/books/entries/:id/reverse": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/books/compare/preflight": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 422,
-      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: 1 trip — the guard only; the file is read in memory, nothing of the shop is read, nothing written."
+      "status": 422
     },
     "POST /api/books/compare/snapshots": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/enable": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/entries": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/entries/:id/reverse": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "POST /api/books/fx-rates": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
       "fired": true,
       "status": 422,
-      "why": "PR1, by hand: on the empty stub the country gate answers 422 NO_COUNTRY inside the `on` guard (one read, cached a minute per shop) before the switch and the who-may check. Live: 2 trips — the guard, then ONE transaction (the snapshot parts when adding to one · ONE insert)."
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/books/fx-rates/import": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/books/fx-revalue": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "awaiting_client": {
+        "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
+        "since": "2026-10-14"
+      }
     },
     "POST /api/books/move-in/import": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 422,
-      "why": "IM1: on the empty stub the country gate answers 422 before the switch (one read, cached a minute per shop); live, the route reads the shop's chart / parties / products ONCE per file (no per-row reads) and the import writes in one transaction"
+      "status": 422
     },
     "POST /api/books/move-in/preflight": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
       "status": 422,
-      "why": "IM1: on the empty stub the country gate answers 422 before the switch (one read, cached a minute per shop); live, the route reads the shop's chart / parties / products ONCE per file (no per-row reads) and the import writes in one transaction",
       "extra": true
     },
     "POST /api/books/move-in/preview": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
       "status": 422,
-      "why": "IM1: on the empty stub the country gate answers 422 before the switch (one read, cached a minute per shop); live, the route reads the shop's chart / parties / products ONCE per file (no per-row reads) and the import writes in one transaction",
       "extra": true
     },
     "POST /api/books/opening": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/books/outbox/retry": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/books/packs": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/books/packs/:id/ack": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/books/payments": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/books/payments/preview": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/books/preview": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/books/recurring": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
-    },
-    "POST /api/books/terms": {
-      "file": "books.js",
-      "trips": 3,
-      "wire": null,
-      "fired": false,
-      "why": "F2: owner write, one withEntity (read, update, one change row per changed key); ceiling until measured"
+      "status": 422
     },
     "POST /api/books/setting": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
+    },
+    "POST /api/books/terms": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
     },
     "POST /api/books/year/:fy/close": {
       "file": "books.js",
       "trips": 1,
-      "wire": 6,
+      "wire": 3,
       "fired": true,
-      "status": 404
+      "status": 422
     },
     "POST /api/capture/:id/convert": {
       "file": "capture.js",
@@ -1225,6 +1838,14 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/catalogue/enquiry/:item_id": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "POST /api/channels": {
       "file": "channels.js",
       "trips": 0,
@@ -1246,13 +1867,221 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/chits/:chit_id/amend": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/archive": {
+      "why": "answered 500 on the stub",
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/assign-lines": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/books-request": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/deliver-lines": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/disputes": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/:chit_id/messages": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/:chit_id/payment": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/:chit_id/raida": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/raida/:raida_id/close": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/:chit_id/reprice": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/restore": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/unarchive": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/chits/:chit_id/unread": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
     "POST /api/chits/assign-bulk": {
       "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T1-RAIL, by hand: 0 new trips — inside the one withEntity transaction, +1 statement per chit (statusGate reads the received copy before moving it to pending; the assignment UPDATE no longer sets current_status). The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/chits/register/entries/:raida_id/close": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/register/entries/:raida_id/revise": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/register/subjects": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/chits/register/subjects/:subject_id/close": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/register/subjects/:subject_id/entries": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/chits/send": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/combo-templates/:id/push": {
+      "file": "combo-templates.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/connectors": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/:actorId/connections": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/:actorId/erp-test": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/:actorId/ping": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/:actorId/regenerate-key": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
+    },
+    "POST /api/connectors/erp-ingest": {
+      "file": "connectors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/connectors/ingest": {
+      "file": "connectors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "extra": true
+    },
+    "POST /api/connectors/reissue-code": {
+      "file": "connectors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 403
     },
     "POST /api/counters": {
       "file": "counters.js",
@@ -1282,44 +2111,30 @@
       "fired": true,
       "status": 400
     },
-    "POST /api/crm/leads": {
+    "POST /api/crm/groups": {
       "file": "crm.js",
-      "trips": 2,
-      "wire": 0,
+      "trips": 1,
+      "wire": 3,
       "fired": true,
       "status": 400,
-      "why": "L1: ONE transaction (mint + customer_list row + memberships row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm. The empty stub answers 400 early (a floor)"
+      "awaiting_client": {
+        "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/crm/leads": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
     },
     "POST /api/crm/leads/import": {
       "file": "crm.js",
-      "trips": 4,
+      "trips": 0,
       "wire": 0,
       "fired": true,
-      "status": 400,
-      "why": "L3: ONE transaction of set-based statements for up to 500 rows (owner handle · the matching parties · mintMany 4 · contact update · customer_list insert · number block 3 · merges update · addMany 2 · notes insert = 1 trip, the same for 6 rows and for 500) plus three probes cached once present (memberships table, identities.city, customer_list.legal_name): 4 cold, 1 warm. A dry run is the probe + 1. The empty stub answers 400 NO_ROWS early (a floor)"
-    },
-    "POST /api/crm/parties/:id/outcome": {
-      "file": "crm.js",
-      "trips": 2,
-      "wire": 3,
-      "fired": true,
-      "status": 200,
-      "why": "L2: ONE transaction (party check, last calls, close open follow-ups, interaction, next follow-up, stage row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm"
-    },
-    "POST /api/crm/parties/:id/stage": {
-      "file": "crm.js",
-      "trips": 2,
-      "wire": 0,
-      "fired": true,
-      "status": 400,
-      "why": "L1: ONE transaction (lead check + item check + memberships row = 1 trip) plus the memberships table probe, cached once present: 2 cold, 1 warm. The empty stub answers 400 early (a floor)"
-    },
-    "POST /api/crm/parties/:id/interactions": {
-      "file": "crm.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub. MKT-SRV1 G2 by hand: an OUT call/message asks privacy.gate inside the SAME withEntity (to_regclass once per process + one SELECT … LIMIT 1) — 0 new trips; the route stays 1 trip"
+      "status": 400
     },
     "POST /api/crm/parties/:id/contact-prefs": {
       "file": "crm.js",
@@ -1327,67 +2142,71 @@
       "wire": 4,
       "fired": true,
       "status": 404,
-      "why": "T3-P3-CONSENT: called by the web now — the CRM record's Consent block (Yes / No) and, through the same lib/privacy.notePref, the shopper's POST /api/privacy/me/consent"
+      "awaiting_client": {
+        "pr": "CO1 web (contact prefs)",
+        "since": "2026-10-14"
+      }
+    },
+    "POST /api/crm/parties/:id/interactions": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/crm/parties/:id/outcome": {
+      "file": "crm.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/crm/parties/:id/stage": {
+      "file": "crm.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
     },
     "POST /api/crm/privacy-requests": {
       "file": "crm.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400,
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "POST /api/crm/privacy-requests/:id/answer": {
       "file": "crm.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub (b307 absent); by hand: ONE withEntity transaction = 1 trip",
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
-    },
-    "GET /api/crm/segments": {
-      "file": "crm.js",
-      "trips": 3,
-      "wire": 28,
-      "fired": true,
-      "status": 200,
-      "why": "T3-P2-CRM, by hand: the Parties list's own transaction with ?with=consent (lib/crm.list — the same rows, the same statements, 1 trip) + ONE transaction (the shop's high-value rule · the offers that name a group, ONE grouped statement over definition_version) + the group names (customer-groups.namesOf, 1). Counts are made in memory from those rows; no per-row statement.",
-      "awaiting_client": { "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)", "since": "2026-10-14" }
-    },
-    "POST /api/crm/groups": {
-      "file": "crm.js",
       "trips": 1,
-      "wire": 7,
+      "wire": 3,
       "fired": true,
       "status": 400,
-      "why": "T3-P2-CRM, by hand: ONE transaction — array_append over ANY(add[]) · array_remove over ANY(remove[]) · the count after (3 statements, however many ids, ≤ 500). The empty stub answers 400 (no name) early: a floor.",
-      "awaiting_client": { "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)", "since": "2026-10-14" }
-    },
-    "DELETE /api/crm/groups/:name": {
-      "file": "crm.js",
-      "trips": 1,
-      "wire": 5,
-      "fired": true,
-      "status": 404,
-      "why": "T3-P2-CRM, by hand: ONE transaction, ONE statement (array_remove across the shop's customers). Owner only. The empty stub answers 404 (no such group).",
-      "awaiting_client": { "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
+        "since": "2026-10-13"
+      }
     },
     "POST /api/crm/segments/:key/send": {
       "file": "crm.js",
-      "trips": 1,
+      "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 400,
-      "why": "T3-P2-CRM, by hand: dry = the Parties list's transaction (1 trip; the verdict per member is lib/privacy.mayAll's, in memory). A real send adds the shop's WhatsApp line (1) and then the ONE sender per allowed member (lib/whatsapp-out.notify: the gate read · the window read · the outbound log = 3 small transactions each) — a provider send is one call per recipient by nature, so the set is CAPPED at 100 (TOO_MANY in words above it). The empty stub answers 400 (no text) early: a floor.",
-      "awaiting_client": { "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)", "since": "2026-10-14" }
+      "awaiting_client": {
+        "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
+        "since": "2026-10-14"
+      }
     },
     "POST /api/crm/walk-ins/add": {
       "file": "crm.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
-      "status": 400,
-      "why": "T1-FINREW REW-L1 (by hand): the points claim is ONE withEntity transaction (lib/reward-store.claim: 2 advisory locks · the SUM read · the expiry read when the programme expires · 2 inserts) after the programme read; before it, 2 withEntity reads (programme · a 500-row fold) + 2 separate inserts. The stub answers 400 first, so the line stays the floor."
+      "status": 400
     },
     "POST /api/definitions": {
       "file": "definitions.js",
@@ -1403,6 +2222,101 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/entities/populations": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/entities/register": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/entities/verify": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/events/ticket": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/folders": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/folders/:id/rules": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/folders/messages/:message_id/mark": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/folders/move": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/folders/rules/preview": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/governance/ai-draft": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401
+    },
+    "POST /api/governance/compliance": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/governance/supplier-acceptance": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/governance/verify": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "POST /api/integrations/:actor_id/approve": {
       "file": "integrations.js",
       "trips": 1,
@@ -1412,10 +2326,10 @@
     },
     "POST /api/integrations/ask/:handle/stock": {
       "file": "integrations.js",
-      "trips": 2,
-      "wire": 2,
-      "fired": false,
-      "why": "TOP-CORRECT (2026-10-14), counted by hand: anonymous. The handle lookup + the storefront's visibility read (lib/catalogue-view catalogueVisibility, one identities read); the bell itself is in memory. A private/closed shop is 404 after the second statement.",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
       "extra": true
     },
     "POST /api/integrations/books/skip": {
@@ -1432,34 +2346,6 @@
       "fired": false,
       "why": "answered 500 on the stub"
     },
-    "POST /api/network-design/validate": {
-      "file": "network-design.js",
-      "trips": 3,
-      "wire": 6,
-      "fired": true,
-      "status": 200
-    },
-    "GET /api/network-design": {
-      "file": "network-design.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": true,
-      "status": 200
-    },
-    "GET /api/network-design/availability": {
-      "file": "network-design.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 400
-    },
-    "GET /api/network-design/stores": {
-      "file": "network-design.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 404
-    },
     "POST /api/network-design/build": {
       "file": "network-design.js",
       "trips": 1,
@@ -1474,86 +2360,10 @@
       "fired": true,
       "status": 400
     },
-    "PUT /api/actors/assign/:chit_id": {
-      "file": "actors.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T1-RAIL, by hand: 0 new trips — inside the one withEntity transaction, pull/push +1 statement (statusGate reads the received copy, then the gated UPDATE); the status_pending timeline row is written only when the copy actually moved. The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
-    },
-    "PUT /api/governance/country-setup": {
-      "file": "governance.js",
-      "trips": 9,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run). CS2 (2026-10-13): each profile also makes the ONE EXISTS read (+2 = 9). When the COUNTRY CHANGED before the shop was constituted, the same transaction also re-seeds a switched-on never-posted ledger (books.reseedUnposted: setting + entries read, 2 DELETEs, enable()'s inserts — one per chart row, as the switch itself costs) and logs who/when to books_change_log (one INSERT per changed fact, savepointed) — a once-per-shop correction, outside this ceiling by design. FX-AU1 (2026-10-14): the re-seed is no longer in a swallowing savepoint (a failed re-seed fails the correction — one transaction) and the year is re-laid by ONE set-based UPDATE when its DATES differ (IN→AU, both \"2026-27\") — the ceiling is unchanged"
-    },
-    "PUT /api/governance/profile/vault": {
-      "file": "governance.js",
-      "trips": 7,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (governanceRouter by variable). T2-POLICY (2026-10-14): held-vault read + UPI mirror (policy.patchKey, 1) + vault upsert in withEntity (set_config + INSERT) + — only when a Business identity row carries a tax number or address — the identities read (country, gstn, address) and at most ONE write through profile.setShopIdentity"
-    },
-    "POST /api/entities/register": {
-      "file": "entities.js",
-      "trips": 11,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (entitiesRouter is mounted by variable) — the client DOES call it (api('register'), app.html doRegister). Measured by hand, FX-AU1 (2026-10-14): signin ask (identity lookup) + the user_id taken check + istest probe (cached) + ONE INSERT identities (the browser guess is NAMED in it — no extra trip) + the identities.timezone column probe (cached) + ONE withEntity upsert of entity_governance.setup_source (only when a guess came: +1) + sendCode (the code row + the mail). tests/register-country-guess.test.cjs drives it. GOV-SPIN (2026-10-14): + CS.atSignup → govresolve.resolveInstallationGovernance for THIS installation (constitution base · installation · capability set — each memo'd a minute, +3 cold, 0 warm); the offer is named in the same INSERT (no extra trip)"
-    },
-    "GET /api/entities/constitutions": {
-      "file": "entities.js",
-      "trips": 4,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (entitiesRouter is mounted by variable) — the client DOES call it (api('constitutions'), app/register-form.js). PUBLIC, pre-auth. Measured by hand, GOV-SPIN (2026-10-14): the constitution list (1) + CS.atSignup → govresolve.resolveInstallationGovernance (constitution base · installation · capability set, memo'd a minute: +3 cold, 0 warm) — 4 cold, 1 warm. countries[] is the engines registry, no trip"
-    },
-    "POST /api/entities/verify": {
-      "file": "entities.js",
-      "trips": 24,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "no mount in server.js (entitiesRouter is mounted by variable) — alias of signin verify (api('ownerVerify'), app/register-form.js). A placeholder CEILING until a fixture runs the whole onboarding path (OTP check · identity · the governance-context COALESCE · signup_context · the auto-mint · schema bootstrap · root link · the token). GOV-SPIN (2026-10-14) adds, ONLY when the register panel sent country_source with agreed_at (a registration, never an ordinary sign-in): CS.atSignup (+3 cold memo'd, 0 warm) + ONE withEntity: identities read (1), and only when the accepted country differs — the setup mark (1) + the ONE EXISTS read (1) + UPDATE identities (1) — then the setup_source UPDATE (1); + the b383 column probe (cached) + ONE UPDATE of that verify's own signup_context row (RETURNING id, no search). tests/register-spin-country.test.cjs drives acceptAtSignup"
-    },
-    "PUT /api/network-design": {
+    "POST /api/network-design/validate": {
       "file": "network-design.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 400
-    },
-    "GET /api/events/stats": {
-      "file": "events.js",
-      "trips": 0,
-      "wire": 0,
-      "extra": true,
-      "why": "SEC3 (by hand): platform root only — lib/platformroot.refuseUnlessRoot reads env, no statement; the counts are in memory"
-    },
-    "POST /api/connectors/ingest": {
-      "file": "connectors.js",
-      "trips": 50,
-      "wire": 50,
-      "extra": true,
-      "why": "SEC3 (by hand): device key, no session. Key + the shop's capability switch in ONE statement (was a key-only read); `to` → ONE withEntity (party + mayTrade) and a second look only on a refusal; then as before (heartbeat 1-2, work pattern, the signal chit's reads + deliver; the shop row now also carries currency_code/country — no new trip). Placeholder ceiling until a fixture runs it"
-    },
-    "POST /api/connectors/erp-ingest": {
-      "file": "connectors.js",
-      "trips": 50,
-      "wire": 50,
-      "extra": true,
-      "why": "SEC3 (by hand): key + switch in ONE statement; `to` → ONE withEntity (+1 only on a refusal); then the receipt claim + chit as before. Placeholder ceiling until a fixture runs it"
-    },
-    "POST /api/events/ticket": {
-      "file": "events.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 3,
+      "wire": 6,
       "fired": true,
       "status": 200
     },
@@ -1613,6 +2423,195 @@
       "fired": true,
       "status": 200
     },
+    "POST /api/privacy/me/consent": {
+      "file": "privacy.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "extra": true
+    },
+    "POST /api/privacy/me/requests": {
+      "file": "privacy.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401,
+      "extra": true
+    },
+    "POST /api/products": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/products/:id/media": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/products/:id/schedule": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/products/bulk-update": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/products/import": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/products/import/preflight": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/products/starter-columns": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/products/status/bulk": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/relationships/customers": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/relationships/customers/:id/groups": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/relationships/suppliers": {
+      "file": "relationships.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/repeat": {
+      "file": "repeat-supply.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/repeat/:id/accept": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/agree": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/counter": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "POST /api/repeat/:id/decline": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/end": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/pause": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/refuse": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/resume": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/run": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/:id/skip": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/repeat/sweep": {
+      "file": "repeat-supply.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": true,
+      "status": 200
+    },
     "POST /api/service/:chit_id/pause": {
       "file": "service.js",
       "trips": 0,
@@ -1668,6 +2667,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/tax/compute": {
+      "file": "tax.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/testing/cases/close": {
       "file": "testing.js",
@@ -1732,12 +2739,135 @@
       "fired": true,
       "status": 200
     },
+    "POST /api/till/price": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/actors/:id/delegate": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "PUT /api/actors/:id/status": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/actors/:id/tasks/route": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/actors/assign/:chit_id": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/actors/break": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/actors/change-pin": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/actors/settings": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "PUT /api/catalogue-face": {
       "file": "catalogue-face.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/chits/:chit_id/priority": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/chits/:chit_id/priority-flag": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/chits/:chit_id/star": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "PUT /api/chits/:chit_id/status": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/chits/:chit_id/use": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "PUT /api/chits/:chit_id/void": {
+      "file": "chits.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/chits/:id/use": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "PUT /api/definitions/:id": {
       "file": "definitions.js",
@@ -1746,10 +2876,54 @@
       "fired": true,
       "status": 404
     },
+    "PUT /api/entities/populations/:code/desk": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404
+    },
+    "PUT /api/entities/routing": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/governance/country-setup": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "PUT /api/governance/profile": {
+      "file": "governance.js",
+      "trips": 5,
+      "wire": 14,
+      "fired": true,
+      "status": 200
+    },
+    "PUT /api/governance/profile/vault": {
+      "file": "governance.js",
+      "trips": 7,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "answered 503 on the stub"
+    },
     "PUT /api/integrations/streams": {
       "file": "integrations.js",
       "trips": 1,
       "wire": 1,
+      "fired": true,
+      "status": 400
+    },
+    "PUT /api/network-design": {
+      "file": "network-design.js",
+      "trips": 0,
+      "wire": 0,
       "fired": true,
       "status": 400
     },
@@ -1760,53 +2934,19 @@
       "fired": true,
       "status": 400
     },
-    "GET /api/chits/disputes/queue": {
-      "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-DISPUTES-ASSIST, by hand: 2 trips — ONE withEntity transaction (BEGIN · set_config · the page with count(*) OVER() · the open/resolved counts · COMMIT) + ONE roster read for the whole page (unnest + LATERAL chit_dispute_roster). Was 1 + one roster read PER ROW. The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
+    "PUT /api/products/:id/availability": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
     },
-    "GET /api/chits/:chit_id/disputes": {
-      "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-DISPUTES-ASSIST, by hand: 2 trips — ONE withEntity transaction (the participant check · my dispute copies · the chit's all_recipients for raise_parties, +1 statement) + ONE roster read for every dispute on the chit (was one per dispute). The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
-    },
-    "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
-      "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-DISPUTES-ASSIST, by hand: 0 new trips — the refusal is lib/dispute-may.resolve over the dispute copy the route already read (no statement added). The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
-    },
-    "PUT /api/chits/:chit_id/status": {
-      "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T1-RAIL, by hand: 0 new trips, 0 new statements — moveStatus's read and UPDATE are lib/rail-status statusGate's, in the same transaction; a sender's cancel gates its sent copy (+1 SELECT in the transaction it already opened). The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
-    },
-    "PUT /api/chits/:chit_id/void": {
-      "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T1-RAIL, by hand: 0 new trips — the one withEntity transaction now reads each own copy (sent · received) and asks the rail before the UPDATE(s): +2 statements. A refused void (completed) answers 409 after that one transaction, writing nothing. The chits/actors routers are not mounted by this scanner: placeholder ceiling, counted by hand."
-    },
-    "PUT /api/chits/:id/use": {
-      "file": "chits.js",
-      "trips": 2,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "FX-F10W, by hand: lib/bill-use.set — taxCopy.copyOf (1 trip) + ONE withEntity transaction (1 trip): the use UPDATE, and with { party } the supplier read (books-store supplierByName, STD1: the one resolver) + the party UPDATE (5 statements: BEGIN · set_config · SELECT · UPDATE · COMMIT; + the use UPDATE when both are sent). The chits router is not mounted by this scanner. GET /api/chits/:chit_id (STD1): books_wait is one more scalar in the ONE_SHOT statement — 0 new trips."
+    "PUT /api/products/:id/status": {
+      "file": "products.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
     },
     "PUT /api/service/:chit_id": {
       "file": "service.js",
@@ -1814,259 +2954,6 @@
       "wire": 4,
       "fired": true,
       "status": 404
-    },
-    "GET /api/repeat": {
-      "file": "repeat-supply.js",
-      "trips": 3,
-      "wire": 12,
-      "fired": true,
-      "status": 200,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the shop's zone (a minute's cache) + the list, one join to chit_header; on the empty stub the table is 'missing' → migrated:false"
-    },
-    "GET /api/repeat/:id": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: zone + row; the customer: the copy they hold (own RLS) + the row as the seller; on the stub: 404 (a floor)"
-    },
-    "POST /api/repeat": {
-      "file": "repeat-supply.js",
-      "trips": 0,
-      "wire": null,
-      "fired": true,
-      "status": 400,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the table check, the zone, the source bill read; the agreement is SENT over loopback (its own request: the send route's cost), then the row inserted and two history lines; the stub answers 400 early (a floor)"
-    },
-    "POST /api/repeat/sweep": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 200,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): every agreed row due: each run is one loopback send (its own request) + the row's move + two history lines; nothing due on the stub"
-    },
-    "POST /api/repeat/:id/accept": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the customer: the copy held + the row, the status writer's own trips (moveStatus), the row's move, two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
-      "extra": true
-    },
-    "POST /api/repeat/:id/counter": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the customer: the copy held + the row, the row's move, two history lines; on the stub: 404 (a floor)"
-    },
-    "POST /api/repeat/:id/decline": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as accept (the status writer, best-effort) + the row's move; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
-      "extra": true
-    },
-    "POST /api/repeat/:id/skip": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): either side: the row (+ the copy held for the customer), the move, two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
-      "extra": true
-    },
-    "POST /api/repeat/:id/agree": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, the move, two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
-      "extra": true
-    },
-    "POST /api/repeat/:id/refuse": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
-      "extra": true
-    },
-    "POST /api/repeat/:id/pause": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
-      "extra": true
-    },
-    "POST /api/repeat/:id/resume": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
-      "extra": true
-    },
-    "POST /api/repeat/:id/end": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): as agree; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
-      "extra": true
-    },
-    "POST /api/repeat/:id/run": {
-      "file": "repeat-supply.js",
-      "trips": 1,
-      "wire": null,
-      "fired": true,
-      "status": 404,
-      "why": "RI1 (by hand, measured 2026-10-13 on the stub): the seller: the row, then per due day one loopback send (its own request) + the move + two history lines; on the stub: 404 (a floor). INT2: the web (cap-repeat.js rpEpOf) invokes this verb by the action name the server lists, invisible to the registry scanner — extra, as IM1's preflight/preview",
-      "extra": true
-    },
-    "POST /api/chits/:chit_id/deliver-lines": {
-      "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "SEC4, by hand: 0 new trips — the copy read (taxCopy.copyOf, 1 trip) moved BEFORE the bill-use write so the rail answers first; a viewer / commenter is refused with no read at all (level first), a stranger after that one read (404 not_participant). Then as before: the delivery transaction, the fan-out, progress. The chits router is not mounted by this scanner: placeholder ceiling, counted by hand."
-    },
-    "GET /api/catalogue/:bridge_id": {
-      "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "SEC4, by hand: 0 new trips — the sign-in-first cut reads storefront_access from the view buildPublicView already built (its identities read), and the token is verified in memory. Called by shop.html / embed.html (not app.html): placeholder ceiling."
-    },
-    "GET /api/catalogue/enquiry": {
-      "file": "catalogue.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": false,
-      "extra": true,
-      "why": "SEC4, new, by hand: ONE withEntity statement (BEGIN · set_config · SELECT · COMMIT) — the page of threads and the total in one SELECT (CTEs + json_agg); no per-row read."
-    },
-    "POST /api/catalogue/enquiry/:item_id": {
-      "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "SEC4, by hand: 0 new trips — the supplier bell is lib/events.notifyAfter, in-process after the response; the gate and the b162 definer are unchanged."
-    },
-    "POST /api/till/price": {
-      "file": "till.js",
-      "trips": 10,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-FIXES, by hand: owner/till key 0 new trips (writeRefusal returns before any read); a co-assist +1 withEntity (BEGIN · set_config · can_see_costs · COMMIT) before the one price transaction. Placeholder ceiling: not fired by the scanner."
-    },
-    "POST /api/products/:id/schedule": {
-      "file": "products.js",
-      "trips": 20,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-FIXES, by hand: owner 0 new trips; a co-assist +1 withEntity (the can_see_costs read) — a cost-blind one is refused BEFORE ensureDeclared and the item read. Placeholder ceiling."
-    },
-    "POST /api/combo-templates/:id/push": {
-      "file": "combo-templates.js",
-      "trips": 24,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-FIXES, by hand: owner 0 new trips; a co-assist +1 withEntity (can_see_costs), refused before the template read when cost-blind. Placeholder ceiling."
-    },
-    "POST /api/products/import/preflight": {
-      "file": "products.js",
-      "trips": 8,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-FIXES, by hand: 0 new trips — the workbook-cut notice reads xlsx-read's own flag; the GTIN check is pure (gs1). Placeholder ceiling."
-    },
-    "POST /api/products/import": {
-      "file": "products.js",
-      "trips": 40,
-      "wire": null,
-      "fired": false,
-      "extra": true,
-      "why": "T3-FIXES, by hand: 0 new trips — a cut workbook is refused (413 WORKBOOK_CUT) before any read. Placeholder ceiling."
-    },
-    "GET /api/signin/sessions": {
-      "file": "signin.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "why": "T3-P4-ACCOUNT: one read of the shop's devices (lib/person-session devicesOf), may.devices derived from req — CB Settings › Account › Sessions"
-    },
-    "GET /api/signin/devices": {
-      "file": "signin.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "why": "T3-P4-ACCOUNT: the same one read, owner only (lib/owner.gate) — CB Settings › Account › Every device"
-    },
-    "POST /api/signin/sessions/revoke": {
-      "file": "signin.js",
-      "trips": 2,
-      "wire": 2,
-      "fired": true,
-      "status": 200,
-      "why": "T3-P4-ACCOUNT: one read to find whose session it is, one locked write (person-session close / revokeDevice) — Sign out this device"
-    },
-    "GET /api/folders/mis": {
-      "file": "folders.js",
-      "trips": 3,
-      "wire": 3,
-      "fired": true,
-      "status": 200,
-      "why": "T3-P4-ACCOUNT: policy.get + select.rows (one transaction), measured once by lib/measure — CB Finance › Reports (cap-mis.js api('misMetrics')) and the workshop MIS (cap-admin.js). extra: routes/folders.js is mounted without an inline require, so tools/endpoint-usage.cjs cannot place its paths (its own note) — invisible to the called list, fired here",
-      "extra": true
-    },
-    "GET /api/facts/counters": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "why": "T3-SETTINGS card (the till card's REGISTER_SQL, one trip) — line added by hand in T3-P4-ACCOUNT, it was missing",
-      "extra": true
-    },
-    "GET /api/facts/account": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "why": "T3-P4-ACCOUNT: the register read widened by the devices column — one trip",
-      "extra": true
-    },
-    "GET /api/facts/reports": {
-      "file": "facts.js",
-      "trips": 2,
-      "wire": 5,
-      "fired": true,
-      "status": 200,
-      "why": "T3-P4-ACCOUNT: railScope (overdue_days + select.rows, together) through lib/measure — the rail card's read without the CRM lists",
-      "extra": true
     }
   }
 }

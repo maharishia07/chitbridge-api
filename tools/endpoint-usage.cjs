@@ -51,24 +51,12 @@ const callsOf = (key) => {
 };
 
 /* ── 3 · the server's routes ────────────────────────────────────────────────────────────────────────────── */
-const mounts = {};
-try {
-  const app = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
-  /**
-   * ⚠️ THE MOUNT LINE HAS MORE SHAPES THAN THE OBVIOUS ONE. A pattern demanding
-   * `require('./routes/<lowercase>')` found 14 of 24 route files: it missed `./src/routes/network`, and it
-   * missed any mount carrying middleware between the path and the require. Every route file it fails to place
-   * gets an empty base path, so none of its endpoints can ever match a registry entry — the tool then reports
-   * its own blindness as "not called by the client".
-   */
-  /* ⚠️ [^;] not [\s\S]: a mount with no inline require (`app.use('/api/governance', governanceRouter);`)
-     let the old pattern run past the `;` and pair that path with the NEXT line's require — network-design
-     landed on /api/governance, events on /api/connections, identity-docs on /api/schemas, and every call to
-     their real paths was invisible to the budget. A single app.use() statement never contains a `;`. */
-  for (const m of app.matchAll(/app\.use\(\s*['"]([^'"]+)['"][^;]{0,120}?require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) {
-    if (!mounts[m[2] + '.js']) mounts[m[2] + '.js'] = m[1];
-  }
-} catch (_) { /* no server.js — paths degrade to the route file's own path */ }
+/* ⚠️ THE MOUNT LINE HAS MORE SHAPES THAN THE OBVIOUS ONE — inline require, or a router VARIABLE (actors, entities, governance…). Both are
+   read by tools/server-mounts.cjs (EFF-TRIPS: one helper for this scanner and the round-trip harness; the old regex here knew only the first
+   shape and reported its own blindness as "not called by the client" / "no mount in server.js"). */
+let mounts = {};
+try { mounts = require('./server-mounts.cjs').serverMounts(fs.readFileSync(path.join(API, 'server.js'), 'utf8')); }
+catch (_) { /* no server.js — paths degrade to the route file's own path */ }
 
 const rows = [];
 for (const f of fs.readdirSync(path.join(API, 'routes')).filter((x) => x.endsWith('.js'))) {

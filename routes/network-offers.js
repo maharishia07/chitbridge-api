@@ -21,7 +21,7 @@ const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { query, withEntity } = require('../db');
+const { withEntity, readBatch } = require('../db');
 const net = require('../lib/network-offers');
 const ncat = require('../lib/network-catalogue');
 const membership = require('../lib/network-membership');
@@ -43,48 +43,86 @@ async function ownOffer(entity_id, id) {
   return r.rows[0] || null;
 }
 
+/**
+ * ⭐ EFF-TRIPS (2026-10-15): THREE TRIPS, NOT 3 + 3 PER BRAND + 2 PER MEMBER. Every read this screen needs is batched (db readBatch):
+ *   trip 1 — everything keyed by ME: my identities row (name · flags — read ONCE, it was read three times) · my own offers · my place on the
+ *            tree · my roster · my adoptions WITH their source's owner and items (one join) · the brands I have an edge with · my own sources
+ *            · my products (only when I author a source — an EXISTS in the statement)
+ *   trip 2 — everything keyed by the brands and members found: their identities rows · the brands' catalogue titles · my standing with each
+ *            brand · which brands I am IN (membership.isMemberSql)
+ *   trip 3 — each brand's released offers, under THAT brand's binding (readBatch's per-statement entity — FORCE RLS on definition)
+ * The answer is the same shape, row for row (tests/network-offers-shape.test.cjs). ⚠️ A batch that fails answers membership's 503 + code
+ * (the reads used to degrade one by one to "none"; a half-read network is not an answer).
+ */
 router.get('/', auth, sessionOnly, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const brand = await net.brandView(me);
-    /* the networks THIS shop belongs to, read from its own adoptions */
-    const ado = await withEntity(me, (db) => db.query(
-      'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [me])).catch(log.orElse('network-offers GET /: the read failed — answered with none', ({ rows: [] })));
+    const actor = require('../lib/reqctx').currentActor();
+    const batch = (what, stmts) => readBatch(me, actor, stmts).catch((e) => { throw membership.readFailed(e, what); });
+    const [meRow, ownOffers, ownPlace, roster, ado, edged, ownSources, products] = await batch('network offers (own)', [
+      { text: 'SELECT display_name, policy_flags FROM identities WHERE identity_id = $1', params: [me] },
+      { text: net.OWN_OFFERS_SQL, params: [me] },
+      { text: net.OWN_PLACE_SQL, params: [me] },
+      { text: membership.ROSTER_SQL, params: [me] },
+      /* the networks THIS shop belongs to, read from its own adoptions — with each source's owner and items in the same statement */
+      { text: `SELECT a.source_key, a.commercials, s.owner_entity_id, s.items FROM catalogue_adoption a LEFT JOIN catalogue_source s ON s.source_key = a.source_key
+                WHERE a.entity_id = $1 AND a.visible = true`, params: [me] },
+      /* ⭐ every brand this store has a commercial edge with — invited, ASKED (NET-SRV1 G1: a store sees the request it sent even to a
+         brand whose catalogue it does not sell yet), in or suspended — so standing() below is asked about all of them, never guessed */
+      { text: `SELECT DISTINCT i.identity_id::text AS brand_id
+                 FROM identities mi JOIN cb_entity mc ON mc.bridge_id = mi.bridge_id
+                 JOIN cb_edge e ON e.child_id = mc.id AND e.type = 'commercial' AND e.state IN ('requested', 'active', 'suspended')
+                 JOIN cb_entity bc ON bc.id = e.parent_id JOIN identities i ON i.bridge_id = bc.bridge_id AND i.identity_type = 'entity'
+                WHERE mi.identity_id = $1`, params: [me] },
+      { text: ncat.OWN_SOURCES_SQL, params: [me] },
+      { text: ncat.BRAND_PRODUCTS_SQL.replace(' ORDER BY', ' AND EXISTS (SELECT 1 FROM catalogue_source WHERE owner_entity_id = $1::uuid AND active = true) ORDER BY'), params: [me] },
+    ]);
+    const my = meRow.rows[0] || {};
+    const myFlags = my.policy_flags || {};
     const owners = [];
-    if (ado.rows.length) {
-      const src = await query('SELECT source_key, owner_entity_id FROM catalogue_source WHERE source_key = ANY($1::text[])',
-        [ado.rows.map((r) => r.source_key)]).catch(log.orElse('network-offers GET /: the read failed — answered with none', ({ rows: [] })));
-      src.rows.forEach((r) => { if (r.owner_entity_id && String(r.owner_entity_id) !== String(me)) owners.push(String(r.owner_entity_id)); });
-    }
-    const choices = ((await net.flagsOf(me)).flags.network_choices) || {};
-    /* ⭐ every brand this store has a commercial edge with — invited, ASKED (NET-SRV1 G1: a store sees the request it sent even to a
-       brand whose catalogue it does not sell yet), in or suspended — so standing() below is asked about all of them, never guessed */
-    const edged = await query(
-      `SELECT DISTINCT i.identity_id::text AS brand_id
-         FROM identities mi JOIN cb_entity mc ON mc.bridge_id = mi.bridge_id
-         JOIN cb_edge e ON e.child_id = mc.id AND e.type = 'commercial' AND e.state IN ('requested', 'active', 'suspended')
-         JOIN cb_entity bc ON bc.id = e.parent_id JOIN identities i ON i.bridge_id = bc.bridge_id AND i.identity_type = 'entity'
-        WHERE mi.identity_id = $1`, [me]).catch(log.orElse('network-offers GET /: edge read failed — the brands this store asked or joined are not listed', ({ rows: [] })));
+    ado.rows.forEach((r) => { if (r.owner_entity_id && String(r.owner_entity_id) !== String(me)) owners.push(String(r.owner_entity_id)); });
+    const choices = myFlags.network_choices || {};
     const brandIds = [...new Set(owners.concat(edged.rows.map((x) => x.brand_id)))];
+    const memberIds = roster.rows.map((m) => String(m.id));
+    const peopleIds = [...new Set(brandIds.concat(memberIds))];
     /* ⭐ where this store stands with each — in, asked, invited, suspended, or not yet asked — and the bridge ids that link to the network */
-    const standing = await membership.standing(me, brandIds);
+    let standing = {}, inNetwork = new Set();
+    const people = new Map();   /* id → { name, flags, title } — one identities row and one catalogue title per brand or member */
+    if (peopleIds.length) {
+      const stmts = [{ text: 'SELECT identity_id::text AS id, display_name, policy_flags FROM identities WHERE identity_id = ANY($1::uuid[])', params: [peopleIds] }];
+      if (brandIds.length) stmts.push(
+        { text: `SELECT DISTINCT ON (owner_entity_id) owner_entity_id::text AS id, title FROM catalogue_source
+                  WHERE owner_entity_id = ANY($1::uuid[]) AND COALESCE(title, '') <> '' ORDER BY owner_entity_id, source_key`, params: [brandIds] },
+        { text: membership.STANDING_SQL, params: [me, brandIds] },
+        { text: `SELECT b FROM unnest($1::text[]) AS b WHERE ${membership.isMemberSql('b', '$2')}`, params: [brandIds, String(me)] });
+      const [idRows, titles, standRows, inRows] = await batch('network offers (brands)', stmts);
+      idRows.rows.forEach((r) => people.set(String(r.id), { name: r.display_name || null, flags: r.policy_flags || {}, title: null }));
+      if (titles) titles.rows.forEach((r) => { const p = people.get(String(r.id)); if (p) p.title = r.title ? String(r.title) : null; });
+      if (standRows) standing = membership.standingOf(standRows.rows);
+      if (inRows) inNetwork = new Set(inRows.rows.map((x) => String(x.b)));
+    }
+    const of = (id) => people.get(String(id)) || { name: null, flags: {}, title: null };
+    const names = new Map(memberIds.filter((id) => of(id).name).map((id) => [id, of(id).name]));
+    const brand = await net.brandView(me, { flags: myFlags, offers: ownOffers.rows, own: ownPlace.rows, roster: roster.rows, names });
+    /* trip 3 — each brand's released offers, read under that brand (only a store INSIDE the network is told of them) */
+    const want = brandIds.filter((b) => (standing[b] || {}).state === 'active' && Object.keys(((of(b).flags.network_offers || {}).released) || {}).length);
+    const offerRows = {};
+    if (want.length) {
+      const got = await batch('network offers (released)', want.map((b) => ({ entity: b, params: [b, Object.keys(of(b).flags.network_offers.released)],
+        text: `SELECT definition_id, name, sub_kind, status FROM definition
+                WHERE entity_id = $1 AND kind = 'offer' AND definition_id::text = ANY($2::text[])` })));
+      want.forEach((b, i) => { offerRows[b] = got[i].rows; });
+    }
     const networks = [];
     for (const brand_id of brandIds) {
       const st = standing[brand_id] || { state: 'none', via: null, edge_id: null, asked_by: null };
       const inside = st.state === 'active';
-      const { name, flags } = await net.flagsOf(brand_id);
+      const { name, flags, title } = of(brand_id);
       const no = flags.network_offers || {};
       const policy = net.POLICIES.indexOf(no.policy) >= 0 ? no.policy : 'opt_in';
       const rel = no.released || {};
-      const ids = Object.keys(rel);
-      let rows = [];
-      if (ids.length) {
-        const r = await withEntity(brand_id, (db) => db.query(
-          `SELECT definition_id, name, sub_kind, status FROM definition
-            WHERE entity_id = $1 AND kind = 'offer' AND definition_id::text = ANY($2::text[])`, [brand_id, ids])).catch(log.orElse('network-offers GET /: the read failed — answered with none', ({ rows: [] })));
-        rows = r.rows;
-      }
-      networks.push({ brand_id, brand_name: await net.brandName(brand_id, name), policy,
+      const rows = offerRows[brand_id] || [];
+      networks.push({ brand_id, brand_name: title || name || null, policy,
         /* ⭐ G3: the brand's bridge id, and the network ROOT's — the network store reads by the root (GET /api/catalogue/network/:bridge_id) */
         brand_bridge_id: st.brand_bridge_id || null, root_bridge_id: st.root_bridge_id || null,
         /* in | requested (asked_by says who must answer) | suspended | none — the store half of lib/network-membership */
@@ -101,9 +139,13 @@ router.get('/', auth, sessionOnly, async (req, res) => {
         }) });
     }
     /* ⭐ the catalogue half: what the brand would publish, and the prices its stores are being asked about */
-    brand.catalogue = await ncat.brandView(me).catch(membership.orElse('network offers: the catalogue half was not read — shown without it', null));
+    const brandsPre = {}; brandIds.forEach((b) => { brandsPre[b] = of(b); });
+    brand.catalogue = await ncat.brandView(me, { sources: ownSources.rows, products: products.rows, flags: myFlags,
+      members: roster.rows.filter((m) => m.state === 'active').map((m) => m.id), names }).catch(membership.orElse('network offers: the catalogue half was not read — shown without it', null));
     if (brand.catalogue) brand.is_brand = true;
-    const price_notices = await ncat.storeNotices(me, ado.rows).catch(membership.orElse('network offers: price notices not read — none shown', []));
+    const price_notices = await ncat.storeNotices(me, ado.rows.map((r) => ({ source_key: r.source_key, commercials: r.commercials })),
+      { seen: myFlags.network_price_seen || {}, src: ado.rows.filter((r) => r.owner_entity_id).map((r) => ({ source_key: r.source_key, owner_entity_id: r.owner_entity_id, items: r.items })),
+        inside: inNetwork, brands: brandsPre }).catch(membership.orElse('network offers: price notices not read — none shown', []));
     /* ⭐ may this login DESIGN a network? the same rule POST /api/network-design/build enforces (only the business itself, never a co-assist);
        the member view's Design tab shows the action either way and greys it with this sentence (no query — read off the session) */
     const may_design = (req.identity && req.identity.parent_entity_id)
