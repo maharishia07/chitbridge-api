@@ -124,6 +124,18 @@ spin_migrate() {
   dry || docker image inspect chitbridge-migrate >/dev/null 2>&1 || docker build -q --target migrate -t chitbridge-migrate "$SPIN_API_DIR" >/dev/null
   run docker run --rm -e DATABASE_URL="$1" -e CB_APP_PASSWORD="$CB_APP_PASSWORD" --entrypoint sh chitbridge-migrate -c \
     'node tools/migrate.cjs --db "$DATABASE_URL" && echo "ALTER ROLE cb_app PASSWORD :'"'"'pw'"'"';" | psql -X -q -v ON_ERROR_STOP=1 -v pw="$CB_APP_PASSWORD" -d "$DATABASE_URL" && echo "migrate: cb_app can sign in"'
+  spin_installation "$1"
+}
+
+# spin_installation <owner url> — GOV-SPIN: this spin's OWN installation row (INSTALLATION_KEY=cbspin-<id>, spin_api_env), so the api resolves
+# from it instead of `fallback`. CB_SPIN_COUNTRY (ISO-2, e.g. AU) makes it a regional spin: registration offers that country first and the
+# registrant accepts it (lib/country-setup.atSignup, b382). Unset → the row states no country (registration asks, as platform-0 does).
+# Idempotent (ON CONFLICT). Values travel as psql variables, never spliced into the SQL.
+spin_installation() {
+  local c="${CB_SPIN_COUNTRY:-}"
+  [ -z "$c" ] || [[ "$c" =~ ^[A-Z]{2}$ ]] || die "CB_SPIN_COUNTRY must be an ISO-2 code like AU (got '$c')"
+  run docker run --rm -e DATABASE_URL="$1" -e K="cbspin-$CB_SPIN_ID" -e C="$c" --entrypoint sh chitbridge-migrate -c \
+    'printf "%s\n" "INSERT INTO installation (installation_key, label, purpose, cloud_provider, vertical_key, country) VALUES (:'"'"'k'"'"', :'"'"'k'"'"', '"'"'spin'"'"', '"'"'spin'"'"', '"'"'base'"'"', NULLIF(:'"'"'c'"'"', '"'"''"'"'))" "ON CONFLICT (installation_key) DO UPDATE SET country = EXCLUDED.country, active = true;" | psql -X -q -v ON_ERROR_STOP=1 -v k="$K" -v c="$C" -d "$DATABASE_URL" && echo "installation: $K country ${C:-none stated}"'
 }
 
 # spin_wait_http <url> <what> — until it answers at all (any HTTP status: the sink says 401 without its token), 10 min
