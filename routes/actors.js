@@ -310,8 +310,8 @@ router.post('/',
           identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          otp_code, otp_expires_at, hat, entity_kind${_lvlCol ? ', access_level, whole_entity' : ''}
-        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor'${_lvlCol ? ',$13,$14' : ''})`,
+          otp_code, otp_expires_at, hat, entity_kind, country${_lvlCol ? ', access_level, whole_entity' : ''}
+        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor',(SELECT country FROM identities WHERE identity_id = $5)${_lvlCol ? ',$13,$14' : ''})`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
          otp, otp_expires, hat, employee_id].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])

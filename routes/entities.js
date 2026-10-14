@@ -90,22 +90,21 @@ async function registerNew(req, res) {
      * ⭐⭐ FX-AU1: THE GUESS THE OWNER WAS SHOWN IS STORED IN THE WRITE THAT CREATES THE SHOP. The governance panel showed a Sydney browser
      * Australia · AUD · Australia/Sydney; until this the INSERT named no country, the column default ('IN') landed, and verify's
      * COALESCE could never correct it — an owner who left before Continue had an Indian shop. Each guessed value is NAMED here, so the
-     * default never decides it. No guess (an API fixture, an old page) → the column is not named, as before, and no source is stored:
-     * the setup step then says "not confirmed yet", never "your registration" (the DEFAULT stays — owner decision GOV-AU1).
+     * default never decides it. No guess (an API fixture, an old page) → country is named NULL and no source is stored: the setup step
+     * then ASKS, never "your registration" (GOV-AU1, Athi 14 Oct: "drop the DEFAULT 'IN' too" — b376; unknown is NULL, never India).
      */
     const CS = require('../lib/country-setup');
     const guess = CS.guessOf(req.body.context);
     const more = [];   /* [column, value] beyond the fixed six, each named only when known */
     if (mark.population !== null) more.push(['population', mark.population]);
-    if (guess && guess.country) more.push(['country', guess.country]);
     if (guess && guess.currency) more.push(['currency_code', guess.currency]);
     if (guess && guess.timezone && await schema.hasColumn('identities', 'timezone')) more.push(['timezone', guess.timezone]);
     await query(
-      `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind`
+      `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind, country`
       + more.map(([c]) => ', ' + c).join('')
-      + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6`
-      + more.map((_, i) => ', $' + (i + 7)).join('') + ')',
-      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind].concat(more.map(([, v]) => v))
+      + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7`
+      + more.map((_, i) => ', $' + (i + 8)).join('') + ')',
+      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, (guess && guess.country) || null].concat(more.map(([, v]) => v))
     );
     /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
     if (guess) {

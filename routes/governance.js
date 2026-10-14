@@ -117,8 +117,8 @@ router.post('/entities', auth, async (req, res) => {
       const ins = await client.query(
         `INSERT INTO identities
            (bridge_id, display_name, email, identity_type, status,
-            governed_by, constitution_version, params_override, plan, entity_kind)
-         VALUES ($1,$2,$3,'entity','active',$4,$5,$6,$7,'customer')
+            governed_by, constitution_version, params_override, plan, entity_kind, country)
+         VALUES ($1,$2,$3,'entity','active',$4,$5,$6,$7,'customer',NULL)   -- GOV-AU1: nobody stated it — Country setup asks
          RETURNING identity_id`,
         [genBridge(), display_name, email,
          stamp.governed_by, stamp.constitution_version, JSON.stringify(stamp.params_override), plan]);
