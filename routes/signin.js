@@ -214,7 +214,7 @@ const askChecks = [
  * to who can sign in — not in this move).
  */
 async function sendCode(req, res, { identity_id, email, display_name }, extra) {
-  const otp = devOtp.fixedOtp('entity') || generateOTP();
+  const otp = generateOTP('entity');
   const expires = new Date(Date.now() + 60 * 60 * 1000);
   await query(
     `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,

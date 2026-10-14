@@ -67,6 +67,7 @@ const GUARDS = [
   'access-events.test.cjs',     // the IAM audit trail never invents a change, and a lost row is SAID (review 2026-09-25)
   'notifications-count.test.cjs', // ⭐⭐ the badge's number is ONE withEntity statement over the feed's own rows (M7, 2026-09-28)
   'supplier-list-scope.test.cjs', // ⭐⭐⭐ every supplier_list statement runs inside withEntity — ready for FORCE RLS (H2, 2026-09-28)
+  'one-writer.test.cjs',         // ⭐⭐⭐ T2-WRITERS: one product writer, one task-count writer, one OTP door, one add-customer — zero outside each
   'knownerr.test.js',         // a refusal the database makes on purpose (b247) reaches a person as a 409, from every route that writes a chit
   'xlsx-read.test.js',        // an Excel file read into the shape a CSV makes, and refused in words otherwise
   'xlsx-write.test.js',       // a workbook Excel will open — every part it needs, and a code keeps its leading zero

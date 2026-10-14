@@ -75,6 +75,7 @@ const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
    recoverable — an attacker able to observe some output can predict a victim's code. The S4 reviewer fix said
    exactly this in 2026-07-13 and was applied to routes/entities.js only; this copy never got it. */
 const generateOTP = require('../lib/otp').generateOTP;
+const { taskCount } = require('../lib/assign-chit');   /* ⭐ TA1: the one writer of a person's task count */
 
 // Suggest actor_key from full name
 // Ravi Kumar → ravik
@@ -913,10 +914,9 @@ router.put('/:id/status',
               [targetActor.identity_id, targetActor.display_name, actor_id]
             );
             tasks_routed = result.rowCount;
-            await client.query(`UPDATE identities SET current_task_count = current_task_count + $1 WHERE identity_id = $2`,
-              [tasks_routed, target_actor_id]);
+            await taskCount(client, target_actor_id, { add: tasks_routed });
           }
-          await client.query(`UPDATE identities SET current_task_count = 0 WHERE identity_id = $1`, [actor_id]);
+          await taskCount(client, actor_id, 'clear');
         }
         if (action === 'deactivate') {
           await client.query(
@@ -1038,13 +1038,13 @@ router.put('/break',
 
       if (break_type === 'leave') {
         // Tasks must be routed before leave confirmed — active tasks only
-        const taskCount = await withEntity(entity_id, (c) => c.query(
+        const openTasks = await withEntity(entity_id, (c) => c.query(
           `SELECT COUNT(*) as count FROM chit_status
            WHERE assigned_to_actor_id = $1
            AND current_status NOT IN ('completed','cancelled','rejected')`,
           [actor_id]
         ));
-        const count = parseInt(taskCount.rows[0].count);
+        const count = parseInt(openTasks.rows[0].count);
 
         if (count > 0 && !task_action) {
           return res.status(400).json({
@@ -1092,7 +1092,7 @@ router.put('/break',
                 [targetActor.identity_id, targetActor.display_name, actor_id]
               );
             }
-            await client.query(`UPDATE identities SET current_task_count = 0 WHERE identity_id = $1`, [actor_id]);
+            await taskCount(client, actor_id, 'clear');
           }
           await client.query(
             `UPDATE identities
@@ -1187,11 +1187,7 @@ router.put('/assign/:chit_id',
           [action_by_id, action_by_name, chit_id, entity_id]
         );
         const movedOnPull = await toPending(client, entity_id, chit_id, railActions.meOf(req), 'pull');
-        await db(
-          `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
-           WHERE identity_id = $1`,
-          [action_by_id]
-        );
+        await taskCount(db, action_by_id, 'take');
         // Log assignment event
         await db(
           `INSERT INTO state_log
@@ -1243,11 +1239,7 @@ router.put('/assign/:chit_id',
 
         // Reduce previous assignee count
         if (cs.assigned_to_actor_id) {
-          await db(
-            `UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1)
-             WHERE identity_id = $1`,
-            [cs.assigned_to_actor_id]
-          );
+          await taskCount(db, cs.assigned_to_actor_id, 'release');
         }
 
         await db(
@@ -1261,11 +1253,7 @@ router.put('/assign/:chit_id',
           [t.identity_id, t.display_name, chit_id, entity_id]
         );
         const movedOnPush = await toPending(client, entity_id, chit_id, railActions.meOf(req), 'push');
-        await db(
-          `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
-           WHERE identity_id = $1`,
-          [t.identity_id]
-        );
+        await taskCount(db, t.identity_id, 'take');
         // Log assignment — differentiate initial push from actor-to-actor transfer
         const isTransfer = !!cs.assigned_to_actor_id;
         const assignDetail = isTransfer
@@ -1303,11 +1291,7 @@ router.put('/assign/:chit_id',
 
       if (action === 'return') {
         if (cs.assigned_to_actor_id) {
-          await db(
-            `UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1)
-             WHERE identity_id = $1`,
-            [cs.assigned_to_actor_id]
-          );
+          await taskCount(db, cs.assigned_to_actor_id, 'release');
         }
         await db(
           `UPDATE chit_status
@@ -1574,12 +1558,7 @@ router.put('/:id/tasks/route',
           [chit_id, entity_id]
         );
         // Decrement from_actor task count
-        await db(
-          `UPDATE identities
-           SET current_task_count = GREATEST(0, current_task_count - 1)
-           WHERE identity_id = $1`,
-          [from_actor_id]
-        );
+        await taskCount(db, from_actor_id, 'release');
         // Log
         await db(
           `INSERT INTO state_log
@@ -1614,18 +1593,8 @@ router.put('/:id/tasks/route',
           [to_actor_id, chit_id, entity_id]
         );
         // Update task counts
-        await db(
-          `UPDATE identities
-           SET current_task_count = GREATEST(0, current_task_count - 1)
-           WHERE identity_id = $1`,
-          [from_actor_id]
-        );
-        await db(
-          `UPDATE identities
-           SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
-           WHERE identity_id = $1`,
-          [to_actor_id]
-        );
+        await taskCount(db, from_actor_id, 'release');
+        await taskCount(db, to_actor_id, 'take');
         // Log
         await db(
           `INSERT INTO state_log

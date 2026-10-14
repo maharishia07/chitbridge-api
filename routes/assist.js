@@ -525,12 +525,9 @@ router.post('/publish', auth, async (req, res) => {
     const qaIn = (typeof b.qa_id === 'string' && b.qa_id.trim()) ? b.qa_id.trim() : '';
     if (qaIn) {
       // B1 RLS: a help desk publishes to ITS OWN catalogue -> withEntity(me).
-      const upd = await withEntity(helpId, (db) => db.query(
-        `UPDATE catalogue_items
-            SET item_data = item_data || jsonb_build_object('question',$3::text,'answer',$4::text,'context',$5::jsonb,'status','approved'),
-                is_active = true, updated_at = now()
-          WHERE entity_id = $1 AND item_data->>'qa_id' = $2`,
-        [helpId, qaIn, question, answer, JSON.stringify(context)]));
+      const upd = await withEntity(helpId, (db) => require('../lib/catalogue-write').patchWhere(db,   /* CAT-W1: the one product writer */
+        { entity_id: helpId, field: 'qa_id', value: qaIn, activate: true },
+        { question, answer, context, status: 'approved' }));
       if (upd.rowCount) { log.info('assist updated', { id: req.id, qa_id: qaIn }); return res.json({ ok: true, qa_id: qaIn, updated: true }); }
     }
     const sch = await query(`SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND is_default = true LIMIT 1`, [helpId]);
