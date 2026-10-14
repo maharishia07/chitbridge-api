@@ -45,16 +45,9 @@ async function run(sql, args) {
       const [eid, scheme, value, limit] = args;
       const all = TABLE.filter(mine(eid, scheme, value));
       const total = all.reduce((a, r) => a + r.points, 0);
-      return { rows: all.slice().sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, limit).map((r) => Object.assign({ total: String(total) }, r)) };
-    }
-    if (/NOT EXISTS/.test(sql) && /why = 'earned'/.test(sql)) {
-      const [eid, scheme, value, months] = args;
-      const all = TABLE.filter(mine(eid, scheme, value));
-      return { rows: all.filter((e) => {
-        if (e.why !== 'earned' || !(e.points > 0)) return false;
-        const due = new Date(e.at); due.setUTCMonth(due.getUTCMonth() + months);
-        return due.getTime() <= Date.now() && !all.some((x) => x.why === 'expired' && x.ref === e.ref);
-      }) };
+      /* ⚠️ LIMIT NULL is Postgres for "no limit" (ENG-REW1: the whole ledger when the programme declares expiry) */
+      const page = all.slice().sort((a, b) => String(b.at).localeCompare(String(a.at)));
+      return { rows: (limit == null ? page : page.slice(0, limit)).map((r) => Object.assign({ total: String(total) }, r)) };
     }
     if (/^\s*INSERT INTO reward_ledger/.test(sql)) {
       const [entity_id, holder_scheme, holder_value, points, why, ref, note, definition_id, at] = args;
@@ -179,6 +172,45 @@ await ita('⭐⭐ T1-FINREW: an expiry once WRITTEN is counted once — the next
   const b = await store.balance(SHOP, OLD2, withEntity);
   assert.strictEqual(b.expired.length, 0, 'an expiry already in the ledger was produced again');
   assert.strictEqual(b.points, 80, 'got ' + b.points + ' — the written expiry was counted twice');
+});
+
+await ita('⭐⭐ ENG-REW1: reading a balance never writes, and reading twice gives the same answer', async () => {
+  const R1 = { scheme: 'identity', value: 'cust-read' };
+  put(R1, 300, 'earned', 'B-R1', '2024-03-01T00:00:00.000Z');
+  const rows = TABLE.length;
+  const a = await store.balance(SHOP, R1, withEntity);
+  const b = await store.balance(SHOP, R1, withEntity);
+  assert.strictEqual(TABLE.length, rows, 'a READ appended to the ledger');
+  assert.strictEqual(a.points, 0); assert.strictEqual(b.points, 0, 'the second read cut the balance again: ' + b.points);
+  assert.strictEqual(a.expired.length, 1); assert.strictEqual(b.expired.length, 1, 'the same expiry rides every read until a touch writes it');
+  assert.strictEqual(String(a.expired[0].at).slice(0, 10), '2025-03-01', 'the expiry is dated the day the points ran out');
+});
+
+await ita('⭐⭐ ENG-REW1: earn 100 (due D), spend 60 → at D only 40 expire, not 100 — the balance never goes negative', async () => {
+  const F = { scheme: 'identity', value: 'cust-fifo' };
+  put(F, 100, 'earned', 'B-F1', '2024-06-01T00:00:00.000Z');
+  put(F, -60, 'spent', 'B-F2', '2024-09-01T00:00:00.000Z');
+  const b = await store.balance(SHOP, F, withEntity);
+  assert.strictEqual(b.expired.length, 1);
+  assert.strictEqual(b.expired[0].points, -40, 'got ' + b.expired[0].points + ' — points already spent were expired');
+  assert.strictEqual(b.points, 0);
+  assert.strictEqual(b.negative, false, 'expiring spent points drove the balance below zero');
+  /* the next touch writes exactly that one row, keyed to the lot; a second touch writes nothing */
+  const prog = await store.programme(SHOP, withEntity);
+  await store.settle(SHOP, F, prog, { ref: 'B-F3', spend: 0, added: 0 }, withEntity);
+  await store.settle(SHOP, F, prog, { ref: 'B-F4', spend: 0, added: 0 }, withEntity);
+  const exp = TABLE.filter((r) => r.holder_value === 'cust-fifo' && r.why === 'expired');
+  assert.strictEqual(exp.length, 1, 'the expiry was written ' + exp.length + ' times');
+  assert.strictEqual(exp[0].ref, 'B-F1'); assert.strictEqual(exp[0].points, -40);
+  assert.strictEqual((await store.balance(SHOP, F, withEntity)).points, 0);
+});
+
+await ita('⚠️ ENG-REW1: a spend after expiry — the counter reads 0 and greys the tender (the engine refuses it)', async () => {
+  const G = { scheme: 'identity', value: 'cust-gone' };
+  put(G, 100, 'earned', 'B-G1', '2024-01-01T00:00:00.000Z');
+  const b = await store.balance(SHOP, G, withEntity);
+  assert.strictEqual(b.points, 0);
+  assert.strictEqual(rewards.canSpend(b, 10).ok, false, 'expired points were spendable');
 });
 
 console.log('— the walk-in who registers —');
