@@ -62,6 +62,8 @@ function fail(res, e) {
   if (e && (e.code === 'BOOKS_ENGINE' || e.code === 'BOOKS_NOT_MIGRATED')) return res.status(503).json({ code: e.code, error: e.message, message: e.message });
   /* a question the owner can answer (a missing field, a date that is not a date): 400, in words */
   if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
+  /* T1-INV: closing stock from the ledger refused for a NAMED reason — the code and the products, so a screen offers Count / Enter by hand */
+  if (e && e.refused && /^STOCK_/.test(String(e.code || ''))) return res.status(422).json({ code: e.code, items: e.items || [], error: e.message, message: e.message });
   if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json({ error: e.message, message: e.message });
   if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
   /* a terms field the owner can fix (lib/finance-terms): 400/404 in a sentence */
@@ -1230,7 +1232,7 @@ route('post', '/assets/:id/dispose', (req, e, s, b, by) => {
 });
 /** POST /depreciation/run { fy } → one entry at the year end, from the register; says which entity basis it used */
 route('post', '/depreciation/run', (req, e, s, b, by) => P().runDepreciation(e, s, b, by));
-/** POST /closing-stock { date, value_minor, nrv_minor?, method: 'manual' } */
+/** POST /closing-stock { date, value_minor?, nrv_minor?, method: 'manual' | 'automatic' (valued from the stock ledger — T1-INV) } */
 route('post', '/closing-stock', (req, e, s, b, by) => P().closingStock(e, s, b, by));
 /** POST /gst/close { fy, period } → { utilised, payable_minor, carried_minor, pay_total_minor, entry_no } · POST /gst/pay { fy, period, amounts, bank, challan_no } */
 route('post', '/gst/close', (req, e, s, b, by) => P().gstClose(e, s, b, by));
