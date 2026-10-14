@@ -1626,8 +1626,8 @@ router.get('/lists', auth, async (req, res) => {
      * stamped with the ENTITY's currency on write, exactly as every other product is. One currency on the
      * screen, and it is always the shop's. A second one would be a conversion nobody performed.
      */
-    let currency = 'INR';
-    try { currency = (await regional.currencyFor(entity_id)) || 'INR'; } catch (_) { currency = 'INR'; }
+    let currency = null;
+    try { currency = (await regional.currencyFor(entity_id)) || null; } catch (e) { require('../lib/logger').warn('products: currency unread — the figure shows without a symbol', { why: String(e && e.message) }); }
 
     res.json({
       /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */

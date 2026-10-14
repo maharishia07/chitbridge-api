@@ -415,7 +415,9 @@ router.get('/regions', async (req, res) => {
 // RESOLVED for a region (global content + regional override + auto-cascaded basics), SEALED + cached. Public read.
 router.get('/resolve', async (req, res) => {
   try {
-    const region = (req.query.region && String(req.query.region).trim()) || 'IN';
+    const region = (req.query.region && String(req.query.region).trim()) || null;
+    /* T2-NATDEF: a product is resolved FOR a region the caller names — never India by default */
+    if (!region) return res.status(400).json({ ok: false, code: 'NO_COUNTRY', error: 'Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one.' });
     const r = await regional.resolveRegional(req.query.container, req.query.version, region);
     if (!r) return res.status(404).json({ ok: false, error: 'Unknown container or version.' });
     res.json({ ok: true, ...r });

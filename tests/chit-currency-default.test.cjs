@@ -36,7 +36,7 @@ ok('…decided before the invoice is computed and the money block is written', c
 const books = read('lib/books.js');
 ok('lib/books.enable() reads the Country setup (lib/country-setup.profile)', /const cs = await CS\.profile\(h, entity, \{ constitution: false \}\)/.test(books) && /const CS = require\('\.\/country-setup'\)/.test(books));
 /* INT5b: main's CX0 order kept — the caller's, then a ledger already open (its country is fixed), then the setup's */
-ok('…the country comes from the setup when the caller names none', /o\.country \|\| \(cur && cur\.country\) \|\| \(cs\.country && cs\.country\.code\) \|\| 'IN'/.test(books));
+ok('…the country comes from the setup when the caller names none', /o\.country \|\| \(cur && cur\.country\) \|\| \(cs\.country && cs\.country\.code\) \|\| ''\)/.test(books));   /* STD2 · T2-NATDEF: none → NO_COUNTRY, never 'IN' */
 /* INT5b: the year is the pack's before a stored month (CS2 — a stored month may be the old country's); the money is this country's setup's before the pack's */
 ok('…and the money is the setup\'s before the pack\'s; the year the pack\'s (CS2)', /fy_start_month: Number\(o\.fy_start_month\) \|\| pack0\.fy_start_month \|\| Number\(own\.fy_start_month\)/.test(books) && /currency: o\.currency \|\| own\.currency \|\| pack0\.currency/.test(books));
 ok('…the opening year is the SHOP\'s day (books-hooks.dayOf), not the UTC date', /fiscalYearOf\(o\.today \|\| require\('\.\/books-hooks'\)\.dayOf\(CLOCK\.now\(\), \{ country, timezone: cs && cs\.timezone \}\), pack\)/.test(books) && !/fiscalYearOf\(o\.today \|\| CLOCK\.now\(\)\.toISOString\(\)/.test(books));

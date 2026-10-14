@@ -43,7 +43,7 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
     /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
     const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
     const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
-    const invoice = Object.assign({ DocDtls: { Typ: 'INV', No: null, Dt: new Date().toISOString().slice(0, 10) }, currency }, det);
+    const invoice = Object.assign({ DocDtls: { Typ: 'INV', No: null, Dt: require('../lib/shop-clock').today(seller && seller.Country) }   /* the seller's day (dayOf), not the server's UTC */, currency }, det);
     res.json({ engine: 'chitbridge-invoice', version: 1, order: ['pricing structure', 'offers', 'tax'],
       pricing: priced.map((l) => ({ key: l.key, unit_price: l.unit_price, list_price: l.list_price, structure: l.structure, why: l.why })),
       offers: { subtotal: off.ev.subtotal, total: off.ev.total, adjustments: off.ev.adjustments || [], notes: off.ev.notes || [], considered: off.offers_considered },

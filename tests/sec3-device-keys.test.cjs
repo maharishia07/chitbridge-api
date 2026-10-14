@@ -156,7 +156,7 @@ const KEY = { 'X-Bridge-Key': 'device-key-1' };
     ok('E3 neither → null, and the ONE sentence with code NO_MONEY', r.status === 200 && cur() === null && r.body.money_why && r.body.money_why.code === 'NO_MONEY'
       && r.body.money_why.why === require(path.join(API, 'lib', 'country-setup')).MONEY_UNSTATED, { r, c: DELIVERED[0] && cur() });
     ok('E4 no \'INR\' literal left on the signal chit', !/currency_code: 'INR'/.test(src));
-    ok('E5 mint.summary: absent currency still INR; explicit null stays null', mint.summary({}).currency_code === 'INR' && mint.summary({ currency_code: null }).currency_code === null);
+    ok('E5 mint.summary: absent or null currency stays null — never INR by name (T2-NATDEF, INT6a)', mint.summary({}).currency_code === null && mint.summary({ currency_code: null }).currency_code === null);
   } finally { server.close(); }
 
   console.log('— F · Zoho: a tax list that did not load holds the order —');

@@ -10,8 +10,8 @@ const t = make(), D = t.data, F = require('../lib/crm-followups'), H = require('
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
 let pass = 0;
 const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + (e.stack || e.message).split('\n').slice(0, 4).join('\n      ')); process.exitCode = 1; } };
-const day = (n) => H.dayOf(new Date(Date.now() + n * 86400000).toISOString(), 'IN');
-const f = (owner, due, who, o) => Object.assign({ followup_id: t.uid(), owner, party_id: P(2), what: 'x', due_at: H.dayBounds(due, 'IN').from, assignee_user_id: who, done_at: null, bell_day: null, source: 'manual', created_at: new Date().toISOString() }, o);
+const day = (n) => H.dayOf(new Date(Date.now() + n * 86400000).toISOString(), null);   /* the rig's shop states no country → its day is UTC (T2-NATDEF), never India's */
+const f = (owner, due, who, o) => Object.assign({ followup_id: t.uid(), owner, party_id: P(2), what: 'x', due_at: H.dayBounds(due, D.country).from, assignee_user_id: who, done_at: null, bell_day: null, source: 'manual', created_at: new Date().toISOString() }, o);
 const run = async () => { const ev = []; const out = await F.sweep({ emit: (ids, e) => ev.push([ids, e]) }); return { out, ev }; };
 
 (async () => {
@@ -49,6 +49,7 @@ const run = async () => { const ev = []; const out = await F.sweep({ emit: (ids,
     assert.strictEqual(out.skipped >= 1, true); assert.ok(ev.indexOf('E2') >= 0, 'E2 still rang'); D.extra = real;
   });
   await ita('the shop\'s day: due at the start of today (India) is "today", not late, even when UTC is still yesterday', async () => {
+    D.country = 'IN';   /* the shop STATES India — its day is India's (T2-NATDEF: an unstated shop's day is UTC) */
     D.followups = [f('E1', '2026-10-03', 'E1')];
     const ev = []; await F.sweep({ now: '2026-10-02T18:45:00Z', emit: (ids, e) => ev.push(e) });          /* 00:15 on 3 Oct in India */
     assert.strictEqual(ev.length, 1); assert.strictEqual(ev[0].today, 1); assert.strictEqual(ev[0].late, 0);
