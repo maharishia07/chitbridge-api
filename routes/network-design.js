@@ -470,7 +470,8 @@ router.post('/build', auth, async (req, res) => {
            JSON.stringify({ caps: { catalogue_visibility: c.visibility } }),
            // The store's own country if the design stated one, else the operator's. There is exactly ONE country
            // column and it was very nearly listed twice — Postgres refuses that outright, which is the good case.
-           (c.place && c.place.country) || meRow.country || 'IN',
+           // GOV-AU1: neither stated → NULL (the store's Country setup asks), never India.
+           (c.place && c.place.country) || meRow.country || null,
            // The store's OWN currency when the design set one — a store trading in another country is stamped
            // in ITS currency, and money is never converted afterwards. Otherwise the network's.
            (c.place && c.place.currency) || meRow.currency_code || 'INR', claim, expires, me,
