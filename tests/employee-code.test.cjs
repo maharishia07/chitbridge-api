@@ -6,7 +6,7 @@
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const { verifyOtp } = require('../lib/otp');
-const KEYS = ['NODE_ENV', 'DEV_OTP', 'OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'FROM_EMAIL', 'DEV_OTP_IN_RESPONSE'];
+const KEYS = ['NODE_ENV', 'DEV_OTP', 'OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'FROM_EMAIL', 'DEV_OTP_IN_RESPONSE', 'DATABASE_URL'];
 const saved = {}; KEYS.forEach((k) => { saved[k] = process.env[k]; });
 function env(o) { KEYS.forEach((k) => delete process.env[k]); Object.assign(process.env, o); }
 function load() { for (const m of ['../lib/dev-otp', '../lib/employee-code']) delete require.cache[require.resolve(m)]; return require('../lib/employee-code'); }
@@ -55,14 +55,21 @@ it('sealed + the sender fails or throws: delivery failed, still no code in the b
     assert.strictEqual(body.delivery, 'failed'); assert(!JSON.stringify(body).includes('482913'));
   }
 });
-it('unsealed dev: the owner still sees the code once (no e-mail: delivery none + the words)', async () => {
-  env({ NODE_ENV: 'development' }); const ec = load(); const send = stub();
+it('SEC2 · unsealed but not a local stack: no code in the answer either (no e-mail: delivery none + what to do)', async () => {
+  env({ NODE_ENV: 'development', DATABASE_URL: 'postgres://u:p@db.example.com:5432/x' }); const ec = load(); const send = stub();
   assert.strictEqual(ec.refusal(''), null);
   const body = await ec.deliver({ to: '', name: 'A', otp: '482913', send });
-  assert.strictEqual(send.calls.length, 0); assert.strictEqual(body.delivery, 'none'); assert.strictEqual(body.otp, '482913');
-  assert(/No e-mail on file/.test(body.delivery_note));
+  assert.strictEqual(send.calls.length, 0); assert.strictEqual(body.delivery, 'none'); assert(!('otp' in body));
+  assert(!JSON.stringify(body).includes('482913'));
+  assert(/No e-mail on file.*Add their e-mail/.test(body.delivery_note));
   const b2 = await ec.deliver({ to: 'a@b.co', name: 'A', otp: '482913', send });
-  assert.strictEqual(b2.delivery, 'sent'); assert.strictEqual(b2.otp, '482913');
+  assert.strictEqual(b2.delivery, 'sent'); assert(!JSON.stringify(b2).includes('482913'));
+});
+it('SEC2 · the one door: a local stack that opted in (DEV_OTP + DEV_OTP_IN_RESPONSE) still shows it', async () => {
+  env({ NODE_ENV: 'development', DATABASE_URL: 'postgres://u:p@127.0.0.1:5432/x', DEV_OTP: '1', DEV_OTP_IN_RESPONSE: 'true' }); const ec = load();
+  assert.strictEqual((await ec.deliver({ to: '', name: 'A', otp: '482913', send: stub() })).otp, '482913');
+  env({ NODE_ENV: 'development', DATABASE_URL: 'postgres://u:p@127.0.0.1:5432/x', DEV_OTP: '1' }); const ec2 = load();
+  assert(!('otp' in (await ec2.deliver({ to: '', name: 'A', otp: '482913', send: stub() }))), 'no opt-in, yet the code was shown');
 });
 it('a code is valid 24 h: minted expiry is now + 24 h; inside works, past is refused', async () => {
   env({ NODE_ENV: 'development' }); const ec = load();
@@ -87,8 +94,8 @@ it('source guard: all four code-issuing routes use employee-code; no 7-day code;
   for (const fn of ['mint', 'refusal', 'deliver']) assert.strictEqual((src.match(new RegExp('empCode\\.' + fn + '\\(', 'g')) || []).length, 4, fn);
   assert(!/7 \* 24 \* 60 \* 60 \* 1000/.test(src), 'a 7-day code is still issued');
   assert(!/^\s+otp,$/m.test(src), 'a bare `otp,` is still in a response');
-  const li = src.split('\n').filter((l) => /login_instruction/.test(l)).join('\n');
-  assert(/isSealed\(\)/.test(li), 'login_instruction prints the code without checking sealed');
+  const li = src.split('\n').filter((l) => /login_instruction:/.test(l)).join('\n');
+  assert(li && !/\botp\b|OTP:/.test(li), 'SEC2: login_instruction prints the code');
 });
 it('boot guard: a sealed env without RESEND_API_KEY + FROM_EMAIL cannot start; with both it can', () => {
   const dev = () => { delete require.cache[require.resolve('../lib/dev-otp')]; return require('../lib/dev-otp'); };

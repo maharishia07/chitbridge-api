@@ -1,6 +1,78 @@
 {
   "_doc": "DB10: round-trip ceiling per route the web client calls. trips = X-DB-Trips, wire = statements sent. Lower it when a route gets cheaper (node tests/round-trips-all.test.cjs --write); never raise without saying why. fired:false = placeholder ceiling, the route could not be fired offline (see why).",
   "routes": {
+    "GET /api/actors": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the list SELECT (pin_state is a CASE in the same statement — no extra trip for dropping otp_code) + the summary COUNT.",
+      "extra": true
+    },
+    "POST /api/actors": {
+      "file": "actors.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the shop row (user_id) + the key-free check + ONE INSERT identities (the e-mail rides in it) + the seat meter; schema probe cached.",
+      "extra": true
+    },
+    "PATCH /api/actors/:id": {
+      "file": "actors.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the before-row (audit) + ONE UPDATE (email is one more SET, same statement) + ONE withEntity audit write.",
+      "extra": true
+    },
+    "DELETE /api/actors/:id/pin": {
+      "file": "actors.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the actor read + its e-mail + ONE UPDATE + the login handle read.",
+      "extra": true
+    },
+    "POST /api/actors/:id/otp": {
+      "file": "actors.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the actor read + its e-mail + ONE UPDATE + the login handle read.",
+      "extra": true
+    },
+    "PUT /api/actors/:id/status": {
+      "file": "actors.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). reactivate: the actor read + its e-mail + ONE UPDATE + the login handle; deactivate/remove: the actor read + ONE withEntity transaction + the disputes withEntity (3).",
+      "extra": true
+    },
+    "PUT /api/actors/settings": {
+      "file": "actors.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the default-assignee check (only when one is named) + ONE upsert + the read-back.",
+      "extra": true
+    },
+    "PUT /api/actors/:id/delegate": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the delegate check (only when one is named) + ONE UPDATE … RETURNING.",
+      "extra": true
+    },
+    "PUT /api/actors/:id/tasks/route": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). ONE withEntity transaction (the chit read, its UPDATE and the state_log row inside it).",
+      "extra": true
+    },
     "DELETE /api/books/recurring/:id": {
       "file": "books.js",
       "trips": 2,

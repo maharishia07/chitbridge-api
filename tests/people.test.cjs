@@ -33,8 +33,12 @@ t('who stands in is named', latha.cover && latha.cover.name === 'Ravi Kumar');
 t('the picker choices are the IAM presets', v.access_choices.length === require(path.join(API, 'lib', 'access')).PRESETS.length && v.access_choices.every((c) => c.key && c.label && c.level));
 const nonOwner = people.view(rows, { owner: false });
 t('a non-owner is greyed with the owner-only sentence on every action', nonOwner.may.add.ok === false && nonOwner.may.add.why === people.OWNER_ONLY
-  && nonOwner.people.every((p) => ['access', 'reset_pin', 'switch', 'cover'].every((k) => p.may[k].ok === false && p.may[k].why === people.OWNER_ONLY)));
+  && nonOwner.people.every((p) => ['access', 'email', 'reset_pin', 'switch', 'cover'].every((k) => p.may[k].ok === false && p.may[k].why === people.OWNER_ONLY)));
 t('switch keeps its direction even when greyed', nonOwner.people[1].may.switch.to === 'on');
+/* SEC2 · PEOPLE-EMAIL: the owner sees the address and may change it; a colleague sees only whether one is on file */
+const withMail = (o) => people.view([row({ email: 'ravi@shop.test', has_email: true })], o).people[0];
+t('owner: email is shown and may.email is open', withMail({ owner: true }).email === 'ravi@shop.test' && withMail({ owner: true }).may.email.ok === true);
+t('colleague: email is null, has_email says one is on file', withMail({ owner: false }).email === null && withMail({ owner: false }).has_email === true);
 process.env.NODE_ENV = 'production';
 const sealed = require(path.join(API, 'lib', 'dev-otp')).isSealed();
 if (sealed) t('sealed with no e-mail: reset is greyed with a sentence', !people.view([row({ has_email: false })], { owner: true }).people[0].may.reset_pin.ok);

@@ -29,7 +29,7 @@ router.get('/', auth, async (req, res) => {
       `SELECT i.identity_id, i.display_name, i.actor_key, i.user_id, i.actor_role, i.phone, i.hat, i.break_status,
               i.can_see_costs, i.current_task_count, i.last_active_at, i.delegate_actor_id,
               (to_jsonb(i)->>'access_level') AS access_level, ((to_jsonb(i)->>'whole_entity')::boolean) AS whole_entity,
-              (i.email IS NOT NULL AND i.email <> '') AS has_email,
+              i.email, (i.email IS NOT NULL AND i.email <> '') AS has_email,
               e.user_id AS entity_handle, e.country AS entity_country
          FROM identities e
          LEFT JOIN identities i ON i.parent_entity_id = e.identity_id AND i.identity_type = 'actor'
