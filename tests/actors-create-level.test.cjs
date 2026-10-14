@@ -10,7 +10,7 @@ const access = require('../lib/access');
 let n = 0; const ok = (c, m) => { assert(c, m); n++; console.log('  ok  ' + m); };
 const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'actors.js'), 'utf8');
 const ins = /INSERT INTO identities \([\s\S]*?\)`,\s*\[[\s\S]*?\]\.concat\(_lvlCol \? \[access_level[^\]]*\] : \[\]\)/.exec(src);   /* INT5b: main's FX-L2C / WX-P2P-18 INSERT kept — it also writes the reach (whole_entity) */
-ok(ins && /hat, entity_kind, country\$\{_lvlCol \? ', access_level/.test(ins[0]) && /\$\{_lvlCol \? ',\$13/.test(ins[0]), 'the INSERT writes access_level when the column exists (pre-b173: absent)');
+ok(ins && /hat, entity_kind, country, email\$\{_lvlCol \? ', access_level/.test(ins[0]) && /\$\{_lvlCol \? ',\$14/.test(ins[0]), 'the INSERT writes access_level when the column exists (pre-b173: absent) — after the e-mail ($13, SEC2)');
 const expr = /const access_level = ([^;]+);/.exec(src);
 ok(expr, 'the level is chosen in one expression');
 const pick = (body, hat) => Function('access', 'req', 'hat', 'return ' + expr[1])(access, { body }, hat);

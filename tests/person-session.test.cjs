@@ -32,15 +32,16 @@ const ROWS = {
 };
 let FAIL_WRITES = false;
 const SQL_SEEN = [];
+const PP = require('./support/policy-patch.cjs');
 const clone = (x) => JSON.parse(JSON.stringify(x));
 const q = async (sql, params) => {
   const s = String(sql); SQL_SEEN.push(s);
-  const row = ROWS[params && params[0]];
-  if (/^\s*UPDATE identities SET policy_flags = jsonb_set/.test(s)) {
+  const row = ROWS[PP.isPatch(s) ? PP.entityOf(s, params) : params && params[0]];
+  if (PP.isPatch(s)) {                                       /* T2-POLICY: every policy_flags write is policy.patchKey */
     if (FAIL_WRITES) throw new Error('simulated write failure');
-    if (!/'\{devices\}'/.test(s)) throw new Error('a write touched more than policy_flags.devices');
-    row.policy_flags = Object.assign({}, row.policy_flags || {}, { devices: JSON.parse(params[1]) });
-    return { rows: [], rowCount: 1 };
+    if (String(params[0]) !== 'devices') throw new Error('a write touched more than policy_flags.devices');
+    row.policy_flags = row.policy_flags || {};
+    return PP.apply(s, params, row.policy_flags);
   }
   if (/SELECT policy_flags FROM identities/.test(s)) return { rows: row ? [{ policy_flags: clone(row.policy_flags || {}) }] : [], rowCount: row ? 1 : 0 };
   if (/break_status/.test(s)) return { rows: row && row.identity_type === 'actor' ? [clone(row)] : [], rowCount: 1 };
@@ -122,7 +123,7 @@ const dec = (tok) => jwt.decode(tok);
     t('the jti is listed under its device in the SHOP\'s policy_flags.devices',
       devs()[DEV_A] && devs()[DEV_A].sessions.some((s) => s.jti === A.jti && s.exp === A.exp && s.surface === 'till'));
     t('  …the listing write touched policy_flags.devices only (jsonb_set) — api_keys untouched',
-      ROWS.shop1.policy_flags.api_keys.length === 1 && SQL_SEEN.some((s) => /jsonb_set\(COALESCE\(policy_flags, '\{\}'::jsonb\), '\{devices\}'/.test(s)));
+      ROWS.shop1.policy_flags.api_keys.length === 1 && SQL_SEEN.some((s) => /^\s*UPDATE identities SET policy_flags = jsonb_set\(COALESCE\(policy_flags, '\{\}'::jsonb\), \$1::text\[\]/.test(s)));
     const tokE = await identityAuth.issueToken(q, EMP, { device_id: DEV_B, surface: 'till' });
     t('an employee\'s session is listed under the shop (parent), not their own row',
       devs()[DEV_B] && devs()[DEV_B].sessions.some((s) => s.jti === dec(tokE).jti && s.by === 'emp1') && !ROWS.emp1.policy_flags);

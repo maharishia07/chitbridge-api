@@ -99,7 +99,7 @@ const BUDGET = {
   /* 'lib/supply-store.js' — was KNOWN DEBT here (2 round trips per purchase line); batched 2026-09-28 (ensureMany + one
      last-cost UPDATE), so it has none left and its budget is gone. The stock postings stay per line: order-dependent. */
   'routes/governance.js': 1,
-  'routes/products.js': 4,
+  /* routes/products.js — clean since CAT-W1 (14 Oct): the import and the stock feed write through catalogue-write.patchItems, once */
   'lib/storage.js': 2,
   'src/services/chit.js': 2,
   'src/services/network.js': 1,

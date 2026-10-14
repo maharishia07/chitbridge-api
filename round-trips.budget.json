@@ -1,6 +1,78 @@
 {
   "_doc": "DB10: round-trip ceiling per route the web client calls. trips = X-DB-Trips, wire = statements sent. Lower it when a route gets cheaper (node tests/round-trips-all.test.cjs --write); never raise without saying why. fired:false = placeholder ceiling, the route could not be fired offline (see why).",
   "routes": {
+    "GET /api/actors": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the list SELECT (pin_state is a CASE in the same statement — no extra trip for dropping otp_code) + the summary COUNT.",
+      "extra": true
+    },
+    "POST /api/actors": {
+      "file": "actors.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the shop row (user_id) + the key-free check + ONE INSERT identities (the e-mail rides in it) + the seat meter; schema probe cached.",
+      "extra": true
+    },
+    "PATCH /api/actors/:id": {
+      "file": "actors.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the before-row (audit) + ONE UPDATE (email is one more SET, same statement) + ONE withEntity audit write.",
+      "extra": true
+    },
+    "DELETE /api/actors/:id/pin": {
+      "file": "actors.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the actor read + its e-mail + ONE UPDATE + the login handle read.",
+      "extra": true
+    },
+    "POST /api/actors/:id/otp": {
+      "file": "actors.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the actor read + its e-mail + ONE UPDATE + the login handle read.",
+      "extra": true
+    },
+    "PUT /api/actors/:id/status": {
+      "file": "actors.js",
+      "trips": 4,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). reactivate: the actor read + its e-mail + ONE UPDATE + the login handle; deactivate/remove: the actor read + ONE withEntity transaction + the disputes withEntity (3).",
+      "extra": true
+    },
+    "PUT /api/actors/settings": {
+      "file": "actors.js",
+      "trips": 3,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the default-assignee check (only when one is named) + ONE upsert + the read-back.",
+      "extra": true
+    },
+    "PUT /api/actors/:id/delegate": {
+      "file": "actors.js",
+      "trips": 2,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). the delegate check (only when one is named) + ONE UPDATE … RETURNING.",
+      "extra": true
+    },
+    "PUT /api/actors/:id/tasks/route": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": null,
+      "fired": false,
+      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). ONE withEntity transaction (the chit read, its UPDATE and the state_log row inside it).",
+      "extra": true
+    },
     "DELETE /api/books/recurring/:id": {
       "file": "books.js",
       "trips": 2,
@@ -449,6 +521,14 @@
       "fired": false,
       "extra": true,
       "why": "not mapped by the scanner (entitiesRouter). Measured by tests/sides.test.cjs: two trips of its own warm (the batch + govresolve.mintedOf stamp read); cold adds 9 cached schema probes (7 hasTable + 2 hasColumns). It also runs the two reads it reuses: home-facts rail (2 trips) and entity-header.read (1 warm / 3 cold) — so a warm GET is about 5, a cold one about 11."
+    },
+    "PATCH /api/entities/profile": {
+      "file": "entities.js",
+      "trips": 12,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (the scanner cannot map entitiesRouter). T2-POLICY (2026-10-14): the tax number and address go through profile.shopIdentitySql INSIDE the one profile UPDATE (no extra write); a tax number sent costs ONE read (the shop's country, for the pack's check — profile.taxIdRefusal). Worst path: user_id read + taken check + handler check + currency envelope + country read + UPDATE + storefront_access + ui_prefs probe/merge + visibility cap/write — a ceiling, not measured on a fixture"
     },
     "GET /api/facts/accounts": {
       "file": "facts.js",
@@ -1199,6 +1279,14 @@
       "extra": true,
       "why": "no mount in server.js (the scanner cannot map governanceRouter, mounted by variable like entitiesRouter) — the client DOES call it (api('countrySetupSave'), cap-country.js). CS1 (owner only), measured by tests/country-setup.test.cjs: probe + profile (2 reads) + UPDATE identities + UPDATE entity_governance (+1 INSERT for a shop with no stamp row) + the profile again (2 reads), ONE transaction; 503 on the stub (b299 not run). CS2 (2026-10-13): each profile also makes the ONE EXISTS read (+2 = 9). When the COUNTRY CHANGED before the shop was constituted, the same transaction also re-seeds a switched-on never-posted ledger (books.reseedUnposted: setting + entries read, 2 DELETEs, enable()'s inserts — one per chart row, as the switch itself costs) and logs who/when to books_change_log (one INSERT per changed fact, savepointed) — a once-per-shop correction, outside this ceiling by design. FX-AU1 (2026-10-14): the re-seed is no longer in a swallowing savepoint (a failed re-seed fails the correction — one transaction) and the year is re-laid by ONE set-based UPDATE when its DATES differ (IN→AU, both \"2026-27\") — the ceiling is unchanged"
     },
+    "PUT /api/governance/profile/vault": {
+      "file": "governance.js",
+      "trips": 7,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "no mount in server.js (governanceRouter by variable). T2-POLICY (2026-10-14): held-vault read + UPI mirror (policy.patchKey, 1) + vault upsert in withEntity (set_config + INSERT) + — only when a Business identity row carries a tax number or address — the identities read (country, gstn, address) and at most ONE write through profile.setShopIdentity"
+    },
     "POST /api/entities/register": {
       "file": "entities.js",
       "trips": 11,
@@ -1229,6 +1317,27 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "GET /api/events/stats": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
+      "extra": true,
+      "why": "SEC3 (by hand): platform root only — lib/platformroot.refuseUnlessRoot reads env, no statement; the counts are in memory"
+    },
+    "POST /api/connectors/ingest": {
+      "file": "connectors.js",
+      "trips": 50,
+      "wire": 50,
+      "extra": true,
+      "why": "SEC3 (by hand): device key, no session. Key + the shop's capability switch in ONE statement (was a key-only read); `to` → ONE withEntity (party + mayTrade) and a second look only on a refusal; then as before (heartbeat 1-2, work pattern, the signal chit's reads + deliver; the shop row now also carries currency_code/country — no new trip). Placeholder ceiling until a fixture runs it"
+    },
+    "POST /api/connectors/erp-ingest": {
+      "file": "connectors.js",
+      "trips": 50,
+      "wire": 50,
+      "extra": true,
+      "why": "SEC3 (by hand): key + switch in ONE statement; `to` → ONE withEntity (+1 only on a refusal); then the receipt claim + chit as before. Placeholder ceiling until a fixture runs it"
     },
     "POST /api/events/ticket": {
       "file": "events.js",

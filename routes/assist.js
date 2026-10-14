@@ -415,7 +415,9 @@ router.get('/regions', async (req, res) => {
 // RESOLVED for a region (global content + regional override + auto-cascaded basics), SEALED + cached. Public read.
 router.get('/resolve', async (req, res) => {
   try {
-    const region = (req.query.region && String(req.query.region).trim()) || 'IN';
+    const region = (req.query.region && String(req.query.region).trim()) || null;
+    /* T2-NATDEF: a product is resolved FOR a region the caller names — never India by default */
+    if (!region) return res.status(400).json({ ok: false, code: 'NO_COUNTRY', error: 'Name the region (?region=AU) — a product is resolved for the region you say, never a guessed one.' });
     const r = await regional.resolveRegional(req.query.container, req.query.version, region);
     if (!r) return res.status(404).json({ ok: false, error: 'Unknown container or version.' });
     res.json({ ok: true, ...r });
@@ -523,12 +525,9 @@ router.post('/publish', auth, async (req, res) => {
     const qaIn = (typeof b.qa_id === 'string' && b.qa_id.trim()) ? b.qa_id.trim() : '';
     if (qaIn) {
       // B1 RLS: a help desk publishes to ITS OWN catalogue -> withEntity(me).
-      const upd = await withEntity(helpId, (db) => db.query(
-        `UPDATE catalogue_items
-            SET item_data = item_data || jsonb_build_object('question',$3::text,'answer',$4::text,'context',$5::jsonb,'status','approved'),
-                is_active = true, updated_at = now()
-          WHERE entity_id = $1 AND item_data->>'qa_id' = $2`,
-        [helpId, qaIn, question, answer, JSON.stringify(context)]));
+      const upd = await withEntity(helpId, (db) => require('../lib/catalogue-write').patchWhere(db,   /* CAT-W1: the one product writer */
+        { entity_id: helpId, field: 'qa_id', value: qaIn, activate: true },
+        { question, answer, context, status: 'approved' }));
       if (upd.rowCount) { log.info('assist updated', { id: req.id, qa_id: qaIn }); return res.json({ ok: true, qa_id: qaIn, updated: true }); }
     }
     const sch = await query(`SELECT schema_id FROM entity_schemas WHERE entity_id = $1 AND is_default = true LIMIT 1`, [helpId]);

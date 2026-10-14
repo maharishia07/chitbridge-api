@@ -17,6 +17,14 @@ const railActions = require('../lib/rail-actions');   // T1-RAIL — who is movi
 const railStatus = require('../lib/rail-status');     // T1-RAIL — the ONE status write; an assignment never SETs current_status itself
 const log = require('../lib/logger');
 const router  = express.Router();
+/* SEC2 · THE ONE owner gate on every people WRITE (lib/owner.js ownerOnly, the sentence lib/people.js already shows on the
+   People screen). Before it, delegate and settings had no check at all and the others refused a person by an accidental 404. */
+const ownerWrite = require('../lib/owner').ownerOnly(require('../lib/people').OWNER_ONLY);
+/* PEOPLE-EMAIL (SEC2): identities.email is UNIQUE across every sign-in (000_baseline_part2.sql identities_email_key), so the
+   owner's own address on a staff row collides. Said in words with a code — never "Key taken", never a 500. */
+const EMAIL_TAKEN = { error: 'E-mail in use', code: 'EMAIL_TAKEN',
+  message: 'That e-mail already signs in to another account. Use the person\'s own e-mail, or leave it empty.' };
+const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(String(err.constraint || err.detail || '')));
 
 /**
  * ── loginIdFor — THE LOGIN A CO-ASSIST ACTUALLY TYPES ──────────────────────────────────────────────────────
@@ -67,6 +75,7 @@ const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
    recoverable — an attacker able to observe some output can predict a victim's code. The S4 reviewer fix said
    exactly this in 2026-07-13 and was applied to routes/entities.js only; this copy never got it. */
 const generateOTP = require('../lib/otp').generateOTP;
+const { taskCount } = require('../lib/assign-chit');   /* ⭐ TA1: the one writer of a person's task count */
 
 // Suggest actor_key from full name
 // Ravi Kumar → ravik
@@ -174,9 +183,11 @@ router.post('/check-key',
 // ── POST /api/actors ─────────────────────────────────────────
 // Create a new actor under entity
 router.post('/',
-  auth,
+  auth, ownerWrite,
   [
     body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
+    /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
+    body('email').optional({ checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
     /* ⚠ 4–12. An employee's sign-in is `key@entity-user-id` — two names joined — and this half had no maximum
        at all, so a 40-character key would have produced a login nobody could type. The cap is on CREATE only:
        an actor_key is never re-validated on edit, so no existing co-assist is locked out by it. */
@@ -210,12 +221,7 @@ router.post('/',
        * PATCH the same bug was harmless BY ACCIDENT — the WHERE matched nothing and returned 404 — which is
        * exactly why it survived: it looked like a permission working.
        */
-      if (req.identity.identity_type === 'actor') {
-        return res.status(403).json({
-          error: 'Forbidden',
-          message: 'Only the account owner can add or change co-assists. Ask whoever manages this business.',
-        });
-      }
+      /* SEC2: the refusal itself is `ownerWrite` on the route (lib/owner.js) — one gate for every people write. */
 
       const entity_id    = auth.entityOf(req);
       /**
@@ -273,7 +279,7 @@ router.post('/',
       // ⭐ [capability: sign-in] fixedOtp('entity') closes the isSealed() gap generateOTP() never checked —
       // see lib/identity-auth.js. Same fixed code as an entity's own OTP on a LOCAL stack; a real code anywhere else (SEC1).
       // M02: 24 h, and refused up front in a sealed env with no Resend / no e-mail (nothing is written then).
-      const toEmail = typeof req.body.email === 'string' ? req.body.email.trim() : '';
+      const toEmail = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
       const refused = empCode.refusal(toEmail);
       if (refused) return res.status(refused.status).json(refused.body);
       const { otp, expires: otp_expires } = empCode.mint();
@@ -309,19 +315,22 @@ router.post('/',
        */
       const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : (access.FROM_HAT[hat] || access.EDITOR);
       const _lvlCol = await schema.hasColumn('identities', 'access_level');
+      /* PEOPLE-EMAIL (SEC2): the Add form's e-mail is STORED (identities.email, $13) — before, it was used once to send the first
+         code and dropped, so every later reset / reactivate (actorEmail) found nothing and a sealed host refused it. */
       await db(
         `INSERT INTO identities (
           identity_id, bridge_id, display_name, actor_key, user_id,
           actor_type, parent_entity_id, actor_role, phone,
           max_tasks, identity_type, status, break_status,
-          otp_code, otp_expires_at, hat, entity_kind, country${_lvlCol ? ', access_level, whole_entity' : ''}
-        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor',${shopCountrySql(5)}${_lvlCol ? ',$13,$14' : ''})`,
+          otp_code, otp_expires_at, hat, entity_kind, country, email${_lvlCol ? ', access_level, whole_entity' : ''}
+        ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor',${shopCountrySql(5)},$13${_lvlCol ? ',$14,$15' : ''})`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
-         otp, otp_expires, hat, employee_id].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])
+         otp, otp_expires, hat, employee_id, toEmail || null].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])
       );
 
-      console.log(`Actor created: ${actor_key}@${entity_name}` + (devOtp.isSealed() ? '' : ` — OTP: ${otp}`));
+      /* SEC2: a REAL code is never logged — only the local stack's fixed code, which is a known constant anyway */
+      console.log(`Actor created: ${actor_key}@${entity_name}` + (devOtp.fixedOtp('entity') ? ` — OTP: ${otp}` : ''));
 
       /**
        * ⭐ A CO-ASSIST IS A SEAT, and seats are the most conventional thing a platform bills. b99 names
@@ -344,7 +353,8 @@ router.post('/',
         },
         ...(await empCode.deliver({ to: toEmail, name: display_name, otp })),
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-        login_instruction: `Ask ${display_name} to login with:\nUsername: ${actor_key}@${entity_name}` + (devOtp.isSealed() ? '\nThe first code was sent to their e-mail.' : `\nOTP: ${otp}`)
+        /* SEC2: the code reaches the person by e-mail; the answer names only the user id (a code here went through no door) */
+        login_instruction: `Ask ${display_name} to login with:\nUsername: ${actor_key}@${entity_name}` + (toEmail ? '\nThe first code was sent to their e-mail.' : '\nAdd their e-mail so the first code can be sent.')
       });
 
     } catch (err) {
@@ -354,6 +364,7 @@ router.post('/',
        * stamped into every line event they recorded. Returning a 500 with "please try again" invited a retry
        * that could never succeed and gave no way to learn why.
        */
+      if (emailTaken(err)) return res.status(409).json(EMAIL_TAKEN);
       if (err && err.code === '23505') {
         return res.status(409).json({ error: 'Key taken',
           message: 'That key already belongs to someone at this entity — including people who have been removed, '
@@ -369,7 +380,7 @@ router.post('/',
 // Edit a co-assist's owner-controlled profile fields (name / role / max_tasks / phone).
 // Does NOT touch login key, type, status, or shift — those have dedicated routes. Entity-scoped.
 router.patch('/:id',
-  auth,
+  auth, ownerWrite,
   [
     body('display_name').optional().trim().isLength({ min: 2, max: 100 }),
     body('actor_role').optional({ nullable: true }).trim().isLength({ max: 100 }),
@@ -381,6 +392,7 @@ router.patch('/:id',
     body('access_level').optional().isIn(['viewer','commenter','editor']),
     body('whole_entity').optional().isBoolean(),
     body('can_see_costs').optional().isBoolean(),
+    body('email').optional({ nullable: true, checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
   ],
   validate,
   async (req, res) => {
@@ -401,12 +413,7 @@ router.patch('/:id',
        * PATCH the same bug was harmless BY ACCIDENT — the WHERE matched nothing and returned 404 — which is
        * exactly why it survived: it looked like a permission working.
        */
-      if (req.identity.identity_type === 'actor') {
-        return res.status(403).json({
-          error: 'Forbidden',
-          message: 'Only the account owner can add or change co-assists. Ask whoever manages this business.',
-        });
-      }
+      /* SEC2: the refusal itself is `ownerWrite` on the route (lib/owner.js) — one gate for every people write. */
 
       const entity_id = auth.entityOf(req);   // the entity that owns it — never the caller's own id
       const actor_id  = req.params.id;
@@ -463,6 +470,8 @@ router.patch('/:id',
       if ('actor_role'   in req.body) { sets.push(`actor_role = $${n++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
       if ('phone'        in req.body) { sets.push(`phone = $${n++}`);        vals.push((req.body.phone || '').trim() || null); }
       if ('max_tasks'    in req.body) { sets.push(`max_tasks = $${n++}`);    vals.push(parseInt(req.body.max_tasks, 10)); }
+      /* PEOPLE-EMAIL (SEC2): editable, so a person added without one can still get a reset code; empty clears it */
+      if ('email'        in req.body) { sets.push(`email = $${n++}`);        vals.push(String(req.body.email || '').trim().toLowerCase() || null); }
       /**
        * ⚠️⚠️ THE `$` HERE IS LOAD-BEARING AND I DELETED IT ONCE. Commit 5196018 turned a working
        * `hat = $${n++}` into `hat = ${n++}` — a scripted edit collapsed the doubled dollar — and added the two
@@ -483,12 +492,12 @@ router.patch('/:id',
       if (_lvlCols && 'whole_entity' in req.body) { sets.push(`whole_entity = $${n++}`); vals.push(!!req.body.whole_entity); }
       /* b145 — the ONLY way this column is ever set. Guarded above: an actor calling this route is refused. */
       if ('can_see_costs' in req.body) { sets.push(`can_see_costs = $${n++}`); vals.push(!!req.body.can_see_costs); }
-      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, max_tasks, hat, or can_see_costs' });
+      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs' });
       vals.push(actor_id, entity_id);
       const r = await db(
         `UPDATE identities SET ${sets.join(', ')}
          WHERE identity_id = $${n++} AND parent_entity_id = $${n} AND identity_type = 'actor'
-         RETURNING identity_id, display_name, actor_role, phone, max_tasks, hat, can_see_costs${_lvlCols ? ', access_level, whole_entity' : ''}`, vals);
+         RETURNING identity_id, display_name, actor_role, phone, email, max_tasks, hat, can_see_costs${_lvlCols ? ', access_level, whole_entity' : ''}`, vals);
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found' });
       /* ⭐ The audit trail (b172). ONE EVENT PER ACCESS FIELD THAT MOVED — a PATCH setting both hat and
          can_see_costs is TWO access changes, and collapsing them loses which one a reason referred to.
@@ -517,6 +526,7 @@ router.patch('/:id',
       res.json({ message: 'Co-assist updated', actor: r.rows[0],
                  audit: { recorded: (audit && audit.written) || 0, failed: (audit && audit.failed) || 0 } });
     } catch (err) {
+      if (emailTaken(err)) return res.status(409).json(EMAIL_TAKEN);
       console.error('Update actor error:', err.message);
       res.status(500).json({ error: 'Update failed', message: safeErr(err) });
     }
@@ -588,7 +598,7 @@ router.put('/change-pin',
 // ── DELETE /api/actors/:id/pin ──────────────────────────────
 // Admin clears actor PIN — forces new PIN setup on next OTP login
 router.delete('/:id/pin',
-  auth,
+  auth, ownerWrite,
   async (req, res) => {
     try {
       const entity_id = req.identity.identity_id;
@@ -678,7 +688,11 @@ router.get('/',
            return_date, max_tasks, current_task_count,
            phone, created_at, last_active_at,
            delegate_actor_id, last_assigned_at,
-           pin_set_at, otp_code, otp_expires_at,
+           /* SEC2: NEVER the code. Any signed-in colleague reads this list, and it carried every pending first code
+              (otp_code). The screen only needs to know which of three states the sign-in is in. */
+           CASE WHEN pin_hash IS NOT NULL THEN 'set'
+                WHEN otp_code IS NOT NULL AND (otp_expires_at IS NULL OR otp_expires_at > NOW()) THEN 'pending'
+                ELSE 'none' END AS pin_state,
            site, last_seen, connector_type, connector_config   /* a connector actor: where it runs, when it last checked in, what it is */
          FROM identities
          WHERE ${where}
@@ -730,7 +744,7 @@ router.get('/',
 // ── POST /api/actors/:id/otp ─────────────────────────────────
 // Regenerate OTP for actor — admin only
 router.post('/:id/otp',
-  auth,
+  auth, ownerWrite,
   async (req, res) => {
     try {
       const entity_id = req.identity.identity_id;
@@ -781,7 +795,7 @@ router.post('/:id/otp',
 // ── PUT /api/actors/:id/status ───────────────────────────────
 // Deactivate or remove actor — admin only
 router.put('/:id/status',
-  auth,
+  auth, ownerWrite,
   [
     body('action').isIn(['deactivate','remove','reactivate'])
       .withMessage('Action must be deactivate remove or reactivate'),
@@ -900,10 +914,9 @@ router.put('/:id/status',
               [targetActor.identity_id, targetActor.display_name, actor_id]
             );
             tasks_routed = result.rowCount;
-            await client.query(`UPDATE identities SET current_task_count = current_task_count + $1 WHERE identity_id = $2`,
-              [tasks_routed, target_actor_id]);
+            await taskCount(client, target_actor_id, { add: tasks_routed });
           }
-          await client.query(`UPDATE identities SET current_task_count = 0 WHERE identity_id = $1`, [actor_id]);
+          await taskCount(client, actor_id, 'clear');
         }
         if (action === 'deactivate') {
           await client.query(
@@ -1025,13 +1038,13 @@ router.put('/break',
 
       if (break_type === 'leave') {
         // Tasks must be routed before leave confirmed — active tasks only
-        const taskCount = await withEntity(entity_id, (c) => c.query(
+        const openTasks = await withEntity(entity_id, (c) => c.query(
           `SELECT COUNT(*) as count FROM chit_status
            WHERE assigned_to_actor_id = $1
            AND current_status NOT IN ('completed','cancelled','rejected')`,
           [actor_id]
         ));
-        const count = parseInt(taskCount.rows[0].count);
+        const count = parseInt(openTasks.rows[0].count);
 
         if (count > 0 && !task_action) {
           return res.status(400).json({
@@ -1079,7 +1092,7 @@ router.put('/break',
                 [targetActor.identity_id, targetActor.display_name, actor_id]
               );
             }
-            await client.query(`UPDATE identities SET current_task_count = 0 WHERE identity_id = $1`, [actor_id]);
+            await taskCount(client, actor_id, 'clear');
           }
           await client.query(
             `UPDATE identities
@@ -1174,11 +1187,7 @@ router.put('/assign/:chit_id',
           [action_by_id, action_by_name, chit_id, entity_id]
         );
         const movedOnPull = await toPending(client, entity_id, chit_id, railActions.meOf(req), 'pull');
-        await db(
-          `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
-           WHERE identity_id = $1`,
-          [action_by_id]
-        );
+        await taskCount(db, action_by_id, 'take');
         // Log assignment event
         await db(
           `INSERT INTO state_log
@@ -1230,11 +1239,7 @@ router.put('/assign/:chit_id',
 
         // Reduce previous assignee count
         if (cs.assigned_to_actor_id) {
-          await db(
-            `UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1)
-             WHERE identity_id = $1`,
-            [cs.assigned_to_actor_id]
-          );
+          await taskCount(db, cs.assigned_to_actor_id, 'release');
         }
 
         await db(
@@ -1248,11 +1253,7 @@ router.put('/assign/:chit_id',
           [t.identity_id, t.display_name, chit_id, entity_id]
         );
         const movedOnPush = await toPending(client, entity_id, chit_id, railActions.meOf(req), 'push');
-        await db(
-          `UPDATE identities SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
-           WHERE identity_id = $1`,
-          [t.identity_id]
-        );
+        await taskCount(db, t.identity_id, 'take');
         // Log assignment — differentiate initial push from actor-to-actor transfer
         const isTransfer = !!cs.assigned_to_actor_id;
         const assignDetail = isTransfer
@@ -1290,11 +1291,7 @@ router.put('/assign/:chit_id',
 
       if (action === 'return') {
         if (cs.assigned_to_actor_id) {
-          await db(
-            `UPDATE identities SET current_task_count = GREATEST(0, current_task_count - 1)
-             WHERE identity_id = $1`,
-            [cs.assigned_to_actor_id]
-          );
+          await taskCount(db, cs.assigned_to_actor_id, 'release');
         }
         await db(
           `UPDATE chit_status
@@ -1358,7 +1355,7 @@ router.get('/settings', auth, async (req, res) => {
 
 // ── PUT /api/actors/settings ─────────────────────────────────
 router.put('/settings',
-  auth,
+  auth, ownerWrite,
   [
     body('assignment_model').optional().isIn(['pull','push','both']),
     body('default_max_tasks').optional().isInt({ min: 1, max: 100 }),
@@ -1413,7 +1410,7 @@ router.put('/settings',
 // Who covers this actor's auto-assigned work while they're on leave. Loop-prevented: the chain that
 // starts at the new delegate must never lead back to this actor.
 router.put('/:id/delegate',
-  auth,
+  auth, ownerWrite,
   [ body('delegate_actor_id').optional({ nullable: true }).isUUID() ],
   validate,
   async (req, res) => {
@@ -1523,7 +1520,7 @@ router.get('/:id/tasks',
 // Entity admin routes a specific task from an actor
 // action: pool (return to pool) | push (assign to another actor)
 router.put('/:id/tasks/route',
-  auth,
+  auth, ownerWrite,
   async (req, res) => {
     try {
       const entity_id    = req.identity.identity_id;
@@ -1561,12 +1558,7 @@ router.put('/:id/tasks/route',
           [chit_id, entity_id]
         );
         // Decrement from_actor task count
-        await db(
-          `UPDATE identities
-           SET current_task_count = GREATEST(0, current_task_count - 1)
-           WHERE identity_id = $1`,
-          [from_actor_id]
-        );
+        await taskCount(db, from_actor_id, 'release');
         // Log
         await db(
           `INSERT INTO state_log
@@ -1601,18 +1593,8 @@ router.put('/:id/tasks/route',
           [to_actor_id, chit_id, entity_id]
         );
         // Update task counts
-        await db(
-          `UPDATE identities
-           SET current_task_count = GREATEST(0, current_task_count - 1)
-           WHERE identity_id = $1`,
-          [from_actor_id]
-        );
-        await db(
-          `UPDATE identities
-           SET current_task_count = current_task_count + 1, last_assigned_at = NOW()
-           WHERE identity_id = $1`,
-          [to_actor_id]
-        );
+        await taskCount(db, from_actor_id, 'release');
+        await taskCount(db, to_actor_id, 'take');
         // Log
         await db(
           `INSERT INTO state_log

@@ -9,7 +9,11 @@
  * AUTH: PREFERRED = device-key ingest — the CB-issued ActorKey (BRIDGE_KEY) hits POST /api/connectors/ingest,
  * which heartbeats (health goes LIVE in the cockpit) AND emits the chit in one call, using the device's OWN
  * credential (no user session). FALLBACK (no key) = a session TOKEN + POST /api/chits/send (kept for demos).
- * Zero dependencies (Node's https) so it runs on a bare Raspberry Pi.
+ * Zero dependencies (Node's http/https) so it runs on a bare Raspberry Pi.
+ *
+ * ⭐ SEC3 — WHERE IT POINTS: the LOCAL stack by default (http://localhost:3000, deploy/compose.yml's API_PORT). API_BASE names
+ * another; plain http is allowed only for localhost / 127.0.0.1. The production api only with --production (or CB_SIM_PRODUCTION=1)
+ * — a simulator must never write signals into real shops by accident.
  *
  * Usage:
  *   # PREFERRED — device-key ingest (create the connector + a device in the app, copy the ActorKey + BridgeId)
@@ -24,10 +28,26 @@
  *   GATEWAY_EMAIL=gw01@connector.iot  TO=<counterparty entity_id>  node scripts/connector-gateway-sim.js
  */
 const https = require('https');
+const http = require('http');
 const fs = require('fs');
 const { URL } = require('url');
 
-const API_BASE = process.env.API_BASE || 'https://chitbridge-api-production.up.railway.app';
+const PRODUCTION = 'https://chitbridge-api-production.up.railway.app';
+const LOCAL = 'http://localhost:3000';
+/** apiBase(env, argv) → { base } | { refuse } — local by default, http only to localhost, production only by explicit flag */
+function apiBase(env, argv) {
+  const wantProd = (argv || []).includes('--production') || env.CB_SIM_PRODUCTION === '1';
+  const base = String(env.API_BASE || (wantProd ? PRODUCTION : LOCAL)).replace(/\/$/, '');
+  let u; try { u = new URL(base); } catch (_) { return { refuse: 'API_BASE is not a URL: ' + base }; }
+  const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(u.hostname);
+  if (u.protocol === 'http:' && !local) return { refuse: 'plain http is allowed only for localhost — use https for ' + u.hostname };
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return { refuse: 'API_BASE must be http(s): ' + base };
+  if (base === PRODUCTION && !wantProd) return { refuse: 'this is the PRODUCTION api — pass --production to write into it on purpose' };
+  return { base };
+}
+module.exports = { apiBase };
+const _b = apiBase(process.env, process.argv);
+const API_BASE = _b.base;
 const cfg = {
   key:    process.env.BRIDGE_KEY || '',      // PREFERRED: the CB-issued ActorKey -> device-key ingest (no user token)
   bridge: process.env.BRIDGE_ID || '',       // the device BridgeId under the connector (for ingest routing/health)
@@ -47,12 +67,13 @@ function req(method, path, body, token, extraHeaders){
   return new Promise((resolve, reject)=>{
     const u = new URL(API_BASE + path);
     const data = body ? JSON.stringify(body) : null;
-    const opts = { method, hostname:u.hostname, port:u.port||443, path:u.pathname+u.search,
+    const lib = u.protocol === 'http:' ? http : https;
+    const opts = { method, hostname:u.hostname, port:u.port||(u.protocol === 'http:' ? 80 : 443), path:u.pathname+u.search,
       headers:{ 'Content-Type':'application/json',
         ...(token?{Authorization:'Bearer '+token}:{}),
         ...(extraHeaders||{}),
         ...(data?{'Content-Length':Buffer.byteLength(data)}:{}) } };
-    const r = https.request(opts, res=>{ let b=''; res.on('data',c=>b+=c); res.on('end',()=>{
+    const r = lib.request(opts, res=>{ let b=''; res.on('data',c=>b+=c); res.on('end',()=>{
       let j; try{ j=JSON.parse(b); }catch(_){ j=b; }
       if(res.statusCode>=400) reject(new Error('HTTP '+res.statusCode+' · '+((j&&(j.message||j.error))||b).toString().slice(0,200)));
       else resolve(j); }); });
@@ -85,8 +106,10 @@ async function ensureToken(){
   return tok;
 }
 
-(async ()=>{
+if (require.main === module) (async ()=>{
   try{
+    if(_b.refuse) throw new Error(_b.refuse);
+    console.log('[api]', API_BASE);
     // PREFERRED PATH — device-key ingest: authenticate with the CB-issued ActorKey (no user token), heartbeat +
     // emit in ONE call. The counterparty comes from the connection (TO optional). This is what a real Pi should use.
     if(cfg.key){

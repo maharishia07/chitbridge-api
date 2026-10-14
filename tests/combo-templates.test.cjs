@@ -125,11 +125,11 @@ async function run() {
           PRODUCTS.push(row);
           return { rows: [row] };
         }
-        if (q.startsWith('UPDATE catalogue_items SET item_data=$1')) {
-          const [item_data, item_id, eid] = params;
-          const row = PRODUCTS.find((p) => p.item_id === item_id && p.entity_id === eid);
+        if (q.startsWith('UPDATE catalogue_items AS c')) {   /* lib/catalogue-write.patchItems — the one product writer (CAT-W1) */
+          const [ids, datas, , , eid] = params;
+          const row = PRODUCTS.find((p) => p.item_id === ids[0] && p.entity_id === eid);
           if (!row) return { rows: [] };
-          row.item_data = JSON.parse(item_data);
+          row.item_data = JSON.parse(datas[0]);
           return { rows: [row] };
         }
         return { rows: [] };   /* defaultSchemaId(), ensureDeclared()'s own schema/column reads — see above */

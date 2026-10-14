@@ -20,6 +20,7 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction } = require('../db');
+const policy = require('../lib/policy');   // T2-POLICY: the one writer of policy_flags (patchKey)
 
 /* ⚠️ ASKED, NOT REMEMBERED. This was its own array, so a scope added to the guard was mintable by nobody and a scope removed
    from the guard stayed on offer here. The map that enforces them is the only place they are named.
@@ -53,14 +54,8 @@ async function listOf(entity_id) {
  * ⚠️ The merge is SHALLOW — top-level fields of one key. Anything nested is passed whole.
  */
 async function patchKey(entity_id, jti, patch, db) {
-  const run = db ? db.query.bind(db) : query;
-  await run(
-    `UPDATE identities
-        SET policy_flags = jsonb_set(COALESCE(policy_flags, '{}'::jsonb), '{api_keys}',
-          COALESCE((SELECT jsonb_agg(CASE WHEN k->>'jti' = $2 THEN k || $3::jsonb ELSE k END)
-                      FROM jsonb_array_elements(COALESCE(policy_flags->'api_keys', '[]'::jsonb)) k), '[]'::jsonb))
-      WHERE identity_id = $1`,
-    [entity_id, String(jti), JSON.stringify(patch)]);
+  /* T2-POLICY: the one writer — its `merge_item` op is this statement, generalised */
+  await policy.patchKey(db || null, entity_id, ['api_keys'], patch, { op: 'merge_item', match: ['jti', String(jti)] });
 }
 
 router.get('/', auth, sessionOnly, async (req, res) => {
@@ -108,8 +103,7 @@ async function mint(entity_id, identity, opts) {
     /* ⚠️ a CLOSED counter is kept as history and must not use up a place — closing one is how a shop makes room */
     if (keys.filter((k) => !(k && k.till && k.till.closed_at)).length >= 20)
       throw Object.assign(new Error('Twenty keys at most — revoke one first.'), { status: 400 });
-    await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
-      [JSON.stringify({ api_keys: keys.concat([rec]) }), entity_id]);
+    await policy.patchKey(db, entity_id, [], { api_keys: keys.concat([rec]) }, { op: 'merge' });
   });
   return Object.assign({ key: token }, rec);
 }
@@ -130,8 +124,7 @@ router.setEnrol = async (entity_id, jti, patch) => {
     if (!k) return;
     k.enrol = Object.assign({}, k.enrol || {}, patch || {});
     out = k.enrol;
-    await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
-      [JSON.stringify({ api_keys: keys }), entity_id]);
+    await policy.patchKey(db, entity_id, [], { api_keys: keys }, { op: 'merge' });
   });
   if (out) auth.forgetKey(jti);
   return out;
@@ -344,16 +337,9 @@ async function claimDevice(db, entity_id, pf, who, ask) {
     assigned_at: pick && pick === had && me.till && me.till.assigned_at ? me.till.assigned_at : now });
   if (counter) till.counter = counter.id; else delete till.counter;
   if (engines) till.engines = engines;
-  await db.query(
-    `UPDATE identities SET policy_flags = jsonb_set(policy_flags, ARRAY['devices', $2::text, 'till'], $3::jsonb, true)
-      WHERE identity_id = $1`, [entity_id, String(who.device_id), JSON.stringify(till)]);
+  await policy.patchKey(db, entity_id, ['devices', String(who.device_id), 'till'], till, { parents: false });
   /* the register: this phone holds its assigned counter, and lets go of any it held before */
-  const counterPatch = (id, patch) => db.query(
-    `UPDATE identities
-        SET policy_flags = jsonb_set(COALESCE(policy_flags, '{}'::jsonb), '{counters}',
-              COALESCE(policy_flags->'counters', '{}'::jsonb)
-              || jsonb_build_object($2::text, COALESCE(policy_flags->'counters'->$2, '{}'::jsonb) || $3::jsonb))
-      WHERE identity_id = $1`, [entity_id, String(id), JSON.stringify(patch)]);
+  const counterPatch = (id, patch) => policy.patchKey(db, entity_id, ['counters', String(id)], patch, { op: 'merge' });
   for (const id of Object.keys(counters)) {
     const c = counters[id];
     if (c && c.held_by === mine && (!counter || String(id).toUpperCase() !== counter.id))
@@ -517,8 +503,7 @@ router.delete('/:jti', auth, sessionOnly, async (req, res) => {
       const left = keys.filter((k) => String(k.jti) !== gone && String(k.parent || '') !== gone);
       found = keys.some((k) => String(k.jti) === gone);
       keys.filter((k) => String(k.parent || '') === gone).forEach((k) => auth.forgetKey(k.jti));
-      if (found) await db.query(`UPDATE identities SET policy_flags = COALESCE(policy_flags,'{}'::jsonb) || $1::jsonb WHERE identity_id = $2`,
-        [JSON.stringify({ api_keys: left }), entity_id]);
+      if (found) await policy.patchKey(db, entity_id, [], { api_keys: left }, { op: 'merge' });
     });
     if (!found) return res.status(404).json({ error: 'Not found' });
     auth.forgetKey(req.params.jti);

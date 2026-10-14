@@ -41,13 +41,7 @@ const pendingLive = (c) => isPending(c && c.held_by) && (Date.now() - new Date(c
 
 /** set one counter's record in one statement — shallow merge into policy_flags.counters[id] */
 async function patchCounter(db, entity_id, id, patch) {
-  await db.query(
-    `UPDATE identities
-        SET policy_flags = jsonb_set(COALESCE(policy_flags, '{}'::jsonb), '{counters}',
-              COALESCE(policy_flags->'counters', '{}'::jsonb)
-              || jsonb_build_object($2::text, COALESCE(policy_flags->'counters'->$2, '{}'::jsonb) || $3::jsonb))
-      WHERE identity_id = $1`,
-    [entity_id, String(id), JSON.stringify(patch)]);
+  await require('../lib/policy').patchKey(db, entity_id, ['counters', String(id)], patch, { op: 'merge' });   /* T2-POLICY: the one writer */
 }
 router.patchCounter = patchCounter;
 

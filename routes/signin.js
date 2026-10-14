@@ -32,15 +32,14 @@ const auth = require('../middleware/auth');
 const { query, withTransaction, withEntity } = require('../db');
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
-const { isOwner } = require('../lib/owner');
+const { isOwner, ownerOnly: ownerGate } = require('../lib/owner');
 
 const personOnly = (req, res, next) => {
   if (req.api_key) { res.locals.code = 'KEY_CANNOT_SIGN_IN';
     return res.status(403).json({ error: 'Forbidden', code: 'KEY_CANNOT_SIGN_IN', message: 'A key cannot sign in — sign in.' }); }
   next();
 };
-const ownerOnly = (req, res, next) => (isOwner(req) ? next()
-  : res.status(403).json({ error: 'Forbidden', message: 'Only the owner may do this.' }));
+const ownerOnly = ownerGate();   // SEC2: the one owner gate (lib/owner.js)
 const fail = (res, e) => {
   const status = (e && e.status) || 500;
   if (e && e.code) res.locals.code = e.code;
@@ -215,7 +214,7 @@ const askChecks = [
  * to who can sign in — not in this move).
  */
 async function sendCode(req, res, { identity_id, email, display_name }, extra) {
-  const otp = devOtp.fixedOtp('entity') || generateOTP();
+  const otp = generateOTP('entity');
   const expires = new Date(Date.now() + 60 * 60 * 1000);
   await query(
     `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,

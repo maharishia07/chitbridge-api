@@ -10,7 +10,7 @@ const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customer-auth');   // T2.4 — the storefront customer's OWN surface
-const { verifyOtp } = require('../lib/otp');   // per-account OTP attempt cap
+const { verifyOtp, issueShopperOtp, spendShopperOtp } = require('../lib/otp');   // per-account OTP attempt cap · SH-OTP1: the one shopper code
 const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
 const container = require('../lib/container');              // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
@@ -20,9 +20,8 @@ const money = require('../lib/money');                      // MONEY TYPE — a 
 // ⚠️ ONE generator (lib/bridgeid.js). This copy was the ONLY one that ever received the S4 CSPRNG hardening —
 //    the fix was correct and reached one sixth of the code it was written for. That is why it now lives in one file.
 const genBridge = require('../lib/bridgeid').generateBridgeId;
-// Customer (storefront) OTP: a fixed customer code on a LOCAL stack only (distinct from the entity code, lib/dev-otp.js); CSPRNG elsewhere (S4).
+// Customer (storefront) OTP: issued and spent by lib/otp.js (SH-OTP1) — a fixed customer code on a LOCAL stack only, CSPRNG elsewhere.
 const devOtp = require('../lib/dev-otp');   // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
-const genOTP = () => devOtp.fixedOtp('customer') || require('crypto').randomInt(100000, 1000000).toString();
 const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
 // F2 — dual-channel customer identifier: the customer gives EXACTLY ONE of phone OR email. '@' present => email
@@ -761,18 +760,8 @@ router.post('/:bridge_id/order/start',
            VALUES ($1,$2,$3,$4,$5,$6,'customer',$7,'entity','otp','pending','shopper',NULL)`   /* GOV-AU1: a shopper's country is not known — the bill's walkIn decides */,
           [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]);
       }
-      const otp = genOTP();
-      // T3.12 · re-issuing a code no longer ZEROES the attempt counter. verifyOtp caps at 5 guesses, but this reset
-      // it on every /order/start — so "start → 5 guesses → start" looped indefinitely and the cap bounded nothing.
-      // The counter now decays with the TTL instead: a fresh window costs a wait, not a single extra request.
-      // The TTL also drops from 60 minutes to 15 — an hour-long reusable ticket has no legitimate use here.
-      const OTP_TTL_MS = 15 * 60 * 1000;
-      await query(
-        `UPDATE identities
-            SET otp_code = $1, otp_expires_at = $2, otp_contact = $3,
-                otp_attempts = CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW() THEN 0 ELSE COALESCE(otp_attempts, 0) END
-          WHERE identity_id = $4`,
-        [otp, new Date(Date.now() + OTP_TTL_MS), raw, identity_id]);
+      // T3.12 · re-issuing a code does not ZERO the attempt counter (it decays with the 15-minute TTL) — lib/otp.js has the why.
+      const otp = await issueShopperOtp(query, identity_id, raw);   /* SH-OTP1: the one OTP door */
       // F2: deliver the OTP on the SAME channel, to the RAW contact (never the .cr handle).
       const sent = await sendOtp(channel, raw, name, otp);
       res.json({
@@ -860,17 +849,8 @@ router.post('/:bridge_id/support/start', validate, async (req, res) => {
          VALUES ($1,$2,$3,$4,$5,$6,'customer',$7,'entity','otp','pending','shopper',NULL)`,
         [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]);
     }
-    const otp = genOTP();
-    /* ⚠️ the attempt counter DECAYS with the TTL and is not zeroed by asking again — the T3.12 rule from
-       /order/start, repeated here because repeating the rule is cheaper than sharing a bug. */
-    const OTP_TTL_MS = 15 * 60 * 1000;
-    await query(
-      `UPDATE identities
-          SET otp_code = $1, otp_expires_at = $2, otp_contact = $3,
-              otp_attempts = CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW()
-                                  THEN 0 ELSE COALESCE(otp_attempts, 0) END
-        WHERE identity_id = $4`,
-      [otp, new Date(Date.now() + OTP_TTL_MS), raw, identity_id]);
+    /* ⚠️ the same issue /order/start makes (the T3.12 decay rule included) — one helper, not a repeated rule */
+    const otp = await issueShopperOtp(query, identity_id, raw);   /* SH-OTP1: the one OTP door */
     const sent = await sendOtp(channel, raw, name, otp);
     res.json({
       message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
@@ -906,9 +886,7 @@ router.post('/:bridge_id/support',
 
       /* ⚠️ THE CODE IS SPENT, exactly as /order/confirm spends it. verifyOtp does not clear it, so without this
          one code would post tickets for the rest of its fifteen minutes. */
-      await query(
-        `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0,
-                last_active_at=NOW() WHERE identity_id=$1`, [c.identity_id]);
+      await spendShopperOtp(query, c.identity_id);
 
       const SEV = require('../lib/raiseticket').URGENCY.map((u) => u[0]);
       const severity = SEV.indexOf(String(req.body.severity || '')) >= 0 ? String(req.body.severity) : 'Sev-3';
@@ -1148,9 +1126,7 @@ router.post('/:bridge_id/order/confirm',
       ];
       try {
         await withEntity(c.identity_id, async (client) => {
-          await client.query(
-            `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW()
-              WHERE identity_id=$1`, [c.identity_id]);
+          await spendShopperOtp((t, p) => client.query(t, p), c.identity_id);   /* SH-OTP1, on the chit's own transaction */
           /* ⚠️ THE OPEN CLIENT IS PASSED IN, not a new connection — the OTP consume above and the documents below
              must commit with the chit or not at all. mint.deliver honours opts.client for exactly this. */
           await mint.deliver(c.identity_id, chit_id, orderCopies, { client });
@@ -1175,9 +1151,7 @@ router.post('/:bridge_id/order/confirm',
         if (!(e && (e.code === '42883' || /chit_deliver/.test(e.message || '')))) throw e;
         // pre-b50 fallback: the legacy inline OTP consume + dual-copy fan-out (unchanged).
         await withTransaction(async (client) => {
-        await client.query(
-          `UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW()
-            WHERE identity_id=$1`, [c.identity_id]);
+        await spendShopperOtp((t, p) => client.query(t, p), c.identity_id);   /* SH-OTP1, on the chit's own transaction */
 
         // sender (customer) record
         await client.query(
@@ -1300,7 +1274,7 @@ router.post('/:bridge_id/login/verify',
       const c = cr.rows[0];
       const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] });   // SEC1: the typed contact, for TESTER_NAMES
       if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Sign-in failed', message: otpCheck.message });
-      await query(`UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW() WHERE identity_id=$1`, [c.identity_id]);
+      await spendShopperOtp(query, c.identity_id);
       // ⭐ [capability: sign-in] issueToken() — see the other call site in this file for why this stopped
       // being a third hand-built jwt.sign().
       const token = await require('../lib/identity-auth').issueToken(query,
@@ -1309,6 +1283,20 @@ router.post('/:bridge_id/login/verify',
       res.json({ message: 'Signed in', token, name: c.display_name });
     } catch (err) { res.status(500).json({ error: 'Sign-in failed', message: safeErr(err) }); }
   });
+
+/**
+ * ⭐ SH-MY1 (T1-ORD) — THE PAGER CONTRACT for the shopper's own lists (DISCIPLINES §2: top-level total · page · limit, latest
+ * first). One reader for both routes; the server caps the page (MY_PAGE_MAX) whatever the client asks. The total rides the same
+ * statement (COUNT(*) OVER ()) — no second trip.
+ */
+const MY_PAGE_MAX = 50;
+function myPage(req) {
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.max(1, Math.min(MY_PAGE_MAX, parseInt(req.query.limit, 10) || 20));
+  return { page, limit, offset: (page - 1) * limit };
+}
+const myTotal = (rows) => (rows.length ? Number(rows[0]._total) || 0 : 0);
+const myRows = (rows) => rows.map(({ _total, ...r }) => r);
 
 // ── CJ-F1: the signed-in customer's orders + live status ──
 // T2.4 · THE CUSTOMER'S OWN SURFACE. This route existed but was mounted on `auth`, which fails closed on
@@ -1321,14 +1309,17 @@ router.get('/:bridge_id/my-orders', customerAuth, async (req, res) => {
     /* ⚠️ WX-O2C (2026-10-13): MY copy stays 'delivered' (the rail: it reached the shop) — the shop's Accept / Close moves THEIR copy. So
        `shop_status` is the other party's status, read in the same statement through chit_participants (b50, SECURITY DEFINER: the caller must
        be a participant — RLS as me). Before b50 the function is absent (42883): the list still answers, without shop_status. */
-    const sql = (withShop) => `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status${withShop
+    const sql = (withShop) => `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status, COUNT(*) OVER () AS _total${withShop
         ? `, (SELECT p.current_status FROM chit_participants(ch.chit_id) p WHERE p.entity_id <> ch.entity_id LIMIT 1) AS shop_status` : ''}
        FROM chit_header ch
        JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
        WHERE ch.entity_id = $1 AND ch.purpose IN ('order', 'offer')
-       ORDER BY ch.created_at DESC`;
-    const r = await withEntity(me, async (db) => (await trySavepoint(db, (h) => h.query(sql(true), [me]), null)) || db.query(sql(false), [me]));
-    res.json({ orders: r.rows, count: r.rows.length });
+       ORDER BY ch.created_at DESC LIMIT $2 OFFSET $3`;
+    const pg = myPage(req), args = [me, pg.limit, pg.offset];
+    const r = await withEntity(me, async (db) => (await trySavepoint(db, (h) => h.query(sql(true), args), null)) || db.query(sql(false), args));
+    const orders = myRows(r.rows);
+    /* `count` = the rows on this page (kept for older readers); `total` = all of mine — the pager's end marker reads it */
+    res.json({ orders, count: orders.length, total: myTotal(r.rows), page: pg.page, limit: pg.limit });
   } catch (err) { res.status(500).json({ error: 'Orders failed', message: safeErr(err) }); }
 });
 
@@ -1336,10 +1327,12 @@ router.get('/:bridge_id/my-orders', customerAuth, async (req, res) => {
 router.get('/:bridge_id/my-documents', customerAuth, async (req, res) => {
   try {
     const me = req.customer.identity_id;
+    const pg = myPage(req);
     const r = await withEntity(me, (db) => db.query(
-      `SELECT id, chit_id, line_index, name, mime, size, created_at
-         FROM cb_attachment WHERE entity_id = $1 ORDER BY created_at DESC LIMIT 200`, [me]));
-    res.json({ documents: r.rows, count: r.rows.length });
+      `SELECT id, chit_id, line_index, name, mime, size, created_at, COUNT(*) OVER () AS _total
+         FROM cb_attachment WHERE entity_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`, [me, pg.limit, pg.offset]));
+    const documents = myRows(r.rows);
+    res.json({ documents, count: documents.length, total: myTotal(r.rows), page: pg.page, limit: pg.limit });
   } catch (err) { res.status(500).json({ error: 'Documents failed', message: safeErr(err) }); }
 });
 

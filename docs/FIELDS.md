@@ -4,6 +4,28 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## /api/actors · /api/people · `pin_state` · `email` · the owner refusal (SEC2, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| GET /api/actors `actors[].pin_state` | `none` · `pending` · `set` | Derived in the list SELECT: `set` = a PIN hash is stored; `pending` = a first code is stored and not expired; else `none`. REPLACES `otp_code` · `otp_expires_at` · `pin_set_at` in that answer (a colleague could read every pending code). Written by nobody. Read by web app.html mapApiActor → cap-workforce.js (the invite chip and the Login card). |
+| GET /api/people `people[].email` | string or null | `identities.email` — the OWNER's answer only; null for anyone else. Written by POST /api/actors (the Add form) and PATCH /api/actors/:id `{ email }` (lowercased; empty clears it). Read by web cap-employees.js (the E-mail panel). |
+| GET /api/people `people[].has_email` | boolean | Derived (`identities.email` is set). Read by the same screen; lib/people.js already used it for the reset-code refusal. |
+| GET /api/people `people[].may.email` | `{ ok, why }` | lib/people.js — open for the owner, the owner-only sentence for anyone else (the same rule as the other four). |
+| 403 of every people write | `{ error, code: 'OWNER_ONLY', may: false, why, message }` | lib/owner.js ownerOnly — POST / · PATCH /:id · DELETE /:id/pin · POST /:id/otp · PUT /:id/status · PUT /settings · PUT /:id/delegate · PUT /:id/tasks/route (and signin.js's owner routes). `why` = `message`. Read by web CBAction (shows `message`). |
+| 409 of POST / · PATCH /:id | `{ error, code: 'EMAIL_TAKEN', message }` | identities_email_key (one e-mail per sign-in across the platform) — the owner's own address on a staff row is the usual case. |
+| write answers `otp` · `login_instruction` (changed) | `otp` only through dev-otp.mayExposeOtp | lib/employee-code.deliver: no longer "whenever not sealed". `login_instruction` never carries a code. `delivery_note` for `none` now says to add an e-mail and send a new code. |
+
+## POST /api/connectors/ingest · /erp-ingest · GET /api/events/stats — device keys in their shop and switch (SEC3, 2026-10-14)
+
+Derived per call, never stored. Written by `routes/connectors.js` (deviceActor · deviceMayAddress · the ingest catch) and `lib/platformroot.refuseUnlessRoot`. Read by: the generated Pi agent (web `public/app/cap-connector.js` `_agentJs` — it branches on the HTTP status, logs the code) and `scripts/connector-gateway-sim.js`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `code` on a refusal (new) | `NO_KEY` · `KEY_UNKNOWN` (401) · `CAPABILITY_OFF` · `DEVICE_TO_REFUSED` (403) · `CHIT_NOT_DELIVERED` (503) · a knownerr code (e.g. `POPULATION_BOUNDARY` 409) | Derived. Anything but 2xx = the device keeps the event and retries. `message` is the sentence a person reads; nothing branches on it. |
+| `money_why` on a 200 ingest (new) | `{ code: 'NO_MONEY', why }` or null | Derived: set only when the shop states no money and its country has no pack (`country-setup.shopMoney` → null); `why` = `MONEY_UNSTATED`. The signal chit's `summary_json.currency_code` is then null (was always `INR`). |
+| `GET /api/events/stats` refusal `code` (new) | `NOT_PLATFORM_ROOT` (403) · `NO_PLATFORM_ROOT` (404) | Derived from `PLATFORM_ROOT_ENTITY`. The same door now answers the entities.js operator routes (same codes added there). |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
@@ -517,6 +539,8 @@ Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, rou
 | `GET /api/till/snapshot` · `shop.tax_id_word` (new) | `GSTIN` · `ABN` · `TRN` or null | Derived: `profile.taxIdWordOf(shop country)` — the counter's label for the tax number (was the till's own `taxIdLabel` copy). Written by nobody. Read by till.html `taxIdLabel()`; null → "Tax number". |
 | `GET /api/till/snapshot` · `shop.currency` (changed) | ISO-4217 or null | The shop's `identities.currency_code`, else its pack's; neither → null (was `INR`). |
 | `GET /api/till/snapshot` · `shop.money_why` (new) | `{ code: 'NO_MONEY', why }` or null | Derived: set only when `shop.currency` is null; `why` = `country-setup.MONEY_UNSTATED` (the one sentence). Read by till.html's shop dialog beside "Money is …". |
+| `GET /api/catalogue/:bridge_id` (catalogue-view) · `shop.money_why` (new, T1-ORD) | `{ code: 'NO_MONEY', why }` or null | Derived: set only when `shop.currency_code` is null; `why` = `country-setup.MONEY_UNSTATED`. Read by web app/cart.js (the money block's footnote) through the page's `moneyWhy` option; shop.html passes it. |
+| `GET /api/catalogue/:bridge_id/my-orders` · `my-documents` · `total` `page` `limit` (new, T1-ORD) | integers | Derived: the pager contract (DISCIPLINES §2); `limit` capped at 50; `count` stays = the rows on this page. Read by web shop.html shopMyOrders (Show more) and app.html's customer list (PG). |
 | `profile.invoiceParty().currency` (changed) | ISO-4217 or null | `identities.currency_code`, else the pack's, else null (was `INR`). |
 | books refusal `NO_MONEY` (new code) | 422 `{ code, error, message }` | `books.enable` / `books-store.saveSetting` when neither Country setup nor the pack states the money or the year start (was `INR` / April). The sentence is `country-setup.MONEY_UNSTATED`. |
 | `identities.currency_code` · `cb_entity.currency_code` (b400) | varchar(3) or NULL | DEFAULT 'INR' dropped (b400): a money nobody stated is NULL — registration names it (offerOf / acceptAtSignup), Country setup asks for it. Layer: entity, class chosen-then-fixed (fixed once constituted). |
@@ -565,3 +589,15 @@ the whole range, exactly as before (the web adopts the pages in PERF2). Who may:
 | `/chits/inbox`, `/chits/sent` → `total` | — | derived: the COUNT, on page 1 only; `null` on a later page (app.html pgNext keeps page 1's) | routes/chits.js | the Task / Order pager |
 | … `next` | — | derived: `<created_at UTC, µs>\|<chit_id>` of the page's last row — the next page's `?after=` (newest-first order only; another sort keeps `page` + OFFSET); null on a short page | routes/chits.js (`keysetOf` · `afterOf`) | app.html fetchPage |
 | … `limit` | — | the server's: ≤ 200 (`LIST_MAX`) — `?limit=1000000` was obeyed before PERF1 | routes/chits.js | the pager |
+
+## T2-POLICY (2026-10-14) · one writer of `identities.policy_flags`; one of the shop's `gstn` · `address`
+
+No SQL, no new stored key. Who WRITES changed; what is stored did not.
+
+| key | shape | source / derived · writer · readers |
+|---|---|---|
+| `identities.policy_flags` (every key) | jsonb | source. Written ONLY by `lib/policy.js` — `set()` for FLAGS keys, `patchKey(db, entity, path, value, { op })` / `patchSql` for everything else (api_keys · counters · devices · network_* · profile_provenance · storefront_exposure). Guard: tests/policy-one-writer.test.cjs (0 direct writers). Readers unchanged. |
+| `FLAGS[key].ui` | `{ order, label, level, gov, help, labels?, options?, scale?, suffix?, step? }` | derived (code, lib/policy.js `CARD`). Not stored. Sent by `GET /api/entities/policy` as `schema[key].ui`; read by the web's Business rules card (cap-admin.js) — its former POLICY_FLAGS copy is gone. |
+| `FLAGS[key].may` · `.may_why` | `'owner'` · sentence | derived (code). `system_folders`, `books`. Read by `policy.refusalFor` in `PATCH /api/entities/policy` (403 `POLICY_OWNER_ONLY`). |
+| `bound_schema` (GET /api/entities/policy) | `{ dispute_scope: { type, options, def, ui } }` | derived (code). Read by the card for its locked row. |
+| `identities.gstn` · `identities.address` (the shop's own row) | text | source. Written ONLY through `lib/profile.js` `setShopIdentity` / `shopIdentitySql` (PATCH /entities/profile · country setup · the profile sync · a network store's place · the vault save's write-through). The tax number is checked by `profile.taxIdRefusal(country, number)` — the pack `taxIdWordOf` names (GSTIN checksum · ABN · TRN · ≤ 40 for no pack). A party's row (`parent_entity_id`) is the counterparty's, not this. |
