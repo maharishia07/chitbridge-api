@@ -70,7 +70,13 @@ function answer(text, params) {
       keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: F.allShut ? SHUT_AT : null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: F.c2open ? null : '2026-10-01T10:00:00Z' } }] }] };
   }
   if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: params[0] === 'a2' }] };
-  if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, last_check: { at: '2026-10-06T21:00:00Z', ok: true } }] };
+  if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, country: 'IN', last_check: { at: '2026-10-06T21:00:00Z', ok: true }, terms: F.terms || null }] };
+  /* T3-P1-MONEY: the cheques held (books-store.cheques) — a post-dated one for tomorrow, one overdue for deposit, one already deposited, one written OUT */
+  if (/FROM books_payment p/.test(sql)) { F.chqSql = sql; const d = (n) => new Date(Date.now() + n * DAYS).toISOString().slice(0, 10); return { rows: F.cheques === 'none' ? [] : [
+    { payment_id: 'p1', party_id: 'c1', direction: 'in', amount_minor: 500000, currency: 'INR', cheque_no: '000777', cheque_bank: 'SBI', cheque_date: d(1), received_at: d(-3), status: 'received' },
+    { payment_id: 'p2', party_id: 'c2', direction: 'in', amount_minor: 120000, currency: 'INR', cheque_no: '000778', cheque_bank: 'HDFC', cheque_date: d(-2), received_at: d(-5), status: 'received' },
+    { payment_id: 'p3', party_id: 'c3', direction: 'in', amount_minor: 90000, currency: 'INR', cheque_no: '000779', cheque_bank: 'HDFC', cheque_date: d(-9), received_at: d(-9), status: 'deposited' },
+    { payment_id: 'p4', party_id: 's1', direction: 'out', amount_minor: 70000, currency: 'INR', cheque_no: '110', cheque_bank: 'SBI', cheque_date: d(0), received_at: d(0), status: 'received' }] }; }
   /* STD1: the ONE count — GROUP BY todo over every open row (211 here: more than any page of 50 or 200) */
   if (/FROM books_outbox/.test(sql)) { F.outboxSql = sql; return { rows: [{ todo: 'accept', n: 120 }, { todo: 'add_supplier', n: 90 }, { todo: 'record', n: 1 }] }; }
   if (/FROM catalogue_items/.test(sql)) return { rows: [{ items: 10, no_cost: 4, cost: SECRET, item_data: { cost: { value: SECRET } } }] };
@@ -173,6 +179,20 @@ const get = (port, p) => new Promise((ok) => {
   t('accounts: at most 2 trips', r.trips <= 2, true);
   F.booksOn = false; r = await g('accounts');
   t('accounts: ledger off -> no lines, and it says why', [r.status, r.json.lines, typeof r.json.unavailable], [200, [], 'string']);
+  F.booksOn = true;
+
+  /* finance (T3-P1-MONEY): the cheques to deposit — the engine's pdcReminders over the SAME rows GET /books/cheques reads; money worded by the page */
+  r = await g('finance');
+  t('finance: 200', r.status, 200);
+  t('finance: one cheque is past its date and still received -> "1 cheque to deposit · {money} · 1 overdue", the sum in the pack\'s unit, tone dn', r.json.lines[0],
+    { text: '1 cheque to deposit · {money} · 1 overdue', value: 1, tone: 'dn', money: { amount: 1200, currency: 'INR' } });
+  t('finance: the figures count what the card says (to_deposit · late · in hand = received + deposited, IN only)', [r.json.figures.to_deposit, r.json.figures.late, r.json.figures.in_hand, r.json.figures.remind_on], [1, 1, 3, true]);
+  t('finance: the cheques read is books-store\'s own (mode = cheque, the held ones), one transaction', [/p\.mode = 'cheque'/.test(F.chqSql || ''), r.trips <= 2], [true, true]);
+  t('finance: as_of is the shop\'s day', /^\d{4}-\d{2}-\d{2}$/.test(String(r.json.figures.as_of)), true);
+  F.cheques = 'none'; r = await g('finance');
+  t('finance: no cheque at all -> said in words, value 0, never a blank', r.json.lines, [{ text: 'No cheque waiting', value: 0 }]);
+  F.cheques = null; F.booksOn = false; r = await g('finance');
+  t('finance: ledger off -> no lines, and it says why', [r.status, r.json.lines, typeof r.json.unavailable], [200, [], 'string']);
   F.booksOn = true;
 
   /* product-lab */
