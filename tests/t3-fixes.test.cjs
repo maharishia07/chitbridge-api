@@ -98,6 +98,6 @@ require.cache[require.resolve(path.join(API, 'db'))] = { id: 'db', loaded: true,
   t('"named" is the constitution actually found, not the default it fell back to',
     /const named = !!\(req\.body\.constitution && String\(req\.body\.constitution\)\.trim\(\) === c\.constitution_key\)/.test(si));
 
-  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  console.log('\n' + (pass + fail) + ' checks · ' + pass + ' passed · ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
