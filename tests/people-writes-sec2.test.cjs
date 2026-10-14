@@ -167,7 +167,7 @@ const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k o
     say('\n4 · the connector code comes through the one generator');
     const csrc = fs.readFileSync(path.join(API, 'routes', 'connectors.js'), 'utf8');
     t('routes/connectors.js has no generator of its own (no randomInt, no fixedOtp)', !/randomInt|fixedOtp\(/.test(csrc));
-    t('…both its codes are generateOTP(\'connector\')', /generateOTP\('connector'\)/.test(csrc) && (csrc.match(/genOtp\(\)/g) || []).length >= 2);
+    t('…both its codes are generateOTP(\'connector\')', /generateOTP\('connector'\)/.test(csrc) && (csrc.match(/generateOTP\('connector'\)/g) || []).length >= 2);   /* INT6a: SEC2's private genOtp folded into the one door (T2-WRITERS) */
     const devOtp = () => { ['dev-otp', 'otp'].forEach((m) => { delete require.cache[require.resolve(path.join(API, 'lib', m))]; }); return require(path.join(API, 'lib', 'otp.js')); };
     process.env.DATABASE_URL = 'postgres://u:p@127.0.0.1:5432/cb';
     const local = devOtp();
