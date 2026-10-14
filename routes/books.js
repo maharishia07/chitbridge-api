@@ -55,7 +55,7 @@ function fail(res, e) {
   /* FX1: a foreign entry whose day has no rate — 422 WITH the code, so a screen offers "Add rate" beside the sentence */
   if (e && e.code === 'FX_RATE_MISSING') return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   /* ⭐ CS1: the country gate — a pack-less country, no country, or the setup still to do: 422 WITH its code and sentence (never the quiet 404) */
-  if (e && (e.code === 'NO_COUNTRY_PACK' || e.code === 'NO_COUNTRY' || e.code === 'COUNTRY_SETUP_PENDING')) return res.status(422).json({ code: e.code, error: e.message, message: e.message });
+  if (e && (e.code === 'NO_COUNTRY_PACK' || e.code === 'NO_COUNTRY' || e.code === 'COUNTRY_SETUP_PENDING' || e.code === 'NO_MONEY')) return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   /* BAS1: an Indian shop asking GET /returns — its GSTR is read from the rail, not the ledgers: 422 WITH the code, so the GST screen paints the GSTR close instead */
   if (e && e.code === 'RETURN_FROM_RAIL') return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   /* ⚠️ before the 422: "not migrated" is thrown as a refusal too, and read as 422 — missing tables are the server's state, 503 */

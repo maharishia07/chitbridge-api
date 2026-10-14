@@ -5876,7 +5876,8 @@ function docCountry(){ return (S && S.shop && S.shop.country) || 'IN'; }
 /* ⭐ CX0 (2026-10-13): THE PACK'S OWN WORDS on the paper — the tax-id label (GSTIN · ABN · TRN), the scheme (GST · VAT), the credit note's title.
    Read from the registered pack of the shop's country (CBRegulation, bundled in /engine/tax.js); a page without the registry keeps India's words. */
 function shopPack(){ try { return (window.CBRegulation && CBRegulation.packFor(docCountry())) || null; } catch (_) { return null; } }
-function taxIdLabel(){ var p = shopPack(); return p && p.abn ? 'ABN' : p && p.trn ? 'TRN' : 'GSTIN'; }
+/* STD2: the tax number's word is the SERVER's (snapshot shop.tax_id_word = api profile.taxIdWordOf, the one reader) — never a copy here; none → neutral */
+function taxIdLabel(){ return (S && S.shop && S.shop.tax_id_word) || 'Tax number'; }
 function schemeWord(){ var p = shopPack(); return (p && p.tax && p.tax.scheme) || 'GST'; }
 function creditNoteTitle(){ var p = shopPack(); return p && p.creditNote && p.creditNote.title ? String(p.creditNote.title).toUpperCase() : 'CREDIT NOTE'; }
 /** does the shop's tax turn on the STATE (India's CGST/SGST · IGST — pack.tax.supply 'state')? A border pack (Australia, the UAE) has one head and no state. No pack known → India's rule, as before. */
@@ -18808,7 +18809,9 @@ function shopEditOpen(){
       + '</label>';
   }).join('');
   /* ⚠⚠ the two the counter may NOT set, shown with the reason rather than hidden */
-  body += '<p class="note">Money is <b>' + esc(sh.currency || 'INR') + '</b> and registration is <b>'
+  /* STD2: no money stated → the server's ONE sentence (shop.money_why, code NO_MONEY), never INR by name */
+  if (!sh.currency && sh.money_why && sh.money_why.why) body += '<p class="note" data-testid="till-shop-money-why">' + esc(sh.money_why.why) + '</p>';
+  body += '<p class="note">Money is <b>' + esc(sh.currency || '—') + '</b> and registration is <b>'
         + esc(sh.reg_type || 'regular') + '</b>. Those two are changed in ChitBridge, not here — each one changes'
         + ' what every future bill charges, not just what it says.</p>';
   document.getElementById('shopform').innerHTML = body;
@@ -20331,7 +20334,7 @@ function shopCheck(){
   var pk0 = shopPack(), tid = pk0 && (pk0.abn || pk0.trn);
   if (tid && typeof tid.check === 'function') {
     var c0 = tid.check(v);
-    if (!c0.ok) { shopSay(esc(c0.why || ('That is not the shape of ' + (pk0.abn ? 'an ABN' : 'a TRN') + '.')), true); return false; }
+    if (!c0.ok) { shopSay(esc(c0.why || ('That is not the shape of this shop\u2019s ' + taxIdLabel() + '.')), true); return false; }
     shopSay(shopSlipBadge('TAX INVOICE') + ' · ' + taxIdLabel() + ' ' + esc(v) + ' checks out — its shape and check digit; whether it is live is the registry\'s answer, not this box\'s.', false, true);
     return true;
   }

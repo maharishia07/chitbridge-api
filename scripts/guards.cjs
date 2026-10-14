@@ -35,6 +35,8 @@ const GUARDS = [
   'spin-scripts.test.cjs',      // ⭐⭐ HX2: the cloud spin scripts — one env list (HOSTING.md), tagged, India by default, no secret printed
   'hosting-neutral.test.cjs',   // ⭐⭐ HX1: the DB password goes only to configured URLs; SigV4 = AWS's examples; no platform host in shipped code
   'records-keeping.test.cjs',   // ⭐⭐ CO3: the books' edit trail cannot be disabled (Rule 3(1)); no copy expires inside the 9-year records floor
+  'fx-dates-tz.test.cjs',       // ⭐ a rate's day is the same on every server (India · Sydney · UTC · LA) — fx-rates reads dates with books-engines ymd
+  'till-country-bill.test.cjs', // ⭐ the counter bill in IN · AU · AE: fmtCount by money, tax words per pack (api #163; on the board since the 14 Oct rebuild)
   'identity-country.test.cjs',  // ⭐⭐ GOV-AU1 (b376): every INSERT INTO identities names its country; no reader answers India for NULL
   'migration-numbers.test.cjs', // ⭐⭐ one number, one migration — two parallel rounds both wrote b299 (12 Oct); a clash fails here
   'co2-controls.test.cjs',      // ⭐ CO2: a critical line reaches CB_ALERT_WEBHOOK; state_log append-only (b315) — the Standards register's evidence
@@ -290,7 +292,7 @@ const files = all
  * without it they ran with no engine and failed with 0 checks (CI run 37414852968, red since 2026-10-06). Measured
  * the same way: these are exactly the CI failures, and each passes locally with the engines present. */
 const NEEDS_ENGINES = ['engines-pinned.test.js', 'tax-vendor.test.js',
-  'books-collections.test.cjs', 'books-fixes.test.cjs', 'books-dates-tz.test.cjs', 'books-period.test.cjs', 'books-preview.test.cjs', 'books-rcm.test.cjs',
+  'books-collections.test.cjs', 'books-fixes.test.cjs', 'books-dates-tz.test.cjs', 'fx-dates-tz.test.cjs', 'books-period.test.cjs', 'books-preview.test.cjs', 'books-rcm.test.cjs',
   'books-year.test.cjs', 'books-recurring.test.cjs', 'books-todo.test.cjs', 'books-manual-events.test.cjs',
   'books-voucher-series.test.cjs', 'two-sided-books.test.cjs'];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
