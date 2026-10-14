@@ -1109,5 +1109,328 @@
     "params": null
    }
   ]
+ },
+ "by-batch · no value → 400": {
+  "status": 400,
+  "body": {
+   "error": "Bad request",
+   "message": "A batch value (q) is required"
+  },
+  "calls": []
+ },
+ "by-batch · matched on the lot (depth, a red node, an unknown one)": {
+  "status": 200,
+  "body": {
+   "dir": "forward",
+   "by_batch": "24B",
+   "reconstructed": true,
+   "matched_on": "batch",
+   "matched_note": "Matched on the lot recorded on each line — GS1 (10) batch or (21) serial.",
+   "start": "A",
+   "reachable_count": 4,
+   "depth_max": 2,
+   "flagged": 1,
+   "terminals": [
+    {
+     "chit_id": "C",
+     "product": "Rice"
+    },
+    {
+     "chit_id": "D",
+     "product": "Rice"
+    }
+   ],
+   "nodes": [
+    {
+     "chit_id": "A",
+     "sender_entity_id": "UUID#1",
+     "sender_name": "From 1",
+     "to_entity_id": "UUID#2",
+     "to_name": "To 2",
+     "product": "Rice",
+     "qty": 100,
+     "unit": null,
+     "base_qty": 100,
+     "base_unit": "kg",
+     "depth": 0,
+     "is_origin": true,
+     "balance": {
+      "in": 100,
+      "out": 110,
+      "delta": 10,
+      "base_unit": "kg",
+      "status": "red"
+     }
+    },
+    {
+     "chit_id": "B",
+     "sender_entity_id": "UUID#2",
+     "sender_name": "From 2",
+     "to_entity_id": "UUID#3",
+     "to_name": "To 3",
+     "product": "Rice",
+     "qty": 70,
+     "unit": null,
+     "base_qty": 70,
+     "base_unit": "kg",
+     "depth": 1,
+     "is_origin": false,
+     "balance": {
+      "status": "unknown"
+     }
+    },
+    {
+     "chit_id": "C",
+     "sender_entity_id": "UUID#2",
+     "sender_name": "From 2",
+     "to_entity_id": "UUID#4",
+     "to_name": "To 4",
+     "product": "Rice",
+     "qty": 40,
+     "unit": null,
+     "base_qty": 40,
+     "base_unit": "kg",
+     "depth": 1,
+     "is_origin": false,
+     "balance": null
+    },
+    {
+     "chit_id": "D",
+     "sender_entity_id": "UUID#3",
+     "sender_name": "From 3",
+     "to_entity_id": "UUID#5",
+     "to_name": "To 5",
+     "product": "Rice",
+     "qty": 5,
+     "unit": null,
+     "base_qty": 5,
+     "base_unit": "bag",
+     "depth": 2,
+     "is_origin": false,
+     "balance": null
+    }
+   ],
+   "edges": [
+    {
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "from": "A",
+     "to": "C"
+    },
+    {
+     "from": "B",
+     "to": "D"
+    }
+   ]
+  },
+  "calls": [
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients, h.summary_json->'trace' AS trace FROM chit_header h JOIN chit_line l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id WHERE h.summary_json->'trace' IS NOT NULL AND l.removed = false AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))",
+    "params": [
+     "24B"
+    ]
+   }
+  ]
+ },
+ "by-batch · no lot anywhere → the product, said (a cycle)": {
+  "status": 200,
+  "body": {
+   "dir": "forward",
+   "by_batch": "rice",
+   "reconstructed": true,
+   "matched_on": "product",
+   "matched_note": "No lot was recorded on any line, so this is every movement of a product with that name — not a lot-level recall.",
+   "start": "A",
+   "reachable_count": 3,
+   "depth_max": 0,
+   "flagged": 0,
+   "terminals": [
+    {
+     "chit_id": "B",
+     "product": "Rice"
+    }
+   ],
+   "nodes": [
+    {
+     "chit_id": "A",
+     "sender_entity_id": "UUID#1",
+     "sender_name": "From 1",
+     "to_entity_id": "UUID#2",
+     "to_name": "To 2",
+     "product": "Rice",
+     "qty": 100,
+     "unit": null,
+     "base_qty": 100,
+     "base_unit": "kg",
+     "depth": 0,
+     "is_origin": false,
+     "balance": {
+      "status": "unknown"
+     }
+    },
+    {
+     "chit_id": "B",
+     "sender_entity_id": "UUID#2",
+     "sender_name": "From 2",
+     "to_entity_id": "UUID#3",
+     "to_name": "To 3",
+     "product": "Rice",
+     "qty": 70,
+     "unit": null,
+     "base_qty": 70,
+     "base_unit": "kg",
+     "depth": 0,
+     "is_origin": false,
+     "balance": null
+    },
+    {
+     "chit_id": "E",
+     "sender_entity_id": "UUID#2",
+     "sender_name": "From 2",
+     "to_entity_id": "UUID#1",
+     "to_name": "To 1",
+     "product": "Rice",
+     "qty": 1,
+     "unit": null,
+     "base_qty": null,
+     "base_unit": null,
+     "depth": 0,
+     "is_origin": false,
+     "balance": null
+    }
+   ],
+   "edges": [
+    {
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "from": "A",
+     "to": "E"
+    },
+    {
+     "from": "E",
+     "to": "A"
+    }
+   ]
+  },
+  "calls": [
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients, h.summary_json->'trace' AS trace FROM chit_header h JOIN chit_line l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id WHERE h.summary_json->'trace' IS NOT NULL AND l.removed = false AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))",
+    "params": [
+     "rice"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE summary_json->'trace' IS NOT NULL AND lower(summary_json->'trace'->>'product') = lower($1)",
+    "params": [
+     "rice"
+    ]
+   }
+  ]
+ },
+ "by-batch · pre-b142 (no chit_line) → the product": {
+  "status": 200,
+  "body": {
+   "dir": "forward",
+   "by_batch": "rice",
+   "reconstructed": true,
+   "matched_on": "product",
+   "matched_note": "No lot was recorded on any line, so this is every movement of a product with that name — not a lot-level recall.",
+   "start": "A",
+   "reachable_count": 3,
+   "depth_max": 0,
+   "flagged": 0,
+   "terminals": [
+    {
+     "chit_id": "B",
+     "product": "Rice"
+    }
+   ],
+   "nodes": [
+    {
+     "chit_id": "A",
+     "sender_entity_id": "UUID#1",
+     "sender_name": "From 1",
+     "to_entity_id": "UUID#2",
+     "to_name": "To 2",
+     "product": "Rice",
+     "qty": 100,
+     "unit": null,
+     "base_qty": 100,
+     "base_unit": "kg",
+     "depth": 0,
+     "is_origin": false,
+     "balance": {
+      "status": "unknown"
+     }
+    },
+    {
+     "chit_id": "B",
+     "sender_entity_id": "UUID#2",
+     "sender_name": "From 2",
+     "to_entity_id": "UUID#3",
+     "to_name": "To 3",
+     "product": "Rice",
+     "qty": 70,
+     "unit": null,
+     "base_qty": 70,
+     "base_unit": "kg",
+     "depth": 0,
+     "is_origin": false,
+     "balance": null
+    },
+    {
+     "chit_id": "E",
+     "sender_entity_id": "UUID#2",
+     "sender_name": "From 2",
+     "to_entity_id": "UUID#1",
+     "to_name": "To 1",
+     "product": "Rice",
+     "qty": 1,
+     "unit": null,
+     "base_qty": null,
+     "base_unit": null,
+     "depth": 0,
+     "is_origin": false,
+     "balance": null
+    }
+   ],
+   "edges": [
+    {
+     "from": "A",
+     "to": "B"
+    },
+    {
+     "from": "A",
+     "to": "E"
+    },
+    {
+     "from": "E",
+     "to": "A"
+    }
+   ]
+  },
+  "calls": [
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients, h.summary_json->'trace' AS trace FROM chit_header h JOIN chit_line l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id WHERE h.summary_json->'trace' IS NOT NULL AND l.removed = false AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))",
+    "params": [
+     "rice"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE summary_json->'trace' IS NOT NULL AND lower(summary_json->'trace'->>'product') = lower($1)",
+    "params": [
+     "rice"
+    ]
+   }
+  ]
  }
 }

@@ -31,6 +31,16 @@ const GRAPH = {
   [E]: node(E, { product: 'Rice', qty: 10, base_qty: 10, base_unit: 'bag', parents: [C] }, 'Kiosk'),
 };
 
+const bnode = (id, from, to, t) => ({ chit_id: id, sender_entity_id: from, sender_entity_display_name: 'From ' + from.slice(-1), all_recipients: JSON.stringify([{ role: 'sender', entity_id: from }, { role: 'receiver', entity_id: to, display_name: 'To ' + to.slice(-1) }]), trace: t });
+const P1 = 'bbbbbbbb-0000-4000-8000-000000000001', P2 = 'bbbbbbbb-0000-4000-8000-000000000002', P3 = 'bbbbbbbb-0000-4000-8000-000000000003', P4 = 'bbbbbbbb-0000-4000-8000-000000000004';
+const BATCH = [
+  bnode(A, P1, P2, { product: 'Rice', qty: 100, base_qty: 100, base_unit: 'kg' }),
+  bnode(B, P2, P3, { product: 'Rice', qty: 70, base_qty: 70, base_unit: 'kg' }),
+  bnode(C, P2, P4, { product: 'Rice', qty: 40, base_qty: 40, base_unit: 'kg' }),
+  bnode(D, P3, 'bbbbbbbb-0000-4000-8000-000000000005', { product: 'Rice', qty: 5, base_qty: 5, base_unit: 'bag' }),
+  bnode(B, P2, P3, { product: 'Rice', qty: 70, base_qty: 70, base_unit: 'kg' }),
+];
+const CYCLE = bnode(E, P2, P1, { product: 'Rice', qty: 1 });   /* P2 sends back to P1: A → B and E → A — a cycle the depth walk must not loop on */
 function rows(s, p, ctx) {
   if (/FROM chit_header WHERE chit_id = \$1/.test(s) && /trace/.test(s)) {
     const r = GRAPH[p[0]]; if (!r) return [];
@@ -41,6 +51,8 @@ function rows(s, p, ctx) {
     const front = p[0] || [];
     return Object.values(GRAPH).filter((r) => r.trace.parents.some((x) => front.includes(x)) && (!p[1] || (r.trace.network && r.trace.network.id === p[1])));
   }
+  if (/JOIN chit_line/.test(s)) { if (ctx.lotThrows) throw new Error('no chit_line'); return ctx.lot ? BATCH : []; }
+  if (/lower\(summary_json->'trace'->>'product'\) = lower\(\$1\)/.test(s)) return BATCH.slice(0, 2).concat([CYCLE]);
   if (/WHERE summary_json->'trace' IS NOT NULL/.test(s)) return Object.values(GRAPH).concat([GRAPH[A]]).map((r) => Object.assign({ created_at: '2026-10-01T10:00:00.000Z' }, r));
   if (/state_log_fanout/.test(s) && ctx.noFanout) { const e = new Error('no fn'); e.code = '42883'; throw e; }
   return [];
@@ -80,6 +92,10 @@ const SCENARIOS = [
   ['trace · backward to the origin (a dead-end parent recorded)', { method: 'GET', url: '/' + D + '/trace?dir=backward' }],
   ['trace · backward from the origin', { method: 'GET', url: '/' + A + '/trace?dir=backward' }],
   ['trace · the batches list (one label helper with the walk)', { method: 'GET', url: '/trace/batches' }],
+  ['by-batch · no value → 400', { method: 'GET', url: '/trace/by-batch' }],
+  ['by-batch · matched on the lot (depth, a red node, an unknown one)', { method: 'GET', url: '/trace/by-batch?q=24B', ctx: { lot: true } }],
+  ['by-batch · no lot anywhere → the product, said (a cycle)', { method: 'GET', url: '/trace/by-batch?q=rice' }],
+  ['by-batch · pre-b142 (no chit_line) → the product', { method: 'GET', url: '/trace/by-batch?q=rice', ctx: { lotThrows: true } }],
 ];
 
 (async () => {
