@@ -172,7 +172,7 @@ it('an exact match still ranks above a forgiven one', () => {
 console.log('— one file, two screens —');
 
 it('⭐ the counter and the app load the SAME search: three copies, byte for byte', () => {
-  const master = fs.readFileSync(path.join(WEB, 'app', 'search.js'), 'utf8').replace(/\r\n/g, '\n');
+  const master = fs.readFileSync(path.join(WEB, 'engine', 'search.js'), 'utf8').replace(/\r\n/g, '\n');
   for (const copy of [path.join(WEB, 'engine', 'search.js'), path.join(API, 'lib', 'search-engine.js')]) {
     const have = fs.readFileSync(copy, 'utf8').replace(/\r\n/g, '\n');
     assert.strictEqual(have, master, copy + ' has drifted — run node scripts/vendor-till.cjs');
@@ -184,7 +184,7 @@ it('neither screen keeps a search of its own', () => {
   assert.ok(till.indexOf('/engine/search.js') > 0, 'the counter must load the shared engine');
   assert.ok(till.indexOf('everyTokenInAWord') < 0, 'the counter still carries its own copy of the letters pass');
   const app = fs.readFileSync(path.join(WEB, 'app.html'), 'utf8');
-  if (app.indexOf('CBSearch') > 0) assert.ok(app.indexOf('app/search.js') > 0, 'the app uses CBSearch but never loads it');
+  if (app.indexOf('CBSearch') > 0) assert.ok(app.indexOf('engine/search.js') > 0, 'the app uses CBSearch but never loads it');
 });
 
 
