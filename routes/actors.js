@@ -64,7 +64,9 @@ const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
-const signin  = require('./signin');   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
+const signin  = require('./signin');
+const personSession = require('../lib/person-session');   // PEOPLE-SRV1 (G4): the one session listing — closeBy ends a person's phones
+const keysRoute = require('./keys');                       // PEOPLE-SRV1 (G4): the one key list — endKeysBy ends the keys a person opened   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -832,7 +834,7 @@ router.put('/:id/status',
       // Remove requires REMOVE confirmation
       if (action === 'remove' && confirm !== 'REMOVE') {
         return res.status(400).json({
-          error: 'Confirmation required',
+          error: 'Confirmation required', code: 'CONFIRM_REMOVE',   /* PEOPLE-SRV1: the screen asks "Remove?" on this code, never on the words */
           message: 'Send confirm: REMOVE to permanently remove this actor',
           tasks_warning: a.current_task_count > 0
             ? `Actor has ${a.current_task_count} active tasks — route them first`
@@ -843,7 +845,7 @@ router.put('/:id/status',
       // If tasks exist — require routing decision
       if (a.current_task_count > 0 && !task_action) {
         return res.status(400).json({
-          error: 'Tasks must be routed',
+          error: 'Tasks must be routed', code: 'TASKS_TO_ROUTE',
           message: `Actor has ${a.current_task_count} active tasks`,
           required: 'Send task_action: pool (return to entity) or actor (pass to colleague)',
           actor_tasks: a.current_task_count
@@ -891,6 +893,7 @@ router.put('/:id/status',
 
       // Atomic: route this actor's active tasks AND apply the status change together.
       let tasks_routed = 0, covers_removed = 0, was_default_assignee = false, disputes_cleared = 0;
+      let signed_out = { sessions: 0, keys_closed: 0, keys_revoked: 0 }, endedJtis = [], endedKeys = [];
       // B1 RLS: all task-routing chit_status updates are this entity's own rows -> withEntity(me).
       await withEntity(entity_id, async (client) => {
         if (a.current_task_count > 0 && task_action) {
@@ -942,7 +945,18 @@ router.put('/:id/status',
         // Default auto-assign assignee: if it points to this actor, clear it (would otherwise route to a gone actor).
         const _da = await client.query(`UPDATE entity_actor_settings SET default_assignee_actor_id = NULL WHERE entity_id = $1 AND default_assignee_actor_id = $2`, [entity_id, actor_id]);
         was_default_assignee = (_da.rowCount || 0) > 0;
+        /* PEOPLE-SRV1 (G4): SWITCHED OFF OR REMOVED = SIGNED OUT, in this same transaction. Every phone/browser session they
+           opened is unlisted (lib/person-session closeBy) and every key they opened ends (routes/keys endKeysBy: a counter key is
+           closed as Release closes it, any other key is revoked). Before, the listings stayed: switching them back on revived
+           every old phone, and a counter they opened kept billing — its key is the shop's, so auth's actor check never saw it. */
+        const ss = await personSession.closeBy((fn) => fn(client), entity_id, actor_id);
+        const kk = await keysRoute.endKeysBy(client, entity_id, actor_id);
+        signed_out = { sessions: ss.ended, keys_closed: kk.closed, keys_revoked: kk.revoked };
+        endedJtis = ss.jtis; endedKeys = kk.jtis;
       });
+      /* after COMMIT: a request in between may have re-cached the old "listed" answer */
+      endedJtis.forEach(personSession.forget);
+      endedKeys.forEach(auth.forgetKey);
 
       // Drop any dispute-handler assignment to this actor so open disputes aren't routed to a gone person.
       // B1 RLS (b68): chit_disputes is now per-copy + FORCE RLS, so this MUST run under withEntity(me) — a plain
@@ -964,6 +978,7 @@ router.put('/:id/status',
         covers_removed,
         was_default_assignee,
         disputes_cleared,
+        signed_out,
         had_cover: !!a.delegate_actor_id
       });
 
@@ -974,8 +989,31 @@ router.put('/:id/status',
   }
 );
 
+/**
+ * breakSubject(req) — PEOPLE-SRV1 (G6): WHOSE break this is. A person says their own (no actor_id, or their own id); the OWNER
+ * marks someone away or back by naming them (`actor_id`) — owner only (ownerWrite, before this runs), one of the shop's own
+ * people, not switched off or removed. → { id, name|null, other } or { status, body } to refuse with (a code on every refusal).
+ */
+async function breakSubject(req) {
+  const asked = req.body.actor_id;
+  if (!asked || asked === req.identity.identity_id) {
+    if (req.identity.identity_type !== 'actor') return { status: 400, body: { error: 'Name the person', code: 'NAME_THE_PERSON', message: 'Say who is away — pick the person.' } };
+    return { id: req.identity.identity_id, name: null, other: false };
+  }
+  const r = await db(
+    `SELECT identity_id, display_name, break_status FROM identities
+      WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
+    [asked, auth.entityOf(req)]);
+  const t = r.rows[0];
+  if (!t || t.break_status === 'removed') return { status: 404, body: { error: 'Not found', code: 'NOT_FOUND', message: 'That person is not in your shop.' } };
+  if (t.break_status === 'deactivated') return { status: 400, body: { error: 'Switched off', code: 'SWITCHED_OFF', message: t.display_name + ' is switched off. Switch them on first.' } };
+  return { id: t.identity_id, name: t.display_name, other: true };
+}
+/* the owner gate only when somebody ELSE is named — a person's own break stays theirs (hat-gate lets it through) */
+const ownerWhenOther = (req, res, next) => (req.body && req.body.actor_id && req.body.actor_id !== req.identity.identity_id ? ownerWrite(req, res, next) : next());
+
 // ── PUT /api/actors/break ────────────────────────────────────
-// Actor goes on break — short or leave
+// Actor goes on break — short or leave. PEOPLE-SRV1 (G6): the owner may name the person (actor_id).
 router.put('/break',
   auth,
   [
@@ -983,26 +1021,27 @@ router.put('/break',
       .withMessage('break_type must be short_break leave or end_break'),
     body('task_action').optional().isIn(['hold','pool','actor']),
     body('target_actor_id').optional().isUUID(),
+    body('actor_id').optional().isUUID(),
   ],
   validate,
+  ownerWhenOther,
   async (req, res) => {
     try {
-      const actor_id = req.identity.identity_id;
       const entity_id = auth.entityOf(req);   // B1 RLS context
       const { break_type, task_action, target_actor_id } = req.body;
-
-      if (req.identity.identity_type !== 'actor') {
-        return res.status(400).json({ error: 'Only actors can use break endpoint' });
-      }
+      const who = await breakSubject(req);
+      if (who.status) return res.status(who.status).json(who.body);
+      const actor_id = who.id;
+      const you = who.other ? who.name : 'You', youre = who.other ? who.name + ' is' : "You're";
 
       // Buddy-cover concurrency: don't leave anyone uncovered when going off (both directions; skip on end_break).
       if (break_type !== 'end_break') {
         const deps = (await db(`SELECT display_name FROM identities WHERE delegate_actor_id = $1 AND break_status IN ('short_break','leave')`, [actor_id])).rows;
-        if (deps.length) return res.status(400).json({ error: 'Cover conflict', message: `You're covering ${deps.map(d=>d.display_name).join(', ')} who ${deps.length>1?'are':'is'} away — you can't go off until they're back.` });
+        if (deps.length) return res.status(400).json({ error: 'Cover conflict', code: 'COVER_CONFLICT', message: `${youre} covering ${deps.map(d=>d.display_name).join(', ')} who ${deps.length>1?'are':'is'} away — ${who.other ? 'they' : 'you'} can't go off until they're back.` });
         const me = (await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1`, [actor_id])).rows[0];
         if (me && me.delegate_actor_id) {
           const cov = (await db(`SELECT display_name, break_status FROM identities WHERE identity_id = $1`, [me.delegate_actor_id])).rows[0];
-          if (cov && cov.break_status !== 'active') return res.status(400).json({ error: 'Cover conflict', message: `Your leave-cover ${cov.display_name} is also away — you can't both be off at once.` });
+          if (cov && cov.break_status !== 'active') return res.status(400).json({ error: 'Cover conflict', code: 'COVER_CONFLICT', message: `${who.other ? who.name + "'s" : 'Your'} leave-cover ${cov.display_name} is also away — both can't be off at once.` });
         }
       }
 
@@ -1016,7 +1055,7 @@ router.put('/break',
            WHERE identity_id = $1`,
           [actor_id]
         );
-        return res.json({ message: 'Break ended — you are now active' });
+        return res.json({ message: who.other ? who.name + ' is back' : 'Break ended — you are now active', actor_id, state: 'on' });
       }
 
       if (break_type === 'short_break') {
@@ -1030,7 +1069,8 @@ router.put('/break',
           [actor_id]
         );
         return res.json({
-          message: 'Short break started — your tasks are held',
+          message: who.other ? who.name + ' is on a short break — their tasks are held' : 'Short break started — your tasks are held',
+          actor_id, state: 'away',
           break_type: 'short_break',
           tasks: 'held — nobody else can pull them'
         });
@@ -1048,8 +1088,8 @@ router.put('/break',
 
         if (count > 0 && !task_action) {
           return res.status(400).json({
-            error: 'Route tasks first',
-            message: `You have ${count} active tasks`,
+            error: 'Route tasks first', code: 'TASKS_TO_ROUTE',
+            message: `${you} ${who.other ? 'has' : 'have'} ${count} active tasks`,
             required: 'Send task_action: pool (return to entity) or actor (pass to colleague)',
             task_count: count
           });
@@ -1059,11 +1099,12 @@ router.put('/break',
         let targetActor = null;
         if (count > 0 && task_action === 'actor') {
           if (!target_actor_id) return res.status(400).json({ error: 'Target actor required' });
+          /* PEOPLE-SRV1: the stand-in must be one of THIS shop's people (this read had no shop filter — any shop's person could be handed the tasks), and not the one going */
           const tr = await db(
             `SELECT identity_id, display_name FROM identities
-             WHERE identity_id = $1 AND break_status = 'active'
+             WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_id <> $3 AND break_status = 'active'
                AND hat IN ('act','manager')`,
-            [target_actor_id]
+            [target_actor_id, entity_id, actor_id]
           );
           if (tr.rows.length === 0) return res.status(400).json({ error: 'Target actor not found or not active' });
           targetActor = tr.rows[0];
@@ -1103,7 +1144,8 @@ router.put('/break',
         });
 
         return res.json({
-          message: 'Leave started — tasks routed',
+          message: who.other ? who.name + ' is on leave — tasks routed' : 'Leave started — tasks routed',
+          actor_id, state: 'away',
           break_type: 'leave',
           task_action: task_action || null,
           tasks_routed: count

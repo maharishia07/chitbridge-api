@@ -85,6 +85,9 @@ async function mint(entity_id, identity, opts) {
      counter key's jti, and middleware/auth refuses it the moment that counter key is revoked or closed — so nothing a
      counter hands out can outlive the counter. Athi: "yes, screen codes only". */
   if (opts.parent) rec.parent = String(opts.parent);
+  /* PEOPLE-SRV1 (G4): A KEY A PERSON OPENS NAMES THE PERSON. The token is the shop's (identity_type 'entity'), so auth's
+     "is this co-assist still on" check never sees it — switching the person off now ends it (endKeysBy). An owner's key has no `by`. */
+  if (id.parent_entity_id && id.identity_id) rec.by = String(id.identity_id);
   /**
    * ⚠️⚠️ FOR UPDATE, THEN WRITE IN THE SAME TRANSACTION (2026-09-23). mint() used to read the list with listOf(),
    * then save() the WHOLE array back — the exact read-modify-write shape the comment above patchKey() already
@@ -109,6 +112,36 @@ async function mint(entity_id, identity, opts) {
 }
 router.mint = mint;
 router.listOf = listOf;
+
+/**
+ * endKeysBy(db, entity_id, person) → { closed, revoked, jtis } — PEOPLE-SRV1 (G4): every live key the person opened (`by`) ends,
+ * on the caller's transaction client, in ONE locked read and ONE write of api_keys:
+ *   · a counter key is CLOSED as POST /api/counters/:id/release closes it (till.closed_at + released) — kept as history, the
+ *     counter is free, the bills still on that PC keep their numbers and come in by pairing;
+ *   · any other key is dropped from the listing with the screen keys it paired — the DELETE /api/keys/:jti rule.
+ * The caller forgets `jtis` (auth.forgetKey) after its COMMIT. Keys made before `by` was recorded are not touched.
+ */
+async function endKeysBy(db, entity_id, person) {
+  const who = String(person || '');
+  if (!who) return { closed: 0, revoked: 0, jtis: [] };
+  const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
+  const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
+  const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
+  const mine = keys.filter((k) => k && String(k.by || '') === who && !isClosed(k));
+  if (!mine.length) return { closed: 0, revoked: 0, jtis: [] };
+  const now = new Date().toISOString();
+  const tills = new Set(mine.filter((k) => k.till).map((k) => String(k.jti)));
+  const gone = new Set(mine.filter((k) => !k.till).map((k) => String(k.jti)));
+  const jtis = new Set(mine.map((k) => String(k.jti)));
+  const left = keys.filter((k) => {
+    if (!k) return false;
+    if (gone.has(String(k.jti)) || gone.has(String(k.parent || ''))) { jtis.add(String(k.jti)); return false; }
+    return true;
+  }).map((k) => (tills.has(String(k.jti)) ? Object.assign({}, k, { till: Object.assign({}, k.till, { closed_at: now, released: true }) }) : k));
+  await policy.patchKey(db, entity_id, [], { api_keys: left }, { op: 'merge' });
+  return { closed: tills.size, revoked: gone.size, jtis: [...jtis] };
+}
+router.endKeysBy = endKeysBy;
 /**
  * setEnrol(entity_id, jti, patch) → the key's enrolment record after the patch (null if the key is not listed). Clears the auth cache.
  * ⚠️ FOR UPDATE, same reason as mint() — an owner approving a connector while another request touches the same
