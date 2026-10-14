@@ -241,8 +241,15 @@ function machine(c, io) {
     var ch = S.choices[i]; if (!ch) return Promise.resolve(S);
     return askFor(String(ch.id), true);
   }
+  /* SEC1 · a TESTER code (the api's TESTER_CODE: 8+ characters, any kind) is sent as typed — the engine's code() knows only a
+     4-digit PIN and a 6-digit code (chitbridge-engines signin.code; widening it is queued for the engines round). Only on the
+     code step, never for a PIN or the host's local credential; the SERVER decides whether it is good. */
+  function longCode(cred) {
+    var v = String(cred == null ? '' : cred).trim();
+    return S.need === 'code' && !S.local && v.length >= 8 && v.length <= 64 ? { ok: true, value: v, isPin: false } : null;
+  }
   function verify(cred) {
-    var code = E.code(cred);
+    var code = longCode(cred) || E.code(cred);
     if (!code.ok) { set({ why: code.why }); return Promise.resolve(S); }
     if (S.need === 'pin' && !code.isPin) { set({ why: E.pinShape('', W.pinName).why }); return Promise.resolve(S); }
     if (S.need === 'code' && code.isPin) { set({ why: 'A code is six digits.' }); return Promise.resolve(S); }
@@ -375,7 +382,7 @@ function paint(host, m, c) {
     var pin = S.need === 'pin', local = !!S.local;
     /* a LOCAL credential is named for what it is (the counter PIN); its one other way on is the line, offered only when there is one */
     h = '<h2>' + esc(W.title) + '</h2>' + (S.said ? '<p class="cbsi-said" data-testid="signin-said">' + esc(S.said) + '</p>' : '') + why +
-      '<label>' + esc(local ? W.localPin : pin ? W.pin : W.code) + '<input name="cred" data-testid="' + (pin ? 'signin-pin' : 'signin-code') + '" type="' + (pin ? 'password' : 'text') + '" inputmode="numeric" pattern="[0-9]*" maxlength="' + (pin ? 4 : 6) + '" autocomplete="one-time-code" enterkeyhint="go"></label>' +
+      '<label>' + esc(local ? W.localPin : pin ? W.pin : W.code) + '<input name="cred" data-testid="' + (pin ? 'signin-pin' : 'signin-code') + '" type="' + (pin ? 'password' : 'text') + '" inputmode="numeric"' + (pin ? ' pattern="[0-9]*" maxlength="4"' : ' maxlength="64"') + ' autocomplete="one-time-code" enterkeyhint="go"></label>' +
       '<button type="submit" class="cbsi-go" data-testid="signin-verify"' + busy + '>' + esc(S.busy ? W.working : W.verify) + '</button>' +
       '<div class="cbsi-row">' + (pin ? '' : '<button type="button" class="cbsi-ln" data-cbsi="again" data-testid="signin-again">' + esc(W.again) + '</button>') +
       (local && m.online() ? '<button type="button" class="cbsi-ln" data-cbsi="line" data-testid="signin-line">' + esc(W.line) + '</button>' : '') +

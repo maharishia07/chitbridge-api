@@ -1754,6 +1754,30 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
 // Mounted BEFORE /:chit_id so "sent" is never parsed as a chit_id.
 // Advanced-search filters shared by the chit lists: amount range, date range, priority, status bucket.
 // All parameterised (no injection). Used by /inbox, /sent, /folder. (Criteria set can become schema-driven later.)
+/* ── PERF1 · the chit lists' page: a server-side maximum, and keyset paging in the default (newest-first) order ── */
+const PAGE_LIMIT = require('../lib/page-limit');
+const LIST_MAX = 200;   /* the most rows one page of a chit list answers (DISCIPLINES §2 — never the client's word) */
+/**
+ * ?after=<created_at, µs, UTC>|<chit_id> — the `next` the page before answered. Only in the default order (newest first): any other sort keeps
+ * page + OFFSET. → { where } appended to the list's WHERE (params pushed). The cursor carries microseconds (keyCol below), so no row is skipped.
+ */
+function keysetOf(req, params, a) {
+  if ((req.query.sort && req.query.sort !== 'date') || String(req.query.dir || '').toLowerCase() === 'asc') return { where: '' };
+  const m = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z)\|([0-9a-f-]{36})$/i.exec(String(req.query.after || ''));
+  if (!m) return { where: '' };
+  params.push(m[1], m[2]);
+  return { where: ` AND (${a}.created_at::timestamptz, ${a}.chit_id) < ($${params.length - 1}::timestamptz, $${params.length}::uuid)` };
+}
+/** the cursor column a list selects (its last row's becomes `next`), printed in the session's zone — db/index.js pins it to UTC */
+const keyCol = (a) => `to_char(${a}.created_at::timestamptz, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') || '|' || ${a}.chit_id::text AS _after`;
+/** `next` from a page's rows (null on a short page, or in another order) — and the cursor column taken off every row */
+function afterOf(rows, limit, req) {
+  const last = rows[rows.length - 1], keyed = !(req.query.sort && req.query.sort !== 'date') && String(req.query.dir || '').toLowerCase() !== 'asc';
+  const next = keyed && rows.length === limit && last ? last._after || null : null;
+  rows.forEach((r) => { delete r._after; });
+  return next;
+}
+
 function chitFilters(req, where, params){
   /**
    * ⚠️ A FOLDER IS A FILTER ON THIS LIST, NOT A SECOND SCREEN. Athi, 2026-08-10: *"we just pass the parameter as
@@ -1807,9 +1831,9 @@ function chitFilters(req, where, params){
 router.get('/sent', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
-    const page   = parseInt(req.query.page || 1);
-    const limit  = parseInt(req.query.limit || 20);
-    const offset = (page - 1) * limit;
+    /* PERF1: as the Inbox — a server-side maximum, keyset after page 1, the count on page 1 only */
+    const page   = PAGE_LIMIT.pageOf(req.query.page);
+    const limit  = PAGE_LIMIT.limitOf(req.query.limit, 20, LIST_MAX);
     const q_search = (req.query.q || '').trim();
 
     // search across the header data (subject, recipients, purpose). pg_trgm GIN index recommended at scale.
@@ -1825,9 +1849,13 @@ router.get('/sent', auth, async (req, res) => {
          JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction`;
 
     where = chitFilters(req, where, params);
+    const countWhere = where, countParams = params.slice();
+    const ks = keysetOf(req, params, 'ch');
+    if (ks.where) where += ks.where;
+    const offset = ks.where ? 0 : (page - 1) * limit;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result } = await withEntity(entity_id, async (db) => {
-    const countResult = await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${where}`, params);
+    const countResult = page === 1 && !ks.where ? await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${countWhere}`, countParams) : null;
 
     const limIdx = params.length + 1, offIdx = params.length + 2;
     const _cancelCol = await cancelCols();
@@ -1840,17 +1868,19 @@ router.get('/sent', auth, async (req, res) => {
               (SELECT COUNT(*) FROM chit_disputes cd
                 WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
               (SELECT COUNT(*) FROM chit_disputes cd
-                WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count
+                WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count,
+              ${keyCol('ch')}
          ${joinFrom}
         WHERE ${where}
-        ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:"(ch.all_recipients->1->>'display_name')",amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:"CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC
+        ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:"(ch.all_recipients->1->>'display_name')",amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:"CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
       [...params, limit, offset]
     );
     return { countResult, result };
     });
 
-    res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit });
+    const next = afterOf(result.rows, limit, req);
+    res.json({ chits: result.rows, total: countResult ? parseInt(countResult.rows[0].count) : null, page, limit, next });
   } catch (err) {
     console.error('Sent list error:', err.message);
     res.status(500).json({ error: 'Failed to get sent items', message: safeErr(err) });
@@ -2016,9 +2046,9 @@ router.get('/inbox', auth, async (req, res) => {
   try {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
     const entity_id = entityId(req);
-    const page = parseInt(req.query.page || 1);
-    const limit = parseInt(req.query.limit || 20);
-    const offset = (page - 1) * limit;
+    /* PERF1: a server-side maximum (lib/page-limit — `?limit=1000000` was obeyed) · keyset after page 1 (`after`, below) · the COUNT on page 1 only */
+    const page = PAGE_LIMIT.pageOf(req.query.page);
+    const limit = PAGE_LIMIT.limitOf(req.query.limit, 20, LIST_MAX);
     const status_filter = req.query.status || null;
     const q_search = (req.query.q || '').trim();
 
@@ -2080,15 +2110,20 @@ router.get('/inbox', auth, async (req, res) => {
     }
 
     whereClause = chitFilters(req, whereClause, params);
+    /* the count is of the same rows, before the keyset narrows them — and only on the first page (the pager keeps it: app.html pgNext) */
+    const countWhere = whereClause, countParams = params.slice();
+    const ks = keysetOf(req, params, 'ch');
+    if (ks.where) whereClause += ks.where;
+    const offset = ks.where ? 0 : (page - 1) * limit;
     paramCount = params.length;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result } = await withEntity(entity_id, async (db) => {
-    const countResult = await db.query(
+    const countResult = page === 1 && !ks.where ? await db.query(
       `SELECT COUNT(*) FROM chit_status cs
         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
-        WHERE ${whereClause}`,
-      params
-    );
+        WHERE ${countWhere}`,
+      countParams
+    ) : null;
 
     // Get inbox — lightweight — no payload
     const _cancelCol = await cancelCols();   // b195 — see cancelCols(); three list selects, one fragment
@@ -2125,25 +2160,28 @@ router.get('/inbox', auth, async (req, res) => {
          (SELECT i.identity_type FROM state_log sl
           LEFT JOIN identities i ON i.identity_id = sl.action_by_identity_id
           WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
-          ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_type
+          ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_type,
+         ${keyCol('ch')}
        FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id
                           AND ch.entity_id = cs.entity_id
                           AND ch.direction = cs.direction
        WHERE ${whereClause}
-       ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:'ch.sender_entity_display_name',amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:"CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC
+       ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:'ch.sender_entity_display_name',amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:"CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC, ch.chit_id DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
       [...params, limit, offset]
     );
     return { countResult, result };
     });
 
+    const inboxNext = afterOf(result.rows, limit, req);
     res.json({
       chits: result.rows,
       // top-level total/page/limit — mirrors /sent so the web pager treats both lists the same
-      total: parseInt(countResult.rows[0].count),
+      total: countResult ? parseInt(countResult.rows[0].count) : null,   /* PERF1: counted on page 1; later pages say null and the pager keeps page 1's */
       page,
-      limit
+      limit,
+      next: inboxNext   /* PERF1: the ?after= of the next page (newest-first order only; null on the last) */
       /* ⚠️ the `pagination` object said the same three numbers a second time and the envelope dropped it on the
          way in. Two spellings of one fact is how they start disagreeing. */
     });
@@ -3445,6 +3483,9 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
               /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
               `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
               [chit_id, entity_id]);
+        /* ⭐ FX-F10W2: REJECTING A BILL SAYS WHY (lib/workflow needsOf: reject → reason; the chit read answers actions.reject.needs). The
+           reason is the note — it goes on the chit's history. Refused before the write, said; a task keeps its own ask. */
+        if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(hdr.rows[0], entity_id) === 'bill_received') return { stop: 'reason', previous_status };
         // Update chit_status — the caller's OWN received copy (the gate above said yes).
         await verdict.write();
         return { previous_status, openCount, header: hdr, copy };
@@ -3460,6 +3501,9 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       }
       if (_pre.stop === 'noop') {
         return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
+      }
+      if (_pre.stop === 'reason') {
+        return { code: 400, body: { error: 'Reason required', code: 'reason_required', message: 'Say why you are rejecting this bill — the reason goes on the bill.', why: 'reason_required' } };
       }
       if (_pre.stop === 'invalid') {
         return { code: 400, body: {
@@ -3479,8 +3523,10 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
        * able to fail the status change; off it is one cached read. Idempotent on the chit (source_ref chit:<id>), so a
        * second door firing the same acceptance posts nothing twice.
        */
-      if (/^(accepted|in_progress|completed)$/.test(new_status)) {
-        try { const hooks = require('../lib/books-hooks'); setImmediate(() => hooks.afterChit(entity_id, chit_id, action_by_id)); } catch (_) {}
+      /* FX-F10W2: a rejection / cancellation reaches the books too — it never posts, and the bill's Waiting row closes as "Rejected — not posted" */
+      if (/^(accepted|in_progress|completed|rejected|cancelled)$/.test(new_status)) {
+        try { const hooks = require('../lib/books-hooks'); setImmediate(() => hooks.afterChit(entity_id, chit_id, action_by_id)); }
+        catch (e) { require('../lib/logger').warn('books.hook-not-reached', { entity_id, chit_id, status: new_status, error: String((e && e.message) || e), then: 'the nightly sweep posts or closes it' }); }
       }
 
       if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
