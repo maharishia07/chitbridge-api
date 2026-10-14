@@ -543,7 +543,8 @@ async function verify(req, res) {
           // place the entity on the INSTALLATION that serves its vertical (service-desk → the Mexico platform), else default
           /* GOV-SPIN: else THIS installation (INSTALLATION_KEY) — a spin's shops were stamped India's platform-0 */
           let installKey = require('../lib/country-setup').installationKey();
-          try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY created_at LIMIT 1`, [c.constitution_key]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; } catch (_) {}
+          /* …and THIS installation first when it serves the vertical — platform-0 also serves 'base', and created_at alone picked it on every spin */
+          try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY (installation_key = $2) DESC, created_at LIMIT 1`, [c.constitution_key, installKey]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; } catch (_) {}
           await withEntity(identity.identity_id, (cl) => cl.query(
             `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
              ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()`,
