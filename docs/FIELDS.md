@@ -4,6 +4,18 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## /api/actors · /api/people · `pin_state` · `email` · the owner refusal (SEC2, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| GET /api/actors `actors[].pin_state` | `none` · `pending` · `set` | Derived in the list SELECT: `set` = a PIN hash is stored; `pending` = a first code is stored and not expired; else `none`. REPLACES `otp_code` · `otp_expires_at` · `pin_set_at` in that answer (a colleague could read every pending code). Written by nobody. Read by web app.html mapApiActor → cap-workforce.js (the invite chip and the Login card). |
+| GET /api/people `people[].email` | string or null | `identities.email` — the OWNER's answer only; null for anyone else. Written by POST /api/actors (the Add form) and PATCH /api/actors/:id `{ email }` (lowercased; empty clears it). Read by web cap-employees.js (the E-mail panel). |
+| GET /api/people `people[].has_email` | boolean | Derived (`identities.email` is set). Read by the same screen; lib/people.js already used it for the reset-code refusal. |
+| GET /api/people `people[].may.email` | `{ ok, why }` | lib/people.js — open for the owner, the owner-only sentence for anyone else (the same rule as the other four). |
+| 403 of every people write | `{ error, code: 'OWNER_ONLY', may: false, why, message }` | lib/owner.js ownerOnly — POST / · PATCH /:id · DELETE /:id/pin · POST /:id/otp · PUT /:id/status · PUT /settings · PUT /:id/delegate · PUT /:id/tasks/route (and signin.js's owner routes). `why` = `message`. Read by web CBAction (shows `message`). |
+| 409 of POST / · PATCH /:id | `{ error, code: 'EMAIL_TAKEN', message }` | identities_email_key (one e-mail per sign-in across the platform) — the owner's own address on a staff row is the usual case. |
+| write answers `otp` · `login_instruction` (changed) | `otp` only through dev-otp.mayExposeOtp | lib/employee-code.deliver: no longer "whenever not sealed". `login_instruction` never carries a code. `delivery_note` for `none` now says to add an e-mail and send a new code. |
+
 ## GET /api/entities/constitutions · `installation` · `allowed_countries` · `countries` (GOV-SPIN, 2026-10-14)
 
 PUBLIC (pre-auth), the register panel's one read. Additive beside `constitutions`. Written by: nobody (derived) — the installation row by migration / `deploy/spin-lib.sh` (CB_SPIN_COUNTRY) / `scripts/seed-local-installations.sql` (local only). Read by: web `app/register-form.js` (the gov panel).
