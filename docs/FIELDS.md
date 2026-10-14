@@ -50,6 +50,24 @@ Derived per call, never stored. Written by routes/tax.js (compute) and lib/home-
 | `code` (400/422/500) | `NO_LINES` · `BAD_QTY` · `BAD_PRICE` · `BAD_RATE` · `NO_PRICE` · `BAD_FLAG` · `NO_COUNTRY` · `ITEM_NOT_FOUND` · `TAX_FAILED` (+ knownerr's) | A caller branches on `code`; `message` is for a person; `line` names the refused line's key. |
 | facts `tax-lab` → `figures.products` · `figures.no_slab` | numbers | Derived: active catalogue items, and those whose slab resolves to `none` (tax-lines.resolveItem → tax-slab.resolve). Omitted (`unavailable`) for a GST shop with no GSTIN. |
 
+## GET /api/chits/disputes/queue (widened) · GET /api/chits/:chit_id/disputes · GET /api/assist/whoami (T3-DISPUTES-ASSIST, 2026-10-14)
+
+All derived per read, never stored. Read by: web tasks.html › Disputes and CB Assist (app/cap-dispute.js CBDispute, app/cap-assist.js) and the chit sheet's dispute section.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| queue `rows` · `total` · `page` · `limit` | list · int · int · int | The page asked by `?status=open\|resolved\|all&side=mine\|against&q=&sort=old\|new&page=&limit=` (lib/page-limit: 50, max 200). No page/limit = every matching row (the old answer); `disputes` · `my_disputes` · `other_disputes` · `total_open` keep their meaning (`total_open` = the open count). |
+| queue `counts` | `{ open, resolved }` | My dispute copies by status (RLS = my copies). The tab counts; never the page's length. |
+| queue `code` | `DISPUTES_NOT_SET_UP` | Only when the chit_disputes table is missing — the screen says so in words. |
+| `rows[]` / `disputes[]` `.mine` | bool | `raised_by_entity_id` = me. |
+| `rows[]` / `disputes[]` `.others` | `[{ entity_id, display_name, role, dispute_status }]` | The roster minus me ("with whom") — decided by the server, not by the page. |
+| `rows[]` / `disputes[]` `.actions.resolve` | `{ ok }` \| `{ ok:false, why, say }` | lib/dispute-may.resolve: the rail's `dispute` level/held verdict, then `already_resolved`, then `not_raiser` — the same verdict PUT …/resolve refuses with (its 400/403 now carry `why`). |
+| chit disputes `actions.raise` | `{ ok }` \| `{ ok:false, why, say }` | lib/dispute-may.raise = rail.can(`dispute`). |
+| chit disputes `raise_parties` | `[{ entity_id, display_name, role }]` | The chit's `all_recipients` (my header copy) minus me, once each — who a new dispute may name (`participant_entity_ids`). |
+| GET /api/facts/disputes `lines` · `figures` | `{ open, mine, against }` | lib/home-facts `disputes`: one count of my open dispute copies (RLS). Read by Home's Disputes card (manifest `disputes`). |
+| GET /api/facts/assist `lines` · `figures` | `{ answers }` | lib/home-facts `assist`: active rows of assist_qa (the platform's library). Read by Home's CB Assist card (manifest `coassist`). |
+| whoami `actions.publish` | `{ ok }` \| `{ ok:false, why: 'not_helpdesk'\|'not_read', say }` | The same entity_schemas test POST /assist/publish refuses with (its 403 now carries `why: 'not_helpdesk'`). |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

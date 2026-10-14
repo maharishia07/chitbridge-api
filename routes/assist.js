@@ -503,6 +503,8 @@ router.post('/gap', async (req, res) => {
   }
 });
 
+/** the one sentence for "you may not publish" — POST /publish's 403 and GET /whoami's actions.publish say the same */
+const PUBLISH_NO = 'Only a help desk can publish to its catalogue.';
 // POST /api/assist/publish — the help desk publishes a resolved Q&A to ITS catalogue => the projection trigger
 // serves it live. Auth; the caller MUST be the Help entity itself (only it edits its own knowledge base).
 router.post('/publish', auth, async (req, res) => {
@@ -518,7 +520,7 @@ router.post('/publish', auth, async (req, res) => {
     const sender = auth.entityOf(req);
     const hd = await query(
       `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [sender]);
-    if (!hd.rows.length) return res.status(403).json({ ok: false, error: 'Only a help desk can publish to its catalogue.' });
+    if (!hd.rows.length) return res.status(403).json({ ok: false, error: PUBLISH_NO, why: 'not_helpdesk' });
     const helpId = sender;
 
     // Refine an existing answer when qa_id is supplied and found; else publish new.
@@ -566,8 +568,13 @@ router.get('/whoami', auth, async (req, res) => {
     const entity = auth.entityOf(req);
     const r = await query(
       `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [entity]);
-    res.json({ ok: true, is_helpdesk: r.rows.length > 0 });
-  } catch (_) { res.json({ ok: true, is_helpdesk: false }); }
+    const hd = r.rows.length > 0;
+    /* T3-DISPUTES-ASSIST: may I publish an answer — the SAME test POST /publish refuses with (403 below), as a code the CB Assist screen greys on */
+    res.json({ ok: true, is_helpdesk: hd, actions: { publish: hd ? { ok: true } : { ok: false, why: 'not_helpdesk', say: PUBLISH_NO } } });
+  } catch (err) {
+    log.warn('assist/whoami could not read the help-desk schema — answered as not a help desk', { id: req.id, err: err.message });
+    res.json({ ok: true, is_helpdesk: false, actions: { publish: { ok: false, why: 'not_read', say: 'Could not check who may publish. Try again.' } } });
+  }
 });
 
 module.exports = router;
