@@ -75,3 +75,7 @@ Voucher series by type from 2026-10-03 (engines v1.16.0; DECISIONS "Voucher numb
 reversal, typed write-off) takes the single series MJ. Counters are `books_counter (entity, series, fiscal year)`, taken inside the entry's own transaction. Entries issued
 before this date keep their `JV/` numbers; nothing is renumbered. The voucher type column (`journal_entry.voucher_type`) is the DRAFT migration b279, not yet run — until then the
 type is derived from the series (`lib/books.js voucherTypeOfEntry`).
+
+---
+
+**Proprietary.** © 2026 ChitBridge. All rights reserved — published for review only, not open source. See [LICENSE](LICENSE).
