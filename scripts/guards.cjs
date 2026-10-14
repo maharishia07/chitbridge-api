@@ -41,6 +41,8 @@ const GUARDS = [
   'identity-country.test.cjs',  // ⭐⭐ GOV-AU1 (b376): every INSERT INTO identities names its country; no reader answers India for NULL
   'migration-numbers.test.cjs', // ⭐⭐ one number, one migration — two parallel rounds both wrote b299 (12 Oct); a clash fails here
   'co2-controls.test.cjs',      // ⭐ CO2: a critical line reaches CB_ALERT_WEBHOOK; state_log append-only (b315) — the Standards register's evidence
+  'privacy.test.cjs',          // ⭐⭐ CO1 + MKT-SRV1: consent rows append-only; every verdict has a code; an out call / offer / WhatsApp without consent refused with it
+  'consent-senders.test.cjs',   // ⭐⭐ CO1-GATE: every provider send in lib/ routes/ asks lib/privacy.gate, or is EXEMPT with its reason
   'engines-pinned.test.js',    // ⭐⭐⭐ every adopted engine is EXACTLY its chitbridge-engines release — no hand edit survives
   'money-round.test.js',       // one rounder (0 wrong in 1.74 M cases, per-currency decimals) and one price reader
   'google-availability.test.cjs', // one output shape: status → Google Merchant availability; nothing Google does not define (M53)
