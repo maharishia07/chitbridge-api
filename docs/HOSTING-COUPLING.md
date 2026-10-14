@@ -108,7 +108,7 @@ then fails verification and falls to the pooler. For "TLS, don't verify" use `?s
 | CRM follow-up sweep | `lib/crm-followups.js:224-227`, started `server.js:481` | `CRM_SWEEP=0` off | every 6 h (+12 min) | 🟡 same | same |
 | Retention sweep | `lib/retention.js:13-17` | `RETENTION_*` | **no scheduler** — called only from scripts/tests | neutral (unrun) | — |
 | Uptime probe | `.github/workflows/uptime.yml:32`, `:41`, `:49` | code | hourly cron | 🔴 hard-coded `chitbridge-api-production.up.railway.app` | a repo variable `API_URL` |
-| Backup | `.github/workflows/backup-restore.yml:9-57` | secret `BACKUP_DATABASE_URL` | — | neutral (`pg_dump` of `public`) | — |
+| Backup | `deploy/backup.sh` (the one path) · nightly in PRIVATE `chitbridge-engines` `.github/workflows/backup-nightly.yml` · dry run here in `backup-restore.yml` | secrets `BACKUP_DATABASE_URL` + `BACKUP_PASSPHRASE` (engines repo only) | 20:30 UTC | neutral (`pg_dump` of `public`, aes-256 encrypted, 14 d GitHub artifact) | — |
 | pg_cron | `migrations/purge_test_entities_ROUTINE.sql:18` (comment only) | — | — | neutral | — |
 
 ## Network / TLS / proxy / CORS
@@ -236,7 +236,7 @@ platform is only the wiring below — that wiring is the tech debt we carry, one
 | TLS + DNS | ✅ `*.awsapprunner.com`; custom domain not scripted | ✅ `*.azurecontainerapps.io`; custom domain + managed cert not scripted | ✅ `*.run.app`; domain mapping / LB not scripted | ✅ Railway's generated https domain; custom domain not scripted |
 | Scheduler (books nightly, CRM sweep) | 🟡 in-process timers (`server.js:479-481`): run per instance — keep the api at ONE instance, or move them to EventBridge Scheduler → an endpoint (debt, unchanged from HX0) | 🟡 same (Container Apps jobs would be native) | 🟡 same (Cloud Scheduler) | 🟡 same (Railway cron services) |
 | Logs (CERT-In: 180 days, in India) | 🟡 App Runner → CloudWatch Logs in ap-south-1; default retention = never expire — set 180 d | 🟡 Log Analytics in centralindia; default retention 30 d — raise to 180 | 🟡 Cloud Logging, `_Default` bucket = 30 d and global — a regional asia-south1 bucket with 180 d is needed | 🔴 Railway's log window is short and not in India — ship logs out (debt) |
-| Backups (Companies Act: daily, in India) | ✅ RDS automated backups in-region (the TEST spin turns them off) | ✅ Flexible Server backups in-region (7 d on the spin) | ✅ Cloud SQL backups (the TEST spin turns them off) | 🔴 not in India — `backup-restore.yml` `pg_dump` to an India bucket |
+| Backups (Companies Act: daily, in India) | ✅ RDS automated backups in-region (the TEST spin turns them off) | ✅ Flexible Server backups in-region (7 d on the spin) | ✅ Cloud SQL backups (the TEST spin turns them off) | 🔴 not in India — the encrypted nightly (`deploy/backup.sh`) sits in GitHub storage; an India bucket is still open |
 | Secrets | 🟡 plain env on App Runner (Secrets Manager refs are native) | 🟡 plain env (`secretref:` is native) | 🟡 plain env (Secret Manager is native) | ✅ variables are Railway's secret store |
 | Mail (sign-in codes) | ✅ Resend over `RESEND_API_KEY` everywhere; the test spin points `RESEND_BASE_URL` at its token-guarded sink | ✅ same | ✅ same | ✅ same |
 | Teardown handle | tag `cb-spin=<id>` (Tagging API) + IAM tags | the resource group (tagged) | labels + the service account's display name | the project's name |

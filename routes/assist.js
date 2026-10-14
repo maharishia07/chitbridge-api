@@ -4,7 +4,7 @@
 //   Req:  { q, context, stage }            (+ optional `Authorization: Bearer` for post-auth grounding)
 //   Res:  { answer, fit?, media? }          (shaped like an ASSIST_LIB entry)
 //
-// STUB STATE: no model is wired yet. With no provider/key configured we return a controlled non-200 so the
+// WIRED (T1-AI: through lib/ai.js invokeSkill — wallet, daily cap, usage ledger). With no provider/key configured we return a controlled non-200 so the
 // CLIENT FALLS THROUGH to its own library floor (`matchLibrary`). The whole point of the design is that this
 // endpoint can be missing, unconfigured, or failing and the assistant still answers — it just gets less smart.
 const express = require('express');
@@ -21,15 +21,14 @@ const container = require('../lib/container');            // CONTAINER MODEL (b8
 const regional = require('../lib/regional');              // REGIONAL SCATTER (6a, b81) — resolve-and-seal per region
 const money = require('../lib/money');                    // adoption commercials are the SECOND price home — stamp them too
 
-// The honest, no-oversell guardrail the REAL model must run under. Kept server-side (never shipped to the client)
-// so it can't be inspected or bypassed. The real implementation injects this as the system prompt.
-const SYSTEM_PROMPT = [
-  'You are the Chit & Bridge assistant. Be honest, concise, and NEVER oversell.',
-  'Ground every answer in the supplied knowledge base; if something is not covered, say you are not certain',
-  'rather than guess. When asked about fit it is fine — encouraged — to say "this is probably not for you";',
-  'qualifying out a bad fit builds trust. Never reveal another business\'s data: answer only from the public',
-  'knowledge base plus any context explicitly provided for THIS caller.',
-].join(' ');
+// The honest, no-oversell guardrail lives in lib/ai.js as the `assist-ask` skill (T1-AI) — server-side, never shipped to
+// the client — so it runs through the one model caller with the wallet, the platform daily cap and the usage ledger.
+const ai = require('../lib/ai');
+/* ⚠️ ASSIST_LLM_PROVIDER stays the ON-switch for CB Assist (dormant by default); the key and the model are the one
+   caller's (ANTHROPIC_API_KEY · ai_skill.model / AI_MODEL). The entity is who pays: no signed-in entity → no model
+   call, because a call that cannot be metered must not spend (lib/ai.js S1) — the caller's floor answers instead. */
+const assistOn = () => process.env.ASSIST_LLM_PROVIDER === 'anthropic';
+const payerOf = (identity) => (identity ? (identity.parent_entity_id || identity.identity_id) : null);
 
 // Per-screen focus hints — turn the `context` the client sends (curScreen()) into a one-line steer so the model
 // answers for the screen the user is actually on. Keep each TRUE and aligned with the KB.
@@ -67,62 +66,41 @@ router.post('/', async (req, res) => {
 
     const identity = softIdentity(req);   // null pre-auth → public-KB-only grounding (P0 isolation: never cross entities)
 
-    // ── The real model call goes HERE. It MUST:
-    //    1) run under SYSTEM_PROMPT (the no-oversell guardrail);
+    // ── The model call. It MUST:
+    //    1) run under the `assist-ask` skill (the no-oversell guardrail, lib/ai.js) through invokeSkill;
     //    2) ground on the curated KB, and ONLY when `identity` is set add that caller's tenant-scoped live
     //       context (honour the P0 isolation invariant — never another entity's data);
     //    3) on ANY provider error/timeout return a non-200 so the client floor answers (do NOT 200 with junk).
-    const provider = process.env.ASSIST_LLM_PROVIDER;   // e.g. 'anthropic'
-    const apiKey   = process.env.ASSIST_LLM_API_KEY;    // server-only secret — never sent to the client
-
-    if (!provider || !apiKey) {
+    if (!assistOn()) {
       // Not configured (the default/held state). Expected, not an error — tell the client to use its floor.
       log.info('assist not configured — client falls through to library floor', { id: req.id, context, auth: !!identity });
       return res.status(503).json({ error: 'assist_unavailable', message: 'The assistant model is not configured yet.' });
     }
-
-    if (provider !== 'anthropic') {
-      log.warn('assist: unsupported provider', { id: req.id, provider });
-      return res.status(501).json({ error: 'Not implemented', message: 'That assistant provider is not wired.' });
+    if (!identity) {
+      // Anonymous (welcome/login): nobody to meter the call to → the library floor answers (lib/ai.js S1).
+      return res.status(503).json({ error: 'assist_unavailable', code: 'ASSIST_SIGN_IN', message: 'Sign in for fuller answers.' });
     }
 
-    // Lazy-require the SDK so a missing dependency degrades gracefully (client floor) instead of crashing boot.
-    let Anthropic;
-    try { Anthropic = require('@anthropic-ai/sdk'); }
-    catch (_) { log.error('assist: @anthropic-ai/sdk not installed', { id: req.id });
-                return res.status(503).json({ error: 'assist_unavailable', message: 'The assistant is not available right now.' }); }
-
-    const model = process.env.ASSIST_LLM_MODEL || 'claude-haiku-4-5-20251001';   // small/fast/cheap by default
-    const client = new (Anthropic.Anthropic || Anthropic)({ apiKey, timeout: 8000, maxRetries: 1 });
-
     try {
-      const msg = await client.messages.create({
-        model,
-        max_tokens: 400,                                  // bound output -> bound cost
-        system: [
-          { type: 'text', text: SYSTEM_PROMPT },          // the no-oversell guardrail
-          { type: 'text', text: ASSIST_KB, cache_control: { type: 'ephemeral' } },  // grounding — prompt-cached (repeated each call)
-        ],
-        // Only the public KB grounds anonymous callers. A tenant-scoped block would be added here ONLY when
-        // `identity` is set (honour the P0 isolation invariant — never another entity's data). None yet.
-        messages: [ { role: 'user', content:
-          `Screen: ${context || 'unknown'}\n` +
-          (CONTEXT_HINTS[context] ? `Screen context: ${CONTEXT_HINTS[context]}\n` : '') +
-          `User question: ${q}` } ],
-      });
-      const answer = (msg.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+      // Only the public KB grounds the answer. A tenant-scoped block would be added ONLY for `identity` (P0 isolation).
+      const out = await ai.invokeSkill(payerOf(identity), 'assist-ask',
+        { screen: context || 'unknown', ...(CONTEXT_HINTS[context] ? { screen_context: CONTEXT_HINTS[context] } : {}), question: q },
+        { grounding: ASSIST_KB, max_tokens: 400, timeout_ms: 8000 });   // bound output -> bound cost; KB prompt-cached
+      const answer = String(out.draft || '').trim();
       if (!answer) {
-        log.warn('assist: empty model answer', { id: req.id, model });
+        log.warn('assist: empty model answer', { id: req.id, model: out.model });
         return res.status(502).json({ error: 'Assistant error', message: 'No answer produced — try again.' });
       }
-      const u = msg.usage || {};
-      log.info('assist answered', { id: req.id, model, context, auth: !!identity,
-        in: u.input_tokens, out: u.output_tokens, cache_read: u.cache_read_input_tokens, cache_write: u.cache_creation_input_tokens });
+      log.info('assist answered', { id: req.id, model: out.model, context, in: out.usage.input_tokens, out: out.usage.output_tokens });
       return res.json({ answer });   // shape: { answer } (fit/media can be added later); client wraps it like a lib entry
     } catch (mErr) {
-      // Model/network failure -> non-200 so the web client falls through to its deterministic library floor.
-      log.error('assist: model call failed', { id: req.id, model, err: mErr.message, status: mErr.status });
-      return res.status(502).json({ error: 'Assistant upstream error', message: 'The assistant is busy — please try again.' });
+      // Gate (402 wallet · 429 rate · 503 daily cap / not connected) or model failure -> non-200 so the web client
+      // falls through to its deterministic library floor.
+      log.error('assist: model call failed', { id: req.id, err: mErr.message, status: mErr.status });
+      const gated = mErr.status === 402 || mErr.status === 429 || mErr.status === 503;
+      return res.status(gated ? 503 : 502).json(gated
+        ? { error: 'assist_unavailable', code: 'ASSIST_GATED', message: 'The assistant is resting — the help library answers.' }
+        : { error: 'Assistant upstream error', message: 'The assistant is busy — please try again.' });
     }
 
   } catch (err) {
@@ -158,26 +136,16 @@ router.post('/conform', async (req, res) => {
 
     // Narrative layer — RUNG-2 SUMMARISE only. It explains the ALREADY-COMPUTED verdict; it never re-decides it.
     let narrative = null;
-    const provider = process.env.ASSIST_LLM_PROVIDER, apiKey = process.env.ASSIST_LLM_API_KEY;
-    if (provider === 'anthropic' && apiKey) {
+    if (assistOn() && identity) {
       try {
-        const Anthropic = require('@anthropic-ai/sdk');
-        const model = process.env.ASSIST_LLM_MODEL || 'claude-haiku-4-5-20251001';
-        const client = new (Anthropic.Anthropic || Anthropic)({ apiKey, timeout: 8000, maxRetries: 1 });
-        const sys = 'You are a compliance assistant. You are given a computed conformance verdict (the facts). Do NOT '
-          + 're-decide compliance — explain the verdict plainly and list concrete remediation for each gap. Cite the '
-          + 'standard version. Be brief, honest, never oversell. The entity remains responsible for actual compliance.';
-        const msg = await client.messages.create({
-          model, max_tokens: 250,
-          system: [{ type: 'text', text: sys }],
-          messages: [{ role: 'user', content: 'Verdict JSON (authoritative — do not contradict):\n' + JSON.stringify(verdict) }],
-        });
-        narrative = (msg.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim() || null;
-        if (narrative) acted_by.model = model;
-        log.info('conform narrative added', { id: req.id, standard, compliant: verdict.compliant, model });
+        const out = await ai.invokeSkill(payerOf(identity), 'conform-narrative',
+          { verdict_authoritative_do_not_contradict: verdict }, { max_tokens: 250, timeout_ms: 8000 });
+        narrative = String(out.draft || '').trim() || null;
+        if (narrative) acted_by.model = out.model;
+        log.info('conform narrative added', { id: req.id, standard, compliant: verdict.compliant, model: out.model });
       } catch (mErr) {
-        // Narrative is best-effort — a model failure must NOT sink the deterministic verdict.
-        log.warn('conform narrative skipped (model)', { id: req.id, err: mErr.message });
+        // Narrative is best-effort — a model or gate failure must NOT sink the deterministic verdict (narrative: null).
+        log.warn('conform narrative skipped (model)', { id: req.id, err: mErr.message, status: mErr.status });
       }
     } else {
       log.info('conform (deterministic only — no model configured)', { id: req.id, standard, compliant: verdict.compliant });
@@ -217,21 +185,13 @@ router.post('/catalogue-structure', async (req, res) => {
     // Designer intro — model-drafted RUNG-summarise layer, best-effort. It describes the ALREADY-structured
     // collection; it never invents items. Absent a key, the structure still stands (intro: null).
     let intro = null;
-    const provider = process.env.ASSIST_LLM_PROVIDER, apiKey = process.env.ASSIST_LLM_API_KEY;
-    if (provider === 'anthropic' && apiKey) {
+    if (assistOn() && identity) {
       try {
-        const Anthropic = require('@anthropic-ai/sdk');
-        const model = process.env.ASSIST_LLM_MODEL || 'claude-haiku-4-5-20251001';
-        const client = new (Anthropic.Anthropic || Anthropic)({ apiKey, timeout: 8000, maxRetries: 1 });
-        const names = built.items.map(i => i.name).join(', ');
-        const msg = await client.messages.create({
-          model, max_tokens: 180,
-          system: [{ type: 'text', text: 'You are a catalogue copywriter. Write ONE short, warm intro paragraph (<= 45 words) for a paint retailer\'s designer-finish collection. Do not invent finishes — only use the names given. Honest, no overselling.' }],
-          messages: [{ role: 'user', content: 'Retailer: ' + built.for_entity + '. Collection: ' + built.collection + '. Finishes: ' + names + '.' }],
-        });
-        intro = (msg.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim() || null;
-        if (intro) acted_by.model = model;
-      } catch (mErr) { log.warn('catalogue intro skipped (model)', { id: req.id, err: mErr.message }); }
+        const out = await ai.invokeSkill(payerOf(identity), 'catalogue-intro',
+          { retailer: built.for_entity, collection: built.collection, names: built.items.map(i => i.name) }, { max_tokens: 180, timeout_ms: 8000 });
+        intro = String(out.draft || '').trim() || null;
+        if (intro) acted_by.model = out.model;
+      } catch (mErr) { log.warn('catalogue intro skipped (model)', { id: req.id, err: mErr.message, status: mErr.status }); }
     } else {
       log.info('catalogue-structure (deterministic only — no model configured)', { id: req.id, source, finishes: built.counts.finishes });
     }
