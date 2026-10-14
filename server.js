@@ -46,6 +46,7 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
     log.warn('fixed test OTPs active', { reason: 'DEV_OTP is set — entity/customer/connector OTPs are FIXED and are '
       + 'echoed in API responses. Dev/test ONLY. To seal: see the checklist at the top of lib/dev-otp.js.' });
   }
+  devOtp.testerNotices().forEach((n) => log[n.level](n.msg, { reason: n.reason }));   // SEC1b: TEMPORARY tester code — never its value
 }
 
 // Trust Railway's proxy

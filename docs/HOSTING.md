@@ -138,7 +138,8 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `RAILWAY_GIT_COMMIT_SHA` | optional | set by Railway | no | Commit on `/health`; wins over `SOURCE_COMMIT`. |
 | `RAILWAY_REPLICA_REGION` / `RAILWAY_REGION` | optional | set by Railway | no | Region on `/health`; no neutral equivalent. |
 | **Testers on a deployed api (SEC1)** | | | | |
-| `TESTER_CODE` | optional | `<8+ characters, Athi's secret>` | **yes** | The one sign-in code testers use with ANY sign-in name, on as many shops as they like. Checked on verify only (never issued, e-mailed, logged or echoed; timing-safe). Unset or shorter than 8 → no tester code works. Works in a sealed env too. |
+| `TESTER_CODE` | optional | `<8+ characters, Athi's secret>` | **yes** | The one sign-in code testers use with ANY sign-in name, on as many shops as they like. Checked on verify only (never issued, e-mailed, logged or echoed; timing-safe). Unset or shorter than 8 → no tester code works. Works in a sealed env too. May carry ONE `{yymmdd}` / `{yyyymmdd}` (a daily code, SEC1b). ⚠️ TEMPORARY — remove before real users (boot warns while set). |
+| `TESTER_CODE_TZ` | optional | `Australia/Sydney` | no | SEC1b, TEMPORARY: the zone whose day fills `{yymmdd}` / `{yyyymmdd}` in `TESTER_CODE` (default `Asia/Kolkata`). Remove with `TESTER_CODE` before real users. |
 | `TESTER_NAMES` | optional | `*@test.chitbridge,anil-tester` | no | Comma list of exact sign-in names or `*` patterns; set → the tester code works only for those names; unset → any name. |
 | **Local stack only — refused anywhere else** | | | | |
 | `DEV_OTP` | local stack only | `1` | no | Arms the fixed entity / customer / connector codes (values: lib/dev-otp.js LOCAL STACK block, docs/SIM-LOAD.md). They work ONLY when DATABASE_URL's host is 127.0.0.1 / localhost / ::1 AND `NODE_ENV=development`; a sealed env refuses to boot with it. |
@@ -253,7 +254,20 @@ CI: `.github/workflows/spin-test.yml` (manual only) — `docs/patches/HX2-spin-t
 Set `TESTER_CODE` (and optionally `TESTER_NAMES`) in Railway → Variables; share the code with testers privately (never in a chat
 that is logged, a ticket or the repo); change it any time — no deploy, the api reads it on every sign-in. Testers keep today's ease:
 any sign-in name, one remembered code, as many shops as they like. Choose 8+ DIGITS: phones open the number pad on the code box
-(letters work on a keyboard). The fixed local codes no longer work on Railway. The answer and
-the logs never say whether a tester code exists; guessing is capped by the sign-in rate limiter (30 tries / 15 min per IP,
+(letters work on a keyboard). The fixed local codes no longer work on Railway. A sign-in answer never
+says whether a tester code exists (the boot log says one is active — the TEMPORARY warning below — never its value); guessing is capped by the sign-in rate limiter (30 tries / 15 min per IP,
 `AUTH_RATE_LIMIT_MAX`) and by 5 wrong codes per account (`MAX_OTP_ATTEMPTS`). The cloud e2e reads it from the GitHub secret
 `E2E_TESTER_CODE` (web repo) and skips with a warning while that is unset.
+
+**A code that changes by itself every day (SEC1b — TEMPORARY, testing phase only).** Put ONE date placeholder in the code:
+`{yymmdd}` (261014) or `{yyyymmdd}` (20261014), e.g. `TESTER_CODE=<your word>{yymmdd}`. The api fills it with TODAY in India
+(`TESTER_CODE_TZ` — an IANA zone like `Australia/Sydney` — overrides), and also takes yesterday's code until 06:00, so a tester who
+signed in near midnight is not locked out. Testers work out the day's code themselves — nobody needs to log in to e-mail. Put the
+SAME template in `E2E_TESTER_CODE`; the cloud e2e fills it the same way. The code after filling must be 8+ characters, else no tester
+code works and the boot log says why. ⚠️ Weaker than a random code: anyone who learns the fixed part knows every future day's code —
+keep the fixed part private and change it if it leaks. Every boot logs at WARN *"TEMPORARY: a tester sign-in code is active (testing
+phase). Remove TESTER_CODE before real users."*
+
+### Before real users — REMOVE
+- [ ] Railway → Variables → DELETE `TESTER_CODE`, `TESTER_NAMES`, `TESTER_CODE_TZ`; web repo → Secrets → DELETE `E2E_TESTER_CODE`.
+- [ ] Boot log shows no "TEMPORARY: a tester sign-in code is active" line. (The cutover checklist at the top of lib/dev-otp.js, item 4.)
