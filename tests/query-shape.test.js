@@ -84,7 +84,7 @@ const BUDGET = {
   'routes/testing.js': 3,
   /* 9 → 11 (2026-09-27): cancel-requested and withdraw (b195/b197, 2026-09-02) write each PARTY's own copy, each
      under that party's RLS context — "a write per recipient", which this file's rule allows by name. */
-  'routes/chits.js': 11,
+  'routes/chits.js': 10,   /* T2-SPLIT (2026-10-14): 12 → 10 — the recipient lookup is its own step (sendLookupRecipient), one call per recipient */
   /**
    * ⭐ PER-TENANT, BY CONSTRUCTION (2026-09-27, each read before it was budgeted). Each loop is over ENTITIES, and each
    * entity's rows sit behind FORCE RLS keyed on the context withEntity() sets — one statement cannot read or write

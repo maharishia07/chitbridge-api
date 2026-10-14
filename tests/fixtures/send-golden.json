@@ -10434,10 +10434,13 @@
   ]
  },
  "a lost race on the bill number → the chit that exists": {
-  "status": 500,
+  "status": 200,
   "body": {
-   "error": "Send failed",
-   "message": "Something went wrong — please try again."
+   "ok": true,
+   "chit_id": "OP",
+   "duplicate": true,
+   "client_ref": "C1/26-27/0050",
+   "raced": true
   },
   "calls": [
    {
@@ -10754,6 +10757,14 @@
       "is_draft": false
      }
     }
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
+    "params": [
+     "SHOP",
+     "C1/26-27/0050"
+    ]
    }
   ]
  },

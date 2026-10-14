@@ -109,6 +109,7 @@ function harness(opts) {
 /** --write freezes the recordings; otherwise every scenario must equal its frozen twin. Returns the failures. */
 function compare(recordings, fixture) {
   const write = process.argv.includes('--write');
+  if (process.env.GOLDEN_DUMP) fs.writeFileSync(process.env.GOLDEN_DUMP, JSON.stringify(recordings, null, 1));   /* to diff a failure by hand */
   if (write) {
     fs.writeFileSync(fixture, JSON.stringify(recordings, null, 1) + '\n');
     console.log('   wrote ' + path.relative(API, fixture) + ' (' + Object.keys(recordings).length + ' scenarios)');
