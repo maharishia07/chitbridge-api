@@ -79,9 +79,9 @@ for (const c of cases) {
 eq('the shop day of 12 Oct in India is 18:30Z to 18:30Z', H.dayBounds('2026-10-12', 'IN'), { from: '2026-10-11T18:30:00.000Z', to: '2026-10-12T18:30:00.000Z' });
 
 /* ── the zone a caller hands over: a setting row, an identity row, a country, an IANA name, nothing ── */
-eq('the setting row carries the zone (identities.timezone); its country is the fallback', [H.zoneOf({ timezone: 'Australia/Sydney', country: 'AU' }), H.zoneOf({ timezone: null, country: 'AE' }), H.zoneOf({})], ['Australia/Sydney', 'Asia/Dubai', 'Asia/Kolkata']);
-eq('a country code is its single zone, as b176 guessed it; nothing is India', [H.zoneOf('IN'), H.zoneOf('ae'), H.zoneOf(undefined), H.zoneOf('UTC')], ['Asia/Kolkata', 'Asia/Dubai', 'Asia/Kolkata', 'UTC']);
-eq('an unknown zone name does not throw — it falls back to India', H.dayOf('2026-10-11T18:35:00Z', 'Mars/Olympus'), '2026-10-12');
+eq('the setting row carries the zone (identities.timezone); its country is the fallback', [H.zoneOf({ timezone: 'Australia/Sydney', country: 'AU' }), H.zoneOf({ timezone: null, country: 'AE' }), H.zoneOf({})], ['Australia/Sydney', 'Asia/Dubai', 'UTC']);
+eq('a country code is its single zone, as b176 guessed it; nothing is UTC, never India (T2-NATDEF)', [H.zoneOf('IN'), H.zoneOf('ae'), H.zoneOf(undefined), H.zoneOf('UTC'), H.zoneOf('ZZ')], ['Asia/Kolkata', 'Asia/Dubai', 'UTC', 'UTC', 'UTC']);
+eq('an unknown zone name does not throw — it falls back to UTC, no country\'s clock (T2-NATDEF)', H.dayOf('2026-10-11T18:35:00Z', 'Mars/Olympus'), '2026-10-11');
 eq('the old callers still read: dayOf(moment, country), a Date or a string, a bare day, nothing', [H.dayOf(new Date('2026-09-28T20:00:00Z'), 'IN'), H.dayOf('2026-09-28T20:00:00Z', 'IN'), H.dayOf('2026-09-28T17:00:00.500Z', 'IN'), H.dayOf('2026-04-01', 'IN'), H.dayOf(null, 'IN'), H.dayOf('nope', 'IN')], ['2026-09-29', '2026-09-29', '2026-09-28', '2026-04-01', null, null]);
 eq('Dubai is +04:00, not India\'s +05:30', [H.dayOf('2026-10-11T19:30:00Z', 'AE'), H.dayOf('2026-10-11T20:30:00Z', 'AE')], ['2026-10-11', '2026-10-12']);
 

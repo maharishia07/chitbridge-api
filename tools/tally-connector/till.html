@@ -4043,14 +4043,17 @@ var WHO = null;   /* { id, name } — who is standing at this counter, kept on t
  * ⚠️ IT INCLUDES THE SYMBOL. The 55 places that used to write '' + money(x) now just write money(x).
  * ⚠️ The fallback is the old behaviour, not a crash: a counter whose locale engine failed to load must still bill.
  */
+/* ⭐ T2-NATDEF: THE ONE READER OF THE SHOP'S MONEY on this page — the snapshot's stated currency, or null. Never INR by name: a shop nobody
+   gave money is shown the amount alone, and the server's sentence (shop.money_why, NO_MONEY) says what to do. */
+function shopCur(){ return (typeof S !== 'undefined' && S && S.shop && S.shop.currency) || null; }
 function curSym(){
-  var cur = (typeof S !== 'undefined' && S && S.shop && S.shop.currency) || 'INR';
+  var cur = shopCur(); if (!cur) return '';
   if (window.CBLocale && CBLocale.symbol) { try { return CBLocale.symbol(cur) || cur; } catch (_) {} }
   return cur;
 }
 var money = function(n){
-  var cur = (typeof S !== 'undefined' && S && S.shop && S.shop.currency) || 'INR';
-  if (window.CBLocale && CBLocale.money) { try { return CBLocale.money(n, cur); } catch (_) {} }
+  var cur = shopCur();
+  if (cur && window.CBLocale && CBLocale.money) { try { return CBLocale.money(n, cur); } catch (_) {} }
   return r2(n).toFixed(2);
 };
 /* ⭐ CS2 (2026-10-13): a COUNT ("1,234 products") reads in the shop's own locale through the same engine — CBLocale.number is hydrated from the shop's
@@ -4060,7 +4063,7 @@ var money = function(n){
    SHOP'S MONEY first — the locale engine's moneyTag (lakh for the rupee only, 1,234,567 elsewhere; what CX1's shopCount did) — then number(). */
 var fmtCount = function(n){
   try {
-    var cur = (typeof S !== 'undefined' && S && S.shop && S.shop.currency) || '';
+    var cur = shopCur();
     if (cur && window.CBLocale && CBLocale.moneyTag) return Number(n).toLocaleString(CBLocale.moneyTag(cur));
   } catch (_) {}
   if (window.CBLocale && CBLocale.number) { try { return CBLocale.number(n); } catch (_) {} }
@@ -5884,9 +5887,9 @@ var CloudHost = {
  */
 /** the number: C1/26-27/0041 — continuous within the financial year, prefixed by the counter, decided locally */
 function fyOf(d){ var y=d.getFullYear(), apr=d.getMonth()>=3, a=apr?y:y-1; return String(a).slice(2)+'-'+String(a+1).slice(2); }
-/** the shop's jurisdiction — the pivot every numbering rule hangs from. Defaults to India, which is where
- *  this counter has actually been built and tested. */
-function docCountry(){ return (S && S.shop && S.shop.country) || 'IN'; }
+/** the shop's jurisdiction — the pivot every numbering rule hangs from. T2-NATDEF: the STATED country or null, never India by default —
+ *  CBDoc.rules(null) is the generic rule ('*'), packFor(null) no pack, and the health check says the NO_COUNTRY sentence. */
+function docCountry(){ return (S && S.shop && S.shop.country) || null; }
 /* ⭐ CX0 (2026-10-13): THE PACK'S OWN WORDS on the paper — the tax-id label (GSTIN · ABN · TRN), the scheme (GST · VAT), the credit note's title.
    Read from the registered pack of the shop's country (CBRegulation, bundled in /engine/tax.js); a page without the registry keeps India's words. */
 function shopPack(){ try { return (window.CBRegulation && CBRegulation.packFor(docCountry())) || null; } catch (_) { return null; } }
@@ -5916,6 +5919,7 @@ function buyerNamed(c){ var n = String((c && c.name) || '').trim(); return !!(c 
  */
 function voiceLangs(){
   var c = docCountry();
+  if (!c) return ['en'];         /* T2-NATDEF: no country stated → plain English, no region's accent */
   if (c === 'IN') return null;   /* the page's own four options, untouched */
   var r = null; try { r = window.CBLocale && CBLocale.REGIONS && CBLocale.REGIONS[c]; } catch (_) {}
   var langs = (r && r.langs && r.langs.length) ? r.langs : ['en'];
@@ -7066,13 +7070,13 @@ function booksOn(){
 function creditCust(){ return booksOn() ? custKnown() : null; }
 /** minor units → the amount, in the shop's own currency's decimals (the money engine's rule, never a hard-coded 100) */
 function booksMajor(minor){
-  var cur = (S && S.shop && S.shop.currency) || 'INR';
+  var cur = shopCur();
   var dec = (window.CBMoney && CBMoney.decimals) ? CBMoney.decimals(cur) : 2;
   return r2(Number(minor || 0) / Math.pow(10, dec));
 }
 /** an amount → minor units in the shop's own currency — booksMajor's inverse, the same decimals (CX1: the pack's taxInvoice takes minor) */
 function shopMinor(amount){
-  var cur = (S && S.shop && S.shop.currency) || 'INR';
+  var cur = shopCur();
   var dec = (window.CBMoney && CBMoney.decimals) ? CBMoney.decimals(cur) : 2;
   return Math.round(r2(amount) * Math.pow(10, dec));
 }
@@ -7206,7 +7210,7 @@ function rcvPayPropose(){
   var mode = (document.getElementById('rp_mode') || {}).value || 'cash';
   var chq = document.getElementById('rp_chq'); if (chq) chq.hidden = mode !== 'cheque';
   var amt = Number((document.getElementById('rp_amt') || {}).value) || 0;
-  var cur = (S && S.shop && S.shop.currency) || 'INR';
+  var cur = shopCur();
   var open = (Array.isArray(c.open_bills) ? c.open_bills : []).slice()
     .sort(function(a, b){ return String(a.due_date || '').localeCompare(String(b.due_date || '')) || String(a.ref).localeCompare(String(b.ref)); });
   var head = mode === 'cheque' ? '<b>A cheque is applied when it clears.</b> Until then it shows as received, not cleared. ' : '';
@@ -7242,7 +7246,7 @@ async function rcvPaySave(){
     if (!cheque.no) { say('A cheque needs its number — it is how a bounce is traced.'); return; }
   }
   var doc = { kind: 'payment', party: { identity_id: c.identity_id, name: c.name, phone: c.phone || null },
-              amount: amt, currency: (S && S.shop && S.shop.currency) || 'INR', mode: mode, cheque: cheque,
+              amount: amt, currency: shopCur(), mode: mode, cheque: cheque,
               status: mode === 'cheque' ? 'received' : 'cleared',
               by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null };
   var r = null;
@@ -8009,7 +8013,7 @@ function offersFor(i){
   var line = lineOf({ item_id:i.item_id, code:i.code, name:i.name, unit:i.unit, price:i.price, qty:1,
                       item_data:{ category:i.category, offers_excluded:i.offers_excluded } });
   var got = [];
-  try { got = CBOffers.forLine(line, (S.offers || []), { currency:(S.shop && S.shop.currency) || 'INR', now:new Date().toISOString() }) || []; } catch (_) { got = []; }
+  try { got = CBOffers.forLine(line, (S.offers || []), { currency:shopCur(), now:new Date().toISOString() }) || []; } catch (_) { got = []; }
   i._off = got;
   return got;
 }
@@ -8585,7 +8589,7 @@ function menuShopBody(){
       ? (cbRoot() + '/shop.html?s=' + encodeURIComponent(sh.handle)) : '';
     /* ⚠️ M33 (walk 2026-10-10): shopTax().gstin is a YES/NO — returning it printed "true" where the GSTIN goes */
     if (k === 'gstin')    return (tx.gstin && String(sh.gstin || '').trim()) || (noGst ? 'Not registered' : '');
-    if (k === 'currency') return sh.currency || (S && S.currency) || 'INR';
+    if (k === 'currency') return sh.currency || (S && S.currency) || '';   /* T2-NATDEF: unstated stays blank — the row asks for it */
     if (k === 'counter')  return counterName();
     return sh[k] || '';
   };
@@ -14506,7 +14510,7 @@ function offerExample(i, o){
                         item_data:{ category:i.category } });
     line.excluded = [];
     var ev = CBOffers.evaluate({ lines:[line], offers:[trial],
-      ctx:{ currency:(S.shop && S.shop.currency) || 'INR', now:new Date().toISOString() } });
+      ctx:{ currency:shopCur(), now:new Date().toISOString() } });
     var gross = r2(price * q);
     var net = (ev && ev.line_net && ev.line_net[line.key] != null) ? r2(ev.line_net[line.key]) : gross;
     var save = r2(gross - net);
@@ -17634,7 +17638,7 @@ function price(){
   var lines = CART.map(function(c){ return lineOf(c); });
   var ev = null;
   try { if (window.CBOffers && S && (S.offers||[]).length)
-    ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:(S.shop&&S.shop.currency)||'INR', now:new Date().toISOString() } }); } catch(_){ ev = null; }
+    ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:shopCur(), now:new Date().toISOString() } }); } catch(_){ ev = null; }
   /* ⭐ kept for the totals, so "Saved" can name what it is made of rather than being a lump nobody can check */
   EV = ev;
   CART.forEach(function(c, n){
@@ -18286,7 +18290,10 @@ function health(){
    */
   (function(){
     if (!window.CBDoc) return;
-    var c = (S.shop && S.shop.country) || 'IN';
+    var c = docCountry();
+    /* T2-NATDEF: no country stated → the engines' NO_COUNTRY sentence (CBRegulation.status), never "checked for India" */
+    if (!c) { var nc = window.CBRegulation && CBRegulation.status ? CBRegulation.status(null) : null;   /* pure — no country → { code: 'NO_COUNTRY', why } */
+      add('note', 'Bill numbering follows the shop\u2019s country', (nc && nc.why) || 'Set the shop\u2019s country first (Country setup).'); return; }
     var r = window.CBDoc.rules(c);
     if (r.verified) return;
     add('note', 'Bill numbering for ' + c + ' has not been checked',
@@ -21280,7 +21287,7 @@ function payLink(way, amount, ref){
     return 'upi://pay?pa=' + encodeURIComponent(way.payee)
       + '&pn=' + encodeURIComponent(String(name).slice(0, 60))
       + (amount ? '&am=' + encodeURIComponent(String(r2(amount))) : '')
-      + '&cu=' + encodeURIComponent((S && S.shop && S.shop.currency) || 'INR')
+      + (shopCur() ? '&cu=' + encodeURIComponent(shopCur()) : '')   /* T2-NATDEF: the stated money only — UPI reads a missing cu as its own */
       + '&tn=' + encodeURIComponent('CB-' + String(ref || '').slice(0, 12));
   }
   /* ⚠️ an unknown scheme draws nothing rather than guessing at an encoding — a wrong QR takes money somewhere else */
@@ -22435,7 +22442,7 @@ function paintRcvCosts(){
 function rcvBillCheck(total, taxable, tax, no){
   if (total == null || total === '') return { code: 'no_total', sentence: '' };
   if (!window.CBTheirBill) return { code: 'no_engine', sentence: 'Their bill says ' + money(total) + ' — this counter cannot check it yet (press ↻ while online).' };
-  var cur = (S && S.shop && S.shop.currency) || 'INR';
+  var cur = shopCur();
   var c = CBTheirBill.check({ total: total, taxable: taxable, tax: tax, currency: cur, no: no, say: money });
   if (c.code === 'no_engine') c.sentence = 'Their bill says ' + money(total) + ' — this counter cannot check it yet (press ↻ while online).';
   return c;
