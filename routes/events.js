@@ -9,8 +9,11 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const events = require('../lib/events');
 const ctx = (req) => auth.entityOf(req);
+const { isScreenKey } = require('../lib/holder');
 
-router.post('/ticket', auth, (req, res) => { const e = ctx(req); if (!e) return res.status(401).json({ error: 'Unauthorised' }); res.json(events.ticketFor(e)); });
+/* SNAP-SCREEN: a screen key's ticket is marked, so its stream carries only 'the shop changed' (lib/events ticketFor) */
+router.post('/ticket', auth, (req, res) => { const e = ctx(req); if (!e) return res.status(401).json({ error: 'Unauthorised' });
+  res.json(events.ticketFor(e, { screen: isScreenKey(req.till && req.till.key) })); });
 router.get('/stream', (req, res) => {
   /**
    * ⚠️⚠️ BOTH SPELLINGS. The app has always sent ?t=, and the counter and the shop screen have always sent ?ticket= —
@@ -19,9 +22,9 @@ router.get('/stream', (req, res) => {
    * offer change reached every store's snapshot and no store's counter. Accepting both mends every page already open
    * in a shop, without anyone having to reload it.
    */
-  const e = events.spend(req.query.t || req.query.ticket);
-  if (!e) return res.status(401).json({ error: 'Unauthorised', message: 'ticket missing, spent or expired' });
-  events.subscribe(e, req, res);
+  const v = events.spendFor(req.query.t || req.query.ticket);
+  if (!v) return res.status(401).json({ error: 'Unauthorised', message: 'ticket missing, spent or expired' });
+  events.subscribe(v.entity_id, req, res, { screen: v.screen });
 });
 router.get('/stats', auth, (req, res) => res.json(events.stats()));
 module.exports = router;

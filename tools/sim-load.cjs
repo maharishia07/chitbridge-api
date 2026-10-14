@@ -39,6 +39,9 @@
  *              the shop's currency · year · tax heads · rate menu are READ from its pack (lib/regulation.packFor); the loader types only
  *              what no pack says: SHOPS below. ⚠️ Until the api adopts the books engines ≥ v1.41 (accounts-packs is v1.20: PACKS.IN only),
  *              an AU/AE shop's chart is India's fallback and the proof is expected RED on purchases — web docs/design/standards/COUNTRY-COVERAGE.md)
+ *   --scale    10k | 50k | 100k (PERF1): after the plan, grow the shop to that many journal lines (+ 500 customers · ≤ 5,000 open items · 10,000
+ *              products) in the open year after it, then time every hot read 20× — p50 / p95 · rows · X-DB-Trips (tools/sim-scale.cjs).
+ *              --scale-reads: time only (the shop already grown) · --scale-only <word>: only the reads whose name has it. Use with --start 2023-04-01 so the plan's years end before the grown one.
  *   --start    the first financial year's first day (default 2026-<the pack's first month>-01). WX-O2C: `--start 2023-04-01` ends the three
  *              years on 2026-03-31, so TODAY sits in an open year after them — a walk's own bills are then the newest, in an unlocked month.
  *   Env it sets for the in-process api when unset: NODE_ENV=development, DEV_OTP=123456, a local JWT_SECRET, SHOP_CLOCK_ALLOW=1,
@@ -78,7 +81,10 @@ if (require.main !== module) { module.exports = { localOnly, CHAIN_SKIP }; retur
 const DB = arg('db', process.env.SIM_DB || ''), SHOP = String(arg('shop', '')).trim().toLowerCase();
 const YEARS = Number(arg('years', 3)), SEED = Number(arg('seed', 7)), COUNTRY = String(arg('country', 'IN')).toUpperCase();
 const FRESH = has('fresh'), SCHEMA_ONLY = has('schema-only'), SCHEMA = has('schema') || SCHEMA_ONLY;
-const START_ARG = arg('start', '');   /* WX-O2C — checked against the pack's first month once the pack is read */
+const START_ARG = arg('start', '');
+const SCALE = arg('scale', ''), SCALE_READS = has('scale-reads');   /* PERF1: tools/sim-scale.cjs — grow the shop to 10k · 50k · 100k journal lines, then time the reads */
+if (SCALE && !require('./sim-scale.cjs').TARGETS[SCALE]) { console.error('\n  REFUSED: --scale is 10k, 50k or 100k\n'); process.exit(3); }
+if (SCALE) process.env.CB_TRIPS = process.env.CB_TRIPS || '1';   /* lib/trips: X-DB-Trips on every answer — the scale table's trips column (local only) */   /* WX-O2C — checked against the pack's first month once the pack is read */
 const die = (m, code) => { console.error('\n  REFUSED: ' + m + '\n'); process.exit(code || 3); };
 const loc = localOnly(DB);
 if (!DB) die('say which local database: --db postgres://postgres:pw@127.0.0.1:5432/cb_sim');
@@ -229,6 +235,21 @@ function trackHooks() {
 }
 async function drain() { while (pending.size) await Promise.allSettled([...pending]); }
 
+/* ── PERF1 · --scale: the shop grown past the plan, then the reads timed (tools/sim-scale.cjs; docs/SIM-LOAD.md "Scale") ── */
+async function scaleThen(shopId) {
+  await j('/api/entities/register', { method: 'POST', body: { email: EMAIL, display_name: 'Simulated Stores', user_id: SHOP } });   /* register is also sign-in (the dev code) */
+  const ver = must(await j('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: OTP } }), 'sign in for --scale');
+  const token = ver.b.token;
+  if (!token) must({ status: 500, b: ver.b }, 'sign in for --scale (no token)');
+  const start = dayAdd(PLAN.last, 1), end = dayAdd(start, 195);   /* the open year after the plan: 1 Apr → 13 Oct with --start 2023-04-01 */
+  try {
+    await require('./sim-scale.cjs').run({ base: BASE, sql, B: require(path.join(API, 'lib', 'books')), CLOCK: require(path.join(API, 'lib', 'shop-clock')), shopId, token,
+      cur: CUR, scale: SCALE, readsOnly: SCALE_READS, only: arg('scale-only', ''), say, start, end });
+  } catch (e) { console.error('\n  sim-load --scale stopped: ' + (e && e.stack || e) + '\n'); return 1; }
+  await pool.end();
+  return 0;
+}
+
 /* ── main ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 (async () => {
   if (SCHEMA_ONLY) return schemaOnly();
@@ -250,6 +271,7 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
     const bills = await sql(`SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND sender_entity_id = $1 AND business_json ? 'bill_no'`, [shopId]);
     const loaded = mark.rows[0] ? mark.rows[0].source_ref.replace(/^opening:/, '') : null;
     if (!FRESH) {
+      if (loaded === MARK && SCALE) { say('already loaded: ' + SHOP + ' holds ' + loaded + ' — on to --scale ' + SCALE); await startApi(); process.exit(await scaleThen(shopId)); }
       if (loaded === MARK) { say('already loaded: ' + SHOP + ' holds ' + loaded + ' (' + bills.rows[0].n + ' bills). Nothing written.'); await proof(shopId, true); printLogin(); process.exit(0); }
       if (loaded) die(SHOP + ' already holds ' + loaded + ' — a different seed/years. Rebuild with --fresh.');
       if (bills.rows[0].n) die(SHOP + ' already has ' + bills.rows[0].n + ' bills (an earlier run that did not finish?). Rebuild with --fresh.');
@@ -414,6 +436,7 @@ async function drain() { while (pending.size) await Promise.allSettled([...pendi
 
   const red = await proof(shopId, false);
   printLogin();
+  if (SCALE && !red) process.exit(await scaleThen(shopId));
   await pool.end();
   process.exit(red ? 1 : 0);
 })().catch((e) => { console.error('\n  sim-load failed: ' + (e && e.stack || e) + '\n'); process.exit(2); });
