@@ -413,7 +413,7 @@ it('lib/offers-engine.js and the app\'s offers.js are the same engine (body iden
   const fs = require('fs'), path = require('path');
   const strip = (s) => s.replace(/\r\n/g, '\n').split('\n').slice(39).join('\n');
   const api = strip(fs.readFileSync(path.join(__dirname, '..', 'lib', 'offers-engine.js'), 'utf8'));
-  const web = strip(fs.readFileSync(path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'app', 'offers.js'), 'utf8'));
+  const web = strip(fs.readFileSync(path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'engine', 'offers.js'), 'utf8'));
   assert.strictEqual(api, web);
 });
 

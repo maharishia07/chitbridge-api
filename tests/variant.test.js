@@ -17,7 +17,7 @@ const assert = require('node:assert');
 const path = require('path');
 const fs = require('fs');
 
-const SRC = path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'app', 'variant.js');
+const SRC = path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'engine', 'variant.js');
 (0, eval)(fs.readFileSync(SRC, 'utf8'));
 const V = globalThis.CBVariant;
 
