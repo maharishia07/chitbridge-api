@@ -397,6 +397,7 @@ const INFRA_LIBS = [
   'public-facts.js',       // what a counterparty may see about an entity, with the rung (GSTIN · state · registration type; never the vault)
   'exposure.js',           // what a customer may see of an ITEM (tax · offers · stock · synonyms · hsn · description · media), enforced in the one projection
   'offers-live.js',        // the seller's live offers applied to a set of lines — the one function the storefront order AND the send path call
+  'offer-clash.js',        // T2-LABS: a live offer that overlaps another live one is refused at save — the engine's rule (CBOffers.clashes), read in the save's own transaction
   'customer-groups.js',    // what the SELLER's customer list says about a viewer (segment · one customer) — the groups a customer-only offer may name
   'stores.js',             // store lookup helpers
   'transcribe.js',         // audio → text; an outside service behind one function
@@ -791,7 +792,7 @@ const TILL_SHIPPABLE = {
   /* ⚠️ MASTERED IN chitbridge-web, copied INTO lib/ — the direction is the opposite of the five above, and
      guarding the lib copy would be guarding the wrong file. */
   'search.js':    'search-engine.js', // finding a product cannot wait for a network
-  'offers.js':    'offers-engine.js',  // an offer must apply with the line down — this is why it is not a server call — ADOPTED (v1.3.0)
+  'offers.js':    'offers-engine.js',  // an offer must apply with the line down — this is why it is not a server call — ADOPTED (v1.46.0)
   'pricing.js':   'pricing-engine.js', //   the same, for a price — ADOPTED from chitbridge-engines (v1.3.0)
   'tax.js':       'tax.js',            // and for tax: a bill printed offline is still a legal document — ADOPTED (chitbridge-engines), with tax-slab
   'locale.js':    'locale.browser.js', // region → language, currency, format
