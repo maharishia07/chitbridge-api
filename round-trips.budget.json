@@ -278,7 +278,7 @@
       "wire": 6,
       "fired": true,
       "status": 404,
-      "why": "PERF1, by hand: live = the gate read + ONE transaction — cheques · the listed parties' names (S.parties(ids), from the shop's two lists) · chart · the listed parties' items in ONE read per control account (≤ 2). It was one items read PER PARTY inside the loop (N+1). The offline stub answers 404 (ledger off): the floor."
+      "why": "PERF1, by hand: live = the gate read + ONE transaction — cheques · the shop's stored terms (T3-P1-MONEY: the reminder switch, one statement, only once b298 ran) · the listed parties' names (S.parties(ids), from the shop's two lists) · chart · the listed parties' items in ONE read per control account (≤ 2). It was one items read PER PARTY inside the loop (N+1). The offline stub answers 404 (ledger off): the floor."
     },
     "GET /api/books/daybook": {
       "file": "books.js",
@@ -547,6 +547,15 @@
       "fired": true,
       "status": 200,
       "extra": true
+    },
+    "GET /api/facts/finance": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 7,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "T3-P1-MONEY, by hand: the Home card's cheques line — the cached b298 probe (lib/schema, one trip until it answers yes, as GET /books/terms) + ONE transaction: the setting (savepoint · read · release) · the shop's stored terms (the reminder switch, only once b298 ran) · the cheques held (books-store.cheques, the SAME read GET /books/cheques makes); the states are the engine's pdcReminders, no second query. The offline stub answers an empty ledger: the floor."
     },
     "GET /api/facts/combo-lab": {
       "file": "facts.js",

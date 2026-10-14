@@ -837,15 +837,19 @@ router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) =
  * The cheques still HELD (with ?all=1, every cheque) — what a "Cheques held" list shows. `next` is the steps the ENGINE
  * will accept now (CBReceivables.itemsOfCheque decides — received → deposited → cleared | bounced); a screen offers those.
  * ⭐ F3: + pdc_reminders: [{ payment_id, cheque_no, cheque_date, amount_minor, state: deposit_today | overdue_for_deposit | not_yet }] — the post-dated
- *   cheques RECEIVED and not yet deposited, as CBReceivables.pdcReminders says them (today's shop day; `not_yet` only within PDC_LEAD_DAYS). Read from the
- *   same rows as `cheques`, no second query. Nothing else changed.
+ *   cheques RECEIVED and not yet deposited, as CBReceivables.pdcReminders says them (today's shop day; `not_yet` only within lead_days). Read from the
+ *   same rows as `cheques`, no second query.
+ * ⭐ T3-P1-MONEY: + asOf (the shop's day the states were judged on) and remind: { on, lead_days, from: 'shop'|null, may_set, why_not } — the OWNER's switch,
+ *   read from the shop's stored terms (lib/finance-terms pdcRemind: books_setting.terms.pdc_remind, set through POST /terms); absent = on, 7 days ahead, as
+ *   before. `on` false → pdc_reminders is [] (the engine answers null). One more statement in the SAME transaction (shopTerms), only once b298 has run.
  */
-const PDC_LEAD_DAYS = 7;   /* a cheque dated within the week ahead is a reminder too — the engine's lead_days */
 router.get('/cheques', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), all = String(req.query.all || '') === '1';
+    const e = ctx(req), all = String(req.query.all || '') === '1', T = require('../lib/finance-terms'), may = isOwner(req);
+    const mig = await T.migrated();
     const out = await withEntity(e, async (h) => {
       const rows = await S.cheques(h, e, all, 200);
+      const remind = T.pdcRemind(mig ? await T.shopTerms(h, e) : {});
       const pids = Array.from(new Set(rows.map((c) => String(c.party_id))));
       const names = await partyNames(h, e, pids), chart = await S.accounts(h, e), R = E.receivables(), kept = new Map(), day = today(req);
       /* PERF1: every listed party's items on each control account in ONE read per account (≤ 2) — it was one read per party inside the loop (N+1) */
@@ -859,7 +863,7 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
       /* the engine's credit shape ({ id, amount, cheque: { no, date, status } }) from the same rows; the amount back from the row by id, so no second rounding */
       const byId = new Map(rows.map((c) => [String(c.payment_id), c]));
       const pdc = (R.pdcReminders(rows.filter((c) => c.direction === 'in').map((c) => ({ id: String(c.payment_id), amount: Number(c.amount_minor), cheque: { no: c.cheque_no || null, date: E.ymd(c.cheque_date), status: c.status || 'received' } })),
-        day, { on: true, lead_days: PDC_LEAD_DAYS }) || []).map((r) => { const c = byId.get(String(r.credit)) || {}; return { payment_id: r.credit, cheque_no: r.no, cheque_date: r.date, amount_minor: Number(c.amount_minor || 0), state: r.state }; });
+        day, { on: remind.on, lead_days: remind.lead_days }) || []).map((r) => { const c = byId.get(String(r.credit)) || {}; return { payment_id: r.credit, cheque_no: r.no, cheque_date: r.date, amount_minor: Number(c.amount_minor || 0), state: r.state }; });
       for (const c of rows) {
         const a = chart.find((x) => x.role === (c.direction === 'in' ? 'debtors' : 'creditors'));
         const k = c.party_id + '|' + (a ? a.account_id : '');
@@ -870,9 +874,10 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
           currency: c.currency, reference: c.reference || null, cheque_no: c.cheque_no || null, cheque_bank: c.cheque_bank || null, cheque_date: E.ymd(c.cheque_date), received_at: E.ymd(c.received_at),
           status: c.status || 'received', next });
       }
-      return { list, pdc };
+      return { list, pdc, remind, day };
     });
-    res.json({ currency: curOf(req), cheques: out.list, pdc_reminders: out.pdc });
+    res.json({ currency: curOf(req), asOf: out.day, cheques: out.list, pdc_reminders: out.pdc,
+      remind: { on: out.remind.on, lead_days: out.remind.lead_days, from: out.remind.from, may_set: may, why_not: may ? null : 'Only the owner may set the reminder.' } });
   } catch (err) { fail(res, err); }
 });
 /**
