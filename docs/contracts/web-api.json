@@ -2281,6 +2281,168 @@
     "entries[].who"
    ]
   },
+  "GET /api/network-offers": {
+   "status": 200,
+   "example": {
+    "brand": {
+     "members": [
+      {
+       "id": "store-2",
+       "via": "joined",
+       "state": "requested",
+       "edge_id": "e-2",
+       "asked_by": "store",
+       "node_id": "n-store-2",
+       "brand_node": "n-a",
+       "name": "Corner Shop",
+       "may": {
+        "request": {
+         "ok": false,
+         "why": "Already asked. Waiting for the answer."
+        },
+        "approve": {
+         "ok": true,
+         "why": "Already in the network."
+        },
+        "decline": {
+         "ok": true,
+         "why": "Already in the network."
+        },
+        "suspend": {
+         "ok": false,
+         "why": "Not in the network yet."
+        },
+        "resume": {
+         "ok": false,
+         "why": "Not in the network yet."
+        },
+        "disconnect": {
+         "ok": false,
+         "why": "Not in the network yet. Decline instead."
+        }
+       }
+      }
+     ],
+     "is_brand": false,
+     "policy": "opt_in",
+     "stores": 0,
+     "offers": [
+      {
+       "id": "0f0f0f0f-0000-4000-8000-000000000001",
+       "name": "Festive 10%",
+       "kind": "percent_off",
+       "status": "live",
+       "version": 1,
+       "released": {
+        "version": 1,
+        "at": "2026-10-15T00:00:00.000Z",
+        "until": "2026-11-05T00:00:00.000Z",
+        "released_at": "2026-10-14T06:00:00.000Z",
+        "released_by": "Apex"
+       },
+       "changed": false
+      }
+     ],
+     "catalogue": [
+      {
+       "source_key": "apex@v1",
+       "title": "Apex Foods",
+       "items": 1,
+       "changes": [],
+       "candidates": [],
+       "missing": [
+        "Rice 5kg"
+       ],
+       "published": [
+        "Rice 5kg"
+       ],
+       "stores": [
+        {
+         "id": "store-1",
+         "name": "Fresh Mart"
+        }
+       ],
+       "withdrawn_at": {},
+       "pending": null,
+       "log": []
+      }
+     ]
+    },
+    "store": {
+     "networks": [
+      {
+       "brand_id": "brand-a",
+       "brand_name": "Apex Foods",
+       "policy": "opt_in",
+       "brand_bridge_id": "CB-BRAND-A",
+       "root_bridge_id": "CB-BRAND-A",
+       "membership": {
+        "state": "active",
+        "via": "built",
+        "edge_id": "g-1",
+        "brand_node": "n-a"
+       },
+       "may": {
+        "request": {
+         "ok": false,
+         "why": "Already in the network."
+        },
+        "approve": {
+         "ok": false,
+         "why": "Already in the network."
+        },
+        "decline": {
+         "ok": false,
+         "why": "Already in the network."
+        },
+        "suspend": {
+         "ok": false,
+         "why": "only the network can suspend or resume a member"
+        },
+        "resume": {
+         "ok": false,
+         "why": "Not paused."
+        },
+        "disconnect": {
+         "ok": true,
+         "why": "Not in the network yet. Decline instead."
+        }
+       },
+       "offers": [
+        {
+         "id": "0f0f0f0f-0000-4000-8000-000000000001",
+         "name": "Festive 10%",
+         "kind": "percent_off",
+         "live": true,
+         "at": "2026-10-15T00:00:00.000Z",
+         "until": "2026-11-05T00:00:00.000Z",
+         "choice": "in",
+         "applies": true
+        }
+       ]
+      }
+     ],
+     "price_notices": []
+    },
+    "may_design": {
+     "ok": true,
+     "why": "Only the business owner designs a network. Sign in as the business itself."
+    }
+   },
+   "optional": [],
+   "free": [
+    "brand.catalogue[].withdrawn_at"
+   ],
+   "note": "NET-SRV1 (2026-10-14): every membership row (store.networks[], brand.members[]) carries may { request · approve · decline · suspend · resume · disconnect: { ok, why } } from the one rule table (src/services/network.mayAct); a store row names brand_bridge_id and root_bridge_id (the network store: network-shop.html?bridge=<root>). why is null when ok. withdrawn_at is keyed by source_key."
+  },
+  "GET /api/network-offers #403": {
+   "status": 403,
+   "example": {
+    "error": "Forbidden",
+    "message": "Network offers are managed by a signed-in person."
+   },
+   "optional": []
+  },
   "GET /api/repeat": {
    "status": 200,
    "example": {
@@ -4234,6 +4396,23 @@
      "on_chitbridge": false
     },
     "points_claimed": 120
+   },
+   "optional": []
+  },
+  "POST /api/network-offers/:id/choice": {
+   "status": 200,
+   "example": {
+    "ok": true,
+    "id": "0f0f0f0f-0000-4000-8000-000000000001",
+    "choice": "in"
+   },
+   "optional": []
+  },
+  "POST /api/network-offers/:id/choice #400": {
+   "status": 400,
+   "example": {
+    "error": "validation",
+    "message": "Unknown offer."
    },
    "optional": []
   },
