@@ -1092,7 +1092,7 @@ router.post('/:bridge_id/order/confirm',
           if (v === null || typeof v === 'object') continue;                  // scalars only
           captured[k] = String(v).slice(0, 200);
         }
-      } catch (e) { logger.fellBack('catalogue: the helper failed — answered with an empty set', e); captured = {}; }                                          // cannot resolve what is asked for → carry nothing
+      } catch (e) { logger.fellBack('order capture: the allow-list could not be resolved — no captured field rides on the chit (fails closed)', e); captured = {}; }                                          // cannot resolve what is asked for → carry nothing
       if (Object.keys(captured).length) summary_json.captured = captured;
       try {
         // captured goes in UNDER its own key, never spread over the authoritative summary — a customer must not be

@@ -3679,8 +3679,8 @@ router.put('/:chit_id/status',
         // as optional and simply omits the quoted subject when absent.
         require('../lib/whatsapp-out')
           .notifyChitStatus(entity_id, chit_id, new_status, null)
-          .catch(cbLog.orElse('chits PUT /:chit_id/status: the signal was not sent — carried on without it'));
-      } catch (e) { cbLog.fellBack('chits PUT /:chit_id/status: the signal was not sent — carried on without it', e); /* outbound is never allowed to affect the status change */ }
+          .catch(cbLog.orElse('status changed, but the WhatsApp reply was not sent — the customer was not told'));
+      } catch (e) { cbLog.fellBack('status changed, but the WhatsApp reply could not start — the customer was not told', e); /* outbound is never allowed to affect the status change */ }
 
     } catch (err) {
       console.error('Update status error:', err.message);
