@@ -463,7 +463,10 @@ router.get('/network-store/:networkId', async (req, res) => {
     const q = String(req.query.q || '').trim().toLowerCase();
     const cat = String(req.query.category || '').trim();
     const rows = (await withEntity(null, (db) => db.query(
-      `SELECT item_id, item_data FROM catalogue_items WHERE item_data->>'network_id' = $1 AND is_active = true`, [nid]))).rows;
+      /* SEC4: a sign-in-first shop's items never reach this anonymous lens (the same rule publicViewFor applies); to_jsonb so a
+         deployment without the storefront_access column reads as it always did */
+      `SELECT ci.item_id, ci.item_data FROM catalogue_items ci WHERE ci.item_data->>'network_id' = $1 AND ci.is_active = true
+          AND NOT EXISTS (SELECT 1 FROM identities i WHERE i.identity_id = ci.entity_id AND to_jsonb(i)->>'storefront_access' = 'login')`, [nid]))).rows;
     let products = rows.map((r) => { const d = r.item_data || {};
       return { product_id: r.item_id, name: d.name || d.particulars || '(unnamed)', category: d.category || 'Other',
         // TOLERANT READ (both shapes). null stays null — "price on request" is a real state, not a zero.
@@ -647,6 +650,7 @@ router.get('/network/:bridge_id', async (req, res) => {
       const ent = await resolveEntity(bid);
       if (!ent) continue;
       const view = await publicViewFor(ent, {});
+      if (view.sign_in) continue;   /* SEC4 — a sign-in-first department is absent from the anonymous network front, like a private one */
       departments.push({ entity: ent, view });
     }
 
@@ -672,14 +676,41 @@ router.get('/network/:bridge_id', async (req, res) => {
  * owner is not a stranger: with a valid session for THIS entity, the read bypasses the visibility gate and answers
  * with `preview: true`. Nothing changes for anyone else — a bad or foreign token is simply anonymous.
  */
-function ownerOf(req, entity) {
+/** the bearer's verified claims, or null — a missing, bad or expired token is simply anonymous on a public read */
+function claimsOf(req) {
   try {
-    const h = req.headers.authorization || ''; if (!h.startsWith('Bearer ')) return false;
-    const d = require('../lib/jwt-verify').verifyJwt(h.slice(7)).claims;   // E10 — the ONE verifier
-    if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
-    const mine = d.parent_entity_id || d.identity_id;
-    return String(mine) === String(entity.identity_id);
-  } catch (_) { return false; }
+    const h = req.headers.authorization || ''; if (!h.startsWith('Bearer ')) return null;
+    return require('../lib/jwt-verify').verifyJwt(h.slice(7)).claims || null;   // E10 — the ONE verifier
+  } catch (_) { return null; }
+}
+function ownerOf(req, entity) {
+  const d = claimsOf(req);
+  if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
+  const mine = d.parent_entity_id || d.identity_id;
+  return String(mine) === String(entity.identity_id);
+}
+/**
+ * ⭐ SEC4 · A CUSTOMER SIGNED IN TO THIS SHOP — the token /login/verify (or /order/confirm) issued: identity_type 'customer' and
+ * parent_entity_id = THIS shop (storefront identities are per shop, crHandle). The same test middleware/customer-auth.js applies.
+ */
+function customerOf(req, entity) {
+  const d = claimsOf(req);
+  return !!(d && d.identity_id && d.identity_type === 'customer' && String(d.parent_entity_id || '') === String(entity.identity_id));
+}
+/**
+ * ⭐⭐ SEC4 · A SIGN-IN-FIRST SHOP ANSWERS A STRANGER WITH ITS CARD ONLY. Before SEC4 `storefront_access: 'login'` was only SENT, and
+ * shop.html hid a catalogue it had already been handed in full — the embed, a CTP pull and `curl` read every item and price. Now the
+ * view itself is cut down here, in the one function every anonymous door shares: the card (who the shop is, so the sign-in page can
+ * say whose it is) and a CODE the page branches on — never the sentence. `storefront_access` is already read inside buildPublicView,
+ * so the gate costs no trip.
+ */
+const SIGN_IN_FIRST = { code: 'sign_in_first', say: 'This shop asks customers to sign in first. Sign in with your phone or email to see what it sells.' };
+function signInFirst(view) {
+  const s = (view && view.shop) || {};
+  if (!view || !view.available || s.storefront_access !== 'login') return view;
+  return { available: true, sign_in: SIGN_IN_FIRST,
+    shop: { bridge_id: s.bridge_id, display_name: s.display_name, logo_url: s.logo_url, address: s.address, is_verified: s.is_verified,
+      business_status: s.business_status, storefront_access: s.storefront_access, country: s.country } };
 }
 /**
  * ── ⭐⭐ THE PUBLIC VIEW OF ONE STORE, AS ONE FUNCTION ───────────────────────────────────────────────────────────
@@ -690,19 +721,23 @@ function ownerOf(req, entity) {
  * doors to call one function. Two copies of that deps object would be two visibility policies within a month.
  *
  * ⚠️ `asOwner` is the ONLY thing that widens the view, and a peer installation is never the owner.
+ * ⭐ SEC4: a sign-in-first shop is cut to its card (signInFirst) unless the reader is signed in — the owner, a `viewer` (a business
+ *   signed in to CB, e.g. an enquiry), or `signedIn` (this shop's customer, customerOf). A peer installation is none of them.
  */
 async function publicViewFor(entity, opts) {
   const o = opts || {};
   /* ⚠️ THE ONE CALL. `asOwner` widens the view to the owner's preview; `viewer` lets a signed-in customer see
      what the visibility cap grants THEM. A peer installation passes neither. */
-  return catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput,
+  const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput,
     identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'),
     container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'),
     asOwner: !!o.asOwner, viewer: o.viewer });
+  return (o.asOwner || o.viewer || o.signedIn) ? view : signInFirst(view);
 }
 
 /** what a storefront visitor is SENT — the public response, trimmed from the raw view. One place. */
 function publicResponseFor(view, asOwner) {
+  if (view.sign_in) return { shop: view.shop, sign_in: view.sign_in };   /* SEC4 — the card and the code, nothing else */
   return { shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
     groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
     unpriced_hidden: view.unpriced_hidden,
@@ -710,13 +745,61 @@ function publicResponseFor(view, asOwner) {
     offers: view.offers || [], categories: view.categories || [],
     finishes: view.finishes, preview: asOwner ? { visibility: view.visibility || 'private' } : undefined };
 }
+/**
+ * ⭐ SEC4 · GET /api/catalogue/enquiry?page&limit&side=in|out — MY PRODUCT ENQUIRIES, ONE ROW PER PRODUCT, LATEST FIRST (paged: top-level
+ * total · page · limit). Before SEC4 an enquiry could only be read by opening the product it was about — a supplier had no way to find
+ * the questions waiting for them. Who may call: any signed-in business or its staff (auth + the hat gate); the rows are MY copies only
+ * (withEntity(me), RLS), so nothing here reaches past what /enquiry/:item_id already shows me. side=in → questions about MY products,
+ * side=out → the ones I asked. One statement. ⚠️ Declared BEFORE /:bridge_id, which would otherwise take the path as a shop handle;
+ * 'enquiry' is 7 characters, shorter than any user_id (8–30), so no shop can be named it.
+ */
+router.get('/enquiry', auth, async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+  const side = req.query.side === 'in' || req.query.side === 'out' ? req.query.side : null;
+  try {
+    const me = req.identity.parent_entity_id || req.identity.identity_id;
+    const r = await withEntity(me, (db) => db.query(
+      `WITH m AS (
+         SELECT subject_id, sender_entity_id, sender_display_name, message_text, created_at
+           FROM chit_messages WHERE entity_id = $1 AND subject_type = 'product' AND thread_type = 'external'),
+       t AS (
+         SELECT DISTINCT ON (subject_id) subject_id AS item_id, left(message_text, 160) AS last_text,
+                sender_display_name AS last_from_name, (sender_entity_id = $1) AS last_from_me, created_at AS last_at
+           FROM m ORDER BY subject_id, created_at DESC),
+       n AS (
+         SELECT subject_id, count(*)::int AS messages,
+                count(DISTINCT sender_entity_id) FILTER (WHERE sender_entity_id <> $1)::int AS askers
+           FROM m GROUP BY subject_id),
+       f AS (
+         SELECT t.item_id, COALESCE(ci.item_data->>'name', ci.item_data->>'particulars') AS item_name,
+                COALESCE(ci.entity_id = $1, false) AS about_mine, n.messages, n.askers,
+                t.last_text, t.last_from_name, t.last_from_me, t.last_at
+           FROM t JOIN n ON n.subject_id = t.item_id
+           LEFT JOIN catalogue_items ci ON ci.item_id = t.item_id
+          WHERE ($4::text IS NULL OR ($4 = 'in') = COALESCE(ci.entity_id = $1, false)))
+       SELECT (SELECT count(*) FROM f)::int AS total,
+              COALESCE((SELECT json_agg(p ORDER BY p.last_at DESC)
+                          FROM (SELECT * FROM f ORDER BY last_at DESC LIMIT $2 OFFSET $3) p), '[]'::json) AS rows`,
+      [me, limit, (page - 1) * limit, side]));
+    const row = r.rows[0] || { total: 0, rows: [] };
+    res.json({ enquiries: row.rows || [], total: row.total || 0, page, limit });
+  } catch (err) {
+    /* b161 not applied (no subject_type) → an empty list said as such, not a broken screen — the same answer /enquiry/:item_id gives */
+    if (err && err.code === '42703') return res.json({ enquiries: [], total: 0, page, limit, migrated: false });
+    console.error('enquiry list:', err.message);
+    res.status(500).json({ error: 'Enquiries failed', message: safeErr(err) });
+  }
+});
+
 router.get('/:bridge_id', async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     const asOwner = req.query.preview === '1' && ownerOf(req, entity);
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
-    const view = await publicViewFor(entity, { asOwner });
+    /* SEC4: this shop's signed-in customer (or its own owner/staff) passes a sign-in-first shop's gate; anyone else gets the card */
+    const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || ownerOf(req, entity) });
     if (!view.available) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     res.json(publicResponseFor(view, asOwner));
   } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
@@ -1472,6 +1555,12 @@ router.post('/enquiry/:item_id', auth,
         [message_id, req.params.item_id, me, req.identity.display_name || null,
          req.body.thread_type === 'internal' ? 'internal' : 'external',
          req.body.message_text, req.body.msg_type || 'info']));
+      /* ⭐ SEC4 · THE SUPPLIER'S BELL — the same push a storefront order rings (lib/events), sent once the response has gone out (the
+         definer committed). Only an external question about SOMEONE ELSE's product: my own note, or asking about my own item, rings nothing.
+         Nothing sensitive rides it (kind · item id · who); the bell reads the list through GET /api/catalogue/enquiry. */
+      if (req.body.thread_type !== 'internal' && gate.owner_id && String(gate.owner_id) !== String(me)) {
+        require('../lib/events').notifyAfter(res, [gate.owner_id], { kind: 'enquiry', id: req.params.item_id, who: req.identity.display_name || null });
+      }
       res.status(201).json({ message_id, created_at: r.rows[0] && r.rows[0].created_at });
     } catch (err) {
       if (err && err.code === '42883') {
