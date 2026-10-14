@@ -87,7 +87,9 @@ async function run(ctx) {
     say('scale · grown: ' + (await lines()) + ' journal lines · ' + n + ' scale bills · ' + paid + ' payments · ' + Math.round((Date.now() - t0) / 1000) + 's');
   }
 
-  /* ── TIME ── */
+  /* ── TIME ── the planner's statistics first: rows bulk-loaded a minute ago are invisible to it until autovacuum's ANALYZE runs (a shop grown in
+     a minute read a ledger page in 15 s on row estimates of 1, 14 Oct). A live database is analysed as it grows; this local one is told now. */
+  await sql('ANALYZE journal_entry; ANALYZE journal_line; ANALYZE account_balance; ANALYZE party_item; ANALYZE catalogue_items; ANALYZE customer_list; ANALYZE chit_header; ANALYZE chit_status');
   const facts = (await sql(`SELECT (SELECT count(*) FROM journal_line WHERE entity_id = $1)::int AS lines, (SELECT count(*) FROM journal_entry WHERE entity_id = $1)::int AS entries,
                                    (SELECT count(*) FROM party_item WHERE entity_id = $1)::int AS items, (SELECT count(*) FROM customer_list WHERE owner_entity_id = $1)::int AS parties,
                                    (SELECT count(*) FROM catalogue_items WHERE entity_id = $1)::int AS catalogue,
