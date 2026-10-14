@@ -30,5 +30,5 @@ for (const f of senders) {
   else ok(f + ' is exempt for a stated reason', !!EXEMPT[f], 'a NEW provider send: call lib/privacy.gate before it, or add it to EXEMPT with why it never messages a party');
 }
 Object.keys(GATED).concat(Object.keys(EXEMPT)).forEach((f) => ok(f + ' still exists and still sends (no stale entry)', senders.indexOf(f) >= 0));
-console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
+console.log('\n  ' + (pass + fail) + ' checks · ' + fail + ' failed');
 process.exitCode = fail ? 1 : 0;
