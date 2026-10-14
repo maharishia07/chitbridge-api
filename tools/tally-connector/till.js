@@ -423,7 +423,7 @@ async function refresh() {
     /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
     try {
       /* live: files only SERVED, written at once — the page and the sign-in window it mounts (a byte copy of the web's) */
-      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-ui.js'], staged: STAGED });
+      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-ui.js', 'their-bill.js'], staged: STAGED });
       if (up) {
         UPDATE.version = up.version;
         if (up.updated.length) { UPDATE.page_at = new Date().toISOString(); log('the counter screen was updated — reload the page in the browser (F5) when you are between customers'); }
@@ -1066,6 +1066,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/app/signin-ui.js') {
       const f = path.join(__dirname, 'signin-ui.js');
       if (!fs.existsSync(f)) return send(res, 503, 'text/plain', '// the sign-in window is not in this kit yet — update the kit while online');
+      return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(f, 'utf8'));
+    }
+    /* ⭐ FX-F10W2: the ONE comparison of their bill total (api lib/their-bill.js) — the kit's byte copy, served like the sign-in window */
+    if (req.method === 'GET' && url.pathname === '/app/their-bill.js') {
+      const f = path.join(__dirname, 'their-bill.js');
+      if (!fs.existsSync(f)) return send(res, 503, 'text/plain', '// the bill check is not in this kit yet — update the kit while online');
       return send(res, 200, 'application/javascript; charset=utf-8', fs.readFileSync(f, 'utf8'));
     }
 

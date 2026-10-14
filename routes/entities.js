@@ -19,7 +19,7 @@ const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
 const schema = require('../lib/schema');   // b176 — never name a column from an unrun migration
 const handleLib = require('../lib/handle');   // slug + check — the same rules the network root uses
 
-// DEV_OTP in Railway env = fixed OTP for testing e.g. 123456
+// DEV_OTP = fixed OTP for testing — on a LOCAL stack only (lib/dev-otp.js, SEC1); testers elsewhere use TESTER_CODE
 // No DEV_OTP = random 6-digit OTP
 // S4 (reviewer 2026-07-13) — OTP from a CSPRNG (crypto.randomInt), not Math.random() (whose V8 state is recoverable,
 // letting an attacker predict a victim's OTP). DEV_OTP still overrides for team testing when explicitly set.

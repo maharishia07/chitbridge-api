@@ -62,6 +62,8 @@ function fail(res, e) {
   if (e && (e.code === 'BOOKS_ENGINE' || e.code === 'BOOKS_NOT_MIGRATED')) return res.status(503).json({ code: e.code, error: e.message, message: e.message });
   /* a question the owner can answer (a missing field, a date that is not a date): 400, in words */
   if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
+  /* T1-INV: closing stock from the ledger refused for a NAMED reason — the code and the products, so a screen offers Count / Enter by hand */
+  if (e && e.refused && /^STOCK_/.test(String(e.code || ''))) return res.status(422).json({ code: e.code, items: e.items || [], error: e.message, message: e.message });
   if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json({ error: e.message, message: e.message });
   if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
   /* a terms field the owner can fix (lib/finance-terms): 400/404 in a sentence */
@@ -306,18 +308,38 @@ function howOf(l, day) {
   const r = parts.map((p) => p.ref || p.reference || p.utr).find((x) => x != null && String(x).trim());
   return { how: words.length ? words.join(' + ') : null, how_ref: r ? String(r).trim() : null, split: null };
 }
-async function partyNames(h, e) {
-  const m = new Map(); (await S.parties(h, e)).forEach((p) => m.set(String(p.party_id), p)); return m;
+/** the names of the parties a read shows — PERF1: `ids` = only those (a Day book page, the cheques list); without ids every party of the shop (Dues) */
+async function partyNames(h, e, ids) {
+  const m = new Map(); (await S.parties(h, e, ids)).forEach((p) => m.set(String(p.party_id), p)); return m;
 }
+/**
+ * ⭐ PERF1 · THE PAGE A BOOKS LIST IS ASKED FOR (DISCIPLINES §2 — the Inbox's contract: top-level total · page · limit, a server-side maximum):
+ *   ?limit=1..500 (default 100) · ?after=YYYY-MM-DD|ENTRY_NO — the last row of the page before (keyset, never OFFSET) · ?page — the client's count, echoed
+ *   ?entries=<entry_id>,… (≤ 500) — exactly those entries (a ledger line opening its own journal reads them, not the year's Day book)
+ * null = nothing asked: the whole range, as before PERF1 (the screens adopt the pages in the web's PERF2).
+ */
+const PL = require('../lib/page-limit');
+function pageQ(q) {
+  const ids = String(q.entries || '').split(',').map((x) => x.trim()).filter((x) => UUID.test(x));
+  if (ids.length) return { entries: ids.slice(0, S.PAGE_MAX) };
+  if (q.limit == null && q.after == null && q.page == null) return null;
+  const m = /^(\d{4}-\d{2}-\d{2})\|(.{1,60})$/.exec(String(q.after || ''));
+  return { limit: PL.limitOf(q.limit, S.PAGE_DEFAULT, S.PAGE_MAX), after: m ? { date: m[1], no: m[2] } : null, page: PL.pageOf(q.page) };
+}
+const cursorOf = (nx) => (nx ? nx.date + '|' + nx.no : null);
 
 /** GET /daybook?from&to → { currency, entries: [{ entry_no, posting_date, source_chit_id, source: { chit_id, ref, kind, counter, by, count, how, how_ref, split, doc_at, recorded_at } | null, narration,
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 router.get('/daybook', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), from = dateQ(req.query.from, today(req)), to = dateQ(req.query.to, from);
+    const e = ctx(req), from = dateQ(req.query.from, today(req)), to = dateQ(req.query.to, from), pg = pageQ(req.query);
+    let paged = null;
     const out = await withEntity(e, async (h) => {
-      const lines = await S.entryLines(h, e, from, to, null, null);
-      const names = await partyNames(h, e);
+      let lines;
+      if (pg && pg.entries) lines = await S.entryLines(h, e, from, to, null, null, pg);
+      else if (pg) { const p = await S.entryPage(h, e, from, to, null, null, pg), t = await S.pageSums(h, e, from, to, null, null, null, false); lines = p.rows; paged = { next: p.next, limit: p.limit, sums: t }; }
+      else lines = await S.entryLines(h, e, from, to, null, null);
+      const names = await partyNames(h, e, lines.map((l) => l.party_id).filter(Boolean));
       const entries = [], at = new Map();
       for (const l of lines) {
         let x = at.get(l.entry_id);
@@ -332,7 +354,9 @@ router.get('/daybook', auth, on, async (req, res) => {
       }
       return entries;
     });
-    res.json({ currency: curOf(req), from, to, entries: out, count: out.length });
+    /* PERF1: a page says its place — total entries in [from, to] · page · limit · `next` (the ?after= of the next page, null on the last) · the range's Σ Dr / Σ Cr, from the server */
+    const page = paged ? { total: paged.sums.entries, page: pg.page, limit: paged.limit, next: cursorOf(paged.next), totals: { dr_minor: paged.sums.dr, cr_minor: paged.sums.cr } } : {};
+    res.json(Object.assign({ currency: curOf(req), from, to, entries: out, count: out.length }, page));
   } catch (err) { fail(res, err); }
 });
 
@@ -340,7 +364,7 @@ router.get('/daybook', auth, on, async (req, res) => {
  *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], closing_minor } */
 router.get('/ledger/:account', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), to = dateQ(req.query.to, today(req)), from = dateQ(req.query.from, fyStart(req, to));
+    const e = ctx(req), to = dateQ(req.query.to, today(req)), from = dateQ(req.query.from, fyStart(req, to)), pg = pageQ(req.query);
     const party = UUID.test(String(req.query.party || '')) ? String(req.query.party) : null;
     const out = await withEntity(e, async (h) => {
       const key = String(req.params.account);
@@ -348,11 +372,17 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
       const a = chart.find((x) => String(x.code) === key) || chart.find((x) => x.role === key) || chart.find((x) => String(x.account_id) === key);
       if (!a || a.is_group) return null;
       const lo = await B.ledgerOf(h, e, a, party, from, to), open = lo.opening_minor;
-      const rows = (await S.entryLines(h, e, from, to, a.account_id, party)).filter((l) => !(lo.period0 && Number(l.period) === 0));   /* period 0 is IN the opening (WX-R2R) */
-      let run = open;
+      /* PERF1: a page (?limit · ?after) reads its entries only; its first running balance = the range's opening + ONE indexed SUM of the lines before
+         the cursor (S.pageSums — never the earlier pages read); the range's closing and Σ come from the same SUM, not from the rows on the page */
+      const p = pg && !pg.entries ? await S.entryPage(h, e, from, to, a.account_id, party, Object.assign({ noOpening: !!lo.period0 }, pg)) : null;
+      const t = p ? await S.pageSums(h, e, from, to, a.account_id, party, pg.after, !!lo.period0) : null;
+      const rows = (p ? p.rows : await S.entryLines(h, e, from, to, a.account_id, party)).filter((l) => !(lo.period0 && Number(l.period) === 0));   /* period 0 is IN the opening (WX-R2R) */
+      const first = t ? open + t.before_dr - t.before_cr : open;
+      let run = first;
       const lines = rows.map((l) => { run += Number(l.dr_minor) - Number(l.cr_minor); return { date: E.ymd(l.posting_date), doc_date: E.ymd(l.doc_date), what: l.narration || WORD[l.event_type] || l.event_type,
-        ref: l.entry_no, source_chit_id: l.source_chit_id, source: sourceOf(l), party_id: l.party_id, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), running_minor: run }; });
-      return { account: { code: a.code, name: a.name, nature: a.nature }, party, from, to, opening_minor: open, lines, closing_minor: run };
+        ref: l.entry_no, entry_id: l.entry_id, entry_no: l.entry_no, event_type: l.event_type, reverses_entry_id: l.reverses_entry_id || null, reversed_by: l.reversed_by || null, source_chit_id: l.source_chit_id, source: sourceOf(l), party_id: l.party_id, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), running_minor: run }; });
+      const base = { account: { code: a.code, name: a.name, nature: a.nature }, party, from, to, opening_minor: open, lines, closing_minor: t ? open + t.dr - t.cr : run };
+      return t ? Object.assign(base, { page_opening_minor: first, total: t.entries, page: pg.page, limit: p.limit, next: cursorOf(p.next), totals: { dr_minor: t.dr, cr_minor: t.cr } }) : base;
     });
     if (!out) return res.status(404).json({ error: 'Not found', message: 'No such ledger.' });
     res.json(Object.assign({ currency: curOf(req) }, out));
@@ -415,7 +445,9 @@ async function statementInput(h, e, party, from, to) {
  */
 router.get('/dues', auth, noKey, on, async (req, res) => {
   try {
-    /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · over_limit · interest_minor · last_remind. Owner only — the server decides. */
+    /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · credit_limit_from · over_limit · interest_minor · interest_state · last_remind.
+       Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
+       not set — credit_limit_from null / interest_state 'not_set' (interest_minor null) is the code the screen paints "Not set" from. */
     const fin = req.query.finance === '1';
     if (fin && !isOwner(req)) { const no = req.query.side === 'supplier' ? 'Only the owner may see what you owe.' : 'Only the owner may see collections.'; return res.status(403).json({ error: no, message: no }); }
     const e = ctx(req), asOf = dateQ(req.query.asOf, today(req));
@@ -423,38 +455,50 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
     const pay = fin && req.query.side === 'supplier';   /* F4 Payables: the supplier side of CB Finance */
     let payables = null;
     const out = await withEntity(e, async (h) => {
-      const chart = await S.accounts(h, e), names = await partyNames(h, e), per = new Map();
+      const chart = await S.accounts(h, e), per = new Map();
+      /* PERF1: "recorded on or before asOf (the shop's day)" is ONE moment — the start of the shop's next day (books-hooks.dayBounds) — compared per item;
+         it was dayOf() per item, a zone conversion each (≈ 0.6 s of 0.9 s on 24k items at 100k lines) */
+      const cut = Date.parse(require('../lib/books-hooks').dayBounds(asOf, req.books).to);
+      /* FIN-R1: interest and limit come from the customer's TERMS (finance-terms.resolve: own, else the shop default, else not set) — one grouped read */
+      const T = require('../lib/finance-terms');
+      const terms = fin && sides.includes('debtors') ? await T.customerTerms(h, e) : null;
+      const effOf = (pid) => { const own = terms && terms.by_party.get(String(pid)); return own ? T.resolve(terms.shop, own) : null; };
       let payableItems = [];
       for (const role of sides) {
         const a = chart.find((x) => x.role === role); if (!a) continue;
         const side = role === 'creditors' ? 'payable' : 'receivable', sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
-        const items = (await S.items(h, e, null, a.account_id)).filter((i) => require('../lib/books-hooks').dayOf(i.created_at, req.books) <= asOf).map(E.itemOf);
+        const items = (await S.items(h, e, null, a.account_id)).filter((i) => new Date(i.created_at).getTime() < cut).map(E.itemOf);
         const d = E.dues(items, asOf, side);
         if (role === 'creditors') payableItems = items;
         const byRef = d.outstanding.by_ref || {};
+        /* PERF1: each party's open documents, grouped ONCE — the filter over every document ran once per party (251 × 15k at 100k lines) */
+        const docsOf = new Map();
+        Object.keys(byRef).forEach((k) => { const x = byRef[k]; if (!(x.outstanding_minor > 0)) return; const p = String(x.party); if (!docsOf.has(p)) docsOf.set(p, []); docsOf.get(p).push(x); });
         Object.keys(d.ageing.by_party || {}).concat(Object.keys(d.outstanding.by_party || {})).forEach((pid) => {
           if (per.has(pid + '|' + role)) return;
           const ag = d.ageing.by_party[pid] || { undisputed: {}, disputed: {}, total_minor: 0 };
           const open = Number((d.outstanding.by_party || {})[pid] || 0);
-          const docs = Object.keys(byRef).map((k) => byRef[k]).filter((x) => String(x.party) === String(pid) && x.outstanding_minor > 0);
+          const docs = docsOf.get(String(pid)) || [];
           const oldest = docs.map((x) => x.due_date || x.date).filter(Boolean).sort()[0] || null;
           const buckets = {}; Object.keys(ag.undisputed || {}).forEach((k) => { buckets[k] = sign * ((ag.undisputed[k] || 0) + ((ag.disputed || {})[k] || 0)); });
           const disputed = Object.keys(ag.disputed || {}).reduce((t, k) => t + (ag.disputed[k] || 0), 0);
           const row = { party_id: pid, side: role === 'creditors' ? 'supplier' : 'customer', balance_minor: sign * open, oldest_due: oldest, disputed_minor: sign * disputed, buckets };
-          if (fin && role === 'debtors') row.interest_minor = E.interestMinor(docs, asOf, curOf(req));
+          if (fin && role === 'debtors') { const eff = effOf(pid); row.interest_minor = E.interestMinor(docs, asOf, curOf(req), eff && eff.interest.value); row.interest_state = E.interestState(eff); }
           per.set(pid + '|' + role, row);
         });
       }
+      /* the names of the parties with dues — PERF1: only those, read from the shop's own lists (never the platform's identities) */
+      const names = await partyNames(h, e, Array.from(per.values()).map((r) => r.party_id).concat(payableItems.map((i) => i.party)));
       /* one row per party: a party on both lists nets (what they owe you less what you owe them) */
       const rows = new Map();
       for (const r of per.values()) {
         const p = names.get(String(r.party_id)) || {};
         const x = rows.get(r.party_id);
-        if (!x) rows.set(r.party_id, Object.assign({ party_no: p.party_no || null, name: p.nickname || p.name || null }, r, fin ? E.limitView(p, r) : {}));
+        if (!x) rows.set(r.party_id, Object.assign({ party_no: p.party_no || null, name: p.nickname || p.name || null }, r, fin ? E.limitView(effOf(r.party_id), r) : {}));
         else { x.balance_minor += r.balance_minor; x.disputed_minor += r.disputed_minor; x.side = 'both'; x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
                Object.keys(r.buckets).forEach((k) => { x.buckets[k] = (x.buckets[k] || 0) + r.buckets[k]; });
-               if (fin) { x.interest_minor = (x.interest_minor || 0) + (r.interest_minor || 0); Object.assign(x, E.limitView(p, x)); } }
+               if (fin) { if (r.interest_minor != null) { x.interest_minor = (x.interest_minor || 0) + r.interest_minor; x.interest_state = r.interest_state; } Object.assign(x, E.limitView(effOf(r.party_id), x)); } }
       }
       /* FX1: a party with a foreign-currency balance shows it beside the books' figure — "USD 1,000 · ₹83,250" (b392; one grouped read; absent before b392 and for a party with none) */
       if (await S.fxLinesReady()) {
@@ -800,7 +844,15 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
     const e = ctx(req), all = String(req.query.all || '') === '1';
     const out = await withEntity(e, async (h) => {
       const rows = await S.cheques(h, e, all, 200);
-      const names = await partyNames(h, e), chart = await S.accounts(h, e), R = E.receivables(), kept = new Map(), day = today(req);
+      const pids = Array.from(new Set(rows.map((c) => String(c.party_id))));
+      const names = await partyNames(h, e, pids), chart = await S.accounts(h, e), R = E.receivables(), kept = new Map(), day = today(req);
+      /* PERF1: every listed party's items on each control account in ONE read per account (≤ 2) — it was one read per party inside the loop (N+1) */
+      for (const role of ['debtors', 'creditors']) {
+        const a = chart.find((x) => x.role === role), ids = Array.from(new Set(rows.filter((c) => (c.direction === 'in') === (role === 'debtors')).map((c) => String(c.party_id))));
+        if (!a || !ids.length) continue;
+        ids.forEach((pid) => kept.set(pid + '|' + a.account_id, []));
+        (await S.items(h, e, ids, a.account_id)).forEach((it) => { const k = String(it.party_id) + '|' + a.account_id; if (kept.has(k)) kept.get(k).push(E.itemOf(it)); });
+      }
       const list = [];
       /* the engine's credit shape ({ id, amount, cheque: { no, date, status } }) from the same rows; the amount back from the row by id, so no second rounding */
       const byId = new Map(rows.map((c) => [String(c.payment_id), c]));
@@ -809,7 +861,7 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
       for (const c of rows) {
         const a = chart.find((x) => x.role === (c.direction === 'in' ? 'debtors' : 'creditors'));
         const k = c.party_id + '|' + (a ? a.account_id : '');
-        if (!kept.has(k)) kept.set(k, a ? await B.partyItems(h, e, c.party_id, a.account_id) : []);
+        if (!kept.has(k)) kept.set(k, []);
         const next = ['deposited', 'cleared', 'bounced'].filter((to) => { try { R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day); return true; } catch (_) { return false; } });
         const p = names.get(String(c.party_id)) || {};
         list.push({ payment_id: c.payment_id, party_id: c.party_id, party_no: p.party_no || null, name: p.nickname || p.name || null, direction: c.direction, amount_minor: Number(c.amount_minor),
@@ -1230,7 +1282,7 @@ route('post', '/assets/:id/dispose', (req, e, s, b, by) => {
 });
 /** POST /depreciation/run { fy } → one entry at the year end, from the register; says which entity basis it used */
 route('post', '/depreciation/run', (req, e, s, b, by) => P().runDepreciation(e, s, b, by));
-/** POST /closing-stock { date, value_minor, nrv_minor?, method: 'manual' } */
+/** POST /closing-stock { date, value_minor?, nrv_minor?, method: 'manual' | 'automatic' (valued from the stock ledger — T1-INV) } */
 route('post', '/closing-stock', (req, e, s, b, by) => P().closingStock(e, s, b, by));
 /** POST /gst/close { fy, period } → { utilised, payable_minor, carried_minor, pay_total_minor, entry_no } · POST /gst/pay { fy, period, amounts, bank, challan_no } */
 route('post', '/gst/close', (req, e, s, b, by) => P().gstClose(e, s, b, by));

@@ -30,11 +30,11 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   else log.warn('weak JWT_SECRET', { reason: msg + ' — set a strong JWT_SECRET before any real deploy' });
 }
 
-// Fixed test OTP guard. DEV_OTP pins every OTP to a constant (e.g. 123456) for testing — a critical auth hole if
+// Fixed test OTP guard. DEV_OTP pins every OTP to a constant for testing — a critical auth hole if
 // it ever reaches a real environment. KNOWN + DEFERRED decision: allowed in dev/test ONLY during exploration (the
-// team uses 123456 to avoid needing a real inbox per test entity); the registration/login rework + real OTP delivery
+// team uses the fixed code to avoid needing a real inbox per test entity); the registration/login rework + real OTP delivery
 // lands at the UAT cutover, so DEV_OTP is HARD-BLOCKED (fail-closed) in uat/staging/live — it cannot silently ship.
-// The whole OTP posture is decided in ONE place now (lib/dev-otp.js) — the sealed-env list, the three fixed codes,
+// The whole OTP posture is decided in ONE place now (lib/dev-otp.js) — the sealed-env list, the fixed codes (LOCAL stack only, SEC1), the tester code,
 // and whether a code may ever be echoed in an HTTP response. This guard refuses to boot in a state that LOOKS sealed
 // but leaks, so the cutover cannot be half-done: naming a sealed env without unsetting DEV_OTP *and* proving real
 // delivery (OTP_EMAIL_ENABLED=true) is fatal, not a warning.

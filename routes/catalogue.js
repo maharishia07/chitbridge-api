@@ -20,7 +20,7 @@ const money = require('../lib/money');                      // MONEY TYPE — a 
 // ⚠️ ONE generator (lib/bridgeid.js). This copy was the ONLY one that ever received the S4 CSPRNG hardening —
 //    the fix was correct and reached one sixth of the code it was written for. That is why it now lives in one file.
 const genBridge = require('../lib/bridgeid').generateBridgeId;
-// Customer (storefront) OTP: fixed 123123 in dev (distinct from the entity dev OTP 123456); CSPRNG in real prod (S4).
+// Customer (storefront) OTP: a fixed customer code on a LOCAL stack only (distinct from the entity code, lib/dev-otp.js); CSPRNG elsewhere (S4).
 const devOtp = require('../lib/dev-otp');   // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
 const genOTP = () => devOtp.fixedOtp('customer') || require('crypto').randomInt(100000, 1000000).toString();
 const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
@@ -884,7 +884,7 @@ router.post('/:bridge_id/support/start', validate, async (req, res) => {
 });
 
 router.post('/:bridge_id/support',
-  [ body('otp').trim().isLength({ min: 6, max: 6 }),
+  [ body('otp').trim().isLength({ min: 6, max: 64 }),
     body('observed').trim().isLength({ min: 1 }).withMessage('Say what went wrong') ],
   validate,
   async (req, res) => {
@@ -901,7 +901,7 @@ router.post('/:bridge_id/support',
       if (!cr.rows.length)
         return res.status(400).json({ error: 'Verify failed', message: 'Ask for a code first' });
       const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp);
+      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] });   // SEC1: the typed contact, for TESTER_NAMES
       if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Verify failed', message: otpCheck.message });
 
       /* ⚠️ THE CODE IS SPENT, exactly as /order/confirm spends it. verifyOtp does not clear it, so without this
@@ -939,7 +939,7 @@ router.post('/:bridge_id/support',
 
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
 router.post('/:bridge_id/order/confirm',
-  [ body('otp').trim().isLength({ min: 6, max: 6 }),
+  [ body('otp').trim().isLength({ min: 6, max: 64 }),
     body('line_items').isArray({ min: 1 }).withMessage('Order is empty') ],
   validate,
   async (req, res) => {
@@ -957,7 +957,7 @@ router.post('/:bridge_id/order/confirm',
          FROM identities WHERE email = $1`, [handle]);
       if (!cr.rows.length) return res.status(400).json({ error: 'Verify failed', message: 'Start the order first' });
       const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp);
+      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] });   // SEC1: the typed contact, for TESTER_NAMES
       if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Verify failed', message: otpCheck.message });
       // build the guaranteed chit: customer = sender, shop = receiver
       // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
@@ -1284,7 +1284,7 @@ router.post('/:bridge_id/order/confirm',
 
 // ── CJ-F1: verify OTP for sign-in (no order) → customer token ──
 router.post('/:bridge_id/login/verify',
-  [ body('otp').trim().isLength({ min: 6, max: 6 }) ],
+  [ body('otp').trim().isLength({ min: 6, max: 64 }) ],
   validate,
   async (req, res) => {
     try {
@@ -1298,7 +1298,7 @@ router.post('/:bridge_id/login/verify',
          FROM identities WHERE email = $1`, [handle]);
       if (!cr.rows.length) return res.status(400).json({ error: 'Sign-in failed', message: 'No account — place an order first' });
       const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp);
+      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] });   // SEC1: the typed contact, for TESTER_NAMES
       if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Sign-in failed', message: otpCheck.message });
       await query(`UPDATE identities SET status='active', otp_code=NULL, otp_expires_at=NULL, otp_attempts=0, last_active_at=NOW() WHERE identity_id=$1`, [c.identity_id]);
       // ⭐ [capability: sign-in] issueToken() — see the other call site in this file for why this stopped

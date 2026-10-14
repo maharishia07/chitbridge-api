@@ -4,6 +4,32 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `items[].item_data.avail` (changed) | `{ qty, source, as_of }` — unchanged shape; `source` gains `ledger`; `qty` keeps 3 decimals | Derived per read (never written back) by `availability.withLedger` from `stock-store.onHand` (stock_balance summed across batches) when `availability.sourceOf(policy)` = `ledger` — i.e. no connector owns the shop's `stock` stream (`stream_owner.stock`). Otherwise the connector's stamp as before. Absent = unknown (never moved, or below zero). Read by web cart.js stock chip (`shop-stock`), qty_zero_hides. |
+| `from_ledger` | `{ value_minor, lines, movements }` | Only on `method:'automatic'`. Derived: `stock-store.asAt` (the movement log replayed to the end of the shop's day, weighted average). Written by: nobody (answer only). Read by: the closing-stock screen (not yet). |
+| `code` · `items` (422) | `STOCK_LEDGER_MISSING` · `STOCK_LEDGER_EMPTY` · `STOCK_BELOW_ZERO` · `STOCK_UNCOSTED` · `STOCK_UNREADABLE`; `items` = up to 20 product names | Derived by `books-period.ledgerValue` — a screen branches on `code`, never on the sentence. |
+
+## POST /api/governance/ai-draft (skill `line-item-draft`) · POST /api/capture/:id/raise — the quantity guard (T1-AI, 2026-10-14)
+
+Derived, never stored by the guard. Written by `lib/line-guard.js` (calls the engines' `numerals.verifyQuantity` / `negationIn`) over an AI reading. Read by: compose "✨ Fill" (app.html `ccAiFill`) and the raise screen.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `data.quantity_check` (ai-draft, line-item-draft only) | `{ code: 'QTY_OK'\|'QTY_NEEDS_CHECK', needs_human: n, quantity_rejected[], quantity_unverified[], refused[], unclear[] }` | Derived per call by `guardLines`. A screen branches on `code` / `needs_human`, never on the sentences. |
+| `line_items[].raw_phrase` (line-item-draft, new) | string | The model's pointer at the words of the description (same contract as message-to-chit, b141). |
+| `line_items[].qty_rejected` · `phrase_says` · `qty_unverified` · `needs_human` (line-item-draft, new; raise as before) | string · number · true · true | Same keys the raise already wrote; `qty` is null when rejected — never corrected. |
+| `line_items[].refused` (ai-draft and raise, new) | true | The line's own words refuse it ("venam", "வேணாம்"). Flagged, never dropped. |
+| `line_items[].negation_unclear` (ai-draft and raise, new) | string | `illa` — "or" and "not" both; the reason sentence (display only). |
+
+## Column · `ai_skill.model` (b433, T1-AI)
+
+| Column | Shape | Source · who writes it · who reads it |
+|---|---|---|
+| `ai_skill.model` | text or NULL | Stated by the platform owner per skill (slot). NULL = env `AI_MODEL`, else `lib/ai.js DEFAULT_MODEL`. Read only by `lib/ai.js modelFor()`; recorded per call in `usage_ledger.meta.model`. |
+
 ## GET /api/entities/constitutions · `installation` · `allowed_countries` · `countries` (GOV-SPIN, 2026-10-14)
 
 PUBLIC (pre-auth), the register panel's one read. Additive beside `constitutions`. Written by: nobody (derived) — the installation row by migration / `deploy/spin-lib.sh` (CB_SPIN_COUNTRY) / `scripts/seed-local-installations.sql` (local only). Read by: web `app/register-form.js` (the gov panel).
@@ -522,3 +548,22 @@ A rate is EVIDENCE the owner types or imports — never fetched, never assumed (
 | a foreign event's refusal `code: FX_RATE_MISSING` | — | derived: "No USD rate for 14 Oct — add it in Accounts › Rates." — the hooks park it on Waiting with that sentence; it posts on the retry once the rate exists | composeEntry (`fx-rates.forEvent`) | Waiting · the payment sheet |
 
 Limits (said, not hidden): a foreign PAYMENT settles at the party's open foreign balance's average carried rate (the booked rate of each bill when only one is open); one larger than what they owe in that currency is refused (record the extra as an advance). A foreign BANK ledger is not told apart from the shop's own bank yet, so revaluation covers debtors and creditors only.
+
+## Pages · GET /api/books/daybook · /ledger/:account · /api/chits/inbox · /sent (PERF1, 2026-10-14 · migration b406, FILE — Athi runs it)
+
+DISCIPLINES §2's list contract (top-level `total · page · limit`, a server-side maximum) on the books lists, keyset (never OFFSET). The page is
+asked with `?limit=1..500` (default 100; `lib/page-limit.limitOf` — the one clamp) and `?after=` (the `next` of the page before); no page asked =
+the whole range, exactly as before (the web adopts the pages in PERF2). Who may: whoever may read the books / the list — unchanged.
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `/daybook`, `/ledger/:account` → `total` | — | derived: how many entries [from, to] holds (a ledger: those with a line on it; period 0 left out where the opening holds it) — `books-store.pageSums` | the route, only when a page is asked | the pager (the count it shows) |
+| … `page` · `limit` | — | derived: the client's page number echoed · the limit the SERVER applied (≤ 500) | the route | the pager |
+| … `next` | — | derived: `YYYY-MM-DD\|ENTRY_NO` of the page's last entry — the next page's `?after=`; null on the last page (`books-store.entryPage` reads one entry more than asked) | the route | the pager |
+| … `totals { dr_minor, cr_minor }` | — | derived: Σ Dr · Σ Cr of the whole range (a ledger: its lines; the Day book: every line) — the server's figure, never the loaded rows added up | `pageSums` | the list's footer |
+| `/ledger/:account` → `page_opening_minor` | — | derived: the balance BEFORE this page's first line = `opening_minor` + Σ(Dr − Cr) of the range's lines before the cursor (one indexed SUM); `opening_minor` · `closing_minor` stay the RANGE's on every page | the route | the first running balance of a page |
+| `/ledger/:account` → `lines[].entry_id · entry_no · event_type · reverses_entry_id · reversed_by` | — | source: the line's journal entry and its reversal — the party statement's M29 line keys, the same shape (`reversed_by` read once per statement, b406) | the route | the web: Reverse from the row (bkCanReverse · bkReverseLine) and the line's journal by `/daybook?entries=` |
+| `/daybook?entries=<id>,…` | — | a READ of exactly those entries (≤ 500) — never the range's Day book for one line | — | the Ledger's opened line (cap-books.js bkLgJournal) |
+| `/chits/inbox`, `/chits/sent` → `total` | — | derived: the COUNT, on page 1 only; `null` on a later page (app.html pgNext keeps page 1's) | routes/chits.js | the Task / Order pager |
+| … `next` | — | derived: `<created_at UTC, µs>\|<chit_id>` of the page's last row — the next page's `?after=` (newest-first order only; another sort keeps `page` + OFFSET); null on a short page | routes/chits.js (`keysetOf` · `afterOf`) | app.html fetchPage |
+| … `limit` | — | the server's: ≤ 200 (`LIST_MAX`) — `?limit=1000000` was obeyed before PERF1 | routes/chits.js | the pager |

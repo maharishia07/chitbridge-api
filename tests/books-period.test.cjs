@@ -194,8 +194,45 @@ function memoryRegister() {
   const cs4 = await q('POST', '/closing-stock', { date: '2026-10-31', value_minor: 6000000, nrv_minor: 5500000, method: 'manual', client_ref: 'cs-oct' });
   const cse4 = entries('stock:cs-oct')[0];
   eq('…cost 60,000 but NRV 55,000: the LOWER is valued (AS 2) — only 5,000 more than the books', cse4 && stored(cse4), engine({ type: 'closing_stock', mode: 'manual', book: 50000, cost: 60000, nrv: 55000, date: '2026-10-31', currency: 'INR' }));
-  const cs5 = await q('POST', '/closing-stock', { date: '2026-10-31', value_minor: 7000000, method: 'automatic' });
-  ok('\'automatic\' answers the engine\'s refusal in plain words (no quantities yet)', cs5.status === 422 && /quantities/.test(cs5.body.message), JSON.stringify(cs5.body));
+  /* ── T1-INV: 'automatic' = the shop's OWN stock ledger, replayed to the end of the day; refused only when something is truly missing, NAMED ── */
+  {
+    const SCH = require(path.join(H.API, 'lib', 'schema')); const hasT0 = SCH.hasTable; let LEDGER = false;
+    SCH.hasTable = async (t) => (t === 'stock_movement' ? LEDGER : hasT0(t));
+    const RICE = 'a1000000-0000-4000-8000-000000000001', SUGAR = 'a1000000-0000-4000-8000-000000000002', DAL = 'a1000000-0000-4000-8000-000000000003';
+    const NAMES = { [RICE]: 'Ponni Rice', [SUGAR]: 'Sugar', [DAL]: 'Toor Dal' };
+    let MOVES = [];
+    const mv = (item_id, qty, rate, reason, at) => ({ movement_id: 'm' + MOVES.length, item_id, location: 'default', lot: '', qty, rate, value_delta: null, unit: 'kg', reason, at });
+    const dq0 = X.db.query.bind(X.db); let movesUntil = null;
+    X.db.query = async (t, p) => {
+      if (/FROM stock_movement/.test(String(t))) { movesUntil = p[1]; return { rows: MOVES.filter((m) => m.at < p[1]) }; }
+      if (/FROM catalogue_items/.test(String(t))) return { rows: p[1].filter((id) => NAMES[id]).map((id) => ({ id, name: NAMES[id] })) };
+      return dq0(t, p);
+    };
+    const auto = (ref) => q('POST', '/closing-stock', { date: '2026-10-31', method: 'automatic', client_ref: ref });
+    const n2 = X.T.entries.length;
+    const m0 = await auto('cs-auto');
+    ok('T1-INV \'automatic\' with no ledger on the server → 422 STOCK_LEDGER_MISSING in words, nothing posted', m0.status === 422 && m0.body.code === 'STOCK_LEDGER_MISSING' && /stock ledger/.test(m0.body.message) && X.T.entries.length === n2, JSON.stringify(m0.body));
+    LEDGER = true;
+    const m1 = await auto('cs-auto');
+    ok('…a ledger with nothing up to the date → 422 STOCK_LEDGER_EMPTY', m1.status === 422 && m1.body.code === 'STOCK_LEDGER_EMPTY' && /2026-10-31/.test(m1.body.message), JSON.stringify(m1.body));
+    MOVES = [mv(RICE, 10, 400, 'purchase', '2026-10-05T04:00:00.000Z'), mv(RICE, -4, null, 'sale', '2026-10-20T06:00:00.000Z'),
+      mv(RICE, -5, null, 'sale', '2026-11-02T06:00:00.000Z'),                                       /* after the month end — not in the value */
+      mv(DAL, 2, 120, 'purchase', '2026-10-05T04:00:00.000Z'), mv(DAL, -3, null, 'sale', '2026-10-25T06:00:00.000Z'),
+      mv(SUGAR, 5, 0, 'purchase', '2026-10-06T04:00:00.000Z')];
+    const m2 = await auto('cs-auto');
+    ok('…a product sold below zero → 422 STOCK_BELOW_ZERO NAMING it (Toor Dal), nothing posted', m2.status === 422 && m2.body.code === 'STOCK_BELOW_ZERO' && /Toor Dal/.test(m2.body.message) && m2.body.items[0] === 'Toor Dal' && X.T.entries.length === n2, JSON.stringify(m2.body));
+    MOVES = MOVES.filter((m) => m.item_id !== DAL);
+    const m3 = await auto('cs-auto');
+    ok('…a product on hand with no cost → 422 STOCK_UNCOSTED naming it (Sugar)', m3.status === 422 && m3.body.code === 'STOCK_UNCOSTED' && /^Sugar came in with no cost/.test(m3.body.message), JSON.stringify(m3.body));
+    MOVES = MOVES.filter((m) => m.item_id !== SUGAR);
+    const m4 = await auto('cs-auto');
+    const me = entries('stock:cs-auto')[0];
+    ok('…the ledger\'s quantities valued: 6 kg rice at 400 = 2,400 as at the END of 31 Oct (IST) — November\'s sale left out', m4.status === 200 && m4.body.ok && m4.body.from_ledger
+      && m4.body.from_ledger.value_minor === 240000 && m4.body.from_ledger.lines === 1 && movesUntil === '2026-10-31T18:30:00.000Z', JSON.stringify([m4.body, movesUntil]));
+    eq('…its lines are the engine\'s closing_stock for that value (book 55,000 → 2,400)', me && stored(me), engine({ type: 'closing_stock', mode: 'manual', book: 55000, amount: 2400, date: '2026-10-31', currency: 'INR' }));
+    ok('…said where it came from: the narration names the stock ledger', me && /from the stock ledger/.test(String(me.narration || '')), me && me.narration);
+    X.db.query = dq0; SCH.hasTable = hasT0;
+  }
   await q('POST', '/periods/2026-27/7/lock', { reason: 'x' });
   const n1 = X.T.entries.length;
   const csl = await q('POST', '/closing-stock', { date: '2026-10-31', value_minor: 1000000, method: 'manual', client_ref: 'cs-late' });
