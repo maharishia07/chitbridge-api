@@ -451,6 +451,16 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
                Object.keys(r.buckets).forEach((k) => { x.buckets[k] = (x.buckets[k] || 0) + r.buckets[k]; });
                if (fin) { x.interest_minor = (x.interest_minor || 0) + (r.interest_minor || 0); Object.assign(x, E.limitView(p, x)); } }
       }
+      /* FX1: a party with a foreign-currency balance shows it beside the books' figure — "USD 1,000 · ₹83,250" (b392; one grouped read; absent before b392 and for a party with none) */
+      if (await S.fxLinesReady()) {
+        const ids = sides.map((role) => (chart.find((x) => x.role === role) || {}).account_id).filter(Boolean);
+        const fx = ids.length ? await S.foreignBalances(h, e, { asOf, functional: curOf(req), account_ids: ids }) : [];
+        for (const f of fx) {
+          const r = rows.get(f.party_id); if (!r) continue;
+          const have = (r.foreign = r.foreign || []).find((x) => x.currency === f.txn_currency);
+          if (have) { have.balance_minor += f.txn_minor; have.carried_minor += f.fn_minor; } else r.foreign.push({ currency: f.txn_currency, balance_minor: f.txn_minor, carried_minor: f.fn_minor });
+        }
+      }
       if (pay) {
         const P = require('../lib/books-payables'), more = await P.read(h, e);
         const v = P.view({ asOf, currency: curOf(req), country: req.books && req.books.country, payable_items: payableItems, cheques: more.cheques, names, msme: more.msme, terms: more.terms, chart });
