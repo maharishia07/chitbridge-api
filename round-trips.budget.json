@@ -1629,7 +1629,8 @@
       "wire": 3,
       "fired": true,
       "status": 200,
-      "why": "T3-P4-ACCOUNT: policy.get + select.rows (one transaction), measured once by lib/measure — CB Finance › Reports; the workshop MIS read it before under cap-admin.js"
+      "why": "T3-P4-ACCOUNT: policy.get + select.rows (one transaction), measured once by lib/measure — CB Finance › Reports (cap-mis.js api('misMetrics')) and the workshop MIS (cap-admin.js). extra: routes/folders.js is mounted without an inline require, so tools/endpoint-usage.cjs cannot place its paths (its own note) — invisible to the called list, fired here",
+      "extra": true
     },
     "GET /api/facts/counters": {
       "file": "facts.js",
