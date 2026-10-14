@@ -4,6 +4,18 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## GET /api/network-offers · `store.networks[].may` · `brand.members[].may` · `brand_bridge_id` · `root_bridge_id` (NET-SRV1, 2026-10-14)
+
+Derived per read, never stored. Written by: nobody (answer only). Read by: the Network app (web public/app/network-app.js — the screen that paints them waits for its design). Contract: docs/contracts/web-api.json `GET /api/network-offers`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `store.networks[].may` · `brand.members[].may` | `{ request, approve, decline, suspend, resume, disconnect }`, each `{ ok: boolean, why: string\|null }` | Derived by `lib/network-membership.mayOf(standing, side)` from the ONE rule table `src/services/network.mayAct` (the sentence POST /api/network/connections/:id/* would refuse with) and the edge's state. `why` is null when `ok`. A screen branches on `ok` and greys a refused action with `why`; it never decides from the state words. |
+| `store.networks[].brand_bridge_id` | string or null | `identities.bridge_id` of the brand, read in `standing()`'s one statement. null when the brand has no node on the tree yet. |
+| `store.networks[].root_bridge_id` | string or null | `cb_entity.bridge_id` of the TOP of the brand's tree (`subpath(path, 0, 1)`), read in the same statement — the network store's address (`network-shop.html?bridge=`, GET /api/catalogue/network/:bridge_id). Never parsed off the ltree label (its dashes are mangled). |
+| `brand.members[].brand_node` | string (cb_entity id) | Added to `ROSTER_SQL`; the brand's own node, so `mayOf` can name the parent. |
+| `store.networks[]` (changed: who is listed) | — | Now every brand the store holds a commercial edge with (requested · active · suspended, whoever asked — `lib/network-membership.edgesOf`) plus the brands whose catalogue it sells. Before: adoptions + invitations only, so a store's OWN request to a brand it does not sell for was invisible. |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
