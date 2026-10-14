@@ -252,16 +252,28 @@ const policy = require('../lib/policy');
 const policyEntity = (req) => auth.entityOf(req);
 
 /* T2-POLICY (POL1): `schema[key].ui` is the Business rules card (label · help · level · gov · order) and `bound_schema` its locked rows —
-   the web paints from these, it holds no copy. 1 trip. */
+   the web paints from these, it holds no copy. 1 trip.
+   T3-SETTINGS: WHO MAY CHANGE EACH FLAG, said by the server (CB Settings › Policy greys a row with it) — `may[flag]`, from the SAME place the
+   PATCH refuses from (lib/policy FLAGS[k].may · may_why; BOUND keys are the platform's), so the sentence a screen shows is the sentence the
+   server refuses with. */
+const POLICY_BOUND_WHY = 'Set by the platform for every shop.';
+function policyMay(req) {
+  const owner = require('../lib/owner'), out = {};
+  for (const k of Object.keys(policy.FLAGS)) out[k] = policy.FLAGS[k].may === 'owner' ? owner.may(req, policy.FLAGS[k].may_why) : { ok: true, code: null, why: null };
+  for (const k of Object.keys(policy.BOUND)) out[k] = { ok: false, code: 'PLATFORM_BOUND', why: POLICY_BOUND_WHY };
+  return out;
+}
+
 router.get('/policy', auth, async (req, res) => {
-  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA }); }
+  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) }); }
   catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
 });
 
 router.patch('/policy', auth, async (req, res) => {
-  /* ⚠️ who may change a flag is on the flag (policy.FLAGS[k].may — system_folders, books): the owner's, not a back door for a co-assist or a key */
+  /* ⚠️ who may change a flag is on the flag (policy.FLAGS[k].may — system_folders, books): the owner's, not a back door for a co-assist or a key.
+     The code is the one owner code (OWNER_ONLY) — the same the GET's may[flag] carries, so a screen branches on one word. */
   const refused = policy.refusalFor(req.body, require('../lib/owner').isOwner(req));
-  if (refused) return res.status(403).json({ error: 'Only the owner may do this.', code: 'POLICY_OWNER_ONLY', message: refused });
+  if (refused) return res.status(403).json({ error: 'Only the owner may do this.', code: require('../lib/owner').OWNER_ONLY, may: false, why: refused, message: refused });
   try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
   catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });

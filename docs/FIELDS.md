@@ -68,6 +68,16 @@ All derived per read, never stored. Read by: web tasks.html › Disputes and CB 
 | GET /api/facts/assist `lines` · `figures` | `{ answers }` | lib/home-facts `assist`: active rows of assist_qa (the platform's library). Read by Home's CB Assist card (manifest `coassist`). |
 | whoami `actions.publish` | `{ ok }` \| `{ ok:false, why: 'not_helpdesk'\|'not_read', say }` | The same entity_schemas test POST /assist/publish refuses with (its 403 now carries `why: 'not_helpdesk'`). |
 
+## GET /api/counters · `may.manage` · GET /api/entities/policy · `may` · GET /api/facts/counters (T3-SETTINGS, 2026-10-14)
+
+CB Settings › Counters & keys / Policy greys an action with the server's answer; the client branches on `ok` / `code`, never on `why`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `may.manage` (GET /api/counters, new) | `{ ok, code: null\|'OWNER_ONLY', why: string\|null }` | Derived per read by `lib/owner.may` — the same test and sentence as `lib/owner.gate`, which refuses every counters write (POST · PATCH · open · release · assign) with 403 `code:'OWNER_ONLY'`. Written by nobody. Read by web cap-settings.js (Add · Open on this PC · Release · Save the name). |
+| `may[flag]` (GET /api/entities/policy, new) | `{ [flag]: { ok, code: null\|'OWNER_ONLY'\|'PLATFORM_BOUND', why } }` — one per `lib/policy` FLAGS key + each BOUND key | Derived per read by `policyMay` (routes/entities.js) from lib/policy `FLAGS[k].may · may_why` (the place the PATCH refuses from, 403 `code:'OWNER_ONLY'`) and `policy.BOUND`. Read by web cap-settings.js (Policy · the connectors-in-use switch). |
+| `lines` · `figures` (GET /api/facts/counters, new card) | `{ lines:[{ text, value }], figures:{ counters, counters_open, keys } }` | Derived by `lib/home-facts.counters` from the till card's REGISTER_SQL (one trip) and its open rule. `keys` counts open non-till keys. Read by web shell.js (the manifest row `counters`). |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
@@ -652,6 +662,6 @@ No SQL, no new stored key. Who WRITES changed; what is stored did not.
 |---|---|---|
 | `identities.policy_flags` (every key) | jsonb | source. Written ONLY by `lib/policy.js` — `set()` for FLAGS keys, `patchKey(db, entity, path, value, { op })` / `patchSql` for everything else (api_keys · counters · devices · network_* · profile_provenance · storefront_exposure). Guard: tests/policy-one-writer.test.cjs (0 direct writers). Readers unchanged. |
 | `FLAGS[key].ui` | `{ order, label, level, gov, help, labels?, options?, scale?, suffix?, step? }` | derived (code, lib/policy.js `CARD`). Not stored. Sent by `GET /api/entities/policy` as `schema[key].ui`; read by the web's Business rules card (cap-admin.js) — its former POLICY_FLAGS copy is gone. |
-| `FLAGS[key].may` · `.may_why` | `'owner'` · sentence | derived (code). `system_folders`, `books`. Read by `policy.refusalFor` in `PATCH /api/entities/policy` (403 `POLICY_OWNER_ONLY`). |
+| `FLAGS[key].may` · `.may_why` | `'owner'` · sentence | derived (code). `system_folders`, `books`. Read by `policy.refusalFor` in `PATCH /api/entities/policy` (403 `OWNER_ONLY`). |
 | `bound_schema` (GET /api/entities/policy) | `{ dispute_scope: { type, options, def, ui } }` | derived (code). Read by the card for its locked row. |
 | `identities.gstn` · `identities.address` (the shop's own row) | text | source. Written ONLY through `lib/profile.js` `setShopIdentity` / `shopIdentitySql` (PATCH /entities/profile · country setup · the profile sync · a network store's place · the vault save's write-through). The tax number is checked by `profile.taxIdRefusal(country, number)` — the pack `taxIdWordOf` names (GSTIN checksum · ABN · TRN · ≤ 40 for no pack). A party's row (`parent_entity_id`) is the counterparty's, not this. |
