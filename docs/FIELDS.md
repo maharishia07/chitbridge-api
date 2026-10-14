@@ -4,6 +4,15 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## POST /api/signin/verify · `constitution` · `business_json.invoice` reverse-charge keys now written live (SIGNIN-CONST, 2026-10-14)
+
+No new key. Two existing keys change who writes them and when; their shape is the engine's (engines v1.20.0 INV-01) and is unchanged.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| verify `constitution` (changed meaning) | `base@v3` (versionref) or null | Was: the constitution the sign-in had just minted — and it minted on EVERY owner verify, resetting the shop to `base`. Now: the constitution the shop HOLDS, from the one writer `lib/country-setup.stampConstitution` (registration's verify applies the registrant's choice to the `base` placeholder; a later sign-in inserts only when no stamp exists; never overwrites). Read by: nobody on the web yet (the register panel ignores it). Layer: Constitution · class bound. |
+| `business_json.invoice.ItemList[].RcmCd` · `RcmCgstAmt` · `RcmSgstAmt` · `RcmIgstAmt` · `RcmItc` · `ValDtls.RcmCgstVal/RcmSgstVal/RcmIgstVal` · `_cb.rcm[]` | the engine's reverse-charge heads (present only on an invoice with a reverse-charge line; every other invoice keeps its shape) | Derived ONCE by `tax.determine({ rcm: true })` — the engine's rule (registered recipient; unregistered supplier or an always-RCM category of the recipient's pack). Written by: `tax-copy.entryFor` → `tax-lines.invoiceFor` for MY copy of a purchase (`sells: false`) when my pack carries RCM categories (`tax-lines.rcmOptIn`: IN yes · AU / AE / no country no), frozen by `freezeOnComplete` as before. Read by: `books-hooks.rcmOf` → posting `rcmLines_` (Cr 2204–2206, Dr input credit when `itc`), `books-period` (the GST close's cash challan), `gst-returns`. Before this round nothing wrote them live (the opt-in was dropped in invoiceFor), so reverse charge never posted. |
+
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
