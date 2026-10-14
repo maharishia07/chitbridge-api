@@ -196,14 +196,16 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "PERF1, by hand: live = the gate read + ONE transaction — cheques · the listed parties' names (S.parties(ids), from the shop's two lists) · chart · the listed parties' items in ONE read per control account (≤ 2). It was one items read PER PARTY inside the loop (N+1). The offline stub answers 404 (ledger off): the floor."
     },
     "GET /api/books/daybook": {
       "file": "books.js",
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "PERF1, by hand: live = the gate read + ONE transaction — the lines (the reversals joined once per statement, not a LATERAL per line) · the page's parties' names (S.parties(ids)). With ?limit/?after: + 1 statement (S.pageSums — total · Σ Dr · Σ Cr of the range) in the same trip; ?entries=: none. 0 new trips."
     },
     "GET /api/books/dues": {
       "file": "books.js",
@@ -233,7 +235,8 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "PERF1, by hand: live = the gate read + ONE transaction — chart · the opening (B.ledgerOf: the year's month rows, every year in ONE read) · the lines. With ?limit/?after: + 1 statement (S.pageSums — the SUM before the cursor, the range's Σ and count) in the same trip. 0 new trips."
     },
     "GET /api/books/packs": {
       "file": "books.js",
@@ -318,7 +321,8 @@
       "trips": 1,
       "wire": 6,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "PERF1, by hand: the carry-forward reads every year it walks back through in ONE statement (books.yearBalances → S.yearRows([years])) — it was one statement per past year (≤ 30). 0 new trips."
     },
     "GET /api/books/year/:fy/status": {
       "file": "books.js",
@@ -375,7 +379,8 @@
       "trips": 1,
       "wire": 14,
       "fired": true,
-      "status": 200
+      "status": 200,
+      "why": "PERF1, by hand: party-fields.decorate reads the list rows, tax ids and open items of the parties ON THIS LIST only (ANY($2)) — same statements, 0 new trips."
     },
     "GET /api/crm/parties/:id": {
       "file": "crm.js",

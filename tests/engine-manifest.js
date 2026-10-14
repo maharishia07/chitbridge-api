@@ -144,6 +144,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      but it judges nothing about money or trade; a price reaches it already formatted (2026-09-17). */
   'screen-kit.js',
   'ai.js', 'assist-kb.js', 'capture.js', 'catalogue-build.js', 'catalogue-view.js', 'compliance.js',
+  /* ADOPTION, not engine (T1-AI): line-guard.js only CALLS the engines' nums (numerals.js) over an AI reading — the
+     judgement is the engine's; this file decides which line is flagged for a person. */
+  'line-guard.js',
   /* ADOPTION, not engine, and the split is the point: lib/rewards.js decides what a point is WORTH (pure, no DB,
      Tier A) while reward-store.js only knows where one is KEPT — four queries against an append-only table. Swap
      the store for another database and nothing about a customer's balance changes; swap the engine and it does. */
@@ -190,6 +193,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* PERF1: the one page-size clamp every list route reads (a default, a server-side maximum) — plumbing, not a rule of the platform. (2026-10-14) */
+  'page-limit.js',
   /* HX1: where this installation is reached from outside (PUBLIC_API_BASE / PUBLIC_WEB_BASE) — hosting config, not a rule. (2026-10-13) */
   'public-base.js',
   /* the field ledger's repo-reading helper (migration columns, form inputs, readers of a not-used field) — a build-time
