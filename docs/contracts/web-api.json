@@ -1772,12 +1772,14 @@
     "why"
    ]
   },
-  "GET /api/books/returns #422": {
-   "status": 422,
+  "GET /api/books/returns #rail": {
+   "status": 200,
    "example": {
+    "form": null,
+    "pack": "IN",
     "code": "RETURN_FROM_RAIL",
-    "error": "India's GSTR-1 and GSTR-3B are read from the frozen invoices on the rail (GET /api/tax/gstr), not from the ledgers.",
-    "message": "India's GSTR-1 and GSTR-3B are read from the frozen invoices on the rail (GET /api/tax/gstr), not from the ledgers."
+    "why": "Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month's GST here.",
+    "rail": "/api/tax/gstr"
    },
    "optional": []
   },

@@ -2,7 +2,7 @@
  * home-facts.test.cjs — GET /api/facts/:card (N18): what each Home card says, from the server, or not at all.
  *
  * Offline: the real route and lib/home-facts over a stand-in db. Held here:
- *   · each card's shape ({ lines:[{text,value?,tone?}] }; rail = { suppliers, customers, in, out, stuck })
+ *   · each card's shape ({ lines:[{text,value?,tone?}] }; rail = { suppliers, customers, in, out, tasks, stuck } — in/out/tasks = Tasks & Orders' folder counts)
  *   · every answer costs at most 3 database trips (the rail: overdue clock + CRM lists + chits, run together) (readBatch = 1, withEntity = 1, query = 1)
  *   · a figure the server cannot compute is OMITTED, never 0 (no summary today -> no bills line; a truncated read -> no in/out/stuck)
  *   · cost never travels: the stand-in returns hostile cost values and none reaches a body; no statement selects item_data
@@ -54,9 +54,9 @@ function chits() {
       counterparty_id: 'e2', counterparty_name: 'cbincroot', all_recipients: [{ display_name: 'Mayur Bhavan' }, { display_name: 'cbincroot' }], manual_subject: 'Payment advice PY/2026-27/000002' },
     { chit_id: 'exp', direction: 'received', sender_entity_id: 'e1', current_status: 'pending', created_at: d(1), open_disputes: 0, purpose: 'expense', alt_value: '90', value: '0', manual_subject: 'Expense - rent' }];
   return own.concat([
-    { chit_id: 'a', direction: 'received', current_status: 'pending', created_at: d(10), open_disputes: 0 },   /* in, and stuck (7-day default) */
-    { chit_id: 'b', direction: 'received', current_status: 'pending', created_at: d(1), open_disputes: 0 },    /* in */
-    { chit_id: 'c', direction: 'sent', current_status: 'accepted', created_at: d(2), open_disputes: 0 },       /* out */
+    { chit_id: 'a', direction: 'received', current_status: 'pending', created_at: d(10), open_disputes: 0, purpose: 'order' },   /* an order in, and stuck (7-day default) */
+    { chit_id: 'b', direction: 'received', current_status: 'pending', created_at: d(1), open_disputes: 0 },    /* a task (came in, not an order) */
+    { chit_id: 'c', direction: 'sent', current_status: 'accepted', created_at: d(2), open_disputes: 0, purpose: 'order' },       /* an order out */
     { chit_id: 'd', direction: 'sent', current_status: 'completed', created_at: d(30), open_disputes: 0 },     /* closed */
   ]);
 }
@@ -109,7 +109,7 @@ mock('/db', db);
 require(API + '/lib/policy').get = async () => ({});
 /* M168: the orders card asks lib/open-orders - the till's own list - never its own query */
 const OO = { calls: [], list: [{ chit_id: 'o1' }, { chit_id: 'o2' }] };
-mock('/lib/open-orders', { tasks: async (e, kind, limit) => { OO.calls.push([e, kind]); return OO.list; } });
+mock('/lib/open-orders', Object.assign({}, require(API + '/lib/open-orders'), { tasks: async (e, kind, limit) => { OO.calls.push([e, kind]); return OO.list; } }));   /* sideOf stays real: lib/work-rows reads it (TOUR-FIX1) */
 
 const get = (port, p) => new Promise((ok) => {
   trips = 0; sent = [];
@@ -123,6 +123,7 @@ const get = (port, p) => new Promise((ok) => {
 (async () => {
   const app = express();
   app.use('/api/facts', require(API + '/routes/facts'));
+  app.use('/api/work', require(API + '/routes/work'));   /* Tasks & Orders' own reader — the rail must agree with it (TOUR-FIX1) */
   const srv = app.listen(0); const port = srv.address().port;
   const g = (c) => get(port, '/api/facts/' + c);
   console.log('\n-- N18 Home facts --\n');
@@ -203,11 +204,14 @@ const get = (port, p) => new Promise((ok) => {
 
   /* rail */
   r = await g('rail');
-  t('rail: { suppliers, customers, in, out, stuck } - the counts are CRM\'s (hidden and merged rows are not parties)', r.json, { suppliers: 3, customers: 5, in: 2, out: 1, stuck: 1 });
+  t('rail: { suppliers, customers, in, out, tasks, stuck } - parties are CRM\'s (hidden and merged rows are not parties); in/out/tasks are the Tasks folders', r.json, { suppliers: 3, customers: 5, in: 1, out: 1, tasks: 1, stuck: 1 });
+  /* ⭐ TOUR-FIX1 (Home said 187 in, Tasks › Orders in said 0): the rail and Tasks & Orders answer from ONE reader — the same numbers, asked both ways */
+  const wf = await get(port, '/api/work/facts'), wl = await get(port, '/api/work/list?view=orders_in');
+  t('rail in / out / tasks === GET /api/work/facts counts (orders_in · orders_out · tasks) === the Orders in list\'s own total', [r.json.in, r.json.out, r.json.tasks, wl.json.total], [wf.json.counts.orders_in, wf.json.counts.orders_out, wf.json.counts.tasks, wf.json.counts.orders_in]);
   t('rail: at most 3 trips', r.trips <= 3, true);
   t('rail: both CRM list reads leave the shop itself out (H3)', F.crmSql.length >= 2 && F.crmSql.every((q) => /<> \$1/.test(q)), true);
   F.chits = 'own'; r = await g('rail');
-  t('rail: a chit the shop sent to itself is never stuck - an open one is "in", a closed one is nothing', r.json, { suppliers: 3, customers: 5, in: 3, out: 1, stuck: 1 });
+  t('rail: a chit the shop sent to itself is never stuck - an open one is a task, a closed one is nothing', r.json, { suppliers: 3, customers: 5, in: 1, out: 1, tasks: 2, stuck: 1 });
   r = await get(port, '/api/facts/rail/chits');
   t('rail/chits: a note to self is listed (In tab) with stuck:false, self:true, no reason; stuck rows still number the rail', [r.json.items.filter((i) => i.stuck).map((i) => i.chit_id), r.json.items.find((i) => i.chit_id === 'cs1').self, r.json.items.find((i) => i.chit_id === 'cs1').why, r.json.items.some((i) => i.chit_id === 'cs2')], [['a'], true, null, false]);
   F.chits = 'few';
@@ -225,7 +229,7 @@ const get = (port, p) => new Promise((ok) => {
   r = await get(port, '/api/facts/rail/chits');
   t('rail/chits: 200', r.status, 200);
   t('rail/chits: only OPEN chits, stuck first', r.json.items.map((i) => [i.chit_id, i.tab, i.stuck]), [['a', 'in', true], ['b', 'in', false], ['c', 'out', false]]);
-  t('rail/chits: the stuck rows number the rail\'s stuck, in/out number its in/out', [r.json.items.filter((i) => i.stuck).length, r.json.items.filter((i) => i.tab === 'in').length, r.json.items.filter((i) => i.tab === 'out').length], [1, 2, 1]);
+  t('rail/chits: the stuck rows number the rail\'s stuck; the list holds every open chit (in 2 · out 1 — the rail\'s in/out are the Tasks folders)', [r.json.items.filter((i) => i.stuck).length, r.json.items.filter((i) => i.tab === 'in').length, r.json.items.filter((i) => i.tab === 'out').length], [1, 2, 1]);
   t('rail/chits: a stuck row says why in plain words', r.json.items[0].why, 'They sent it 10 days ago and you have not answered.');
   t('rail/chits: a row that is not stuck has no reason', r.json.items[1].why, null);
   t('rail/chits: at most 2 trips', r.trips <= 2, true);

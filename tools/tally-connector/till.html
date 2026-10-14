@@ -25815,7 +25815,7 @@ async function usignIn(s, answer){
   /* ⭐ M10: a browser still holding a KEY keeps this session too — the reload that follows opens the person store, and
      the old key store comes along (moveOldStores); the key goes once its store is accounted for (keyRetire). DESIGN §5. */
   if ((personOn() || keyedBrowser()) && answer.token) {
-    var kept = await becomeShop({ token: answer.token, who: k.person, idn: answer.identity || null });
+    var kept = await becomeShop({ token: answer.token, who: k.person, idn: answer.identity || null, via: 'window' });
     if (kept && kept.ok && !kept.same) {
       /* ⭐ the shop is named before anything else happens — a person in the wrong account sees it here, not in the books */
       USIGN.opening = (S && S.shop && S.shop.name) || 'your shop';
@@ -25880,7 +25880,7 @@ function shopMoveOf(o){
 async function usignBecome(takeover, counter){
   var p = USIGN.pending; if (!p) return;
   USIGN.busy = true;
-  var r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover, counter: counter || null });
+  var r = await becomeShop({ token: p.token, who: p.person, idn: p.idn, takeover: !!takeover, counter: counter || null, via: 'window' });
   USIGN.busy = false;
   if (r && r.held) { USIGN.held = r; usignNote(usignHeldHtml(r)); return; }
   if (!r || !r.ok) { usignRestore((r && r.message) || 'Signed in, but the shop did not issue a counter key.'); return; }
@@ -25945,7 +25945,7 @@ async function becomeShop(to){
     if (!r) return { ok: false, message: 'This PC could not reach the counter program. Is it still running?' };
     if (r.held) return { ok: false, held: true, counter: r.counter || tillId(), held_by: r.held_by || null, seen: r.seen || null };
     if (!r.ok) return r;
-    if (to.who) whoPending(to.who, r.shop, to.idn);
+    if (to.who) whoPending(to.who, r.shop, to.idn, to.via);
     var was = JSON.stringify((STATE && STATE.shop) || null);
     counterRestarted(enrol ? function(st){ return JSON.stringify((st && st.shop) || null) !== was; }
                            : function(st){ return !(st && st.paired); }, to.gaveUp);
@@ -25979,7 +25979,7 @@ async function becomeShop(to){
     same = !!(CloudHost.person && String(CloudHost.person.entity_id) === String(person.entity_id));
     if (!ls.set('cb_till_person', JSON.stringify(person))) return { ok: false, message: 'This phone could not keep the sign-in (its storage refused). Free some space and try again.' };
     CloudHost.person = person;                       /* ⚠️ FIRST — shopLs() names this shop's slot from it */
-    if (to.who) whoPending(to.who, shop, to.idn);
+    if (to.who) whoPending(to.who, shop, to.idn, to.via);
     /* the same shop again is not a change of shop — the store is the same, nothing to reopen */
     if (!same) location.reload();
     return { ok: true, same: same, shop: shop };
@@ -25991,7 +25991,7 @@ async function becomeShop(to){
   try { localStorage.removeItem('cb_till_person'); } catch (_) {}
   CloudHost.person = null;
   if (key && to.marker && to.marker.shop) { ls.set(shopLs('cb_till_shop'), to.marker.shop); ls.set(shopLs('cb_till_shopname'), to.marker.name || ''); }
-  if (to.who) whoPending(to.who, shop, to.idn);
+  if (to.who) whoPending(to.who, shop, to.idn, to.via);
   if (location.hash.indexOf('key=') >= 0) history.replaceState(null, '', location.pathname + location.search);
   /* the same key again is not a change of shop — nothing to reopen, and reloading a boot into itself would loop */
   if (!same) location.reload();
@@ -26004,8 +26004,10 @@ async function becomeShop(to){
  * (whoAdoptPending). Writing WHO here directly would be a second writer, and the shop it would be written for
  * is not open yet.
  */
-function whoPending(person, shop, idn){
-  try { ls.set('cb_till_whonext', JSON.stringify({ person: person, idn: idn || null, shop: shop || null, at: Date.now() })); } catch (_) {}
+/* TOUR-FIX1: `via` 'window' = the person typed this sign-in into the window, so the counter PIN is offered in the window again after the reload;
+   anything else (the apps' own session handed over — appSessionHandoff) carries the offer on "Who is at the counter?" instead */
+function whoPending(person, shop, idn, via){
+  try { ls.set('cb_till_whonext', JSON.stringify({ person: person, idn: idn || null, shop: shop || null, at: Date.now(), via: via || null })); } catch (_) {}
 }
 function whoAdoptPending(){
   var raw = null; try { raw = JSON.parse(ls.get('cb_till_whonext', '') || 'null'); } catch (_) { raw = null; }
@@ -26019,15 +26021,36 @@ function whoAdoptPending(){
      sign-in is KEPT, and the next load() tries again (the caller only marks it done on true) */
   usignAdopt(p);
   drop();
-  /* ⭐ they proved who they are online a moment ago — the one time a counter PIN can be offered safely */
+  /* ⭐ they proved who they are online a moment ago — the one time a counter PIN can be offered safely. TOUR-FIX1: offered, not imposed — the
+     window reopens only for a sign-in typed into it; a handed-over app session gets the offer on "Who is at the counter?" (pinLaterOffer). */
   try {
     if (!pinUsableFor(p) && window.crypto && crypto.subtle) {
-      usignOpen(); USIGN.person = p; USIGN.idn = raw.idn || null; USIGN.pinOffered = true;
-      /* no token here (spent on the key, or kept by becomeShop) — the window is told who is in and offers the LOCAL PIN */
-      USIGN.win.machine.offerPin({ token: '', name: p.name || '', person: { id: p.id, kind: p.kind } });
+      if (raw.via !== 'window') pinLaterOffer(p, raw.idn || null);
+      else {
+        /* they were in the sign-in window a moment ago — the window comes back to finish that sign-in with its LOCAL PIN offer */
+        usignOpen(); USIGN.person = p; USIGN.idn = raw.idn || null; USIGN.pinOffered = true;
+        /* no token here (spent on the key, or kept by becomeShop) — the window is told who is in and offers the LOCAL PIN */
+        USIGN.win.machine.offerPin({ token: '', name: p.name || '', person: { id: p.id, kind: p.kind } });
+      }
     }
-  } catch (_) {}
+  } catch (e) { toastLine('A counter PIN could not be offered yet: ' + ((e && e.message) || e)); }   /* the engines not fetched yet (a PC just restarted) — said, the sign-in stands */
   return true;
+}
+/**
+ * TOUR-FIX1: a counter PIN still to keep for the person just signed in — remembered for this page (memory only: the proof was THIS sign-in), said
+ * once in the footer, and offered as a button on "Who is at the counter?" (openWho). The sign-in window opens only when they press it.
+ */
+var PIN_LATER;   /* no initialiser: whoAdoptPending may run from load() before this line does, and a `= null` here would wipe its offer (W1, the hoisted var) */
+function pinLaterOffer(p, idn){
+  PIN_LATER = { person: p, idn: idn || null };
+  toastLine('Keep a counter PIN for ' + (p.name || p.id) + ': 👤 › Keep a counter PIN.');
+}
+function usignPinNow(){
+  var x = PIN_LATER; if (!x || !x.person) return;
+  var w = document.getElementById('whodlg'); if (w && w.open) w.close();
+  usignOpen(); USIGN.person = x.person; USIGN.idn = x.idn; USIGN.pinOffered = true;
+  /* no token here (spent on the key, or kept by becomeShop) — the window is told who is in and offers the LOCAL PIN */
+  USIGN.win.machine.offerPin({ token: '', name: x.person.name || '', person: { id: x.person.id, kind: x.person.kind } });
 }
 
 /**
@@ -26107,8 +26130,11 @@ async function usignAfterIn(p, idn){
     whoFloat(Math.max(0, Number(float0) || 0));
   }
   if (idn && !pinUsableFor(p) && window.crypto && crypto.subtle && USIGN.win) {
+    /* TOUR-FIX1: the PIN is offered INSIDE a sign-in window that is already open — never by opening one over the counter (the tour: a Counter PIN
+       window covered the bill on every visit). With no window up, the offer waits on "Who is at the counter?" (pinLaterOffer). */
+    var d = document.getElementById('usigndlg');
+    if (!(d && d.open)) { pinLaterOffer(p, idn); if (USIGN.closeWhenIn) usignClose(); return; }
     USIGN.idn = idn; USIGN.pinOffered = true;
-    var d = document.getElementById('usigndlg'); if (d && !d.open && d.showModal) { try { d.showModal(); } catch (_) {} }
     USIGN.win.machine.offerPin();
     return;
   }
@@ -26221,6 +26247,9 @@ function openWho(){
     + (WHO && WHO.name
         ? '<b>' + esc(WHO.name) + '</b> is signed in at this counter'
           + (WHO.since ? '<div class="u">since ' + esc(sinceWord(WHO.since)) + '</div>' : '')
+          /* TOUR-FIX1: the counter PIN offer, waiting here instead of over the counter (pinLaterOffer) */
+          + (PIN_LATER && PIN_LATER.person && String(PIN_LATER.person.id) === String(WHO.id) && !pinUsableFor(PIN_LATER.person)
+              ? '<div><button class="pill" data-testid="till-who-pin" onclick="usignPinNow()">🔑 Keep a counter PIN</button></div>' : '')
         : '<b>Nobody is signed in.</b><div class="u">Bills are being recorded as the shop itself, and the day close cannot say who took the money.</div>')
     + '</div>'
     /**
@@ -26587,8 +26616,18 @@ function cartGripInit(){
   /* ⭐ back to automatic — the escape hatch for anyone who has dragged themselves into a corner */
   g.addEventListener('dblclick', function(){ apply(''); ls.set('cb_till_carth', ''); });
 }
+/**
+ * TOUR-FIX1 (the tour: Dark saved, the counter painted Cream): a counter that never chose its own look (☰ / ⚙ write cb_till_theme) wears the look
+ * the person chose everywhere else — CBAvatar's theme (cb_theme), turned into the counter theme that IS it by the library's own pairs
+ * (CBScreen.counterThemeFor: cream → lightCream, dark → dark). A theme with no counter counterpart keeps the counter's light.
+ */
+function sharedLook(){
+  var app = (window.CBAvatar && CBAvatar.themeKey) ? CBAvatar.themeKey() : null;
+  var id = (app && window.CBScreen && CBScreen.counterThemeFor) ? CBScreen.counterThemeFor(app) : null;
+  return id === 'lightCream' ? 'light' : (id || 'light');
+}
 function applyLook(){
-  var t = ls.get('cb_till_theme','light'), root = document.documentElement;
+  var t = ls.get('cb_till_theme', null) || sharedLook(), root = document.documentElement;
   /**
    * ⭐ A COLOUR SCHEME FROM THE LIBRARY (lib/screen-kit THEMES): the page's own light/dark rules stay as the base —
    * data-theme picks which — and the scheme's variables are laid over them inline. Light is the library's light cream,

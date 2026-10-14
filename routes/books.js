@@ -1291,8 +1291,19 @@ route('post', '/gst/close', (req, e, s, b, by) => P().gstClose(e, s, b, by));
 route('post', '/gst/pay', (req, e, s, b, by) => P().gstPay(e, s, b, by));
 /** GET /returns?period&frequency&simpler&stagger&emirate — BAS1: the shop's OWN return (AU BAS · AE VAT201) READ from the posted books for one period, with the pack's period
  *  table and due dates; every box names the ledgers it counts (lib/books-period.taxReturn → engines gst-returns.returnFor). Owner only. Prepared, never lodged.
- *  India → 422 RETURN_FROM_RAIL (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
-router.get('/returns', auth, owner, on, async (req, res) => { try { res.json(await P().taxReturn(ctx(req), req.books, req.query || {})); } catch (err) { fail(res, err); } });
+ *  India → 200 { form: null, code: RETURN_FROM_RAIL, why, rail } (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
+/* TOUR-FIX1: a shop whose return is not read from the ledgers (India: the GSTR from the rail) is an ANSWER, not a refusal — 200 with `form: null`,
+   the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
+router.get('/returns', auth, owner, on, async (req, res) => {
+  try { res.json(await P().taxReturn(ctx(req), req.books, req.query || {})); }
+  catch (err) {
+    if (err && err.code === 'RETURN_FROM_RAIL') {
+      const pack = err.pack || null;
+      return res.json({ form: null, pack, code: err.code, why: pack === 'IN' ? 'Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month\'s GST here.' : err.message, rail: pack === 'IN' ? '/api/tax/gstr' : null });
+    }
+    fail(res, err);
+  }
+});
 /** POST /loans { ref, lender, amount, into, rate?, kind? } · POST /loans/:ref/emi { principal, interest, from?, date, client_ref } */
 route('post', '/loans', (req, e, s, b, by) => P().takeLoan(e, s, b, by));
 route('post', '/loans/:ref/emi', (req, e, s, b, by) => P().loanEmi(e, s, String(req.params.ref).slice(0, 60), b, by));

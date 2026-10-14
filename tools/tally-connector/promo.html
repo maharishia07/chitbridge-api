@@ -87,7 +87,10 @@
   #hint.show{opacity:1}
 
   /* ⚠️ SIZED FOR A ROOM, NOT A DESK — read from across a shop by someone holding a remote */
-  #pairwrap{position:fixed;inset:0;z-index:60;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
+  /* TOUR-FIX1: the pairing panel TAKES the stage instead of lying over the page — a fixed full-screen layer covered the bar's own controls (camp, play,
+     share …) and the caption box. Unpaired, the stage and the side have nothing to show, so they step aside (body.pairing) and the bar stays usable. */
+  #pairwrap{flex:1;align-self:stretch;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
+  body.pairing #stage, body.pairing #side{display:none}
   /**
    * ⚠️⚠️ AN AUTHOR display RULE BEATS THE hidden ATTRIBUTE. `hidden` is only display:none from the browser's OWN stylesheet, so
    * the `display:flex` above outranks it and the element stays painted with .hidden reading true — which is exactly what
@@ -1174,6 +1177,7 @@ async function pairClaim(){
 }
 function pairShow(){
   document.getElementById('pairwrap').hidden = false;
+  document.body.classList.add('pairing');
   var b = document.getElementById('paircode'); if (b) b.focus();
 }
 document.getElementById('pairgo').onclick = pairClaim;

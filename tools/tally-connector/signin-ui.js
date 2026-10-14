@@ -345,18 +345,20 @@ function machine(c, io) {
 var CSS = '.cbsi{max-width:420px;margin:0 auto;font:inherit;color:var(--ink,#1D1B16);background:var(--card,#fff);border:1px solid var(--line,#DDD6C6);border-radius:15px;padding:18px 19px;box-sizing:border-box}' +
   '.cbsi form{display:flex;flex-direction:column;gap:10px}' +
   '.cbsi h2{font-size:19px;font-weight:800;margin:0 0 2px;letter-spacing:-.01em}' +
-  '.cbsi label{display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:var(--muted,#5E594D)}' +
+  /* TOUR-FIX1: on a page without the list names (settings) a chosen theme left the label grey and the links Cream blue on a dark card (~2:1, ~1.8:1) — the
+     theme library's own --grey / --blue-d come next, then the Cream values */
+  '.cbsi label{display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:var(--muted,var(--grey,#5E594D))}' +
   '.cbsi input{height:46px;padding:0 13px;border:1px solid var(--line,#DDD6C6);border-radius:10px;background:var(--card,#fff);color:var(--ink,#1D1B16);font:inherit;font-size:16px;width:100%;box-sizing:border-box}' +
   '.cbsi input:focus{outline:2px solid var(--green,#16693F);outline-offset:1px}' +
   '.cbsi .cbsi-go,.cbsi .cbsi-m{height:46px;padding:0 16px;border-radius:10px;border:1px solid var(--green,#16693F);background:var(--green,#16693F);color:var(--on-green,#fff);font:inherit;font-size:15px;font-weight:700;cursor:pointer;width:100%}' +
   '.cbsi .cbsi-go[disabled]{opacity:.6;cursor:default}' +
   '.cbsi .cbsi-m{background:var(--card,#fff);color:var(--ink,#1D1B16);border-color:var(--line,#DDD6C6)}' +
-  '.cbsi .cbsi-ln{display:inline-block;background:none;border:0;padding:6px 0;color:var(--blue-i,#174A87);text-decoration:underline;text-underline-offset:3px;font:inherit;font-size:13.5px;cursor:pointer;text-align:start;min-height:40px}' +
+  '.cbsi .cbsi-ln{display:inline-block;background:none;border:0;padding:6px 0;color:var(--blue-i,var(--blue-d,#174A87));text-decoration:underline;text-underline-offset:3px;font:inherit;font-size:13.5px;cursor:pointer;text-align:start;min-height:40px}' +
   '.cbsi .cbsi-why{margin:0;padding:10px 13px;border-radius:10px;background:var(--red-t,#FBEAE3);border:1px solid var(--red-b,#E7B9A8);color:var(--red-i,#8E3517);font-size:13.5px}' +
-  '.cbsi .cbsi-said{margin:0;font-size:13.5px;color:var(--muted,#5E594D)}' +
+  '.cbsi .cbsi-said{margin:0;font-size:13.5px;color:var(--muted,var(--grey,#5E594D))}' +
   '.cbsi .cbsi-in{margin:0;padding:12px 14px;border-radius:10px;background:var(--green-t,#E8F4ED);border:1px solid var(--green-b,#A9D3BC);color:var(--green-d,#0D4A2B);font-weight:600}' +
   '.cbsi .cbsi-ch{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 13px;border:1px solid var(--line,#DDD6C6);border-radius:10px;background:var(--card,#fff);color:inherit;font:inherit;cursor:pointer;text-align:start;width:100%}' +
-  '.cbsi .cbsi-ch b{font-weight:700}.cbsi .cbsi-ch span{color:var(--muted,#5E594D);font-size:13px}' +
+  '.cbsi .cbsi-ch b{font-weight:700}.cbsi .cbsi-ch span{color:var(--muted,var(--grey,#5E594D));font-size:13px}' +
   '.cbsi .cbsi-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}';
 var cssDone = false;
 function addCss() { if (cssDone || !doc) return; cssDone = true; var s = doc.createElement('style'); s.setAttribute('data-cbsi', '1'); s.textContent = CSS; (doc.head || doc.documentElement).appendChild(s); }
