@@ -186,6 +186,22 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     const a3 = await K.postChit(CUST, 'h1', {});
     ok('…posting again (Intake and goods-in both firing) is a duplicate — one entry, ever', a3.duplicate === true && posted('h1').length === 1, JSON.stringify(a3));
 
+    /* ⭐ FX-F10W2: the acceptance that posts closes its OWN Waiting row (no "Try again", no nightly retry); a rejection closes it, said */
+    copyNow = Object.assign(buyerCopy('h5', CREDIT), { current_status: 'delivered' });
+    await K.postChit(CUST, 'h5', {});
+    const h5w = waitRows('h5').length;
+    copyNow = Object.assign(buyerCopy('h5', CREDIT), { current_status: 'accepted' });
+    const h5 = await K.postChit(CUST, 'h5', {});
+    const h5row = X.T.outbox.filter((o) => o.entity_id === CUST && o.source_chit_id === 'h5').pop();
+    eq('FX-F10W2 · accepted → posted AND its Waiting row closed in the same path, said ("Accepted — posted to the books")',
+      [h5w, !!h5.ok || !!h5.entry_no, posted('h5').length, waitRows('h5').length, h5row && h5row.why], [1, true, 1, 0, 'Accepted — posted to the books']);
+    copyNow = Object.assign(buyerCopy('h6', CREDIT), { current_status: 'delivered' });
+    await K.postChit(CUST, 'h6', {});
+    copyNow = Object.assign(buyerCopy('h6', CREDIT), { current_status: 'rejected' });
+    const h6 = await K.postChit(CUST, 'h6', {});
+    const h6row = X.T.outbox.filter((o) => o.entity_id === CUST && o.source_chit_id === 'h6').pop();
+    eq('FX-F10W2 · rejected → never posts, and its Waiting row closes as "Rejected — not posted"', [h6.none, posted('h6').length, waitRows('h6').length, h6row && h6row.why], [true, 0, 0, 'Rejected — not posted']);
+
     /* disputed → not posted; settled for the SELLER (dispute resolved, buyer accepts) → posted; settled for the BUYER (rejected) → never */
     copyNow = Object.assign(buyerCopy('h2', CREDIT), { current_status: 'accepted' });
     X.T.disputes.push({ entity_id: CUST, chit_id: 'h2', status: 'open' });
@@ -255,7 +271,7 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
       [d.k.kind, d.k.wait, d.k.why], ['queue', 'party', 'Who is Sri Ganesh? Add them as a supplier — then bill SG-101 waits for you to accept it.']);
     const g = await RCV(rcpt('r7', rbj({ their_bill: { no: 'SG-101', total: 1300 } }), 'accepted'));
     eq('F10 · their total differs from the lines by more than a rupee → waits with BOTH figures and the gap (never a silent post of either)',
-      [g.k.kind, g.k.wait, g.k.why], ['queue', 'gap', 'Their bill SG-101 says ₹1,300, the lines counted come to ₹1,180 — ₹120 apart. Ask Sri Ganesh Provisions to correct it, or reject it and record their bill by hand.']);
+      [g.k.kind, g.k.wait, g.k.why], ['queue', 'gap', 'Their bill SG-101 says ₹1,300, goods ₹1,000 + tax ₹180 come to ₹1,180 — ₹120 apart. Ask Sri Ganesh Provisions to correct it, or reject it and record their bill by hand.']);
     const gp = await RCV(rcpt('r7p', rbj({ their_bill: { no: 'SG-101', total: 1300 } }), 'pending'));
     eq('F10 · …and says so BEFORE acceptance, so the Accept popup can grey Accept with that sentence', [gp.k.kind, gp.k.wait], ['queue', 'gap']);
     const ro = await RCV(rcpt('r8', rbj({ their_bill: { no: 'SG-101', total: 1180.6 } }), 'accepted'));
@@ -267,6 +283,34 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     eq('F10 · …a supplier the counter typed, no state given → waits in words', [nostate.k.kind, nostate.k.wait, /state is not known/.test(nostate.k.why || '')], ['queue', 'state', true]);
     const st2 = await RCV(rcpt('r9c', rbj({ party: { name: 'Lakshmi Agencies' }, input_tax: { inclusive: false, vendor_state: '29' } }), 'accepted'), { party: '44444444-4444-4444-8444-444444444444' });
     eq('F10 · …the state the counter typed (29 vs our 33) → IGST', st2.k.event && st2.k.event.by_rate, [{ rate: 18, taxable: 1000, cgst: 0, sgst: 0, igst: 180 }]);
+
+    /* ══ FX-F10W2 · ONE COMPARISON: their total against what they CHARGE (taxable + tax), lib/their-bill — the counter calls the same file ══ */
+    const TB = require(path.join(H.API, 'lib', 'their-bill'));
+    const sg = (tot, lines, it) => RCV(rcpt('sg-' + tot + (it ? 'i' : ''), rbj({ their_bill: { no: 'SG-201', total: tot }, input_tax: { inclusive: !!it, vendor_state: '33' } }), 'accepted', lines));
+    const ex5 = [{ particulars: 'Toor dal', quantity: 4, unit: 'kg', price: 105, total: 420, gst_rate: 5 }];
+    const s441 = await sg(441, ex5), s420 = await sg(420, ex5);
+    eq('FX-F10W2 · SG-201 (IN 5%, exclusive): goods ₹420 + tax ₹21 — their ₹441 POSTS (it agrees, no round-off)', [s441.k.kind, s441.k.event && s441.k.event.round_off], ['post', 0]);
+    eq('FX-F10W2 · …their ₹420 (the goods BEFORE tax) waits — ₹21 apart: the figure the counter used to call "agrees"', [s420.k.kind, s420.k.wait, s420.k.gap], ['queue', 'gap', -21]);
+    const say = (n) => require(path.join(H.API, 'lib', 'bill-privacy')).money(Math.round(n * 100), 'INR');
+    eq('FX-F10W2 · …and its Waiting sentence starts with lib/their-bill\'s, word for word (the slip prints the same)',
+      s420.k.why.indexOf(TB.check({ total: 420, taxable: 420, tax: 21, currency: 'INR', no: 'SG-201', say }).sentence), 0);
+    const in5 = await sg(441, [{ particulars: 'Toor dal', quantity: 4, unit: 'kg', price: 110.25, total: 441, gst_rate: 5 }], true);
+    eq('FX-F10W2 · inclusive (their rates already carry 5%): lines ₹441 = taxable ₹420 + tax ₹21 — their ₹441 posts', [in5.k.kind, in5.k.event && in5.k.event.round_off, in5.k.event && in5.k.event.by_rate[0].taxable], ['post', 0, 420]);
+    const ex18 = [{ particulars: 'Soap', quantity: 10, unit: 'piece', price: 100, total: 1000, gst_rate: 18 }];
+    eq('FX-F10W2 · IN 18%: ₹1,000 + ₹180 — their ₹1,181 is within one rupee → posts with round-off +1; ₹1,181.01 waits',
+      [(await sg(1181, ex18)).k.event.round_off, (await sg(1181.01, ex18)).k.kind, (await sg(1179, ex18)).k.event.round_off], [1, 'queue', -1]);
+    /* the rule itself, every host: exclusive and inclusive operands (the engine's split), AU 10% and IN 5% / 18%, the one-unit edge */
+    const Tx = require(path.join(H.API, 'lib', 'tax'));
+    const sp = (v, r, inc) => Tx.splitLineTax({ net: v, rate: r, priceIncludesTax: inc });
+    const cmp = (tot, v, r, inc, cur) => { const x = sp(v, r, inc); return TB.check({ total: tot, taxable: x.assessable, tax: x.tax, currency: cur || 'INR' }); };
+    eq('FX-F10W2 · their-bill: IN 5% exclusive ₹420 → ₹441 agrees, ₹420 apart (−21)', [cmp(441, 420, 5, false).code, cmp(420, 420, 5, false).code, cmp(420, 420, 5, false).gap], ['agrees', 'apart', -21]);
+    eq('FX-F10W2 · their-bill: IN 18% inclusive ₹1,180 → ₹1,180 agrees (taxable 1,000 + 180)', [cmp(1180, 1180, 18, true).code, cmp(1180, 1180, 18, true).ours], ['agrees', 1180]);
+    eq('FX-F10W2 · their-bill: AU GST 10% exclusive A$100 → A$110 agrees; A$100 apart', [cmp(110, 100, 10, false, 'AUD').code, cmp(100, 100, 10, false, 'AUD').code], ['agrees', 'apart']);
+    eq('FX-F10W2 · their-bill: AU GST 10% inclusive A$110 → A$110 agrees (taxable 100 + GST 10)', [cmp(110, 110, 10, true, 'AUD').code, sp(110, 10, true).tax], ['agrees', 10]);
+    eq('FX-F10W2 · their-bill: the one-unit edge — +1.00 and −1.00 round_off, +1.01 apart, no total → no_total',
+      [cmp(442, 420, 5, false).code, cmp(440, 420, 5, false).code, cmp(442.01, 420, 5, false).code, TB.check({ total: '', taxable: 1, tax: 0, currency: 'INR' }).code], ['round_off', 'round_off', 'apart', 'no_total']);
+    eq('FX-F10W2 · their-bill: in minor units — a 3-decimal currency (KWD) tolerates 1.000, not 1.001',
+      [TB.check({ total: 11.000, taxable: 10, tax: 0, currency: 'KWD' }).code, TB.check({ total: 11.001, taxable: 10, tax: 0, currency: 'KWD' }).code], ['round_off', 'apart']);
 
     /* an AU shop: the supplier charged GST at my door — ONE head, `gst`, never India's three */
     ROWS[SHOP] = { identity_id: SHOP, gstn: '51824753556', display_name: 'Bondi Grocer', country: 'AU', policy_flags: {} };
