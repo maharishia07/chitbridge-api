@@ -28,7 +28,7 @@ const jwt = need('jsonwebtoken');
 const express = need('express');
 const bcrypt = need('bcryptjs');
 
-Object.assign(process.env, { JWT_SECRET: 'test-only-secret-signin-routes', NODE_ENV: 'test', DEV_OTP: '123456', DEV_OTP_IN_RESPONSE: 'true' });
+Object.assign(process.env, { JWT_SECRET: 'test-only-secret-signin-routes', NODE_ENV: 'development', DEV_OTP: '123456', DEV_OTP_IN_RESPONSE: 'true', DATABASE_URL: 'postgres://cb@127.0.0.1:5432/cb_test' /* SEC1: the fixed codes work on a LOCAL stack only */ });
 ['OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'PLATFORM_ROOT_ENTITY', 'DEV_OTP_CUSTOMER'].forEach((k) => { delete process.env[k]; });
 
 /* ── output: the routes talk on the console; keep ours, collect theirs ───────────────────────────────────────────── */

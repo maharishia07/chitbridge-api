@@ -137,10 +137,14 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `SOURCE_COMMIT` | optional | `<git sha>` | no | Commit shown on `/health` (neutral name). |
 | `RAILWAY_GIT_COMMIT_SHA` | optional | set by Railway | no | Commit on `/health`; wins over `SOURCE_COMMIT`. |
 | `RAILWAY_REPLICA_REGION` / `RAILWAY_REGION` | optional | set by Railway | no | Region on `/health`; no neutral equivalent. |
+| **Testers on a deployed api (SEC1)** | | | | |
+| `TESTER_CODE` | optional | `<8+ characters, Athi's secret>` | **yes** | The one sign-in code testers use with ANY sign-in name, on as many shops as they like. Checked on verify only (never issued, e-mailed, logged or echoed; timing-safe). Unset or shorter than 8 → no tester code works. Works in a sealed env too. |
+| `TESTER_NAMES` | optional | `*@test.chitbridge,anil-tester` | no | Comma list of exact sign-in names or `*` patterns; set → the tester code works only for those names; unset → any name. |
+| **Local stack only — refused anywhere else** | | | | |
+| `DEV_OTP` | local stack only | `1` | no | Arms the fixed entity / customer / connector codes (values: lib/dev-otp.js LOCAL STACK block, docs/SIM-LOAD.md). They work ONLY when DATABASE_URL's host is 127.0.0.1 / localhost / ::1 AND `NODE_ENV=development`; a sealed env refuses to boot with it. |
+| `DEV_OTP_CUSTOMER` / `DEV_OTP_CONNECTOR` | local stack only | `<digits>` | no | Override the fixed customer / connector codes while `DEV_OTP` armed (local stack only). |
+| `DEV_OTP_IN_RESPONSE` | local stack only | `true` | no | Echoes the fixed code in API responses (local stack only). |
 | **Dev/test only — never in production** | | | | |
-| `DEV_OTP` | never in production | `123456` | no | Fixes entity OTPs; sealed env refuses to boot with it. |
-| `DEV_OTP_CUSTOMER` / `DEV_OTP_CONNECTOR` | never in production | `123123` / `654321` | no | Fixed customer / connector OTPs while `DEV_OTP` armed. |
-| `DEV_OTP_IN_RESPONSE` | never in production | `true` | no | Echoes the fixed code in API responses (non-sealed only). |
 | `SHOP_CLOCK_ALLOW` | never in production | `1` | no | Lets tests move the shop clock. |
 | `BOOKS_DEV_ENGINES` | never in production | `1` | no | Loads books engines from a sibling checkout. |
 | `TEST_BOARD_ENTITY` | never in production | `<entity uuid>` | no | Shared test-result board entity. |
@@ -244,3 +248,11 @@ CI: `.github/workflows/spin-test.yml` (manual only) — `docs/patches/HX2-spin-t
 | `MAIL_SINK_TOKEN` | `deploy/mail-sink.cjs` | a public sink answers only to `authorization: Bearer <token>`; the spin sets it = the api's `RESEND_API_KEY` |
 | `PLAN=1` · `PARSE=1` | every spin/test/teardown | print the commands · let aws/az/gcloud parse each one with no credentials (`deploy/spin-check.sh`) |
 | `SIM_YEARS` · `CTP_PEER_API` | `deploy/spin-test.sh` | years of the sim shop (1) · another spin's api for the CTP check |
+
+## Testers' sign-in code (SEC1, 14 Oct)
+Set `TESTER_CODE` (and optionally `TESTER_NAMES`) in Railway → Variables; share the code with testers privately (never in a chat
+that is logged, a ticket or the repo); change it any time — no deploy, the api reads it on every sign-in. Testers keep today's ease:
+any sign-in name, one remembered code, as many shops as they like. The fixed local codes no longer work on Railway. The answer and
+the logs never say whether a tester code exists; guessing is capped by the sign-in rate limiter (30 tries / 15 min per IP,
+`AUTH_RATE_LIMIT_MAX`) and by 5 wrong codes per account (`MAX_OTP_ATTEMPTS`). The cloud e2e reads it from the GitHub secret
+`E2E_TESTER_CODE` (web repo) and skips with a warning while that is unset.

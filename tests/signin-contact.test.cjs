@@ -18,7 +18,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-Object.assign(process.env, { JWT_SECRET: 'test-only-secret-signin-contact', NODE_ENV: 'development', DEV_OTP: '123456' });
+Object.assign(process.env, { JWT_SECRET: 'test-only-secret-signin-contact', NODE_ENV: 'development', DEV_OTP: '123456', DATABASE_URL: 'postgres://cb@127.0.0.1:5432/cb_test' /* SEC1: the fixed codes work on a LOCAL stack only */ });
 ['OTP_EMAIL_ENABLED', 'RESEND_API_KEY', 'FROM_EMAIL', 'PLATFORM_ROOT_ENTITY', 'DEV_OTP_IN_RESPONSE', 'DEV_OTP_CUSTOMER', 'SMS_PROVIDER'].forEach((k) => { delete process.env[k]; });
 
 const say = console.log.bind(console);
