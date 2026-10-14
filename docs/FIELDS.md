@@ -16,6 +16,19 @@ A new key needs its entry here, in the same change. This file is being built; en
 | 409 of POST / · PATCH /:id | `{ error, code: 'EMAIL_TAKEN', message }` | identities_email_key (one e-mail per sign-in across the platform) — the owner's own address on a staff row is the usual case. |
 | write answers `otp` · `login_instruction` (changed) | `otp` only through dev-otp.mayExposeOtp | lib/employee-code.deliver: no longer "whenever not sealed". `login_instruction` never carries a code. `delivery_note` for `none` now says to add an e-mail and send a new code. |
 
+## People: sign-out, Remove, Away, the Home card (PEOPLE-SRV1, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `policy_flags.api_keys[].by` | identity_id | source. Written by routes/keys.js `mint` when a CO-ASSIST opens the key (a counter, a kit); absent for the owner's keys and for pairings. Read by `endKeysBy` (switch-off/remove). Keys minted before 2026-10-14 have none and are not ended. |
+| PUT /api/actors/:id/status `signed_out` | `{ sessions, keys_closed, keys_revoked }` (numbers) | Derived — deactivate/remove: sessions the person opened that were unlisted (lib/person-session `closeBy`), counter keys closed (`till.closed_at` + `released`, as Release), other keys revoked (with the screens they paired). Read by web cap-employees.js (the switched-off sentence). |
+| 400 of PUT /:id/status | `code: 'CONFIRM_REMOVE'` · `'TASKS_TO_ROUTE'` | remove without `confirm:'REMOVE'` · open jobs and no `task_action`. |
+| PUT /api/actors/break `actor_id` (request) | uuid, optional | the OWNER names the person (G6); absent or the caller's own id = their own break. 403 OWNER_ONLY · 404 NOT_FOUND · 400 SWITCHED_OFF · NAME_THE_PERSON · COVER_CONFLICT · TASKS_TO_ROUTE. Answer adds `actor_id`, `state` (`away` · `on`). |
+| GET /api/people `people[].may.away` | `{ ok, why, to: 'away'\|'on'\|null }` | lib/people.js — open for the owner unless switched off. `to` = what the button does. |
+| GET /api/people `people[].may.remove` | `{ ok, why }` | lib/people.js — open for the owner (switched off too). |
+| GET /api/people `people[].away` · `counts.away` | `'short_break'\|'leave'\|null` · number | Derived from `identities.break_status`; `counts.away` is inside `counts.on`. |
+| GET /api/facts/people `figures` | `{ total, at_work, away, off }` | Derived — one grouped count over lib/people.peopleSql (the people GET /api/people lists), words by lib/people.stateOf. Read by web shell.js (the CB Employees Home card). |
+
 ## POST /api/connectors/ingest · /erp-ingest · GET /api/events/stats — device keys in their shop and switch (SEC3, 2026-10-14)
 
 Derived per call, never stored. Written by `routes/connectors.js` (deviceActor · deviceMayAddress · the ingest catch) and `lib/platformroot.refuseUnlessRoot`. Read by: the generated Pi agent (web `public/app/cap-connector.js` `_agentJs` — it branches on the HTTP status, logs the code) and `scripts/connector-gateway-sim.js`.
