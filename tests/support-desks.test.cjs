@@ -105,7 +105,8 @@ ok('the walk is bounded',
   /MAX_HOPS/.test(route) && /LIMIT \$2/.test(route));
 
 ok('inheritance fails open, like every other rung here',
-  /catch \(_\) \{ \/\* no tree, no column, no answer/.test(route));
+  /* T2-HONEST: it still fails open — and now it logs the failure first (log.fellBack) */
+  /catch \((_|e)\) \{ (log\.fellBack\('[^']*', e\); )?\/\* no tree, no column, no answer/.test(route));
 
 ok('and it SAYS it was inherited, and from whom',
   /why: 'inherited from '/.test(route),

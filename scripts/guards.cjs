@@ -95,6 +95,7 @@ const GUARDS = [
   'screen-kit.test.cjs',        // the screen library: every layout places every part; presets resolve; tiles fall back
   'no-tax-reformula.test.cjs',  // the counter calls CBTax.splitLineTax() — no page re-derives the tax split itself
   'network-authority.test.cjs',  // who may act on a network edge — from the token, never the body (ATH-86)
+  'honest-failures.test.cjs',    // ⭐⭐ T2-HONEST: a failed member read answers an error (never "no members"); safeErr on every 500; one health(); the silent-catch ratchet
   /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every
      format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
   'govcontext.test.js',
