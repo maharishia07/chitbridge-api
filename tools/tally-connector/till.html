@@ -22214,15 +22214,52 @@ function rcvPickTask(id){
   }
   paintReceive();
 }
+/**
+ * ⭐⭐ THE BATCH ON A LOT, AS A KEY (STK-FIX1b, 2026-10-14). The batch code, else the serial, normalised by the ONE normaliser
+ * the server keys stock on (lib/lotfields lotKey, here as CBLots) — so what this screen calls "the same batch" is exactly what
+ * stock_balance will. Null when the lot names no batch. With no engine on the page the text is compared as typed, trimmed:
+ * two different codes are still never one line.
+ */
+function rcvBatchOf(lot){
+  var b = lot && (lot.batch != null && String(lot.batch).trim() !== '' ? lot.batch : lot.serial);
+  if (b == null || String(b).trim() === '') return null;
+  return (window.CBLots && CBLots.lotKey) ? CBLots.lotKey(b) : String(b).trim();
+}
+/**
+ * ⭐⭐⭐ WHICH LINE A SCAN LANDS ON: THE SAME PRODUCT **AND** THE SAME BATCH (STK-FIX1b). Before this the match was by product
+ * alone (lineFor), and a second batch of the same product was merged onto line 1 — its code written OVER the first batch's, the
+ * two counts added up under one lot. The server then held one balance where there were two, and FEFO had one date for both.
+ *   · the scan names a batch → the line of this product with that batch; else a line of this product that has no batch yet (the
+ *     order's own line, or a plain count — the batch fills its seam, as before); else NONE: a new batch is a new line.
+ *   · the scan names no batch → the line of this product most recently counted (unchanged when there is only one).
+ */
+function rcvLineFor(i, lot){
+  var mine = RCV.lines.filter(function(l){ return !!lineFor([l], i); });   /* the one product match (id, else name) */
+  if (!mine.length) return null;
+  var key = rcvBatchOf(lot);
+  if (!key) return mine[mine.length - 1];
+  var same = mine.filter(function(l){ return rcvBatchOf(l.lot) === key; });
+  if (same.length) return same[same.length - 1];
+  var blank = mine.filter(function(l){ return !rcvBatchOf(l.lot); });
+  return blank.length ? blank[blank.length - 1] : null;
+}
 /** an item off the shelf, added to what arrived — it may or may not be on the order */
 function rcvAdd(i, qty, lot){
-  var have = lineFor(RCV.lines, i);
-  if (lot && have) { have.lot = Object.assign({}, have.lot || {}, lot); }
+  var have = rcvLineFor(i, lot);
+  /* the line's own words stand: a scan fills what the line has not said (the batch of a blank line, an expiry) and never
+     rewrites a batch code it already carries — ' ac2431 ' scanned again is the same batch, not a new spelling of it */
+  if (lot && have) { have.lot = Object.assign({}, lot, have.lot || {}); }
   if (have) { have.counted = r2((Number(have.counted) || 0) + qty); if (!have.item_id) have.item_id = i.item_id || null; }
-  else RCV.lines.push({ line_id:null, item_id:i.item_id, name:i.name, unit:i.unit || 'piece', ordered:null,
-                        counted:qty, rate:(Number(i.price) || 0), reason:'', lot:(lot || null), added:true,
-                        /* ⭐ what this product attracts, from the shop's own slabs — a default, not a decision */
-                        gst_rate: rcvDefaultRate(i) });
+  else {
+    /* ⭐ a SECOND BATCH of a product already on the receipt is its own line — and it keeps the order line's identity (line_id,
+       rate, the GST on their bill), so the receipt still reports each batch against the line that was ordered (movesOfDoc). */
+    var kin = lineFor(RCV.lines, i);
+    RCV.lines.push({ line_id:(kin ? kin.line_id : null), item_id:i.item_id, name:i.name, unit:i.unit || 'piece', ordered:null,
+                     counted:qty, rate:(kin && kin.rate != null ? kin.rate : (Number(i.price) || 0)), reason:'', lot:(lot || null),
+                     added:(kin ? !!kin.added : true),
+                     /* ⭐ what this product attracts, from the shop's own slabs — a default, not a decision */
+                     gst_rate: (kin && kin.gst_rate != null) ? kin.gst_rate : rcvDefaultRate(i) });
+  }
   paintReceive();
 }
 function rcvSet(n, what, v){
@@ -22243,7 +22280,12 @@ function rcvClear(){ RCV = rcvBlank(); ['rcv_vendor','rcv_billno','rcv_billdate'
 var REASONS = ['', 'not sent', 'damaged', 'rejected at the door', 'short weight', 'extra sent', 'free / sample'];
 function rcvDiff(l){
   if (l.ordered == null || l.counted == null) return 0;
-  return r2(l.counted - l.ordered);
+  return r2(rcvCounted(l) - l.ordered);
+}
+/** ⭐ what was counted against an ORDER line — its batches together (STK-FIX1b): a delivery in two batches is not a shortage */
+function rcvCounted(l){
+  if (!l.line_id) return Number(l.counted) || 0;
+  return RCV.lines.reduce(function(sum, x){ return sum + ((x.line_id === l.line_id && x.item_id === l.item_id) ? (Number(x.counted) || 0) : 0); }, 0);
 }
 /**
  * ⭐⭐ HOW MUCH DIFFERENCE IS NOT A DISPUTE. A lorry of rice does not arrive to the gram, and a counter that called every kilo a
@@ -22294,7 +22336,7 @@ function paintReceive(){
   box.innerHTML = RCV.lines.length ? RCV.lines.map(function(l, n){
     var d = rcvDiff(l), done = (l.counted != null && d === 0 && l.ordered != null);
     var ok = d ? rcvAbsorbed(l) : false;
-    var head = l.ordered == null ? 'added at the door' : ('ordered ' + l.ordered + ' ' + esc(l.unit));
+    var head = l.ordered == null ? (l.line_id ? 'another batch of the ordered line' : 'added at the door') : ('ordered ' + l.ordered + ' ' + esc(l.unit));
     return '<div class="ln' + (done ? ' done' : '') + '" data-testid="rcv-line-' + n + '">'
       + '<span><span class="nm">' + esc(l.name) + '</span><div class="u">' + esc(head)
         + (d ? ' · <b style="color:' + (ok ? 'var(--ok)' : 'var(--warn)') + '">' + (d > 0 ? 'excess ' + d : 'short ' + (-d))

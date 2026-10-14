@@ -464,5 +464,67 @@ await ita('⭐ but a despatch against an order that was NEVER billed does move s
   assert.strictEqual((await store.balanceOf(SHOP, B2B, withEntity)).qty, 18);
 });
 
+console.log('— STK-FIX1b: a batch received at the counter becomes a real lot, with its expiry; an unreadable one is refused —');
+const PILL = '99999999-9999-9999-9999-999999999999';
+
+await ita('⭐⭐⭐ two batches on one receipt → two lots keyed by the batch CODE, each with its expiry (never "[OBJECT OBJECT]")', async () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  /* the door's own shape (till.js chitOfDoc): item_data.lot = { batch, expiry } */
+  const chit = { purpose: 'receipt', business_json: { doc: 'receipt', doc_no: 'GRN-LOT' }, created_at: at(40),
+    line_items: [
+      { particulars: 'Pill', quantity: 100, unit: 'strip', price: 10, item_data: { item_id: PILL, line_id: 'L1', lot: { batch: 'ac2431', expiry: '2028-03-31' } } },
+      { particulars: 'Pill', quantity: 50,  unit: 'strip', price: 10, item_data: { item_id: PILL, line_id: 'L2', lot: { batch: 'AC2432', expiry: '2027-01-31' } } },
+    ] };
+  const m = fromChit.movementsFor(chit);
+  assert.deepStrictEqual(m.map((x) => [x.lot, x.expires_at]), [['ac2431', '2028-03-31'], ['AC2432', '2027-01-31']],
+    'each line carries its own batch CODE (a string) and ISO expiry');
+  const r = await fromChit.postFor(SHOP, chit, withEntity, { sectors: ['pharma'] });
+  assert.strictEqual(r.moved, 2, JSON.stringify(r));
+  const lots = await store.lotsOf(SHOP, PILL, withEntity);
+  assert.deepStrictEqual(lots.map((l) => [l.lot, l.qty, l.expires_at]), [['AC2432', 50, '2027-01-31'], ['AC2431', 100, '2028-03-31']],
+    'two balances, keyed by the normalised code, the sooner expiry first (FEFO can sort)');
+  assert.ok(!MOVES.concat(BAL).some((x) => /OBJECT/i.test(String(x.lot))), 'an object was stringified where a batch code belongs');
+});
+
+await ita('⚠️⚠️ a line whose batch cannot be read is REFUSED with a sentence and a code — never stored as a guess', async () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const bad = (lot) => fromChit.movementsFor({ purpose: 'receipt', business_json: { doc: 'receipt', doc_no: 'GRN-BAD' },
+    line_items: [{ quantity: 1, price: 10, item_data: { item_id: PILL, line_id: 'L1', lot } }] })[0];
+  for (const lot of [{ batch: { no: 'AC1' } }, { batch: ['AC1'] }, { batch: 'A'.repeat(21) }, { batch: 'AC\u001d1' }, { serial: { n: 1 } }, ['AC1'], true])
+    assert.deepStrictEqual([bad(lot).skip, bad(lot).code, typeof bad(lot).why], [true, 'batch_unreadable', 'string'], JSON.stringify(lot));
+  const exp = bad({ batch: 'AC1', expiry: '31/03/2028' });
+  assert.strictEqual(exp.code, 'expiry_unreadable', 'a date that is not YYYY-MM-DD is refused, not guessed at');
+  assert.ok(/YYYY-MM-DD/.test(exp.why), 'the sentence says what to type');
+  assert.strictEqual(bad({ batch: 'AC1', best_before: 'soon' }).code, 'expiry_unreadable', 'a best-before that is not a date, the same');
+  /* and the refusal reaches postFor as a named skip while the readable line of the same chit still posts */
+  const before = MOVES.length;
+  const r = await fromChit.postFor(SHOP, { purpose: 'receipt', business_json: { doc: 'receipt', doc_no: 'GRN-MIX' }, created_at: at(41),
+    line_items: [
+      { quantity: 5, price: 10, item_data: { item_id: PILL, line_id: 'L1', lot: { batch: { no: 'X' } } } },
+      { quantity: 5, price: 10, item_data: { item_id: PILL, line_id: 'L2', lot: { batch: 'AC2433', expiry: '2029-01-01' } } },
+    ] }, withEntity);
+  assert.strictEqual(r.moved, 1);
+  assert.deepStrictEqual(r.skipped.map((s) => [s.line_ref, s.code]), [['L1', 'batch_unreadable']]);
+  assert.strictEqual(MOVES.length, before + 1, 'the refused line wrote nothing');
+});
+
+await ita('⭐ guards: the bare code, the typed GS1 form, the flat shape, a serial, and a line that says nothing', () => {
+  const fromChit = require(path.join(__dirname, '..', 'lib', 'stock-from-chit.js'));
+  const L = (item_data) => fromChit.lotOf({ item_data });
+  assert.deepStrictEqual(L({ lot: 'AC24' }), { lot: 'AC24', expires_at: null }, 'a bare batch code');
+  assert.deepStrictEqual(L({ lot: 'AC24', expiry: '2027-06-30' }), { lot: 'AC24', expires_at: '2027-06-30' }, 'bare code + the line\'s own expiry');
+  assert.deepStrictEqual(L({ lot: '(10)AC2431(17)280331' }), { lot: 'AC2431', expires_at: '2028-03-31' }, 'the typed GS1 form: (10) batch, (17) expiry');
+  assert.deepStrictEqual(L({ lot: '(10)AC2431', expiry: '2027-06-30' }), { lot: 'AC2431', expires_at: '2027-06-30' }, 'typed (10) only + the line\'s own expiry');
+  assert.deepStrictEqual(L({ batch: 7, expiry: '2027-06-30' }), { lot: '7', expires_at: '2027-06-30' }, 'the flat older shape, a numeric code');
+  assert.deepStrictEqual(L({ lot: { batch: ' ac-1 ' } }), { lot: 'ac-1', expires_at: null }, 'trimmed; the store upper-cases the key');
+  assert.deepStrictEqual(L({ lot: { serial: 'SN123' } }), { lot: 'SN123', expires_at: null }, 'a serial-tracked pack keys on its serial (T3-FIXES)');
+  assert.deepStrictEqual(L({ lot: { batch: 'B1', best_before: '2027-01-01' } }), { lot: 'B1', expires_at: '2027-01-01' }, 'best-before stands in for FEFO');
+  assert.deepStrictEqual(L({}), { lot: null, expires_at: null }, 'nothing said = untracked stock, lot \'\'');
+  assert.deepStrictEqual(L({ lot: null }), { lot: null, expires_at: null });
+  assert.deepStrictEqual(L({ lot: '' }), { lot: null, expires_at: null });
+  assert.deepStrictEqual(L({ lot: { mrp: 12 } }), { lot: null, expires_at: null }, 'a lot object with no batch says nothing about a batch');
+  assert.deepStrictEqual(fromChit.lotOf({}), { lot: null, expires_at: null }, 'no item_data at all');
+});
+
 console.log(pass + ' checks');
 })();
