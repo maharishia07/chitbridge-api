@@ -400,10 +400,10 @@
     "GET /api/crm/parties/:id/contact-prefs": {
       "file": "crm.js",
       "trips": 1,
-      "wire": 4,
+      "wire": 5,
       "fired": true,
       "status": 404,
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "why": "T3-P3-CONSENT by hand (wire 4 → 5, 0 new trips): the shop's country (one SELECT on identities, same transaction) → `law`, the words the consent block paints. The web's CRM record consent block and the shopper's page now read it."
     },
     "GET /api/crm/privacy-requests": {
       "file": "crm.js",
@@ -595,6 +595,30 @@
       "fired": true,
       "status": 200,
       "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+    },
+    "GET /api/privacy/me": {
+      "file": "privacy.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": false,
+      "extra": true,
+      "why": "T3-P3-CONSENT by hand (extra: the web calls it from public/app/shop-privacy.js with fetch on the storefront token, not an EP map entry, so tools/endpoint-usage.cjs does not list it; a storefront token the stub cannot mint): ONE withEntity as the shop — the two identity rows (1), to_regclass b306 + the party's rows (2), to_regclass b307 + the WITH-counts page (2) = 5 statements, 6 as a ceiling. Before b306/b307: still 1 trip, said in may_consent / may_request."
+    },
+    "POST /api/privacy/me/consent": {
+      "file": "privacy.js",
+      "trips": 1,
+      "wire": 5,
+      "fired": false,
+      "extra": true,
+      "why": "T3-P3-CONSENT by hand (storefront token): ONE withEntity — to_regclass (1), the party's rows before (1), INSERT (1), the rows after for `may` (1) = 4 statements, 5 as a ceiling; the same notePref the CRM's POST contact-prefs uses."
+    },
+    "POST /api/privacy/me/requests": {
+      "file": "privacy.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": false,
+      "extra": true,
+      "why": "T3-P3-CONSENT by hand (storefront token): ONE withEntity — the shopper's name line (1), to_regclass b307 (1), the shop's country (1), INSERT (1) = 4 statements. Records the request only; no erase statement exists on this route."
     },
     "GET /api/people": {
       "file": "people.js",
@@ -1089,7 +1113,7 @@
       "wire": 4,
       "fired": true,
       "status": 404,
-      "awaiting_client": { "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check", "since": "2026-10-13" }
+      "why": "T3-P3-CONSENT: called by the web now — the CRM record's Consent block (Yes / No) and, through the same lib/privacy.notePref, the shopper's POST /api/privacy/me/consent"
     },
     "POST /api/crm/privacy-requests": {
       "file": "crm.js",

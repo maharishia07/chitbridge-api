@@ -8,6 +8,7 @@
  *   GET    /api/crm/parties                     the whole list, ONE row per party (a party on both lists is one row, two roles); total · page · limit
  *                                              (no ?limit = the whole list, CAP); ?with=consent → each party's contact_prefs { migrated, may } (MKT-SRV1 G1)
  *   GET    /api/crm/parties/:id                 the record; the id of a merged party opens the survivor
+ *   GET    /api/crm/parties/:id/contact-prefs   history · may (per channel × purpose, with a code) · law (the shop's country's words — T3-P3-CONSENT)
  *   GET    /api/crm/parties/:id/timeline        chits · disputes · messages · ledger · interactions · follow-ups · changes, newest first, paged
  *   POST   /api/crm/parties/:id/interactions    log a call / visit / message / note (b276); an OUT call/message asks privacy.gate → 403 { code, why }
  *   GET    /api/crm/followups                   ?scope=mine|all&done=0|1                                    (b276)
@@ -386,7 +387,13 @@ async function mine(h, owner, id) {
 router.get('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), id = idOf(req);
-    const out = await withEntity(owner, async (h) => { await mine(h, owner, id); return PV.prefs(h, owner, id); });
+    const out = await withEntity(owner, async (h) => {
+      await mine(h, owner, id);
+      const p = await PV.prefs(h, owner, id);
+      /* T3-P3-CONSENT: the shop's country's law words (one SELECT in this same transaction) — the consent block paints THESE, never a default */
+      const c = (await h.query(`SELECT country FROM identities WHERE identity_id = $1`, [owner])).rows[0];
+      return Object.assign(p, { law: PV.lawOf(c && c.country) });
+    });
     res.json(Object.assign({ party_id: id }, out));
   } catch (e) { fail(res, e); }
 });
