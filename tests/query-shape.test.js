@@ -35,7 +35,6 @@ const API = path.join(__dirname, '..');
  * Known per-item queries, by file. Each is a deliberate cost someone has looked at.
  *
  * routes/chits.js        the send fan-out and its per-participant reads — a chit genuinely touches each party
- * routes/products.js     the CSV import path — per-row writes; the RULES are already read once (schemaFieldsOf)
  * routes/network-design.js  per-store reads behind per-tenant RLS, now bounded to 4 in flight (mapLimit)
  * routes/governance.js   one read per cascade level
  * lib/storage.js         per-file operations
@@ -98,7 +97,7 @@ const BUDGET = {
      last-cost UPDATE), so it has none left and its budget is gone. The stock postings stay per line: order-dependent. */
   'routes/governance.js': 1,
   'routes/network-design.js': 3,
-  'routes/products.js': 4,
+  /* routes/products.js — clean since CAT-W1 (14 Oct): the import and the stock feed write through catalogue-write.patchItems, once */
   'lib/storage.js': 2,
   'src/services/chit.js': 2,
   'src/services/network.js': 1,
