@@ -95,7 +95,7 @@ async function registerNew(req, res) {
      */
     const CS = require('../lib/country-setup');
     const guess = CS.guessOf(req.body.context);
-    const more = [];   /* [column, value] beyond the fixed six, each named only when known */
+    const more = [];   /* [column, value] beyond the fixed seven (country among them, NULL when no guess), each named only when known */
     if (mark.population !== null) more.push(['population', mark.population]);
     if (guess && guess.currency) more.push(['currency_code', guess.currency]);
     if (guess && guess.timezone && await schema.hasColumn('identities', 'timezone')) more.push(['timezone', guess.timezone]);
