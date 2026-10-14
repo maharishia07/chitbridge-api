@@ -27,6 +27,7 @@ const TESTS = path.join(__dirname, '..', 'tests');
 const GUARDS = [
   'pages-parse.test.js',      // every inline script in app.html, till.html and promo.html parses
   'till-vendor.test.js',      // the counter and its vendored engines agree, byte for byte
+  't3-fixes.test.cjs',        // T3-FIXES: one cost gate on every price write · each received batch its own lot · profile writes the shop · sign-in keeps the constitution
   'shop-clock-guard.test.cjs',  // ⭐⭐ Y1: one shop clock — no raw new Date()/Date.now() in the ledger files; set/advance/reset proven
   'natdef-guard.test.cjs',     // ⭐ T2-NATDEF: zero `|| 'INR'` / `|| 'IN'` (lib · routes · till master); one date reader (books-engines ymd · addDays), NOW labels allow-listed
   'shop-day-tz.test.cjs',       // ⭐⭐ M210: a midnight sale lands in the SHOP's day on every server clock, before and after b299; Sydney across DST

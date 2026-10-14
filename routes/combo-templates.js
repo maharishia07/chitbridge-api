@@ -144,6 +144,9 @@ router.patch('/:id', auth, [ body('name').optional().isString(), body('definitio
 router.post('/:id/push', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
+    /* [OFFR-04] a push writes the product's name, modifiers and price — the same gate as PATCH /products (lib/cost.writeRefusal) */
+    const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['name', 'modifiers', 'price']);
+    if (refused) return res.status(403).json(refused);
     const cur = await withEntity(entity_id, (db) => db.query(
       `SELECT name, definition, price, product_item_id FROM combo_templates WHERE id=$1 AND entity_id=$2`,
       [req.params.id, entity_id]));

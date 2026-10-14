@@ -528,7 +528,7 @@
       "wire": null,
       "fired": false,
       "extra": true,
-      "why": "no mount in server.js (the scanner cannot map entitiesRouter). T2-POLICY (2026-10-14): the tax number and address go through profile.shopIdentitySql INSIDE the one profile UPDATE (no extra write); a tax number sent costs ONE read (the shop's country, for the pack's check — profile.taxIdRefusal). Worst path: user_id read + taken check + handler check + currency envelope + country read + UPDATE + storefront_access + ui_prefs probe/merge + visibility cap/write — a ceiling, not measured on a fixture"
+      "why": "no mount in server.js (the scanner cannot map entitiesRouter). T2-POLICY (2026-10-14): the tax number and address go through profile.shopIdentitySql INSIDE the one profile UPDATE (no extra write); a tax number sent costs ONE read (the shop's country, for the pack's check — profile.taxIdRefusal). Worst path: user_id read + taken check + handler check + currency envelope + country read + UPDATE + storefront_access + ui_prefs probe/merge + visibility cap/write — a ceiling, not measured on a fixture T3-FIXES, by hand: 0 new trips — the same statements, now keyed on auth.entityOf(req) (the shop) instead of the caller. Placeholder ceiling."
     },
     "GET /api/facts/accounts": {
       "file": "facts.js",
@@ -1734,6 +1734,46 @@
       "fired": false,
       "extra": true,
       "why": "SEC4, by hand: 0 new trips — the supplier bell is lib/events.notifyAfter, in-process after the response; the gate and the b162 definer are unchanged."
+    },
+    "POST /api/till/price": {
+      "file": "till.js",
+      "trips": 10,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: owner/till key 0 new trips (writeRefusal returns before any read); a co-assist +1 withEntity (BEGIN · set_config · can_see_costs · COMMIT) before the one price transaction. Placeholder ceiling: not fired by the scanner."
+    },
+    "POST /api/products/:id/schedule": {
+      "file": "products.js",
+      "trips": 20,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: owner 0 new trips; a co-assist +1 withEntity (the can_see_costs read) — a cost-blind one is refused BEFORE ensureDeclared and the item read. Placeholder ceiling."
+    },
+    "POST /api/combo-templates/:id/push": {
+      "file": "combo-templates.js",
+      "trips": 24,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: owner 0 new trips; a co-assist +1 withEntity (can_see_costs), refused before the template read when cost-blind. Placeholder ceiling."
+    },
+    "POST /api/products/import/preflight": {
+      "file": "products.js",
+      "trips": 8,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: 0 new trips — the workbook-cut notice reads xlsx-read's own flag; the GTIN check is pure (gs1). Placeholder ceiling."
+    },
+    "POST /api/products/import": {
+      "file": "products.js",
+      "trips": 40,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "T3-FIXES, by hand: 0 new trips — a cut workbook is refused (413 WORKBOOK_CUT) before any read. Placeholder ceiling."
     }
   }
 }

@@ -80,6 +80,19 @@ const importLimiter = rateLimit({
  * workbook would die in the body parser with a 413 that never mentions spreadsheets.
  */
 const XLSX_MAX = 4 * 1024 * 1024;   /* the decoded workbook. A product list is a few hundred KB. */
+/**
+ * ⚠️ A WORKBOOK READ ONLY IN PART SAYS SO (T3-FIXES, CAT-FIX1). lib/xlsx-read stops at MAX_CELLS and sets `truncated`; nothing
+ * read it, so a sheet past the cap previewed and imported its first part as if it were the whole. → null, or { code, message }.
+ */
+function workbookCut(parsed) {
+  if (!parsed || !parsed.truncated) return null;
+  return { code: 'WORKBOOK_CUT', cells: xlsxRead.MAX_CELLS,
+    message: 'This sheet has more than ' + String(xlsxRead.MAX_CELLS) + ' cells, so only part of it was read. '
+      + 'Nothing is imported from it — delete unused columns, or split it, and upload again.' };
+}
+/** ⭐ the GTIN check digit, for the preflight (T3-FIXES): gs1.classify / gs1.describe — the one check; a typo'd barcode is warned */
+const gs1 = require('../lib/gs1');
+function gtinCheck(raw) { return gs1.classify(raw) === 'gtin-invalid' ? gs1.describe(raw).message : null; }
 function readUpload(body) {
   const b = body || {};
   if (typeof b.xlsx === 'string' && b.xlsx.trim()) {
@@ -834,10 +847,14 @@ router.post('/import/preflight', auth, preflightLimiter,
     catch (e) { return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) }); }
     // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
+    const cut = workbookCut(parsed);
+    if (cut) { report.ready = false; report.notes.unshift(cut.message); }
 
     res.json({ report, accepted: template.columns, optional: template.optional, preset: oi.preset,
       identity: ident, identity_problems: identityProblems, dry_run: true,
+      /* ⚠️ a workbook read only in part says so (T3-FIXES) — `cut.code` is what a screen branches on, never the sentence */
+      cut,
       /* ⭐ which sheet was read, and what else was in the workbook — a person who meant a different one can say so */
       sheet: parsed.sheet || null, sheets: parsed.sheets || null,
       /* ⭐⭐ and which ROW was taken as the headings, with the first few rows so a person can point at another
@@ -883,12 +900,16 @@ router.post('/import', auth, importLimiter,
     let parsed;
     try { parsed = readUpload(req.body); }
     catch (e) { return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) }); }
+    /* ⚠️ A CUT WORKBOOK IS REFUSED, like a file over IMPORT_MAX_ROWS: importing the part that was read would leave a person
+       working out which products are missing — the all-or-nothing rule this route keeps everywhere else. */
+    const cut = workbookCut(parsed);
+    if (cut) return res.status(413).json(Object.assign({ error: 'Workbook too large' }, cut));
     if (parsed.rows.length > IMPORT_MAX_ROWS) {
       return res.status(413).json({ error: 'Too many rows',
         message: `This file has ${parsed.rows.length} rows and one upload can carry ${IMPORT_MAX_ROWS}. Nothing was imported — split the file and it will all go in.` });
     }
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
     const rowErrors = report.issues.filter((i) => i.severity === 'error');
     if (rowErrors.length) {
       return res.status(409).json({ error: 'The file has problems', report,
@@ -1151,12 +1172,11 @@ function mergePatch(target, patch) {
  * ensureDeclared() — pushing a combo declares and validates exactly like a person typing the product by
  * hand, not a fourth door with its own rules. */
 router.mergePatch = mergePatch;
+router.gtinCheck = gtinCheck;   /* T3-FIXES: the preflight's code check, for tests/t3-fixes */
 router.defaultSchemaId = defaultSchemaId;
 router.validateAgainst = validateAgainst;
-/** [OFFR-04] all a cost-blind actor may touch through PATCH /:id — the "availability flag", nothing else.
- * Not price, not the modifiers, not the name — a person who cannot see what a change to any of those
- * would cost the margin should not be the one making it either. */
-const COST_BLIND_ALLOWED_FIELDS = ['status'];
+/* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
+   one gate for this PATCH, the schedule below, POST /till/price and the combo push (T3-FIXES, CAT-FIX1) */
 router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1166,14 +1186,8 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
      * change them, and checking post-merge would refuse a plain status flip for carrying fields the
      * caller never touched.
      */
-    if (req.identity && req.identity.identity_type === 'actor'
-        && !(await safeCanSeeCosts(req, entity_id))) {
-      const sent = Object.keys(req.body.item_data || {});
-      const blocked = sent.filter((k) => COST_BLIND_ALLOWED_FIELDS.indexOf(k) < 0);
-      if (blocked.length) return res.status(403).json({ error: 'Not permitted',
-        message: 'Your access does not include cost or price. You can change availability; the account '
-          + 'owner can grant "Sees costs" in Co-assists to change: ' + blocked.join(', ') + '.' });
-    }
+    const refused = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
+    if (refused) return res.status(403).json(refused);
     /**
      * ⭐⭐ `merge: true` — WRITE ONLY WHAT YOU EDITED ([EXP-01], 2026-09-06). This route REPLACES item_data (it always did; a client
      * comment claimed it merged). The exposure pane sent the whole item_data it had loaded minutes earlier, so a rate set in between
@@ -1229,6 +1243,9 @@ router.get('/:id/schedule', auth, async (req, res) => {
 router.post('/:id/schedule', auth, [ body('effective_at').isString(), body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
+    /* [OFFR-04] a parked change is an edit that lands later — the same cost gate as PATCH /:id, before anything is read */
+    const refused = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
+    if (refused) return res.status(403).json(refused);
     /* the patch goes through the SAME declaration gate as an edit — a scheduled key must be a declared column too */
     const decl = await catcols.ensureDeclared({
       query, entity_id, schema_id: await defaultSchemaId(entity_id), item_data: req.body.item_data,
