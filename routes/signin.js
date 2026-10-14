@@ -26,6 +26,7 @@
  * names its device (X-Device-Id) — so a phone can move onto a revocable session without anybody signing in again.
  */
 const express = require('express');
+const log = require('../lib/logger');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -402,7 +403,7 @@ function deviceRevoked(req, res, identity, method) {
   res.locals.code = 'DEVICE_REVOKED';
   return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' });
 }
-const jtiOf = (token) => { try { return (jwt.decode(token) || {}).jti || null; } catch (_) { return null; } };
+const jtiOf = (token) => { try { return (jwt.decode(token) || {}).jti || null; } catch (e) { log.fellBack('signin jtiOf: failed — answered with nothing', e); return null; } };
 const methodOf = (identity) => (identityAuth.needsPin(identity) ? 'pin' : 'otp');
 
 async function verify(req, res) {
@@ -559,7 +560,7 @@ async function verify(req, res) {
       } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }
 
       // BOOTSTRAP the default schema so catalogue/compose works at once. Non-fatal.
-      try { await require('../lib/schema-bootstrap').ensureDefaultSchema(identity.identity_id); } catch (_) {}
+      try { await require('../lib/schema-bootstrap').ensureDefaultSchema(identity.identity_id); } catch (e) { log.fellBack('signin verify: the helper failed — carried on without it', e); }
 
       /* CONNECT to this deployment's root (lib/rootlink.js) — inert without PLATFORM_ROOT_ENTITY, and never fails verification */
       try {

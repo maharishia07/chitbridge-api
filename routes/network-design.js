@@ -7,6 +7,7 @@
 // on someone else's behalf, so read lib/network-build.js before changing it: the plan is decided there, purely, and
 // this file only executes it. Owned nodes are created; partners are invited and never created.
 const express = require('express');
+const log = require('../lib/logger');
 const router  = express.Router();
 const crypto  = require('crypto');
 const { v4: uuidv4 } = require('uuid');
@@ -21,6 +22,7 @@ const devOtp = require('../lib/dev-otp');
 const money = require('../lib/money');                    // a price is {amount,currency} — never a bare number
 const availability = require('../lib/availability');      // a quantity is not an answer without a date
 const catalogueView = require('../lib/catalogue-view');   // ONE visibility rule — stock follows the catalogue's
+const membership = require('../lib/network-membership');  // who is in the network — one reader, fails loudly (T2-HONEST)
 
 const ent = (req) => auth.entityOf(req);
 const MAX_BYTES = 2_000_000;   // a design is a modest JSON tree; cap so this never becomes a document store
@@ -125,9 +127,9 @@ async function operatorCap(entityId) {
   try {
     const r = await query('SELECT plan, params_override FROM identities WHERE identity_id = $1', [entityId]);
     if (r.rows[0]) { plan = r.rows[0].plan; paramsOverride = r.rows[0].params_override || {}; }
-  } catch (_) { /* pre-governance schema — capOf() then reports unenforced */ }
+  } catch (e) { log.fellBack('network-design operatorCap: the read failed — carried on without it', e); /* pre-governance schema — capOf() then reports unenforced */ }
   let planMenu = null;
-  try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (_) {}
+  try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (e) { log.fellBack('network-design operatorCap: the helper failed — carried on without it', e); }
   return visibilityCap.capOf({ plan, planMenu, paramsOverride });
 }
 
@@ -784,14 +786,8 @@ async function mapLimit(items, limit, fn) {
  * or who may be looked at — two answers to "which stores?" is how one of them quietly becomes wrong.
  */
 async function visibleStores(meRow) {
-  let members = [];
-  try {
-    const r = await query(
-      `SELECT e.bridge_id FROM cb_entity e
-        WHERE e.path <@ (SELECT subpath(path, 0, 1) FROM cb_entity WHERE bridge_id = $1 LIMIT 1)
-        ORDER BY nlevel(e.path), e.name`, [meRow.bridge_id]);
-    members = r.rows.map((x) => x.bridge_id);
-  } catch (_) { members = []; }
+  /* ⭐ one tree reader (lib/network-membership.treeOf); a failed read throws NETWORK_READ_FAILED — never "not in a network" */
+  const members = await membership.treeOf(meRow.bridge_id);
   if (!members.length) return { members: [], visible: [], truncated: null };
 
   const truncated = members.length > MAX_STORES ? { asked: MAX_STORES, of: members.length } : null;
@@ -847,6 +843,7 @@ router.get('/stores', auth, async (req, res) => {
     });
     res.json({ stores, ...(truncated && { truncated }) });
   } catch (err) {
+    if (membership.answerReadFailed(res, err)) return;
     console.error('Network stores error:', err.message);
     res.status(500).json({ error: 'Load failed', message: safeErr(err) });
   }
@@ -865,14 +862,7 @@ router.get('/availability', auth, async (req, res) => {
     if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
 
     // Everyone under MY root, at any depth — one query, whatever the shape of the tree.
-    let members = [];
-    try {
-      const r = await query(
-        `SELECT e.bridge_id FROM cb_entity e
-          WHERE e.path <@ (SELECT subpath(path, 0, 1) FROM cb_entity WHERE bridge_id = $1 LIMIT 1)
-          ORDER BY nlevel(e.path), e.name`, [meRow.bridge_id]);
-      members = r.rows.map((x) => x.bridge_id);
-    } catch (_) { members = []; }
+    const members = await membership.treeOf(meRow.bridge_id);
     if (!members.length) {
       return res.json({ q, rows: [], summary: 'This business is not part of a network.', not_in_network: true });
     }
@@ -1062,6 +1052,7 @@ router.get('/availability', auth, async (req, res) => {
       ...(degraded && { degraded }),
     });
   } catch (err) {
+    if (membership.answerReadFailed(res, err)) return;
     console.error('Availability search error:', err.message);
     res.status(500).json({ error: 'Search failed', message: safeErr(err) });
   }

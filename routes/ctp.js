@@ -25,6 +25,7 @@
  */
 
 const express = require('express');
+const log = require('../lib/logger');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 
@@ -63,13 +64,13 @@ async function manifest() {
          ORDER BY (installation_key = $1) DESC, hosted_locally DESC, installation_key LIMIT 1`,
       [process.env.INSTALLATION_KEY || 'platform-0']);
     me = r.rows[0] || null;
-  } catch (_) { me = null; }
+  } catch (e) { log.fellBack('ctp manifest: the read failed — answered with nothing', e); me = null; }
   try {
     /* ⚠️ only `live` by default. Publishing every sandbox code would tell the world what we are testing and
        invite a stranger to guess a pairing. */
     const p = await query(`SELECT code FROM ops.population WHERE is_live`);
     pops = p.rows.map((x) => x.code);
-  } catch (_) { pops = []; }
+  } catch (e) { log.fellBack('ctp manifest: the read failed — answered with none', e); pops = []; }
 
   return {
     ctp: '1',
@@ -127,7 +128,7 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
         `SELECT installation_key, domain, hosted_locally, active FROM installation WHERE installation_key = $1`,
         [ik]);
       peer = r.rows[0] || null;
-    } catch (_) { peer = null; }
+    } catch (e) { log.fellBack('ctp POST /deliver: the read failed — answered with nothing', e); peer = null; }
     /**
      * ⚠️⚠️ "IS HE A MEMBER OF ME" — Athi's phrase, and this is the line that answers it. Discovery is open;
      * DELIVERY IS NOT. A stranger can read our manifest and still be refused here, because being findable and
@@ -155,7 +156,7 @@ router.post('/deliver', ctpLimiter, async (req, res) => {
      */
     let senderGov = null;
     try { senderGov = await require('../lib/govresolve').resolveInstallationGovernance(ik); }
-    catch (_) { senderGov = null; }
+    catch (e) { log.fellBack('ctp POST /deliver: the helper failed — answered with nothing', e); senderGov = null; }
 
     /* ── the signature, against the key on THEIR domain. Never one they sent us. */
     const pk = await directory.publicKeyFor(peer.domain, ik);
@@ -316,7 +317,7 @@ router.post('/query', ctpLimiter, async (req, res) => {
       const r = await query(
         `SELECT installation_key, domain, hosted_locally, active FROM installation WHERE installation_key = $1`, [ik]);
       peer = r.rows[0] || null;
-    } catch (_) { peer = null; }
+    } catch (e) { log.fellBack('ctp POST /query: the read failed — answered with nothing', e); peer = null; }
     if (!peer || !peer.active) return no(403, 'installation ' + ik + ' is not one we deal with');
     if (peer.hosted_locally) return no(409, 'installation ' + ik + ' is hosted here — ask locally');
     if (!peer.domain) return no(403, 'no domain recorded for ' + ik + ', so its key cannot be found');

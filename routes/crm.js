@@ -31,6 +31,7 @@
  * ⚠️ BEFORE b276 the writers answer 503 { code: 'CRM_NOT_MIGRATED' }; the record and the timeline simply carry `migrated: false`.
  */
 const express = require('express');
+const logger = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { withEntity, query } = require('../db');
@@ -341,7 +342,7 @@ router.post('/walk-ins/add', auth, noKey, async (req, res) => {
       `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
        VALUES ($1, $2, 'entity', 'manual', 0, NULL) ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING RETURNING customer_list_id`, [owner, local.identity_id]));
     if (!ins.rows.length) throw bad('That customer is already on your list.', 409, 'EXISTS');
-    const party_no = await withEntity(owner, (h) => require('../db').trySavepoint(h, () => PF.ensureNo(h, owner, local.identity_id), null)).catch(() => null);
+    const party_no = await withEntity(owner, (h) => require('../db').trySavepoint(h, () => PF.ensureNo(h, owner, local.identity_id), null)).catch(logger.orElse('crm POST /walk-ins/add: the read failed — answered with nothing', null));
     /* the points: read through the ONE reader, claimed by the engine, appended by the ONE writer */
     let claimed = 0;
     const bal = await RS.balance(owner, from, withEntity);

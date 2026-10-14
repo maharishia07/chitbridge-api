@@ -15,6 +15,8 @@
  * Scopes today: 'offers' (the offer engine as a service). A route asks for one with auth.requireScope('offers').
  */
 const express = require('express');
+const { safeErr } = require('../lib/respond');
+const logger = require('../lib/logger');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
@@ -65,7 +67,7 @@ async function patchKey(entity_id, jti, patch, db) {
 
 router.get('/', auth, sessionOnly, async (req, res) => {
   try { res.json({ keys: await listOf(auth.entityOf(req)), scopes: SCOPES }); }
-  catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -230,7 +232,7 @@ async function bookedPrefixes(db, entity_id) {
       [entity_id]);
     r.rows.forEach((x) => { if (x.id) out.add(x.id); });
     await db.query('RELEASE SAVEPOINT booked');
-  } catch (_) { try { await db.query('ROLLBACK TO SAVEPOINT booked'); } catch (__) {} }
+  } catch (_) { try { await db.query('ROLLBACK TO SAVEPOINT booked'); } catch (__) { logger.fellBack('keys bookedPrefixes: the read failed — carried on without it', __); } }
   return out;
 }
 router.bookedPrefixes = bookedPrefixes;
@@ -272,7 +274,7 @@ async function phoneHashesOf(db, entity_id, by) {
     const r = await db.query(st.text, st.params);
     r.rows.forEach((x) => { if (x.value_hash) out.add(String(x.value_hash)); });
     await db.query('RELEASE SAVEPOINT phone_doc');
-  } catch (_) { try { await db.query('ROLLBACK TO SAVEPOINT phone_doc'); } catch (__) {} }
+  } catch (_) { try { await db.query('ROLLBACK TO SAVEPOINT phone_doc'); } catch (__) { logger.fellBack('keys phoneHashesOf: the read failed — carried on without it', __); } }
   return out;
 }
 /** the hashes an assigned number may have been filed under — with and without its leading '+', since both are allowed */
@@ -360,7 +362,7 @@ async function claimDevice(db, entity_id, pf, who, ask) {
       await counterPatch(id, { held_by: null, held_at: null, closed_at: now });
   }
   if (counter && counter.held_by !== mine) await counterPatch(counter.id, { held_by: mine, held_at: now, opened_at: now, closed_at: null, released: null });
-  if (who.session) { try { require('../lib/person-session').forget(who.session); } catch (_) {} }
+  if (who.session) { try { require('../lib/person-session').forget(who.session); } catch (e) { logger.fellBack('keys claimDevice: the helper failed — carried on without it', e); } }
 
   const from = using || had;
   const out = { id: pick, clash: pick ? null : { id: from, held_by: 'every prefix is taken' },
@@ -523,7 +525,7 @@ router.delete('/:jti', auth, sessionOnly, async (req, res) => {
     if (!found) return res.status(404).json({ error: 'Not found' });
     auth.forgetKey(req.params.jti);
     res.json({ message: 'Key revoked', jti: req.params.jti });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.openapi = { paths: { '/api/keys': { post: { summary: 'Mint an API key (session only)', tags: ['keys'], security: [{ bearer: [] }], requestBody: { content: { 'application/json': { schema: { type: 'object', properties: { name: { type: 'string' }, scopes: { type: 'array', items: { type: 'string', enum: SCOPES } }, days: { type: 'integer' } } } } } }, responses: { 201: { description: 'the key, shown once' } } }, get: { summary: 'List keys (session only)', tags: ['keys'], security: [{ bearer: [] }], responses: { 200: { description: 'keys' } } } }, '/api/keys/{jti}': { delete: { summary: 'Revoke a key (session only)', tags: ['keys'], security: [{ bearer: [] }], parameters: [{ name: 'jti', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'revoked' } } } } }, schemas: {} };

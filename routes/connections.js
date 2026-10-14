@@ -1,5 +1,6 @@
 // routes/connections.js — Connection handshake
 const express = require('express');
+const log = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
@@ -215,7 +216,7 @@ router.put('/:id/respond',
          billing for one would charge for being asked. */
       if (newStatus === 'accepted') {
         try { require('../lib/meter').meter(entity_id, 'network.connect', {
-          detail: connection_id, rid: req.id }).catch(() => {}); } catch (_) {}
+          detail: connection_id, rid: req.id }).catch(log.orElse('connections PUT /:id/respond: failed — carried on without it')); } catch (e) { log.fellBack('connections PUT /:id/respond: the helper failed — carried on without it', e); }
       }
 
       res.json({

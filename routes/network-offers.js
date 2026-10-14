@@ -18,11 +18,16 @@
  */
 'use strict';
 const express = require('express');
+const log = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
 const net = require('../lib/network-offers');
 const ncat = require('../lib/network-catalogue');
+const membership = require('../lib/network-membership');
+const { safeErr } = require('../lib/respond');
+/** every door's catch: a member read that failed answers in its own words (503 + code); anything else, safeErr */
+const failed = (res, e) => membership.answerReadFailed(res, e) || res.status(500).json({ error: 'Failed', message: safeErr(e) });
 
 const sessionOnly = (req, res, next) => {
   if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Network offers are managed by a signed-in person.' });
@@ -34,7 +39,7 @@ async function ownOffer(entity_id, id) {
   if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return null;
   const r = await withEntity(entity_id, (db) => db.query(
     `SELECT definition_id, name, status, current_version FROM definition WHERE entity_id = $1 AND definition_id = $2 AND kind = 'offer'`,
-    [entity_id, id])).catch(() => ({ rows: [] }));
+    [entity_id, id])).catch(log.orElse('network-offers ownOffer: the read failed — answered with none', ({ rows: [] })));
   return r.rows[0] || null;
 }
 
@@ -44,23 +49,23 @@ router.get('/', auth, sessionOnly, async (req, res) => {
     const brand = await net.brandView(me);
     /* the networks THIS shop belongs to, read from its own adoptions */
     const ado = await withEntity(me, (db) => db.query(
-      'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [me])).catch(() => ({ rows: [] }));
+      'SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true', [me])).catch(log.orElse('network-offers GET /: the read failed — answered with none', ({ rows: [] })));
     const owners = [];
     if (ado.rows.length) {
       const src = await query('SELECT source_key, owner_entity_id FROM catalogue_source WHERE source_key = ANY($1::text[])',
-        [ado.rows.map((r) => r.source_key)]).catch(() => ({ rows: [] }));
+        [ado.rows.map((r) => r.source_key)]).catch(log.orElse('network-offers GET /: the read failed — answered with none', ({ rows: [] })));
       src.rows.forEach((r) => { if (r.owner_entity_id && String(r.owner_entity_id) !== String(me)) owners.push(String(r.owner_entity_id)); });
     }
     const choices = ((await net.flagsOf(me)).flags.network_choices) || {};
     /* ⭐ where this store stands with each brand it sells for — in, asked, invited, suspended, or not yet asked */
-    const standing = await require('../lib/network-membership').standing(me, owners);
+    const standing = await membership.standing(me, owners);
     /* ⭐ and the brands that INVITED this store without it selling their catalogue yet */
     const invites = await query(
       `SELECT i.identity_id::text AS brand_id, e.id::text AS edge_id
          FROM identities mi JOIN cb_entity mc ON mc.bridge_id = mi.bridge_id
          JOIN cb_edge e ON e.child_id = mc.id AND e.type = 'commercial' AND e.state = 'requested' AND e.requested_by = e.parent_id
          JOIN cb_entity bc ON bc.id = e.parent_id JOIN identities i ON i.bridge_id = bc.bridge_id AND i.identity_type = 'entity'
-        WHERE mi.identity_id = $1`, [me]).catch(() => ({ rows: [] }));
+        WHERE mi.identity_id = $1`, [me]).catch(log.orElse('network-offers GET /: the read failed — answered with none', ({ rows: [] })));
     const networks = [];
     for (const brand_id of [...new Set(owners.concat(invites.rows.map((x) => x.brand_id)))]) {
       const st = standing[brand_id] || { state: 'invited', via: 'joined', edge_id: (invites.rows.find((x) => x.brand_id === brand_id) || {}).edge_id, asked_by: 'brand' };
@@ -74,7 +79,7 @@ router.get('/', auth, sessionOnly, async (req, res) => {
       if (ids.length) {
         const r = await withEntity(brand_id, (db) => db.query(
           `SELECT definition_id, name, sub_kind, status FROM definition
-            WHERE entity_id = $1 AND kind = 'offer' AND definition_id::text = ANY($2::text[])`, [brand_id, ids])).catch(() => ({ rows: [] }));
+            WHERE entity_id = $1 AND kind = 'offer' AND definition_id::text = ANY($2::text[])`, [brand_id, ids])).catch(log.orElse('network-offers GET /: the read failed — answered with none', ({ rows: [] })));
         rows = r.rows;
       }
       networks.push({ brand_id, brand_name: await net.brandName(brand_id, name), policy,
@@ -90,15 +95,15 @@ router.get('/', auth, sessionOnly, async (req, res) => {
         }) });
     }
     /* ⭐ the catalogue half: what the brand would publish, and the prices its stores are being asked about */
-    brand.catalogue = await ncat.brandView(me).catch(() => null);
+    brand.catalogue = await ncat.brandView(me).catch(membership.orElse('network offers: the catalogue half was not read — shown without it', null));
     if (brand.catalogue) brand.is_brand = true;
-    const price_notices = await ncat.storeNotices(me, ado.rows).catch(() => []);
+    const price_notices = await ncat.storeNotices(me, ado.rows).catch(membership.orElse('network offers: price notices not read — none shown', []));
     /* ⭐ may this login DESIGN a network? the same rule POST /api/network-design/build enforces (only the business itself, never a co-assist);
        the member view's Design tab shows the action either way and greys it with this sentence (no query — read off the session) */
     const may_design = (req.identity && req.identity.parent_entity_id)
       ? { ok: false, why: 'Only the business owner designs a network. Sign in as the business itself.' } : { ok: true, why: null };
     res.json({ brand, store: { networks, price_notices }, may_design });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { failed(res, e); }
 });
 
 router.put('/policy', auth, sessionOnly, async (req, res) => {
@@ -109,7 +114,7 @@ router.put('/policy', auth, sessionOnly, async (req, res) => {
     await net.mergeFlag(me, 'network_offers', { policy });
     const pushed = await net.pushToNetwork(me, 'network offer policy');
     res.json({ ok: true, policy, pushed });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { failed(res, e); }
 });
 
 const mapOf = (v) => (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
@@ -122,7 +127,7 @@ router.post('/catalogue/publish', auth, sessionOnly, async (req, res) => {
     const out = await ncat.publish(auth.entityOf(req), String(b.source_key || ''), { at: b.at, add: Array.isArray(b.add) ? b.add : [], withdraw: Array.isArray(b.withdraw) ? b.withdraw : [], withdraw_at: mapOf(b.withdraw_at), restore_at: mapOf(b.restore_at), by: who(req) });
     if (out.error) return fail(res, out);
     res.json(Object.assign({ ok: true }, out));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { failed(res, e); }
 });
 
 router.post('/catalogue/cancel', auth, sessionOnly, async (req, res) => {
@@ -130,7 +135,7 @@ router.post('/catalogue/cancel', auth, sessionOnly, async (req, res) => {
     const out = await ncat.cancel(auth.entityOf(req), String((req.body || {}).source_key || ''));
     if (out.error) return fail(res, out);
     res.json(out);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { failed(res, e); }
 });
 
 router.post('/catalogue/price', auth, sessionOnly, async (req, res) => {
@@ -139,7 +144,7 @@ router.post('/catalogue/price', auth, sessionOnly, async (req, res) => {
     const out = await ncat.answer(auth.entityOf(req), { source_key: String(b.source_key || ''), name: String(b.name || ''), key: b.key ? String(b.key) : null, choice: b.choice });
     if (out.error) return fail(res, out);
     res.json(out);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { failed(res, e); }
 });
 
 router.post('/:id/release', auth, sessionOnly, async (req, res) => {
@@ -171,7 +176,7 @@ router.post('/:id/release', auth, sessionOnly, async (req, res) => {
     /* ⭐ the push: every member store is told, and each store's counters are the clients subscribed under it */
     const pushed = await net.pushToNetwork(me, 'network offer released');
     res.json({ ok: true, id: o.definition_id, name: o.name, release: rec, pushed });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { failed(res, e); }
 });
 
 router.post('/:id/withdraw', auth, sessionOnly, async (req, res) => {
@@ -186,7 +191,7 @@ router.post('/:id/withdraw', auth, sessionOnly, async (req, res) => {
     await net.setReleased(me, o.definition_id, Object.assign({}, cur, { until, withdrawn_at: new Date().toISOString() }));
     const pushed = await net.pushToNetwork(me, 'network offer withdrawn');
     res.json({ ok: true, id: o.definition_id, until, pushed });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { failed(res, e); }
 });
 
 router.post('/:id/choice', auth, sessionOnly, async (req, res) => {
@@ -200,7 +205,7 @@ router.post('/:id/choice', auth, sessionOnly, async (req, res) => {
     /* ⭐ the store's own counters re-read at once */
     require('../lib/shopchanged').shopChanged(me, 'network offer choice');
     res.json({ ok: true, id, choice });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { failed(res, e); }
 });
 
 module.exports = router;

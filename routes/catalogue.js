@@ -1,7 +1,9 @@
 // routes/catalogue.js — B3.7 Public catalogue + end-customer order (no business login)
 const express = require('express');
+const logger = require('../lib/logger');
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
+const membership = require('../lib/network-membership');   // who is in the network — one reader, fails loudly (T2-HONEST)
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
@@ -304,7 +306,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         finishByName.set(nk, { count: nb.count + 1, rec });
       }
     }
-  } catch (_) { /* no reference catalogue for this shop */ }
+  } catch (e) { logger.fellBack('catalogue repriceAgainstCatalogue: the read failed — carried on without it', e); /* no reference catalogue for this shop */ }
   const MAX_QTY = 100000;
   const items = await Promise.all(rawItems.map(async (li, idx) => {
     // FINISH line (reference catalogue) — priced from the adoption commercials, server-authoritative (never the customer).
@@ -338,7 +340,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
       if (Number.isFinite(minL) && minL > 0 && fq < minL) throw _422(`"${fref.name}" has a minimum order of ${minL} litres (set by ${fref.source}).`);
       // WIRING (stone 5): FREEZE the container ref + version (the immutable snapshot the customer saw → chit verifiable forever).
       let containerFreeze = null;
-      try { const cid = container.itemContainerId(fref.source, fref.name); const cc = await container.getContainer(cid); if (cc) containerFreeze = { ref: cid, content_version: cc.current_version }; } catch (_) {}
+      try { const cid = container.itemContainerId(fref.source, fref.name); const cc = await container.getContainer(cid); if (cc) containerFreeze = { ref: cid, content_version: cc.current_version }; } catch (e) { logger.fellBack('catalogue repriceAgainstCatalogue: failed — carried on without it', e); }
       // The buyer's POSITION. Deliberately computed AFTER price/total below: the seller's price comes from the
       // catalogue and is authoritative; the buyer's price travels ON THE CHIT and never touches money.
       const proposal = validateProposal(li.proposal, oi, fref.band, fref.name);
@@ -474,7 +476,7 @@ router.get('/network-store/:networkId', async (req, res) => {
     const categories = [...new Set(products.map((p) => p.category))].sort();
     res.json({ network_id: nid, categories, count: products.length, products });   // NO node/entity attribution — the internal structure stays hidden
   } catch (err) {
-    res.status(500).json({ error: 'Storefront failed', message: (err && err.message) || 'error' });
+    res.status(500).json({ error: 'Storefront failed', message: safeErr(err) });
   }
 });
 
@@ -628,14 +630,8 @@ router.get('/network/:bridge_id', async (req, res) => {
     if (!root) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
 
     // The members: everything under this root on the cb_entity tree. One query whatever the depth.
-    let members = [];
-    try {
-      const r = await query(
-        `SELECT e.bridge_id FROM cb_entity e
-          WHERE e.path <@ (SELECT path FROM cb_entity WHERE bridge_id = $1 LIMIT 1)
-          ORDER BY nlevel(e.path), e.name`, [root.bridge_id]);
-      members = r.rows.map((x) => x.bridge_id);
-    } catch (_) { members = []; }   // no tree → not a network
+    /* ⭐ the one tree reader (lib/network-membership); a read that failed answers 503 in words, never "Shop not found" */
+    const members = await membership.treeOf(root.bridge_id, { under: 'self' });
 
     if (!members.length) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     const truncated = members.length > MAX_DEPARTMENTS;
@@ -663,7 +659,7 @@ router.get('/network/:bridge_id', async (req, res) => {
       return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     }
     res.json(shopfront);
-  } catch (err) { res.status(500).json({ error: 'Network storefront failed', message: safeErr(err) }); }
+  } catch (err) { if (membership.answerReadFailed(res, err)) return; res.status(500).json({ error: 'Network storefront failed', message: safeErr(err) }); }
 });
 // ── CJ-02: public catalogue (only when visibility='public') ──
 /**
@@ -679,7 +675,7 @@ function ownerOf(req, entity) {
     if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
     const mine = d.parent_entity_id || d.identity_id;
     return String(mine) === String(entity.identity_id);
-  } catch (_) { return false; }
+  } catch (e) { logger.fellBack('catalogue ownerOf: the helper failed — answered no', e); return false; }
 }
 /**
  * ── ⭐⭐ THE PUBLIC VIEW OF ONE STORE, AS ONE FUNCTION ───────────────────────────────────────────────────────────
@@ -1071,7 +1067,7 @@ router.post('/:bridge_id/order/confirm',
         const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: entity.identity_id });
         if (cfg) summary_json.governed = { pattern: cfg._blueprint, capability: cfg._capability,
           constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
-      } catch (_) { /* seam is best-effort */ }
+      } catch (e) { logger.fellBack('catalogue: the helper failed — carried on without it', e); /* seam is best-effort */ }
       // CAPTURE (increment 3): the storefront GATHERS the standard's required fields from the customer (hs_code,
       // incoterms, …) and sends them as `captured`. They're stored on the chit and fed into conformance → it now
       // PASSES instead of flagging. (Fields the standard requires but the form didn't gather still show as gaps.)
@@ -1096,14 +1092,14 @@ router.post('/:bridge_id/order/confirm',
           if (v === null || typeof v === 'object') continue;                  // scalars only
           captured[k] = String(v).slice(0, 200);
         }
-      } catch (_) { captured = {}; }                                          // cannot resolve what is asked for → carry nothing
+      } catch (e) { logger.fellBack('catalogue: the helper failed — answered with an empty set', e); captured = {}; }                                          // cannot resolve what is asked for → carry nothing
       if (Object.keys(captured).length) summary_json.captured = captured;
       try {
         // captured goes in UNDER its own key, never spread over the authoritative summary — a customer must not be
         // able to decide what the checker sees for total_value or line_item_count.
         const v = await require('../lib/conformance').checkConformance({ ...summary_json, ...captured, line_items }, 'chit');
         summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map(g => g.missing), captured: Object.keys(captured) };
-      } catch (_) { /* advisory is best-effort */ }
+      } catch (e) { logger.fellBack('catalogue: the helper failed — carried on without it', e); /* advisory is best-effort */ }
       const auto_subject = `Order from ${c.display_name} — ` +
         new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
       const all_recipients = [
@@ -1242,7 +1238,7 @@ router.post('/:bridge_id/order/confirm',
         try {
           const srcs = Array.from(new Set(line_items.filter((l) => l.source).map((l) => l.source)));
           for (const sk of srcs) await query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [sk, entity.identity_id, custLocality]);
-        } catch (e) { /* b79 not applied → skip (self-healing) */ }
+        } catch (e) { logger.fellBack('catalogue: the write failed — carried on without it', e); /* b79 not applied → skip (self-healing) */ }
       }
 
       // 6b: ERP HANDOFF (receipt-only, process-then-forget). Hand the order + its governance (source@v, frozen
@@ -1257,7 +1253,7 @@ router.post('/:bridge_id/order/confirm',
             `INSERT INTO erp_handoff (handoff_id, entity_id, chit_id, summary, payload_hash, status) VALUES ($1,$2,$3,$4::jsonb,$5,'handed_off')`,
             [uuidv4(), entity.identity_id, chit_id, JSON.stringify(summary), payload_hash]));
         }
-      } catch (e) { /* b82 not applied → skip (self-healing) */ }
+      } catch (e) { logger.fellBack('catalogue: the write failed — carried on without it', e); /* b82 not applied → skip (self-healing) */ }
 
       // ⭐ [capability: sign-in] issueToken() — the one place a sign-in becomes a JWT, entity, coassist or
       // customer alike (customer token, for future order tracking — CJ-F1).
@@ -1270,7 +1266,7 @@ router.post('/:bridge_id/order/confirm',
       // customer still has the file on screen to retry with. `documents` is reported so the caller can record the
       // sealed hashes, with line_index so a bundle can tell which form each proof belongs to.
       /* ⭐ THE SELLER'S BELL: a storefront order is the arrival that matters most (lib/events.js) — the transaction above has committed */
-      try { require('../lib/events').emit([entity.identity_id], { kind: 'chit', id: chit_id, who: c.display_name || null, note: purpose === 'offer' ? 'offer' : 'order' }); } catch (_) {}
+      try { require('../lib/events').emit([entity.identity_id], { kind: 'chit', id: chit_id, who: c.display_name || null, note: purpose === 'offer' ? 'offer' : 'order' }); } catch (e) { logger.fellBack('catalogue: the signal was not sent — carried on without it', e); }
       res.json({ message: purpose === 'offer' ? 'Offer sent' : 'Order placed', chit_id, shop: entity.display_name,
                  summary: summary_json, token,
                  ...(pendingDocs.length ? { documents: pendingDocs.map((d) => ({ name: d.name, sha256: d.sha256, line_index: d.line_index })) } : {}) });
@@ -1420,7 +1416,7 @@ const enquiryLimitCheck = async (viewer, item_id) => {
      short-circuit for "your own product" was unreachable, since the row it tests was never returned. */
   let owner_id = null;
   const own = await withEntity(viewer, (db) => db.query(
-    'SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id])).catch(() => null);
+    'SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id])).catch(logger.orElse('catalogue enquiryLimitCheck: the read failed — answered with nothing', null));
   if (own && own.rows[0]) owner_id = own.rows[0].entity_id;
   if (!owner_id) {
     const pub = await query('SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id]);
@@ -1430,7 +1426,7 @@ const enquiryLimitCheck = async (viewer, item_id) => {
   if (owner_id === viewer) return { ok: true, owner_id };          // your own product
   const ent = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [owner_id]);
   if (!ent.rows[0]) return { ok: false };
-  const view = await publicViewFor(ent.rows[0], { viewer }).catch(() => null);
+  const view = await publicViewFor(ent.rows[0], { viewer }).catch(logger.orElse('catalogue enquiryLimitCheck: failed — answered with nothing', null));
   return (view && view.available !== false) ? { ok: true, owner_id } : { ok: false };
 };
 

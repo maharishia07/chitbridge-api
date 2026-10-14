@@ -32,6 +32,8 @@
  * b213 made for points, and the same append-only grant: a re-test is a NEW ROW and the latest one wins.
  */
 const express = require('express');
+const { safeErr } = require('../lib/respond');
+const logger = require('../lib/logger');
 const storage = require('../lib/storage');
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -201,7 +203,7 @@ router.post('/cases/close', auth, async (req, res) => {
       return res.status(404).json({ error: 'Not found', message: 'no case called ' + key });
     }
     return res.json({ case_key: r.rows[0].name, status: r.rows[0].status, closed: !open });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String((e && e.message) || e) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.post('/trace', auth, (req, res) => {
@@ -211,14 +213,14 @@ router.post('/trace', auth, (req, res) => {
     const t = require('../lib/trips');
     const b = req.body || {};
     return res.json(b.off ? t.traceOff(me) : t.traceOn(me, b.minutes));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String((e && e.message) || e) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.get('/trace', auth, (req, res) => {
   try {
     const me = auth.entityOf(req);
     if (!me) return res.status(401).json({ error: 'Unauthorised' });
     return res.json(require('../lib/trips').traceState(me));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String((e && e.message) || e) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.get('/vocabulary', (req, res) => {
@@ -292,7 +294,7 @@ router.get('/cases', auth, async (req, res) => {
         version: x.current_version, status: x.status }, x.rules || {}));
     res.json({ cases, count: cases.length });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the test cases', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read the test cases', message: safeErr(err) });
   }
 });
 
@@ -683,10 +685,10 @@ router.post('/cases/import', auth, async (req, res) => {
         require('../lib/testnews').testRaised(_ent, 'case', rows[0].case_key,
           { screen: rows[0].screen_code, by: _who.id, byName: _who.name });
       }
-    } catch (_) {}
+    } catch (e) { logger.fellBack('testing POST /cases/import: the helper failed — carried on without it', e); }
     res.json(_out);
   } catch (err) {
-    res.status(500).json({ error: 'Import failed', message: String(err.message || err) });
+    res.status(500).json({ error: 'Import failed', message: safeErr(err) });
   }
 });
 
@@ -738,7 +740,7 @@ router.post('/cases/seed', auth, async (req, res) => {
     const out = await importCases(testboard.entityFor(auth.entityOf(req)), testerOf(req), doc.cases || []);
     res.json(Object.assign({ version: doc.version, date: doc.date }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not load the documented cases', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not load the documented cases', message: safeErr(err) });
   }
 });
 
@@ -839,7 +841,7 @@ router.get('/cmdb', auth, async (req, res) => {
     res.json({ records: rows.rows.map((r) => ({ ci: r.name, title: (r.rules || {}).title || r.name,
       version: r.current_version, updated_at: r.updated_at, source: (r.rules || {}).source || null,
       flags: cmdb.flags(r.rules || {}) })) });
-  } catch (err) { res.status(500).json({ error: 'Could not read the CMDB', message: String(err.message || err) }); }
+  } catch (err) { res.status(500).json({ error: 'Could not read the CMDB', message: safeErr(err) }); }
 });
 
 /** GET /api/testing/cmdb/:ci — one record, as stored (?version=N for an earlier one) */
@@ -858,7 +860,7 @@ router.get('/cmdb/:ci', auth, async (req, res) => {
     if (!r) return res.status(404).json({ error: 'No such record', message: 'Nothing in the CMDB is called ' + ci + '.' });
     res.json({ ci: r.name, version: r.version, current_version: r.current_version, saved_at: r.created_at,
                record: r.rules, flags: cmdb.flags(r.rules || {}) });
-  } catch (err) { res.status(500).json({ error: 'Could not read the record', message: String(err.message || err) }); }
+  } catch (err) { res.status(500).json({ error: 'Could not read the record', message: safeErr(err) }); }
 });
 
 /** PUT /api/testing/cmdb/:ci — save one record; a new version only when it actually changed */
@@ -872,7 +874,7 @@ router.put('/cmdb/:ci', auth, async (req, res) => {
     const out = await withEntity(entity_id, (db) =>
       upsertVersioned(db, entity_id, testerOf(req), 'cmdb', rec.ci, rec.system || null, rec.title, v.record));
     res.json(Object.assign({ ci: rec.ci, flags: cmdb.flags(rec) }, out));
-  } catch (err) { res.status(500).json({ error: 'Could not save the record', message: String(err.message || err) }); }
+  } catch (err) { res.status(500).json({ error: 'Could not save the record', message: safeErr(err) }); }
 });
 
 /** POST /api/testing/cmdb/seed — load every record shipped in data/cmdb/*.json, the way cases/seed loads cases */
@@ -890,7 +892,7 @@ router.post('/cmdb/seed', auth, async (req, res) => {
     const files = fs.readdirSync(CMDB_DIR).filter((n) => /\.json$/.test(n)).sort();
     /* ⚠️ every file is checked BEFORE anything is written: one bad record refuses the whole load, said by name,
        rather than leaving the CMDB half-seeded and looking complete */
-    const recs = files.map((n) => { let r = null; try { r = JSON.parse(fs.readFileSync(require('path').join(CMDB_DIR, n), 'utf8')); } catch (_) {}
+    const recs = files.map((n) => { let r = null; try { r = JSON.parse(fs.readFileSync(require('path').join(CMDB_DIR, n), 'utf8')); } catch (e) { logger.fellBack('testing POST /cmdb/seed: did not parse — carried on without it', e, 'debug'); }
       return { n, r, v: cmdb.shape(r) }; });
     const bad = recs.filter((x) => !x.v.ok);
     if (bad.length) return res.status(400).json({ error: 'A shipped record does not fit',
@@ -902,7 +904,7 @@ router.post('/cmdb/seed', auth, async (req, res) => {
       }
     });
     res.json(out);
-  } catch (err) { res.status(500).json({ error: 'Could not load the CMDB records', message: String(err.message || err) }); }
+  } catch (err) { res.status(500).json({ error: 'Could not load the CMDB records', message: safeErr(err) }); }
 });
 
 /* ── THE RESULTS ──────────────────────────────────────────────────────────────────────────────────────────── */
@@ -1070,7 +1072,7 @@ router.post('/results', auth, async (req, res) => {
     const out = await recordResults(testboard.entityFor(auth.entityOf(req)), testerOf(req), req.body || {});
     res.status(out.status).json(out.body);
   } catch (err) {
-    res.status(500).json({ error: 'Could not record the result', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not record the result', message: safeErr(err) });
   }
 });
 
@@ -1110,7 +1112,7 @@ router.get('/results', auth, async (req, res) => {
         ORDER BY case_key, COALESCE(layer,''), at DESC`, [entity_id, pj.project]));
     res.json({ results: r.rows, count: r.rows.length, project: pj.project });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the results', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read the results', message: safeErr(err) });
   }
 });
 
@@ -1148,7 +1150,7 @@ router.get('/runs', auth, async (req, res) => {
     });
     res.json({ runs: r.rows, count: r.rows.length, project: pj.project, projects });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the runs', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read the runs', message: safeErr(err) });
   }
 });
 
@@ -1197,7 +1199,7 @@ function layerOfCase(key) {
       if (ar.indexOf(a) >= 0) return AREA_TO_LAYER[a];
     }
     return null;
-  } catch (_) { return null; }
+  } catch (e) { logger.fellBack('testing layerOfCase: did not parse — answered with nothing', e, 'debug'); return null; }
 }
 
 router.post('/results/junit', auth, async (req, res) => {
@@ -1233,7 +1235,7 @@ router.post('/results/junit', auth, async (req, res) => {
       project: req.body.project });
     return res.status(out.status).json(Object.assign({ unmatched }, out.body));
   } catch (err) {
-    res.status(500).json({ error: 'Could not read that report', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read that report', message: safeErr(err) });
   }
 });
 
@@ -1284,7 +1286,7 @@ router.get('/cases/gherkin', auth, async (req, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename="' + (only || 'chitbridge') + '.feature"');
     res.send(gherkin.toFeatures(groups));
   } catch (err) {
-    res.status(500).json({ error: 'Could not export', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not export', message: safeErr(err) });
   }
 });
 
@@ -1340,7 +1342,7 @@ router.post('/cases/gherkin', auth, async (req, res) => {
     }
     res.json(out);
   } catch (err) {
-    res.status(500).json({ error: 'Could not import', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not import', message: safeErr(err) });
   }
 });
 
@@ -1544,10 +1546,10 @@ router.post('/requirements', auth, async (req, res) => {
       } catch (e) { support = { copied: false, why: String(e.message || e) }; }
       require('../lib/testnews').testRaised(entity_id, 'requirement', out && (out.clause || out.ref),
         { screen: (req.body || {}).screen_code, by: w2.id, byName: w2.name });
-    } catch (_) {}
+    } catch (e) { logger.fellBack('testing POST /requirements: the helper failed — carried on without it', e); }
     res.json(Object.assign({ raised: true, state: 'raised', support }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not raise it', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not raise it', message: safeErr(err) });
   }
 });
 
@@ -1592,7 +1594,7 @@ router.get('/requirements', auth, async (req, res) => {
     const counts = REQ_STATES.reduce((a, k) => { a[k] = all.filter((q) => q.state === k).length; return a; }, {});
     res.json({ requirements: list, count: list.length, counts, open: open.length, total: all.length });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read them', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read them', message: safeErr(err) });
   }
 });
 
@@ -1659,11 +1661,11 @@ router.patch('/requirements/:id', auth, async (req, res) => {
     try {
       require('../lib/testnews').testRaised(entity_id, 'requirement', out._ref,
         { state: out.state, forId: out._raiser, screen: out._screen, by: who.id, byName: who.name });
-    } catch (_) {}
+    } catch (e) { logger.fellBack('testing PATCH /requirements/:id: the helper failed — carried on without it', e); }
     delete out._ref; delete out._raiser; delete out._screen;
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not set it', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not set it', message: safeErr(err) });
   }
 });
 
@@ -1786,7 +1788,7 @@ router.post('/incidents', auth, async (req, res) => {
       const w = testerOf(req);
       require('../lib/testnews').testRaised(entity_id, 'incident', out && out.ref,
         { screen: b.screen_code, by: w.id, byName: w.name });
-    } catch (_) {}
+    } catch (e) { logger.fellBack('testing POST /incidents: the helper failed — carried on without it', e); }
 
     /**
      * ── ⭐⭐ AND IT REACHES US (DESIGN-SUPPORT-LIFECYCLE.md §5.2) ─────────────────────────────────────────────
@@ -1824,7 +1826,7 @@ router.post('/incidents', auth, async (req, res) => {
 
     res.json(Object.assign({ recorded: true, state: 'raised', support }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not record it', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not record it', message: safeErr(err) });
   }
 });
 
@@ -1891,7 +1893,7 @@ router.get('/incidents', auth, async (req, res) => {
     res.json({ incidents: list, count: list.length, counts, open: open.length, open_by_severity: bySev,
       total: all.length, severities: INC_SEV, means: SEV_MEANS });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read them', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read them', message: safeErr(err) });
   }
 });
 
@@ -1998,11 +2000,11 @@ router.patch('/incidents/:id', auth, async (req, res) => {
     try {
       require('../lib/testnews').testRaised(entity_id, 'incident', out._ref,
         { state: out.state, forId: out._raiser, screen: out._screen, by: who.id, byName: who.name });
-    } catch (_) {}
+    } catch (e) { logger.fellBack('testing PATCH /incidents/:id: the helper failed — carried on without it', e); }
     delete out._ref; delete out._raiser; delete out._screen;
     res.json(Object.assign({ ok: true }, out));
   } catch (err) {
-    res.status(500).json({ error: 'Could not set it', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not set it', message: safeErr(err) });
   }
 });
 
@@ -2054,7 +2056,7 @@ router.post('/evidence', auth, async (req, res) => {
        entity-scoped, so evidence cannot be read by anyone the tester does not work for. */
     res.json({ id: id, name: b.name || null, mime: mime, size: buffer.length });
   } catch (err) {
-    res.status(500).json({ error: 'Could not attach it', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not attach it', message: safeErr(err) });
   }
 });
 
@@ -2085,7 +2087,7 @@ router.get('/stale', auth, async (req, res) => {
         : 'Every case cites the current wording of its clause.',
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read that', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read that', message: safeErr(err) });
   }
 });
 
@@ -2238,7 +2240,7 @@ router.get('/coverage', auth, async (req, res) => {
         : 'Every case has been run at least once.',
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the coverage', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read the coverage', message: safeErr(err) });
   }
 });
 
@@ -2485,7 +2487,7 @@ router.get('/report', auth, async (req, res) => {
         found = { rows: (cases.rows || []).concat(findings.rows || [])
           .sort((a, b) => (a.kind + a.name).localeCompare(b.kind + b.name)) };
       }
-    } catch (_) { found = { rows: [] }; }
+    } catch (e) { logger.fellBack('testing GET /report: the read failed — answered with none', e); found = { rows: [] }; }
 
     const KINDW = { testcase: 'case', spec: 'requirement', incident: 'incident' };
     /**
@@ -2761,7 +2763,7 @@ router.get('/report', auth, async (req, res) => {
       ],
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not build the report', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not build the report', message: safeErr(err) });
   }
 });
 
@@ -2889,7 +2891,7 @@ router.get('/reliability', auth, async (req, res) => {
         : 'Nothing has been recorded yet.',
     });
   } catch (err) {
-    res.status(500).json({ error: 'Could not read the history', message: String(err.message || err) });
+    res.status(500).json({ error: 'Could not read the history', message: safeErr(err) });
   }
 });
 
@@ -3008,7 +3010,7 @@ router.post('/changes', auth, async (req, res) => {
       needs_review: risk !== 'routine' });
   } catch (e) {
     console.error('change create:', e.code || '', e.message);
-    res.status(500).json({ error: 'Failed to record the change', message: e.message });
+    res.status(500).json({ error: 'Failed to record the change', message: safeErr(e) });
   }
 });
 
@@ -3156,7 +3158,7 @@ router.post('/releases', auth, async (req, res) => {
       unproven: carried.rows.filter((x) => !(x.rules.proves || []).length).map((x) => x.ref) });
   } catch (e) {
     console.error('release create:', e.code || '', e.message);
-    res.status(500).json({ error: 'Failed to cut the release', message: e.message });
+    res.status(500).json({ error: 'Failed to cut the release', message: safeErr(e) });
   }
 });
 
@@ -3200,7 +3202,7 @@ async function markIncidentResolved(entity_id, definition_id, releaseName, who, 
     try {
       require('../lib/testnews').testRaised(entity_id, 'incident', ru.ref || null,
         { state: 'resolved', forId: ru.raised_by_id || null, by: who.id, byName: who.name });
-    } catch (_) {}
+    } catch (e) { logger.fellBack('testing markIncidentResolved: the helper failed — carried on without it', e); }
     return { ok: true, origin: ru.origin || null };
   });
 }

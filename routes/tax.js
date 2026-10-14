@@ -69,7 +69,7 @@ router.post('/rate', auth, auth.requireScope('tax'), async (req, res) => {
     const sh = await S.shelfOf(auth.entityOf(req));
     const rated = S.rateLines(lines, sh);
     res.json({ engine: 'chitbridge-tax', version: 1, lines: rated.map((l) => ({ key: l.key, item_id: l.item_id, code: l.code, name: l.name, gst_rate: l.gst_rate, cess_rate: l.cess_rate, hsn: l.hsn, slab: l.tax_slab_name, source: l.tax_source, scheme: l.tax_scheme })) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
   try {
@@ -84,7 +84,7 @@ router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
     const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
     const det = S.computeTax({ seller, buyer, lines: rated.map((l) => Object.assign({}, l, { unit_price: l.listPrice })), priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
     res.json({ engine: 'chitbridge-tax', version: 1, seller: { Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType }, buyer: { Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country }, invoice: det, heads: T.heads(det) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.openapi = {
   paths: {

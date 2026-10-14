@@ -17,6 +17,8 @@
  */
 'use strict';
 const express = require('express');
+const { safeErr } = require('../lib/respond');
+const log = require('../lib/logger');
 const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -92,7 +94,7 @@ async function holdsStockOf(entity_id) {
             OR EXISTS (SELECT 1 FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data->>'batch_tracked' = 'true')) AS held`,
       [entity_id]));
     return !!(r.rows[0] && r.rows[0].held);
-  } catch (_) { return null; }
+  } catch (e) { log.fellBack('till holdsStockOf: the read failed — answered with nothing', e); return null; }
 }
 router.get('/snapshot', auth, async (req, res) => {
   try {
@@ -116,7 +118,7 @@ router.get('/snapshot', auth, async (req, res) => {
     const me = await query(
       `SELECT display_name, gstn, country, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id]);
     const row = me.rows[0] || {};
-    const flags = await policy.get(entity_id).catch(() => ({}));
+    const flags = await policy.get(entity_id).catch(log.orElse('till GET /snapshot: failed — answered with an empty set', ({})));
 
     /**
      * ⭐⭐⭐ WHICH COUNTER IS THIS — decided by the SERVER, from the thing that is already unique.
@@ -166,7 +168,7 @@ router.get('/snapshot', auth, async (req, res) => {
           if (c.said) till.said = c.said;
         }
       }
-    } catch (_) { /* ⚠ best effort — a counter must open whatever this says */ }
+    } catch (e) { log.fellBack('till GET /snapshot: failed — carried on without it', e); /* ⚠ best effort — a counter must open whatever this says */ }
     /**
      * ⭐⭐ THE ROUTE'S OWN FIVE READS, IN ONE TRANSACTION (2026-09-29, M36). entity_profile, the items, the live count, the
      * customers and the adoptions were five withEntity transactions — BEGIN · set_config · the read · COMMIT each, twenty
@@ -269,7 +271,7 @@ router.get('/snapshot', auth, async (req, res) => {
       });
     } catch (e) {
       own = null;
-      try { require('../lib/logger').warn('till.snapshot.shared-read', { entity_id, why: String(e && e.message) }); } catch (_) {}
+      require('../lib/logger').warn('till.snapshot.shared-read', { entity_id, why: String(e && e.message) });
     }
     const ownRead = (k) => (own ? own[k] : withEntity(entity_id, OWN[k]));
 
@@ -291,7 +293,7 @@ router.get('/snapshot', auth, async (req, res) => {
     } catch (e) {
       /* ⚠️ SAY IT. The silent catch here is what let the above hide for weeks — a shop with no profile is
          the ordinary case and needs no noise, but a query that CANNOT run must leave a trace. */
-      try { require('../lib/logger').warn('till.sectors', { entity_id, why: String(e && e.message) }); } catch (_) {}
+      require('../lib/logger').warn('till.sectors', { entity_id, why: String(e && e.message) });
     }
 
     /**
@@ -301,9 +303,9 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     const [shelf, itemRows, liveCount] = await Promise.all([
       taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
-        getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: false }).catch(() => null),
+        getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: false }).catch(log.orElse('till GET /snapshot: the read failed — answered with nothing', null)),
       /* ⭐ the items and the live count — read in the shared transaction above (OWN.items, OWN.count), each on its own if it failed */
-      Promise.resolve().then(() => ownRead('items')).catch(() => ({ rows: [] })),
+      Promise.resolve().then(() => ownRead('items')).catch(log.orElse('till GET /snapshot: the read failed — answered with none', ({ rows: [] }))),
       Promise.resolve().then(() => ownRead('count')).catch(() => ({ rows: [{ n: null }] })),
     ]);
 
@@ -322,14 +324,14 @@ router.get('/snapshot', auth, async (req, res) => {
           WHERE es.entity_id = $1 AND es.status = 'active' AND es.is_default = true
           ORDER BY sf.display_order LIMIT 3`, [entity_id]);
       declared = sc.rows.map((x) => ({ k: x.field_key, n: x.field_name || x.field_key }));
-    } catch (_) { declared = []; }   /* a shop that declared nothing shows nothing — the ordinary case */
+    } catch (e) { log.fellBack('till GET /snapshot: the read failed — answered with none', e); declared = []; }   /* a shop that declared nothing shows nothing — the ordinary case */
 
     /* the live offers this shop is running — the same rows the storefront and the chit read */
     let offers = [];
     try {
       const live = await catalogueView.liveOffers({ entity_id, withEntity, viewer: null, groups: [], all: false });
       offers = Array.isArray(live) ? live : (live && live.offers) || [];
-    } catch (_) { /* a shop with no offers bills fine */ }
+    } catch (e) { log.fellBack('till GET /snapshot: the read failed — carried on without it', e); /* a shop with no offers bills fine */ }
 
     /**
      * ⭐⭐ THE REWARD PROGRAMME — a definition of kind 'reward', read exactly like an offer, because it IS the same
@@ -345,7 +347,7 @@ router.get('/snapshot', auth, async (req, res) => {
          while the server awards under another — that is a customer promised one rate and paid at a different one. */
       reward = await require('../lib/reward-store').programme(entity_id, withEntity);
     } catch (e) {
-      try { require('../lib/logger').warn('till.reward', { entity_id, why: String(e && e.message) }); } catch (_) {}
+      require('../lib/logger').warn('till.reward', { entity_id, why: String(e && e.message) });
     }
 
     /* the counter's customer list — a name and a phone, nothing more; the till looks up a repeat customer, it does not hold history */
@@ -375,7 +377,7 @@ router.get('/snapshot', auth, async (req, res) => {
        * ⚠️ ORDERED before the limit (oldest due first): a LIMIT with no ORDER BY cuts an arbitrary part away.
        */
       let booksOn = false;
-      try { booksOn = !!(await ownRead('books')); } catch (_) { booksOn = false; }
+      try { booksOn = !!(await ownRead('books')); } catch (e) { log.fellBack('till GET /snapshot: failed — answered no', e); booksOn = false; }
       let dues = { rows: [] };
       if (booksOn && c.rows.some((x) => x.has_party_item)) {
         try {
@@ -390,7 +392,7 @@ router.get('/snapshot', auth, async (req, res) => {
              HAVING SUM(amount_minor) <> 0
               ORDER BY MIN(due_date) FILTER (WHERE ref_kind = 'bill') NULLS LAST, against_ref
               LIMIT 20000`, [entity_id]));
-        } catch (e) { try { require('../lib/logger').warn('till.snapshot.dues', { entity_id, why: String(e && e.message) }); } catch (_) {} }
+        } catch (e) { require('../lib/logger').warn('till.snapshot.dues', { entity_id, why: String(e && e.message) }); }
       }
       const owe = {};
       for (const d of dues.rows) {
@@ -424,7 +426,7 @@ router.get('/snapshot', auth, async (req, res) => {
        * hiding a query that could never run. A swallowed error that explains itself wrongly is how a broken
        * feature becomes a documented one — so this one leaves a trace and the till still bills.
        */
-      try { require('../lib/logger').warn('till.customers', { entity_id, why: String(e && e.message) }); } catch (_) {}
+      require('../lib/logger').warn('till.customers', { entity_id, why: String(e && e.message) });
     }
 
     /* F11: the suppliers the Receive form suggests — { party_id, name, nickname?, state?, party_no? }; an unreadable list is none (said) */
@@ -441,7 +443,7 @@ router.get('/snapshot', auth, async (req, res) => {
         if (x.party_no) o.party_no = String(x.party_no);
         return o;
       });
-    } catch (e) { try { require('../lib/logger').warn('till.suppliers', { entity_id, why: String(e && e.message) }); } catch (_) {} }
+    } catch (e) { require('../lib/logger').warn('till.suppliers', { entity_id, why: String(e && e.message) }); }
 
     /**
      * ⭐ THE PEOPLE WHO MAY STAND AT A COUNTER (2026-09-07). The shop's own co-assists — never the connectors, which are actors too
@@ -456,7 +458,7 @@ router.get('/snapshot', auth, async (req, res) => {
             AND (actor_type IS NULL OR actor_type <> 'connector') AND connector_type IS NULL
           ORDER BY display_name LIMIT 200`, [entity_id]);
       staff = st.rows.map((a) => ({ id: a.identity_id, name: a.display_name, hat: a.hat || null }));
-    } catch (_) { /* a shop with no co-assists bills as the shop itself */ }
+    } catch (e) { log.fellBack('till GET /snapshot: the read failed — carried on without it', e); /* a shop with no co-assists bills as the shop itself */ }
 
     /* ⚠️ A CAP, AND IT IS A REAL LIMIT. 20,000 items is about 5 MB in one answer — heavy but workable on a shop line. Beyond that
        the snapshot must PAGE (a cursor beside ?since=), because no counter should wait on a 26 MB download; measured 2026-09-08. */
@@ -535,7 +537,7 @@ router.get('/snapshot', auth, async (req, res) => {
     catch (e) {
       /* ⚠️ SAID OUT LOUD, the way this router already says it for sectors, rewards and customers — the shop
          still bills, and every product falls back to its stored category, which is today's behaviour. */
-      try { require('../lib/logger').warn('till.categories', { entity_id, why: String(e && e.message) }); } catch (_) {}
+      require('../lib/logger').warn('till.categories', { entity_id, why: String(e && e.message) });
     }
 
     const tillItem = (item_id, d) => {
@@ -672,8 +674,8 @@ router.get('/snapshot', auth, async (req, res) => {
       if (ado.rows.length) {
         const catalogueBuild = require('../lib/catalogue-build');
         const catalogueRead = require('../lib/catalogue-read');
-        let container = null; try { container = require('../lib/container'); } catch (_) {}
-        const resolved = await Promise.all(ado.rows.map((r) => catalogueBuild.resolve(r.source_key, r.commercials || {}, { entity_id }).catch(() => null)));
+        let container = null; try { container = require('../lib/container'); } catch (e) { log.fellBack('till GET /snapshot: the helper failed — carried on without it', e); }
+        const resolved = await Promise.all(ado.rows.map((r) => catalogueBuild.resolve(r.source_key, r.commercials || {}, { entity_id }).catch(log.orElse('till GET /snapshot: failed — answered with nothing', null))));
         const srcs = [];
         ado.rows.forEach((r, i) => { const x = resolved[i]; if (x) srcs.push({ source_key: r.source_key, title: x.title,
           owner_entity_id: x.owner_entity_id || null, items: x.items || [] }); });
@@ -681,7 +683,7 @@ router.get('/snapshot', auth, async (req, res) => {
         if (container && container.resolveMany && container.itemContainerId) {
           const ids = [];
           for (const sx of srcs) for (const it of sx.items) if (it && it.name) ids.push(container.itemContainerId(sx.source_key, it.name));
-          try { containers = (await container.resolveMany(ids)) || {}; } catch (_) { containers = {}; }
+          try { containers = (await container.resolveMany(ids)) || {}; } catch (e) { log.fellBack('till GET /snapshot: failed — answered with an empty set', e); containers = {}; }
         }
         const lines = catalogueRead.lines({ owned: [], sources: srcs, me: entity_id, containers,
           containerIdFor: container ? container.itemContainerId : null });
@@ -698,7 +700,7 @@ router.get('/snapshot', auth, async (req, res) => {
           items.push(row);
         }
       }
-    } catch (_) { /* a store with no network, or a source that cannot be read, still opens with its own products */ }
+    } catch (e) { log.fellBack('till GET /snapshot: did not parse — carried on without it', e, 'debug'); /* a store with no network, or a source that cannot be read, still opens with its own products */ }
 
     /**
      * ⭐⭐⭐ AND THE OFFERS ITS NETWORKS RELEASED (lib/network-offers). Opt-in or opt-out is the brand's model; the store's
@@ -713,7 +715,7 @@ router.get('/snapshot', auth, async (req, res) => {
         const fromNetworks = await require('../lib/network-offers').forStore(entity_id, owners, byOwner);
         if (fromNetworks.length) offers = offers.concat(fromNetworks);
       }
-    } catch (_) { /* a network that cannot be read never stops the store's own offers */ }
+    } catch (e) { log.fellBack('till snapshot: the brand networks\' offers were not read — the counter bills with the store\'s own offers only', e); /* a network that cannot be read never stops the store's own offers */ }
 
     const body = {
       at: deltaCursor || readAt,   /* [REV-16] captured before the item SELECT ran — see the comment at the top of this handler;
@@ -849,7 +851,7 @@ router.get('/snapshot', auth, async (req, res) => {
     if (snapshotBooksOn) body.books = true;
     body.version = versionOf({ i: items, o: offers, s: body.slabs, sh: body.shop, st: staff });
     res.json(body);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -898,7 +900,7 @@ router.post('/stock', auth, auth.requireScope('till'), async (req, res) => {
     shopChanged(entity_id, 'stock ' + status);
     const d = r.rows[0].item_data || {};
     res.json({ ok: true, item_id, name: d.name || null, status });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -950,7 +952,7 @@ router.post('/stock/bulk', auth, auth.requireScope('till'), async (req, res) => 
       message: n + ' product' + (n === 1 ? '' : 's')
         + (status === 'available' ? ' put on the shelf' : ' taken off the shelf')
         + (n < ids.length ? ' · ' + (ids.length - n) + ' could not be found' : '') + '.' });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1009,7 +1011,7 @@ router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => 
     const diag = await require('./keys').setDiag(entity_id, jti, patch);
     if (!diag) return res.status(404).json({ error: 'Not found', message: 'This key is not listed for the shop.' });
     res.json({ ok: true, code: diag.code, at: diag.at });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 /**
  * ── ⭐⭐⭐ POST /api/till/close — A COUNTER FINISHES, AND SAYS SO ────────────────────────────────────────────────
@@ -1069,7 +1071,7 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
       });
     }
     res.json({ ok: true, closed_at: till.closed_at, prefix: till.id || null });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 /**
  * ⭐⭐ POST /api/till/state — ON BREAK, OR BILLING (Athi, 2026-09-17: *"closing a counter need not be closing the sale
@@ -1099,7 +1101,7 @@ router.post('/state', auth, auth.requireScope('till'), async (req, res) => {
       });
     });
     res.json({ ok: true, recorded: true, state });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
   try {
@@ -1140,7 +1142,7 @@ router.post('/flags', auth, auth.requireScope('till'), async (req, res) => {
     shopChanged(entity_id, b.offer_id != null ? 'offer opt-out' : 'screen pick');
     res.json({ ok: true, item_id, name: d.name || null,
                offers_excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded : [], screen: d.screen === true });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1176,7 +1178,7 @@ router.get('/counters', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const counters = await require('./counters').listNarrow(auth.entityOf(req));
     res.json({ counters, me: await counterOfReq(req) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.get('/quick-keys/groups', auth, auth.requireScope('till'), async (req, res) => {
@@ -1184,7 +1186,7 @@ router.get('/quick-keys/groups', auth, auth.requireScope('till'), async (req, re
     const entity_id = auth.entityOf(req);
     const groups = await withEntity(entity_id, (db) => qk.listGroups(db, entity_id));
     res.json({ groups });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.get('/quick-keys/state', auth, auth.requireScope('till'), async (req, res) => {
@@ -1196,7 +1198,7 @@ router.get('/quick-keys/state', auth, auth.requireScope('till'), async (req, res
     if (!business_date) return res.status(400).json({ error: 'validation', message: 'business_date required' });
     const state = await withEntity(entity_id, (db) => qk.getActiveGroups(db, entity_id, counter_id, business_date));
     res.json(state);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.post('/quick-keys/state', auth, auth.requireScope('till'), async (req, res) => {
@@ -1208,7 +1210,7 @@ router.post('/quick-keys/state', auth, auth.requireScope('till'), async (req, re
     if (!b.business_date) return res.status(400).json({ error: 'validation', message: 'business_date required' });
     const state = await withEntity(entity_id, (db) => qk.setActiveGroups(db, entity_id, counter_id, b.business_date, b.shift_id, b.active_group_ids));
     res.json(state);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.get('/quick-keys/hidden', auth, auth.requireScope('till'), async (req, res) => {
@@ -1219,7 +1221,7 @@ router.get('/quick-keys/hidden', auth, auth.requireScope('till'), async (req, re
     if (!counter_id) return res.json({ hidden: [] });
     const hidden = await withEntity(entity_id, (db) => qk.listHidden(db, entity_id, counter_id));
     res.json({ hidden });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /* ⚠️ IDEMPOTENT ON PURPOSE — a queued offline write can replay, and re-hiding an already-hidden item must be a
@@ -1234,7 +1236,7 @@ router.post('/quick-keys/hide', auth, auth.requireScope('till'), async (req, res
     if (!b.product_id) return res.status(400).json({ error: 'validation', message: 'product_id required' });
     const rows = await withEntity(entity_id, (db) => qk.hideItem(db, entity_id, counter_id, b.product_id, b.shift_id, (b.by || null), b.also_counters));
     res.json({ hidden: rows });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.post('/quick-keys/unhide', auth, auth.requireScope('till'), async (req, res) => {
@@ -1246,7 +1248,7 @@ router.post('/quick-keys/unhide', auth, auth.requireScope('till'), async (req, r
     if (!b.product_id) return res.status(400).json({ error: 'validation', message: 'product_id required' });
     const r = await withEntity(entity_id, (db) => qk.unhideItem(db, entity_id, counter_id, b.product_id, b.also_counters));
     res.json(r);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), async (req, res) => {
@@ -1255,7 +1257,7 @@ router.get('/quick-keys/screen-config', auth, auth.requireScope('till'), async (
     const counter_id = await counterOfReq(req);
     const cfg = await withEntity(entity_id, (db) => qk.getScreenConfig(db, entity_id, counter_id));
     res.json(cfg);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), async (req, res) => {
@@ -1265,7 +1267,7 @@ router.post('/quick-keys/screen-config', auth, auth.requireScope('till'), async 
     if (!counter_id) return res.status(403).json({ error: 'Forbidden', message: 'This key is not holding a counter.' });
     const cfg = await withEntity(entity_id, (db) => qk.setScreenConfig(db, entity_id, counter_id, (req.body || {}).config, null));
     res.json(cfg);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1397,7 +1399,7 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) 
     res.json({ ok: true, days, quiet, items: out.slice(0, 60),
                /* ⚠️ said out loud: this is what the shop RECORDED, not a stock count nobody has taken */
                basis: 'expiry recorded at goods-in, and the last time each product was on a bill' });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => {
@@ -1451,7 +1453,7 @@ router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => 
     if (out.refused) return res.status(400).json({ error: 'validation', message: out.refused });
     shopChanged(entity_id, 'offer ' + (on ? 'added to' : 'removed from') + ' a product');
     res.json(Object.assign({ ok: true, offer_id, item_id, on }, out));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
@@ -1487,7 +1489,7 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
     if (!out) return res.status(404).json({ error: 'Not found' });
     shopChanged(entity_id, 'price changed');
     res.json({ ok: true, item_id, name: out.name, was: out.was, now: out.now, currency });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /* ═══ REWARDS ═════════════════════════════════════════════════════════════════════════════════════════════════
@@ -1544,7 +1546,7 @@ router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
                worth: rewards.liability(prog, bal.points),
                expiring: gone.length ? gone.reduce((a, e) => a + Math.abs(e.points), 0) : 0,
                entries: entries.slice(0, 50) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1593,7 +1595,7 @@ router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
                /* ⚠️ SAID, NOT HIDDEN: the spend was honoured because it had already come off the bill */
                overspent: spend > bal.points ? spend - bal.points : 0,
                says: rewards.billSays(prog, { added: added, spent: spend, balance: after }, {}) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1622,7 +1624,7 @@ router.post('/reward/claim', auth, auth.requireScope('till'), async (req, res) =
     /* ⚠️ each half of a claim lands under ITS OWN holder — the entry carries it, the loop must not assume one */
     for (const e of c.entries) await ledgerWrite(entity_id, e.holder || from, e, prog.definition_id);
     res.json({ ok: true, moved: c.points, from: from, to: to });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1698,7 +1700,7 @@ router.post('/pair', auth, async (req, res) => {
     PAIR.set(code, { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null, expires,
                      parent: viaCounter ? tk.jti : null });
     res.json({ code, expires_at: new Date(expires).toISOString(), minutes: Math.round(PAIR_TTL_MS / 60000) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1798,7 +1800,7 @@ router.post('/pair/claim', async (req, res) => {
         parent: got.parent || null });
     PAIR_MISSES.delete(ip);
     res.json({ key: minted.key, shop: { entity_id: got.entity_id, name: got.name } });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1824,7 +1826,7 @@ router.get('/screens', auth, auth.requireScope('till'), async (req, res) => {
       from_counter: !!k.parent,
     }));
     res.json({ screens, count: screens.length, limit: 20, keys_used: list.filter((k) => !(k && k.till && k.till.closed_at)).length });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res) => {
   try {
@@ -1847,7 +1849,7 @@ router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res)
     if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
     auth.forgetKey(jti);
     res.json({ ok: true, jti, message: 'That screen is switched off. It stops showing the sign within a minute.' });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1877,7 +1879,7 @@ router.post('/screens/rename', auth, auth.requireScope('till'), async (req, res)
     if (!found) return res.status(404).json({ error: 'Not found', message: 'That screen is no longer paired.' });
     auth.forgetKey(jti);
     res.json({ ok: true, jti, name: name || null });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -1941,7 +1943,7 @@ router.post('/reconcile', auth, auth.requireScope('till'), async (req, res) => {
       return { no: b.no, verdict: same ? 'ok' : 'absorbed', recorded_as: c.ref || null };
     });
     res.json({ checked: out.length, bills: out });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
@@ -1971,7 +1973,7 @@ router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
       + "     AND COALESCE(NULLIF(btrim(lower(item_data->>'status')), ''), 'available')"
       + "         NOT IN ('unavailable', 'redundant', 'retired'))"
       + ' SELECT item_id, item_data, n FROM live WHERE n = ANY($2::int[]) ORDER BY n',
-      [entity_id, [...new Set(offsets)]])).catch(() => ({ rows: [] }));
+      [entity_id, [...new Set(offsets)]])).catch(log.orElse('till GET /verify: the read failed — answered with none', ({ rows: [] })));
     const sample = sampleRows.rows.map((row) => {
       const d = row.item_data || {};
       return { at_offset: row.n, item_id: row.item_id, name: d.name || null,
@@ -1979,7 +1981,7 @@ router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
     });
     res.json({ total, at: new Date().toISOString(),
                shop: { entity_id, name: (me.rows[0] && me.rows[0].display_name) || null }, sample });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -2045,7 +2047,7 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
     /* ⭐ WHO IS WRITING. counterOfReq reads it off the key's own register row — the page cannot be trusted to
        say which counter it is, and it does not have to. */
     let who = null;
-    try { who = await counterOfReq(req); } catch (_) {}
+    try { who = await counterOfReq(req); } catch (e) { log.fellBack('till POST /shop: failed — carried on without it', e); }
     const source = 'counter' + (who ? ' ' + who : '');
     const as_of = new Date().toISOString();
 
@@ -2107,14 +2109,14 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
 
     /* ⭐ the bill header just changed, so every open counter and the shop screen hear it on the same bell a
        price change rides — rather than each discovering it whenever it next happens to re-read the shop. */
-    try { shopChanged(entity_id, 'shop profile'); } catch (_) {}
+    try { shopChanged(entity_id, 'shop profile'); } catch (e) { log.fellBack('till POST /shop: the signal was not sent — carried on without it', e); }
 
     /* ⚠️ THE REPLY IS THE SERVER'S TRUTH, RE-READ — never the page's own optimism echoed back. A counter that
        painted what it SENT would show a GSTIN the vault had normalised differently. [[feedback-check-after-the-wire]] */
     const after = (await cbProfile.invoiceParty(entity_id)) || {};
     res.json({ ok: true, changed: changed, refused: refused, shop: after, by: source, at: as_of });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
 });
 
@@ -2156,7 +2158,7 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
     /* [OFFR-04] the average cost is the shop's buying price: an actor without can_see_costs gets the qty only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id))) for (const id of Object.keys(out)) delete out[id].avg_cost;
     res.json({ balances: out, at: new Date().toISOString() });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -2265,7 +2267,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
     if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });
 
     /* ⭐ the shop screen and every open counter hear it on the same bell a price change rides */
-    try { shopChanged(entity_id, 'catalogue started'); } catch (_) {}
+    try { shopChanged(entity_id, 'catalogue started'); } catch (e) { log.fellBack('till POST /catalogue: the signal was not sent — carried on without it', e); }
 
     res.json({ ok: true, added: w.rows.length, from: from,
       /* ⚠️ REFUSALS TRAVEL BACK WITH THEIR ROW NUMBERS. An upload that quietly loses eleven of four hundred
@@ -2274,7 +2276,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
       message: w.rows.length + ' product' + (w.rows.length === 1 ? '' : 's') + ' added'
         + (refused.length ? ', and ' + refused.length + ' row' + (refused.length === 1 ? '' : 's') + ' could not be' : '') });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
 });
 
@@ -2283,7 +2285,7 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
   try {
     const BP = require('../lib/catalogue-blueprint');
     const catwrite = require('../lib/catalogue-write');
-    let have = 0; try { have = await catwrite.countItems(auth.entityOf(req)); } catch (_) {}
+    let have = 0; try { have = await catwrite.countItems(auth.entityOf(req)); } catch (e) { log.fellBack('till GET /catalogue/blueprints: failed — carried on without it', e); }
     res.json({
       version: BP.VERSION, axiom: BP.AXIOM, enrich: BP.ENRICH, have: have,
       blueprints: Object.keys(BP.BLUEPRINTS).map((k) => {
@@ -2293,7 +2295,7 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
                  sample: bp.starter.slice(0, 4).map((p) => p.name) };
       }),
     });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -2346,7 +2348,7 @@ router.get('/summary', auth, async (req, res) => {
     res.json({ period, rows, counters: Array.from(new Set(r.rows
       .map((x) => (((x.business_json || {}).summary || {}).till || {}).id).filter(Boolean))).sort() });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', message: String(e && e.message) });
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
   }
 });
 
@@ -2410,7 +2412,7 @@ router.get('/bills', auth, async (req, res) => {
                  mods: Array.isArray(l.mods) ? l.mods : null })) };
     }).filter((x) => x.no && (!by || (x.by && x.by.id === by)));
     res.json({ days, count: rows.length, bills: rows });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -2436,7 +2438,7 @@ router.get('/tasks', auth, async (req, res) => {
     const limit = Math.min(Math.max(parseInt(req.query.limit || '40', 10) || 40, 1), 100);
     const out = await require('../lib/open-orders').tasks(entity_id, kind, limit);
     res.json({ kind, count: out.length, tasks: out });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -2464,7 +2466,7 @@ router.get('/match', auth, async (req, res) => {
     /* both directions: a purchase order for an off-platform supplier is a SELF chit and lands as 'received' */
     const heads = await select.rows(entity_id, { purpose: 'order', since, limit: 300 });
     /* what this trade absorbs — the same numbers the counter was given in its snapshot */
-    const flags = await policy.get(entity_id).catch(() => ({}));
+    const flags = await policy.get(entity_id).catch(log.orElse('till GET /match: failed — answered with an empty set', ({})));
     const tol = { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp), count_units: Number(flags.tol_count_units) || 0 };
     if (!heads.length) return res.json({ days, count: 0, orders: [] });
 
@@ -2513,7 +2515,7 @@ router.get('/match', auth, async (req, res) => {
         const bj = d.business_json || {};
         if (bj.bill_no) continue;                       /* a counter sale is not a purchase order */
         if (sideOf(h, bj) !== 'buy') continue;          /* the match is about what we BUY */
-        const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(() => null);
+        const prog = await deliverline.progress(entity_id, h.chit_id, db).catch(log.orElse('till GET /match: failed — answered with nothing', null));
         const receipts = receiptsFor.get(String(h.chit_id)) || [];
         /* their invoice: a chit from this counterparty, else the figure keyed off their paper bill at the door */
         const theirChit = inv.rows.find((x) => h.counterparty_id && String(x.sender_entity_id) === String(h.counterparty_id)) || null;
@@ -2577,7 +2579,7 @@ router.get('/match', auth, async (req, res) => {
     if (!(await require('../lib/cost').canReadSafe(req, entity_id)))
       out.forEach((o) => (o.receipts || []).forEach((r) => { delete r.landed; }));
     res.json({ days, count: out.length, orders: out });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -2621,7 +2623,7 @@ router.post('/alias', auth, async (req, res) => {
     });
     if (!out) return res.status(404).json({ error: 'no such product' });
     res.json({ ok: true, aliases: out });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 /**
@@ -2699,7 +2701,7 @@ router.get('/engine/:name', auth, (req, res) => {
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     res.setHeader('Cache-Control', 'no-store');
     res.send(body);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.openapi = { paths: { '/api/till/snapshot': { get: { summary: 'Everything a counter needs to bill offline, in one call',

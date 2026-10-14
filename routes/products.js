@@ -1,5 +1,6 @@
 // routes/products.js — B3.7a Catalogue items (products) CRUD + search
 const express = require('express');
+const log = require('../lib/logger');
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
@@ -83,7 +84,7 @@ function readUpload(body) {
   const b = body || {};
   if (typeof b.xlsx === 'string' && b.xlsx.trim()) {
     let buf;
-    try { buf = Buffer.from(b.xlsx, 'base64'); } catch (_) { buf = null; }
+    try { buf = Buffer.from(b.xlsx, 'base64'); } catch (e) { log.fellBack('products readUpload: did not parse — answered with nothing', e, 'debug'); buf = null; }
     if (!buf || !buf.length) { const e = new Error('That file could not be read.'); e.userMessage = e.message; throw e; }
     if (buf.length > XLSX_MAX) {
       const e = new Error('That workbook is ' + Math.round(buf.length / 1048576) + ' MB. A product list should be'
@@ -241,7 +242,7 @@ async function faceOf(entity_id) {
     const f = await withEntity(entity_id, (db) => db.query(
       `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
     return (f.rows[0] && f.rows[0].face) || {};
-  } catch (_) { return {}; }
+  } catch (e) { log.fellBack('products faceOf: the read failed — answered with an empty set', e); return {}; }
 }
 
 /** The accepted format + the shop's contract, built once so preflight, import and template cannot disagree. */
@@ -255,7 +256,7 @@ async function catalogueShape(entity_id) {
       `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
     face0 = (f.rows[0] && f.rows[0].face) || {};
     oi = orderInput.resolve(face0.order_input || (face0.method ? { preset: face0.method } : null));
-  } catch (_) { /* no face declared → the cart default, which is how the shop behaves */ }
+  } catch (e) { log.fellBack('products catalogueShape: the read failed — carried on without it', e); /* no face declared → the cart default, which is how the shop behaves */ }
 
   /**
    * ⭐⭐ ONE RESOLVER, SO THE TEMPLATE CANNOT DISAGREE WITH THE EXPORT OR THE COLUMNS PANEL.
@@ -587,7 +588,7 @@ router.get('/', auth, async (req, res) => {
         r = res[0]; tally = res[1]; catRows = res[2].rows; uncat = Number(res[3].rows[0].n) || 0;
         pendingRows = sched ? res[5].rows : [];
       }
-    } catch (_) { r = null; }
+    } catch (e) { log.fellBack('products GET /: did not parse — answered with nothing', e, 'debug'); r = null; }
     if (!r) {
       const both = await withEntity(entity_id, async (db) => {
         await schedule.applyDue(entity_id, db);
@@ -597,7 +598,7 @@ router.get('/', auth, async (req, res) => {
            depending on whether a parked change happened to be due */
         const c = await db.query(catSql.text, catSql.params);
         const u = await db.query(uncatSql.text, uncatSql.params);
-        if (out.rows.length) { try { pendingRows = await schedule.pending(entity_id, null, db); } catch (_) { pendingRows = []; } }
+        if (out.rows.length) { try { pendingRows = await schedule.pending(entity_id, null, db); } catch (e) { log.fellBack('products GET /: failed — answered with none', e); pendingRows = []; } }
         return { out, t, c, u };
       });
       r = both.out; tally = both.t; catRows = both.c.rows; uncat = Number(both.u.rows[0].n) || 0;
@@ -622,7 +623,7 @@ router.get('/', auth, async (req, res) => {
         for (const row of pendingRows) { const k = String(row.item_id); (byItem.get(k) || byItem.set(k, []).get(k)).push(row); }
         if (byItem.size) items = items.map((it) => byItem.has(String(it.item_id)) ? Object.assign({}, it, { scheduled: byItem.get(String(it.item_id)) }) : it);
       }
-    } catch (_) { /* the list never fails for a parked change */ }
+    } catch (e) { log.fellBack('products GET /: failed — carried on without it', e); /* the list never fails for a parked change */ }
     /* The tally is over EVERY row, not the page and not the filtered set — it is what the tabs count, so it must not change
        depending on which tab is open or how far somebody has scrolled. statusOf() decides, as it always has. */
     const counts = {};
@@ -682,7 +683,7 @@ async function catalogueRows(entity_id, canCost) {
       const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
       schema = { properties: Object.fromEntries(cols.columns.map((k) => [k, {}])) };
     }
-  } catch (_) { /* no schema is fine — the columns then come from the items themselves */ }
+  } catch (e) { log.fellBack('products catalogueRows: the read failed — carried on without it', e); /* no schema is fine — the columns then come from the items themselves */ }
   /**
    * ⭐⭐ PROJECTED. Athi, 2026-09-02: *"json is too much for the user and he will not understand."* See
    * lib/sheet.js — available (yes/no) · qty · qty_as_of · qty_source, four plain cells, never one nested one.
@@ -1403,14 +1404,14 @@ router.get('/media/:item_id/:mid', async (req, res) => {
        then read the item IN THAT ENTITY'S CONTEXT. The ids stay unguessable, so nothing new is exposed. */
     let row = null;
     try { const own = await query('SELECT entity_id FROM media_blobs WHERE key LIKE $1 LIMIT 1', ['%/' + req.params.mid]);
-      if (own.rows[0]) row = await withEntity(own.rows[0].entity_id, async (db) => (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id])).rows[0] || null); } catch (_) { row = null; }
+      if (own.rows[0]) row = await withEntity(own.rows[0].entity_id, async (db) => (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id])).rows[0] || null); } catch (e) { log.fellBack('products GET /media/:item_id/:mid: the read failed — answered with nothing', e); row = null; }
     if (!row) { const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]); row = r.rows[0]; }
     if (!row) return res.status(404).end();
     const m = (Array.isArray(row.item_data && row.item_data.media) ? row.item_data.media : []).find((x) => x && String(x.id) === String(req.params.mid));
     if (!m || !m.key) return res.status(404).end();
     const buf = await objStore.get(m.key);
     res.set('Content-Type', m.mime || 'application/octet-stream'); res.set('Cache-Control', 'public, max-age=86400'); res.send(buf);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.post('/:id/media', auth, async (req, res) => {
   try {
@@ -1472,7 +1473,7 @@ router.delete('/:id/media/:mid', auth, async (req, res) => {
       return { gone, media: d.media };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
-    if (out.gone && out.gone.key && (await objStore.available())) { try { await objStore.del(out.gone.key); } catch (_) {} }
+    if (out.gone && out.gone.key && (await objStore.available())) { try { await objStore.del(out.gone.key); } catch (e) { log.fellBack('products DELETE /:id/media/:mid: failed — carried on without it', e); } }
     res.json({ message: 'Media removed', media: out.media });
   } catch (e) { fail(res, e, 'Could not remove the media'); }
 });
@@ -1607,7 +1608,7 @@ router.get('/lists', auth, async (req, res) => {
        * into a confident zero — which here would read as "this shop sells tomatoes for nothing".
        */
       mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price), active: x.is_active !== false }));
-    } catch (_) { mine = []; }
+    } catch (e) { log.fellBack('products GET /lists: the read failed — answered with none', e); mine = []; }
 
     /**
      * ⭐⭐ THE SHOP'S CURRENCY, BECAUSE A BARE NUMBER IS NOT A PRICE. Athi: *"currency is not shown in the
@@ -1687,7 +1688,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], vali
           `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit
              FROM catalogue_items WHERE entity_id = $1 LIMIT 5000`, [entity_id]));
         skipNames = r.rows.map((x) => ({ name: x.name, unit: x.unit }));
-      } catch (_) { skipNames = []; }
+      } catch (e) { log.fellBack('products POST /lists/adopt: the read failed — answered with none', e); skipNames = []; }
     }
 
     const existing = await catwrite.codesInUse(entity_id);
