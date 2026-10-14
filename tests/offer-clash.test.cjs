@@ -110,6 +110,6 @@ const writes = () => SQL.filter((s) => /^\s*(INSERT|UPDATE)/.test(s)).length;
   t('anything that is not an offer is untouched', r.status === 201, JSON.stringify(r));
 
   srv.close();
-  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
