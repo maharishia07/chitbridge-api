@@ -35,8 +35,9 @@ it('the copy on disk is exactly the release both sides pin (nobody edited one si
 
 /* ⭐ CL1 (2026-10-12): the sandbox's window IS its global, as a browser's is (till-vendor's load() does the same) — the bundle now carries the regulation packs
    ahead of tax-packs, and regulation finds a pack by its GLOBAL (CBRegIN …) while each pack sets window.CBRegIN; a window that is a separate object hides them. */
-const load = () => { const sandbox = {}; sandbox.window = sandbox; vm.createContext(sandbox); vm.runInContext(fs.readFileSync(COPY, 'utf8'), sandbox); return sandbox.window.CBTax; };
-const T = load();
+const page = () => { const sandbox = {}; sandbox.window = sandbox; vm.createContext(sandbox); vm.runInContext(fs.readFileSync(COPY, 'utf8'), sandbox); return sandbox.window; };
+const W = page();
+const T = W.CBTax;
 
 it('it exposes the same names the server exports', () => {
   assert.deepStrictEqual(Object.keys(T.slab).sort(), Object.keys(serverSlab).sort());
@@ -83,6 +84,29 @@ it('the rate a product carries is resolved the same on both sides', () => {
   const item = { item_data: { name: 'Oil', tax_slab: 's5' }, face: shelf.face, slabs: shelf.slabs, categories: shelf.categories };
   const a = serverSlab.resolve(item), b = T.slab.resolve(item);
   assert.strictEqual(JSON.stringify(b), JSON.stringify(a));
+});
+
+/* ⭐ T1-TAX (14 Oct): THE PACKS, NOT ONLY determine(). The web's bundle sat at reg-* v1.42 while the server booked on v1.45 — every
+   determine() above still agreed, and Country Lab drew a chart without 4260 fx_gain_loss. So the packs themselves are compared:
+   every registered country, every member (a function by its source), and the tax packs. */
+const regulation = require('../lib/regulation.js'), taxPacks = require('../lib/tax-packs.js');
+const canon = (o) => JSON.stringify(o, (k, v) => (typeof v === 'function' ? 'fn:' + String(v) : v));
+
+it('the web registers the same country packs as the server, each member equal (the chart, its ledgers, pack.fx …)', () => {
+  const web = W.CBRegulation;
+  assert.ok(web && typeof web.packFor === 'function', 'the web bundle carries no CBRegulation');
+  const ids = (reg) => reg.list().map((p) => p.id).sort().join(',');
+  assert.strictEqual(ids(web), ids(regulation), 'the two registries hold different countries');
+  for (const p of regulation.list()) {
+    const a = regulation.packFor(p.id), b = web.packFor(p.id);
+    const differ = Object.keys(Object.assign({}, a, b)).filter((k) => canon(a[k]) !== canon(b[k]));
+    assert.deepStrictEqual(differ, [], p.id + ': the web pack differs from the server\'s in ' + differ.join(', ') + ' — the two pin different reg-* releases (engines.lock.json)');
+  }
+});
+
+it('the tax packs are the same, country by country', () => {
+  assert.ok(W.CBTaxPacks && W.CBTaxPacks.PACKS, 'the web bundle carries no CBTaxPacks');
+  assert.strictEqual(canon(W.CBTaxPacks.PACKS), canon(taxPacks.PACKS), 'the web\'s tax packs differ from the server\'s');
 });
 
 console.log(pass + ' checks');

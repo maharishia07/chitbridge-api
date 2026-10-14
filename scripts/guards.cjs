@@ -32,6 +32,7 @@ const GUARDS = [
   'till-t2a.test.cjs',  // round T2a: bills-only count, an online order billed, the mode menu, no 403 on quick-keys/hidden
   'till-shippable.test.cjs',  // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
+  'backup-guard.test.cjs',      // ⭐⭐⭐ BKP1: no workflow uploads a plaintext dump; backup.sh refuses without a passphrase; the nightly is never in this public repo
   'spin-scripts.test.cjs',      // ⭐⭐ HX2: the cloud spin scripts — one env list (HOSTING.md), tagged, India by default, no secret printed
   'hosting-neutral.test.cjs',   // ⭐⭐ HX1: the DB password goes only to configured URLs; SigV4 = AWS's examples; no platform host in shipped code
   'records-keeping.test.cjs',   // ⭐⭐ CO3: the books' edit trail cannot be disabled (Rule 3(1)); no copy expires inside the 9-year records floor
@@ -50,6 +51,12 @@ const GUARDS = [
   'counter-gates.test.cjs',     // ⭐⭐⭐ ONE door to a shop (becomeShop), ONE for a person (sign-in, offline PIN), lock/break = that sign-in
   /* ⚠️ "A GUARD NOBODY RUNS" (BACKLOG, 2026-09-18) — the suite ran it, the gate never did. Added 2026-09-28. */
   'tdz-guard.test.js',          // no const/let read above its declaration in the same function (node -c cannot see a TDZ)
+  /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
+  'fn-size.test.cjs',           // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
+  'send-golden.test.cjs',       // POST /chits/send: 40 scenarios, every SQL · copy · hook · answer = the trace frozen before the split
+  'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
+  'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
+  'ctp-door.test.cjs',          // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
   /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
   'migration-lint.test.cjs',     // no NEW migration hides a FOREIGN KEY inside CREATE TABLE IF NOT EXISTS
   'entity-cast-guard.test.cjs',  // no NEW RLS policy casts an unset current_setting straight to ::uuid
@@ -86,6 +93,7 @@ const GUARDS = [
   'sim-load.test.cjs',         // ⭐⭐⭐ Y1b: the simulator's loader refuses every non-local database; one plan for Y1 and Y1b; the chit carries the shop clock
   'round-trips-till.test.cjs', // ⭐⭐ the counter's snapshot has a trip budget: its own five tables in ONE transaction, 50 → 38 (M36, 2026-09-29)
   'rev16-delta-cursor-stamped-first.test.js', // ⭐⭐ a delta's cursor never skips a change — stamped before the read; past the cap sent in parts (2026-09-28)
+  'screen-snapshot.test.cjs', // ⭐⭐⭐ SNAP-SCREEN · CFD-03: a TV key's snapshot + bell carry no customer/supplier/staff/cost — an allow-list; a counter unchanged
   'snapshot-wire.test.js',    // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs',// the bill number's shape: what the date says vs when the run restarts
@@ -108,6 +116,7 @@ const GUARDS = [
   'reward-cycle.test.js',     // the SEQUENCE: earn, come back, encash, expire, register — against the real store
   'sql-runner.test.js',       // a tool that runs SQL at production: its WITH/WITHOUT RLS line must be true
   'stock-cycle.test.js',      // the log and the cache must stay in step — through a replay, a minus, and a corrupted balance
+  'storefront-stock-ledger.test.js', // ⭐⭐ T1-INV: one stock truth — a no-connector shop's storefront shows its OWN ledger; a connector shop its stamp
   /* ⚠️⚠️ IT WAS NOT IN THIS LIST until 2026-09-10, so the one guard that asks 'is every module classified,
      and does everything unreachable say so' only ran when somebody remembered to. It caught an unclassified
      lib the same minute it was added here. A guard outside the suite is a guard nobody runs. */
@@ -201,6 +210,7 @@ const GUARDS = [
   'books-hooks.test.cjs',       // ⭐⭐ what a chit posts — and a failed post NEVER fails the chit (parked, named)
   'books-country.test.cjs',     // ⭐ CX2: the books speak the shop's country — IN · AU · AE (core ≥ v1.42, money, zone, year label, depreciation basis)
   'books-routes.test.cjs',      // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
+  'books-pages.test.cjs',       // ⭐ PERF1: Day book + Ledger pages (keyset, server max, server totals) add up to the whole; lib/page-limit
   'books-tally.test.cjs',       // ⭐⭐ the pack's Tally files come from the connector's adapter — one Tally writer, Receipt byte-identical
   'books-collections.test.cjs', // ⭐ CB Finance F1: /dues?finance=1 — limit · over_limit · interest SHOWN · owner only; plain /dues untouched
   'books-fixes.test.cjs',       // ⭐⭐⭐ the red-team findings of 2026-09-30 (M1–M12), each held by a check that was red before its fix
@@ -257,6 +267,7 @@ const GUARDS = [
   'auth-first.test.cjs',       // M04: POST /api/chits/send — auth before the body is read (401 not 400/413, validators never run); before/after matrix: no allow/deny change
   'person-session.test.cjs',    // M05: a person session is listed, bound to one device (DEVICE_MISMATCH), revocable within 60 s (fake clock); sign-in on B never revokes A; legacy tokens unchanged
   'rail-actions.test.cjs',     // ⭐⭐ R01: GET /chits/:id `actions` and the writing doors are ONE engine (lib/rail.js) — 14 situations; before/after: same outcome, `why` added
+  'rail-status.test.cjs',      // ⭐⭐ T1-RAIL: every status change goes through lib/rail-status statusGate (the one write); void of a completed chit 409s; no SQL writes current_status elsewhere
   'claim-series.test.cjs',     // M11: ONE series allocator for a counter PC (key) and a phone (device); label by PHONE number (D9); no prefix ever on two holders; a pre-M11 key claims the prefix it has today; a phone's till.by/device_id = the session
   'signin-routes.test.cjs',     // M06: every old sign-in path answers as before the move (golden) and IS the new door's handler; one signin_events row per attempt; b282 missing never blocks
   'home-facts.test.cjs',        // N18: GET /api/facts/:card — each Home card's shape, <= 2 trips, a figure the server cannot compute is omitted (never 0), cost never travels, unknown card 404

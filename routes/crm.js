@@ -342,13 +342,14 @@ router.post('/walk-ins/add', auth, noKey, async (req, res) => {
        VALUES ($1, $2, 'entity', 'manual', 0, NULL) ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING RETURNING customer_list_id`, [owner, local.identity_id]));
     if (!ins.rows.length) throw bad('That customer is already on your list.', 409, 'EXISTS');
     const party_no = await withEntity(owner, (h) => require('../db').trySavepoint(h, () => PF.ensureNo(h, owner, local.identity_id), null)).catch(() => null);
-    /* the points: read through the ONE reader, claimed by the engine, appended by the ONE writer */
+    /* the points: the ONE claim path (lib/reward-store.claim — the engine's claim, both halves in ONE transaction, all or nothing).
+       The ref names the new customer too: a phone claimed again later onto another customer is a NEW claim, never a half-replay. */
     let claimed = 0;
-    const bal = await RS.balance(owner, from, withEntity);
-    if (bal.programme && bal.points > 0) {
+    const prog = await RS.programme(owner, withEntity);
+    if (prog) {
       const to = { scheme: 'identity', value: String(local.identity_id) };
-      const c = rewards.claim(bal, from, to, 'claim:' + digits);
-      if (c.ok) { for (const e of c.entries) await RS.append(owner, e.holder, e, bal.programme.definition_id, withEntity); claimed = c.points; }
+      const c = await RS.claim(owner, from, to, 'claim:' + digits + ':' + local.identity_id, prog, withEntity);
+      if (c.ok) claimed = c.points;
     }
     res.status(201).json({ party: { party_id: local.identity_id, user_id: local.user_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false }, points_claimed: claimed });
   } catch (e) { fail(res, e); }
