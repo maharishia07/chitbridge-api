@@ -12,6 +12,20 @@ A new key needs its entry here, in the same change. This file is being built; en
 | `from_ledger` | `{ value_minor, lines, movements }` | Only on `method:'automatic'`. Derived: `stock-store.asAt` (the movement log replayed to the end of the shop's day, weighted average). Written by: nobody (answer only). Read by: the closing-stock screen (not yet). |
 | `code` · `items` (422) | `STOCK_LEDGER_MISSING` · `STOCK_LEDGER_EMPTY` · `STOCK_BELOW_ZERO` · `STOCK_UNCOSTED` · `STOCK_UNREADABLE`; `items` = up to 20 product names | Derived by `books-period.ledgerValue` — a screen branches on `code`, never on the sentence. |
 
+## POST /api/tax/compute · POST /api/invoice/build — the quote explains itself (TAX-SRV1, 2026-10-14)
+
+Derived per call, never stored. Written by `routes/tax.js` / `routes/invoice.js` through `lib/services` (the counter's engine: `tax.determine` → `tax.moneyOf`). Read by: API-key callers (no web screen yet).
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `basis` (compute, invoice/build — new) | `{ price_includes_tax: bool, from: 'caller'\|'shop' }` | `services.priceBasis`: the caller's `priceIncludesTax` when given, else the shop's `policy price_includes_tax` (def 'yes' — the counter's `taxIncluded`). |
+| `money` (compute — new) | `tax.moneyOf(invoice, currency)` — `summary_json.money`'s shape: gross · savings · net · taxable · tax · total · `by_rate` · heads · lines | The SAME reader the counter's slip and summary_json.money use; nothing re-derived. |
+| `currency` (compute — new) | ISO code | `body.currency`, else `tax-lines.currencyOf(seller)` (the seller pack's). |
+| `pack` (compute — new) | `{ id, version, scheme, fallback }` | `regulation.lookup(seller.Country)` (id · version; `fallback` true = no pack for that country, the default read) + the invoice's `_cb.scheme`. |
+| `pricing` (compute — new) | `[{ key, unit_price, list_price, structure, why }]` — only lines priced from the shelf | `services.priceLine` (the one price reader) — /api/invoice/build's `pricing` shape. |
+| `rates` (compute — new) | `[{ key, gst_rate, cess_rate, hsn, slab, source, scheme }]` | `services.rateLines` — /api/invoice/build's `rates` shape. |
+| `code` (400/422 — new) | `NO_LINES` · `BAD_QTY` · `BAD_RATE` · `BAD_PRICE_BASIS` (400) · `NO_PRICE` · `TAX_NOT_DECIDED` (422) · `QUOTE_FAILED` (500, no raw text) · lib/knownerr's codes | `services.quoteFailure` — a caller branches on `code`, never the sentence. |
+
 ## POST /api/governance/ai-draft (skill `line-item-draft`) · POST /api/capture/:id/raise — the quantity guard (T1-AI, 2026-10-14)
 
 Derived, never stored by the guard. Written by `lib/line-guard.js` (calls the engines' `numerals.verifyQuantity` / `negationIn`) over an AI reading. Read by: compose "✨ Fill" (app.html `ccAiFill`) and the raise screen.
@@ -219,7 +233,7 @@ One read per Home card, behind auth, signed-in people only (a key gets 403). Bui
 |---|---|---|
 | `/api/facts/till` | `{ lines:[{text,value?}], figures:{ day, bills, takings, currency, counters_open } }` — newest day sent up (named "today" only when it is the shop's day), and counters open | "bills not sent up" (the queue is on the counter's PC); `day`/`bills`/`takings` when no day summary exists |
 | `/api/facts/accounts` | `{ lines, figures:{ last_check, waiting, accept, add_supplier, record } }` — `tone:'dn'` on a difference or anything waiting; the waiting line in To do words (FX-F10W) | everything (`lines:[]`, `unavailable`) when the ledger is off or not provisioned |
-| `/api/facts/product-lab` | `{ lines, figures:{ items, no_cost } }` — a COUNT of items whose cost is unknown | `no_cost` for an actor without `can_see_costs`; no cost value is ever selected |
+| `/api/facts/product-lab` | `{ lines, figures:{ items, no_cost, no_slab } }` — a COUNT of items whose cost is unknown; `no_slab` (TAX-SRV1 G7) a COUNT of items with no tax slab AND no HSN (the counter's Shelf job `noslab`; SQL `lib/tax-shelf NO_SLAB_SQL`, in the same statement); the second line joins both problems | `no_cost` for an actor without `can_see_costs`; `no_slab` for a shop that charges no tax (`CHARGES_TAX_SQL`: regular + a tax number); no item value is ever selected |
 | `/api/facts/combo-lab` | `{ lines, figures:{ saved } }` — saved sets in the library | the combos/modifiers split (one table, one shape) |
 | `/api/facts/offer-lab` | `{ lines, figures:{ drafts, live } }` | — |
 | `/api/facts/rail` | `{ suppliers, customers, in, out, stuck }` — in/out = open chits to you / from you, stuck = open past the shop's `overdue_days` | `in`/`out`/`stuck` when the shop holds 5,000+ chit copies (a truncated count is a wrong one) |

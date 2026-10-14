@@ -1134,6 +1134,14 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/invoice/build": {
+      "file": "invoice.js",
+      "trips": 12,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "TAX-SRV1 (by hand): 1 identities read (services.shopOfEntity, the same row partyOfEntity read) + the shelf + live offers; the count is unchanged by this round."
+    },
     "POST /api/keys": {
       "file": "keys.js",
       "trips": 50,
@@ -1348,6 +1356,22 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/tax/compute": {
+      "file": "tax.js",
+      "trips": 12,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "TAX-SRV1 (by hand): 1 identities read (services.shopOfEntity: the party AND the shop's price basis, one row) + the shelf (lib/tax-shelf readShelf, one transaction) only when a line lacks a rate or a price; on the empty stub it answers 401 before any trip."
+    },
+    "POST /api/tax/rate": {
+      "file": "tax.js",
+      "trips": 12,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "TAX-SRV1 (by hand): the shelf read only (lib/tax-shelf readShelf, one transaction); on the empty stub it answers 401 before any trip."
     },
     "POST /api/testing/cases/close": {
       "file": "testing.js",
