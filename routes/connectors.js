@@ -18,8 +18,8 @@ const auth    = require('../middleware/auth');
 const mint    = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const { sendOtpEmail, sendEmail } = require('../lib/notify');
 const { verifyOtp } = require('../lib/otp');
-// Reissue step-up code. In DEV (DEV_OTP set) use a FIXED 654321 — distinct from the login dev-OTP (123456) so the two
-// are unmistakable during testing. In prod it's a fresh random 6-digit code.
+// Reissue step-up code. On a LOCAL stack (DEV_OTP set) a FIXED connector code — distinct from the entity code so the two
+// are unmistakable during testing (lib/dev-otp.js). In prod it's a fresh random 6-digit code.
 const devOtp = require('../lib/dev-otp');   // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
 const genOtp = () => devOtp.fixedOtp('connector') || require('crypto').randomInt(100000, 1000000).toString();
 
@@ -476,7 +476,7 @@ router.post('/reissue-code', auth, requireConnector, async (req, res) => {
 // only + re-type the gateway name (the QUESTION) + the one-time code sent to the entity email (the PASSWORD). Audited.
 router.post('/:actorId/regenerate-key', auth, requireConnector,
   [ param('actorId').isUUID(), body('name').trim().notEmpty().withMessage('Type the gateway name'),
-    body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('6-digit code required') ], validate,
+    body('otp').trim().isLength({ min: 6, max: 64 }).withMessage('6-digit code required') ], validate,
   async (req, res) => {
   try {
     const perm = await canReissue(req);

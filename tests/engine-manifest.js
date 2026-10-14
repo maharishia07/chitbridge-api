@@ -421,6 +421,9 @@ const ENGINE_OTHER = [
   /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
      books-hooks (which event) and stock-from-chit (whether it is stock). CB's own decision. (2026-10-01) */
   'bill-use.js',
+  /* ⭐ FX-F10W2: does their bill agree — the ONE comparison of a supplier's total with taxable + tax (books-hooks receiptBill; the counter page by its
+     vendored copy). Pure; its home is the tax engine (CBTax) once an engines round lifts it. */
+  'their-bill.js',
   /* ⭐ THE BILLS FOLDER (2026-10-01): folder-inventory.js — the system folders numbered with the ledger, and the ONE document
      classification the inbox and the folders share; bill-steps.js — the bill lifecycle derived from existing records. CB's own
      decisions. folder-views.js — what a view folder holds (the rule's matches), plumbing over select + match. */

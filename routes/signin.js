@@ -381,7 +381,7 @@ const entityVerifyChecks = [
   body('email').optional().trim(),
   body('user_id').optional().trim(),
   body('id').optional().trim(),
-  body('otp').optional().trim().isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits'),
+  body('otp').optional().trim().isLength({ min: 6, max: 64 }).withMessage('OTP must be 6 digits'),   // SEC1: up to 64 — a tester code is 8+ (words kept: signin-parity golden)
   body('pin').optional().trim().isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be 4 digits'),
 ];
 const actorLoginChecks = [
@@ -442,7 +442,7 @@ async function verify(req, res) {
     identity = rows[0];
 
     // ⭐ ONE verify, OTP or PIN — lib/identity-auth.js. The engine counts and locks; this door says it in its words.
-    const check = await identityAuth.verifyCredential(query, identity, { otp, pin });
+    const check = await identityAuth.verifyCredential(query, identity, { otp, pin, name: email || handle || id });
     if (!check.ok) {
       note(req, identity, actionOf(check.reason), check.method, check.reason);
       res.locals.code = check.reason || null;
@@ -680,7 +680,7 @@ async function actorLogin(req, res) {
         return res.status(400).json({ error: 'OTP required', message: 'Enter the OTP your admin shared with you', use_otp: true });
       }
       // F5: lib/otp.js's per-account attempt cap; authLimiter still sits in front of this door
-      const check = await identityAuth.verifyCredential(query, a, { otp });
+      const check = await identityAuth.verifyCredential(query, a, { otp, name: req.body.username });
       if (!check.ok) {
         note(req, a, actionOf(check.reason), 'otp', check.reason);
         res.locals.code = check.reason;
