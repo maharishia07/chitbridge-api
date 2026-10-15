@@ -87,6 +87,8 @@ const TC = require(path.join(API, 'lib', 'tax-copy'));
 const T = require(path.join(API, 'lib', 'tax-lines'));
 const I = require(path.join(API, 'lib', 'issued-invoice'));
 const CBTAX = require(path.join(API, 'lib', 'tax.js'));
+/* W1-TILL: the country registry the page has (window.CBRegulation AND the bare global — the page's window IS its global; the sandbox's is not) */
+const REGULATION = require(path.join(API, 'lib', 'regulation.js'));
 const MONEY = require(path.join(API, 'lib', 'money'));
 const r2 = (n) => MONEY.round(Number(n) || 0);
 
@@ -118,7 +120,9 @@ async function ring(o) {
   const saved = {}, el = (v) => ({ value: v || '', textContent: '', className: '', innerHTML: '', classList: { remove() {}, add() {} }, showModal() {}, close() {}, open: false });
   const els = { tendered: el(''), cname: el(o.cust ? o.cust.name : ''), cphone: el(o.cust ? '9840012345' : ''), lastnote: el(''), billsdlg: el('') };
   const ctx = {
-    window: {}, console, Object, Array, String, Number, JSON, Math, Date, Promise,
+    /* W1-TILL: the page has the country REGISTRY (CBRegulation, in /engine/tax.js) — the shop's pack decides the state split; the sandbox
+       used to omit it and lean on the India default the counter no longer has */
+    window: { CBRegulation: REGULATION }, CBRegulation: REGULATION, console, Object, Array, String, Number, JSON, Math, Date, Promise,
     CBTax: o.noEngine ? undefined : CBTAX,
     MONEY: () => MONEY, r2, esc: (v) => String(v == null ? '' : v), money: (v) => '₹' + (Number(v) || 0).toFixed(2),
     S: { shop: { name: 'Tally Test', gstin: '33AABCK1234F1Z6', state_code: '33', country: 'IN', reg_type: 'regular' },

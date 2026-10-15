@@ -133,7 +133,7 @@ it('an offer comes off the total and is shown as a saving, never as a lower pric
 
 it('a registered shop splits the tax OUT of the shelf price — the customer pays what the shelf said', () => {
   P.CART = [{ price: 118, qty: 1, gross: 118, net: 118, save: 0, gst_rate: 18 }];
-  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' } };   /* ⚠️ registered MEANS a GSTIN */
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' } };   /* ⚠️ registered MEANS a GSTIN */
   const m = P.billMoney();
   assert.strictEqual(m.net, 118, 'the total is the shelf price');
   assert.strictEqual(m.base, 100); assert.strictEqual(m.tax, 18);
@@ -145,7 +145,7 @@ it('⭐⭐⭐ [SPLIT-01] mixed rates and a zero-rated line, to the paisa — wit
     { price: 200, qty: 2, gross: 400, net: 400, save: 0, gst_rate: 0 },
     { price: 30, qty: 3, gross: 90, net: 81, save: 9, gst_rate: 18 },
   ];
-  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' } };   /* ⚠️ registered MEANS a GSTIN */
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' } };   /* ⚠️ registered MEANS a GSTIN */
   const m = P.billMoney();
   /**
    * ⚠️⚠️ THIS ASSERTION MOVED, IT WAS NOT DELETED (Athi, 2026-09-17: "no computation should be tightly bound to
@@ -184,7 +184,7 @@ it('⭐⭐⭐ [SPLIT-02] the slip\'s CGST/SGST are the SUM of the lines\' heads 
     { price: 209, qty: 1, gross: 209, net: 209, save: 0, gst_rate: 5 },
   ];
   /* prices quoted EXCLUSIVE of tax, as the live bill was: ₹209 taxable at 5% = ₹10.45 a line */
-  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', state_code: '33' }, policy: { price_includes_tax: 'no' } };
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', state_code: '33', country: 'IN' }, policy: { price_includes_tax: 'no' } };
   try {
     const m = P.billMoney();
     const r5 = m.byRate['5'];
@@ -204,12 +204,58 @@ it('⭐⭐⭐ [SPLIT-02] the slip\'s CGST/SGST are the SUM of the lines\' heads 
     const sum = (k) => Math.round((inv.ItemList || []).reduce((t, it) => t + (it[k] || 0), 0) * 100) / 100;
     assert.strictEqual(sum('CgstAmt'), r5.cgst, 'the invoice\'s CGST equals the slip\'s');
     assert.strictEqual(sum('SgstAmt'), r5.sgst, 'the invoice\'s SGST equals the slip\'s');
-  } finally { P.CBTax = prev; P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' } }; }   /* the shop as the tests before it had it — never leave a policy behind */
+  } finally { P.CBTax = prev; P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' } }; }   /* the shop as the tests before it had it — never leave a policy behind */
 });
 
-it('the financial year in a bill number starts in April, as India\'s does', () => {
-  assert.strictEqual(P.fyOf(new Date('2026-03-31T00:00:00Z')), '25-26');
-  assert.strictEqual(P.fyOf(new Date('2026-04-01T00:00:00Z')), '26-27');
+/* ⭐ W1-TILL: the year in a bill number is the DOC-NUMBER ENGINE's rule for the shop's stated country — the page keeps no April formula of its own */
+it('the year label in a bill number comes from CBDoc for the shop\'s country: India April–March, an unstated country the calendar year, never India by default', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  assert.ok(!/function fyOf\(/.test(html), 'the page carries its own financial-year formula again — the rule is CBDoc.rules(country).yearLabel');
+  assert.ok(/var D = DOCNUM\(\);/.test(html) && /D\.periodKey\(\{ country: country/.test(html), 'nextNumber asks DOCNUM().periodKey for the period');
+  assert.throws(() => P.DOCNUM(), /CBDoc is not loaded/, 'a missing engine is said, never guessed around');
+  const docnumber = require(path.join(API, 'lib', 'docnumber.js'));
+  assert.strictEqual(docnumber.periodKey({ country: 'IN', at: new Date('2026-03-31T00:00:00Z') }), '25-26');
+  assert.strictEqual(docnumber.periodKey({ country: 'IN', at: new Date('2026-04-01T00:00:00Z') }), '26-27');
+  assert.strictEqual(docnumber.periodKey({ country: null, at: new Date('2026-03-31T00:00:00Z') }), '2026', 'no country → the calendar year, not India\'s');
+});
+
+/* ⭐ W1-TILL: no pack (no country stated, or the registry not loaded) → the NEUTRAL answer, never India's words or split */
+it('with no country pack the counter says Tax, keeps one tax head and offers no UPI — India is not the default', () => {
+  const prevS = P.S, prevReg = P.CBRegulation;
+  try {
+    P.S = { shop: { reg_type: 'regular' } };   /* no country */
+    assert.strictEqual(P.schemeWord(), 'Tax');
+    assert.strictEqual(P.packSplitsByState(), false);
+    assert.strictEqual(P.packHasUpi(), false);
+    assert.strictEqual(P.shopTz(), undefined, 'no country → no zone guessed (CBLocale is not loaded here)');
+    P.S = { shop: { reg_type: 'regular', country: 'IN', currency: 'INR' } };
+    assert.strictEqual(P.schemeWord(), 'GST'); assert.strictEqual(P.packSplitsByState(), true); assert.strictEqual(P.packHasUpi(), true);
+    assert.strictEqual(P.shopTz(), 'Asia/Kolkata', 'a STATED India is India');
+    P.S = { shop: { reg_type: 'regular', currency: 'INR' } };
+    assert.strictEqual(P.shopTz(), undefined, 'INR alone does not place the shop in India');
+  } finally { P.S = prevS; P.CBRegulation = prevReg; }
+});
+
+/* ⭐ W1-TILL: the key check and the scale reader are never silent */
+it('keyWatch branches on the host\'s STATUS (401 · 403), not on a regex over its sentence; its catch records', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  const fn = html.slice(html.indexOf('async function keyWatch('), html.indexOf('\n}', html.indexOf('async function keyWatch(')));
+  assert.ok(!/40\[13\]/.test(fn), 'keyWatch reads the refusal off the prose again');
+  assert.ok(/KEY_REFUSED_STATUSES\.indexOf\(Number\(v\.status\)\)/.test(fn), 'keyWatch branches on v.status');
+  assert.ok(/cbQuiet\('keyWatch:verify'/.test(fn) && /cbQuiet\('keyWatch:1'/.test(fn), 'a non-verdict failure is recorded');
+  assert.strictEqual(JSON.stringify(P.KEY_REFUSED_STATUSES), '[401,403]');   /* a sandbox array is another realm's — compare the values */
+});
+
+it('weighRead says when the scale engine fails on a shop WITH a scale, and never asks the engine on a shop without one', () => {
+  const prevScale = P.CBScaleCode, prevOpt = P.tillOpt;
+  try {
+    P.CBScaleCode = { read() { throw new Error('engine down'); } };
+    P.tillOpt = () => ({ weigh: { on: true, preset: 'price_13' } });
+    const r = P.weighRead('2123456012349');
+    assert.ok(r && r.bad && /scale reader is not working/.test(r.bad), 'a thrown engine is said, not returned as "an ordinary barcode": ' + JSON.stringify(r));
+    P.tillOpt = () => ({ weigh: { on: false } });
+    assert.strictEqual(P.weighRead('2123456012349'), null, 'no scale → an ordinary barcode, the engine not even asked');
+  } finally { P.CBScaleCode = prevScale; P.tillOpt = prevOpt; }
 });
 
 it('the chit a bill becomes carries the bill number as client_ref, so a replay cannot bill twice', () => {
@@ -585,14 +631,14 @@ it('⚠️⚠️ NO GSTIN, NO GST — a shop without one prints a CASH MEMO, wha
 });
 
 it('a registered shop WITH a GSTIN charges, and its slip is a tax invoice', () => {
-  P.S = { shop: { name: 'Sri Murugan Stores', reg_type: 'regular', gstin: '33ABCDE1234F1Z5' } };
+  P.S = { shop: { name: 'Sri Murugan Stores', reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' } };
   const t = P.shopTax();
   assert.strictEqual(t.charges, true);
   assert.strictEqual(t.kind, 'tax');
 });
 
 it('a composition dealer has a GSTIN and still charges nothing — a BILL OF SUPPLY', () => {
-  P.S = { shop: { reg_type: 'composition', gstin: '33ABCDE1234F1Z5' } };
+  P.S = { shop: { reg_type: 'composition', gstin: '33ABCDE1234F1Z5', country: 'IN' } };
   const t = P.shopTax();
   assert.strictEqual(t.charges, false, 'a composition dealer may not collect tax on supplies');
   assert.strictEqual(t.kind, 'supply');
@@ -684,7 +730,7 @@ const finds = (h, word) => h.filter((x) => (x.what + ' ' + x.means).toLowerCase(
 it('⭐⭐ THE ONE HE ASKED FOR: a shop that charges GST, with products that carry no rate', () => {
   /* the engine the browser loads as /engine/tax.js — determine() and the slab together (billMoney needs the first) */
   P.CBTax = Object.assign({}, P.CBTax, { slab: require(path.join(API, 'lib', 'tax-slab.js')) });
-  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' }, face: {}, policy: {},
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' }, face: {}, policy: {},
     slabs: [{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 }], categories: [],
     items: [{ item_id: 'a', name: 'Rice', price: 60, tax_slab: 'gst-5' },
             { item_id: 'b', name: 'Oil', price: 142 },
@@ -706,7 +752,7 @@ it('a shop set to regular with NO GSTIN is told plainly', () => {
 });
 
 it('⭐⭐ AND THE ASSUMPTION NOBODY HAD ASKED ABOUT: are shelf prices quoted with tax in them?', () => {
-  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' }, policy: { price_includes_tax: 'yes' },
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' }, policy: { price_includes_tax: 'yes' },
     slabs: [{ definition_id: 'gst-5', name: 'GST 5%', rate: 5 }], categories: [], face: {},
     items: [{ item_id: 'a', name: 'Rice', price: 60, tax_slab: 'gst-5' }] };
   const inc = P.health();
@@ -717,7 +763,7 @@ it('⭐⭐ AND THE ASSUMPTION NOBODY HAD ASKED ABOUT: are shelf prices quoted wi
 
 it('⚠️ and the split follows it — the same shelf price is two different bills', () => {
   P.CART = [{ price: 105, qty: 1, gross: 105, net: 105, save: 0, gst_rate: 5 }];
-  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5' }, policy: { price_includes_tax: 'yes' } };
+  P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' }, policy: { price_includes_tax: 'yes' } };
   const inc = P.billMoney();
   assert.strictEqual(inc.net, 105, 'inclusive: the customer pays what the shelf said');
   assert.strictEqual(inc.base, 100); assert.strictEqual(inc.tax, 5);

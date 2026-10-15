@@ -5176,7 +5176,8 @@ var AgentHost = {
   print: function(b){ return fetch('/api/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
   doc: function(d){ return fetch('/api/doc',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(function(r){ return r.json(); }); },
   alias: function(a){ return fetch('/api/alias',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(a)}).then(function(r){ return r.json(); }); },
-  verify: function(){ return fetch('/api/verify').then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
+  /* W1-TILL: the program forwards the cloud's status · code · sentence (its /api/verify); a program that cannot be reached is said in words */
+  verify: function(){ return fetch('/api/verify').then(function(r){ return r.json(); }).catch(function(e){ cbQuiet('AgentHost.verify:1', e); return { ok:false, why:'the counter program did not answer' }; }); },
   tillPost: function(path, body){ return fetch('/api/op', { method:'POST', headers:{ 'Content-Type':'application/json' },
       body: JSON.stringify({ path: path, body: body }) }).then(function(r){ return r.json(); })
       .catch(function(e){ return { ok:false, why:e.message }; }); },
@@ -5534,14 +5535,17 @@ var CloudHost = {
     await queueTally(); paintStatus();
     return { ok:true, queued:true };
   },
+  /** ⭐ W1-TILL: a refusal carries the SERVER's sentence and code (message · code, as tillPost reads them) beside the status the
+   *  caller branches on — never 'HTTP 401' as the only words; a dropped line says so in the counter's own words. */
   async verify(){
     if (!this.cred() || !lineUp()) return { ok:false, why:'this needs the internet' };
     try {
       var r = await fetchBy(this.api + '/api/till/verify', { headers: this.auth() });
       if (r.ok) return Object.assign({ ok:true }, await r.json());
-      var vc = null; try { vc = (await r.json()).code || null; } catch (_) { vc = null; }
-      return { ok:false, why:'HTTP ' + r.status, status: r.status, code: vc };
-    } catch (e) { return { ok:false, why:e.message }; }
+      var said = '', code = null;
+      try { var answer = await r.json(); said = (answer && (answer.message || answer.error)) || ''; code = (answer && answer.code) || null; } catch (e) { cbQuiet('verify:1', e); }
+      return { ok:false, why: said || ('ChitBridge refused the key check (' + r.status + ')'), status: r.status, code: code };
+    } catch (e) { cbQuiet('verify:2', e); return { ok:false, why: (e && e.name === 'AbortError') ? 'ChitBridge did not answer in time' : 'the line dropped' }; }
   },
   async doc(d){
     var no = await nextNumber(docTagOf(d.kind));
@@ -5909,22 +5913,31 @@ var CloudHost = {
  * the bill's series: a gapless sales series is a legal expectation, and a goods receipt sitting in the middle of it breaks the thing
  * the numbering exists to prove.
  */
-/** the number: C1/26-27/0041 — continuous within the financial year, prefixed by the counter, decided locally */
-function fyOf(d){ var y=d.getFullYear(), apr=d.getMonth()>=3, a=apr?y:y-1; return String(a).slice(2)+'-'+String(a+1).slice(2); }
+/** the number: C1/26-27/0041 — continuous within the financial year, prefixed by the counter, decided locally.
+ *  ⭐ W1-TILL: THE YEAR LABEL IS THE DOC-NUMBER ENGINE'S (CBDoc.rules(country).yearLabel — India April–March, an unstated country the calendar
+ *  year). The April formula that sat here was a second copy of India's rule and answered it for every shop; like MONEY(), a missing engine is
+ *  SAID (engineMissed has listed 'docnumber'), never guessed around. */
+function DOCNUM(){
+  if (!window.CBDoc || typeof CBDoc.periodKey !== 'function') throw new Error('CBDoc is not loaded — /engine/docnumber.js is missing from this page');
+  return window.CBDoc;
+}
 /** the shop's jurisdiction — the pivot every numbering rule hangs from. T2-NATDEF: the STATED country or null, never India by default —
  *  CBDoc.rules(null) is the generic rule ('*'), packFor(null) no pack, and the health check says the NO_COUNTRY sentence. */
 function docCountry(){ return (S && S.shop && S.shop.country) || null; }
 /* ⭐ CX0 (2026-10-13): THE PACK'S OWN WORDS on the paper — the tax-id label (GSTIN · ABN · TRN), the scheme (GST · VAT), the credit note's title.
-   Read from the registered pack of the shop's country (CBRegulation, bundled in /engine/tax.js); a page without the registry keeps India's words. */
+   Read from the registered pack of the shop's country (CBRegulation, bundled in /engine/tax.js).
+   ⭐ W1-TILL: NO PACK → THE NEUTRAL WORD, never India's. No pack means no country stated (NO_COUNTRY says what to do) or the registry failed to
+   load (engineMissed lists it); neither is a reason to print GST, split CGST/SGST or offer UPI on a shop nobody placed. */
 function shopPack(){ try { return (window.CBRegulation && CBRegulation.packFor(docCountry())) || null; } catch (_) { return null; } }
 /* STD2: the tax number's word is the SERVER's (snapshot shop.tax_id_word = api profile.taxIdWordOf, the one reader) — never a copy here; none → neutral */
 function taxIdLabel(){ return (S && S.shop && S.shop.tax_id_word) || 'Tax number'; }
-function schemeWord(){ var p = shopPack(); return (p && p.tax && p.tax.scheme) || 'GST'; }
+/* no pack → 'Tax', the neutral word beside taxIdLabel's 'Tax number' (W1-TILL) */
+function schemeWord(){ var pack = shopPack(); return (pack && pack.tax && pack.tax.scheme) || 'Tax'; }
 function creditNoteTitle(){ var p = shopPack(); return p && p.creditNote && p.creditNote.title ? String(p.creditNote.title).toUpperCase() : 'CREDIT NOTE'; }
-/** does the shop's tax turn on the STATE (India's CGST/SGST · IGST — pack.tax.supply 'state')? A border pack (Australia, the UAE) has one head and no state. No pack known → India's rule, as before. */
-function packSplitsByState(){ try { var p = shopPack(); return !p || !p.tax || !p.tax.supply || p.tax.supply === 'state'; } catch (_) { return true; } }
-/** does the shop's pack carry UPI among its payment modes (reg-in chart.paymentModes.upi)? Elsewhere a counter's own UPI payee is not offered — an NPCI QR with cu=AUD pays nobody. */
-function packHasUpi(){ try { var p = shopPack(); return !p || !!(p.chart && p.chart.paymentModes && p.chart.paymentModes.upi); } catch (_) { return true; } }
+/** does the shop's tax turn on the STATE (India's CGST/SGST · IGST — pack.tax.supply 'state')? A border pack (Australia, the UAE) has one head and no state. No pack known → one head (W1-TILL). */
+function packSplitsByState(){ try { var pack = shopPack(); return !!(pack && pack.tax && pack.tax.supply === 'state'); } catch (e) { cbQuiet('packSplitsByState:1', e); return false; } }
+/** does the shop's pack carry UPI among its payment modes (reg-in chart.paymentModes.upi)? Elsewhere a counter's own UPI payee is not offered — an NPCI QR with cu=AUD pays nobody. No pack → not offered (W1-TILL). */
+function packHasUpi(){ try { var pack = shopPack(); return !!(pack && pack.chart && pack.chart.paymentModes && pack.chart.paymentModes.upi); } catch (e) { cbQuiet('packHasUpi:1', e); return false; } }
 /**
  * ⭐ CX1 (T1, 2026-10-13): WHAT THIS BILL MUST BE, BY THE SHOP'S LAW — the pack's own taxInvoice(total_minor, { buyer_registered }) (reg-au s.29-70:
  * the buyer's identity or ABN from A$1,000 · reg-ae ER Art. 59: full or simplified, the buyer's TRN on a full one). India's pack has no such member
@@ -6160,9 +6173,9 @@ var LAST_SERIES = null;
    "Next bill: C5/26-27/0003" from a worked example (seq 3) while the next sale correctly took 0004. */
 async function nextNumber(kind, peek){
   var country = docCountry();
-  var D = window.CBDoc;
+  var D = DOCNUM();   /* W1-TILL: the one numbering rule — a missing engine is said, not replaced by an April formula */
   var now = new Date();
-  var r = D ? D.rules(country) : null;
+  var r = D.rules(country);
   /**
    * ── ⭐⭐⭐ THE SHOP'S SCHEME (Athi, 2026-09-16) ────────────────────────────────────────────────────────────
    *
@@ -6188,7 +6201,7 @@ async function nextNumber(kind, peek){
    * setting this up before its first sale expects. `schemeTakesEffect()` says which, in the settings panel.
    */
   var _eff = (_had0 && Number(_had0.next) > 1 && _had0.scheme) ? _had0.scheme : tillScheme();
-  var period = D ? D.periodKey({ country: country, at: now, scheme: _eff }) : fyOf(now);
+  var period = D.periodKey({ country: country, at: now, scheme: _eff });
 
   /* ⚠️ ONE SERIES PER KIND, IN ITS OWN RECORD. Sharing a run would put a hole in the sales series, which is
      the one thing the numbering exists to prove. The box keys are unchanged from the first version. */
@@ -11635,14 +11648,16 @@ function weighExample(){
   var row = document.getElementById('row_weighex');
   if (!box || !row) return;
   var cfg = weighCfg();
-  var e = null;
-  try { e = cfg.on ? SCALE().example(cfg) : null; } catch (e) { cbQuiet('weighExample:1', e); }
-  if (!e) { row.hidden = true; box.textContent = ''; return; }
+  if (!cfg.on) { row.hidden = true; box.textContent = ''; return; }
+  var example = null;
+  /* W1-TILL: an engine failure is SAID in the box (it used to hide the row, which looked like "nothing to show") */
+  try { example = SCALE().example(cfg); } catch (e) { cbQuiet('weighExample:1', e); row.hidden = false; box.textContent = SCALE_READER_DOWN; return; }
+  if (!example) { row.hidden = true; box.textContent = ''; return; }
   row.hidden = false;
-  if (!e.reads) { box.textContent = e.code + ' — this pattern reads nothing. Check it against a real label.'; return; }
-  var r = e.reads;
-  box.textContent = e.code + ' reads as item ' + r.item + ', '
-    + (r.amount != null ? (curSym() + r.amount) : (r.qty + ' ' + (r.unit || '')));
+  if (!example.reads) { box.textContent = example.code + ' — this pattern reads nothing. Check it against a real label.'; return; }
+  var reads = example.reads;
+  box.textContent = example.code + ' reads as item ' + reads.item + ', '
+    + (reads.amount != null ? (curSym() + reads.amount) : (reads.qty + ' ' + (reads.unit || '')));
 }
 
 function weighSet(v){
@@ -11714,9 +11729,15 @@ function SCALE(){
   if (!window.CBScaleCode) throw new Error('CBScaleCode is not loaded — /engine/scalecode.js is missing from this page');
   return window.CBScaleCode;
 }
+/* ⭐ W1-TILL: the words when the scale engine itself fails on a shop that HAS a scale — said at the counter, never a silent fall-through */
+var SCALE_READER_DOWN = 'The scale reader is not working on this counter — type the item and its weight instead.';
 function weighRead(raw){
+  var cfg = weighCfg();
+  if (!cfg.on) return null;                  /* no scale here — nothing to decode, and the engine is not even asked */
   var r;
-  try { r = SCALE().read(raw, weighCfg()); } catch (_) { return null; }
+  /* ⚠️ W1-TILL: an engine that THROWS used to come back as null — "an ordinary barcode" — and the label fell through to the
+     product search with nothing said. A shop with a scale whose reader is down must hear so. */
+  try { r = SCALE().read(raw, cfg); } catch (e) { cbQuiet('weighRead:1', e); return { bad: SCALE_READER_DOWN }; }
   if (!r) return null;                       /* an ordinary barcode — the common case, and it costs nothing */
   if (!r.ok) return { bad: r.why };          /* a label that IS ours and could not be read */
 
@@ -14527,8 +14548,9 @@ function offerState(i, o){
     var line = lineOf({ item_id:i.item_id, code:i.code, name:i.name, unit:i.unit, price:i.price, qty:1,
                         item_data:{ category:i.category } });
     line.excluded = [];                              /* ⚠️ ask what the RULE reaches, not what survives the opt-out */
-    covered = CBOffers.forLine(line, [o], { currency:'INR', now:new Date().toISOString() }).length > 0;
-  } catch (_) { covered = false; }
+    /* W1-TILL: the shop's own money (shopCur, the one reader) — an INR by name hid every offer written in another currency */
+    covered = CBOffers.forLine(line, [o], { currency:shopCur(), now:new Date().toISOString() }).length > 0;
+  } catch (e) { cbQuiet('offerState:1', e); covered = false; }
   var on = covered && !excluded;
   var how = excluded ? 'excluded' : (ticked ? 'ticked' : (covered ? 'rule' : 'none'));
   return { id:id, on:on, how:how, ticked:ticked, excluded:excluded, covered:covered };
@@ -19605,6 +19627,8 @@ function lineSince(){
  * could not check anyway.
  */
 var KEY_OK = true, KEY_ASKED = 0, KEY_EVERY_MS = 600000;
+/* the two answers that MEAN "this key is refused" — anything else is the line, the server or the clock, not the key */
+var KEY_REFUSED_STATUSES = [401, 403];
 async function keyWatch(){
   try {
     if (!HOST || !HOST.verify || !(HOST.cred ? HOST.cred() : HOST.key)) return;
@@ -19616,8 +19640,12 @@ async function keyWatch(){
      * ⚠️⚠️ ONLY A CLEAR REFUSAL COUNTS. A timeout, a 500 or a dropped connection say nothing about the key —
      * treating them as a bad key would put "sign in again" in front of a shopkeeper every time the line
      * wobbled, which is how a real warning stops being read.
+     * ⭐ W1-TILL: the refusal is read off the STATUS the host carries (401 · 403), never a regex over the sentence — a copy
+     * edit must not change what the counter does. A failure that is not a verdict is still RECORDED (cbQuiet → the 🩺
+     * report lists it with the host's sentence), so "the key could not be checked" is never silent.
      */
-    var refused = !!(v && !v.ok && /40[13]/.test(String(v.why || '')));
+    var refused = !!(v && !v.ok && KEY_REFUSED_STATUSES.indexOf(Number(v.status)) >= 0);
+    if (v && !v.ok && !refused) cbQuiet('keyWatch:verify', new Error(v.why || 'the key could not be checked'));
     var was = KEY_OK;
     KEY_OK = refused ? false : (v && v.ok ? true : KEY_OK);
     /* ⚠️ [TILL-193] same plain framing as refreshFailed()'s flash — one story, not two — see its comment. */
@@ -19626,7 +19654,7 @@ async function keyWatch(){
       if (personOn()) { var pr = personRefused(v && v.code, STATE && STATE.queued); flash(pr.ico, pr.line, pr.fix, function(){ fromMenu(window[pr.act]); }); }
       else flash('🔧', 'Due to maintenance', keyWord(), function(){ pairAgain(); });
     }
-  } catch (_) { /* a check that cannot run is not a verdict */ }
+  } catch (e) { cbQuiet('keyWatch:1', e); /* a check that cannot run is not a verdict — but it is on the record */ }
 }
 
 var WATCH_WAS = null;
@@ -19705,11 +19733,12 @@ function lineFaults(rows){
  * PC's clock is set to; otherwise the zone CBLocale already answers (the person's override, else the device). No sums here —
  * Intl does the zone arithmetic.
  */
+/* W1-TILL: the country comes from its ONE reader (docCountry — the snapshot's stated country); India's single zone is a fact of a STATED
+   country, never guessed from the money. A shop nobody placed keeps the zone CBLocale answers (the person's override, else the device). */
+var ONE_ZONE_COUNTRIES = { IN: 'Asia/Kolkata' };
 function shopTz(){
-  var sh = (typeof S !== 'undefined' && S && S.shop) || {};
-  var c = String(sh.country || sh.country_code || '').toUpperCase();
-  var cur = String(sh.currency || (typeof S !== 'undefined' && S && S.currency) || '').toUpperCase();
-  if (c === 'IN' || c === 'IND' || c === 'INDIA' || (!c && cur === 'INR')) return 'Asia/Kolkata';
+  var zone = ONE_ZONE_COUNTRIES[String(docCountry() || '').toUpperCase()];
+  if (zone) return zone;
   try { if (window.CBLocale && CBLocale.timezone) return CBLocale.timezone(); } catch (e) { cbQuiet('shopTz:1', e); }
   return undefined;
 }
