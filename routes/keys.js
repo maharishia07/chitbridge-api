@@ -60,8 +60,15 @@ async function patchKey(entity_id, jti, patch, db) {
   await policy.patchKey(db || null, entity_id, ['api_keys'], patch, { op: 'merge_item', match: ['jti', String(jti)] });
 }
 
+/** the kinds a login may mint: every scope, minus the platform's 'testing' for a shop login */
+function scopesFor(req) {
+  let platform = false; try { platform = require('../lib/platformroot').isPlatform(req); } catch (e) { logger.warn('keys scopesFor: the platform test failed — answered a shop\'s list', { err: e && e.message }); }
+  return SCOPES.filter((s) => s !== 'testing' || platform);
+}
 router.get('/', auth, sessionOnly, async (req, res) => {
-  try { res.json({ keys: await listOf(auth.entityOf(req)), scopes: SCOPES }); }
+  /* ⭐ SET-WALK1 · W15: `scopes` = the kinds THIS login may mint — 'testing' (a build posts test results to the board) is the platform role's
+     only (lib/platformroot.isPlatform); a shop owner never sees it. The web offers exactly this list (cap-settings.js keyKinds); mint() refuses the rest. */
+  try { res.json({ keys: await listOf(auth.entityOf(req)), scopes: scopesFor(req) }); }
   catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
@@ -517,6 +524,9 @@ router.setDiag = async (entity_id, jti, patch) => {
 router.post('/', auth, sessionOnly, async (req, res) => {
   try {
     const b = req.body || {};
+    const allowed = scopesFor(req), asked = Array.isArray(b.scopes) ? b.scopes.map(String) : [];
+    const refused = asked.filter((x) => SCOPES.includes(x) && !allowed.includes(x));
+    if (refused.length) return res.status(403).json({ error: 'Platform only', code: 'NOT_PLATFORM', may: false, why: 'NOT_PLATFORM', message: 'A ' + refused[0] + ' key is the platform\'s to make, not a shop\'s.' });
     const r = await mint(auth.entityOf(req), req.identity, { name: b.name, scopes: Array.isArray(b.scopes) ? b.scopes : undefined, days: b.days });
     res.status(201).json(Object.assign({ note: 'Shown once. Send it as Authorization: Bearer <key> or X-Api-Key: <key>.' }, r));
   } catch (e) { res.status(e && e.status ? e.status : 500).json({ error: e && e.status === 400 ? 'validation' : 'Failed', message: String(e && e.message) }); }

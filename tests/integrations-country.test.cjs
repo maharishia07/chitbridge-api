@@ -36,7 +36,10 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     t('one read for the country when signed in', seen.length === 1);
     for (const c of ['AU', 'AE']) {
       country = c; m = by(await cat(true));
-      t(c + ': Tally, GoFrugal, Zoho greyed with a sentence', ['tally', 'gofrugal', 'zoho'].every((id) => m[id].ok === false && /not offered for a/.test(m[id].why)), JSON.stringify(m));
+      /* SET-WALK1 W16: Tally is "not offered" (NOT_FOR_COUNTRY: Tally's books are India's); GoFrugal and Zoho Books are SOLD there — "not yet" (NOT_YET_FOR_COUNTRY: our kit is India-GST-shaped so far) */
+      t(c + ': Tally greyed "not offered" with its code; GoFrugal and Zoho "not yet" with theirs', m.tally.ok === false && m.tally.code === 'NOT_FOR_COUNTRY' && /not offered for a/.test(m.tally.why)
+        && ['gofrugal', 'zoho'].every((id) => m[id].ok === false && m[id].code === 'NOT_YET_FOR_COUNTRY' && /not yet for a/.test(m[id].why)), JSON.stringify(m));
+      t(c + ': the Xero and MYOB rows are listed for an AU shop as "not built yet" (NOT_YET), not at all for the UAE', c === 'AU' ? (m.xero && m.xero.code === 'NOT_YET' && m.myob && m.myob.code === 'NOT_YET') : (!m.xero && !m.myob), JSON.stringify(Object.keys(m)));
       t(c + ': the sentence names the country, not a code', /Australia|United Arab Emirates/.test(m.tally.why));
       t(c + ': Till and CSV may', m.till.ok && m.csv.ok);
       const d = await fetch(base + '/download/tally', { headers: { authorization: 'Bearer x' } });
