@@ -30,30 +30,31 @@
 -->
 <style>
   :root{
-    --ink:#0E1117; --dim:#7A8796; --line:#242C38; --card:#151A22; --paper:#FFF8EE;
+    --tv-ink:#0E1117; --tv-dim:#7A8796; --tv-line:#242C38; --tv-card:#151A22; --tv-paper:#FFF8EE;   /* the TV's own palette (SHELL-ONE: --tv-* so a chosen theme never inverts the screen) */
     --hot:#E23A1F; --fresh:#1F7A4C; --gold:#C77B0E; --cool:#1B5E8C; --plum:#6B2D5B;
     --fs:15px;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;background:var(--ink);color:var(--paper);
-       font:var(--fs)/1.5 "Segoe UI","Nirmala UI",system-ui,-apple-system,sans-serif;
+  body{margin:0;background:var(--tv-ink);color:var(--tv-paper);
+       font:var(--fs)/1.5 var(--f-ui,'IBM Plex Sans',system-ui,sans-serif);   /* SYSTEM.md §2: one face on every page (SHELL-ONE) */
        display:flex;flex-direction:column;overflow:hidden}
 
   /* ── the bar. It disappears entirely in show mode: a television with a toolbar on it is a computer, not a sign. ── */
-  header{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);
-         background:var(--card);flex-wrap:wrap;flex:0 0 auto}
-  .brand{font-weight:800;letter-spacing:.2px;margin-inline-end:4px}
-  .brand small{display:block;font-weight:400;color:var(--dim);font-size:11px;letter-spacing:.3px}
-  button,select{font:inherit;color:var(--paper);background:transparent;border:1px solid var(--line);
+  /* SHELL-ONE: the frame's bar reads the TV's palette through the frame's names, scoped to the bar */
+  #shell{--page:var(--tv-ink);--paper:var(--tv-ink);--card:var(--tv-card);--panel:var(--tv-card);--line:var(--tv-line);--ink:var(--tv-paper);--muted:var(--tv-dim);--grey:var(--tv-dim);--hover:var(--tv-line);flex:0 0 auto}
+  .tools{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--tv-line);
+         background:var(--tv-card);flex-wrap:wrap;flex:0 0 auto}
+  .brand{font-weight:400;color:var(--tv-dim);font-size:12px;letter-spacing:.3px;margin-inline-end:4px}
+  button,select{font:inherit;color:var(--tv-paper);background:transparent;border:1px solid var(--tv-line);
                 border-radius:999px;padding:6px 13px;cursor:pointer;white-space:nowrap}
-  button:hover,select:hover{border-color:var(--dim)}
+  button:hover,select:hover{border-color:var(--tv-dim)}
   button.on{background:var(--hot);border-color:var(--hot);color:#fff;font-weight:700}
-  button.ghost{border-color:transparent;color:var(--dim)}
+  button.ghost{border-color:transparent;color:var(--tv-dim)}
   button:disabled{opacity:.4;cursor:default}
-  select{padding:6px 10px;border-radius:8px;background:var(--card)}
+  select{padding:6px 10px;border-radius:8px;background:var(--tv-card)}
   .sp{flex:1}
-  .note{color:var(--dim);font-size:12px}
+  .note{color:var(--tv-dim);font-size:12px}
 
   /* ── the stage ── */
   main{flex:1;display:flex;align-items:center;justify-content:center;padding:22px;min-height:0;position:relative}
@@ -66,30 +67,30 @@
   /* ── the side panel: why these, where it goes, and the caption already written ── */
   #side{width:330px;flex:0 0 auto;display:flex;flex-direction:column;gap:14px;margin-inline-start:22px;
         max-height:100%;overflow-y:auto}
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-  .panel h3{margin:0 0 8px;font-size:12px;letter-spacing:.9px;text-transform:uppercase;color:var(--dim);
+  .panel{background:var(--tv-card);border:1px solid var(--tv-line);border-radius:12px;padding:14px 16px}
+  .panel h3{margin:0 0 8px;font-size:12px;letter-spacing:.9px;text-transform:uppercase;color:var(--tv-dim);
             display:flex;align-items:center;gap:8px}
   .panel p{margin:0;line-height:1.55}
   .muted{color:#C9D2DD;font-size:14px}
   button.tiny{font-size:11px;padding:2px 9px;margin-inline-start:auto;text-transform:none;letter-spacing:0}
-  #cap{width:100%;background:#0E1117;color:var(--paper);border:1px solid var(--line);border-radius:8px;
+  #cap{width:100%;background:#0E1117;color:var(--tv-paper);border:1px solid var(--tv-line);border-radius:8px;
        padding:10px;font:13px/1.5 inherit;resize:vertical}
   @media (max-width:1100px){ #side{display:none} }
 
   /* ── show mode: the page becomes the sign ── */
-  body.show header,body.show #side{display:none}
+  body.show #shell,body.show .tools,body.show #side{display:none}
   body.show main{padding:0;background:#000}
   body.show #stage{max-width:100vw;max-height:100vh;border-radius:0;box-shadow:none}
   body.show canvas{max-width:100vw;max-height:100vh}
   #hint{position:fixed;inset-block-end:16px;inset-inline-start:50%;transform:translateX(-50%);
-        background:rgba(0,0,0,.66);border:1px solid var(--line);border-radius:999px;padding:7px 15px;
+        background:rgba(0,0,0,.66);border:1px solid var(--tv-line);border-radius:999px;padding:7px 15px;
         font-size:12px;color:#fff;opacity:0;transition:opacity .3s;pointer-events:none;z-index:5}
   #hint.show{opacity:1}
 
   /* ⚠️ SIZED FOR A ROOM, NOT A DESK — read from across a shop by someone holding a remote */
   /* TOUR-FIX1: the pairing panel TAKES the stage instead of lying over the page — a fixed full-screen layer covered the bar's own controls (camp, play,
      share …) and the caption box. Unpaired, the stage and the side have nothing to show, so they step aside (body.pairing) and the bar stays usable. */
-  #pairwrap{flex:1;align-self:stretch;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:24px}
+  #pairwrap{flex:1;align-self:stretch;background:var(--tv-ink);display:flex;align-items:center;justify-content:center;padding:24px}
   body.pairing #stage, body.pairing #side{display:none}
   /**
    * ⚠️⚠️ AN AUTHOR display RULE BEATS THE hidden ATTRIBUTE. `hidden` is only display:none from the browser's OWN stylesheet, so
@@ -102,10 +103,10 @@
   .pairbox{max-width:760px;width:100%;text-align:center}
   .pairbox h2{font-size:clamp(28px,4vw,52px);margin:0 0 18px}
   .pairbox ol{text-align:start;display:inline-block;color:#C9D2DD;font-size:clamp(15px,1.6vw,21px);line-height:1.8;margin:0 0 26px}
-  .pairbox b{color:var(--paper)}
+  .pairbox b{color:var(--tv-paper)}
   #paircode{width:min(100%,520px);text-align:center;text-transform:uppercase;letter-spacing:.22em;
             font:800 clamp(38px,7vw,86px)/1.1 "Segoe UI","Nirmala UI",system-ui,sans-serif;
-            background:#0B0E13;color:var(--paper);border:2px solid var(--line);border-radius:16px;padding:14px 10px}
+            background:#0B0E13;color:var(--tv-paper);border:2px solid var(--tv-line);border-radius:16px;padding:14px 10px}
   #paircode:focus{outline:none;border-color:var(--hot)}
   #pairgo{margin-top:20px;background:var(--hot);border-color:var(--hot);color:#fff;font-weight:800;
           font-size:clamp(15px,1.8vw,22px);padding:12px 28px;border-radius:999px}
@@ -114,13 +115,14 @@
 
   .rail{display:flex;gap:6px;align-items:center;overflow-x:auto;max-width:100%;padding-bottom:2px}
   .rail button{font-size:12px;padding:5px 11px}
-  @media (max-width:760px){ .brand small{display:none} }
+  @media (max-width:760px){ .brand{display:none} }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="brand">Shop screen<small id="shopname">not paired yet</small></div>
+<div id="shell" data-testid="promo-shell"></div>   <!-- THE ONE FRAME (SHELL-ONE): the bar; hidden with the tools when the screen plays full -->
+<div class="tools">
+  <span class="brand" id="shopname">not paired yet</span>
 
   <select id="camp" title="Which campaign is running"></select>
   <div class="rail" id="chan"></div>
@@ -137,7 +139,7 @@
   <button id="full" title="F">⛶ Full screen</button>
   <button id="refresh" class="ghost" title="Read the shop again">↻</button>
   <button id="repair" class="ghost" data-testid="promo-repair" title="Pair this screen again with a new code">📡</button>
-</header>
+</div>
 
 <main>
   <!--
@@ -183,6 +185,15 @@
 <div id="hint"></div>
 
 <script src="/config.js"></script>   <!-- HX1: window.CB_API — the deploy's one api address -->
+<script src="/app/helpers.js"></script>   <!-- esc — the ONE copy (the screen chip reads it) -->
+<!-- THE ONE FRAME (SHELL-ONE): the header every page wears — mark · name · the screen chip · ⌂ Home · the avatar (Sign in). Nothing of it is drawn here. -->
+<script src="/engine/screen.js"></script>   <!-- APP_THEMES: the themes the avatar applies -->
+<script src="/app/avatar.js"></script>      <!-- CBAvatar: the one avatar / Sign in door -->
+<script src="/app/one-person.js"></script>  <!-- CBOnePerson: whose session this browser holds (CBFrame.session) -->
+<script src="/app/screen-id.js"></script>   <!-- CBScreenId: this screen's name · code in the bar -->
+<script src="/app/shell.js"></script>       <!-- CBShell: the bar -->
+<script src="/app/page-frame.js"></script>  <!-- CBFrame.mount({ bar: true }): the header only; the page's own body under it -->
+<script>if (window.CBFrame) CBFrame.mount({ app:'promo', bar:true, signin:false, host:document.getElementById('shell'), title:{ icon:'▶', name:'Shop screen' } });   /* SHELL-ONE: ⌂ Home is ChitBridge's — the screen is the shop's own device */</script>
 <script src="/engine/offers.js"></script>
 <script src="/engine/tax.js"></script>
 <!-- ⭐ THE MONEY RENDERER. The screen showed rupees whatever the shop dealt in because it never loaded this —
