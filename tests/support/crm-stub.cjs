@@ -19,6 +19,16 @@ function make() {
   };
   let seq = 0; const uid = () => '00000000-0000-4000-8000-' + String(++seq).padStart(12, '0');
   const norm = (s) => String(s).replace(/\s+/g, ' ').trim();
+  /** W2-CRM: a window-counted page the way Postgres answers it — every row of the page carries the WHOLE set's total_rows · late_rows · today_rows
+   *  (count(*) OVER () … FILTER (WHERE f.due_at < $start / >= $start AND < $end)), then LIMIT $n OFFSET $m (a null limit = every row) */
+  function countedPage(sql, p, rows) {
+    const lim = sql.match(/LIMIT \$(\d+) OFFSET \$(\d+)/); if (!lim) return rows;
+    const start = (sql.match(/f\.due_at < \$(\d+)\) OVER/) || [])[1], end = (sql.match(/f\.due_at < \$(\d+)\) OVER \(\)::int AS today_rows/) || [])[1];
+    const from = start ? p[start - 1] : null, to = end ? p[end - 1] : null, open = rows.filter((r) => !r.done_at);
+    const counts = { total_rows: rows.length, late_rows: from ? open.filter((r) => r.due_at < from).length : 0, today_rows: from && to ? open.filter((r) => r.due_at >= from && r.due_at < to).length : 0 };
+    const limit = p[lim[1] - 1], offset = Number(p[lim[2] - 1]) || 0;
+    return rows.slice(offset, limit == null ? undefined : offset + Number(limit)).map((r) => Object.assign({}, r, counts));
+  }
   const gone = (what) => { const e = new Error('relation "' + what + '" does not exist'); e.code = '42P01'; return e; };
 
   async function run(sqlRaw, p) {
@@ -64,7 +74,7 @@ function make() {
         rows = rows.filter((r) => (/f\.done_at IS NOT NULL/.test(sql) ? !!r.done_at : !r.done_at));
         const m = sql.match(/f\.assignee_user_id = \$(\d+)/); if (m) rows = rows.filter((r) => r.assignee_user_id === p[m[1] - 1]);
         const q = sql.match(/f\.party_id = \$(\d+)/); if (q) rows = rows.filter((r) => r.party_id === p[q[1] - 1]);
-        rows = rows.slice().sort((a, b) => (a.due_at < b.due_at ? -1 : 1));
+        rows = countedPage(sql, p, rows.slice().sort((a, b) => (a.due_at < b.due_at ? -1 : 1)));
       }
       return { rows: rows.map((r) => Object.assign({ party_name: 'Name of ' + r.party_id.slice(-4), assignee_name: 'Who ' + r.assignee_user_id }, r)) };
     }
