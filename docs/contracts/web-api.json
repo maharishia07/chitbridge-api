@@ -3684,30 +3684,25 @@
     "nothing_to_set_off": true
    },
    "optional": [
-    "carried_word",
     "cash_minor",
     "doc_date",
     "duplicate",
     "entry_id",
     "entry_no",
-    "form",
-    "heads",
     "items",
     "lines",
     "moved",
     "note",
     "nothing_to_set_off",
     "posting_date",
-    "rcm_minor",
-    "ref_hint",
-    "ref_label",
-    "return_period"
+    "rcm_minor"
    ]
   },
   "POST /api/books/gst/pay": {
    "status": 200,
    "example": {
     "challan_no": "CPIN24100001",
+    "payment_ref": "CPIN24100001",
     "paid_minor": {
      "cgst": 4500,
      "sgst": 4500
@@ -3724,11 +3719,9 @@
     "rcm_paid_minor": {
      "cgst": 25000,
      "sgst": 25000
-    },
-    "payment_ref": "CPIN24100001"
+    }
    },
    "optional": [
-    "challan_no",
     "paid_minor.cgst",
     "paid_minor.sgst",
     "rcm_paid_minor"
@@ -5803,6 +5796,98 @@
     "line": "0"
    },
    "optional": []
+  },
+  "POST /api/books/gst/close #return": {
+   "status": 200,
+   "example": {
+    "period": "2026-Q1",
+    "date": "2026-09-30",
+    "utilised": [
+     {
+      "from": "gst",
+      "against": "gst",
+      "amount_minor": 5000
+     }
+    ],
+    "payable_minor": {
+     "gst_minor": 6000,
+     "vat_minor": 4000
+    },
+    "carried_minor": {
+     "gst_minor": 0,
+     "vat_minor": 0
+    },
+    "pay_total_minor": 6000,
+    "form": "BAS",
+    "heads": [
+     "gst"
+    ],
+    "return_period": {
+     "period": "2026-Q1",
+     "label": "2026-27 Q1 (Jul–Sep 2026)",
+     "frequency": "quarterly",
+     "start": "2026-07-01",
+     "end": "2026-09-30",
+     "due": "2026-10-28",
+     "stagger": 1,
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+    },
+    "ref_label": "Payment reference number",
+    "ref_hint": "The payment reference number on the BAS",
+    "carried_word": "GST refund due from the ATO",
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000245",
+    "entry_no": "JV/2026-27/000001",
+    "posting_date": "2026-09-30",
+    "doc_date": "2026-09-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null,
+    "rcm_minor": {
+     "vat": 2000
+    },
+    "cash_minor": {
+     "vat": 6000
+    }
+   },
+   "optional": [
+    "carried_minor.gst_minor",
+    "carried_minor.vat_minor",
+    "cash_minor",
+    "payable_minor.gst_minor",
+    "payable_minor.vat_minor",
+    "rcm_minor",
+    "return_period.due_rule",
+    "return_period.stagger"
+   ]
+  },
+  "POST /api/books/gst/pay #return": {
+   "status": 200,
+   "example": {
+    "payment_ref": "PRN-1",
+    "paid_minor": {
+     "gst": 6000,
+     "vat": 4000
+    },
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000246",
+    "entry_no": "MJ/2026-27/000001",
+    "posting_date": "2026-10-15",
+    "doc_date": "2026-10-15",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null,
+    "rcm_paid_minor": {
+     "vat": 2000
+    }
+   },
+   "optional": [
+    "paid_minor.gst",
+    "paid_minor.vat",
+    "rcm_paid_minor"
+   ]
   }
  },
  "_about": "THE API'S COPY IS THE MASTER (chitbridge-api docs/contracts/web-api.json). chitbridge-web keeps e2e/fixtures/web-api.contract.json - the same file. tests/web-api-contract.test.cjs holds the API's real answers to it; chitbridge-web e2e/contract.cjs holds every stand-in to it. Change the shape of an answer here (node tests/web-api-contract.test.cjs --write), then copy the file across."
