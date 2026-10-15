@@ -2147,9 +2147,8 @@ router.get('/sent', auth, async (req, res) => {
 router.get('/folder', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
-    const page   = parseInt(req.query.page || 1);
-    const limit  = parseInt(req.query.limit || 20);
-    const offset = (page - 1) * limit;
+    /* always a page (the mailbox folders were never answered whole); LIM2: the one pager — before it ?limit=1000000 was obeyed here */
+    const { page, limit, offset } = PAGE_LIMIT.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : 20 }, 20, LIST_MAX);
     const view   = req.query.view || 'drafts';
     const q_search = (req.query.q || '').trim();
 
@@ -4673,9 +4672,8 @@ router.get('/disputes/queue', auth, async (req, res) => {
   const side = ['mine', 'against'].includes(qs.side) ? qs.side : null;
   const words = typeof qs.q === 'string' ? qs.q.trim().slice(0, 100) : '';
   const like = words ? '%' + words.replace(/[\\%_]/g, (c) => '\\' + c) + '%' : null;
-  const paged = qs.page != null || qs.limit != null;
-  const limit = paged ? PAGE_LIMIT.limitOf(qs.limit, 50, 200) : null;
-  const page = paged ? PAGE_LIMIT.pageOf(qs.page) : 1;
+  const pageAsked = PAGE_LIMIT.pageArgs(qs, 50, 200);   /* not asked = every row, as before */
+  const paged = pageAsked.asked, limit = pageAsked.limit, page = pageAsked.page;
   const dir = qs.sort === 'new' ? 'DESC' : 'ASC';
 
   try {
@@ -4695,7 +4693,7 @@ router.get('/disputes/queue', auth, async (req, res) => {
          WHERE ($4::text IS NULL OR concat_ws(' ', x.auto_subject, x.purpose, x.category, x.reason, x.raised_by_display_name, x.resolution_note) ILIKE $4::text)
          ORDER BY x.created_at ${dir}, x.dispute_id
          LIMIT $5 OFFSET $6`,
-        [entity_id, status, side, like, limit, paged ? (page - 1) * limit : 0]);
+        [entity_id, status, side, like, limit, pageAsked.offset]);
       const c = await db.query(`SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes`);
       return { rows: r.rows, counts: c.rows[0] || { open: 0, resolved: 0 } };
     });

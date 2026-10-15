@@ -13,6 +13,8 @@ const availability = require('../lib/availability');   // a quantity is not an a
    item's LIFECYCLE — whether it is something you sell at all. A shelf can be empty without the product being
    retired, and a retired product can still have stock nobody may order. */
 const itemstatus = require('../lib/itemstatus');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — the clamp and the envelope */
+const SHELF_CAP = 2000;   /* the list's default AND its max: a cap, not a page size (see GET / below) */
 const { shopChanged } = require('../lib/shopchanged');   /* ⭐ every counter and screen holding a copy is told, at once */
 const regional = require('../lib/regional');    // the currency comes from the ENTITY, never from the request
 const csv = require('../lib/csv');              // catalogue export — a merchant can leave the way they arrived
@@ -519,8 +521,8 @@ router.get('/', auth, async (req, res) => {
      * ⚠️ AND THE TOTAL IS ALWAYS THE TRUE ONE. `truncated` says plainly that there is more, so a screen can say so rather than
      * quietly showing a tenth of a catalogue as if it were all of it.
      */
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '2000', 10) || 2000, 1), 2000);
-    const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0);
+    const limit = PL.limitOf(req.query.limit, SHELF_CAP, SHELF_CAP);
+    const offset = Math.max(parseInt(req.query.offset || '0', 10) || 0, 0);   /* this list's callers page by offset; `page` is answered for the one envelope */
     /**
      * ⚠️ THE STATUS FILTER MOVED INTO SQL, and it had to: filtering a PAGE in JS would hand back three rows out of a hundred and
      * call it a page. The CASE below is statusOf() written in SQL — absent, blank and unknown all mean 'available', which is the
@@ -644,7 +646,7 @@ router.get('/', auth, async (req, res) => {
        for a caller who is staff and whose owner has not turned this on */
     if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(items);
 
-    res.json({ items, count: items.length, total, offset, limit,
+    res.json({ items, count: items.length, total, offset, limit, page: Math.floor(offset / limit) + 1,
                /* ⚠️ SAID OUT LOUD. A screen that shows a tenth of a catalogue without knowing it is a screen that lies quietly. */
                truncated: (offset + items.length) < total,
                status_counts: counts,

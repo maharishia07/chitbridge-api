@@ -12,6 +12,7 @@ const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customer-auth');   // T2.4 — the storefront customer's OWN surface
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager */
 const { verifyOtp, issueShopperOtp, spendShopperOtp } = require('../lib/otp');   // per-account OTP attempt cap · SH-OTP1: the one shopper code
 const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
@@ -748,9 +749,9 @@ function publicResponseFor(view, asOwner) {
  * side=out → the ones I asked. One statement. ⚠️ Declared BEFORE /:bridge_id, which would otherwise take the path as a shop handle;
  * 'enquiry' is 7 characters, shorter than any user_id (8–30), so no shop can be named it.
  */
+const ENQUIRY_PAGE = 20, ENQUIRY_MAX = 100;
 router.get('/enquiry', auth, async (req, res) => {
-  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+  const { page, limit, offset } = PL.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : ENQUIRY_PAGE }, ENQUIRY_PAGE, ENQUIRY_MAX);
   const side = req.query.side === 'in' || req.query.side === 'out' ? req.query.side : null;
   try {
     const me = req.identity.parent_entity_id || req.identity.identity_id;
@@ -776,7 +777,7 @@ router.get('/enquiry', auth, async (req, res) => {
        SELECT (SELECT count(*) FROM f)::int AS total,
               COALESCE((SELECT json_agg(p ORDER BY p.last_at DESC)
                           FROM (SELECT * FROM f ORDER BY last_at DESC LIMIT $2 OFFSET $3) p), '[]'::json) AS rows`,
-      [me, limit, (page - 1) * limit, side]));
+      [me, limit, offset, side]));
     const row = r.rows[0] || { total: 0, rows: [] };
     res.json({ enquiries: row.rows || [], total: row.total || 0, page, limit });
   } catch (err) {
@@ -1368,11 +1369,10 @@ router.post('/:bridge_id/login/verify',
  * first). One reader for both routes; the server caps the page (MY_PAGE_MAX) whatever the client asks. The total rides the same
  * statement (COUNT(*) OVER ()) — no second trip.
  */
-const MY_PAGE_MAX = 50;
+const MY_PAGE_MAX = 50, MY_PAGE_DEFAULT = 20;
+/** always a page (these lists were never answered whole): the one pager, asked with the default when the client is silent */
 function myPage(req) {
-  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-  const limit = Math.max(1, Math.min(MY_PAGE_MAX, parseInt(req.query.limit, 10) || 20));
-  return { page, limit, offset: (page - 1) * limit };
+  return PL.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : MY_PAGE_DEFAULT }, MY_PAGE_DEFAULT, MY_PAGE_MAX);
 }
 const myTotal = (rows) => (rows.length ? Number(rows[0]._total) || 0 : 0);
 const myRows = (rows) => rows.map(({ _total, ...r }) => r);

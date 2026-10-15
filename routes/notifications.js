@@ -7,6 +7,8 @@ const { safeErr } = require('../lib/respond');
 const { query, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 const billPrivacy = require('../lib/bill-privacy');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager */
+const FEED_PAGE = 30, FEED_MAX = 100;   /* the bell shows the newest thirty */
 
 // GET /api/notifications?limit= — recent activity (newest first) on my chits, excluding my own actions.
 /**
@@ -46,7 +48,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const caller_id = req.identity.identity_id;   // the actor (or entity) actually making the call
-    const limit = Math.min(parseInt(req.query.limit || 30), 100);
+    const limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
 
     /**
      * ── ⭐⭐ ?count=1 — THE BADGE'S OWN QUESTION, IN ONE STATEMENT (2026-09-28, BACKLOG "THE BADGE COSTS A FULL
@@ -148,7 +150,7 @@ router.get('/', auth, async (req, res) => {
     const countable = (r) => r.action !== 'message_sent';
     const fresh = (seen ? result.rows.filter((r) => new Date(r.created_at) > new Date(seen)) : result.rows)
       .filter(countable).length;
-    res.json({ notifications: result.rows, count: fresh, total: result.rows.length, seen_at: seen });
+    res.json({ notifications: result.rows, count: fresh, total: result.rows.length, page: 1, limit, seen_at: seen });
   } catch (err) {
     console.error('Notifications error:', err.message);
     res.status(500).json({ error: 'Failed to get notifications', message: safeErr(err) });

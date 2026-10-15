@@ -50,10 +50,10 @@ function scan() {
     const re = /router\.(get|post|put|patch|delete|use|all)\(\s*(['"`])([^'"`]*)\2/g;
     const hits = []; let m;
     while ((m = re.exec(src))) hits.push({ verb: m[1], p: m[3], at: m.index });
-    /* a file's own page reader counts as the clamp when its body calls limitOf (routes/testing.js readPage) */
-    const readers = ['limitOf'];
+    /* a file's own page reader counts as the clamp when its body calls limitOf or pageArgs (routes/testing.js readPage, catalogue.js myPage) */
+    const readers = ['limitOf', 'pageArgs'];
     const fre = /(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/g;
-    while ((m = fre.exec(src))) if (/\blimitOf\(/.test(m[2])) readers.push(m[1]);
+    while ((m = fre.exec(src))) if (/\b(limitOf|pageArgs)\(/.test(m[2])) readers.push(m[1]);
     const pagedRe = new RegExp('\\b(' + readers.join('|') + ')\\(');
     hits.forEach((h, i) => {
       if (h.verb !== 'get') return;
