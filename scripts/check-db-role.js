@@ -10,12 +10,9 @@ const { Client } = require('pg');
   if (!process.env.DATABASE_URL) { console.error('DATABASE_URL is not set in this environment.'); process.exit(2); }
   const c = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await c.connect();
-  const { rows } = await c.query(
-    `SELECT current_user, session_user, rolsuper, rolbypassrls
-       FROM pg_roles WHERE rolname = current_user`
-  );
-  const r = rows[0] || {};
-  const bypass = !!(r.rolsuper || r.rolbypassrls);
+  const dbRole = require('../lib/db-role');   // SEC-FIX2: the one SELECT + verdict, shared with the boot check
+  const r = (await dbRole.roleFacts((sql) => c.query(sql))) || {};
+  const bypass = dbRole.bypassesRls(r);
   console.log('Connected as   :', r.current_user, '(session_user:', (r.session_user || '?') + ')');
   console.log('rolsuper       :', r.rolsuper);
   console.log('rolbypassrls   :', r.rolbypassrls);

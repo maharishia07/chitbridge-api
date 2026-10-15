@@ -49,7 +49,7 @@ async function captured(fn) {
   out('\nSEC1 · the tester code is Athi\'s secret, never in the code\n');
 
   /* ── 1 · TESTER_CODE signs in; a wrong code is refused ─────────────────────────────────────────────────────────────── */
-  env({ NODE_ENV: ' development', DATABASE_URL: REMOTE, DEV_OTP: '1', TESTER_CODE: SECRET });
+  env({ NODE_ENV: ' development', DATABASE_URL: REMOTE, DEV_OTP: '1', TESTER_CODE: SECRET, TESTER_NAMES: '*' });
   let { dev, otp } = load();
   let row = rowOf();
   t('TESTER_CODE set → the tester code signs in (stored code untouched)', (await otp.verifyOtp(fakeRun(row), row, SECRET)).ok === true);
@@ -149,38 +149,38 @@ async function captured(fn) {
     require('../lib/books-hooks'); await require('../db').query('select 1').catch(() => { /* no database in this test, by design */ });
   });
   const at = (ist) => clock.set(ist + '+05:30');
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'qa-{yymmdd}-lamp' }); ({ dev } = load());
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp' }); ({ dev } = load());
   at('2026-10-14T10:00:00');
-  t('{yymmdd} → 261014 on 14 Oct IST', dev.testerCodeOk('qa-261014-lamp') === true && dev.testerCodeOk('qa-{yymmdd}-lamp') === false);
-  t('…yesterday\'s code refused after 06:00', dev.testerCodeOk('qa-261013-lamp') === false);
+  t('{yymmdd} → 261014 on 14 Oct IST', dev.testerCodeOk('qa-261014-lamp', ['qa']) === true && dev.testerCodeOk('qa-{yymmdd}-lamp', ['qa']) === false);
+  t('…yesterday\'s code refused after 06:00', dev.testerCodeOk('qa-261013-lamp', ['qa']) === false);
   at('2026-10-14T05:59:59');
-  t('…yesterday\'s code accepted before 06:00 (and today\'s too)', dev.testerCodeOk('qa-261013-lamp') === true && dev.testerCodeOk('qa-261014-lamp') === true);
-  t('…the day before yesterday never', dev.testerCodeOk('qa-261012-lamp') === false);
+  t('…yesterday\'s code accepted before 06:00 (and today\'s too)', dev.testerCodeOk('qa-261013-lamp', ['qa']) === true && dev.testerCodeOk('qa-261014-lamp', ['qa']) === true);
+  t('…the day before yesterday never', dev.testerCodeOk('qa-261012-lamp', ['qa']) === false);
   at('2026-10-14T06:00:00');
-  t('…refused from 06:00 sharp', dev.testerCodeOk('qa-261013-lamp') === false && dev.testerCodeOk('qa-261014-lamp') === true);
+  t('…refused from 06:00 sharp', dev.testerCodeOk('qa-261013-lamp', ['qa']) === false && dev.testerCodeOk('qa-261014-lamp', ['qa']) === true);
   clock.set('2026-10-13T19:00:00Z');   // 00:30 on 14 Oct in India, still the 13th in UTC
-  t('the day is India\'s, not the server\'s UTC', dev.testerCodeOk('qa-261014-lamp') === true);
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'qa-{yymmdd}-lamp', TESTER_CODE_TZ: 'Australia/Sydney' }); ({ dev } = load());
+  t('the day is India\'s, not the server\'s UTC', dev.testerCodeOk('qa-261014-lamp', ['qa']) === true);
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp', TESTER_CODE_TZ: 'Australia/Sydney' }); ({ dev } = load());
   clock.set('2026-10-14T15:00:00Z');   // 02:00 on 15 Oct in Sydney
-  t('TESTER_CODE_TZ overrides the zone', dev.testerCodeOk('qa-261015-lamp') === true && dev.testerCodeOk('qa-261014-lamp') === true);
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'Q{yyyymmdd}' }); ({ dev } = load());
+  t('TESTER_CODE_TZ overrides the zone', dev.testerCodeOk('qa-261015-lamp', ['qa']) === true && dev.testerCodeOk('qa-261014-lamp', ['qa']) === true);
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'Q{yyyymmdd}' }); ({ dev } = load());
   at('2026-10-14T10:00:00');
-  t('{yyyymmdd} → 20261014', dev.testerCodeOk('Q20261014') === true && dev.testerCodeOk('Q261014') === false);
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: SECRET }); ({ dev } = load());
+  t('{yyyymmdd} → 20261014', dev.testerCodeOk('Q20261014', ['qa']) === true && dev.testerCodeOk('Q261014', ['qa']) === false);
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: SECRET }); ({ dev } = load());
   at('2026-10-14T03:00:00');
-  t('a static code is unchanged by the clock', dev.testerCodeOk(SECRET) === true && dev.testerCodeOk(SECRET + '261014') === false);
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'a{yymmdd}' }); ({ dev } = load());
-  t('too short after filling (7) → no tester code works', dev.testerCodeOk('a261014') === false
+  t('a static code is unchanged by the clock', dev.testerCodeOk(SECRET, ['qa']) === true && dev.testerCodeOk(SECRET + '261014') === false);
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'a{yymmdd}' }); ({ dev } = load());
+  t('too short after filling (7) → no tester code works', dev.testerCodeOk('a261014', ['qa']) === false
     && dev.testerNotices().some((n) => /shorter than 8/.test(n.reason)));
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'qa-{yymmdd}{yymmdd}' }); ({ dev } = load());
-  t('two placeholders → refused', dev.testerCodeOk('qa-261014261014') === false && dev.testerNotices().some((n) => /more than one/.test(n.reason)));
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}{yymmdd}' }); ({ dev } = load());
+  t('two placeholders → refused', dev.testerCodeOk('qa-261014261014', ['qa']) === false && dev.testerNotices().some((n) => /more than one/.test(n.reason)));
 
-  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'qa-{yymmdd}-lamp', LOG_LEVEL: 'debug' }); ({ dev, otp } = load());
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_NAMES: '*', TESTER_CODE: 'qa-{yymmdd}-lamp', LOG_LEVEL: 'debug' }); ({ dev, otp } = load());
   at('2026-10-14T05:00:00');
   const daily = await captured(async () => {
     const log = require('../lib/logger');
     dev.testerNotices().forEach((n) => log[n.level](n.msg, { reason: n.reason }));   // exactly what server.js does at boot
-    dev.testerCodeOk('qa-261014-lamp'); dev.testerCodeOk('qa-261013-lamp'); dev.testerCodeOk('nope-nope-nope');
+    dev.testerCodeOk('qa-261014-lamp', ['qa']); dev.testerCodeOk('qa-261013-lamp', ['qa']); dev.testerCodeOk('nope-nope-nope', ['qa']);
     await otp.verifyOtp(fakeRun(rowOf()), rowOf(), 'qa-261014-lamp');
   });
   const lines = daily.text.split('\n').filter((l) => l.trim());

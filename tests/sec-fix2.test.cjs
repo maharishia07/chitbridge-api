@@ -10,6 +10,7 @@
  *       customer token — never an e-mail), and that customer belongs to the brand or a member.
  *   M3  POST /assist/catalogue-adopt and GET /assist/catalogue-mine run the real `auth` (revoked actor → 401, viewer → 403).
  *   L1  DELETE /api/keys/:jti is owner-only (lib/owner.gate): a co-assist gets 403 OWNER_ONLY.
+ *   LIVE 2/3  lib/db-role verdict (RLS-bypassing role refuses to serve) · the tester door closed on an empty TESTER_NAMES off a local stack
  *   L2  routes/entities.js routing/preview and routes/till.js listen answer safeErr words, never the raw error text.
  *
  * Run: node tests/sec-fix2.test.cjs · no DB, no network beyond 127.0.0.1.
@@ -214,6 +215,30 @@ const sawSql = (re) => SQL.some((x) => re.test(x.s));
   const rawIn = (f) => fs.readFileSync(path.join(API, 'routes', f), 'utf8').split('\n').map((l, i) => (/res\.(status\(\d+\)\.)?json\(/.test(l) && RAW_WHY.test(l)) ? f + ':' + (i + 1) : null).filter(Boolean);
   const raw = rawIn('entities.js').concat(rawIn('till.js'));
   t('routes/entities.js routing/preview and routes/till.js listen answer safeErr, not e.message', raw.length === 0, raw.join(', '));
+
+  console.log('\n— LIVE 2 · the database role must not bypass RLS —');
+  const dbRole = require(path.join(API, 'lib', 'db-role'));
+  const asRole = (o) => Object.assign({ current_user: 'cb_app', rolsuper: false, rolbypassrls: false }, o);
+  t('cb_app / false / false → ok', dbRole.verdict(asRole({}), false).level === 'ok');
+  t('a superuser role → fatal (refuse to serve)', dbRole.verdict(asRole({ current_user: 'postgres', rolsuper: true }), false).level === 'fatal');
+  t('a BYPASSRLS role → fatal', dbRole.verdict(asRole({ rolbypassrls: true }), false).level === 'fatal');
+  t('…on a local stack the same role only warns', dbRole.verdict(asRole({ rolsuper: true }), true).level === 'warn');
+  t('no pg_roles row → warn, never ok', dbRole.verdict(null, false).level === 'warn');
+  t('roleFacts runs the one SELECT through the given runner', (await dbRole.roleFacts(async (sql) => ({ rows: [sql === dbRole.ROLE_SQL ? asRole({}) : null] }))).current_user === 'cb_app');
+  t('server.js checks the role before app.listen', /checkDbRole\(\)\.then\(startServing\)/.test(fs.readFileSync(path.join(API, 'server.js'), 'utf8')));
+
+  console.log('\n— LIVE 3 · the tester door needs TESTER_NAMES outside a local stack —');
+  const freshDevOtp = () => { delete require.cache[require.resolve(path.join(API, 'lib', 'dev-otp'))]; return require(path.join(API, 'lib', 'dev-otp')); };
+  const was = { n: process.env.NODE_ENV, d: process.env.DATABASE_URL, names: process.env.TESTER_NAMES, code: process.env.TESTER_CODE };
+  process.env.NODE_ENV = ' development'; process.env.DATABASE_URL = 'postgres://cb@db.example.com:5432/cb'; delete process.env.TESTER_NAMES; process.env.TESTER_CODE = 'tester-code-12345';
+  let devOtp = freshDevOtp();
+  t('production-like (remote DB), TESTER_NAMES empty → the door is closed', devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === false);
+  t('…and boot says so at WARN', devOtp.testerNotices().some((n) => n.level === 'warn' && /CLOSED/.test(n.msg)));
+  process.env.TESTER_NAMES = 'qa-*'; devOtp = freshDevOtp();
+  t('…with TESTER_NAMES set, a listed name passes and another does not', devOtp.testerCodeOk('tester-code-12345', ['qa-one']) === true && devOtp.testerCodeOk('tester-code-12345', ['owner@shop.test']) === false);
+  delete process.env.TESTER_NAMES; process.env.DATABASE_URL = 'postgres://cb@localhost:5432/cb'; process.env.NODE_ENV = 'development'; devOtp = freshDevOtp();
+  t('a local stack with an empty list still lets a tester in', devOtp.testerCodeOk('tester-code-12345', ['anyone']) === true);
+  for (const [k, v] of [['NODE_ENV', was.n], ['DATABASE_URL', was.d], ['TESTER_NAMES', was.names], ['TESTER_CODE', was.code]]) { if (v === undefined) delete process.env[k]; else process.env[k] = v; }
 
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
