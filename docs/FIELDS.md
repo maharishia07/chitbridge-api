@@ -6,6 +6,15 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **The shop's flags and the person's prefs (W1-SET · FLD2, 2026-10-15):** every key of `lib/policy.js` FLAGS (`policy_flags.<key>`) and of `routes/entities.js` PREF_SETS (`ui_prefs.<key>` · `locale_prefs.<key>`) must have a row in this file, spelled with its store (`policy_flags.trade_side`, never the bare word). `lib/field-ledger.undocumentedSettings` reads both sources and this file; `tests/field-ledger.test.cjs` fails by name when a 33rd flag arrives without its row.
 
+## POST /api/till/reward · the points come from the SERVER'S bill · 409 `BILL_NOT_RECORDED` (W2-REW · REW-T1, 2026-10-15)
+
+| key | type | source / derived · who writes · who reads |
+|---|---|---|
+| body `ref` · `holder` · `spend` · `at` | string · `{ scheme, value }` · integer points · ISO string or absent | Source: the counter (till.html finish(), after `HOST.bill` answered). `net` · `gross` · `count` · `lines` are NOT read any more: the earning is `rewards.earnedOn` over the server's own chit under `client_ref = ref` (lib/counter-bill `byRef` → `basketOf`: `summary_json.money` + `chit_detail.line_items`), inside `reward-store.settle`'s one transaction. `at` = the bill's `billed_at` as the counter stamped it: the same number at another moment is another counter's bill (the /reconcile verdict) and is refused. |
+| 409 `{ code: 'BILL_NOT_RECORDED', error: 'conflict', message }` | — | The server holds no chit under this number for this shop (or holds another counter's). Nothing is written — the spend included. The shop-PC queue retries it with backoff after the bill lands (drain); the web counter had the bill answered before it asked. The till master's `tillPost` refusal now carries `code` beside `why`. |
+| `added` (response) | integer points | Derived: the server's own bill's earning. The counter's `rwEarns()` is only what it TELLS the customer before paying (and prints when the post is queued offline); the slip prints the server's `added` when the answer is in hand. |
+| `GET /api/till/bills` `bills[].total` (unchanged value) | number | Now picked by lib/counter-bill `paidOf(summary_json)` — `money.total` else `money.net` else `total_value` — the same figure the reward earns from. |
+
 ## The platform door · GET /api/testing/cmdb paged (W1-SET · GOV2, 2026-10-15)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

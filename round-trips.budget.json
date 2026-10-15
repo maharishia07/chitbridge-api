@@ -2787,6 +2787,15 @@
       "status": 400,
       "extra": true
     },
+    "POST /api/till/reward": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true,
+      "why": "W2-REW by hand: the empty stub answers 400 (ref required) before any trip. Live, with a programme: + lock + the SERVER'S bill (lib/counter-bill byRef) + balance + writes in one TX; an on_items category rule adds the category master + the catalogue (2)."
+    },
     "PUT /api/actors/:id/delegate": {
       "file": "actors.js",
       "trips": 1,
