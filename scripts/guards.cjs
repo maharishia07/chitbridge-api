@@ -227,7 +227,9 @@ const GUARDS = [
   'books-routes.test.cjs',      // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
   'books-pages.test.cjs',       // ⭐ PERF1: Day book + Ledger pages (keyset, server max, server totals) add up to the whole; lib/page-limit
   'testing-pages.test.cjs',     // ⭐ T2-PAGING: the test board's five lists page (total · page · limit, lib/page-limit max); an old High is never cut
-  'list-paging-guard.test.cjs', // ⭐ T2-PAGING ratchet: unpaged list GETs ≤ the frozen number; every allowance has its reason
+  'list-paging-guard.test.cjs', // ⭐ T2-PAGING ratchet: unpaged list GETs ≤ the frozen number (W1-PLAT: 0); every allowance has its reason
+  'page-limit.test.cjs',        // ⭐ LIM2: the ONE pager — limitOf · pageOf · pageArgs (not asked = every row) · pageOut (the envelope), every rule and edge
+  'idempotency.test.cjs',       // ⭐ LIM2: idempotency off is never silent — warn + held in memory; a retry replayed or 409, another body 422, X-Idempotency: unverified
   'books-tally.test.cjs',       // ⭐⭐ the pack's Tally files come from the connector's adapter — one Tally writer, Receipt byte-identical
   'books-collections.test.cjs', // ⭐ CB Finance F1: /dues?finance=1 — limit · over_limit · interest SHOWN · owner only; plain /dues untouched
   'books-fixes.test.cjs',       // ⭐⭐⭐ the red-team findings of 2026-09-30 (M1–M12), each held by a check that was red before its fix
