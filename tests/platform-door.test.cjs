@@ -99,4 +99,4 @@ it('an admitted caller gets no answer written (the route goes on)', () => {
   assert.strictEqual(r.status, null);
 });
 
-console.log('\n  ' + pass + ' passed' + (process.exitCode ? ' · FAILURES above' : '') + '\n');
+console.log('\n' + pass + ' checks passed' + (process.exitCode ? ' · FAILURES above' : '') + '\n');
