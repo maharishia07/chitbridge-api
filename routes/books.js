@@ -66,6 +66,8 @@ function fail(res, e) {
   if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
   /* T1-INV: closing stock from the ledger refused for a NAMED reason — the code and the products, so a screen offers Count / Enter by hand */
   if (e && e.refused && /^STOCK_/.test(String(e.code || ''))) return res.status(422).json({ code: e.code, items: e.items || [], error: e.message, message: e.message });
+  /* W2-BOOKS: a refusal that carries its own code (PERIOD_NOT_ENDED · RCM_NETTING_NOT_BUILT · NOT_FOR_COUNTRY …) says it — a screen branches on the code, never on the prose */
+  if (e && e.refused && e.code && e.code !== 'BOOKS_REFUSED') return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json({ error: e.message, message: e.message });
   if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
   /* a terms field the owner can fix (lib/finance-terms): 400/404 in a sentence */

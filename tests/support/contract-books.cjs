@@ -259,6 +259,13 @@ async function captureBooks() {
       await X.B.postEntry(X.db, shop, { type: 'purchase_bill', ref: 'P1', date: d2, currency: cur, party: SUPP, by_rate: [Object.assign({ rate, taxable: 5000 / rate }, { [head]: 50 })], paid: {}, round_off: 0, source_ref: 'pur:P1' });
       if (country === 'AE') await q('GET', '/returns', null, '/returns');        /* no stagger yet: `needs: 'stagger'`, nothing guessed */
       await q('GET', '/returns' + query, null, '/returns');
+      /* W2-BOOKS: the RETURN period closed and paid (AU: Q1 — a second day so the output tax exceeds the credit and something is payable); its own contract rows (#return) */
+      const d3 = country === 'AU' ? '2026-08-01' : '2026-03-15', period = country === 'AU' ? '2026-Q1' : '2026-02/2026-04', picks = country === 'AU' ? {} : { stagger: 1 };
+      await X.B.postEntry(X.db, shop, { type: 'walkin_day', ref: 'D2', date: d3, currency: cur, modes: { cash: 1000 + 100 }, by_rate: [Object.assign({ rate, taxable: 1000 }, { [head]: 100 })], round_off: 0, source_ref: 'walkin:C2:' + shop });
+      /* AE: an imported service under reverse charge (credit allowed) — the close carries rcm_minor / cash_minor beside the set-off; the two 200s merge into one example */
+      if (country === 'AE') await X.B.postEntry(X.db, shop, { type: 'purchase_bill', ref: 'P2', date: '2026-04-05', currency: cur, party: SUPP, by_rate: [{ rate, taxable: 400, vat: 0 }], rcm: [{ rate, itc: true, taxable: 400, vat: 20 }], paid: 0, round_off: 0, source_ref: 'pur:P2' });
+      await q('POST', '/gst/close', Object.assign({ period, client_ref: 'close-' + period }, picks), '/gst/close #return');
+      await q('POST', '/gst/pay', Object.assign({ period, amounts: { [head + '_minor']: country === 'AU' ? 6000 : 4000 }, bank: 'bank', payment_ref: country === 'AU' ? 'PRN-1' : 'GIBAN-1', date: country === 'AU' ? '2026-10-15' : '2026-05-20' }, country === 'AE' ? { rcm: { vat_minor: 2000 } } : {}, picks), '/gst/pay #return');
     }
     OWNER.identity_id = SHOP; DAY = '2027-04-10';
     await q('GET', '/returns', null, '/returns #rail');                             /* India: 200 form:null RETURN_FROM_RAIL (TOUR-FIX1), its own contract row */
