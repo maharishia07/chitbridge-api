@@ -1330,6 +1330,15 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/testing/cmdb": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true,
+      "why": "W1-SET: paged through readPage (one statement carries the page and its count); called by public/cmdb/record.html outside the registry"
+    },
     "GET /api/testing/coverage": {
       "file": "testing.js",
       "trips": 2,
@@ -2316,6 +2325,15 @@
       "fired": true,
       "status": 400,
       "extra": true
+    },
+    "POST /api/governance/source": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true,
+      "why": "W1-SET: the platform door (lib/platformroot.refuseUnlessPlatform) answers before any read; no web screen calls it (the runbook does)"
     },
     "POST /api/governance/supplier-acceptance": {
       "file": "governance.js",

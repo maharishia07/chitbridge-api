@@ -127,6 +127,13 @@ it('reading is open to every signed-in user: GET /cmdb and GET /cmdb/:ci use aut
     assert.ok(/, auth, /.test(h) && /testboard\.entityFor\(/.test(h), 'GET ' + r + ' does not read the shared board');
   }
 });
+it('⭐ W1-SET: GET /cmdb is PAGED like every other list here — readPage, top-level total · page · limit, and `records` stays', () => {
+  const h = handler('get', '/cmdb');
+  assert.ok(/readPage\(db,/.test(h), 'GET /cmdb does not go through readPage');
+  assert.ok(/PAGE\.cmdb/.test(h) && /cmdb: \d+/.test(ROUTES), 'no PAGE.cmdb size');
+  assert.ok(/total: page\.total, page: page\.page, limit: page\.limit/.test(h), 'the answer lacks top-level total · page · limit');
+  assert.ok(/res\.json\(\{ records,/.test(h), 'the `records` key the web page reads is gone');
+});
 it('⚠️⚠️ both writes check the gate BEFORE anything is written', () => {
   for (const [v, r] of [['put', '/cmdb/:ci'], ['post', '/cmdb/seed']]) {
     const h = handler(v, r);
