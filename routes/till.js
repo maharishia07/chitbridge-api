@@ -33,6 +33,7 @@ const taxShelf = require('../lib/tax-shelf');
  */
 const categories = require('../lib/categories');
 const regional = require('../lib/regional');
+const countrySetup = require('../lib/country-setup');   /* W1-TILL: shopMoney + MONEY_UNSTATED — the one reader of a shop's money */
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus');   /* "may somebody take one NOW?" — one definition, the storefront's */
 const lotfields = require('../lib/lotfields');
@@ -1508,7 +1509,12 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
     /* [OFFR-04] a price typed at the counter is the same write as PATCH /products — the same gate (lib/cost.writeRefusal) */
     const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['price']);
     if (refused) return res.status(403).json(refused);
-    const currency = await regional.currencyFor(entity_id).catch(() => 'INR');
+    /* W1-TILL: the shop's money through the ONE reader (country-setup.shopMoney — its own, else its pack's; as /snapshot and connectors read it).
+       A shop nobody gave money is REFUSED with the one sentence (NO_MONEY) — never INR written into a price by name. One identities read, as before. */
+    const shopRow = await query('SELECT currency_code, country FROM identities WHERE identity_id = $1', [entity_id]);
+    const shop = shopRow.rows[0] || {};
+    const currency = countrySetup.shopMoney(shop.currency_code, shop.country);
+    if (!currency) return res.status(422).json({ error: 'refused', code: 'NO_MONEY', message: countrySetup.MONEY_UNSTATED });
     /**
      * ⚠️ A PRICE IS MONEY, NOT A NUMBER — the catalogue stores { amount, currency }, and reading only the bare figure once gave a
      * counter a shelf of zeroes ([TILL-01]). It is written in the shape it is read in.
