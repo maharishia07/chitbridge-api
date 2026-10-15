@@ -24,7 +24,8 @@ Detailed smoke steps: `MANUAL-TEST-SCRIPT.md`.
   - [ ] `NODE_ENV=development`
   - [ ] `JWT_SECRET=<strong, ≥32 chars>`
   - [ ] `ALLOWED_ORIGINS=<the dev web origin>` (else the browser is CORS-blocked)
-  - [ ] `TESTER_CODE=<8+ characters, shared privately>` (the testers' code — SEC1; `DEV_OTP` works on a local stack only)
+  - [ ] `TESTER_CODE=<8+ characters, shared privately>` (the testers' code — SEC1; `DEV_OTP` works on a local stack only; a
+        `{yymmdd}` in it changes it daily — SEC1b). ⚠️ TEMPORARY: see "Before real users — REMOVE" below.
   - [ ] leave `ASSIST_LLM_PROVIDER` / `ASSIST_LLM_API_KEY` **unset** → assistant runs on the free library floor
   - [ ] leave `NETWORK_WRITE_ENABLED` **unset** → network/cb_* writes return 503 (expected)
 
@@ -62,3 +63,8 @@ New / security behaviours (must pass):
 - [ ] All step-5 boxes ticked, failures logged (screen / steps / expected / actual / screenshot).
 - [ ] Decide go/no-go for the **production** promotion (separate runbook step; address open items first:
       network Track-B, migration ledger, OTP on actor login, unset `DEV_OTP` for prod).
+
+## Before real users — REMOVE (temporary testing-phase arrangement, SEC1/SEC1b)
+- [ ] Railway → Variables → DELETE `TESTER_CODE`, `TESTER_NAMES`, `TESTER_CODE_TZ`.
+- [ ] Web repo → Secrets → DELETE `E2E_TESTER_CODE`.
+- [ ] Boot log has no "TEMPORARY: a tester sign-in code is active" line.

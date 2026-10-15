@@ -7,6 +7,8 @@
  *   · TESTER_NAMES allows the listed names / patterns and refuses the rest
  *   · the code never appears in a log line or an answer, and a refusal looks the same whether a tester code exists or not
  *   · the compare is crypto.timingSafeEqual over SHA-256 digests · no file that ships names a fixed code outside dev-otp's LOCAL block
+ *   · SEC1b (TEMPORARY): {yymmdd}/{yyyymmdd} in TESTER_CODE fills with today in IST on the shop clock; yesterday's until 06:00; one
+ *     placeholder; ≥ 8 after filling; the boot says TEMPORARY at warn and nothing else — never the template or the code
  * Run: node tests/tester-code.test.cjs · no network, no DB.
  */
 'use strict';
@@ -20,7 +22,7 @@ const t = (name, ok, extra) => { if (ok) { pass++; out('  ok  ' + name + '\n'); 
 
 const SECRET = 'tq7-Lantern-42';
 const LOCAL = 'postgres://cb@127.0.0.1:5432/cb_test', REMOTE = 'postgres://cb:pw@db.example-host.supabase.co:5432/postgres';
-const KEYS = ['TESTER_CODE', 'TESTER_NAMES', 'DEV_OTP', 'DEV_OTP_CUSTOMER', 'DEV_OTP_CONNECTOR', 'DEV_OTP_IN_RESPONSE', 'NODE_ENV', 'DATABASE_URL'];
+const KEYS = ['TESTER_CODE', 'TESTER_NAMES', 'TESTER_CODE_TZ', 'SHOP_CLOCK_ALLOW', 'DEV_OTP', 'DEV_OTP_CUSTOMER', 'DEV_OTP_CONNECTOR', 'DEV_OTP_IN_RESPONSE', 'NODE_ENV', 'DATABASE_URL'];
 function env(vars) { KEYS.forEach((k) => { delete process.env[k]; }); Object.assign(process.env, vars || {}); }
 function load() {
   ['../lib/dev-otp', '../lib/otp', '../lib/logger'].forEach((m) => { try { delete require.cache[require.resolve(m)]; } catch (_) { /* not loaded yet */ } });
@@ -140,6 +142,60 @@ async function captured(fn) {
   t('guard: no fixed test code outside dev-otp.js\'s LOCAL STACK block in anything that ships (' + files.length + ' files)', hits.length === 0, hits.slice(0, 8).join(' · '));
   const envReaders = files.filter((rel) => rel !== 'lib/dev-otp.js' && /\.c?js$/.test(rel) && /process\.env\.TESTER_(CODE|NAMES)/.test(fs.readFileSync(path.join(API, rel), 'utf8')));
   t('one door: only lib/dev-otp.js reads TESTER_CODE / TESTER_NAMES', envReaders.length === 0, envReaders.join(' · '));
+
+  /* ── 6 · SEC1b · the daily code (TEMPORARY) — a fixed shop clock, IST ──────────────────────────────────────────────── */
+  const clock = require('../lib/shop-clock');
+  env({}); await captured(async () => {   // the day rule lives in books-hooks, which brings the db pool; let its no-database boot line pass here, unasserted
+    require('../lib/books-hooks'); await require('../db').query('select 1').catch(() => { /* no database in this test, by design */ });
+  });
+  const at = (ist) => clock.set(ist + '+05:30');
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'qa-{yymmdd}-lamp' }); ({ dev } = load());
+  at('2026-10-14T10:00:00');
+  t('{yymmdd} → 261014 on 14 Oct IST', dev.testerCodeOk('qa-261014-lamp') === true && dev.testerCodeOk('qa-{yymmdd}-lamp') === false);
+  t('…yesterday\'s code refused after 06:00', dev.testerCodeOk('qa-261013-lamp') === false);
+  at('2026-10-14T05:59:59');
+  t('…yesterday\'s code accepted before 06:00 (and today\'s too)', dev.testerCodeOk('qa-261013-lamp') === true && dev.testerCodeOk('qa-261014-lamp') === true);
+  t('…the day before yesterday never', dev.testerCodeOk('qa-261012-lamp') === false);
+  at('2026-10-14T06:00:00');
+  t('…refused from 06:00 sharp', dev.testerCodeOk('qa-261013-lamp') === false && dev.testerCodeOk('qa-261014-lamp') === true);
+  clock.set('2026-10-13T19:00:00Z');   // 00:30 on 14 Oct in India, still the 13th in UTC
+  t('the day is India\'s, not the server\'s UTC', dev.testerCodeOk('qa-261014-lamp') === true);
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'qa-{yymmdd}-lamp', TESTER_CODE_TZ: 'Australia/Sydney' }); ({ dev } = load());
+  clock.set('2026-10-14T15:00:00Z');   // 02:00 on 15 Oct in Sydney
+  t('TESTER_CODE_TZ overrides the zone', dev.testerCodeOk('qa-261015-lamp') === true && dev.testerCodeOk('qa-261014-lamp') === true);
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'Q{yyyymmdd}' }); ({ dev } = load());
+  at('2026-10-14T10:00:00');
+  t('{yyyymmdd} → 20261014', dev.testerCodeOk('Q20261014') === true && dev.testerCodeOk('Q261014') === false);
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: SECRET }); ({ dev } = load());
+  at('2026-10-14T03:00:00');
+  t('a static code is unchanged by the clock', dev.testerCodeOk(SECRET) === true && dev.testerCodeOk(SECRET + '261014') === false);
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'a{yymmdd}' }); ({ dev } = load());
+  t('too short after filling (7) → no tester code works', dev.testerCodeOk('a261014') === false
+    && dev.testerNotices().some((n) => /shorter than 8/.test(n.reason)));
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'qa-{yymmdd}{yymmdd}' }); ({ dev } = load());
+  t('two placeholders → refused', dev.testerCodeOk('qa-261014261014') === false && dev.testerNotices().some((n) => /more than one/.test(n.reason)));
+
+  env({ SHOP_CLOCK_ALLOW: '1', TESTER_CODE: 'qa-{yymmdd}-lamp', LOG_LEVEL: 'debug' }); ({ dev, otp } = load());
+  at('2026-10-14T05:00:00');
+  const daily = await captured(async () => {
+    const log = require('../lib/logger');
+    dev.testerNotices().forEach((n) => log[n.level](n.msg, { reason: n.reason }));   // exactly what server.js does at boot
+    dev.testerCodeOk('qa-261014-lamp'); dev.testerCodeOk('qa-261013-lamp'); dev.testerCodeOk('nope-nope-nope');
+    await otp.verifyOtp(fakeRun(rowOf()), rowOf(), 'qa-261014-lamp');
+  });
+  const lines = daily.text.split('\n').filter((l) => l.trim());
+  t('nothing logged but the TEMPORARY warning (warn level)', lines.length === 1 && /TEMPORARY: a tester sign-in code is active \(testing phase\)\. Remove TESTER_CODE before real users\./.test(lines[0])
+    && /"level":"warn"/i.test(lines[0]), lines.join(' | ').slice(0, 300));
+  t('…and never the template or an expansion', !/\{yymmdd\}|qa-|261014|261013/.test(daily.text));
+  env({}); ({ dev } = load());
+  t('TESTER_CODE unset → no boot notice', dev.testerNotices().length === 0);
+  clock.reset();
+  t('server.js logs testerNotices at boot', /testerNotices\(\)\.forEach/.test(fs.readFileSync(path.join(API, 'server.js'), 'utf8')));
+  for (const doc of ['docs/HOSTING.md', 'docs/DEPLOY-RUNBOOK.md', 'docs/DEV-DEPLOY-CHECKLIST.md']) {
+    const d = fs.readFileSync(path.join(API, doc), 'utf8');
+    t(doc + ' has the "Before real users — REMOVE" item for TESTER_CODE · TESTER_NAMES · E2E_TESTER_CODE',
+      /Before real users — REMOVE/.test(d) && /TESTER_CODE/.test(d) && /TESTER_NAMES/.test(d) && /E2E_TESTER_CODE/.test(d));
+  }
 
   out('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
