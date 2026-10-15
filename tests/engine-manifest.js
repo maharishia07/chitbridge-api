@@ -186,6 +186,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'conformance.js', 'instruments.js', 'kyb.js', 'readiness.js', 'reference.js', 'verify.js', 'profile.js',
   'boilerplate.js', 'plans.js', 'forms.js',
   'entity-header.js', 'licence-rules.js',   // ADOPTION (N19): the shell's header sheet and the country-keyed licence rules it reads - a presentation of what the shop holds, no engine rule
+  'pack-words.js',   // ADOPTION (AU-WORDS, 15 Oct): the words a screen says per country pack (registration kinds · trade checks · the return's name) — presentation of the pack, no rule of its own; retires into the engines packs' `words`
   // Beckn is a WIRE PROTOCOL — adoption by definition. Classified BEFORE it was written, so the guard existed
   // before the thing it guards. The engine may never import it; vocabulary drift is how a distinct thing becomes
   // a client of someone else's model.
