@@ -51,6 +51,19 @@ Every row: **layer E** (the entity's own settings, layer 7 of the GOV cascade) u
 | `policy_flags.quick_key_reset_at` | `business_day` · `shift_close`; default `business_day` | Source · `entity`. Business rules card. Read by lib/quick-keys.js (when a counter's sold-out marks clear). `shift_close` behaves as `business_day` until shifts exist — said on the card. |
 | `policy_flags.system_folders` | `{ '<B-code>': 'on' \| 'off' \| { on, msg } }` over lib/folder-inventory's switchable codes; default `{}` = the inventory's default | Source · `entity`, **owner only** (`may: 'owner'` → OWNER_ONLY). Written by routes/folders.js PUT /inventory/:code. Read by lib/folder-inventory.js, lib/folder-views.js, lib/crm.js:31 (which system folders this shop shows; `msg` = the folder's messaging level, never above the inventory's ceiling). |
 
+## Every list GET · `total` · `page` · `limit` — the one pager (LIM2 · W1-PLAT, 2026-10-15)
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `total` · `page` · `limit` beside the list's own key (`actors` · `tasks` · `events` · `catalogues` · `handoffs` · `data` · `templates` · `requests` · `connections` · `receipts` · `connectors` · `definitions` · `folders` · `chits` · `rules` · `messages` · `documents` · `stock` · `people` · `suppliers` · `results` · `customers` · `bills` · `orders` · `products` · `batches` · `records` · `changes` · `releases` · `notifications` (page · limit) · `items` (page) · `entries` on the CRM timeline) | — | derived (`lib/page-limit.pageArgs` + `pageOut`, DISCIPLINES §2). **Not asked** (`?page=` and `?limit=` absent) = every row, as before — `total` = the rows, `page` 1, `limit` = `total`. **Asked** = the page: `limit` clamped to the file's server max (50 default · 200 max unless the route says otherwise), `page` ≥ 1, `total` = the whole. Every old key (`count`, `ok`, `migrated`…) stays. A not-migrated answer carries `total: 0, page: 1, limit: 0`. `tests/list-paging-guard.test.cjs` holds the unpaged count at 0; a non-list read is allowed there with its reason. | nobody | the web pager (PG / CBList remote / lazyWrap) |
+
+## middleware/idempotency · `code` on a refusal · `X-Idempotency: unverified` (LIM2 · W1-PLAT, 2026-10-15)
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `code` on an Idempotency-Key refusal: 422 `IDEMPOTENCY_CONFLICT` (the key was used with another body) · 409 `IDEMPOTENCY_IN_PROGRESS` (the first request is still running) | — | derived (middleware/idempotency `answerExisting`); the sentence is only printed, the code is what an outbox branches on | nobody | the till's outbox, lib/autoraise callers |
+| Header `X-Idempotency: unverified` (with `X-Idempotent-Replay: true` on a replay) | — | derived: the durable store (idempotency_key, b109) was OFF for this request — missing, erroring, or the body could not be fingerprinted — and the key was held in this process's memory instead (bounded 5 000, the same window). A retry is replayed or refused here, not proven across instances. Every such request also writes a `warn` line with the request id and the why. | nobody | the outbox (keep the record until a verified answer), the request log |
+
 ## lib/stock-from-chit `postFor` → `skipped[].code` · log `stock.from-chit` `refused[]` (STK-FIX1b, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

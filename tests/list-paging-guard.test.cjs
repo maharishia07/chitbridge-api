@@ -16,11 +16,13 @@
  * Measured 14 Oct (T2-PAGING): 98 list GETs, 17 allowed with a reason. BEFORE (main) 81 unpaged, 0 on page-limit →
  * AFTER 76 unpaged (/api/testing cases · results · runs · requirements · incidents moved). The MAINT-1 baseline (62) counts differently; this
  * file's scan is the one the gate holds.
+ * W1-PLAT (15 Oct, LIM2): 99 list GETs · 51 paged (pageArgs/pageOut — lib/page-limit, the one pager) · 49 allowed with a reason · 0 left.
+ * The ratchet is now a gate: a new list GET pages or says why it is not a list.
  */
 const fs = require('fs'), path = require('path'), assert = require('assert');
 const ROUTES = path.join(__dirname, '..', 'routes');
 
-const MAX_UNPAGED = 76;
+const MAX_UNPAGED = 0;   /* W1-PLAT (15 Oct, LIM2): every growing list reads the one pager; what is left is allowed below with its reason */
 
 /** file + path → why it is not a growing list. */
 const ALLOWED = {
@@ -41,6 +43,39 @@ const ALLOWED = {
   'till.js /verify': 'the counter\'s sign-in check',
   'folders.js /:id/metrics': 'one folder\'s metrics',
   'testing.js /report': 'one report document over the whole board',
+  /* W1-PLAT (LIM2): not growing lists — a summary, a graph, one record's rows, a fixed vocabulary */
+  'assist.js /penetration': 'a summary by locality (orders per locality), not a list',
+  'books.js /party/:id/statement': 'one party\'s statement over a date range — its lines carry a running balance a page would break (keyset later, as /ledger)',
+  'books.js /trial-balance': 'one row per account — bounded by the chart',
+  'books.js /bank/rail': 'one range\'s bank-vs-rail reconciliation summary',
+  'books.js /periods': 'the year\'s periods — twelve rows',
+  'books.js /fx-revalue': 'one revaluation proposal',
+  'chits.js /rollup': 'grouped sums over my chits — one row per group',
+  'chits.js /unread': 'the unread ids for the badge — ids only',
+  'chits.js /:chit_id/disputes': 'one chit\'s disputes',
+  'chits.js /:id/children': 'one chit\'s children',
+  'chits.js /:id/trace': 'one chit\'s trace graph',
+  'chits.js /trace/by-batch': 'one batch\'s reconstructed graph',
+  'chits.js /trace/networks': 'the networks I trace in — a small vocabulary',
+  'entities.js /search': 'a typeahead — the ten best matches by design (LIMIT 10)',
+  'entities.js /routing': 'one entity\'s routing summary',
+  'entities.js /populations': 'the fixed population vocabulary',
+  'entities.js /mis': 'one entity\'s MIS summary',
+  'folders.js /reconcile': 'one reconciliation summary',
+  'folders.js /mis': 'the folders\' MIS summary',
+  'integrations.js /reconcile': 'one range\'s books-vs-connector reconciliation summary',
+  'keys.js /': 'the shop\'s API keys — a bounded list inside one row\'s policy_flags',
+  'network-design.js /availability': 'one availability question across the network\'s members',
+  'products.js /:id/versions': 'one product\'s versions',
+  'products.js /lists': 'the Product Lab\'s tick-and-grey: what the shop sells beside the blueprint lists (a vocabulary)',
+  'relationships.js /scorecard/:entity_id': 'one counterparty\'s scorecard',
+  'simulator.js /content': 'the simulator\'s fixed content tables',
+  'tax.js /ledger': 'one month\'s tax ledger',
+  'testing.js /stale': 'a summary of stale items',
+  'testing.js /coverage': 'the coverage summary',
+  'testing.js /reliability': 'the reliability summary',
+  'till.js /worth-an-offer': 'a computed shortlist (sixty at most)',
+  'till.js /stock': 'the counter\'s stock balances — one object keyed by item',
 };
 
 function scan() {
@@ -50,10 +85,10 @@ function scan() {
     const re = /router\.(get|post|put|patch|delete|use|all)\(\s*(['"`])([^'"`]*)\2/g;
     const hits = []; let m;
     while ((m = re.exec(src))) hits.push({ verb: m[1], p: m[3], at: m.index });
-    /* a file's own page reader counts as the clamp when its body calls limitOf (routes/testing.js readPage) */
-    const readers = ['limitOf'];
+    /* a file's own page reader counts as the clamp when its body calls limitOf or pageArgs (routes/testing.js readPage, catalogue.js myPage) */
+    const readers = ['limitOf', 'pageArgs'];
     const fre = /(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/g;
-    while ((m = fre.exec(src))) if (/\blimitOf\(/.test(m[2])) readers.push(m[1]);
+    while ((m = fre.exec(src))) if (/\b(limitOf|pageArgs)\(/.test(m[2])) readers.push(m[1]);
     const pagedRe = new RegExp('\\b(' + readers.join('|') + ')\\(');
     hits.forEach((h, i) => {
       if (h.verb !== 'get') return;
@@ -85,9 +120,9 @@ ok('the test board\'s five lists stay paged (T2-PAGING)', () => {
     assert.ok(r && r.paged, 'testing.js /' + p + ' no longer reads lib/page-limit');
   });
 });
-ok('ONE clamp: no route spells its own Math.min(…parseInt(…limit…)) beside page-limit in a moved route', () => {
-  const src = fs.readFileSync(path.join(ROUTES, 'testing.js'), 'utf8');
-  assert.ok(!/Math\.min\([^)]*parseInt\([^)]*limit/.test(src), 'routes/testing.js clamps a limit by hand');
+ok('ONE clamp: no route spells its own Math.min(…parseInt(…limit…)) beside page-limit (W1-PLAT: every routes/*.js, was testing.js alone)', () => {
+  const byHand = fs.readdirSync(ROUTES).filter((f) => f.endsWith('.js') && /Math\.min\([^)]*parseInt\([^)]*limit/.test(fs.readFileSync(path.join(ROUTES, f), 'utf8')));
+  assert.deepStrictEqual(byHand, [], 'these route files clamp a limit by hand');
 });
 console.log('\n' + n + ' checks');
 if (fail) process.exitCode = 1;

@@ -104,9 +104,10 @@ const norm = (s) => s.replace(/\s+/g, ' ').trim();
       'the feed or the count is no longer bounded in time — it re-sorts the whole history on every poll');
   });
 
-  await ita('without ?count=1 the feed is unchanged: rows, count, total, seen_at', async () => {
+  await ita('without ?count=1 the feed is unchanged: rows, count, total, seen_at (+ the one pager\'s page · limit, LIM2)', async () => {
     const r = await call({});
-    assert.deepStrictEqual(Object.keys(r.body).sort(), ['count', 'notifications', 'seen_at', 'total']);
+    assert.deepStrictEqual(Object.keys(r.body).sort(), ['count', 'limit', 'notifications', 'page', 'seen_at', 'total']);
+    assert.deepStrictEqual([r.body.page, r.body.limit], [1, 30]);
   });
 
   console.log('\n  ' + pass + ' checks\n');

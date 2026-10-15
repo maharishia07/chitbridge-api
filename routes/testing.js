@@ -108,8 +108,8 @@ function projectWhere(has, i) {
  * ⭐ T2-PAGING (DISCIPLINES §2): every list here answers top-level `total` · `page` · `limit`, the size clamped by
  * lib/page-limit.js. Each default is the size the list answered before, so no screen reads a shorter list than it did.
  */
-const { limitOf, pageOf } = require('../lib/page-limit');
-const PAGE = { cases: 5000, results: 5000, history: 500, runs: 50, findings: 500, cmdb: 500 };   /* cmdb: 30 records ship today; the whole list in one answer */
+const { limitOf, pageOf, pageArgs, pageOut } = require('../lib/page-limit');
+const PAGE = { cases: 5000, results: 5000, history: 500, runs: 50, findings: 500, cmdb: 500, releases: 200 };   /* LIM2: changes (findings) · releases — the size each answered before; cmdb: 30 records ship today, the whole list in one answer (W1-SET) */
 /**
  * ONE page read for this file: `SELECT <sel> <from> ORDER BY <order>` cut to the page, with the count of the whole
  * filtered set in the same statement. Only a page past the end (no row to carry the count) asks the count again.
@@ -3101,8 +3101,8 @@ router.get('/changes', auth, async (req, res) => {
     });
     const open = all.filter((c) => c.state === 'proposed' || c.state === 'reviewed');
     const list = want === 'all' ? all : (want === 'open' ? open : all.filter((c) => c.state === want));
-    res.json({ changes: list, counts: { all: all.length, open: open.length,
-      unproven: all.filter((c) => !(c.proves || []).length).length } });
+    res.json(Object.assign(pageOut('changes', list, pageArgs(req.query, PAGE.findings, PAGE.findings)), { counts: { all: all.length, open: open.length,
+      unproven: all.filter((c) => !(c.proves || []).length).length } }));
   } catch (e) {
     console.error('changes list:', e.code || '', e.message);
     res.status(500).json({ error: 'Failed to list changes' });
@@ -3278,11 +3278,11 @@ router.get('/releases', auth, async (req, res) => {
          JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
         WHERE d.entity_id = $1 AND d.kind = 'release'
         ORDER BY d.updated_at DESC LIMIT 200`, [entity_id]));
-    res.json({ releases: r.rows.map((x) => ({
+    res.json(pageOut('releases', r.rows.map((x) => ({
       definition_id: x.definition_id, name: x.name, note: x.note,
       carried: (x.rules || {}).carried || [], proves: (x.rules || {}).proves || [],
       work_status: teststatus.workStatus({ kind: 'release', proves: (x.rules || {}).proves || [] }),
-      cut_by: (x.rules || {}).cut_by || null, at: x.updated_at })) });
+      cut_by: (x.rules || {}).cut_by || null, at: x.updated_at })), pageArgs(req.query, PAGE.releases, PAGE.releases)));
   } catch (e) {
     console.error('releases list:', e.code || '', e.message);
     res.status(500).json({ error: 'Failed to list releases' });

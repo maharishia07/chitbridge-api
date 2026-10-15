@@ -2367,7 +2367,7 @@
   },
   "GET /api/crm/parties/:id/timeline": {
    "status": 200,
-   "note": "?before=<iso>&limit=<n> only (no kind / q); entries are kind-specific, money on a chit is MAJOR units (value), on a ledger item MINOR (amount_minor).",
+   "note": "?before=<iso>&limit=<n> only (no kind / q); entries are kind-specific, money on a chit is MAJOR units (value), on a ledger item MINOR (amount_minor). LIM2 (W1-PLAT): total · page · limit beside the cursor (total = the rows this page could see; page is always 1 of the cursor).",
    "example": {
     "party_id": "10000000-0000-4000-8000-000000000002",
     "entries": [
@@ -2409,7 +2409,10 @@
      }
     ],
     "next_before": null,
-    "migrated": true
+    "migrated": true,
+    "total": 1,
+    "page": 1,
+    "limit": 30
    },
    "optional": [
     "entries[].amount_minor",

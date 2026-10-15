@@ -1117,7 +1117,10 @@
      "sender_name": "Sender of 5",
      "to_name": "Kiosk"
     }
-   ]
+   ],
+   "total": 5,
+   "page": 1,
+   "limit": 5
   },
   "calls": [
    {

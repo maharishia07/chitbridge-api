@@ -2004,6 +2004,7 @@ async function sendAnswer(st, req, res) {
 /* ── PERF1 · the chit lists' page: a server-side maximum, and keyset paging in the default (newest-first) order ── */
 const PAGE_LIMIT = require('../lib/page-limit');
 const LIST_MAX = 200;   /* the most rows one page of a chit list answers (DISCIPLINES §2 — never the client's word) */
+const LIST_PAGE = 20;   /* the page a chit list answers when asked for one without a size */
 /**
  * ?after=<created_at, µs, UTC>|<chit_id> — the `next` the page before answered. Only in the default order (newest first): any other sort keeps
  * page + OFFSET. → { where } appended to the list's WHERE (params pushed). The cursor carries microseconds (keyCol below), so no row is skipped.
@@ -2142,9 +2143,8 @@ router.get('/sent', auth, async (req, res) => {
 router.get('/folder', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
-    const page   = parseInt(req.query.page || 1);
-    const limit  = parseInt(req.query.limit || 20);
-    const offset = (page - 1) * limit;
+    /* always a page (the mailbox folders were never answered whole); LIM2: the one pager — before it ?limit=1000000 was obeyed here */
+    const { page, limit, offset } = PAGE_LIMIT.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : 20 }, 20, LIST_MAX);
     const view   = req.query.view || 'drafts';
     const q_search = (req.query.q || '').trim();
 
@@ -4243,10 +4243,10 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
     const byMsg = {};
     for (const a of atts) { (byMsg[a.message_id] = byMsg[a.message_id] || []).push(a); }
     for (const m of result.rows) { m.attachments = byMsg[m.message_id] || []; }
-    res.json({ messages: result.rows, count: result.rows.length });
+    res.json(Object.assign({ count: result.rows.length }, PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
     console.error('Get messages error:', err.message);
-    if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0 });
+    if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
     res.status(500).json({ error: 'Get messages failed', message: safeErr(err) });
   }
 });
@@ -4668,9 +4668,8 @@ router.get('/disputes/queue', auth, async (req, res) => {
   const side = ['mine', 'against'].includes(qs.side) ? qs.side : null;
   const words = typeof qs.q === 'string' ? qs.q.trim().slice(0, 100) : '';
   const like = words ? '%' + words.replace(/[\\%_]/g, (c) => '\\' + c) + '%' : null;
-  const paged = qs.page != null || qs.limit != null;
-  const limit = paged ? PAGE_LIMIT.limitOf(qs.limit, 50, 200) : null;
-  const page = paged ? PAGE_LIMIT.pageOf(qs.page) : 1;
+  const pageAsked = PAGE_LIMIT.pageArgs(qs, 50, 200);   /* not asked = every row, as before */
+  const paged = pageAsked.asked, limit = pageAsked.limit, page = pageAsked.page;
   const dir = qs.sort === 'new' ? 'DESC' : 'ASC';
 
   try {
@@ -4690,7 +4689,7 @@ router.get('/disputes/queue', auth, async (req, res) => {
          WHERE ($4::text IS NULL OR concat_ws(' ', x.auto_subject, x.purpose, x.category, x.reason, x.raised_by_display_name, x.resolution_note) ILIKE $4::text)
          ORDER BY x.created_at ${dir}, x.dispute_id
          LIMIT $5 OFFSET $6`,
-        [entity_id, status, side, like, limit, paged ? (page - 1) * limit : 0]);
+        [entity_id, status, side, like, limit, pageAsked.offset]);
       const c = await db.query(`SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes`);
       return { rows: r.rows, counts: c.rows[0] || { open: 0, resolved: 0 } };
     });
@@ -5408,7 +5407,7 @@ router.get('/trace/batches', auth, async (req, res) => {
       batches.push({ chit_id: row.chit_id, product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
         is_origin: !!t.is_origin, network: (t.network && t.network.id) || null, sender_name: row.sender_entity_display_name || null, to_name: toName(row) });
     }
-    res.json({ count: batches.length, batches });
+    res.json(Object.assign({ count: batches.length }, PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
     res.status(500).json({ error: 'Failed to list batches', message: safeErr(err) });
   }

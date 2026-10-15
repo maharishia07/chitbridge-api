@@ -6,6 +6,8 @@
 const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const logger = require('../lib/logger');
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const empCode = require('../lib/employee-code');   // M02: the one place an employee's first code is minted, e-mailed and shown
 /** The e-mail on file for an employee (identities.email), or '' — a read that can never fail the request. */
 const actorEmail = async (id) => { try { const r = await db('SELECT email FROM identities WHERE identity_id = $1', [id]); return (r.rows[0] && r.rows[0].email) || ''; } catch (e) { logger.fellBack('actors actorEmail: the read failed — left blank', e); return ''; } };
@@ -656,6 +658,7 @@ router.get('/',
       const entity_id = auth.entityOf(req);
       const status     = req.query.status || 'active';
       const actor_type = req.query.type   || null;
+      const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
 
       let where = `parent_entity_id = $1 AND identity_type = 'actor'`;
       const params = [entity_id];
@@ -724,8 +727,7 @@ router.get('/',
       const summary = {};
       counts.rows.forEach(r => { summary[r.break_status] = parseInt(r.count); });
 
-      res.json({
-        actors: result.rows,
+      res.json(Object.assign(PL.pageOut('actors', result.rows, pg), {
         summary: {
           active:      summary.active      || 0,
           on_break:    (summary.short_break || 0) + (summary.leave || 0),
@@ -733,7 +735,7 @@ router.get('/',
           removed:     summary.removed     || 0,
           total:       result.rows.length
         }
-      });
+      }));
 
     } catch (err) {
       console.error('List actors error:', err.message);
@@ -1430,6 +1432,7 @@ router.get('/:id/tasks',
     try {
       const entity_id = req.identity.identity_id;
       const actor_id  = req.params.id;
+      const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
 
       // Verify actor belongs to this entity
       const actor = await db(
@@ -1473,7 +1476,7 @@ router.get('/:id/tasks',
         [entity_id, actor_id]
       ));
 
-      res.json({
+      res.json(Object.assign(PL.pageOut('tasks', tasks.rows, pg), {
         actor: {
           identity_id:       a.identity_id,
           display_name:      a.display_name,
@@ -1482,9 +1485,8 @@ router.get('/:id/tasks',
           current_task_count: a.current_task_count,
           max_tasks:         a.max_tasks
         },
-        tasks: tasks.rows,
         count: tasks.rows.length
-      });
+      }));
 
     } catch (err) {
       console.error('Actor tasks error:', err.message);
@@ -1610,6 +1612,7 @@ router.get('/access-events',
     try {
       const entity_id = auth.entityOf(req);
       const subject = String(req.query.subject || '').trim();
+      const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
       const params = [entity_id];
       let where = 'e.entity_id = $1';
       if (subject) { params.push(subject); where += ' AND e.subject_identity_id = $2'; }
@@ -1635,9 +1638,9 @@ router.get('/access-events',
           ORDER BY e.at DESC
           LIMIT 200`, params));
 
-      res.json({ events: r.rows, applied: true });
+      res.json(Object.assign(PL.pageOut('events', r.rows, pg), { applied: true }));
     } catch (err) {
-      if (/access_events/.test(err.message || '')) return res.json({ events: [], applied: false });
+      if (/access_events/.test(err.message || '')) return res.json({ events: [], applied: false, total: 0, page: 1, limit: 0 });
       console.error('Access events error:', err.message);
       res.status(500).json({ error: 'Read failed', message: safeErr(err) });
     }

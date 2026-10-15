@@ -2,6 +2,8 @@
 // entity; filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.
 // chit_status is RLS-protected -> any query touching it runs inside withEntity(caller). The folder table is entity-filtered.
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const log = require('../lib/logger');
 const router  = express.Router();
 const { withEntity } = require('../db');   // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
@@ -78,7 +80,7 @@ router.get('/', auth, async (req, res) => {
      */
     let sys = [], sysErr = null;
     try { sys = await views.systemFolders(e); } catch (e2) { sysErr = safeErr(e2); console.error('system folders:', e2.message); }
-    res.json(Object.assign({ folders: sys.concat(rows) }, sysErr ? { system_error: sysErr } : {}));
+    res.json(Object.assign(PL.pageOut('folders', sys.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), sysErr ? { system_error: sysErr } : {}));
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
@@ -301,6 +303,7 @@ router.post('/move', auth,
 router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, res) => {
   try {
     const e = ent(req); const arch = (req.query.archived === '1' || req.query.archived === 'true');
+    const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
     /**
      * ⭐ A VIEW FOLDER answers with its rule's matches — a bill carrying its lifecycle (lib/bill-steps: step · code · label ·
      * by · at, and the history of every acceptance). ?state=open (default) | closed | all. An OFF system folder is absent.
@@ -311,7 +314,7 @@ router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, r
       const m = await views.members(e, vf, { archived: arch, state: req.query.state });
       /* ⚠️ { chits, counts } and nothing else: the web's envelope collapses `chits` to the array and keeps only the siblings it
          knows (`counts` is one) — anything more would be dropped silently on the way in */
-      return res.json({ chits: m.chits, counts: m.counts });
+      return res.json(Object.assign(PL.pageOut('chits', m.chits, pg), { counts: m.counts }));
     }
     const r = await withEntity(e, (db) => db.query(
       `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
@@ -322,7 +325,7 @@ router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, r
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE cs.entity_id = $1 AND cs.folder_id = $2 AND cs.deleted_at IS NULL AND cs.archived_at IS ${arch ? 'NOT NULL' : 'NULL'}
         ORDER BY ch.created_at DESC LIMIT 100`, [e, req.params.id]));
-    res.json({ chits: r.rows });
+    res.json(PL.pageOut('chits', r.rows, pg));
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
@@ -407,7 +410,8 @@ router.get('/rules/vocabulary', auth, (req, res) => res.json({ keys: require('..
  * with one argument dropped, not a second implementation that can drift from the first.
  */
 router.get('/rules', auth, async (req, res) => {
-  try { res.json(await rules.list(ent(req), null)); } catch (err) { fail(res, err, 'Rules list failed'); }
+  try { const found = await rules.list(ent(req), null); res.json(Object.assign({}, found, PL.pageOut('rules', found.rules, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)))); }
+  catch (err) { fail(res, err, 'Rules list failed'); }
 });
 
 /**
@@ -566,7 +570,7 @@ router.get('/messages', auth, async (req, res) => {
           LIMIT 200`, params);
       return q.rows;
     });
-    res.json({ messages: rows, count: rows.length });
+    res.json(Object.assign({ count: rows.length }, PL.pageOut('messages', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     console.error('messages inbox:', err);
     res.status(500).json({ error: 'Failed', message: safeErr ? safeErr(err) : 'error' });

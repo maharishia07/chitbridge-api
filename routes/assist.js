@@ -8,6 +8,8 @@
 // CLIENT FALLS THROUGH to its own library floor (`matchLibrary`). The whole point of the design is that this
 // endpoint can be missing, unconfigured, or failing and the assistant still answers — it just gets less smart.
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const router  = express.Router();
 const jwt     = require('jsonwebtoken');
 const { safeErr } = require('../lib/respond');
@@ -274,6 +276,7 @@ router.get('/catalogue-mine', async (req, res) => {
     const identity = softIdentity(req);
     if (!identity) return res.status(401).json({ ok: false, error: 'Sign in.' });
     const entity = identity.parent_entity_id || identity.identity_id;
+    const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
     let rows = [];
     try {
       /* ⭐ ONE network round trip for the adoption rows (readBatch); the transaction path stays as the fallback. */
@@ -286,7 +289,7 @@ router.get('/catalogue-mine', async (req, res) => {
     }
     const catalogues = (await Promise.all(rows.map(async (row) => ({ source: row.source_key, version: row.version, visible: row.visible, updated_at: row.updated_at,
       resolved: await catalogueBuild.resolve(row.source_key, row.commercials || {}) })))).filter((c) => c.resolved);
-    res.json({ ok: true, count: catalogues.length, catalogues });
+    res.json(Object.assign({ ok: true, count: catalogues.length }, PL.pageOut('catalogues', catalogues, pg)));
   } catch (err) {
     log.error('assist/catalogue-mine failed', { id: req.id, err: err.message });
     res.status(500).json({ ok: false, error: safeErr(err) });
@@ -371,13 +374,14 @@ router.get('/container/:id', async (req, res) => {
 router.get('/erp-handoffs', auth, async (req, res) => {
   try {
     const entity = auth.entityOf(req);
+    const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
     let rows = [];
     try {
       const r = await withEntity(entity, (db) => db.query(
         'SELECT handoff_id, chit_id, summary, payload_hash, status, created_at FROM erp_handoff WHERE entity_id = $1 ORDER BY created_at DESC LIMIT 200', [entity]));
       rows = r.rows || [];
     } catch (dbErr) { return res.status(503).json({ ok: false, code: 'HANDOFF_STORE_MISSING', error: 'ERP handoff not enabled yet — apply migration b82.' }); }
-    res.json({ ok: true, count: rows.length, handoffs: rows });
+    res.json(Object.assign({ ok: true, count: rows.length }, PL.pageOut('handoffs', rows, pg)));
   } catch (err) { log.error('assist/erp-handoffs failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: safeErr(err) }); }
 });
 
@@ -475,7 +479,7 @@ router.get('/questions', async (req, res) => {
     const r = await query(
       `SELECT id, question AS q, answer AS a, topics, context, fit, media
          FROM assist_qa WHERE ${where} ORDER BY sort, id`, params);
-    res.json({ ok: true, data: r.rows });
+    res.json(Object.assign({ ok: true }, PL.pageOut('data', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     log.error('assist/questions failed', { id: req.id, err: err.message });
     res.status(500).json({ ok: false, error: 'Could not load assistant questions.' });
