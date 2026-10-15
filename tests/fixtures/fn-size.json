@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 159,
+  "long_functions": 158,
   "worst_complexity": 185,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -259,7 +259,6 @@
     "routes/catalogue.js": [
       "(anonymous)",
       "POST /:bridge_id/order/confirm",
-      "POST /network-store/:networkId/order",
       "repriceAgainstCatalogue"
     ],
     "routes/chits.js": [
