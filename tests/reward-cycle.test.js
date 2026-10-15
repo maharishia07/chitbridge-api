@@ -14,6 +14,7 @@
 const assert = require('assert'), path = require('path');
 const rewards = require(path.join(__dirname, '..', 'lib', 'rewards.js'));
 const store = require(path.join(__dirname, '..', 'lib', 'reward-store.js'));
+const counterBill = require(path.join(__dirname, '..', 'lib', 'counter-bill.js'));   /* W2-REW: the server's own bill, the one pick of what was paid */
 
 let pass = 0;
 const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); }
@@ -342,6 +343,21 @@ await ita('⚠️⚠️ nothing corrects a balance by editing a row', async () =
 it('⭐ and every row that was ever written is still there', () => {
   assert.ok(TABLE.length >= 25, 'only ' + TABLE.length + ' rows — something removed history');
   assert.ok(TABLE.every((r) => r.points !== 0), 'a zero entry records nothing and should never have been written');
+});
+
+/* ⭐ W2-REW (REW-T1): the points are earned from the SERVER'S bill — lib/counter-bill picks what was paid and shapes the basket, never a sum here */
+it('counter-bill paidOf: money.total, else money.net, else total_value — one pick', () => {
+  assert.strictEqual(counterBill.paidOf({ money: { total: 1180, net: 1000 }, total_value: 5 }), 1180);
+  assert.strictEqual(counterBill.paidOf({ money: { net: 1000 } }), 1000);
+  assert.strictEqual(counterBill.paidOf({ total_value: 7 }), 7);
+  assert.strictEqual(counterBill.paidOf(null), undefined);
+});
+it('counter-bill basketOf: net from the pick, gross from money, the lines with the shop\'s own sku and category, nothing summed', () => {
+  const bill = { summary_json: { money: { total: 1180, gross: 1300 } }, line_items: [{ item_id: 'a1', quantity: 2, total: 600 }, { quantity: 1, total: 580 }] };
+  const basket = counterBill.basketOf(bill, new Map([['a1', { sku: 'SKU-1', category: 'Snacks' }]]));
+  assert.deepStrictEqual(basket, { net: 1180, gross: 1300, count: 2, lines: [
+    { item_id: 'a1', qty: 2, net: 600, sku: 'SKU-1', category: 'Snacks' }, { item_id: null, qty: 1, net: 580, sku: null, category: null }] });
+  assert.deepStrictEqual(counterBill.basketOf(null, null), { net: 0, gross: 0, count: 0, lines: [] });
 });
 
 console.log(pass + ' checks');

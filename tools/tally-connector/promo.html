@@ -1,5 +1,9 @@
 <!doctype html>
 <html lang="en">
+<!-- OWNS  the shop screen (a second screen / TV): the shop's offers as a carousel, read from the counter's promo answer.
+     CALLED BY the counter (till.html opens it on a second screen) and the web's vendored copy (public/promo.html).
+     FLOW  load → the frame's bar → the promo read → the carousel paints → ↻ re-reads and says what it read
+     CARD counter/shop-screen -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">

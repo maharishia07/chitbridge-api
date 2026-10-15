@@ -1,5 +1,9 @@
 <!doctype html>
 <html lang="en">
+<!-- OWNS  the counter: sign-in · day open · the bill (CBTax · CBOffers · the rewards words) · the slip · the offline queue — ONE master, vendored to the web.
+     CALLED BY the kit's till.js (serves it to the shop PC) and the web (public/till.html, a byte copy written by scripts/vendor-till.cjs).
+     FLOW  boot → CBSignin → day open → the bill → POST /api/chits/send → POST /api/till/reward → the slip; offline: the queue → sync once
+     CARD counter/till -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -5512,6 +5516,12 @@ var CloudHost = {
    * is down — which is right for something that already happened, and wrong for something about to. A catalogue
    * change is an INTENTION: it must not be treated as done until ChitBridge has agreed (see cloudFirst).
    */
+  /** ⭐ W2-REW: the server's refusal as the counter reads it — its sentence AND its CODE (BILL_NOT_RECORDED …), so a caller that
+   *  branches does so on the code, never on the words; an answer that is not JSON is said as nothing, never thrown */
+  async refusalOf(response){
+    try { var j = await response.json(); return { said: (j && (j.message || j.error)) || '', code: (j && j.code) || null }; }
+    catch (e) { cbQuiet('tillPost:1', e); return { said: '', code: null }; }
+  },
   async tillPost(path, body, opts){
     var noQueue = !!(opts && opts.noQueue);
     if (!this.cred()) return { ok:false, why:'this counter is not paired' };
@@ -5520,13 +5530,10 @@ var CloudHost = {
         var r = await fetchBy(this.api + path, { method:'POST',
           headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(body) });
         if (r.ok) return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
-        /* a refusal is FINAL — queueing a 400 would retry a mistake for ever. ⭐ W2-REW: the server's CODE rides beside its
-           sentence (BILL_NOT_RECORDED …), so a caller that branches does so on the code, never on the words. */
-        var said = '', code = null;
-        try { var j = await r.json(); said = (j && (j.message || j.error)) || ''; code = (j && j.code) || null; } catch (e) { cbQuiet('tillPost:1', e); }
+        var refusal = await this.refusalOf(r);   /* a refusal is FINAL — queueing a 400 would retry a mistake for ever */
         if (r.status >= 400 && r.status < 500)
-          return { ok:false, final:true, code: code, why: said || ('ChitBridge refused it (' + r.status + ')') };
-        if (noQueue) return { ok:false, why: said || ('ChitBridge answered ' + r.status) };
+          return { ok:false, final:true, code: refusal.code, why: refusal.said || ('ChitBridge refused it (' + r.status + ')') };
+        if (noQueue) return { ok:false, why: refusal.said || ('ChitBridge answered ' + r.status) };
       } catch (e) {
         if (noQueue) return { ok:false, why: (e && e.name === 'AbortError') ? 'ChitBridge did not answer in time' : 'the line dropped' };
         /* the line went mid-request; fall through and queue it */
@@ -21533,11 +21540,10 @@ async function finish(){
    */
   var rwSaid = null;
   if (RW.holder && rwProg()) {
-    /* ⭐ W2-REW (REW-T1): the server earns the points from ITS copy of this bill — the chit sent just above under the same
-       number — so the counter sends no basket beside it (net · gross · count · lines were never the server's input to trust).
-       `at` is the bill's moment: the same number at another moment is another counter's bill, and the server says so. */
+    /* ⭐ W2-REW (REW-T1): the server earns the points from ITS copy of this bill (the chit sent just above under the same number), so no basket
+       rides beside it; `at` is the bill's moment — the same number at another moment is another counter's bill, and the server says so. */
     var rr = await HOST.tillPost('/api/till/reward', {
-      ref: r.bill.no, holder: RW.holder, spend: RW.spend || 0, at: r.bill.at || null });
+      ref: r.bill.no, holder: RW.holder, spend: RW.spend || 0, at: r.bill.at });
     /* ⚠️ QUEUED IS CHECKED FIRST, and the order is the whole point: a queued post answers ok:true with no figures
        in it, so testing ok first would have printed 'earned 0' on a slip for a customer who earned 40. */
     if (rr && rr.queued) rwSaid = { queued: true, added: rwEarns(), spent: RW.spend || 0 };

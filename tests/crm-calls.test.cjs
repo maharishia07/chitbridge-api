@@ -13,6 +13,7 @@ const state = { table: true };
 { const p = require.resolve(path.join(API, 'lib/schema')); require.cache[p] = { id: p, filename: p, loaded: true, exports: { hasTable: async (t) => (t === 'memberships' ? state.table : true), hasColumn: async () => true, forget() {} } }; }
 const { make, row } = require('./support/crm-stub.cjs');
 const t = make(), D = t.data, F = require('../lib/crm-followups'), H = require('../lib/books-hooks');
+const CALLS = require('../lib/crm-calls');   /* the module under test, by name: its public table and its day arithmetic (W2-CRM) */
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
 const day = (n) => H.dayOf(new Date(Date.now() + n * 86400000).toISOString(), 'IN');
 let pass = 0;
@@ -114,6 +115,13 @@ const post = (id, body) => t.post('/parties/' + id + '/outcome', body);
     let r = await post(P(9), { outcome: 'interested' }); assert.strictEqual(r.status, 404);
     r = await post(P(1), { outcome: 'nope' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'BAD_OUTCOME');
     r = await post('not-an-id', { outcome: 'interested' }); assert.strictEqual(r.status, 400);
+  });
+  /* the call desk's own table, as the web reads it: labels and picks, never the days; a wrong-number outcome has no next day */
+  await ita('crm-calls publicTable: every outcome has key + label, the days never travel; nextDay: wrong_number → null', async () => {
+    const table = CALLS.publicTable();
+    assert.ok(table.length >= 3 && table.every((o) => o.key && o.label && !('days' in o)));
+    assert.strictEqual(CALLS.nextDay(CALLS.OUTCOMES.find((o) => o.key === 'wrong_number'), {}, '2026-10-15', 0), null);
+    assert.strictEqual(CALLS.addDays('2026-10-15', 3), '2026-10-18');
   });
   console.log(pass + ' checks'); process.exit(process.exitCode || 0);
 })();

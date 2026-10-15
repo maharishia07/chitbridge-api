@@ -1,4 +1,6 @@
 /**
+ * CALLED BY server.js (mounted at /api/till), the counter (till.html) by its key, the Operations page.
+ * CARD counter/till-routes
  * routes/till.js — WHAT A COUNTER NEEDS, IN ONE CALL (TILL-SPEC-2026-09-07).
  *
  * Athi, 2026-09-07: *"someone runs a store without a computer… why can't we develop a desktop application, you just download it and we
@@ -2442,8 +2444,7 @@ router.get('/bills', auth, async (req, res) => {
       return { chit_id: x.chit_id, no: b.bill_no || null, at: b.billed_at || x.created_at,
                customer: (b.customer && b.customer.name) || 'Walk-in',
                by: t.by || null, till: { id: t.id || null, name: t.name || null },
-               /* the one pick of what was paid (lib/counter-bill paidOf) — the reward earns from the same figure */
-               total: counterBill.paidOf(x.summary_json),
+               total: counterBill.paidOf(x.summary_json),   /* the one pick of what was paid (lib/counter-bill paidOf) — the reward earns from the same figure */
                saved: m.savings != null ? m.savings : null, taxable: m.taxable != null ? m.taxable : (m.net != null ? m.net : null),
                tax: m.tax != null ? m.tax : null,
                kind: b.slip || 'cash',

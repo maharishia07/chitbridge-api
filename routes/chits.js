@@ -2963,8 +2963,8 @@ router.post('/:chit_id/reprice', auth, async (req, res) => {
     /* ⭐ W2-RAIL R2 — THE RAIL QUESTION, the same one /amend asks: a reprice WRITES amendments (lib/reprice apply → amend.record),
        so it is the `amend` action — the level ladder (viewer · commenter refused in the engine's word), then "I hold a copy".
        Preview too: the answer GET /chits/:id gives for `amend` is the door's answer, preview or apply. */
-    const _v = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
-    if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
+    const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
+    if (!verdict.ok) return railActions.refuseOwnCopy(res, verdict);
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
     const opts = { line_ids: ids, only_unpriced: !!req.body.only_unpriced };
@@ -3493,8 +3493,8 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
     const mine = await withEntity(entity_id, (db) => db.query(
       `SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
     /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
-    const _v = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
-    if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
+    const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
+    if (!verdict.ok) return railActions.refuseOwnCopy(res, verdict);
 
     const out = await amend.record(entity_id, chit_id, req.body.edits || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name });

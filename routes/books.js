@@ -1,4 +1,8 @@
 // @stage built
+// OWNS  /api/books: the ledger's reads and the period-end writes, every refusal a code + a sentence (fail), never a 500 of prose.
+// CALLED BY server.js (mounted at /api/books), CB Accounts and CB Finance.
+// FLOW  auth → noKey → owner → lib/books-* → the answer; a refusal → fail(res, e)
+// CARD 16-finance/books-routes
 // @stage-note [BOOKS v2] /api/books — the ledger's reads (day book, ledgers, statement, dues, trial balance, P&L, balance
 // @stage-note sheet) and its few writes (payments, manual entries, reversals, month locks, opening, packs). 404 while off.
 'use strict';
@@ -48,6 +52,11 @@ const WORD = { walkin_day: 'Walk-in sales', sale_bill: 'Sale', purchase_bill: 'P
   credit_given: 'Credit given', expense: 'Expense', other_income: 'Income', return: 'Return', credit_note: 'Credit note', purchase_return: 'Returned to supplier',
   write_off: 'Written off', opening: 'Opening balance', manual: 'Journal', reversal: 'Reversal' };
 
+/** W2-BOOKS: a refusal that carries its own code (PERIOD_NOT_ENDED · RCM_NETTING_NOT_BUILT · NOT_FOR_COUNTRY …) says it — a screen branches on the code, never on the prose */
+function refusalBody(e) {
+  const coded = e.code && e.code !== 'BOOKS_REFUSED';
+  return coded ? { code: e.code, error: e.message, message: e.message } : { error: e.message, message: e.message };
+}
 function fail(res, e) {
   /* ⭐ a typed date in a locked month: 409 with a code the web's friendlyErr maps (and its exact sentence) */
   if (e && e.code === 'PERIOD_LOCKED') return res.status(409).json({ code: 'PERIOD_LOCKED', error: e.message, message: e.message });
@@ -66,9 +75,7 @@ function fail(res, e) {
   if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
   /* T1-INV: closing stock from the ledger refused for a NAMED reason — the code and the products, so a screen offers Count / Enter by hand */
   if (e && e.refused && /^STOCK_/.test(String(e.code || ''))) return res.status(422).json({ code: e.code, items: e.items || [], error: e.message, message: e.message });
-  /* W2-BOOKS: a refusal that carries its own code (PERIOD_NOT_ENDED · RCM_NETTING_NOT_BUILT · NOT_FOR_COUNTRY …) says it — a screen branches on the code, never on the prose */
-  if (e && e.refused && e.code && e.code !== 'BOOKS_REFUSED') return res.status(422).json({ code: e.code, error: e.message, message: e.message });
-  if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json({ error: e.message, message: e.message });
+  if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json(refusalBody(e));
   if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
   /* a terms field the owner can fix (lib/finance-terms): 400/404 in a sentence */
   if (e && e.say && (e.status === 400 || e.status === 404)) return res.status(e.status).json({ error: e.say, message: e.say });

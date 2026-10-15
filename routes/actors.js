@@ -1,4 +1,8 @@
 /* ⭐ Every kind of id, its shape and which of them may be sent to: docs/NAMESPACE.md, with the
+ * OWNS  /api/actors: the shop's people and co-assists — their hats, sessions, breaks and the task hand-over when one goes.
+ * CALLED BY server.js (mounted at /api/actors), the People page and the Task panel.
+ * FLOW  auth → validate → the owner gate → one transaction (withEntity) → the answer with may/why
+ * CARD 28-platform-and-operations/people
    machine-checked table in docs/namespace.yaml (guard: tests/namespace.test.cjs). */
 // routes/actors.js — B3 Actor model API
 // All endpoints for create login manage actors

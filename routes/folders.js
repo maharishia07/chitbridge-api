@@ -1,4 +1,7 @@
 // routes/folders.js — FOLDERS: a per-entity tree for organising ANY chit (mailing-model). Folders are private per
+// OWNS  /api/folders: a per-entity tree for filing any chit, and a folder's chit list (paged; a cut list says so).
+// FLOW  auth → the folder read (withEntity) → pageOut
+// CARD 01-rail-core-the-chit/folders
 // entity; filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.
 // chit_status is RLS-protected -> any query touching it runs inside withEntity(caller). The folder table is entity-filtered.
 const express = require('express');
