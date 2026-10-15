@@ -640,7 +640,9 @@
      "payable_minor": 9000,
      "due_date": "2027-05-20",
      "counted": false,
-     "why": null
+     "why": null,
+     "form": "GSTR-3B",
+     "short": "GST"
     },
     "series": [
      {
