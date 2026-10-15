@@ -1,0 +1,55 @@
+# Scope for CodeQL (STD-MEASURE) — copies adopted from chitbridge-engines (byte-equal pins), the vendored till, fixtures,
+# generated output. Findings in those belong to their master repo. Regenerate the adopted list with:
+#   grep -l "ADOPTED from chitbridge-engines" lib/*.js
+name: chitbridge-api codeql scope
+paths-ignore:
+  - node_modules
+  - docs
+  - design-handoff
+  - design-style
+  - design-style2
+  - tests/fixtures
+  - lib/accounts-packs.js
+  - lib/bookpack.js
+  - lib/chart.js
+  - lib/convert.js
+  - lib/dayopen.js
+  - lib/docnumber.js
+  - lib/govcontext.browser.js
+  - lib/gs1.js
+  - lib/gst-returns.js
+  - lib/jurisdiction.js
+  - lib/ledger.js
+  - lib/line-guard.js
+  - lib/locale.browser.js
+  - lib/lotfields.js
+  - lib/money.js
+  - lib/numerals.js
+  - lib/offers-engine.js
+  - lib/orderhub.js
+  - lib/orders.js
+  - lib/period.js
+  - lib/posting.js
+  - lib/pricing-engine.js
+  - lib/profile-map.js
+  - lib/qty.js
+  - lib/rail.js
+  - lib/receivables.js
+  - lib/reg-ae.js
+  - lib/reg-au.js
+  - lib/reg-in.js
+  - lib/regulation.js
+  - lib/rewards.js
+  - lib/rollup.js
+  - lib/scalecode.js
+  - lib/screen-kit.js
+  - lib/search-engine.js
+  - lib/signin.js
+  - lib/tax-engine.browser.js
+  - lib/tax-packs.js
+  - lib/tax-slab.js
+  - lib/tax.js
+  - lib/units.js
+  - lib/variant.browser.js
+  - lib/verdict.js
+  - lib/workflow.js
