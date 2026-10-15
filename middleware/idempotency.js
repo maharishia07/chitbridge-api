@@ -25,6 +25,10 @@ const log = require('../lib/logger');
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const KEY_MAX_LENGTH = 200;
 const DEFAULT_WINDOW_HOURS = 48;
+/* L3 (PAY-FIX): a request that crashed mid-flight leaves its key 'in_progress'. A live request finishes in seconds, so
+   after this many minutes the key is STALE and a retry may claim it — before, it blocked the retry for the whole window. */
+const IN_PROGRESS_STALE_MINUTES = Number(process.env.IDEMPOTENCY_STALE_MINUTES || 10);
+const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 3600 * 1000;
 const UNVERIFIED_MEMORY_MAX = 5000;   /* entries the store-off memory keeps before the oldest is forgotten */
 const STORE_MISSING_CODES = ['42P01', '42703'];   /* table or column missing — pre-b109, expected rather than alarming */
@@ -65,8 +69,9 @@ const dbStore = {
     return withEntity(entity, async (db) => {
       const found = await db.query(
         `SELECT idem_key, req_hash, state, status, response,
-                (created_at < now() - ($2 || ' hours')::interval) AS expired
-           FROM idempotency_key WHERE entity_id = $1 AND idem_key = $3`, [entity, String(windowHrs), key]);
+                (created_at < now() - ($2 || ' hours')::interval
+                 OR (state = 'in_progress' AND created_at < now() - ($4 || ' minutes')::interval)) AS expired
+           FROM idempotency_key WHERE entity_id = $1 AND idem_key = $3`, [entity, String(windowHrs), key, String(IN_PROGRESS_STALE_MINUTES)]);
       if (found.rows[0] && !found.rows[0].expired) return { existing: found.rows[0] };
       if (found.rows[0]) await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2`, [entity, key]);   // expired → reclaim
       const claimed = await db.query(
@@ -95,7 +100,8 @@ const unverified = new Map();   /* (entity + '\n' + key) → { at, req_hash, sta
 const memoryStore = {
   async begin(entity, key, req, hash, windowHrs) {
     const memoryKey = entity + '\n' + key, held = unverified.get(memoryKey);
-    if (held && Date.now() - held.at <= windowHrs * HOUR_MS) return { existing: held };
+    const staleInProgress = held && held.state === 'in_progress' && Date.now() - held.at > IN_PROGRESS_STALE_MINUTES * MINUTE_MS;
+    if (held && !staleInProgress && Date.now() - held.at <= windowHrs * HOUR_MS) return { existing: held };
     if (held) unverified.delete(memoryKey);   // expired → reclaim
     if (unverified.size >= UNVERIFIED_MEMORY_MAX) unverified.delete(unverified.keys().next().value);   // the oldest is forgotten
     unverified.set(memoryKey, { at: Date.now(), req_hash: hash, state: 'in_progress', status: null, response: null });
@@ -165,4 +171,5 @@ module.exports = function idempotency(req, res, next) {
 module.exports._stable = stable;
 module.exports._scope = scope;
 module.exports._memory = memoryStore;
+module.exports.IN_PROGRESS_STALE_MINUTES = IN_PROGRESS_STALE_MINUTES;
 module.exports.UNVERIFIED_MEMORY_MAX = UNVERIFIED_MEMORY_MAX;
