@@ -3650,10 +3650,13 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
  *   POST /:chit_id/payment { method: 'upi'|'cash'|'card'|'bank'|'other', ref?, amount?, note?, acknowledge?: [codes] } → { message, payment, books }
  *   DELETE /:chit_id/payment → the mark cleared; a payment the books recorded STAYS (reverse it there — the answer names the entry)
  */
-router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }), body('acknowledge').optional().isArray() ], validate, async (req, res) => {
+router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }), body('acknowledge').optional().isArray(), body('client_ref').optional().trim().isLength({ max: 80 }) ], validate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req), chit_id = req.params.chit_id;
     const payment = { method: req.body.method, ref: req.body.ref || null, amount: req.body.amount != null ? Number(req.body.amount) : null, note: req.body.note || null, at: new Date().toISOString(), by: (req.identity && req.identity.identity_id) || entity_id };
+    /* H2 (PAY-FIX): the press's own reference (the web mints one per open of the sheet) — the books key the payment chitpay:<chit>:<ref>, so a second
+       "Mark paid" is a second payment and a retry of the same press is its own replay (docs/FIELDS.md business_json.payment.client_ref) */
+    if (req.body.client_ref) payment.client_ref = String(req.body.client_ref);
     const hooks = require('../lib/books-hooks');
     const out = await withEntity(entity_id, async (db) => {
       const copy = await taxCopy.copyOn(db, chit_id, entity_id);
@@ -3681,7 +3684,9 @@ router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'ca
     if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
     /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
     try { require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method }); } catch (e) { cbLog.fellBack('chits POST /:chit_id/payment: the signal was not sent — carried on without it', e); }
-    res.json({ message: 'Payment recorded', payment, books: out.books });
+    /* a replay (the same press, or an older web's second press on one chit) is SAID: the books kept the first — never "recorded" twice */
+    const replayed = !!(out.books && out.books.payment && out.books.payment.duplicate);
+    res.json({ message: replayed ? 'Already recorded' : 'Payment recorded', replayed, payment, books: out.books });
   } catch (err) {
     const BR = require('./books');
     if (err && err.code === 'ALREADY_PAID') return BR.alreadyPaid(res, err);
@@ -3699,10 +3704,14 @@ router.delete('/:chit_id/payment', auth, async (req, res) => {
     try {
       const S = require('../lib/books-store');
       books = await withEntity(entity_id, async (db) => {
-        const p = await S.paymentByRef(db, entity_id, 'chitpay:' + req.params.chit_id);
-        if (!p) return null;
-        const en = await S.entryBySource(db, entity_id, 'pay:' + p.payment_id);
-        return { payment_id: p.payment_id, entry_no: en ? en.entry_no : null, words: 'The books still hold this payment' + (en ? ' (' + en.entry_no + ')' : '') + ' — reverse it there.' };
+        /* H2: every press the chit recorded (chitpay:<chit> and chitpay:<chit>:<ref>), each named by its entry */
+        const mine = await S.paymentsOfChit(db, entity_id, req.params.chit_id);
+        if (!mine.length) return null;
+        const named = [];
+        for (const p of mine) { const en = await S.entryBySource(db, entity_id, 'pay:' + p.payment_id); named.push({ payment_id: p.payment_id, entry_no: en ? en.entry_no : null }); }
+        const nos = named.map((x) => x.entry_no).filter(Boolean);
+        return { payment_id: named[0].payment_id, entry_no: named[0].entry_no, payments: named,
+          words: 'The books still hold ' + (named.length === 1 ? 'this payment' : 'these ' + named.length + ' payments') + (nos.length ? ' (' + nos.join(', ') + ')' : '') + ' — reverse ' + (named.length === 1 ? 'it' : 'them') + ' there.' };
       });
     } catch (e) { if (!e || e.code !== '42P01') console.error('payment clear: books read failed:', e && e.message); }
     res.json({ message: 'Payment cleared', books });

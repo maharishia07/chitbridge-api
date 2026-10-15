@@ -6,6 +6,14 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **The shop's flags and the person's prefs (W1-SET · FLD2, 2026-10-15):** every key of `lib/policy.js` FLAGS (`policy_flags.<key>`) and of `routes/entities.js` PREF_SETS (`ui_prefs.<key>` · `locale_prefs.<key>`) must have a row in this file, spelled with its store (`policy_flags.trade_side`, never the bare word). `lib/field-ledger.undocumentedSettings` reads both sources and this file; `tests/field-ledger.test.cjs` fails by name when a 33rd flag arrives without its row.
 
+## POST /api/chits/:id/payment · the press's own key (PAY-FIX · H2, 2026-10-15)
+
+| key | type | source / derived · who writes · who reads |
+|---|---|---|
+| body `client_ref` → `business_json.payment.client_ref` | string ≤ 80, optional | Source: the web mints one when the Mark-paid sheet opens (app.html `chitMarkPaid`, `press-<time>-<rand>`), so a retry of the same press carries the same ref and a second press carries a new one. Written by the route into the copy's `payment` slot beside `method · ref · amount · note · at · by`. Read by `lib/books-hooks.classify`: the books' key is `chitpay:<chit_id>:<client_ref>` (without it `chitpay:<chit_id>`, one payment per chit as before), through `books.recordPayment`'s one idempotency rule. |
+| response `replayed` · `message` | boolean · `Payment recorded` \| `Already recorded` | Derived: `books.payment.duplicate` — the press was the replay of a recorded one (the first answer is handed back, nothing posted twice). The web toasts `message`. |
+| DELETE response `books.payments[]` · `books.words` | `[{ payment_id, entry_no }]` · sentence | Derived by `books-store.paymentsOfChit` (every key of the chit, oldest first): clearing the mark never undoes the books — the sentence names every entry to reverse. `payment_id` / `entry_no` stay the first one's (as before). |
+
 ## Housekeeping refusals · `code` · `why` · list caps `capped` · `cap_note` (W2-RAIL · R2, 2026-10-15)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
