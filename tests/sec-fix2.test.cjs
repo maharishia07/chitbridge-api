@@ -72,7 +72,7 @@ const dbPath = require.resolve(path.join(API, 'db'));
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
   query: q, pool: { query: q, connect: async () => Object.assign({ release() {} }, tx) },
   withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx), onEntity: async (id, db, fn) => fn(tx),
-  readBatch: async () => ({}), trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } },
+  readBatch: async (ent, db, stmts) => (stmts || []).map(() => ({ rows: [] })), trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } },
 } };
 const sc = require(path.join(API, 'lib', 'schema'));
 sc.hasColumn = async () => true; sc.hasTable = async (t) => t === 'media_blobs';

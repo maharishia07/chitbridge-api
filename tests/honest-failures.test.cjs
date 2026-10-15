@@ -81,11 +81,13 @@ it('⭐⭐ the push after a saved change does not throw, and SAYS no store was t
 
 it('⭐⭐ no route answers a 500 with the raw error text — safeErr everywhere a route catches', () => {
   const RAW = /status\(500\)[^;]*(\b(e|err|error|ex)\.message\b|String\(\s*(e|err)\s*\))/;
+  /* SEC-FIX2 L2: a 200 `ok:false` that carries the raw text as `why` is the same leak by another door (entities routing/preview, till listen) */
+  const RAW_WHY = /res\.json\(\{[^}]*\bwhy:\s*String\(\s*(e|err)(?:\s*&&\s*\1)?\.message\b/;
   const bad = [];
   for (const f of fs.readdirSync(path.join(API, 'routes')).filter((x) => x.endsWith('.js'))) {
-    fs.readFileSync(path.join(API, 'routes', f), 'utf8').split('\n').forEach((l, i) => { if (RAW.test(l)) bad.push(f + ':' + (i + 1)); });
+    fs.readFileSync(path.join(API, 'routes', f), 'utf8').split('\n').forEach((l, i) => { if (RAW.test(l) || RAW_WHY.test(l)) bad.push(f + ':' + (i + 1)); });
   }
-  assert.deepStrictEqual(bad, [], 'a 500 sends the error text to the caller — use safeErr(e) (lib/respond)');
+  assert.deepStrictEqual(bad, [], 'a 500 (or an ok:false why) sends the error text to the caller — use safeErr(e) (lib/respond)');
 });
 
 it('⭐ ONE health(last_seen): defined in routes/connectors.js only; integrations reads that one', () => {

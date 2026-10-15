@@ -2698,7 +2698,7 @@ router.post('/listen', auth, async (req, res) => {
     if (buf.length > speech.MAX_BYTES) return res.json({ ok: false, why: 'that is too long — say it in one short phrase' });
     const out = await speech.transcribe(buf, { mime: b.mime, format: b.format, lang: b.lang, hint: b.hint });
     res.json(out);
-  } catch (e) { res.json({ ok: false, why: String(e && e.message) }); }
+  } catch (e) { res.json({ ok: false, why: safeErr(e) }); }   /* L2: ok:false in words (the counter falls back to the browser's recogniser), never the raw error text */
 });
 
 /**

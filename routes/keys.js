@@ -60,8 +60,12 @@ async function patchKey(entity_id, jti, patch, db) {
   await policy.patchKey(db || null, entity_id, ['api_keys'], patch, { op: 'merge_item', match: ['jti', String(jti)] });
 }
 
+/* ⭐ SEC-FIX2 L1: revoking a key is the OWNER's (lib/owner — the same gate counters and people writes use): an editor could stop the
+   counter mid-sale by revoking its key, while changing the counters themselves was already owner-only. The list says it as `may`. */
+const owner = require('../lib/owner');
+const REVOKE_SAYS = 'Only the owner can revoke a key.';
 router.get('/', auth, sessionOnly, async (req, res) => {
-  try { res.json({ keys: await listOf(auth.entityOf(req)), scopes: SCOPES }); }
+  try { res.json({ keys: await listOf(auth.entityOf(req)), scopes: SCOPES, may: { revoke: owner.may(req, REVOKE_SAYS) } }); }
   catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
@@ -524,7 +528,7 @@ router.post('/', auth, sessionOnly, async (req, res) => {
 
 /* ⚠️ FOR UPDATE, same reason as mint() and setEnrol() — a revoke racing a mint on the same list must not have
    whichever save() lands second resurrect the key the other request just removed, or drop the one it just added. */
-router.delete('/:jti', auth, sessionOnly, async (req, res) => {
+router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), async (req, res) => {   /* L1: the owner gate, see GET / above */
   try {
     const entity_id = auth.entityOf(req);
     let found = false;

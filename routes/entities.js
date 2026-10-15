@@ -1335,7 +1335,7 @@ router.get('/routing/preview', auth, async (req, res) => {
       { kind: String(q.kind || 'incident'), audience: q.audience, to_bridge_id: q.to_bridge_id });
     res.json(out);
   } catch (e) {
-    res.json({ ok: false, why: String(e.message || e) });
+    res.json({ ok: false, why: safeErr(e) });   /* L2: still 200 ok:false (a preview never red-boxes), but never the raw error text */
   }
 });
 
