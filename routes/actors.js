@@ -1067,7 +1067,7 @@ router.put('/break',
         const openTasks = await withEntity(entity_id, (c) => c.query(
           `SELECT COUNT(*) as count FROM chit_status
            WHERE assigned_to_actor_id = $1
-           AND current_status NOT IN ('completed','cancelled','rejected')`,
+           AND current_status NOT IN (${railActions.CLOSED_SQL})`,
           [actor_id]
         ));
         const count = parseInt(openTasks.rows[0].count);
@@ -1471,7 +1471,7 @@ router.get('/:id/tasks',
          JOIN identities sender ON sender.identity_id = ch.sender_entity_id
          WHERE cs.entity_id = $1
          AND cs.assigned_to_actor_id = $2
-         AND cs.current_status NOT IN ('completed','cancelled','rejected')
+         AND cs.current_status NOT IN (${railActions.CLOSED_SQL})
          ORDER BY cs.created_at ASC`,
         [entity_id, actor_id]
       ));

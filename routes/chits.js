@@ -1,4 +1,14 @@
 // routes/chits.js — Chit send, inbox, detail, status update
+/**
+ * owns: the chit routes — send (the fan-out of co-held copies), the lists (inbox · sent · folder), the read (GET /:id with the
+ *       rail's `actions`), moveStatus (the ONE status writer, through lib/rail-status), amend · reprice · assign · deliver,
+ *       disputes, and the housekeeping of MY copy (delete · restore · archive · unarchive · purge · star · unread).
+ * called by: the web app (EP map in app.html · cap-chit2.js · chit-sheet.js), the till, lib/autoraise, CTP's deliver door.
+ * FLOW  auth → entityId(req) → withEntity(me) → the rail's verdict (rail-actions / rail-status / canHousekeep) → the write → res
+ * INIT  express → lib (logger · money · rail-actions · dispute-may · rail-status · assign-chit) → db → the routes in file order
+ *       (every literal path — /sent · /folder · /raida/report — is mounted BEFORE /:chit_id, so a word is never read as an id)
+ * // CARD 01-rail-core-the-chit/chits-routes
+ */
 const express = require('express');
 const cbLog = require('../lib/logger');
 const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
@@ -1593,12 +1603,12 @@ async function sendCopies(st, req, res) {
   }, extra));
   const copies = suppressSentCopy ? [] : [ mkCopy({
     entity_id: sender_id, direction: 'sent', role: is_draft ? 'Draft' : 'Act',
-    current_status: 'delivered', priority_flag: 'normal', payload_delivered: true,
+    current_status: railActions.SENT_STATUS, priority_flag: 'normal', payload_delivered: true,
     log: { action: 'created', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
-           new_status: 'delivered', detail: `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}` },
+           new_status: railActions.SENT_STATUS, detail: `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}` },
   }) ];
   if (!is_draft) for (const receiver of receiverDetails) {
-    const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered';   // To acts; CC/For informational
+    const rcv_status = railActions.arrivalStatus(receiver.kind);   // the one table: To acts (pending); CC/For are informed (delivered)
     const billCopy = billCopyFor(receiver);   /* the customer's copy of a counter bill — a bill, in their words */
     copies.push(mkCopy(Object.assign({
       /**
@@ -1639,9 +1649,9 @@ async function sendOperatorCopy(st, req, res) {
     copies.push(mint.party(headerCommon, {
       summary_json: opSummary, total_value: null,
       entity_id: operatorInfo.identity_id, direction: 'received', role: 'For',
-      current_status: 'delivered',
+      current_status: railActions.ARRIVAL.for,
       log: { action: 'oversight', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
-             new_status: 'delivered', detail: `Network oversight co-hold (edge only) — ${operatorInfo.display_name}` },
+             new_status: railActions.ARRIVAL.for, detail: `Network oversight co-hold (edge only) — ${operatorInfo.display_name}` },
     }));
   }
 }
@@ -1740,7 +1750,7 @@ async function sendLegacyReceiverRows(client, st, receiver) {
   const { chit_id, sender_id, sender_bridge_id, sender_display_name, all_recipients, purpose, auto_subject, manual_subject,
           frozen_schema_version, frozen_schema_id, created_by_actor_id, now, summary, summary_json, line_items, retainDaysFor } = st;
   const _summaryFor = (eid) => sendSummaryFor(st, eid), bjFor = (eid) => sendBjFor(st, eid), billCopyFor = (r) => sendBillCopyFor(st, r);
-  const rcv_status = receiver.kind === 'to' ? 'pending' : 'delivered'; // To acts; CC/For are informational
+  const rcv_status = railActions.arrivalStatus(receiver.kind);   // the one table (rail-actions ARRIVAL), as the live path above
   const billCopy = billCopyFor(receiver);   /* the same per-copy reading as the live path above */
   const rcvPurpose = billCopy ? billCopy.purpose : purpose;
   const rcvBj = billCopy ? billCopy.business_json : bjFor(receiver.entity_id);
@@ -2005,6 +2015,9 @@ async function sendAnswer(st, req, res) {
 const PAGE_LIMIT = require('../lib/page-limit');
 const LIST_MAX = 200;   /* the most rows one page of a chit list answers (DISCIPLINES §2 — never the client's word) */
 const LIST_PAGE = 20;   /* the page a chit list answers when asked for one without a size */
+/** a chit list's page — ALWAYS a page (inbox · sent · folder were never answered whole): the one clamp, and whether the asked size
+ *  was cut, so the answer can say so (W2-RAIL R2: PAGE_LIMIT.capOf → `capped` + `cap_note`, never a silent 200-row ceiling) */
+const listPage = (req) => PAGE_LIMIT.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : LIST_PAGE }, LIST_PAGE, LIST_MAX);
 /**
  * ?after=<created_at, µs, UTC>|<chit_id> — the `next` the page before answered. Only in the default order (newest first): any other sort keeps
  * page + OFFSET. → { where } appended to the list's WHERE (params pushed). The cursor carries microseconds (keyCol below), so no row is skipped.
@@ -2060,8 +2073,8 @@ function chitFilters(req, where, params){
   if (req.query.abroad === '1' || req.query.abroad === 'true') { params.push(entityId(req)); where += ` AND ${require('../lib/country-setup').abroadSql('ch', params.length)}`; }
   if (req.query.priority)  { params.push(req.query.priority);  where += ` AND cs.priority_flag = $${params.length}`; }
   if (req.query.fstatus)   {
-    const B = { open:['pending','delivered','read'], act:['accepted','in_progress','partial'], close:['completed','cancelled','rejected'] };
-    const L = B[req.query.fstatus] || [req.query.fstatus];
+    /* ⭐ W2-RAIL R2: the buckets are the ONE table (lib/rail-actions BUCKETS, read off the engine's transitions) — never spelled here */
+    const L = railActions.BUCKETS[req.query.fstatus] || [req.query.fstatus];
     const ph = L.map(s => { params.push(s); return '$'+params.length; }).join(',');
     where += ` AND cs.current_status IN (${ph})`;
   }
@@ -2083,8 +2096,7 @@ router.get('/sent', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* PERF1: as the Inbox — a server-side maximum, keyset after page 1, the count on page 1 only */
-    const page   = PAGE_LIMIT.pageOf(req.query.page);
-    const limit  = PAGE_LIMIT.limitOf(req.query.limit, 20, LIST_MAX);
+    const pg = listPage(req), page = pg.page, limit = pg.limit;
     const q_search = (req.query.q || '').trim();
 
     // search across the header data (subject, recipients, purpose). pg_trgm GIN index recommended at scale.
@@ -2131,7 +2143,8 @@ router.get('/sent', auth, async (req, res) => {
     });
 
     const next = afterOf(result.rows, limit, req);
-    res.json({ chits: result.rows, total: countResult ? parseInt(countResult.rows[0].count) : null, page, limit, next });
+    const total = countResult ? parseInt(countResult.rows[0].count) : null;
+    res.json(Object.assign({ chits: result.rows, total, page, limit, next }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Sent list error:', err.message);
     res.status(500).json({ error: 'Failed to get sent items', message: safeErr(err) });
@@ -2144,7 +2157,7 @@ router.get('/folder', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* always a page (the mailbox folders were never answered whole); LIM2: the one pager — before it ?limit=1000000 was obeyed here */
-    const { page, limit, offset } = PAGE_LIMIT.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : 20 }, 20, LIST_MAX);
+    const pg = listPage(req), { page, limit, offset } = pg;
     const view   = req.query.view || 'drafts';
     const q_search = (req.query.q || '').trim();
 
@@ -2197,7 +2210,8 @@ router.get('/folder', auth, async (req, res) => {
     });
     /* ⚠️ `view` was echoed back and dropped by the envelope; the pager reads total/page/limit. It was the
        caller's own query param travelling in a circle. */
-    res.json({ chits: result.rows, total: parseInt(countResult.rows[0].count), page, limit });
+    const total = parseInt(countResult.rows[0].count);
+    res.json(Object.assign({ chits: result.rows, total, page, limit }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));
   } catch (err) {
     console.error('Folder error:', err.message);
     res.status(500).json({ error: 'Failed to get folder', message: safeErr(err) });
@@ -2297,8 +2311,7 @@ router.get('/inbox', auth, async (req, res) => {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
     const entity_id = entityId(req);
     /* PERF1: a server-side maximum (lib/page-limit — `?limit=1000000` was obeyed) · keyset after page 1 (`after`, below) · the COUNT on page 1 only */
-    const page = PAGE_LIMIT.pageOf(req.query.page);
-    const limit = PAGE_LIMIT.limitOf(req.query.limit, 20, LIST_MAX);
+    const pg = listPage(req), page = pg.page, limit = pg.limit;
     const status_filter = req.query.status || null;
     const q_search = (req.query.q || '').trim();
 
@@ -2425,16 +2438,17 @@ router.get('/inbox', auth, async (req, res) => {
     });
 
     const inboxNext = afterOf(result.rows, limit, req);
-    res.json({
+    const total = countResult ? parseInt(countResult.rows[0].count) : null;   /* PERF1: counted on page 1; later pages say null and the pager keeps page 1's */
+    res.json(Object.assign({
       chits: result.rows,
       // top-level total/page/limit — mirrors /sent so the web pager treats both lists the same
-      total: countResult ? parseInt(countResult.rows[0].count) : null,   /* PERF1: counted on page 1; later pages say null and the pager keeps page 1's */
+      total,
       page,
       limit,
       next: inboxNext   /* PERF1: the ?after= of the next page (newest-first order only; null on the last) */
       /* ⚠️ the `pagination` object said the same three numbers a second time and the envelope dropped it on the
          way in. Two spellings of one fact is how they start disagreeing. */
-    });
+    }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));   /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
 
   } catch (err) {
     console.error('Inbox error:', err.message);
@@ -2946,7 +2960,11 @@ router.post('/:chit_id/reprice', auth, async (req, res) => {
     const chit_id = req.params.chit_id;
     const mine = await withEntity(entity_id, (db) => db.query(
       `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
-    if (!mine.rows.length) return res.status(404).json({ error: 'Not found', message: 'Chit not found or you do not have access' });
+    /* ⭐ W2-RAIL R2 — THE RAIL QUESTION, the same one /amend asks: a reprice WRITES amendments (lib/reprice apply → amend.record),
+       so it is the `amend` action — the level ladder (viewer · commenter refused in the engine's word), then "I hold a copy".
+       Preview too: the answer GET /chits/:id gives for `amend` is the door's answer, preview or apply. */
+    const _v = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
+    if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
     const opts = { line_ids: ids, only_unpriced: !!req.body.only_unpriced };
@@ -3743,10 +3761,9 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
 
         if (!verdict.ok) return { stop: 'invalid', previous_status, allowed: verdict.allowed, why: verdict.why };
 
-        const openCount = _checkDisputes
-          ? (((await db.query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
-              [chit_id])).rows[0] || {}).count || 0)
-          : 0;
+        /* the ONE open-dispute count (lib/dispute-may openOn, W2-RAIL R2). Closing never blocks on a dispute (C1 above), so an
+           unreadable count (null, logged there) only loses the warning — delete and archive, which DO block, refuse on it. */
+        const openCount = _checkDisputes ? ((await disputeMay.openOn(db, chit_id)) || 0) : 0;
         /**
          * ⭐ THE FREEZE'S COPY, READ HERE RATHER THAN IN ITS OWN TRANSACTION. G3 stamps the invoice when this
          * copy reaches `completed`, and it was re-reading the very row this transaction has open — a second
@@ -3918,7 +3935,7 @@ router.put('/:chit_id/status',
   [
     body('status')
       .trim()
-      .isIn(['pending','accepted','rejected','in_progress','partial','completed','cancelled'])
+      .isIn(railActions.ASKABLE)   /* W2-RAIL R2: every transition target of the engine's table — delivered · read are the system's alone */
       .withMessage('Invalid status'),
     body('note').optional().trim().isLength({ max: 500 }),
   ],
@@ -4718,7 +4735,20 @@ router.get('/disputes/queue', auth, async (req, res) => {
 // ─── DELETE /chits/:chit_id ──────────────────────────────────
 // Soft delete (per-entity) — sets chit_status.deleted_at for the
 // requesting entity only; the other party's copy is untouched.
-// Blocked (409) while an OPEN dispute exists on the chit.
+// ⭐ W2-RAIL R2 — THE GUARDS FAIL CLOSED, answered by lib/rail-actions canHousekeep (one rule for delete · purge · archive):
+//   a copy that was SENT or RECEIVED is a record both parties hold → 409 co_held_record (only a Draft moves to Trash — the
+//   rule the web already follows and /purge already enforced; the trash door was the one that said yes to anything);
+//   an OPEN dispute → 409 dispute_open; a dispute count that could not be read → 503 disputes_unknown, never "none".
+/** my copy's facts for a housekeeping verdict: its status, the header's role (Draft = never sent), the open-dispute count (null = unreadable) */
+async function housekeepFacts(db, chit_id, entity_id) {
+  const copy = await db.query(
+    `SELECT cs.current_status, ch.role FROM chit_status cs
+       JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
+      WHERE cs.chit_id = $1 AND cs.entity_id = $2 AND cs.deleted_at IS NULL`,
+    [chit_id, entity_id]);
+  if (copy.rows.length === 0) return null;
+  return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) };
+}
 router.delete('/:chit_id', auth, async (req, res) => {
   try {
     const chit_id        = req.params.chit_id;
@@ -4726,35 +4756,12 @@ router.delete('/:chit_id', auth, async (req, res) => {
     const action_by_id   = req.identity.identity_id;
     const action_by_name = req.identity.display_name;
 
-    // B1 RLS: caller deletes only its own copy -> withEntity(me).
+    // B1 RLS: caller deletes only its own copy -> withEntity(me). ONE transaction: the facts, the verdict, the write, the log.
     await withEntity(entity_id, async (db) => {
-    // Verify this entity has a (non-deleted) copy of the chit
-    const current = await db.query(
-      `SELECT current_status FROM chit_status
-       WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL`,
-      [chit_id, entity_id]
-    );
-
-    if (current.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Not found',
-        message: 'Chit not found or already deleted'
-      });
-    }
-
-    // Guard: cannot delete while an open dispute is registered
-    const openDisputes = await db.query(
-      `SELECT COUNT(*)::int AS count FROM chit_disputes
-       WHERE chit_id = $1 AND status = 'open'`,
-      [chit_id]
-    );
-
-    if (openDisputes.rows[0].count > 0) {
-      return res.status(409).json({
-        error: 'Dispute active',
-        message: 'Cannot delete a chit with an open dispute. Resolve the dispute first.'
-      });
-    }
+    const facts = await housekeepFacts(db, chit_id, entity_id);
+    if (!facts) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already deleted' });
+    const verdict = railActions.canHousekeep('delete', facts);
+    if (!verdict.ok) return railActions.refuseHousekeep(res, verdict);
 
     // Soft delete this entity's copy only
     await db.query(
@@ -4771,7 +4778,7 @@ router.delete('/:chit_id', auth, async (req, res) => {
         action_by_display_name, previous_status, new_status, detail)
        VALUES ($1, $2, 'deleted', $3, $4, $5, $5, $6)`,
       [chit_id, entity_id, action_by_id, action_by_name,
-       current.rows[0].current_status,
+       facts.current_status,
        `Chit deleted by ${action_by_name}`]
     );
 
@@ -4893,21 +4900,23 @@ router.put('/:chit_id/priority-flag',
 // ─────────────────────────────────────────────────────────────
 
 // POST /chits/:chit_id/archive — hide MY copy from inbox/sent (reversible; never deletes).
+// ⭐ W2-RAIL R2: the open-dispute guard FAILS CLOSED — the count that could not be read used to answer 0 (`.catch(() => count 0)`)
+// and the chit was archived; now it is 503 disputes_unknown, logged (lib/dispute-may openOn). One transaction, not two.
 router.post('/:chit_id/archive', auth, async (req, res) => {
   try {
-    const entity_id = entityId(req);
-    // D4 guard: a chit with an OPEN dispute can't be archived (parity with the delete guard) — resolve first.
-    const openD = await withEntity(entity_id, (db) => db.query(`SELECT COUNT(*)::int AS count FROM chit_disputes WHERE chit_id = $1 AND status = 'open'`,
-      [req.params.chit_id])).catch(() => ({ rows: [{ count: 0 }] }));   // per-copy: my own open dispute copies
-    if (openD.rows[0].count > 0) return res.status(409).json({ error: 'Dispute active', message: 'Cannot archive a chit with an open dispute. Resolve the dispute first.' });
-    // B1 RLS: caller archives only its own copy -> withEntity(me).
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
-        WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL AND archived_at IS NULL
-        RETURNING chit_id`,
-      [req.params.chit_id, entity_id]));
-    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already archived' });
-    res.json({ message: 'Chit archived', chit_id: req.params.chit_id });
+    const entity_id = entityId(req), chit_id = req.params.chit_id;
+    // B1 RLS: caller archives only its own copy -> withEntity(me). Per-copy: my own open dispute copies.
+    await withEntity(entity_id, async (db) => {
+      const verdict = railActions.canHousekeep('archive', { open_disputes: await disputeMay.openOn(db, chit_id) });
+      if (!verdict.ok) return railActions.refuseHousekeep(res, verdict);
+      const r = await db.query(
+        `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
+          WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL AND archived_at IS NULL
+          RETURNING chit_id`,
+        [chit_id, entity_id]);
+      if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already archived' });
+      res.json({ message: 'Chit archived', chit_id });
+    });
   } catch (err) { res.status(500).json({ error: 'Archive failed', message: safeErr(err) }); }
 });
 
@@ -4990,7 +4999,9 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
     await withEntity(entity_id, async (db) => {
       const chk = await db.query(`SELECT role, created_by_actor_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       if (chk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
-      if (chk.rows[0].role !== 'Draft') return res.status(403).json({ error: 'Forbidden', message: 'Only drafts can be permanently deleted — sent chits are immutable co-held records.' });
+      /* W2-RAIL R2: the same draft rule the trash door now enforces (canHousekeep: a sent/received copy → 409 co_held_record) */
+      const verdict = railActions.canHousekeep('purge', { role: chk.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) });
+      if (!verdict.ok) return railActions.refuseHousekeep(res, verdict);
       if (chk.rows[0].created_by_actor_id !== req.identity.identity_id) return res.status(403).json({ error: 'Forbidden', message: 'You can only delete drafts you created.' });
       await db.query(`DELETE FROM chit_messages WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);   // per-entity: my own copies only
       await db.query(`DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);

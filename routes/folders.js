@@ -4,6 +4,7 @@
 const express = require('express');
 const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
+const FOLDER_LIST_MAX = 100;   /* a filed folder's chit list when no page is asked — the ceiling it always had, now said in words (W2-RAIL R2) */
 const log = require('../lib/logger');
 const router  = express.Router();
 const { withEntity } = require('../db');   // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
@@ -316,16 +317,22 @@ router.get('/:id/chits', auth, [ param('id').isUUID() ], validate, async (req, r
          knows (`counts` is one) — anything more would be dropped silently on the way in */
       return res.json(Object.assign(PL.pageOut('chits', m.chits, pg), { counts: m.counts }));
     }
+    /* ⭐ W2-RAIL R2: THE CAP SAYS SO. This list always cut at 100 and answered `total` = the rows it kept, so a folder's 101st chit
+       was invisible and unsaid. Now the whole count rides in the same statement (COUNT(*) OVER(), no extra trip), the page is the
+       pager's when asked (LIMIT/OFFSET) and the ceiling when not — and pageOut answers `capped` + `cap_note` whenever rows were cut. */
+    const limit = pg.asked ? pg.limit : FOLDER_LIST_MAX, offset = pg.asked ? pg.offset : 0;
     const r = await withEntity(e, (db) => db.query(
       `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
               ch.business_json, ch.created_by_actor_id,
               (SELECT display_name FROM identities WHERE identity_id = ch.created_by_actor_id) AS raiser_name,
-              cs.direction, cs.current_status
+              cs.direction, cs.current_status, COUNT(*) OVER() AS _total
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE cs.entity_id = $1 AND cs.folder_id = $2 AND cs.deleted_at IS NULL AND cs.archived_at IS ${arch ? 'NOT NULL' : 'NULL'}
-        ORDER BY ch.created_at DESC LIMIT 100`, [e, req.params.id]));
-    res.json(PL.pageOut('chits', r.rows, pg));
+        ORDER BY ch.created_at DESC LIMIT $3 OFFSET $4`, [e, req.params.id, limit, offset]));
+    const total = r.rows.length ? Number(r.rows[0]._total) || 0 : 0;
+    r.rows.forEach((row) => { delete row._total; });
+    res.json(PL.pageOut('chits', r.rows, pg, total));
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
