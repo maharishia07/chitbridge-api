@@ -19,6 +19,7 @@ const auth    = require('../middleware/auth');
 const mint    = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const { sendOtpEmail, sendEmail } = require('../lib/notify');
 const localIdentity = require('../lib/local-identity');   /* SEC3: mayTradeSql / mayTrade — the one "may this party receive?" */
+const { assignChit } = require('../lib/assign-chit');      /* W1-RAIL: the one writer of who holds a chit copy */
 const CS = require('../lib/country-setup');               /* SEC3: shopMoney + MONEY_UNSTATED — the one "what money is this shop in" */
 const log = require('../lib/logger');
 const { verifyOtp } = require('../lib/otp');
@@ -252,8 +253,8 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
       await withEntity(entity_id, async (dbx) => {
         const a = await dbx.query(`SELECT display_name FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND status = 'active'`, [default_assignee, entity_id]);
         if (a.rows[0]) {
-          await dbx.query(`UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2, assigned_at = NOW(), assignment_type = 'auto', updated_at = NOW() WHERE chit_id = $3 AND entity_id = $4 AND direction = 'received'`,
-            [default_assignee, a.rows[0].display_name, chit_id, entity_id]);
+          /* W1-RAIL: the one assignment writer (lib/assign-chit); no mover → the copy's status is left as it is, as before */
+          await assignChit(dbx, entity_id, chit_id, { identity_id: default_assignee, display_name: a.rows[0].display_name }, 'auto', { copy: 'received' });
           assigned_to = default_assignee;
         }
       });
