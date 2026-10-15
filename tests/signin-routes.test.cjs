@@ -3,6 +3,8 @@
  *
  * ⚠️ THE RISKIEST IAM MOVE, so the proof is in three layers:
  *   1. GOLDEN — every old path answers exactly what it answered BEFORE the move. tests/fixtures/signin-parity.golden.json
+ *      ⭐ edited BY HAND once (TOP-CORRECT, 2026-10-14): ask.actor.first — the admin's held code (654321, the seed row's own expiry) is KEPT,
+ *      no longer re-issued as the fixed code; the pre-move answer was the bug (identity-auth heldOtp). Everything else is as recorded.
  *      was recorded by this same file running against origin/main (cf349d2) before a line moved:
  *          node tests/signin-routes.test.cjs --golden <root of the pre-move api> tests/fixtures/signin-parity.golden.json
  *      Status, body (token → its claims without iat/exp) and every identities row the request touched (codes, attempts,

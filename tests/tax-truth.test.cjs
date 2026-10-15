@@ -99,7 +99,8 @@ function fnText(src, sig) {
   const end = src.indexOf('\n}\n', at);
   return src.slice(at, end + 2);
 }
-const PAGE_FNS = ['function billMoney(', 'function moneyOf(', 'async function finish(', 'function chitOf(',
+/* STD-CATCH (14 Oct): the lifted functions' best-effort catches record through cbQuiet — lift the ring and the recorder with them */
+const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', 'function billMoney(', 'function moneyOf(', 'async function finish(', 'function chitOf(',
   'function billRecipients(', 'function billSendTo(', 'function isReturnRow(', 'function isExpenseRow(', 'function slipOfRow(',
   'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded(',
   'function tillStamp(', 'function tillHostWord(', 'function unratedOnBill(', 'function billOrderRow(', 'function posWords(',

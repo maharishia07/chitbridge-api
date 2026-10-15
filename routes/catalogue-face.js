@@ -3,6 +3,7 @@
 // browser-localStorage only). The catalogue ITEMS live in catalogue_items (real products); this holds only the face.
 // catalogue_face is RLS-protected (b112) -> every query runs inside withEntity(caller). One row per entity.
 const express = require('express');
+const log = require('../lib/logger');
 const router  = express.Router();
 const { withEntity, query } = require('../db');
 const { safeErr } = require('../lib/respond');
@@ -55,7 +56,7 @@ router.put('/', auth, async (req, res) => {
       const cols = await query(
         `SELECT sf.field_key FROM schema_fields sf
            JOIN entity_schemas es ON es.schema_id = sf.schema_id
-          WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true`, [e]).catch(() => ({ rows: [] }));
+          WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true`, [e]).catch(log.orElse('catalogue-face PUT /: the read failed — answered with none', ({ rows: [] })));
       const have = cols.rows.map((r) => r.field_key);
       // Only check when there is something to check against — an entity with no schema yet would otherwise be told
       // every field it names is missing.

@@ -1,6 +1,7 @@
 // routes/capture.js — the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm
 // (send via /api/chits/send) → mark converted. See SPEC-capture-connector.md. Migration b104.
 const express = require('express');
+const log = require('../lib/logger');
 const crypto = require('crypto');
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -14,7 +15,7 @@ function hmacOk(rawBuf, secret, header, prefix) {
   if (!secret || !rawBuf || !header) return false;
   const sig = String(header).replace(prefix || '', '');
   const mine = crypto.createHmac('sha256', secret).update(rawBuf).digest('hex');
-  try { return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(mine, 'hex')); } catch (_) { return false; }
+  try { return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(mine, 'hex')); } catch (e) { log.fellBack('capture hmacOk: did not parse — answered no', e, 'debug'); return false; }
 }
 
 const entityId = (req) => auth.entityOf(req);
@@ -136,7 +137,7 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
            */
           if (bind && bind.auto_raise && !cap.duplicate) {
             const _cid = cap.id, _ent = entity;
-            setImmediate(() => { require('../lib/autoraise').run(_ent, _cid).catch(() => {}); });
+            setImmediate(() => { require('../lib/autoraise').run(_ent, _cid).catch(log.orElse('capture: auto-raise failed — the message waits in Intake to be raised by hand')); });
           }
           placed++;
         }

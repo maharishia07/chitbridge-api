@@ -89,7 +89,8 @@ t('★★ the status route calls it AFTER res.json and does not await it', () =>
   assert.ok(lastRes > -1 && lastRes < i, 'notify must come AFTER the response is sent');
   const call = src.slice(i - 200, i + 200);
   assert.ok(!/await\s+require\('\.\.\/lib\/whatsapp-out'\)/.test(call), 'must not be awaited — it would delay the chit operation');
-  assert.match(call, /\.catch\(\(\) => \{\}\)/, 'a failed send must not surface as an unhandled rejection');
+  /* T2-HONEST: caught AND logged (log.orElse) — still never an unhandled rejection, no longer silent */
+  assert.match(call, /\.catch\(\(\) => \{\}\)|\.catch\(\w+\.orElse\(/, 'a failed send must not surface as an unhandled rejection');
 });
 t('★★ it only replies when the chit CAME FROM a channel', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'whatsapp-out.js'), 'utf8');

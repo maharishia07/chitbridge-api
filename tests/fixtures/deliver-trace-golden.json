@@ -209,6 +209,13 @@
   },
   "calls": [
    {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
     "via": "billUse.set",
     "payload": [
      "SHOP",
@@ -220,13 +227,6 @@
       "name": "Mayur Traders"
      }
     ]
-   },
-   {
-    "via": "taxCopy.copyOf",
-    "payload": {
-     "cid": "A",
-     "eid": "SHOP"
-    }
    },
    {
     "via": "deliverline.record",
@@ -410,6 +410,13 @@
   },
   "calls": [
    {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
+    }
+   },
+   {
     "via": "billUse.set",
     "payload": [
      "SHOP",
@@ -426,13 +433,6 @@
       "name": "Mayur Traders"
      }
     ]
-   },
-   {
-    "via": "taxCopy.copyOf",
-    "payload": {
-     "cid": "A",
-     "eid": "SHOP"
-    }
    },
    {
     "via": "deliverline.record",
@@ -531,6 +531,23 @@
     "payload": {
      "eid": "SHOP",
      "cid": "A"
+    }
+   }
+  ]
+ },
+ "deliver · SEC4 a business holding no copy → 404 not_participant, nothing written": {
+  "status": 404,
+  "body": {
+   "error": "Not found",
+   "message": "Chit not found or you do not have access",
+   "why": "not_participant"
+  },
+  "calls": [
+   {
+    "via": "taxCopy.copyOf",
+    "payload": {
+     "cid": "A",
+     "eid": "SHOP"
     }
    }
   ]

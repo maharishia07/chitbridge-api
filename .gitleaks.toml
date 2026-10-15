@@ -3,6 +3,16 @@
 [extend]
 useDefault = true
 
+# SEC0 (2026-10-14): the Supabase PROJECT REF is configuration (the host inside DATABASE_URL / S3_ENDPOINT), never a literal in this
+# public repo — it was in 7 files. The rule matches the ref's SHAPE (20 lowercase letters) in the four forms it was found in:
+# a `*.supabase.co` host · the dashboard URL · the pooler user `<role>.<ref>` · after the words supabase / project / ref.
+# tests/hosting-neutral.test.cjs §6 reads THIS regex and runs it over every tracked file offline (one pattern, two runners);
+# gitleaks runs it in CI (ci.yml scan job). Docs write `<ref>` / `<project-ref>`; fixtures use `db.example-host.supabase.co`.
+[[rules]]
+id = "cb-supabase-project-ref"
+description = "Supabase project ref written into the repo (SEC0) — it belongs in the host env (DATABASE_URL / S3_ENDPOINT)"
+regex = '''(?:\b[a-z]{20}\.supabase\.(?:co|in)\b|supabase\.com/dashboard/project/[a-z]{20}\b|\b[a-z_]{2,}\.[a-z]{20}\b|(?:[Ss]upabase|SUPABASE|[Pp]roject|PROJECT|\b[Rr]ef\b|\bREF\b)[^\n]{0,60}\b[a-z]{20}\b)'''
+
 [allowlist]
 description = "Named dev/test fixtures only"
 paths = [

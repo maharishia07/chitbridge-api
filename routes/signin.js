@@ -4,7 +4,7 @@
  *
  *   POST /api/signin/renew              (person)  → { token, jti, exp, device_id } — new jti, same device, old jti gone
  *   POST /api/signin/logout             (person)  → { ok, removed } — removes this session's jti; 200 even if already gone
- *   GET  /api/signin/sessions           (person)  → { sessions:[…] } — my own sessions on every device in this shop
+ *   GET  /api/signin/sessions           (person)  → { sessions:[…], legacy, may:{ devices } } — my own sessions on every device in this shop; may.devices = owner (T3-P4-ACCOUNT)
  *   GET  /api/signin/devices            (owner)   → { devices:[…] } — every device listed in this shop
  *   POST /api/signin/sessions/revoke    { jti }        — my own session, or (owner) anyone's
  *                                       { device_id }  — (owner) the device: revoked_at, every session on it ends
@@ -26,20 +26,25 @@
  * names its device (X-Device-Id) — so a phone can move onto a revocable session without anybody signing in again.
  */
 const express = require('express');
+const log = require('../lib/logger');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction, withEntity } = require('../db');
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
-const { isOwner, ownerOnly: ownerGate } = require('../lib/owner');
+const owner = require('../lib/owner');
+const { isOwner } = owner;
 
 const personOnly = (req, res, next) => {
   if (req.api_key) { res.locals.code = 'KEY_CANNOT_SIGN_IN';
     return res.status(403).json({ error: 'Forbidden', code: 'KEY_CANNOT_SIGN_IN', message: 'A key cannot sign in — sign in.' }); }
   next();
 };
-const ownerOnly = ownerGate();   // SEC2: the one owner gate (lib/owner.js)
+/* T3-P4-ACCOUNT: the ONE owner gate (lib/owner.gate = SEC2's ownerOnly, with the sentence) — the refusal carries code OWNER_ONLY and the sentence GET /sessions says in `may.devices`,
+   so CB Settings › Account greys "Every device" and "Remove this device" with the words the server would refuse with (never a regex over prose). */
+const DEVICES_WHY = 'Only the owner may see or remove every device.';
+const ownerOnly = owner.gate(DEVICES_WHY);
 const fail = (res, e) => {
   const status = (e && e.status) || 500;
   if (e && e.code) res.locals.code = e.code;
@@ -91,7 +96,8 @@ router.get('/sessions', auth, personOnly, async (req, res) => {
                    device: { label: d.label || null, kind: d.kind || null, seen: d.seen || null } });
       }
     }
-    res.json({ sessions: out, legacy: !req.session });
+    /* T3-P4-ACCOUNT: may.devices — whether THIS sign-in may read GET /devices and revoke a device (the owner); a co-assist sees the list greyed with this sentence */
+    res.json({ sessions: out, legacy: !req.session, may: { devices: owner.may(req, DEVICES_WHY) } });
   } catch (e) { fail(res, e); }
 });
 
@@ -110,7 +116,7 @@ router.post('/sessions/revoke', auth, personOnly, async (req, res) => {
   try {
     const b = req.body || {}, shop = shopOf(req);
     if (b.device_id) {
-      if (!isOwner(req)) return res.status(403).json({ error: 'Forbidden', message: 'Only the owner may remove a device.' });
+      if (!isOwner(req)) return res.status(403).json({ error: 'Forbidden', code: owner.OWNER_ONLY, message: DEVICES_WHY });
       const device_id = sessions.deviceIdOf(b.device_id);
       if (!device_id) return res.status(400).json({ error: 'Refused', message: 'device_id is not a device id.' });
       const out = await sessions.revokeDevice(withTransaction, shop, device_id, me(req));
@@ -273,7 +279,9 @@ async function ask(req, res, next) {
         note(req, a, 'ask', 'pin');
         return res.json(Object.assign({ message: 'Enter your PIN.', use_pin: true, user_id: a.user_id }, extra('actor', 'pin', a.user_id)));
       }
-      const otp = await identityAuth.issueOtp(query, a);
+      /* ⭐ TOP-CORRECT: the code the admin shared is KEPT while it is live (identityAuth.heldOtp) — this line used to re-issue and
+         overwrite it, so the employee typed a code that was no longer in the row. A new code only when none is held. */
+      const otp = identityAuth.heldOtp(a) || await identityAuth.issueOtp(query, a);
       note(req, a, 'ask', 'otp');
       /* M14: an employee who signed in by a VERIFIED e-mail gets the code there — the one contact the shop proved is theirs */
       const toMail = found.via === 'contact' && input.includes('@') && !identityAuth.mobileOf(input);
@@ -401,7 +409,7 @@ function deviceRevoked(req, res, identity, method) {
   res.locals.code = 'DEVICE_REVOKED';
   return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' });
 }
-const jtiOf = (token) => { try { return (jwt.decode(token) || {}).jti || null; } catch (_) { return null; } };
+const jtiOf = (token) => { try { return (jwt.decode(token) || {}).jti || null; } catch (e) { log.fellBack('signin jtiOf: failed — answered with nothing', e); return null; } };
 const methodOf = (identity) => (identityAuth.needsPin(identity) ? 'pin' : 'otp');
 
 async function verify(req, res) {
@@ -548,17 +556,29 @@ async function verify(req, res) {
           /* …and THIS installation first when it serves the vertical — platform-0 also serves 'base', and created_at alone picked it on every spin */
           try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY (installation_key = $2) DESC, created_at LIMIT 1`, [c.constitution_key, installKey]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; }
           catch (e) { require('../lib/logger').warn('signin.verify: installation lookup failed — the shop is stamped on this installation', { installKey, why: String(e && e.message) }); }
-          await withEntity(identity.identity_id, (cl) => cl.query(
+          /**
+           * ⚠️⚠️ A SIGN-IN NEVER RE-STAMPS A SHOP'S CONSTITUTION (T3-FIXES, SIGNIN-CONST). This runs on EVERY owner verify, and a
+           * plain sign-in names no constitution — so `chosen` fell to 'base' and a pharma shop was re-stamped base each morning.
+           * The stamp moves only when THIS request named the constitution it got ($5); otherwise an existing row is refreshed
+           * (version, installation) only while it is already on the same constitution — a different key is kept as chosen.
+           */
+          const named = !!(req.body.constitution && String(req.body.constitution).trim() === c.constitution_key);
+          const st = await withEntity(identity.identity_id, (cl) => cl.query(
             `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
-             ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()`,
-            [identity.identity_id, c.constitution_key, c.version, installKey]));
-          mintedConstitution = require('../lib/versionref').format(c.constitution_key, c.version);
-          console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
+             ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()
+             WHERE $5::boolean OR entity_governance.constitution_key = EXCLUDED.constitution_key`,
+            [identity.identity_id, c.constitution_key, c.version, installKey, named]));
+          if (st && st.rowCount === 0) {
+            require('../lib/logger').info('signin.verify: the shop keeps its own constitution — a sign-in does not re-stamp it', { entity: identity.identity_id, offered: c.constitution_key });
+          } else {
+            mintedConstitution = require('../lib/versionref').format(c.constitution_key, c.version);
+            console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
+          }
         }
       } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }
 
       // BOOTSTRAP the default schema so catalogue/compose works at once. Non-fatal.
-      try { await require('../lib/schema-bootstrap').ensureDefaultSchema(identity.identity_id); } catch (_) {}
+      try { await require('../lib/schema-bootstrap').ensureDefaultSchema(identity.identity_id); } catch (e) { log.fellBack('signin verify: the helper failed — carried on without it', e); }
 
       /* CONNECT to this deployment's root (lib/rootlink.js) — inert without PLATFORM_ROOT_ENTITY, and never fails verification */
       try {

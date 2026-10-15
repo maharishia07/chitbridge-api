@@ -316,6 +316,23 @@
    },
    "optional": []
   },
+  "DELETE /api/crm/groups/:name": {
+   "status": 200,
+   "example": {
+    "name": "VIP",
+    "removed": 2
+   },
+   "optional": []
+  },
+  "DELETE /api/crm/groups/:name #404": {
+   "status": 404,
+   "example": {
+    "code": "NOT_FOUND",
+    "error": "No group by that name.",
+    "message": "No group by that name."
+   },
+   "optional": []
+  },
   "DELETE /api/crm/parties/:id": {
    "status": 200,
    "example": {
@@ -654,8 +671,16 @@
    "status": 200,
    "example": {
     "currency": "INR",
+    "asOf": "2027-04-10",
     "cheques": [],
-    "pdc_reminders": []
+    "pdc_reminders": [],
+    "remind": {
+     "on": true,
+     "lead_days": 7,
+     "from": null,
+     "may_set": true,
+     "why_not": null
+    }
    },
    "optional": []
   },
@@ -685,7 +710,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "f5af3a2b-8309-4b8c-9ee8-a0912ae8cad5",
+      "snapshot_id": "c25347eb-992f-486b-aeb2-5dd30018f023",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -707,7 +732,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "f5af3a2b-8309-4b8c-9ee8-a0912ae8cad5",
+     "snapshot_id": "c25347eb-992f-486b-aeb2-5dd30018f023",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -1772,12 +1797,14 @@
     "why"
    ]
   },
-  "GET /api/books/returns #422": {
-   "status": 422,
+  "GET /api/books/returns #rail": {
+   "status": 200,
    "example": {
+    "form": null,
+    "pack": "IN",
     "code": "RETURN_FROM_RAIL",
-    "error": "India's GSTR-1 and GSTR-3B are read from the frozen invoices on the rail (GET /api/tax/gstr), not from the ledgers.",
-    "message": "India's GSTR-1 and GSTR-3B are read from the frozen invoices on the rail (GET /api/tax/gstr), not from the ledgers."
+    "why": "Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month's GST here.",
+    "rail": "/api/tax/gstr"
    },
    "optional": []
   },
@@ -1899,7 +1926,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-12T05:21:30.299Z",
+      "last_at": "2026-10-12T16:55:57.289Z",
       "late": true,
       "today": false
      }
@@ -1935,13 +1962,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-13T05:21:30.243Z",
+      "due_at": "2026-10-13T16:55:57.250Z",
       "due_day": "2026-10-13",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-14T05:21:30.245Z",
+      "created_at": "2026-10-14T16:55:57.251Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -2037,7 +2064,72 @@
        "theirs": null,
        "differs": false
       },
-      "name": "Chola"
+      "name": "Chola",
+      "contact_prefs": {
+       "migrated": false,
+       "may": {
+        "phone": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on phone. Ask them first."
+         }
+        },
+        "sms": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on sms. Ask them first."
+         }
+        },
+        "whatsapp": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on whatsapp. Ask them first."
+         }
+        },
+        "email": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on email. Ask them first."
+         }
+        },
+        "chitbridge": {
+         "service": {
+          "may": true,
+          "code": "LEGITIMATE_USE",
+          "why": "Messages about their own orders are allowed."
+         },
+         "marketing": {
+          "may": false,
+          "code": "NO_CONSENT",
+          "why": "No consent for offers on chitbridge. Ask them first."
+         }
+        }
+       }
+      }
      }
     ],
     "walk_ins": [
@@ -2051,14 +2143,20 @@
      }
     ],
     "count": 4,
+    "total": 4,
+    "page": 1,
+    "limit": 5000,
     "truncated": false,
     "alerts": {
      "dues_overdue": 2
     },
+    "consent_migrated": false,
     "leads_migrated": false
    },
    "optional": [
+    "consent_migrated",
     "leads_migrated",
+    "parties[].contact_prefs",
     "parties[].customer",
     "parties[].lead",
     "parties[].may_trade.why",
@@ -2155,6 +2253,71 @@
      "differs": false
     },
     "name": "Chola",
+    "contact_prefs": {
+     "migrated": false,
+     "may": {
+      "phone": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on phone. Ask them first."
+       }
+      },
+      "sms": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on sms. Ask them first."
+       }
+      },
+      "whatsapp": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on whatsapp. Ask them first."
+       }
+      },
+      "email": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on email. Ask them first."
+       }
+      },
+      "chitbridge": {
+       "service": {
+        "may": true,
+        "code": "LEGITIMATE_USE",
+        "why": "Messages about their own orders are allowed."
+       },
+       "marketing": {
+        "may": false,
+        "code": "NO_CONSENT",
+        "why": "No consent for offers on chitbridge. Ask them first."
+       }
+      }
+     }
+    },
     "merged_from": {
      "party_id": "10000000-0000-4000-8000-000000000008",
      "party_no": "P-0008"
@@ -2211,7 +2374,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-12T05:21:29.799Z",
+      "due_at": "2026-10-12T16:55:57.167Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -2281,12 +2444,115 @@
     "entries[].who"
    ]
   },
+  "GET /api/crm/segments": {
+   "status": 200,
+   "example": {
+    "segments": [
+     {
+      "key": "new",
+      "name": "New",
+      "rule": "fewer than 3 bills",
+      "count": 0,
+      "overrides": 0,
+      "offers": 0,
+      "reach": {
+       "may": 0,
+       "not": 0,
+       "refused_by": [
+        {
+         "code": "NO_CONSENT",
+         "n": 1
+        }
+       ]
+      }
+     }
+    ],
+    "groups": [
+     {
+      "key": "group:Dealers",
+      "name": "Dealers",
+      "count": 2,
+      "offers": 1,
+      "reach": {
+       "may": 0,
+       "not": 2,
+       "refused_by": [
+        {
+         "code": "NO_CONSENT",
+         "n": 2
+        }
+       ]
+      }
+     }
+    ],
+    "groups_migrated": true,
+    "consent_migrated": false,
+    "channel": "whatsapp",
+    "purpose": "marketing",
+    "customers": 2,
+    "may": {
+     "group": {
+      "may": true,
+      "code": "OK",
+      "why": ""
+     },
+     "send": {
+      "may": true,
+      "code": "OK",
+      "why": ""
+     },
+     "delete": {
+      "may": true,
+      "code": "OK",
+      "why": ""
+     }
+    }
+   },
+   "optional": []
+  },
+  "GET /api/facts/rail": {
+   "status": 200,
+   "example": {
+    "suppliers": 0,
+    "customers": 0,
+    "may_sample": {
+     "ok": false,
+     "why": "live_shop",
+     "say": "This is a live shop, so a lab chit cannot be sent from it. Try it in a test shop."
+    },
+    "in": 1,
+    "out": 3,
+    "tasks": 1,
+    "stuck": 0
+   },
+   "optional": [
+    "may_sample.say",
+    "may_sample.why"
+   ]
+  },
+  "GET /api/facts/tax-lab": {
+   "status": 200,
+   "example": {
+    "lines": [
+     {
+      "text": "1 product has no tax slab",
+      "value": 1,
+      "tone": "dn"
+     }
+    ],
+    "figures": {
+     "products": 2,
+     "no_slab": 1
+    }
+   },
+   "optional": []
+  },
   "GET /api/repeat": {
    "status": 200,
    "example": {
     "agreements": [
      {
-      "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+      "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
       "entity_id": "11111111-1111-4111-8111-111111111111",
       "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
       "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -2428,7 +2694,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -2599,7 +2865,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-14T04:21:30.939Z",
+    "created_at": "2026-10-14T15:55:57.420Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -2814,7 +3080,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-14T04:21:30.939Z",
+      "created_at": "2026-10-14T15:55:57.420Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -2903,7 +3169,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-14T05:21:32.646Z"
+     "shared_at": "2026-10-14T16:55:58.326Z"
     }
    },
    "optional": []
@@ -2956,13 +3222,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-13T05:21:30.243Z",
+     "due_at": "2026-10-13T16:55:57.250Z",
      "due_day": "2026-10-13",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-14T05:21:30.255Z",
-     "created_at": "2026-10-14T05:21:30.245Z",
+     "done_at": "2026-10-14T16:55:57.257Z",
+     "created_at": "2026-10-14T16:55:57.251Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -3179,7 +3445,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "f5af3a2b-8309-4b8c-9ee8-a0912ae8cad5",
+    "snapshot_id": "c25347eb-992f-486b-aeb2-5dd30018f023",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -4015,13 +4281,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-13T05:21:30.243Z",
+     "due_at": "2026-10-13T16:55:57.250Z",
      "due_day": "2026-10-13",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-14T05:21:30.245Z",
+     "created_at": "2026-10-14T16:55:57.251Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -4035,6 +4301,25 @@
     "code": "CRM_NOT_MIGRATED",
     "error": "Not migrated yet",
     "message": "CB CRM needs migration b276 — not run yet."
+   },
+   "optional": []
+  },
+  "POST /api/crm/groups": {
+   "status": 201,
+   "example": {
+    "name": "VIP",
+    "added": 2,
+    "removed": 0,
+    "count": 2
+   },
+   "optional": []
+  },
+  "POST /api/crm/groups #400": {
+   "status": 400,
+   "example": {
+    "code": "BAD_NAME",
+    "error": "Name the group: up to 40 letters, digits, spaces, - & /.",
+    "message": "Name the group: up to 40 letters, digits, spaces, - & /."
    },
    "optional": []
   },
@@ -4136,9 +4421,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-14T05:21:30.242Z",
+     "at": "2026-10-14T16:55:57.249Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-14T05:21:30.242Z"
+     "created_at": "2026-10-14T16:55:57.249Z"
     }
    },
    "optional": []
@@ -4153,9 +4438,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-14T05:21:30.301Z",
+     "at": "2026-10-14T16:55:57.291Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-14T05:21:30.301Z"
+     "created_at": "2026-10-14T16:55:57.291Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -4164,13 +4449,13 @@
      "party_name": "Name of 0012",
      "party_listed": true,
      "what": "Demo",
-     "due_at": "2026-10-16T18:30:00.000Z",
+     "due_at": "2026-10-17T00:00:00.000Z",
      "due_day": "2026-10-17",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-14T05:21:30.301Z",
+     "created_at": "2026-10-14T16:55:57.291Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -4222,6 +4507,45 @@
    },
    "optional": []
   },
+  "POST /api/crm/segments/:key/send": {
+   "status": 200,
+   "example": {
+    "key": "group:VIP",
+    "dry": true,
+    "channel": "whatsapp",
+    "purpose": "marketing",
+    "members": 2,
+    "may": 0,
+    "refused": [
+     {
+      "party_id": "10000000-0000-4000-8000-000000000002",
+      "name": "Chola Auto Care",
+      "code": "NO_CONSENT",
+      "why": "No consent for offers on whatsapp. Ask them first."
+     }
+    ],
+    "refused_by": [
+     {
+      "code": "NO_CONSENT",
+      "n": 2
+     }
+    ],
+    "sent": [],
+    "sent_n": 0,
+    "failed_n": 0,
+    "refused_n": 2
+   },
+   "optional": []
+  },
+  "POST /api/crm/segments/:key/send #400": {
+   "status": 400,
+   "example": {
+    "code": "BAD_KEY",
+    "error": "That is not a segment or a group.",
+    "message": "That is not a segment or a group."
+   },
+   "optional": []
+  },
   "POST /api/crm/walk-ins/add": {
    "status": 201,
    "example": {
@@ -4241,7 +4565,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4339,7 +4663,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4418,7 +4742,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4510,7 +4834,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4598,7 +4922,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6894fed3-3c5c-48bd-b030-760427e32570",
+     "agreement_id": "c76b26ba-d5d0-457e-afb8-bd2d14d6d7d2",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4676,7 +5000,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4783,7 +5107,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4875,7 +5199,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "c5e7948d-fc85-4455-812f-36a9a86bbe43",
+     "agreement_id": "18801d18-eb39-40ed-bab9-9b8ea9db35ee",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4966,7 +5290,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5058,7 +5382,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5165,7 +5489,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "cfbd9bcc-98d0-4cbd-aa2c-ab45e84e6427",
+     "agreement_id": "2e20fffd-b96e-4aca-ae01-3a783dafa408",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5252,6 +5576,218 @@
    "example": {
     "ran": [],
     "problems": []
+   },
+   "optional": []
+  },
+  "POST /api/tax/compute": {
+   "status": 200,
+   "example": {
+    "engine": "chitbridge-tax",
+    "version": 1,
+    "seller": {
+     "Gstin": "33AAAAA0000A1Z5",
+     "State": "33",
+     "Country": "IN",
+     "RegType": "regular"
+    },
+    "buyer": {
+     "Pos": "33",
+     "Country": "IN"
+    },
+    "price_includes_tax": {
+     "value": true,
+     "source": "shop"
+    },
+    "priced": [
+     {
+      "key": "0",
+      "unit_price": 118,
+      "source": "shelf",
+      "structure": null,
+      "why": "list price"
+     }
+    ],
+    "currency": "INR",
+    "pack": {
+     "id": "IN",
+     "version": "1.0.0",
+     "code": null,
+     "why": null
+    },
+    "money": {
+     "gross": 266,
+     "savings": 0,
+     "net": 266,
+     "taxable": 230,
+     "tax": 36,
+     "total": 266,
+     "round_off": 0,
+     "cgst": 18,
+     "sgst": 18,
+     "igst": 0,
+     "cess": 0,
+     "vat": 0,
+     "supply": "intra",
+     "pos_state": "33",
+     "currency_code": "INR",
+     "by_rate": {
+      "0": {
+       "taxable": 30,
+       "cgst": 0,
+       "sgst": 0,
+       "igst": 0,
+       "tax": 0
+      },
+      "10": {
+       "taxable": 5,
+       "cgst": 0,
+       "sgst": 0,
+       "igst": 0,
+       "tax": 0.5,
+       "gst": 0.5
+      },
+      "18": {
+       "taxable": 200,
+       "cgst": 18,
+       "sgst": 18,
+       "igst": 0,
+       "tax": 36
+      }
+     },
+     "heads": [
+      {
+       "name": "CGST",
+       "rate": 9,
+       "base": 200,
+       "amount": 18
+      }
+     ],
+     "lines": [
+      {
+       "gross": 236,
+       "discount": 0,
+       "taxable": 200,
+       "cgst": 18,
+       "sgst": 18,
+       "igst": 0,
+       "cess": 0,
+       "tax": 36,
+       "total": 236
+      }
+     ]
+    },
+    "invoice": {
+     "TranDtls": {
+      "TaxSch": "GST",
+      "SupTyp": "B2C",
+      "RegRev": "N",
+      "IgstOnIntra": "N"
+     },
+     "SellerDtls": {
+      "Gstin": "33AAAAA0000A1Z5",
+      "LglNm": "Ponni Stores",
+      "State": "33"
+     },
+     "BuyerDtls": {
+      "Pos": "33"
+     },
+     "ItemList": [
+      {
+       "SlNo": "1",
+       "PrdDesc": "Ponni Rice",
+       "IsServc": "N",
+       "HsnCd": "",
+       "Qty": 2,
+       "Unit": "",
+       "UnitPrice": 118,
+       "TotAmt": 236,
+       "Discount": 0,
+       "AssAmt": 200,
+       "GstRt": 18,
+       "IgstAmt": 0,
+       "CgstAmt": 18,
+       "SgstAmt": 18,
+       "TaxAmt": 0,
+       "CesRt": 0,
+       "CesAmt": 0,
+       "TotItemVal": 236,
+       "_line_id": "0"
+      }
+     ],
+     "ValDtls": {
+      "AssVal": 230,
+      "CgstVal": 18,
+      "SgstVal": 18,
+      "IgstVal": 0,
+      "CesVal": 0,
+      "StCesVal": 0,
+      "Discount": 0,
+      "RndOffAmt": 0,
+      "TotInvVal": 266,
+      "TaxVal": 0
+     },
+     "_cb": {
+      "scheme": "GST",
+      "supply": "intra",
+      "place_of_supply": "33",
+      "seller_state": "33",
+      "slabs": [
+       {
+        "GstRt": 0,
+        "AssVal": 30,
+        "CgstVal": 0,
+        "SgstVal": 0,
+        "IgstVal": 0,
+        "CesVal": 0,
+        "TaxVal": 0.5
+       }
+      ],
+      "amount_payable": 266,
+      "reverse_charge": false,
+      "price_includes_tax": true,
+      "notes": [
+       "Your prices include tax, so the taxable value was worked back out of each price."
+      ]
+     }
+    },
+    "heads": {
+     "taxable": 230,
+     "cgst": 18,
+     "sgst": 18,
+     "igst": 0,
+     "cess": 0,
+     "vat": 0,
+     "total": 266,
+     "tax": 36
+    }
+   },
+   "optional": [
+    "buyer.Pos",
+    "invoice.SellerDtls.State",
+    "invoice._cb.slabs[].TaxVal",
+    "money.by_rate.0",
+    "money.by_rate.10",
+    "money.by_rate.18",
+    "priced[].structure",
+    "priced[].why"
+   ]
+  },
+  "POST /api/tax/compute #400": {
+   "status": 400,
+   "example": {
+    "error": "Bad request",
+    "code": "BAD_QTY",
+    "message": "Line \"A\" needs a quantity above 0."
+   },
+   "optional": []
+  },
+  "POST /api/tax/compute #422": {
+   "status": 422,
+   "example": {
+    "error": "Cannot compute",
+    "code": "ITEM_NOT_FOUND",
+    "message": "Line \"NOPE\" names an item this shop does not sell.",
+    "line": "0"
    },
    "optional": []
   }

@@ -87,7 +87,8 @@ const SHOP = '11111111-1111-4111-8111-111111111111', CUST = '22222222-2222-4222-
   ok('policy.FLAGS has books, defaulting to empty (= OFF)', !!P.FLAGS.books && JSON.stringify(P.defaults().books) === '{}');
   ok("policy.coerce keeps books.auto_post 'on' and drops unknown keys", JSON.stringify(P.coerce('books', { auto_post: 'on', junk: 1 })) === '{"auto_post":"on"}');
   const src = require('fs').readFileSync(path.join(H.API, 'routes', 'entities.js'), 'utf8');
-  ok('PATCH /entities/policy refuses `books` from anyone but the owner', /hasOwnProperty\.call\(req\.body, 'books'\)\s*&&\s*!require\('\.\.\/lib\/owner'\)\.isOwner/.test(src));
+  /* T2-POLICY: who may change a flag is ON the flag (FLAGS.books.may === 'owner'); the PATCH asks policy.refusalFor with the owner test — one place */
+  ok('PATCH /entities/policy refuses `books` from anyone but the owner', P.FLAGS.books.may === 'owner' && /policy\.refusalFor\(req\.body,\s*require\('\.\.\/lib\/owner'\)\.isOwner\(req\)\)/.test(src));
 
   dbStub.withEntity = real; K.dayOf = realDay;
   console.log('\n  ' + (fail ? '✗ ' + fail + ' FAILED · ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');

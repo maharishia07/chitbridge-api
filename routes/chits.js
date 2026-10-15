@@ -1,9 +1,11 @@
 // routes/chits.js — Chit send, inbox, detail, status update
 const express = require('express');
+const cbLog = require('../lib/logger');
 const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions');   // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
+const disputeMay = require('../lib/dispute-may');   // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const railStatus = require('../lib/rail-status');   // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const log = require('../lib/logger');
 const { body } = require('express-validator');
@@ -32,7 +34,7 @@ async function countryOfEntity(entity_id) {
     const r = await query(`SELECT country, gstn FROM identities WHERE identity_id = $1`, [entity_id]);
     const row = r.rows[0] || {};
     c = require('../lib/profile').countryOf({ country: row.country, gstin: row.gstn });
-  } catch (_) { /* ⚠️ a bill must never fail because we could not look up a country */ }
+  } catch (e) { cbLog.fellBack('chits countryOfEntity: the read failed — carried on without it', e); /* ⚠️ a bill must never fail because we could not look up a country */ }
   _countryMemo.set(entity_id, { c: c, at: Date.now() });
   return c;
 }
@@ -58,6 +60,7 @@ const taxLines = require('../lib/tax-lines');
 const taxEngine = require('../lib/tax');   // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 const localIdentity = require('../lib/local-identity');   /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
+const istest = require('../lib/istest');   /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
    live in the Bills folders. The SAME classification the folders read through lib/select.js, so the two can never disagree. */
 const FOLDER_INV = require('../lib/folder-inventory');
@@ -86,7 +89,7 @@ async function definersReady() {
            AND to_regprocedure('chit_log_targets(uuid,uuid[],text,uuid,text,text)') IS NOT NULL
            AND to_regprocedure('chit_participant_parity(uuid,uuid)') IS NOT NULL) AS ok`);
     _definersReady = !!(r.rows[0] && r.rows[0].ok);
-  } catch (_) { /* leave false — fall back to legacy */ }
+  } catch (e) { cbLog.fellBack('chits definersReady: the read failed — carried on without it', e); /* leave false — fall back to legacy */ }
   return _definersReady;
 }
 
@@ -144,7 +147,7 @@ let _folderColReady = null;
 async function folderColReady() {
   if (_folderColReady !== null) return _folderColReady;
   try { const r = await query(`SELECT 1 FROM information_schema.columns WHERE table_name = 'chit_status' AND column_name = 'folder_id' LIMIT 1`); _folderColReady = r.rows.length > 0; }
-  catch (_) { _folderColReady = false; }
+  catch (e) { cbLog.fellBack('chits folderColReady: the read failed — answered no', e); _folderColReady = false; }
   return _folderColReady;
 }
 
@@ -388,7 +391,7 @@ router.post('/send',
             return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true,
                                           client_ref: raceRef, raced: true });
           }
-        } catch (_) { /* fall through to the ordinary failure — a bad answer here must not hide the real one */ }
+        } catch (e) { cbLog.fellBack('chits: failed — carried on without it', e); /* fall through to the ordinary failure — a bad answer here must not hide the real one */ }
       }
       /* ⭐ a refusal the database made on purpose (b247's population boundary) answers as one — 409, in words — not
          as "Send failed" (lib/knownerr, external review §23) */
@@ -405,7 +408,7 @@ router.post('/send',
    lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
 const SEND_STEPS = [
-  sendSender, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
+  sendSender, sendLab, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
   sendBody, sendCredit, sendSource, sendFanOut, sendTrace,
   sendPrefs, sendRecipients, sendSeller, sendOffers, sendMoney,
   sendIssued, sendCopyPolicy, sendPromote, sendParticipants, sendRetention,
@@ -451,6 +454,26 @@ async function sendSender(st, req, res) {
              + 'Open ChitBridge → Settings and set the shop\'s bridge id, then send this bill again.' });
   }
   Object.assign(st, { sender_id, sender_bridge_id, sender_display_name });
+}
+
+/**
+ * ⭐ RAIL-LAB-SRV1 (2026-10-14) · A LAB CHIT IS REFUSED ON A LIVE SHOP, IN WORDS, BEFORE ANYTHING IS WRITTEN.
+ * The sender declares a lab chit as `business_json.lab: true` (the is_promotion path; sendSummary echoes it onto summary_json.lab so
+ * every co-held copy says what it is). The ONE rule is lib/istest's (b249's axis: a lab shop is a shop whose population is not live) —
+ * the same answer GET /api/facts/rail gives as `may_sample`, so the Rail Lab can never be told "yes" here and "no" there.
+ * ⚠️ ONE identities read, ONLY when a lab chit is declared: an ordinary send runs no statement here and is byte-identical
+ * (tests/send-golden.test.cjs). This is the one door: a lab chit cannot reach a live shop by delivery either — b247's population
+ * boundary and istest.mayTrade already refuse a copy across populations. A population the database cannot state is LIVE (fail safe).
+ * The refusal carries a CODE the client branches on (`code`, `why`); the sentence is for the person.
+ */
+async function sendLab(st, req, res) {
+  const bj = req.body && req.body.business_json;
+  if (!istest.isLabChit(bj)) return;
+  const r = await query(`SELECT to_jsonb(i)->>'population' AS population FROM identities i WHERE identity_id = $1`, [st.sender_id]);
+  const population = r.rows[0] && r.rows[0].population != null ? String(r.rows[0].population) : null;
+  const may = istest.maySample(population);
+  if (!may.ok) return res.status(409).json({ error: 'Lab chit on a live shop', code: 'LAB_CHIT_LIVE_SHOP', may: false, why: may.why, message: may.say });
+  st.lab = true;
 }
 
 /** the bill number on the paper, checked against this shop's country rule — recorded, never refused */
@@ -642,7 +665,7 @@ async function sendReplay(st, req, res) {
         if (verdict.collision) return res.status(409).json(verdict.body);
         return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });
       }
-    } catch (_) { /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */ }
+    } catch (e) { cbLog.fellBack('chits: failed — carried on without it', e); /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */ }
   }
 }
 
@@ -727,7 +750,7 @@ async function sendCredit(st, req, res) {
     if (chk.over) {
       const ov = business_json.credit_override, allowed = !!(ov && ov.by && (req.till || isOwner(req)));
       if (!allowed) return res.status(409).json({ code: 'OVER_LIMIT', error: 'Over the credit limit.', message: F.overSentence(chk), limit_minor: chk.limit_minor, owed_minor: chk.owed_minor, after_minor: chk.after_minor, party_id: chk.party_id });
-      F.noteOverride(sender_id, chk, String(ov.by)).catch(() => {});
+      F.noteOverride(sender_id, chk, String(ov.by)).catch(cbLog.orElse('chits: failed — carried on without it'));
     }
   }
 
@@ -775,7 +798,7 @@ async function sendSource(st, req, res) {
         business_json.source = { name: sender_display_name || null, sectors,
                                  vertical: require('../lib/adopt').verticalOf(sectors) };
       }
-    } catch (_) { /* a shop that has declared no trade sends goods that require nothing — the ordinary case */ }
+    } catch (e) { cbLog.fellBack('chits: the read failed — carried on without it', e); /* a shop that has declared no trade sends goods that require nothing — the ordinary case */ }
   }
 }
 
@@ -1002,7 +1025,7 @@ async function sendSeller(st, req, res) {
     const shelf = await taxShelf.readShelf(sellerId, { withEntity, query, regionLayer: regional.regionLayer,
       getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: true });
     if (shelf) line_items = taxLines.decorate(line_items, { items: shelf.items, slabs: shelf.slabs, categories: shelf.categories, face: shelf.face });   /* the Map, as the storefront passes it — see slabOf */
-  } catch (_) { /* rate-less lines are what every chit carried until tonight */ }
+  } catch (e) { cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */ }
   Object.assign(st, { line_items, orderLike, toIds, counterBill, sellerId });
 }
 
@@ -1039,7 +1062,7 @@ async function sendOffers(st, req, res) {
       const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity, viewer: orderLike ? sender_id : null });   /* an order's buyer may hold a customer-only offer with this seller */
       if (r && r.items) { line_items = r.items; offersApplied = Array.isArray(r.applied) ? r.applied : []; }
     }
-  } catch (_) { /* no offers, no change */ }
+  } catch (e) { cbLog.fellBack('chits: the read failed — carried on without it', e); /* no offers, no change */ }
   Object.assign(st, { line_items, offersApplied });
 }
 
@@ -1090,7 +1113,7 @@ async function sendMoney(st, req, res) {
       }
     }
     moneyBlock = { gross, savings: r2m(gross - net), net, tax, total: total != null ? total : (tax != null ? r2m(net + tax) : null), currency_code, provisional: true };
-  } catch (_) { /* a chit never fails to send because its money summary could not be built */ }
+  } catch (e) { cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */ }
   Object.assign(st, { moneyBlock });
 }
 
@@ -1120,7 +1143,7 @@ async function sendIssued(st, req, res) {
         business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
         require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
       }
-    } catch (_) { /* the check never stops a bill — the stored invoice stands either way */ }
+    } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */ }
   }
   Object.assign(st, { moneyBlock, issuedTotal });
 }
@@ -1256,7 +1279,7 @@ async function sendParticipants(st, req, res) {
 
   // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
   /* ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js */
-  try { require('../lib/events').notifyAfter(res, receiverDetails.map(r => r.entity_id), { kind: 'chit', id: chit_id, who: sender_display_name || null, note: purpose || null }); } catch (_) {}
+  try { require('../lib/events').notifyAfter(res, receiverDetails.map(r => r.entity_id), { kind: 'chit', id: chit_id, who: sender_display_name || null, note: purpose || null }); } catch (e) { cbLog.fellBack('chits: the signal was not sent — carried on without it', e); }
   const all_recipients = [
     {
       entity_id: sender_id,
@@ -1332,7 +1355,7 @@ async function sendRetention(st, req, res) {
   const retainDaysFor = async (owner_id) => {
     let floor = 90;
     try { const f = await policy.get(owner_id); if (Number.isFinite(+f.retention_floor_days)) floor = +f.retention_floor_days; }
-    catch (_) { /* unreadable policy → keep the schema default; never shorten on an error */ }
+    catch (e) { cbLog.fellBack('chits retainDaysFor: failed — carried on without it', e); /* unreadable policy → keep the schema default; never shorten on an error */ }
     return Math.max(policy.RECORDS_FLOOR_DAYS, floor, _reqDays || 0);   /* CO3: the records-law floor sits under every copy */
   };
   Object.assign(st, { auto_subject, summary, ext_priority, retention, retainDaysFor });
@@ -1348,7 +1371,7 @@ async function sendFolds(st, req, res) {
   try {
     const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: sender_id });
     if (cfg) governed = { pattern: cfg._blueprint, capability: cfg._capability, constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
-  } catch (_) { /* seam is best-effort */ }
+  } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* seam is best-effort */ }
   // ── ORDER-BINDING: fold the sender's HELD clearances into the chit (per-copy snapshot, FROZEN). The buyer sees, on
   //    THIS order, exactly the supplier's clearances met + their assurance rung; later changes never alter this copy.
   //    Best-effort — never blocks the send. ──
@@ -1360,7 +1383,7 @@ async function sendFolds(st, req, res) {
       .map(c => ({ standard: c.standard, doc: c.doc, title: c.title, rung: c.rung,
         valid_until: c.valid_until || null, verified_at: c.verified_at || null, verified_by: c.verified_by || null }));
     if (held.length) folded_clearances = { folded_at: new Date().toISOString(), items: held };
-  } catch (_) { /* best-effort */ }
+  } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */ }
   // ── COMMERCIAL COVER fold — a trade order (one that carries clearances) also freezes its commercial-cover FRAMEWORK
   //    onto the buyer's copy: payment/transit/currency/credit cover by risk, and which is already evidenced on-rail
   //    (e.g. performance risk = the supplier's on-rail track record). Framework, not a secured instrument — honest.
@@ -1374,7 +1397,7 @@ async function sendFolds(st, req, res) {
         on_rail: !!g.covered_onrail, instruments: (g.instruments || []).map(i => i.name) }));
       if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: inc, areas };
     }
-  } catch (_) { /* best-effort */ }
+  } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */ }
   Object.assign(st, { governed, folded_clearances, folded_commercial });
 }
 
@@ -1444,7 +1467,7 @@ async function sendDesigns(st, req, res) {
     try {
       const _pf = await policy.get(eid);
       if (_pf && _pf.detail_design && _pf.detail_design !== 'chit') d = _pf.detail_design;
-    } catch (e) { /* no stamp; Order level, which is the default anyway */ }
+    } catch (e) { cbLog.fellBack('chits _designFor: failed — carried on without it', e); /* no stamp; Order level, which is the default anyway */ }
     _designCache.set(eid, d);
     return d;
   };
@@ -1482,6 +1505,8 @@ async function sendSummary(st, req, res) {
     priority_external: ext_priority,
     purpose,
     is_promotion: !!(business_json && business_json.is_promotion),
+    /* RAIL-LAB-SRV1: a lab chit says so on every copy (sendLab proved the shop may; mint.summary keeps the rider only when true) */
+    lab: st.lab ? true : undefined,
     // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
     forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
     copy_policy: copyPolicy,
@@ -1873,8 +1898,8 @@ async function sendMeter(st, req, res) {
         basis: (summary && summary.total_value != null) ? summary.total_value : null,
         currency: (summary_json && summary_json.currency_code) || null,
         meta: { purpose: purpose || undefined },
-      }).catch(() => {});
-    } catch (_) {}
+      }).catch(cbLog.orElse('chits: failed — carried on without it'));
+    } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
   }
 }
 
@@ -1911,11 +1936,14 @@ async function sendStock(st, req, res) {
             require('../lib/logger').warn('stock.from-chit', {
               chit_id, entity_id: sender_id, moved: r.moved, duplicate: r.duplicate,
               skipped: r.skipped.length, failed: r.failed,
+              /* STK-FIX1b: a REFUSED line (an unreadable batch or expiry) is named with its sentence and code — a count alone is silence */
+              refused: r.skipped.filter((s) => s.code === 'batch_unreadable' || s.code === 'expiry_unreadable')
+                                .map((s) => ({ line_ref: s.line_ref, item_id: s.item_id, code: s.code, why: s.why })),
             });
-          } catch (_) {}
+          } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
         })
-        .catch(() => {});   /* postFor already never rejects; this is belt and braces on the hot path */
-    } catch (_) {}
+        .catch(cbLog.orElse('chits: failed — carried on without it'));   /* postFor already never rejects; this is belt and braces on the hot path */
+    } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
   }
 }
 
@@ -1936,7 +1964,7 @@ async function sendBooks(st, req, res) {
         hooks.afterChit(sender_id, chit_id, who);
         for (const r of receiverDetails) if (r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)) hooks.afterChit(r.entity_id, chit_id, null);
       });
-    } catch (_) {}
+    } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
   }
 }
 
@@ -1967,7 +1995,7 @@ async function sendAnswer(st, req, res) {
    */
   if (!is_draft && client_ref && business_json && business_json.series) {
     setImmediate(() => {
-      require('./counters').noteBill(sender_id, business_json.series, business_json.billed_at, client_ref).catch(() => {});
+      require('./counters').noteBill(sender_id, business_json.series, business_json.billed_at, client_ref).catch(cbLog.orElse('chits: the helper failed — carried on without it'));
     });
   }
 }
@@ -2031,6 +2059,9 @@ function chitFilters(req, where, params){
     if (req.query.date_from) { params.push(req.query.date_from); where += ` AND ch.created_at >= $${params.length}::timestamptz`; }
     if (req.query.date_to)   { params.push(req.query.date_to);   where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`; }
   }
+  /* ⭐ TRADE-SRV1 G3: ?abroad=1 → only the trades across a border (another currency, or a party in another country) — ONE fragment
+     (country-setup.abroadSql, beside shopCountrySql), so Task, Order and every folder answer the same */
+  if (req.query.abroad === '1' || req.query.abroad === 'true') { params.push(entityId(req)); where += ` AND ${require('../lib/country-setup').abroadSql('ch', params.length)}`; }
   if (req.query.priority)  { params.push(req.query.priority);  where += ` AND cs.priority_flag = $${params.length}`; }
   if (req.query.fstatus)   {
     const B = { open:['pending','delivered','read'], act:['accepted','in_progress','partial'], close:['completed','cancelled','rejected'] };
@@ -2539,7 +2570,7 @@ router.get('/:chit_id', auth, async (req, res) => {
           await db.query('RELEASE SAVEPOINT mark_read');
         } catch (e) {
           console.error('mark-read skipped:', e.message);
-          try { await db.query('ROLLBACK TO SAVEPOINT mark_read'); } catch (_) {}
+          try { await db.query('ROLLBACK TO SAVEPOINT mark_read'); } catch (e) { cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', e); }
         }
       }
 
@@ -2785,7 +2816,7 @@ router.get('/:chit_id', auth, async (req, res) => {
        environment where the one-shot statement failed — still pays for its own transaction here. */
     const attachments = (bundle && bundle.attachments != null)
       ? bundle.attachments
-      : await storage.listForChit(chit_id, entity_id).catch(() => []);
+      : await storage.listForChit(chit_id, entity_id).catch(cbLog.orElse('chits GET /:chit_id: failed — answered with none', []));
     _mark('attachments');   // per-entity: the caller's OWN copies only
 
     /* ── b137 AMENDMENTS ─────────────────────────────────────────────────────────────────────────────────────
@@ -2827,7 +2858,7 @@ router.get('/:chit_id', auth, async (req, res) => {
                     to_jsonb(d)->>'particulars' AS dparticulars
                FROM chit_line l LEFT JOIN chit_line_delivery d ON d.entity_id = l.entity_id AND d.chit_id = l.chit_id AND d.line_id = l.line_id
               WHERE l.entity_id = $1 AND l.chit_id = $2 AND (d.delivery_id IS NULL OR d.recorded_by_entity_id = $1)
-              ORDER BY l.seq, l.line_id, d.delivered_at`, [entity_id, chit_id])).catch(() => null);
+              ORDER BY l.seq, l.line_id, d.delivered_at`, [entity_id, chit_id])).catch(cbLog.orElse('chits GET /:chit_id: failed — answered with nothing', null));
           _prog = dl ? await deliverline.progress(entity_id, chit_id, null, dl.rows) : null;
         }
       }
@@ -2857,7 +2888,7 @@ router.get('/:chit_id', auth, async (req, res) => {
           [e.live, e.original].forEach((tgt) => { if (!tgt || typeof tgt !== 'object') return; KEEP.forEach((k) => { if ((tgt[k] === undefined || tgt[k] === null) && j[k] !== undefined && j[k] !== null) tgt[k] = j[k]; }); });
         });
       }
-    } catch (_) {}
+    } catch (e) { cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e); }
 
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
@@ -3244,10 +3275,19 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
+    /* ⭐ SEC4 — the server decides, not the page's grey: the level first (no read, nothing written for a viewer), then "I hold a copy",
+       through the rail's words (lib/rail-actions canDeliver). A copy read that FAILS is logged and left to the delivery definer's own
+       participant gate, as before — only a read that answers "no copy" refuses here (404, the answer an id in the URL always got). */
+    const _me = railActions.meOf(req);
+    const _lv = railActions.canDeliver({ held: true }, _me);
+    if (!_lv.ok) return railActions.refuseOwnCopy(res, _lv);
+    let _mineCopy = null, _copyRead = true;
+    try { _mineCopy = await taxCopy.copyOf(chit_id, entity_id); }
+    catch (e) { _copyRead = false; log.warn('deliver.copy-unread', { chit_id, entity_id, err: e && e.message, then: 'the delivery definer checks the participant' }); }
+    if (_copyRead) { const _v = railActions.canDeliver({ held: !!_mineCopy }, _me); if (!_v.ok) return railActions.refuseOwnCopy(res, _v); }
     const useSaid = await deliverUse(req, entity_id, chit_id);
     /* ⭐⭐ ON A BILL, GOODS-IN IS MY OWN STEP (lib/bill-privacy): recorded on my copy only, and its line is written at my bill
        folder's level — never replicated into, or announced to, the other shop */
-    const _mineCopy = await taxCopy.copyOf(chit_id, entity_id).catch(() => null);
     const _bill = !!(_mineCopy && billPrivacy.isBill(_mineCopy, entity_id));
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name, private: _bill });
@@ -3627,7 +3667,7 @@ router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'ca
     /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
     if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
     /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
-    try { require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method }); } catch (_) {}
+    try { require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method }); } catch (e) { cbLog.fellBack('chits POST /:chit_id/payment: the signal was not sent — carried on without it', e); }
     res.json({ message: 'Payment recorded', payment, books: out.books });
   } catch (err) {
     const BR = require('./books');
@@ -3670,7 +3710,7 @@ router.post('/:chit_id/books-request', auth, async (req, res) => {
       `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('books_request', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
       [JSON.stringify(reqRec), req.params.chit_id, entity_id]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
-    try { require('../lib/events').emit([entity_id], { kind: 'books', id: req.params.chit_id }); } catch (_) {}
+    try { require('../lib/events').emit([entity_id], { kind: 'books', id: req.params.chit_id }); } catch (e) { cbLog.fellBack('chits POST /:chit_id/books-request: the signal was not sent — carried on without it', e); }
     res.json({ ok: true, books_request: reqRec });
   } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
 });
@@ -3762,7 +3802,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       }
       const previous_status = _pre.previous_status;
       /* ⭐ G3 — THE STAMP. `completed` freezes the invoice on MY copy (lib/tax-copy.freezeOnComplete); fails open. */
-      if (new_status === 'completed') { try { await taxCopy.freezeOnComplete(chit_id, entity_id, _pre.copy); } catch (_) {} }
+      if (new_status === 'completed') { try { await taxCopy.freezeOnComplete(chit_id, entity_id, _pre.copy); } catch (e) { cbLog.fellBack('chits moveStatus: failed — carried on without it', e); } }
       /**
        * ⭐⭐ THE BUYER'S ACCEPTANCE REACHES THE LEDGER (Athi, 2026-10-01: "a checking mechanism in the rail to allow it to the
        * sundry creditor"). A bill I RECEIVED posts as my purchase only once MY copy is accepted / in_progress / completed
@@ -3968,8 +4008,8 @@ router.put('/:chit_id/status',
         // as optional and simply omits the quoted subject when absent.
         require('../lib/whatsapp-out')
           .notifyChitStatus(entity_id, chit_id, new_status, null)
-          .catch(() => {});
-      } catch (_) { /* outbound is never allowed to affect the status change */ }
+          .catch(cbLog.orElse('status changed, but the WhatsApp reply was not sent — the customer was not told'));
+      } catch (e) { cbLog.fellBack('status changed, but the WhatsApp reply could not start — the customer was not told', e); /* outbound is never allowed to affect the status change */ }
 
     } catch (err) {
       console.error('Update status error:', err.message);
@@ -4099,13 +4139,13 @@ router.post('/:chit_id/messages',
           try {
             const rr = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [disputeId]));
             disputeRoster = [...new Set([entity_id].concat(rr.rows.map((r) => String(r.entity_id))))];
-          } catch (_) { /* keep [me] */ }
+          } catch (e) { cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* keep [me] */ }
         }
       }
       // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
       let senderName = display_name;
       if (isDispute && req.identity.parent_entity_id) {
-        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(() => ({ rows: [] }));
+        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(cbLog.orElse('chits POST /:chit_id/messages: the read failed — answered with none', ({ rows: [] })));
         if (_e.rows[0] && _e.rows[0].display_name) senderName = _e.rows[0].display_name;
       }
 
@@ -4157,7 +4197,7 @@ router.post('/:chit_id/messages',
           const others = (disputeRoster || [h.sender_entity_id].concat((Array.isArray(h.all_recipients) ? h.all_recipients : []).map((x) => x && x.entity_id)))
             .filter((x) => x && String(x) !== String(entity_id));
           if (others.length) require('../lib/events').notifyAfter(res, others, { kind: 'message', id: chit_id, who: display_name || null });
-        } catch (_) { /* the message is sent; only the push is lost */ }
+        } catch (e) { cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* the message is sent; only the push is lost */ }
       }
 
       res.json({
@@ -4204,7 +4244,7 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
     if (result === null) return res.status(403).json({ error: 'Forbidden' });
 
     const msgIds = result.rows.map(m => m.message_id).filter(Boolean);
-    const atts = await storage.listForMessages(msgIds, entity_id).catch(() => []);   // per-entity: caller's own copies
+    const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', []));   // per-entity: caller's own copies
     const byMsg = {};
     for (const a of atts) { (byMsg[a.message_id] = byMsg[a.message_id] || []).push(a); }
     for (const m of result.rows) { m.attachments = byMsg[m.message_id] || []; }
@@ -4268,7 +4308,7 @@ router.post('/:chit_id/disputes',
       // B3 (Athi): dispute records + messages carry the ENTITY's name; the acting actor stays as provenance in the timeline.
       let entityName = display_name;
       if (req.identity.parent_entity_id) {
-        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(() => ({ rows: [] }));
+        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(cbLog.orElse('chits POST /:chit_id/disputes: the read failed — answered with none', ({ rows: [] })));
         if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name;
       }
 
@@ -4378,35 +4418,57 @@ router.post('/:chit_id/disputes',
 
 // ─── GET /chits/:chit_id/disputes ────────────────────────────
 // All participants see all disputes on a chit
+/**
+ * ⭐ T3-DISPUTES-ASSIST — every dispute row a screen paints, finished ONE way (this route and the queue below):
+ *   participants  the roster (names/roles from MY copy's snapshot) with each party's live status — ONE definer read for every row
+ *                 (was one read PER ROW); a failed read keeps the snapshot, logged, never a 500
+ *   others        the participants who are not me (the raiser too, when it is not me) — "with whom", decided here, not by the page
+ *   mine          I raised it
+ *   actions.resolve  { ok } | { ok:false, why, say } — lib/dispute-may.resolve, the same verdict PUT …/resolve refuses with
+ */
+async function finishDisputes(rows, entity_id, me) {
+  const ids = rows.map((d) => d.dispute_id);
+  const statusBy = {};
+  let rosterRead = false;
+  if (ids.length) {
+    try {
+      const rr = await query(`SELECT u.did AS dispute_id, r.entity_id, r.role, r.status FROM unnest($1::uuid[]) AS u(did) CROSS JOIN LATERAL chit_dispute_roster(u.did) r`, [ids]);
+      rr.rows.forEach((r) => { statusBy[r.dispute_id + '|' + r.entity_id] = r.status; });
+      rosterRead = true;
+    } catch (err) { log.warn('dispute roster read failed — the snapshot is shown', { err: err.message, n: ids.length }); }
+  }
+  const lvl = railActions.can({ held: true }, me, 'dispute');
+  return rows.map(({ evidence_snapshot, roster, ...d }) => {
+    const parts = (roster || d.participants || []).map((p) => ({ dispute_id: d.dispute_id, entity_id: p.entity_id, display_name: p.display_name, role: p.role,
+      dispute_status: (rosterRead && statusBy[d.dispute_id + '|' + p.entity_id]) || p.dispute_status || 'open' }));
+    const mine = d.raised_by_entity_id === entity_id;
+    return { ...d, has_evidence: evidence_snapshot != null, participants: parts, others: parts.filter((p) => p.entity_id !== entity_id), mine,
+      actions: { resolve: disputeMay.resolve(lvl, { open: d.status === 'open', raisedByMe: mine }) } };
+  });
+}
 router.get('/:chit_id/disputes', auth, async (req, res) => {
   const { chit_id } = req.params;
   const entity_id   = entityId(req);
 
   try {
-    // B1 RLS: participant access check on own copy -> withEntity(me).
-    const access = await withEntity(entity_id, (db) => db.query(
-      `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
-      [chit_id, entity_id]
-    ));
-    if (access.rows.length === 0) return res.status(403).json({ error: 'Forbidden' });
-
-    // B3.10 + D4 — scoped: you see chit-wide disputes, ones you raised/target, or ones you're a listed party to
-    // per-copy (b68): RLS returns MY OWN dispute copies for this chit
-    const result = await withEntity(entity_id, (db) => db.query(
-      `SELECT * FROM chit_disputes WHERE chit_id = $1 ORDER BY created_at ASC`, [chit_id]));
-    // roster (names/roles from my copy's snapshot) + live per-party status via the definer (reads all parties' copies)
-    let partsByD = {};
-    for (const d of result.rows) {
-      try {
-        const rr = await query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [d.dispute_id]);
-        const statusBy = {}; rr.rows.forEach(r => { statusBy[r.entity_id] = r.status; });
-        partsByD[d.dispute_id] = (d.roster || []).map(p => ({ dispute_id: d.dispute_id, entity_id: p.entity_id,
-          display_name: p.display_name, role: p.role, dispute_status: statusBy[p.entity_id] || 'open' }));
-      } catch (_) { partsByD[d.dispute_id] = (d.roster || []); }
-    }
+    // B1 RLS: participant access check on own copy -> withEntity(me). T3: the chit's recipients ride the same transaction (who a dispute may name).
+    const own = await withEntity(entity_id, async (db) => {
+      const access = await db.query(`SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      if (access.rows.length === 0) return null;
+      // B3.10 + D4 — scoped: per-copy (b68): RLS returns MY OWN dispute copies for this chit
+      const result = await db.query(`SELECT * FROM chit_disputes WHERE chit_id = $1 ORDER BY created_at ASC`, [chit_id]);
+      const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
+      return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
+    });
+    if (!own) return res.status(403).json({ error: 'Forbidden' });
+    const me = railActions.meOf(req);
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
-    const disputes = result.rows.map(({ evidence_snapshot, roster, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null, participants: partsByD[d.dispute_id] || [] }));
-    res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length });
+    const disputes = await finishDisputes(own.rows, entity_id, me);
+    /* T3: who a new dispute may name — everyone on the chit but me, once each (the raise route ticks these as participant_entity_ids) */
+    const seen = {}, raise_parties = (Array.isArray(own.recipients) ? own.recipients : []).filter((r) => r && r.entity_id && r.entity_id !== entity_id && !seen[r.entity_id] && (seen[r.entity_id] = 1))
+      .map((r) => ({ entity_id: r.entity_id, display_name: r.display_name || null, role: r.role || null }));
+    res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length, raise_parties,
+      actions: { raise: disputeMay.raise(railActions.can({ held: true }, me, 'dispute')) } });
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
     res.status(500).json({ error: 'Get disputes failed', message: safeErr(err) });
@@ -4449,7 +4511,7 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
       if (Array.isArray(li) && li.length) {
         itemLabel = li.map(i => i.particulars || i.product).filter(Boolean).join(', ') || null;
       }
-    } catch { itemLabel = null; }
+    } catch (e) { cbLog.fellBack('chits GET /:chit_id/diagnosis: did not parse — answered with nothing', e, 'debug'); itemLabel = null; }
 
     // same audience rule as GET disputes — never leak someone else's dispute
     const d = await withEntity(entity_id, (db) => db.query(   // per-copy: RLS returns MY OWN dispute copies
@@ -4509,7 +4571,7 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
     const display_name = req.identity.display_name;
     // B3: the resolution message posts in the ENTITY name (the acting actor stays as provenance in the timeline).
     let entityName = display_name;
-    if (req.identity.parent_entity_id) { const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(() => ({ rows: [] })); if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name; }
+    if (req.identity.parent_entity_id) { const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(cbLog.orElse('chits PUT /:chit_id/disputes/:dispute_id/resolve: the read failed — answered with none', ({ rows: [] }))); if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name; }
 
     try {
       // b68 — per-copy: read the raiser's OWN dispute copy (RLS), then resolve across copies via the definer.
@@ -4518,10 +4580,13 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
       if (dispute.rows.length === 0) return res.status(404).json({ error: 'Dispute not found' });
 
       const d = dispute.rows[0];
-      if (d.status !== 'open') return res.status(400).json({ error: 'Dispute already resolved' });
-      if (d.raised_by_entity_id !== entity_id) {
-        return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it' });
+      /* T3-DISPUTES-ASSIST: the SAME verdict GET answers as actions.resolve (lib/dispute-may) — the status codes and words unchanged, `why` added */
+      const may = disputeMay.resolve(railActions.can({ held: true }, railActions.meOf(req), 'dispute'), { open: d.status === 'open', raisedByMe: d.raised_by_entity_id === entity_id });
+      if (!may.ok && may.why === 'already_resolved') return res.status(400).json({ error: 'Dispute already resolved', why: may.why });
+      if (!may.ok && may.why === 'not_raiser') {
+        return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it', why: may.why });
       }
+      if (!may.ok) return res.status(403).json({ error: 'Not permitted', message: may.say, why: may.why });
 
       /* ⭐ N02 / I2 — the body's target_entity_id becomes the notice list below, so it must be a PARTY on this dispute's roster.
          The definer only checks chit membership; an unchecked id would hand an outsider "Dispute resolved — <category>: <note>". */
@@ -4572,7 +4637,7 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
       /* ⭐ a settled dispute may release a bill a party already ACCEPTED (lib/books-hooks buyerGate: open dispute → waits).
          The dispute carries no "in whose favour"; the buyer's own status says it — accepted posts, rejected never does. */
       if (out.allResolved) {
-        try { const hooks = require('../lib/books-hooks'); setImmediate(() => { for (const p of [entity_id].concat(out.resolvedPartyIds || [])) hooks.afterChit(p, chit_id, null); }); } catch (_) {}
+        try { const hooks = require('../lib/books-hooks'); setImmediate(() => { for (const p of [entity_id].concat(out.resolvedPartyIds || [])) hooks.afterChit(p, chit_id, null); }); } catch (e) { cbLog.fellBack('chits PUT /:chit_id/disputes/:dispute_id/resolve: the helper failed — carried on without it', e); }
       }
 
       res.json({
@@ -4593,35 +4658,50 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
 // ─── GET /chits/disputes/queue ────────────────────────────────
 // All open disputes across all chits for this entity — used by DisputesPage sidebar
 // Safe: /disputes/queue has 2 segments; /:chit_id matches 1 segment only — no conflict
+/**
+ * ⭐ T3-DISPUTES-ASSIST — WIDENED, never copied: the same route answers the small app's paged list (CB Tasks & Orders › Disputes).
+ *   ?status=open|resolved|all (open)  ?side=mine|against  ?q=<words>  ?sort=old|new (old: the oldest open one is the one rotting)
+ *   ?page=&limit= (lib/page-limit; no page/limit = every row, as before)
+ * The answer keeps every key it had (disputes · my_disputes · other_disputes · total_open — the workshop and MIS read them) and adds
+ * rows · total · page · limit · counts { open, resolved } and, per row, others · mine · actions.resolve (finishDisputes above).
+ * Trips: ONE withEntity transaction (the page + the counts) + ONE roster read for the whole page (was one per row).
+ */
 router.get('/disputes/queue', auth, async (req, res) => {
   const entity_id = entityId(req);
+  const qs = req.query || {};
+  const status = ['open', 'resolved', 'all'].includes(qs.status) ? qs.status : 'open';
+  const side = ['mine', 'against'].includes(qs.side) ? qs.side : null;
+  const words = typeof qs.q === 'string' ? qs.q.trim().slice(0, 100) : '';
+  const like = words ? '%' + words.replace(/[\\%_]/g, (c) => '\\' + c) + '%' : null;
+  const paged = qs.page != null || qs.limit != null;
+  const limit = paged ? PAGE_LIMIT.limitOf(qs.limit, 50, 200) : null;
+  const page = paged ? PAGE_LIMIT.pageOf(qs.page) : 1;
+  const dir = qs.sort === 'new' ? 'DESC' : 'ASC';
 
   try {
-    // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me).
-    const result = await withEntity(entity_id, (db) => db.query(
-      `SELECT cd.*,
-              (SELECT ch.auto_subject FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS auto_subject,
-              (SELECT ch.purpose      FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS purpose,
-              (SELECT se.display_name FROM chit_header ch LEFT JOIN identities se ON se.identity_id=ch.sender_entity_id
-                WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS sender_display_name
-       FROM chit_disputes cd
-       WHERE cd.status = 'open'
-       ORDER BY cd.created_at ASC`,
-      [entity_id]
-    ));   // per-copy: RLS returns only MY OWN open dispute copies (I have one only if I'm a participant)
-
-    // evidence_snapshot is PII — expose presence only, never its contents
-    const rows = result.rows.map(({ evidence_snapshot, ...d }) => ({ ...d, has_evidence: evidence_snapshot != null }));
-    // attach the per-party roster (live status per party) so the raiser can resolve each party independently
-    for (const d of rows) {
-      try {
-        const rr = await query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [d.dispute_id]);
-        const statusBy = {}; rr.rows.forEach(r => { statusBy[r.entity_id] = r.status; });
-        d.participants = (d.roster || []).map(p => ({ dispute_id: d.dispute_id, entity_id: p.entity_id,
-          display_name: p.display_name, role: p.role, dispute_status: statusBy[p.entity_id] || 'open' }));
-      } catch (_) { d.participants = d.roster || []; }
-      delete d.roster;
-    }
+    // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me). per-copy: RLS returns only MY OWN dispute copies.
+    const got = await withEntity(entity_id, async (db) => {
+      const r = await db.query(
+        `SELECT x.*, count(*) OVER() AS _total FROM (
+           SELECT cd.*,
+                  (SELECT ch.auto_subject FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS auto_subject,
+                  (SELECT ch.purpose      FROM chit_header ch WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS purpose,
+                  (SELECT se.display_name FROM chit_header ch LEFT JOIN identities se ON se.identity_id=ch.sender_entity_id
+                    WHERE ch.chit_id=cd.chit_id AND ch.entity_id=$1 LIMIT 1) AS sender_display_name
+             FROM chit_disputes cd
+            WHERE ($2::text = 'all' OR ($2::text = 'open' AND cd.status = 'open') OR ($2::text = 'resolved' AND cd.status <> 'open'))
+              AND ($3::text IS NULL OR ($3::text = 'mine' AND cd.raised_by_entity_id = $1) OR ($3::text = 'against' AND cd.raised_by_entity_id <> $1))
+         ) x
+         WHERE ($4::text IS NULL OR concat_ws(' ', x.auto_subject, x.purpose, x.category, x.reason, x.raised_by_display_name, x.resolution_note) ILIKE $4::text)
+         ORDER BY x.created_at ${dir}, x.dispute_id
+         LIMIT $5 OFFSET $6`,
+        [entity_id, status, side, like, limit, paged ? (page - 1) * limit : 0]);
+      const c = await db.query(`SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes`);
+      return { rows: r.rows, counts: c.rows[0] || { open: 0, resolved: 0 } };
+    });
+    const total = got.rows.length ? Number(got.rows[0]._total) : 0;
+    // evidence_snapshot is PII — expose presence only, never its contents; the roster as participants (live status per party) so the raiser can resolve each party
+    const rows = await finishDisputes(got.rows.map(({ _total, ...d }) => d), entity_id, railActions.meOf(req));
     // "other" now means disputes targeting me (untargeted ones no longer leak)
     const myDisputes    = rows.filter(d => d.raised_by_entity_id === entity_id);
     const otherDisputes = rows.filter(d => d.raised_by_entity_id !== entity_id);
@@ -4630,11 +4710,12 @@ router.get('/disputes/queue', auth, async (req, res) => {
       disputes:       rows,
       my_disputes:    myDisputes,
       other_disputes: otherDisputes,
-      total_open:     rows.length,
+      total_open:     got.counts.open,
+      rows, total, page, limit: limit || total, counts: { open: got.counts.open, resolved: got.counts.resolved },
     });
   } catch (err) {
     if (err.message.includes('chit_disputes')) {
-      return res.json({ disputes: [], my_disputes: [], other_disputes: [], total_open: 0 });
+      return res.json({ disputes: [], my_disputes: [], other_disputes: [], total_open: 0, rows: [], total: 0, page: 1, limit: 0, counts: { open: 0, resolved: 0 }, code: 'DISPUTES_NOT_SET_UP' });
     }
     res.status(500).json({ error: 'Get dispute queue failed', message: safeErr(err) });
   }
@@ -4922,7 +5003,7 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
       await db.query(`DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       await db.query(`DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       await db.query(`DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-      try { await db.query(`DELETE FROM cb_attachment WHERE chit_id = $1`, [chit_id]); } catch (e) { /* attachment table may not exist */ }
+      try { await db.query(`DELETE FROM cb_attachment WHERE chit_id = $1`, [chit_id]); } catch (e) { cbLog.fellBack('chits DELETE /:chit_id/purge: the write failed — carried on without it', e); /* attachment table may not exist */ }
       res.json({ message: 'Draft permanently deleted', chit_id });
     });
   } catch (err) {
@@ -5241,7 +5322,7 @@ router.get('/:id/trace', auth, async (req, res) => {
 // came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
 // co-holds — not commercial terms — so this stays within the TR-6 lens.
 function traceToName(row) {
-  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
+  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { cbLog.fellBack('chits traceToName: did not parse — answered with none', e, 'debug'); a = []; } }
   a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null;
 }
 /** a node's edge facts off its frozen summary_json.trace */
@@ -5381,7 +5462,7 @@ router.get('/trace/by-batch', auth, async (req, res) => {
 
 /** the receiver of a handoff (by-batch chains on it): the 'receiver' row, else the first party that is not sender or operator */
 function traceRecipientOf(row) {
-  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (_) { a = []; } }
+  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { cbLog.fellBack('chits traceRecipientOf: did not parse — answered with none', e, 'debug'); a = []; } }
   a = Array.isArray(a) ? a : []; return a.find((x) => x.role === 'receiver') || a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
 }
 

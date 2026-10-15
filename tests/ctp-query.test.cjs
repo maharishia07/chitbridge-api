@@ -180,7 +180,8 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
     const code = strip(src);
     assert.strictEqual((code.match(/catalogueView\.buildPublicView\(/g) || []).length, 1,
       'buildPublicView may be called from exactly ONE place in routes/catalogue.js — publicViewFor');
-    assert.ok(/const view = await publicViewFor\(entity, \{ asOwner \}\)/.test(code), 'the /:bridge_id route goes through it');
+    /* SEC4: the route also says whether the reader is signed in (a sign-in-first shop's gate) — still the same function */
+    assert.ok(/const view = await publicViewFor\(entity, \{ asOwner[ ,}]/.test(code), 'the /:bridge_id route goes through it');
     assert.ok(/publicViewFor\(ent, \{\}\)/.test(code), 'so does the network shopfront, per department');
     assert.ok(/publicViewFor\(ent\.rows\[0\], \{ viewer \}\)/.test(code), 'and the enquiry check, with its viewer');
     assert.ok(/module\.exports\.publicViewFor = publicViewFor/.test(code));

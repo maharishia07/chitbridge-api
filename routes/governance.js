@@ -1,5 +1,6 @@
 'use strict';
 const versionref = require('../lib/versionref');
+const log = require('../lib/logger');
 // routes/governance.js — GOV-01 protected entity / constitution / governed inheritance.
 // Adapted to this codebase: Express router + query/withTransaction from ../db, identity_id PK,
 // parameterized SQL only (closes TD-006 for this surface), default-deny, read view leaks no PII.
@@ -8,6 +9,7 @@ const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
+const { writeGate } = require('../lib/access');   /* TRADE-SRV1 G8: a trade write is the owner's or an editor's — the server says why not */
 const { memo } = require('../lib/confcache');   // the active constitution is read once a minute, not once a call
 
 const { resolve, driftStatus } = require('../governance/resolver');
@@ -266,7 +268,9 @@ router.get('/readiness', auth, async (req, res) => {
     const out = req.query.destination
       ? await R.resolveForDestination(entity_id, String(req.query.destination), req.query.vertical, req.query.origin)
       : await R.resolveReadiness(entity_id);
-    res.json(out);
+    /* G8: what this login may do here — the server answers, the screen greys a refused button WITH the sentence */
+    const m = require('../lib/access').mayWrite(req);
+    res.json({ ...out, may: { gather: m, verify: m } });
   } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
 });
 
@@ -274,7 +278,8 @@ router.get('/readiness', auth, async (req, res) => {
 router.get('/lanes', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin));
+    const m = require('../lib/access').mayWrite(req);   /* G8 */
+    res.json({ ...(await require('../lib/readiness').resolveLaneMatrix(entity_id, req.query.vertical, req.query.origin)), may: { gather: m, verify: m } });
   } catch (err) { res.status(500).json({ error: 'Lanes failed', message: safeErr(err) }); }
 });
 
@@ -326,7 +331,7 @@ router.put('/profile', auth, async (req, res) => {
     const saved = await require('../lib/profile').saveProfile(entity_id, req.body || {});
     /* ⚠ AFTER the save, not before it. Announcing a change that has not happened yet is a lie every open tab
        acts on, and it would fire even when saveProfile throws. */
-    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}
+    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile: the signal was not sent — carried on without it', e); }
     res.json(saved);
   } catch (err) { res.status(err.status || 500).json({ error: 'Save profile failed', message: safeErr(err) }); }
 });
@@ -344,7 +349,7 @@ router.put('/profile/vault', auth, async (req, res) => {
     const b = req.body || {};
     const saved = await require('../lib/profile').saveVault(entity_id, b.vault || b);
     /* ⭐ the Business identity rows are the counter's bill header (trade name, address, phone) — so open counters hear it */
-    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}
+    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e); }
     res.json(saved);
   } catch (err) { res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
@@ -384,8 +389,8 @@ router.put('/country-setup', auth, async (req, res) => {
     const CS = require('../lib/country-setup');
     const out = await withEntity(entity_id, (h) => CS.save(h, entity_id, req.body || {}, req.identity && req.identity.identity_id));   /* CS2: who corrected the country is logged */
     /* the books gate's cached answer and the books-hooks switch cache both move with the country */
-    try { require('../lib/books-hooks').forget(entity_id); } catch (_) {}
-    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (_) {}
+    try { require('../lib/books-hooks').forget(entity_id); } catch (e) { log.fellBack('governance PUT /country-setup: the helper failed — carried on without it', e); }
+    try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /country-setup: the signal was not sent — carried on without it', e); }
     res.json(out);
   } catch (err) {
     if (err && err.say) return res.status(err.status || 422).json({ code: err.code, error: err.say, message: err.say });
@@ -446,13 +451,13 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
     /* ⭐ user_id RIDES ALONG so the caller can DISPLAY a handle rather than a key — invariant 3. bridge_id
        stays because it is what the UI keys the row by. */
     /* ⭐ the public facts with their rung — what they gave, what their books say, what we checked (lib/public-facts.js) */
-    let facts = null; try { facts = require('../lib/public-facts').factsOf(r.rows[0]); } catch (_) {}
+    let facts = null; try { facts = require('../lib/public-facts').factsOf(r.rows[0]); } catch (e) { log.fellBack('governance GET /readiness/:bridge_id: the helper failed — carried on without it', e); }
     res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...rd });
   } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
 });
 
 // POST /api/governance/compliance — GATHER a clearance for the acting entity (the supplier records a document).
-router.post('/compliance', auth, async (req, res) => {
+router.post('/compliance', auth, writeGate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -467,7 +472,7 @@ router.post('/compliance', auth, async (req, res) => {
 // POST /api/governance/verify — MACHINE-VERIFY a registry ID (IEC/GSTN/PAN) → the "verified" rung. Un-fakeable once the
 // Registry verify: confirms the ID against a KYB provider when one is connected (→ VERIFIED); otherwise records it as a
 // format-checked claim (→ NOT verified, honest). A malformed ID or a registry "not-active" is refused with 422.
-router.post('/verify', auth, async (req, res) => {
+router.post('/verify', auth, writeGate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
@@ -497,7 +502,7 @@ module.exports.loadActiveConstitution = loadActiveConstitution;
  */
 
 /** POST /api/governance/supplier-acceptance — record that this entity accepted a supplier's readiness. */
-router.post('/supplier-acceptance', auth, async (req, res) => {
+router.post('/supplier-acceptance', auth, writeGate, async (req, res) => {
   try {
     if (!(await require('../lib/schema').hasTable('supplier_readiness_acceptance'))) {
       return res.status(503).json({ error: 'Not enabled', code: 'SRA_NOT_MIGRATED',

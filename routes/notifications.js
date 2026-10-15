@@ -1,6 +1,7 @@
 // routes/notifications.js — derived notification feed (no notifications table).
 // Computed from state_log: recent activity by OTHERS on chits I am a party to.
 const express = require('express');
+const log = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { query, withEntity } = require('../db');
@@ -133,7 +134,7 @@ router.get('/', auth, async (req, res) => {
       const s = await withEntity(entity_id, (c) => c.query(
         `SELECT to_jsonb(i)->>'notif_seen_at' AS seen FROM identities i WHERE i.identity_id = $1`, [entity_id]));
       seen = s.rows[0] && s.rows[0].seen;
-    } catch (e) { /* pre-b157 — leave seen null and every row counts as new */ }
+    } catch (e) { log.fellBack('notifications GET /: the read failed — carried on without it', e); /* pre-b157 — leave seen null and every row counts as new */ }
     /**
      * ⚠️ MESSAGES ARE NOT COUNTED HERE — they have their own badge now.
      *

@@ -19,7 +19,6 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { isOwner } = require('../lib/owner');
 const access = require('../lib/access');
 const railActions = require('../lib/rail-actions');
 const RS = () => require('../lib/repeat-supply');
@@ -34,14 +33,14 @@ function fail(res, e) {
   if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
   if (e && e.refused) return res.status(422).json({ code: e.code || 'REPEAT_REFUSED', error: e.message, message: e.message });
   if (e && e.status >= 400 && e.status < 500) return res.status(e.status).json(Object.assign({ error: e.message, message: e.message }, e.body || {}));
-  try { require('../lib/logger').error('repeat.route', { error: String(e && e.message).slice(0, 200) }); } catch (_) {}
+  require('../lib/logger').error('repeat.route', { error: String(e && e.message).slice(0, 200) });
   return res.status(500).json({ error: 'Server error', message: 'Repeat supply could not answer. Try again.' });
 }
 /** a writing verb on either side: the owner, or a person at editor level — the rail's own words for the rest */
 function editorMay(req, res) {
-  if (isOwner(req) || access.canEdit(req.identity)) return true;
-  const why = access.levelOf(req.identity) === 'commenter' ? 'comment_only' : 'read_only';
-  res.status(403).json({ error: 'Not permitted', message: railActions.WHY[why], why });
+  const m = access.mayWrite(req);   /* the one answer (lib/access mayWrite) — the trade writes ask the same */
+  if (m.may) return true;
+  res.status(403).json({ error: 'Not permitted', message: m.why, why: m.code });
   return false;
 }
 /** the customer's verbs: editor level on the copy they hold (the rail engine's ladder, the same answer GET /chits/:id gives) */

@@ -17,6 +17,7 @@
  * [[reference-cb-core-principle]] applied to a person: the fact travels, the source does not.
  */
 const express = require('express');
+const log = require('../lib/logger');
 const router  = express.Router();
 const auth    = require('../middleware/auth');
 const schema  = require('../lib/schema');
@@ -278,7 +279,7 @@ async function loadDoc(req, scheme) {
     `SELECT value_enc, status, verification_ref FROM identity_documents WHERE identity_id = $1 AND scheme = $2`, [subject.id, scheme]));
   const row = r.rows[0];
   let value = null;
-  if (row && row.value_enc) { try { value = (vault.decryptVault(JSON.parse(row.value_enc)) || {}).v || null; } catch (_) { value = null; } }
+  if (row && row.value_enc) { try { value = (vault.decryptVault(JSON.parse(row.value_enc)) || {}).v || null; } catch (e) { log.fellBack('identity-docs loadDoc: did not parse — answered with nothing', e, 'debug'); value = null; } }
   return { subject, entity_id, row, value };
 }
 const stores = (entity_id, identity_id, scheme) => ({

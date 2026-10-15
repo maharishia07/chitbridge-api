@@ -3,6 +3,8 @@
 // @stage-note sheet) and its few writes (payments, manual entries, reversals, month locks, opening, packs). 404 while off.
 'use strict';
 const CLOCK = require('../lib/shop-clock');
+const { safeErr } = require('../lib/respond');
+const logger = require('../lib/logger');
 /**
  * routes/books.js — SPEC-books-v2 §5, in the shapes the Ledger screen reads (chitbridge-web public/app/cap-books.js).
  *
@@ -76,7 +78,7 @@ function fail(res, e) {
   }
   /* silence is the bug: the 500 used to leave nothing in the Railway log */
   console.error('books route failed:', (e && e.stack) || e);
-  return res.status(500).json({ error: 'Failed', message: String((e && e.message) || e).slice(0, 300) });
+  return res.status(500).json({ error: 'Failed', message: safeErr(e) });
 }
 /** a key-bearer (a counter, a TV, a connector) has no business in the ledger — the second fence behind KEY_ROUTES */
 function noKey(req, res, next) {
@@ -835,15 +837,19 @@ router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) =
  * The cheques still HELD (with ?all=1, every cheque) — what a "Cheques held" list shows. `next` is the steps the ENGINE
  * will accept now (CBReceivables.itemsOfCheque decides — received → deposited → cleared | bounced); a screen offers those.
  * ⭐ F3: + pdc_reminders: [{ payment_id, cheque_no, cheque_date, amount_minor, state: deposit_today | overdue_for_deposit | not_yet }] — the post-dated
- *   cheques RECEIVED and not yet deposited, as CBReceivables.pdcReminders says them (today's shop day; `not_yet` only within PDC_LEAD_DAYS). Read from the
- *   same rows as `cheques`, no second query. Nothing else changed.
+ *   cheques RECEIVED and not yet deposited, as CBReceivables.pdcReminders says them (today's shop day; `not_yet` only within lead_days). Read from the
+ *   same rows as `cheques`, no second query.
+ * ⭐ T3-P1-MONEY: + asOf (the shop's day the states were judged on) and remind: { on, lead_days, from: 'shop'|null, may_set, why_not } — the OWNER's switch,
+ *   read from the shop's stored terms (lib/finance-terms pdcRemind: books_setting.terms.pdc_remind, set through POST /terms); absent = on, 7 days ahead, as
+ *   before. `on` false → pdc_reminders is [] (the engine answers null). One more statement in the SAME transaction (shopTerms), only once b298 has run.
  */
-const PDC_LEAD_DAYS = 7;   /* a cheque dated within the week ahead is a reminder too — the engine's lead_days */
 router.get('/cheques', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), all = String(req.query.all || '') === '1';
+    const e = ctx(req), all = String(req.query.all || '') === '1', T = require('../lib/finance-terms'), may = isOwner(req);
+    const mig = await T.migrated();
     const out = await withEntity(e, async (h) => {
       const rows = await S.cheques(h, e, all, 200);
+      const remind = T.pdcRemind(mig ? await T.shopTerms(h, e) : {});
       const pids = Array.from(new Set(rows.map((c) => String(c.party_id))));
       const names = await partyNames(h, e, pids), chart = await S.accounts(h, e), R = E.receivables(), kept = new Map(), day = today(req);
       /* PERF1: every listed party's items on each control account in ONE read per account (≤ 2) — it was one read per party inside the loop (N+1) */
@@ -857,20 +863,21 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
       /* the engine's credit shape ({ id, amount, cheque: { no, date, status } }) from the same rows; the amount back from the row by id, so no second rounding */
       const byId = new Map(rows.map((c) => [String(c.payment_id), c]));
       const pdc = (R.pdcReminders(rows.filter((c) => c.direction === 'in').map((c) => ({ id: String(c.payment_id), amount: Number(c.amount_minor), cheque: { no: c.cheque_no || null, date: E.ymd(c.cheque_date), status: c.status || 'received' } })),
-        day, { on: true, lead_days: PDC_LEAD_DAYS }) || []).map((r) => { const c = byId.get(String(r.credit)) || {}; return { payment_id: r.credit, cheque_no: r.no, cheque_date: r.date, amount_minor: Number(c.amount_minor || 0), state: r.state }; });
+        day, { on: remind.on, lead_days: remind.lead_days }) || []).map((r) => { const c = byId.get(String(r.credit)) || {}; return { payment_id: r.credit, cheque_no: r.no, cheque_date: r.date, amount_minor: Number(c.amount_minor || 0), state: r.state }; });
       for (const c of rows) {
         const a = chart.find((x) => x.role === (c.direction === 'in' ? 'debtors' : 'creditors'));
         const k = c.party_id + '|' + (a ? a.account_id : '');
         if (!kept.has(k)) kept.set(k, []);
-        const next = ['deposited', 'cleared', 'bounced'].filter((to) => { try { R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day); return true; } catch (_) { return false; } });
+        const next = ['deposited', 'cleared', 'bounced'].filter((to) => { try { R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day); return true; } catch (e) { logger.fellBack('books cheques: not a next step for this cheque — not offered', e, 'debug'); return false; } });
         const p = names.get(String(c.party_id)) || {};
         list.push({ payment_id: c.payment_id, party_id: c.party_id, party_no: p.party_no || null, name: p.nickname || p.name || null, direction: c.direction, amount_minor: Number(c.amount_minor),
           currency: c.currency, reference: c.reference || null, cheque_no: c.cheque_no || null, cheque_bank: c.cheque_bank || null, cheque_date: E.ymd(c.cheque_date), received_at: E.ymd(c.received_at),
           status: c.status || 'received', next });
       }
-      return { list, pdc };
+      return { list, pdc, remind, day };
     });
-    res.json({ currency: curOf(req), cheques: out.list, pdc_reminders: out.pdc });
+    res.json({ currency: curOf(req), asOf: out.day, cheques: out.list, pdc_reminders: out.pdc,
+      remind: { on: out.remind.on, lead_days: out.remind.lead_days, from: out.remind.from, may_set: may, why_not: may ? null : 'Only the owner may set the reminder.' } });
   } catch (err) { fail(res, err); }
 });
 /**
@@ -1289,8 +1296,19 @@ route('post', '/gst/close', (req, e, s, b, by) => P().gstClose(e, s, b, by));
 route('post', '/gst/pay', (req, e, s, b, by) => P().gstPay(e, s, b, by));
 /** GET /returns?period&frequency&simpler&stagger&emirate — BAS1: the shop's OWN return (AU BAS · AE VAT201) READ from the posted books for one period, with the pack's period
  *  table and due dates; every box names the ledgers it counts (lib/books-period.taxReturn → engines gst-returns.returnFor). Owner only. Prepared, never lodged.
- *  India → 422 RETURN_FROM_RAIL (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
-router.get('/returns', auth, owner, on, async (req, res) => { try { res.json(await P().taxReturn(ctx(req), req.books, req.query || {})); } catch (err) { fail(res, err); } });
+ *  India → 200 { form: null, code: RETURN_FROM_RAIL, why, rail } (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
+/* TOUR-FIX1: a shop whose return is not read from the ledgers (India: the GSTR from the rail) is an ANSWER, not a refusal — 200 with `form: null`,
+   the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
+router.get('/returns', auth, owner, on, async (req, res) => {
+  try { res.json(await P().taxReturn(ctx(req), req.books, req.query || {})); }
+  catch (err) {
+    if (err && err.code === 'RETURN_FROM_RAIL') {
+      const pack = err.pack || null;
+      return res.json({ form: null, pack, code: err.code, why: pack === 'IN' ? 'Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month\'s GST here.' : err.message, rail: pack === 'IN' ? '/api/tax/gstr' : null });
+    }
+    fail(res, err);
+  }
+});
 /** POST /loans { ref, lender, amount, into, rate?, kind? } · POST /loans/:ref/emi { principal, interest, from?, date, client_ref } */
 route('post', '/loans', (req, e, s, b, by) => P().takeLoan(e, s, b, by));
 route('post', '/loans/:ref/emi', (req, e, s, b, by) => P().loanEmi(e, s, String(req.params.ref).slice(0, 60), b, by));

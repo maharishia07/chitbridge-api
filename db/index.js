@@ -342,16 +342,31 @@ function inlineSql(text, params) {
   if (/;\s*\S/.test(out.replace(/'[^']*'/g, ''))) throw new Error('readBatch: one statement per entry');
   return out;
 }
+/**
+ * ⭐ EFF-TRIPS (2026-10-15): a statement may name its OWN `entity` — `{ text, params, entity }`. A `SELECT set_config(
+ * 'app.current_entity', <entity>, true)` rides in front of it (SET LOCAL, same transaction, one more statement on the
+ * wire, still ONE trip), so a store reading the released offers of each of its brands — FORCE-RLS rows that only open
+ * under that brand's binding — asks once instead of once per brand (GET /api/network-offers: one withEntity per brand).
+ * Statements without `entity` run under the batch's entity, exactly as before; the result array still has one entry per
+ * statement, in order. The binding stays switched for the statements that FOLLOW — put the batch-entity statements first.
+ */
 const readBatch = async (entityId, actorId, statements) => {
   if (!pool) await ensurePool();
   /* ⭐ ONE trip, and lib/trips is told so — it was not, so X-DB-Trips left every readBatch out of the count (2026-09-29) */
   try { require('../lib/trips').tick('batch'); } catch (_) {}
   const head = "BEGIN; SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true);";
-  const body = statements.map((s) => { rlsGuardCheck(s.text); return inlineSql(s.text, s.params); }).join(';\n') + ';';
+  const texts = [], at = [];
+  statements.forEach((s) => {
+    rlsGuardCheck(s.text);
+    if (s.entity !== undefined && s.entity !== null) texts.push("SELECT set_config('app.current_entity', " + inlineLiteral(String(s.entity)) + ', true)');
+    at.push(texts.length);
+    texts.push(inlineSql(s.text, s.params));
+  });
+  const body = texts.join(';\n') + ';';
   const text = head + '\n' + body + '\nCOMMIT;';
   const res = await pool.query(text);          /* no values → simple protocol → one message, many results */
   const arr = Array.isArray(res) ? res : [res];
-  /* results: BEGIN, set_config, …statements…, COMMIT — hand back the middle */
-  return arr.slice(2, 2 + statements.length);
+  /* results: BEGIN, set_config, …statements (each entity switch is one more)…, COMMIT — hand back one per statement */
+  return at.map((i) => arr[2 + i]);
 };
 module.exports = { query, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, readBatch, inlineSql, get pool() { return pool; } };

@@ -14,13 +14,14 @@
  */
 'use strict';
 const express = require('express');
+const { safeErr } = require('../lib/respond');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const supplies = require('../lib/supply-store');
 
 const ctx = (req) => auth.entityOf(req);
-const fail = (res, e, what) => res.status(500).json({ error: what, message: String(e && e.message) });
+const fail = (res, e, what) => res.status(500).json({ error: what, message: safeErr(e) });
 
 /** the shop's own list of things it uses — never products, never priced */
 router.get('/', auth, async (req, res) => {

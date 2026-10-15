@@ -1,5 +1,6 @@
 // routes/relationships.js — B3.6 Supplier List + Customer List + Promotions
 const express = require('express');
+const log = require('../lib/logger');
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
@@ -35,7 +36,7 @@ async function partyPatch(req, res, side) {
  */
 async function numberParty(owner, party_id) {
   try { return await withEntity(owner, (db) => require('../db').trySavepoint(db, () => partyFields.ensureNo(db, owner, party_id), null)); }
-  catch (_) { return null; }
+  catch (e) { log.fellBack('relationships numberParty: the read failed — answered with nothing', e); return null; }
 }
 
 // actors act in their parent entity's context
@@ -207,10 +208,10 @@ router.get('/suppliers', auth, async (req, res) => {
         if (o.on_rail === false) { o.for_you = []; return; }
         try {
           const [groups, all] = await Promise.all([cg.groupsOf({ seller_id: o.supplier_entity_id, viewer_id: owner, withEntity }), cv.liveOffers({ entity_id: o.supplier_entity_id, withEntity, all: true })]);
-          o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => '₹' + Number(n).toFixed(2), customer_groups: groups }) : null; } catch (_) {} return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive }; });
-        } catch (_) { o.for_you = []; }
+          o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => '₹' + Number(n).toFixed(2), customer_groups: groups }) : null; } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); } return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive }; });
+        } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — answered with none', e, 'debug'); o.for_you = []; }
       }));
-    } catch (_) {}
+    } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); }
     await partyFields.decorate(withEntity, owner, rows, 'supplier_entity_id', 'supplier');
     res.json({ suppliers: rows, count: rows.length });
   } catch (err) {

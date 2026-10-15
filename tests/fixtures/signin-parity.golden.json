@@ -529,7 +529,7 @@
      "body": {
       "message": "First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.",
       "user_id": "mala@shopone.br",
-      "dev_otp": "123456"
+      "dev_otp": "654321"
      }
     }
    ],
@@ -555,8 +555,8 @@
      "status": "active"
     },
     "mala": {
-     "otp_code": "123456",
-     "otp_expires_at": "T+60m",
+     "otp_code": "654321",
+     "otp_expires_at": "T+1440m",
      "otp_attempts": 0,
      "status": "pending"
     },

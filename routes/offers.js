@@ -14,6 +14,7 @@
  * still writes its own order; this only says what would come off and why. Same engine, same answer, in every system.
  */
 const express = require('express');
+const { safeErr } = require('../lib/respond');
 const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -54,7 +55,7 @@ async function run(req, res, explain) {
                   perLine: eng.perLine ? eng.perLine(ev, lines) : {}, offers_considered: offers.length, engine: 'chitbridge-offers', version: 1 };
     if (explain) out.explain = (ev.adjustments || []).map((a) => ({ label: a.label, why: a.why, amount: a.amount, scope: a.scope, target: a.target }));
     res.json(out);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 }
 router.post('/evaluate', auth, auth.requireScope('offers'), (req, res) => run(req, res, false));
 router.post('/explain', auth, auth.requireScope('offers'), (req, res) => run(req, res, true));
