@@ -7,6 +7,7 @@ const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions');   // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
 const disputeMay = require('../lib/dispute-may');   // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const railStatus = require('../lib/rail-status');   // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
+const { assignChit, taskCount } = require('../lib/assign-chit');   // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
 const log = require('../lib/logger');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
@@ -273,17 +274,11 @@ async function autoAssignReceived(entity_id, chit_id) {
       [target, entity_id])).rows[0];
     if (!t) return;
 
-    await client.query(
-      `UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
-              assigned_at = NOW(), assignment_type = 'auto', updated_at = NOW()
-        WHERE chit_id = $3 AND entity_id = $4 AND direction = 'received'`,
-      [t.identity_id, t.display_name, chit_id, entity_id]);
-    /* ⭐ T1-RAIL: the copy goes back to pending through the ONE status write (the rail's table), never a bare SET.
-       The status was read with the row above, in this transaction — no second read. The shop's own automation = SYSTEM. */
-    const g = await railStatus.statusGate(client, entity_id, chit_id, 'pending', railStatus.SYSTEM, { from: cs.current_status });
-    if (g.ok) await g.write();
-    else log.warn('auto-assign: status not moved to pending', { chit_id, from: g.from, why: g.why });
-    await require('../lib/assign-chit').taskCount(client, t.identity_id, 'take');   /* TA1 */
+    /* ⭐ W1-RAIL: the one assignment writer (lib/assign-chit) — my received copy, then back to pending through the ONE status write
+       (T1-RAIL, rail-status statusGate), never a bare SET. The status was read with the row above — no second read. The shop's own
+       automation moves it as SYSTEM. */
+    await assignChit(client, entity_id, chit_id, t, 'auto', { copy: 'received', me: railStatus.SYSTEM, from: cs.current_status });
+    await taskCount(client, t.identity_id, 'take');   /* TA1 */
     await client.query(
       `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
        VALUES ($1, $2, 'assigned', NULL, 'System (auto-assign)', 'pending', $3)`,
@@ -5215,18 +5210,11 @@ router.post('/assign-bulk',
           const already = cs.rows[0].assigned_to_actor_id;
           if (already === t.identity_id) { assigned.push(chit_id); continue; }              // already theirs — no change, no cost
           if (load >= cap) { skipped.push({ chit_id, reason: `at capacity (${cap})` }); continue; }   // (e) capacity gate
-          if (already) { await require('../lib/assign-chit').taskCount(client, already, 'release'); }
-          await client.query(
-            `UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
-                    assigned_at = NOW(), assignment_type = 'push', updated_at = NOW()
-              WHERE chit_id = $3 AND entity_id = $4`,
-            [t.identity_id, t.display_name, chit_id, entity_id]);
-          /* ⭐ T1-RAIL: back to pending through the ONE status write — only my received copy moves (the rail's rule); a sent
-             copy keeps its status. The assignment stands either way; a refusal is logged, never silent. */
-          const g = await railStatus.statusGate(client, entity_id, chit_id, 'pending', me);
-          if (g.ok) await g.write();
-          else if (g.why !== 'not_received') log.warn('assign-bulk: status not moved to pending', { chit_id, from: g.from, why: g.why });
-          await require('../lib/assign-chit').taskCount(client, t.identity_id, 'take');   /* TA1 */
+          if (already) { await taskCount(client, already, 'release'); }
+          /* ⭐ W1-RAIL: the one assignment writer — the UPDATE, then back to pending through the ONE status write (T1-RAIL): only my
+             received copy moves (the rail's rule); a sent copy keeps its status. The assignment stands either way; a refusal is logged. */
+          await assignChit(client, entity_id, chit_id, t, 'push', { me });
+          await taskCount(client, t.identity_id, 'take');   /* TA1 */
           load++;
           await client.query(
             // F3: assignment is INTERNAL — write ONLY the assigning entity's own row. The assignee sees it via the

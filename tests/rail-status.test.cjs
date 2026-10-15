@@ -136,7 +136,9 @@ const world = (rows) => { STATUS = rows.map((r) => Object.assign({ chit_id: C1 }
   world([{ entity_id: R, direction: 'received', current_status: 'accepted' }]);
   await chits._autoAssignReceived(R, C1);
   t('auto-assign: back to pending through the gate', GATES.some((x) => x.to === 'pending') && STATUS[0].current_status === 'pending');
-  t('auto-assign: the assignment UPDATE no longer sets current_status', !SENT.some((s) => /assignment_type = 'auto'/.test(s) && /current_status/.test(s)));
+  /* W1-RAIL: the assignment UPDATE is lib/assign-chit's one shape (assignment_type = $3) and it never carries current_status */
+  t('auto-assign: the assignment UPDATE is sent and does not set current_status',
+    SENT.some((s) => /SET assigned_to_actor_id = \$1,.*assignment_type = \$3/.test(s)) && !SENT.some((s) => /SET assigned_to_actor_id/.test(s) && /current_status/.test(s)));
   world([{ entity_id: R, direction: 'received', current_status: 'accepted' }, { entity_id: R, direction: 'sent', current_status: 'delivered' }]);
   r = await call('POST', '/api/chits/assign-bulk', tok(R), { chit_ids: [C1], target_actor_id: A1 });
   t('assign-bulk: back to pending through the gate — only the received copy', r.status === 200 && GATES.some((x) => x.to === 'pending')

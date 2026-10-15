@@ -15,8 +15,6 @@ const accessEvents = require('../lib/access-events');   // b172 — who changed 
 const schema = require('../lib/schema');   // b173 — deploy-before-migration column probe
 const access = require('../lib/access');   // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
 const railActions = require('../lib/rail-actions');   // T1-RAIL — who is moving the copy (the rail's level ladder)
-const railStatus = require('../lib/rail-status');     // T1-RAIL — the ONE status write; an assignment never SETs current_status itself
-const log = require('../lib/logger');
 const router  = express.Router();
 /* SEC2 · THE ONE owner gate on every people WRITE (lib/owner.js ownerOnly, the sentence lib/people.js already shows on the
    People screen). Before it, delegate and settings had no check at all and the others refused a person by an accidental 404. */
@@ -78,7 +76,7 @@ const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
    recoverable — an attacker able to observe some output can predict a victim's code. The S4 reviewer fix said
    exactly this in 2026-07-13 and was applied to routes/entities.js only; this copy never got it. */
 const generateOTP = require('../lib/otp').generateOTP;
-const { taskCount } = require('../lib/assign-chit');   /* ⭐ TA1: the one writer of a person's task count */
+const { taskCount, assignChit, rerouteOpenTasks } = require('../lib/assign-chit');   /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
 
 // Suggest actor_key from full name
 // Ravi Kumar → ravik
@@ -898,26 +896,11 @@ router.put('/:id/status',
       // B1 RLS: all task-routing chit_status updates are this entity's own rows -> withEntity(me).
       await withEntity(entity_id, async (client) => {
         if (a.current_task_count > 0 && task_action) {
+          /* W1-RAIL: the one assignment writer (lib/assign-chit) — their open work → the pool or the colleague */
           if (task_action === 'pool') {
-            const result = await client.query(
-              `UPDATE chit_status
-               SET assigned_to_actor_id = NULL, assigned_to_actor_display_name = NULL,
-                   assigned_at = NULL, assignment_type = NULL
-               WHERE assigned_to_actor_id = $1
-               AND current_status NOT IN ('completed','cancelled','rejected')`,
-              [actor_id]
-            );
-            tasks_routed = result.rowCount;
+            tasks_routed = await rerouteOpenTasks(client, entity_id, actor_id, null);
           } else if (task_action === 'actor' && targetActor) {
-            const result = await client.query(
-              `UPDATE chit_status
-               SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
-                   assigned_at = NOW(), assignment_type = 'push'
-               WHERE assigned_to_actor_id = $3
-               AND current_status NOT IN ('completed','cancelled','rejected')`,
-              [targetActor.identity_id, targetActor.display_name, actor_id]
-            );
-            tasks_routed = result.rowCount;
+            tasks_routed = await rerouteOpenTasks(client, entity_id, actor_id, targetActor);
             await taskCount(client, target_actor_id, { add: tasks_routed });
           }
           await taskCount(client, actor_id, 'clear');
@@ -1115,24 +1098,12 @@ router.put('/break',
         // B1 RLS: the chit_status routing updates are this entity's own rows -> withEntity(me).
         await withEntity(entity_id, async (client) => {
           if (count > 0) {
+            /* W1-RAIL: the one assignment writer (lib/assign-chit); the colleague's count follows the work, as on deactivate */
             if (task_action === 'pool') {
-              await client.query(
-                `UPDATE chit_status
-                 SET assigned_to_actor_id = NULL, assigned_to_actor_display_name = NULL,
-                     assigned_at = NULL, assignment_type = NULL
-                 WHERE assigned_to_actor_id = $1
-                 AND current_status NOT IN ('completed','cancelled','rejected')`,
-                [actor_id]
-              );
+              await rerouteOpenTasks(client, entity_id, actor_id, null);
             } else if (task_action === 'actor' && targetActor) {
-              await client.query(
-                `UPDATE chit_status
-                 SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2,
-                     assigned_at = NOW(), assignment_type = 'push'
-                 WHERE assigned_to_actor_id = $3
-                 AND current_status NOT IN ('completed','cancelled','rejected')`,
-                [targetActor.identity_id, targetActor.display_name, actor_id]
-              );
+              const routed = await rerouteOpenTasks(client, entity_id, actor_id, targetActor);
+              await taskCount(client, targetActor.identity_id, { add: routed });
             }
             await taskCount(client, actor_id, 'clear');
           }
@@ -1159,18 +1130,6 @@ router.put('/break',
     }
   }
 );
-
-/**
- * ⭐ T1-RAIL — an assignment puts MY received copy back to pending through the ONE status write (lib/rail-status statusGate,
- * the rail's table), inside the assignment's own transaction. A sent copy keeps its status (the rail moves only received
- * copies); a refusal leaves the assignment standing and is logged, never silent. → { moved, from }
- */
-async function toPending(client, entity_id, chit_id, me, kind) {
-  const g = await railStatus.statusGate(client, entity_id, chit_id, 'pending', me);
-  if (g.ok) return { moved: await g.write(), from: g.from };
-  if (g.why !== 'not_received') log.warn('assign ' + kind + ': status not moved to pending', { chit_id, from: g.from, why: g.why });
-  return { moved: false, from: g.from };
-}
 
 // ── PUT /api/actors/assign/:chit_id ─────────────────────────
 // Pull push or return a chit assignment
@@ -1219,17 +1178,9 @@ router.put('/assign/:chit_id',
             message: `Already assigned to ${cs.actor_name}`
           });
         }
-        await db(
-          `UPDATE chit_status
-           SET assigned_to_actor_id = $1,
-               assigned_to_actor_display_name = $2,
-               assigned_at = NOW(),
-               assignment_type = 'pull',
-               updated_at = NOW()
-           WHERE chit_id = $3 AND entity_id = $4`,
-          [action_by_id, action_by_name, chit_id, entity_id]
-        );
-        const movedOnPull = await toPending(client, entity_id, chit_id, railActions.meOf(req), 'pull');
+        /* W1-RAIL: the one assignment writer — the UPDATE and the back-to-pending step (rail-status statusGate) in one call */
+        const movedOnPull = await assignChit(client, entity_id, chit_id, { identity_id: action_by_id, display_name: action_by_name }, 'pull',
+          { me: railActions.meOf(req) });
         await taskCount(db, action_by_id, 'take');
         // Log assignment event
         await db(
@@ -1285,17 +1236,7 @@ router.put('/assign/:chit_id',
           await taskCount(db, cs.assigned_to_actor_id, 'release');
         }
 
-        await db(
-          `UPDATE chit_status
-           SET assigned_to_actor_id = $1,
-               assigned_to_actor_display_name = $2,
-               assigned_at = NOW(),
-               assignment_type = 'push',
-               updated_at = NOW()
-           WHERE chit_id = $3 AND entity_id = $4`,
-          [t.identity_id, t.display_name, chit_id, entity_id]
-        );
-        const movedOnPush = await toPending(client, entity_id, chit_id, railActions.meOf(req), 'push');
+        const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) });   /* W1-RAIL: the one writer */
         await taskCount(db, t.identity_id, 'take');
         // Log assignment — differentiate initial push from actor-to-actor transfer
         const isTransfer = !!cs.assigned_to_actor_id;
@@ -1336,14 +1277,7 @@ router.put('/assign/:chit_id',
         if (cs.assigned_to_actor_id) {
           await taskCount(db, cs.assigned_to_actor_id, 'release');
         }
-        await db(
-          `UPDATE chit_status
-           SET assigned_to_actor_id = NULL,
-               assigned_to_actor_display_name = NULL,
-               assigned_at = NULL, assignment_type = NULL
-           WHERE chit_id = $1 AND entity_id = $2`,
-          [chit_id, entity_id]
-        );
+        await assignChit(client, entity_id, chit_id, null);   /* W1-RAIL: back to the pool through the one writer */
         // One row per participant — each owns their copy of this return event
         await db(
           `INSERT INTO state_log
@@ -1591,15 +1525,8 @@ router.put('/:id/tasks/route',
       }
 
       if (action === 'pool') {
-        // Return to entity pool
-        await db(
-          `UPDATE chit_status
-           SET assigned_to_actor_id = NULL,
-               assigned_at = NULL,
-               assignment_type = NULL
-           WHERE chit_id = $1 AND entity_id = $2`,
-          [chit_id, entity_id]
-        );
+        // Return to entity pool — W1-RAIL: the one writer (this copy also clears the name it used to leave behind)
+        await assignChit(client, entity_id, chit_id, null);
         // Decrement from_actor task count
         await taskCount(db, from_actor_id, 'release');
         // Log
@@ -1627,14 +1554,8 @@ router.put('/:id/tasks/route',
           return res.status(400).json({ error: 'Target actor not found or not active' });
         }
         const ta = toActor.rows[0];
-        await db(
-          `UPDATE chit_status
-           SET assigned_to_actor_id = $1,
-               assigned_at = NOW(),
-               assignment_type = 'push'
-           WHERE chit_id = $2 AND entity_id = $3`,
-          [to_actor_id, chit_id, entity_id]
-        );
+        /* W1-RAIL: the one writer — this door used to write the id but NOT the display name, so the row still showed the previous person */
+        await assignChit(client, entity_id, chit_id, ta, 'push');
         // Update task counts
         await taskCount(db, from_actor_id, 'release');
         await taskCount(db, to_actor_id, 'take');
