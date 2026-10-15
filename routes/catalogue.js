@@ -454,22 +454,34 @@ async function resolveEntity(handle) {
   return r.rows[0] || null;
 }
 
-// ── Network storefront (the lens): aggregate the PUBLIC catalogues of a NETWORK's nodes into ONE store, with the
-//    holding node STRIPPED OUT. Products self-declare membership via item_data.network_id (migration-free); the
+// ── Network storefront (the lens): aggregate the PUBLIC catalogues of a NETWORK's members into ONE store. The
 //    public read runs withEntity(null) so RLS returns ONLY public items — a private department is never exposed.
 //    The customer SEARCHES products by category (= the line of business); they never see the internal tree,
-//    department, or location. The product→node map that routes the order stays server-side, never in this response. ──
+//    department, or location. The product→node map that routes the order stays server-side, never in this response.
+//
+//    ⭐ SEC-FIX2 C6 (review 2026-10-15): `:networkId` is the network ROOT's handle (the brand's bridge_id or user_id), and
+//    membership comes from the network itself — lib/network-membership.members (cb_entity + cb_edge, standing applied) —
+//    never from `item_data.network_id`, a key every shop wrote on its own product: a shop could put its items, and then
+//    its orders, into any network it named. The operator that fulfils an order is that root; `item_data.operator` is no
+//    longer read. ──
+/** networkStoreOf(handle) → { brand, members: [identity ids, the brand first] } from the edges, or null when no such network */
+async function networkStoreOf(handle) {
+  const brand = await resolveEntity(String(handle || '').trim());
+  if (!brand) return null;
+  const members = await membership.members(brand.identity_id);
+  return { brand, members: [String(brand.identity_id)].concat(members.map(String)) };
+}
+/** the public item rows of these members — one statement; a sign-in-first shop's items never reach the anonymous lens (SEC4) */
+const networkItems = (members) => withEntity(null, (db) => db.query(
+  `SELECT ci.item_id, ci.entity_id, ci.item_data FROM catalogue_items ci WHERE ci.entity_id = ANY($1::uuid[]) AND ci.is_active = true
+      AND NOT EXISTS (SELECT 1 FROM identities i WHERE i.identity_id = ci.entity_id AND to_jsonb(i)->>'storefront_access' = 'login')`, [members]));
 router.get('/network-store/:networkId', async (req, res) => {
   try {
-    const nid = String(req.params.networkId || '').trim();
-    if (!nid) return res.status(400).json({ error: 'Bad request', message: 'network id required' });
+    const net = await networkStoreOf(req.params.networkId);
+    if (!net) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
     const q = String(req.query.q || '').trim().toLowerCase();
     const cat = String(req.query.category || '').trim();
-    const rows = (await withEntity(null, (db) => db.query(
-      /* SEC4: a sign-in-first shop's items never reach this anonymous lens (the same rule publicViewFor applies); to_jsonb so a
-         deployment without the storefront_access column reads as it always did */
-      `SELECT ci.item_id, ci.item_data FROM catalogue_items ci WHERE ci.item_data->>'network_id' = $1 AND ci.is_active = true
-          AND NOT EXISTS (SELECT 1 FROM identities i WHERE i.identity_id = ci.entity_id AND to_jsonb(i)->>'storefront_access' = 'login')`, [nid]))).rows;
+    const rows = (await networkItems(net.members)).rows;
     let products = rows.map((r) => { const d = r.item_data || {};
       return { product_id: r.item_id, name: d.name || d.particulars || '(unnamed)', category: d.category || 'Other',
         // TOLERANT READ (both shapes). null stays null — "price on request" is a real state, not a zero.
@@ -478,8 +490,9 @@ router.get('/network-store/:networkId', async (req, res) => {
     if (cat) products = products.filter((p) => p.category.toLowerCase() === cat.toLowerCase());
     if (q) products = products.filter((p) => (p.name + ' ' + p.category).toLowerCase().indexOf(q) >= 0);
     const categories = [...new Set(products.map((p) => p.category))].sort();
-    res.json(Object.assign({ network_id: nid, categories, count: products.length }, PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));   // NO node/entity attribution — the internal structure stays hidden
+    res.json(Object.assign({ network_id: net.brand.bridge_id, categories, count: products.length }, PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));   // NO node/entity attribution — the internal structure stays hidden
   } catch (err) {
+    if (membership.answerReadFailed(res, err)) return;   /* a member read that failed is said, never "no products" (T2-HONEST) */
     res.status(500).json({ error: 'Storefront failed', message: safeErr(err) });
   }
 });
@@ -520,43 +533,50 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
 // ── Network order (finish the loop): a customer completes an order → ONE order chit to the network operator (the
 //    common ORDER_ID the customer sees), then SILENT per-store fragments (operator → each fulfilling store,
 //    parents:[ORDER_ID]). The customer co-holds only the order, so the fragments/stores are invisible to them; the
-//    operator co-holds all and can walk ORDER_ID forward to see them converge. Dev-gated (server acts as the
-//    network); routed purely from public catalogue data (item→store = entity_id, item→operator = item_data.operator). ──
+//    operator co-holds all and can walk ORDER_ID forward to see them converge. The operator is the network ROOT (the
+//    brand, from the edges); item→store = the item's entity_id.
+//
+//    ⭐ SEC-FIX2 C6 — WHO MAY CALL THIS (the server decides): the door is CLOSED unless NETWORK_STORE_ORDERS=true (an explicit
+//    flag, off by default, in every environment — `isSealed()` alone left it open wherever NODE_ENV was " development");
+//    the customer is the signed-in STOREFRONT CUSTOMER (middleware/customer-auth, the one customer verifier) whose shop is
+//    the brand or a member — never an e-mail from the body (the old route looked up ANY identity by e-mail and wrote chits
+//    as that person). No identity is created here. ──
+const NETWORK_ORDERS_FLAG = 'NETWORK_STORE_ORDERS';
+const networkOrdersOn = () => String(process.env[NETWORK_ORDERS_FLAG] || '').trim().toLowerCase() === 'true';
+/** shopperOf(req) → the storefront customer the Bearer token proves ({ identity_id, bridge_id, shop_entity_id, display_name }), or null —
+ *  the same claims test as customerOf (SEC4) / middleware/customer-auth, without naming the shop up front (the network decides) */
+function shopperOf(req) {
+  const d = claimsOf(req);
+  if (!d || !d.identity_id || d.identity_type !== 'customer') return null;
+  return { identity_id: d.identity_id, bridge_id: d.bridge_id || null, shop_entity_id: d.parent_entity_id || null, display_name: d.display_name || null };
+}
 router.post('/network-store/:networkId/order', async (req, res) => {
   try {
-    /**
-     * ⚠️⚠️ THIS ROUTE TAKES NO AUTH AND CREATES ORDERS, so its gate is the only thing standing in front of it —
-     * and the gate had two faults. It compared NODE_ENV **untrimmed**, which the platform defeats with the
-     * leading space it has been observed producing (" development"); and it treated **DEV_OTP as sufficient on
-     * its own**, so a fixed-test-OTP flag left set could open an unauthenticated order route in an environment
-     * nobody thought was open. A convenience flag for logging in must never be a second key to a different door.
-     *
-     * ⭐ One definition, asked once: dev-only means NOT SEALED. The moment NODE_ENV is set to a sealed value
-     * this closes, whatever DEV_OTP says, and the stray space cannot decide it either way.
-     */
-    if (require('../lib/dev-otp').isSealed()) {
-      return res.status(403).json({ error: 'Disabled', message: 'Network order routing is dev-only for now.' });
+    if (!networkOrdersOn()) {
+      return res.status(403).json({ error: 'Disabled', code: 'NETWORK_ORDERS_OFF', may: false, why: 'Network ordering is not switched on here.', message: 'Network ordering is not switched on here.' });
     }
-    const nid = String(req.params.networkId || '').trim();
+    const shopper = shopperOf(req);
+    if (!shopper) return res.status(401).json({ error: 'Unauthorised', code: 'SIGN_IN_FIRST', message: 'Sign in at the store to order.' });
     const cart = Array.isArray(req.body.items) ? req.body.items : [];
-    const cust = req.body.customer || {};
-    if (!nid || !cart.length) return res.status(400).json({ error: 'Bad request', message: 'network id + items required' });
+    if (!cart.length) return res.status(400).json({ error: 'Bad request', message: 'items required' });
+    const net = await networkStoreOf(req.params.networkId);
+    if (!net) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
+    if (!net.members.includes(String(shopper.shop_entity_id || ''))) {
+      return res.status(403).json({ error: 'Forbidden', code: 'NOT_THIS_NETWORK', message: 'Your sign-in belongs to another store. Sign in at this network\'s store to order.' });
+    }
+    const nid = net.brand.bridge_id;
     const ids = cart.map((c) => c.product_id).filter(Boolean);
     const rows = (await withEntity(null, (db) => db.query(
-      `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND item_data->>'network_id' = $2 AND is_active = true`, [ids, nid]))).rows;
+      `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`, [ids, net.members]))).rows;
     if (!rows.length) return res.status(404).json({ error: 'Not found', message: 'No matching products in this network' });
-    const operatorId = rows.map((r) => r.item_data && r.item_data.operator).find(Boolean);
-    if (!operatorId) return res.status(409).json({ error: 'No operator', message: 'This network has no fulfilment operator set.' });
-    const idset = [...new Set([operatorId, ...rows.map((r) => r.entity_id)])];
+    const operatorId = String(net.brand.identity_id);
+    /* one read for every party: the operator, the stores, and the customer the token names (by id — never by e-mail) */
+    const idset = [...new Set([operatorId, String(shopper.identity_id), ...rows.map((r) => String(r.entity_id))])];
     const idents = {}; (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [idset])).rows.forEach((r) => { idents[r.identity_id] = { id: r.identity_id, bridge_id: r.bridge_id, display_name: r.display_name }; });
     const operator = idents[operatorId]; if (!operator) return res.status(409).json({ error: 'No operator', message: 'Operator not found' });
-    // resolve-or-create the customer — attaches to the NETWORK (a lightweight buyer identity)
-    const cemail = String(cust.email || '').trim().toLowerCase() || ('cust-' + uuidv4().slice(0, 8) + '@shopper.cb');
-    let crow = (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE email = $1 LIMIT 1`, [cemail])).rows[0];
-    if (!crow) { const cid = uuidv4(), cb = genBridge();
-      await query(`INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, entity_kind, country) VALUES ($1,$2,$3,$4,'entity','active','shopper',NULL)`, [cid, cb, String(cust.name || 'Customer').slice(0, 80), cemail]);
-      crow = { identity_id: cid, bridge_id: cb, display_name: String(cust.name || 'Customer') }; }
-    const customer = { id: crow.identity_id, bridge_id: crow.bridge_id, display_name: crow.display_name };
+    const crow = idents[String(shopper.identity_id)] || { id: shopper.identity_id, bridge_id: shopper.bridge_id, display_name: shopper.display_name };
+    if (!crow.bridge_id) return res.status(401).json({ error: 'Unauthorised', code: 'SIGN_IN_FIRST', message: 'Sign in at the store to order.' });
+    const customer = { id: crow.id, bridge_id: crow.bridge_id, display_name: crow.display_name || 'Customer' };
     const items = rows.map((r) => { const c = cart.find((x) => x.product_id === r.item_id) || {}; const d = r.item_data || {};
       // `Number(d.price || 0)` read a stamped price as NaN and an absent one as a FREE item. Both now fail loudly.
       const amt = money.amountOfLoose(d.price);
