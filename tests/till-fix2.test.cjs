@@ -100,9 +100,9 @@ it('a real refusal stays final: a 400, and a 409 with another code, queue nothin
     assert.deepStrictEqual(Object.keys(DB.stores.queue), [], status + ' must not queue');
   }
 });
-it('the sale flow asks for exactly that: finish() posts the reward with queueAs <bill no>/reward', () => {
+it('the sale flow asks for exactly that: the sale posts (postRewardBehindBill) the reward with queueAs <bill no>/reward', () => {
   const finish = PAGE.slice(PAGE.indexOf("HOST.tillPost('/api/till/reward'"), PAGE.indexOf("HOST.tillPost('/api/till/reward'") + 300);
-  assert.ok(/queueAs:\s*r\.bill\.no \+ '\/reward'/.test(finish), 'finish() does not queue the reward behind its bill');
+  assert.ok(/queueAs:\s*bill\.no \+ '\/reward'/.test(finish), 'finish() does not queue the reward behind its bill');
 });
 it('the queue counts that row as POINTS waiting (queueTally reads the path, not the key)', () => {
   assert.ok(/tillPost\.path\)\.indexOf\('\/api\/till\/reward'\) === 0\) t\.points\+\+/.test(PAGE));
@@ -234,6 +234,6 @@ it('no sale at all → null (the close says nothing rather than a GRN number)', 
     try { await fn(); pass++; console.log('  ok  ' + what); }
     catch (e) { fail++; console.log('  FAIL ' + what + '\n      ' + (e && e.message)); }
   }
-  console.log('\ntill-fix2: ' + pass + ' passed, ' + fail + ' failed');
+  console.log('\ntill-fix2: ' + pass + ' passed, ' + fail + ' failed\n\n' + pass + ' checks');
   if (fail) process.exitCode = 1;
 })();
