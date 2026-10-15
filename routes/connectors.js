@@ -448,7 +448,7 @@ router.get('/:actorId/receipts', auth, requireConnector,
       const r = await withEntity(entity_id, (c) => c.query(
         `SELECT receipt_id, doc_type, doc_ref, payload_hash, outcome, chit_id, received_at
            FROM connector_receipt WHERE actor_id = $1 ORDER BY received_at DESC LIMIT 200`, [req.params.actorId]));
-      res.json({ receipts: r.rows });
+      res.json(PL.pageOut('receipts', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
     } catch (err) { res.status(500).json({ error: 'List receipts failed', message: safeErr(err) }); }
   });
 
@@ -491,7 +491,7 @@ router.get('/', auth, requireConnector, async (req, res) => {
          FROM identities
         WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL
         ORDER BY site NULLS LAST, created_at DESC`, [entity_id]);
-    res.json({ connectors: r.rows.map(a => ({ ...a, health: health(a.last_seen) })) });
+    res.json(PL.pageOut('connectors', r.rows.map(a => ({ ...a, health: health(a.last_seen) })), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
@@ -617,7 +617,7 @@ router.get('/:actorId/connections', auth, requireConnector, [param('actorId').is
     const r = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
     // CASCADE: if the Pi/system is offline, every connection reports no-signal regardless of its own last_seen.
     const connections = r.rows.map(c => ({ ...c, signal: actorHealth === 'offline' ? 'no_signal' : health(c.last_seen) }));
-    res.json({ actor_health: actorHealth, actor_last_seen: actor.last_seen, connections });
+    res.json(Object.assign({ actor_health: actorHealth, actor_last_seen: actor.last_seen }, PL.pageOut('connections', connections, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) { res.status(500).json({ error: 'List connections failed', message: safeErr(err) }); }
 });
 

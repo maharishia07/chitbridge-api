@@ -60,7 +60,7 @@ router.get('/', auth, async (req, res) => {
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT ${COLS} FROM combo_templates
        WHERE entity_id=$1 ORDER BY created_at DESC LIMIT 200`, [entity_id]));
-    res.json({ templates: r.rows });
+    res.json(PL.pageOut('templates', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
   } catch (e) { fail(res, e, 'Could not read your saved combos'); }
 });
 

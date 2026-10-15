@@ -2009,6 +2009,7 @@ async function sendAnswer(st, req, res) {
 /* ── PERF1 · the chit lists' page: a server-side maximum, and keyset paging in the default (newest-first) order ── */
 const PAGE_LIMIT = require('../lib/page-limit');
 const LIST_MAX = 200;   /* the most rows one page of a chit list answers (DISCIPLINES §2 — never the client's word) */
+const LIST_PAGE = 20;   /* the page a chit list answers when asked for one without a size */
 /**
  * ?after=<created_at, µs, UTC>|<chit_id> — the `next` the page before answered. Only in the default order (newest first): any other sort keeps
  * page + OFFSET. → { where } appended to the list's WHERE (params pushed). The cursor carries microseconds (keyCol below), so no row is skipped.
@@ -4247,10 +4248,10 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
     const byMsg = {};
     for (const a of atts) { (byMsg[a.message_id] = byMsg[a.message_id] || []).push(a); }
     for (const m of result.rows) { m.attachments = byMsg[m.message_id] || []; }
-    res.json({ messages: result.rows, count: result.rows.length });
+    res.json(Object.assign({ count: result.rows.length }, PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
     console.error('Get messages error:', err.message);
-    if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0 });
+    if (err.message.includes('chit_messages')) return res.json({ messages: [], count: 0, total: 0, page: 1, limit: 0 });
     res.status(500).json({ error: 'Get messages failed', message: safeErr(err) });
   }
 });
@@ -5418,7 +5419,7 @@ router.get('/trace/batches', auth, async (req, res) => {
       batches.push({ chit_id: row.chit_id, product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
         is_origin: !!t.is_origin, network: (t.network && t.network.id) || null, sender_name: row.sender_entity_display_name || null, to_name: toName(row) });
     }
-    res.json({ count: batches.length, batches });
+    res.json(Object.assign({ count: batches.length }, PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
     res.status(500).json({ error: 'Failed to list batches', message: safeErr(err) });
   }

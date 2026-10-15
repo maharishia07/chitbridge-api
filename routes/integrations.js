@@ -336,7 +336,7 @@ router.post('/books', auth, auth.requireScope('connector'), async (req, res) => 
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.get('/status', auth, async (req, res) => {
-  try { const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]); res.json({ connectors: r.rows.map(rowOut) }); }
+  try { const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]); res.json(PL.pageOut('connectors', r.rows.map(rowOut), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))); }
   catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 const SQL_RECONCILE = `SELECT ch.chit_id, ch.direction, ch.purpose, ch.auto_subject, ch.manual_subject, ch.created_at, ch.all_recipients,
@@ -508,7 +508,7 @@ router.get('/stock/:handle', async (req, res) => {
   try {
     const entity_id = await publicEntityOfHandle(req.params.handle); if (!entity_id) return res.status(404).json({ error: 'Not found' });
     const r = await require('../db').withEntity(entity_id, (db) => db.query(`SELECT item_id, item_data->'avail' AS avail FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data ? 'avail'`, [entity_id]));
-    res.json({ stock: r.rows.map((x) => ({ item_id: x.item_id, avail: x.avail })), at: new Date().toISOString() });
+    res.json(Object.assign(PL.pageOut('stock', r.rows.map((x) => ({ item_id: x.item_id, avail: x.avail })), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), { at: new Date().toISOString() }));
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 /* ── THE PROFILE FROM THEIR SYSTEM (Athi, 2026-09-05): what we look for · where it comes from · how trusted ── */

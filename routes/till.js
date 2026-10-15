@@ -2353,12 +2353,13 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
  * ⚠️ NO DIRECTION TEST, for the reason recorded on /bills below: a counter chit is one the shop sends to
  * ITSELF, and a self chit lands as 'received'. Asking for 'sent' is what made "Earlier bills" empty for weeks.
  */
+const SUMMARY_BILLS = 60, SUMMARY_BILLS_MAX = 400;   /* how many bills one period summary rolls up */
 router.get('/summary', auth, async (req, res) => {
   try {
     const rollup = require('../lib/rollup');
     const entity_id = auth.entityOf(req);
     const period = rollup.PERIODS.indexOf(req.query.period) >= 0 ? req.query.period : 'day';
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '60', 10) || 60, 1), 400);
+    const limit = PL.limitOf(req.query.limit, SUMMARY_BILLS, SUMMARY_BILLS_MAX);   /* the one clamp */
     const { withEntity } = require('../db');
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT h.chit_id, h.created_at, h.business_json
@@ -2383,11 +2384,12 @@ router.get('/summary', auth, async (req, res) => {
   }
 });
 
+const BILLS_PAGE = 100, BILLS_MAX = 500;   /* the day report's bills: the statement always cuts at the page */
 router.get('/bills', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '100', 10) || 100, 1), 500);
+    const pg = PL.pageArgs({ limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX), limit = pg.limit;   /* always a page: the statement cuts */
     const by = (typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by)) ? req.query.by : null;
     /* ⭐ FX-CT1: ONE COUNTER'S BILLS — the day report asks what the server holds for THIS counter. Filtered in SQL, because the
        LIMIT runs first: on a busy shop the other counters' bills would crowd this one's out of a JS filter. */
@@ -2442,7 +2444,7 @@ router.get('/bills', auth, async (req, res) => {
                  save: (l.offer && l.offer.off) || 0, off: !!l.offer, off_label: (l.offer && l.offer.label) || '', gst_rate: l.gst_rate, hsn: l.hsn,
                  mods: Array.isArray(l.mods) ? l.mods : null })) };
     }).filter((x) => x.no && (!by || (x.by && x.by.id === by)));
-    res.json({ days, count: rows.length, bills: rows });
+    res.json(Object.assign({ days, count: rows.length }, PL.pageOut('bills', rows, pg, rows.length)));
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
@@ -2462,13 +2464,14 @@ const deliverline = require('../lib/deliverline');
 const select = require('../lib/select');            /* ⭐ the shared selector: one definition of "my chits", counterparty included */
 
 const { sideOf } = require('../lib/open-orders');   /* ONE definition of an open order: lib/open-orders (the till's list and Home's Orders card, M168) */
+const TASKS_PAGE = 40, TASKS_MAX = 100;   /* the counter's open-order tasks */
 router.get('/tasks', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const kind = String(req.query.kind || 'despatch') === 'receive' ? 'receive' : 'despatch';
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '40', 10) || 40, 1), 100);
+    const limit = PL.limitOf(req.query.limit, TASKS_PAGE, TASKS_MAX);   /* the one clamp */
     const out = await require('../lib/open-orders').tasks(entity_id, kind, limit);
-    res.json({ kind, count: out.length, tasks: out });
+    res.json({ kind, count: out.length, tasks: out, total: out.length, page: 1, limit });
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
@@ -2499,7 +2502,7 @@ router.get('/match', auth, async (req, res) => {
     /* what this trade absorbs — the same numbers the counter was given in its snapshot */
     const flags = await policy.get(entity_id).catch(log.orElse('till GET /match: failed — answered with an empty set', ({})));
     const tol = { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp), count_units: Number(flags.tol_count_units) || 0 };
-    if (!heads.length) return res.json({ days, count: 0, orders: [] });
+    if (!heads.length) return res.json({ days, count: 0, orders: [], total: 0, page: 1, limit: 0 });
 
     const { withEntity } = require('../db');
     const out = await withEntity(entity_id, async (db) => {
@@ -2609,7 +2612,7 @@ router.get('/match', auth, async (req, res) => {
     /* [OFFR-04] landed = goods + freight etc. as the shop paid it: cost, so owner / can_see_costs only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id)))
       out.forEach((o) => (o.receipts || []).forEach((r) => { delete r.landed; }));
-    res.json({ days, count: out.length, orders: out });
+    res.json(Object.assign({ days, count: out.length }, PL.pageOut('orders', out, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 

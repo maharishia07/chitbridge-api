@@ -12,7 +12,8 @@ const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customer-auth');   // T2.4 — the storefront customer's OWN surface
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager */
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's whole-list reads */
 const { verifyOtp, issueShopperOtp, spendShopperOtp } = require('../lib/otp');   // per-account OTP attempt cap · SH-OTP1: the one shopper code
 const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
@@ -477,7 +478,7 @@ router.get('/network-store/:networkId', async (req, res) => {
     if (cat) products = products.filter((p) => p.category.toLowerCase() === cat.toLowerCase());
     if (q) products = products.filter((p) => (p.name + ' ' + p.category).toLowerCase().indexOf(q) >= 0);
     const categories = [...new Set(products.map((p) => p.category))].sort();
-    res.json({ network_id: nid, categories, count: products.length, products });   // NO node/entity attribution — the internal structure stays hidden
+    res.json(Object.assign({ network_id: nid, categories, count: products.length }, PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));   // NO node/entity attribution — the internal structure stays hidden
   } catch (err) {
     res.status(500).json({ error: 'Storefront failed', message: safeErr(err) });
   }
@@ -1517,10 +1518,10 @@ router.get('/enquiry/:item_id', auth, async (req, res) => {
       `SELECT * FROM chit_messages
         WHERE subject_type = 'product' AND subject_id = $1
         ORDER BY created_at ASC`, [req.params.item_id]));
-    res.json({ messages: r.rows, count: r.rows.length });
+    res.json(Object.assign({ count: r.rows.length }, PL.pageOut('messages', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     /* b161/b162 not applied on this deployment → an empty thread, not a broken screen. */
-    if (err && (err.code === '42703' || err.code === '42883')) return res.json({ messages: [], count: 0, migrated: false });
+    if (err && (err.code === '42703' || err.code === '42883')) return res.json({ messages: [], count: 0, migrated: false, total: 0, page: 1, limit: 0 });
     res.status(500).json({ error: 'Enquiry read failed', message: safeErr(err) });
   }
 });

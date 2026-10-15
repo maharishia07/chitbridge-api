@@ -37,7 +37,8 @@ router.get('/', auth, async (req, res) => {
         ORDER BY (i.break_status = 'deactivated'), i.display_name`,
       [entity_id]);
     const country = r.rows[0] && r.rows[0].entity_country;
-    res.json(people.view(r.rows.filter((x) => x.identity_id), { owner: isOwner(req), country }));
+    const view = people.view(r.rows.filter((x) => x.identity_id), { owner: isOwner(req), country });
+    res.json(Object.assign(view, PL.pageOut('people', view.people, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     console.error('List people error:', err.message);
     res.status(500).json({ error: 'Failed to list people', message: safeErr(err) });

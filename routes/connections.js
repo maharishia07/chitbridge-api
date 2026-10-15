@@ -133,10 +133,7 @@ router.get('/pending', auth, async (req, res) => {
       [req.identity.identity_id]
     );
 
-    res.json({
-      requests: result.rows,
-      count: result.rows.length
-    });
+    res.json(Object.assign({ count: result.rows.length }, PL.pageOut('requests', result.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
 
   } catch (err) {
     console.error('Pending connections error:', err.message);
@@ -254,10 +251,7 @@ router.get('/list', auth, async (req, res) => {
       [entity_id]
     );
 
-    res.json({
-      connections: result.rows,
-      count: result.rows.length
-    });
+    res.json(Object.assign({ count: result.rows.length }, PL.pageOut('connections', result.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
 
   } catch (err) {
     console.error('Connections list error:', err.message);

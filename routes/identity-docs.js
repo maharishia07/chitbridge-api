@@ -105,11 +105,11 @@ router.get('/documents', auth, async (req, res) => {
     /* M18: a plain `verified` (+ `verified_at`) per document — what N19's trade-ready check reads. Only status 'verified'
        WITH a stamp counts; the pending-code counterfoil (verification_ref) is never selected, so it cannot leak. */
     const documents = r.rows.map(d => ({ ...d, verified: d.status === 'verified' && !!d.verified_at }));
-    res.json({ documents, catalogue: schemesFor(await shopCountry(auth.entityOf(req))).map(s => ({
+    res.json(Object.assign(PL.pageOut('documents', documents, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), { catalogue: schemesFor(await shopCountry(auth.entityOf(req))).map(s => ({
       scheme: s.scheme, label: s.label, verify: s.verify, stored: s.store,
       /* the client renders an input only where this is true — the server refuses the rest either way */
       selfServe: !!s.selfServe,
-    })) });
+    })) }));
   } catch (e) {
     /* ⚠️ safeErr RETURNS A STRING — it does not send a response. I first wrote safeErr(res, e, msg) as though
        it were a responder, which logs `res` as the error, discards the string, and NEVER REPLIES: the request

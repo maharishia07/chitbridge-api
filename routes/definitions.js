@@ -156,7 +156,7 @@ router.get('/', auth, async (req, res) => {
         if (gov.length) rows = rows.concat(gov);
       }
     }
-    res.json({ definitions: rows, count: rows.length });
+    res.json(Object.assign({ count: rows.length }, PL.pageOut('definitions', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (e) { if (notMigrated(e)) return gone(res);
     res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
