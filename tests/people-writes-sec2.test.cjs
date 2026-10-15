@@ -127,6 +127,35 @@ const SEALED_ENV = { NODE_ENV: 'production', OTP_EMAIL_ENABLED: 'true', RESEND_A
 const withoutEmail = (body) => { if (!body) return body; const copy = Object.assign({}, body); delete copy.email; return copy; };
 const sealHost = () => { delete process.env.DEV_OTP; Object.assign(process.env, SEALED_ENV); };
 const unsealHost = () => { Object.keys(SEALED_ENV).forEach((k) => { delete process.env[k]; }); process.env.NODE_ENV = 'development'; process.env.DEV_OTP = '1'; };
+/* Bala's mailbox as the store holds it, and the two ledgers (writes · e-mails) emptied before each call */
+const balaHas = (email) => { STORED_EMAIL = email; WRITES.length = 0; SENT.length = 0; };
+const nothingTouched = () => !WRITES.some((w) => /identities/.test(w.sql)) && SENT.length === 0;
+const wroteTheCode = () => WRITES.some((w) => /^(UPDATE|INSERT INTO) identities/.test(w.sql) && w.params.includes(SECRET));
+
+/* Section 5 — the sealed host: each code door reads the STORED address, mails the code there and says so; no address → refused
+   before any write (W2-PEOPLE: "a sealed reset can send to it" had no end-to-end proof through routes/actors.js). */
+async function proveSealedReset() {
+  sealHost();
+  for (const [method, url, body] of RESET_DOORS) {
+    balaHas('bala@shop.test');
+    const sent = await call(method, url, body);
+    t(method + ' ' + url + ' with an e-mail on file → 200, delivery sent to the masked stored address, the code never in the answer',
+      sent.status === 200 && sent.body.delivery === 'sent' && sent.body.sent_to === 'b***@shop.test' && /b\*\*\*@shop\.test/.test(sent.body.delivery_note || '') && !sent.raw.includes(SECRET),
+      sent.status + ' ' + sent.raw.slice(0, 200));
+    t('   …the code went to the STORED address (not the request), and the row holds it', SENT.length === 1 && SENT[0].to === 'bala@shop.test' && SENT[0].otp === SECRET && wroteTheCode(),
+      JSON.stringify(SENT) + ' writes:' + WRITES.length);
+    balaHas('');
+    const refused = await call(method, url, withoutEmail(body));   /* Add reads the body's address; the resets read the stored one */
+    t(method + ' ' + url + ' with NO e-mail on file → 400 EMPLOYEE_EMAIL_REQUIRED in words, nothing written, nothing sent',
+      refused.status === 400 && refused.body.code === 'EMPLOYEE_EMAIL_REQUIRED' && /e-mail/i.test(refused.body.message || '') && !refused.raw.includes(SECRET) && nothingTouched(),
+      refused.status + ' ' + refused.raw.slice(0, 200) + ' writes:' + WRITES.length + ' sent:' + SENT.length);
+  }
+  delete process.env.RESEND_API_KEY; balaHas('bala@shop.test');
+  const noSender = await call('DELETE', '/' + BALA + '/pin');
+  t('sealed with no sender → 503 EMAIL_DELIVERY_NOT_CONFIGURED, nothing written, nothing sent',
+    noSender.status === 503 && noSender.body.code === 'EMAIL_DELIVERY_NOT_CONFIGURED' && nothingTouched(), noSender.status + ' ' + noSender.raw.slice(0, 160));
+  unsealHost(); STORED_EMAIL = 'v_email';
+}
 const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k of Object.keys(v)) { out.push(k); keysIn(v[k], out); } return out; };
 
 (async () => {
@@ -186,28 +215,7 @@ const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k o
     throwOn = null;
 
     say('\n5 · W2-PEOPLE — a sealed host resets through the stored e-mail (the code to the mailbox, the answer says where)');
-    sealHost(); WHO = OWNER;
-    for (const [m, u, b] of RESET_DOORS) {
-      STORED_EMAIL = 'bala@shop.test'; WRITES.length = 0; SENT.length = 0;
-      const sent = await call(m, u, b);
-      const codeWrite = WRITES.find((w) => /^(UPDATE|INSERT INTO) identities/.test(w.sql) && w.params.includes(SECRET));
-      t(m + ' ' + u + ' with an e-mail on file → 200, delivery sent to the masked stored address, the code never in the answer',
-        sent.status === 200 && sent.body.delivery === 'sent' && sent.body.sent_to === 'b***@shop.test' && /b\*\*\*@shop\.test/.test(sent.body.delivery_note || '') && !sent.raw.includes(SECRET),
-        sent.status + ' ' + sent.raw.slice(0, 200));
-      t('   …the code went to the STORED address (not the request), and the row holds it', SENT.length === 1 && SENT[0].to === 'bala@shop.test' && SENT[0].otp === SECRET && !!codeWrite,
-        JSON.stringify(SENT) + ' writes:' + WRITES.length);
-      STORED_EMAIL = ''; WRITES.length = 0; SENT.length = 0;
-      const refused = await call(m, u, withoutEmail(b));   /* Add reads the body's address; the resets read the stored one */
-      t(m + ' ' + u + ' with NO e-mail on file → 400 EMPLOYEE_EMAIL_REQUIRED in words, nothing written, nothing sent',
-        refused.status === 400 && refused.body.code === 'EMPLOYEE_EMAIL_REQUIRED' && /e-mail/i.test(refused.body.message || '') && !refused.raw.includes(SECRET)
-          && !WRITES.some((w) => /identities/.test(w.sql)) && SENT.length === 0,
-        refused.status + ' ' + refused.raw.slice(0, 200) + ' writes:' + WRITES.length + ' sent:' + SENT.length);
-    }
-    delete process.env.RESEND_API_KEY; STORED_EMAIL = 'bala@shop.test'; WRITES.length = 0; SENT.length = 0;
-    const noSender = await call('DELETE', '/' + BALA + '/pin');
-    t('sealed with no sender → 503 EMAIL_DELIVERY_NOT_CONFIGURED, nothing written, nothing sent', noSender.status === 503 && noSender.body.code === 'EMAIL_DELIVERY_NOT_CONFIGURED'
-      && !WRITES.some((w) => /identities/.test(w.sql)) && SENT.length === 0, noSender.status + ' ' + noSender.raw.slice(0, 160));
-    unsealHost(); STORED_EMAIL = 'v_email';
+    WHO = OWNER; await proveSealedReset();
 
     say('\n4 · the connector code comes through the one generator');
     const csrc = fs.readFileSync(path.join(API, 'routes', 'connectors.js'), 'utf8');
