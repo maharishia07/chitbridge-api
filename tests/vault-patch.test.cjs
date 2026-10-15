@@ -107,6 +107,6 @@ const stored = () => crypto.decryptVault(DB.row.vault);
   r = await call(port, 'PUT', '/api/governance/profile/vault', { version: '1003', vault: VAULT });
   t('the whole body WITH the current version is still taken (an older screen that reloaded)', [r.status, r.json.version], [200, '1004']);
   srv.close();
-  console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed\n');
+  console.log('\n  ' + (pass + fail) + ' checks · ' + fail + ' failed\n');   /* the guard runner reads "<n> checks" */
   process.exit(fail ? 1 : 0);
 })();

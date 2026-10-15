@@ -55,6 +55,6 @@ const call = (port, method, p, body) => new Promise((ok) => {
   r = await call(port, 'POST', '/api/keys', { name: 'counter', scopes: ['till'] });
   t('a shop\'s own kind (till) still mints', [r.status, !!(r.json && r.json.key)], [201, true]);
   srv.close();
-  console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed\n');
+  console.log('\n  ' + (pass + fail) + ' checks · ' + fail + ' failed\n');   /* the guard runner reads "<n> checks" */
   process.exit(fail ? 1 : 0);
 })();
