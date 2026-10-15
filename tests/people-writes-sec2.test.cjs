@@ -129,8 +129,8 @@ const sealHost = () => { delete process.env.DEV_OTP; Object.assign(process.env, 
 const unsealHost = () => { Object.keys(SEALED_ENV).forEach((k) => { delete process.env[k]; }); process.env.NODE_ENV = 'development'; process.env.DEV_OTP = '1'; };
 /* Bala's mailbox as the store holds it, and the two ledgers (writes · e-mails) emptied before each call */
 const balaHas = (email) => { STORED_EMAIL = email; WRITES.length = 0; SENT.length = 0; };
-const nothingTouched = () => !WRITES.some((w) => /identities/.test(w.sql)) && SENT.length === 0;
-const wroteTheCode = () => WRITES.some((w) => /^(UPDATE|INSERT INTO) identities/.test(w.sql) && w.params.includes(SECRET));
+const nothingTouched = () => !WRITES.some((write) => /identities/.test(write.sql)) && SENT.length === 0;
+const wroteTheCode = () => WRITES.some((write) => /^(UPDATE|INSERT INTO) identities/.test(write.sql) && write.params.includes(SECRET));
 
 /* Section 5 — the sealed host: each code door reads the STORED address, mails the code there and says so; no address → refused
    before any write (W2-PEOPLE: "a sealed reset can send to it" had no end-to-end proof through routes/actors.js). */
