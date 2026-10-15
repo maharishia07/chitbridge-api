@@ -136,6 +136,56 @@ const allocatedAgainst = (X, ref) => X.T.items.filter((i) => i.ref_kind === 'all
     ok('DELETE /chits/:id/payment reads paymentsOfChit (every key of the chit), not the one old key', /paymentsOfChit\(db, entity_id, req\.params\.chit_id\)/.test(doorSrc) && !/paymentByRef\(db, entity_id, 'chitpay:'/.test(doorSrc));
   });
 
+  /* ═══ M1 ═══ */
+  await section('M1 · a closed tax period locks its months: a typed date is refused, an automatic entry moves on and is set off next time, the posting read holds the months FOR SHARE', async () => {
+    const X = H.load(); twoClients(X);
+    await shopWithBill(X);
+    await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-05', currency: 'INR', party: MALA, source_chit_id: BILL('m'), source_ref: 'chit:m',
+      by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+    const BP = require(path.join(H.API, 'lib', 'books-period'));
+    const s = await X.store.setting(X.db, SHOP);
+    const close = await BP.gstClose(SHOP, s, { fy: '2026-27', period: 6 }, SHOP);
+    const sept = () => X.T.periods.find((x) => x.entity_id === SHOP && x.fiscal_year === '2026-27' && Number(x.period) === 6);
+    ok('POST /gst/close for September → the set-off posts AND September is soft-locked in the same transaction, named on the answer (locked: [...])',
+      close.ok === true && !close.duplicate && sept().status === 'soft_locked' && JSON.stringify(close.locked) === JSON.stringify([{ fiscal_year: '2026-27', period: 6 }]), JSON.stringify([close.locked, sept()]));
+    let refused = null;
+    try { await X.B.postEntry(X.db, SHOP, { type: 'contra', from: 'cash', to: 'bank', amount: 1, date: '2026-09-20', currency: 'INR', strict_date: true, owner: true }); } catch (e) { refused = e; }
+    ok('a date a person types in September is refused PERIOD_LOCKED', refused && refused.code === 'PERIOD_LOCKED', refused && (refused.code + ' ' + refused.message));
+    const late = await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-28', currency: 'INR', party: MALA, source_chit_id: BILL('n'), source_ref: 'chit:n',
+      by_rate: [{ rate: 18, taxable: 100, cgst: 9, sgst: 9, igst: 0 }], paid: {}, round_off: 0 });
+    ok('a late offline counter bill dated September MOVES to 1 October, said (moved: true) — the ledger\'s standing rule, never a silent post into a filed month', late.ok && late.moved === true && late.posting_date === '2026-10-01', JSON.stringify(late));
+    const again = await BP.gstClose(SHOP, s, { fy: '2026-27', period: 6 }, SHOP);
+    ok('closing September again answers the SAME close (duplicate), not a lock refusal', again.ok && again.duplicate === true, JSON.stringify(again));
+    const fs = require('fs');
+    const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8'), booksSrc = fs.readFileSync(path.join(H.API, 'lib', 'books.js'), 'utf8');
+    ok('the real store reads fiscal_period FOR SHARE when a posting asks (periods(db, e, fy, lock)); postingDateFor asks it for every non-preview read',
+      /async function periods\(db, e, fy, lock\)[\s\S]{0,400}\(lock \? ' FOR SHARE' : ''\)/.test(storeSrc) && /S\.periods\(db, entity, fy, !readOnly\)/.test(booksSrc) && /S\.periods\(db, entity, y, !readOnly\)/.test(booksSrc));
+  });
+
+  /* ═══ M2 ═══ */
+  await section('M2 · the asset entry and its register row are written on the ONE handle the caller holds', async () => {
+    const X = H.load();
+    let serial = 0;
+    X.dbStub.withEntity = async (e, fn) => { const handle = Object.create(X.db); handle.__id = ++serial; return fn(handle); };
+    await shopWithBill(X);
+    const Assets = require(path.join(H.API, 'lib', 'books-assets')), seen = { entry: null, register: null, depreciation: null };
+    Assets.use({ exists: async () => true, list: async () => [], get: async () => null, bySourceEntry: async () => null,
+      insert: async (h, e, a) => { seen.register = h.__id; return { asset_id: 'x', name: a.name, cost_minor: a.cost_minor, accumulated_minor: 0 }; },
+      addDepreciation: async (h) => { seen.depreciation = h.__id; }, markDisposed: async () => {} });
+    const wasInsert = X.store.insertEntry;
+    X.store.insertEntry = async (db, e, hdr) => { seen.entry = db.__id; return wasInsert(db, e, hdr); };
+    try {
+      const BP = require(path.join(H.API, 'lib', 'books-period'));
+      const s = await X.store.setting(X.db, SHOP);
+      const r = await BP.addAsset(SHOP, s, { name: 'Laptop', class: 'computers', cost_minor: 4200000, date: '2026-09-10', how: 'bank' }, SHOP);
+      ok('POST /assets: the purchase entry and the register row are written on the SAME handle (one transaction — a failure after the entry takes the entry back too)',
+        r.ok === true && seen.entry != null && seen.entry === seen.register, JSON.stringify([r.ok, seen]));
+      const srcPeriod = require('fs').readFileSync(path.join(H.API, 'lib', 'books-period.js'), 'utf8');
+      ok('postOwn(h, …) hands the caller\'s handle to postEntry; every in-transaction caller passes h (assets · dispose · depreciation · closing stock · tax close · tax pay · instalment · accrual reversal)',
+        /function postOwn\(h, entity, ev, by, system\) \{\s*return B\.postEntry\(h, entity/.test(srcPeriod) && (srcPeriod.match(/postOwn\(h, entity/g) || []).length >= 8 && !/postOwn\(entity,/.test(srcPeriod));
+    } finally { Assets.use(null); X.store.insertEntry = wasInsert; }
+  });
+
   console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed\n');
   process.exit(fail ? 1 : 0);
 })();
