@@ -5543,7 +5543,7 @@ var CloudHost = {
       var r = await fetchBy(this.api + '/api/till/verify', { headers: this.auth() });
       if (r.ok) return Object.assign({ ok:true }, await r.json());
       var said = '', code = null;
-      try { var j = await r.json(); said = (j && (j.message || j.error)) || ''; code = (j && j.code) || null; } catch (e) { cbQuiet('verify:1', e); }
+      try { var answer = await r.json(); said = (answer && (answer.message || answer.error)) || ''; code = (answer && answer.code) || null; } catch (e) { cbQuiet('verify:1', e); }
       return { ok:false, why: said || ('ChitBridge refused the key check (' + r.status + ')'), status: r.status, code: code };
     } catch (e) { cbQuiet('verify:2', e); return { ok:false, why: (e && e.name === 'AbortError') ? 'ChitBridge did not answer in time' : 'the line dropped' }; }
   },
