@@ -53,6 +53,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: chitbridge-api
+          fetch-depth: 0     # READ-GUARD: tests/readability-guard.test.cjs diffs against origin/main (merge-base) — it needs the history
       # ⭐ TWIN BRANCHES (13 Oct): a branch that also exists in chitbridge-web is tested against THAT web branch, not web main — so twin
       # PRs (same branch name in both repos, e.g. integrate/1013, round/<NAME>-<run>) check each other instead of deadlocking. Else: main.
       - name: Twin web branch?
@@ -106,6 +107,33 @@ jobs:
           node ../chitbridge-web/e2e/post-results.cjs --file "$PWD/test-results/guards.xml" --keys name \
             --kind unit --layer engine --label "guards ${GITHUB_SHA::7}" --build "${GITHUB_SHA::7}" --warn \
             --project "${{ vars.CB_BOARD_PROJECT }}"
+
+  pr-checklist:
+    # ⭐ READ-GUARD (DISCIPLINES §6): a PR's body carries the §6 checklist WITH NUMBERS (.github/pull_request_template.md), filled from
+    # `node ../chitbridge-web/tools/readability.cjs --changed --repo api --root . --ratchet --md`. ONE reader for both repos: the web's
+    # tools/pr-checklist.cjs, run from a web checkout (main) — never a copy. Dependency bots and docs-only PRs skip. The body travels in an env var.
+    name: pr-checklist (§6 numbers in the PR body)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-web
+          path: .side/chitbridge-web
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: The PR body carries the §6 checklist with numbers (bots' dependency PRs and docs-only PRs skip)
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ ! -f .side/chitbridge-web/tools/pr-checklist.cjs ]; then echo "::warning::pr-checklist skipped — chitbridge-web main has no tools/pr-checklist.cjs yet (READ-GUARD lands in the web first)"; exit 0; fi
+          node .side/chitbridge-web/tools/pr-checklist.cjs --author "$PR_AUTHOR" --base "$PR_BASE" --root "$PWD"
 
   integration:
     name: integration (smoke + isolation) — DB-backed
