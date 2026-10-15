@@ -2017,7 +2017,9 @@ const LIST_MAX = 200;   /* the most rows one page of a chit list answers (DISCIP
 const LIST_PAGE = 20;   /* the page a chit list answers when asked for one without a size */
 /** a chit list's page — ALWAYS a page (inbox · sent · folder were never answered whole): the one clamp, and whether the asked size
  *  was cut, so the answer can say so (W2-RAIL R2: PAGE_LIMIT.capOf → `capped` + `cap_note`, never a silent 200-row ceiling) */
-const listPage = (req) => PAGE_LIMIT.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : LIST_PAGE }, LIST_PAGE, LIST_MAX);
+function listPage(req) {
+  return PAGE_LIMIT.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : LIST_PAGE }, LIST_PAGE, LIST_MAX);
+}
 /**
  * ?after=<created_at, µs, UTC>|<chit_id> — the `next` the page before answered. Only in the default order (newest first): any other sort keeps
  * page + OFFSET. → { where } appended to the list's WHERE (params pushed). The cursor carries microseconds (keyCol below), so no row is skipped.

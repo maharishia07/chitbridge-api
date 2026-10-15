@@ -29,17 +29,28 @@ ok('limitOf: absent → default · above the max → the max · not a number →
 ok('pageOf: a whole number ≥ 1', () => {
   assert.strictEqual(PL.pageOf('-3'), 1); assert.strictEqual(PL.pageOf('7'), 7); assert.strictEqual(PL.pageOf(undefined), 1); assert.strictEqual(PL.pageOf('2.9'), 2);
 });
-ok('pageArgs: nothing asked → every row (limit null = LIMIT NULL, offset 0, page 1)', () => {
-  assert.deepStrictEqual(PL.pageArgs({}, 50, 200), { asked: false, page: 1, limit: null, offset: 0 });
-  assert.deepStrictEqual(PL.pageArgs(undefined, 50, 200), { asked: false, page: 1, limit: null, offset: 0 });
+/* W2-RAIL R2: pageArgs also answers `max` (the route's ceiling) and `capped` (the caller asked for more than it) — the cap words' facts */
+ok('pageArgs: nothing asked → every row (limit null = LIMIT NULL, offset 0, page 1), not capped', () => {
+  assert.deepStrictEqual(PL.pageArgs({}, 50, 200), { asked: false, page: 1, limit: null, offset: 0, max: 200, capped: false });
+  assert.deepStrictEqual(PL.pageArgs(undefined, 50, 200), { asked: false, page: 1, limit: null, offset: 0, max: 200, capped: false });
   assert.strictEqual(PL.WHOLE_LIST, null);
 });
-ok('pageArgs: asked → the clamp and the offset (page 3 of 200 → offset 400; ?limit=1000000 never beats the max)', () => {
-  assert.deepStrictEqual(PL.pageArgs({ limit: '1000000', page: '3' }, 50, 200), { asked: true, page: 3, limit: 200, offset: 400 });
+ok('pageArgs: asked → the clamp and the offset (page 3 of 200 → offset 400; ?limit=1000000 never beats the max — and says capped)', () => {
+  assert.deepStrictEqual(PL.pageArgs({ limit: '1000000', page: '3' }, 50, 200), { asked: true, page: 3, limit: 200, offset: 400, max: 200, capped: true });
 });
-ok('pageArgs: ?page alone asks (default size) · ?limit alone asks (page 1)', () => {
-  assert.deepStrictEqual(PL.pageArgs({ page: '2' }, 50, 200), { asked: true, page: 2, limit: 50, offset: 50 });
-  assert.deepStrictEqual(PL.pageArgs({ limit: '10' }, 50, 200), { asked: true, page: 1, limit: 10, offset: 0 });
+ok('pageArgs: ?page alone asks (default size) · ?limit alone asks (page 1) — neither capped', () => {
+  assert.deepStrictEqual(PL.pageArgs({ page: '2' }, 50, 200), { asked: true, page: 2, limit: 50, offset: 50, max: 200, capped: false });
+  assert.deepStrictEqual(PL.pageArgs({ limit: '10' }, 50, 200), { asked: true, page: 1, limit: 10, offset: 0, max: 200, capped: false });
+});
+ok('capOf / pageOut: a cut list says so (capped + cap_note); a whole list carries nothing (W2-RAIL R2)', () => {
+  const asked500 = PL.pageArgs({ limit: '500' }, 20, 200);
+  assert.deepStrictEqual(PL.capOf(asked500, 200, 900), { capped: true, cap_note: 'Showing 200 of 900. Narrow the search, or load the next page.' });
+  assert.deepStrictEqual(PL.capOf(asked500, 200, null), { capped: true, cap_note: 'A page shows at most 200. Load the next page for more.' });
+  assert.deepStrictEqual(PL.capOf(asked500, 3, 3), {});
+  assert.deepStrictEqual(PL.capOf(PL.pageArgs({ limit: '50' }, 20, 200), 50, 900), {});
+  const cut = PL.pageOut('items', ROWS.slice(0, 2), PL.pageArgs({}, 50, 200), 7);
+  assert.strictEqual(cut.capped, true); assert.strictEqual(cut.limit, 2); assert.strictEqual(cut.total, 7);
+  assert.deepStrictEqual(Object.keys(PL.pageOut('items', ROWS, PL.pageArgs({}, 50, 200))).sort(), ['items', 'limit', 'page', 'total']);
 });
 ok('pageOut: not asked → the whole list under its key, total = length, page 1, limit = total', () => {
   const out = PL.pageOut('items', ROWS, PL.pageArgs({}, 50, 200));

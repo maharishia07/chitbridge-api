@@ -1901,10 +1901,11 @@
     },
     "POST /api/chits/:chit_id/archive": {
       "file": "chits.js",
-      "trips": 2,
-      "wire": 8,
+      "trips": 1,
+      "wire": 7,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "W2-RAIL R2: the open-dispute count and the UPDATE in ONE withEntity (was two); the count is savepointed (SAVEPOINT · COUNT · RELEASE) so an unreadable dispute table refuses 503, never archives"
     },
     "POST /api/chits/:chit_id/assign-lines": {
       "file": "chits.js",
