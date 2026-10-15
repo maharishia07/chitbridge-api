@@ -3304,6 +3304,8 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
     const _bill = !!(_mineCopy && billPrivacy.isBill(_mineCopy, entity_id));
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name, private: _bill });
+    /* H6 — a replay of rows already recorded is answered with the first result and does not announce, advance or accept again */
+    if (out.delivered.length && out.delivered.every((row) => row.replayed)) return res.json({ ...out, replayed: true });
     await deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill);
     await deliverProgress(entity_id, chit_id, out);
     await goodsInAccept(req, entity_id, chit_id, out);

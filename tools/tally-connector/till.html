@@ -5774,7 +5774,7 @@ var CloudHost = {
              to an order, which go somewhere else entirely. Each row says which it is; nothing here guesses. */
           var url = this.api + '/api/chits/send', payload;
           if (bill.tillPost) { url = this.api + bill.tillPost.path; payload = bill.tillPost.body; }
-          else if (bill.deliver) { url = this.api + '/api/chits/' + bill.deliver.chit_id + '/deliver-lines'; payload = { rows: bill.deliver.rows }; }
+          else if (bill.deliver) { url = this.api + '/api/chits/' + bill.deliver.chit_id + '/deliver-lines'; payload = { rows: stampDeliveryRefs(bill.no, bill.deliver.rows) }; }
           else payload = bill.shiftBody ? bill.shiftBody : (bill.chitBody ? bill.chitBody : chitOf(bill));
           tried++;
           /* ⭐⭐ PROGRESS, NOT START — see the note on the watchdog above. Without this line a long queue looks
@@ -6336,6 +6336,11 @@ function tillStamp(id, by){
     t.by_name = (who && who.name) || null;
   }
   return t;
+}
+/* PAY-FIX H6 — a queued goods-in / despatch / online-delivery row carries a STABLE replay key (queue number + position), so a
+   retry after a timeout that the server already committed answers the first result instead of counting the quantities twice. */
+function stampDeliveryRefs(queueNo, rows){
+  return (rows || []).map(function(row, i){ return row.client_ref ? row : Object.assign({}, row, { client_ref: queueNo + ':' + i }); });
 }
 function chitOfCN(cn){
   return {
@@ -23320,10 +23325,13 @@ function isIssuedRow(b){
 async function renumberBill(bill, why){
   var tries = Number(bill._renum) || 0;
   if (tries >= 20) return null;
-  var from = bill.no, to = null;
-  LAST_SERIES = null;
-  try { to = await nextNumber(); } catch (_) { return null; }
-  if (!to || to === from) return null;
+  var from = bill.no, to = bill.renumber_to || null;
+  if (!to) {
+    LAST_SERIES = null;
+    try { to = await nextNumber(); } catch (_) { return null; }
+    if (!to || to === from) return null;
+    await rememberRenumber(bill, to);
+  }
   var fresh = Object.assign({}, bill, {
     no: to,
     till: tillId(),
@@ -23333,12 +23341,24 @@ async function renumberBill(bill, why){
                   why: why || 'the number was already used by another counter' },
     _renum: tries + 1, _tries: 0
   });
-  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._verified;
+  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._verified; delete fresh.renumber_to;
   await DB.put('bills', fresh);
   await DB.put('queue', fresh);
   try { await DB.del('queue', from); } catch (e) { cbQuiet('renumberBill:1', e); }
   try { await DB.del('bills', from); } catch (e) { cbQuiet('renumberBill:2', e); }
   return { from: from, to: to };
+}
+/**
+ * PAY-FIX H9 - THE NEW NUMBER IS WRITTEN ON THE OLD ROW BEFORE ANYTHING ELSE. renumberBill is four separate IndexedDB writes (one
+ * store per transaction). A reload between them used to draw ANOTHER number on the retry, so one sale reached the server under two
+ * numbers and two client_refs. The old queue row (what the drain reads) is stamped first, then the old bill: a retry finds
+ * `renumber_to` and reuses it, so the sale keeps ONE number and the server's client_ref dedupes it.
+ */
+async function rememberRenumber(bill, to){
+  var stamped = Object.assign({}, bill, { renumber_to: to });
+  await DB.put('queue', stamped);
+  await DB.put('bills', stamped);
+  bill.renumber_to = to;
 }
 /**
  * ⭐⭐⭐ FIND THE SALES THAT SAY "SENT" AND WERE NOT. A bill absorbed before the shop fix holds a real chit id —

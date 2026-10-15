@@ -14,6 +14,14 @@ A new key needs its entry here, in the same change. This file is being built; en
 | response `replayed` · `message` | boolean · `Payment recorded` \| `Already recorded` | Derived: `books.payment.duplicate` — the press was the replay of a recorded one (the first answer is handed back, nothing posted twice). The web toasts `message`. |
 | DELETE response `books.payments[]` · `books.words` | `[{ payment_id, entry_no }]` · sentence | Derived by `books-store.paymentsOfChit` (every key of the chit, oldest first): clearing the mark never undoes the books — the sentence names every entry to reverse. `payment_id` / `entry_no` stay the first one's (as before). |
 
+## POST /api/chits/:id/deliver-lines · the replay key (PAY-FIX · H6, 2026-10-15)
+
+| key | type | source / derived · who writes · who reads |
+|---|---|---|
+| row `client_ref` → `chit_line_delivery.client_ref` (b730) | string ≤ 120, optional | Source: the counter's drain stamps `<queue row no>:<position>` on each queued goods-in / despatch / online-delivery row (`till.html stampDeliveryRefs`), stable across retries. Written by `lib/deliverline.record` into `chit_line_event`'s 12th argument; a partial unique index (entity, chit, line, client_ref) makes a replay insert nothing. Read by nothing else. Not (reference, kind): "6 then 4" under one GRN is two real deliveries. |
+| response `delivered[].replayed` · `replayed` | boolean | Derived: the key was already recorded — the first result stands; the route does not announce, advance or accept again. |
+| till queue row `renumber_to` (PAY-FIX · H9) | string, local only | Source: `till.html rememberRenumber` stamps the number a collided bill is moving to on the OLD queue / bill rows before the four IndexedDB writes; `renumberBill` reuses it after a reload, so a sale keeps one number. Never sent to the server; removed from the new row. |
+
 ## Housekeeping refusals · `code` · `why` · list caps `capped` · `cap_note` (W2-RAIL · R2, 2026-10-15)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
