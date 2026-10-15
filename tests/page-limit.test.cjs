@@ -74,5 +74,19 @@ ok('pageOut: an empty list and a non-list both answer [] with total 0 — never 
   assert.deepStrictEqual(PL.pageOut('items', null, PL.pageArgs({ limit: '5' }, 50, 200)), { items: [], total: 0, page: 1, limit: 5 });
 });
 
-console.log('\n' + n + ' checks' + (fail ? ', ' + fail + ' FAILED' : ''));
-if (fail) process.exitCode = 1;
+/* W2-CRM: totalOf — the window count (total_rows on every row); an empty page past the end asks again for one row; page 1 empty = 0 without asking */
+(async () => {
+  let asked = 0;
+  const again = async () => { asked++; return [{ total_rows: 42 }]; };
+  const counted = ROWS.slice(0, 3).map((r) => Object.assign({ total_rows: 42 }, r));
+  try {
+    assert.strictEqual(await PL.totalOf(counted, PL.pageArgs({ page: '1', limit: '3' }, 50, 200), again), 42); assert.strictEqual(asked, 0);
+    assert.strictEqual(await PL.totalOf([], PL.pageArgs({ page: '9', limit: '3' }, 50, 200), again), 42, 'a page past the end re-asks'); assert.strictEqual(asked, 1);
+    assert.strictEqual(await PL.totalOf([], PL.pageArgs({}, 50, 200), again), 0, 'page 1 empty = an empty set, nothing asked'); assert.strictEqual(asked, 1);
+    assert.strictEqual(await PL.totalOf([{ total_rows: 'x' }], PL.pageArgs({}, 50, 200)), 0, 'a count that is not a number answers 0, never NaN');
+    assert.strictEqual(PL.TOTAL_COLUMN, 'total_rows');
+    n++; console.log('  ok  totalOf: first row · past the end re-asks · page 1 empty = 0 · never NaN');
+  } catch (e) { fail++; console.log('  FAIL totalOf\n      ' + e.message); }
+  console.log('\n' + n + ' checks' + (fail ? ', ' + fail + ' FAILED' : ''));
+  if (fail) process.exitCode = 1;
+})();

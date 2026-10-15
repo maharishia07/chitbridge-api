@@ -63,6 +63,24 @@ const asCo = (id) => t.as('E1', { identity: { identity_id: id, parent_entity_id:
     const r = await t.patch('/followups/' + b.followup_id, { due_at: day(1) }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.followup.due_day, day(1)); assert.strictEqual(r.body.followup.today, false);
     assert.strictEqual(D.followups.find((x) => x.followup_id === b.followup_id).bell_day, null);
   });
+  await ita('W2-CRM (CRM-DAY): snooze by a WORD — { after: tomorrow } lands on the SHOP\'s next day (start of day), { after: week } +7; a foreign word → 400 BAD_AFTER, nothing changed', async () => {
+    let r = await t.patch('/followups/' + b.followup_id, { after: 'tomorrow' }); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(r.body.followup.due_day, day(1)); assert.strictEqual(r.body.followup.due_at, H.dayBounds(day(1), 'IN').from, 'the start of the shop\'s day, never a phone\'s 09:00');
+    r = await t.patch('/followups/' + b.followup_id, { after: 'week' }); assert.strictEqual(r.body.followup.due_day, day(7)); assert.strictEqual(r.body.followup.bucket, 'later');
+    r = await t.patch('/followups/' + b.followup_id, { after: 'someday' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'BAD_AFTER');
+    assert.strictEqual((await t.get('/followups?scope=all')).body.followups.find((x) => x.followup_id === b.followup_id).due_day, day(7), 'the bad word changed nothing');
+    assert.deepStrictEqual(F.AFTER, { today: 0, tomorrow: 1, '3days': 3, week: 7 }, 'the ONE table the call desk reads too');
+    r = await t.patch('/followups/' + b.followup_id, { after: 'today' }); assert.strictEqual(r.body.followup.today, true);   /* back to today for the tests below */
+  });
+  await ita('W2-CRM (CRM-PAGE): the one pager — ?page=2&limit=1 → one row, total 3, page 2, limit 1; late · today count the WHOLE set; shop_day is the shop\'s day; no page asked = every row with its total', async () => {
+    const pg = (await t.get('/followups?scope=all&page=2&limit=1')).body;
+    assert.strictEqual(pg.followups.length, 1); assert.strictEqual(pg.total, 3); assert.strictEqual(pg.page, 2); assert.strictEqual(pg.limit, 1);
+    assert.strictEqual(pg.late, 1); assert.strictEqual(pg.today, 1); assert.strictEqual(pg.shop_day, day(0));
+    const all = (await t.get('/followups?scope=all')).body; assert.strictEqual(all.followups.length, 3); assert.strictEqual(all.total, 3); assert.strictEqual(all.limit, 3); assert.strictEqual(all.page, 1);
+    const past = (await t.get('/followups?scope=all&page=5&limit=2')).body; assert.strictEqual(past.followups.length, 0); assert.strictEqual(past.total, 3, 'a page past the end still says the true total');
+    assert.strictEqual((await t.get('/followups?scope=all&limit=1000000')).body.limit, 1000, 'the server\'s max, never the client\'s word');
+    assert.ok(all.may && all.may.write && all.may.write.may === true, 'the owner may write (may rides the list)');
+  });
   await ita('reassign: the owner may; the current assignee may; anyone else is refused 403 NOT_ASSIGNEE; a stranger is 400', async () => {
     let r = await t.patch('/followups/' + a.followup_id, { assignee_user_id: 'A1' }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.followup.assignee_user_id, 'A1');
     asCo('A2'); r = await t.patch('/followups/' + a.followup_id, { assignee_user_id: 'A2' }); assert.strictEqual(r.status, 403); assert.strictEqual(r.body.code, 'NOT_ASSIGNEE');

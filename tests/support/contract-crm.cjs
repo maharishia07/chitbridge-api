@@ -127,7 +127,7 @@ async function captureCrm() {
     mem.on = true; SC._reset();
     /* the call desk (L2): the queue, then an outcome that moves a stage, one that only schedules, a refused pick, and "b297 not run" for a stage move */
     D.pre = async (sql, p) => {
-      if (/^SELECT q\.followup_id/.test(sql)) return { rows: [{ followup_id: 'f-q1', party_id: P(12), what: 'Ring again', due_at: day(-1), assignee_user_id: 'E1', src: 'followup', party_name: 'Lead Lata', phone: '+919840011111', last_outcome: 'No answer', last_at: day(-2), stage: 'lead' },
+      if (/^SELECT q\.followup_id/.test(sql)) return { rows: [{ total_rows: 2, late_rows: 1, today_rows: 0, followup_id: 'f-q1', party_id: P(12), what: 'Ring again', due_at: day(-1), assignee_user_id: 'E1', src: 'followup', party_name: 'Lead Lata', phone: '+919840011111', last_outcome: 'No answer', last_at: day(-2), stage: 'lead' },
         { followup_id: null, party_id: P(13), what: null, due_at: null, assignee_user_id: null, src: 'new', party_name: 'New Nikhil', phone: null, last_outcome: null, last_at: null, stage: 'lead' }] };
       if (/^UPDATE party_followup SET done_at = now\(\), done_by = \$3 WHERE owner_entity_id = \$1 AND party_id = \$2/.test(sql)) return { rows: [] };
       if (/^SELECT body FROM party_interaction/.test(sql)) return { rows: [] };

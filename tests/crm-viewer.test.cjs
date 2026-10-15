@@ -68,6 +68,20 @@ const who = (identity) => t.as('E1', { identity: Object.assign({ identity_id: 'A
     who({ hat: 'view_only' }); assert.strictEqual((await t.post('/leads', { name: 'X' })).status, 403);
     who({ hat: 'act' }); assert.strictEqual((await t.post('/leads', { name: '' })).status, 400);
   });
+  await ita('W2-CRM (CRM-MAY): the SERVER says may/why — a viewer reads may.write { may:false, code:read_only, why } and may.remove OWNER_ONLY on GET /parties · /parties/:id · /followups; a commenter comment_only; an editor writes, never removes; the owner both; DELETE refuses with the same sentence', async () => {
+    const WHY = require(path.join(API, 'lib/rail')).WHY, REMOVE = 'Only the owner can remove a party.';
+    who({ access_level: 'viewer' });
+    for (const p of ['/parties', '/parties/' + P(2), '/followups']) {
+      const r = await t.get(p); assert.strictEqual(r.status, 200, p + ' ' + JSON.stringify(r.body).slice(0, 80));
+      assert.deepStrictEqual(r.body.may.write, { may: false, code: 'read_only', why: WHY.read_only }, p + ' write');
+      assert.deepStrictEqual(r.body.may.remove, { ok: false, code: 'OWNER_ONLY', why: REMOVE }, p + ' remove');
+    }
+    assert.strictEqual((await t.get('/calls')).body.may.write.code, 'read_only', 'GET /calls carries may.write beside its stage verdict');
+    who({ access_level: 'commenter' }); assert.strictEqual((await t.get('/parties')).body.may.write.code, 'comment_only');
+    who({ access_level: 'editor' }); const ed = (await t.get('/parties')).body.may; assert.strictEqual(ed.write.may, true); assert.strictEqual(ed.remove.ok, false);
+    const r2 = await t.del('/parties/' + P(2)); assert.strictEqual(r2.status, 403); assert.strictEqual(r2.body.message, REMOVE, 'the DELETE refuses with the very sentence may.remove.why carried');
+    t.as('E1'); assert.deepStrictEqual((await t.get('/parties')).body.may, { write: { may: true, code: null, why: null }, remove: { ok: true, code: null, why: null } });
+  });
   t.close();
 
   /* ── 2 · POST /api/actors WRITES the level ────────────────────────────────────────────────────────────────────────────────── */
