@@ -262,7 +262,7 @@ router.post('/catalogue-adopt', auth, async (req, res) => {
     } catch (e) { log.fellBack('catalogue adopted, but whether the store is in the brand\'s network was not read — no join request sent', e); }
     res.json({ ok: true, persisted: true, source, resolved: await catalogueBuild.resolve(source, commercials),
       acted_by: { deputy: 'ai:catalogue-structure@v1', rung: 'extract', principal: 'entity:' + entity,
-        delegator: { type: 'human', id: identity.identity_id }, confirmed_by: { id: identity.identity_id }, grant: 'per-act' } });
+        delegator: { type: 'human', id: req.identity.identity_id }, confirmed_by: { id: req.identity.identity_id }, grant: 'per-act' } });
   } catch (err) {
     log.error('assist/catalogue-adopt failed', { id: req.id, err: err.message });
     res.status(500).json({ ok: false, error: safeErr(err) });

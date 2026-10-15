@@ -175,7 +175,7 @@ const show = (r) => r.status + ' ' + JSON.stringify(r.body).slice(0, 200);
   const CAT_SRC = fs.readFileSync(path.join(API, 'routes', 'catalogue.js'), 'utf8');
   t('the network storefront skips a sign-in-first department', /if \(view\.sign_in\) continue;/.test(CAT_SRC));
   SQL.length = 0;
-  await call('GET', '/api/catalogue/network-store/net-1', null);
+  await call('GET', '/api/catalogue/network-store/shop-s', null);
   t('the network lens (network-store) filters sign-in-first shops in its one statement', SQL.some((s) => /FROM catalogue_items ci/.test(s) && /storefront_access' = 'login'/.test(s)));
 
   console.log('\n— C · enquiries ring the supplier\'s bell, and there is a list —');
