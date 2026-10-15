@@ -6340,7 +6340,7 @@ function tillStamp(id, by){
 /* PAY-FIX H6 — a queued goods-in / despatch / online-delivery row carries a STABLE replay key (queue number + position), so a
    retry after a timeout that the server already committed answers the first result instead of counting the quantities twice. */
 function stampDeliveryRefs(queueNo, rows){
-  return (rows || []).map(function(row, i){ return row.client_ref ? row : Object.assign({}, row, { client_ref: queueNo + ':' + i }); });
+  return (rows || []).map(function(row, position){ return row.client_ref ? row : Object.assign({}, row, { client_ref: queueNo + ':' + position }); });
 }
 function chitOfCN(cn){
   return {

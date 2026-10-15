@@ -83,8 +83,8 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   const srcRoute = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
   const voidSrc = srcRoute.slice(srcRoute.indexOf("router.put('/:chit_id/void'"), srcRoute.indexOf("router.post('/assign-bulk'"));
   t('the reversal is posted INSIDE the gate transaction (after g.write(), before the handle returns) — a refusal rolls the withdrawal back and answers 409 in words',
-    voidSrc.indexOf('chitWithdrawn(db, entity_id, chit_id, reason') > voidSrc.indexOf('for (const g of gates) await g.write();') && voidSrc.indexOf('chitWithdrawn(') < voidSrc.indexOf('return { refused: null, books }')
-    && /status\(409\)\.json\(\{ error: 'Cannot withdraw', code: err\.code \|\| 'BOOKS_REFUSED', why: 'books_refused'/.test(voidSrc));
+    voidSrc.indexOf('chitWithdrawn(db, entity_id, chit_id, reason') > voidSrc.indexOf('for (const g of gates) await g.write();')
+    && /withdrawFailure\(res, err\)/.test(voidSrc) && /status\(409\)\.json\(\{ error: 'Cannot withdraw', code: err\.code \|\| 'BOOKS_REFUSED', why: 'books_refused'/.test(srcRoute));
 
   console.log('\n— B · a chit the books never posted —');
   STATUS = [{ chit_id: C2, entity_id: SHOP, direction: 'sent', current_status: 'delivered' }]; SENT = [];
@@ -99,8 +99,10 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   const w2 = await X.dbStub.withEntity(SHOP, (db) => K.chitWithdrawn(db, SHOP, C2, 'changed their mind', SHOP));
   t('chitWithdrawn: the ONE helper both doors call — reverses once; the second call answers duplicate', w.ok === true && w.reverses === posted3.entry_no && w2.duplicate === true && (await openOf(C2)) === 0, JSON.stringify([w, w2]));
   const moveSrc = srcRoute.slice(srcRoute.indexOf('async function moveStatus('), srcRoute.indexOf("router.put('/:chit_id/void'"));
-  t('moveStatus: the sender-cancel leg calls chitWithdrawn on the sent copy\'s handle and carries `books` on the answer (a refusal in words, never swallowed)',
-    /if \(isSender && new_status === 'cancelled'\)[\s\S]{0,900}chitWithdrawn\(db, entity_id, chit_id, note, action_by_id\)/.test(moveSrc) && /books: booksOnCancel/.test(moveSrc) && /g\.books = \{ refused: e\.message \}/.test(moveSrc));
+  const cancelSrc = srcRoute.slice(srcRoute.indexOf('async function cancelSentCopy('), srcRoute.indexOf('async function moveStatus('));
+  t('moveStatus: the sender-cancel leg (cancelSentCopy) calls chitWithdrawnSaid on the sent copy\'s handle, after g.write(), and carries `books` on the answer (a refusal in words, never swallowed)',
+    /if \(isSender && new_status === 'cancelled'\) booksOnCancel = await cancelSentCopy\(/.test(moveSrc) && cancelSrc.indexOf('chitWithdrawnSaid(db, entity_id, chit_id, note, by.id)') > cancelSrc.indexOf('await gate.write()')
+    && /books: booksOnCancel/.test(moveSrc) && /refused: err\.message/.test(fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8')));
 
   console.log('\n— D · the walk-in day leaves a cancelled bill out —');
   const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');

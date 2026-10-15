@@ -46,7 +46,7 @@ const withEntity = async (entity_id, fn) => {
 };
 async function run(sql, args) {
     if (/^\s*SELECT d\.definition_id/.test(sql)) return { rows: [{ definition_id: 'def-1', name: 'Shop points', rules: PROG }] };
-    if (/pg_advisory_xact_lock/.test(sql)) { LOCKS.push(args[0]); return { rows: [{}] }; }
+    if (/pg_advisory_xact_lock/.test(sql)) { LOCKS.push(args.join('|'));   /* (shop, key) since lib/xact-lock */ return { rows: [{}] }; }
     if (/SUM\(points\) OVER \(\)/.test(sql)) {
       const [eid, scheme, value, limit] = args;
       const all = TABLE.filter(mine(eid, scheme, value));
