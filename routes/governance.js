@@ -345,14 +345,34 @@ router.get('/vault-schema', auth, async (req, res) => {
     res.json({ section_types: p.SECTION_TYPES, verifiable_tags: p.VERIFIABLE_TAGS });
   } catch (err) { res.status(500).json({ error: 'Vault schema failed', message: safeErr(err) }); }
 });
+/**
+ * ⭐ SET-WALK1 · W25 (2026-10-15) — THE VAULT IS SAVED AS A MERGE-PATCH WITH A VERSION, NEVER REPLACED BLIND.
+ *   PUT /api/governance/profile/vault  { version, patch: { sections: { '<type>|<label>': { label?, rows: { 't:<tag>' | 'n:<name>': { name, value, tag } | null } } | null } } }
+ *     → { vault, version }.  RFC 7386 over the keyed view (lib/vault-patch): only what this screen changed travels; null removes.
+ *     409 VAULT_CHANGED "Changed since you opened it — reload?" when `version` ≠ the server's (GET /profile answers `vault_version`).
+ *   The old whole body { vault: { sections: [...] } } is still taken for a FIRST fill (no row yet); over an existing vault it needs the
+ *     version too (409 VAULT_VERSION_REQUIRED otherwise) — a blind replace is exactly the lost update Athi saw.
+ *   Who may: any signed-in login of the shop (as before; the server's auth). Trips: 1 read + 1 conditional write (+ the mirror's).
+ */
 router.put('/profile/vault', auth, async (req, res) => {
   try { const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    const saved = await require('../lib/profile').saveVault(entity_id, b.vault || b);
+    const P = require('../lib/profile'), VP = require('../lib/vault-patch');
+    let saved;
+    if (VP.isPatchBody(b)) saved = await P.patchVault(entity_id, b.patch, b.version);
+    else {
+      const held = await P.readVault(entity_id);
+      if (held.version && b.version == null) return res.status(409).json({ code: 'VAULT_VERSION_REQUIRED', error: 'This screen is older than the vault — reload it, then save.', message: 'This screen is older than the vault — reload it, then save.' });
+      if (held.version && String(b.version) !== held.version) throw P.vaultChanged();
+      saved = await P.saveVault(entity_id, b.vault || b, { expect: held.version });
+    }
     /* ⭐ the Business identity rows are the counter's bill header (trade name, address, phone) — so open counters hear it */
     try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e); }
     res.json(saved);
-  } catch (err) { res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  } catch (err) {
+    if (err && err.code === 'VAULT_CHANGED') return res.status(409).json({ code: err.code, error: err.say, message: err.say });
+    res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) });
+  }
 });
 // the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
 router.get('/profile/readiness', auth, async (req, res) => {
