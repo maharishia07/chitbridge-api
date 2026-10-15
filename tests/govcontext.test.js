@@ -20,7 +20,7 @@ const path = require('path');
 const fs = require('fs');
 
 /* the engine is a browser IIFE that hangs itself on the global, exactly like locale.js */
-const SRC = path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'app', 'govcontext.js');
+const SRC = path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'engine', 'govcontext.js');
 const LOCALE = path.join(__dirname, '..', 'lib', 'locale.browser.js');
 
 let pass = 0, fail = 0;

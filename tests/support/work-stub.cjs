@@ -65,6 +65,9 @@ function seed() {
 function selectAnswer(sql, p) {
   D.statements.push(sql);
   if (D.bigRows) return { rows: D.bigRows };
+  /* RAIL-LAB-SRV1: GET /api/facts/rail (routes/facts over lib/home-facts) also runs here for the contract — CB CRM's two list reads and its
+     shop-rule / zone reads (lib/crm.rows) answer no parties; the chit rows are the same copies the Task page reads */
+  if (/FROM customer_list cl JOIN identities|FROM supplier_list sl JOIN identities|policy_flags'->'crm'|COALESCE\(timezone, country\) AS zone/.test(sql)) return { rows: [] };
   let rows = D.copies.filter((r) => r.entity_id === p[0]);
   if (/cs\.chit_id = \$/.test(sql)) { const id = p.find((v) => /^[0-9a-f-]{36}$/.test(String(v)) && v !== p[0]); rows = rows.filter((r) => r.chit_id === id); }
   return { rows: rows.map((r) => Object.assign({}, r)) };
@@ -73,12 +76,15 @@ const fakeDb = { query: async (sql, p) => selectAnswer(String(sql).replace(/\s+/
 stubMod('db/index.js', {
   withEntity: async (entity, fn) => { D.trips += 4; return fn(fakeDb); },
   onEntity: async (entity, db, fn) => (db && db.query ? fn(db) : fn(fakeDb)),
+  trySavepoint: async (h, fn, fb) => { try { return await fn(h); } catch (_) { return fb; } },
   query: async (sql) => { D.statements.push(String(sql)); return { rows: D.tables ? [{ '?column?': 1 }] : [] }; },
   readBatch: async (entity, actor, stmts) => {
     D.trips += 1; D.batches++;
     return stmts.map((s) => {
       const t = String(s.text).replace(/\s+/g, ' ');
       D.statements.push(t);
+      /* the rail's clock + population (home-facts.railScope): D.population = 'live' (default) · 'test' (a lab shop) */
+      if (/policy_flags->'overdue_days'/.test(t)) return { rows: [{ overdue_days: null, population: D.population === undefined ? 'live' : D.population }] };
       const mine = (r) => D.copies.some((c) => c.chit_id === r.chit_id && c.entity_id === s.params[0]);
       if (/FROM chit_header h LEFT JOIN chit_detail d/.test(t)) return { rows: s.params[1].filter((id) => mine({ chit_id: id })).filter((id) => D.detail[id]).map((id) => Object.assign({ chit_id: id }, D.detail[id])) };
       if (/SELECT DISTINCT CASE/.test(t)) return { rows: D.marks };
@@ -97,6 +103,7 @@ stubMod('lib/access.js', Object.assign({}, require('../../lib/access'), { levelO
 
 const express = require('express');
 const app = express(); app.use('/api/work', require('../../routes/work'));
+app.use('/api/facts', require('../../routes/facts'));   /* RAIL-LAB-SRV1: GET /api/facts/rail, for the contract (may_sample) */
 const srv = http.createServer(app);
 
 function get(url) {

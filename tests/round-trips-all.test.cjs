@@ -39,23 +39,48 @@ process.env.DB_BOOT_WAIT_MS = '2000';
 /* ── the wire: a pool that counts statements and answers with no rows ── */
 let wire = 0;
 const empty = () => ({ rows: [], rowCount: 0, fields: [], command: 'SELECT' });
-function answer(text) {
+/**
+ * ⭐ EFF-TRIPS (2026-10-15): THE STUB SAYS THE SCHEMA IS WHOLE. A route that is honest about an absent table (lib/schema hasTable ·
+ * to_regclass probes — crm, privacy, followups) answered 503 on an empty stub and was never measured past its probe: 10 rows stood at the
+ * 50 ceiling. A probe now gets one row ("the table is there", "every column asked for is there"), and the route goes on to its real reads.
+ * ⚠️ Probes only — every other statement still answers no rows, so the number stays a FLOOR, as the header says.
+ */
+function probe(text, params) {
+  const t = String(text);
+  if (/information_schema\.columns/i.test(t)) {
+    const cols = Array.isArray(params && params[1]) ? params[1] : (params && params[1] ? [params[1]] : ['x']);
+    return { rows: cols.map((c) => ({ column_name: c })), rowCount: cols.length, fields: [], command: 'SELECT' };
+  }
+  if (/information_schema\.tables/i.test(t)) return { rows: [{ '?column?': 1 }], rowCount: 1, fields: [], command: 'SELECT' };
+  if (/to_regclass\(/i.test(t) && /^\s*SELECT/i.test(t) && !/\bFROM\b/i.test(t)) {
+    const row = {}; for (const m of t.matchAll(/\bAS\s+([A-Za-z_]\w*)/g)) row[m[1]] = true;
+    return { rows: [Object.keys(row).length ? row : { to_regclass: 'x' }], rowCount: 1, fields: [], command: 'SELECT' };
+  }
+  /* an aggregate with no GROUP BY ALWAYS has one row on a real database — `rows[0].count` on an empty stub threw 500 (chits inbox · folder ·
+     sent · rollup, products) and those routes were never measured; the row answers 0 under every alias (and `count`) */
+  if (/\b(count|sum|max|min|avg)\s*\(/i.test(t) && !/\bGROUP\s+BY\b/i.test(t) && /^\s*(SELECT|WITH)\b/i.test(t)) {
+    const row = { count: '0', n: 0 }; for (const m of t.matchAll(/\bAS\s+"?([A-Za-z_]\w*)"?/gi)) if (!/^(true|false|null)$/i.test(m[1])) row[m[1]] = 0;
+    return { rows: [row], rowCount: 1, fields: [], command: 'SELECT' };
+  }
+  return null;
+}
+function answer(text, params) {
   wire += 1;
   /* readBatch sends BEGIN; ...; COMMIT; as one simple-protocol text and slices the middle out of an array of results */
   if (/^\s*BEGIN;/.test(String(text))) return Array.from({ length: 200 }, empty);
-  return empty();
+  return probe(text, params) || empty();
 }
 class FakePool {
   on() { return this; }
   async end() {}
   query(text, params, cb) {
-    if (typeof params === 'function') cb = params;
-    const r = answer(text);
+    if (typeof params === 'function') { cb = params; params = undefined; }
+    const r = answer(text, params);
     if (cb) { cb(null, r); return undefined; }
     return Promise.resolve(r);
   }
   connect(cb) {
-    const client = { query: (q) => Promise.resolve(answer(q)), release() {} };
+    const client = { query: (q, p) => Promise.resolve(answer(q, Array.isArray(p) ? p : undefined)), release() {} };
     if (typeof cb === 'function') { cb(null, client, () => {}); return undefined; }
     return Promise.resolve(client);
   }
@@ -85,8 +110,8 @@ if (webHere) {
 }
 if (!called) {
   /* the web client is not beside us: fire the budget's own list, with the mounts server.js declares */
-  const src = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
-  for (const m of src.matchAll(/app\.use\(\s*['"]([^'"]+)['"][^;]{0,120}?require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) if (!mounts[m[2] + '.js']) mounts[m[2] + '.js'] = m[1];   /* [^;] — see tools/endpoint-usage.cjs: a routerless mount must not steal the next require */
+  const found = require(path.join(API, 'tools', 'server-mounts.cjs')).serverMounts(fs.readFileSync(path.join(API, 'server.js'), 'utf8'));   /* one helper with the scanner — inline AND variable mounts */
+  for (const f of Object.keys(found)) if (!mounts[f]) mounts[f] = found[f];
   called = Object.keys(budget.routes).map((k) => ({ route: k, file: budget.routes[k].file }));
 }
 
@@ -156,11 +181,15 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       const row = { route: r.route, file: r.file, status: m.status, trips: m.trips, wire: m.wire };
       if (m.error) {
         notFired.push(Object.assign(row, { why: m.error }));
-        next.routes[r.route] = { file: r.file, trips: b && b.fired === false ? b.trips : UNFIRED_CEILING, wire: null, fired: false, why: m.error, ...(b && b.extra ? { extra: true } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) };
+        /* ⭐ EFF-TRIPS: --write is NOT lossy any more — a row that STAYS unfired keeps its hand-counted trips and `why` (the SEC/SRV rounds'
+           reasoning); only the harness's own reason is refreshed when the hand note did not carry one. extra / awaiting_client ride along. */
+        next.routes[r.route] = Object.assign({}, b || {}, { file: r.file, trips: b && b.fired === false ? b.trips : UNFIRED_CEILING, wire: null, fired: false,
+          why: b && b.fired === false && b.why && !/^(no mount in server\.js|answered \d{3} on the stub|timed out|no X-DB-Trips header)/.test(b.why) ? b.why : m.error });
         continue;
       }
       (m.status >= 400 ? shallow : fired).push(row);
-      next.routes[r.route] = { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(b && b.extra ? { extra: true } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) };
+      /* a measured row: the number is the harness's; a hand `why` is kept beside it (a note is not lost by being measured) */
+      next.routes[r.route] = Object.assign({}, (b && b.why && b.fired === false) ? { why: b.why } : {}, { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(b && b.extra ? { extra: true } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) });
       if (!WRITE) {
         t(r.route + ' has a budget line (I19)', !!b);
         if (b && b.fired !== false) {

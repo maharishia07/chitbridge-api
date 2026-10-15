@@ -28,6 +28,7 @@
  */
 'use strict';
 const express = require('express');
+const logger = require('../lib/logger');
 const router  = express.Router();
 const { body } = require('express-validator');
 const { query, withEntity, withTransaction, readBatch } = require('../db');
@@ -39,6 +40,7 @@ const { shopChanged } = require('../lib/shopchanged');   /* ⭐ an offer is what
 const regional = require('../lib/regional');
 const taxGov = require('../lib/tax-governance');
 const slabCites = require('../lib/slab-cites');
+const offerClash = require('../lib/offer-clash');   /* T2-LABS: a live offer that overlaps another live one is refused, in words (CBOffers.clashes) */
 
 const ctx = (req) => auth.entityOf(req);
 
@@ -137,7 +139,7 @@ router.get('/', auth, async (req, res) => {
        * A shop with no stores gets nothing: the words would be about a network it does not have.
        */
       if (at.net !== undefined) require('../lib/network-offers').stampReleases(rows, res[at.net].rows[0]);
-    } catch (_) { rows = null; }
+    } catch (e) { logger.fellBack('definitions GET /: the read failed — answered with nothing', e); rows = null; }
     const r = rows === null ? await withEntity(entity_id, (db) => db.query(listSql, params)) : null;
     /**
      * ⭐⭐ THE JURISDICTION'S SLABS RIDE ALONG WITH THE ENTITY'S OWN. Athi, 2026-09-04: *"why each entity should
@@ -219,6 +221,10 @@ router.post('/', auth,
        * The pair is the unit, exactly as putForParticipantsInTx treats a chit and its documents.
        */
       const out = await withEntity(entity_id, async (db) => {
+        /* ⭐ T2-LABS: born LIVE beside another live discount on the same items → refused before anything is written */
+        const clash = await offerClash.check(db, entity_id, { definition_id: null, kind: String(kind).trim(), sub_kind: sub_kind ? String(sub_kind).trim() : null,
+          name: String(name).trim(), rules, status: status0 });
+        if (clash) return { clash };
         const d = await db.query(
           `INSERT INTO definition (entity_id, kind, sub_kind, name, note, status, current_version, created_by)
            VALUES ($1,$2,$3,$4,$5,$7,1,$6) RETURNING *`,
@@ -233,6 +239,7 @@ router.post('/', auth,
            req.identity && req.identity.identity_id]);
         return row;
       });
+      if (out && out.clash) return res.status(out.clash.status).json(out.clash.body);
       shopChanged(entity_id, 'definition created');
       res.status(201).json({ message: 'Definition created', definition: out, version: 1 });
     } catch (e) {
@@ -268,6 +275,16 @@ router.put('/:id', auth, async (req, res) => {
       const d = cur.rows[0];
       /* an edit that removes the value is refused like a create without one */
       if (rules) { const bad = require('../lib/definition-check').missingValue(d.kind, d.sub_kind, rules); if (bad) return { bad }; }
+      /* ⭐ T2-LABS: a save that MAKES the offer live, or changes the rules of a live one, is asked whether it clashes with another
+         live discount (lib/offer-clash — the engine's rule). A rename, a pause or a retire is never refused for it. */
+      const after = status ? String(status) : d.status;
+      if (d.kind === 'offer' && after === 'live' && (rules || d.status !== 'live')) {
+        const rulesNow = rules || ((await db.query(`SELECT rules FROM definition_version WHERE definition_id = $1 AND version = $2`,
+          [req.params.id, d.current_version])).rows[0] || {}).rules || {};
+        const clash = await offerClash.check(db, entity_id, { definition_id: d.definition_id, kind: d.kind, sub_kind: d.sub_kind,
+          name: name ? String(name).trim() : d.name, rules: rulesNow, status: after });
+        if (clash) return { clash };
+      }
       let version = d.current_version;
 
       /* ⚠️ A NEW VERSION ONLY WHEN THE RULES CHANGE. Renaming a definition or retiring it is not a change to
@@ -309,6 +326,7 @@ router.put('/:id', auth, async (req, res) => {
 
     if (out.missing) return res.status(404).json({ error: 'Not found' });
     if (out.bad) return res.status(422).json({ error: 'Incomplete rule', message: out.bad });
+    if (out.clash) return res.status(out.clash.status).json(out.clash.body);
     res.json({ message: out.versioned ? 'Saved as version ' + out.version : 'Saved',
                definition: out.row, version: out.version, new_version: out.versioned });
   } catch (e) {

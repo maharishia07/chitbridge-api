@@ -52,6 +52,9 @@ async function captureCrm() {
     /* the stage trail the timeline reads (FX-L2C): newest first, LIMIT + 1 */
     if (/^SELECT membership_id, grp, at, by_user_id FROM memberships/.test(sql)) { if (!mem.on) throw Object.assign(new Error('relation "memberships" does not exist'), { code: '42P01' }); return { rows: mem.rows.filter((m) => m.item_id === p[1] && m.at < p[2]).sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, p[3]).map((m, i) => ({ membership_id: m.membership_id || 'mm' + i, grp: m.grp, at: m.at, by_user_id: 'E1' })) }; }
     if (/^INSERT INTO memberships/.test(sql)) { const r = { item_id: p[2], kind: p[3], grp: p[4], at: '2026-10-10T09:00:00.000Z', membership_id: 'mm1' }; mem.rows.push(r); return { rows: [r] }; }
+    /* CO1 · MKT-SRV1: b306 not run here (a fresh install) — the consent gate reads no rows; the record's contact_prefs says migrated: false */
+    if (/^SELECT to_regclass\(\$1\) IS NOT NULL AS ok/.test(sql)) return { rows: [{ ok: false }] };
+    if (/^SELECT DISTINCT ON \(party_id, channel, purpose\)/.test(sql)) throw Object.assign(new Error('relation "party_contact_pref" does not exist'), { code: '42P01' });
     if (/^SELECT EXISTS \(SELECT 1 FROM customer_list/.test(sql)) return { rows: [{ ok: D.cust.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
     if (/^SELECT txn_count FROM customer_list/.test(sql)) { const r = D.cust.find((x) => x.owner === p[0] && x.party_id === p[1] && x.added_via === 'lead'); return { rows: r ? [{ txn_count: r.txn_count }] : [] }; }
     return null;
@@ -81,6 +84,7 @@ async function captureCrm() {
   F.forget();
   try {
     keep('GET', '/parties', await t.get('/parties'));
+    keep('GET', '/parties', await t.get('/parties?with=consent'));   /* MKT-SRV1 G1: each party's contact_prefs { migrated, may } + consent_migrated */
     keep('GET', '/parties/:id', await t.get('/parties/' + P(2)));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(8)));
     keep('GET', '/parties/:id', await t.get('/parties/' + P(3)));
@@ -143,6 +147,28 @@ async function captureCrm() {
     keep('GET', '/parties/:id', await t.get('/parties/' + P(1)));
     keep('POST', '/followups', await t.post('/followups', { party_id: P(2), what: 'x', due_at: day(0) }));
     D.migrated = true; F.forget();
+    /* T3-P2-CRM: segments & groups — the overview (offers that name a group, b306 not run → NO_CONSENT), a group written, deleted, a dry send and a real one (no token → refused in words) */
+    D.pre = async (sql, p) => {
+      if (/FROM definition d/.test(sql)) return { rows: [{ g: 'group:Dealers', n: 1 }] };
+      if (/^SELECT DISTINCT unnest\(groups\)/.test(sql)) { const s = new Set(); D.cust.forEach((r) => (r.groups || []).forEach((g) => s.add(g))); return { rows: [...s].sort().map((name) => ({ name })) }; }
+      if (/^UPDATE customer_list SET groups = array_append/.test(sql)) { const out = []; D.cust.forEach((r) => { if (r.owner === p[0] && p[2].indexOf(r.party_id) >= 0 && (r.groups || []).indexOf(p[1]) < 0) { r.groups = (r.groups || []).concat([p[1]]); out.push({ customer_identity_id: r.party_id, n: r.groups.length }); } }); return { rows: out }; }
+      if (/^UPDATE customer_list SET groups = array_remove/.test(sql)) { const out = []; D.cust.forEach((r) => { if (r.owner === p[0] && (!p[2] || p[2].indexOf(r.party_id) >= 0) && (r.groups || []).indexOf(p[1]) >= 0) { r.groups = r.groups.filter((g) => g !== p[1]); out.push({ customer_identity_id: r.party_id }); } }); return { rows: out }; }
+      if (/^SELECT count\(\*\)::int AS n FROM customer_list/.test(sql)) return { rows: [{ n: D.cust.filter((r) => r.owner === p[0] && (r.groups || []).indexOf(p[1]) >= 0).length }] };
+      if (/FROM channel_binding WHERE entity_id = \$1 AND channel = 'whatsapp'/.test(sql)) return { rows: [] };
+      if (/^INSERT INTO channel_outbound/.test(sql)) return { rows: [{ id: 'ob1', status: p[6], reason: p[7] }] };
+      if (/FROM party_contact_pref\s+WHERE owner_entity_id = \$1 AND party_id = \$2 AND channel = \$3 AND purpose = \$4/.test(sql)) return { rows: [] };
+      return null;
+    };
+    delete process.env.WHATSAPP_TOKEN;
+    keep('GET', '/segments', await t.get('/segments'));
+    keep('POST', '/groups', await t.post('/groups', { name: 'VIP', add: [P(2), P(5)] }));
+    keep('POST', '/groups', await t.post('/groups', { name: '<bad>', add: [P(2)] }));
+    keep('POST', '/segments/:key/send', await t.post('/segments/group:VIP/send', { text: 'Diwali offer: 10% off this week', dry: true }));
+    keep('POST', '/segments/:key/send', await t.post('/segments/group:VIP/send', { text: 'Diwali offer: 10% off this week' }));
+    keep('POST', '/segments/:key/send', await t.post('/segments/everyone/send', { text: 'hi' }));
+    keep('DELETE', '/groups/:name', await t.del('/groups/VIP'));
+    keep('DELETE', '/groups/:name', await t.del('/groups/VIP'));
+    D.pre = null;
   } finally { t.close(); }
   return got;
 }

@@ -1,5 +1,6 @@
 // routes/products.js — B3.7a Catalogue items (products) CRUD + search
 const express = require('express');
+const log = require('../lib/logger');
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
@@ -79,11 +80,24 @@ const importLimiter = rateLimit({
  * workbook would die in the body parser with a 413 that never mentions spreadsheets.
  */
 const XLSX_MAX = 4 * 1024 * 1024;   /* the decoded workbook. A product list is a few hundred KB. */
+/**
+ * ⚠️ A WORKBOOK READ ONLY IN PART SAYS SO (T3-FIXES, CAT-FIX1). lib/xlsx-read stops at MAX_CELLS and sets `truncated`; nothing
+ * read it, so a sheet past the cap previewed and imported its first part as if it were the whole. → null, or { code, message }.
+ */
+function workbookCut(parsed) {
+  if (!parsed || !parsed.truncated) return null;
+  return { code: 'WORKBOOK_CUT', cells: xlsxRead.MAX_CELLS,
+    message: 'This sheet has more than ' + String(xlsxRead.MAX_CELLS) + ' cells, so only part of it was read. '
+      + 'Nothing is imported from it — delete unused columns, or split it, and upload again.' };
+}
+/** ⭐ the GTIN check digit, for the preflight (T3-FIXES): gs1.classify / gs1.describe — the one check; a typo'd barcode is warned */
+const gs1 = require('../lib/gs1');
+function gtinCheck(raw) { return gs1.classify(raw) === 'gtin-invalid' ? gs1.describe(raw).message : null; }
 function readUpload(body) {
   const b = body || {};
   if (typeof b.xlsx === 'string' && b.xlsx.trim()) {
     let buf;
-    try { buf = Buffer.from(b.xlsx, 'base64'); } catch (_) { buf = null; }
+    try { buf = Buffer.from(b.xlsx, 'base64'); } catch (e) { log.fellBack('products readUpload: did not parse — answered with nothing', e, 'debug'); buf = null; }
     if (!buf || !buf.length) { const e = new Error('That file could not be read.'); e.userMessage = e.message; throw e; }
     if (buf.length > XLSX_MAX) {
       const e = new Error('That workbook is ' + Math.round(buf.length / 1048576) + ' MB. A product list should be'
@@ -241,7 +255,7 @@ async function faceOf(entity_id) {
     const f = await withEntity(entity_id, (db) => db.query(
       `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
     return (f.rows[0] && f.rows[0].face) || {};
-  } catch (_) { return {}; }
+  } catch (e) { log.fellBack('products faceOf: the read failed — answered with an empty set', e); return {}; }
 }
 
 /** The accepted format + the shop's contract, built once so preflight, import and template cannot disagree. */
@@ -255,7 +269,7 @@ async function catalogueShape(entity_id) {
       `SELECT face FROM catalogue_face WHERE entity_id = $1`, [entity_id]));
     face0 = (f.rows[0] && f.rows[0].face) || {};
     oi = orderInput.resolve(face0.order_input || (face0.method ? { preset: face0.method } : null));
-  } catch (_) { /* no face declared → the cart default, which is how the shop behaves */ }
+  } catch (e) { log.fellBack('products catalogueShape: the read failed — carried on without it', e); /* no face declared → the cart default, which is how the shop behaves */ }
 
   /**
    * ⭐⭐ ONE RESOLVER, SO THE TEMPLATE CANNOT DISAGREE WITH THE EXPORT OR THE COLUMNS PANEL.
@@ -576,7 +590,7 @@ router.get('/', auth, async (req, res) => {
         r = res[0]; tally = res[1]; catRows = res[2].rows; uncat = Number(res[3].rows[0].n) || 0;
         pendingRows = sched ? res[5].rows : [];
       }
-    } catch (_) { r = null; }
+    } catch (e) { log.fellBack('products GET /: did not parse — answered with nothing', e, 'debug'); r = null; }
     if (!r) {
       const both = await withEntity(entity_id, async (db) => {
         await schedule.applyDue(entity_id, db);
@@ -586,7 +600,7 @@ router.get('/', auth, async (req, res) => {
            depending on whether a parked change happened to be due */
         const c = await db.query(catSql.text, catSql.params);
         const u = await db.query(uncatSql.text, uncatSql.params);
-        if (out.rows.length) { try { pendingRows = await schedule.pending(entity_id, null, db); } catch (_) { pendingRows = []; } }
+        if (out.rows.length) { try { pendingRows = await schedule.pending(entity_id, null, db); } catch (e) { log.fellBack('products GET /: failed — answered with none', e); pendingRows = []; } }
         return { out, t, c, u };
       });
       r = both.out; tally = both.t; catRows = both.c.rows; uncat = Number(both.u.rows[0].n) || 0;
@@ -611,7 +625,7 @@ router.get('/', auth, async (req, res) => {
         for (const row of pendingRows) { const k = String(row.item_id); (byItem.get(k) || byItem.set(k, []).get(k)).push(row); }
         if (byItem.size) items = items.map((it) => byItem.has(String(it.item_id)) ? Object.assign({}, it, { scheduled: byItem.get(String(it.item_id)) }) : it);
       }
-    } catch (_) { /* the list never fails for a parked change */ }
+    } catch (e) { log.fellBack('products GET /: failed — carried on without it', e); /* the list never fails for a parked change */ }
     /* The tally is over EVERY row, not the page and not the filtered set — it is what the tabs count, so it must not change
        depending on which tab is open or how far somebody has scrolled. statusOf() decides, as it always has. */
     const counts = {};
@@ -671,7 +685,7 @@ async function catalogueRows(entity_id, canCost) {
       const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
       schema = { properties: Object.fromEntries(cols.columns.map((k) => [k, {}])) };
     }
-  } catch (_) { /* no schema is fine — the columns then come from the items themselves */ }
+  } catch (e) { log.fellBack('products catalogueRows: the read failed — carried on without it', e); /* no schema is fine — the columns then come from the items themselves */ }
   /**
    * ⭐⭐ PROJECTED. Athi, 2026-09-02: *"json is too much for the user and he will not understand."* See
    * lib/sheet.js — available (yes/no) · qty · qty_as_of · qty_source, four plain cells, never one nested one.
@@ -833,10 +847,14 @@ router.post('/import/preflight', auth, preflightLimiter,
     catch (e) { return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) }); }
     // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
+    const cut = workbookCut(parsed);
+    if (cut) { report.ready = false; report.notes.unshift(cut.message); }
 
     res.json({ report, accepted: template.columns, optional: template.optional, preset: oi.preset,
       identity: ident, identity_problems: identityProblems, dry_run: true,
+      /* ⚠️ a workbook read only in part says so (T3-FIXES) — `cut.code` is what a screen branches on, never the sentence */
+      cut,
       /* ⭐ which sheet was read, and what else was in the workbook — a person who meant a different one can say so */
       sheet: parsed.sheet || null, sheets: parsed.sheets || null,
       /* ⭐⭐ and which ROW was taken as the headings, with the first few rows so a person can point at another
@@ -882,12 +900,16 @@ router.post('/import', auth, importLimiter,
     let parsed;
     try { parsed = readUpload(req.body); }
     catch (e) { return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) }); }
+    /* ⚠️ A CUT WORKBOOK IS REFUSED, like a file over IMPORT_MAX_ROWS: importing the part that was read would leave a person
+       working out which products are missing — the all-or-nothing rule this route keeps everywhere else. */
+    const cut = workbookCut(parsed);
+    if (cut) return res.status(413).json(Object.assign({ error: 'Workbook too large' }, cut));
     if (parsed.rows.length > IMPORT_MAX_ROWS) {
       return res.status(413).json({ error: 'Too many rows',
         message: `This file has ${parsed.rows.length} rows and one upload can carry ${IMPORT_MAX_ROWS}. Nothing was imported — split the file and it will all go in.` });
     }
     const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
-    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident });
+    const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
     const rowErrors = report.issues.filter((i) => i.severity === 'error');
     if (rowErrors.length) {
       return res.status(409).json({ error: 'The file has problems', report,
@@ -1150,12 +1172,11 @@ function mergePatch(target, patch) {
  * ensureDeclared() — pushing a combo declares and validates exactly like a person typing the product by
  * hand, not a fourth door with its own rules. */
 router.mergePatch = mergePatch;
+router.gtinCheck = gtinCheck;   /* T3-FIXES: the preflight's code check, for tests/t3-fixes */
 router.defaultSchemaId = defaultSchemaId;
 router.validateAgainst = validateAgainst;
-/** [OFFR-04] all a cost-blind actor may touch through PATCH /:id — the "availability flag", nothing else.
- * Not price, not the modifiers, not the name — a person who cannot see what a change to any of those
- * would cost the margin should not be the one making it either. */
-const COST_BLIND_ALLOWED_FIELDS = ['status'];
+/* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
+   one gate for this PATCH, the schedule below, POST /till/price and the combo push (T3-FIXES, CAT-FIX1) */
 router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1165,14 +1186,8 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
      * change them, and checking post-merge would refuse a plain status flip for carrying fields the
      * caller never touched.
      */
-    if (req.identity && req.identity.identity_type === 'actor'
-        && !(await safeCanSeeCosts(req, entity_id))) {
-      const sent = Object.keys(req.body.item_data || {});
-      const blocked = sent.filter((k) => COST_BLIND_ALLOWED_FIELDS.indexOf(k) < 0);
-      if (blocked.length) return res.status(403).json({ error: 'Not permitted',
-        message: 'Your access does not include cost or price. You can change availability; the account '
-          + 'owner can grant "Sees costs" in Co-assists to change: ' + blocked.join(', ') + '.' });
-    }
+    const refused = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
+    if (refused) return res.status(403).json(refused);
     /**
      * ⭐⭐ `merge: true` — WRITE ONLY WHAT YOU EDITED ([EXP-01], 2026-09-06). This route REPLACES item_data (it always did; a client
      * comment claimed it merged). The exposure pane sent the whole item_data it had loaded minutes earlier, so a rate set in between
@@ -1228,6 +1243,9 @@ router.get('/:id/schedule', auth, async (req, res) => {
 router.post('/:id/schedule', auth, [ body('effective_at').isString(), body('item_data').isObject() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
+    /* [OFFR-04] a parked change is an edit that lands later — the same cost gate as PATCH /:id, before anything is read */
+    const refused = await cost.writeRefusal(req, entity_id, Object.keys(req.body.item_data || {}));
+    if (refused) return res.status(403).json(refused);
     /* the patch goes through the SAME declaration gate as an edit — a scheduled key must be a declared column too */
     const decl = await catcols.ensureDeclared({
       query, entity_id, schema_id: await defaultSchemaId(entity_id), item_data: req.body.item_data,
@@ -1384,14 +1402,14 @@ router.get('/media/:item_id/:mid', async (req, res) => {
        then read the item IN THAT ENTITY'S CONTEXT. The ids stay unguessable, so nothing new is exposed. */
     let row = null;
     try { const own = await query('SELECT entity_id FROM media_blobs WHERE key LIKE $1 LIMIT 1', ['%/' + req.params.mid]);
-      if (own.rows[0]) row = await withEntity(own.rows[0].entity_id, async (db) => (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id])).rows[0] || null); } catch (_) { row = null; }
+      if (own.rows[0]) row = await withEntity(own.rows[0].entity_id, async (db) => (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id])).rows[0] || null); } catch (e) { log.fellBack('products GET /media/:item_id/:mid: the read failed — answered with nothing', e); row = null; }
     if (!row) { const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]); row = r.rows[0]; }
     if (!row) return res.status(404).end();
     const m = (Array.isArray(row.item_data && row.item_data.media) ? row.item_data.media : []).find((x) => x && String(x.id) === String(req.params.mid));
     if (!m || !m.key) return res.status(404).end();
     const buf = await objStore.get(m.key);
     res.set('Content-Type', m.mime || 'application/octet-stream'); res.set('Cache-Control', 'public, max-age=86400'); res.send(buf);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.post('/:id/media', auth, async (req, res) => {
   try {
@@ -1453,7 +1471,7 @@ router.delete('/:id/media/:mid', auth, async (req, res) => {
       return { gone, media: d.media };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
-    if (out.gone && out.gone.key && (await objStore.available())) { try { await objStore.del(out.gone.key); } catch (_) {} }
+    if (out.gone && out.gone.key && (await objStore.available())) { try { await objStore.del(out.gone.key); } catch (e) { log.fellBack('products DELETE /:id/media/:mid: failed — carried on without it', e); } }
     res.json({ message: 'Media removed', media: out.media });
   } catch (e) { fail(res, e, 'Could not remove the media'); }
 });
@@ -1588,7 +1606,7 @@ router.get('/lists', auth, async (req, res) => {
        * into a confident zero — which here would read as "this shop sells tomatoes for nothing".
        */
       mine = r.rows.map((x) => ({ name: x.name, unit: x.unit, price: money.amountOf(x.price), active: x.is_active !== false }));
-    } catch (_) { mine = []; }
+    } catch (e) { log.fellBack('products GET /lists: the read failed — answered with none', e); mine = []; }
 
     /**
      * ⭐⭐ THE SHOP'S CURRENCY, BECAUSE A BARE NUMBER IS NOT A PRICE. Athi: *"currency is not shown in the
@@ -1668,7 +1686,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], vali
           `SELECT item_data->>'name' AS name, item_data->>'unit' AS unit
              FROM catalogue_items WHERE entity_id = $1 LIMIT 5000`, [entity_id]));
         skipNames = r.rows.map((x) => ({ name: x.name, unit: x.unit }));
-      } catch (_) { skipNames = []; }
+      } catch (e) { log.fellBack('products POST /lists/adopt: the read failed — answered with none', e); skipNames = []; }
     }
 
     const existing = await catwrite.codesInUse(entity_id);

@@ -41,6 +41,14 @@ ok('interest on needs a rate', /rate/.test(throwsSay(() => T.clean({ interest: {
 ok('early-pay needs days', /days/.test(throwsSay(() => T.clean({ early: { pct: 2, within_days: 0 } }))));
 ok('null clears; absent keys stay out', JSON.stringify(T.clean({ interest: null })) === '{"interest":null}');
 
+/* ── T3-P1-MONEY: the post-dated-cheque reminder, a shop-level switch in the same jsonb ── */
+ok('pdc_remind: on by default with 7 days ahead; off is kept; days whole 0–90', JSON.stringify(T.clean({ pdc_remind: { on: true } })) === '{"pdc_remind":{"on":true,"lead_days":7}}'
+  && T.clean({ pdc_remind: { on: false, lead_days: 3 } }).pdc_remind.on === false && T.clean({ pdc_remind: { on: false, lead_days: 3 } }).pdc_remind.lead_days === 3
+  && /Days ahead/.test(throwsSay(() => T.clean({ pdc_remind: { on: true, lead_days: 91 } }))) && /Days ahead/.test(throwsSay(() => T.clean({ pdc_remind: { on: true, lead_days: 1.5 } }))));
+ok('pdc_remind null clears', JSON.stringify(T.clean({ pdc_remind: null })) === '{"pdc_remind":null}');
+ok('pdcRemind: nothing stored → on, 7 days, from null (what GET /cheques always did)', JSON.stringify(T.pdcRemind({})) === '{"on":true,"lead_days":7,"from":null}' && T.pdcRemind(null).on === true);
+ok('pdcRemind: the owner\'s switch wins, from shop', JSON.stringify(T.pdcRemind({ pdc_remind: { on: false, lead_days: 2 } })) === '{"on":false,"lead_days":2,"from":"shop"}');
+
 /* ── the writes: one change event per changed key, nothing for an unchanged one ── */
 function fake(state) {
   const q = [];

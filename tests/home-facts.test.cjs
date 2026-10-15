@@ -2,7 +2,7 @@
  * home-facts.test.cjs — GET /api/facts/:card (N18): what each Home card says, from the server, or not at all.
  *
  * Offline: the real route and lib/home-facts over a stand-in db. Held here:
- *   · each card's shape ({ lines:[{text,value?,tone?}] }; rail = { suppliers, customers, in, out, stuck })
+ *   · each card's shape ({ lines:[{text,value?,tone?}] }; rail = { suppliers, customers, in, out, tasks, stuck } — in/out/tasks = Tasks & Orders' folder counts)
  *   · every answer costs at most 3 database trips (the rail: overdue clock + CRM lists + chits, run together) (readBatch = 1, withEntity = 1, query = 1)
  *   · a figure the server cannot compute is OMITTED, never 0 (no summary today -> no bills line; a truncated read -> no in/out/stuck)
  *   · cost never travels: the stand-in returns hostile cost values and none reaches a body; no statement selects item_data
@@ -54,9 +54,9 @@ function chits() {
       counterparty_id: 'e2', counterparty_name: 'cbincroot', all_recipients: [{ display_name: 'Mayur Bhavan' }, { display_name: 'cbincroot' }], manual_subject: 'Payment advice PY/2026-27/000002' },
     { chit_id: 'exp', direction: 'received', sender_entity_id: 'e1', current_status: 'pending', created_at: d(1), open_disputes: 0, purpose: 'expense', alt_value: '90', value: '0', manual_subject: 'Expense - rent' }];
   return own.concat([
-    { chit_id: 'a', direction: 'received', current_status: 'pending', created_at: d(10), open_disputes: 0 },   /* in, and stuck (7-day default) */
-    { chit_id: 'b', direction: 'received', current_status: 'pending', created_at: d(1), open_disputes: 0 },    /* in */
-    { chit_id: 'c', direction: 'sent', current_status: 'accepted', created_at: d(2), open_disputes: 0 },       /* out */
+    { chit_id: 'a', direction: 'received', current_status: 'pending', created_at: d(10), open_disputes: 0, purpose: 'order' },   /* an order in, and stuck (7-day default) */
+    { chit_id: 'b', direction: 'received', current_status: 'pending', created_at: d(1), open_disputes: 0 },    /* a task (came in, not an order) */
+    { chit_id: 'c', direction: 'sent', current_status: 'accepted', created_at: d(2), open_disputes: 0, purpose: 'order' },       /* an order out */
     { chit_id: 'd', direction: 'sent', current_status: 'completed', created_at: d(30), open_disputes: 0 },     /* closed */
   ]);
 }
@@ -70,13 +70,22 @@ function answer(text, params) {
       keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: F.allShut ? SHUT_AT : null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: F.c2open ? null : '2026-10-01T10:00:00Z' } }] }] };
   }
   if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: params[0] === 'a2' }] };
-  if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, last_check: { at: '2026-10-06T21:00:00Z', ok: true } }] };
+  if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, country: 'IN', last_check: { at: '2026-10-06T21:00:00Z', ok: true }, terms: F.terms || null }] };
+  /* T3-P1-MONEY: the cheques held (books-store.cheques) — a post-dated one for tomorrow, one overdue for deposit, one already deposited, one written OUT */
+  /* INT6d-GREEN: the cheque dates are the SHOP's days (country IN above — the same day shop-clock.today(s) gives the card), never the runner's UTC date:
+   * between 18:30 and 00:00 UTC (the 04:00 IST batch) "tomorrow" in UTC is already today in India and the post-dated cheque counted as due */
+  if (/FROM books_payment p/.test(sql)) { F.chqSql = sql; const d = (n) => require('../lib/books-hooks').dayOf(new Date(Date.now() + n * DAYS).toISOString(), 'IN'); return { rows: F.cheques === 'none' ? [] : [
+    { payment_id: 'p1', party_id: 'c1', direction: 'in', amount_minor: 500000, currency: 'INR', cheque_no: '000777', cheque_bank: 'SBI', cheque_date: d(1), received_at: d(-3), status: 'received' },
+    { payment_id: 'p2', party_id: 'c2', direction: 'in', amount_minor: 120000, currency: 'INR', cheque_no: '000778', cheque_bank: 'HDFC', cheque_date: d(-2), received_at: d(-5), status: 'received' },
+    { payment_id: 'p3', party_id: 'c3', direction: 'in', amount_minor: 90000, currency: 'INR', cheque_no: '000779', cheque_bank: 'HDFC', cheque_date: d(-9), received_at: d(-9), status: 'deposited' },
+    { payment_id: 'p4', party_id: 's1', direction: 'out', amount_minor: 70000, currency: 'INR', cheque_no: '110', cheque_bank: 'SBI', cheque_date: d(0), received_at: d(0), status: 'received' }] }; }
   /* STD1: the ONE count — GROUP BY todo over every open row (211 here: more than any page of 50 or 200) */
   if (/FROM books_outbox/.test(sql)) { F.outboxSql = sql; return { rows: [{ todo: 'accept', n: 120 }, { todo: 'add_supplier', n: 90 }, { todo: 'record', n: 1 }] }; }
   if (/FROM catalogue_items/.test(sql)) return { rows: [{ items: 10, no_cost: 4, cost: SECRET, item_data: { cost: { value: SECRET } } }] };
   if (/FROM combo_templates/.test(sql)) return { rows: [{ n: 2 }] };
   if (/FROM definition WHERE/.test(sql)) return { rows: [{ drafts: 1, live: 5 }] };
-  if (/policy_flags->'overdue_days'/.test(sql)) return { rows: [{ overdue_days: null }] };
+  /* RAIL-LAB-SRV1: the population rides the overdue_days statement (to_jsonb: null before b249 = live) */
+  if (/policy_flags->'overdue_days'/.test(sql)) { F.railSql = sql; return { rows: [{ overdue_days: null, population: F.population === undefined ? null : F.population }] }; }
   /* CB CRM's two list reads (lib/crm.rows) - the rail counts what CRM lists: the hidden and the merged-away rows are not parties */
   const party = (id, extra) => Object.assign({ party_id: id, display_name: 'P ' + id, user_id: 'u' + id, status: 'active', on_rail: true, same_world: true }, extra);
   if (/FROM customer_list cl JOIN identities/.test(sql)) { F.crmSql.push(sql); return { rows: [party('c1'), party('c2'), party('c3'), party('c4'), party('c5', { hidden_at: '2026-10-01' }), party('b1')] }; }
@@ -93,6 +102,9 @@ function answer(text, params) {
     { entry_id: 'rt', event_type: 'return', covers: null, source_chit_id: 's3', account_role: 'cash', dr_minor: 0, cr_minor: 2000, line_no: 1 },
     { entry_id: 'x1', event_type: 'reversal', covers: null, reverses_entry_id: 'b2', source_chit_id: 's2', account_role: 'debtors', dr_minor: 0, cr_minor: 4000, line_no: 1 }] : []) : [] };
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
+  /* T3-DISPUTES-ASSIST: the disputes card's one count (RLS = my copies) and CB Assist's library count */
+  if (/FROM chit_disputes WHERE status = 'open'/.test(sql)) return { rows: [F.disputes || { mine: 0, against: 0 }] };
+  if (/FROM assist_qa WHERE active = true/.test(sql)) return { rows: [{ n: F.answers == null ? 0 : F.answers }] };
   return { rows: [] };
 }
 const db = {
@@ -106,7 +118,7 @@ mock('/db', db);
 require(API + '/lib/policy').get = async () => ({});
 /* M168: the orders card asks lib/open-orders - the till's own list - never its own query */
 const OO = { calls: [], list: [{ chit_id: 'o1' }, { chit_id: 'o2' }] };
-mock('/lib/open-orders', { tasks: async (e, kind, limit) => { OO.calls.push([e, kind]); return OO.list; } });
+mock('/lib/open-orders', Object.assign({}, require(API + '/lib/open-orders'), { tasks: async (e, kind, limit) => { OO.calls.push([e, kind]); return OO.list; } }));   /* sideOf stays real: lib/work-rows reads it (TOUR-FIX1) */
 
 const get = (port, p) => new Promise((ok) => {
   trips = 0; sent = [];
@@ -120,6 +132,7 @@ const get = (port, p) => new Promise((ok) => {
 (async () => {
   const app = express();
   app.use('/api/facts', require(API + '/routes/facts'));
+  app.use('/api/work', require(API + '/routes/work'));   /* Tasks & Orders' own reader — the rail must agree with it (TOUR-FIX1) */
   const srv = app.listen(0); const port = srv.address().port;
   const g = (c) => get(port, '/api/facts/' + c);
   console.log('\n-- N18 Home facts --\n');
@@ -156,6 +169,13 @@ const get = (port, p) => new Promise((ok) => {
   t('till: an actor without can_see_costs still sees takings (the old read never hid them)', /"amount":4320\.5\b/.test(r.body), true);
   WHO = OWNER;
 
+  /* counters (T3-SETTINGS): CB Settings › Counters & keys - the till card's register read and open rule, one trip */
+  r = await g('counters');
+  t('counters: 200, "2 counters · 1 open" (C1 held by a live key, C2 closed)', [r.status, r.json.lines[0]], [200, { text: '2 counters · 1 open', value: 2 }]);
+  t('counters: till keys are counters, not "keys for other systems" - no keys line', r.json.lines.length, 1);
+  t('counters: figures carry the raw numbers', r.json.figures, { counters: 2, counters_open: 1, keys: 0 });
+  t('counters: at most 1 trip', r.trips <= 1, true);
+
   /* orders (M145): a live door with its count - one read, asked for orders that came to the shop, counted by lib/measure's OPEN set */
   r = await g('orders');
   t('orders: 200, one count line, the figure is a number', [r.status, r.json.lines.length, typeof r.json.figures.open, r.json.lines[0].value === r.json.figures.open], [200, 1, 'number', true]);
@@ -173,6 +193,20 @@ const get = (port, p) => new Promise((ok) => {
   t('accounts: at most 2 trips', r.trips <= 2, true);
   F.booksOn = false; r = await g('accounts');
   t('accounts: ledger off -> no lines, and it says why', [r.status, r.json.lines, typeof r.json.unavailable], [200, [], 'string']);
+  F.booksOn = true;
+
+  /* finance (T3-P1-MONEY): the cheques to deposit — the engine's pdcReminders over the SAME rows GET /books/cheques reads; money worded by the page */
+  r = await g('finance');
+  t('finance: 200', r.status, 200);
+  t('finance: one cheque is past its date and still received -> "1 cheque to deposit · {money} · 1 overdue", the sum in the pack\'s unit, tone dn', r.json.lines[0],
+    { text: '1 cheque to deposit · {money} · 1 overdue', value: 1, tone: 'dn', money: { amount: 1200, currency: 'INR' } });
+  t('finance: the figures count what the card says (to_deposit · late · in hand = received + deposited, IN only)', [r.json.figures.to_deposit, r.json.figures.late, r.json.figures.in_hand, r.json.figures.remind_on], [1, 1, 3, true]);
+  t('finance: the cheques read is books-store\'s own (mode = cheque, the held ones), one transaction', [/p\.mode = 'cheque'/.test(F.chqSql || ''), r.trips <= 2], [true, true]);
+  t('finance: as_of is the shop\'s day', /^\d{4}-\d{2}-\d{2}$/.test(String(r.json.figures.as_of)), true);
+  F.cheques = 'none'; r = await g('finance');
+  t('finance: no cheque at all -> said in words, value 0, never a blank', r.json.lines, [{ text: 'No cheque waiting', value: 0 }]);
+  F.cheques = null; F.booksOn = false; r = await g('finance');
+  t('finance: ledger off -> no lines, and it says why', [r.status, r.json.lines, typeof r.json.unavailable], [200, [], 'string']);
   F.booksOn = true;
 
   /* product-lab */
@@ -200,11 +234,23 @@ const get = (port, p) => new Promise((ok) => {
 
   /* rail */
   r = await g('rail');
-  t('rail: { suppliers, customers, in, out, stuck } - the counts are CRM\'s (hidden and merged rows are not parties)', r.json, { suppliers: 3, customers: 5, in: 2, out: 1, stuck: 1 });
+  /* RAIL-LAB-SRV1 (G1): may_sample is the SERVER's may/why - a live shop (population null = the default, live) is refused with a code and a sentence */
+  const LIVE_NO = { ok: false, why: 'live_shop', say: 'This is a live shop, so a lab chit cannot be sent from it. Try it in a test shop.' };
+  t('rail: { suppliers, customers, may_sample, in, out, tasks, stuck } - parties are CRM\'s (hidden and merged rows are not parties); in/out/tasks are the Tasks folders; may_sample the lab rule', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 1, stuck: 1 });
+  t('rail: the population rides the overdue_days statement (to_jsonb - no failed query before b249, no second identities read)', /to_jsonb\(i\)->>'population'/.test(F.railSql) && sent.filter((q) => /policy_flags->'overdue_days'/.test(q)).length === 1, true);
+  /* ⭐ TOUR-FIX1 (Home said 187 in, Tasks › Orders in said 0): the rail and Tasks & Orders answer from ONE reader — the same numbers, asked both ways */
+  const wf = await get(port, '/api/work/facts'), wl = await get(port, '/api/work/list?view=orders_in');
+  t('rail in / out / tasks === GET /api/work/facts counts (orders_in · orders_out · tasks) === the Orders in list\'s own total', [r.json.in, r.json.out, r.json.tasks, wl.json.total], [wf.json.counts.orders_in, wf.json.counts.orders_out, wf.json.counts.tasks, wf.json.counts.orders_in]);
   t('rail: at most 3 trips', r.trips <= 3, true);
+  F.population = 'live'; r = await g('rail');
+  t('rail: a shop whose population is stated live is refused the same way', r.json.may_sample, LIVE_NO);
+  F.population = 'test'; r = await g('rail');
+  t('rail: a lab (test) shop may sample - { ok: true }, the counts unchanged', r.json, { suppliers: 3, customers: 5, may_sample: { ok: true }, in: 1, out: 1, tasks: 1, stuck: 1 });
+  t('rail: the answer is lib/istest.maySample - one rule for the card and the send door', JSON.stringify(require(API + '/lib/istest').maySample('test')) === JSON.stringify(r.json.may_sample) && JSON.stringify(require(API + '/lib/istest').maySample(null)) === JSON.stringify(LIVE_NO), true);
+  F.population = undefined;
   t('rail: both CRM list reads leave the shop itself out (H3)', F.crmSql.length >= 2 && F.crmSql.every((q) => /<> \$1/.test(q)), true);
   F.chits = 'own'; r = await g('rail');
-  t('rail: a chit the shop sent to itself is never stuck - an open one is "in", a closed one is nothing', r.json, { suppliers: 3, customers: 5, in: 3, out: 1, stuck: 1 });
+  t('rail: a chit the shop sent to itself is never stuck - an open one is a task, a closed one is nothing', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 2, stuck: 1 });
   r = await get(port, '/api/facts/rail/chits');
   t('rail/chits: a note to self is listed (In tab) with stuck:false, self:true, no reason; stuck rows still number the rail', [r.json.items.filter((i) => i.stuck).map((i) => i.chit_id), r.json.items.find((i) => i.chit_id === 'cs1').self, r.json.items.find((i) => i.chit_id === 'cs1').why, r.json.items.some((i) => i.chit_id === 'cs2')], [['a'], true, null, false]);
   F.chits = 'few';
@@ -215,14 +261,14 @@ const get = (port, p) => new Promise((ok) => {
   t('rail/chits: an expense with no total shows its own amount and is flagged own (the list hides it by default)', [exp.value, exp.own], [90, true]);
   F.chits = 'few';
   F.chits = 'many'; r = await g('rail');
-  t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number)', r.json, { suppliers: 3, customers: 5 });
+  t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number) - may_sample is still answered', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO });
   F.chits = 'few';
 
   /* the chits behind the numbers (H1/H4/H10) */
   r = await get(port, '/api/facts/rail/chits');
   t('rail/chits: 200', r.status, 200);
   t('rail/chits: only OPEN chits, stuck first', r.json.items.map((i) => [i.chit_id, i.tab, i.stuck]), [['a', 'in', true], ['b', 'in', false], ['c', 'out', false]]);
-  t('rail/chits: the stuck rows number the rail\'s stuck, in/out number its in/out', [r.json.items.filter((i) => i.stuck).length, r.json.items.filter((i) => i.tab === 'in').length, r.json.items.filter((i) => i.tab === 'out').length], [1, 2, 1]);
+  t('rail/chits: the stuck rows number the rail\'s stuck; the list holds every open chit (in 2 · out 1 — the rail\'s in/out are the Tasks folders)', [r.json.items.filter((i) => i.stuck).length, r.json.items.filter((i) => i.tab === 'in').length, r.json.items.filter((i) => i.tab === 'out').length], [1, 2, 1]);
   t('rail/chits: a stuck row says why in plain words', r.json.items[0].why, 'They sent it 10 days ago and you have not answered.');
   t('rail/chits: a row that is not stuck has no reason', r.json.items[1].why, null);
   t('rail/chits: at most 2 trips', r.trips <= 2, true);
@@ -234,6 +280,16 @@ const get = (port, p) => new Promise((ok) => {
   F.chits = 'few';
 
   /* refusals */
+  /* T3-DISPUTES-ASSIST: the Disputes and CB Assist cards — one read each, the work in words, none open said in words (never a bare 0) */
+  F.disputes = { mine: 1, against: 2 }; trips = 0; r = await g('disputes');
+  t('disputes: against you first (the work to answer), then you raised · one trip', [JSON.parse(r.body).lines, JSON.parse(r.body).figures, trips],
+    [[{ text: '2 disputes against you', value: 2, tone: 'dn' }, { text: '1 dispute you raised', value: 1 }], { open: 3, mine: 1, against: 2 }, 1]);
+  F.disputes = { mine: 0, against: 0 }; r = await g('disputes');
+  t('disputes: none open is said in words', JSON.parse(r.body).lines, [{ text: 'No open disputes', value: 0 }]);
+  F.answers = 7; trips = 0; r = await g('assist');
+  t('assist: the live answers counted · one trip', [JSON.parse(r.body).lines, trips], [[{ text: '7 answers live', value: 7 }], 1]);
+  F.answers = 0; r = await g('assist');
+  t('assist: none yet is said in words', JSON.parse(r.body).lines, [{ text: 'No answers published yet', value: 0 }]);
   r = await g('nonsense');
   t('unknown card -> 404', r.status, 404);
   r = await g('toString');
@@ -242,7 +298,7 @@ const get = (port, p) => new Promise((ok) => {
   t('a key is not a person -> 403', r.status, 403);
   KEY = false;
   const bodies = [];
-  for (const c of ['till', 'accounts', 'product-lab', 'combo-lab', 'offer-lab', 'rail']) bodies.push((await g(c)).body);
+  for (const c of ['till', 'counters', 'accounts', 'product-lab', 'combo-lab', 'offer-lab', 'rail']) bodies.push((await g(c)).body);
   t('no answer anywhere carries a cost value', bodies.some((b) => b.includes('4242')), false);
 
   srv.close();

@@ -103,7 +103,7 @@ console.log('\n— every copy of the rule, with money.js ABSENT, agrees with mon
  * out of its file and run with neither CBMoney nor require in reach, so the fallback is what actually runs.
  */
 const fs = require('fs');
-const WEB_APP = path.join(API, '..', 'chitbridge-web', 'public', 'app');
+const WEB_APP = path.join(API, '..', 'chitbridge-web', 'public', 'engine');   // T2-ENGONCE: the web's one home of an adopted engine
 function cut(src, start) {
   const at = src.indexOf(start); if (at < 0) return null;
   let d = 0, i = src.indexOf('{', at);

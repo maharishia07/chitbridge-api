@@ -85,7 +85,21 @@ function run(sql, p, ctx) {
   SQL.push({ s, p, ctx });
   p = p || [];
   /* the two reads whose text also names other tables — matched first */
-  if (/FROM chit_disputes cd WHERE cd.status = 'open'/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.status === 'open');   // the queue
+  if (/FROM chit_disputes cd WHERE cd.status = 'open'/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.status === 'open');   // the queue (before T3)
+  /* T3-DISPUTES-ASSIST: the widened queue — $2 status · $3 side · $4 ILIKE words · $5 limit · $6 offset, RLS = my copies; _total = count(*) OVER() */
+  if (/FROM chit_disputes cd WHERE \(\$2::text = 'all'/.test(s)) {
+    const [me, st, side, like, lim, off] = p, re = like ? new RegExp(like.replace(/^%|%$/g, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : null;
+    let r = mine(DISPUTES, ctx).filter((d) => st === 'all' || (st === 'open' ? d.status === 'open' : d.status !== 'open'))
+      .filter((d) => !side || (side === 'mine' ? d.raised_by_entity_id === me : d.raised_by_entity_id !== me))
+      .map((d) => Object.assign({}, d, { auto_subject: 'Order 7 — brake pads', purpose: 'order', sender_display_name: NAME[A] }))
+      .filter((d) => !re || re.test([d.auto_subject, d.purpose, d.category, d.reason, d.raised_by_display_name, d.resolution_note].join(' ')));
+    r.sort((a, b) => (a.created_at < b.created_at ? -1 : 1) * (/ DESC,/.test(s) ? -1 : 1));
+    const total = r.length; r = r.slice(off || 0, lim == null ? undefined : (off || 0) + lim);
+    return r.map((d) => Object.assign(d, { _total: total }));
+  }
+  if (/count\(\*\) FILTER \(WHERE status = 'open'\)::int AS open/.test(s)) { const r = mine(DISPUTES, ctx); return [{ open: r.filter((d) => d.status === 'open').length, resolved: r.filter((d) => d.status !== 'open').length }]; }
+  if (/CROSS JOIN LATERAL chit_dispute_roster\(u.did\)/.test(s))   // the roster for a whole page (definer: every copy)
+    return DISPUTES.filter((d) => (p[0] || []).indexOf(d.dispute_id) >= 0).map((d) => ({ dispute_id: d.dispute_id, entity_id: d.entity_id, role: d.role, status: d.status }));
   /* ── the bell's feed (routes/notifications.js FEED_FROM) — state_log under RLS = my own rows ── */
   if (/FROM state_log sl/.test(s)) return mine(LOG, ctx).filter((l) => l.chit_id === CH && (l.action_by_identity_id !== p[1] || /^dispute_|^voided$/.test(l.action)))
     .map((l) => Object.assign({ log_id: 'l' + LOG.indexOf(l), created_at: new Date().toISOString() }, l));
@@ -377,6 +391,47 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       logOf(C).length === 0 && !MSGS.some((x) => /CN-17/.test(x.message_text) && x.entity_id === C), JSON.stringify(logOf(C)));
     ok('…and nothing is resolved or announced at all (no [resolved] message, no notice to anyone)',
       !MSGS.some((x) => /CN-17/.test(x.message_text)) && logOf(A, /^dispute_resolved$/).length === 0 && logOf(B, /^dispute_resolved$/).length === 0);
+
+    { console.log('\n══ 6 · T3-DISPUTES-ASSIST — the server says may/why, and the queue pages ══\n');
+    reset();
+    const t1 = await as(A, 'POST', U + '/disputes', { category: 'quality', reason: 'Brake pads arrived cracked, 4 of 10', target_entity_id: B });
+    await new Promise((r) => setTimeout(r, 5));
+    const t2 = await as(A, 'POST', U + '/disputes', { category: 'delivery', reason: 'Delivered two days after promised', target_entity_id: B });
+    const gA = await as(A, 'GET', U + '/disputes'), gB = await as(B, 'GET', U + '/disputes');
+    const resA = (gA.body.disputes || []).map((d) => d.actions && d.actions.resolve), resB = (gB.body.disputes || []).map((d) => d.actions && d.actions.resolve);
+    ok('GET /disputes: the raiser may resolve each (ok), the party may not — greyed WITH not_raiser and its sentence',
+      resA.length === 2 && resA.every((v) => v && v.ok === true) && resB.length === 2 && resB.every((v) => v && v.ok === false && v.why === 'not_raiser' && /raised this dispute/.test(v.say)), JSON.stringify([resA, resB]));
+    ok('…mine / others: A raised them (mine), and "with" is B — never A itself',
+      gA.body.disputes.every((d) => d.mine === true && d.others.map((o) => o.entity_id).join() === B) && gB.body.disputes.every((d) => d.mine === false && d.others.map((o) => o.entity_id).join() === A),
+      JSON.stringify(gA.body.disputes.map((d) => d.others)));
+    ok('…raise: the rail\'s verdict (an editor holding a copy → ok) and the parties a new one may name (not me, once each)',
+      gA.body.actions && gA.body.actions.raise && gA.body.actions.raise.ok === true && (gA.body.raise_parties || []).map((x) => x.entity_id).sort().join() === [B, C, D].sort().join(), JSON.stringify([gA.body.actions, gA.body.raise_parties]));
+    const pg = await as(A, 'GET', '/api/chits/disputes/queue?status=open&page=1&limit=1');
+    ok('queue ?page=1&limit=1: one row, total 2, page 1, limit 1, counts { open 2 } — oldest first; the old keys still there',
+      pg.status === 200 && pg.body.rows.length === 1 && pg.body.total === 2 && pg.body.page === 1 && pg.body.limit === 1 && pg.body.counts.open === 2 && pg.body.rows[0].dispute_id === t1.body.dispute_id
+        && Array.isArray(pg.body.my_disputes) && Array.isArray(pg.body.other_disputes) && pg.body.total_open === 2, JSON.stringify(pg.body).slice(0, 300));
+    const pg2 = await as(A, 'GET', '/api/chits/disputes/queue?status=open&page=2&limit=1&sort=old');
+    ok('…page 2 holds the newer one', pg2.body.rows.length === 1 && pg2.body.rows[0].dispute_id === t2.body.dispute_id, JSON.stringify(pg2.body.rows.map((r) => r.dispute_id)));
+    const qs = await as(A, 'GET', '/api/chits/disputes/queue?status=all&q=' + encodeURIComponent('two days') + '&page=1&limit=20');
+    ok('…?q= searches the reason (server-side): "two days" finds the delivery one only', qs.body.total === 1 && qs.body.rows[0].category === 'delivery', JSON.stringify(qs.body.rows.map((r) => r.category)));
+    const side = await as(B, 'GET', '/api/chits/disputes/queue?status=all&side=mine&page=1&limit=20'), against = await as(B, 'GET', '/api/chits/disputes/queue?status=all&side=against&page=1&limit=20');
+    ok('…?side=: B raised none (mine 0), both are against B (against 2), each greyed not_raiser for B',
+      side.body.total === 0 && against.body.total === 2 && against.body.rows.every((r) => r.actions.resolve.why === 'not_raiser'), JSON.stringify([side.body.total, against.body.total]));
+    const leg = await as(A, 'GET', '/api/chits/disputes/queue');
+    ok('…no parameters: every open row as before (2), my_disputes 2, other_disputes 0', leg.body.disputes.length === 2 && leg.body.my_disputes.length === 2 && leg.body.other_disputes.length === 0, JSON.stringify(leg.body).slice(0, 200));
+    const bres = await as(B, 'PUT', U + '/disputes/' + t1.body.dispute_id + '/resolve', { resolution_note: 'I say it is settled' });
+    ok('the resolve route refuses B with the SAME word GET answered: 403 · why not_raiser (message unchanged)', bres.status === 403 && bres.body.why === 'not_raiser' && /Only the entity that raised/.test(bres.body.message || ''), JSON.stringify(bres));
+    await as(A, 'PUT', U + '/disputes/' + t1.body.dispute_id + '/resolve', { resolution_note: 'Credit note CN-21 sent' });
+    const twice = await as(A, 'PUT', U + '/disputes/' + t1.body.dispute_id + '/resolve', { resolution_note: 'Second time' });
+    const after = await as(A, 'GET', '/api/chits/disputes/queue?status=resolved&page=1&limit=20');
+    ok('…resolved once: a second resolve is 400 · why already_resolved; the Resolved filter lists it, greyed already_resolved; counts 1 · 1',
+      twice.status === 400 && twice.body.why === 'already_resolved' && after.body.total === 1 && after.body.rows[0].actions.resolve.why === 'already_resolved' && after.body.counts.open === 1 && after.body.counts.resolved === 1,
+      JSON.stringify([twice.body, after.body.counts]));
+    const dm = require(path.join(API, 'lib', 'dispute-may'));
+    const rail = require(path.join(API, 'lib', 'rail'));
+    const vw = dm.resolve(rail.can({ held: true }, { level: 'viewer' }, 'dispute'), { open: true, raisedByMe: true }), cm = dm.raise(rail.can({ held: true }, { level: 'commenter' }, 'dispute'));
+    ok('lib/dispute-may: a viewer may not resolve (read_only, the rail\'s sentence); a commenter may not raise (comment_only)',
+      vw.ok === false && vw.why === 'read_only' && vw.say === rail.WHY.read_only && cm.ok === false && cm.why === 'comment_only', JSON.stringify([vw, cm])); }
   } catch (e) { fail++; console.log('   FAIL threw: ' + (e && e.stack)); }
   console.log('\n' + pass + ' passed, ' + fail + ' failed' + (known ? ' (' + known + ' of the passes are KNOWN BREAKS — see section 5)' : '') + ' · ' + (pass + fail) + ' checks\n');
   srv.close(); process.exit(fail ? 1 : 0);

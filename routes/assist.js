@@ -54,7 +54,7 @@ function softIdentity(req) {
     // (e.g. a sim_lead token). Return null → the caller treats it as anonymous (public-KB-only), never as an entity.
     if (!d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return null;
     return { identity_id: d.identity_id, parent_entity_id: d.parent_entity_id || null };
-  } catch (_) { return null; }
+  } catch (e) { log.fellBack('assist softIdentity: the helper failed — answered with nothing', e); return null; }
 }
 
 router.post('/', async (req, res) => {
@@ -226,7 +226,7 @@ router.post('/catalogue-adopt', async (req, res) => {
       const prev = await withEntity(entity, (db) => db.query(
         'SELECT commercials FROM catalogue_adoption WHERE entity_id = $1 AND source_key = $2', [entity, source]));
       commercialsIn = require('../lib/network-catalogue').keepFollow(commercialsIn, (prev.rows[0] && prev.rows[0].commercials) || {}, built.items);
-    } catch (_) { /* first adoption, or b75 absent — nothing to keep */ }
+    } catch (e) { log.fellBack('assist POST /catalogue-adopt: the read failed — carried on without it', e); /* first adoption, or b75 absent — nothing to keep */ }
     const commercials = money.stampCommercials(commercialsIn, await regional.currencyFor(entity));
     const visible = !(req.body && req.body.visible === false);
     try {
@@ -254,10 +254,10 @@ router.post('/catalogue-adopt', async (req, res) => {
           const netsvc = require('../src/services/network');
           const me = await netsvc.nodeOf(entity, { ensure: true });
           const brandNode = await netsvc.nodeOf(owner.owner_entity_id, { ensure: true });
-          if (me && brandNode) await netsvc.requestConnect({ parentId: brandNode.id, childId: me.id, type: 'commercial' }, me).catch(() => {});
+          if (me && brandNode) await netsvc.requestConnect({ parentId: brandNode.id, childId: me.id, type: 'commercial' }, me).catch(log.orElse('catalogue adopted, but the request to join the brand\'s network was not sent — the store can ask from Network'));
         }
       }
-    } catch (_) {}
+    } catch (e) { log.fellBack('catalogue adopted, but whether the store is in the brand\'s network was not read — no join request sent', e); }
     res.json({ ok: true, persisted: true, source, resolved: await catalogueBuild.resolve(source, commercials),
       acted_by: { deputy: 'ai:catalogue-structure@v1', rung: 'extract', principal: 'entity:' + entity,
         delegator: { type: 'human', id: identity.identity_id }, confirmed_by: { id: identity.identity_id }, grant: 'per-act' } });
@@ -328,7 +328,7 @@ router.put('/catalogue-source', auth, async (req, res) => {
     } catch (dbErr) { return res.status(503).json({ ok: false, code: 'SOURCE_STORE_MISSING', error: 'Source authoring not enabled yet — apply migration b78.' }); }
     // WIRING (stone 5): mirror each item to a CONTAINER (create/enhance, change-detected). Best-effort, self-healing.
     let containers = 0;
-    try { containers = (await container.syncItemContainers(owner, source_key, items)).length; } catch (_) { /* b80 absent → skip */ }
+    try { containers = (await container.syncItemContainers(owner, source_key, items)).length; } catch (e) { log.fellBack('assist PUT /catalogue-source: failed — carried on without it', e); /* b80 absent → skip */ }
     log.info('catalogue source authored', { id: req.id, source_key, owner: String(owner).slice(0, 8), items: items.length, containers });
     res.json({ ok: true, source_key, owner_entity_id: owner, authored: true, containers });
   } catch (err) {
@@ -406,7 +406,7 @@ router.put('/region-override', auth, async (req, res) => {
 router.get('/regions', async (req, res) => {
   try {
     let rows = [];
-    try { const r = await query('SELECT region_code, currency, units, language, jurisdiction FROM region_layer ORDER BY region_code'); rows = r.rows || []; } catch (_) { /* b81 absent */ }
+    try { const r = await query('SELECT region_code, currency, units, language, jurisdiction FROM region_layer ORDER BY region_code'); rows = r.rows || []; } catch (e) { log.fellBack('assist GET /regions: the read failed — carried on without it', e); /* b81 absent */ }
     res.json({ ok: true, regions: rows });
   } catch (err) { res.status(500).json({ ok: false, error: safeErr(err) }); }
 });
@@ -503,6 +503,8 @@ router.post('/gap', async (req, res) => {
   }
 });
 
+/** the one sentence for "you may not publish" — POST /publish's 403 and GET /whoami's actions.publish say the same */
+const PUBLISH_NO = 'Only a help desk can publish to its catalogue.';
 // POST /api/assist/publish — the help desk publishes a resolved Q&A to ITS catalogue => the projection trigger
 // serves it live. Auth; the caller MUST be the Help entity itself (only it edits its own knowledge base).
 router.post('/publish', auth, async (req, res) => {
@@ -518,7 +520,7 @@ router.post('/publish', auth, async (req, res) => {
     const sender = auth.entityOf(req);
     const hd = await query(
       `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [sender]);
-    if (!hd.rows.length) return res.status(403).json({ ok: false, error: 'Only a help desk can publish to its catalogue.' });
+    if (!hd.rows.length) return res.status(403).json({ ok: false, error: PUBLISH_NO, why: 'not_helpdesk' });
     const helpId = sender;
 
     // Refine an existing answer when qa_id is supplied and found; else publish new.
@@ -566,8 +568,13 @@ router.get('/whoami', auth, async (req, res) => {
     const entity = auth.entityOf(req);
     const r = await query(
       `SELECT 1 FROM entity_schemas WHERE entity_id = $1 AND schema_name = 'Assistant Q&A' AND status = 'active' LIMIT 1`, [entity]);
-    res.json({ ok: true, is_helpdesk: r.rows.length > 0 });
-  } catch (_) { res.json({ ok: true, is_helpdesk: false }); }
+    const hd = r.rows.length > 0;
+    /* T3-DISPUTES-ASSIST: may I publish an answer — the SAME test POST /publish refuses with (403 below), as a code the CB Assist screen greys on */
+    res.json({ ok: true, is_helpdesk: hd, actions: { publish: hd ? { ok: true } : { ok: false, why: 'not_helpdesk', say: PUBLISH_NO } } });
+  } catch (err) {
+    log.warn('assist/whoami could not read the help-desk schema — answered as not a help desk', { id: req.id, err: err.message });
+    res.json({ ok: true, is_helpdesk: false, actions: { publish: { ok: false, why: 'not_read', say: 'Could not check who may publish. Try again.' } } });
+  }
 });
 
 module.exports = router;

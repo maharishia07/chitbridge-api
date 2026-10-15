@@ -27,7 +27,7 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); }
 global.window = global.window || {}; global.self = global;
 /* ⚠️ money BEFORE locale, the same order every page loads them in — locale forwards to it */
 require(path.join(WEB, 'engine', 'money.js'));
-require(path.join(WEB, 'app', 'locale.js'));
+require(path.join(WEB, 'engine', 'locale.js'));
 const M = (global.window && global.window.CBMoney) || global.CBMoney;
 global.CBMoney = M;
 const L = (global.window && global.window.CBLocale) || global.CBLocale;
@@ -124,7 +124,7 @@ it('⭐⭐⭐ every surface that reads a price unwraps { amount, currency }', ()
    * ⚠️ There are five copies of this unwrap and none is exported, which is exactly why a sixth place forgot.
    * That is the backlog item; this guard is the floor until it is done.
    */
-  const files = ['offer-lab.html', 'app/cart.js', 'app/pricing.js'];
+  const files = ['offer-lab.html', 'app/cart.js', 'engine/pricing.js'];
   files.forEach((f) => {
     const p = path.join(WEB, f);
     if (!fs.existsSync(p)) return;
@@ -161,7 +161,7 @@ it('⭐ English IS the key, so a missing translation stays readable', () => {
 
 it('⚠️ a region offers only the languages it actually uses', () => {
   /* RFC 4647, at most three — a shop is not offered a language its region does not use */
-  const loc = fs.readFileSync(path.join(WEB, 'app', 'locale.js'), 'utf8');
+  const loc = fs.readFileSync(path.join(WEB, 'engine', 'locale.js'), 'utf8');
   assert.ok(/4647|lookup/i.test(loc), 'the language-matching rule (RFC 4647) is no longer named in locale.js');
 });
 

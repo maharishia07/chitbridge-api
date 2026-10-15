@@ -117,7 +117,8 @@ t('2.3 · `captured` is restricted to the fields this shop actually asks for', (
 t('2.3 · captured values are scalars, length-capped, and an unresolvable allow-list carries NOTHING', () => {
   assert.match(ROUTE, /if \(v === null \|\| typeof v === 'object'\) continue;/, 'objects must not ride onto the chit');
   assert.match(ROUTE, /String\(v\)\.slice\(0, 200\)/, 'values must be capped');
-  assert.match(ROUTE, /catch \(_\) \{ captured = \{\}; \}/, 'failing to resolve the allow-list must fail CLOSED');
+  /* T2-HONEST: still fails closed — and now logs the failure first (log.fellBack) */
+  assert.match(ROUTE, /catch \((_|e)\) \{ (\w+\.fellBack\('[^']*', e\); )?captured = \{\}; \}/, 'failing to resolve the allow-list must fail CLOSED');
 });
 t('2.3 · the allow-list reads the right key — `field`, not `key`', () => {
   // captureFieldsForEntity returns [{field, standard, facet, title}]. Reading `key` yields an EMPTY allow-list,

@@ -60,6 +60,44 @@ ok('the delta reads OLDEST first, one past the cap', /updated_at > \$2 ORDER BY 
   'a newest-first delta cuts the oldest changes');
 ok('the delta goes through deltaPage, and the answer carries more', /const pg = deltaPage\(all, DELTA_CAP\)/.test(snap) && /more: deltaMore,/.test(snap));
 
+/* ⭐ SEC-SMALL item 5 (2026-10-14): the FULL read was still `ORDER BY updated_at DESC NULLS LAST LIMIT 20000`, cut in silence — a shop past
+   the cap never received its oldest items, and the till's total check pulled the whole (cut) shop again on every refresh */
+console.log('\n── the FULL read pages by the same rule, and says its limit ──\n');
+ok('⭐ the full read is oldest-first, one past the cap, through the same parameter', /is_active = true ORDER BY updated_at ASC LIMIT \$2', \[entity_id, DELTA_CAP \+ 1\]/.test(snap),
+  'a full read that is newest-first LIMIT 20000 cuts the oldest items in silence');
+ok('deltaPage runs for a delta AND a full read (no `if (since)` around it)', !/if \(since\) \{ const pg = deltaPage/.test(snap) && /\{ const pg = deltaPage\(all, DELTA_CAP\); all = pg\.rows;/.test(snap));
+ok('the answer says its limit beside more · at · total', /limit: DELTA_CAP,/.test(snap));
+ok('no bare LIMIT 20000 is left in the snapshot route', !/LIMIT 20000/.test(snap.replace(/\/\*[\s\S]*?\*\//g, '')), 'a silent cap remains');
+ok('the dues aggregate reads one past the cap and, cut, sends balances as UNKNOWN (absent) with a warn line',
+  /LIMIT \$2`, \[entity_id, DELTA_CAP \+ 1\]/.test(snap) && /dues\.rows\.length > DELTA_CAP/.test(snap) && /duesCut = true; dues = \{ rows: \[\] \}/.test(snap)
+  && /warn\('till\.snapshot\.dues\.cut'/.test(snap) && /x\.has_party_item && !duesCut\)/.test(snap));
+
+/* ⭐ and the counter follows: the master reads a snapshot in parts to its end before comparing it with total or storing it */
+const till = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8');
+let partsDone = null;   /* the async part of the till check — awaited before the verdict below */
+const fn = till.match(/async function snapParts\(snap\)\{[\s\S]*?\n\}/);
+ok('⭐ the till master has snapParts', !!fn);
+ok('refresh() reads the parts before the merge with the stored copy, and the rebuild read does too',
+  (till.match(/snap = await snapParts\.call\(this, snap\);/g) || []).length === 1 && /snap = await snapParts\.call\(this, await full\.json\(\)\); snap\.rebuilt = true;/.test(till));
+/* the loop itself, driven by a stub fetch: three parts of four rows, a removal in part two, the cursor followed, total taken from the last part */
+if (fn) {
+  const PARTS = {
+    'a': { at: 'b', more: true,  items: [{ item_id: 'i5' }, { item_id: 'i6' }], removed: ['i1'], entity_id: 'shop' },
+    'b': { at: 'c', more: false, items: [{ item_id: 'i7' }], removed: [], total: 6, entity_id: 'shop' },
+  };
+  const seen = [];
+  const sandbox = { fetchBy: async (url) => { const since = decodeURIComponent(url.split('since=')[1]); seen.push(since);
+    const p = PARTS[since]; return { ok: !!p, json: async () => p }; }, SLOW: 1, encodeURIComponent, String, Object, Array };
+  const snapParts = new Function('fetchBy', 'SLOW', fn[0] + '; return snapParts;')(sandbox.fetchBy, 1);
+  const store = { api: 'http://x', auth: () => ({}) };
+  partsDone = snapParts.call(store, { at: 'a', more: true, items: [{ item_id: 'i1' }, { item_id: 'i2' }, { item_id: 'i3' }, { item_id: 'i4' }], entity_id: 'shop', total: 4 })
+    .then((s) => {
+      ok('⭐⭐ the parts are followed by cursor (a → b) and the loop stops when more is false', seen.join(',') === 'a,b' && s.more === false && s.at === 'c', JSON.stringify({ seen, at: s.at, more: s.more }));
+      ok('the rows add up: four, minus the one removed, plus three — six, and total is the last part\'s', s.items.length === 6 && s.total === 6 && !s.items.some((i) => i.item_id === 'i1'), s.items.map((i) => i.item_id).join(','));
+      ok('the removals ride on the snapshot for the merge with the stored copy', Array.isArray(s.removed) && s.removed.indexOf('i1') >= 0);
+    });
+}
+
 /* ⭐ and the behaviour itself: a counter that follows the cursor receives EVERY row, however many parts it takes */
 const fnSrc = src.match(/function deltaPage\(rows, cap\) \{[\s\S]*?\n\}/);
 ok('deltaPage exists', !!fnSrc);
@@ -74,5 +112,7 @@ ok('⭐⭐ following the cursor delivers all 11 rows — none skipped at a part 
   'received ' + got.size + ' of ' + ROWS.length + ' in ' + parts + ' parts');
 ok('a delta that fits is one part, cursor null (readAt stands)', deltaPage(ROWS.slice(0, 2), 3).cursor === null && deltaPage(ROWS.slice(0, 2), 3).more === false);
 
-console.log('\n' + (fail ? '✗ ' + fail + ' failed' : '✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
-process.exit(fail ? 1 : 0);
+Promise.resolve(partsDone).then(() => {
+  console.log('\n' + (fail ? '✗ ' + fail + ' failed' : '✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
+  process.exit(fail ? 1 : 0);
+});

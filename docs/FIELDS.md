@@ -4,6 +4,22 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **Per ITEM, not per route:** the field ledger. `data/cmdb/CAP-FIELDS-PRODUCT*.json` (CMDB, open `/cmdb/record.html#CAP-FIELDS-PRODUCT-1` on the web app) lists every field of a PRODUCT with its meaning, origin, one source, who sets it, what checks it, where it is shown, what reads it, its test and its status. A new product column or form input without a row fails `tests/field-ledger.test.cjs`. Human table: `C:/dev/toolset/fields/FIELDS-product.md`. This file stays the dictionary of response keys.
 
+## lib/stock-from-chit `postFor` → `skipped[].code` · log `stock.from-chit` `refused[]` (STK-FIX1b, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `skipped[].code` (new) | `batch_unreadable` · `expiry_unreadable` · `no_cost` · `not_stock_use` · `not_stock_asset` | Derived per line by `movementsFor` (the sentence stays in `why`; a caller branches on `code`, never on the words). Written by: `stock-from-chit.lotOf` (the two unreadable codes) · the use / cost checks. Read by: `routes/chits.js` sendStock's log (`refused[]` = the two unreadable codes with `line_ref · item_id · code · why`). The postFor result is not a route answer today — the chit route posts stock after it has replied, so a refusal is in the log, not on the counter (the standing trade stated in stock-from-chit.js). |
+| `stock_movement.lot` · `stock_balance.lot` (unchanged slot, corrected value) | the batch CODE, `lotfields.lotKey`-normalised (trimmed, upper-cased, ≤ 64); `''` for untracked stock | Written only by `stock-store.post` from `movementsFor`'s `lot`, a string from `gs1.lotOf` (door shape `item_data.lot.{batch,expiry}` · serial · bare code · typed GS1 `(10)…(17)…` · flat `item_data.batch/expiry`). Never an object. `expires_at` = the line's ISO expiry (or best-before), captured once (b215). Migrations b598 (report) · b599 (repair) for rows the old reader keyed `[OBJECT OBJECT]`. |
+
+## GET /health `audit_lost` · GET /api/till/snapshot `limit` · the shared-board write refusal (SEC-SMALL, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| GET /health `audit_lost` | integer ≥ 0 | Derived: `lib/access-events.lostCount()` — IAM audit rows this process could not write since boot (each one is also a lib/logger ERROR line with the event kind and the database code, never a person's id). The action that caused it still succeeded. Written by nobody; read by a reviewer (the Standards page: not yet). Resets on restart — the log line is the durable record. |
+| GET /api/till/snapshot `limit` | integer (DELTA_CAP, default 20000) | Source: `routes/till.js` DELTA_CAP. With `total` (sellable items right now), `more` (this answer stopped at `limit`) and `at` (the cursor: the LAST row carried when cut, else readAt) it is the snapshot's pager — a full read and a delta page by the one rule (deltaPage). Read by the till master `snapParts` (reads while `more`, then compares with `total`). |
+| GET /api/till/snapshot `customers[].balance_minor` · `open_bills` (changed) | absent when the shop's open receivable dues exceed `limit` | Derived: absent already meant "unknown" (no ledger, or not read); now also "more dues than one answer carries" — never a short sum. The warn line `till.snapshot.dues.cut` names the shop. |
+| 403 of POST /api/testing/cases/close · /cases/import · /cases/seed · /cases/gherkin · PUT /cmdb/:ci · POST /cmdb/seed | `{ error, code: 'NOT_BOARD_WRITER', message }` | `routes/testing.js boardRefused` → `lib/testboard.canWrite`: the board's own entity · TEST_BOARD_WRITERS · the platform root (lib/platformroot). Results, incidents, requirements, evidence, changes, releases and every GET are not gated. Read by the web test board (it shows `message`). |
+
 ## /api/actors · /api/people · `pin_state` · `email` · the owner refusal (SEC2, 2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
@@ -16,6 +32,19 @@ A new key needs its entry here, in the same change. This file is being built; en
 | 409 of POST / · PATCH /:id | `{ error, code: 'EMAIL_TAKEN', message }` | identities_email_key (one e-mail per sign-in across the platform) — the owner's own address on a staff row is the usual case. |
 | write answers `otp` · `login_instruction` (changed) | `otp` only through dev-otp.mayExposeOtp | lib/employee-code.deliver: no longer "whenever not sealed". `login_instruction` never carries a code. `delivery_note` for `none` now says to add an e-mail and send a new code. |
 
+## People: sign-out, Remove, Away, the Home card (PEOPLE-SRV1, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `policy_flags.api_keys[].by` | identity_id | source. Written by routes/keys.js `mint` when a CO-ASSIST opens the key (a counter, a kit); absent for the owner's keys and for pairings. Read by `endKeysBy` (switch-off/remove). Keys minted before 2026-10-14 have none and are not ended. |
+| PUT /api/actors/:id/status `signed_out` | `{ sessions, keys_closed, keys_revoked }` (numbers) | Derived — deactivate/remove: sessions the person opened that were unlisted (lib/person-session `closeBy`), counter keys closed (`till.closed_at` + `released`, as Release), other keys revoked (with the screens they paired). Read by web cap-employees.js (the switched-off sentence). |
+| 400 of PUT /:id/status | `code: 'CONFIRM_REMOVE'` · `'TASKS_TO_ROUTE'` | remove without `confirm:'REMOVE'` · open jobs and no `task_action`. |
+| PUT /api/actors/break `actor_id` (request) | uuid, optional | the OWNER names the person (G6); absent or the caller's own id = their own break. 403 OWNER_ONLY · 404 NOT_FOUND · 400 SWITCHED_OFF · NAME_THE_PERSON · COVER_CONFLICT · TASKS_TO_ROUTE. Answer adds `actor_id`, `state` (`away` · `on`). |
+| GET /api/people `people[].may.away` | `{ ok, why, to: 'away'\|'on'\|null }` | lib/people.js — open for the owner unless switched off. `to` = what the button does. |
+| GET /api/people `people[].may.remove` | `{ ok, why }` | lib/people.js — open for the owner (switched off too). |
+| GET /api/people `people[].away` · `counts.away` | `'short_break'\|'leave'\|null` · number | Derived from `identities.break_status`; `counts.away` is inside `counts.on`. |
+| GET /api/facts/people `figures` | `{ total, at_work, away, off }` | Derived — one grouped count over lib/people.peopleSql (the people GET /api/people lists), words by lib/people.stateOf. Read by web shell.js (the CB Employees Home card). |
+
 ## POST /api/connectors/ingest · /erp-ingest · GET /api/events/stats — device keys in their shop and switch (SEC3, 2026-10-14)
 
 Derived per call, never stored. Written by `routes/connectors.js` (deviceActor · deviceMayAddress · the ingest catch) and `lib/platformroot.refuseUnlessRoot`. Read by: the generated Pi agent (web `public/app/cap-connector.js` `_agentJs` — it branches on the HTTP status, logs the code) and `scripts/connector-gateway-sim.js`.
@@ -25,6 +54,84 @@ Derived per call, never stored. Written by `routes/connectors.js` (deviceActor �
 | `code` on a refusal (new) | `NO_KEY` · `KEY_UNKNOWN` (401) · `CAPABILITY_OFF` · `DEVICE_TO_REFUSED` (403) · `CHIT_NOT_DELIVERED` (503) · a knownerr code (e.g. `POPULATION_BOUNDARY` 409) | Derived. Anything but 2xx = the device keeps the event and retries. `message` is the sentence a person reads; nothing branches on it. |
 | `money_why` on a 200 ingest (new) | `{ code: 'NO_MONEY', why }` or null | Derived: set only when the shop states no money and its country has no pack (`country-setup.shopMoney` → null); `why` = `MONEY_UNSTATED`. The signal chit's `summary_json.currency_code` is then null (was always `INR`). |
 | `GET /api/events/stats` refusal `code` (new) | `NOT_PLATFORM_ROOT` (403) · `NO_PLATFORM_ROOT` (404) | Derived from `PLATFORM_ROOT_ENTITY`. The same door now answers the entities.js operator routes (same codes added there). |
+
+## GET /api/catalogue/:bridge_id `sign_in` · POST /chits/:id/deliver-lines `why` · GET /api/catalogue/enquiry · event `enquiry` (SEC4, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `sign_in` | `{ code: 'sign_in_first', say }` — present ONLY when the answer is cut to the card; the body is then `{ shop, sign_in }` and nothing else | Derived per read by routes/catalogue.js `signInFirst` from `identities.storefront_access = 'login'` when the reader is not this shop's customer, its owner/staff or a signed-in business. Same cut on the CTP pull (`want:'catalogue'`). Read by web shop.html `shopLoad` (sign-in gate) and embed.html — they branch on `code`, never `say`. |
+| `shop` (card form) | `{ bridge_id, display_name, logo_url, address, is_verified, business_status, storefront_access, country }` | The same keys as the full `shop`, minus payment id, units, tax word and currency. |
+| `why` (deliver-lines 403/404) | a rail WHY word: `read_only` · `comment_only` · `not_participant` | lib/rail-actions `canDeliver` (rail.byLevel + "I hold a copy"); `message` = the rail's sentence. |
+| `enquiries[]` · `total` · `page` · `limit` | `{ item_id, item_name, about_mine, messages, askers, last_text, last_from_name, last_from_me, last_at }`, latest first; `?side=in\|out`; `migrated:false` before b161 | Derived per read from MY `chit_messages` copies (subject_type product, external), one row per product, plus `catalogue_items` name. Read by: the enquiry list screen (next round). |
+| event `{ kind: 'enquiry', id: item_id, who }` | SSE `cb` event | Emitted by POST /api/catalogue/enquiry/:item_id to the product's OWNER (external, not my own item). Read by the bell (rail-bell.js / core.js re-read on any `cb`). |
+
+## POST /api/tax/compute · GET /api/facts/tax-lab (TAX-SRV1, 2026-10-14)
+
+Derived per call, never stored. Written by routes/tax.js (compute) and lib/home-facts.js taxLab. Read by: API-key callers; the Tax Lab screen (coming).
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `price_includes_tax` | `{ value: bool, source: 'caller'\|'shop' }` | The caller's flag when it said one, else the shop's policy `price_includes_tax` (services.shopOf → policy.flagOf — the counter's taxIncluded). |
+| `priced[]` | `{ key, unit_price, source: 'caller'\|'shelf', structure?, why? }` | `source` `caller` (price sent) or `shelf` (services.priceLine — the one price reader, the product's structure at the qty). |
+| `money` | the `summary_json.money` shape (tax.moneyOf) | gross · savings · net · taxable · tax · total · `by_rate` (keyed by RATE — contract `free`) · heads · `currency_code`. Same function as the chit and the counter. |
+| `currency` | ISO code \| null | The seller's pack currency (tax-lines.currencyOf) — null when no pack, never the default's INR. |
+| `pack` | `{ id, version, code, why }` | regulation.status(seller country): id + version, or `NO_COUNTRY_PACK` + its sentence. |
+| `code` (400/422/500) | `NO_LINES` · `BAD_QTY` · `BAD_PRICE` · `BAD_RATE` · `NO_PRICE` · `BAD_FLAG` · `NO_COUNTRY` · `ITEM_NOT_FOUND` · `TAX_FAILED` (+ knownerr's) | A caller branches on `code`; `message` is for a person; `line` names the refused line's key. |
+| facts `tax-lab` → `figures.products` · `figures.no_slab` | numbers | Derived: active catalogue items, and those whose slab resolves to `none` (tax-lines.resolveItem → tax-slab.resolve). Omitted (`unavailable`) for a GST shop with no GSTIN. |
+
+## GET /api/chits/disputes/queue (widened) · GET /api/chits/:chit_id/disputes · GET /api/assist/whoami (T3-DISPUTES-ASSIST, 2026-10-14)
+
+All derived per read, never stored. Read by: web tasks.html › Disputes and CB Assist (app/cap-dispute.js CBDispute, app/cap-assist.js) and the chit sheet's dispute section.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| queue `rows` · `total` · `page` · `limit` | list · int · int · int | The page asked by `?status=open\|resolved\|all&side=mine\|against&q=&sort=old\|new&page=&limit=` (lib/page-limit: 50, max 200). No page/limit = every matching row (the old answer); `disputes` · `my_disputes` · `other_disputes` · `total_open` keep their meaning (`total_open` = the open count). |
+| queue `counts` | `{ open, resolved }` | My dispute copies by status (RLS = my copies). The tab counts; never the page's length. |
+| queue `code` | `DISPUTES_NOT_SET_UP` | Only when the chit_disputes table is missing — the screen says so in words. |
+| `rows[]` / `disputes[]` `.mine` | bool | `raised_by_entity_id` = me. |
+| `rows[]` / `disputes[]` `.others` | `[{ entity_id, display_name, role, dispute_status }]` | The roster minus me ("with whom") — decided by the server, not by the page. |
+| `rows[]` / `disputes[]` `.actions.resolve` | `{ ok }` \| `{ ok:false, why, say }` | lib/dispute-may.resolve: the rail's `dispute` level/held verdict, then `already_resolved`, then `not_raiser` — the same verdict PUT …/resolve refuses with (its 400/403 now carry `why`). |
+| chit disputes `actions.raise` | `{ ok }` \| `{ ok:false, why, say }` | lib/dispute-may.raise = rail.can(`dispute`). |
+| chit disputes `raise_parties` | `[{ entity_id, display_name, role }]` | The chit's `all_recipients` (my header copy) minus me, once each — who a new dispute may name (`participant_entity_ids`). |
+| GET /api/facts/disputes `lines` · `figures` | `{ open, mine, against }` | lib/home-facts `disputes`: one count of my open dispute copies (RLS). Read by Home's Disputes card (manifest `disputes`). |
+| GET /api/facts/assist `lines` · `figures` | `{ answers }` | lib/home-facts `assist`: active rows of assist_qa (the platform's library). Read by Home's CB Assist card (manifest `coassist`). |
+| whoami `actions.publish` | `{ ok }` \| `{ ok:false, why: 'not_helpdesk'\|'not_read', say }` | The same entity_schemas test POST /assist/publish refuses with (its 403 now carries `why: 'not_helpdesk'`). |
+
+## GET /api/signin/sessions · `may.devices` · GET /api/facts/account · GET /api/facts/reports (T3-P4-ACCOUNT, 2026-10-14)
+
+CB Settings › Account (Sessions · API keys · Vault) and CB Finance › Reports. A client branches on `ok` / `code` / `current`, never on `why`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `may.devices` (GET /api/signin/sessions, new) | `{ ok, code: null\|'OWNER_ONLY', why: string\|null }` | Derived per read by `lib/owner.may` — the same test and sentence as the `lib/owner.gate` on GET /api/signin/devices and on POST /api/signin/sessions/revoke `{ device_id }` (403 `code:'OWNER_ONLY'`, the same sentence). Written by nobody. Read by web cap-settings.js `account` (the Every device list and Remove this device are greyed with it). |
+| `sessions[].current` (GET /api/signin/sessions, existing) | boolean | The session this request came with. Read by cap-settings.js: "Sign out" on the current row is greyed with the page's sentence (use the menu's Sign out) — a field, not prose. |
+| `lines` · `figures` (GET /api/facts/account, new card) | `{ lines:[{ text, value }], figures:{ devices, keys } }` | Derived by `lib/home-facts.account` from the till card's REGISTER_SQL widened by `policy_flags->'devices'` (one trip): devices = not revoked and holding a session whose exp is ahead (GET /devices' own test); keys = the counters card's rule. Read by the Home card of manifest entry `account`. |
+| `all.overdue` · `received.overdue` · `sent.overdue` (GET /api/folders/mis, changed) · `truncated` (new) | number · boolean | Derived by `lib/home-facts.railMeasure` (lib/measure + the rail's one rule: the shop's own notes are never overdue) — the same count as Home's rail `stuck` and CB CRM › Chits › Stuck. Before, the shop's own open notes counted as overdue here. `truncated` = the 5,000-row read was cut. Read by web cap-mis.js (CB Finance › Reports) and the workshop MIS (cap-admin.js). |
+| `lines` · `figures` (GET /api/facts/reports, new card) | `{ lines:[{ text, value, tone? }], figures:{ open, overdue, overdue_days } }` | Derived by `lib/home-facts.reports`: the rail card's `railScope` read (overdue_days + select.rows, one batch) through `lib/measure` — the same engine GET /api/folders/mis answers CB Finance › Reports with; the shop's own notes are left out of the measure as the rail leaves them out. Omitted (`unavailable`) when the read is truncated. Read by the Home card of manifest entry `reports`. |
+
+## GET /api/counters · `may.manage` · GET /api/entities/policy · `may` · GET /api/facts/counters (T3-SETTINGS, 2026-10-14)
+
+CB Settings › Counters & keys / Policy greys an action with the server's answer; the client branches on `ok` / `code`, never on `why`.
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `may.manage` (GET /api/counters, new) | `{ ok, code: null\|'OWNER_ONLY', why: string\|null }` | Derived per read by `lib/owner.may` — the same test and sentence as `lib/owner.gate`, which refuses every counters write (POST · PATCH · open · release · assign) with 403 `code:'OWNER_ONLY'`. Written by nobody. Read by web cap-settings.js (Add · Open on this PC · Release · Save the name). |
+| `may[flag]` (GET /api/entities/policy, new) | `{ [flag]: { ok, code: null\|'OWNER_ONLY'\|'PLATFORM_BOUND', why } }` — one per `lib/policy` FLAGS key + each BOUND key | Derived per read by `policyMay` (routes/entities.js) from lib/policy `FLAGS[k].may · may_why` (the place the PATCH refuses from, 403 `code:'OWNER_ONLY'`) and `policy.BOUND`. Read by web cap-settings.js (Policy · the connectors-in-use switch). |
+| `lines` · `figures` (GET /api/facts/counters, new card) | `{ lines:[{ text, value }], figures:{ counters, counters_open, keys } }` | Derived by `lib/home-facts.counters` from the till card's REGISTER_SQL (one trip) and its open rule. `keys` counts open non-till keys. Read by web shell.js (the manifest row `counters`). |
+
+## GET /api/governance/lanes · /readiness · /api/forms · /forms/instances/all · chit lists `?abroad=1` (TRADE-SRV1, 2026-10-14)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `origin` · `vertical` (lanes, readiness?destination; changed) | ISO-2 \| null · sector \| null | Derived per read by `readiness.laneOf`: the query's value, else the shop's STATED country (`country-setup.status` — confirmed by Country setup; the column's 'IN' default is not a statement) and the governance profile's first sector (`entity_profile.sectors`). Never 'IN' / 'paint' by default. Read by web cap-readiness.js (next round: stop sending paint/IN). |
+| `asked` · `code` · `why` (lanes, readiness?destination, profile readiness/path) | `['origin'\|'sector'\|'markets']` · `ORIGIN_UNSTATED` \| `SECTOR_UNSTATED` \| null · sentence | Derived (`readiness.asks`). A screen branches on `code`, never the sentence. No origin → `lanes: []` / no clearances. |
+| `lanes[].domestic` · `domestic` (readiness?destination) | bool | Derived: the lane whose `dest_key` is the origin. Replaces the `jurisdiction.domestic` flag (it said India for every shop). |
+| `may` (lanes, readiness) | `{ gather, verify }` each `{ may, code, why }` | Derived per request by `lib/access.mayWrite` (owner or editor; else `read_only` / `comment_only` + the rail's sentence). The same answer refuses POST /compliance · /verify · /supplier-acceptance with 403. |
+| `may` (GET /api/forms, /forms/instances/all) | `{ issue, sign, attach }` each `{ may, code, why }` | As above; refuses POST issue · sign · attach. |
+| `instances[].context_ref` · `context_ref` (forms/instances/all) | chit_id \| null | Stored: `form_instance.context_ref` (b108), written by issueForm. `?context_ref=` narrows to one deal's papers (400 `FORMS_BAD_CONTEXT` if not a chit id). |
+| `fields[].note` · `fields[].code` (forms resolve, field `fx_rate` only) | sentence · `FX_RATE_OF_DAY` \| `FX_RATE_MISSING` | Derived by `forms.shopOf` from FX1 `fx-rates.rateOn` (the owner's rate for the invoice's day, deal currency → books' currency); missing = fx-rates' own sentence. Frozen into `form_instance.fields` when issued. |
+| form `packing-list` (registry, new) | 12 fields | `lib/forms.js` registry (config, FORMS_REGISTRY overrides). Read by GET /api/forms. |
+| chit lists `?abroad=1` (inbox · sent · folder; query, not a key) | filter | `country-setup.abroadSql`: the copy's `summary_json.currency_code` ≠ the shop's, or a party in `all_recipients` with `identities.country` ≠ the shop's. Unknown is never foreign. |
 
 ## GET /api/catalogue/:bridge_id · `items[].item_data.avail` · POST /api/books/closing-stock · `from_ledger` · `code`/`items` (T1-INV, 2026-10-14)
 
@@ -150,7 +257,16 @@ Every key is a READ of what exists; nothing is stored and no money is computed h
 |---|---|---|---|---|
 | `party_contact_pref.*` (pref_id · owner_entity_id · party_id · channel · purpose · allowed · basis · noted_at · noted_by · withdrawn_at) | b306 | source — append-only; the newest row per (party, channel, purpose) is the answer | `POST /api/crm/parties/:id/contact-prefs` | `GET` of the same; `lib/privacy.mayMessage` |
 | `party_contact_pref.notice_version` (new beside the DATA.md §5 design) | b306 | source: env `PRIVACY_NOTICE_VERSION` at the moment the row is written (NULL until the owner publishes a notice) | `lib/privacy.notePref` | the consent history (proof under DPDP s.6(10)) |
-| `may[channel][purpose]` = `{ may, why }` on GET contact-prefs | — | derived (`lib/privacy.mayMessage`) | nobody | any sender (none yet), the record's privacy block |
+| `may[channel][purpose]` = `{ may, why, code }` on GET contact-prefs | — | derived (`lib/privacy.mayMessage`); `code` (MKT-SRV1 G0) ∈ `CONSENT` · `LEGITIMATE_USE` · `NO_CONSENT` · `CONSENT_WITHDRAWN` · `SAID_NO` · `OPTED_OUT` — what a screen branches on; `why` is only printed | nobody | the record's privacy block, `lib/privacy.gate` (every sender) |
+| `contact_prefs` = `{ migrated, may }` on a party (GET /api/crm/parties?with=consent · GET /parties/:id) | — | derived (MKT-SRV1 G1 · G5): `lib/privacy.LATEST_SQL` (newest b306 row per party × channel × purpose, ONE statement in lib/crm.rows' transaction) → `contactPrefsOf` → the SAME `may` map as GET contact-prefs. `migrated: false` before b306 (service may · offers NO_CONSENT) | nobody | CB CRM (list filter "may get offers", the record) |
+| `consent_migrated` (list, only with `?with=consent`) | — | derived: b306 readable | nobody | CB CRM — say "consent records not set up yet" in words |
+| `total` · `page` · `limit` on GET /api/crm/parties and GET /api/crm/privacy-requests | — | derived (MKT-SRV1 G4, DISCIPLINES §2; `lib/page-limit`). Parties: no `?limit` = the whole list (CAP 5000), `count` = `total` kept for old readers. Requests: default 50, max 200; `open` · `late` count the whole register, not the page | nobody | the web pager (PG / CBList remote) |
+| 403 `{ code, why }` on POST /parties/:id/interactions | — | derived (MKT-SRV1 G2): an OUT `call` (channel phone) or `message` (body `channel`, else whatsapp) for body `purpose` (else service) asks `lib/privacy.gate`; in-bound, visits and notes are never gated | nobody | the Log sheet: grey Save with `why` |
+| `code` on a refused `lib/whatsapp-out.notify` result + `channel_outbound.reason` = the gate's `why` | — | derived (CO1-GATE): the gate asked by `party_id` when the caller knows it, else by the digits of `to_ref` against the shop's parties' phone / sign-in contact; unreadable → `CONSENT_UNREADABLE` (fail closed) | `lib/whatsapp-out` | the outbound log (lib/channels) |
+| GET /api/facts/marketing → `lines[]` · `figures { agreed, said_no }` or `unavailable` | — | derived (MKT-SRV1 G3, `lib/home-facts.marketing`): a party AGREED when its newest marketing row on any channel is a yes; SAID NO when it has marketing rows and none is a standing yes. Before b306: `unavailable` in words, never 0 | nobody | a Home / CRM card (web round to come) |
+| `law` on GET /api/crm/parties/:id/contact-prefs and GET /api/privacy/me → `{ country, known, law, short, authority, consent, rights, kinds[], note, due_days }` | — | derived (T3-P3-CONSENT, `lib/privacy.lawOf(shop country)` — ONE per-country table beside DUE_DAYS: IN DPDP Act 2023 · AU Privacy Act 1988 · AE PDPL; `known: false` + `note` for an unstated or unpacked country, every kind offered — never India's words). `kinds` is what a page draws request buttons from | nobody (config) | the CRM record's Consent block; the shopper's privacy sheet (shop.html) |
+| `GET /api/privacy/me` → `shop { name, country }` · `law` · `held[] { key, label, value }` · `consent { migrated, history[], may }` · `requests { migrated, requests[], total }` · `may_consent` · `may_request` `{ may, code, why }` | — | derived (T3-P3-CONSENT, `lib/privacy.shopper`; a storefront token only — middleware/customer-auth; the shop = the token's parent, the party = the token's identity). `held` lists what the platform holds with a null said, never dropped. `may_*` carries `PRIVACY_NOT_MIGRATED` before b306 / b307 | nobody | the shopper's privacy sheet (shop.html, beside My orders) |
+| `party_contact_pref.noted_by` = the PARTY's own id (via POST /api/privacy/me/consent) | b306 | source: "how given" — by them, online (noted_by = party_id) vs noted by the shop's staff (noted_by = an actor or the owner) — the same `notePref`, no second writer | `lib/privacy.notePref` | the CRM consent history ("by them" / "noted by"), GET /api/privacy/me |
 | `privacy_request.*` (request_id · owner_entity_id · party_id · who · kind · country · received_at · due_at · answered_at · answered_by · outcome · answer · created_by · created_at) | b307 | source; `due_at` derived at insert from `lib/privacy.DUE_DAYS`; answered once (trigger) | `POST /api/crm/privacy-requests` · `/:id/answer` (owner) | `GET /api/crm/privacy-requests` |
 | `late` · `answered_late` · `open` · `late` (list) · `may_answer` · `why` | — | derived by the server | nobody | the register's reader |
 | `GET /api/privacy/facts` → `notice_version` · `notice` · `contact` · `contact_line` · `processors[]` (name · role · region · source · on) · `due_days` | — | `lib/privacy.FACTS` + env (`RAILWAY_REGION`, `PRIVACY_NOTICE_VERSION`, `PRIVACY_CONTACT`; a provider is `on` when its key is set) | nobody (config) | the Standards register's privacy rows (live check); web docs/compliance/ROPA.md |
@@ -244,7 +360,7 @@ One read per Home card, behind auth, signed-in people only (a key gets 403). Bui
 | `/api/facts/product-lab` | `{ lines, figures:{ items, no_cost } }` — a COUNT of items whose cost is unknown | `no_cost` for an actor without `can_see_costs`; no cost value is ever selected |
 | `/api/facts/combo-lab` | `{ lines, figures:{ saved } }` — saved sets in the library | the combos/modifiers split (one table, one shape) |
 | `/api/facts/offer-lab` | `{ lines, figures:{ drafts, live } }` | — |
-| `/api/facts/rail` | `{ suppliers, customers, in, out, stuck }` — in/out = open chits to you / from you, stuck = open past the shop's `overdue_days` | `in`/`out`/`stuck` when the shop holds 5,000+ chit copies (a truncated count is a wrong one) |
+| `/api/facts/rail` | `{ suppliers, customers, in, out, tasks, stuck }` — in / out / tasks = Tasks & Orders' folder counts (Orders in · Orders out · Tasks; derived by lib/work-rows classify · countsOf over the rail's own select read — written by lib/home-facts.rail, read by index.html's rail, TOUR-FIX1), stuck = open past the shop's `overdue_days` | `in`/`out`/`tasks`/`stuck` when the shop holds 5,000+ chit copies (a truncated count is a wrong one) |
 
 `lines[i]` = `{ text, value?, tone? }` (`tone` is `'dn'` or absent); the shell draws the first two. Unknown card: 404. Trips: till 1 · accounts 1 · product-lab 1 (2 for an actor) · combo-lab 1 · offer-lab 1 · rail 2.
 ## GET /api/identity/documents · POST /api/identity/documents/:scheme/code · /verify (M18, 2026-10-07)
@@ -545,6 +661,18 @@ Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, rou
 | books refusal `NO_MONEY` (new code) | 422 `{ code, error, message }` | `books.enable` / `books-store.saveSetting` when neither Country setup nor the pack states the money or the year start (was `INR` / April). The sentence is `country-setup.MONEY_UNSTATED`. |
 | `identities.currency_code` · `cb_entity.currency_code` (b400) | varchar(3) or NULL | DEFAULT 'INR' dropped (b400): a money nobody stated is NULL — registration names it (offerOf / acceptAtSignup), Country setup asks for it. Layer: entity, class chosen-then-fixed (fixed once constituted). |
 
+## Pages · GET /api/testing/cases · results · runs · requirements · incidents (T2-PAGING, 2026-10-14 · no migration)
+
+DISCIPLINES §2's list contract on the test board's lists: `?page=` (≥ 1) and `?limit=` clamped by `lib/page-limit.limitOf` to the list's
+server max, which is also its default — the size it answered before (cases · results 5000, a case's/run's history 500, runs 50,
+requirements · incidents 500). Cut AFTER the order, in SQL (OFFSET). Who may: whoever may read the board — unchanged.
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `total` | integer | derived: rows the query (with its `?state=` / `?project=` / `?all=`) holds — `count(*) OVER ()` of the page read (routes/testing.js `readPage`). ⚠️ On /requirements and /incidents it USED to be every state; every state is now the sum of `counts` | the route | web `CBList.every` (the board reads every page) · PG (`testPgArm`) |
+| `page` · `limit` | integers | derived: the page asked (≥ 1) · the limit the SERVER applied | the route | the same |
+| /requirements · /incidents `counts` · `open` · `open_by_severity` | integers | derived: one `GROUP BY` over EVERY row (no cut) — before, they counted the 500 newest | the route | the view's filter chips; `Everything` = Σ `counts` (`testCountAll`) |
+
 ## F10 / F11 · the counter receipt that carries their bill (2026-10-14)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
@@ -598,6 +726,41 @@ No SQL, no new stored key. Who WRITES changed; what is stored did not.
 |---|---|---|
 | `identities.policy_flags` (every key) | jsonb | source. Written ONLY by `lib/policy.js` — `set()` for FLAGS keys, `patchKey(db, entity, path, value, { op })` / `patchSql` for everything else (api_keys · counters · devices · network_* · profile_provenance · storefront_exposure). Guard: tests/policy-one-writer.test.cjs (0 direct writers). Readers unchanged. |
 | `FLAGS[key].ui` | `{ order, label, level, gov, help, labels?, options?, scale?, suffix?, step? }` | derived (code, lib/policy.js `CARD`). Not stored. Sent by `GET /api/entities/policy` as `schema[key].ui`; read by the web's Business rules card (cap-admin.js) — its former POLICY_FLAGS copy is gone. |
-| `FLAGS[key].may` · `.may_why` | `'owner'` · sentence | derived (code). `system_folders`, `books`. Read by `policy.refusalFor` in `PATCH /api/entities/policy` (403 `POLICY_OWNER_ONLY`). |
+| `FLAGS[key].may` · `.may_why` | `'owner'` · sentence | derived (code). `system_folders`, `books`. Read by `policy.refusalFor` in `PATCH /api/entities/policy` (403 `OWNER_ONLY`). |
 | `bound_schema` (GET /api/entities/policy) | `{ dispute_scope: { type, options, def, ui } }` | derived (code). Read by the card for its locked row. |
 | `identities.gstn` · `identities.address` (the shop's own row) | text | source. Written ONLY through `lib/profile.js` `setShopIdentity` / `shopIdentitySql` (PATCH /entities/profile · country setup · the profile sync · a network store's place · the vault save's write-through). The tax number is checked by `profile.taxIdRefusal(country, number)` — the pack `taxIdWordOf` names (GSTIN checksum · ABN · TRN · ≤ 40 for no pack). A party's row (`parent_entity_id`) is the counterparty's, not this. |
+
+## RAIL-LAB-SRV1 (2026-10-14) · the Rail Lab's may/why and the lab chit — `GET /api/facts/rail` · `POST /api/chits/send`
+
+No SQL, no new column. The ONE "is this a lab shop" rule is b249's population axis (`lib/istest.js` `isLab` · `maySample`): a lab shop is a shop whose `identities.population` is not `live`; an unstated population is live (fail safe).
+
+| key | shape | source / derived · writer · readers |
+|---|---|---|
+| `GET /api/facts/rail` `may_sample` (new) | `{ ok: true }` · `{ ok: false, why: 'live_shop', say }` | derived (code, `lib/istest.maySample` over the population read in `home-facts.railScope` — the overdue_days statement, no extra trip). Always present. Read by the Rail Lab (web, to come): the action shown, greyed with `say`; branches on `why`, never the words. |
+| `summary_json.lab` (new rider) | `true` — absent on every other chit | derived from what the sender declares as `business_json.lab: true` (the `is_promotion` path). Written ONLY by routes/chits.js `sendSummary` through `mint.summary` (whitelist `lab`), after `sendLab` proved the shop may. Rides every co-held copy. Readers: the Rail Lab's own list (to come); the CRM / Task lists ignore it today. |
+| 409 of `POST /api/chits/send` (new) | `{ error, code: 'LAB_CHIT_LIVE_SHOP', may: false, why: 'live_shop', message }` | derived: `sendLab` — a lab chit declared from a live shop, refused before anything is written (one identities read, only when `lab` is declared). `message` = `istest.LAB_WHY.live_shop`, the same sentence the facts card says. |
+
+## RCM-POST (2026-10-14) · `line_items[].rcm_category` — a line says it is under reverse charge
+
+No SQL, no route. One new line key; the invoice keys it switches on exist since engines v1.20.0 (INV-01 `RcmCd` · `RcmItc` · `RcmCgstAmt/RcmSgstAmt/RcmIgstAmt`, `TranDtls.RegRev`, `_cb.rcm[]`, `moneyOf(inv).rcm`).
+
+| key | shape | source / derived · writer · readers |
+|---|---|---|
+| `line_items[].rcm_category` | string — the pack's category id (reg-in `rcm.categories[].id`: `gta` · `legal` · `rent_unregistered` · `cashew` …) | source. Written by whoever writes the line (a supplier's send, a captured bill's lines, later a catalogue item that carries it); nothing writes it yet by UI. Read by `lib/tax-lines.invoiceFor` (`rcmCategoryOf` → the engine's `rcm_category`, and `rcm: true` for the bill when any line names one) → `tax.determine` resolves it against the pack (`tax-packs.rcmCategoryFor`) and applies the registration tests. Frozen on `business_json.invoice` as the line's `RcmCd`; the books read `moneyOf(inv).rcm.rows` (books-hooks `rcmOf`), the sheet reads `moneyOf(inv).rcm` (web chit-sheet.js). Tests: tests/rcm-post.test.cjs. |
+
+## Segments & groups · GET /api/crm/segments · POST /api/crm/groups · DELETE /groups/:name · POST /api/crm/segments/:key/send (T3-P2-CRM, 2026-10-14)
+
+No migration: a segment is `lib/customer-groups` SEGMENT_SQL (read by `lib/crm.rows`, b273 for high value); a named group is `customer_list.groups[]` (b205) —
+the SAME values an offer's "Only for" stores (`'group:<name>'` · `'<segment>'`). Who may: anyone signed in reads; the owner or an editor writes a group and
+sends; the owner deletes. Every figure here is counted from the rows GET /parties answers (one reading); nothing is a second rule.
+
+| Key | Number | Source or derived | Written by | Read by |
+|---|---|---|---|---|
+| `segments[] { key, name, rule, count, overrides, offers, reach }` | — | derived (`lib/crm-groups.overview`): the four segments in order new · regular · high_value · inactive; `rule` = the shop's own high-value numbers in words (`lib/crm.shopRule`); `count` = customers (never a lead) the list puts there; `overrides` = those the owner set by hand; `offers` = offers (live or draft) whose `rules.customer_group` names it — ONE grouped statement over `definition_version` | nobody | CB CRM › Groups & segments |
+| `groups[] { key: 'group:<name>', name, count, offers, reach }` | — | derived: every name any customer carries (`customer-groups.namesOf` + the rows) | nobody | the same screen; `key` is what a send and an offer's "Only for" use |
+| `reach { may, not, refused_by[] { code, n } }` | — | derived: `lib/privacy.mayAll`'s verdict per member for `channel` × `purpose` (whatsapp · marketing), counted BY CODE — the client branches on the code, never on a sentence; before b306 every member is `NO_CONSENT` | nobody | the screen's "n may be sent offers · m not (why)" |
+| `groups_migrated` · `consent_migrated` · `customers` · `channel` · `purpose` | — | derived: b205 readable · b306 readable · how many customers were counted · the channel and purpose the reach was counted for | nobody | the screen says "not set up yet" in words |
+| `may { group, send, delete } = { may, code, why }` | — | derived (`lib/crm-groups.mays`): the server's answer for this login — `VIEW_ONLY` · `OWNER_ONLY` · `OK` | nobody | every action shown, greyed with `why` |
+| POST /groups → `{ name, added, removed, count }` | — | the group after the write: `added` / `removed` = rows actually changed (an id that is nobody's customer changes nothing); `count` = members now | `lib/crm-groups.setGroup` (ONE transaction; ≤ 500 ids; ≤ 20 groups per customer → `TOO_MANY_GROUPS`; before b205 → 409 `GROUPS_NOT_MIGRATED`) | the screen's refresh |
+| DELETE /groups/:name → `{ name, removed }` | — | how many customers the group left; 404 `NOT_FOUND` when none carried it | `lib/crm-groups.dropGroup` | the screen |
+| POST /segments/:key/send → `{ key, dry, channel, purpose, members, may, refused[] { party_id, name, code, why }, refused_by[], sent[] { party_id, name, status, reason }, sent_n, failed_n, refused_n }` | — | derived: `dry` = the verdict per member, nothing sent; a real send = `lib/whatsapp-out.notify` per allowed member (the ONE sender, which asks `lib/privacy.gate` again) — `status` sent · refused · failed with the sender's own `reason`; only WhatsApp is sendable today (`CHANNEL_NOT_SENDABLE`); > 100 allowed members → 400 `TOO_MANY` before any send | `lib/crm-groups.send` | the Send sheet: the count first, then the outcome per member |

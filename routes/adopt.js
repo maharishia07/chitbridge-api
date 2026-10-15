@@ -22,6 +22,8 @@
  */
 'use strict';
 const express = require('express');
+const { safeErr } = require('../lib/respond');
+const logger = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
@@ -29,7 +31,7 @@ const adopt = require('../lib/adopt');
 const { mintProduct } = require('../lib/mint-product');
 
 const ctx = (req) => auth.entityOf(req);
-const fail = (res, e, what) => res.status(500).json({ error: what, message: String(e && e.message) });
+const fail = (res, e, what) => res.status(500).json({ error: what, message: safeErr(e) });
 
 /**
  * ⚠️ THE SENDER'S TRADE TRAVELS WITH THE GOODS, and where it is not on the chit it is looked up. A batch number is
@@ -59,7 +61,7 @@ async function receiverOf(entity_id) {
       `SELECT sectors FROM entity_profile WHERE entity_id = $1`, [entity_id]));
     const row = p.rows[0] || {};
     sectors = row.sectors || [];
-  } catch (_) {}
+  } catch (e) { logger.fellBack('adopt receiverOf: the read failed — carried on without it', e); }
   /**
    * ⚠️⚠️ MATCH ON WHAT THE SUPPLIER CALLS IT, NOT ONLY ON WHAT THE SHOP CALLS IT — and [ADOPT-02] found this
    * the first time a person walked the screen. The shop adopted "Paracetamol 500mg strip" as "Paracetamol
@@ -99,7 +101,7 @@ async function supplierKind(entity_id, supplier_entity_id) {
       `SELECT supply_kind, nickname FROM supplier_list
         WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [entity_id, supplier_entity_id]));
     return r.rows[0] ? { supply_kind: r.rows[0].supply_kind, nickname: r.rows[0].nickname } : null;
-  } catch (_) { return null; }
+  } catch (e) { logger.fellBack('adopt supplierKind: the read failed — answered with nothing', e); return null; }
 }
 
 /** ⭐ WHAT THIS DELIVERY OFFERS — reads only. Grouped the way a person reads it, never as forty rows. */

@@ -8,6 +8,7 @@
  *        listPrice it takes the product's list price.
  */
 const express = require('express');
+const { safeErr } = require('../lib/respond');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const S = require('../lib/services');
@@ -24,7 +25,7 @@ router.post('/price', auth, auth.requireScope('pricing'), async (req, res) => {
     const sh = needShelf ? await S.shelfOf(auth.entityOf(req)) : null;
     const out = lines.map((l) => S.priceLine(l, sh ? sh.productOf(l) : null));
     res.json({ engine: 'chitbridge-pricing', version: 1, lines: out, total: S.R2(out.reduce((t, l) => t + (l.unit_price || 0) * l.qty, 0)) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.openapi = {

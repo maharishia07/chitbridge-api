@@ -32,8 +32,7 @@ router.get('/', auth, async (req, res) => {
               i.email, (i.email IS NOT NULL AND i.email <> '') AS has_email,
               e.user_id AS entity_handle, e.country AS entity_country
          FROM identities e
-         LEFT JOIN identities i ON i.parent_entity_id = e.identity_id AND i.identity_type = 'actor'
-          AND COALESCE(i.actor_type, 'human') = 'human' AND i.break_status IS DISTINCT FROM 'removed'
+         LEFT JOIN identities i ON i.parent_entity_id = e.identity_id AND ${people.peopleSql('i')}
         WHERE e.identity_id = $1
         ORDER BY (i.break_status = 'deactivated'), i.display_name`,
       [entity_id]);

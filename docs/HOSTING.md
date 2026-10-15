@@ -39,7 +39,7 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `CTP_PRIVATE_KEY` | optional | `<Ed25519 PKCS#8 PEM>` | yes | Signs cross-installation envelopes; unset = unsigned. |
 | `NETWORK_WRITE_ENABLED` | optional | `true` | no | `false` makes `/api/network` read-only. |
 | **Database** | | | | |
-| `DATABASE_URL` | always | `postgres://cb_app:<password>@db.example:5432/chitbridge?sslmode=disable` | yes | The Postgres DSN, tried first. Its `sslmode` decides TLS (`disable` · `no-verify` · `require` · `verify-full`). |
+| `DATABASE_URL` | always | `postgres://cb_app:<password>@db.example:5432/chitbridge?sslmode=disable` | yes | The Postgres DSN, tried first. Its `sslmode` decides TLS (`disable` · `no-verify` · `require` · `verify-full`). SEC0: on Supabase the host carries the project ref (`db.<ref>.supabase.co` / user `<role>.<ref>`) — the ref is env ONLY, never a literal in the repo (`.gitleaks.toml` rule `cb-supabase-project-ref`; `tests/hosting-neutral.test.cjs` §6 fails a commit that carries one). |
 | `DB_POOLER_URL` | optional | `postgres://<user>:<password>@<pooler-host>:6543/postgres?sslmode=no-verify` | yes | HX1: a second DSN, tried only when `DATABASE_URL` fails — carries its OWN credentials; nothing else is ever tried (`db/connect-config.js`). |
 | `PGSSLMODE` | optional | `no-verify` | no | TLS when the URL has no `sslmode`. Neither set: a sealed env uses TLS without verification (every host); any other env no TLS. |
 | `PGSSL` | optional | `disable` | no | Old switch, still honoured: `disable` = no TLS when neither `sslmode` nor `PGSSLMODE` says otherwise. |

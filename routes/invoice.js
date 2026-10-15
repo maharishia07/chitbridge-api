@@ -10,6 +10,7 @@
  * ⚠️ IT BUILDS, IT DOES NOT ISSUE. Nothing is written; an invoice number, a signature and the freeze belong to the chit.
  */
 const express = require('express');
+const { safeErr } = require('../lib/respond');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const S = require('../lib/services');
@@ -29,8 +30,8 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
       excluded: l.excluded.length ? l.excluded : ((prod && Array.isArray(prod.offers_excluded)) ? prod.offers_excluded.map(String) : []) }); });
     /* 1 · pricing structure */
     const priced = lines.map((l) => Object.assign({}, l, S.priceLine(l, sh.productOf(l))));
-    const mine = await S.partyOfEntity(entity_id);
-    const seller = S.party(body.seller, mine);
+    const shop = await S.shopOf(entity_id);
+    const seller = S.party(body.seller, shop.party);
     /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */
     const currency = body.currency || T.currencyOf(seller);
     /* 2 · offers on the priced lines */
@@ -42,7 +43,7 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
     const rated = S.rateLines(withOffers, sh);
     /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
     const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
-    const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: !!body.priceIncludesTax, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
+    const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: S.saidInclusive(body) != null ? S.saidInclusive(body) : shop.priceIncludesTax /* TAX-SRV1 G2: left out = the shop's own setting */, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
     const invoice = Object.assign({ DocDtls: { Typ: 'INV', No: null, Dt: require('../lib/shop-clock').today(seller && seller.Country) }   /* the seller's day (dayOf), not the server's UTC */, currency }, det);
     res.json({ engine: 'chitbridge-invoice', version: 1, order: ['pricing structure', 'offers', 'tax'],
       pricing: priced.map((l) => ({ key: l.key, unit_price: l.unit_price, list_price: l.list_price, structure: l.structure, why: l.why })),
@@ -50,7 +51,7 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
       rates: rated.map((l) => ({ key: l.key, gst_rate: l.gst_rate, cess_rate: l.cess_rate, hsn: l.hsn, slab: l.tax_slab_name, source: l.tax_source, scheme: l.tax_scheme })),
       seller: { LglNm: seller.LglNm, Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType }, buyer: { LglNm: buyer.LglNm, Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country },
       invoice, heads: T.heads(invoice) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.get('/:chit_id', auth, auth.requireScope('invoice', 'connector') /* the B2B voucher reads the buyer's GSTIN and the tax split from here */, async (req, res) => {
@@ -60,7 +61,7 @@ router.get('/:chit_id', auth, auth.requireScope('invoice', 'connector') /* the B
     if (!hdr) return res.status(404).json({ error: 'Not found' });
     const e = await C.entryFor(hdr, me);
     res.json({ chit_id: e.chit_id, direction: e.direction, sells: e.sells, status: e.status, provisional: e.provisional, frozen: e.frozen, rated: e.rated, unrated: e.unrated, seller: e.seller, buyer: e.buyer, invoice: e.invoice, heads: T.heads(e.invoice) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: String(e && e.message) }); }
+  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
 router.openapi = {

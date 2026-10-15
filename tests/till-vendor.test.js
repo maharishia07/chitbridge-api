@@ -44,6 +44,41 @@ it('it declares what it will not do — the boundary is written where the next p
     assert.ok(html.indexOf(word) >= 0, 'the page no longer says it ' + word);
 });
 
+/* ── ⭐ STD-CATCH: a best-effort step that fails is quiet, never silent — ONE recorder, and no empty catch left ── */
+it('⭐ the page has no empty catch: every best-effort failure goes through cbQuiet (the one recorder)', () => {
+  const html = fs.readFileSync(PAGE, 'utf8');
+  /* a catch with a comment inside is a decision, not silence (scanned raw, so the comment counts); the two prose lines that
+     quote the old shape in backticks are not code */
+  const empty = html.match(/(?<!`)catch\s*(\(\s*[\w$]*\s*\))?\s*\{\s*\}|\.catch\(\s*function\s*\(\s*[\w$]*\s*\)\s*\{\s*\}\s*\)/g) || [];
+  assert.deepStrictEqual(empty, [], empty.length + ' empty catch(es) in the master — record them with cbQuiet(where, e)');
+  assert.strictEqual((html.match(/function cbQuiet\(/g) || []).length, 1, 'ONE recorder');
+  assert.ok((html.match(/cbQuiet\(/g) || []).length > 400, 'the catches do not use it');
+});
+
+it('⭐ cbQuiet never throws and the ring holds the last 200 — a recorder that could fail would need a recorder', () => {
+  const P = load();
+  P.QUIET.length = 0;   /* booting the page in a bare sandbox already records a few (no BroadcastChannel there) */
+  const bad = {}; Object.defineProperty(bad, 'message', { get() { throw new Error('a getter that throws'); } });
+  const circular = { message: 'x' }; circular.self = circular;
+  for (const e of [undefined, null, 'a string', 42, new Error('ordinary'), bad, circular, { name: 'OnlyAName' }]) P.cbQuiet('t:1', e);
+  P.cbQuiet(undefined, undefined); P.cbQuiet(null, new Error('no where'));
+  const log = P.cbQuietLog();
+  assert.strictEqual(log.length, 10);
+  assert.strictEqual(log[4].message, 'ordinary'); assert.strictEqual(log[4].where, 't:1'); assert.ok(log[4].time > 0);
+  assert.strictEqual(log[5].message, 'failed (unreadable error)', 'a message that cannot be read still leaves a row');
+  assert.strictEqual(log[7].message, 'OnlyAName', 'an error with only a name is named');
+  assert.strictEqual(log[8].where, '?', 'no where → "?"');
+  for (let i = 0; i < 500; i++) P.cbQuiet('fill:' + i, new Error('n' + i));
+  const after = P.cbQuietLog();
+  assert.strictEqual(after.length, 200, 'capped at 200');
+  assert.strictEqual(after[199].where, 'fill:499', 'the newest is kept');
+  assert.strictEqual(after[0].where, 'fill:300', 'the oldest is dropped');
+  assert.ok(P.cbQuietLog() !== P.QUIET, 'the reader hands out a copy');
+  /* the sandboxed page functions that carry on past a failure must still carry on — a catch that threw would be a new crash */
+  P.CBLocale = { symbol() { throw new Error('locale down'); } };
+  assert.doesNotThrow(() => P.curSym('INR'));
+});
+
 /* ── the money, lifted out of the page and run ─────────────────────────────────────────────────────────────── */
 function load() {
   const html = fs.readFileSync(PAGE, 'utf8');
@@ -799,7 +834,7 @@ JOBS.push(['⭐⭐⭐ every vendored engine EXECUTES in a browser and hands over
    * Naming the order HERE is what makes a page that gets the order wrong a test failure rather than a bug report.
    */
   /* bank-recon (engines v1.28+, adopted by the web at v1.44.1 in BR1) reads the pack registry at load: engine/tax.js bundles regulation
-     and the packs, as app/tax.js does ahead of it on accounts.html */
+     and the packs, as engine/tax.js does ahead of it on accounts.html */
   const DEPS = { 'convert.js': ['money.js', 'units.js'], 'bank-recon.js': ['money.js', 'tax.js'] };
   const files = fs.readdirSync(dir).filter((n) => n.endsWith('.js'));
   assert.ok(files.length >= 9, 'only ' + files.length + ' engines found — this test has stopped looking properly');

@@ -5,10 +5,12 @@
 /**
  * routes/crm.js — docs/design/crm/PLAN.md Phases 3 and 4 (API side). The page is the browser's; this file shapes answers.
  *
- *   GET    /api/crm/parties                     the whole list, ONE row per party (a party on both lists is one row, two roles)
+ *   GET    /api/crm/parties                     the whole list, ONE row per party (a party on both lists is one row, two roles); total · page · limit
+ *                                              (no ?limit = the whole list, CAP); ?with=consent → each party's contact_prefs { migrated, may } (MKT-SRV1 G1)
  *   GET    /api/crm/parties/:id                 the record; the id of a merged party opens the survivor
+ *   GET    /api/crm/parties/:id/contact-prefs   history · may (per channel × purpose, with a code) · law (the shop's country's words — T3-P3-CONSENT)
  *   GET    /api/crm/parties/:id/timeline        chits · disputes · messages · ledger · interactions · follow-ups · changes, newest first, paged
- *   POST   /api/crm/parties/:id/interactions    log a call / visit / message / note                         (b276)
+ *   POST   /api/crm/parties/:id/interactions    log a call / visit / message / note (b276); an OUT call/message asks privacy.gate → 403 { code, why }
  *   GET    /api/crm/followups                   ?scope=mine|all&done=0|1                                    (b276)
  *   POST   /api/crm/followups · PATCH /followups/:id · DELETE /followups/:id                                (b276)
  *   DELETE /api/crm/parties/:id                 "Remove from my parties" — owner, no open dues, hides the row, deletes no history (b276)
@@ -24,6 +26,10 @@
  *   GET    /api/crm/privacy-requests            CO1 K4/K11: the register of privacy requests and grievances, ?open=1              (b307)
  *   POST   /api/crm/privacy-requests            log one: who · kind · when it came in → the due date the law sets                 (b307)
  *   POST   /api/crm/privacy-requests/:id/answer the owner answers it, once (done · partly · refused + what was done)             (b307)
+ *   GET    /api/crm/segments                    T3-P2-CRM: segments (the one SQL rule) + named groups, each with count · offers · who may be sent offers
+ *   POST   /api/crm/groups                      { name, add[], remove[] } — a named group written on customer_list.groups (b205), one transaction
+ *   DELETE /api/crm/groups/:name                the owner takes a group off every customer
+ *   POST   /api/crm/segments/:key/send          { text, dry? } — a message to a segment or a group through the one gate; dry = the count, by code
  *
  * ⭐ THIS FILE COMPUTES NO MONEY. Dues, totals and values are READ from what the Ledger and the chits stored (party-fields.decorate,
  *   summary_json, party_item) — "compute once, everyone reads". ⭐ Every read runs AS THE SHOP (withEntity): one shop never sees another's party.
@@ -31,6 +37,7 @@
  * ⚠️ BEFORE b276 the writers answer 503 { code: 'CRM_NOT_MIGRATED' }; the record and the timeline simply carry `migrated: false`.
  */
 const express = require('express');
+const logger = require('../lib/logger');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { withEntity, query } = require('../db');
@@ -39,6 +46,7 @@ const { isOwner } = require('../lib/owner');
 const crm = require('../lib/crm');
 const F = require('../lib/crm-followups');
 const M = require('../lib/memberships');
+const PV = require('../lib/privacy');
 
 const ctx = (req) => auth.entityOf(req);
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
@@ -52,7 +60,7 @@ function fail(res, e) {
   if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) return res.status(503).json({ code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CB CRM needs migration b276 — not run yet.' });
   if (e && e.code === 'PRIVACY_NOT_MIGRATED') return res.status(503).json({ code: e.code, error: 'Not migrated yet', message: e.message });
   if (e && e.code === 'LEADS_NOT_MIGRATED') return res.status(503).json({ code: 'LEADS_NOT_MIGRATED', error: e.message, message: e.message });
-  if (e && e.status && e.status < 500) return res.status(e.status).json({ code: e.code || 'REFUSED', error: e.message, message: e.message });
+  if (e && e.status && e.status < 500) return res.status(e.status).json(Object.assign({ code: e.code || 'REFUSED', error: e.message, message: e.message }, e.why ? { why: e.why } : {}));
   return res.status(500).json({ error: 'Failed', message: safeErr(e) });
 }
 const bad = F.bad;
@@ -60,14 +68,18 @@ const idOf = (req) => { const id = String(req.params.id || ''); if (!UUID.test(i
 
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/parties', auth, noKey, async (req, res) => {
-  try { res.json(await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null })); } catch (e) { fail(res, e); }
+  try {
+    const PL = require('../lib/page-limit');
+    res.json(await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null, consent: String(req.query.with || '').split(',').indexOf('consent') >= 0,
+      page: PL.pageOf(req.query.page), limit: PL.limitOf(req.query.limit, crm.CAP, crm.CAP) }));
+  } catch (e) { fail(res, e); }
 });
 
 /** the record: the list row + the relationship line (the scorecard's own arithmetic) + points + open follow-ups */
 router.get('/parties/:id', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), id = idOf(req);
-    const found = await crm.one(owner, id, { stages: true });
+    const found = await crm.one(owner, id, { stages: true, consent: true });
     if (!found) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'Not your party.' });
     const p = found.party;
     const rec = Object.assign({}, p, { merged_from: found.merged_from });
@@ -170,6 +182,20 @@ router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
+/**
+ * contactOf(body) → { channel, purpose } for a contact the shop makes, else null (MKT-SRV1 G2). An out call is the phone; an out message is
+ * body.channel, else whatsapp (the one message kind the log offers); purpose is body.purpose, else service. Unknown words → 400 in words.
+ */
+function contactOf(b) {
+  const x = b || {}, kind = String(x.kind || '').toLowerCase(), dir = String(x.direction || '').toLowerCase();
+  if (dir !== 'out' || (kind !== 'call' && kind !== 'message')) return null;
+  const channel = kind === 'call' ? 'phone' : String(x.channel || 'whatsapp').toLowerCase();
+  const purpose = String(x.purpose || 'service').toLowerCase();
+  if (PV.CHANNELS.indexOf(channel) < 0) throw bad('Channel is phone, sms, whatsapp, email or chitbridge.', 400, 'BAD_CHANNEL');
+  if (PV.PURPOSES.indexOf(purpose) < 0) throw bad('Purpose is service or marketing.', 400, 'BAD_PURPOSE');
+  return { channel, purpose };
+}
+
 /* ── Phase 4: log, follow up, remove, walk-in ───────────────────────────────────────────────────────────────────── */
 router.post('/parties/:id/interactions', auth, noKey, async (req, res) => {
   try {
@@ -178,6 +204,8 @@ router.post('/parties/:id/interactions', auth, noKey, async (req, res) => {
       await F.need(h);
       const on = await require('../lib/books-store').partyOn(h, owner, id);
       if (!on.customer && !on.supplier) throw bad('Not your party.', 404, 'NOT_FOUND');
+      const reach = contactOf(req.body);   /* G2: a call or message the shop MAKES asks the one gate first; in-bound, visits and notes are facts */
+      if (reach) { const v = await PV.gate(h, owner, { party_id: id }, reach.channel, reach.purpose); if (!v.may) throw PV.refusal(v); }
       return F.addInteraction(h, owner, id, req.body, byOf(req));
     });
     res.status(201).json({ interaction: row });
@@ -351,8 +379,7 @@ router.post('/walk-ins/add', auth, noKey, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
-/* ── CO1 privacy: contact consent (K2, b306) and the request register (K4 · K11, b307) — lib/privacy.js ────────────────────── */
-const PV = require('../lib/privacy');
+/* ── CO1 privacy: contact consent (K2, b306) and the request register (K4 · K11, b307) — lib/privacy.js (PV, required at the top) ── */
 /** the party must be on this shop's list (the same test the log uses) */
 async function mine(h, owner, id) {
   const on = await require('../lib/books-store').partyOn(h, owner, id);
@@ -361,7 +388,13 @@ async function mine(h, owner, id) {
 router.get('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), id = idOf(req);
-    const out = await withEntity(owner, async (h) => { await mine(h, owner, id); return PV.prefs(h, owner, id); });
+    const out = await withEntity(owner, async (h) => {
+      await mine(h, owner, id);
+      const p = await PV.prefs(h, owner, id);
+      /* T3-P3-CONSENT: the shop's country's law words (one SELECT in this same transaction) — the consent block paints THESE, never a default */
+      const c = (await h.query(`SELECT country FROM identities WHERE identity_id = $1`, [owner])).rows[0];
+      return Object.assign(p, { law: PV.lawOf(c && c.country) });
+    });
     res.json(Object.assign({ party_id: id }, out));
   } catch (e) { fail(res, e); }
 });
@@ -375,9 +408,8 @@ router.post('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
 router.get('/privacy-requests', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req);
-    const list = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1' }));
-    res.json({ requests: list, open: list.filter((x) => !x.answered_at).length, late: list.filter((x) => x.late).length,
-      may_answer: isOwner(req), why: isOwner(req) ? null : 'Only the owner answers a privacy request.' });
+    const out = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1', page: req.query.page, limit: req.query.limit }));
+    res.json(Object.assign(out, { may_answer: isOwner(req), why: isOwner(req) ? null : 'Only the owner answers a privacy request.' }));
   } catch (e) { fail(res, e); }
 });
 router.post('/privacy-requests', auth, noKey, async (req, res) => {
@@ -395,6 +427,37 @@ router.post('/privacy-requests/:id/answer', auth, noKey, async (req, res) => {
     if (!UUID.test(id)) throw bad('That is not a request id.', 400, 'BAD_ID');
     const r = await withEntity(owner, (h) => PV.answerRequest(h, owner, id, req.body, byOf(req)));
     res.json({ request: r });
+  } catch (e) { fail(res, e); }
+});
+
+/* ── T3-P2-CRM: segments & groups (lib/crm-groups.js) — the ONE segment definition counted, named groups written, a set messaged through the one gate ── */
+const CG = require('../lib/crm-groups');
+const whoIs = (req) => ({ owner: isOwner(req), editor: require('../lib/access').canEdit(req.identity) });
+/** who may: anyone signed in to the shop reads it (a viewer sees every action greyed with the server's sentence — `may`) */
+router.get('/segments', auth, noKey, async (req, res) => {
+  try { res.json(await CG.overview(ctx(req), whoIs(req))); } catch (e) { fail(res, e); }
+});
+/** who may: the owner or an editor (hat-gate refuses a viewer first; this is the sentence) — { name, add[], remove[] }, ONE transaction */
+router.post('/groups', auth, noKey, async (req, res) => {
+  try {
+    if (!whoIs(req).editor) throw bad('Your login can only view.', 403, 'VIEW_ONLY');
+    const owner = ctx(req);
+    res.status(201).json(await withEntity(owner, (h) => CG.setGroup(h, owner, req.body)));
+  } catch (e) { fail(res, e); }
+});
+/** who may: the owner only — the group leaves every customer; the offers that named it are the warning GET /segments carried */
+router.delete('/groups/:name', auth, noKey, async (req, res) => {
+  try {
+    if (!isOwner(req)) throw bad('Only the owner deletes a group.', 403, 'OWNER_ONLY');
+    const owner = ctx(req);
+    res.json(await withEntity(owner, (h) => CG.dropGroup(h, owner, req.params.name)));
+  } catch (e) { fail(res, e); }
+});
+/** who may: the owner or an editor — { channel?, purpose?, text, dry? }: dry = the count and who is refused (by code); real = the one sender per allowed member */
+router.post('/segments/:key/send', auth, noKey, async (req, res) => {
+  try {
+    if (!whoIs(req).editor) throw bad('Your login can only view.', 403, 'VIEW_ONLY');
+    res.json(await CG.send(ctx(req), req.params.key, req.body));
   } catch (e) { fail(res, e); }
 });
 

@@ -460,7 +460,7 @@ it('⭐⭐⭐ a store is moved by ONE engine (storeMoveIn): it proves the copy b
     assert.ok(!/deleteDatabase/.test(body(PAGE, fn).text), fn + ' deletes a store — the old copy must stay in this release');
   }
   /* allowed: peekStore undoing a database it created by peeking; closing the counter and a cold start, which clear THIS store (tillStore()) once the shop accepted */
-  const w = outside(PAGE, /indexedDB\.deleteDatabase\(/, body(PAGE, 'async function wipeDevice('), ['indexedDB.deleteDatabase(name); } catch (_) {} return res(null); }', 'var rq = indexedDB.deleteDatabase(name);']);
+  const w = outside(PAGE, /indexedDB\.deleteDatabase\(/, body(PAGE, 'async function wipeDevice('), ['indexedDB.deleteDatabase(name); } catch (e) { cbQuiet(\'rq.onsuccess:1\', e); } return res(null); }', 'var rq = indexedDB.deleteDatabase(name);']);
   assert.deepStrictEqual(w, [], 'a store is deleted somewhere other than "Clear everything" (peekStore only undoes a database it created by peeking):\n      ' + w.join('\n      '));
 });
 
