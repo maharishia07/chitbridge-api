@@ -67,9 +67,10 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     t('a licence with no rule shows days only: no band, no note, no renew', noRule.days_left <= 10 && noRule.band === null && noRule.note === null && noRule.renew_url === null && noRule.rule_verified === null);
     t('a soon licence carries no penalty sentence (only the rule says when)', by('SHOP').note === null);
     t('a general-trade shop has no core licence', a.j.licences.every((l) => l.core === false));
-    t('trade_ready has the four checks', a.j.trade_ready.checks.length === 4 && a.j.trade_ready.checks.map((c) => c.key).join() === 'address,phone,pan,gstin');
+    t('trade_ready has India\'s four checks (the pack\'s list, AU-WORDS): address · phone · pan · tax_id', a.j.trade_ready.checks.length === 4 && a.j.trade_ready.checks.map((c) => c.key).join() === 'address,phone,pan,tax_id');
+    t('the tax id check is called by the pack\'s word: GSTIN', a.j.trade_ready.checks.find((c) => c.key === 'tax_id').label === 'GSTIN');
     t('PHONE document unverified -> Phone verified is false', ck(a, 'phone') === false);
-    t('GSTIN present -> GSTIN true; PAN read from it -> PAN on file true', ck(a, 'gstin') === true && ck(a, 'pan') === true);
+    t('GSTIN present -> GSTIN true; PAN read from it -> PAN on file true', ck(a, 'tax_id') === true && ck(a, 'pan') === true);
     t('address only declared -> Address proven false; done false', ck(a, 'address') === false && a.j.trade_ready.done === false);
     t('X-DB-Trips <= 3', a.trips <= 3, a.trips + ' used');
     const warm = await get(); t("a warm read (probes cached) is ONE trip", warm.trips === 1, warm.trips + " used");
@@ -97,6 +98,21 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     planted = base(); planted.sectors = ['textile']; planted.compliance = [];
     const g = await get();
     t('nothing held, nothing core -> an empty list, not an error', g.status === 200 && g.j.licences.length === 0);
+
+    /* AU-WORDS (2026-10-15): the checks are the shop's PACK's — an AU shop is never asked for a PAN or a GSTIN; AE asks for its trade licence; no country → neutral words */
+    const labelsOf = (r) => r.j.trade_ready.checks.map((c) => c.key + ':' + c.label).join();
+    planted = base(); planted.me.country = 'AU'; planted.me.gstn = '51824753556'; planted.compliance = [];
+    const au = await get();
+    t('AU shop: Address · Phone · ABN — no PAN, no GSTIN anywhere', labelsOf(au) === 'address:Address proven,phone:Phone verified,tax_id:ABN' && !/GSTIN|PAN/.test(JSON.stringify(au.j.trade_ready)), labelsOf(au));
+    t('AU shop: the ABN on file -> tax_id done', ck(au, 'tax_id') === true);
+    planted = base(); planted.me.country = 'AE'; planted.me.gstn = '100123456700003'; planted.compliance = [comp('AE-DED', 'trade_licence', 200)];
+    const ae = await get();
+    t('AE shop: Address · Phone · TRN · Trade licence; the gathered trade licence counts', labelsOf(ae) === 'address:Address proven,phone:Phone verified,tax_id:TRN,trade_licence:Trade licence' && ck(ae, 'trade_licence') === true, labelsOf(ae));
+    planted = base(); planted.me.country = 'AE'; planted.compliance = [];
+    t('AE shop holding no trade licence -> that check is not done', (await get()).j.trade_ready.checks.find((c) => c.key === 'trade_licence').done === false);
+    planted = base(); planted.me.country = null; planted.compliance = [];
+    const none = await get();
+    t('no country: Address · Phone · Tax number — never India\'s words', labelsOf(none) === 'address:Address proven,phone:Phone verified,tax_id:Tax number', labelsOf(none));
 
     /* the rule file: country-keyed, nothing cited -> verify */
     const rules = require(path.join(API, 'lib', 'licence-rules'));
