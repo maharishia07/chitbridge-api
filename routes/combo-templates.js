@@ -179,11 +179,11 @@ router.post('/:id/push', auth, async (req, res) => {
       const merged = productsRouter.mergePatch(existing.item_data || {}, wantedFields);
       const schema_id = await productsRouter.defaultSchemaId(entity_id);
       const decl = await catcols.ensureDeclared({
-        query, entity_id, schema_id, item_data: merged,
+        query, entity_id, schema_id, item_data: merged, stored: existing.item_data || {},   /* C4: the product's own media rides through unchanged */
         ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
         validate: (data, rows) => productsRouter.validateAgainst(rows, data),
       });
-      if (decl.error) return res.status(400).json({ error: 'Invalid product', message: decl.error });
+      if (decl.error) return res.status(400).json({ error: 'Invalid product', code: decl.code || undefined, message: decl.error });
       const stamped = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
       const r = await withEntity(entity_id, (db) => require('../lib/catalogue-write').patchItems(db, entity_id,   /* CAT-W1: the one product writer */
         [{ item_id: existing.item_id, replace: stamped }], { returning: '*' }));
