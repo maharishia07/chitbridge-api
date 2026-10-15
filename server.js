@@ -51,6 +51,7 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
         + ' Dev/test ONLY. To seal: see the checklist at the top of lib/dev-otp.js.'
       : 'DEV_OTP is set but this is not a local stack — every code is random. Testers use TESTER_CODE (lib/dev-otp.js). Delete DEV_OTP here.' });
   }
+  devOtp.testerNotices().forEach((n) => log[n.level](n.msg, { reason: n.reason }));   // SEC1b: TEMPORARY tester code — never its value
 }
 
 // Trust Railway's proxy

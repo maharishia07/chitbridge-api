@@ -70,11 +70,17 @@ Apply on the DEV DB together with the §3 list: **`migration_otp_attempts.sql`**
 
 ### Testers' sign-in code (SEC1)
 Set `TESTER_CODE` (8+ characters; and optionally `TESTER_NAMES`) in Railway → Variables; share it with testers privately; change it
-any time — no deploy. Details: docs/HOSTING.md "Testers' sign-in code".
+any time — no deploy. A `{yymmdd}` in it makes it change by itself every day (SEC1b). Details: docs/HOSTING.md "Testers' sign-in code".
+⚠️ TEMPORARY — testing phase only; every boot warns while it is set.
 
 ## 6. Promote to PROD — separate, conscious, reviewed step
 Re-check `TECH-HARDENING-BACKLOG.md` "Re-check before UAT/Prod". Set prod env (strong secret, prod CORS origin).
 Apply the same migrations on the prod DB. Only after dev is green + must-fixes landed.
+
+**Before real users — REMOVE** (SEC1/SEC1b, temporary testing-phase arrangement):
+- [ ] Railway → Variables → DELETE `TESTER_CODE`, `TESTER_NAMES`, `TESTER_CODE_TZ`.
+- [ ] Web repo → Settings → Secrets → Actions → DELETE `E2E_TESTER_CODE`.
+- [ ] Boot log has no "TEMPORARY: a tester sign-in code is active" line.
 
 ## Rollback
 - Code: redeploy the previous Railway/Vercel build; or restore from the `Downloads/*.bundle`.
