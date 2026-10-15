@@ -1130,10 +1130,10 @@ router.patch('/profile', auth,
     }
   });
 
-// PATCH /entities/:id/erase — mark an identity erased (tombstone). Platform-scope only.
+// PATCH /entities/:id/erase — mark an identity erased (tombstone). The platform role only (lib/platformroot.refuseUnlessPlatform, W1-SET).
 // Full PII-redaction sweep is a separate ops routine; this just flips the markers.
 router.patch('/:id/erase', auth, async (req, res) => {
-  if (req.identity.owner_scope !== 'platform') return res.status(403).json({ error: 'Forbidden' });
+  if (!require('../lib/platformroot').refuseUnlessPlatform(req, res)) return;
   try {
     // sealed = protected (governance/root/Help) — delete flows MUST refuse it (b43). Enforce it here.
     const s = await query(`SELECT sealed FROM identities WHERE identity_id = $1`, [req.params.id]);

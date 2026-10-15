@@ -1,5 +1,7 @@
 // routes/relationships.js — B3.6 Supplier List + Customer List + Promotions
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const log = require('../lib/logger');
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
@@ -213,7 +215,7 @@ router.get('/suppliers', auth, async (req, res) => {
       }));
     } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); }
     await partyFields.decorate(withEntity, owner, rows, 'supplier_entity_id', 'supplier');
-    res.json({ suppliers: rows, count: rows.length });
+    res.json(Object.assign({ count: rows.length }, PL.pageOut('suppliers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     console.error('Get suppliers error:', err.message);
     res.status(500).json({ error: 'Get suppliers failed', message: safeErr(err) });
@@ -425,7 +427,7 @@ router.get('/suppliers/availability', auth, async (req, res) => {
       }
     }));
 
-    res.json({ q, results, count: results.filter((r) => r && r.state === 'has').length, searched: rows.length });
+    res.json(Object.assign({ q, count: results.filter((r) => r && r.state === 'has').length, searched: rows.length }, PL.pageOut('results', results, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     res.status(500).json({ error: 'Supplier availability failed', message: safeErr(err) });
   }
@@ -501,7 +503,7 @@ router.get('/customers', auth, async (req, res) => {
     let r; for (let _t = 0; !r && _t < 3; _t++) { try { r = await _run(); } catch (e) { if (e && e.code === '42703' && _g) _g = false; else if (e && e.code === '42P01' && _seg !== customerGroups.SEGMENT_SQL_BASE) _seg = customerGroups.SEGMENT_SQL_BASE; else throw e; } }
     const rows = (segment ? r.rows.filter(c => c.segment === segment) : r.rows).map((c) => Object.assign(c, { groups: Array.isArray(c.groups) ? c.groups : [] }));
     await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
-    res.json({ customers: rows, count: rows.length, groups_migrated: _g });
+    res.json(Object.assign({ count: rows.length, groups_migrated: _g }, PL.pageOut('customers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     console.error('Get customers error:', err.message);
     res.status(500).json({ error: 'Get customers failed', message: safeErr(err) });

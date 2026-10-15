@@ -319,7 +319,8 @@ ok('a preview about SOMEBODY ELSE tells you who, and nothing else',
   + 'account that asked, for any bridge id, with no relationship of any kind');
 
 ok('assignment reports the OUTCOME, like filing does',
-  raise.includes('assignedRows = as.rowCount')
+  /* W1-RAIL: the write is lib/assign-chit assignChit; its answer `rows` IS the UPDATE's rowCount */
+  raise.includes('assignedRows = placed.rows')
     && raise.includes('assigned: assignedRows === null ? false : assignedRows > 0'),
   'a routed person who is not on the receiving desk is silently not assigned, and it said yes anyway');
 

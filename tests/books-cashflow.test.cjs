@@ -38,8 +38,9 @@ const ASOF = '2026-10-12';
     opening: [{ role: 'cash', code: '1400', name: 'Cash', balance_minor: 1000000 }, { role: 'bank', code: '1500', name: 'Bank', balance_minor: 4000000 }],
     receivable_items: [bill('SB-1', SRI, 'receivable', 3000000, '2026-09-01', '2026-09-30'), bill('SB-2', MALA, 'receivable', 2000000, '2026-10-04', '2026-10-14')],
     payable_items: [bill('PB-1', KUMAR, 'payable', 6000000, '2026-09-15', '2026-10-15')],
-    cheques: [], promises: [], gst: { payable_minor: 500000, due_date: '2026-11-20' }, names,
+    cheques: [], promises: [], gst: { payable_minor: 500000, form: 'GSTR-3B', short: 'GST', due_date: '2026-11-20', why: null }, names,
   };
+  const GST_OCT20 = { payable_minor: 500000, form: 'GSTR-3B', short: 'GST', due_date: '2026-10-20', why: null };   /* the words and the date are read()'s (returnDueFor): project() dates nothing itself */
   const r1 = CF.project(base);
   ok('opening = cash + bank, every row today first, 7 rows', r1.opening_minor === 5000000 && r1.series.length === 7 && r1.series[0].date === ASOF && r1.to === '2026-10-18', JSON.stringify([r1.opening_minor, r1.series.length, r1.to]));
   const d14 = r1.series.find((d) => d.date === '2026-10-14'), d15 = r1.series.find((d) => d.date === '2026-10-15');
@@ -57,7 +58,7 @@ const ASOF = '2026-10-12';
   ok('closing = opening + in − out', r2.closing_minor === 2760000 + 2000000 - 6000000 && r2.closing_minor === r2.series[6].balance_minor, String(r2.closing_minor));
 
   /* ── 2 · promises, cheques, GST within 30 days ── */
-  const r3 = CF.project(Object.assign({}, base, { days: 30, gst: { payable_minor: 500000, due_date: '2026-10-20' },   /* a 30-day run from 12 Oct ends 10 Nov: the challan inside it is October's 20th */
+  const r3 = CF.project(Object.assign({}, base, { days: 30, gst: GST_OCT20,   /* a 30-day run from 12 Oct ends 10 Nov: the challan inside it is October's 20th */
     promises: [{ party_id: SRI, due_day: '2026-10-20' }],                                        /* Sri promised the 20th → counted that day */
     cheques: [{ payment_id: 'c1', party_id: MALA, direction: 'in', amount_minor: 1500000, cheque_no: '000777', cheque_date: '2026-10-13', status: 'received' },   /* covers Mala's bill in part */
       { payment_id: 'c2', party_id: KUMAR, direction: 'out', amount_minor: 2500000, cheque_no: '000123', cheque_date: '2026-10-25', status: 'received' }] }));  /* our post-dated cheque to Kumar */
@@ -69,7 +70,7 @@ const ASOF = '2026-10-12';
   ok('30 rows; in and out add up across the series', r3.series.length === 30 && r3.in_minor === 1500000 + 500000 + 3000000 && r3.out_minor === 3500000 + 2500000 + 500000, JSON.stringify([r3.series.length, r3.in_minor, r3.out_minor]));
 
   /* ── 3 · a disputed bill is frozen (C4); an overdue PAYABLE is counted today; a GST shortfall names GST ── */
-  const r4 = CF.project(Object.assign({}, base, { days: 30, opening: [{ role: 'bank', code: '1500', name: 'Bank', balance_minor: 6300000 }], gst: { payable_minor: 500000, due_date: '2026-10-20' },
+  const r4 = CF.project(Object.assign({}, base, { days: 30, opening: [{ role: 'bank', code: '1500', name: 'Bank', balance_minor: 6300000 }], gst: GST_OCT20,
     receivable_items: base.receivable_items.concat([{ item_id: 'i-s', party: MALA, side: 'receivable', ref_kind: 'status', ref: 'SB-2', against_ref: 'SB-2', amount_minor: 0, currency: 'INR', date: '2026-10-05', status: 'disputed' }]),
     payable_items: [bill('PB-9', KUMAR, 'payable', 6000000, '2026-08-15', '2026-09-15')] }));
   ok('a disputed receivable is not counted (C4) and is named', r4.uncounted.disputed_in_minor === 2000000 && r4.in_minor === 0, JSON.stringify(r4.uncounted));
@@ -77,7 +78,21 @@ const ASOF = '2026-10-12';
   ok('the GST challan tips it below zero: the sentence names GST', r4.shortfall && r4.shortfall.date === '2026-10-20' && r4.words === 'On 20 Oct 2026 you will be ₹2,000 short — GST of ₹5,000 is due that day.', r4.words);
   const r5 = CF.project(Object.assign({}, base, { opening: [] }));
   ok('nothing in the cash ledgers → ₹0 opening, "Today you are … short" when the first day is below zero', r5.opening_minor === 0 && (CF.project(Object.assign({}, base, { opening: [], payable_items: [bill('PB-2', KUMAR, 'payable', 100, '2026-10-01', '2026-10-01')] })).words === 'Today you are ₹1 short — Kumar Wholesale’s ₹1 is due that day.'), r5.words);
-  ok('gstDueAfter: the 20th of the month after (Dec → Jan)', CF.gstDueAfter('2026-10-12') === '2026-11-20' && CF.gstDueAfter('2026-12-31') === '2027-01-20');
+  /* ── 3b · W1-FIN FIN-R4: the return's due date is the PACK's calendar (gst-returns), never the 20th for every country ── */
+  const REG = require(path.join(H.API, 'lib', 'regulation')), dueOf = (c, d, o) => CF.returnDueFor(REG.packFor(c), d, o);
+  ok('IN: GSTR-3B, the 20th of the month after (Dec → Jan) — gst-returns.dueDate', JSON.stringify(dueOf('IN', '2026-10-12')) === JSON.stringify({ form: 'GSTR-3B', short: 'GST', due_date: '2026-11-20', why: null }) && dueOf('IN', '2026-12-31').due_date === '2027-01-20', JSON.stringify(dueOf('IN', '2026-10-12')));
+  ok('AU: the BAS quarter that holds the day — Q1 (Jul–Sep) due 28 Oct, Q2 due 28 Feb; monthly the 21st', dueOf('AU', '2026-09-30').due_date === '2026-10-28' && dueOf('AU', '2026-10-12').due_date === '2027-02-28' && dueOf('AU', '2026-10-12').short === 'BAS'
+    && dueOf('AU', '2027-01-05', { frequency: 'monthly' }).due_date === '2027-02-21', JSON.stringify([dueOf('AU', '2026-09-30'), dueOf('AU', '2026-10-12')]));
+  ok('AE: no stagger stored → NO date (never guessed) and the sentence; with the stagger, the 28th after the period (Nov–Jan → 28 Feb)', dueOf('AE', '2026-10-12').due_date === null && /picked under Returns/.test(dueOf('AE', '2026-10-12').why) && dueOf('AE', '2026-10-12').short === 'VAT return'
+    && dueOf('AE', '2027-01-15', { stagger: 1 }).due_date === '2027-02-28', JSON.stringify([dueOf('AE', '2026-10-12'), dueOf('AE', '2027-01-15', { stagger: 1 })]));
+  ok('no pack → no date, said in words; a pack without a return → the same honesty', dueOf(null, '2026-10-12').due_date === null && /no country pack/.test(dueOf(null, '2026-10-12').why) && CF.returnDueFor({ id: 'ZZ' }, '2026-10-12').why === 'No return is built for the ZZ pack yet.');
+  const rAU = CF.project(Object.assign({}, base, { days: 30, currency: 'AUD', opening: [{ role: 'bank', code: '1500', name: 'Bank', balance_minor: 6300000 }], receivable_items: [], payable_items: [],
+    gst: Object.assign({ payable_minor: 6500000 }, dueOf('AU', '2026-09-30'), { why: null }), asOf: '2026-10-12' }));
+  const dAU = rAU.series.find((d) => d.date === '2026-10-28');
+  ok('AU: the BAS is counted on ITS 28th, named by the pack’s word — the shortfall sentence says BAS, not GST', rAU.gst.form === 'BAS' && rAU.gst.counted === true && dAU.items[0].name === 'BAS' && dAU.items[0].kind === 'gst'
+    && rAU.words === 'On 28 Oct 2026 you will be AUD 2,000 short — BAS of AUD 65,000 is due that day.', rAU.words + ' ' + JSON.stringify(rAU.gst));
+  const rAE = CF.project(Object.assign({}, base, { days: 30, currency: 'AED', receivable_items: [], payable_items: [], gst: Object.assign({ payable_minor: 500000 }, dueOf('AE', '2026-10-12')) }));
+  ok('AE: payable known, date unknown → not counted, no series item, the sentence carried in why', rAE.gst.payable_minor === 500000 && rAE.gst.due_date === null && rAE.gst.counted === false && !rAE.series.some((d) => d.items.some((i) => i.kind === 'gst')) && /picked under Returns/.test(rAE.gst.why), JSON.stringify(rAE.gst));
 
   /* ── 4 · the route over the in-memory books: a sale, a purchase, a received cheque; owner only; 404 while off ── */
   console.log('\n══ GET /api/books/cashflow · /cheques pdc_reminders ══');
@@ -102,7 +117,7 @@ const ASOF = '2026-10-12';
     ok('the cheque comes in on 14 Oct and covers ₹5,000 of Sri\'s bill; the bill\'s ₹16,000 rest on its due date 18 Oct', byDate['2026-10-14'] && byDate['2026-10-14'].in_minor === 500000 && byDate['2026-10-18'] && byDate['2026-10-18'].in_minor === 1600000, JSON.stringify([byDate['2026-10-14'], byDate['2026-10-18']]));
     ok('Kumar\'s bill goes out on 15 Oct, named', byDate['2026-10-15'] && byDate['2026-10-15'].out_minor === 1050000 && byDate['2026-10-15'].items[0].name === 'Kumar Wholesale', JSON.stringify(byDate['2026-10-15']));
     ok('no cash was ever received: opening ₹0, the shortfall is the 15th, in words', r.body.opening_minor === 0 && r.body.shortfall && r.body.shortfall.date === '2026-10-15' && /^On 15 Oct 2026 you will be ₹5,500 short — Kumar Wholesale/.test(r.body.words), r.body.words);
-    ok('GST from the posted ledgers: output 1,000 less input 500 → ₹500 due 20 Nov, not inside 7 days', r.body.gst && r.body.gst.payable_minor === 50000 && r.body.gst.due_date === '2026-11-20' && r.body.gst.counted === false, JSON.stringify(r.body.gst));
+    ok('GST from the posted ledgers: output 1,000 less input 500 → ₹500 due 20 Nov (the IN pack\'s GSTR-3B calendar, form + short sent), not inside 7 days', r.body.gst && r.body.gst.payable_minor === 50000 && r.body.gst.due_date === '2026-11-20' && r.body.gst.counted === false && r.body.gst.form === 'GSTR-3B' && r.body.gst.short === 'GST', JSON.stringify(r.body.gst));
     const r30 = await q('GET', '/cashflow?days=30');
     ok('days=30 → 30 rows to 10 Nov; the 20 Nov challan is still beyond it (known, not counted)', r30.status === 200 && r30.body.series.length === 30 && r30.body.to === '2026-11-10' && r30.body.gst.counted === false, JSON.stringify([r30.body.to, r30.body.gst]));
     CLOCK.set('2026-10-25T06:00:00Z');

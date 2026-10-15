@@ -10,6 +10,8 @@
 // before Apply. This route's only job is CRUD, scoped to the caller's own entity.
 'use strict';
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
@@ -60,7 +62,7 @@ router.get('/', auth, async (req, res) => {
     const r = await withEntity(entity_id, (db) => db.query(
       `SELECT ${COLS} FROM combo_templates
        WHERE entity_id=$1 ORDER BY created_at DESC LIMIT 200`, [entity_id]));
-    res.json({ templates: r.rows });
+    res.json(PL.pageOut('templates', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
   } catch (e) { fail(res, e, 'Could not read your saved combos'); }
 });
 

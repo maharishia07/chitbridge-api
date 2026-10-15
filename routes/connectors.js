@@ -6,6 +6,8 @@
 const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const logger = require('../lib/logger');
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const router  = express.Router();
 const crypto  = require('crypto');
 const { v4: uuidv4 } = require('uuid');
@@ -19,6 +21,7 @@ const auth    = require('../middleware/auth');
 const mint    = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
 const { sendOtpEmail, sendEmail } = require('../lib/notify');
 const localIdentity = require('../lib/local-identity');   /* SEC3: mayTradeSql / mayTrade — the one "may this party receive?" */
+const { assignChit } = require('../lib/assign-chit');      /* W1-RAIL: the one writer of who holds a chit copy */
 const CS = require('../lib/country-setup');               /* SEC3: shopMoney + MONEY_UNSTATED — the one "what money is this shop in" */
 const log = require('../lib/logger');
 const { verifyOtp } = require('../lib/otp');
@@ -252,8 +255,8 @@ async function emitSignalChit({ entity_id, actor, folder, sub_type, cc, signal, 
       await withEntity(entity_id, async (dbx) => {
         const a = await dbx.query(`SELECT display_name FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND status = 'active'`, [default_assignee, entity_id]);
         if (a.rows[0]) {
-          await dbx.query(`UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2, assigned_at = NOW(), assignment_type = 'auto', updated_at = NOW() WHERE chit_id = $3 AND entity_id = $4 AND direction = 'received'`,
-            [default_assignee, a.rows[0].display_name, chit_id, entity_id]);
+          /* W1-RAIL: the one assignment writer (lib/assign-chit); no mover → the copy's status is left as it is, as before */
+          await assignChit(dbx, entity_id, chit_id, { identity_id: default_assignee, display_name: a.rows[0].display_name }, 'auto', { copy: 'received' });
           assigned_to = default_assignee;
         }
       });
@@ -448,7 +451,7 @@ router.get('/:actorId/receipts', auth, requireConnector,
       const r = await withEntity(entity_id, (c) => c.query(
         `SELECT receipt_id, doc_type, doc_ref, payload_hash, outcome, chit_id, received_at
            FROM connector_receipt WHERE actor_id = $1 ORDER BY received_at DESC LIMIT 200`, [req.params.actorId]));
-      res.json({ receipts: r.rows });
+      res.json(PL.pageOut('receipts', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
     } catch (err) { res.status(500).json({ error: 'List receipts failed', message: safeErr(err) }); }
   });
 
@@ -491,7 +494,7 @@ router.get('/', auth, requireConnector, async (req, res) => {
          FROM identities
         WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL
         ORDER BY site NULLS LAST, created_at DESC`, [entity_id]);
-    res.json({ connectors: r.rows.map(a => ({ ...a, health: health(a.last_seen) })) });
+    res.json(PL.pageOut('connectors', r.rows.map(a => ({ ...a, health: health(a.last_seen) })), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
@@ -617,7 +620,7 @@ router.get('/:actorId/connections', auth, requireConnector, [param('actorId').is
     const r = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
     // CASCADE: if the Pi/system is offline, every connection reports no-signal regardless of its own last_seen.
     const connections = r.rows.map(c => ({ ...c, signal: actorHealth === 'offline' ? 'no_signal' : health(c.last_seen) }));
-    res.json({ actor_health: actorHealth, actor_last_seen: actor.last_seen, connections });
+    res.json(Object.assign({ actor_health: actorHealth, actor_last_seen: actor.last_seen }, PL.pageOut('connections', connections, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) { res.status(500).json({ error: 'List connections failed', message: safeErr(err) }); }
 });
 

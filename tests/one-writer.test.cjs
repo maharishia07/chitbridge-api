@@ -5,6 +5,7 @@
  *   primitive                      the one writer                         before → after (this guard asserts the after)
  *   a product UPDATE               lib/catalogue-write patchItems/Where   21 statements in 8 files → 0 outside
  *   a person's task count          lib/assign-chit taskCount               13 statements in 2 files → 0 outside
+ *   who holds a chit copy          lib/assign-chit assignChit/reroute…     9 `SET assigned_to_actor_id` in 4 files → 0 outside (W1-RAIL, 15 Oct)
  *   an OTP generator               lib/otp generateOTP(kind)               3 private generators + 4 `fixedOtp() ||` → 0 outside
  *   the shopper's code issue/spend lib/otp issueShopperOtp/spendShopperOtp 2 issues + 4 spends in routes/catalogue.js → 0
  *   a local customer (mint 'cus')  lib/local-identity addCustomer          4 copies, 3 phone checks → 1 helper, phoneOf
@@ -58,6 +59,13 @@ const none = (list, why) => assert.deepStrictEqual(list, [], why + '\n      at: 
   });
   await it('TA1: no write of current_task_count outside lib/assign-chit.js', () =>
     none(hits(/(SET|,)\s*current_task_count\s*=/i, ['lib/assign-chit.js']), 'a task count change must go through assign-chit.taskCount'));
+  await it('W1-RAIL: no write of assigned_to_actor_id outside lib/assign-chit.js (pull · push · return · route · leave · auto · bulk · connector · ticket)', () =>
+    none(hits(/(SET|,)\s*assigned_to_actor_id\s*=/i, ['lib/assign-chit.js']), 'who holds a chit copy is written only by assign-chit.assignChit / rerouteOpenTasks'));
+  await it('W1-RAIL: lib/assign-chit.js holds exactly two SET spellings (a holder, the pool) — one UPDATE shape each', () => {
+    const src = CODE.find((c) => c.rel === 'lib/assign-chit.js').src;
+    assert.strictEqual((src.match(/SET\s+assigned_to_actor_id\s*=/g) || []).length, 2, 'SET_HOLDER and SET_POOL, nothing else');
+    assert.ok(!/current_status\s*=\s*\$/.test(src) && !/SET[^;]*current_status\s*=/.test(src), 'the assignment writer never SETs current_status — rail-status does');
+  });
   await it('SH-OTP1: no OTP generator outside lib/otp.js (randomInt(100000…) or fixedOtp(…) ||)', () => {
     none(hits(/randomInt\(\s*100000/, ['lib/otp.js']), 'a six-digit code must come from otp.generateOTP(kind)');
     none(hits(/fixedOtp\([^)]*\)\s*\|\|/, ['lib/otp.js']), 'the fixed-code fallback lives inside otp.generateOTP');
@@ -116,6 +124,61 @@ const none = (list, why) => assert.deepStrictEqual(list, [], why + '\n      at: 
     assert.ok(/current_task_count = 0/.test(calls[2].sql));
     assert.deepStrictEqual(calls[3].p, [3, 'P']);
     await assert.rejects(() => taskCount(db, 'P', 'double'));
+  });
+
+  await it('assignChit: a person → ONE UPDATE of the four assignment columns (every copy I hold); copy received → that copy only; null → the pool', async () => {
+    const { assignChit } = require(path.join(API, 'lib', 'assign-chit'));
+    const { db, calls } = rec();
+    const asha = { identity_id: 'A1', display_name: 'Asha' };
+    const placed = await assignChit(db, 'E', 'C1', asha, 'push');
+    assert.strictEqual(calls.length, 1);
+    assert.strictEqual(calls[0].sql, 'UPDATE chit_status SET assigned_to_actor_id = $1, assigned_to_actor_display_name = $2, assigned_at = NOW(), assignment_type = $3, updated_at = NOW() WHERE chit_id = $4 AND entity_id = $5');
+    assert.deepStrictEqual(calls[0].p, ['A1', 'Asha', 'push', 'C1', 'E']);
+    assert.deepStrictEqual(placed, { rows: 1, moved: false, from: null }, 'no mover → the status is not touched');
+    await assignChit(db, 'E', 'C1', asha, 'auto', { copy: 'received' });
+    assert.ok(/WHERE chit_id = \$4 AND entity_id = \$5 AND direction = 'received'$/.test(calls[1].sql), calls[1].sql);
+    await assignChit(db, 'E', 'C1', null);
+    assert.strictEqual(calls[2].sql, 'UPDATE chit_status SET assigned_to_actor_id = NULL, assigned_to_actor_display_name = NULL, assigned_at = NULL, assignment_type = NULL, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2');
+    assert.deepStrictEqual(calls[2].p, ['C1', 'E']);
+    await assignChit((t, p) => db.query(t, p), 'E', 'C1', null, undefined, { copy: 'received' });   /* a bare query function works too */
+    assert.ok(/AND direction = 'received'$/.test(calls[3].sql));
+    const nothing = await assignChit(db, 'E', null, asha, 'push');
+    assert.deepStrictEqual(nothing, { rows: 0, moved: false, from: null }); assert.strictEqual(calls.length, 4, 'no chit → no statement');
+    await assert.rejects(() => assignChit(db, 'E', 'C1', asha, 'grab'), /kind must be pull, push or auto/);
+    await assert.rejects(() => assignChit(db, 'E', 'C1', asha, 'push', { copy: 'both' }), /copy must be received or sent/);
+  });
+  await it('assignChit + me: the received copy goes back to pending THROUGH rail-status.statusGate — the rail decides; a noop writes nothing; a viewer is refused and the assignment still stands', async () => {
+    const { assignChit } = require(path.join(API, 'lib', 'assign-chit'));
+    const railStatus = require(path.join(API, 'lib', 'rail-status'));
+    const asha = { identity_id: 'A1', display_name: 'Asha' };
+    const { db, calls } = rec();
+    const moved = await assignChit(db, 'E', 'C1', asha, 'pull', { me: railStatus.SYSTEM, from: 'accepted' });
+    assert.deepStrictEqual(moved, { rows: 1, moved: true, from: 'accepted' });
+    assert.strictEqual(calls.length, 2, 'the assignment UPDATE, then the one status write (opts.from saved the read)');
+    assert.ok(/^UPDATE chit_status SET current_status = \$1, updated_at = NOW\(\) WHERE chit_id = \$2 AND entity_id = \$3 AND direction = 'received'$/.test(calls[1].sql), calls[1].sql);
+    assert.deepStrictEqual(calls[1].p, ['pending', 'C1', 'E']);
+    const already = await assignChit(db, 'E', 'C1', asha, 'push', { me: railStatus.SYSTEM, from: 'pending' });
+    assert.deepStrictEqual(already, { rows: 1, moved: false, from: 'pending' }); assert.strictEqual(calls.length, 3, 'already pending → no status write');
+    const viewer = await assignChit(db, 'E', 'C1', asha, 'push', { me: { level: 'viewer', holder: null }, from: 'accepted' });
+    assert.deepStrictEqual(viewer, { rows: 1, moved: false, from: 'accepted' }); assert.strictEqual(calls.length, 4, 'refused → the assignment is written, the status is not');
+    const sentOnly = await assignChit(db, 'E', 'C1', asha, 'push', { me: railStatus.SYSTEM, from: null });
+    assert.deepStrictEqual(sentOnly, { rows: 1, moved: false, from: null }, 'no received copy → not_received, quietly');
+    const n = calls.length;
+    await assignChit(db, 'E', 'C1', asha, 'push', { me: railStatus.SYSTEM });
+    assert.ok(/^SELECT current_status FROM chit_status WHERE chit_id = \$1 AND entity_id = \$2 AND direction = 'received'$/.test(calls[n + 1].sql), 'without opts.from the gate reads the copy itself');
+  });
+  await it('rerouteOpenTasks: everything one person still holds → a colleague (push) or the pool, closed copies excluded, scoped to the shop', async () => {
+    const { rerouteOpenTasks, CLOSED_STATUSES } = require(path.join(API, 'lib', 'assign-chit'));
+    const { db, calls } = rec();
+    assert.deepStrictEqual(CLOSED_STATUSES, ['completed', 'cancelled', 'rejected']);
+    const toRavi = await rerouteOpenTasks(db, 'E', 'A1', { identity_id: 'R1', display_name: 'Ravi' });
+    assert.strictEqual(toRavi, 1);
+    assert.ok(/SET assigned_to_actor_id = \$1, assigned_to_actor_display_name = \$2, assigned_at = NOW\(\), assignment_type = \$3, updated_at = NOW\(\) WHERE assigned_to_actor_id = \$4 AND entity_id = \$5 AND current_status NOT IN \('completed','cancelled','rejected'\)$/.test(calls[0].sql), calls[0].sql);
+    assert.deepStrictEqual(calls[0].p, ['R1', 'Ravi', 'push', 'A1', 'E']);
+    await rerouteOpenTasks(db, 'E', 'A1', null);
+    assert.ok(/SET assigned_to_actor_id = NULL, assigned_to_actor_display_name = NULL, assigned_at = NULL, assignment_type = NULL, updated_at = NOW\(\) WHERE assigned_to_actor_id = \$1 AND entity_id = \$2 AND current_status NOT IN/.test(calls[1].sql), calls[1].sql);
+    assert.deepStrictEqual(calls[1].p, ['A1', 'E']);
+    assert.strictEqual(await rerouteOpenTasks(db, 'E', null, null), 0); assert.strictEqual(calls.length, 2, 'nobody → nothing');
   });
 
   await it('issueShopperOtp / spendShopperOtp: a 6-digit code, 15 minutes, attempts DECAY (not zeroed); the spend clears and activates', async () => {

@@ -122,4 +122,30 @@ it('every not-used row says what to do about it (retire or mark)', () => {
   assert.deepStrictEqual(vague.map((r) => r.key), [], 'a not-used field needs a decision (retire vs mark) in its finding');
 });
 
+console.log('\nTHE SHOP\'S FLAGS AND THE PERSON\'S PREFS HAVE A DICTIONARY ENTRY (W1-SET · FLD2)\n');
+it('the readers see the sources: ≥ 30 policy flags, the ui and locale pref sets', () => {
+  const flags = FL.policyFlagKeys(API), prefs = FL.prefKeys(API);
+  assert.ok(flags.length >= 30 && flags.includes('trade_side') && flags.includes('books'), 'FLAGS scan found ' + flags.length);
+  assert.ok((prefs.ui_prefs || []).includes('theme') && (prefs.locale_prefs || []).includes('tz'), 'PREF_SETS scan: ' + JSON.stringify(prefs));
+});
+it('⭐ every policy flag and every pref key has a row in docs/FIELDS.md, spelled with its store', () => {
+  const missing = FL.undocumentedSettings(API);
+  assert.deepStrictEqual(missing, [], 'setting key(s) with no dictionary row: ' + missing.join(', ')
+    + ' — add a row to docs/FIELDS.md (`policy_flags.<key>` / `ui_prefs.<key>` / `locale_prefs.<key>`: shape · default · layer · class · writer · readers)');
+});
+it('the dictionary reader understands a sibling run (`locale_prefs.nu` · `.hc`) and ignores a bare word', () => {
+  const os = require('os'), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fl-dict-'));
+  fs.mkdirSync(path.join(tmp, 'docs'));
+  fs.writeFileSync(path.join(tmp, 'docs', 'FIELDS.md'), '| `locale_prefs.nu` · `.hc` · `.ca` | x |\n| `policy_flags.books.auto_post` | y |\nthe slot `system_folders` already uses\n');
+  assert.deepStrictEqual([...FL.dictionaryKeys(tmp)].sort(), ['locale_prefs.ca', 'locale_prefs.hc', 'locale_prefs.nu', 'policy_flags.books']);
+});
+it('the guard bites: an invented flag is named, by store and key', () => {
+  const os = require('os'), tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fl-flag-'));
+  for (const d of ['lib', 'routes', 'docs']) fs.mkdirSync(path.join(tmp, d));
+  fs.writeFileSync(path.join(tmp, 'lib', 'policy.js'), "const FLAGS = {\n  trade_side: { type: 'enum' },\n  colour_mood: { type: 'enum' },\n};\n");
+  fs.writeFileSync(path.join(tmp, 'routes', 'entities.js'), "const PREF_SETS = {\n  ui: { column: 'ui_prefs', keys: ['theme', 'mood'] },\n};\n");
+  fs.writeFileSync(path.join(tmp, 'docs', 'FIELDS.md'), '| `policy_flags.trade_side` | | |\n| `ui_prefs.theme` | | |\n');
+  assert.deepStrictEqual(FL.undocumentedSettings(tmp), ['policy_flags.colour_mood', 'ui_prefs.mood']);
+});
+
 console.log('\n' + pass + ' checks passed\n');

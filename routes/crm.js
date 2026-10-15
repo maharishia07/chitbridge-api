@@ -47,6 +47,7 @@ const crm = require('../lib/crm');
 const F = require('../lib/crm-followups');
 const M = require('../lib/memberships');
 const PV = require('../lib/privacy');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager */
 
 const ctx = (req) => auth.entityOf(req);
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
@@ -69,7 +70,6 @@ const idOf = (req) => { const id = String(req.params.id || ''); if (!UUID.test(i
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/parties', auth, noKey, async (req, res) => {
   try {
-    const PL = require('../lib/page-limit');
     res.json(await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null, consent: String(req.query.with || '').split(',').indexOf('consent') >= 0,
       page: PL.pageOf(req.query.page), limit: PL.limitOf(req.query.limit, crm.CAP, crm.CAP) }));
   } catch (e) { fail(res, e); }
@@ -115,13 +115,14 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
  * stage (FX-L2C): a lead's move as memberships holds it — { stage, from, by, at }; from is null on the first row (the lead's start).
  * Money on an entry is the stored figure (summary_json total_value; party_item amount_minor) — never recomputed.
  */
+const TIMELINE_PAGE = 30, TIMELINE_MAX = 100;
 router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req), id = idOf(req);
     const found = await crm.one(owner, id);
     if (!found) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'Not your party.' });
     const party = found.party.party_id;
-    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit, 10) || 30));
+    const limit = PL.limitOf(req.query.limit, TIMELINE_PAGE, TIMELINE_MAX);
     let before = Date.now() + 86400000;
     if (req.query.before) { const t = Date.parse(req.query.before); if (!isFinite(t)) throw bad('before is a time.', 400, 'BAD_BEFORE'); before = t; }
     const beforeIso = new Date(before).toISOString();
@@ -178,7 +179,8 @@ router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
     });
     entries.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
     const page = entries.slice(0, limit);
-    res.json({ party_id: party, entries: page, next_before: entries.length > limit ? page[page.length - 1].at : null, migrated });
+    /* the one envelope beside the cursor: total = the rows this page could see (a cursor list has no whole count); page is always 1 of the cursor */
+    res.json({ party_id: party, entries: page, next_before: entries.length > limit ? page[page.length - 1].at : null, migrated, total: entries.length, page: 1, limit });
   } catch (e) { fail(res, e); }
 });
 

@@ -278,10 +278,19 @@ const today = () => new Date().toISOString().slice(0, 10);
  * cannot ask anyone, so the series is LOCAL and the counter's id is part of it: C1/26-27/0041. Two tills never collide, and a number is
  * written to disk BEFORE the bill it belongs to, so a crash costs a gap of one rather than a duplicate.
  */
+/**
+ * ⭐ W1-TILL: THE YEAR LABEL IS THE DOC-NUMBER ENGINE'S, for the SHOP'S country (the snapshot's stated country, never India by default):
+ * CBDoc.periodKey → India '26-27' (April–March), an unstated or unstudied country the calendar year. The engine is the copy this PC
+ * cached beside the snapshot (engine-docnumber.js, ENGINE_NAMES); before the first sync there is neither, and the one rule every
+ * jurisdiction agrees on — the calendar year — labels the series until the shop is known.
+ */
 function fyOf(d) {
-  const y = d.getFullYear(), apr = d.getMonth() >= 3;      /* the Indian financial year starts on 1 April */
-  const a = apr ? y : y - 1;
-  return String(a).slice(2) + '-' + String(a + 1).slice(2);
+  const country = (snapshot && snapshot.shop && snapshot.shop.country) || null;
+  try {
+    const docnumber = require(F.engine('docnumber'));
+    if (docnumber && typeof docnumber.periodKey === 'function') return docnumber.periodKey({ country, at: d });
+  } catch (e) { log('the year label fell back to the calendar year — the number engine is not cached yet: ' + e.message); }
+  return String(d.getFullYear());
 }
 function nextNumberOf(kind){
   /* ⚠️ ONE SERIES PER KIND. A goods receipt in the middle of the sales run puts a hole in the very thing a gapless series proves. */
@@ -1545,7 +1554,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && url.pathname === '/api/verify') {
       try { const r = await cb.call('GET', '/api/till/verify');
         return json(res, 200, Object.assign({ ok: true }, r || {}));
-      } catch (e) { return json(res, 200, { ok: false, why: e.message }); }
+      } catch (e) {
+        /* W1-TILL: the cloud's STATUS and code travel with the sentence (core.call sets e.status · e.body) — the page branches on the
+           status, never on the words; a line that dropped has no status and is said as such */
+        const said = (e.body && (e.body.message || e.body.error)) || (e.status ? e.message : 'the line to ChitBridge dropped');
+        return json(res, 200, { ok: false, why: said, status: e.status || null, code: (e.body && e.body.code) || null });
+      }
     }
 
     /* ⭐ EARLIER BILLS come from ChitBridge; the page asks its host, never the internet directly (2026-09-08) */

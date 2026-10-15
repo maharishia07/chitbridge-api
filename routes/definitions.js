@@ -28,6 +28,8 @@
  */
 'use strict';
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const logger = require('../lib/logger');
 const router  = express.Router();
 const { body } = require('express-validator');
@@ -156,7 +158,7 @@ router.get('/', auth, async (req, res) => {
         if (gov.length) rows = rows.concat(gov);
       }
     }
-    res.json({ definitions: rows, count: rows.length });
+    res.json(Object.assign({ count: rows.length }, PL.pageOut('definitions', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (e) { if (notMigrated(e)) return gone(res);
     res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });

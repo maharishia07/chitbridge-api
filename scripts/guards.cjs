@@ -139,6 +139,7 @@ const GUARDS = [
   'board-kinds.test.cjs',      // the shared board carries CASES and CMDB records, nothing else — findings stay with the raiser
   'cmdb.test.cjs',             // ⭐⭐ the CMDB: every shipped record fits, a way in + out + tests, only a board writer writes
   'testing-board-writes.test.cjs', // ⭐⭐ SEC-SMALL: the six shared-board writes ask the gate first; results/incidents/evidence stay open; the platform root writes
+  'platform-door.test.cjs',    // ⭐⭐ W1-SET GOV2: the platform role is ONE door (platformroot.refuseUnlessPlatform) — register a source · governed create · re-attest · erase ask it before any read
   'notif-feed-dryrun.test.cjs',    // ⭐ SEC-SMALL: b619 is the live notifications feed verbatim; b620 CONCURRENTLY + IF NOT EXISTS, no transaction block
   'field-ledger.test.cjs',     // ⭐⭐ NO FIELD LEFT UNTURNED: a new product column / form input has a ledger row; a "not used" field gains no reader (2026-10-09)
   'engine-boundary.test.js',  // every lib declared engine or not; anything unreachable carries an @stage
@@ -227,7 +228,9 @@ const GUARDS = [
   'books-routes.test.cjs',      // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
   'books-pages.test.cjs',       // ⭐ PERF1: Day book + Ledger pages (keyset, server max, server totals) add up to the whole; lib/page-limit
   'testing-pages.test.cjs',     // ⭐ T2-PAGING: the test board's five lists page (total · page · limit, lib/page-limit max); an old High is never cut
-  'list-paging-guard.test.cjs', // ⭐ T2-PAGING ratchet: unpaged list GETs ≤ the frozen number; every allowance has its reason
+  'list-paging-guard.test.cjs', // ⭐ T2-PAGING ratchet: unpaged list GETs ≤ the frozen number (W1-PLAT: 0); every allowance has its reason
+  'page-limit.test.cjs',        // ⭐ LIM2: the ONE pager — limitOf · pageOf · pageArgs (not asked = every row) · pageOut (the envelope), every rule and edge
+  'idempotency.test.cjs',       // ⭐ LIM2: idempotency off is never silent — warn + held in memory; a retry replayed or 409, another body 422, X-Idempotency: unverified
   'books-tally.test.cjs',       // ⭐⭐ the pack's Tally files come from the connector's adapter — one Tally writer, Receipt byte-identical
   'books-collections.test.cjs', // ⭐ CB Finance F1: /dues?finance=1 — limit · over_limit · interest SHOWN · owner only; plain /dues untouched
   'books-fixes.test.cjs',       // ⭐⭐⭐ the red-team findings of 2026-09-30 (M1–M12), each held by a check that was red before its fix
