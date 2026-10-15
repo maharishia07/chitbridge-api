@@ -11,6 +11,7 @@ const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
 const { writeGate } = require('../lib/access');   /* TRADE-SRV1 G8: a trade write is the owner's or an editor's — the server says why not */
 const { memo } = require('../lib/confcache');   // the active constitution is read once a minute, not once a call
+const platformroot = require('../lib/platformroot');   /* W1-SET: the ONE platform-role door (create · re-attest · register a source) */
 
 const { resolve, driftStatus } = require('../governance/resolver');
 const { mintEntity, reattest } = require('../governance/mint');
@@ -88,11 +89,10 @@ router.get('/entities/:id', auth, async (req, res) => {
   }
 });
 
-// ── POST /api/governance/entities — governed create (platform-scope only) ──
+// ── POST /api/governance/entities — governed create (the platform role only: lib/platformroot.refuseUnlessPlatform) ──
 // Transactional: the identity row + its Class-C exceptions commit together.
 router.post('/entities', auth, async (req, res) => {
-  if (req.identity.owner_scope !== 'platform')
-    return res.status(403).json({ error: 'Forbidden', message: 'Governed create is platform-scope only' });
+  if (!platformroot.refuseUnlessPlatform(req, res)) return;
 
   const override     = (req.body && req.body.params_override) || {};
   const plan         = (req.body && req.body.plan) || 'free';
@@ -144,8 +144,7 @@ router.post('/entities', auth, async (req, res) => {
 // Forward-only: an entity's NEW chits then resolve under the active constitution;
 // chits already sent stay frozen at their original version (handled at send/freeze time).
 router.post('/entities/:id/reattest', auth, async (req, res) => {
-  if (req.identity.owner_scope !== 'platform')
-    return res.status(403).json({ error: 'Forbidden', message: 'Re-attest is platform-scope only' });
+  if (!platformroot.refuseUnlessPlatform(req, res)) return;
   try {
     const { rows } = await query(
       `SELECT params_override FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`,
@@ -240,8 +239,10 @@ router.post('/boilerplate/:key/adopt', auth, async (req, res) => {
 
 // POST /api/governance/source — REGISTER a source as a sealed SOURCE-ENTITY + upload its typed content + stamp it.
 // One call = the runbook's "register entity → upload standard → stamp as source". Idempotent by source_key.
-// (Demo: auth-gated; production would gate this to a platform / source-authority scope.)
+// ⚠️ W1-SET (GOV2): the platform role only — a source is a PLATFORM entity every shop's standards resolve against (lib/source.js
+// mints it with owner_scope 'platform'), so a shop's login is refused BEFORE anything is read (403 NOT_PLATFORM, the sentence).
 router.post('/source', auth, async (req, res) => {
+  if (!platformroot.refuseUnlessPlatform(req, res)) return;
   try {
     const b = req.body || {};
     const out = await require('../lib/source').registerSource({
