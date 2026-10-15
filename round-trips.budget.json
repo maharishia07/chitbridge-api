@@ -504,7 +504,6 @@
       "extra": true
     },
     "GET /api/chits/folder": {
-      "why": "answered 500 on the stub",
       "file": "chits.js",
       "trips": 3,
       "wire": 7,
@@ -512,7 +511,6 @@
       "status": 200
     },
     "GET /api/chits/inbox": {
-      "why": "answered 500 on the stub",
       "file": "chits.js",
       "trips": 2,
       "wire": 6,
@@ -555,7 +553,6 @@
       "status": 200
     },
     "GET /api/chits/rollup": {
-      "why": "answered 500 on the stub",
       "file": "chits.js",
       "trips": 1,
       "wire": 5,
@@ -563,7 +560,6 @@
       "status": 200
     },
     "GET /api/chits/sent": {
-      "why": "answered 500 on the stub",
       "file": "chits.js",
       "trips": 1,
       "wire": 5,
@@ -731,6 +727,13 @@
       "fired": true,
       "status": 404,
       "extra": true
+    },
+    "GET /api/entities/me/can-see-costs": {
+      "file": "entities.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200
     },
     "GET /api/entities/mis": {
       "file": "entities.js",
@@ -1188,7 +1191,6 @@
       "extra": true
     },
     "GET /api/products": {
-      "why": "answered 500 on the stub",
       "file": "products.js",
       "trips": 2,
       "wire": 9,
@@ -1285,6 +1287,20 @@
       "wire": 4,
       "fired": true,
       "status": 404
+    },
+    "GET /api/signin/devices": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
+    },
+    "GET /api/signin/sessions": {
+      "file": "signin.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200
     },
     "GET /api/supplies": {
       "file": "supplies.js",
@@ -1875,7 +1891,6 @@
       "status": 404
     },
     "POST /api/chits/:chit_id/archive": {
-      "why": "answered 500 on the stub",
       "file": "chits.js",
       "trips": 2,
       "wire": 8,
@@ -2646,6 +2661,13 @@
       "wire": 4,
       "fired": true,
       "status": 404
+    },
+    "POST /api/signin/sessions/revoke": {
+      "file": "signin.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
     },
     "POST /api/supplies": {
       "file": "supplies.js",
