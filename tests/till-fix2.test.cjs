@@ -27,11 +27,14 @@ function liftIf(name) {
   throw new Error('unbalanced ' + name);
 }
 function lift(name) { const src = liftIf(name); assert.ok(src, name + ' is not in the page'); return src; }
-/** the whole CloudHost object literal — its methods are the thing under test */
+/** a top-level `var NAME = …;` line of the page, '' when absent */
+function liftVar(name) { const m = PAGE.match(new RegExp('\\nvar ' + name + ' = [^\\n]*;')); return m ? m[0] + '\n' : ''; }
+/** the whole CloudHost object literal — its methods are the thing under test — with the page's own code for "no such bill yet" */
 function liftCloudHost() {
   const a = PAGE.indexOf('\nvar CloudHost = {');
   assert.ok(a >= 0, 'CloudHost is gone');
-  return PAGE.slice(a, PAGE.indexOf('\n};\n', a) + 4);
+  const code = PAGE.match(/\nvar WAITS_FOR_BILL = '[A-Z_]+';/);
+  return (code ? code[0] : '') + PAGE.slice(a, PAGE.indexOf('\n};\n', a) + 4);
 }
 /** an in-memory stand-in for the page's DB: a kv box plus the two row stores, each call waiting a tick like IndexedDB does */
 function fakeDB() {
@@ -110,7 +113,7 @@ function renumberWith(DB, nextNo) {
   const ctx = { console, setTimeout, JSON, Object, Math, Date, String, Number, Array, Promise, Error,
     DB, cbQuiet: quiet, tillId: () => 'C1', LAST_SERIES: null, nextNumber: async () => nextNo };
   vm.createContext(ctx);
-  return vm.runInContext(liftIf('rekeyCompanions') + lift('renumberBill') + '; renumberBill', ctx);
+  return vm.runInContext(liftVar('BILL_COMPANIONS') + liftIf('rekeyCompanions') + lift('renumberBill') + '; renumberBill', ctx);
 }
 it('a renumbered bill (409 TILL_SERIES_COLLISION) carries its reward row along: <new no>/reward with ref = the new number', async () => {
   const DB = fakeDB();
@@ -123,7 +126,8 @@ it('a renumbered bill (409 TILL_SERIES_COLLISION) carries its reward row along: 
   const keys = Object.keys(DB.stores.queue).sort();
   assert.deepStrictEqual(keys, ['C1/26-27/0009', 'C1/26-27/0009/reward'], 'queue after the renumber: ' + JSON.stringify(keys));
   assert.strictEqual(DB.stores.queue['C1/26-27/0009/reward'].tillPost.body.ref, 'C1/26-27/0009', 'the reward still names the old number');
-  assert.deepStrictEqual(moved.companions, [BILL + '/reward'], 'the drain is not told which old rows retired');
+  /* Array.from: the page's array was made in the vm's realm, and deepStrictEqual compares prototypes too */
+  assert.deepStrictEqual(Array.from(moved.companions || []), [BILL + '/reward'], 'the drain is not told which old rows retired');
 });
 
 /* ───────────────────────────────────────────── M6 ───────────────────────────────────────────── */
@@ -137,9 +141,9 @@ function numberingOn(DB, extra) {
     DOC_TAGS: { GRN: 'receipt', DC: 'despatch', CN: 'credit', EXP: 'expense', SUB: 'subscription', R: 'payment' },
     LAST_SERIES: null }, extra || {});
   vm.createContext(ctx);
-  const src = ['docKindOf', 'seriesLockName', 'underSeriesLock', 'seriesFor', 'resumeFromCloud', 'numberText', 'takeNumber']
+  const src = liftVar('SERIES_TURN') + ['docKindOf', 'seriesLockName', 'underSeriesLock', 'seriesFor', 'resumeFromCloud', 'numberText', 'takeNumber']
     .map(liftIf).join('') + lift('nextNumber');
-  vm.runInContext(src + (liftIf('underSeriesLock') ? '' : '\nvar SERIES_TURN;'), ctx);
+  vm.runInContext(src, ctx);
   return ctx;
 }
 it('a sale and a background renumber take numbers at the same moment → two DIFFERENT numbers, and the series moved on by two', async () => {
