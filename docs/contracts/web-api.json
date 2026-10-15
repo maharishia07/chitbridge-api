@@ -3684,18 +3684,24 @@
     "nothing_to_set_off": true
    },
    "optional": [
+    "carried_word",
     "cash_minor",
     "doc_date",
     "duplicate",
     "entry_id",
     "entry_no",
+    "form",
+    "heads",
     "items",
     "lines",
     "moved",
     "note",
     "nothing_to_set_off",
     "posting_date",
-    "rcm_minor"
+    "rcm_minor",
+    "ref_hint",
+    "ref_label",
+    "return_period"
    ]
   },
   "POST /api/books/gst/pay": {
@@ -3718,9 +3724,11 @@
     "rcm_paid_minor": {
      "cgst": 25000,
      "sgst": 25000
-    }
+    },
+    "payment_ref": "CPIN24100001"
    },
    "optional": [
+    "challan_no",
     "paid_minor.cgst",
     "paid_minor.sgst",
     "rcm_paid_minor"
