@@ -3745,6 +3745,7 @@ router.post('/:chit_id/books-request', auth, async (req, res) => {
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       const action_by_id = by.id, action_by_name = by.name;
       let disputeWarning = null;
+      let booksOnCancel = null;   /* H3: what the books did with a sender's cancel (the reversal, or its refusal in words) */
       /* ⭐ R01: the transition table that lived here (validTransitions) is the rail engine's TRANSITIONS now, verbatim, and the
          decision is rail.move — the same function GET /chits/:id answers `actions` with. `me` = railActions.meOf(req). */
       if (!me) throw new Error('moveStatus: who is moving it (railActions.meOf(req)) is required');
@@ -3885,9 +3886,15 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         const sent = await withEntity(entity_id, async (db) => {
           const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', me, { copy: 'sent' });
           if (g.ok) await g.write();
+          /* ⭐ H3 (PAY-FIX): the sale this chit posted is reversed with the sent copy, in this transaction; a refusal is SAID on the answer (books.refused), never swallowed */
+          if (g.ok) {
+            try { g.books = await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, note, action_by_id); }
+            catch (e) { if (!(e && (e.refused || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(e.code || ''))))) throw e; g.books = { refused: e.message }; log.warn('books.withdraw-not-reversed', { chit_id, entity_id, why: e.message }); }
+          }
           return g;
         });
         if (!sent.ok && sent.why !== 'not_received') log.warn('sent copy not cancelled', { chit_id, from: sent.from, why: sent.why });
+        if (sent.books) booksOnCancel = sent.books;
         await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: action_by_name,
           thread_type: 'external', msg_type: 'action',
           message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}` });
@@ -3936,7 +3943,8 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         warning: disputeWarning,   // C1: set when a disputed chit was closed anyway (UI shows who + that it was open)
         chit_id,
         previous_status,
-        new_status
+        new_status,
+        books: booksOnCancel       // H3: the reversal the cancel posted (entry_no · reverses), { none } when nothing was posted, { refused } in words
       } };
 }
 
@@ -5096,7 +5104,9 @@ router.put('/:chit_id/void',
           `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
           [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]);   // own timeline only
-        return { refused: null };
+        /* ⭐ H3 (PAY-FIX): the sale this chit posted is reversed in the SAME transaction — a refusal throws and the withdrawal rolls back with it */
+        const books = await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id);
+        return { refused: null, books };
       });
       if (gate.refused) {
         const g = gate.refused;
@@ -5179,8 +5189,13 @@ router.put('/:chit_id/void',
 
       /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
          the private word this change exists to retire. */
-      res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled' });
+      res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books || null });
     } catch (err) {
+      /* H3: the books would not take the reversal (every month locked, …) — the withdrawal did not happen; the sentence says why and what to do */
+      if (err && (err.refused || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) {
+        return res.status(409).json({ error: 'Cannot withdraw', code: err.code || 'BOOKS_REFUSED', why: 'books_refused',
+          message: 'The books hold this chit and could not reverse it: ' + err.message + ' Open the month, or reverse the entry there, then withdraw again.' });
+      }
       console.error('Void error:', err.message);
       res.status(500).json({ error: 'Void failed', message: safeErr(err) });
     }
