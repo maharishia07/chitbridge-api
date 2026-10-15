@@ -18,6 +18,11 @@
  *   node scripts/guards.cjs --junit test-results/guards.xml
  *                                   also write a JUnit report, one <testcase> per file, named by the board's key
  *                                   (`chitbridge-api/tests/<file>`) — CI posts it to the test board (ci.yml)
+ *
+ * OWNS      the declared list of offline guards (GUARDS) and the one line that says how many checks passed.
+ * CALLED BY .github/workflows/ci.yml (guards job, every push), the VS Code task, by hand before every push.
+ * FLOW      GUARDS ──▶ spawn each tests/<file> ──▶ read its last "<n> checks" ──▶ ok / FAIL per file ──▶ --junit ──▶ exit 1 on any FAIL
+ * CARD      qa/offline-guards
  */
 'use strict';
 const fs = require('fs'), path = require('path'), { spawnSync } = require('child_process');
@@ -60,6 +65,7 @@ const GUARDS = [
   'tdz-guard.test.js',          // no const/let read above its declaration in the same function (node -c cannot see a TDZ)
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
   'fn-size.test.cjs',           // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
+  'readability-guard.test.cjs', // ⭐⭐ READ-GUARD (DISCIPLINES §6, 15 Oct): ONLY the code this change touched — hard limits · new cryptic name · empty catch · header · CARD · trace row · readability.ratchet.json (the web's tools/readability.cjs, from the twin checkout)
   'send-golden.test.cjs',       // POST /chits/send: 40 scenarios, every SQL · copy · hook · answer = the trace frozen before the split
   'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
