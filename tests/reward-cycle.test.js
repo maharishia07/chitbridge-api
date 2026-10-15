@@ -32,6 +32,11 @@ const PROG = { definition_id: 'def-1', name: 'Shop points',
  *    and the statements the store issues against it ── */
 const TABLE = [];
 const LOCKS = [];
+/* the server's own records the reward reads: bills by number, catalogue items by id, the category master */
+const BILLS = {};
+const ITEMS = { 'a1a1a1a1-0000-4000-8000-000000000001': { name: 'Shampoo', sku: 'SH-1', categories: ['cat-1'] },
+                'a1a1a1a1-0000-4000-8000-000000000002': { name: 'Rice', sku: 'RC-1', categories: ['cat-2'] } };
+const CATS = [{ id: 'cat-1', name: 'Personal care' }, { id: 'cat-2', name: 'Grocery' }];
 const mine = (eid, scheme, value) => (r) => r.entity_id === eid && r.holder_scheme === scheme && r.holder_value === value;
 const withEntity = async (entity_id, fn) => {
   const mark = TABLE.length;
@@ -49,6 +54,18 @@ async function run(sql, args) {
       const page = all.slice().sort((a, b) => String(b.at).localeCompare(String(a.at)));
       return { rows: (limit == null ? page : page.slice(0, limit)).map((r) => Object.assign({ total: String(total) }, r)) };
     }
+    /* ⭐ W2-REW: the server's OWN bill (chit_header + chit_detail by client_ref — lib/counter-bill byRef), its catalogue and its
+       category master. The reward reads these; the counter's posted basket is not an input anywhere below. */
+    if (/FROM chit_header/.test(sql)) {
+      const [eid, ref] = args; const b = BILLS[ref];
+      return { rows: (b && eid === SHOP) ? [{ chit_id: 'chit-' + ref, till_id: 'C1', billed_at: b.at || null,
+                                            summary_json: { money: b.money }, line_items: b.line_items || [] }] : [] };
+    }
+    if (/FROM catalogue_items/.test(sql)) {
+      const ids = args[1] || [];
+      return { rows: ids.filter((id) => ITEMS[id]).map((id) => ({ item_id: id, item_data: ITEMS[id] })) };
+    }
+    if (/kind = 'category'/.test(sql)) return { rows: CATS.map((c) => ({ definition_id: c.id, name: c.name, status: 'live' })) };
     if (/^\s*INSERT INTO reward_ledger/.test(sql)) {
       const [entity_id, holder_scheme, holder_value, points, why, ref, note, definition_id, at] = args;
       /* ⚠️ THE REAL UNIQUE INDEX, reproduced: one entry per (shop, bill, reason, holder). A bill that syncs twice
@@ -66,13 +83,15 @@ async function run(sql, args) {
     return { rows: [] };
 }
 
-/** the award path, as routes/till.js performs it — kept in one place so the visits below read as visits */
-async function bill(holder, ref, net, spend) {
+/** the award path, as routes/till.js performs it — kept in one place so the visits below read as visits.
+ *  `total` is what the SERVER'S copy of the bill came to (summary_json.money.total): the only figure the earning is computed from. */
+async function bill(holder, ref, total, spend) {
   const prog = await store.programme(SHOP, withEntity);
   const walkIn = holder.scheme === 'phone';
   const mayEarn = !walkIn || prog.walk_in_earns !== false;
-  const added = mayEarn ? rewards.earnedOn(prog, { net, count: 1, lines: [] }) : 0;
-  const before = await store.settle(SHOP, holder, prog, { ref, spend: spend || 0, added }, withEntity);
+  BILLS[ref] = BILLS[ref] || { money: { total }, line_items: [] };
+  const r = await store.settle(SHOP, holder, prog, { ref, spend: spend || 0, earn: mayEarn }, withEntity);
+  const before = r.before, added = r.added;
   return { added, spent: spend || 0, points: before.points - (spend || 0) + added,
            overspent: (spend || 0) > before.points ? (spend || 0) - before.points : 0 };
 }
@@ -259,6 +278,57 @@ await ita('⭐⭐ T1-FINREW: 650 entries — the balance is the SUM of all of th
   assert.strictEqual(b.entries[0].ref, 'L-649', 'newest first');
   const r = await bill(LOYAL, 'L-SPEND', 0, want);
   assert.strictEqual(r.overspent, 0, 'a spend of the whole (true) balance was called an overspend');
+});
+
+console.log('— W2-REW: the points come from the SERVER\'S bill —');
+
+await ita('⭐⭐⭐ REW-T1: the earning is computed from the stored bill — the counter\'s own figure is not an input', async () => {
+  const S = { scheme: 'identity', value: 'cust-server' };
+  BILLS['S-001'] = { money: { gross: 520, savings: 20, net: 500, tax: 0, total: 500 }, line_items: [{ particulars: 'Rice', quantity: 5, total: 500 }] };
+  const prog = await store.programme(SHOP, withEntity);
+  /* the route no longer carries net · gross · count · lines: a till that posted ₹100 000 beside this bill would change nothing */
+  const r = await store.settle(SHOP, S, prog, { ref: 'S-001', spend: 0, earn: true, net: 100000 }, withEntity);
+  assert.strictEqual(r.added, 5, 'got ' + r.added + ' — ₹500 on the server\'s bill earns 5');
+  assert.strictEqual((await store.balance(SHOP, S, withEntity)).points, 5);
+});
+
+await ita('⚠️ a bill the server does not hold earns nothing and is REFUSED with a code — nothing written, the spend included', async () => {
+  const S = { scheme: 'identity', value: 'cust-server' };
+  const rows = TABLE.length;
+  const prog = await store.programme(SHOP, withEntity);
+  await assert.rejects(() => store.settle(SHOP, S, prog, { ref: 'S-NOWHERE', spend: 2, earn: true }, withEntity),
+                       (e) => e.code === 'BILL_NOT_RECORDED' && e.status === 409 && /S-NOWHERE/.test(e.say));
+  assert.strictEqual(TABLE.length, rows, 'a refused bill wrote to the ledger');
+});
+
+await ita('⚠️ the same number at ANOTHER moment is another counter\'s bill (the /reconcile verdict) — refused, not earned from', async () => {
+  const S = { scheme: 'identity', value: 'cust-server' };
+  BILLS['C1/26-27/0041'] = { at: '2026-10-15T09:00:00.000Z', money: { total: 9000 }, line_items: [] };
+  const prog = await store.programme(SHOP, withEntity);
+  await assert.rejects(() => store.settle(SHOP, S, prog, { ref: 'C1/26-27/0041', spend: 0, earn: true, at: '2026-10-15T09:05:00.000Z' }, withEntity),
+                       (e) => e.code === 'BILL_NOT_RECORDED');
+  const r = await store.settle(SHOP, S, prog, { ref: 'C1/26-27/0041', spend: 0, earn: true, at: '2026-10-15T09:00:00.000Z' }, withEntity);
+  assert.strictEqual(r.added, 90, 'the same moment is this counter\'s bill');
+});
+
+await ita('⭐⭐ an on_items rule reaches the lines through the server\'s catalogue and category master, by the OFFERS engine\'s scope test', async () => {
+  const S = { scheme: 'identity', value: 'cust-items' };
+  const ON = Object.assign({}, PROG, { earn: { kind: 'on_items', points: 200, applies_to: { category: 'Personal care' } } });
+  BILLS['S-CAT'] = { money: { total: 640 }, line_items: [
+    { particulars: 'Shampoo', quantity: 2, total: 400, item_id: 'a1a1a1a1-0000-4000-8000-000000000001' },
+    { particulars: 'Rice', quantity: 3, total: 240, item_id: 'a1a1a1a1-0000-4000-8000-000000000002' }] };
+  const r = await store.settle(SHOP, S, ON, { ref: 'S-CAT', spend: 0, earn: true }, withEntity);
+  assert.strictEqual(r.added, 400, 'got ' + r.added + ' — two shampoos at 200 each; the rice is Grocery');
+  const BYSKU = Object.assign({}, PROG, { earn: { kind: 'on_items', points: 50, applies_to: { skus: ['RC-1'] } } });
+  BILLS['S-SKU'] = BILLS['S-CAT'];
+  assert.strictEqual((await store.settle(SHOP, S, BYSKU, { ref: 'S-SKU', spend: 0, earn: true }, withEntity)).added, 150, 'three rice by sku');
+});
+
+await ita('⚠️ earn:false (the shop said walk-ins do not earn) reads no bill and writes no earning', async () => {
+  const PH = { scheme: 'phone', value: '9000077777' };
+  const prog = await store.programme(SHOP, withEntity);
+  const r = await store.settle(SHOP, PH, prog, { ref: 'S-NOWHERE-2', spend: 0, earn: false }, withEntity);
+  assert.strictEqual(r.added, 0);
 });
 
 console.log('— what the ledger will not let anyone do —');

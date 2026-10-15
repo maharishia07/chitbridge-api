@@ -60,6 +60,7 @@ const catalogueMintLimiter = rateLimit({
     message: 'That is a lot of attempts in a short time. Nothing has been changed — try again in a few minutes.' },
 });   /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */                     /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const rewards = require('../lib/rewards');       /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
+const counterBill = require('../lib/counter-bill'); /* ⭐ the shop's own bill by its number — what was paid (GET /bills) and what it earned (POST /reward) */
 const speech = require('../lib/speech');            /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */      /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
@@ -1548,10 +1549,11 @@ router.post('/price', auth, auth.requireScope('till'), async (req, res) => {
  *
  * ⭐⭐ WHY THE ARITHMETIC IS DONE TWICE, AND WHICH ANSWER WINS.
  * The counter computes points at the till, because it bills offline and has to TELL the customer what they just
- * earned while they are still standing there. The server computes them again here, from the bill it received,
- * and the SERVER'S answer is the one written. Not from mistrust of the till — from the fact that only the server
- * can see the balance, and only the balance can say whether a redemption is affordable. A till that has been
- * offline for two days does not know what the customer spent yesterday at the other counter.
+ * earned while they are still standing there. The server computes them again here — from ITS OWN copy of the bill,
+ * the chit the counter sent first under the same number (W2-REW, REW-T1: lib/counter-bill byRef, never the basket
+ * the till posts beside it) — and the SERVER'S answer is the one written. Not from mistrust of the till — from the
+ * fact that only the server can see the balance, and only the balance can say whether a redemption is affordable.
+ * A till that has been offline for two days does not know what the customer spent yesterday at the other counter.
  *
  * ⚠️ EXCEPT FOR A SPEND, WHICH IS TAKEN AS STATED — because it already came off the bill total. If the server
  * disagreed and refused it, the customer would have paid a reduced price AND kept the points. So an unaffordable
@@ -1596,18 +1598,22 @@ router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
 });
 
 /**
- * POST /api/till/reward  { ref, holder:{scheme,value}, net, count, lines, spend }
- *   ref    the bill number — the SAME client_ref the chit carries, which is what makes a replay harmless
- *   net    what the customer actually paid, so the server can compute the earning itself
+ * POST /api/till/reward  { ref, holder:{scheme,value}, spend, at? }
+ *   ref    the bill number — the SAME client_ref the chit carries: the server reads ITS bill under it (the one the
+ *          earning is computed from — W2-REW) and a replay writes nothing
  *   spend  points encashed on this bill, already deducted from that total at the counter
+ *   at     the bill's billed_at as the counter stamped it — the same number at another moment is another counter's bill
+ * ⚠️ net · gross · count · lines are NOT read any more: a till cannot state what a bill came to, only the server's chit can.
+ * → 409 { code: 'BILL_NOT_RECORDED', message } when the server holds no such bill yet — the shop-PC queue retries it after
+ *   the bill lands; the web counter had the bill answered before it asked. Nothing is written on a refusal.
  */
 router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const b = req.body || {};
-    const ref = String(b.ref || '').trim().slice(0, 64);
+    const body = req.body || {};
+    const ref = String(body.ref || '').trim().slice(0, 64);
     if (!ref) return res.status(400).json({ error: 'validation', message: 'ref (the bill number) required' });
-    const holder = holderFrom(b.holder || b.customer);
+    const holder = holderFrom(body.holder || body.customer);
     /* ⚠️ NOT AN ERROR. A walk-in who gave no number is the commonest bill in the shop; it earns nothing and the
        counter says so in one line. Returning 400 here would put a red box on an ordinary sale. */
     if (!holder) return res.json({ ok: true, holder: null, added: 0, spent: 0, points: 0,
@@ -1620,22 +1626,24 @@ router.post('/reward', auth, auth.requireScope('till'), async (req, res) => {
        walk-in may still SPEND what an earlier visit earned, or the points would be a promise the shop never keeps. */
     const walkIn = holder.scheme === 'phone';
     const mayEarn = !walkIn || prog.walk_in_earns !== false;
+    const spend = Math.max(0, Math.trunc(Number(body.spend) || 0));
+    const billedAt = typeof body.at === 'string' && body.at ? body.at.slice(0, 40) : null;
 
-    const basket = { net: Number(b.net) || 0, gross: Number(b.gross) || 0, count: Number(b.count) || 0,
-                     lines: Array.isArray(b.lines) ? b.lines : [] };
-    const added = mayEarn ? rewards.earnedOn(prog, basket) : 0;
-    const spend = Math.max(0, Math.trunc(Number(b.spend) || 0));
+    /* ⭐ ONE transaction: the holder locked, the SERVER'S bill read and its points computed, the balance read (a SUM of every
+       entry), the due expiries + spend + earning written together */
+    const settled = await store.settle(entity_id, holder, prog, { ref, spend, earn: mayEarn, at: billedAt }, withEntity);
+    const before = settled.before, added = settled.added;
 
-    /* ⭐ ONE transaction: the holder locked, the balance read (a SUM of every entry), the due expiries + spend + earning written together */
-    const bal = await store.settle(entity_id, holder, prog, { ref, spend, added }, withEntity);
-
-    const after = bal.points - spend + added;
+    const after = before.points - spend + added;
     res.json({ ok: true, holder: holder, programme: prog.name, added: added, spent: spend,
                points: after, worth: rewards.liability(prog, after),
                /* ⚠️ SAID, NOT HIDDEN: the spend was honoured because it had already come off the bill */
-               overspent: spend > bal.points ? spend - bal.points : 0,
+               overspent: spend > before.points ? spend - before.points : 0,
                says: rewards.billSays(prog, { added: added, spent: spend, balance: after }, {}) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    if (e && e.code === 'BILL_NOT_RECORDED') return res.status(409).json({ error: 'conflict', code: e.code, message: e.say });
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 /**
@@ -2434,7 +2442,8 @@ router.get('/bills', auth, async (req, res) => {
       return { chit_id: x.chit_id, no: b.bill_no || null, at: b.billed_at || x.created_at,
                customer: (b.customer && b.customer.name) || 'Walk-in',
                by: t.by || null, till: { id: t.id || null, name: t.name || null },
-               total: m.total != null ? m.total : (m.net != null ? m.net : (x.summary_json || {}).total_value),
+               /* the one pick of what was paid (lib/counter-bill paidOf) — the reward earns from the same figure */
+               total: counterBill.paidOf(x.summary_json),
                saved: m.savings != null ? m.savings : null, taxable: m.taxable != null ? m.taxable : (m.net != null ? m.net : null),
                tax: m.tax != null ? m.tax : null,
                kind: b.slip || 'cash',

@@ -5520,10 +5520,12 @@ var CloudHost = {
         var r = await fetchBy(this.api + path, { method:'POST',
           headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(body) });
         if (r.ok) return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
-        /* a refusal is FINAL — queueing a 400 would retry a mistake for ever */
-        var said = ''; try { var j = await r.json(); said = (j && (j.message || j.error)) || ''; } catch (e) { cbQuiet('tillPost:1', e); }
+        /* a refusal is FINAL — queueing a 400 would retry a mistake for ever. ⭐ W2-REW: the server's CODE rides beside its
+           sentence (BILL_NOT_RECORDED …), so a caller that branches does so on the code, never on the words. */
+        var said = '', code = null;
+        try { var j = await r.json(); said = (j && (j.message || j.error)) || ''; code = (j && j.code) || null; } catch (e) { cbQuiet('tillPost:1', e); }
         if (r.status >= 400 && r.status < 500)
-          return { ok:false, final:true, why: said || ('ChitBridge refused it (' + r.status + ')') };
+          return { ok:false, final:true, code: code, why: said || ('ChitBridge refused it (' + r.status + ')') };
         if (noQueue) return { ok:false, why: said || ('ChitBridge answered ' + r.status) };
       } catch (e) {
         if (noQueue) return { ok:false, why: (e && e.name === 'AbortError') ? 'ChitBridge did not answer in time' : 'the line dropped' };
@@ -21531,10 +21533,11 @@ async function finish(){
    */
   var rwSaid = null;
   if (RW.holder && rwProg()) {
+    /* ⭐ W2-REW (REW-T1): the server earns the points from ITS copy of this bill — the chit sent just above under the same
+       number — so the counter sends no basket beside it (net · gross · count · lines were never the server's input to trust).
+       `at` is the bill's moment: the same number at another moment is another counter's bill, and the server says so. */
     var rr = await HOST.tillPost('/api/till/reward', {
-      ref: r.bill.no, holder: RW.holder, net: m.net, gross: m.gross, count: CART.length,
-      lines: CART.map(function(c){ return { item_id:c.item_id, qty:c.qty, net:c.net, category:c.category }; }),
-      spend: RW.spend || 0 });
+      ref: r.bill.no, holder: RW.holder, spend: RW.spend || 0, at: r.bill.at || null });
     /* ⚠️ QUEUED IS CHECKED FIRST, and the order is the whole point: a queued post answers ok:true with no figures
        in it, so testing ok first would have printed 'earned 0' on a slip for a customer who earned 40. */
     if (rr && rr.queued) rwSaid = { queued: true, added: rwEarns(), spent: RW.spend || 0 };

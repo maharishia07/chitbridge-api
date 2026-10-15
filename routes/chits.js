@@ -18,6 +18,7 @@ const railActions = require('../lib/rail-actions');   // ⭐ R01 — the rail en
 const disputeMay = require('../lib/dispute-may');   // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const railStatus = require('../lib/rail-status');   // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit');   // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
+const ownBill = require('../lib/counter-bill');   // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
 const log = require('../lib/logger');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
@@ -382,18 +383,18 @@ router.post('/send',
         try {
           const who = entityId(req);
           const seen = await sameRefLook(who, raceRef);
-          if (seen.rows[0]) {
+          if (seen) {
             const _bj = req.body && req.body.business_json;
             const mine = (_bj && _bj.till && _bj.till.id) || null;
-            const theirs = seen.rows[0].till_id || null;
+            const theirs = seen.till_id || null;
             const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
-            const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
+            const theirAt = seen.billed_at ? String(seen.billed_at) : null;
             /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — via the one function both callers share, so this can no
                longer drift from it (it used to: this branch had no sameName wording at all). */
             const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, raceRef);
             if (verdict.collision) return res.status(409).json(verdict.body);
             /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
-            return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true,
+            return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true,
                                           client_ref: raceRef, raced: true });
           }
         } catch (e) { cbLog.fellBack('chits: failed — carried on without it', e); /* fall through to the ordinary failure — a bad answer here must not hide the real one */ }
@@ -531,15 +532,12 @@ async function sendNumberCheck(st, req, res) {
  * ⚠⚠ ONE LOOK-UP, TWO CALLERS. It is asked once BEFORE anything is written (the ordinary duplicate), and again
  * from the route's catch when the b263 unique index refuses an insert (the race the first ask lost). Two copies
  * of this query would be two opinions about what "already here" means. [[feedback-no-duplicate-functions]]
+ * ⭐ W2-REW: the query itself lives in lib/counter-bill (byRef) — the reward reads the same bill by the same number to earn
+ * its points from, and two readers of "my bill by its number" are one query. The till id comes back too (the collision check).
+ * → the row { chit_id, till_id, billed_at, summary_json } or null.
  */
 async function sameRefLook(sender_id, client_ref) {
-  return withEntity(sender_id, (db) => db.query(
-    /* ⚠️ the till id comes back too — see the collision check at the call site */
-    `SELECT chit_id, business_json->'till'->>'id' AS till_id,
-            business_json->>'billed_at' AS billed_at
-       FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2
-      ORDER BY created_at LIMIT 1`,
-    [sender_id, client_ref]));
+  return withEntity(sender_id, (db) => ownBill.byRef(db, sender_id, client_ref));
 }
 /** the one place the bill number is read off a request, so the catch below cannot drift from the check above */
 function refOf(req) {
@@ -616,7 +614,7 @@ async function sendReplay(st, req, res) {
   if (client_ref) {
     try {
       const seen = await sameRefLook(sender_id, client_ref);
-      if (seen.rows[0]) {
+      if (seen) {
         /**
          * ⭐⭐⭐ A RETRY AND A COLLISION LOOK IDENTICAL FROM HERE, AND THEY ARE OPPOSITES.
          *
@@ -641,7 +639,7 @@ async function sendReplay(st, req, res) {
             here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
         const _bj = req.body && req.body.business_json;
         const mine = (_bj && _bj.till && _bj.till.id) || null;
-        const theirs = seen.rows[0].till_id || null;
+        const theirs = seen.till_id || null;
         /**
          * ── ⚠️⚠️⚠️ THE GUARD ABOVE NEVER FIRED FOR THE ONE CASE ITS OWN COMMENT DESCRIBES ────────────────
          *
@@ -665,10 +663,10 @@ async function sendReplay(st, req, res) {
          * exactly as before. This only ever turns a silent absorption into a spoken refusal.
          */
         const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
-        const theirAt = seen.rows[0].billed_at ? String(seen.rows[0].billed_at) : null;
+        const theirAt = seen.billed_at ? String(seen.billed_at) : null;
         const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
         if (verdict.collision) return res.status(409).json(verdict.body);
-        return res.status(200).json({ ok: true, chit_id: seen.rows[0].chit_id, duplicate: true, client_ref });
+        return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
       }
     } catch (e) { cbLog.fellBack('chits: failed — carried on without it', e); /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */ }
   }
