@@ -1,4 +1,8 @@
 /* ⭐ Every kind of id, its shape and which of them may be sent to: docs/NAMESPACE.md, with the
+ * OWNS  /api/actors: the shop's people and co-assists — their hats, sessions, breaks and the task hand-over when one goes.
+ * CALLED BY server.js (mounted at /api/actors), the People page and the Task panel.
+ * FLOW  auth → validate → the owner gate → one transaction (withEntity) → the answer with may/why
+ * CARD 28-platform-and-operations/people
    machine-checked table in docs/namespace.yaml (guard: tests/namespace.test.cjs). */
 // routes/actors.js — B3 Actor model API
 // All endpoints for create login manage actors
@@ -1067,7 +1071,7 @@ router.put('/break',
         const openTasks = await withEntity(entity_id, (c) => c.query(
           `SELECT COUNT(*) as count FROM chit_status
            WHERE assigned_to_actor_id = $1
-           AND current_status NOT IN ('completed','cancelled','rejected')`,
+           AND current_status NOT IN (${railActions.CLOSED_SQL})`,
           [actor_id]
         ));
         const count = parseInt(openTasks.rows[0].count);
@@ -1471,7 +1475,7 @@ router.get('/:id/tasks',
          JOIN identities sender ON sender.identity_id = ch.sender_entity_id
          WHERE cs.entity_id = $1
          AND cs.assigned_to_actor_id = $2
-         AND cs.current_status NOT IN ('completed','cancelled','rejected')
+         AND cs.current_status NOT IN (${railActions.CLOSED_SQL})
          ORDER BY cs.created_at ASC`,
         [entity_id, actor_id]
       ));

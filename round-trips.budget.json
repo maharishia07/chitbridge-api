@@ -1901,10 +1901,11 @@
     },
     "POST /api/chits/:chit_id/archive": {
       "file": "chits.js",
-      "trips": 2,
-      "wire": 8,
+      "trips": 1,
+      "wire": 7,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "why": "W2-RAIL R2: the open-dispute count and the UPDATE in ONE withEntity (was two); the count is savepointed (SAVEPOINT · COUNT · RELEASE) so an unreadable dispute table refuses 503, never archives"
     },
     "POST /api/chits/:chit_id/assign-lines": {
       "file": "chits.js",
@@ -2786,6 +2787,15 @@
       "fired": true,
       "status": 400,
       "extra": true
+    },
+    "POST /api/till/reward": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true,
+      "why": "W2-REW by hand: the empty stub answers 400 (ref required) before any trip. Live, with a programme: + lock + the SERVER'S bill (lib/counter-bill byRef) + balance + writes in one TX; an on_items category rule adds the category master + the catalogue (2)."
     },
     "PUT /api/actors/:id/delegate": {
       "file": "actors.js",

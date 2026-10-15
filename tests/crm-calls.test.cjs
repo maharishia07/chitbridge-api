@@ -13,6 +13,7 @@ const state = { table: true };
 { const p = require.resolve(path.join(API, 'lib/schema')); require.cache[p] = { id: p, filename: p, loaded: true, exports: { hasTable: async (t) => (t === 'memberships' ? state.table : true), hasColumn: async () => true, forget() {} } }; }
 const { make, row } = require('./support/crm-stub.cjs');
 const t = make(), D = t.data, F = require('../lib/crm-followups'), H = require('../lib/books-hooks');
+const CALLS = require('../lib/crm-calls');   /* the module under test, by name: its public table and its day arithmetic (W2-CRM) */
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
 const day = (n) => H.dayOf(new Date(Date.now() + n * 86400000).toISOString(), 'IN');
 let pass = 0;
@@ -30,7 +31,11 @@ D.pre = async (sql, p) => {
     const open = D.followups.filter((f) => f.owner === p[0] && !f.done_at).map((f) => ({ followup_id: f.followup_id, party_id: f.party_id, what: f.what, due_at: f.due_at, assignee_user_id: f.assignee_user_id, src: 'followup' }));
     const touched = new Set(D.followups.concat(D.interactions).filter((x) => x.owner === p[0]).map((x) => x.party_id));
     const fresh = D.cust.filter((c) => c.owner === p[0] && c.added_via === 'lead' && !c.txn_count && !touched.has(c.party_id)).map((c) => ({ followup_id: null, party_id: c.party_id, what: null, due_at: null, assignee_user_id: null, src: 'new' }));
-    return { rows: open.concat(fresh).map((x) => Object.assign(x, { party_name: (D.cust.find((c) => c.party_id === x.party_id) || {}).display_name, phone: '+919840011111', last_outcome: null, last_at: null, stage: 'lead' })) };
+    const all = open.concat(fresh).map((x) => Object.assign(x, { party_name: (D.cust.find((c) => c.party_id === x.party_id) || {}).display_name, phone: '+919840011111', last_outcome: null, last_at: null, stage: 'lead' }));
+    /* W2-CRM: the window counts every row carries ($4 = the start of the shop's today) and the page ($5 LIMIT, null = all · $6 OFFSET), as Postgres answers */
+    const counts = { total_rows: all.length, late_rows: all.filter((x) => x.due_at && x.due_at < p[3]).length, today_rows: all.filter((x) => x.due_at && x.due_at >= p[3]).length };
+    const offset = Number(p[5]) || 0;
+    return { rows: all.slice(offset, p[4] == null ? undefined : offset + Number(p[4])).map((x) => Object.assign(x, counts)) };
   }
   if (/^UPDATE party_followup SET done_at = now\(\), done_by = \$3 WHERE owner_entity_id = \$1 AND party_id = \$2/.test(sql)) {
     assert.strictEqual(p[0], 'E1'); D.followups.forEach((f) => { if (f.owner === p[0] && f.party_id === p[1] && !f.done_at) f.done_at = new Date().toISOString(); }); return { rows: [] };
@@ -59,7 +64,14 @@ const post = (id, body) => t.post('/parties/' + id + '/outcome', body);
     const f = r.body.calls.find((c) => c.party_id === P(2)); assert.strictEqual(f.late, true); assert.strictEqual(f.phone, '+919840011111');
     assert.strictEqual(r.body.calls.find((c) => c.party_id === P(1)).new, true); assert.strictEqual(r.body.late, 1); assert.strictEqual(r.body.count, 3);
     assert.deepStrictEqual(r.body.outcomes.map((o) => o.key), ['no_answer', 'call_back', 'interested', 'demo_booked', 'not_now', 'wrong_number']);
-    assert.ok(r.body.outcomes.every((o) => !('days' in o)), 'the web holds no days'); assert.deepStrictEqual(r.body.may, { ok: true });
+    assert.ok(r.body.outcomes.every((o) => !('days' in o)), 'the web holds no days'); assert.deepStrictEqual(r.body.may, { ok: true, write: { may: true, code: null, why: null } });
+    assert.strictEqual(r.body.total, 3); assert.strictEqual(r.body.page, 1); assert.strictEqual(r.body.limit, 3); assert.strictEqual(r.body.shop_day, day(0));
+  });
+  await ita('W2-CRM (CRM-PAGE): ?page=2&limit=1 → one row, total 3, page 2, limit 1 — and late counts the WHOLE queue, not the page; a page past the end still says total 3', async () => {
+    const r = await t.get('/calls?scope=all&page=2&limit=1'); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(r.body.calls.length, 1); assert.strictEqual(r.body.total, 3); assert.strictEqual(r.body.page, 2); assert.strictEqual(r.body.limit, 1); assert.strictEqual(r.body.late, 1);
+    const past = await t.get('/calls?scope=all&page=9&limit=2'); assert.strictEqual(past.body.calls.length, 0); assert.strictEqual(past.body.total, 3, 'the empty page re-asks for the count');
+    assert.strictEqual((await t.get('/calls?scope=all&limit=1000000')).body.limit, 1000, 'the server\'s max, never the client\'s word');
   });
   await ita('interested: call logged (call · out · the word), the open follow-up closed, the next is +2 days, source interaction', async () => {
     const r = await post(P(2), { outcome: 'interested' }); assert.strictEqual(r.status, 201, JSON.stringify(r.body));
@@ -103,6 +115,13 @@ const post = (id, body) => t.post('/parties/' + id + '/outcome', body);
     let r = await post(P(9), { outcome: 'interested' }); assert.strictEqual(r.status, 404);
     r = await post(P(1), { outcome: 'nope' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'BAD_OUTCOME');
     r = await post('not-an-id', { outcome: 'interested' }); assert.strictEqual(r.status, 400);
+  });
+  /* the call desk's own table, as the web reads it: labels and picks, never the days; a wrong-number outcome has no next day */
+  await ita('crm-calls publicTable: every outcome has key + label, the days never travel; nextDay: wrong_number → null', async () => {
+    const table = CALLS.publicTable();
+    assert.ok(table.length >= 3 && table.every((o) => o.key && o.label && !('days' in o)));
+    assert.strictEqual(CALLS.nextDay(CALLS.OUTCOMES.find((o) => o.key === 'wrong_number'), {}, '2026-10-15', 0), null);
+    assert.strictEqual(CALLS.addDays('2026-10-15', 3), '2026-10-18');
   });
   console.log(pass + ' checks'); process.exit(process.exitCode || 0);
 })();

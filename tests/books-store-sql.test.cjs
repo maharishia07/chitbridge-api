@@ -34,7 +34,7 @@ const CALLS = {
   /* CS2: a never-posted ledger re-charted in place (no DELETE on the setup tables) */
   parkChart: [E], rechart: [E, [{ code: '2200', name: 'GST collected', is_group: false, nature: 'liability', role: 'gst_collected', parent_code: '2200', tally_group: 'GST and Statutory Liabilities', sch3_line: 'x', saft_grouping: 'LIABILITY:x' }], { pack_code: 'AU', pack_version: null }],
   relabelPeriods: [E, '2026-27', [{ period: 1, fiscal_year: '2026', start_date: '2026-01-01', end_date: '2026-01-31' }]],
-  nextNo: [E, 'JV', '2026-27'], entryBySource: [E, 'chit:x'], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'],
+  nextNo: [E, 'JV', '2026-27'], entryBySource: [E, 'chit:x'], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment']],
   /* PERF1: a keyset page and the figures it stands on */
   entryPage: [E, '2026-04-01', '2026-04-30', U, null, { limit: 100, after: null }], pageSums: [E, '2026-04-01', '2026-04-30', U, null, { date: '2026-04-03', no: 'SV/2026-27/000009' }, true],
   yearRows: [E, '2026-27'], ledgerLines: [E, '2026-04-01', '2026-04-30', U], years: [E],

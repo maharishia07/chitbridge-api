@@ -3,6 +3,8 @@
 // @stage-note follow-ups, remove a party from the list, walk-in → party. 503 "not migrated yet" for what needs b276.
 'use strict';
 /**
+ * CALLED BY server.js (mounted at /api/crm), CB CRM (cap-crm*.js) and the storefront's privacy sheet.
+ * CARD 11-crm-and-marketing/crm-routes
  * routes/crm.js — docs/design/crm/PLAN.md Phases 3 and 4 (API side). The page is the browser's; this file shapes answers.
  *
  *   GET    /api/crm/parties                     the whole list, ONE row per party (a party on both lists is one row, two roles); total · page · limit
@@ -11,8 +13,9 @@
  *   GET    /api/crm/parties/:id/contact-prefs   history · may (per channel × purpose, with a code) · law (the shop's country's words — T3-P3-CONSENT)
  *   GET    /api/crm/parties/:id/timeline        chits · disputes · messages · ledger · interactions · follow-ups · changes, newest first, paged
  *   POST   /api/crm/parties/:id/interactions    log a call / visit / message / note (b276); an OUT call/message asks privacy.gate → 403 { code, why }
- *   GET    /api/crm/followups                   ?scope=mine|all&done=0|1                                    (b276)
- *   POST   /api/crm/followups · PATCH /followups/:id · DELETE /followups/:id                                (b276)
+ *   GET    /api/crm/followups                   ?scope=mine|all&done=0|1&page=&limit= — total · page · limit (the one pager), late · today of the whole set, shop_day   (b276)
+ *   POST   /api/crm/followups · PATCH /followups/:id ({ done } · { due_at: a date } · { after: today|tomorrow|3days|week } · { assignee_user_id } · { what }) · DELETE /followups/:id   (b276)
+ *   ⭐ W2-CRM: GET /parties · /parties/:id · /followups answer `may { write, remove }`; GET /calls `may.write` — the server's may/why for every CRM action
  *   DELETE /api/crm/parties/:id                 "Remove from my parties" — owner, no open dues, hides the row, deletes no history (b276)
  *   GET    /api/crm/parties?view=leads          only the leads (no trade yet), each with its stage; `leads_migrated` false until b297
  *   POST   /api/crm/leads                       one lead = a local party (added_via 'lead') + its first stage                          (b297)
@@ -48,10 +51,18 @@ const F = require('../lib/crm-followups');
 const M = require('../lib/memberships');
 const PV = require('../lib/privacy');
 const PL = require('../lib/page-limit');   /* LIM2: the ONE pager */
+const PAGE_DEFAULT = 300, PAGE_MAX = 1000;   /* one page of this file's follow-ups and calls (300 = the queue's old silent cut, now a page with a total) */
 
 const ctx = (req) => auth.entityOf(req);
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const UUID = crm.UUID;
+const REMOVE_WHY = 'Only the owner can remove a party.';
+/**
+ * ⭐ W2-CRM (CRM-MAY): the SERVER says may/why for the CRM's actions, ONCE per read, in the two shapes that already exist — `write` is
+ * lib/access.mayWrite (the owner or an editor; else the rail's read_only / comment_only sentence, the same answer hat-gate refuses with) and
+ * `remove` is lib/owner.may (owner only, the sentence DELETE /parties/:id refuses with). A screen greys a button WITH `why`; it decides nothing from a hat.
+ */
+const crmMay = (req) => ({ write: require('../lib/access').mayWrite(req), remove: require('../lib/owner').may(req, REMOVE_WHY) });
 function noKey(req, res, next) {
   if (req.api_key) return res.status(403).json({ code: 'SIGN_IN', error: 'Sign in to use CB CRM.', message: 'Sign in to use CB CRM.' });
   next();
@@ -70,8 +81,9 @@ const idOf = (req) => { const id = String(req.params.id || ''); if (!UUID.test(i
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/parties', auth, noKey, async (req, res) => {
   try {
-    res.json(await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null, consent: String(req.query.with || '').split(',').indexOf('consent') >= 0,
-      page: PL.pageOf(req.query.page), limit: PL.limitOf(req.query.limit, crm.CAP, crm.CAP) }));
+    const out = await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null, consent: String(req.query.with || '').split(',').indexOf('consent') >= 0,
+      page: PL.pageOf(req.query.page), limit: PL.limitOf(req.query.limit, crm.CAP, crm.CAP) });
+    res.json(Object.assign(out, { may: crmMay(req) }));
   } catch (e) { fail(res, e); }
 });
 
@@ -105,6 +117,7 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
     catch (e) { if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) rec.migrated = false; else throw e; }
     /* a lead's stage chip + "Move to…": the server says which moves, and may/why (b297 not run → greyed with its sentence) */
     if (rec.lead) rec.lead = Object.assign({}, rec.lead, { moves: M.KINDS.lead_stage.groups.filter((g) => g !== rec.lead.stage), may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY } });
+    rec.may = crmMay(req);   /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
     res.json(rec);
   } catch (e) { fail(res, e); }
 });
@@ -214,11 +227,12 @@ router.post('/parties/:id/interactions', auth, noKey, async (req, res) => {
   } catch (e) { fail(res, e); }
 });
 
+/** ?scope=mine|all&done=0|1&page=&limit= → { followups, total, page, limit, late, today, shop_day, may } — one statement; none asked = every row */
 router.get('/followups', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req);
-    const list = await withEntity(owner, (h) => F.list(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', done: String(req.query.done) === '1', me: byOf(req) }));
-    res.json({ followups: list, late: list.filter((x) => x.late).length, today: list.filter((x) => x.today).length });
+    const owner = ctx(req), page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
+    const out = await withEntity(owner, (h) => F.page(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', done: String(req.query.done) === '1', me: byOf(req), page }));
+    res.json(Object.assign(out, { may: crmMay(req) }));
   } catch (e) { fail(res, e); }
 });
 router.post('/followups', auth, noKey, async (req, res) => {
@@ -256,7 +270,7 @@ router.delete('/followups/:id', auth, noKey, async (req, res) => {
  */
 router.delete('/parties/:id', auth, noKey, async (req, res) => {
   try {
-    if (!isOwner(req)) throw bad('Only the owner can remove a party.', 403, 'OWNER_ONLY');
+    if (!isOwner(req)) throw bad(REMOVE_WHY, 403, 'OWNER_ONLY');   /* the same sentence GET /parties may.remove.why carried */
     const owner = ctx(req), id = idOf(req);
     const found = await crm.one(owner, id);
     if (!found || found.merged_from) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'Not your party.' });
@@ -301,8 +315,8 @@ router.post('/leads', auth, noKey, async (req, res) => {
 /* ── L2: the call desk — the table of outcomes is lib/crm-calls (server); the web only labels it ─────────────────── */
 router.get('/calls', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req);
-    res.json(await withEntity(owner, (h) => require('../lib/crm-calls').queue(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', me: byOf(req) })));
+    const owner = ctx(req), page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
+    res.json(await withEntity(owner, (h) => require('../lib/crm-calls').queue(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', me: byOf(req), page, write: crmMay(req).write })));
   } catch (e) { fail(res, e); }
 });
 /** Body { outcome, after?: today|tomorrow|3days, due_at?: YYYY-MM-DD }. 201 { interaction, followup, stage, suggest } */

@@ -9,7 +9,10 @@
  *      ownerOnly, the sentence lib/people.js shows), the owner passes; delegate and settings had no check at all before.
  *   3. PEOPLE-EMAIL — the Add form's e-mail is stored (lowercased) and PATCH edits / clears it; a taken e-mail is 409 in words.
  *   4. The connector code comes through the one generator (lib/otp.generateOTP('connector')).
- * Offline: express on 127.0.0.1, auth + db stubbed. Run: node tests/people-writes-sec2.test.cjs
+ *   5. W2-PEOPLE — A SEALED HOST RESETS THROUGH THE STORED E-MAIL: on each reset door (DELETE /:id/pin · POST /:id/otp · reactivate)
+ *      and on Add, the stored address is read back, the code goes to that mailbox only and the answer says where (masked); a person
+ *      with no e-mail is refused 400 EMPLOYEE_EMAIL_REQUIRED BEFORE anything is written or sent; no sender → 503, nothing written.
+ * Offline: express on 127.0.0.1, auth + db + the e-mail sender stubbed. Run: node tests/people-writes-sec2.test.cjs
  */
 const path = require('path'), http = require('http'), fs = require('fs');
 const API = path.join(__dirname, '..');
@@ -32,8 +35,10 @@ const CHIT = '44444444-4444-4444-8444-444444444444';
 const WRITES = [];
 let throwOn = null;
 const splitTop = (s) => { const out = []; let d = 0, cur = ''; for (const c of s) { if (c === '(') d++; else if (c === ')') d--; if (c === ',' && d === 0) { out.push(cur); cur = ''; } else cur += c; } out.push(cur); return out.map((x) => x.trim()).filter(Boolean); };
+let STORED_EMAIL = 'v_email';   /* what identities.email holds for Bala — section 5 sets a real address, or none */
 const valueFor = (col) => {
   if (col === 'otp_code') return SECRET;
+  if (col === 'email') return STORED_EMAIL;
   if (/count|tasks|attempts/.test(col)) return 0;
   if (/^(identity_id|delegate_actor_id|assigned_to_actor_id)$/.test(col)) return BALA;
   if (col === 'chit_id') return CHIT;
@@ -76,6 +81,10 @@ stub('lib/schema', { hasColumn: async () => true, has: async () => true, hasTabl
 /* every freshly minted code is the secret too, so "the code just issued" is caught as well as "a code stored earlier" */
 const realOtp = require(path.join(API, 'lib', 'otp'));
 stub('lib/otp', Object.assign({}, realOtp, { generateOTP: () => SECRET }));
+/* the e-mail sender records where each code went instead of calling Resend (lib/employee-code.deliver reads it at call time) */
+const SENT = [];
+const realNotify = require(path.join(API, 'lib', 'notify'));
+stub('lib/notify', Object.assign({}, realNotify, { sendOtpEmail: async (to, name, otp) => { SENT.push({ to, name, otp }); return { delivered: true }; } }));
 /* WHO is calling — the owner (an entity) or a colleague (an actor under the shop). The real auth is tested elsewhere. */
 let WHO = null;
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Mayur Bhavan', parent_entity_id: null };
@@ -106,6 +115,47 @@ const WRITES_PEOPLE = [
   ['PUT', '/' + BALA + '/tasks/route', { chit_id: CHIT, action: 'pool' }],
 ];
 const BANNED_KEYS = ['otp_code', 'first_code', 'dev_otp', 'otp'];
+/* section 5: the four doors that mint a code for a person — the Add and the three resets (lib/employee-code is called 4× in actors.js) */
+const RESET_DOORS = [
+  ['POST', '/', { display_name: 'Bala', actor_key: 'bala', email: 'bala@shop.test' }],
+  ['DELETE', '/' + BALA + '/pin'],
+  ['POST', '/' + BALA + '/otp'],
+  ['PUT', '/' + BALA + '/status', { action: 'reactivate' }],
+];
+/* a sealed host as production boots it (dev-otp.otpPostureErrors): no DEV_OTP, real delivery on, a sender and a from-address */
+const SEALED_ENV = { NODE_ENV: 'production', OTP_EMAIL_ENABLED: 'true', RESEND_API_KEY: 're_test_only', FROM_EMAIL: 'codes@shop.test' };
+const withoutEmail = (body) => { if (!body) return body; const copy = Object.assign({}, body); delete copy.email; return copy; };
+const sealHost = () => { delete process.env.DEV_OTP; Object.assign(process.env, SEALED_ENV); };
+const unsealHost = () => { Object.keys(SEALED_ENV).forEach((k) => { delete process.env[k]; }); process.env.NODE_ENV = 'development'; process.env.DEV_OTP = '1'; };
+/* Bala's mailbox as the store holds it, and the two ledgers (writes · e-mails) emptied before each call */
+const balaHas = (email) => { STORED_EMAIL = email; WRITES.length = 0; SENT.length = 0; };
+const nothingTouched = () => !WRITES.some((write) => /identities/.test(write.sql)) && SENT.length === 0;
+const wroteTheCode = () => WRITES.some((write) => /^(UPDATE|INSERT INTO) identities/.test(write.sql) && write.params.includes(SECRET));
+
+/* Section 5 — the sealed host: each code door reads the STORED address, mails the code there and says so; no address → refused
+   before any write (W2-PEOPLE: "a sealed reset can send to it" had no end-to-end proof through routes/actors.js). */
+async function proveSealedReset() {
+  sealHost();
+  for (const [method, url, body] of RESET_DOORS) {
+    balaHas('bala@shop.test');
+    const sent = await call(method, url, body);
+    t(method + ' ' + url + ' with an e-mail on file → 200, delivery sent to the masked stored address, the code never in the answer',
+      sent.status === 200 && sent.body.delivery === 'sent' && sent.body.sent_to === 'b***@shop.test' && /b\*\*\*@shop\.test/.test(sent.body.delivery_note || '') && !sent.raw.includes(SECRET),
+      sent.status + ' ' + sent.raw.slice(0, 200));
+    t('   …the code went to the STORED address (not the request), and the row holds it', SENT.length === 1 && SENT[0].to === 'bala@shop.test' && SENT[0].otp === SECRET && wroteTheCode(),
+      JSON.stringify(SENT) + ' writes:' + WRITES.length);
+    balaHas('');
+    const refused = await call(method, url, withoutEmail(body));   /* Add reads the body's address; the resets read the stored one */
+    t(method + ' ' + url + ' with NO e-mail on file → 400 EMPLOYEE_EMAIL_REQUIRED in words, nothing written, nothing sent',
+      refused.status === 400 && refused.body.code === 'EMPLOYEE_EMAIL_REQUIRED' && /e-mail/i.test(refused.body.message || '') && !refused.raw.includes(SECRET) && nothingTouched(),
+      refused.status + ' ' + refused.raw.slice(0, 200) + ' writes:' + WRITES.length + ' sent:' + SENT.length);
+  }
+  delete process.env.RESEND_API_KEY; balaHas('bala@shop.test');
+  const noSender = await call('DELETE', '/' + BALA + '/pin');
+  t('sealed with no sender → 503 EMAIL_DELIVERY_NOT_CONFIGURED, nothing written, nothing sent',
+    noSender.status === 503 && noSender.body.code === 'EMAIL_DELIVERY_NOT_CONFIGURED' && nothingTouched(), noSender.status + ' ' + noSender.raw.slice(0, 160));
+  unsealHost(); STORED_EMAIL = 'v_email';
+}
 const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k of Object.keys(v)) { out.push(k); keysIn(v[k], out); } return out; };
 
 (async () => {
@@ -163,6 +213,9 @@ const keysIn = (v, out = []) => { if (v && typeof v === 'object') for (const k o
     const taken2 = await call('POST', '/', { display_name: 'Bala', actor_key: 'bala', email: 'owner@shop.test' });
     t('…and on Add → 409 EMAIL_TAKEN (never "Key taken")', taken2.status === 409 && taken2.body.code === 'EMAIL_TAKEN', taken2.raw);
     throwOn = null;
+
+    say('\n5 · W2-PEOPLE — a sealed host resets through the stored e-mail (the code to the mailbox, the answer says where)');
+    WHO = OWNER; await proveSealedReset();
 
     say('\n4 · the connector code comes through the one generator');
     const csrc = fs.readFileSync(path.join(API, 'routes', 'connectors.js'), 'utf8');
