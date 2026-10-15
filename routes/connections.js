@@ -1,5 +1,7 @@
 // routes/connections.js — Connection handshake
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const log = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');

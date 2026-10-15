@@ -6,6 +6,8 @@
 const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const logger = require('../lib/logger');
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const empCode = require('../lib/employee-code');   // M02: the one place an employee's first code is minted, e-mailed and shown
 /** The e-mail on file for an employee (identities.email), or '' — a read that can never fail the request. */
 const actorEmail = async (id) => { try { const r = await db('SELECT email FROM identities WHERE identity_id = $1', [id]); return (r.rows[0] && r.rows[0].email) || ''; } catch (e) { logger.fellBack('actors actorEmail: the read failed — left blank', e); return ''; } };

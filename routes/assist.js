@@ -8,6 +8,8 @@
 // CLIENT FALLS THROUGH to its own library floor (`matchLibrary`). The whole point of the design is that this
 // endpoint can be missing, unconfigured, or failing and the assistant still answers — it just gets less smart.
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const router  = express.Router();
 const jwt     = require('jsonwebtoken');
 const { safeErr } = require('../lib/respond');

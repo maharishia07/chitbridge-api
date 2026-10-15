@@ -10,6 +10,8 @@
 // before Apply. This route's only job is CRUD, scoped to the caller's own entity.
 'use strict';
 const express = require('express');
+const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
