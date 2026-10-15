@@ -38,7 +38,7 @@ const t = (name, cond, extra) => { if (cond) { pass++; console.log('  ok   ' + n
 
 const comp = (std, doc, days) => ({ standard_key: std, doc_key: doc, status: 'gathered', evidence_ref: null, valid_until: days == null ? null : iso(days), verification: {} });
 const base = () => ({
-  me: { display_name: 'Kumar Stores', address: '12 Mill Rd', phone: '+919800000001', gstn: '33ABCDE1234F1Z5', country: 'IN', vertical: 'general', policy_flags: {} },
+  me: { display_name: 'Kumar Stores', address: '12 Mill Rd', phone: '+919800000001', gstn: '33ABCDE1234F1Z5', country: 'IN', currency_code: 'INR', vertical: 'general', policy_flags: {} },
   sectors: ['stationery'],
   compliance: [comp('IN-FSSAI', 'licence', 200), comp('IN-DRUG', 'licence', 100), comp('IN-SHOPS-ACT', 'registration', 40), comp('IN-OLD-FSSAI', 'fssai_licence', -5), comp('VILLAGE-NOC', 'noc', 10)],
   docs: [{ scheme: 'PHONE', status: 'pending', verified_at: null }],
@@ -56,6 +56,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const a = await get();
     t('answers 200 with business, licences, trade_ready', a.status === 200 && a.j.business && Array.isArray(a.j.licences) && a.j.trade_ready, String(a.status));
     t('business: name, legal_name, address, phone', a.j.business.name === 'Kumar Stores' && 'legal_name' in a.j.business && a.j.business.address === '12 Mill Rd' && a.j.business.phone === '+919800000001');
+    t('business.currency is the shop\'s money (AU-WORDS: the shell paints its symbol as the money icon)', a.j.business.currency === 'INR');
     const by = (s) => a.j.licences.find((l) => l.scheme === s);
     t('every licence has the shell keys', a.j.licences.every((l) => ['scheme', 'label', 'number_masked', 'valid_until', 'days_left', 'band', 'core', 'renew_url'].every((k) => k in l)));
     t('band ok beyond 120 days', by('FSSAI').band === 'ok' && by('FSSAI').days_left >= 199, String(by('FSSAI').days_left));
