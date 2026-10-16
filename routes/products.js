@@ -343,7 +343,7 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
       query, withEntity, entity_id, schema_id, item_data: req.body.item_data, rid: req.id,
       validate: (data, rows) => validateAgainst(rows, data),
     });
-    if (made.error) return res.status(400).json({ error: 'Invalid product', code: made.code || undefined, message: made.error });
+    if (made.error) return res.status(400).json(declareRefusal('Invalid product', made));
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
     res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
   } catch (e) { fail(res, e, 'Add failed'); }
@@ -1182,6 +1182,21 @@ router.mergePatch = mergePatch;
 router.gtinCheck = gtinCheck;   /* T3-FIXES: the preflight's code check, for tests/t3-fixes */
 router.defaultSchemaId = defaultSchemaId;
 router.validateAgainst = validateAgainst;
+/** the body of a 400 for a declare refusal: the sentence, and the machine code when there is one (SERVER_OWNED travels with its sentence) */
+function declareRefusal(label, answer) { return { error: label, code: answer.code || undefined, message: answer.error }; }
+/** the item_data the shop holds for an item ({} when it holds none), or null when there is no such item in this shop */
+async function readStoredItemData(entity_id, itemId) {
+  const found = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [itemId, entity_id]));
+  return found.rows.length ? (found.rows[0].item_data || {}) : null;
+}
+/** C4: delete an object as THIS shop's — a key outside its prefix is left alone and said (NOT_OWNER); any other failure is logged and carried on */
+async function deleteMediaObject(key, entity_id, itemId) {
+  try { await objStore.del(key, entity_id); }
+  catch (e) {
+    if (e && e.code === objStore.NOT_OWNER) log.warn('products DELETE /:id/media/:mid: the item named a key outside its shop — the entry went, the object was not touched', { entity_id, item_id: itemId });
+    else log.fellBack('products DELETE /:id/media/:mid: failed — carried on without it', e);
+  }
+}
 /* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
    one gate for this PATCH, the schedule below, POST /till/price and the combo push (T3-FIXES, CAT-FIX1) */
 router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (req, res) => {
@@ -1208,9 +1223,8 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
        no extra trip. */
     let stored = null;
     if (req.body.merge === true || catcols.hasServerOwned(req.body.item_data)) {
-      const cur = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [req.params.id, entity_id]));
-      if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
-      stored = cur.rows[0].item_data || {};
+      stored = await readStoredItemData(entity_id, req.params.id);
+      if (!stored) return res.status(404).json({ error: 'Not found' });
       if (req.body.merge === true) bodyItem = mergePatch(stored, req.body.item_data);
     }
     /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
@@ -1221,7 +1235,7 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
       ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
       validate: (data, rows) => validateAgainst(rows, data),
     });
-    if (decl.error) return res.status(400).json({ error: 'Invalid product', code: decl.code || undefined, message: decl.error });
+    if (decl.error) return res.status(400).json(declareRefusal('Invalid product', decl));
     // STAMP on edit too — a round-trip that read `{amount,currency}` and writes it back is accepted only while the
     // currency still agrees with the entity's; a different one is refused (see money.stampPrice).
     const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
@@ -1264,7 +1278,7 @@ router.post('/:id/schedule', auth, [ body('effective_at').isString(), body('item
       ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
       validate: () => null,
     });
-    if (decl.error) return res.status(400).json({ error: 'Invalid change', code: decl.code || undefined, message: decl.error });
+    if (decl.error) return res.status(400).json(declareRefusal('Invalid change', decl));
     const cur = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id]));
     if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
     const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(Object.assign({}, cur.rows[0].item_data, decl.item_data), await regional.currencyFor(entity_id)));
@@ -1488,10 +1502,7 @@ router.delete('/:id/media/:mid', auth, async (req, res) => {
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     /* ⭐ C4: the object is deleted as THIS shop's — a key outside its prefix is left alone and said (NOT_OWNER), never deleted */
-    if (out.gone && out.gone.key && (await objStore.available())) {
-      try { await objStore.del(out.gone.key, entity_id); }
-      catch (e) { if (e && e.code === objStore.NOT_OWNER) log.warn('products DELETE /:id/media/:mid: the item named a key outside its shop — the entry went, the object was not touched', { entity_id, item_id: req.params.id }); else log.fellBack('products DELETE /:id/media/:mid: failed — carried on without it', e); }
-    }
+    if (out.gone && out.gone.key && (await objStore.available())) await deleteMediaObject(out.gone.key, entity_id, req.params.id);
     res.json({ message: 'Media removed', media: out.media });
   } catch (e) { fail(res, e, 'Could not remove the media'); }
 });

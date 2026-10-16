@@ -128,6 +128,27 @@ router.patch('/:id', auth, [ body('name').optional().isString(), body('definitio
   } catch (e) { fail(res, e, 'Could not update this combo'); }
 });
 
+/** push onto the product the template is linked to: merge, declare (C4: the product's own media rides through unchanged), stamp the shop's
+ *  currency, write through the one product writer (CAT-W1) → { item } | { error, code } */
+async function updateLinkedProduct(entity_id, existing, wantedFields, productsRouter) {
+  const catcols = require('../lib/catalogue-columns');
+  const money = require('../lib/money');
+  const regional = require('../lib/regional');
+  const { query } = require('../db');
+  const storedData = existing.item_data || {};
+  const merged = productsRouter.mergePatch(storedData, wantedFields);
+  const schema_id = await productsRouter.defaultSchemaId(entity_id);
+  const decl = await catcols.ensureDeclared({
+    query, entity_id, schema_id, item_data: merged, stored: storedData,
+    ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+    validate: (data, rows) => productsRouter.validateAgainst(rows, data),
+  });
+  if (decl.error) return { error: decl.error, code: decl.code || undefined };
+  const stamped = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
+  const written = await withEntity(entity_id, (db) => require('../lib/catalogue-write').patchItems(db, entity_id,
+    [{ item_id: existing.item_id, replace: stamped }], { returning: '*' }));
+  return { item: written.rows[0] };
+}
 /**
  * ── ⭐⭐⭐ [OFFR-08] POST /api/combo-templates/:id/push — CREATE THE FIRST TIME, UPDATE EVERY TIME AFTER ──────
  *
@@ -161,9 +182,6 @@ router.post('/:id/push', auth, async (req, res) => {
     if (defErr) return res.status(400).json({ error: 'Invalid combo', message: defErr });
 
     const productsRouter = require('./products');
-    const catcols = require('../lib/catalogue-columns');
-    const money = require('../lib/money');
-    const regional = require('../lib/regional');
     const { query } = require('../db');
 
     const wantedFields = { name: t.name, modifiers: t.definition };
@@ -179,18 +197,9 @@ router.post('/:id/push', auth, async (req, res) => {
 
     let item, verb;
     if (existing) {
-      const merged = productsRouter.mergePatch(existing.item_data || {}, wantedFields);
-      const schema_id = await productsRouter.defaultSchemaId(entity_id);
-      const decl = await catcols.ensureDeclared({
-        query, entity_id, schema_id, item_data: merged, stored: existing.item_data || {},   /* C4: the product's own media rides through unchanged */
-        ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
-        validate: (data, rows) => productsRouter.validateAgainst(rows, data),
-      });
-      if (decl.error) return res.status(400).json({ error: 'Invalid product', code: decl.code || undefined, message: decl.error });
-      const stamped = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
-      const r = await withEntity(entity_id, (db) => require('../lib/catalogue-write').patchItems(db, entity_id,   /* CAT-W1: the one product writer */
-        [{ item_id: existing.item_id, replace: stamped }], { returning: '*' }));
-      item = r.rows[0]; verb = 'updated';
+      const updated = await updateLinkedProduct(entity_id, existing, wantedFields, productsRouter);
+      if (updated.error) return res.status(400).json({ error: 'Invalid product', code: updated.code, message: updated.error });
+      item = updated.item; verb = 'updated';
     } else {
       if (t.price == null) return res.status(400).json({ error: 'Price is required',
         message: 'Give this combo a price before pushing it as a new product.' });

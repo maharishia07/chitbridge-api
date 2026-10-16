@@ -67,7 +67,7 @@ async function patchKey(entity_id, jti, patch, db) {
 /** the kinds a login may mint: every scope, minus the platform's 'testing' for a shop login */
 function scopesFor(req) {
   let platform = false; try { platform = require('../lib/platformroot').isPlatform(req); } catch (e) { logger.warn('keys scopesFor: the platform test failed — answered a shop\'s list', { err: e && e.message }); }
-  return SCOPES.filter((s) => s !== 'testing' || platform);
+  return SCOPES.filter((scope) => scope !== 'testing' || platform);
 }
 /* ⭐ SEC-FIX2 L1: revoking a key is the OWNER's (lib/owner — the same gate counters and people writes use): an editor could stop the
    counter mid-sale by revoking its key, while changing the counters themselves was already owner-only. The list says it as `may`. */

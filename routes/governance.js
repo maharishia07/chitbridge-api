@@ -363,14 +363,14 @@ router.get('/vault-schema', auth, async (req, res) => {
 router.put('/profile/vault', auth, async (req, res) => {
   try { const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    const P = require('../lib/profile'), VP = require('../lib/vault-patch');
+    const profile = require('../lib/profile'), vaultPatch = require('../lib/vault-patch');
     let saved;
-    if (VP.isPatchBody(b)) saved = await P.patchVault(entity_id, b.patch, b.version);
+    if (vaultPatch.isPatchBody(b)) saved = await profile.patchVault(entity_id, b.patch, b.version);
     else {
-      const held = await P.readVault(entity_id);
+      const held = await profile.readVault(entity_id);
       if (held.version && b.version == null) return res.status(409).json({ code: 'VAULT_VERSION_REQUIRED', error: 'This screen is older than the vault — reload it, then save.', message: 'This screen is older than the vault — reload it, then save.' });
-      if (held.version && String(b.version) !== held.version) throw P.vaultChanged();
-      saved = await P.saveVault(entity_id, b.vault || b, { expect: held.version });
+      if (held.version && String(b.version) !== held.version) throw profile.vaultChanged();
+      saved = await profile.saveVault(entity_id, b.vault || b, { expect: held.version });
     }
     /* ⭐ the Business identity rows are the counter's bill header (trade name, address, phone) — so open counters hear it */
     try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e); }
