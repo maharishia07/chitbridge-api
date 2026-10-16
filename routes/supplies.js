@@ -11,6 +11,11 @@
  *
  * ⚠️ AND NOTHING HERE HAS A SELLING PRICE. There is no field for one, deliberately. A supply that could be priced
  * would eventually be sold, and the whole point of the split is that it cannot.
+ *
+ * owns: /api/supplies — what a shop buys to use (sundries): list · add · purchase · issue
+ * called by: server.js (mounted at /api/supplies)
+ * FLOW  POST /purchase → lib/supply-store.purchase → says (expensed — not in your books yet)
+ * // CARD 16-finance/supplies-routes
  */
 'use strict';
 const express = require('express');
@@ -84,7 +89,7 @@ router.post('/purchase', auth, async (req, res) => {
        fine (SYSTEM rule 1: only a failing thing earns words); what happened, in a shopkeeper's words */
     const n = out.recorded.length, parts = [n + (n === 1 ? ' line recorded' : ' lines recorded')];
     if (out.stocked) parts.push(out.stocked + ' counted');
-    if (out.expensed) parts.push(out.expensed + ' expensed');
+    if (out.expensed) parts.push(out.expensed + ' expensed — not in your books yet');
     if (out.failed && out.failed.length) parts.push(out.failed.length + ' not recorded');
     res.json(Object.assign({ message: 'Purchase recorded' }, out, { says: parts.join(' · ') }));
   } catch (e) {

@@ -14,7 +14,7 @@ const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  '
 const cs = (r) => Object.assign(r, { customer_type: 'entity', added_via: 'manual', txn_count: 1, segment: 'new' });
 D.cust = [cs(row({ party_id: P(1), display_name: 'Square Dealer', user_id: 'sq' })), cs(row({ party_id: P(2), display_name: 'Owes Money', user_id: 'om' })), cs(row({ party_id: P(8), display_name: 'Folded', user_id: 'fo', merged_into: P(1) }))];
 D.sup = [cs(row({ party_id: P(1), display_name: 'Square Dealer', user_id: 'sq' }))];
-D.stored.customer[P(1)] = { balance_minor: 5000 }; D.stored.supplier[P(1)] = { balance_minor: -5000 };   /* nets to 0 */
+D.stored.customer[P(1)] = { balance_minor: 0 }; D.stored.supplier[P(1)] = { balance_minor: 0 };   /* settled both ways (R10: 5000 / -5000 is NOT settled — tests/crm-fix) */
 D.stored.customer[P(2)] = { balance_minor: 25000 };
 
 (async () => {

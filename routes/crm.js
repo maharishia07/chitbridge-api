@@ -272,14 +272,7 @@ router.delete('/parties/:id', auth, noKey, async (req, res) => {
   try {
     if (!isOwner(req)) throw bad(REMOVE_WHY, 403, 'OWNER_ONLY');   /* the same sentence GET /parties may.remove.why carried */
     const owner = ctx(req), id = idOf(req);
-    const found = await crm.one(owner, id);
-    if (!found || found.merged_from) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'Not your party.' });
-    const d = found.party.dues;
-    if (d && d.balance_minor !== 0) throw bad('There are open dues on this party.', 409, 'HAS_DUES');
-    await withEntity(owner, async (h) => {
-      await h.query(`UPDATE customer_list SET hidden_at = now() WHERE owner_entity_id = $1 AND customer_identity_id = $2 AND hidden_at IS NULL`, [owner, id]);
-      await h.query(`UPDATE supplier_list SET hidden_at = now() WHERE owner_entity_id = $1 AND supplier_entity_id = $2 AND hidden_at IS NULL`, [owner, id]);
-    });
+    await crm.removeParty(owner, id);
     res.json({ ok: true, party_id: id });
   } catch (e) { fail(res, e); }
 });
@@ -303,7 +296,7 @@ router.post('/leads', auth, noKey, async (req, res) => {
     const out = await withEntity(owner, async (h) => {
       const a = await L.addCustomer(h, owner, { name, phone, via: 'lead' });   /* ⭐ CRM-MINT1: the one add-customer */
       if (a.refused) throw bad((a.refused.error && a.refused.error.message) || 'Could not add them.', a.refused.status || 400, 'MINT_REFUSED');
-      if (a.exists) throw bad('That name is already on your list.', 409, 'EXISTS');
+      if (a.exists) throw bad(L.existsWords(a, 'That name is already on your list.'), 409, 'EXISTS');
       const local = a.local, party_no = a.party_no;
       const m = await M.add(h, owner, { kind: 'lead_stage', item_id: local.identity_id, group: stage, by: byOf(req) });
       return { party: { party_id: local.identity_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false, lead: { stage, since: crm.iso(m.at) } } };
@@ -378,7 +371,7 @@ router.post('/walk-ins/add', auth, noKey, async (req, res) => {
     const { local, party_no, claimed } = await withEntity(owner, async (h) => {
       const a = await L.addCustomer(h, owner, { name, phone: from.value, via: 'manual' });
       if (a.refused) throw bad((a.refused.error && a.refused.error.message) || 'Could not add them.', a.refused.status || 400, 'MINT_REFUSED');
-      if (a.exists) throw bad('That customer is already on your list.', 409, 'EXISTS');
+      if (a.exists) throw bad(L.existsWords(a, 'That customer is already on your list.'), 409, 'EXISTS');
       /* the points: the ONE claim path (lib/reward-store.claim — the engine's claim, both halves locked and written together), here
          inside this same transaction. The ref names the new customer too: a phone claimed again later onto another customer is a
          NEW claim, never a half-replay (main's rule, kept through INT6a). */
