@@ -67,6 +67,8 @@ function rowsFor(sql, p) {
   const s = String(sql).replace(/\s+/g, ' ').trim();
   p = p || [];
   if (/break_status/.test(s) && /FROM identities/.test(s)) { const a = ACTORS[p[0]]; return a ? [{ break_status: 'active', hat: a.hat, access_level: a.access_level, whole_entity: a.whole_entity }] : []; }
+  /* the one status write is compare-and-set + RETURNING (ORD-FIX O6): a row comes back when the copy still holds the status that was read */
+  if (/^UPDATE chit_status SET current_status = \$1/.test(s)) return st(p[1], p[2], 'received').filter((r) => r.current_status === p[3]).map((r) => ({ chit_id: r.chit_id }));
   /* GET */
   if (/^SELECT \* FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return hd(p[0], p[1]);
   if (/FROM chit_detail/.test(s)) return [{ detail_type: 'order', line_item_count: 0, total_value: null, currency_code: 'INR', line_items: null }];

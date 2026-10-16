@@ -155,8 +155,8 @@ const none = (list, why) => assert.deepStrictEqual(list, [], why + '\n      at: 
     const moved = await assignChit(db, 'E', 'C1', asha, 'pull', { me: railStatus.SYSTEM, from: 'accepted' });
     assert.deepStrictEqual(moved, { rows: 1, moved: true, from: 'accepted' });
     assert.strictEqual(calls.length, 2, 'the assignment UPDATE, then the one status write (opts.from saved the read)');
-    assert.ok(/^UPDATE chit_status SET current_status = \$1, updated_at = NOW\(\) WHERE chit_id = \$2 AND entity_id = \$3 AND direction = 'received'$/.test(calls[1].sql), calls[1].sql);
-    assert.deepStrictEqual(calls[1].p, ['pending', 'C1', 'E']);
+    assert.ok(/^UPDATE chit_status SET current_status = \$1, updated_at = NOW\(\) WHERE chit_id = \$2 AND entity_id = \$3 AND direction = 'received' AND current_status = \$4 RETURNING chit_id$/.test(calls[1].sql), calls[1].sql);
+    assert.deepStrictEqual(calls[1].p, ['pending', 'C1', 'E', 'accepted']);
     const already = await assignChit(db, 'E', 'C1', asha, 'push', { me: railStatus.SYSTEM, from: 'pending' });
     assert.deepStrictEqual(already, { rows: 1, moved: false, from: 'pending' }); assert.strictEqual(calls.length, 3, 'already pending → no status write');
     const viewer = await assignChit(db, 'E', 'C1', asha, 'push', { me: { level: 'viewer', holder: null }, from: 'accepted' });

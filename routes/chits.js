@@ -3774,6 +3774,11 @@ async function cancelSentCopy(entity_id, chit_id, viewer, note, by) {
  * SAME validation, timeline row, ledger hook and cancel legs as Intake — never a second status writer.
  * → { code, body, moved?, noop? }  — the caller answers with code/body; `moved` = a status actually changed.
  */
+/** ORD-FIX O6: write the caller's OWN received copy (the gate said yes) — compare-and-set, so someone who moved it a moment ago wins; → `done` for the writer, a `conflict` stop for the loser */
+async function writeOrConflict(verdict, done) {
+  try { await verdict.write(); return done; }
+  catch (e) { if (e && e.code === 'status_conflict') return { stop: 'conflict', message: e.message }; throw e; }
+}
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       const action_by_id = by.id, action_by_name = by.name;
       let disputeWarning = null;
@@ -3784,7 +3789,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
 
       // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
       // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
-      const _checkDisputes = (new_status === 'completed' || new_status === 'cancelled')
+      const _checkDisputes = ['completed', 'cancelled'].includes(new_status)
         && await schema.hasTable('chit_disputes');
 
       const _pre = await withEntity(entity_id, async (db) => {
@@ -3827,9 +3832,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         /* ⭐ FX-F10W2: REJECTING A BILL SAYS WHY (lib/workflow needsOf: reject → reason; the chit read answers actions.reject.needs). The
            reason is the note — it goes on the chit's history. Refused before the write, said; a task keeps its own ask. */
         if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(hdr.rows[0], entity_id) === 'bill_received') return { stop: 'reason', previous_status };
-        // Update chit_status — the caller's OWN received copy (the gate above said yes).
-        await verdict.write();
-        return { previous_status, openCount, header: hdr, copy };
+        return writeOrConflict(verdict, { previous_status, openCount, header: hdr, copy });
       });
 
       /* ⭐ the early returns, OUTSIDE the transaction — see the note above on why they are markers */
@@ -3843,6 +3846,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       if (_pre.stop === 'noop') {
         return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
       }
+      if (_pre.stop === 'conflict') return { code: 409, body: { error: 'Status changed', code: 'status_conflict', message: _pre.message } };
       if (_pre.stop === 'reason') {
         return { code: 400, body: { error: 'Reason required', code: 'reason_required', message: 'Say why you are rejecting this bill — the reason goes on the bill.', why: 'reason_required' } };
       }

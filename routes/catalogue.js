@@ -1,3 +1,7 @@
+// CARD 10-online-shop-and-storefront-orders/order-start-confirm
+// owns: the public storefront routes (catalogue, order start / confirm, buyer login).
+// called by: server.js mounts it at /api/catalogue.
+// FLOW  order/start (issue code) → order/confirm (verify, reprice, spend once, mint both copies) → token
 // routes/catalogue.js — B3.7 Public catalogue + end-customer order (no business login)
 const express = require('express');
 const logger = require('../lib/logger');
@@ -14,7 +18,7 @@ const auth = require('../middleware/auth');
 const customerAuth = require('../middleware/customer-auth');   // T2.4 — the storefront customer's OWN surface
 const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's whole-list reads */
-const { verifyOtp, issueShopperOtp, spendShopperOtp } = require('../lib/otp');   // per-account OTP attempt cap · SH-OTP1: the one shopper code
+const { verifyOtp, issueShopperOtp, spendShopperOtp, spendOrderCode } = require('../lib/otp');   // per-account OTP attempt cap · SH-OTP1: the one shopper code
 const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
 const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
 const container = require('../lib/container');              // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
@@ -1227,7 +1231,7 @@ router.post('/:bridge_id/order/confirm',
       ];
       try {
         await withEntity(c.identity_id, async (client) => {
-          await spendShopperOtp((t, p) => client.query(t, p), c.identity_id);   /* SH-OTP1, on the chit's own transaction */
+          await spendOrderCode((t, p) => client.query(t, p), c, req.body.otp);   /* SH-OTP1 · ORD-FIX O7: spent once, on the chit's own transaction */
           /* ⚠️ THE OPEN CLIENT IS PASSED IN, not a new connection — the OTP consume above and the documents below
              must commit with the chit or not at all. mint.deliver honours opts.client for exactly this. */
           await mint.deliver(c.identity_id, chit_id, orderCopies, { client });
@@ -1252,7 +1256,7 @@ router.post('/:bridge_id/order/confirm',
         if (!(e && (e.code === '42883' || /chit_deliver/.test(e.message || '')))) throw e;
         // pre-b50 fallback: the legacy inline OTP consume + dual-copy fan-out (unchanged).
         await withTransaction(async (client) => {
-        await spendShopperOtp((t, p) => client.query(t, p), c.identity_id);   /* SH-OTP1, on the chit's own transaction */
+        await spendOrderCode((t, p) => client.query(t, p), c, req.body.otp);   /* SH-OTP1 · ORD-FIX O7: spent once, on the chit's own transaction */
 
         // sender (customer) record
         await client.query(

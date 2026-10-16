@@ -26,13 +26,13 @@ function rowsFor(sql, p) {
   SQLS.push(s.replace(/\s+/g, ' '));
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
   if (/SELECT current_status FROM chit_status/.test(s)) return [{ current_status: STATUS }];
-  if (/UPDATE chit_status SET current_status = \$1/.test(s)) { UPDATES.push([p[2], p[0]]); STATUS = p[0]; return []; }
+  if (/UPDATE chit_status SET current_status = \$1/.test(s)) { UPDATES.push([p[2], p[0]]); STATUS = p[0]; return [{ chit_id: p[1] }]; }   /* RETURNING chit_id (ORD-FIX O6) */
   if (/SELECT sender_entity_id FROM chit_header/.test(s)) return [{ sender_entity_id: SENDER }];
   if (/SELECT h\.chit_id, d\.line_items, h\.business_json/.test(s)) return TASK_ROWS;
   return [];
 }
 const dbPath = require.resolve(path.join(API, 'db'));
-const tx = { query: async (s, p) => ({ rows: rowsFor(s, p) }) };
+const tx = { query: async (s, p) => { const rows = rowsFor(s, p); return { rows, rowCount: rows.length }; } };
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
   query: async (s, p) => ({ rows: rowsFor(s, p) }),
   withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx),

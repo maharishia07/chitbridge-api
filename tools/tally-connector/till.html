@@ -5586,8 +5586,7 @@ var CloudHost = {
    * leaves "open orders" (/api/till/tasks hides an order with nothing remaining) without a packing slip and without a D/ number.
    */
   async orderBilled(bo, bill){
-    var rows = ((bo && bo.lines) || []).filter(function(l){ return l.line_id && l.quantity > 0; })
-      .map(function(l){ return { line_id: l.line_id, quantity: l.quantity, unit: l.unit, reference: bill.no, note: 'billed' }; });
+    var rows = orderRowsOfBill(bo, bill).map(function(l){ return { line_id: l.line_id, quantity: l.quantity, unit: l.unit, reference: bill.no, note: 'billed' }; });
     if (!rows.length) return { ok: false, why: 'the order has no lines to mark' };
     await DB.put('queue', { no: bill.no + '/order', at: bill.at, deliver: { chit_id: bo.chit_id, rows: rows } });
     this.drain();
@@ -21098,10 +21097,11 @@ async function orderSettle(o){
   O().billable(orderFind(o.id) || o).forEach(function(l){ CART.push(l); });
   try {
     price();
-    await finish();
-    /* ⚠️ finish() leaves the just-saved bill in LAST, not on STATE — reading STATE.lastBill here always sent
-       null, so a settled order never carried its own bill number */
-    await floorDo({ do: 'settled', id: o.id, bill: (typeof LAST !== 'undefined' && LAST) || null });
+    /* ⭐ ORD-FIX O5: settled ONLY when finish() saved the bill. It gives up by returning (20 still to take, credit refused, save failed, day
+       closed) - the table then goes back to open, as for a thrown error, and carries no bill number it never had. */
+    var done = await finish();
+    if (done && done.ok) await floorDo({ do: 'settled', id: o.id, bill: done.bill || null });
+    else { await floorDo({ do: 'reopen', id: o.id }); toastLine('That ' + says('subject') + ' was not billed - it is open again.'); }
   } catch (e) {
     await floorDo({ do: 'reopen', id: o.id });
     toastLine('That ' + says('subject') + ' was not billed — nothing has changed.');
@@ -21476,14 +21476,15 @@ async function postRewardBehindBill(bill){
                                     worth: posted.worth || 0, overspent: posted.overspent || 0 };
   return { failed: (posted && posted.why) || 'not recorded yet', added: rwEarns(), spent: spent };
 }
+/** ORD-FIX O5: answers { ok, bill } - ok only when the bill was SAVED; a short payment, a refused credit, a stopped day or a failed save answer { ok: false } (the order pad must not mark a table settled on those) */
 async function finish(){
-  if (!CART.length) return;
-  if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
-  if (!(await dayReopenAsk())) return;   /* M115 — the day was closed on this counter */
+  if (!CART.length) return { ok: false };
+  if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return { ok: false }; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
+  if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */
   var m = billMoney();
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
-  if (!m.invoice) { saleStop('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return; }
+  if (!m.invoice) { saleStop('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return { ok: false }; }
   /* ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41: a details mismatch never costs
      a sale). A taxed bill saves as NOT a tax invoice (not_invoice, slipHTML); an untaxed one has nothing to contradict. */
   var clash = (shopTax().charges && Number(m.tax) > 0) ? shopStateClash() : null;
@@ -21496,14 +21497,14 @@ async function finish(){
   var cust = custKnown(), credit = PICKED === 'On credit', override = null;
   if (credit) {
     /* ⚠️ a draft or a stale pick can still say On credit after the ledger went off — refused here, not only hidden */
-    if (!booksOn()) { say('The shop’s Ledger is off, so this cannot go On credit.\n\nTake it another way.'); return; }
-    if (!cust) { say('On credit needs a customer the shop knows — choose them first.'); return; }
+    if (!booksOn()) { say('The shop’s Ledger is off, so this cannot go On credit.\n\nTake it another way.'); return { ok: false }; }
+    if (!cust) { say('On credit needs a customer the shop knows — choose them first.'); return { ok: false }; }
     var takenC = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
     var owedNow = r2(m.net - takenC);
     if (owedNow > 0) {
       await creditSinceRefresh(cust);
       var chk = creditLimitCheck(cust, owedNow);
-      if (chk.known && chk.over) { override = await ownerApprove(chk); if (!override) return;
+      if (chk.known && chk.over) { override = await ownerApprove(chk); if (!override) return { ok: false };
                                    override = { by: override.by, limit: chk.limit, after: chk.after, at: new Date().toISOString() }; }
       parts.push({ how: 'On credit', amount: owedNow });
     }
@@ -21518,7 +21519,7 @@ async function finish(){
     if (tendered > 0 && r2(m.net - tendered) >= 0.01) {
       say(money(r2(m.net - tendered)) + ' is still to take.\n\nTake the rest, or use "+ part" to take it another way'
         + (creditCust() ? ', or put it On credit.' : '.'));
-      return;
+      return { ok: false };
     }
     parts = [{ how: PICKED, amount: Math.min(tendered || m.net, m.net) }];
   }
@@ -21593,7 +21594,7 @@ async function finish(){
   };
   var r = null;
   try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
-  if (!r || !r.ok){ saleStop('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
+  if (!r || !r.ok){ saleStop('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return { ok: false }; }
   LAST = r.bill; LASTNO = r.bill && r.bill.no; if (r.today) STATE.today = r.today;
   /**
    * ⭐⭐ THE POINTS, AFTER THE BILL EXISTS AND NOT BEFORE. The bill number is the ref that makes a replay harmless,
@@ -21616,7 +21617,7 @@ async function finish(){
   /* ⚠ the day just changed — so must anything on screen that is showing the day. See menuFresh(). */
   menuFresh();
   load(); loadQuick();
-  stepGo('pick');   /* the next customer starts at Items */
+  stepGo('pick'); return { ok: true, bill: r.bill };   /* the next customer starts at Items */
 }
 
 /**
@@ -27513,6 +27514,24 @@ async function onlineOrderPick(id){
  * bill - normal series, normal tax, normal slip. finish() then marks the order done (HOST.orderBilled), so it leaves the open list (M129).
  * ONE PATH: addItem, price(), finish() - the order adds nothing the counter does not already do. A bill already on the screen is parked first.
  */
+/**
+ * ORD-FIX O1: what the SAVED BILL delivered of the order - not what the order said. The cashier may drop a line or lower a quantity after
+ * "Bill it"; the delivery rows come from the bill's own lines, matched to the order's lines by item (never more than the line asked for),
+ * so what is not billed stays owed and the order stays open. A line from an older parked bill with no item id keeps its loaded quantity.
+ */
+function orderRowsOfBill(order, bill){
+  var billed = {};
+  ((bill && bill.lines) || []).forEach(function(billLine){ if (billLine.item_id != null) billed[billLine.item_id] = (billed[billLine.item_id] || 0) + (Number(billLine.qty) || 0); });
+  var rows = [];
+  ((order && order.lines) || []).forEach(function(l){
+    if (!l.line_id) return;
+    var taken = l.item_id == null ? l.quantity : Math.min(billed[l.item_id] || 0, l.quantity);
+    if (l.item_id != null) billed[l.item_id] = (billed[l.item_id] || 0) - taken;
+    taken = Math.round(taken * 1000) / 1000;
+    if (taken > 0) rows.push({ line_id: l.line_id, quantity: taken, unit: l.unit });
+  });
+  return rows;
+}
 var BILL_ORDER = null;   /* { chit_id, party, kind: 'deliver'|'take', lines: [{ line_id, quantity, unit }] } while an online order is on the bill */
 /** M169: the order's Delivery / Pickup was only for ITS bill - the next bill starts at the counter's own kind again */
 function orderToBill(t){
@@ -27528,7 +27547,7 @@ function orderToBill(t){
     })[0];
     if (!it) { missing.push(l.name || 'an item'); return; }
     addItem(Object.assign({}, it, { price: l.rate != null ? Number(l.rate) : it.price }), q);
-    got.push({ line_id: l.line_id || null, quantity: q, unit: l.unit || 'piece' });
+    got.push({ line_id: l.line_id || null, item_id: it.item_id != null ? it.item_id : null, quantity: q, unit: l.unit || 'piece' });
   });
   if (!got.length) { say('None of this order is on the counter’s shelf.\n\nRead the shop again (F4), then tap the order.'); return; }
   var pickup = !!(t.order && t.order.fulfilment === 'pickup');
