@@ -52,6 +52,6 @@ const { mintProduct } = require(API + '/lib/mint-product');
   await new Promise((resolve) => setImmediate(resolve));
   t('a failing meter does not fail the add (the row is still returned)', answer.item.item_id, 'i1');
 
-  console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
+  console.log('\n  ' + pass + ' checks · ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
 })();

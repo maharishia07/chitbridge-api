@@ -32,5 +32,5 @@ const roleText = fs.readFileSync(path.join(API, 'scripts', 'check-db-role.js'), 
 const writes = roleText.match(/\b(INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE)\b/g) || [];
 t('check-db-role.js is read-only (no statement that writes)', writes, []);
 
-console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
+console.log('\n  ' + pass + ' checks · ' + fail + ' failed\n');
 process.exit(fail ? 1 : 0);
