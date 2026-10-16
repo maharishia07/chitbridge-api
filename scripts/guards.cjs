@@ -75,6 +75,7 @@ const GUARDS = [
   'ctp-door.test.cjs',          // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
   /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
   'migration-lint.test.cjs',     // no NEW migration hides a FOREIGN KEY inside CREATE TABLE IF NOT EXISTS
+  'schema-lint.test.cjs',        // ⭐⭐ SCHEMA-LINT (assessment 2026-10-16): a NEW migration indexes its FKs, FORCEs its RLS, uses timestamptz and no national default, keys its once-only facts, and applies on an empty database — baseline shrinks only
   'entity-cast-guard.test.cjs',  // no NEW RLS policy casts an unset current_setting straight to ::uuid
   /* ⚠️ a guard nobody ran: the access gate for co-assists was never in this list (found 2026-09-28) */
   'sec-fix2.test.cjs',          // ⭐⭐ SEC-FIX2 (review 2026-10-15): media/image server-owned + owner-prefixed object keys (C4) · the network store reads the edges, its order needs a flag and a customer (C6) · assist writes behind auth (M3) · key revoke owner-only (L1) · no raw error text as why (L2)

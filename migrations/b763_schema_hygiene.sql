@@ -13,8 +13,7 @@
 --          index is present; DROP DEFAULT and FORCE are no-ops the second time.
 -- ROLLBACK  indexes: DROP INDEX <name> (the names are the ix_fk_/ix_hot_ ones listed below). Defaults: ALTER COLUMN … SET DEFAULT
 --          'IN'/'INR' (not advised). Dropped indexes: the definitions are in the SELECT at the end, recreate from there.
--- schema-lint: allow R1 R3 R8 this file is the repair of those findings; its indexes are made in a DO block the lint cannot see
--- schema-lint: allow R15 only indexes are dropped, never a table, column or row
+-- (its indexes are made in DO blocks that tools/schema-replay.cjs does not read — no allow header is needed.)
 
 -- ── 1 · INDEXES — one DO block, one list: (index, table, columns, predicate) ───────────────────────────────────────────────────
 -- A nullable, sparse column gets a PARTIAL index (WHERE col IS NOT NULL): the foreign-key check and every `col = $1` filter implies

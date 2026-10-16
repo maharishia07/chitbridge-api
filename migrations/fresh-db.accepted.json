@@ -1,0 +1,4 @@
+{
+  "_": "Migrations allowed to fail on an EMPTY database (tools/fresh-db-check.cjs). SCHEMA-FIX1 emptied it: the list may only shrink, and a file that starts to pass must be removed from it.",
+  "accepted": []
+}
