@@ -1,4 +1,10 @@
 'use strict';
+/*
+ * OWNS      protected entity, constitution, readiness passport and clearances.
+ * CALLED BY web Standards · Trade readiness.
+ * FLOW      auth → entity scope → readiness → answer without another shop's registry values
+ * CARD      21-compliance-attestation-and-trade/governance
+ */
 const versionref = require('../lib/versionref');
 const log = require('../lib/logger');
 // routes/governance.js — GOV-01 protected entity / constitution / governed inheritance.
@@ -473,7 +479,10 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
        stays because it is what the UI keys the row by. */
     /* ⭐ the public facts with their rung — what they gave, what their books say, what we checked (lib/public-facts.js) */
     let facts = null; try { facts = require('../lib/public-facts').factsOf(r.rows[0]); } catch (e) { log.fellBack('governance GET /readiness/:bridge_id: the helper failed — carried on without it', e); }
-    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...rd });
+    /* SEC-FIX3 S6: the registry value (PAN, IEC, GSTIN) rides in evidence_ref — it stays with its owner; a stranger sees status + rung only */
+    const isOwnRow = String(auth.entityOf(req)) === String(r.rows[0].identity_id);
+    const shown = isOwnRow ? rd : Object.assign({}, rd, { clearances: (rd.clearances || []).map((clearance) => Object.assign({}, clearance, { evidence_ref: null })) });
+    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...shown });
   } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
 });
 

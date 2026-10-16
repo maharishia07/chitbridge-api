@@ -24,6 +24,7 @@ const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const { safeErr } = require('../lib/respond');
 const log = require('../lib/logger');
 const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
+const { ownerOnly } = require('../lib/owner');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
@@ -1773,7 +1774,7 @@ router.post('/pair', auth, async (req, res) => {
  * `bridge_id: null`. The counter names its own data folder from the bridge_id inside its key ([TILL-120]) so it
  * can tell one shop from another with no network at all — a key without one falls back to an unreadable hash.
  */
-router.post('/enrol', auth, async (req, res) => {
+router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), async (req, res) => {   /* SEC-FIX3 S9 */
   try {
     if (!req.identity || req.api_key)
       return res.status(403).json({ error: 'Forbidden', message: 'Sign in to connect a counter.' });

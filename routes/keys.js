@@ -1,3 +1,9 @@
+/*
+ * OWNS      API keys for other systems: mint (owner only), list, revoke.
+ * CALLED BY web Settings › Integrations › Keys · routes/till.js.
+ * FLOW      auth → owner gate → mint → revoke
+ * CARD      18-identity-sign-in-and-access/keys
+ */
 /**
  * /api/keys — API KEYS FOR OTHER SYSTEMS (Athi, 2026-09-05: "create the entire offer as a capability and attach it to
  * any other systems … an api or micro service").
@@ -19,6 +25,7 @@ const { safeErr } = require('../lib/respond');
 const logger = require('../lib/logger');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { ownerOnly } = require('../lib/owner');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction } = require('../db');
@@ -525,7 +532,8 @@ router.setDiag = async (entity_id, jti, patch) => {
   auth.forgetKey(jti); return diag;
 };
 
-router.post('/', auth, sessionOnly, async (req, res) => {
+/* SEC-FIX3 S9: only the owner makes a key — a co-assist's key survived their switch-off and could carry more than they may do */
+router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'), async (req, res) => {
   try {
     const b = req.body || {};
     const allowed = scopesFor(req), asked = Array.isArray(b.scopes) ? b.scopes.map(String) : [];

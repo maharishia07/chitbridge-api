@@ -1,3 +1,9 @@
+/*
+ * OWNS      the assistant proxy and the brand's catalogue-source authoring.
+ * CALLED BY web assistant · Network brand screens.
+ * FLOW      auth → ask / author source (owner or root only) → answer
+ * CARD      28-platform-and-operations/assist
+ */
 // routes/assist.js — POST /api/assist — tier-1 assistant LLM proxy (STUB).
 // The web client (app.html `askLLM`) calls THIS so the model API key NEVER lives in the browser.
 // Contract (docs/AI-ASSISTANT.md):
@@ -297,6 +303,13 @@ router.get('/catalogue-mine', auth, async (req, res) => {   /* M3: the same real
 // PUT /api/assist/catalogue-source — SOURCE-AS-ENTITY: a brand entity AUTHORS/updates its OWN catalogue source
 // (content + the customer-EXPERIENCE blueprint that cascades). Owner-only. catalogue_source is WITHOUT RLS, so
 // ownership is enforced HERE (app-side) by owner_entity_id. Self-healing: 503 if b78 isn't applied yet.
+/** why this caller may not rewrite the source row (or null): owned by another brand; or an unowned platform seed and the caller is not the root (SEC-FIX3 S11) */
+function sourceRefusal(row, owner) {
+  if (!row) return null;
+  if (row.owner_entity_id) return String(row.owner_entity_id) === String(owner) ? null : { ok: false, error: 'This source is owned by another brand.' };
+  return require('../lib/platformroot').isRoot(String(owner)) ? null : { ok: false, error: 'This source belongs to the platform.' };
+}
+
 router.put('/catalogue-source', auth, async (req, res) => {
   try {
     const owner = auth.entityOf(req);
@@ -306,9 +319,8 @@ router.put('/catalogue-source', auth, async (req, res) => {
     let exists;
     try { exists = await query('SELECT owner_entity_id FROM catalogue_source WHERE source_key = $1', [source_key]); }
     catch (dbErr) { return res.status(503).json({ ok: false, code: 'SOURCE_STORE_MISSING', error: 'Source authoring not enabled yet — apply migration b78.' }); }
-    // Owner-only: if the source exists and is owned by someone else, refuse. (Unowned platform-seeds can be claimed.)
-    if (exists.rows.length && exists.rows[0].owner_entity_id && String(exists.rows[0].owner_entity_id) !== String(owner))
-      return res.status(403).json({ ok: false, error: 'This source is owned by another brand.' });
+    const refusal = sourceRefusal(exists.rows[0], owner);
+    if (refusal) return res.status(403).json(refusal);
     const schema = (b.schema && typeof b.schema === 'object') ? b.schema : {};
     const items = Array.isArray(b.items) ? b.items : [];
     const commercials_fields = Array.isArray(b.commercials_fields) ? b.commercials_fields : [];
