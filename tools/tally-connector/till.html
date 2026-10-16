@@ -21566,8 +21566,7 @@ async function finish(){
   /* ⚠ the day just changed — so must anything on screen that is showing the day. See menuFresh(). */
   menuFresh();
   load(); loadQuick();
-  stepGo('pick');   /* the next customer starts at Items */
-  return { ok: true, bill: r.bill };
+  stepGo('pick'); return { ok: true, bill: r.bill };   /* the next customer starts at Items */
 }
 
 /**
@@ -27407,16 +27406,16 @@ async function onlineOrderPick(id){
  * "Bill it"; the delivery rows come from the bill's own lines, matched to the order's lines by item (never more than the line asked for),
  * so what is not billed stays owed and the order stays open. A line from an older parked bill with no item id keeps its loaded quantity.
  */
-function orderRowsOfBill(bo, bill){
+function orderRowsOfBill(order, bill){
   var billed = {};
-  ((bill && bill.lines) || []).forEach(function(b){ if (b.item_id != null) billed[b.item_id] = (billed[b.item_id] || 0) + (Number(b.qty) || 0); });
+  ((bill && bill.lines) || []).forEach(function(billLine){ if (billLine.item_id != null) billed[billLine.item_id] = (billed[billLine.item_id] || 0) + (Number(billLine.qty) || 0); });
   var rows = [];
-  ((bo && bo.lines) || []).forEach(function(l){
+  ((order && order.lines) || []).forEach(function(l){
     if (!l.line_id) return;
-    var q = l.item_id == null ? l.quantity : Math.min(billed[l.item_id] || 0, l.quantity);
-    if (l.item_id != null) billed[l.item_id] = (billed[l.item_id] || 0) - q;
-    q = Math.round(q * 1000) / 1000;
-    if (q > 0) rows.push({ line_id: l.line_id, quantity: q, unit: l.unit });
+    var taken = l.item_id == null ? l.quantity : Math.min(billed[l.item_id] || 0, l.quantity);
+    if (l.item_id != null) billed[l.item_id] = (billed[l.item_id] || 0) - taken;
+    taken = Math.round(taken * 1000) / 1000;
+    if (taken > 0) rows.push({ line_id: l.line_id, quantity: taken, unit: l.unit });
   });
   return rows;
 }

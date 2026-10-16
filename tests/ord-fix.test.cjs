@@ -41,7 +41,7 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   await openOrders.tasks('e1', 'despatch', 50);
   select.rows = realRows;
   t('open-orders asks select to leave the closed states out', asked.length > 0 && Array.isArray(asked[0].status_not) && ['rejected', 'cancelled'].every((s) => asked[0].status_not.includes(s)), JSON.stringify(asked[0]));
-  t('select.js turns status_not into one SQL clause', /sel\.status_not[\s\S]{0,200}cs\.current_status <> ALL/.test(src('lib/select.js')));
+  t('select.js turns status_not into one SQL clause', /selection\.status_not[\s\S]{0,200}cs\.current_status <> ALL/.test(src('lib/select.js')));
 
   console.log('\n— O3 · billing reads the amended lines —');
   const live = openOrders.liveLines;
@@ -59,7 +59,7 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
     t('no progress (chit_line not migrated) → the frozen lines, unchanged', live(CH, frozen, null) === frozen);
   }
   t('work-rows measures against the same live lines', /liveLines/.test(src('lib/work-rows.js')));
-  t('billed-with-movement stays open while quantity is left (O1 server half)', /billed\.has\(String\(h\.chit_id\)\) && lines\.every\(\(l\) => !\(l\.moved > 0\)\)/.test(src('lib/open-orders.js')));
+  t('billed-with-movement stays open while quantity is left (O1 server half)', /nothingMoved && \(despatched\.has\(String\(h\.chit_id\)\) \|\| billed\.has\(String\(h\.chit_id\)\)\)/.test(src('lib/open-orders.js')));
 
   console.log('\n— O4 · accepted, then rejected: the purchase is reversed —');
   const store = require(path.join(API, 'lib', 'books-store')), asked4 = [];
@@ -83,7 +83,12 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   t('spend names the code and says whether it spent one', spent === false && /otp_code = \$2/.test(runs[0].sql) && /RETURNING/.test(runs[0].sql));
   const won = await otp.spendShopperOtp(async () => ({ rows: [{ identity_id: 'id1' }], rowCount: 1 }), 'id1', '123456');
   t('a live code spends once (true)', won === true);
-  t('the order/confirm transaction refuses when nothing was spent', /const spendOnce[\s\S]{0,500}code_already_used/.test(src('routes/catalogue.js')));
+  t('the order/confirm transaction spends through spendOrderCode (both the b50 path and the fallback)', (src('routes/catalogue.js').match(/spendOrderCode\(\(t, p\) => client\.query/g) || []).length === 2);
+  let again = null;
+  try { await otp.spendOrderCode(async () => ({ rows: [], rowCount: 0 }), { identity_id: 'id1', otp_code: '123456' }, ' 123456 '); } catch (e) { again = e; }
+  t('the second confirm (code already gone) throws code_already_used, which knownerr answers 409', !!again && again.code === 'code_already_used' && require(path.join(API, 'lib', 'knownerr')).known(again).status === 409);
+  const tester = []; await otp.spendOrderCode(async (sql) => { tester.push(one(sql)); return { rows: [], rowCount: 1 }; }, { identity_id: 'id1', otp_code: '999999' }, '111111');
+  t('a code that is not the stored one (tester code) keeps the unconditional spend', !/otp_code = \$2/.test(tester[0]));
 
   console.log('\n— O1 / O5 · the counter page —');
   const till = src('tools/tally-connector/till.html');
@@ -100,6 +105,6 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   t('O5 finish() answers { ok, bill }', /return \{ ok: false \}/.test(till) && /return \{ ok: true, bill: r\.bill \}/.test(till));
   t('O5 orderSettle sends settled only on ok, else reopen', /var done = await finish\(\);[\s\S]{0,300}done && done\.ok[\s\S]{0,200}do: 'settled'[\s\S]{0,200}do: 'reopen'/.test(till));
 
-  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })();
