@@ -340,7 +340,7 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
       query, withEntity, entity_id, schema_id, item_data: req.body.item_data, rid: req.id,
       validate: (data, rows) => validateAgainst(rows, data),
     });
-    if (made.error) return res.status(400).json({ error: 'Invalid product', code: made.code || undefined, message: made.error });
+    if (made.error) return res.status(400).json(declRefusal('Invalid product', made));
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
     res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
   } catch (e) { fail(res, e, 'Add failed'); }
@@ -1160,6 +1160,16 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
   } catch (e) { fail(res, e, 'Could not adopt the standard set'); }
 });
 
+/** the stored row, read only when merge:true or a server-owned key asks for it (an ordinary edit costs no extra trip) → { missing } or { stored, bodyItem } */
+async function readStoredForEdit(entity_id, item_id, body) {
+  if (body.merge !== true && !catcols.hasServerOwned(body.item_data)) return { stored: null, bodyItem: body.item_data };
+  const current = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [item_id, entity_id]));
+  if (!current.rows.length) return { missing: true };
+  const stored = current.rows[0].item_data || {};
+  return { stored, bodyItem: body.merge === true ? mergePatch(stored, body.item_data) : body.item_data };
+}
+/** the 400 body for a declaration refused (a SERVER_OWNED key travels with its code) */
+function declRefusal(label, decl) { return { error: label, code: decl.code || undefined, message: decl.error }; }
 // UPDATE — edit a product
 /** RFC 7386 merge-patch: an object merges key by key, null deletes a key, anything else replaces. The catalogue standard we adopted
  *  (golden records, PIM-on-MDM) — and the only safe way for a form that edits ONE field to write. */
@@ -1199,17 +1209,12 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
      * merge:true the body is an RFC 7386 patch against the stored item_data: send the one key, null removes it, nothing else moves.
      * Without the flag the old contract holds for the editors that send the whole record on purpose.
      */
-    let bodyItem = req.body.item_data;
     /* ⭐ C4: media/image are SERVER-OWNED (catalogue-columns.SERVER_OWNED). The stored row is read when merge:true asks for
        it, or when the body names a server-owned key (an unchanged echo passes, a change is refused) — an ordinary edit costs
        no extra trip. */
-    let stored = null;
-    if (req.body.merge === true || catcols.hasServerOwned(req.body.item_data)) {
-      const cur = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [req.params.id, entity_id]));
-      if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
-      stored = cur.rows[0].item_data || {};
-      if (req.body.merge === true) bodyItem = mergePatch(stored, req.body.item_data);
-    }
+    const read = await readStoredForEdit(entity_id, req.params.id, req.body);
+    if (read.missing) return res.status(404).json({ error: 'Not found' });
+    const stored = read.stored, bodyItem = read.bodyItem;
     /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
        validated and wrote the raw body, so a key added on edit — through the API, or through a form that renders
        declared columns and will one day render one more — could land undeclared again. Same writer, same rule. */
@@ -1218,7 +1223,7 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
       ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
       validate: (data, rows) => validateAgainst(rows, data),
     });
-    if (decl.error) return res.status(400).json({ error: 'Invalid product', code: decl.code || undefined, message: decl.error });
+    if (decl.error) return res.status(400).json(declRefusal('Invalid product', decl));
     // STAMP on edit too — a round-trip that read `{amount,currency}` and writes it back is accepted only while the
     // currency still agrees with the entity's; a different one is refused (see money.stampPrice).
     const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
@@ -1261,7 +1266,7 @@ router.post('/:id/schedule', auth, [ body('effective_at').isString(), body('item
       ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
       validate: () => null,
     });
-    if (decl.error) return res.status(400).json({ error: 'Invalid change', code: decl.code || undefined, message: decl.error });
+    if (decl.error) return res.status(400).json(declRefusal('Invalid change', decl));
     const cur = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id]));
     if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
     const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(Object.assign({}, cur.rows[0].item_data, decl.item_data), await regional.currencyFor(entity_id)));
