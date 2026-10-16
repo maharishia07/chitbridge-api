@@ -1205,9 +1205,17 @@ router.post('/:bridge_id/order/confirm',
           log: { action: 'delivered', action_by_identity_id: c.identity_id, action_by_display_name: c.display_name,
                  new_status: 'pending', detail: `Order received from ${c.display_name}` } }),
       ];
+      /* ORD-FIX O7: the code is spent ONCE, inside the order's own transaction — a double tap's second confirm finds it gone and no second order is made.
+         (A code that verifyOtp accepted without it being the stored one — the tester code — keeps the unconditional spend.) */
+      const typedCode = String(req.body.otp == null ? '' : req.body.otp).trim();
+      const spendOnce = async (client) => {
+        const stored = c.otp_code != null && String(c.otp_code) === typedCode;
+        if (await spendShopperOtp((t, p) => client.query(t, p), c.identity_id, stored ? typedCode : undefined)) return;
+        throw Object.assign(new Error('This order was already sent — check My orders before sending it again.'), { code: 'code_already_used' });
+      };
       try {
         await withEntity(c.identity_id, async (client) => {
-          await spendShopperOtp((t, p) => client.query(t, p), c.identity_id);   /* SH-OTP1, on the chit's own transaction */
+          await spendOnce(client);   /* SH-OTP1, on the chit's own transaction */
           /* ⚠️ THE OPEN CLIENT IS PASSED IN, not a new connection — the OTP consume above and the documents below
              must commit with the chit or not at all. mint.deliver honours opts.client for exactly this. */
           await mint.deliver(c.identity_id, chit_id, orderCopies, { client });
@@ -1232,7 +1240,7 @@ router.post('/:bridge_id/order/confirm',
         if (!(e && (e.code === '42883' || /chit_deliver/.test(e.message || '')))) throw e;
         // pre-b50 fallback: the legacy inline OTP consume + dual-copy fan-out (unchanged).
         await withTransaction(async (client) => {
-        await spendShopperOtp((t, p) => client.query(t, p), c.identity_id);   /* SH-OTP1, on the chit's own transaction */
+        await spendOnce(client);   /* SH-OTP1, on the chit's own transaction */
 
         // sender (customer) record
         await client.query(

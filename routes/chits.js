@@ -3786,7 +3786,8 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
            reason is the note — it goes on the chit's history. Refused before the write, said; a task keeps its own ask. */
         if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(hdr.rows[0], entity_id) === 'bill_received') return { stop: 'reason', previous_status };
         // Update chit_status — the caller's OWN received copy (the gate above said yes).
-        await verdict.write();
+        /* ORD-FIX O6: the write is compare-and-set — someone who moved this copy a moment ago wins, and this caller is told */
+        try { await verdict.write(); } catch (e) { if (e && e.code === 'status_conflict') return { stop: 'conflict', previous_status, message: e.message }; throw e; }
         return { previous_status, openCount, header: hdr, copy };
       });
 
@@ -3800,6 +3801,9 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       }
       if (_pre.stop === 'noop') {
         return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
+      }
+      if (_pre.stop === 'conflict') {
+        return { code: 409, body: { error: 'Status changed', code: 'status_conflict', message: _pre.message, why: 'status_conflict' } };
       }
       if (_pre.stop === 'reason') {
         return { code: 400, body: { error: 'Reason required', code: 'reason_required', message: 'Say why you are rejecting this bill — the reason goes on the bill.', why: 'reason_required' } };
