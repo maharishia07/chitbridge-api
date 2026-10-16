@@ -260,7 +260,7 @@ const tally = {};
     JSON.stringify(RA.forBill('bill_received', gap, railNo).reject) === JSON.stringify({ ok: true, needs: ['reason'] }));
   t('FX-F10W2 · …a viewer is refused Reject by the rail, word for word', RA.forBill('bill_received', null, { accept: { ok: false, why: 'read_only' }, reject: { ok: false, why: 'read_only' } }).reject.why === 'read_only');
   t('FX-F10W2 · PUT /status refuses a bill\'s reject without a reason, in words, with a code (reason_required)',
-    /new_status === 'rejected' && !String\(note \|\| ''\)\.trim\(\) && FOLDER_INV\.docOf\(hdr\.rows\[0\], entity_id\) === 'bill_received'/.test(SRC) && /code: 'reason_required'/.test(SRC));
+    /new_status === 'rejected' && !String\(note \|\| ''\)\.trim\(\) && FOLDER_INV\.docOf\((?:hdr|header)\.rows\[0\], entity_id\) === 'bill_received'/.test(SRC) && /code: 'reason_required'/.test(SRC));
   t('FX-F10W2 · a rejection / cancellation reaches the books hook (its Waiting row closes)', /\^\(accepted\|in_progress\|completed\|rejected\|cancelled\)\$\/\.test\(new_status\)/.test(SRC));
   t('…the books wait on something else (a gap) → Accept refused WITH the books\' sentence and its todo',
     JSON.stringify(RA.forBill('bill_received', gap, railNo).accept) === JSON.stringify({ ok: false, why: 'books_waiting', say: gap.why, todo: 'record' }));
