@@ -124,5 +124,5 @@ const STAFF = { identity: { identity_id: 'act-1', identity_type: 'actor', parent
   await it('a shop is refused and nothing is written', async () => { const r = await put(SHOP_A); assert.strictEqual(r.status, 403); assert.ok(!SEEN.some((c) => /INSERT INTO catalogue_source/.test(c.sql))); });
   await it('the root may claim it', async () => { const r = await put(ROOT); assert.ok(SEEN.some((c) => /INSERT INTO catalogue_source/.test(c.sql)), JSON.stringify(r)); });
 
-  console.log('\n' + pass + ' passed'); setTimeout(() => process.exit(process.exitCode || 0), 50);
+  console.log('\n' + pass + ' passed, ' + (process.exitCode ? 'some' : 0) + ' failed · ' + pass + ' checks'); setTimeout(() => process.exit(process.exitCode || 0), 50);
 })();
