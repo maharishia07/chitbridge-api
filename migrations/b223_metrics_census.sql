@@ -31,6 +31,8 @@
 -- ⭐ NOT YET RUN.
 --
 
+ALTER TABLE identities ADD COLUMN IF NOT EXISTS entity_kind varchar(16) NOT NULL DEFAULT 'customer';  -- SCHEMA-FIX1: b225 owns the column, its check and backfill; no-op once b225 has run
+
 -- ── ⑦ CATALOGUE SIZE — how big are shops' catalogues? ───────────────────────────────────────────────────────────
 -- ⚠️ Counts LIVE items only. is_active — a shop that listed 400 products and retired 390
 --    has a catalogue of ten, and billing or roadmap decisions taken on 400 would be wrong.

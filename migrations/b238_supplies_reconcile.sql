@@ -38,6 +38,10 @@
 
 BEGIN;
 
+-- 0 · SCHEMA-FIX1: b178 left its own CHECK (identities_supplies_check: goods|services|both). On production it is already gone; on a
+--     fresh database it refused 'none'. Dropping it by name is a no-op where it is absent.
+ALTER TABLE identities DROP CONSTRAINT IF EXISTS identities_supplies_check;
+
 -- 1 · the vocabulary the shipped route actually sends, plus the two additions
 ALTER TABLE identities DROP CONSTRAINT IF EXISTS identities_supplies_chk;
 ALTER TABLE identities ADD  CONSTRAINT identities_supplies_chk CHECK (supplies IN (

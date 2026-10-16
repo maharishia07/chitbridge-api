@@ -36,7 +36,8 @@ BEGIN
     FROM journal_entry h
    WHERE h.entry_no = 'PY/2026-27/000002' AND h.event_type = 'payment_made' AND h.source_ref LIKE 'pay:%'
    GROUP BY h.entity_id;
-  IF NOT FOUND THEN RAISE EXCEPTION 'T60: no PY/2026-27/000002 payment entry found — nothing to reverse'; END IF;
+  /* SCHEMA-FIX1: a database without that payment (a fresh one) has nothing to reverse - a notice, not an error */
+  IF NOT FOUND THEN RAISE NOTICE 'T60: no PY/2026-27/000002 payment entry found - nothing to reverse'; RETURN; END IF;
   IF (SELECT count(DISTINCT entity_id) FROM journal_entry WHERE entry_no = 'PY/2026-27/000002' AND event_type = 'payment_made') <> 1 THEN
     RAISE EXCEPTION 'T60: more than one shop holds a PY/2026-27/000002 — name the entity (set v_entity by hand) and re-run';
   END IF;

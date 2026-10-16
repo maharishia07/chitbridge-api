@@ -64,6 +64,9 @@
 
 CREATE SCHEMA IF NOT EXISTS ops;
 
+-- SCHEMA-FIX1: b225 owns entity_kind (check + backfill); stated here so a fresh database reads it. No-op once b225 has run.
+ALTER TABLE identities ADD COLUMN IF NOT EXISTS entity_kind varchar(16) NOT NULL DEFAULT 'customer';
+
 -- ── the operator role. Narrower than cb_metrics: this one sees entity_ids, so it is for US, never for a dashboard.
 DO $$
 BEGIN
