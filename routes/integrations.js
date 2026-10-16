@@ -170,7 +170,7 @@ const NOT_YET = [
   { id: 'xero', name: 'Xero connector', for: ['AU', 'NZ', 'GB'], adapters: [], fits: 'none', status: 'not yet', runs_on: '—', does: 'Items from Xero; every ChitBridge order as a Xero invoice.' },
   { id: 'myob', name: 'MYOB connector', for: ['AU', 'NZ'], adapters: [], fits: 'none', status: 'not yet', runs_on: '—', does: 'Items from MYOB; every ChitBridge order as a MYOB invoice.' },
 ];
-function catalogueFor(country) { return CATALOGUE.concat(NOT_YET.filter((c) => country && c.for.includes(country))); }
+function catalogueFor(country) { return CATALOGUE.concat(NOT_YET.filter((row) => country && row.for.includes(country))); }
 function mayFor(c, country) {
   const f = c.fits && FITS[c.fits]; if (!f) return { ok: true, code: null, why: null };
   if (f === FITS.none) return { ok: false, code: f.code, why: f.why.replace('{name}', c.name.replace(/ connector$/, '')) };
@@ -189,7 +189,7 @@ async function countryOf(req) {
 const authIfOffered = (req, res, next) => ((req.headers.authorization || req.headers['x-api-key']) ? auth(req, res, next) : next());
 router.get('/catalogue', authIfOffered, async (req, res) => {
   const country = await countryOf(req);
-  res.json({ connectors: catalogueFor(country).map((c) => { const o = Object.assign({}, c, { download: '/api/integrations/download/' + c.id, docs: '/api/integrations/docs/' + c.id, may: mayFor(c, country) }); delete o.fits; delete o.for; return o; }) });
+  res.json({ connectors: catalogueFor(country).map((connector) => { const row = Object.assign({}, connector, { download: '/api/integrations/download/' + connector.id, docs: '/api/integrations/docs/' + connector.id, may: mayFor(connector, country) }); delete row.fits; delete row.for; return row; }) });
 });
 router.get('/download/:id', authIfOffered, async (req, res) => {
   const c = CATALOGUE.find((x) => x.id === req.params.id);

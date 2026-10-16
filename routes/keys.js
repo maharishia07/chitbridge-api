@@ -70,7 +70,7 @@ async function patchKey(entity_id, jti, patch, db) {
 /** the kinds a login may mint: every scope, minus the platform's 'testing' for a shop login */
 function scopesFor(req) {
   let platform = false; try { platform = require('../lib/platformroot').isPlatform(req); } catch (e) { logger.warn('keys scopesFor: the platform test failed — answered a shop\'s list', { err: e && e.message }); }
-  return SCOPES.filter((s) => s !== 'testing' || platform);
+  return SCOPES.filter((scope) => scope !== 'testing' || platform);
 }
 /* ⭐ SEC-FIX2 L1: revoking a key is the OWNER's (lib/owner — the same gate counters and people writes use): an editor could stop the
    counter mid-sale by revoking its key, while changing the counters themselves was already owner-only. The list says it as `may`. */
@@ -532,13 +532,19 @@ router.setDiag = async (entity_id, jti, patch) => {
   auth.forgetKey(jti); return diag;
 };
 
+/** a shop asking for a platform-only kind (testing) is refused with its sentence → the 403 body, or null when every asked kind is its to make */
+function platformScopeRefusal(req, askedScopes) {
+  const allowed = scopesFor(req), asked = Array.isArray(askedScopes) ? askedScopes.map(String) : [];
+  const refused = asked.filter((kind) => SCOPES.includes(kind) && !allowed.includes(kind));
+  if (!refused.length) return null;
+  return { error: 'Platform only', code: 'NOT_PLATFORM', may: false, why: 'NOT_PLATFORM', message: 'A ' + refused[0] + ' key is the platform\'s to make, not a shop\'s.' };
+}
 /* SEC-FIX3 S9: only the owner makes a key — a co-assist's key survived their switch-off and could carry more than they may do */
 router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'), async (req, res) => {
   try {
     const b = req.body || {};
-    const allowed = scopesFor(req), asked = Array.isArray(b.scopes) ? b.scopes.map(String) : [];
-    const refused = asked.filter((x) => SCOPES.includes(x) && !allowed.includes(x));
-    if (refused.length) return res.status(403).json({ error: 'Platform only', code: 'NOT_PLATFORM', may: false, why: 'NOT_PLATFORM', message: 'A ' + refused[0] + ' key is the platform\'s to make, not a shop\'s.' });
+    const refusal = platformScopeRefusal(req, b.scopes);
+    if (refusal) return res.status(403).json(refusal);
     const r = await mint(auth.entityOf(req), req.identity, { name: b.name, scopes: Array.isArray(b.scopes) ? b.scopes : undefined, days: b.days });
     res.status(201).json(Object.assign({ note: 'Shown once. Send it as Authorization: Bearer <key> or X-Api-Key: <key>.' }, r));
   } catch (e) { res.status(e && e.status ? e.status : 500).json({ error: e && e.status === 400 ? 'validation' : 'Failed', message: String(e && e.message) }); }
