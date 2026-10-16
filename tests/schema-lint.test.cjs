@@ -28,7 +28,7 @@ const check = (what, ok, extra) => { checks++; if (!ok) failed++; console.log((o
 function rulesFiredBy(sql, header) {
   const src = (header || '') + sql, model = new Model(), facts = readFile(model, src);
   ['users', 'parent', 'ledger'].forEach((t) => model.known.add(t));
-  return Object.keys(RULES).filter((r) => RULES[r](facts, model, src, 'b900_x.sql', '').length);
+  return Object.keys(RULES).filter((r) => RULES[r](facts, model, { source: src, fileName: 'b900_x.sql', fieldsText: '' }).length);
 }
 
 /** each row: the rule, a snippet it must catch, and a clean snippet it must let through */
@@ -53,7 +53,7 @@ const SELF_TESTS = [
 ];
 console.log('\n── each rule fires on its own bad snippet, and stays quiet on the good one ──');
 for (const [rule, bad, good, header] of SELF_TESTS) {
-  if (rule === 'R17') { check('R17 a name outside bNNN_*.sql is refused', RULES.R17({}, null, '', 'weird name.sql').length === 1 && !RULES.R17({}, null, '', 'b9_x.sql').length); continue; }
+  if (rule === 'R17') { check('R17 a name outside bNNN_*.sql is refused', RULES.R17({}, null, { fileName: 'weird name.sql' }).length === 1 && !RULES.R17({}, null, { fileName: 'b9_x.sql' }).length); continue; }
   const fired = rulesFiredBy(bad), clean = rulesFiredBy(good, header);
   check(rule + ' fires on its bad snippet', fired.includes(rule), 'fired: ' + fired.join(' '));
   check(rule + ' is quiet on the good one', !clean.includes(rule), 'fired: ' + clean.join(' '));
