@@ -1,4 +1,6 @@
-// routes/products.js — B3.7a Catalogue items (products) CRUD + search
+// routes/products.js — B3.7a Catalogue items (products) CRUD + search.   CARD storefront-and-catalogue/products-routes
+// OWNS the products door: list · search · create · bulk · update · retire · CALLED BY server.js (app.use('/api/products')) · the web catalogue and the counter.
+// FLOW  validate → auth → withEntity → lib/catalogue-write / mint-product (the one writer) → { ok, data, error }, every list paged
 const express = require('express');
 const log = require('../lib/logger');
 const router  = express.Router();

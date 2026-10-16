@@ -1,5 +1,6 @@
-// server.js — Chit and Bridge MVP — Main Server
-// Version 1.0 — June 2026
+// server.js — Chit and Bridge MVP — Main Server (Version 1.0 — June 2026).   CARD 28-platform-and-operations/api-server
+// OWNS the process: the boot preflight, the middleware order, the route mounts, the DB-role check and the listener · CALLED BY node (npm start), tests/server-boot.test.cjs.
+// FLOW  preflight (sealed-environment errors → exit 1) → middleware (helmet · cors · limiters · auth-first) → routes → checkDbRole → startServing (listen · nightly jobs)
 require('dotenv').config();
 
 const express = require('express');

@@ -1,5 +1,7 @@
+// routes/entities.js — Entity registration, login, search.   CARD 28-platform-and-operations/entities-routes
+// OWNS the entity door: register · OTP login · search · profile · header · sides · policy · country setup · CALLED BY server.js (app.use('/api/entities')).
+// FLOW  validate → auth → withEntity (the caller's own entity) → the lib that owns the data (profile · policy · entity-header · sides) → { ok, data, error }
 const versionref = require('../lib/versionref');
-// routes/entities.js — Entity registration, login, search
 const express = require('express');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
