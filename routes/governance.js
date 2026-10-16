@@ -351,6 +351,18 @@ router.get('/vault-schema', auth, async (req, res) => {
     res.json({ section_types: p.SECTION_TYPES, verifiable_tags: p.VERIFIABLE_TAGS });
   } catch (err) { res.status(500).json({ error: 'Vault schema failed', message: safeErr(err) }); }
 });
+/** one PUT /profile/vault body: a patch, or a whole vault (a first fill — over an existing vault it must name the version); → { saved } or { refusal } */
+async function writeVaultBody(entity_id, body) {
+  const profile = require('../lib/profile');
+  if (require('../lib/vault-patch').isPatchBody(body)) return { saved: await profile.patchVault(entity_id, body.patch, body.version) };
+  const held = await profile.readVault(entity_id);
+  if (held.version && body.version == null) {
+    const words = 'This screen is older than the vault — reload it, then save.';
+    return { refusal: { code: 'VAULT_VERSION_REQUIRED', error: words, message: words } };
+  }
+  if (held.version && String(body.version) !== held.version) throw profile.vaultChanged();
+  return { saved: await profile.saveVault(entity_id, body.vault || body, { expect: held.version }) };
+}
 /**
  * ⭐ SET-WALK1 · W25 (2026-10-15) — THE VAULT IS SAVED AS A MERGE-PATCH WITH A VERSION, NEVER REPLACED BLIND.
  *   PUT /api/governance/profile/vault  { version, patch: { sections: { '<type>|<label>': { label?, rows: { 't:<tag>' | 'n:<name>': { name, value, tag } | null } } | null } } }
@@ -363,15 +375,9 @@ router.get('/vault-schema', auth, async (req, res) => {
 router.put('/profile/vault', auth, async (req, res) => {
   try { const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    const P = require('../lib/profile'), VP = require('../lib/vault-patch');
-    let saved;
-    if (VP.isPatchBody(b)) saved = await P.patchVault(entity_id, b.patch, b.version);
-    else {
-      const held = await P.readVault(entity_id);
-      if (held.version && b.version == null) return res.status(409).json({ code: 'VAULT_VERSION_REQUIRED', error: 'This screen is older than the vault — reload it, then save.', message: 'This screen is older than the vault — reload it, then save.' });
-      if (held.version && String(b.version) !== held.version) throw P.vaultChanged();
-      saved = await P.saveVault(entity_id, b.vault || b, { expect: held.version });
-    }
+    const written = await writeVaultBody(entity_id, b);
+    if (written.refusal) return res.status(409).json(written.refusal);
+    const saved = written.saved;
     /* ⭐ the Business identity rows are the counter's bill header (trade name, address, phone) — so open counters hear it */
     try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e); }
     res.json(saved);
