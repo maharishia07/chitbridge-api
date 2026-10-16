@@ -1,3 +1,9 @@
+/*
+ * OWNS      the connector catalogue and kit downloads.
+ * CALLED BY web Settings › Integrations.
+ * FLOW      catalogue → download (owner's zip carries a key) → heartbeat
+ * CARD      28-platform-and-operations/integrations
+ */
 /**
  * /api/integrations — THE HOME OF CONNECTORS (Athi, 2026-09-05: "include the tally connector as a downloadable option in
  * the system itself … all should reside as part of Integrations; if we build more, it should stay there").

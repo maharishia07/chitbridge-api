@@ -1,3 +1,9 @@
+/*
+ * OWNS      the intake inbox and channel adapters (web simulate, webhooks).
+ * CALLED BY web Inbox · WhatsApp / email webhooks.
+ * FLOW      channel → capture → AI structure → human confirm → chit
+ * CARD      11-crm-and-marketing/capture
+ */
 // routes/capture.js — the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm
 // (send via /api/chits/send) → mark converted. See SPEC-capture-connector.md. Migration b104.
 const express = require('express');

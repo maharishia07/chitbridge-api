@@ -1,3 +1,9 @@
+/*
+ * OWNS      Settings › Channels: bindings, templates and the platform approval.
+ * CALLED BY web Settings › Channels.
+ * FLOW      bind → platform approve (admin key) → verified line
+ * CARD      11-crm-and-marketing/channels
+ */
 // routes/channels.js — Settings → Channels. Which inbound number / address belongs to this entity, and whether the
 // provider behind it is actually configured. This is the map the capture webhooks have been waiting for (b104 →
 // b123). See SPEC-capture-connector.md.
@@ -78,7 +84,7 @@ router.post('/:id/approve', admin, async (req, res) => {
 });
 // POST /:id/template-approve { entity_id, name } — the platform records Meta's approval (SEC-FIX3 S7: a shop cannot say it for itself)
 router.post('/:id/template-approve', admin, async (req, res) => {
-  try { const b = req.body || {}; res.json(await channels.setTemplate(b.entity_id, req.params.id, b.name, 'approved', true)); }
+  try { const given = req.body || {}; res.json(await channels.setTemplate(given.entity_id, req.params.id, given.name, 'approved', true)); }
   catch (err) { res.status(err.status || 500).json({ error: 'Template update failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 router.post('/:id/revoke', admin, async (req, res) => {

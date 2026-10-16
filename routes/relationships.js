@@ -1,3 +1,9 @@
+/*
+ * OWNS      supplier list, customer list and promotions.
+ * CALLED BY web Suppliers · Customers.
+ * FLOW      handle lookup (businesses only) → list row → numbered party
+ * CARD      11-crm-and-marketing/relationships
+ */
 // routes/relationships.js — B3.6 Supplier List + Customer List + Promotions
 const express = require('express');
 const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */

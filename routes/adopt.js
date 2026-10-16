@@ -1,3 +1,9 @@
+/*
+ * OWNS      taking a supplier's delivery into the buyer's own catalogue.
+ * CALLED BY web Catalogue › Adopt.
+ * FLOW      consider → name + sku → mintProduct on the shop's default schema
+ * CARD      03-catalogue/adopt
+ */
 /**
  * ── routes/adopt.js · TAKING A SUPPLIER'S DELIVERY INTO YOUR OWN CATALOGUE ─────────────────────────────────────
  *
@@ -155,9 +161,7 @@ router.post('/:chit_id', auth, async (req, res) => {
     if (kind) { from.supply_kind = kind.supply_kind; from.name = kind.nickname || from.name; }
     const me = await receiverOf(entity_id);
 
-    const made = [], refused = [];
-    /* SEC-FIX3 S2: the shop's OWN default schema — never an id from the body (as POST /api/products does) */
-    const schema_id = await require('../lib/catalogue-write').defaultSchemaId(entity_id);
+    const made = [], refused = [], schema_id = await require('../lib/catalogue-write').defaultSchemaId(entity_id);   /* S2: the shop's OWN schema, never the body's */
     for (const w of wanted) {
       const i = Number(w.line);
       const line = lines[i];

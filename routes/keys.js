@@ -1,3 +1,9 @@
+/*
+ * OWNS      API keys for other systems: mint (owner only), list, revoke.
+ * CALLED BY web Settings › Integrations › Keys · routes/till.js.
+ * FLOW      auth → owner gate → mint → revoke
+ * CARD      18-identity-sign-in-and-access/keys
+ */
 /**
  * /api/keys — API KEYS FOR OTHER SYSTEMS (Athi, 2026-09-05: "create the entire offer as a capability and attach it to
  * any other systems … an api or micro service").

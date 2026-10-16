@@ -1,3 +1,9 @@
+/*
+ * OWNS      the test board: cases, results, incidents, requirements, changes and releases.
+ * CALLED BY web Testing screens · CI key.
+ * FLOW      auth → entity scope → record → release closes the loop for the root
+ * CARD      28-platform-and-operations/testing
+ */
 /**
  * /api/testing — THE TEST BOARD: cases you can append to, results you can record, and who recorded them.
  *
@@ -289,6 +295,15 @@ router.get('/vocabulary', (req, res) => {
 /* ── who is recording this ────────────────────────────────────────────────────────────────────────────────────
  * ⚠️ BOTH the id and the name, stored together on the row. The id is the truth; the name is what the board shows
  * months later, when the person may no longer have a row to join to. */
+/**
+ * SEC-FIX3 S10 — where a posted result lands. A board writer's result goes on the shared board; anyone else's stays under their OWN
+ * entity (entityForFinding). Any shop could write `pass` onto the board every shop reads — and the tester name now comes from the token.
+ */
+function resultsEntityOf(req) {
+  const callerEntity = auth.entityOf(req);
+  return testboard.canWrite(callerEntity) ? testboard.entityFor(callerEntity) : testboard.entityForFinding(callerEntity);
+}
+
 function testerOf(req) {
   const i = req.identity || {};
   return { id: i.identity_id || null, name: i.display_name || i.user_id || 'someone' };
@@ -1111,9 +1126,8 @@ async function recordResults(entity_id, who, b) {
 }
 
 router.post('/results', auth, async (req, res) => {
-  if (boardRefused(req, res)) return;   /* SEC-FIX3 S10: a result on the shared board is the board writer's act */
   try {
-    const out = await recordResults(testboard.entityFor(auth.entityOf(req)), testerOf(req), req.body || {});
+    const out = await recordResults(resultsEntityOf(req), testerOf(req), req.body || {});
     res.status(out.status).json(out.body);
   } catch (err) {
     res.status(500).json({ error: 'Could not record the result', message: safeErr(err) });
@@ -1247,7 +1261,6 @@ function layerOfCase(key) {
 }
 
 router.post('/results/junit', auth, async (req, res) => {
-  if (boardRefused(req, res)) return;   /* SEC-FIX3 S10 */
   try {
     const xml = String((req.body && req.body.xml) || '');
     if (!xml.trim()) return res.status(400).json({ error: 'No report', message: 'Send { xml: "<testsuites>…" }.' });
@@ -1275,7 +1288,7 @@ router.post('/results/junit', auth, async (req, res) => {
     }
 
     /* ⭐ the SAME recorder a person's tap goes through — one write path, one shape of row */
-    const out = await recordResults(testboard.entityFor(auth.entityOf(req)), testerOf(req), {
+    const out = await recordResults(resultsEntityOf(req), testerOf(req), {
       results, run_id: req.body.run_id, run_label: req.body.run_label || 'automated', build: req.body.build,
       project: req.body.project });
     return res.status(out.status).json(Object.assign({ unmatched }, out.body));
@@ -3197,31 +3210,17 @@ router.post('/releases', auth, async (req, res) => {
      * release: the release genuinely happened. Each one is attempted and reported on its own.
      */
     const told = [];
+    const mayFollow = require('../lib/platformroot').isRoot(String(entity_id));
     for (const x of carried.rows) {
       const c = x.rules.cites || {};
       if (!c.definition_id || !c.entity_id || c.kind !== 'incident') continue;
       /* SEC-FIX3 S1: a change recorded before this fix may name a stranger — only the root follows another entity, or `origin` */
-      const mayFollow = require('../lib/platformroot').isRoot(String(entity_id));
       if (!mayFollow && String(c.entity_id) !== String(entity_id)) { told.push({ ref: c.ref, resolved: false, why: 'not your incident' }); continue; }
       try {
         /* ⭐ ours first — the queue we work from. */
         const mine = await markIncidentResolved(c.entity_id, c.definition_id, name, who, carried.rel.at);
         told.push({ ref: c.ref, entity_id: c.entity_id, resolved: mine.ok, why: mine.why || null });
-
-        /**
-         * ⭐⭐ AND THEN THE SHOP'S, WHICH IS THE ONE THAT MATTERS. Our copy carries `origin` (lib/supportcopy)
-         * naming the entity that raised the fault. Resolving only ours would close our own queue and tell
-         * nobody — the failure mode of every support desk that looks tidy from the inside.
-         *
-         * ⚠️ A SEPARATE withEntity, after ours: the transaction is pinned to one entity, and a shop that
-         * cannot be reached must not unmake a release that genuinely happened.
-         */
-        const o = mine.origin;
-        if (mayFollow && o && o.entity_id && o.definition_id && String(o.entity_id) !== String(c.entity_id)) {
-          const theirs = await markIncidentResolved(o.entity_id, o.definition_id, name, who, carried.rel.at);
-          told.push({ ref: o.ref || c.ref, entity_id: o.entity_id, shop: o.shop || null,
-                      resolved: theirs.ok, why: theirs.why || null });
-        }
+        if (mayFollow) await tellOriginShop(mine.origin, c, name, who, carried.rel.at, told);
       } catch (e) {
         /* ⚠️ said, not swallowed: "0 shops told" with no explanation reads as "there was nobody to tell". */
         told.push({ ref: c.ref, entity_id: c.entity_id, failed: e.code || e.message });
@@ -3238,6 +3237,17 @@ router.post('/releases', auth, async (req, res) => {
     res.status(500).json({ error: 'Failed to cut the release', message: safeErr(e) });
   }
 });
+
+/**
+ * ⭐⭐ AND THEN THE SHOP'S, WHICH IS THE ONE THAT MATTERS. Our copy carries `origin` (lib/supportcopy) naming the entity that
+ * raised the fault. Resolving only ours would close our own queue and tell nobody — the failure mode of every support desk that
+ * looks tidy from the inside. ⚠️ A SEPARATE withEntity, after ours (a transaction is pinned to one entity); root only (SEC-FIX3 S1).
+ */
+async function tellOriginShop(origin, cited, releaseName, releasedBy, at, told) {
+  if (!origin || !origin.entity_id || !origin.definition_id || String(origin.entity_id) === String(cited.entity_id)) return;
+  const theirs = await markIncidentResolved(origin.entity_id, origin.definition_id, releaseName, releasedBy, at);
+  told.push({ ref: origin.ref || cited.ref, entity_id: origin.entity_id, shop: origin.shop || null, resolved: theirs.ok, why: theirs.why || null });
+}
 
 /**
  * ── ⭐⭐ MARK ONE INCIDENT RESOLVED, WHEREVER IT LIVES ───────────────────────────────────────────────────────────
@@ -3309,3 +3319,5 @@ router.get('/releases', auth, async (req, res) => {
 /* the project-column cache, for tests/junit-board.test.js only — the route never reads it from outside */
 router._proj = _proj;
 module.exports = router;
+router.citedEntityOf = citedEntityOf;
+router.resultsEntityOf = resultsEntityOf;   /* SEC-FIX3 — exported for tests/sec-fix3.test.cjs */

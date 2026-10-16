@@ -4289,11 +4289,16 @@ async function probeParity(chit_id, target_entity_id, caller_entity_id) {
   return { parity_state:'present', mode:'two_sided', answerable:true, target_display_name:t.display_name };
 }
 
-/** which of these entity ids hold a copy of the chit (chit_participants, the definer that only a holder may call) */
-async function holdersAmong(caller_entity_id, chit_id, ids) {
+/** the businesses a dispute names: the checklist, else the single target of a targeted dispute */
+function askedPartyIds(checklist, targetId) {
+  return checklist.length ? [...new Set(checklist)] : (targetId ? [targetId] : []);
+}
+
+/** SEC-FIX3 S4 — which of these entity ids HOLD a copy of the chit (chit_participants, callable by a holder only); a stranger gets no copy, no reason text */
+async function holdersAmong(callerEntity, chit_id, ids) {
   if (!ids.length) return [];
-  const got = await withEntity(caller_entity_id, (db) => db.query(`SELECT entity_id FROM chit_participants($1)`, [chit_id]));
-  const holding = new Set(got.rows.map((r) => String(r.entity_id)));
+  const participants = await withEntity(callerEntity, (db) => db.query(`SELECT entity_id FROM chit_participants($1)`, [chit_id]));
+  const holding = new Set(participants.rows.map((row) => String(row.entity_id)));
   return ids.filter((id) => holding.has(String(id)));
 }
 
@@ -4357,12 +4362,7 @@ router.post('/:chit_id/disputes',
 
       // 5b. D4 — resolve the involved parties (multi-select checklist). Falls back to the single
       //     target for back-compat. Raiser + parties form the roster; each party carries its own status.
-      const askedIds = selParties.length
-        ? [...new Set(selParties)]
-        : (scope === 'targeted' && target_entity_id ? [target_entity_id] : []);
-      /* SEC-FIX3 S4: only a business that HOLDS this chit may be named — the audience gets the reason text and a timeline line */
-      const partyIds = await holdersAmong(entity_id, chit_id, askedIds);
-      /* a named business that does not hold the chit stays out of the audience — a record-only dispute notifies nobody */
+      const partyIds = await holdersAmong(entity_id, chit_id, askedPartyIds(selParties, scope === 'targeted' ? target_entity_id : null));
       let partyNames = {};
       if (partyIds.length) {
         const nm = await query(`SELECT identity_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [partyIds]);
@@ -5571,3 +5571,4 @@ router.get('/trace/networks', auth, async (req, res) => {
 router.moveStatus = moveStatus;   /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 router._autoAssignReceived = autoAssignReceived;   /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
+router.holdersAmong = holdersAmong;   /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
