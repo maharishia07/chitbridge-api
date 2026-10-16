@@ -3779,6 +3779,55 @@ async function writeOrConflict(verdict, done) {
   try { await verdict.write(); return done; }
   catch (e) { if (e && e.code === 'status_conflict') return { stop: 'conflict', message: e.message }; throw e; }
 }
+/** the first half of a status move, inside the transaction: the verdict (rail-status statusGate), the open-dispute count, the copy the freeze reads, then the write — or a marker saying why it stopped */
+/** the copy the freeze reads, or the narrow header read: one statement either way */
+async function readMoveHeader(db, chit_id, entity_id, new_status) {
+  /**
+   * ⭐ THE FREEZE'S COPY, READ HERE RATHER THAN IN ITS OWN TRANSACTION. G3 stamps the invoice when this
+   * copy reaches `completed`, and it was re-reading the very row this transaction has open — a second
+   * BEGIN · set_config · SELECT · COMMIT for chit_header, four trips to fetch what was already in hand.
+   * ⚠️ Only on `completed`; every other status takes the narrow read below and nothing more.
+   */
+  const copy = (new_status === 'completed')
+    ? await taxCopy.copyOn(db, chit_id, entity_id)
+    : undefined;
+  /* ⚠️ AND THE NARROW READ IS THE ELSE, NOT AN EXTRA. The wide copy already carries sender_entity_id, so
+     reading chit_header twice in one transaction — which is what the first cut of this left behind — was
+     a statement spent on a column already on the row above. */
+  const header = (copy !== undefined)
+    ? { rows: copy ? [copy] : [] }
+    : await db.query(
+        /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
+        `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
+        [chit_id, entity_id]);
+  return { copy, header };
+}
+async function readThenWriteMove(db, press) {
+  const { entity_id, chit_id, new_status, note, checkDisputes } = press;
+  /* B1 RLS: own received-copy read — and the gate for everything below it */
+  /* ⭐ R01 — THE ENGINE DECIDES (lib/rail.js move): level → my received copy → the transition table. This route reads
+     ONLY my received copy, so "no copy" and "only the sent copy" are one answer here: not_received, said as the 404 it
+     always was. ⭐ T1-RAIL: the read, the verdict and the write are lib/rail-status statusGate — the same one every door uses. */
+  const verdict = await railStatus.statusGate(db, entity_id, chit_id, new_status, press.me);
+  const previous_status = verdict.from;
+  if (!verdict.ok && verdict.why === 'not_received') return { stop: 'missing', why: verdict.why };
+  if (!verdict.ok && verdict.why !== 'wrong_step') return { stop: 'level', why: verdict.why };
+
+  /* Idempotent: advancing to the status it is already in is a no-op success, not a 400. Fixes the
+     "Cannot move from accepted to accepted" error when a self-chit's displayed copy diverges. */
+  if (verdict.noop) return { stop: 'noop', previous_status };
+
+  if (!verdict.ok) return { stop: 'invalid', previous_status, allowed: verdict.allowed, why: verdict.why };
+
+  /* the ONE open-dispute count (lib/dispute-may openOn, W2-RAIL R2). Closing never blocks on a dispute (C1 above), so an
+     unreadable count (null, logged there) only loses the warning — delete and archive, which DO block, refuse on it. */
+  const openCount = checkDisputes ? ((await disputeMay.openOn(db, chit_id)) || 0) : 0;
+  const { copy, header } = await readMoveHeader(db, chit_id, entity_id, new_status);
+  /* ⭐ FX-F10W2: REJECTING A BILL SAYS WHY (lib/workflow needsOf: reject → reason; the chit read answers actions.reject.needs). The
+     reason is the note — it goes on the chit's history. Refused before the write, said; a task keeps its own ask. */
+  if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(header.rows[0], entity_id) === 'bill_received') return { stop: 'reason', previous_status };
+  return writeOrConflict(verdict, { previous_status, openCount, header, copy });
+}
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       const action_by_id = by.id, action_by_name = by.name;
       let disputeWarning = null;
@@ -3792,48 +3841,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       const _checkDisputes = ['completed', 'cancelled'].includes(new_status)
         && await schema.hasTable('chit_disputes');
 
-      const _pre = await withEntity(entity_id, async (db) => {
-        /* B1 RLS: own received-copy read — and the gate for everything below it */
-        /* ⭐ R01 — THE ENGINE DECIDES (lib/rail.js move): level → my received copy → the transition table. This route reads
-           ONLY my received copy, so "no copy" and "only the sent copy" are one answer here: not_received, said as the 404 it
-           always was. ⭐ T1-RAIL: the read, the verdict and the write are lib/rail-status statusGate — the same one every door uses. */
-        const verdict = await railStatus.statusGate(db, entity_id, chit_id, new_status, me);
-        const previous_status = verdict.from;
-        if (!verdict.ok && verdict.why === 'not_received') return { stop: 'missing', why: verdict.why };
-        if (!verdict.ok && verdict.why !== 'wrong_step') return { stop: 'level', why: verdict.why };
-
-        /* Idempotent: advancing to the status it is already in is a no-op success, not a 400. Fixes the
-           "Cannot move from accepted to accepted" error when a self-chit's displayed copy diverges. */
-        if (verdict.noop) return { stop: 'noop', previous_status };
-
-        if (!verdict.ok) return { stop: 'invalid', previous_status, allowed: verdict.allowed, why: verdict.why };
-
-        /* the ONE open-dispute count (lib/dispute-may openOn, W2-RAIL R2). Closing never blocks on a dispute (C1 above), so an
-           unreadable count (null, logged there) only loses the warning — delete and archive, which DO block, refuse on it. */
-        const openCount = _checkDisputes ? ((await disputeMay.openOn(db, chit_id)) || 0) : 0;
-        /**
-         * ⭐ THE FREEZE'S COPY, READ HERE RATHER THAN IN ITS OWN TRANSACTION. G3 stamps the invoice when this
-         * copy reaches `completed`, and it was re-reading the very row this transaction has open — a second
-         * BEGIN · set_config · SELECT · COMMIT for chit_header, four trips to fetch what was already in hand.
-         * ⚠️ Only on `completed`; every other status takes the narrow read below and nothing more.
-         */
-        const copy = (new_status === 'completed')
-          ? await taxCopy.copyOn(db, chit_id, entity_id)
-          : undefined;
-        /* ⚠️ AND THE NARROW READ IS THE ELSE, NOT AN EXTRA. The wide copy already carries sender_entity_id, so
-           reading chit_header twice in one transaction — which is what the first cut of this left behind — was
-           a statement spent on a column already on the row above. */
-        const hdr = (copy !== undefined)
-          ? { rows: copy ? [copy] : [] }
-          : await db.query(
-              /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
-              `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
-              [chit_id, entity_id]);
-        /* ⭐ FX-F10W2: REJECTING A BILL SAYS WHY (lib/workflow needsOf: reject → reason; the chit read answers actions.reject.needs). The
-           reason is the note — it goes on the chit's history. Refused before the write, said; a task keeps its own ask. */
-        if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(hdr.rows[0], entity_id) === 'bill_received') return { stop: 'reason', previous_status };
-        return writeOrConflict(verdict, { previous_status, openCount, header: hdr, copy });
-      });
+      const _pre = await withEntity(entity_id, (db) => readThenWriteMove(db, { entity_id, chit_id, new_status, me, note, checkDisputes: _checkDisputes }));
 
       /* ⭐ the early returns, OUTSIDE the transaction — see the note above on why they are markers */
       if (_pre.stop === 'missing') {
