@@ -1,3 +1,7 @@
+// OWNS  the Tally XML builders and the live Tally adapter.
+// CALLED BY tools/tally-connector, lib/books-tally.
+// FLOW  voucher object → builders (REMOTEID when given) → envelope → POST to Tally
+// CARD 16-finance/tally-connector
 /**
  * ADAPTER: Tally Prime / Tally.ERP 9 — over its own XML port (Gateway of Tally › F1 Help › Settings › Connectivity:
  * "Enable ODBC/XML" on port 9000). Two functions, as every adapter: readProducts() and pushOrder(order) — plus the optional
