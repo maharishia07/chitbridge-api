@@ -752,7 +752,7 @@ router.get('/snapshot', auth, async (req, res) => {
              id is made safe here; the true reference rides beside it for the chit. */
           const row = tillItem(String(l.line_id).replace(/['"\\<>&\s]/g, '_'), f);
           if (!row.name) continue;
-          if (!(Number(row.price) > 0)) { networkUnpriced++; continue; }
+          if (!catalogueRead.isPricedByStore(l, row.price)) { networkUnpriced++; continue; }
           /* ⭐ where it came from — the slip, the chit and the shop screen can all say "from <brand>" */
           row.source = { key: l.source_key, title: l.source_title || null, owner: l.owner_entity_id || null, line: l.line_id };
           items.push(row);
@@ -767,7 +767,7 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     try {
       const byOwner = {};
-      items.forEach((x) => { if (x.source && x.source.owner) (byOwner[x.source.owner] = byOwner[x.source.owner] || []).push({ name: x.name, id: x.item_id }); });
+      items.forEach((x) => { if (x.source && x.source.owner) (byOwner[x.source.owner] = byOwner[x.source.owner] || []).push({ name: x.name, id: x.item_id, category: x.category }); });
       const owners = Object.keys(byOwner);
       if (owners.length) {
         const fromNetworks = await require('../lib/network-offers').forStore(entity_id, owners, byOwner);
