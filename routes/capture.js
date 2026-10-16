@@ -21,12 +21,13 @@ function hmacOk(rawBuf, secret, header, prefix) {
 const entityId = (req) => auth.entityOf(req);
 
 // ── authenticated intake (the entity's own inbox) ──────────────────────────────────────────────────────────────
-// POST /simulate — record an inbound message as if it arrived on a channel (testable WITHOUT a BSP/inbound-parse).
+// POST /simulate — record an inbound message as if it arrived on the web (testable WITHOUT a BSP/inbound-parse).
+// ⚠️ SEC-FIX3 S7: ALWAYS channel 'web' — a simulated 'whatsapp' message opened the 24-hour window for any number.
 router.post('/simulate', auth, async (req, res) => {
   try {
     const b = req.body || {};
     res.json(await capture.createCapture(entityId(req), {
-      channel: b.channel || 'web', sender_ref: b.sender_ref, sender_name: b.sender_name, subject: b.subject, raw_text: b.raw_text, media_refs: b.media_refs }));
+      channel: 'web', sender_ref: b.sender_ref, sender_name: b.sender_name, subject: b.subject, raw_text: b.raw_text, media_refs: b.media_refs }));
   } catch (err) { res.status(err.status || 500).json({ error: 'Capture failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
 

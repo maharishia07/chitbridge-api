@@ -1060,7 +1060,7 @@ async function recordResults(entity_id, who, b) {
           case_version: d ? d.current_version : null,
           module_key: r.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
           status: r.status, run_kind: r.run_kind, layer: r.layer || null,
-          tester_name: r.tester_name || who.name,
+          tester_name: who.name,   /* SEC-FIX3 S10: stamped from the token, never the body */
           note: r.note || null, evidence: r.evidence || null,
         };
       });
@@ -1111,6 +1111,7 @@ async function recordResults(entity_id, who, b) {
 }
 
 router.post('/results', auth, async (req, res) => {
+  if (boardRefused(req, res)) return;   /* SEC-FIX3 S10: a result on the shared board is the board writer's act */
   try {
     const out = await recordResults(testboard.entityFor(auth.entityOf(req)), testerOf(req), req.body || {});
     res.status(out.status).json(out.body);
@@ -1246,6 +1247,7 @@ function layerOfCase(key) {
 }
 
 router.post('/results/junit', auth, async (req, res) => {
+  if (boardRefused(req, res)) return;   /* SEC-FIX3 S10 */
   try {
     const xml = String((req.body && req.body.xml) || '');
     if (!xml.trim()) return res.status(400).json({ error: 'No report', message: 'Send { xml: "<testsuites>…" }.' });
@@ -3008,6 +3010,17 @@ function riskOf(body) {
   return { risk: RISKS.indexOf(asked) >= 0 ? asked : 'routine', forced: null };
 }
 
+/**
+ * SEC-FIX3 S1 — the entity a change cites. A shop's change can only cite its OWN incidents; only the platform root may name
+ * another shop's (it works the support queue). A body-supplied entity_id from anyone else was a license to resolve a stranger's
+ * incident and message its staff.
+ */
+function citedEntityOf(callerEntity, cites) {
+  const named = cites && cites.entity_id ? String(cites.entity_id) : null;
+  if (named && require('../lib/platformroot').isRoot(String(callerEntity))) return named;
+  return String(callerEntity);
+}
+
 /** POST /api/testing/changes — record what we did, to which code, why, and how to undo it. */
 router.post('/changes', auth, async (req, res) => {
   try {
@@ -3041,7 +3054,7 @@ router.post('/changes', auth, async (req, res) => {
         /* ⚠️ the entity is captured WITH the reference. An incident lives in the entity that raised it, and by
            release time there is no other way to find out which one that was. */
         cites: { kind: String(cites.kind || 'incident'), ref: String(cites.ref).trim(),
-                 definition_id: cites.definition_id || null, entity_id: cites.entity_id || null },
+                 definition_id: cites.definition_id || null, entity_id: citedEntityOf(entity_id, cites) },
         repo: String(b.repo || '').trim() || null,
         /* ⭐ the SHA is the record. A branch name rots the moment it is merged or deleted. */
         sha: String(b.sha || '').trim() || null,
@@ -3187,6 +3200,9 @@ router.post('/releases', auth, async (req, res) => {
     for (const x of carried.rows) {
       const c = x.rules.cites || {};
       if (!c.definition_id || !c.entity_id || c.kind !== 'incident') continue;
+      /* SEC-FIX3 S1: a change recorded before this fix may name a stranger — only the root follows another entity, or `origin` */
+      const mayFollow = require('../lib/platformroot').isRoot(String(entity_id));
+      if (!mayFollow && String(c.entity_id) !== String(entity_id)) { told.push({ ref: c.ref, resolved: false, why: 'not your incident' }); continue; }
       try {
         /* ⭐ ours first — the queue we work from. */
         const mine = await markIncidentResolved(c.entity_id, c.definition_id, name, who, carried.rel.at);
@@ -3201,7 +3217,7 @@ router.post('/releases', auth, async (req, res) => {
          * cannot be reached must not unmake a release that genuinely happened.
          */
         const o = mine.origin;
-        if (o && o.entity_id && o.definition_id && String(o.entity_id) !== String(c.entity_id)) {
+        if (mayFollow && o && o.entity_id && o.definition_id && String(o.entity_id) !== String(c.entity_id)) {
           const theirs = await markIncidentResolved(o.entity_id, o.definition_id, name, who, carried.rel.at);
           told.push({ ref: o.ref || c.ref, entity_id: o.entity_id, shop: o.shop || null,
                       resolved: theirs.ok, why: theirs.why || null });

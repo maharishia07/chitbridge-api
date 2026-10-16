@@ -76,6 +76,11 @@ router.post('/:id/approve', admin, async (req, res) => {
   try { res.json(await channels.approveBinding(req.params.id, (req.body || {}).via || 'platform')); }
   catch (err) { res.status(err.status || 500).json({ error: 'Approve failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
 });
+// POST /:id/template-approve { entity_id, name } — the platform records Meta's approval (SEC-FIX3 S7: a shop cannot say it for itself)
+router.post('/:id/template-approve', admin, async (req, res) => {
+  try { const b = req.body || {}; res.json(await channels.setTemplate(b.entity_id, req.params.id, b.name, 'approved', true)); }
+  catch (err) { res.status(err.status || 500).json({ error: 'Template update failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) }); }
+});
 router.post('/:id/revoke', admin, async (req, res) => {
   try { res.json(await channels.revokeBinding(req.params.id)); }
   catch (err) { res.status(err.status || 500).json({ error: 'Revoke failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }

@@ -19,6 +19,7 @@ const { safeErr } = require('../lib/respond');
 const logger = require('../lib/logger');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { ownerOnly } = require('../lib/owner');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction } = require('../db');
@@ -514,7 +515,8 @@ router.setDiag = async (entity_id, jti, patch) => {
   auth.forgetKey(jti); return diag;
 };
 
-router.post('/', auth, sessionOnly, async (req, res) => {
+/* SEC-FIX3 S9: only the owner makes a key — a co-assist's key survived their switch-off and could carry more than they may do */
+router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'), async (req, res) => {
   try {
     const b = req.body || {};
     const r = await mint(auth.entityOf(req), req.identity, { name: b.name, scopes: Array.isArray(b.scopes) ? b.scopes : undefined, days: b.days });

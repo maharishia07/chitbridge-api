@@ -3,6 +3,10 @@ const express = require('express');
 const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const log = require('../lib/logger');
+/* SEC-FIX3 S5 — a handle lookup finds a BUSINESS only: not a storefront customer (<phone>@<shop>.cr, identity_type 'customer') and not an
+   employee (name@shop.br, an actor) — both carry a parent entity. Otherwise adding one confirmed it and returned their phone/contact. */
+const A_BUSINESS = `identity_type = 'entity' AND parent_entity_id IS NULL`;
+
 const router  = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
@@ -141,7 +145,7 @@ router.post('/suppliers',
       // so bridge-id-only lookup would 404 those. (Matches the ATH-114 user_id resolution.)
       const sup = await query(
         `SELECT identity_id, display_name FROM identities
-         WHERE bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)
+         WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)) AND ${A_BUSINESS}
          LIMIT 1`, [bridge]);
       if (sup.rows.length === 0)
         return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
@@ -605,7 +609,7 @@ router.post('/customers',
         return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
       const who = await query(
         `SELECT identity_id, display_name, user_id, bridge_id FROM identities
-          WHERE bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)
+          WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)) AND ${A_BUSINESS}
           LIMIT 1`, [handle]);
       if (who.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
       const c = who.rows[0];

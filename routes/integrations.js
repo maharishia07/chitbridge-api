@@ -23,6 +23,7 @@ const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a 
 const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const fs = require('fs');
 const path = require('path');
+const { isOwner } = require('../lib/owner');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query } = require('../db');
@@ -186,7 +187,9 @@ router.get('/download/:id', authIfOffered, async (req, res) => {
      for this kit and writes it into connector.json — the "shown once" is the zip itself. `configured:false` sends start.cmd through setup
      (Tally port, company, ledgers) before it ever watches. An anonymous download, or the 20-key limit, falls back to the placeholder. */
   let key = 'PASTE THE KEY FROM SETTINGS › INTEGRATIONS (scope: connector)', minted = null;
-  if (req.identity && !req.api_key) {
+  /* SEC-FIX3 S8: a key writes (products, prices, GSTIN), and hat-gate lets every GET through — so only the OWNER's download carries one;
+     a co-assist's zip holds the placeholder (a key's power never exceeds its maker's access) */
+  if (req.identity && isOwner(req)) {
     /* ⚠️ THE COUNTER'S KEY IS A TILL KEY. Its four calls (snapshot · engine · chits/send · bills) are behind the 'till' scope, and a
        till key may address nobody but itself — which is the whole point of it. A kit minted with the connector scopes could not read
        the shop it was downloaded for (found 2026-09-08). */

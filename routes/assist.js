@@ -308,9 +308,12 @@ router.put('/catalogue-source', auth, async (req, res) => {
     let exists;
     try { exists = await query('SELECT owner_entity_id FROM catalogue_source WHERE source_key = $1', [source_key]); }
     catch (dbErr) { return res.status(503).json({ ok: false, code: 'SOURCE_STORE_MISSING', error: 'Source authoring not enabled yet — apply migration b78.' }); }
-    // Owner-only: if the source exists and is owned by someone else, refuse. (Unowned platform-seeds can be claimed.)
+    // Owner-only: if the source exists and is owned by someone else, refuse. (Unowned platform-seeds are claimed by the platform root only — SEC-FIX3 S11.)
     if (exists.rows.length && exists.rows[0].owner_entity_id && String(exists.rows[0].owner_entity_id) !== String(owner))
       return res.status(403).json({ ok: false, error: 'This source is owned by another brand.' });
+    /* SEC-FIX3 S11: an UNOWNED seed is the platform's — only the root may claim it (it was "first caller wins") */
+    if (exists.rows.length && !exists.rows[0].owner_entity_id && !require('../lib/platformroot').isRoot(String(owner)))
+      return res.status(403).json({ ok: false, error: 'This source belongs to the platform.' });
     const schema = (b.schema && typeof b.schema === 'object') ? b.schema : {};
     const items = Array.isArray(b.items) ? b.items : [];
     const commercials_fields = Array.isArray(b.commercials_fields) ? b.commercials_fields : [];

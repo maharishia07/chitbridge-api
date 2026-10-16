@@ -156,6 +156,8 @@ router.post('/:chit_id', auth, async (req, res) => {
     const me = await receiverOf(entity_id);
 
     const made = [], refused = [];
+    /* SEC-FIX3 S2: the shop's OWN default schema — never an id from the body (as POST /api/products does) */
+    const schema_id = await require('../lib/catalogue-write').defaultSchemaId(entity_id);
     for (const w of wanted) {
       const i = Number(w.line);
       const line = lines[i];
@@ -196,7 +198,7 @@ router.post('/:chit_id', auth, async (req, res) => {
       });
       Object.keys(item_data).forEach((k) => item_data[k] === undefined && delete item_data[k]);
 
-      const r = await mintProduct({ query, withEntity, entity_id, schema_id: req.body.schema_id,
+      const r = await mintProduct({ query, withEntity, entity_id, schema_id,
         item_data, rid: req.id, note: 'adopted from a delivery' });
       if (r.error) { refused.push({ line: i, why: r.error }); continue; }
       made.push({ line: i, item_id: r.item.item_id, name, missing: say.missing });
