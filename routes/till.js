@@ -766,7 +766,7 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     try {
       const byOwner = {};
-      items.forEach((x) => { if (x.source && x.source.owner) (byOwner[x.source.owner] = byOwner[x.source.owner] || []).push({ name: x.name, id: x.item_id }); });
+      items.forEach((x) => { if (x.source && x.source.owner) (byOwner[x.source.owner] = byOwner[x.source.owner] || []).push({ name: x.name, id: x.item_id, category: x.category }); });
       const owners = Object.keys(byOwner);
       if (owners.length) {
         const fromNetworks = await require('../lib/network-offers').forStore(entity_id, owners, byOwner);
