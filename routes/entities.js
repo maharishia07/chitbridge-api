@@ -673,7 +673,7 @@ const PREF_SETS = {
    */
   ui: {
     column: 'ui_prefs',
-    keys: ['theme', 'fs', 'motion', 'stripes', 'edition', 'font', 'weight'],   /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */
+    keys: ['theme', 'fs', 'motion', 'stripes', 'edition', 'font', 'weight', 'kural'],   /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */   /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */
     check(prefs) {
       if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font';   /* avatar.js FONTS */
       if (prefs.weight && !['normal', 'bold'].includes(prefs.weight)) return 'Unknown text weight';

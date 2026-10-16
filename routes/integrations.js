@@ -151,13 +151,25 @@ router.get('/docs/:id', (req, res) => {
  * An unknown country (no pack, or not signed in) = offered, never a guess. The catalogue says may/why; the download refuses the same.
  */
 const FITS = {
-  tally: { ok: (p) => !!(p.export && p.export.tallyXml), why: 'The Tally connector is built on Tally\'s Indian GST books, so it is not offered for a {country} shop. Use the File connector (CSV) or the Counter.' },
-  gstin: { ok: (p) => !!(p.tax && p.tax.supply === 'state'), why: 'This connector is built on India\'s GST (GSTIN, CGST/SGST/IGST), so it is not offered for a {country} shop yet. Use the File connector (CSV) or the Counter.' },
+  tally: { ok: (p) => !!(p.export && p.export.tallyXml), code: 'NOT_FOR_COUNTRY', why: 'The Tally connector is built on Tally\'s Indian GST books, so it is not offered for a {country} shop. Use the File connector (CSV) or the Counter.' },
+  /* ⭐ SET-WALK1 · W16: Zoho Books is SOLD in Australia and the UAE — what is India-shaped is OUR kit (adapters/zoho.js: GSTIN, CGST/SGST). So the
+     row is "not yet for {country}" (code NOT_YET_FOR_COUNTRY: the kit is still to be built for that pack), never "not for your country". */
+  gstin: { ok: (p) => !!(p.tax && p.tax.supply === 'state'), code: 'NOT_YET_FOR_COUNTRY', why: 'Our {name} kit is built for India\'s GST so far — not yet for a {country} shop. Use the File connector (CSV) or the Counter.' },
+  /* a row with no kit at all: listed so an AU shop sees its own packages named, greyed with the sentence; the download refuses the same */
+  none: { ok: () => false, code: 'NOT_YET', why: 'A {name} kit is not built yet. Use the File connector (CSV) or the Counter; ask for it under Help.' },
 };
+/** the catalogue rows a country's pack names as the packages its shops run (reg-au: Xero · MYOB) — `fits:'none'` until a kit exists */
+const NOT_YET = [
+  { id: 'xero', name: 'Xero connector', for: ['AU', 'NZ', 'GB'], adapters: [], fits: 'none', status: 'not yet', runs_on: '—', does: 'Items from Xero; every ChitBridge order as a Xero invoice.' },
+  { id: 'myob', name: 'MYOB connector', for: ['AU', 'NZ'], adapters: [], fits: 'none', status: 'not yet', runs_on: '—', does: 'Items from MYOB; every ChitBridge order as a MYOB invoice.' },
+];
+function catalogueFor(country) { return CATALOGUE.concat(NOT_YET.filter((c) => country && c.for.includes(country))); }
 function mayFor(c, country) {
-  const f = c.fits && FITS[c.fits]; if (!f || !country) return { ok: true, why: null };
-  const p = require('../lib/regulation').packFor(country); if (!p) return { ok: true, why: null };
-  return f.ok(p) ? { ok: true, why: null } : { ok: false, why: f.why.replace('{country}', require('../lib/country-setup').nameOf(country)) };
+  const f = c.fits && FITS[c.fits]; if (!f) return { ok: true, code: null, why: null };
+  if (f === FITS.none) return { ok: false, code: f.code, why: f.why.replace('{name}', c.name.replace(/ connector$/, '')) };
+  if (!country) return { ok: true, code: null, why: null };
+  const p = require('../lib/regulation').packFor(country); if (!p) return { ok: true, code: null, why: null };
+  return f.ok(p) ? { ok: true, code: null, why: null } : { ok: false, code: f.code, why: f.why.replace('{country}', require('../lib/country-setup').nameOf(country)).replace('{name}', c.name.replace(/ connector$/, '')) };
 }
 /** the signed-in shop's country (identities.country) — one read; null when anonymous or unset */
 async function countryOf(req) {
@@ -170,13 +182,13 @@ async function countryOf(req) {
 const authIfOffered = (req, res, next) => ((req.headers.authorization || req.headers['x-api-key']) ? auth(req, res, next) : next());
 router.get('/catalogue', authIfOffered, async (req, res) => {
   const country = await countryOf(req);
-  res.json({ connectors: CATALOGUE.map((c) => { const o = Object.assign({}, c, { download: '/api/integrations/download/' + c.id, docs: '/api/integrations/docs/' + c.id, may: mayFor(c, country) }); delete o.fits; return o; }) });
+  res.json({ connectors: catalogueFor(country).map((c) => { const o = Object.assign({}, c, { download: '/api/integrations/download/' + c.id, docs: '/api/integrations/docs/' + c.id, may: mayFor(c, country) }); delete o.fits; delete o.for; return o; }) });
 });
 router.get('/download/:id', authIfOffered, async (req, res) => {
   const c = CATALOGUE.find((x) => x.id === req.params.id);
   if (!c) return res.status(404).json({ error: 'Not found' });
   const may = mayFor(c, await countryOf(req));
-  if (!may.ok) return res.status(409).json({ error: may.why, code: 'NOT_FOR_COUNTRY' });
+  if (!may.ok) return res.status(409).json({ error: may.why, code: may.code || 'NOT_FOR_COUNTRY', message: may.why });
   const adapter = c.adapters.includes(String(req.query.adapter || '')) ? String(req.query.adapter) : c.default_adapter;
   const base = require('../lib/public-base').apiBase(req);
   /* HX1: the site the counter's "open ChitBridge" link opens — PUBLIC_WEB_BASE, else the page that asked for the kit (its Origin) */
