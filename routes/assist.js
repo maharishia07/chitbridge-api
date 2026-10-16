@@ -1,4 +1,8 @@
 // routes/assist.js — POST /api/assist — tier-1 assistant LLM proxy (STUB).
+//
+// CALLED BY the web client's askLLM (app.html) — the model key never lives in the browser.
+// FLOW      POST /api/assist → lib/ai.js invokeSkill (wallet · daily cap · usage ledger) → { answer } | a controlled non-200 (the client falls to its library)
+// CARD      28-platform-and-operations/assist
 // The web client (app.html `askLLM`) calls THIS so the model API key NEVER lives in the browser.
 // Contract (docs/AI-ASSISTANT.md):
 //   Req:  { q, context, stage }            (+ optional `Authorization: Bearer` for post-auth grounding)

@@ -1,4 +1,9 @@
 // server.js — Chit and Bridge MVP — Main Server
+//
+// OWNS      the process: boot preflight, middleware, rate limits, every route mount, and listen.
+// CALLED BY npm start / the host (railway.json healthcheck on /health); tests lift pieces through the lib modules, not this file.
+// FLOW      dotenv → boot preflight (lib/dev-otp) → express + helmet + cors → limiters → route mounts → listen
+// CARD      28-platform-and-operations/server
 // Version 1.0 — June 2026
 require('dotenv').config();
 

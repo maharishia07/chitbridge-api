@@ -1,5 +1,8 @@
 // routes/combo-templates.js — [OFFR-06] saved, reusable combo/modifier group sets — b266.
 //
+// FLOW      list → save-as (POST) → open again (GET one) → replace (PUT) → delete — every query scoped to the caller's own entity
+// CARD      07-offers-pricing-and-combos/combo-templates
+//
 // Athi, testing the Modifier Lab: "the example shown is very pathetic... what i want is something similar
 // to the combo offer in a popup window with possibly combination, and also with save as option, if we are
 // doing save as feature then we should be having a mechanism of open the same again."

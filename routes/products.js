@@ -1,4 +1,9 @@
 // routes/products.js — B3.7a Catalogue items (products) CRUD + search
+//
+// OWNS      /api/products: the catalogue's products — add · bulk · import · export · edit · availability · schedule · media · versions · lists.
+// CALLED BY server.js (mounted at /api/products); the web Catalogue and the CSV import.
+// FLOW      auth gate → lib/catalogue-columns (declare) → lib/mint-product / lib/catalogue-write (the one writer) → one JSON envelope
+// CARD      storefront-and-catalogue/products-routes
 const express = require('express');
 const log = require('../lib/logger');
 const router  = express.Router();

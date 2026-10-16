@@ -1,4 +1,9 @@
 // scripts/check-db-role.js — answers B1 open-question #1: does the API's DB role BYPASS Row-Level Security?
+//
+// OWNS      the one-off check that the API's database role does not bypass Row-Level Security.
+// CALLED BY a person on the dev box (node scripts/check-db-role.js); read-only.
+// FLOW      connect with DATABASE_URL → read the role's flags → print → disconnect
+// CARD      28-platform-and-operations/db-role
 // Runs through the SAME connection the app uses (process.env.DATABASE_URL), so it reports the REAL role —
 // not the Supabase SQL-editor's `postgres` superuser. Run on the dev box (where DATABASE_URL is set):
 //     node scripts/check-db-role.js

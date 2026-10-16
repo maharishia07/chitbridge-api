@@ -14,6 +14,9 @@
  * co-assist rail already lists with site, health and rights; every later heartbeat writes the actor's last_seen and
  * counters, so the SAME health(last_seen) answers here and there. The API key stays the kit's credential (scoped,
  * revocable); the actor row is its identity. No migration: the columns b62 gave connectors.
+ *
+ * CALLED BY server.js (mounted at /api/integrations); the web Settings › Connectors and the downloaded kits' heartbeat.
+ * CARD      iot-and-connectors/integrations
  */
 const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const { safeErr } = require('../lib/respond');

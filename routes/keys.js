@@ -13,6 +13,10 @@
  *
  * ⚠️ A KEY CANNOT MINT OR REVOKE KEYS. Only a person's session can — a leaked key must not be able to breed.
  * Scopes today: 'offers' (the offer engine as a service). A route asks for one with auth.requireScope('offers').
+ *
+ * OWNS      minting, listing and revoking the API keys another system signs in with (the listing on the entity is what keeps a key alive).
+ * CALLED BY server.js (mounted at /api/keys); the web Settings › Counters & keys.
+ * CARD      20-settings-governance-and-plan/keys
  */
 const express = require('express');
 const { safeErr } = require('../lib/respond');

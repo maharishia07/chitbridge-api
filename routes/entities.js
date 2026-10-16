@@ -1,3 +1,9 @@
+/**
+ * OWNS      /api/entities: register · verify · the shop's own row (me · prefs · locale · profile) · policy flags · header · sides · routing · populations · usage · entitlements.
+ * CALLED BY server.js (mounted at /api/entities); the web shell, Settings and the sign-in window.
+ * FLOW      auth gate → the route's lib (lib/policy · lib/entity-header · lib/sides · lib/profile) → one JSON envelope
+ * CARD      20-settings-governance-and-plan/entities-routes
+ */
 const versionref = require('../lib/versionref');
 // routes/entities.js — Entity registration, login, search
 const express = require('express');

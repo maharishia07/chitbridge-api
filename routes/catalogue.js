@@ -1,4 +1,9 @@
 // routes/catalogue.js — B3.7 Public catalogue + end-customer order (no business login)
+//
+// OWNS      the public catalogue and the end-customer order (no business login): list, face, media and the order that lands as a chit.
+// CALLED BY the public storefront (public/store.html) and the shops' share links; mounted at /api/catalogue by server.js.
+// FLOW      GET catalogue (rate-limited) → POST order → chit to the shop; media streams through lib/storage
+// CARD      storefront-and-catalogue/catalogue-routes
 const express = require('express');
 const logger = require('../lib/logger');
 const router  = express.Router();

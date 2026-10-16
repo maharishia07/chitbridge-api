@@ -1,4 +1,10 @@
 'use strict';
+/**
+ * OWNS      /api/governance: entities and conformance, the profile and its vault (merge-patch), country setup, readiness, AI draft and usage.
+ * CALLED BY server.js (mounted at /api/governance); Settings (Your shop · Country · Print setup) and the readiness screens.
+ * FLOW      auth gate → lib/profile · lib/country-setup · lib/vault-patch → one JSON envelope
+ * CARD      20-settings-governance-and-plan/governance-routes
+ */
 const versionref = require('../lib/versionref');
 const log = require('../lib/logger');
 // routes/governance.js — GOV-01 protected entity / constitution / governed inheritance.
