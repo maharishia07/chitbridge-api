@@ -258,7 +258,6 @@
     "routes/catalogue.js": [
       "(anonymous)",
       "POST /:bridge_id/order/confirm",
-      "POST /network-store/:networkId/order",
       "repriceAgainstCatalogue"
     ],
     "routes/chits.js": [

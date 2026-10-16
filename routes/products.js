@@ -338,7 +338,7 @@ router.post('/', auth, [ body('item_data').isObject() ], validate, async (req, r
       query, withEntity, entity_id, schema_id, item_data: req.body.item_data, rid: req.id,
       validate: (data, rows) => validateAgainst(rows, data),
     });
-    if (made.error) return res.status(400).json({ error: 'Invalid product', message: made.error });
+    if (made.error) return res.status(400).json({ error: 'Invalid product', code: made.code || undefined, message: made.error });
     /* The new columns and any near-miss warning travel with the answer, so the screen can say what it did. */
     res.json({ message: 'Product added', item: made.item, declared: made.declared, warnings: made.warnings });
   } catch (e) { fail(res, e, 'Add failed'); }
@@ -1198,20 +1198,25 @@ router.patch('/:id', auth, [ body('item_data').isObject() ], validate, async (re
      * Without the flag the old contract holds for the editors that send the whole record on purpose.
      */
     let bodyItem = req.body.item_data;
-    if (req.body.merge === true) {
+    /* ⭐ C4: media/image are SERVER-OWNED (catalogue-columns.SERVER_OWNED). The stored row is read when merge:true asks for
+       it, or when the body names a server-owned key (an unchanged echo passes, a change is refused) — an ordinary edit costs
+       no extra trip. */
+    let stored = null;
+    if (req.body.merge === true || catcols.hasServerOwned(req.body.item_data)) {
       const cur = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [req.params.id, entity_id]));
       if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
-      bodyItem = mergePatch(cur.rows[0].item_data || {}, req.body.item_data);
+      stored = cur.rows[0].item_data || {};
+      if (req.body.merge === true) bodyItem = mergePatch(stored, req.body.item_data);
     }
     /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
        validated and wrote the raw body, so a key added on edit — through the API, or through a form that renders
        declared columns and will one day render one more — could land undeclared again. Same writer, same rule. */
     const decl = await catcols.ensureDeclared({
-      query, entity_id, schema_id: await defaultSchemaId(entity_id), item_data: bodyItem,
+      query, entity_id, schema_id: await defaultSchemaId(entity_id), item_data: bodyItem, stored,
       ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
       validate: (data, rows) => validateAgainst(rows, data),
     });
-    if (decl.error) return res.status(400).json({ error: 'Invalid product', message: decl.error });
+    if (decl.error) return res.status(400).json({ error: 'Invalid product', code: decl.code || undefined, message: decl.error });
     // STAMP on edit too — a round-trip that read `{amount,currency}` and writes it back is accepted only while the
     // currency still agrees with the entity's; a different one is refused (see money.stampPrice).
     const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
@@ -1254,7 +1259,7 @@ router.post('/:id/schedule', auth, [ body('effective_at').isString(), body('item
       ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
       validate: () => null,
     });
-    if (decl.error) return res.status(400).json({ error: 'Invalid change', message: decl.error });
+    if (decl.error) return res.status(400).json({ error: 'Invalid change', code: decl.code || undefined, message: decl.error });
     const cur = await withEntity(entity_id, (db) => db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id]));
     if (!cur.rows.length) return res.status(404).json({ error: 'Not found' });
     const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(Object.assign({}, cur.rows[0].item_data, decl.item_data), await regional.currencyFor(entity_id)));
@@ -1409,9 +1414,13 @@ router.get('/media/:item_id/:mid', async (req, res) => {
     if (!row) return res.status(404).end();
     const m = (Array.isArray(row.item_data && row.item_data.media) ? row.item_data.media : []).find((x) => x && String(x.id) === String(req.params.mid));
     if (!m || !m.key) return res.status(404).end();
-    const buf = await objStore.get(m.key);
+    /* ⭐ C4: the bytes are read as the ITEM'S OWNER — a key the item names outside its own prefix is a 404, never served */
+    const buf = await objStore.get(m.key, row.entity_id);
     res.set('Content-Type', m.mime || 'application/octet-stream'); res.set('Cache-Control', 'public, max-age=86400'); res.send(buf);
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    if (e && e.code === objStore.NOT_OWNER) { log.warn('products GET /media: the item names a key outside its shop — not served', { item_id: req.params.item_id, mid: req.params.mid }); return res.status(404).end(); }
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 router.post('/:id/media', auth, async (req, res) => {
   try {
@@ -1473,7 +1482,11 @@ router.delete('/:id/media/:mid', auth, async (req, res) => {
       return { gone, media: d.media };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
-    if (out.gone && out.gone.key && (await objStore.available())) { try { await objStore.del(out.gone.key); } catch (e) { log.fellBack('products DELETE /:id/media/:mid: failed — carried on without it', e); } }
+    /* ⭐ C4: the object is deleted as THIS shop's — a key outside its prefix is left alone and said (NOT_OWNER), never deleted */
+    if (out.gone && out.gone.key && (await objStore.available())) {
+      try { await objStore.del(out.gone.key, entity_id); }
+      catch (e) { if (e && e.code === objStore.NOT_OWNER) log.warn('products DELETE /:id/media/:mid: the item named a key outside its shop — the entry went, the object was not touched', { entity_id, item_id: req.params.id }); else log.fellBack('products DELETE /:id/media/:mid: failed — carried on without it', e); }
+    }
     res.json({ message: 'Media removed', media: out.media });
   } catch (e) { fail(res, e, 'Could not remove the media'); }
 });

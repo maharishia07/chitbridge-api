@@ -212,11 +212,11 @@ router.post('/catalogue-structure', async (req, res) => {
 // POST /api/assist/catalogue-adopt — PERSIST the entity's adoption: a REFERENCE (source_key + version) + its
 // COMMERCIALS overlay only (NO copy of design/colour). Per-entity, WITH RLS (b75 catalogue_adoption). This is the
 // human CONFIRM/publish of the catalogue-structure slot. Self-healing: if b75 isn't applied, returns 503 (not 500).
-router.post('/catalogue-adopt', async (req, res) => {
+/* ⭐ SEC-FIX2 M3: a WRITE runs the real sign-in (middleware/auth — removed/deactivated, revoked session, device binding, key scope and
+   the View-only hat gate), not softIdentity, which checks only the signature. The entity is auth's (entityOf). */
+router.post('/catalogue-adopt', auth, async (req, res) => {
   try {
-    const identity = softIdentity(req);
-    if (!identity) return res.status(401).json({ ok: false, error: 'Sign in to adopt a catalogue.' });
-    const entity = identity.parent_entity_id || identity.identity_id;
+    const entity = auth.entityOf(req);
     const source = (req.body && typeof req.body.source === 'string') ? req.body.source.trim() : 'beta-royale-play@v1';
     const built = await catalogueBuild.build(source);
     if (!built) return res.status(404).json({ ok: false, error: 'Unknown catalogue source.' });
@@ -262,7 +262,7 @@ router.post('/catalogue-adopt', async (req, res) => {
     } catch (e) { log.fellBack('catalogue adopted, but whether the store is in the brand\'s network was not read — no join request sent', e); }
     res.json({ ok: true, persisted: true, source, resolved: await catalogueBuild.resolve(source, commercials),
       acted_by: { deputy: 'ai:catalogue-structure@v1', rung: 'extract', principal: 'entity:' + entity,
-        delegator: { type: 'human', id: identity.identity_id }, confirmed_by: { id: identity.identity_id }, grant: 'per-act' } });
+        delegator: { type: 'human', id: req.identity.identity_id }, confirmed_by: { id: req.identity.identity_id }, grant: 'per-act' } });
   } catch (err) {
     log.error('assist/catalogue-adopt failed', { id: req.id, err: err.message });
     res.status(500).json({ ok: false, error: safeErr(err) });
@@ -271,11 +271,9 @@ router.post('/catalogue-adopt', async (req, res) => {
 
 // GET /api/assist/catalogue-mine — the entity's PERSISTED catalogue(s): its adoption rows (WITH RLS) RESOLVED against
 // the shared source (design/colour by reference) + its commercials overlay. Self-healing (503 if b75 not applied).
-router.get('/catalogue-mine', async (req, res) => {
+router.get('/catalogue-mine', auth, async (req, res) => {   /* M3: the same real sign-in as the write it mirrors */
   try {
-    const identity = softIdentity(req);
-    if (!identity) return res.status(401).json({ ok: false, error: 'Sign in.' });
-    const entity = identity.parent_entity_id || identity.identity_id;
+    const entity = auth.entityOf(req);
     const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
     let rows = [];
     try {

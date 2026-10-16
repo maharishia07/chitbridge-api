@@ -76,6 +76,7 @@ const GUARDS = [
   'migration-lint.test.cjs',     // no NEW migration hides a FOREIGN KEY inside CREATE TABLE IF NOT EXISTS
   'entity-cast-guard.test.cjs',  // no NEW RLS policy casts an unset current_setting straight to ::uuid
   /* ⚠️ a guard nobody ran: the access gate for co-assists was never in this list (found 2026-09-28) */
+  'sec-fix2.test.cjs',          // ⭐⭐ SEC-FIX2 (review 2026-10-15): media/image server-owned + owner-prefixed object keys (C4) · the network store reads the edges, its order needs a flag and a customer (C6) · assist writes behind auth (M3) · key revoke owner-only (L1) · no raw error text as why (L2)
   'hat-gate.test.cjs',          // ⭐⭐ a View-only/Comment-only co-assist cannot write; asking /assist is open, its five writes are not
   'access-events.test.cjs',     // the IAM audit trail never invents a change, and a lost row is SAID (review 2026-09-25)
   'notifications-count.test.cjs', // ⭐⭐ the badge's number is ONE withEntity statement over the feed's own rows (M7, 2026-09-28)

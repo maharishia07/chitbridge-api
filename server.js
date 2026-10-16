@@ -482,14 +482,29 @@ app.use((err, req, res, next) => {
 // ── Start ─────────────────────────────────────────────────────
 /* HOST (optional): the address to listen on. Unset = every interface, as in production; the local test stack sets HOST=127.0.0.1 so the api is not reachable from the LAN. */
 const HOST = process.env.HOST || undefined;
-app.listen(PORT, HOST, () => {
-  console.log(`Chit and Bridge API running on port ${PORT}${HOST ? ' (' + HOST + ' only)' : ''}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Health: http://localhost:${PORT}/health`);
-  /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
-  try { require('./lib/books-nightly').start(); } catch (e) { console.warn('books nightly not started:', e.message); }
-  /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
-  try { require('./lib/crm-followups').start(); } catch (e) { console.warn('crm sweep not started:', e.message); }
-});
+/* SEC-FIX2 live check 2: read the role the app pool connects as BEFORE serving — a role that bypasses RLS refuses to start (warns on a local stack). */
+async function checkDbRole() {
+  if (!process.env.DATABASE_URL) return;
+  const dbRole = require('./lib/db-role');
+  try {
+    const verdictNow = dbRole.verdict(await dbRole.roleFacts((sql) => require('./db').query(sql)), require('./lib/dev-otp').isLocalStack());
+    log[verdictNow.level === 'fatal' ? 'critical' : verdictNow.level === 'ok' ? 'info' : 'warn'](verdictNow.msg, { reason: verdictNow.reason });
+    if (verdictNow.level === 'fatal') process.exit(1);
+  } catch (e) { log.warn('database role not checked', { reason: 'the read failed (' + e.message + ') — the pool retries; run npm run db:role by hand' }); }
+}
+
+function startServing() {
+  app.listen(PORT, HOST, () => {
+    console.log(`Chit and Bridge API running on port ${PORT}${HOST ? ' (' + HOST + ' only)' : ''}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Health: http://localhost:${PORT}/health`);
+    /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
+    try { require('./lib/books-nightly').start(); } catch (e) { console.warn('books nightly not started:', e.message); }
+    /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
+    try { require('./lib/crm-followups').start(); } catch (e) { console.warn('crm sweep not started:', e.message); }
+  });
+}
+checkDbRole().then(startServing);
+
 
 module.exports = app;
