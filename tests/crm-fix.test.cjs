@@ -14,6 +14,7 @@
 const assert = require('assert'), path = require('path');
 const API = path.join(__dirname, '..');
 process.env.WHATSAPP_TOKEN = 'tok';
+{ const sp = require.resolve(path.join(API, 'lib/schema')); require.cache[sp] = { id: sp, filename: sp, loaded: true, exports: { hasTable: async () => true, hasColumn: async () => true, forget() {} } }; }
 const { make, row } = require('./support/crm-stub.cjs');
 const t = make(), D = t.data;
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
@@ -40,10 +41,15 @@ async function dbq(sql, p) {
 const handle = { query: dbq };
 { const db = require(path.join(API, 'db')), crmEntity = db.withEntity; db.withEntity = async (e, fn) => (world.on ? fn(handle) : crmEntity(e, fn)); }   /* the sender's world only while world.on */
 global.fetch = async (url, o) => { world.sent.push(JSON.parse(o.body)); return { ok: true, json: async () => ({ messages: [{ id: 'm1' }] }) }; };
+const S = require('../lib/stores'), G = require('../lib/crm-groups');   /* the modules under test, by name */
 const PV = require('../lib/privacy'), WA = require('../lib/whatsapp-out');
 const reset = () => { world.on = true; world.parties = [{ id: 'P1', phone: '9840012321' }]; world.prefs = []; world.captures = []; world.sent = []; world.logged = []; };
 
 (async () => {
+  await ita('R1/R7 phoneMatchKey: one key for +91 / bare / country-code forms and AU 04…/61…; too short names no one', async () => {
+    assert.strictEqual(S.phoneMatchKey('+91 98400 12321'), S.phoneMatchKey('9840012321')); assert.strictEqual(S.phoneMatchKey('919840012321'), S.phoneMatchKey('9840012321'));
+    assert.strictEqual(S.phoneMatchKey('61412345678'), S.phoneMatchKey('0412345678')); assert.strictEqual(S.phoneMatchKey('12345'), ''); assert.strictEqual(G.SEND_CAP > 0, true);
+  });
   await ita('R1 gate by a WhatsApp number (country code) finds a party saved without it, and the opt-out holds', async () => {
     reset(); world.prefs = [{ party_id: 'P1', channel: 'whatsapp', purpose: 'service', allowed: false, basis: 'legitimate_use', withdrawn_at: null }];
     const v = await PV.gate(handle, 'E1', { to_ref: '919840012321' }, 'whatsapp', 'service'); assert.strictEqual(v.may, false); assert.strictEqual(v.code, 'OPTED_OUT');

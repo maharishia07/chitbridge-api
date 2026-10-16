@@ -26,6 +26,9 @@ const MEM = [];
 let stmts = [];
 D.pre = async (sql, p) => {
   stmts.push(sql);
+  if (/^SELECT to_regclass\(\$1\)/.test(sql)) return { rows: [{ ok: true }] };   /* R4: the call desk asks the consent gate — no consent rows here = no objection */
+  if (/FROM party_contact_pref\s+WHERE owner_entity_id/.test(sql)) return { rows: [] };
+  if (/^SELECT DISTINCT ON \(party_id, channel, purpose\)/.test(sql)) return { rows: [] };
   if (/^SELECT q\.followup_id/.test(sql)) {
     assert.strictEqual(p[0], 'E1', 'the queue is scoped to the shop ($1)');
     const open = D.followups.filter((f) => f.owner === p[0] && !f.done_at).map((f) => ({ followup_id: f.followup_id, party_id: f.party_id, what: f.what, due_at: f.due_at, assignee_user_id: f.assignee_user_id, src: 'followup' }));
@@ -38,7 +41,7 @@ D.pre = async (sql, p) => {
     return { rows: all.slice(offset, p[4] == null ? undefined : offset + Number(p[4])).map((x) => Object.assign(x, counts)) };
   }
   if (/^UPDATE party_followup SET done_at = now\(\), done_by = \$3 WHERE owner_entity_id = \$1 AND party_id = \$2/.test(sql)) {
-    assert.strictEqual(p[0], 'E1'); D.followups.forEach((f) => { if (f.owner === p[0] && f.party_id === p[1] && !f.done_at) f.done_at = new Date().toISOString(); }); return { rows: [] };
+    assert.strictEqual(p[0], 'E1'); D.followups.forEach((f) => { if (f.owner === p[0] && f.party_id === p[1] && !f.done_at && (!/followup_id = \$4/.test(sql) || f.followup_id === p[3])) f.done_at = new Date().toISOString(); }); return { rows: [] };
   }
   if (/^SELECT body FROM party_interaction/.test(sql)) return { rows: D.interactions.filter((i) => i.owner === p[0] && i.party_id === p[1] && i.kind === 'call').sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, 2).map((i) => ({ body: i.body })) };
   if (/^SELECT txn_count FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2 AND added_via = 'lead'/.test(sql)) { const r = D.cust.find((x) => x.owner === p[0] && x.party_id === p[1] && x.added_via === 'lead'); return { rows: r ? [{ txn_count: r.txn_count }] : [] }; }
@@ -74,7 +77,7 @@ const post = (id, body) => t.post('/parties/' + id + '/outcome', body);
     assert.strictEqual((await t.get('/calls?scope=all&limit=1000000')).body.limit, 1000, 'the server\'s max, never the client\'s word');
   });
   await ita('interested: call logged (call · out · the word), the open follow-up closed, the next is +2 days, source interaction', async () => {
-    const r = await post(P(2), { outcome: 'interested' }); assert.strictEqual(r.status, 201, JSON.stringify(r.body));
+    const r = await post(P(2), { outcome: 'interested', followup_id: 'f1' }); assert.strictEqual(r.status, 201, JSON.stringify(r.body));   /* R5: the row's own follow-up */
     assert.strictEqual(r.body.interaction.body, 'Interested'); assert.strictEqual(r.body.interaction.kind, 'call'); assert.strictEqual(r.body.interaction.direction, 'out');
     assert.strictEqual(r.body.followup.due_day, day(2)); assert.strictEqual(r.body.followup.source, 'interaction'); assert.strictEqual(r.body.stage, null);
     assert.ok(D.followups.find((f) => f.followup_id === 'f1').done_at, 'the old follow-up is closed'); assert.strictEqual(D.followups.filter((f) => f.party_id === P(2) && !f.done_at).length, 1);
@@ -94,8 +97,8 @@ const post = (id, body) => t.post('/parties/' + id + '/outcome', body);
   });
   await ita('not now → +30 days and Parked; wrong number → no follow-up and Lost; a customer\'s stage is not touched', async () => {
     let r = await post(P(3), { outcome: 'not_now' }); assert.strictEqual(r.body.followup.due_day, day(30)); assert.strictEqual(r.body.stage.stage, 'parked');
-    r = await post(P(3), { outcome: 'wrong_number' }); assert.strictEqual(r.body.followup, null); assert.strictEqual(r.body.stage.stage, 'lost');
-    assert.strictEqual(D.followups.filter((f) => f.party_id === P(3) && !f.done_at).length, 0, 'wrong number leaves no follow-up');
+    const wrongFrom = r.body.followup.followup_id; r = await post(P(3), { outcome: 'wrong_number', followup_id: wrongFrom });   /* the row the call came from */ assert.strictEqual(r.body.followup, null); assert.strictEqual(r.body.stage.stage, 'lost');
+    assert.ok(!D.followups.some((f) => f.followup_id === wrongFrom && !f.done_at), 'the follow-up the call came from is closed');
     const m = MEM.length; r = await post(P(2), { outcome: 'not_now' }); assert.strictEqual(r.status, 201); assert.strictEqual(r.body.stage, null); assert.strictEqual(MEM.length, m);
   });
   await ita('no answer: +1 day; the 3rd in a row → +3 days and a Parked suggestion', async () => {

@@ -863,3 +863,11 @@ sends; the owner deletes. Every figure here is counted from the rows GET /partie
 | POST /groups → `{ name, added, removed, count }` | — | the group after the write: `added` / `removed` = rows actually changed (an id that is nobody's customer changes nothing); `count` = members now | `lib/crm-groups.setGroup` (ONE transaction; ≤ 500 ids; ≤ 20 groups per customer → `TOO_MANY_GROUPS`; before b205 → 409 `GROUPS_NOT_MIGRATED`) | the screen's refresh |
 | DELETE /groups/:name → `{ name, removed }` | — | how many customers the group left; 404 `NOT_FOUND` when none carried it | `lib/crm-groups.dropGroup` | the screen |
 | POST /segments/:key/send → `{ key, dry, channel, purpose, members, may, refused[] { party_id, name, code, why }, refused_by[], sent[] { party_id, name, status, reason }, sent_n, failed_n, refused_n }` | — | derived: `dry` = the verdict per member, nothing sent; a real send = `lib/whatsapp-out.notify` per allowed member (the ONE sender, which asks `lib/privacy.gate` again) — `status` sent · refused · failed with the sender's own `reason`; only WhatsApp is sendable today (`CHANNEL_NOT_SENDABLE`); > 100 allowed members → 400 `TOO_MANY` before any send | `lib/crm-groups.send` | the Send sheet: the count first, then the outcome per member |
+
+## CRM-FIX (R4 · R5 · R9 · R10, 16 Oct 2026)
+| key | shape | number · source · writer · reader |
+|---|---|---|
+| `dues.open_side` (GET /api/crm/parties · /parties/:id) | boolean | Derived in `lib/crm.net`: either stored side (customer / supplier) is non-zero, even when the netted `balance_minor` is 0. Read by `crm.removeParty` (HAS_DUES). |
+| `calls[].may_call` · `call_why` · `call_code` (GET /api/crm/calls) | boolean · string/null · string/null | Derived per row from the newest `party_contact_pref` row for phone × service (`privacy.contactPrefsOf`); true before b306. The call desk greys the tap-to-call with `call_why`; POST outcome refuses 403 with `call_code`. |
+| POST /api/crm/parties/:id/outcome `followup_id` | uuid, optional | The queue row's own follow-up — the only one the call closes. Absent (a new lead's row) closes none. |
+| POST /api/supplies/purchase `books_posted` | boolean, always false | Written by `supply-store.purchase`: cost and stock only, no expense/payable/input tax is posted; the toast says "not in your books yet". Read by the supplies screen. |

@@ -1,4 +1,8 @@
 // routes/relationships.js — B3.6 Supplier List + Customer List + Promotions
+// owns: /api/relationships — supplier list · customer list · promotions · scorecard routes
+// called by: server.js (mounted at /api/relationships)
+// FLOW  auth → validate → withEntity → lib/crm · lib/local-identity (the add/remove paths)
+// CARD 11-crm-and-marketing/relationships-routes
 const express = require('express');
 const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
@@ -309,10 +313,10 @@ router.delete('/suppliers/:id', auth, async (req, res) => {
   try {
     /* R8: owner only, refused with money open, and it HIDES (CRM's own remove) — a staff login can no longer delete a supplier the shop owes */
     if (!isOwner(req)) return res.status(403).json({ code: 'OWNER_ONLY', error: 'Owner only', message: 'Only the owner can remove a supplier.' });
-    const owner = ctx(req), crm = require('../lib/crm');
+    const owner = ctx(req);
     const row = await withEntity(owner, (db) => db.query(`SELECT supplier_entity_id FROM supplier_list WHERE supplier_list_id = $1 AND owner_entity_id = $2`, [req.params.id, owner]));
     if (row.rows.length === 0) return res.status(404).json({ error: 'Not found' });
-    await crm.removeParty(owner, row.rows[0].supplier_entity_id);
+    await require('../lib/crm').removeParty(owner, row.rows[0].supplier_entity_id);
     res.json({ message: 'Supplier removed' });
   } catch (err) {
     if (err && err.status && err.status < 500) return res.status(err.status).json({ code: err.code || 'REFUSED', error: err.message, message: err.message });
@@ -594,7 +598,7 @@ router.post('/customers',
         /* ⭐ CRM-MINT1: mint · contact · list row · number — the one add-customer, one transaction */
         const a = await withEntity(owner, (h) => L.addCustomer(h, owner, { name: localName, phone, gstin, via: 'manual' }));
         if (a.refused) return res.status(a.refused.status).json(a.refused.error);
-        if (a.exists) return res.status(409).json({ error: 'Exists', message: a.by === 'phone' ? 'That phone number is already in your customer list as ' + a.local.display_name : localName + ' is already in your customer list' });
+        if (a.exists) return res.status(409).json({ error: 'Exists', message: L.existsWords(a, localName + ' is already in your customer list') });
         const local = a.local;
         const why = 'not on ChitBridge — bills stay with you';
         return res.json({ message: 'Customer added — ' + why,

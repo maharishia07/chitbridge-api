@@ -11,6 +11,11 @@
  *
  * ⚠️ AND NOTHING HERE HAS A SELLING PRICE. There is no field for one, deliberately. A supply that could be priced
  * would eventually be sold, and the whole point of the split is that it cannot.
+ *
+ * owns: /api/supplies — what a shop buys to use (sundries): list · add · purchase · issue
+ * called by: server.js (mounted at /api/supplies)
+ * FLOW  POST /purchase → lib/supply-store.purchase → says (expensed — not in your books yet)
+ * // CARD 16-finance/supplies-routes
  */
 'use strict';
 const express = require('express');

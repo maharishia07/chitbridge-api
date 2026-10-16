@@ -57,7 +57,7 @@ D.extra = async (sql, p) => {
     return { rows: newest(T.prefs.filter((r) => r.owner === p[0] && r.party_id === p[1] && r.channel === p[2] && r.purpose === p[3])) };
   }
   if (/^SELECT p\.channel, p\.purpose, p\.allowed, p\.basis, p\.withdrawn_at FROM party_contact_pref p JOIN identities i/.test(sql)) {
-    const ids = D.cust.filter((c) => [c.phone, c.otp_contact].some((x) => x && String(x).replace(/[^0-9]/g, '') === p[1])).map((c) => c.party_id);
+    const ids = D.cust.filter((c) => [c.phone, c.otp_contact].some((x) => x && String(x).replace(/[^0-9]/g, '').slice(-9) === p[1])).map((c) => c.party_id);
     return { rows: newest(T.prefs.filter((r) => r.owner === p[0] && ids.indexOf(r.party_id) >= 0 && r.channel === p[2] && r.purpose === p[3])) };
   }
   if (/^SELECT DISTINCT ON \(party_id, channel, purpose\)/.test(sql)) {   /* G1 · G5: the newest row per (party, channel, purpose) */

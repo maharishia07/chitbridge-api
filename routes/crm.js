@@ -296,7 +296,7 @@ router.post('/leads', auth, noKey, async (req, res) => {
     const out = await withEntity(owner, async (h) => {
       const a = await L.addCustomer(h, owner, { name, phone, via: 'lead' });   /* ⭐ CRM-MINT1: the one add-customer */
       if (a.refused) throw bad((a.refused.error && a.refused.error.message) || 'Could not add them.', a.refused.status || 400, 'MINT_REFUSED');
-      if (a.exists) throw bad(a.by === 'phone' ? 'That phone number is already on your list as ' + a.local.display_name + '.' : 'That name is already on your list.', 409, 'EXISTS');
+      if (a.exists) throw bad(L.existsWords(a, 'That name is already on your list.'), 409, 'EXISTS');
       const local = a.local, party_no = a.party_no;
       const m = await M.add(h, owner, { kind: 'lead_stage', item_id: local.identity_id, group: stage, by: byOf(req) });
       return { party: { party_id: local.identity_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false, lead: { stage, since: crm.iso(m.at) } } };
@@ -371,7 +371,7 @@ router.post('/walk-ins/add', auth, noKey, async (req, res) => {
     const { local, party_no, claimed } = await withEntity(owner, async (h) => {
       const a = await L.addCustomer(h, owner, { name, phone: from.value, via: 'manual' });
       if (a.refused) throw bad((a.refused.error && a.refused.error.message) || 'Could not add them.', a.refused.status || 400, 'MINT_REFUSED');
-      if (a.exists) throw bad(a.by === 'phone' ? 'That phone number is already on your list as ' + a.local.display_name + '.' : 'That customer is already on your list.', 409, 'EXISTS');
+      if (a.exists) throw bad(L.existsWords(a, 'That customer is already on your list.'), 409, 'EXISTS');
       /* the points: the ONE claim path (lib/reward-store.claim — the engine's claim, both halves locked and written together), here
          inside this same transaction. The ref names the new customer too: a phone claimed again later onto another customer is a
          NEW claim, never a half-replay (main's rule, kept through INT6a). */

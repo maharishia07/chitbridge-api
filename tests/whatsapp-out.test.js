@@ -55,7 +55,7 @@ t('★★ with no token it REFUSES rather than pretending to queue', async () =>
 });
 t('★★ every refusal that HAS a recipient is logged, not silently dropped', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'whatsapp-out.js'), 'utf8');
-  const notify = src.slice(src.indexOf('async function notify('), src.indexOf('async function notifyChitStatus'));
+  const notify = src.slice(src.indexOf('async function templatePayload('), src.indexOf('async function notifyChitStatus'));
   /**
    * A notification never attempted is not the same as one that failed, and the shop must be able to tell which.
    * So every refusal on the send path goes through _log — no token, no provider_ref, window closed.
@@ -120,8 +120,8 @@ t('★★ an absent approval means NO, not "probably fine"', () => {
 });
 t('★★ outside the window, an unapproved template REFUSES and says both reasons', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'whatsapp-out.js'), 'utf8');
-  const notify = src.slice(src.indexOf('async function notify('), src.indexOf('async function notifyChitStatus'));
-  assert.match(notify, /if \(win\.open\)/, 'the window must still decide which kind of message is even possible');
+  const notify = src.slice(src.indexOf('async function templatePayload('), src.indexOf('async function notifyChitStatus'));
+  assert.match(notify, /win\.open/, 'the window must still decide which kind of message is even possible');
   assert.match(notify, /is not approved on this number/, 'the refusal must name the template problem, not just the window');
   assert.match(notify, /tpl\.approvedOn\(binding, TEMPLATE_FOR_STATUS\)/, 'approval must be read off the BINDING, not a global');
 });
