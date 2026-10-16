@@ -108,12 +108,12 @@ it('the queue counts that row as POINTS waiting (queueTally reads the path, not 
   assert.ok(/tillPost\.path\)\.indexOf\('\/api\/till\/reward'\) === 0\) t\.points\+\+/.test(PAGE));
 });
 
-/** renumberBill with its globals stubbed: the next number is fixed, the DB holds what the test puts in it */
+/** INT7c: PAY-FIX's rememberRenumber (the new number is written on the old row first) rides with it. renumberBill with its globals stubbed: the next number is fixed, the DB holds what the test puts in it */
 function renumberWith(DB, nextNo) {
   const ctx = { console, setTimeout, JSON, Object, Math, Date, String, Number, Array, Promise, Error,
     DB, cbQuiet: quiet, tillId: () => 'C1', LAST_SERIES: null, nextNumber: async () => nextNo };
   vm.createContext(ctx);
-  return vm.runInContext(liftVar('BILL_COMPANIONS') + liftIf('rekeyCompanions') + lift('renumberBill') + '; renumberBill', ctx);
+  return vm.runInContext(liftVar('BILL_COMPANIONS') + liftIf('rekeyCompanions') + liftIf('rememberRenumber') + lift('renumberBill') + '; renumberBill', ctx);
 }
 it('a renumbered bill (409 TILL_SERIES_COLLISION) carries its reward row along: <new no>/reward with ref = the new number', async () => {
   const DB = fakeDB();
