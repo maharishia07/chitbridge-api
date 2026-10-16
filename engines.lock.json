@@ -35,15 +35,19 @@
     "ledger": "1.44.1",
     "bookpack": "1.44.1",
     "period": "1.44.1",
-    "gst-returns": "1.53.0",
+    "gst-returns": "1.57.1",
     "rail": "1.29.0",
     "workflow": "1.33.0",
-    "pack-kit": "1.53.0",
-    "reg-in": "1.53.0",
-    "reg-au": "1.53.0",
-    "reg-ae": "1.53.0",
-    "regulation": "1.53.0",
-    "country": "1.53.1",
+    "pack-kit": "1.57.1",
+    "reg-in": "1.57.1",
+    "reg-au": "1.57.1",
+    "reg-ae": "1.57.1",
+    "reg-sg": "1.57.1",
+    "reg-my": "1.57.1",
+    "reg-us": "1.57.1",
+    "reg-jp": "1.57.1",
+    "regulation": "1.57.1",
+    "country": "1.57.1",
     "chart": "1.42.0"
   },
   "adopt": {
@@ -175,6 +179,18 @@
     "reg-ae": [
       "lib/reg-ae.js"
     ],
+    "reg-sg": [
+      "lib/reg-sg.js"
+    ],
+    "reg-my": [
+      "lib/reg-my.js"
+    ],
+    "reg-us": [
+      "lib/reg-us.js"
+    ],
+    "reg-jp": [
+      "lib/reg-jp.js"
+    ],
     "regulation": [
       "lib/regulation.js"
     ],
@@ -191,6 +207,10 @@
       "reg-in",
       "reg-au",
       "reg-ae",
+      "reg-sg",
+      "reg-my",
+      "reg-us",
+      "reg-jp",
       "regulation",
       "country",
       "tax-packs",
@@ -236,12 +256,16 @@
     "gst-returns": "757ffbab01749d7103a8963aba11b0e8d81c3941523426ef9ace4874d8619f64",
     "rail": "62146650c1ae4e0aa47c16625026f2d29039c4d05261c191f899bd0213f1b698",
     "workflow": "f8c7a43048bc1b8453a1c2ec43b6eed7f619feee4c67eaba046c6cea370f0a5b",
-    "pack-kit": "6b62b3a1619af9229d7558f7fb8f36d3ea53e61ece8ee7decbd416a56b0661fe",
+    "pack-kit": "265fed3faa84578d00043d07aef4eab0176827cff617dc583ea1e160a9147f37",
     "reg-in": "238ebdbf9bd7b16fd851a849be20cee96ef809515223719d1b971445ca9c64e8",
     "reg-au": "a54072393db494fd03fc2e1d644e0ff218b59c5b063c5bdfb4dd4df679bad537",
     "reg-ae": "1c661b9d1384d720f6fbc4580529ef33be0eb0b763d6835bec509c67e98d6f57",
-    "regulation": "2a17f548b62f7ac91b79934fe29bd7d5fa81a53cb91a57a3b126b084ec0bc0e7",
-    "country": "8fb8eaa2ea3f6bb73b2430e4102f11d295aead86e466f6ca2ce9ca7eff22977f",
+    "reg-sg": "06846cad86d11a0430dc6837aa27d5dbf8b8f3fcbfa91d1b9b6d979fc14290e7",
+    "reg-my": "1a22afc3bfe0fd7fbe28124d1b50eb80281d784b1cd66ac088dd6d8d7b4de1af",
+    "reg-us": "c6da20e6dc74458181fafb9dc4afec8263a84ba88c7f00d69cd51469a3e5737d",
+    "reg-jp": "d940a7b0638f31b073c59e1ac771366677dbc71ee70d22445536c35cdc1692ad",
+    "regulation": "99324e7bc565cc0544626a78d2680aaecf06e8b0a74030e530f59fc3014c5b21",
+    "country": "b5f798afa364b9effff4f51365357ce5f6d9cd99e8cf7738b41d348de030b3fb",
     "chart": "7201c432d50a3f35038f415cfef71c7ac1652c79ed3aadacca8cea3ec42fed37"
   }
 }
