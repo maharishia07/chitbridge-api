@@ -37,8 +37,9 @@ function rowsFor(sql, p) {
   const mine = STATUS.filter((r) => r.chit_id === p[0] && r.entity_id === p[1] && (!dir || r.direction === dir));
   if (/^SELECT current_status FROM chit_status/.test(s)) return mine.map((r) => ({ current_status: r.current_status }));
   if (/^UPDATE chit_status SET current_status = \$1/.test(s)) {
-    STATUS.filter((r) => r.chit_id === p[1] && r.entity_id === p[2] && r.direction === dir).forEach((r) => { r.current_status = p[0]; });
-    return [];
+    const hit = STATUS.filter((r) => r.chit_id === p[1] && r.entity_id === p[2] && r.direction === dir && (p[3] === undefined || r.current_status === p[3]));
+    hit.forEach((r) => { r.current_status = p[0]; });
+    return hit.map((r) => ({ chit_id: r.chit_id }));   /* RETURNING chit_id — ORD-FIX O6 compare-and-set */
   }
   if (/SELECT sender_entity_id FROM chit_header/.test(s)) return [{ sender_entity_id: p[1] === S ? S : S }];
   if (/break_status/.test(s) && /FROM identities/.test(s) && /parent_entity_id/.test(s) === false) return [];

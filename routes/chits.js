@@ -3803,7 +3803,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
       }
       if (_pre.stop === 'conflict') {
-        return { code: 409, body: { error: 'Status changed', code: 'status_conflict', message: _pre.message, why: 'status_conflict' } };
+        return { code: 409, body: { error: 'Status changed', code: 'status_conflict', message: _pre.message } };
       }
       if (_pre.stop === 'reason') {
         return { code: 400, body: { error: 'Reason required', code: 'reason_required', message: 'Say why you are rejecting this bill — the reason goes on the bill.', why: 'reason_required' } };

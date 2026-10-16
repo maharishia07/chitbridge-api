@@ -79,6 +79,10 @@ function create() {
       return T.entries.filter((x) => x.entity_id === e && String(x.posting_date).slice(0, 10) >= from && String(x.posting_date).slice(0, 10) <= to && (types || []).indexOf(x.event_type) >= 0)
         .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id).map((l) => ({ entry_id: h.entry_id, event_type: h.event_type, code: (T.accounts.find((a) => a.account_id === l.account_id) || {}).code, dr_minor: l.dr_minor, cr_minor: l.cr_minor })));
     },
+    async unreversedForChit(db, e, chit_id) {
+      const mine = T.entries.filter((x) => x.entity_id === e && x.source_ref && x.source_ref.indexOf('chit:' + chit_id) === 0 && !x.reverses_entry_id);
+      return mine.filter((x) => !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id)).map((x) => x.entry_id);
+    },
     async postedSources(db, e, refs) { return T.entries.filter((x) => x.entity_id === e && x.source_ref && (refs || []).indexOf(x.source_ref) >= 0).map((x) => x.source_ref); },
     async entry(db, e, eid) {
       const h = T.entries.find((x) => x.entity_id === e && x.entry_id === eid); if (!h) return null;

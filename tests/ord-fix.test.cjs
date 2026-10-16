@@ -62,11 +62,19 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   t('billed-with-movement stays open while quantity is left (O1 server half)', /billed\.has\(String\(h\.chit_id\)\) && lines\.every\(\(l\) => !\(l\.moved > 0\)\)/.test(src('lib/open-orders.js')));
 
   console.log('\n— O4 · accepted, then rejected: the purchase is reversed —');
+  const store = require(path.join(API, 'lib', 'books-store')), asked4 = [];
+  const dbm = require(path.join(API, 'db'));
+  dbm.withEntity = async (id, fn) => fn({ query: async (sql, p) => { asked4.push({ sql: one(sql), p }); return { rows: [{ entry_id: 'E1' }, { entry_id: 'E2' }], rowCount: 2 }; } });
   const hooks = require(path.join(API, 'lib', 'books-hooks'));
   t('books-hooks exports reverseIfPosted', typeof hooks.reverseIfPosted === 'function');
   t('postChit calls it on the refused branch', /reverseIfPosted\(entity, chit_id/.test(src('lib/books-hooks.js')));
-  const refused = hooks.classify({ chit: { purpose: 'invoice', current_status: 'rejected' }, entry: { invoice: {}, sells: false }, setting: { on: true }, status: 'rejected' });
-  t('classify still says "Rejected — not posted" (the screen words)', refused.kind === 'none' && /Rejected/.test(refused.why || ''));
+  if (typeof hooks.reverseIfPosted === 'function') {
+    const books = require(path.join(API, 'lib', 'books')), calls = [];
+    books.reverseEntry = async (db, entity, entry_id, o) => { calls.push({ entry_id, reason: o.reason }); return { ok: true }; };
+    const n = await hooks.reverseIfPosted('shop1', 'chit9', 'Rejected — not posted', 'u1');
+    t('every posted, not-yet-reversed entry of the bill is reversed, once each, with the reason', n === 2 && calls.map((c) => c.entry_id).join() === 'E1,E2' && /Rejected/.test(calls[0].reason));
+    t('the read leaves out entries already reversed and the reversals themselves', /reverses_entry_id IS NULL/.test(asked4[0].sql) && /NOT EXISTS/.test(asked4[0].sql) && /LIKE 'chit:'/.test(asked4[0].sql));
+  }
 
   console.log('\n— O7 · a shopper code is spent once —');
   const otp = require(path.join(API, 'lib', 'otp'));
@@ -79,7 +87,15 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
 
   console.log('\n— O1 / O5 · the counter page —');
   const till = src('tools/tally-connector/till.html');
-  t('O1 orderBilled builds delivery rows from the saved bill (bill.lines)', /async orderBilled\(bo, bill\)[\s\S]{0,900}bill\.lines/.test(till));
+  const fnSrc = (till.match(/function orderRowsOfBill\(bo, bill\)\{[\s\S]*?\n\}\n/) || [''])[0];
+  const rowsOf = fnSrc ? new Function(fnSrc + '; return orderRowsOfBill;')() : null;
+  t('O1 orderBilled asks orderRowsOfBill (the saved bill), not the loaded order', /async orderBilled\(bo, bill\)\{\s*var rows = orderRowsOfBill\(bo, bill\)/.test(till));
+  if (rowsOf) {
+    const bo = { lines: [{ line_id: 'LA', item_id: 'A', quantity: 5, unit: 'kg' }, { line_id: 'LB', item_id: 'B', quantity: 2, unit: 'kg' }] };
+    const rows = rowsOf(bo, { lines: [{ item_id: 'A', qty: 3 }] });
+    t('O1 5 × A + 2 × B collected as 3 × A → only 3 × A is recorded delivered', rows.length === 1 && rows[0].line_id === 'LA' && rows[0].quantity === 3, JSON.stringify(rows));
+    t('O1 a bill of MORE than the order asked never delivers more than ordered', rowsOf(bo, { lines: [{ item_id: 'A', qty: 9 }, { item_id: 'B', qty: 2 }] }).map((r) => r.quantity).join() === '5,2');
+  }
   t('O1 the order lines remember their item_id for that match', /got\.push\(\{ line_id: l\.line_id \|\| null, item_id:/.test(till));
   t('O5 finish() answers { ok, bill }', /return \{ ok: false \}/.test(till) && /return \{ ok: true, bill: r\.bill \}/.test(till));
   t('O5 orderSettle sends settled only on ok, else reopen', /var done = await finish\(\);[\s\S]{0,300}done && done\.ok[\s\S]{0,200}do: 'settled'[\s\S]{0,200}do: 'reopen'/.test(till));
