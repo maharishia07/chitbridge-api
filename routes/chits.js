@@ -3304,6 +3304,8 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
     const _bill = !!(_mineCopy && billPrivacy.isBill(_mineCopy, entity_id));
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
       actor_id: req.identity.identity_id, actor_name: req.identity.display_name, private: _bill });
+    /* H6 — a replay of rows already recorded is answered with the first result and does not announce, advance or accept again */
+    if (out.delivered.length && out.delivered.every((row) => row.replayed)) return res.json({ ...out, replayed: true });
     await deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill);
     await deliverProgress(entity_id, chit_id, out);
     await goodsInAccept(req, entity_id, chit_id, out);
@@ -3632,48 +3634,55 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
     res.status(500).json({ error: 'Failed to load catalogue', message: safeErr(err) });
   }
 });
-
-// ─── PUT /chits/:chit_id/status ───────────────────────────────
-// Update chit status — accept, reject, complete etc
+/** the quote a Mark-paid is held against: the summary's total, else the frozen invoice's grand total, else null */
+function quotedTotalOf(copy) {
+  const summary = copy.summary_json || {}, invoice = (copy.business_json || {}).invoice;
+  if (summary.total_value != null) return Number(summary.total_value);
+  return invoice && invoice.grand_total != null ? Number(invoice.grand_total) : null;
+}
 /**
- * ⭐ PAYMENT, LEVEL 1 (Athi, 2026-09-05: "or QR code and get the payment loop done"). The seller records that a chit was
- * paid — by UPI against the QR, by cash, or otherwise — on THEIR OWN copy (business_json.payment), the way the frozen
- * invoice rides business_json. Nothing moves money; a gateway (level 2) will write the same field from its webhook.
- * ⭐⭐ A DOOR INTO THE BOOKS, NOT A SECOND WRITER OF "PAID" (drift D1, TILES 2026-10-08; Athi: "Q4 redirect in M26"). This used
- * to mark the copy, write a state_log row with columns that do not exist (swallowed — BACKLOG N16), ring the bell, and never
- * post. Now, in ONE transaction: the copy carries the payment (the screen, the e2e and the connector's Receipt read it) AND the
- * books record it through lib/books-hooks.chitPaid → lib/books.recordPayment, the one path — one payment row, one entry, the
- * chit's bill allocated when the books hold it open (else an advance). client_ref 'chitpay:<chit_id>': the same chit marked
- * twice posts nothing twice. The duplicate rule W1–W4 asks here as it does on POST /api/books/payments — 409 ALREADY_PAID, and
- * `acknowledge: [codes]` answers it. No ledger → the copy says paid, `books: { off: true }`. A payer the shop does not know → the
- * mark is kept and the payment WAITS, named (`books: { queued, why }`); the retry posts it once the customer is chosen.
- *   POST /:chit_id/payment { method: 'upi'|'cash'|'card'|'bank'|'other', ref?, amount?, note?, acknowledge?: [codes] } → { message, payment, books }
- *   DELETE /:chit_id/payment → the mark cleared; a payment the books recorded STAYS (reverse it there — the answer names the entry)
+ * the Mark-paid write on the caller's handle: the books first (a refusal throws — nothing marked), then the mark on my copy.
+ * → null (no copy) · { parts } (the bill carries its own tender) · { over } (above the quote, no note) · { books }
  */
-router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }), body('acknowledge').optional().isArray() ], validate, async (req, res) => {
+async function markChitPaid(db, press) {
+  const { entity_id, chit_id, payment, hooks } = press;
+  const copy = await taxCopy.copyOn(db, chit_id, entity_id);
+  if (!copy) return null;
+  const bj = copy.business_json || {};
+  /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
+  if (bj.payment && Array.isArray(bj.payment.parts)) return { parts: true };
+  /* an amount above the quoted total is a dispute, not a payment — unless the note says why (a tip, a rounding, an old balance) */
+  const quoted = quotedTotalOf(copy);
+  if (payment.amount != null && !payment.note && quoted != null && payment.amount > quoted * 1.005 + 1) return { over: quoted };
+  const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, bj, { payment }) }),
+    { by: payment.by, acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge.map(String) : [], name: (bj.customer && bj.customer.name) || undefined });
+  const marked = await db.query(
+    `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('payment', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
+    [JSON.stringify(payment), chit_id, entity_id]);
+  return marked.rows.length ? { books } : null;
+}
+/** the payment a Mark-paid press carries (method · ref · amount · note · when · who · the press's own client_ref, H2) */
+function pressPayment(req, entity_id) {
+  const body = req.body, payment = { method: body.method, ref: body.ref || null, amount: body.amount != null ? Number(body.amount) : null, note: body.note || null,
+    at: new Date().toISOString(), by: (req.identity && req.identity.identity_id) || entity_id };
+  if (body.client_ref) payment.client_ref = String(body.client_ref);
+  return payment;
+}
+/** a Mark-paid that failed: the books' own refusals in words (already paid · a locked month · …), else a 500 */
+function payFailure(res, err) {
+  const BR = require('./books');
+  if (err && err.code === 'ALREADY_PAID') return BR.alreadyPaid(res, err);
+  if (err && (err.refused || err.status === 409 || err.status === 422 || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) return BR.fail(res, err);
+  return res.status(500).json({ error: 'Payment failed', message: safeErr(err) });
+}
+router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }), body('acknowledge').optional().isArray(), body('client_ref').optional().trim().isLength({ max: 80 }) ], validate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req), chit_id = req.params.chit_id;
-    const payment = { method: req.body.method, ref: req.body.ref || null, amount: req.body.amount != null ? Number(req.body.amount) : null, note: req.body.note || null, at: new Date().toISOString(), by: (req.identity && req.identity.identity_id) || entity_id };
+    /* H2 (PAY-FIX): the press's own reference (the web mints one per open of the sheet) — the books key the payment chitpay:<chit>:<ref>, so a second
+       "Mark paid" is a second payment and a retry of the same press is its own replay (docs/FIELDS.md business_json.payment.client_ref) */
+    const payment = pressPayment(req, entity_id);
     const hooks = require('../lib/books-hooks');
-    const out = await withEntity(entity_id, async (db) => {
-      const copy = await taxCopy.copyOn(db, chit_id, entity_id);
-      if (!copy) return null;
-      const bj = copy.business_json || {};
-      /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
-      if (bj.payment && Array.isArray(bj.payment.parts)) return { parts: true };
-      /* an amount above the quoted total is a dispute, not a payment — unless the note says why (a tip, a rounding, an old balance) */
-      const sj = copy.summary_json || {};
-      const quoted = sj.total_value != null ? Number(sj.total_value) : (bj.invoice && bj.invoice.grand_total != null ? Number(bj.invoice.grand_total) : null);
-      if (payment.amount != null && !payment.note && quoted != null && payment.amount > quoted * 1.005 + 1) return { over: quoted };
-      /* the books first (a refusal throws — nothing marked), then the mark, on the same handle */
-      const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, bj, { payment }) }),
-        { by: payment.by, acknowledge: Array.isArray(req.body.acknowledge) ? req.body.acknowledge.map(String) : [], name: (bj.customer && bj.customer.name) || undefined });
-      const r = await db.query(
-        `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('payment', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
-        [JSON.stringify(payment), chit_id, entity_id]);
-      if (!r.rows.length) return null;
-      return { books };
-    });
+    const out = await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks }));
     if (!out) return res.status(404).json({ error: 'Not found' });
     if (out.parts) return res.status(422).json({ error: 'The tender is on the bill', message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.' });
     if (out.over != null) return res.status(422).json({ error: 'Above the quoted amount', message: 'Received ' + payment.amount + ' against a quote of ' + out.over + '. Add a note saying why, or record the quoted amount.', quoted: out.over });
@@ -3681,13 +3690,10 @@ router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'ca
     if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
     /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
     try { require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method }); } catch (e) { cbLog.fellBack('chits POST /:chit_id/payment: the signal was not sent — carried on without it', e); }
-    res.json({ message: 'Payment recorded', payment, books: out.books });
-  } catch (err) {
-    const BR = require('./books');
-    if (err && err.code === 'ALREADY_PAID') return BR.alreadyPaid(res, err);
-    if (err && (err.refused || err.status === 409 || err.status === 422 || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) return BR.fail(res, err);
-    res.status(500).json({ error: 'Payment failed', message: safeErr(err) });
-  }
+    /* a replay (the same press, or an older web's second press on one chit) is SAID: the books kept the first — never "recorded" twice */
+    const replayed = !!(out.books && out.books.payment && out.books.payment.duplicate);
+    res.json({ message: replayed ? 'Already recorded' : 'Payment recorded', replayed, payment, books: out.books });
+  } catch (err) { payFailure(res, err); }
 });
 router.delete('/:chit_id/payment', auth, async (req, res) => {
   try {
@@ -3699,10 +3705,14 @@ router.delete('/:chit_id/payment', auth, async (req, res) => {
     try {
       const S = require('../lib/books-store');
       books = await withEntity(entity_id, async (db) => {
-        const p = await S.paymentByRef(db, entity_id, 'chitpay:' + req.params.chit_id);
-        if (!p) return null;
-        const en = await S.entryBySource(db, entity_id, 'pay:' + p.payment_id);
-        return { payment_id: p.payment_id, entry_no: en ? en.entry_no : null, words: 'The books still hold this payment' + (en ? ' (' + en.entry_no + ')' : '') + ' — reverse it there.' };
+        /* H2: every press the chit recorded (chitpay:<chit> and chitpay:<chit>:<ref>), each named by its entry */
+        const mine = await S.paymentsOfChit(db, entity_id, req.params.chit_id);
+        if (!mine.length) return null;
+        const named = [];
+        for (const p of mine) { const en = await S.entryBySource(db, entity_id, 'pay:' + p.payment_id); named.push({ payment_id: p.payment_id, entry_no: en ? en.entry_no : null }); }
+        const entryNumbers = named.map((x) => x.entry_no).filter(Boolean);
+        return { payment_id: named[0].payment_id, entry_no: named[0].entry_no, payments: named,
+          words: 'The books still hold ' + (named.length === 1 ? 'this payment' : 'these ' + named.length + ' payments') + (entryNumbers.length ? ' (' + entryNumbers.join(', ') + ')' : '') + ' — reverse ' + (named.length === 1 ? 'it' : 'them') + ' there.' };
       });
     } catch (e) { if (!e || e.code !== '42P01') console.error('payment clear: books read failed:', e && e.message); }
     res.json({ message: 'Payment cleared', books });
@@ -3728,6 +3738,38 @@ router.post('/:chit_id/books-request', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
 });
 /**
+ * H3 (PAY-FIX): the books would not take the reversal of a withdrawn chit (every month locked, …) — the withdrawal did NOT happen (its
+ * transaction rolled back); the sentence says why and what to do. The sale is reversed in the SAME transaction as the withdrawal.
+ */
+function withdrawFailure(res, err) {
+  if (!require('../lib/books-hooks').isBooksRefusal(err)) {
+    console.error('Void error:', err.message);
+    return res.status(500).json({ error: 'Void failed', message: safeErr(err) });
+  }
+  return res.status(409).json({ error: 'Cannot withdraw', code: err.code || 'BOOKS_REFUSED', why: 'books_refused',
+    message: 'The books hold this chit and could not reverse it: ' + err.message + ' Open the month, or reverse the entry there, then withdraw again.' });
+}
+/**
+ * the sender's own cancel leg (T1-RAIL + H3): my SENT copy goes through the same rail gate, the sale it posted is reversed in that SAME
+ * transaction (a books refusal is SAID on the answer — { refused }, never swallowed), and the withdrawal message goes to the recipients.
+ * → the books' answer for the cancel (the reversal · { none } · { refused }) or undefined. A sent copy the rail will not cancel stays, said in the log.
+ */
+async function cancelSentCopy(entity_id, chit_id, viewer, note, by) {
+  const hooks = require('../lib/books-hooks');
+  const sent = await withEntity(entity_id, async (db) => {
+    const gate = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', viewer, { copy: 'sent' });
+    if (!gate.ok) return gate;
+    await gate.write();
+    gate.books = await hooks.chitWithdrawnSaid(db, entity_id, chit_id, note, by.id);
+    return gate;
+  });
+  if (!sent.ok && sent.why !== 'not_received') log.warn('sent copy not cancelled', { chit_id, from: sent.from, why: sent.why });
+  await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: by.name,
+    thread_type: 'external', msg_type: 'action',
+    message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}` });
+  return sent.books;
+}
+/**
  * ⭐⭐ ONE TRANSITION, MANY DOORS (Athi, 2026-10-01: "one fact, three doors"). The body of PUT /:chit_id/status, lifted
  * out unchanged so that goods-in (POST /:chit_id/deliver-lines, all lines received) moves a bill to `accepted` through the
  * SAME validation, timeline row, ledger hook and cancel legs as Intake — never a second status writer.
@@ -3736,6 +3778,7 @@ router.post('/:chit_id/books-request', auth, async (req, res) => {
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
       const action_by_id = by.id, action_by_name = by.name;
       let disputeWarning = null;
+      let booksOnCancel = null;   /* H3: what the books did with a sender's cancel (the reversal, or its refusal in words) */
       /* ⭐ R01: the transition table that lived here (validTransitions) is the rail engine's TRANSITIONS now, verbatim, and the
          decision is rail.move — the same function GET /chits/:id answers `actions` with. `me` = railActions.meOf(req). */
       if (!me) throw new Error('moveStatus: who is moving it (railActions.meOf(req)) is required');
@@ -3870,19 +3913,7 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
 
       // Sender cancel = a REQUEST, never a cross-entity write (Athi): the sender cancels ITS OWN copy and delivers a
       // flagged "[cancel requested]" message to the recipients; each recipient cancels its own copy at its own will.
-      if (isSender && new_status === 'cancelled') {
-        /* ⭐ T1-RAIL: my SENT copy too, through the same gate (the received copy moved above); a sent copy the rail will not
-           cancel stays where it is, said in the log — the withdrawal message still goes */
-        const sent = await withEntity(entity_id, async (db) => {
-          const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', me, { copy: 'sent' });
-          if (g.ok) await g.write();
-          return g;
-        });
-        if (!sent.ok && sent.why !== 'not_received') log.warn('sent copy not cancelled', { chit_id, from: sent.from, why: sent.why });
-        await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: action_by_name,
-          thread_type: 'external', msg_type: 'action',
-          message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}` });
-      }
+      if (isSender && new_status === 'cancelled') booksOnCancel = await cancelSentCopy(entity_id, chit_id, me, note, by);
 
       /**
        * ⭐⭐ THE RETURN LEG (b197) — Athi, 2026-09-02: *"on cancelling the requester should be notified as well
@@ -3927,7 +3958,8 @@ async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
         warning: disputeWarning,   // C1: set when a disputed chit was closed anyway (UI shows who + that it was open)
         chit_id,
         previous_status,
-        new_status
+        new_status,
+        ...(booksOnCancel ? { books: booksOnCancel } : {})       // H3 (only when the cancel touched the books — every other move answers as it always did): the reversal the cancel posted (entry_no · reverses), { none } when nothing was posted, { refused } in words
       } };
 }
 
@@ -5087,7 +5119,7 @@ router.put('/:chit_id/void',
           `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
           [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]);   // own timeline only
-        return { refused: null };
+        return { refused: null, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) };   // H3
       });
       if (gate.refused) {
         const g = gate.refused;
@@ -5170,11 +5202,8 @@ router.put('/:chit_id/void',
 
       /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
          the private word this change exists to retire. */
-      res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled' });
-    } catch (err) {
-      console.error('Void error:', err.message);
-      res.status(500).json({ error: 'Void failed', message: safeErr(err) });
-    }
+      res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books });
+    } catch (err) { withdrawFailure(res, err); }
   });
 
 // POST /chits/assign-bulk — push-assign many chits to one actor (mirrors the single push).

@@ -134,6 +134,9 @@ async function captureBooks() {
     await q('POST', '/depreciation/run', { fy: '2026-27', client_ref: 'dep-27' }, '/depreciation/run');
     const asset = ((await call(port, 'GET', '/api/books/assets?asOf=2027-03-31')).body.assets || [])[0];
     if (asset) await q('POST', '/assets/' + asset.asset_id + '/dispose', { date: '2027-04-05', proceeds_minor: 2000000, into: 'bank', client_ref: 'sell-1' }, '/assets/:id/dispose');
+    /* M1 (PAY-FIX): a tax close locks the months it covers, so everything dated in them is posted BEFORE the close (as in life) */
+    await q('POST', '/accruals', { ref: 'ELEC-9', kind: 'outstanding', class: 'electricity', amount_minor: 120000, date: '2026-09-30' }, '/accruals');
+    await q('POST', '/accruals/ELEC-9/reverse', {}, '/accruals/:ref/reverse');
     await q('POST', '/gst/close', { fy: '2026-27', period: 6, client_ref: 'gc-6' }, '/gst/close');
     await q('POST', '/gst/pay', { fy: '2026-27', period: 6, amounts: { cgst_minor: 4500, sgst_minor: 4500 }, bank: 'bank', challan_no: 'CPIN24100001', date: '2026-10-02' }, '/gst/pay');
     /* the same taps again: each answers the first entry with duplicate: true */
@@ -141,15 +144,6 @@ async function captureBooks() {
     await q('POST', '/depreciation/run', { fy: '2026-27', client_ref: 'dep-27' }, '/depreciation/run');
     await q('POST', '/closing-stock', { date: '2026-09-30', value_minor: 5000000, method: 'manual', client_ref: 'cs-sep' }, '/closing-stock');
     await q('POST', '/assets', { name: 'Laptop', class: 'computers', cost_minor: 4200000, date: '2026-04-18', how: 'bank', client_ref: 'lap-1' }, '/assets');
-    /* a month with a purchase under REVERSE CHARGE: the close answers rcm_minor and cash_minor too, and the challan takes the RCM amounts */
-    const rcmPost = await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-10-10', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-0000000000aa', source_ref: 'chit:rcm1',
-      by_rate: [{ rate: 0, taxable: 10000, cgst: 0, sgst: 0, igst: 0 }], rcm: [{ rate: 5, itc: false, taxable: 10000, cgst: 250, sgst: 250, igst: 0 }], paid: {} });
-    if (!rcmPost.ok) throw new Error('the reverse-charge purchase did not post: ' + JSON.stringify(rcmPost));
-    await q('POST', '/gst/close', { fy: '2026-27', period: 7, client_ref: 'gc-7' }, '/gst/close');
-    await q('POST', '/gst/pay', { fy: '2026-27', period: 7, amounts: {}, rcm: { cgst_minor: 25000, sgst_minor: 25000 }, bank: 'bank', challan_no: 'CPIN-RCM', date: '2026-11-02' }, '/gst/pay');
-    await q('POST', '/accruals', { ref: 'ELEC-9', kind: 'outstanding', class: 'electricity', amount_minor: 120000, date: '2026-09-30' }, '/accruals');
-    await q('POST', '/accruals/ELEC-9/reverse', {}, '/accruals/:ref/reverse');
-
     /* ── M26 payments: preview, one-call record, then more than Ravi owes (W2 excess → 409 ALREADY_PAID; W2 needs no clock) ── */
     const PAY = { party_id: SUPP, direction: 'out', amount_minor: 20000, currency: 'INR', mode: 'bank', received_at: '2026-10-12', allocate: 'oldest_first' };
     await q('POST', '/payments/preview', { party_id: SUPP, direction: 'out', amount_minor: 20000, currency: 'INR', allocate: 'oldest_first' }, '/payments/preview');
@@ -168,6 +162,13 @@ async function captureBooks() {
       await q('PATCH', '/payments/' + pid3, { advice_shared_at: true }, '/payments/:id');
       await q('GET', '/payments/' + pid1 + '/advice', null, '/payments/:id/advice');
     }
+    /* a month with a purchase under REVERSE CHARGE: the close answers rcm_minor and cash_minor too, and the challan takes the RCM amounts */
+    const rcmPost = await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-10-10', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-0000000000aa', source_ref: 'chit:rcm1',
+      by_rate: [{ rate: 0, taxable: 10000, cgst: 0, sgst: 0, igst: 0 }], rcm: [{ rate: 5, itc: false, taxable: 10000, cgst: 250, sgst: 250, igst: 0 }], paid: {} });
+    if (!rcmPost.ok) throw new Error('the reverse-charge purchase did not post: ' + JSON.stringify(rcmPost));
+    await q('POST', '/gst/close', { fy: '2026-27', period: 7, client_ref: 'gc-7' }, '/gst/close');
+    await q('POST', '/gst/pay', { fy: '2026-27', period: 7, amounts: {}, rcm: { cgst_minor: 25000, sgst_minor: 25000 }, bank: 'bank', challan_no: 'CPIN-RCM', date: '2026-11-02' }, '/gst/pay');
+
     /* ── BR1 · the rail leg of the bank reconciliation: a customer's advice I RECEIVED (the bills it settles) and the bank question I ASKED ── */
     X.T.chits.push({ chit_id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', entity_id: SHOP, direction: 'received', status: 'delivered', created_at: '2026-10-12T05:00:00.000Z', party_id: CUST, party_name: 'Ravi Stores',
       business_json: { kind: 'payment_advice', currency: 'INR', payment_advice: { action: 'paid', adviser_payment_id: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc1', adviser_entry_no: 'MJ/26-27/0009', amount: 4200, amount_minor: 420000, currency: 'INR',

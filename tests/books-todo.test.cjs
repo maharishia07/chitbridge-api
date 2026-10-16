@@ -105,14 +105,15 @@ function memoryTemplates() {
   ok('accepted → "bills to accept" is gone', kinds(await todo()).indexOf('bills_to_accept') < 0);
   const stk = await BP.closingStock(SHOP, S, { date: '2026-10-31', value: 500 }, SHOP);
   ok('closing stock entered → that row is gone', stk.ok && kinds(await todo()).indexOf('closing_stock_missing') < 0, JSON.stringify(stk));
+  /* M1 (PAY-FIX): closing October locks it, and the sweep's reversal is dated 1 Oct — so the sweep runs BEFORE the close, as it does every day in life */
+  const sw = await R.sweep(SHOP, S, DAY, { autoPost: true });
+  ok('the sweep turns the accrual back → that row is gone', sw.reversed.length === 1 && kinds(await todo()).indexOf('accrual_reversals_due') < 0, JSON.stringify(sw));
   const gc = await BP.gstClose(SHOP, S, { fy: '2026-27', period: 7 }, SHOP);
   ok('closing the month with no credit to set off leaves the tax still to pay — the row stays', gc.ok && get(await todo(), 'gst_due'), JSON.stringify(gc));
   const gp = await BP.gstPay(SHOP, S, { fy: '2026-27', period: 7, amounts: { cgst_minor: 27000, sgst_minor: 27000 }, challan_no: 'CPIN-OCT', bank: 'bank', date: '2026-11-05' }, SHOP);
   ok('the challan paid → "GST due" is gone', gp.ok && kinds(await todo()).indexOf('gst_due') < 0, JSON.stringify(gp));
   const acc = await q('POST', '/recurring/' + rec.body.recurring_id + '/post', {});
   ok('rent accepted → "repeating entry due" is gone', acc.status === 200 && kinds(await todo()).indexOf('recurring_due') < 0, JSON.stringify(acc.body).slice(0, 200));
-  const sw = await R.sweep(SHOP, S, DAY, { autoPost: true });
-  ok('the sweep turns the accrual back → that row is gone', sw.reversed.length === 1 && kinds(await todo()).indexOf('accrual_reversals_due') < 0, JSON.stringify(sw));
   for (let p = 1; p <= 7; p++) await q('POST', '/periods/2026-27/' + p + '/lock', { reason: 'done' });
   ok('the seven months locked → "months not locked" is gone', kinds(await todo()).indexOf('months_not_locked') < 0);
 

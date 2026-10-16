@@ -712,7 +712,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "45788d74-4daf-4d3e-b900-bcaeb7305c74",
+      "snapshot_id": "209bb91a-5bb7-44a8-a810-9b5427f9382b",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -722,7 +722,7 @@
        "bs"
       ],
       "lines": 22,
-      "created_at": "2026-09-29T10:00:53.000Z"
+      "created_at": "2026-09-29T10:00:55.000Z"
      }
     ]
    },
@@ -734,7 +734,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "45788d74-4daf-4d3e-b900-bcaeb7305c74",
+     "snapshot_id": "209bb91a-5bb7-44a8-a810-9b5427f9382b",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -1275,7 +1275,7 @@
       "source": "official",
       "source_ref": "rates.csv",
       "entered_by": "11111111-1111-4111-8111-111111111111",
-      "created_at": "2026-09-29T10:01:16.000Z"
+      "created_at": "2026-09-29T10:01:24.000Z"
      }
     ]
    },
@@ -1471,10 +1471,10 @@
       "entry_id": "00000000-0000-4000-8000-000000000112",
       "entry_no": "PV/2026-27/000001",
       "event_type": "purchase_bill",
-      "reverses_entry_id": "00000000-0000-4000-8000-000000000127",
+      "reverses_entry_id": "00000000-0000-4000-8000-000000000125",
       "reversed_by": "MJ/2026-27/000008",
       "reversed_why": "Paid twice",
-      "payment_id": "00000000-0000-4000-8000-000000000126",
+      "payment_id": "00000000-0000-4000-8000-000000000124",
       "unapplied_minor": 0,
       "advice": {
        "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
@@ -1490,7 +1490,7 @@
    "status": 200,
    "example": {
     "currency": "INR",
-    "payment_id": "00000000-0000-4000-8000-000000000126",
+    "payment_id": "00000000-0000-4000-8000-000000000124",
     "party": {
      "party_id": "33333333-3333-4333-8333-333333333333",
      "name": "Kumar Traders",
@@ -1523,7 +1523,7 @@
      ],
      "purpose": "general",
      "manual_subject": "Payment advice PY/2026-27/000001",
-     "client_ref": "advice:pay:00000000-0000-4000-8000-000000000126",
+     "client_ref": "advice:pay:00000000-0000-4000-8000-000000000124",
      "line_items": [
       {
        "particulars": "Bill c0000000-0000-4000-8000-00000000000b",
@@ -1543,7 +1543,7 @@
       "currency": "INR",
       "payment_advice": {
        "action": "paid",
-       "adviser_payment_id": "00000000-0000-4000-8000-000000000126",
+       "adviser_payment_id": "00000000-0000-4000-8000-000000000124",
        "adviser_entry_no": "PY/2026-27/000001",
        "amount": 200,
        "amount_minor": 20000,
@@ -1900,7 +1900,7 @@
     "refusals": [
      {
       "name": "months_open",
-      "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
+      "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
      }
     ],
     "months": [
@@ -1928,7 +1928,7 @@
       "assignee_user_id": "E1",
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-10-13T05:49:16.452Z",
+      "last_at": "2026-10-13T16:16:55.945Z",
       "late": true,
       "today": false
      }
@@ -1973,13 +1973,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-10-14T05:49:16.422Z",
+      "due_at": "2026-10-14T16:16:55.917Z",
       "due_day": "2026-10-14",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-10-15T05:49:16.423Z",
+      "created_at": "2026-10-15T16:16:55.918Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -2425,7 +2425,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-10-13T05:49:16.357Z",
+      "due_at": "2026-10-13T16:16:55.862Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -2606,7 +2606,7 @@
    "example": {
     "agreements": [
      {
-      "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+      "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
       "entity_id": "11111111-1111-4111-8111-111111111111",
       "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
       "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -2748,7 +2748,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -2919,7 +2919,7 @@
      "name": "Asha"
     },
     "lines_assigned_n": 1,
-    "created_at": "2026-10-15T04:49:16.553Z",
+    "created_at": "2026-10-15T15:16:56.030Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -3134,7 +3134,7 @@
        "name": "Asha"
       },
       "lines_assigned_n": 1,
-      "created_at": "2026-10-15T04:49:16.553Z",
+      "created_at": "2026-10-15T15:16:56.030Z",
       "age_days": 0,
       "actions": {
        "accept": {
@@ -3219,11 +3219,11 @@
    "status": 200,
    "example": {
     "ok": true,
-    "payment_id": "00000000-0000-4000-8000-000000000126",
+    "payment_id": "00000000-0000-4000-8000-000000000124",
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-10-15T05:49:17.255Z"
+     "shared_at": "2026-10-15T16:16:56.628Z"
     }
    },
    "optional": []
@@ -3276,13 +3276,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-14T05:49:16.422Z",
+     "due_at": "2026-10-14T16:16:55.917Z",
      "due_day": "2026-10-14",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-10-15T05:49:16.429Z",
-     "created_at": "2026-10-15T05:49:16.423Z",
+     "done_at": "2026-10-15T16:16:55.923Z",
+     "created_at": "2026-10-15T16:16:55.918Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -3312,8 +3312,8 @@
    "status": 200,
    "example": {
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000125",
-    "entry_no": "JV/2026-27/000004",
+    "entry_id": "00000000-0000-4000-8000-000000000121",
+    "entry_no": "JV/2026-27/000003",
     "posting_date": "2026-10-01",
     "doc_date": "2026-10-01",
     "moved": false,
@@ -3499,7 +3499,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "45788d74-4daf-4d3e-b900-bcaeb7305c74",
+    "snapshot_id": "209bb91a-5bb7-44a8-a810-9b5427f9382b",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -3641,7 +3641,7 @@
      "source": "manual",
      "source_ref": null,
      "entered_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-09-29T10:01:15.000Z"
+     "created_at": "2026-09-29T10:01:23.000Z"
     }
    },
    "optional": []
@@ -3666,7 +3666,7 @@
       "source": "official",
       "source_ref": "rates.csv",
       "entered_by": "11111111-1111-4111-8111-111111111111",
-      "created_at": "2026-09-29T10:01:16.000Z"
+      "created_at": "2026-09-29T10:01:24.000Z"
      }
     ]
    },
@@ -3711,14 +3711,20 @@
     },
     "pay_total_minor": 9000,
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000120",
-    "entry_no": "JV/2026-27/000003",
+    "entry_id": "00000000-0000-4000-8000-000000000122",
+    "entry_no": "JV/2026-27/000004",
     "posting_date": "2026-09-30",
     "doc_date": "2026-09-30",
     "moved": false,
     "lines": 4,
     "items": 0,
     "note": null,
+    "locked": [
+     {
+      "fiscal_year": "2026-27",
+      "period": 6
+     }
+    ],
     "duplicate": true,
     "rcm_minor": {
      "cgst": 25000,
@@ -3740,6 +3746,7 @@
     "entry_no",
     "items",
     "lines",
+    "locked",
     "moved",
     "note",
     "nothing_to_set_off",
@@ -3782,8 +3789,8 @@
      "stagger": 1,
      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
     },
-    "ref_label": "Payment reference",
-    "ref_hint": "The reference the authority gave",
+    "ref_label": "Payment reference number",
+    "ref_hint": "The payment reference number on the BAS",
     "carried_word": "GST refund due from the ATO",
     "ok": true,
     "entry_id": "00000000-0000-4000-8000-000000000245",
@@ -3794,6 +3801,12 @@
     "lines": 2,
     "items": 0,
     "note": null,
+    "locked": [
+     {
+      "fiscal_year": "2026-27",
+      "period": 1
+     }
+    ],
     "rcm_minor": {
      "vat": 2000
     },
@@ -3822,8 +3835,8 @@
      "sgst": 4500
     },
     "ok": true,
-    "entry_id": "00000000-0000-4000-8000-000000000121",
-    "entry_no": "MJ/2026-27/000005",
+    "entry_id": "00000000-0000-4000-8000-000000000123",
+    "entry_no": "MJ/2026-27/000006",
     "posting_date": "2026-10-02",
     "doc_date": "2026-10-02",
     "moved": false,
@@ -4050,13 +4063,13 @@
    "example": {
     "ok": true,
     "payment": {
-     "payment_id": "00000000-0000-4000-8000-000000000126",
+     "payment_id": "00000000-0000-4000-8000-000000000124",
      "status": "recorded",
      "duplicate": false
     },
     "posted": {
      "ok": true,
-     "entry_id": "00000000-0000-4000-8000-000000000127",
+     "entry_id": "00000000-0000-4000-8000-000000000125",
      "entry_no": "PY/2026-27/000001",
      "posting_date": "2026-10-12",
      "doc_date": "2026-10-12",
@@ -4087,11 +4100,11 @@
      ],
      "applied_minor": 20000,
      "on_account_minor": 0,
-     "balance_minor": -1039000,
-     "balance_words": "you owe ₹10,390"
+     "balance_minor": -39000,
+     "balance_words": "you owe ₹390"
     },
     "advice": {
-     "payment_id": "00000000-0000-4000-8000-000000000126",
+     "payment_id": "00000000-0000-4000-8000-000000000124",
      "party": {
       "party_id": "33333333-3333-4333-8333-333333333333",
       "name": "Kumar Traders",
@@ -4124,7 +4137,7 @@
       ],
       "purpose": "general",
       "manual_subject": "Payment advice PY/2026-27/000001",
-      "client_ref": "advice:pay:00000000-0000-4000-8000-000000000126",
+      "client_ref": "advice:pay:00000000-0000-4000-8000-000000000124",
       "line_items": [
        {
         "particulars": "Bill c0000000-0000-4000-8000-00000000000b",
@@ -4144,7 +4157,7 @@
        "currency": "INR",
        "payment_advice": {
         "action": "paid",
-        "adviser_payment_id": "00000000-0000-4000-8000-000000000126",
+        "adviser_payment_id": "00000000-0000-4000-8000-000000000124",
         "adviser_entry_no": "PY/2026-27/000001",
         "amount": 200,
         "amount_minor": 20000,
@@ -4211,7 +4224,7 @@
      "name": "Kumar Traders",
      "on_rail": true
     },
-    "open_minor": 1059000,
+    "open_minor": 59000,
     "proposal": [
      {
       "against_ref": "c0000000-0000-4000-8000-00000000000b",
@@ -4386,12 +4399,12 @@
    "example": {
     "ok": false,
     "fiscal_year": "2026-27",
-    "error": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
-    "message": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+    "error": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
+    "message": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03.",
     "refusals": [
      {
       "name": "months_open",
-      "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-09, 2026-10, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
+      "why": "Every month must be locked before the year closes — still open: 2026-04, 2026-05, 2026-06, 2026-07, 2026-08, 2026-11, 2026-12, 2027-01, 2027-02, 2027-03."
      }
     ]
    },
@@ -4428,13 +4441,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-10-14T05:49:16.422Z",
+     "due_at": "2026-10-14T16:16:55.917Z",
      "due_day": "2026-10-14",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-10-15T05:49:16.423Z",
+     "created_at": "2026-10-15T16:16:55.918Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -4568,9 +4581,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-10-15T05:49:16.422Z",
+     "at": "2026-10-15T16:16:55.916Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-15T05:49:16.422Z"
+     "created_at": "2026-10-15T16:16:55.916Z"
     }
    },
    "optional": []
@@ -4585,9 +4598,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-10-15T05:49:16.453Z",
+     "at": "2026-10-15T16:16:55.946Z",
      "by_user_id": "E1",
-     "created_at": "2026-10-15T05:49:16.453Z"
+     "created_at": "2026-10-15T16:16:55.946Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -4602,7 +4615,7 @@
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-10-15T05:49:16.453Z",
+     "created_at": "2026-10-15T16:16:55.946Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -4712,7 +4725,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4810,7 +4823,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4889,7 +4902,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -4981,7 +4994,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5069,7 +5082,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "3079cac8-0fba-470c-b08a-d2eb5a820c9c",
+     "agreement_id": "59af0619-9d7d-42d8-a05e-3a4378ca02d2",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000003",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5147,7 +5160,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5254,7 +5267,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5346,7 +5359,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "6e44df4f-d063-480f-b888-854b007b20a7",
+     "agreement_id": "1f1d09f8-c6b0-441e-b545-63b35ed80eb3",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000005",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5437,7 +5450,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5529,7 +5542,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",
@@ -5636,7 +5649,7 @@
    "status": 200,
    "example": {
     "agreement": {
-     "agreement_id": "9536d9ea-5b1e-4404-a451-3c463404ad03",
+     "agreement_id": "7f5e3a44-d6b9-443a-9322-d93ffe116d1a",
      "entity_id": "11111111-1111-4111-8111-111111111111",
      "chit_id": "aaaaaaaa-0000-4000-8000-000000000001",
      "customer_entity_id": "22222222-2222-4222-8222-222222222222",

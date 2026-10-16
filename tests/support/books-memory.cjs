@@ -202,6 +202,9 @@ function create() {
       const r = Object.assign({ payment_id: id(), entity_id: e, created_at: now() }, clone(p)); T.payments.push(r); return { payment_id: r.payment_id, duplicate: false };
     },
     async paymentsSince(db, e, party, direction, since) { return clone(T.payments.filter((p) => p.entity_id === e && p.party_id === party && p.direction === direction && String(p.created_at || '') >= String(since)).reverse()); },
+    /* C3: the advisory lock has no memory shape — a test that needs the race stands in its own (tests/pay-fix twoClients) */
+    async lockParty() {},
+    async paymentsOfChit(db, e, chit) { const key = 'chitpay:' + chit; return T.payments.filter((x) => x.entity_id === e && (x.client_ref === key || String(x.client_ref || '').indexOf(key + ':') === 0)).map((p) => ({ payment_id: p.payment_id, amount_minor: p.amount_minor, currency: p.currency, client_ref: p.client_ref })); },
     async paymentByRef(db, e, ref) { const p = T.payments.find((x) => x.entity_id === e && x.client_ref === String(ref)); return p ? { payment_id: p.payment_id, mode: p.mode } : null; },
     async cheques(db, e, all, limit) {
       const steps = ['received', 'deposited', 'cleared', 'bounced'];

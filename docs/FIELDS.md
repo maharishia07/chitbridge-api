@@ -6,6 +6,22 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **The shop's flags and the person's prefs (W1-SET · FLD2, 2026-10-15):** every key of `lib/policy.js` FLAGS (`policy_flags.<key>`) and of `routes/entities.js` PREF_SETS (`ui_prefs.<key>` · `locale_prefs.<key>`) must have a row in this file, spelled with its store (`policy_flags.trade_side`, never the bare word). `lib/field-ledger.undocumentedSettings` reads both sources and this file; `tests/field-ledger.test.cjs` fails by name when a 33rd flag arrives without its row.
 
+## POST /api/chits/:id/payment · the press's own key (PAY-FIX · H2, 2026-10-15)
+
+| key | type | source / derived · who writes · who reads |
+|---|---|---|
+| body `client_ref` → `business_json.payment.client_ref` | string ≤ 80, optional | Source: the web mints one when the Mark-paid sheet opens (app.html `chitMarkPaid`, `press-<time>-<rand>`), so a retry of the same press carries the same ref and a second press carries a new one. Written by the route into the copy's `payment` slot beside `method · ref · amount · note · at · by`. Read by `lib/books-hooks.classify`: the books' key is `chitpay:<chit_id>:<client_ref>` (without it `chitpay:<chit_id>`, one payment per chit as before), through `books.recordPayment`'s one idempotency rule. |
+| response `replayed` · `message` | boolean · `Payment recorded` \| `Already recorded` | Derived: `books.payment.duplicate` — the press was the replay of a recorded one (the first answer is handed back, nothing posted twice). The web toasts `message`. |
+| DELETE response `books.payments[]` · `books.words` | `[{ payment_id, entry_no }]` · sentence | Derived by `books-store.paymentsOfChit` (every key of the chit, oldest first): clearing the mark never undoes the books — the sentence names every entry to reverse. `payment_id` / `entry_no` stay the first one's (as before). |
+
+## POST /api/chits/:id/deliver-lines · the replay key (PAY-FIX · H6, 2026-10-15)
+
+| key | type | source / derived · who writes · who reads |
+|---|---|---|
+| row `client_ref` → `chit_line_delivery.client_ref` (b730) | string ≤ 120, optional | Source: the counter's drain stamps `<queue row no>:<position>` on each queued goods-in / despatch / online-delivery row (`till.html stampDeliveryRefs`), stable across retries. Written by `lib/deliverline.record` into `chit_line_event`'s 12th argument; a partial unique index (entity, chit, line, client_ref) makes a replay insert nothing. Read by nothing else. Not (reference, kind): "6 then 4" under one GRN is two real deliveries. |
+| response `delivered[].replayed` · `replayed` | boolean | Derived: the key was already recorded — the first result stands; the route does not announce, advance or accept again. |
+| till queue row `renumber_to` (PAY-FIX · H9) | string, local only | Source: `till.html rememberRenumber` stamps the number a collided bill is moving to on the OLD queue / bill rows before the four IndexedDB writes; `renumberBill` reuses it after a reload, so a sale keeps one number. Never sent to the server; removed from the new row. |
+
 ## Housekeeping refusals · `code` · `why` · list caps `capped` · `cap_note` (W2-RAIL · R2, 2026-10-15)
 
 | Key | Shape | Source / derived · who writes it · who reads it |

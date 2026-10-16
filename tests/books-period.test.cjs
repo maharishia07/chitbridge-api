@@ -247,6 +247,11 @@ function memoryRegister() {
     && gc.body.payable_minor.sgst_minor === 4500 && gc.body.pay_total_minor === 9000 && so.utilised.length === 2, JSON.stringify(gc.body));
   eq('…the set-off entry\'s lines are the engine\'s gst_setoff', gce && stored(gce), engine(so.event));
   ok('…system-computed: series JV', gce && seriesOf(gce) === 'JV');
+  /* M1 (PAY-FIX): the close LOCKS the month it covers, in its own transaction — soft, so the owner can open it again with a reason */
+  const sept = X.T.periods.find((x) => x.entity_id === SHOP && x.fiscal_year === '2026-27' && Number(x.period) === 6);
+  ok('M1: the close soft-locks September (the answer names it); a typed date in September is now refused PERIOD_LOCKED',
+    sept && sept.status === 'soft_locked' && JSON.stringify(gc.body.locked) === JSON.stringify([{ fiscal_year: '2026-27', period: 6 }])
+    && (await q('POST', '/contra', { from: 'cash', to: 'bank', amount_minor: 100, date: '2026-09-20' })).body.code === 'PERIOD_LOCKED', JSON.stringify([sept, gc.body.locked]));
   const gc2 = await q('POST', '/gst/close', { fy: '2026-27', period: 6 });
   ok('…a double tap: posts once; the answer still says what is left to pay', gc2.body.duplicate === true && X.T.entries.filter((x) => x.source_ref === 'gstclose:2026-27:6').length === 1 && gc2.body.pay_total_minor === 9000, JSON.stringify(gc2.body));
   eq('…a month that has not ended is refused in words', await (async () => { DAY = '2026-09-20'; const r = await q('POST', '/gst/close', { fy: '2026-27', period: 6 }); DAY = '2027-04-10'; return [r.status, /ends on 2026-09-30/.test(r.body.message)]; })(), [422, true]);
@@ -260,11 +265,14 @@ function memoryRegister() {
   const gp3 = await q('POST', '/gst/pay', { fy: '2026-27', period: 6, amounts: { cgst_minor: 450000 }, bank: 'bank', challan_no: 'CPIN24100002', date: '2026-10-02' });
   ok('…paying more than is owed (a slipped decimal) is refused, against the books (422)', gp3.status === 422 && /more than the tax owed/.test(gp3.body.message) && !entries('gstpay:CPIN24100002').length, JSON.stringify(gp3.body));
   eq('…no challan number is a plain question (400)', (await q('POST', '/gst/pay', { fy: '2026-27', period: 6, amounts: { cgst_minor: 1 }, bank: 'bank' })).status, 400);
-  await q('POST', '/periods/2026-27/6/lock', { reason: 'GSTR-3B filed' });
+  await q('POST', '/periods/2026-27/5/lock', { reason: 'locked by hand, never closed' });
   const n2 = X.T.entries.length;
-  const gl = await q('POST', '/gst/close', { fy: '2026-27', period: 6 });
+  const gl = await q('POST', '/gst/close', { fy: '2026-27', period: 5 });
   const gl2 = await q('POST', '/gst/pay', { fy: '2026-27', period: 6, amounts: { cgst_minor: 1 }, bank: 'bank', challan_no: 'CPIN24100003', date: '2026-09-30' });
-  ok('GST close and pay in a locked month → 409 PERIOD_LOCKED, nothing posted', gl.status === 409 && gl.body.code === 'PERIOD_LOCKED' && gl2.status === 409 && gl2.body.code === 'PERIOD_LOCKED' && X.T.entries.length === n2, JSON.stringify([gl.body, gl2.body]));
+  const gl3 = await q('POST', '/gst/close', { fy: '2026-27', period: 6 });
+  ok('GST close of a locked, never-closed month and a pay dated in a locked month → 409 PERIOD_LOCKED, nothing posted; a closed month closed again still answers its figures (duplicate — M1: the lock is the close\'s own)',
+    gl.status === 409 && gl.body.code === 'PERIOD_LOCKED' && gl2.status === 409 && gl2.body.code === 'PERIOD_LOCKED' && gl3.status === 200 && gl3.body.duplicate === true && X.T.entries.length === n2, JSON.stringify([gl.body, gl2.body, gl3.body]));
+  await q('POST', '/periods/2026-27/5/unlock', { reason: 'test' });
   await q('POST', '/periods/2026-27/6/unlock', { reason: 'test' });
 
   /* ── loans ── */
