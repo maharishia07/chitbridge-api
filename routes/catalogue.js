@@ -481,11 +481,11 @@ const networkItems = (members) => withEntity(null, (db) => db.query(
       AND NOT EXISTS (SELECT 1 FROM identities i WHERE i.identity_id = ci.entity_id AND to_jsonb(i)->>'storefront_access' = 'login')`, [members]));
 router.get('/network-store/:networkId', async (req, res) => {
   try {
-    const net = await networkStoreOf(req.params.networkId);
-    if (!net) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
+    const network = await networkStoreOf(req.params.networkId);
+    if (!network) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
     const q = String(req.query.q || '').trim().toLowerCase();
     const cat = String(req.query.category || '').trim();
-    const rows = (await networkItems(net.members)).rows;
+    const rows = (await networkItems(network.members)).rows;
     let products = rows.map((r) => { const d = r.item_data || {};
       return { product_id: r.item_id, name: d.name || d.particulars || '(unnamed)', category: d.category || 'Other',
         // TOLERANT READ (both shapes). null stays null — "price on request" is a real state, not a zero.
@@ -494,7 +494,7 @@ router.get('/network-store/:networkId', async (req, res) => {
     if (cat) products = products.filter((p) => p.category.toLowerCase() === cat.toLowerCase());
     if (q) products = products.filter((p) => (p.name + ' ' + p.category).toLowerCase().indexOf(q) >= 0);
     const categories = [...new Set(products.map((p) => p.category))].sort();
-    res.json(Object.assign({ network_id: net.brand.bridge_id, categories, count: products.length }, PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));   // NO node/entity attribution — the internal structure stays hidden
+    res.json(Object.assign({ network_id: network.brand.bridge_id, categories, count: products.length }, PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));   // NO node/entity attribution — the internal structure stays hidden
   } catch (err) {
     if (membership.answerReadFailed(res, err)) return;   /* a member read that failed is said, never "no products" (T2-HONEST) */
     res.status(500).json({ error: 'Storefront failed', message: safeErr(err) });
@@ -550,9 +550,9 @@ const networkOrdersOn = () => String(process.env[NETWORK_ORDERS_FLAG] || '').tri
 /** shopperOf(req) → the storefront customer the Bearer token proves ({ identity_id, bridge_id, shop_entity_id, display_name }), or null —
  *  the same claims test as customerOf (SEC4) / middleware/customer-auth, without naming the shop up front (the network decides) */
 function shopperOf(req) {
-  const d = claimsOf(req);
-  if (!d || !d.identity_id || d.identity_type !== 'customer') return null;
-  return { identity_id: d.identity_id, bridge_id: d.bridge_id || null, shop_entity_id: d.parent_entity_id || null, display_name: d.display_name || null };
+  const claims = claimsOf(req);
+  if (!claims || !claims.identity_id || claims.identity_type !== 'customer') return null;
+  return { identity_id: claims.identity_id, bridge_id: claims.bridge_id || null, shop_entity_id: claims.parent_entity_id || null, display_name: claims.display_name || null };
 }
 router.post('/network-store/:networkId/order', async (req, res) => {
   try {
@@ -563,17 +563,17 @@ router.post('/network-store/:networkId/order', async (req, res) => {
     if (!shopper) return res.status(401).json({ error: 'Unauthorised', code: 'SIGN_IN_FIRST', message: 'Sign in at the store to order.' });
     const cart = Array.isArray(req.body.items) ? req.body.items : [];
     if (!cart.length) return res.status(400).json({ error: 'Bad request', message: 'items required' });
-    const net = await networkStoreOf(req.params.networkId);
-    if (!net) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
-    if (!net.members.includes(String(shopper.shop_entity_id || ''))) {
+    const network = await networkStoreOf(req.params.networkId);
+    if (!network) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
+    if (!network.members.includes(String(shopper.shop_entity_id || ''))) {
       return res.status(403).json({ error: 'Forbidden', code: 'NOT_THIS_NETWORK', message: 'Your sign-in belongs to another store. Sign in at this network\'s store to order.' });
     }
-    const nid = net.brand.bridge_id;
+    const nid = network.brand.bridge_id;
     const ids = cart.map((c) => c.product_id).filter(Boolean);
     const rows = (await withEntity(null, (db) => db.query(
-      `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`, [ids, net.members]))).rows;
+      `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`, [ids, network.members]))).rows;
     if (!rows.length) return res.status(404).json({ error: 'Not found', message: 'No matching products in this network' });
-    const operatorId = String(net.brand.identity_id);
+    const operatorId = String(network.brand.identity_id);
     /* one read for every party: the operator, the stores, and the customer the token names (by id — never by e-mail) */
     const idset = [...new Set([operatorId, String(shopper.identity_id), ...rows.map((r) => String(r.entity_id))])];
     const idents = {}; (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [idset])).rows.forEach((r) => { idents[r.identity_id] = { id: r.identity_id, bridge_id: r.bridge_id, display_name: r.display_name }; });
