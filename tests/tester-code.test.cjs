@@ -184,8 +184,8 @@ async function captured(fn) {
     await otp.verifyOtp(fakeRun(rowOf()), rowOf(), 'qa-261014-lamp');
   });
   const lines = daily.text.split('\n').filter((l) => l.trim());
-  t('nothing logged but the TEMPORARY warning (warn level)', lines.length === 1 && /TEMPORARY: a tester sign-in code is active \(testing phase\)\. Remove TESTER_CODE before real users\./.test(lines[0])
-    && /"level":"warn"/i.test(lines[0]), lines.join(' | ').slice(0, 300));
+  t('nothing logged but the TEMPORARY warning and the explicit-* warning (warn level)', lines.length === 2 && /TEMPORARY: a tester sign-in code is active \(testing phase\)\. Remove TESTER_CODE before real users\./.test(lines[0])
+    && /TESTER_NAMES is \*/.test(lines[1]) && lines.every((l) => /"level":"warn"/i.test(l)), lines.join(' | ').slice(0, 300));
   t('…and never the template or an expansion', !/\{yymmdd\}|qa-|261014|261013/.test(daily.text));
   env({}); ({ dev } = load());
   t('TESTER_CODE unset → no boot notice', dev.testerNotices().length === 0);

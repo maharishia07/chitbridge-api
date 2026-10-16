@@ -12,22 +12,14 @@ const log     = require('./lib/logger');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// Fail fast on a missing/weak JWT_SECRET — auth integrity depends entirely on it (see the P0 isolation
-// invariant). In production a bad secret aborts boot; in dev it warns loudly.
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-  const msg = 'JWT_SECRET is missing or shorter than 32 chars';
-  /**
-   * ⚠️⚠️ THIS COMPARISON WAS UNTRIMMED, AND THE CODEBASE ALREADY KNEW WHY THAT IS FATAL. `lib/dev-otp.js` says
-   * it in its own header: *"NODE_ENV is trimmed because production has been observed carrying a leading space
-   * (' development'), which silently defeated every `=== 'production'` comparison in the codebase."* That fix
-   * was applied there and never reached here — so the one guard that aborts boot on a weak JWT_SECRET, the
-   * secret **auth integrity depends entirely on**, would have gone quiet the moment NODE_ENV was set to
-   * " production" with the same stray space this platform demonstrably produces.
-   *
-   * ⭐ There is ONE definition of a sealed environment and it lives in lib/dev-otp.js. Everything asks it.
-   */
-  if (require('./lib/dev-otp').isSealed()) { log.critical('boot aborted', { reason: msg }); process.exit(1); }
-  else log.warn('weak JWT_SECRET', { reason: msg + ' — set a strong JWT_SECRET before any real deploy' });
+// Boot preflight (INT7c): in a sealed environment EVERY missing/invalid setting (JWT_SECRET, DATABASE_URL, the OTP posture, the mailer) is listed
+// in ONE log line and the process exits once — never one crash per setting. railway.json's healthcheck keeps a failing deploy from replacing the
+// healthy one. NODE_ENV is trimmed inside isSealed() (production has carried ' development'); the one definition of sealed is lib/dev-otp.js.
+{
+  const preflight = require('./lib/dev-otp').bootPreflightErrors();
+  if (preflight.length) { log.critical('boot aborted: ' + preflight.length + ' setting(s) to fix — ' + preflight.join(' · '), { reasons: preflight }); process.exit(1); }
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
+    log.warn('weak JWT_SECRET', { reason: 'JWT_SECRET is missing or shorter than 32 chars — set a strong JWT_SECRET before any real deploy' });
 }
 
 // Fixed test OTP guard. DEV_OTP pins every OTP to a constant for testing — a critical auth hole if
@@ -40,8 +32,6 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
 // delivery (OTP_EMAIL_ENABLED=true) is fatal, not a warning.
 {
   const devOtp = require('./lib/dev-otp');
-  const errs = devOtp.otpPostureErrors();
-  if (errs.length) { errs.forEach((e) => log.critical('boot aborted', { reason: e })); process.exit(1); }
   /* SEC2: the warning says what is TRUE — fixed codes work only on a local stack (fixedOtp), and are echoed only when that
      stack also opted in (mayExposeOtp). DEV_OTP on any other host does nothing, and says so. */
   if (devOtp.armed()) {

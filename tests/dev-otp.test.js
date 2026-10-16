@@ -104,6 +104,18 @@ t('boot: M02 — sealed without RESEND_API_KEY / FROM_EMAIL refuses to start', (
   const d = load({ NODE_ENV: 'production', DEV_OTP: '', OTP_EMAIL_ENABLED: 'true', RESEND_API_KEY: '', FROM_EMAIL: '' });
   assert.ok(d.errors.some((e) => /RESEND_API_KEY/.test(e)), JSON.stringify(d.errors));
 });
+t('boot preflight (INT7c): a sealed host lists EVERY missing setting in one list; railway.json has the /health check', () => {
+  const m = require('../lib/dev-otp.js'); const saved = { ...process.env };
+  try {
+    Object.assign(process.env, { NODE_ENV: 'production', DEV_OTP: '1', OTP_EMAIL_ENABLED: '', RESEND_API_KEY: '', FROM_EMAIL: '', JWT_SECRET: 'short' });
+    delete process.env.DATABASE_URL;
+    const errs = m.bootPreflightErrors();
+    for (const word of ['JWT_SECRET', 'DATABASE_URL', 'DEV_OTP', 'OTP_EMAIL_ENABLED', 'RESEND_API_KEY']) assert.ok(errs.some((e) => e.includes(word)), word + ' missing from ' + JSON.stringify(errs));
+    process.env.NODE_ENV = 'development'; assert.deepStrictEqual(m.bootPreflightErrors(), []);
+  } finally { process.env = saved; }
+  assert.strictEqual(require('../railway.json').deploy.healthcheckPath, '/health');
+  assert.ok(/preflight\.length[\s\S]{0,120}process\.exit\(1\)/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'server.js'), 'utf8')), 'server.js exits once on the list');
+});
 t('boot: dev is never blocked — we are still developing', () => {
   assert.deepStrictEqual(load({ NODE_ENV: 'development', DEV_OTP: '123456' }).errors, []);
 });
