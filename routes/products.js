@@ -1684,6 +1684,17 @@ router.get('/lists', auth, async (req, res) => {
  *   categories  only these shelves        names  only these exact rows ({name, unit}) — the ticked boxes
  *   languages   which synonym packs       skip_existing  default true
  */
+/** WALK-REG R57 (16 Oct): the starter lists carry INDIAN-RUPEE figures (Chennai market) with no currency of their own. A shop in another
+ *  currency must never inherit them as its price (a UAE shop adopted "Tomato AED 40/kg"). The page's own prices are applied AFTER this, so they survive; the list's own
+ *  figure is dropped and the line is adopted unpriced. A failed currency read drops the list figures too — unpriced is the safe side. */
+async function dropForeignListPrices(items, req) {
+  const withoutListPrice = (item) => { const copy = Object.assign({}, item); delete copy.price; return copy; };
+  let shopCurrency = null;
+  try { shopCurrency = await regional.currencyFor(req.identity && req.identity.identity_id); }
+  catch (failure) { log.fellBack('products POST /lists/adopt: the shop currency read failed — list prices dropped', failure); return items.map(withoutListPrice); }
+  if (!shopCurrency || String(shopCurrency).toUpperCase() === 'INR') return items;
+  return items.map(withoutListPrice);
+}
 router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1738,7 +1749,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], vali
      * ⚠️ A BLANK IS NOT ZERO. An empty box means "leave the suggestion", which is what the page's own
      * setPrice() records as null; reading '' as 0 would give the goods away.
      */
-    if (Array.isArray(b.names) && b.names.length) {
+    items = await dropForeignListPrices(items, req); if (Array.isArray(b.names) && b.names.length) {   /* R57: list prices out first, then the page's own */
       const priceBy = new Map();
       for (const x of b.names) {
         if (!x || typeof x !== 'object') continue;
