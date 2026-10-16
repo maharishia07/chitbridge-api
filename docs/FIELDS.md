@@ -6,6 +6,22 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **The shop's flags and the person's prefs (W1-SET · FLD2, 2026-10-15):** every key of `lib/policy.js` FLAGS (`policy_flags.<key>`) and of `routes/entities.js` PREF_SETS (`ui_prefs.<key>` · `locale_prefs.<key>`) must have a row in this file, spelled with its store (`policy_flags.trade_side`, never the bare word). `lib/field-ledger.undocumentedSettings` reads both sources and this file; `tests/field-ledger.test.cjs` fails by name when a 33rd flag arrives without its row.
 
+## POST /api/chits/:id/payment · the press's own key (PAY-FIX · H2, 2026-10-15)
+
+| key | type | source / derived · who writes · who reads |
+|---|---|---|
+| body `client_ref` → `business_json.payment.client_ref` | string ≤ 80, optional | Source: the web mints one when the Mark-paid sheet opens (app.html `chitMarkPaid`, `press-<time>-<rand>`), so a retry of the same press carries the same ref and a second press carries a new one. Written by the route into the copy's `payment` slot beside `method · ref · amount · note · at · by`. Read by `lib/books-hooks.classify`: the books' key is `chitpay:<chit_id>:<client_ref>` (without it `chitpay:<chit_id>`, one payment per chit as before), through `books.recordPayment`'s one idempotency rule. |
+| response `replayed` · `message` | boolean · `Payment recorded` \| `Already recorded` | Derived: `books.payment.duplicate` — the press was the replay of a recorded one (the first answer is handed back, nothing posted twice). The web toasts `message`. |
+| DELETE response `books.payments[]` · `books.words` | `[{ payment_id, entry_no }]` · sentence | Derived by `books-store.paymentsOfChit` (every key of the chit, oldest first): clearing the mark never undoes the books — the sentence names every entry to reverse. `payment_id` / `entry_no` stay the first one's (as before). |
+
+## POST /api/chits/:id/deliver-lines · the replay key (PAY-FIX · H6, 2026-10-15)
+
+| key | type | source / derived · who writes · who reads |
+|---|---|---|
+| row `client_ref` → `chit_line_delivery.client_ref` (b730) | string ≤ 120, optional | Source: the counter's drain stamps `<queue row no>:<position>` on each queued goods-in / despatch / online-delivery row (`till.html stampDeliveryRefs`), stable across retries. Written by `lib/deliverline.record` into `chit_line_event`'s 12th argument; a partial unique index (entity, chit, line, client_ref) makes a replay insert nothing. Read by nothing else. Not (reference, kind): "6 then 4" under one GRN is two real deliveries. |
+| response `delivered[].replayed` · `replayed` | boolean | Derived: the key was already recorded — the first result stands; the route does not announce, advance or accept again. |
+| till queue row `renumber_to` (PAY-FIX · H9) | string, local only | Source: `till.html rememberRenumber` stamps the number a collided bill is moving to on the OLD queue / bill rows before the four IndexedDB writes; `renumberBill` reuses it after a reload, so a sale keeps one number. Never sent to the server; removed from the new row. |
+
 ## Housekeeping refusals · `code` · `why` · list caps `capped` · `cap_note` (W2-RAIL · R2, 2026-10-15)
 
 | Key | Shape | Source / derived · who writes it · who reads it |
@@ -481,7 +497,7 @@ The shell's header sheet in ONE read (`lib/entity-header.js`; one `readBatch` ov
 
 | Key | Shape | Meaning |
 |---|---|---|
-| `business` | `{ name, legal_name, address, phone }` | `name` = `identities.display_name`; `legal_name` / `address` / `phone` = the profile vault's Business-identity tags, else the `identities` column. Any may be null. |
+| `business` | `{ name, legal_name, address, phone, currency }` | `name` = `identities.display_name`; `legal_name` / `address` / `phone` = the profile vault's Business-identity tags, else the `identities` column. Any may be null. `currency` (AU-WORDS, 2026-10-15) = `identities.currency_code` (source; written by country-setup / registration), read by the web shell (`moneySymbol`): the money icon on Home and the area switcher is this currency's symbol, `¤` when null. |
 | `licences[]` | one row per gathered `entity_compliance` row, plus one per CORE scheme not yet held | Core rows not held have `days_left: null`, `valid_until: null`, `band: null` ("not added"). |
 | `licences[].scheme` · `label` | string | The rule's scheme and label; for a row with no rule, its `standard_key` and humanised `doc_key`. |
 | `licences[].number_masked` | string or null | `verification.number_masked` when the verifier stored one; else null. |
@@ -491,8 +507,18 @@ The shell's header sheet in ONE read (`lib/entity-header.js`; one `readBatch` ov
 | `licences[].renew_url` | string or null | From the rule; null without one. |
 | `licences[].note` | string or null | The rule's late-fee sentence, only for the bands the rule names (FSSAI: `gone`). Carries no amount and no start day. Null when no rule. |
 | `licences[].rule_verified` | boolean or null | `false` = the rule's source is not cited yet ("verify"); every rule is false today. Null when no rule. |
-| `trade_ready.checks[]` | `{ key, label, done }` x 4 | `address` (an address whose rung is at least `copied`: profile provenance or vault row, not just typed) · `phone` (the PHONE identity document is `verified`) · `pan` (a PAN identity document is held, or the PAN is read from the GSTIN) · `gstin` (a GSTIN is on file). |
-| `trade_ready.done` | boolean | All four are done. |
+| `trade_ready.checks[]` | `{ key, label, done }` — the shop's COUNTRY PACK's list (`lib/pack-words.tradeChecksFor`, AU-WORDS 2026-10-15) | `key` is the code a client may branch on; `label` the pack's word. IN: `address` (an address whose rung is at least `copied`: profile provenance or vault row, not just typed) · `phone` (the PHONE identity document is `verified`) · `pan` (a PAN identity document is held, or the PAN is read from the GSTIN) · `tax_id` ("GSTIN": the number is on file). AU: `address` · `phone` · `tax_id` ("ABN"). AE: `address` · `phone` · `tax_id` ("TRN") · `trade_licence` (a gathered `entity_compliance` row whose keys say trade licence / shops act). No country: `address` · `phone` · `tax_id` ("Tax number"). Was `gstin` × 4 fixed rows before 2026-10-15. |
+| `trade_ready.done` | boolean | Every check of the pack's list is done. |
+
+## GET /api/entities/policy · PATCH /api/entities/policy · GET /api/entities/sides — the pack's words (AU-WORDS, 2026-10-15)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| GET /policy `country` | ISO-2 or null | Source: `identities.country`, read in the same statement as the flags (`policy.read`, 1 trip). Read by nobody on the web yet (the schema already carries the pack's words); sent so a client can say which pack worded it. |
+| GET /policy `schema.gst_registration.ui` | `{ label, options[], labels{}, help }` per pack (`policy.schemaFor` ← `lib/pack-words.registrationKindsFor`) | Derived. `options` is the subset of the STORED enum (`regular · composition · unregistered · sez`, unchanged) the pack offers: IN all four; AU and AE `regular · unregistered`; no pack `regular · unregistered`. `label` = "GST registration" (IN · AU) · "VAT registration" (AE) · "Tax registration" (none). Read by web cap-settings.js `policy` (CB Settings › Policy) and cap-admin.js polDefs. |
+| GET /policy `schema.chit_expiry_days.ui.labels` · `schema.retention_days.ui.labels` | `{ "0": word }` | Derived: "No expiry" · "Keep — the law here asks N years" (the pack's `retentionYears`) or "Keep — at least 9 years" (policy.RECORDS_FLOOR_YEARS). Read by web cap-settings.js `shown` (a 0 is shown as its word). |
+| PATCH /policy 400 `code: 'REG_KIND_NOT_OFFERED'` | `{ error, code, message }` | Derived: the patch named a `gst_registration` kind the shop's pack does not offer (`policy.kindRefusal`); `message` lists the pack's choices. One extra read (the country) only when the patch names that key. |
+| GET /sides `impact.field` · `impact.tax_id_word` | `'tax_id'` · the pack's word (`GSTIN · ABN · TRN · Tax number`) | Derived (`lib/pack-words.wordsFor`). `impact.n` = "Your " + the word; the Filings row `m` = the pack's return short name + " · Name your " + the word (GSTR-3B · BAS · VAT return; none with no pack). Was `field: 'gstin'`, "Your GSTIN" for every shop. Read by web sides.js (paints `n` and `m` only). |
 
 ## `policy_flags.books.auto_post` (M34, 2026-10-08 · DECISIONS: "Nothing posts by itself")
 
@@ -863,3 +889,31 @@ sends; the owner deletes. Every figure here is counted from the rows GET /partie
 | POST /groups → `{ name, added, removed, count }` | — | the group after the write: `added` / `removed` = rows actually changed (an id that is nobody's customer changes nothing); `count` = members now | `lib/crm-groups.setGroup` (ONE transaction; ≤ 500 ids; ≤ 20 groups per customer → `TOO_MANY_GROUPS`; before b205 → 409 `GROUPS_NOT_MIGRATED`) | the screen's refresh |
 | DELETE /groups/:name → `{ name, removed }` | — | how many customers the group left; 404 `NOT_FOUND` when none carried it | `lib/crm-groups.dropGroup` | the screen |
 | POST /segments/:key/send → `{ key, dry, channel, purpose, members, may, refused[] { party_id, name, code, why }, refused_by[], sent[] { party_id, name, status, reason }, sent_n, failed_n, refused_n }` | — | derived: `dry` = the verdict per member, nothing sent; a real send = `lib/whatsapp-out.notify` per allowed member (the ONE sender, which asks `lib/privacy.gate` again) — `status` sent · refused · failed with the sender's own `reason`; only WhatsApp is sendable today (`CHANNEL_NOT_SENDABLE`); > 100 allowed members → 400 `TOO_MANY` before any send | `lib/crm-groups.send` | the Send sheet: the count first, then the outcome per member |
+
+## SET-WALK1 · W25 (2026-10-15) · the vault is saved as a merge-patch with a version — `GET /api/governance/profile` · `PUT /api/governance/profile/vault`
+
+No migration: the version IS `entity_profile.updated_at` (b96), read as whole microseconds. Who may: any signed-in login of the shop (unchanged).
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `GET /api/governance/profile` `vault_version` (new) | text — `(extract(epoch from entity_profile.updated_at) * 1000000)::bigint` as a string; `null` before the first fill | derived (`lib/profile.readVault`, the same read as `vault`). Read by web cap-shop.js (kept on the model with the vault; sent back as `version` on Save). |
+| `PUT /api/governance/profile/vault` body `{ version, patch }` (new shape) | `patch` = RFC 7386 merge-patch over the KEYED vault: `{ sections: { '<type>\|<label>': { label?, rows: { 't:<tag>' \| 'n:<name>': { name, value, tag? } \| null } } \| null } }` (lib/vault-patch: a repeated key gets `#2`) | source. Written by web cap-shop.js `saveVaultUI` (only the rows this screen changed; `null` removes). Applied by `lib/profile.patchVault` → `saveVault` with `expect` — the check and the write are ONE statement (`… WHERE updated_at = $3 RETURNING version`). The old whole body `{ vault: { sections: [] } }` is taken for a first fill, or with the current `version`. |
+| `PUT /api/governance/profile/vault` → `{ vault, version }` | `version` as above, after the write | derived. Read by cap-shop.js (the model's version moves on). |
+| 409 of `PUT /api/governance/profile/vault` | `{ code: 'VAULT_CHANGED', error, message: 'Changed since you opened it — reload?' }` · `{ code: 'VAULT_VERSION_REQUIRED', … }` (a whole body over an existing vault with no version) | derived. The web paints the sentence with a Reload button (CBAction onFail); nothing is written. |
+
+## SET-WALK1 · W15 / W16 / W28 (2026-10-15) · the kinds a login may mint · a connector not yet for a country · the words for big numbers
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `GET /api/keys` `scopes` (changed) | the kinds THIS login may mint — `testing` only for the platform role (`lib/platformroot.isPlatform`) | derived (`routes/keys.scopesFor`). Read by web cap-settings.js (the "It may" picker offers exactly this list). `POST /api/keys` refuses a kind outside it: 403 `NOT_PLATFORM`. |
+| `GET /api/integrations/catalogue` `connectors[].may.code` (new) | `null` · `NOT_FOR_COUNTRY` (Tally outside a Tally-XML pack) · `NOT_YET_FOR_COUNTRY` (Zoho Books: sold there, our kit is India-GST-shaped so far) · `NOT_YET` (Xero · MYOB: no kit; listed for the countries whose shops run them) | derived (`routes/integrations.mayFor`). The web words the row from the CODE ("Not for your country" · "Not yet for your country" · "Not built yet"), never from the sentence. The download answers 409 with the same code. |
+| `policy_flags.number_words` | `pack` · `lakh` · `million`; default `pack` (= the money's own: INR lakh/crore, else million) | Source · layer E, class `entity`. Written by CB Settings › Country (W28, through the one writer PATCH /entities/policy). Read by the web's Country setup (the live example) and, when `CBMoney.words` lands in the engines, by every bill's words line. No `ui`: it is shown in ONE place (Country), not in the Policy list. |
+| `ui_prefs.kural` | `auto` · `on` · `off`; default `auto` | Source (SET-WALK1 W7). The person's choice in the avatar menu's Thirukkural group (web avatar.js `CBAvatar.set('kural')`), synced like theme. Read by web kural.js `wanted()`: `auto` draws the band only where the shop reads Tamil (`CBLocale.langs` has `ta`). No migration (ui_prefs jsonb). |
+
+## CRM-FIX (R4 · R5 · R9 · R10, 16 Oct 2026)
+| key | shape | number · source · writer · reader |
+|---|---|---|
+| `dues.open_side` (GET /api/crm/parties · /parties/:id) | boolean | Derived in `lib/crm.net`: either stored side (customer / supplier) is non-zero, even when the netted `balance_minor` is 0. Read by `crm.removeParty` (HAS_DUES). |
+| `calls[].may_call` · `call_why` · `call_code` (GET /api/crm/calls) | boolean · string/null · string/null | Derived per row from the newest `party_contact_pref` row for phone × service (`privacy.contactPrefsOf`); true before b306. The call desk greys the tap-to-call with `call_why`; POST outcome refuses 403 with `call_code`. |
+| POST /api/crm/parties/:id/outcome `followup_id` | uuid, optional | The queue row's own follow-up — the only one the call closes. Absent (a new lead's row) closes none. |
+| POST /api/supplies/purchase `books_posted` | boolean, always false | Written by `supply-store.purchase`: cost and stock only, no expense/payable/input tax is posted; the toast says "not in your books yet". Read by the supplies screen. |

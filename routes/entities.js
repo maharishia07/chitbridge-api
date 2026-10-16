@@ -1,5 +1,7 @@
+// routes/entities.js — Entity registration, login, search.   CARD 28-platform-and-operations/entities-routes
+// OWNS the entity door: register · OTP login · search · profile · header · sides · policy · country setup · CALLED BY server.js (app.use('/api/entities')).
+// FLOW  validate → auth → withEntity (the caller's own entity) → the lib that owns the data (profile · policy · entity-header · sides) → { ok, data, error }
 const versionref = require('../lib/versionref');
-// routes/entities.js — Entity registration, login, search
 const express = require('express');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
@@ -265,8 +267,12 @@ function policyMay(req) {
 }
 
 router.get('/policy', auth, async (req, res) => {
-  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) }); }
-  catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
+  /* AU-WORDS: the schema is worded by the shop's COUNTRY PACK (policy.schemaFor — the registration kinds it offers, the tax's name, the records
+     floor); the country comes in the same read as the flags (policy.read), still 1 trip. No country → neutral words, never India's. */
+  try {
+    const { flags, country } = await policy.read(policyEntity(req));
+    res.json({ flags, country, schema: policy.schemaFor(country), bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) });
+  } catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
 });
 
 router.patch('/policy', auth, async (req, res) => {
@@ -275,7 +281,10 @@ router.patch('/policy', auth, async (req, res) => {
   const refused = policy.refusalFor(req.body, require('../lib/owner').isOwner(req));
   if (refused) return res.status(403).json({ error: 'Only the owner may do this.', code: require('../lib/owner').OWNER_ONLY, may: false, why: refused, message: refused });
   try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  catch (err) {
+    /* a refused value carries its code (REG_KIND_NOT_OFFERED: a kind this country's pack does not offer) and the sentence; a fault never leaks e.message */
+    res.status(err.status || 500).json({ error: 'Policy update failed', code: err.status && err.code ? err.code : undefined, message: err.status ? (err.message || safeErr(err)) : safeErr(err) });
+  }
 });
 
 /**
@@ -666,7 +675,7 @@ const PREF_SETS = {
    */
   ui: {
     column: 'ui_prefs',
-    keys: ['theme', 'fs', 'motion', 'stripes', 'edition', 'font', 'weight'],   /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */
+    keys: ['theme', 'fs', 'motion', 'stripes', 'edition', 'font', 'weight', 'kural'],   /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */   /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */
     check(prefs) {
       if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font';   /* avatar.js FONTS */
       if (prefs.weight && !['normal', 'bold'].includes(prefs.weight)) return 'Unknown text weight';
@@ -1335,7 +1344,7 @@ router.get('/routing/preview', auth, async (req, res) => {
       { kind: String(q.kind || 'incident'), audience: q.audience, to_bridge_id: q.to_bridge_id });
     res.json(out);
   } catch (e) {
-    res.json({ ok: false, why: String(e.message || e) });
+    res.json({ ok: false, why: safeErr(e) });   /* L2: still 200 ok:false (a preview never red-boxes), but never the raw error text */
   }
 });
 

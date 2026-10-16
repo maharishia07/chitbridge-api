@@ -1,4 +1,5 @@
-// scripts/check-db-role.js — answers B1 open-question #1: does the API's DB role BYPASS Row-Level Security?
+// scripts/check-db-role.js — answers B1 open-question #1: does the API's DB role BYPASS Row-Level Security?   CARD 28-platform-and-operations/db-role
+// OWNS the by-hand role check (the boot check is server.js checkDbRole; both use lib/db-role) · CALLED BY npm run db:role · FLOW  DATABASE_URL → connect → roleFacts → bypassesRls → verdict printed
 // Runs through the SAME connection the app uses (process.env.DATABASE_URL), so it reports the REAL role —
 // not the Supabase SQL-editor's `postgres` superuser. Run on the dev box (where DATABASE_URL is set):
 //     node scripts/check-db-role.js
@@ -10,12 +11,9 @@ const { Client } = require('pg');
   if (!process.env.DATABASE_URL) { console.error('DATABASE_URL is not set in this environment.'); process.exit(2); }
   const c = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await c.connect();
-  const { rows } = await c.query(
-    `SELECT current_user, session_user, rolsuper, rolbypassrls
-       FROM pg_roles WHERE rolname = current_user`
-  );
-  const r = rows[0] || {};
-  const bypass = !!(r.rolsuper || r.rolbypassrls);
+  const dbRole = require('../lib/db-role');   // SEC-FIX2: the one SELECT + verdict, shared with the boot check
+  const r = (await dbRole.roleFacts((sql) => c.query(sql))) || {};
+  const bypass = dbRole.bypassesRls(r);
   console.log('Connected as   :', r.current_user, '(session_user:', (r.session_user || '?') + ')');
   console.log('rolsuper       :', r.rolsuper);
   console.log('rolbypassrls   :', r.rolbypassrls);

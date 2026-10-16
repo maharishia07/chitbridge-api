@@ -123,3 +123,12 @@ bash deploy/backup.sh prove cb-YYYY-MM-DD.enc "postgresql://postgres:<pw>@<host>
 # or by hand: openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE -in cb-….enc | pg_restore --no-owner --no-privileges -d "<url>"
 ```
 The plaintext is never written to disk on the way; `prove` creates the Supabase roles/extensions the dump refers to first.
+
+## Going sealed — checklist (INT7c, after the 15 Oct 20:39–21:05 outage: `NODE_ENV=production` crashed on `OTP_EMAIL_ENABLED`)
+Set ALL of these on the host BEFORE you set `NODE_ENV=production`; the server lists every missing one in one log line (`boot aborted: N setting(s) to fix — …`) and exits once.
+- [ ] `NODE_ENV=production` (trimmed; the last thing you set)
+- [ ] `OTP_EMAIL_ENABLED=true` — with `RESEND_API_KEY` + `FROM_EMAIL` (real sign-in mail proven first)
+- [ ] no `DEV_OTP*` variables at all
+- [ ] `TESTER_NAMES` set to the names/patterns allowed to use the tester code (empty = every account and a WARN at boot; `*` = every account, explicit, WARN)
+- [ ] `JWT_SECRET` ≥ 32 characters · `DATABASE_URL` set
+- [ ] `railway.json` carries `healthcheckPath "/health"`: a failing deploy never replaces the healthy one — watch the deploy go green before leaving.

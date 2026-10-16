@@ -67,6 +67,8 @@ function rowsFor(sql, p) {
   const s = String(sql).replace(/\s+/g, ' ').trim();
   p = p || [];
   if (/break_status/.test(s) && /FROM identities/.test(s)) { const a = ACTORS[p[0]]; return a ? [{ break_status: 'active', hat: a.hat, access_level: a.access_level, whole_entity: a.whole_entity }] : []; }
+  /* the one status write is compare-and-set + RETURNING (ORD-FIX O6): a row comes back when the copy still holds the status that was read */
+  if (/^UPDATE chit_status SET current_status = \$1/.test(s)) return st(p[1], p[2], 'received').filter((r) => r.current_status === p[3]).map((r) => ({ chit_id: r.chit_id }));
   /* GET */
   if (/^SELECT \* FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return hd(p[0], p[1]);
   if (/FROM chit_detail/.test(s)) return [{ detail_type: 'order', line_item_count: 0, total_value: null, currency_code: 'INR', line_items: null }];
@@ -258,7 +260,7 @@ const tally = {};
     JSON.stringify(RA.forBill('bill_received', gap, railNo).reject) === JSON.stringify({ ok: true, needs: ['reason'] }));
   t('FX-F10W2 · …a viewer is refused Reject by the rail, word for word', RA.forBill('bill_received', null, { accept: { ok: false, why: 'read_only' }, reject: { ok: false, why: 'read_only' } }).reject.why === 'read_only');
   t('FX-F10W2 · PUT /status refuses a bill\'s reject without a reason, in words, with a code (reason_required)',
-    /new_status === 'rejected' && !String\(note \|\| ''\)\.trim\(\) && FOLDER_INV\.docOf\(hdr\.rows\[0\], entity_id\) === 'bill_received'/.test(SRC) && /code: 'reason_required'/.test(SRC));
+    /new_status === 'rejected' && !String\(note \|\| ''\)\.trim\(\) && FOLDER_INV\.docOf\((?:hdr|header)\.rows\[0\], entity_id\) === 'bill_received'/.test(SRC) && /code: 'reason_required'/.test(SRC));
   t('FX-F10W2 · a rejection / cancellation reaches the books hook (its Waiting row closes)', /\^\(accepted\|in_progress\|completed\|rejected\|cancelled\)\$\/\.test\(new_status\)/.test(SRC));
   t('…the books wait on something else (a gap) → Accept refused WITH the books\' sentence and its todo',
     JSON.stringify(RA.forBill('bill_received', gap, railNo).accept) === JSON.stringify({ ok: false, why: 'books_waiting', say: gap.why, todo: 'record' }));

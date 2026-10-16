@@ -170,10 +170,10 @@
     },
     "GET /api/assist/catalogue-mine": {
       "file": "assist.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 1,
       "fired": true,
-      "status": 401
+      "status": 200
     },
     "GET /api/assist/catalogue-sources": {
       "file": "assist.js",
@@ -625,14 +625,14 @@
     "GET /api/crm/calls": {
       "file": "crm.js",
       "trips": 2,
-      "wire": 8,
+      "wire": 12,
       "fired": true,
       "status": 200
     },
     "GET /api/crm/followups": {
       "file": "crm.js",
       "trips": 1,
-      "wire": 7,
+      "wire": 8,
       "fired": true,
       "status": 200
     },
@@ -1613,10 +1613,10 @@
     },
     "POST /api/assist/catalogue-adopt": {
       "file": "assist.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 6,
+      "wire": 12,
       "fired": true,
-      "status": 401
+      "status": 200
     },
     "POST /api/assist/catalogue-structure": {
       "file": "assist.js",

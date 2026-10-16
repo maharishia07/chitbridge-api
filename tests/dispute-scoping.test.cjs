@@ -113,6 +113,7 @@ function run(sql, p, ctx) {
   /* chit_status — the participant gate, RLS-scoped */
   if (/^SELECT .{1,40} FROM chit_status WHERE chit_id ?= ?\$1 AND entity_id ?= ?\$2/.test(s))
     return mine(STATUS, ctx).filter((r) => r.chit_id === p[0] && r.entity_id === p[1]).map((r) => Object.assign({ ok: 1 }, r));
+  if (/chit_participants\(/.test(s)) return isPart(ctx) ? STATUS.filter((r) => r.chit_id === p[0]).map((r) => ({ entity_id: r.entity_id })) : [];   /* SEC-FIX3 S4: the holders of the chit, for a holder only */
   if (/chit_participant_parity\(/.test(s)) return STATUS.filter((r) => r.chit_id === p[0] && r.entity_id === p[1]).map((r) => ({ deleted_at: r.deleted_at }));
   if (/FROM chit_header ch JOIN chit_status cs/.test(s)) return [{ auto_subject: 'Order 7 — brake pads', summary_json: {}, my_status: 'pending' }];
   if (/FROM chit_header WHERE chit_id=\$1 AND entity_id=\$2/.test(s)) return [{ auto_subject: 'Order 7 — brake pads', schema_version: 1 }];

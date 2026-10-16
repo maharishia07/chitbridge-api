@@ -1,5 +1,6 @@
-// server.js — Chit and Bridge MVP — Main Server
-// Version 1.0 — June 2026
+// server.js — Chit and Bridge MVP — Main Server (Version 1.0 — June 2026).   CARD 28-platform-and-operations/api-server
+// OWNS the process: the boot preflight, the middleware order, the route mounts, the DB-role check and the listener · CALLED BY node (npm start), tests/server-boot.test.cjs.
+// FLOW  preflight (sealed-environment errors → exit 1) → middleware (helmet · cors · limiters · auth-first) → routes → checkDbRole → startServing (listen · nightly jobs)
 require('dotenv').config();
 
 const express = require('express');
@@ -12,22 +13,14 @@ const log     = require('./lib/logger');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// Fail fast on a missing/weak JWT_SECRET — auth integrity depends entirely on it (see the P0 isolation
-// invariant). In production a bad secret aborts boot; in dev it warns loudly.
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-  const msg = 'JWT_SECRET is missing or shorter than 32 chars';
-  /**
-   * ⚠️⚠️ THIS COMPARISON WAS UNTRIMMED, AND THE CODEBASE ALREADY KNEW WHY THAT IS FATAL. `lib/dev-otp.js` says
-   * it in its own header: *"NODE_ENV is trimmed because production has been observed carrying a leading space
-   * (' development'), which silently defeated every `=== 'production'` comparison in the codebase."* That fix
-   * was applied there and never reached here — so the one guard that aborts boot on a weak JWT_SECRET, the
-   * secret **auth integrity depends entirely on**, would have gone quiet the moment NODE_ENV was set to
-   * " production" with the same stray space this platform demonstrably produces.
-   *
-   * ⭐ There is ONE definition of a sealed environment and it lives in lib/dev-otp.js. Everything asks it.
-   */
-  if (require('./lib/dev-otp').isSealed()) { log.critical('boot aborted', { reason: msg }); process.exit(1); }
-  else log.warn('weak JWT_SECRET', { reason: msg + ' — set a strong JWT_SECRET before any real deploy' });
+// Boot preflight (INT7c): in a sealed environment EVERY missing/invalid setting (JWT_SECRET, DATABASE_URL, the OTP posture, the mailer) is listed
+// in ONE log line and the process exits once — never one crash per setting. railway.json's healthcheck keeps a failing deploy from replacing the
+// healthy one. NODE_ENV is trimmed inside isSealed() (production has carried ' development'); the one definition of sealed is lib/dev-otp.js.
+{
+  const preflight = require('./lib/dev-otp').bootPreflightErrors();
+  if (preflight.length) { log.critical('boot aborted: ' + preflight.length + ' setting(s) to fix — ' + preflight.join(' · '), { reasons: preflight }); process.exit(1); }
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)
+    log.warn('weak JWT_SECRET', { reason: 'JWT_SECRET is missing or shorter than 32 chars — set a strong JWT_SECRET before any real deploy' });
 }
 
 // Fixed test OTP guard. DEV_OTP pins every OTP to a constant for testing — a critical auth hole if
@@ -40,8 +33,6 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
 // delivery (OTP_EMAIL_ENABLED=true) is fatal, not a warning.
 {
   const devOtp = require('./lib/dev-otp');
-  const errs = devOtp.otpPostureErrors();
-  if (errs.length) { errs.forEach((e) => log.critical('boot aborted', { reason: e })); process.exit(1); }
   /* SEC2: the warning says what is TRUE — fixed codes work only on a local stack (fixedOtp), and are echoed only when that
      stack also opted in (mayExposeOtp). DEV_OTP on any other host does nothing, and says so. */
   if (devOtp.armed()) {
@@ -482,14 +473,29 @@ app.use((err, req, res, next) => {
 // ── Start ─────────────────────────────────────────────────────
 /* HOST (optional): the address to listen on. Unset = every interface, as in production; the local test stack sets HOST=127.0.0.1 so the api is not reachable from the LAN. */
 const HOST = process.env.HOST || undefined;
-app.listen(PORT, HOST, () => {
-  console.log(`Chit and Bridge API running on port ${PORT}${HOST ? ' (' + HOST + ' only)' : ''}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Health: http://localhost:${PORT}/health`);
-  /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
-  try { require('./lib/books-nightly').start(); } catch (e) { console.warn('books nightly not started:', e.message); }
-  /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
-  try { require('./lib/crm-followups').start(); } catch (e) { console.warn('crm sweep not started:', e.message); }
-});
+/* SEC-FIX2 live check 2: read the role the app pool connects as BEFORE serving — a role that bypasses RLS refuses to start (warns on a local stack). */
+async function checkDbRole() {
+  if (!process.env.DATABASE_URL) return;
+  const dbRole = require('./lib/db-role');
+  try {
+    const verdictNow = dbRole.verdict(await dbRole.roleFacts((sql) => require('./db').query(sql)), require('./lib/dev-otp').isLocalStack());
+    log[verdictNow.level === 'fatal' ? 'critical' : verdictNow.level === 'ok' ? 'info' : 'warn'](verdictNow.msg, { reason: verdictNow.reason });
+    if (verdictNow.level === 'fatal') process.exit(1);
+  } catch (e) { log.warn('database role not checked', { reason: 'the read failed (' + e.message + ') — the pool retries; run npm run db:role by hand' }); }
+}
+
+function startServing() {
+  app.listen(PORT, HOST, () => {
+    console.log(`Chit and Bridge API running on port ${PORT}${HOST ? ' (' + HOST + ' only)' : ''}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Health: http://localhost:${PORT}/health`);
+    /* the ledger's nightly check — every 6 h, only for shops with the ledger on (lib/books-nightly.js) */
+    try { require('./lib/books-nightly').start(); } catch (e) { console.warn('books nightly not started:', e.message); }
+    /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
+    try { require('./lib/crm-followups').start(); } catch (e) { console.warn('crm sweep not started:', e.message); }
+  });
+}
+checkDbRole().then(startServing);
+
 
 module.exports = app;

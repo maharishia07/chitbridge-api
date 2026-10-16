@@ -1,4 +1,10 @@
 'use strict';
+/*
+ * OWNS      protected entity, constitution, readiness passport and clearances.
+ * CALLED BY web Standards · Trade readiness.
+ * FLOW      auth → entity scope → readiness → answer without another shop's registry values
+ * CARD      21-compliance-attestation-and-trade/governance
+ */
 const versionref = require('../lib/versionref');
 const log = require('../lib/logger');
 // routes/governance.js — GOV-01 protected entity / constitution / governed inheritance.
@@ -345,14 +351,40 @@ router.get('/vault-schema', auth, async (req, res) => {
     res.json({ section_types: p.SECTION_TYPES, verifiable_tags: p.VERIFIABLE_TAGS });
   } catch (err) { res.status(500).json({ error: 'Vault schema failed', message: safeErr(err) }); }
 });
+/** one PUT /profile/vault body: a patch, or a whole vault (a first fill — over an existing vault it must name the version); → { saved } or { refusal } */
+async function writeVaultBody(entity_id, body) {
+  const profile = require('../lib/profile');
+  if (require('../lib/vault-patch').isPatchBody(body)) return { saved: await profile.patchVault(entity_id, body.patch, body.version) };
+  const held = await profile.readVault(entity_id);
+  if (held.version && body.version == null) {
+    const words = 'This screen is older than the vault — reload it, then save.';
+    return { refusal: { code: 'VAULT_VERSION_REQUIRED', error: words, message: words } };
+  }
+  if (held.version && String(body.version) !== held.version) throw profile.vaultChanged();
+  return { saved: await profile.saveVault(entity_id, body.vault || body, { expect: held.version }) };
+}
+/**
+ * ⭐ SET-WALK1 · W25 (2026-10-15) — THE VAULT IS SAVED AS A MERGE-PATCH WITH A VERSION, NEVER REPLACED BLIND.
+ *   PUT /api/governance/profile/vault  { version, patch: { sections: { '<type>|<label>': { label?, rows: { 't:<tag>' | 'n:<name>': { name, value, tag } | null } } | null } } }
+ *     → { vault, version }.  RFC 7386 over the keyed view (lib/vault-patch): only what this screen changed travels; null removes.
+ *     409 VAULT_CHANGED "Changed since you opened it — reload?" when `version` ≠ the server's (GET /profile answers `vault_version`).
+ *   The old whole body { vault: { sections: [...] } } is still taken for a FIRST fill (no row yet); over an existing vault it needs the
+ *     version too (409 VAULT_VERSION_REQUIRED otherwise) — a blind replace is exactly the lost update Athi saw.
+ *   Who may: any signed-in login of the shop (as before; the server's auth). Trips: 1 read + 1 conditional write (+ the mirror's).
+ */
 router.put('/profile/vault', auth, async (req, res) => {
   try { const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    const saved = await require('../lib/profile').saveVault(entity_id, b.vault || b);
+    const written = await writeVaultBody(entity_id, b);
+    if (written.refusal) return res.status(409).json(written.refusal);
+    const saved = written.saved;
     /* ⭐ the Business identity rows are the counter's bill header (trade name, address, phone) — so open counters hear it */
     try { require('../lib/shopchanged').shopChanged(entity_id, 'profile'); } catch (e) { log.fellBack('governance PUT /profile/vault: the signal was not sent — carried on without it', e); }
     res.json(saved);
-  } catch (err) { res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  } catch (err) {
+    if (err && err.code === 'VAULT_CHANGED') return res.status(409).json({ code: err.code, error: err.say, message: err.say });
+    res.status(err.status || 500).json({ error: 'Save vault failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) });
+  }
 });
 // the entity's OWN required set (mandatory ∪ adopted) resolved from its profile
 router.get('/profile/readiness', auth, async (req, res) => {
@@ -453,7 +485,10 @@ router.get('/readiness/:bridge_id', auth, async (req, res) => {
        stays because it is what the UI keys the row by. */
     /* ⭐ the public facts with their rung — what they gave, what their books say, what we checked (lib/public-facts.js) */
     let facts = null; try { facts = require('../lib/public-facts').factsOf(r.rows[0]); } catch (e) { log.fellBack('governance GET /readiness/:bridge_id: the helper failed — carried on without it', e); }
-    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...rd });
+    /* SEC-FIX3 S6: the registry value (PAN, IEC, GSTIN) rides in evidence_ref — it stays with its owner; a stranger sees status + rung only */
+    const isOwnRow = String(auth.entityOf(req)) === String(r.rows[0].identity_id);
+    const shown = isOwnRow ? rd : Object.assign({}, rd, { clearances: (rd.clearances || []).map((clearance) => Object.assign({}, clearance, { evidence_ref: null })) });
+    res.json({ supplier: { bridge_id: r.rows[0].bridge_id, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name }, facts, ...shown });
   } catch (err) { res.status(500).json({ error: 'Readiness failed', message: safeErr(err) }); }
 });
 

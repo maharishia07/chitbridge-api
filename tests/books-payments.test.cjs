@@ -271,10 +271,12 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     /* the shape that makes it so: the chit route reads the copy, calls the door and marks the copy on ONE handle; no state_log row, no second "paid" */
     const csrc = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
     const route = csrc.slice(csrc.indexOf("router.post('/:chit_id/payment'"), csrc.indexOf("router.delete('/:chit_id/payment'"));
-    const tx = route.slice(route.indexOf('await withEntity(entity_id, async (db) => {'), route.indexOf('if (!out) return res.status(404)'));
+    /* PAY-FIX shrink: the one-handle body is markChitPaid (called inside ONE withEntity by the route); the refusals are payFailure */
+    const tx = csrc.slice(csrc.indexOf('async function markChitPaid('), csrc.indexOf("router.post('/:chit_id/payment'"));
+    const routeAll = csrc.slice(csrc.indexOf('async function markChitPaid('), csrc.indexOf("router.delete('/:chit_id/payment'"));
     ok('POST /chits/:id/payment: taxCopy.copyOn(db…) → hooks.chitPaid(db…) → UPDATE chit_header … payment, inside ONE withEntity; the books first (a refusal marks nothing)',
       /taxCopy\.copyOn\(db, chit_id, entity_id\)/.test(tx) && /hooks\.chitPaid\(db, entity_id,/.test(tx) && tx.indexOf('hooks.chitPaid(') < tx.indexOf("jsonb_build_object('payment'")
-      && !/withEntity/.test(tx.slice(10)) && !/state_log/.test(route) && /ALREADY_PAID/.test(route) && /hooks\.park\(entity_id/.test(route), tx.slice(0, 200));
+      && /withEntity\(entity_id, \(db\) => markChitPaid\(db,/.test(route) && !/withEntity/.test(tx.slice(0, tx.indexOf('function pressPayment'))) && !/state_log/.test(routeAll) && /ALREADY_PAID/.test(routeAll) && /hooks\.park\(entity_id/.test(route), tx.slice(0, 200));
     ok('the hook\'s own payment branch (the counter\'s money chit) and the door share recordChitPayment — one call site into recordPayment outside lib/books.js',
       (fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8').match(/B\.recordPayment\(/g) || []).length === 1);
     /* ⭐ THE GUARD: nothing in routes/ or lib/ but lib/books.js writes "paid" — a line that pairs a SQL write with the literal 'paid', or a state_log 'paid' row */

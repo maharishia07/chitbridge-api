@@ -189,6 +189,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'conformance.js', 'instruments.js', 'kyb.js', 'readiness.js', 'reference.js', 'verify.js', 'profile.js',
   'boilerplate.js', 'plans.js', 'forms.js',
   'entity-header.js', 'licence-rules.js',   // ADOPTION (N19): the shell's header sheet and the country-keyed licence rules it reads - a presentation of what the shop holds, no engine rule
+  'vault-patch.js',  // ADOPTION (SET-WALK1 W25, 15 Oct): RFC 7386 merge-patch over the vault's keyed view — pure, no rule of CB's own; the key rule is the web's twin (cap-shop.js vaultKeys) and the first candidate for an engines lift
+  'pack-words.js',   // ADOPTION (AU-WORDS, 15 Oct): the words a screen says per country pack (registration kinds · trade checks · the return's name) — presentation of the pack, no rule of its own; retires into the engines packs' `words`
   // Beckn is a WIRE PROTOCOL — adoption by definition. Classified BEFORE it was written, so the guard existed
   // before the thing it guards. The engine may never import it; vocabulary drift is how a distinct thing becomes
   // a client of someone else's model.
@@ -200,6 +202,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
+  'xact-lock.js',
+  /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture, not a rule of the platform. (2026-10-15) */
+  'db-role.js',
   /* PERF1: the one page-size clamp every list route reads (a default, a server-side maximum) — plumbing, not a rule of the platform. (2026-10-14) */
   'page-limit.js',
   /* HX1: where this installation is reached from outside (PUBLIC_API_BASE / PUBLIC_WEB_BASE) — hosting config, not a rule. (2026-10-13) */

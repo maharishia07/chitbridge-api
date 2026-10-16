@@ -1,3 +1,9 @@
+/*
+ * OWNS      API keys for other systems: mint (owner only), list, revoke.
+ * CALLED BY web Settings › Integrations › Keys · routes/till.js.
+ * FLOW      auth → owner gate → mint → revoke
+ * CARD      18-identity-sign-in-and-access/keys
+ */
 /**
  * /api/keys — API KEYS FOR OTHER SYSTEMS (Athi, 2026-09-05: "create the entire offer as a capability and attach it to
  * any other systems … an api or micro service").
@@ -19,6 +25,7 @@ const { safeErr } = require('../lib/respond');
 const logger = require('../lib/logger');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { ownerOnly } = require('../lib/owner');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction } = require('../db');
@@ -60,8 +67,19 @@ async function patchKey(entity_id, jti, patch, db) {
   await policy.patchKey(db || null, entity_id, ['api_keys'], patch, { op: 'merge_item', match: ['jti', String(jti)] });
 }
 
+/** the kinds a login may mint: every scope, minus the platform's 'testing' for a shop login */
+function scopesFor(req) {
+  let platform = false; try { platform = require('../lib/platformroot').isPlatform(req); } catch (e) { logger.warn('keys scopesFor: the platform test failed — answered a shop\'s list', { err: e && e.message }); }
+  return SCOPES.filter((scope) => scope !== 'testing' || platform);
+}
+/* ⭐ SEC-FIX2 L1: revoking a key is the OWNER's (lib/owner — the same gate counters and people writes use): an editor could stop the
+   counter mid-sale by revoking its key, while changing the counters themselves was already owner-only. The list says it as `may`. */
+const owner = require('../lib/owner');
+const REVOKE_SAYS = 'Only the owner can revoke a key.';
 router.get('/', auth, sessionOnly, async (req, res) => {
-  try { res.json({ keys: await listOf(auth.entityOf(req)), scopes: SCOPES }); }
+  /* ⭐ SET-WALK1 · W15: `scopes` = the kinds THIS login may mint — 'testing' (a build posts test results to the board) is the platform role's
+     only (lib/platformroot.isPlatform); a shop owner never sees it. The web offers exactly this list (cap-settings.js keyKinds); mint() refuses the rest. */
+  try { res.json({ keys: await listOf(auth.entityOf(req)), scopes: scopesFor(req), may: { revoke: owner.may(req, REVOKE_SAYS) } }); }
   catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
@@ -514,9 +532,19 @@ router.setDiag = async (entity_id, jti, patch) => {
   auth.forgetKey(jti); return diag;
 };
 
-router.post('/', auth, sessionOnly, async (req, res) => {
+/** a shop asking for a platform-only kind (testing) is refused with its sentence → the 403 body, or null when every asked kind is its to make */
+function platformScopeRefusal(req, askedScopes) {
+  const allowed = scopesFor(req), asked = Array.isArray(askedScopes) ? askedScopes.map(String) : [];
+  const refused = asked.filter((kind) => SCOPES.includes(kind) && !allowed.includes(kind));
+  if (!refused.length) return null;
+  return { error: 'Platform only', code: 'NOT_PLATFORM', may: false, why: 'NOT_PLATFORM', message: 'A ' + refused[0] + ' key is the platform\'s to make, not a shop\'s.' };
+}
+/* SEC-FIX3 S9: only the owner makes a key — a co-assist's key survived their switch-off and could carry more than they may do */
+router.post('/', auth, sessionOnly, ownerOnly('Only the owner can make a key.'), async (req, res) => {
   try {
     const b = req.body || {};
+    const refusal = platformScopeRefusal(req, b.scopes);
+    if (refusal) return res.status(403).json(refusal);
     const r = await mint(auth.entityOf(req), req.identity, { name: b.name, scopes: Array.isArray(b.scopes) ? b.scopes : undefined, days: b.days });
     res.status(201).json(Object.assign({ note: 'Shown once. Send it as Authorization: Bearer <key> or X-Api-Key: <key>.' }, r));
   } catch (e) { res.status(e && e.status ? e.status : 500).json({ error: e && e.status === 400 ? 'validation' : 'Failed', message: String(e && e.message) }); }
@@ -524,7 +552,7 @@ router.post('/', auth, sessionOnly, async (req, res) => {
 
 /* ⚠️ FOR UPDATE, same reason as mint() and setEnrol() — a revoke racing a mint on the same list must not have
    whichever save() lands second resurrect the key the other request just removed, or drop the one it just added. */
-router.delete('/:jti', auth, sessionOnly, async (req, res) => {
+router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), async (req, res) => {   /* L1: the owner gate, see GET / above */
   try {
     const entity_id = auth.entityOf(req);
     let found = false;

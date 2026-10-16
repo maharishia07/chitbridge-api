@@ -24,6 +24,7 @@ const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
 const { safeErr } = require('../lib/respond');
 const log = require('../lib/logger');
 const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
+const { ownerOnly } = require('../lib/owner');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
@@ -751,7 +752,7 @@ router.get('/snapshot', auth, async (req, res) => {
              id is made safe here; the true reference rides beside it for the chit. */
           const row = tillItem(String(l.line_id).replace(/['"\\<>&\s]/g, '_'), f);
           if (!row.name) continue;
-          if (!(Number(row.price) > 0)) { networkUnpriced++; continue; }
+          if (!catalogueRead.isPricedByStore(l, row.price)) { networkUnpriced++; continue; }
           /* ⭐ where it came from — the slip, the chit and the shop screen can all say "from <brand>" */
           row.source = { key: l.source_key, title: l.source_title || null, owner: l.owner_entity_id || null, line: l.line_id };
           items.push(row);
@@ -766,7 +767,7 @@ router.get('/snapshot', auth, async (req, res) => {
      */
     try {
       const byOwner = {};
-      items.forEach((x) => { if (x.source && x.source.owner) (byOwner[x.source.owner] = byOwner[x.source.owner] || []).push({ name: x.name, id: x.item_id }); });
+      items.forEach((x) => { if (x.source && x.source.owner) (byOwner[x.source.owner] = byOwner[x.source.owner] || []).push({ name: x.name, id: x.item_id, category: x.category }); });
       const owners = Object.keys(byOwner);
       if (owners.length) {
         const fromNetworks = await require('../lib/network-offers').forStore(entity_id, owners, byOwner);
@@ -1773,7 +1774,7 @@ router.post('/pair', auth, async (req, res) => {
  * `bridge_id: null`. The counter names its own data folder from the bridge_id inside its key ([TILL-120]) so it
  * can tell one shop from another with no network at all — a key without one falls back to an unreadable hash.
  */
-router.post('/enrol', auth, async (req, res) => {
+router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), async (req, res) => {   /* SEC-FIX3 S9 */
   try {
     if (!req.identity || req.api_key)
       return res.status(403).json({ error: 'Forbidden', message: 'Sign in to connect a counter.' });
@@ -2698,7 +2699,7 @@ router.post('/listen', auth, async (req, res) => {
     if (buf.length > speech.MAX_BYTES) return res.json({ ok: false, why: 'that is too long — say it in one short phrase' });
     const out = await speech.transcribe(buf, { mime: b.mime, format: b.format, lang: b.lang, hint: b.hint });
     res.json(out);
-  } catch (e) { res.json({ ok: false, why: String(e && e.message) }); }
+  } catch (e) { res.json({ ok: false, why: safeErr(e) }); }   /* L2: ok:false in words (the counter falls back to the browser's recogniser), never the raw error text */
 });
 
 /**

@@ -140,7 +140,7 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | **Testers on a deployed api (SEC1)** | | | | |
 | `TESTER_CODE` | optional | `<8+ characters, Athi's secret>` | **yes** | The one sign-in code testers use with ANY sign-in name, on as many shops as they like. Checked on verify only (never issued, e-mailed, logged or echoed; timing-safe). Unset or shorter than 8 → no tester code works. Works in a sealed env too. May carry ONE `{yymmdd}` / `{yyyymmdd}` (a daily code, SEC1b). ⚠️ TEMPORARY — remove before real users (boot warns while set). |
 | `TESTER_CODE_TZ` | optional | `Australia/Sydney` | no | SEC1b, TEMPORARY: the zone whose day fills `{yymmdd}` / `{yyyymmdd}` in `TESTER_CODE` (default `Asia/Kolkata`). Remove with `TESTER_CODE` before real users. |
-| `TESTER_NAMES` | optional | `*@test.chitbridge,anil-tester` | no | Comma list of exact sign-in names or `*` patterns; set → the tester code works only for those names; unset → any name. |
+| `TESTER_NAMES` | optional | `*@test.chitbridge,anil-tester` | no | Comma list of exact sign-in names or `*` patterns; set → the tester code works only for those names; unset → any name (and a boot WARN "set TESTER_NAMES"); `*` → every account, explicit (WARN). |
 | **Local stack only — refused anywhere else** | | | | |
 | `DEV_OTP` | local stack only | `1` | no | Arms the fixed entity / customer / connector codes (values: lib/dev-otp.js LOCAL STACK block, docs/SIM-LOAD.md). They work ONLY when DATABASE_URL's host is 127.0.0.1 / localhost / ::1 AND `NODE_ENV=development`; a sealed env refuses to boot with it. |
 | `DEV_OTP_CUSTOMER` / `DEV_OTP_CONNECTOR` | local stack only | `<digits>` | no | Override the fixed customer / connector codes while `DEV_OTP` armed (local stack only). |
@@ -271,3 +271,12 @@ phase). Remove TESTER_CODE before real users."*
 ### Before real users — REMOVE
 - [ ] Railway → Variables → DELETE `TESTER_CODE`, `TESTER_NAMES`, `TESTER_CODE_TZ`; web repo → Secrets → DELETE `E2E_TESTER_CODE`.
 - [ ] Boot log shows no "TEMPORARY: a tester sign-in code is active" line. (The cutover checklist at the top of lib/dev-otp.js, item 4.)
+
+## Going sealed — checklist (INT7c, after the 15 Oct 20:39–21:05 outage: `NODE_ENV=production` crashed on `OTP_EMAIL_ENABLED`)
+Set ALL of these on the host BEFORE you set `NODE_ENV=production`; the server lists every missing one in one log line (`boot aborted: N setting(s) to fix — …`) and exits once.
+- [ ] `NODE_ENV=production` (trimmed; the last thing you set)
+- [ ] `OTP_EMAIL_ENABLED=true` — with `RESEND_API_KEY` + `FROM_EMAIL` (real sign-in mail proven first)
+- [ ] no `DEV_OTP*` variables at all
+- [ ] `TESTER_NAMES` set to the names/patterns allowed to use the tester code (empty = every account and a WARN at boot; `*` = every account, explicit, WARN)
+- [ ] `JWT_SECRET` ≥ 32 characters · `DATABASE_URL` set
+- [ ] `railway.json` carries `healthcheckPath "/health"`: a failing deploy never replaces the healthy one — watch the deploy go green before leaving.

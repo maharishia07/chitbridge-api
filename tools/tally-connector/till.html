@@ -5210,6 +5210,8 @@ var AgentHost = {
  * ⭐ THE PAGE AS THE TILL. Same rules as the program: the number first, then the bill on disk, then the queue — so a crash costs a gap
  * in the numbering, never a duplicate — and the queue drains whenever the line is up.
  */
+/** ⭐ TILL-FIX2 (H5): the server's code for "no such bill here YET" (routes/till.js /reward · lib/reward-store) — the one 4xx tillPost queues */
+var WAITS_FOR_BILL = 'BILL_NOT_RECORDED';
 var CloudHost = {
   mode:'cloud',
   key: null, api: null,
@@ -5522,27 +5524,39 @@ var CloudHost = {
     try { var j = await response.json(); return { said: (j && (j.message || j.error)) || '', code: (j && j.code) || null }; }
     catch (e) { cbQuiet('tillPost:1', e); return { said: '', code: null }; }
   },
+  /** ⭐ TILL-FIX2 (H5): the ONE 4xx that is not a refusal — the server holds no such bill YET (the bill is in this queue or in flight), so the
+   *  write WAITS behind the bill instead of ending as final. The caller names the row (`opts.queueAs`, e.g. '<bill no>/reward') so it
+   *  sorts right behind its bill in the queue and a second queueing replaces it — never two rows for one bill. */
   async tillPost(path, body, opts){
     var noQueue = !!(opts && opts.noQueue);
     if (!this.cred()) return { ok:false, why:'this counter is not paired' };
-    if (lineUp()) {
-      try {
-        var r = await fetchBy(this.api + path, { method:'POST',
-          headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(body) });
-        if (r.ok) return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
-        var refusal = await this.refusalOf(r);   /* a refusal is FINAL — queueing a 400 would retry a mistake for ever */
-        if (r.status >= 400 && r.status < 500)
-          return { ok:false, final:true, code: refusal.code, why: refusal.said || ('ChitBridge refused it (' + r.status + ')') };
-        if (noQueue) return { ok:false, why: refusal.said || ('ChitBridge answered ' + r.status) };
-      } catch (e) {
-        if (noQueue) return { ok:false, why: (e && e.name === 'AbortError') ? 'ChitBridge did not answer in time' : 'the line dropped' };
-        /* the line went mid-request; fall through and queue it */
-      }
-    } else if (noQueue) return { ok:false, why:'there is no internet' };
-    await DB.put('queue', { no: 'OP/' + Date.now() + '/' + Math.random().toString(36).slice(2, 7),
+    var answer = await this.postNow(path, body, noQueue);
+    if (answer) return answer;
+    await this.queueWrite(path, body, opts && opts.queueAs);
+    return { ok:true, queued:true };
+  },
+  /** one try on the wire: the answer when it is final (ok · a refusal · noQueue's "not now"), or null when the write should WAIT in the queue */
+  async postNow(path, body, noQueue){
+    if (!lineUp()) return noQueue ? { ok:false, why:'there is no internet' } : null;
+    try {
+      var r = await fetchBy(this.api + path, { method:'POST',
+        headers: this.auth({ 'Content-Type':'application/json' }), body: JSON.stringify(body) });
+      if (r.ok) return Object.assign({ ok:true }, await r.json().catch(function(){ return {}; }));
+      var refusal = await this.refusalOf(r);   /* a refusal is FINAL — queueing a 400 would retry a mistake for ever */
+      var waitsForBill = r.status === 409 && refusal.code === WAITS_FOR_BILL;
+      if (r.status >= 400 && r.status < 500 && !waitsForBill)
+        return { ok:false, final:true, code: refusal.code, why: refusal.said || ('ChitBridge refused it (' + r.status + ')') };
+      return noQueue ? { ok:false, code: refusal.code, why: refusal.said || ('ChitBridge answered ' + r.status) } : null;
+    } catch (e) {
+      /* the line went mid-request: queue it, unless the caller wants the answer now */
+      return noQueue ? { ok:false, why: (e && e.name === 'AbortError') ? 'ChitBridge did not answer in time' : 'the line dropped' } : null;
+    }
+  },
+  /** the small write goes on the bills' queue — under the caller's key when it belongs to a bill, else its own OP/ key */
+  async queueWrite(path, body, queueAs){
+    await DB.put('queue', { no: queueAs || ('OP/' + Date.now() + '/' + Math.random().toString(36).slice(2, 7)),
                             at: new Date().toISOString(), tillPost: { path: path, body: body } });
     await queueTally(); paintStatus();
-    return { ok:true, queued:true };
   },
   /** ⭐ W1-TILL: a refusal carries the SERVER's sentence and code (message · code, as tillPost reads them) beside the status the
    *  caller branches on — never 'HTTP 401' as the only words; a dropped line says so in the counter's own words. */
@@ -5572,8 +5586,7 @@ var CloudHost = {
    * leaves "open orders" (/api/till/tasks hides an order with nothing remaining) without a packing slip and without a D/ number.
    */
   async orderBilled(bo, bill){
-    var rows = ((bo && bo.lines) || []).filter(function(l){ return l.line_id && l.quantity > 0; })
-      .map(function(l){ return { line_id: l.line_id, quantity: l.quantity, unit: l.unit, reference: bill.no, note: 'billed' }; });
+    var rows = orderRowsOfBill(bo, bill).map(function(l){ return { line_id: l.line_id, quantity: l.quantity, unit: l.unit, reference: bill.no, note: 'billed' }; });
     if (!rows.length) return { ok: false, why: 'the order has no lines to mark' };
     await DB.put('queue', { no: bill.no + '/order', at: bill.at, deliver: { chit_id: bo.chit_id, rows: rows } });
     this.drain();
@@ -5774,7 +5787,7 @@ var CloudHost = {
              to an order, which go somewhere else entirely. Each row says which it is; nothing here guesses. */
           var url = this.api + '/api/chits/send', payload;
           if (bill.tillPost) { url = this.api + bill.tillPost.path; payload = bill.tillPost.body; }
-          else if (bill.deliver) { url = this.api + '/api/chits/' + bill.deliver.chit_id + '/deliver-lines'; payload = { rows: bill.deliver.rows }; }
+          else if (bill.deliver) { url = this.api + '/api/chits/' + bill.deliver.chit_id + '/deliver-lines'; payload = { rows: stampDeliveryRefs(bill.no, bill.deliver.rows) }; }
           else payload = bill.shiftBody ? bill.shiftBody : (bill.chitBody ? bill.chitBody : chitOf(bill));
           tried++;
           /* ⭐⭐ PROGRESS, NOT START — see the note on the watchdog above. Without this line a long queue looks
@@ -5858,7 +5871,7 @@ var CloudHost = {
              * ⚠️ Only a SALE is renumbered here. A receipt or despatch note has its own series and is left for a person.
              */
             if (r.status === 409 && code === 'TILL_SERIES_COLLISION' && isSaleRow(bill)) {
-              var moved = await renumberBill(bill, said);
+              var moved = await renumberBill(bill, said, rows);   /* H5: a row it moved leaves `rows`, so its old copy is never written back */
               if (moved) { if (!why) why = 'Bill ' + moved.from + ' shared a number with another counter — recorded as ' + moved.to + '.'; continue; }
             }
             bill._status = r.status; bill._why = said || ('the shop answered ' + r.status);
@@ -6178,13 +6191,35 @@ async function tillClaim(t){
  * exists to prove. The only thing that may change is the TAG, and only for a series that has issued nothing.
  */
 var LAST_SERIES = null;
+/**
+ * ⭐ TILL-FIX2 (M6): ONE NUMBER-TAKER AT A TIME. takeNumber() reads the series, waits on the database, then writes it back; a sale rung
+ * while a background renumber (drain → renumberBill) takes a number — or a second tab of the same counter — interleaved on that wait and
+ * both PRINTED the same seq (the server caught it later; the paper was already duplicated). The browser's Web Locks serialise every tab
+ * of this counter where they exist (Chrome 69 · Safari 15.4 · Firefox 96); the promise chain serialises this tab everywhere. A failed
+ * turn releases the next one (the catch keeps the chain alive) — a lock that could wedge a sale would be worse than the duplicate.
+ */
+var SERIES_TURN = Promise.resolve();
+function seriesLockName(){ return 'cb-till-series:' + tillStore(); }
+/** run `task` with no other number-taker in flight — in this tab always, across tabs where navigator.locks exists */
+function underSeriesLock(task){
+  var turn = SERIES_TURN.then(function(){
+    if (typeof navigator !== 'undefined' && navigator.locks && navigator.locks.request) return navigator.locks.request(seriesLockName(), task);
+    return task();
+  });
+  SERIES_TURN = turn.catch(function(e){ cbQuiet('underSeriesLock:1', e); });
+  return turn;
+}
 /* ⭐ M54 (walk 2026-10-10): `peek` answers the SAME number finish() would get, and writes nothing — Settings › Bills said
-   "Next bill: C5/26-27/0003" from a worked example (seq 3) while the next sale correctly took 0004. */
+   "Next bill: C5/26-27/0003" from a worked example (seq 3) while the next sale correctly took 0004. A peek never waits for the lock. */
 async function nextNumber(kind, peek){
+  if (peek) return takeNumber(kind, true);
+  return underSeriesLock(function(){ return takeNumber(kind, false); });
+}
+/** the number itself: read the series box once, roll it if the period turned, take the seq, write it back (unless peeking), compose */
+async function takeNumber(kind, peek){
   var country = docCountry();
   var D = DOCNUM();   /* W1-TILL: the one numbering rule — a missing engine is said, not replaced by an April formula */
   var now = new Date();
-  var r = D.rules(country);
   /**
    * ── ⭐⭐⭐ THE SHOP'S SCHEME (Athi, 2026-09-16) ────────────────────────────────────────────────────────────
    *
@@ -6200,8 +6235,12 @@ async function nextNumber(kind, peek){
    * back the repeating `001` tail that julian dating was chosen to avoid.
    * ⚠️ A MONTHLY RESET DOES REPEAT THE TAIL, 12 times a year rather than never. Said out loud in the setting.
    */
-  var _box0 = (DOC_TAGS[kind] ? ('series-' + kind) : 'series');
-  var _had0 = await DB.get(_box0);
+  /* ⚠️ ONE SERIES PER KIND, IN ITS OWN RECORD. Sharing a run would put a hole in the sales series, which is
+     the one thing the numbering exists to prove. The box keys are unchanged from the first version.
+     ⭐ TILL-FIX2: read ONCE (it was read twice under two names) — inside the lock, the one read is the truth. */
+  var tag = DOC_TAGS[kind] ? kind : '';
+  var box = tag ? ('series-' + tag) : 'series';
+  var stored = await DB.get(box);
   /**
    * ⚠️⚠️ A SERIES THAT HAS ISSUED NUMBERS KEEPS ITS SHAPE UNTIL THE PERIOD ROLLS. This is the same rule the tag
    * style already follows and it is the one thing the numbering exists to prove — a run that changes shape in
@@ -6209,23 +6248,28 @@ async function nextNumber(kind, peek){
    * adopted at the next roll; a series that has issued NOTHING adopts it immediately, which is what a shop
    * setting this up before its first sale expects. `schemeTakesEffect()` says which, in the settings panel.
    */
-  var _eff = (_had0 && Number(_had0.next) > 1 && _had0.scheme) ? _had0.scheme : tillScheme();
-  var period = D.periodKey({ country: country, at: now, scheme: _eff });
-
-  /* ⚠️ ONE SERIES PER KIND, IN ITS OWN RECORD. Sharing a run would put a hole in the sales series, which is
-     the one thing the numbering exists to prove. The box keys are unchanged from the first version. */
-  var tag = DOC_TAGS[kind] ? kind : '';
-  var box = tag ? ('series-' + tag) : 'series';
-  var had = await DB.get(box);
-
-  /**
-   * ⭐ THE TAG STYLE IS DECIDED ONCE, ON THE FIRST NUMBER, AND KEPT. `GRN/C1/26-27/0007` is seventeen
-   * characters — over India's limit on the DEFAULT till id — so a new series uses the one-letter tag. But a
-   * series that has already issued numbers keeps the long one, because changing it mid-year is exactly the
-   * discontinuity we are trying to prevent. It rolls to the short form by itself at the next year-end.
-   */
-  var s = had || { prefix: tillId(), fy: period, next: 1, tagStyle: 'short' };
-  if (had && !had.tagStyle) s.tagStyle = 'long';          // a record written before this change
+  var scheme = (stored && Number(stored.next) > 1 && stored.scheme) ? stored.scheme : tillScheme();
+  var period = D.periodKey({ country: country, at: now, scheme: scheme });
+  var series = seriesFor(stored, period);
+  if (!tag) resumeFromCloud(series, period);
+  var seq = series.next; series.next = seq + 1;
+  /* ⭐ where this number sits in its counter's run — travels on the bill so the cloud can keep the high-water mark */
+  if (!peek) {
+    if (!tag) LAST_SERIES = { prefix: series.prefix, period: series.fy, seq: seq };
+    await DB.set(box, series);
+  }
+  return numberText(D, { country: country, prefix: series.prefix, tagStyle: series.tagStyle, at: now, seq: seq, scheme: scheme, tag: tag, kind: kind });
+}
+/**
+ * the series record as it stands for THIS number: the stored one, rolled when the period turned, re-based when the counter's prefix changed.
+ * ⭐ THE TAG STYLE IS DECIDED ONCE, ON THE FIRST NUMBER, AND KEPT. `GRN/C1/26-27/0007` is seventeen
+ * characters — over India's limit on the DEFAULT till id — so a new series uses the one-letter tag. But a
+ * series that has already issued numbers keeps the long one, because changing it mid-year is exactly the
+ * discontinuity we are trying to prevent. It rolls to the short form by itself at the next year-end.
+ */
+function seriesFor(stored, period){
+  var s = stored || { prefix: tillId(), fy: period, next: 1, tagStyle: 'short' };
+  if (stored && !stored.tagStyle) s.tagStyle = 'long';          // a record written before this change
   if (s.fy !== period) { s.fy = period; s.next = 1; s.tagStyle = 'short'; s.scheme = tillScheme(); s.runs = {}; }
   /**
    * ⚠️⚠️ A NEW PREFIX IS A NEW SERIES, AND A NEW SERIES STARTS AT ONE. This line used to swap the prefix and keep
@@ -6235,45 +6279,42 @@ async function nextNumber(kind, peek){
    */
   /* ⚠️ AND EACH PREFIX REMEMBERS WHERE IT STOPPED. Rename C1 → C2 → C1 without the ledger below and C1 would
      start again at 0001, on top of its own earlier invoices. `runs` is the high-water mark per prefix, per period. */
-  var _now = tillId();
-  if (_now && s.prefix && String(_now).toUpperCase() !== String(s.prefix).toUpperCase()) {
+  var prefixNow = tillId();
+  if (prefixNow && s.prefix && String(prefixNow).toUpperCase() !== String(s.prefix).toUpperCase()) {
     s.runs = s.runs || {};
     s.runs[String(s.prefix).toUpperCase()] = s.next;                       /* the old run, parked where it ended */
-    s.next = Number(s.runs[String(_now).toUpperCase()]) || 1;              /* the new one resumes, or begins */
+    s.next = Number(s.runs[String(prefixNow).toUpperCase()]) || 1;         /* the new one resumes, or begins */
     s.tagStyle = 'short'; s.scheme = tillScheme();
   }
-  s.prefix = _now || s.prefix;
-  /**
-   * ⭐⭐ THE CLOUD'S FLOOR FOR A NAMED COUNTER (routes/counters.js). A counter opened on a PC that has never held it,
-   * or held it long ago, continues from where the cloud says its run stopped — never below, and only within the
-   * same period, because a new period starts every run at 1 anyway.
-   */
-  if (!tag) {
-    try {
-      var fl = JSON.parse(ls.get(shopLs('cb_till_resume'), 'null'));
-      if (fl && String(fl.prefix) === String(s.prefix).toUpperCase() && fl.period != null
-          && String(fl.period) === String(period) && Number(s.next) < Number(fl.next)) s.next = Number(fl.next);
-    } catch (e) { cbQuiet('nextNumber:1', e); }
-  }
-  var seq = s.next; s.next = seq + 1;
-  /* ⭐ where this number sits in its counter's run — travels on the bill so the cloud can keep the high-water mark */
-  if (!peek) {
-    if (!tag) LAST_SERIES = { prefix: s.prefix, period: s.fy, seq: seq };
-    await DB.set(box, s);
-  }
-
-  if (!D) return (tag ? tag + '/' : '') + s.prefix + '/' + period + '/' + String(seq).padStart(4,'0');
-  /* ⚠️ COMPOSED WITH THE SAME SCHEME THE PERIOD WAS KEYED ON, or the printed label and the reset would be
-     answering two different questions — the label would jump shape while the run carried on underneath it. */
-  var sch = _eff;
-  var body = D.compose({ country: country, prefix: s.prefix, kind: 'sale', at: now, seq: seq, scheme: sch });
+  s.prefix = prefixNow || s.prefix;
+  return s;
+}
+/**
+ * ⭐⭐ THE CLOUD'S FLOOR FOR A NAMED COUNTER (routes/counters.js). A counter opened on a PC that has never held it,
+ * or held it long ago, continues from where the cloud says its run stopped — never below, and only within the
+ * same period, because a new period starts every run at 1 anyway. Sales series only (the caller says).
+ */
+function resumeFromCloud(series, period){
+  try {
+    var floor = JSON.parse(ls.get(shopLs('cb_till_resume'), 'null'));
+    if (floor && String(floor.prefix) === String(series.prefix).toUpperCase() && floor.period != null
+        && String(floor.period) === String(period) && Number(series.next) < Number(floor.next)) series.next = Number(floor.next);
+  } catch (e) { cbQuiet('nextNumber:1', e); }
+}
+/**
+ * the printed text of the number, from the docnumber engine.
+ * ⚠️ COMPOSED WITH THE SAME SCHEME THE PERIOD WAS KEYED ON, or the printed label and the reset would be
+ * answering two different questions — the label would jump shape while the run carried on underneath it.
+ */
+function numberText(engine, parts){
+  var tag = parts.tag, kind = parts.kind;
+  var body = engine.compose({ country: parts.country, prefix: parts.prefix, kind: 'sale', at: parts.at, seq: parts.seq, scheme: parts.scheme });
   if (!tag) return body;
   /* ⚠️⚠️ A KIND THE ENGINE DOES NOT KNOW WOULD COME BACK SHAPED LIKE A SALE ('payment' — BOOKS v2, 2026-09-29): the
      same text as a sale number from another run, which the server's client_ref index answers with the SALE. Such a
      kind keeps the long form, tag first, until the docnumber engine learns it. */
-  if (s.tagStyle === 'long' || !(D.KINDS && Object.prototype.hasOwnProperty.call(D.KINDS, docKindOf(kind)))) return tag + '/' + body;
-  return D.compose({ country: country, prefix: s.prefix, at: now, seq: seq, scheme: sch,
-                     kind: docKindOf(kind) });
+  if (parts.tagStyle === 'long' || !(engine.KINDS && Object.prototype.hasOwnProperty.call(engine.KINDS, docKindOf(kind)))) return tag + '/' + body;
+  return engine.compose({ country: parts.country, prefix: parts.prefix, at: parts.at, seq: parts.seq, scheme: parts.scheme, kind: docKindOf(kind) });
 }
 
 /**
@@ -6336,6 +6377,11 @@ function tillStamp(id, by){
     t.by_name = (who && who.name) || null;
   }
   return t;
+}
+/* PAY-FIX H6 — a queued goods-in / despatch / online-delivery row carries a STABLE replay key (queue number + position), so a
+   retry after a timeout that the server already committed answers the first result instead of counting the quantities twice. */
+function stampDeliveryRefs(queueNo, rows){
+  return (rows || []).map(function(row, position){ return row.client_ref ? row : Object.assign({}, row, { client_ref: queueNo + ':' + position }); });
 }
 function chitOfCN(cn){
   return {
@@ -21051,10 +21097,11 @@ async function orderSettle(o){
   O().billable(orderFind(o.id) || o).forEach(function(l){ CART.push(l); });
   try {
     price();
-    await finish();
-    /* ⚠️ finish() leaves the just-saved bill in LAST, not on STATE — reading STATE.lastBill here always sent
-       null, so a settled order never carried its own bill number */
-    await floorDo({ do: 'settled', id: o.id, bill: (typeof LAST !== 'undefined' && LAST) || null });
+    /* ⭐ ORD-FIX O5: settled ONLY when finish() saved the bill. It gives up by returning (20 still to take, credit refused, save failed, day
+       closed) - the table then goes back to open, as for a thrown error, and carries no bill number it never had. */
+    var done = await finish();
+    if (done && done.ok) await floorDo({ do: 'settled', id: o.id, bill: done.bill || null });
+    else { await floorDo({ do: 'reopen', id: o.id }); toastLine('That ' + says('subject') + ' was not billed - it is open again.'); }
   } catch (e) {
     await floorDo({ do: 'reopen', id: o.id });
     toastLine('That ' + says('subject') + ' was not billed — nothing has changed.');
@@ -21413,14 +21460,31 @@ function saleStop(words){
 function saleStopLast(){
   try { return JSON.parse(ls.get(shopLs('cb_till_salestop'), 'null')); } catch (_) { return null; }
 }
+/**
+ * ⭐ TILL-FIX2 (H5): post the points for a just-saved bill. The bill goes by the queue (HOST.bill → drain, not awaited) so the server may not
+ * hold it yet — its 409 BILL_NOT_RECORDED is not a refusal: the reward is QUEUED behind its bill under the bill's own key ('<no>/reward'),
+ * sent once the bill lands, applied once (the server's unique index), carried along if the bill is renumbered. Returns what the slip says.
+ * ⚠️ W2-REW (REW-T1): the server earns the points from ITS copy of the bill, so no basket rides beside it; `at` is the bill's moment.
+ */
+async function postRewardBehindBill(bill){
+  if (!(RW.holder && rwProg())) return null;
+  var spent = RW.spend || 0;
+  var posted = await HOST.tillPost('/api/till/reward', { ref: bill.no, holder: RW.holder, spend: spent, at: bill.at }, { queueAs: bill.no + '/reward' });
+  /* ⚠️ QUEUED IS CHECKED FIRST: a queued post answers ok:true with no figures, so testing ok first would print 'earned 0' for a customer who earned 40. */
+  if (posted && posted.queued) return { queued: true, added: rwEarns(), spent: spent };
+  if (posted && posted.ok) return { added: posted.added || 0, spent: posted.spent || 0, points: posted.points || 0,
+                                    worth: posted.worth || 0, overspent: posted.overspent || 0 };
+  return { failed: (posted && posted.why) || 'not recorded yet', added: rwEarns(), spent: spent };
+}
+/** ORD-FIX O5: answers { ok, bill } - ok only when the bill was SAVED; a short payment, a refused credit, a stopped day or a failed save answer { ok: false } (the order pad must not mark a table settled on those) */
 async function finish(){
-  if (!CART.length) return;
-  if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
-  if (!(await dayReopenAsk())) return;   /* M115 — the day was closed on this counter */
+  if (!CART.length) return { ok: false };
+  if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return { ok: false }; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
+  if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */
   var m = billMoney();
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
-  if (!m.invoice) { saleStop('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return; }
+  if (!m.invoice) { saleStop('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return { ok: false }; }
   /* ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41: a details mismatch never costs
      a sale). A taxed bill saves as NOT a tax invoice (not_invoice, slipHTML); an untaxed one has nothing to contradict. */
   var clash = (shopTax().charges && Number(m.tax) > 0) ? shopStateClash() : null;
@@ -21433,14 +21497,14 @@ async function finish(){
   var cust = custKnown(), credit = PICKED === 'On credit', override = null;
   if (credit) {
     /* ⚠️ a draft or a stale pick can still say On credit after the ledger went off — refused here, not only hidden */
-    if (!booksOn()) { say('The shop’s Ledger is off, so this cannot go On credit.\n\nTake it another way.'); return; }
-    if (!cust) { say('On credit needs a customer the shop knows — choose them first.'); return; }
+    if (!booksOn()) { say('The shop’s Ledger is off, so this cannot go On credit.\n\nTake it another way.'); return { ok: false }; }
+    if (!cust) { say('On credit needs a customer the shop knows — choose them first.'); return { ok: false }; }
     var takenC = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
     var owedNow = r2(m.net - takenC);
     if (owedNow > 0) {
       await creditSinceRefresh(cust);
       var chk = creditLimitCheck(cust, owedNow);
-      if (chk.known && chk.over) { override = await ownerApprove(chk); if (!override) return;
+      if (chk.known && chk.over) { override = await ownerApprove(chk); if (!override) return { ok: false };
                                    override = { by: override.by, limit: chk.limit, after: chk.after, at: new Date().toISOString() }; }
       parts.push({ how: 'On credit', amount: owedNow });
     }
@@ -21455,7 +21519,7 @@ async function finish(){
     if (tendered > 0 && r2(m.net - tendered) >= 0.01) {
       say(money(r2(m.net - tendered)) + ' is still to take.\n\nTake the rest, or use "+ part" to take it another way'
         + (creditCust() ? ', or put it On credit.' : '.'));
-      return;
+      return { ok: false };
     }
     parts = [{ how: PICKED, amount: Math.min(tendered || m.net, m.net) }];
   }
@@ -21530,7 +21594,7 @@ async function finish(){
   };
   var r = null;
   try { r = await HOST.bill(body); } catch (e) { r = { ok:false, error: e && e.message }; }
-  if (!r || !r.ok){ saleStop('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return; }
+  if (!r || !r.ok){ saleStop('The bill could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — the items are still on the screen.'); return { ok: false }; }
   LAST = r.bill; LASTNO = r.bill && r.bill.no; if (r.today) STATE.today = r.today;
   /**
    * ⭐⭐ THE POINTS, AFTER THE BILL EXISTS AND NOT BEFORE. The bill number is the ref that makes a replay harmless,
@@ -21538,19 +21602,7 @@ async function finish(){
    * ⚠️ AND IT NEVER BLOCKS THE SALE. If this fails the customer has still paid and the goods have still gone; the
    * bill stands, the points are reported as not yet recorded, and the queue carries the post when the line returns.
    */
-  var rwSaid = null;
-  if (RW.holder && rwProg()) {
-    /* ⭐ W2-REW (REW-T1): the server earns the points from ITS copy of this bill (the chit sent just above under the same number), so no basket
-       rides beside it; `at` is the bill's moment — the same number at another moment is another counter's bill, and the server says so. */
-    var rr = await HOST.tillPost('/api/till/reward', {
-      ref: r.bill.no, holder: RW.holder, spend: RW.spend || 0, at: r.bill.at });
-    /* ⚠️ QUEUED IS CHECKED FIRST, and the order is the whole point: a queued post answers ok:true with no figures
-       in it, so testing ok first would have printed 'earned 0' on a slip for a customer who earned 40. */
-    if (rr && rr.queued) rwSaid = { queued: true, added: rwEarns(), spent: RW.spend || 0 };
-    else if (rr && rr.ok) rwSaid = { added: rr.added || 0, spent: rr.spent || 0, points: rr.points || 0,
-                                     worth: rr.worth || 0, overspent: rr.overspent || 0 };
-    else rwSaid = { failed: (rr && rr.why) || 'not recorded yet', added: rwEarns(), spent: RW.spend || 0 };
-  }
+  var rwSaid = await postRewardBehindBill(r.bill);
   if (r.bill) r.bill.reward = rwSaid;
   /* ⭐ the customer's screen says thank you and then goes back to the slides on its own */
   CFD.done(r.bill && r.bill.no, r.bill && money(r.bill.total));
@@ -21565,7 +21617,7 @@ async function finish(){
   /* ⚠ the day just changed — so must anything on screen that is showing the day. See menuFresh(). */
   menuFresh();
   load(); loadQuick();
-  stepGo('pick');   /* the next customer starts at Items */
+  stepGo('pick'); return { ok: true, bill: r.bill };   /* the next customer starts at Items */
 }
 
 /**
@@ -23081,7 +23133,7 @@ function rewardOnSlip(bill, t, dash){
   if (!out) return '';
   if (rw.points != null && !rw.failed && !rw.queued) out += t(name + ' balance', String(rw.points));
   /* ⚠️ SAY WHEN IT IS ONLY PROMISED. Both of these are honest and neither is an error the customer caused. */
-  if (rw.queued) out += '<div style="font-size:.9em">Recorded on this counter — reaches the shop when the line is back.</div>';
+  if (rw.queued) out += '<div style="font-size:.9em">Recorded on this counter — reaches the shop with the bill.</div>';
   if (rw.failed) out += '<div style="font-size:.9em">Not yet recorded at the shop (' + esc(String(rw.failed)) + ').</div>';
   return out + dash;
 }
@@ -23308,6 +23360,27 @@ function isDocRow(b){ return !!(b && (b.doc === true || b.kind === 'despatch' ||
 function isSaleRow(b){
   return !!(b && !b.tillPost && Array.isArray(b.lines) && (b.kind == null || b.kind === 'cash' || b.kind === 'tax' || b.kind === 'supply'));
 }
+/** ⭐ TILL-FIX2 (L4): where a bill sits in its run — the `series.seq` every sale carries (HOST.bill), the trailing digits for an old row */
+function seqOfBill(bill){
+  if (bill && bill.series && Number(bill.series.seq) > 0) return Number(bill.series.seq);
+  var tail = String((bill && bill.no) || '').match(/(\d+)$/);
+  return tail ? Number(tail[1]) : 0;
+}
+/**
+ * ⭐ TILL-FIX2 (L4): the counter's LAST BILL for the close (/api/till/close last_no → the Counters screen) — the SALE with the highest
+ * series number in this counter's current period. A text sort put GRN/… and D/… above C1/…, and 9999 above 10000; a period that rolled
+ * (0150 on 30 Sept, 0001 on 1 Oct) is answered by the current period first. `series` is the counter's series box (prefix · fy · next).
+ */
+function lastSaleNo(bills, series){
+  var period = (series && series.fy != null) ? String(series.fy) : null;
+  function inPeriod(row){ var rowPeriod = row.series && row.series.period; return (period == null || rowPeriod == null || String(rowPeriod) === period) ? 1 : 0; }
+  var sales = (bills || []).filter(isSaleRow);
+  sales.sort(function(left, right){
+    return (inPeriod(left) - inPeriod(right)) || (seqOfBill(left) - seqOfBill(right)) || String(left.at || '').localeCompare(String(right.at || ''));
+  });
+  var last = sales[sales.length - 1];
+  return last ? last.no : null;
+}
 /**
  * ⭐⭐ EVERY DOCUMENT THIS COUNTER ISSUED THAT THE BOOKS MUST RECEIVE (2026-09-28, M11) — a sale, a credit note,
  * an expense, a subscription. isSaleRow() stays the SALES allow-list (the renumber path, the sales series); this
@@ -23317,13 +23390,16 @@ function isSaleRow(b){
 function isIssuedRow(b){
   return !!(b && !b.tillPost && (isSaleRow(b) || b.kind === 'credit_note' || b.kind === 'expense' || b.kind === 'subscription'));
 }
-async function renumberBill(bill, why){
+async function renumberBill(bill, why, drainRows){   /* `drainRows` (optional): the drain's snapshot — rows moved to a new key are taken out of it */
   var tries = Number(bill._renum) || 0;
   if (tries >= 20) return null;
-  var from = bill.no, to = null;
-  LAST_SERIES = null;
-  try { to = await nextNumber(); } catch (_) { return null; }
-  if (!to || to === from) return null;
+  var from = bill.no, to = bill.renumber_to || null;
+  if (!to) {
+    LAST_SERIES = null;
+    try { to = await nextNumber(); } catch (_) { return null; }
+    if (!to || to === from) return null;
+    await rememberRenumber(bill, to);
+  }
   var fresh = Object.assign({}, bill, {
     no: to,
     till: tillId(),
@@ -23333,12 +23409,50 @@ async function renumberBill(bill, why){
                   why: why || 'the number was already used by another counter' },
     _renum: tries + 1, _tries: 0
   });
-  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._verified;
+  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._verified; delete fresh.renumber_to;
   await DB.put('bills', fresh);
   await DB.put('queue', fresh);
+  var companions = await rekeyCompanions(from, to);
+  if (drainRows) forgetRows(drainRows, companions);
   try { await DB.del('queue', from); } catch (e) { cbQuiet('renumberBill:1', e); }
   try { await DB.del('bills', from); } catch (e) { cbQuiet('renumberBill:2', e); }
-  return { from: from, to: to };
+  return { from: from, to: to, companions: companions };
+}
+/** take the rows with these keys out of a snapshot, in place (they sort after their bill, so the drain's index is not disturbed) */
+function forgetRows(rows, keys){
+  for (var i = rows.length - 1; i >= 0; i--) if (rows[i] && keys.indexOf(rows[i].no) >= 0) rows.splice(i, 1);
+}
+/** ⭐ TILL-FIX2 (H5): the rows that ride BEHIND a bill under its key ('<no>/reward') follow it to its new number — the reward names the
+ *  bill by `ref`, and a reward left under the old number would wait for a bill the server never records. Returns the retired keys. */
+var BILL_COMPANIONS = ['/reward'];
+async function rekeyCompanions(from, to){
+  var retired = [];
+  var rows = (await DB.all('queue')) || [];
+  for (var i = 0; i < BILL_COMPANIONS.length; i++) {
+    var oldKey = from + BILL_COMPANIONS[i];
+    var row = rows.filter(function(x){ return x && x.no === oldKey; })[0];
+    if (!row) continue;
+    var moved = Object.assign({}, row, { no: to + BILL_COMPANIONS[i], _tries: 0 });
+    delete moved._nextAt; delete moved._status; delete moved._why;
+    if (moved.tillPost && moved.tillPost.body && moved.tillPost.body.ref === from)
+      moved.tillPost = Object.assign({}, moved.tillPost, { body: Object.assign({}, moved.tillPost.body, { ref: to }) });
+    await DB.put('queue', moved);
+    try { await DB.del('queue', oldKey); } catch (e) { cbQuiet('rekeyCompanions:1', e); }
+    retired.push(oldKey);
+  }
+  return retired;
+}
+/**
+ * PAY-FIX H9 - THE NEW NUMBER IS WRITTEN ON THE OLD ROW BEFORE ANYTHING ELSE. renumberBill is four separate IndexedDB writes (one
+ * store per transaction). A reload between them used to draw ANOTHER number on the retry, so one sale reached the server under two
+ * numbers and two client_refs. The old queue row (what the drain reads) is stamped first, then the old bill: a retry finds
+ * `renumber_to` and reuses it, so the sale keeps ONE number and the server's client_ref dedupes it.
+ */
+async function rememberRenumber(bill, to){
+  var stamped = Object.assign({}, bill, { renumber_to: to });
+  await DB.put('queue', stamped);
+  await DB.put('bills', stamped);
+  bill.renumber_to = to;
 }
 /**
  * ⭐⭐⭐ FIND THE SALES THAT SAY "SENT" AND WERE NOT. A bill absorbed before the shop fix holds a real chit id —
@@ -23503,7 +23617,7 @@ async function closeCounter(already){
 
     busyAt(0, 0, 'Telling ChitBridge…');
     var series = null; try { series = await DB.get('series'); } catch (e) { cbQuiet('closeCounter:7', e); }
-    var lastNo = bills.map(function(b){ return b && b.no; }).filter(Boolean).sort().pop() || null;
+    var lastNo = lastSaleNo(bills, series);   /* TILL-FIX2 (L4): the last SALE by its series number, never a text sort */
     var r = await HOST.tillPost('/api/till/close', { last_no: lastNo, bills: bills.length,
                                                      next: series ? series.next : null,
                                                      period: series ? series.fy : null }, { noQueue: true });
@@ -27400,6 +27514,24 @@ async function onlineOrderPick(id){
  * bill - normal series, normal tax, normal slip. finish() then marks the order done (HOST.orderBilled), so it leaves the open list (M129).
  * ONE PATH: addItem, price(), finish() - the order adds nothing the counter does not already do. A bill already on the screen is parked first.
  */
+/**
+ * ORD-FIX O1: what the SAVED BILL delivered of the order - not what the order said. The cashier may drop a line or lower a quantity after
+ * "Bill it"; the delivery rows come from the bill's own lines, matched to the order's lines by item (never more than the line asked for),
+ * so what is not billed stays owed and the order stays open. A line from an older parked bill with no item id keeps its loaded quantity.
+ */
+function orderRowsOfBill(order, bill){
+  var billed = {};
+  ((bill && bill.lines) || []).forEach(function(billLine){ if (billLine.item_id != null) billed[billLine.item_id] = (billed[billLine.item_id] || 0) + (Number(billLine.qty) || 0); });
+  var rows = [];
+  ((order && order.lines) || []).forEach(function(l){
+    if (!l.line_id) return;
+    var taken = l.item_id == null ? l.quantity : Math.min(billed[l.item_id] || 0, l.quantity);
+    if (l.item_id != null) billed[l.item_id] = (billed[l.item_id] || 0) - taken;
+    taken = Math.round(taken * 1000) / 1000;
+    if (taken > 0) rows.push({ line_id: l.line_id, quantity: taken, unit: l.unit });
+  });
+  return rows;
+}
 var BILL_ORDER = null;   /* { chit_id, party, kind: 'deliver'|'take', lines: [{ line_id, quantity, unit }] } while an online order is on the bill */
 /** M169: the order's Delivery / Pickup was only for ITS bill - the next bill starts at the counter's own kind again */
 function orderToBill(t){
@@ -27415,7 +27547,7 @@ function orderToBill(t){
     })[0];
     if (!it) { missing.push(l.name || 'an item'); return; }
     addItem(Object.assign({}, it, { price: l.rate != null ? Number(l.rate) : it.price }), q);
-    got.push({ line_id: l.line_id || null, quantity: q, unit: l.unit || 'piece' });
+    got.push({ line_id: l.line_id || null, item_id: it.item_id != null ? it.item_id : null, quantity: q, unit: l.unit || 'piece' });
   });
   if (!got.length) { say('None of this order is on the counter’s shelf.\n\nRead the shop again (F4), then tap the order.'); return; }
   var pickup = !!(t.order && t.order.fulfilment === 'pickup');

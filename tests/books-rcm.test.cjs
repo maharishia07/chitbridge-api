@@ -54,7 +54,7 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
   eq('…and the challan total counts it', gc.pay_total_minor, 50000);
   let over = null; try { await BP.gstPay(SHOP, S, { fy: '2026-27', period: 6, rcm: { cgst_minor: 99999 }, challan_no: 'CPIN1', bank: 'bank' }, SHOP); } catch (x) { over = x; }
   ok('paying more than the RCM owed is refused in words', over && /more than the reverse-charge tax owed/.test(over.message), over && over.message);
-  const pay = await BP.gstPay(SHOP, S, { fy: '2026-27', period: 6, rcm: { cgst_minor: 25000, sgst_minor: 25000 }, challan_no: 'CPIN1', bank: 'bank', date: '2026-09-30' }, SHOP);
+  const pay = await BP.gstPay(SHOP, S, { fy: '2026-27', period: 6, rcm: { cgst_minor: 25000, sgst_minor: 25000 }, challan_no: 'CPIN1', bank: 'bank' }, SHOP);
   const pl = X.T.lines.filter((l) => l.entry_id === pay.entry_id).map((l) => [l.code, l.dr_minor, l.cr_minor]);
   ok('the challan: Dr 2204 / 2205 · Cr bank 500', pay.ok && pl.some((l) => l[0] === '2204' && l[1] === 25000) && pl.some((l) => l[0] === '2205' && l[1] === 25000) && pl.some((l) => l[0] === codeOf('bank') && l[2] === 50000), JSON.stringify(pl));
   const gc2 = await BP.gstClose(SHOP, S, { fy: '2026-27', period: 6 }, SHOP);

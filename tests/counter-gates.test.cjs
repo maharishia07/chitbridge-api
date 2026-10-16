@@ -382,7 +382,7 @@ it('the shop PC files a payment received with the day\'s documents — never the
 });
 it('a receipt number cannot take the shape of a sale number (tag first, for a kind the engine does not know)', () => {
   assert.ok(/R: 'payment'/.test(PAGE), 'DOC_TAGS lost the R series');
-  assert.ok(/hasOwnProperty\.call\(D\.KINDS, docKindOf\(kind\)\)\)\) return tag \+ '\/' \+ body;/.test(PAGE), 'an unknown kind would be composed like a sale');
+  assert.ok(/hasOwnProperty\.call\(engine\.KINDS, docKindOf\(kind\)\)\)\) return tag \+ '\/' \+ body;/.test(PAGE), 'an unknown kind would be composed like a sale');
 });
 it('On credit is offered only for ONE known customer, and a credit bill without one is refused', () => {
   assert.ok(/if \(credCust\) ways\.push\(\{ id:'credit', label:'On credit' \}\);\n  else if \(PICKED === 'On credit'\) PICKED = ways\[0\]\.label;/.test(PAGE), 'the credit tender is offered without a known customer, or stays picked after one is cleared');

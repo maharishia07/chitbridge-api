@@ -127,6 +127,20 @@ const reset = () => { storeRows = {}; storeError = null; stmts = []; warns.lengt
     const oldest = await idempotency._memory.begin('shop-1', 'm0', { method: 'POST', path: '/x' }, 'h', 48);
     assert.ok(oldest.claimed, 'm0 was forgotten and can be claimed again');
   });
+  await ita('L3 · a key stuck in_progress past the stale minutes is reclaimable; a fresh one still refuses (memory store)', async () => {
+    reset(); storeError = new Error('boom');
+    const fresh = await idempotency._memory.begin('shop-1', 'stale1', { method: 'POST', path: '/x' }, 'h', 48);
+    assert.ok(fresh.claimed);
+    assert.ok((await idempotency._memory.begin('shop-1', 'stale1', { method: 'POST', path: '/x' }, 'h', 48)).existing, 'still running → refused');
+    const realNow = Date.now; Date.now = () => realNow() + (idempotency.IN_PROGRESS_STALE_MINUTES + 1) * 60000;
+    try { assert.ok((await idempotency._memory.begin('shop-1', 'stale1', { method: 'POST', path: '/x' }, 'h', 48)).claimed, 'crashed request → the retry may claim it'); }
+    finally { Date.now = realNow; }
+  });
+  await ita('L3 · the durable store treats an old in_progress row as expired (the SQL carries the stale term)', async () => {
+    reset(); await send({ key: 'k-sql' });
+    const select = stmts.find((q) => /^\s*SELECT/.test(q) && /expired/.test(q));
+    assert.ok(/state = 'in_progress' AND created_at < now\(\) - \(\$4 \|\| ' minutes'\)/.test(select), 'stale in_progress is expired');
+  });
   await ita('no empty catch in middleware/idempotency.js and no console.* — the logger says what the person sees instead', async () => {
     const src = fs.readFileSync(path.join(API, 'middleware', 'idempotency.js'), 'utf8');
     assert.ok(!/catch\s*\(\s*_?\s*\)\s*\{\s*(return[^;]*;)?\s*\}/.test(src), 'an empty catch is back');
