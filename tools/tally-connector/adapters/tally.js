@@ -149,7 +149,9 @@ function accountingVoucherBody(v) {
     const bills = (e.bills || []).map((b) => `<BILLALLOCATIONS.LIST><NAME>${esc(b.name)}</NAME><BILLTYPE>${esc(b.type)}</BILLTYPE><AMOUNT>${dr ? '-' : ''}${b.amount}</AMOUNT></BILLALLOCATIONS.LIST>`).join('');
     return `<ALLLEDGERENTRIES.LIST><LEDGERNAME>${esc(e.ledger)}</LEDGERNAME><ISDEEMEDPOSITIVE>${dr ? 'Yes' : 'No'}</ISDEEMEDPOSITIVE>${e.is_party ? '<ISPARTYLEDGER>Yes</ISPARTYLEDGER>' : ''}<AMOUNT>${dr ? '-' + e.dr : e.cr}</AMOUNT>${bills ? '\n' + bills : ''}</ALLLEDGERENTRIES.LIST>`;
   }).join('\n');
-  return `<VOUCHER VCHTYPE="${esc(v.vtype)}" ACTION="Create" OBJVIEW="Accounting Voucher View"><DATE>${v.date}</DATE><VOUCHERTYPENAME>${esc(v.vtype)}</VOUCHERTYPENAME>
+  /* PRICE-FIX F4: a stable REMOTEID (the journal entry's id) so importing the same file again alters the voucher, never doubles it */
+  const remote = v.remote_id ? ` REMOTEID="${esc(v.remote_id)}"` : '';
+  return `<VOUCHER${remote} VCHTYPE="${esc(v.vtype)}" ACTION="Create" OBJVIEW="Accounting Voucher View"><DATE>${v.date}</DATE><VOUCHERTYPENAME>${esc(v.vtype)}</VOUCHERTYPENAME>
 <REFERENCE>${esc(v.ref)}</REFERENCE><NARRATION>${esc(v.narration)}</NARRATION>
 ${v.party ? '<PARTYLEDGERNAME>' + esc(v.party) + '</PARTYLEDGERNAME>\n' : ''}${lines}
 </VOUCHER>`;
