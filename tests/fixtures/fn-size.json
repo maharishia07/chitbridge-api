@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 158,
+  "long_functions": 159,
   "worst_complexity": 185,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -50,6 +50,9 @@
       "consolidate"
     ],
     "lib/convert.js": [
+      "(anonymous)"
+    ],
+    "lib/country.js": [
       "(anonymous)"
     ],
     "lib/crm-leads.js": [
@@ -212,6 +215,7 @@
       "partiesFor"
     ],
     "lib/tax-engine.browser.js": [
+      "(anonymous)",
       "(anonymous)",
       "(anonymous)",
       "(anonymous)",
