@@ -481,7 +481,7 @@ The shell's header sheet in ONE read (`lib/entity-header.js`; one `readBatch` ov
 
 | Key | Shape | Meaning |
 |---|---|---|
-| `business` | `{ name, legal_name, address, phone }` | `name` = `identities.display_name`; `legal_name` / `address` / `phone` = the profile vault's Business-identity tags, else the `identities` column. Any may be null. |
+| `business` | `{ name, legal_name, address, phone, currency }` | `name` = `identities.display_name`; `legal_name` / `address` / `phone` = the profile vault's Business-identity tags, else the `identities` column. Any may be null. `currency` (AU-WORDS, 2026-10-15) = `identities.currency_code` (source; written by country-setup / registration), read by the web shell (`moneySymbol`): the money icon on Home and the area switcher is this currency's symbol, `¤` when null. |
 | `licences[]` | one row per gathered `entity_compliance` row, plus one per CORE scheme not yet held | Core rows not held have `days_left: null`, `valid_until: null`, `band: null` ("not added"). |
 | `licences[].scheme` · `label` | string | The rule's scheme and label; for a row with no rule, its `standard_key` and humanised `doc_key`. |
 | `licences[].number_masked` | string or null | `verification.number_masked` when the verifier stored one; else null. |
@@ -491,8 +491,18 @@ The shell's header sheet in ONE read (`lib/entity-header.js`; one `readBatch` ov
 | `licences[].renew_url` | string or null | From the rule; null without one. |
 | `licences[].note` | string or null | The rule's late-fee sentence, only for the bands the rule names (FSSAI: `gone`). Carries no amount and no start day. Null when no rule. |
 | `licences[].rule_verified` | boolean or null | `false` = the rule's source is not cited yet ("verify"); every rule is false today. Null when no rule. |
-| `trade_ready.checks[]` | `{ key, label, done }` x 4 | `address` (an address whose rung is at least `copied`: profile provenance or vault row, not just typed) · `phone` (the PHONE identity document is `verified`) · `pan` (a PAN identity document is held, or the PAN is read from the GSTIN) · `gstin` (a GSTIN is on file). |
-| `trade_ready.done` | boolean | All four are done. |
+| `trade_ready.checks[]` | `{ key, label, done }` — the shop's COUNTRY PACK's list (`lib/pack-words.tradeChecksFor`, AU-WORDS 2026-10-15) | `key` is the code a client may branch on; `label` the pack's word. IN: `address` (an address whose rung is at least `copied`: profile provenance or vault row, not just typed) · `phone` (the PHONE identity document is `verified`) · `pan` (a PAN identity document is held, or the PAN is read from the GSTIN) · `tax_id` ("GSTIN": the number is on file). AU: `address` · `phone` · `tax_id` ("ABN"). AE: `address` · `phone` · `tax_id` ("TRN") · `trade_licence` (a gathered `entity_compliance` row whose keys say trade licence / shops act). No country: `address` · `phone` · `tax_id` ("Tax number"). Was `gstin` × 4 fixed rows before 2026-10-15. |
+| `trade_ready.done` | boolean | Every check of the pack's list is done. |
+
+## GET /api/entities/policy · PATCH /api/entities/policy · GET /api/entities/sides — the pack's words (AU-WORDS, 2026-10-15)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| GET /policy `country` | ISO-2 or null | Source: `identities.country`, read in the same statement as the flags (`policy.read`, 1 trip). Read by nobody on the web yet (the schema already carries the pack's words); sent so a client can say which pack worded it. |
+| GET /policy `schema.gst_registration.ui` | `{ label, options[], labels{}, help }` per pack (`policy.schemaFor` ← `lib/pack-words.registrationKindsFor`) | Derived. `options` is the subset of the STORED enum (`regular · composition · unregistered · sez`, unchanged) the pack offers: IN all four; AU and AE `regular · unregistered`; no pack `regular · unregistered`. `label` = "GST registration" (IN · AU) · "VAT registration" (AE) · "Tax registration" (none). Read by web cap-settings.js `policy` (CB Settings › Policy) and cap-admin.js polDefs. |
+| GET /policy `schema.chit_expiry_days.ui.labels` · `schema.retention_days.ui.labels` | `{ "0": word }` | Derived: "No expiry" · "Keep — the law here asks N years" (the pack's `retentionYears`) or "Keep — at least 9 years" (policy.RECORDS_FLOOR_YEARS). Read by web cap-settings.js `shown` (a 0 is shown as its word). |
+| PATCH /policy 400 `code: 'REG_KIND_NOT_OFFERED'` | `{ error, code, message }` | Derived: the patch named a `gst_registration` kind the shop's pack does not offer (`policy.kindRefusal`); `message` lists the pack's choices. One extra read (the country) only when the patch names that key. |
+| GET /sides `impact.field` · `impact.tax_id_word` | `'tax_id'` · the pack's word (`GSTIN · ABN · TRN · Tax number`) | Derived (`lib/pack-words.wordsFor`). `impact.n` = "Your " + the word; the Filings row `m` = the pack's return short name + " · Name your " + the word (GSTR-3B · BAS · VAT return; none with no pack). Was `field: 'gstin'`, "Your GSTIN" for every shop. Read by web sides.js (paints `n` and `m` only). |
 
 ## `policy_flags.books.auto_post` (M34, 2026-10-08 · DECISIONS: "Nothing posts by itself")
 

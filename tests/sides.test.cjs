@@ -75,6 +75,17 @@ t('impact: who lists names', b.impact.who.length >= 3 && b.impact.who.some((w) =
 const noEdges = B({ rows: { edges: [] } });
 t('impact: no filing source -> "filings not yet", never 0', noEdges.impact.filings === null && /filings not yet/.test(noEdges.impact.m), noEdges.impact.m);
 
+/* ── AU-WORDS (2026-10-15): the Filings row and the impact box say the shop's PACK's words — never India's for another country ── */
+{
+  const forCountry = (country) => sides.build({ rows: Object.assign({}, rows, { me: [{ display_name: 'Shop', country }], edges: [] }), gov: null, rail, header: null, entity_id: 'ME' });
+  const au = forCountry('AU'), ae = forCountry('AE'), india = forCountry('IN'), none = forCountry(null);
+  t('AU: Filings "BAS · Name your ABN", impact "Your ABN"', rowOf(au.use, 'cite', 'filings').m === 'BAS · Name your ABN' && au.impact.n === 'Your ABN', rowOf(au.use, 'cite', 'filings').m + ' / ' + au.impact.n);
+  t('AE: Filings "VAT return · Name your TRN", impact "Your TRN"', rowOf(ae.use, 'cite', 'filings').m === 'VAT return · Name your TRN' && ae.impact.n === 'Your TRN', rowOf(ae.use, 'cite', 'filings').m);
+  t('IN unchanged in meaning: "GSTR-3B · Name your GSTIN", "Your GSTIN"', rowOf(india.use, 'cite', 'filings').m === 'GSTR-3B · Name your GSTIN' && india.impact.n === 'Your GSTIN', rowOf(india.use, 'cite', 'filings').m);
+  t('no country: "Name your Tax number" — never GSTIN', rowOf(none.use, 'cite', 'filings').m === 'Name your Tax number' && none.impact.n === 'Your Tax number' && !/GSTIN|PAN/.test(JSON.stringify(none)), rowOf(none.use, 'cite', 'filings').m);
+  t('an AU answer holds no GSTIN / PAN / ₹ anywhere; the impact field is the code tax_id with its word beside it', !/GSTIN|PAN|₹/.test(JSON.stringify(au)) && au.impact.field === 'tax_id' && au.impact.tax_id_word === 'ABN');
+}
+
 /* ── H31-r: the impact box reads CRM's parties, not the raw lists ── */
 {
   const party = (id, name, roles) => ({ party_id: id, name, display_name: name, roles });

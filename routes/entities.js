@@ -265,8 +265,12 @@ function policyMay(req) {
 }
 
 router.get('/policy', auth, async (req, res) => {
-  try { res.json({ flags: await policy.get(policyEntity(req)), schema: policy.FLAGS, bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) }); }
-  catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
+  /* AU-WORDS: the schema is worded by the shop's COUNTRY PACK (policy.schemaFor — the registration kinds it offers, the tax's name, the records
+     floor); the country comes in the same read as the flags (policy.read), still 1 trip. No country → neutral words, never India's. */
+  try {
+    const { flags, country } = await policy.read(policyEntity(req));
+    res.json({ flags, country, schema: policy.schemaFor(country), bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) });
+  } catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
 });
 
 router.patch('/policy', auth, async (req, res) => {
@@ -275,7 +279,10 @@ router.patch('/policy', auth, async (req, res) => {
   const refused = policy.refusalFor(req.body, require('../lib/owner').isOwner(req));
   if (refused) return res.status(403).json({ error: 'Only the owner may do this.', code: require('../lib/owner').OWNER_ONLY, may: false, why: refused, message: refused });
   try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
-  catch (err) { res.status(err.status || 500).json({ error: 'Policy update failed', message: err.status ? (err.message || safeErr(err)) : safeErr(err) }); }
+  catch (err) {
+    /* a refused value carries its code (REG_KIND_NOT_OFFERED: a kind this country's pack does not offer) and the sentence; a fault never leaks e.message */
+    res.status(err.status || 500).json({ error: 'Policy update failed', code: err.status && err.code ? err.code : undefined, message: err.status ? (err.message || safeErr(err)) : safeErr(err) });
+  }
 });
 
 /**
