@@ -917,3 +917,172 @@ No migration: the version IS `entity_profile.updated_at` (b96), read as whole mi
 | `calls[].may_call` · `call_why` · `call_code` (GET /api/crm/calls) | boolean · string/null · string/null | Derived per row from the newest `party_contact_pref` row for phone × service (`privacy.contactPrefsOf`); true before b306. The call desk greys the tap-to-call with `call_why`; POST outcome refuses 403 with `call_code`. |
 | POST /api/crm/parties/:id/outcome `followup_id` | uuid, optional | The queue row's own follow-up — the only one the call closes. Absent (a new lead's row) closes none. |
 | POST /api/supplies/purchase `books_posted` | boolean, always false | Written by `supply-store.purchase`: cost and stock only, no expense/payable/input tax is posted; the toast says "not in your books yet". Read by the supplies screen. |
+
+## Table columns the dictionary did not name · identities · register_entry · chit_status · chit_disputes · chit_header · chit_messages (SCHEMA-FIX1 · FLD3, 16 Oct 2026)
+
+Columns, not response keys: SCHEMA-ASSESSMENT-2026-10-16 §7 found 134 columns of these six tables that no row here named. Each row is the column as the database holds it (type from the schema built out of `migrations/`; the meaning is the schema's own `COMMENT ON COLUMN` where one exists). **Written by* lists the lib/ routes/ middleware files that hold an INSERT/UPDATE of the table AND name the column (a file that also reads it is listed here once); *read by* lists the other files that name it. Both lists are a grep, not a trace: a file that builds the column name at run time is not in them. The one writer per column is the open question of SCHEMA-ASSESSMENT fix 6/7.
+
+
+### `identities`
+
+| column | type | meaning · written by · read by |
+|---|---|---|
+| `email_verified` | boolean | no schema comment, the owning module names it · written by `routes/signin.js` · read by no file that names it |
+| `identity_type` | character varying | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `lib/local-identity.js`, `lib/network-build-run.js`, `lib/source.js` +9 · read by `lib/access.js`, `lib/autoraise.js`, `lib/catalogue-view.js`, `lib/cost.js` +23 |
+| `auth_method` | character varying | no schema comment, the owning module names it · written by `routes/catalogue.js` · read by no file that names it |
+| `last_active_at` | timestamp without time zone | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `lib/otp.js`, `routes/actors.js`, `routes/entities.js` · read by `lib/people.js`, `routes/people.js` |
+| `actor_key` | character varying | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `lib/network-build-run.js`, `routes/actors.js`, `routes/connectors.js` +3 · read by `lib/handle.js`, `lib/mintuserid.js`, `lib/people.js`, `lib/resolveuserid.js` +1 |
+| `actor_type` | character varying | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `routes/actors.js`, `routes/connectors.js`, `routes/integrations.js` +1 · read by `lib/people.js`, `routes/till.js` |
+| `user_id` | character varying | no schema comment, the owning module names it · written by `lib/crm-leads.js`, `lib/identity-auth.js`, `lib/local-identity.js`, `lib/network-build-run.js` +9 · read by `lib/bill-steps.js`, `lib/books-store.js`, `lib/crm.js`, `lib/handle.js` +17 |
+| `actor_role` | character varying | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `routes/actors.js`, `routes/connectors.js`, `routes/integrations.js` +1 · read by `lib/people.js`, `lib/sides.js`, `routes/people.js` |
+| `max_tasks` | integer | no schema comment, the owning module names it · written by `routes/actors.js`, `routes/connectors.js`, `routes/integrations.js`, `routes/signin.js` · read by `routes/chits.js` |
+| `current_task_count` | integer | no schema comment, the owning module names it · written by `lib/assign-chit.js`, `routes/actors.js` · read by `lib/people.js`, `routes/chits.js`, `routes/people.js` |
+| `break_type` | character varying | no schema comment, the owning module names it · written by `routes/actors.js` · read by no file that names it |
+| `break_started_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/actors.js` · read by no file that names it |
+| `return_date` | date | no schema comment, the owning module names it · written by `routes/actors.js` · read by no file that names it |
+| `deactivated_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/actors.js` · read by no file that names it |
+| `removed_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/actors.js` · read by no file that names it |
+| `deactivated_by` | uuid | no schema comment, the owning module names it · written by `routes/actors.js` · read by no file that names it |
+| `removed_by` | uuid | no schema comment, the owning module names it · written by `routes/actors.js` · read by no file that names it |
+| `otp_attempts` | integer | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `lib/network-build-run.js`, `lib/otp.js`, `routes/actors.js` +4 · read by no file that names it |
+| `pin_hash` | character varying | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `routes/actors.js`, `routes/signin.js` · read by no file that names it |
+| `pin_attempts` | integer | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `routes/actors.js`, `routes/signin.js` · read by no file that names it |
+| `pin_locked_at` | timestamp without time zone | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `routes/actors.js`, `routes/signin.js` · read by no file that names it |
+| `is_erased` | boolean | no schema comment, the owning module names it · written by `routes/entities.js` · read by `routes/chits.js` |
+| `erased_at` | timestamp with time zone | no schema comment, the owning module names it · written by `routes/entities.js` · read by no file that names it |
+| `governed_by` | uuid | no schema comment, the owning module names it · written by `routes/governance.js` · read by no file that names it |
+| `constitution_version` | text | no schema comment, the owning module names it · written by `routes/governance.js`, `routes/signin.js` · read by `lib/govresolve.js` |
+| `params_override` | jsonb | no schema comment, the owning module names it · written by `lib/network-build-run.js`, `routes/catalogue.js`, `routes/entities.js`, `routes/governance.js` +1 · read by `lib/catalogue-view.js`, `lib/visibility-cap.js` |
+| `message_type_mode` | character varying | no schema comment, the owning module names it · written by no app file · read by no file that names it |
+| `dispute_handler_actor_id` | uuid | no schema comment, the owning module names it · written by `routes/actors.js`, `routes/entities.js` · read by `routes/notifications.js` |
+| `delegate_actor_id` | uuid | no schema comment, the owning module names it · written by `routes/actors.js` · read by `lib/people.js`, `routes/chits.js`, `routes/people.js` |
+| `last_assigned_at` | timestamp with time zone | no schema comment, the owning module names it · written by `lib/assign-chit.js`, `routes/actors.js` · read by `routes/chits.js` |
+| `capabilities` | jsonb | no schema comment, the owning module names it · written by `routes/connectors.js`, `routes/entities.js` · read by `lib/catalogue-view.js`, `lib/consolidate.js`, `lib/govresolve.js`, `lib/itemmatch.js` +1 |
+| `connector_type` | text | no schema comment, the owning module names it · written by `routes/actors.js`, `routes/connectors.js`, `routes/integrations.js` · read by `lib/catalogue-view.js`, `lib/sides.js`, `routes/till.js` |
+| `site` | text | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `routes/actors.js`, `routes/catalogue.js`, `routes/connectors.js` +2 · read by `lib/access.js`, `lib/amend.js`, `lib/catalogue-blueprint.js`, `lib/catalogue-write.js` +14 |
+| `connector_config` | jsonb | no schema comment, the owning module names it · written by `routes/actors.js`, `routes/connectors.js`, `routes/integrations.js` · read by no file that names it |
+| `provision_key_hash` | text | no schema comment, the owning module names it · written by `routes/connectors.js` · read by no file that names it |
+| `last_seen` | timestamp with time zone | no schema comment, the owning module names it · written by `routes/actors.js`, `routes/connectors.js`, `routes/entities.js`, `routes/integrations.js` · read by `lib/catalogue-view.js`, `routes/testing.js` |
+| `catalogue_visibility` | text | no schema comment, the owning module names it · written by `lib/network-build-run.js`, `routes/catalogue.js`, `routes/entities.js`, `routes/network-design.js` · read by `lib/catalogue-view.js`, `lib/network-build.js`, `lib/schema-bootstrap.js`, `lib/visibility-cap.js` |
+| `sort_order` | integer | Where this store sits among its siblings in its network, set by the network build. NULL = not arranged (sorts last, by name). · written by `lib/network-build-run.js`, `routes/entities.js`, `routes/network-design.js` · read by `lib/network-build.js`, `lib/quick-keys.js`, `routes/quick-keys.js` |
+| `lat` | numeric | Latitude, decimal degrees. NULL = not located (never 0 — that is a real place). · written by `lib/network-build-run.js`, `routes/entities.js`, `routes/network-design.js` · read by `lib/availability.js`, `lib/network-build.js` |
+| `lng` | numeric | Longitude, decimal degrees. NULL = not located. · written by `lib/network-build-run.js`, `routes/entities.js`, `routes/network-design.js` · read by `lib/availability.js`, `lib/network-build.js` |
+| `service_km` | integer | How far this store serves, km. NULL = not stated, which is not zero. · written by `lib/network-build-run.js`, `routes/entities.js`, `routes/network-design.js` · read by `lib/availability.js`, `lib/network-build.js` |
+| `dispatch_days` | smallint | Days from order to goods leaving this store. 0 = same day. NULL = not declared, which is not the same as 0. · written by `lib/network-build-run.js`, `routes/network-design.js` · read by `lib/availability.js`, `lib/network-build.js` |
+| `ship_within_days` | smallint | Transit days to a customer inside service_km. NULL = not declared. · written by `lib/network-build-run.js`, `routes/network-design.js` · read by `lib/availability.js`, `lib/network-build.js` |
+| `ship_beyond_days` | smallint | Transit days to a customer beyond service_km — usually a different lane, not a longer drive. NULL = not declared. · written by `lib/network-build-run.js`, `routes/network-design.js` · read by `lib/availability.js`, `lib/network-build.js` |
+| `notif_seen_at` | timestamp with time zone | no schema comment, the owning module names it · written by no app file · read by `routes/notifications.js` |
+| `access_level` | character varying | no schema comment, the owning module names it · written by `lib/identity-auth.js`, `routes/actors.js`, `routes/entities.js` · read by `lib/access-events.js`, `lib/access.js`, `lib/people.js`, `lib/schema.js` +4 |
+| `whole_entity` | boolean | no schema comment, the owning module names it · written by `routes/actors.js`, `routes/entities.js` · read by `lib/access-events.js`, `lib/access.js`, `lib/people.js`, `lib/schema.js` +2 |
+| `entity_kind` | character varying | What this identity IS, declared at the mint. Closed vocabulary — see identities_entity_kind_chk. b225. · written by `lib/local-identity.js`, `lib/network-build-run.js`, `lib/source.js`, `routes/actors.js` +5 · read by `lib/crm.js`, `lib/entitykind.js`, `lib/istest.js`, `lib/rootlink.js` |
+| `entity_visibility` | character varying | May this entity be FOUND and named as a counterparty. Distinct from catalogue_visibility, which is only about products. public = today's behaviour for everyone. internal = receive-only (b234). · written by `routes/entities.js` · read by no file that names it |
+| `is_test` | boolean | Derived from population, kept so existing readers keep working. ⚠️ Never written — set `population`. · written by `routes/entities.js` · read by `lib/istest.js` |
+| `serves_all_populations` | boolean | Infrastructure, not a counterparty: the platform operator and the standards. Exempt from the transaction boundary in both directions, so a test shop can raise a support incident to us. Internal entities only. · written by no app file · read by `lib/istest.js`, `lib/raiseticket.js` |
+
+### `register_entry`
+
+| column | type | meaning · written by · read by |
+|---|---|---|
+| `raida_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `routes/chits.js` |
+| `closes_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `lib/sides.js` |
+| `visibility` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/catalogue-view.js`, `lib/cost.js`, `lib/csv-preflight.js`, `lib/customer-groups.js` +17 |
+| `dispute_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/dispute-may.js`, `routes/chits.js`, `routes/crm.js` |
+| `created_by_actor_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/mint.js`, `lib/raiseticket.js`, `routes/catalogue.js`, `routes/chits.js` +2 |
+| `created_by_name` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by no file that names it |
+| `subject_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `routes/catalogue.js`, `routes/chits.js` |
+| `owner_actor_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by no file that names it |
+| `owner_name` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `lib/instruments.js`, `routes/chits.js` |
+| `review_date` | date | no schema comment, the owning module names it · written by `lib/raida.js` · read by `routes/chits.js` |
+| `likelihood` | smallint | no schema comment, the owning module names it · written by `lib/raida.js` · read by `routes/chits.js` |
+| `severity` | smallint | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/csv-preflight.js`, `lib/impact.js`, `lib/kyb.js`, `lib/raiseticket.js` +6 |
+| `residual_likelihood` | smallint | no schema comment, the owning module names it · written by `lib/raida.js` · read by no file that names it |
+| `residual_severity` | smallint | no schema comment, the owning module names it · written by `lib/raida.js` · read by no file that names it |
+| `treatment` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/gst-returns.js`, `lib/points.js`, `lib/sheet.js`, `routes/chits.js` |
+| `verification_method` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by `routes/chits.js` |
+| `rel_type` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `routes/chits.js` |
+| `to_type` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `routes/chits.js` |
+| `to_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `lib/sides.js`, `routes/chits.js`, `routes/connections.js` |
+| `to_label` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `lib/sides.js`, `routes/chits.js` |
+| `needed_by` | date | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `routes/chits.js` |
+| `disposition` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by no file that names it |
+| `carried_to_subject_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by no file that names it |
+| `evidence_ref` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/entity-header.js`, `lib/kyb.js`, `lib/readiness.js`, `routes/governance.js` |
+| `evidence_hash` | text | no schema comment, the owning module names it · written by `lib/raida.js` · read by no file that names it |
+| `revises_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by `lib/impact.js`, `lib/sides.js` |
+| `template_id` | uuid | no schema comment, the owning module names it · written by `lib/raida.js` · read by `routes/chits.js` |
+
+### `chit_status`
+
+| column | type | meaning · written by · read by |
+|---|---|---|
+| `status_id` | uuid | no schema comment, the owning module names it · written by no app file · read by no file that names it |
+| `assigned_to_actor_id` | uuid | no schema comment, the owning module names it · written by `lib/assign-chit.js`, `routes/chits.js`, `routes/folders.js` · read by `lib/select.js`, `lib/work-rows.js`, `routes/actors.js`, `routes/notifications.js` |
+| `assigned_to_actor_display_name` | character varying | no schema comment, the owning module names it · written by `lib/assign-chit.js`, `routes/chits.js` · read by `lib/select.js`, `lib/work-rows.js` |
+| `assignment_type` | character varying | no schema comment, the owning module names it · written by `lib/assign-chit.js`, `routes/chits.js` · read by `routes/actors.js` |
+| `read_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/chits.js`, `routes/folders.js` · read by `lib/match.js`, `lib/measure.js`, `lib/mint.js`, `lib/select.js` +1 |
+| `star_flag` | boolean | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
+| `priority_flag` | character varying | no schema comment, the owning module names it · written by `routes/chits.js` · read by `lib/mint.js` |
+| `snoozed_until` | timestamp without time zone | no schema comment, the owning module names it · written by no app file · read by no file that names it |
+| `deleted_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/chits.js`, `routes/folders.js` · read by `lib/assign.js`, `lib/books-store.js`, `lib/raida.js`, `lib/retention.js` +3 |
+| `retention_expires_at` | timestamp with time zone | no schema comment, the owning module names it · written by `routes/chits.js` · read by `lib/policy.js` |
+| `legal_hold` | boolean | no schema comment, the owning module names it · written by no app file · read by `lib/retention.js` |
+| `customer_priority` | boolean | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
+| `customer_priority_locked` | boolean | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
+| `archived_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/chits.js`, `routes/folders.js` · read by `lib/select.js` |
+| `folder_id` | uuid | no schema comment, the owning module names it · written by `lib/folder-rules.js`, `lib/raiseticket.js`, `routes/chits.js`, `routes/connectors.js` +1 · read by `lib/folder-inventory.js`, `lib/folder-views.js`, `lib/groupsum.js`, `lib/select.js` +3 |
+| `retire_at` | timestamp with time zone | no schema comment, the owning module names it · written by `routes/chits.js` · read by `lib/retention.js` |
+| `retired_at` | timestamp with time zone | no schema comment, the owning module names it · written by no app file · read by `lib/supply-store.js` |
+| `cancel_requested_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
+| `cancel_requested_by` | character varying | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
+| `cancel_reason` | text | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
+| `cancel_confirmed_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
+| `cancel_confirmed_by` | character varying | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
+
+### `chit_disputes`
+
+| column | type | meaning · written by · read by |
+|---|---|---|
+| `dispute_id` | uuid | no schema comment, the owning module names it · written by no app file · read by `lib/dispute-may.js`, `lib/raida.js`, `routes/chits.js`, `routes/crm.js` |
+| `raised_by_display_name` | character varying | no schema comment, the owning module names it · written by no app file · read by `lib/bill-steps.js`, `routes/chits.js` |
+| `resolution_note` | text | no schema comment, the owning module names it · written by no app file · read by `routes/chits.js`, `routes/service.js` |
+| `resolved_by_entity_id` | uuid | no schema comment, the owning module names it · written by no app file · read by no file that names it |
+| `resolved_at` | timestamp with time zone | no schema comment, the owning module names it · written by no app file · read by `lib/bill-steps.js`, `lib/raiseticket.js`, `lib/sla.js`, `routes/connectors.js` +3 |
+| `target_entity_id` | uuid | no schema comment, the owning module names it · written by no app file · read by `routes/chits.js` |
+| `target_display_name` | character varying | no schema comment, the owning module names it · written by no app file · read by `routes/chits.js` |
+| `scope` | character varying | no schema comment, the owning module names it · written by no app file · read by `db/index.js`, `lib/assist-kb.js`, `lib/catalogue-write.js`, `lib/conformance.js` +51 |
+| `answerable` | boolean | no schema comment, the owning module names it · written by no app file · read by `lib/capture.js`, `lib/inventory.js`, `lib/lotfields.js`, `lib/match.js` +5 |
+| `parity_state` | character varying | no schema comment, the owning module names it · written by no app file · read by `routes/chits.js` |
+| `evidence_snapshot` | jsonb | no schema comment, the owning module names it · written by no app file · read by `routes/chits.js` |
+
+### `chit_header`
+
+| column | type | meaning · written by · read by |
+|---|---|---|
+| `header_id` | uuid | no schema comment, the owning module names it · written by no app file · read by no file that names it |
+| `sender_entity_id` | uuid | no schema comment, the owning module names it · written by `lib/tax-copy.js`, `routes/catalogue.js`, `routes/chits.js` · read by `lib/bill-privacy.js`, `lib/books-hooks.js`, `lib/books-store.js`, `lib/counter-bill.js` +16 |
+| `sender_entity_bridge_id` | character varying | no schema comment, the owning module names it · written by `routes/catalogue.js`, `routes/chits.js` · read by `lib/beckn-map.js`, `lib/mint.js`, `lib/raiseticket.js`, `routes/connectors.js` |
+| `sender_entity_display_name` | character varying | no schema comment, the owning module names it · written by `routes/catalogue.js`, `routes/chits.js` · read by `lib/assign.js`, `lib/bill-steps.js`, `lib/books-store.js`, `lib/forms.js` +10 |
+| `created_by_actor_id` | uuid | no schema comment, the owning module names it · written by `routes/catalogue.js`, `routes/chits.js` · read by `lib/mint.js`, `lib/raida.js`, `lib/raiseticket.js`, `routes/connectors.js` +1 |
+| `created_by_actor_display_name` | character varying | no schema comment, the owning module names it · written by no app file · read by no file that names it |
+| `auto_subject` | character varying | no schema comment, the owning module names it · written by `lib/tax-copy.js`, `routes/catalogue.js`, `routes/chits.js`, `routes/integrations.js` · read by `lib/assign.js`, `lib/books-store.js`, `lib/folder-rules.js`, `lib/home-facts.js` +14 |
+| `chit_ref` | uuid | no schema comment, the owning module names it · written by `routes/catalogue.js`, `routes/chits.js` · read by `lib/beckn-map.js`, `lib/rollup.js` |
+| `previous_chit_id` | uuid | no schema comment, the owning module names it · written by no app file · read by no file that names it |
+| `sent_at` | timestamp with time zone | no schema comment, the owning module names it · written by `lib/tax-copy.js`, `routes/catalogue.js`, `routes/chits.js` · read by `lib/books-hooks.js`, `lib/books-store.js`, `lib/mint.js`, `lib/tax-lines.js` +1 |
+| `schema_version` | character varying | no schema comment, the owning module names it · written by `routes/catalogue.js`, `routes/chits.js` · read by `lib/beckn-map.js`, `lib/container.js`, `lib/gst-returns.js`, `lib/mint.js` +1 |
+| `schema_id` | uuid | no schema comment, the owning module names it · written by `routes/catalogue.js`, `routes/chits.js` · read by `lib/beckn-map.js`, `lib/catalogue-columns.js`, `lib/catalogue-view.js`, `lib/catalogue-write.js` +14 |
+
+### `chit_messages`
+
+| column | type | meaning · written by · read by |
+|---|---|---|
+| `message_id` | uuid | no schema comment, the owning module names it · written by no app file · read by `lib/beckn-map.js`, `lib/forms.js`, `lib/storage.js`, `routes/attachments.js` +4 |
+| `sender_entity_id` | uuid | no schema comment, the owning module names it · written by no app file · read by `lib/bill-privacy.js`, `lib/books-hooks.js`, `lib/books-store.js`, `lib/counter-bill.js` +19 |
+| `sender_display_name` | character varying | no schema comment, the owning module names it · written by no app file · read by `lib/mint.js`, `routes/catalogue.js`, `routes/chits.js`, `routes/crm.js` +1 |
+| `thread_type` | character varying | no schema comment, the owning module names it · written by no app file · read by `middleware/hat-gate.js`, `routes/catalogue.js`, `routes/chits.js`, `routes/crm.js` +1 |
+| `visibility_entity_id` | uuid | no schema comment, the owning module names it · written by no app file · read by `routes/attachments.js`, `routes/chits.js` |
+| `message_text` | text | no schema comment, the owning module names it · written by no app file · read by `routes/catalogue.js`, `routes/chits.js`, `routes/crm.js`, `routes/folders.js` |
+| `msg_type` | character varying | no schema comment, the owning module names it · written by no app file · read by `routes/catalogue.js`, `routes/chits.js`, `routes/folders.js` |
+| `is_dispute` | boolean | no schema comment, the owning module names it · written by no app file · read by `routes/chits.js`, `routes/folders.js` |
+| `dispute_id` | uuid | no schema comment, the owning module names it · written by no app file · read by `lib/dispute-may.js`, `lib/raida.js`, `routes/chits.js`, `routes/crm.js` |
+| `read_at` | timestamp with time zone | no schema comment, the owning module names it · written by no app file · read by `lib/match.js`, `lib/measure.js`, `lib/mint.js`, `lib/select.js` +3 |
+| `subject_id` | uuid | no schema comment, the owning module names it · written by no app file · read by `lib/impact.js`, `lib/raida.js`, `routes/catalogue.js`, `routes/chits.js` |

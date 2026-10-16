@@ -201,6 +201,41 @@ jobs:
       - name: E01 limits, with a real database (a planted pg_sleep is cancelled by the statement deadline)
         run: node tests/limits.test.cjs
 
+  fresh-db:
+    # SCHEMA-FIX1 (16 Oct): rule R11 of the schema lint cannot prove a chain builds — only an EMPTY Postgres can. Unlike `integration` this is
+    # NOT gated: it needs no server and no Supabase pooler, only a plain Postgres service and psql (on the runner).
+    #   1) tools/fresh-db-check.cjs → tools/migrate.cjs apply(): baseline + every bNNN in order on an empty database; fails on any file that
+    #      errors outside migrations/fresh-db.accepted.json (shrink-only, now empty), and on an accepted file that now passes.
+    #   2) tests/rls-fresh-db.test.cjs: the RLS isolation test on THAT database, as cb_app (no context → nothing; A never sees B).
+    # cb_metrics is an ops role the owner creates by hand in production (b151's header); the job creates it the same way first.
+    name: fresh-db (empty Postgres built from migrations/ + RLS isolation)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cb_fresh
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      CB_FRESH_DB_URL: postgres://postgres:postgres@localhost:5432/cb_fresh
+      PGSSLMODE: disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - name: ops role that production has by hand (b151 header)
+        run: psql "$CB_FRESH_DB_URL" -v ON_ERROR_STOP=1 -c "CREATE ROLE cb_metrics NOLOGIN"
+      - name: build the empty database from migrations/ (fails on any file outside fresh-db.accepted.json)
+        run: node tools/fresh-db-check.cjs --db "$CB_FRESH_DB_URL"
+      - name: RLS isolation test on the fresh database
+        run: node tests/rls-fresh-db.test.cjs
+
   scan:
     # E02 — dependency + secret scanning on every push/PR.
     #  1) npm audit: shipped (production) dependencies must carry no high/critical advisory. Dev-only tooling is

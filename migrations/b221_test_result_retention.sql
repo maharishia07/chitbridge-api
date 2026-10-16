@@ -68,9 +68,12 @@ CREATE TABLE IF NOT EXISTS test_result_month (
   -- a month is not what this measure is for.
   flips       integer NOT NULL DEFAULT 0,
   first_at    timestamptz,
-  last_at     timestamptz,
-  PRIMARY KEY (entity_id, case_key, month, run_kind, COALESCE(layer, ''))
+  last_at     timestamptz
+  -- SCHEMA-FIX1: a PRIMARY KEY cannot hold COALESCE(...) (syntax error on a fresh database); the same key is a unique index below.
+  -- Nothing reads this table yet (the roll-up was never run), so the key is only stated in a different clause.
 );
+CREATE UNIQUE INDEX IF NOT EXISTS test_result_month_key
+  ON test_result_month (entity_id, case_key, month, run_kind, COALESCE(layer, ''));
 
 ALTER TABLE test_result_month ENABLE ROW LEVEL SECURITY;
 ALTER TABLE test_result_month FORCE  ROW LEVEL SECURITY;

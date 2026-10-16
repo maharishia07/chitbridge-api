@@ -54,6 +54,11 @@ DO $$
 DECLARE o uuid; n uuid; t int; clash int;
 BEGIN
   SELECT old_e, new_e INTO o, n FROM _b292;
+  /* SCHEMA-FIX1: the shared test-board shop is a production row. On a fresh database there is nothing to move: say so and stop the
+     block (the UPDATEs below then touch zero rows). Where the old shop exists, every refusal below is unchanged. */
+  IF NOT EXISTS (SELECT 1 FROM identities WHERE identity_id = o) THEN
+    RAISE NOTICE 'b292: the old test-board shop is not in this database - nothing to move'; RETURN;
+  END IF;
   IF (SELECT count(*) FROM identities WHERE identity_type = 'entity' AND (lower(bridge_id) = 'cbinctest' OR lower(coalesce(user_id, '')) = 'cbinctest' OR lower(replace(display_name, ' ', '')) = 'cbinctest')) <> 1
     THEN RAISE EXCEPTION 'b292: cbinctest must match exactly ONE business — check STEP 1'; END IF;
   IF n IS NULL THEN RAISE EXCEPTION 'b292: cbinctest not found'; END IF;
