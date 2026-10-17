@@ -47,6 +47,7 @@ const GUARDS = [
   'records-keeping.test.cjs',   // ⭐⭐ CO3: the books' edit trail cannot be disabled (Rule 3(1)); no copy expires inside the 9-year records floor
   'fx-dates-tz.test.cjs',       // ⭐ a rate's day is the same on every server (India · Sydney · UTC · LA) — fx-rates reads dates with books-engines ymd
   'till-country-bill.test.cjs', // ⭐ the counter bill in IN · AU · AE: fmtCount by money, tax words per pack (api #163; on the board since the 14 Oct rebuild)
+  'till-country-slip.test.cjs', // ⭐ TILL-B2: the slip per country — IN byte for byte, AE Arabic + English, JP per rate + ※, SG, US without an EIN, AU 5c cash rounding → books round-off
   'identity-country.test.cjs',  // ⭐⭐ GOV-AU1 (b376): every INSERT INTO identities names its country; no reader answers India for NULL
   'vault-patch.test.cjs',
   'keys-kinds.test.cjs',        // SET-WALK1 W15: the key kind 'testing' is offered to and minted by the platform role only (GET /keys scopes · POST 403 NOT_PLATFORM)       // ⭐ SET-WALK1 W25: the vault PUT is a merge-patch (RFC 7386 over the keyed view) with a version — 409 VAULT_CHANGED in words, never a blind replace

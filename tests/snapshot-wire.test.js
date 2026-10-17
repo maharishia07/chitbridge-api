@@ -809,7 +809,8 @@ it('⭐⭐ the state code comes from the same GSTIN the shop is shown as having'
  */
 it('⭐⭐⭐ the till shows the shop’s tax facts as ONE LINE, with a link to the rest (00-CORRECTIONS.md §10.7, Phase 4.5)', () => {
   const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
-  const fn = page.slice(page.indexOf('function paintShop(){'), page.indexOf('function paintTotals'));
+  /* TILL-B2 (2026-10-17): the registration words and the document word moved to shopStatusWords / shopDocWords, just above paintShop */
+  const fn = page.slice(page.indexOf('function shopDocWords('), page.indexOf('function paintTotals'));
   /* ⚠️ NOTHING WAS DROPPED, ONLY SAID AS ONE SENTENCE — GSTIN, registration state, document type and the tax
      split are still every one of them here, just folded into one line instead of four stacked rows. */
   assert.ok(fn.indexOf('GSTIN') > 0, 'the till does not say GSTIN');
@@ -1198,8 +1199,10 @@ it('⭐⭐ the bill says which way it will be recorded, and the day close counts
   /* MOVED 2026-09-29 (BOOKS v2): the line now sits inside a block that first refuses a bill SHORT of its total — an
      EMPTY box is still "exactly the total", so the ordinary cash sale stays one keystroke; the window widens to reach it */
   const fin2 = page.slice(page.indexOf('async function finish(){'), page.indexOf('async function finish(){') + 3800);   /* +400 (M49, 2026-10-10): the refusals now record why (saleStop) · +400 (ORD-FIX O5): the refusals answer { ok: false } */
-  assert.ok(fin2.indexOf('else if (!parts.length) {') > 0 && fin2.indexOf('parts = [{ how: PICKED, amount: Math.min(tendered || m.net, m.net) }];') > 0
-    && fin2.indexOf('if (tendered > 0 && r2(m.net - tendered) >= 0.01)') > 0,
+  /* TILL-B2 (2026-10-17): the tender moved to tenderParts — the rest is cashDue (rounded only where the pack rounds cash), the same one keystroke */
+  const tp = page.slice(page.indexOf('function tenderParts('), page.indexOf('function tenderParts(') + 1200);
+  assert.ok(fin2.indexOf('parts = tenderParts(parts, m.net, tendered)') > 0 && tp.indexOf('if (!parts.length) {') > 0
+    && tp.indexOf('return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];') > 0 && tp.indexOf('if (tendered > 0 && r2(rest - tendered) >= 0.01)') > 0,
     'the one-keystroke path is gone — the ordinary cash sale must stay one keystroke');
 });
 

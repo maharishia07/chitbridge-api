@@ -5952,9 +5952,19 @@ function docCountry(){ return (S && S.shop && S.shop.country) || null; }
    load (engineMissed lists it); neither is a reason to print GST, split CGST/SGST or offer UPI on a shop nobody placed. */
 function shopPack(){ try { return (window.CBRegulation && CBRegulation.packFor(docCountry())) || null; } catch (_) { return null; } }
 /* STD2: the tax number's word is the SERVER's (snapshot shop.tax_id_word = api profile.taxIdWordOf, the one reader) — never a copy here; none → neutral */
-function taxIdLabel(){ return (S && S.shop && S.shop.tax_id_word) || 'Tax number'; }
+/** ⭐ the shop's tax id as the REGISTRY knows it (CBCountries.taxId — the seam routes/till.js uses on save): { word, hint, check } for every
+    pack, AU/AE and SG/MY/US/JP alike. Reading only `abn || trn` refused a UEN, an SST number, an EIN and a T-number as "not the shape of a
+    GSTIN" (counter audit, 17 Oct). India has no registry check: shopCheck's GSTIN checksum keeps its detailed words. */
+function registryTaxId(){ try { return (window.CBCountries && docCountry()) ? CBCountries.taxId(docCountry()) : null; } catch (e) { cbQuiet('registryTaxId:1', e); return null; } }   /* null → India's words and checksum */
+function taxIdLabel(){
+  var registry = registryTaxId();   /* the registry's word: UEN · EIN · T-number … */
+  return (S && S.shop && S.shop.tax_id_word) || (registry && registry.word) || 'Tax number';
+}
 /* no pack → 'Tax', the neutral word beside taxIdLabel's 'Tax number' (W1-TILL) */
-function schemeWord(){ var pack = shopPack(); return (pack && pack.tax && pack.tax.scheme) || 'Tax'; }
+/** the shop's country words from the registry (CBCountries.meta — AU/AE's legacy words included): taxName · taxId · postcode · region; {} when none */
+function countryWords(){ try { var meta = window.CBCountries && docCountry() ? CBCountries.meta(docCountry()) : null; return (meta && meta.words) || {}; } catch (e) { cbQuiet('countryWords:1', e); return {}; } }   /* {} → the form's own words */
+/** the tax's own word — "Sales tax", "Consumption tax", "GST", "VAT" — the pack's words before its scheme code ("STAX", "JCT" were printed, 17 Oct audit) */
+function schemeWord(){ var pack = shopPack(); return countryWords().taxName || (pack && pack.tax && pack.tax.scheme) || 'Tax'; }
 function creditNoteTitle(){ var p = shopPack(); return p && p.creditNote && p.creditNote.title ? String(p.creditNote.title).toUpperCase() : 'CREDIT NOTE'; }
 /** does the shop's tax turn on the STATE (India's CGST/SGST · IGST — pack.tax.supply 'state')? A border pack (Australia, the UAE) has one head and no state. No pack known → one head (W1-TILL). */
 function packSplitsByState(){ try { var pack = shopPack(); return !!(pack && pack.tax && pack.tax.supply === 'state'); } catch (e) { cbQuiet('packSplitsByState:1', e); return false; } }
@@ -6571,7 +6581,7 @@ function chitOf(bill){
       /* ⭐ this bill's place in its counter's run — the cloud keeps the highest (routes/counters.js noteBill) */
       series: bill.series || null,
       renumbered: bill.renumbered || null,
-      payment: { mode: (bill.payments||[]).map(function(p){ return p.how; }).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments||[] },
+      payment: { mode: (bill.payments||[]).map(function(part){ return part.how; }).join('+') || 'cash', paid: bill.paid, change: bill.change, parts: bill.payments||[], cash_round: bill.cash_round },
       slip: bill.kind || 'cash',
       /* ⭐ 'shop_details' when this tax bill went out as NOT a tax invoice (M41) — the server copy reprints it the same way */
       not_invoice: bill.not_invoice || undefined,
@@ -10055,6 +10065,16 @@ function dayRepTable(title, cols, rows, foot){
         return '<td' + (cols[n] && cols[n].num ? ' class="num"' : '') + '>' + cell + '</td>'; }).join('') + '</tr></tfoot>' : '')
     + '</table></section>';
 }
+/** the day's first table — bills, items, average, offers, taxable, tax, Net sales. ⭐ TILL-B2: and the cash rounding the bills took (AU · MY,
+    each bill's cash_round), so Net sales plus it is what "How the money moved" totals */
+function dayRepSummary(figures){
+  var rounded = figures.bills.reduce(function(sum, bill){ return r2(sum + (Number(bill.cash_round) || 0)); }, 0);
+  var rows = [['Bills', String(figures.count)], ['Items sold', String(figures.qty)], ['Average bill', figures.count ? money(r2(figures.total / figures.count)) : '\u2014'],
+    ['Taken off by offers', figures.saved ? '\u2212' + money(figures.saved) : money(0)], ['Taxable value', money(figures.taxable)], ['Tax', money(figures.tax)]];
+  if (rounded) rows.push(['Cash rounding', (rounded > 0 ? '+' : '') + money(rounded)]);
+  return dayRepTable('The day', [{ label: 'What' }, { label: 'Figure', num: true }], rows,
+    ['<b>Net sales</b>', '<b data-testid="till-dayrep-netsales">' + money(figures.total) + '</b>']);
+}
 function dayReportHTML(bills){
   /* ⚠️ THE COUNT IS OF SALES. The money nets by itself (a credit note or an expense is stored negative); the
    * count does not — [till expenses] joins the credit-note exclusion here for the identical reason. */
@@ -10097,14 +10117,7 @@ function dayReportHTML(bills){
      printed "No sales yet today" and hid the Returns table beneath this line */
   if (!n && !back.length && !spent.length) return head + '<p class="drnone">No sales yet today. The day report fills itself as bills are made.</p>';
 
-  var summary = dayRepTable('The day', [{ label: 'What' }, { label: 'Figure', num: true }], [
-    ['Bills', String(n)],
-    ['Items sold', String(qty)],
-    ['Average bill', n ? money(r2(total / n)) : '\u2014'],
-    ['Taken off by offers', saved ? '\u2212' + money(saved) : money(0)],
-    ['Taxable value', money(taxable)],
-    ['Tax', money(tax)],
-  ], ['<b>Net sales</b>', '<b data-testid="till-dayrep-netsales">' + money(total) + '</b>']);
+  var summary = dayRepSummary({ bills: bills, count: n, qty: qty, total: total, saved: saved, taxable: taxable, tax: tax });
 
   /**
    * ⚠️⚠️ THE SHEET RECONCILES TO ITSELF (2026-09-28, M11). "How it was paid" summed only money TAKEN, so it was
@@ -10283,7 +10296,7 @@ function hubHits(){
 function hubFindBox(){
   var hits = hubHits();
   return '<div class="hubfind">'
-    + '<input id="hubq" data-testid="till-hub-find" placeholder="Find anything — printer, GSTIN, close, colours…"'
+    + '<input id="hubq" data-testid="till-hub-find" placeholder="Find anything — printer, ' + esc(taxIdLabel()) + ', close, colours…"'
     + ' autocomplete="off" value="' + esc(HUB_Q) + '" oninput="hubFind(this.value)">'
     + (HUB_Q.trim() && !hits.length
         ? '<div class="hubnone" data-testid="till-hub-find-none">Nothing in this menu matches “' + esc(HUB_Q.trim())
@@ -18262,9 +18275,14 @@ function shopTax(){
   var sh = (S && S.shop) || {};
   var reg = String(sh.reg_type || 'regular');
   var hasGstin = !!String(sh.gstin || '').trim();
-  return { charges: (reg === 'regular' && hasGstin), reg: reg, gstin: hasGstin,
+  /* ⭐ TILL-B2: …unless the shop's law collects the tax with no national id (US sales tax, under the state's seller's permit —
+     pack.tax.collect_without_tax_id). The bill is then no tax invoice (kind 'cash' → the pack's plain title, "Receipt"), but it is taxed. */
+  var charges = reg === 'regular' && (hasGstin || packCollectsWithoutId());
+  return { charges: charges, reg: reg, gstin: hasGstin,
            kind: (reg === 'regular' && hasGstin) ? 'tax' : (reg === 'composition' && hasGstin ? 'supply' : 'cash') };
 }
+/** does the shop's pack collect its tax without a tax id (reg-us collect_without_tax_id)? No pack → no (W1-TILL) */
+function packCollectsWithoutId(){ var pack = shopPack(); return !!(pack && pack.tax && pack.tax.collect_without_tax_id); }
 /**
  * ⭐⭐⭐ WHICH LINES CARRY NO TAX RATE, IN A SHOP THAT CHARGES GST (walk 2026-10-09, BF1). The engine answers a line with no rate
  * as nil-rated (billMoney sends 0) — fine for the arithmetic, never fine for the DOCUMENT: a slip headed TAX INVOICE with GST 0.00
@@ -18376,6 +18394,8 @@ async function billWarnFix(which){
  * ⚠️ IT NEVER BLOCKS A SALE. A dot in the header and a panel behind it. A counter that refused to sell because a slab was missing
  * would have turned a data problem into a lost customer, which is a worse outcome than the fault it was protecting against.
  */
+/** registered as regular with no tax id and so charging nothing — a fault to name. ⭐ TILL-B2: a US shop charges sales tax with no EIN, which is not one */
+function noIdFault(taxState){ return taxState.reg === 'regular' && !taxState.gstin && !taxState.charges; }
 function health(){
   var out = [], items = (S && S.items) || [], tx = shopTax();
   var add = function(level, what, means, todo, eg){ out.push({ level:level, what:what, means:means, todo:todo, eg:eg || [] }); };
@@ -18452,7 +18472,7 @@ function health(){
   })();
 
   /* ── the tax component, which is the one he asked for ── */
-  if (tx.reg === 'regular' && !tx.gstin)
+  if (noIdFault(tx))
     add('bad', 'Set as regular, but there is no GSTIN',
       'A registered shop must show its GSTIN on a tax invoice. Without one the counter prints a CASH MEMO and charges no GST — which is right, but it is probably not what you meant.',
       'Add the GSTIN in ChitBridge → Profile, or set the registration to unregistered.');
@@ -18873,11 +18893,23 @@ function countShort(lines){
  * of the mini table this panel used to be. Address, phone, legal name and currency stay where they always
  * were, in the hub's menuShopBody(), one press away through "More about the shop ↗".
  */
+/** the document every bill of this shop is: a TAX INVOICE · a BILL OF SUPPLY · a cash memo — ⭐ TILL-B2: or the pack's plain title ("a receipt") when it taxes with no id (US) */
+function shopDocWords(taxState){
+  if (taxState.kind === 'tax') return 'a TAX INVOICE';
+  if (taxState.kind === 'supply') return 'a BILL OF SUPPLY';
+  return taxState.charges ? 'a ' + slipTitleLines('cash', null)[0].text.toLowerCase() : 'a cash memo';
+}
+/** the shop's registration in a line — registered, with its id · ⭐ TILL-B2: no id, the tax still charged (US, the state permit) · not registered, and why */
+function shopStatusWords(shop, taxState){
+  if (shop.gstin) return 'Registered · ' + taxIdLabel() + ' ' + esc(String(shop.gstin));
+  if (taxState.charges) return 'No ' + taxIdLabel() + ' — ' + schemeWord() + ' is still charged';
+  return 'Not registered' + (regWords() ? ' — ' + esc(regWords()) : ' — this shop does not charge ' + schemeWord());
+}
 function paintShop(){
   var el = document.getElementById('shopbox'); if (!el) return;
   if (!S || !S.shop) { el.innerHTML = '<div class="shopfacts">No copy of the shop yet — press ↻ once, while online.</div>'; return; }
   var sh = S.shop, tx = shopTax();
-  var doc = tx.kind === 'tax' ? 'a TAX INVOICE' : (tx.kind === 'supply' ? 'a BILL OF SUPPLY' : 'a cash memo');
+  var doc = shopDocWords(tx);
   /* CX0: the split is India's (a state-split pack); a one-head scheme names its head — GST 10 % in Australia, VAT 5 % in the UAE */
   var split = !packSplitsByState() ? schemeWord() : !sh.state_code ? 'cannot be split'
     : ((window.CBTax && CBTax.supplyType(String(sh.state_code), CBTax.placeOfSupply(null, String(sh.state_code))) === 'intra') ? 'CGST + SGST' : 'IGST');
@@ -18885,8 +18917,7 @@ function paintShop(){
    * ⭐⭐ NO GSTIN IS A STATE, NOT A GAP ([TILL-105]). Athi: *"if no gstn, say this shop is not GSTN shop"* —
    * *"service tax not registered."* A shop below the threshold is correctly unregistered, and the line says so.
    */
-  var status = sh.gstin ? 'Registered · ' + taxIdLabel() + ' ' + esc(String(sh.gstin))
-    : 'Not registered' + (regWords() ? ' — ' + esc(regWords()) : ' — this shop does not charge ' + schemeWord());
+  var status = shopStatusWords(sh, tx);
   /* ⭐ M56 (walk 2026-10-10) — ONE TRUTH. "every bill is a TAX INVOICE" stood over a bill that carried no tax and a details clash
      that saves sales as NOT a tax invoice (M41). It now says the rule as the bill applies it, and the clash beside it (shopStateClash,
      the bill's own check). */
@@ -18945,8 +18976,11 @@ function shopEditOpen(){
   var d = document.getElementById('shopdlg'); if (!d) return;
   var sh = (S && S.shop) || {};
   var missing = Array.isArray(sh.missing) ? sh.missing : [];
-  var body = SHOP_FIELDS.map(function(f){
+  /* the country's own words over India's (GSTIN · PIN code · State): UEN, ZIP code, Prefecture; a country with no region row (SG) shows no State box */
+  var words = countryWords(), label = { gstin: words.taxId || (docCountry() && docCountry() !== 'IN' ? taxIdLabel() : null), pincode: words.postcode, state: words.region };
+  var body = SHOP_FIELDS.filter(function(field){ return !(field[0] === 'state' && words.region === null); }).map(function(f){
     var k = f[0], val = shopFieldValue(sh, k);
+    if (label[k]) f = [k, label[k], k === 'gstin' ? 'without it, no ' + schemeWord() + ' is charged on any bill' : f[2], f[3]];
     /* ⚠️ 'not set yet' comes from the SERVER's idea of missing (lib/profile), not from an empty box here.
        ⚠️⚠️ [2026-09-27] GSTIN NEVER GETS THIS MARK. shopCheck() already says, in words, that a shop below
        the threshold is not registered and that is not an error — this label used to disagree with its own
@@ -19790,10 +19824,12 @@ function lineFaults(rows){
  */
 /* W1-TILL: the country comes from its ONE reader (docCountry — the snapshot's stated country); India's single zone is a fact of a STATED
    country, never guessed from the money. A shop nobody placed keeps the zone CBLocale answers (the person's override, else the device). */
-var ONE_ZONE_COUNTRIES = { IN: 'Asia/Kolkata' };
+/* A country with ONE zone in its pack (IN, AE, SG, MY, JP) is that zone — a fact of the stated country, read from its pack (timeZones), not a
+   table here (it held India only; a Dubai shop on a PC set to UTC printed UTC times, 17 Oct audit). A multi-zone country (AU, US) keeps
+   CBLocale's answer until the snapshot carries the shop's own zone. */
 function shopTz(){
-  var zone = ONE_ZONE_COUNTRIES[String(docCountry() || '').toUpperCase()];
-  if (zone) return zone;
+  var pack = shopPack(), zones = pack && Array.isArray(pack.timeZones) ? pack.timeZones : null;
+  if (zones && zones.length === 1) return zones[0];
   try { if (window.CBLocale && CBLocale.timezone) return CBLocale.timezone(); } catch (e) { cbQuiet('shopTz:1', e); }
   return undefined;
 }
@@ -20464,6 +20500,20 @@ function shopWhyToggle(){ SHOP_WHY = !SHOP_WHY; shopCheck(); }
 function shopSlipBadge(kind){
   return '<b class="slipbadge' + (kind === 'CASH MEMO' ? '' : ' ok') + '">' + esc(kind) + '</b>';
 }
+/** the shop sheet's line when no tax id is typed: the document that will print, and why. ⭐ TILL-B2: a pack that collects without one (US)
+    says the tax is still charged, under its plain title (RECEIPT) — never "no tax goes on any bill" over a bill that carries sales tax. */
+function shopNoIdSay(){
+  var collects = packCollectsWithoutId();
+  var kind0 = collects ? slipTitleLines('cash', null)[0].text
+    : (window.CBTax && S && S.shop && shopTax && shopTax().kind === 'supply') ? 'BILL OF SUPPLY' : 'CASH MEMO';
+  var reason = collects ? ' · no ' + taxIdLabel() + ' needed — ' + schemeWord() + ' is still charged on every bill'
+    : ' · not registered for ' + schemeWord() + ', so no tax goes on any bill';
+  shopSay(shopSlipBadge(kind0) + reason
+    + ' <button type="button" class="linklike" data-testid="till-shop-why" onclick="shopWhyToggle()">'
+    + (SHOP_WHY ? 'Hide' : 'Why?') + '</button>'
+    + (SHOP_WHY ? '<div class="shopwhy">' + esc(regWords()) + '</div>' : ''), false, true);
+  return true;
+}
 function shopCheck(){
   /* ⚠️ THE "not set yet" MARK IS LIVE, not a snapshot of when the form opened. It sat beside a box the
      shopkeeper had just filled, which reads as the form arguing with itself. */
@@ -20479,17 +20529,10 @@ function shopCheck(){
    * tax not registered."* A small shop below the threshold is LEGITIMATELY unregistered, and a counter that
    * calls that field missing is nagging a shopkeeper about a decision the law already made for them.
    */
-  if (!v) {
-    var kind0 = (window.CBTax && S && S.shop && shopTax && shopTax().kind === 'supply') ? 'BILL OF SUPPLY' : 'CASH MEMO';
-    shopSay(shopSlipBadge(kind0) + ' · not registered for ' + schemeWord() + ', so no tax goes on any bill'
-      + ' <button type="button" class="linklike" data-testid="till-shop-why" onclick="shopWhyToggle()">'
-      + (SHOP_WHY ? 'Hide' : 'Why?') + '</button>'
-      + (SHOP_WHY ? '<div class="shopwhy">' + esc(regWords()) + '</div>' : ''), false, true);
-    return true;
-  }
+  if (!v) return shopNoIdSay();
   /* ⭐ CX0: under a pack that names its own tax id (reg-au `abn` · reg-ae `trn`) the PACK's check decides — the same one routes/till.js runs
      on save. The GSTIN checksum below refused every ABN and TRN ("not the shape of a GSTIN") and the counter's shop form could not be saved. */
-  var pk0 = shopPack(), tid = pk0 && (pk0.abn || pk0.trn);
+  var tid = registryTaxId();
   if (tid && typeof tid.check === 'function') {
     var c0 = tid.check(v);
     if (!c0.ok) { shopSay(esc(c0.why || ('That is not the shape of this shop\u2019s ' + taxIdLabel() + '.')), true); return false; }
@@ -20680,10 +20723,10 @@ function paintTotals(){
   var brk = savedBreakdown();
   var tendered = Number(document.getElementById('tendered').value) || 0;
   var taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
-  var due = r2(m.net - taken);
-  var change = r2(tendered - due);
+  var stillOwed = cashDue(r2(m.net - taken), payWayId(PICKED));   /* TILL-B2: the cash that pays the rest is owed the rounded amount */
+  var change = r2(tendered - stillOwed);
   document.getElementById('change').textContent = PARTS.length
-    ? (tendered ? (change >= 0 ? 'change ' + money(change) : 'still ' + money(-change)) : 'still ' + money(due))
+    ? (tendered ? (change >= 0 ? 'change ' + money(change) : 'still ' + money(-change)) : 'still ' + money(stillOwed))
     : (tendered ? (change >= 0 ? 'change ' + money(change) : 'short ' + money(-change)) : '');
   /* ⭐ §3 (Phase 3.7) — the pictorial breakdown rides beside the figure, never instead of it (rule 2: "colour
      never carries meaning alone — and neither does text") */
@@ -20730,7 +20773,7 @@ function paintTotals(){
     + wideRows
     + (m.taxed ? '<div class="t"><span>Taxable</span><span>' + money(m.base) + '</span></div>'
         + m.heads.map(function(h){
-            return '<div class="t head"><span>' + h.name + ' ' + h.rate + '%</span><span>' + money(h.amount) + '</span></div>'; }).join('')
+            return '<div class="t head"><span>' + taxHeadWord(h) + ' ' + h.rate + '%</span><span>' + money(h.amount) + '</span></div>'; }).join('')
         /* ⚠️ SAY WHY, do not silently show one figure. A bill headed TAX INVOICE with an unsplit GST line is not a
            formatting choice — the buyer cannot claim the credit off it. */
         + (m.supply === 'unknown'
@@ -21403,7 +21446,7 @@ function paintPays(){
       + (PARTS.length
           ? 'Taking ' + PARTS.map(function(p){ return money(p.amount) + ' in ' + esc(p.how); }).join(' + ')
             + (left > 0 ? ' · ' + money(left) + ' still due as <b>' + esc(PICKED) + '</b>' : '')
-          : 'This bill will be recorded as <b>' + esc(PICKED) + '</b>')
+          : 'This bill will be recorded as <b>' + esc(PICKED) + '</b>') + cashSaysHTML(left)
       + (PICKED === 'On credit' && credCust ? (function(){
           var due = dueDateFor(credCust), chk = creditLimitCheck(credCust, left);
           return ' · on ' + esc(credCust.name) + '’s account'
@@ -21509,22 +21552,7 @@ async function finish(){
       parts.push({ how: 'On credit', amount: owedNow });
     }
   }
-  else if (!parts.length) {
-    /**
-     * ⚠️⚠️ SHORT OF THE TOTAL IS NOT PAID (2026-09-29, found by till-books-offline). ₹100 typed against a ₹105 bill was
-     * saved as a ₹105 sale paid with ₹100 — the drawer and the day's sales disagreed by ₹5 with nothing saying so, and
-     * the day's entry had to carry it as round-off. The shortfall is taken, split (+ part), or put on credit — never
-     * dropped. (An empty box still means "exactly the total", the ordinary one-keystroke sale.)
-     */
-    if (tendered > 0 && r2(m.net - tendered) >= 0.01) {
-      say(money(r2(m.net - tendered)) + ' is still to take.\n\nTake the rest, or use "+ part" to take it another way'
-        + (creditCust() ? ', or put it On credit.' : '.'));
-      return { ok: false };
-    }
-    parts = [{ how: PICKED, amount: Math.min(tendered || m.net, m.net) }];
-  }
-  else if (tendered > 0) { var taken0 = parts.reduce(function(a,p){ return r2(a + p.amount); }, 0);
-    if (taken0 < m.net) parts.push({ how: PICKED, amount: Math.min(tendered, r2(m.net - taken0)) }); }
+  else if (!(parts = tenderParts(parts, m.net, tendered))) return { ok: false };   /* the rest in the picked way; short is said (tenderParts) */
   var paid = r2(parts.reduce(function(a,p){ return a + p.amount; }, 0));
   var body = {
     /* ⚠️ price is what was CHARGED per unit (after the structure, before offers); list_price and priced_by say what
@@ -21557,7 +21585,7 @@ async function finish(){
     /* ⚠️ THE POINTS RIDE THE BILL. The counter may be offline; the reward post goes through the SAME queue and the
        server's unique index makes a replay a no-op — so a bill that syncs twice does not award twice. */
     reward: RW.holder ? { holder: RW.holder, spend: RW.spend || 0 } : null,
-    payment_asked: PAY_ASKED, change: r2(Math.max(0, (tendered || 0) - r2(m.net - (paid - (parts[parts.length-1] || {}).amount || 0)))),
+    payment_asked: PAY_ASKED, change: changeOf(tendered, m.net, parts), cash_round: cashRoundOf(parts, m.net) || undefined,
     total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
     /* ⚠️ THE SPLIT IS RECORDED, NOT RE-DERIVED. A reprint months later must show the heads this bill was ISSUED with —
        the shop's registration can change, and a slip that recomputes would quietly restate a filed return. */
@@ -21645,6 +21673,28 @@ function isExpenseRow(b){
   if (window.CBRollup && CBRollup.isExpense) return CBRollup.isExpense(b);
   return !!(b && b.kind === 'expense');
 }
+/** ⭐ COMPUTE ONCE, READ AFTER: add the rate-wise figures a bill was ISSUED with (by_rate — a credit note's are negative, so it nets) to the
+    day. Working the tax out again with TODAY's inclusive flag disagreed with the bills whenever the flag had changed (17 Oct audit).
+    Answers the bill's by_rate, or null for a bill saved before by_rate existed (dayAddSplit then does its lines). */
+function dayAddIssued(sheet, bill){
+  var issued = bill.by_rate && Object.keys(bill.by_rate).length ? bill.by_rate : null;
+  if (issued) Object.keys(issued).forEach(function(rate){
+    var figures = issued[rate] || {}; if (!Number(rate)) return;
+    sheet.rate[rate] = sheet.rate[rate] || { base:0, tax:0 };
+    sheet.rate[rate].base = r2(sheet.rate[rate].base + (Number(figures.base != null ? figures.base : figures.taxable) || 0));
+    sheet.rate[rate].tax = r2(sheet.rate[rate].tax + (Number(figures.tax) || 0));
+  });
+  return issued;
+}
+/** an OLD bill's line (no by_rate): CBTax.splitLineTax(), the same formula the invoice used, not the report's own guess at it */
+function dayAddSplit(sheet, line){
+  var rate = Number(line.gst_rate) || 0, lineNet = Number(line.net) || 0; if (!rate) return;
+  var split = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: lineNet, rate: rate, priceIncludesTax: taxIncluded() })
+    : (function(){ var base = taxIncluded() ? r2(lineNet * 100 / (100 + rate)) : lineNet; return { assessable: base, tax: r2(base * rate / 100) }; })();
+  sheet.rate[rate] = sheet.rate[rate] || { base:0, tax:0 };
+  sheet.rate[rate].base = r2(sheet.rate[rate].base + split.assessable);
+  sheet.rate[rate].tax = r2(sheet.rate[rate].tax + split.tax);
+}
 function dayCloseSheet(rows){
   /**
    * ⚠️⚠️ A RETURN IS NOT A BILL, AND THE COUNT MUST NOT SAY IT IS (2026-09-18). Every accumulator below is a
@@ -21720,20 +21770,13 @@ function dayCloseSheet(rows){
        is paying rent a sale, however it went through the same person's hands */
     if (!isReturnRow(b) && !isExpenseRow(b)) d.people[who].bills++;
     d.people[who].total = r2(d.people[who].total + (b.total||0));
+    var issued = dayAddIssued(d, b);
     (b.lines||[]).forEach(function(l){
       var k = l.name || l.item_id;
       d.items[k] = d.items[k] || { qty:0, net:0, unit:l.unit||'' };
       d.items[k].qty = r2(d.items[k].qty + (Number(l.qty)||0));
       d.items[k].net = r2(d.items[k].net + (Number(l.net)||0));
-      var rt = Number(l.gst_rate)||0;
-      if (rt){
-        /* ⚠️ CBTax.splitLineTax() — the same formula the invoice used, not the report's own guess at it */
-        var sp = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: Number(l.net)||0, rate: rt, priceIncludesTax: taxIncluded() })
-          : (function(){ var b2 = taxIncluded() ? r2((Number(l.net)||0) * 100 / (100 + rt)) : Number(l.net)||0; return { assessable: b2, tax: r2(b2 * rt / 100) }; })();
-        d.rate[rt] = d.rate[rt] || { base:0, tax:0 };
-        d.rate[rt].base = r2(d.rate[rt].base + sp.assessable);
-        d.rate[rt].tax = r2(d.rate[rt].tax + sp.tax);
-      }
+      if (!issued) dayAddSplit(d, l);
     });
   });
   d.cash = r2(d.modes.Cash || 0);
@@ -22471,9 +22514,15 @@ function rcvBalLine(l){
   }
   return out + '</span>';
 }
+/** the receive form's two invoice facts in the shop's own tax words; the state-code box only where the tax splits by state (India) */
+function rcvWords(){
+  var incl = document.getElementById('rcv_incl'), stateBox = document.getElementById('rcv_vstate'), word = schemeWord();
+  if (incl && incl.options && incl.options.length === 2) { incl.options[0].textContent = 'Their rates are before ' + word + ' (usual)'; incl.options[1].textContent = 'Their rates already include ' + word; }
+  if (stateBox) stateBox.hidden = !packSplitsByState();
+}
 function paintReceive(){
   var box = document.getElementById('rcv_lines'); if (!box) return;
-  rcvBalEnsure();
+  rcvBalEnsure(); rcvWords();
   box.innerHTML = RCV.lines.length ? RCV.lines.map(function(l, n){
     var d = rcvDiff(l), done = (l.counted != null && d === 0 && l.ordered != null);
     var ok = d ? rcvAbsorbed(l) : false;
@@ -22490,7 +22539,7 @@ function paintReceive(){
          editable, because the rate on the supplier's invoice is THEIR statement and it is the paper the credit is
          claimed against. Hidden entirely for a shop that charges no GST: it would have nothing to claim. */
       + (shopTax().charges
-          ? '<input class="gstin" type="number" min="0" max="100" step="0.5" inputmode="decimal" placeholder="GST%"'
+          ? '<input class="gstin" type="number" min="0" max="100" step="0.5" inputmode="decimal" placeholder="' + esc(schemeWord()) + '%"'
             + ' value="' + (l.gst_rate == null ? '' : l.gst_rate) + '" title="the GST rate on their invoice"'
             + ' data-testid="rcv-gst-' + n + '" onchange="rcvSet(' + n + ',\'gst\',this.value)">'
           : '')
@@ -22929,6 +22978,69 @@ function posWords(code){
  * no shop, no address, no GSTIN — the document that undoes a sale must name the same seller the sale did. The bill and the credit
  * note both start here. A GSTIN prints on anything but a cash memo.
  */
+/**
+ * ⭐ TILL-B2 (2026-10-17): CASH ROUNDS TO THE COIN THE COUNTRY STILL MAKES — pack.cashRounding { step_minor, tender } (AU 5c since 1992,
+ * MY 5 sen). Only the CASH tender that pays the rest of a bill rounds (nearest step: 0.03 → 0.05, 0.02 → 0.00); card and every other way
+ * pays exact. The cash part is TAKEN at the rounded amount, so the books post the gap as round-off by the path they already have
+ * (lib/books-hooks: round_off = what was paid − the invoice total) — no second ledger. No rule in the pack (India, Japan …) → exact.
+ */
+function cashRule(){ var pack = shopPack(), rule = pack && pack.cashRounding; return rule && Number(rule.step_minor) > 0 ? rule : null; }
+/** a tender's id from its label — the shop's own pay list (S.shop.pay), else the label itself ('Cash' → 'cash') */
+function payWayId(label){
+  var shopWays = (S && S.shop && S.shop.pay) || [], match = shopWays.filter(function(option){ return option.label === label; })[0];
+  return String(match ? match.id : (label || '')).toLowerCase();
+}
+/** what the tender `wayId` takes for `amount`: rounded to the pack's cash step when it is the tender that rounds, else the amount itself */
+function cashDue(amount, wayId){
+  var rule = cashRule();
+  if (!rule || String(wayId || '').toLowerCase() !== String(rule.tender || 'cash')) return amount;
+  var step = Number(rule.step_minor);
+  return booksMajor(Math.round(shopMinor(amount) / step) * step);
+}
+/** "Cash A$10.05 · rounded from A$10.03" — said before paying; '' when nothing rounds */
+function cashRoundWords(amount){
+  var rounded = cashDue(amount, 'cash');
+  return rounded !== amount ? 'Cash ' + money(rounded) + ' · rounded from ' + money(amount) : '';
+}
+/** the pay line's rounding note, when the picked tender is the one that rounds */
+function cashSaysHTML(left){
+  var words = cashDue(left, payWayId(PICKED)) !== left ? cashRoundWords(left) : '';
+  return words ? ' · <b data-testid="till-pay-cashround">' + esc(words) + '</b>' : '';
+}
+/** what was still owed when the last part was taken — the rest it paid, before any rounding */
+function restBeforeLast(parts, billNet){
+  var last = parts[parts.length - 1] || {}, paid = r2(parts.reduce(function(sum, part){ return sum + part.amount; }, 0));
+  return r2(billNet - r2(paid - (Number(last.amount) || 0)));
+}
+/** the change handed back: what was tendered over what the last way was owed (rounded when it is the cash that rounds) */
+function changeOf(tendered, billNet, parts){
+  var last = parts[parts.length - 1] || {};
+  return r2(Math.max(0, (tendered || 0) - cashDue(restBeforeLast(parts, billNet), payWayId(last.how))));
+}
+/** TILL-B2: the rounding this bill took — the cash part over what it was owed (signed, major units); 0 when nothing rounded */
+function cashRoundOf(parts, billNet){
+  var last = parts[parts.length - 1] || {}, rest = restBeforeLast(parts, billNet);
+  return parts.length && cashDue(rest, payWayId(last.how)) === last.amount && last.amount !== rest ? r2(last.amount - rest) : 0;
+}
+/**
+ * the payments a bill not On credit is saved with: the parts already taken plus the picked way for the rest — the rest at cashDue (rounded
+ * when the cash pays it). null when the money handed over is short, and said.
+ * ⚠️⚠️ SHORT OF THE TOTAL IS NOT PAID (2026-09-29, found by till-books-offline). ₹100 typed against a ₹105 bill was saved as a ₹105 sale
+ * paid with ₹100 — the drawer and the day's sales disagreed by ₹5 with nothing saying so. The shortfall is taken, split (+ part), or put on
+ * credit — never dropped. (An empty box still means "exactly the total", the ordinary one-keystroke sale.)
+ */
+function tenderParts(parts, billNet, tendered){
+  var taken = r2(parts.reduce(function(sum, part){ return sum + part.amount; }, 0)), rest = cashDue(r2(billNet - taken), payWayId(PICKED));
+  if (!parts.length) {
+    if (tendered > 0 && r2(rest - tendered) >= 0.01) {
+      say(money(r2(rest - tendered)) + ' is still to take.\n\nTake the rest, or use "+ part" to take it another way' + (creditCust() ? ', or put it On credit.' : '.'));
+      return null;
+    }
+    return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];
+  }
+  if (tendered > 0 && taken < billNet) parts.push({ how: PICKED, amount: Math.min(tendered, rest) });
+  return parts;
+}
 function slipHeadHTML(kind){
   var shop = (S && S.shop) || {};
   return '<div data-testid="till-slip-head" style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name || counterName()) + '</div>'
@@ -22948,17 +23060,70 @@ function slipBuyerHTML(bill, t){
     + (bill.not_invoice === 'buyer_identity' ? '<div data-testid="till-slip-nobuyer" style="font-size:.9em">Over ' + money(buyerFromMajor())
       + ' a tax invoice names the buyer or their ' + taxIdLabel() + ' — none was given.</div>' : '');
 }
+/* the English titles a slip printed before the packs carried their own (pack.slip) — the fallback, so a shop with no pack prints what it always did */
+var SLIP_TITLE_EN = { tax: 'TAX INVOICE', supply: 'BILL OF SUPPLY', plain: 'CASH MEMO' };
+/**
+ * ⭐ TILL-B2 (2026-10-17): THE SLIP'S TITLE IN THE SHOP'S LANGUAGES — pack.slip (engines v1.65.0) → [{ lang, text }], one per language in
+ * slip.langs order, the first the main line. kind 'tax' → titles.tax (titles.simplified when the pack's taxInvoice rule says 'simplified'),
+ * 'supply' → titles.supply, anything else → titles.plain. Uppercased — Arabic and Japanese have no case and print as written; India stays
+ * TAX INVOICE · BILL OF SUPPLY · CASH MEMO. No pack.slip, or no title for the kind → today's English words.
+ */
+function slipTitleLines(kind, rule){
+  var pack = shopPack(), slip = pack && pack.slip, key = slipTitleKey(kind, rule, slip);
+  var words = slip && slip.titles && slip.titles[key];
+  var lines = words ? (slip.langs || []).filter(function(lang){ return words[lang]; })
+    .map(function(lang){ return { lang: lang, text: String(words[lang]).toUpperCase() }; }) : [];
+  return lines.length ? lines : [{ lang: 'en', text: SLIP_TITLE_EN[key === 'simplified' ? 'tax' : key] }];
+}
+/** which of pack.slip.titles a bill of this kind prints: tax (or simplified, when the rule says so and the pack has the words) · supply · plain */
+function slipTitleKey(kind, rule, slip){
+  if (kind === 'supply') return 'supply';
+  if (kind !== 'tax') return 'plain';
+  var simplified = rule && rule.kind === 'simplified' && slip && slip.titles && slip.titles.simplified;
+  return simplified ? 'simplified' : 'tax';
+}
+/** the title as the slip prints it: one centred bold line per language; with two or more each names its language (Arabic right to left) */
+function slipTitleHTML(lines){
+  var many = lines.length > 1;
+  return lines.map(function(line){
+    var attrs = !many ? '' : line.lang === 'ar' ? ' dir="rtl" lang="ar"' : ' lang="' + esc(line.lang) + '"';
+    return '<div' + attrs + ' style="text-align:center;font-weight:700">' + esc(line.text) + '</div>';
+  }).join('');
+}
+/* ⚠️ NEVER "TAX INVOICE" OVER A LINE THAT CHARGED NO TAX BECAUSE IT HAD NO RATE (BF1) — the paper says what it is */
+/* ⚠️ …nor over a bill saved while the shop's own details disagreed (M41, bill.not_invoice) — the same title, no second path */
+function slipTitleOf(bill, unrated){
+  if (unrated.length || bill.not_invoice) return slipTitleHTML([{ lang: 'en', text: 'BILL — NOT A TAX INVOICE' }]);
+  var rule = bill.kind === 'tax' ? invoiceRule(bill.total, bill.customer && bill.customer.gstin) : null;
+  return slipTitleHTML(slipTitleLines(bill.kind, rule));
+}
+/** ⭐ TILL-B2: does this slip carry a tax foot? A tax invoice — and a RECEIPT that still charged tax (US sales tax with no EIN, shopTax) */
+function slipTaxed(bill){ return bill.kind === 'tax' || (bill.kind === 'cash' && Number(bill.tax) !== 0); }
+/** ⭐ TILL-B2: Japan's reduced-rate mark — ' ※' after a line taxed below the pack's standard rate (and above 0), when the invoice rule asks for it */
+function reducedMark(bill, line){
+  var rule = slipTaxed(bill) ? invoiceRule(bill.total, bill.customer && bill.customer.gstin) : null, pack = shopPack();
+  var rate = Number(line && line.gst_rate) || 0, standard = Number(pack && pack.tax && pack.tax.standard_rate) || 0;
+  return rule && rule.reduced_mark && rate > 0 && rate < standard ? ' ※' : '';
+}
+/** the line that says what ※ means, when any line carries it */
+function reducedNoteHTML(bill){
+  var marked = (bill.lines || []).some(function(line){ return reducedMark(bill, line); });
+  return marked ? '<div data-testid="till-slip-reduced" style="font-size:.9em">※ reduced rate (軽減税率対象)</div>' : '';
+}
+/** ⭐ TILL-B2: the cash rounding this bill took (bill.cash_round, AU · MY), between the total and the cash that paid it */
+function slipCashRoundHTML(bill, row){
+  var rounded = Number(bill.cash_round) || 0;
+  return rounded ? '<div data-testid="till-slip-cashround">' + row('Cash rounding', (rounded > 0 ? '+' : '') + money(rounded)) + '</div>' : '';
+}
 function slipHTML(bill, m){
   var shop = (S && S.shop) || {};
   var unrated = unratedOnBill(bill);
-  /* ⚠️ NEVER "TAX INVOICE" OVER A LINE THAT CHARGED NO TAX BECAUSE IT HAD NO RATE (BF1) — the paper says what it is */
-  /* ⚠️ …nor over a bill saved while the shop's own details disagreed (M41, bill.not_invoice) — the same title, no second path */
-  var title = (unrated.length || bill.not_invoice) ? 'BILL — NOT A TAX INVOICE' : bill.kind === 'tax' ? 'TAX INVOICE' : (bill.kind === 'supply' ? 'BILL OF SUPPLY' : 'CASH MEMO');
+  var title = slipTitleOf(bill, unrated);
   var t = function(a,b,big){ return '<div style="display:flex;justify-content:space-between' + (big?';font-weight:700;font-size:1.15em':'') + '"><span>' + a + '</span><span>' + b + '</span></div>'; };
   var dash = '<div style="border-top:1px dashed #000;margin:4px 0"></div>', solid = '<div style="border-top:1px solid currentColor;margin:4px 0"></div>';
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
     + slipHeadHTML(bill.kind)
-    + solid + '<div style="text-align:center;font-weight:700">' + title + '</div>' + dash
+    + solid + title + dash
     + t('No ' + esc(bill.no), esc(atShop(bill.at)))
     /* ⚠️ a REPRINT of a renumbered sale must carry both numbers — the customer's paper says the first one */
     + (bill.printed_as ? t('Printed as ' + esc(bill.printed_as), 'recorded as ' + esc(bill.no)) : '')
@@ -23003,7 +23168,7 @@ function slipHTML(bill, m){
          * line rate is not clutter, it is the thing that makes the document usable. On a cash memo it is absent,
          * because there is no tax to name.
          */
-        return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + '</span><span>' + money(l.net) + '</span></div>'
+        return '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + reducedMark(bill, l) + '</span><span>' + money(l.net) + '</span></div>'
              /* ⭐ THE CHOSEN MODIFIERS, under the item they belong to (BF3) */
              + (l.mods && l.mods.length ? '<div data-testid="till-slip-mods" style="font-size:.9em;padding-inline-start:8px">' + esc(modWordsPlain(l.mods)) + '</div>' : '')
              + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price)
@@ -23054,14 +23219,14 @@ function slipHTML(bill, m){
      * dropped the tax block would be worse than one that shows it the old way.
      */
     /* ⚠️ a reprint of a bill whose tax was never kept says so — never "GST 0.00" on a TAX INVOICE (slipOfRow) */
-    + (bill.kind === 'tax' ? (bill.tax_lost ? t('Tax detail not kept for this bill', '') : taxSummaryHTML(bill, t, dash)) : '')
+    + (slipTaxed(bill) ? (bill.tax_lost ? t('Tax detail not kept for this bill', '') : taxSummaryHTML(bill, t, dash)) : '')
     /* ⭐ Rule 46(n): a tax invoice names its place of supply */
     + (unrated.length ? '<div data-testid="till-slip-norate" style="font-size:.9em">No tax rate set, so no ' + schemeWord() + ' charged on: ' + esc(unrated.join(', ')) + '</div>' : '')
     /* ⚠️ M66 (walk 2026-10-10): ONLY ON A REAL TAX INVOICE. A bill saved as NOT a tax invoice (no rate, or the shop's GSTIN and
        address in two states) printed "Place of supply 29 Karnataka" on a Chennai takeaway — the GSTIN's state, under a title that
        says it is not an invoice. The place itself is still CBTax.placeOfSupply's (the shop's state; a delivery moves it). */
     + (bill.kind === 'tax' && bill.pos_state && !(unrated.length || bill.not_invoice) ? t('Place of supply', esc(posWords(bill.pos_state))) : '')
-    + solid + t('TOTAL', money(bill.total), true) + solid
+    + solid + t('TOTAL', money(bill.total), true) + solid + slipCashRoundHTML(bill, t)
     + (bill.payments||[]).map(function(p){ return t(esc(p.how), money(p.amount)); }).join('')
     + (bill.change > 0 ? t('Change', money(bill.change)) : '') + dash
     /**
@@ -23077,6 +23242,33 @@ function slipHTML(bill, m){
     + '<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>'
     + '<div style="height:10mm"></div></div>';
 }
+/** a tax head's word on the paper and the screen: under a pack with ONE head (Sales tax · Consumption tax · GST · VAT) the pack's own word,
+    never its code ("STAX" and "JCT" were printed, 17 Oct audit); India's four heads keep their names (CGST · SGST · IGST · cess) */
+function taxHeadWord(head){
+  var pack = shopPack();
+  return pack && pack.taxHeads && pack.taxHeads.length === 1 ? schemeWord() : head.name;
+}
+/**
+ * the foot of a one-head bill (and of any bill saved without rate-wise detail): Taxable, each head, the total. ⭐ TILL-B2: when the pack's
+ * invoice rule asks for the total of each rate (Japan's simplified qualified invoice, per_rate), one row per rate from the bill's by_rate.
+ */
+function domesticFootHTML(bill, row){
+  var rule = invoiceRule(bill.total, bill.customer && bill.customer.gstin);
+  if (rule && rule.per_rate && bill.by_rate && Object.keys(bill.by_rate).length) return perRateFootHTML(bill, row) + reducedNoteHTML(bill);
+  return row('Taxable', money(bill.taxable))
+    + ((bill.heads && bill.heads.length)
+        ? bill.heads.map(function(head){ return row(taxHeadWord(head) + ' ' + head.rate + '%', money(head.amount)); }).join('')
+          + row(schemeWord() + ' total', money(bill.tax))
+        : row(schemeWord(), money(bill.tax)));
+}
+/** one row per rate — the base and the tax as the bill STORED them (base, or taxable; a credit note's are negative), then the tax total */
+function perRateFootHTML(bill, row){
+  var issued = bill.by_rate;
+  return Object.keys(issued).sort(function(left, right){ return Number(left) - Number(right); }).map(function(rate){
+    var figures = issued[rate] || {}, base = figures.base != null ? figures.base : figures.taxable;
+    return '<div data-testid="till-slip-rate-' + esc(rate) + '">' + row(esc(rate) + '% on ' + money(Number(base) || 0), money(Number(figures.tax) || 0)) + '</div>';
+  }).join('') + row(schemeWord() + ' total', money(bill.tax));
+}
 /**
  * ⭐ THE FOOT OF A TAX INVOICE: one row per rate, with the taxable value and the tax split the way this bill was
  * issued. 72 mm of thermal paper, so it is a monospace grid rather than a table — four short columns fit, five
@@ -23088,13 +23280,7 @@ function taxSummaryHTML(bill, t, dash){
   /* ⚠️ an older bill, or one with no rate-wise detail — say the same thing in the simpler shape it was saved in.
      ⭐ CX0: and EVERY bill under a one-head scheme (supply 'domestic' — the border decided: GST in Australia, VAT in the UAE): its heads are
      the engine's (GST 10 % · VAT 5 %), never a CGST/SGST grid that printed 0.00 twice and the tax nowhere. */
-  if (!rates.length || bill.supply === 'domestic') {
-    return t('Taxable', money(bill.taxable))
-      + ((bill.heads && bill.heads.length)
-          ? bill.heads.map(function(h){ return t(h.name + ' ' + h.rate + '%', money(h.amount)); }).join('')
-            + t(schemeWord() + ' total', money(bill.tax))
-          : t(schemeWord(), money(bill.tax)));
-  }
+  if (!rates.length || bill.supply === 'domestic') return domesticFootHTML(bill, t);
   var inter = bill.supply === 'inter';
   var cell = function(v, w, end){ return '<span style="display:inline-block;width:' + w
     + ';text-align:' + (end ? 'right' : 'left') + '">' + v + '</span>'; };

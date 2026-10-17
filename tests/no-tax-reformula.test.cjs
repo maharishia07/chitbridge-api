@@ -96,8 +96,13 @@ t('billMoney() calls CBTax.determine() — the whole invoice — and holds no sp
   if (/splitLineTax|lineHeads|\*\s*100\s*\/\s*\(/.test(body)) throw new Error('billMoney() is working the tax out itself again');
 });
 
-t('dayCloseSheet() and rcvLineTax() each call CBTax.splitLineTax(), not their own arithmetic', () => {
-  ['function dayCloseSheet(', 'function rcvLineTax('].forEach((sig) => {
+/* counter batch 1 (2026-10-17): the day close reads each bill's issued by_rate (dayAddIssued) and splits only an old bill's line, in dayAddSplit */
+t('dayCloseSheet() goes through dayAddIssued / dayAddSplit', () => {
+  const body = bodyOf(src.indexOf('function dayCloseSheet('));
+  if (body.indexOf('dayAddIssued(') < 0 || body.indexOf('dayAddSplit(') < 0) throw new Error('dayCloseSheet() no longer reads the issued figures through dayAddIssued / dayAddSplit');
+});
+t('dayAddSplit() and rcvLineTax() each call CBTax.splitLineTax(), not their own arithmetic', () => {
+  ['function dayAddSplit(', 'function rcvLineTax('].forEach((sig) => {
     const at = src.indexOf(sig);
     if (at < 0) throw new Error(sig + ' not found — this guard is stale, or the function was renamed');
     const body = bodyOf(at);
