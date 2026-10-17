@@ -64,12 +64,12 @@ const REMOVE_WHY = 'Only the owner can remove a party.';
  */
 const crmMay = (req) => ({ write: require('../lib/access').mayWrite(req), remove: require('../lib/owner').may(req, REMOVE_WHY) });
 function noKey(req, res, next) {
-  if (req.api_key) return res.status(403).json({ code: 'SIGN_IN', error: 'Sign in to use CB CRM.', message: 'Sign in to use CB CRM.' });
+  if (req.api_key) return res.status(403).json({ code: 'SIGN_IN', error: 'Sign in to use CRM.', message: 'Sign in to use CRM.' });
   next();
 }
 /** a condition becomes a verdict with a code a screen maps to its own written line — the message is never shown as-is (design rule 1) */
 function fail(res, e) {
-  if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) return res.status(503).json({ code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CB CRM needs migration b276 — not run yet.' });
+  if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) return res.status(503).json({ code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CRM needs migration b276 — not run yet.' });
   if (e && e.code === 'PRIVACY_NOT_MIGRATED') return res.status(503).json({ code: e.code, error: 'Not migrated yet', message: e.message });
   if (e && e.code === 'LEADS_NOT_MIGRATED') return res.status(503).json({ code: 'LEADS_NOT_MIGRATED', error: e.message, message: e.message });
   if (e && e.status && e.status < 500) return res.status(e.status).json(Object.assign({ code: e.code || 'REFUSED', error: e.message, message: e.message }, e.why ? { why: e.why } : {}));
