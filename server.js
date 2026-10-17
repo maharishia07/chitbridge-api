@@ -400,6 +400,8 @@ app.use('/api/privacy', require('./routes/privacy'));   // CO1 — public privac
 app.use('/api/supplies', require('./routes/supplies'));
 /* ⭐ taking a supplier's delivery into your OWN catalogue — offers, never auto-accepts (lib/adopt.js) */
 app.use('/api/adopt', require('./routes/adopt'));
+/* the accounting-platform sandbox trial (17 Oct) — mounted ONLY on a local stack that is not sealed (routes/sandbox.js mount) */
+require('./routes/sandbox').mount(app);
 
 // ── Static HTML pages (legacy — React replaces these) ────────
 app.use(express.static(path.join(__dirname, 'public')));
