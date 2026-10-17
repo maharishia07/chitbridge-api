@@ -116,6 +116,13 @@ it('the chain carries the ledger (b304) and --record-through takes the baseline 
   assert.ok(!t.some((f) => /^b(30[5-9]|3[1-9]\d)_/.test(f)), 'a file after b304 was taken');
   assert.throws(() => mig.through('latest'), /migration number/);
 });
+it('the chain keeps every schema file a rebuild needs: letter suffixes and a name holding "_list" (BCP-MIG, 17 Oct)', () => {
+  const chain = mig.chainFiles();
+  for (const f of ['b105a_floor_trigger_definer.sql', 'b171d_customer_who_and_when.sql', 'b263b_clear_the_duplicate_bills.sql', 'b270_supplier_list_rls.sql'])
+    assert.ok(chain.includes(f), f + ' is not in the chain');
+  assert.ok(chain.indexOf('b105_retention_prep.sql') < chain.indexOf('b105a_floor_trigger_definer.sql'), 'b105a runs before b105');
+  assert.ok(!chain.some((f) => /dryrun|verify|purge/i.test(f)), 'a dry run, verify or purge file is in the chain');
+});
 
 /* ── 5 · no platform host in shipped code ── */
 it('⭐ no *.railway.app / *.vercel.app literal in the runtime, the kit or the workflows (beyond the named exceptions)', () => {

@@ -35,6 +35,8 @@ BEGIN
    WHERE i.identity_type = 'entity'
      AND i.catalogue_visibility = 'public'
      AND es.visibility IS DISTINCT FROM 'public';
+  /* BCP-MIG (17 Oct): zero matches (a fresh database, or prod after this ran) has nothing to write - a notice, not an abort */
+  IF n = 0 THEN RAISE NOTICE 'b194c: 0 schemas match - nothing to align'; RETURN; END IF;
   IF n < 60 OR n > 160 THEN
     RAISE EXCEPTION 'b194c aborted — % schemas match, the approved shape was 106. Re-run b193 and look again.', n;
   END IF;

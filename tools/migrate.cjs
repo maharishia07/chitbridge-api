@@ -13,6 +13,9 @@
  * <url> defaults to DATABASE_URL. Needs psql on PATH for apply (the migrate image has it). TLS: db/connect-config.js (the URL's sslmode).
  * ⚠️ NOTHING RUNS THIS ON PRODUCTION BY ITSELF — the api never calls it; the compose stack's one-shot `migrate` job does, on its own
  * database. On production the owner still runs the SQL; --record makes that visible.
+ * CARD       28-platform-and-operations/migrations-and-schema
+ * CALLED BY  Dockerfile target `migrate` (deploy/compose.yml one-shot job) · tools/fresh-db-check.cjs (CI `fresh-db`) · tools/schema-replay.cjs
+ *            and tools/sim-load.cjs (chainFiles / CHAIN_SKIP) · tests/hosting-neutral.test.cjs
  */
 'use strict';
 const path = require('path'), fs = require('fs'), crypto = require('crypto');
@@ -22,12 +25,15 @@ const M = path.join(API, 'migrations');
 const LEDGER_FILE = 'b304_schema_migrations.sql';
 const BASELINE = ['000_baseline.sql', '000_baseline_part2.sql'];
 
-/** a migration file the chain skips: a dry run, a verify, a one-off data script, a purge */
-const CHAIN_SKIP = /dryrun|verify|_LIST|COMMIT|purge|^READ-|^sim01|^net0/i;
+/** a migration file the chain skips: a dry run, a verify, a one-off data script, a purge.
+ *  BCP-MIG (17 Oct): `_LIST` is gone — under /i it matched `supplier_list`, so b270 (supplier_list RLS) never ran on a rebuilt database;
+ *  the purge_*_LIST file it was for is skipped by `purge`. */
+const CHAIN_SKIP = /dryrun|verify|COMMIT|purge|^READ-|^sim01|^net0/i;
 const numOf = (f) => Number(/b(\d+)/.exec(f)[1]);
-/** the chain after the baseline, in number order (b105 before b105a, migration_b48 among the b4x) */
+/** the chain after the baseline, in number order (b105 before b105a, migration_b48 among the b4x).
+ *  BCP-MIG (17 Oct): a letter suffix (b105a b171d b194b b263b) is IN the chain — `b\d+_` alone dropped those four on a rebuild. */
 function chainFiles() {
-  return fs.readdirSync(M).filter((f) => /^(migration_b(4[2-9]|5[0-7])|b\d+)_.*\.sql$/.test(f) && !CHAIN_SKIP.test(f))
+  return fs.readdirSync(M).filter((f) => /^(migration_b(4[2-9]|5[0-7])|b\d+[a-z]?)_.*\.sql$/.test(f) && !CHAIN_SKIP.test(f))
     .sort((a, b) => numOf(a) - numOf(b) || a.localeCompare(b));
 }
 const shaOf = (f) => crypto.createHash('sha256').update(fs.readFileSync(path.join(M, f))).digest('hex');
