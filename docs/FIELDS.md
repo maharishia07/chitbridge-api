@@ -1087,3 +1087,11 @@ Columns, not response keys: SCHEMA-ASSESSMENT-2026-10-16 §7 found 134 columns o
 | `dispute_id` | uuid | no schema comment, the owning module names it · written by no app file · read by `lib/dispute-may.js`, `lib/raida.js`, `routes/chits.js`, `routes/crm.js` |
 | `read_at` | timestamp with time zone | no schema comment, the owning module names it · written by no app file · read by `lib/match.js`, `lib/measure.js`, `lib/mint.js`, `lib/select.js` +3 |
 | `subject_id` | uuid | no schema comment, the owning module names it · written by no app file · read by `lib/impact.js`, `lib/raida.js`, `routes/catalogue.js`, `routes/chits.js` |
+
+## GET /api/till/summary?compare=1 · GET /api/facts/till `figures.trend` (RPT2 · Reports › Trend, 2026-10-17)
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `period` · `n` · `currency` · `fy_start_month` (GET /api/till/summary?compare=1, new) | `'week'\|'month'\|'quarter'\|'year'` · number · ISO code · 1-12 | Derived by `lib/till-summary.trend`: the shop's year = books_setting, else entity_governance, else the pack (`country-setup.fyStartOf`); money = `country-setup.shopMoney`. None → 422 `NO_COUNTRY` / `NO_MONEY`. Read by web cap-mis-trend.js. |
+| `slots[]` (same route, new) | `[{ key, gross_minor\|null, total_minor\|null, bills\|null, coverage:{ expected, seen, short, partial }, last_year:{ key\|null, gross_minor\|null, short }, change_pct\|null }]`, newest last | Derived: `rollup.series` (engines v1.66.0) over the summary chits — unchanged by the route. Minor units; null = no record (never 0); change_pct null unless both slots are whole and closed and last year sold. Read by web cap-mis-trend.js (chart + table). |
+| `figures.trend` (GET /api/facts/till, new) | `{ spark:[8 × gross_minor\|null], vs_last_year_pct:number\|null }` — omitted when there is no year, or < 2 weeks with a figure | Derived by `lib/till-summary.teaser`: `rollup.series('week', 8)`; vs_last_year_pct = the newest closed week's change_pct. Read by web shell.js (the Till card's sparkline). |
