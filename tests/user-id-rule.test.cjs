@@ -5,7 +5,7 @@
  * the hat gate had (20/20 green while the gate read the wrong property). This drives express.
  */
 const path = require('path');
-const API = 'C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 const DB = { envelope: null, user_id: null, taken: new Set(['acmetraders']) };
 
 require.cache[require.resolve(API + '/db')] = { exports: { query: async (sql, p) => {

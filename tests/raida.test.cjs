@@ -12,7 +12,7 @@
  * that answers. A rename is the one migration old code cannot limp through — proven the hard way on 2026-08-30,
  * when b185 was applied before this code shipped and every read went to migrated:false.
  */
-const API = 'C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 
 let ROWS = [], SQL = [], TABLES = new Set(), COLS = new Set();
 const fakeDb = {

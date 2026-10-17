@@ -17,7 +17,7 @@
  * reflexively until it meant nothing. A CEILING fails only when someone adds a round trip to the hottest
  * endpoint — which is the event worth interrupting a build for.
  */
-const API = 'C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 
 let queries = [];
 let COLUMNS = new Set(['timezone', 'supplies', 'storefront_access', 'locale_prefs', 'ui_prefs', 'capabilities']);

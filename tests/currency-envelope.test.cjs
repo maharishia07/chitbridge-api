@@ -14,7 +14,7 @@
  * this route is proof, since it was written later and simply never grew the guard. This test exercises the
  * answerer directly AND through the profile route, because a shared function nobody calls is not a fix.
  */
-const API = 'C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 
 let ENVELOPE = null;   // what the active constitution permits; null = no restriction
 /* ⚠⚠ A FLAG, NOT A FUNCTION SWAP. lib/govresolve does `const { query } = require('../db')` — it captures the

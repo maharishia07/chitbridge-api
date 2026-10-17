@@ -31,6 +31,9 @@ DECLARE
   n int;
 BEGIN
   SELECT count(*) INTO n FROM b194_target;
+  /* BCP-MIG (17 Oct): zero matches (a fresh database) has nothing to write - a notice, not an abort. Any other count
+     outside the band still aborts exactly as before. */
+  IF n = 0 THEN RAISE NOTICE 'b194: 0 schemas match - nothing to align'; RETURN; END IF;
   -- Approved shape: ~109. A wide band, because ordinary use moves this a little; a big move means something else.
   IF n < 60 OR n > 160 THEN
     RAISE EXCEPTION 'b194 aborted — % schemas match, approved shape was about 109. Re-run b193 and look again.', n;

@@ -19,7 +19,7 @@
  * refusal (Athi's call): the person is asked "you said AC filter, the nearest we sell is Oil filter"
  * instead of being handed the wrong part silently. capture.js already turns that into needs_human.
  */
-const im = require('C:/dev/chitbridge-api/lib/itemmatch');
+const im = require('../lib/itemmatch');
 
 let pass = 0, fail = 0;
 const t = (name, cond, extra) => {

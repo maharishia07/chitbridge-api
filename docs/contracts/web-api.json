@@ -2896,6 +2896,60 @@
     "agreement.runs"
    ]
   },
+  "GET /api/till/summary": {
+   "status": 200,
+   "example": {
+    "period": "month",
+    "rows": [
+     {
+      "key": "2026-09",
+      "totals": {
+       "count": 4,
+       "returns": 0,
+       "gross": 1100,
+       "refunds": 0,
+       "expenseCount": 0,
+       "expenses": 0,
+       "total": 1100,
+       "by": {}
+      },
+      "counters": [
+       {
+        "till": {
+         "id": "C1",
+         "name": null
+        },
+        "totals": {
+         "count": 4,
+         "returns": 0,
+         "gross": 1100,
+         "refunds": 0,
+         "expenseCount": 0,
+         "expenses": 0,
+         "total": 1090,
+         "by": {}
+        },
+        "at": null,
+        "source": [
+         "2026-09-01"
+        ]
+       }
+      ],
+      "source": [
+       "2026-09-01"
+      ]
+     }
+    ],
+    "counters": [
+     "C1"
+    ]
+   },
+   "optional": [],
+   "free": [
+    "rows[].counters[].totals.by",
+    "rows[].totals.by"
+   ]
+  },
   "GET /api/till/summary #compare": {
    "status": 200,
    "example": {

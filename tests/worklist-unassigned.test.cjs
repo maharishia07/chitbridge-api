@@ -14,7 +14,7 @@
  * ⭐ No client change was needed — the grouping already keys on assignee_actor_id || '__unassigned__'
  * and the worklist already sorts that bucket last and greys it. This pins the SQL that feeds it.
  */
-const API = 'C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 
 let sql = '';
 require.cache[require.resolve(API + '/db')] = { exports: {
