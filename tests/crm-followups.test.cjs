@@ -107,5 +107,16 @@ const asCo = (id) => t.as('E1', { identity: { identity_id: id, parent_entity_id:
     assert.strictEqual(next.late, true);
   });
   await ita('an API key cannot touch follow-ups (403)', async () => { t.as('E1', { key: true }); assert.strictEqual((await t.get('/followups')).status, 403); t.as('E1'); });
+  await ita('an EMPTY list reads clean: the page SQL puts its window counts before FROM (never a trailing ", count(*) OVER ()" after the joins — Postgres 42601), and no row means no party read', async () => {
+    F.forget(); const seen = [];
+    const fake = { query: async (sql) => { seen.push(String(sql)); return { rows: /to_regclass/.test(sql) ? [{ i: true, f: true }] : [] }; } };
+    const out = await F.page(fake, 'E1', { scope: 'all', done: 0 });
+    assert.deepStrictEqual(out.followups, []); assert.strictEqual(out.late, 0);
+    const page = seen.find((q) => /party_followup f/.test(q) && /OVER ()/.test(q)); assert.ok(page, 'the page statement ran');
+    assert.ok(page.indexOf('count(*) OVER') < page.indexOf('FROM party_followup'), 'window counts sit in the select list, before FROM');
+    assert.strictEqual(seen.some((q) => q.includes("= ANY")), false, 'no party lookups for an empty page');
+    assert.deepStrictEqual(await F.list(fake, 'E1', { party_id: P(2) }), []);
+    F.forget();
+  });
   t.close(); console.log('  ' + pass + ' checks');
 })();
