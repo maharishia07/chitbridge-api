@@ -880,7 +880,8 @@ async function sendPrefs(st, req, res) {
   // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
   const prefRow = await query(`SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1`, [sender_id]);
   /* the sender's money (WX-R2R, above): the row's own code; a row without one asks lib/regional.currencyFor — the ONE resolver (its regional layer, its fallback) */
-  currency_code = String(currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || await require('../lib/regional').currencyFor(sender_id)).toUpperCase();
+  const statedMoney = currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || await require('../lib/regional').currencyFor(sender_id);
+  currency_code = statedMoney ? String(statedMoney).toUpperCase() : null;   /* N1: none stated → null (sendMoneyStated refuses a document first), never 'INR' by name */
   /**
    * ⭐ A SELF-CHIT MAKES ONE COPY, AND IT IS THE TASK — Athi, 2026-08-14: *"self should create one copy only,
    * no two copies, and you would be very specific about direction."*
@@ -1072,7 +1073,7 @@ async function sendOffers(st, req, res) {
     const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
     /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
     if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike)) {
-      const cur = await require('../lib/regional').currencyFor(sellerId).catch(() => 'INR');
+      const cur = await require('../lib/regional').currencyFor(sellerId).catch(cbLog.orElse('chits sendOffers: the seller money was not read - no live offers applied', null));
       const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity, viewer: orderLike ? sender_id : null });   /* an order's buyer may hold a customer-only offer with this seller */
       if (r && r.items) { line_items = r.items; offersApplied = Array.isArray(r.applied) ? r.applied : []; }
     }

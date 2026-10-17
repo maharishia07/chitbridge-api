@@ -202,7 +202,7 @@ router.get('/suppliers', auth, async (req, res) => {
               /* ⭐ lib/istest mayTradeSql — the ONE rule (b249 + on the rail); this was a second, handle-only copy of it */
               ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail,
               i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
-              i.gstn, i.country, i.policy_flags,
+              i.gstn, i.country, i.policy_flags, i.currency_code AS supplier_money,
               EXISTS (SELECT 1 FROM entity_schemas es
                       WHERE es.entity_id = i.identity_id
                         AND es.status = 'active' AND es.is_default = true) AS has_catalogue
@@ -225,10 +225,11 @@ router.get('/suppliers', auth, async (req, res) => {
         if (o.on_rail === false) { o.for_you = []; return; }
         try {
           const [groups, all] = await Promise.all([cg.groupsOf({ seller_id: o.supplier_entity_id, viewer_id: owner, withEntity }), cv.liveOffers({ entity_id: o.supplier_entity_id, withEntity, all: true })]);
-          o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => '₹' + Number(n).toFixed(2), customer_groups: groups }) : null; } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); } return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive }; });
+          o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => offerMoney(n, o.supplier_money), customer_groups: groups }) : null; } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); } return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive }; });
         } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — answered with none', e, 'debug'); o.for_you = []; }
       }));
     } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); }
+    for (const row of rows) delete row.supplier_money;   /* read above for the supplier's own offer wording; not part of the answer */
     await partyFields.decorate(withEntity, owner, rows, 'supplier_entity_id', 'supplier');
     res.json(Object.assign({ count: rows.length }, PL.pageOut('suppliers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
@@ -706,6 +707,14 @@ router.patch('/customers/:id',
 const select  = require('../lib/select');
 const measure = require('../lib/measure');
 const policy  = require('../lib/policy');
+
+/** N1: an offer's amount in the SUPPLIER's own money (its stated currency; none stated → the bare amount); only a rupee supplier reads ₹ */
+function offerMoney(amount, currency) {
+  const stated = require('../lib/country-setup').currencyStated(currency), digits = require('../lib/money').decimals(stated);
+  const figure = Number(amount).toFixed(digits);
+  if (stated === 'INR') return '₹' + figure;   /* IN-only branch: the rupee shop reads exactly what it read before */
+  return stated ? stated + ' ' + figure : figure;
+}
 
 router.get('/scorecard', auth, async (req, res) => {
   try {

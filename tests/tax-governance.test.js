@@ -61,12 +61,12 @@ test('the governed rate reaches lib/tax.js unchanged — intra halves it, inter 
   assert.equal(le.IgstAmt, 18); assert.equal(le.CgstAmt, 0);
 });
 
-test('jurisdictionFor: identities.country wins; INR alone infers IN; anything else is null', async () => {
+test('jurisdictionFor: identities.country wins; no country is null whatever the currency (N1: never India by guess)', async () => {
   const q = (rows) => ({ query: async () => ({ rows }) });
   assert.equal(await G.jurisdictionFor('e1', q([{ country: 'ae', currency_code: 'INR' }])), 'AE');
-  assert.equal(await G.jurisdictionFor('e1', q([{ country: null, currency_code: 'INR' }])), 'IN');
+  assert.equal(await G.jurisdictionFor('e1', q([{ country: null, currency_code: 'INR' }])), null);
   assert.equal(await G.jurisdictionFor('e1', q([{ country: null, currency_code: 'USD' }])), null);
-  assert.equal(await G.jurisdictionFor('e1', q([{ country: null, currency_code: null }])), 'IN', 'unset = INR = India, as regional.currencyFor decides');
+  assert.equal(await G.jurisdictionFor('e1', q([{ country: null, currency_code: null }])), null, 'unset = unknown, never India');
   assert.equal(await G.jurisdictionFor('e1', q([])), null);
 });
 

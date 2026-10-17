@@ -511,7 +511,9 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
   // CURRENCY comes from the GOVERNANCE LAYER, resolved once by the caller and passed in — never invented here and
   // never read from the request. Both copies of a co-held chit MUST carry the same code: two parties disagreeing on
   // the denomination of the same order is exactly the dispute the rail exists to prevent.
-  const currency_code = String(currency || regional.FALLBACK_CURRENCY).toUpperCase();
+  /* N1: a currency nobody stated is REFUSED in words (NO_MONEY), never defaulted by name - the callers resolve it once with regional.currencyFor */
+  if (!currency) { const refusal = new Error(regional.NO_CURRENCY_SAYS()); refusal.status = 422; refusal.code = 'NO_MONEY'; refusal.refused = true; throw refusal; }
+  const currency_code = String(currency).toUpperCase();
   // TOTAL_VALUE was hard-coded 0 here, so every network order and fulfilment fragment claimed to be worth nothing
   // while carrying real line items — and lib/kyb.js sums this column as trade value. A currency with no value is
   // meaningless; state both or state neither. null means "not applicable", which 0 never did.
