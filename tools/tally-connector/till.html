@@ -577,7 +577,15 @@
   .mrow .mi{background:rgba(var(--mh),.14);color:rgb(var(--mh));transition:background .14s ease}
   .msec.open .mrow{background:rgba(var(--mh),.09)}
   .msec.open .mrow .mi{background:rgba(var(--mh),.22)}
-  .msec.open .mrow .mt b{color:rgb(var(--mh))}
+  /* ⭐ A SECTION'S HUE IS A FILL AND AN ICON TINT, NEVER THE TEXT COLOUR ON ITS OWN. The raw hue (lamp amber, paper
+     blue …) on its own 9-10% tint measured 2.6-4.2:1 (visual tour 17 Oct: "Start the day", "open", "Preview").
+     --mhi is the hue pulled 42% toward --ink, so it keeps the section's colour and clears 4.5:1 in every theme
+     (--ink turns light in dark, so the mix lightens there). Declared only where --mh is, and only if the browser
+     can mix; every use falls back to the raw hue. */
+  @supports (color:color-mix(in srgb,red,blue)){
+    .msec,.side .sicons button[data-mh]{--mhi:color-mix(in srgb,rgb(var(--mh)) 58%,var(--ink))}
+  }
+  .msec.open .mrow .mt b{color:var(--mhi,rgb(var(--mh)))}
   /* ⚠️ A CHEVRON THAT TURNS IS A STATE YOU CAN SEE WITHOUT READING. One glyph, rotated — not two glyphs,
      which is how › and ⌄ ended up different weights and sizes in the same column. */
   .mch{display:inline-flex;transition:transform .16s ease;font-size:1.15em;line-height:1}
@@ -588,7 +596,7 @@
    * ⚠️ .msec is position:relative (set for the open rail, [TILL-85]) — this depends on that.
    */
   .msec .mlink{position:absolute;top:14px;inset-inline-end:40px;z-index:2;
-        border:1px solid rgba(var(--mh),.45);background:rgba(var(--mh),.10);color:rgb(var(--mh));
+        border:1px solid rgba(var(--mh),.45);background:rgba(var(--mh),.10);color:var(--mhi,rgb(var(--mh)));
         border-radius:999px;padding:6px 14px;min-height:34px;font:inherit;font-size:.84em;font-weight:700;
         cursor:pointer;text-decoration:underline;text-underline-offset:2px}
   .msec .mlink:hover{background:rgba(var(--mh),.2)}
@@ -738,7 +746,7 @@
   /* ⭐ the main door of its section wears the section's hue, so it reads as the way ON rather than as one more
      grey outline in a panel of grey outlines ([TILL-85]) */
   .msec .pill.wide.door{min-height:46px;padding:9px 14px;font-size:13px;font-weight:700;
-        border-color:rgba(var(--mh),.45);background:rgba(var(--mh),.10);color:rgb(var(--mh))}
+        border-color:rgba(var(--mh),.45);background:rgba(var(--mh),.10);color:var(--mhi,rgb(var(--mh)))}
   .msec .pill.wide.door:hover{background:rgba(var(--mh),.18)}
   .msec .pill.wide.door span{display:block;font-weight:400;font-size:.88em;opacity:.85}
   /* the strip's own count — the one number there that a shopkeeper put on it themselves */
@@ -860,6 +868,9 @@
                    background:var(--card);border-radius:12px;padding:6px 8px 6px 12px}
   .hubhead .hubwho.none{border-color:var(--warn);background:var(--warn-tint);border-bottom:1px solid var(--warn)}
   .hubhead .hubwho.none .mt b{color:var(--warn)}
+  /* ⚠️ `.menu button{color:var(--ink)}` (0,1,1) outranks `.pri` (0,1,0): the hub's "Hand over" drew dark ink on the green
+     fill, 2.56:1 (visual tour 17 Oct). A primary in the menu wears its own ink. */
+  .menu button.pri{color:var(--on-accent)}
   .pri.sm{height:34px;padding:0 12px;font-size:.9em}
   /* ── Careful as a strip across the foot, never a fold ────────────────────────────────── */
   /* ⚠️ the CAREFUL strip's styles went with it ([TILL-173]) — nothing in the hub is red now unless a
@@ -890,7 +901,7 @@
    * you, §7.3), just the current state in the same tabular figures the rest of the till uses for a number.
    */
   .mfig{flex:0 0 auto;color:var(--dim);font-size:.85em;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .msec.open .mfig{color:rgb(var(--mh))}
+  .msec.open .mfig{color:var(--mhi,rgb(var(--mh)))}
   /* ── ⭐⭐ CHECK, RANKED ([TILL-160], counter-hub §3) ──────────────────────────────────────────── */
   /* ⚠⚠ THE BADGE COUNTS THINGS, NOT COLOURS. It is amber unless something has actually stopped a sale;
      red for three set-up items is how red stops meaning anything. */
@@ -1119,7 +1130,7 @@
    * the amber one is the morning has learned it in both halves at once — which is the whole argument for a
    * colour: it is only worth a thing if it is the SAME thing everywhere.
    */
-  .side .sicons button[data-mh]{color:rgb(var(--mh))}
+  .side .sicons button[data-mh]{color:var(--mhi,rgb(var(--mh)))}
   .side .sicons button[data-mh]:hover{background:rgba(var(--mh),.14)}
   /* ⚠️ the acknowledgement still wins — a press must read as a press whatever colour the icon is */
   .side .sicons button.hit[data-mh]{background:var(--ok);color:var(--on-accent)}
@@ -1405,6 +1416,10 @@
   .ibqty .ibdrop{margin-inline-start:auto;border-color:var(--line);color:var(--dim)}
   .ibqty .ibdrop:hover{border-color:var(--warn);color:var(--warn)}
   /* the bar stays put while the keys move under it — it says which list you are looking at */
+  /* ⚠️ THE STICKY BAR MUST NOT HIDE A LIVE CONTROL (visual tour 17 Oct: "+" on a row could be scrolled only UNDER
+     .qbar). A scroll that brings a row or its "+" into view stops below the bar, which is ~44-64px tall. */
+  .quick{scroll-padding-top:64px}
+  .quick .addbtn{scroll-margin-top:64px}
   .quick .qbar{position:sticky;top:-12px;z-index:2;background:var(--panel);
                margin:-12px -12px 0;padding:12px 12px 6px}
   /* ⚠️ a phone shows its keys inside the Items step, where 42vh of a short screen is too little */
@@ -8929,7 +8944,7 @@ var TILL_MENU = [
    */
   /* ⚠️ THE SECTION KEY STAYS 'pricing' — it is a deep-link target and a data-testid; the NAME is what Athi
      renamed. [[TERMS.md]] */
-  { id: 'pricing', icon: '🧪', title: 'Lab',           sum: 'adopt products, work out a discount, or build a combo — before you run it',  ops: ['productlab', 'offerlab', 'combolab'] },
+  { id: 'pricing', icon: '🧪', title: 'Lab',           sum: 'products, discounts, combos — try before you run',  ops: ['productlab', 'offerlab', 'combolab'] },
   /**
    * ⭐⭐⭐ [found live-testing, 2026-09-26] Athi: "i couldn't find the day in the menu icon?" — because
    * expenses (and, briefly, subscriptions — see menuSubscriptionSummary()'s own HELD note) were filed under
