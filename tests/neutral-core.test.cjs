@@ -62,6 +62,12 @@ const fs = require('fs');
   const sameAsBefore = ['2026-10-17T00:00:00Z', '2026-10-17T10:00:00Z', '2026-10-17T18:29:59Z', '2026-10-17T18:30:00Z', '2026-12-31T23:59:00Z', '2027-02-28T12:00:00Z'].every((moment) => offers.nextOpening(moment, 'Asia/Kolkata') === oldIst(moment) && offers.nextOpening(moment, 'IN') === oldIst(moment));
   ok('N3: nextOpening for an India brand is exactly the old IST midnight, at six instants', sameAsBefore);
   ok('N3: nextOpening with no zone stated is UTC midnight, and a Sydney brand opens at Sydney midnight', offers.nextOpening('2026-10-17T10:00:00Z') === '2026-10-18T00:00:00.000Z' && offers.nextOpening('2026-10-17T10:00:00Z', 'Australia/Sydney') === '2026-10-17T13:00:00.000Z');
+  /* ── N4: the year starts where the setting or the pack says ── */
+  ok('N4: fyStartOf - the pack\'s month (India 4, Australia 7), null when no country or no pack', CS.fyStartOf('IN') === 4 && CS.fyStartOf('au') === 7 && CS.fyStartOf(null) === null && CS.fyStartOf('ZZ') === null);
+  const tillSrc = fs.readFileSync(path.join(API, 'routes/till.js'), 'utf8');
+  ok('N4: the till snapshot carries shop.fy_start_month (the pack\'s), listed for the screen', tillSrc.includes("'money_why', 'fy_start_month']") && tillSrc.includes("fy_start_month: require('../lib/country-setup').fyStartOf(cbCountry)"));
+  const migration = fs.readFileSync(path.join(API, 'migrations', 'b764_books_setting_fy_no_default.sql'), 'utf8');
+  ok('N4: the migration drops books_setting.fy_start_month DEFAULT (written, not run) and the one writer names the column', /ALTER COLUMN fy_start_month DROP DEFAULT/.test(migration) && /INSERT INTO books_setting \(entity_id, enabled, walkin_grain, fy_start_month/.test(fs.readFileSync(path.join(API, 'lib/books-store.js'), 'utf8')));
 
 /* ── N1 · THE RATCHET: no NEW 'INR' / ₹ / Asia/Kolkata / en-IN literal outside an India-pack path ─────────────────────────────────────────
    Athi, 2026-10-17: "a record states its own country/currency/zone/language; a reader that finds none says so - never guesses India."
