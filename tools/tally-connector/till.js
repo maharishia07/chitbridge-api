@@ -863,16 +863,17 @@ function rollUp(now) {
    * cannot be built from days at all: by the time it closes, most of its days have been purged (FLOOR_DAYS),
    * which is the entire point of keeping summaries. Twelve months compose it exactly.
    *
-   * ⚠️ AND IT IS THE FINANCIAL YEAR — April to March, because every return an Indian shop files is against it.
-   * lib/rollup.yearKey() holds that, with fyStart for a shop whose year starts elsewhere.
+   * ⚠️ AND IT IS THE SHOP'S OWN YEAR — the snapshot's fy_start_month (the country pack's, N4): India April–March,
+   * Australia July–June. An unstated country is the calendar year, as fyOf() labels the series — never April by default.
    */
   {
+    const fyo = { fyStart: (snapshot && snapshot.shop && snapshot.shop.fy_start_month) || 1 };
     const monthsOnDisk = summaryKeys('month');
-    const years = Array.from(new Set(monthsOnDisk.map((m) => rollup.keyOf('year', m + '-01'))));
+    const years = Array.from(new Set(monthsOnDisk.map((m) => rollup.keyOf('year', m + '-01', fyo))));
     for (const key of years) {
-      if (!rollup.isClosed('year', key, now)) continue;
+      if (!rollup.isClosed('year', key, now, fyo)) continue;
       if (readSummary('year', key)) continue;
-      const mine = monthsOnDisk.filter((m) => rollup.keyOf('year', m + '-01') === key).sort();
+      const mine = monthsOnDisk.filter((m) => rollup.keyOf('year', m + '-01', fyo) === key).sort();
       /**
        * ⚠️⚠️⚠️ NOT "TWELVE OR IT WAITS", AND THE DIFFERENCE MATTERS. A week waits for all of its days because
        * those days are still arriving. A CLOSED year is not waiting for anything: no further month can ever be
