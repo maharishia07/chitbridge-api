@@ -61,7 +61,11 @@ const flat = () => sql.replace(/\s+/g, ' ');
      ⚠️ Matched against the CODE, not the prose — the explanation above lives inside the SQL template
      literal, so a naive /is_draft/ over the query text matches the comment warning about it. */
   t('never dereferences h.is_draft', !/h\.is_draft/.test(flat()));
-  t('closed chits are still excluded', /NOT IN \('completed', 'cancelled', 'rejected'\)/.test(flat()));
+  /* W2-RAIL R2: the closed set now comes from the ONE status table (rail-actions.CLOSED_SQL, no spaces), so the old spelled-out
+     regex went red on spacing alone (17 Oct). Assert both halves: the query uses that set, and the set still holds all three. */
+  const { CLOSED_STATES, CLOSED_SQL } = require(API + '/lib/rail-actions');
+  t('closed chits are still excluded', flat().includes('NOT IN (' + CLOSED_SQL + ')')
+    && ['completed', 'cancelled', 'rejected'].every((s) => CLOSED_STATES.includes(s)), CLOSED_SQL);
 
   console.log('\n-- ⭐⭐ a line with NO assignment lands in the Unassigned bucket --');
   ROWS = [

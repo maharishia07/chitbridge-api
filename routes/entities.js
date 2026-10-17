@@ -905,7 +905,7 @@ router.patch('/profile', auth,
        * ⚠️⚠️ SET ONCE. Athi, 2026-08-19: *"the registered user id cannot be changed. Are you able to change your
        * Gmail id? The same way here."*
        *
-       * The UPDATE below writes COALESCE(user_id, $5) — the existing value always wins — so a change is impossible
+       * The UPDATE below writes COALESCE(user_id, $3) — the existing value always wins — so a change is impossible
        * at the write even if this check were bypassed. But a write that SILENTLY ignores what you sent is its own
        * defect: the screen would report "saved" and the value would be unchanged. So say so, out loud, with 409.
        *
