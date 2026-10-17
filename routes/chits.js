@@ -413,7 +413,7 @@ router.post('/send',
    lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
 const SEND_STEPS = [
-  sendSender, sendLab, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
+  sendSender, sendMoneyStated, sendLab, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
   sendBody, sendCredit, sendSource, sendFanOut, sendTrace,
   sendPrefs, sendRecipients, sendSeller, sendOffers, sendMoney,
   sendIssued, sendCopyPolicy, sendPromote, sendParticipants, sendRetention,
@@ -459,6 +459,18 @@ async function sendSender(st, req, res) {
              + 'Open ChitBridge → Settings and set the shop\'s bridge id, then send this bill again.' });
   }
   Object.assign(st, { sender_id, sender_bridge_id, sender_display_name });
+}
+
+/**
+ * ⭐ N0 · A SHOP THAT HAS NOT STATED ITS COUNTRY AND MONEY ISSUES NO DOCUMENT — refused in words, before anything is written. A draft is the
+ * author's own copy and is let through; a shop already India (the b299 backfill) has both stated and passes unchanged. The sentence and the
+ * check are country-setup's (documentGate); this step only asks.
+ */
+async function sendMoneyStated(state, req, res) {
+  if (req.body.is_draft) return false;
+  const refusal = await require('../lib/country-setup').documentGate(query, state.sender_id);
+  if (!refusal) return false;
+  return res.status(refusal.status).json({ error: 'refused', code: refusal.code, message: refusal.message });
 }
 
 /**

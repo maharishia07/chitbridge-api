@@ -34,6 +34,7 @@ function rows(s, p, ctx) {
   if (/business_json->>'client_ref' = \$2/.test(s)) return ctx.seen ? [ctx.seen] : [];
   if (/SELECT role, business_json->>'page' AS page FROM chit_header/.test(s)) return ctx.draft ? [ctx.draft] : [];
   if (/FROM chit_header WHERE chit_id = ANY\(\$1::uuid\[\]\) AND entity_id = \$2/.test(s)) return (ctx.held || []).map((c) => ({ chit_id: c }));
+  if (/SELECT country, currency_code FROM identities/.test(s)) return [{ country: 'IN', currency_code: 'INR' }];   /* N0: the document gate's one read */
   if (/SELECT self_copy_pref, currency_code FROM identities/.test(s)) return [{ self_copy_pref: ctx.pref || null, currency_code: ctx.noCurrency ? null : 'INR' }];
   if (/SELECT sectors FROM entity_profile/.test(s)) return ctx.sectors ? [{ sectors: ctx.sectors }] : [];
   if (/FROM entity_schemas/.test(s) && /is_default = true/.test(s) && /schema_version/.test(s)) return [{ schema_id: 'SCHEMA-1', schema_version: 3 }];
