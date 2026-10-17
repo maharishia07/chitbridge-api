@@ -10,9 +10,10 @@ const t = make(), D = t.data, F = require('../lib/crm-followups'), H = require('
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
 let pass = 0;
 const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + (e.stack || e.message).split('\n').slice(0, 4).join('\n      ')); process.exitCode = 1; } };
-const day = (n) => H.dayOf(new Date(Date.now() + n * 86400000).toISOString(), null);   /* the rig's shop states no country → its day is UTC (T2-NATDEF), never India's */
+const NOW = '2026-10-10T08:00:00Z';   /* A6: one pinned instant for every day() and every sweep */
+const day = (n) => H.dayOf(new Date(Date.parse(NOW) + n * 86400000).toISOString(), null);   /* the rig's shop states no country → its day is UTC (T2-NATDEF), never India's */
 const f = (owner, due, who, o) => Object.assign({ followup_id: t.uid(), owner, party_id: P(2), what: 'x', due_at: H.dayBounds(due, D.country).from, assignee_user_id: who, done_at: null, bell_day: null, source: 'manual', created_at: new Date().toISOString() }, o);
-const run = async () => { const ev = []; const out = await F.sweep({ emit: (ids, e) => ev.push([ids, e]) }); return { out, ev }; };
+const run = async () => { const ev = []; const out = await F.sweep({ now: NOW, emit: (ids, e) => ev.push([ids, e]) }); return { out, ev }; };
 
 (async () => {
   await ita('before b276 the sweep does nothing and says so (never throws)', async () => {
@@ -45,7 +46,7 @@ const run = async () => { const ev = []; const out = await F.sweep({ emit: (ids,
     D.followups.forEach((x) => { x.bell_day = null; });
     const ev = [], real = D.extra; let n = 0;
     D.extra = null;
-    const out = await F.sweep({ emit: (ids, e) => ev.push(ids[0]), withEntity: async (o, fn) => { if (o === 'E1' && !n++) throw new Error('boom'); return require('../db').withEntity(o, fn); } });
+    const out = await F.sweep({ now: NOW, emit: (ids, e) => ev.push(ids[0]), withEntity: async (o, fn) => { if (o === 'E1' && !n++) throw new Error('boom'); return require('../db').withEntity(o, fn); } });
     assert.strictEqual(out.skipped >= 1, true); assert.ok(ev.indexOf('E2') >= 0, 'E2 still rang'); D.extra = real;
   });
   await ita('the shop\'s day: due at the start of today (India) is "today", not late, even when UTC is still yesterday', async () => {

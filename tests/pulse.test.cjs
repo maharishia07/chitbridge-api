@@ -13,7 +13,7 @@
  *   · chit_status MAX(updated_at)  — a status change, which UPDATES in place and moves no created_at
  *   · COUNT(*)                     — a DELETION, which LOWERS nothing and would otherwise be invisible
  */
-const API = 'C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 
 let DB = { h: null, s: null, c: null, n: 0 };
 let fail_next = false;
