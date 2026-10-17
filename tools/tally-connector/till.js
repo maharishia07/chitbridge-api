@@ -294,6 +294,8 @@ const today = () => new Date().toISOString().slice(0, 10);
  * cached beside the snapshot (engine-docnumber.js, ENGINE_NAMES); before the first sync there is neither, and the one rule every
  * jurisdiction agrees on — the calendar year — labels the series until the shop is known.
  */
+/** the shop's own year for the roll-up: the snapshot's fy_start_month (the country pack's, N4); unstated = the calendar year, as fyOf() labels the series */
+function shopYear() { return { fyStart: (snapshot && snapshot.shop && snapshot.shop.fy_start_month) || 1 }; }
 function fyOf(d) {
   const country = (snapshot && snapshot.shop && snapshot.shop.country) || null;
   try {
@@ -867,13 +869,12 @@ function rollUp(now) {
    * Australia July–June. An unstated country is the calendar year, as fyOf() labels the series — never April by default.
    */
   {
-    const fyo = { fyStart: (snapshot && snapshot.shop && snapshot.shop.fy_start_month) || 1 };
     const monthsOnDisk = summaryKeys('month');
-    const years = Array.from(new Set(monthsOnDisk.map((m) => rollup.keyOf('year', m + '-01', fyo))));
+    const years = Array.from(new Set(monthsOnDisk.map((m) => rollup.keyOf('year', m + '-01', shopYear()))));
     for (const key of years) {
-      if (!rollup.isClosed('year', key, now, fyo)) continue;
+      if (!rollup.isClosed('year', key, now, shopYear())) continue;
       if (readSummary('year', key)) continue;
-      const mine = monthsOnDisk.filter((m) => rollup.keyOf('year', m + '-01', fyo) === key).sort();
+      const mine = monthsOnDisk.filter((m) => rollup.keyOf('year', m + '-01', shopYear()) === key).sort();
       /**
        * ⚠️⚠️⚠️ NOT "TWELVE OR IT WAITS", AND THE DIFFERENCE MATTERS. A week waits for all of its days because
        * those days are still arriving. A CLOSED year is not waiting for anything: no further month can ever be
