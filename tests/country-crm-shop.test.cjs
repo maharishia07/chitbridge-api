@@ -44,7 +44,7 @@ require.cache[require.resolve(path.join(API, 'db'))] = { id: 'db', loaded: true,
   ROW = { display_name: 'Sim Sydney', gstn: '51824753556', address: '1 George St', phone: '+61290000000', country: 'AU', currency_code: null };
   const auP = await P.invoiceParty('e-au');
   ok('R4 Australia: no state off an ABN ("51" is not a state), no PAN, the pack\'s money', auP.state_code === null && auP.pan === null && auP.currency === 'AUD', JSON.stringify(auP));
-  ok('R4 Australia: what is missing is said, the fix names the ABN', auP.missing.indexOf('state') >= 0 && /ABN on Profile$/.test(auP.fix));
+  ok('R4 Australia: what is missing is said, the fix names the ABN (N2: a state is asked only where the pack splits tax by state - India)', auP.missing.indexOf('state') < 0 && /ABN on Profile$/.test(auP.fix));
   ROW = { display_name: 'Sim Dubai', gstn: null, address: 'Deira', phone: '+97140000000', country: 'AE', currency_code: 'AED' };
   const aeP = await P.invoiceParty('e-ae');
   ok('R4 UAE: a missing tax id is called TRN, never gstin', aeP.missing.indexOf('TRN') >= 0 && aeP.missing.indexOf('gstin') < 0, JSON.stringify(aeP.missing));

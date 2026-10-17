@@ -44,6 +44,13 @@
   "calls": [
    {
     "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
@@ -509,6 +516,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -983,6 +997,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT country, gstn FROM identities WHERE identity_id = $1",
@@ -1513,6 +1534,13 @@
   "calls": [
    {
     "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
@@ -1999,6 +2027,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -2637,6 +2672,13 @@
   "calls": [
    {
     "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
@@ -3090,6 +3132,13 @@
   "calls": [
    {
     "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
@@ -3372,6 +3421,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -3736,6 +3792,13 @@
   "calls": [
    {
     "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
@@ -4052,6 +4115,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
@@ -4421,6 +4491,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -4883,6 +4960,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
@@ -5633,6 +5717,13 @@
   },
   "calls": [
    {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
     "params": [
@@ -5653,6 +5744,13 @@
    "message": "Bill C1/26-27/0041 was already recorded by a different counter that is ALSO called C1. Two counters are numbering from the same series. This counter is given its own number the next time it reads the shop. This bill is kept on the counter, unsent — it was already printed with this number, so how it is recorded needs a decision. Nothing has been lost."
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
@@ -5726,6 +5824,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
@@ -6298,6 +6403,13 @@
   },
   "calls": [
    {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
     "params": [
@@ -6821,6 +6933,13 @@
   },
   "calls": [
    {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
     "params": [
@@ -6876,6 +6995,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
@@ -7576,7 +7702,15 @@
    "client_ref": null,
    "message": "This bill was made on another phone. It is kept where it was made — send it from that phone."
   },
-  "calls": []
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   }
+  ]
  },
  "over the credit limit, no override → 409 OVER_LIMIT": {
   "status": 409,
@@ -7589,7 +7723,15 @@
    "after_minor": 1500,
    "party_id": "CUST"
   },
-  "calls": []
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   }
+  ]
  },
  "over the credit limit, owner override from a till": {
   "status": 200,
@@ -7634,6 +7776,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "credit.noteOverride",
     "payload": [
@@ -8158,6 +8307,13 @@
   "calls": [
    {
     "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
@@ -8573,7 +8729,15 @@
    "code": "PAGE_UNKNOWN",
    "message": "No detail page is called sale.foo.bar"
   },
-  "calls": []
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   }
+  ]
  },
  "bad role → 400": {
   "status": 400,
@@ -8581,7 +8745,15 @@
    "error": "Invalid recipient role",
    "message": "role must be to|cc|for, got \"bcc\""
   },
-  "calls": []
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   }
+  ]
  },
  "too many recipients → 400": {
   "status": 400,
@@ -8589,7 +8761,15 @@
    "error": "Limit exceeded",
    "message": "Recipient caps — to:5, cc:5, for:1"
   },
-  "calls": []
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   }
+  ]
  },
  "too many lines → 400": {
   "status": 400,
@@ -8597,7 +8777,15 @@
    "error": "Limit exceeded",
    "message": "Max 50 line items"
   },
-  "calls": []
+  "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   }
+  ]
  },
  "a minted party → 404": {
   "status": 404,
@@ -8606,6 +8794,13 @@
    "message": "\"~mayur.sup-0001\" cannot receive chits — that is a local record, not a ChitBridge business."
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -8622,6 +8817,13 @@
    "message": "Recipient \"Nobody Known\" not found in the platform"
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -8652,6 +8854,13 @@
    "message": "Parent chit not co-held by sender: PARENT"
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id FROM chit_header WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2",
@@ -8724,6 +8933,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id FROM chit_header WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2",
@@ -9307,6 +9523,13 @@
   "calls": [
    {
     "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
@@ -9374,6 +9597,13 @@
    "message": "This chit has already been sent"
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -9479,6 +9709,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -9995,6 +10232,13 @@
    },
    {
     "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
@@ -10444,6 +10688,13 @@
   },
   "calls": [
    {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
     "via": "withEntity:SHOP",
     "sql": "SELECT chit_id, business_json->'till'->>'id' AS till_id, business_json->>'billed_at' AS billed_at FROM chit_header WHERE entity_id = $1 AND business_json->>'client_ref' = $2 ORDER BY created_at LIMIT 1",
     "params": [
@@ -10775,6 +11026,13 @@
    "message": "Something went wrong — please try again."
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -11165,6 +11423,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -11688,6 +11953,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
@@ -12257,6 +12529,13 @@
    }
   },
   "calls": [
+   {
+    "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
    {
     "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",

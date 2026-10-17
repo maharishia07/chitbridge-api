@@ -1692,7 +1692,7 @@ async function dropForeignListPrices(items, req) {
   let shopCurrency = null;
   try { shopCurrency = await regional.currencyFor(req.identity && req.identity.identity_id); }
   catch (failure) { log.fellBack('products POST /lists/adopt: the shop currency read failed — list prices dropped', failure); return items.map(withoutListPrice); }
-  if (!shopCurrency || String(shopCurrency).toUpperCase() === 'INR') return items;
+  if (shopCurrency && String(shopCurrency).toUpperCase() === 'INR') return items;   /* the lists' figures ARE rupees: kept for a rupee shop only; no money stated → dropped */
   return items.map(withoutListPrice);
 }
 router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], validate, async (req, res) => {

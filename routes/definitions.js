@@ -1,3 +1,7 @@
+/* OWNS an entity's own named things: pack models ("Carton of 6"), tax slabs, categories - every edit writes a version
+ * CALLED BY server.js (mounted at /api/definitions); the web Definitions workshop (cap-definitions.js)
+ * FLOW auth -> ctx(entity) -> definition / definition_version (append-only) -> list adds the governed slabs of the entity's country (or says why there are none)
+ * CARD 07-catalogue-and-pricing/definitions */
 /**
  * routes/definitions.js — an entity's own named things: "Carton of 6", "Diwali 10%", a category list.
  *
@@ -55,6 +59,13 @@ const gone = (res) => res.status(503).json({ error: 'Not provisioned',
 const MAX_NAME = 120, MAX_NOTE = 500;
 
 /** GET / — the shelf. ?kind= narrows; ?status= narrows (default: everything except retired). */
+/** N1: the governed slabs of the entity's country, or - with no country - none and the one sentence that says where to set it */
+async function governedNote(entityId) {
+  const gov = await taxGov.governedSlabsFor(entityId, { query, regionLayer: regional.regionLayer });
+  if (gov.length) return { rows: gov, why: null };
+  return { rows: [], why: (await taxGov.jurisdictionFor(entityId, { query })) ? null : taxGov.NO_COUNTRY_SLABS_SAY };
+}
+
 router.get('/', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -151,14 +162,14 @@ router.get('/', auth, async (req, res) => {
      * and the catalogue default pick from both without a second code path. `?status=draft|retired` never includes
      * them: a governed slab is always live. See lib/tax-governance.js.
      */
+    let governedWhy = null;
     if (rows === null) {
       rows = r.rows;
       if (wantsTax && wantsLive) {
-        const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
-        if (gov.length) rows = rows.concat(gov);
+        const governed = await governedNote(entity_id); rows = rows.concat(governed.rows); governedWhy = governed.why;   /* N1: no country -> no slabs, and the sentence says why */
       }
     }
-    res.json(Object.assign({ count: rows.length }, PL.pageOut('definitions', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+    res.json(Object.assign({ count: rows.length }, governedWhy ? { governed_why: governedWhy } : {}, PL.pageOut('definitions', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (e) { if (notMigrated(e)) return gone(res);
     res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });

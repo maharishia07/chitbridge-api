@@ -9540,7 +9540,7 @@ function menuTrendBody(){
      * shopkeeper concludes the feature is broken. [[feedback-silence-is-the-bug]]
      */
     return out + '<p class="u" data-testid="till-trend-none" title="a ' + esc(TREND_PERIOD) + ' shows once it has finished'
-      + (TREND_PERIOD === 'year' ? ' (a financial year: after 31 March)' : '') + '">No finished ' + esc(label[TREND_PERIOD].toLowerCase())
+      + (TREND_PERIOD === 'year' ? ' (its tax year, once it ends)' : '') + '">No finished ' + esc(label[TREND_PERIOD].toLowerCase())
       + ' yet</p></div>';
   }
 
