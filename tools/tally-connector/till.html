@@ -5952,9 +5952,15 @@ function docCountry(){ return (S && S.shop && S.shop.country) || null; }
    load (engineMissed lists it); neither is a reason to print GST, split CGST/SGST or offer UPI on a shop nobody placed. */
 function shopPack(){ try { return (window.CBRegulation && CBRegulation.packFor(docCountry())) || null; } catch (_) { return null; } }
 /* STD2: the tax number's word is the SERVER's (snapshot shop.tax_id_word = api profile.taxIdWordOf, the one reader) — never a copy here; none → neutral */
-function taxIdLabel(){ return (S && S.shop && S.shop.tax_id_word) || 'Tax number'; }
+function taxIdLabel(){
+  var reg = (window.CBCountries && docCountry()) ? CBCountries.taxId(docCountry()) : null;   /* the registry's word: UEN · EIN · T-number … */
+  return (S && S.shop && S.shop.tax_id_word) || (reg && reg.word) || 'Tax number';
+}
 /* no pack → 'Tax', the neutral word beside taxIdLabel's 'Tax number' (W1-TILL) */
-function schemeWord(){ var pack = shopPack(); return (pack && pack.tax && pack.tax.scheme) || 'Tax'; }
+/** the shop's country words from the registry (CBCountries.meta — AU/AE's legacy words included): taxName · taxId · postcode · region; {} when none */
+function countryWords(){ try { var m = window.CBCountries && docCountry() ? CBCountries.meta(docCountry()) : null; return (m && m.words) || {}; } catch (_) { return {}; } }
+/** the tax's own word — "Sales tax", "Consumption tax", "GST", "VAT" — the pack's words before its scheme code ("STAX", "JCT" were printed, 17 Oct audit) */
+function schemeWord(){ var pack = shopPack(); return countryWords().taxName || (pack && pack.tax && pack.tax.scheme) || 'Tax'; }
 function creditNoteTitle(){ var p = shopPack(); return p && p.creditNote && p.creditNote.title ? String(p.creditNote.title).toUpperCase() : 'CREDIT NOTE'; }
 /** does the shop's tax turn on the STATE (India's CGST/SGST · IGST — pack.tax.supply 'state')? A border pack (Australia, the UAE) has one head and no state. No pack known → one head (W1-TILL). */
 function packSplitsByState(){ try { var pack = shopPack(); return !!(pack && pack.tax && pack.tax.supply === 'state'); } catch (e) { cbQuiet('packSplitsByState:1', e); return false; } }
@@ -10283,7 +10289,7 @@ function hubHits(){
 function hubFindBox(){
   var hits = hubHits();
   return '<div class="hubfind">'
-    + '<input id="hubq" data-testid="till-hub-find" placeholder="Find anything — printer, GSTIN, close, colours…"'
+    + '<input id="hubq" data-testid="till-hub-find" placeholder="Find anything — printer, ' + esc(taxIdLabel()) + ', close, colours…"'
     + ' autocomplete="off" value="' + esc(HUB_Q) + '" oninput="hubFind(this.value)">'
     + (HUB_Q.trim() && !hits.length
         ? '<div class="hubnone" data-testid="till-hub-find-none">Nothing in this menu matches “' + esc(HUB_Q.trim())
@@ -18945,8 +18951,11 @@ function shopEditOpen(){
   var d = document.getElementById('shopdlg'); if (!d) return;
   var sh = (S && S.shop) || {};
   var missing = Array.isArray(sh.missing) ? sh.missing : [];
-  var body = SHOP_FIELDS.map(function(f){
+  /* the country's own words over India's (GSTIN · PIN code · State): UEN, ZIP code, Prefecture; a country with no region row (SG) shows no State box */
+  var cw = countryWords(), label = { gstin: cw.taxId || (docCountry() && docCountry() !== 'IN' ? taxIdLabel() : null), pincode: cw.postcode, state: cw.region };
+  var body = SHOP_FIELDS.filter(function(f){ return !(f[0] === 'state' && cw.region === null); }).map(function(f){
     var k = f[0], val = shopFieldValue(sh, k);
+    if (label[k]) f = [k, label[k], k === 'gstin' ? 'without it, no ' + schemeWord() + ' is charged on any bill' : f[2], f[3]];
     /* ⚠️ 'not set yet' comes from the SERVER's idea of missing (lib/profile), not from an empty box here.
        ⚠️⚠️ [2026-09-27] GSTIN NEVER GETS THIS MARK. shopCheck() already says, in words, that a shop below
        the threshold is not registered and that is not an error — this label used to disagree with its own
@@ -19790,10 +19799,12 @@ function lineFaults(rows){
  */
 /* W1-TILL: the country comes from its ONE reader (docCountry — the snapshot's stated country); India's single zone is a fact of a STATED
    country, never guessed from the money. A shop nobody placed keeps the zone CBLocale answers (the person's override, else the device). */
-var ONE_ZONE_COUNTRIES = { IN: 'Asia/Kolkata' };
+/* A country with ONE zone in its pack (IN, AE, SG, MY, JP) is that zone — a fact of the stated country, read from its pack (timeZones), not a
+   table here (it held India only; a Dubai shop on a PC set to UTC printed UTC times, 17 Oct audit). A multi-zone country (AU, US) keeps
+   CBLocale's answer until the snapshot carries the shop's own zone. */
 function shopTz(){
-  var zone = ONE_ZONE_COUNTRIES[String(docCountry() || '').toUpperCase()];
-  if (zone) return zone;
+  var pack = shopPack(), zones = pack && Array.isArray(pack.timeZones) ? pack.timeZones : null;
+  if (zones && zones.length === 1) return zones[0];
   try { if (window.CBLocale && CBLocale.timezone) return CBLocale.timezone(); } catch (e) { cbQuiet('shopTz:1', e); }
   return undefined;
 }
@@ -20489,7 +20500,10 @@ function shopCheck(){
   }
   /* ⭐ CX0: under a pack that names its own tax id (reg-au `abn` · reg-ae `trn`) the PACK's check decides — the same one routes/till.js runs
      on save. The GSTIN checksum below refused every ABN and TRN ("not the shape of a GSTIN") and the counter's shop form could not be saved. */
-  var pk0 = shopPack(), tid = pk0 && (pk0.abn || pk0.trn);
+  /* ⭐ the REGISTRY decides (CBCountries.taxId — the seam routes/till.js uses on save): every pack's own check, AU/AE and SG/MY/US/JP alike.
+     Reading only `abn || trn` refused a UEN, an SST number, an EIN and a T-number as "not the shape of a GSTIN" (counter audit, 17 Oct).
+     India has no registry check (its GSTIN checksum, below, keeps its detailed words). */
+  var tid = (window.CBCountries && docCountry()) ? CBCountries.taxId(docCountry()) : null;
   if (tid && typeof tid.check === 'function') {
     var c0 = tid.check(v);
     if (!c0.ok) { shopSay(esc(c0.why || ('That is not the shape of this shop\u2019s ' + taxIdLabel() + '.')), true); return false; }
@@ -21720,13 +21734,23 @@ function dayCloseSheet(rows){
        is paying rent a sale, however it went through the same person's hands */
     if (!isReturnRow(b) && !isExpenseRow(b)) d.people[who].bills++;
     d.people[who].total = r2(d.people[who].total + (b.total||0));
+    /* ⭐ COMPUTE ONCE, READ AFTER: a bill carries the rate-wise figures it was ISSUED with (by_rate) — the report adds those. Working the
+       tax out again with TODAY's inclusive flag disagreed with the bills whenever the flag had changed since (17 Oct audit). Only a bill
+       saved before by_rate existed falls back to the line split below. */
+    var issued = b.by_rate && Object.keys(b.by_rate).length ? b.by_rate : null;
+    if (issued) Object.keys(issued).forEach(function(rt){
+      var v = issued[rt] || {}; if (!Number(rt)) return;
+      d.rate[rt] = d.rate[rt] || { base:0, tax:0 };
+      d.rate[rt].base = r2(d.rate[rt].base + (Number(v.base != null ? v.base : v.taxable) || 0));
+      d.rate[rt].tax = r2(d.rate[rt].tax + (Number(v.tax) || 0));
+    });
     (b.lines||[]).forEach(function(l){
       var k = l.name || l.item_id;
       d.items[k] = d.items[k] || { qty:0, net:0, unit:l.unit||'' };
       d.items[k].qty = r2(d.items[k].qty + (Number(l.qty)||0));
       d.items[k].net = r2(d.items[k].net + (Number(l.net)||0));
       var rt = Number(l.gst_rate)||0;
-      if (rt){
+      if (rt && !issued){
         /* ⚠️ CBTax.splitLineTax() — the same formula the invoice used, not the report's own guess at it */
         var sp = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: Number(l.net)||0, rate: rt, priceIncludesTax: taxIncluded() })
           : (function(){ var b2 = taxIncluded() ? r2((Number(l.net)||0) * 100 / (100 + rt)) : Number(l.net)||0; return { assessable: b2, tax: r2(b2 * rt / 100) }; })();
@@ -22471,9 +22495,15 @@ function rcvBalLine(l){
   }
   return out + '</span>';
 }
+/** the receive form's two invoice facts in the shop's own tax words; the state-code box only where the tax splits by state (India) */
+function rcvWords(){
+  var incl = document.getElementById('rcv_incl'), vst = document.getElementById('rcv_vstate'), word = schemeWord();
+  if (incl && incl.options.length === 2) { incl.options[0].textContent = 'Their rates are before ' + word + ' (usual)'; incl.options[1].textContent = 'Their rates already include ' + word; }
+  if (vst) vst.hidden = !packSplitsByState();
+}
 function paintReceive(){
   var box = document.getElementById('rcv_lines'); if (!box) return;
-  rcvBalEnsure();
+  rcvBalEnsure(); rcvWords();
   box.innerHTML = RCV.lines.length ? RCV.lines.map(function(l, n){
     var d = rcvDiff(l), done = (l.counted != null && d === 0 && l.ordered != null);
     var ok = d ? rcvAbsorbed(l) : false;
@@ -22490,7 +22520,7 @@ function paintReceive(){
          editable, because the rate on the supplier's invoice is THEIR statement and it is the paper the credit is
          claimed against. Hidden entirely for a shop that charges no GST: it would have nothing to claim. */
       + (shopTax().charges
-          ? '<input class="gstin" type="number" min="0" max="100" step="0.5" inputmode="decimal" placeholder="GST%"'
+          ? '<input class="gstin" type="number" min="0" max="100" step="0.5" inputmode="decimal" placeholder="' + esc(schemeWord()) + '%"'
             + ' value="' + (l.gst_rate == null ? '' : l.gst_rate) + '" title="the GST rate on their invoice"'
             + ' data-testid="rcv-gst-' + n + '" onchange="rcvSet(' + n + ',\'gst\',this.value)">'
           : '')
