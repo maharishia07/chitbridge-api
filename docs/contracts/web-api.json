@@ -2582,7 +2582,8 @@
     "in": 1,
     "out": 3,
     "tasks": 1,
-    "stuck": 0
+    "stuck": 0,
+    "state": "in_use"
    },
    "optional": [
     "may_sample.say",
@@ -2602,7 +2603,8 @@
     "figures": {
      "products": 2,
      "no_slab": 1
-    }
+    },
+    "state": "needs_you"
    },
    "optional": []
   },
@@ -2893,6 +2895,99 @@
    "free": [
     "agreement.runs"
    ]
+  },
+  "GET /api/till/summary": {
+   "status": 200,
+   "example": {
+    "period": "month",
+    "rows": [
+     {
+      "key": "2026-09",
+      "totals": {
+       "count": 4,
+       "returns": 0,
+       "gross": 1100,
+       "refunds": 0,
+       "expenseCount": 0,
+       "expenses": 0,
+       "total": 1100,
+       "by": {}
+      },
+      "counters": [
+       {
+        "till": {
+         "id": "C1",
+         "name": null
+        },
+        "totals": {
+         "count": 4,
+         "returns": 0,
+         "gross": 1100,
+         "refunds": 0,
+         "expenseCount": 0,
+         "expenses": 0,
+         "total": 1090,
+         "by": {}
+        },
+        "at": null,
+        "source": [
+         "2026-09-01"
+        ]
+       }
+      ],
+      "source": [
+       "2026-09-01"
+      ]
+     }
+    ],
+    "counters": [
+     "C1"
+    ]
+   },
+   "optional": [],
+   "free": [
+    "rows[].counters[].totals.by",
+    "rows[].totals.by"
+   ]
+  },
+  "GET /api/till/summary #compare": {
+   "status": 200,
+   "example": {
+    "period": "month",
+    "n": 12,
+    "currency": "AUD",
+    "fy_start_month": 7,
+    "slots": [
+     {
+      "key": "2025-11",
+      "gross_minor": 110000,
+      "total_minor": 110000,
+      "bills": 4,
+      "coverage": {
+       "expected": 30,
+       "seen": 30,
+       "short": false,
+       "partial": false
+      },
+      "last_year": {
+       "key": "2024-11",
+       "gross_minor": 100000,
+       "short": false
+      },
+      "change_pct": 10
+     }
+    ]
+   },
+   "optional": []
+  },
+  "GET /api/till/summary #compare-422": {
+   "status": 422,
+   "example": {
+    "error": "Set the shop country first. The books never open on a guess.",
+    "code": "NO_COUNTRY",
+    "message": "Set the shop country first. The books never open on a guess."
+   },
+   "optional": []
   },
   "GET /api/work/:chit_id": {
    "status": 200,

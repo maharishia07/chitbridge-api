@@ -2373,21 +2373,25 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
  * ITSELF, and a self chit lands as 'received'. Asking for 'sent' is what made "Earlier bills" empty for weeks.
  */
 const SUMMARY_BILLS = 60, SUMMARY_BILLS_MAX = 400;   /* how many bills one period summary rolls up */
+/*
+ * ⭐ RPT2 (2026-10-17) · ?compare=1&period=week|month|quarter|year&n= → Reports › Trend: { period, n, currency, fy_start_month, slots } —
+ * rollup.series (the ONE comparison calculation) over the same summaries, each slot beside the same slot last year. ONE trip (readBatch:
+ * the shop's year + the summaries). 422 NO_COUNTRY / NO_MONEY with the one sentence when the shop's country, money or year is unstated.
+ * Who may call: the shop's own session or key (auth, own entity, RLS through readBatch). Without compare=1 the answer is unchanged.
+ */
 router.get('/summary', auth, async (req, res) => {
   try {
-    const rollup = require('../lib/rollup');
+    const rollup = require('../lib/rollup'), TS = require('../lib/till-summary');
     const entity_id = auth.entityOf(req);
+    if (req.query.compare === '1') {
+      const out = await TS.trend(entity_id, req.identity && req.identity.identity_id, { period: req.query.period, n: req.query.n, now: Date.now() });
+      return res.status(out.status).json(out.body);
+    }
     const period = rollup.PERIODS.indexOf(req.query.period) >= 0 ? req.query.period : 'day';
     const limit = PL.limitOf(req.query.limit, SUMMARY_BILLS, SUMMARY_BILLS_MAX);   /* the one clamp */
     const { withEntity } = require('../db');
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT h.chit_id, h.created_at, h.business_json
-         FROM chit_header h
-        WHERE h.entity_id = $1
-          AND h.purpose = 'general'
-          AND h.business_json -> 'summary' ->> 'period' = $2
-        ORDER BY h.business_json -> 'summary' ->> 'key' DESC, h.created_at DESC
-        LIMIT $3`, [entity_id, period, limit * 8]));
+    const statement = TS.summaryStatement(entity_id, period, limit);   /* lib/till-summary: the ONE copy of the statement (its follow-up, done) */
+    const r = await withEntity(entity_id, (db) => db.query(statement.text, statement.params));
 
     /**
      * ⭐ THE FOLD LIVES IN THE ENGINE, not here — rollup.acrossCounters(). The risky part of it (one row per

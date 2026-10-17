@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.32.0 · rollup · sha256 85d79ab7b164e3683fad2b5c06ef5f97c31849d4b9ab7ec8095eb81cdfa67a2d — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.66.0 · rollup · sha256 a1d4915f0edf71281d88f72aaf2514086458b11fecdc028b3aebfcdb0caf3014 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · rollup. Edited ONLY in chitbridge-engines/src/rollup.js; every platform adopts a released version of it. */
 (function (root) {
 'use strict';
@@ -193,7 +193,28 @@ function yearKey(d, fyStart) {
   return from + '-' + pad((from + 1) % 100);
 }
 
+/**
+ * ⭐ v1.66.0 (RPT1) — A QUARTER, AND IT IS THREE MONTHS OF THE SHOP'S OWN YEAR. quarterKey('2026-08-15', 4) → '2026-27-Q2';
+ * fyStart 1 → '2026-Q3'. ⚠️ NO DEFAULT YEAR HERE (unlike yearKey, whose April default adopted callers pin): a quarter is new, so
+ * nobody depends on a guess, and an Australian Q1 is July–September — guessing April would file it under the wrong quarter.
+ */
+function fyStartOf_(fyStart, what) {
+  const s = Number(fyStart);
+  if (!(Number.isInteger(s) && s >= 1 && s <= 12)) {
+    throw new Error('rollup: ' + what + ' needs fyStart — the month the shop\'s financial year starts (1-12, from its books setting or country pack); there is no default year.');
+  }
+  return s;
+}
+function quarterKey(d, fyStart) {
+  const start = fyStartOf_(fyStart, 'a quarter');
+  const m = new Date(d).getUTCMonth() + 1;
+  return yearKey(d, start) + '-Q' + (Math.floor(((m - start + 12) % 12) / 3) + 1);
+}
+
+/** ⚠️ PERIODS ARE THE STORED ONES — the server route and the kit's file count read this list to find summary chits. A quarter is
+ *  DERIVED (folded from three month summaries, never written as a chit), so it lives in DERIVED_PERIODS and keyOf() knows both. */
 const PERIODS = ['day', 'week', 'month', 'year'];
+const DERIVED_PERIODS = ['quarter'];
 /**
  * ⚠️ `opts` IS OPTIONAL AND EVERY EXISTING CALLER PASSES NOTHING. Day, week and month never look at it; only
  * the year does, and only for where a shop's year starts.
@@ -203,7 +224,8 @@ function keyOf(period, d, opts) {
   if (period === 'week') return weekKey(d);
   if (period === 'month') return monthKey(d);
   if (period === 'year') return yearKey(d, opts && opts.fyStart);
-  throw new Error('rollup: no such period "' + period + '" — it is one of ' + PERIODS.join(', '));
+  if (period === 'quarter') return quarterKey(d, opts && opts.fyStart);
+  throw new Error('rollup: no such period "' + period + '" — it is one of ' + PERIODS.concat(DERIVED_PERIODS).join(', '));
 }
 
 /** which day-keys a week or month is made of, given the days that actually exist */
@@ -375,7 +397,7 @@ function acrossCounters(summaries) {
     if (!byKey.has(sum.key)) byKey.set(sum.key, []);
     byKey.get(sum.key).push({
       till: { id: (sum.till && sum.till.id) || null, name: (sum.till && sum.till.name) || null },
-      totals: sum.totals, at: sum.summarised_at || null,
+      totals: sum.totals, at: sum.summarised_at || null, source: sum.source || null,
     });
   }
   /* ⭐ newest period first, which is how every screen that reads this wants it */
@@ -383,7 +405,14 @@ function acrossCounters(summaries) {
     key,
     totals: fold(byKey.get(key).map((p) => p.totals)),
     counters: byKey.get(key),
+    /* ⭐ v1.66.0 — the parts the counters were folded from (union), so coverage() still says "short" on the shop-wide row; null when none said */
+    source: sourceUnion_(byKey.get(key)),
   }));
+}
+function sourceUnion_(parts) {
+  const all = new Set();
+  for (const p of parts) for (const k of (p.source || [])) all.add(k);
+  return all.size ? Array.from(all).sort() : null;
 }
 
 /**
@@ -403,7 +432,7 @@ function acrossCounters(summaries) {
  */
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'];
-const FULL = { day: 1, week: 7, month: 28, year: 12 };
+const FULL = { day: 1, week: 7, month: 28, quarter: 3, year: 12 };
 function coverage(sum) {
   const src = (sum && sum.source) || null;
   const period = sum && sum.period;
@@ -411,11 +440,11 @@ function coverage(sum) {
   const parts = src.length;
   const full = FULL[period] || 0;
   /* ⚠️ A MONTH IS 28..31 DAYS, so "full" cannot be an equality — only a floor, or February is always short */
-  const partial = period === 'year' ? parts < 12 : (period === 'week' ? parts < 7 : (period === 'month' ? parts < 28 : false));
+  const partial = (period === 'year' || period === 'quarter' || period === 'week' || period === 'month') ? parts < full : false;
   if (!partial) return { partial: false, parts: parts, from: src[0], to: src[parts - 1], say: '' };
   const to = src[parts - 1];
   let say = 'up to ' + to;
-  if (period === 'year') {
+  if (period === 'year' || period === 'quarter') {
     /* ⭐ '2026-08' reads as August to a person; the key does not. */
     const m = /^(\d{4})-(\d{2})$/.exec(String(to));
     if (m) say = 'up to ' + MONTHS[Number(m[2]) - 1] + ' ' + m[1];
@@ -423,7 +452,184 @@ function coverage(sum) {
   return { partial: true, parts: parts, from: src[0], to: to, say: say };
 }
 
-const EXPORTS = { coverage, isReturn, isExpense, isStockNote, totals, fold, dayKey, yearKey, weekKey, monthKey, keyOf, daysIn, isClosed, summary, chitOf, refOf, PERIODS, planPurge, FLOOR_DAYS, MAX_PER_RUN, acrossCounters };
+/**
+ * ── ⭐⭐⭐ THE SERIES: 52 WEEKS · 12 MONTHS · QUARTERS · YEARS, EACH BESIDE LAST YEAR (v1.66.0 · RPT1) ─────────
+ *
+ * Athi, 2026-10-17: *"no one wants to see the text, only pictures, comparison … 52 weeks, 12 months, quarter, say 7
+ * years of annual comparison."* ONE comparison calculation, here, so the server, the back office and the shop PC
+ * (offline) draw the same trend — a page never computes a second answer. docs/planning/metrics/REQUIREMENT.md §3.
+ * FLOW: R2R · reports. Pure: `now`, `fyStart` and `currency` are passed in; there is no clock and no default year.
+ */
+const MONTH_RE = /^(\d{4})-(0[1-9]|1[0-2])$/;   /* '2026-27' is a year, not a 27th month */
+
+/**
+ * fromMonths(monthRows, fyStart, period = 'quarter' | 'year') → one row per quarter (or year), newest first:
+ * { period, key, totals (fold of its months), source: [its month keys], parts_short: [months that are short themselves] }.
+ * ⚠️ ONE ROW PER MONTH (acrossCounters() output, or one counter's months). A month seen twice is refused, because a
+ * re-send folded twice doubles the quarter — the worst thing this could do, and it would look like a good quarter.
+ */
+function fromMonths(monthRows, fyStart, period) {
+  const p = period || 'quarter';
+  if (p !== 'quarter' && p !== 'year') throw new Error('rollup.fromMonths folds months into a quarter or a year, not "' + p + '"');
+  const opts = { fyStart: fyStartOf_(fyStart, 'rollup.fromMonths') };
+  const seen = new Set(), byKey = new Map();
+  for (const r of (monthRows || [])) {
+    if (!r || !r.totals) continue;
+    if (!MONTH_RE.test(String(r.key))) throw new Error('rollup.fromMonths: "' + r.key + '" is not a month key (YYYY-MM)');
+    if (seen.has(r.key)) throw new Error('rollup.fromMonths: month ' + r.key + ' appears twice — pass one row per month (acrossCounters() output)');
+    seen.add(r.key);
+    const k = keyOf(p, r.key + '-01', opts);
+    if (!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k).push(r);
+  }
+  return Array.from(byKey.keys()).sort().reverse().map((key) => monthFold_(p, key, byKey.get(key)));
+}
+function monthFold_(period, key, rows) {
+  rows.sort((a, b) => (a.key < b.key ? -1 : 1));
+  return {
+    period, key,
+    totals: fold(rows.map((r) => r.totals)),
+    source: rows.map((r) => r.key),
+    /* a month that is itself short (coverage()'s rule) makes its quarter or year short too — said, never hidden */
+    parts_short: rows.filter((r) => coverage({ period: 'month', source: r.source }).partial).map((r) => r.key),
+  };
+}
+
+/**
+ * lastYearKey(period, key) → the same period one year earlier, or null when there is none:
+ *   day '2026-03-01' → '2025-03-01' (29 February → null) · week '2026-W10' → '2025-W10' (W53 → null: no week 53 last year)
+ *   month '2026-08' → '2025-08' · quarter '2026-27-Q2' → '2025-26-Q2' ('2026-Q2' → '2025-Q2') · year '2026-27' → '2025-26'.
+ * A key that is not of its period's form throws: that is a caller's bug, not "no last year".
+ */
+function lastYearKey(period, key) {
+  const k = String(key == null ? '' : key);
+  const re = { day: /^(\d{4})-(\d{2})-(\d{2})$/, week: /^(\d{4})-W(\d{2})$/, month: MONTH_RE,
+               quarter: /^(\d{4})(-\d{2})?-Q([1-4])$/, year: /^(\d{4})(-\d{2})?$/ }[period];
+  if (!re) throw new Error('rollup.lastYearKey: no such period "' + period + '"');
+  const m = re.exec(k);
+  if (!m) throw new Error('rollup.lastYearKey: "' + k + '" is not a ' + period + ' key');
+  const y = Number(m[1]) - 1;
+  if (period === 'day') return (m[2] === '02' && m[3] === '29') ? null : y + '-' + m[2] + '-' + m[3];
+  if (period === 'week') return m[2] === '53' ? null : y + '-W' + m[2];
+  if (period === 'month') return y + '-' + m[2];
+  const year = m[2] ? y + '-' + pad((y + 1) % 100) : String(y);   /* the key form says split or single, as yearKey writes it */
+  return period === 'quarter' ? year + '-Q' + m[3] : year;
+}
+
+/* ⚠️ money.decimals' rule, without require('./money') (see roundMoney_): CBMoney on a page, else the same Intl lookup.
+   tests/rollup.test.js holds the two equal. The currency is checked as an ISO code before this is reached. */
+function decimalsOf_(currency) {
+  if (typeof CBMoney !== 'undefined' && CBMoney.decimals) return CBMoney.decimals(currency);
+  const d = new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits;
+  return (Number.isInteger(d) && d >= 0 && d <= 4) ? d : 2;
+}
+/** a summary's major-unit figure → whole minor units of its currency (₹12.34 → 1234, ¥1234 → 1234), half away from zero */
+function toMinor_(major, currency) {
+  const x = Number(major);
+  if (!Number.isFinite(x)) return null;
+  const c = Math.round(Number((Math.abs(x) * Math.pow(10, decimalsOf_(currency))).toPrecision(15)));
+  return (x < 0 && c !== 0) ? -c : c;
+}
+
+/** how many slots each period may ask for — years clamp at 10 (REQUIREMENT §3 rule 7) */
+const SERIES_MAX = { day: 366, week: 53, month: 24, quarter: 12, year: 10 };
+
+/** the options a series cannot guess: each missing one throws in words that name it */
+function seriesOpts_(period, n, opts) {
+  const o = opts || {};
+  if (!SERIES_MAX[period]) throw new Error('rollup.series: no such period "' + period + '" — it is one of ' + Object.keys(SERIES_MAX).join(', '));
+  const count = Math.floor(Number(n));
+  if (!(count >= 1)) throw new Error('rollup.series: n must be a whole number of periods, 1 or more');
+  const fyStart = fyStartOf_(o.fyStart, 'rollup.series');
+  const currency = String(o.currency || '').trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(currency)) throw new Error('rollup.series needs currency — the shop\'s ISO code (INR, AUD, AED …) — to give whole minor units; there is no default currency.');
+  if (o.now == null || isNaN(new Date(o.now).getTime())) throw new Error('rollup.series needs now — the moment to measure from; it reads no clock.');
+  return { n: Math.min(count, SERIES_MAX[period]), fyStart, currency, now: o.now };
+}
+
+/**
+ * The shop-wide rows a series reads: stored day · week · month summaries as they are; a quarter folded from months; a
+ * year folded from months, and a STORED year only where no month exists AND its own months all fall in that year under
+ * this fyStart — a year written with the old April default on a July shop is left out, not shown under the wrong year.
+ */
+function seriesRows_(period, summaries, fyStart) {
+  const of = (p) => acrossCounters((summaries || []).filter((s) => s && s.period === p));
+  if (period === 'day' || period === 'week' || period === 'month') return of(period);
+  const folded = fromMonths(of('month'), fyStart, period);
+  if (period === 'quarter') return folded;
+  const have = new Set(folded.map((r) => r.key));
+  const fits = (r) => (r.source || []).every((m) => MONTH_RE.test(m) && yearKey(m + '-01', fyStart) === r.key);
+  return folded.concat(of('year').filter((r) => !have.has(r.key) && fits(r)));
+}
+
+/** the n slot keys ending at the period that holds `now`, oldest first (left → right on a chart) */
+function slotKeys_(period, n, now, fyStart) {
+  const keys = [], back = { month: 1, quarter: 3, year: 12 }[period];
+  const t = new Date(dayKey(now) + 'T00:00:00Z');
+  for (let i = 0; i < n; i++) {
+    keys.unshift(keyOf(period, t, { fyStart }));
+    if (back) { t.setUTCDate(1); t.setUTCMonth(t.getUTCMonth() - back); } else t.setUTCDate(t.getUTCDate() - (period === 'week' ? 7 : 1));
+  }
+  return keys;
+}
+
+/** how many parts make the period whole: a week 7 days, a month its own days, a quarter 3 months, a year 12 */
+function expectedParts_(period, key) {
+  if (period === 'month') { const m = MONTH_RE.exec(key); return new Date(Date.UTC(+m[1], +m[2], 0)).getUTCDate(); }
+  return { day: 1, week: 7, quarter: 3, year: 12 }[period];
+}
+
+/** a slot's coverage: short = coverage()'s one rule (or a short month inside it); partial = the period is still running */
+function coverageOf_(period, key, row, o) {
+  const expected = expectedParts_(period, key);
+  const partial = !isClosed(period, key, o.now, { fyStart: o.fyStart });
+  if (!row) return { expected, seen: 0, short: false, partial };
+  const src = row.source && row.source.length ? row.source : null;
+  const short = coverage({ period, source: src }).partial || !!(row.parts_short && row.parts_short.length);
+  /* read from the bills themselves (no source): whole by construction */
+  return { expected, seen: src ? src.length : expected, short, partial };
+}
+
+/** one slot. ⚠️ change_pct is null — NEVER 0 — unless this slot and last year's are both whole, closed and last year sold something */
+function slot_(period, key, byKey, o) {
+  const row = byKey.get(key) || null;
+  const lyKey = lastYearKey(period, key);
+  const ly = (lyKey && byKey.get(lyKey)) || null;
+  const cov = coverageOf_(period, key, row, o);
+  const lyShort = !!ly && coverageOf_(period, lyKey, ly, o).short;
+  const gross = row ? toMinor_(row.totals.gross, o.currency) : null;
+  const lyGross = ly ? toMinor_(ly.totals.gross, o.currency) : null;
+  const comparable = row && ly && !cov.short && !cov.partial && !lyShort && lyGross > 0;
+  return {
+    key,
+    gross_minor: gross,
+    total_minor: row ? toMinor_(row.totals.total, o.currency) : null,
+    bills: row ? (Number(row.totals.count) || 0) : null,
+    coverage: cov,
+    last_year: { key: lyKey, gross_minor: lyGross, short: lyShort },
+    change_pct: comparable ? r2(((gross - lyGross) * 100) / lyGross) : null,
+  };
+}
+
+/**
+ * series(period, n, summaries, { fyStart, currency, now }) → [{ key, gross_minor, total_minor, bills,
+ *   coverage: { expected, seen, short, partial }, last_year: { key, gross_minor, short }, change_pct }], newest LAST.
+ *
+ *   period     'week' (ISO, Monday) · 'month' · 'quarter' (3 months of the shop's year) · 'year' (the shop's own) · 'day'
+ *   summaries  stored summary records (summary() shape, any counters, NEWEST FIRST — acrossCounters' rule); quarters and
+ *              years are folded from the month summaries; pass last year's too, or there is nothing to compare with
+ *   fyStart    1-12, REQUIRED for every period (yearKey's April default is kept only for its adopted callers)
+ *
+ * Every figure is an integer in minor units, or null when there is no record (a slot with no summary is null, never 0).
+ * The lead figure is sales (gross); change_pct compares gross with the same slot last year, to 2 decimals.
+ */
+function series(period, n, summaries, opts) {
+  const o = seriesOpts_(period, n, opts);
+  const byKey = new Map(seriesRows_(period, summaries, o.fyStart).map((r) => [r.key, r]));
+  return slotKeys_(period, o.n, o.now, o.fyStart).map((key) => slot_(period, key, byKey, o));
+}
+
+const EXPORTS = { coverage, isReturn, isExpense, isStockNote, totals, fold, dayKey, yearKey, weekKey, monthKey, keyOf, daysIn, isClosed, summary, chitOf, refOf, PERIODS, planPurge, FLOOR_DAYS, MAX_PER_RUN, acrossCounters, quarterKey, DERIVED_PERIODS, fromMonths, lastYearKey, series };
 
 /**
  * ⚠️ NO SELF-ASSIGNED GLOBAL HERE, DELIBERATELY ([TILL-125]). scripts/vendor-till.cjs wrapForBrowser() turns

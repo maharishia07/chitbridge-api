@@ -800,6 +800,14 @@
       "status": 404,
       "extra": true
     },
+    "GET /api/events/stream": {
+      "file": "events.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": false,
+      "extra": true,
+      "why": "event stream held open: the ticket is checked in memory, no database read"
+    },
     "GET /api/facts/account": {
       "file": "facts.js",
       "trips": 1,
@@ -1397,6 +1405,14 @@
       "status": 200
     },
     "GET /api/till/stock": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/summary": {
       "file": "till.js",
       "trips": 1,
       "wire": 4,

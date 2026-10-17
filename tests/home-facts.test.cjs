@@ -63,6 +63,9 @@ function chits() {
 function answer(text, params) {
   sent.push(String(text));
   const sql = String(text);
+  /* RPT2: the teaser's two statements — the shop's year (identities + books_setting + entity_governance) and the week summaries */
+  if (/AS gov\b/.test(sql)) return { rows: F.shopYear ? [F.shopYear] : [] };
+  if (/FROM chit_header h/.test(sql) && /'summary'/.test(sql) && params && params[1] === 'week') return { rows: F.weeks || [] };
   if (/FROM chit_header h/.test(sql) && /'summary'/.test(sql)) return { rows: F.summary ? [summaryRow(F.stale ? '2026-01-01' : todayKey)] : [] };
   if (/FROM identities WHERE identity_id = \$1/.test(sql) && /jsonb_agg/.test(sql)) {
     return { rows: [{ country: 'IN', currency_code: 'INR',
@@ -165,6 +168,30 @@ const get = (port, p) => new Promise((ok) => {
   t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['C1 open']);
   t('till: ...and no bills/takings figure', Object.keys(r.json.figures), ['counters_open']);
   F.summary = true;
+  /* RPT2 · the teaser: 8 ISO weeks of sales + the newest closed week against the same week last year — rollup.series, in the same trip */
+  {
+    const R = require(API + '/lib/rollup');
+    const wk = (n) => R.weekKey(new Date(Date.now() - n * 7 * DAYS));
+    const weekRow = (key, gross) => ({ chit_id: 'w' + key, created_at: new Date(), business_json: { summary: { period: 'week', key, till: { id: 'C1' }, totals: { count: 10, returns: 0, gross, refunds: 0, expenseCount: 0, expenses: 0, total: gross, by: {} } } } });
+    const base = (await g('till')).trips;   /* the card's own trips without a teaser (the Day book read may add one) */
+    const rows = [];
+    for (let i = 1; i <= 7; i++) rows.push(weekRow(wk(i), 1200), weekRow(R.lastYearKey('week', wk(i)), 1000));
+    rows.sort((a, b) => (a.business_json.summary.key < b.business_json.summary.key ? 1 : -1));   /* newest first, as the statement orders */
+    F.weeks = rows; F.shopYear = { country: 'IN', currency_code: 'INR', books: null, gov: null };
+    r = await g('till');
+    const tr = r.json.figures.trend || {};
+    t('till (RPT2): the teaser is 8 weeks of sales in minor units, oldest first; this week (no summary yet) is null, never 0', tr.spark, [120000, 120000, 120000, 120000, 120000, 120000, 120000, null]);
+    t('till (RPT2): vs last year = the engine\'s change for the newest closed week (1200 vs 1000)', tr.vs_last_year_pct, 20);
+    t('till (RPT2): ...and adds no trip (it rides in the till card\'s readBatch)', r.trips, base);
+    F.weeks = rows.filter((x) => x.business_json.summary.key >= wk(7));   /* no last year at all */
+    r = await g('till');
+    t('till (RPT2): no last year -> vs_last_year_pct null (omitted, never 0%)', r.json.figures.trend && r.json.figures.trend.vs_last_year_pct, null);
+    F.shopYear = { country: null, currency_code: null, books: null, gov: null }; r = await g('till');
+    t('till (RPT2): a shop with no country stated gets no teaser (no year guessed)', 'trend' in r.json.figures, false);
+    F.weeks = [weekRow(wk(1), 500)]; F.shopYear = { country: 'AU', currency_code: 'AUD', books: null, gov: null }; r = await g('till');
+    t('till (RPT2): one week with a figure is not a trend -> no teaser', 'trend' in r.json.figures, false);
+    F.weeks = null; F.shopYear = null;
+  }
   WHO = BLIND; r = await g('till');
   t('till: an actor without can_see_costs still sees takings (the old read never hid them)', /"amount":4320\.5\b/.test(r.body), true);
   WHO = OWNER;
@@ -236,7 +263,7 @@ const get = (port, p) => new Promise((ok) => {
   r = await g('rail');
   /* RAIL-LAB-SRV1 (G1): may_sample is the SERVER's may/why - a live shop (population null = the default, live) is refused with a code and a sentence */
   const LIVE_NO = { ok: false, why: 'live_shop', say: 'This is a live shop, so a lab chit cannot be sent from it. Try it in a test shop.' };
-  t('rail: { suppliers, customers, may_sample, in, out, tasks, stuck } - parties are CRM\'s (hidden and merged rows are not parties); in/out/tasks are the Tasks folders; may_sample the lab rule', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 1, stuck: 1 });
+  t('rail: { suppliers, customers, may_sample, in, out, tasks, stuck } - parties are CRM\'s (hidden and merged rows are not parties); in/out/tasks are the Tasks folders; may_sample the lab rule', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 1, stuck: 1, state: 'needs_you' });
   t('rail: the population rides the overdue_days statement (to_jsonb - no failed query before b249, no second identities read)', /to_jsonb\(i\)->>'population'/.test(F.railSql) && sent.filter((q) => /policy_flags->'overdue_days'/.test(q)).length === 1, true);
   /* ⭐ TOUR-FIX1 (Home said 187 in, Tasks › Orders in said 0): the rail and Tasks & Orders answer from ONE reader — the same numbers, asked both ways */
   const wf = await get(port, '/api/work/facts'), wl = await get(port, '/api/work/list?view=orders_in');
@@ -245,12 +272,12 @@ const get = (port, p) => new Promise((ok) => {
   F.population = 'live'; r = await g('rail');
   t('rail: a shop whose population is stated live is refused the same way', r.json.may_sample, LIVE_NO);
   F.population = 'test'; r = await g('rail');
-  t('rail: a lab (test) shop may sample - { ok: true }, the counts unchanged', r.json, { suppliers: 3, customers: 5, may_sample: { ok: true }, in: 1, out: 1, tasks: 1, stuck: 1 });
+  t('rail: a lab (test) shop may sample - { ok: true }, the counts unchanged', r.json, { suppliers: 3, customers: 5, may_sample: { ok: true }, in: 1, out: 1, tasks: 1, stuck: 1, state: 'needs_you' });
   t('rail: the answer is lib/istest.maySample - one rule for the card and the send door', JSON.stringify(require(API + '/lib/istest').maySample('test')) === JSON.stringify(r.json.may_sample) && JSON.stringify(require(API + '/lib/istest').maySample(null)) === JSON.stringify(LIVE_NO), true);
   F.population = undefined;
   t('rail: both CRM list reads leave the shop itself out (H3)', F.crmSql.length >= 2 && F.crmSql.every((q) => /<> \$1/.test(q)), true);
   F.chits = 'own'; r = await g('rail');
-  t('rail: a chit the shop sent to itself is never stuck - an open one is a task, a closed one is nothing', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 2, stuck: 1 });
+  t('rail: a chit the shop sent to itself is never stuck - an open one is a task, a closed one is nothing', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, in: 1, out: 1, tasks: 2, stuck: 1, state: 'needs_you' });
   r = await get(port, '/api/facts/rail/chits');
   t('rail/chits: a note to self is listed (In tab) with stuck:false, self:true, no reason; stuck rows still number the rail', [r.json.items.filter((i) => i.stuck).map((i) => i.chit_id), r.json.items.find((i) => i.chit_id === 'cs1').self, r.json.items.find((i) => i.chit_id === 'cs1').why, r.json.items.some((i) => i.chit_id === 'cs2')], [['a'], true, null, false]);
   F.chits = 'few';
@@ -261,7 +288,7 @@ const get = (port, p) => new Promise((ok) => {
   t('rail/chits: an expense with no total shows its own amount and is flagged own (the list hides it by default)', [exp.value, exp.own], [90, true]);
   F.chits = 'few';
   F.chits = 'many'; r = await g('rail');
-  t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number) - may_sample is still answered', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO });
+  t('rail: a truncated chit read gives no in/out/stuck (omitted, not a wrong number) - may_sample is still answered', r.json, { suppliers: 3, customers: 5, may_sample: LIVE_NO, state: 'in_use' });
   F.chits = 'few';
 
   /* the chits behind the numbers (H1/H4/H10) */
@@ -290,6 +317,15 @@ const get = (port, p) => new Promise((ok) => {
   t('assist: the live answers counted · one trip', [JSON.parse(r.body).lines, trips], [[{ text: '7 answers live', value: 7 }], 1]);
   F.answers = 0; r = await g('assist');
   t('assist: none yet is said in words', JSON.parse(r.body).lines, [{ text: 'No answers published yet', value: 0 }]);
+  /* state: needs_you (a dn line) · in_use (data, nothing pending) · not_started (never used) - the default is home.withState, the card says not_started itself */
+  const st = (x) => JSON.parse(x.body).state;
+  F.disputes = { mine: 1, against: 2 }; t('state: a card with a dn line (disputes against you) -> needs_you', st(await g('disputes')), 'needs_you');
+  F.disputes = { mine: 0, against: 0 }; t('state: disputes with nothing open -> in_use', st(await g('disputes')), 'in_use');
+  F.answers = 7; t('state: assist with answers published, no dn line -> in_use', st(await g('assist')), 'in_use');
+  F.answers = 0; t('state: assist with zero answers -> not_started', st(await g('assist')), 'not_started');
+  const W = require(API + '/lib/home-facts').withState;
+  t('state: withState keeps a card\'s own word', W({ lines: [{ tone: 'dn' }], state: 'not_started' }).state, 'not_started');
+  t('state: withState default, dn -> needs_you, else in_use (also an empty answer)', [W({ lines: [{ tone: 'dn' }] }).state, W({ lines: [{ text: 'x' }] }).state, W({ lines: [] }).state], ['needs_you', 'in_use', 'in_use']);
   r = await g('nonsense');
   t('unknown card -> 404', r.status, 404);
   r = await g('toString');
