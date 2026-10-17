@@ -2,6 +2,12 @@
 /**
  * till.js — THE COUNTER (TILL-SPEC-2026-09-07).
  *
+ * OWNS      the counter's local server on the shop PC: the copy of the shop, the page at 127.0.0.1:7071, the bill queue and its replay,
+ *           the adopted engine files and their releases (engineVersion).
+ * CALLED BY the connector kit's start (the shop PC); the page till.html calls its /api/* routes.
+ * FLOW      start → read connector.json → pair / fetch the snapshot → serve till.html → bill locally → queue → send as chits
+ * CARD      09-counter/till-server
+ *
  * Athi, 2026-09-07: *"someone runs a store without a computer… why can't we develop a desktop application — you download it, we still
  * run everything in the cloud, but the minimum sits on the desktop so the billing works faster."*
  *
@@ -191,9 +197,13 @@ function engineVersion(n) {
   try {
     const t = fs.statSync(file).mtimeMs, hit = ENGINE_V_CACHE.get(file);
     if (hit && hit.t === t) return hit.v;
-    const fd = fs.openSync(file, 'r'), buf = Buffer.alloc(320);
-    const got = fs.readSync(fd, buf, 0, 320, 0); fs.closeSync(fd);
-    const m = buf.slice(0, got).toString('utf8').match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/);
+    /* ⚠️ a BUNDLE's first line names every part ("ADOPTED BUNDLE … tax v1.64.1 — DO NOT EDIT"); with 13 parts (7 country packs) it outgrew
+       the 320 bytes read before, and the tax engine reported 'unversioned' (17 Oct). Read the head, and for a bundle take THIS engine's part. */
+    const fd = fs.openSync(file, 'r'), buf = Buffer.alloc(2048);
+    const got = fs.readSync(fd, buf, 0, 2048, 0); fs.closeSync(fd);
+    const head = buf.slice(0, got).toString('utf8'), line = head.split('\n')[0];
+    const part = /ADOPTED BUNDLE/.test(line) && line.match(new RegExp('(?:^|[\\s+·])' + n + ' v(\\d+\\.\\d+\\.\\d+)'));
+    const m = part || head.match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/);
     const v = m ? m[1] : 'unversioned';
     ENGINE_V_CACHE.set(file, { t: t, v: v });
     return v;
