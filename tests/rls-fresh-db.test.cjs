@@ -19,8 +19,11 @@ const URL = process.env.CB_FRESH_DB_URL || process.env.DATABASE_URL_FRESH;
 if (!URL) { console.log('  - rls-fresh-db: CB_FRESH_DB_URL not set — skipped (the fresh-db CI job sets it)\n\n  0 checks'); process.exit(0); }
 
 const { Pool } = require(path.join(__dirname, '..', 'node_modules', 'pg'));
-const baseline = require('../db/rls-baseline.json');
+/* BCP-MIG (17 Oct): the census is under `.tables` — reading the file's top level compared two keys (`at`, `tables`) and passed vacuously */
+const baseline = require('../db/rls-baseline.json').tables;
 const CORE_FORCED = ['chit_header', 'chit_status', 'chit_detail', 'state_log', 'catalogue_items'];
+/** forced on prod AFTER the baseline census (09-26) was taken: b270 supplier_list, run by the owner 09-29 — the rebuild must force it too */
+const FORCED_SINCE_BASELINE = ['supplier_list'];
 /** a plain two-column tenant table with no foreign key, so a row can be planted without a parent (b99 ai_usage) */
 const PROBE_TABLE = 'ai_usage';
 
@@ -45,6 +48,8 @@ function checkCensus(census) {
   check('every table prod has RLS on has it on here', noRls.length === 0, noRls.join(', '));
   const core = CORE_FORCED.filter((n) => !(census.get(n) || {}).forced);
   check('the five core chit tables are FORCE ROW LEVEL SECURITY', core.length === 0, core.join(', '));
+  const since = FORCED_SINCE_BASELINE.filter((n) => !(census.get(n) || {}).forced);
+  check('tables forced on prod since the census (supplier_list, b270) are forced here', since.length === 0, since.join(', '));
 }
 
 /** run fn as cb_app inside one transaction that is always rolled back; `entity` is the app.current_entity (or null for none) */
