@@ -444,6 +444,12 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
  * entity's bridge_id, and the key must win — otherwise a business could shadow another's shop by choosing the
  * right handle.
  */
+/** N3: today as the shop writes a date - its identity's zone and locale (country-setup.clockOf); nothing stated -> UTC */
+async function shopDatePhrase(identityId) {
+  const countrySetup = require('../lib/country-setup');
+  const row = (await query('SELECT country, timezone FROM identities WHERE identity_id = $1', [identityId])).rows[0];
+  return countrySetup.datePhrase(new Date(), countrySetup.clockOf(row));
+}
 async function resolveEntity(handle) {
   const r = await query(
     /* population: the storefront support path stamps it on the ticket (b249) - without it every buyer ticket
@@ -1190,7 +1196,7 @@ router.post('/:bridge_id/order/confirm',
         summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map(g => g.missing), captured: Object.keys(captured) };
       } catch (e) { logger.fellBack('catalogue: the helper failed — carried on without it', e); /* advisory is best-effort */ }
       const auto_subject = `Order from ${c.display_name} — ` +
-        new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        await shopDatePhrase(entity.identity_id);   /* N3: the shop's zone and locale, not India's */
       const all_recipients = [
         { entity_id: c.identity_id,      bridge_id: c.bridge_id,      display_name: c.display_name,      role: 'sender' },
         { entity_id: entity.identity_id, bridge_id: entity.bridge_id, display_name: entity.display_name, role: 'receiver' }

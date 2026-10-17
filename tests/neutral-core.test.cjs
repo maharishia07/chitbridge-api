@@ -48,6 +48,21 @@ const fs = require('fs');
   ok('N2: the GST Rule 46 readiness item is the Indian shop alone', readySrc.includes('if (isIndiaParty(party)) items.push(invoiceHeaderItem(party, rung, note));') && readySrc.includes("String(party.country || '').toUpperCase() === 'IN'"));
 
 
+  /* ── N3: time - the shop's zone and locale; UTC when nothing is stated ── */
+  const inClock = CS.clockOf({ country: 'IN', timezone: null });
+  ok('N3: clockOf an India row -> Asia/Kolkata + en-IN (the pack), as the subject date always read', inClock.zone === 'Asia/Kolkata' && inClock.locale === 'en-IN');
+  ok('N3: clockOf names the shop\'s own zone first, and nothing stated -> no clock (UTC), never India\'s', CS.clockOf({ country: 'IN', timezone: 'Asia/Dubai' }).zone === 'Asia/Dubai' && CS.clockOf(null).zone === null && CS.clockOf({ country: null, timezone: null }).locale === null);
+  const lateEvening = '2026-10-17T20:00:00Z';
+  ok('N3: datePhrase - an India shop reads 18 Oct 2026 at 01:30 its time; the same moment, no clock stated, is 17 Oct 2026 (UTC)', CS.datePhrase(lateEvening, inClock) === '18 Oct 2026' && CS.datePhrase(lateEvening, null) === '17 Oct 2026');
+  ok('N3: datePhrase - a Sydney shop writes its own day', CS.datePhrase('2026-10-17T20:00:00Z', CS.clockOf({ country: 'AU', timezone: 'Australia/Sydney' })).startsWith('18 Oct 2026') || /18/.test(CS.datePhrase('2026-10-17T20:00:00Z', CS.clockOf({ country: 'AU', timezone: 'Australia/Sydney' }))));
+  const zoneSql = CS.zoneCaseSql('z');
+  ok('N3: the SQL zone is built from the packs (India\'s row says Asia/Kolkata) with no literal in the route', /WHEN 'IN' THEN 'Asia\/Kolkata'/.test(zoneSql) && !/Asia\/Kolkata/.test(stripComments(fs.readFileSync(path.join(API, 'routes/chits.js'), 'utf8'))) && /, 'UTC'\)`;/.test(fs.readFileSync(path.join(API, 'routes/chits.js'), 'utf8')));
+  const offers = require(path.join(API, 'lib/network-offers'));
+  const oldIst = (now) => { const IST = 330 * 60000; const d = new Date(new Date(now).getTime() + IST); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 0, 0) - IST).toISOString(); };
+  const sameAsBefore = ['2026-10-17T00:00:00Z', '2026-10-17T10:00:00Z', '2026-10-17T18:29:59Z', '2026-10-17T18:30:00Z', '2026-12-31T23:59:00Z', '2027-02-28T12:00:00Z'].every((moment) => offers.nextOpening(moment, 'Asia/Kolkata') === oldIst(moment) && offers.nextOpening(moment, 'IN') === oldIst(moment));
+  ok('N3: nextOpening for an India brand is exactly the old IST midnight, at six instants', sameAsBefore);
+  ok('N3: nextOpening with no zone stated is UTC midnight, and a Sydney brand opens at Sydney midnight', offers.nextOpening('2026-10-17T10:00:00Z') === '2026-10-18T00:00:00.000Z' && offers.nextOpening('2026-10-17T10:00:00Z', 'Australia/Sydney') === '2026-10-17T13:00:00.000Z');
+
 /* ── N1 · THE RATCHET: no NEW 'INR' / ₹ / Asia/Kolkata / en-IN literal outside an India-pack path ─────────────────────────────────────────
    Athi, 2026-10-17: "a record states its own country/currency/zone/language; a reader that finds none says so - never guesses India."
    Every code literal of those four (comments stripped) in lib/ routes/ middleware/ is counted. A file NOT in ALLOW may hold none; a file in ALLOW
@@ -61,8 +76,6 @@ const ALLOW = {
   'lib/parallel-run.js': [1, 'the GSTR-3B parallel run prints India\'s return in rupees'],
   'lib/points.js': [1, 'the points line groups with the caller\'s locale, en-IN only when the caller passed none - N3 backlog'],
   'lib/tax-governance.js': [2, 'an INR sub-region (TN, HI) with no tax block inherits India\'s GST slabs - an IN-only branch'],
-  'routes/chits.js': [2, 'N3 pending in this run: the subject date locale (line 187) and the day-filter zone (line 2076)'],
-  'routes/catalogue.js': [1, 'N3 pending in this run: the storefront order\'s subject date locale'],
   'routes/connectors.js': [1, 'the connector SAMPLE document (a test payload: amount random, currency named)'],
   'routes/products.js': [1, 'dropForeignListPrices: the starter lists\' figures ARE rupees - kept for a rupee shop only; an IN-only branch'],
   'routes/relationships.js': [2, 'offerMoney(): the rupee branch for a rupee supplier; every other currency reads its own code'],

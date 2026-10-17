@@ -16,6 +16,10 @@
  * ⚠️ A release with no time takes effect at the NEXT OPENING. Athi: *"not to change in the middle of the day."* Releasing
  * now is possible, and has to be asked for in so many words.
  */
+/* OWNS a brand's network offers: release to the stores, withdraw, what each store holds
+ * CALLED BY server.js (mounted under /api/network-offers); the web Offers screens
+ * FLOW auth -> the brand's own offer -> release / withdraw at the brand's next opening (its own zone) -> pushToNetwork
+ * CARD network-and-trade/network-offers */
 'use strict';
 const express = require('express');
 const log = require('../lib/logger');
@@ -224,7 +228,7 @@ router.post('/:id/release', auth, sessionOnly, async (req, res) => {
     if (!o) return res.status(404).json({ error: 'Not found', message: 'That is not one of your offers.' });
     if (o.status !== 'live') return res.status(409).json({ error: 'Not live', message: 'Make the offer live before releasing it to your stores.' });
     const b = req.body || {};
-    const at = net.whenOf(b.at, net.nextOpening());
+    const at = net.whenOf(b.at, await net.nextOpeningFor(me));
     const until = b.until ? net.whenOf(b.until, null) : null;
     if (until && until <= at) return res.status(400).json({ error: 'validation', message: 'The offer would end before it starts.' });
     /**
@@ -257,7 +261,7 @@ router.post('/:id/withdraw', auth, sessionOnly, async (req, res) => {
     const { flags } = await net.flagsOf(me);
     const cur = ((flags.network_offers || {}).released || {})[o.definition_id];
     if (!cur) return res.status(409).json({ error: 'Not released', message: 'That offer was never released to your stores.' });
-    const until = net.whenOf((req.body || {}).at, net.nextOpening());
+    const until = net.whenOf((req.body || {}).at, await net.nextOpeningFor(me));
     await net.setReleased(me, o.definition_id, Object.assign({}, cur, { until, withdrawn_at: new Date().toISOString() }));
     const pushed = await net.pushToNetwork(me, 'network offer withdrawn');
     res.json({ ok: true, id: o.definition_id, until, pushed });

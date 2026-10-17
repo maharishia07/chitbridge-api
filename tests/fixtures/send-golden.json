@@ -44,7 +44,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -518,7 +518,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -999,7 +999,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -1534,7 +1534,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -2029,7 +2029,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -2672,7 +2672,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -3132,6 +3132,13 @@
   "calls": [
    {
     "via": "query",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
+    "params": [
+     "SHOP"
+    ]
+   },
+   {
+    "via": "query",
     "sql": "SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
@@ -3416,7 +3423,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -3785,7 +3792,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -4110,7 +4117,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -4486,7 +4493,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -4955,7 +4962,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -5711,7 +5718,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -5739,7 +5746,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -5819,7 +5826,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -6397,7 +6404,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -6927,7 +6934,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -6990,7 +6997,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -7698,7 +7705,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -7719,7 +7726,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -7771,7 +7778,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8300,7 +8307,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8725,7 +8732,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8741,7 +8748,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8757,7 +8764,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8773,7 +8780,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8789,7 +8796,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8812,7 +8819,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8849,7 +8856,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -8928,7 +8935,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -9516,7 +9523,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -9592,7 +9599,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -9704,7 +9711,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -10225,7 +10232,7 @@
    },
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -10682,7 +10689,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -11021,7 +11028,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -11418,7 +11425,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -11948,7 +11955,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
@@ -12524,7 +12531,7 @@
   "calls": [
    {
     "via": "query",
-    "sql": "SELECT country, currency_code FROM identities WHERE identity_id = $1",
+    "sql": "SELECT country, currency_code, timezone FROM identities WHERE identity_id = $1",
     "params": [
      "SHOP"
     ]
