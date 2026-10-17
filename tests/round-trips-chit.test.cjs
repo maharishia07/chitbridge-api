@@ -18,7 +18,7 @@
  * opened to run a single SELECT costs four trips, not one. That is the measurement that matters, and counting
  * only `db.query` calls would have said this endpoint was cheap.
  */
-const API = 'C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 
 let queries = [];
 let txOpens = 0;

@@ -11,7 +11,7 @@
  * ⚠️ RED-PROOFED: delete the `if (hit ...) return hit.value` line and test 1 fails; move the `cache.set`
  * above the `await fn()` and test 3 fails. Neither can pass by accident.
  */
-const cc = require('C:/dev/chitbridge-api/lib/confcache');
+const cc = require('../lib/confcache');
 
 let pass = 0, fail = 0;
 const t = (name, cond, extra) => {

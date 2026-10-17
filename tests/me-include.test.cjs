@@ -24,7 +24,7 @@
  *     profile still paints without its channels — exactly as it does today when one of the four fails.
  *     Degrade to less, never to nothing.
  */
-const API='C:/dev/chitbridge-api';
+const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 let hits=[];
 require.cache[require.resolve(API+'/db')]={exports:{
   query:async(sql,args)=>{ hits.push('db');
