@@ -1104,7 +1104,7 @@ async function sendMoney(st, req, res) {
            so priceIncludesTax arrived as undefined and !!undefined taxed a GST-inclusive shelf price as
            if it were ex-tax. sRow already carries policy_flags from the query two lines up; flagOf() reads
            the SELLER's own setting from it, no second query. */
-        const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax') === 'yes';
+        const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax', sRow.country) === 'yes';
         /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever
            reaches DocDtls.Dt (metadata, no rate lookup keys on it), but a bill queued offline and sent days
            later must say when it was actually billed, same reasoning as the offers guard just above. */

@@ -14,7 +14,7 @@ function grab(n) {
   return h.slice(at, i + 1);
 }
 const MONEY = require('../lib/money');
-const FNS = ['shopCur', 'curSym', 'docCountry', 'shopPack', 'taxIdLabel', 'invoiceRule', 'buyerNamed', 'buyerWarnWords', 'buyerFromMajor', 'slipBuyerHTML', 'shopMinor',
+const FNS = ['shopCur', 'curSym', 'docCountry', 'shopPack', 'registryTaxId', 'countryWords', 'taxIdLabel', 'invoiceRule', 'buyerNamed', 'buyerWarnWords', 'buyerFromMajor', 'slipBuyerHTML', 'shopMinor',
   'booksMajor', 'fmtCount', 'voiceLangs', 'tillLang', 'langLabel'];
 function page(country, currency, o) {
   o = o || {};

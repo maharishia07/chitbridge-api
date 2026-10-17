@@ -113,7 +113,11 @@ const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', 'function billMoney(', 'fu
   /* CX1 (2026-10-13): what the shop's law asks of the bill (pack.taxInvoice — none in India's pack, so nothing here changes) */
   'function invoiceRule(', 'function buyerNamed(', 'function buyerWarnWords(', 'function buyerFromMajor(', 'function slipBuyerHTML(', 'function shopMinor(', 'function booksMajor(',
   /* …and a refused sale is written down before it is said (M49) */
-  'function saleStop(', 'function saleStopNote('];
+  'function saleStop(', 'function saleStopNote(',
+  /* counter batch 1 + 2 (2026-10-17): the registry's words, the slip's title per language, the one-head word, the per-rate foot, cash rounding */
+  'function countryWords(', 'function registryTaxId(', 'var SLIP_TITLE_EN', 'function slipTitleKey(', 'function slipTitleHTML(', 'function slipTitleOf(', 'function slipTaxed(',
+  'function reducedNoteHTML(', 'function slipCashRoundHTML(', 'function taxHeadWord(', 'function domesticFootHTML(', 'function perRateFootHTML(',
+  'function cashRule(', 'function cashDue(', 'function cashRoundWords(', 'function restBeforeLast(', 'function changeOf(', 'function cashRoundOf(', 'function tenderParts('];
 
 /** one bill rung at the counter: the page's finish() over a cart, as it runs in a browser — returns what it saved and printed */
 async function ring(o) {

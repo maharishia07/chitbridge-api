@@ -888,7 +888,7 @@ router.get('/snapshot', auth, async (req, res) => {
       reward,                       /* ⚠️ null is the ordinary case — most shops run no programme, and the counter shows nothing */
       policy: { books_at: flags.books_at || 'accepted', qty_zero_hides: flags.qty_zero_hides || 'off',
                 /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
-                price_includes_tax: String(flags.price_includes_tax || 'yes'),
+                price_includes_tax: policy.flagOf(row.policy_flags, 'price_includes_tax', row.country),   /* TILL-B2: unset → the country's convention (US: excluded) */
                 /* ⭐ CAN THIS SERVER TRANSCRIBE? The counter picks a recogniser without a round trip to find out. */
                 speech: speech.available() ? 'server' : 'browser',
                 tolerance: { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp),

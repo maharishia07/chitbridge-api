@@ -85,7 +85,7 @@ test('G1: the answer says tax by rate, the currency and the pack version — AU 
   assert.equal(r.body.money.by_rate['10'].tax, 10);
 });
 test('G1: a country with no pack is computed but says so — currency null, the code and the sentence', async () => {
-  SHOP.row = shopRow({ gstin: 'X1', name: 'Diner', country: 'US' }); SHOP.items = [];
+  SHOP.row = shopRow({ gstin: 'X1', name: 'Diner', country: 'ZZ' });   /* US has a pack since engines v1.6x — ZZ has none */ SHOP.items = [];
   const r = await post({ lines: [{ name: 'Pie', qty: 1, price: 10, gst_rate: 0 }] });
   assert.equal(r.status, 200); assert.equal(r.body.currency, null); assert.equal(r.body.pack.code, 'NO_COUNTRY_PACK'); assert.ok(r.body.pack.why);
 });
