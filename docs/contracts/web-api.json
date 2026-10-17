@@ -2896,6 +2896,45 @@
     "agreement.runs"
    ]
   },
+  "GET /api/till/summary #compare": {
+   "status": 200,
+   "example": {
+    "period": "month",
+    "n": 12,
+    "currency": "AUD",
+    "fy_start_month": 7,
+    "slots": [
+     {
+      "key": "2025-11",
+      "gross_minor": 110000,
+      "total_minor": 110000,
+      "bills": 4,
+      "coverage": {
+       "expected": 30,
+       "seen": 30,
+       "short": false,
+       "partial": false
+      },
+      "last_year": {
+       "key": "2024-11",
+       "gross_minor": 100000,
+       "short": false
+      },
+      "change_pct": 10
+     }
+    ]
+   },
+   "optional": []
+  },
+  "GET /api/till/summary #compare-422": {
+   "status": 422,
+   "example": {
+    "error": "Set the shop country first. The books never open on a guess.",
+    "code": "NO_COUNTRY",
+    "message": "Set the shop country first. The books never open on a guess."
+   },
+   "optional": []
+  },
   "GET /api/work/:chit_id": {
    "status": 200,
    "example": {
