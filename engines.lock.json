@@ -2,9 +2,9 @@
   "$comment": "The engines this platform ADOPTS from chitbridge-engines — ONE PIN PER ENGINE, so a rollout moves one engine at a time. Change a pin, then run: node ../chitbridge-engines/tools/adopt.cjs . — never edit an adopted file.",
   "pins": {
     "money": "1.0.0",
-    "tax-packs": "1.37.0",
-    "tax-slab": "1.2.0",
-    "tax": "1.49.0",
+    "tax-packs": "1.64.1",
+    "tax-slab": "1.64.1",
+    "tax": "1.64.1",
     "pricing": "1.3.0",
     "offers": "1.49.0",
     "variant": "1.4.0",
@@ -29,20 +29,26 @@
     "orderhub": "1.5.0",
     "rollup": "1.32.0",
     "convert": "1.5.0",
-    "accounts-packs": "1.42.0",
-    "receivables": "1.44.1",
-    "posting": "1.45.0",
-    "ledger": "1.44.1",
-    "bookpack": "1.44.1",
-    "period": "1.44.1",
-    "gst-returns": "1.39.0",
+    "accounts-packs": "1.64.1",
+    "receivables": "1.64.1",
+    "posting": "1.64.1",
+    "ledger": "1.64.1",
+    "bookpack": "1.64.1",
+    "period": "1.64.1",
+    "gst-returns": "1.64.1",
     "rail": "1.29.0",
     "workflow": "1.33.0",
-    "reg-in": "1.48.1",
-    "reg-au": "1.48.1",
-    "reg-ae": "1.48.1",
-    "regulation": "1.48.1",
-    "chart": "1.42.0"
+    "pack-kit": "1.64.1",
+    "reg-in": "1.64.1",
+    "reg-au": "1.64.1",
+    "reg-ae": "1.64.1",
+    "reg-sg": "1.64.1",
+    "reg-my": "1.64.1",
+    "reg-us": "1.64.1",
+    "reg-jp": "1.64.1",
+    "regulation": "1.64.1",
+    "country": "1.64.1",
+    "chart": "1.64.1"
   },
   "adopt": {
     "money": [
@@ -161,6 +167,9 @@
     "workflow": [
       "lib/workflow.js"
     ],
+    "pack-kit": [
+      "lib/pack-kit.js"
+    ],
     "reg-in": [
       "lib/reg-in.js"
     ],
@@ -170,8 +179,23 @@
     "reg-ae": [
       "lib/reg-ae.js"
     ],
+    "reg-sg": [
+      "lib/reg-sg.js"
+    ],
+    "reg-my": [
+      "lib/reg-my.js"
+    ],
+    "reg-us": [
+      "lib/reg-us.js"
+    ],
+    "reg-jp": [
+      "lib/reg-jp.js"
+    ],
     "regulation": [
       "lib/regulation.js"
+    ],
+    "country": [
+      "lib/country.js"
     ],
     "chart": [
       "lib/chart.js"
@@ -179,10 +203,16 @@
   },
   "bundles": {
     "lib/tax-engine.browser.js": [
+      "pack-kit",
       "reg-in",
       "reg-au",
       "reg-ae",
+      "reg-sg",
+      "reg-my",
+      "reg-us",
+      "reg-jp",
       "regulation",
+      "country",
       "tax-packs",
       "tax-slab",
       "tax"
@@ -192,7 +222,7 @@
     "money": "1d27c14c8a7240e035e916537fbd77ce945b9083c6efa9d9ec2f579f9ba58e5a",
     "tax-packs": "e3885990e20a64aada0f545316e520176ff3601d9d5a6c6b2d73ce56b00c6248",
     "tax-slab": "439500a95910ff8bd55d4a1c422e2c4e810f509c7a6af2f1cd4e34aa239bc98d",
-    "tax": "62ec56f708bc5697293a8304e205d682dbdf4ca4d6ae904254dbe160ec4907bb",
+    "tax": "de7fdf5117059d8429d1053a5ae3b27ca1cdb6257d990832939261a0a408dae2",
     "pricing": "8fa9a3ec7cae3c049222706433c6fcfac7aaa33cae27d4a259ed60359ba208fd",
     "offers": "c9f544782b39473607d9fde229f52ad41218d01e22f471e1b9b044616ad5f58d",
     "variant": "2b82dcbaba8ad8590623ef72d41979894d4390468abf74d862f158d7d4e48946",
@@ -219,17 +249,23 @@
     "convert": "31b4b4d40a211f0a437ad1b5f4ff394bfb6f63637f05c24323b9846a1e51a5ba",
     "accounts-packs": "68f8d1b497ddf1862a3ef7129a3ac5339851afaa96437ee1cbcc02cceb36707c",
     "receivables": "54d8cab011fee559f22a7e8392a29ca7ed9b561a2038e06c725ae68bdaaade82",
-    "posting": "586173c9d30831645ad504daef4b886309e48ea17f076a112b2a5ac259c8f459",
-    "ledger": "8248af49ff32b8906ff6b9af36645127c9369f33880dd5da5b9a4a3bdef173d9",
+    "posting": "186b44ee7d57dc6d1c95cfb4b9b7d4b86c37a039c5510a5a8e5992e6481f3bab",
+    "ledger": "488cabe73a4c6d199dc107a1bbb00765714c5abf12cd609a47f43602fbb7ea7b",
     "bookpack": "cf530d79fe1eafe64728d6ca158bec2895bc95d4102e661d4e42269e41d2b706",
     "period": "01809ff5778ecdbe38099443c6663e310500bee441a1cd80a63a8479a9c3a9d5",
-    "gst-returns": "d54313ccb3f11a89420365d6cffd57a719a5dd3a656ff7961b0dc7aa138ee182",
+    "gst-returns": "757ffbab01749d7103a8963aba11b0e8d81c3941523426ef9ace4874d8619f64",
     "rail": "62146650c1ae4e0aa47c16625026f2d29039c4d05261c191f899bd0213f1b698",
     "workflow": "f8c7a43048bc1b8453a1c2ec43b6eed7f619feee4c67eaba046c6cea370f0a5b",
-    "reg-in": "2e02f5085f6fd1ad926f49e3315d35f3e476f656b045a0cd659e62808e840bb8",
-    "reg-au": "39bb1eb6853287747ae9f82a67d1de14db1a35172b6bc3d8c78a1c3e56931a38",
-    "reg-ae": "469e5f4c5064049cf6e7a7e400b98eb88e5446e273acafddde29e009dc814128",
-    "regulation": "2a17f548b62f7ac91b79934fe29bd7d5fa81a53cb91a57a3b126b084ec0bc0e7",
+    "pack-kit": "265fed3faa84578d00043d07aef4eab0176827cff617dc583ea1e160a9147f37",
+    "reg-in": "238ebdbf9bd7b16fd851a849be20cee96ef809515223719d1b971445ca9c64e8",
+    "reg-au": "a54072393db494fd03fc2e1d644e0ff218b59c5b063c5bdfb4dd4df679bad537",
+    "reg-ae": "1c661b9d1384d720f6fbc4580529ef33be0eb0b763d6835bec509c67e98d6f57",
+    "reg-sg": "06846cad86d11a0430dc6837aa27d5dbf8b8f3fcbfa91d1b9b6d979fc14290e7",
+    "reg-my": "71ba0952a2d500daf32ee9484f730223b2c6426499ebe7bd3793a3da6bb88bce",
+    "reg-us": "1589959d405decd2737f80a6681fb574a2034301a25ba37cf51590f3ea17b562",
+    "reg-jp": "d940a7b0638f31b073c59e1ac771366677dbc71ee70d22445536c35cdc1692ad",
+    "regulation": "f55881c244d24249c5ef06d8beb3ef8e8a0b0980246b928311b552299958bb29",
+    "country": "9732a8d0e24748b2def104fa222b03fabc136f3a40876d0b873d7290223b21b6",
     "chart": "7201c432d50a3f35038f415cfef71c7ac1652c79ed3aadacca8cea3ec42fed37"
   }
 }

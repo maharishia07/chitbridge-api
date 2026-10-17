@@ -2114,8 +2114,8 @@ router.post('/shop', auth, auth.requireScope('till'), async (req, res) => {
       /* GOV-AU1: a shop with no country has no tax number check to run — it is asked, never checked as India's */
       if (!cc) return res.status(400).json({ error: 'validation', field: 'gstin', code: 'NO_COUNTRY', message: 'Set the shop\u2019s country first (Country setup) — the tax number is checked by its law.' });
       if (cc !== 'IN') {
-        const p = require('../lib/regulation').packFor(cc), id = p && (p.abn || p.trn);
-        const ck = id && typeof id.check === 'function' ? id.check(g) : { ok: true };
+        const id = require('../lib/country').taxId(cc);   /* R5: the registry's check — AU/AE adapters, a new country's own taxId */
+        const ck = id.check ? id.check(g) : { ok: true };
         if (!ck.ok) return res.status(400).json({ error: 'validation', field: 'gstin', message: ck.why || 'That tax number does not check out.' });
       } else {
         const chk = require('../lib/profile-map').gstinChecksum(g);

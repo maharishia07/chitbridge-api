@@ -454,6 +454,10 @@ const ENGINE_OTHER = [
      CL1 (2026-10-12): the UAE pack (AE1) with them, reg-in · regulation at v1.37.0 — the tax bundle below carries the packs ahead of tax-packs, which reads the registry;
      BAS1 (2026-10-12): reg-au · reg-ae at v1.39.0 (the BAS / VAT201 labels carry their ledger roles) */
   'regulation.js', 'reg-in.js', 'reg-au.js', 'reg-ae.js',
+  /* R5 (2026-10-16): the shared country helpers and the country registry, adopted at v1.53.x */
+  'pack-kit.js', 'country.js',
+  /* the country packs added by the runbook (SG v1.54.0 · MY v1.55.0 · US v1.56.0 · JP v1.57.0) — RUNBOOK Q8 lists this step */
+  'reg-sg.js', 'reg-my.js', 'reg-us.js', 'reg-jp.js',
   /* CS2 (2026-10-13): accounts-packs moved to v1.42.0 — the engines' FACADE over the registry (packFor('AU') is the Australia chart) — which reads chart.js, adopted with it */
   'chart.js',
   /* v1.20.0: the month lock and year close (period.js) and the GST returns (gst-returns.js — the API reads its dueDate), ADOPTED the same way */

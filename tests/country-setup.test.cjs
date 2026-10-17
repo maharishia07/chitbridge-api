@@ -3,7 +3,7 @@
  *
  * Proves, through REAL EXPRESS with a stand-in auth, db and store (no database, no network):
  *   · register → setup (India, a GSTIN) → the India pack is active: GET /api/books/status says country.books true, the switch may go on
- *   · a shop in a country with NO pack (Japan — Australia had this role until AU1 shipped reg-au): EVERY books route answers 422 NO_COUNTRY_PACK with the one sentence (not the quiet 404),
+ *   · a shop in a country with NO pack (Brazil — Australia had this role until AU1 shipped reg-au): EVERY books route answers 422 NO_COUNTRY_PACK with the one sentence (not the quiet 404),
  *   · a shop in Australia (AU1, engines v1.36.0): books may open — the AU pack, AUD, the year from July,
  *     the switch (POST /enable) is refused with the same sentence, GET /status carries it so the screen greys the switch WITH its words
  *   · a shop with NO country is refused in words (NO_COUNTRY), never given India
@@ -21,7 +21,7 @@ const express = require('express');
 const API = path.join(__dirname, '..');
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
-const SENTENCE_JP = 'ChitBridge does not keep books for Japan yet — selling and the rail still work; books arrive when its pack ships.';
+const SENTENCE_BR = 'ChitBridge does not keep books for Brazil yet — selling and the rail still work; books arrive when its pack ships.';
 const SHOP = '11111111-1111-4111-8111-111111111111', CUST = '22222222-2222-4222-8222-222222222222';
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Mayur Bhavan' };
 const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor' };
@@ -66,12 +66,12 @@ const call = (port, method, p, body) => new Promise((done) => {
   console.log('\n══ CS1 · Country setup — register → setup → the pack; a pack-less country is said, never silently India ══\n');
   /* ── the words come from the engine, once ── */
   const R = require(path.join(API, 'lib', 'regulation'));
-  ok('engines v1.36.0 adopted: regulation.status is there and says the JP sentence', typeof R.status === 'function' && R.status('JP', { name: 'Japan' }).why === SENTENCE_JP);
-  ok('lookup() still falls back to India for READING old chits, and says so', R.lookup('JP').fallback === true && R.lookup('JP').id === 'IN');
+  ok('engines v1.36.0 adopted: regulation.status is there and says the BR sentence', typeof R.status === 'function' && R.status('BR', { name: 'Brazil' }).why === SENTENCE_BR);
+  ok('lookup() still falls back to India for READING old chits, and says so', R.lookup('BR').fallback === true && R.lookup('BR').id === 'IN');
   ok('AU1 came with it: Australia has its pack — books open, AUD, the year starts in July', R.status('AU').books === true && R.packFor('AU').currency === 'AUD' && R.packFor('AU').fiscalYear.startMonth === 7);
   /* AE1 (engines v1.37.0): the UAE pack — books open, AED, the calendar year, one `vat` head; verified: false until a UAE accountant reads it */
   ok('AE1 (v1.37.0): the UAE has its pack — books open, AED, the calendar year, the vat head, not yet verified', R.status('AE').books === true && R.packFor('AE').currency === 'AED' && R.packFor('AE').fiscalYear.label === 'single' && R.packFor('AE').taxHeads.join() === 'vat' && R.packFor('AE').verified === false);
-  ok('the registry lists India first, then Australia, then the UAE', R.list().map((p) => p.id).join() === 'IN,AU,AE');
+  ok('the registry lists India first, then Australia, then the UAE', R.list().map((p) => p.id).slice(0, 3).join() === 'IN,AU,AE'   /* more countries follow (SG MY US JP); the first three keep their order */);
 
   /* ── A · the GOVERNANCE routes (the step itself) ── */
   const authPath = require.resolve(path.join(API, 'middleware', 'auth'));
@@ -94,7 +94,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   /* CS2: the step is told whether the country may still change, the pack's zones, and the countries it may offer — exactly the registered packs */
   ok('CS2 GET: constituted false (no product, no transaction) with what was looked at; the India pack names ONE zone; countries = the registered packs with what each derives',
     r.body.constituted === false && JSON.stringify(r.body.constituted_by) === JSON.stringify({ products: false, chits: false, entries: false }) && JSON.stringify(r.body.zones) === '["Asia/Kolkata"]'
-    && r.body.countries.map((c) => c.code).join() === 'IN,AU,AE' && r.body.countries[1].currency === 'AUD' && r.body.countries[1].fy_start_month === 7 && r.body.countries[1].zones.length === 11 && r.body.countries[1].name === 'Australia' && r.body.countries[2].zones[0] === 'Asia/Dubai' && r.body.countries[0].locale === 'en-IN',
+    && r.body.countries.map((c) => c.code).slice(0, 3).join() === 'IN,AU,AE' && r.body.countries[1].currency === 'AUD' && r.body.countries[1].fy_start_month === 7 && r.body.countries[1].zones.length === 11 && r.body.countries[1].name === 'Australia' && r.body.countries[2].zones[0] === 'Asia/Dubai' && r.body.countries[0].locale === 'en-IN',
     JSON.stringify({ c: r.body.constituted, z: r.body.zones, countries: r.body.countries }));
   WHO = STAFF; r = await g('PUT', '/country-setup', { country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false } });
   ok('PUT by a co-assist → 403 (the server decides who may set the country)', r.status === 403); WHO = OWNER;
@@ -129,14 +129,14 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('GET says constituted: the step greys country and money with the reason', (await g('GET', '/country-setup')).body.constituted === true);
   CONST = { products: false, chits: false, entries: false };
 
-  console.log('— a shop in a country with NO pack (a Japanese browser: Asia/Tokyo) —');
-  ID = { country: 'JP', currency_code: 'JPY', gstn: null, timezone: 'Asia/Tokyo', policy_flags: {} }; GOV = { fy_start_month: null, tax_registration: null, setup_source: null, country_setup_at: null }; WRITES = []; CS._reset();
+  console.log('— a shop in a country with NO pack (a Brazilian browser: America/Sao_Paulo) —');
+  ID = { country: 'BR', currency_code: 'BRL', gstn: null, timezone: 'America/Sao_Paulo', policy_flags: {} }; GOV = { fy_start_month: null, tax_registration: null, setup_source: null, country_setup_at: null }; WRITES = []; CS._reset();
   r = await g('GET', '/country-setup');
-  ok('GET: the step says it in shop words — pack null, books false, the sentence names Japan', r.status === 200 && r.body.pack.id === null && r.body.pack.books === false && r.body.pack.code === 'NO_COUNTRY_PACK' && r.body.pack.why === SENTENCE_JP && r.body.country.name === 'Japan', JSON.stringify(r.body.pack));
-  r = await g('PUT', '/country-setup', { country: 'JP', currency: 'JPY', fy_start_month: 4, tax: { registered: true, number: 'T1234567890123' } });
-  ok('PUT (generic: registered for tax? number) → 200: the step completes, the books stay OFF with the sentence, selling continues', r.status === 200 && r.body.done === true && r.body.pack.books === false && r.body.pack.why === SENTENCE_JP && r.body.fy_start_month === 4 && r.body.tax.number === 'T1234567890123' && r.body.tax.scheme === 'regular', JSON.stringify(r.body));
-  ok('CS2: a pack-less country names no zone, so the zone registration wrote stays (Asia/Tokyo) and the step offers none', ID.timezone === 'Asia/Tokyo' && r.body.zones.length === 0, ID.timezone);
-  r = await g('PUT', '/country-setup', { country: 'JP', currency: 'JPY', fy_start_month: 4, tax: { registered: true, number: 'T1234567890123' } });
+  ok('GET: the step says it in shop words — pack null, books false, the sentence names Brazil', r.status === 200 && r.body.pack.id === null && r.body.pack.books === false && r.body.pack.code === 'NO_COUNTRY_PACK' && r.body.pack.why === SENTENCE_BR && r.body.country.name === 'Brazil', JSON.stringify(r.body.pack));
+  r = await g('PUT', '/country-setup', { country: 'BR', currency: 'BRL', fy_start_month: 4, tax: { registered: true, number: 'T1234567890123' } });
+  ok('PUT (generic: registered for tax? number) → 200: the step completes, the books stay OFF with the sentence, selling continues', r.status === 200 && r.body.done === true && r.body.pack.books === false && r.body.pack.why === SENTENCE_BR && r.body.fy_start_month === 4 && r.body.tax.number === 'T1234567890123' && r.body.tax.scheme === 'regular', JSON.stringify(r.body));
+  ok('CS2: a pack-less country names no zone, so the zone registration wrote stays (America/Sao_Paulo) and the step offers none', ID.timezone === 'America/Sao_Paulo' && r.body.zones.length === 0, ID.timezone);
+  r = await g('PUT', '/country-setup', { country: 'BR', currency: 'BRL', fy_start_month: 4, tax: { registered: true, number: 'T1234567890123' } });
   ok('a shop with no stamp row gets one on save (the row the b254 trigger would have written)', (() => { return true; })());
 
   console.log('— a shop in Australia (AU1): the pack is there, so the step prefills AUD and July and the books may open —');
@@ -185,13 +185,13 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('books OFF, India: the routes still answer the quiet 404 (' + ROUTES.length + ')', bad.length === 0, bad.join(' · '));
 
   console.log('— a pack-less country: said on every route —');
-  M.fakeDb.countryRow = { country: 'JP', currency_code: 'JPY', gstn: null, timezone: 'Asia/Tokyo', policy_flags: {} }; CS._reset();
-  bad = []; for (const [m, p] of ROUTES) { const x = await b(m, p, {}); if (!(x.status === 422 && x.body.code === 'NO_COUNTRY_PACK' && x.body.message === SENTENCE_JP)) bad.push(m + ' ' + p + ' → ' + x.status + ' ' + JSON.stringify(x.body).slice(0, 60)); }
+  M.fakeDb.countryRow = { country: 'BR', currency_code: 'BRL', gstn: null, timezone: 'America/Sao_Paulo', policy_flags: {} }; CS._reset();
+  bad = []; for (const [m, p] of ROUTES) { const x = await b(m, p, {}); if (!(x.status === 422 && x.body.code === 'NO_COUNTRY_PACK' && x.body.message === SENTENCE_BR)) bad.push(m + ' ' + p + ' → ' + x.status + ' ' + JSON.stringify(x.body).slice(0, 60)); }
   ok('every books route answers 422 NO_COUNTRY_PACK with THE sentence, not the quiet 404 (' + ROUTES.length + ')', bad.length === 0, bad.join(' · '));
   st = await b('GET', '/status');
-  ok('GET /status carries it: country { books:false, code, why } so the switch is greyed WITH its sentence', st.status === 200 && st.body.country.books === false && st.body.country.code === 'NO_COUNTRY_PACK' && st.body.country.why === SENTENCE_JP, JSON.stringify(st.body.country));
+  ok('GET /status carries it: country { books:false, code, why } so the switch is greyed WITH its sentence', st.status === 200 && st.body.country.books === false && st.body.country.code === 'NO_COUNTRY_PACK' && st.body.country.why === SENTENCE_BR, JSON.stringify(st.body.country));
   let en = await b('POST', '/enable', {});
-  ok('POST /enable (the owner\'s switch) is refused with the same sentence — the ledger stays OFF, never India\'s rules', en.status === 422 && en.body.code === 'NO_COUNTRY_PACK' && en.body.message === SENTENCE_JP, JSON.stringify(en.body));
+  ok('POST /enable (the owner\'s switch) is refused with the same sentence — the ledger stays OFF, never India\'s rules', en.status === 422 && en.body.code === 'NO_COUNTRY_PACK' && en.body.message === SENTENCE_BR, JSON.stringify(en.body));
   ok('…and the setting row was never seeded', !(await X.store.setting(X.db, SHOP)));
 
   console.log('— no country at all —');
