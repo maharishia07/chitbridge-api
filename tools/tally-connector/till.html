@@ -582,7 +582,7 @@
      --mhi is the hue pulled 42% toward --ink, so it keeps the section's colour and clears 4.5:1 in every theme
      (--ink turns light in dark, so the mix lightens there). Declared only where --mh is, and only if the browser
      can mix; every use falls back to the raw hue. */
-  @supports (color:color-mix(in srgb,red,blue)){
+  @supports (color:color-mix(in srgb,currentColor,currentColor)){
     .msec,.side .sicons button[data-mh]{--mhi:color-mix(in srgb,rgb(var(--mh)) 58%,var(--ink))}
   }
   .msec.open .mrow .mt b{color:var(--mhi,rgb(var(--mh)))}
