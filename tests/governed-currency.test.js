@@ -59,20 +59,20 @@ await ta('2. falls back to the REGIONAL LAYER when the entity has none', async (
   assert.strictEqual(await regional.currencyFor('e1'), 'AED');
 });
 
-await ta('3. falls back to the NAMED constant only when both are absent', async () => {
+await ta('3. nothing stated anywhere → null (N1: never INR by name)', async () => {
   const { regional } = loadRegional(() => ({ rows: [] }));
-  assert.strictEqual(await regional.currencyFor('e1'), regional.FALLBACK_CURRENCY);
+  assert.strictEqual(await regional.currencyFor('e1'), null);
 });
 
 await ta('4. an unknown entity never reaches the database', async () => {
   const { regional, calls } = loadRegional(() => ({ rows: [] }));
-  assert.strictEqual(await regional.currencyFor(null), regional.FALLBACK_CURRENCY);
+  assert.strictEqual(await regional.currencyFor(null), null);
   assert.strictEqual(calls.length, 0, `expected no queries, got ${calls.length}`);
 });
 
-await ta('5. a thrown query degrades to the fallback rather than breaking a mint', async () => {
+await ta('5. a thrown query degrades to null (no money stated) rather than breaking a mint', async () => {
   const { regional } = loadRegional(() => { throw new Error('relation "identities" does not exist'); });
-  assert.strictEqual(await regional.currencyFor('e1'), regional.FALLBACK_CURRENCY);
+  assert.strictEqual(await regional.currencyFor('e1'), null);
 });
 
 await ta('6. the code is normalised — trimmed and upper-cased', async () => {

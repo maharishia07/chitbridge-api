@@ -173,7 +173,7 @@ async function crossing(entity, definerSql, definerParams, fallback) {
 // Sender can send to any entity that exists in the system
 
 // ─── Helper: Generate auto subject ───────────────────────────
-const generateAutoSubject = (purpose, senderName, date) => {
+const generateAutoSubject = (purpose, senderName, date, clock) => {
   const purposes = {
     order: 'Order',
     invoice: 'Invoice',
@@ -184,9 +184,7 @@ const generateAutoSubject = (purpose, senderName, date) => {
     general: 'Message'
   };
   const label = purposes[purpose] || 'Chit';
-  const dateStr = new Date(date).toLocaleDateString('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric'
-  });
+  const dateStr = require('../lib/country-setup').datePhrase(date, clock);   /* N3: the shop's locale and zone, India's only when the shop is India's */
   return `${label} from ${senderName} — ${dateStr}`;
 };
 
@@ -413,7 +411,7 @@ router.post('/send',
    lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
 const SEND_STEPS = [
-  sendSender, sendLab, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
+  sendSender, sendMoneyStated, sendLab, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
   sendBody, sendCredit, sendSource, sendFanOut, sendTrace,
   sendPrefs, sendRecipients, sendSeller, sendOffers, sendMoney,
   sendIssued, sendCopyPolicy, sendPromote, sendParticipants, sendRetention,
@@ -459,6 +457,21 @@ async function sendSender(st, req, res) {
              + 'Open ChitBridge → Settings and set the shop\'s bridge id, then send this bill again.' });
   }
   Object.assign(st, { sender_id, sender_bridge_id, sender_display_name });
+}
+
+/**
+ * ⭐ N0 · A SHOP THAT HAS NOT STATED ITS COUNTRY AND MONEY ISSUES NO DOCUMENT — refused in words, before anything is written. A draft is the
+ * author's own copy and is let through; a shop already India (the b299 backfill) has both stated and passes unchanged. The sentence and the
+ * check are country-setup's (documentGate); this step only asks.
+ */
+async function sendMoneyStated(state, req, res) {
+  const countrySetup = require('../lib/country-setup');
+  const facts = await countrySetup.statedFacts(query, state.sender_id);
+  state.clock = countrySetup.clockOf(facts);   /* N3: the shop's zone and locale write the subject's date */
+  if (req.body.is_draft) return false;
+  const refusal = countrySetup.documentRefusal(facts);
+  if (!refusal) return false;
+  return res.status(refusal.status).json({ error: 'refused', code: refusal.code, message: refusal.message });
 }
 
 /**
@@ -868,7 +881,8 @@ async function sendPrefs(st, req, res) {
   // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
   const prefRow = await query(`SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1`, [sender_id]);
   /* the sender's money (WX-R2R, above): the row's own code; a row without one asks lib/regional.currencyFor — the ONE resolver (its regional layer, its fallback) */
-  currency_code = String(currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || await require('../lib/regional').currencyFor(sender_id)).toUpperCase();
+  const statedMoney = currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || await require('../lib/regional').currencyFor(sender_id);
+  currency_code = statedMoney ? String(statedMoney).toUpperCase() : null;   /* N1: none stated → null (sendMoneyStated refuses a document first), never 'INR' by name */
   /**
    * ⭐ A SELF-CHIT MAKES ONE COPY, AND IT IS THE TASK — Athi, 2026-08-14: *"self should create one copy only,
    * no two copies, and you would be very specific about direction."*
@@ -1060,7 +1074,7 @@ async function sendOffers(st, req, res) {
     const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
     /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
     if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike)) {
-      const cur = await require('../lib/regional').currencyFor(sellerId).catch(() => 'INR');
+      const cur = await require('../lib/regional').currencyFor(sellerId).catch(cbLog.orElse('chits sendOffers: the seller money was not read - no live offers applied', null));
       const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity, viewer: orderLike ? sender_id : null });   /* an order's buyer may hold a customer-only offer with this seller */
       if (r && r.items) { line_items = r.items; offersApplied = Array.isArray(r.applied) ? r.applied : []; }
     }
@@ -1317,7 +1331,7 @@ async function sendParticipants(st, req, res) {
 async function sendRetention(st, req, res) {
   const { sender_display_name, purpose, line_items, issuedTotal, now } = st;
   // Generate auto subject
-  const auto_subject = generateAutoSubject(purpose, sender_display_name, now);
+  const auto_subject = generateAutoSubject(purpose, sender_display_name, now, st.clock);
 
   // Calculate summary from line items
   const summary = calculateSummary(line_items);
@@ -2053,14 +2067,14 @@ function chitFilters(req, where, params){
   const amin = num(req.query.amount_min), amax = num(req.query.amount_max);
   if (amin !== null) { params.push(amin); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`; }
   if (amax !== null) { params.push(amax); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) <= $${params.length}`; }
-  /* ⭐ a date filter is the SHOP's day (M210): midnight in the shop's own zone (identities.timezone, b176; India when unset) — the
+  /* ⭐ a date filter is the SHOP's day (M210): midnight in the shop's own zone (identities.timezone, b176; else its country pack's zone, else UTC) — the
      same rule as books-hooks.dayBounds, spelt in SQL because this builder is synchronous and a trip to read the zone is not
      affordable here. `timestamp AT TIME ZONE zone` names the instant that midnight is; it compares right against created_at
      before b301 (naive, read as UTC by the pinned session zone) and after it (timestamptz). */
   const dateQ = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '').trim());
   if (dateQ(req.query.date_from) || dateQ(req.query.date_to)) {
     params.push(entityId(req));                                     /* the SHOP (an actor's parent entity), whose zone it is */
-    const zone = `COALESCE((SELECT z.timezone FROM identities z WHERE z.identity_id = $${params.length}::uuid), 'Asia/Kolkata')`;
+    const zone = `COALESCE((SELECT COALESCE(z.timezone, ${require('../lib/country-setup').zoneCaseSql('z')}) FROM identities z WHERE z.identity_id = $${params.length}::uuid), 'UTC')`;
     if (dateQ(req.query.date_from)) { params.push(String(req.query.date_from).trim()); where += ` AND ch.created_at >= ($${params.length}::date::timestamp AT TIME ZONE ${zone})`; }
     if (dateQ(req.query.date_to))   { params.push(String(req.query.date_to).trim());   where += ` AND ch.created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE ${zone})`; }
   } else {                                                          /* a full timestamp: as before, an instant */

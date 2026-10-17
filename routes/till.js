@@ -101,7 +101,7 @@ function deltaPage(rows, cap) {
  * status is 'available' (lib/itemstatus) — a screen never sells, so an unavailable product has nothing to say on it. On a
  * delta, an item that stopped being available travels as a removal, so it leaves the wall.
  */
-const SCREEN_SHOP = ['name', 'address', 'phone', 'currency', 'country', 'tax_id_word', 'money_why'];
+const SCREEN_SHOP = ['name', 'address', 'phone', 'currency', 'country', 'tax_id_word', 'money_why', 'fy_start_month'];
 const SCREEN_ITEM = ['item_id', 'name', 'code', 'unit', 'price', 'mrp', 'category', 'image', 'screen', 'status'];
 const pickKeys = (o, ks) => { const out = {}; ks.forEach((k) => { if (o && o[k] !== undefined) out[k] = o[k]; }); return out; };
 function screenView(body) {
@@ -852,7 +852,7 @@ router.get('/snapshot', auth, async (req, res) => {
         /* STD2: no money stated and no pack to read it from → the ONE sentence with its code; the counter paints it beside "Money is …" */
         money_why: shopMoney ? null : { code: 'NO_MONEY', why: require('../lib/country-setup').MONEY_UNSTATED },
         /* STD2: the pack's word for the tax number (profile.taxIdWordOf — the ONE reader); null = no pack, the counter says "Tax number" */
-        tax_id_word: cbProfile.taxIdWordOf(cbCountry),
+        tax_id_word: cbProfile.taxIdWordOf(cbCountry), fy_start_month: require('../lib/country-setup').fyStartOf(cbCountry),   /* N4: the year roll-up passes the pack's own start month (null = unstated), never April */
       },
       items, removed, delta: !!since, since: since || null, offers, staff,
       /**
