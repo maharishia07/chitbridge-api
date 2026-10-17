@@ -56,5 +56,50 @@ t('a callback with a state we never issued is refused (400) and nothing is saved
   assert.ok(!fs.existsSync(path.join(process.env.SANDBOX_SAMPLES_DIR, '.tokens', 'qbo.json')));
 });
 
+/* error-never-leaks: a vendor refusing the code → 502 with OUR sentence; its own error text never reaches the page, no token file */
+{
+  const handlerOf = (route) => S.router.stack.find((layer) => layer.route && layer.route.path === route).route.stack[0].handle;
+  let redirected = '';
+  handlerOf('/:vendor/connect')({ params: { vendor: 'qbo' }, query: {} }, { redirect(to) { redirected = to; }, status() { return this; }, type() { return this; }, send() { return this; } });
+  const state = new URL(redirected).searchParams.get('state');
+  const saved = global.fetch;
+  global.fetch = async () => ({ ok: false, status: 400, json: async () => ({ error: 'invalid_grant', error_description: 'VENDOR-INTERNAL-DETAIL' }) });
+  const reply = { code: 0, body: '', status(c) { this.code = c; return this; }, type() { return this; }, send(b) { this.body = b; return this; }, redirect() { this.code = 302; } };
+  Promise.resolve(handlerOf('/:vendor/callback')({ params: { vendor: 'qbo' }, query: { state, code: 'abc' } }, reply)).then(() => {
+    global.fetch = saved;
+    const ok = reply.code === 502 && !reply.body.includes('VENDOR-INTERNAL-DETAIL') && !reply.body.includes('invalid_grant') && !fs.existsSync(path.join(process.env.SANDBOX_SAMPLES_DIR, '.tokens', 'qbo.json'));
+    console.log((ok ? '  ok  ' : '  XX  ') + 'a vendor refusing the code → 502 in our words; its error text never reaches the page');
+    if (!ok) process.exitCode = 1;
+  });
+}
+
+/* lib/sandbox-oauth — the pure rules */
+const oauth = require('../lib/sandbox-oauth');
+t('ZOHO_DC is read in any of its forms; none → null (asked, never a national default)', () => {
+  const was = process.env.ZOHO_DC;
+  [['in', 'in'], ['zoho.in', 'in'], ['https://accounts.zoho.in', 'in'], ['com.au', 'com.au'], ['', null], ['nonsense value', null]].forEach(([given, want]) => {
+    process.env.ZOHO_DC = given; assert.strictEqual(oauth.zohoDc(), want, given);
+  });
+  process.env.ZOHO_DC = was || '';
+});
+t('the consent address carries the least scopes and our state, never the secret', () => {
+  const address = new URL(oauth.authorizeUrl('qbo', 'st4te'));
+  assert.strictEqual(address.searchParams.get('scope'), 'com.intuit.quickbooks.accounting');
+  assert.strictEqual(address.searchParams.get('state'), 'st4te');
+  assert.ok(!address.toString().includes('TEST-SECRET-NEVER-SHOWN'));
+});
+t('a refreshed token keeps the old refresh token when the vendor sends none (Zoho does not rotate it)', () => {
+  const token = oauth.shapeToken('zoho', { access_token: 'new', expires_in: 3600 }, { refresh_token: 'keep-me', api_domain: 'https://www.zohoapis.in' });
+  assert.strictEqual(token.refresh_token, 'keep-me'); assert.strictEqual(token.api_domain, 'https://www.zohoapis.in'); assert.ok(token.expires_at > Date.now());
+});
+/* async: the refusal is checked when it settles; a wrong answer fails the run's exit code */
+oauth.freshToken('xero').then(
+  () => { console.log('  XX  a pull before Connect was NOT refused'); process.exitCode = 1; },
+  (e) => { if (e.code === 'SANDBOX_NOT_CONNECTED') console.log('  ok  a pull before Connect is refused with its code (fail closed, no network)'); else { console.log('  XX  wrong refusal ' + e.code); process.exitCode = 1; } });
+t('the token file sits outside the repo, under the samples root', () => {
+  assert.ok(oauth.tokenFile('qbo').startsWith(process.env.SANDBOX_SAMPLES_DIR));
+  assert.ok(!oauth.tokenFile('qbo').startsWith(path.join(__dirname, '..')));
+});
+
 process.env.NODE_ENV = SAVED.NODE_ENV; process.env.DATABASE_URL = SAVED.DATABASE_URL;
 console.log('sandbox-routes: ' + n + ' passed');
