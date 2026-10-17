@@ -105,8 +105,9 @@ function docChecks(spec, doc, currency) {
   if (!lines.length) return [];
   const out = lines.map((line, index) => lineCheck(spec, line, index, currency)).filter(Boolean);
   const sum = lines.reduce((total, line) => total + minor(spec.amount(line), currency), 0);
-  const subtotal = spec.subtotal ? minor(spec.subtotal(doc), currency) : sum;
-  if (spec.subtotal && sum !== subtotal) out.push({ check: 'lines vs subtotal', theirs: subtotal, computed: sum, diff: subtotal - sum });
+  const given = spec.subtotal ? spec.subtotal(doc) : null, hasSubtotal = given !== null && given !== undefined && given !== '';   /* no subtotal sent → the lines are it */
+  const subtotal = hasSubtotal ? minor(given, currency) : sum;
+  if (hasSubtotal && sum !== subtotal) out.push({ check: 'lines vs subtotal', theirs: subtotal, computed: sum, diff: subtotal - sum });
   const expected = subtotal + (spec.inclusive(doc) ? 0 : minor(spec.tax(doc), currency)) + minor(spec.extra(doc), currency), total = minor(spec.total(doc), currency);
   if (expected !== total) out.push({ check: 'subtotal + tax vs total', theirs: total, computed: expected, diff: total - expected });
   return out;
