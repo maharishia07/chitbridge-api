@@ -11,61 +11,15 @@
  * Run: node tests/till-trend.test.cjs
  */
 'use strict';
-const path = require('path');
-const http = require('http');
-const express = require('express');
-const API = path.join(__dirname, '..');
+const { S, sumRow, daysOf, monthsBack, start, API } = require('./support/till-trend-stub.cjs');   /* the stubbed db + auth, and the real router */
 let pass = 0, fail = 0;
 const t = (label, got, want) => {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   ok ? pass++ : fail++;
   console.log('  ' + (ok ? 'ok  ' : 'FAIL') + '  ' + label.padEnd(84) + (ok ? '' : JSON.stringify(got) + '   want ' + JSON.stringify(want)));
 };
-const mock = (rel, exports) => { require.cache[require.resolve(API + rel)] = { id: rel, filename: rel, loaded: true, exports }; };
-
-mock('/middleware/auth', Object.assign((req, res, next) => { req.identity = { identity_id: 'e1', identity_type: 'entity' }; next(); }, {
-  entityOf: (req) => (req.identity && req.identity.identity_id) || null,
-  requireScope: () => (req, res, next) => next(),
-}));
-
-/* ── the stand-in database: summaries by period, the shop's year row ── */
-const S = { shop: null, rows: { week: [], month: [], year: [] } };
-let trips = 0;
-const sumRow = (period, key, gross, source) => ({ chit_id: period + key, created_at: new Date(), business_json: { summary: {
-  period, key, till: { id: 'C1' }, source: source || undefined,
-  totals: { count: 4, returns: 0, gross, refunds: 0, expenseCount: 0, expenses: 0, total: gross - 10, by: {} } } } });
-function answer(text, params) {
-  const sql = String(text);
-  if (/AS gov\b/.test(sql)) return { rows: S.shop ? [S.shop] : [] };
-  if (/FROM chit_header h/.test(sql)) return { rows: (S.rows[params[1]] || []).slice().sort((a, b) => (a.business_json.summary.key < b.business_json.summary.key ? 1 : -1)) };
-  return { rows: [] };
-}
-mock('/db', {
-  query: async (s, p) => { trips++; return answer(s, p); },
-  withEntity: async (_id, fn) => { trips++; return fn({ query: async (s, p) => answer(s, p) }); },
-  withTransaction: async (fn) => { trips++; return fn({ query: async (s, p) => answer(s, p) }); },
-  readBatch: async (_e, _a, stmts) => { trips++; return stmts.map((s) => answer(s.text, s.params)); },
-  trySavepoint: async (h, fn, fb) => { try { return await fn(h); } catch (_) { return fb; } },
-});
-
-const get = (port, p) => new Promise((ok) => {
-  trips = 0;
-  http.get({ host: '127.0.0.1', port, path: p }, (res) => {
-    const chunks = [];
-    res.on('data', (c) => chunks.push(c));
-    res.on('end', () => { const body = Buffer.concat(chunks).toString(); let json = null; try { json = JSON.parse(body); } catch (_) {} ok({ status: res.statusCode, json, trips }); });
-  });
-});
-
-/** a full month's day keys (the coverage rule: a month is whole when every day of it sent a summary) */
-const daysOf = (m) => { const [y, mo] = m.split('-').map(Number); const n = new Date(Date.UTC(y, mo, 0)).getUTCDate(); return Array.from({ length: n }, (_, i) => m + '-' + String(i + 1).padStart(2, '0')); };
-const monthsBack = (k) => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - k); return d.toISOString().slice(0, 7); };
-
 (async () => {
-  const app = express();
-  app.use('/api/till', require(API + '/routes/till'));
-  const srv = app.listen(0); const port = srv.address().port;
-  const g = (q) => get(port, '/api/till/summary?' + q);
+  const srv = start(), g = srv.get;
   const R = require(API + '/lib/rollup');
   console.log('\n-- RPT2 Reports › Trend --\n');
 
@@ -104,7 +58,7 @@ const monthsBack = (k) => { const d = new Date(); d.setUTCDate(1); d.setUTCMonth
   r = await g('period=month&limit=3');
   t('without compare=1 the answer is the old one ({ period, rows, counters })', [r.status, Object.keys(r.json), r.json.rows.length], [200, ['period', 'rows', 'counters'], 3]);
 
-  srv.close();
+  srv.stop();
   console.log('\n  ' + pass + ' checks · ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
