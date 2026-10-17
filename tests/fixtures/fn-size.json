@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 159,
+  "long_functions": 167,
   "worst_complexity": 185,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -181,6 +181,18 @@
     "lib/reg-in.js": [
       "(anonymous)"
     ],
+    "lib/reg-jp.js": [
+      "(anonymous)"
+    ],
+    "lib/reg-my.js": [
+      "(anonymous)"
+    ],
+    "lib/reg-sg.js": [
+      "(anonymous)"
+    ],
+    "lib/reg-us.js": [
+      "(anonymous)"
+    ],
     "lib/regulation.js": [
       "(anonymous)"
     ],
@@ -222,14 +234,18 @@
       "(anonymous)",
       "(anonymous)",
       "(anonymous)",
-      "determine"
+      "(anonymous)",
+      "(anonymous)",
+      "(anonymous)",
+      "(anonymous)",
+      "determine_"
     ],
     "lib/tax-slab.js": [
       "(anonymous)"
     ],
     "lib/tax.js": [
       "(anonymous)",
-      "determine"
+      "determine_"
     ],
     "lib/units.js": [
       "(anonymous)"
