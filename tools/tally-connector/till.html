@@ -22517,7 +22517,7 @@ function rcvBalLine(l){
 /** the receive form's two invoice facts in the shop's own tax words; the state-code box only where the tax splits by state (India) */
 function rcvWords(){
   var incl = document.getElementById('rcv_incl'), stateBox = document.getElementById('rcv_vstate'), word = schemeWord();
-  if (incl && incl.options.length === 2) { incl.options[0].textContent = 'Their rates are before ' + word + ' (usual)'; incl.options[1].textContent = 'Their rates already include ' + word; }
+  if (incl && incl.options && incl.options.length === 2) { incl.options[0].textContent = 'Their rates are before ' + word + ' (usual)'; incl.options[1].textContent = 'Their rates already include ' + word; }
   if (stateBox) stateBox.hidden = !packSplitsByState();
 }
 function paintReceive(){
