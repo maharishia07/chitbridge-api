@@ -2582,7 +2582,8 @@
     "in": 1,
     "out": 3,
     "tasks": 1,
-    "stuck": 0
+    "stuck": 0,
+    "state": "in_use"
    },
    "optional": [
     "may_sample.say",
@@ -2602,7 +2603,8 @@
     "figures": {
      "products": 2,
      "no_slab": 1
-    }
+    },
+    "state": "needs_you"
    },
    "optional": []
   },
