@@ -37,6 +37,15 @@ const fs = require('fs');
   ok('N1: tax-governance: no country -> no jurisdiction whatever the currency (was INR/empty -> IN)', gov.jurisdictionOf({ country: null, currency_code: 'INR' }) === null && gov.jurisdictionOf({ country: null, currency_code: null }) === null);
   ok('N1: tax-governance: a stated country is still its own (India unchanged)', gov.jurisdictionOf({ country: 'in' }) === 'IN' && gov.jurisdictionOf({ country: 'AE' }) === 'AE');
   ok('N1: tax-governance: no country -> the sentence, not silence', /country/i.test(gov.NO_COUNTRY_SLABS_SAY) && /Country setup/.test(gov.NO_COUNTRY_SLABS_SAY));
+  /* ── N2: no pack is neutral; India unchanged ── */
+  const policy = require(path.join(API, 'lib/policy'));
+  ok('N2: the policy card says "GST registration" for India (unchanged) and "Tax registration" with no country', policy.schemaFor('IN').gst_registration.ui.label === 'GST registration' && policy.schemaFor(null).gst_registration.ui.label === 'Tax registration');
+  const packed = fs.readFileSync(path.join(API, 'lib/catalogue-view.js'), 'utf8');
+  ok('N2: catalogue-view strips the UPI id unless the pack carries UPI (no country, no pack -> none)', /if \(!\(pk && pk\.chart && pk\.chart\.paymentModes && pk\.chart\.paymentModes\.upi\)\) upi_id = null;/.test(packed));
+  const profileSrc = fs.readFileSync(path.join(API, 'lib/profile.js'), 'utf8');
+  ok('N2: profile.invoiceParty: no pack does not split by state, and a state is asked only where the pack splits', profileSrc.includes("function splitsByStateOf(pack) { return !!(pack && pack.tax && pack.tax.supply === 'state'); }") && profileSrc.includes('if (!party.state && splitsByState)'));
+  const readySrc = fs.readFileSync(path.join(API, 'lib/readiness.js'), 'utf8');
+  ok('N2: the GST Rule 46 readiness item is the Indian shop alone', readySrc.includes('if (isIndiaParty(party)) items.push(invoiceHeaderItem(party, rung, note));') && readySrc.includes("String(party.country || '').toUpperCase() === 'IN'"));
 
 
 /* ── N1 · THE RATCHET: no NEW 'INR' / ₹ / Asia/Kolkata / en-IN literal outside an India-pack path ─────────────────────────────────────────
