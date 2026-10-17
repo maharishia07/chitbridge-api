@@ -8281,7 +8281,7 @@ var TILL_OPS = [
    * under one roof." Product Lab joins the other two: a shop ADOPTS goods here rather than typing them.
    * ⚠️ A PERSON signs into it, not this counter — see the Offer Lab note above, which applies with more
    * force here: adopting creates sellable goods on a live shelf. */
-  { id: 'productlab', icon: '📋', label: 'Product Lab',        hint: 'adopt a ready-made product list — veg, egg, fish, chicken, meat · opens in a new tab', fn: 'openProductLab' },
+  { id: 'productlab', icon: '📋', label: 'Price Lab',          hint: 'adopt a ready-made product list — veg, egg, fish, chicken, meat · opens in a new tab', fn: 'openProductLab' },
   { id: 'offerlab', icon: '🧮', label: 'Offer Lab',          hint: 'work out a discount before you run it · opens in a new tab', fn: 'openOfferLab' },
   /* ⭐ [Labs split, 2026-09-26] Athi: "bring offer lab and combo lab as a separate item... combo lab earned
    * its place now" — was a modal reachable only from inside Offer Lab; now its own page, its own hub entry,
@@ -8624,7 +8624,7 @@ function gstNotRegistered(){
  * reusing it is the fix, not inventing a second way to find it.
  */
 function openGst(){
-  /* SET1 (2026-10-13): the shop's GST details are CB Settings › Your shop (settings.html) — a small app, never the workshop (docs/design/INDEX-NOT-APP.md) */
+  /* SET1 (2026-10-13): the shop's GST details are Settings › Your shop (settings.html) — a small app, never the workshop (docs/design/INDEX-NOT-APP.md) */
   var url = cbRoot() + '/settings.html#/shop';
   try { window.open(url, '_blank', 'noopener'); } catch (e) { cbQuiet('openGst:1', e); }
   toastLine('Your shop is open in another tab — change the GSTIN there, then press ↻ here.');
@@ -18328,7 +18328,7 @@ function shopStateClash(){
   return { gstin_state: g, gstin_state_name: gn, says: says,
     words: 'This shop’s details disagree. Its GSTIN ' + sh.gstin + ' is a ' + gn + ' registration (state ' + g + '), but '
       + says.map(function(x){ return x.from + ' says ' + x.name; }).join(' and ') + '. A tax invoice names one state, and the place of supply is ' + gn + '.',
-    fix: 'Correct the address or the GSTIN in CB Settings › Your shop, then press ↻ here. Until then a tax invoice will not print.' };
+    fix: 'Correct the address or the GSTIN in Settings › Your shop, then press ↻ here. Until then a tax invoice will not print.' };
 }
 /**
  * what sits above the total when something about THIS bill is wrong — said where it is sold.
@@ -18381,7 +18381,7 @@ async function billWarnFix(which){
                : (un.length ? un.join(', ') + '\n\nNo GST is charged on ' + (un.length === 1 ? 'it' : 'them')
                               + ', and the slip will not say TAX INVOICE.' : 'Every item has a tax rate now.');
   var go = await sure(msg, st ? 'Open the shop’s details' : 'Open the catalogue', st ? 'GSTIN state ≠ address' : 'No tax rate', 'Close');
-  /* the state half opens CB Settings › Your shop (SET1); the rate half still opens the workshop's catalogue until CAT1 builds catalogue.html */
+  /* the state half opens Settings › Your shop (SET1); the rate half still opens the workshop's catalogue until CAT1 builds catalogue.html */
   if (go) { try { window.open(st ? cbRoot() + '/settings.html#/shop' : cbHome() + '#/app/catalogue', '_blank', 'noopener'); } catch (e) { cbQuiet('billWarnFix:2', e); } }
 }
 /**
@@ -20452,7 +20452,7 @@ async function startOpen(){
   document.getElementById('startbody').insertAdjacentHTML('beforeend',
     '<button class="bring" data-testid="till-productlab-open" onclick="startClose();openProductLab()">'
     + '<b>Let me pick what I sell</b>'
-    + '<span class="out">Product Lab — the same lists, with a tick against each product</span>'
+    + '<span class="out">Price Lab — the same lists, with a tick against each product</span>'
     + '<span class="eg">choose a shelf at a time, set your own prices, add more whenever you like</span></button>');
 }
 function startClose(){ var d = document.getElementById('startdlg'); if (d && d.open) d.close(); }

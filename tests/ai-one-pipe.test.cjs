@@ -193,9 +193,9 @@ const reloadSkills = async (rows) => { DB.skills = rows; await ai.loadSkills(tru
     finally { process.env.ASSIST_LLM_PROVIDER = 'anthropic'; }
     assert.strictEqual(calls.length, 0);
   });
-  await it('privacy register names CB Assist under the one Anthropic entry', async () => {
+  await it('privacy register names Assist under the one Anthropic entry', async () => {
     const f = require('../lib/privacy').facts().processors.filter((p) => p.name === 'Anthropic');
-    assert.strictEqual(f.length, 1); assert.ok(/CB Assist/.test(f[0].role) && /routes\/assist\.js/.test(f[0].source));
+    assert.strictEqual(f.length, 1); assert.ok(/Assist answers/.test(f[0].role) && /routes\/assist\.js/.test(f[0].source));
   });
 
   console.log('\n' + pass + ' passed' + (process.exitCode ? ' — FAILURES above' : ''));
