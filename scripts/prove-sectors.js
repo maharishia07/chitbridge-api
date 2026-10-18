@@ -3,12 +3,12 @@
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { if (ok) { P++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { F++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
 
 (async () => {
   console.log('== PROVE SECTORS (generic, not chemical-only) ==  ' + B + '\n');
   const ts = Date.now().toString().slice(-6), email = 'sec-' + ts + '@test.com';
-  const r1 = await api('POST', '/api/entities/register', { body: { email } }).catch(()=>({}));
+  const reply = await api('POST', '/api/entities/register', { body: { email } }).catch(()=>({}));
   const reg = await (await fetch(B + '/api/entities/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) })).json();
   const ver = await (await fetch(B + '/api/entities/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, otp: reg.dev_otp }) })).json();
   const token = ver.token; chk('login', !!token);
@@ -16,7 +16,7 @@ async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'applicat
   async function lane(vertical, dest) {
     const rd = await api('GET', '/api/governance/readiness?destination=' + dest + '&vertical=' + vertical + '&origin=IN', { token });
     const keys = (rd.j && rd.j.standards) || [];
-    const titles = ((rd.j && rd.j.clearances) || []).map(c => c.title);
+    const titles = ((rd.j && rd.j.clearances) || []).map(item => item.title);
     return { keys, titles };
   }
   const has = (a, k) => a.indexOf(k) >= 0;
