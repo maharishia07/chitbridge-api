@@ -2,16 +2,16 @@
 // regional overrides), sealed + cached. Needs b80 + b81. Run: node scripts/regional-scatter.js
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0; function chk(n, ok, d){ if(ok){P++;console.log('  ✓ '+n+(d?'  '+d:''));}else{F++;console.log('  ✗ '+n+(d?'  — '+d:''));} }
-async function api(m,p,o){o=o||{};const h={'Content-Type':'application/json'};if(o.token)h.Authorization='Bearer '+o.token;const r=await fetch(B+p,{method:m,headers:h,body:o.body?JSON.stringify(o.body):undefined});let j=null;try{j=await r.json();}catch(_){}return{status:r.status,j};}
-async function ent(name){ const email=name+'@test.com'; const reg=await api('POST','/api/entities/register',{body:{email}}); const v=await api('POST','/api/entities/verify',{body:{email,otp:reg.j&&reg.j.dev_otp}}); const me=await api('GET','/api/entities/me',{token:v.j&&v.j.token}); return { token:v.j&&v.j.token, id:(me.j&&me.j.entity||{}).identity_id }; }
+async function api(m,p,o){o=o||{};const h={'Content-Type':'application/json'};if(o.token)h.Authorization='Bearer '+o.token;const reply=await fetch(B+p,{method:m,headers:h,body:o.body?JSON.stringify(o.body):undefined});let j=null;try{j=await reply.json();}catch(_){}return{status:reply.status,j};}
+async function ent(name){ const email=name+'@test.com'; const reply=await api('POST','/api/entities/register',{body:{email}}); const v=await api('POST','/api/entities/verify',{body:{email,otp:reply.j&&reply.j.dev_otp}}); const me=await api('GET','/api/entities/me',{token:v.j&&v.j.token}); return { token:v.j&&v.j.token, id:(me.j&&me.j.entity||{}).identity_id }; }
 (async()=>{
   console.log('== 6a: REGIONAL SCATTER (spin the globe) ==\n');
   const ts=Date.now().toString().slice(-6);
   const brand=await ent('rs-'+ts);
   const cid='royaleplay/tussar-rs-'+ts;
-  const a=await api('PUT','/api/assist/container',{token:brand.token,body:{container_id:cid,name:'Tussar',content:{colour_name:'Raw Silk',story:'silk that catches the light'}}});
-  if(a.status===503){ console.log('  · b80 not applied — apply, re-run.'); process.exit(0); }
-  chk('brand authored the global container', a.status===200);
+  const reply=await api('PUT','/api/assist/container',{token:brand.token,body:{container_id:cid,name:'Tussar',content:{colour_name:'Raw Silk',story:'silk that catches the light'}}});
+  if(reply.status===503){ console.log('  · b80 not applied — apply, re-run.'); process.exit(0); }
+  chk('brand authored the global container', reply.status===200);
 
   // a genuinely-local override for Mexico (Spanish colour name + a compliance note)
   const ovr=await api('PUT','/api/assist/region-override',{token:brand.token,body:{container_id:cid,region:'MX',overrides:{colour_name:'Seda Cruda',compliance:'NOM-003'}}});
