@@ -37,7 +37,7 @@ console.log('\n── 🧮 group sum ──────────────�
 console.log('1 · ten parties, one requirement, and the roster survives');
 {
   const reqs = [];
-  for (let i = 1; i <= 10; i++) reqs.push(req('c' + i, 'Shop ' + i, i % 2 ? 'thakkali' : 'tomato', 100, 'kg'));
+  for (let index = 1; index <= 10; index++) reqs.push(req('c' + index, 'Shop ' + index, index % 2 ? 'thakkali' : 'tomato', 100, 'kg'));
   const out = consolidate.consolidate(reqs, CAT);
   eq('one line, not ten', out.lines.length, 1);
   eq('1000 kg total — spelling never fragments it', out.lines[0].total, 1000);
@@ -56,7 +56,7 @@ console.log('\n2 · cost rides along, per party and per line');
   attachValue(out.lines, prices);
   const l = out.lines[0];
   eq('line value = 100x30 + 50x32', l.value, [{ currency: 'INR', total: 4600 }]);
-  eq('each party carries its own cost', (l.breakdown || []).map((b) => b.value), [3000, 1600]);
+  eq('each party carries its own cost', (l.breakdown || []).map((item) => item.value), [3000, 1600]);
   ok('and no partial flag when everything was priced', !l.value_partial);
 }
 
@@ -90,7 +90,7 @@ console.log('\n4 · ⚠️ CURRENCIES ARE NEVER ADDED TOGETHER');
   eq('reported side by side', l.value, [{ currency: 'INR', total: 3000 }, { currency: 'USD', total: 20 }]);
   ok('and flagged as mixed', l.value_mixed === true);
   ok('there is NO single combined figure anywhere on the line',
-     !Object.keys(l).some((k) => k !== 'value' && typeof l[k] === 'number' && l[k] === 3020));
+     !Object.keys(l).some((item) => item !== 'value' && typeof l[item] === 'number' && l[item] === 3020));
 }
 
 console.log('\n5 · ⚠️ VARIANTS ARE NEVER MERGED, so their costs cannot be either');
@@ -123,8 +123,8 @@ console.log('\n7 · the price index cannot pick the wrong line');
   ok('different chits never share a key',
      lineKey('c1', { particulars: 'tomato', quantity: 10, unit: 'kg' }) !== lineKey('c2', { particulars: 'tomato', quantity: 10, unit: 'kg' }));
   ok('a missing price is treated as UNPRICED, not as zero — a lookup miss must never invent a cost',
-     (function () { const l = [{ breakdown: [{ chit_id: 'zz', phrase: 'x', qty: 5, unit: 'kg' }] }];
-       attachValue(l, new Map()); return l[0].value.length === 0 && l[0].value_partial.unpriced === 1; })());
+     (function () { const list = [{ breakdown: [{ chit_id: 'zz', phrase: 'x', qty: 5, unit: 'kg' }] }];
+       attachValue(list, new Map()); return list[0].value.length === 0 && list[0].value_partial.unpriced === 1; })());
 }
 
 console.log('\n────────────────────────────────────────────────────────────────────────────');
