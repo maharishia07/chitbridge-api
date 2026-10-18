@@ -171,7 +171,7 @@
   "lib/sheet.js": {"score":14,"long40":1,"long80":0,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":8,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/shop-clock.js": {"score":4,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/shopchanged.js": {"score":1,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "lib/sides.js": {"score":68,"long40":1,"long80":1,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":63,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
+  "lib/sides.js": {"score":44,"long40":1,"long80":1,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":39,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/signin-events.js": {"score":18,"long40":0,"long80":0,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/sla.js": {"score":29,"long40":1,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":26,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/slab-cites.js": {"score":7,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":6,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
