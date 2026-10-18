@@ -42,8 +42,8 @@ async function api(method, path, body, token){
 async function mint(label){
   const slug = label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
   const email=`gold-${slug}-${Date.now()}-${Math.floor(Math.random()*1e5)}@test-cb.com`;
-  const reg=await api('POST','/api/entities/register',{ display_name:label, email });
-  const otp=reg.data.dev_otp||'123456';
+  const reply=await api('POST','/api/entities/register',{ display_name:label, email });
+  const otp=reply.data.dev_otp||'123456';
   const v=await api('POST','/api/entities/verify',{ email, otp });
   if(v.status!==200) throw new Error(`verify ${label}: ${v.status}`);
   return { id:v.data.entity.identity_id, token:v.data.token, name:label };
@@ -52,21 +52,21 @@ async function mint(label){
 // One gold handoff. fineG = FINE-GOLD grams (weight x fineness — the accountable quantity). Returns {status,chit_id}.
 // strict=false lets callers inspect a rejected attempt instead of throwing (used for the no-silent-holes probe).
 async function ship(from, to, { fineG, parents, is_origin, product, note }, operatorId, strict=true){
-  const r=await api('POST','/api/chits/send',{
+  const reply=await api('POST','/api/chits/send',{
     receivers:[{entity_id:to.id}], purpose:'delivery_note', manual_subject:`${from.name} -> ${to.name}`,
     line_items:[{ name: note || product, quantity:fineG, unit:'g', price:0, total:0 }],
     trace:{ parents, is_origin, product, qty:fineG, unit:'g', network:{ id:'dxb-gold', operator:operatorId } },
   }, from.token);
-  if(strict && r.status!==200) throw new Error(`ship ${from.name}->${to.name}: ${r.status} ${r.data.message||''}`);
-  return { status:r.status, chit_id:r.data.chit_id, message:r.data.message||r.data.error };
+  if(strict && reply.status!==200) throw new Error(`ship ${from.name}->${to.name}: ${reply.status} ${reply.data.message||''}`);
+  return { status:reply.status, chit_id:reply.data.chit_id, message:reply.data.message||reply.data.error };
 }
 
 // Walk forward from an origin node as `who`; return what that party can see about the node:
 //   httpStatus, seen (is the node visible at all), qty (the frozen inbound fine-g), bal (balance obj or null=leaf-to-them).
 async function view(originId, who){
-  const w = await api('GET', `/api/chits/${originId}/trace?dir=forward`, null, who.token);
-  const n = (w.data.nodes||[]).find(x=>x.chit_id===originId);
-  return { httpStatus:w.status, seen:!!n, qty: n && n.base_qty, bal: n && n.balance };
+  const reply = await api('GET', `/api/chits/${originId}/trace?dir=forward`, null, who.token);
+  const n = (reply.data.nodes||[]).find(x=>x.chit_id===originId);
+  return { httpStatus:reply.status, seen:!!n, qty: n && n.base_qty, bal: n && n.balance };
 }
 
 function h(t){ console.log(`\n${C.bold}${C.cyan}${t}${C.z}`); }
@@ -139,7 +139,7 @@ async function main(){
 }
 
 function done(){
-  const pass=results.filter(Boolean).length, bad=results.filter(r=>!r).length;
+  const pass=results.filter(Boolean).length, bad=results.filter(item=>!item).length;
   console.log(`\n${'═'.repeat(62)}`);
   if(!bad) console.log(`  ${C.g}${C.bold}THE NERVE${C.z} — same launderer: ${C.g}GREEN on his own books${C.z}, ${C.r}RED on a co-held cross-party chain${C.z}.`);
   else     console.log(`  ${C.r}${C.bold}${bad} CHECK(S) FAILED${C.z}  (${pass} passed)`);
