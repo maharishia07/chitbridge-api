@@ -11,8 +11,8 @@ const { query, withEntity } = require('../db');
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { ok ? (P++, console.log('  ✓ ' + n + (d ? '  ' + d : ''))) : (F++, console.log('  ✗ ' + n + (d ? '  — ' + d : ''))); };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
-async function login(email) { const reg = await api('POST', '/api/entities/register', { body: { email } }); const v = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } }); return { token: v.j && v.j.token, id: v.j && v.j.entity && v.j.entity.identity_id }; }
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
+async function login(email) { const reply = await api('POST', '/api/entities/register', { body: { email } }); const v = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } }); return { token: v.j && v.j.token, id: v.j && v.j.entity && v.j.entity.identity_id }; }
 const raised = async (fn, needle) => { try { await fn(); return { raised: false }; } catch (e) { return { raised: true, msg: e.message, match: needle ? new RegExp(needle, 'i').test(e.message) : true }; } };
 const uuid = () => 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/[x]/g, () => (Math.random() * 16 | 0).toString(16));
 
@@ -26,8 +26,8 @@ const uuid = () => 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/[x]/g, () => 
   const ts = Date.now().toString().slice(-6);
   const a = await login('dg-a-' + ts + '@t.com');   // raiser
   const b = await login('dg-b-' + ts + '@t.com');   // party (non-raiser)
-  const snd = await api('POST', '/api/chits/send', { token: a.token, body: { recipients: [{ entity_id: b.id, role: 'to' }], purpose: 'general', manual_subject: 'DG ' + ts, line_items: [{ description: 'x', qty: 1, rate: 1 }] } });
-  const chit_id = snd.j && (snd.j.chit_id || (snd.j.chit && snd.j.chit.chit_id));
+  const reply = await api('POST', '/api/chits/send', { token: a.token, body: { recipients: [{ entity_id: b.id, role: 'to' }], purpose: 'general', manual_subject: 'DG ' + ts, line_items: [{ description: 'x', qty: 1, rate: 1 }] } });
+  const chit_id = reply.j && (reply.j.chit_id || (reply.j.chit && reply.j.chit.chit_id));
   const rz = await api('POST', '/api/chits/' + chit_id + '/disputes', { token: a.token, body: { category: 'quality', reason: 'definer-guard proof dispute', scope: 'targeted', target_entity_id: b.id } });
   const dispute_id = rz.j && (rz.j.dispute_id || (rz.j.dispute && rz.j.dispute.dispute_id));
   chk('setup: chit + dispute created (A=raiser, B=party)', !!chit_id && !!dispute_id, 'dispute=' + (dispute_id ? dispute_id.slice(0, 8) : '—'));
@@ -37,15 +37,15 @@ const uuid = () => 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/[x]/g, () => 
 
   // ── NEW-1 — B (non-raiser) calls chit_dispute_resolve inside withEntity(B) → must RAISE ──
   {
-    const r = await raised(() => withEntity(b.id, (c) => c.query('SELECT chit_dispute_resolve($1,$2,$3,$4)', [dispute_id, b.id, null, 'non-raiser attempt'])), 'raiser');
-    chk('NEW-1: non-raiser resolve → RAISE ("only the raiser can resolve")', r.raised && r.match, r.raised ? r.msg.split('\n')[0].slice(0, 90) : 'did NOT raise (resolve succeeded!)');
+    const text = await raised(() => withEntity(b.id, (c) => c.query('SELECT chit_dispute_resolve($1,$2,$3,$4)', [dispute_id, b.id, null, 'non-raiser attempt'])), 'raiser');
+    chk('NEW-1: non-raiser resolve → RAISE ("only the raiser can resolve")', text.raised && text.match, text.raised ? text.msg.split('\n')[0].slice(0, 90) : 'did NOT raise (resolve succeeded!)');
   }
 
   // ── M3/ROOT — chit_message_deliver via plain query (NO entity context) → must RAISE ──
   {
-    const r = await raised(() => query('SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+    const text = await raised(() => query('SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9)',
       [uuid(), chit_id, a.id, 'A', 'external', 'no-context attempt', 'info', false, null]), 'no entity context');
-    chk('M3/ROOT: deliver with NO context → RAISE ("no entity context")', r.raised && r.match, r.raised ? r.msg.split('\n')[0].slice(0, 90) : 'did NOT raise');
+    chk('M3/ROOT: deliver with NO context → RAISE ("no entity context")', text.raised && text.match, text.raised ? text.msg.split('\n')[0].slice(0, 90) : 'did NOT raise');
   }
 
   // ── M2 — delete every roster row, then a dispute message must RAISE (never broadcast) ──
@@ -56,9 +56,9 @@ const uuid = () => 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/[x]/g, () => 
     const left = await query('SELECT count(*)::int AS n FROM chit_disputes WHERE dispute_id = $1', [dispute_id]).then(r => r.rows[0].n);
     chk('M2 setup: roster fully deleted', left === 0, left + ' rows left');
     const msgId = uuid();
-    const r = await raised(() => withEntity(a.id, (c) => c.query('SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9)',
+    const text = await raised(() => withEntity(a.id, (c) => c.query('SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9)',
       [msgId, chit_id, a.id, 'A', 'external', 'should NOT broadcast', 'info', true, dispute_id])), 'party|belong|roster|broadcast');
-    chk('M2: dispute message with an empty roster → RAISE (refuses)', r.raised && r.match, r.raised ? r.msg.split('\n')[0].slice(0, 90) : 'did NOT raise (BROADCAST!)');
+    chk('M2: dispute message with an empty roster → RAISE (refuses)', text.raised && text.match, text.raised ? text.msg.split('\n')[0].slice(0, 90) : 'did NOT raise (BROADCAST!)');
     const leaked = await query('SELECT count(*)::int AS n FROM chit_messages WHERE message_id = $1', [msgId]).then(r => r.rows[0].n).catch(() => -1);
     chk('M2: and NOTHING was written (zero message copies) — no broadcast', leaked === 0, leaked + ' message rows');
   }
