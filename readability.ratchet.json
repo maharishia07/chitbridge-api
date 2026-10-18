@@ -402,7 +402,7 @@
   "scripts/source-rules.js": {"score":22,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/sql.cjs": {"score":22,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/tax-truth-breaks.cjs": {"score":8,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":7,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "scripts/test-dev.js": {"score":24,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":21,"noWhatLine":1,"emptyCatch":1,"noHeader":1},
+  "scripts/test-dev.js": {"score":23,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":1,"emptyCatch":1,"noHeader":1},
   "scripts/two-sided-breaks.cjs": {"score":8,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":7,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/vault-crypto-test.js": {"score":10,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":9,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/vendor-till.cjs": {"score":14,"long40":1,"long80":1,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":10,"noWhatLine":1,"emptyCatch":0,"noHeader":1},

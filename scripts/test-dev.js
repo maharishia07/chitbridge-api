@@ -74,7 +74,7 @@ const makeEntity = async (name, email) => {
     deny('I6 B void A chit',            await req('PUT',    '/api/chits/' + A_CHIT + '/void',    B, { reason: 'x' }));
     deny('I7 B delete A chit',          await req('DELETE', '/api/chits/' + A_CHIT,             B, null));
     const nf = await req('GET', '/api/notifications', B, null);
-    const leak = ((nf.json && nf.json.notifications) || []).filter(n => n.chit_id === A_CHIT).length;
+    const leak = ((nf.json && nf.json.notifications) || []).filter(item => item.chit_id === A_CHIT).length;
     (leak === 0) ? pass('I9 A chit absent from B notifications') : fail('I9 A chit leaked into B notifications', 'count ' + leak + ' [P0]');
   }
   if (A_ID) {
