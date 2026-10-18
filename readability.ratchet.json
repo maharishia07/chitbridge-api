@@ -334,7 +334,7 @@
   "scripts/prove-chitline-live.js": {"score":19,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-commerce-standards.js": {"score":24,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-commerce.js": {"score":19,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
-  "scripts/prove-cost-live.js": {"score":29,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":27,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
+  "scripts/prove-cost-live.js": {"score":23,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":21,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-definer-guards.js": {"score":27,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":0,"emptyCatch":4,"noHeader":1},
   "scripts/prove-definitions.js": {"score":18,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-delivery-live.js": {"score":23,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":21,"noWhatLine":0,"emptyCatch":1,"noHeader":1},

@@ -16,7 +16,7 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   const A = await signIn('beta@test-cb.com', 'Beta Fresh');
   const B = await signIn('gamma@test-cb.com', 'Gamma Document Services');
   if (!A || !B) { console.log('\n  could not sign in\n'); process.exitCode = 2; return; }
-  const eid = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
+  const eid = (text) => { try { return JSON.parse(Buffer.from(text.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
 
   console.log('\n── b145 live · cost, margin, write-without-read ─────────────────────────────\n');
   console.log('0 · a chit worth ₹1,000');
@@ -56,7 +56,7 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   const r2 = await j('/api/chits/' + id + '/costs', { token: A });
   eq('★★ spent back to 900', r2.b.spent, 900);
   eq('★★ …and BOTH transport rows remain on the record',
-     (r2.b.costs || []).filter((c) => c.kind === 'transport').map((c) => Number(c.amount)), [250, -250]);
+     (r2.b.costs || []).filter((item) => item.kind === 'transport').map((item) => Number(item.amount)), [250, -250]);
   eq('  margin follows: 1000 − 900', r2.b.margin, 100);
   const zero = await j('/api/chits/' + id + '/costs', { method: 'POST', token: A, body: { rows: [{ kind: 'other', amount: 0 }] } });
   ok('  a zero-amount cost is refused as meaningless', zero.status === 400, 'status ' + zero.status);
@@ -92,15 +92,15 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
       ok('★★★ invoiced is ABSENT', !('invoiced' in mine.b));
       ok('★★★ by_kind is ABSENT', !('by_kind' in mine.b));
       ok('★★ …and he cannot see the goods cost anyone else entered',
-         !(mine.b.costs || []).some((c) => c.kind === 'goods'), JSON.stringify(mine.b.costs));
+         !(mine.b.costs || []).some((item) => item.kind === 'goods'), JSON.stringify(mine.b.costs));
 
       console.log('\n5 · the owner sees everything, including his row');
       const all = await j('/api/chits/' + id + '/costs', { token: A });
       eq('★ 5 rows now', (all.b.costs || []).length, 5);
       eq('★★ spent includes his 75', all.b.spent, 975);
       ok('★ …and his row is attributed to him',
-         (all.b.costs || []).some((c) => Number(c.amount) === 75 && /Murugan/.test(c.recorded_by_actor_name || '')),
-         JSON.stringify((all.b.costs || []).map((c) => [c.amount, c.recorded_by_actor_name])));
+         (all.b.costs || []).some((item) => Number(item.amount) === 75 && /Murugan/.test(item.recorded_by_actor_name || '')),
+         JSON.stringify((all.b.costs || []).map((item) => [item.amount, item.recorded_by_actor_name])));
 
       console.log('\n6 · ⭐ the grant — the only way in, and it cannot grant itself');
       /* ⚠️ can_see_costs shipped READ-ONLY: the column and the read gate existed with nothing able to set them,
