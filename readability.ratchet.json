@@ -223,7 +223,7 @@
   "public/inbox.html": {"score":8,"long40":1,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":2,"noWhatLine":2,"emptyCatch":2,"noHeader":1},
   "public/register.html": {"score":8,"long40":2,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":1,"noWhatLine":2,"emptyCatch":2,"noHeader":1},
   "public/send.html": {"score":17,"long40":1,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":12,"noWhatLine":1,"emptyCatch":2,"noHeader":1},
-  "routes/actors.js": {"score":78,"long40":12,"long80":8,"complex10":7,"complex15":5,"deep3":1,"deep4":0,"cryptic":45,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
+  "routes/actors.js": {"score":74,"long40":12,"long80":8,"complex10":7,"complex15":5,"deep3":1,"deep4":0,"cryptic":41,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/adopt.js": {"score":19,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/assist.js": {"score":46,"long40":3,"long80":0,"complex10":7,"complex15":4,"deep3":3,"deep4":1,"cryptic":28,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/attachments.js": {"score":7,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":0,"emptyCatch":0,"noHeader":1},

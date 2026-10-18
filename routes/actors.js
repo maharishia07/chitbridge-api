@@ -268,7 +268,7 @@ router.post('/',
       const actor_role   = sanitise(req.body.actor_role || '');
       const phone        = req.body.phone || null;
       const max_tasks    = req.body.max_tasks || 10;
-      const hat          = ['view_only','act','audit','mis','manager'].includes(req.body.hat) ? req.body.hat : 'act';
+      const list          = ['view_only','act','audit','mis','manager'].includes(req.body.hat) ? req.body.hat : 'act';
 
       // Check key available
       const available = await isKeyAvailable(actor_key, entity_id);
@@ -320,7 +320,7 @@ router.post('/',
        * level after the POST. Now: the body's level, else the old hat's meaning (lib/access.FROM_HAT), else editor —
        * the same answer PATCH /actors/:id writes. WX-P2P-18 found the same on the real stack and adds the reach (whole_entity) as chosen. Before b173 the column is absent: not SELECTed, not written (lib/schema).
        */
-      const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : (access.FROM_HAT[hat] || access.EDITOR);
+      const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : (access.FROM_HAT[list] || access.EDITOR);
       const _lvlCol = await schema.hasColumn('identities', 'access_level');
       /* PEOPLE-EMAIL (SEC2): the Add form's e-mail is STORED (identities.email, $13) — before, it was used once to send the first
          code and dropped, so every later reset / reactivate (actorEmail) found nothing and a sealed host refused it. */
@@ -333,7 +333,7 @@ router.post('/',
         ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor',${shopCountrySql(5)},$13${_lvlCol ? ',$14,$15' : ''})`,
         [identity_id, bridge_id, display_name, actor_key,
          entity_id, actor_role || null, phone, max_tasks,
-         otp, otp_expires, hat, employee_id, toEmail || null].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])
+         otp, otp_expires, list, employee_id, toEmail || null].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])
       );
 
       /* SEC2: a REAL code is never logged — only the local stack's fixed code, which is a known constant anyway */
@@ -472,13 +472,13 @@ router.patch('/:id',
         beforeRow = _b.rows[0] || null;
       } catch (e) { logger.fellBack('actors PATCH /:id: the read failed — carried on without it', e); /* the audit trail must never be the reason a change fails */ }
 
-      const sets = [], vals = []; let n = 1;
-      if ('display_name' in req.body) { sets.push(`display_name = $${n++}`); vals.push(sanitise(req.body.display_name)); }
-      if ('actor_role'   in req.body) { sets.push(`actor_role = $${n++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
-      if ('phone'        in req.body) { sets.push(`phone = $${n++}`);        vals.push((req.body.phone || '').trim() || null); }
-      if ('max_tasks'    in req.body) { sets.push(`max_tasks = $${n++}`);    vals.push(parseInt(req.body.max_tasks, 10)); }
+      const sets = [], vals = []; let index = 1;
+      if ('display_name' in req.body) { sets.push(`display_name = $${index++}`); vals.push(sanitise(req.body.display_name)); }
+      if ('actor_role'   in req.body) { sets.push(`actor_role = $${index++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
+      if ('phone'        in req.body) { sets.push(`phone = $${index++}`);        vals.push((req.body.phone || '').trim() || null); }
+      if ('max_tasks'    in req.body) { sets.push(`max_tasks = $${index++}`);    vals.push(parseInt(req.body.max_tasks, 10)); }
       /* PEOPLE-EMAIL (SEC2): editable, so a person added without one can still get a reset code; empty clears it */
-      if ('email'        in req.body) { sets.push(`email = $${n++}`);        vals.push(String(req.body.email || '').trim().toLowerCase() || null); }
+      if ('email'        in req.body) { sets.push(`email = $${index++}`);        vals.push(String(req.body.email || '').trim().toLowerCase() || null); }
       /**
        * ⚠️⚠️ THE `$` HERE IS LOAD-BEARING AND I DELETED IT ONCE. Commit 5196018 turned a working
        * `hat = $${n++}` into `hat = ${n++}` — a scripted edit collapsed the doubled dollar — and added the two
@@ -488,22 +488,22 @@ router.patch('/:id',
        * `$${n++}` inside a template literal is ONE literal dollar plus the interpolation. Anything that
        * rewrites these lines must preserve both.
        */
-      if ('hat'          in req.body) { sets.push(`hat = $${n++}`);          vals.push(req.body.hat); }
+      if ('hat'          in req.body) { sets.push(`hat = $${index++}`);          vals.push(req.body.hat); }
       /* ⚠️ b173 MAY NOT BE APPLIED YET. Writing to a column that does not exist is Postgres 42703 and fails the
          WHOLE PATCH, not just this field — so the level is not written until the migration lands, and `hat`
          (which the UI sends alongside for exactly this window) carries the change on its own. lib/schema.js. */
       const _lvlCols = await schema.hasColumn('identities', 'access_level');
-      if (_lvlCols && 'access_level' in req.body) { sets.push(`access_level = $${n++}`); vals.push(req.body.access_level); }
+      if (_lvlCols && 'access_level' in req.body) { sets.push(`access_level = $${index++}`); vals.push(req.body.access_level); }
       /* ⚠️ REACH IS THE ENTITY'S TO GRANT, LIKE MONEY. Guarded above with can_see_costs: an actor calling this
          route is refused outright, so a co-assist cannot widen their own reach. */
-      if (_lvlCols && 'whole_entity' in req.body) { sets.push(`whole_entity = $${n++}`); vals.push(!!req.body.whole_entity); }
+      if (_lvlCols && 'whole_entity' in req.body) { sets.push(`whole_entity = $${index++}`); vals.push(!!req.body.whole_entity); }
       /* b145 — the ONLY way this column is ever set. Guarded above: an actor calling this route is refused. */
-      if ('can_see_costs' in req.body) { sets.push(`can_see_costs = $${n++}`); vals.push(!!req.body.can_see_costs); }
+      if ('can_see_costs' in req.body) { sets.push(`can_see_costs = $${index++}`); vals.push(!!req.body.can_see_costs); }
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs' });
       vals.push(actor_id, entity_id);
       const r = await db(
         `UPDATE identities SET ${sets.join(', ')}
-         WHERE identity_id = $${n++} AND parent_entity_id = $${n} AND identity_type = 'actor'
+         WHERE identity_id = $${index++} AND parent_entity_id = $${index} AND identity_type = 'actor'
          RETURNING identity_id, display_name, actor_role, phone, email, max_tasks, hat, can_see_costs${_lvlCols ? ', access_level, whole_entity' : ''}`, vals);
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found' });
       /* ⭐ The audit trail (b172). ONE EVENT PER ACCESS FIELD THAT MOVED — a PATCH setting both hat and
@@ -729,7 +729,7 @@ router.get('/',
       );
 
       const summary = {};
-      counts.rows.forEach(r => { summary[r.break_status] = parseInt(r.count); });
+      counts.rows.forEach(item => { summary[item.break_status] = parseInt(item.count); });
 
       res.json(Object.assign(PL.pageOut('actors', result.rows, pg), {
         summary: {
@@ -1027,7 +1027,7 @@ router.put('/break',
       // Buddy-cover concurrency: don't leave anyone uncovered when going off (both directions; skip on end_break).
       if (break_type !== 'end_break') {
         const deps = (await db(`SELECT display_name FROM identities WHERE delegate_actor_id = $1 AND break_status IN ('short_break','leave')`, [actor_id])).rows;
-        if (deps.length) return res.status(400).json({ error: 'Cover conflict', code: 'COVER_CONFLICT', message: `${youre} covering ${deps.map(d=>d.display_name).join(', ')} who ${deps.length>1?'are':'is'} away — ${who.other ? 'they' : 'you'} can't go off until they're back.` });
+        if (deps.length) return res.status(400).json({ error: 'Cover conflict', code: 'COVER_CONFLICT', message: `${youre} covering ${deps.map(item=>item.display_name).join(', ')} who ${deps.length>1?'are':'is'} away — ${who.other ? 'they' : 'you'} can't go off until they're back.` });
         const me = (await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1`, [actor_id])).rows[0];
         if (me && me.delegate_actor_id) {
           const cov = (await db(`SELECT display_name, break_status FROM identities WHERE identity_id = $1`, [me.delegate_actor_id])).rows[0];
