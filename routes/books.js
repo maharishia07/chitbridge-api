@@ -988,13 +988,20 @@ router.post('/opening', auth, owner, on, async (req, res) => {
 });
 /* ── MOVE IN FROM XERO / QUICKBOOKS (IM1) — three doors, owner only, the ledger on: the columns guessed, the dry run, the import (lib/move-in) ── */
 const MI = require('../lib/move-in');
-/** what every move-in door reads from the body: the file (csv | xlsx + sheet / header_row), which export (kind), which system (source), the side, the move date */
+/** what every move-in door reads from the body: the file (csv | xlsx + sheet / header_row), which export (kind), which system (source), the side, the move date,
+ *  ⭐ W1.1b the country the OWNER states the file is from (source_country, two letters — checked against the shop's by lib/move-in-gate, kept in the proof)
+ *  and W1.4 their company id when they know it (source_company: QBO realm · Xero organisation · Zoho organization) */
 function moveInBody(req) {
   const b = req.body || {};
   const kind = MI.kindOf(b.kind), source = MI.sourceOf(b.source);
   const as_at = dateQ(b.as_at, null) || fyStart(req, today(req));
   const side = kind === 'contacts' ? (b.side === 'supplier' ? 'supplier' : 'customer') : kind === 'open_bills' ? (b.side === 'payable' || b.side === 'supplier' ? 'payable' : 'receivable') : null;
-  return { kind, source, side, as_at, parsed: MI.readFile(b), decisions: b.decisions, client_ref: b.client_ref ? String(b.client_ref).slice(0, 80) : null };
+  return Object.assign({ kind, source, side, as_at, parsed: MI.readFile(b), decisions: b.decisions, client_ref: b.client_ref ? String(b.client_ref).slice(0, 80) : null }, moveInOrigin(b));
+}
+/** where the owner says the books come from: the country as given (lib/move-in-gate judges it) and their company id, each cut to size or null */
+function moveInOrigin(body) {
+  const sized = (value, size) => (value == null ? null : String(value).slice(0, size));
+  return { source_country: sized(body.source_country, 60), source_company: sized(body.source_company, 80) };
 }
 /** POST /move-in/preflight { kind, source, csv | xlsx, sheet?, header_row? } → { kind, source, headers, fields, guess: [{ incoming, field, how, confidence, why }], missing, ready, rows_total, sample, sheet, sheets, header_row } — reads nothing of the shop; nothing is written */
 router.post('/move-in/preflight', auth, owner, on, async (req, res) => {
@@ -1008,18 +1015,20 @@ router.post('/move-in/preflight', auth, owner, on, async (req, res) => {
 async function moveInPlan(req, h) {
   const e = ctx(req), m = moveInBody(req);
   const rows = MI.cells(m.kind, m.parsed, m.decisions);
-  const w = await MI.world(h, e, m.kind, req.books);
-  const pl = MI.plan(m.kind, { source: m.source, side: m.side, rows, world: w, currency: curOf(req), as_at: m.as_at });
+  const w = await MI.world(h, e, m.kind, req.books, { source: m.source, side: m.side, rows });
+  const pl = MI.plan(m.kind, { source: m.source, side: m.side, rows, world: w, currency: curOf(req), as_at: m.as_at,
+    country: req.books && req.books.country, source_country: m.source_country, country_how: 'stated', source_company: m.source_company });
   return { m, pl, w };
 }
-/** POST /move-in/preview { kind, source, csv | xlsx, decisions: [{ incoming, field }], side?, as_at? } → { kind, source, side, as_at, counts: { add, merge, skip }, rows: [{ line, what, action, why, data }], refusal, notes } — the DRY RUN; nothing is written */
+/** POST /move-in/preview { kind, source, source_country, source_company?, csv | xlsx, decisions: [{ incoming, field }], side?, as_at? } → { kind, source, side, as_at, counts: { add, merge, skip, hold }, rows: [{ line, what, action, why, data, code? }], refusal, notes, country: { shop, source, how }, company_id, tax_codes? } — the DRY RUN; nothing is written. A country refusal: 422 { code: MOVE_IN_COUNTRY · _UNSTATED · _WORD · MOVE_IN_FOREIGN · MOVE_IN_COMPANY } */
 router.post('/move-in/preview', auth, owner, on, async (req, res) => {
   try {
     const { m, pl } = await withEntity(ctx(req), (h) => moveInPlan(req, h));
     res.json(Object.assign({ kind: m.kind, source: m.source, side: m.side, as_at: m.as_at }, pl));
   } catch (err) { fail(res, err); }
 });
-/** POST /move-in/import { …as preview, confirm: true } → { kind, source, side, as_at, added, merged, skipped, rows: [the skipped, with why], notes, entry?, source_code_written? } — ONE transaction; a refusal writes nothing (422 with the sentence) */
+/** POST /move-in/import { …as preview, confirm: true } → { kind, source, side, as_at, added, merged, skipped, held, rows: [the skipped and the held, with why (+ code)], notes, entry?,
+ *  source_code_written?, proof, proof_stored, import_id } — ONE transaction; a refusal writes nothing (422 with the code and the sentence) */
 router.post('/move-in/import', auth, owner, on, async (req, res) => {
   try {
     if ((req.body || {}).confirm !== true) return res.status(400).json({ error: 'Not confirmed', message: 'Nothing was imported — this needs an explicit confirmation.' });
@@ -1030,6 +1039,14 @@ router.post('/move-in/import', auth, owner, on, async (req, res) => {
       return Object.assign({ side: m.side, as_at: m.as_at }, r);
     });
     res.json(out);
+  } catch (err) { fail(res, err); }
+});
+/** GET /move-in/imports → { ready, why, imports: [{ import_id, source, company_id, source_country, country_how, kind, side, as_at, counts, proof, created_at }] } —
+ *  the latest 20 imports with their MATCH PROOF (W1.10, b765), read back. Owner only. Before b765: ready false with the sentence. One transaction. */
+router.get('/move-in/imports', auth, owner, on, async (req, res) => {
+  try {
+    const e = ctx(req);
+    res.json(await withEntity(e, (conn) => require('../lib/move-in-proof').list(conn, e)));
   } catch (err) { fail(res, err); }
 });
 /* ── PARALLEL RUN (PR1) — an auditor's Tally / Xero / QBO period beside ours, line by line (lib/parallel-run). Their figures are a SNAPSHOT: read from export

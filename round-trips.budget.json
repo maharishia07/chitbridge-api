@@ -324,6 +324,14 @@
       "fired": true,
       "status": 422
     },
+    "GET /api/books/move-in/imports": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "GET /api/books/packs": {
       "file": "books.js",
       "trips": 1,
