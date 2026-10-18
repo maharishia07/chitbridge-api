@@ -110,12 +110,12 @@ async function seedOne(c) {
   const ent = await signIn(c.email, c.name);
 
   const keys = {};
-  c.publish.items.forEach((it) => Object.keys(it).forEach((k) => { if (k !== 'name') keys[k] = true; }));
+  c.publish.items.forEach((item) => Object.keys(item).forEach((k) => { if (k !== 'name') keys[k] = true; }));
   const p = await call('PUT', '/api/assist/catalogue-source', { token: ent.token, body: {
     source_key: c.publish.source_key, version: 'v1', for_vertical: c.publish.for_vertical,
     title: c.publish.title, collection: c.publish.collection,
     schema: { name: c.publish.collection, fields: [{ key: 'name', label: 'Name', type: 'text' }]
-      .concat(Object.keys(keys).map((k) => ({ key: k, label: k.replace(/_/g, ' '), type: 'text' }))) },
+      .concat(Object.keys(keys).map((item) => ({ key: item, label: item.replace(/_/g, ' '), type: 'text' }))) },
     items: c.publish.items, commercials_fields: [{ key: 'price', label: 'Price', type: 'money' }],
     experience: { note: c.publish.title }, formatting: {} } });
   if (p.status >= 400) throw new Error(`publish ${p.status}: ${JSON.stringify(p.json).slice(0, 160)}`);
@@ -149,8 +149,8 @@ async function inspect(m) {
 (async () => {
   console.log(B('\nSEED — ' + MODE + '   ' + API));
 
-  const want = MODE === 'phase2' ? CAST.filter((c) => c.phase === 2)
-             : MODE === 'phase1' ? CAST.filter((c) => c.phase === 1) : CAST;
+  const want = MODE === 'phase2' ? CAST.filter((item) => item.phase === 2)
+             : MODE === 'phase1' ? CAST.filter((item) => item.phase === 1) : CAST;
 
   const made = [];
   if (MODE !== 'verify') {
@@ -184,9 +184,9 @@ async function inspect(m) {
       else bad(`${c.name.padEnd(20)} no prices found`);
       continue;
     }
-    const bare = got.prices.filter((p) => typeof p.price !== 'object');
-    const stamped = got.prices.filter((p) => p.price && typeof p.price === 'object' && p.price.currency);
-    const wrongCur = stamped.filter((p) => c.currency && p.price.currency !== c.currency);
+    const bare = got.prices.filter((item) => typeof item.price !== 'object');
+    const stamped = got.prices.filter((item) => item.price && typeof item.price === 'object' && item.price.currency);
+    const wrongCur = stamped.filter((item) => c.currency && item.price.currency !== c.currency);
     if (bare.length)      bad(`${c.name.padEnd(20)} ${bare.length} BARE price(s): ${JSON.stringify(bare[0])}`);
     else if (wrongCur.length) bad(`${c.name.padEnd(20)} stamped ${wrongCur[0].price.currency}, expected ${c.currency}`);
     else ok(`${c.name.padEnd(20)} ${stamped.length} price(s), all ${stamped[0].price.currency}  e.g. ${stamped[0].item}=${stamped[0].price.amount}`);
@@ -204,7 +204,7 @@ async function inspect(m) {
   console.log('\n' + B(`${PASS} passed, ${FAIL} failed`) + '\n');
   if (made.length) {
     console.log(B('Storefronts:'));
-    made.forEach((m) => console.log(`   https://chitbridge-web.vercel.app/shop.html?bridge=${m.bridge_id}   ${m.name}`));
+    made.forEach((item) => console.log(`   https://chitbridge-web.vercel.app/shop.html?bridge=${item.bridge_id}   ${item.name}`));
     console.log();
   }
   process.exit(FAIL ? 1 : 0);
