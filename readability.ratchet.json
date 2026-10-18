@@ -252,7 +252,7 @@
   "routes/keys.js": {"score":68,"long40":4,"long80":2,"complex10":4,"complex15":2,"deep3":0,"deep4":0,"cryptic":56,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/kyb.js": {"score":2,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":1,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "routes/network-design.js": {"score":49,"long40":3,"long80":1,"complex10":4,"complex15":3,"deep3":0,"deep4":0,"cryptic":37,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "routes/network-offers.js": {"score":49,"long40":0,"long80":0,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":46,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
+  "routes/network-offers.js": {"score":33,"long40":0,"long80":0,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":30,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/notifications.js": {"score":14,"long40":1,"long80":1,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "routes/offers.js": {"score":11,"long40":0,"long80":0,"complex10":2,"complex15":0,"deep3":0,"deep4":0,"cryptic":8,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "routes/openapi.js": {"score":5,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":1,"emptyCatch":0,"noHeader":1},

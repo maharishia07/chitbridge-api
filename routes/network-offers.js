@@ -81,9 +81,9 @@ async function readOwn(batch, me) {
   ]);
   const my = meRow.rows[0] || {};
   const owners = [];
-  ado.rows.forEach((r) => { if (r.owner_entity_id && String(r.owner_entity_id) !== String(me)) owners.push(String(r.owner_entity_id)); });
+  ado.rows.forEach((item) => { if (item.owner_entity_id && String(item.owner_entity_id) !== String(me)) owners.push(String(item.owner_entity_id)); });
   return { myFlags: my.policy_flags || {}, ownOffers: ownOffers.rows, ownPlace: ownPlace.rows, roster: roster.rows, ado: ado.rows, ownSources: ownSources.rows, products: products.rows,
-           brandIds: [...new Set(owners.concat(edged.rows.map((x) => x.brand_id)))], memberIds: roster.rows.map((m) => String(m.id)) };
+           brandIds: [...new Set(owners.concat(edged.rows.map((x) => x.brand_id)))], memberIds: roster.rows.map((item) => String(item.id)) };
 }
 
 /** trip 2 — everything keyed by the brands and members found: their identities rows · the brands' titles · my standing · which brands I am IN */
@@ -99,8 +99,8 @@ async function readPeople(batch, me, brandIds, memberIds) {
       { text: membership.STANDING_SQL, params: [me, brandIds] },
       { text: `SELECT b FROM unnest($1::text[]) AS b WHERE ${membership.isMemberSql('b', '$2')}`, params: [brandIds, String(me)] });
     const [idRows, titles, standRows, inRows] = await batch('network offers (brands)', stmts);
-    idRows.rows.forEach((r) => people.set(String(r.id), { name: r.display_name || null, flags: r.policy_flags || {}, title: null }));
-    if (titles) titles.rows.forEach((r) => { const p = people.get(String(r.id)); if (p) p.title = r.title ? String(r.title) : null; });
+    idRows.rows.forEach((item) => people.set(String(item.id), { name: item.display_name || null, flags: item.policy_flags || {}, title: null }));
+    if (titles) titles.rows.forEach((item) => { const p = people.get(String(item.id)); if (p) p.title = item.title ? String(item.title) : null; });
     if (standRows) standing = membership.standingOf(standRows.rows);
     if (inRows) inNetwork = new Set(inRows.rows.map((x) => String(x.b)));
   }
@@ -110,13 +110,13 @@ async function readPeople(batch, me, brandIds, memberIds) {
 
 /** trip 3 — each brand's released offers, read under THAT brand (readBatch's per-statement entity); only a store INSIDE the network is told */
 async function readReleased(batch, brandIds, standing, of) {
-  const want = brandIds.filter((b) => (standing[b] || {}).state === 'active' && Object.keys(((of(b).flags.network_offers || {}).released) || {}).length);
+  const want = brandIds.filter((item) => (standing[item] || {}).state === 'active' && Object.keys(((of(item).flags.network_offers || {}).released) || {}).length);
   const offerRows = {};
   if (!want.length) return offerRows;
-  const got = await batch('network offers (released)', want.map((b) => ({ entity: b, params: [b, Object.keys(of(b).flags.network_offers.released)],
+  const got = await batch('network offers (released)', want.map((item) => ({ entity: item, params: [item, Object.keys(of(item).flags.network_offers.released)],
     text: `SELECT definition_id, name, sub_kind, status FROM definition
             WHERE entity_id = $1 AND kind = 'offer' AND definition_id::text = ANY($2::text[])` })));
-  want.forEach((b, i) => { offerRows[b] = got[i].rows; });
+  want.forEach((item, index) => { offerRows[item] = got[index].rows; });
   return offerRows;
 }
 
@@ -135,10 +135,10 @@ function networkRow(me, brand_id, st, who, rows, choices) {
     /* ⭐ G2: what THIS store may do on the row — the server's rule (mayAct), never re-derived on a screen */
     may: membership.mayOn(st, st.store_node || me),
     /* a store outside the network is told nothing of its offers */
-    offers: (inside ? rows : []).map((d) => {
-      const c = choices[d.definition_id] || null;
-      return { id: d.definition_id, name: d.name, kind: d.sub_kind, live: d.status === 'live',
-               at: rel[d.definition_id].at || null, until: rel[d.definition_id].until || null,
+    offers: (inside ? rows : []).map((item) => {
+      const c = choices[item.definition_id] || null;
+      return { id: item.definition_id, name: item.name, kind: item.sub_kind, live: item.status === 'live',
+               at: rel[item.definition_id].at || null, until: rel[item.definition_id].until || null,
                choice: c, applies: policy === 'opt_in' ? c === 'in' : c !== 'out' };
     }) };
 }
@@ -163,14 +163,14 @@ router.get('/', auth, sessionOnly, async (req, res) => {
     const brand = await net.brandView(me, { flags: own.myFlags, offers: own.ownOffers, own: own.ownPlace, roster: own.roster, names });
     const offerRows = await readReleased(batch, own.brandIds, standing, of);
     const choices = own.myFlags.network_choices || {};
-    const networks = own.brandIds.map((b) => networkRow(me, b, standing[b] || { state: 'none', via: null, edge_id: null, asked_by: null }, of(b), offerRows[b] || [], choices));
+    const networks = own.brandIds.map((item) => networkRow(me, item, standing[item] || { state: 'none', via: null, edge_id: null, asked_by: null }, of(item), offerRows[item] || [], choices));
     /* ⭐ the catalogue half: what the brand would publish, and the prices its stores are being asked about */
-    const brandsPre = {}; own.brandIds.forEach((b) => { brandsPre[b] = of(b); });
+    const brandsPre = {}; own.brandIds.forEach((item) => { brandsPre[item] = of(item); });
     brand.catalogue = await ncat.brandView(me, { sources: own.ownSources, products: own.products, flags: own.myFlags,
-      members: own.roster.filter((m) => m.state === 'active').map((m) => m.id), names }).catch(membership.orElse('network offers: the catalogue half was not read — shown without it', null));
+      members: own.roster.filter((item) => item.state === 'active').map((item) => item.id), names }).catch(membership.orElse('network offers: the catalogue half was not read — shown without it', null));
     if (brand.catalogue) brand.is_brand = true;
-    const price_notices = await ncat.storeNotices(me, own.ado.map((r) => ({ source_key: r.source_key, commercials: r.commercials })),
-      { seen: own.myFlags.network_price_seen || {}, src: own.ado.filter((r) => r.owner_entity_id).map((r) => ({ source_key: r.source_key, owner_entity_id: r.owner_entity_id, items: r.items })),
+    const price_notices = await ncat.storeNotices(me, own.ado.map((item) => ({ source_key: item.source_key, commercials: item.commercials })),
+      { seen: own.myFlags.network_price_seen || {}, src: own.ado.filter((item) => item.owner_entity_id).map((item) => ({ source_key: item.source_key, owner_entity_id: item.owner_entity_id, items: item.items })),
         inside: inNetwork, brands: brandsPre }).catch(membership.orElse('network offers: price notices not read — none shown', []));
     /* ⭐ may this login DESIGN a network? the same rule POST /api/network-design/build enforces (only the business itself, never a co-assist);
        the member view's Design tab shows the action either way and greys it with this sentence (no query — read off the session) */
