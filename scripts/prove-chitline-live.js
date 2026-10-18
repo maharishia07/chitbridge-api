@@ -18,7 +18,7 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   const A = await signIn('beta@test-cb.com', 'Beta Fresh');
   const B = await signIn('gamma@test-cb.com', 'Gamma Document Services');
   if (!A || !B) { console.log('\n  could not sign in\n'); process.exitCode = 2; return; }
-  const eid = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
+  const eid = (text) => { try { return JSON.parse(Buffer.from(text.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
 
   console.log('\n── b142 live · a line is a row ──────────────────────────────────────────────\n');
   console.log('0 · send a chit with three lines');
@@ -38,13 +38,13 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   const mine = await get(A), theirs = await get(B);
 
   console.log('\n1 · every line was stamped with an identity and an order');
-  const ls = mine.live_set || [];
-  eq('three lines', ls.length, 3);
-  const ids = ls.map((e) => (e.live || e.original || {}).line_id);
+  const list = mine.live_set || [];
+  eq('three lines', list.length, 3);
+  const ids = list.map((e) => (e.live || e.original || {}).line_id);
   ok('★★ every line carries a line_id', ids.every(Boolean), JSON.stringify(ids));
   ok('…and they are distinct', new Set(ids).size === 3);
-  eq('★ seq is STATED, gapped by 10', ls.map((e) => (e.live || e.original || {}).seq), [10, 20, 30]);
-  eq('…and they come back in that order', ls.map((e) => (e.live || e.original || {}).particulars), ['Tomato', 'Milk', 'Onion']);
+  eq('★ seq is STATED, gapped by 10', list.map((e) => (e.live || e.original || {}).seq), [10, 20, 30]);
+  eq('…and they come back in that order', list.map((e) => (e.live || e.original || {}).particulars), ['Tomato', 'Milk', 'Onion']);
 
   console.log('\n2 · ⭐ BOTH COPIES AGREE ON WHAT A LINE IS');
   const theirIds = (theirs.live_set || []).map((e) => (e.live || e.original || {}).line_id);
@@ -64,7 +64,7 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   /* ⚠️ THE ASSERTION THAT WAS MISSING. Every earlier check read live/original, which are built from chit_line and
      the frozen payload — so an empty history was invisible. Athi's first screenshot showed a corrected line with
      NO struck-through original, because amend.list() never selected line_id and the chain filter matched nothing. */
-  eq('★★★ the history carries the ORIGINAL, for the strike-through', (after.live_set[0].history || []).map((h) => h.quantity), [3]);
+  eq('★★★ the history carries the ORIGINAL, for the strike-through', (after.live_set[0].history || []).map((item) => item.quantity), [3]);
 
   console.log('\n4 · ⭐ RLS — a correction is MY reading of MY copy');
   const theirsAfter = await get(B);
@@ -82,11 +82,11 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   console.log('\n6 · ⭐ the group sum totals the LIVE lines');
   const gs = await j('/api/folders/groupsum?scope=order', { token: A });
   const seen = [];
-  ((gs.b || {}).requirement || []).forEach((l) => (l.breakdown || []).forEach((b) => { if (b.chit_id === id) seen.push({ p: b.phrase, q: b.qty }); }));
-  ((((gs.b || {}).flags) || {}).unmatched || []).forEach((u) => { if (u.chit_id === id) seen.push({ p: u.phrase, q: u.qty }); });
-  eq('★★ the corrected 8 counts, not the misread 3', seen.filter((s) => /tomato/i.test(s.p)).map((s) => s.q), [8]);
-  eq('★★ the removed line counts nowhere at all', seen.filter((s) => /milk/i.test(s.p)).length, 0);
-  eq('  the untouched line is still there', seen.filter((s) => /onion/i.test(s.p)).map((s) => s.q), [1]);
+  ((gs.b || {}).requirement || []).forEach((item) => (item.breakdown || []).forEach((b) => { if (b.chit_id === id) seen.push({ p: b.phrase, q: b.qty }); }));
+  ((((gs.b || {}).flags) || {}).unmatched || []).forEach((item) => { if (item.chit_id === id) seen.push({ p: item.phrase, q: item.qty }); });
+  eq('★★ the corrected 8 counts, not the misread 3', seen.filter((item) => /tomato/i.test(item.p)).map((item) => item.q), [8]);
+  eq('★★ the removed line counts nowhere at all', seen.filter((item) => /milk/i.test(item.p)).length, 0);
+  eq('  the untouched line is still there', seen.filter((item) => /onion/i.test(item.p)).map((item) => item.q), [1]);
 
   console.log('\n' + (fail ? '\x1b[31m' : '\x1b[32m') + pass + ' passed, ' + fail + ' failed\x1b[0m');
   console.log('  chit left for inspection: ' + id + '  (subject "chitline ' + stamp + '")\n');
