@@ -31,10 +31,10 @@ async function run(ctx) {
   const OPEN_ITEMS = Math.min(OPEN_MAX, Math.round(target / 20));
   const call = async (p, o) => {
     const opt = o || {}, t0 = process.hrtime.bigint();
-    const r = await fetch(base + p, { method: opt.method || 'GET', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: opt.body ? JSON.stringify(opt.body) : undefined });
-    const text = await r.text(), ms = Number(process.hrtime.bigint() - t0) / 1e6;
+    const reply = await fetch(base + p, { method: opt.method || 'GET', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token }, body: opt.body ? JSON.stringify(opt.body) : undefined });
+    const text = await reply.text(), ms = Number(process.hrtime.bigint() - t0) / 1e6;
     let b = null; try { b = JSON.parse(text); } catch (_) { b = null; }
-    return { status: r.status, b: b || {}, ms, trips: Number(r.headers.get('x-db-trips')) || null, bytes: text.length };
+    return { status: reply.status, b: b || {}, ms, trips: Number(reply.headers.get('x-db-trips')) || null, bytes: text.length };
   };
   const lines = async () => Number((await sql('SELECT count(*)::int AS n FROM journal_line WHERE entity_id = $1', [shopId])).rows[0].n);
   CLOCK.set(ctx.end + 'T20:00:00+05:30');
@@ -51,13 +51,13 @@ async function run(ctx) {
     /* catalogue */
     const items = Number((await sql(`SELECT count(*)::int AS n FROM catalogue_items WHERE entity_id = $1`, [shopId])).rows[0].n);
     for (let i = items; i < CATALOGUE;) {
-      const batch = []; for (let k = 0; k < 200 && i < CATALOGUE; k++, i++) { const nm = 'Scale item ' + String(i + 1).padStart(5, '0'); batch.push({ product: nm, name: nm, unit: 'piece', price: 10 + (i % 490), category: 'Scale', hsn: '3401', gst_rate: 18 }); }
+      const batch = []; for (let index = 0; index < 200 && i < CATALOGUE; index++, i++) { const nm = 'Scale item ' + String(i + 1).padStart(5, '0'); batch.push({ product: nm, name: nm, unit: 'piece', price: 10 + (i % 490), category: 'Scale', hsn: '3401', gst_rate: 18 }); }
       const r = await call('/api/products/bulk', { method: 'POST', body: { items: batch } });
       if (r.status >= 300) throw new Error('products bulk: HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
     }
     say('scale · catalogue ' + Number((await sql(`SELECT count(*)::int AS n FROM catalogue_items WHERE entity_id = $1`, [shopId])).rows[0].n));
     /* the journal: credit bills (4 lines) and cash bills (4 lines) spread over the open year's days, then payments (2 lines) settling the oldest */
-    const days = []; for (let d = new Date(ctx.start + 'T00:00:00Z'); d.toISOString().slice(0, 10) <= ctx.end; d.setUTCDate(d.getUTCDate() + 1)) days.push(d.toISOString().slice(0, 10));
+    const days = []; for (let date = new Date(ctx.start + 'T00:00:00Z'); date.toISOString().slice(0, 10) <= ctx.end; date.setUTCDate(date.getUTCDate() + 1)) days.push(date.toISOString().slice(0, 10));
     let n = Number((await sql(`SELECT count(*)::int AS n FROM journal_entry WHERE entity_id = $1 AND source_ref LIKE 'scale:%'`, [shopId])).rows[0].n);
     let have0 = await lines(); const t0 = Date.now();
     /* each payment adds 2 lines and closes one bill: bills B, payments B − OPEN, lines ≈ 4B + 2(B − OPEN) → B ≈ (need + 2·OPEN) / 6 of credit, the same again cash */
@@ -80,7 +80,7 @@ async function run(ctx) {
     for (const o of toPay) {
       const body = { party_id: o.party_id, direction: 'in', amount_minor: Number(o.open), currency: ctx.cur, mode: 'cash', received_at: o.paid_on && o.paid_on < ctx.end ? o.paid_on : ctx.end, allocations: [{ against_ref: o.against_ref, amount_minor: Number(o.open) }], client_ref: 'scale-pay:' + o.against_ref };
       let r = await call('/api/books/payments', { method: 'POST', body });
-      if (r.status === 409 && r.b.warnings) r = await call('/api/books/payments', { method: 'POST', body: Object.assign(body, { acknowledge: r.b.warnings.map((w) => w.code) }) });
+      if (r.status === 409 && r.b.warnings) r = await call('/api/books/payments', { method: 'POST', body: Object.assign(body, { acknowledge: r.b.warnings.map((item) => item.code) }) });
       if (r.status >= 300) throw new Error('scale payment refused: HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300));
       paid++; if (paid % 1000 === 0) say('scale · ' + paid + ' payments · ' + Math.round((Date.now() - t0) / 1000) + 's');
     }
@@ -124,17 +124,17 @@ async function run(ctx) {
     ['Till snapshot · since', '/api/till/snapshot?since=' + encodeURIComponent(since), 'items'],
   ];
   const out = [];
-  for (const [name, p, key] of READS.filter((r) => !ctx.only || r[0].toLowerCase().indexOf(String(ctx.only).toLowerCase()) >= 0)) {
+  for (const [name, p, key] of READS.filter((item) => !ctx.only || item[0].toLowerCase().indexOf(String(ctx.only).toLowerCase()) >= 0)) {
     const ms = []; let last = null;
-    for (let i = 0; i < 20; i++) { last = await call(p); ms.push(last.ms); if (last.ms > 3000 || last.status >= 500) break; }   /* a read past 3 s (or failing) is said once — 20 timeouts add nothing */
+    for (let index = 0; index < 20; index++) { last = await call(p); ms.push(last.ms); if (last.ms > 3000 || last.status >= 500) break; }   /* a read past 3 s (or failing) is said once — 20 timeouts add nothing */
     out.push({ name, status: last.status, n: ms.length, p50: pct(ms, 50), p95: pct(ms, 95), rows: key ? (Array.isArray(last.b[key]) ? last.b[key].length : null) : rowsOf(last.b), trips: last.trips, kb: Math.round(last.bytes / 1024) });
   }
   /* the proof on the real database: the cash ledger walked in pages of 500 = the whole ledger, line for line and balance for balance */
   if (!ctx.only) {
-    const whole = await call('/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today), got = []; let after = null, pages = 0;
-    do { const r = await call('/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today + '&limit=500' + (after ? '&after=' + encodeURIComponent(after) : '')); (r.b.lines || []).forEach((l) => got.push(l)); after = r.b.next; pages++; } while (after && pages < 1000);
-    const same = got.length === (whole.b.lines || []).length && got.every((l, i) => l.running_minor === whole.b.lines[i].running_minor && l.ref === whole.b.lines[i].ref);
-    console.log('\n  ' + (same ? 'ok  ' : 'RED ') + ' cash ledger in ' + pages + ' pages of 500 = the whole ledger (' + got.length + ' lines, every running balance equal)');
+    const whole = await call('/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today), list = []; let after = null, pages = 0;
+    do { const r = await call('/api/books/ledger/' + cash + '?from=' + fy + '&to=' + today + '&limit=500' + (after ? '&after=' + encodeURIComponent(after) : '')); (r.b.lines || []).forEach((item) => list.push(item)); after = r.b.next; pages++; } while (after && pages < 1000);
+    const same = list.length === (whole.b.lines || []).length && list.every((item, index) => item.running_minor === whole.b.lines[index].running_minor && item.ref === whole.b.lines[index].ref);
+    console.log('\n  ' + (same ? 'ok  ' : 'RED ') + ' cash ledger in ' + pages + ' pages of 500 = the whole ledger (' + list.length + ' lines, every running balance equal)');
     if (!same) process.exitCode = 1;
   }
   const f = (x) => (x == null ? '—' : x < 10 ? x.toFixed(1) : String(Math.round(x)));
@@ -142,7 +142,7 @@ async function run(ctx) {
     + facts.parties + ' customers · ' + facts.catalogue + ' catalogue rows · snapshot ' + snap.status + '\n');
   console.log('| read | HTTP | calls | p50 ms | p95 ms | rows | trips | KB |');
   console.log('|---|---|---|---|---|---|---|---|');
-  out.forEach((r) => console.log('| ' + [r.name, r.status, r.n, f(r.p50), f(r.p95), r.rows == null ? '—' : r.rows, r.trips == null ? '—' : r.trips, r.kb].join(' | ') + ' |'));
+  out.forEach((item) => console.log('| ' + [item.name, item.status, item.n, f(item.p50), f(item.p95), item.rows == null ? '—' : item.rows, item.trips == null ? '—' : item.trips, item.kb].join(' | ') + ' |'));
   return { facts, reads: out };
 }
 
