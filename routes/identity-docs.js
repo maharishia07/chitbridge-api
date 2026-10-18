@@ -42,10 +42,10 @@ const { safeErr } = require('../lib/respond');
    whitespace survived and "TN01 2011 0001234" would have failed the DL pattern for no visible reason. Third
    time in one session that a script silently dropped an escape; anything touching these lines uses an editor,
    not a generator. */
-const UP     = (v) => v.toUpperCase().replace(/[\s-]/g, '');   // PAN, Voter ID — case-insensitive, no separators
-const UPKEEP = (v) => v.toUpperCase().replace(/\s/g, '');      // DL — keeps hyphens, which appear in real numbers
-const DIGITS = (v) => v.replace(/[^0-9+]/g, '');               // phone, Aadhaar — a leading + survives
-const LOWER  = (v) => v.trim().toLowerCase();                  // email — lowercased, never stripped
+const UP     = (text) => text.toUpperCase().replace(/[\s-]/g, '');   // PAN, Voter ID — case-insensitive, no separators
+const UPKEEP = (text) => text.toUpperCase().replace(/\s/g, '');      // DL — keeps hyphens, which appear in real numbers
+const DIGITS = (text) => text.replace(/[^0-9+]/g, '');               // phone, Aadhaar — a leading + survives
+const LOWER  = (text) => text.trim().toLowerCase();                  // email — lowercased, never stripped
 
 /**
  * ⭐⭐ selfServe — MAY THE PERSON THEMSELVES FILE THIS? Athi, 2026-08-20: *"mobile number and email id, he can
@@ -64,7 +64,7 @@ const LOWER  = (v) => v.trim().toLowerCase();                  // email — lowe
 const CATALOGUE = {
   IN: [
     { scheme: 'PHONE',    label: 'Mobile',         pattern: /^[+]?[0-9]{10,15}$/,        mask: v => '•••••' + v.slice(-4),  store: true,  verify: 'otp', norm: DIGITS, selfServe: true },
-    { scheme: 'EMAIL',    label: 'Email',          pattern: /^[^@\s]+@[^@\s]+\.[^@\s]+$/, mask: v => v.replace(/^(.).*(@.*)$/, '$1•••$2'), store: true, verify: 'otp', norm: LOWER, selfServe: true },
+    { scheme: 'EMAIL',    label: 'Email',          pattern: /^[^@\s]+@[^@\s]+\.[^@\s]+$/, mask: text => text.replace(/^(.).*(@.*)$/, '$1•••$2'), store: true, verify: 'otp', norm: LOWER, selfServe: true },
     { scheme: 'PAN',      label: 'PAN',            pattern: /^[A-Z]{5}[0-9]{4}[A-Z]$/,   mask: v => v.slice(0,3) + '••••' + v.slice(-3), store: true, verify: 'nsdl', norm: UP },
     { scheme: 'VOTER_ID', label: 'Voter ID',       pattern: /^[A-Z]{3}[0-9]{7}$/,        mask: v => '•••' + v.slice(-4),    store: true,  verify: 'manual', norm: UP },
     { scheme: 'DL',       label: 'Driving licence',pattern: /^[A-Z0-9-]{8,20}$/,          mask: v => '••••' + v.slice(-4),   store: true,  verify: 'manual', norm: UPKEEP },
@@ -72,7 +72,7 @@ const CATALOGUE = {
     { scheme: 'AADHAAR',  label: 'Aadhaar',        pattern: /^[0-9]{12}$/,               mask: v => 'XXXX XXXX ' + v.slice(-4), store: false, verify: 'uidai-offline', norm: DIGITS },
   ],
 };
-const schemesFor = (cc) => CATALOGUE[cc] || CATALOGUE.IN.filter((s) => s.selfServe);   /* CX0: a country with no list gets the universal two (phone · email), never India's PAN / Aadhaar */
+const schemesFor = (cc) => CATALOGUE[cc] || CATALOGUE.IN.filter((item) => item.selfServe);   /* CX0: a country with no list gets the universal two (phone · email), never India's PAN / Aadhaar */
 /**
  * CX4 (R3): WHICH COUNTRY'S LIST — the shop's own (identities.country), read here by the server. A country sent by the client was
  * trusted before (default IN), so an Australian shop was offered PAN and Aadhaar and could file one. One read, the shop's row.
@@ -106,11 +106,11 @@ router.get('/documents', auth, async (req, res) => {
       [subject.id]));
     /* M18: a plain `verified` (+ `verified_at`) per document — what N19's trade-ready check reads. Only status 'verified'
        WITH a stamp counts; the pending-code counterfoil (verification_ref) is never selected, so it cannot leak. */
-    const documents = r.rows.map(d => ({ ...d, verified: d.status === 'verified' && !!d.verified_at }));
-    res.json(Object.assign(PL.pageOut('documents', documents, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), { catalogue: schemesFor(await shopCountry(auth.entityOf(req))).map(s => ({
-      scheme: s.scheme, label: s.label, verify: s.verify, stored: s.store,
+    const documents = r.rows.map(item => ({ ...item, verified: item.status === 'verified' && !!item.verified_at }));
+    res.json(Object.assign(PL.pageOut('documents', documents, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), { catalogue: schemesFor(await shopCountry(auth.entityOf(req))).map(item => ({
+      scheme: item.scheme, label: item.label, verify: item.verify, stored: item.store,
       /* the client renders an input only where this is true — the server refuses the rest either way */
-      selfServe: !!s.selfServe,
+      selfServe: !!item.selfServe,
     })) }));
   } catch (e) {
     /* ⚠️ safeErr RETURNS A STRING — it does not send a response. I first wrote safeErr(res, e, msg) as though
@@ -171,7 +171,7 @@ router.put('/documents/:scheme', auth, async (req, res) => {
     }
     const cc   = await shopCountry(auth.entityOf(req));   /* CX4: the shop's country, never the client's */
     const want = String(req.params.scheme || '').toUpperCase();
-    const spec = schemesFor(cc).find(s => s.scheme === want);
+    const spec = schemesFor(cc).find(item => item.scheme === want);
     if (!spec) return res.status(400).json({ error: 'Unknown document', message: 'That document is not recognised for ' + cc + '.' });
 
     /**
