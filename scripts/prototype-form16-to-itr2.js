@@ -88,16 +88,16 @@ const ITR2 = OI.resolve({ preset: 'form', schema: { properties: {
 
 async function extractText(pdfBuffer) {
   let mod = null, used = null;
-  for (const p of PDFJS_PATHS) {
-    try { if (p && fs.existsSync(p)) { mod = await import('file://' + p.replace(/\\/g, '/')); used = p; break; } } catch (_) {}
+  for (const text of PDFJS_PATHS) {
+    try { if (text && fs.existsSync(text)) { mod = await import('file://' + text.replace(/\\/g, '/')); used = text; break; } } catch (_) {}
   }
   if (!mod) throw new Error('pdfjs not found. Install it somewhere and set PDFJS_PATH to .../pdfjs-dist/legacy/build/pdf.mjs');
   const doc = await mod.getDocument({ data: new Uint8Array(pdfBuffer), useSystemFonts: false, isEvalSupported: false }).promise;
   let text = '';
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
+  for (let index = 1; index <= doc.numPages; index++) {
+    const page = await doc.getPage(index);
     const c = await page.getTextContent();
-    text += c.items.map((it) => it.str).join(' ') + '\n';
+    text += c.items.map((item) => item.str).join(' ') + '\n';
   }
   return { text, pages: doc.numPages, via: used };
 }
@@ -131,7 +131,7 @@ async function extractText(pdfBuffer) {
   }
   console.log('   ' + G('✓ ') + `${Object.keys(doc16).length} of ${PATTERNS.length} fields read from the PDF`);
   if (missed.length) console.log('   ' + Y('· ') + 'patterns that did not match: ' + missed.join(', '));
-  Object.entries(doc16).slice(0, 4).forEach(([k, v]) => console.log('   ' + D(`    ${k.padEnd(20)} = ${v}`)));
+  Object.entries(doc16).slice(0, 4).forEach(([text, v]) => console.log('   ' + D(`    ${text.padEnd(20)} = ${v}`)));
 
   // 4 · the handshake — coverage first (what it WOULD fill), then the actual fill with provenance
   console.log('\n' + B('4 · Map onto ITR-2 (lib/form-handshake.js)'));
@@ -163,18 +163,18 @@ async function extractText(pdfBuffer) {
     console.log('\n' + B('7 · Submit it to the live storefront, PDF attached'));
     const API = process.env.API || 'https://chitbridge-api-production.up.railway.app';
     const call = async (m, p, body, token) => {
-      const r = await fetch(API + p, { method: m, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      const reply = await fetch(API + p, { method: m, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
         body: body === undefined ? undefined : JSON.stringify(body) });
-      let j = null; try { j = await r.json(); } catch (_) {}
-      return { status: r.status, json: j };
+      let j = null; try { j = await reply.json(); } catch (_) {}
+      return { status: reply.status, json: j };
     };
     try {
       const reg = await call('POST', '/api/entities/register', { email: 'gamma@test-cb.com', display_name: 'Gamma Document Services' });
       const ver = await call('POST', '/api/entities/verify', { email: 'gamma@test-cb.com', otp: (reg.json && reg.json.dev_otp) || '123456' });
       const shop = (ver.json && (ver.json.entity || ver.json)) || {};
       const sf = await call('GET', `/api/catalogue/${encodeURIComponent(shop.bridge_id)}`);
-      const names = ((sf.json && sf.json.finishes) || []).flatMap((f) => (f.items || []).map((i) => i.name));
-      const item = names.find((n) => /ITR/.test(n)) || names[0];
+      const names = ((sf.json && sf.json.finishes) || []).flatMap((item) => (item.items || []).map((i) => i.name));
+      const item = names.find((item) => /ITR/.test(item)) || names[0];
       if (!item) throw new Error('the Gamma store has no ITR-2 template — run scripts/reset-and-seed.js --go --skip-wipe');
       const who = 'form16.proto@test-cb.com';
       const start = await call('POST', `/api/catalogue/${encodeURIComponent(shop.bridge_id)}/order/start`, { identifier: who, name: 'Form16 prototype' });
