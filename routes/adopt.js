@@ -84,7 +84,7 @@ async function receiverOf(entity_id) {
   const add = (v) => { const k = String(v || '').trim().toLowerCase(); if (k) have.add(k); };
   for (const row of r.rows) {
     add(row.name);
-    (Array.isArray(row.aliases) ? row.aliases : []).forEach((a) => add(a && a.text));
+    (Array.isArray(row.aliases) ? row.aliases : []).forEach((item) => add(item && item.text));
   }
   return { sectors, has_item: (n) => have.has(String(n || '').trim().toLowerCase()) };
 }
@@ -200,7 +200,7 @@ router.post('/:chit_id', auth, async (req, res) => {
            line in a grocery's catalogue in a year should be able to see that a person decided that. */
         adopted_override: say.overridden ? say.vertical : undefined,
       });
-      Object.keys(item_data).forEach((k) => item_data[k] === undefined && delete item_data[k]);
+      Object.keys(item_data).forEach((item) => item_data[item] === undefined && delete item_data[item]);
 
       const r = await mintProduct({ query, withEntity, entity_id, schema_id,
         item_data, rid: req.id, note: 'adopted from a delivery' });
