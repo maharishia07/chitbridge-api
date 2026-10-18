@@ -16,15 +16,15 @@ export const DEFAULTS = {
 export function loadConfig(path = 'copy-guard.config.json') {
   if (!existsSync(path)) return { ...DEFAULTS };
   try {
-    const c = JSON.parse(readFileSync(path, 'utf8'));
-    return { ...DEFAULTS, ...c,
-      budget: { ...DEFAULTS.budget, ...(c.budget || {}) },
-      rules:  { ...DEFAULTS.rules,  ...(c.rules  || {}) } };
+    const parsed = JSON.parse(readFileSync(path, 'utf8'));
+    return { ...DEFAULTS, ...parsed,
+      budget: { ...DEFAULTS.budget, ...(parsed.budget || {}) },
+      rules:  { ...DEFAULTS.rules,  ...(parsed.rules  || {}) } };
   } catch { return { ...DEFAULTS }; }
 }
 
-const globLike = (pat, s) =>
-  new RegExp('^' + pat.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+const globLike = (text, s) =>
+  new RegExp('^' + text.replace(/[.+^${}()|[\]\\]/g, '\\$&')
                       .replace(/\*\*/g, '\u0000').replace(/\*/g, '[^/]*')
                       .replace(/\u0000/g, '.*') + '$').test(s);
 
@@ -38,7 +38,7 @@ export function walk(cfg) {
       let st; try { st = statSync(full); } catch { continue; }
       if (st.isDirectory()) visit(full);
       else if (cfg.extensions.includes(extname(name))
-               && !cfg.skipFiles.some(p => globLike(p, basename(name)))) out.push(full);
+               && !cfg.skipFiles.some(item => globLike(item, basename(name)))) out.push(full);
     }
   };
   for (const r of cfg.roots) if (existsSync(r)) visit(r);
@@ -46,9 +46,9 @@ export function walk(cfg) {
 }
 
 export const isExempt = (file, cfg) =>
-  (cfg.exemptScreenBudget || []).some(p => globLike(p, file) || file.includes(p.replace(/\*/g, '')));
+  (cfg.exemptScreenBudget || []).some(item => globLike(item, file) || file.includes(item.replace(/\*/g, '')));
 
-export const words = s => s.trim().split(/\s+/).filter(Boolean).length;
+export const words = text => text.trim().split(/\s+/).filter(Boolean).length;
 
 // Strings that a person can actually see. Several parsers, deliberately overlapping —
 // a duplicate finding is cheap, a missed string is not.
@@ -62,7 +62,7 @@ const TEXT_ATTRS = 'title|label|placeholder|aria-label|alt|heading|subtitle|capt
  * ⚠️ `//` is only blanked where it STARTS a line — anywhere else it may be inside a URL.
  */
 export function blankComments(src) {
-  const keepNl = (m) => m.replace(/[^\n]/g, ' ');
+  const keepNl = (text) => text.replace(/[^\n]/g, ' ');
   return String(src)
     .replace(/<!--[\s\S]*?-->/g, keepNl)
     .replace(/\/\*[\s\S]*?\*\//g, keepNl)
@@ -108,8 +108,8 @@ export function extract(rawSrc, file) {
     push(m[1], 'text', m.index);
 
   const seen = new Set();
-  return found.filter(f => {
-    const k = f.kind + '\u0000' + f.text;
+  return found.filter(item => {
+    const k = item.kind + '\u0000' + item.text;
     if (seen.has(k)) return false; seen.add(k); return true;
   });
 }
