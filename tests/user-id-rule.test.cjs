@@ -19,7 +19,8 @@ require.cache[require.resolve(API + '/db')] = { exports: { query: async (sql, p)
   }
   if (/FROM identities WHERE LOWER\(user_id\)/.test(sql)) return { rows: DB.taken.has(p[0]) ? [{ '?column?': 1 }] : [] };
   if (/SELECT user_id FROM identities WHERE identity_id/.test(sql)) return { rows: [{ user_id: DB.user_id }] };
-  if (/^\s*UPDATE identities SET display_name/.test(sql)) { DB.wrote = p[4]; return { rows: [] }; }
+  /* the user_id placeholder is READ from the SQL, not assumed: the statement grew columns (T2-POLICY) and p[4] became the dispute handler */
+  if (/^\s*UPDATE identities SET display_name/.test(sql)) { const n = (sql.match(/user_id=COALESCE\(user_id,\$(\d+)\)/) || [])[1]; DB.wrote = n ? p[n - 1] : 'NO user_id PLACEHOLDER'; return { rows: [] }; }
   if (/INSERT INTO identities/.test(sql)) { DB.inserted = p[4]; return { rows: [] }; }
   return { rows: [] };
 } } };
@@ -32,7 +33,11 @@ app.use(express.json());
    permanently, so every entity-only gate in this route was tested from the ONE side that passes. Both
    USER_ID_ENTITY_ONLY and CURRENCY_ENTITY_ONLY refuse ACTORS — the branch that matters was unreachable. */
 let AS = 'entity';
-require.cache[require.resolve(API + '/middleware/auth')] = { exports: (req,res,next)=>{ req.identity={identity_id:'11111111-1111-1111-1111-111111111111',identity_type:AS}; next(); } };
+/* The stub keeps the REAL helpers (entityOf, …): the route reads auth.entityOf(req) since CAT-FIX1, and a bare function
+   stub answered 500 'auth.entityOf is not a function' — the stub drifted, not the route (17 Oct). */
+const realAuth = require(API + '/middleware/auth');
+const stubAuth = Object.assign((req,res,next)=>{ req.identity={identity_id:'11111111-1111-1111-1111-111111111111',identity_type:AS}; next(); }, realAuth);
+require.cache[require.resolve(API + '/middleware/auth')] = { exports: stubAuth };
 app.use('/api/entities', require(API + '/routes/entities'));
 
 const post = (p, body) => new Promise((ok) => {
