@@ -494,7 +494,7 @@ router.get('/', auth, requireConnector, async (req, res) => {
          FROM identities
         WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL
         ORDER BY site NULLS LAST, created_at DESC`, [entity_id]);
-    res.json(PL.pageOut('connectors', r.rows.map(a => ({ ...a, health: health(a.last_seen) })), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
+    res.json(PL.pageOut('connectors', r.rows.map(item => ({ ...item, health: health(item.last_seen) })), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
@@ -510,10 +510,10 @@ router.get('/:actorId/provisioning', auth, requireConnector, [param('actorId').i
       return res.json({ type: 'iot', mode: cfg.mode || 'push',
         endpoint: cfg.endpoint || (require('../lib/public-base').apiBase(req) + '  (HTTPS · POST /api/connectors/ingest)'),   /* HX1: this api's own address */
         note: 'ActorKey is shown once at creation — Regenerate to re-issue. Flash Endpoint + ActorKey on the Pi; it publishes these BridgeIds.',
-        publishes: conns.rows.map(c => ({ bridge_id: c.bridge_id, ref: c.ref, topic: (c.conn_config || {}).topic || null })) });
+        publishes: conns.rows.map(item => ({ bridge_id: item.bridge_id, ref: item.ref, topic: (item.conn_config || {}).topic || null })) });
     }
     return res.json({ type: 'erp', base_url: cfg.base_url || null, auth_type: cfg.auth_type || null, auth_ref: cfg.auth_ref || null,
-      endpoints: conns.rows.map(c => ({ bridge_id: c.bridge_id, ref: c.ref, path: (c.conn_config || {}).path || null })) });
+      endpoints: conns.rows.map(item => ({ bridge_id: item.bridge_id, ref: item.ref, path: (item.conn_config || {}).path || null })) });
   } catch (err) { res.status(500).json({ error: 'Provisioning failed', message: safeErr(err) }); }
 });
 
@@ -619,7 +619,7 @@ router.get('/:actorId/connections', auth, requireConnector, [param('actorId').is
     const actorHealth = health(actor.last_seen);
     const r = await db(`SELECT * FROM connector_connection WHERE actor_id = $1 AND entity_id = $2 ORDER BY created_at DESC`, [actor.identity_id, entity_id]);
     // CASCADE: if the Pi/system is offline, every connection reports no-signal regardless of its own last_seen.
-    const connections = r.rows.map(c => ({ ...c, signal: actorHealth === 'offline' ? 'no_signal' : health(c.last_seen) }));
+    const connections = r.rows.map(item => ({ ...item, signal: actorHealth === 'offline' ? 'no_signal' : health(item.last_seen) }));
     res.json(Object.assign({ actor_health: actorHealth, actor_last_seen: actor.last_seen }, PL.pageOut('connections', connections, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) { res.status(500).json({ error: 'List connections failed', message: safeErr(err) }); }
 });
