@@ -18,7 +18,7 @@
  */
 const { j, signIn, run } = require('./_proof');
 
-const arg = (n, d) => { const a = process.argv.find((x) => x.startsWith('--' + n + '=')); return a ? a.split('=').slice(1).join('=') : d; };
+const arg = (n, d) => { const text = process.argv.find((x) => x.startsWith('--' + n + '=')); return text ? text.split('=').slice(1).join('=') : d; };
 const EMAIL = arg('entity', 'beta@test-cb.com');
 const RESET = process.argv.includes('--reset');
 
@@ -48,7 +48,7 @@ run('seed-folders-demo', async (t) => {
      itself worth showing: a folder is a view over YOUR copies, not over one direction. */
   const inbox = ((await j('/api/chits/inbox?limit=200', { token: tok })).b || {}).chits || [];
   const sent  = ((await j('/api/chits/sent?limit=200',  { token: tok })).b || {}).chits || [];
-  const all = [...inbox.map((c) => ({ ...c, direction: 'received' })), ...sent.map((c) => ({ ...c, direction: 'sent' }))];
+  const all = [...inbox.map((item) => ({ ...item, direction: 'received' })), ...sent.map((item) => ({ ...item, direction: 'sent' }))];
   t.ok(all.length > 0, 'found ' + all.length + ' real chits to work with (' + inbox.length + ' task · ' + sent.length + ' order)');
   if (!all.length) { t.note('nothing to file — run send-test-message.js a few times first'); return; }
 
@@ -64,7 +64,7 @@ run('seed-folders-demo', async (t) => {
     }
     if (!f) { t.ok(false, 'could not create ' + step.name); continue; }
 
-    const picked = all.filter((c) => !claimed.has(c.chit_id + c.direction) && step.pick(c)).slice(0, 40);
+    const picked = all.filter((item) => !claimed.has(item.chit_id + item.direction) && step.pick(item)).slice(0, 40);
     let filed = 0;
     for (const c of picked) {
       const r = await j('/api/folders/move', { method: 'POST', token: tok, body: { chit_id: c.chit_id, folder_id: f.folder_id, direction: c.direction } });
@@ -86,7 +86,7 @@ run('seed-folders-demo', async (t) => {
 
   /* ── now READ THEM BACK, which is the actual deliverable ─────────────────────────────────────────────────── */
   const folders = ((await j('/api/folders', { token: tok })).b || {}).folders || [];
-  const mine = folders.filter((f) => PLAN.some((p) => p.name === f.name));
+  const mine = folders.filter((item) => PLAN.some((p) => p.name === item.name));
 
   console.log('\n  ══ WHAT THE FOLDERS NOW SAY ══════════════════════════════════════════════════════════\n');
   const pad = (s, n) => String(s === null || s === undefined ? '—' : s).padStart(n);
@@ -105,7 +105,7 @@ run('seed-folders-demo', async (t) => {
       + pad(d.rate_pct === null ? '—' : d.rate_pct + '%', 9));
     const mo = m.money || {};
     if ((mo.by_currency || []).length) {
-      console.log('  ' + ' '.repeat(24) + 'value: ' + mo.by_currency.map((b) => b.currency + ' ' + b.total + ' (' + b.chits + ')').join('  ·  ')
+      console.log('  ' + ' '.repeat(24) + 'value: ' + mo.by_currency.map((item) => item.currency + ' ' + item.total + ' (' + item.chits + ')').join('  ·  ')
         + (mo.mixed ? '   ⚠️ more than one currency — NOT added together' : '')
         + (((mo.excluded || {}).awaiting_agreement) ? '   · ' + mo.excluded.awaiting_agreement + ' with no agreed value (excluded, not zeroed)' : ''));
     }

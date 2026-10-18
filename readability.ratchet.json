@@ -392,7 +392,7 @@
   "scripts/seed-2026-08-05.js": {"score":36,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":31,"noWhatLine":1,"emptyCatch":2,"noHeader":1},
   "scripts/seed-bulk-catalogue.js": {"score":22,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":1,"emptyCatch":1,"noHeader":1},
   "scripts/seed-catalogue-veg.js": {"score":8,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":7,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "scripts/seed-folders-demo.js": {"score":35,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":30,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
+  "scripts/seed-folders-demo.js": {"score":29,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":24,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/seed-livewalk.js": {"score":13,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/seed-local.cjs": {"score":27,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":25,"noWhatLine":0,"emptyCatch":1,"noHeader":0},
   "scripts/seed-test-entities.js": {"score":27,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":25,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
