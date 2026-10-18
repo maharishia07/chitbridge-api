@@ -36,7 +36,7 @@ function planDays(opt) {
   while (day <= LAST) {
     const row = { day, sales: [], purchase: null, expense: null, rent: day.slice(8) === '05' };
     const nSales = between(2, 4);
-    for (let i = 0; i < nSales; i++) { const s = sale(pick(RATES)); row.sales.push({ rate: s.rate, taxable: s.taxable, how: pick(MODES) }); }
+    for (let index = 0; index < nSales; index++) { const s = sale(pick(RATES)); row.sales.push({ rate: s.rate, taxable: s.taxable, how: pick(MODES) }); }
     if (rnd() < 0.34) { const p = sale(18); row.purchase = { taxable: p.taxable, paid_bank: rnd() < 0.5 }; }
     if (rnd() < 0.5) row.expense = { class: pick(EXPENSES), amount: between(1, 20) * 50 };
     days.push(row);
@@ -49,7 +49,7 @@ function planDays(opt) {
 function countOf(plan) {
   const c = { days: plan.days.length, bills: 0, credit_bills: 0, purchases: 0, expenses: 0 };
   for (const d of plan.days) {
-    c.bills += d.sales.length; c.credit_bills += d.sales.filter((s) => s.how === 'credit').length;
+    c.bills += d.sales.length; c.credit_bills += d.sales.filter((item) => item.how === 'credit').length;
     if (d.purchase) c.purchases++;
     if (d.expense) c.expenses++;
     if (d.rent) c.expenses++;
