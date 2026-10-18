@@ -2,7 +2,8 @@
 'use strict';
 /**
  * tools/sandbox/pull.cjs — pull one accounting sandbox's books and KEEP THEM RAW (Athi, 2026-10-17: "keep the data").
- *   node tools/sandbox/pull.cjs <qbo|xero|zoho> [--force]
+ *   node tools/sandbox/pull.cjs <qbo|xero|zoho> [--force] [--setup]
+ *   --setup reads the company's SETTINGS instead (vendors.cjs `setup`), saved to <yyyy-mm-dd>-setup/ — the setup map's evidence
  * OWNS      the pull: a fresh token (lib/sandbox-oauth, refreshed and saved) → which company (vendors.cjs prepare) → every entity, paged →
  *           each body saved EXACTLY as the API returned it to C:/dev/samples/<vendor>/<yyyy-mm-dd>/<entity>.json (page 2 on: <entity>.pN.json;
  *           Zoho document details: <entity>.detail.json, an array of the bodies) + manifest.json (counts · time · API version · files)
@@ -62,9 +63,9 @@ async function pullDetails(spec, token, getPage, entity, found, dir) {
   return { file: path.basename(file), count: bodies.length, capped: found.length > docIds.length ? 'details for ' + docIds.length + ' of ' + found.length : null };
 }
 /** every entity in turn; one that fails is recorded with its reason and the rest still pull */
-async function pullAll(spec, token, dir) {
+async function pullAll(spec, token, dir, list) {
   const getPage = getter(spec, token), entities = {};
-  for (const entity of spec.entities) {
+  for (const entity of list) {
     try {
       const pulled = await pullEntity(spec, token, getPage, entity, dir);
       entities[entity.name] = { count: pulled.count, files: pulled.files, capped: pulled.capped || null };
@@ -87,14 +88,15 @@ async function connectTo(vendor, spec) {
 async function main() {
   const vendor = oauth.vendorOf(process.argv[2]);
   if (!vendor) refuse('which sandbox — qbo, xero or zoho?', 2);
-  const pullDay = today(), dir = path.join(oauth.samplesDir(), vendor, pullDay), manifestFile = path.join(dir, 'manifest.json');
+  const setup = process.argv.includes('--setup'), pullDay = today() + (setup ? '-setup' : '');
+  const dir = path.join(oauth.samplesDir(), vendor, pullDay), manifestFile = path.join(dir, 'manifest.json');
   if (fs.existsSync(manifestFile) && !process.argv.includes('--force')) { console.log('pull: ' + vendor + ' was already pulled today (' + dir + ') — nothing done. --force pulls again.'); return; }
   oauth.loadKeys();
   const spec = VENDORS[vendor], started = new Date().toISOString();
   const { token, company } = await connectTo(vendor, spec);
   fs.mkdirSync(dir, { recursive: true });
-  const entities = await pullAll(spec, token, dir);
-  fs.writeFileSync(manifestFile, JSON.stringify({ vendor, source: 'api', company, api_version: spec.api_version, started_at: started, finished_at: new Date().toISOString(), entities }, null, 2));
+  const entities = await pullAll(spec, token, dir, setup ? spec.setup : spec.entities);
+  fs.writeFileSync(manifestFile, JSON.stringify({ vendor, source: 'api', set: setup ? 'setup' : 'books', company, api_version: spec.api_version, started_at: started, finished_at: new Date().toISOString(), entities }, null, 2));
   console.log('pull: ' + vendor + ' saved to ' + dir);
 }
 

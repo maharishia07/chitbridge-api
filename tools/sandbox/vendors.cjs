@@ -2,7 +2,8 @@
 /**
  * tools/sandbox/vendors.cjs — WHAT each accounting platform's API is asked for in the sandbox trial, and how its pages are read.
  * OWNS      per vendor: the API version, the base address and headers, the one-time lookup of WHICH company (QBO realm · Xero tenant ·
- *           Zoho organisation), the entity list (path per page · the key the records sit under · is there another page)
+ *           Zoho organisation), the entity list (path per page · the key the records sit under · is there another page), and the SETUP
+ *           list (the company's settings, read once each — pull.cjs --setup; the setup map 23-…/SETUP-MAP-2026-10-18.md)
  * CALLED BY tools/sandbox/pull.cjs (fetch and save) · tools/sandbox/load.cjs (read the saved pages back with the same `list`)
  * FLOW      pull: prepare(token) → for each entity: path(page) → save the body as returned → more(body)?  · load: records(vendor, entity, body)
  * CARD      23-connectors-and-integrations/xero-quickbooks-myob
@@ -33,6 +34,11 @@ const zohoEntity = (name, key, route, detail) => ({ name, key, detail,
   path: (page) => '/' + route + (route.includes('?') ? '&' : '?') + 'page=' + page + '&per_page=' + ZOHO_PAGE,
   list: (body) => (body && (body[key] || body[key.replace(/_/g, '')])) || [],   /* the docs write customer_payments, the endpoint is customerpayments */
   more: (body) => !!(body && body.page_context && body.page_context.has_more_page) });
+/* a setting read once: one GET, no pages (the SETUP set — the company's own settings, read so our setup can be pre-filled) */
+const settingEntity = (name, key, route) => ({ name, key, path: () => '/' + route,
+  list: (body) => { const holder = [body, body && body.QueryResponse, body && body.data].find((each) => each && each[key] !== undefined);   /* Zoho payment terms sit under data */
+    return holder ? [].concat(holder[key]) : []; },
+  more: () => false });
 const zohoDetail = (kind, idKey) => ({ path: (docId) => '/' + kind + 's/' + docId, id: idKey, key: kind });
 
 /** Xero: the Demo Company among the tenants this token may see; kept on the token file so the next pull does not ask */
@@ -61,6 +67,7 @@ const VENDORS = {
     headers: (token) => ({ Authorization: 'Bearer ' + token.access_token, Accept: 'application/json' }),
     async prepare(token) { if (!token.realm_id) throw new Error('QuickBooks gave no company id (realmId) — connect again.'); return { company: token.realm_id }; },
     entities: ['Customer', 'Vendor', 'Item', 'Invoice', 'Bill', 'CreditMemo', 'VendorCredit', 'Payment', 'BillPayment', 'TaxCode', 'TaxRate', 'Account', 'CompanyInfo'].map(qboEntity),
+    setup: ['Preferences', 'CompanyInfo', 'Term', 'PaymentMethod', 'Class', 'Department', 'CompanyCurrency', 'TaxCode', 'TaxRate'].map(qboEntity),
   },
   xero: {
     api_version: 'api.xro/2.0',
@@ -74,6 +81,9 @@ const VENDORS = {
       xeroEntity('credit_notes', 'CreditNotes', 'CreditNotes', true), xeroEntity('payments', 'Payments', 'Payments', true),
       xeroEntity('tax_rates', 'TaxRates', 'TaxRates', false), xeroEntity('accounts', 'Accounts', 'Accounts', false), xeroEntity('organisation', 'Organisations', 'Organisation', false),
     ],
+    setup: [settingEntity('organisation', 'Organisations', 'Organisation'), settingEntity('currencies', 'Currencies', 'Currencies'),
+      settingEntity('tracking_categories', 'TrackingCategories', 'TrackingCategories'), settingEntity('branding_themes', 'BrandingThemes', 'BrandingThemes'),
+      settingEntity('tax_rates', 'TaxRates', 'TaxRates')],
   },
   zoho: {
     api_version: 'books/v3',
@@ -91,6 +101,11 @@ const VENDORS = {
       zohoEntity('taxes', 'taxes', 'settings/taxes'), zohoEntity('chart_of_accounts', 'chartofaccounts', 'chartofaccounts'),
       { name: 'organisation', key: 'organization', path: () => '/organizations/{org}', list: (body) => (body && body.organization ? [body.organization] : []), more: () => false },
     ],
+    setup: [settingEntity('organisation', 'organization', 'organizations/{org}'), settingEntity('preferences', 'preferences', 'settings/preferences'),
+      settingEntity('currencies', 'currencies', 'settings/currencies'), settingEntity('taxes', 'taxes', 'settings/taxes'),
+      /* not asked: settings/taxgroups answers 405 to a GET and settings/units 404 (18 Oct) — groups come inside settings/taxes */
+      settingEntity('payment_terms', 'payment_terms', 'settings/paymentterms'), settingEntity('invoice_settings', 'invoice_settings', 'settings/invoices'),
+      settingEntity('opening_balances', 'opening_balance', 'settings/openingbalances')],
   },
 };
 
