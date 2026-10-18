@@ -248,7 +248,7 @@
   "routes/governance.js": {"score":35,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":32,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/identity-docs.js": {"score":24,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "routes/integrations.js": {"score":81,"long40":2,"long80":1,"complex10":8,"complex15":4,"deep3":1,"deep4":0,"cryptic":64,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
-  "routes/invoice.js": {"score":21,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
+  "routes/invoice.js": {"score":11,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":9,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "routes/keys.js": {"score":68,"long40":4,"long80":2,"complex10":4,"complex15":2,"deep3":0,"deep4":0,"cryptic":56,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/kyb.js": {"score":2,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":1,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "routes/network-design.js": {"score":40,"long40":3,"long80":1,"complex10":4,"complex15":3,"deep3":0,"deep4":0,"cryptic":28,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
