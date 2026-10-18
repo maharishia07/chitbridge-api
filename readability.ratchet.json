@@ -300,7 +300,7 @@
   "scripts/design-kit.cjs": {"score":21,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/dispute-reads.js": {"score":20,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":18,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/dispute-scope.js": {"score":22,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":0,"emptyCatch":2,"noHeader":1},
-  "scripts/empty-catches.cjs": {"score":22,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":21,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
+  "scripts/empty-catches.cjs": {"score":11,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":10,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/entity-vertical.js": {"score":17,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/erp-connector.js": {"score":24,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/erp-handoff.js": {"score":21,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":0,"emptyCatch":1,"noHeader":1},

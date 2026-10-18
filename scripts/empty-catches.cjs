@@ -16,19 +16,19 @@
 const fs = require('fs'), path = require('path');
 
 const LITERAL = /^(null|undefined|true|false|-?\d+|''|""|``|\[\]|\{\}|\(\{\s*rows\s*:\s*\[\]\s*\}\)|\{\s*rows\s*:\s*\[\]\s*\}|\(\{\}\)|new Set\(\)|new Map\(\))$/;
-const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').trim();
+const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').trim();
 
 /** a handler body that only carries on: nothing, or return/assign of a literal */
 function silent(body) {
-  const b = stripComments(body).replace(/;+\s*$/, '').trim();
-  if (!b) return true;
-  return b.split(';').map((s) => s.trim()).filter(Boolean).every((p) =>
-    (/^return(\s+.*)?$/.test(p) && (p === 'return' || LITERAL.test(p.slice(6).trim())))
-    || (/^[A-Za-z_$][\w$.]*\s*=\s*(.*)$/.test(p) && LITERAL.test(p.replace(/^[^=]*=\s*/, '').trim())));
+  const text = stripComments(body).replace(/;+\s*$/, '').trim();
+  if (!text) return true;
+  return text.split(';').map((item) => item.trim()).filter(Boolean).every((item) =>
+    (/^return(\s+.*)?$/.test(item) && (item === 'return' || LITERAL.test(item.slice(6).trim())))
+    || (/^[A-Za-z_$][\w$.]*\s*=\s*(.*)$/.test(item) && LITERAL.test(item.replace(/^[^=]*=\s*/, '').trim())));
 }
 function closing(src, i, open, close) {
-  let d = 0;
-  for (let j = i; j < src.length; j++) { if (src[j] === open) d++; else if (src[j] === close && --d === 0) return j; }
+  let count = 0;
+  for (let j = i; j < src.length; j++) { if (src[j] === open) count++; else if (src[j] === close && --count === 0) return j; }
   return -1;
 }
 /** the line numbers of every silent catch in one source text */
@@ -47,7 +47,7 @@ function silentCatches(src) {
     const body = src.slice(m.index + m[0].length, pc).trim();
     if (body.startsWith('{') && body.endsWith('}') ? silent(body.slice(1, -1)) : silent('return ' + body)) at.push(m.index);
   }
-  return at.map((i) => src.slice(0, i).split('\n').length).sort((a, b) => a - b);
+  return at.map((item) => src.slice(0, item).split('\n').length).sort((first, second) => first - second);
 }
 function files(p, out) {
   if (fs.statSync(p).isFile()) { out.push(p); return out; }
@@ -74,9 +74,9 @@ module.exports = { count, silentCatches, SCOPE };
 
 if (require.main === module) {
   const args = process.argv.slice(2), list = args.includes('--list');
-  const roots = args.filter((a) => a !== '--list');
+  const roots = args.filter((item) => item !== '--list');
   const out = count(roots.length ? roots : SCOPE);
-  if (list) Object.entries(out.where).sort((a, b) => b[1].length - a[1].length)
+  if (list) Object.entries(out.where).sort((first, second) => second[1].length - first[1].length)
     .forEach(([f, l]) => console.log(String(l.length).padStart(4) + '  ' + f + ':' + l.join(',')));
   console.log('silent catches: ' + out.total);
 }
