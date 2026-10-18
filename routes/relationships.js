@@ -31,7 +31,7 @@ const orderInput     = require('../lib/order-input');
 /* ⭐ SPEC-books-v2 §4: the party fields (legal name, party no, credit days/limit, state, tax ids) live ON these lists */
 const partyFields    = require('../lib/party-fields');
 const PARTY_KEYS     = ['legal_name', 'nickname', 'credit_days', 'credit_limit', 'credit_limit_minor', 'state_code', 'merged_into', 'tax_ids'];
-const hasParty = (b, side) => PARTY_KEYS.some((k) => k in (b || {}) && !(side === 'supplier' && k === 'nickname'));
+const hasParty = (b, side) => PARTY_KEYS.some((item) => item in (b || {}) && !(side === 'supplier' && item === 'nickname'));
 /** the party half of a PATCH: its own answer (404 / 409 / 400 in words) or null when the body carries none */
 async function partyPatch(req, res, side) {
   if (!hasParty(req.body, side)) return null;
@@ -218,15 +218,15 @@ router.get('/suppliers', auth, async (req, res) => {
        engine's promise. Read in parallel; a supplier whose read fails simply shows no tag. A stranger gets [] everywhere. */
     try {
       const cg = require('../lib/customer-groups'); const cv = require('../lib/catalogue-view'); const eng = require('../lib/offers-engine').CBOffers;
-      await Promise.all(rows.map(async (o) => {
+      await Promise.all(rows.map(async (item) => {
         /* ⚠️ A LOCAL SUPPLIER HAS NO OFFERS AND NEVER WILL — they are not on the platform. Asking anyway costs two
            reads per row and can only ever answer []; a shop whose suppliers are mostly local is exactly the shop
            that would feel it. Skipping is cheaper AND more honest than an empty answer that looks computed. */
-        if (o.on_rail === false) { o.for_you = []; return; }
+        if (item.on_rail === false) { item.for_you = []; return; }
         try {
-          const [groups, all] = await Promise.all([cg.groupsOf({ seller_id: o.supplier_entity_id, viewer_id: owner, withEntity }), cv.liveOffers({ entity_id: o.supplier_entity_id, withEntity, all: true })]);
-          o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => offerMoney(n, o.supplier_money), customer_groups: groups }) : null; } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); } return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive }; });
-        } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — answered with none', e, 'debug'); o.for_you = []; }
+          const [groups, all] = await Promise.all([cg.groupsOf({ seller_id: item.supplier_entity_id, viewer_id: owner, withEntity }), cv.liveOffers({ entity_id: item.supplier_entity_id, withEntity, all: true })]);
+          item.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => offerMoney(n, item.supplier_money), customer_groups: groups }) : null; } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); } return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive }; });
+        } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — answered with none', e, 'debug'); item.for_you = []; }
       }));
     } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); }
     for (const row of rows) delete row.supplier_money;   /* read above for the supplier's own offer wording; not part of the answer */
@@ -253,17 +253,17 @@ router.patch('/suppliers/:id',
       const owner = ctx(req);
       const party = await partyPatch(req, res, 'supplier');
       if (party === false) return;
-      const sets = [], vals = []; let n = 1;
-      if ('nickname'  in req.body) { sets.push(`nickname = $${n++}`);  vals.push(sanitise(req.body.nickname || '') || null); }
-      if ('category'  in req.body) { sets.push(`category = $${n++}`);  vals.push(sanitise(req.body.category || '') || null); }
-      if ('notes'     in req.body) { sets.push(`notes = $${n++}`);     vals.push(sanitise(req.body.notes || '') || null); }
-      if ('preferred' in req.body) { sets.push(`preferred = $${n++}`); vals.push(req.body.preferred === true || req.body.preferred === 'true'); }
+      const sets = [], vals = []; let index = 1;
+      if ('nickname'  in req.body) { sets.push(`nickname = $${index++}`);  vals.push(sanitise(req.body.nickname || '') || null); }
+      if ('category'  in req.body) { sets.push(`category = $${index++}`);  vals.push(sanitise(req.body.category || '') || null); }
+      if ('notes'     in req.body) { sets.push(`notes = $${index++}`);     vals.push(sanitise(req.body.notes || '') || null); }
+      if ('preferred' in req.body) { sets.push(`preferred = $${index++}`); vals.push(req.body.preferred === true || req.body.preferred === 'true'); }
       /* ⭐ Athi, 2026-09-10: *"while adding or may be later through edit set a flag — is he the supplier for my
          sales or is he the facilitator"*. Later matters: a shop learns what a supplier actually is by using them,
          and the first guess on the add form is often wrong. Moving the flag moves which tab they appear under and
          what a delivery from them does — a resale supplier's goods are OFFERED to the catalogue, an own_use
          supplier's never are (lib/adopt.js). ⚠️ It changes nothing already adopted; the past stays as it was. */
-      if ('supply_kind' in req.body) { sets.push(`supply_kind = $${n++}`); vals.push(req.body.supply_kind === 'own_use' ? 'own_use' : 'resale'); }
+      if ('supply_kind' in req.body) { sets.push(`supply_kind = $${index++}`); vals.push(req.body.supply_kind === 'own_use' ? 'own_use' : 'resale'); }
 
       /**
        * ⭐⭐ RENAME A SUPPLIER YOU MINTED. Athi, 2026-09-10: *"user id we generate, but the shop name — they can
@@ -303,7 +303,7 @@ router.patch('/suppliers/:id',
       vals.push(req.params.id, owner);
       const r = await withEntity(owner, (db) => db.query(
         `UPDATE supplier_list SET ${sets.join(', ')}
-         WHERE supplier_list_id = $${n++} AND owner_entity_id = $${n} RETURNING supplier_list_id`, vals));
+         WHERE supplier_list_id = $${index++} AND owner_entity_id = $${index} RETURNING supplier_list_id`, vals));
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
       res.json({ message: 'Supplier updated', ...(party ? { party } : {}) });
     } catch (err) {
@@ -368,9 +368,9 @@ const AVAIL_HITS_PER_SUPPLIER = 6;
 router.get('/suppliers/availability', auth, async (req, res) => {
   try {
     const owner = ctx(req);
-    const q = String(req.query.q || '').trim().toLowerCase();
+    const text = String(req.query.q || '').trim().toLowerCase();
     /* Two characters, same floor as the panel. A one-letter query matches most catalogues and answers nothing. */
-    if (q.length < 2) return res.json({ q, results: [], count: 0, searched: 0 });
+    if (text.length < 2) return res.json({ q: text, results: [], count: 0, searched: 0 });
 
     const sup = await withEntity(owner, (db) => db.query(
       /* ⚠️ The SAME columns the single-catalogue route selects. buildPublicView reads `business_status` for the
@@ -398,7 +398,7 @@ router.get('/suppliers/availability', auth, async (req, res) => {
 
     const matches = (p) => {
       const d = (p && p.item_data) || p || {};
-      return ((d.name || d.product || '') + ' ' + (d.code || d.hsn || d.sku || '')).toLowerCase().indexOf(q) >= 0;
+      return ((d.name || d.product || '') + ' ' + (d.code || d.hsn || d.sku || '')).toLowerCase().indexOf(text) >= 0;
     };
 
     const one = async (s) => {
@@ -421,9 +421,9 @@ router.get('/suppliers/availability', auth, async (req, res) => {
              the same value, so the mistake would have been invisible until a shop overrode it. */
           currency: (view.shop && view.shop.currency_code) || s.currency_code || null,
           total_items: (view.items || []).length,
-          hits: hits.slice(0, AVAIL_HITS_PER_SUPPLIER).map((p) => {
-            const d = (p && p.item_data) || p || {};
-            return { item_id: p.item_id || null, name: d.name || d.product || 'item',
+          hits: hits.slice(0, AVAIL_HITS_PER_SUPPLIER).map((item) => {
+            const d = (item && item.item_data) || item || {};
+            return { item_id: item.item_id || null, name: d.name || d.product || 'item',
                      unit: d.unit || 'unit', price: d.price == null ? null : d.price,
                      code: d.code || d.sku || d.hsn || null };
           }),
@@ -445,7 +445,7 @@ router.get('/suppliers/availability', auth, async (req, res) => {
       }
     }));
 
-    res.json(Object.assign({ q, count: results.filter((r) => r && r.state === 'has').length, searched: rows.length }, PL.pageOut('results', results, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+    res.json(Object.assign({ q: text, count: results.filter((item) => item && item.state === 'has').length, searched: rows.length }, PL.pageOut('results', results, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     res.status(500).json({ error: 'Supplier availability failed', message: safeErr(err) });
   }
@@ -518,8 +518,8 @@ router.get('/customers', auth, async (req, res) => {
          AND ${customerGroups.NOT_A_SUPPLIER_SQL}
        ORDER BY cl.last_txn_at DESC NULLS LAST`, [owner]));
     /* no party_item yet (42P01) → the segment without high_value, as before b273 */
-    let r; for (let _t = 0; !r && _t < 3; _t++) { try { r = await _run(); } catch (e) { if (e && e.code === '42703' && _g) _g = false; else if (e && e.code === '42P01' && _seg !== customerGroups.SEGMENT_SQL_BASE) _seg = customerGroups.SEGMENT_SQL_BASE; else throw e; } }
-    const rows = (segment ? r.rows.filter(c => c.segment === segment) : r.rows).map((c) => Object.assign(c, { groups: Array.isArray(c.groups) ? c.groups : [] }));
+    let r; for (let count = 0; !r && count < 3; count++) { try { r = await _run(); } catch (e) { if (e && e.code === '42703' && _g) _g = false; else if (e && e.code === '42P01' && _seg !== customerGroups.SEGMENT_SQL_BASE) _seg = customerGroups.SEGMENT_SQL_BASE; else throw e; } }
+    const rows = (segment ? r.rows.filter(item => item.segment === segment) : r.rows).map((item) => Object.assign(item, { groups: Array.isArray(item.groups) ? item.groups : [] }));
     await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
     res.json(Object.assign({ count: rows.length, groups_migrated: _g }, PL.pageOut('customers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
@@ -569,7 +569,7 @@ router.get('/customers/:id/rewards', auth, async (req, res) => {
       expires_months: b.programme.expires_months || null,
       /* the last movements, so "where did those come from" has an answer on the same screen */
       recent: b.entries.slice(0, 12),
-      expired_now: b.expired.reduce((a, e) => a + Math.abs(e.points), 0),
+      expired_now: b.expired.reduce((total, e) => total + Math.abs(e.points), 0),
     });
   } catch (err) {
     /* ⚠️ BEFORE THE MIGRATION IS RUN the table does not exist, and a CRM pane must not break because of it */
