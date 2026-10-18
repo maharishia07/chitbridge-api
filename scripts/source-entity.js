@@ -4,8 +4,8 @@
 // SOURCE's experience (cascade). Also checks the seeded source's experience cascades. Run: node scripts/source-entity.js
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0; function chk(n, ok, d){ if(ok){P++;console.log('  ✓ '+n+(d?'  '+d:''));}else{F++;console.log('  ✗ '+n+(d?'  — '+d:''));} }
-async function api(m,p,o){o=o||{};const h={'Content-Type':'application/json'};if(o.token)h.Authorization='Bearer '+o.token;const r=await fetch(B+p,{method:m,headers:h,body:o.body?JSON.stringify(o.body):undefined});let j=null;try{j=await r.json();}catch(_){}return{status:r.status,j};}
-async function tokenFor(name){ const email=name+'@test.com'; const reg=await api('POST','/api/entities/register',{body:{email}}); const v=await api('POST','/api/entities/verify',{body:{email,otp:reg.j&&reg.j.dev_otp}}); const me=await api('GET','/api/entities/me',{token:v.j&&v.j.token}); return { token:v.j&&v.j.token, id:(me.j&&me.j.entity||{}).identity_id, bridge:(me.j&&me.j.entity||{}).bridge_id }; }
+async function api(m,p,o){o=o||{};const h={'Content-Type':'application/json'};if(o.token)h.Authorization='Bearer '+o.token;const reply=await fetch(B+p,{method:m,headers:h,body:o.body?JSON.stringify(o.body):undefined});let j=null;try{j=await reply.json();}catch(_){}return{status:reply.status,j};}
+async function tokenFor(name){ const email=name+'@test.com'; const reply=await api('POST','/api/entities/register',{body:{email}}); const v=await api('POST','/api/entities/verify',{body:{email,otp:reply.j&&reply.j.dev_otp}}); const me=await api('GET','/api/entities/me',{token:v.j&&v.j.token}); return { token:v.j&&v.j.token, id:(me.j&&me.j.entity||{}).identity_id, bridge:(me.j&&me.j.entity||{}).bridge_id }; }
 (async()=>{
   console.log('== SOURCE-AS-ENTITY + EXPERIENCE ==\n');
   const ts = Date.now().toString().slice(-6);
@@ -19,8 +19,8 @@ async function tokenFor(name){ const email=name+'@test.com'; const reg=await api
   chk('brand authored its own source', author.status===200 && author.j && author.j.authored, 'status '+author.status);
   chk('source stamped owner = the brand entity', author.j && String(author.j.owner_entity_id)===String(brand.id));
 
-  const got = await api('GET','/api/assist/catalogue-source/'+encodeURIComponent(key));
-  chk('read back: owner + experience present', got.j && String(got.j.owner_entity_id)===String(brand.id) && got.j.experience && got.j.experience.visualize && got.j.experience.visualize.enabled===true);
+  const reply = await api('GET','/api/assist/catalogue-source/'+encodeURIComponent(key));
+  chk('read back: owner + experience present', reply.j && String(reply.j.owner_entity_id)===String(brand.id) && reply.j.experience && reply.j.experience.visualize && reply.j.experience.visualize.enabled===true);
 
   // A distributor adopts the brand's source, prices it, exposes it → storefront runs the SOURCE experience.
   const dist = await tokenFor('dist-'+ts);
