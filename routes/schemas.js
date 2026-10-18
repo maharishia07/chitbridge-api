@@ -105,23 +105,23 @@ router.get('/fields', auth, async (req, res) => {
     const attrs = {};
     if (ready && schema_id) {
       const a = await query(`SELECT field_key, unit, leg, via FROM schema_fields WHERE schema_id = $1`, [schema_id]);
-      a.rows.forEach((r) => { attrs[r.field_key] = { unit: r.unit || null, leg: r.leg || null, via: r.via || null }; });
+      a.rows.forEach((item) => { attrs[item.field_key] = { unit: item.unit || null, leg: item.leg || null, via: item.via || null }; });
     }
 
-    res.json({ attrs_ready: ready, fields: fields.rows.map((f) => Object.assign({}, f, attrs[f.field_key] || {}, {
-      used_by: used[f.field_key] || 0,
-      retypable: columnRules.retypable({ field_key: f.field_key, field_name: f.field_name, used_by: used[f.field_key] || 0 }),
-      retype_because: columnRules.retypeWhy({ field_key: f.field_key, field_name: f.field_name, used_by: used[f.field_key] || 0 }),
+    res.json({ attrs_ready: ready, fields: fields.rows.map((item) => Object.assign({}, item, attrs[item.field_key] || {}, {
+      used_by: used[item.field_key] || 0,
+      retypable: columnRules.retypable({ field_key: item.field_key, field_name: item.field_name, used_by: used[item.field_key] || 0 }),
+      retype_because: columnRules.retypeWhy({ field_key: item.field_key, field_name: item.field_name, used_by: used[item.field_key] || 0 }),
       /* ⭐ THE ANSWER, COMPUTED ONCE, SO EVERY SURFACE AGREES. A screen that decides removability for itself is a
          screen that will disagree with the server the day one of them changes. */
-      removable: columnRules.removable({ field_key: f.field_key, field_name: f.field_name, required: f.required, used_by: used[f.field_key] || 0 }),
+      removable: columnRules.removable({ field_key: item.field_key, field_name: item.field_name, required: item.required, used_by: used[item.field_key] || 0 }),
       /* ⭐ AND THE REASON TRAVELS WITH IT, so the screen can say WHY a control is dead rather than only that it is. */
-      locked_because: columnRules.why({ field_key: f.field_key, field_name: f.field_name, required: f.required, used_by: used[f.field_key] || 0 }),
+      locked_because: columnRules.why({ field_key: item.field_key, field_name: item.field_name, required: item.required, used_by: used[item.field_key] || 0 }),
     })),
       /* ⭐ SHOWN BESIDE THE DECLARED ONES, NEVER MIXED WITH THEM. A product records these, so a panel headed
          "what every product records" must list them — but they are managed elsewhere and their SHAPE is
          load-bearing, so they travel in their own array rather than as columns with a disabled tickbox. */
-      system: columnRules.SYSTEM_FIELDS.map(function(f){ return Object.assign({}, f, { used_by: used[f.field_key] || 0 }); }),
+      system: columnRules.SYSTEM_FIELDS.map(function(item){ return Object.assign({}, item, { used_by: used[item.field_key] || 0 }); }),
       /**
        * ⚠️⚠️ THE COLUMNS THAT EXIST IN THE DATA AND IN NO DECLARATION — and the panel used to be silent about
        * them. item_data is free-form jsonb and, before the declare-first writer, any write path except the CSV
@@ -134,7 +134,7 @@ router.get('/fields', auth, async (req, res) => {
        * means legacy rows still need the backfill migration — so the screen can say so rather than quietly
        * papering over it.
        */
-      undeclared: (cols.undeclared || []).map(function(k){ return { field_key: k, used_by: used[k] || 0 }; }),
+      undeclared: (cols.undeclared || []).map(function(item){ return { field_key: item, used_by: used[item] || 0 }; }),
     });
   } catch (err) {
     console.error('Schema fields error:', err.message);
@@ -229,14 +229,14 @@ router.patch('/fields/order', auth,
       /* ⚠️ ORDERED, or "everything not named keeps its relative order" (below) was whatever order Postgres returned */
       const own = await query(`SELECT field_key FROM schema_fields WHERE schema_id = $1
                                ORDER BY display_order NULLS LAST, field_key`, [schema_id]);
-      const mine = new Set(own.rows.map((r) => r.field_key));
+      const mine = new Set(own.rows.map((item) => item.field_key));
       /* ⚠️ Only this catalogue's own columns, de-duplicated — a repeated key would otherwise take two positions
          and leave a gap that the next reorder would read as an ordering. */
-      const wanted = [...new Set(req.body.order.map(String).filter((k) => mine.has(k)))];
+      const wanted = [...new Set(req.body.order.map(String).filter((item) => mine.has(item)))];
       if (!wanted.length) return res.status(400).json({ error: 'Nothing to order', message: 'None of those columns are in your catalogue.' });
 
       /* Everything not named keeps its relative order, after the ones that were. */
-      const rest = own.rows.map((r) => r.field_key).filter((k) => !wanted.includes(k));
+      const rest = own.rows.map((item) => item.field_key).filter((item) => !wanted.includes(item));
       /**
        * ⭐ ONE STATEMENT FOR THE WHOLE ORDER (2026-09-27, tests/query-shape). This was one UPDATE per column — twenty
        * columns, twenty round trips — and a failure half-way left the catalogue half-reordered. Now every position in
@@ -246,7 +246,7 @@ router.patch('/fields/order', auth,
       await query(`UPDATE schema_fields s SET display_order = u.ord
                      FROM unnest($2::text[], $3::int[]) AS u(k, ord)
                     WHERE s.schema_id = $1 AND s.field_key = u.k`,
-        [schema_id, keys, keys.map((_, i) => i + 1)]);
+        [schema_id, keys, keys.map((_, index) => index + 1)]);
       res.json({ message: 'Order saved', ordered: wanted.length, untouched: rest.length });
     } catch (err) {
       console.error('Schema field order error:', err.message);
@@ -323,7 +323,7 @@ router.patch('/fields/:field_key', auth,
         set('required', want);
       }
 
-      const wantsAttr = ATTR_COLS.some((c) => b[c] !== undefined);
+      const wantsAttr = ATTR_COLS.some((item) => b[item] !== undefined);
       if (wantsAttr) {
         if (!(await attrsReady())) {
           return res.status(409).json({ error: 'Not yet available', code: 'MIGRATION',
