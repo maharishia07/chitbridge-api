@@ -84,7 +84,7 @@ const DOCS = {
     lines: (doc) => (doc.Line || []).filter((line) => /LineDetail$/.test(line.DetailType || '') && !QBO_SKIP_LINES.includes(line.DetailType)),
     qty: (line) => at(line, 'SalesItemLineDetail.Qty') || at(line, 'ItemBasedExpenseLineDetail.Qty'),
     rate: (line) => at(line, 'SalesItemLineDetail.UnitPrice') || at(line, 'ItemBasedExpenseLineDetail.UnitPrice'), discount: () => 0, amount: (line) => line.Amount,
-    subtotal: null, tax: (doc) => at(doc, 'TxnTaxDetail.TotalTax') || 0, extra: qboDiscount, total: (doc) => doc.TotalAmt, inclusive: (doc) => doc.GlobalTaxCalculation === 'TaxInclusive' },
+    subtotal: null, tax: (doc) => at(doc, 'TxnTaxDetail.TotalTax') || 0, extra: qboDiscount, total: (doc) => doc.TotalAmt, inclusive: () => false }   /* QBO Line.Amount is NET even when GlobalTaxCalculation=TaxInclusive (TaxInclusiveAmt carries the gross): tax is always added — AU 1019: 409.09 + 40.91 = 450 */,
   zoho: { entities: ['invoices', 'bills', 'credit_notes'], number: (doc) => doc.invoice_number || doc.bill_number || doc.creditnote_number, lines: (doc) => doc.line_items || [],
     qty: (line) => line.quantity, rate: (line) => line.rate, discount: (line) => (String(line.discount || '').includes('%') ? parseFloat(line.discount) : 0), amount: (line) => line.item_total,
     subtotal: (doc) => doc.sub_total, tax: (doc) => doc.tax_total,
