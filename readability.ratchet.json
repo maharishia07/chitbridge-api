@@ -421,7 +421,7 @@
   "tools/round-trips.cjs": {"score":41,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":1,"deep4":0,"cryptic":36,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "tools/schema-replay.cjs": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "tools/server-mounts.cjs": {"score":3,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":2,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "tools/sim-load.cjs": {"score":116,"long40":1,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":105,"noWhatLine":2,"emptyCatch":6,"noHeader":1},
+  "tools/sim-load.cjs": {"score":95,"long40":1,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":84,"noWhatLine":2,"emptyCatch":6,"noHeader":1},
   "tools/sim-plan.cjs": {"score":17,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "tools/sim-scale.cjs": {"score":40,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":34,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "tools/simulate-years.cjs": {"score":99,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":93,"noWhatLine":4,"emptyCatch":1,"noHeader":1},

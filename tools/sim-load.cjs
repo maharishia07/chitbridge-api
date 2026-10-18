@@ -189,10 +189,10 @@ async function wipeShop(ids) {
     const cols = (await c.query(`SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'
                                    AND column_name IN ('entity_id', 'owner_entity_id', 'identity_id', 'parent_entity_id', 'customer_identity_id', 'supplier_entity_id', 'sender_entity_id')`)).rows;
     const byTable = new Map();
-    cols.forEach((r) => { if (r.table_name === 'identities') return; const a = byTable.get(r.table_name) || []; a.push(r.column_name); byTable.set(r.table_name, a); });
+    cols.forEach((item) => { if (item.table_name === 'identities') return; const list = byTable.get(item.table_name) || []; list.push(item.column_name); byTable.set(item.table_name, list); });
     const cleared = [];
-    for (const [t, cs] of byTable) {
-      const where = cs.map((k) => k + ' = ANY($1::uuid[])').join(' OR ');
+    for (const [t, list] of byTable) {
+      const where = list.map((item) => item + ' = ANY($1::uuid[])').join(' OR ');
       const r = await c.query(`DELETE FROM ${t} WHERE ${where}`, [ids]);
       if (r.rowCount) cleared.push(t + ' ' + r.rowCount);
     }
@@ -215,14 +215,14 @@ async function startApi() {
   process.env.RATE_LIMIT_MAX = process.env.RATE_LIMIT_MAX || '10000000';   /* server.js's 15-minute window (500) would refuse a year of bills — this api serves one caller, on this PC */
   const port = await freePort(); process.env.PORT = String(port); BASE = 'http://127.0.0.1:' + port;
   require(path.join(API, 'server.js'));
-  for (let i = 0; i < 100; i++) { try { const r = await fetch(BASE + '/health'); if (r.ok) return; } catch (_) {} await new Promise((ok) => setTimeout(ok, 200)); }
+  for (let index = 0; index < 100; index++) { try { const reply = await fetch(BASE + '/health'); if (reply.ok) return; } catch (_) {} await new Promise((ok) => setTimeout(ok, 200)); }
   die('the api did not answer /health on ' + BASE);
 }
 async function j(p, o) {
   const opt = o || {};
-  const r = await fetch(BASE + p, { method: opt.method || 'GET', headers: Object.assign({ 'content-type': 'application/json' }, opt.token ? { authorization: 'Bearer ' + opt.token } : {}), body: opt.body ? JSON.stringify(opt.body) : undefined });
-  let b = null; try { b = await r.json(); } catch (_) { /* no body */ }
-  return { status: r.status, b: b || {} };
+  const reply = await fetch(BASE + p, { method: opt.method || 'GET', headers: Object.assign({ 'content-type': 'application/json' }, opt.token ? { authorization: 'Bearer ' + opt.token } : {}), body: opt.body ? JSON.stringify(opt.body) : undefined });
+  let b = null; try { b = await reply.json(); } catch (_) { /* no body */ }
+  return { status: reply.status, b: b || {} };
 }
 const must = (r, what) => { if (r.status >= 300) { console.error('\n  sim-load stopped at ' + what + ': HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 400) + '\n'); process.exit(1); } return r; };
 
@@ -278,7 +278,7 @@ async function scaleThen(shopId) {
       say('shop ' + SHOP + ' exists and is empty — loading into it');
     } else {
       const kids = await sql(`SELECT identity_id FROM identities WHERE parent_entity_id = $1`, [shopId]);
-      await wipeShop([shopId].concat(kids.rows.map((r) => String(r.identity_id))));
+      await wipeShop([shopId].concat(kids.rows.map((item) => String(item.identity_id))));
       shopId = null;
     }
   } else if (FRESH) say('fresh: nothing to remove — ' + SHOP + ' did not exist');
@@ -316,7 +316,7 @@ async function scaleThen(shopId) {
   else { en = await B.enable(null, shopId, { country: COUNTRY }); require(path.join(API, 'lib', 'books-hooks')).forget(shopId); }   /* the route takes no country (IN); AU · AE go through the same enable() */
   const chart = must(await j('/api/books/accounts', { token }), 'chart').b;
   const accounts = chart.accounts || chart.rows || chart.items || (Array.isArray(chart) ? chart : []);
-  const codeOfRole = (role) => (accounts.find((a) => a.role === role) || {}).code;
+  const codeOfRole = (role) => (accounts.find((item) => item.role === role) || {}).code;
   const CASH = codeOfRole('cash'), CAPITAL = codeOfRole('capital') || '3000';
   if (!CASH) die('the chart has no cash ledger (role cash) — enable answered ' + JSON.stringify(en).slice(0, 200));
   const op = must(await j('/api/books/opening', { method: 'POST', token, body: { date: PLAN.start, client_ref: MARK, rows: [{ code: CASH, dr_minor: 50000000 }, { code: CAPITAL, cr_minor: 50000000 }] } }), 'opening balances').b;
@@ -328,10 +328,10 @@ async function scaleThen(shopId) {
   const cus = await j('/api/relationships/customers', { method: 'POST', token, body: { name: CUSTOMER, phone: SHOPROW.phone } });
   if (cus.status !== 409) must(cus, 'customer');
   const parties = (await sql(`SELECT identity_id, display_name FROM identities WHERE parent_entity_id = $1`, [shopId])).rows;
-  const SUPP = (parties.find((p) => p.display_name === SUPPLIER) || {}).identity_id, CUST = (parties.find((p) => p.display_name === CUSTOMER) || {}).identity_id;
+  const SUPP = (parties.find((item) => item.display_name === SUPPLIER) || {}).identity_id, CUST = (parties.find((item) => item.display_name === CUSTOMER) || {}).identity_id;
   if (!SUPP || !CUST) die('the parties were not minted: ' + JSON.stringify({ sup: sup.b, cus: cus.b }).slice(0, 300));
   let counters = must(await j('/api/counters', { token }), 'counters').b.counters || [];
-  if (!counters.some((c) => c.id === TILL)) counters = counters.concat([must(await j('/api/counters', { method: 'POST', token, body: { name: 'Counter 1' } }), 'add counter').b.counter]);
+  if (!counters.some((item) => item.id === TILL)) counters = counters.concat([must(await j('/api/counters', { method: 'POST', token, body: { name: 'Counter 1' } }), 'add counter').b.counter]);
   const have = must(await j('/api/products?limit=500', { token }), 'list products').b;
   const rows = have.items || have.products || have.rows || [];
   const byName = new Map(rows.map((x) => [String((x.item_data || x).name || '').toLowerCase(), x.item_id || x.id]));
@@ -352,14 +352,14 @@ async function scaleThen(shopId) {
   const basketOf = (rate, dayIx, i) => {
     const r = PLAN_LIB.rng(SEED * 1000003 + dayIx * 101 + i);
     /* the plan draws an IN slab (5 / 12 / 18); a one-rate pack (AU 10 % · AE 5 %) maps it to its standard rate, as the shelf was added (WX-R2R) */
-    const pool0 = ITEMS.filter((it) => it.rate === rateOf(rate)), n = 1 + Math.floor(r() * 3), lines = [];
-    for (let k = 0; k < n; k++) { const it = pool0[Math.floor(r() * pool0.length)], qty = 1 + Math.floor(r() * 3); if (lines.some((l) => l.item_id === it.id)) continue;
+    const pool0 = ITEMS.filter((item) => item.rate === rateOf(rate)), n = 1 + Math.floor(r() * 3), lines = [];
+    for (let index = 0; index < n; index++) { const it = pool0[Math.floor(r() * pool0.length)], qty = 1 + Math.floor(r() * 3); if (lines.some((item) => item.item_id === it.id)) continue;
       lines.push({ particulars: it.name, quantity: qty, unit: it.unit, price: it.price, total: it.price * qty, item_id: it.id, hsn: it.hsn, gst_rate: it.rate }); }
     return lines;
   };
 
   /* 5 · the days */
-  let bills = 0, purchases = 0, expenses = 0, months = 0, refusedBills = 0, seq = 0, curFy = '';
+  let bills = 0, purchases = 0, expenses = 0, months = 0, refusedBills = 0, count = 0, curFy = '';
   const dayRows = [];
   const closeMonth = async (pd) => {
     await drain();
@@ -374,18 +374,18 @@ async function scaleThen(shopId) {
     }
   };
   for (let dayIx = 0; dayIx < PLAN.days.length; dayIx++) {
-    const row = PLAN.days[dayIx], d = row.day;
-    CLOCK.set(AT(d, 9, 0));
-    if (d.slice(8) === '01' && d !== PLAN.start) await closeMonth(dayAdd(d, -1));
-    if (fyOf(d) !== curFy) { curFy = fyOf(d); seq = 0; }
+    const row = PLAN.days[dayIx], text = row.day;
+    CLOCK.set(AT(text, 9, 0));
+    if (text.slice(8) === '01' && text !== PLAN.start) await closeMonth(dayAdd(text, -1));
+    if (fyOf(text) !== curFy) { curFy = fyOf(text); count = 0; }
     const todays = [];
-    for (let i = 0; i < row.sales.length; i++) {
-      const s = row.sales[i], at = AT(d, 10 + Math.floor(i * 9 / row.sales.length), (dayIx * 7 + i * 13) % 60);
+    for (let index = 0; index < row.sales.length; index++) {
+      const s = row.sales[index], at = AT(text, 10 + Math.floor(index * 9 / row.sales.length), (dayIx * 7 + index * 13) % 60);
       CLOCK.set(at);
-      const lines = basketOf(s.rate, dayIx, i);
+      const lines = basketOf(s.rate, dayIx, index);
       const inv = TL.invoiceFor({ lines, seller, buyer: buyerOf(s.how === 'credit' ? CUSTOMER : 'Walk-in'), currency: CUR, at, priceIncludesTax }).invoice;
       const total = Number(inv.ValDtls && inv.ValDtls.TotInvVal) || 0;
-      const no = TILL + '/' + fyShort(d) + '/' + String(++seq).padStart(4, '0');
+      const no = TILL + '/' + fyShort(text) + '/' + String(++count).padStart(4, '0');
       const credit = s.how === 'credit', how = howOf(s.how);
       const body = {
         recipients: [{ self: true, name: 'self' }], purpose: 'order', subject: 'Counter sale ' + no, manual_subject: 'Counter sale ' + no, client_ref: no,
@@ -395,7 +395,7 @@ async function scaleThen(shopId) {
           bill_no: no, billed_at: at, catalogue_version: null,
           payment: { mode: how, paid: credit ? 0 : total, change: 0, parts: [{ how, amount: total }] },
           slip: credit ? 'credit' : 'cash',
-          terms: credit ? { due_date: dayAdd(d, CREDIT_DAYS), credit_days: CREDIT_DAYS } : null, credit_override: null,
+          terms: credit ? { due_date: dayAdd(text, CREDIT_DAYS), credit_days: CREDIT_DAYS } : null, credit_override: null,
           invoice: inv,
         },
         line_items: lines,
@@ -408,25 +408,25 @@ async function scaleThen(shopId) {
     /* the counter's day summary — the record the shop's folder shows; its hook posts the walk-in day */
     if (todays.length) {
       await drain();
-      CLOCK.set(AT(d, 21, 0));
-      const sum = RU.summary('day', d, RU.totals(todays), { till: { id: TILL, name: 'Counter 1' }, bills_from: todays[0].no, bills_to: todays[todays.length - 1].no, at: CLOCK.now().toISOString() });
+      CLOCK.set(AT(text, 21, 0));
+      const sum = RU.summary('day', text, RU.totals(todays), { till: { id: TILL, name: 'Counter 1' }, bills_from: todays[0].no, bills_to: todays[todays.length - 1].no, at: CLOCK.now().toISOString() });
       const r = await j('/api/chits/send', { method: 'POST', token, body: RU.chitOf(sum) });
-      if (r.status >= 300) console.log('   RED  day summary ' + d + ' refused: ' + JSON.stringify(r.b).slice(0, 200));
-      dayRows.push({ day: d, bills: todays.length });
+      if (r.status >= 300) console.log('   RED  day summary ' + text + ' refused: ' + JSON.stringify(r.b).slice(0, 200));
+      dayRows.push({ day: text, bills: todays.length });
     }
     if (row.purchase) {
-      CLOCK.set(AT(d, 16, 0));
+      CLOCK.set(AT(text, 16, 0));
       const taxable = row.purchase.taxable, prate = rateOf(18), ptotal = taxable + taxable * prate / 100;
-      const r = await B.postEntry(null, shopId, { type: 'purchase_bill', party: SUPP, date: d, currency: CUR, source_ref: 'sim:' + d + ':p', ref: 'KT/' + d.replace(/-/g, '') + '/' + (purchases + 1),
-        by_rate: [taxRow(prate, taxable)], paid: row.purchase.paid_bank ? { bank: ptotal } : {}, round_off: 0, due_date: dayAdd(d, 30) }).catch((e) => ({ ok: false, why: String(e && e.message) }));
-      if (r && r.ok) purchases++; else console.log('   RED  purchase on ' + d + ' refused — ' + JSON.stringify(r).slice(0, 200));
+      const r = await B.postEntry(null, shopId, { type: 'purchase_bill', party: SUPP, date: text, currency: CUR, source_ref: 'sim:' + text + ':p', ref: 'KT/' + text.replace(/-/g, '') + '/' + (purchases + 1),
+        by_rate: [taxRow(prate, taxable)], paid: row.purchase.paid_bank ? { bank: ptotal } : {}, round_off: 0, due_date: dayAdd(text, 30) }).catch((e) => ({ ok: false, why: String(e && e.message) }));
+      if (r && r.ok) purchases++; else console.log('   RED  purchase on ' + text + ' refused — ' + JSON.stringify(r).slice(0, 200));
     }
     const spend = async (cls, amount, from, ref) => {
-      const r = await j('/api/books/events', { method: 'POST', token, body: { event: 'expense', class: cls, amount, paid_from: from, date: d, client_ref: ref } });
+      const r = await j('/api/books/events', { method: 'POST', token, body: { event: 'expense', class: cls, amount, paid_from: from, date: text, client_ref: ref } });
       if (r.status === 200) expenses++; else console.log('   RED  expense ' + ref + ' refused — ' + JSON.stringify(r.b).slice(0, 200));
     };
-    if (row.expense) { CLOCK.set(AT(d, 17, 0)); await spend(row.expense.class, row.expense.amount, 'cash', 'sim:' + d + ':e'); }
-    if (row.rent) { CLOCK.set(AT(d, 17, 30)); await spend('rent', 20000, 'bank', 'sim:' + d + ':rent'); }
+    if (row.expense) { CLOCK.set(AT(text, 17, 0)); await spend(row.expense.class, row.expense.amount, 'cash', 'sim:' + text + ':e'); }
+    if (row.rent) { CLOCK.set(AT(text, 17, 30)); await spend('rent', 20000, 'bank', 'sim:' + text + ':rent'); }
   }
   CLOCK.set(AT(dayAdd(PLAN.last, 1), 9, 0));
   await closeMonth(PLAN.last);
@@ -448,22 +448,22 @@ async function proof(shopId, quiet) {
   const bills = await sql(`SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND sender_entity_id = $1 AND role <> 'Draft' AND business_json ? 'bill_no' AND business_json -> 'till' ->> 'id' = $2`, [shopId, TILL]);
   line(bills.rows[0].n === WANT.bills, 'bills in chit_header = the plan\'s (' + bills.rows[0].n + ' of ' + WANT.bills + ', ' + WANT.days + ' days)');
   const sums = await sql(`SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND purpose = 'general' AND business_json -> 'summary' ->> 'period' = 'day'`, [shopId]);
-  const daysWithBills = PLAN.days.filter((d) => d.sales.length).length;
+  const daysWithBills = PLAN.days.filter((item) => item.sales.length).length;
   line(sums.rows[0].n === daysWithBills, 'day summaries = days with bills (' + sums.rows[0].n + ' of ' + daysWithBills + ')');
   const pur = await sql(`SELECT count(*)::int AS n FROM journal_entry WHERE entity_id = $1 AND event_type = 'purchase_bill'`, [shopId]);
   line(pur.rows[0].n === WANT.purchases, 'purchases posted = the plan\'s (' + pur.rows[0].n + ' of ' + WANT.purchases + ')');
   /* trial balance: every month's lines balance */
   const tb = await sql(`SELECT e.fiscal_year, e.period, SUM(l.dr_minor)::bigint AS dr, SUM(l.cr_minor)::bigint AS cr FROM journal_entry e JOIN journal_line l ON l.entry_id = e.entry_id
                          WHERE e.entity_id = $1 GROUP BY 1, 2 ORDER BY 1, 2`, [shopId]);
-  const unb = tb.rows.filter((r) => String(r.dr) !== String(r.cr));
-  line(tb.rows.length > 0 && unb.length === 0, 'trial balance balances every month (' + tb.rows.length + ' months, Dr = Cr)', unb.slice(0, 3).map((r) => r.fiscal_year + '/' + r.period + ' Dr ' + rup(r.dr) + ' Cr ' + rup(r.cr)).join(' · '));
+  const unb = tb.rows.filter((item) => String(item.dr) !== String(item.cr));
+  line(tb.rows.length > 0 && unb.length === 0, 'trial balance balances every month (' + tb.rows.length + ' months, Dr = Cr)', unb.slice(0, 3).map((item) => item.fiscal_year + '/' + item.period + ' Dr ' + rup(item.dr) + ' Cr ' + rup(item.cr)).join(' · '));
   /* the STORED month summaries (account_balance, written by the posting) balance too — a second source, not the lines again */
   const sb = await sql(`SELECT fiscal_year, period, SUM(dr_minor)::bigint AS dr, SUM(cr_minor)::bigint AS cr FROM account_balance WHERE entity_id = $1 AND party_key = $2 GROUP BY 1, 2 ORDER BY 1, 2`, [shopId, ZERO]);
-  const sunb = sb.rows.filter((r) => String(r.dr) !== String(r.cr));
-  line(sb.rows.length === tb.rows.length && sunb.length === 0, 'stored month summaries (account_balance) balance, one per month (' + sb.rows.length + ')', sunb.slice(0, 3).map((r) => r.fiscal_year + '/' + r.period).join(' · '));
+  const sunb = sb.rows.filter((item) => String(item.dr) !== String(item.cr));
+  line(sb.rows.length === tb.rows.length && sunb.length === 0, 'stored month summaries (account_balance) balance, one per month (' + sb.rows.length + ')', sunb.slice(0, 3).map((item) => item.fiscal_year + '/' + item.period).join(' · '));
   /* cash, each FY: opening (the STORED summaries of the years before) + net flow (this year's LINES) = closing (the stored summaries up to this year) */
-  const fys = [...new Set(tb.rows.map((r) => r.fiscal_year))].sort();
-  for (const fy of fys) {
+  const list = [...new Set(tb.rows.map((item) => item.fiscal_year))].sort();
+  for (const fy of list) {
     const range = AP.fyRange(fy, FYPACK), from = range.start, to = range.end;   /* the pack's year, not April's */
     const c = await sql(`SELECT (SELECT COALESCE(SUM(b.dr_minor - b.cr_minor), 0) FROM account_balance b JOIN ledger_account a ON a.account_id = b.account_id
                                   WHERE b.entity_id = $1 AND a.role = 'cash' AND b.party_key = $4 AND b.fiscal_year < $5)::bigint AS opening,
@@ -471,7 +471,7 @@ async function proof(shopId, quiet) {
                                   WHERE e.entity_id = $1 AND a.role = 'cash' AND e.posting_date >= $2 AND e.posting_date <= $3)::bigint AS flow,
                                 (SELECT COALESCE(SUM(b.dr_minor - b.cr_minor), 0) FROM account_balance b JOIN ledger_account a ON a.account_id = b.account_id
                                   WHERE b.entity_id = $1 AND a.role = 'cash' AND b.party_key = $4 AND b.fiscal_year <= $5)::bigint AS closing`, [shopId, from, to, ZERO, fy]);
-    const r = c.rows[0], ok = BigInt(r.opening) + BigInt(r.flow) === BigInt(r.closing) && (fys.indexOf(fy) === 0 || BigInt(r.opening) > 0n);
+    const r = c.rows[0], ok = BigInt(r.opening) + BigInt(r.flow) === BigInt(r.closing) && (list.indexOf(fy) === 0 || BigInt(r.opening) > 0n);
     line(ok, fy + ' · cash opening ' + rup(r.opening) + ' (stored) + net flow ' + rup(r.flow) + ' (lines) = closing ' + rup(r.closing) + ' (stored)');
   }
   /* created_at names an INSTANT (M210): timestamptz after b299, and before it a naive UTC wall clock — read as UTC because this
