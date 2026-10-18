@@ -8,6 +8,8 @@
  *   3 X-1: one reference on two parties' bills → both land, each kept with the party's number; no reference → one generated from the line
  *   4 W1.8 their contact id first: a renamed contact's bill lands · W1.3 the tax ID by the pack (IN: a GSTIN lands, no ABN refusal) · W1.7 kgs → kg
  *   5 the proof (lib/move-in-proof build): held items with code + reason, the stated country, the company id, a sub-cent difference SHOWN ("0.004"), not held
+ *   7 W1.11 (DECISIONS 2026-10-18:83): IN, no map yet — contacts and untaxed items land; a taxed item (code · purchase code · HSN) is HELD, the clean
+ *     rows land; bills · trial balance · chart refused; foreign source · no pack · US (no map, no say) refused; AU unchanged
  *   6 the doors, through real Express over the in-memory ledger: /move-in/preview + /move-in/import answer each refusal with 422 + its code and write nothing;
  *     GET /move-in/imports answers ready:false with the sentence before b765
  * No database, no network. Run: node tests/move-in-country-gate.test.cjs
@@ -63,10 +65,10 @@ t('⭐ an unknown shop country is NEVER given India\'s rules: ZZ · none · a wo
   /* accounts-packs answers India for an unknown country: the gate reads the SETTING's country, never world.pack */
   refusedWith(() => plan('items', { country: undefined, source_country: 'IN', world: { pack: IN, setting: { country: 'ZZ' }, products: [] } }), 'MOVE_IN_COUNTRY');
 });
-t('a shop whose pack has no move-in map yet (US · IN today) → refused MOVE_IN_COUNTRY, never "every document held" (C2)', () => {
+t('a shop whose pack has no move-in map yet (US · IN today) → refused MOVE_IN_COUNTRY, never "every document held" (C2); IN: the lanes that carry tax', () => {
   const e = refusedWith(() => plan('items', { country: 'US', source_country: 'US' }), 'MOVE_IN_COUNTRY');
   assert.ok(/not ready for United States/.test(e.message), e.message);
-  refusedWith(() => plan('items', { country: 'IN', source_country: 'IN' }), 'MOVE_IN_COUNTRY');
+  refusedWith(() => plan('trial_balance', { country: 'IN', source_country: 'IN', rows: [] }), 'MOVE_IN_COUNTRY');
 });
 t("⭐ behavioural guard: an IN shop with an IN stub map plans through IN's map — its own code lands at ITS rate, an unknown one is held, AU's GST is refused as foreign (never borrowed)", () => {
   IN.moveIn = { sources: ['qbo'], supplyKindFor: (s, c) => (String(c) === 'GST18' ? { id: 'taxable', name: 'Taxable 18%', rate: 18 } : undefined) };
@@ -86,6 +88,52 @@ t('⭐ a foreign fingerprint: a tax code only ANOTHER country\'s map knows refus
 t('W1.4 one company per shop and system: a second, different company → MOVE_IN_COMPANY; the same one → planned, its id on the plan', () => {
   refusedWith(() => plan('items', { source_company: '222', world: { products: [], companies: ['111'] } }), 'MOVE_IN_COMPANY');
   assert.strictEqual(plan('items', { source_company: '111', world: { products: [], companies: ['111'] } }).company_id, '111');
+});
+
+console.log('\nmove-in W1.11 · India: the lanes that carry no tax, before the IN map');
+const inPlan = (kind, inp) => plan(kind, Object.assign({ country: 'IN', source_country: 'IN', currency: 'INR' }, inp));
+const NOT_READY = /^Moving books in is not ready for India yet — its tax codes have no map here\./;
+t('⭐ the gate itself: IN takes contacts and items with no map (map null); bills, trial balance and the chart are refused with the not-ready sentence', () => {
+  for (const kind of ['contacts', 'items']) assert.strictEqual(Gate.gate({ kind, country: 'IN', source_country: 'IN' }).map, null, kind);
+  for (const kind of ['open_bills', 'trial_balance', 'accounts', undefined]) {
+    const e = refusedWith(() => Gate.gate({ kind, country: 'IN', source_country: 'IN' }), 'MOVE_IN_COUNTRY');
+    assert.ok(NOT_READY.test(e.message) && /Nothing was imported/.test(e.message), e.message);
+  }
+  assert.strictEqual(Gate.taxBearing('items', { sales_tax: ' ' }), false); assert.strictEqual(Gate.taxBearing('items', { hsn: '0901' }), true);
+  assert.strictEqual(Gate.taxBearing('contacts', { gstin: '33AAAAA0000A1Z5' }), false);
+});
+t('⭐ IN contacts land with no map: a GSTIN contact is added, the plan carries IN → IN', () => {
+  const pl = inPlan('contacts', { side: 'customer', world: { parties: [] }, rows: [{ line: 2, name: 'Kumar Traders', gstin: '27AAPFU0939F1ZV' }, { line: 3, name: 'Selvi Stores' }] });
+  assert.deepStrictEqual(pl.counts, { add: 2, merge: 0, skip: 0, hold: 0 });
+  assert.strictEqual(pl.rows[0].data.gstin, '27AAPFU0939F1ZV'); assert.deepStrictEqual(pl.country, { shop: 'IN', source: 'IN', how: 'stated' });
+});
+t('⭐ IN items: an item with no tax field lands (no rate); one with a sales code, a purchase code or an HSN is HELD (tax_code), the not-ready sentence', () => {
+  const pl = inPlan('items', { rows: [ITEM({ sales_tax: '' }), ITEM({ line: 3, code: 'T1', sales_tax: 'GST18' }), ITEM({ line: 4, code: 'T2', sales_tax: '', purchase_tax: 'IGST12' }), ITEM({ line: 5, code: 'T3', sales_tax: '', hsn: '0901' })] });
+  assert.deepStrictEqual(pl.counts, { add: 1, merge: 0, skip: 0, hold: 3 });
+  assert.strictEqual(pl.rows[0].action, 'add'); assert.strictEqual(pl.rows[0].data.rec.gst_rate, null);
+  assert.ok(pl.rows.slice(1).every((r) => r.action === 'hold' && r.code === 'tax_code' && NOT_READY.test(r.why)), JSON.stringify(pl.rows.slice(1)));
+  assert.deepStrictEqual(pl.tax_codes, []);
+  assert.strictEqual(MI.guess('items', ['Item Name', 'HSN/SAC']).guess[1].field, 'hsn');
+});
+t('⭐ IN bills (open_bills), opening balances (trial_balance) and the chart: refused WHOLE before a row is read', () => {
+  const bill = [{ line: 2, contact: 'Acme', invoice_no: 'B1', amount_due: '10' }];
+  for (const [kind, rows] of [['open_bills', bill], ['trial_balance', [{ line: 2, account: 'Cash', debit: '10', credit: '' }]], ['accounts', [{ line: 2, name: 'Cash', type: 'Bank' }]]]) {
+    const e = refusedWith(() => inPlan(kind, { side: 'payable', rows, world: { chart: CHART(), parties: [] } }), 'MOVE_IN_COUNTRY');
+    assert.ok(NOT_READY.test(e.message), kind + ': ' + e.message);
+  }
+});
+t('⭐ the country rule is unchanged on the no-tax lanes: AU books into the IN shop · an AU code in an IN items file · no pack · US (no map, no say)', () => {
+  const e = refusedWith(() => inPlan('contacts', { source_country: 'AU', side: 'customer', world: { parties: [] }, rows: [{ line: 2, name: 'X' }] }), 'MOVE_IN_COUNTRY');
+  assert.ok(/from Australia and this shop is in India/.test(e.message), e.message);
+  refusedWith(() => inPlan('items', { rows: [ITEM({ sales_tax: '' }), ITEM({ line: 3, code: 'X', sales_tax: 'GST' })] }), 'MOVE_IN_FOREIGN');
+  for (const cc of ['ZZ', 'GB']) refusedWith(() => plan('contacts', { country: cc, source_country: cc, side: 'customer', world: { parties: [] }, rows: [{ line: 2, name: 'X' }] }), 'MOVE_IN_COUNTRY');
+  const us = refusedWith(() => plan('contacts', { country: 'US', source_country: 'US', side: 'customer', world: { parties: [] }, rows: [{ line: 2, name: 'X' }] }), 'MOVE_IN_COUNTRY');
+  assert.ok(/not ready for United States/.test(us.message), us.message);
+});
+t('AU (has a map) unchanged: an item with GST lands at 10 %, an HSN column changes nothing; a taxed AU item is never held for "not ready"', () => {
+  const pl = plan('items', { rows: [ITEM(), ITEM({ line: 3, code: 'H', hsn: '0901' })] });
+  assert.deepStrictEqual(pl.counts, { add: 2, merge: 0, skip: 0, hold: 0 });
+  assert.strictEqual(pl.rows[0].data.rec.gst_rate, 10); assert.ok(pl.tax_codes.length >= 1);
 });
 
 console.log('\nmove-in W1 · 2 holds — nothing lands unmatched');
@@ -202,6 +250,20 @@ t('⭐ the proof holds the stated country, the company id, each held item with c
     const r = await call('POST', '/move-in/import', body({ source_country: 'GB', confirm: true }));
     assert.strictEqual(r.status, 422); assert.strictEqual(r.body.code, 'MOVE_IN_COUNTRY');
     assert.strictEqual(JSON.stringify(X.T.entries || []).length, before);
+  });
+  await ta('⭐ W1.11 the door, shop set to IN: an items preview lands the clean row and HOLDS the HSN one; open bills answer 422 MOVE_IN_COUNTRY', async () => {
+    await X.store.saveSetting(X.db, SHOP, { enabled: true, country: 'IN' });
+    try {
+      const inCsv = 'Product/Service,SKU,Sales price,HSN/SAC\nRice 5kg,R5,320.00,\nCoffee,CF,250.00,0901\n';
+      const inDec = [{ incoming: 'Product/Service', field: 'name' }, { incoming: 'SKU', field: 'code' }, { incoming: 'Sales price', field: 'sales_price' }, { incoming: 'HSN/SAC', field: 'hsn' }];
+      const r = await call('POST', '/move-in/preview', { kind: 'items', source: 'qbo', csv: inCsv, decisions: inDec, source_country: 'IN' });
+      assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.deepStrictEqual(r.body.counts, { add: 1, merge: 0, skip: 0, hold: 1 });
+      assert.strictEqual(r.body.rows[1].code, 'tax_code'); assert.ok(/not ready for India/.test(r.body.rows[1].why), r.body.rows[1].why);
+      const billCsv = 'Contact,Invoice number,Amount due\nAcme,B1,10.00\n';
+      const billDec = [{ incoming: 'Contact', field: 'contact' }, { incoming: 'Invoice number', field: 'invoice_no' }, { incoming: 'Amount due', field: 'amount_due' }];
+      const b = await call('POST', '/move-in/preview', { kind: 'open_bills', source: 'qbo', side: 'payable', csv: billCsv, decisions: billDec, source_country: 'IN' });
+      assert.strictEqual(b.status, 422, JSON.stringify(b.body)); assert.strictEqual(b.body.code, 'MOVE_IN_COUNTRY'); assert.ok(/not ready for India/.test(b.body.message), b.body.message);
+    } finally { await X.store.saveSetting(X.db, SHOP, { enabled: true, country: 'AU' }); }
   });
   await ta('GET /move-in/imports before b765: ready false, with the sentence (never a 500)', async () => {
     const r = await call('GET', '/move-in/imports');
