@@ -6,14 +6,14 @@
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { if (ok) { P++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { F++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
-const rungOf = (rd, doc) => { const it = ((rd.j && rd.j.clearances) || []).find(c => c.doc === doc); return it && it.rung; };
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
+const rungOf = (rd, doc) => { const it = ((rd.j && rd.j.clearances) || []).find(item => item.doc === doc); return it && it.rung; };
 
 (async () => {
   console.log('== PROVE HONEST VERIFICATION ==  ' + B + '\n');
   const ts = Date.now().toString().slice(-6), email = 'ver-' + ts + '@test.com';
-  const reg = await api('POST', '/api/entities/register', { body: { email } });
-  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } });
+  const reply = await api('POST', '/api/entities/register', { body: { email } });
+  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } });
   const token = ver.j && ver.j.token;
   chk('login', !!token);
 
