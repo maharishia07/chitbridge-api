@@ -126,7 +126,7 @@
   "lib/network-view.js": {"score":24,"long40":1,"long80":0,"complex10":2,"complex15":1,"deep3":1,"deep4":0,"cryptic":18,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/notify.js": {"score":7,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/offer-clash.js": {"score":18,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
-  "lib/offers-live.js": {"score":53,"long40":1,"long80":1,"complex10":4,"complex15":2,"deep3":0,"deep4":0,"cryptic":43,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
+  "lib/offers-live.js": {"score":40,"long40":1,"long80":1,"complex10":4,"complex15":2,"deep3":0,"deep4":0,"cryptic":30,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/open-orders.js": {"score":16,"long40":2,"long80":0,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/order-input.js": {"score":44,"long40":3,"long80":0,"complex10":8,"complex15":5,"deep3":1,"deep4":0,"cryptic":26,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/otp.js": {"score":9,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":8,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
