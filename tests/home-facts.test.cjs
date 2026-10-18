@@ -108,6 +108,8 @@ function answer(text, params) {
   /* T3-DISPUTES-ASSIST: the disputes card's one count (RLS = my copies) and CB Assist's library count */
   if (/FROM chit_disputes WHERE status = 'open'/.test(sql)) return { rows: [F.disputes || { mine: 0, against: 0 }] };
   if (/FROM assist_qa WHERE active = true/.test(sql)) return { rows: [{ n: F.answers == null ? 0 : F.answers }] };
+  if (/SELECT catalogue_visibility/.test(sql)) return { rows: [{ catalogue_visibility: F.visibility || 'private', plan: null, params_override: {}, bridge_id: 'b1', business_status: 'open' }] };
+  if (/FROM books_compare_part/.test(sql)) return { rows: F.snapshots || [] };
   return { rows: [] };
 }
 const db = {
@@ -326,6 +328,33 @@ const get = (port, p) => new Promise((ok) => {
   const W = require(API + '/lib/home-facts').withState;
   t('state: withState keeps a card\'s own word', W({ lines: [{ tone: 'dn' }], state: 'not_started' }).state, 'not_started');
   t('state: withState default, dn -> needs_you, else in_use (also an empty answer)', [W({ lines: [{ tone: 'dn' }] }).state, W({ lines: [{ text: 'x' }] }).state, W({ lines: [] }).state], ['needs_you', 'in_use', 'in_use']);
+  /* WALK2 W3: the four tiles that said nothing - CRM · Trend · Online shop · Parallel run - each say one line, or not_started */
+  r = await g('crm');
+  t('crm (W3): customers and suppliers, CRM own count (hidden and merged left out)', [r.json.lines[0].text, r.json.state], ['5 customers · 3 suppliers', 'in_use']);
+  r = await g('trend');
+  t('trend (W3): no weeks of sales -> not_started, no figure invented', [r.json.state, r.json.lines.length], ['not_started', 0]);
+  {
+    const R = require(API + '/lib/rollup');
+    const wk = (n) => R.weekKey(new Date(Date.now() - n * 7 * DAYS));
+    const weekRow = (key) => ({ chit_id: 'w' + key, created_at: new Date(), business_json: { summary: { period: 'week', key, till: { id: 'C1' }, totals: { count: 1, returns: 0, gross: 900, refunds: 0, expenseCount: 0, expenses: 0, total: 900, by: {} } } } });
+    F.weeks = [weekRow(wk(1)), weekRow(wk(2))]; F.shopYear = { country: 'IN', currency_code: 'INR', books: null, gov: null };
+    r = await g('trend');
+    t('trend (W3): the Till card teaser (the same engine), "Last 8 weeks" when last year is not known', [r.json.state, r.json.lines.map((l) => l.text), r.json.figures.trend.spark.filter((x) => x != null).length], ['in_use', ['Last 8 weeks'], 2]);
+    F.weeks = null; F.shopYear = null;
+  }
+  r = await g('storefront');
+  t('storefront (W3): private (the default) -> not_started, said not hidden', r.json.state, 'not_started');
+  F.visibility = 'public'; r = await g('storefront');
+  t('storefront (W3): public -> "Open to everyone"', [r.json.lines[0].text, r.json.state], ['Open to everyone', 'in_use']);
+  F.visibility = null;
+  require(API + '/lib/books-store').compareReady = async () => !!F.compareTable;   /* b309 present or not - lib/schema holds the real pool (loaded before the stand-in) */
+  r = await g('compare');
+  t('compare (W3): no snapshot kept -> not_started', r.json.state, 'not_started');
+  F.compareTable = true; F.snapshots = [{ snapshot_id: 's1' }, { snapshot_id: 's2' }]; r = await g('compare');
+  t('compare (W3): two of their periods kept -> one line', [r.json.lines[0].text, r.json.state], ['2 periods of their books loaded', 'in_use']);
+  F.booksOn = false; r = await g('compare');
+  t('compare (W3): the ledger off -> not_started', r.json.state, 'not_started');
+  F.booksOn = true; F.snapshots = null;
   r = await g('nonsense');
   t('unknown card -> 404', r.status, 404);
   r = await g('toString');
