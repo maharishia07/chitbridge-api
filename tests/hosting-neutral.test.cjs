@@ -115,6 +115,8 @@ it('the one baseline carries the ledger (b304) and --record-through takes only t
   assert.deepStrictEqual(mig.BASELINE, ['000_baseline_2026-10-18.sql']);
   const base = fs.readFileSync(path.join(API, 'migrations', mig.BASELINE[0]), 'utf8');
   assert.ok(/CREATE TABLE public\.schema_migrations \(/.test(base), 'the baseline does not make schema_migrations');
+  assert.ok(!base.includes('\r'), 'the baseline has CR characters — a CRLF checkout puts \\r inside every function body it makes (.gitattributes eol=lf)');
+  assert.ok(/do NOT run this file there/.test(base), 'the baseline no longer tells production not to run it');
   assert.ok(fs.existsSync(mig.LEDGER_PATH), 'b304 is not in migrations/archive/');
   assert.deepStrictEqual(mig.through('b764'), mig.BASELINE);
   assert.throws(() => mig.through('latest'), /migration number/);
