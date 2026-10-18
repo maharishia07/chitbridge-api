@@ -21,8 +21,8 @@ const zlib = require('zlib');
 /* ── a minimal PNG encoder. Chunk = length, type, data, CRC32 — the format's own rules, nothing clever. ────── */
 function crc32(buf) {
   let c, crc = 0xFFFFFFFF;
-  for (let n = 0; n < buf.length; n++) {
-    c = (crc ^ buf[n]) & 0xFF;
+  for (let index = 0; index < buf.length; index++) {
+    c = (crc ^ buf[index]) & 0xFF;
     for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
     crc = c ^ (crc >>> 8);
   }
@@ -112,8 +112,8 @@ function main() {
   made.push({ file: 'oversized.png', bytes: big.length, note: 'must be REFUSED at 6MB' });
 
   console.log('test media → ' + out);
-  made.forEach((m) => console.log('  ' + m.file.padEnd(16) + String(m.bytes).padStart(9) + ' bytes'
-    + (m.note ? '   ⚠️ ' + m.note : '')));
+  made.forEach((item) => console.log('  ' + item.file.padEnd(16) + String(item.bytes).padStart(9) + ' bytes'
+    + (item.note ? '   ⚠️ ' + item.note : '')));
   const over = big.length > 6 * 1024 * 1024;
   console.log('\noversized is actually over 6MB: ' + over
     + (over ? '' : '   ⚠️ IT IS NOT — raise the dimensions or this proves nothing'));
