@@ -5,8 +5,8 @@ const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.ap
 const BP = 'royaleplay-bp-india';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { if (ok) { P++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { F++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
-const login = async () => { const ts = Date.now().toString().slice(-6) + Math.floor(Math.random() * 99); const email = 'trade-' + ts + '@test.com'; const reg = await api('POST', '/api/entities/register', { body: { email } }); const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } }); const token = ver.j && ver.j.token; let bridge = ver.j && ver.j.bridge_id; if (!bridge) { const me = await api('GET', '/api/entities/me', { token }); bridge = me.j && (me.j.bridge_id || (me.j.entity && me.j.entity.bridge_id)); } return { token, bridge }; };
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
+const login = async () => { const ts = Date.now().toString().slice(-6) + Math.floor(Math.random() * 99); const email = 'trade-' + ts + '@test.com'; const reply = await api('POST', '/api/entities/register', { body: { email } }); const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } }); const token = ver.j && ver.j.token; let bridge = ver.j && ver.j.bridge_id; if (!bridge) { const me = await api('GET', '/api/entities/me', { token }); bridge = me.j && (me.j.bridge_id || (me.j.entity && me.j.entity.bridge_id)); } return { token, bridge }; };
 
 (async () => {
   console.log('== PROVE TRADE READINESS / CONFIDENCE ==  ' + B + '\n');
@@ -15,19 +15,19 @@ const login = async () => { const ts = Date.now().toString().slice(-6) + Math.fl
   await api('POST', '/api/governance/boilerplate/' + BP + '/adopt', { token: supplier.token });   // inherit ISO 9001 + EXIM
 
   // 1 · the supplier sees its REQUIRED clearances (from its standards), all pending
-  const rd0 = await api('GET', '/api/governance/readiness', { token: supplier.token });
-  const req0 = (rd0.j && rd0.j.clearances) || [];
-  chk('supplier sees its required clearances', req0.length > 0, req0.length + ' documents · ' + (rd0.j && rd0.j.standards || []).join(', '));
-  chk('all pending before gathering', rd0.j && rd0.j.summary && rd0.j.summary.percent === 0, 'percent ' + (rd0.j && rd0.j.summary && rd0.j.summary.percent));
+  const reply = await api('GET', '/api/governance/readiness', { token: supplier.token });
+  const req0 = (reply.j && reply.j.clearances) || [];
+  chk('supplier sees its required clearances', req0.length > 0, req0.length + ' documents · ' + (reply.j && reply.j.standards || []).join(', '));
+  chk('all pending before gathering', reply.j && reply.j.summary && reply.j.summary.percent === 0, 'percent ' + (reply.j && reply.j.summary && reply.j.summary.percent));
 
   // 2 · the supplier GATHERS each required document (reference-based — whatever the standards require)
   const soon = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);   // one "expiring" to mirror REACH
-  const far = new Date(Date.now() + 730 * 86400000).toISOString().slice(0, 10);
-  let i = 0;
+  const date = new Date(Date.now() + 730 * 86400000).toISOString().slice(0, 10);
+  let index = 0;
   for (const it of req0) {
     await api('POST', '/api/governance/compliance', { token: supplier.token, body: {
-      standard_key: it.standard, doc_key: it.doc, evidence_ref: 'chit://' + it.doc, valid_until: (i === 0 ? soon : far) } });
-    i++;
+      standard_key: it.standard, doc_key: it.doc, evidence_ref: 'chit://' + it.doc, valid_until: (index === 0 ? soon : date) } });
+    index++;
   }
 
   // 3 · readiness rolls up to import-ready
