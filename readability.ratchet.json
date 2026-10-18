@@ -78,7 +78,7 @@
   "lib/exposure.js": {"score":5,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/field-ledger.js": {"score":22,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":1,"deep4":1,"cryptic":18,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/finance-terms.js": {"score":57,"long40":0,"long80":0,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":52,"noWhatLine":0,"emptyCatch":1,"noHeader":0},
-  "lib/folder-inventory.js": {"score":40,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":38,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
+  "lib/folder-inventory.js": {"score":30,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":28,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/folder-rules.js": {"score":21,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":3,"emptyCatch":0,"noHeader":1},
   "lib/folder-views.js": {"score":25,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":24,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/form-handshake.js": {"score":21,"long40":0,"long80":0,"complex10":3,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
