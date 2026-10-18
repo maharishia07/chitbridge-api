@@ -349,7 +349,7 @@
   "scripts/prove-lanes.js": {"score":24,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-lifecycle.js": {"score":25,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":23,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-line-events.js": {"score":23,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "scripts/prove-line-threads.js": {"score":33,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":32,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
+  "scripts/prove-line-threads.js": {"score":23,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-lot.js": {"score":14,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-message-to-chit.js": {"score":20,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-network-cap.js": {"score":19,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":0,"emptyCatch":2,"noHeader":1},

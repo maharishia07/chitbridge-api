@@ -42,7 +42,7 @@ const login = async (email, name) => {
     { method: 'POST', token: tok, body: { message_text: text, thread_type: type, line_id: line } });
   const read = async (tok, type, line) => {
     const r = await P.j('/api/chits/' + id + '/messages?thread_type=' + type + (line ? '&line_id=' + line : ''), { token: tok });
-    const b = r.b; return ((b && (b.messages || b.items || (Array.isArray(b) ? b : []))) || []).map((m) => m.message_text);
+    const b = r.b; return ((b && (b.messages || b.items || (Array.isArray(b) ? b : []))) || []).map((item) => item.message_text);
   };
 
   await post(seller.token, 'Rice is 2 days late — mill is down', 'external', A);
@@ -50,24 +50,24 @@ const login = async (email, name) => {
   await post(buyer.token,  'That is fine, deliver Wednesday',    'external', A);
   await post(seller.token, 'Dal is on the same lorry',           'external', B);
 
-  const sX = await read(seller.token, 'external', A), sI = await read(seller.token, 'internal', A);
+  const list = await read(seller.token, 'external', A), sI = await read(seller.token, 'internal', A);
   const bX = await read(buyer.token,  'external', A), bI = await read(buyer.token,  'internal', A);
   const bB = await read(buyer.token,  'external', B);
 
-  ok(bX.some((t) => /mill is down/.test(t)), '⭐ the buyer SEES the seller external message');
-  ok(sX.some((t) => /deliver Wednesday/.test(t)), '⭐ the seller sees the reply — a real two-way thread');
+  ok(bX.some((item) => /mill is down/.test(item)), '⭐ the buyer SEES the seller external message');
+  ok(list.some((item) => /deliver Wednesday/.test(item)), '⭐ the seller sees the reply — a real two-way thread');
   /* ⚠️⚠️ THE ONE THAT MATTERS. Checked in BOTH threads, because a leak that put the note in the buyer's external
      thread would pass a test that only looked at their internal one. */
-  ok(!bX.concat(bI).some((t) => /oversold/.test(t)), '⭐⭐ the buyer NEVER sees the internal note, in either thread');
-  ok(sI.some((t) => /oversold/.test(t)), 'and the seller keeps their own note');
+  ok(!bX.concat(bI).some((item) => /oversold/.test(item)), '⭐⭐ the buyer NEVER sees the internal note, in either thread');
+  ok(sI.some((item) => /oversold/.test(item)), 'and the seller keeps their own note');
   ok(bI.length === 0, 'the buyer internal thread is empty — internal is per-entity, not per-chit');
   /* Line scoping has to hold across the boundary too: B's message must not appear under A for either party. */
-  ok(!bX.some((t) => /same lorry/.test(t)) && bB.some((t) => /same lorry/.test(t)),
+  ok(!bX.some((item) => /same lorry/.test(item)) && bB.some((item) => /same lorry/.test(item)),
      'line scoping holds for the counterparty as well — B stays on B');
 
-  let p = 0, f = 0;
+  let count = 0, f = 0;
   console.log('');
-  T.forEach((t) => { if (t.ok) { p++; console.log('  ✓ ' + t.m + (t.d ? '  ' + t.d : '')); } else { f++; console.log('  ✗ ' + t.m + (t.d ? '  → ' + t.d : '')); } });
-  console.log('\n== RESULT ==  PASS ' + p + '  ·  FAIL ' + f);
+  T.forEach((item) => { if (item.ok) { count++; console.log('  ✓ ' + item.m + (item.d ? '  ' + item.d : '')); } else { f++; console.log('  ✗ ' + item.m + (item.d ? '  → ' + item.d : '')); } });
+  console.log('\n== RESULT ==  PASS ' + count + '  ·  FAIL ' + f);
   process.exit(f ? 1 : 0);
 })().catch((e) => { console.log('ERR', e.message); process.exit(1); });
