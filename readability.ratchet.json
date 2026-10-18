@@ -51,7 +51,7 @@
   "lib/counter-bill.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/country-setup.js": {"score":71,"long40":1,"long80":0,"complex10":8,"complex15":7,"deep3":0,"deep4":0,"cryptic":55,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/crm-calls.js": {"score":25,"long40":0,"long80":0,"complex10":2,"complex15":0,"deep3":0,"deep4":0,"cryptic":23,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "lib/crm-followups.js": {"score":77,"long40":0,"long80":0,"complex10":3,"complex15":2,"deep3":0,"deep4":0,"cryptic":71,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
+  "lib/crm-followups.js": {"score":68,"long40":0,"long80":0,"complex10":3,"complex15":2,"deep3":0,"deep4":0,"cryptic":62,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "lib/crm-groups.js": {"score":54,"long40":0,"long80":0,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":50,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "lib/crm-leads.js": {"score":62,"long40":2,"long80":1,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":55,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/crm.js": {"score":67,"long40":1,"long80":0,"complex10":5,"complex15":3,"deep3":0,"deep4":0,"cryptic":57,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
