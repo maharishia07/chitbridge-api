@@ -3,22 +3,22 @@
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { if (ok) { P++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { F++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
 const stds = (rd) => ((rd.j && rd.j.standards) || []).slice().sort();
 
 (async () => {
   console.log('== PROVE TRADE LANES (generic · origin-aware) ==  ' + B + '\n');
   const ts = Date.now().toString().slice(-6), email = 'lane-' + ts + '@test.com';
-  const reg = await api('POST', '/api/entities/register', { body: { email } });
-  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } });
+  const reply = await api('POST', '/api/entities/register', { body: { email } });
+  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } });
   const token = ver.j && ver.j.token;
   chk('login', !!token);
 
   // 1 · the MATRIX — readiness per destination (the eye-opener), all derived
   const mx = await api('GET', '/api/governance/lanes?vertical=paint&origin=IN', { token });
   const lanes = (mx.j && mx.j.lanes) || [];
-  chk('matrix returns destinations', lanes.length >= 3, lanes.map(l => l.dest_key + ':' + l.total).join(' · '));
-  const counts = {}; lanes.forEach(l => counts[l.dest_key] = l.total);
+  chk('matrix returns destinations', lanes.length >= 3, lanes.map(item => item.dest_key + ':' + item.total).join(' · '));
+  const counts = {}; lanes.forEach(item => counts[item.dest_key] = item.total);
   chk('different destinations require DIFFERENT sets (not enumerated, derived)', counts.EU !== counts.US || counts.EU !== counts.IN,
     'EU=' + counts.EU + ' US=' + counts.US + ' IN=' + counts.IN);
 
@@ -38,7 +38,7 @@ const stds = (rd) => ((rd.j && rd.j.standards) || []).slice().sort();
     !stds(euFromEU).includes('exim-policy') && stds(euFromEU).includes('reach'), stds(euFromEU).join(', '));
 
   // 5 · guidance on gaps (guide the rest)
-  const gap = ((eu.j && eu.j.clearances) || []).find(c => c.status !== 'gathered' && c.guidance);
+  const gap = ((eu.j && eu.j.clearances) || []).find(item => item.status !== 'gathered' && item.guidance);
   chk('gaps carry GUIDANCE (go as far as we can, guide the rest)', !!gap, gap ? ('e.g. ' + gap.standard + ': ' + String(gap.guidance).slice(0, 60)) : '');
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
