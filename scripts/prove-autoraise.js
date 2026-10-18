@@ -60,8 +60,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const LINE = '+9190' + RUN + '00', CUST = '+919000002222';
   const bindFor = async (addr) => {
     const list = await j('/api/channels', { token: tok });
-    const wa = (list.b.channels || []).find((c) => c.key === 'whatsapp') || { bindings: [] };
-    return (wa.bindings || []).find((b) => b.address === addr) || null;
+    const wa = (list.b.channels || []).find((item) => item.key === 'whatsapp') || { bindings: [] };
+    return (wa.bindings || []).find((item) => item.address === addr) || null;
   };
   let bind = await bindFor(LINE);
   if (!bind) { const made = await j('/api/channels', { method: 'POST', token: tok, body: { channel: 'whatsapp', address: LINE, label: 'auto line' } }); bind = made.b; }
@@ -86,8 +86,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const pending = async () => ((await j('/api/capture/pending', { token: tok })).b || {}).captures || [];
   // Watch, don't drive. Returns the matching chit or null after the window.
   const waitForChit = async (needle, secs) => {
-    for (let i = 0; i < (secs || 45); i++) {
-      const hit = (await inbox()).find((c) => new RegExp(needle, 'i').test((c.manual_subject || c.auto_subject || '') + JSON.stringify(c.summary_json || {})));
+    for (let index = 0; index < (secs || 45); index++) {
+      const hit = (await inbox()).find((item) => new RegExp(needle, 'i').test((item.manual_subject || item.auto_subject || '') + JSON.stringify(item.summary_json || {})));
       if (hit) return hit;
       await sleep(1000);
     }
@@ -109,7 +109,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await sleep(20000);                                   // generous: if it were going to raise, it would have by now
   ok(!(await waitForChit('OFF-' + RUN, 2)), '★★★ OFF means OFF — no chit appeared without a person',
     'a chit was raised while the switch was off');
-  ok((await pending()).some((c) => new RegExp('OFF-' + RUN).test(c.raw_text || '')), '★ and it is waiting in Intake, as it always was');
+  ok((await pending()).some((item) => new RegExp('OFF-' + RUN).test(item.raw_text || '')), '★ and it is waiting in Intake, as it always was');
 
   // ── 3. ON → the chit appears, and NOTHING here asked for it.
   await j('/api/channels/' + bind.id + '/auto-raise', { method: 'POST', token: tok, body: { on: true } });
@@ -127,14 +127,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     ok(sum.copy_policy && sum.copy_policy.suppressed && sum.copy_policy.suppressed.indexOf('sent') >= 0,
       '★★★ Task only — no Order copy, unattended or not', JSON.stringify(sum.copy_policy));
     const sent = ((await j('/api/chits/sent?limit=50', { token: tok })).b || {}).chits || [];
-    ok(!sent.some((c) => c.chit_id === chit.chit_id), '★★★ and it is NOT in the Order list');
+    ok(!sent.some((item) => item.chit_id === chit.chit_id), '★★★ and it is NOT in the Order list');
 
     const full = await j('/api/chits/' + chit.chit_id, { token: tok });
     const atts = (full.b && (full.b.attachments || (full.b.detail || {}).attachments)) || [];
-    ok(atts.some((a) => /original-message/.test(a.name || '')),
+    ok(atts.some((item) => /original-message/.test(item.name || '')),
       '★★ the ORIGINAL message was attached unattended — evidence is not a property of which button was pressed',
-      JSON.stringify(atts.map((a) => a.name)));
-    ok(!(await pending()).some((c) => new RegExp('ON-' + RUN).test(c.raw_text || '')), '★ and it left the intake queue');
+      JSON.stringify(atts.map((item) => item.name)));
+    ok(!(await pending()).some((item) => new RegExp('ON-' + RUN).test(item.raw_text || '')), '★ and it left the intake queue');
   }
 
   // ── 4. A REDELIVERY must not mint a second chit. Meta retries; a retry is not a second order.
@@ -154,7 +154,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   await deliver('ok thanks NOISE-' + RUN, 'NOISE');
   await sleep(30000);
   ok(!(await waitForChit('NOISE-' + RUN, 3)), '★★★ a message with no order in it did NOT become a chit');
-  ok((await pending()).some((c) => new RegExp('NOISE-' + RUN).test(c.raw_text || '')), '★★ it is waiting in Intake for a person');
+  ok((await pending()).some((item) => new RegExp('NOISE-' + RUN).test(item.raw_text || '')), '★★ it is waiting in Intake for a person');
 
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
   console.log('  \x1b[33m⚠️\x1b[0m  transport is stood in for — that Meta carried it needs a WhatsApp Business account.\n');
