@@ -92,7 +92,7 @@ router.get('/', auth, sessionOnly, async (req, res) => {
 async function mint(entity_id, identity, opts) {
   opts = opts || {};
   const name = String(opts.name || '').trim().slice(0, 80) || 'key';
-  const scopes = (Array.isArray(opts.scopes) ? opts.scopes : ['offers']).map(String).filter((s) => SCOPES.includes(s));
+  const scopes = (Array.isArray(opts.scopes) ? opts.scopes : ['offers']).map(String).filter((item) => SCOPES.includes(item));
   if (!scopes.length) throw Object.assign(new Error('scopes must include one of: ' + SCOPES.join(', ')), { status: 400 });
   const days = Math.min(Math.max(Number(opts.days) || 365, 1), 3650);
   const jti = crypto.randomBytes(12).toString('hex');
@@ -124,7 +124,7 @@ async function mint(entity_id, identity, opts) {
     const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
     const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
     /* ⚠️ a CLOSED counter is kept as history and must not use up a place — closing one is how a shop makes room */
-    if (keys.filter((k) => !(k && k.till && k.till.closed_at)).length >= 20)
+    if (keys.filter((item) => !(item && item.till && item.till.closed_at)).length >= 20)
       throw Object.assign(new Error('Twenty keys at most — revoke one first.'), { status: 400 });
     await policy.patchKey(db, entity_id, [], { api_keys: keys.concat([rec]) }, { op: 'merge' });
   });
@@ -147,17 +147,17 @@ async function endKeysBy(db, entity_id, person) {
   const lr = await db.query('SELECT policy_flags FROM identities WHERE identity_id = $1 FOR UPDATE', [entity_id]);
   const pf = (lr.rows[0] && lr.rows[0].policy_flags) || {};
   const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
-  const mine = keys.filter((k) => k && String(k.by || '') === who && !isClosed(k));
+  const mine = keys.filter((item) => item && String(item.by || '') === who && !isClosed(item));
   if (!mine.length) return { closed: 0, revoked: 0, jtis: [] };
   const now = new Date().toISOString();
-  const tills = new Set(mine.filter((k) => k.till).map((k) => String(k.jti)));
-  const gone = new Set(mine.filter((k) => !k.till).map((k) => String(k.jti)));
-  const jtis = new Set(mine.map((k) => String(k.jti)));
-  const left = keys.filter((k) => {
-    if (!k) return false;
-    if (gone.has(String(k.jti)) || gone.has(String(k.parent || ''))) { jtis.add(String(k.jti)); return false; }
+  const tills = new Set(mine.filter((item) => item.till).map((item) => String(item.jti)));
+  const gone = new Set(mine.filter((item) => !item.till).map((item) => String(item.jti)));
+  const jtis = new Set(mine.map((item) => String(item.jti)));
+  const left = keys.filter((item) => {
+    if (!item) return false;
+    if (gone.has(String(item.jti)) || gone.has(String(item.parent || ''))) { jtis.add(String(item.jti)); return false; }
     return true;
-  }).map((k) => (tills.has(String(k.jti)) ? Object.assign({}, k, { till: Object.assign({}, k.till, { closed_at: now, released: true }) }) : k));
+  }).map((item) => (tills.has(String(item.jti)) ? Object.assign({}, item, { till: Object.assign({}, item.till, { closed_at: now, released: true }) }) : item));
   await policy.patchKey(db, entity_id, [], { api_keys: left }, { op: 'merge' });
   return { closed: tills.size, revoked: gone.size, jtis: [...jtis] };
 }
@@ -237,8 +237,8 @@ router.setSeen = async (entity_id, jti, at) => {
 const TILL_IDS = (() => {
   /* C1..C9 then A1..A9, B1.. — TWO CHARACTERS, because the whole number must stay inside India's sixteen */
   const out = [];
-  for (let n = 1; n <= 9; n++) out.push('C' + n);
-  for (let L = 65; L <= 90; L++) { if (L === 67) continue; for (let n = 1; n <= 9; n++) out.push(String.fromCharCode(L) + n); }
+  for (let index = 1; index <= 9; index++) out.push('C' + index);
+  for (let L = 65; L <= 90; L++) { if (L === 67) continue; for (let index = 1; index <= 9; index++) out.push(String.fromCharCode(L) + index); }
   return out;
 })();
 /**
@@ -249,9 +249,9 @@ const TILL_IDS = (() => {
  */
 function cleanEngines(raw) {
   if (!raw) return null;
-  const s = Array.isArray(raw) ? raw.join(',') : String(raw);
+  const text = Array.isArray(raw) ? raw.join(',') : String(raw);
   const out = {};
-  s.split(',').slice(0, 60).forEach((pair) => {
+  text.split(',').slice(0, 60).forEach((pair) => {
     const m = /^([a-z0-9-]{1,32}):([0-9A-Za-z.\-]{1,20})$/.exec(pair.trim());
     if (m) out[m[1]] = m[2];
   });
@@ -324,9 +324,9 @@ async function phoneHashesOf(db, entity_id, by) {
 /** the hashes an assigned number may have been filed under — with and without its leading '+', since both are allowed */
 function assignedHashes(phone) {
   const docs = require('./identity-docs');
-  const d = docs.normPhone(phone);
-  if (!d) return [];
-  const bare = d.replace(/^\+/, '');
+  const text = docs.normPhone(phone);
+  if (!text) return [];
+  const bare = text.replace(/^\+/, '');
   return [docs.docHash('PHONE', bare), docs.docHash('PHONE', '+' + bare)];
 }
 router.assignedHashes = assignedHashes;
@@ -353,9 +353,9 @@ async function claimDevice(db, entity_id, pf, who, ask) {
   if (!me || me.revoked_at) return null;
   const now = new Date().toISOString();
   const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
-  const tills = keys.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);
-  const keyHeld = new Set(tills.map((k) => k.till && String(k.till.id || '').toUpperCase()).filter(Boolean));
-  const liveKeyHeld = new Set(tills.filter((k) => !isClosed(k)).map((k) => k.till && String(k.till.id || '').toUpperCase()).filter(Boolean));
+  const tills = keys.filter((item) => item && Array.isArray(item.scopes) && item.scopes.indexOf('till') >= 0);
+  const keyHeld = new Set(tills.map((item) => item.till && String(item.till.id || '').toUpperCase()).filter(Boolean));
+  const liveKeyHeld = new Set(tills.filter((item) => !isClosed(item)).map((item) => item.till && String(item.till.id || '').toUpperCase()).filter(Boolean));
   const phoneHeld = devicePrefixes(pf, who.device_id);
   const counters = pf.counters || {};
   const mine = 'dev:' + who.device_id;
@@ -365,16 +365,16 @@ async function claimDevice(db, entity_id, pf, who, ask) {
   const order = (a, b) => TILL_IDS.indexOf(a.id) - TILL_IDS.indexOf(b.id);
   /* a registered counter a live key holds (or is opening) is not this phone's to take */
   const keyHolds = (c) => liveKeyHeld.has(c.id) || (c.held_by && String(c.held_by).indexOf('dev:') !== 0
-    && (String(c.held_by).indexOf('pending:') === 0 || tills.some((k) => String(k.jti) === String(c.held_by) && !isClosed(k))));
+    && (String(c.held_by).indexOf('pending:') === 0 || tills.some((item) => String(item.jti) === String(c.held_by) && !isClosed(item))));
 
   /* 1 · assigned by phone number */
   let pick = null, counter = null;
   const assigned = Object.keys(counters).map((id) => Object.assign({ id: String(id).toUpperCase() }, counters[id]))
-    .filter((c) => c.assigned && c.assigned.phone).sort(order);
+    .filter((item) => item.assigned && item.assigned.phone).sort(order);
   if (assigned.length) {
     const hashes = await phoneHashesOf(db, entity_id, who.by);
-    counter = assigned.find((c) => assignedHashes(c.assigned.phone).some((h) => hashes.has(h))
-      && !keyHolds(c) && !phoneHeld.has(c.id)) || null;
+    counter = assigned.find((item) => assignedHashes(item.assigned.phone).some((h) => hashes.has(h))
+      && !keyHolds(item) && !phoneHeld.has(item.id)) || null;
     if (counter) pick = counter.id;
   }
   /* 2 · kept */
@@ -433,9 +433,9 @@ router.claimSeries = async (entity_id, holder, ask) => withTransaction(async (db
   const keys = Array.isArray(pf.api_keys) ? pf.api_keys : [];
   const me = keys.find((x) => x && String(x.jti) === String(jti));
   if (!me) return null;
-  const tills = keys.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);
+  const tills = keys.filter((item) => item && Array.isArray(item.scopes) && item.scopes.indexOf('till') >= 0);
   const older = (a, b) => String(a.created_at || '').localeCompare(String(b.created_at || ''));
-  const others = tills.filter((k) => String(k.jti) !== String(jti));
+  const others = tills.filter((item) => String(item.jti) !== String(jti));
   const using = String((ask && ask.id) || '').trim().toUpperCase() || null;
   const issued = !!(ask && ask.issued);
   const now = new Date().toISOString();
@@ -459,7 +459,7 @@ router.claimSeries = async (entity_id, holder, ask) => withTransaction(async (db
   }
 
   /* every prefix another counter of this shop holds */
-  const held = new Set(others.map((k) => k.till && String(k.till.id || '').toUpperCase()).filter(Boolean));
+  const held = new Set(others.map((item) => item.till && String(item.till.id || '').toUpperCase()).filter(Boolean));
   /**
    * ⚠️⚠️ AND EVERY PREFIX THAT ALREADY HAS BILLS IN THE BOOKS. Athi, 2026-09-17: *"is the running sequence number
    * stored in cloud after every chit? is the seq maintained by us?"* — it is not; the next number lives only on the
@@ -481,7 +481,7 @@ router.claimSeries = async (entity_id, holder, ask) => withTransaction(async (db
   if (issued && using) {
     /* this counter has numbers out under `using` — does an OLDER counter hold the same prefix? */
     const rival = others
-      .filter((k) => k.till && String(k.till.id || '').toUpperCase() === using && k.till.issued)
+      .filter((item) => item.till && String(item.till.id || '').toUpperCase() === using && item.till.issued)
       .sort(older)[0];
     if (rival && older(rival, me) < 0) {
       /**
@@ -563,9 +563,9 @@ router.delete('/:jti', auth, sessionOnly, owner.gate(REVOKE_SAYS), async (req, r
       /* ⭐ and the screen keys that counter paired go with it — auth already refuses them once their maker is gone, but
          left listed they would keep using up the shop's twenty places for keys that can no longer open anything */
       const gone = String(req.params.jti);
-      const left = keys.filter((k) => String(k.jti) !== gone && String(k.parent || '') !== gone);
-      found = keys.some((k) => String(k.jti) === gone);
-      keys.filter((k) => String(k.parent || '') === gone).forEach((k) => auth.forgetKey(k.jti));
+      const left = keys.filter((item) => String(item.jti) !== gone && String(item.parent || '') !== gone);
+      found = keys.some((item) => String(item.jti) === gone);
+      keys.filter((item) => String(item.parent || '') === gone).forEach((item) => auth.forgetKey(item.jti));
       if (found) await policy.patchKey(db, entity_id, [], { api_keys: left }, { op: 'merge' });
     });
     if (!found) return res.status(404).json({ error: 'Not found' });
