@@ -36,9 +36,9 @@ const PHOTOS = { 'Masala Dosa': [222, 160, 60], 'Veg Meals': [90, 160, 70], 'Fil
 
 const step = (s) => console.log('  · ' + s);
 async function j(path, { method = 'GET', token, body } = {}) {
-  const r = await fetch(API + path, { method, headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}), body: body ? JSON.stringify(body) : undefined });
-  let b = null; try { b = await r.json(); } catch (_) { /* no body */ }
-  return { status: r.status, b: b || {} };
+  const reply = await fetch(API + path, { method, headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}), body: body ? JSON.stringify(body) : undefined });
+  let b = null; try { b = await reply.json(); } catch (_) { /* no body */ }
+  return { status: reply.status, b: b || {} };
 }
 const must = (r, what) => { if (r.status >= 300) { console.error('seed failed at ' + what + ': HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 300)); process.exit(1); } return r; };
 
@@ -348,11 +348,11 @@ async function demoMonth({ token, bridge, ids }) {
 
   /* counters C1..C5 — the api hands out the lowest free number, so five creates give C5 */
   let counters = must(await j('/api/counters', { token }), 'list counters').b.counters || [];
-  while (!counters.some((c) => c.id === 'C5')) {
+  while (!counters.some((item) => item.id === 'C5')) {
     const r = must(await j('/api/counters', { method: 'POST', token, body: { name: 'Counter ' + (counters.length + 1) } }), 'add counter');
     counters = counters.concat([r.b.counter]);
   }
-  step('counters ' + counters.map((c) => c.id).join(' '));
+  step('counters ' + counters.map((item) => item.id).join(' '));
 
   /* the staff login: created with a one-time code, signs in with it, sets a PIN, then signs in with the PIN */
   const login = STAFF.key + '@' + userId;
@@ -364,7 +364,7 @@ async function demoMonth({ token, bridge, ids }) {
     let code = made.b.otp;
     if (!code) {
       const list = must(await j('/api/actors', { token }), 'list staff').b;
-      const me = (list.actors || list.rows || list || []).find((a) => a.actor_key === STAFF.key);
+      const me = (list.actors || list.rows || list || []).find((item) => item.actor_key === STAFF.key);
       must(await j('/api/actors/' + me.identity_id + '/otp', { method: 'POST', token }), 'fresh staff code'); code = ENTITY_OTP;
     }
     const otpIn = must(await j('/api/actors/login', { method: 'POST', body: { username: login, otp: code } }), 'staff login with the code');
