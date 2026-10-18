@@ -5,8 +5,8 @@
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { if (ok) { P++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { F++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
-async function login(email) { const reg = await api('POST', '/api/entities/register', { body: { email } }); const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } }); return { token: ver.j && ver.j.token, id: ver.j && ver.j.entity && ver.j.entity.identity_id }; }
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
+async function login(email) { const reply = await api('POST', '/api/entities/register', { body: { email } }); const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } }); return { token: ver.j && ver.j.token, id: ver.j && ver.j.entity && ver.j.entity.identity_id }; }
 
 (async () => {
   console.log('== PROVE SELF-PROVING REFERENCE / TRACK RECORD ==  ' + B + '\n');
@@ -21,11 +21,11 @@ async function login(email) { const reg = await api('POST', '/api/entities/regis
     'rung=' + (tr.j && tr.j.rung) + ' settled=' + (tr.j && tr.j.settled));
 
   // a real dealing: the buyer places an order chit ON the seller …
-  const snd = await api('POST', '/api/chits/send', { token: buyer.token, body: {
+  const reply = await api('POST', '/api/chits/send', { token: buyer.token, body: {
     recipients: [{ entity_id: seller.id, role: 'to' }], purpose: 'general', manual_subject: 'REF ' + ts,
     line_items: [{ description: 'Consignment', qty: 1, rate: 1000 }] } });
-  const chit_id = snd.j && (snd.j.chit_id || (snd.j.chit && snd.j.chit.chit_id));
-  chk('buyer placed an order on the seller', !!chit_id, chit_id || JSON.stringify(snd.j).slice(0, 160));
+  const chit_id = reply.j && (reply.j.chit_id || (reply.j.chit && reply.j.chit.chit_id));
+  chk('buyer placed an order on the seller', !!chit_id, chit_id || JSON.stringify(reply.j).slice(0, 160));
 
   // … the seller (receiver) accepts then FULFILS it — receiver-driven close on the seller's own copy.
   await api('PUT', '/api/chits/' + chit_id + '/status', { token: seller.token, body: { status: 'accepted' } });
