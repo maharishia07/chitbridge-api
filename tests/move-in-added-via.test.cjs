@@ -110,6 +110,6 @@ const ctx = { world: { listIds: [] }, by: 'u1' };
   });
   await t('the sentence says nothing was imported', () => assert.ok(/^Nothing was imported/.test(err.message), err.message));
 
-  console.log('\n' + pass + ' passed, ' + fail + ' failed');
+  console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
