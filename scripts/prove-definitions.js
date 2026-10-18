@@ -70,12 +70,12 @@ async function login(email, name) {
   ok('⭐⭐ THE FROZEN COPY IS UNCHANGED — 10%, not 25%', snap.rules.percent === 10, snap.rules.percent);
 
   const full = await P.j('/api/definitions/' + id, me);
-  const vs = (full.b && full.b.versions) || [];
+  const list = (full.b && full.b.versions) || [];
   ok('⭐ BOTH versions are still readable — the frozen copy can be checked against the shelf',
-     vs.length === 2, vs.map((v) => v.version));
-  const v1 = vs.filter((v) => v.version === 1)[0] || {};
+     list.length === 2, list.map((item) => item.version));
+  const v1 = list.filter((item) => item.version === 1)[0] || {};
   ok('…and version 1 still says 10%', v1.rules && v1.rules.percent === 10, v1.rules);
-  const v2 = vs.filter((v) => v.version === 2)[0] || {};
+  const v2 = list.filter((item) => item.version === 2)[0] || {};
   ok('…while the shelf has moved to 25%', v2.rules && v2.rules.percent === 25, v2.rules);
 
   const after = await P.j('/api/definitions/freeze', { method: 'POST', ...me, body: { definition_ids: [id] } });
@@ -96,16 +96,16 @@ async function login(email, name) {
    */
   const gone = await P.j('/api/definitions?kind=offer', me);
   ok('the shelf actually answers (not a 500 masquerading as an empty list)', gone.status === 200, gone.status);
-  const listed = (gone.b.definitions || []).filter((d) => d.definition_id === id);
+  const listed = (gone.b.definitions || []).filter((item) => item.definition_id === id);
   ok('…so it leaves the default shelf', gone.status === 200 && listed.length === 0, listed.length);
   const all = await P.j('/api/definitions?all=1', me);
   ok('?all=1 answers', all.status === 200, all.status);
   ok('…and a retired definition is still there when asked for',
-     (all.b.definitions || []).some((d) => d.definition_id === id),
+     (all.b.definitions || []).some((item) => item.definition_id === id),
      { status: all.status, rows: (all.b.definitions || []).length });
   const onlyRetired = await P.j('/api/definitions?status=retired', me);
   ok('…and ?status=retired finds it directly',
-     (onlyRetired.b.definitions || []).some((d) => d.definition_id === id), onlyRetired.status);
+     (onlyRetired.b.definitions || []).some((item) => item.definition_id === id), onlyRetired.status);
 
   const stillFreezes = await P.j('/api/definitions/freeze', { method: 'POST', ...me, body: { definition_ids: [id] } });
   ok('⚠️ …and a RETIRED definition still freezes — retiring means "stop offering", not "never happened"',
@@ -124,7 +124,7 @@ async function login(email, name) {
   const them = await login('karpagam@email.com', 'Karpagam Caterers');
   const theirList = await P.j('/api/definitions?all=1', them);
   ok('another entity does not see it on their shelf',
-     !((theirList.b.definitions || []).some((d) => d.definition_id === id)));
+     !((theirList.b.definitions || []).some((item) => item.definition_id === id)));
   const theirGet = await P.j('/api/definitions/' + id, them);
   ok('…cannot open it by id', theirGet.status === 404, theirGet.status);
   const theirFreeze = await P.j('/api/definitions/freeze', { method: 'POST', ...them, body: { definition_ids: [id] } });
