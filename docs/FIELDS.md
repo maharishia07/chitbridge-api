@@ -12,7 +12,7 @@ Derived per read, never stored. Written by: nobody (answer only). Read by: the N
 
 | Key | Shape | Source / derived · who writes it · who reads it |
 |---|---|---|
-| `store.networks[].may` · `brand.members[].may` | `{ request, approve, decline, suspend, resume, disconnect }`, each `{ ok: boolean, why: string or null }` | Derived by `lib/network-membership.mayOn(row, node)` from the ONE rule table (`src/services/network.mayAct`: the sentence POST /api/network/connections/:id/* would refuse with) and the edge's state. `why` is null when `ok`. A screen greys a refused action WITH the sentence. |
+| `store.networks[].may` · `brand.members[].may` | `{ request, approve, decline, suspend, resume, disconnect }`, each `{ ok: boolean, code: string or null, why: string or null }` | Derived by `lib/network-membership.mayOn(row, node)` from the ONE rule table (`src/services/network.mayAct`: the sentence POST /api/network/connections/:id/* would refuse with) and the edge's state. `code` and `why` are null when `ok`; `code` is the word a screen branches on (BAD_STATE, NOT_ALLOWED...). A screen greys a refused action WITH the sentence. |
 | `store.networks[].brand_bridge_id` | string or null | `identities.bridge_id` of the brand, read in `standing()`'s one statement. null when the brand has no node on the tree yet. |
 | `store.networks[].root_bridge_id` | string or null | `cb_entity.bridge_id` of the TOP of the brand's tree, read in the same statement: the network store's address (GET /api/catalogue/network/:bridge_id). |
 | `store.networks[]` (who is listed) | n/a | Every brand the store holds a commercial edge with (requested, active or suspended, whoever asked) plus the brands whose catalogue it sells. |
