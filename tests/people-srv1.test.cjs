@@ -11,6 +11,9 @@
  *        a person's own break still works; lib/people says may.away { to } and `away`.
  *   G5 · GET /api/facts/people — at work · away · switched off, from the same filter GET /api/people reads (lib/people.peopleSql).
  *   G2 (e-mail) is SEC2's: tests/people-writes-sec2.test.cjs.
+ *   COMPLIANCE (second dispatch) · THE OWNER'S ACTS GO ON THE IAM TRAIL — switch off · remove · back on · away · back each write
+ *        one access_events break_changed row (lib/access-events, the PATCH's writer) with the real before-state, by whom, why;
+ *        after the act's COMMIT, never inside it; a lost row is said (audit.failed) and never fails the act; a refusal writes none.
  * Offline: express on 127.0.0.1, auth + db stubbed, the policy_flags writes applied by tests/support/policy-patch.cjs.
  * Run: node tests/people-srv1.test.cjs
  */
@@ -30,9 +33,9 @@ const clone = (x) => JSON.parse(JSON.stringify(x));
 
 /* ── the store ── */
 const PP = require('./support/policy-patch.cjs');
-let PEOPLE, FLAGS, SQL;
+let PEOPLE, FLAGS, SQL, EVENTS = [], AUDIT_FAIL = false;   /* EVENTS: the access_events rows written; AUDIT_FAIL: the table is away */
 function reset() {
-  SQL = [];
+  SQL = []; EVENTS = [];
   PEOPLE = {
     [BALA]: { identity_id: BALA, display_name: 'Bala', actor_key: 'bala', break_status: 'active', current_task_count: 0, delegate_actor_id: null, parent_entity_id: SHOP },
     [RAVI]: { identity_id: RAVI, display_name: 'Ravi', actor_key: 'ravi', break_status: 'active', current_task_count: 0, delegate_actor_id: null, parent_entity_id: SHOP },
@@ -58,6 +61,11 @@ reset();
 async function q(sql, params) {
   const s = String(sql).replace(/\s+/g, ' ').trim(); const p = params || [];
   SQL.push({ sql: s, params: p });
+  if (/^INSERT INTO access_events/i.test(s)) {
+    if (AUDIT_FAIL) throw Object.assign(new Error('relation "access_events" does not exist'), { code: '42P01' });
+    EVENTS.push({ subject: p[1], action: p[2], before: JSON.parse(p[3]), after: JSON.parse(p[4]), by: p[5], reason: p[6] });
+    return { rows: [], rowCount: 1 };
+  }
   if (PP.isPatch(s)) return PP.apply(s, p, FLAGS);
   if (/^SELECT policy_flags FROM identities/i.test(s)) return { rows: [{ policy_flags: clone(FLAGS) }], rowCount: 1 };
   /* the status route's actor read and break's subject read: the shop's own people only */
@@ -140,6 +148,51 @@ const keyOf = (jti) => FLAGS.api_keys.find((k) => k.jti === jti);
     const twice = await call('PUT', '/actors/' + BALA + '/status', { action: 'deactivate' });
     t('switching off twice ends nothing the second time (idempotent: 0 · 0 · 0)', again.status === 200 && twice.status === 200
       && JSON.stringify(twice.body.signed_out) === JSON.stringify({ sessions: 0, keys_closed: 0, keys_revoked: 0 }), JSON.stringify(twice.body));
+
+    say('Compliance · the owner\'s acts go on the IAM trail (access_events break_changed)');
+    reset();
+    const d1 = await call('PUT', '/actors/' + BALA + '/status', { action: 'deactivate' });
+    const e1 = EVENTS.filter((e) => e.action === 'break_changed');
+    t('switch off → ONE break_changed event: active → deactivated, by the owner, reason deactivate', d1.status === 200 && e1.length === 1 && EVENTS.length === 1
+      && e1[0].subject === BALA && e1[0].before.break_status === 'active' && e1[0].after.break_status === 'deactivated' && e1[0].by === SHOP && e1[0].reason === 'deactivate', JSON.stringify(EVENTS));
+    t('…the answer says audit { recorded 1, failed 0 }', JSON.stringify(d1.body.audit) === JSON.stringify({ recorded: 1, failed: 0 }), JSON.stringify(d1.body.audit));
+    t('…written AFTER the status transaction, never inside it (a refused INSERT must not abort the act)',
+      SQL.findIndex((x) => /^INSERT INTO access_events/i.test(x.sql)) > SQL.findIndex((x) => PP.isPatch(x.sql)));
+    EVENTS = [];
+    const d2 = await call('PUT', '/actors/' + BALA + '/status', { action: 'deactivate' });
+    t('switching off an already-off person writes no event (nothing moved), audit.recorded 0', d2.status === 200 && EVENTS.length === 0 && d2.body.audit.recorded === 0, JSON.stringify(d2.body.audit));
+    reset();
+    await call('PUT', '/actors/' + BALA + '/status', { action: 'remove', confirm: 'REMOVE' });
+    t('remove → active → removed, reason remove', EVENTS.length === 1 && EVENTS[0].after.break_status === 'removed' && EVENTS[0].reason === 'remove', JSON.stringify(EVENTS));
+    reset(); PEOPLE[BALA].break_status = 'deactivated';
+    const backOn = await call('PUT', '/actors/' + BALA + '/status', { action: 'reactivate' });
+    t('back on → deactivated → active, reason reactivate, audit in the answer', backOn.status === 200 && EVENTS.length === 1 && EVENTS[0].before.break_status === 'deactivated'
+      && EVENTS[0].after.break_status === 'active' && EVENTS[0].reason === 'reactivate' && backOn.body.audit.recorded === 1, JSON.stringify(backOn.body));
+    reset(); AUDIT_FAIL = true;
+    const lost = await call('PUT', '/actors/' + BALA + '/status', { action: 'deactivate' });
+    t('a lost audit row never fails the act: 200, Bala off and signed out, audit { recorded 0, failed 1 } SAID', lost.status === 200 && PEOPLE[BALA].break_status === 'deactivated'
+      && sessionsOf(BALA) === 0 && JSON.stringify(lost.body.audit) === JSON.stringify({ recorded: 0, failed: 1 }), JSON.stringify(lost.body));
+    AUDIT_FAIL = false;
+    reset();
+    const aw = await call('PUT', '/actors/break', { break_type: 'short_break', actor_id: BALA });
+    t('owner marks Bala away → active → short_break, by the owner, reason "owner: short_break"', aw.status === 200 && EVENTS.length === 1 && EVENTS[0].subject === BALA
+      && EVENTS[0].before.break_status === 'active' && EVENTS[0].after.break_status === 'short_break' && EVENTS[0].by === SHOP && EVENTS[0].reason === 'owner: short_break' && aw.body.audit.recorded === 1, JSON.stringify(EVENTS));
+    EVENTS = [];
+    const bk = await call('PUT', '/actors/break', { break_type: 'end_break', actor_id: BALA });
+    t('…and back → short_break → active (the before-state is READ, never "was null")', bk.status === 200 && EVENTS.length === 1 && EVENTS[0].before.break_status === 'short_break' && EVENTS[0].after.break_status === 'active', JSON.stringify(EVENTS));
+    EVENTS = []; WHO = COLLEAGUE;
+    const mine = await call('PUT', '/actors/break', { break_type: 'short_break' });
+    t('a person\'s own break → by themselves, reason "own: short_break", from their real state', mine.status === 200 && EVENTS.length === 1 && EVENTS[0].subject === RAVI && EVENTS[0].by === RAVI
+      && EVENTS[0].reason === 'own: short_break' && EVENTS[0].before.break_status === 'active', JSON.stringify(EVENTS));
+    EVENTS = []; WHO = OWNER; TASKS = 2;
+    const refused = await call('PUT', '/actors/break', { break_type: 'leave', actor_id: BALA });
+    const foreign2 = await call('PUT', '/actors/break', { break_type: 'short_break', actor_id: OTHER });
+    t('a refused break (TASKS_TO_ROUTE · NOT_FOUND) writes no event', refused.status === 400 && foreign2.status === 404 && EVENTS.length === 0, JSON.stringify(EVENTS));
+    TASKS = 0;
+    const lv = await call('PUT', '/actors/break', { break_type: 'leave', actor_id: BALA });
+    t('leave → active → leave, reason "owner: leave"', lv.status === 200 && EVENTS.length === 1 && EVENTS[0].after.break_status === 'leave' && EVENTS[0].reason === 'owner: leave', JSON.stringify(EVENTS));
+    const srcA = fs.readFileSync(path.join(API, 'routes', 'actors.js'), 'utf8');
+    t('ONE helper (recordBreak) over lib/access-events for both routes — no second audit writer', (srcA.match(/recordBreak\(/g) || []).length >= 4 && !/INSERT INTO access_events/.test(srcA));
 
     say('G4 · refusals carry a code (the screen never reads the words)');
     reset();
