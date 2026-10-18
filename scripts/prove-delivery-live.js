@@ -17,7 +17,7 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   const A = await signIn('beta@test-cb.com', 'Beta Fresh');
   const B = await signIn('gamma@test-cb.com', 'Gamma Document Services');
   if (!A || !B) { console.log('\n  could not sign in\n'); process.exitCode = 2; return; }
-  const eid = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
+  const eid = (text) => { try { return JSON.parse(Buffer.from(text.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
 
   console.log('\n── b144 live · per-line delivery ────────────────────────────────────────────\n');
   const snd = await j('/api/chits/send', { method: 'POST', token: A, body: {
