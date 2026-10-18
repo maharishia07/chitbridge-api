@@ -50,4 +50,6 @@ CREATE POLICY rls_entity ON move_in_import
   WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);
 
 GRANT SELECT, INSERT ON move_in_import TO cb_app;
+-- the default privileges also hand cb_app UPDATE/DELETE (live needed this on 2026-10-18): take them back, so insert-only is true
+REVOKE UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON move_in_import FROM cb_app;
 COMMENT ON TABLE move_in_import IS 'move-in W1.10: one import (one file, one kind) with its match proof, the source country (stated / read) and their company id; insert-only, never posted';

@@ -534,7 +534,7 @@ router.get('/me', auth, async (req, res) => {
       visibility_cap = visibilityCap.capOf({ plan: row.plan, planMenu, paramsOverride: row.params_override || {} });
       catalogue_visibility = visibilityCap.effective(row.catalogue_visibility, visibility_cap);
     } catch (e) { log.fellBack('entities GET /me: the read failed — carried on without it', e); /* pre-b114 → the default above */ }
-    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs, ui_prefs, policy_flags });
+    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs, ui_prefs, policy_flags, dev_tools: devOtp.mayShowDevTools([result.rows[0].email, result.rows[0].user_id, result.rows[0].bridge_id]) });   // W1: the web's Build preview strip; the names the tester code is checked against
     /**
      * ⭐⭐ ?include= — ONE HTTP ROUND TRIP INSTEAD OF FOUR. Athi, 2026-08-21: *"why do we need a round trip,
      * can't the js send all the required information in one shot and get it from the background? We have built
