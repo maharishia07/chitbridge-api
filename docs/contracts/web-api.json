@@ -608,6 +608,8 @@
     "to": "2027-04-16",
     "currency": "INR",
     "opening_minor": 0,
+    "drawer_minor": 0,
+    "bank_minor": 0,
     "opening": [],
     "in_minor": 0,
     "out_minor": 59000,
