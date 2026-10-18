@@ -69,12 +69,12 @@ router.put('/', auth, async (req, res) => {
     const prevNodes = (prevDraft && Array.isArray(prevDraft.nodes)) ? prevDraft.nodes : [];
     if (prevNodes.length && Array.isArray(draft.nodes)) {
       const receipts = new Map();
-      prevNodes.forEach((n) => { if (n && n.key && (n.built || n.invited)) receipts.set(n.key, n); });
+      prevNodes.forEach((item) => { if (item && item.key && (item.built || item.invited)) receipts.set(item.key, item); });
       if (receipts.size) {
-        draft.nodes = draft.nodes.map((n) => {
-          const r = n && n.key ? receipts.get(n.key) : null;
-          if (!r) return n;
-          const out = Object.assign({}, n);
+        draft.nodes = draft.nodes.map((item) => {
+          const r = item && item.key ? receipts.get(item.key) : null;
+          if (!r) return item;
+          const out = Object.assign({}, item);
           if (r.built && !out.built) out.built = r.built;
           if (r.invited && !out.invited) out.invited = r.invited;
           return out;
@@ -339,10 +339,10 @@ async function visibleStores(meRow) {
        FROM identities
       WHERE bridge_id = ANY($1) AND identity_type = 'entity' AND status = 'active'`, [use])).rows;
 
-  const visible = ents.filter((ent) => {
-    const chosen = ent.catalogue_visibility;
+  const visible = ents.filter((item) => {
+    const chosen = item.catalogue_visibility;
     if (chosen !== 'public' && chosen !== 'network') return false;
-    const cap = visibilityCap.capOf({ plan: ent.plan, paramsOverride: ent.params_override || {} });
+    const cap = visibilityCap.capOf({ plan: item.plan, paramsOverride: item.params_override || {} });
     return visibilityCap.RANK[visibilityCap.effective(chosen, cap)] > 0;
   });
   return { members: use, visible, truncated };
@@ -375,10 +375,10 @@ router.get('/stores', auth, async (req, res) => {
     }));
     // The operator's arrangement (b118) first, then by name — the same order the network tree uses, so a person
     // reading both sees one network rather than two lists that happen to hold the same stores.
-    stores.sort((a, b) => {
-      const ao = a.sort_order == null ? Number.MAX_SAFE_INTEGER : a.sort_order;
-      const bo = b.sort_order == null ? Number.MAX_SAFE_INTEGER : b.sort_order;
-      return ao !== bo ? ao - bo : String(a.name).localeCompare(String(b.name));
+    stores.sort((first, second) => {
+      const ao = first.sort_order == null ? Number.MAX_SAFE_INTEGER : first.sort_order;
+      const bo = second.sort_order == null ? Number.MAX_SAFE_INTEGER : second.sort_order;
+      return ao !== bo ? ao - bo : String(first.name).localeCompare(String(second.name));
     });
     res.json({ stores, ...(truncated && { truncated }) });
   } catch (err) {
@@ -391,8 +391,8 @@ router.get('/stores', auth, async (req, res) => {
 router.get('/availability', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const q = String(req.query.q || '').trim();
-    if (q.length < 2) {
+    const text = String(req.query.q || '').trim();
+    if (text.length < 2) {
       return res.status(400).json({ error: 'Bad request', message: 'Search for a product — two characters or more.' });
     }
 
@@ -403,13 +403,13 @@ router.get('/availability', auth, async (req, res) => {
     // Everyone under MY root, at any depth — one query, whatever the shape of the tree.
     const members = await membership.treeOf(meRow.bridge_id);
     if (!members.length) {
-      return res.json({ q, rows: [], summary: 'This business is not part of a network.', not_in_network: true });
+      return res.json({ q: text, rows: [], summary: 'This business is not part of a network.', not_in_network: true });
     }
     const truncated = members.length > MAX_STORES;
     const use = members.slice(0, MAX_STORES);
 
     const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
-    const like = '%' + q.toLowerCase() + '%';
+    const like = '%' + text.toLowerCase() + '%';
     const rows = [];
 
     /**
@@ -431,7 +431,7 @@ router.get('/availability', auth, async (req, res) => {
     const forceFanout = req.get('X-CB-Force-Fanout') === '1';
     try {
       if (forceFanout) throw Object.assign(new Error('forced fan-out'), { forced: true });
-      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, q, SINGLE_LIMIT]);
+      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, text, SINGLE_LIMIT]);
     } catch (e) {
       /**
        * ⚠️ ANY failure of the fast path falls back to the fan-out — it does not fail the search.
@@ -459,12 +459,12 @@ router.get('/availability', auth, async (req, res) => {
        * visibleStores(), same module, evaluated once per store rather than once per row.
        */
       const capOk = new Map();
-      const allowed = single.rows.filter((r) => {
-        if (!capOk.has(r.entity_id)) {
-          const cap = visibilityCap.capOf({ plan: r.plan, paramsOverride: r.params_override || {} });
-          capOk.set(r.entity_id, visibilityCap.RANK[visibilityCap.effective(r.catalogue_visibility || 'private', cap)] > 0);
+      const allowed = single.rows.filter((item) => {
+        if (!capOk.has(item.entity_id)) {
+          const cap = visibilityCap.capOf({ plan: item.plan, paramsOverride: item.params_override || {} });
+          capOk.set(item.entity_id, visibilityCap.RANK[visibilityCap.effective(item.catalogue_visibility || 'private', cap)] > 0);
         }
-        return capOk.get(r.entity_id);
+        return capOk.get(item.entity_id);
       });
       for (const r of allowed) {
         const d = r.item_data || {};
@@ -489,7 +489,7 @@ router.get('/availability', auth, async (req, res) => {
       }
       const out1 = availability.answer(rows, { from });
       return res.json({
-        q, from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
+        q: text, from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
         rows: out1.rows, summary: out1.summary, total: out1.total,
         stores_with_stock: out1.stores_with_stock, stores_unknown: out1.stores_unknown,
         one_query: true,
@@ -521,11 +521,11 @@ router.get('/availability', auth, async (req, res) => {
          FROM identities
         WHERE bridge_id = ANY($1) AND identity_type = 'entity' AND status = 'active'`, [use])).rows;
 
-    const visible = ents.filter((ent) => {
-      const chosen = ent.catalogue_visibility;
+    const visible = ents.filter((item) => {
+      const chosen = item.catalogue_visibility;
       if (chosen !== 'public' && chosen !== 'network') return false;   // private, or unset → absent
       // The operator cap still binds: a store capped to private is closed even if it chose otherwise.
-      const cap = visibilityCap.capOf({ plan: ent.plan, paramsOverride: ent.params_override || {} });
+      const cap = visibilityCap.capOf({ plan: item.plan, paramsOverride: item.params_override || {} });
       return visibilityCap.RANK[visibilityCap.effective(chosen, cap)] > 0;
     });
 
@@ -546,7 +546,7 @@ router.get('/availability', auth, async (req, res) => {
           WHERE entity_id = $1 AND is_active = true
             AND (LOWER(item_data->>'name') LIKE $2 OR LOWER(item_data->>'code') LIKE $2 OR LOWER(item_data->>'sku') LIKE $2)
           LIMIT 5`, [ent.identity_id, like]))
-        .then((r) => ({ ent, rows: r.rows }))
+        .then((reply) => ({ ent, rows: reply.rows }))
         .catch(() => ({ ent, rows: [] })));   // one unreadable store must not fail the whole answer
 
     for (const { ent, rows: itemRows } of perStore) {
@@ -582,7 +582,7 @@ router.get('/availability', auth, async (req, res) => {
 
     const out = availability.answer(rows, { from });
     res.json({
-      q, from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
+      q: text, from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
       rows: out.rows, summary: out.summary,
       total: out.total, stores_with_stock: out.stores_with_stock, stores_unknown: out.stores_unknown,
       // Said out loud rather than silently cut — a capped answer that looks complete is worse than a slow one.
