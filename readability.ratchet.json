@@ -87,7 +87,7 @@
   "lib/gherkin.js": {"score":22,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":1,"deep4":0,"cryptic":16,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/govresolve.js": {"score":18,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/groupsum.js": {"score":21,"long40":1,"long80":1,"complex10":2,"complex15":0,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "lib/handle.js": {"score":28,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":23,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
+  "lib/handle.js": {"score":23,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":18,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/holder.js": {"score":9,"long40":0,"long80":0,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/home-facts.js": {"score":96,"long40":0,"long80":0,"complex10":8,"complex15":5,"deep3":0,"deep4":0,"cryptic":81,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
   "lib/iddoc-verify.js": {"score":17,"long40":0,"long80":0,"complex10":2,"complex15":0,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
