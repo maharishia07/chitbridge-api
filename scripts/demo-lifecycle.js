@@ -8,7 +8,7 @@ let P = 0, F = 0;
 function step(n, title, s) { console.log('\n' + s + '  STEP ' + n + ' — ' + title); }
 function line(t) { console.log('     ' + t); }
 function chk(ok, t) { if (ok) { P++; line('✓ ' + t); } else { F++; line('✗ ' + t); } }
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
 const S = (o) => JSON.stringify(o || '');
 
 (async () => {
@@ -18,8 +18,8 @@ const S = (o) => JSON.stringify(o || '');
   const ts = Date.now().toString().slice(-6);
   // a presenter identity (stands in for the platform operator running the demo)
   const email = 'demo-' + ts + '@test.com';
-  const reg = await api('POST', '/api/entities/register', { body: { email } });
-  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } });
+  const reply = await api('POST', '/api/entities/register', { body: { email } });
+  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } });
   const token = ver.j && ver.j.token;
   let bridge = (ver.j && ver.j.bridge_id) || null;
   if (!bridge) { const me = await api('GET', '/api/entities/me', { token }); bridge = me.j && (me.j.bridge_id || (me.j.entity && me.j.entity.bridge_id)); }
@@ -48,7 +48,7 @@ const S = (o) => JSON.stringify(o || '');
   const bpr = await api('GET', '/api/governance/boilerplate/' + BP, { token });
   const bpj = bpr.j || {};
   chk(bpr.status === 200, 'the mould resolves  → ' + (bpj.label || '—'));
-  line('declares: ' + (bpj.sources || []).map(s => (s.source_name || s.source_key) + (s.facet ? ' (' + s.facet + ')' : '')).join('  ·  '));
+  line('declares: ' + (bpj.sources || []).map(item => (item.source_name || item.source_key) + (item.facet ? ' (' + item.facet + ')' : '')).join('  ·  '));
   line('locale:   ' + S(bpj.locale));
   chk(bpj.standards && bpj.standards.quality === 'iso-9001@v1' && bpj.standards.trade === 'exim-policy@v1',
     'the mould INHERITS both standards (declared, not global)');
@@ -71,7 +71,7 @@ const S = (o) => JSON.stringify(o || '');
 
   step(7, 'A customer orders — the storefront GATHERS the standard\'s fields', '✅');
   const cf = await api('GET', '/api/catalogue/' + bridge + '/capture-fields');
-  const askFields = ((cf.j && cf.j.fields) || []).map(f => f.field);
+  const askFields = ((cf.j && cf.j.fields) || []).map(item => item.field);
   line('the storefront asks the customer for: ' + (askFields.join(', ') || '—'));
   const captured = {}; for (const f of askFields) captured[f] = 'X-' + f;   // the customer fills them in
   const custEmail = 'buyer-' + ts + '@test.com';
@@ -89,11 +89,11 @@ const S = (o) => JSON.stringify(o || '');
   // reference-based, not literal: whatever standards the MOULD declares (step 4) is what we expect on the chit — so a
   // rename/swap of a standard needs ZERO edits here (see the loose-coupling principle).
   const declaredRefs = Object.values(bpj.standards || {});
-  chk(declaredRefs.length > 0 && declaredRefs.every(r => cs.includes(r.split('@')[0])),
+  chk(declaredRefs.length > 0 && declaredRefs.every(item => cs.includes(item.split('@')[0])),
     'chit carries the mould\'s DECLARED standards → ' + declaredRefs.join(', '));
   chk(cs.includes('conformance'), 'chit carries the conformance verdict');
   const gathered = Object.values(captured);
-  chk(gathered.length === 0 || gathered.every(v => cs.includes(v)), 'chit carries the GATHERED capture fields');
+  chk(gathered.length === 0 || gathered.every(item => cs.includes(item)), 'chit carries the GATHERED capture fields');
   const passed = (chit.j && chit.j.summary_json && chit.j.summary_json.conformance && chit.j.summary_json.conformance.status === 'pass')
     || (cs.includes('"conformance"') && !cs.includes('"gaps":["'));   // no remaining gaps
   chk(passed, 'conformance now PASSES — the standard\'s fields were gathered, not just flagged');
