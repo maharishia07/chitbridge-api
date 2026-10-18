@@ -76,7 +76,7 @@ const messageFor = (stamp) =>
   await deliver(NUM, CUST, MESSAGE);
   const caps = ((await j('/api/capture/pending', { token: A })).b || {}).captures || [];
   // Matched on THIS RUN's stamp, so a leftover capture from another run can never be mistaken for ours.
-  const cap = caps.find((c) => String(c.raw_text || '').includes(stamp));
+  const cap = caps.find((item) => String(item.raw_text || '').includes(stamp));
   ok('★★ the message is in the intake inbox, raw and unaltered', !!cap);
   ok('★ it knows who wrote and which line they wrote to', cap && cap.sender_ref === CUST && cap.to_ref === NUM);
   ok('★★ it is NOT a chit yet — it is pending', cap && cap.status === 'pending' && !cap.chit_id);
@@ -89,14 +89,14 @@ const messageFor = (stamp) =>
   ok('★★ prose became structured line items', st.status === 200 && lines.length >= 2, 'status ' + st.status + ' lines ' + lines.length);
   const txt = JSON.stringify(lines).toLowerCase();
   ok('★★ it read the ACTUAL goods, not a guess', txt.includes('bolt') && txt.includes('cable'), JSON.stringify(lines).slice(0, 200));
-  const bolts = lines.find((l) => /bolt/i.test(l.particulars || ''));
+  const bolts = lines.find((item) => /bolt/i.test(item.particulars || ''));
   ok('★★ …and the ACTUAL quantity — 2 boxes of bolts', bolts && Number(bolts.qty) === 2, JSON.stringify(bolts));
   /**
    * ⚠️ THE MOST IMPORTANT ASSERTION HERE. The message states no prices. A model that helpfully supplies one has
    * invented a number that will sit on a chit and be traded against — the single worst thing this pipeline could
    * do. The skill forbids it; this proves the forbidding holds on real prose.
    */
-  ok('★★ it invented NO price — none was stated', lines.every((l) => Number(l.rate || 0) === 0), JSON.stringify(lines));
+  ok('★★ it invented NO price — none was stated', lines.every((item) => Number(item.rate || 0) === 0), JSON.stringify(lines));
   ok('★ it is marked as a DRAFT, not evidence', /draft/i.test(st.b.note || ''), st.b.note);
   if (st.b.usage) console.log('  \x1b[36m--\x1b[0m  cost of that call: $' + st.b.usage.est_cost_usd);
 
@@ -106,8 +106,8 @@ const messageFor = (stamp) =>
   const chit = await j('/api/chits/send', { method: 'POST', token: A, body: {
     recipients: [{ name: 'Self', role: 'to', self: true }], is_draft: false, send_as_label: 'Beta Fresh',
     subject: subject, schema_values: { subject: subject },
-    line_items: lines.map((l) => ({ particulars: l.particulars, quantity: Number(l.qty) || 0,
-                                    price: Number(l.rate) || 0, total: (Number(l.qty) || 0) * (Number(l.rate) || 0) })),
+    line_items: lines.map((item) => ({ particulars: item.particulars, quantity: Number(item.qty) || 0,
+                                    price: Number(item.rate) || 0, total: (Number(item.qty) || 0) * (Number(item.rate) || 0) })),
     external_priority: 'normal' } });
   const chit_id = chit.b && chit.b.chit_id;
   ok('★★ THE CHIT EXISTS ON THE RAIL', (chit.status === 200 || chit.status === 201) && !!chit_id, JSON.stringify(chit.b).slice(0, 140));
@@ -136,7 +136,7 @@ const messageFor = (stamp) =>
   /* ⚠️ PROVENANCE — the point of the whole exercise. Six weeks later someone must be able to ask "where did this
      order come from?" and be told: that WhatsApp message, from that number, on that date. */
   const after = (await j('/api/capture/pending', { token: A })).b.captures || [];
-  ok('★★ it has left the pending queue — handled, not lost', !after.find((c) => c.id === cap.id));
+  ok('★★ it has left the pending queue — handled, not lost', !after.find((item) => item.id === cap.id));
   ok('★★ the capture still POINTS AT the chit it became — provenance survives', conv.b.chit_id === chit_id);
 
   console.log('\n── 5 · ⚠️ the SAME message must not become a SECOND chit ───────────────────');
@@ -163,7 +163,7 @@ const messageFor = (stamp) =>
   await j('/api/capture/webhook/whatsapp', { method: 'POST', body: same, headers: { 'X-Hub-Signature-256': sig } });
   await j('/api/capture/webhook/whatsapp', { method: 'POST', body: same, headers: { 'X-Hub-Signature-256': sig } });
   const afterDup = (await j('/api/capture/pending', { token: A })).b.captures || [];
-  const retries = afterDup.filter((c) => String(c.raw_text || '') === 'retry test ' + stamp);
+  const retries = afterDup.filter((item) => String(item.raw_text || '') === 'retry test ' + stamp);
   ok('★★ (b) the SAME message delivered twice makes ONE capture, not two', retries.length === 1, 'found ' + retries.length);
   /* Tidy the extras this section created so the queue is left as it was found. */
   for (const c of afterDup) if (String(c.raw_text || '').includes('retry test ' + stamp)) {
