@@ -86,14 +86,14 @@ const actor = async (owner, label) => {
   const say = (who, text) => P.j('/api/chits/' + chit + '/messages', { method: 'POST', token: who.token,
     body: { message_text: text, thread_type: 'external', line_id: LINE } });
 
-  const seq = [
+  const list = [
     [buyer,   'Can you deliver Wednesday instead of Tuesday?'],
     [sAct,    'Wednesday works — lorry loads 6am, arrives by noon.'],
     [carrier, 'We can collect Tuesday night and hold overnight.'],
     [bAct,    'Our gate shuts at 7pm — please arrive before that.'],
     [supplier,'Agreed: collect Tuesday night, deliver Wednesday noon.'],
   ];
-  for (const [who, text] of seq) {
+  for (const [who, text] of list) {
     const r = await say(who, text);
     ok(r.status === 200, 'posted: ' + who.name + ' — "' + text.slice(0, 34) + '…"', 'status ' + r.status);
   }
@@ -107,32 +107,32 @@ const actor = async (owner, label) => {
   // ── what each side can see ───────────────────────────────────────────────────────────────────────────────
   const inbox = async (who, q) => {
     const r = await P.j('/api/folders/messages?all=1' + (q || ''), { token: who.token });
-    return ((r.b && r.b.messages) || []).map((m) => m.message_text);
+    return ((r.b && r.b.messages) || []).map((item) => item.message_text);
   };
   const thread = async (who, type) => {
     const r = await P.j('/api/chits/' + chit + '/messages?thread_type=' + type + '&line_id=' + LINE, { token: who.token });
-    const b = r.b; return ((b && (b.messages || b.items || (Array.isArray(b) ? b : []))) || []).map((m) => m.message_text);
+    const b = r.b; return ((b && (b.messages || b.items || (Array.isArray(b) ? b : []))) || []).map((item) => item.message_text);
   };
 
   const sX = await thread(supplier, 'external'), bX = await thread(buyer, 'external'), cX = await thread(carrier, 'external');
   ok(sX.length === 5 && bX.length === 5 && cX.length === 5,
     '⭐ ALL FIVE messages reached ALL THREE parties', 'supplier ' + sX.length + ' · buyer ' + bX.length + ' · carrier ' + cX.length);
-  ok(cX.some((t) => /gate shuts/.test(t)),
+  ok(cX.some((item) => /gate shuts/.test(item)),
     'the CARRIER sees what the buyer\'s co-assist said — a CC is a full participant, not a bystander');
-  ok(bX.some((t) => /lorry loads 6am/.test(t)),
+  ok(bX.some((item) => /lorry loads 6am/.test(item)),
     'and the buyer sees what the supplier\'s co-assist said');
 
   const sI = await thread(supplier, 'internal'), bI = await thread(buyer, 'internal'), cI = await thread(carrier, 'internal');
-  ok(sI.some((t) => t === secret), 'the supplier keeps their own internal note');
+  ok(sI.some((item) => item === secret), 'the supplier keeps their own internal note');
   /* ⭐⭐ THE HEADLINE. Two other parties, two chances to leak, checked in BOTH threads for each. */
-  ok(!bI.concat(bX).some((t) => /margin is thin/.test(t)), '⭐⭐ the BUYER never sees the internal note, in either thread');
-  ok(!cI.concat(cX).some((t) => /margin is thin/.test(t)), '⭐⭐ the CARRIER never sees it either');
+  ok(!bI.concat(bX).some((item) => /margin is thin/.test(item)), '⭐⭐ the BUYER never sees the internal note, in either thread');
+  ok(!cI.concat(cX).some((item) => /margin is thin/.test(item)), '⭐⭐ the CARRIER never sees it either');
 
   // ── the actors ───────────────────────────────────────────────────────────────────────────────────────────
   const sa = await inbox(sAct), ba = await inbox(bAct);
   ok(sa.length > 0, 'the supplier\'s co-assist sees the conversation on the line they hold', sa.length + ' message(s)');
   ok(ba.length > 0, 'the buyer\'s co-assist sees it on their own copy', ba.length + ' message(s)');
-  ok(!sa.some((t) => /margin is thin/.test(t)),
+  ok(!sa.some((item) => /margin is thin/.test(item)),
     '⚠️ and an INTERNAL note does not reach an actor through this inbox either — it lists external only');
 
   /* An actor holding NOTHING on this chit must see none of it, even inside the same business. */
@@ -140,11 +140,11 @@ const actor = async (owner, label) => {
   const idle = await inbox(sNone);
   ok(idle.length === 0, '⭐ a co-assist with no line on this order sees none of its conversation', idle.length + ' message(s)');
 
-  let p = 0, f = 0;
+  let count = 0, f = 0;
   console.log('');
-  T.forEach((t) => { if (t.ok) { p++; console.log('  ✓ ' + t.m + (t.d ? '  ' + t.d : '')); }
-                     else { f++; console.log('  ✗ ' + t.m + (t.d ? '  → ' + t.d : '')); } });
-  console.log('\n== RESULT ==  PASS ' + p + '  ·  FAIL ' + f);
+  T.forEach((item) => { if (item.ok) { count++; console.log('  ✓ ' + item.m + (item.d ? '  ' + item.d : '')); }
+                     else { f++; console.log('  ✗ ' + item.m + (item.d ? '  → ' + item.d : '')); } });
+  console.log('\n== RESULT ==  PASS ' + count + '  ·  FAIL ' + f);
   console.log('\nchit: ' + chit + '\nline: ' + LINE);
   process.exit(f ? 1 : 0);
 })().catch((e) => { console.log('ERR', e.message); process.exit(1); });
