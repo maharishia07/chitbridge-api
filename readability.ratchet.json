@@ -303,7 +303,7 @@
   "scripts/empty-catches.cjs": {"score":22,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":21,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/entity-vertical.js": {"score":17,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/erp-connector.js": {"score":24,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
-  "scripts/erp-handoff.js": {"score":24,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
+  "scripts/erp-handoff.js": {"score":21,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/fn-size.cjs": {"score":16,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":2,"emptyCatch":0,"noHeader":1},
   "scripts/gold-demo.js": {"score":26,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":1,"emptyCatch":1,"noHeader":1},
   "scripts/gov-cascade.js": {"score":16,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":1,"noHeader":1},

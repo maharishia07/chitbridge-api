@@ -3,14 +3,14 @@
 // ERP (refs + routing + hash, NOT the raw payload; process-then-forget). CB does NOT route. Needs b78+b80+b82.
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0; function chk(n, ok, d){ if(ok){P++;console.log('  ✓ '+n+(d?'  '+d:''));}else{F++;console.log('  ✗ '+n+(d?'  — '+d:''));} }
-async function api(m,p,o){o=o||{};const h={'Content-Type':'application/json'};if(o.token)h.Authorization='Bearer '+o.token;const r=await fetch(B+p,{method:m,headers:h,body:o.body?JSON.stringify(o.body):undefined});let j=null;try{j=await r.json();}catch(_){}return{status:r.status,j};}
-async function ent(name){ const email=name+'@test.com'; const reg=await api('POST','/api/entities/register',{body:{email}}); const v=await api('POST','/api/entities/verify',{body:{email,otp:reg.j&&reg.j.dev_otp}}); const me=await api('GET','/api/entities/me',{token:v.j&&v.j.token}); return { token:v.j&&v.j.token, id:(me.j&&me.j.entity||{}).identity_id, bridge:(me.j&&me.j.entity||{}).bridge_id }; }
+async function api(m,p,o){o=o||{};const h={'Content-Type':'application/json'};if(o.token)h.Authorization='Bearer '+o.token;const reply=await fetch(B+p,{method:m,headers:h,body:o.body?JSON.stringify(o.body):undefined});let j=null;try{j=await reply.json();}catch(_){}return{status:reply.status,j};}
+async function ent(name){ const email=name+'@test.com'; const reply=await api('POST','/api/entities/register',{body:{email}}); const v=await api('POST','/api/entities/verify',{body:{email,otp:reply.j&&reply.j.dev_otp}}); const me=await api('GET','/api/entities/me',{token:v.j&&v.j.token}); return { token:v.j&&v.j.token, id:(me.j&&me.j.entity||{}).identity_id, bridge:(me.j&&me.j.entity||{}).bridge_id }; }
 (async()=>{
   console.log('== 6b: ERP HANDOFF (receipt-only) ==\n');
   const ts=Date.now().toString().slice(-6);
   const brand=await ent('eh-'+ts); const srcKey='rp-eh-'+ts+'@v1';
-  const a=await api('PUT','/api/assist/catalogue-source',{token:brand.token,body:{source_key:srcKey,title:'Royale Play',items:[{name:'Tussar',combinations:[{name:'Silk Route',colours:[{name:'Raw Silk',hex:'#C9A86A'}]}]}],experience:{rules:{min_order_litres:1,order_routing:'nearest_distributor'}}}});
-  if(a.status===503){ console.log('  · b78/b80 not applied — apply, re-run.'); process.exit(0); }
+  const reply=await api('PUT','/api/assist/catalogue-source',{token:brand.token,body:{source_key:srcKey,title:'Royale Play',items:[{name:'Tussar',combinations:[{name:'Silk Route',colours:[{name:'Raw Silk',hex:'#C9A86A'}]}]}],experience:{rules:{min_order_litres:1,order_routing:'nearest_distributor'}}}});
+  if(reply.status===503){ console.log('  · b78/b80 not applied — apply, re-run.'); process.exit(0); }
   const dist=await ent('ehd-'+ts);
   await api('POST','/api/assist/catalogue-adopt',{token:dist.token,body:{source:srcKey,commercials:{Tussar:{price_per_litre:1000}}}});
   const cust='ehbuyer-'+ts+'@test.com';
