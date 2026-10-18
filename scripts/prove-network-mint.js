@@ -42,8 +42,8 @@ async function api(path, { method = 'GET', token, body } = {}) {
 async function shop(key, name) {
   const email = `mint-${key}-${SUFFIX}@test-cb.com`;
   await api('/api/entities/register', { method: 'POST', body: { email, display_name: name } });
-  const v = await api('/api/entities/verify', { method: 'POST', body: { email, otp: OTP } });
-  const token = (v.json || {}).token;
+  const reply = await api('/api/entities/verify', { method: 'POST', body: { email, otp: OTP } });
+  const token = (reply.json || {}).token;
   const me = await api('/api/entities/me', { token });
   const e = (me.json && (me.json.entity || me.json)) || {};
   return { key, name, email, token, bridge: e.bridge_id, id: e.identity_id };
@@ -94,36 +94,36 @@ const DESIGN = (rootKey) => ({
 
   // ── 3 · DRY RUN ──────────────────────────────────────────────────────────────────────────────────────────
   step(3, 'dry run — what WOULD happen');
-  const dry = await api('/api/network-design/build', { method: 'POST', token: op.token, body: { dry_run: true } });
-  const d = dry.json || {};
-  ok('dry run answered', dry.status === 200, JSON.stringify(d.counts || d.message || d));
-  const handles = (d.create || []).map((c) => c.handle);
+  const reply = await api('/api/network-design/build', { method: 'POST', token: op.token, body: { dry_run: true } });
+  const d = reply.json || {};
+  ok('dry run answered', reply.status === 200, JSON.stringify(d.counts || d.message || d));
+  const handles = (d.create || []).map((item) => item.handle);
   ok('★★ handles are human readable and ALWAYS two levels — Mens sits under Clothing on the tree, not in the name',
     handles.includes(ROOT_HANDLE + '.clothing') && handles.includes(ROOT_HANDLE + '.mens')
-    && !handles.some((h) => h.split('.').length > 2), handles.join('  '));
+    && !handles.some((item) => item.split('.').length > 2), handles.join('  '));
   ok('★ protected → network, no storefront → private',
-    (d.create || []).find((c) => c.name === 'Warehouse')?.visibility === 'network'
-    && (d.create || []).find((c) => c.name === 'Mens')?.visibility === 'private');
+    (d.create || []).find((item) => item.name === 'Warehouse')?.visibility === 'network'
+    && (d.create || []).find((item) => item.name === 'Mens')?.visibility === 'private');
   ok('★★ a partner with no handle is NOT created — it is reported',
-    !(d.create || []).some((c) => /Ravi/.test(c.name)) && (d.problems || []).some((p) => /Ravi/.test(p.name)));
+    !(d.create || []).some((item) => /Ravi/.test(item.name)) && (d.problems || []).some((item) => /Ravi/.test(item.name)));
   const before = await api('/api/entities/lookup?user_id=' + ROOT_HANDLE + '.clothing', { token: op.token });
   ok('★★ dry run created NOTHING', before.status === 404, 'lookup → ' + before.status);
 
   // ── 4 · name the partner, then BUILD ─────────────────────────────────────────────────────────────────────
   step(4, 'name the partner and build for real');
-  design.nodes.find((n) => n.key === 'n_ptnr').partner_ref = partnerRef;
+  design.nodes.find((item) => item.key === 'n_ptnr').partner_ref = partnerRef;
   await api('/api/network-design', { method: 'PUT', token: op.token, body: { draft: design } });
 
   const build = await api('/api/network-design/build', { method: 'POST', token: op.token, body: {} });
   const b = build.json || {};
   ok('build ran', build.status === 200, b.message || JSON.stringify(b));
   const created = b.created || [];
-  ok('three owned stores created', created.length === 3, created.map((c) => c.handle).join('  '));
-  (b.problems || []).forEach((p) => note('⚠ not built: ' + p.name + ' — ' + p.reason));
+  ok('three owned stores created', created.length === 3, created.map((item) => item.handle).join('  '));
+  (b.problems || []).forEach((item) => note('⚠ not built: ' + item.name + ' — ' + item.reason));
 
-  const cloth = created.find((c) => c.handle === ROOT_HANDLE + '.clothing');
-  const wh    = created.find((c) => c.handle === ROOT_HANDLE + '.warehouse');
-  const mens  = created.find((c) => c.handle === ROOT_HANDLE + '.mens');
+  const cloth = created.find((item) => item.handle === ROOT_HANDLE + '.clothing');
+  const wh    = created.find((item) => item.handle === ROOT_HANDLE + '.warehouse');
+  const mens  = created.find((item) => item.handle === ROOT_HANDLE + '.mens');
   // The name is flat; the PLACEMENT is not. This is the half that would silently go missing if the flattening had
   // been done by dropping the parent rather than by only dropping it from the name.
   ok('★★ Mens is still placed UNDER Clothing on the tree', !!(mens && cloth && mens.path.indexOf(cloth.path + '.') === 0),
@@ -132,12 +132,12 @@ const DESIGN = (rootKey) => ({
 
   // ── 5 · THE PARTNER WAS INVITED, NOT CREATED ─────────────────────────────────────────────────────────────
   step(5, 'the partner — invited, never absorbed');
-  ok('★★ an invitation exists', (b.invited || []).some((i) => i.handle === partnerRef),
+  ok('★★ an invitation exists', (b.invited || []).some((item) => item.handle === partnerRef),
     JSON.stringify(b.invited || []));
   const pending = await api('/api/connections/pending', { token: partner.token });
   const reqs = (pending.json && (pending.json.requests || pending.json.pending || pending.json)) || [];
   ok('★★ THE PARTNER MUST ACCEPT — it is sitting in their inbox, not in the network',
-    Array.isArray(reqs) && reqs.some((r) => r.from_bridge_id === op.bridge), 'pending: ' + (Array.isArray(reqs) ? reqs.length : '?'));
+    Array.isArray(reqs) && reqs.some((item) => item.from_bridge_id === op.bridge), 'pending: ' + (Array.isArray(reqs) ? reqs.length : '?'));
 
   // ── 6 · THE STORE CAN LOG IN ─────────────────────────────────────────────────────────────────────────────
   step(6, 'the store signs in with its handle and code');
@@ -229,15 +229,15 @@ const DESIGN = (rootKey) => ({
   // asserts that it does — the client being careful and the server not trusting it are two different guarantees.
   const reread = await api('/api/network-design', { token: op.token });
   const live = (reread.json || {}).draft;
-  ok('the saved design carries what was built', !!live && (live.nodes || []).filter((n) => n.built).length === 3,
-    (live && (live.nodes || []).filter((n) => n.built).length) + ' node(s) marked built');
+  ok('the saved design carries what was built', !!live && (live.nodes || []).filter((item) => item.built).length === 3,
+    (live && (live.nodes || []).filter((item) => item.built).length) + ' node(s) marked built');
   const stale = JSON.parse(JSON.stringify(design));   // deliberately WITHOUT the receipts
-  stale.nodes.find((n) => n.key === 'n_wh').exposure = 'private';   // warehouse: network → private
+  stale.nodes.find((item) => item.key === 'n_wh').exposure = 'private';   // warehouse: network → private
   await api('/api/network-design', { method: 'PUT', token: op.token, body: { draft: stale } });
   const after = await api('/api/network-design', { token: op.token });
   ok('★★ a stale save cannot un-record what was built',
-    (((after.json || {}).draft || {}).nodes || []).filter((n) => n.built).length === 3,
-    (((after.json || {}).draft || {}).nodes || []).filter((n) => n.built).length + ' still marked built');
+    (((after.json || {}).draft || {}).nodes || []).filter((item) => item.built).length === 3,
+    (((after.json || {}).draft || {}).nodes || []).filter((item) => item.built).length + ' still marked built');
   design = (after.json || {}).draft || design;   // carry on from what the server actually holds
   const dry3 = await api('/api/network-design/build', { method: 'POST', token: op.token, body: { dry_run: true } });
   const upd = ((dry3.json || {}).update) || [];
@@ -262,7 +262,7 @@ const DESIGN = (rootKey) => ({
                       holds: ['catalogue'], exposure: 'public' });
   await api('/api/network-design', { method: 'PUT', token: op.token, body: { draft: design } });
   const dry5 = await api('/api/network-design/build', { method: 'POST', token: op.token, body: { dry_run: true } });
-  const pop = (((dry5.json || {}).create) || []).find((c) => c.name === 'Pop Up');
+  const pop = (((dry5.json || {}).create) || []).find((item) => item.name === 'Pop Up');
   ok('★★ a private network caps its stores at network — public is refused, not granted',
     !!pop && pop.visibility !== 'public',
     pop ? 'designed public → planned ' + pop.visibility : 'Pop Up missing');
@@ -273,11 +273,11 @@ const DESIGN = (rootKey) => ({
   step(13, 'the already-public store must come down too');
   // Clothing is LIVE and public, and the design still says public — the two agree, so nothing would be proposed
   // on the ordinary path. The cap has to overrule the design here, or a cap is only a statement about new stores.
-  const forced = (((dry5.json || {}).update) || []).find((u) => u.name === 'Clothing');
+  const forced = (((dry5.json || {}).update) || []).find((item) => item.name === 'Clothing');
   ok('★★ a store already public under a now-private network is brought DOWN', !!forced && forced.to !== 'public',
     forced ? forced.from + ' → ' + forced.to + (forced.forced ? ' (forced by the cap)' : '') : 'no change proposed');
   const closed = await api('/api/network-design/build', { method: 'POST', token: op.token, body: {} });
-  ok('★ applied', (((closed.json || {}).updated) || []).some((u) => u.name === 'Clothing'), (closed.json || {}).message || '');
+  ok('★ applied', (((closed.json || {}).updated) || []).some((item) => item.name === 'Clothing'), (closed.json || {}).message || '');
   if (clothToken) {
     const meC = await api('/api/entities/me', { token: clothToken });
     const nowVis = ((meC.json || {}).entity || meC.json || {}).catalogue_visibility;
