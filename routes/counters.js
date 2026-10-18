@@ -64,7 +64,7 @@ async function readLocked(db, entity_id) {
   const pf = (r.rows[0] && r.rows[0].policy_flags) || {};
   const counters = Object.assign({}, pf.counters || {});
   const list = Array.isArray(pf.api_keys) ? pf.api_keys : [];
-  const tills = list.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);
+  const tills = list.filter((item) => item && Array.isArray(item.scopes) && item.scopes.indexOf('till') >= 0);
   for (const k of tills) {
     const id = k.till && k.till.id ? String(k.till.id).toUpperCase() : null;
     if (!id || keys.isClosed(k)) continue;
@@ -88,7 +88,7 @@ function view(c, list, devices) {
     return Object.assign(baseView(c), { state: 'open', held_by: { name: dev.label || 'a phone', phone: true, since: c.held_at || null,
       seen: dev.seen ? { at: dev.seen } : null, diag: null } });
   }
-  const holder = c.held_by && !isPending(c.held_by) && !isDevice(c.held_by) ? list.find((k) => k && String(k.jti) === String(c.held_by)) : null;
+  const holder = c.held_by && !isPending(c.held_by) && !isDevice(c.held_by) ? list.find((item) => item && String(item.jti) === String(c.held_by)) : null;
   const open = !!(holder && !keys.isClosed(holder));
   return {
     id: c.id, name: c.name || ('Counter ' + c.id), created_at: c.created_at || null,
@@ -132,10 +132,10 @@ router.get('/', auth, sessionOnly, async (req, res) => {
     const entity_id = auth.entityOf(req);
     const out = await withTransaction(async (db) => {
       const { counters, list, devices } = await readLocked(db, entity_id);
-      return Object.values(counters).sort((a, b) => keys.TILL_IDS.indexOf(a.id) - keys.TILL_IDS.indexOf(b.id))
-        .map((c) => view(c, list, devices));
+      return Object.values(counters).sort((first, second) => keys.TILL_IDS.indexOf(first.id) - keys.TILL_IDS.indexOf(second.id))
+        .map((item) => view(item, list, devices));
     });
-    res.json({ counters: out, free: out.filter((c) => c.state === 'closed').length, may: { manage: require('../lib/owner').may(req, OWNER_SAYS) } });
+    res.json({ counters: out, free: out.filter((item) => item.state === 'closed').length, may: { manage: require('../lib/owner').may(req, OWNER_SAYS) } });
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
@@ -265,7 +265,7 @@ router.post('/:id/release', auth, sessionOnly, ownerOnly, async (req, res) => {
       const { counters, list } = await readLocked(db, entity_id);
       const c = counters[id];
       if (!c) return null;
-      const holder = c.held_by && !isPending(c.held_by) ? list.find((k) => k && String(k.jti) === String(c.held_by)) : null;
+      const holder = c.held_by && !isPending(c.held_by) ? list.find((item) => item && String(item.jti) === String(c.held_by)) : null;
       if (holder && !keys.isClosed(holder)) {
         await keys.patchKeyWith(db, entity_id, holder.jti, {
           till: Object.assign({}, holder.till || {}, { closed_at: new Date().toISOString(), released: true }) });
@@ -359,7 +359,7 @@ router.claim = async ({ entity_id, identity, id, label, takeover }) => {
      * where exactly that can happen.
      */
     if (takeover && c.held_by && !isPending(c.held_by)) {
-      const holder = list.find((k) => k && String(k.jti) === String(c.held_by));
+      const holder = list.find((item) => item && String(item.jti) === String(c.held_by));
       if (holder && !keys.isClosed(holder)) {
         await keys.patchKeyWith(db, entity_id, holder.jti, {
           till: Object.assign({}, holder.till || {}, { closed_at: new Date().toISOString(), released: true }) });
