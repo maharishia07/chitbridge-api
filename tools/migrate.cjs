@@ -33,17 +33,17 @@ const numOf = (f) => Number(/b(\d+)/.exec(f)[1]);
 /** the chain after the baseline, in number order (b105 before b105a, migration_b48 among the b4x).
  *  BCP-MIG (17 Oct): a letter suffix (b105a b171d b194b b263b) is IN the chain — `b\d+_` alone dropped those four on a rebuild. */
 function chainFiles() {
-  return fs.readdirSync(M).filter((f) => /^(migration_b(4[2-9]|5[0-7])|b\d+[a-z]?)_.*\.sql$/.test(f) && !CHAIN_SKIP.test(f))
-    .sort((a, b) => numOf(a) - numOf(b) || a.localeCompare(b));
+  return fs.readdirSync(M).filter((item) => /^(migration_b(4[2-9]|5[0-7])|b\d+[a-z]?)_.*\.sql$/.test(item) && !CHAIN_SKIP.test(item))
+    .sort((first, second) => numOf(first) - numOf(second) || first.localeCompare(second));
 }
 const shaOf = (f) => crypto.createHash('sha256').update(fs.readFileSync(path.join(M, f))).digest('hex');
 const safe = (url) => String(url).replace(/:[^:@/]+@/, ':***@');
 
 function psql(url, file, stopOnError) {
-  const a = ['-X', '-q', '-d', url, '-f', file].concat(stopOnError ? ['-v', 'ON_ERROR_STOP=1'] : []);
-  const r = spawnSync('psql', a, { encoding: 'utf8', cwd: API });
+  const list = ['-X', '-q', '-d', url, '-f', file].concat(stopOnError ? ['-v', 'ON_ERROR_STOP=1'] : []);
+  const r = spawnSync('psql', list, { encoding: 'utf8', cwd: API });
   if (r.error) throw new Error('psql is needed to apply migrations and was not found on PATH (' + r.error.message + ')');
-  const errs = (r.stderr || '').split('\n').filter((l) => /ERROR/.test(l));
+  const errs = (r.stderr || '').split('\n').filter((item) => /ERROR/.test(item));
   return { ok: r.status === 0, errs };
 }
 
@@ -80,7 +80,7 @@ async function apply(url, opts) {
     const fresh = !(await hasTable(pool, 'identities'));
     const hadLedger = await hasTable(pool, 'schema_migrations');
     /* a database with tables and no (or an empty) ledger is somebody's live data whose history we cannot see: touch NOTHING */
-    if (!fresh && (!hadLedger || [...(await ledger(pool)).keys()].filter((f) => f !== LEDGER_FILE).length === 0)) {
+    if (!fresh && (!hadLedger || [...(await ledger(pool)).keys()].filter((item) => item !== LEDGER_FILE).length === 0)) {
       say('the database has tables and ' + (hadLedger ? 'its ledger is empty' : 'no ledger (' + LEDGER_FILE + ')') + ' — nothing run. Record what it already has first:');
       say('  run ' + LEDGER_FILE + ' as the owner, then: node tools/migrate.cjs --db <url> --record-through bNNN   (the last migration it has had)');
       return { ran: [], failed: [], skipped: 0, fresh, left_alone: true };
@@ -90,7 +90,7 @@ async function apply(url, opts) {
       if (!x.ok) throw new Error(LEDGER_FILE + ' failed: ' + x.errs[0]);
     }
     let done = await ledger(pool);
-    const ran = [], failed = [];
+    const list = [], failed = [];
     if (fresh) {
       say('schema: 000_baseline.sql');
       let r = psql(url, path.join(M, BASELINE[0]), true);
@@ -100,24 +100,24 @@ async function apply(url, opts) {
       let left = Infinity;
       for (let pass = 1; pass <= 6; pass++) {
         r = psql(url, path.join(M, BASELINE[1]), false);
-        const real = r.errs.filter((l) => !/already exists|multiple primary keys|already a primary/.test(l));
+        const real = r.errs.filter((item) => !/already exists|multiple primary keys|already a primary/.test(item));
         say('schema: 000_baseline_part2.sql pass ' + pass + ' — ' + real.length + ' statement(s) still waiting');
         if (real.length === 0 || real.length >= left) break;
         left = real.length;
       }
-      await record(pool, BASELINE, 'migrate'); ran.push(...BASELINE);
+      await record(pool, BASELINE, 'migrate'); list.push(...BASELINE);
     }
-    if (!hadLedger) { await record(pool, [LEDGER_FILE], 'migrate'); ran.push(LEDGER_FILE); }
+    if (!hadLedger) { await record(pool, [LEDGER_FILE], 'migrate'); list.push(LEDGER_FILE); }
     done = await ledger(pool);
-    const files = chainFiles(), todo = files.filter((f) => !done.has(f));
+    const files = chainFiles(), todo = files.filter((item) => !done.has(item));
     for (const f of todo) {
       const x = psql(url, path.join(M, f), true);
-      if (x.ok) { await record(pool, [f], 'migrate'); ran.push(f); }
+      if (x.ok) { await record(pool, [f], 'migrate'); list.push(f); }
       else failed.push(f + ' — ' + String(x.errs[0] || '').replace(/^psql:[^ ]+ /, '').slice(0, 110));
     }
     say('schema: ' + (todo.length - failed.length) + ' of ' + todo.length + ' pending migration(s) applied · ' + (files.length - todo.length) + ' already in the ledger');
-    if (failed.length) { say('schema: not applied (ops roles, one-off data scripts, the register) — not recorded, tried again next run:'); failed.forEach((f) => console.log('      ' + f)); }
-    return { ran, failed, skipped: files.length - todo.length, fresh };
+    if (failed.length) { say('schema: not applied (ops roles, one-off data scripts, the register) — not recorded, tried again next run:'); failed.forEach((item) => console.log('      ' + item)); }
+    return { ran: list, failed, skipped: files.length - todo.length, fresh };
   } finally { await pool.end(); }
 }
 
@@ -127,14 +127,14 @@ async function status(url) {
     if (!(await hasTable(pool, 'schema_migrations'))) return { ledger: false };
     const done = await ledger(pool);
     const all = BASELINE.concat(chainFiles());
-    const pending = all.filter((f) => !done.has(f));
-    const changed = all.filter((f) => done.has(f) && done.get(f).sha256 && done.get(f).sha256 !== shaOf(f));
+    const pending = all.filter((item) => !done.has(item));
+    const changed = all.filter((item) => done.has(item) && done.get(item).sha256 && done.get(item).sha256 !== shaOf(item));
     return { ledger: true, recorded: done.size, pending, changed };
   } finally { await pool.end(); }
 }
 
 async function recordFiles(url, files) {
-  const unknown = files.filter((f) => !fs.existsSync(path.join(M, f)));
+  const unknown = files.filter((item) => !fs.existsSync(path.join(M, item)));
   if (unknown.length) throw new Error('not in migrations/: ' + unknown.join(', '));
   const pool = open(url);
   try {
@@ -147,7 +147,7 @@ async function recordFiles(url, files) {
 function through(bnnn) {
   const n = Number(String(bnnn || '').replace(/^b/i, ''));
   if (!Number.isInteger(n) || n <= 0) throw new Error('--record-through takes a migration number, e.g. b304');
-  return BASELINE.concat(chainFiles().filter((f) => numOf(f) <= n));
+  return BASELINE.concat(chainFiles().filter((item) => numOf(item) <= n));
 }
 
 module.exports = { apply, status, recordFiles, through, chainFiles, CHAIN_SKIP, LEDGER_FILE };
@@ -164,15 +164,15 @@ if (require.main === module) {
       const s = await status(url);
       if (!s.ledger) { console.log('  no schema_migrations table — ' + LEDGER_FILE + ' has not run here'); return; }
       console.log('  ' + s.recorded + ' file(s) recorded · ' + s.pending.length + ' pending · ' + s.changed.length + ' changed since they ran');
-      s.pending.forEach((f) => console.log('    pending  ' + f));
-      s.changed.forEach((f) => console.log('    changed  ' + f));
+      s.pending.forEach((item) => console.log('    pending  ' + item));
+      s.changed.forEach((item) => console.log('    changed  ' + item));
       return;
     }
     if (argv.includes('--record-through')) { const n = await recordFiles(url, through(arg('record-through'))); console.log('  recorded ' + n + ' file(s) through ' + arg('record-through') + ' (source recorded)'); return; }
     const ri = argv.indexOf('--record');
     if (ri >= 0) {
-      const rest = argv.slice(ri + 1), stop = rest.findIndex((a) => a.startsWith('--'));
-      const files = (stop < 0 ? rest : rest.slice(0, stop)).map((f) => path.basename(f));
+      const rest = argv.slice(ri + 1), stop = rest.findIndex((item) => item.startsWith('--'));
+      const files = (stop < 0 ? rest : rest.slice(0, stop)).map((item) => path.basename(item));
       if (!files.length) fail('--record names the file(s) you ran, e.g. --record ' + LEDGER_FILE);
       const n = await recordFiles(url, files); console.log('  recorded ' + n + ' file(s): ' + files.join(', ')); return;
     }
