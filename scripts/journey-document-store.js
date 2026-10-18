@@ -119,7 +119,7 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
       experience: { note: 'Filing templates — fill online, attach your source document.' }, formatting: {},
     };
     const r = await call('PUT', '/api/assist/catalogue-source', { token: store.token, body });
-    if (r.status < 400) ok(`published "${sourceKey}" with ${TEMPLATES.length} templates: ` + TEMPLATES.map((t) => t.name).join(' · '));
+    if (r.status < 400) ok(`published "${sourceKey}" with ${TEMPLATES.length} templates: ` + TEMPLATES.map((item) => item.name).join(' · '));
     else bad(`publish failed ${r.status}: ${JSON.stringify(r.json)}`);
   }
 
@@ -139,9 +139,9 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
     const r = await call('PUT', '/api/catalogue-face', { token: store.token, body: { face } });
     if (r.status < 400) {
       ok('catalogue-level fallback declared; each TEMPLATE overrides it with its own form:');
-      TEMPLATES.forEach((tpl) => {
-        const s = tpl.order_input.schema, d = tpl.order_input.documents;
-        note(`${tpl.name} → ${Object.keys(s.properties).length} fields, ${(s.required || []).length} required`
+      TEMPLATES.forEach((item) => {
+        const s = item.order_input.schema, d = item.order_input.documents;
+        note(`${item.name} → ${Object.keys(s.properties).length} fields, ${(s.required || []).length} required`
            + `, proof: ${d.required ? 'REQUIRED ' : 'optional '}${d.label} (${d.accept.join('/')}, max ${d.max})`);
       });
     } else bad(`face save failed ${r.status}: ${JSON.stringify(r.json)}`);
@@ -154,23 +154,23 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
     if (r.status >= 400) { bad(`storefront ${r.status}: ${JSON.stringify(r.json)}`); }
     else {
       const oi = (r.json.shop || {}).order_input || {};
-      const fin = (r.json.finishes || []).flatMap((f) => f.items || []);
+      const list = (r.json.finishes || []).flatMap((item) => item.items || []);
       ok(`shop "${r.json.shop.display_name}" is live`);
       ok(`order_input reached the storefront → preset=${B(oi.preset)} pipeline=${B(oi.pipeline)}`);
       if (oi.pipeline !== 'payload') bad('expected the PAYLOAD pipeline for a form catalogue');
-      if (fin.length) ok(`templates visible: ${fin.map((i) => i.name).join('  ·  ')}`);
+      if (list.length) ok(`templates visible: ${list.map((item) => item.name).join('  ·  ')}`);
       else bad('no templates visible on the storefront');
       // ONE ENTRY = ONE FORM: each template must carry its OWN declaration to the storefront, or the customer would
       // be shown the wrong fields for whichever one they pick.
       let perItem = 0;
-      fin.forEach((i) => {
-        const d = i.order_input;
-        if (!d) { bad(`"${i.name}" carries NO declaration — the customer would see the wrong form`); return; }
+      list.forEach((item) => {
+        const d = item.order_input;
+        if (!d) { bad(`"${item.name}" carries NO declaration — the customer would see the wrong form`); return; }
         perItem++;
         const props = Object.keys((d.schema && d.schema.properties) || {}).length;
-        note(`${i.name} → ${props} fields` + (d.documents ? `, proof: ${d.documents.required ? 'REQUIRED ' : 'optional '}${d.documents.label}` : ', no proof required'));
+        note(`${item.name} → ${props} fields` + (d.documents ? `, proof: ${d.documents.required ? 'REQUIRED ' : 'optional '}${d.documents.label}` : ', no proof required'));
       });
-      if (perItem === fin.length && fin.length) ok(`every template carries its own form (${perItem}/${fin.length})`);
+      if (perItem === list.length && list.length) ok(`every template carries its own form (${perItem}/${list.length})`);
     }
   }
 
@@ -198,7 +198,7 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
     // `documents_stored:false` to check any more. Reaching here at all is the proof.
     if ((confirm.json.documents || []).length) ok('the Form 16 committed WITH the chit (per-copy; both parties hold their own)');
     else bad('no documents echoed in the response — the document did not travel');
-    (confirm.json.documents || []).forEach((d) => note(`proof: ${d.name} → sha256 ${d.sha256.slice(0, 24)}… (line ${d.line_index})`));
+    (confirm.json.documents || []).forEach((item) => note(`proof: ${item.name} → sha256 ${item.sha256.slice(0, 24)}… (line ${item.line_index})`));
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -213,11 +213,11 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
       ok('the document store can open the submission it received');
       if (li.payload) {
         ok('FILLED VALUES visible to the store:');
-        Object.entries(li.payload).forEach(([k, v]) => console.log('        ' + k.padEnd(20) + ' = ' + v));
+        Object.entries(li.payload).forEach(([text, v]) => console.log('        ' + text.padEnd(20) + ' = ' + v));
       } else bad('no payload on the line item — the filled form did not arrive');
       if (li.documents && li.documents.length) {
         ok('PROOF attached and sealed:');
-        li.documents.forEach((d) => console.log(`        ${d.name}  ${d.mime}  ${d.size}B  sha256 ${d.sha256.slice(0, 24)}…`));
+        li.documents.forEach((item) => console.log(`        ${item.name}  ${item.mime}  ${item.size}B  sha256 ${item.sha256.slice(0, 24)}…`));
       } else bad('no document metadata on the line item');
     }
   }
