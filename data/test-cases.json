@@ -66281,6 +66281,35 @@
     "a database (via move-in.js)"
    ]
   },
+ {
+  "case_key": "chitbridge-api/tests/rls-census-from.test.cjs",
+  "module_key": "chitbridge-api/tests",
+  "module_name": "API guards",
+  "intro": "",
+  "title": "DB-1 CENSUS FROM A PASTE: rls-census --from reads the rows Athi pastes from the Supabase editor and gives the same verdicts as a live read",
+  "claim": "DB-1 CENSUS FROM A PASTE: rls-census --from reads the rows Athi pastes from the Supabase editor and gives the same verdicts as a live read",
+  "priority": "Medium",
+  "pre": "",
+  "data": "",
+  "steps": [],
+  "note": "test.guard · unit · 51 lines. Run: node chitbridge-api/tests/rls-census-from.test.cjs",
+  "layer": "engine",
+  "test_type": "unit",
+  "group": "test.guard",
+  "automated": true,
+  "seq": 90,
+  "step": "",
+  "areas": [
+   "db",
+   "engine"
+  ],
+  "subjects": [
+   "scripts/rls-census.cjs"
+  ],
+  "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+  "changed_at": "2026-10-18T16:00:00Z",
+  "needs": []
+ },
   {
    "case_key": "chitbridge-api/tests/move-in-meter.test.cjs",
    "module_key": "chitbridge-api/tests",
