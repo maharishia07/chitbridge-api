@@ -520,7 +520,7 @@ router.patch('/:id',
        * is cheap and empty is worth less than nothing, because it is believed.
        */
       /* ⚠️ the change stands either way; a lost audit row is SAID — in the answer and in the log (review 2026-09-25) */
-      const audit = await withEntity(entity_id, (edb) => accessEvents.recordChanges((sql, args) => edb.query(sql, args), {
+      const audit = await withEntity(entity_id, (entityDb) => accessEvents.recordChanges((sql, args) => entityDb.query(sql, args), {
         entity_id,
         subject_identity_id: actor_id,
         before: beforeRow,
@@ -816,6 +816,17 @@ async function recordBreak(entity_id, subject, before, after, by, reason) {
   return { recorded: out.written, failed: out.failed };
 }
 
+/**
+ * clearDisputeHandler(entity_id, actor_id) → how many open disputes stopped being routed to this (gone) person — 0 when the write fails (said in the log).
+ * B1 RLS (b68): chit_disputes is per-copy + FORCE RLS, so this MUST run under withEntity(me) — a plain query would fail closed and silently leave the gone actor as handler.
+ */
+async function clearDisputeHandler(entity_id, actor_id) {
+  try {
+    const cleared = await withEntity(entity_id, (client) => client.query(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id]));
+    return (cleared && cleared.rowCount) || 0;
+  } catch (e) { logger.fellBack('actors PUT /:id/status: the write failed — carried on without it', e); return 0; }
+}
+
 // ── PUT /api/actors/:id/status ───────────────────────────────
 // Deactivate or remove actor — admin only
 router.put('/:id/status',
@@ -967,15 +978,7 @@ router.put('/:id/status',
       endedJtis.forEach(personSession.forget);
       endedKeys.forEach(auth.forgetKey);
 
-      // Drop any dispute-handler assignment to this actor so open disputes aren't routed to a gone person.
-      // B1 RLS (b68): chit_disputes is now per-copy + FORCE RLS, so this MUST run under withEntity(me) — a plain
-      // query would fail-closed (0 rows) and silently leave the gone actor as handler. This entity's own copies only.
-      try {
-        await withEntity(entity_id, async (client) => {
-          const _dh = await client.query(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id]);
-          disputes_cleared = (_dh && _dh.rowCount) || 0;
-        });
-      } catch (e) { logger.fellBack('actors PUT /:id/status: the write failed — carried on without it', e); }
+      disputes_cleared = await clearDisputeHandler(entity_id, actor_id);
 
       /* PEOPLE-SRV1 (compliance): switched off / removed goes on the IAM trail — by whom, from what state */
       const audit = await recordBreak(entity_id, actor_id, a.break_status, action === 'remove' ? 'removed' : 'deactivated', req.identity.identity_id, action);
@@ -1010,20 +1013,33 @@ router.put('/:id/status',
  * own break reads their row too (+1 trip, counted by hand) rather than writing "was null" on the trail.
  */
 async function breakSubject(req) {
-  const asked = req.body.actor_id, own = !asked || asked === req.identity.identity_id;
-  if (own && req.identity.identity_type !== 'actor') return { status: 400, body: { error: 'Name the person', code: 'NAME_THE_PERSON', message: 'Say who is away — pick the person.' } };
+  const asked = req.body.actor_id, isOwnBreak = !asked || asked === req.identity.identity_id;
+  if (isOwnBreak && req.identity.identity_type !== 'actor') return { status: 400, body: { error: 'Name the person', code: 'NAME_THE_PERSON', message: 'Say who is away — pick the person.' } };
   const r = await db(
     `SELECT identity_id, display_name, break_status FROM identities
       WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-    [own ? req.identity.identity_id : asked, auth.entityOf(req)]);
+    [isOwnBreak ? req.identity.identity_id : asked, auth.entityOf(req)]);
   const t = r.rows[0];
   if (!t || t.break_status === 'removed') return { status: 404, body: { error: 'Not found', code: 'NOT_FOUND', message: 'That person is not in your shop.' } };
-  if (!own && t.break_status === 'deactivated') return { status: 400, body: { error: 'Switched off', code: 'SWITCHED_OFF', message: t.display_name + ' is switched off. Switch them on first.' } };
-  return { id: t.identity_id, name: own ? null : t.display_name, other: !own, before: t.break_status };
+  if (!isOwnBreak && t.break_status === 'deactivated') return { status: 400, body: { error: 'Switched off', code: 'SWITCHED_OFF', message: t.display_name + ' is switched off. Switch them on first.' } };
+  return { id: t.identity_id, name: isOwnBreak ? null : t.display_name, other: !isOwnBreak, before: t.break_status };
 }
 /* the owner gate only when somebody ELSE is named — a person's own break stays theirs (hat-gate lets it through) */
 const ownerWhenOther = (req, res, next) => (req.body && req.body.actor_id && req.body.actor_id !== req.identity.identity_id ? ownerWrite(req, res, next) : next());
 
+/**
+ * coverConflict(actor_id, who, youre) → a 400 body when going off would leave someone uncovered (they cover somebody who is away, or their
+ * own leave-cover is away), else null. PEOPLE-SRV1: split out of PUT /break so the handler does not grow.
+ */
+async function coverConflict(actor_id, subject, youre) {
+  const refusal = (message) => ({ error: 'Cover conflict', code: 'COVER_CONFLICT', message });
+  const deps = (await db(`SELECT display_name FROM identities WHERE delegate_actor_id = $1 AND break_status IN ('short_break','leave')`, [actor_id])).rows;
+  if (deps.length) return refusal(`${youre} covering ${deps.map(d=>d.display_name).join(', ')} subject ${deps.length>1?'are':'is'} away — ${subject.other ? 'they' : 'you'} can't go off until they're back.`);
+  const covered = (await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1`, [actor_id])).rows[0];
+  if (!covered || !covered.delegate_actor_id) return null;
+  const cover = (await db(`SELECT display_name, break_status FROM identities WHERE identity_id = $1`, [covered.delegate_actor_id])).rows[0];
+  return cover && cover.break_status !== 'active' ? refusal(`${subject.other ? subject.name + "'s" : 'Your'} leave-cover ${cover.display_name} is also away — both can't be off at once.`) : null;
+}
 // ── PUT /api/actors/break ────────────────────────────────────
 // Actor goes on break — short or leave. PEOPLE-SRV1 (G6): the owner may name the person (actor_id).
 router.put('/break',
@@ -1049,15 +1065,8 @@ router.put('/break',
       const trail = (after) => recordBreak(entity_id, actor_id, who.before, after, req.identity.identity_id, (who.other ? 'owner: ' : 'own: ') + break_type);
 
       // Buddy-cover concurrency: don't leave anyone uncovered when going off (both directions; skip on end_break).
-      if (break_type !== 'end_break') {
-        const deps = (await db(`SELECT display_name FROM identities WHERE delegate_actor_id = $1 AND break_status IN ('short_break','leave')`, [actor_id])).rows;
-        if (deps.length) return res.status(400).json({ error: 'Cover conflict', code: 'COVER_CONFLICT', message: `${youre} covering ${deps.map(d=>d.display_name).join(', ')} who ${deps.length>1?'are':'is'} away — ${who.other ? 'they' : 'you'} can't go off until they're back.` });
-        const me = (await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1`, [actor_id])).rows[0];
-        if (me && me.delegate_actor_id) {
-          const cov = (await db(`SELECT display_name, break_status FROM identities WHERE identity_id = $1`, [me.delegate_actor_id])).rows[0];
-          if (cov && cov.break_status !== 'active') return res.status(400).json({ error: 'Cover conflict', code: 'COVER_CONFLICT', message: `${who.other ? who.name + "'s" : 'Your'} leave-cover ${cov.display_name} is also away — both can't be off at once.` });
-        }
-      }
+      const conflict = break_type !== 'end_break' && await coverConflict(actor_id, who, youre);
+      if (conflict) return res.status(400).json(conflict);
 
       if (break_type === 'end_break') {
         // Return from any break
