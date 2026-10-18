@@ -46,8 +46,8 @@ async function api(path, { method = 'GET', token, body } = {}) {
 async function shop(key, name) {
   const email = `dept-${key}@test-cb.com`;
   await api('/api/entities/register', { method: 'POST', body: { email, display_name: name } });
-  const v = await api('/api/entities/verify', { method: 'POST', body: { email, otp: OTP } });
-  const token = (v.json || {}).token;
+  const reply = await api('/api/entities/verify', { method: 'POST', body: { email, otp: OTP } });
+  const token = (reply.json || {}).token;
   const me = await api('/api/entities/me', { token });
   const e = (me.json && (me.json.entity || me.json)) || {};
   return { key, name, email, token, bridge: e.bridge_id, id: e.identity_id, vis: e.catalogue_visibility };
@@ -71,9 +71,9 @@ const DEPTS = [
   const STORE = await shop('store', 'DeptStore (network)');
   const made = [];
   for (const d of DEPTS) made.push(Object.assign(await shop(d.key, d.name), { want: d.vis, product: d.product, price: d.price }));
-  ok('all five entities exist', !!STORE.bridge && made.every((m) => m.bridge));
+  ok('all five entities exist', !!STORE.bridge && made.every((item) => item.bridge));
   note(`network root: ${STORE.name}  ${STORE.bridge}`);
-  made.forEach((m) => note(`  ${m.name.padEnd(26)} ${m.bridge}  → wants ${m.want}`));
+  made.forEach((item) => note(`  ${item.name.padEnd(26)} ${item.bridge}  → wants ${item.want}`));
 
   // ── 2 · one product each, and the visibility each one wants ────────────────────────────────────────────────
   step(2, 'give each department a product and its visibility');
@@ -91,10 +91,10 @@ const DEPTS = [
 
   // ── 3 · are they on the network tree yet? ──────────────────────────────────────────────────────────────────
   step(3, 'network membership');
-  const wh = made.find((m) => m.key === 'warehouse');
-  const clothing = made.find((m) => m.key === 'clothing');
+  const wh = made.find((item) => item.key === 'warehouse');
+  const clothing = made.find((item) => item.key === 'clothing');
   // A member reading the warehouse proves membership resolves; nothing else can tell us from outside.
-  const sup = await api('/api/relationships/suppliers', { method: 'POST', token: clothing.token, body: { supplier_bridge_id: wh.bridge } });
+  const reply = await api('/api/relationships/suppliers', { method: 'POST', token: clothing.token, body: { supplier_bridge_id: wh.bridge } });
   const sups = await api('/api/relationships/suppliers', { token: clothing.token });
   const row = ((sups.json && (sups.json.suppliers || sups.json)) || []).find((x) => x.bridge_id === wh.bridge);
   const viaMember = row ? await api('/api/relationships/suppliers/' + row.supplier_entity_id + '/catalogue', { token: clothing.token }) : { json: {} };
@@ -110,9 +110,9 @@ const DEPTS = [
     console.log(`   INSERT INTO cb_entity (bridge_id, name, mode, owner_scope, path, claimed)`);
     console.log(`   VALUES`);
     console.log(`     ('${STORE.bridge}', '${STORE.name}', 'b2b', 'entity', '${label(STORE.bridge)}'::ltree, true),`);
-    made.forEach((m, i) => {
-      const tail = i === made.length - 1 ? '' : ',';
-      console.log(`     ('${m.bridge}', '${m.name}', 'b2c', 'entity', '${label(STORE.bridge)}.${label(m.bridge)}'::ltree, true)${tail}`);
+    made.forEach((item, index) => {
+      const tail = index === made.length - 1 ? '' : ',';
+      console.log(`     ('${item.bridge}', '${item.name}', 'b2c', 'entity', '${label(STORE.bridge)}.${label(item.bridge)}'::ltree, true)${tail}`);
     });
     console.log(`   ON CONFLICT (bridge_id) DO UPDATE SET path = EXCLUDED.path;`);
     console.log(`   -- every department hangs under the store, so subpath(path,0,1) is the same for all five`);
