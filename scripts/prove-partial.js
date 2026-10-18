@@ -178,8 +178,8 @@ async function pure() {
 function report() {
   let pass = 0, fail = 0;
   console.log('');
-  T.forEach((t) => { if (t.ok) { pass++; console.log('  ✓ ' + t.msg + (t.detail ? '  ' + t.detail : '')); }
-                     else { fail++; console.log('  ✗ ' + t.msg + (t.detail ? '  → got ' + t.detail : '')); } });
+  T.forEach((item) => { if (item.ok) { pass++; console.log('  ✓ ' + item.msg + (item.detail ? '  ' + item.detail : '')); }
+                     else { fail++; console.log('  ✗ ' + item.msg + (item.detail ? '  → got ' + item.detail : '')); } });
   console.log('\n== RESULT ==  PASS ' + pass + '  ·  FAIL ' + fail);
   process.exit(fail ? 1 : 0);
 }
