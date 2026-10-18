@@ -424,7 +424,7 @@
   "tools/sim-load.cjs": {"score":95,"long40":1,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":84,"noWhatLine":2,"emptyCatch":6,"noHeader":1},
   "tools/sim-plan.cjs": {"score":17,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "tools/sim-scale.cjs": {"score":40,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":34,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
-  "tools/simulate-years.cjs": {"score":99,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":93,"noWhatLine":4,"emptyCatch":1,"noHeader":1},
+  "tools/simulate-years.cjs": {"score":75,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":69,"noWhatLine":4,"emptyCatch":1,"noHeader":1},
   "tools/sql-inventory.cjs": {"score":21,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "tools/tally-connector/adapters/csv.js": {"score":30,"long40":1,"long80":0,"complex10":1,"complex15":0,"deep3":1,"deep4":0,"cryptic":25,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "tools/tally-connector/adapters/gofrugal.js": {"score":32,"long40":1,"long80":0,"complex10":3,"complex15":1,"deep3":0,"deep4":0,"cryptic":24,"noWhatLine":1,"emptyCatch":1,"noHeader":1},

@@ -54,9 +54,9 @@ const rup = (minor) => (minor / 100).toFixed(2);
     r.end(b);
   });
   const T = X.T;
-  const codeOfRole = (role) => (T.accounts.find((a) => a.entity_id === SHOP && a.role === role) || {}).code;
+  const codeOfRole = (role) => (T.accounts.find((item) => item.entity_id === SHOP && item.role === role) || {}).code;
   const nameOfCode = (c) => { const a = T.accounts.find((x) => x.entity_id === SHOP && String(x.code) === String(c)); return a ? c + ' ' + a.name : String(c); };
-  const codeOfId = (id) => (T.accounts.find((a) => a.account_id === id) || {}).code;
+  const codeOfId = (id) => (T.accounts.find((item) => item.account_id === id) || {}).code;
   const entryOf = new Map();                                           /* entry_id → entry, built lazily for the line scans */
   const entryById = (id) => { if (!entryOf.has(id)) { const e = T.entries.find((x) => x.entry_id === id); if (e) entryOf.set(id, e); } return entryOf.get(id); };
 
@@ -83,9 +83,9 @@ const rup = (minor) => (minor / 100).toFixed(2);
   };
 
   const tbNet = async (asOf) => {                           /* code → net (Dr positive) from the trial balance route */
-    const r = await q('GET', '/trial-balance?asOf=' + asOf), m = new Map();
-    (r.body.rows || []).forEach((x) => m.set(String(x.code), x.dr_minor - x.cr_minor));
-    return { m, balanced: r.body.balanced, dr: r.body.total_dr_minor, cr: r.body.total_cr_minor };
+    const r = await q('GET', '/trial-balance?asOf=' + asOf), lookup = new Map();
+    (r.body.rows || []).forEach((x) => lookup.set(String(x.code), x.dr_minor - x.cr_minor));
+    return { m: lookup, balanced: r.body.balanced, dr: r.body.total_dr_minor, cr: r.body.total_cr_minor };
   };
   const salesCode = () => String(codeOfRole('sales') || '4000');
 
@@ -95,57 +95,57 @@ const rup = (minor) => (minor / 100).toFixed(2);
     const close = await tbNet(lastDay), open = await tbNet(nextFirst);
     check(fy + ' · trial balance balances at year end (' + rup(close.dr) + ' Dr = ' + rup(close.cr) + ' Cr)', close.balanced === true, 'Dr ' + close.dr + ' vs Cr ' + close.cr);
     check(nextFy + ' · opening trial balance balances', open.balanced === true, 'Dr ' + open.dr + ' vs Cr ' + open.cr);
-    let profit = 0; close.m.forEach((net, c) => { if (/^[4-9]/.test(c)) profit -= net; });        /* income is Cr (negative net) → profit positive */
+    let profit = 0; close.m.forEach((item, index) => { if (/^[4-9]/.test(index)) profit -= item; });        /* income is Cr (negative net) → profit positive */
     const wrong = [];
-    close.m.forEach((net, c) => {
-      if (/^[4-9]/.test(c)) return;
-      const want = c === '3900' ? net - profit : net, got = open.m.get(c) || 0;
-      if (got !== want) wrong.push(nameOfCode(c) + ' closed ' + rup(want) + ' but opened ' + rup(got));
+    close.m.forEach((item, index) => {
+      if (/^[4-9]/.test(index)) return;
+      const want = index === '3900' ? item - profit : item, got = open.m.get(index) || 0;
+      if (got !== want) wrong.push(nameOfCode(index) + ' closed ' + rup(want) + ' but opened ' + rup(got));
     });
-    open.m.forEach((net, c) => { if (!close.m.has(c) && net !== 0 && c !== '3900') wrong.push(nameOfCode(c) + ' appeared at opening with ' + rup(net)); });
+    open.m.forEach((item, index) => { if (!close.m.has(index) && item !== 0 && index !== '3900') wrong.push(nameOfCode(index) + ' appeared at opening with ' + rup(item)); });
     check(fy + ' → ' + nextFy + ' · opening = last closing, to the paisa (' + close.m.size + ' ledgers)', !wrong.length, wrong.slice(0, 5).join(' · '));
     const capWant = (close.m.get('3900') || 0) - profit;
     check(fy + ' · profit ' + rup(profit) + ' moved into capital (3900)', (open.m.get('3900') || 0) === capWant, '3900 opened ' + rup(open.m.get('3900') || 0) + ', expected ' + rup(capWant));
-    const carried = [...open.m.keys()].filter((c) => /^[4-9]/.test(c) && open.m.get(c) !== 0);
+    const carried = [...open.m.keys()].filter((item) => /^[4-9]/.test(item) && open.m.get(item) !== 0);
     check(fy + ' · no income/expense ledger is carried into ' + nextFy, !carried.length, carried.map(nameOfCode).join(', '));
   };
 
   const verifySummaries = async (fy) => {
     /* 3 · every summary = the sum of its days */
     const sums = new Map(), perMonthSales = new Map();
-    T.lines.forEach((l) => {
-      const en = entryById(l.entry_id); if (!en || en.fiscal_year !== fy) return;
-      const c = codeOfId(l.account_id), k = c + '|' + en.period, s = sums.get(k) || { dr: 0, cr: 0 };
-      s.dr += l.dr_minor || 0; s.cr += l.cr_minor || 0; sums.set(k, s);
-      if (c === salesCode()) perMonthSales.set(Number(en.period), (perMonthSales.get(Number(en.period)) || 0) + (l.cr_minor || 0) - (l.dr_minor || 0));
+    T.lines.forEach((item) => {
+      const en = entryById(item.entry_id); if (!en || en.fiscal_year !== fy) return;
+      const c = codeOfId(item.account_id), k = c + '|' + en.period, s = sums.get(k) || { dr: 0, cr: 0 };
+      s.dr += item.dr_minor || 0; s.cr += item.cr_minor || 0; sums.set(k, s);
+      if (c === salesCode()) perMonthSales.set(Number(en.period), (perMonthSales.get(Number(en.period)) || 0) + (item.cr_minor || 0) - (item.dr_minor || 0));
     });
-    const bad = [];
-    T.balances.forEach((b) => {
-      if (b.fiscal_year !== fy || b.party_key !== X.store.ZERO) return;
-      const c = codeOfId(b.account_id), s = sums.get(c + '|' + b.period) || { dr: 0, cr: 0 };
-      if (s.dr !== b.dr_minor || s.cr !== b.cr_minor) bad.push(nameOfCode(c) + ' month ' + b.period + ': summary ' + rup(b.dr_minor) + '/' + rup(b.cr_minor) + ' ≠ its lines ' + rup(s.dr) + '/' + rup(s.cr));
+    const list = [];
+    T.balances.forEach((item) => {
+      if (item.fiscal_year !== fy || item.party_key !== X.store.ZERO) return;
+      const c = codeOfId(item.account_id), s = sums.get(c + '|' + item.period) || { dr: 0, cr: 0 };
+      if (s.dr !== item.dr_minor || s.cr !== item.cr_minor) list.push(nameOfCode(c) + ' month ' + item.period + ': summary ' + rup(item.dr_minor) + '/' + rup(item.cr_minor) + ' ≠ its lines ' + rup(s.dr) + '/' + rup(s.cr));
     });
-    check(fy + ' · every month summary (account_balance) = the sum of its entries’ lines', !bad.length, bad.slice(0, 4).join(' · '));
+    check(fy + ' · every month summary (account_balance) = the sum of its entries’ lines', !list.length, list.slice(0, 4).join(' · '));
     /* the days this script posted, summed by month, against the Sales ledger and the period figures */
-    const days = new Map(), tot = new Map();
-    DAYS.forEach((v, d) => { if (fyOf(d) !== fy) return; const m = monthNo(d); days.set(m, (days.get(m) || 0) + v.taxable_minor); tot.set(m, (tot.get(m) || 0) + v.total_minor); });
-    const sbad = []; days.forEach((v, m) => { if ((perMonthSales.get(m) || 0) !== v) sbad.push('Sales month ' + m + ': ledger ' + rup(perMonthSales.get(m) || 0) + ' vs the days ' + rup(v)); });
+    const days = new Map(), lookup = new Map();
+    DAYS.forEach((item, index) => { if (fyOf(index) !== fy) return; const m = monthNo(index); days.set(m, (days.get(m) || 0) + item.taxable_minor); lookup.set(m, (lookup.get(m) || 0) + item.total_minor); });
+    const sbad = []; days.forEach((item, index) => { if ((perMonthSales.get(index) || 0) !== item) sbad.push('Sales month ' + index + ': ledger ' + rup(perMonthSales.get(index) || 0) + ' vs the days ' + rup(item)); });
     check(fy + ' · Sales (' + salesCode() + ') each month = the sum of the days posted into it', !sbad.length, sbad.join(' · '));
     const fig = await X.store.periodFigures(X.db, SHOP, fy), fbad = [];
-    fig.forEach((f) => { if (f.period > 0 && (tot.get(f.period) || 0) !== f.sales_minor) fbad.push('month ' + f.period + ': figure ' + rup(f.sales_minor) + ' vs the days ' + rup(tot.get(f.period) || 0)); });
+    fig.forEach((item) => { if (item.period > 0 && (lookup.get(item.period) || 0) !== item.sales_minor) fbad.push('month ' + item.period + ': figure ' + rup(item.sales_minor) + ' vs the days ' + rup(lookup.get(item.period) || 0)); });
     check(fy + ' · month figures (sales) = the sum of their days', !fbad.length, fbad.join(' · '));
   };
 
   const verifyVouchers = (fy) => {
     /* 4 · gap-free per series inside the year, every number carrying the year */
     const by = new Map(); T.entries.filter((e) => e.fiscal_year === fy).forEach((e) => { const a = by.get(e.series) || []; a.push(e); by.set(e.series, a); });
-    const bad = [];
+    const list = [];
     by.forEach((arr, series) => {
-      const n = (e) => Number(String(e.entry_no).split('/').pop()), sorted = arr.slice().sort((a, b) => n(a) - n(b));
-      if (!arr.every((e) => String(e.entry_no).indexOf('/' + fy + '/') > 0)) bad.push(series + ' has a number outside /' + fy + '/');
-      for (let i = 0; i < sorted.length; i++) if (n(sorted[i]) !== i + 1) { bad.push(series + ' gap: expected ' + (i + 1) + ' got ' + n(sorted[i]) + ' (' + sorted[i].doc_date + ')'); break; }
+      const n = (e) => Number(String(e.entry_no).split('/').pop()), sorted = arr.slice().sort((first, second) => n(first) - n(second));
+      if (!arr.every((e) => String(e.entry_no).indexOf('/' + fy + '/') > 0)) list.push(series + ' has a number outside /' + fy + '/');
+      for (let index = 0; index < sorted.length; index++) if (n(sorted[index]) !== index + 1) { list.push(series + ' gap: expected ' + (index + 1) + ' got ' + n(sorted[index]) + ' (' + sorted[index].doc_date + ')'); break; }
     });
-    check(fy + ' · voucher series gap-free from 1, every number carries ' + fy + ' (' + [...by.keys()].join(' ') + ')', !bad.length, bad.join(' · '));
+    check(fy + ' · voucher series gap-free from 1, every number carries ' + fy + ' (' + [...by.keys()].join(' ') + ')', !list.length, list.join(' · '));
   };
 
   const closeMonth = async (pd) => {
@@ -172,9 +172,9 @@ const rup = (minor) => (minor / 100).toFixed(2);
     if (d !== day) line('RED', 'the clock and the loop disagree on ' + day, 'clock says ' + d);
     if (d.slice(8) === '01' && d !== START) await closeMonth(dayAdd(d, -1));     /* the month just ended: GST set-off, lock, and at March the year close */
 
-    for (let i = 0; i < row.sales.length; i++) {
-      const s = sale(row.sales[i]), how = row.sales[i].how;
-      const ev = { type: 'sale_bill', source_ref: 'sim:' + d + ':s:' + i, by_rate: [{ rate: s.rate, taxable: s.taxable, cgst: s.half, sgst: s.half, igst: 0 }], round_off: 0 };
+    for (let index = 0; index < row.sales.length; index++) {
+      const s = sale(row.sales[index]), how = row.sales[index].how;
+      const ev = { type: 'sale_bill', source_ref: 'sim:' + d + ':s:' + index, by_rate: [{ rate: s.rate, taxable: s.taxable, cgst: s.half, sgst: s.half, igst: 0 }], round_off: 0 };
       if (how === 'credit') { ev.party = CUST; ev.paid = {}; } else ev.paid = { [how]: s.total };
       await post(d, ev, s); sales++;
     }
@@ -219,7 +219,7 @@ const rup = (minor) => (minor / 100).toFixed(2);
     }
   }
   CLOCK.reset(); srv.close();
-  const red = REPORT.filter((r) => r.status === 'RED').length, finds = REPORT.filter((r) => r.status === 'FINDING').length;
+  const red = REPORT.filter((item) => item.status === 'RED').length, finds = REPORT.filter((item) => item.status === 'FINDING').length;
   if (AS_JSON) console.log(JSON.stringify({ years: YEARS, seed: SEED, posted, sales, plan: PLAN_LIB.countOf(PLAN), red, findings: finds, report: REPORT }, null, 1));
   else console.log('\n  ' + (red ? '✗ ' + red + ' RED' : '✓ all green') + ' · ' + REPORT.length + ' lines · ' + finds + ' finding(s) · ' + posted + ' postings (' + sales + ' bills) · ' + YEARS + ' years\n');
   process.exit(red ? 1 : 0);
