@@ -69495,6 +69495,36 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/vertical-resolver.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "VERT-1/VERT-8: one answer to the shop's trade (govresolve.verticalOf); the readers ask it; the Price Lab opens on the trade's list.",
+   "claim": "VERT-1/VERT-8: one answer to the shop's trade (govresolve.verticalOf); the readers ask it; the Price Lab opens on the trade's list.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 125 lines. Run: node chitbridge-api/tests/vertical-resolver.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 91,
+   "step": "",
+   "areas": [
+    "api",
+    "connector",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-18T20:30:00+05:30",
+   "needs": []
+  },
+  {
    "case_key": "chitbridge-api/tests/signin-contact.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
