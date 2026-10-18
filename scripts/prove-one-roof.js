@@ -43,8 +43,8 @@ async function api(path, { method = 'GET', token, body } = {}) {
 }
 async function signIn(email, name) {
   await api('/api/entities/register', { method: 'POST', body: { email, display_name: name } });
-  const v = await api('/api/entities/verify', { method: 'POST', body: { email, otp: OTP } });
-  const j = v.json || {};
+  const reply = await api('/api/entities/verify', { method: 'POST', body: { email, otp: OTP } });
+  const j = reply.json || {};
   return j.token || (j.entity && j.entity.token) || null;
 }
 const me = async (token) => (await api('/api/entities/me', { token })).json;
@@ -73,10 +73,10 @@ const me = async (token) => (await api('/api/entities/me', { token })).json;
 
   // ── 1 · the BRAND authors a container, v1, with an image ──────────────────────────────────────────────────
   step(1, 'the BRAND authors a product container — v1, with an image');
-  const v1 = await api('/api/assist/container', { method: 'PUT', token: brand, body: {
+  const reply = await api('/api/assist/container', { method: 'PUT', token: brand, body: {
     container_id: CID, name: 'Tussar', source_key: `${SRC}@v1`,
     content: { name: 'Tussar', unit: 'litre', image: 'tussar-v1.jpg', finish: 'Matt' }, schema: {} } });
-  ok('container authored', v1.status === 200, JSON.stringify(v1.json));
+  ok('container authored', reply.status === 200, JSON.stringify(reply.json));
   const r1 = await api(`/api/assist/container/${encodeURIComponent(CID)}`);
   ok('v1 resolves as CURRENT', r1.json && r1.json.version === 1 && r1.json.is_current === true);
   say(`image now: ${r1.json && r1.json.content && r1.json.content.image}`);
@@ -102,8 +102,8 @@ const me = async (token) => (await api('/api/entities/me', { token })).json;
   await api('/api/entities/profile', { method: 'PATCH', token: shop, body: { catalogue_visibility: 'public' } });
   const view1 = await api(`/api/catalogue/${shopBridge}`);
   const lines1 = (view1.json && view1.json.lines) || [];
-  const refLine = lines1.find((l) => l.origin === 'source');
-  const ownLine = lines1.find((l) => l.origin === 'own');
+  const refLine = lines1.find((item) => item.origin === 'source');
+  const ownLine = lines1.find((item) => item.origin === 'own');
   ok('owned AND referenced arrive in ONE list', !!refLine && !!ownLine,
     `summary ${JSON.stringify(view1.json && view1.json.catalogue_summary)}`);
   if (refLine) {
@@ -146,7 +146,7 @@ const me = async (token) => (await api('/api/entities/me', { token })).json;
   // ── 6 · THE PROOF ─────────────────────────────────────────────────────────────────────────────────────────
   step(6, 'THE PROOF — the catalogue moved, the chit did not');
   const view2 = await api(`/api/catalogue/${shopBridge}`);
-  const ref2 = ((view2.json && view2.json.lines) || []).find((l) => l.origin === 'source');
+  const ref2 = ((view2.json && view2.json.lines) || []).find((item) => item.origin === 'source');
   ok('★ the CATALOGUE now shows the new image — nothing republished, nothing re-adopted',
     !!ref2 && ref2.fields.image === 'tussar-V2-NEW.jpg', `catalogue image = ${ref2 && ref2.fields.image}`);
   ok('★ and it says which version it is showing', !!ref2 && ref2.container && ref2.container.version === 2);
