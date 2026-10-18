@@ -105,7 +105,7 @@ async function captured(fn) {
   env({ NODE_ENV: 'development', DATABASE_URL: LOCAL }); ({ dev } = load());
   t('dev tools: the local stack always shows them', dev.mayShowDevTools([]) === true);
   const meRoute = fs.readFileSync(require('path').join(__dirname, '..', 'routes', 'entities.js'), 'utf8');
-  t('GET /entities/me carries dev_tools from mayShowDevTools', meRoute.includes('dev_tools = devOtp.mayShowDevTools('));
+  t('GET /entities/me carries dev_tools from mayShowDevTools', meRoute.includes('dev_tools: devOtp.mayShowDevTools('));
 
   /* ── 4 · never logged, never answered, never revealed ─────────────────────────────────────────────────────────────── */
   env({ NODE_ENV: ' development', DATABASE_URL: REMOTE, TESTER_CODE: SECRET, TESTER_NAMES: 'only-me', LOG_LEVEL: 'debug' }); ({ dev, otp } = load());
