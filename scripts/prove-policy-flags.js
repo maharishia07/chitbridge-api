@@ -87,8 +87,8 @@ const ok = (c, m, x) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m ' +
     }
     const LINE = '+919000000777', CUST = '+919000000888';
     const list = await j('/api/channels', { token: tok2 });
-    const wa = (list.b.channels || []).find((c) => c.key === 'whatsapp') || { bindings: [] };
-    let bind = (wa.bindings || []).find((b) => b.address === LINE);
+    const wa = (list.b.channels || []).find((item) => item.key === 'whatsapp') || { bindings: [] };
+    let bind = (wa.bindings || []).find((item) => item.address === LINE);
     if (!bind) { const made = await j('/api/channels', { method: 'POST', token: tok2, body: { channel: 'whatsapp', address: LINE, label: 'proof' } }); bind = made.b; }
     if (bind && bind.status !== 'verified') await j('/api/channels/' + bind.id + '/approve', { method: 'POST', headers: { 'x-cb-admin-key': ADMIN }, body: {} });
 
@@ -101,7 +101,7 @@ const ok = (c, m, x) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m ' +
       } }] }] });
       await j('/api/capture/webhook/whatsapp', { method: 'POST', body: payload,
         headers: { 'X-Hub-Signature-256': 'sha256=' + crypto.createHmac('sha256', SECRET).update(payload).digest('hex') } });
-      const cap = ((await j('/api/capture/pending', { token: tok2 })).b.captures || []).find((c) => (c.raw_text || '').includes(tag));
+      const cap = ((await j('/api/capture/pending', { token: tok2 })).b.captures || []).find((item) => (item.raw_text || '').includes(tag));
       if (!cap) return null;
       await j('/api/capture/' + cap.id + '/structure', { method: 'POST', token: tok2, body: {} });
       const r = await j('/api/capture/' + cap.id + '/raise', { method: 'POST', token: tok2, body: {} });
@@ -111,7 +111,7 @@ const ok = (c, m, x) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m ' +
     const recv = await raiseFor('3 bags of cement please REF-RECV', 'REF-RECV');
     const rli = (recv && recv.line_items) || [];
     ok(rli.length > 0, 'the RECEIVE-side message raised', JSON.stringify(recv).slice(0, 140));
-    ok(rli.every((l) => !l.price), '★★★ set to RECEIVE, cement comes back UNPRICED even though the catalogue has it at 340',
+    ok(rli.every((item) => !item.price), '★★★ set to RECEIVE, cement comes back UNPRICED even though the catalogue has it at 340',
       JSON.stringify(rli));
     ok(recv && ((recv.business_json || {}).via || {}).priced.catalogue_used === false,
       '★★ and the chit records that the catalogue was not consulted', JSON.stringify(recv && (recv.business_json || {}).via && recv.business_json.via.priced));
@@ -119,7 +119,7 @@ const ok = (c, m, x) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m ' +
     await j('/api/entities/policy', { method: 'PATCH', token: tok2, body: { trade_side: 'sell' } });
     const sell = await raiseFor('3 bags of cement please REF-SELL', 'REF-SELL');
     const sli = (sell && sell.line_items) || [];
-    ok(sli.some((l) => /cement/i.test(l.particulars) && l.price === 340),
+    ok(sli.some((item) => /cement/i.test(item.particulars) && item.price === 340),
       '★★★ flipped to SELL, the same message prices at 340 — the flag GOVERNS, it does not just store',
       JSON.stringify(sli));
   }
