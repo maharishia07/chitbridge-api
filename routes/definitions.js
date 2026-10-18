@@ -98,7 +98,7 @@ router.get('/', auth, async (req, res) => {
      * that works today slower.
      */
     const kinds = req.query.kind
-      ? String(req.query.kind).split(',').map((k) => k.trim()).filter(Boolean).slice(0, 12)
+      ? String(req.query.kind).split(',').map((item) => item.trim()).filter(Boolean).slice(0, 12)
       : [];
     if (kinds.length === 1) { params.push(kinds[0]); where += ` AND d.kind = $${params.length}`; }
     else if (kinds.length > 1) { params.push(kinds); where += ` AND d.kind = ANY($${params.length})`; }
@@ -360,8 +360,8 @@ router.put('/:id', auth, async (req, res) => {
 /** the takeover slab: one of my LIVE slabs, or a governed one (lib/slab-cites has the why) */
 async function liveSlabById(db, entity_id, id) {
   if (taxGov.isGovernedId(id)) {
-    const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
-    const g = gov.find((x) => String(x.definition_id) === String(id));
+    const list = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
+    const g = list.find((x) => String(x.definition_id) === String(id));
     return g ? slabCites.S.slabOf(g) : null;
   }
   const r = await db.query(`SELECT d.definition_id, d.name, d.status, v.rules FROM definition d
@@ -431,7 +431,7 @@ router.post('/freeze', auth, [ body('definition_ids').isArray() ], validate, asy
        own definitions freeze from their version row; the jurisdiction's slabs freeze as a copy of the regional
        layer (there is no version row to point at — the copy IS the record, keyed by effective_from). */
     const govIds = ids.filter(taxGov.isGovernedId);
-    const ownIds = ids.filter((i) => !taxGov.isGovernedId(i));
+    const ownIds = ids.filter((item) => !taxGov.isGovernedId(item));
 
     const r = ownIds.length ? await withEntity(entity_id, (db) => db.query(
       `SELECT d.definition_id, d.kind, d.sub_kind, d.name, d.status,
@@ -453,11 +453,11 @@ router.post('/freeze', auth, [ body('definition_ids').isArray() ], validate, asy
      * something this entity may learn more about.
      */
     if (govIds.length) {
-      const gov = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
-      gov.filter((g) => govIds.includes(g.definition_id)).forEach((g) => frozen.push(taxGov.frozenCopy(g, at)));
+      const list = await taxGov.governedSlabsFor(entity_id, { query, regionLayer: regional.regionLayer });
+      list.filter((item) => govIds.includes(item.definition_id)).forEach((item) => frozen.push(taxGov.frozenCopy(item, at)));
     }
-    const found = new Set(frozen.map((f) => String(f.definition_id)));
-    res.json({ frozen, missing: ids.filter((i) => !found.has(i)), frozen_at: at });
+    const found = new Set(frozen.map((item) => String(item.definition_id)));
+    res.json({ frozen, missing: ids.filter((item) => !found.has(item)), frozen_at: at });
   } catch (e) { if (notMigrated(e)) return gone(res);
     res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
