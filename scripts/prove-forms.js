@@ -5,9 +5,9 @@ const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.ap
 let P = 0, F = 0, S = 0;
 const chk = (n, ok, d) => { ok ? (P++, console.log('  ✓ ' + n + (d ? '  ' + d : ''))) : (F++, console.log('  ✗ ' + n + (d ? '  — ' + d : ''))); };
 const skip = (n, why) => { S++; console.log('  ◐ ' + n + '  — ' + why); };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
-async function login(email) { const reg = await api('POST', '/api/entities/register', { body: { email } }); const v = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } }); return { token: v.j && v.j.token, id: v.j && v.j.entity && v.j.entity.identity_id }; }
-const field = (resolved, id) => ((resolved && resolved.fields) || []).find((f) => f.id === id) || {};
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
+async function login(email) { const reply = await api('POST', '/api/entities/register', { body: { email } }); const v = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } }); return { token: v.j && v.j.token, id: v.j && v.j.entity && v.j.entity.identity_id }; }
+const field = (resolved, id) => ((resolved && resolved.fields) || []).find((item) => item.id === id) || {};
 
 (async () => {
   console.log('== PROVE AUTHORITY-FORMS ==  ' + B + '\n');
@@ -17,29 +17,29 @@ const field = (resolved, id) => ((resolved && resolved.fields) || []).find((f) =
 
   // ── Registry ──
   const list = (await api('GET', '/api/forms', { token: me.token })).j;
-  chk('registry lists the seeded forms (CoO, invoice, authority-application)', list && Array.isArray(list.forms) && list.forms.length >= 3, (list.forms || []).map((f) => f.key).join(', '));
+  chk('registry lists the seeded forms (CoO, invoice, authority-application)', list && Array.isArray(list.forms) && list.forms.length >= 3, (list.forms || []).map((item) => item.key).join(', '));
 
   // ── Manual override + derive + readiness (need NO vault) — the engine spine ──
   let r = (await api('POST', '/api/forms/authority-application/resolve', { token: me.token, body: { manual: { purpose: 'Trade licence renewal' } } })).j;
   chk('T2 · a manual value fills its field, source=manual rung=declared', field(r, 'purpose').source === 'manual' && field(r, 'purpose').rung === 'declared', 'purpose=' + JSON.stringify(field(r, 'purpose').value));
   chk('DERIVE · date is computed, source=derive rung=derived', field(r, 'date').source === 'derive' && field(r, 'date').rung === 'derived', 'date=' + field(r, 'date').value);
-  chk('READY=false while a required field (applicant) is unresolved', r.ready === false && (r.unresolved_required || []).some((u) => u.id === 'applicant'), 'unresolved=' + (r.unresolved_required || []).map((u) => u.id).join('/'));
+  chk('READY=false while a required field (applicant) is unresolved', r.ready === false && (r.unresolved_required || []).some((item) => item.id === 'applicant'), 'unresolved=' + (r.unresolved_required || []).map((item) => item.id).join('/'));
   const badIssue = await api('POST', '/api/forms/authority-application/issue', { token: me.token, body: { manual: { purpose: 'x' } } });
   chk('ISSUE refuses an unready form (400 FORM_NOT_READY, lists what is missing)', badIssue.status === 400 && badIssue.j && badIssue.j.code === 'FORM_NOT_READY' && Array.isArray(badIssue.j.unresolved), 'status=' + badIssue.status);
 
   // ── T1 · no channel mints `verified` from a self-write ──
-  const allRungs = (r.fields || []).map((f) => f.rung).filter(Boolean);
+  const allRungs = (r.fields || []).map((item) => item.rung).filter(Boolean);
   chk('T1 · nothing self-written is `verified`/`attested` (rungs ∈ documented/declared/derived)', allRungs.every((x) => ['documented', 'declared', 'derived'].includes(x)), 'rungs=' + [...new Set(allRungs)].join(','));
 
   // ── Order-bound source — an order-drawn field is `documented` (freeze-by-value already happened on the chit) ──
-  const sc = await api('POST', '/api/chits/send', { token: me.token, body: { recipients: [{ name: 'Acme Importers GmbH', role: 'to' }], purpose: 'general', manual_subject: 'INV-' + ts, line_items: [{ description: 'Emulsion paint 20L', qty: 10, rate: 55 }] } });
-  const chitId = sc.j && (sc.j.chit_id || (sc.j.chit && sc.j.chit.chit_id));
+  const reply = await api('POST', '/api/chits/send', { token: me.token, body: { recipients: [{ name: 'Acme Importers GmbH', role: 'to' }], purpose: 'general', manual_subject: 'INV-' + ts, line_items: [{ description: 'Emulsion paint 20L', qty: 10, rate: 55 }] } });
+  const chitId = reply.j && (reply.j.chit_id || (reply.j.chit && reply.j.chit.chit_id));
   if (chitId) {
     const ci = (await api('POST', '/api/forms/commercial-invoice/resolve', { token: me.token, body: { context_ref: chitId } })).j;
     chk('ORDER · buyer pulled from the order, source=order rung=documented', field(ci, 'buyer').source === 'order' && field(ci, 'buyer').rung === 'documented', 'buyer=' + JSON.stringify(field(ci, 'buyer').value));
     chk('ORDER · invoice_no + total_value are order-bound (documented)', field(ci, 'invoice_no').rung === 'documented' && field(ci, 'total_value').rung === 'documented', 'inv=' + field(ci, 'invoice_no').value + ' val=' + field(ci, 'total_value').value);
     chk('PROVENANCE · the resolve rolls up counts by source', ci.provenance && ci.provenance.order >= 2, JSON.stringify(ci.provenance));
-  } else { skip('ORDER-bound tests', 'could not mint a context chit (chits/send shape) — status ' + sc.status); }
+  } else { skip('ORDER-bound tests', 'could not mint a context chit (chits/send shape) — status ' + reply.status); }
 
   // ── Inert external sources — NO fabrication ──
   const coo = (await api('POST', '/api/forms/certificate-of-origin/resolve', { token: me.token, body: {} })).j;
@@ -61,7 +61,7 @@ const field = (resolved, id) => ((resolved && resolved.fields) || []).find((f) =
       // FREEZE: change the vault, the issued instance must NOT change
       await api('PUT', '/api/governance/profile/vault', { token: me.token, body: { vault: { identity: { legal_name: 'RENAMED LATER', city: 'Chennai', country: 'India', address: 'x' }, signatory: { name: 'A. Narayanan', designation: 'Director' } } } });
       const inst = (await api('GET', '/api/forms/instances/' + formId, { token: me.token })).j;
-      const applicantFrozen = (inst.fields || []).find((f) => f.id === 'applicant');
+      const applicantFrozen = (inst.fields || []).find((item) => item.id === 'applicant');
       chk('FREEZE · the issued form is frozen by value (vault rename does NOT alter it)', applicantFrozen && applicantFrozen.value === 'Sunrise Paints Pvt Ltd', 'frozen=' + JSON.stringify(applicantFrozen && applicantFrozen.value));
       const sign1 = await api('POST', '/api/forms/instances/' + formId + '/sign', { token: me.token, body: {} });
       chk('SIGN · signs with the vault signatory, stamps signed_at', sign1.status === 200 && sign1.j.signed_at && sign1.j.signatory && sign1.j.signatory.name === 'A. Narayanan', 'signed_at=' + (sign1.j && sign1.j.signed_at));
