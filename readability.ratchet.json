@@ -415,7 +415,7 @@
   "src/services/catalogue.js": {"score":10,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":2,"emptyCatch":0,"noHeader":1},
   "src/services/chit.js": {"score":15,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "src/services/network.js": {"score":24,"long40":0,"long80":0,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":4,"emptyCatch":1,"noHeader":1},
-  "tools/endpoint-usage.cjs": {"score":23,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":21,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
+  "tools/endpoint-usage.cjs": {"score":6,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "tools/fresh-db-check.cjs": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "tools/migrate.cjs": {"score":24,"long40":1,"long80":0,"complex10":2,"complex15":1,"deep3":1,"deep4":0,"cryptic":18,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "tools/round-trips.cjs": {"score":24,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":1,"deep4":0,"cryptic":19,"noWhatLine":0,"emptyCatch":1,"noHeader":1},

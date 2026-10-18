@@ -30,8 +30,8 @@ const reg = {};
 let clientText = '';
 try {
   const files = [path.join(WEB, 'app.html'), path.join(WEB, 'shop.html'),
-    ...fs.readdirSync(path.join(WEB, 'app')).filter((f) => f.endsWith('.js')).map((f) => path.join(WEB, 'app', f))];
-  clientText = files.filter((f) => fs.existsSync(f)).map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+    ...fs.readdirSync(path.join(WEB, 'app')).filter((item) => item.endsWith('.js')).map((item) => path.join(WEB, 'app', item))];
+  clientText = files.filter((item) => fs.existsSync(item)).map((item) => fs.readFileSync(item, 'utf8')).join('\n');
   for (const m of clientText.matchAll(/(\w+):\s*\{\s*m:\s*["'](\w+)["']\s*,\s*p:\s*["']([^"']+)["']/g)) {
     reg[m[1]] = { method: m[2], path: m[3] };
   }
@@ -74,15 +74,15 @@ for (const f of fs.readdirSync(path.join(API, 'routes')).filter((x) => x.endsWit
      * ⭐ Third tool this session that needed its MATCHING fixed before its OUTPUT could be trusted. The finding
      * is always the same shape: a scan that under-matches reports its own blindness as a fact about the code.
      */
-    const norm = (p) => p.split('?')[0].replace(/\/$/, '').replace(/:[A-Za-z_]+/g, ':p');
-    const keys = Object.keys(reg).filter((k) => reg[k].method === d[1].toUpperCase()
-      && norm(reg[k].path) === norm(full));
-    const calls = keys.reduce((s, k) => s + callsOf(k), 0);
+    const norm = (text) => text.split('?')[0].replace(/\/$/, '').replace(/:[A-Za-z_]+/g, ':p');
+    const keys = Object.keys(reg).filter((item) => reg[item].method === d[1].toUpperCase()
+      && norm(reg[item].path) === norm(full));
+    const calls = keys.reduce((total, item) => total + callsOf(item), 0);
     rows.push({ file: f, route: d[1].toUpperCase() + ' ' + full, keys, calls });
   }
 }
 
-const called = rows.filter((r) => r.calls > 0);
+const called = rows.filter((item) => item.calls > 0);
 
 /* ⭐ --json: the called routes as data, for tests/round-trips-all.test.cjs (DB10) — one scan, not a second copy of it.
    KG1 (2026-10-12) widened it ADDITIVELY: `registry` (the client's key → method + path) and `routes` (every server row with
@@ -92,13 +92,13 @@ if (process.argv.indexOf('--json') >= 0) {
      the widened output crossed that line on 2026-10-12 and the first reader got "Unterminated string in JSON". Exit from
      the write's callback, after the bytes are out. */
   process.stdout.write(JSON.stringify({
-    called: called.map((r) => ({ file: r.file, route: r.route, calls: r.calls })), mounts,
+    called: called.map((item) => ({ file: item.file, route: item.route, calls: item.calls })), mounts,
     registry: reg,
-    routes: rows.map((r) => ({ file: r.file, route: r.route, keys: r.keys, calls: r.calls })),
+    routes: rows.map((item) => ({ file: item.file, route: item.route, keys: item.keys, calls: item.calls })),
   }), () => process.exit(0));
 } else {
-const known = rows.filter((r) => r.keys.length && r.calls === 0);
-const unknown = rows.filter((r) => !r.keys.length);
+const known = rows.filter((item) => item.keys.length && item.calls === 0);
+const unknown = rows.filter((item) => !item.keys.length);
 
 console.log('\n  ' + rows.length + ' server endpoints  ·  ' + Object.keys(reg).length + ' registry entries in the client\n');
 console.log('    ' + String(called.length).padStart(3) + '  called by the web client');
@@ -106,13 +106,13 @@ console.log('    ' + String(known.length).padStart(3) + '  IN the registry but n
 console.log('    ' + String(unknown.length).padStart(3) + '  not in the registry at all (storefront, services, direct callers)\n');
 
 console.log('  DECLARED AND NEVER INVOKED — the registry entry exists, no api() call does:\n');
-known.slice(0, 25).forEach((r) => console.log('      ' + r.route.padEnd(46) + r.keys.join(', ')));
+known.slice(0, 25).forEach((item) => console.log('      ' + item.route.padEnd(46) + item.keys.join(', ')));
 if (known.length > 25) console.log('      … and ' + (known.length - 25) + ' more');
 
 if (process.argv.indexOf('--called') >= 0) {
   console.log('\n  CALLED, most-used first:\n');
-  called.sort((a, b) => b.calls - a.calls).forEach((r) =>
-    console.log('      ' + String(r.calls).padStart(3) + '  ' + r.route.padEnd(46) + r.keys.join(', ')));
+  called.sort((first, second) => second.calls - first.calls).forEach((item) =>
+    console.log('      ' + String(item.calls).padStart(3) + '  ' + item.route.padEnd(46) + item.keys.join(', ')));
 }
 console.log('\n  (--called lists the live ones by call count)\n');
 }
