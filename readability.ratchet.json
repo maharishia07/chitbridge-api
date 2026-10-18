@@ -140,7 +140,7 @@
   "lib/plans.js": {"score":10,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":9,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/platformroot.js": {"score":13,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":1,"deep4":0,"cryptic":7,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/points.js": {"score":12,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "lib/policy.js": {"score":48,"long40":1,"long80":1,"complex10":4,"complex15":3,"deep3":0,"deep4":0,"cryptic":36,"noWhatLine":3,"emptyCatch":0,"noHeader":0},
+  "lib/policy.js": {"score":40,"long40":1,"long80":1,"complex10":4,"complex15":3,"deep3":0,"deep4":0,"cryptic":28,"noWhatLine":3,"emptyCatch":0,"noHeader":0},
   "lib/privacy.js": {"score":59,"long40":0,"long80":0,"complex10":3,"complex15":2,"deep3":0,"deep4":0,"cryptic":50,"noWhatLine":4,"emptyCatch":0,"noHeader":0},
   "lib/profile.js": {"score":84,"long40":1,"long80":0,"complex10":10,"complex15":5,"deep3":5,"deep4":1,"cryptic":57,"noWhatLine":5,"emptyCatch":0,"noHeader":0},
   "lib/public-base.js": {"score":2,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":1,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
