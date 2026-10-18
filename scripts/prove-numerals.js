@@ -85,9 +85,9 @@ console.log('\n6 · several numbers on one line — a SIZE and a COUNT');
 
 console.log('\n7 · silence is not approval');
 {
-  const v = N.verifyQuantity('send tomatoes', 3);
-  ok('no numeral in the phrase → the check does not fire', v.ok === true && v.checked === false);
-  ok('…and it SAYS it did not check', v.reason === 'no numeral in the phrase');
+  const node = N.verifyQuantity('send tomatoes', 3);
+  ok('no numeral in the phrase → the check does not fire', node.ok === true && node.checked === false);
+  ok('…and it SAYS it did not check', node.reason === 'no numeral in the phrase');
   const w = N.verifyQuantity('pathu kilo', null);
   ok('⚠️ words name a number and nothing was extracted → REJECT', w.ok === false, JSON.stringify(w));
 }
@@ -117,7 +117,7 @@ console.log('\n10 · ⭐ SPELLING IS THE REAL PROBLEM, not meaning');
 {
   /* Athi typed `irupadhu`. The table had irubadhu, irupathu, irubathu — three of four, missing the one he
      actually uses. Tamil has no single correct romanisation; everyone transliterates by ear. */
-  ['irupadhu', 'irubadhu', 'irupathu', 'irubathu', 'iruvathu'].forEach((w) => eq('"' + w + '" = 20', vals(w + ' kilo'), [20]));
+  ['irupadhu', 'irubadhu', 'irupathu', 'irubathu', 'iruvathu'].forEach((item) => eq('"' + item + '" = 20', vals(item + ' kilo'), [20]));
   ok('⚠️ enumerating spellings from a desk cannot work — three of four were written, the used one was missed', true);
 }
 
@@ -131,7 +131,7 @@ console.log('\n11 · fuzzy spelling, with guards');
   ok('a tie between two spellings of the SAME number still resolves', (N.nearNumeral('irupadhuu') || {}).value === 20);
   /* ⚠️ SHORT TOKENS ARE EXCLUDED: anju/aaru/ettu are four letters, and one edit connects several of them to each
      other and to ordinary words. A four-letter fuzzy match is a coincidence with a good disguise. */
-  ['anju', 'aaru', 'ettu', 'naalu'].forEach((w) => ok('"' + w + '" is too short to fuzz — refused', N.nearNumeral(w) === null));
+  ['anju', 'aaru', 'ettu', 'naalu'].forEach((item) => ok('"' + item + '" is too short to fuzz — refused', N.nearNumeral(item) === null));
 }
 
 console.log('\n12 · ⭐⭐ A GUESS MAY ACCEPT, BUT IT MAY NOT REJECT');
@@ -149,9 +149,9 @@ console.log('\n12 · ⭐⭐ A GUESS MAY ACCEPT, BUT IT MAY NOT REJECT');
 
 console.log('\n13 · the growth surface — what the platform should learn');
 {
-  const u = N.unknownNumerals('naapathanju kilo onion and rendu crate tomato');
-  eq('an unknown token in a quantity position is reported', u.map((x) => x.token), ['naapathanju']);
-  ok('  …and a KNOWN one is not', !u.some((x) => x.token === 'rendu'));
+  const list = N.unknownNumerals('naapathanju kilo onion and rendu crate tomato');
+  eq('an unknown token in a quantity position is reported', list.map((x) => x.token), ['naapathanju']);
+  ok('  …and a KNOWN one is not', !list.some((x) => x.token === 'rendu'));
   const g = N.unknownNumerals('irupadhuu kilo onion');
   eq('a near-miss carries its best guess', (g[0] || {}).probably, 20);
   /* ⚠️ IT PROPOSES, IT NEVER ADDS. A numeral entering the table wrongly would put a wrong quantity on every

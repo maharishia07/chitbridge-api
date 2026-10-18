@@ -356,7 +356,7 @@
   "scripts/prove-network-mint.js": {"score":20,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":18,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-network-search.js": {"score":19,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-nothing-dropped.js": {"score":23,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":18,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "scripts/prove-numerals.js": {"score":21,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
+  "scripts/prove-numerals.js": {"score":17,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-one-roof.js": {"score":22,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-orderbind.js": {"score":20,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":18,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-outbound.js": {"score":13,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":12,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
