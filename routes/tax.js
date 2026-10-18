@@ -37,9 +37,9 @@ router.get('/ledger', auth, async (req, res) => {
     const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
     res.json({ month: bounds.month, period: bounds.period, gstin: meParty.Gstin || null, registration: meParty.RegType,
                output: ledger.output, itc: ledger.itc, net: ledger.net, count: ledger.count, provisional: ledger.provisional,
-               rows: ledger.rows.map((r) => ({ chit_id: r.chit_id, subject: r.subject, purpose: r.purpose, status: r.status, direction: r.direction,
-                 side: r.side, at: r.at, counterparty: r.direction === 'sent' ? r.buyer.LglNm : r.seller.LglNm,
-                 counterparty_gstin: r.direction === 'sent' ? r.buyer.Gstin : r.seller.Gstin, heads: r.heads, provisional: r.provisional, unrated: r.unrated })),
+               rows: ledger.rows.map((item) => ({ chit_id: item.chit_id, subject: item.subject, purpose: item.purpose, status: item.status, direction: item.direction,
+                 side: item.side, at: item.at, counterparty: item.direction === 'sent' ? item.buyer.LglNm : item.seller.LglNm,
+                 counterparty_gstin: item.direction === 'sent' ? item.buyer.Gstin : item.seller.Gstin, heads: item.heads, provisional: item.provisional, unrated: item.unrated })),
                note: 'Computed from chits on the rail. A copy is frozen when it reaches completed; until then its figures are provisional. Off-rail purchases are not here. This is not a filing.' });
   } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
 });
@@ -92,7 +92,7 @@ router.post('/rate', auth, auth.requireScope('tax'), async (req, res) => {
     const lines = S.normLines(req.body); if (!lines.length) return refuse(res, 400, 'NO_LINES', 'Send at least one line.');
     const sh = await S.shelfOf(auth.entityOf(req));
     const rated = S.rateLines(lines, sh);
-    res.json({ engine: 'chitbridge-tax', version: 1, lines: rated.map((l) => ({ key: l.key, item_id: l.item_id, code: l.code, name: l.name, gst_rate: l.gst_rate, cess_rate: l.cess_rate, hsn: l.hsn, slab: l.tax_slab_name, source: l.tax_source, scheme: l.tax_scheme })) });
+    res.json({ engine: 'chitbridge-tax', version: 1, lines: rated.map((item) => ({ key: item.key, item_id: item.item_id, code: item.code, name: item.name, gst_rate: item.gst_rate, cess_rate: item.cess_rate, hsn: item.hsn, slab: item.tax_slab_name, source: item.tax_source, scheme: item.tax_scheme })) });
   } catch (e) { fault(res, e); }
 });
 /**
@@ -118,7 +118,7 @@ router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
     const seller = S.party(body.seller, shop.party);
     const st = regulation.status(seller.Country);
     if (st.code === 'NO_COUNTRY') return refuse(res, 422, 'NO_COUNTRY', st.why);
-    const needShelf = lines.some((l) => l.gst_rate == null || l.listPrice == null);
+    const needShelf = lines.some((item) => item.gst_rate == null || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(entity_id) : null;
     const priced = [];
     for (const l of lines) {
@@ -134,7 +134,7 @@ router.post('/compute', auth, auth.requireScope('tax'), async (req, res) => {
     /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
     const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
     const inclusive = said !== undefined ? said : shop.priceIncludesTax;
-    const det = S.computeTax({ seller, buyer, lines: rated.map((l) => Object.assign({}, l, { unit_price: l.listPrice })), priceIncludesTax: inclusive, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
+    const det = S.computeTax({ seller, buyer, lines: rated.map((item) => Object.assign({}, item, { unit_price: item.listPrice })), priceIncludesTax: inclusive, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
     /* no pack = no currency said: never the default pack's INR for a country we do not keep (regulation.lookup would fall back) */
     const currency = st.pack ? T.currencyOf(seller) : null;
     res.json({ engine: 'chitbridge-tax', version: 1, seller: { Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType }, buyer: { Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country },
