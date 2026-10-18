@@ -32,12 +32,12 @@ const cat = (function build() {
     { name: 'Onion',  variant: '', unit: 'kg', synonyms: ['vengayam', 'onion'], conversions: {} },
     { name: 'Orange', variant: 'grade 1', unit: 'kg', synonyms: ['orange'], conversions: {} },
     { name: 'Orange', variant: 'grade 2', unit: 'kg', synonyms: ['orange'], conversions: {} },
-  ].map((d) => ({
-    name: d.name, variant: d.variant, unit: d.unit, conversions: d.conversions,
-    synonyms: d.synonyms.map(C.norm), key: C.norm(d.name) + '|' + C.norm(d.variant),
+  ].map((item) => ({
+    name: item.name, variant: item.variant, unit: item.unit, conversions: item.conversions,
+    synonyms: item.synonyms.map(C.norm), key: C.norm(item.name) + '|' + C.norm(item.variant),
   }));
   const variantsOf = {};
-  items.forEach((it) => { (variantsOf[C.norm(it.name)] = variantsOf[C.norm(it.name)] || new Set()).add(it.variant); });
+  items.forEach((item) => { (variantsOf[C.norm(item.name)] = variantsOf[C.norm(item.name)] || new Set()).add(item.variant); });
   return { items, variantsOf };
 })();
 
@@ -67,7 +67,7 @@ ok('W-3 · …and total together (5+3+2+4 = 14) — a shop\'s spelling must neve
   syn.lines[0] && syn.lines[0].total === 14, syn.lines[0] && String(syn.lines[0].total));
 
 /* ── W-4 · ARITHMETIC (trust-critical) ─────────────────────────────────────────────────────────────────────── */
-const sumOfBreakdown = syn.lines.reduce((n, l) => n + l.breakdown.reduce((m, b) => m + b.qty, 0), 0);
+const sumOfBreakdown = syn.lines.reduce((total, item) => total + item.breakdown.reduce((m, b) => m + b.qty, 0), 0);
 ok('★★★ W-4 · the consolidated total EQUALS the sum of the individual chit lines',
   syn.lines[0].total === sumOfBreakdown, syn.lines[0].total + ' vs ' + sumOfBreakdown);
 
@@ -109,8 +109,8 @@ const varSep = C.consolidate([
 ok('★★★ W-9 · grade 1 and grade 2 total SEPARATELY — never merged', varSep.lines.length === 2,
   JSON.stringify(varSep.lines.map((l) => l.item + ' ' + l.variant + '=' + l.total)));
 ok('★★★ W-9 · …with the right quantity on each',
-  varSep.lines.every((l) => (l.variant === 'grade 1' && l.total === 5) || (l.variant === 'grade 2' && l.total === 3)),
-  JSON.stringify(varSep.lines.map((l) => l.variant + '=' + l.total)));
+  varSep.lines.every((item) => (item.variant === 'grade 1' && item.total === 5) || (item.variant === 'grade 2' && item.total === 3)),
+  JSON.stringify(varSep.lines.map((item) => item.variant + '=' + item.total)));
 
 const varUnspec = C.consolidate([ req('Store A', FRI, [{ particulars: 'orange', qty: 7, unit: 'kg' }]) ], cat);
 ok('★★★ W-9 · a variant the message did not name is FLAGGED variant-unspecified',
@@ -124,9 +124,9 @@ const dates = C.consolidate([
   req('Store B', MON, [{ particulars: 'tomato', qty: 8, unit: 'kg' }]),
 ], cat);
 ok('★★★ W-10 · two fulfilment dates do NOT total together', dates.lines.length === 2,
-  JSON.stringify(dates.lines.map((l) => l.date + '=' + l.total)));
+  JSON.stringify(dates.lines.map((item) => item.date + '=' + item.total)));
 ok('W-10 · Friday is 5 and Monday is 8 — he sources per delivery day',
-  dates.lines.find((l) => l.date === FRI).total === 5 && dates.lines.find((l) => l.date === MON).total === 8);
+  dates.lines.find((item) => item.date === FRI).total === 5 && dates.lines.find((item) => item.date === MON).total === 8);
 const noDate = C.consolidate([ req('Store A', null, [{ particulars: 'tomato', qty: 5, unit: 'kg' }]) ], cat);
 ok('★★★ W-10 · no stated date is FLAGGED date-unspecified, never assumed to be today',
   noDate.flags.date_unspecified.length === 1 && noDate.lines.length === 0, JSON.stringify(noDate.flags.date_unspecified));
@@ -138,15 +138,15 @@ const attr = C.consolidate([
 ], cat);
 const g1 = attr.lines[0];
 ok('★★ W-7 · attribution answers "who asked for how much", per item AND variant',
-  g1.breakdown.length === 2 && g1.breakdown.every((b) => b.chit_id),
-  JSON.stringify(g1.breakdown.map((b) => b.store_name + ':' + b.qty)));
-ok('★★ W-7 · …and every line links back to its chit', g1.breakdown.every((b) => /^chit-/.test(b.chit_id)));
+  g1.breakdown.length === 2 && g1.breakdown.every((item) => item.chit_id),
+  JSON.stringify(g1.breakdown.map((item) => item.store_name + ':' + item.qty)));
+ok('★★ W-7 · …and every line links back to its chit', g1.breakdown.every((item) => /^chit-/.test(item.chit_id)));
 ok('★★★ W-4 (again, on the attribution) · the breakdown sums to the total',
-  g1.breakdown.reduce((n, b) => n + b.qty, 0) === g1.total, g1.total + ' vs ' + g1.breakdown.reduce((n, b) => n + b.qty, 0));
+  g1.breakdown.reduce((total, item) => total + item.qty, 0) === g1.total, g1.total + ' vs ' + g1.breakdown.reduce((total, item) => total + item.qty, 0));
 
 /* ── W-8 · THE CATALOGUE IS AUTHORITATIVE ──────────────────────────────────────────────────────────────────── */
 const cat2 = JSON.parse(JSON.stringify({ items: cat.items, variantsOf: {} }));
-cat2.items = cat.items.map((i) => (i.name === 'Tomato' ? { ...i, unit: 'box' } : i));
+cat2.items = cat.items.map((item) => (item.name === 'Tomato' ? { ...item, unit: 'box' } : item));
 cat2.variantsOf = cat.variantsOf;
 const auth = C.consolidate([ req('Store A', FRI, [{ particulars: 'tomato', qty: 5, unit: '' }]) ], cat2);
 ok('★★ W-8 · changing the catalogue UNIT changes the normalisation — the catalogue is the authority',
