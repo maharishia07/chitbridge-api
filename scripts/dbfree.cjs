@@ -42,12 +42,12 @@ const BOUND_MODULES = ['pg', 'pg-pool', 'ioredis', 'redis', 'node-fetch', 'axios
 const BOUND_LOCAL = ['db', 'pool', 'supabase'];
 
 function requiresOf(file) {
-  let src = '';
-  try { src = fs.readFileSync(file, 'utf8'); } catch (_) { return []; }
+  let text = '';
+  try { text = fs.readFileSync(file, 'utf8'); } catch (_) { return []; }
   /* ⚠️ COMMENTS STRIPPED. Half these files DOCUMENT the rule by quoting require('../db') — a scan that cannot
      tell prose from code reports the warning as the offence. The same trap the --sk-ph guard fell into. */
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, ' ').split('\n')
-    .map((l) => l.replace(/(^|[^:])\/\/.*$/, '$1')).join('\n');
+  const code = text.replace(/\/\*[\s\S]*?\*\//g, ' ').split('\n')
+    .map((item) => item.replace(/(^|[^:])\/\/.*$/, '$1')).join('\n');
   const out = [];
   const re = /require\(\s*['"]([^'"]+)['"]\s*\)/g;
   let m;
@@ -64,36 +64,36 @@ function bindsBy(rel, seen) {
   seen.add(rel);
   const file = path.join(LIB, rel);
   let verdict = null;
-  for (const r of requiresOf(file)) {
-    const bare = r.replace(/^node:/, '');
-    if (BOUND_MODULES.indexOf(bare) >= 0 || BOUND_MODULES.some((b) => bare === b || bare.startsWith(b + '/'))) {
-      verdict = [rel + ' → ' + r]; break;
+  for (const text of requiresOf(file)) {
+    const bare = text.replace(/^node:/, '');
+    if (BOUND_MODULES.indexOf(bare) >= 0 || BOUND_MODULES.some((item) => bare === item || bare.startsWith(item + '/'))) {
+      verdict = [rel + ' → ' + text]; break;
     }
-    if (r.startsWith('.')) {
-      const base = path.basename(r).replace(/\.js$/, '');
-      if (BOUND_LOCAL.indexOf(base) >= 0) { verdict = [rel + ' → ' + r]; break; }
+    if (text.startsWith('.')) {
+      const base = path.basename(text).replace(/\.js$/, '');
+      if (BOUND_LOCAL.indexOf(base) >= 0) { verdict = [rel + ' → ' + text]; break; }
       const next = base + '.js';
       if (!fs.existsSync(path.join(LIB, next))) continue;   /* outside lib/ — not ours to chase */
       const deeper = bindsBy(next, seen);
-      if (deeper) { verdict = [rel + ' → ' + r].concat(deeper); break; }
+      if (deeper) { verdict = [rel + ' → ' + text].concat(deeper); break; }
     }
   }
   cache.set(rel, verdict);
   return verdict;
 }
 
-const files = fs.readdirSync(LIB).filter((f) => f.endsWith('.js')).sort();
+const files = fs.readdirSync(LIB).filter((item) => item.endsWith('.js')).sort();
 const free = [], bound = [];
 for (const f of files) (bindsBy(f) ? bound : free).push(f);
 
 /* what the counter already carries, so "could" can be told from "does" */
 const vendored = fs.existsSync(WEB)
-  ? fs.readdirSync(WEB).filter((f) => f.endsWith('.js')).map((f) => f.replace(/\.js$/, ''))
+  ? fs.readdirSync(WEB).filter((item) => item.endsWith('.js')).map((item) => item.replace(/\.js$/, ''))
   : [];
 const page = path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html');
 const loaded = fs.existsSync(page)
   ? (fs.readFileSync(page, 'utf8').match(/engine\/([a-z0-9-]+)\.js/g) || [])
-      .map((s) => s.replace('engine/', '').replace('.js', ''))
+      .map((item) => item.replace('engine/', '').replace('.js', ''))
   : [];
 const uniqLoaded = [...new Set(loaded)];
 
@@ -113,14 +113,14 @@ console.log('  the counter loads ' + uniqLoaded.length + ' engines today (of ' +
 
 if (args.indexOf('--list') >= 0) {
   console.log('  ── DB-free ' + '─'.repeat(46));
-  free.forEach((f) => {
-    const nm = f.replace(/\.js$/, '');
+  free.forEach((item) => {
+    const nm = item.replace(/\.js$/, '');
     const inTill = uniqLoaded.some((l) => l === nm || nm.indexOf(l) >= 0 || l.indexOf(nm) >= 0);
-    console.log('    ' + (inTill ? '●' : '○') + ' ' + f);
+    console.log('    ' + (inTill ? '●' : '○') + ' ' + item);
   });
   console.log('\n  ● already in the counter   ○ DB-free and not carried yet\n');
   console.log('  ── bound ' + '─'.repeat(48));
-  bound.forEach((f) => console.log('    ✗ ' + f + '   ' + (bindsBy(f) || []).slice(-1)[0]));
+  bound.forEach((item) => console.log('    ✗ ' + item + '   ' + (bindsBy(item) || []).slice(-1)[0]));
   console.log('');
 } else {
   console.log('  run with --list to see every file, or --why <file.js> for one chain\n');
