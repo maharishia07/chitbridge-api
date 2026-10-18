@@ -1038,6 +1038,7 @@ router.post('/move-in/import', auth, owner, on, async (req, res) => {
       const r = await MI.apply(h, e, pl, { world: w, setting: req.books, by: byOf(req), as_at: m.as_at, currency: curOf(req), client_ref: m.client_ref });
       return Object.assign({ side: m.side, as_at: m.as_at }, r);
     });
+    MI.afterCommit(e, out);   /* committed: only now the items are metered (a refusal above threw, so a rolled-back move-in meters nothing) */
     res.json(out);
   } catch (err) { fail(res, err); }
 });
