@@ -130,7 +130,7 @@ function kitManifest() {
     const buf = fs.readFileSync(p);
     files.push({ name: n, sha256: crypto.createHash('sha256').update(buf).digest('hex'), bytes: buf.length });
   }
-  const version = crypto.createHash('sha256').update(files.map((f) => f.name + ':' + f.sha256).join('|')).digest('hex').slice(0, 12);
+  const version = crypto.createHash('sha256').update(files.map((item) => item.name + ':' + item.sha256).join('|')).digest('hex').slice(0, 12);
   return { version, at: new Date().toISOString(), files };
 }
 router.get('/kit', auth, (req, res) => res.json(kitManifest()));
@@ -248,7 +248,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
          6. nothing known → pending: Settings › Integrations › Running connectors › Approve this PC (host · Tally company). */
     const keysMod = require('./keys'); const jti = req.api_key && req.api_key.jti; let enrol = null;
     if (jti) {
-      const list = await keysMod.listOf(entity_id); const rec = list.find((k) => k && String(k.jti) === String(jti)) || null;
+      const list = await keysMod.listOf(entity_id); const rec = list.find((item) => item && String(item.jti) === String(jti)) || null;
       const prior = (rec && rec.enrol) || null; const t = (b.tally && typeof b.tally === 'object') ? b.tally : {};
       const norm = (g) => String(g || '').replace(/\s/g, '').toUpperCase();
       const me = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]).catch(logger.orElse('integrations POST /heartbeat: the read failed — answered with none', ({ rows: [] })));
@@ -310,7 +310,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res)
       for (const st of mine) { if (!owner[st]) { claims[st] = kit_id; changed = true; } }
       if (changed) { owner = Object.assign({}, owner, claims);
         try { await require('../lib/policy').set(entity_id, { stream_owner: owner }); } catch (e) { console.log('stream claim:', e && e.message); } }
-      owns = mine.filter((st) => owner[st] === kit_id);
+      owns = mine.filter((item) => owner[item] === kit_id);
     }
     res.json({ ok: true, id: kit_id, actor_id, created, seen: new Date().toISOString(), approved: enrol ? enrol.approved : true, reason: enrol ? enrol.reason : null,
                policy: { books_at, books_overdue_hours: overdue_hours }, owns: mine.length ? owns : null, stream_owner: owner });
@@ -476,26 +476,26 @@ router.get('/reconcile', auth, async (req, res) => {
     try { const c = await query("SELECT MIN(created_at) AS t FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL", [entity_id]);
       since = c.rows[0] && c.rows[0].t ? new Date(c.rows[0].t).getTime() : null; } catch (e) { logger.fellBack('integrations GET /reconcile: the read failed — carried on without it', e); }
     const now = Date.now();
-    const out = rows.rows.map((r) => {
-      const kind = r.direction === 'sent' ? 'purchase' : 'order';
-      const b = (r.books && r.books[kind]) || null;
-      const rel = released(r);
-      const cancelled = /^(cancelled|rejected)$/.test(String(r.current_status || ''));
+    const out = rows.rows.map((item) => {
+      const kind = item.direction === 'sent' ? 'purchase' : 'order';
+      const b = (item.books && item.books[kind]) || null;
+      const rel = released(item);
+      const cancelled = /^(cancelled|rejected)$/.test(String(item.current_status || ''));
       let state = 'waiting';
       if (b && b.outcome === 'ok') state = 'booked';
-      else if (r.skip) state = 'set_aside';                       /* somebody said this one is not for the books */
+      else if (item.skip) state = 'set_aside';                       /* somebody said this one is not for the books */
       else if (b && b.outcome === 'failed') state = 'refused';
       else if (cancelled) state = 'skipped';
       else if (rel && since != null && new Date(rel).getTime() < since) state = 'before_connector';   /* nothing was listening yet */
       else if (rel) state = (now - new Date(rel).getTime() > hrs * 3600 * 1000) ? 'overdue' : 'due';
-      return { chit_id: r.chit_id, side: r.direction === 'sent' ? 'purchase' : 'sales', kind, set_aside: r.skip || null,
-               subject: r.manual_subject || r.auto_subject || null, /* the counterparty by NAME — all_recipients holds objects, and printing one gave the screen "[object Object]" (2026-09-07) */
-                              party: nameOfParty(r.all_recipients),
-               status: r.current_status, created_at: r.created_at, released_at: rel, state,
+      return { chit_id: item.chit_id, side: item.direction === 'sent' ? 'purchase' : 'sales', kind, set_aside: item.skip || null,
+               subject: item.manual_subject || item.auto_subject || null, /* the counterparty by NAME — all_recipients holds objects, and printing one gave the screen "[object Object]" (2026-09-07) */
+                              party: nameOfParty(item.all_recipients),
+               status: item.current_status, created_at: item.created_at, released_at: rel, state,
                system: b ? b.system : null, ref: b ? b.ref : null, why: b ? b.why : null, at: b ? b.at : null, host: b ? b.host : null };
     });
-    const counts = out.reduce((a, r) => { a[r.state] = (a[r.state] || 0) + 1; a.total++; return a; }, { total: 0 });
-    const by_system = out.filter((r) => r.state === 'booked').reduce((a, r) => { const k = r.system || 'books'; a[k] = (a[k] || 0) + 1; return a; }, {});
+    const counts = out.reduce((a, item) => { a[item.state] = (a[item.state] || 0) + 1; a.total++; return a; }, { total: 0 });
+    const by_system = out.filter((item) => item.state === 'booked').reduce((total, item) => { const k = item.system || 'books'; total[k] = (total[k] || 0) + 1; return total; }, {});
     res.json({ days, books_at: at, overdue_hours: hrs, connector_since: since ? new Date(since).toISOString() : null, counts, by_system, rows: out });
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
@@ -547,8 +547,8 @@ router.post('/profile', auth, auth.requireScope('connector'), async (req, res) =
   try {
     const entity_id = auth.entityOf(req); const b = req.body || {}; const P = require('../lib/profile');
     const source = String(b.source || 'connector').slice(0, 40), as_of = (b.as_of && !isNaN(Date.parse(b.as_of))) ? new Date(b.as_of).toISOString() : new Date().toISOString();
-    const incoming = Object.entries(b.fields || {}).filter(([k]) => PM.FIELDS.some((f) => f.key === k)).map(([k, val]) => ({ key: k, value: val, source, as_of, rung: 'copied' }));
-    if (!incoming.length) return res.status(400).json({ error: 'validation', message: 'fields{} required — keys: ' + PM.FIELDS.map((f) => f.key).join(', ') });
+    const incoming = Object.entries(b.fields || {}).filter(([k]) => PM.FIELDS.some((item) => item.key === k)).map(([k, val]) => ({ key: k, value: val, source, as_of, rung: 'copied' }));
+    if (!incoming.length) return res.status(400).json({ error: 'validation', message: 'fields{} required — keys: ' + PM.FIELDS.map((item) => item.key).join(', ') });
     const current = await P.profileValues(entity_id);
     const m = PM.merge(current, incoming);
     /* the checks raise what they can: a GSTIN with a good check digit becomes 'checked', and so on — before it is written */
