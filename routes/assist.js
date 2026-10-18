@@ -55,9 +55,9 @@ const CONTEXT_HINTS = {
 // pre-auth on welcome/login/register), grounded on the public KB only. Never throws.
 function softIdentity(req) {
   try {
-    const h = req.headers.authorization;
-    if (!h || !h.startsWith('Bearer ')) return null;
-    const d = require('../lib/jwt-verify').verifyJwt(h.split(' ')[1]).claims;   // E10 — the ONE verifier
+    const text = req.headers.authorization;
+    if (!text || !text.startsWith('Bearer ')) return null;
+    const d = require('../lib/jwt-verify').verifyJwt(text.split(' ')[1]).claims;   // E10 — the ONE verifier
     // S1b (reviewer 2026-07-13) — a valid signature is not an identity. Reject any token that isn't a real entity/actor
     // (e.g. a sim_lead token). Return null → the caller treats it as anonymous (public-KB-only), never as an entity.
     if (!d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return null;
@@ -196,7 +196,7 @@ router.post('/catalogue-structure', async (req, res) => {
     if (assistOn() && identity) {
       try {
         const out = await ai.invokeSkill(payerOf(identity), 'catalogue-intro',
-          { retailer: built.for_entity, collection: built.collection, names: built.items.map(i => i.name) }, { max_tokens: 180, timeout_ms: 8000 });
+          { retailer: built.for_entity, collection: built.collection, names: built.items.map(item => item.name) }, { max_tokens: 180, timeout_ms: 8000 });
         intro = String(out.draft || '').trim() || null;
         if (intro) acted_by.model = out.model;
       } catch (mErr) { log.warn('catalogue intro skipped (model)', { id: req.id, err: mErr.message, status: mErr.status }); }
@@ -292,7 +292,7 @@ router.get('/catalogue-mine', auth, async (req, res) => {   /* M3: the same real
       return res.status(503).json({ ok: false, code: 'CATALOGUE_STORE_MISSING', error: 'Catalogue persistence not enabled yet — apply migration b75.' });
     }
     const catalogues = (await Promise.all(rows.map(async (row) => ({ source: row.source_key, version: row.version, visible: row.visible, updated_at: row.updated_at,
-      resolved: await catalogueBuild.resolve(row.source_key, row.commercials || {}) })))).filter((c) => c.resolved);
+      resolved: await catalogueBuild.resolve(row.source_key, row.commercials || {}) })))).filter((item) => item.resolved);
     res.json(Object.assign({ ok: true, count: catalogues.length }, PL.pageOut('catalogues', catalogues, pg)));
   } catch (err) {
     log.error('assist/catalogue-mine failed', { id: req.id, err: err.message });
@@ -457,7 +457,7 @@ router.get('/penetration', auth, async (req, res) => {
           ORDER BY orders DESC, sp.locality ASC`, [owner]);
       rows = r.rows;
     } catch (dbErr) { return res.status(503).json({ ok: false, code: 'PENETRATION_STORE_MISSING', error: 'Penetration not enabled yet — apply migration b79.' }); }
-    const total_orders = rows.reduce((s, x) => s + x.orders, 0);
+    const total_orders = rows.reduce((total, x) => total + x.orders, 0);
     const localities = Array.from(new Set(rows.map((x) => x.locality)));
     res.json({ ok: true, total_orders, localities: localities.length, by_locality: rows });
   } catch (err) { log.error('assist/penetration failed', { id: req.id, err: err.message }); res.status(500).json({ ok: false, error: safeErr(err) }); }
@@ -482,7 +482,7 @@ router.get('/questions', async (req, res) => {
     // context may be a CHAIN (comma-list: fine → parent → nav) so a sub-page ADDS its specific Q&A without losing the
     // broader curated set. Match if the entry's context array OVERLAPS any of them, or is universal ('*').
     const ctxRaw = (req.query && typeof req.query.context === 'string') ? req.query.context.slice(0, 128).trim() : '';
-    const ctxArr = ctxRaw ? ctxRaw.split(',').map(s => s.trim()).filter(Boolean).slice(0, 6) : [];
+    const ctxArr = ctxRaw ? ctxRaw.split(',').map(item => item.trim()).filter(Boolean).slice(0, 6) : [];
     const params = [];
     let where = 'active = true';
     if (ctxArr.length) { params.push(ctxArr); where += ` AND (context && $1::text[] OR '*' = ANY(context))`; }
