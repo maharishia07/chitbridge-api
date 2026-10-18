@@ -89,15 +89,15 @@ run('prove-wholesaler-e2e', async (t) => {
 
   /* ── bind the wholesaler's line and deliver the three messages ────────────────────────────────────────────── */
   const chl = await j('/api/channels', { token: tok });
-  const wa = ((chl.b || {}).channels || []).find((c) => c.key === 'whatsapp') || { bindings: [] };
-  let bind = (wa.bindings || []).find((b) => b.address === LINE);
+  const wa = ((chl.b || {}).channels || []).find((item) => item.key === 'whatsapp') || { bindings: [] };
+  let bind = (wa.bindings || []).find((item) => item.address === LINE);
   if (!bind) { const m = await j('/api/channels', { method: 'POST', token: tok, body: { channel: 'whatsapp', address: LINE, label: 'wholesaler line' } }); bind = m.b; }
   if (bind && bind.status !== 'verified') await j('/api/channels/' + bind.id + '/approve', { method: 'POST', headers: { 'x-cb-admin-key': ADMIN }, body: {} });
 
   for (const s of SHOPS) { const r = await deliver(s.phone, s.msg); t.ok(r.b && r.b.captured >= 1, '  · ' + s.name + ' messaged', JSON.stringify(r.b)); }
 
   /* ── read → raise → chit, for each (W-1) ──────────────────────────────────────────────────────────────────── */
-  const caps = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).filter((c) => (c.raw_text || '').includes(TAG));
+  const caps = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).filter((item) => (item.raw_text || '').includes(TAG));
   t.ok(caps.length === 3, 'W-1 · three messages arrived as three captures', String(caps.length));
   const chits = [];
   for (const c of caps) {
@@ -127,23 +127,23 @@ run('prove-wholesaler-e2e', async (t) => {
   /* ⚠️ THE EARLIEST date, not the last: the W-10 test deliberately adds a LATER one, and 'last' would then point at
      it. Naming which day is meant is the difference between a stable assertion and a lucky one. */
   const fri = (R.dates || []).slice().sort()[0];
-  const lines = (R.requirement || []).filter((l) => l.date === fri);
+  const lines = (R.requirement || []).filter((item) => item.date === fri);
 
   console.log('\n  ══ A · CONSOLIDATED REQUIREMENT for ' + fri + ' ══════════════════════════════════');
   lines.forEach((l) => {
     console.log('   ' + (l.item + (l.variant ? ' ' + l.variant : '')).padEnd(22)
       + String(l.total).padStart(6) + ' ' + (l.canonical_unit || '')
       + '   TOTAL across ' + l.stores + ' shop(s)'
-      + (l.conversions_applied ? '   ⚙ ' + l.conversions_applied.map((c) => c.qty + ' ' + c.from_unit + ' × ' + c.factor + ' = ' + c.became + ' ' + c.to_unit).join(', ') : ''));
-    l.breakdown.forEach((s2) => console.log('       └─ ' + String(s2.store_name).padEnd(20) + String(s2.qty).padStart(5) + ' ' + (s2.unit || l.canonical_unit) + '   (asked: "' + s2.phrase + '")'));
-    if (l.unit_split) console.log('       ⚠️ NOT ADDED: ' + l.unit_split.map((u) => u.qty + ' ' + u.unit).join('  +  ') + '   — no conversion declared');
+      + (l.conversions_applied ? '   ⚙ ' + l.conversions_applied.map((item) => item.qty + ' ' + item.from_unit + ' × ' + item.factor + ' = ' + item.became + ' ' + item.to_unit).join(', ') : ''));
+    l.breakdown.forEach((item) => console.log('       └─ ' + String(item.store_name).padEnd(20) + String(item.qty).padStart(5) + ' ' + (item.unit || l.canonical_unit) + '   (asked: "' + item.phrase + '")'));
+    if (l.unit_split) console.log('       ⚠️ NOT ADDED: ' + l.unit_split.map((item) => item.qty + ' ' + item.unit).join('  +  ') + '   — no conversion declared');
   });
   console.log('\n  ══ B · ATTRIBUTION ═════════════════════════════════════════════════════════════');
   lines.forEach((l) => console.log('   ' + (l.item + (l.variant ? ' ' + l.variant : '')).padEnd(20)
-    + l.breakdown.map((b) => b.store_name + ' ' + b.qty + (b.unit ? b.unit : '')).join(' · ')));
+    + l.breakdown.map((item) => item.store_name + ' ' + item.qty + (item.unit ? item.unit : '')).join(' · ')));
   console.log('\n  ══ FLAGGED — shown, never folded into a total ══════════════════════════════════');
-  ['unmatched', 'variant_unspecified', 'date_unspecified', 'unit_split'].forEach((k) => {
-    (R.flags[k] || []).forEach((f) => console.log('   ' + k.padEnd(20) + JSON.stringify(f).slice(0, 110)));
+  ['unmatched', 'variant_unspecified', 'date_unspecified', 'unit_split'].forEach((item) => {
+    (R.flags[item] || []).forEach((f) => console.log('   ' + item.padEnd(20) + JSON.stringify(f).slice(0, 110)));
   });
   console.log('');
 
@@ -164,21 +164,21 @@ run('prove-wholesaler-e2e', async (t) => {
   t.ok(g1 && g1.total === 4, '★★★ W-9 · orange grade 1 totals on its own', g1 && String(g1.total));
   t.ok(!lines.some((l) => /orange/i.test(l.item) && !l.variant), '★★★ W-9 · no variant-less orange line was invented');
 
-  t.ok((R.flags.unmatched || []).some((f) => /dragon/i.test(f.phrase || '')),
+  t.ok((R.flags.unmatched || []).some((item) => /dragon/i.test(item.phrase || '')),
     '★★★ W-5 · dragonfruit is FLAGGED unmatched', JSON.stringify(R.flags.unmatched));
   t.ok(!lines.some((l) => /dragon/i.test(l.item)), '★★★ W-5 · …and appears in NO total');
 
   /* W-4 arithmetically, across every line */
-  const bad = lines.filter((l) => !l.unit_split && Math.abs(l.breakdown.reduce((n, b) => n + b.qty, 0) - l.total) > 0.001
-    && !(l.conversions_applied || []).length);
-  t.ok(bad.length === 0, '★★★ W-4 · every un-converted total EQUALS the sum of its shop lines',
-    JSON.stringify(bad.map((l) => l.item)));
+  const list = lines.filter((item) => !item.unit_split && Math.abs(item.breakdown.reduce((total, b) => total + b.qty, 0) - item.total) > 0.001
+    && !(item.conversions_applied || []).length);
+  t.ok(list.length === 0, '★★★ W-4 · every un-converted total EQUALS the sum of its shop lines',
+    JSON.stringify(list.map((l) => l.item)));
 
-  t.ok(lines.every((l) => l.breakdown.every((b) => b.chit_id)), '★★ W-7 · every attribution line traces to its chit');
+  t.ok(lines.every((item) => item.breakdown.every((b) => b.chit_id)), '★★ W-7 · every attribution line traces to its chit');
 
   /* W-10 · a second date must not join the first */
   await deliver(SHOPS[0].phone, '10 kg tomato on monday ' + TAG);
-  const c2 = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((c) => /monday/i.test(c.raw_text || ''));
+  const c2 = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((item) => /monday/i.test(item.raw_text || ''));
   if (c2) {
     await j('/api/capture/' + c2.id + '/structure', { method: 'POST', token: tok, body: {} });
     const p2 = await j('/api/capture/' + c2.id + '/raise', { method: 'POST', token: tok, body: {} });
@@ -202,7 +202,7 @@ run('prove-wholesaler-e2e', async (t) => {
    * to be handed back. So: a shop orders onion in CRATES, for which the catalogue declares NO conversion.
    */
   await deliver(SHOPS[2].phone, '4 crate vengayam by friday ' + TAG);
-  const c3 = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((c) => /crate vengayam/i.test(c.raw_text || ''));
+  const c3 = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((item) => /crate vengayam/i.test(item.raw_text || ''));
   if (c3) {
     await j('/api/capture/' + c3.id + '/structure', { method: 'POST', token: tok, body: {} });
     const p3 = await j('/api/capture/' + c3.id + '/raise', { method: 'POST', token: tok, body: {} });
@@ -225,14 +225,14 @@ run('prove-wholesaler-e2e', async (t) => {
     '★★★ W-6 · …and it is flagged for the wholesaler to resolve', JSON.stringify((con3.b.flags || {}).unit_split));
 
   /* W-11 · the address override */
-  const amma = lines.flatMap((l) => l.breakdown).find((b) => /Amma/i.test(b.store_name || ''));
+  const amma = lines.flatMap((item) => item.breakdown).find((item) => /Amma/i.test(item.store_name || ''));
   t.ok(!!amma, 'W-11 · the shop that named a different address is attributable', amma && amma.store_name);
   t.note('W-11 · deliver_to / address_overridden ride on each request (consolidationInput) — surfaced next to the shop.');
 
   console.log('\n  ── HAND-BACK NUMBERS ───────────────────────────────────────────────────────────');
   console.log('   item phrases that failed to match the catalogue: ' + (R.unmatched_phrase_count || 0)
     + '   ← how much catalogue/synonym work real deployment needs');
-  console.log('   W-4 totals reconcile      : ' + (bad.length === 0 ? 'YES' : 'NO'));
+  console.log('   W-4 totals reconcile      : ' + (list.length === 0 ? 'YES' : 'NO'));
   console.log('   W-9 variants never merged : ' + (!lines.some((l) => /orange/i.test(l.item) && !l.variant) ? 'YES' : 'NO'));
   const uf = ((con3.b || {}).flags || {}).unit_split || [];
   console.log('   W-6 no invented conversion: ' + (uf.length ? 'YES — split + flagged, proved on real data' : 'NOT EXERCISED'));
