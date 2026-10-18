@@ -2545,6 +2545,13 @@ router.get('/unread', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: 'Unread failed', message: safeErr(err) }); }
 });
 
+/**
+ * orderBilledSql(header) — WALK2 W36: the ONE_SHOT scalar that says whether a bill names this ORDER yet (open-orders' ONE billed test, the Tasks
+ * list's Billed tag), so the sheet says "Not billed yet" instead of "Unpaid" (an order is a promise; it never posts). NULL when not an order.
+ */
+function orderBilledSql(header) {
+  return header && header.purpose === 'order' ? require('../lib/open-orders').billedOfChitSql('$1', '$2') : 'NULL::boolean';
+}
 router.get('/:chit_id', auth, async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
@@ -2759,7 +2766,7 @@ router.get('/:chit_id', auth, async (req, res) => {
           WHERE cs.chit_id = $2 AND cs.entity_id = $1 AND cs.direction = 'received' LIMIT 1)            AS my_received,
         -- ⭐ STD1: what the books wait on for THIS chit (books_outbox, b273: todo · name · why · candidates) — a scalar, no round trip;
         -- the bill's Accept verdict below is composed from it (the server's may/why), never from a list the page happens to hold.
-        ${require('../lib/books-store').waitOfChitSql('$1', '$2')}                                        AS books_wait`;
+        ${require('../lib/books-store').waitOfChitSql('$1', '$2')}                                        AS books_wait, ${orderBilledSql(data.header.rows[0])} AS order_billed`;
 
     let bundle = null;
     try {
@@ -2773,7 +2780,7 @@ router.get('/:chit_id', auth, async (req, res) => {
           assigned: _lines0 ? await assign.current(entity_id, chit_id, db, g.assignments || []) : null,
           prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
           my_received: g.my_received || null,
-          books_wait: g.books_wait || null,
+          books_wait: g.books_wait || null, order_billed: g.order_billed,   /* W36: orderBilledSql */
           /**
            * ⭐ THE ATTACHMENT LIST RIDES ALONG — it cost a whole transaction of its own, measured at 1074ms,
            * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
@@ -2934,7 +2941,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       /* ⭐ STD1: WHAT DOCUMENT THIS COPY IS, said by the server (lib/folder-inventory docOf — the Bills folders' own classification), so the popup
          never guesses whether it holds a bill; and what the books wait on for it (books_wait: todo · name · why · candidates, or null) */
       doc: _doc,
-      books_wait: bundle.books_wait || null,
+      books_wait: bundle.books_wait || null, order_billed: bundle.order_billed,   /* W36: true · false on an order, null otherwise; absent on the fallback path */
       /* ⭐ THE LIVE SET — one entry per ORIGINAL line, carrying what it is now and everything it has been.
          Removed lines are PRESENT with live:null: they must stay visible as evidence while counting nowhere.
          Sent whenever lines exist, amended or not, so the client has exactly one shape to render. */
