@@ -22115,8 +22115,8 @@ try {
  * 20 px icon; in Despatch, F10 did nothing and nothing said how to get back. Now: the header names the current mode in words
  * (#modepill, opens the list), ← Sell is one tap back (#modeback), F10 (day close) and F8 (bills) work in every mode, and a key that
  * belongs to Sell says so. Receive and Despatch are SHOWN to every shop and greyed with the reason when the shop holds no stock -
- * the server says which (snapshot shop.holds_stock, from the trade), the counter may override it (tillOpt().stock), and a counter
- * that keeps order tickets (kitchen / order pad) serves rather than stocks. PROPOSAL - Athi decides the final placement.
+ * the server says which (snapshot shop.holds_stock, from the shop's own data) and the counter may override it (tillOpt().stock); kitchen
+ * tickets and open orders do not decide it (CTR-2). PROPOSAL - Athi decides the final placement.
  */
 var MODE_WORD = { sell: 'Sell', receive: 'Receive', despatch: 'Despatch', maintain: 'Maintenance' };
 var MODE_HINT = { sell: 'Ring up and print bills', receive: 'Count in goods that arrive', despatch: 'Pack and send an order', maintain: 'Change a product or its price' };
@@ -22124,7 +22124,8 @@ function holdsStock(){
   try {
     var o = tillOpt() || {};
     if (o.stock === true || o.stock === false) return o.stock;
-    if (kotOn() || purposeHas('open_orders')) return false;
+    /* CTR-2 (VERT-BOX VB2): the counter override, else the server's holds_stock — a counter that sends kitchen tickets or holds orders open
+       is not thereby a shop without stock (the trade is never read here) */
     return !(S && S.shop && S.shop.holds_stock === false);
   } catch (_) { return true; }
 }
