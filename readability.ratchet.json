@@ -12,7 +12,7 @@
   "lib/availability.js": {"score":39,"long40":0,"long80":0,"complex10":3,"complex15":0,"deep3":0,"deep4":0,"cryptic":35,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/beckn-map.js": {"score":22,"long40":1,"long80":0,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/bill-privacy.js": {"score":44,"long40":0,"long80":0,"complex10":3,"complex15":2,"deep3":0,"deep4":0,"cryptic":38,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "lib/bill-steps.js": {"score":83,"long40":2,"long80":1,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":75,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
+  "lib/bill-steps.js": {"score":53,"long40":2,"long80":1,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":45,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/bill-use.js": {"score":32,"long40":0,"long80":0,"complex10":3,"complex15":2,"deep3":0,"deep4":0,"cryptic":26,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/boilerplate.js": {"score":8,"long40":1,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/books-assets.js": {"score":31,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":30,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
