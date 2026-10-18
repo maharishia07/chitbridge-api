@@ -6,6 +6,17 @@ A new key needs its entry here, in the same change. This file is being built; en
 
 > **The shop's flags and the person's prefs (W1-SET · FLD2, 2026-10-15):** every key of `lib/policy.js` FLAGS (`policy_flags.<key>`) and of `routes/entities.js` PREF_SETS (`ui_prefs.<key>` · `locale_prefs.<key>`) must have a row in this file, spelled with its store (`policy_flags.trade_side`, never the bare word). `lib/field-ledger.undocumentedSettings` reads both sources and this file; `tests/field-ledger.test.cjs` fails by name when a 33rd flag arrives without its row.
 
+## GET /api/network-offers · `store.networks[].may` · `brand.members[].may` · `brand_bridge_id` · `root_bridge_id` (NET-SRV1, carried over by NET-32, 2026-10-18)
+
+Derived per read, never stored. Written by: nobody (answer only). Read by: the Network app (web public/app/network-app.js). Contract: docs/contracts/web-api.json `GET /api/network-offers` (captured by tests/support/contract-network.cjs over tests/support/network-world.cjs).
+
+| Key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `store.networks[].may` · `brand.members[].may` | `{ request, approve, decline, suspend, resume, disconnect }`, each `{ ok: boolean, why: string or null }` | Derived by `lib/network-membership.mayOn(row, node)` from the ONE rule table (`src/services/network.mayAct`: the sentence POST /api/network/connections/:id/* would refuse with) and the edge's state. `why` is null when `ok`. A screen greys a refused action WITH the sentence. |
+| `store.networks[].brand_bridge_id` | string or null | `identities.bridge_id` of the brand, read in `standing()`'s one statement. null when the brand has no node on the tree yet. |
+| `store.networks[].root_bridge_id` | string or null | `cb_entity.bridge_id` of the TOP of the brand's tree, read in the same statement: the network store's address (GET /api/catalogue/network/:bridge_id). |
+| `store.networks[]` (who is listed) | n/a | Every brand the store holds a commercial edge with (requested, active or suspended, whoever asked) plus the brands whose catalogue it sells. |
+
 ## POST /api/chits/:id/payment · the press's own key (PAY-FIX · H2, 2026-10-15)
 
 | key | type | source / derived · who writes · who reads |
