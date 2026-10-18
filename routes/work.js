@@ -5,6 +5,7 @@
  *        -> { view, page, limit, truncated, counts|null, total|null, rows:[{ chit_id, kind, tab, stage, word, status, side, subject, party, total_minor, currency,
  *             channel, fulfilment, address, requested_for, remark, lines_n, lines_open_n, billed, assignee, lines_assigned_n, age_days, actions }] }
  *   GET /api/work/facts   -> { truncated, counts|null, lines:[{ text, value?, tone? }], figures }       (the Home box and the till pill)
+ *        ?unbilled=1 adds figures.unbilled { n, minor, currency } — the open orders in that no bill names yet (Finance › Collections, W11)
  *   GET /api/work/:chit_id -> the row + lines:[{ line_id, particulars, qty, unit, price_minor, delivered, remaining, assignment, settings, actions }]
  *
  * Every answer is built in lib/work-rows.js from the libs the old reads used (select · workflow · open-orders · assign · deliverline); this file only
@@ -41,7 +42,7 @@ router.get('/list', auth, async (req, res) => {
 /* before /:chit_id, which would call it a chit */
 router.get('/facts', auth, async (req, res) => {
   const ctx = who(req, res); if (!ctx) return;
-  try { res.json(await work.facts(ctx)); }
+  try { res.json(await work.facts(ctx, { unbilled: req.query && req.query.unbilled === '1' })); }
   catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 
