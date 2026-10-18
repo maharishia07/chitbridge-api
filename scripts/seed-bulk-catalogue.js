@@ -24,8 +24,8 @@
 const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 const OTP = process.env.DEV_OTP || '123456';
 const arg = (k, d) => {
-  const hit = process.argv.find((a) => a.startsWith('--' + k + '='));
-  return hit ? hit.split('=').slice(1).join('=') : d;
+  const text = process.argv.find((item) => item.startsWith('--' + k + '='));
+  return text ? text.split('=').slice(1).join('=') : d;
 };
 const EMAIL = arg('email', 'bulk@test-cb.com');
 const COUNT = parseInt(arg('count', '20000'), 10);
@@ -66,8 +66,8 @@ function itemAt(i) {
   console.log('  ' + API + '\n');
 
   await api('/api/entities/register', { method: 'POST', body: { email: EMAIL, display_name: 'Bulk Test Store' } });
-  const v = await api('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: OTP } });
-  const token = (v.json || {}).token;
+  const reply = await api('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: OTP } });
+  const token = (reply.json || {}).token;
   if (!token) { console.log('  could not sign in as ' + EMAIL + ' — is DEV_OTP set on the server?\n'); process.exit(1); }
   await api('/api/schemas/create-default', { method: 'POST', token });
 
@@ -91,8 +91,8 @@ function itemAt(i) {
     for (let start = 0; start < COUNT; start += BATCH) {
       const n = Math.min(BATCH, COUNT - start);
       const lines = ['name,code,unit,price'];
-      for (let i = 0; i < n; i++) {
-        const it = itemAt(start + i);
+      for (let index = 0; index < n; index++) {
+        const it = itemAt(start + index);
         lines.push([it.name, it.code, it.unit, it.price].join(','));
       }
       const csvText = lines.join('\n');
@@ -102,8 +102,8 @@ function itemAt(i) {
       const pre = await api('/api/products/import/preflight', { method: 'POST', token, body: { csv: csvText } });
       const mapping = (((pre.json || {}).report) || {}).mapping || [];
       const decisions = mapping
-        .filter((m) => m.canonical && m.how !== 'blocked' && m.how !== 'not-accepted')
-        .map((m) => ({ incoming: m.incoming, action: 'map', field: m.canonical }));
+        .filter((item) => item.canonical && item.how !== 'blocked' && item.how !== 'not-accepted')
+        .map((item) => ({ incoming: item.incoming, action: 'map', field: item.canonical }));
       const r = await api('/api/products/import', { method: 'POST', token,
         body: { csv: csvText, decisions, confirm: true } });
       if (r.status === 200) { ok += n; } else {
@@ -124,16 +124,16 @@ function itemAt(i) {
     ['duplex',   'a material matching many'],
     ['zzzzz',    'matching nothing'],
   ];
-  for (const [q, why] of probes) {
+  for (const [text, why] of probes) {
     const runs = [];
-    for (let k = 0; k < 3; k++) {
+    for (let index = 0; index < 3; index++) {
       const t = Date.now();
-      const r = await api('/api/network-design/availability?q=' + encodeURIComponent(q), { token });
+      const r = await api('/api/network-design/availability?q=' + encodeURIComponent(text), { token });
       runs.push(Date.now() - t);
-      if (k === 0 && r.status !== 200) console.log('    (' + q + ' → ' + r.status + ')');
+      if (index === 0 && r.status !== 200) console.log('    (' + text + ' → ' + r.status + ')');
     }
     const best = Math.min(...runs);
-    console.log('    ' + q.padEnd(11) + best + ' ms  (best of 3)   ' + why);
+    console.log('    ' + text.padEnd(11) + best + ' ms  (best of 3)   ' + why);
   }
 
   console.log('\n  WHAT TO LOOK FOR');
