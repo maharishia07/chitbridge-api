@@ -830,7 +830,7 @@ async function visibilityCapFor(entityId) {
   return visibilityCap.capOf({ plan, planMenu, paramsOverride });
 }
 
-router.patch('/profile', auth,
+router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: the shop's own details are the owner's or an editor's to change */
   /**
    * ⚠️ EVERY RULE SAYS WHAT IT WANTS. Athi, 2026-08-18: *"it says validation failed, not sure what it is. Need
    * to have explanation so people understand and update accordingly."*

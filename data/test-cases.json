@@ -66313,6 +66313,37 @@
    "needs": []
   },
   {
+   "case_key": "chitbridge-api/tests/profile-write-gate.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SEC-71 (2026-10-18): the shop's profile is changed only by the owner or an editor: PUT /profile, PUT /profile/vault and PATCH /entities/profile sit behind lib/access.writeGate; a viewer or commenter is refused 403 with the rail's sentence.",
+   "claim": "SEC-71 (2026-10-18): the shop's profile is changed only by the owner or an editor: PUT /profile, PUT /profile/vault and PATCH /entities/profile sit behind lib/access.writeGate; a viewer or commenter is refused 403 with the rail's sentence.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 90 lines. Run: node chitbridge-api/tests/profile-write-gate.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "connector",
+    "engine"
+   ],
+   "subjects": [
+    "lib/catalogue-write.js",
+    "lib/move-in.js",
+    "routes/books.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-18T04:30:00Z",
+   "needs": []
+  },
+  {
    "case_key": "chitbridge-api/tests/move-in-country-gate.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

@@ -333,7 +333,7 @@ router.get('/profile', auth, async (req, res) => {
  * the vault. It was the one piece of reference data that changed without telling anybody, so a tab open
  * elsewhere kept showing the old supplier block until it was reloaded.
  */
-router.put('/profile', auth, async (req, res) => {
+router.put('/profile', auth, writeGate, async (req, res) => {
   try { const entity_id = auth.entityOf(req);
     const saved = await require('../lib/profile').saveProfile(entity_id, req.body || {});
     /* ⚠ AFTER the save, not before it. Announcing a change that has not happened yet is a lie every open tab
@@ -370,9 +370,9 @@ async function writeVaultBody(entity_id, body) {
  *     409 VAULT_CHANGED "Changed since you opened it — reload?" when `version` ≠ the server's (GET /profile answers `vault_version`).
  *   The old whole body { vault: { sections: [...] } } is still taken for a FIRST fill (no row yet); over an existing vault it needs the
  *     version too (409 VAULT_VERSION_REQUIRED otherwise) — a blind replace is exactly the lost update Athi saw.
- *   Who may: any signed-in login of the shop (as before; the server's auth). Trips: 1 read + 1 conditional write (+ the mirror's).
+ *   Who may: the owner or an editor (SEC-71: lib/access writeGate — a viewer/commenter gets 403 read_only/comment_only WITH the rail's sentence). Trips: 1 read + 1 conditional write (+ the mirror's).
  */
-router.put('/profile/vault', auth, async (req, res) => {
+router.put('/profile/vault', auth, writeGate, async (req, res) => {
   try { const entity_id = auth.entityOf(req);
     const b = req.body || {};
     const written = await writeVaultBody(entity_id, b);
