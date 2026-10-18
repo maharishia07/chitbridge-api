@@ -77,14 +77,14 @@ const CASES = [
     bad:  (item) => [{ kind: 'payload', finish: item, name: item,
       payload: { pan: 'ABCDE1234F', assessment_year: '2026-27', income_from_salary: 1718600, bank_account_ifsc: 'HDFC0001234' } }],
     badWhy: 'a form missing its REQUIRED document',
-    pickItem: (items) => (items.find((i) => /ITR/.test(i)) || items[0]) },
+    pickItem: (items) => (items.find((item) => /ITR/.test(item)) || items[0]) },
 
   { key: 'negotiation', store: 'Delta Trade', email: 'delta@test-cb.com', preset: 'range', pipeline: 'commerce',
     good: (item) => [{ kind: 'finish', finish: item, quantity: 5, proposal: { price: 47000 } }],
     // outside the seller's declared band
     bad:  (item) => [{ kind: 'finish', finish: item, quantity: 5, proposal: { price: 10 } }],
     badWhy: "an offer BELOW the seller's band",
-    pickItem: (items) => (items.find((i) => /coil/i.test(i)) || items[0]) },
+    pickItem: (items) => (items.find((item) => /coil/i.test(item)) || items[0]) },
 
   { key: 'helpdesk', store: 'Epsilon Help Desk', email: 'epsilon@test-cb.com', preset: 'form', pipeline: 'payload',
     good: (item) => [{ kind: 'payload', finish: item, name: item, payload: { question: 'Is my order shipped?' } }],
@@ -119,7 +119,7 @@ const CASES = [
       const sf = await call('GET', `/api/catalogue/${encodeURIComponent(me.bridge_id)}`);
       const shop = (sf.json && sf.json.shop) || {};
       const oi = shop.order_input || {};
-      const names = ((sf.json && sf.json.finishes) || []).flatMap((f) => (f.items || []).map((i) => i.name));
+      const names = ((sf.json && sf.json.finishes) || []).flatMap((item) => (item.items || []).map((i) => i.name));
       row.storefront = sf.status === 200 ? 'ok' : 'FAIL(' + sf.status + ')';
       row.declared = (oi.preset === c.preset && oi.pipeline === c.pipeline) ? 'ok' : `FAIL(${oi.preset}/${oi.pipeline})`;
       row.items = names.length ? String(names.length) : 'FAIL(0)';
@@ -155,7 +155,7 @@ const CASES = [
       if (buyer) {
         await call('POST', '/api/relationships/suppliers', { token: buyer.token, body: { supplier_bridge_id: me.bridge_id } });
         const sup = await call('GET', `/api/relationships/suppliers/${encodeURIComponent(me.id)}/catalogue`, { token: buyer.token });
-        const supNames = ((sup.json && sup.json.finishes) || []).flatMap((f) => (f.items || []).map((i) => i.name));
+        const supNames = ((sup.json && sup.json.finishes) || []).flatMap((item) => (item.items || []).map((i) => i.name));
         row.supplier = (sup.status === 200 && supNames.length === names.length) ? 'ok'
                      : `FAIL(${sup.status}/${supNames.length} vs ${names.length})`;
       }
@@ -166,17 +166,17 @@ const CASES = [
   // ── the grid ──
   const cols = ['storefront', 'declared', 'items', 'submit', 'guard', 'chit', 'supplier'];
   const w = 15;
-  console.log('\n' + B('  ' + 'store'.padEnd(28) + cols.map((c) => c.padEnd(w)).join('')));
+  console.log('\n' + B('  ' + 'store'.padEnd(28) + cols.map((item) => item.padEnd(w)).join('')));
   console.log('  ' + '─'.repeat(28 + cols.length * w));
   let failures = 0;
   for (const r of rows) {
-    const cells = cols.map((c) => {
-      const v = String(r[c]);
-      if (v.startsWith('FAIL')) { failures++; return R(v.padEnd(w)); }
-      return (v === '–' ? D(v.padEnd(w)) : G(v.padEnd(w)));
+    const cells = cols.map((item) => {
+      const text = String(r[item]);
+      if (text.startsWith('FAIL')) { failures++; return R(text.padEnd(w)); }
+      return (text === '–' ? D(text.padEnd(w)) : G(text.padEnd(w)));
     });
     console.log('  ' + r.store.padEnd(28) + cells.join(''));
-    r.notes.forEach((n) => console.log('  ' + D('    ↳ ' + n)));
+    r.notes.forEach((item) => console.log('  ' + D('    ↳ ' + item)));
   }
 
   console.log('\n' + '─'.repeat(100));

@@ -316,7 +316,7 @@
   "scripts/lifecycle-iot.js": {"score":27,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":25,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/lint-copy.mjs": {"score":23,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":1,"emptyCatch":1,"noHeader":1},
   "scripts/make-test-media.js": {"score":20,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":2,"emptyCatch":0,"noHeader":1},
-  "scripts/matrix.js": {"score":36,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":34,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
+  "scripts/matrix.js": {"score":28,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":26,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/multi-source.js": {"score":31,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":29,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/o1-seal.js": {"score":11,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":10,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/penetration.js": {"score":27,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":25,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
