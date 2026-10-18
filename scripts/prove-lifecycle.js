@@ -9,14 +9,14 @@
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { if (ok) { P++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { F++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
 const S = (o) => JSON.stringify(o || '');
 
 (async () => {
   console.log('== PROVE LIFECYCLE (assimilation + runtime conformance) ==  ' + B + '\n');
   const ts = Date.now().toString().slice(-6), email = 'prove-' + ts + '@test.com';
-  const reg = await api('POST', '/api/entities/register', { body: { email } });
-  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } });
+  const reply = await api('POST', '/api/entities/register', { body: { email } });
+  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } });
   const token = ver.j && ver.j.token;
   chk('throwaway entity login', !!token);
 
@@ -35,14 +35,14 @@ const S = (o) => JSON.stringify(o || '');
   // ── B. RUNTIME GOVERNANCE: the standard is READ live and flags a contradiction ───────────────
   const exportOrder = { purpose: 'export order', product: 'Royale Play Tussar', quantity: 40 };   // no hs_code / incoterms
   const v1 = await api('POST', '/api/governance/conformance', { token, body: { data: exportOrder, scope: 'chit' } });
-  const checkedRefs = ((v1.j && v1.j.checked) || []).map(c => c.ref);
+  const checkedRefs = ((v1.j && v1.j.checked) || []).map(item => item.ref);
   chk('both standards READ at runtime', checkedRefs.includes('iso-9001@v1') && checkedRefs.includes('exim-policy@v1'),
     checkedRefs.join(', ') || 'none');
   chk('EXIM (chit-scope) FLAGS the contradiction', v1.j && v1.j.status === 'flagged'
-    && (v1.j.gaps || []).some(g => g.missing === 'hs_code') && (v1.j.gaps || []).some(g => g.missing === 'incoterms'),
-    'gaps: ' + ((v1.j && v1.j.gaps) || []).map(g => g.missing).join(', '));
+    && (v1.j.gaps || []).some(item => item.missing === 'hs_code') && (v1.j.gaps || []).some(item => item.missing === 'incoterms'),
+    'gaps: ' + ((v1.j && v1.j.gaps) || []).map(item => item.missing).join(', '));
   chk('ISO 9000 (entity-scope) is read but NOT mis-applied to the chit',
-    !((v1.j && v1.j.gaps) || []).some(g => String(g.standard).startsWith('iso-9001')), 'no false quality gaps');
+    !((v1.j && v1.j.gaps) || []).some(item => String(item.standard).startsWith('iso-9001')), 'no false quality gaps');
 
   // ── C. DISCRIMINATION: a complete export order passes ────────────────────────────────────────
   const goodOrder = { purpose: 'export order', product: 'Royale Play Tussar', quantity: 40,
