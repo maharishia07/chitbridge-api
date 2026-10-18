@@ -58,7 +58,7 @@ const auth = async (req, res, next) => {
       if (rec && rec.enrol && rec.enrol.approved === false && !/^\/api\/integrations\/heartbeat$/.test(url))
         return res.status(403).json({ error: 'Forbidden', pending: true, message: 'This connector is waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC' + (rec.enrol.host ? ' (' + rec.enrol.host + ')' : '') + (rec.enrol.reason ? ' · ' + rec.enrol.reason : '') });
       /* ⚠️ A KEY REACHES ONLY THE ROUTES ITS SCOPES NAME — never the session's whole surface */
-      const allowed = req.api_key.scopes.some((sc) => (KEY_ROUTES[sc] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
+      const allowed = req.api_key.scopes.some((item) => (KEY_ROUTES[item] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
       if (!allowed) return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
     }
     /**
@@ -233,8 +233,8 @@ function mark(res, k, v) { try { (res.locals = res.locals || {})[k] = v; } catch
  * drifts unless something asserts it; twice this week a scope was wrong in a way nothing noticed.
  */
 auth.allowsKey = function (scopes, method, url) {
-  return (scopes || []).some(function (sc) {
-    return (KEY_ROUTES[sc] || []).some(function (pair) {
+  return (scopes || []).some(function (item) {
+    return (KEY_ROUTES[item] || []).some(function (pair) {
       return (pair[0] === '*' || pair[0] === method) && pair[1].test(url); }); });
 };
 /**
@@ -400,10 +400,10 @@ function noteSeen(entity_id, jti, req) {
  */
 function keyAlive(list, jti) {
   if (!Array.isArray(list)) return false;
-  const rec = list.find((k) => k && String(k.jti) === String(jti));
+  const rec = list.find((item) => item && String(item.jti) === String(jti));
   if (!rec) return false;
   if (rec.parent) {
-    const p = list.find((k) => k && String(k.jti) === String(rec.parent));
+    const p = list.find((item) => item && String(item.jti) === String(rec.parent));
     if (!p || (p.till && p.till.closed_at)) return false;
   }
   return rec;
@@ -423,7 +423,7 @@ async function keyListed(entity_id, jti, req) {
 /** requireScope('offers') — a session may do anything; a key only what it was minted for */
 auth.requireScope = (...scopes) => (req, res, next) => {
   if (!req.api_key) return next();
-  if (scopes.some((s) => req.api_key.scopes.includes(s)) || req.api_key.scopes.includes('services')) return next();   /* 'services' = every service; any listed scope will do */
+  if (scopes.some((item) => req.api_key.scopes.includes(item)) || req.api_key.scopes.includes('services')) return next();   /* 'services' = every service; any listed scope will do */
   return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + scopes.join(' / ') });
 };
 
