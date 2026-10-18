@@ -114,7 +114,7 @@
   "lib/memberships.js": {"score":18,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/meter.js": {"score":3,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":2,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/mint-product.js": {"score":4,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
-  "lib/mint.js": {"score":36,"long40":1,"long80":1,"complex10":4,"complex15":2,"deep3":0,"deep4":0,"cryptic":26,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
+  "lib/mint.js": {"score":26,"long40":1,"long80":1,"complex10":4,"complex15":2,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/mintuserid.js": {"score":12,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/move-in.js": {"score":210,"long40":2,"long80":0,"complex10":9,"complex15":8,"deep3":1,"deep4":0,"cryptic":184,"noWhatLine":6,"emptyCatch":0,"noHeader":0},
   "lib/namedentity.js": {"score":2,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":1,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
