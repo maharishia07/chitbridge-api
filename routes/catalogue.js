@@ -39,14 +39,14 @@ function resolveContact(body) {
   const em = String(body.email ?? '').trim();
   const id = String(body.identifier ?? '').trim();
   if (ph && em) return { error: 'Give just one — a phone OR an email, not both.' };
-  const raw = id || ph || em;
-  if (!raw) return { error: 'Enter a phone number or an email.' };
-  if (raw.includes('@')) {
-    const email = raw.toLowerCase();
+  const text = id || ph || em;
+  if (!text) return { error: 'Enter a phone number or an email.' };
+  if (text.includes('@')) {
+    const email = text.toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: 'Enter a valid email address.' };
     return { channel: 'email', raw: email };
   }
-  const phone = cleanPhone(raw);
+  const phone = cleanPhone(text);
   if (phone.length < 6 || phone.length > 20) return { error: 'Enter a valid phone number.' };
   return { channel: 'phone', raw: phone };
 }
@@ -130,7 +130,7 @@ async function itemDeclFor(entity_id, itemName, cache) {
     const hits = c._decls.get(_norm(itemName)) || [];
     // T3.6 · reject AMBIGUITY rather than silently picking one. The commerce path already refuses when a name exists
     // under two brands ("available from more than one brand"); the payload path used to take whichever came first.
-    const distinct = hits.filter((h) => h.order_input).map((h) => h.source_key);
+    const distinct = hits.filter((item) => item.order_input).map((item) => item.source_key);
     if (distinct.length > 1) {
       const err = new Error(`"${itemName}" is offered by more than one source (${distinct.join(', ')}) — choose the source`);
       err.status = 422;
@@ -304,7 +304,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         const unit = _c.unit || it.unit || 'unit';
         // the SELLER's declared band (SPEC-negotiation-position §2) — bounds a buyer's offer; absent → unbounded.
         const band = (_c.price_min != null || _c.price_max != null) ? { min: _c.price_min, max: _c.price_max } : null;
-        const rec = { name: it.name, sku: it.sku || null, category: it.category || null, categories: Array.isArray(it.categories) ? it.categories : null, price: p, unit, band, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) };
+        const rec = { name: it.name, sku: it.sku || null, category: it.category || null, categories: Array.isArray(it.categories) ? it.categories : null, price: p, unit, band, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((item) => _norm(item.name))) };
         const nk = _norm(it.name);
         finishMap.set(row.source_key + '|' + nk, rec);
         const nb = finishByName.get(nk) || { count: 0, rec: null };
@@ -423,7 +423,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
                     ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } },
              ref.d));
   }));
-  const total = money.round(items.reduce((s, i) => s + i.total, 0));
+  const total = money.round(items.reduce((s, item) => s + item.total, 0));
   return { items, total };
 }
 
@@ -490,16 +490,16 @@ router.get('/network-store/:networkId', async (req, res) => {
     const network = await networkStoreOf(req.params.networkId);
     if (!network) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
     const q = String(req.query.q || '').trim().toLowerCase();
-    const cat = String(req.query.category || '').trim();
+    const text = String(req.query.category || '').trim();
     const rows = (await networkItems(network.members)).rows;
-    let products = rows.map((r) => { const d = r.item_data || {};
-      return { product_id: r.item_id, name: d.name || d.particulars || '(unnamed)', category: d.category || 'Other',
+    let products = rows.map((item) => { const d = item.item_data || {};
+      return { product_id: item.item_id, name: d.name || d.particulars || '(unnamed)', category: d.category || 'Other',
         // TOLERANT READ (both shapes). null stays null — "price on request" is a real state, not a zero.
         price: (Number.isFinite(money.amountOfLoose(d.price)) ? money.amountOfLoose(d.price) : null),
         unit: d.unit || null, image: d.image || null }; });
-    if (cat) products = products.filter((p) => p.category.toLowerCase() === cat.toLowerCase());
-    if (q) products = products.filter((p) => (p.name + ' ' + p.category).toLowerCase().indexOf(q) >= 0);
-    const categories = [...new Set(products.map((p) => p.category))].sort();
+    if (text) products = products.filter((item) => item.category.toLowerCase() === text.toLowerCase());
+    if (q) products = products.filter((item) => (item.name + ' ' + item.category).toLowerCase().indexOf(q) >= 0);
+    const categories = [...new Set(products.map((item) => item.category))].sort();
     res.json(Object.assign({ network_id: network.brand.bridge_id, categories, count: products.length }, PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));   // NO node/entity attribution — the internal structure stays hidden
   } catch (err) {
     if (membership.answerReadFailed(res, err)) return;   /* a member read that failed is said, never "no products" (T2-HONEST) */
@@ -577,23 +577,23 @@ router.post('/network-store/:networkId/order', async (req, res) => {
       return res.status(403).json({ error: 'Forbidden', code: 'NOT_THIS_NETWORK', message: 'Your sign-in belongs to another store. Sign in at this network\'s store to order.' });
     }
     const nid = network.brand.bridge_id;
-    const ids = cart.map((c) => c.product_id).filter(Boolean);
+    const ids = cart.map((item) => item.product_id).filter(Boolean);
     const rows = (await withEntity(null, (db) => db.query(
       `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`, [ids, network.members]))).rows;
     if (!rows.length) return res.status(404).json({ error: 'Not found', message: 'No matching products in this network' });
     const operatorId = String(network.brand.identity_id);
     /* one read for every party: the operator, the stores, and the customer the token names (by id — never by e-mail) */
-    const idset = [...new Set([operatorId, String(shopper.identity_id), ...rows.map((r) => String(r.entity_id))])];
-    const idents = {}; (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [idset])).rows.forEach((r) => { idents[r.identity_id] = { id: r.identity_id, bridge_id: r.bridge_id, display_name: r.display_name }; });
+    const idset = [...new Set([operatorId, String(shopper.identity_id), ...rows.map((item) => String(item.entity_id))])];
+    const idents = {}; (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [idset])).rows.forEach((item) => { idents[item.identity_id] = { id: item.identity_id, bridge_id: item.bridge_id, display_name: item.display_name }; });
     const operator = idents[operatorId]; if (!operator) return res.status(409).json({ error: 'No operator', message: 'Operator not found' });
     const crow = idents[String(shopper.identity_id)] || { id: shopper.identity_id, bridge_id: shopper.bridge_id, display_name: shopper.display_name };
     if (!crow.bridge_id) return res.status(401).json({ error: 'Unauthorised', code: 'SIGN_IN_FIRST', message: 'Sign in at the store to order.' });
     const customer = { id: crow.id, bridge_id: crow.bridge_id, display_name: crow.display_name || 'Customer' };
-    const items = rows.map((r) => { const c = cart.find((x) => x.product_id === r.item_id) || {}; const d = r.item_data || {};
+    const items = rows.map((item) => { const c = cart.find((x) => x.product_id === item.item_id) || {}; const d = item.item_data || {};
       // `Number(d.price || 0)` read a stamped price as NaN and an absent one as a FREE item. Both now fail loudly.
       const amt = money.amountOfLoose(d.price);
       if (!Number.isFinite(amt)) { const e = new Error(`"${d.name || 'item'}" has no usable price — order cannot be placed`); e.status = 422; throw e; }
-      return { item_id: r.item_id, store: r.entity_id, name: d.name || 'item', price: amt, qty: Number(c.qty || 1), category: d.category || '' }; });
+      return { item_id: item.item_id, store: item.entity_id, name: d.name || 'item', price: amt, qty: Number(c.qty || 1), category: d.category || '' }; });
     // ⚠ CROSS-ENTITY TOTAL. These items come from SEVERAL stores in one network, and a network can span countries —
     // so unlike every other total in this file the denomination is NOT a constant here. Before the money type this
     // line added INR to AED without complaint and produced a confident wrong number. It now refuses.
@@ -601,9 +601,9 @@ router.post('/network-store/:networkId/order', async (req, res) => {
     // Stores whose price is still an unstamped bare number contribute no currency, so a wholly unmigrated network
     // totals exactly as it did before. Once ANY store is stamped, a genuine mismatch surfaces as a 409 rather than
     // a plausible figure — which is the entire reason for doing this.
-    const perStore = rows.map((r) => (r.item_data || {}).price).filter((p) => money.isMoney(p));
+    const perStore = rows.map((item) => (item.item_data || {}).price).filter((item) => money.isMoney(item));
     if (perStore.length) money.sum(perStore);   // throws 409 naming both currencies
-    const total = money.round2(items.reduce((s, i) => s + i.price * i.qty, 0));
+    const total = money.round2(items.reduce((total, item) => total + item.price * item.qty, 0));
     // The OPERATOR governs this network, so its governed currency denominates the order and every fragment beneath
     // it. Resolved ONCE here: the order and its fragments are one transaction and must not drift apart.
     const currency = await regional.currencyFor(operatorId);
@@ -614,10 +614,10 @@ router.post('/network-store/:networkId/order', async (req, res) => {
       // unambiguous in every locale and leaves symbol choice to the UI, where presentation belongs.
       subject: 'Order — ' + items.length + ' item(s), ' + currency + ' ' + total,
       trace: { is_origin: true, product: 'ORDER', qty: items.length, unit: 'items', network: { id: nid, operator: operatorId }, order: true },
-      business: { kind: 'network_order', order_id: ORDER_ID, network_id: nid, items: items.map((i) => ({ name: i.name, qty: i.qty, price: i.price, category: i.category })), total, at: new Date().toISOString() },
+      business: { kind: 'network_order', order_id: ORDER_ID, network_id: nid, items: items.map((item) => ({ name: item.name, qty: item.qty, price: item.price, category: item.category })), total, at: new Date().toISOString() },
       status: 'pending' });
     // 2) SILENT per-store fragments (operator → store), each parents:[ORDER_ID]
-    const byStore = {}; items.forEach((i) => { (byStore[i.store] = byStore[i.store] || []).push(i); });
+    const byStore = {}; items.forEach((item) => { (byStore[item.store] = byStore[item.store] || []).push(item); });
     const fragments = [];
     for (const storeId of Object.keys(byStore)) {
       const store = idents[storeId]; if (!store) continue;
@@ -626,10 +626,10 @@ router.post('/network-store/:networkId/order', async (req, res) => {
       // A fragment carries THIS store's subtotal, not the order's. Stamping the whole total on each fragment would
       // multiply the network's apparent trade value by the number of stores the moment anyone sums the column.
       await deliverEdge({ sender: operator, receiver: store, chit_id: FRAG_ID, currency,
-        total_value: money.round2(sitems.reduce((s, i) => s + i.price * i.qty, 0)),
+        total_value: money.round2(sitems.reduce((total, item) => total + item.price * item.qty, 0)),
         subject: 'Fulfil order ' + ORDER_ID.slice(0, 8) + ' — ' + sitems.length + ' item(s)',
         trace: { parents: [ORDER_ID], product: 'FULFIL', qty: sitems.length, unit: 'items', network: { id: nid, operator: operatorId } },
-        business: { kind: 'order_fragment', order_id: ORDER_ID, network_id: nid, items: sitems.map((i) => ({ name: i.name, qty: i.qty })), at: new Date().toISOString() },
+        business: { kind: 'order_fragment', order_id: ORDER_ID, network_id: nid, items: sitems.map((item) => ({ name: item.name, qty: item.qty })), at: new Date().toISOString() },
         status: 'pending' });
       fragments.push(FRAG_ID);
     }
@@ -708,8 +708,8 @@ router.get('/network/:bridge_id', async (req, res) => {
 /** the bearer's verified claims, or null — a missing, bad or expired token is simply anonymous on a public read */
 function claimsOf(req) {
   try {
-    const h = req.headers.authorization || ''; if (!h.startsWith('Bearer ')) return null;
-    return require('../lib/jwt-verify').verifyJwt(h.slice(7)).claims || null;   // E10 — the ONE verifier
+    const text = req.headers.authorization || ''; if (!text.startsWith('Bearer ')) return null;
+    return require('../lib/jwt-verify').verifyJwt(text.slice(7)).claims || null;   // E10 — the ONE verifier
   } catch (e) { logger.fellBack('catalogue claimsOf: the token did not verify — read as a stranger', e, 'debug'); return null; }
 }
 function ownerOf(req, entity) {
@@ -1001,7 +1001,7 @@ router.post('/:bridge_id/support',
          one code would post tickets for the rest of its fifteen minutes. */
       await spendShopperOtp(query, c.identity_id);
 
-      const SEV = require('../lib/raiseticket').URGENCY.map((u) => u[0]);
+      const SEV = require('../lib/raiseticket').URGENCY.map((item) => item[0]);
       const severity = SEV.indexOf(String(req.body.severity || '')) >= 0 ? String(req.body.severity) : 'Sev-3';
       const observed = String(req.body.observed || '').trim().slice(0, 4000);
 
@@ -1091,9 +1091,9 @@ router.post('/:bridge_id/order/confirm',
           // the proof still stands and the blob is re-uploadable against a known hash.
           const dv = orderInput.validateDocuments(li.documents, itemOi.documents, crypto, docBudget);
           if (!dv.ok) throw _422(`"${label}": ${dv.errors.join('; ')}`);
-          dv.docs.forEach((d) => pendingDocs.push({ ...d, line_index: idx }));   // the proof stays attached to ITS form
+          dv.docs.forEach((item) => pendingDocs.push({ ...item, line_index: idx }));   // the proof stays attached to ITS form
           line_items.push({ kind: 'payload', name: label, particulars: label, quantity: 1, price: 0, total: 0, payload: v.value,
-                            ...(dv.docs.length ? { documents: dv.docs.map((d) => ({ name: d.name, mime: d.mime, size: d.size, sha256: d.sha256 })) } : {}) });
+                            ...(dv.docs.length ? { documents: dv.docs.map((item) => ({ name: item.name, mime: item.mime, size: item.size, sha256: item.sha256 })) } : {}) });
           }
           total = 0;
         } catch (ve) {
@@ -1137,7 +1137,7 @@ router.post('/:bridge_id/order/confirm',
       const monetary = oi.pipeline === 'commerce';
       /* O8 (black-box 2026-10-09): what the customer typed at the shop checkout rides ON THE CHIT - the full delivery address, the time asked for, the remark - so the shop
          can act on the order. Bounded short strings, never spread from the body; the sheet reads summary_json.order_details (web chit-sheet.js). */
-      const _short = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : '');
+      const _short = (text, n) => (typeof text === 'string' ? text.trim().slice(0, n) : '');
       const _rd = (req.body && req.body.requested_delivery && typeof req.body.requested_delivery === 'object') ? req.body.requested_delivery : null;
       const _addr = _short(req.body && req.body.location, 300), _rem = _short(req.body && req.body.remark, 300);
       /* M182: the name typed at checkout rides on the order too — an existing account keeps its old display_name, so the till would show that instead */
@@ -1179,7 +1179,7 @@ router.post('/:bridge_id/order/confirm',
         const allowed = await require('../lib/conformance').captureFieldsForEntity(entity.identity_id);
         // captureFieldsForEntity returns [{field, standard, facet, title}] — the key is `field`. Getting this wrong
         // yields an EMPTY allow-list, which silently drops every captured field rather than failing loudly.
-        const allow = new Set((allowed || []).map((f) => (typeof f === 'string' ? f : (f && (f.field || f.key)))).filter(Boolean));
+        const allow = new Set((allowed || []).map((item) => (typeof item === 'string' ? item : (item && (item.field || item.key)))).filter(Boolean));
         const raw = (req.body && typeof req.body.captured === 'object' && !Array.isArray(req.body.captured)) ? req.body.captured : {};
         for (const k of Object.keys(raw)) {
           if (!allow.has(k)) continue;                                        // not asked for → not carried
@@ -1193,7 +1193,7 @@ router.post('/:bridge_id/order/confirm',
         // captured goes in UNDER its own key, never spread over the authoritative summary — a customer must not be
         // able to decide what the checker sees for total_value or line_item_count.
         const v = await require('../lib/conformance').checkConformance({ ...summary_json, ...captured, line_items }, 'chit');
-        summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map(g => g.missing), captured: Object.keys(captured) };
+        summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map(item => item.missing), captured: Object.keys(captured) };
       } catch (e) { logger.fellBack('catalogue: the helper failed — carried on without it', e); /* advisory is best-effort */ }
       const auto_subject = `Order from ${c.display_name} — ` +
         await shopDatePhrase(entity.identity_id);   /* N3: the shop's zone and locale, not India's */
@@ -1327,7 +1327,7 @@ router.post('/:bridge_id/order/confirm',
       // Best-effort, post-commit, never breaks the order; self-heals if b79 isn't applied. Feeds the brand's heatmap.
       if (custLocality) {
         try {
-          const srcs = Array.from(new Set(line_items.filter((l) => l.source).map((l) => l.source)));
+          const srcs = Array.from(new Set(line_items.filter((item) => item.source).map((item) => item.source)));
           for (const sk of srcs) await query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [sk, entity.identity_id, custLocality]);
         } catch (e) { logger.fellBack('catalogue: the write failed — carried on without it', e); /* b79 not applied → skip (self-healing) */ }
       }
@@ -1336,7 +1336,7 @@ router.post('/:bridge_id/order/confirm',
       // container, routing, locality) to the ERP; keep a RECEIPT (refs + hash), NOT the raw payload. CB does NOT
       // route/fulfill — the ERP does. This is where CB stops at the information. Best-effort, self-healing.
       try {
-        const govLines = line_items.filter((l) => l.governed).map((l) => ({ finish: l.name, source: l.governed.under, container: l.governed.container || null, routing: l.governed.routing || null, qty: l.quantity }));
+        const govLines = line_items.filter((item) => item.governed).map((item) => ({ finish: item.name, source: item.governed.under, container: item.governed.container || null, routing: item.governed.routing || null, qty: item.quantity }));
         if (govLines.length) {
           const summary = { chit_id, total: summary_json.total_value, currency: summary_json.currency_code, locality: custLocality || null, lines: govLines };
           const payload_hash = crypto.createHash('sha256').update(JSON.stringify(summary)).digest('hex');
@@ -1360,7 +1360,7 @@ router.post('/:bridge_id/order/confirm',
       try { require('../lib/events').emit([entity.identity_id], { kind: 'chit', id: chit_id, who: c.display_name || null, note: purpose === 'offer' ? 'offer' : 'order' }); } catch (e) { logger.fellBack('catalogue: the signal was not sent — carried on without it', e); }
       res.json({ message: purpose === 'offer' ? 'Offer sent' : 'Order placed', chit_id, shop: entity.display_name,
                  summary: summary_json, token,
-                 ...(pendingDocs.length ? { documents: pendingDocs.map((d) => ({ name: d.name, sha256: d.sha256, line_index: d.line_index })) } : {}) });
+                 ...(pendingDocs.length ? { documents: pendingDocs.map((item) => ({ name: item.name, sha256: item.sha256, line_index: item.line_index })) } : {}) });
     } catch (err) {
       /* ⭐ b247's population boundary answers as a 409 in words, not "Order failed" (lib/knownerr, review §23) */
       const _known = require('../lib/knownerr').known(err);
