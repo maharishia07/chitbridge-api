@@ -4,9 +4,9 @@ const BASE = 'https://chitbridge-api-production.up.railway.app';
 const ALPHA = 'Alpha Timbers', BETA = 'Beta Traders', ALPHA_ID = '71373522-147e-4a75-966a-73de3d8bf045', BETA_ID = '75c378a6-ad7f-4b58-87d2-e1509cbb0482';
 let PASS = 0, FAIL = 0;
 function check(n, ok, d) { if (ok) { PASS++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { FAIL++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } }
-async function api(m, p, { token, body } = {}) { const h = { 'Content-Type': 'application/json' }; if (token) h.Authorization = 'Bearer ' + token; const r = await fetch(BASE + p, { method: m, headers: h, body: body ? JSON.stringify(body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, json: j }; }
-async function login(n) { const r = await api('POST', '/api/entities/register', { body: { email: n } }); const o = r.json && r.json.dev_otp; if (!o) return {}; const v = await api('POST', '/api/entities/verify', { body: { email: r.json.email, otp: o } }); return { token: v.json && v.json.token }; }
-const eid = t => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
+async function api(m, p, { token, body } = {}) { const h = { 'Content-Type': 'application/json' }; if (token) h.Authorization = 'Bearer ' + token; const reply = await fetch(BASE + p, { method: m, headers: h, body: body ? JSON.stringify(body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, json: j }; }
+async function login(n) { const reply = await api('POST', '/api/entities/register', { body: { email: n } }); const o = reply.json && reply.json.dev_otp; if (!o) return {}; const v = await api('POST', '/api/entities/verify', { body: { email: reply.json.email, otp: o } }); return { token: v.json && v.json.token }; }
+const eid = text => { try { return JSON.parse(Buffer.from(text.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
 const has = (o, s) => JSON.stringify(o || '').includes(s);
 (async () => {
   console.log('== DISPUTE MESSAGE SCOPING ==\n');
@@ -16,8 +16,8 @@ const has = (o, s) => JSON.stringify(o || '').includes(s);
   const gid = eid(G.token);
   const ts = Date.now().toString().slice(-5);
   // Alpha -> Beta(to) + Gamma(cc): all three are CHIT participants
-  const snd = await api('POST', '/api/chits/send', { token: A.token, body: { recipients: [{ entity_id: BETA_ID, role: 'to' }, { entity_id: gid, role: 'cc' }], purpose: 'general', manual_subject: 'DSCOPE ' + ts, business_json: {} } });
-  const chit = snd.json && (snd.json.chit_id || (snd.json.chit && snd.json.chit.chit_id));
+  const reply = await api('POST', '/api/chits/send', { token: A.token, body: { recipients: [{ entity_id: BETA_ID, role: 'to' }, { entity_id: gid, role: 'cc' }], purpose: 'general', manual_subject: 'DSCOPE ' + ts, business_json: {} } });
+  const chit = reply.json && (reply.json.chit_id || (reply.json.chit && reply.json.chit.chit_id));
   check('3-party chit created (Beta TO, Gamma CC)', !!chit, chit);
   if (!chit) return done();
   check('Gamma is a chit participant', has((await api('GET', '/api/chits/inbox', { token: G.token })).json, chit));
