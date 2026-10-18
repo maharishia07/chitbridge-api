@@ -36,7 +36,7 @@
   "lib/catalogue-build.js": {"score":32,"long40":0,"long80":0,"complex10":3,"complex15":1,"deep3":0,"deep4":0,"cryptic":27,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/catalogue-columns.js": {"score":30,"long40":3,"long80":0,"complex10":3,"complex15":1,"deep3":0,"deep4":0,"cryptic":23,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/catalogue-read.js": {"score":20,"long40":1,"long80":0,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "lib/catalogue-view.js": {"score":52,"long40":2,"long80":1,"complex10":2,"complex15":1,"deep3":1,"deep4":1,"cryptic":42,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
+  "lib/catalogue-view.js": {"score":39,"long40":2,"long80":1,"complex10":2,"complex15":1,"deep3":1,"deep4":1,"cryptic":29,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
   "lib/catalogue-write.js": {"score":21,"long40":1,"long80":0,"complex10":3,"complex15":2,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/categories.js": {"score":15,"long40":1,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/channels.js": {"score":33,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":1,"deep4":0,"cryptic":30,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
