@@ -82,9 +82,9 @@ router.get('/', auth, async (req, res) => {
      * ⭐ THE SYSTEM FOLDERS FIRST — the inventory's ON rows (lib/folder-inventory), each with its code, its ledger and the count
      * of its OPEN items. ⚠️ A failure reading them never blanks the shop's own tree, and it is SAID (system_error), not swallowed.
      */
-    let sys = [], sysErr = null;
-    try { sys = await views.systemFolders(e); } catch (e2) { sysErr = safeErr(e2); console.error('system folders:', e2.message); }
-    res.json(Object.assign(PL.pageOut('folders', sys.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), sysErr ? { system_error: sysErr } : {}));
+    let list = [], sysErr = null;
+    try { list = await views.systemFolders(e); } catch (e2) { sysErr = safeErr(e2); console.error('system folders:', e2.message); }
+    res.json(Object.assign(PL.pageOut('folders', list.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), sysErr ? { system_error: sysErr } : {}));
   } catch (err) { res.status(500).json({ error: 'List failed', message: safeErr(err) }); }
 });
 
@@ -193,16 +193,16 @@ router.patch('/:id', auth,
     body('parent_id').optional({ nullable: true }) ],
   validate, async (req, res) => {
   try {
-    const e = ent(req); const sets = []; const params = []; let n = 0;
-    if (req.body.name !== undefined) { n++; sets.push(`name = $${n}`); params.push(sanitise(req.body.name)); }
+    const e = ent(req); const sets = []; const params = []; let index = 0;
+    if (req.body.name !== undefined) { index++; sets.push(`name = $${index}`); params.push(sanitise(req.body.name)); }
     if (req.body.parent_id !== undefined) {
       const par = req.body.parent_id || null;
       if (par === req.params.id) return res.status(400).json({ error: 'A folder cannot be its own parent' });
-      n++; sets.push(`parent_id = $${n}`); params.push(par);
+      index++; sets.push(`parent_id = $${index}`); params.push(par);
     }
     if (!sets.length) return res.status(400).json({ error: 'Nothing to update' });
-    n++; const idIdx = n; params.push(req.params.id); n++; params.push(e);
-    const r = await withEntity(e, (db) => db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${n} RETURNING folder_id, parent_id, name`, params));
+    index++; const idIdx = index; params.push(req.params.id); index++; params.push(e);
+    const r = await withEntity(e, (db) => db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${index} RETURNING folder_id, parent_id, name`, params));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ folder: r.rows[0] });
   } catch (err) { res.status(500).json({ error: 'Update failed', message: safeErr(err) }); }
@@ -655,7 +655,7 @@ router.get('/groupsum', auth, async (req, res) => {
        (paging is 50) while keeping an unbounded list out of the request. The lib INTERSECTS these with the
        caller's own rows, so this parameter can only ever narrow what they could already see. */
     const ids = String(req.query.chit_ids || '').split(',')
-      .map((s) => s.trim()).filter((s) => /^[0-9a-f-]{36}$/i.test(s)).slice(0, 500);
+      .map((item) => item.trim()).filter((item) => /^[0-9a-f-]{36}$/i.test(item)).slice(0, 500);
     res.json(await groupsum.requirement(me, {
       scope: req.query.scope === 'order' ? 'order' : 'task',
       folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
@@ -707,9 +707,9 @@ router.get('/reconcile', auth, async (req, res) => {
     }
     // Roll a folder's own rows up through its ancestors, so `tree` is this folder plus everything beneath it.
     const kids = {};
-    folders.forEach((f) => { (kids[f.parent_id || 'root'] = kids[f.parent_id || 'root'] || []).push(f); });
+    folders.forEach((item) => { (kids[item.parent_id || 'root'] = kids[item.parent_id || 'root'] || []).push(item); });
     const treeRows = (fid) => (byFolder.get(fid) || []).concat(
-      ((kids[fid] || []).flatMap((c) => treeRows(c.folder_id))));
+      ((kids[fid] || []).flatMap((item) => treeRows(item.folder_id))));
 
     const seg = (list) => Object.assign(measure.measure(list, { overdue_days: flags.overdue_days }), {
       /* ⚠️ ASSIGNED vs UNASSIGNED is a SEGREGATION, not a status. A chit can be open and unassigned, or open and
@@ -718,15 +718,15 @@ router.get('/reconcile', auth, async (req, res) => {
       unassigned: list.filter((x) => !x.assigned_to_actor_id).length,
     });
 
-    const out = folders.map((f) => {
-      const own = byFolder.get(f.folder_id) || [];
-      const tree = treeRows(f.folder_id);
-      return { folder_id: f.folder_id, parent_id: f.parent_id, name: f.name,
+    const out = folders.map((item) => {
+      const own = byFolder.get(item.folder_id) || [];
+      const tree = treeRows(item.folder_id);
+      return { folder_id: item.folder_id, parent_id: item.parent_id, name: item.name,
                own: own.length, tree: tree.length, segments: seg(own) };
     });
 
     const filed = rows.length - unfiled;
-    const summed = out.reduce((n, f) => n + f.own, 0);
+    const summed = out.reduce((total, item) => total + item.own, 0);
     /**
      * ⭐ THE BILLS LEFT THE INBOX, SO THEY ARE COUNTED, NOT LOST (2026-10-01). An unfiled bill is in the Bills folders, not in
      * Task: unfiled = inbox + in_bills, by the same classification the inbox uses (lib/folder-inventory LEAVES over doc_kind).
@@ -788,8 +788,8 @@ router.get('/mis', auth, async (req, res) => {
     /* ⚠️ ONE read, then partitioned — counting the halves separately is how two numbers come to disagree.
        Same discipline as /reconcile above, and the same limit. */
     const rows = await select.rows(me, { limit: 5000, since });
-    const received = rows.filter((r) => r.direction === 'received');
-    const sent = rows.filter((r) => r.direction === 'sent');
+    const received = rows.filter((item) => item.direction === 'received');
+    const sent = rows.filter((item) => item.direction === 'sent');
     /* T3-P4-ACCOUNT: `overdue` follows the rail's one rule (lib/home-facts railMeasure — the shop's own notes are never overdue), so CB Finance › Reports'
        overdue opens CB CRM's stuck list and counts the same chits as Home's rail. Every other figure is lib/measure's own, as before. */
     const M = (xs) => require('../lib/home-facts').railMeasure(xs, me, opts);
