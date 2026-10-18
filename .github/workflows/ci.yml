@@ -185,9 +185,9 @@ jobs:
           done
           # cb_* network/catalogue schema (for the jest suites)
           psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d cb_test -c "CREATE EXTENSION IF NOT EXISTS ltree;"
-          $PSQL migrations/net01_network.sql
-          $PSQL migrations/net02_chit.sql
-          $PSQL migrations/net03_full_schema.sql
+          $PSQL migrations/archive/net01_network.sql
+          $PSQL migrations/archive/net02_chit.sql
+          $PSQL migrations/archive/net03_full_schema.sql
       - name: Jest DB suites (cb_* network/catalogue)
         run: npm run test:jest
       - name: Start API + wait for health

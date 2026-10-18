@@ -108,7 +108,7 @@ D.extra = async (sql, p) => {
     assert.strictEqual((await t.get('/parties')).status, 200); state.table = true;
   });
   await ita('b297 (the RLS test of the new table): RLS ON and FORCED, policy on entity_id NULLIF-guarded, append-only, kinds a dictionary', async () => {
-    const sql = fs.readFileSync(path.join(API, 'migrations', 'b297_memberships.sql'), 'utf8').replace(/--[^\n]*/g, '');
+    const sql = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b297_memberships.sql'), 'utf8').replace(/--[^\n]*/g, '');
     assert.ok(/ALTER TABLE memberships ENABLE ROW LEVEL SECURITY/.test(sql) && /ALTER TABLE memberships FORCE\s+ROW LEVEL SECURITY/.test(sql));
     assert.ok(/CREATE POLICY rls_entity ON memberships\s+USING\s+\(entity_id = NULLIF\(current_setting\('app\.current_entity', true\), ''\)::uuid\)\s+WITH CHECK \(entity_id = NULLIF\(current_setting\('app\.current_entity', true\), ''\)::uuid\)/.test(sql));
     assert.ok(/REVOKE UPDATE, DELETE ON memberships FROM cb_app/.test(sql) && /GRANT SELECT, INSERT ON memberships TO cb_app/.test(sql));

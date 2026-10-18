@@ -2,7 +2,7 @@
 /**
  * tests/notif-feed-dryrun.test.cjs — THE DRY RUN IS THE LIVE STATEMENT (SEC-SMALL item 6, 2026-10-14).
  *
- * migrations/b619_notif_feed_index_dryrun.sql asks the database for the plan of the 20-second notifications poll. A dry
+ * migrations/archive/b619_notif_feed_index_dryrun.sql asks the database for the plan of the 20-second notifications poll. A dry
  * run of a statement that is not the one the api runs measures nothing — so this file renders routes/notifications.js's
  * FEED_FROM exactly as the route does (lib/bill-privacy filled in, $1/$2 as the placeholder uuid, FEED_DAYS as 90) and
  * requires the SQL file to carry it verbatim. It also holds b620 to the CONCURRENTLY rules and keeps the 90-day bound
@@ -13,8 +13,8 @@
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
 const route = fs.readFileSync(path.join(API, 'routes', 'notifications.js'), 'utf8');
-const dry = fs.readFileSync(path.join(API, 'migrations', 'b619_notif_feed_index_dryrun.sql'), 'utf8');
-const apply = fs.readFileSync(path.join(API, 'migrations', 'b620_notif_feed_index_apply.sql'), 'utf8');
+const dry = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b619_notif_feed_index_dryrun.sql'), 'utf8');
+const apply = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b620_notif_feed_index_apply.sql'), 'utf8');
 const billPrivacy = require(path.join(API, 'lib', 'bill-privacy'));
 
 let pass = 0;
@@ -59,7 +59,7 @@ it('b620 is CONCURRENTLY, idempotent, and never inside a transaction block', () 
   assert.ok(/indisvalid/.test(code), 'the verify must name an INVALID index rather than report success');
 });
 it('b620 is the index the baseline created, same columns, same order', () => {
-  const base = fs.readFileSync(path.join(API, 'migrations', '000_baseline_part2.sql'), 'utf8');
+  const base = fs.readFileSync(path.join(API, 'migrations', 'archive', '000_baseline_part2.sql'), 'utf8');
   assert.ok(/CREATE INDEX idx_state_log_entity ON public\.state_log USING btree \(entity_id, created_at DESC\)/.test(base));
 });
 it('both files say RLS and the reserved numbers are the round\'s (b619 · b620)', () => {

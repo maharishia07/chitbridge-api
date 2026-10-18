@@ -23,8 +23,8 @@
  * ⭐ THE DATABASE IS MODELLED, NOT MOCKED FLAT. Disputes are per-copy under FORCE RLS (b68), so a flat stub would prove
  * nothing. The in-memory store below holds one row per (dispute, entity) and every read inside withEntity(me) sees only
  * MY rows — exactly the rls_entity policy. The definers are transcribed from the migrations that are live:
- *   chit_dispute_deliver / chit_dispute_resolve  — migrations/b103_definers_b50_standard.sql (caller checks, raiser-only)
- *   chit_dispute_roster                           — migrations/b68_disputes_percopy.sql
+ *   chit_dispute_deliver / chit_dispute_resolve  — migrations/archive/b103_definers_b50_standard.sql (caller checks, raiser-only)
+ *   chit_dispute_roster                           — migrations/archive/b68_disputes_percopy.sql
  *   chit_message_deliver (9 + 10 arg)             — b103 + b155 (dispute → roster only, fail closed)
  *   chit_log_targets                              — migration_b51 (writes only to targets that are chit participants)
  *   chit_log_all                                  — migration_b50 (writes to EVERY chit participant)

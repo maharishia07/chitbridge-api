@@ -19,7 +19,7 @@ require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true,
   exports: { query: async () => ({ rows: ROW ? [ROW] : [] }) } };
 const istest = require(path.join(API, 'lib', 'istest'));
 
-const MIG = fs.readFileSync(path.join(API, 'migrations', 'b249_population_as_a_value.sql'), 'utf8');
+const MIG = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b249_population_as_a_value.sql'), 'utf8');
 const TRIG = MIG.slice(MIG.indexOf('FUNCTION chit_populations_must_match'), MIG.indexOf('$fn$;', MIG.indexOf('FUNCTION chit_populations_must_match')));
 
 const checks = [];

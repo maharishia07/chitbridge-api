@@ -3,8 +3,9 @@
  * tools/migrate.cjs — THE SCHEMA PATH, WITH A LEDGER (HX1). Moved here from tools/sim-load.cjs (applySchema, HX0) and widened: every
  * file it runs is written into `schema_migrations` (b304), and a file already there is skipped — so a second deploy runs only what is new.
  *
- *   node tools/migrate.cjs --db <url>                       apply: an EMPTY database gets the chain (000_baseline → part2 passes → every
- *                                                           bNNN in number order, migrations/MANIFEST.md); a database with a ledger gets
+ *   node tools/migrate.cjs --db <url>                       apply: an EMPTY database gets the ONE baseline (000_baseline_2026-10-18.sql:
+ *                                                           schema + reference rows + the ledger table) then every bNNN after b764 in number
+ *                                                           order (migrations/MANIFEST.md); a database with a ledger gets
  *                                                           the chain files the ledger does not name. A database WITH tables and an EMPTY
  *                                                           ledger is left alone (exit 0) — record what it has first (below).
  *   node tools/migrate.cjs --db <url> --status              what the ledger says: pending files, files changed since they ran. Reads only.
@@ -22,19 +23,39 @@ const path = require('path'), fs = require('fs'), crypto = require('crypto');
 const { spawnSync } = require('child_process');
 const API = path.join(__dirname, '..');
 const M = path.join(API, 'migrations');
+/* DB-REBASE (Athi, 18 Oct 2026): ONE baseline = production's schema on that day (pg_dump of the old chain, proven equal by the rebase
+   fingerprint). The files it replaces — 000_baseline pair, migration_b42..57, b58..b764, net0x, sim01 — live unchanged in
+   migrations/archive/ and are never run on a new database. b304 (the ledger table) is inside the baseline; LEDGER_FILE names it for
+   the owner's hand step on a database that has none. */
 const LEDGER_FILE = 'b304_schema_migrations.sql';
-const BASELINE = ['000_baseline.sql', '000_baseline_part2.sql'];
+const LEDGER_PATH = path.join(M, 'archive', LEDGER_FILE);
+const BASELINE = ['000_baseline_2026-10-18.sql'];
+/** the last migration number the baseline contains: a chain file must be numbered above it */
+const BASELINE_THROUGH = 764;
 
 /** a migration file the chain skips: a dry run, a verify, a one-off data script, a purge.
  *  BCP-MIG (17 Oct): `_LIST` is gone — under /i it matched `supplier_list`, so b270 (supplier_list RLS) never ran on a rebuilt database;
  *  the purge_*_LIST file it was for is skipped by `purge`. */
 const CHAIN_SKIP = /dryrun|verify|COMMIT|purge|^READ-|^sim01|^net0/i;
 const numOf = (f) => Number(/b(\d+)/.exec(f)[1]);
-/** the chain after the baseline, in number order (b105 before b105a, migration_b48 among the b4x).
- *  BCP-MIG (17 Oct): a letter suffix (b105a b171d b194b b263b) is IN the chain — `b\d+_` alone dropped those four on a rebuild. */
+const CHAIN_NAME = /^b\d+[a-z]?_.*\.sql$/;
+/** the chain after the baseline, in number order (b765 before b765a). A letter suffix is IN the chain (BCP-MIG, 17 Oct).
+ *  Only migrations/ itself is read (never archive/), and only numbers above BASELINE_THROUGH. */
 function chainFiles() {
-  return fs.readdirSync(M).filter((f) => /^(migration_b(4[2-9]|5[0-7])|b\d+[a-z]?)_.*\.sql$/.test(f) && !CHAIN_SKIP.test(f))
+  return fs.readdirSync(M).filter((file) => CHAIN_NAME.test(file) && !CHAIN_SKIP.test(file) && numOf(file) > BASELINE_THROUGH)
     .sort((a, b) => numOf(a) - numOf(b) || a.localeCompare(b));
+}
+/** every SQL file AS WRITTEN, by folder then name: migrations/archive/ (before the baseline) then migrations/ (after it) — never the
+ *  baseline itself, which is a pg_dump (the rebase fingerprint proves it). For the static guards that read definitions out of the files.
+ *  → [{ name, path (absolute), rel ('migrations/…' or 'migrations/archive/…') }] */
+function writtenSqlFiles() {
+  const list = (dir, shown) => (fs.existsSync(dir) ? fs.readdirSync(dir) : []).filter((file) => file.endsWith('.sql') && !BASELINE.includes(file)).sort()
+    .map((file) => ({ name: file, path: path.join(dir, file), rel: shown + file }));
+  return list(path.join(M, 'archive'), 'migrations/archive/').concat(list(M, 'migrations/'));
+}
+/** chain-shaped files numbered at or below the baseline: written after it by mistake, they would never run — apply() names them */
+function strayFiles() {
+  return fs.readdirSync(M).filter((file) => CHAIN_NAME.test(file) && !CHAIN_SKIP.test(file) && numOf(file) <= BASELINE_THROUGH);
 }
 const shaOf = (f) => crypto.createHash('sha256').update(fs.readFileSync(path.join(M, f))).digest('hex');
 const safe = (url) => String(url).replace(/:[^:@/]+@/, ':***@');
@@ -82,33 +103,21 @@ async function apply(url, opts) {
     /* a database with tables and no (or an empty) ledger is somebody's live data whose history we cannot see: touch NOTHING */
     if (!fresh && (!hadLedger || [...(await ledger(pool)).keys()].filter((f) => f !== LEDGER_FILE).length === 0)) {
       say('the database has tables and ' + (hadLedger ? 'its ledger is empty' : 'no ledger (' + LEDGER_FILE + ')') + ' — nothing run. Record what it already has first:');
-      say('  run ' + LEDGER_FILE + ' as the owner, then: node tools/migrate.cjs --db <url> --record-through bNNN   (the last migration it has had)');
+      say('  run migrations/archive/' + LEDGER_FILE + ' as the owner, then: node tools/migrate.cjs --db <url> --record-through bNNN   (the last migration it has had)');
       return { ran: [], failed: [], skipped: 0, fresh, left_alone: true };
     }
-    if (!hadLedger) {
-      const x = psql(url, path.join(M, LEDGER_FILE), true);
-      if (!x.ok) throw new Error(LEDGER_FILE + ' failed: ' + x.errs[0]);
-    }
-    let done = await ledger(pool);
+    /* the baseline makes schema_migrations itself, so an empty database that already has one was half-built by hand: stop */
+    if (fresh && hadLedger) throw new Error('the database has no identities table but has schema_migrations — drop it and build again, or record what it has');
     const ran = [], failed = [];
     if (fresh) {
-      say('schema: 000_baseline.sql');
-      let r = psql(url, path.join(M, BASELINE[0]), true);
-      if (!r.ok) throw new Error('000_baseline.sql failed: ' + r.errs[0]);
-      /* part2 lists constraints alphabetically — a FOREIGN KEY to identities comes before identities' PRIMARY KEY — so it is run in
-         passes until the only errors left are "already exists" (each pass adds what the last one could not) */
-      let left = Infinity;
-      for (let pass = 1; pass <= 6; pass++) {
-        r = psql(url, path.join(M, BASELINE[1]), false);
-        const real = r.errs.filter((l) => !/already exists|multiple primary keys|already a primary/.test(l));
-        say('schema: 000_baseline_part2.sql pass ' + pass + ' — ' + real.length + ' statement(s) still waiting');
-        if (real.length === 0 || real.length >= left) break;
-        left = real.length;
-      }
+      say('schema: ' + BASELINE[0]);
+      const r = psql(url, path.join(M, BASELINE[0]), true);
+      if (!r.ok) throw new Error(BASELINE[0] + ' failed: ' + r.errs[0]);
       await record(pool, BASELINE, 'migrate'); ran.push(...BASELINE);
     }
-    if (!hadLedger) { await record(pool, [LEDGER_FILE], 'migrate'); ran.push(LEDGER_FILE); }
-    done = await ledger(pool);
+    const stray = strayFiles();
+    if (stray.length) say('schema: NOT RUN — numbered at or below the baseline (b' + BASELINE_THROUGH + '), renumber them above it: ' + stray.join(', '));
+    const done = await ledger(pool);
     const files = chainFiles(), todo = files.filter((f) => !done.has(f));
     for (const f of todo) {
       const x = psql(url, path.join(M, f), true);
@@ -150,7 +159,7 @@ function through(bnnn) {
   return BASELINE.concat(chainFiles().filter((f) => numOf(f) <= n));
 }
 
-module.exports = { apply, status, recordFiles, through, chainFiles, CHAIN_SKIP, LEDGER_FILE };
+module.exports = { apply, status, recordFiles, through, chainFiles, strayFiles, writtenSqlFiles, CHAIN_SKIP, LEDGER_FILE, LEDGER_PATH, BASELINE, BASELINE_THROUGH };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);

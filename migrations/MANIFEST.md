@@ -1,3 +1,31 @@
+# Migration manifest
+
+## ⭐ FROM 18 OCT 2026: ONE BASELINE + NUMBERED MIGRATIONS AFTER IT (DB-REBASE, Athi)
+
+> "db baselining so we don't need to run multiple migrations … then we can note down migrations from this moment onwards" (Athi, 18 Oct 2026)
+
+**The rule.** A new database = `migrations/000_baseline_2026-10-18.sql`, then ONLY the numbered migrations after it (`b765` onward),
+in number order. Each one is logged in `migrations/MIGRATIONS-LOG.md` with **run-by / run-at** for every database it ran on.
+The one runner is `tools/migrate.cjs` (it records each file in `schema_migrations`). Never edit the baseline or an applied file:
+a change is a new `bNNN`.
+
+| | |
+|---|---|
+| Baseline | `000_baseline_2026-10-18.sql` — schema (public · metrics · ops) + the reference rows of the 30 tables the old chain seeded + the ledger table (`schema_migrations`, was b304). Roles: makes `cb_app` / `cb_ops` if missing; stops if `cb_metrics` is missing (create it by hand first, b151 header). |
+| Covers | everything up to and including **b764** (api origin/main 57d4f9fe). `tools/migrate.cjs` `BASELINE_THROUGH = 764`: a `bNNN` at or below it in `migrations/` is never run and is named as a stray. |
+| Made by | `pg_dump --no-owner --no-comments --column-inserts` (PostgreSQL 16) of a scratch database built by the old chain; data only for the 30 seeded tables. Two edits, both stated in the file: `search_path` = `pg_catalog, public` (a trigger `WHEN` compares ltree values), and 5 varchar CHECKs written back as `col IN (…)` (pg_dump's spelling re-parses to a different tree). |
+| Proven | `tools/schema-fingerprint.cjs`: a fresh database from the baseline equals the chain-built one on all **1224** objects (tables' columns, constraints, indexes, RLS enable/force, policies, triggers, grants; functions; views; sequences; roles) and on every seeded row (30 tables). Build: 8 s instead of 108 s. |
+| Production | production already HAS this schema — **never run the baseline there**. Once `rebase-1` (sql-to-run/2026-10-18) shows prod = baseline, or its differences are reconciled, the owner records it: `node tools/migrate.cjs --db <prod> --record 000_baseline_2026-10-18.sql` (or the INSERT in the record file). |
+| History | the files the baseline replaces are kept unchanged in `migrations/archive/`: `000_baseline.sql` + `000_baseline_part2.sql` (prod capture, 5 Jul 2026), `migration_b42..b57`, `b58..b764` (with their dry runs / verifies), `net01..03`, `sim01`. The static guards that read definitions out of the SQL (`tools/migrate.cjs` `writtenSqlFiles()`) read archive/ then migrations/. |
+| Still here | `purge_test_entities_*` and `READ-*` — utilities, never in the chain. |
+
+**Writing a new migration:** take the next number above the highest in `migrations/` (and above any reserved for a round), header rule as
+before (what · RLS stated · idempotent · who runs it), then a row in `MIGRATIONS-LOG.md` when it runs anywhere that matters.
+
+---
+
+# History (before 18 Oct 2026) — kept as written
+
 # Migration manifest — single ordered chain (Phase-1 consolidation, 2026-06-27)
 
 The canonical apply order for a fresh database. Files live in two places today

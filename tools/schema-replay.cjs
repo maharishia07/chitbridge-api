@@ -12,11 +12,13 @@
  */
 'use strict';
 const fs = require('fs'), path = require('path');
-const { chainFiles } = require('./migrate.cjs');
+const { chainFiles, BASELINE } = require('./migrate.cjs');
 
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
 const FIELDS_DICTIONARY = path.join(__dirname, '..', 'docs', 'FIELDS.md');
-const BASELINE_FILES = ['000_baseline.sql', '000_baseline_part2.sql'];
+/* DB-REBASE (18 Oct 2026): the one baseline is READ into the model (every table, key and index it makes) but not JUDGED — it is a
+   pg_dump of what production has, not something anyone writes; the rules judge the files written after it. */
+const BASELINE_FILES = BASELINE;
 const NATIONAL_DEFAULT = /\bDEFAULT\s+'(IN|INR|India|Asia\/Kolkata|\+91|GST)'/;
 const ONCE_ONLY_KEY = /^(client_ref|source_ref|external_id|idempotency_key|provider_msg_id|entry_no|bill_no)$/;
 const MONEY_NAME = /(^|_)(amount|price|total|cost|fee|tax|balance|paid|due|rate)(_|$)/;
@@ -263,10 +265,15 @@ function allowedRules(source) {
 
 /* ── the replay ───────────────────────────────────────────────────────────────────────────────────────────── */
 
-/** every migration file in judging order: the chain, then what the chain skips (one-off data scripts, net0x, root-era files) */
+/** every migration file to JUDGE, in order: the chain after the baseline, then what the chain skips (one-off data scripts, purges) */
 function orderedFiles() {
-  const everything = fs.readdirSync(MIGRATIONS_DIR).filter((file) => file.endsWith('.sql')), chain = BASELINE_FILES.concat(chainFiles());
+  const everything = fs.readdirSync(MIGRATIONS_DIR).filter((file) => file.endsWith('.sql') && !BASELINE_FILES.includes(file)), chain = chainFiles();
   return chain.filter((file) => everything.includes(file)).concat(everything.filter((file) => !chain.includes(file)).sort());
+}
+/** the baseline folded into the model, unjudged → how many tables it made */
+function readBaseline(model) {
+  for (const file of BASELINE_FILES) readFile(model, fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8'));
+  return model.tables.size;
 }
 /** tables the non-chain files create exist for every chain file (net0x, sim01 … are run by other paths): learn their names first */
 function seedAmbientNames(model, files) {
@@ -284,17 +291,18 @@ function judgeFile(file, facts, model, context) {
   }
   return { found, allowLines: allow.lines.map((line) => file + ': ' + line) };
 }
-/** replay → { files, violations: [{ file, rule, object, allowed }], allows } */
+/** replay → { files, violations: [{ file, rule, object, allowed }], allows, baselineTables } */
 function replay() {
   const files = orderedFiles(), model = new Model(), violations = [], allows = [];
   const fieldsText = fs.existsSync(FIELDS_DICTIONARY) ? fs.readFileSync(FIELDS_DICTIONARY, 'utf8') : '';
+  const baselineTables = readBaseline(model);
   seedAmbientNames(model, files);
   for (const file of files) {
     const source = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
     const judged = judgeFile(file, readFile(model, source), model, { source, fileName: file, fieldsText });
     violations.push(...judged.found); allows.push(...judged.allowLines);
   }
-  return { files, violations, allows };
+  return { files, violations, allows, baselineTables };
 }
 const keyOf = (violation) => violation.file + '|' + violation.rule + '|' + violation.object;
 

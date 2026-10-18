@@ -27,6 +27,10 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const MIG  = path.join(ROOT, 'migrations');
+/* DB-REBASE (18 Oct): the SQL as written lives in migrations/archive/ (before the one baseline) and migrations/ (after it);
+   the baseline itself is a pg_dump, proven by the rebase fingerprint, so it is not read here */
+const WRITTEN = new Map(require('../tools/migrate.cjs').writtenSqlFiles().map((x) => [x.name, x.path]));
+const at = (f) => WRITTEN.get(f) || path.join(MIG, f);
 
 /* What the application actually sets — read from db/index.js, not hardcoded, so renaming the GUC updates this
    test rather than breaking it in the confusing direction. */
@@ -35,7 +39,7 @@ const SET = new Set([...dbSrc.matchAll(/set_config\(\s*['"`]([a-z_.]+)['"`]/gi)]
 if (!SET.size) { console.error('✗ found no set_config call in db/index.js — fix this test before trusting it'); process.exit(1); }
 const CANONICAL = [...SET][0];
 
-const files = fs.readdirSync(MIG).filter(n => n.endsWith('.sql'));
+const files = [...WRITTEN.keys()].filter(n => n.endsWith('.sql'));
 const isComment = (l) => /^\s*(--|\*|\/\*)/.test(l);
 
 /**
@@ -51,7 +55,7 @@ const latest = new Map();        // policyname -> { file, line, guc, text }
 const unsetValue = [], noNullif = [];
 
 for (const f of files) {
-  const lines = fs.readFileSync(path.join(MIG, f), 'utf8').split(/\r?\n/);
+  const lines = fs.readFileSync(at(f), 'utf8').split(/\r?\n/);
   let current = null;            // the policy whose predicate we are inside
   lines.forEach((line, i) => {
     if (isComment(line)) return;                       // b175's own header names the wrong GUC on purpose
@@ -120,7 +124,7 @@ if (noNullif.length) {
  */
 const rlsTables = new Set();
 for (const f of files) {
-  const src = fs.readFileSync(path.join(MIG, f), 'utf8');
+  const src = fs.readFileSync(at(f), 'utf8');
   for (const m of src.matchAll(/ALTER TABLE\s+([a-z0-9_]+)\s+ENABLE ROW LEVEL SECURITY/gi)) rlsTables.add(m[1].toLowerCase());
 }
 

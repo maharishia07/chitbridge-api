@@ -27,10 +27,14 @@ const fs = require('fs');
 const path = require('path');
 
 const DIR = path.join(__dirname, '..', 'migrations');
+/* DB-REBASE (18 Oct): the SQL as written lives in migrations/archive/ (before the one baseline) and migrations/ (after it);
+   the baseline itself is a pg_dump, proven by the rebase fingerprint, so it is not read here */
+const WRITTEN = new Map(require('../tools/migrate.cjs').writtenSqlFiles().map((x) => [x.name, x.path]));
+const at = (f) => WRITTEN.get(f) || path.join(DIR, f);
 /* ⭐ the era this rule belongs to. Raise it, never lower it. */
 const FROM = 240;
 
-const files = fs.readdirSync(DIR).filter((f) => {
+const files = [...WRITTEN.keys()].filter((f) => {
   const m = /^b(\d+)_/.exec(f);
   return m && Number(m[1]) >= FROM && f.endsWith('.sql');
 }).sort();
@@ -41,7 +45,7 @@ const fail = (f, msg, why) => { fails++; console.log('  ✗ ' + f + '  ' + msg +
 console.log('\n══ MIGRATIONS MUST BE RE-RUNNABLE (b' + FROM + '+) ══\n');
 
 for (const f of files) {
-  const sql = fs.readFileSync(path.join(DIR, f), 'utf8');
+  const sql = fs.readFileSync(at(f), 'utf8');
   /* ⚠️ comments blanked: these files argue with themselves at length and half of them quote the very SQL
      they are warning about. Matching on prose would make this guard agree with any file that discussed the
      rule instead of following it — the same fault the list-controls watcher shipped with. */

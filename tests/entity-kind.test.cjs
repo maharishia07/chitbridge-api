@@ -25,11 +25,12 @@ const ROOT = path.join(__dirname, '..');
  * moment those files were renumbered to b225_/b226_ — which happened the same day, because eight of the nine
  * migrations written that day had collided with existing numbers. A number is an ordering, not an identity.
  */
+/* DB-REBASE (18 Oct): the SQL as written lives in migrations/archive/ (before the one baseline) and migrations/ (after it) */
 function migration(suffix) {
-  const dir = path.join(ROOT, 'migrations');
-  const hit = fs.readdirSync(dir).filter((f) => f.endsWith(suffix)).sort().pop();
+  const hits = require('../tools/migrate.cjs').writtenSqlFiles().filter((f) => f.name.endsWith(suffix));
+  const hit = hits.sort((a, b) => a.name.localeCompare(b.name)).pop();
   if (!hit) throw new Error('no migration ending in ' + suffix + ' — was it renamed as well as renumbered?');
-  return fs.readFileSync(path.join(dir, hit), 'utf8').replace(/\r\n/g, '\n');
+  return fs.readFileSync(hit.path, 'utf8').replace(/\r\n/g, '\n');
 }
 
 const KINDS = ['customer', 'network', 'supplier', 'test', 'internal', 'actor', 'shopper'];

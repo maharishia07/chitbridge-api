@@ -1372,7 +1372,7 @@ it('⚠️⚠️ the customer list asks for columns that exist, on the table tha
   assert.ok(q.indexOf("logger').warn('till.customers'") > 0, 'a swallowed failure must leave something behind');
 
   /* the columns it names must be ones the baseline or a migration actually creates */
-  const base = fs.readFileSync(path.join(API, 'migrations', '000_baseline.sql'), 'utf8');
+  const base = fs.readFileSync(path.join(API, 'migrations', 'archive', '000_baseline.sql'), 'utf8');
   const tableAt = base.indexOf('CREATE TABLE customer_list');
   const cols = base.slice(tableAt, base.indexOf(');', tableAt));
   for (const real of ['owner_entity_id', 'customer_identity_id', 'last_txn_at'])

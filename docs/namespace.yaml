@@ -204,7 +204,7 @@ not_identities:
 # ⚠️ entity_kind is guarded by a CHECK constraint. This list must match it exactly — the test asserts it.
 entity_kind:
   constraint: identities_entity_kind_chk
-  declared_in: migrations/b225_entity_kind.sql
+  declared_in: migrations/archive/b225_entity_kind.sql
   default: customer
   values:
     customer: a real registered business — THE DEFAULT

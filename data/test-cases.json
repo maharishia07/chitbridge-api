@@ -2278,7 +2278,7 @@
     "note": "9 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b172_access_events.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b172_access_events.sql"
    },
    {
     "name": "account_balance",
@@ -2286,7 +2286,7 @@
     "note": "11 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b273_books_journal.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b273_books_journal.sql"
    },
    {
     "name": "ai_skill",
@@ -2294,7 +2294,7 @@
     "note": "12 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b110_ai_skills.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b110_ai_skills.sql"
    },
    {
     "name": "assist_qa",
@@ -2302,7 +2302,7 @@
     "note": "10 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "blueprint_source",
@@ -2310,7 +2310,7 @@
     "note": "6 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b60_blueprint_catalogue.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b60_blueprint_catalogue.sql"
    },
    {
     "name": "blueprint_template",
@@ -2318,7 +2318,7 @@
     "note": "7 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b60_blueprint_catalogue.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b60_blueprint_catalogue.sql"
    },
    {
     "name": "blueprints",
@@ -2326,7 +2326,7 @@
     "note": "12 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "boilerplate",
@@ -2334,7 +2334,7 @@
     "note": "8 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b88_boilerplate.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b88_boilerplate.sql"
    },
    {
     "name": "boilerplate_sources",
@@ -2342,7 +2342,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b88_boilerplate.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b88_boilerplate.sql"
    },
    {
     "name": "books_change_log",
@@ -2350,7 +2350,7 @@
     "note": "9 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b273_books_journal.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b273_books_journal.sql"
    },
    {
     "name": "books_compare_part",
@@ -2358,7 +2358,7 @@
     "note": "13 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b309_books_compare.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b309_books_compare.sql"
    },
    {
     "name": "books_counter",
@@ -2366,7 +2366,7 @@
     "note": "4 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b272_books_ledger.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b272_books_ledger.sql"
    },
    {
     "name": "books_outbox",
@@ -2374,7 +2374,7 @@
     "note": "9 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b273_books_journal.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b273_books_journal.sql"
    },
    {
     "name": "books_pack",
@@ -2382,7 +2382,7 @@
     "note": "15 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b274_books_party.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b274_books_party.sql"
    },
    {
     "name": "books_payment",
@@ -2390,7 +2390,7 @@
     "note": "17 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b273_books_journal.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b273_books_journal.sql"
    },
    {
     "name": "books_setting",
@@ -2398,7 +2398,7 @@
     "note": "12 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b272_books_ledger.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b272_books_ledger.sql"
    },
    {
     "name": "capability",
@@ -2406,7 +2406,7 @@
     "note": "9 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b71_capability_mint.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b71_capability_mint.sql"
    },
    {
     "name": "capture",
@@ -2414,7 +2414,7 @@
     "note": "18 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b104_capture.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b104_capture.sql"
    },
    {
     "name": "catalogue_adoption",
@@ -2422,7 +2422,7 @@
     "note": "7 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b75_catalogue_reference.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b75_catalogue_reference.sql"
    },
    {
     "name": "catalogue_face",
@@ -2430,7 +2430,7 @@
     "note": "3 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b112_catalogue_face.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b112_catalogue_face.sql"
    },
    {
     "name": "catalogue_item_schedule",
@@ -2438,7 +2438,7 @@
     "note": "10 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b203_catalogue_item_schedule_APPLY.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b203_catalogue_item_schedule_APPLY.sql"
    },
    {
     "name": "catalogue_item_version",
@@ -2446,7 +2446,7 @@
     "note": "15 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b146_catalogue_item_version.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b146_catalogue_item_version.sql"
    },
    {
     "name": "catalogue_items",
@@ -2454,7 +2454,7 @@
     "note": "7 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "catalogue_source",
@@ -2462,7 +2462,7 @@
     "note": "13 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/b75_catalogue_reference.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b75_catalogue_reference.sql"
    },
    {
     "name": "cb_attachment",
@@ -2470,7 +2470,7 @@
     "note": "12 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_building",
@@ -2478,7 +2478,7 @@
     "note": "4 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_catalogue_category",
@@ -2486,7 +2486,7 @@
     "note": "8 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_catalogue_item",
@@ -2494,7 +2494,7 @@
     "note": "27 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_chit",
@@ -2502,7 +2502,7 @@
     "note": "50 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_chit_item",
@@ -2510,7 +2510,7 @@
     "note": "13 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_chit_log",
@@ -2518,7 +2518,7 @@
     "note": "10 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_city",
@@ -2526,7 +2526,7 @@
     "note": "3 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_consumer_traction",
@@ -2534,7 +2534,7 @@
     "note": "8 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_contact",
@@ -2542,7 +2542,7 @@
     "note": "7 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_currency",
@@ -2550,7 +2550,7 @@
     "note": "9 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_device",
@@ -2558,7 +2558,7 @@
     "note": "8 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_edge",
@@ -2566,7 +2566,7 @@
     "note": "14 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_entity",
@@ -2574,7 +2574,7 @@
     "note": "47 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_entity_employee",
@@ -2582,7 +2582,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_entity_supplier",
@@ -2590,7 +2590,7 @@
     "note": "4 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_external_reference",
@@ -2598,7 +2598,7 @@
     "note": "20 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_industry",
@@ -2606,7 +2606,7 @@
     "note": "3 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_task",
@@ -2614,7 +2614,7 @@
     "note": "18 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "cb_transaction_history",
@@ -2622,7 +2622,7 @@
     "note": "12 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "channel_binding",
@@ -2630,7 +2630,7 @@
     "note": "13 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b123_channel_binding.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b123_channel_binding.sql"
    },
    {
     "name": "channel_outbound",
@@ -2638,7 +2638,7 @@
     "note": "12 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b126_outbound.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b126_outbound.sql"
    },
    {
     "name": "chit_amendment",
@@ -2646,7 +2646,7 @@
     "note": "13 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b137_chit_amendment.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b137_chit_amendment.sql"
    },
    {
     "name": "chit_detail",
@@ -2654,7 +2654,7 @@
     "note": "12 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "chit_disputes",
@@ -2662,7 +2662,7 @@
     "note": "22 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "chit_header",
@@ -2670,7 +2670,7 @@
     "note": "22 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "chit_line",
@@ -2678,7 +2678,7 @@
     "note": "20 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b142_chit_line.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b142_chit_line.sql"
    },
    {
     "name": "chit_line_amendment",
@@ -2686,7 +2686,7 @@
     "note": "12 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b138_line_amendment.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b138_line_amendment.sql"
    },
    {
     "name": "chit_line_assignment",
@@ -2694,7 +2694,7 @@
     "note": "15 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b143_line_assignment.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b143_line_assignment.sql"
    },
    {
     "name": "chit_line_cost",
@@ -2702,7 +2702,7 @@
     "note": "13 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b145_line_cost.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b145_line_cost.sql"
    },
    {
     "name": "chit_line_delivery",
@@ -2710,7 +2710,7 @@
     "note": "17 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b144_line_delivery.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b144_line_delivery.sql"
    },
    {
     "name": "chit_line_raida",
@@ -2718,7 +2718,7 @@
     "note": "12 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b182_line_raida.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b182_line_raida.sql"
    },
    {
     "name": "chit_messages",
@@ -2726,7 +2726,7 @@
     "note": "17 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "chit_reads",
@@ -2734,7 +2734,7 @@
     "note": "3 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b61_chit_reads.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b61_chit_reads.sql"
    },
    {
     "name": "chit_sla",
@@ -2742,7 +2742,7 @@
     "note": "15 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b147_service_sla.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b147_service_sla.sql"
    },
    {
     "name": "chit_sla_pause",
@@ -2750,7 +2750,7 @@
     "note": "15 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b147_service_sla.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b147_service_sla.sql"
    },
    {
     "name": "chit_status",
@@ -2758,7 +2758,7 @@
     "note": "29 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "combo_templates",
@@ -2766,7 +2766,7 @@
     "note": "8 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b266_combo_templates.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b266_combo_templates.sql"
    },
    {
     "name": "connections",
@@ -2774,7 +2774,7 @@
     "note": "11 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "connector_receipt",
@@ -2782,7 +2782,7 @@
     "note": "9 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b69_connector_receipt.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b69_connector_receipt.sql"
    },
    {
     "name": "constitution",
@@ -2790,7 +2790,7 @@
     "note": "9 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b72_constitution_mint.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b72_constitution_mint.sql"
    },
    {
     "name": "container_region_override",
@@ -2798,7 +2798,7 @@
     "note": "4 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b81_regional_scatter.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b81_regional_scatter.sql"
    },
    {
     "name": "counter_hidden_item",
@@ -2806,7 +2806,7 @@
     "note": "6 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b262_quick_key_groups.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b262_quick_key_groups.sql"
    },
    {
     "name": "counter_quick_key_state",
@@ -2814,7 +2814,7 @@
     "note": "6 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b262_quick_key_groups.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b262_quick_key_groups.sql"
    },
    {
     "name": "customer_list",
@@ -2822,7 +2822,7 @@
     "note": "19 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "definition",
@@ -2830,7 +2830,7 @@
     "note": "11 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b160_definitions.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b160_definitions.sql"
    },
    {
     "name": "definition_status_log",
@@ -2838,7 +2838,7 @@
     "note": "6 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b268_definition_status_log.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b268_definition_status_log.sql"
    },
    {
     "name": "definition_version",
@@ -2846,7 +2846,7 @@
     "note": "7 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b160_definitions.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b160_definitions.sql"
    },
    {
     "name": "device_screen_config",
@@ -2854,7 +2854,7 @@
     "note": "6 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b262_quick_key_groups.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b262_quick_key_groups.sql"
    },
    {
     "name": "dispute_participants",
@@ -2862,7 +2862,7 @@
     "note": "7 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "entity_actor_settings",
@@ -2870,7 +2870,7 @@
     "note": "10 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "entity_compliance",
@@ -2878,7 +2878,7 @@
     "note": "8 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b90_compliance.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b90_compliance.sql"
    },
    {
     "name": "entity_governance",
@@ -2886,7 +2886,7 @@
     "note": "6 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b73_entity_mint.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b73_entity_mint.sql"
    },
    {
     "name": "entity_profile",
@@ -2894,7 +2894,7 @@
     "note": "6 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b96_entity_profile.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b96_entity_profile.sql"
    },
    {
     "name": "entity_schemas",
@@ -2902,7 +2902,7 @@
     "note": "12 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "entity_wallet",
@@ -2910,7 +2910,7 @@
     "note": "3 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b99_ai_usage.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b99_ai_usage.sql"
    },
    {
     "name": "entity_work_routing",
@@ -2918,7 +2918,7 @@
     "note": "8 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b250_work_routing_by_kind.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b250_work_routing_by_kind.sql"
    },
    {
     "name": "erp_handoff",
@@ -2926,7 +2926,7 @@
     "note": "7 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b82_erp_handoff.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b82_erp_handoff.sql"
    },
    {
     "name": "fiscal_period",
@@ -2934,7 +2934,7 @@
     "note": "9 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b272_books_ledger.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b272_books_ledger.sql"
    },
    {
     "name": "fixed_asset",
@@ -2942,7 +2942,7 @@
     "note": "16 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b280_fixed_asset.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b280_fixed_asset.sql"
    },
    {
     "name": "folder",
@@ -2950,7 +2950,7 @@
     "note": "6 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b63_folders.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b63_folders.sql"
    },
    {
     "name": "folder_rule",
@@ -2958,7 +2958,7 @@
     "note": "12 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b132_folder_rules.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b132_folder_rules.sql"
    },
    {
     "name": "form_instance",
@@ -2966,7 +2966,7 @@
     "note": "13 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b108_form_instance.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b108_form_instance.sql"
    },
    {
     "name": "fx_rate",
@@ -2974,7 +2974,7 @@
     "note": "10 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b391_fx_rates.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b391_fx_rates.sql"
    },
    {
     "name": "governance_exceptions",
@@ -2982,7 +2982,7 @@
     "note": "6 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "idempotency_key",
@@ -2990,7 +2990,7 @@
     "note": "9 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b109_idempotency.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b109_idempotency.sql"
    },
    {
     "name": "identities",
@@ -2998,7 +2998,7 @@
     "note": "88 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "identity_documents",
@@ -3006,7 +3006,7 @@
     "note": "16 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b174_identity_documents.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b174_identity_documents.sql"
    },
    {
     "name": "installation",
@@ -3014,7 +3014,7 @@
     "note": "14 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b74_platform_governance.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b74_platform_governance.sql"
    },
    {
     "name": "journal_entry",
@@ -3022,7 +3022,7 @@
     "note": "21 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b273_books_journal.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b273_books_journal.sql"
    },
    {
     "name": "journal_line",
@@ -3030,7 +3030,7 @@
     "note": "19 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b273_books_journal.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b273_books_journal.sql"
    },
    {
     "name": "jurisdiction",
@@ -3038,7 +3038,7 @@
     "note": "1 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b91_trade_lanes.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b91_trade_lanes.sql"
    },
    {
     "name": "kyb_field_cache",
@@ -3046,7 +3046,7 @@
     "note": "5 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b107_kyb_field_cache.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b107_kyb_field_cache.sql"
    },
    {
     "name": "ledger_account",
@@ -3054,7 +3054,7 @@
     "note": "19 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b272_books_ledger.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b272_books_ledger.sql"
    },
    {
     "name": "media_blobs",
@@ -3062,7 +3062,7 @@
     "note": "6 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/b204_media_blobs_APPLY.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b204_media_blobs_APPLY.sql"
    },
    {
     "name": "membership_kind",
@@ -3070,7 +3070,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b297_memberships.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b297_memberships.sql"
    },
    {
     "name": "memberships",
@@ -3078,7 +3078,7 @@
     "note": "8 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b297_memberships.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b297_memberships.sql"
    },
    {
     "name": "network_design",
@@ -3086,7 +3086,7 @@
     "note": "3 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b111_network_design.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b111_network_design.sql"
    },
    {
     "name": "notif_dismissed",
@@ -3094,7 +3094,7 @@
     "note": "3 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b164_notif_dismissed.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b164_notif_dismissed.sql"
    },
    {
     "name": "party_contact_pref",
@@ -3102,7 +3102,7 @@
     "note": "11 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b306_party_contact_pref.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b306_party_contact_pref.sql"
    },
    {
     "name": "party_followup",
@@ -3110,7 +3110,7 @@
     "note": "11 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b276_crm_party.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b276_crm_party.sql"
    },
    {
     "name": "party_interaction",
@@ -3118,7 +3118,7 @@
     "note": "10 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b276_crm_party.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b276_crm_party.sql"
    },
    {
     "name": "party_item",
@@ -3126,7 +3126,7 @@
     "note": "22 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b273_books_journal.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b273_books_journal.sql"
    },
    {
     "name": "party_tax_id",
@@ -3134,7 +3134,7 @@
     "note": "5 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b274_books_party.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b274_books_party.sql"
    },
    {
     "name": "platform_constitution",
@@ -3142,7 +3142,7 @@
     "note": "9 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "platform_root",
@@ -3150,7 +3150,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "privacy_request",
@@ -3158,7 +3158,7 @@
     "note": "14 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b307_privacy_request.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b307_privacy_request.sql"
    },
    {
     "name": "product_container",
@@ -3166,7 +3166,7 @@
     "note": "7 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/b80_container_model.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b80_container_model.sql"
    },
    {
     "name": "product_version",
@@ -3174,7 +3174,7 @@
     "note": "6 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b80_container_model.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b80_container_model.sql"
    },
    {
     "name": "quick_key_audit",
@@ -3182,7 +3182,7 @@
     "note": "7 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b262_quick_key_groups.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b262_quick_key_groups.sql"
    },
    {
     "name": "quick_key_group",
@@ -3190,7 +3190,7 @@
     "note": "12 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b262_quick_key_groups.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b262_quick_key_groups.sql"
    },
    {
     "name": "quick_key_group_item",
@@ -3198,7 +3198,7 @@
     "note": "4 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b262_quick_key_groups.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b262_quick_key_groups.sql"
    },
    {
     "name": "recurring_entry",
@@ -3206,7 +3206,7 @@
     "note": "14 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b281_recurring_entry.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b281_recurring_entry.sql"
    },
    {
     "name": "region_layer",
@@ -3214,7 +3214,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b81_regional_scatter.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b81_regional_scatter.sql"
    },
    {
     "name": "register_acceptance",
@@ -3222,7 +3222,7 @@
     "note": "9 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b185_register.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b185_register.sql"
    },
    {
     "name": "register_attachable",
@@ -3230,7 +3230,7 @@
     "note": "5 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b185_register.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b185_register.sql"
    },
    {
     "name": "register_entry_standard",
@@ -3238,7 +3238,7 @@
     "note": "5 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b185_register.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b185_register.sql"
    },
    {
     "name": "register_subject",
@@ -3246,7 +3246,7 @@
     "note": "11 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b185_register.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b185_register.sql"
    },
    {
     "name": "register_template",
@@ -3254,7 +3254,7 @@
     "note": "13 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b185_register.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b185_register.sql"
    },
    {
     "name": "register_template_standard",
@@ -3262,7 +3262,7 @@
     "note": "5 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b185_register.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b185_register.sql"
    },
    {
     "name": "repeat_supply",
@@ -3270,7 +3270,7 @@
     "note": "25 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b303_repeat_supply.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b303_repeat_supply.sql"
    },
    {
     "name": "resolved_blueprint",
@@ -3278,7 +3278,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b81_regional_scatter.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b81_regional_scatter.sql"
    },
    {
     "name": "reward_ledger",
@@ -3286,7 +3286,7 @@
     "note": "11 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b213_reward_ledger.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b213_reward_ledger.sql"
    },
    {
     "name": "schema_fields",
@@ -3294,7 +3294,7 @@
     "note": "17 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "schema_migrations",
@@ -3302,7 +3302,7 @@
     "note": "5 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b304_schema_migrations.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b304_schema_migrations.sql"
    },
    {
     "name": "signin_events",
@@ -3310,7 +3310,7 @@
     "note": "13 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b282_signin_events.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b282_signin_events.sql"
    },
    {
     "name": "signup_context",
@@ -3318,7 +3318,7 @@
     "note": "13 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b264_signup_context.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b264_signup_context.sql"
    },
    {
     "name": "sim_compare",
@@ -3326,7 +3326,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "sim_feedback",
@@ -3334,7 +3334,7 @@
     "note": "6 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "sim_items",
@@ -3342,7 +3342,7 @@
     "note": "10 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "sim_layers",
@@ -3350,7 +3350,7 @@
     "note": "4 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "sim_leads",
@@ -3358,7 +3358,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "sim_rules",
@@ -3366,7 +3366,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "sim_shapes",
@@ -3374,7 +3374,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "sim_usps",
@@ -3382,7 +3382,7 @@
     "note": "7 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "source_penetration",
@@ -3390,7 +3390,7 @@
     "note": "5 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b79_source_penetration.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b79_source_penetration.sql"
    },
    {
     "name": "standard_document",
@@ -3398,7 +3398,7 @@
     "note": "10 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b90_compliance.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b90_compliance.sql"
    },
    {
     "name": "standard_source",
@@ -3406,7 +3406,7 @@
     "note": "11 cols",
     "stage": "held",
     "tier": "unguarded",
-    "file": "chitbridge-api/chitbridge-api/migrations/b85_standard_source.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b85_standard_source.sql"
    },
    {
     "name": "state_log",
@@ -3414,7 +3414,7 @@
     "note": "10 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "stock_balance",
@@ -3422,7 +3422,7 @@
     "note": "13 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b214_stock.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b214_stock.sql"
    },
    {
     "name": "stock_movement",
@@ -3430,7 +3430,7 @@
     "note": "17 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b214_stock.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b214_stock.sql"
    },
    {
     "name": "supplier_list",
@@ -3438,7 +3438,7 @@
     "note": "18 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/000_baseline.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/000_baseline.sql"
    },
    {
     "name": "supplier_readiness_acceptance",
@@ -3446,7 +3446,7 @@
     "note": "7 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b177_supplier_readiness_acceptance.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b177_supplier_readiness_acceptance.sql"
    },
    {
     "name": "supply_item",
@@ -3454,7 +3454,7 @@
     "note": "14 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b217_supplies.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b217_supplies.sql"
    },
    {
     "name": "test_result",
@@ -3462,7 +3462,7 @@
     "note": "18 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b219_test_ledger.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b219_test_ledger.sql"
    },
    {
     "name": "test_result_month",
@@ -3470,7 +3470,7 @@
     "note": "14 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b221_test_result_retention.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b221_test_result_retention.sql"
    },
    {
     "name": "usage_ledger",
@@ -3478,7 +3478,7 @@
     "note": "8 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b99_ai_usage.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b99_ai_usage.sql"
    },
    {
     "name": "vertical_category",
@@ -3486,7 +3486,7 @@
     "note": "1 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b91_trade_lanes.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b91_trade_lanes.sql"
    },
    {
     "name": "wholesaler_store",
@@ -3494,7 +3494,7 @@
     "note": "9 cols",
     "stage": "proven",
     "tier": "policy",
-    "file": "chitbridge-api/chitbridge-api/migrations/b135_wholesaler_stores.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b135_wholesaler_stores.sql"
    },
    {
     "name": "work_pattern",
@@ -3502,7 +3502,7 @@
     "note": "9 cols",
     "stage": null,
     "tier": "shared",
-    "file": "chitbridge-api/chitbridge-api/migrations/b70_iot_signal_blueprint.sql"
+    "file": "chitbridge-api/chitbridge-api/migrations/archive/b70_iot_signal_blueprint.sql"
    }
   ],
   "connector": [

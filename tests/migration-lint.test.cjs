@@ -14,6 +14,10 @@
 const fs = require('fs');
 const path = require('path');
 const DIR = path.join(__dirname, '..', 'migrations');
+/* DB-REBASE (18 Oct): the SQL as written lives in migrations/archive/ (before the one baseline) and migrations/ (after it);
+   the baseline itself is a pg_dump, proven by the rebase fingerprint, so it is not read here */
+const WRITTEN = new Map(require('../tools/migrate.cjs').writtenSqlFiles().map((x) => [x.name, x.path]));
+const at = (f) => WRITTEN.get(f) || path.join(DIR, f);
 
 let pass = 0, fail = 0;
 const t = (name, cond, extra) => {
@@ -21,7 +25,7 @@ const t = (name, cond, extra) => {
   else { fail++; console.error('  ✗ ' + name + (extra ? '   ' + extra : '')); }
 };
 
-const files = fs.readdirSync(DIR).filter((f) => f.endsWith('.sql')).sort();
+const files = [...WRITTEN.keys()].filter((f) => f.endsWith('.sql')).sort();
 
 console.log('\n-- ⚠️⚠️ every dollar-quoted block must CLOSE --');
 /* SCHEMA-FIX1 (16 Oct): b185 was FIXED IN PLACE (`END $$;`) so an empty database builds — nothing is accepted any more.
@@ -29,7 +33,7 @@ console.log('\n-- ⚠️⚠️ every dollar-quoted block must CLOSE --');
 const ACCEPTED_QUOTES = [];
 const badQuotes = [];
 for (const f of files) {
-  const src = fs.readFileSync(path.join(DIR, f), 'utf8').replace(/\r\n/g, '\n');
+  const src = fs.readFileSync(at(f), 'utf8').replace(/\r\n/g, '\n');
   const code = src.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
   /* Every dollar-quote delimiter: $$ or $tag$. They must pair up. */
   const tags = code.match(/\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$/g) || [];
@@ -89,7 +93,7 @@ const ACCEPTED = [
 ];
 const found = [];
 for (const f of files) {
-  const src = fs.readFileSync(path.join(DIR, f), 'utf8').replace(/\r\n/g, '\n');
+  const src = fs.readFileSync(at(f), 'utf8').replace(/\r\n/g, '\n');
   const code = src.split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
   const re = /CREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(([\s\S]*?)\n\)\s*;/gi;
   let m;
@@ -104,7 +108,7 @@ t('  ...and the baseline names nothing that has since gone', stale.length === 0,
 t('  ...covering every occurrence on disk', found.length === ACCEPTED.length, found.length + ' occurrences');
 
 console.log('\n-- b189 repairs the silent-empty-table class --');
-const rd = (f) => fs.existsSync(path.join(DIR, f)) ? fs.readFileSync(path.join(DIR, f), 'utf8').replace(/\r\n/g, '\n') : '';
+const rd = (f) => fs.existsSync(at(f)) ? fs.readFileSync(at(f), 'utf8').replace(/\r\n/g, '\n') : '';
 const b189dry = rd('b189_rls_without_policy_dryrun.sql');
 const b189app = rd('b189_rls_without_policy_apply.sql');
 /* ⭐ THE CLASS: RLS enabled with no policy returns ZERO ROWS to every non-owner, silently. The owner is exempt

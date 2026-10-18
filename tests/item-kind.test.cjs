@@ -83,8 +83,7 @@ it('the default is still catalogue — history depends on it', () => {
 });
 
 it('the database agrees with the code about what is legal', () => {
-  const sql = fs.readdirSync(path.join(ROOT, 'migrations')).filter((f) => f.endsWith('.sql'))
-    .map((f) => read(path.join('migrations', f))).join('\n');
+  const sql = require('../tools/migrate.cjs').writtenSqlFiles().map((f) => read(f.rel)).join('\n');
   assert.ok(/item_kind\s+IN\s*\('catalogue',\s*'supply'\)/.test(sql),
     'no CHECK found constraining item_kind to catalogue|supply. Without it a typo becomes a third list that '
     + 'nothing reads and nothing counts.');

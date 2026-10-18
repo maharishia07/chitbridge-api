@@ -87,7 +87,7 @@ ok('the plan starts on the pack\'s first month (April IN · July AU · January A
 ok('a one-rate pack\'s basket draws at its standard rate (AU 10 % · AE 5 %), an IN basket from its slab', /it\.rate === rateOf\(rate\)/.test(src));
 
 /* 4 · one clock on the chit */
-const chits = read('routes/chits.js'), mint = read('lib/mint.js'), b300 = read('migrations/b300_chit_deliver_clock.sql');
+const chits = read('routes/chits.js'), mint = read('lib/mint.js'), b300 = read('migrations/archive/b300_chit_deliver_clock.sql');
 ok('routes/chits.js stamps a chit with the shop clock (CLOCK.now()), never new Date() for `now`', /const now = CLOCK\.now\(\)/.test(chits) && !/const now = new Date\(\)/.test(chits));
 ok('…hands it to mint.header (created_at · sent_at)', /created_at: now, sent_at: now/.test(chits));
 ok('…and the legacy in-transaction inserts use it too (no NOW(),NOW() on chit_header)', !/NOW\(\),NOW\(\)\)`/.test(chits) && /'sent', now\]/.test(chits) && /'received', now\]/.test(chits));
@@ -100,7 +100,7 @@ ok('the loader refuses a database whose chit_deliver predates b300, in words', /
 ok('the loader pins its session zone to UTC (M210), as db/index.js pins the api\'s', /SET TimeZone = 'UTC'/.test(src));
 ok('the proof reads the SHOP\'s day (books-hooks.zoneOf), not the process offset', /zoneOf\(COUNTRY\)/.test(src) && /created_at::timestamptz AT TIME ZONE \$2/.test(src) && !/getTimezoneOffset/.test(src));
 ok('the migration states the zone rule (an instant; UTC wall clock before b299, timestamptz after)', /b299_created_at_timestamptz/.test(b300) && /pins to UTC/.test(b300));
-ok('no second b299 beside M210\'s two — the Y1b file is b300', !fs.existsSync(path.join(ROOT, 'migrations', 'b299_chit_deliver_clock.sql')) && fs.existsSync(path.join(ROOT, 'migrations', 'b300_chit_deliver_clock.sql')));
+ok('no second b299 beside M210\'s two — the Y1b file is b300', !fs.existsSync(path.join(ROOT, 'migrations', 'b299_chit_deliver_clock.sql')) && fs.existsSync(path.join(ROOT, 'migrations', 'archive', 'b300_chit_deliver_clock.sql')));
 
 /* 5 · the schema step's skip list */
 for (const f of ['b171a_customer_purge_DRYRUN.sql', 'b179_currency_envelope_dryrun.sql', 'b180_chit_status_pulse_index_verify.sql', 'purge_test_entities_1_LIST.sql', 'b194c_schema_visibility_backfill_commit.sql', 'READ-2026-10-09-product-field-survey.sql'])
