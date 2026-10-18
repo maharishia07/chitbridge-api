@@ -68,7 +68,7 @@
   "lib/dbwatch.js": {"score":7,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/defaults.js": {"score":15,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/definition-check.js": {"score":9,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
-  "lib/deliverline.js": {"score":28,"long40":1,"long80":1,"complex10":3,"complex15":1,"deep3":1,"deep4":0,"cryptic":20,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
+  "lib/deliverline.js": {"score":25,"long40":1,"long80":1,"complex10":3,"complex15":1,"deep3":1,"deep4":0,"cryptic":17,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "lib/dev-otp.js": {"score":12,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/dispute-may.js": {"score":3,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/employee-code.js": {"score":6,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
