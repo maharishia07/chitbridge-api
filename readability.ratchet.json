@@ -369,7 +369,7 @@
   "scripts/prove-request-from-message.js": {"score":21,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-retention.js": {"score":6,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-sectors.js": {"score":24,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":21,"noWhatLine":0,"emptyCatch":2,"noHeader":1},
-  "scripts/prove-security-fixes.js": {"score":32,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":30,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
+  "scripts/prove-security-fixes.js": {"score":27,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":25,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-sla.js": {"score":15,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-storefront-mint.js": {"score":16,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-storefront.js": {"score":23,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":21,"noWhatLine":0,"emptyCatch":1,"noHeader":1},

@@ -5,11 +5,11 @@
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { ok ? (P++, console.log('  ✓ ' + n + (d ? '  ' + d : ''))) : (F++, console.log('  ✗ ' + n + (d ? '  — ' + d : ''))); };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
-async function login(email) { const reg = await api('POST', '/api/entities/register', { body: { email } }); const v = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } }); return { token: v.j && v.j.token, id: v.j && v.j.entity && v.j.entity.identity_id }; }
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
+async function login(email) { const reply = await api('POST', '/api/entities/register', { body: { email } }); const v = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } }); return { token: v.j && v.j.token, id: v.j && v.j.entity && v.j.entity.identity_id }; }
 const RDPATH = '/api/governance/readiness?destination=EU&vertical=paint&origin=IN';
 async function readiness(token) { return (await api('GET', RDPATH, { token })).j; }
-const rungFor = (rd, std, doc) => { const it = ((rd && rd.clearances) || []).find(c => c.standard === std && c.doc === doc); return it ? it.rung : '(not-in-list)'; };
+const rungFor = (rd, std, doc) => { const it = ((rd && rd.clearances) || []).find(item => item.standard === std && item.doc === doc); return it ? it.rung : '(not-in-list)'; };
 
 (async () => {
   console.log('== PROVE SECURITY FIXES (T1 self-cert · T4 fake-UUID · M1 dispute injection) ==  ' + B + '\n');
@@ -20,7 +20,7 @@ const rungFor = (rd, std, doc) => { const it = ((rd && rd.clearances) || []).fin
 
   // pick three REAL required (standard,doc) pairs from this lane so the gathers attach to actual items
   const rd0 = await readiness(sup.token);
-  const pend = ((rd0 && rd0.clearances) || []).filter(c => c.status === 'pending');
+  const pend = ((rd0 && rd0.clearances) || []).filter(item => item.status === 'pending');
   if (pend.length < 3) { console.log('  (need 3 pending clearances; found ' + pend.length + ')'); }
   const A = pend[0], Bc = pend[1], C = pend[2];
 
@@ -38,8 +38,8 @@ const rungFor = (rd, std, doc) => { const it = ((rd && rd.clearances) || []).fin
   chk('T4 · fake UUID evidence_ref does NOT earn `documented`', r4 !== 'documented', Bc.standard + ' rung=' + r4);
 
   // ── legit: a REAL owned self-chit as evidence → `documented`. ──
-  const sc = await api('POST', '/api/chits/send', { token: sup.token, body: { recipients: [{ name: 'self', role: 'to' }], manual_subject: 'evidence', subject: 'evidence', purpose: 'general', line_items: [] } });
-  const realChit = sc.j && (sc.j.chit_id || (sc.j.chit && sc.j.chit.chit_id));
+  const reply = await api('POST', '/api/chits/send', { token: sup.token, body: { recipients: [{ name: 'self', role: 'to' }], manual_subject: 'evidence', subject: 'evidence', purpose: 'general', line_items: [] } });
+  const realChit = reply.j && (reply.j.chit_id || (reply.j.chit && reply.j.chit.chit_id));
   await api('POST', '/api/governance/compliance', { token: sup.token, body: { standard_key: C.standard, doc_key: C.doc, status: 'gathered', evidence_ref: realChit } });
   let rC = rungFor(await readiness(sup.token), C.standard, C.doc);
   chk('  └ a REAL owned evidence chit still earns `documented`', rC === 'documented', C.standard + ' rung=' + rC);
