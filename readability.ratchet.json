@@ -82,7 +82,7 @@
   "lib/folder-rules.js": {"score":21,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":3,"emptyCatch":0,"noHeader":1},
   "lib/folder-views.js": {"score":25,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":24,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/form-handshake.js": {"score":21,"long40":0,"long80":0,"complex10":3,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "lib/forms.js": {"score":52,"long40":1,"long80":0,"complex10":5,"complex15":2,"deep3":0,"deep4":0,"cryptic":41,"noWhatLine":2,"emptyCatch":0,"noHeader":1},
+  "lib/forms.js": {"score":38,"long40":1,"long80":0,"complex10":5,"complex15":2,"deep3":0,"deep4":0,"cryptic":27,"noWhatLine":2,"emptyCatch":0,"noHeader":1},
   "lib/fx-rates.js": {"score":81,"long40":0,"long80":0,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":76,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/gherkin.js": {"score":32,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":1,"deep4":0,"cryptic":26,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/govresolve.js": {"score":18,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
