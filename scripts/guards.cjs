@@ -79,6 +79,7 @@ const GUARDS = [
   /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
   'migration-lint.test.cjs',     // no NEW migration hides a FOREIGN KEY inside CREATE TABLE IF NOT EXISTS
   'schema-lint.test.cjs',        // ⭐⭐ SCHEMA-LINT (assessment 2026-10-16): a NEW migration indexes its FKs, FORCEs its RLS, uses timestamptz and no national default, keys its once-only facts, and applies on an empty database — baseline shrinks only
+  'rls-census-from.test.cjs',    // DB-1 (19 Oct): rls-census --from reads Athi's editor paste with the same verdicts as a live read
   'fresh-db-check.test.cjs',     // SCHEMA-FIX1: the empty-database verdict — a new failing migration fails, an accepted one that passes leaves the list
   'entity-cast-guard.test.cjs',  // no NEW RLS policy casts an unset current_setting straight to ::uuid
   /* ⚠️ a guard nobody ran: the access gate for co-assists was never in this list (found 2026-09-28) */
