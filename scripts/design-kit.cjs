@@ -31,7 +31,7 @@ function tokens(block) {
 const LIGHT = tokens(blockAfter(':root{'));
 const DARK = Object.assign({}, LIGHT, tokens(blockAfter(':root[data-theme="dark"]{')));
 
-const varsOf = (t) => Object.keys(t).map((k) => '      ' + k + ': ' + t[k] + ';').join('\n');
+const varsOf = (t) => Object.keys(t).map((item) => '      ' + item + ': ' + t[item] + ';').join('\n');
 
 /* the shared head every card uses — the counter's own tokens, both themes */
 const HEAD = (title) => `<!doctype html>
@@ -333,5 +333,5 @@ fs.writeFileSync(path.join(OUT, 'README.md'),
   + 'Start at **BRIEF.html** — what a redesign must keep, and what is open.\n');
 
 console.log('wrote ' + cards.length + ' cards to ' + OUT);
-cards.forEach((c) => console.log('   ' + c.group.padEnd(12) + c.path));
+cards.forEach((item) => console.log('   ' + item.group.padEnd(12) + item.path));
 console.log('\ntokens parsed: light ' + Object.keys(LIGHT).length + ', dark ' + Object.keys(DARK).length);
