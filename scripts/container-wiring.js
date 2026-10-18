@@ -2,8 +2,8 @@
 // ref + version → verifiable forever even after the source enhances. Needs b78 + b80. Run: node scripts/container-wiring.js
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0; function chk(n, ok, d){ if(ok){P++;console.log('  ✓ '+n+(d?'  '+d:''));}else{F++;console.log('  ✗ '+n+(d?'  — '+d:''));} }
-async function api(m,p,o){o=o||{};const h={'Content-Type':'application/json'};if(o.token)h.Authorization='Bearer '+o.token;const r=await fetch(B+p,{method:m,headers:h,body:o.body?JSON.stringify(o.body):undefined});let j=null;try{j=await r.json();}catch(_){}return{status:r.status,j};}
-async function ent(name){ const email=name+'@test.com'; const reg=await api('POST','/api/entities/register',{body:{email}}); const v=await api('POST','/api/entities/verify',{body:{email,otp:reg.j&&reg.j.dev_otp}}); const me=await api('GET','/api/entities/me',{token:v.j&&v.j.token}); return { token:v.j&&v.j.token, id:(me.j&&me.j.entity||{}).identity_id, bridge:(me.j&&me.j.entity||{}).bridge_id }; }
+async function api(m,p,o){o=o||{};const h={'Content-Type':'application/json'};if(o.token)h.Authorization='Bearer '+o.token;const reply=await fetch(B+p,{method:m,headers:h,body:o.body?JSON.stringify(o.body):undefined});let j=null;try{j=await reply.json();}catch(_){}return{status:reply.status,j};}
+async function ent(name){ const email=name+'@test.com'; const reply=await api('POST','/api/entities/register',{body:{email}}); const v=await api('POST','/api/entities/verify',{body:{email,otp:reply.j&&reply.j.dev_otp}}); const me=await api('GET','/api/entities/me',{token:v.j&&v.j.token}); return { token:v.j&&v.j.token, id:(me.j&&me.j.entity||{}).identity_id, bridge:(me.j&&me.j.entity||{}).bridge_id }; }
 (async()=>{
   console.log('== STONE 5 WIRING: order chit freezes the container version ==\n');
   const ts=Date.now().toString().slice(-6);
@@ -12,9 +12,9 @@ async function ent(name){ const email=name+'@test.com'; const reg=await api('POS
   const cid='rp-wire-'+ts+'#tussar';   // itemContainerId(srcKey,'Tussar') = <base># <norm(name)>
   const tussarV1={ name:'Tussar', texture_family:'weave', combinations:[{name:'Silk Route',colours:[{name:'Raw Silk',hex:'#C9A86A'}]}], story:'v1 story' };
 
-  const a1=await api('PUT','/api/assist/catalogue-source',{token:brand.token,body:{source_key:srcKey,title:'Royale Play',items:[tussarV1],experience:{rules:{min_order_litres:1}}}});
-  if(a1.status===503){ console.log('  · b78/b80 not applied — apply, then re-run.'); process.exit(0); }
-  chk('source authored + item mirrored to a container', a1.status===200 && a1.j.containers>=1, 'containers='+(a1.j&&a1.j.containers));
+  const reply=await api('PUT','/api/assist/catalogue-source',{token:brand.token,body:{source_key:srcKey,title:'Royale Play',items:[tussarV1],experience:{rules:{min_order_litres:1}}}});
+  if(reply.status===503){ console.log('  · b78/b80 not applied — apply, then re-run.'); process.exit(0); }
+  chk('source authored + item mirrored to a container', reply.status===200 && reply.j.containers>=1, 'containers='+(reply.j&&reply.j.containers));
   const c1=await api('GET','/api/assist/container/'+encodeURIComponent(cid));
   chk('item container is at v1', c1.j && c1.j.version===1 && c1.j.content.story==='v1 story');
 
