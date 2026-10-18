@@ -37,10 +37,10 @@ async function api(method, path, { token, body } = {}) {
   return { status: res.status, json, text };
 }
 async function login(name) {
-  const reg = await api('POST', '/api/entities/register', { body: { email: name } });
-  const otp = reg.json && reg.json.dev_otp; if (!otp) return { err: JSON.stringify(reg.json) };
-  const ver = await api('POST', '/api/entities/verify', { body: { email: reg.json.email, otp } });
-  return { token: ver.json && ver.json.token, email: reg.json.email };
+  const reply = await api('POST', '/api/entities/register', { body: { email: name } });
+  const otp = reply.json && reply.json.dev_otp; if (!otp) return { err: JSON.stringify(reply.json) };
+  const ver = await api('POST', '/api/entities/verify', { body: { email: reply.json.email, otp } });
+  return { token: ver.json && ver.json.token, email: reply.json.email };
 }
 const idOf = (t) => { try { return JSON.parse(Buffer.from(String(t).split('.')[1], 'base64').toString()).identity_id || null; } catch (_) { return null; } };
 const has = (obj, id) => JSON.stringify(obj || '').includes(id);
@@ -62,9 +62,9 @@ const has = (obj, id) => JSON.stringify(obj || '').includes(id);
 async function holdsCopy(token, chit_id) {
   const inbox = await api('GET', '/api/chits/inbox', { token });
   if (has(inbox.json, chit_id)) return { ok: true, how: 'in the inbox' };
-  const det = await api('GET', '/api/chits/' + chit_id, { token });
-  if (det.status !== 200) return { ok: false, how: 'not in the inbox and detail says ' + det.status };
-  const st = (det.json && det.json.header) || {};
+  const reply = await api('GET', '/api/chits/' + chit_id, { token });
+  if (reply.status !== 200) return { ok: false, how: 'not in the inbox and detail says ' + reply.status };
+  const st = (reply.json && reply.json.header) || {};
   return { ok: true, how: 'held but FILED into a folder (role ' + (st.role || '?') + ') — not a delivery failure' };
 }
 
@@ -84,7 +84,7 @@ async function holdsCopy(token, chit_id) {
   // ===== 1 · SEND A->B + delivery (mailing model) =====
   console.log('\n1 · Send A→B + delivery');
   const subj = 'REG ' + Date.now().toString().slice(-6);
-  const snd = await api('POST', '/api/chits/send', { token: A.token, body: {
+  const reply = await api('POST', '/api/chits/send', { token: A.token, body: {
     recipients: [{ entity_id: BETA_ID, role: 'to' }], purpose: 'general', manual_subject: subj,
     /* ⚠️ THE CANONICAL LINE SHAPE — particulars/quantity/price, not description/qty/rate. This script used the
        wrong one for months, and because line_items is jsonb the API stored it verbatim. The result: 45 chits on
@@ -95,8 +95,8 @@ async function holdsCopy(token, chit_id) {
        unreadable lines. Flagged for a decision rather than patched into a reader, because tolerating it downstream
        would hide it in four places instead of rejecting it in one. */
     line_items: [{ particulars: 'Widget', quantity: 2, price: 100 }], business_json: { note: 'reg test' } } });
-  const chit_id = snd.json && (snd.json.chit_id || (snd.json.chit && snd.json.chit.chit_id));
-  check('send returned a chit_id', !!chit_id, chit_id || JSON.stringify(snd.json).slice(0, 200));
+  const chit_id = reply.json && (reply.json.chit_id || (reply.json.chit && reply.json.chit.chit_id));
+  check('send returned a chit_id', !!chit_id, chit_id || JSON.stringify(reply.json).slice(0, 200));
   if (!chit_id) return done();
   const aSent = await api('GET', '/api/chits/sent', { token: A.token });
   check('Alpha has the SENT copy (Order)', has(aSent.json, chit_id));
@@ -169,7 +169,7 @@ async function holdsCopy(token, chit_id) {
     check('Alpha fetches ITS OWN copy', aGet.status === 200, 'status ' + aGet.status);
     // Beta gets its OWN copy via the chit detail — distinct id, not Alpha's
     const bDet = await api('GET', '/api/chits/' + chit_id, { token: B.token });
-    const bAtt = ((bDet.json && bDet.json.attachments) || []).find(a => a.name === 'doc.txt');
+    const bAtt = ((bDet.json && bDet.json.attachments) || []).find(item => item.name === 'doc.txt');
     const betaAttId = bAtt && bAtt.id;
     check('Beta has its OWN replicated copy (distinct id)', !!betaAttId && betaAttId !== attId, 'beta ' + betaAttId + ' vs alpha ' + attId);
     if (betaAttId) { const bOwn = await api('GET', '/api/attachments/' + betaAttId, { token: B.token });
@@ -191,7 +191,7 @@ async function holdsCopy(token, chit_id) {
 
   // ===== 8 · CC-role delivery (fan-out) =====
   console.log('\n8 · CC-role delivery');
-  const eid = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
+  const eid = (text) => { try { return JSON.parse(Buffer.from(text.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
   const gammaId = gammaOk ? eid(G.token) : null;
   if (gammaId) {
     const subj2 = 'REGCC ' + Date.now().toString().slice(-6);
@@ -215,6 +215,6 @@ async function holdsCopy(token, chit_id) {
 
 function done() {
   console.log('\n== RESULT ==  PASS ' + PASS + '  ·  FAIL ' + FAIL);
-  if (ISSUES.length) { console.log('\n-- ISSUES / THINGS TO REVIEW --'); ISSUES.forEach((i, n) => console.log((n + 1) + '. ' + i)); }
+  if (ISSUES.length) { console.log('\n-- ISSUES / THINGS TO REVIEW --'); ISSUES.forEach((item, index) => console.log((index + 1) + '. ' + item)); }
   process.exit(0);
 }
