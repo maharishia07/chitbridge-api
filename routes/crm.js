@@ -116,7 +116,7 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
     try { rec.followups = await withEntity(owner, async (h) => F.list(h, owner, { party_id: p.party_id })); }
     catch (e) { if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) rec.migrated = false; else throw e; }
     /* a lead's stage chip + "Move to…": the server says which moves, and may/why (b297 not run → greyed with its sentence) */
-    if (rec.lead) rec.lead = Object.assign({}, rec.lead, { moves: M.KINDS.lead_stage.groups.filter((g) => g !== rec.lead.stage), may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY } });
+    if (rec.lead) rec.lead = Object.assign({}, rec.lead, { moves: M.KINDS.lead_stage.groups.filter((item) => item !== rec.lead.stage), may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY } });
     rec.may = crmMay(req);   /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
     res.json(rec);
   } catch (e) { fail(res, e); }
@@ -144,9 +144,9 @@ router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
     /* chits (+ the latest external message of each) and disputes — through select.rows, the scorecard's own selector */
     if (found.party.kind !== 'local') {
       const select = require('../lib/select');
-      const cs = (await select.rows(owner, { counterparty_id: party, limit: 2000 })).filter((r) => new Date(r.created_at).getTime() < before).slice(0, limit);
-      const ids = cs.map((r) => r.chit_id);
-      for (const r of cs) entries.push({ kind: 'chit', at: crm.iso(r.created_at), chit_id: r.chit_id, direction: r.direction, status: r.current_status, purpose: r.purpose,
+      const list = (await select.rows(owner, { counterparty_id: party, limit: 2000 })).filter((item) => new Date(item.created_at).getTime() < before).slice(0, limit);
+      const ids = list.map((item) => item.chit_id);
+      for (const r of list) entries.push({ kind: 'chit', at: crm.iso(r.created_at), chit_id: r.chit_id, direction: r.direction, status: r.current_status, purpose: r.purpose,
         doc_kind: r.doc_kind || null, bill_no: r.bill_no || null, title: r.manual_subject || r.auto_subject || null,
         value: crm.num(r.value), currency: r.currency || null, open_disputes: Number(r.open_disputes) || 0 });
       if (ids.length) {
@@ -188,9 +188,9 @@ router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
          Before b297 the table is absent — its savepoint answers no rows (soft), exactly as the other optional sources. */
       const st = await soft(() => h.query(`SELECT membership_id, grp, at, by_user_id FROM memberships WHERE entity_id = $1 AND item_type = 'party' AND item_id = $2 AND kind = 'lead_stage' AND at < $3
                                             ORDER BY at DESC, membership_id DESC LIMIT $4`, [owner, party, beforeIso, limit + 1]));
-      st.rows.slice(0, limit).forEach((x, i) => entries.push({ kind: 'stage', at: crm.iso(x.at), membership_id: x.membership_id, stage: x.grp, from: st.rows[i + 1] ? st.rows[i + 1].grp : null, by: x.by_user_id || null }));
+      st.rows.slice(0, limit).forEach((x, index) => entries.push({ kind: 'stage', at: crm.iso(x.at), membership_id: x.membership_id, stage: x.grp, from: st.rows[index + 1] ? st.rows[index + 1].grp : null, by: x.by_user_id || null }));
     });
-    entries.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+    entries.sort((first, second) => (first.at < second.at ? 1 : first.at > second.at ? -1 : 0));
     const page = entries.slice(0, limit);
     /* the one envelope beside the cursor: total = the rows this page could see (a cursor list has no whole count); page is always 1 of the cursor */
     res.json({ party_id: party, entries: page, next_before: entries.length > limit ? page[page.length - 1].at : null, migrated, total: entries.length, page: 1, limit });
