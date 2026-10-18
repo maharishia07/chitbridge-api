@@ -75,8 +75,8 @@ const ok = (c, m, extra) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m
 
   // bind + approve the business line
   const list = await j('/api/channels', { token: tok });
-  const wa = (list.b.channels || []).find((c) => c.key === 'whatsapp') || { bindings: [] };
-  let bind = (wa.bindings || []).find((b) => b.address === LINE);
+  const wa = (list.b.channels || []).find((item) => item.key === 'whatsapp') || { bindings: [] };
+  let bind = (wa.bindings || []).find((item) => item.address === LINE);
   if (!bind) { const made = await j('/api/channels', { method: 'POST', token: tok, body: { channel: 'whatsapp', address: LINE, label: 'proof line' } }); bind = made.b; }
   if (bind && bind.status !== 'verified') await j('/api/channels/' + bind.id + '/approve', { method: 'POST', headers: { 'x-cb-admin-key': ADMIN }, body: {} });
 
@@ -93,7 +93,7 @@ const ok = (c, m, extra) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m
   ok(hook.status === 200 && hook.b && hook.b.captured >= 1, 'the signed message was captured', JSON.stringify(hook.b));
 
   const pend = await j('/api/capture/pending', { token: tok });
-  const cap = (pend.b.captures || []).find((c) => c.raw_text && c.raw_text.includes('Ramnagar'));
+  const cap = (pend.b.captures || []).find((item) => item.raw_text && item.raw_text.includes('Ramnagar'));
   ok(!!cap, 'it is on the intake queue');
   if (!cap) { console.log('\n  ' + pass + ' passed, ' + fail + ' failed\n'); process.exitCode = 1; return; }
 
@@ -133,9 +133,9 @@ const ok = (c, m, extra) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m
    * ⚠️ The catalogue row is created BEFORE the raise, so the match is real rather than something this script set up
    *    to succeed. And "nails" must come back UNPRICED and be ADDED — not quietly priced off some near-miss row.
    */
-  ok(pay.line_items.some((l) => /cement/i.test(l.particulars) && l.price === 340),
+  ok(pay.line_items.some((item) => /cement/i.test(item.particulars) && item.price === 340),
     '★★ the CATALOGUE price was attached to the line they asked for', JSON.stringify(pay.line_items));
-  ok(pay.line_items.some((l) => /nail/i.test(l.particulars) && !l.price),
+  ok(pay.line_items.some((item) => /nail/i.test(item.particulars) && !item.price),
     '★★ an item you do not stock stays UNPRICED — never guessed from a near-miss', JSON.stringify(pay.line_items));
   const pr = ((pay.business_json || {}).via || {}).priced || {};
   ok(pr.from_catalogue >= 1, '★ it reports how many lines it priced', JSON.stringify(pr));
@@ -144,12 +144,12 @@ const ok = (c, m, extra) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m
    * wrote a row back for every unrecognised item, which made a stranger's message a reason to edit your shop.
    * Counted before and after, because "it didn't add anything" is only believable as a number.
    */
-  const rowsOf = (r) => { const b = (r.b && (r.b.items || r.b.products || r.b)) || []; return Array.isArray(b) ? b.map((x) => x.item_data || x) : []; };
-  const catAfter = rowsOf(await j('/api/products', { token: tok })).map((d) => d.name).sort();
+  const rowsOf = (r) => { const list = (r.b && (r.b.items || r.b.products || r.b)) || []; return Array.isArray(list) ? list.map((x) => x.item_data || x) : []; };
+  const catAfter = rowsOf(await j('/api/products', { token: tok })).map((item) => item.name).sort();
   ok(JSON.stringify(catAfter) === JSON.stringify(catBefore),
     '★★★ the catalogue is UNTOUCHED — a request never writes a product',
     'before ' + JSON.stringify(catBefore) + '\n      after  ' + JSON.stringify(catAfter));
-  ok(!catAfter.some((n) => /nail/i.test(n)), '★★ the unstocked item was NOT added — it is only on the chit');
+  ok(!catAfter.some((item) => /nail/i.test(item)), '★★ the unstocked item was NOT added — it is only on the chit');
   ok(/^WhatsApp request — /.test(pay.subject), '★★ the chit says on its subject line that it is a WhatsApp request', pay.subject);
 
   const beforeCount = (await j('/api/capture/pending', { token: tok })).b.captures.length;
@@ -202,14 +202,14 @@ const ok = (c, m, extra) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m
   const orders = await j('/api/chits/sent?limit=50', { token: tok });
   ok(tasks.status === 200 && orders.status === 200, 'both lists actually answered (a 404 would fake the next two)',
     'inbox=' + tasks.status + ' sent=' + orders.status);
-  ok(rows(tasks).some((c) => c.chit_id === chitId), '★★★ it is in the TASK list — the request is in their inbox',
+  ok(rows(tasks).some((item) => item.chit_id === chitId), '★★★ it is in the TASK list — the request is in their inbox',
     'inbox holds ' + rows(tasks).length + ' chits');
-  ok(!rows(orders).some((c) => c.chit_id === chitId), '★★★ it is NOT in the Order list — the record never claims they raised it themselves',
+  ok(!rows(orders).some((item) => item.chit_id === chitId), '★★★ it is NOT in the Order list — the record never claims they raised it themselves',
     'sent holds ' + rows(orders).length + ' chits');
 
   // ── the customer is NOT a party. This is the gate that must keep holding.
-  const parties = (h.all_recipients || []).map((r) => String(r.display_name || ''));
-  ok(!parties.some((p) => p.includes('9000000444')), '★★ the phone number is NOT a party on the chit', JSON.stringify(parties));
+  const parties = (h.all_recipients || []).map((item) => String(item.display_name || ''));
+  ok(!parties.some((item) => item.includes('9000000444')), '★★ the phone number is NOT a party on the chit', JSON.stringify(parties));
 
   // ── raise twice? The capture is converted, so the second press has nothing to raise.
   const again = await j('/api/capture/' + cap.id + '/raise', { method: 'POST', token: tok, body: {} });
@@ -239,8 +239,8 @@ const ok = (c, m, extra) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m
   ok(fcat.length === 0, 'the factory has NO catalogue (so nothing can be looked up)', fcat.length + ' items');
 
   const flist = await j('/api/channels', { token: ftok });
-  const fwa = (flist.b.channels || []).find((c) => c.key === 'whatsapp') || { bindings: [] };
-  let fbind = (fwa.bindings || []).find((b) => b.address === FLINE);
+  const fwa = (flist.b.channels || []).find((item) => item.key === 'whatsapp') || { bindings: [] };
+  let fbind = (fwa.bindings || []).find((item) => item.address === FLINE);
   if (!fbind) { const made = await j('/api/channels', { method: 'POST', token: ftok, body: { channel: 'whatsapp', address: FLINE, label: 'collection line' } }); fbind = made.b; }
   if (fbind && fbind.status !== 'verified') await j('/api/channels/' + fbind.id + '/approve', { method: 'POST', headers: { 'x-cb-admin-key': ADMIN }, body: {} });
 
@@ -253,17 +253,17 @@ const ok = (c, m, extra) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m
   await j('/api/capture/webhook/whatsapp', { method: 'POST', body: fpayload,
     headers: { 'X-Hub-Signature-256': 'sha256=' + crypto.createHmac('sha256', SECRET).update(fpayload).digest('hex') } });
   const fpend = await j('/api/capture/pending', { token: ftok });
-  const fcap = (fpend.b.captures || []).find((c) => /milk/i.test(c.raw_text || ''));
+  const fcap = (fpend.b.captures || []).find((item) => /milk/i.test(item.raw_text || ''));
   ok(!!fcap, 'the farmer\'s message arrived');
   if (fcap) {
     await j('/api/capture/' + fcap.id + '/structure', { method: 'POST', token: ftok, body: {} });
     const fr = await j('/api/capture/' + fcap.id + '/raise', { method: 'POST', token: ftok, body: {} });
     ok(fr.status === 200, '★★★ it raises with NO catalogue — the chit is the primitive', JSON.stringify(fr.b).slice(0, 160));
-    const fli = (fr.b && fr.b.line_items) || [];
-    ok(fli.some((l) => /milk/i.test(l.particulars)), '★★ "milk 10 l" became a line', JSON.stringify(fli));
-    ok(fli.every((l) => !l.price), '★ it carries no price, and nothing invented one', JSON.stringify(fli));
+    const list = (fr.b && fr.b.line_items) || [];
+    ok(list.some((item) => /milk/i.test(item.particulars)), '★★ "milk 10 l" became a line', JSON.stringify(list));
+    ok(list.every((item) => !item.price), '★ it carries no price, and nothing invented one', JSON.stringify(list));
     const fsent = await j('/api/chits/send', { method: 'POST', token: ftok, body: {
-      recipients: fr.b.recipients, subject: fr.b.subject, line_items: fli,
+      recipients: fr.b.recipients, subject: fr.b.subject, line_items: list,
       purpose: fr.b.purpose, business_json: fr.b.business_json, self_copy: fr.b.self_copy } });
     ok(fsent.status === 200 || fsent.status === 201, '★★★ and it SENDS — the factory has its notice before the milk moves',
       JSON.stringify(fsent.b).slice(0, 160));
@@ -287,14 +287,14 @@ const ok = (c, m, extra) => { if (c) { pass++; console.log('  \x1b[32m✓\x1b[0m
   } }] }] });
   await j('/api/capture/webhook/whatsapp', { method: 'POST', body: tpayload,
     headers: { 'X-Hub-Signature-256': 'sha256=' + crypto.createHmac('sha256', SECRET).update(tpayload).digest('hex') } });
-  const tcap = ((await j('/api/capture/pending', { token: ftok })).b.captures || []).find((c) => /tomato/i.test(c.raw_text || ''));
+  const tcap = ((await j('/api/capture/pending', { token: ftok })).b.captures || []).find((item) => /tomato/i.test(item.raw_text || ''));
   ok(!!tcap, 'the priced message arrived');
   if (tcap) {
     await j('/api/capture/' + tcap.id + '/structure', { method: 'POST', token: ftok, body: {} });
     const tr = await j('/api/capture/' + tcap.id + '/raise', { method: 'POST', token: ftok, body: {} });
-    const tli = (tr.b && tr.b.line_items) || [];
-    const tom = tli.find((l) => /tomato/i.test(l.particulars || ''));
-    ok(!!tom, '★★ "tomato" came through as the name', JSON.stringify(tli));
+    const list = (tr.b && tr.b.line_items) || [];
+    const tom = list.find((item) => /tomato/i.test(item.particulars || ''));
+    ok(!!tom, '★★ "tomato" came through as the name', JSON.stringify(list));
     ok(tom && tom.quantity === 10, '★★ 10 came through as the quantity', JSON.stringify(tom));
     ok(tom && tom.price === 40, '★★★ 40.00 came through as the PRICE — the only figure in the message is kept',
       JSON.stringify(tom));
