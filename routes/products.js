@@ -1650,12 +1650,16 @@ router.get('/lists', auth, async (req, res) => {
     let currency = null;
     try { currency = (await regional.currencyFor(entity_id)) || null; } catch (e) { require('../lib/logger').warn('products: currency unread — the figure shows without a symbol', { why: String(e && e.message) }); }
 
+    const trade = await require('../lib/govresolve').verticalOf(entity_id);   /* one trip; an unreadable trade answers key null (logged) */
     res.json({
       /* H29: "in your catalogue today" counts what the shop sells now - the same active items the Home Product Lab card counts (lib/home-facts productLab). A retired item stays in `mine` so the lab still greys it. */
       have: mine.filter((x) => x.active).length,
       currency,
       /* ⚠️ THE ROWS THEMSELVES TRAVEL, not just a count — the lab is a spreadsheet the shopkeeper reads and
          ticks, so it needs every row's name, unit, price, category and local names to render at all. */
+      /* VERT-8: the list this shop's trade opens on (govresolve.verticalOf → BP.forVertical); null = no list fits, the page asks */
+      vertical: trade.key,
+      pick: BP.forVertical(trade.key),
       lists: Object.keys(BP.BLUEPRINTS).map((k) => {
         const bp = BP.blueprint(k);
         return {

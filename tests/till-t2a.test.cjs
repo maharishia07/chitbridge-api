@@ -67,14 +67,16 @@ ok('/api/till/tasks says how an online order was placed (orderOf), from summary_
 });
 
 console.log('- M127: the mode menu');
-ok('holdsStock: the server says, the counter may override, an order-ticket counter serves', () => {
+ok('holdsStock: the server says, the counter may override; kitchen tickets or open orders do not decide it (CTR-2)', () => {
   const mk = (S, opt, kot, open) => new Function('S', 'tillOpt', 'kotOn', 'purposeHas',
     lift('holdsStock').replace('function holdsStock', 'function holdsStock') + '; return holdsStock();')(S, () => opt, () => kot, () => open);
   assert.strictEqual(mk({ shop: { holds_stock: true } }, {}, false, false), true);
   assert.strictEqual(mk({ shop: { holds_stock: false } }, {}, false, false), false);
   assert.strictEqual(mk({ shop: {} }, {}, false, false), true, 'unknown = general trade = holds stock');
   assert.strictEqual(mk({ shop: { holds_stock: false } }, { stock: true }, false, false), true, 'the counter overrides');
-  assert.strictEqual(mk({ shop: { holds_stock: true } }, {}, true, false), false, 'a kitchen-ticket counter serves');
+  assert.strictEqual(mk({ shop: { holds_stock: true } }, {}, true, true), true, 'CTR-2: a kitchen-ticket / open-order counter of a stock-holding shop holds stock');
+  assert.strictEqual(mk({ shop: { holds_stock: true } }, { stock: false }, true, false), false, 'the counter override still decides');
+  assert(lift('holdsStock').indexOf('kotOn') < 0 && lift('holdsStock').indexOf('purposeHas') < 0, 'CTR-2: holdsStock reads no counter purpose');
 });
 ok('Despatch is greyed WITH the reason when the shop holds no stock; Receive is never greyed (a new shop, nothing received yet, can start); the saved mode cannot strand a restaurant in Despatch', () => {
   assert(PAGE.includes("return (m === 'despatch' && !holdsStock()) ? 'This shop does not hold stock.' : '';"));
