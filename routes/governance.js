@@ -512,15 +512,15 @@ router.post('/verify', auth, writeGate, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
-    const v = await require('../lib/verify').verifyRegistry(b.id_type, b.id_value);
-    if (!v.ok) return res.status(422).json({ error: 'Verification failed', message: v.note, verdict: v });
+    const node = await require('../lib/verify').verifyRegistry(b.id_type, b.id_value);
+    if (!node.ok) return res.status(422).json({ error: 'Verification failed', message: node.note, verdict: node });
     await require('../lib/readiness').gatherDocument(entity_id, {
-      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: v.value, valid_until: b.valid_until,
+      standard_key: b.standard_key, doc_key: b.doc_key, evidence_ref: node.value, valid_until: b.valid_until,
       status: 'gathered', trusted: true,   // T1 — ONLY this platform path may set a verification stamp
-      verification: { method: v.method, id_type: v.id_type, checked: v.checked, provider: v.provider || null,
-        registry: v.registry || null, note: v.note, verified_at: new Date().toISOString() } });
-    const msg = v.method === 'registry' ? 'Verified against the registry' : 'Format valid — not registry-confirmed (no provider connected)';
-    res.json({ message: msg, verdict: v, ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
+      verification: { method: node.method, id_type: node.id_type, checked: node.checked, provider: node.provider || null,
+        registry: node.registry || null, note: node.note, verified_at: new Date().toISOString() } });
+    const msg = node.method === 'registry' ? 'Verified against the registry' : 'Format valid — not registry-confirmed (no provider connected)';
+    res.json({ message: msg, verdict: node, ...(await require('../lib/readiness').resolveReadiness(entity_id)).summary });
   } catch (err) { res.status(err.status || 500).json({ error: 'Verify failed', message: safeErr(err) }); }
 });
 
