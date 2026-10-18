@@ -38,8 +38,8 @@ run('prove-nothing-dropped', async (t) => {
 
   const tok = await signIn('beta@test-cb.com', 'Beta Fresh');
   const list = await j('/api/channels', { token: tok });
-  const wa = (list.b.channels || []).find((c) => c.key === 'whatsapp') || { bindings: [] };
-  let bind = (wa.bindings || []).find((b) => b.address === LINE);
+  const wa = (list.b.channels || []).find((item) => item.key === 'whatsapp') || { bindings: [] };
+  let bind = (wa.bindings || []).find((item) => item.address === LINE);
   if (!bind) { const made = await j('/api/channels', { method: 'POST', token: tok, body: { channel: 'whatsapp', address: LINE, label: 'drop proof' } }); bind = made.b; }
   if (bind && bind.status !== 'verified') await j('/api/channels/' + bind.id + '/approve', { method: 'POST', headers: { 'x-cb-admin-key': ADMIN }, body: {} });
 
@@ -52,7 +52,7 @@ run('prove-nothing-dropped', async (t) => {
   await j('/api/capture/webhook/whatsapp', { method: 'POST', body: payload,
     headers: { 'X-Hub-Signature-256': 'sha256=' + crypto.createHmac('sha256', SECRET).update(payload).digest('hex') } });
 
-  const cap = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((c) => (c.raw_text || '').includes(tag));
+  const cap = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((item) => (item.raw_text || '').includes(tag));
   t.ok(!!cap, 'the message arrived');
   if (!cap) return;
 
@@ -66,15 +66,15 @@ run('prove-nothing-dropped', async (t) => {
   const blob = JSON.stringify(raise.b).toLowerCase();
 
   console.log('\n  ── what the chit actually holds ──');
-  li.forEach((l) => console.log('   • ' + l.particulars + ' × ' + l.quantity + (l.unit ? ' ' + l.unit : '')
-    + (l.unit_size ? ' (' + l.unit_size + ')' : '') + (l.unit_price ? ' @' + l.unit_price : '')
-    + (l.comment ? '\n       ↳ ' + l.comment : '')));
-  ['delivery_at', 'delivery_address', 'notes', 'unplaced'].forEach((k) => { if (via[k]) console.log('   ' + k + ': ' + via[k]); });
+  li.forEach((item) => console.log('   • ' + item.particulars + ' × ' + item.quantity + (item.unit ? ' ' + item.unit : '')
+    + (item.unit_size ? ' (' + item.unit_size + ')' : '') + (item.unit_price ? ' @' + item.unit_price : '')
+    + (item.comment ? '\n       ↳ ' + item.comment : '')));
+  ['delivery_at', 'delivery_address', 'notes', 'unplaced'].forEach((item) => { if (via[item]) console.log('   ' + item + ': ' + via[item]); });
   console.log('');
 
   /* ── the ITEMS themselves ──────────────────────────────────────────────────────────────────────────────────── */
-  const bir = li.find((l) => /briyani|biryani/i.test(l.particulars || ''));
-  const tom = li.find((l) => /thakkali|tomato/i.test(l.particulars || ''));
+  const bir = li.find((item) => /briyani|biryani/i.test(item.particulars || ''));
+  const tom = li.find((item) => /thakkali|tomato/i.test(item.particulars || ''));
   t.ok(!!bir, '★ the biryani became a line');
   t.ok(!!tom, '★ the thakkali became a line');
   t.ok(bir && bir.quantity === 4, '★ …with the quantity the customer said (4)', bir && String(bir.quantity));
@@ -103,8 +103,8 @@ run('prove-nothing-dropped', async (t) => {
   /* ⚠️ THE WHOLE-MESSAGE SWEEP. Field-by-field checks only test what I remembered to check. This asks the harder
      question: is every meaningful word from the message findable anywhere in the chit? */
   const STOP = new Set(['with','and','at','my','the','for','of','a','an','to','each','before','coming','ref']);
-  const words = MESSAGE.toLowerCase().replace(/[.,]/g, ' ').split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w) && !/^\d+$/.test(w));
-  const lost = [...new Set(words)].filter((w) => !blob.includes(w));
+  const words = MESSAGE.toLowerCase().replace(/[.,]/g, ' ').split(/\s+/).filter((item) => item.length > 2 && !STOP.has(item) && !/^\d+$/.test(item));
+  const lost = [...new Set(words)].filter((item) => !blob.includes(item));
   t.ok(lost.length === 0, '★★★ EVERY meaningful word from the message is findable on the chit',
     lost.length ? 'LOST: ' + lost.join(', ') : '');
   if (lost.length) console.log('      (a lost word is a fact nobody will ever know was said)');
