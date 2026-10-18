@@ -8,27 +8,27 @@ async function api(m, p, { token, key, body } = {}) {
   const h = { 'Content-Type': 'application/json' };
   if (token) h.Authorization = 'Bearer ' + token;
   if (key) h['X-Bridge-Key'] = key;
-  const r = await fetch(BASE + p, { method: m, headers: h, body: body ? JSON.stringify(body) : undefined });
-  let j = null; try { j = await r.json(); } catch (_) {}
-  return { status: r.status, json: j };
+  const reply = await fetch(BASE + p, { method: m, headers: h, body: body ? JSON.stringify(body) : undefined });
+  let j = null; try { j = await reply.json(); } catch (_) {}
+  return { status: reply.status, json: j };
 }
 async function login(name) {
-  const r = await api('POST', '/api/entities/register', { body: { email: name } });
-  const o = r.json && r.json.dev_otp;
-  const v = await api('POST', '/api/entities/verify', { body: { email: r.json.email, otp: o } });
+  const reply = await api('POST', '/api/entities/register', { body: { email: name } });
+  const o = reply.json && reply.json.dev_otp;
+  const v = await api('POST', '/api/entities/verify', { body: { email: reply.json.email, otp: o } });
   return v.json.token;
 }
 async function bridgeOf(token, connId, ref) {
-  const c = await api('GET', '/api/connectors/' + connId + '/connections', { token });
-  const d = ((c.json && c.json.connections) || []).find(x => x.ref === ref);
+  const reply = await api('GET', '/api/connectors/' + connId + '/connections', { token });
+  const d = ((reply.json && reply.json.connections) || []).find(x => x.ref === ref);
   return d && d.bridge_id;
 }
 (async () => {
   console.log('== IoT default-assignee (resolution seam) ==\n');
   const A = await login('Alpha Timbers');
-  const c = await api('POST', '/api/connectors', { token: A, body: { display_name: 'ASG ' + Date.now().toString().slice(-5), type: 'iot', config: { mode: 'push' } } });
-  const connId = c.json && c.json.connector && c.json.connector.identity_id;
-  const key = c.json && c.json.provision_key;
+  const reply = await api('POST', '/api/connectors', { token: A, body: { display_name: 'ASG ' + Date.now().toString().slice(-5), type: 'iot', config: { mode: 'push' } } });
+  const connId = reply.json && reply.json.connector && reply.json.connector.identity_id;
+  const key = reply.json && reply.json.provision_key;
   check('connector created', !!connId && !!key);
   if (!connId) return done();
 
