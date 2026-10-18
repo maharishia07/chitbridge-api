@@ -26,11 +26,11 @@ async function api(method, path, { token, key, body } = {}) {
 
   // ---- AUTH ----
   console.log('AUTH');
-  const reg = await api('POST', '/api/entities/register', { body: { email: ENTITY } });
-  const otp = reg.json && reg.json.dev_otp;
-  check('dev login issued an OTP', !!otp, otp ? 'email ' + reg.json.email : JSON.stringify(reg.json));
+  const reply = await api('POST', '/api/entities/register', { body: { email: ENTITY } });
+  const otp = reply.json && reply.json.dev_otp;
+  check('dev login issued an OTP', !!otp, otp ? 'email ' + reply.json.email : JSON.stringify(reply.json));
   if (!otp) return done();
-  const ver = await api('POST', '/api/entities/verify', { body: { email: reg.json.email, otp } });
+  const ver = await api('POST', '/api/entities/verify', { body: { email: reply.json.email, otp } });
   const token = ver.json && ver.json.token;
   check('verify returned a JWT', !!token);
   if (!token) return done();
@@ -84,12 +84,12 @@ async function api(method, path, { token, key, body } = {}) {
   // ---- 6 · AUTO-FILE INTO FOLDER (the payoff) ----
   console.log('\n6 · Auto-file into "Gate log" + raiser shown');
   const fl = await api('GET', '/api/folders', { token });
-  const gate = (fl.json && fl.json.folders || []).find(f => (f.name || '').toLowerCase() === 'gate log');
+  const gate = (fl.json && fl.json.folders || []).find(item => (item.name || '').toLowerCase() === 'gate log');
   check('folder "Gate log" auto-created', !!gate, gate && gate.folder_id);
   if (gate) {
     const fc = await api('GET', '/api/folders/' + gate.folder_id + '/chits', { token });
     const rows = (fc.json && fc.json.chits) || [];
-    const mine = rows.find(r => r.chit_id === chit_id);
+    const mine = rows.find(item => item.chit_id === chit_id);
     check('the exception is filed in the folder', !!mine);
     if (mine) {
       check('raiser = the device', mine.raiser_name === name, 'raiser_name=' + mine.raiser_name);
@@ -111,11 +111,11 @@ async function api(method, path, { token, key, body } = {}) {
     check('Beta logged in', !!betaToken);
     if (betaToken && gate) {
       const bf = await api('GET', '/api/folders', { token: betaToken });
-      const betaSeesGate = ((bf.json && bf.json.folders) || []).some(f => f.folder_id === gate.folder_id || (f.name || '').toLowerCase() === 'gate log');
+      const betaSeesGate = ((bf.json && bf.json.folders) || []).some(item => item.folder_id === gate.folder_id || (item.name || '').toLowerCase() === 'gate log');
       check('Beta does NOT see Alpha\'s "Gate log" folder', !betaSeesGate);
       const bc = await api('GET', '/api/folders/' + gate.folder_id + '/chits', { token: betaToken });
       const betaRows = (bc.json && bc.json.chits) || [];
-      const leaked = betaRows.find(r => r.chit_id === chit_id);
+      const leaked = betaRows.find(item => item.chit_id === chit_id);
       check('Beta CANNOT read chits filed in Alpha\'s folder (RLS)', !leaked, 'rows visible to Beta: ' + betaRows.length);
     }
   }
@@ -155,11 +155,11 @@ async function api(method, path, { token, key, body } = {}) {
     const fMove = await api('POST', '/api/folders/move', { token, body: { chit_id, folder_id: crudId } });
     check('MOVE a chit into it (manual file)', fMove.json && fMove.json.moved >= 1, 'moved ' + (fMove.json && fMove.json.moved));
     const fVer = await api('GET', '/api/folders/' + crudId + '/chits', { token });
-    check('chit now appears in the folder', ((fVer.json && fVer.json.chits) || []).some(r => r.chit_id === chit_id));
+    check('chit now appears in the folder', ((fVer.json && fVer.json.chits) || []).some(item => item.chit_id === chit_id));
     const fDel = await api('DELETE', '/api/folders/' + crudId, { token });
     check('delete folder + child cascades', fDel.status === 200, 'status ' + fDel.status + ' deleted ' + (fDel.json && fDel.json.deleted));
     const fGone = await api('GET', '/api/folders', { token });
-    check('deleted folder no longer listed', !((fGone.json && fGone.json.folders) || []).some(f => f.folder_id === crudId));
+    check('deleted folder no longer listed', !((fGone.json && fGone.json.folders) || []).some(item => item.folder_id === crudId));
     const inbAfter = await api('GET', '/api/chits/inbox', { token });
     check('unfiled chit SURVIVES (not deleted with folder)', JSON.stringify(inbAfter.json || '').includes(chit_id));
   }
