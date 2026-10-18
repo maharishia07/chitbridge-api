@@ -58,7 +58,7 @@ const { Client } = require('pg');
 const argv = process.argv.slice(2);
 const has = (f) => argv.includes(f);
 const val = (f) => { const i = argv.indexOf(f); return i >= 0 ? argv[i + 1] : null; };
-const file = argv.find((a) => !a.startsWith('-') && a !== val('--entity') && a !== val('-e'));
+const file = argv.find((item) => !item.startsWith('-') && item !== val('--entity') && item !== val('-e'));
 
 const WRITE = has('--write');
 const ENTITY = val('--entity');
@@ -189,7 +189,7 @@ function die(msg, code) { console.error('\n  ' + msg + '\n'); process.exit(code 
    */
   if (!ENTITY && !bypasses) {
     try {
-      const named = [...new Set((sql.match(/\b[a-z_][a-z0-9_]{2,}\b/gi) || []).map((s) => s.toLowerCase()))];
+      const named = [...new Set((sql.match(/\b[a-z_][a-z0-9_]{2,}\b/gi) || []).map((item) => item.toLowerCase()))];
       if (named.length) {
         const hit = (await c.query(
           `SELECT cl.relname AS t, cl.relforcerowsecurity AS forced
@@ -213,9 +213,9 @@ function die(msg, code) { console.error('\n  ' + msg + '\n'); process.exit(code 
   /* ⚠️ AN OUTLINE, AND SAID TO BE ONE. Postgres does the parsing; this only counts what a person would recognise,
      so nothing here decides what runs. A regex that pretended to be a parser is the bug this file avoids. */
   const verbs = (sql.match(/^\s*(CREATE|ALTER|DROP|GRANT|REVOKE|INSERT|UPDATE|DELETE|SELECT|BEGIN|COMMIT|DO)\b/gim) || [])
-    .map((s) => s.trim().toUpperCase());
-  const tally = verbs.reduce((a, v) => (a[v] = (a[v] || 0) + 1, a), {});
-  console.log('  contains  ' + (Object.keys(tally).map((k) => k + '×' + tally[k]).join(' · ') || '(nothing recognised)'));
+    .map((item) => item.trim().toUpperCase());
+  const tally = verbs.reduce((total, item) => (total[item] = (total[item] || 0) + 1, total), {});
+  console.log('  contains  ' + (Object.keys(tally).map((item) => item + '×' + tally[item]).join(' · ') || '(nothing recognised)'));
 
   if (!WRITE) {
     /* ⚠️ AND IT SAYS WHAT IT CANNOT PROMISE. A file with its own COMMIT cannot be wrapped in a rollback, so there
@@ -240,15 +240,15 @@ function die(msg, code) { console.error('\n  ' + msg + '\n'); process.exit(code 
        the head of the SAME string so a pooler cannot separate it from the work it governs. */
     const out = await c.query(prelude + sql);
     const results = (Array.isArray(out) ? out : [out]).slice(prelude ? 2 : 0);   /* hide the prelude's own results */
-    results.forEach((r, i) => {
-      if (!r) return;
-      const n = String(i + 1).padStart(2, ' ');
-      if (r.command === 'SELECT' && r.rows && r.rows.length) {
-        console.log('  ' + n + '  SELECT → ' + r.rows.length + ' row(s)');
-        console.table(r.rows.slice(0, 20));
-        if (r.rows.length > 20) console.log('      … ' + (r.rows.length - 20) + ' more');
+    results.forEach((item, index) => {
+      if (!item) return;
+      const n = String(index + 1).padStart(2, ' ');
+      if (item.command === 'SELECT' && item.rows && item.rows.length) {
+        console.log('  ' + n + '  SELECT → ' + item.rows.length + ' row(s)');
+        console.table(item.rows.slice(0, 20));
+        if (item.rows.length > 20) console.log('      … ' + (item.rows.length - 20) + ' more');
       } else {
-        console.log('  ' + n + '  ' + (r.command || '?') + (r.rowCount != null ? ' ' + r.rowCount : ''));
+        console.log('  ' + n + '  ' + (item.command || '?') + (item.rowCount != null ? ' ' + item.rowCount : ''));
       }
     });
     console.log('\n  ▸ done · ' + rls + '\n');
