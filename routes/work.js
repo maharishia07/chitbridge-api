@@ -13,6 +13,8 @@
  * sentence (`why`, `say`) — the page greys it, and the writing route still refuses.
  * ⭐ A truncated shop (more copies than one read takes) gets `truncated: true` and no counts — never a wrong one.
  * Answers are the caller's own shop (auth.entityOf, entity-scoped reads); a key is not a person and a customer is not staff: both are refused.
+ * FLOW  auth → who(req) → lib/work-rows list · facts (?unbilled=1 → unbilledOf) · one → res.json
+ * CARD 02-tasks-orders-and-workflow/everyones-work
  */
 'use strict';
 const express = require('express');

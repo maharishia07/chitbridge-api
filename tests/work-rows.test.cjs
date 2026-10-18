@@ -94,6 +94,9 @@ const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), clo
   /* W11: the open orders in no bill names yet — asked for by Finance only; the plain facts (the till pill) carry none and cost no batch */
   r = await get('/api/work/facts?unbilled=1');
   ok('W11: facts?unbilled=1 → the one open order in, not billed, its own value in minor units', JSON.stringify(r.body.figures.unbilled) === JSON.stringify({ n: 1, minor: 120050, currency: 'INR' }), JSON.stringify(r.body.figures.unbilled));
+  /* W36: the one chit's billed scalar (routes/chits ONE_SHOT) is the SAME test as MARKS_SQL - one fragment, never a second copy */
+  { const OO = require(path.join(API, 'lib', 'open-orders')), frag = "business_json->>'bill_no' IS NOT NULL AND business_json->'order'->>'from' = ";
+    ok('W36: billedOfChitSql and MARKS_SQL share the one billed test', OO.billedOfChitSql('$1', '$2').includes(frag + '$2::text') && OO.MARKS_SQL.includes(frag + 'ANY($2::text[])'), OO.billedOfChitSql('$1', '$2')); }
   ok('W11: the plain facts carry no unbilled figure', !('unbilled' in (await get('/api/work/facts')).body.figures));
 
   /* ── 6 · truncated ── */
