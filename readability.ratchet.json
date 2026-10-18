@@ -180,7 +180,7 @@
   "lib/starter-fields.js": {"score":6,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/stock-from-chit.js": {"score":39,"long40":2,"long80":0,"complex10":6,"complex15":3,"deep3":1,"deep4":0,"cryptic":25,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/stock-store.js": {"score":37,"long40":2,"long80":1,"complex10":3,"complex15":2,"deep3":0,"deep4":0,"cryptic":28,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "lib/storage-object.js": {"score":23,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
+  "lib/storage-object.js": {"score":19,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":18,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "lib/storage.js": {"score":10,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":9,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "lib/stores.js": {"score":4,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/supply-store.js": {"score":25,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":21,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
