@@ -4,7 +4,7 @@
     "money": "1.0.0",
     "tax-packs": "1.65.0",
     "tax-slab": "1.65.0",
-    "tax": "1.65.0",
+    "tax": "1.67.0",
     "pricing": "1.3.0",
     "offers": "1.49.0",
     "variant": "1.4.0",
@@ -47,7 +47,7 @@
     "reg-us": "1.65.0",
     "reg-jp": "1.65.0",
     "regulation": "1.65.0",
-    "country": "1.65.0",
+    "country": "1.67.0",
     "chart": "1.65.0"
   },
   "adopt": {
@@ -222,7 +222,7 @@
     "money": "1d27c14c8a7240e035e916537fbd77ce945b9083c6efa9d9ec2f579f9ba58e5a",
     "tax-packs": "e3885990e20a64aada0f545316e520176ff3601d9d5a6c6b2d73ce56b00c6248",
     "tax-slab": "439500a95910ff8bd55d4a1c422e2c4e810f509c7a6af2f1cd4e34aa239bc98d",
-    "tax": "de7fdf5117059d8429d1053a5ae3b27ca1cdb6257d990832939261a0a408dae2",
+    "tax": "ef270a0a6f9829b0e78d4fd5cdcd9191b96d04822eff6a9955d323e4babe46c9",
     "pricing": "8fa9a3ec7cae3c049222706433c6fcfac7aaa33cae27d4a259ed60359ba208fd",
     "offers": "c9f544782b39473607d9fde229f52ad41218d01e22f471e1b9b044616ad5f58d",
     "variant": "2b82dcbaba8ad8590623ef72d41979894d4390468abf74d862f158d7d4e48946",
@@ -265,7 +265,7 @@
     "reg-us": "28eccd704db91bc66c3a8ff719c5e37f67ecdce9de5a669a5511dc13de0813dd",
     "reg-jp": "290797e22ae29bf0934a78e994a89228aa5d6ef2cd4a0244bf31105920315f2c",
     "regulation": "f55881c244d24249c5ef06d8beb3ef8e8a0b0980246b928311b552299958bb29",
-    "country": "a010b717764f8b446c7029e0d210abe87b74b5ec5f25cb4058933aa16addbd9f",
+    "country": "4251c4ba6cade9f5a6dc47360f3e7eabbb84746149ddd35dd2d0607172b19466",
     "chart": "7201c432d50a3f35038f415cfef71c7ac1652c79ed3aadacca8cea3ec42fed37"
   }
 }

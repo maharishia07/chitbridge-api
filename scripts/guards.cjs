@@ -332,6 +332,8 @@ const GUARDS = [
   'limits.test.cjs',           // E01: 9 MB on a non-upload route -> 413 BODY_TOO_LARGE; 30 s request deadline -> 503 REQUEST_TIMEOUT (late answer swallowed); 57014 -> 503 STATEMENT_TIMEOUT; parsers after id+logger
   'request-log.test.cjs',       // E07: request id minted (uuid) or kept (plain token), echoed and on the log line; every line JSON with entity/person/bytes; slow query -> one line, fingerprint only, no SQL text; /health db + version
   'signin-contact.test.cjs',    // M14: sign in by a MOBILE or an E-MAIL — verified contact (M18 reader) / own sign-in e-mail / customer contact -> the stored id behind the scenes; several -> 409 CHOOSE_IDENTITY; unverified opens nothing; old doors byte-identical
+  'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
+  'move-in-meter.test.cjs',        // move-in W1.6: items written inside the move-in are metered only after it commits; a rolled-back one meters nothing
   'move-in-added-via.test.cjs', // QM-1: the move-in writes only an added_via the migrations' CHECKs allow (read from the .sql); a 23514 is a 422 sentence
 ];
 

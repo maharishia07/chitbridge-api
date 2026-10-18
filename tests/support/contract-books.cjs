@@ -214,20 +214,6 @@ async function captureBooks() {
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
     await q('POST', '/year/2026-27/close', {}, '/year/:fy/close');
 
-    /* ── IM1 move in from Xero / QuickBooks (INT2: AFTER the year close — its balanced trial balance parks a difference on Suspense, which would refuse the close and lose the 200 example; as_at on the first day of the year the close carried to): the columns guessed, the dry run, the import (the chart; an unbalanced trial balance refused) ── */
-    const fx = (f) => require('fs').readFileSync(path.join(H.API, 'tests', 'fixtures', 'move-in', f), 'utf8');
-    const pre = await q('POST', '/move-in/preflight', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv') }, '/move-in/preflight');
-    const dec = ((pre.body && pre.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
-    await q('POST', '/move-in/preview', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec }, '/move-in/preview');
-    await q('POST', '/move-in/import', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec, confirm: true }, '/move-in/import');
-    const tbp = await q('POST', '/move-in/preflight', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv') }, '/move-in/preflight');
-    const tbd = ((tbp.body && tbp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
-    await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv'), decisions: tbd, confirm: true, as_at: '2027-04-01' }, '/move-in/import');
-    /* a balanced trial balance: the preview's totals / control keys and the import's entry (an Indian rig, so most rows skip — the SHAPES are what is held) */
-    await q('POST', '/move-in/preview', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, as_at: '2027-04-01' }, '/move-in/preview');
-    await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, confirm: true, as_at: '2027-04-01' }, '/move-in/import');
-
-
     /* ── PR1 the parallel-run compare: the list, a Tally XML read at once, a Tally CSV's columns guessed, a snapshot kept (and the same part again → 409), the compare ── */
     const px = (f) => require('fs').readFileSync(path.join(H.API, 'tests', 'fixtures', 'parallel-run', f), 'utf8');
     await q('GET', '/compare', null, '/compare');
@@ -267,6 +253,24 @@ async function captureBooks() {
       if (country === 'AE') await X.B.postEntry(X.db, shop, { type: 'purchase_bill', ref: 'P2', date: '2026-04-05', currency: cur, party: SUPP, by_rate: [{ rate, taxable: 400, vat: 0 }], rcm: [{ rate, itc: true, taxable: 400, vat: 20 }], paid: 0, round_off: 0, source_ref: 'pur:P2' });
       await q('POST', '/gst/close', Object.assign({ period, client_ref: 'close-' + period }, picks), '/gst/close #return');
       await q('POST', '/gst/pay', Object.assign({ period, amounts: { [head + '_minor']: country === 'AU' ? 6000 : 4000 }, bank: 'bank', payment_ref: country === 'AU' ? 'PRN-1' : 'GIBAN-1', date: country === 'AU' ? '2026-10-15' : '2026-05-20' }, country === 'AE' ? { rcm: { vat_minor: 2000 } } : {}, picks), '/gst/pay #return');
+      if (country === 'AU') {
+        /* ── IM1 move in from Xero / QuickBooks (INT2; W1 2026-10-18: an AUSTRALIAN shop — an Indian shop's pack has no move-in map, so the gate refuses it whole; as_at in Q2, which is not closed): the columns guessed, the dry run, the import (the chart; an unbalanced trial balance refused) ── */
+        const fx = (f) => require('fs').readFileSync(path.join(H.API, 'tests', 'fixtures', 'move-in', f), 'utf8');
+        const pre = await q('POST', '/move-in/preflight', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv') }, '/move-in/preflight');
+        const dec = ((pre.body && pre.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
+        await q('POST', '/move-in/preview', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec, source_country: 'AU' }, '/move-in/preview');
+        await q('POST', '/move-in/import', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec, confirm: true, source_country: 'AU' }, '/move-in/import');
+        const tbp = await q('POST', '/move-in/preflight', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv') }, '/move-in/preflight');
+        const tbd = ((tbp.body && tbp.body.guess) || []).filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
+        await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb-unbalanced.csv'), decisions: tbd, confirm: true, as_at: '2026-10-01', source_country: 'AU' }, '/move-in/import');
+        /* a balanced trial balance: the preview's totals / control keys and the import's entry (an Indian rig, so most rows skip — the SHAPES are what is held) */
+        await q('POST', '/move-in/preview', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, as_at: '2026-10-01', source_country: 'AU' }, '/move-in/preview');
+        await q('POST', '/move-in/import', { kind: 'trial_balance', source: 'xero', csv: fx('xero-tb.csv'), decisions: tbd, confirm: true, as_at: '2026-10-01', source_country: 'AU' }, '/move-in/import');
+
+
+        /* W1 the country gate: books stated as from another country are refused whole, 422 with a code (the shop here is Australian) */
+        await q('POST', '/move-in/preview', { kind: 'accounts', source: 'xero', csv: fx('xero-accounts.csv'), decisions: dec, source_country: 'GB' }, '/move-in/preview #422-country');
+      }
     }
     OWNER.identity_id = SHOP; DAY = '2027-04-10';
     await q('GET', '/returns', null, '/returns #rail');                             /* India: 200 form:null RETURN_FROM_RAIL (TOUR-FIX1), its own contract row */

@@ -28,7 +28,7 @@ function load(opt) {
     trySavepoint: async (db, fn, fallback) => { try { return await fn(db); } catch (_) { return fallback; } },
     onEntity: async (e, fn) => fn(M.fakeDb),
   };
-  for (const k of Object.keys(require.cache)) if (k.indexOf(path.join(API, 'lib', 'books')) === 0 || k.indexOf(path.join(API, 'lib', 'party-fields')) === 0 || k.indexOf(path.join(API, 'lib', 'fx-rates')) === 0 || k.indexOf(path.join(API, 'routes', 'books')) === 0) delete require.cache[k];
+  for (const k of Object.keys(require.cache)) if (k.indexOf(path.join(API, 'lib', 'books')) === 0 || k.indexOf(path.join(API, 'lib', 'party-fields')) === 0 || k.indexOf(path.join(API, 'lib', 'fx-rates')) === 0 || k.indexOf(path.join(API, 'lib', 'schema')) === 0 || k.indexOf(path.join(API, 'lib', 'move-in-proof')) === 0 || k.indexOf(path.join(API, 'routes', 'books')) === 0) delete require.cache[k];
   require.cache[require.resolve(path.join(API, 'db'))] = { exports: dbStub };
   require.cache[require.resolve(path.join(API, 'lib', 'books-store'))] = { exports: store };
   if (o.auth) require.cache[require.resolve(path.join(API, 'middleware', 'auth'))] = { exports: o.auth };

@@ -433,6 +433,8 @@ const ENGINE_OTHER = [
   'country-setup.js',
   'assign-chit.js',           /* TA1 (14 Oct): the one writer of identities.current_task_count — a counter, no rule of its own; who takes a chit stays assign.js / the routes */
   'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
+  'move-in-gate.js',          /* move-in W1.1 (18 Oct): the country gate — reads engines country.moveInFor / fingerprint, refuses in words; no rule of its own */
+  'move-in-proof.js',         /* move-in W1.10 (18 Oct): the match proof kept with the import (b765) — counts and shows, computes no money */
   'fx-rates.js',              /* FX1: the shop's exchange rates (b391) and the foreign event's rate / settlement / revaluation — every figure is CBPosting's (fx_settlement · fx_revalue · fxRevaluation) */
   'parallel-run.js',          /* PR1: their Tally / Xero period beside ours — reads their files, compares PURELY over the engines' answers; writes nothing to the books */
   /* ⭐ bill-use.js — what a bill I RECEIVED is for (resale · use · asset): the buyer's choice, else their catalogue; read by
