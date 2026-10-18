@@ -232,7 +232,7 @@
   "routes/catalogue-face.js": {"score":11,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":7,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "routes/catalogue.js": {"score":169,"long40":7,"long80":3,"complex10":12,"complex15":6,"deep3":2,"deep4":2,"cryptic":135,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
   "routes/channels.js": {"score":1,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":1,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "routes/chits.js": {"score":491,"long40":37,"long80":9,"complex10":39,"complex15":15,"deep3":10,"deep4":1,"cryptic":371,"noWhatLine":7,"emptyCatch":2,"noHeader":0},
+  "routes/chits.js": {"score":395,"long40":37,"long80":9,"complex10":39,"complex15":15,"deep3":10,"deep4":1,"cryptic":275,"noWhatLine":7,"emptyCatch":2,"noHeader":0},
   "routes/combo-templates.js": {"score":16,"long40":0,"long80":0,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/connections.js": {"score":6,"long40":2,"long80":1,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":2,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "routes/connectors.js": {"score":67,"long40":2,"long80":1,"complex10":3,"complex15":2,"deep3":1,"deep4":1,"cryptic":56,"noWhatLine":0,"emptyCatch":0,"noHeader":1},

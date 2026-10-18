@@ -268,7 +268,7 @@ async function autoAssignReceived(entity_id, chit_id) {
              AND hat IN ('act','manager')
            ORDER BY current_task_count ASC, last_assigned_at ASC NULLS FIRST
            LIMIT 10`, [entity_id])).rows;
-      const room = cand.find(a => (a.current_task_count || 0) < (a.max_tasks || defMax));
+      const room = cand.find(item => (item.current_task_count || 0) < (item.max_tasks || defMax));
       target = room ? room.identity_id : defaultAssignee;   // all full → overflow to the default assignee
     }
     if (!target) return;                               // no eligible actor + no default → stays in the pool
@@ -553,8 +553,8 @@ async function sameRefLook(sender_id, client_ref) {
 }
 /** the one place the bill number is read off a request, so the catch below cannot drift from the check above */
 function refOf(req) {
-  const v = req && req.body && req.body.client_ref;
-  return (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 64) : null;
+  const text = req && req.body && req.body.client_ref;
+  return (typeof text === 'string' && text.trim()) ? text.trim().slice(0, 64) : null;
 }
 /**
  * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
@@ -694,8 +694,8 @@ async function sendTillGate(st, req, res) {
   let oneSided = null;   /* { why } when a counter bill is recorded without its customer's copy — see tillMaySend */
   const tk = req.till && req.till.key;   /* M04 — the holder says whether a key is speaking (middleware/auth holderOf) */
   if (tk && tk.scopes.indexOf('till') >= 0 && !tk.scopes.includes('connector')) {
-    const rl = (Array.isArray(req.body.recipients) ? req.body.recipients : (Array.isArray(req.body.receivers) ? req.body.receivers : []));
-    const outward = rl.filter((r) => r && r.self !== true && String(r.entity_id || '') !== String(sender_id));
+    const list = (Array.isArray(req.body.recipients) ? req.body.recipients : (Array.isArray(req.body.receivers) ? req.body.receivers : []));
+    const outward = list.filter((item) => item && item.self !== true && String(item.entity_id || '') !== String(sender_id));
     const gate = outward.length ? await tillMaySend(sender_id, outward, req.body) : null;
     if (gate && gate.refuse) {
       /* ⚠️ code TILL_SEND_REFUSED: a refusal of THIS BILL's shape, not of the key — the counter keeps it and sends the rest */
@@ -705,8 +705,8 @@ async function sendTillGate(st, req, res) {
     if (gate && gate.oneSided) {
       /* ⭐ ONE-SIDED: the sale and its ledger are recorded; only the customer's copy is dropped. The bill keeps naming its
          customer (business_json.customer) — it is still their bill, they simply do not receive a copy on ChitBridge. */
-      const keep = rl.filter((r) => !(r && r.self !== true && String(r.entity_id || '') !== String(sender_id)));
-      if (!keep.some((r) => r && r.self === true)) keep.push({ self: true, name: 'self' });
+      const keep = list.filter((item) => !(item && item.self !== true && String(item.entity_id || '') !== String(sender_id)));
+      if (!keep.some((item) => item && item.self === true)) keep.push({ self: true, name: 'self' });
       if (Array.isArray(req.body.recipients)) req.body.recipients = keep; else req.body.receivers = keep;
       oneSided = { why: gate.oneSided };
     }
@@ -831,7 +831,7 @@ async function sendFanOut(st, req, res) {
   const rawList = (Array.isArray(req.body.recipients) ? req.body.recipients
                  : Array.isArray(req.body.receivers)  ? req.body.receivers
                  : []
-                ).map(r => ({ ...r, kind: String(r.role || 'to').toLowerCase() }));
+                ).map(item => ({ ...item, kind: String(item.role || 'to').toLowerCase() }));
 
   // Server-side LIMITS re-check — never trust the client (ATH-120).
   const counts = { to: 0, cc: 0, for: 0 };
@@ -866,8 +866,8 @@ async function sendTrace(st, req, res) {
       const held = await withEntity(sender_id, (db) => db.query(
         `SELECT chit_id FROM chit_header WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2`,
         [traceEdge.parents, sender_id]));
-      const heldSet = new Set(held.rows.map((r) => r.chit_id));
-      const missing = traceEdge.parents.filter((p) => !heldSet.has(p));
+      const heldSet = new Set(held.rows.map((item) => item.chit_id));
+      const missing = traceEdge.parents.filter((item) => !heldSet.has(item));
       if (missing.length) return res.status(400).json({ error: 'Invalid handoff', message: `Parent chit not co-held by sender: ${missing.join(', ')}` });
     }
   }
@@ -1024,7 +1024,7 @@ async function sendSeller(st, req, res) {
    * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
    */
   const orderLike = /^(order|offer)$/.test(String(purpose || ''));
-  const toIds = receiverDetails.filter((r) => r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)).map((r) => String(r.entity_id));
+  const toIds = receiverDetails.filter((item) => item.kind === 'to' && item.entity_id && String(item.entity_id) !== String(sender_id)).map((item) => String(item.entity_id));
   /* ⚠️ A COUNTER BILL IS 'order' TOO, AND THE COUNTER SELLS IT (the two-sided counter bill, 2026-10-01). Sent to an on-rail
      customer it has one 'to' recipient — read as an order, the CUSTOMER would have become the seller: their shelf, their
      offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
@@ -1071,7 +1071,7 @@ async function sendOffers(st, req, res) {
   try {
     const bj = business_json || {};
     const alreadyBilled = require('../lib/offers-live').alreadyBilled(bj);
-    const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
+    const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((item) => item && (item.self === true || String(item.name || '').toLowerCase() === 'self'));
     /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
     if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike)) {
       const cur = await require('../lib/regional').currencyFor(sellerId).catch(cbLog.orElse('chits sendOffers: the seller money was not read - no live offers applied', null));
@@ -1103,8 +1103,8 @@ async function sendMoney(st, req, res) {
     const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
     const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
     const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
-    const gross = r2m(li.reduce((a, l) => a + listOf(l) * qtyOf(l), 0));
-    const net = r2m(li.reduce((a, l) => a + netOf(l), 0));
+    const gross = r2m(li.reduce((total, item) => total + listOf(item) * qtyOf(item), 0));
+    const net = r2m(li.reduce((total, item) => total + netOf(item), 0));
     let tax = null, total = null;
     /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
     const buyerId = counterBill ? null : orderLike ? String(sender_id) : (toIds.length === 1 ? toIds[0] : null);
@@ -1153,8 +1153,8 @@ async function sendIssued(st, req, res) {
     issuedTotal = moneyBlock.total;
     try {
       const e = await taxCopy.entryFor({ chit_id: null, sender_entity_id: sender_id, purpose, business_json, line_items, currency_code,
-        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(receiverDetails.filter((r) => r.entity_id)
-          .map((r) => ({ entity_id: r.entity_id, role: r.all_role || 'receiver' }))), sent_at: business_json.billed_at || null }, sender_id);
+        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(receiverDetails.filter((item) => item.entity_id)
+          .map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))), sent_at: business_json.billed_at || null }, sender_id);
       if (e && e.tax_check && !e.tax_check.ok) {
         business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
         require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
@@ -1167,7 +1167,7 @@ async function sendIssued(st, req, res) {
 /** which copies a self-chit or a numbered document keeps — declared, never silent */
 async function sendCopyPolicy(st, req, res) {
   const { sender_id, client_ref, is_draft, promote_draft_id, selfCopyPref, hasSelf, receiverDetails } = st;
-  const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
+  const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(item => item.entity_id === sender_id);
   /**
    * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
    *
@@ -1190,7 +1190,7 @@ async function sendCopyPolicy(st, req, res) {
   let copyPolicy = null, suppressSentCopy = false;
   if (pureSelfChit) {                          // every self-chit KEEPS its identity (scope:'self') — recorded, not showcased
     if (effSelfCopy === 'sent') {             // ORDER-only → drop the self Task (received) copy
-      const si = receiverDetails.findIndex(r => r.entity_id === sender_id);
+      const si = receiverDetails.findIndex(item => item.entity_id === sender_id);
       if (si >= 0) receiverDetails.splice(si, 1);
       copyPolicy = { scope: 'self', kept: ['sent'], suppressed: ['received'], reason: 'Task copy suppressed — self-chit (Order only)', source: copySource };
     } else if (effSelfCopy === 'received') {  // TASK-only → drop the sender Order (sent) copy
@@ -1263,7 +1263,7 @@ function sendBillCopyFor(st, receiver) {
   if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
   const bj = Object.assign({}, sendBjFor(st, receiver.entity_id), { counter_bill: true });
   const parts = (bj.payment && Array.isArray(bj.payment.parts)) ? bj.payment.parts : [];
-  const total = roundMoney(parts.reduce((t, p) => t + (Number(p && p.amount) || 0), 0));
+  const total = roundMoney(parts.reduce((total, item) => total + (Number(item && item.amount) || 0), 0));
   return { purpose: 'invoice', business_json: bj,
            manual_subject: 'Bill ' + bj.bill_no + ' from ' + (sender_display_name || 'the seller'),
            bill_received: { from: sender_display_name || null, no: String(bj.bill_no), total } };
@@ -1295,7 +1295,7 @@ async function sendParticipants(st, req, res) {
 
   // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
   /* ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js */
-  try { require('../lib/events').notifyAfter(res, receiverDetails.map(r => r.entity_id), { kind: 'chit', id: chit_id, who: sender_display_name || null, note: purpose || null }); } catch (e) { cbLog.fellBack('chits: the signal was not sent — carried on without it', e); }
+  try { require('../lib/events').notifyAfter(res, receiverDetails.map(item => item.entity_id), { kind: 'chit', id: chit_id, who: sender_display_name || null, note: purpose || null }); } catch (e) { cbLog.fellBack('chits: the signal was not sent — carried on without it', e); }
   const all_recipients = [
     {
       entity_id: sender_id,
@@ -1303,9 +1303,9 @@ async function sendParticipants(st, req, res) {
       display_name: sender_display_name,
       role: 'sender'
     },
-    ...receiverDetails.map(r => ({
-      entity_id: r.entity_id, bridge_id: r.bridge_id,
-      display_name: r.display_name, role: r.all_role
+    ...receiverDetails.map(item => ({
+      entity_id: item.entity_id, bridge_id: item.bridge_id,
+      display_name: item.display_name, role: item.all_role
     }))
   ];
 
@@ -1316,7 +1316,7 @@ async function sendParticipants(st, req, res) {
   let operatorInfo = null;
   if (traceEdge && traceEdge.network && traceEdge.network.operator && !is_draft) {
     const opId = traceEdge.network.operator;
-    if (opId !== sender_id && !receiverDetails.some((r) => r.entity_id === opId)) {
+    if (opId !== sender_id && !receiverDetails.some((item) => item.entity_id === opId)) {
       const opRow = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [opId]);
       if (opRow.rows[0]) {
         operatorInfo = opRow.rows[0];
@@ -1395,9 +1395,9 @@ async function sendFolds(st, req, res) {
   try {
     const rd = await require('../lib/readiness').resolveReadiness(sender_id);
     const held = (rd.clearances || [])
-      .filter(c => c.status === 'gathered' || c.status === 'expiring')
-      .map(c => ({ standard: c.standard, doc: c.doc, title: c.title, rung: c.rung,
-        valid_until: c.valid_until || null, verified_at: c.verified_at || null, verified_by: c.verified_by || null }));
+      .filter(item => item.status === 'gathered' || item.status === 'expiring')
+      .map(item => ({ standard: item.standard, doc: item.doc, title: item.title, rung: item.rung,
+        valid_until: item.valid_until || null, verified_at: item.verified_at || null, verified_by: item.verified_by || null }));
     if (held.length) folded_clearances = { folded_at: new Date().toISOString(), items: held };
   } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */ }
   // ── COMMERCIAL COVER fold — a trade order (one that carries clearances) also freezes its commercial-cover FRAMEWORK
@@ -1409,8 +1409,8 @@ async function sendFolds(st, req, res) {
     if (folded_clearances) {
       const inc = (summary && summary.incoterm) || 'CIF';
       const ci = require('../lib/instruments').resolveInstruments({ cross_border: 1, incoterm: inc });
-      const areas = (ci.cluster || []).map(g => ({ label: g.label, frm_class: g.frm_class,
-        on_rail: !!g.covered_onrail, instruments: (g.instruments || []).map(i => i.name) }));
+      const areas = (ci.cluster || []).map(item => ({ label: item.label, frm_class: item.frm_class,
+        on_rail: !!item.covered_onrail, instruments: (item.instruments || []).map(i => i.name) }));
       if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: inc, areas };
     }
   } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */ }
@@ -1616,7 +1616,7 @@ async function sendCopies(st, req, res) {
     entity_id: sender_id, direction: 'sent', role: is_draft ? 'Draft' : 'Act',
     current_status: railActions.SENT_STATUS, priority_flag: 'normal', payload_delivered: true,
     log: { action: 'created', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
-           new_status: railActions.SENT_STATUS, detail: `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}` },
+           new_status: railActions.SENT_STATUS, detail: `Chit created and sent to ${receiverDetails.map(item => item.display_name).join(', ')}` },
   }) ];
   if (!is_draft) for (const receiver of receiverDetails) {
     const rcv_status = railActions.arrivalStatus(receiver.kind);   // the one table: To acts (pending); CC/For are informed (delivered)
@@ -1682,7 +1682,7 @@ async function sendWrite(st, req, res) {
      * write can never fail a guaranteed chit (D-065). A named party that is also a recipient is left to the recipient block.
      */
     const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
-    const isRecipient = namedParty && receiverDetails.some((r) => String(r.entity_id) === String(namedParty));
+    const isRecipient = namedParty && receiverDetails.some((item) => String(item.entity_id) === String(namedParty));
     await withEntity(sender_id, async (c) => {
       await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: c });
       if (namedParty && !isRecipient) await trySavepoint(c, () => require('../lib/crm').traded(c, sender_id, namedParty, now), null);
@@ -1752,7 +1752,7 @@ async function sendLegacySenderRows(client, st) {
       action_by_display_name, new_status, detail)
      VALUES ($1,$2,'created',$3,$4,'delivered',$5)`,
     [chit_id, sender_id, sender_id, sender_display_name,
-     `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}`]
+     `Chit created and sent to ${receiverDetails.map(item => item.display_name).join(', ')}`]
   );
 }
 
@@ -1944,17 +1944,17 @@ async function sendStock(st, req, res) {
       require('../lib/stock-from-chit')
         .postFor(sender_id, { chit_id, purpose, is_draft, business_json, line_items, created_at: now },
                  withEntity, { actor_id: req.identity && req.identity.identity_id })
-        .then((r) => {
-          if (!r || (!r.failed.length && !r.skipped.length)) return;
+        .then((reply) => {
+          if (!reply || (!reply.failed.length && !reply.skipped.length)) return;
           /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
              and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
           try {
             require('../lib/logger').warn('stock.from-chit', {
-              chit_id, entity_id: sender_id, moved: r.moved, duplicate: r.duplicate,
-              skipped: r.skipped.length, failed: r.failed,
+              chit_id, entity_id: sender_id, moved: reply.moved, duplicate: reply.duplicate,
+              skipped: reply.skipped.length, failed: reply.failed,
               /* STK-FIX1b: a REFUSED line (an unreadable batch or expiry) is named with its sentence and code — a count alone is silence */
-              refused: r.skipped.filter((s) => s.code === 'batch_unreadable' || s.code === 'expiry_unreadable')
-                                .map((s) => ({ line_ref: s.line_ref, item_id: s.item_id, code: s.code, why: s.why })),
+              refused: reply.skipped.filter((item) => item.code === 'batch_unreadable' || item.code === 'expiry_unreadable')
+                                .map((item) => ({ line_ref: item.line_ref, item_id: item.item_id, code: item.code, why: item.why })),
             });
           } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
         })
@@ -2048,7 +2048,7 @@ const keyCol = (a) => `to_char(${a}.created_at::timestamptz, 'YYYY-MM-DD"T"HH24:
 function afterOf(rows, limit, req) {
   const last = rows[rows.length - 1], keyed = !(req.query.sort && req.query.sort !== 'date') && String(req.query.dir || '').toLowerCase() !== 'asc';
   const next = keyed && rows.length === limit && last ? last._after || null : null;
-  rows.forEach((r) => { delete r._after; });
+  rows.forEach((item) => { delete item._after; });
   return next;
 }
 
@@ -2087,8 +2087,8 @@ function chitFilters(req, where, params){
   if (req.query.priority)  { params.push(req.query.priority);  where += ` AND cs.priority_flag = $${params.length}`; }
   if (req.query.fstatus)   {
     /* ⭐ W2-RAIL R2: the buckets are the ONE table (lib/rail-actions BUCKETS, read off the engine's transitions) — never spelled here */
-    const L = railActions.BUCKETS[req.query.fstatus] || [req.query.fstatus];
-    const ph = L.map(s => { params.push(s); return '$'+params.length; }).join(',');
+    const list = railActions.BUCKETS[req.query.fstatus] || [req.query.fstatus];
+    const ph = list.map(item => { params.push(item); return '$'+params.length; }).join(',');
     where += ` AND cs.current_status IN (${ph})`;
   }
   // Delegation scope: unassigned = the entity's own pool; assigned = delegated to a co-assist. assigned_to=me|<id>
@@ -2515,8 +2515,8 @@ router.get('/pulse', auth, async (req, res) => {
          (SELECT COUNT(*)        FROM chit_header WHERE entity_id = $1) AS n`,
       [me]));
     const x = r.rows[0] || {};
-    const w = ['h', 's', 'c'].map((k) => (x[k] ? new Date(x[k]).getTime() : 0)).join('.') + '.' + (x.n || 0);
-    res.json({ w });
+    const list = ['h', 's', 'c'].map((item) => (x[item] ? new Date(x[item]).getTime() : 0)).join('.') + '.' + (x.n || 0);
+    res.json({ w: list });
   } catch (e) {
     /**
      * ⚠️ A PULSE THAT FAILS MUST NOT SILENCE THE SCREEN. Answering an error would leave the client with no
@@ -2576,7 +2576,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       if (participation.rows.length === 0) return { notFound: true };
       // Draft privacy: a draft is the author's PRIVATE WIP — another actor of the SAME entity must not read it,
       // even by direct id. The drafts LIST is author-scoped (created_by_actor_id); the detail read must be too.
-      const _draft = participation.rows.find(r => r.role === 'Draft');
+      const _draft = participation.rows.find(item => item.role === 'Draft');
       if (_draft && _draft.created_by_actor_id !== req.identity.identity_id) return { notFound: true };
 
       // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
@@ -2803,7 +2803,7 @@ router.get('/:chit_id', auth, async (req, res) => {
 
     if (!bundle) bundle = await withEntity(entity_id, async (db) => {
       const participants = await trySavepoint(db,
-        (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((r) => r.rows),
+        (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((reply) => reply.rows),
         null);
       /* The b50 fallback, still scoped to self under FORCE — a degraded panel, never a leak. */
       const participants2 = participants || await trySavepoint(db, (c) => c.query(
@@ -2812,7 +2812,7 @@ router.get('/:chit_id', auth, async (req, res) => {
                 i.display_name, i.bridge_id
            FROM chit_status cs
            JOIN identities i ON i.identity_id = cs.entity_id
-          WHERE cs.chit_id = $1`, [chit_id]).then((r) => r.rows), []);
+          WHERE cs.chit_id = $1`, [chit_id]).then((reply) => reply.rows), []);
 
       const amd = await trySavepoint(db, () => amend.list(entity_id, chit_id, db),
         { amendments: [], migrated: false });
@@ -2823,10 +2823,10 @@ router.get('/:chit_id', auth, async (req, res) => {
       /* R01 — my received copy's status, as the one-shot reads it (null = none, or not readable here) */
       const my_received = await trySavepoint(db, (c) => c.query(
         `SELECT cs.current_status FROM chit_status cs WHERE cs.chit_id = $1 AND cs.entity_id = $2 AND cs.direction = 'received' LIMIT 1`,
-        [chit_id, entity_id]).then((r) => (r.rows[0] && r.rows[0].current_status) || null), null);
+        [chit_id, entity_id]).then((reply) => (reply.rows[0] && reply.rows[0].current_status) || null), null);
       /* STD1 — the books' wait on this chit, as the one-shot reads it (null = none, or not readable here) */
       const books_wait = await trySavepoint(db, (c) => c.query(`SELECT ${require('../lib/books-store').waitOfChitSql('$1', '$2')} AS w`, [entity_id, chit_id])
-        .then((r) => (r.rows[0] && r.rows[0].w) || null), null);
+        .then((reply) => (reply.rows[0] && reply.rows[0].w) || null), null);
       return { participants: participants2, amd, rows, assigned, prog, my_received, books_wait };
     });
 
@@ -2870,7 +2870,7 @@ router.get('/:chit_id', auth, async (req, res) => {
     try {
       const _h = data.header.rows[0];
       if (_h && billPrivacy.isBill(_h, entity_id)) {
-        const mine = await billPrivacy.mineSet(entity_id, data.log.rows.map((r) => r.action_by_identity_id));
+        const mine = await billPrivacy.mineSet(entity_id, data.log.rows.map((item) => item.action_by_identity_id));
         _red = billPrivacy.redactRead({ header: _h, me: entity_id, state_log: data.log.rows, participants: bundle.participants, mine });
         if (_lines0) {
           const dl = await withEntity(entity_id, (db) => db.query(
@@ -2885,13 +2885,13 @@ router.get('/:chit_id', auth, async (req, res) => {
         }
       }
     } catch (e) { console.error('bill read redaction:', e.message); _red = { private: true, state_log: [], participants: [] }; _prog = null; }
-    const _byId = new Map((_lines || []).map((l) => [l.line_id, l]));
+    const _byId = new Map((_lines || []).map((item) => [item.line_id, item]));
     const _live = _rows
       ? _rows.map((row, i) => {
           const orig = _byId.get(row.line_id) || (_lines || [])[i] || row;
-          const chain = (amd.amendments || []).filter((a) => a.line_id === row.line_id).sort((x, y) => x.seq - y.seq);
+          const chain = (amd.amendments || []).filter((item) => item.line_id === row.line_id).sort((x, y) => x.seq - y.seq);
           return { index: i, line_id: row.line_id, live: row.removed ? null : row, original: orig,
-                   history: chain.length ? [orig].concat(chain.slice(0, -1).map((c) => c.line).filter(Boolean)) : [],
+                   history: chain.length ? [orig].concat(chain.slice(0, -1).map((item) => item.line).filter(Boolean)) : [],
                    removed: !!row.removed, reason_code: row.removed_reason || (chain.length ? chain[chain.length - 1].reason_code : undefined),
                    versions: chain.length };
         })
@@ -2906,8 +2906,8 @@ router.get('/:chit_id', auth, async (req, res) => {
     try {
       const KEEP = ['discount', 'offer', 'gst_rate', 'cess_rate', 'tax_name', 'tax_scheme', 'tax_slab_name', 'tax_source', 'hsn', 'sku', 'item_id', 'code'];
       if (Array.isArray(_lines) && Array.isArray(_live) && _lines.length === _live.length) {
-        _live.forEach((e, i) => { const j = _lines[i]; if (!j || !e) return;
-          [e.live, e.original].forEach((tgt) => { if (!tgt || typeof tgt !== 'object') return; KEEP.forEach((k) => { if ((tgt[k] === undefined || tgt[k] === null) && j[k] !== undefined && j[k] !== null) tgt[k] = j[k]; }); });
+        _live.forEach((e, index) => { const j = _lines[index]; if (!j || !e) return;
+          [e.live, e.original].forEach((item) => { if (!item || typeof item !== 'object') return; KEEP.forEach((k) => { if ((item[k] === undefined || item[k] === null) && j[k] !== undefined && j[k] !== null) item[k] = j[k]; }); });
         });
       }
     } catch (e) { cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e); }
@@ -3471,7 +3471,7 @@ router.post('/:chit_id/assign-lines', auth, async (req, res) => {
     /* ⚠️ LOGGED, BUT INTERNALLY. state_log is per-copy, so this stays on our side of the boundary — the
        counterparty's log is a different set of rows and never receives it. */
     try {
-      const detail = out.assignments.map((a) => (a.assignee_name || 'Unassigned') + (a.task ? ' · ' + a.task : '') + (a.due_date ? ' · due ' + String(a.due_date).slice(0, 10) : '')).join('; ');
+      const detail = out.assignments.map((item) => (item.assignee_name || 'Unassigned') + (item.task ? ' · ' + item.task : '') + (item.due_date ? ' · due ' + String(item.due_date).slice(0, 10) : '')).join('; ');
       await withEntity(entity_id, (db) => db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
          VALUES ($1,$2,'assigned_line',$3,$4,$5)`,
@@ -3517,9 +3517,9 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
     /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
        every other action. Best-effort: a missing log must not lose a correction that already committed. */
     try {
-      const detail = out.amendments.map((a) => a.line === null
-        ? ('line ' + (a.line_index + 1) + ' removed (' + a.reason_code + ')')
-        : ('line ' + (a.line_index + 1) + ' → ' + [a.line.particulars, a.line.quantity, a.line.unit].filter(Boolean).join(' ') + ' (' + a.reason_code + ')')).join('; ');
+      const detail = out.amendments.map((item) => item.line === null
+        ? ('line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')')
+        : ('line ' + (item.line_index + 1) + ' → ' + [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') + ' (' + item.reason_code + ')')).join('; ');
       await withEntity(entity_id, (db) => db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
          VALUES ($1,$2,'amended',$3,$4,$5)`,
@@ -3536,10 +3536,10 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
       .rows[0] || {}).line_items || [];
     const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
     const candidates = out.amendments
-      .filter((a) => a.line && a.reason_code === 'misread_by_ai')
-      .map((a) => ({ was: (orig[a.line_index] || {}).particulars, now: a.line.particulars, amendment_id: a.amendment_id }))
-      .filter((c) => c.was && c.now && norm(c.was) !== norm(c.now))
-      .map((c) => ({ amendment_id: c.amendment_id, term: c.was, means: c.now }));
+      .filter((item) => item.line && item.reason_code === 'misread_by_ai')
+      .map((item) => ({ was: (orig[item.line_index] || {}).particulars, now: item.line.particulars, amendment_id: item.amendment_id }))
+      .filter((item) => item.was && item.now && norm(item.was) !== norm(item.now))
+      .map((item) => ({ amendment_id: item.amendment_id, term: item.was, means: item.now }));
 
     res.json({ ...out, ...(candidates.length ? { synonym_candidates: candidates } : {}) });
   } catch (err) {
@@ -3613,15 +3613,15 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
     /* The matcher's shortlist, re-read from the catalogue so the picker shows the SAME row shape as everything
        else — and so the price on it is today's, not whatever the reader saw when the chit was raised. */
     const shortlist = (m) => (m.candidates || [])
-      .map((c) => { const it = cat.items.find((x) => x.key === c.key);
-        return it ? { ...full(it), status: c.status, status_text: c.status_text } : null; })
+      .map((item) => { const it = cat.items.find((x) => x.key === item.key);
+        return it ? { ...full(it), status: item.status, status_text: item.status_text } : null; })
       .filter(Boolean);
 
     const m = q ? itemmatch.match(q, req.query.comment || '', cat) : null;
     const nq = itemmatch.norm(q);
-    const items = (nq ? cat.items.filter((it) =>
-        itemmatch.norm(it.name).includes(nq) || nq.includes(itemmatch.norm(it.name)) ||
-        it.synonyms.some((s) => s.includes(nq) || nq.includes(s)))
+    const items = (nq ? cat.items.filter((item) =>
+        itemmatch.norm(item.name).includes(nq) || nq.includes(itemmatch.norm(item.name)) ||
+        item.synonyms.some((s) => s.includes(nq) || nq.includes(s)))
       : cat.items).slice(0, 200).map(full);
 
     res.json({
@@ -4207,7 +4207,7 @@ router.post('/:chit_id/messages',
           disputeRoster = [entity_id];
           try {
             const rr = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [disputeId]));
-            disputeRoster = [...new Set([entity_id].concat(rr.rows.map((r) => String(r.entity_id))))];
+            disputeRoster = [...new Set([entity_id].concat(rr.rows.map((item) => String(item.entity_id))))];
           } catch (e) { cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* keep [me] */ }
         }
       }
@@ -4312,7 +4312,7 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
     });
     if (result === null) return res.status(403).json({ error: 'Forbidden' });
 
-    const msgIds = result.rows.map(m => m.message_id).filter(Boolean);
+    const msgIds = result.rows.map(item => item.message_id).filter(Boolean);
     const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', []));   // per-entity: caller's own copies
     const byMsg = {};
     for (const a of atts) { (byMsg[a.message_id] = byMsg[a.message_id] || []).push(a); }
@@ -4328,7 +4328,7 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
 // ─── B3.10 — targeted + erasure-aware dispute helpers ────────
 // integrity-critical categories whose audience the platform widens by obligation (opt-in via env)
 const WIDEN_CATEGORIES = (process.env.CB_DISPUTE_WIDEN_CATEGORIES || '')
-  .split(',').map(s => s.trim()).filter(Boolean);
+  .split(',').map(item => item.trim()).filter(Boolean);
 
 async function probeParity(chit_id, target_entity_id, caller_entity_id) {
   if (!target_entity_id) return { parity_state: null, mode: 'two_sided', answerable: true, target_display_name: null };
@@ -4424,7 +4424,7 @@ router.post('/:chit_id/disputes',
       let partyNames = {};
       if (partyIds.length) {
         const nm = await query(`SELECT identity_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [partyIds]);
-        nm.rows.forEach(r => { partyNames[r.identity_id] = r.display_name; });
+        nm.rows.forEach(item => { partyNames[item.identity_id] = item.display_name; });
       }
 
       // 6. evidence snapshot — "forward your chit" (survives counterparty erasure)
@@ -4507,22 +4507,22 @@ router.post('/:chit_id/disputes',
  *   actions.resolve  { ok } | { ok:false, why, say } — lib/dispute-may.resolve, the same verdict PUT …/resolve refuses with
  */
 async function finishDisputes(rows, entity_id, me) {
-  const ids = rows.map((d) => d.dispute_id);
+  const ids = rows.map((item) => item.dispute_id);
   const statusBy = {};
   let rosterRead = false;
   if (ids.length) {
     try {
       const rr = await query(`SELECT u.did AS dispute_id, r.entity_id, r.role, r.status FROM unnest($1::uuid[]) AS u(did) CROSS JOIN LATERAL chit_dispute_roster(u.did) r`, [ids]);
-      rr.rows.forEach((r) => { statusBy[r.dispute_id + '|' + r.entity_id] = r.status; });
+      rr.rows.forEach((item) => { statusBy[item.dispute_id + '|' + item.entity_id] = item.status; });
       rosterRead = true;
     } catch (err) { log.warn('dispute roster read failed — the snapshot is shown', { err: err.message, n: ids.length }); }
   }
   const lvl = railActions.can({ held: true }, me, 'dispute');
   return rows.map(({ evidence_snapshot, roster, ...d }) => {
-    const parts = (roster || d.participants || []).map((p) => ({ dispute_id: d.dispute_id, entity_id: p.entity_id, display_name: p.display_name, role: p.role,
-      dispute_status: (rosterRead && statusBy[d.dispute_id + '|' + p.entity_id]) || p.dispute_status || 'open' }));
+    const parts = (roster || d.participants || []).map((item) => ({ dispute_id: d.dispute_id, entity_id: item.entity_id, display_name: item.display_name, role: item.role,
+      dispute_status: (rosterRead && statusBy[d.dispute_id + '|' + item.entity_id]) || item.dispute_status || 'open' }));
     const mine = d.raised_by_entity_id === entity_id;
-    return { ...d, has_evidence: evidence_snapshot != null, participants: parts, others: parts.filter((p) => p.entity_id !== entity_id), mine,
+    return { ...d, has_evidence: evidence_snapshot != null, participants: parts, others: parts.filter((item) => item.entity_id !== entity_id), mine,
       actions: { resolve: disputeMay.resolve(lvl, { open: d.status === 'open', raisedByMe: mine }) } };
   });
 }
@@ -4545,9 +4545,9 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
     const disputes = await finishDisputes(own.rows, entity_id, me);
     /* T3: who a new dispute may name — everyone on the chit but me, once each (the raise route ticks these as participant_entity_ids) */
-    const seen = {}, raise_parties = (Array.isArray(own.recipients) ? own.recipients : []).filter((r) => r && r.entity_id && r.entity_id !== entity_id && !seen[r.entity_id] && (seen[r.entity_id] = 1))
-      .map((r) => ({ entity_id: r.entity_id, display_name: r.display_name || null, role: r.role || null }));
-    res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length, raise_parties,
+    const seen = {}, raise_parties = (Array.isArray(own.recipients) ? own.recipients : []).filter((item) => item && item.entity_id && item.entity_id !== entity_id && !seen[item.entity_id] && (seen[item.entity_id] = 1))
+      .map((item) => ({ entity_id: item.entity_id, display_name: item.display_name || null, role: item.role || null }));
+    res.json({ disputes, open_count: disputes.filter(item => item.status === 'open').length, raise_parties,
       actions: { raise: disputeMay.raise(railActions.can({ held: true }, me, 'dispute')) } });
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
@@ -4589,7 +4589,7 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
       const raw = det.rows[0]?.line_items;
       const li = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : [];
       if (Array.isArray(li) && li.length) {
-        itemLabel = li.map(i => i.particulars || i.product).filter(Boolean).join(', ') || null;
+        itemLabel = li.map(item => item.particulars || item.product).filter(Boolean).join(', ') || null;
       }
     } catch (e) { cbLog.fellBack('chits GET /:chit_id/diagnosis: did not parse — answered with nothing', e, 'debug'); itemLabel = null; }
 
@@ -4672,7 +4672,7 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
          The definer only checks chit membership; an unchecked id would hand an outsider "Dispute resolved — <category>: <note>". */
       if (targetParty) {
         const ros = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [dispute_id]));
-        if (!ros.rows.some((r) => r.role === 'party' && String(r.entity_id) === String(targetParty))) {
+        if (!ros.rows.some((item) => item.role === 'party' && String(item.entity_id) === String(targetParty))) {
           return res.status(400).json({ error: 'Invalid target', code: 'DISPUTE_TARGET_NOT_PARTY',
             message: 'That business is not a party to this dispute' });
         }
@@ -4685,7 +4685,7 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
         if (targetParty) resolvedPartyIds = [targetParty];
         else {
           const openR = await client.query(`SELECT entity_id FROM chit_dispute_roster($1) WHERE role='party' AND status='open'`, [dispute_id]);
-          resolvedPartyIds = openR.rows.map(r => r.entity_id);
+          resolvedPartyIds = openR.rows.map(item => item.entity_id);
         }
         // definer clears the party copy(ies), and the raiser's copy when no party remains open. Returns allResolved.
         const rr = await client.query(`SELECT chit_dispute_resolve($1,$2,$3,$4) AS all_resolved`, [dispute_id, entity_id, targetParty || null, resolution_note]);
@@ -4748,14 +4748,14 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
  */
 router.get('/disputes/queue', auth, async (req, res) => {
   const entity_id = entityId(req);
-  const qs = req.query || {};
-  const status = ['open', 'resolved', 'all'].includes(qs.status) ? qs.status : 'open';
-  const side = ['mine', 'against'].includes(qs.side) ? qs.side : null;
-  const words = typeof qs.q === 'string' ? qs.q.trim().slice(0, 100) : '';
+  const list = req.query || {};
+  const status = ['open', 'resolved', 'all'].includes(list.status) ? list.status : 'open';
+  const side = ['mine', 'against'].includes(list.side) ? list.side : null;
+  const words = typeof list.q === 'string' ? list.q.trim().slice(0, 100) : '';
   const like = words ? '%' + words.replace(/[\\%_]/g, (c) => '\\' + c) + '%' : null;
-  const pageAsked = PAGE_LIMIT.pageArgs(qs, 50, 200);   /* not asked = every row, as before */
+  const pageAsked = PAGE_LIMIT.pageArgs(list, 50, 200);   /* not asked = every row, as before */
   const paged = pageAsked.asked, limit = pageAsked.limit, page = pageAsked.page;
-  const dir = qs.sort === 'new' ? 'DESC' : 'ASC';
+  const dir = list.sort === 'new' ? 'DESC' : 'ASC';
 
   try {
     // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me). per-copy: RLS returns only MY OWN dispute copies.
@@ -4782,8 +4782,8 @@ router.get('/disputes/queue', auth, async (req, res) => {
     // evidence_snapshot is PII — expose presence only, never its contents; the roster as participants (live status per party) so the raiser can resolve each party
     const rows = await finishDisputes(got.rows.map(({ _total, ...d }) => d), entity_id, railActions.meOf(req));
     // "other" now means disputes targeting me (untargeted ones no longer leak)
-    const myDisputes    = rows.filter(d => d.raised_by_entity_id === entity_id);
-    const otherDisputes = rows.filter(d => d.raised_by_entity_id !== entity_id);
+    const myDisputes    = rows.filter(item => item.raised_by_entity_id === entity_id);
+    const otherDisputes = rows.filter(item => item.raised_by_entity_id !== entity_id);
 
     res.json({
       disputes:       rows,
@@ -5148,7 +5148,7 @@ router.put('/:chit_id/void',
           const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', me, { copy });
           if (g.from) gates.push(g);   // a copy I do not hold has nothing to move
         }
-        const refusedBy = gates.find((g) => !g.ok);
+        const refusedBy = gates.find((item) => !item.ok);
         if (refusedBy) return { refused: refusedBy };
         for (const g of gates) await g.write();
         await db.query(
@@ -5222,7 +5222,7 @@ router.put('/:chit_id/void',
           const hdr = await withEntity(entity_id, (db) => db.query(
             `SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
           const parties = ((hdr.rows[0] && hdr.rows[0].all_recipients) || [])
-            .map((r) => r && r.entity_id)
+            .map((item) => item && item.entity_id)
             .filter((id) => id && id !== entity_id);
           /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
              timestamp for no reason. */
@@ -5359,15 +5359,15 @@ router.get('/:id/trace', auth, async (req, res) => {
       await traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH);
       const { nodes, edges } = g;
       const nodeArr = [...nodes.values()];
-      const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
+      const terminals = nodeArr.filter((item) => !edges.some((e) => e.from === item.chit_id));
       // ── Mass-balance invariant (Fragment 3): at each node, what goes OUT (sum of its children's base_qty) must not
       //    exceed what came IN (its own base_qty), in the same base unit. out > in ⇒ RED — more claimed out than
       //    received = theft / dilution / counterfeit, caught with no investigation. Only compares like base units.
       const flagged = traceBalance(nodeArr, (n) => edges.filter((e) => e.from === n.chit_id).map((e) => nodes.get(e.to)).filter(Boolean));
       return res.json({ dir, start: id, reachable_count: nodeArr.length,
-        depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0),
+        depth_max: nodeArr.reduce((total, item) => Math.max(total, item.depth), 0),
         flagged,
-        terminals: terminals.map((t) => ({ chit_id: t.chit_id, product: t.product })),
+        terminals: terminals.map((item) => ({ chit_id: item.chit_id, product: item.product })),
         nodes: nodeArr, edges });
     }
 
@@ -5385,8 +5385,8 @@ router.get('/:id/trace', auth, async (req, res) => {
 // came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
 // co-holds — not commercial terms — so this stays within the TR-6 lens.
 function traceToName(row) {
-  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { cbLog.fellBack('chits traceToName: did not parse — answered with none', e, 'debug'); a = []; } }
-  a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null;
+  let list = row.all_recipients; if (typeof list === 'string') { try { list = JSON.parse(list); } catch (e) { cbLog.fellBack('chits traceToName: did not parse — answered with none', e, 'debug'); list = []; } }
+  list = Array.isArray(list) ? list : []; const rec = list.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null;
 }
 /** a node's edge facts off its frozen summary_json.trace */
 function traceEdgeOf(t) {
@@ -5434,8 +5434,8 @@ function traceBalance(nodeArr, kidsOf) {
   for (const n of nodeArr) {
     const kids = kidsOf(n);
     if (!kids.length || n.base_qty == null) { n.balance = null; continue; }         // a leaf, or no quantity to balance
-    if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
-    const out = kids.reduce((s, k) => s + k.base_qty, 0);
+    if (!kids.every((item) => item.base_qty != null && item.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
+    const out = kids.reduce((total, item) => total + item.base_qty, 0);
     const delta = out - n.base_qty;
     const red = delta > 1e-9;
     if (red) flagged++;
@@ -5504,7 +5504,7 @@ router.get('/trace/by-batch', auth, async (req, res) => {
     const { edges, nodeArr, kidsMap, nmap } = batchChain(items);
     // mass-balance, same invariant as the walk — the ONE rule (traceBalance)
     const flagged = traceBalance(nodeArr, (n) => (kidsMap[n.chit_id] || []).map((id) => nmap[id]).filter(Boolean));
-    const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
+    const terminals = nodeArr.filter((item) => !edges.some((e) => e.from === item.chit_id));
     res.json({ dir: 'forward', by_batch: q, reconstructed: true,
       /* ⚠️ THE CALLER MUST BE ABLE TO TELL THESE APART. 'batch' = these shipments carried this lot. 'product' =
          no lot data was found anywhere, so this is every movement of a product with that name — a much wider and
@@ -5514,8 +5514,8 @@ router.get('/trace/by-batch', auth, async (req, res) => {
         ? 'Matched on the lot recorded on each line — GS1 (10) batch or (21) serial.'
         : 'No lot was recorded on any line, so this is every movement of a product with that name — not a lot-level recall.',
       start: (nodeArr[0] && nodeArr[0].chit_id) || null,
-      reachable_count: nodeArr.length, depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0), flagged,
-      terminals: terminals.map((t) => ({ chit_id: t.chit_id, product: t.product })), nodes: nodeArr, edges });
+      reachable_count: nodeArr.length, depth_max: nodeArr.reduce((total, item) => Math.max(total, item.depth), 0), flagged,
+      terminals: terminals.map((item) => ({ chit_id: item.chit_id, product: item.product })), nodes: nodeArr, edges });
   } catch (err) {
     res.status(500).json({ error: 'Batch trace failed', message: safeErr(err) });
   }
@@ -5525,8 +5525,8 @@ router.get('/trace/by-batch', auth, async (req, res) => {
 
 /** the receiver of a handoff (by-batch chains on it): the 'receiver' row, else the first party that is not sender or operator */
 function traceRecipientOf(row) {
-  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { cbLog.fellBack('chits traceRecipientOf: did not parse — answered with none', e, 'debug'); a = []; } }
-  a = Array.isArray(a) ? a : []; return a.find((x) => x.role === 'receiver') || a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
+  let list = row.all_recipients; if (typeof list === 'string') { try { list = JSON.parse(list); } catch (e) { cbLog.fellBack('chits traceRecipientOf: did not parse — answered with none', e, 'debug'); list = []; } }
+  list = Array.isArray(list) ? list : []; return list.find((x) => x.role === 'receiver') || list.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
 }
 
 /**
@@ -5589,15 +5589,15 @@ function batchItems(rows) {
 /** the chain rebuilt from the data alone, and each node's depth from the roots */
 function batchChain(items) {
   // rebuild edges: X → Y when receiver(X) === sender(Y). Pure data correlation, no links.
-  const bySender = {}; items.forEach((it) => { (bySender[it.sender_entity_id] = bySender[it.sender_entity_id] || []).push(it); });
+  const bySender = {}; items.forEach((item) => { (bySender[item.sender_entity_id] = bySender[item.sender_entity_id] || []).push(item); });
   const edges = []; const hasParent = new Set();
   items.forEach((x) => (bySender[x.to_entity_id] || []).forEach((y) => { if (y.chit_id !== x.chit_id) { edges.push({ from: x.chit_id, to: y.chit_id }); hasParent.add(y.chit_id); } }));
-  const nmap = {}; items.forEach((it) => { nmap[it.chit_id] = Object.assign({}, it, { depth: 0, is_origin: !hasParent.has(it.chit_id) }); });
+  const nmap = {}; items.forEach((item) => { nmap[item.chit_id] = Object.assign({}, item, { depth: 0, is_origin: !hasParent.has(item.chit_id) }); });
   // BFS depth from the roots
   const kidsMap = {}; edges.forEach((e) => { (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to); });
-  let frontier = items.filter((it) => !hasParent.has(it.chit_id)).map((it) => it.chit_id);
-  const seenD = new Set(frontier); let d = 0;
-  while (frontier.length && d < 60) { const next = []; frontier.forEach((id) => (kidsMap[id] || []).forEach((k) => { if (!seenD.has(k)) { seenD.add(k); nmap[k].depth = d + 1; next.push(k); } })); frontier = next; d++; }
+  let frontier = items.filter((item) => !hasParent.has(item.chit_id)).map((item) => item.chit_id);
+  const seenD = new Set(frontier); let count = 0;
+  while (frontier.length && count < 60) { const next = []; frontier.forEach((id) => (kidsMap[id] || []).forEach((item) => { if (!seenD.has(item)) { seenD.add(item); nmap[item].depth = count + 1; next.push(item); } })); frontier = next; count++; }
   const nodeArr = Object.values(nmap);
   return { edges, nodeArr, kidsMap, nmap };
 }
