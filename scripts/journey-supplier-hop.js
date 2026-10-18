@@ -59,7 +59,7 @@ async function signIn(email, display_name) {
   {
     const r = await call('GET', '/api/relationships/suppliers', { token: alpha.token });
     const list = Array.isArray(r.json) ? r.json : ((r.json && r.json.suppliers) || []);
-    const found = list.find((s) => (s.supplier_bridge_id === doc.bridge_id) || (s.bridge_id === doc.bridge_id) || (s.supplier_entity_id === doc.id));
+    const found = list.find((item) => (item.supplier_bridge_id === doc.bridge_id) || (item.bridge_id === doc.bridge_id) || (item.supplier_entity_id === doc.id));
     if (found) { sid = found.supplier_entity_id || found.identity_id || doc.id; ok(`"${found.display_name || found.supplier_display_name || doc.name}" is listed under Suppliers`); }
     else gap(`Document Services is NOT in Alpha Timbers' supplier list (${list.length} supplier(s))`);
   }
@@ -72,7 +72,7 @@ async function signIn(email, display_name) {
       const j = r.json || {};
       note(`returned keys: ${Object.keys(j).join(', ')}`);
       note(`schema: ${j.schema ? j.schema.schema_name : 'null'} · items: ${(j.items || []).length}`);
-      if ((j.items || []).length) ok(`items visible: ${(j.items || []).map((i) => (i.item_data || {}).name).join(' · ')}`);
+      if ((j.items || []).length) ok(`items visible: ${(j.items || []).map((item) => (item.item_data || {}).name).join(' · ')}`);
       else gap('NO items returned — the templates are not reachable this way');
       if (j.finishes) ok('finishes (adopted/published templates) are included');
       else gap('NO `finishes` key — the supplier view does not carry the adopted reference catalogue, which is where the TEMPLATES live');
@@ -85,11 +85,11 @@ async function signIn(email, display_name) {
   {
     const r = await call('GET', `/api/catalogue/${encodeURIComponent(doc.bridge_id)}`);
     const j = r.json || {};
-    const fin = (j.finishes || []).flatMap((f) => f.items || []);
-    if (fin.length) ok(`storefront shows ${fin.length} template(s): ${fin.map((i) => i.name).join(' · ')}`);
+    const list = (j.finishes || []).flatMap((item) => item.items || []);
+    if (list.length) ok(`storefront shows ${list.length} template(s): ${list.map((item) => item.name).join(' · ')}`);
     const oi = (j.shop || {}).order_input;
     if (oi) ok(`storefront carries the declaration → preset=${oi.preset} pipeline=${oi.pipeline}`);
-    fin.forEach((i) => { if (i.order_input) note(`${i.name} → its own form (${Object.keys((i.order_input.schema || {}).properties || {}).length} fields)`); });
+    list.forEach((item) => { if (item.order_input) note(`${item.name} → its own form (${Object.keys((item.order_input.schema || {}).properties || {}).length} fields)`); });
   }
 
   hr('─');
