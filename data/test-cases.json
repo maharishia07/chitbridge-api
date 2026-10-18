@@ -66282,6 +66282,69 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/move-in-meter.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "MOVE IN W1.6, ITEMS METERED AFTER THE COMMIT: items written inside the move-in's transaction are metered only once it commits; a refused or rolled-back move-in meters nothing; a plain catalogue write meters as before. No database, no network.",
+   "claim": "MOVE IN W1.6, ITEMS METERED AFTER THE COMMIT: items written inside the move-in's transaction are metered only once it commits; a refused or rolled-back move-in meters nothing; a plain catalogue write meters as before. No database, no network.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 88 lines. Run: node chitbridge-api/tests/move-in-meter.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "connector",
+    "engine"
+   ],
+   "subjects": [
+    "lib/catalogue-write.js",
+    "lib/move-in.js",
+    "routes/books.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-18T04:30:00Z",
+   "needs": []
+  },
+  {
+   "case_key": "chitbridge-api/tests/move-in-country-gate.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "MOVE IN W1, THE COUNTRY RULE: books from another country are refused whole, before a row is read (an unknown country is never given India's rules); an unmatched tax code, unit or open bill is held with its reason; one reference on two parties' bills lands for both; the match proof keeps the source country and their company id. No database, no network.",
+   "claim": "MOVE IN W1, THE COUNTRY RULE: books from another country are refused whole, before a row is read (an unknown country is never given India's rules); an unmatched tax code, unit or open bill is held with its reason; one reference on two parties' bills lands for both; the match proof keeps the source country and their company id. No database, no network.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 217 lines. Run: node chitbridge-api/tests/move-in-country-gate.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "connector",
+    "engine"
+   ],
+   "subjects": [
+    "lib/move-in.js",
+    "lib/move-in-gate.js",
+    "lib/move-in-proof.js",
+    "routes/books.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-18T04:30:00Z",
+   "needs": []
+  },
+  {
    "case_key": "chitbridge-api/tests/namespace.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
