@@ -35,8 +35,8 @@ async function api(method, path, body, token){
 async function mint(label){
   const slug = label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
   const email=`akums-${slug}-${Date.now()}-${Math.floor(Math.random()*1e5)}@test-cb.com`;
-  const reg=await api('POST','/api/entities/register',{ display_name:label, email });
-  const otp=reg.data.dev_otp||'123456';
+  const reply=await api('POST','/api/entities/register',{ display_name:label, email });
+  const otp=reply.data.dev_otp||'123456';
   const v=await api('POST','/api/entities/verify',{ email, otp });
   if(v.status!==200) throw new Error(`verify ${label}: ${v.status}`);
   return { id:v.data.entity.identity_id, token:v.data.token, name:label };
@@ -44,24 +44,24 @@ async function mint(label){
 
 // One handoff (material or finished lot). `qty` in kg. Returns {status, chit_id}.
 async function ship(from, to, { qty, parents, is_origin, product, note }, operatorId){
-  const r=await api('POST','/api/chits/send',{
+  const reply=await api('POST','/api/chits/send',{
     receivers:[{entity_id:to.id}], purpose:'delivery_note', manual_subject:`${from.name} -> ${to.name}`,
     line_items:[{ name: note || product, quantity:qty, unit:'kg', price:0, total:0 }],
     trace:{ parents, is_origin, product, qty, unit:'kg', network:{ id:'akums-cdmo', operator:operatorId } },
   }, from.token);
-  if(r.status!==200) throw new Error(`ship ${from.name}->${to.name}: ${r.status} ${r.data.message||''}`);
-  return { status:r.status, chit_id:r.data.chit_id };
+  if(reply.status!==200) throw new Error(`ship ${from.name}->${to.name}: ${reply.status} ${reply.data.message||''}`);
+  return { status:reply.status, chit_id:reply.data.chit_id };
 }
 
 // Forward "recall" walk: everything reachable downstream from an origin, as seen by `who`.
 async function recallSet(originId, who){
-  const w = await api('GET', `/api/chits/${originId}/trace?dir=forward`, null, who.token);
-  return { httpStatus:w.status, ids:new Set((w.data.nodes||[]).map(n=>n.chit_id)), count:(w.data.nodes||[]).length };
+  const reply = await api('GET', `/api/chits/${originId}/trace?dir=forward`, null, who.token);
+  return { httpStatus:reply.status, ids:new Set((reply.data.nodes||[]).map(item=>item.chit_id)), count:(reply.data.nodes||[]).length };
 }
 // Can `who` see this chit at all?
 async function canSee(chitId, who){
-  const w = await api('GET', `/api/chits/${chitId}/trace?dir=forward`, null, who.token);
-  return w.status===200 && (w.data.nodes||[]).some(n=>n.chit_id===chitId);
+  const reply = await api('GET', `/api/chits/${chitId}/trace?dir=forward`, null, who.token);
+  return reply.status===200 && (reply.data.nodes||[]).some(item=>item.chit_id===chitId);
 }
 
 function h(t){ console.log(`\n${C.bold}${C.cyan}${t}${C.z}`); }
@@ -121,7 +121,7 @@ async function main(){
 }
 
 function done(){
-  const pass=results.filter(Boolean).length, bad=results.filter(r=>!r).length;
+  const pass=results.filter(Boolean).length, bad=results.filter(item=>!item).length;
   console.log(`\n${'═'.repeat(62)}`);
   if(!bad) console.log(`  ${C.g}${C.bold}SURGICAL RECALL${C.z} — exact lots from one bad batch, ${C.bold}without exposing any brand to another${C.z}.`);
   else     console.log(`  ${C.r}${C.bold}${bad} CHECK(S) FAILED${C.z}  (${pass} passed)`);
