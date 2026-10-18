@@ -19,7 +19,7 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   const A = await signIn('beta@test-cb.com', 'Beta Fresh');
   const B = await signIn('gamma@test-cb.com', 'Gamma Document Services');
   if (!A || !B) { console.log('\n  could not sign in\n'); process.exitCode = 2; return; }
-  const eid = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
+  const eid = (text) => { try { return JSON.parse(Buffer.from(text.split('.')[1], 'base64').toString()).identity_id; } catch (_) { return null; } };
 
   console.log('\n── b143 live · division of labour ───────────────────────────────────────────\n');
   console.log('0 · two chits, so the work list has something to assemble');
@@ -69,7 +69,7 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
     { line_id: ids1[0], assignee_actor_id: SELVAM, assignee_name: 'Selvam', assignee_type: 'human', task: 'packing', due_date: '2026-08-16', note: 'Murugan off' } ] } });
   const re = (await get(A, c1)).line_assignment || {};
   eq('★★ Selvam holds it now', (re[ids1[0]] || {}).assignee_name, 'Selvam');
-  eq('★★ …and it remembers Murugan had it', ((re[ids1[0]] || {}).history || []).map((h) => h.assignee_name), ['Murugan']);
+  eq('★★ …and it remembers Murugan had it', ((re[ids1[0]] || {}).history || []).map((item) => item.assignee_name), ['Murugan']);
   eq('  seq advanced server-side', (re[ids1[0]] || {}).seq, 2);
 
   console.log('\n3 · ⭐⭐ THE COUNTERPARTY SEES NONE OF IT');
@@ -84,21 +84,21 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   console.log('\n4 · ⭐ the work list — one person, every chit');
   const wl = await j('/api/folders/worklist?due_on=2026-08-16', { token: A });
   ok('worklist answers', wl.status === 200, 'status ' + wl.status);
-  const sel = ((wl.b || {}).people || []).find((p) => p.name === 'Selvam');
-  const mur = ((wl.b || {}).people || []).find((p) => p.name === 'Murugan');
-  ok('★★ Selvam\'s line is on his list', sel && sel.lines.some((l) => l.chit_id === c1), JSON.stringify(sel));
-  ok('★★ Murugan still has the OTHER chit\'s line — assembled ACROSS chits', mur && mur.lines.some((l) => l.chit_id === c2), JSON.stringify(mur));
+  const sel = ((wl.b || {}).people || []).find((item) => item.name === 'Selvam');
+  const mur = ((wl.b || {}).people || []).find((item) => item.name === 'Murugan');
+  ok('★★ Selvam\'s line is on his list', sel && sel.lines.some((item) => item.chit_id === c1), JSON.stringify(sel));
+  ok('★★ Murugan still has the OTHER chit\'s line — assembled ACROSS chits', mur && mur.lines.some((item) => item.chit_id === c2), JSON.stringify(mur));
   /* ⚠️ A reassigned line must appear on exactly ONE list. Two people picking the same crate means one customer
      gets nothing, and the picking list is where that error would be born. */
   ok('★★ the reassigned line is NOT still on Murugan\'s list',
-     !mur || !mur.lines.some((l) => l.line_id === ids1[0]), JSON.stringify(mur && mur.lines));
+     !mur || !mur.lines.some((item) => item.line_id === ids1[0]), JSON.stringify(mur && mur.lines));
 
   console.log('\n5 · a removed line is not work anybody owes');
   await j('/api/chits/' + c2 + '/amend', { method: 'POST', token: A, body: { edits: [
     { line_index: 0, line_id: ids2[0], line: null, reason_code: 'stock_unavailable' } ] } });
   const wl2 = await j('/api/folders/worklist?due_on=2026-08-16', { token: A });
-  const mur2 = ((wl2.b || {}).people || []).find((p) => p.name === 'Murugan');
-  ok('★★ the struck line drops off the picking list', !mur2 || !mur2.lines.some((l) => l.chit_id === c2),
+  const mur2 = ((wl2.b || {}).people || []).find((item) => item.name === 'Murugan');
+  ok('★★ the struck line drops off the picking list', !mur2 || !mur2.lines.some((item) => item.chit_id === c2),
      'still listed — someone would go looking for cancelled goods');
 
   console.log('\n' + (fail ? '\x1b[31m' : '\x1b[32m') + pass + ' passed, ' + fail + ' failed\x1b[0m');
