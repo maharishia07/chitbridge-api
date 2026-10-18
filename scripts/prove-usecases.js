@@ -92,8 +92,8 @@ const EMAIL = 'cholaauto@email.com';
   const kavya  = await crewFor('kavya',  'Kavya');
   const suresh = await crewFor('suresh', 'Suresh');
   const crew = [ramesh, kavya, suresh];
-  ok(crew.every((c) => c.token), 'the same three mechanics, reused — no new staff on a re-run',
-    crew.map((c) => c.name).join(' · ') + (crew.find((c) => !c.token) ? '  ' + crew.find((c) => !c.token).err : ''));
+  ok(crew.every((item) => item.token), 'the same three mechanics, reused — no new staff on a re-run',
+    crew.map((item) => item.name).join(' · ') + (crew.find((item) => !item.token) ? '  ' + crew.find((item) => !item.token).err : ''));
 
   /* ── the catalogue: what this workshop sells ───────────────────────────────────────────────────────────── */
   console.log('\n0 · THE CATALOGUE — parts and labour, both of them priced');
@@ -144,7 +144,7 @@ const EMAIL = 'cholaauto@email.com';
   await event(S.id, [{ line_id: sl, kind: 'add', particulars: 'Extra time on the chassis',       quantity: 1.5, unit: 'hour', amount: 1125, reference: idOf(CAT.diagnosis) }], ramesh);
   await event(S.id, [{ line_id: sl, kind: 'deliver', quantity: 1, unit: 'job' }], ramesh);
   const s2 = (await linesOf(S.id))[sl];
-  const sh = (s2.added || []).filter((a) => a.unit === 'hour').reduce((t, a) => t + Number(a.quantity), 0);
+  const sh = (s2.added || []).filter((item) => item.unit === 'hour').reduce((total, item) => total + Number(item.quantity), 0);
   ok(sh === 3.5 && Number(s2.charged) === 2625, 'estimated 2 h, accrued 3.5 h — the overrun is chargeable', money(s2.charged));
   ok(s2.complete === true, '⭐⭐ COMPLETE without anything being shipped — the FINDING was the deliverable');
 
@@ -156,7 +156,7 @@ const EMAIL = 'cholaauto@email.com';
     { particulars: 'Complaint 3 — AC not cooling',  quantity: 1, unit: 'job', price: 0 },
     { particulars: 'Complaint 4 — front tyre wear', quantity: 1, unit: 'job', price: 0 },
   ], 'Job card — TN 09 BX 4471');
-  const [c1, c2, c3, c4] = J.lines.map((l) => l.line_id);
+  const [c1, c2, c3, c4] = J.lines.map((item) => item.line_id);
   const NAME = { [c1]: 'engine noise', [c2]: 'driver door', [c3]: 'AC not cooling', [c4]: 'front tyre wear' };
 
   /* Complaint 1 — Ramesh. Parts from the catalogue, labour by the hour. DONE. */
@@ -196,32 +196,32 @@ const EMAIL = 'cholaauto@email.com';
   const L = await linesOf(J.id);
   const rows = [c1, c2, c3, c4].map((id) => {
     const l = L[id] || {};
-    const ev = l.added || [];
-    const hours = ev.filter((a) => a.unit === 'hour').reduce((t, a) => t + Number(a.quantity || 0), 0);
-    const parts = ev.filter((a) => a.unit !== 'hour');
-    const labour = ev.filter((a) => a.unit === 'hour').reduce((t, a) => t + Number(a.amount || 0), 0);
-    const mats = parts.reduce((t, a) => t + Number(a.amount || 0), 0);
-    const who = [...new Set(ev.map((a) => a.by_actor).filter(Boolean))];
-    return { id, name: NAME[id], done: l.complete === true, hours, parts: parts.length, labour, mats, who, started: ev.length > 0 };
+    const list = l.added || [];
+    const hours = list.filter((item) => item.unit === 'hour').reduce((total, item) => total + Number(item.quantity || 0), 0);
+    const parts = list.filter((item) => item.unit !== 'hour');
+    const labour = list.filter((item) => item.unit === 'hour').reduce((total, item) => total + Number(item.amount || 0), 0);
+    const mats = parts.reduce((total, item) => total + Number(item.amount || 0), 0);
+    const who = [...new Set(list.map((item) => item.by_actor).filter(Boolean))];
+    return { id, name: NAME[id], done: l.complete === true, hours, parts: parts.length, labour, mats, who, started: list.length > 0 };
   });
 
   console.log('\n── JOB CARD · TN 09 BX 4471 ' + '─'.repeat(38));
-  rows.forEach((r) => {
-    const state = r.done ? 'DONE     ' : (r.started ? 'IN PROGRESS' : 'NOT STARTED');
-    console.log('   ' + r.name.padEnd(18) + state.padEnd(13)
-      + (r.hours ? (r.hours + ' h').padEnd(7) : '—'.padEnd(7))
-      + (r.parts + ' parts').padEnd(10)
-      + money(r.labour + r.mats).padStart(10)
-      + '   ' + (r.who.join(', ') || '—'));
+  rows.forEach((item) => {
+    const state = item.done ? 'DONE     ' : (item.started ? 'IN PROGRESS' : 'NOT STARTED');
+    console.log('   ' + item.name.padEnd(18) + state.padEnd(13)
+      + (item.hours ? (item.hours + ' h').padEnd(7) : '—'.padEnd(7))
+      + (item.parts + ' parts').padEnd(10)
+      + money(item.labour + item.mats).padStart(10)
+      + '   ' + (item.who.join(', ') || '—'));
   });
-  const done = rows.filter((r) => r.done).length;
-  const hours = rows.reduce((t, r) => t + r.hours, 0);
-  const labour = rows.reduce((t, r) => t + r.labour, 0);
-  const mats = rows.reduce((t, r) => t + r.mats, 0);
-  const people = new Set(rows.flatMap((r) => r.who));
+  const done = rows.filter((item) => item.done).length;
+  const hours = rows.reduce((total, item) => total + item.hours, 0);
+  const labour = rows.reduce((total, item) => total + item.labour, 0);
+  const mats = rows.reduce((total, item) => total + item.mats, 0);
+  const people = new Set(rows.flatMap((item) => item.who));
   console.log('   ' + '─'.repeat(62));
   console.log('   ' + String(done) + ' of 4 complaints closed'.padEnd(24)
-    + ('  ' + people.size + ' people   ' + hours + ' h   ' + rows.reduce((t, r) => t + r.parts, 0) + ' parts'));
+    + ('  ' + people.size + ' people   ' + hours + ' h   ' + rows.reduce((total, item) => total + item.parts, 0) + ' parts'));
   console.log('   labour ' + money(labour) + '   ·   materials ' + money(mats) + '   ·   TOTAL SO FAR ' + money(labour + mats));
   console.log('─'.repeat(66));
 
@@ -234,10 +234,10 @@ const EMAIL = 'cholaauto@email.com';
   ok(people.size === 2, 'two mechanics have recorded work; the third is assigned to a complaint not yet started',
     [...people].join(' · ') + '  (crew of ' + crew.length + ')');
   ok(labour + mats === 7025, 'the running total is SUMMED from events — it rises as work happens', money(labour + mats));
-  ok(rows.every((r) => (L[r.id].added || []).every((a) => a.unit === 'hour' || a.reference)),
+  ok(rows.every((item) => (L[item.id].added || []).every((a) => a.unit === 'hour' || a.reference)),
     '⭐ every PART carries its catalogue reference — "6 materials changed" reconciles against the catalogue');
 
-  const fails = T.filter((t) => !t.ok);
+  const fails = T.filter((item) => !item.ok);
   console.log('\n══ ' + (T.length - fails.length) + ' passed · ' + fails.length + ' failed ══\n');
   process.exit(fails.length ? 1 : 0);
 })().catch((e) => { console.error('HARNESS ERROR', e && e.message); process.exit(1); });
