@@ -30,7 +30,7 @@ if (argv.has('--detect')) {
   };
   look('.');
   console.log('Likely source roots :', roots.length ? roots.join(', ') : '(none found — set "roots" by hand)');
-  console.log('File types present  :', Object.entries(seen).sort((a, b) => b[1] - a[1]).slice(0, 12)
+  console.log('File types present  :', Object.entries(seen).sort((first, second) => second[1] - first[1]).slice(0, 12)
     .map(([k, v]) => `${k} ${v}`).join('  '));
   console.log('\nWrite the roots you want into copy-guard.config.json, then run the lint.');
   process.exit(0);
@@ -92,8 +92,8 @@ if (argv.has('--json')) {
   process.exit(findings.length ? 1 : 0);
 }
 
-const byRule = findings.reduce((a, f) => (a[f.rule] = (a[f.rule] || 0) + 1, a), {});
-const byFile = findings.reduce((a, f) => (a[f.file] = (a[f.file] || 0) + 1, a), {});
+const byRule = findings.reduce((total, item) => (total[item.rule] = (total[item.rule] || 0) + 1, total), {});
+const byFile = findings.reduce((total, item) => (total[item.file] = (total[item.file] || 0) + 1, total), {});
 
 if (!argv.has('--quiet')) {
   for (const f of findings.slice(0, 200))
@@ -105,9 +105,9 @@ console.error(`\n${files.length} files scanned.`);
 if (!findings.length) { console.log('✓ copy within budget'); process.exit(0); }
 
 console.error(`${findings.length} finding(s):`);
-for (const [r, n] of Object.entries(byRule).sort((a, b) => b[1] - a[1])) console.error(`   ${String(n).padStart(4)}  ${r}`);
+for (const [r, n] of Object.entries(byRule).sort((first, second) => second[1] - first[1])) console.error(`   ${String(n).padStart(4)}  ${r}`);
 console.error('\nWorst files:');
-for (const [f, n] of Object.entries(byFile).sort((a, b) => b[1] - a[1]).slice(0, 8)) console.error(`   ${String(n).padStart(4)}  ${f}`);
+for (const [f, n] of Object.entries(byFile).sort((first, second) => second[1] - first[1]).slice(0, 8)) console.error(`   ${String(n).padStart(4)}  ${f}`);
 const hot = files.length >= 5 ? Object.entries(byRule).find(([, n]) => n > files.length * 0.4) : null;
 if (hot) console.error(`\nNote: "${hot[0]}" fires on most files. Loosen its budget in copy-guard.config.json rather than disabling it.`);
 console.error('\nShorten the strings. Never widen the boxes.');
