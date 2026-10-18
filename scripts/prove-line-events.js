@@ -64,9 +64,9 @@ const ok = (cond, msg, detail) => { T.push({ ok: !!cond, msg, detail }); };
     r.line && ('charged ' + r.line.charged));
   /* ⚠️ THE WHOLE POINT OF THE MIXED-UNIT RULE, seen from the other side: 1 litre + 2 piece + 1.5 hour is not 4.5
      of anything. Each stays in its own unit; only the money is added. */
-  ok(added.map((a) => a.unit).sort().join(',') === 'hour,litre,piece',
+  ok(added.map((item) => item.unit).sort().join(',') === 'hour,litre,piece',
     'each event keeps its OWN unit — litre, piece, hour, never summed',
-    added.map((a) => a.quantity + ' ' + a.unit).join(' · '));
+    added.map((item) => item.quantity + ' ' + item.unit).join(' · '));
   ok(r.line && Number(r.line.delivered) === 0,
     '⭐ an added event does NOT deliver the job — fitting a shoe is not 2 of a brake service',
     r.line && ('delivered ' + r.line.delivered));
@@ -168,8 +168,8 @@ const ok = (cond, msg, detail) => { T.push({ ok: !!cond, msg, detail }); };
 
   let pass = 0, fail = 0;
   console.log('');
-  T.forEach((t) => { if (t.ok) { pass++; console.log('  ✓ ' + t.msg + (t.detail ? '  ' + t.detail : '')); }
-                     else { fail++; console.log('  ✗ ' + t.msg + (t.detail ? '  → got ' + t.detail : '')); } });
+  T.forEach((item) => { if (item.ok) { pass++; console.log('  ✓ ' + item.msg + (item.detail ? '  ' + item.detail : '')); }
+                     else { fail++; console.log('  ✗ ' + item.msg + (item.detail ? '  → got ' + item.detail : '')); } });
   console.log('\n== RESULT ==  PASS ' + pass + '  ·  FAIL ' + fail);
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log('ERR', e.message); process.exit(1); });
