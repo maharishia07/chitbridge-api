@@ -126,7 +126,7 @@ function readUpload(body) {
  */
 function csvWithHead(parsed, headerRow) {
   const preview = [{ row: 1, cells: parsed.headers.slice(0, 12) }].concat(
-    parsed.rows.slice(0, 7).map((r, i) => ({ row: i + 2, cells: parsed.headers.slice(0, 12).map((h) => String(r[h] == null ? '' : r[h])) })));
+    parsed.rows.slice(0, 7).map((item, index) => ({ row: index + 2, cells: parsed.headers.slice(0, 12).map((h) => String(item[h] == null ? '' : item[h])) })));
   const want = Number(headerRow);
   if (!Number.isInteger(want) || want <= 1) return Object.assign({}, parsed, { headerRow: 1, preview });
 
@@ -136,19 +136,19 @@ function csvWithHead(parsed, headerRow) {
     e.userMessage = e.message; throw e;
   }
   /* ⚠️ the VALUES of that row become the headings, in column order */
-  const headers = parsed.headers.map((h) => String(parsed.rows[at][h] == null ? '' : parsed.rows[at][h]).trim());
+  const headers = parsed.headers.map((item) => String(parsed.rows[at][item] == null ? '' : parsed.rows[at][item]).trim());
   const seen = new Map();
-  const finalHeaders = headers.map((h, i) => {
-    let name = h || ('Column ' + String.fromCharCode(65 + (i % 26)));
+  const finalHeaders = headers.map((item, index) => {
+    let name = item || ('Column ' + String.fromCharCode(65 + (index % 26)));
     if (seen.has(name)) { const n = seen.get(name) + 1; seen.set(name, n); name = name + ' (' + n + ')'; }
     else seen.set(name, 1);
     return name;
   });
-  const rows = parsed.rows.slice(at + 1).map((r) => {
+  const rows = parsed.rows.slice(at + 1).map((item) => {
     const o = {};
-    parsed.headers.forEach((h, i) => { o[finalHeaders[i]] = r[h] == null ? '' : r[h]; });
+    parsed.headers.forEach((h, index) => { o[finalHeaders[index]] = item[h] == null ? '' : item[h]; });
     return o;
-  }).filter((o) => Object.keys(o).some((k) => String(o[k]).trim() !== ''));
+  }).filter((item) => Object.keys(item).some((k) => String(item[k]).trim() !== ''));
   return { headers: finalHeaders, rows, headerRow: want, preview };
 }
 const identity  = require('../lib/identity');       // which line is this, and which product does it belong to
@@ -198,7 +198,7 @@ const ctx = (req) => auth.entityOf(req);
 const cost = require('../lib/cost');
 /** strips item_data.cost from every row in place — the one place a list response leaves this file */
 function stripCosts(items) {
-  items.forEach((it) => { if (it && it.item_data && 'cost' in it.item_data) delete it.item_data.cost; });
+  items.forEach((item) => { if (item && item.item_data && 'cost' in item.item_data) delete item.item_data.cost; });
   return items;
 }
 /**
@@ -309,10 +309,10 @@ async function catalogueShape(entity_id) {
   try {
     const sample = await withEntity(entity_id, (db) => db.query(
       `SELECT item_data FROM catalogue_items WHERE entity_id=$1 AND is_active=true`, [entity_id]));
-    defCols = defaults.columnsFor(sample.rows.map((r) => r.item_data || {}), face0);
+    defCols = defaults.columnsFor(sample.rows.map((item) => item.item_data || {}), face0);
   } catch (_) { defCols = defaults.columnsFor([], face0); }
 
-  const observed = cols.columns.concat(defCols.filter((k) => cols.columns.indexOf(k) < 0));
+  const observed = cols.columns.concat(defCols.filter((item) => cols.columns.indexOf(item) < 0));
   const ident = identity.resolve(face0);
   return { schema_id: sid, labels, identity: ident, identityProblems: identity.check(ident, Object.keys((schema && schema.properties) || {})), required: required.length ? required : ['name'], template: csv.templateFor({ schema, orderInput: oi, observed }), orderInput: oi };
 }
@@ -378,7 +378,7 @@ router.post('/bulk', auth, bulkLimiter, [ body('items').isArray({ min: 1 }) ], v
     if (items.length > BULK_MAX) {
       return res.status(400).json({ error: 'Too many', message: `At most ${BULK_MAX} items in one request.` });
     }
-    if (!items.every((it) => it && typeof it === 'object' && !Array.isArray(it))) {
+    if (!items.every((item) => item && typeof item === 'object' && !Array.isArray(item))) {
       return res.status(400).json({ error: 'Invalid product', message: 'Every item must be an object.' });
     }
 
@@ -443,7 +443,7 @@ router.post('/status/bulk', auth,
     /* ⚠️ SAY WHICH ONES DID NOT MOVE. An id that is not in this catalogue simply does not match, and a bulk
        action that reports "done" while three rows never changed is the reason nobody trusts bulk actions. */
     const done = r.rows.map((x) => x.item_id);
-    const missed = ids.filter((i) => done.indexOf(i) < 0);
+    const missed = ids.filter((item) => done.indexOf(item) < 0);
     res.json({ message: done.length + ' updated', updated: done.length, missed: missed,
       status: req.body.status,
       reads_as: r.rows.length ? itemstatus.explain(r.rows[0].item_data || {}) : null });
@@ -475,8 +475,8 @@ router.post('/bulk-update', auth, [ body('items').isArray({ min: 1 }) ], validat
     if (items.length > BULK_MAX) {
       return res.status(400).json({ error: 'Too many', message: `At most ${BULK_MAX} items in one request.` });
     }
-    const shaped = items.every((it) => it && typeof it === 'object' && typeof it.id === 'string'
-      && it.item_data && typeof it.item_data === 'object' && !Array.isArray(it.item_data));
+    const shaped = items.every((item) => item && typeof item === 'object' && typeof item.id === 'string'
+      && item.item_data && typeof item.item_data === 'object' && !Array.isArray(item.item_data));
     if (!shaped) {
       return res.status(400).json({ error: 'Bad shape', message: 'Every item must be { id, item_data }.' });
     }
@@ -484,24 +484,24 @@ router.post('/bulk-update', auth, [ body('items').isArray({ min: 1 }) ], validat
     const schema_id = await defaultSchemaId(entity_id);
     const currency = await regional.currencyFor(entity_id);
 
-    const bad = [];
+    const list = [];
     for (let i = 0; i < items.length; i++) {
       const verr = await validateItem(schema_id, items[i].item_data);
-      if (verr) bad.push({ index: i, id: items[i].id, message: verr });
+      if (verr) list.push({ index: i, id: items[i].id, message: verr });
     }
-    if (bad.length) {
+    if (list.length) {
       return res.status(400).json({ error: 'Invalid product',
-        message: bad.length + ' item(s) were refused and nothing was written.', invalid: bad });
+        message: list.length + ' item(s) were refused and nothing was written.', invalid: list });
     }
 
-    const ids = items.map((it) => it.id);
+    const ids = items.map((item) => item.id);
 
     /* One statement for the lot: the one product writer pairs each id with its own new item_data. */
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id,
-      items.map((it) => ({ item_id: it.id, replace: money.stampItem(it.item_data, currency) }))));
+      items.map((item) => ({ item_id: item.id, replace: money.stampItem(item.item_data, currency) }))));
 
     const done = r.rows.map((x) => x.item_id);
-    const missed = ids.filter((i) => done.indexOf(i) < 0);
+    const missed = ids.filter((item) => done.indexOf(item) < 0);
     res.json({ message: done.length + ' updated', updated: done.length, missed: missed });
   } catch (e) { fail(res, e, 'Bulk update failed'); }
 });
@@ -627,13 +627,13 @@ router.get('/', auth, async (req, res) => {
       if (pendingRows.length) {
         const byItem = new Map();
         for (const row of pendingRows) { const k = String(row.item_id); (byItem.get(k) || byItem.set(k, []).get(k)).push(row); }
-        if (byItem.size) items = items.map((it) => byItem.has(String(it.item_id)) ? Object.assign({}, it, { scheduled: byItem.get(String(it.item_id)) }) : it);
+        if (byItem.size) items = items.map((item) => byItem.has(String(item.item_id)) ? Object.assign({}, item, { scheduled: byItem.get(String(item.item_id)) }) : item);
       }
     } catch (e) { log.fellBack('products GET /: failed — carried on without it', e); /* the list never fails for a parked change */ }
     /* The tally is over EVERY row, not the page and not the filtered set — it is what the tabs count, so it must not change
        depending on which tab is open or how far somebody has scrolled. statusOf() decides, as it always has. */
     const counts = {};
-    itemstatus.STATUSES.forEach((s) => { counts[s] = 0; });
+    itemstatus.STATUSES.forEach((item) => { counts[item] = 0; });
     const tallyRows = (tally && tally.rows) || [];
     tallyRows.forEach((x) => { counts[itemstatus.statusOf({ status: x.st })]++; });
     const total = wantRaw
@@ -687,7 +687,7 @@ async function catalogueRows(entity_id, canCost) {
     const sid = await defaultSchemaId(entity_id);
     if (sid) {
       const cols = await catcols.resolveColumns({ query, withEntity, entity_id, schema_id: sid });
-      schema = { properties: Object.fromEntries(cols.columns.map((k) => [k, {}])) };
+      schema = { properties: Object.fromEntries(cols.columns.map((item) => [item, {}])) };
     }
   } catch (e) { log.fellBack('products catalogueRows: the read failed — carried on without it', e); /* no schema is fine — the columns then come from the items themselves */ }
   /**
@@ -698,7 +698,7 @@ async function catalogueRows(entity_id, canCost) {
   /* [OFFR-04] cost never leaves for a caller who may not read it: dropped from the rows AND the schema columns,
      so the header does not even name it. Fails closed: only an explicit true keeps it. */
   if (canCost !== true) {
-    items.forEach((it) => { if (it) Object.keys(it).forEach((k) => { if (/^cost(_|$)/.test(k)) delete it[k]; }); });
+    items.forEach((item) => { if (item) Object.keys(item).forEach((k) => { if (/^cost(_|$)/.test(k)) delete item[k]; }); });
     if (schema && schema.properties) delete schema.properties.cost;
   }
   return { items, schema, columns: csv.columnsFor(items, schema) };
@@ -736,8 +736,8 @@ router.get('/workbook.xlsx', auth, async (req, res) => {
 
     /* ⚠️ THE HEADER ROW IS THE COLUMN ORDER csv.columnsFor DECIDED — the same one the .csv gets, so a shop
        that downloads both does not meet two different sheets. */
-    const products = [columns].concat(items.map((it) => columns.map((c) => {
-      const v = it[c];
+    const products = [columns].concat(items.map((item) => columns.map((c) => {
+      const v = item[c];
       if (v === null || v === undefined) return null;
       /* ⚠️ a NUMBER stays a number so Excel can total it; everything else is text, which keeps a code's
          leading zero and stops a barcode being rounded into uselessness. */
@@ -752,7 +752,7 @@ router.get('/workbook.xlsx', auth, async (req, res) => {
     let catRows = [['id', 'Category', 'Status']];
     try {
       const list = await cats.listCategories(entity_id, { withEntity });
-      catRows = catRows.concat(list.map((c) => [String(c.id), c.name, c.status || 'live']));
+      catRows = catRows.concat(list.map((item) => [String(item.id), item.name, item.status || 'live']));
       if (!list.length) catRows.push([null, '(none yet — add a name here and it will be created)', null]);
     } catch (_) {
       /* ⚠️ a shop whose definitions are not provisioned still gets a workbook, with the sheet saying so */
@@ -765,10 +765,10 @@ router.get('/workbook.xlsx', auth, async (req, res) => {
      * measured-vs-counted is shown because it is the one fact that changes how a bill reads ([TILL-104]).
      */
     const unitRows = [['Unit', 'Also accepted', 'Counted or measured']].concat(
-      Object.keys(units.UNITS).map((k) => [
-        k,
-        (units.aliasesOf(k) || []).filter((a) => a !== k).slice(0, 8).join(', '),
-        units.isMeasured(k) ? 'measured (0.25 is ordinary)' : 'counted (whole things)',
+      Object.keys(units.UNITS).map((item) => [
+        item,
+        (units.aliasesOf(item) || []).filter((a) => a !== item).slice(0, 8).join(', '),
+        units.isMeasured(item) ? 'measured (0.25 is ordinary)' : 'counted (whole things)',
       ]));
 
     const buf = xw.workbook([
@@ -850,7 +850,7 @@ router.post('/import/preflight', auth, preflightLimiter,
     try { parsed = readUpload(req.body); }
     catch (e) { return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) }); }
     // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
-    const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
+    const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
     const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
     const cut = workbookCut(parsed);
     if (cut) { report.ready = false; report.notes.unshift(cut.message); }
@@ -912,9 +912,9 @@ router.post('/import', auth, importLimiter,
       return res.status(413).json({ error: 'Too many rows',
         message: `This file has ${parsed.rows.length} rows and one upload can carry ${IMPORT_MAX_ROWS}. Nothing was imported — split the file and it will all go in.` });
     }
-    const rows = parsed.rows.map((r) => parsed.headers.map((h) => r[h]));
+    const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
     const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
-    const rowErrors = report.issues.filter((i) => i.severity === 'error');
+    const rowErrors = report.issues.filter((item) => item.severity === 'error');
     if (rowErrors.length) {
       return res.status(409).json({ error: 'The file has problems', report,
         message: `${rowErrors.length} row problem(s) must be fixed first. Nothing was imported.` });
@@ -964,10 +964,10 @@ router.post('/import', auth, importLimiter,
     // not change what it demands.
     if (sid) {
       const hv = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
-      const known = new Set(hv.rows.map((r) => r.field_key));
+      const known = new Set(hv.rows.map((item) => item.field_key));
       // The order the template renders them in — so registering changes nothing a merchant can see, today.
-      const inOrder = template.columns.filter((c) => applied.mappedFields.includes(c) && !known.has(c)
-        && !preflight.BLOCKED[c] && c !== 'quantity');
+      const inOrder = template.columns.filter((item) => applied.mappedFields.includes(item) && !known.has(item)
+        && !preflight.BLOCKED[item] && item !== 'quantity');
       if (inOrder.length) {
         created.push(...await catcols.commitFields({ query, schema_id: sid,
           newFields: inOrder.map((key) => ({ field_key: key, field_name: labels[key] || key,
@@ -994,7 +994,7 @@ router.post('/import', auth, importLimiter,
     const idLabel = ident.key.join(' + ');
 
     const outcome = [], updates = [], inserts = [];
-    for (let i = 0; i < applied.items.length; i++) {
+    for (let index = 0; index < applied.items.length; index++) {
       /**
        * ⭐⭐ THE ANSWERS BECOME RECORDS HERE. `available: yes` becomes a status AND a fresh stamp; `qty` becomes
        * the availability record with today's date and this upload as its source.
@@ -1004,7 +1004,7 @@ router.post('/import', auth, importLimiter,
        * still true TODAY, and the as-of is the part that moved. Deliberately unlike money.stampPrice, which
        * PRESERVES an existing source/as_of — a quoted price keeps its date, a stock count does not.
        */
-      const item = sheet.fromSheet(applied.items[i], { source: 'upload' }).item_data, line = applied.lines[i];
+      const item = sheet.fromSheet(applied.items[index], { source: 'upload' }).item_data, line = applied.lines[index];
       const ikey = identity.identityOf(item, ident);       // null when the row carries only PART of the key
       const sku = ikey || '';
       const prior = ikey ? byIdentity.get(ikey) : null;
@@ -1053,14 +1053,14 @@ router.post('/import', auth, importLimiter,
       });
     }
 
-    const failed = outcome.filter((o) => o.action === 'failed');
+    const failed = outcome.filter((item) => item.action === 'failed');
     res.json({
-      message: `${outcome.filter((o) => o.action === 'created').length} added, ${outcome.filter((o) => o.action === 'updated').length} updated`
+      message: `${outcome.filter((item) => item.action === 'created').length} added, ${outcome.filter((item) => item.action === 'updated').length} updated`
         + (failed.length ? `, ${failed.length} failed` : '')
         + (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
       created_columns: created, outcome,
-      summary: { created: outcome.filter((o) => o.action === 'created').length,
-        updated: outcome.filter((o) => o.action === 'updated').length, failed: failed.length },
+      summary: { created: outcome.filter((item) => item.action === 'created').length,
+        updated: outcome.filter((item) => item.action === 'updated').length, failed: failed.length },
     });
   } catch (e) { fail(res, e, 'Import failed'); }
 });
@@ -1094,7 +1094,7 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
     /* ⭐ The running display_order used to be tracked here; commitFields owns it now, so this only needs to know
        WHICH keys already exist — the additive-only rule. */
     const have = await query(`SELECT field_key FROM schema_fields WHERE schema_id=$1`, [sid]);
-    const keys = new Set(have.rows.map((r) => r.field_key));
+    const keys = new Set(have.rows.map((item) => item.field_key));
 
     /**
      * ⭐⭐ A SUBSET, AND YOUR OWN COLUMNS — Athi, 2026-09-02, of the categories picker and then of this:
@@ -1109,7 +1109,7 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
      * An empty array is a different statement and is honoured: "none of the standard ones, only mine".
      */
     const wanted = Array.isArray(req.body.fields) ? new Set(req.body.fields.map(String)) : null;
-    const picked = wanted ? set.fields.filter((f) => wanted.has(f.field_key)) : set.fields;
+    const picked = wanted ? set.fields.filter((item) => wanted.has(item.field_key)) : set.fields;
 
     /* ⭐ COLLECTED, THEN APPENDED ONCE — see the shared appender below. Additive only: a column already in use
        is never retyped. */
@@ -1156,7 +1156,7 @@ router.post('/starter-columns', auth, [ body('vertical').isString() ], validate,
 
     res.json({ message: added.length ? `Added ${added.length} column(s)` : 'Your catalogue already has all of those columns',
       vertical: set.vertical, added, rejected,
-      unchanged: picked.filter((f) => !added.includes(f.field_key)).map((f) => f.field_key) });
+      unchanged: picked.filter((item) => !added.includes(item.field_key)).map((item) => item.field_key) });
   } catch (e) { fail(res, e, 'Could not adopt the standard set'); }
 });
 
@@ -1291,21 +1291,21 @@ router.post('/availability/bulk', auth, [ body('items').isArray({ min: 1, max: 2
     const entity_id = ctx(req);
     const out = await withEntity(entity_id, async (db) => {
       const rows = (await db.query(`SELECT item_id, item_data->>'code' AS code, item_data->>'sku' AS sku FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id])).rows;
-      const byId = new Map(rows.map((r) => [String(r.item_id), r])), byCode = new Map();
+      const byId = new Map(rows.map((item) => [String(item.item_id), item])), byCode = new Map();
       for (const r of rows) { const c = String(r.code || r.sku || '').trim().toLowerCase(); if (c && !byCode.has(c)) byCode.set(c, r); }
-      let written = 0, unknown = 0, bad = 0;
+      let written = 0, unknown = 0, count = 0;
       const edits = [];
       for (const it of req.body.items) {
         const row = (it.item_id && byId.get(String(it.item_id))) || (it.code && byCode.get(String(it.code).trim().toLowerCase())) || null;
         if (!row) { unknown++; continue; }
         const rec = availability.stamp({ qty: it.qty, source: it.source || 'erp', as_of: it.as_of, location: it.location });
-        if (!rec) { bad++; continue; }
+        if (!rec) { count++; continue; }
         edits.push({ item_id: row.item_id, merge: { avail: rec } });
         written++;
       }
       /* ⭐ ONE statement for the feed (was one per item), through the one product writer */
       await catwrite.patchItems(db, entity_id, edits);
-      return { written, unknown, bad };
+      return { written, unknown, bad: count };
     });
     res.json(Object.assign({ message: 'Availability updated' }, out));
   } catch (e) { fail(res, e, 'Availability bulk update failed'); }
@@ -1394,10 +1394,10 @@ const objStore = require('../lib/storage-object');
 const MEDIA_MAX = 8 * 1024 * 1024;
 /** A video is a LINK, not bytes: YouTube or Vimeo, parsed to {provider, vid} so the page can embed it. */
 function videoLink(url) {
-  const u = String(url || '').trim();
-  let m = u.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{6,})/);
+  const text = String(url || '').trim();
+  let m = text.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([A-Za-z0-9_-]{6,})/);
   if (m) return { provider: 'youtube', vid: m[1], embed: 'https://www.youtube-nocookie.com/embed/' + m[1] };
-  m = u.match(/vimeo\.com\/(?:video\/)?(\d{5,})/);
+  m = text.match(/vimeo\.com\/(?:video\/)?(\d{5,})/);
   if (m) return { provider: 'vimeo', vid: m[1], embed: 'https://player.vimeo.com/video/' + m[1] };
   return null;
 }
@@ -1656,11 +1656,11 @@ router.get('/lists', auth, async (req, res) => {
       currency,
       /* ⚠️ THE ROWS THEMSELVES TRAVEL, not just a count — the lab is a spreadsheet the shopkeeper reads and
          ticks, so it needs every row's name, unit, price, category and local names to render at all. */
-      lists: Object.keys(BP.BLUEPRINTS).map((k) => {
-        const bp = BP.blueprint(k);
+      lists: Object.keys(BP.BLUEPRINTS).map((item) => {
+        const bp = BP.blueprint(item);
         return {
           key: bp.key, label: bp.label, outcome: bp.outcome, pin: BP.pin(bp),
-          categories: bp.categories, units: bp.units, languages: BP.languagesOf(k),
+          categories: bp.categories, units: bp.units, languages: BP.languagesOf(item),
           count: bp.starter.length,
           rows: bp.starter.map((x) => ({
             name: x.name, unit: x.unit || bp.defaultUnit, price: x.price,
@@ -1735,8 +1735,8 @@ router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], vali
     if (Array.isArray(b.names) && b.names.length) {
       const want = new Set(b.names.map((x) => (typeof x === 'string' ? x : (x && x.name) + '\u0001' + (x && x.unit))
         .toString().trim().toLowerCase()));
-      items = items.filter((it) => want.has(it.name.trim().toLowerCase())
-        || want.has((it.name + '\u0001' + it.unit).trim().toLowerCase()));
+      items = items.filter((item) => want.has(item.name.trim().toLowerCase())
+        || want.has((item.name + '\u0001' + item.unit).trim().toLowerCase()));
     }
 
     /**
@@ -1759,10 +1759,10 @@ router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], vali
         priceBy.set(String(x.name).trim().toLowerCase() + '\u0001' + String(x.unit).trim().toLowerCase(), n);
       }
       if (priceBy.size) {
-        items = items.map((it) => {
-          const k = it.name.trim().toLowerCase() + '\u0001' + String(it.unit).trim().toLowerCase();
+        items = items.map((item) => {
+          const k = item.name.trim().toLowerCase() + '\u0001' + String(item.unit).trim().toLowerCase();
           const over = priceBy.get(k);
-          return over === undefined ? it : Object.assign({}, it, { price: over });
+          return over === undefined ? item : Object.assign({}, item, { price: over });
         });
       }
     }
@@ -1787,7 +1787,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [ body('list').isString() ], vali
     try {
       const stamped = itemstatus.stamp({ status: wantStatus },
         { id: (req.identity && req.identity.identity_id) || null });
-      items = items.map((it) => Object.assign({}, it, stamped));
+      items = items.map((item) => Object.assign({}, item, stamped));
     } catch (e) {
       return res.status(400).json({ error: 'status', message: String(e && e.message) });
     }
