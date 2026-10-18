@@ -9,7 +9,7 @@ async function api(method, path, { token, body } = {}) {
   const res = await fetch(BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
   let json = null; try { json = await res.json(); } catch (_) {} return { status: res.status, json };
 }
-async function entLogin(name) { const r = await api('POST', '/api/entities/register', { body: { email: name } }); const o = r.json && r.json.dev_otp; if (!o) return {}; const v = await api('POST', '/api/entities/verify', { body: { email: r.json.email, otp: o } }); return { token: v.json && v.json.token }; }
+async function entLogin(name) { const reply = await api('POST', '/api/entities/register', { body: { email: name } }); const o = reply.json && reply.json.dev_otp; if (!o) return {}; const v = await api('POST', '/api/entities/verify', { body: { email: reply.json.email, otp: o } }); return { token: v.json && v.json.token }; }
 const has = (o, id) => JSON.stringify(o || '').includes(id);
 
 (async () => {
@@ -33,8 +33,8 @@ const has = (o, id) => JSON.stringify(o || '').includes(id);
 
   // ===== 1 · Actors SHARE the entity's inbox (not actor-private) =====
   console.log('\n1 · Actors share the entity mailbox');
-  const snd = await api('POST', '/api/chits/send', { token: B.token, body: { recipients: [{ entity_id: ALPHA_ID, role: 'to' }], purpose: 'general', manual_subject: 'ACTORTEST ' + ts, business_json: {} } });
-  const chit_id = snd.json && (snd.json.chit_id || (snd.json.chit && snd.json.chit.chit_id));
+  const reply = await api('POST', '/api/chits/send', { token: B.token, body: { recipients: [{ entity_id: ALPHA_ID, role: 'to' }], purpose: 'general', manual_subject: 'ACTORTEST ' + ts, business_json: {} } });
+  const chit_id = reply.json && (reply.json.chit_id || (reply.json.chit && reply.json.chit.chit_id));
   check('Beta sent a chit to Alpha', !!chit_id, chit_id);
   if (chit_id) {
     const anaIn = await api('GET', '/api/chits/inbox', { token: ana.token });
@@ -90,6 +90,6 @@ const has = (o, id) => JSON.stringify(o || '').includes(id);
 
 function done() {
   console.log('\n== RESULT ==  PASS ' + PASS + '  ·  FAIL ' + FAIL);
-  if (ISSUES.length) { console.log('\n-- ISSUES / REVIEW --'); ISSUES.forEach((i, n) => console.log((n + 1) + '. ' + i)); }
+  if (ISSUES.length) { console.log('\n-- ISSUES / REVIEW --'); ISSUES.forEach((item, index) => console.log((index + 1) + '. ' + item)); }
   process.exit(0);
 }
