@@ -3,15 +3,15 @@
 const BASE='https://chitbridge-api-production.up.railway.app', BETA_ID='75c378a6-ad7f-4b58-87d2-e1509cbb0482';
 let PASS=0,FAIL=0;
 function check(n,ok,d){if(ok){PASS++;console.log('  ✓ '+n+(d?'  '+d:''));}else{FAIL++;console.log('  ✗ '+n+(d?'  — '+d:''));}}
-async function api(m,p,{token,body}={}){const h={'Content-Type':'application/json'};if(token)h.Authorization='Bearer '+token;const r=await fetch(BASE+p,{method:m,headers:h,body:body?JSON.stringify(body):undefined});let j=null;try{j=await r.json();}catch(_){}return{status:r.status,json:j};}
-async function login(n){const r=await api('POST','/api/entities/register',{body:{email:n}});const o=r.json&&r.json.dev_otp;const v=await api('POST','/api/entities/verify',{body:{email:r.json.email,otp:o}});return v.json.token;}
+async function api(m,p,{token,body}={}){const h={'Content-Type':'application/json'};if(token)h.Authorization='Bearer '+token;const reply=await fetch(BASE+p,{method:m,headers:h,body:body?JSON.stringify(body):undefined});let j=null;try{j=await reply.json();}catch(_){}return{status:reply.status,json:j};}
+async function login(n){const reply=await api('POST','/api/entities/register',{body:{email:n}});const o=reply.json&&reply.json.dev_otp;const v=await api('POST','/api/entities/verify',{body:{email:reply.json.email,otp:o}});return v.json.token;}
 function statusOf(inboxJson,chit){const rows=(inboxJson&&(inboxJson.chits||inboxJson.rows))||[];const r=rows.find(x=>x.chit_id===chit);return r&&r.current_status;}
 (async()=>{
   console.log('== CANCEL-AS-REQUEST ==\n');
   const A=await login('Alpha Timbers'), B=await login('Beta Traders');
   const ts=Date.now().toString().slice(-5);
-  const snd=await api('POST','/api/chits/send',{token:A,body:{recipients:[{entity_id:BETA_ID,role:'to'}],purpose:'general',manual_subject:'CANCELREQ '+ts,business_json:{}}});
-  const chit=snd.json.chit_id||(snd.json.chit&&snd.json.chit.chit_id);
+  const reply=await api('POST','/api/chits/send',{token:A,body:{recipients:[{entity_id:BETA_ID,role:'to'}],purpose:'general',manual_subject:'CANCELREQ '+ts,business_json:{}}});
+  const chit=reply.json.chit_id||(reply.json.chit&&reply.json.chit.chit_id);
   check('Alpha sent a chit to Beta',!!chit,chit);
   if(!chit)return done();
   // Beta accepts → Beta's status = accepted
