@@ -29,19 +29,19 @@ const BP = require('../lib/catalogue-blueprint');
 const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 
 const LABEL = { veg: 'Vegetables & fruit', fish: 'Fish & seafood', chicken: 'Chicken', meat: 'Meat', egg: 'Eggs', hotel: 'Hotel' };
-const STORES = Object.keys(BP.BLUEPRINTS).map((k) => ({
+const STORES = Object.keys(BP.BLUEPRINTS).map((item) => ({
   /* ⚠️ 'cbrefhotel' is refused: cb + exactly 8 characters is reserved as bridge-id shaped (lib/handle.js
      LOOKS_LIKE_BRIDGE). Athi chose 'cbrefhotels' (2026-09-27). The other five are other lengths, so they pass. */
-  key: k, user_id: k === 'hotel' ? 'cbrefhotels' : 'cbref' + k, email: 'ref-' + k + '@chitbridge.com',
-  display_name: 'Reference · ' + (LABEL[k] || BP.blueprint(k).label),
+  key: item, user_id: item === 'hotel' ? 'cbrefhotels' : 'cbref' + item, email: 'ref-' + item + '@chitbridge.com',
+  display_name: 'Reference · ' + (LABEL[item] || BP.blueprint(item).label),
 }));
 
 async function call(method, path, body, token) {
   const h = { 'Content-Type': 'application/json' };
   if (token) h.Authorization = 'Bearer ' + token;
-  const r = await fetch(API + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
-  let j = null; try { j = await r.json(); } catch (_) {}
-  return { status: r.status, j };
+  const reply = await fetch(API + path, { method, headers: h, body: body ? JSON.stringify(body) : undefined });
+  let j = null; try { j = await reply.json(); } catch (_) {}
+  return { status: reply.status, j };
 }
 
 async function register() {
@@ -79,10 +79,10 @@ async function load() {
     const have = await itemsOf(id);
     if (have.length) { console.log('  · ' + s.user_id + '  already holds ' + have.length + ' products — left alone'); continue; }
     const rows = BP.storeRows(s.key);
-    const ids = await cats.ensureCategories(id, rows.map((r) => r.categoryName), { withEntity: db().withEntity, by: null });
-    const items = rows.map((r) => {
-      const out = Object.assign({}, r);
-      const cid = r.categoryName ? ids.get(r.categoryName) : null;
+    const ids = await cats.ensureCategories(id, rows.map((item) => item.categoryName), { withEntity: db().withEntity, by: null });
+    const items = rows.map((item) => {
+      const out = Object.assign({}, item);
+      const cid = item.categoryName ? ids.get(item.categoryName) : null;
       delete out.categoryName;
       if (cid) out.categories = [cid];
       return out;

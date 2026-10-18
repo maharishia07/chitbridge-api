@@ -380,7 +380,7 @@
   "scripts/prove-whatsapp-live.js": {"score":14,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":2,"noHeader":1},
   "scripts/prove-wholesaler-e2e.js": {"score":41,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":36,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-wholesaler.js": {"score":14,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "scripts/reference-stores.cjs": {"score":27,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":4,"emptyCatch":1,"noHeader":1},
+  "scripts/reference-stores.cjs": {"score":23,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":4,"emptyCatch":1,"noHeader":1},
   "scripts/regional-scatter.js": {"score":22,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/register-mint.js": {"score":14,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":12,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/regression.js": {"score":21,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":3,"noHeader":1},
