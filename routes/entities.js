@@ -107,7 +107,7 @@ async function registerNew(req, res) {
       `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind, country`
       + more.map(([c]) => ', ' + c).join('')
       + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7`
-      + more.map((_, i) => ', $' + (i + 8)).join('') + ')',
+      + more.map((_, index) => ', $' + (index + 8)).join('') + ')',
       [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, (guess && guess.country) || null].concat(more.map(([, v]) => v))
     );
     /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
@@ -576,10 +576,10 @@ router.get('/me', auth, async (req, res) => {
          each ~20 DB round trips across a continent (channels alone opens nine transactions). Three in parallel is three
          connections of a pool of ten — the note above priced that risk when a trip cost 5 ms; at 300 ms the sequential
          wait is the worse failure, and every app open pays it. The real fix is readBatch inside each lib. */
-      const keys = want.filter((k) => Object.prototype.hasOwnProperty.call(LOAD, k));
-      want.filter((k) => keys.indexOf(k) < 0).forEach((k) => { included[k] = { error: 'unknown include' }; });
-      const got = await Promise.all(keys.map((k) => LOAD[k]().then((v) => [k, v], (e) => [k, { error: safeErr(e) }])));
-      got.forEach(([k, v]) => { included[k] = v; });
+      const keys = want.filter((item) => Object.prototype.hasOwnProperty.call(LOAD, item));
+      want.filter((item) => keys.indexOf(item) < 0).forEach((item) => { included[item] = { error: 'unknown include' }; });
+      const list = await Promise.all(keys.map((item) => LOAD[item]().then((reply) => [item, reply], (e) => [item, { error: safeErr(e) }])));
+      list.forEach(([k, v]) => { included[k] = v; });
     }
 
     res.json({ entity: entityOut, capabilities, capabilities_debug, governance,
@@ -655,8 +655,8 @@ const PREF_SETS = {
      */
     check(prefs) {
       try {
-        const u = ['nu', 'hc', 'ca', 'fw'].filter((k) => prefs[k]).map((k) => `${k}-${prefs[k]}`);
-        const tag = (prefs.locale || prefs.lang || 'en') + (u.length ? '-u-' + u.join('-') : '');
+        const list = ['nu', 'hc', 'ca', 'fw'].filter((item) => prefs[item]).map((item) => `${item}-${prefs[item]}`);
+        const tag = (prefs.locale || prefs.lang || 'en') + (list.length ? '-u-' + list.join('-') : '');
         new Intl.NumberFormat(tag);
         new Intl.DateTimeFormat(tag);
       } catch (_) {
@@ -1209,12 +1209,12 @@ router.get('/usage', auth, async (req, res) => {
       return { daily: daily.rows, by_meter: byMeter.rows, recent: recent.rows };
     });
 
-    const total = out.by_meter.reduce((a, r) => a + Number(r.cost || 0), 0);
+    const total = out.by_meter.reduce((total, item) => total + Number(item.cost || 0), 0);
     res.json({
       ok: true,
       window_days: days,
       /* Named for what it is. See the note above: this is the BILLED count. */
-      counts: { billed: out.by_meter.reduce((a, r) => a + Number(r.events || 0), 0) },
+      counts: { billed: out.by_meter.reduce((total, item) => total + Number(item.events || 0), 0) },
       total_cost_usd: Math.round(total * 10000) / 10000,
       rate_card: require('../lib/rates').CARD.id,
       daily: out.daily,
@@ -1400,10 +1400,10 @@ router.get('/routing', auth, async (req, res) => {
     const by = {};
     for (const r of out.rows) by[r.kind] = r;
     res.json({
-      kinds: ROUTABLE.map((k) => Object.assign({}, k, {
-        folder_id: (by[k.kind] || {}).folder_id || null,
-        assignee_actor_id: (by[k.kind] || {}).assignee_actor_id || null,
-        route_to_entity_id: out.teamsBy[k.kind] || null,
+      kinds: ROUTABLE.map((item) => Object.assign({}, item, {
+        folder_id: (by[item.kind] || {}).folder_id || null,
+        assignee_actor_id: (by[item.kind] || {}).assignee_actor_id || null,
+        route_to_entity_id: out.teamsBy[item.kind] || null,
       })),
       folders: out.folders, people: out.people, teams,
     });
@@ -1417,7 +1417,7 @@ router.put('/routing', auth, async (req, res) => {
   const me = auth.entityOf(req);
   const b = req.body || {};
   const kind = String(b.kind || '').trim();
-  if (!ROUTABLE.some((k) => k.kind === kind)) {
+  if (!ROUTABLE.some((item) => item.kind === kind)) {
     return res.status(400).json({ error: 'Not a routable kind',
       message: 'Routing is set per kind of work, and that is not one of them.' });
   }
@@ -1586,10 +1586,10 @@ router.get('/mis', auth, async (req, res) => {
      */
     const popRows = (await query('SELECT code, is_live FROM ops.population')
       .catch(log.orElse('entities GET /mis: the read failed — answered with none', ({ rows: [] })))).rows;
-    const liveCode = (popRows.find((p) => p.is_live) || {}).code || 'live';
+    const liveCode = (popRows.find((item) => item.is_live) || {}).code || 'live';
     const asked = String(req.query.population || '').trim().toLowerCase();
     const pop = (asked === '' || asked === 'real') ? liveCode
-      : (popRows.some((p) => p.code === asked) ? asked : liveCode);
+      : (popRows.some((item) => item.code === asked) ? asked : liveCode);
 
     /**
      * ⚠️⚠️ INTERPOLATED, NOT BOUND — and that needs saying out loud. `LIVE` is a SQL FRAGMENT spliced into a
@@ -1958,7 +1958,7 @@ router.get('/mis', auth, async (req, res) => {
          than a list of every kind, so a kind invented tomorrow is included without touching this. */
       [(String(req.query.kind || '*').trim() === '*')
         ? null
-        : String(req.query.kind).split(',').map((s) => s.trim()).filter(Boolean),
+        : String(req.query.kind).split(',').map((item) => item.trim()).filter(Boolean),
        Math.min(Number(req.query.limit) || 100, 500),
        q,
        String(req.query.vertical || '').trim(),
@@ -1998,7 +1998,7 @@ router.get('/mis', auth, async (req, res) => {
       try {
         const cr = await query(
           'SELECT entity_id, metric, n::int AS n FROM ops.f_entity_counts() WHERE entity_id = ANY($1::uuid[])',
-          [rows.map((r) => r.identity_id)]);
+          [rows.map((item) => item.identity_id)]);
         counts = new Map();
         for (const x of cr.rows) {
           if (!counts.has(x.entity_id)) counts.set(x.entity_id, {});
@@ -2072,7 +2072,7 @@ router.get('/mis', auth, async (req, res) => {
        String(req.query.supplies || '').trim(),
        String(req.query.standing || '').trim()])).rows[0].n);
 
-    const asObj = (r, k, v) => r.rows.reduce((a, x) => (a[x[k]] = x[v], a), {});
+    const asObj = (r, k, v) => r.rows.reduce((total, x) => (total[x[k]] = x[v], total), {});
 
     res.json({
       at: new Date().toISOString(),
@@ -2080,11 +2080,11 @@ router.get('/mis', auth, async (req, res) => {
          a tile that silently went to zero rather than to a different number. */
       other_population: otherPop,
       /* ⭐ the screen draws one button per row. Adding a population must not need a front-end release. */
-      populations: popRows.length ? popRows.map((p) => p.code) : ['real', 'test'],
+      populations: popRows.length ? popRows.map((item) => item.code) : ['real', 'test'],
       headline: {
-        identities: kinds.rows.reduce((a, x) => a + x.n, 0),
+        identities: kinds.rows.reduce((total, x) => total + x.n, 0),
         customers:  (kinds.rows.find((x) => x.k === 'customer') || {}).n || 0,
-        active_30d: kinds.rows.reduce((a, x) => a + (x.k === 'customer' ? x.active_30d : 0), 0),
+        active_30d: kinds.rows.reduce((total, x) => total + (x.k === 'customer' ? x.active_30d : 0), 0),
       },
       by_kind:     kinds.rows,
       by_vertical: asObj(verticals, 'v', 'n'),
