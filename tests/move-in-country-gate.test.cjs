@@ -251,6 +251,20 @@ t('⭐ the proof holds the stated country, the company id, each held item with c
     assert.strictEqual(r.status, 422); assert.strictEqual(r.body.code, 'MOVE_IN_COUNTRY');
     assert.strictEqual(JSON.stringify(X.T.entries || []).length, before);
   });
+  await ta('⭐ W1.11 the door, shop set to IN: an items preview lands the clean row and HOLDS the HSN one; open bills answer 422 MOVE_IN_COUNTRY', async () => {
+    await X.store.saveSetting(X.db, SHOP, { enabled: true, country: 'IN' });
+    try {
+      const inCsv = 'Product/Service,SKU,Sales price,HSN/SAC\nRice 5kg,R5,320.00,\nCoffee,CF,250.00,0901\n';
+      const inDec = [{ incoming: 'Product/Service', field: 'name' }, { incoming: 'SKU', field: 'code' }, { incoming: 'Sales price', field: 'sales_price' }, { incoming: 'HSN/SAC', field: 'hsn' }];
+      const r = await call('POST', '/move-in/preview', { kind: 'items', source: 'qbo', csv: inCsv, decisions: inDec, source_country: 'IN' });
+      assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.deepStrictEqual(r.body.counts, { add: 1, merge: 0, skip: 0, hold: 1 });
+      assert.strictEqual(r.body.rows[1].code, 'tax_code'); assert.ok(/not ready for India/.test(r.body.rows[1].why), r.body.rows[1].why);
+      const billCsv = 'Contact,Invoice number,Amount due\nAcme,B1,10.00\n';
+      const billDec = [{ incoming: 'Contact', field: 'contact' }, { incoming: 'Invoice number', field: 'invoice_no' }, { incoming: 'Amount due', field: 'amount_due' }];
+      const b = await call('POST', '/move-in/preview', { kind: 'open_bills', source: 'qbo', side: 'payable', csv: billCsv, decisions: billDec, source_country: 'IN' });
+      assert.strictEqual(b.status, 422, JSON.stringify(b.body)); assert.strictEqual(b.body.code, 'MOVE_IN_COUNTRY'); assert.ok(/not ready for India/.test(b.body.message), b.body.message);
+    } finally { await X.store.saveSetting(X.db, SHOP, { enabled: true, country: 'AU' }); }
+  });
   await ta('GET /move-in/imports before b765: ready false, with the sentence (never a 500)', async () => {
     const r = await call('GET', '/move-in/imports');
     assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.strictEqual(r.body.ready, false); assert.ok(/b765/.test(r.body.why), r.body.why);
