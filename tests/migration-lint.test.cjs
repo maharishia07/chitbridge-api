@@ -103,6 +103,45 @@ const stale = ACCEPTED.filter((x) => found.indexOf(x) < 0);
 t('  ...and the baseline names nothing that has since gone', stale.length === 0, stale.join(' | '));
 t('  ...covering every occurrence on disk', found.length === ACCEPTED.length, found.length + ' occurrences');
 
+console.log('\n-- ⚠️ an insert-only GRANT must REVOKE the rest beside it --');
+/* ⭐ b765 (18 Oct): `GRANT SELECT, INSERT ON move_in_import TO cb_app` read as insert-only, but the DEFAULT PRIVILEGES had already handed
+   cb_app UPDATE and DELETE — a GRANT only adds. Live needed an extra REVOKE. So a GRANT to cb_app that names INSERT and not UPDATE/DELETE
+   (an append-only table) must carry `REVOKE … UPDATE, DELETE … ON <table> FROM cb_app` in the same file.
+   ⚠️ BASELINE, like the one above: the files below were written before the rule. Whether live holds UPDATE/DELETE on them is a database
+   fact this file cannot see — listed, never assumed fixed. A NEW one fails. */
+const ACCEPTED_GRANTS = [
+  'b79_source_penetration.sql -> source_penetration', 'b80_container_model.sql -> product_version', 'b81_regional_scatter.sql -> resolved_blueprint',
+  'b82_erp_handoff.sql -> erp_handoff', 'b99_ai_usage.sql -> usage_ledger', 'b107_kyb_field_cache.sql -> kyb_field_cache',
+  'b160_definitions.sql -> definition_version', 'b249_population_as_a_value.sql -> ops.population', 'b265_signup_context_rls.sql -> signup_context',
+  'b268_definition_status_log.sql -> definition_status_log', 'b269_ai_usage_force_rls.sql -> ai_usage', 'b309_books_compare.sql -> books_compare_part',
+  'b391_fx_rates.sql -> fx_rate',
+];
+/** every GRANT to cb_app that adds INSERT without UPDATE/DELETE, and those of them with no REVOKE of UPDATE + DELETE on the same table */
+function insertOnlyGrants() {
+  const all = [], unrevoked = [];
+  for (const f of files) {
+    const code = fs.readFileSync(path.join(DIR, f), 'utf8').replace(/\r\n/g, '\n').split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
+    const re = /GRANT\s+([A-Z ,]+?)\s+ON\s+(?:TABLE\s+)?([A-Za-z_][A-Za-z0-9_.]*)\s+TO\s+cb_app\b/gi;
+    let m;
+    while ((m = re.exec(code))) {
+      const privs = m[1].toUpperCase().split(/\s*,\s*/).map((x) => x.trim());
+      if (!privs.includes('INSERT') || privs.some((x) => x === 'ALL' || x === 'UPDATE' || x === 'DELETE')) continue;
+      const table = m[2], key = f + ' -> ' + table;
+      all.push(key);
+      const revoke = new RegExp('REVOKE\\s+[A-Z ,]*\\bUPDATE\\b[A-Z ,]*\\bDELETE\\b[A-Z ,]*\\s+ON\\s+(?:TABLE\\s+)?' + table.replace('.', '\\.') + '\\s+FROM\\s+cb_app\\b', 'i');
+      if (!revoke.test(code)) unrevoked.push(key);
+    }
+  }
+  return { all, unrevoked };
+}
+const grants = insertOnlyGrants();
+const B765 = 'b765_move_in_import.sql -> move_in_import';
+const newUnrevoked = grants.unrevoked.filter((x) => ACCEPTED_GRANTS.indexOf(x) < 0);
+t('no NEW insert-only GRANT to cb_app without its REVOKE', newUnrevoked.length === 0, newUnrevoked.join(' | '));
+t('  ...and b765 carries its REVOKE', grants.all.indexOf(B765) >= 0 && grants.unrevoked.indexOf(B765) < 0);
+t('  ...and the baseline names nothing since fixed or gone', ACCEPTED_GRANTS.every((x) => grants.unrevoked.indexOf(x) >= 0),
+  ACCEPTED_GRANTS.filter((x) => grants.unrevoked.indexOf(x) < 0).join(' | '));
+
 console.log('\n-- b189 repairs the silent-empty-table class --');
 const rd = (f) => fs.existsSync(path.join(DIR, f)) ? fs.readFileSync(path.join(DIR, f), 'utf8').replace(/\r\n/g, '\n') : '';
 const b189dry = rd('b189_rls_without_policy_dryrun.sql');

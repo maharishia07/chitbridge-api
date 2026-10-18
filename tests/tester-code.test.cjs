@@ -94,6 +94,19 @@ async function captured(fn) {
     && (await otp.verifyOtp(fakeRun(rowOf()), rowOf({ email: 'qa@test.chitbridge' }), SECRET)).ok === true
     && (await otp.verifyOtp(fakeRun(rowOf()), rowOf(), SECRET, { names: ['someone@else.test'] })).ok === false);
 
+  /* ── 3b · W1 · the Build preview strip (dev_tools on GET /entities/me) — an explicit list only ─────────────────────── */
+  env({ TESTER_CODE: SECRET, TESTER_NAMES: '*@test.chitbridge, anil-tester' }); ({ dev } = load());
+  t('dev tools: a name on an explicit TESTER_NAMES list sees them', dev.mayShowDevTools(['ravi@test.chitbridge']) === true);
+  t('dev tools: a shop not on the list does not', dev.mayShowDevTools(['owner@shop.test', 'mayuri123', 'B-1']) === false);
+  env({ TESTER_CODE: SECRET }); ({ dev } = load());
+  t('dev tools: an EMPTY TESTER_NAMES (code open to all) shows them to nobody', dev.mayShowDevTools(['ravi@test.chitbridge']) === false);
+  env({ TESTER_CODE: SECRET, TESTER_NAMES: '*' }); ({ dev } = load());
+  t('dev tools: TESTER_NAMES * shows them to nobody', dev.mayShowDevTools(['ravi@test.chitbridge']) === false);
+  env({ NODE_ENV: 'development', DATABASE_URL: LOCAL }); ({ dev } = load());
+  t('dev tools: the local stack always shows them', dev.mayShowDevTools([]) === true);
+  const meRoute = fs.readFileSync(require('path').join(__dirname, '..', 'routes', 'entities.js'), 'utf8');
+  t('GET /entities/me carries dev_tools from mayShowDevTools', meRoute.includes('dev_tools = devOtp.mayShowDevTools('));
+
   /* ── 4 · never logged, never answered, never revealed ─────────────────────────────────────────────────────────────── */
   env({ NODE_ENV: ' development', DATABASE_URL: REMOTE, TESTER_CODE: SECRET, TESTER_NAMES: 'only-me', LOG_LEVEL: 'debug' }); ({ dev, otp } = load());
   const cap = await captured(async () => {
