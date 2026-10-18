@@ -121,7 +121,7 @@
   "lib/network-build-run.js": {"score":30,"long40":4,"long80":0,"complex10":3,"complex15":2,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/network-build.js": {"score":45,"long40":2,"long80":2,"complex10":2,"complex15":1,"deep3":1,"deep4":0,"cryptic":35,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/network-catalogue.js": {"score":69,"long40":3,"long80":0,"complex10":6,"complex15":6,"deep3":3,"deep4":1,"cryptic":50,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "lib/network-membership.js": {"score":22,"long40":0,"long80":0,"complex10":2,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":2,"emptyCatch":0,"noHeader":1},
+  "lib/network-membership.js": {"score":19,"long40":0,"long80":0,"complex10":2,"complex15":0,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":2,"emptyCatch":0,"noHeader":1},
   "lib/network-offers.js": {"score":39,"long40":2,"long80":2,"complex10":4,"complex15":1,"deep3":0,"deep4":0,"cryptic":30,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/network-view.js": {"score":14,"long40":1,"long80":0,"complex10":2,"complex15":1,"deep3":1,"deep4":0,"cryptic":8,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/notify.js": {"score":7,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":4,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
