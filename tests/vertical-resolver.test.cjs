@@ -85,10 +85,10 @@ const shop = (rows) => { ROWS = Object.assign({ identity: null, sectors: [], con
   await okA('adopt.verticalOf(sectors) answers through the resolver: the same pack key as before (kirana → food, none → null)', () => {
     assert.deepStrictEqual([A.verticalOf(['Kirana']), A.verticalOf([]), A.verticalOf(['Pharmaceuticals'])], ['food', null, 'pharma']);
   });
-  await okA('lotfields.tracksBatch takes the resolved pack (pack wins over sectors; pack null tracks nothing)', () => {
-    const pharma = G.verticalFrom({ constitution: 'pharma' }).pack;
-    assert.strictEqual(L.tracksBatch({ pack: pharma, sectors: [] }).tracked, true);
-    assert.strictEqual(L.tracksBatch({ pack: null, sectors: ['pharma'] }).tracked, false);
+  await okA('the resolved trade reaches lotfields.tracksBatch through its sectors door (the engine is not edited): constitution pharma tracks batches, none tracks nothing', () => {
+    const wordsOf = (t) => [t.key].concat(t.sectors).filter(Boolean);
+    assert.strictEqual(L.tracksBatch({ sectors: wordsOf(G.verticalFrom({ constitution: 'pharma' })) }).tracked, true);
+    assert.strictEqual(L.tracksBatch({ sectors: wordsOf(G.verticalFrom({})) }).tracked, false);
     assert.strictEqual(L.tracksBatch({ sectors: ['pharma'] }).tracked, true);   /* the old door is unchanged */
   });
   await okA('entity-header: an Indian pharmacy stamped by its CONSTITUTION gets the drug licence as a core scheme', () => {

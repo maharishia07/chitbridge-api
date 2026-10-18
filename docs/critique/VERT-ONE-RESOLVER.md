@@ -14,7 +14,7 @@ VERTICAL-BOX-AUDIT-2026-10-18.md, NAMING-AND-MEANING.md decision 1, DISCIPLINES.
 - VERT-8 TRUE: product-lab.html picks DATA.lists[0] (veg) for every shop; /api/products/lists names no pick.
 
 (b) Conflicts: govresolve is the one reader of the governance tables (govresolve-ctp test) — the constitution-vertical statement lives there.
-No setting key added. Box logic unchanged: lotfields.tracksBatch only learns to take the resolved pack; readiness/adopt/header read the trade from one place.
+No setting key added. Box logic unchanged: lotfields (an adopted engine file) is NOT edited — stock-from-chit hands the resolved trade words to its sectors door; readiness/adopt/header read the trade from one place.
 
 (c) Simpler: no new module — widen lib/govresolve.js with verticalFrom (pure) + verticalOf (one readBatch, 3 statements). Blueprints get a
 `trades` word list (starter data, owned by the vertical) and forVertical(); the lists route returns `pick`.
