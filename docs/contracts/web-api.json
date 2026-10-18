@@ -3995,7 +3995,8 @@
      {
       "line": 5,
       "what": "Other Revenue",
-      "why": "Your chart has no group \"sales\" for Xero type REVENUE — add it under Shop ledgers."
+      "why": "Your chart has no group \"sales\" for Xero type REVENUE — add it under Shop ledgers.",
+      "code": "tax_code"
      }
     ],
     "notes": [
@@ -4008,12 +4009,29 @@
      "posting_date": "2027-04-01",
      "suspense_minor": 400000,
      "duplicate": false
-    }
+    },
+    "held": 1,
+    "proof": {
+     "source": "xero",
+     "differences": 0
+    },
+    "proof_stored": false,
+    "import_id": null,
+    "item_ids": [
+     "00000000-0000-4000-8000-000000000201"
+    ]
    },
    "optional": [
     "entry",
+    "import_id",
+    "item_ids",
+    "rows[].code",
     "source_code_written"
-   ]
+   ],
+   "free": [
+    "proof"
+   ],
+   "note": "W1 (2026-10-18): held rows are listed with their code; proof = the match proof (lib/move-in-proof build, free); proof_stored false before b765; item_ids for items"
   },
   "POST /api/books/move-in/import #422": {
    "status": 422,
@@ -4095,7 +4113,7 @@
   },
   "POST /api/books/move-in/preview": {
    "status": 200,
-   "note": "IM1: rows[].data is the planned write and its keys depend on the kind (free); refusal is the sentence or null",
+   "note": "IM1: rows[].data is the planned write and its keys depend on the kind (free); refusal is the sentence or null. W1 (2026-10-18): counts.hold; a held row carries code (tax_code · unit · bill_key); country = the shop's, the source's and how it was given; company_id = their company id or null",
    "example": {
     "kind": "accounts",
     "source": "xero",
@@ -4104,7 +4122,8 @@
     "counts": {
      "add": 3,
      "merge": 5,
-     "skip": 7
+     "skip": 7,
+     "hold": 1
     },
     "refusal": null,
     "notes": [
@@ -4127,7 +4146,8 @@
        "code": "4000",
        "dr_minor": 1523050,
        "cr_minor": 0
-      }
+      },
+      "code": "tax_code"
      }
     ],
     "totals": {
@@ -4137,10 +4157,26 @@
     "control": {
      "debtors_minor": 440000,
      "creditors_minor": -220000
-    }
+    },
+    "country": {
+     "shop": "AU",
+     "source": "AU",
+     "how": "stated"
+    },
+    "company_id": "9341455130166501",
+    "tax_codes": [
+     {
+      "code": "GST",
+      "verdict": "maps",
+      "kind": "Taxable supply",
+      "rate": 10
+     }
+    ]
    },
    "optional": [
+    "company_id",
     "control",
+    "rows[].code",
     "rows[].data.account_id",
     "rows[].data.code",
     "rows[].data.cr_minor",
@@ -4151,11 +4187,23 @@
     "rows[].data.name",
     "rows[].data.note",
     "rows[].data.source_code",
+    "side",
+    "tax_codes",
     "totals"
    ],
    "free": [
     "rows[].data"
    ]
+  },
+  "POST /api/books/move-in/preview #422-country": {
+   "status": 422,
+   "note": "W1: the country gate (lib/move-in-gate) refuses the whole file with its code",
+   "example": {
+    "code": "MOVE_IN_COUNTRY",
+    "error": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported.",
+    "message": "These books are from United Kingdom and this shop is in Australia. A country's tax rules must match exactly, so nothing can be moved across. Nothing was imported."
+   },
+   "optional": []
   },
   "POST /api/books/payments": {
    "status": 200,
