@@ -4,13 +4,13 @@
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 function chk(n, ok, d) { if (ok) { P++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { F++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } }
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
 const has = (o, s) => JSON.stringify(o || '').includes(s);
 (async () => {
   console.log('== ASSIMILATE: the seam stamps constitution + capability + pattern + ISO-9000 standard ==\n');
   const ts = Date.now().toString().slice(-6), email = 'asm-' + ts + '@test.com';
-  const reg = await api('POST', '/api/entities/register', { body: { email } });
-  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } });
+  const reply = await api('POST', '/api/entities/register', { body: { email } });
+  const ver = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } });
   const token = ver.j && ver.j.token;
   chk('entity minted + login', !!token);
   const snd = await api('POST', '/api/chits/send', { token, body: { recipients: [{ name: 'self', role: 'to' }], purpose: 'general', manual_subject: 'assimilate ' + ts } });

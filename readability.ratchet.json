@@ -276,7 +276,7 @@
   "scripts/actor-harness.js": {"score":19,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/add-catalogue-synonyms.js": {"score":12,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/akums-demo.js": {"score":21,"long40":1,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":1,"emptyCatch":1,"noHeader":1},
-  "scripts/assimilate-standard.js": {"score":21,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":19,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
+  "scripts/assimilate-standard.js": {"score":19,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/bills-folder-breaks.cjs": {"score":8,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":7,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/bills-private-breaks.cjs": {"score":7,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":6,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/books-breaks.cjs": {"score":8,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":7,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
