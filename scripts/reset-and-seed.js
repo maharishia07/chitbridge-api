@@ -159,7 +159,7 @@ async function signIn(email, display_name) {
     else {
       fs.writeFileSync(file, JSON.stringify(b.rows, null, 2));
       ok(`${b.rows.length} blueprint(s) → ${file}`);
-      b.rows.forEach((s) => console.log('   ' + D('  ' + s.source_key + '  ' + (s.title || ''))));
+      b.rows.forEach((item) => console.log('   ' + D('  ' + item.source_key + '  ' + (item.title || ''))));
     }
     note('catalogue_source has no entity_id, so blueprints survive the wipe anyway — this is belt and braces');
   }
@@ -209,12 +209,12 @@ async function signIn(email, display_name) {
       const ent = await signIn(c.email, c.name);
       let sourceKey = c.adopt && c.adopt.source;
       if (c.publish) {
-        const keys = {}; c.publish.items.forEach((it) => Object.keys(it).forEach((k) => { if (k !== 'name') keys[k] = true; }));
+        const keys = {}; c.publish.items.forEach((item) => Object.keys(item).forEach((k) => { if (k !== 'name') keys[k] = true; }));
         const p = await call('PUT', '/api/assist/catalogue-source', { token: ent.token, body: {
           source_key: c.publish.source_key, version: 'v1', for_vertical: c.publish.for_vertical, title: c.publish.title,
           collection: c.publish.collection,
           schema: { name: c.publish.collection, fields: [{ key: 'name', label: 'Name', type: 'text' }]
-            .concat(Object.keys(keys).map((k) => ({ key: k, label: k.replace(/_/g, ' '), type: 'text' }))) },
+            .concat(Object.keys(keys).map((item) => ({ key: item, label: item.replace(/_/g, ' '), type: 'text' }))) },
           items: c.publish.items, commercials_fields: [{ key: 'price', label: 'Price', type: 'money' }],
           experience: { note: c.publish.title }, formatting: {} } });
         if (p.status >= 400) bad(`  publish failed ${p.status}: ${JSON.stringify(p.json)}`);
@@ -237,7 +237,7 @@ async function signIn(email, display_name) {
     for (const m of made) {
       const r = await call('GET', `/api/catalogue/${encodeURIComponent(m.bridge_id)}`);
       const j = r.json || {};
-      const items = (j.finishes || []).flatMap((f) => f.items || []).length + (j.items || []).length;
+      const items = (j.finishes || []).flatMap((item) => item.items || []).length + (j.items || []).length;
       const oi = (j.shop || {}).order_input || {};
       if (r.status === 200 && items) ok(`${m.name.padEnd(26)} ${items} item(s) · ${oi.preset}/${oi.pipeline}`);
       else bad(`${m.name.padEnd(26)} storefront ${r.status} · ${items} items — check the publish/adopt output above`);
@@ -254,7 +254,7 @@ async function signIn(email, display_name) {
     if (!ADMIN_URL) console.log(Y('  Set ADMIN_DATABASE_URL in .env first, or pass --skip-wipe to seed only.'));
   } else {
     console.log(B('  DONE.') + '  Storefronts (the param is ?bridge= , not ?b=):');
-    made.forEach((m) => console.log('   ' + m.name.padEnd(26) + WEB + '/shop.html?bridge=' + m.bridge_id));
+    made.forEach((item) => console.log('   ' + item.name.padEnd(26) + WEB + '/shop.html?bridge=' + item.bridge_id));
     console.log('\n  ' + Y('Re-register your own login in the app — dev OTP ' + OTP + '.'));
   }
   hr('═');
