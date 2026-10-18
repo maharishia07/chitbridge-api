@@ -5,8 +5,8 @@
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0, F = 0;
 const chk = (n, ok, d) => { ok ? (P++, console.log('  ✓ ' + n + (d ? '  ' + d : ''))) : (F++, console.log('  ✗ ' + n + (d ? '  — ' + d : ''))); };
-async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const r = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await r.json(); } catch (_) {} return { status: r.status, j }; }
-async function login(email) { const reg = await api('POST', '/api/entities/register', { body: { email } }); const v = await api('POST', '/api/entities/verify', { body: { email, otp: reg.j && reg.j.dev_otp } }); return { token: v.j && v.j.token, id: v.j && v.j.entity && v.j.entity.identity_id }; }
+async function api(m, p, o) { o = o || {}; const h = { 'Content-Type': 'application/json' }; if (o.token) h.Authorization = 'Bearer ' + o.token; const reply = await fetch(B + p, { method: m, headers: h, body: o.body ? JSON.stringify(o.body) : undefined }); let j = null; try { j = await reply.json(); } catch (_) {} return { status: reply.status, j }; }
+async function login(email) { const reply = await api('POST', '/api/entities/register', { body: { email } }); const v = await api('POST', '/api/entities/verify', { body: { email, otp: reply.j && reply.j.dev_otp } }); return { token: v.j && v.j.token, id: v.j && v.j.entity && v.j.entity.identity_id }; }
 const rung = (yourself, std) => { const c = ((yourself && yourself.facts && yourself.facts.credentials) || []).find((x) => x.standard === std); return c ? c.rung : '(not-held)'; };
 
 (async () => {
@@ -21,8 +21,8 @@ const rung = (yourself, std) => { const c = ((yourself && yourself.facts && your
   let you = (await api('GET', '/api/kyb/yourself', { token: me.token })).j;
   chk('R2 · unknown user-added credential lands `declared`', rung(you, 'village-noc') === 'declared', 'rung=' + rung(you, 'village-noc'));
   // R2b — the same credential rises to `documented` only with a REAL owned evidence chit.
-  const sc = await api('POST', '/api/chits/send', { token: me.token, body: { recipients: [{ name: 'self', role: 'to' }], subject: 'NOC cert', manual_subject: 'NOC cert', purpose: 'general', line_items: [] } });
-  const chitId = sc.j && (sc.j.chit_id || (sc.j.chit && sc.j.chit.chit_id));
+  const reply = await api('POST', '/api/chits/send', { token: me.token, body: { recipients: [{ name: 'self', role: 'to' }], subject: 'NOC cert', manual_subject: 'NOC cert', purpose: 'general', line_items: [] } });
+  const chitId = reply.j && (reply.j.chit_id || (reply.j.chit && reply.j.chit.chit_id));
   await api('POST', '/api/kyb/credential', { token: me.token, body: { title: 'Village Panchayat NOC', standard_key: 'village-noc', evidence_ref: chitId } });
   you = (await api('GET', '/api/kyb/yourself', { token: me.token })).j;
   chk('R2b · rises to `documented` with a real owned evidence chit', rung(you, 'village-noc') === 'documented', 'rung=' + rung(you, 'village-noc'));
@@ -36,9 +36,9 @@ const rung = (yourself, std) => { const c = ((yourself && yourself.facts && your
   const pos1 = (await api('GET', '/api/kyb/position?vertical=paint&origin=IN', { token: me.token })).j;
   chk('P · position returns directional buckets (reachable/one-step/structural)', pos1 && pos1.facts && pos1.facts.reach && Array.isArray(pos1.facts.reach.one_step),
     'now=' + (pos1.facts.reach.reachable_now || []).length + ' one-step=' + (pos1.facts.reach.one_step || []).length + ' struct=' + (pos1.facts.reach.structural || []).length);
-  const gaps = ((pos1.facts.lanes || []).flatMap((l) => l.gaps || []));
-  const closeable = gaps.find((g) => g.kind === 'closeable');
-  const structural = gaps.find((g) => g.kind === 'structural');
+  const gaps = ((pos1.facts.lanes || []).flatMap((item) => item.gaps || []));
+  const closeable = gaps.find((item) => item.kind === 'closeable');
+  const structural = gaps.find((item) => item.kind === 'structural');
   chk('P2 · a closeable gap carries an unlock count + a path', !!closeable && closeable.unlocks >= 1 && !!closeable.path, closeable ? ('unlocks=' + closeable.unlocks) : 'none');
   chk('P2 · a structural gap is LABELLED and has NO "how to fix" (no path)', !structural || (structural.kind === 'structural' && !structural.path), structural ? 'has path? ' + !!structural.path : '(no structural gap this lane)');
   // P1 — recompute: add a credential that closes a gap → the met/missing should change (proves derived, not hardcoded).
