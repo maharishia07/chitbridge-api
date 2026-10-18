@@ -135,6 +135,8 @@ const dead = sides.build({ rows: { me: [{}], customers: [], suppliers: [], actor
 t('rail unreadable -> trade is one "not yet" row (no 0)', rowOf(dead.use, 'trade', 'trade').s === 'later');
 
 /* ── the route ── */
+/* VERT-1: EH.build above loaded govresolve (the trade resolver) with the REAL db; drop it so the route below binds the stub */
+delete require.cache[require.resolve(path.join(API, 'lib', 'govresolve'))];
 let trips = 0, sent = [];
 const dbPath = require.resolve(path.join(API, 'db'));
 const realDb = require(dbPath);
