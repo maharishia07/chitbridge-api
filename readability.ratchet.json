@@ -63,7 +63,7 @@
   "lib/ctpkeys.js": {"score":4,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "lib/ctpquery.js": {"score":22,"long40":0,"long80":0,"complex10":3,"complex15":3,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/ctptransport.js": {"score":5,"long40":1,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":2,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
-  "lib/customer-groups.js": {"score":18,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":1,"emptyCatch":1,"noHeader":1},
+  "lib/customer-groups.js": {"score":15,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":12,"noWhatLine":1,"emptyCatch":1,"noHeader":1},
   "lib/db-role.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/dbwatch.js": {"score":7,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/defaults.js": {"score":15,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
