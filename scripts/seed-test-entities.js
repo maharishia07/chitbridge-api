@@ -145,11 +145,11 @@ const CAST = [
       let sourceKey = c.adopt && c.adopt.source;
       if (c.publish) {
         const keys = {};
-        c.publish.items.forEach((it) => Object.keys(it).forEach((k) => { if (k !== 'name') keys[k] = true; }));
+        c.publish.items.forEach((item) => Object.keys(item).forEach((k) => { if (k !== 'name') keys[k] = true; }));
         const body = { source_key: c.publish.source_key, version: 'v1', for_vertical: c.publish.for_vertical,
           title: c.publish.title, collection: c.publish.collection,
           schema: { name: c.publish.collection, fields: [{ key: 'name', label: 'Name', type: 'text' }]
-            .concat(Object.keys(keys).map((k) => ({ key: k, label: k.replace(/_/g, ' '), type: 'text' }))) },
+            .concat(Object.keys(keys).map((item) => ({ key: item, label: item.replace(/_/g, ' '), type: 'text' }))) },
           items: c.publish.items, commercials_fields: [{ key: 'price', label: 'Price', type: 'money' }],
           experience: { note: c.publish.title }, formatting: {} };
         const p = await call('PUT', '/api/assist/catalogue-source', { token: ent.token, body });
@@ -186,9 +186,9 @@ const CAST = [
 
   console.log('\n' + '─'.repeat(80));
   console.log(B('  THE CAST'));
-  made.forEach((m) => console.log('   ' + m.bridge_id + '  ' + m.name.padEnd(26) + m.email));
+  made.forEach((item) => console.log('   ' + item.bridge_id + '  ' + item.name.padEnd(26) + item.email));
   console.log('\n  ' + B('Storefronts') + '  (the param is ?bridge= , not ?b=)');
-  made.forEach((m) => console.log('   ' + m.name.padEnd(26) + WEB + '/shop.html?bridge=' + m.bridge_id));
+  made.forEach((item) => console.log('   ' + item.name.padEnd(26) + WEB + '/shop.html?bridge=' + item.bridge_id));
   console.log('\n  ' + Y('Log into any of them with its email + dev OTP ' + OTP + '.'));
   console.log('  ' + Y('All @test-cb.com — cleanup-test-entities.sql sweeps them when you are done.'));
   console.log('═'.repeat(80));
