@@ -343,7 +343,7 @@
   "scripts/prove-forms.js": {"score":25,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":23,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-groupsum.js": {"score":17,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":16,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-idempotency.js": {"score":25,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":23,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
-  "scripts/prove-itemmatch.js": {"score":33,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":31,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
+  "scripts/prove-itemmatch.js": {"score":29,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":27,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-itemversion.js": {"score":9,"long40":1,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":5,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "scripts/prove-kyb.js": {"score":27,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":25,"noWhatLine":0,"emptyCatch":1,"noHeader":1},
   "scripts/prove-lanes.js": {"score":24,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":22,"noWhatLine":0,"emptyCatch":1,"noHeader":1},

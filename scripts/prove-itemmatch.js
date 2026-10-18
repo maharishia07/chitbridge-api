@@ -24,7 +24,7 @@ const item = (name, o = {}) => { const it = Object.assign({ name, variant: '', u
   it.key = im.keyOf(it.name, it.variant); return it; };
 const mkCat = (items) => {
   const variantsOf = {};
-  items.forEach((it) => { (variantsOf[im.norm(it.name)] = variantsOf[im.norm(it.name)] || new Set()).add(it.variant || ''); });
+  items.forEach((item) => { (variantsOf[im.norm(item.name)] = variantsOf[im.norm(item.name)] || new Set()).add(item.variant || ''); });
   return { items, variantsOf };
 };
 const named = (m) => (m && m.item) ? m.item.name : ('unmatched:' + (m && m.reason));
@@ -51,7 +51,7 @@ console.log('\n2 · …but the SAME word matches once the catalogue knows it');
   eq('English, same item', named(im.match('tomato', '', cat)), 'Tomato');
   /* ⚠️ THE POINT OF THE WHOLE LANGUAGE LAYER: three scripts, one item, one total. If these ever disagree the
      forecast fragments and he under-sources. */
-  const all = ['தக்காளி', 'thakkali', 'Tomato', 'TOMATO'].map((p) => named(im.match(p, '', cat)));
+  const all = ['தக்காளி', 'thakkali', 'Tomato', 'TOMATO'].map((item) => named(im.match(item, '', cat)));
   eq('all four spellings collapse to ONE item', [...new Set(all)], ['Tomato']);
 }
 
@@ -67,9 +67,9 @@ console.log('\n3 · Tamil vowel signs survive normalisation');
 console.log('\n4 · nothing survives normalisation → "no item phrase", never a match');
 {
   const cat = mkCat([item('Example product', { price: 100 })]);
-  ['...', '!!!', '   ', '₹₹', '—'].forEach((p) => {
-    const m = im.match(p, '', cat);
-    eq('"' + p + '" → no item phrase', m.reason, 'no item phrase');
+  ['...', '!!!', '   ', '₹₹', '—'].forEach((item) => {
+    const m = im.match(item, '', cat);
+    eq('"' + item + '" → no item phrase', m.reason, 'no item phrase');
   });
   eq('norm() returns EMPTY, not a space — so the guard actually fires', im.norm('...'), '');
 }
@@ -134,7 +134,7 @@ console.log('\n8 · ⭐ A REFUSAL MUST HAND BACK ITS SHORTLIST');
     amb.ambiguous === true && !amb.item, JSON.stringify(amb).slice(0, 160));
   ok('⭐ …and the candidates travel with it', (amb.candidates || []).length === 3, JSON.stringify(amb.candidates));
   ok('every candidate carries a key, a price and a status — enough to decide from',
-    (amb.candidates || []).every((c) => c.key && c.price != null && c.status),
+    (amb.candidates || []).every((item) => item.key && item.price != null && item.status),
     JSON.stringify(amb.candidates));
   eq('the count still reports the NAMES in play, not the rows', amb.matches, 2);
 
