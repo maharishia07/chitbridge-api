@@ -103,15 +103,15 @@ function deltaPage(rows, cap) {
  */
 const SCREEN_SHOP = ['name', 'address', 'phone', 'currency', 'country', 'tax_id_word', 'money_why', 'fy_start_month'];
 const SCREEN_ITEM = ['item_id', 'name', 'code', 'unit', 'price', 'mrp', 'category', 'image', 'screen', 'status'];
-const pickKeys = (o, ks) => { const out = {}; ks.forEach((k) => { if (o && o[k] !== undefined) out[k] = o[k]; }); return out; };
+const pickKeys = (o, list) => { const out = {}; list.forEach((item) => { if (o && o[item] !== undefined) out[item] = o[item]; }); return out; };
 function screenView(body) {
   const all = Array.isArray(body.items) ? body.items : [];
-  const shown = all.filter((i) => i && i.status === 'available');
-  const gone = body.delta ? all.filter((i) => i && i.status !== 'available').map((i) => i.item_id) : [];
+  const shown = all.filter((item) => item && item.status === 'available');
+  const gone = body.delta ? all.filter((item) => item && item.status !== 'available').map((item) => item.item_id) : [];
   return {
     at: body.at, more: body.more, entity_id: body.entity_id,
     shop: pickKeys(body.shop || {}, SCREEN_SHOP),
-    items: shown.map((i) => pickKeys(i, SCREEN_ITEM)),
+    items: shown.map((item) => pickKeys(item, SCREEN_ITEM)),
     removed: (Array.isArray(body.removed) ? body.removed : []).concat(gone),
     delta: body.delta, since: body.since,
     offers: Array.isArray(body.offers) ? body.offers : [],
@@ -200,7 +200,7 @@ router.get('/snapshot', auth, async (req, res) => {
           engines: req.query.eng });
         if (c) {
           const all = await keys.listOf(entity_id);
-          const tills = all.filter((k) => k && Array.isArray(k.scopes) && k.scopes.indexOf('till') >= 0);
+          const tills = all.filter((item) => item && Array.isArray(item.scopes) && item.scopes.indexOf('till') >= 0);
           till = { suggested_id: c.id, assigned_id: c.id, clash: c.clash || null, counters: tills.length,
                    /* ⭐ said out loud, so the shop learns WHY its numbers changed shape */
                    moved_from: c.moved_from || null, held_by: c.held_by || null,
@@ -473,7 +473,7 @@ router.get('/snapshot', auth, async (req, res) => {
         if (num(x.credit_limit_minor) != null) out.credit_limit_minor = num(x.credit_limit_minor);
         if (booksOn && x.has_party_item && !duesCut) {   /* absent = unknown (no ledger, not read, or more dues than one answer carries) — never a 0 that reads as "owes nothing" */
           out.balance_minor = o ? o.balance_minor : 0;
-          out.open_bills = o ? o.open_bills.sort((a, b) => String(a.due_date || '').localeCompare(String(b.due_date || ''))).slice(0, 20) : [];
+          out.open_bills = o ? o.open_bills.sort((first, second) => String(first.due_date || '').localeCompare(String(second.due_date || ''))).slice(0, 20) : [];
         }
         return out;
       });
@@ -514,7 +514,7 @@ router.get('/snapshot', auth, async (req, res) => {
           WHERE parent_entity_id = $1 AND identity_type = 'actor' AND status = 'active'
             AND (actor_type IS NULL OR actor_type <> 'connector') AND connector_type IS NULL
           ORDER BY display_name LIMIT 200`, [entity_id]);
-      staff = st.rows.map((a) => ({ id: a.identity_id, name: a.display_name, hat: a.hat || null }));
+      staff = st.rows.map((item) => ({ id: item.identity_id, name: item.display_name, hat: item.hat || null }));
     } catch (e) { log.fellBack('till GET /snapshot: the read failed — carried on without it', e); /* a shop with no co-assists bills as the shop itself */ }
 
     /* ⚠️ A CAP, AND IT IS A REAL LIMIT. 20,000 items is about 5 MB in one answer — heavy but workable on a shop line. Beyond that
@@ -552,7 +552,7 @@ router.get('/snapshot', auth, async (req, res) => {
     const onTheCounter = (r) => r.is_active !== false
       && ['available', 'unavailable'].indexOf(itemstatus.statusOf(r.item_data || {})) >= 0;
     /* a removal is now "no longer on the counter at all" — retired or redundant — not merely "not sellable today" */
-    const removed = since ? all.filter((r) => !onTheCounter(r)).map((r) => r.item_id) : [];
+    const removed = since ? all.filter((item) => !onTheCounter(item)).map((item) => item.item_id) : [];
     /* ⭐ ONE GSTIN, READ ONCE — see the note where it is used. It may be on the identity row or in the profile; whichever it
        is, the state code is its first two digits and must not be derived from the other field. */
     /**
@@ -688,8 +688,8 @@ router.get('/snapshot', auth, async (req, res) => {
                screen: d.screen === true,
                /* ⭐ WHAT EACH SUPPLIER CALLS IT (2026-09-08) — so a goods-in scan of THEIR code finds OUR product, and their carton
                   converts to our pieces. Capped: an alias list is a memory aid, not a place to accumulate. */
-               aliases: Array.isArray(d.aliases) ? d.aliases.slice(0, 20).map((a) => ({ by: a.by || null, text: a.text,
-                          unit: a.unit || null, factor: a.factor == null ? null : Number(a.factor) })) : null,
+               aliases: Array.isArray(d.aliases) ? d.aliases.slice(0, 20).map((item) => ({ by: item.by || null, text: item.text,
+                          unit: item.unit || null, factor: item.factor == null ? null : Number(item.factor) })) : null,
                /**
                 * ⭐⭐ THE SHOP'S OWN WORDS — thakkali, vengayam, milagai. `synonyms` is a field lib/itemmatch.js has read since August
                 * for WhatsApp orders and consolidation, so the same word resolved in a message and failed at the counter. One
@@ -697,14 +697,14 @@ router.get('/snapshot', auth, async (req, res) => {
                 */
                synonym_text: Array.isArray(d.synonyms) ? (d.synonyms.map((x) => String(x || '')).filter(Boolean).join(' ') || null) : null,
                /* and flattened, because the counter's own search reads fields — so typing what the SUPPLIER calls it finds it */
-               alias_text: Array.isArray(d.aliases) ? (d.aliases.slice(0, 20).map((a) => a.text).filter(Boolean).join(' ') || null) : null,
+               alias_text: Array.isArray(d.aliases) ? (d.aliases.slice(0, 20).map((item) => item.text).filter(Boolean).join(' ') || null) : null,
                brand: d.brand || null, variant: d.variant || d.grade || null,
                /* the shop's own declared facts — a pharmacy's composition, a paint shop's shade. Trimmed: a row is read at a glance. */
-               facts: declared.map((f) => { const v = d[f.k];
-                          return (v == null || typeof v === 'object' || String(v) === '') ? null : { n: f.n, v: String(v).slice(0, 40) };
+               facts: declared.map((item) => { const v = d[item.k];
+                          return (v == null || typeof v === 'object' || String(v) === '') ? null : { n: item.n, v: String(v).slice(0, 40) };
                         }).filter(Boolean) };
     };
-    const items = all.filter(onTheCounter).map((it) => tillItem(it.item_id, it.item_data || {})).filter((x) => x.name);
+    const items = all.filter(onTheCounter).map((item) => tillItem(item.item_id, item.item_data || {})).filter((x) => x.name);
 
     /**
      * ── ⭐⭐⭐ THE NETWORK'S PRODUCTS, AT THE COUNTER (2026-09-17) ───────────────────────────────────────────────────
@@ -733,9 +733,9 @@ router.get('/snapshot', auth, async (req, res) => {
         const catalogueBuild = require('../lib/catalogue-build');
         const catalogueRead = require('../lib/catalogue-read');
         let container = null; try { container = require('../lib/container'); } catch (e) { log.fellBack('till GET /snapshot: the helper failed — carried on without it', e); }
-        const resolved = await Promise.all(ado.rows.map((r) => catalogueBuild.resolve(r.source_key, r.commercials || {}, { entity_id }).catch(log.orElse('till GET /snapshot: failed — answered with nothing', null))));
+        const resolved = await Promise.all(ado.rows.map((item) => catalogueBuild.resolve(item.source_key, item.commercials || {}, { entity_id }).catch(log.orElse('till GET /snapshot: failed — answered with nothing', null))));
         const srcs = [];
-        ado.rows.forEach((r, i) => { const x = resolved[i]; if (x) srcs.push({ source_key: r.source_key, title: x.title,
+        ado.rows.forEach((item, index) => { const x = resolved[index]; if (x) srcs.push({ source_key: item.source_key, title: x.title,
           owner_entity_id: x.owner_entity_id || null, items: x.items || [] }); });
         let containers = {};
         if (container && container.resolveMany && container.itemContainerId) {
@@ -861,7 +861,7 @@ router.get('/snapshot', auth, async (req, res) => {
        * ⚠️ Small by nature — a shop has categories in the tens, not the thousands — so it rides every
        * snapshot rather than needing a door of its own.
        */
-      categories: catList.map((c) => ({ id: c.id, name: c.name, status: c.status })),
+      categories: catList.map((item) => ({ id: item.id, name: item.name, status: item.status })),
       /* how many sellable products the shop has right now — the counter checks its merged copy against this (see the note above) */
       /* ⚠️ INCLUDES THE NETWORK LINES, which ride on every read: the counter compares its merged copy against this, and a
          total that left them out would make every refresh look wrong and pull the whole shop again, for ever */
@@ -1057,7 +1057,7 @@ router.post('/diagnostic', auth, auth.requireScope('till'), async (req, res) => 
       last_why: str(b.last_why, 300),
       /* ⚠️ bill NUMBERS only — they are the shop's own reference and the thing a support call is about */
       waiting:  (Array.isArray(b.waiting) ? b.waiting : []).slice(0, 20)
-                  .map((w) => ({ no: str(w && w.no, 32), tries: num(w && w.tries, 9999), why: str(w && w.why, 200) })),
+                  .map((item) => ({ no: str(item && item.no, 32), tries: num(item && item.tries, 9999), why: str(item && item.why, 200) })),
       /* ⭐ recorded because it is the one fact the counter cannot know about itself, and the shop may need it */
       ip:       String(req.ip || (req.headers['x-forwarded-for'] || '').split(',')[0] || '').trim().slice(0, 45) || null,
       agent:    str(req.headers['user-agent'], 160)
@@ -1088,7 +1088,7 @@ router.post('/close', auth, auth.requireScope('till'), async (req, res) => {
     if (!jti) return res.status(400).json({ error: 'validation', message: 'Only a paired counter can close itself.' });
     const b = req.body || {};
     const list = await keys.listOf(entity_id);
-    const me = list.find((k) => k && String(k.jti) === String(jti));
+    const me = list.find((item) => item && String(item.jti) === String(jti));
     if (!me) return res.status(404).json({ error: 'Not found', message: 'This counter is not listed for the shop.' });
     const till = Object.assign({}, me.till || {}, {
       closed_at: new Date().toISOString(),
@@ -1140,7 +1140,7 @@ router.post('/state', auth, auth.requireScope('till'), async (req, res) => {
     const b = req.body || {};
     const state = b.state === 'break' ? 'break' : 'billing';
     const list = await keys.listOf(entity_id);
-    const me = list.find((k) => k && String(k.jti) === String(jti));
+    const me = list.find((item) => item && String(item.jti) === String(jti));
     if (!me || !me.counter) return res.json({ ok: true, recorded: false });
     const cid = String(me.counter).toUpperCase();
     await require('../db').withTransaction(async (db) => {
@@ -1209,7 +1209,7 @@ async function counterOfReq(req) {
   const jti = req.till && req.till.key && req.till.key.jti;
   if (!jti) return null;
   const list = await keys.listOf(auth.entityOf(req));
-  const me = list.find((k) => k && String(k.jti) === String(jti));
+  const me = list.find((item) => item && String(item.jti) === String(jti));
   return (me && me.counter) ? String(me.counter).toUpperCase() : null;
 }
 const qk = require('../lib/quick-keys');
@@ -1421,14 +1421,14 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) 
     const dayOf = (d) => Math.floor((new Date(d) - today) / 86400000);
     const out = [];
     for (const r of rows.rows) {
-      const why = [];
+      const list = [];
       let urgency = 0;
       if (r.expiry) {
         const left = dayOf(r.expiry);
         /* ⚠️ "expires in 1 days" is the kind of thing that makes a shopkeeper stop trusting the rest of the sentence */
         const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
         if (left <= days) {
-          why.push(left < 0 ? ('expired ' + plural(Math.abs(left), 'day') + ' ago')
+          list.push(left < 0 ? ('expired ' + plural(Math.abs(left), 'day') + ' ago')
                  : (left === 0 ? 'expires today'
                  : (left === 1 ? 'expires tomorrow' : ('expires in ' + plural(left, 'day')))));
           urgency += (days - left) + (left < 0 ? 100 : 0);
@@ -1436,14 +1436,14 @@ router.get('/worth-an-offer', auth, auth.requireScope('till'), async (req, res) 
       }
       if (r.last_sold) {
         const since = Math.abs(dayOf(r.last_sold));
-        if (since >= quiet) { why.push('not sold for ' + since + ' day' + (since === 1 ? '' : 's')); urgency += Math.min(since, 90) / 3; }
+        if (since >= quiet) { list.push('not sold for ' + since + ' day' + (since === 1 ? '' : 's')); urgency += Math.min(since, 90) / 3; }
       } else {
-        why.push('never sold here'); urgency += 10;
+        list.push('never sold here'); urgency += 10;
       }
-      if (why.length) out.push({ item_id: r.item_id, name: r.name, expiry: r.expiry || null,
-                                 last_sold: r.last_sold || null, why, urgency: Math.round(urgency) });
+      if (list.length) out.push({ item_id: r.item_id, name: r.name, expiry: r.expiry || null,
+                                 last_sold: r.last_sold || null, why: list, urgency: Math.round(urgency) });
     }
-    out.sort((a, b) => b.urgency - a.urgency);
+    out.sort((first, second) => second.urgency - first.urgency);
     res.json({ ok: true, days, quiet, items: out.slice(0, 60),
                /* ⚠️ said out loud: this is what the shop RECORDED, not a stock count nobody has taken */
                basis: 'expiry recorded at goods-in, and the last time each product was on a bill' });
@@ -1474,11 +1474,11 @@ router.post('/offer-item', auth, auth.requireScope('till'), async (req, res) => 
 
       const rules = (d.rules && typeof d.rules === 'object') ? d.rules : {};
       const applies = (rules.applies_to && typeof rules.applies_to === 'object') ? rules.applies_to : {};
-      const had = Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : [];
-      const next = on ? (had.indexOf(item_id) >= 0 ? had : had.concat([item_id]))
-                      : had.filter((x) => x !== item_id);
+      const list = Array.isArray(applies.item_ids) ? applies.item_ids.map(String) : [];
+      const next = on ? (list.indexOf(item_id) >= 0 ? list : list.concat([item_id]))
+                      : list.filter((x) => x !== item_id);
       /* nothing to record is not an error, and a version for it would be noise in the one history that must stay readable */
-      if (next.length === had.length && next.every((x, n) => x === had[n]))
+      if (next.length === list.length && next.every((x, index) => x === list[index]))
         return { ok: true, unchanged: true, name: d.name };
 
       /* ⭐ ONE KEY TOUCHED. Everything else about the offer is carried across exactly as it was. */
@@ -1595,7 +1595,7 @@ router.get('/reward', auth, auth.requireScope('till'), async (req, res) => {
                             expires_months: prog.expires_months || null },
                points: bal.points, negative: bal.negative,
                worth: bal.worth,
-               expiring: gone.length ? gone.reduce((a, e) => a + Math.abs(e.points), 0) : 0,
+               expiring: gone.length ? gone.reduce((total, e) => total + Math.abs(e.points), 0) : 0,
                entries: bal.entries });
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
@@ -1715,7 +1715,7 @@ function pairCode() {
   for (;;) {
     const b = crypto.randomBytes(6);
     let c = '';
-    for (let i = 0; i < 6; i++) c += PAIR_ALPHABET[b[i] % PAIR_ALPHABET.length];
+    for (let index = 0; index < 6; index++) c += PAIR_ALPHABET[b[index] % PAIR_ALPHABET.length];
     if (!PAIR.has(c)) return c;
   }
 }
@@ -1866,14 +1866,14 @@ router.get('/screens', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const list = await keys.listOf(entity_id);
-    const screens = list.filter(isScreenKey).map((k) => ({
-      jti: k.jti, name: k.name || null, last4: k.last4 || null, paired_at: k.created_at || null,
-      seen_at: (k.seen && k.seen.at) || null,
+    const screens = list.filter(isScreenKey).map((item) => ({
+      jti: item.jti, name: item.name || null, last4: item.last4 || null, paired_at: item.created_at || null,
+      seen_at: (item.seen && item.seen.at) || null,
       /* ⭐ whether it would be refused right now — a TV paired by a counter that has since been closed */
-      alive: !!auth.keyAlive(list, k.jti),
-      from_counter: !!k.parent,
+      alive: !!auth.keyAlive(list, item.jti),
+      from_counter: !!item.parent,
     }));
-    res.json({ screens, count: screens.length, limit: 20, keys_used: list.filter((k) => !(k && k.till && k.till.closed_at)).length });
+    res.json({ screens, count: screens.length, limit: 20, keys_used: list.filter((item) => !(item && item.till && item.till.closed_at)).length });
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
 router.post('/screens/revoke', auth, auth.requireScope('till'), async (req, res) => {
@@ -1967,10 +1967,10 @@ router.post('/reconcile', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const list = (Array.isArray(req.body && req.body.bills) ? req.body.bills : []).slice(0, 200)
-      .map((b) => ({ no: String((b && b.no) || '').slice(0, 64), at: (b && b.at) ? String(b.at) : null,
-                     chit_id: /^[0-9a-f-]{36}$/i.test(String((b && b.chit_id) || '')) ? String(b.chit_id) : null }))
-      .filter((b) => b.no);
-    const ids = [...new Set(list.map((b) => b.chit_id).filter(Boolean))];
+      .map((item) => ({ no: String((item && item.no) || '').slice(0, 64), at: (item && item.at) ? String(item.at) : null,
+                     chit_id: /^[0-9a-f-]{36}$/i.test(String((item && item.chit_id) || '')) ? String(item.chit_id) : null }))
+      .filter((item) => item.no);
+    const ids = [...new Set(list.map((item) => item.chit_id).filter(Boolean))];
     const found = new Map();
     if (ids.length) {
       const r = await withEntity(entity_id, (db) => db.query(
@@ -1980,13 +1980,13 @@ router.post('/reconcile', auth, auth.requireScope('till'), async (req, res) => {
           ORDER BY chit_id, created_at`, [entity_id, ids]));
       r.rows.forEach((row) => found.set(row.chit_id, row));
     }
-    const out = list.map((b) => {
-      const c = b.chit_id ? found.get(b.chit_id) : null;
-      if (!c) return { no: b.no, verdict: 'missing' };
-      if (!c.billed_at || !b.at) return { no: b.no, verdict: 'unknown' };
+    const out = list.map((item) => {
+      const c = item.chit_id ? found.get(item.chit_id) : null;
+      if (!c) return { no: item.no, verdict: 'missing' };
+      if (!c.billed_at || !item.at) return { no: item.no, verdict: 'unknown' };
       /* ⚠️ same number AND same moment — a chit carrying this number but another moment is another PC's sale */
-      const same = String(c.ref || '') === b.no && String(c.billed_at) === b.at;
-      return { no: b.no, verdict: same ? 'ok' : 'absorbed', recorded_as: c.ref || null };
+      const same = String(c.ref || '') === item.no && String(c.billed_at) === item.at;
+      return { no: item.no, verdict: same ? 'ok' : 'absorbed', recorded_as: c.ref || null };
     });
     res.json({ checked: out.length, bills: out });
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
@@ -2006,7 +2006,7 @@ router.get('/verify', auth, auth.requireScope('till'), async (req, res) => {
     /* eight rows spread across the shelf — first, last, and six evenly between */
     const want = Math.min(8, total);
     const offsets = [];
-    for (let i = 0; i < want; i++) offsets.push(Math.floor((total - 1) * (want === 1 ? 0 : i / (want - 1))));
+    for (let index = 0; index < want; index++) offsets.push(Math.floor((total - 1) * (want === 1 ? 0 : index / (want - 1))));
     /**
      * ⚠️ ONE QUERY, NOT EIGHT. The first cut ran a LIMIT 1 OFFSET n read per sample point, inside a loop — the textbook N+1, and
      * tests/query-shape caught it as "routes/till.js: 1 (budget 0)". A check that a counter is healthy must not itself cost the
@@ -2236,7 +2236,7 @@ router.get('/stock', auth, auth.requireScope('till'), async (req, res) => {
 router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const b = (req.body && typeof req.body === 'object') ? req.body : {};
+    const text = (req.body && typeof req.body === 'object') ? req.body : {};
     const BP = require('../lib/catalogue-blueprint');
     const catwrite = require('../lib/catalogue-write');
     const units = require('../lib/units');
@@ -2246,7 +2246,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
      * not the same Tomato. The refusal says what is already there rather than a bare 409.
      */
     const have = await catwrite.countItems(entity_id);
-    if (have > 0 && b.replace !== true) {
+    if (have > 0 && text.replace !== true) {
       return res.status(409).json({ error: 'not empty',
         message: 'This shop already has ' + have + ' product' + (have === 1 ? '' : 's') + '.'
           + ' Starting a catalogue again would add a second copy of each one.',
@@ -2256,20 +2256,20 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
     const existing = await catwrite.codesInUse(entity_id);
     let items = [], from = null, refused = [];
 
-    if (Array.isArray(b.products) && b.products.length) {
+    if (Array.isArray(text.products) && text.products.length) {
       /* ⚠️ ROWS A PERSON HAS ALREADY APPROVED. The header reconciliation is csv-preflight's job and it
          produces a report somebody agrees to; this is the step after that, never a second guess at it. */
-      const out = BP.rowsToProducts(b.products, b.blueprint, existing, { unitOf: units.unitOf });
+      const out = BP.rowsToProducts(text.products, text.blueprint, existing, { unitOf: units.unitOf });
       items = out.products; refused = out.refused; from = 'file';
       if (!items.length) {
         return res.status(400).json({ error: 'nothing to add',
           message: 'Not one row had both a name and a price.', refused: refused });
       }
     } else {
-      const bp = BP.blueprint(b.blueprint);
-      if (bp.key === 'general' && b.blueprint) {
+      const bp = BP.blueprint(text.blueprint);
+      if (bp.key === 'general' && text.blueprint) {
         return res.status(400).json({ error: 'unknown trade',
-          message: 'There is no product list called "' + String(b.blueprint).slice(0, 40) + '".',
+          message: 'There is no product list called "' + String(text.blueprint).slice(0, 40) + '".',
           choices: Object.keys(BP.BLUEPRINTS) });
       }
       if (!bp.starter.length) {
@@ -2288,7 +2288,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
      * ⚠️ MATCHED CASE-INSENSITIVELY by lib/categories, so a shop that already has "Vegetables" does not
      * acquire "vegetables" beside it — which is the free-text pollution a master exists to prevent.
      */
-    const wantCats = [...new Set(items.map((p) => p.categoryName).filter(Boolean))];
+    const wantCats = [...new Set(items.map((item) => item.categoryName).filter(Boolean))];
     let catIds = new Map();
     if (wantCats.length) {
       /* ⚠️ THE SAME `created_by` routes/definitions.js writes — `req.identity.identity_id`. My first cut
@@ -2303,9 +2303,9 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
           message: 'Your categories could not be set up, so nothing was added. ' + String(e && e.message).slice(0, 120) });
       }
     }
-    items = items.map((p) => {
-      const out = Object.assign({}, p);
-      const id = p.categoryName ? catIds.get(p.categoryName) : null;
+    items = items.map((item) => {
+      const out = Object.assign({}, item);
+      const id = item.categoryName ? catIds.get(item.categoryName) : null;
       delete out.categoryName;
       /* ⚠️ CITED BY ID. `category_names` is NOT written: catalogue-columns reserves it as *"a positional copy
          … for counterparties who cannot resolve our ids"*, and we can resolve our own. */
@@ -2338,8 +2338,8 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
     let have = 0; try { have = await catwrite.countItems(auth.entityOf(req)); } catch (e) { log.fellBack('till GET /catalogue/blueprints: failed — carried on without it', e); }
     res.json({
       version: BP.VERSION, axiom: BP.AXIOM, enrich: BP.ENRICH, have: have,
-      blueprints: Object.keys(BP.BLUEPRINTS).map((k) => {
-        const bp = BP.blueprint(k);
+      blueprints: Object.keys(BP.BLUEPRINTS).map((item) => {
+        const bp = BP.blueprint(item);
         return { key: bp.key, label: bp.label, outcome: bp.outcome, pin: BP.pin(bp),
                  products: bp.starter.length, units: bp.units, categories: bp.categories,
                  sample: bp.starter.slice(0, 4).map((p) => p.name) };
@@ -2462,10 +2462,10 @@ router.get('/bills', auth, async (req, res) => {
                   (till.html slipOfRow → moneyOf), so a duplicate is the same document as the original: "Earlier bills → print"
                   of C2/26-27/0007 printed taxable ₹1,118.15 and GST ₹0.00 on a TAX INVOICE. null for a bill that never carried one. */
                invoice: (b.invoice && typeof b.invoice === 'object' && b.invoice.ValDtls) ? b.invoice : null,
-               lines: (Array.isArray(x.line_items) ? x.line_items : []).map((l) => ({
-                 name: l.particulars || l.name, qty: l.quantity, unit: l.unit, price: l.price, net: l.total,
-                 save: (l.offer && l.offer.off) || 0, off: !!l.offer, off_label: (l.offer && l.offer.label) || '', gst_rate: l.gst_rate, hsn: l.hsn,
-                 mods: Array.isArray(l.mods) ? l.mods : null })) };
+               lines: (Array.isArray(x.line_items) ? x.line_items : []).map((item) => ({
+                 name: item.particulars || item.name, qty: item.quantity, unit: item.unit, price: item.price, net: item.total,
+                 save: (item.offer && item.offer.off) || 0, off: !!item.offer, off_label: (item.offer && item.offer.label) || '', gst_rate: item.gst_rate, hsn: item.hsn,
+                 mods: Array.isArray(item.mods) ? item.mods : null })) };
     }).filter((x) => x.no && (!by || (x.by && x.by.id === by)));
     res.json(Object.assign({ days, count: rows.length }, PL.pageOut('bills', rows, pg, rows.length)));
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
@@ -2529,13 +2529,13 @@ router.get('/match', auth, async (req, res) => {
 
     const { withEntity } = require('../db');
     const out = await withEntity(entity_id, async (db) => {
-      const ids = heads.map((h) => h.chit_id);
+      const ids = heads.map((item) => item.chit_id);
       const det = await db.query(
         `SELECT h.chit_id, d.line_items, h.business_json
            FROM chit_header h
            LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
           WHERE h.entity_id = $1 AND h.chit_id = ANY($2::uuid[])`, [entity_id, ids]);
-      const byId = new Map(det.rows.map((r) => [String(r.chit_id), r]));
+      const byId = new Map(det.rows.map((item) => [String(item.chit_id), item]));
 
       /* the receipts our own counter wrote against these orders — that is where the supplier's bill figure was captured */
       const rec = await db.query(
@@ -2576,37 +2576,37 @@ router.get('/match', auth, async (req, res) => {
         const receipts = receiptsFor.get(String(h.chit_id)) || [];
         /* their invoice: a chit from this counterparty, else the figure keyed off their paper bill at the door */
         const theirChit = inv.rows.find((x) => h.counterparty_id && String(x.sender_entity_id) === String(h.counterparty_id)) || null;
-        const keyed = receipts.map((r) => (r.their_bill && r.their_bill.total != null) ? Number(r.their_bill.total) : null).filter((x) => x != null);
+        const keyed = receipts.map((item) => (item.their_bill && item.their_bill.total != null) ? Number(item.their_bill.total) : null).filter((x) => x != null);
         const invoiced_total = theirChit ? Number((theirChit.summary_json || {}).total_value || 0)
                              : (keyed.length ? keyed.reduce((x, y) => x + y, 0) : null);
 
-        const lines = (Array.isArray(d.line_items) ? d.line_items : []).map((l) => {
-          const p = (prog && prog.get) ? prog.get(l.line_id) : null;
-          const ordered = Number(l.quantity) || 0;
+        const lines = (Array.isArray(d.line_items) ? d.line_items : []).map((item) => {
+          const p = (prog && prog.get) ? prog.get(item.line_id) : null;
+          const ordered = Number(item.quantity) || 0;
           const received = (p && p.delivered != null) ? Number(p.delivered) : 0;
           /* the reason the person at the door gave, carried on the receipt's own line */
           let why = null;
           for (const r of receipts) for (const rl of r.lines) {
             const idm = rl.item_data || {};
-            if (idm.line_id === l.line_id || rl.particulars === (l.particulars || l.name)) { if (idm.reason) why = idm.reason; }
+            if (idm.line_id === item.line_id || rl.particulars === (item.particulars || item.name)) { if (idm.reason) why = idm.reason; }
           }
           const diff = Math.round((received - ordered) * 1000) / 1000;
           /* ⭐ THE SAME TOLERANCE THE DOOR APPLIED (lib/lotfields, one definition for both ends). A difference this trade absorbs is
              not a difference to chase — and both figures still show, because tolerance decides what is worth a conversation, never
              what is true. */
-          const absorbed = diff !== 0 && lotfields.withinTolerance(diff, ordered, l.unit, tol);
-          return { line_id: l.line_id, name: l.particulars || l.name || '', unit: l.unit || 'piece',
-                   rate: l.price == null ? null : Number(l.price),
+          const absorbed = diff !== 0 && lotfields.withinTolerance(diff, ordered, item.unit, tol);
+          return { line_id: item.line_id, name: item.particulars || item.name || '', unit: item.unit || 'piece',
+                   rate: item.price == null ? null : Number(item.price),
                    ordered, received, difference: diff, reason: why, absorbed,
                    state: diff === 0 ? (received > 0 ? 'agreed' : 'awaited') : (absorbed ? 'agreed' : (diff < 0 ? 'short' : 'excess')) };
         });
         if (!lines.length) continue;
 
         const value = (n) => roundMoney(n);
-        const ordered_total = value(lines.reduce((t, l) => t + (l.ordered * (l.rate || 0)), 0));
-        const received_total = value(lines.reduce((t, l) => t + (l.received * (l.rate || 0)), 0));
-        const differences = lines.filter((l) => l.difference !== 0 && !l.absorbed).length;
-        const nothingYet = lines.every((l) => l.received === 0);
+        const ordered_total = value(lines.reduce((total, item) => total + (item.ordered * (item.rate || 0)), 0));
+        const received_total = value(lines.reduce((total, item) => total + (item.received * (item.rate || 0)), 0));
+        const differences = lines.filter((item) => item.difference !== 0 && !item.absorbed).length;
+        const nothingYet = lines.every((item) => item.received === 0);
         /**
          * ⭐ THE VERDICT IS ABOUT WHAT IS KNOWN, not about who is right.
          *   awaited   nothing has arrived yet
@@ -2617,7 +2617,7 @@ router.get('/match', auth, async (req, res) => {
         const money_gap = (invoiced_total == null) ? null : value(received_total - invoiced_total);
         const verdict = nothingYet ? 'awaited'
                       : (differences ? 'differs'
-                      : (lines.some((l) => l.received < l.ordered) ? 'open'
+                      : (lines.some((item) => item.received < item.ordered) ? 'open'
                       : ((money_gap != null && money_gap !== 0) ? 'differs' : 'agreed')));
 
         orders.push({ chit_id: h.chit_id, at: h.created_at,
@@ -2627,14 +2627,14 @@ router.get('/match', auth, async (req, res) => {
                       ordered_total, received_total, invoiced_total,
                       invoiced_from: theirChit ? 'their invoice' : (keyed.length ? 'their bill, keyed at the door' : null),
                       money_gap,
-                      receipts: receipts.map((r) => ({ chit_id: r.chit_id, no: r.no, at: r.at, landed: r.landed,
-                                                       their_bill_no: (r.their_bill && r.their_bill.no) || null })) });
+                      receipts: receipts.map((item) => ({ chit_id: item.chit_id, no: item.no, at: item.at, landed: item.landed,
+                                                       their_bill_no: (item.their_bill && item.their_bill.no) || null })) });
       }
       return orders;
     });
     /* [OFFR-04] landed = goods + freight etc. as the shop paid it: cost, so owner / can_see_costs only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id)))
-      out.forEach((o) => (o.receipts || []).forEach((r) => { delete r.landed; }));
+      out.forEach((item) => (item.receipts || []).forEach((r) => { delete r.landed; }));
     res.json(Object.assign({ days, count: out.length }, PL.pageOut('orders', out, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
 });
@@ -2672,7 +2672,7 @@ router.post('/alias', auth, async (req, res) => {
       const d = r.rows[0].item_data || {};
       const list = Array.isArray(d.aliases) ? d.aliases.slice(0, 50) : [];
       const same = (a) => String(a.text || '').toLowerCase() === text.toLowerCase() && String(a.by || '').toLowerCase() === by.toLowerCase();
-      const kept = list.filter((a) => !same(a));                 /* saying it again replaces what was said before */
+      const kept = list.filter((item) => !same(item));                 /* saying it again replaces what was said before */
       kept.push({ by: by || null, text, unit, factor, at: new Date().toISOString() });
       await catwrite.patchItems(db, entity_id, [{ item_id, merge: { aliases: kept } }]);
       return kept;
