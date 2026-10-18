@@ -210,7 +210,7 @@
   "lib/workroute.js": {"score":19,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/xact-lock.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/xlsx-read.js": {"score":34,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":28,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
-  "lib/xlsx-write.js": {"score":33,"long40":1,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":31,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
+  "lib/xlsx-write.js": {"score":19,"long40":1,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/zip-store.js": {"score":10,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":8,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "middleware/auth-first.js": {"score":2,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":1,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "middleware/auth.js": {"score":30,"long40":1,"long80":1,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":20,"noWhatLine":1,"emptyCatch":4,"noHeader":1},
