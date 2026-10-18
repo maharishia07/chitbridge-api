@@ -108,7 +108,7 @@ router.get('/devices', auth, personOnly, ownerOnly, async (req, res) => {
     res.json({ devices: Object.entries(devices).map(([device_id, d]) => ({
       device_id, label: d.label || null, kind: d.kind || null, by: d.by || null, first_seen: d.first_seen || null, seen: d.seen || null,
       revoked_at: d.revoked_at || null, till_prefix: (d.till && d.till.prefix) || null,
-      sessions: (d.sessions || []).filter((s) => s && Number(s.exp) > t).length })) });
+      sessions: (d.sessions || []).filter((item) => item && Number(item.exp) > t).length })) });
   } catch (e) { fail(res, e); }
 });
 
