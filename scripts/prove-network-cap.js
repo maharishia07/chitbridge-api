@@ -37,8 +37,8 @@ async function api(path, { method = 'GET', token, body } = {}) {
 }
 async function signIn(email, name) {
   await api('/api/entities/register', { method: 'POST', body: { email, display_name: name } });
-  const v = await api('/api/entities/verify', { method: 'POST', body: { email, otp: OTP } });
-  return (v.json || {}).token || null;
+  const reply = await api('/api/entities/verify', { method: 'POST', body: { email, otp: OTP } });
+  return (reply.json || {}).token || null;
 }
 
 (async () => {
@@ -94,8 +94,8 @@ async function signIn(email, name) {
 
   if (provisioned) {
     const tok = await signIn(NODE.email, NODE.name);
-    const me = await api('/api/entities/me', { token: tok });
-    const ent = (me.json && (me.json.entity || me.json)) || {};
+    const reply = await api('/api/entities/me', { token: tok });
+    const ent = (reply.json && (reply.json.entity || reply.json)) || {};
     ok('★ its own profile REPORTS the cap', ent.visibility_cap && ent.visibility_cap.max === 'private',
       JSON.stringify(ent.visibility_cap));
     ok('…and reports its EFFECTIVE visibility as private', ent.catalogue_visibility === 'private');
