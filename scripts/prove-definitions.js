@@ -16,10 +16,16 @@
 'use strict';
 const P = require('./_proof');
 
-let pass = 0, fail = 0;
+let pass = 0,
+  fail = 0;
 const ok = (name, cond, got) => {
-  if (cond) { pass++; console.log('  ok   ' + name); }
-  else { fail++; console.log('  FAIL ' + name + (got === undefined ? '' : '  → ' + JSON.stringify(got))); }
+  if (cond) {
+    pass++;
+    console.log('  ok   ' + name);
+  } else {
+    fail++;
+    console.log('  FAIL ' + name + (got === undefined ? '' : '  → ' + JSON.stringify(got)));
+  }
 };
 
 async function login(email, name) {
@@ -37,19 +43,37 @@ async function login(email, name) {
   const NAME = 'Diwali ' + tag;
 
   console.log('1 · author one');
-  const made = await P.j('/api/definitions', { method: 'POST', ...me, body: {
-    kind: 'offer', sub_kind: 'percent_off', name: NAME, note: 'festive',
-    rules: { percent: 10, valid_from: '2026-11-01', valid_to: '2026-11-15', region: 'TN' } } });
+  const made = await P.j('/api/definitions', {
+    method: 'POST',
+    ...me,
+    body: {
+      kind: 'offer',
+      sub_kind: 'percent_off',
+      name: NAME,
+      note: 'festive',
+      rules: { percent: 10, valid_from: '2026-11-01', valid_to: '2026-11-15', region: 'TN' }
+    }
+  });
   ok('a definition is created', made.status === 201, { status: made.status, body: JSON.stringify(made.b).slice(0, 160) });
   const id = made.b && made.b.definition && made.b.definition.definition_id;
   ok('…at version 1', made.b && made.b.version === 1, made.b && made.b.version);
-  ok('…as a DRAFT — authoring is not publishing',
-     made.b && made.b.definition && made.b.definition.status === 'draft', made.b && made.b.definition && made.b.definition.status);
+  ok(
+    '…as a DRAFT — authoring is not publishing',
+    made.b && made.b.definition && made.b.definition.status === 'draft',
+    made.b && made.b.definition && made.b.definition.status
+  );
 
-  const dup = await P.j('/api/definitions', { method: 'POST', ...me, body: {
-    kind: 'offer', sub_kind: 'percent_off', name: NAME, rules: { percent: 99 } } });
-  ok('⚠️ the same name twice in one kind is refused — a name is how a definition is CITED',
-     dup.status === 409, dup.status);
+  const dup = await P.j('/api/definitions', {
+    method: 'POST',
+    ...me,
+    body: {
+      kind: 'offer',
+      sub_kind: 'percent_off',
+      name: NAME,
+      rules: { percent: 99 }
+    }
+  });
+  ok('⚠️ the same name twice in one kind is refused — a name is how a definition is CITED', dup.status === 409, dup.status);
 
   console.log('\n2 · ⭐⭐ FROZEN BY VALUE WHEN STAMPED');
   const frozen = await P.j('/api/definitions/freeze', { method: 'POST', ...me, body: { definition_ids: [id] } });
@@ -61,27 +85,38 @@ async function login(email, name) {
   ok('…and when it was frozen', !!snap.frozen_at, snap.frozen_at);
 
   /* THE EDIT. This is the moment the whole design is about. */
-  const edited = await P.j('/api/definitions/' + id, { method: 'PUT', ...me, body: {
-    rules: { percent: 25, valid_from: '2026-11-01', valid_to: '2026-11-30', region: 'TN' } } });
-  ok('editing the rules writes a NEW version, never an overwrite',
-     edited.status === 200 && edited.b.new_version === true && edited.b.version === 2,
-     { v: edited.b && edited.b.version, nv: edited.b && edited.b.new_version });
+  const edited = await P.j('/api/definitions/' + id, {
+    method: 'PUT',
+    ...me,
+    body: {
+      rules: { percent: 25, valid_from: '2026-11-01', valid_to: '2026-11-30', region: 'TN' }
+    }
+  });
+  ok('editing the rules writes a NEW version, never an overwrite', edited.status === 200 && edited.b.new_version === true && edited.b.version === 2, {
+    v: edited.b && edited.b.version,
+    nv: edited.b && edited.b.new_version
+  });
 
   ok('⭐⭐ THE FROZEN COPY IS UNCHANGED — 10%, not 25%', snap.rules.percent === 10, snap.rules.percent);
 
   const full = await P.j('/api/definitions/' + id, me);
-  const vs = (full.b && full.b.versions) || [];
-  ok('⭐ BOTH versions are still readable — the frozen copy can be checked against the shelf',
-     vs.length === 2, vs.map((v) => v.version));
-  const v1 = vs.filter((v) => v.version === 1)[0] || {};
+  const list = (full.b && full.b.versions) || [];
+  ok(
+    '⭐ BOTH versions are still readable — the frozen copy can be checked against the shelf',
+    list.length === 2,
+    list.map((item) => item.version)
+  );
+  const v1 = list.filter((item) => item.version === 1)[0] || {};
   ok('…and version 1 still says 10%', v1.rules && v1.rules.percent === 10, v1.rules);
-  const v2 = vs.filter((v) => v.version === 2)[0] || {};
+  const v2 = list.filter((item) => item.version === 2)[0] || {};
   ok('…while the shelf has moved to 25%', v2.rules && v2.rules.percent === 25, v2.rules);
 
   const after = await P.j('/api/definitions/freeze', { method: 'POST', ...me, body: { definition_ids: [id] } });
-  ok('a NEW freeze takes the CURRENT version — 25% at v2',
-     (after.b.frozen || [])[0].rules.percent === 25 && (after.b.frozen || [])[0].version === 2,
-     after.b.frozen);
+  ok(
+    'a NEW freeze takes the CURRENT version — 25% at v2',
+    (after.b.frozen || [])[0].rules.percent === 25 && (after.b.frozen || [])[0].version === 2,
+    after.b.frozen
+  );
 
   console.log('\n3 · ⚠️ retire, never delete');
   const del = await P.j('/api/definitions/' + id, { method: 'DELETE', ...me });
@@ -96,41 +131,53 @@ async function login(email, name) {
    */
   const gone = await P.j('/api/definitions?kind=offer', me);
   ok('the shelf actually answers (not a 500 masquerading as an empty list)', gone.status === 200, gone.status);
-  const listed = (gone.b.definitions || []).filter((d) => d.definition_id === id);
+  const listed = (gone.b.definitions || []).filter((item) => item.definition_id === id);
   ok('…so it leaves the default shelf', gone.status === 200 && listed.length === 0, listed.length);
   const all = await P.j('/api/definitions?all=1', me);
   ok('?all=1 answers', all.status === 200, all.status);
-  ok('…and a retired definition is still there when asked for',
-     (all.b.definitions || []).some((d) => d.definition_id === id),
-     { status: all.status, rows: (all.b.definitions || []).length });
+  ok(
+    '…and a retired definition is still there when asked for',
+    (all.b.definitions || []).some((item) => item.definition_id === id),
+    { status: all.status, rows: (all.b.definitions || []).length }
+  );
   const onlyRetired = await P.j('/api/definitions?status=retired', me);
-  ok('…and ?status=retired finds it directly',
-     (onlyRetired.b.definitions || []).some((d) => d.definition_id === id), onlyRetired.status);
+  ok(
+    '…and ?status=retired finds it directly',
+    (onlyRetired.b.definitions || []).some((item) => item.definition_id === id),
+    onlyRetired.status
+  );
 
   const stillFreezes = await P.j('/api/definitions/freeze', { method: 'POST', ...me, body: { definition_ids: [id] } });
-  ok('⚠️ …and a RETIRED definition still freezes — retiring means "stop offering", not "never happened"',
-     (stillFreezes.b.frozen || []).length === 1, stillFreezes.b);
+  ok(
+    '⚠️ …and a RETIRED definition still freezes — retiring means "stop offering", not "never happened"',
+    (stillFreezes.b.frozen || []).length === 1,
+    stillFreezes.b
+  );
 
   const still = await P.j('/api/definitions/' + id, me);
   ok('…and its history survives retirement', ((still.b && still.b.versions) || []).length === 2);
 
   console.log('\n4 · ⚠️ what was NOT found is reported, not swallowed');
-  const partial = await P.j('/api/definitions/freeze', { method: 'POST', ...me,
-    body: { definition_ids: [id, '00000000-0000-0000-0000-000000000000'] } });
+  const partial = await P.j('/api/definitions/freeze', { method: 'POST', ...me, body: { definition_ids: [id, '00000000-0000-0000-0000-000000000000'] } });
   ok('a missing id comes back in `missing`', (partial.b.missing || []).length === 1, partial.b.missing);
   ok('…and the one that exists still freezes', (partial.b.frozen || []).length === 1);
 
   console.log('\n5 · ⚠️ WITH RLS — another entity cannot see or freeze it');
   const them = await login('karpagam@email.com', 'Karpagam Caterers');
   const theirList = await P.j('/api/definitions?all=1', them);
-  ok('another entity does not see it on their shelf',
-     !((theirList.b.definitions || []).some((d) => d.definition_id === id)));
+  ok('another entity does not see it on their shelf', !(theirList.b.definitions || []).some((item) => item.definition_id === id));
   const theirGet = await P.j('/api/definitions/' + id, them);
   ok('…cannot open it by id', theirGet.status === 404, theirGet.status);
   const theirFreeze = await P.j('/api/definitions/freeze', { method: 'POST', ...them, body: { definition_ids: [id] } });
-  ok('⭐ …and cannot freeze it — it comes back as MISSING, not as someone else’s terms',
-     (theirFreeze.b.frozen || []).length === 0 && (theirFreeze.b.missing || []).length === 1, theirFreeze.b);
+  ok(
+    '⭐ …and cannot freeze it — it comes back as MISSING, not as someone else’s terms',
+    (theirFreeze.b.frozen || []).length === 0 && (theirFreeze.b.missing || []).length === 1,
+    theirFreeze.b
+  );
 
   console.log('\n== RESULT ==  PASS ' + pass + '  ·  FAIL ' + fail);
   process.exit(fail ? 1 : 0);
-})().catch((e) => { console.error('\nthrew: ' + e.message); process.exit(1); });
+})().catch((e) => {
+  console.error('\nthrew: ' + e.message);
+  process.exit(1);
+});

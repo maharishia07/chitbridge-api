@@ -20,7 +20,10 @@
 
 const { j, signIn } = require('./_proof');
 
-const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
+const arg = (k, d) => {
+  const i = process.argv.indexOf('--' + k);
+  return i > 0 ? process.argv[i + 1] : d;
+};
 const EMAIL = arg('entity');
 const NAME = arg('name', 'My Test');
 
@@ -38,74 +41,150 @@ const ITEMS = [
    * 2 crate" would silently be priced as nattu — inventing the grade. Put `nattu thakkali` on both and a
    * customer who said exactly which one gets asked again for no reason.
    */
-  { name: 'Tomato', variant: 'nattu', unit: 'crate', price: 474,
-    synonyms: ['தக்காளி', 'thakkali', 'thakali', 'takkali', 'thakkaali', 'tamatar', 'टमाटर',   // generic — on both
-               'நாட்டு தக்காளி', 'nattu thakkali', 'nattu', 'country tomato', 'local tomato'] },  // specific
-  { name: 'Tomato', variant: 'hybrid', unit: 'crate', price: 395,
-    synonyms: ['தக்காளி', 'thakkali', 'thakali', 'takkali', 'thakkaali', 'tamatar', 'टमाटर',   // generic — on both
-               'ஹைப்ரிட் தக்காளி', 'hybrid thakkali', 'hybrid tomato', 'hybrid'] },              // specific
+  {
+    name: 'Tomato',
+    variant: 'nattu',
+    unit: 'crate',
+    price: 474,
+    synonyms: [
+      'தக்காளி',
+      'thakkali',
+      'thakali',
+      'takkali',
+      'thakkaali',
+      'tamatar',
+      'टमाटर', // generic — on both
+      'நாட்டு தக்காளி',
+      'nattu thakkali',
+      'nattu',
+      'country tomato',
+      'local tomato'
+    ]
+  }, // specific
+  {
+    name: 'Tomato',
+    variant: 'hybrid',
+    unit: 'crate',
+    price: 395,
+    synonyms: [
+      'தக்காளி',
+      'thakkali',
+      'thakali',
+      'takkali',
+      'thakkaali',
+      'tamatar',
+      'टमाटर', // generic — on both
+      'ஹைப்ரிட் தக்காளி',
+      'hybrid thakkali',
+      'hybrid tomato',
+      'hybrid'
+    ]
+  }, // specific
 
-  { name: 'Onion', variant: 'big', unit: 'kg', price: 40,
-    synonyms: ['வெங்காயம்', 'vengayam', 'vengaayam', 'venkayam', 'pyaz', 'प्याज',               // generic — on both
-               'பெரிய வெங்காயம்', 'periya vengayam', 'periya', 'big onion', 'bombay onion'] },   // specific
-  { name: 'Onion', variant: 'small', unit: 'kg', price: 68,
-    synonyms: ['வெங்காயம்', 'vengayam', 'vengaayam', 'venkayam', 'pyaz', 'प्याज',               // generic — on both
-               'சின்ன வெங்காயம்', 'chinna vengayam', 'sinna vengayam', 'chinna',
-               'small onion', 'shallot', 'sambar onion', 'chhota pyaz'] },                       // specific
+  {
+    name: 'Onion',
+    variant: 'big',
+    unit: 'kg',
+    price: 40,
+    synonyms: [
+      'வெங்காயம்',
+      'vengayam',
+      'vengaayam',
+      'venkayam',
+      'pyaz',
+      'प्याज', // generic — on both
+      'பெரிய வெங்காயம்',
+      'periya vengayam',
+      'periya',
+      'big onion',
+      'bombay onion'
+    ]
+  }, // specific
+  {
+    name: 'Onion',
+    variant: 'small',
+    unit: 'kg',
+    price: 68,
+    synonyms: [
+      'வெங்காயம்',
+      'vengayam',
+      'vengaayam',
+      'venkayam',
+      'pyaz',
+      'प्याज', // generic — on both
+      'சின்ன வெங்காயம்',
+      'chinna vengayam',
+      'sinna vengayam',
+      'chinna',
+      'small onion',
+      'shallot',
+      'sambar onion',
+      'chhota pyaz'
+    ]
+  }, // specific
 
-  { name: 'Potato', unit: 'kg', price: 30,
-    synonyms: ['உருளைக்கிழங்கு', 'urulaikizhangu', 'urulai kizhangu', 'urulai', 'urulaikilangu',
-               'potato', 'aloo', 'आलू'] },
+  {
+    name: 'Potato',
+    unit: 'kg',
+    price: 30,
+    synonyms: ['உருளைக்கிழங்கு', 'urulaikizhangu', 'urulai kizhangu', 'urulai', 'urulaikilangu', 'potato', 'aloo', 'आलू']
+  },
 
-  { name: 'Carrot', variant: 'ooty', unit: 'kg', price: 70,
-    synonyms: ['கேரட்', 'ஊட்டி கேரட்', 'carrot', 'kerat', 'ooty carrot', 'gajar', 'गाजर'] },
+  { name: 'Carrot', variant: 'ooty', unit: 'kg', price: 70, synonyms: ['கேரட்', 'ஊட்டி கேரட்', 'carrot', 'kerat', 'ooty carrot', 'gajar', 'गाजर'] },
 
-  { name: 'Beans', unit: 'kg', price: 60,
-    synonyms: ['பீன்ஸ்', 'beans', 'avarai', 'அவரை', 'french beans', 'phali'] },
+  { name: 'Beans', unit: 'kg', price: 60, synonyms: ['பீன்ஸ்', 'beans', 'avarai', 'அவரை', 'french beans', 'phali'] },
 
-  { name: 'Drumstick', unit: 'kg', price: 85,
-    synonyms: ['முருங்கைக்காய்', 'murungakkai', 'murungai kai', 'murungaikai', 'drumstick', 'moringa', 'sahjan'] },
+  { name: 'Drumstick', unit: 'kg', price: 85, synonyms: ['முருங்கைக்காய்', 'murungakkai', 'murungai kai', 'murungaikai', 'drumstick', 'moringa', 'sahjan'] },
 
-  { name: 'Coriander leaves', unit: 'bundle', price: 12,
-    synonyms: ['கொத்தமல்லி', 'kothamalli', 'kotthamalli', 'kothamali', 'coriander', 'cilantro', 'dhania', 'धनिया'] },
+  {
+    name: 'Coriander leaves',
+    unit: 'bundle',
+    price: 12,
+    synonyms: ['கொத்தமல்லி', 'kothamalli', 'kotthamalli', 'kothamali', 'coriander', 'cilantro', 'dhania', 'धनिया']
+  },
 
-  { name: 'Curry leaves', unit: 'bundle', price: 8,
-    synonyms: ['கறிவேப்பிலை', 'karuveppilai', 'kariveppilai', 'karuvepillai', 'curry leaf', 'curry leaves',
-               'kadipatta', 'कढ़ी पत्ता'] },
+  {
+    name: 'Curry leaves',
+    unit: 'bundle',
+    price: 8,
+    synonyms: ['கறிவேப்பிலை', 'karuveppilai', 'kariveppilai', 'karuvepillai', 'curry leaf', 'curry leaves', 'kadipatta', 'कढ़ी पत्ता']
+  },
 
-  { name: 'Mint leaves', unit: 'bundle', price: 10,
-    synonyms: ['புதினா', 'pudina', 'pudhina', 'putina', 'mint', 'mint leaves', 'पुदीना'] },
+  { name: 'Mint leaves', unit: 'bundle', price: 10, synonyms: ['புதினா', 'pudina', 'pudhina', 'putina', 'mint', 'mint leaves', 'पुदीना'] },
 
-  { name: 'Rice', variant: 'ponni', unit: 'kg', price: 58,
-    synonyms: ['அரிசி', 'பொன்னி அரிசி', 'arisi', 'ponni arisi', 'ponni rice', 'ponni', 'chawal', 'चावल'] },
+  {
+    name: 'Rice',
+    variant: 'ponni',
+    unit: 'kg',
+    price: 58,
+    synonyms: ['அரிசி', 'பொன்னி அரிசி', 'arisi', 'ponni arisi', 'ponni rice', 'ponni', 'chawal', 'चावल']
+  },
 
-  { name: 'Toor dal', unit: 'kg', price: 145,
-    synonyms: ['துவரம் பருப்பு', 'thuvaram paruppu', 'thuvaram parupu', 'thuvarai', 'toor dal', 'tur dal',
-               'arhar dal', 'अरहर दाल'] },
+  {
+    name: 'Toor dal',
+    unit: 'kg',
+    price: 145,
+    synonyms: ['துவரம் பருப்பு', 'thuvaram paruppu', 'thuvaram parupu', 'thuvarai', 'toor dal', 'tur dal', 'arhar dal', 'अरहर दाल']
+  },
 
-  { name: 'Groundnut oil', unit: 'litre', price: 195,
-    synonyms: ['கடலை எண்ணெய்', 'kadalai ennai', 'kadalai yennai', 'groundnut oil', 'peanut oil',
-               'moongphali tel', 'मूंगफली तेल'] },
+  {
+    name: 'Groundnut oil',
+    unit: 'litre',
+    price: 195,
+    synonyms: ['கடலை எண்ணெய்', 'kadalai ennai', 'kadalai yennai', 'groundnut oil', 'peanut oil', 'moongphali tel', 'मूंगफली तेल']
+  },
 
   // ── a few more, so the list is not exactly the test message ────────────────────────────────────────────────
-  { name: 'Ginger', unit: 'kg', price: 120,
-    synonyms: ['இஞ்சி', 'inji', 'ingi', 'ginger', 'adrak', 'अदरक'] },
-  { name: 'Garlic', unit: 'kg', price: 210,
-    synonyms: ['பூண்டு', 'poondu', 'pundu', 'garlic', 'lehsun', 'लहसुन'] },
-  { name: 'Green chilli', unit: 'kg', price: 90,
-    synonyms: ['பச்சை மிளகாய்', 'pachai milagai', 'pachcha milagai', 'green chilli', 'hari mirch', 'हरी मिर्च'] },
-  { name: 'Lemon', unit: 'box', price: 340,
-    synonyms: ['எலுமிச்சை', 'elumichai', 'elumichchai', 'lemon', 'lime', 'nimbu', 'नींबू'] },
+  { name: 'Ginger', unit: 'kg', price: 120, synonyms: ['இஞ்சி', 'inji', 'ingi', 'ginger', 'adrak', 'अदरक'] },
+  { name: 'Garlic', unit: 'kg', price: 210, synonyms: ['பூண்டு', 'poondu', 'pundu', 'garlic', 'lehsun', 'लहसुन'] },
+  { name: 'Green chilli', unit: 'kg', price: 90, synonyms: ['பச்சை மிளகாய்', 'pachai milagai', 'pachcha milagai', 'green chilli', 'hari mirch', 'हरी मिर्च'] },
+  { name: 'Lemon', unit: 'box', price: 340, synonyms: ['எலுமிச்சை', 'elumichai', 'elumichchai', 'lemon', 'lime', 'nimbu', 'नींबू'] },
 
   // ── ⚠️ DELIBERATELY UNPRICED — these prove the "needs a price from you" path ───────────────────────────────
-  { name: 'Sugar', unit: 'kg',
-    synonyms: ['சர்க்கரை', 'sarkarai', 'sakkarai', 'sugar', 'cheeni', 'चीनी'] },
-  { name: 'Wheat flour', unit: 'kg',
-    synonyms: ['கோதுமை மாவு', 'gothumai maavu', 'godhumai mavu', 'wheat flour', 'atta', 'आटा'] },
-  { name: 'Coconut oil', unit: 'litre',
-    synonyms: ['தேங்காய் எண்ணெய்', 'thengai ennai', 'thengaai yennai', 'coconut oil', 'nariyal tel'] },
-  { name: 'Tamarind', unit: 'kg',
-    synonyms: ['புளி', 'puli', 'pulli', 'tamarind', 'imli', 'इमली'] },
+  { name: 'Sugar', unit: 'kg', synonyms: ['சர்க்கரை', 'sarkarai', 'sakkarai', 'sugar', 'cheeni', 'चीनी'] },
+  { name: 'Wheat flour', unit: 'kg', synonyms: ['கோதுமை மாவு', 'gothumai maavu', 'godhumai mavu', 'wheat flour', 'atta', 'आटा'] },
+  { name: 'Coconut oil', unit: 'litre', synonyms: ['தேங்காய் எண்ணெய்', 'thengai ennai', 'thengaai yennai', 'coconut oil', 'nariyal tel'] },
+  { name: 'Tamarind', unit: 'kg', synonyms: ['புளி', 'puli', 'pulli', 'tamarind', 'imli', 'इमली'] }
 ];
 
 (async () => {
@@ -117,24 +196,42 @@ const ITEMS = [
     process.exit(2);
   }
   const T = await signIn(EMAIL, NAME);
-  if (!T) { console.log('could not sign in as ' + EMAIL); process.exit(1); }
+  if (!T) {
+    console.log('could not sign in as ' + EMAIL);
+    process.exit(1);
+  }
 
   /* ⚠️ READ FIRST, so a second run does not double the catalogue. Matching on name+variant because that pair is
      what makes two rows different products. */
   const existing = await j('/api/products?limit=300', { token: T });
-  const have = new Set(((existing.b && (existing.b.items || existing.b.products || existing.b)) || [])
-    .map((x) => { const d = x.item_data || x; return String(d.name || '').toLowerCase() + '|' + String(d.variant || '').toLowerCase(); }));
+  const have = new Set(
+    ((existing.b && (existing.b.items || existing.b.products || existing.b)) || []).map((x) => {
+      const d = x.item_data || x;
+      return String(d.name || '').toLowerCase() + '|' + String(d.variant || '').toLowerCase();
+    })
+  );
 
-  let added = 0, skipped = 0, failed = 0, unpriced = 0;
+  let added = 0,
+    skipped = 0,
+    failed = 0,
+    unpriced = 0;
   for (const it of ITEMS) {
     const key = it.name.toLowerCase() + '|' + String(it.variant || '').toLowerCase();
-    if (have.has(key)) { skipped++; continue; }
+    if (have.has(key)) {
+      skipped++;
+      continue;
+    }
     const item_data = { name: it.name, unit: it.unit, synonyms: it.synonyms };
     if (it.variant) item_data.variant = it.variant;
-    if (it.price !== undefined) item_data.price = it.price; else unpriced++;
+    if (it.price !== undefined) item_data.price = it.price;
+    else unpriced++;
     const r = await j('/api/products', { method: 'POST', token: T, body: { item_data } });
-    if (r.status === 200) { added++; }
-    else { failed++; console.log('  ✗ ' + it.name + (it.variant ? ' · ' + it.variant : '') + ' → ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 140)); }
+    if (r.status === 200) {
+      added++;
+    } else {
+      failed++;
+      console.log('  ✗ ' + it.name + (it.variant ? ' · ' + it.variant : '') + ' → ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 140));
+    }
   }
 
   console.log('\n── catalogue seeded into ' + EMAIL + ' ──────────────────────────────────────\n');
@@ -148,4 +245,7 @@ const ITEMS = [
   console.log('    தக்காளி · thakkali · takkali · nattu thakkali · tamatar');
   console.log('    உருளைக்கிழங்கு · urulaikizhangu · urulai · aloo');
   console.log('    கொத்தமல்லி · kothamalli · dhania · cilantro\n');
-})().catch((e) => { console.error('SEED ERROR', e); process.exit(1); });
+})().catch((e) => {
+  console.error('SEED ERROR', e);
+  process.exit(1);
+});

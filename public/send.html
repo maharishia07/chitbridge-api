@@ -158,10 +158,11 @@
 const API = '';
 const token = localStorage.getItem('cb_token');
 const entity = JSON.parse(localStorage.getItem('cb_entity') || '{}');
-if (!token) { window.location.href = '/'; }
+if (!token) {
+  window.location.href = '/';
+}
 
-document.getElementById('entity-info').textContent =
-  `${entity.display_name} · ${entity.bridge_id}`;
+document.getElementById('entity-info').textContent = `${entity.display_name} · ${entity.bridge_id}`;
 
 let selectedReceivers = [];
 let lineItems = [];
@@ -171,7 +172,10 @@ let searchTimer = null;
 async function searchReceivers(q) {
   clearTimeout(searchTimer);
   const resultsEl = document.getElementById('receiver-results');
-  if (q.length < 2) { resultsEl.style.display = 'none'; return; }
+  if (q.length < 2) {
+    resultsEl.style.display = 'none';
+    return;
+  }
 
   searchTimer = setTimeout(async () => {
     try {
@@ -180,8 +184,7 @@ async function searchReceivers(q) {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
-      const results = (data.results || [])
-        .filter(r => !selectedReceivers.find(s => s.id === r.identity_id));
+      const results = (data.results || []).filter((item) => !selectedReceivers.find((s) => s.id === item.identity_id));
 
       if (results.length === 0) {
         resultsEl.innerHTML = '<div class="result-item" style="color:#999">No connected entities found</div>';
@@ -189,12 +192,16 @@ async function searchReceivers(q) {
         return;
       }
 
-      resultsEl.innerHTML = results.map(r => `
-        <div class="result-item" onclick="addReceiver('${r.identity_id}','${r.display_name}','${r.bridge_id}')">
-          <div class="result-name">${r.display_name}</div>
-          <div class="result-id">${r.bridge_id}</div>
+      resultsEl.innerHTML = results
+        .map(
+          (item) => `
+        <div class="result-item" onclick="addReceiver('${item.identity_id}','${item.display_name}','${item.bridge_id}')">
+          <div class="result-name">${item.display_name}</div>
+          <div class="result-id">${item.bridge_id}</div>
         </div>
-      `).join('');
+      `
+        )
+        .join('');
       resultsEl.style.display = 'block';
     } catch (err) {
       resultsEl.style.display = 'none';
@@ -203,7 +210,7 @@ async function searchReceivers(q) {
 }
 
 function addReceiver(id, name, bridgeId) {
-  if (selectedReceivers.find(r => r.id === id)) return;
+  if (selectedReceivers.find((item) => item.id === id)) return;
   selectedReceivers.push({ id, name, bridgeId });
   renderReceivers();
   document.getElementById('receiver-search').value = '';
@@ -211,18 +218,22 @@ function addReceiver(id, name, bridgeId) {
 }
 
 function removeReceiver(id) {
-  selectedReceivers = selectedReceivers.filter(r => r.id !== id);
+  selectedReceivers = selectedReceivers.filter((item) => item.id !== id);
   renderReceivers();
 }
 
 function renderReceivers() {
   const el = document.getElementById('receivers-display');
-  el.innerHTML = selectedReceivers.map(r => `
+  el.innerHTML = selectedReceivers
+    .map(
+      (item) => `
     <span class="receiver-tag">
-      ${r.name}
-      <button onclick="removeReceiver('${r.id}')">×</button>
+      ${item.name}
+      <button onclick="removeReceiver('${item.id}')">×</button>
     </span>
-  `).join('');
+  `
+    )
+    .join('');
 }
 
 // ── Line items ───────────────────────────────────────────────
@@ -233,22 +244,23 @@ function addLineItem() {
 }
 
 function removeLineItem(id) {
-  lineItems = lineItems.filter(i => i.id !== id);
+  lineItems = lineItems.filter((item) => item.id !== id);
   renderLineItems();
 }
 
 function updateLineItem(id, field, value) {
-  const item = lineItems.find(i => i.id === id);
+  const item = lineItems.find((item) => item.id === id);
   if (item) {
-    item[field] = field === 'quantity' || field === 'price'
-      ? parseFloat(value) || 0 : value;
+    item[field] = field === 'quantity' || field === 'price' ? parseFloat(value) || 0 : value;
   }
   updateTotal();
 }
 
 function renderLineItems() {
   const el = document.getElementById('line-items');
-  el.innerHTML = lineItems.map(item => `
+  el.innerHTML = lineItems
+    .map(
+      (item) => `
     <div class="line-item">
       <div class="line-item-grid">
         <input type="text" value="${item.name}" placeholder="Item name"
@@ -263,15 +275,16 @@ function renderLineItems() {
                 style="padding:7px 10px; font-size:16px;">×</button>
       </div>
     </div>
-  `).join('');
+  `
+    )
+    .join('');
   updateTotal();
 }
 
 function updateTotal() {
-  const total = lineItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+  const total = lineItems.reduce((sum, item) => sum + item.quantity * item.price, 0);
   const currency = document.getElementById('currency').value;
-  document.getElementById('total-display').textContent =
-    `${currency} ${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  document.getElementById('total-display').textContent = `${currency} ${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   return total;
 }
 
@@ -291,18 +304,18 @@ async function sendChit() {
 
   // Prepare line items with total
   const items = lineItems
-    .filter(i => i.name.trim())
-    .map(i => ({
-      name: i.name.trim(),
-      quantity: i.quantity,
-      unit: i.unit,
-      price: i.price,
-      total: Math.round(i.quantity * i.price * 100) / 100,
+    .filter((item) => item.name.trim())
+    .map((item) => ({
+      name: item.name.trim(),
+      quantity: item.quantity,
+      unit: item.unit,
+      price: item.price,
+      total: Math.round(item.quantity * item.price * 100) / 100,
       currency_code: currency
     }));
 
   const payload = {
-    receivers: selectedReceivers.map(r => ({ entity_id: r.id })),
+    receivers: selectedReceivers.map((item) => ({ entity_id: item.id })),
     purpose,
     manual_subject: manual_subject || undefined,
     line_items: items.length > 0 ? items : undefined
@@ -346,8 +359,9 @@ async function sendChit() {
     btn.disabled = false;
     btn.textContent = 'Send Chit →';
 
-    setTimeout(() => { window.location.href = '/inbox.html'; }, 2000);
-
+    setTimeout(() => {
+      window.location.href = '/inbox.html';
+    }, 2000);
   } catch (err) {
     msgEl.innerHTML = '<div class="msg error">Network error — please try again</div>';
     btn.disabled = false;

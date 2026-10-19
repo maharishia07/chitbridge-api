@@ -5,14 +5,30 @@
 // PREREQ: migration b69_connector_receipt.sql applied, and this connectors.js deployed. Run: node scripts/erp-connector.js
 const crypto = require('crypto');
 const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
-let PASS = 0, FAIL = 0;
-function check(n, ok, d) { if (ok) { PASS++; console.log('  ✓ ' + n + (d ? '  ' + d : '')); } else { FAIL++; console.log('  ✗ ' + n + (d ? '  — ' + d : '')); } }
+let PASS = 0,
+  FAIL = 0;
+function check(n, ok, d) {
+  if (ok) {
+    PASS++;
+    console.log('  ✓ ' + n + (d ? '  ' + d : ''));
+  } else {
+    FAIL++;
+    console.log('  ✗ ' + n + (d ? '  — ' + d : ''));
+  }
+}
 
 // Mirror of the server's canonical hash so we can independently verify the receipt's payload_hash.
-const stableStringify = (v) => {
-  if (v === null || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
-  if (Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
-  return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stableStringify(v[k])).join(',') + '}';
+const stableStringify = (list) => {
+  if (list === null || typeof list !== 'object') return JSON.stringify(list === undefined ? null : list);
+  if (Array.isArray(list)) return '[' + list.map(stableStringify).join(',') + ']';
+  return (
+    '{' +
+    Object.keys(list)
+      .sort()
+      .map((item) => JSON.stringify(item) + ':' + stableStringify(list[item]))
+      .join(',') +
+    '}'
+  );
 };
 const hashPayload = (v) => crypto.createHash('sha256').update(stableStringify(v)).digest('hex');
 
@@ -20,14 +36,17 @@ async function api(m, p, { token, key, body } = {}) {
   const h = { 'Content-Type': 'application/json' };
   if (token) h.Authorization = 'Bearer ' + token;
   if (key) h['X-Bridge-Key'] = key;
-  const r = await fetch(BASE + p, { method: m, headers: h, body: body ? JSON.stringify(body) : undefined });
-  let j = null; try { j = await r.json(); } catch (_) {}
-  return { status: r.status, json: j };
+  const reply = await fetch(BASE + p, { method: m, headers: h, body: body ? JSON.stringify(body) : undefined });
+  let j = null;
+  try {
+    j = await reply.json();
+  } catch (_) {}
+  return { status: reply.status, json: j };
 }
 async function login(name) {
-  const r = await api('POST', '/api/entities/register', { body: { email: name } });
-  const o = r.json && r.json.dev_otp;
-  const v = await api('POST', '/api/entities/verify', { body: { email: r.json.email, otp: o } });
+  const reply = await api('POST', '/api/entities/register', { body: { email: name } });
+  const o = reply.json && reply.json.dev_otp;
+  const v = await api('POST', '/api/entities/verify', { body: { email: reply.json.email, otp: o } });
   return v.json.token;
 }
 
@@ -36,12 +55,15 @@ async function login(name) {
   const A = await login('Alpha Timbers');
   const B = await login('Beta Traders');
   // discover Beta's entity id (the counterparty) so the outcome chit has somewhere to co-land
-  const bMe = await api('GET', '/api/entities/me', { token: B });
-  const betaId = bMe.json && (bMe.json.entity_id || bMe.json.identity_id || (bMe.json.entity && bMe.json.entity.identity_id));
+  const reply = await api('GET', '/api/entities/me', { token: B });
+  const betaId = reply.json && (reply.json.entity_id || reply.json.identity_id || (reply.json.entity && reply.json.entity.identity_id));
 
   // 1) create an ERP connector — it MUST get a credential (unlike IoT pull)
   const nm = 'ERP ' + Date.now().toString().slice(-5);
-  const c = await api('POST', '/api/connectors', { token: A, body: { display_name: nm, type: 'erp', config: { folder: 'ERP Inbox', counterparty_entity_id: betaId } } });
+  const c = await api('POST', '/api/connectors', {
+    token: A,
+    body: { display_name: nm, type: 'erp', config: { folder: 'ERP Inbox', counterparty_entity_id: betaId } }
+  });
   const id = c.json && c.json.connector && c.json.connector.identity_id;
   const key = c.json && c.json.provision_key;
   check('ERP connector created', !!id, id);
@@ -49,7 +71,17 @@ async function login(name) {
   if (!id || !key) return done();
 
   // 2) push a document → a receipt is created, an outcome chit is emitted
-  const doc1 = { doc_type: 'invoice', doc_ref: 'INV-1001', amount: 4200, currency: 'INR', lines: [{ sku: 'TIMBER-A', qty: 10 }, { sku: 'TIMBER-B', qty: 3 }], notes: 'raw payload body that must NOT be persisted' };
+  const doc1 = {
+    doc_type: 'invoice',
+    doc_ref: 'INV-1001',
+    amount: 4200,
+    currency: 'INR',
+    lines: [
+      { sku: 'TIMBER-A', qty: 10 },
+      { sku: 'TIMBER-B', qty: 3 }
+    ],
+    notes: 'raw payload body that must NOT be persisted'
+  };
   const p1 = await api('POST', '/api/connectors/erp-ingest', { key, body: { payload: doc1, to: betaId } });
   check('document accepted', p1.status === 200 && p1.json && p1.json.message === 'received', 'status ' + p1.status);
   check('receipt id returned', !!(p1.json && p1.json.receipt_id));
@@ -76,9 +108,9 @@ async function login(name) {
   const led = await api('GET', '/api/connectors/' + id + '/receipts', { token: A });
   const rows = (led.json && led.json.receipts) || [];
   check('receipt ledger readable by owner', led.status === 200 && rows.length >= 2, rows.length + ' receipts');
-  const leak = rows.some(r => 'payload' in r || 'lines' in r || 'notes' in r || 'body' in r);
+  const leak = rows.some((item) => 'payload' in item || 'lines' in item || 'notes' in item || 'body' in item);
   check('ledger carries NO raw payload (only hash/outcome)', !leak);
-  const inv = rows.find(r => r.doc_ref === 'INV-1001');
+  const inv = rows.find((item) => item.doc_ref === 'INV-1001');
   check('receipt keeps doc_type/ref + hash', !!(inv && inv.doc_type === 'invoice' && inv.payload_hash));
 
   // 6) RLS ISOLATION — Beta cannot read Alpha's ERP receipt ledger
@@ -99,11 +131,20 @@ async function login(name) {
   check('bad key → 401', badKey.status === 401, 'status ' + badKey.status);
   const noBody = await api('POST', '/api/connectors/erp-ingest', { key, body: { doc_ref: 'X' } });
   check('missing payload → 400', noBody.status === 400, 'status ' + noBody.status);
-  const iot = await api('POST', '/api/connectors', { token: A, body: { display_name: 'IOT ' + Date.now().toString().slice(-4), type: 'iot', config: { mode: 'push' } } });
+  const iot = await api('POST', '/api/connectors', {
+    token: A,
+    body: { display_name: 'IOT ' + Date.now().toString().slice(-4), type: 'iot', config: { mode: 'push' } }
+  });
   const iotKey = iot.json && iot.json.provision_key;
   const wrongType = await api('POST', '/api/connectors/erp-ingest', { key: iotKey, body: { payload: doc2 } });
   check('IoT key on ERP path → 409 wrong type', wrongType.status === 409, 'status ' + wrongType.status);
 
   done();
-})().catch(e => { console.error(e); done(); });
-function done() { console.log('\n== RESULT ==  PASS ' + PASS + '  ·  FAIL ' + FAIL); process.exit(0); }
+})().catch((e) => {
+  console.error(e);
+  done();
+});
+function done() {
+  console.log('\n== RESULT ==  PASS ' + PASS + '  ·  FAIL ' + FAIL);
+  process.exit(0);
+}

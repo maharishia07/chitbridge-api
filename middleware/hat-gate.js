@@ -33,7 +33,7 @@
  * hat self-contradictory.
  */
 'use strict';
-const access = require('../lib/access');   // b173 — viewer / commenter / editor
+const access = require('../lib/access'); // b173 — viewer / commenter / editor
 
 /* ⚠️ WRITE_HATS is gone — lib/access.js owns that question now. It was one of eighteen places comparing
    against 'manager' / 'audit' / 'mis' / 'view_only' across six files. */
@@ -61,13 +61,13 @@ const SELF_SCOPED = [
   /* M05: renew, sign out, list and end ONE'S OWN sessions. Ending someone else's session or removing a device is
      owner-only, and routes/signin.js refuses it itself — an actor is never the owner. */
   ['/signin', 'a person’s own sessions — signing out cannot require permission to sign out'],
-  ['/notifications', 'clearing one\'s own notifications changes no record — b164 writes only a dismissal'],
+  ['/notifications', "clearing one's own notifications changes no record — b164 writes only a dismissal"],
   /* ⚠️⚠️ '/assist' WAS HERE, BY PREFIX — and five routes under it WRITE business records (external review
      2026-09-25, fixed 2026-09-28): catalogue-adopt, catalogue-source (PUT with an empty list wipes a brand's
      shared source that every member store adopts), container, region-override, publish. A View-only co-assist
      could do all five. Asking is now opened by EXACT path below, and the writes are gated like any other. */
   ['/metrics', 'reporting — which is precisely what the mis hat is for'],
-  ['/exports', 'the same'],
+  ['/exports', 'the same']
 
   /**
    * ⭐⭐ MESSAGING IS NOT A WRITE TO THE RECORD. Athi, 2026-08-20: *"Though read only, you can pass messages…
@@ -102,7 +102,7 @@ const SELF_SCOPED_EXACT = [
   [/^\/assist\/conform$/, 'checking a product against a standard — a read'],
   [/^\/assist\/catalogue-structure$/, 'a proposed catalogue structure, returned, not saved'],
   [/^\/assist\/gap$/, 'deprecated: logs a line and writes nothing (capture is the chit flow)'],
-  [/^\/assist\/resolve$/, 'resolving a governed view — a read'],
+  [/^\/assist\/resolve$/, 'resolving a governed view — a read']
 ];
 
 /** Verbs that change something. GET/HEAD/OPTIONS are never gated. */
@@ -110,8 +110,8 @@ const MUTATING = ['POST', 'PATCH', 'PUT', 'DELETE'];
 
 /* ⚠️ Keyed by LEVEL now, not by the five old hat names. b173 collapsed those to three. */
 const SAYS = {
-  viewer:    'View-only',
-  commenter: 'Comment-only — read and reply internally',
+  viewer: 'View-only',
+  commenter: 'Comment-only — read and reply internally'
 };
 
 module.exports = function hatGate(req, res, next) {
@@ -152,9 +152,11 @@ module.exports = function hatGate(req, res, next) {
    *
    * ⚠️ The query string is stripped: '/assist/ask?x=1' must match '/assist'.
    */
-  const p = String(req.originalUrl || req.path || '').split('?')[0].replace(/^\/api(?=\/|$)/, '');
-  if (SELF_SCOPED.some(([prefix]) => p === prefix || p.startsWith(prefix + '/'))) return next();
-  if (SELF_SCOPED_EXACT.some(([re]) => re.test(p))) return next();
+  const text = String(req.originalUrl || req.path || '')
+    .split('?')[0]
+    .replace(/^\/api(?=\/|$)/, '');
+  if (SELF_SCOPED.some(([prefix]) => text === prefix || text.startsWith(prefix + '/'))) return next();
+  if (SELF_SCOPED_EXACT.some(([re]) => re.test(text))) return next();
 
   /**
    * ⚠️ THE MESSAGE NAMES THE HAT AND WHO CAN CHANGE IT. A bare "Forbidden" tells someone they are blocked and
@@ -170,9 +172,9 @@ module.exports = function hatGate(req, res, next) {
   const lvl = access.levelOf(req.identity);
   return res.status(403).json({
     error: 'Not permitted',
-    message: 'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. '
-      + 'The account owner can change this in Co-assists.',
-    access_level: lvl,
+    message:
+      'Your access is set to "' + (SAYS[lvl] || lvl) + '", which can read records but not change them. ' + 'The account owner can change this in Co-assists.',
+    access_level: lvl
   });
 };
 module.exports.SELF_SCOPED = SELF_SCOPED;

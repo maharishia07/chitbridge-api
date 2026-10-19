@@ -7,19 +7,19 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
-const visibilityCap = require('../lib/visibility-cap');   // a choice, bounded by a cap
+const visibilityCap = require('../lib/visibility-cap'); // a choice, bounded by a cap
 const { query, withEntity } = require('../db');
 const log = require('../lib/logger');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
-const { sendOtpEmail } = require('../lib/notify');   // shared OTP email sender (F2 — extracted from here)
-const { resolveEntityGovernance, currencyRefusal } = require('../lib/govresolve');   // resolve the entity's governance from attributes
+const { sendOtpEmail } = require('../lib/notify'); // shared OTP email sender (F2 — extracted from here)
+const { resolveEntityGovernance, currencyRefusal } = require('../lib/govresolve'); // resolve the entity's governance from attributes
 
 // ⚠️ ONE generator (lib/bridgeid.js). This was SIX copies and the CSPRNG hardening reached only one of them —
 //    not this one, which is where every entity's bridge id is minted. Same call site, now a strong PRNG.
 const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
-const schema = require('../lib/schema');   // b176 — never name a column from an unrun migration
-const handleLib = require('../lib/handle');   // slug + check — the same rules the network root uses
+const schema = require('../lib/schema'); // b176 — never name a column from an unrun migration
+const handleLib = require('../lib/handle'); // slug + check — the same rules the network root uses
 
 // DEV_OTP = fixed OTP for testing — on a LOCAL stack only (lib/dev-otp.js, SEC1); testers elsewhere use TESTER_CODE
 // No DEV_OTP = random 6-digit OTP
@@ -70,24 +70,26 @@ async function registerNew(req, res) {
     const verdict = handleLib.checkRoot(wanted);
     if (!verdict.ok) {
       return res.status(400).json({
-        error: 'Choose a User ID', code: 'USER_ID_INVALID', message: verdict.reason,
-        suggestion: handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null,
+        error: 'Choose a User ID',
+        code: 'USER_ID_INVALID',
+        message: verdict.reason,
+        suggestion: handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null
       });
     }
     /* ⚠️ UNIQUE PLATFORM-WIDE, refused HERE — the unique index on lower(user_id) would raise a 500 that says nothing usable */
     const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1', [verdict.value]);
     if (taken.rows.length) {
       return res.status(409).json({
-        error: 'That User ID is taken', code: 'USER_ID_TAKEN',
-        message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.',
+        error: 'That User ID is taken',
+        code: 'USER_ID_TAKEN',
+        message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.'
       });
     }
     /**
      * ⚠️⚠️ A fixture registration is a CUSTOMER that is a TEST (b246 emptied entity_kind = 'test'). ⚠⚠ population, NOT
      * is_test: b249 made is_test GENERATED ALWAYS, and naming it here failed every sign-up with 428C9.
      */
-    const mark = require('../lib/istest')
-      .atRegistration(email, await require('../lib/istest').ready());
+    const mark = require('../lib/istest').atRegistration(email, await require('../lib/istest').ready());
     /**
      * ⭐⭐ FX-AU1: THE GUESS THE OWNER WAS SHOWN IS STORED IN THE WRITE THAT CREATES THE SHOP. The governance panel showed a Sydney browser
      * Australia · AUD · Australia/Sydney; until this the INSERT named no country, the column default ('IN') landed, and verify's
@@ -99,21 +101,25 @@ async function registerNew(req, res) {
     /* ⭐ GOV-SPIN: a regional spin STATES its country (installation.country, b382) — that is OFFERED first, the browser's guess only when the
        installation states none. The offer is stored here (as FX-AU1 stored the guess); the registrant ACCEPTS or changes it at verify (reg-agree). */
     const guess = CS.offerOf(CS.guessOf(req.body.context), await CS.atSignup());
-    const more = [];   /* [column, value] beyond the fixed seven (country among them, NULL when no guess), each named only when known */
+    const more = []; /* [column, value] beyond the fixed seven (country among them, NULL when no guess), each named only when known */
     if (mark.population !== null) more.push(['population', mark.population]);
     if (guess && guess.currency) more.push(['currency_code', guess.currency]);
-    if (guess && guess.timezone && await schema.hasColumn('identities', 'timezone')) more.push(['timezone', guess.timezone]);
+    if (guess && guess.timezone && (await schema.hasColumn('identities', 'timezone'))) more.push(['timezone', guess.timezone]);
     await query(
-      `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind, country`
-      + more.map(([c]) => ', ' + c).join('')
-      + `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7`
-      + more.map((_, i) => ', $' + (i + 8)).join('') + ')',
+      `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind, country` +
+        more.map(([c]) => ', ' + c).join('') +
+        `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7` +
+        more.map((_, index) => ', $' + (index + 8)).join('') +
+        ')',
       [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, (guess && guess.country) || null].concat(more.map(([, v]) => v))
     );
     /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
     if (guess) {
-      try { await withEntity(identity_id, (h) => CS.noteGuess(h, identity_id, guess)); }
-      catch (e) { console.log('[register] guess source NOT STORED for ' + identity_id + ': ' + (e && e.message)); }
+      try {
+        await withEntity(identity_id, (h) => CS.noteGuess(h, identity_id, guess));
+      } catch (e) {
+        console.log('[register] guess source NOT STORED for ' + identity_id + ': ' + (e && e.message));
+      }
     }
     console.log(`New entity registered: ${display_name} / ${bridge_id}`);
     return await signin.sendCode(req, res, { identity_id, email, display_name }, {});
@@ -137,8 +143,11 @@ router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, valida
 router.get('/constitutions', async (req, res) => {
   const CS = require('../lib/country-setup');
   const at = await CS.atSignup();
-  const spin = { installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null, timezone: at.timezone },
-                 allowed_countries: at.allowed, countries: CS.offered(at, req.query && req.query.tz) };
+  const spin = {
+    installation: { key: at.installation.key, country: at.installation.country, name: at.installation.name || null, timezone: at.timezone },
+    allowed_countries: at.allowed,
+    countries: CS.offered(at, req.query && req.query.tz)
+  };
   try {
     const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
       FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
@@ -260,8 +269,10 @@ const policyEntity = (req) => auth.entityOf(req);
    server refuses with. */
 const POLICY_BOUND_WHY = 'Set by the platform for every shop.';
 function policyMay(req) {
-  const owner = require('../lib/owner'), out = {};
-  for (const k of Object.keys(policy.FLAGS)) out[k] = policy.FLAGS[k].may === 'owner' ? owner.may(req, policy.FLAGS[k].may_why) : { ok: true, code: null, why: null };
+  const owner = require('../lib/owner'),
+    out = {};
+  for (const k of Object.keys(policy.FLAGS))
+    out[k] = policy.FLAGS[k].may === 'owner' ? owner.may(req, policy.FLAGS[k].may_why) : { ok: true, code: null, why: null };
   for (const k of Object.keys(policy.BOUND)) out[k] = { ok: false, code: 'PLATFORM_BOUND', why: POLICY_BOUND_WHY };
   return out;
 }
@@ -272,18 +283,26 @@ router.get('/policy', auth, async (req, res) => {
   try {
     const { flags, country } = await policy.read(policyEntity(req));
     res.json({ flags, country, schema: policy.schemaFor(country), bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) });
-  } catch (err) { res.status(500).json({ error: 'Policy read failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Policy read failed', message: safeErr(err) });
+  }
 });
 
 router.patch('/policy', auth, async (req, res) => {
   /* ⚠️ who may change a flag is on the flag (policy.FLAGS[k].may — system_folders, books): the owner's, not a back door for a co-assist or a key.
      The code is the one owner code (OWNER_ONLY) — the same the GET's may[flag] carries, so a screen branches on one word. */
   const refused = policy.refusalFor(req.body, require('../lib/owner').isOwner(req));
-  if (refused) return res.status(403).json({ error: 'Only the owner may do this.', code: require('../lib/owner').OWNER_ONLY, may: false, why: refused, message: refused });
-  try { res.json({ flags: await policy.set(policyEntity(req), req.body || {}) }); }
-  catch (err) {
+  if (refused)
+    return res.status(403).json({ error: 'Only the owner may do this.', code: require('../lib/owner').OWNER_ONLY, may: false, why: refused, message: refused });
+  try {
+    res.json({ flags: await policy.set(policyEntity(req), req.body || {}) });
+  } catch (err) {
     /* a refused value carries its code (REG_KIND_NOT_OFFERED: a kind this country's pack does not offer) and the sentence; a fault never leaks e.message */
-    res.status(err.status || 500).json({ error: 'Policy update failed', code: err.status && err.code ? err.code : undefined, message: err.status ? (err.message || safeErr(err)) : safeErr(err) });
+    res.status(err.status || 500).json({
+      error: 'Policy update failed',
+      code: err.status && err.code ? err.code : undefined,
+      message: err.status ? err.message || safeErr(err) : safeErr(err)
+    });
   }
 });
 
@@ -331,8 +350,15 @@ router.get('/me', auth, async (req, res) => {
      * unchanged — hasColumns writes exactly the entries hasColumn would have. Only the trip count moved.
      */
     const _cols = await schema.hasColumns('identities', [
-      'timezone', 'supplies', 'storefront_access', 'locale_prefs', 'ui_prefs', 'policy_flags',
-      'catalogue_visibility', 'plan', 'params_override',
+      'timezone',
+      'supplies',
+      'storefront_access',
+      'locale_prefs',
+      'ui_prefs',
+      'policy_flags',
+      'catalogue_visibility',
+      'plan',
+      'params_override'
     ]);
     const _tzCol = _cols.timezone;
     const _supCol = _cols.supplies;
@@ -431,13 +457,17 @@ router.get('/me', auth, async (req, res) => {
      */
     if (req.identity.identity_type !== 'actor' && result.rows[0].user_id) {
       try {
-        const prefix = String(result.rows[0].user_id).toLowerCase().replace(/([%_\\])/g, '\\$1') + '.';
+        const prefix =
+          String(result.rows[0].user_id)
+            .toLowerCase()
+            .replace(/([%_\\])/g, '\\$1') + '.';
         const nc = await query(
           `SELECT count(*)::int AS n FROM identities
             WHERE LOWER(user_id) LIKE $1 || '%' ESCAPE '\\'
               AND identity_type = 'entity' AND status = 'active'
               AND catalogue_visibility = 'public'`,
-          [prefix]);
+          [prefix]
+        );
         result.rows[0].network_public_count = nc.rows[0] ? nc.rows[0].n : 0;
       } catch (_) {
         /* ⚠️ ABSENT, NOT ZERO. A failed count must not render as "nothing under you is public" — that is a
@@ -448,26 +478,27 @@ router.get('/me', auth, async (req, res) => {
 
     if (req.identity.identity_type === 'actor') {
       result.rows[0].identity_type = 'actor';
-      result.rows[0].hat           = req.identity.hat || null;
-      result.rows[0].access_level  = req.identity.access_level || null;
-      result.rows[0].whole_entity  = req.identity.whole_entity === true;
+      result.rows[0].hat = req.identity.hat || null;
+      result.rows[0].access_level = req.identity.access_level || null;
+      result.rows[0].whole_entity = req.identity.whole_entity === true;
       result.rows[0].parent_entity_id = req.identity.parent_entity_id || null;
     } else {
       result.rows[0].identity_type = 'entity';
     }
 
-  /**
-   * ⚠️⚠️ A WRITE ON THE HOTTEST READ PATH, AND THE READER WAITED FOR IT. `last_active_at` is telemetry — no
-   * part of this response depends on it — yet every profile paint blocked on an UPDATE to `identities`, the
-   * busiest table in the product. Measured 2026-08-23: the floor for any authed call is ~500 ms
-   * (`/entities/policy` and `/connections/list` both), and `/entities/me` was taking 3,193 ms.
-   *
-   * ⭐ Not awaited now. The response no longer carries the cost of recording that it happened. The write still
-   * runs; if it fails nobody is blocked, and the failure is logged rather than swallowed — a "last seen"
-   * stamp that quietly stops updating is a fact people later rely on.
-   */
-  query('UPDATE identities SET last_active_at = NOW() WHERE identity_id = $1', [req.identity.identity_id])
-    .catch((e) => log.warn('last_active_at not recorded', { id: req.id, err: e.message }));
+    /**
+     * ⚠️⚠️ A WRITE ON THE HOTTEST READ PATH, AND THE READER WAITED FOR IT. `last_active_at` is telemetry — no
+     * part of this response depends on it — yet every profile paint blocked on an UPDATE to `identities`, the
+     * busiest table in the product. Measured 2026-08-23: the floor for any authed call is ~500 ms
+     * (`/entities/policy` and `/connections/list` both), and `/entities/me` was taking 3,193 ms.
+     *
+     * ⭐ Not awaited now. The response no longer carries the cost of recording that it happened. The write still
+     * runs; if it fails nobody is blocked, and the failure is logged rather than swallowed — a "last seen"
+     * stamp that quietly stops updating is a fact people later rely on.
+     */
+    query('UPDATE identities SET last_active_at = NOW() WHERE identity_id = $1', [req.identity.identity_id]).catch((e) =>
+      log.warn('last_active_at not recorded', { id: req.id, err: e.message })
+    );
     // the ENTITY's capability selection (add-ons; core is implicit) — drives the itemised capability toggles. [b55/connector]
     // Defensive: defaults to [] if the b55 column isn't present in this environment.
     let capabilities = [];
@@ -485,20 +516,24 @@ router.get('/me', auth, async (req, res) => {
        * capability list instead of their employer's, silently removing every capability-gated nav item. A round
        * trip saved by answering the wrong question is not a saving.
        */
-      const c = (eid === req.identity.identity_id && _me)
-        ? { rows: [_me] }
-        : await query('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
+      const c = eid === req.identity.identity_id && _me ? { rows: [_me] } : await query('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
       capabilities = (c.rows[0] && c.rows[0].capabilities) || [];
-      capabilities_debug = (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8)
-        + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);
-    } catch (e) { capabilities_debug = 'ERR: ' + String((e && e.message) || e).slice(0, 140); }
+      capabilities_debug =
+        (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8) + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);
+    } catch (e) {
+      capabilities_debug = 'ERR: ' + String((e && e.message) || e).slice(0, 140);
+    }
     // NOTE: the web client's api() runs every body through unwrap(), which returns j.entity for /me and
     // DROPS sibling keys. So the capability selection MUST ride INSIDE entity to reach SESSION.capabilities
     // (which gates the itemised capability nav). Top-level copies kept for direct/API callers + curl. [b55/connector]
     // Resolve the entity's GOVERNANCE from attributes (constitution · installation · basics · allowances · jurisdiction).
     // Best-effort; rides INSIDE entity (unwrap() drops siblings) so the client can read it. Null if not resolvable yet.
     let governance = null;
-    try { governance = await resolveEntityGovernance(auth.entityOf(req)); } catch (e) { log.fellBack('entities GET /me: failed — carried on without it', e); }
+    try {
+      governance = await resolveEntityGovernance(auth.entityOf(req));
+    } catch (e) {
+      log.fellBack('entities GET /me: failed — carried on without it', e);
+    }
     /**
      * ⭐⭐ READ FROM THE ROW WE ALREADY HAVE — these were TWO EXTRA ROUND TRIPS against `identities` for the
      * SAME identity_id the main SELECT above just fetched. On the hottest endpoint on the platform.
@@ -512,9 +547,9 @@ router.get('/me', auth, async (req, res) => {
      * try/catch so that b166 missing where b165 had run still returned the language. Per-column probes give the
      * same guarantee structurally: `locale_prefs` is selected when it exists whether or not `ui_prefs` does.
      */
-    const storefront_access = _sfCol ? (_me.storefront_access || 'browse') : 'browse';
+    const storefront_access = _sfCol ? _me.storefront_access || 'browse' : 'browse';
     const locale_prefs = (_lpCol && _me.locale_prefs) || {};
-    const ui_prefs     = (_upCol && _me.ui_prefs) || {};
+    const ui_prefs = (_upCol && _me.ui_prefs) || {};
     /* ⚠️ Absent the column, `{}` — which reads as "never chosen" and lets every default apply, the same shape
        locale_prefs uses above. Never a guessed value: a made-up preference is worse than no preference. */
     const policy_flags = (_pfCol && _me.policy_flags) || {};
@@ -530,11 +565,29 @@ router.get('/me', auth, async (req, res) => {
          for the same identity_id inside one request. */
       const row = _me;
       let planMenu = null;
-      try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (e) { log.fellBack('entities GET /me: the helper failed — carried on without it', e); }
+      try {
+        const c = await require('./governance').loadActiveConstitution();
+        planMenu = c && c.plan_menu;
+      } catch (e) {
+        log.fellBack('entities GET /me: the helper failed — carried on without it', e);
+      }
       visibility_cap = visibilityCap.capOf({ plan: row.plan, planMenu, paramsOverride: row.params_override || {} });
       catalogue_visibility = visibilityCap.effective(row.catalogue_visibility, visibility_cap);
-    } catch (e) { log.fellBack('entities GET /me: the read failed — carried on without it', e); /* pre-b114 → the default above */ }
-    const entityOut = Object.assign({}, result.rows[0], { capabilities, capabilities_debug, governance, storefront_access, catalogue_visibility, visibility_cap, locale_prefs, ui_prefs, policy_flags, dev_tools: devOtp.mayShowDevTools([result.rows[0].email, result.rows[0].user_id, result.rows[0].bridge_id]) });   // W1: the web's Build preview strip; the names the tester code is checked against
+    } catch (e) {
+      log.fellBack('entities GET /me: the read failed — carried on without it', e); /* pre-b114 → the default above */
+    }
+    const entityOut = Object.assign({}, result.rows[0], {
+      capabilities,
+      capabilities_debug,
+      governance,
+      storefront_access,
+      catalogue_visibility,
+      visibility_cap,
+      locale_prefs,
+      ui_prefs,
+      policy_flags,
+      dev_tools: devOtp.mayShowDevTools([result.rows[0].email, result.rows[0].user_id, result.rows[0].bridge_id])
+    }); // W1: the web's Build preview strip; the names the tester code is checked against
     /**
      * ⭐⭐ ?include= — ONE HTTP ROUND TRIP INSTEAD OF FOUR. Athi, 2026-08-21: *"why do we need a round trip,
      * can't the js send all the required information in one shot and get it from the background? We have built
@@ -559,14 +612,17 @@ router.get('/me', auth, async (req, res) => {
      * error in place: the profile still paints without its channels, which is exactly how it behaves today when
      * one of the four separate fetches fails. Degrade to less, never to nothing.
      */
-    const want = String(req.query.include || '').split(',').map((x) => x.trim()).filter(Boolean);
+    const want = String(req.query.include || '')
+      .split(',')
+      .map((x) => x.trim())
+      .filter(Boolean);
     const included = {};
     if (want.length) {
       const eid = auth.entityOf(req);
       const LOAD = {
         readiness: () => require('../lib/readiness').resolveReadiness(eid),
-        channels:  () => require('../lib/channels').listChannels(eid),
-        vault:     () => require('../lib/profile').getProfile(eid),
+        channels: () => require('../lib/channels').listChannels(eid),
+        vault: () => require('../lib/profile').getProfile(eid)
       };
       /* ⚠️ SEQUENTIAL, NOT Promise.all. The pool is max:10 and these each open their own transaction — three
          in parallel per request means two concurrent readers want six connections. The win here is removing
@@ -576,14 +632,26 @@ router.get('/me', auth, async (req, res) => {
          each ~20 DB round trips across a continent (channels alone opens nine transactions). Three in parallel is three
          connections of a pool of ten — the note above priced that risk when a trip cost 5 ms; at 300 ms the sequential
          wait is the worse failure, and every app open pays it. The real fix is readBatch inside each lib. */
-      const keys = want.filter((k) => Object.prototype.hasOwnProperty.call(LOAD, k));
-      want.filter((k) => keys.indexOf(k) < 0).forEach((k) => { included[k] = { error: 'unknown include' }; });
-      const got = await Promise.all(keys.map((k) => LOAD[k]().then((v) => [k, v], (e) => [k, { error: safeErr(e) }])));
-      got.forEach(([k, v]) => { included[k] = v; });
+      const keys = want.filter((item) => Object.prototype.hasOwnProperty.call(LOAD, item));
+      want
+        .filter((item) => keys.indexOf(item) < 0)
+        .forEach((item) => {
+          included[item] = { error: 'unknown include' };
+        });
+      const list = await Promise.all(
+        keys.map((item) =>
+          LOAD[item]().then(
+            (reply) => [item, reply],
+            (e) => [item, { error: safeErr(e) }]
+          )
+        )
+      );
+      list.forEach(([k, v]) => {
+        included[k] = v;
+      });
     }
 
-    res.json({ entity: entityOut, capabilities, capabilities_debug, governance,
-      ...(want.length ? { included } : {}) });
+    res.json({ entity: entityOut, capabilities, capabilities_debug, governance, ...(want.length ? { included } : {}) });
   } catch (err) {
     console.error('Profile error:', err.message);
     res.status(500).json({ error: 'Failed to get profile', message: safeErr(err) });
@@ -644,7 +712,7 @@ const PREF_SETS = {
     patterns: {
       langs: /^[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*(,[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*){0,2}$/,
       tz: /^[A-Za-z][A-Za-z0-9_+-]{0,30}(\/[A-Za-z0-9_+-]{1,30}){0,2}$/,
-      workdays: /^[1-7](,[1-7]){0,6}$/,
+      workdays: /^[1-7](,[1-7]){0,6}$/
     },
     /**
      * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. BCP 47 admits thousands of valid tags; a whitelist of
@@ -655,17 +723,23 @@ const PREF_SETS = {
      */
     check(prefs) {
       try {
-        const u = ['nu', 'hc', 'ca', 'fw'].filter((k) => prefs[k]).map((k) => `${k}-${prefs[k]}`);
-        const tag = (prefs.locale || prefs.lang || 'en') + (u.length ? '-u-' + u.join('-') : '');
+        const list = ['nu', 'hc', 'ca', 'fw'].filter((item) => prefs[item]).map((item) => `${item}-${prefs[item]}`);
+        const tag = (prefs.locale || prefs.lang || 'en') + (list.length ? '-u-' + list.join('-') : '');
         new Intl.NumberFormat(tag);
         new Intl.DateTimeFormat(tag);
       } catch (_) {
         return 'That combination is not a locale ICU recognises';
       }
       /* the zone is ICU's to judge too (RangeError for one it does not know) — never a hand-kept list */
-      if (prefs.tz) { try { new Intl.DateTimeFormat('en', { timeZone: prefs.tz }); } catch (_) { return 'Unknown time zone'; } }
+      if (prefs.tz) {
+        try {
+          new Intl.DateTimeFormat('en', { timeZone: prefs.tz });
+        } catch (_) {
+          return 'Unknown time zone';
+        }
+      }
       return null;
-    },
+    }
   },
   /**
    * Appearance. ⚠️ HERE A CLOSED LIST IS RIGHT, and the contrast with locale above is the point: these are OUR
@@ -675,17 +749,26 @@ const PREF_SETS = {
    */
   ui: {
     column: 'ui_prefs',
-    keys: ['theme', 'fs', 'motion', 'stripes', 'edition', 'font', 'weight', 'kural'],   /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */   /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */
+    keys: [
+      'theme',
+      'fs',
+      'motion',
+      'stripes',
+      'edition',
+      'font',
+      'weight',
+      'kural'
+    ] /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */ /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */,
     check(prefs) {
-      if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font';   /* avatar.js FONTS */
+      if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font'; /* avatar.js FONTS */
       if (prefs.weight && !['normal', 'bold'].includes(prefs.weight)) return 'Unknown text weight';
       if (prefs.stripes && !['off', 'light', 'strong'].includes(prefs.stripes)) return 'Unknown row stripes setting';
       if (prefs.fs && !['s', 'm', 'l', 'xl'].includes(prefs.fs)) return 'Unknown text size';
       if (prefs.motion && !['auto', 'reduce', 'full'].includes(prefs.motion)) return 'Unknown motion setting';
       if (prefs.edition && !/^[a-z][a-z0-9-]{0,23}$/.test(prefs.edition)) return 'Unknown edition';
       return null;
-    },
-  },
+    }
+  }
 };
 
 /**
@@ -697,11 +780,15 @@ const MERGE_PATCH_SQL = (col) => `(COALESCE(${col}, '{}'::jsonb) - $3::text[]) |
 
 /** prefPatch(set, body) → { set, drop } or { error }. Whitelisted keys only; '' / null = drop; a bad value = error. */
 function prefPatch(set, body) {
-  const out = {}, drop = [];
+  const out = {},
+    drop = [];
   for (const k of set.keys) {
-    if (!(k in body)) continue;                             // not sent = not touched
+    if (!(k in body)) continue; // not sent = not touched
     const v = String(body[k] == null ? '' : body[k]).trim();
-    if (!v) { drop.push(k); continue; }                     // empty = "follow the default": removed
+    if (!v) {
+      drop.push(k);
+      continue;
+    } // empty = "follow the default": removed
     // Short alphanumeric-and-hyphen tokens. Anything else is not one of these values at all.
     const pat = (set.patterns && set.patterns[k]) || /^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/;
     if (!pat.test(v)) return { error: `${k} is not a valid value` };
@@ -734,8 +821,11 @@ async function savePrefSet(req, res, kind) {
 
     /* ⚠️ A MERGE-PATCH, NEVER THE WHOLE COLUMN (CU2). This UPDATE used to write `= $1`, so a theme push erased every
        other key in ui_prefs — the shop's product-rows choice with it. Only the keys sent change; the rest stay. */
-    const r = await query(`UPDATE identities SET ${set.column} = ${MERGE_PATCH_SQL(set.column)} WHERE identity_id = $2 RETURNING ${set.column} AS v`,
-      [JSON.stringify(prefs), req.identity.identity_id, p.drop]);
+    const r = await query(`UPDATE identities SET ${set.column} = ${MERGE_PATCH_SQL(set.column)} WHERE identity_id = $2 RETURNING ${set.column} AS v`, [
+      JSON.stringify(prefs),
+      req.identity.identity_id,
+      p.drop
+    ]);
     const merged = (r && r.rows && r.rows[0] && r.rows[0].v) || prefs;
     res.json({ ok: true, kind, prefs: merged, [set.column]: merged });
   } catch (err) {
@@ -756,14 +846,18 @@ router.patch('/me/prefs/:kind', auth, (req, res) => savePrefSet(req, res, String
  */
 router.patch('/me/exposure', auth, async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req); const X = require('../lib/exposure');
-    const body = req.body || {}; const out = {};
+    const entity_id = auth.entityOf(req);
+    const X = require('../lib/exposure');
+    const body = req.body || {};
+    const out = {};
     for (const k of X.KEYS) if (k in body) out[k] = !!body[k];
     if (!Object.keys(out).length) return res.status(400).json({ error: 'validation', message: 'switches required — keys: ' + X.KEYS.join(', ') });
-    await policy.patchKey(null, entity_id, ['storefront_exposure'], out, { op: 'merge' });   /* T2-POLICY: the one writer */
+    await policy.patchKey(null, entity_id, ['storefront_exposure'], out, { op: 'merge' }); /* T2-POLICY: the one writer */
     const r = await query(`SELECT policy_flags->'storefront_exposure' AS x FROM identities WHERE identity_id = $1`, [entity_id]);
     res.json({ message: 'Defaults saved', exposure: Object.assign({}, X.DEFAULTS, (r.rows[0] && r.rows[0].x) || {}) });
-  } catch (err) { res.status(500).json({ error: 'Exposure save failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Exposure save failed', message: safeErr(err) });
+  }
 });
 
 /**
@@ -781,9 +875,10 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const cost = require('../lib/cost');
-    res.json({ can_see_costs: await cost.canRead(req, entity_id),
-               is_owner: req.identity.identity_type === 'entity' });
-  } catch (err) { res.status(500).json({ error: 'Read failed', message: safeErr(err) }); }
+    res.json({ can_see_costs: await cost.canRead(req, entity_id), is_owner: req.identity.identity_type === 'entity' });
+  } catch (err) {
+    res.status(500).json({ error: 'Read failed', message: safeErr(err) });
+  }
 });
 
 /* ⚠️ THE SHIPPED PATH, KEPT. Clients deployed before this refactor call /me/locale, and a browser holding a
@@ -820,17 +915,31 @@ router.get('/lookup', auth, async (req, res) => {
  * lib/visibility-cap.js for why an absent declaration must not close every shop on the platform.
  */
 async function visibilityCapFor(entityId) {
-  let plan = null, paramsOverride = {};
+  let plan = null,
+    paramsOverride = {};
   try {
     const r = await query('SELECT plan, params_override FROM identities WHERE identity_id = $1', [entityId]);
-    if (r.rows[0]) { plan = r.rows[0].plan; paramsOverride = r.rows[0].params_override || {}; }
-  } catch (e) { log.fellBack('entities visibilityCapFor: the read failed — carried on without it', e); /* pre-governance schema — capOf() then reports unenforced */ }
+    if (r.rows[0]) {
+      plan = r.rows[0].plan;
+      paramsOverride = r.rows[0].params_override || {};
+    }
+  } catch (e) {
+    log.fellBack('entities visibilityCapFor: the read failed — carried on without it', e); /* pre-governance schema — capOf() then reports unenforced */
+  }
   let planMenu = null;
-  try { const c = await require('./governance').loadActiveConstitution(); planMenu = c && c.plan_menu; } catch (e) { log.fellBack('entities visibilityCapFor: the helper failed — carried on without it', e); }
+  try {
+    const c = await require('./governance').loadActiveConstitution();
+    planMenu = c && c.plan_menu;
+  } catch (e) {
+    log.fellBack('entities visibilityCapFor: the helper failed — carried on without it', e);
+  }
   return visibilityCap.capOf({ plan, planMenu, paramsOverride });
 }
 
-router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: the shop's own details are the owner's or an editor's to change */
+router.patch(
+  '/profile',
+  auth,
+  require('../lib/access').writeGate /* SEC-71: the shop's own details are the owner's or an editor's to change */,
   /**
    * ⚠️ EVERY RULE SAYS WHAT IT WANTS. Athi, 2026-08-18: *"it says validation failed, not sure what it is. Need
    * to have explanation so people understand and update accordingly."*
@@ -839,7 +948,8 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
    * the rule and leaves someone re-typing at random. A validator that refuses without saying why has moved the
    * work from the code to the person, which is the wrong direction.
    */
-  [ /**
+  [
+    /**
      * ⚠️⚠️ THE NAME COULD NOT BE CHANGED AT ALL, and the screen had it exactly backwards. Athi, 2026-08-19:
      * *"if they are different, we should be providing an option to change the name here. Not the user id."*
      * *"and it looks reverse. That is the problem."*
@@ -850,27 +960,25 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
      *
      * The MUTABLE fact was fixed and the LOAD-BEARING one was loose. Now the name is editable, as documented.
      */
-    body('display_name').optional().trim().isLength({ min: 2, max: 255 })
-      .withMessage('A business name is 2 characters or more.'),
+    body('display_name').optional().trim().isLength({ min: 2, max: 255 }).withMessage('A business name is 2 characters or more.'),
     /* T2-POLICY (SET4): no "15 characters" here — the tax number is checked in the handler by profile.taxIdRefusal, from the shop's pack */
     body('gstn').optional().trim(),
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
-    body('business_status').optional().isIn(['open','closed','away']),
+    body('business_status').optional().isIn(['open', 'closed', 'away']),
     /* ⭐ b177-era: the entity may CHOOSE a currency. Bounded below against what the constitution permits —
        an enum here would freeze the set, and the whole point is that the layer decides it. */
     body('currency_code').optional().trim().isLength({ min: 3, max: 3 }),
     /* 'none' and 'unknown' added with b238. 'none' is a real answer — a business buying only for its own use
        supplies nothing — and must stay distinguishable from 'unknown', which means nobody asked. A form that
        cannot tell those apart produces counts nobody can trust. 'unknown' is never offered on screen. */
-    body('supplies').optional().isIn(['goods','services','both','none','unknown'])
-      .withMessage('Shop status can be open, closed or away.'),
-    body('storefront_access').optional().isIn(['browse','login'])
+    body('supplies').optional().isIn(['goods', 'services', 'both', 'none', 'unknown']).withMessage('Shop status can be open, closed or away.'),
+    body('storefront_access')
+      .optional()
+      .isIn(['browse', 'login'])
       .withMessage('Storefront access can be "browse" (open catalogue) or "login" (sign in first).'),
-    body('self_copy_pref').optional().isIn(['both','sent','received'])
-      .withMessage('Keep-a-copy can be both, sent or received.'),
-    body('dispute_handler_actor_id').optional().isUUID()
-      .withMessage('Pick a co-assist from the list — that is not a valid id.'),
+    body('self_copy_pref').optional().isIn(['both', 'sent', 'received']).withMessage('Keep-a-copy can be both, sent or received.'),
+    body('dispute_handler_actor_id').optional().isUUID().withMessage('Pick a co-assist from the list — that is not a valid id.'),
     /**
      * user_id — the handle a person TYPES. Athi, 2026-08-07: *"we should not allow space in the user id."*
      *
@@ -894,7 +1002,8 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
      * PERSON types on was the permissive one. Now there is one: handleLib.checkRoot, applied in the handler so the
      * set-once check and the format check give the same answer.
      */
-    body('user_id').optional().trim() ],
+    body('user_id').optional().trim()
+  ],
   validate,
   async (req, res) => {
     try {
@@ -926,12 +1035,11 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
        *
        * ⭐ Refused here rather than in the validator, so the message can say WHY instead of "invalid".
        */
-      if (req.identity.identity_type === 'actor'
-          && req.body.user_id !== undefined && String(req.body.user_id).trim() !== '') {
+      if (req.identity.identity_type === 'actor' && req.body.user_id !== undefined && String(req.body.user_id).trim() !== '') {
         return res.status(403).json({
-          error: 'Not permitted', code: 'USER_ID_ENTITY_ONLY',
-          message: 'A User ID belongs to the business, not to a person. You sign in as '
-                 + '"key@business" — that is your login, and it cannot be changed here.'
+          error: 'Not permitted',
+          code: 'USER_ID_ENTITY_ONLY',
+          message: 'A User ID belongs to the business, not to a person. You sign in as ' + '"key@business" — that is your login, and it cannot be changed here.'
         });
       }
 
@@ -943,32 +1051,36 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
         if (existing) {
           if (verdict.value !== String(existing).toLowerCase()) {
             return res.status(409).json({
-              error: 'A User ID cannot be changed', code: 'USER_ID_IMMUTABLE',
-              message: 'Your User ID is "' + existing + '". It is how people sign in and how everything else '
-                     + 'is named, so it is fixed for the life of the business — like an email address. '
-                     + 'The name above it can be changed to anything.',
-              user_id: existing,
+              error: 'A User ID cannot be changed',
+              code: 'USER_ID_IMMUTABLE',
+              message:
+                'Your User ID is "' +
+                existing +
+                '". It is how people sign in and how everything else ' +
+                'is named, so it is fixed for the life of the business — like an email address. ' +
+                'The name above it can be changed to anything.',
+              user_id: existing
             });
           }
         } else {
           if (!verdict.ok) {
             return res.status(400).json({ error: 'Choose a User ID', code: 'USER_ID_INVALID', message: verdict.reason });
           }
-          const taken = await query(
-            'SELECT 1 FROM identities WHERE LOWER(user_id) = $1 AND identity_id <> $2', [verdict.value, id]);
+          const taken = await query('SELECT 1 FROM identities WHERE LOWER(user_id) = $1 AND identity_id <> $2', [verdict.value, id]);
           if (taken.rows.length) {
-            return res.status(409).json({ error: 'That User ID is taken', code: 'USER_ID_TAKEN',
-              message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.' });
+            return res.status(409).json({
+              error: 'That User ID is taken',
+              code: 'USER_ID_TAKEN',
+              message: '"' + verdict.value + '" is already registered. Choose another — it cannot be changed later.'
+            });
           }
-          userId = verdict.value;   // lowercase: the uniqueness index is on lower(user_id)
+          userId = verdict.value; // lowercase: the uniqueness index is on lower(user_id)
         }
       }
       // dispute_handler must be one of MY OWN actors — never an arbitrary identity.
       const handler = req.body.dispute_handler_actor_id || null;
       if (handler) {
-        const ok = await query(
-          `SELECT 1 FROM identities WHERE identity_id=$1 AND identity_type='actor' AND parent_entity_id=$2`,
-          [handler, id]);
+        const ok = await query(`SELECT 1 FROM identities WHERE identity_id=$1 AND identity_type='actor' AND parent_entity_id=$2`, [handler, id]);
         if (!ok.rows.length) return res.status(400).json({ error: 'Bad handler', message: 'dispute_handler_actor_id must be an actor under your entity' });
       }
       /**
@@ -990,9 +1102,9 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
        */
       if (req.identity.identity_type === 'actor' && req.body.currency_code !== undefined) {
         return res.status(403).json({
-          error: 'Not permitted', code: 'CURRENCY_ENTITY_ONLY',
-          message: 'The currency your prices are written in belongs to the business. Ask whoever runs the '
-                 + 'account to change it in Settings.'
+          error: 'Not permitted',
+          code: 'CURRENCY_ENTITY_ONLY',
+          message: 'The currency your prices are written in belongs to the business. Ask whoever runs the ' + 'account to change it in Settings.'
         });
       }
 
@@ -1001,14 +1113,14 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
         /* ⚠️ ONE ANSWERER — see lib/govresolve.currencyRefusal. The envelope check used to be written out here,
            and the SECOND place that sets this column (network-design/build) was added without it. */
         const refusal = await currencyRefusal(id, req.body.currency_code);
-        if (refusal) return res.status(refusal.code === 'CURRENCY_MALFORMED' ? 400 : 422).json(
-          Object.assign({ error: 'Currency not permitted' }, refusal));
+        if (refusal) return res.status(refusal.code === 'CURRENCY_MALFORMED' ? 400 : 422).json(Object.assign({ error: 'Currency not permitted' }, refusal));
         _cur = String(req.body.currency_code).toUpperCase();
       }
       /* ⭐ T2-POLICY (SET4): the tax number and address through the ONE writer's fragment (profile.shopIdentitySql), in this statement —
          only what was sent (an absent or empty field leaves the column alone, as COALESCE did). The number is checked against the
          shop's pack first (the country read only when a number was sent). */
-      const P = require('../lib/profile'); const idFields = {};
+      const P = require('../lib/profile');
+      const idFields = {};
       if (req.body.gstn) {
         const c = await query('SELECT country FROM identities WHERE identity_id = $1', [id]);
         const bad = P.taxIdRefusal(c.rows[0] && c.rows[0].country, req.body.gstn);
@@ -1026,21 +1138,44 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
                 currency_code=COALESCE($8,currency_code),
                 supplies=COALESCE($9,supplies)
          WHERE identity_id=$6`,
-        [req.body.logo_url || null,
-         req.body.business_status || null, userId, req.body.self_copy_pref || null, handler, id,
-         /* $7 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
-         (req.body.display_name ? sanitise(req.body.display_name) : null),
-         /* $8 — validated against the constitution above; null leaves it alone. */
-         _cur, req.body.supplies || null].concat(idSql.params));
+        [
+          req.body.logo_url || null,
+          req.body.business_status || null,
+          userId,
+          req.body.self_copy_pref || null,
+          handler,
+          id,
+          /* $7 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
+          req.body.display_name ? sanitise(req.body.display_name) : null,
+          /* $8 — validated against the constitution above; null leaves it alone. */
+          _cur,
+          req.body.supplies || null
+        ].concat(idSql.params)
+      );
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
-      if (req.body.storefront_access) { try { await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]); } catch (e) { log.fellBack('entities: the write failed — carried on without it', e); } }
+      if (req.body.storefront_access) {
+        try {
+          await query('UPDATE identities SET storefront_access=$1 WHERE identity_id=$2', [req.body.storefront_access, id]);
+        } catch (e) {
+          log.fellBack('entities: the write failed — carried on without it', e);
+        }
+      }
       /* ui_prefs — the business's own UI choices (which product rows show, appearance). MERGED, never replaced, so two
          screens saving two keys do not erase each other. Guarded by the column probe: b166 may not have run. */
       if (req.body.ui_prefs && typeof req.body.ui_prefs === 'object' && !Array.isArray(req.body.ui_prefs)) {
         /* the same merge-patch as /me/prefs: a null value removes its key (RFC 7386), an absent key is untouched */
-        const _up = {}, _upDrop = [];
-        for (const [k, v] of Object.entries(req.body.ui_prefs)) { if (v === null) _upDrop.push(k); else _up[k] = v; }
-        try { if (await require('../lib/schema').hasColumn('identities', 'ui_prefs')) await query(`UPDATE identities SET ui_prefs = ${MERGE_PATCH_SQL('ui_prefs')} WHERE identity_id=$2`, [JSON.stringify(_up), id, _upDrop]); } catch (e) { log.fellBack('entities: the write failed — carried on without it', e); }
+        const _up = {},
+          _upDrop = [];
+        for (const [k, v] of Object.entries(req.body.ui_prefs)) {
+          if (v === null) _upDrop.push(k);
+          else _up[k] = v;
+        }
+        try {
+          if (await require('../lib/schema').hasColumn('identities', 'ui_prefs'))
+            await query(`UPDATE identities SET ui_prefs = ${MERGE_PATCH_SQL('ui_prefs')} WHERE identity_id=$2`, [JSON.stringify(_up), id, _upDrop]);
+        } catch (e) {
+          log.fellBack('entities: the write failed — carried on without it', e);
+        }
       }
       // b114 (self-healing): CATALOGUE VISIBILITY — publishing is an explicit act. Whitelisted, never free text, and
       // saved separately so a normal profile save still works before b114 is applied.
@@ -1073,11 +1208,14 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
         try {
           await query('UPDATE identities SET catalogue_visibility=$1 WHERE identity_id=$2', [req.body.catalogue_visibility, id]);
         } catch (e) {
-          if (e && e.code === '42703') { /* pre-b114: no column yet — genuinely nothing to do */ }
-          else if (e && e.code === '23514') {
-            return res.status(409).json({ error: 'Not stored',
+          if (e && e.code === '42703') {
+            /* pre-b114: no column yet — genuinely nothing to do */
+          } else if (e && e.code === '23514') {
+            return res.status(409).json({
+              error: 'Not stored',
               message: `This database does not accept "${req.body.catalogue_visibility}" yet — apply migration b115.`,
-              code: 'VISIBILITY_NOT_MIGRATED' });
+              code: 'VISIBILITY_NOT_MIGRATED'
+            });
           } else {
             return res.status(500).json({ error: 'Not stored', message: safeErr(e) });
           }
@@ -1123,13 +1261,15 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
           await query(
             `UPDATE entity_schemas SET visibility = $1
               WHERE entity_id = $2 AND status = 'active' AND is_default = true`,
-            [schemaVisibility, id]);
+            [schemaVisibility, id]
+          );
         } catch (e) {
           /* An entity with no default schema yet is not an error — it gets one at first use, and
              ensureDefaultSchema will then read the value we just wrote above. Anything else is worth surfacing:
              silently swallowing it is exactly how the identities write hid its own failure for twenty minutes. */
-          if (e && (e.code === '42703' || e.code === '42P01')) { /* pre-migration column/table — nothing to do */ }
-          else return res.status(500).json({ error: 'Not stored', message: safeErr(e) });
+          if (e && (e.code === '42703' || e.code === '42P01')) {
+            /* pre-migration column/table — nothing to do */
+          } else return res.status(500).json({ error: 'Not stored', message: safeErr(e) });
         }
       }
       res.json({ message: 'Profile updated' });
@@ -1137,7 +1277,8 @@ router.patch('/profile', auth, require('../lib/access').writeGate,   /* SEC-71: 
       if (err.code === '23505') return res.status(409).json({ error: 'Taken', message: 'That user_id is already in use' });
       res.status(500).json({ error: 'Profile update failed', message: safeErr(err) });
     }
-  });
+  }
+);
 
 // PATCH /entities/:id/erase — mark an identity erased (tombstone). The platform role only (lib/platformroot.refuseUnlessPlatform, W1-SET).
 // Full PII-redaction sweep is a separate ops routine; this just flips the markers.
@@ -1149,9 +1290,10 @@ router.patch('/:id/erase', auth, async (req, res) => {
     if (s.rows[0] && s.rows[0].sealed) return res.status(403).json({ error: 'Forbidden', message: 'Protected (sealed) entity — cannot be erased.' });
     await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1`, [req.params.id]);
     res.json({ message: 'Identity tombstoned', id: req.params.id });
-  } catch (err) { res.status(500).json({ error: 'Erase failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Erase failed', message: safeErr(err) });
+  }
 });
-
 
 /**
  * ── GET /api/entities/usage — WHAT THIS ENTITY HAS BEEN BILLED FOR ─────────────────────────────────────────
@@ -1182,7 +1324,9 @@ router.get('/usage', auth, async (req, res) => {
                 COALESCE(sum(cost_usd), 0)::numeric(12,4) AS cost
            FROM usage_ledger
           WHERE entity_id = $1 AND created_at > now() - ($2 || ' days')::interval
-          GROUP BY 1 ORDER BY 1 DESC`, [me, String(days)]);
+          GROUP BY 1 ORDER BY 1 DESC`,
+        [me, String(days)]
+      );
 
       /* Per meter — what KIND of thing is costing. */
       const byMeter = await c.query(
@@ -1192,7 +1336,9 @@ router.get('/usage', auth, async (req, res) => {
                 COALESCE(sum(cost_usd), 0)::numeric(12,4) AS cost
            FROM usage_ledger
           WHERE entity_id = $1 AND created_at > now() - ($2 || ' days')::interval
-          GROUP BY 1 ORDER BY cost DESC, events DESC`, [me, String(days)]);
+          GROUP BY 1 ORDER BY cost DESC, events DESC`,
+        [me, String(days)]
+      );
 
       /**
        * The rows themselves. `detail` is the reference — for `chit.send` it is the chit id, so a row can always
@@ -1204,28 +1350,39 @@ router.get('/usage', auth, async (req, res) => {
            FROM usage_ledger
           WHERE entity_id = $1
           ORDER BY created_at DESC
-          LIMIT 100`, [me]);
+          LIMIT 100`,
+        [me]
+      );
 
       return { daily: daily.rows, by_meter: byMeter.rows, recent: recent.rows };
     });
 
-    const total = out.by_meter.reduce((a, r) => a + Number(r.cost || 0), 0);
+    const total = out.by_meter.reduce((total, item) => total + Number(item.cost || 0), 0);
     res.json({
       ok: true,
       window_days: days,
       /* Named for what it is. See the note above: this is the BILLED count. */
-      counts: { billed: out.by_meter.reduce((a, r) => a + Number(r.events || 0), 0) },
+      counts: { billed: out.by_meter.reduce((total, item) => total + Number(item.events || 0), 0) },
       total_cost_usd: Math.round(total * 10000) / 10000,
       rate_card: require('../lib/rates').CARD.id,
       daily: out.daily,
       by_meter: out.by_meter,
-      recent: out.recent,
+      recent: out.recent
     });
   } catch (err) {
     /* ⚠️ A missing table is not an error worth a 500 to the reader: b99 may not be applied in every environment. */
     if (/relation .*usage_ledger.* does not exist/i.test(String(err.message))) {
-      return res.json({ ok: true, window_days: 0, counts: { billed: 0 }, total_cost_usd: 0,
-        rate_card: null, daily: [], by_meter: [], recent: [], not_enabled: true });
+      return res.json({
+        ok: true,
+        window_days: 0,
+        counts: { billed: 0 },
+        total_cost_usd: 0,
+        rate_card: null,
+        daily: [],
+        by_meter: [],
+        recent: [],
+        not_enabled: true
+      });
     }
     log.error('usage read failed', { id: req.id, err: err.message });
     res.status(500).json({ error: 'Usage read failed', message: safeErr(err) });
@@ -1292,7 +1449,9 @@ router.get('/usage', auth, async (req, res) => {
  * worse than not being able to remove a population is removing one that entities still point at.
  */
 /* SEC3: the one platform-staff door now lives in lib/platformroot (GET /api/events/stats asks it too) */
-function rootOnly(req, res) { return require('../lib/platformroot').refuseUnlessRoot(req, res); }
+function rootOnly(req, res) {
+  return require('../lib/platformroot').refuseUnlessRoot(req, res);
+}
 
 /**
  * ── ⭐⭐⭐ WHERE WORK GOES — CONFIGURABLE, NOT A MIGRATION ───────────────────────────────────────────────────────
@@ -1312,11 +1471,11 @@ function rootOnly(req, res) { return require('../lib/platformroot').refuseUnless
 
 /** ⭐ the kinds a person can route, named for what they ARE rather than for the column they are stored in. */
 const ROUTABLE = [
-  { kind: 'incident', label: 'Faults',       hint: 'Something is broken or not working' },
-  { kind: 'spec',     label: 'Requests',     hint: 'Somebody wants something built or changed' },
-  { kind: 'change',   label: 'Changes',      hint: 'Work done to the product, and how to undo it' },
-  { kind: 'release',  label: 'Releases',     hint: 'What shipped, and what it carried' },
-  { kind: 'testcase', label: 'Test cases',   hint: 'The suite the product is checked against' },
+  { kind: 'incident', label: 'Faults', hint: 'Something is broken or not working' },
+  { kind: 'spec', label: 'Requests', hint: 'Somebody wants something built or changed' },
+  { kind: 'change', label: 'Changes', hint: 'Work done to the product, and how to undo it' },
+  { kind: 'release', label: 'Releases', hint: 'What shipped, and what it carried' },
+  { kind: 'testcase', label: 'Test cases', hint: 'The suite the product is checked against' }
 ];
 
 /**
@@ -1336,15 +1495,15 @@ router.get('/routing/preview', auth, async (req, res) => {
   const me = auth.entityOf(req);
   const q = req.query || {};
   try {
-    const r = await query(
-      'SELECT bridge_id, display_name, population FROM identities WHERE identity_id = $1', [me]);
+    const r = await query('SELECT bridge_id, display_name, population FROM identities WHERE identity_id = $1', [me]);
     const row = r.rows[0] || {};
     const out = await require('../lib/raiseticket').preview(
       { entity_id: me, bridge_id: row.bridge_id, display_name: row.display_name, population: row.population },
-      { kind: String(q.kind || 'incident'), audience: q.audience, to_bridge_id: q.to_bridge_id });
+      { kind: String(q.kind || 'incident'), audience: q.audience, to_bridge_id: q.to_bridge_id }
+    );
     res.json(out);
   } catch (e) {
-    res.json({ ok: false, why: safeErr(e) });   /* L2: still 200 ok:false (a preview never red-boxes), but never the raw error text */
+    res.json({ ok: false, why: safeErr(e) }); /* L2: still 200 ok:false (a preview never red-boxes), but never the raw error text */
   }
 });
 
@@ -1355,25 +1514,31 @@ router.get('/routing', auth, async (req, res) => {
       /* ⚠️ every read here is inside withEntity: folder, entity_work_routing and identities-by-parent are all
          tenant-scoped, and a context-free read would answer an empty list that looks exactly like "you have
          nothing set up". [[feedback-silence-is-the-bug]] */
-      const rows = await db.query(
-        `SELECT kind, folder_id, assignee_actor_id, notify_email FROM entity_work_routing WHERE entity_id = $1`,
-        [me]).catch((e) => (e.code === '42P01' ? { rows: [] } : Promise.reject(e)));
+      const rows = await db
+        .query(`SELECT kind, folder_id, assignee_actor_id, notify_email FROM entity_work_routing WHERE entity_id = $1`, [me])
+        .catch((e) => (e.code === '42P01' ? { rows: [] } : Promise.reject(e)));
       /* route_to_entity_id arrives with b251 — asked for separately so its absence is "no teams yet" and not
          a failed screen. */
       let teamsBy = {};
       try {
-        const t = await db.query(
-          `SELECT kind, route_to_entity_id FROM entity_work_routing WHERE entity_id = $1`, [me]);
+        const t = await db.query(`SELECT kind, route_to_entity_id FROM entity_work_routing WHERE entity_id = $1`, [me]);
         for (const r of t.rows) teamsBy[r.kind] = r.route_to_entity_id;
-      } catch (e) { log.fellBack('entities GET /routing: the read failed — answered with an empty set', e); teamsBy = {}; }
+      } catch (e) {
+        log.fellBack('entities GET /routing: the read failed — answered with an empty set', e);
+        teamsBy = {};
+      }
 
-      const folders = await db.query(
-        `SELECT folder_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, lower(name)`, [me])
-        .catch(log.orElse('entities GET /routing: the read failed — answered with none', ({ rows: [] })));
-      const people = await db.query(
-        `SELECT identity_id, display_name FROM identities
+      const folders = await db
+        .query(`SELECT folder_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, lower(name)`, [me])
+        .catch(log.orElse('entities GET /routing: the read failed — answered with none', { rows: [] }));
+      const people = await db
+        .query(
+          `SELECT identity_id, display_name FROM identities
           WHERE parent_entity_id = $1 AND entity_kind = 'actor' AND coalesce(status,'active') = 'active'
-          ORDER BY lower(display_name)`, [me]).catch(log.orElse('entities GET /routing: the read failed — answered with none', ({ rows: [] })));
+          ORDER BY lower(display_name)`,
+          [me]
+        )
+        .catch(log.orElse('entities GET /routing: the read failed — answered with none', { rows: [] }));
       return { rows: rows.rows, teamsBy, folders: folders.rows, people: people.rows };
     });
 
@@ -1393,19 +1558,28 @@ router.get('/routing', auth, async (req, res) => {
                                 WHERE i2.identity_id = $1)
             AND i.identity_id <> $1
             AND coalesce(i.status,'active') <> 'erased'
-          ORDER BY c.path`, [me]);
+          ORDER BY c.path`,
+        [me]
+      );
       teams = t.rows;
-    } catch (e) { log.fellBack('entities GET /routing: the read failed — answered with none', e); teams = []; }   /* no b243/root_path, or not in a network — then there are no teams */
+    } catch (e) {
+      log.fellBack('entities GET /routing: the read failed — answered with none', e);
+      teams = [];
+    } /* no b243/root_path, or not in a network — then there are no teams */
 
     const by = {};
     for (const r of out.rows) by[r.kind] = r;
     res.json({
-      kinds: ROUTABLE.map((k) => Object.assign({}, k, {
-        folder_id: (by[k.kind] || {}).folder_id || null,
-        assignee_actor_id: (by[k.kind] || {}).assignee_actor_id || null,
-        route_to_entity_id: out.teamsBy[k.kind] || null,
-      })),
-      folders: out.folders, people: out.people, teams,
+      kinds: ROUTABLE.map((item) =>
+        Object.assign({}, item, {
+          folder_id: (by[item.kind] || {}).folder_id || null,
+          assignee_actor_id: (by[item.kind] || {}).assignee_actor_id || null,
+          route_to_entity_id: out.teamsBy[item.kind] || null
+        })
+      ),
+      folders: out.folders,
+      people: out.people,
+      teams
     });
   } catch (e) {
     console.error('routing read:', e.code || '', e.message);
@@ -1417,33 +1591,37 @@ router.put('/routing', auth, async (req, res) => {
   const me = auth.entityOf(req);
   const b = req.body || {};
   const kind = String(b.kind || '').trim();
-  if (!ROUTABLE.some((k) => k.kind === kind)) {
-    return res.status(400).json({ error: 'Not a routable kind',
-      message: 'Routing is set per kind of work, and that is not one of them.' });
+  if (!ROUTABLE.some((item) => item.kind === kind)) {
+    return res.status(400).json({ error: 'Not a routable kind', message: 'Routing is set per kind of work, and that is not one of them.' });
   }
   /* ⚠️ '' means "clear it", and it must be distinguishable from "leave it alone" — so the client always sends
      all three and null is an answer rather than an omission. */
   const nul = (v) => (v === '' || v === undefined || v === null ? null : String(v));
   try {
-    await withEntity(me, (db) => db.query(
-      `INSERT INTO entity_work_routing (entity_id, kind, folder_id, assignee_actor_id, route_to_entity_id, updated_at)
+    await withEntity(me, (db) =>
+      db.query(
+        `INSERT INTO entity_work_routing (entity_id, kind, folder_id, assignee_actor_id, route_to_entity_id, updated_at)
        VALUES ($1,$2,$3,$4,$5, now())
        ON CONFLICT (entity_id, kind) DO UPDATE
          SET folder_id = EXCLUDED.folder_id, assignee_actor_id = EXCLUDED.assignee_actor_id,
              route_to_entity_id = EXCLUDED.route_to_entity_id, updated_at = now()`,
-      [me, kind, nul(b.folder_id), nul(b.assignee_actor_id), nul(b.route_to_entity_id)]));
+        [me, kind, nul(b.folder_id), nul(b.assignee_actor_id), nul(b.route_to_entity_id)]
+      )
+    );
     /* ⚠️ the resolver memoises for 60s; without this a change looks like it did not save for a minute, which
        is exactly long enough for somebody to set it twice. */
-    try { require('../lib/workroute').invalidate(me); } catch (e) { log.fellBack('entities nul: the helper failed — carried on without it', e); }
+    try {
+      require('../lib/workroute').invalidate(me);
+    } catch (e) {
+      log.fellBack('entities nul: the helper failed — carried on without it', e);
+    }
     res.json({ ok: true, kind });
   } catch (e) {
-    if (e.code === '42P01') return res.status(409).json({ error: 'Not available yet',
-      message: 'Run migration b250 — the routing table does not exist in this database.' });
+    if (e.code === '42P01')
+      return res.status(409).json({ error: 'Not available yet', message: 'Run migration b250 — the routing table does not exist in this database.' });
     /* ⚠️ b251 refuses a team outside your own network, and that refusal is a sentence, not a stack trace. */
-    if (e.code === '23514') return res.status(409).json({ error: 'Not your network',
-      message: e.message, hint: e.hint || null });
-    if (e.code === '23503') return res.status(409).json({ error: 'Gone',
-      message: 'That folder or person no longer exists. Pick another.' });
+    if (e.code === '23514') return res.status(409).json({ error: 'Not your network', message: e.message, hint: e.hint || null });
+    if (e.code === '23503') return res.status(409).json({ error: 'Gone', message: 'That folder or person no longer exists. Pick another.' });
     console.error('routing write:', e.code || '', e.message);
     res.status(500).json({ error: 'Could not save it', message: safeErr(e) });
   }
@@ -1461,16 +1639,19 @@ router.get('/populations', auth, async (req, res) => {
          FROM ops.population p
          LEFT JOIN identities d ON d.identity_id = p.desk_entity_id
          LEFT JOIN identities i ON i.population = p.code AND coalesce(i.status,'active') <> 'erased'
-        GROUP BY 1,2,3,4,5,6,7 ORDER BY p.is_live DESC, p.code`)
+        GROUP BY 1,2,3,4,5,6,7 ORDER BY p.is_live DESC, p.code`
+    )
       /* ⚠️ b252 not run is an ANSWER too — the screen shows the populations and simply cannot set a desk. */
-      .catch((e) => (e.code === '42703'
-        ? query(`SELECT p.code, p.label, p.is_live, p.note,
+      .catch((e) =>
+        e.code === '42703'
+          ? query(`SELECT p.code, p.label, p.is_live, p.note,
                         NULL::uuid AS desk_entity_id, NULL::text AS desk_name, NULL::text AS desk_bridge_id,
                         count(i.identity_id) FILTER (WHERE i.identity_type = 'entity') ::int AS entities
                    FROM ops.population p
                    LEFT JOIN identities i ON i.population = p.code AND coalesce(i.status,'active') <> 'erased'
                   GROUP BY 1,2,3,4 ORDER BY p.is_live DESC, p.code`)
-        : Promise.reject(e)));
+          : Promise.reject(e)
+      );
 
     /* the entities that COULD answer a population's support: a business, active, already in that population.
        ⚠️ the b252 trigger refuses anything else, so offering it would be a control that only ever fails. */
@@ -1479,7 +1660,8 @@ router.get('/populations', auth, async (req, res) => {
          FROM identities
         WHERE identity_type = 'entity' AND coalesce(status,'active') = 'active'
           AND coalesce(population, 'live') IN (SELECT code FROM ops.population)
-        ORDER BY lower(display_name)`).catch(log.orElse('entities GET /populations: the read failed — answered with none', ({ rows: [] })));
+        ORDER BY lower(display_name)`
+    ).catch(log.orElse('entities GET /populations: the read failed — answered with none', { rows: [] }));
 
     res.json({ populations: r.rows, desk_candidates: cand.rows });
   } catch (e) {
@@ -1503,27 +1685,30 @@ router.get('/populations', auth, async (req, res) => {
  */
 router.put('/populations/:code/desk', auth, async (req, res) => {
   if (!rootOnly(req, res)) return;
-  const code = String(req.params.code || '').trim().toLowerCase();
+  const code = String(req.params.code || '')
+    .trim()
+    .toLowerCase();
   const v = (req.body || {}).desk_entity_id;
-  const desk = (v === '' || v === undefined || v === null) ? null : String(v);
+  const desk = v === '' || v === undefined || v === null ? null : String(v);
   try {
-    const u = await query(
-      'UPDATE ops.population SET desk_entity_id = $2 WHERE code = $1', [code, desk]);
+    const u = await query('UPDATE ops.population SET desk_entity_id = $2 WHERE code = $1', [code, desk]);
     /* ⚠️ an UPDATE matching nothing is not an error. Without this, setting a desk on a population that does
        not exist answers ok and changes nothing. [[feedback-silence-is-the-bug]] */
-    if (!u.rowCount) return res.status(404).json({ error: 'No such population',
-      message: 'There is no population called ' + code + '.' });
+    if (!u.rowCount) return res.status(404).json({ error: 'No such population', message: 'There is no population called ' + code + '.' });
     /* ⚠️ the resolver memoises for 60s; without this the change looks like it did not save for a minute,
        which is long enough for somebody to set it twice. */
-    try { require('../lib/platformroot').invalidateDesks(); } catch (e) { log.fellBack('entities PUT /populations/:code/desk: the helper failed — carried on without it', e); }
+    try {
+      require('../lib/platformroot').invalidateDesks();
+    } catch (e) {
+      log.fellBack('entities PUT /populations/:code/desk: the helper failed — carried on without it', e);
+    }
     res.json({ ok: true, code, desk_entity_id: desk });
   } catch (e) {
-    if (e.code === '42703' || e.code === '42P01') return res.status(409).json({ error: 'Not available yet',
-      message: 'Run migration b252 — the desk column does not exist in this database yet.' });
+    if (e.code === '42703' || e.code === '42P01')
+      return res.status(409).json({ error: 'Not available yet', message: 'Run migration b252 — the desk column does not exist in this database yet.' });
     /* ⚠️ b252's trigger refuses a desk outside the population it serves, or one that is not a business. That
        refusal is a sentence somebody can act on, not a stack trace. */
-    if (e.code === '23514') return res.status(409).json({ error: 'Not a desk for this population',
-      message: e.message, hint: e.hint || null });
+    if (e.code === '23514') return res.status(409).json({ error: 'Not a desk for this population', message: e.message, hint: e.hint || null });
     console.error('population desk:', e.code || '', e.message);
     res.status(500).json({ error: 'Could not set the desk', message: safeErr(e) });
   }
@@ -1531,29 +1716,35 @@ router.put('/populations/:code/desk', auth, async (req, res) => {
 
 router.post('/populations', auth, async (req, res) => {
   if (!rootOnly(req, res)) return;
-  const code  = String((req.body || {}).code  || '').trim().toLowerCase();
+  const code = String((req.body || {}).code || '')
+    .trim()
+    .toLowerCase();
   const label = String((req.body || {}).label || '').trim();
-  const note  = String((req.body || {}).note  || '').trim();
+  const note = String((req.body || {}).note || '').trim();
   /* ⚠️ the same shape the database enforces, checked here too so the answer is a sentence rather than a
      constraint name. The database remains the authority — this is the courtesy, not the rule. */
   if (!/^[a-z][a-z0-9_]{1,23}$/.test(code)) {
-    return res.status(400).json({ error: 'Not a usable code',
-      message: 'Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is '
-        + 'stored on every entity in the population and appears in links.' });
+    return res.status(400).json({
+      error: 'Not a usable code',
+      message:
+        'Lowercase letters, digits and underscore, 2–24 characters, starting with a letter. It is ' +
+        'stored on every entity in the population and appears in links.'
+    });
   }
   if (!label) return res.status(400).json({ error: 'Needs a name', message: 'What should it be called?' });
-  if (!note)  return res.status(400).json({ error: 'Needs a note',
-    message: 'Say what this population is for. A world nobody can describe is one nobody can decide to use.' });
+  if (!note)
+    return res
+      .status(400)
+      .json({ error: 'Needs a note', message: 'Say what this population is for. A world nobody can describe is one nobody can decide to use.' });
   try {
     /* ⚠️ is_live is never accepted from the request. The unique index permits one live world and would refuse
        it anyway, but a route that forwards the field is a route somebody will one day trust. */
     await query('INSERT INTO ops.population (code, label, note) VALUES ($1, $2, $3)', [code, label, note]);
     res.status(201).json({ ok: true, code, label });
   } catch (e) {
-    if (e.code === '23505') return res.status(409).json({ error: 'Already exists',
-      message: 'There is already a population called ' + code + '.' });
-    if (['42P01', '3F000', '42501'].includes(e.code)) return res.status(409).json({ error: 'Not available yet',
-      message: 'Run migration b249 — the population registry does not exist in this database.' });
+    if (e.code === '23505') return res.status(409).json({ error: 'Already exists', message: 'There is already a population called ' + code + '.' });
+    if (['42P01', '3F000', '42501'].includes(e.code))
+      return res.status(409).json({ error: 'Not available yet', message: 'Run migration b249 — the population registry does not exist in this database.' });
     console.error('population create:', e.code || '', e.message);
     res.status(500).json({ error: 'Failed to add the population', message: safeErr(e) });
   }
@@ -1567,12 +1758,10 @@ router.get('/mis', auth, async (req, res) => {
     /* ⚠️ ROOT ONLY. This is a cross-tenant view — every other entity gets a flat refusal, not an empty report,
        because an empty report reads as "there is nothing" rather than "this is not yours". */
     if (!platformroot.configured()) {
-      return res.status(404).json({ error: 'No platform root',
-        message: 'PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.' });
+      return res.status(404).json({ error: 'No platform root', message: 'PLATFORM_ROOT_ENTITY is not set — this deployment has no operator surface.' });
     }
     if (!platformroot.isRoot(me)) {
-      return res.status(403).json({ error: 'Not the platform root',
-        message: 'The platform report is available to the operator entity only.' });
+      return res.status(403).json({ error: 'Not the platform root', message: 'The platform report is available to the operator entity only.' });
     }
 
     /* ⭐ asked ONCE, before anything that needs it. Both the class ladder and the population predicate below
@@ -1584,12 +1773,14 @@ router.get('/mis', auth, async (req, res) => {
      * an unknown value falls back to the live one rather than returning nothing.
      * ⚠️ 'real' is still accepted: it is what the screen sent before b249 named the live population 'live'.
      */
-    const popRows = (await query('SELECT code, is_live FROM ops.population')
-      .catch(log.orElse('entities GET /mis: the read failed — answered with none', ({ rows: [] })))).rows;
-    const liveCode = (popRows.find((p) => p.is_live) || {}).code || 'live';
-    const asked = String(req.query.population || '').trim().toLowerCase();
-    const pop = (asked === '' || asked === 'real') ? liveCode
-      : (popRows.some((p) => p.code === asked) ? asked : liveCode);
+    const popRows = (
+      await query('SELECT code, is_live FROM ops.population').catch(log.orElse('entities GET /mis: the read failed — answered with none', { rows: [] }))
+    ).rows;
+    const liveCode = (popRows.find((item) => item.is_live) || {}).code || 'live';
+    const asked = String(req.query.population || '')
+      .trim()
+      .toLowerCase();
+    const pop = asked === '' || asked === 'real' ? liveCode : popRows.some((item) => item.code === asked) ? asked : liveCode;
 
     /**
      * ⚠️⚠️ INTERPOLATED, NOT BOUND — and that needs saying out loud. `LIVE` is a SQL FRAGMENT spliced into a
@@ -1619,18 +1810,35 @@ router.get('/mis', auth, async (req, res) => {
      * [[feedback-silence-is-the-bug]]
      */
     const hasPopulation = popRows.length > 0;
-    const POP = hasPopulation ? `AND population = ${escLit(pop)}`
-      : hasIsTest ? (pop === 'test' ? 'AND is_test' : 'AND NOT is_test')
-      : (pop === 'test' ? "AND entity_kind = 'test'" : "AND entity_kind <> 'test'");
+    const POP = hasPopulation
+      ? `AND population = ${escLit(pop)}`
+      : hasIsTest
+        ? pop === 'test'
+          ? 'AND is_test'
+          : 'AND NOT is_test'
+        : pop === 'test'
+          ? "AND entity_kind = 'test'"
+          : "AND entity_kind <> 'test'";
     const LIVE = "coalesce(status,'active') <> 'erased' " + POP;
 
     /* ⭐ and the size of the population you are NOT looking at, so the third tile can say something true. */
-    const otherPop = Number((await query(
-      `SELECT count(*)::int AS n FROM identities
-        WHERE identity_type = 'entity' AND coalesce(status,'active') <> 'erased' `
-      + (hasPopulation ? `AND population <> ${escLit(pop)}`
-        : hasIsTest ? (pop === 'test' ? 'AND NOT is_test' : 'AND is_test')
-        : (pop === 'test' ? "AND entity_kind <> 'test'" : "AND entity_kind = 'test'")))).rows[0].n);
+    const otherPop = Number(
+      (
+        await query(
+          `SELECT count(*)::int AS n FROM identities
+        WHERE identity_type = 'entity' AND coalesce(status,'active') <> 'erased' ` +
+            (hasPopulation
+              ? `AND population <> ${escLit(pop)}`
+              : hasIsTest
+                ? pop === 'test'
+                  ? 'AND NOT is_test'
+                  : 'AND is_test'
+                : pop === 'test'
+                  ? "AND entity_kind <> 'test'"
+                  : "AND entity_kind = 'test'")
+        )
+      ).rows[0].n
+    );
 
     /**
      * ── ⭐⭐ ONE CLASS PER ENTITY — exhaustive, and no row in two boxes ───────────────────────────────────────
@@ -1701,7 +1909,7 @@ router.get('/mis', auth, async (req, res) => {
               GROUP BY 1 ORDER BY 2 DESC`),
       query(`SELECT date_trunc('month', created_at)::date AS month, count(*)::int AS n
                FROM identities WHERE ${LIVE} AND entity_kind = 'customer'
-              GROUP BY 1 ORDER BY 1 DESC LIMIT 12`),
+              GROUP BY 1 ORDER BY 1 DESC LIMIT 12`)
     ]);
 
     /* ⭐ THE ROWS THE LEFT PANEL DRAWS — newest first, because "who just joined" is the question a list is
@@ -1801,8 +2009,7 @@ router.get('/mis', auth, async (req, res) => {
        screen meaning exactly the same thing in both states. */
     /* ⭐ the row list and the aggregates use the SAME predicate. They used to be built separately, which is
        how a screen comes to report one population and count another. */
-    const TEST_WHERE = hasPopulation ? `AND i.population = ${escLit(pop)}`
-      : require('../lib/istest').where(pop === liveCode ? 'real' : 'test', hasIsTest);
+    const TEST_WHERE = hasPopulation ? `AND i.population = ${escLit(pop)}` : require('../lib/istest').where(pop === liveCode ? 'real' : 'test', hasIsTest);
 
     /**
      * ⭐ OWNERSHIP — ours, or the market's. Athi's first-level filter: *"All / internal / External."*
@@ -1810,36 +2017,35 @@ router.get('/mis', auth, async (req, res) => {
      * kind has an 'internal' value that does not always agree with it. One source per question.
      */
     const own = String(req.query.ownership || '').trim();
-    const OWN_WHERE = own === 'internal' ? "AND coalesce(i.entity_visibility,'public') = 'internal'"
-                    : own === 'external' ? "AND coalesce(i.entity_visibility,'public') <> 'internal'"
-                    : '';
+    const OWN_WHERE =
+      own === 'internal'
+        ? "AND coalesce(i.entity_visibility,'public') = 'internal'"
+        : own === 'external'
+          ? "AND coalesce(i.entity_visibility,'public') <> 'internal'"
+          : '';
 
-    const hasStanding = (await query(
-      "SELECT to_regprocedure('ops.f_entity_standing()') IS NOT NULL AS ok")).rows[0].ok === true;
+    const hasStanding = (await query("SELECT to_regprocedure('ops.f_entity_standing()') IS NOT NULL AS ok")).rows[0].ok === true;
     const ST_JOIN = hasStanding ? 'LEFT JOIN ops.f_entity_standing() st ON st.entity_id = i.identity_id' : '';
-    const ST_COL  = hasStanding ? 'st.standing' : 'NULL::text';
+    const ST_COL = hasStanding ? 'st.standing' : 'NULL::text';
     /* ⚠️ the placeholder is spent either way so the parameter list keeps its shape. Without b242 the filter
        cannot narrow anything, so it is a no-op — never a predicate that quietly matches nothing. */
-    const stWhere = (n) => (hasStanding
-      ? `AND ($${n} = '' OR st.standing LIKE $${n} || '%')`
-      : `AND ($${n} IS NOT NULL)`);
+    const stWhere = (n) => (hasStanding ? `AND ($${n} = '' OR st.standing LIKE $${n} || '%')` : `AND ($${n} IS NOT NULL)`);
 
     const SORTS = {
-      joined:     'i.created_at',
-      last_seen:  'i.last_active_at',
-      name:       'lower(i.display_name)',
-      handle:     'lower(i.user_id)',
-      kind:       'i.entity_kind',
-      vertical:   'i.vertical',
-      plan:       'i.plan',
-      seats:      'seats',
-      suppliers:  'suppliers',
-      branches:   'branches',
+      joined: 'i.created_at',
+      last_seen: 'i.last_active_at',
+      name: 'lower(i.display_name)',
+      handle: 'lower(i.user_id)',
+      kind: 'i.entity_kind',
+      vertical: 'i.vertical',
+      plan: 'i.plan',
+      seats: 'seats',
+      suppliers: 'suppliers',
+      branches: 'branches',
       /* ⭐ the ladder's 'a · ', 'b · ' prefixes exist so a plain ORDER BY reads worst-first. */
-      ...(hasStanding ? { standing: 'st.standing' } : {}),
+      ...(hasStanding ? { standing: 'st.standing' } : {})
     };
-    const sortKey = Object.prototype.hasOwnProperty.call(SORTS, String(req.query.sort || ''))
-      ? String(req.query.sort) : 'joined';
+    const sortKey = Object.prototype.hasOwnProperty.call(SORTS, String(req.query.sort || '')) ? String(req.query.sort) : 'joined';
     const dir = String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
     /* ⚠️ SEARCH IS A BIND PARAMETER, unlike the sort. It matches the three things a person actually types:
@@ -1858,31 +2064,32 @@ router.get('/mis', auth, async (req, res) => {
     let _supFn = true;
     const SUP_JOIN = `LEFT JOIN (SELECT entity_id, n::int AS n FROM ops.f_entity_counts() WHERE metric = 'suppliers') supc
                         ON supc.entity_id = i.identity_id`;
-    const _list = () => query(
-      /**
-       * ── ⭐ EVERY WAY THIS SHOP CAN BE ADDRESSED, IN ONE ROW ─────────────────────────────────────────────
-       *
-       * Athi, 2026-09-14: *"we need to have uuid, bridge id, user id, username all in our list."*
-       *
-       *   identity_id   the uuid — the only one the database joins on
-       *   bridge_id     CB………  — what a counterparty is given
-       *   user_id       the handle — what staff sign in under, and what suppliers are numbered beneath
-       *   display_name  what a human calls them; the ONLY one of the four that can change
-       * ⚠️⚠️ THERE IS NO SEPARATE "username", AND I CHECKED BEFORE SAYING SO. `identities` has no such column.
-       * `cb_entity` has `username` and `company_name` — and both are NULL for ALL 340 ROWS. Nothing has ever
-       * written them; they are legacy columns carried by that table's original shape.
-       *
-       * ⭐ So `user_id` IS the username: it is what staff sign in under (`athi@alpha-timers`) and what
-       * suppliers are numbered beneath (`~alpha-timers.sup-0001`). Selecting the two empty columns would have
-       * added two permanently blank fields to every row and made the list look like it was missing data it
-       * never had. Reporting four identifiers that all exist beats five where one is always null.
-       *
-       * ⚠️ EMAIL IS SHOWN HERE AND IS DELIBERATELY NOT SEARCHABLE. Showing an operator their own customer's
-       * address is an account fact — it is how you contact a customer. Letting anything MATCH on a fragment of
-       * it turns the same endpoint into an address harvester. Different question, different answer; the route
-       * is root-only either way.
-       */
-      `SELECT i.identity_id, i.display_name, i.user_id, i.bridge_id,
+    const _list = () =>
+      query(
+        /**
+         * ── ⭐ EVERY WAY THIS SHOP CAN BE ADDRESSED, IN ONE ROW ─────────────────────────────────────────────
+         *
+         * Athi, 2026-09-14: *"we need to have uuid, bridge id, user id, username all in our list."*
+         *
+         *   identity_id   the uuid — the only one the database joins on
+         *   bridge_id     CB………  — what a counterparty is given
+         *   user_id       the handle — what staff sign in under, and what suppliers are numbered beneath
+         *   display_name  what a human calls them; the ONLY one of the four that can change
+         * ⚠️⚠️ THERE IS NO SEPARATE "username", AND I CHECKED BEFORE SAYING SO. `identities` has no such column.
+         * `cb_entity` has `username` and `company_name` — and both are NULL for ALL 340 ROWS. Nothing has ever
+         * written them; they are legacy columns carried by that table's original shape.
+         *
+         * ⭐ So `user_id` IS the username: it is what staff sign in under (`athi@alpha-timers`) and what
+         * suppliers are numbered beneath (`~alpha-timers.sup-0001`). Selecting the two empty columns would have
+         * added two permanently blank fields to every row and made the list look like it was missing data it
+         * never had. Reporting four identifiers that all exist beats five where one is always null.
+         *
+         * ⚠️ EMAIL IS SHOWN HERE AND IS DELIBERATELY NOT SEARCHABLE. Showing an operator their own customer's
+         * address is an account fact — it is how you contact a customer. Letting anything MATCH on a fragment of
+         * it turns the same endpoint into an address harvester. Different question, different answer; the route
+         * is root-only either way.
+         */
+        `SELECT i.identity_id, i.display_name, i.user_id, i.bridge_id,
               i.email,
               i.entity_kind, i.vertical, i.plan,
               /* ⭐ THE SECOND, ORTHOGONAL CLASSIFICATION. Athi, 2026-09-14: *'we have already 3
@@ -1952,25 +2159,33 @@ router.get('/mis', auth, async (req, res) => {
            WARNING: ORDER BY must be a total order or paging silently repeats and drops rows between
            pages. It is a whitelisted column plus NULLS LAST, and identity_id breaks any remaining tie. */
         LIMIT $2 OFFSET $11`,
-      /* ⚠️ '*' MEANS EVERY KIND. Athi, 2026-09-14, after spotting Beta Fresh and Gamma Exports in the data
+        /* ⚠️ '*' MEANS EVERY KIND. Athi, 2026-09-14, after spotting Beta Fresh and Gamma Exports in the data
          but not on the screen: vertical and plan both offered 'any' and kind did not, so there was no way
          to look across the whole platform at once — the one thing an operator report is for. NULL rather
          than a list of every kind, so a kind invented tomorrow is included without touching this. */
-      [(String(req.query.kind || '*').trim() === '*')
-        ? null
-        : String(req.query.kind).split(',').map((s) => s.trim()).filter(Boolean),
-       Math.min(Number(req.query.limit) || 100, 500),
-       q,
-       String(req.query.vertical || '').trim(),
-       String(req.query.plan || '').trim(), String(req.query.position || '').trim(),
-       String(req.query.visibility || '').trim(),
-       String(req.query.entity_visibility || '').trim(),
-       String(req.query.supplies || '').trim(),
-       String(req.query.standing || '').trim(),
-       Math.max(0, Number(req.query.offset) || 0)]);
+        [
+          String(req.query.kind || '*').trim() === '*'
+            ? null
+            : String(req.query.kind)
+                .split(',')
+                .map((item) => item.trim())
+                .filter(Boolean),
+          Math.min(Number(req.query.limit) || 100, 500),
+          q,
+          String(req.query.vertical || '').trim(),
+          String(req.query.plan || '').trim(),
+          String(req.query.position || '').trim(),
+          String(req.query.visibility || '').trim(),
+          String(req.query.entity_visibility || '').trim(),
+          String(req.query.supplies || '').trim(),
+          String(req.query.standing || '').trim(),
+          Math.max(0, Number(req.query.offset) || 0)
+        ]
+      );
     let rows;
-    try { rows = (await _list()).rows; }
-    catch (e) {
+    try {
+      rows = (await _list()).rows;
+    } catch (e) {
       if (!(e && ['42883', '3F000', '42501'].indexOf(e.code) >= 0)) throw e;
       _supFn = false;
       rows = (await _list()).rows;
@@ -1993,12 +2208,13 @@ router.get('/mis', auth, async (req, res) => {
      * ⚠️⚠️ AND IF b241 HAS NOT BEEN RUN, counts is NULL — never {}. The screen must be able to tell "nobody has
      * any customers" from "nobody has asked", and a 0 cannot say the second. [[feedback-silence-is-the-bug]]
      */
-    let counts = null, counts_error = null;
+    let counts = null,
+      counts_error = null;
     if (rows.length) {
       try {
-        const cr = await query(
-          'SELECT entity_id, metric, n::int AS n FROM ops.f_entity_counts() WHERE entity_id = ANY($1::uuid[])',
-          [rows.map((r) => r.identity_id)]);
+        const cr = await query('SELECT entity_id, metric, n::int AS n FROM ops.f_entity_counts() WHERE entity_id = ANY($1::uuid[])', [
+          rows.map((item) => item.identity_id)
+        ]);
         counts = new Map();
         for (const x of cr.rows) {
           if (!counts.has(x.entity_id)) counts.set(x.entity_id, {});
@@ -2018,24 +2234,28 @@ router.get('/mis', auth, async (req, res) => {
            if that is not what the pool actually logs in as, 116 grants have been aimed at the wrong name.
            The database knows. Asking it beats reading a connection string out of a deploy dashboard. */
         try {
-          const who = await query('SELECT current_user AS u, current_setting(\'is_superuser\') AS su');
+          const who = await query("SELECT current_user AS u, current_setting('is_superuser') AS su");
           counts_error += ' [connected as ' + who.rows[0].u + ', superuser=' + who.rows[0].su + ']';
-        } catch (e) { log.fellBack('entities GET /mis: the read failed — carried on without it', e); /* if even this fails the original error is the more useful one */ }
+        } catch (e) {
+          log.fellBack('entities GET /mis: the read failed — carried on without it', e); /* if even this fails the original error is the more useful one */
+        }
       }
     }
     for (const r of rows) {
-      const c = counts ? (counts.get(r.identity_id) || {}) : null;
+      const c = counts ? counts.get(r.identity_id) || {} : null;
       /* ⭐ THE SURFACE WINS WHERE BOTH EXIST. seats and suppliers are also read inline above, because they work
          with no migration and SORTS orders by them. When supplier_list finally gets RLS (BACKLOG), that inline
          count turns silently into 0 — so the surface, which reads through RLS, takes precedence now. */
       r.counts = c;
-      if (c && c.people    != null) r.seats     = c.people;
+      if (c && c.people != null) r.seats = c.people;
       if (c && c.suppliers != null) r.suppliers = c.suppliers;
     }
 
     /* the SAME predicate as the page above, counted without the LIMIT — see the note on `matched` below */
-    const matched = Number((await query(
-      `SELECT count(*)::int AS n
+    const matched = Number(
+      (
+        await query(
+          `SELECT count(*)::int AS n
          FROM identities i
          LEFT JOIN cb_entity c ON c.bridge_id = i.bridge_id
          ${ST_JOIN}
@@ -2062,17 +2282,27 @@ router.get('/mis', auth, async (req, res) => {
                                 ELSE $5 = CASE WHEN c.bridge_id IS NULL THEN 'standalone'
                                                WHEN nlevel(c.path) = 1 THEN 'root'
                                                ELSE 'branch' END END))`,
-      [(String(req.query.kind || '*').trim() === '*')
-        ? null
-        : String(req.query.kind).split(',').map((x) => x.trim()).filter(Boolean),
-       q, String(req.query.vertical || '').trim(), String(req.query.plan || '').trim(),
-       String(req.query.position || '').trim(),
-       String(req.query.visibility || '').trim(),
-       String(req.query.entity_visibility || '').trim(),
-       String(req.query.supplies || '').trim(),
-       String(req.query.standing || '').trim()])).rows[0].n);
+          [
+            String(req.query.kind || '*').trim() === '*'
+              ? null
+              : String(req.query.kind)
+                  .split(',')
+                  .map((x) => x.trim())
+                  .filter(Boolean),
+            q,
+            String(req.query.vertical || '').trim(),
+            String(req.query.plan || '').trim(),
+            String(req.query.position || '').trim(),
+            String(req.query.visibility || '').trim(),
+            String(req.query.entity_visibility || '').trim(),
+            String(req.query.supplies || '').trim(),
+            String(req.query.standing || '').trim()
+          ]
+        )
+      ).rows[0].n
+    );
 
-    const asObj = (r, k, v) => r.rows.reduce((a, x) => (a[x[k]] = x[v], a), {});
+    const asObj = (r, k, v) => r.rows.reduce((total, x) => ((total[x[k]] = x[v]), total), {});
 
     res.json({
       at: new Date().toISOString(),
@@ -2080,15 +2310,15 @@ router.get('/mis', auth, async (req, res) => {
          a tile that silently went to zero rather than to a different number. */
       other_population: otherPop,
       /* ⭐ the screen draws one button per row. Adding a population must not need a front-end release. */
-      populations: popRows.length ? popRows.map((p) => p.code) : ['real', 'test'],
+      populations: popRows.length ? popRows.map((item) => item.code) : ['real', 'test'],
       headline: {
-        identities: kinds.rows.reduce((a, x) => a + x.n, 0),
-        customers:  (kinds.rows.find((x) => x.k === 'customer') || {}).n || 0,
-        active_30d: kinds.rows.reduce((a, x) => a + (x.k === 'customer' ? x.active_30d : 0), 0),
+        identities: kinds.rows.reduce((total, x) => total + x.n, 0),
+        customers: (kinds.rows.find((x) => x.k === 'customer') || {}).n || 0,
+        active_30d: kinds.rows.reduce((total, x) => total + (x.k === 'customer' ? x.active_30d : 0), 0)
       },
-      by_kind:     kinds.rows,
+      by_kind: kinds.rows,
       by_vertical: asObj(verticals, 'v', 'n'),
-      by_plan:     asObj(plans, 'p', 'n'),
+      by_plan: asObj(plans, 'p', 'n'),
       by_visibility: asObj(vis, 'v', 'n'),
       by_entity_visibility: asObj(evis, 'v', 'n'),
       by_supplies: asObj(sup, 'v', 'n'),
@@ -2126,8 +2356,7 @@ router.get('/mis', auth, async (req, res) => {
         /* ⚠️ named by the SERVER, never hard-coded in the page: a filter list that drifts from what the
            database will honour fails silently — you pick a value and get everything. */
         standings: hasStanding
-          ? ['a · never signed in', 'b · registered, never used', 'c · lapsed (90d+)',
-             'd · drifting (30d+)', 'e · quiet (7d+)', 'f · active']
+          ? ['a · never signed in', 'b · registered, never used', 'c · lapsed (90d+)', 'd · drifting (30d+)', 'e · quiet (7d+)', 'f · active']
           : [],
         /**
          * ⚠️⚠️ IT ECHOED SIX OF THIRTEEN. position, class, standing, supplies, visibility, entity_visibility
@@ -2138,32 +2367,41 @@ router.get('/mis', auth, async (req, res) => {
          * ⭐ A control the server honours and does not name is a control you have to take on trust. Every
          * filter this route reads is now answered back, in the same shape it was read.
          */
-        applied:  { sort: sortKey, dir: dir.toLowerCase(), q, kind: req.query.kind || '*',
-                    vertical: req.query.vertical || '', plan: req.query.plan || '',
-                    position: req.query.position || '',
-                    ownership: own, population: pop, live_population: liveCode,
-                    standing: req.query.standing || '', supplies: req.query.supplies || '',
-                    visibility: req.query.visibility || '',
-                    entity_visibility: req.query.entity_visibility || '',
-                    limit: Math.min(Number(req.query.limit) || 100, 500),
-                    offset: Math.max(0, Number(req.query.offset) || 0) },
+        applied: {
+          sort: sortKey,
+          dir: dir.toLowerCase(),
+          q,
+          kind: req.query.kind || '*',
+          vertical: req.query.vertical || '',
+          plan: req.query.plan || '',
+          position: req.query.position || '',
+          ownership: own,
+          population: pop,
+          live_population: liveCode,
+          standing: req.query.standing || '',
+          supplies: req.query.supplies || '',
+          visibility: req.query.visibility || '',
+          entity_visibility: req.query.entity_visibility || '',
+          limit: Math.min(Number(req.query.limit) || 100, 500),
+          offset: Math.max(0, Number(req.query.offset) || 0)
+        },
         /* the named orderings a person actually asks for, rather than a column plus a direction */
         presets: [
-          { key: 'newest',     label: 'Most recent',   sort: 'joined',    dir: 'desc' },
-          { key: 'oldest',     label: 'Oldest',        sort: 'joined',    dir: 'asc'  },
-          { key: 'active',     label: 'Recently seen', sort: 'last_seen', dir: 'desc' },
-          { key: 'quiet',      label: 'Gone quiet',    sort: 'last_seen', dir: 'asc'  },
-          { key: 'biggest',    label: 'Most people',   sort: 'seats',     dir: 'desc' },
-          { key: 'az',         label: 'A–Z',           sort: 'name',      dir: 'asc'  },
+          { key: 'newest', label: 'Most recent', sort: 'joined', dir: 'desc' },
+          { key: 'oldest', label: 'Oldest', sort: 'joined', dir: 'asc' },
+          { key: 'active', label: 'Recently seen', sort: 'last_seen', dir: 'desc' },
+          { key: 'quiet', label: 'Gone quiet', sort: 'last_seen', dir: 'asc' },
+          { key: 'biggest', label: 'Most people', sort: 'seats', dir: 'desc' },
+          { key: 'az', label: 'A–Z', sort: 'name', dir: 'asc' }
         ],
         /* filter values that actually exist in the data — an empty dropdown is worse than no dropdown */
         filters: {
-          kind:     kinds.rows.map((x) => x.k),
+          kind: kinds.rows.map((x) => x.k),
           vertical: Object.keys(asObj(verticals, 'v', 'n')),
-          plan:     Object.keys(asObj(plans, 'p', 'n')),
+          plan: Object.keys(asObj(plans, 'p', 'n')),
           visibility: Object.keys(asObj(vis, 'v', 'n')),
           entity_visibility: Object.keys(asObj(evis, 'v', 'n')),
-          supplies: Object.keys(asObj(sup, 'v', 'n')),
+          supplies: Object.keys(asObj(sup, 'v', 'n'))
         },
         searches: ['display_name', 'user_id', 'bridge_id'],
         /* root · branch · standalone — computed from cb_entity.path, not stored, so it needs naming here */
@@ -2179,15 +2417,15 @@ router.get('/mis', auth, async (req, res) => {
          * ⚠️ Position is NOT a visibility. It is the BILLING axis, and it is listed beside the two visibility
          * filters only because that is where a person looks for it. See VISIBILITY-MATRIX.md §4b.
          */
-        positions: ['standalone', 'root', 'branch', 'networked', 'billable'],
+        positions: ['standalone', 'root', 'branch', 'networked', 'billable']
       },
       /** ⚠️ NAMED, NOT OMITTED. See the header. */
       blind: {
-        tables: ['catalogue_items (public only)', 'chit_header', 'chit_status',
-                 'customer_list', 'definition', 'entity_governance', 'usage_ledger'],
-        why: 'RLS-forced: this connection reads them as zero rows, not as an error. Catalogue size, chit '
-           + 'volume and governance stamps are therefore absent from this report rather than reported as nil.',
-      },
+        tables: ['catalogue_items (public only)', 'chit_header', 'chit_status', 'customer_list', 'definition', 'entity_governance', 'usage_ledger'],
+        why:
+          'RLS-forced: this connection reads them as zero rows, not as an error. Catalogue size, chit ' +
+          'volume and governance stamps are therefore absent from this report rather than reported as nil.'
+      }
     });
   } catch (err) {
     res.status(500).json({ error: 'Could not build the report', message: safeErr(err) });
@@ -2201,11 +2439,14 @@ router.get('/entitlements', auth, async (req, res) => {
 
     let row = {};
     try {
-      const r = await query(
-        'SELECT plan, vertical, entity_kind, catalogue_visibility FROM identities WHERE identity_id = $1',
-        [entity_id]);
+      const r = await query('SELECT plan, vertical, entity_kind, catalogue_visibility FROM identities WHERE identity_id = $1', [entity_id]);
       row = r.rows[0] || {};
-    } catch (e) { log.fellBack('entities GET /entitlements: the read failed — carried on without it', e); /* pre-b229/b230 schema — the defaults below still describe the tier honestly */ }
+    } catch (e) {
+      log.fellBack(
+        'entities GET /entitlements: the read failed — carried on without it',
+        e
+      ); /* pre-b229/b230 schema — the defaults below still describe the tier honestly */
+    }
 
     const code = row.plan || plans.DEFAULT_PLAN;
     const p = plans.plan(code);
@@ -2231,12 +2472,17 @@ router.get('/entitlements', auth, async (req, res) => {
       envelope = gov && {
         constitution: gov.constitution,
         installation: gov.installation || null,
-        allowed:      gov.allowed || {},
-        basics:       gov.basics || {},
+        allowed: gov.allowed || {},
+        basics: gov.basics || {},
         jurisdiction: gov.jurisdiction || null,
-        capabilities: gov.capabilities || [],
+        capabilities: gov.capabilities || []
       };
-    } catch (e) { log.fellBack('entities GET /entitlements: the helper failed — carried on without it', e); /* governance unresolvable — reported as null rather than guessed */ }
+    } catch (e) {
+      log.fellBack(
+        'entities GET /entitlements: the helper failed — carried on without it',
+        e
+      ); /* governance unresolvable — reported as null rather than guessed */
+    }
 
     res.json({
       plan: code,
@@ -2250,8 +2496,9 @@ router.get('/entitlements', auth, async (req, res) => {
       envelope,
       /* ⚠️ THE MOST IMPORTANT FIELD HERE. Nothing in the product gates on any of the above. */
       enforced: false,
-      note: 'Reporting only — no route gates on plan today. lib/visibility-cap.js is the one reader and it is '
-          + 'switched off after the outage its header records.',
+      note:
+        'Reporting only — no route gates on plan today. lib/visibility-cap.js is the one reader and it is ' +
+        'switched off after the outage its header records.'
     });
   } catch (err) {
     res.status(500).json({ error: 'Could not read entitlements', message: safeErr(err) });
@@ -2263,4 +2510,4 @@ module.exports = router;
 module.exports.prefPatch = prefPatch;
 module.exports.MERGE_PATCH_SQL = MERGE_PATCH_SQL;
 module.exports.PREF_SETS = PREF_SETS;
-module.exports.registerNew = registerNew;   /* FX-AU1: tests/register-country-guess.test.cjs drives it with a stand-in db */
+module.exports.registerNew = registerNew; /* FX-AU1: tests/register-country-guess.test.cjs drives it with a stand-in db */

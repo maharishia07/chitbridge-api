@@ -10,13 +10,21 @@
  *
  *   planDays({ start: '2026-04-01', years: 3, seed: 7 }) → { start, last, days: [{ day, sales: [{ rate, taxable, how }],
  *                                                            purchase: { taxable, paid_bank } | null, expense: { class, amount } | null, rent: boolean }] }
+ 
+ * CALLED BY tools/sim-load.cjs, tools/simulate-years.cjs   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
 'use strict';
 
 /** a small seeded generator (mulberry32) — the one simulate-years.cjs has used since Y1 */
 function rng(seed) {
   let a = seed >>> 0;
-  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 const dayAdd = (d, k) => new Date(Date.parse(d + 'T00:00:00Z') + k * 86400000).toISOString().slice(0, 10);
 
@@ -26,18 +34,35 @@ const EXPENSES = ['fuel', 'rent', 'fuel'];
 
 function planDays(opt) {
   const o = opt || {};
-  const START = o.start || '2026-04-01', YEARS = Number(o.years || 3), SEED = Number(o.seed == null ? 7 : o.seed);
-  const LAST = dayAdd((+START.slice(0, 4) + YEARS) + START.slice(4), -1);   /* the day before the start's anniversary: an April year ends 31 March, a July year (AU) 30 June */
-  const rnd = rng(SEED), pick = (a) => a[Math.floor(rnd() * a.length)], between = (lo, hi) => lo + Math.floor(rnd() * (hi - lo + 1));
+  const START = o.start || '2026-04-01',
+    YEARS = Number(o.years || 3),
+    SEED = Number(o.seed == null ? 7 : o.seed);
+  const LAST = dayAdd(
+    +START.slice(0, 4) + YEARS + START.slice(4),
+    -1
+  ); /* the day before the start's anniversary: an April year ends 31 March, a July year (AU) 30 June */
+  const rnd = rng(SEED),
+    pick = (a) => a[Math.floor(rnd() * a.length)],
+    between = (lo, hi) => lo + Math.floor(rnd() * (hi - lo + 1));
   /* a sale: the rate first, then the taxable amount — the draw order Y1 proved with (do not reorder: the seed's days would change) */
-  const sale = (rate) => { const taxable = between(2, 60) * 100, half = taxable * rate / 100 / 2; return { rate, taxable, half, total: taxable + half * 2 }; };
+  const sale = (rate) => {
+    const taxable = between(2, 60) * 100,
+      half = (taxable * rate) / 100 / 2;
+    return { rate, taxable, half, total: taxable + half * 2 };
+  };
   const days = [];
   let day = START;
   while (day <= LAST) {
     const row = { day, sales: [], purchase: null, expense: null, rent: day.slice(8) === '05' };
     const nSales = between(2, 4);
-    for (let i = 0; i < nSales; i++) { const s = sale(pick(RATES)); row.sales.push({ rate: s.rate, taxable: s.taxable, how: pick(MODES) }); }
-    if (rnd() < 0.34) { const p = sale(18); row.purchase = { taxable: p.taxable, paid_bank: rnd() < 0.5 }; }
+    for (let index = 0; index < nSales; index++) {
+      const s = sale(pick(RATES));
+      row.sales.push({ rate: s.rate, taxable: s.taxable, how: pick(MODES) });
+    }
+    if (rnd() < 0.34) {
+      const p = sale(18);
+      row.purchase = { taxable: p.taxable, paid_bank: rnd() < 0.5 };
+    }
     if (rnd() < 0.5) row.expense = { class: pick(EXPENSES), amount: between(1, 20) * 50 };
     days.push(row);
     day = dayAdd(day, 1);
@@ -49,7 +74,8 @@ function planDays(opt) {
 function countOf(plan) {
   const c = { days: plan.days.length, bills: 0, credit_bills: 0, purchases: 0, expenses: 0 };
   for (const d of plan.days) {
-    c.bills += d.sales.length; c.credit_bills += d.sales.filter((s) => s.how === 'credit').length;
+    c.bills += d.sales.length;
+    c.credit_bills += d.sales.filter((item) => item.how === 'credit').length;
     if (d.purchase) c.purchases++;
     if (d.expense) c.expenses++;
     if (d.rent) c.expenses++;

@@ -5,31 +5,32 @@
 // routes/catalogue.js — B3.7 Public catalogue + end-customer order (no business login)
 const express = require('express');
 const logger = require('../lib/logger');
-const router  = express.Router();
+const router = express.Router();
 const { safeErr } = require('../lib/respond');
-const membership = require('../lib/network-membership');   // who is in the network — one reader, fails loudly (T2-HONEST)
+const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
 const { body } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');   // 6b: hash the ERP handoff payload (receipt, not raw payload)
+const crypto = require('crypto'); // 6b: hash the ERP handoff payload (receipt, not raw payload)
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
-const customerAuth = require('../middleware/customer-auth');   // T2.4 — the storefront customer's OWN surface
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's whole-list reads */
-const { verifyOtp, issueShopperOtp, spendShopperOtp, spendOrderCode } = require('../lib/otp');   // per-account OTP attempt cap · SH-OTP1: the one shopper code
-const { sendOtp } = require('../lib/notify');  // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
-const catalogueBuild = require('../lib/catalogue-build');   // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
-const container = require('../lib/container');              // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
-const regional = require('../lib/regional');                // GOVERNED CURRENCY — the network path must not invent 'INR'
-const money = require('../lib/money');                      // MONEY TYPE — a price is never a bare number
+const customerAuth = require('../middleware/customer-auth'); // T2.4 — the storefront customer's OWN surface
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's whole-list reads */
+const { verifyOtp, issueShopperOtp, spendShopperOtp, spendOrderCode } = require('../lib/otp'); // per-account OTP attempt cap · SH-OTP1: the one shopper code
+const { sendOtp } = require('../lib/notify'); // F2 — dual-channel OTP delivery (email via Resend, SMS pluggable)
+const catalogueBuild = require('../lib/catalogue-build'); // B3.7-ref: resolve the shop's adopted REFERENCE catalogue for the storefront
+const container = require('../lib/container'); // CONTAINER MODEL (b80) — freeze the container ref+version on the order chit
+const regional = require('../lib/regional'); // GOVERNED CURRENCY — the network path must not invent 'INR'
+const money = require('../lib/money'); // MONEY TYPE — a price is never a bare number
 
 // ⚠️ ONE generator (lib/bridgeid.js). This copy was the ONLY one that ever received the S4 CSPRNG hardening —
 //    the fix was correct and reached one sixth of the code it was written for. That is why it now lives in one file.
 const genBridge = require('../lib/bridgeid').generateBridgeId;
 // Customer (storefront) OTP: issued and spent by lib/otp.js (SH-OTP1) — a fixed customer code on a LOCAL stack only, CSPRNG elsewhere.
-const devOtp = require('../lib/dev-otp');   // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
+const devOtp = require('../lib/dev-otp'); // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
 const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
 // F2 — dual-channel customer identifier: the customer gives EXACTLY ONE of phone OR email. '@' present => email
@@ -39,14 +40,14 @@ function resolveContact(body) {
   const em = String(body.email ?? '').trim();
   const id = String(body.identifier ?? '').trim();
   if (ph && em) return { error: 'Give just one — a phone OR an email, not both.' };
-  const raw = id || ph || em;
-  if (!raw) return { error: 'Enter a phone number or an email.' };
-  if (raw.includes('@')) {
-    const email = raw.toLowerCase();
+  const text = id || ph || em;
+  if (!text) return { error: 'Enter a phone number or an email.' };
+  if (text.includes('@')) {
+    const email = text.toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: 'Enter a valid email address.' };
     return { channel: 'email', raw: email };
   }
-  const phone = cleanPhone(raw);
+  const phone = cleanPhone(text);
   if (phone.length < 6 || phone.length > 20) return { error: 'Enter a valid phone number.' };
   return { channel: 'phone', raw: phone };
 }
@@ -80,19 +81,26 @@ function crHandle(channel, raw, entity) {
 // ASSUMPTIONS to confirm during dev smoke (adjust here if the real shape differs):
 //   (1) a customer line identifies its product by `item_id`, or by name (`particulars`/`name`);
 //   (2) the unit price lives in `catalogue_items.item_data.price`.
-const _norm = (s) => String(s == null ? '' : s).trim().toLowerCase();
-const _422  = (m) => { const e = new Error(m); e.status = 422; return e; };
+const _norm = (s) =>
+  String(s == null ? '' : s)
+    .trim()
+    .toLowerCase();
+const _422 = (m) => {
+  const e = new Error(m);
+  e.status = 422;
+  return e;
+};
 // ── SPEC-negotiation-position — the shop's order method + the buyer's POSITION on a line ──────────────────────────
 // A negotiation is two parties holding divergent values on ONE co-held record until one settles it — the same shape as
 // a dispute, one lifecycle stage earlier. So the buyer's push-back is a generic `proposal` object, not a price column:
 // it extends to quantity, delivery date, spec, incoterm without another migration.
 const orderInput = require('../lib/order-input');
 const itemstatus = require('../lib/itemstatus');
-const catalogueView = require('../lib/catalogue-view');   // ONE catalogue read, shared with the B2B/supplier view
-const taxSlab = require('../lib/tax-slab');   // ⚠️ which slab answers for a line — resolution only, never a rate table
+const catalogueView = require('../lib/catalogue-view'); // ONE catalogue read, shared with the B2B/supplier view
+const taxSlab = require('../lib/tax-slab'); // ⚠️ which slab answers for a line — resolution only, never a rate table
 const taxShelf = require('../lib/tax-shelf'); // the one reader of slabs (own + governed) · categories · face, shared with the send path
-const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
-const MAX_FORMS_PER_SUBMISSION = 5;   // one purpose, several forms (an export bundle, a loan pack) — but bounded
+const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
+const MAX_FORMS_PER_SUBMISSION = 5; // one purpose, several forms (an export bundle, a loan pack) — but bounded
 // The catalogue DECLARES what it receives (lib/order-input.js). Read server-side from the face (b112) and never from
 // the request, so a customer cannot claim a shop is negotiable — or priceless — when it is not.
 const getOrderInput = (entity_id) => catalogueView.getOrderInput({ entity_id, withEntity, orderInput });
@@ -111,15 +119,19 @@ async function itemDeclFor(entity_id, itemName, cache) {
     // passed in by the caller so it lives exactly one request and cannot leak between tenants.
     const c = cache || {};
     if (!c._decls) {
-      const ado = await withEntity(entity_id, (db) => db.query(
-        // T3.6 · ORDER BY makes resolution DETERMINISTIC. Without it the same submission could validate against a
-        // different schema on different requests, at the database's discretion.
-        `SELECT source_key, commercials FROM catalogue_adoption
-          WHERE entity_id = $1 AND visible = true ORDER BY source_key`, [entity_id]));
-      const decls = new Map();          // normalised name → [{source_key, order_input}]
+      const ado = await withEntity(entity_id, (db) =>
+        db.query(
+          // T3.6 · ORDER BY makes resolution DETERMINISTIC. Without it the same submission could validate against a
+          // different schema on different requests, at the database's discretion.
+          `SELECT source_key, commercials FROM catalogue_adoption
+          WHERE entity_id = $1 AND visible = true ORDER BY source_key`,
+          [entity_id]
+        )
+      );
+      const decls = new Map(); // normalised name → [{source_key, order_input}]
       for (const row of ado.rows) {
         const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {}, { entity_id });
-        for (const it of ((resolved && resolved.items) || [])) {
+        for (const it of (resolved && resolved.items) || []) {
           const k = _norm(it.name);
           if (!decls.has(k)) decls.set(k, []);
           decls.get(k).push({ source_key: row.source_key, order_input: it.order_input || null });
@@ -130,7 +142,7 @@ async function itemDeclFor(entity_id, itemName, cache) {
     const hits = c._decls.get(_norm(itemName)) || [];
     // T3.6 · reject AMBIGUITY rather than silently picking one. The commerce path already refuses when a name exists
     // under two brands ("available from more than one brand"); the payload path used to take whichever came first.
-    const distinct = hits.filter((h) => h.order_input).map((h) => h.source_key);
+    const distinct = hits.filter((item) => item.order_input).map((item) => item.source_key);
     if (distinct.length > 1) {
       const err = new Error(`"${itemName}" is offered by more than one source (${distinct.join(', ')}) — choose the source`);
       err.status = 422;
@@ -138,7 +150,7 @@ async function itemDeclFor(entity_id, itemName, cache) {
     }
     if (hits.length) return hits[0].order_input || null;
   } catch (e) {
-    if (e && e.status === 422) throw e;      // ambiguity is the caller's problem to fix, not a retry
+    if (e && e.status === 422) throw e; // ambiguity is the caller's problem to fix, not a retry
     // T1.3 — FAIL CLOSED. This used to swallow the error and return null, so a transient DB fault meant the item's
     // stricter schema (and its REQUIRED document rule) silently did not apply, and the looser submission was sealed
     // onto a chit indistinguishable from a correctly-validated one. A retryable error is far better than that.
@@ -163,10 +175,13 @@ function validateProposal(raw, oi, sellerBand, label) {
   const r = orderInput.validate({ price: raw.price != null ? raw.price : raw.min }, priceOnly);
   if (!r.ok) throw _422(`Offer for "${label}": ${r.errors.join('; ')}`);
   const out = { price: r.value.price };
-  if (raw.max != null) {                                   // buyer proposing a BAND rather than a number
+  if (raw.max != null) {
+    // buyer proposing a BAND rather than a number
     const m = orderInput.validate({ price: raw.max }, priceOnly);
     if (!m.ok) throw _422(`Offer for "${label}": ${m.errors.join('; ')}`);
-    out.min = out.price; out.max = m.value.price; delete out.price;
+    out.min = out.price;
+    out.max = m.value.price;
+    delete out.price;
     if (out.min > out.max) throw _422(`Offer range for "${label}" is inverted`);
   }
   if (raw.note != null) out.note = String(raw.note).slice(0, 500);
@@ -184,16 +199,21 @@ function validateProposal(raw, oi, sellerBand, label) {
  */
 /* ⭐ ONE FUNCTION FOR EVERY PATH (2026-09-05): the body moved to lib/offers-live.js so the send path (Compose · Record a sale · a
    captured WhatsApp message) applies the same live offers the storefront order does. This name stays for its callers here. */
-async function applyLiveOffers(entity, items, total, viewer) { return require('../lib/offers-live').applyLiveOffers(entity, items, total, { withEntity, viewer: viewer || null }); }
+async function applyLiveOffers(entity, items, total, viewer) {
+  return require('../lib/offers-live').applyLiveOffers(entity, items, total, { withEntity, viewer: viewer || null });
+}
 
 async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   if (!Array.isArray(rawItems) || !rawItems.length) throw _422('Order is empty');
-  if (rawItems.length > 200) throw _422('Too many line items — max 200 per order');   // F6: bound the line count
+  if (rawItems.length > 200) throw _422('Too many line items — max 200 per order'); // F6: bound the line count
   // B1 RLS: prices come from the shop's PUBLIC catalogue (public order flow) -> withEntity(null) = no tenant
   // context, so the visibility-aware policy returns only public items (a private shop can't be ordered from here).
-  const cat = await withEntity(null, (db) => db.query(
-    `SELECT item_id, item_data, updated_at FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id]));
-  const byId = new Map(), byName = new Map(), nameCount = new Map();   // F6: nameCount flags ambiguous names
+  const cat = await withEntity(null, (db) =>
+    db.query(`SELECT item_id, item_data, updated_at FROM catalogue_items WHERE entity_id = $1 AND is_active = true`, [entity_id])
+  );
+  const byId = new Map(),
+    byName = new Map(),
+    nameCount = new Map(); // F6: nameCount flags ambiguous names
   for (const row of cat.rows) {
     const d = row.item_data || {};
     /**
@@ -220,16 +240,32 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
        half of the reference a counterparty may legitimately hold, because they read it before they ordered.
        ⚠️ `code` is not read here: the starter set labels it "Code / HSN", so it may be a customs classification
        rather than an identifier, and stamping one as the other would look exactly right. */
-    const rec = { item_id: row.item_id, name: d.name ?? d.particulars ?? '', price, unit: d.unit ?? null,
-                  sku: String(d.sku || d.gtin || '').trim() || null,
-                  as_of: row.updated_at ? new Date(row.updated_at).toISOString() : null,
-                  /* the same stamp the capture path takes, from the same function — one definition of "what it was" */
-                  hash: require('../lib/itemmatch').stampOf({ name: d.name, variant: d.variant || d.grade, unit: d.unit, price: d.price, sku: String(d.sku || d.gtin || '').trim() || null, status: require('../lib/itemstatus').statusOf(d) }) };
+    const rec = {
+      item_id: row.item_id,
+      name: d.name ?? d.particulars ?? '',
+      price,
+      unit: d.unit ?? null,
+      sku: String(d.sku || d.gtin || '').trim() || null,
+      as_of: row.updated_at ? new Date(row.updated_at).toISOString() : null,
+      /* the same stamp the capture path takes, from the same function — one definition of "what it was" */
+      hash: require('../lib/itemmatch').stampOf({
+        name: d.name,
+        variant: d.variant || d.grade,
+        unit: d.unit,
+        price: d.price,
+        sku: String(d.sku || d.gtin || '').trim() || null,
+        status: require('../lib/itemstatus').statusOf(d)
+      })
+    };
     /* The row itself, so the tax slab can be resolved from it below. ⚠️ NOT exposed on the order line — only
        `d.tax_slab`, `d.categories` and `d.gst_rate` are ever read from it, by lib/tax-slab. */
     rec.d = d;
     byId.set(String(row.item_id), rec);
-    if (rec.name) { const k = _norm(rec.name); nameCount.set(k, (nameCount.get(k) || 0) + 1); byName.set(k, rec); }
+    if (rec.name) {
+      const k = _norm(rec.name);
+      nameCount.set(k, (nameCount.get(k) || 0) + 1);
+      byName.set(k, rec);
+    }
   }
   /**
    * ⭐⭐ THE TAX CONTEXT — read ONCE for the whole order, not once per line.
@@ -249,8 +285,12 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
   /* ⚠️ ONE READER FOR BOTH PATHS (lib/tax-shelf). This route's own copy read the entity's slabs only — a product
      citing the jurisdiction's IN-GST-18 (b201) resolved NOTHING on a storefront order while the product page showed
      the split. The shelf reader includes the governed slabs, and the B2B send path now reads the same shelf. */
-  const taxCtx = await taxShelf.readShelf(entity_id, { withEntity, query, regionLayer: regional.regionLayer,
-    getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) });
+  const taxCtx = await taxShelf.readShelf(entity_id, {
+    withEntity,
+    query,
+    regionLayer: regional.regionLayer,
+    getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity })
+  });
   /**
    * ⚠️⚠️ APPLIED TO THIS SHOP'S OWN PRODUCTS ONLY, AND THE FINISH BRANCH IS DELIBERATELY LEFT OUT.
    *
@@ -260,29 +300,28 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
    * lib/tax-slab.js exists to avoid, pointed the other way. The source's slab has to reach us before that line
    * can carry a rate; until then it carries none, which is honest.
    */
-  const withTax = (line, item_data) => (taxCtx
-    ? taxSlab.applyToLine(line, taxSlab.resolve({ item_data, face: taxCtx.face,
-                                                  slabs: taxCtx.slabs, categories: taxCtx.categories }))
-    : line);
+  const withTax = (line, item_data) =>
+    taxCtx ? taxSlab.applyToLine(line, taxSlab.resolve({ item_data, face: taxCtx.face, slabs: taxCtx.slabs, categories: taxCtx.categories })) : line;
   // Finish map (reference catalogue) — resolve the shop's VISIBLE adoptions → norm(name) -> {price, combos, source}.
   // Priced from the adoption commercials, SERVER-side (never the customer). Empty if the shop has no finishes.
-  const finishMap = new Map();       // STONE 3: keyed 'source|name' so same-named finishes from DIFFERENT brands don't collide
-  const finishByName = new Map();     // name -> { count, rec } — for name-only lines (reject if ambiguous across brands)
+  const finishMap = new Map(); // STONE 3: keyed 'source|name' so same-named finishes from DIFFERENT brands don't collide
+  const finishByName = new Map(); // name -> { count, rec } — for name-only lines (reject if ambiguous across brands)
   try {
-    const ado = await withEntity(entity_id, (db) => db.query(
-      `SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity_id]));
+    const ado = await withEntity(entity_id, (db) =>
+      db.query(`SELECT source_key, commercials FROM catalogue_adoption WHERE entity_id = $1 AND visible = true`, [entity_id])
+    );
     for (const row of ado.rows) {
       const resolved = await catalogueBuild.resolve(row.source_key, row.commercials || {}, { entity_id });
       if (!resolved) continue;
       // STONE 2: the SOURCE's governance resolves HERE — an item runs under its source's rules, not the host's.
-      const rules  = (resolved.experience && resolved.experience.rules) || {};
-      const sVer   = (resolved.adoption_model && resolved.adoption_model.version) || 'v1';
+      const rules = (resolved.experience && resolved.experience.rules) || {};
+      const sVer = (resolved.adoption_model && resolved.adoption_model.version) || 'v1';
       const sOwner = resolved.owner_entity_id || null;
-      for (const it of (resolved.items || [])) {
+      for (const it of resolved.items || []) {
         // Commercials are GENERIC {price, unit}; price_per_litre is the pre-generic paint shape. ADDITIVE — both are
         // accepted so a non-paint (kg/count) adoption prices correctly and existing paint adoptions are untouched.
         const _c = it.commercials || {};
-        const _raw = (_c.price != null && _c.price !== '') ? _c.price : _c.price_per_litre;
+        const _raw = _c.price != null && _c.price !== '' ? _c.price : _c.price_per_litre;
         // ⚠️ THE SAME BUG AS LINE ~373, WHICH WAS FIXED AND THIS ONE WAS NOT.
         //
         // `catalogue-adopt` stamps commercials, so an adoption's price is `{amount, currency}`. `Number({…})` is
@@ -299,131 +338,197 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         // comes from the shop's own catalogue and never from the customer — and `amountOfLoose` returns NaN for
         // anything genuinely unreadable, so the guard below still refuses a priceless line exactly as before. What
         // changes is that a CORRECTLY PRICED line stops being refused.
-        const p = (_raw != null && _raw !== '') ? money.amountOfLoose(_raw) : NaN;
+        const p = _raw != null && _raw !== '' ? money.amountOfLoose(_raw) : NaN;
         // the item's OWN unit (kg/count/litre) — was hardcoded 'litre' on the order line, so a kg item's chit recorded litres.
         const unit = _c.unit || it.unit || 'unit';
         // the SELLER's declared band (SPEC-negotiation-position §2) — bounds a buyer's offer; absent → unbounded.
-        const band = (_c.price_min != null || _c.price_max != null) ? { min: _c.price_min, max: _c.price_max } : null;
-        const rec = { name: it.name, sku: it.sku || null, category: it.category || null, categories: Array.isArray(it.categories) ? it.categories : null, price: p, unit, band, source: row.source_key, sVer, sOwner, rules, combos: new Set((it.combinations || []).map((c) => _norm(c.name))) };
+        const band = _c.price_min != null || _c.price_max != null ? { min: _c.price_min, max: _c.price_max } : null;
+        const rec = {
+          name: it.name,
+          sku: it.sku || null,
+          category: it.category || null,
+          categories: Array.isArray(it.categories) ? it.categories : null,
+          price: p,
+          unit,
+          band,
+          source: row.source_key,
+          sVer,
+          sOwner,
+          rules,
+          combos: new Set((it.combinations || []).map((item) => _norm(item.name)))
+        };
         const nk = _norm(it.name);
         finishMap.set(row.source_key + '|' + nk, rec);
         const nb = finishByName.get(nk) || { count: 0, rec: null };
         finishByName.set(nk, { count: nb.count + 1, rec });
       }
     }
-  } catch (e) { logger.fellBack('catalogue repriceAgainstCatalogue: the read failed — carried on without it', e); /* no reference catalogue for this shop */ }
+  } catch (e) {
+    logger.fellBack('catalogue repriceAgainstCatalogue: the read failed — carried on without it', e); /* no reference catalogue for this shop */
+  }
   const MAX_QTY = 100000;
-  const items = await Promise.all(rawItems.map(async (li, idx) => {
-    // FINISH line (reference catalogue) — priced from the adoption commercials, server-authoritative (never the customer).
-    if (li.kind === 'finish' || li.finish || (li.source && finishMap.size)) {
-      const fname = li.finish ?? li.name ?? li.particulars;
-      const nk = _norm(fname);
-      const lsrc = (li.source != null) ? String(li.source).trim() : null;
-      // STONE 3: resolve to the RIGHT brand. With a source on the line, exact (source|name); without, only if the name
-      // is unambiguous across the brands this distributor carries (else make them choose the brand).
-      let fref = lsrc ? finishMap.get(lsrc + '|' + nk) : null;
-      if (!fref && !lsrc) {
-        const nb = finishByName.get(nk);
-        if (nb && nb.count > 1) throw _422(`"${fname}" is available from more than one brand — choose the brand to order it`);
-        fref = nb ? nb.rec : null;
-      }
-      if (!fref) throw _422(`"${fname || ('item ' + (idx + 1))}" is not an available finish in this shop`);
-      if (!Number.isFinite(fref.price)) throw _422(`Price for "${fref.name}" is not set — order cannot be placed`);
-      // T2.5 · `combination` used to be stored RAW: when the resolved item declared no combinations the guard was
-      // skipped entirely, so an arbitrary nested object of any size rode onto BOTH chit copies — flatly contradicting
-      // "an undeclared field is rejected, never carried", which holds on the payload path but did not here.
-      const comboRaw = li.combination ?? li.combo ?? null;
-      if (comboRaw !== null && typeof comboRaw === 'object') throw _422(`"${fref.name}": a colour combination must be a name, not an object`);
-      const combo = comboRaw === null || comboRaw === '' ? null : String(comboRaw).slice(0, 120);
-      if (combo && !fref.combos.size) throw _422(`"${fref.name}" has no colour combinations to choose from`);
-      if (combo && !fref.combos.has(_norm(combo))) throw _422(`"${combo}" is not a colour combination of "${fref.name}"`);
-      const fq = Number(li.quantity ?? li.qty);
-      if (!Number.isFinite(fq) || fq <= 0 || fq > MAX_QTY) throw _422(`Invalid quantity for "${fref.name}"`);
-      // STONE 2: ENFORCE the source's rules (governance from the source). Min order is the source's, not the host's.
-      const rules = fref.rules || {};
-      const minL = Number(rules.min_order_litres);
-      if (Number.isFinite(minL) && minL > 0 && fq < minL) throw _422(`"${fref.name}" has a minimum order of ${minL} litres (set by ${fref.source}).`);
-      // WIRING (stone 5): FREEZE the container ref + version (the immutable snapshot the customer saw → chit verifiable forever).
-      let containerFreeze = null;
-      try { const cid = container.itemContainerId(fref.source, fref.name); const cc = await container.getContainer(cid); if (cc) containerFreeze = { ref: cid, content_version: cc.current_version }; } catch (e) { logger.fellBack('catalogue repriceAgainstCatalogue: failed — carried on without it', e); }
-      // The buyer's POSITION. Deliberately computed AFTER price/total below: the seller's price comes from the
-      // catalogue and is authoritative; the buyer's price travels ON THE CHIT and never touches money.
-      const proposal = validateProposal(li.proposal, oi, fref.band, fref.name);
-      const finLine = { kind: 'finish', source: fref.source, source_version: fref.sVer, finish: fref.name, combination: combo || null,
-        particulars: fref.name + (combo ? (' · ' + combo) : ''), name: fref.name, unit: fref.unit || 'unit', quantity: fq,
-        price: fref.price, total: money.round(fref.price * fq),
-        ...(fref.band ? { seller_band: fref.band } : {}),
-        ...(proposal ? { proposal } : {}),
-        // The order line carries the source's governance + the FROZEN container (verifiable). Routing = INFO for the ERP.
-        governed: { under: fref.source, owner_entity_id: fref.sOwner, container: containerFreeze, routing: rules.order_routing || null, min_order_litres: Number.isFinite(minL) ? minL : null } };
-      /* ⭐ what the offer engine matches a network line on — its code and category — riding the line WITHOUT being stored on it
+  const items = await Promise.all(
+    rawItems.map(async (li, idx) => {
+      // FINISH line (reference catalogue) — priced from the adoption commercials, server-authoritative (never the customer).
+      if (li.kind === 'finish' || li.finish || (li.source && finishMap.size)) {
+        const fname = li.finish ?? li.name ?? li.particulars;
+        const nk = _norm(fname);
+        const lsrc = li.source != null ? String(li.source).trim() : null;
+        // STONE 3: resolve to the RIGHT brand. With a source on the line, exact (source|name); without, only if the name
+        // is unambiguous across the brands this distributor carries (else make them choose the brand).
+        let fref = lsrc ? finishMap.get(lsrc + '|' + nk) : null;
+        if (!fref && !lsrc) {
+          const nb = finishByName.get(nk);
+          if (nb && nb.count > 1) throw _422(`"${fname}" is available from more than one brand — choose the brand to order it`);
+          fref = nb ? nb.rec : null;
+        }
+        if (!fref) throw _422(`"${fname || 'item ' + (idx + 1)}" is not an available finish in this shop`);
+        if (!Number.isFinite(fref.price)) throw _422(`Price for "${fref.name}" is not set — order cannot be placed`);
+        // T2.5 · `combination` used to be stored RAW: when the resolved item declared no combinations the guard was
+        // skipped entirely, so an arbitrary nested object of any size rode onto BOTH chit copies — flatly contradicting
+        // "an undeclared field is rejected, never carried", which holds on the payload path but did not here.
+        const comboRaw = li.combination ?? li.combo ?? null;
+        if (comboRaw !== null && typeof comboRaw === 'object') throw _422(`"${fref.name}": a colour combination must be a name, not an object`);
+        const combo = comboRaw === null || comboRaw === '' ? null : String(comboRaw).slice(0, 120);
+        if (combo && !fref.combos.size) throw _422(`"${fref.name}" has no colour combinations to choose from`);
+        if (combo && !fref.combos.has(_norm(combo))) throw _422(`"${combo}" is not a colour combination of "${fref.name}"`);
+        const fq = Number(li.quantity ?? li.qty);
+        if (!Number.isFinite(fq) || fq <= 0 || fq > MAX_QTY) throw _422(`Invalid quantity for "${fref.name}"`);
+        // STONE 2: ENFORCE the source's rules (governance from the source). Min order is the source's, not the host's.
+        const rules = fref.rules || {};
+        const minL = Number(rules.min_order_litres);
+        if (Number.isFinite(minL) && minL > 0 && fq < minL) throw _422(`"${fref.name}" has a minimum order of ${minL} litres (set by ${fref.source}).`);
+        // WIRING (stone 5): FREEZE the container ref + version (the immutable snapshot the customer saw → chit verifiable forever).
+        let containerFreeze = null;
+        try {
+          const cid = container.itemContainerId(fref.source, fref.name);
+          const cc = await container.getContainer(cid);
+          if (cc) containerFreeze = { ref: cid, content_version: cc.current_version };
+        } catch (e) {
+          logger.fellBack('catalogue repriceAgainstCatalogue: failed — carried on without it', e);
+        }
+        // The buyer's POSITION. Deliberately computed AFTER price/total below: the seller's price comes from the
+        // catalogue and is authoritative; the buyer's price travels ON THE CHIT and never touches money.
+        const proposal = validateProposal(li.proposal, oi, fref.band, fref.name);
+        const finLine = {
+          kind: 'finish',
+          source: fref.source,
+          source_version: fref.sVer,
+          finish: fref.name,
+          combination: combo || null,
+          particulars: fref.name + (combo ? ' · ' + combo : ''),
+          name: fref.name,
+          unit: fref.unit || 'unit',
+          quantity: fq,
+          price: fref.price,
+          total: money.round(fref.price * fq),
+          ...(fref.band ? { seller_band: fref.band } : {}),
+          ...(proposal ? { proposal } : {}),
+          // The order line carries the source's governance + the FROZEN container (verifiable). Routing = INFO for the ERP.
+          governed: {
+            under: fref.source,
+            owner_entity_id: fref.sOwner,
+            container: containerFreeze,
+            routing: rules.order_routing || null,
+            min_order_litres: Number.isFinite(minL) ? minL : null
+          }
+        };
+        /* ⭐ what the offer engine matches a network line on — its code and category — riding the line WITHOUT being stored on it
          (not enumerable, so the chit is unchanged); lib/offers-live reads it to apply the brand's released offers */
-      Object.defineProperty(finLine, 'd', { value: { sku: fref.sku, category: fref.category, categories: fref.categories }, enumerable: false });
-      return finLine;
-    }
-    const name = li.particulars ?? li.name ?? (li.item_data && li.item_data.name);
-    // F6: prefer an item_id match; fall back to name, but REJECT an ambiguous name (>1 active item shares it)
-    // instead of silently pricing against the wrong variant.
-    let ref = (li.item_id != null) ? byId.get(String(li.item_id)) : null;
-    if (!ref) {
-      const k = _norm(name);
-      if ((nameCount.get(k) || 0) > 1) throw _422(`"${name}" matches more than one product — select the item to order it`);
-      ref = byName.get(k);
-    }
-    if (!ref) throw _422(`"${name || ('item ' + (idx + 1))}" is not available in this shop's catalogue`);
-    if (!Number.isFinite(ref.price)) throw _422(`Price for "${ref.name}" is not set — order cannot be placed`);
-    const qty = Number(li.quantity ?? li.qty);
-    if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY) throw _422(`Invalid quantity for "${ref.name}"`);
-    /* ⭐ THE PRICING STRUCTURE THE PRODUCT CITES prices the unit at this quantity (lib/pricing-engine.js, vendored from
+        Object.defineProperty(finLine, 'd', { value: { sku: fref.sku, category: fref.category, categories: fref.categories }, enumerable: false });
+        return finLine;
+      }
+      const name = li.particulars ?? li.name ?? (li.item_data && li.item_data.name);
+      // F6: prefer an item_id match; fall back to name, but REJECT an ambiguous name (>1 active item shares it)
+      // instead of silently pricing against the wrong variant.
+      let ref = li.item_id != null ? byId.get(String(li.item_id)) : null;
+      if (!ref) {
+        const k = _norm(name);
+        if ((nameCount.get(k) || 0) > 1) throw _422(`"${name}" matches more than one product — select the item to order it`);
+        ref = byName.get(k);
+      }
+      if (!ref) throw _422(`"${name || 'item ' + (idx + 1)}" is not available in this shop's catalogue`);
+      if (!Number.isFinite(ref.price)) throw _422(`Price for "${ref.name}" is not set — order cannot be placed`);
+      const qty = Number(li.quantity ?? li.qty);
+      if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY) throw _422(`Invalid quantity for "${ref.name}"`);
+      /* ⭐ THE PRICING STRUCTURE THE PRODUCT CITES prices the unit at this quantity (lib/pricing-engine.js, vendored from
        app/pricing.js) — before offers, before tax; the list price rides beside it so the line can say what it re-priced from */
-    const _pe = require('../lib/pricing-engine').CBPricing;
-    const _unit = (ref.d && ref.d.pricing_kind && _pe) ? _pe.unitPrice(ref.d, qty, ref.price).amount : ref.price;
-    const total = money.round(_unit * qty);
-    // T3.3 · the OFFER GUARD applies here too. validateProposal was called only on the finish/reference branch, so
-    // the ordinary product path silently DROPPED `li.proposal` — meaning the documented restriction ("a fixed-price
-    // shop now rejects an offer") was false for most shops. A plain product has no seller band, so an offer here is
-    // unbounded but still only admissible when the shop declared itself negotiable.
-    const proposal = validateProposal(li.proposal, oi, null, ref.name);
-    /**
-     * ⭐ THE SAME REFERENCE SHAPE THE CAPTURE PATH NOW STAMPS. This line already carried a bare `item_id`, which is
-     * kept — other readers use it — but one fact stored two ways is how the two paths drift apart, and a chit that
-     * says `item_id` when it came from a storefront and `ref.item_id` when it came from WhatsApp cannot be queried
-     * as one thing.
-     *
-     * ⚠️ `how: 'picked'` IS THE STRONGEST RUNG ON THE LADDER, and it is the only place entitled to it: the buyer
-     * chose this row from the shop's own catalogue. Nothing was matched, guessed or resolved — so a dispute can
-     * tell it apart from a line a spelling-guess produced, which the other paths cannot claim.
-     */
-    /**
-     * ⭐ THE RATE IS RESOLVED HERE, WHERE THE PRICE IS. Athi, 2026-09-03: *"each product has different tax
-     * criteria … define slab and attach the slab to the product"*. A line that knows its price and not its rate
-     * makes the buyer's system guess, and both sides then compute a different invoice from the same order.
-     *
-     * ⚠️ IT ADDS FIELDS AND CHANGES NOTHING. `price` and `total` are untouched — CJ-07 price integrity is exactly
-     * as it was — and `applyToLine` writes nothing at all when nobody has declared a slab. An entity with no tax
-     * shelf produces the same line it produced yesterday.
-     */
-    /* ⭐ STOCK WITH A STAMP (Athi, 2026-09-05: "stock with stamp first"). When the connector stamped a figure, the order
+      const _pe = require('../lib/pricing-engine').CBPricing;
+      const _unit = ref.d && ref.d.pricing_kind && _pe ? _pe.unitPrice(ref.d, qty, ref.price).amount : ref.price;
+      const total = money.round(_unit * qty);
+      // T3.3 · the OFFER GUARD applies here too. validateProposal was called only on the finish/reference branch, so
+      // the ordinary product path silently DROPPED `li.proposal` — meaning the documented restriction ("a fixed-price
+      // shop now rejects an offer") was false for most shops. A plain product has no seller band, so an offer here is
+      // unbounded but still only admissible when the shop declared itself negotiable.
+      const proposal = validateProposal(li.proposal, oi, null, ref.name);
+      /**
+       * ⭐ THE SAME REFERENCE SHAPE THE CAPTURE PATH NOW STAMPS. This line already carried a bare `item_id`, which is
+       * kept — other readers use it — but one fact stored two ways is how the two paths drift apart, and a chit that
+       * says `item_id` when it came from a storefront and `ref.item_id` when it came from WhatsApp cannot be queried
+       * as one thing.
+       *
+       * ⚠️ `how: 'picked'` IS THE STRONGEST RUNG ON THE LADDER, and it is the only place entitled to it: the buyer
+       * chose this row from the shop's own catalogue. Nothing was matched, guessed or resolved — so a dispute can
+       * tell it apart from a line a spelling-guess produced, which the other paths cannot claim.
+       */
+      /**
+       * ⭐ THE RATE IS RESOLVED HERE, WHERE THE PRICE IS. Athi, 2026-09-03: *"each product has different tax
+       * criteria … define slab and attach the slab to the product"*. A line that knows its price and not its rate
+       * makes the buyer's system guess, and both sides then compute a different invoice from the same order.
+       *
+       * ⚠️ IT ADDS FIELDS AND CHANGES NOTHING. `price` and `total` are untouched — CJ-07 price integrity is exactly
+       * as it was — and `applyToLine` writes nothing at all when nobody has declared a slab. An entity with no tax
+       * shelf produces the same line it produced yesterday.
+       */
+      /* ⭐ STOCK WITH A STAMP (Athi, 2026-09-05: "stock with stamp first"). When the connector stamped a figure, the order
        reads it: a FRESH zero (under an hour old) refuses the line — the customer is told when the shop last counted;
        a shortfall never refuses (the stamp may be stale, the shop may restock) — it rides the line as `stock` so the
        seller's chit says "short by N as of HH:MM" and can act. Without a stamp nothing changes. */
-    let stock = null;
-    { const av = ref.d && ref.d.avail; const q = av ? Number(av.qty) : NaN;
-      if (av && Number.isFinite(q) && av.as_of && Number.isFinite(Date.parse(av.as_of))) {
-        const age = Date.now() - Date.parse(av.as_of);
-        if (q <= 0 && age >= 0 && age < 3600e3) throw _422(`"${ref.name}" is out of stock as of ${String(av.as_of).slice(11, 16)} UTC — ask the shop before ordering`);
-        if (q < qty) stock = { qty: q, as_of: av.as_of, short: Math.round((qty - q) * 1000) / 1000, ...(av.source ? { source: av.source } : {}) };
-      } }
-    /* ⚠️ the product's own data rides the line for the offer engine (categories, offers_excluded) and is NOT stored — without it a
+      let stock = null;
+      {
+        const av = ref.d && ref.d.avail;
+        const q = av ? Number(av.qty) : NaN;
+        if (av && Number.isFinite(q) && av.as_of && Number.isFinite(Date.parse(av.as_of))) {
+          const age = Date.now() - Date.parse(av.as_of);
+          if (q <= 0 && age >= 0 && age < 3600e3)
+            throw _422(`"${ref.name}" is out of stock as of ${String(av.as_of).slice(11, 16)} UTC — ask the shop before ordering`);
+          if (q < qty) stock = { qty: q, as_of: av.as_of, short: Math.round((qty - q) * 1000) / 1000, ...(av.source ? { source: av.source } : {}) };
+        }
+      }
+      /* ⚠️ the product's own data rides the line for the offer engine (categories, offers_excluded) and is NOT stored — without it a
        category offer the storefront showed was never applied at checkout, and an item switched off offers still got one */
-    const ownLine = (l) => { Object.defineProperty(l, 'd', { value: ref.d, enumerable: false }); return l; };
-    return ownLine(withTax({ item_id: ref.item_id, particulars: ref.name, name: ref.name, unit: ref.unit, quantity: qty,
-             price: _unit, total, ...(_unit !== ref.price ? { list_price: ref.price, pricing: { kind: ref.d.pricing_kind, name: ref.d.pricing_def_name || null } } : {}), ...(proposal ? { proposal } : {}), ...(stock ? { stock } : {}),
-             ref: { item_id: ref.item_id, ...(ref.sku ? { sku: ref.sku } : {}), ...((ref.d && ref.d.code) ? { code: ref.d.code } : {}), how: 'picked',
-                    ...(ref.as_of ? { as_of: ref.as_of } : {}), ...(ref.hash ? { hash: ref.hash } : {}) } },
-             ref.d));
-  }));
-  const total = money.round(items.reduce((s, i) => s + i.total, 0));
+      const ownLine = (l) => {
+        Object.defineProperty(l, 'd', { value: ref.d, enumerable: false });
+        return l;
+      };
+      return ownLine(
+        withTax(
+          {
+            item_id: ref.item_id,
+            particulars: ref.name,
+            name: ref.name,
+            unit: ref.unit,
+            quantity: qty,
+            price: _unit,
+            total,
+            ...(_unit !== ref.price ? { list_price: ref.price, pricing: { kind: ref.d.pricing_kind, name: ref.d.pricing_def_name || null } } : {}),
+            ...(proposal ? { proposal } : {}),
+            ...(stock ? { stock } : {}),
+            ref: {
+              item_id: ref.item_id,
+              ...(ref.sku ? { sku: ref.sku } : {}),
+              ...(ref.d && ref.d.code ? { code: ref.d.code } : {}),
+              how: 'picked',
+              ...(ref.as_of ? { as_of: ref.as_of } : {}),
+              ...(ref.hash ? { hash: ref.hash } : {})
+            }
+          },
+          ref.d
+        )
+      );
+    })
+  );
+  const total = money.round(items.reduce((s, item) => s + item.total, 0));
   return { items, total };
 }
 
@@ -460,7 +565,8 @@ async function resolveEntity(handle) {
         AND identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false
       ORDER BY (bridge_id = $1) DESC
       LIMIT 1`,
-    [handle]);
+    [handle]
+  );
   return r.rows[0] || null;
 }
 
@@ -482,27 +588,46 @@ async function networkStoreOf(handle) {
   return { brand, members: [String(brand.identity_id)].concat(members.map(String)) };
 }
 /** the public item rows of these members — one statement; a sign-in-first shop's items never reach the anonymous lens (SEC4) */
-const networkItems = (members) => withEntity(null, (db) => db.query(
-  `SELECT ci.item_id, ci.entity_id, ci.item_data FROM catalogue_items ci WHERE ci.entity_id = ANY($1::uuid[]) AND ci.is_active = true
-      AND NOT EXISTS (SELECT 1 FROM identities i WHERE i.identity_id = ci.entity_id AND to_jsonb(i)->>'storefront_access' = 'login')`, [members]));
+const networkItems = (members) =>
+  withEntity(null, (db) =>
+    db.query(
+      `SELECT ci.item_id, ci.entity_id, ci.item_data FROM catalogue_items ci WHERE ci.entity_id = ANY($1::uuid[]) AND ci.is_active = true
+      AND NOT EXISTS (SELECT 1 FROM identities i WHERE i.identity_id = ci.entity_id AND to_jsonb(i)->>'storefront_access' = 'login')`,
+      [members]
+    )
+  );
 router.get('/network-store/:networkId', async (req, res) => {
   try {
     const network = await networkStoreOf(req.params.networkId);
     if (!network) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
-    const q = String(req.query.q || '').trim().toLowerCase();
-    const cat = String(req.query.category || '').trim();
+    const q = String(req.query.q || '')
+      .trim()
+      .toLowerCase();
+    const text = String(req.query.category || '').trim();
     const rows = (await networkItems(network.members)).rows;
-    let products = rows.map((r) => { const d = r.item_data || {};
-      return { product_id: r.item_id, name: d.name || d.particulars || '(unnamed)', category: d.category || 'Other',
+    let products = rows.map((item) => {
+      const d = item.item_data || {};
+      return {
+        product_id: item.item_id,
+        name: d.name || d.particulars || '(unnamed)',
+        category: d.category || 'Other',
         // TOLERANT READ (both shapes). null stays null — "price on request" is a real state, not a zero.
-        price: (Number.isFinite(money.amountOfLoose(d.price)) ? money.amountOfLoose(d.price) : null),
-        unit: d.unit || null, image: d.image || null }; });
-    if (cat) products = products.filter((p) => p.category.toLowerCase() === cat.toLowerCase());
-    if (q) products = products.filter((p) => (p.name + ' ' + p.category).toLowerCase().indexOf(q) >= 0);
-    const categories = [...new Set(products.map((p) => p.category))].sort();
-    res.json(Object.assign({ network_id: network.brand.bridge_id, categories, count: products.length }, PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));   // NO node/entity attribution — the internal structure stays hidden
+        price: Number.isFinite(money.amountOfLoose(d.price)) ? money.amountOfLoose(d.price) : null,
+        unit: d.unit || null,
+        image: d.image || null
+      };
+    });
+    if (text) products = products.filter((item) => item.category.toLowerCase() === text.toLowerCase());
+    if (q) products = products.filter((item) => (item.name + ' ' + item.category).toLowerCase().indexOf(q) >= 0);
+    const categories = [...new Set(products.map((item) => item.category))].sort();
+    res.json(
+      Object.assign(
+        { network_id: network.brand.bridge_id, categories, count: products.length },
+        PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))
+      )
+    ); // NO node/entity attribution — the internal structure stays hidden
   } catch (err) {
-    if (membership.answerReadFailed(res, err)) return;   /* a member read that failed is said, never "no products" (T2-HONEST) */
+    if (membership.answerReadFailed(res, err)) return; /* a member read that failed is said, never "no products" (T2-HONEST) */
     res.status(500).json({ error: 'Storefront failed', message: safeErr(err) });
   }
 });
@@ -512,32 +637,63 @@ router.get('/network-store/:networkId', async (req, res) => {
 async function deliverEdge({ sender, receiver, chit_id, subject, trace, business, status, currency, total_value }) {
   const all_recipients = [
     { entity_id: sender.id, bridge_id: sender.bridge_id, display_name: sender.display_name, role: 'sender' },
-    { entity_id: receiver.id, bridge_id: receiver.bridge_id, display_name: receiver.display_name, role: 'receiver' },
+    { entity_id: receiver.id, bridge_id: receiver.bridge_id, display_name: receiver.display_name, role: 'receiver' }
   ];
   // CURRENCY comes from the GOVERNANCE LAYER, resolved once by the caller and passed in — never invented here and
   // never read from the request. Both copies of a co-held chit MUST carry the same code: two parties disagreeing on
   // the denomination of the same order is exactly the dispute the rail exists to prevent.
   /* N1: a currency nobody stated is REFUSED in words (NO_MONEY), never defaulted by name - the callers resolve it once with regional.currencyFor */
-  if (!currency) { const refusal = new Error(regional.NO_CURRENCY_SAYS()); refusal.status = 422; refusal.code = 'NO_MONEY'; refusal.refused = true; throw refusal; }
+  if (!currency) {
+    const refusal = new Error(regional.NO_CURRENCY_SAYS());
+    refusal.status = 422;
+    refusal.code = 'NO_MONEY';
+    refusal.refused = true;
+    throw refusal;
+  }
   const currency_code = String(currency).toUpperCase();
   // TOTAL_VALUE was hard-coded 0 here, so every network order and fulfilment fragment claimed to be worth nothing
   // while carrying real line items — and lib/kyb.js sums this column as trade value. A currency with no value is
   // meaningless; state both or state neither. null means "not applicable", which 0 never did.
-  const value = (total_value === null || total_value === undefined || !Number.isFinite(Number(total_value)))
-    ? null : money.round2(Number(total_value));
+  const value = total_value === null || total_value === undefined || !Number.isFinite(Number(total_value)) ? null : money.round2(Number(total_value));
   /* ⚠️ SHAPE from lib/mint.js; the POLICY above (governance-resolved currency, null-not-zero total) stays here.
      deliverEdge is the NETWORK path (order chit + fulfilment fragments), not the storefront. It is always an
      'order' — there is no negotiation here — and `purpose` is not in scope. A blanket rename briefly made this a
      ReferenceError; the test that counts these caught it. */
   const summary_json = mint.summary({ line_item_count: 0, total_value: value, currency_code, purpose: 'order', trace });
-  const headerCommon = mint.header({ sender_entity_id: sender.id, sender_entity_bridge_id: sender.bridge_id,
-    sender_entity_display_name: sender.display_name, all_recipients, purpose: 'order',
-    auto_subject: subject, manual_subject: subject, summary_json, created_by_actor_id: sender.id });
+  const headerCommon = mint.header({
+    sender_entity_id: sender.id,
+    sender_entity_bridge_id: sender.bridge_id,
+    sender_entity_display_name: sender.display_name,
+    all_recipients,
+    purpose: 'order',
+    auto_subject: subject,
+    manual_subject: subject,
+    summary_json,
+    created_by_actor_id: sender.id
+  });
   const copies = [
-    mint.party(headerCommon, { entity_id: sender.id, direction: 'sent', role: 'Act', current_status: 'delivered', business_json: business,
-      log: { action: 'created', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: 'delivered', detail: subject } }),
-    mint.party(headerCommon, { entity_id: receiver.id, direction: 'received', role: 'Act', current_status: status || 'pending', business_json: business,
-      log: { action: 'delivered', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: status || 'pending', detail: subject } }),
+    mint.party(headerCommon, {
+      entity_id: sender.id,
+      direction: 'sent',
+      role: 'Act',
+      current_status: 'delivered',
+      business_json: business,
+      log: { action: 'created', action_by_identity_id: sender.id, action_by_display_name: sender.display_name, new_status: 'delivered', detail: subject }
+    }),
+    mint.party(headerCommon, {
+      entity_id: receiver.id,
+      direction: 'received',
+      role: 'Act',
+      current_status: status || 'pending',
+      business_json: business,
+      log: {
+        action: 'delivered',
+        action_by_identity_id: sender.id,
+        action_by_display_name: sender.display_name,
+        new_status: status || 'pending',
+        detail: subject
+      }
+    })
   ];
   await mint.deliver(sender.id, chit_id, copies);
 }
@@ -554,18 +710,32 @@ async function deliverEdge({ sender, receiver, chit_id, subject, trace, business
 //    the brand or a member — never an e-mail from the body (the old route looked up ANY identity by e-mail and wrote chits
 //    as that person). No identity is created here. ──
 const NETWORK_ORDERS_FLAG = 'NETWORK_STORE_ORDERS';
-const networkOrdersOn = () => String(process.env[NETWORK_ORDERS_FLAG] || '').trim().toLowerCase() === 'true';
+const networkOrdersOn = () =>
+  String(process.env[NETWORK_ORDERS_FLAG] || '')
+    .trim()
+    .toLowerCase() === 'true';
 /** shopperOf(req) → the storefront customer the Bearer token proves ({ identity_id, bridge_id, shop_entity_id, display_name }), or null —
  *  the same claims test as customerOf (SEC4) / middleware/customer-auth, without naming the shop up front (the network decides) */
 function shopperOf(req) {
   const claims = claimsOf(req);
   if (!claims || !claims.identity_id || claims.identity_type !== 'customer') return null;
-  return { identity_id: claims.identity_id, bridge_id: claims.bridge_id || null, shop_entity_id: claims.parent_entity_id || null, display_name: claims.display_name || null };
+  return {
+    identity_id: claims.identity_id,
+    bridge_id: claims.bridge_id || null,
+    shop_entity_id: claims.parent_entity_id || null,
+    display_name: claims.display_name || null
+  };
 }
 router.post('/network-store/:networkId/order', async (req, res) => {
   try {
     if (!networkOrdersOn()) {
-      return res.status(403).json({ error: 'Disabled', code: 'NETWORK_ORDERS_OFF', may: false, why: 'Network ordering is not switched on here.', message: 'Network ordering is not switched on here.' });
+      return res.status(403).json({
+        error: 'Disabled',
+        code: 'NETWORK_ORDERS_OFF',
+        may: false,
+        why: 'Network ordering is not switched on here.',
+        message: 'Network ordering is not switched on here.'
+      });
     }
     const shopper = shopperOf(req);
     if (!shopper) return res.status(401).json({ error: 'Unauthorised', code: 'SIGN_IN_FIRST', message: 'Sign in at the store to order.' });
@@ -574,26 +744,45 @@ router.post('/network-store/:networkId/order', async (req, res) => {
     const network = await networkStoreOf(req.params.networkId);
     if (!network) return res.status(404).json({ error: 'Not found', code: 'NO_SUCH_NETWORK', message: 'There is no network store by that name.' });
     if (!network.members.includes(String(shopper.shop_entity_id || ''))) {
-      return res.status(403).json({ error: 'Forbidden', code: 'NOT_THIS_NETWORK', message: 'Your sign-in belongs to another store. Sign in at this network\'s store to order.' });
+      return res
+        .status(403)
+        .json({ error: 'Forbidden', code: 'NOT_THIS_NETWORK', message: "Your sign-in belongs to another store. Sign in at this network's store to order." });
     }
     const nid = network.brand.bridge_id;
-    const ids = cart.map((c) => c.product_id).filter(Boolean);
-    const rows = (await withEntity(null, (db) => db.query(
-      `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`, [ids, network.members]))).rows;
+    const ids = cart.map((item) => item.product_id).filter(Boolean);
+    const rows = (
+      await withEntity(null, (db) =>
+        db.query(
+          `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`,
+          [ids, network.members]
+        )
+      )
+    ).rows;
     if (!rows.length) return res.status(404).json({ error: 'Not found', message: 'No matching products in this network' });
     const operatorId = String(network.brand.identity_id);
     /* one read for every party: the operator, the stores, and the customer the token names (by id — never by e-mail) */
-    const idset = [...new Set([operatorId, String(shopper.identity_id), ...rows.map((r) => String(r.entity_id))])];
-    const idents = {}; (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [idset])).rows.forEach((r) => { idents[r.identity_id] = { id: r.identity_id, bridge_id: r.bridge_id, display_name: r.display_name }; });
-    const operator = idents[operatorId]; if (!operator) return res.status(409).json({ error: 'No operator', message: 'Operator not found' });
+    const idset = [...new Set([operatorId, String(shopper.identity_id), ...rows.map((item) => String(item.entity_id))])];
+    const idents = {};
+    (await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [idset])).rows.forEach((item) => {
+      idents[item.identity_id] = { id: item.identity_id, bridge_id: item.bridge_id, display_name: item.display_name };
+    });
+    const operator = idents[operatorId];
+    if (!operator) return res.status(409).json({ error: 'No operator', message: 'Operator not found' });
     const crow = idents[String(shopper.identity_id)] || { id: shopper.identity_id, bridge_id: shopper.bridge_id, display_name: shopper.display_name };
     if (!crow.bridge_id) return res.status(401).json({ error: 'Unauthorised', code: 'SIGN_IN_FIRST', message: 'Sign in at the store to order.' });
     const customer = { id: crow.id, bridge_id: crow.bridge_id, display_name: crow.display_name || 'Customer' };
-    const items = rows.map((r) => { const c = cart.find((x) => x.product_id === r.item_id) || {}; const d = r.item_data || {};
+    const items = rows.map((item) => {
+      const c = cart.find((x) => x.product_id === item.item_id) || {};
+      const d = item.item_data || {};
       // `Number(d.price || 0)` read a stamped price as NaN and an absent one as a FREE item. Both now fail loudly.
       const amt = money.amountOfLoose(d.price);
-      if (!Number.isFinite(amt)) { const e = new Error(`"${d.name || 'item'}" has no usable price — order cannot be placed`); e.status = 422; throw e; }
-      return { item_id: r.item_id, store: r.entity_id, name: d.name || 'item', price: amt, qty: Number(c.qty || 1), category: d.category || '' }; });
+      if (!Number.isFinite(amt)) {
+        const e = new Error(`"${d.name || 'item'}" has no usable price — order cannot be placed`);
+        e.status = 422;
+        throw e;
+      }
+      return { item_id: item.item_id, store: item.entity_id, name: d.name || 'item', price: amt, qty: Number(c.qty || 1), category: d.category || '' };
+    });
     // ⚠ CROSS-ENTITY TOTAL. These items come from SEVERAL stores in one network, and a network can span countries —
     // so unlike every other total in this file the denomination is NOT a constant here. Before the money type this
     // line added INR to AED without complaint and produced a confident wrong number. It now refuses.
@@ -601,39 +790,67 @@ router.post('/network-store/:networkId/order', async (req, res) => {
     // Stores whose price is still an unstamped bare number contribute no currency, so a wholly unmigrated network
     // totals exactly as it did before. Once ANY store is stamped, a genuine mismatch surfaces as a 409 rather than
     // a plausible figure — which is the entire reason for doing this.
-    const perStore = rows.map((r) => (r.item_data || {}).price).filter((p) => money.isMoney(p));
-    if (perStore.length) money.sum(perStore);   // throws 409 naming both currencies
-    const total = money.round2(items.reduce((s, i) => s + i.price * i.qty, 0));
+    const perStore = rows.map((item) => (item.item_data || {}).price).filter((item) => money.isMoney(item));
+    if (perStore.length) money.sum(perStore); // throws 409 naming both currencies
+    const total = money.round2(items.reduce((total, item) => total + item.price * item.qty, 0));
     // The OPERATOR governs this network, so its governed currency denominates the order and every fragment beneath
     // it. Resolved ONCE here: the order and its fragments are one transaction and must not drift apart.
     const currency = await regional.currencyFor(operatorId);
     // 1) the ORDER chit (customer → operator) — the common id the customer sees
     const ORDER_ID = uuidv4();
-    await deliverEdge({ sender: customer, receiver: operator, chit_id: ORDER_ID, currency, total_value: total,
+    await deliverEdge({
+      sender: customer,
+      receiver: operator,
+      chit_id: ORDER_ID,
+      currency,
+      total_value: total,
       // Currency CODE, not a symbol. '₹' was hard-coded here and is unrenderable for any other currency; a code is
       // unambiguous in every locale and leaves symbol choice to the UI, where presentation belongs.
       subject: 'Order — ' + items.length + ' item(s), ' + currency + ' ' + total,
       trace: { is_origin: true, product: 'ORDER', qty: items.length, unit: 'items', network: { id: nid, operator: operatorId }, order: true },
-      business: { kind: 'network_order', order_id: ORDER_ID, network_id: nid, items: items.map((i) => ({ name: i.name, qty: i.qty, price: i.price, category: i.category })), total, at: new Date().toISOString() },
-      status: 'pending' });
+      business: {
+        kind: 'network_order',
+        order_id: ORDER_ID,
+        network_id: nid,
+        items: items.map((item) => ({ name: item.name, qty: item.qty, price: item.price, category: item.category })),
+        total,
+        at: new Date().toISOString()
+      },
+      status: 'pending'
+    });
     // 2) SILENT per-store fragments (operator → store), each parents:[ORDER_ID]
-    const byStore = {}; items.forEach((i) => { (byStore[i.store] = byStore[i.store] || []).push(i); });
+    const byStore = {};
+    items.forEach((item) => {
+      (byStore[item.store] = byStore[item.store] || []).push(item);
+    });
     const fragments = [];
     for (const storeId of Object.keys(byStore)) {
-      const store = idents[storeId]; if (!store) continue;
+      const store = idents[storeId];
+      if (!store) continue;
       const sitems = byStore[storeId];
       const FRAG_ID = uuidv4();
       // A fragment carries THIS store's subtotal, not the order's. Stamping the whole total on each fragment would
       // multiply the network's apparent trade value by the number of stores the moment anyone sums the column.
-      await deliverEdge({ sender: operator, receiver: store, chit_id: FRAG_ID, currency,
-        total_value: money.round2(sitems.reduce((s, i) => s + i.price * i.qty, 0)),
+      await deliverEdge({
+        sender: operator,
+        receiver: store,
+        chit_id: FRAG_ID,
+        currency,
+        total_value: money.round2(sitems.reduce((total, item) => total + item.price * item.qty, 0)),
         subject: 'Fulfil order ' + ORDER_ID.slice(0, 8) + ' — ' + sitems.length + ' item(s)',
         trace: { parents: [ORDER_ID], product: 'FULFIL', qty: sitems.length, unit: 'items', network: { id: nid, operator: operatorId } },
-        business: { kind: 'order_fragment', order_id: ORDER_ID, network_id: nid, items: sitems.map((i) => ({ name: i.name, qty: i.qty })), at: new Date().toISOString() },
-        status: 'pending' });
+        business: {
+          kind: 'order_fragment',
+          order_id: ORDER_ID,
+          network_id: nid,
+          items: sitems.map((item) => ({ name: item.name, qty: item.qty })),
+          at: new Date().toISOString()
+        },
+        status: 'pending'
+      });
       fragments.push(FRAG_ID);
     }
-    res.json({ ok: true, order_id: ORDER_ID, item_count: items.length, total, currency, fragment_count: fragments.length });   // customer sees only the order — no stores
+    res.json({ ok: true, order_id: ORDER_ID, item_count: items.length, total, currency, fragment_count: fragments.length }); // customer sees only the order — no stores
   } catch (err) {
     /* ⭐ a network order writes chits too (deliverEdge), so b247's boundary answers here as a 409 in words (lib/knownerr) */
     const _known = require('../lib/knownerr').known(err);
@@ -641,7 +858,6 @@ router.post('/network-store/:networkId/order', async (req, res) => {
     res.status(500).json({ error: 'Order failed', message: safeErr(err) });
   }
 });
-
 
 /**
  * GET /api/catalogue/network/:bridge_id — the NETWORK STOREFRONT.
@@ -675,18 +891,18 @@ router.get('/network/:bridge_id', async (req, res) => {
 
     const departments = [];
     for (const bid of use) {
-      if (String(bid) === String(root.bridge_id)) continue;      // the root is the front, not a department
+      if (String(bid) === String(root.bridge_id)) continue; // the root is the front, not a department
       const ent = await resolveEntity(bid);
       if (!ent) continue;
       const view = await publicViewFor(ent, {});
-      if (view.sign_in) continue;   /* SEC4 — a sign-in-first department is absent from the anonymous network front, like a private one */
+      if (view.sign_in) continue; /* SEC4 — a sign-in-first department is absent from the anonymous network front, like a private one */
       departments.push({ entity: ent, view });
     }
 
     const nv = require('../lib/network-view');
     let shopfront = nv.assemble({
       network: { bridge_id: root.bridge_id, display_name: root.display_name },
-      departments,
+      departments
     });
     if (req.query.q) shopfront = nv.search(shopfront, req.query.q);
     if (truncated) shopfront.truncated = { shown: use.length, total: members.length };
@@ -696,7 +912,10 @@ router.get('/network/:bridge_id', async (req, res) => {
       return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     }
     res.json(shopfront);
-  } catch (err) { if (membership.answerReadFailed(res, err)) return; res.status(500).json({ error: 'Network storefront failed', message: safeErr(err) }); }
+  } catch (err) {
+    if (membership.answerReadFailed(res, err)) return;
+    res.status(500).json({ error: 'Network storefront failed', message: safeErr(err) });
+  }
 });
 // ── CJ-02: public catalogue (only when visibility='public') ──
 /**
@@ -708,9 +927,13 @@ router.get('/network/:bridge_id', async (req, res) => {
 /** the bearer's verified claims, or null — a missing, bad or expired token is simply anonymous on a public read */
 function claimsOf(req) {
   try {
-    const h = req.headers.authorization || ''; if (!h.startsWith('Bearer ')) return null;
-    return require('../lib/jwt-verify').verifyJwt(h.slice(7)).claims || null;   // E10 — the ONE verifier
-  } catch (e) { logger.fellBack('catalogue claimsOf: the token did not verify — read as a stranger', e, 'debug'); return null; }
+    const text = req.headers.authorization || '';
+    if (!text.startsWith('Bearer ')) return null;
+    return require('../lib/jwt-verify').verifyJwt(text.slice(7)).claims || null; // E10 — the ONE verifier
+  } catch (e) {
+    logger.fellBack('catalogue claimsOf: the token did not verify — read as a stranger', e, 'debug');
+    return null;
+  }
 }
 function ownerOf(req, entity) {
   const d = claimsOf(req);
@@ -737,9 +960,20 @@ const SIGN_IN_FIRST = { code: 'sign_in_first', say: 'This shop asks customers to
 function signInFirst(view) {
   const s = (view && view.shop) || {};
   if (!view || !view.available || s.storefront_access !== 'login') return view;
-  return { available: true, sign_in: SIGN_IN_FIRST,
-    shop: { bridge_id: s.bridge_id, display_name: s.display_name, logo_url: s.logo_url, address: s.address, is_verified: s.is_verified,
-      business_status: s.business_status, storefront_access: s.storefront_access, country: s.country } };
+  return {
+    available: true,
+    sign_in: SIGN_IN_FIRST,
+    shop: {
+      bridge_id: s.bridge_id,
+      display_name: s.display_name,
+      logo_url: s.logo_url,
+      address: s.address,
+      is_verified: s.is_verified,
+      business_status: s.business_status,
+      storefront_access: s.storefront_access,
+      country: s.country
+    }
+  };
 }
 /**
  * ── ⭐⭐ THE PUBLIC VIEW OF ONE STORE, AS ONE FUNCTION ───────────────────────────────────────────────────────────
@@ -757,22 +991,40 @@ async function publicViewFor(entity, opts) {
   const o = opts || {};
   /* ⚠️ THE ONE CALL. `asOwner` widens the view to the owner's preview; `viewer` lets a signed-in customer see
      what the visibility cap grants THEM. A peer installation passes neither. */
-  const view = await catalogueView.buildPublicView({ entity, query, withEntity, catalogueBuild, orderInput,
-    identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'),
-    container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'),
-    asOwner: !!o.asOwner, viewer: o.viewer });
-  return (o.asOwner || o.viewer || o.signedIn) ? view : signInFirst(view);
+  const view = await catalogueView.buildPublicView({
+    entity,
+    query,
+    withEntity,
+    catalogueBuild,
+    orderInput,
+    identity: require('../lib/identity'),
+    catalogueRead: require('../lib/catalogue-read'),
+    container: require('../lib/container'),
+    visibilityCap: require('../lib/visibility-cap'),
+    asOwner: !!o.asOwner,
+    viewer: o.viewer
+  });
+  return o.asOwner || o.viewer || o.signedIn ? view : signInFirst(view);
 }
 
 /** what a storefront visitor is SENT — the public response, trimmed from the raw view. One place. */
 function publicResponseFor(view, asOwner) {
-  if (view.sign_in) return { shop: view.shop, sign_in: view.sign_in };   /* SEC4 — the card and the code, nothing else */
-  return { shop: view.shop, schema: view.schema, fields: view.fields, items: view.items,
-    groups: view.groups, lines: view.lines, catalogue_summary: view.catalogue_summary,
+  if (view.sign_in) return { shop: view.shop, sign_in: view.sign_in }; /* SEC4 — the card and the code, nothing else */
+  return {
+    shop: view.shop,
+    schema: view.schema,
+    fields: view.fields,
+    items: view.items,
+    groups: view.groups,
+    lines: view.lines,
+    catalogue_summary: view.catalogue_summary,
     unpriced_hidden: view.unpriced_hidden,
     /* ⚠️ the view computed the live offers all along; this line never forwarded them — the customer saw none (Athi, 2026-09-04) */
-    offers: view.offers || [], categories: view.categories || [],
-    finishes: view.finishes, preview: asOwner ? { visibility: view.visibility || 'private' } : undefined };
+    offers: view.offers || [],
+    categories: view.categories || [],
+    finishes: view.finishes,
+    preview: asOwner ? { visibility: view.visibility || 'private' } : undefined
+  };
 }
 /**
  * ⭐ SEC4 · GET /api/catalogue/enquiry?page&limit&side=in|out — MY PRODUCT ENQUIRIES, ONE ROW PER PRODUCT, LATEST FIRST (paged: top-level
@@ -782,14 +1034,20 @@ function publicResponseFor(view, asOwner) {
  * side=out → the ones I asked. One statement. ⚠️ Declared BEFORE /:bridge_id, which would otherwise take the path as a shop handle;
  * 'enquiry' is 7 characters, shorter than any user_id (8–30), so no shop can be named it.
  */
-const ENQUIRY_PAGE = 20, ENQUIRY_MAX = 100;
+const ENQUIRY_PAGE = 20,
+  ENQUIRY_MAX = 100;
 router.get('/enquiry', auth, async (req, res) => {
-  const { page, limit, offset } = PL.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : ENQUIRY_PAGE }, ENQUIRY_PAGE, ENQUIRY_MAX);
+  const { page, limit, offset } = PL.pageArgs(
+    { page: req.query.page, limit: req.query.limit != null ? req.query.limit : ENQUIRY_PAGE },
+    ENQUIRY_PAGE,
+    ENQUIRY_MAX
+  );
   const side = req.query.side === 'in' || req.query.side === 'out' ? req.query.side : null;
   try {
     const me = req.identity.parent_entity_id || req.identity.identity_id;
-    const r = await withEntity(me, (db) => db.query(
-      `WITH m AS (
+    const r = await withEntity(me, (db) =>
+      db.query(
+        `WITH m AS (
          SELECT subject_id, sender_entity_id, sender_display_name, message_text, created_at
            FROM chit_messages WHERE entity_id = $1 AND subject_type = 'product' AND thread_type = 'external'),
        t AS (
@@ -810,7 +1068,9 @@ router.get('/enquiry', auth, async (req, res) => {
        SELECT (SELECT count(*) FROM f)::int AS total,
               COALESCE((SELECT json_agg(p ORDER BY p.last_at DESC)
                           FROM (SELECT * FROM f ORDER BY last_at DESC LIMIT $2 OFFSET $3) p), '[]'::json) AS rows`,
-      [me, limit, offset, side]));
+        [me, limit, offset, side]
+      )
+    );
     const row = r.rows[0] || { total: 0, rows: [] };
     res.json({ enquiries: row.rows || [], total: row.total || 0, page, limit });
   } catch (err) {
@@ -831,7 +1091,10 @@ router.get('/:bridge_id', async (req, res) => {
     const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || ownerOf(req, entity) });
     if (!view.available) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     res.json(publicResponseFor(view, asOwner));
-  } catch (err) { console.error('catalogue get:', err.message); res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) }); }
+  } catch (err) {
+    console.error('catalogue get:', err.message);
+    res.status(500).json({ error: 'Catalogue failed', message: safeErr(err) });
+  }
 });
 
 // GET /api/catalogue/:bridge_id/capture-fields — what the storefront must ASK the customer for (increment 3): the
@@ -843,12 +1106,15 @@ router.get('/:bridge_id/capture-fields', async (req, res) => {
     if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
     const fields = await require('../lib/conformance').captureFieldsForEntity(entity.identity_id);
     res.json({ shop: entity.display_name, fields });
-  } catch (err) { res.status(500).json({ error: 'Capture fields failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Capture fields failed', message: safeErr(err) });
+  }
 });
 
 // ── CJ-05a: order-first — enter phone → create/find end_customer scoped to entity → OTP ──
-router.post('/:bridge_id/order/start',
-  validate,   // identifier (phone|email) validated in-handler via resolveContact
+router.post(
+  '/:bridge_id/order/start',
+  validate, // identifier (phone|email) validated in-handler via resolveContact
   async (req, res) => {
     try {
       const entity = await resolveEntity(req.params.bridge_id);
@@ -858,23 +1124,26 @@ router.post('/:bridge_id/order/start',
       const c = resolveContact(req.body);
       if (c.error) return res.status(422).json({ error: 'Bad request', message: c.error });
       const { channel, raw } = c;
-      const name   = sanitise(req.body.name || '') || raw;
-      const handle = crHandle(channel, raw, entity);    // per-entity .cr key (full-email = collision-free)
+      const name = sanitise(req.body.name || '') || raw;
+      const handle = crHandle(channel, raw, entity); // per-entity .cr key (full-email = collision-free)
 
-      let existing = await query(`SELECT identity_id, bridge_id FROM identities WHERE email = $1`, [handle]);
+      const existing = await query(`SELECT identity_id, bridge_id FROM identities WHERE email = $1`, [handle]);
       let identity_id, bridge_id;
       if (existing.rows.length) {
-        identity_id = existing.rows[0].identity_id; bridge_id = existing.rows[0].bridge_id;
+        identity_id = existing.rows[0].identity_id;
+        bridge_id = existing.rows[0].bridge_id;
       } else {
-        identity_id = uuidv4(); bridge_id = genBridge();
+        identity_id = uuidv4();
+        bridge_id = genBridge();
         await query(
           `INSERT INTO identities
              (identity_id, bridge_id, display_name, email, phone, otp_contact, identity_type, parent_entity_id, owner_scope, auth_method, status, entity_kind, country)
-           VALUES ($1,$2,$3,$4,$5,$6,'customer',$7,'entity','otp','pending','shopper',NULL)`   /* GOV-AU1: a shopper's country is not known — the bill's walkIn decides */,
-          [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]);
+           VALUES ($1,$2,$3,$4,$5,$6,'customer',$7,'entity','otp','pending','shopper',NULL)` /* GOV-AU1: a shopper's country is not known — the bill's walkIn decides */,
+          [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]
+        );
       }
       // T3.12 · re-issuing a code does not ZERO the attempt counter (it decays with the 15-minute TTL) — lib/otp.js has the why.
-      const otp = await issueShopperOtp(query, identity_id, raw);   /* SH-OTP1: the one OTP door */
+      const otp = await issueShopperOtp(query, identity_id, raw); /* SH-OTP1: the one OTP door */
       // F2: deliver the OTP on the SAME channel, to the RAW contact (never the .cr handle).
       const sent = await sendOtp(channel, raw, name, otp);
       res.json({
@@ -884,8 +1153,12 @@ router.post('/:bridge_id/order/start',
            may read the code. One rule, in lib/dev-otp.js, and it now needs an explicit opt-in. */
         ...(devOtp.mayExposeOtp() && { dev_otp: otp })
       });
-    } catch (err) { console.error('order/start:', err.message); res.status(500).json({ error: 'Order start failed', message: safeErr(err) }); }
-  });
+    } catch (err) {
+      console.error('order/start:', err.message);
+      res.status(500).json({ error: 'Order start failed', message: safeErr(err) });
+    }
+  }
+);
 
 /**
  * ── ⭐⭐⭐ THE BUYER ON A PUBLIC STOREFRONT, RAISING WITH THE SHOP ────────────────────────────
@@ -913,14 +1186,16 @@ router.get('/:bridge_id/support/preview', async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return res.json({ ok: false, why: 'This shop could not be found.' });
-    res.json({ ok: true,
+    res.json({
+      ok: true,
       to_name: entity.display_name || null,
       /* ⭐ SAID, NOT HIDDEN. A closed shop still takes the report — a complaint about an order already placed
          must not hit a dead end — but the buyer is told not to expect a quick answer, which is the honest
          version of both. Deliberately different from /order/confirm, which refuses outright: you cannot place
          a NEW order with a closed shop, and you can always report a fault with an old one. */
       accepting: entity.business_status !== 'closed',
-      urgency: require('../lib/raiseticket').URGENCY });
+      urgency: require('../lib/raiseticket').URGENCY
+    });
   } catch (e) {
     res.json({ ok: false, why: 'Could not check where this would go.' });
   }
@@ -946,24 +1221,27 @@ router.post('/:bridge_id/support/start', validate, async (req, res) => {
     const c = resolveContact(req.body);
     if (c.error) return res.status(422).json({ error: 'Bad request', message: c.error });
     const { channel, raw } = c;
-    const name   = sanitise(req.body.name || '') || raw;
+    const name = sanitise(req.body.name || '') || raw;
     const handle = crHandle(channel, raw, entity);
 
-    let existing = await query('SELECT identity_id, bridge_id FROM identities WHERE email = $1', [handle]);
+    const existing = await query('SELECT identity_id, bridge_id FROM identities WHERE email = $1', [handle]);
     let identity_id, bridge_id;
     if (existing.rows.length) {
-      identity_id = existing.rows[0].identity_id; bridge_id = existing.rows[0].bridge_id;
+      identity_id = existing.rows[0].identity_id;
+      bridge_id = existing.rows[0].bridge_id;
     } else {
-      identity_id = uuidv4(); bridge_id = genBridge();
+      identity_id = uuidv4();
+      bridge_id = genBridge();
       await query(
         `INSERT INTO identities
            (identity_id, bridge_id, display_name, email, phone, otp_contact, identity_type, parent_entity_id,
             owner_scope, auth_method, status, entity_kind, country)
          VALUES ($1,$2,$3,$4,$5,$6,'customer',$7,'entity','otp','pending','shopper',NULL)`,
-        [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]);
+        [identity_id, bridge_id, name, handle, channel === 'phone' ? raw : null, raw, entity.identity_id]
+      );
     }
     /* ⚠️ the same issue /order/start makes (the T3.12 decay rule included) — one helper, not a repeated rule */
-    const otp = await issueShopperOtp(query, identity_id, raw);   /* SH-OTP1: the one OTP door */
+    const otp = await issueShopperOtp(query, identity_id, raw); /* SH-OTP1: the one OTP door */
     const sent = await sendOtp(channel, raw, name, otp);
     res.json({
       message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
@@ -976,9 +1254,9 @@ router.post('/:bridge_id/support/start', validate, async (req, res) => {
   }
 });
 
-router.post('/:bridge_id/support',
-  [ body('otp').trim().isLength({ min: 6, max: 64 }),
-    body('observed').trim().isLength({ min: 1 }).withMessage('Say what went wrong') ],
+router.post(
+  '/:bridge_id/support',
+  [body('otp').trim().isLength({ min: 6, max: 64 }), body('observed').trim().isLength({ min: 1 }).withMessage('Say what went wrong')],
   validate,
   async (req, res) => {
     try {
@@ -990,48 +1268,57 @@ router.post('/:bridge_id/support',
 
       const cr = await query(
         `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
-           FROM identities WHERE email = $1`, [handle]);
-      if (!cr.rows.length)
-        return res.status(400).json({ error: 'Verify failed', message: 'Ask for a code first' });
+           FROM identities WHERE email = $1`,
+        [handle]
+      );
+      if (!cr.rows.length) return res.status(400).json({ error: 'Verify failed', message: 'Ask for a code first' });
       const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] });   // SEC1: the typed contact, for TESTER_NAMES
+      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] }); // SEC1: the typed contact, for TESTER_NAMES
       if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Verify failed', message: otpCheck.message });
 
       /* ⚠️ THE CODE IS SPENT, exactly as /order/confirm spends it. verifyOtp does not clear it, so without this
          one code would post tickets for the rest of its fifteen minutes. */
       await spendShopperOtp(query, c.identity_id);
 
-      const SEV = require('../lib/raiseticket').URGENCY.map((u) => u[0]);
+      const SEV = require('../lib/raiseticket').URGENCY.map((item) => item[0]);
       const severity = SEV.indexOf(String(req.body.severity || '')) >= 0 ? String(req.body.severity) : 'Sev-3';
-      const observed = String(req.body.observed || '').trim().slice(0, 4000);
+      const observed = String(req.body.observed || '')
+        .trim()
+        .slice(0, 4000);
 
       /* ⚠️ THE POPULATION TRAVELS. Without it every storefront ticket was stamped 'live' in its immutable
          routed_by — on the one path where an actual member of the public raises something, which is exactly
          the distinction b249 exists to draw. A shopper belongs to the population of the shop they are
          standing in front of. */
       const out = await require('../lib/raiseticket').raise(
-        { entity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name || 'A customer',
-          population: entity.population || 'live' },
+        { entity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name || 'A customer', population: entity.population || 'live' },
         { id: c.identity_id, name: c.display_name || 'A customer' },
         /* ⭐ the RESOLVED shop's own bridge id, not whatever was in the URL — the link may carry a handle. */
-        { kind: 'incident', audience: 'them', to_bridge_id: entity.bridge_id || req.params.bridge_id,
-          subject: observed.slice(0, 160), detail: observed, severity });
+        {
+          kind: 'incident',
+          audience: 'them',
+          to_bridge_id: entity.bridge_id || req.params.bridge_id,
+          subject: observed.slice(0, 160),
+          detail: observed,
+          severity
+        }
+      );
 
       /* ⚠️ raise() never throws and always answers — so 'raised: false' is a real outcome that must reach the
          buyer as a sentence, not as a green tick. [[feedback-silence-is-the-bug]] */
-      if (!out.raised)
-        return res.status(502).json({ error: 'Could not send it', message: out.why || 'It did not reach the shop.' });
+      if (!out.raised) return res.status(502).json({ error: 'Could not send it', message: out.why || 'It did not reach the shop.' });
       res.json({ sent: true, ref: out.chit_id, to: entity.display_name || null, routed: out.routed });
     } catch (err) {
       console.error('storefront support:', err.message);
       res.status(500).json({ error: 'Could not send it', message: safeErr(err) });
     }
-  });
+  }
+);
 
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
-router.post('/:bridge_id/order/confirm',
-  [ body('otp').trim().isLength({ min: 6, max: 64 }),
-    body('line_items').isArray({ min: 1 }).withMessage('Order is empty') ],
+router.post(
+  '/:bridge_id/order/confirm',
+  [body('otp').trim().isLength({ min: 6, max: 64 }), body('line_items').isArray({ min: 1 }).withMessage('Order is empty')],
   validate,
   async (req, res) => {
     try {
@@ -1045,15 +1332,20 @@ router.post('/:bridge_id/order/confirm',
 
       const cr = await query(
         `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
-         FROM identities WHERE email = $1`, [handle]);
+         FROM identities WHERE email = $1`,
+        [handle]
+      );
       if (!cr.rows.length) return res.status(400).json({ error: 'Verify failed', message: 'Start the order first' });
       const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] });   // SEC1: the typed contact, for TESTER_NAMES
+      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] }); // SEC1: the typed contact, for TESTER_NAMES
       if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Verify failed', message: otpCheck.message });
       // build the guaranteed chit: customer = sender, shop = receiver
       // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
       // matched/priced. `line_items` + `total` below are now SERVER-authoritative, not customer-supplied.
-      let line_items, total, pendingDocs = [], offersApplied = [];   // pendingDocs: validated+hashed bytes, stored per-copy after commit
+      let line_items,
+        total,
+        pendingDocs = [],
+        offersApplied = []; // pendingDocs: validated+hashed bytes, stored per-copy after commit
       // The shop's OWN method decides whether a buyer offer is admissible at all — read server-side, never trusted
       // from the request, so a customer cannot claim a shop is negotiable when it is not.
       const oi = await getOrderInput(entity.identity_id);
@@ -1073,27 +1365,35 @@ router.post('/:bridge_id/order/confirm',
           // T1.6 — ONE budget for the whole submission. validateDocuments is called per form, so without a shared
           // accumulator a 5-form bundle could carry 25 files / 150 MB against a stated ceiling of 5 files / 12 MB.
           const docBudget = { count: 0, bytes: 0 };
-          const declCache = {};   // T3.5 — one adoption resolve for the whole submission, not one per line
+          const declCache = {}; // T3.5 — one adoption resolve for the whole submission, not one per line
           for (let idx = 0; idx < raw.length; idx++) {
-          const li = raw[idx] || {};
-          const label = String(li.finish || li.name || li.particulars || 'Submission').slice(0, 200);
-          // WHICH template is this entry? Its own declaration governs, so a store offering ITR-2 and a
-          // Commercial Invoice validates each against ITS OWN fields — not one catalogue-wide set.
-          const itemOi = orderInput.forItem(oi, await itemDeclFor(entity.identity_id, label, declCache));
-          // T3.2 · forItem refuses an item declaration that would switch the pipeline; surface it rather than
-          // proceeding under a contract the item did not actually get.
-          if (itemOi.errors && itemOi.errors.length) throw _422(`"${label}": ${itemOi.errors.join('; ')}`);
-          const v = orderInput.validate(li.payload, itemOi.schema);
-          if (!v.ok) throw _422(`"${label}": ${v.errors.join('; ')}`);
-          // THE LINE ITEM IS THE FILLED FORM **AND ITS PROOF**. Documents are validated and hashed BEFORE anything is
-          // written; the sha256 is sealed onto the chit in the same transaction as the answers, so the record of what
-          // was submitted can never be lost. The bytes are replicated per-copy afterwards (see below) — if that fails
-          // the proof still stands and the blob is re-uploadable against a known hash.
-          const dv = orderInput.validateDocuments(li.documents, itemOi.documents, crypto, docBudget);
-          if (!dv.ok) throw _422(`"${label}": ${dv.errors.join('; ')}`);
-          dv.docs.forEach((d) => pendingDocs.push({ ...d, line_index: idx }));   // the proof stays attached to ITS form
-          line_items.push({ kind: 'payload', name: label, particulars: label, quantity: 1, price: 0, total: 0, payload: v.value,
-                            ...(dv.docs.length ? { documents: dv.docs.map((d) => ({ name: d.name, mime: d.mime, size: d.size, sha256: d.sha256 })) } : {}) });
+            const li = raw[idx] || {};
+            const label = String(li.finish || li.name || li.particulars || 'Submission').slice(0, 200);
+            // WHICH template is this entry? Its own declaration governs, so a store offering ITR-2 and a
+            // Commercial Invoice validates each against ITS OWN fields — not one catalogue-wide set.
+            const itemOi = orderInput.forItem(oi, await itemDeclFor(entity.identity_id, label, declCache));
+            // T3.2 · forItem refuses an item declaration that would switch the pipeline; surface it rather than
+            // proceeding under a contract the item did not actually get.
+            if (itemOi.errors && itemOi.errors.length) throw _422(`"${label}": ${itemOi.errors.join('; ')}`);
+            const v = orderInput.validate(li.payload, itemOi.schema);
+            if (!v.ok) throw _422(`"${label}": ${v.errors.join('; ')}`);
+            // THE LINE ITEM IS THE FILLED FORM **AND ITS PROOF**. Documents are validated and hashed BEFORE anything is
+            // written; the sha256 is sealed onto the chit in the same transaction as the answers, so the record of what
+            // was submitted can never be lost. The bytes are replicated per-copy afterwards (see below) — if that fails
+            // the proof still stands and the blob is re-uploadable against a known hash.
+            const dv = orderInput.validateDocuments(li.documents, itemOi.documents, crypto, docBudget);
+            if (!dv.ok) throw _422(`"${label}": ${dv.errors.join('; ')}`);
+            dv.docs.forEach((item) => pendingDocs.push({ ...item, line_index: idx })); // the proof stays attached to ITS form
+            line_items.push({
+              kind: 'payload',
+              name: label,
+              particulars: label,
+              quantity: 1,
+              price: 0,
+              total: 0,
+              payload: v.value,
+              ...(dv.docs.length ? { documents: dv.docs.map((item) => ({ name: item.name, mime: item.mime, size: item.size, sha256: item.sha256 })) } : {})
+            });
           }
           total = 0;
         } catch (ve) {
@@ -1101,13 +1401,16 @@ router.post('/:bridge_id/order/confirm',
           // an internal error and went out verbatim on an unauthenticated endpoint, without safeErr().
           const known = ve && (ve.status === 422 || ve.status === 503);
           if (!known) console.error('order/confirm payload:', ve && ve.message);
-          return res.status(known ? ve.status : 500)
-                    .json({ error: 'Submission rejected', message: known ? ve.message : safeErr(ve) });
+          return res.status(known ? ve.status : 500).json({ error: 'Submission rejected', message: known ? ve.message : safeErr(ve) });
         }
       } else {
-        try { ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi));
-              ({ items: line_items, total, applied: offersApplied } = await applyLiveOffers(entity, line_items, total, c && c.identity_id)); }   /* the signed-in shopper's standing with the shop */
-        catch (ve) { return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message }); }
+        try {
+          ({ items: line_items, total } = await repriceAgainstCatalogue(entity.identity_id, req.body.line_items, oi));
+          ({ items: line_items, total, applied: offersApplied } = await applyLiveOffers(entity, line_items, total, c && c.identity_id));
+        } catch (ve) {
+          /* the signed-in shopper's standing with the shop */
+          return res.status(ve.status || 422).json({ error: 'Order rejected', message: ve.message });
+        }
       }
       // ── T2.1 · AN OFFER MUST NOT CARRY AN ORDER'S MONEY ──────────────────────────────────────────────────────
       // It used to stamp total_value = the SELLER's list price on a negotiation and label it purpose:'order'. That is
@@ -1120,7 +1423,7 @@ router.post('/:bridge_id/order/confirm',
       const negotiation = line_items.some((li) => li && li.proposal);
       const purpose = negotiation ? 'offer' : 'order';
       const chit_id = uuidv4();
-      const custLocality = (req.body && typeof req.body.location === 'string') ? req.body.location.trim().slice(0, 80) : '';   // STONE 4: consent-provided coarse locality
+      const custLocality = req.body && typeof req.body.location === 'string' ? req.body.location.trim().slice(0, 80) : ''; // STONE 4: consent-provided coarse locality
       // MONETARY OR NOT — Athi, 2026-07-31: "if the chit does not hold a currency, that means it is information or
       // helpdesk kind of activity."
       //
@@ -1137,32 +1440,57 @@ router.post('/:bridge_id/order/confirm',
       const monetary = oi.pipeline === 'commerce';
       /* O8 (black-box 2026-10-09): what the customer typed at the shop checkout rides ON THE CHIT - the full delivery address, the time asked for, the remark - so the shop
          can act on the order. Bounded short strings, never spread from the body; the sheet reads summary_json.order_details (web chit-sheet.js). */
-      const _short = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : '');
-      const _rd = (req.body && req.body.requested_delivery && typeof req.body.requested_delivery === 'object') ? req.body.requested_delivery : null;
-      const _addr = _short(req.body && req.body.location, 300), _rem = _short(req.body && req.body.remark, 300);
+      const _short = (text, n) => (typeof text === 'string' ? text.trim().slice(0, n) : '');
+      const _rd = req.body && req.body.requested_delivery && typeof req.body.requested_delivery === 'object' ? req.body.requested_delivery : null;
+      const _addr = _short(req.body && req.body.location, 300),
+        _rem = _short(req.body && req.body.remark, 300);
       /* M182: the name typed at checkout rides on the order too — an existing account keeps its old display_name, so the till would show that instead */
       const _cname = _short(req.body && req.body.name, 80);
       const _when = _rd ? { date: _short(_rd.date, 10) || null, time: _short(_rd.time, 5) || null } : null;
       /* T2b (M67): the shopper chose Pickup or Delivery — only those two words are taken from the body; anything else stays 'delivery' as before */
-      const _fulfil = (req.body && req.body.fulfilment === 'pickup') ? 'pickup' : 'delivery';
-      const orderDetails = (oi.pipeline === 'commerce' && Array.isArray(req.body && req.body.line_items) && (_addr || _rem || _when || _cname || _fulfil === 'pickup'))
-        ? { channel: 'online', fulfilment: _fulfil, address: _fulfil === 'pickup' ? null : (_addr || null), requested_delivery: _when && (_when.date || _when.time) ? _when : null, remark: _rem || null, ...(_cname ? { name: _cname } : {}) } : null;
-      const summary_json = { line_item_count: line_items.length, ...(offersApplied.length ? { offers: offersApplied } : {}),
-                             total_value: (!monetary || negotiation) ? null : money.round(total),
-                             currency_code: monetary ? (entity.currency_code || await regional.currencyFor(entity.identity_id)) : null,   /* CX4 (S4): the shop's own money (its country's region layer), never INR by name */ purpose, is_promotion: false,
-                             customer_locality: custLocality || null,
-                             ...(orderDetails ? { order_details: orderDetails } : {}),
-                             order_preset: oi.preset, pipeline: oi.pipeline,
-                             ...(negotiation ? { negotiation: true, indicative_total: money.round(total) } : {}) };
+      const _fulfil = req.body && req.body.fulfilment === 'pickup' ? 'pickup' : 'delivery';
+      const orderDetails =
+        oi.pipeline === 'commerce' && Array.isArray(req.body && req.body.line_items) && (_addr || _rem || _when || _cname || _fulfil === 'pickup')
+          ? {
+              channel: 'online',
+              fulfilment: _fulfil,
+              address: _fulfil === 'pickup' ? null : _addr || null,
+              requested_delivery: _when && (_when.date || _when.time) ? _when : null,
+              remark: _rem || null,
+              ...(_cname ? { name: _cname } : {})
+            }
+          : null;
+      const summary_json = {
+        line_item_count: line_items.length,
+        ...(offersApplied.length ? { offers: offersApplied } : {}),
+        total_value: !monetary || negotiation ? null : money.round(total),
+        currency_code: monetary ? entity.currency_code || (await regional.currencyFor(entity.identity_id)) : null,
+        /* CX4 (S4): the shop's own money (its country's region layer), never INR by name */ purpose,
+        is_promotion: false,
+        customer_locality: custLocality || null,
+        ...(orderDetails ? { order_details: orderDetails } : {}),
+        order_preset: oi.preset,
+        pipeline: oi.pipeline,
+        ...(negotiation ? { negotiation: true, indicative_total: money.round(total) } : {})
+      };
       // Assimilate the governance SEAM + advisory conformance onto the storefront chit — parity with /chits/send, so a
       // STOREFRONT order carries the same full stamp (constitution · capability · work-pattern · N standards) as any
       // other chit, PLUS a runtime conformance verdict. Governed by the SHOP (the selling entity). Best-effort: never
       // blocks the order. (This is IN ADDITION to the per-line source governance already carried on each line_item.)
       try {
         const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: entity.identity_id });
-        if (cfg) summary_json.governed = { pattern: cfg._blueprint, capability: cfg._capability,
-          constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
-      } catch (e) { logger.fellBack('catalogue: the helper failed — carried on without it', e); /* seam is best-effort */ }
+        if (cfg)
+          summary_json.governed = {
+            pattern: cfg._blueprint,
+            capability: cfg._capability,
+            constitution: cfg._constitution,
+            standard: cfg._standard,
+            standards: cfg._standards,
+            boilerplate: cfg._boilerplate
+          };
+      } catch (e) {
+        logger.fellBack('catalogue: the helper failed — carried on without it', e); /* seam is best-effort */
+      }
       // CAPTURE (increment 3): the storefront GATHERS the standard's required fields from the customer (hs_code,
       // incoterms, …) and sends them as `captured`. They're stored on the chit and fed into conformance → it now
       // PASSES instead of flagging. (Fields the standard requires but the form didn't gather still show as gaps.)
@@ -1179,26 +1507,30 @@ router.post('/:bridge_id/order/confirm',
         const allowed = await require('../lib/conformance').captureFieldsForEntity(entity.identity_id);
         // captureFieldsForEntity returns [{field, standard, facet, title}] — the key is `field`. Getting this wrong
         // yields an EMPTY allow-list, which silently drops every captured field rather than failing loudly.
-        const allow = new Set((allowed || []).map((f) => (typeof f === 'string' ? f : (f && (f.field || f.key)))).filter(Boolean));
-        const raw = (req.body && typeof req.body.captured === 'object' && !Array.isArray(req.body.captured)) ? req.body.captured : {};
+        const allow = new Set((allowed || []).map((item) => (typeof item === 'string' ? item : item && (item.field || item.key))).filter(Boolean));
+        const raw = req.body && typeof req.body.captured === 'object' && !Array.isArray(req.body.captured) ? req.body.captured : {};
         for (const k of Object.keys(raw)) {
-          if (!allow.has(k)) continue;                                        // not asked for → not carried
+          if (!allow.has(k)) continue; // not asked for → not carried
           const v = raw[k];
-          if (v === null || typeof v === 'object') continue;                  // scalars only
+          if (v === null || typeof v === 'object') continue; // scalars only
           captured[k] = String(v).slice(0, 200);
         }
-      } catch (e) { logger.fellBack('order capture: the allow-list could not be resolved — no captured field rides on the chit (fails closed)', e); captured = {}; }                                          // cannot resolve what is asked for → carry nothing
+      } catch (e) {
+        logger.fellBack('order capture: the allow-list could not be resolved — no captured field rides on the chit (fails closed)', e);
+        captured = {};
+      } // cannot resolve what is asked for → carry nothing
       if (Object.keys(captured).length) summary_json.captured = captured;
       try {
         // captured goes in UNDER its own key, never spread over the authoritative summary — a customer must not be
         // able to decide what the checker sees for total_value or line_item_count.
         const v = await require('../lib/conformance').checkConformance({ ...summary_json, ...captured, line_items }, 'chit');
-        summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map(g => g.missing), captured: Object.keys(captured) };
-      } catch (e) { logger.fellBack('catalogue: the helper failed — carried on without it', e); /* advisory is best-effort */ }
-      const auto_subject = `Order from ${c.display_name} — ` +
-        await shopDatePhrase(entity.identity_id);   /* N3: the shop's zone and locale, not India's */
+        summary_json.conformance = { status: v.status, advisory: true, gaps: (v.gaps || []).map((item) => item.missing), captured: Object.keys(captured) };
+      } catch (e) {
+        logger.fellBack('catalogue: the helper failed — carried on without it', e); /* advisory is best-effort */
+      }
+      const auto_subject = `Order from ${c.display_name} — ` + (await shopDatePhrase(entity.identity_id)); /* N3: the shop's zone and locale, not India's */
       const all_recipients = [
-        { entity_id: c.identity_id,      bridge_id: c.bridge_id,      display_name: c.display_name,      role: 'sender' },
+        { entity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name, role: 'sender' },
         { entity_id: entity.identity_id, bridge_id: entity.bridge_id, display_name: entity.display_name, role: 'receiver' }
       ];
       const li = JSON.stringify(line_items);
@@ -1212,7 +1544,7 @@ router.post('/:bridge_id/order/confirm',
           ORDER BY created_at DESC LIMIT 1`,
         [entity.identity_id]
       );
-      const frozen_schema_id      = schemaRow.rows[0]?.schema_id      || null;
+      const frozen_schema_id = schemaRow.rows[0]?.schema_id || null;
       const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
 
       // guaranteed write: OTP consume + both chit records + timeline, all-or-nothing (INV-2).
@@ -1224,22 +1556,53 @@ router.post('/:bridge_id/order/confirm',
          other paths did — the customer is not an actor and the subject is generated. header() supplies both as
          null, which is what the INSERT stored anyway; the difference was that three paths said so and this one
          left the reader to work it out. */
-      const orderHeader = mint.header({ sender_entity_id: c.identity_id, sender_entity_bridge_id: c.bridge_id,
-        sender_entity_display_name: c.display_name, all_recipients, purpose, auto_subject, manual_subject: null,
-        summary_json, schema_version: frozen_schema_version, schema_id: frozen_schema_id, detail_type: purpose });
+      const orderHeader = mint.header({
+        sender_entity_id: c.identity_id,
+        sender_entity_bridge_id: c.bridge_id,
+        sender_entity_display_name: c.display_name,
+        all_recipients,
+        purpose,
+        auto_subject,
+        manual_subject: null,
+        summary_json,
+        schema_version: frozen_schema_version,
+        schema_id: frozen_schema_id,
+        detail_type: purpose
+      });
       const orderCopies = [
-        mint.party(orderHeader, { entity_id: c.identity_id, direction: 'sent', role: 'Act',
-          current_status: 'delivered', payload_delivered: true, line_items,
-          log: { action: 'created', action_by_identity_id: c.identity_id, action_by_display_name: c.display_name,
-                 new_status: 'delivered', detail: `Order placed to ${entity.display_name}` } }),
-        mint.party(orderHeader, { entity_id: entity.identity_id, direction: 'received', role: 'Act',
-          current_status: 'pending', line_items,
-          log: { action: 'delivered', action_by_identity_id: c.identity_id, action_by_display_name: c.display_name,
-                 new_status: 'pending', detail: `Order received from ${c.display_name}` } }),
+        mint.party(orderHeader, {
+          entity_id: c.identity_id,
+          direction: 'sent',
+          role: 'Act',
+          current_status: 'delivered',
+          payload_delivered: true,
+          line_items,
+          log: {
+            action: 'created',
+            action_by_identity_id: c.identity_id,
+            action_by_display_name: c.display_name,
+            new_status: 'delivered',
+            detail: `Order placed to ${entity.display_name}`
+          }
+        }),
+        mint.party(orderHeader, {
+          entity_id: entity.identity_id,
+          direction: 'received',
+          role: 'Act',
+          current_status: 'pending',
+          line_items,
+          log: {
+            action: 'delivered',
+            action_by_identity_id: c.identity_id,
+            action_by_display_name: c.display_name,
+            new_status: 'pending',
+            detail: `Order received from ${c.display_name}`
+          }
+        })
       ];
       try {
         await withEntity(c.identity_id, async (client) => {
-          await spendOrderCode((t, p) => client.query(t, p), c, req.body.otp);   /* SH-OTP1 · ORD-FIX O7: spent once, on the chit's own transaction */
+          await spendOrderCode((t, p) => client.query(t, p), c, req.body.otp); /* SH-OTP1 · ORD-FIX O7: spent once, on the chit's own transaction */
           /* ⚠️ THE OPEN CLIENT IS PASSED IN, not a new connection — the OTP consume above and the documents below
              must commit with the chit or not at all. mint.deliver honours opts.client for exactly this. */
           await mint.deliver(c.identity_id, chit_id, orderCopies, { client });
@@ -1251,9 +1614,18 @@ router.post('/:bridge_id/order/confirm',
             const storage = require('../lib/storage');
             const participants = [c.identity_id, entity.identity_id];
             for (const d of pendingDocs) {
-              await storage.putForParticipantsInTx(client, { chit_id, message_id: null, line_index: d.line_index,
-                name: d.name, mime: d.mime, size: d.size, buffer: d.buffer, uploaded_by: c.identity_id,
-                participants, forEntity: c.identity_id });
+              await storage.putForParticipantsInTx(client, {
+                chit_id,
+                message_id: null,
+                line_index: d.line_index,
+                name: d.name,
+                mime: d.mime,
+                size: d.size,
+                buffer: d.buffer,
+                uploaded_by: c.identity_id,
+                participants,
+                forEntity: c.identity_id
+              });
             }
             // restore the customer's context — set_config above is transaction-local, and anything after this
             // (now or later) must not inherit the shop's.
@@ -1264,145 +1636,220 @@ router.post('/:bridge_id/order/confirm',
         if (!(e && (e.code === '42883' || /chit_deliver/.test(e.message || '')))) throw e;
         // pre-b50 fallback: the legacy inline OTP consume + dual-copy fan-out (unchanged).
         await withTransaction(async (client) => {
-        await spendOrderCode((t, p) => client.query(t, p), c, req.body.otp);   /* SH-OTP1 · ORD-FIX O7: spent once, on the chit's own transaction */
+          await spendOrderCode((t, p) => client.query(t, p), c, req.body.otp); /* SH-OTP1 · ORD-FIX O7: spent once, on the chit's own transaction */
 
-        // sender (customer) record
-        await client.query(
-          `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
+          // sender (customer) record
+          await client.query(
+            `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
              all_recipients, purpose, auto_subject, summary_json, schema_version, schema_id, sent_at, created_at)
            VALUES ($1,$2,$3,$4,$5,$6,$11,$7,$8,$9,$10,NOW(),NOW())`,
-          [chit_id, c.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj,
-           frozen_schema_version, frozen_schema_id, purpose]);
-        await client.query(
-          `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items, payload_delivered_at)
+            [chit_id, c.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj, frozen_schema_version, frozen_schema_id, purpose]
+          );
+          await client.query(
+            `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items, payload_delivered_at)
            VALUES ($1,$2,$7,$3,$4,$5,$6,NOW())`,
-          [chit_id, c.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li, purpose]);
-        await client.query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'delivered')`, [chit_id, c.identity_id]);
+            [chit_id, c.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li, purpose]
+          );
+          await client.query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'delivered')`, [chit_id, c.identity_id]);
 
-        // receiver (shop) record
-        await client.query(
-          `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
+          // receiver (shop) record
+          await client.query(
+            `INSERT INTO chit_header (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id, sender_entity_display_name,
              all_recipients, purpose, auto_subject, summary_json, schema_version, schema_id, sent_at, created_at)
            VALUES ($1,$2,$3,$4,$5,$6,$11,$7,$8,$9,$10,NOW(),NOW())`,
-          [chit_id, entity.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj,
-           frozen_schema_version, frozen_schema_id, purpose]);
-        await client.query(
-          `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items)
+            [chit_id, entity.identity_id, c.identity_id, c.bridge_id, c.display_name, ar, auto_subject, sj, frozen_schema_version, frozen_schema_id, purpose]
+          );
+          await client.query(
+            `INSERT INTO chit_detail (chit_id, entity_id, detail_type, line_item_count, total_value, currency_code, line_items)
            VALUES ($1,$2,$7,$3,$4,$5,$6)`,
-          [chit_id, entity.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li, purpose]);
-        await client.query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'pending')`, [chit_id, entity.identity_id]);
+            [chit_id, entity.identity_id, summary_json.line_item_count, summary_json.total_value, summary_json.currency_code, li, purpose]
+          );
+          await client.query(`INSERT INTO chit_status (chit_id, entity_id, current_status) VALUES ($1,$2,'pending')`, [chit_id, entity.identity_id]);
 
-        // timeline — both sides, in the same commit (was best-effort; now guaranteed)
-        await client.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
+          // timeline — both sides, in the same commit (was best-effort; now guaranteed)
+          await client.query(
+            `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1,$2,'created',$3,$4,'delivered',$5),($1,$6,'delivered',$3,$4,'pending',$7)`,
-          [chit_id, c.identity_id, c.identity_id, c.display_name, `Order placed to ${entity.display_name}`,
-           entity.identity_id, `Order received from ${c.display_name}`]);
+            [
+              chit_id,
+              c.identity_id,
+              c.identity_id,
+              c.display_name,
+              `Order placed to ${entity.display_name}`,
+              entity.identity_id,
+              `Order received from ${c.display_name}`
+            ]
+          );
 
-        // T2.2 · documents commit with the chit on THIS path too, or the fallback would silently lose them.
-        if (pendingDocs.length) {
-          const storage = require('../lib/storage');
-          const participants = [c.identity_id, entity.identity_id];
-          for (const d of pendingDocs) {
-            await storage.putForParticipantsInTx(client, { chit_id, message_id: null, line_index: d.line_index,
-              name: d.name, mime: d.mime, size: d.size, buffer: d.buffer, uploaded_by: c.identity_id,
-              participants, forEntity: c.identity_id });
+          // T2.2 · documents commit with the chit on THIS path too, or the fallback would silently lose them.
+          if (pendingDocs.length) {
+            const storage = require('../lib/storage');
+            const participants = [c.identity_id, entity.identity_id];
+            for (const d of pendingDocs) {
+              await storage.putForParticipantsInTx(client, {
+                chit_id,
+                message_id: null,
+                line_index: d.line_index,
+                name: d.name,
+                mime: d.mime,
+                size: d.size,
+                buffer: d.buffer,
+                uploaded_by: c.identity_id,
+                participants,
+                forEntity: c.identity_id
+              });
+            }
           }
-        }
         });
       }
 
       // CJ-06: best-effort CRM auto-add — after commit, never breaks the order.
       // B1 RLS: customer_list is owner-scoped (owner_entity_id = the shop) -> withEntity(shop).
       try {
-        await withEntity(entity.identity_id, (db) => db.query(
-          `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
+        await withEntity(entity.identity_id, (db) =>
+          db.query(
+            `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
            VALUES ($1,$2,'end_customer','catalogue',1,NOW())
            ON CONFLICT (owner_entity_id, customer_identity_id)
            DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
-          [entity.identity_id, c.identity_id]));
-      } catch (e) { console.log('customer auto-add skipped:', e.message); }
+            [entity.identity_id, c.identity_id]
+          )
+        );
+      } catch (e) {
+        console.log('customer auto-add skipped:', e.message);
+      }
 
       // STONE 4: penetration capture — AGGREGATE-ONLY (source + distributor + coarse locality; NO customer identity).
       // Best-effort, post-commit, never breaks the order; self-heals if b79 isn't applied. Feeds the brand's heatmap.
       if (custLocality) {
         try {
-          const srcs = Array.from(new Set(line_items.filter((l) => l.source).map((l) => l.source)));
-          for (const sk of srcs) await query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [sk, entity.identity_id, custLocality]);
-        } catch (e) { logger.fellBack('catalogue: the write failed — carried on without it', e); /* b79 not applied → skip (self-healing) */ }
+          const srcs = Array.from(new Set(line_items.filter((item) => item.source).map((item) => item.source)));
+          for (const sk of srcs)
+            await query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [
+              sk,
+              entity.identity_id,
+              custLocality
+            ]);
+        } catch (e) {
+          logger.fellBack('catalogue: the write failed — carried on without it', e); /* b79 not applied → skip (self-healing) */
+        }
       }
 
       // 6b: ERP HANDOFF (receipt-only, process-then-forget). Hand the order + its governance (source@v, frozen
       // container, routing, locality) to the ERP; keep a RECEIPT (refs + hash), NOT the raw payload. CB does NOT
       // route/fulfill — the ERP does. This is where CB stops at the information. Best-effort, self-healing.
       try {
-        const govLines = line_items.filter((l) => l.governed).map((l) => ({ finish: l.name, source: l.governed.under, container: l.governed.container || null, routing: l.governed.routing || null, qty: l.quantity }));
+        const govLines = line_items
+          .filter((item) => item.governed)
+          .map((item) => ({
+            finish: item.name,
+            source: item.governed.under,
+            container: item.governed.container || null,
+            routing: item.governed.routing || null,
+            qty: item.quantity
+          }));
         if (govLines.length) {
           const summary = { chit_id, total: summary_json.total_value, currency: summary_json.currency_code, locality: custLocality || null, lines: govLines };
           const payload_hash = crypto.createHash('sha256').update(JSON.stringify(summary)).digest('hex');
-          await withEntity(entity.identity_id, (db) => db.query(
-            `INSERT INTO erp_handoff (handoff_id, entity_id, chit_id, summary, payload_hash, status) VALUES ($1,$2,$3,$4::jsonb,$5,'handed_off')`,
-            [uuidv4(), entity.identity_id, chit_id, JSON.stringify(summary), payload_hash]));
+          await withEntity(entity.identity_id, (db) =>
+            db.query(`INSERT INTO erp_handoff (handoff_id, entity_id, chit_id, summary, payload_hash, status) VALUES ($1,$2,$3,$4::jsonb,$5,'handed_off')`, [
+              uuidv4(),
+              entity.identity_id,
+              chit_id,
+              JSON.stringify(summary),
+              payload_hash
+            ])
+          );
         }
-      } catch (e) { logger.fellBack('catalogue: the write failed — carried on without it', e); /* b82 not applied → skip (self-healing) */ }
+      } catch (e) {
+        logger.fellBack('catalogue: the write failed — carried on without it', e); /* b82 not applied → skip (self-healing) */
+      }
 
       // ⭐ [capability: sign-in] issueToken() — the one place a sign-in becomes a JWT, entity, coassist or
       // customer alike (customer token, for future order tracking — CJ-F1).
-      const token = await require('../lib/identity-auth').issueToken(query,
-        { identity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name,
-          email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id });
+      const token = await require('../lib/identity-auth').issueToken(query, {
+        identity_id: c.identity_id,
+        bridge_id: c.bridge_id,
+        display_name: c.display_name,
+        email: handle,
+        identity_type: 'customer',
+        parent_entity_id: entity.identity_id
+      });
 
       // T2.2 · the documents were written INSIDE the chit transaction above, so reaching here means they committed.
       // There is no `documents_stored:false` any more: a storage failure rolls the whole submission back and the
       // customer still has the file on screen to retry with. `documents` is reported so the caller can record the
       // sealed hashes, with line_index so a bundle can tell which form each proof belongs to.
       /* ⭐ THE SELLER'S BELL: a storefront order is the arrival that matters most (lib/events.js) — the transaction above has committed */
-      try { require('../lib/events').emit([entity.identity_id], { kind: 'chit', id: chit_id, who: c.display_name || null, note: purpose === 'offer' ? 'offer' : 'order' }); } catch (e) { logger.fellBack('catalogue: the signal was not sent — carried on without it', e); }
-      res.json({ message: purpose === 'offer' ? 'Offer sent' : 'Order placed', chit_id, shop: entity.display_name,
-                 summary: summary_json, token,
-                 ...(pendingDocs.length ? { documents: pendingDocs.map((d) => ({ name: d.name, sha256: d.sha256, line_index: d.line_index })) } : {}) });
+      try {
+        require('../lib/events').emit([entity.identity_id], {
+          kind: 'chit',
+          id: chit_id,
+          who: c.display_name || null,
+          note: purpose === 'offer' ? 'offer' : 'order'
+        });
+      } catch (e) {
+        logger.fellBack('catalogue: the signal was not sent — carried on without it', e);
+      }
+      res.json({
+        message: purpose === 'offer' ? 'Offer sent' : 'Order placed',
+        chit_id,
+        shop: entity.display_name,
+        summary: summary_json,
+        token,
+        ...(pendingDocs.length ? { documents: pendingDocs.map((item) => ({ name: item.name, sha256: item.sha256, line_index: item.line_index })) } : {})
+      });
     } catch (err) {
       /* ⭐ b247's population boundary answers as a 409 in words, not "Order failed" (lib/knownerr, review §23) */
       const _known = require('../lib/knownerr').known(err);
       if (_known) return res.status(_known.status).json(_known.body);
-      console.error('order/confirm:', err.message); res.status(500).json({ error: 'Order failed', message: safeErr(err) });
+      console.error('order/confirm:', err.message);
+      res.status(500).json({ error: 'Order failed', message: safeErr(err) });
     }
-  });
+  }
+);
 
 // ── CJ-F1: verify OTP for sign-in (no order) → customer token ──
-router.post('/:bridge_id/login/verify',
-  [ body('otp').trim().isLength({ min: 6, max: 64 }) ],
-  validate,
-  async (req, res) => {
-    try {
-      const entity = await resolveEntity(req.params.bridge_id);
-      if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
-      const c0 = resolveContact(req.body);
-      if (c0.error) return res.status(422).json({ error: 'Sign-in failed', message: c0.error });
-      const handle = crHandle(c0.channel, c0.raw, entity);
-      const cr = await query(
-        `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
-         FROM identities WHERE email = $1`, [handle]);
-      if (!cr.rows.length) return res.status(400).json({ error: 'Sign-in failed', message: 'No account — place an order first' });
-      const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] });   // SEC1: the typed contact, for TESTER_NAMES
-      if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Sign-in failed', message: otpCheck.message });
-      await spendShopperOtp(query, c.identity_id);
-      // ⭐ [capability: sign-in] issueToken() — see the other call site in this file for why this stopped
-      // being a third hand-built jwt.sign().
-      const token = await require('../lib/identity-auth').issueToken(query,
-        { identity_id: c.identity_id, bridge_id: c.bridge_id, display_name: c.display_name,
-          email: handle, identity_type: 'customer', parent_entity_id: entity.identity_id });
-      res.json({ message: 'Signed in', token, name: c.display_name });
-    } catch (err) { res.status(500).json({ error: 'Sign-in failed', message: safeErr(err) }); }
-  });
+router.post('/:bridge_id/login/verify', [body('otp').trim().isLength({ min: 6, max: 64 })], validate, async (req, res) => {
+  try {
+    const entity = await resolveEntity(req.params.bridge_id);
+    if (!entity) return res.status(404).json({ error: 'Not found', message: 'Shop not found' });
+    const c0 = resolveContact(req.body);
+    if (c0.error) return res.status(422).json({ error: 'Sign-in failed', message: c0.error });
+    const handle = crHandle(c0.channel, c0.raw, entity);
+    const cr = await query(
+      `SELECT identity_id, bridge_id, display_name, otp_code, otp_expires_at, otp_attempts
+         FROM identities WHERE email = $1`,
+      [handle]
+    );
+    if (!cr.rows.length) return res.status(400).json({ error: 'Sign-in failed', message: 'No account — place an order first' });
+    const c = cr.rows[0];
+    const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] }); // SEC1: the typed contact, for TESTER_NAMES
+    if (!otpCheck.ok) return res.status(otpCheck.status).json({ error: 'Sign-in failed', message: otpCheck.message });
+    await spendShopperOtp(query, c.identity_id);
+    // ⭐ [capability: sign-in] issueToken() — see the other call site in this file for why this stopped
+    // being a third hand-built jwt.sign().
+    const token = await require('../lib/identity-auth').issueToken(query, {
+      identity_id: c.identity_id,
+      bridge_id: c.bridge_id,
+      display_name: c.display_name,
+      email: handle,
+      identity_type: 'customer',
+      parent_entity_id: entity.identity_id
+    });
+    res.json({ message: 'Signed in', token, name: c.display_name });
+  } catch (err) {
+    res.status(500).json({ error: 'Sign-in failed', message: safeErr(err) });
+  }
+});
 
 /**
  * ⭐ SH-MY1 (T1-ORD) — THE PAGER CONTRACT for the shopper's own lists (DISCIPLINES §2: top-level total · page · limit, latest
  * first). One reader for both routes; the server caps the page (MY_PAGE_MAX) whatever the client asks. The total rides the same
  * statement (COUNT(*) OVER ()) — no second trip.
  */
-const MY_PAGE_MAX = 50, MY_PAGE_DEFAULT = 20;
+const MY_PAGE_MAX = 50,
+  MY_PAGE_DEFAULT = 20;
 /** always a page (these lists were never answered whole): the one pager, asked with the default when the client is silent */
 function myPage(req) {
   return PL.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : MY_PAGE_DEFAULT }, MY_PAGE_DEFAULT, MY_PAGE_MAX);
@@ -1421,18 +1868,22 @@ router.get('/:bridge_id/my-orders', customerAuth, async (req, res) => {
     /* ⚠️ WX-O2C (2026-10-13): MY copy stays 'delivered' (the rail: it reached the shop) — the shop's Accept / Close moves THEIR copy. So
        `shop_status` is the other party's status, read in the same statement through chit_participants (b50, SECURITY DEFINER: the caller must
        be a participant — RLS as me). Before b50 the function is absent (42883): the list still answers, without shop_status. */
-    const sql = (withShop) => `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status, COUNT(*) OVER () AS _total${withShop
-        ? `, (SELECT p.current_status FROM chit_participants(ch.chit_id) p WHERE p.entity_id <> ch.entity_id LIMIT 1) AS shop_status` : ''}
+    const sql = (withShop) => `SELECT ch.chit_id, ch.auto_subject, ch.summary_json, ch.created_at, cs.current_status, COUNT(*) OVER () AS _total${
+      withShop ? `, (SELECT p.current_status FROM chit_participants(ch.chit_id) p WHERE p.entity_id <> ch.entity_id LIMIT 1) AS shop_status` : ''
+    }
        FROM chit_header ch
        JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id
        WHERE ch.entity_id = $1 AND ch.purpose IN ('order', 'offer')
        ORDER BY ch.created_at DESC LIMIT $2 OFFSET $3`;
-    const pg = myPage(req), args = [me, pg.limit, pg.offset];
+    const pg = myPage(req),
+      args = [me, pg.limit, pg.offset];
     const r = await withEntity(me, async (db) => (await trySavepoint(db, (h) => h.query(sql(true), args), null)) || db.query(sql(false), args));
     const orders = myRows(r.rows);
     /* `count` = the rows on this page (kept for older readers); `total` = all of mine — the pager's end marker reads it */
     res.json({ orders, count: orders.length, total: myTotal(r.rows), page: pg.page, limit: pg.limit });
-  } catch (err) { res.status(500).json({ error: 'Orders failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Orders failed', message: safeErr(err) });
+  }
 });
 
 // T2.4 · the documents the customer themselves submitted — their OWN per-copy rows, nobody else's.
@@ -1440,12 +1891,18 @@ router.get('/:bridge_id/my-documents', customerAuth, async (req, res) => {
   try {
     const me = req.customer.identity_id;
     const pg = myPage(req);
-    const r = await withEntity(me, (db) => db.query(
-      `SELECT id, chit_id, line_index, name, mime, size, created_at, COUNT(*) OVER () AS _total
-         FROM cb_attachment WHERE entity_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`, [me, pg.limit, pg.offset]));
+    const r = await withEntity(me, (db) =>
+      db.query(
+        `SELECT id, chit_id, line_index, name, mime, size, created_at, COUNT(*) OVER () AS _total
+         FROM cb_attachment WHERE entity_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+        [me, pg.limit, pg.offset]
+      )
+    );
     const documents = myRows(r.rows);
     res.json({ documents, count: documents.length, total: myTotal(r.rows), page: pg.page, limit: pg.limit });
-  } catch (err) { res.status(500).json({ error: 'Documents failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Documents failed', message: safeErr(err) });
+  }
 });
 
 // T2.4 · and the right to PURGE their own copy. Per-copy independence means each party can delete what it holds
@@ -1454,13 +1911,13 @@ router.get('/:bridge_id/my-documents', customerAuth, async (req, res) => {
 router.delete('/:bridge_id/my-documents/:id', customerAuth, async (req, res) => {
   try {
     const me = req.customer.identity_id;
-    const r = await withEntity(me, (db) => db.query(
-      `DELETE FROM cb_attachment WHERE id = $1 AND entity_id = $2 RETURNING id`, [req.params.id, me]));
+    const r = await withEntity(me, (db) => db.query(`DELETE FROM cb_attachment WHERE id = $1 AND entity_id = $2 RETURNING id`, [req.params.id, me]));
     if (!r.rows.length) return res.status(404).json({ error: 'Not found', message: 'No such document of yours' });
     res.json({ ok: true, deleted: r.rows[0].id });
-  } catch (err) { res.status(500).json({ error: 'Delete failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed', message: safeErr(err) });
+  }
 });
-
 
 /**
  * POST /photo-extract — read products out of a photo (SPEC-catalogue-photo-vision.md, step 5's server half).
@@ -1480,7 +1937,7 @@ router.post('/photo-extract', auth, async (req, res) => {
     const out = await require('../lib/ai').invokeSkill(entity_id, 'photo-to-items', { images });
     res.json(out);
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Photo read failed', message: err.status && err.status < 500 ? (err.message || safeErr(err)) : safeErr(err) });
+    res.status(err.status || 500).json({ error: 'Photo read failed', message: err.status && err.status < 500 ? err.message || safeErr(err) : safeErr(err) });
   }
 });
 
@@ -1524,19 +1981,20 @@ const enquiryLimitCheck = async (viewer, item_id) => {
      meant the owner of a shop that is not public could not enquire about their OWN product: the gate's
      short-circuit for "your own product" was unreachable, since the row it tests was never returned. */
   let owner_id = null;
-  const own = await withEntity(viewer, (db) => db.query(
-    'SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id])).catch(logger.orElse('catalogue enquiryLimitCheck: the read failed — answered with nothing', null));
+  const own = await withEntity(viewer, (db) => db.query('SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id])).catch(
+    logger.orElse('catalogue enquiryLimitCheck: the read failed — answered with nothing', null)
+  );
   if (own && own.rows[0]) owner_id = own.rows[0].entity_id;
   if (!owner_id) {
     const pub = await query('SELECT entity_id FROM catalogue_items WHERE item_id = $1 AND is_active = true', [item_id]);
     owner_id = pub.rows[0] && pub.rows[0].entity_id;
   }
   if (!owner_id) return { ok: false };
-  if (owner_id === viewer) return { ok: true, owner_id };          // your own product
+  if (owner_id === viewer) return { ok: true, owner_id }; // your own product
   const ent = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [owner_id]);
   if (!ent.rows[0]) return { ok: false };
   const view = await publicViewFor(ent.rows[0], { viewer }).catch(logger.orElse('catalogue enquiryLimitCheck: failed — answered with nothing', null));
-  return (view && view.available !== false) ? { ok: true, owner_id } : { ok: false };
+  return view && view.available !== false ? { ok: true, owner_id } : { ok: false };
 };
 
 router.get('/enquiry/:item_id', auth, async (req, res) => {
@@ -1546,10 +2004,14 @@ router.get('/enquiry/:item_id', auth, async (req, res) => {
        You can only read a thread you were delivered into, so there is nothing extra to check and nothing to
        leak — asking about a product you were never part of returns an empty list, exactly like one with no
        messages. */
-    const r = await withEntity(me, (db) => db.query(
-      `SELECT * FROM chit_messages
+    const r = await withEntity(me, (db) =>
+      db.query(
+        `SELECT * FROM chit_messages
         WHERE subject_type = 'product' AND subject_id = $1
-        ORDER BY created_at ASC`, [req.params.item_id]));
+        ORDER BY created_at ASC`,
+        [req.params.item_id]
+      )
+    );
     res.json(Object.assign({ count: r.rows.length }, PL.pageOut('messages', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     /* b161/b162 not applied on this deployment → an empty thread, not a broken screen. */
@@ -1558,9 +2020,10 @@ router.get('/enquiry/:item_id', auth, async (req, res) => {
   }
 });
 
-router.post('/enquiry/:item_id', auth,
-  [ body('message_text').trim().notEmpty().withMessage('Message text required'),
-    body('thread_type').optional().isIn(['external', 'internal']) ],
+router.post(
+  '/enquiry/:item_id',
+  auth,
+  [body('message_text').trim().notEmpty().withMessage('Message text required'), body('thread_type').optional().isIn(['external', 'internal'])],
   validate,
   async (req, res) => {
     try {
@@ -1572,11 +2035,17 @@ router.post('/enquiry/:item_id', auth,
       if (!gate.ok) return res.status(404).json({ error: 'Not found', message: 'No such product' });
 
       const message_id = uuidv4();
-      const r = await withEntity(me, (db) => db.query(
-        `SELECT enquiry_message_deliver($1,$2,$3,$4,$5,$6,$7) AS created_at`,
-        [message_id, req.params.item_id, me, req.identity.display_name || null,
-         req.body.thread_type === 'internal' ? 'internal' : 'external',
-         req.body.message_text, req.body.msg_type || 'info']));
+      const r = await withEntity(me, (db) =>
+        db.query(`SELECT enquiry_message_deliver($1,$2,$3,$4,$5,$6,$7) AS created_at`, [
+          message_id,
+          req.params.item_id,
+          me,
+          req.identity.display_name || null,
+          req.body.thread_type === 'internal' ? 'internal' : 'external',
+          req.body.message_text,
+          req.body.msg_type || 'info'
+        ])
+      );
       /* ⭐ SEC4 · THE SUPPLIER'S BELL — the same push a storefront order rings (lib/events), sent once the response has gone out (the
          definer committed). Only an external question about SOMEONE ELSE's product: my own note, or asking about my own item, rings nothing.
          Nothing sensitive rides it (kind · item id · who); the bell reads the list through GET /api/catalogue/enquiry. */
@@ -1590,13 +2059,14 @@ router.post('/enquiry/:item_id', auth,
       }
       res.status(500).json({ error: 'Enquiry failed', message: safeErr(err) });
     }
-  });
+  }
+);
 
 module.exports = router;
-module.exports.resolveContact = resolveContact;   // exported for unit tests (F2 channel detection)
+module.exports.resolveContact = resolveContact; // exported for unit tests (F2 channel detection)
 module.exports.crHandle = crHandle;
 /* ⭐ the ONE public view and the ONE store resolver — routes/ctp.js `/query` answers a peer with these, so a
    cross-installation pull can never show more than an anonymous visitor sees. */
 module.exports.publicViewFor = publicViewFor;
 module.exports.publicResponseFor = publicResponseFor;
-module.exports.resolveEntity = resolveEntity;               // exported for unit tests (collision-free .cr handle)
+module.exports.resolveEntity = resolveEntity; // exported for unit tests (collision-free .cr handle)

@@ -31,17 +31,26 @@ const PV = require('../lib/privacy');
 const { safeErr } = require('../lib/respond');
 const log = require('../lib/logger');
 
-router.get('/facts', (req, res) => { res.set('Cache-Control', 'public, max-age=300'); res.json(PV.facts()); });
+router.get('/facts', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json(PV.facts());
+});
 
 /** the shop and the party, from the token alone (the server decides; the body never names them) */
 function whoOf(req) {
   const c = req.customer || {};
-  if (!c.shop_entity_id) { const e = new Error('This sign-in is not tied to a shop.'); e.status = 403; e.code = 'NO_SHOP'; throw e; }
+  if (!c.shop_entity_id) {
+    const e = new Error('This sign-in is not tied to a shop.');
+    e.status = 403;
+    e.code = 'NO_SHOP';
+    throw e;
+  }
   return { shop: c.shop_entity_id, me: c.identity_id, name: c.display_name || null };
 }
 function fail(res, e) {
   if (e && e.code === 'PRIVACY_NOT_MIGRATED') return res.status(503).json({ code: e.code, error: 'Not migrated yet', message: e.message });
-  if (e && e.status && e.status < 500) return res.status(e.status).json(Object.assign({ code: e.code || 'REFUSED', error: e.message, message: e.message }, e.why ? { why: e.why } : {}));
+  if (e && e.status && e.status < 500)
+    return res.status(e.status).json(Object.assign({ code: e.code || 'REFUSED', error: e.message, message: e.message }, e.why ? { why: e.why } : {}));
   log.error('privacy/me failed', { err: e && e.message });
   return res.status(500).json({ error: 'Failed', message: safeErr(e) });
 }
@@ -50,27 +59,35 @@ router.get('/me', customerAuth, async (req, res) => {
   try {
     const w = whoOf(req);
     res.json(await withEntity(w.shop, (h) => PV.shopper(h, w.shop, w.me)));
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.post('/me/consent', customerAuth, async (req, res) => {
   try {
-    const w = whoOf(req), b = req.body || {};
+    const w = whoOf(req),
+      b = req.body || {};
     const out = await withEntity(w.shop, async (h) => {
       const pref = await PV.notePref(h, w.shop, w.me, { channel: b.channel, purpose: b.purpose, allowed: b.allowed }, w.me);
       return { pref, may: (await PV.prefs(h, w.shop, w.me)).may };
     });
     res.status(201).json(out);
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.post('/me/requests', customerAuth, async (req, res) => {
   try {
-    const w = whoOf(req), b = req.body || {};
+    const w = whoOf(req),
+      b = req.body || {};
     const r = await withEntity(w.shop, async (h) => {
       const me = (await h.query(`SELECT display_name, phone, otp_contact, email FROM identities WHERE identity_id = $1`, [w.me])).rows[0] || {};
       const who = w.name || me.display_name || me.phone || me.otp_contact || me.email || 'the shopper';
       return PV.logRequest(h, w.shop, { party_id: w.me, who, kind: b.kind }, w.me);
     });
     res.status(201).json({ request: r });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 module.exports = router;

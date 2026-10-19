@@ -5,31 +5,76 @@
 //   when the table is missing. No model call, no network — pure resolution logic.
 const path = require('path');
 const dbPath = require.resolve('../db');
-let ROWS = [], FAIL = false;
-require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
-  withEntity: async (e, fn) => fn({ query: async () => ({ rows: [] }) }),
-  query: async (sql) => { if (FAIL) { const e = new Error('relation "ai_skill" does not exist'); e.code = '42P01'; throw e; } return { rows: /ai_skill/.test(sql) ? ROWS : [] }; },
-} };
+let ROWS = [],
+  FAIL = false;
+require.cache[dbPath] = {
+  id: dbPath,
+  filename: dbPath,
+  loaded: true,
+  exports: {
+    withEntity: async (e, fn) => fn({ query: async () => ({ rows: [] }) }),
+    query: async (sql) => {
+      if (FAIL) {
+        const e = new Error('relation "ai_skill" does not exist');
+        e.code = '42P01';
+        throw e;
+      }
+      return { rows: /ai_skill/.test(sql) ? ROWS : [] };
+    }
+  }
+};
 const ai = require('../lib/ai');
-let P = 0, F = 0; const chk = (n, ok, d) => { ok ? (P++, console.log('  ✓ ' + n + (d ? '  ' + d : ''))) : (F++, console.log('  ✗ ' + n + (d ? '  — ' + d : ''))); };
+let P = 0,
+  F = 0;
+const chk = (n, ok, d) => {
+  ok ? (P++, console.log('  ✓ ' + n + (d ? '  ' + d : ''))) : (F++, console.log('  ✗ ' + n + (d ? '  — ' + d : '')));
+};
 
 (async () => {
   console.log('== PROVE F5 — AI skills are DATA ==\n');
 
   // ── Phase A · table present, with a skill that does NOT exist in code ──
   ROWS = [
-    { skill_id: 'export-declaration', category: 'clearance', gate: 'confirm', kind: 'document', format: null, label: 'Export Declaration', system: 'seeded prompt' },
-    { skill_id: 'invoice-reminder-v2', category: 'commerce', gate: 'confirm', kind: 'document', format: null, label: 'Payment reminder (data-only skill)', system: 'You draft a polite payment reminder from the invoice JSON.' },
+    {
+      skill_id: 'export-declaration',
+      category: 'clearance',
+      gate: 'confirm',
+      kind: 'document',
+      format: null,
+      label: 'Export Declaration',
+      system: 'seeded prompt'
+    },
+    {
+      skill_id: 'invoice-reminder-v2',
+      category: 'commerce',
+      gate: 'confirm',
+      kind: 'document',
+      format: null,
+      label: 'Payment reminder (data-only skill)',
+      system: 'You draft a polite payment reminder from the invoice JSON.'
+    }
   ];
   await ai.loadSkills(true);
   const brandNew = await ai.getSkill('invoice-reminder-v2');
-  chk('F5 · a NEW skill present ONLY as a table row RESOLVES (added by data, zero code)', !!brandNew && brandNew.label === 'Payment reminder (data-only skill)');
+  chk(
+    'F5 · a NEW skill present ONLY as a table row RESOLVES (added by data, zero code)',
+    !!brandNew && brandNew.label === 'Payment reminder (data-only skill)'
+  );
   chk('  └ it is NOT in the in-code SEED (proves it came from the table)', !ai.SKILLS['invoice-reminder-v2']);
-  chk('table is authoritative — a seeded skill resolves from the table', (await ai.getSkill('export-declaration')) && (await ai.getSkill('export-declaration')).system === 'seeded prompt');
+  chk(
+    'table is authoritative — a seeded skill resolves from the table',
+    (await ai.getSkill('export-declaration')) && (await ai.getSkill('export-declaration')).system === 'seeded prompt'
+  );
   chk('a skill absent from the table does NOT resolve (retire = a data change)', !(await ai.getSkill('order-review')));
-  chk('the 3 dropped orphans are gone (removed from code AND not seeded)', !(await ai.getSkill('incoterm-advice')) && !(await ai.getSkill('spec-draft')) && !(await ai.getSkill('profile-prefill')));
+  chk(
+    'the 3 dropped orphans are gone (removed from code AND not seeded)',
+    !(await ai.getSkill('incoterm-advice')) && !(await ai.getSkill('spec-draft')) && !(await ai.getSkill('profile-prefill'))
+  );
   const list = await ai.listSkills();
-  chk('listSkills (the ✨ menu) reflects the TABLE', list.some((s) => s.id === 'invoice-reminder-v2') && !list.some((s) => s.id === 'order-review'));
+  chk(
+    'listSkills (the ✨ menu) reflects the TABLE',
+    list.some((item) => item.id === 'invoice-reminder-v2') && !list.some((item) => item.id === 'order-review')
+  );
 
   // ── Phase B · table MISSING → self-heal to the in-code SEED ──
   FAIL = true;
@@ -41,4 +86,7 @@ let P = 0, F = 0; const chk = (n, ok, d) => { ok ? (P++, console.log('  ✓ ' + 
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F + (F ? '' : '   → F5 mechanism is data-driven + provable'));
   process.exit(F ? 1 : 0);
-})().catch((e) => { console.error('HARNESS ERROR', e); process.exit(1); });
+})().catch((e) => {
+  console.error('HARNESS ERROR', e);
+  process.exit(1);
+});
