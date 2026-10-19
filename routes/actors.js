@@ -70,6 +70,36 @@ const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth    = require('../middleware/auth');
 const signin  = require('./signin');
+
+/**
+ * SET-31 · the entity's own task ceiling: entity_actor_settings.default_max_tasks (Settings › Work), or null when
+ * the owner never set one (then the 1-100 validator is the only bound, as before) or the table is absent.
+ * Per-actor max_tasks may be lower, never higher. Read ONLY when the request carries max_tasks (round-trip budget).
+ */
+async function entityTaskCap(entity_id) {
+  if (!(await schema.hasTable('entity_actor_settings'))) return null;
+  const settingsRow = await db(`SELECT default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+  return (settingsRow.rows[0] && settingsRow.rows[0].default_max_tasks) || null;
+}
+/** SET-31 · the 400 body when a per-actor max_tasks is above the entity's ceiling (the server decides; the person is told the number). */
+function overTaskCap(ceiling) {
+  return { error: 'Over the limit', code: 'MAX_TASKS_OVER_ENTITY',
+    message: `A person can hold at most ${ceiling} tasks, the limit you set in Settings › Work. Raise that first, or give them ${ceiling} or fewer.` };
+}
+/**
+ * SET-31 · route guard for POST and PATCH /actors, run before the handler so the handlers stay as they were:
+ * a per-actor max_tasks above the ceiling is a 400 naming the number. No max_tasks in the body = no read, no change
+ * (a new actor given none keeps today's default of 10; the stored default is not applied without a read).
+ */
+async function taskCapGuard(req, res, next) {
+  try {
+    const sent = req.body && req.body.max_tasks;
+    if (sent === undefined || sent === null || sent === '') return next();
+    const ceiling = await entityTaskCap(auth.entityOf(req));
+    if (ceiling && parseInt(sent, 10) > ceiling) return res.status(400).json(overTaskCap(ceiling));
+    next();
+  } catch (err) { next(err); }
+}
 const personSession = require('../lib/person-session');   // PEOPLE-SRV1 (G4): the one session listing — closeBy ends a person's phones
 const keysRoute = require('./keys');                       // PEOPLE-SRV1 (G4): the one key list — endKeysBy ends the keys a person opened   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
 
@@ -190,7 +220,7 @@ router.post('/check-key',
 // ── POST /api/actors ─────────────────────────────────────────
 // Create a new actor under entity
 router.post('/',
-  auth, ownerWrite,
+  auth, ownerWrite, taskCapGuard,
   [
     body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
@@ -387,7 +417,7 @@ router.post('/',
 // Edit a co-assist's owner-controlled profile fields (name / role / max_tasks / phone).
 // Does NOT touch login key, type, status, or shift — those have dedicated routes. Entity-scoped.
 router.patch('/:id',
-  auth, ownerWrite,
+  auth, ownerWrite, taskCapGuard,
   [
     body('display_name').optional().trim().isLength({ min: 2, max: 100 }),
     body('actor_role').optional({ nullable: true }).trim().isLength({ max: 100 }),
