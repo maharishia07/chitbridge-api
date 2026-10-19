@@ -81,7 +81,7 @@ const idOf = (req) => { const id = String(req.params.id || ''); if (!UUID.test(i
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/parties', auth, noKey, async (req, res) => {
   try {
-    const out = await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null, consent: String(req.query.with || '').split(',').indexOf('consent') >= 0,
+    const out = await crm.list(ctx(req), { actor: byOf(req), view: req.query.view === 'leads' ? 'leads' : null, consent: String(req.query.with || '').split(',').indexOf('consent') >= 0,
       page: PL.pageOf(req.query.page), limit: PL.limitOf(req.query.limit, crm.CAP, crm.CAP) });
     res.json(Object.assign(out, { may: crmMay(req) }));
   } catch (e) { fail(res, e); }
