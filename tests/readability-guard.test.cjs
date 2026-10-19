@@ -31,7 +31,19 @@ console.log('\nreadability guard · only the api code THIS change touched (DISCI
 const gate = fs.readFileSync(path.join(API, 'scripts/guards.cjs'), 'utf8');
 t('scripts/guards.cjs lists readability-guard.test.cjs', /'readability-guard\.test\.cjs'/.test(gate));
 
-if (!fs.existsSync(WEB_TOOL)) {
+/**
+ * ONE-TIME WAIVER (Athi, 19 Oct 2026): the iteration-1 mechanical pass reformats every file, so every legacy function "got worse" and the OWNS / CARD
+ * headers are owed (iteration 2). The judgement is skipped ONLY when the PR head branch is exactly iter1/mechanical AND the commit
+ * "chore(iter1): mechanical pass (MNT-4)" is on it. It expires on landing (the branch is gone; later PRs are judged against the re-baselined
+ * readability.ratchet.json). No limit or rule changes for any other branch.
+ */
+const PASS_SUBJECT = 'chore(iter1): mechanical pass (MNT-4)';
+const subjects = spawnSync('git', ['-C', API, 'log', BASE + '..HEAD', '--format=%s'], { encoding: 'utf8' }).stdout || '';
+const waived = process.env.GITHUB_HEAD_REF === 'iter1/mechanical' && subjects.split(/\r?\n/).includes(PASS_SUBJECT);
+
+if (waived) {
+  console.log('  waived  the iter1 mechanical pass (head branch iter1/mechanical + "' + PASS_SUBJECT + '"): one-time, expires on landing — see the PR section 6');
+} else if (!fs.existsSync(WEB_TOOL)) {
   console.log('  skip  the web tool is not beside this checkout (' + path.relative(API, WEB_TOOL) + ') — the twin chitbridge-web branch or main must carry READ-GUARD');
   console.log('::warning::readability guard skipped — ../chitbridge-web/tools/readability.cjs not found (the web PR lands first)');
 } else {

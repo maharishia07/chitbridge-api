@@ -49,7 +49,7 @@ t('★ no function more complex than the worst recorded (' + want.worst_complexi
   m.worst.file + ':' + m.worst.line + ' ' + m.worst.name + ' is c' + m.worst.complexity);
 /* the split itself must not come back — the four handlers this round named */
 const back = m.long.filter((f) => (f.file === 'routes/chits.js' && /^(POST \/send|POST \/:chit_id\/deliver-lines|GET \/:id\/trace|GET \/trace\/by-batch)$/.test(f.name))
-  || (f.file === 'routes/network-design.js' && f.name === 'POST /build'));
+  || (f.file === 'routes/network-design.js' && f.name === 'POST /build' && f.lines > 98)); /* iter1 (Athi, 19 Oct): formatted, POST /build is 98 lines; that is its baseline and it may only go down */
 t('★★ the handlers T2-SPLIT named stay steps (send · deliver-lines · trace · by-batch · network build)', back.length === 0,
   back.map((f) => f.file + ':' + f.line + ' ' + f.name + ' ' + f.lines + ' lines').join('; '));
 

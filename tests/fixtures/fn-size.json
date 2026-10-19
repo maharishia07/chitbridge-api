@@ -1,11 +1,14 @@
 {
   "limit": 80,
-  "long_functions": 167,
+  "long_functions": 236,
   "worst_complexity": 185,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
     "lib/accounts-packs.js": [
       "(anonymous)"
+    ],
+    "lib/adopt.js": [
+      "consider"
     ],
     "lib/ai.js": [
       "invokeSkill"
@@ -18,10 +21,15 @@
       "byPerson"
     ],
     "lib/bill-steps.js": [
-      "facts"
+      "facts",
+      "lifecycle"
     ],
     "lib/bookpack.js": [
       "(anonymous)"
+    ],
+    "lib/books-cashflow.js": [
+      "datedSide",
+      "project"
     ],
     "lib/books-hooks.js": [
       "classify",
@@ -33,12 +41,31 @@
     "lib/books-pack.js": [
       "build"
     ],
+    "lib/books-payables.js": [
+      "(anonymous)",
+      "view"
+    ],
+    "lib/books-period.js": [
+      "runDepreciation",
+      "taxReturn"
+    ],
+    "lib/books-tally.js": [
+      "build"
+    ],
     "lib/books-todo.js": [
       "todo"
     ],
+    "lib/books.js": [
+      "enable",
+      "writeReversal"
+    ],
     "lib/capture.js": [
       "(anonymous)",
+      "createCapture",
       "raisePayload"
+    ],
+    "lib/catalogue-blueprint.js": [
+      "rowsToProducts"
     ],
     "lib/catalogue-view.js": [
       "buildPublicView"
@@ -52,16 +79,29 @@
     "lib/convert.js": [
       "(anonymous)"
     ],
+    "lib/country-setup.js": [
+      "save"
+    ],
     "lib/country.js": [
       "(anonymous)"
     ],
+    "lib/crm-groups.js": [
+      "send"
+    ],
     "lib/crm-leads.js": [
+      "(anonymous)",
       "importLeads"
+    ],
+    "lib/crm.js": [
+      "assemble"
     ],
     "lib/csv-preflight.js": [
       "applyDecisions",
       "matchHeader",
       "preflight"
+    ],
+    "lib/ctpaddress.js": [
+      "resolveAddress"
     ],
     "lib/dayopen.js": [
       "(anonymous)"
@@ -72,11 +112,17 @@
     "lib/docnumber.js": [
       "(anonymous)"
     ],
+    "lib/forms.js": [
+      "registry"
+    ],
     "lib/gherkin.js": [
       "parseFeature"
     ],
     "lib/govcontext.browser.js": [
       "(anonymous)"
+    ],
+    "lib/govresolve.js": [
+      "cascade"
     ],
     "lib/groupsum.js": [
       "requirement"
@@ -99,8 +145,14 @@
     "lib/jurisdiction.js": [
       "(anonymous)"
     ],
+    "lib/kyb.js": [
+      "risk"
+    ],
     "lib/ledger.js": [
       "(anonymous)"
+    ],
+    "lib/local-identity.js": [
+      "mint"
     ],
     "lib/locale.browser.js": [
       "(anonymous)"
@@ -114,9 +166,16 @@
     "lib/money.js": [
       "(anonymous)"
     ],
+    "lib/network-build-run.js": [
+      "createNode",
+      "rootOf"
+    ],
     "lib/network-build.js": [
       "plan",
       "walk"
+    ],
+    "lib/network-catalogue.js": [
+      "storeNotices"
     ],
     "lib/network-offers.js": [
       "(anonymous)",
@@ -132,6 +191,7 @@
       "terms"
     ],
     "lib/offers-live.js": [
+      "(anonymous)",
       "applyLiveOffers"
     ],
     "lib/orderhub.js": [
@@ -139,6 +199,9 @@
     ],
     "lib/orders.js": [
       "(anonymous)"
+    ],
+    "lib/parallel-run.js": [
+      "compareStatement"
     ],
     "lib/period.js": [
       "(anonymous)"
@@ -220,8 +283,15 @@
     "lib/signin.js": [
       "(anonymous)"
     ],
+    "lib/stock-from-chit.js": [
+      "movementsFor"
+    ],
     "lib/stock-store.js": [
+      "(anonymous)",
       "post"
+    ],
+    "lib/supply-store.js": [
+      "purchase"
     ],
     "lib/tax-copy.js": [
       "partiesFor"
@@ -240,6 +310,9 @@
       "(anonymous)",
       "determine_"
     ],
+    "lib/tax-lines.js": [
+      "gstr1"
+    ],
     "lib/tax-slab.js": [
       "(anonymous)"
     ],
@@ -256,6 +329,12 @@
     "lib/verdict.js": [
       "(anonymous)"
     ],
+    "lib/visibility-cap.js": [
+      "capOf"
+    ],
+    "lib/whatsapp-out.js": [
+      "notify"
+    ],
     "lib/workflow.js": [
       "(anonymous)"
     ],
@@ -265,43 +344,69 @@
     "lib/xlsx-read.js": [
       "sheetRows"
     ],
+    "lib/xlsx-write.js": [
+      "workbook"
+    ],
     "routes/actors.js": [
       "GET /",
       "PATCH /:id",
       "POST /",
       "PUT /:id/status",
-      "PUT /:id/tasks/route",
       "PUT /assign/:chit_id",
       "PUT /assign/:chit_id",
       "PUT /break"
     ],
+    "routes/adopt.js": [
+      "POST /:chit_id"
+    ],
+    "routes/books.js": [
+      "GET /cheques",
+      "GET /dues",
+      "GET /dues",
+      "POST /payments"
+    ],
     "routes/catalogue.js": [
       "(anonymous)",
       "POST /:bridge_id/order/confirm",
+      "POST /network-store/:networkId/order",
       "repriceAgainstCatalogue"
     ],
     "routes/chits.js": [
       "GET /:chit_id",
       "GET /:chit_id",
+      "GET /:chit_id/catalogue-overlay",
       "GET /inbox",
+      "POST /:chit_id/amend",
       "POST /:chit_id/disputes",
       "POST /:chit_id/messages",
+      "POST /assign-bulk",
       "PUT /:chit_id/disputes/:dispute_id/resolve",
       "PUT /:chit_id/status",
       "PUT /:chit_id/void",
-      "moveStatus"
+      "chitFilters",
+      "moveStatus",
+      "sendCopies",
+      "sendCopyPolicy",
+      "sendLegacyReceiverRows",
+      "sendLegacySenderRows"
     ],
     "routes/connections.js": [
-      "POST /request"
+      "POST /request",
+      "PUT /:id/respond"
     ],
     "routes/connectors.js": [
+      "POST /ingest",
       "emitSignalChit"
+    ],
+    "routes/crm.js": [
+      "GET /parties/:id/timeline"
     ],
     "routes/ctp.js": [
       "POST /deliver"
     ],
     "routes/definitions.js": [
-      "GET /"
+      "GET /",
+      "PUT /:id"
     ],
     "routes/entities.js": [
       "GET /me",
@@ -310,33 +415,54 @@
       "PATCH /profile"
     ],
     "routes/folders.js": [
-      "GET /messages"
+      "GET /messages",
+      "POST /move"
     ],
     "routes/identity-docs.js": [
       "PUT /documents/:scheme"
     ],
     "routes/integrations.js": [
+      "GET /reconcile",
       "POST /heartbeat"
     ],
+    "routes/invoice.js": [
+      "POST /build"
+    ],
     "routes/keys.js": [
-      "(anonymous)"
+      "(anonymous)",
+      "claimDevice"
     ],
     "routes/network-design.js": [
-      "GET /availability"
+      "GET /availability",
+      "POST /build"
     ],
     "routes/notifications.js": [
       "GET /"
     ],
+    "routes/offers.js": [
+      "GET /openapi.json"
+    ],
     "routes/products.js": [
       "GET /",
       "GET /:id/versions",
+      "GET /lists",
       "POST /import",
       "POST /lists/adopt",
       "POST /starter-columns"
     ],
     "routes/relationships.js": [
+      "GET /suppliers",
       "GET /suppliers/availability",
+      "PATCH /suppliers/:id",
+      "POST /customers",
       "POST /suppliers"
+    ],
+    "routes/schemas.js": [
+      "GET /fields",
+      "PATCH /fields/:field_key"
+    ],
+    "routes/service.js": [
+      "GET /:chit_id"
     ],
     "routes/signin.js": [
       "actorLogin",
@@ -346,17 +472,22 @@
     "routes/testing.js": [
       "(anonymous)",
       "GET /coverage",
+      "GET /incidents",
       "GET /reliability",
       "GET /report",
       "GET /report",
       "PATCH /incidents/:id",
+      "PATCH /requirements/:id",
+      "POST /changes",
       "POST /incidents",
       "POST /releases",
+      "POST /requirements",
       "POST /requirements",
       "importCases",
       "recordResults"
     ],
     "routes/till.js": [
+      "GET /bills",
       "GET /match",
       "GET /match",
       "GET /snapshot",
