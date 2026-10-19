@@ -97,8 +97,8 @@ it('⭐ ONE health(last_seen): defined in routes/connectors.js only; integration
   }
   assert.deepStrictEqual(defs, ['routes/connectors.js']);
   /* SET-35: integrations reads the rows from lib/connector-rows, the one reader of routes/connectors.health */
-  assert.ok(/require('../routes/connectors')/.test(fs.readFileSync(path.join(API, 'lib', 'connector-rows.js'), 'utf8')));
-  assert.ok(/require('../lib/connector-rows')/.test(fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8')));
+  assert.ok(fs.readFileSync(path.join(API, 'lib', 'connector-rows.js'), 'utf8').includes("require('../routes/connectors')"));
+  assert.ok(fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').includes("require('../lib/connector-rows')"));
   const { health } = require(path.join(API, 'routes', 'connectors.js'));
   assert.strictEqual(health(null), 'offline');
   assert.strictEqual(health(new Date().toISOString()), 'live');

@@ -391,6 +391,7 @@ const INFRA_LIBS = [
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
+  'connector-rows.js',     // SET-35: the checked-in connectors - one statement, one row shape - read by GET /integrations/status and the Connectors Home card
   'match.js',              // matching helpers
   'measure.js',            // unit handling
   'meter.js',              // usage ledger writes — billing plumbing, deliberately best-effort
