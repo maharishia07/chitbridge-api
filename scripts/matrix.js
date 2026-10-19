@@ -176,7 +176,7 @@ const CASES = [
       const sf = await call('GET', `/api/catalogue/${encodeURIComponent(me.bridge_id)}`);
       const shop = (sf.json && sf.json.shop) || {};
       const oi = shop.order_input || {};
-      const names = ((sf.json && sf.json.finishes) || []).flatMap((item) => (item.items || []).map((item) => item.name));
+      const names = ((sf.json && sf.json.finishes) || []).flatMap((entry) => (entry.items || []).map((element) => element.name));
       row.storefront = sf.status === 200 ? 'ok' : 'FAIL(' + sf.status + ')';
       row.declared = oi.preset === c.preset && oi.pipeline === c.pipeline ? 'ok' : `FAIL(${oi.preset}/${oi.pipeline})`;
       row.items = names.length ? String(names.length) : 'FAIL(0)';
@@ -219,7 +219,7 @@ const CASES = [
       if (buyer) {
         await call('POST', '/api/relationships/suppliers', { token: buyer.token, body: { supplier_bridge_id: me.bridge_id } });
         const sup = await call('GET', `/api/relationships/suppliers/${encodeURIComponent(me.id)}/catalogue`, { token: buyer.token });
-        const supNames = ((sup.json && sup.json.finishes) || []).flatMap((item) => (item.items || []).map((item) => item.name));
+        const supNames = ((sup.json && sup.json.finishes) || []).flatMap((entry) => (entry.items || []).map((element) => element.name));
         row.supplier = sup.status === 200 && supNames.length === names.length ? 'ok' : `FAIL(${sup.status}/${supNames.length} vs ${names.length})`;
       }
     } catch (e) {

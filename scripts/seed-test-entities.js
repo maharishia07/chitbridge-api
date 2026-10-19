@@ -261,8 +261,8 @@ const CAST = [
       if (c.publish) {
         const keys = {};
         c.publish.items.forEach((item) =>
-          Object.keys(item).forEach((item) => {
-            if (item !== 'name') keys[item] = true;
+          Object.keys(item).forEach((entry) => {
+            if (entry !== 'name') keys[entry] = true;
           })
         );
         const body = {

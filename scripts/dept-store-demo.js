@@ -98,8 +98,8 @@ const DEPTS = [
     if (!((list.json && list.json.items) || []).length) {
       await api('/api/products', { method: 'POST', token: m.token, body: { item_data: { name: m.product, unit: 'each', price: m.price } } });
     }
-    const reply = await api('/api/entities/profile', { method: 'PATCH', token: m.token, body: { catalogue_visibility: m.want } });
-    ok(`${m.name} → ${m.want}`, reply.status === 200, reply.status === 200 ? '' : JSON.stringify(reply.json));
+    const response = await api('/api/entities/profile', { method: 'PATCH', token: m.token, body: { catalogue_visibility: m.want } });
+    ok(`${m.name} → ${m.want}`, response.status === 200, response.status === 200 ? '' : JSON.stringify(response.json));
   }
 
   // ── 3 · are they on the network tree yet? ──────────────────────────────────────────────────────────────────

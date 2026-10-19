@@ -258,9 +258,9 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
   try {
     const got = await withTransaction(async (db) => {
       const { counters, list, devices } = await readLocked(db, entity_id);
-      const c = counters[id];
-      if (!c) return { status: 404, body: { error: 'Not found', message: 'There is no counter ' + id + ' in this shop.' } };
-      const v = view(c, list, devices);
+      const nestedC = counters[id];
+      if (!nestedC) return { status: 404, body: { error: 'Not found', message: 'There is no counter ' + id + ' in this shop.' } };
+      const v = view(nestedC, list, devices);
       if (v.state === 'open' || v.state === 'break' || v.state === 'opening') {
         return {
           status: 409,
@@ -278,7 +278,7 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, async (req, res) => {
         };
       }
       await patchCounter(db, entity_id, id, { held_by: nonce, held_at: new Date().toISOString() });
-      return { status: 200, counter: c };
+      return { status: 200, counter: nestedC };
     });
     if (got.status !== 200) return res.status(got.status).json(got.body);
 
@@ -396,11 +396,11 @@ router.noteBill = async (entity_id, series, billedAt, no) => {
  * [[feedback-no-duplicate-functions]] [[project-till-series-prefix]]
  */
 router.claim = async ({ entity_id, identity, id, label, takeover }) => {
-  const { withTransaction } = require('../db');
-  const keys = require('./keys');
+  const { withTransaction: nestedWithTransaction } = require('../db');
+  const nestedKeys = require('./keys');
   const want = String(id || 'C1').toUpperCase();
 
-  const got = await withTransaction(async (db) => {
+  const got = await nestedWithTransaction(async (db) => {
     const { counters, list, devices } = await readLocked(db, entity_id);
     const c = counters[want];
     if (!c) return { status: 404, body: { error: 'Not found', message: 'There is no counter ' + want + ' in this shop.' } };
@@ -437,8 +437,8 @@ router.claim = async ({ entity_id, identity, id, label, takeover }) => {
      */
     if (takeover && c.held_by && !isPending(c.held_by)) {
       const holder = list.find((item) => item && String(item.jti) === String(c.held_by));
-      if (holder && !keys.isClosed(holder)) {
-        await keys.patchKeyWith(db, entity_id, holder.jti, {
+      if (holder && !nestedKeys.isClosed(holder)) {
+        await nestedKeys.patchKeyWith(db, entity_id, holder.jti, {
           till: Object.assign({}, holder.till || {}, { closed_at: new Date().toISOString(), released: true })
         });
         auth.forgetKey(holder.jti);
@@ -448,14 +448,14 @@ router.claim = async ({ entity_id, identity, id, label, takeover }) => {
   });
   if (got.status !== 200) return got;
 
-  const minted = await keys.mint(entity_id, identity, {
+  const minted = await nestedKeys.mint(entity_id, identity, {
     name: 'counter ' + want + (label ? ' · ' + label : '') + ' · ' + new Date().toISOString().slice(0, 10),
     scopes: ['till']
   });
 
   /* ⭐ the key and the counter are written together — the key knows its counter, the counter knows its key */
-  await withTransaction(async (db) => {
-    await keys.patchKeyWith(db, entity_id, minted.jti, {
+  await nestedWithTransaction(async (db) => {
+    await nestedKeys.patchKeyWith(db, entity_id, minted.jti, {
       counter: want,
       till: { id: want, issued: Number(got.counter.next) > 1, at: new Date().toISOString() }
     });

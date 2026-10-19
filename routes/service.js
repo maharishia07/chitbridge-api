@@ -69,14 +69,14 @@ router.get('/:chit_id', auth, async (req, res) => {
      */
     const found = await withEntity(entity_id, async (db) => {
       if (!(await mine(entity_id, chit_id, db))) return null;
-      const rec = await db.query(`SELECT * FROM chit_sla WHERE entity_id=$1 AND chit_id=$2`, [entity_id, chit_id]);
-      const pauses = await db.query(
+      const nestedRec = await db.query(`SELECT * FROM chit_sla WHERE entity_id=$1 AND chit_id=$2`, [entity_id, chit_id]);
+      const nestedPauses = await db.query(
         `SELECT pause_id, paused_from, paused_to, reason, note, on_counterparty,
                 claimed_by_entity_id, claimed_by_name, accepted, accepted_at, accepted_by
            FROM chit_sla_pause WHERE entity_id=$1 AND chit_id=$2 ORDER BY paused_from`,
         [entity_id, chit_id]
       );
-      return { rec, pauses };
+      return { rec: nestedRec, pauses: nestedPauses };
     });
     if (!found) return res.status(404).json({ error: 'Not found' });
     const { rec, pauses } = found;

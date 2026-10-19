@@ -32,21 +32,21 @@ async function login(email) {
   // 1 · the message-to-chit AI skill works (independent of the capture table)
   let aiOk = false;
   for (let index = 0; index < 8 && !aiOk; index++) {
-    const reply = await api('POST', '/api/governance/ai-draft', {
+    const response = await api('POST', '/api/governance/ai-draft', {
       token: t,
       body: {
         skill_id: 'message-to-chit',
         context: { channel: 'whatsapp', from: '+9198…', message: 'need 40 drums white primer and 12 tins hardener, deliver Chennai' }
       }
     });
-    if (reply.status === 200 && reply.j && reply.j.data) {
+    if (response.status === 200 && response.j && response.j.data) {
       aiOk = true;
       chk(
         'message-to-chit skill structures the message',
-        Array.isArray(reply.j.data.line_items),
-        'items=' + (reply.j.data.line_items || []).length + ' subject="' + (reply.j.data.subject || '') + '"'
+        Array.isArray(response.j.data.line_items),
+        'items=' + (response.j.data.line_items || []).length + ' subject="' + (response.j.data.subject || '') + '"'
       );
-    } else if (reply.status !== 404) await new Promise((r) => setTimeout(r, 6000));
+    } else if (response.status !== 404) await new Promise((r) => setTimeout(r, 6000));
     else await new Promise((r) => setTimeout(r, 6000));
   }
   if (!aiOk) chk('message-to-chit skill', false, 'no AI response');

@@ -73,7 +73,7 @@ const uuid = () => 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/[x]/g, () => 
   chk('setup: chit + dispute created (A=raiser, B=party)', !!chit_id && !!dispute_id, 'dispute=' + (dispute_id ? dispute_id.slice(0, 8) : '—'));
   // sanity: my ../db sees the same dispute rows (confirms same DB)
   const seen = await query('SELECT count(*)::int AS n FROM chit_disputes WHERE dispute_id = $1', [dispute_id])
-    .then((reply) => reply.rows[0].n)
+    .then((response) => response.rows[0].n)
     .catch(() => -1);
   chk('setup: ../db reaches the same database', seen >= 1, seen + ' dispute copies');
 
@@ -109,7 +109,7 @@ const uuid = () => 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/[x]/g, () => 
     // count non-party message copies before (Gamma / anyone not in the dispute)
     await withEntity(a.id, (c) => c.query('DELETE FROM chit_disputes WHERE dispute_id = $1', [dispute_id])); // A deletes its copy
     await withEntity(b.id, (c) => c.query('DELETE FROM chit_disputes WHERE dispute_id = $1', [dispute_id])); // B deletes its copy
-    const left = await query('SELECT count(*)::int AS n FROM chit_disputes WHERE dispute_id = $1', [dispute_id]).then((reply) => reply.rows[0].n);
+    const left = await query('SELECT count(*)::int AS n FROM chit_disputes WHERE dispute_id = $1', [dispute_id]).then((response) => response.rows[0].n);
     chk('M2 setup: roster fully deleted', left === 0, left + ' rows left');
     const msgId = uuid();
     const text = await raised(
@@ -135,7 +135,7 @@ const uuid = () => 'xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx'.replace(/[x]/g, () => 
       text.raised ? text.msg.split('\n')[0].slice(0, 90) : 'did NOT raise (BROADCAST!)'
     );
     const leaked = await query('SELECT count(*)::int AS n FROM chit_messages WHERE message_id = $1', [msgId])
-      .then((reply) => reply.rows[0].n)
+      .then((response) => response.rows[0].n)
       .catch(() => -1);
     chk('M2: and NOTHING was written (zero message copies) — no broadcast', leaked === 0, leaked + ' message rows');
   }

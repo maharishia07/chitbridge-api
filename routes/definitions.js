@@ -158,11 +158,11 @@ router.get('/', auth, async (req, res) => {
             params: [entity_id]
           }) - 1;
       }
-      const res = await readBatch(entity_id, req.identity && req.identity.identity_id, stmts);
-      rows = res[0].rows;
+      const response = await readBatch(entity_id, req.identity && req.identity.identity_id, stmts);
+      rows = response[0].rows;
       if (at.id !== undefined) {
-        const juris = taxGov.jurisdictionOf(res[at.id].rows[0]);
-        const layers = new Map(res[at.layers].rows.map((x) => [String(x.region_code).toUpperCase(), x]));
+        const juris = taxGov.jurisdictionOf(response[at.id].rows[0]);
+        const layers = new Map(response[at.layers].rows.map((x) => [String(x.region_code).toUpperCase(), x]));
         const gov = taxGov.governedFromRows(juris, layers.get(juris) || null, layers.get('IN') || null);
         if (gov.length) rows = rows.concat(gov);
       }
@@ -172,7 +172,7 @@ router.get('/', auth, async (req, res) => {
        * stores now carries network { stores, released, changed, at } — read in the same message as the list, so it costs no trip.
        * A shop with no stores gets nothing: the words would be about a network it does not have.
        */
-      if (at.net !== undefined) require('../lib/network-offers').stampReleases(rows, res[at.net].rows[0]);
+      if (at.net !== undefined) require('../lib/network-offers').stampReleases(rows, response[at.net].rows[0]);
     } catch (e) {
       logger.fellBack('definitions GET /: the read failed — answered with nothing', e);
       rows = null;

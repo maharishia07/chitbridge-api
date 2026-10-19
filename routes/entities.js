@@ -779,12 +779,12 @@ const PREF_SETS = {
 const MERGE_PATCH_SQL = (col) => `(COALESCE(${col}, '{}'::jsonb) - $3::text[]) || $1::jsonb`;
 
 /** prefPatch(set, body) → { set, drop } or { error }. Whitelisted keys only; '' / null = drop; a bad value = error. */
-function prefPatch(set, body) {
+function prefPatch(set, payload) {
   const out = {},
     drop = [];
   for (const k of set.keys) {
-    if (!(k in body)) continue; // not sent = not touched
-    const v = String(body[k] == null ? '' : body[k]).trim();
+    if (!(k in payload)) continue; // not sent = not touched
+    const v = String(payload[k] == null ? '' : payload[k]).trim();
     if (!v) {
       drop.push(k);
       continue;
@@ -848,9 +848,9 @@ router.patch('/me/exposure', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const X = require('../lib/exposure');
-    const body = req.body || {};
+    const payload = req.body || {};
     const out = {};
-    for (const k of X.KEYS) if (k in body) out[k] = !!body[k];
+    for (const k of X.KEYS) if (k in payload) out[k] = !!payload[k];
     if (!Object.keys(out).length) return res.status(400).json({ error: 'validation', message: 'switches required — keys: ' + X.KEYS.join(', ') });
     await policy.patchKey(null, entity_id, ['storefront_exposure'], out, { op: 'merge' }); /* T2-POLICY: the one writer */
     const r = await query(`SELECT policy_flags->'storefront_exposure' AS x FROM identities WHERE identity_id = $1`, [entity_id]);
@@ -1357,12 +1357,12 @@ router.get('/usage', auth, async (req, res) => {
       return { daily: daily.rows, by_meter: byMeter.rows, recent: recent.rows };
     });
 
-    const total = out.by_meter.reduce((total, item) => total + Number(item.cost || 0), 0);
+    const total = out.by_meter.reduce((sum, item) => sum + Number(item.cost || 0), 0);
     res.json({
       ok: true,
       window_days: days,
       /* Named for what it is. See the note above: this is the BILLED count. */
-      counts: { billed: out.by_meter.reduce((total, item) => total + Number(item.events || 0), 0) },
+      counts: { billed: out.by_meter.reduce((sum, item) => sum + Number(item.events || 0), 0) },
       total_cost_usd: Math.round(total * 10000) / 10000,
       rate_card: require('../lib/rates').CARD.id,
       daily: out.daily,
@@ -2236,8 +2236,11 @@ router.get('/mis', auth, async (req, res) => {
         try {
           const who = await query("SELECT current_user AS u, current_setting('is_superuser') AS su");
           counts_error += ' [connected as ' + who.rows[0].u + ', superuser=' + who.rows[0].su + ']';
-        } catch (e) {
-          log.fellBack('entities GET /mis: the read failed — carried on without it', e); /* if even this fails the original error is the more useful one */
+        } catch (problem) {
+          log.fellBack(
+            'entities GET /mis: the read failed — carried on without it',
+            problem
+          ); /* if even this fails the original error is the more useful one */
         }
       }
     }

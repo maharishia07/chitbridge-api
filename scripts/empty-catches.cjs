@@ -41,10 +41,10 @@ function silent(body) {
     );
 }
 function closing(src, i, open, close) {
-  let count = 0;
+  let total = 0;
   for (let j = i; j < src.length; j++) {
-    if (src[j] === open) count++;
-    else if (src[j] === close && --count === 0) return j;
+    if (src[j] === open) total++;
+    else if (src[j] === close && --total === 0) return j;
   }
   return -1;
 }

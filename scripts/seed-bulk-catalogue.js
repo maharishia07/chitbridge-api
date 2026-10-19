@@ -120,17 +120,17 @@ function itemAt(i) {
       // The decisions are built from preflight's OWN mapping — `incoming` (the file's header) and `canonical`
       // (the catalogue column it matched). Guessing this shape cost a wasted run: the first attempt sent
       // `{header, field}`, nothing mapped, and the import correctly refused with "no row had a product name".
-      const reply = await api('/api/products/import/preflight', { method: 'POST', token, body: { csv: csvText } });
-      const mapping = ((reply.json || {}).report || {}).mapping || [];
+      const response = await api('/api/products/import/preflight', { method: 'POST', token, body: { csv: csvText } });
+      const mapping = ((response.json || {}).report || {}).mapping || [];
       const decisions = mapping
         .filter((item) => item.canonical && item.how !== 'blocked' && item.how !== 'not-accepted')
         .map((item) => ({ incoming: item.incoming, action: 'map', field: item.canonical }));
-      const r = await api('/api/products/import', { method: 'POST', token, body: { csv: csvText, decisions, confirm: true } });
-      if (r.status === 200) {
+      const answer = await api('/api/products/import', { method: 'POST', token, body: { csv: csvText, decisions, confirm: true } });
+      if (answer.status === 200) {
         ok += n;
       } else {
         failed += n;
-        if (failed === n) console.log('\n    import refused: ' + r.status + ' ' + JSON.stringify(r.json).slice(0, 300));
+        if (failed === n) console.log('\n    import refused: ' + answer.status + ' ' + JSON.stringify(answer.json).slice(0, 300));
       }
       const el = Math.max(1, (Date.now() - t0) / 1000);
       process.stdout.write('\r    ' + (ok + failed) + '/' + COUNT + '  ' + Math.round((ok + failed) / el) + '/s   ');
@@ -150,9 +150,9 @@ function itemAt(i) {
     const runs = [];
     for (let index = 0; index < 3; index++) {
       const t = Date.now();
-      const reply = await api('/api/network-design/availability?q=' + encodeURIComponent(text), { token });
+      const response = await api('/api/network-design/availability?q=' + encodeURIComponent(text), { token });
       runs.push(Date.now() - t);
-      if (index === 0 && reply.status !== 200) console.log('    (' + text + ' → ' + reply.status + ')');
+      if (index === 0 && response.status !== 200) console.log('    (' + text + ' → ' + response.status + ')');
     }
     const best = Math.min(...runs);
     console.log('    ' + text.padEnd(11) + best + ' ms  (best of 3)   ' + why);

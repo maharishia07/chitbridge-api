@@ -464,7 +464,7 @@ function howOf(l, day) {
     const split = [];
     (Array.isArray(l.tenders) ? l.tenders : []).forEach((item) => {
       const w = HOW[item.role] || item.role,
-        x = split.find((item) => item.how === w);
+        x = split.find((entry) => entry.how === w);
       if (x) x.amount_minor += Number(item.dr_minor);
       else split.push({ how: w, amount_minor: Number(item.dr_minor) });
     });
@@ -878,9 +878,9 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
         }
       }
       if (pay) {
-        const P = require('../lib/books-payables'),
-          more = await P.read(h, e);
-        const v = P.view({
+        const nestedP = require('../lib/books-payables'),
+          more = await nestedP.read(h, e);
+        const v = nestedP.view({
           asOf,
           currency: curOf(req),
           country: req.books && req.books.country,
@@ -1504,8 +1504,8 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
           try {
             R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day);
             return true;
-          } catch (e) {
-            logger.fellBack('books cheques: not a next step for this cheque — not offered', e, 'debug');
+          } catch (problem) {
+            logger.fellBack('books cheques: not a next step for this cheque — not offered', problem, 'debug');
             return false;
           }
         });

@@ -75,11 +75,11 @@ router.put('/', auth, async (req, res) => {
       });
       if (receipts.size) {
         draft.nodes = draft.nodes.map((item) => {
-          const r = item && item.key ? receipts.get(item.key) : null;
-          if (!r) return item;
+          const nestedR = item && item.key ? receipts.get(item.key) : null;
+          if (!nestedR) return item;
           const out = Object.assign({}, item);
-          if (r.built && !out.built) out.built = r.built;
-          if (r.invited && !out.invited) out.invited = r.invited;
+          if (nestedR.built && !out.built) out.built = nestedR.built;
+          if (nestedR.invited && !out.invited) out.invited = nestedR.invited;
           return out;
         });
       }
@@ -601,21 +601,21 @@ router.get('/availability', auth, async (req, res) => {
      * This is the difference between "fast for me" and "fast for the platform", and only the second one survives
      * more than one user.
      */
-    const perStore = await mapLimit(visible, 4, (ent) =>
-      withEntity(ent.identity_id, (db) =>
+    const perStore = await mapLimit(visible, 4, (nestedEnt) =>
+      withEntity(nestedEnt.identity_id, (db) =>
         db.query(
           `SELECT item_id, item_data FROM catalogue_items
           WHERE entity_id = $1 AND is_active = true
             AND (LOWER(item_data->>'name') LIKE $2 OR LOWER(item_data->>'code') LIKE $2 OR LOWER(item_data->>'sku') LIKE $2)
           LIMIT 5`,
-          [ent.identity_id, like]
+          [nestedEnt.identity_id, like]
         )
       )
-        .then((reply) => ({ ent, rows: reply.rows }))
-        .catch(() => ({ ent, rows: [] }))
+        .then((reply) => ({ ent: nestedEnt, rows: reply.rows }))
+        .catch(() => ({ ent: nestedEnt, rows: [] }))
     ); // one unreadable store must not fail the whole answer
 
-    for (const { ent, rows: itemRows } of perStore) {
+    for (const { ent: nestedEnt, rows: itemRows } of perStore) {
       for (const it of itemRows) {
         const d = it.item_data || {};
         const av = d.avail && typeof d.avail === 'object' ? d.avail : null;
@@ -624,29 +624,29 @@ router.get('/availability', auth, async (req, res) => {
         const rawPrice = d.price;
         const amt = money.amountOfLoose(rawPrice);
         rows.push({
-          store: ent.display_name,
-          bridge_id: ent.bridge_id,
-          city: ent.city || null,
+          store: nestedEnt.display_name,
+          bridge_id: nestedEnt.bridge_id,
+          city: nestedEnt.city || null,
           // identity_id so a request can be addressed. Not a secret: this store's catalogue is already readable by
           // this viewer, and the supplier route hands out the same field for exactly the same reason.
-          entity_id: ent.identity_id,
+          entity_id: nestedEnt.identity_id,
           price: Number.isFinite(amt) ? amt : null,
-          price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || ent.currency_code || null,
-          lat: ent.lat == null ? null : Number(ent.lat),
-          lng: ent.lng == null ? null : Number(ent.lng),
-          service_km: ent.service_km == null ? null : Number(ent.service_km),
-          dispatch_days: ent.dispatch_days == null ? null : Number(ent.dispatch_days),
-          ship_within_days: ent.ship_within_days == null ? null : Number(ent.ship_within_days),
-          ship_beyond_days: ent.ship_beyond_days == null ? null : Number(ent.ship_beyond_days),
+          price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || nestedEnt.currency_code || null,
+          lat: nestedEnt.lat == null ? null : Number(nestedEnt.lat),
+          lng: nestedEnt.lng == null ? null : Number(nestedEnt.lng),
+          service_km: nestedEnt.service_km == null ? null : Number(nestedEnt.service_km),
+          dispatch_days: nestedEnt.dispatch_days == null ? null : Number(nestedEnt.dispatch_days),
+          ship_within_days: nestedEnt.ship_within_days == null ? null : Number(nestedEnt.ship_within_days),
+          ship_beyond_days: nestedEnt.ship_beyond_days == null ? null : Number(nestedEnt.ship_beyond_days),
           item_id: it.item_id,
           name: d.name || d.code || '(unnamed)',
           code: d.code || d.sku || null,
-          currency: ent.currency_code || null,
+          currency: nestedEnt.currency_code || null,
           // null when the store has never said. NEVER 0 — see the header.
           qty: av && av.qty !== undefined && av.qty !== null ? Number(av.qty) : null,
           source: av ? av.source : null,
           as_of: av ? av.as_of : null,
-          is_me: ent.identity_id === me
+          is_me: nestedEnt.identity_id === me
         });
       }
     }

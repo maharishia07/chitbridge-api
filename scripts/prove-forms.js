@@ -133,15 +133,15 @@ const field = (resolved, id) => ((resolved && resolved.fields) || []).find((item
       'applicant=' + JSON.stringify(field(rv, 'applicant').value)
     );
     chk('VAULT · with the vault + a manual purpose the form is now READY', rv.ready === true, 'ready=' + rv.ready);
-    const reply = await api('POST', '/api/forms/authority-application/issue', { token: me.token, body: { manual: { purpose: 'Trade licence renewal' } } });
-    if (reply.status === 503) {
+    const response = await api('POST', '/api/forms/authority-application/issue', { token: me.token, body: { manual: { purpose: 'Trade licence renewal' } } });
+    if (response.status === 503) {
       skip('ISSUE / FREEZE / SIGN', 'form_instance not migrated — run b108');
     } else {
-      const formId = reply.j && reply.j.form_id;
+      const formId = response.j && response.j.form_id;
       chk(
         'ISSUE · a ready form freezes into an instance with a content_hash',
-        !!formId && !!reply.j.content_hash,
-        'hash=' + String(reply.j.content_hash || '').slice(0, 12)
+        !!formId && !!response.j.content_hash,
+        'hash=' + String(response.j.content_hash || '').slice(0, 12)
       );
       // FREEZE: change the vault, the issued instance must NOT change
       await api('PUT', '/api/governance/profile/vault', {
@@ -182,11 +182,11 @@ const field = (resolved, id) => ((resolved && resolved.fields) || []).find((item
           at.status === 200 && !!at.j.attachment_id,
           'att=' + String((at.j && at.j.attachment_id) || '').slice(0, 8)
         );
-        const reply = await api('POST', '/api/forms/instances/' + formId + '/attach', {
+        const answer = await api('POST', '/api/forms/instances/' + formId + '/attach', {
           token: me.token,
           body: { chit_id: '00000000-0000-0000-0000-000000000000' }
         });
-        chk('ATTACH · refuses a chit the entity is not a participant on (403)', reply.status === 403, 'status=' + reply.status);
+        chk('ATTACH · refuses a chit the entity is not a participant on (403)', answer.status === 403, 'status=' + answer.status);
       } else {
         skip('ATTACH tests', 'could not mint a carrier chit');
       }

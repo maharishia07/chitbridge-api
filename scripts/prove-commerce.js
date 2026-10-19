@@ -68,7 +68,7 @@ async function api(m, p, o) {
 
   // 3 · a DOMESTIC lane drops the export-only instruments (e.g. export credit / political risk)
   const dom = await api('GET', '/api/governance/instruments?cross_border=0', { token });
-  const domKeys = (dom.j.cluster || []).flatMap((item) => item.instruments.map((item) => item.key));
+  const domKeys = (dom.j.cluster || []).flatMap((item) => item.instruments.map((entry) => entry.key));
   chk(
     'domestic lane drops export-only cover (no export_credit / political_risk)',
     !domKeys.includes('export_credit') && !domKeys.includes('political_risk'),

@@ -226,8 +226,8 @@ async function holdsCopy(token, chit_id) {
     const aGet = await api('GET', '/api/attachments/' + attId, { token: A.token });
     check('Alpha fetches ITS OWN copy', aGet.status === 200, 'status ' + aGet.status);
     // Beta gets its OWN copy via the chit detail — distinct id, not Alpha's
-    const bDet = await api('GET', '/api/chits/' + chit_id, { token: B.token });
-    const bAtt = ((bDet.json && bDet.json.attachments) || []).find((item) => item.name === 'doc.txt');
+    const nestedBDet = await api('GET', '/api/chits/' + chit_id, { token: B.token });
+    const bAtt = ((nestedBDet.json && nestedBDet.json.attachments) || []).find((item) => item.name === 'doc.txt');
     const betaAttId = bAtt && bAtt.id;
     check('Beta has its OWN replicated copy (distinct id)', !!betaAttId && betaAttId !== attId, 'beta ' + betaAttId + ' vs alpha ' + attId);
     if (betaAttId) {

@@ -195,8 +195,8 @@ const ok = (c, m, extra) => {
    * Counted before and after, because "it didn't add anything" is only believable as a number.
    */
   const rowsOf = (r) => {
-    const list = (r.b && (r.b.items || r.b.products || r.b)) || [];
-    return Array.isArray(list) ? list.map((x) => x.item_data || x) : [];
+    const entries = (r.b && (r.b.items || r.b.products || r.b)) || [];
+    return Array.isArray(entries) ? entries.map((x) => x.item_data || x) : [];
   };
   const catAfter = rowsOf(await j('/api/products', { token: tok }))
     .map((item) => item.name)
@@ -367,16 +367,16 @@ const ok = (c, m, extra) => {
     await j('/api/capture/' + fcap.id + '/structure', { method: 'POST', token: ftok, body: {} });
     const fr = await j('/api/capture/' + fcap.id + '/raise', { method: 'POST', token: ftok, body: {} });
     ok(fr.status === 200, '★★★ it raises with NO catalogue — the chit is the primitive', JSON.stringify(fr.b).slice(0, 160));
-    const list = (fr.b && fr.b.line_items) || [];
+    const entries = (fr.b && fr.b.line_items) || [];
     ok(
-      list.some((item) => /milk/i.test(item.particulars)),
+      entries.some((item) => /milk/i.test(item.particulars)),
       '★★ "milk 10 l" became a line',
-      JSON.stringify(list)
+      JSON.stringify(entries)
     );
     ok(
-      list.every((item) => !item.price),
+      entries.every((item) => !item.price),
       '★ it carries no price, and nothing invented one',
-      JSON.stringify(list)
+      JSON.stringify(entries)
     );
     const fsent = await j('/api/chits/send', {
       method: 'POST',
@@ -384,7 +384,7 @@ const ok = (c, m, extra) => {
       body: {
         recipients: fr.b.recipients,
         subject: fr.b.subject,
-        line_items: list,
+        line_items: entries,
         purpose: fr.b.purpose,
         business_json: fr.b.business_json,
         self_copy: fr.b.self_copy
@@ -433,9 +433,9 @@ const ok = (c, m, extra) => {
   if (tcap) {
     await j('/api/capture/' + tcap.id + '/structure', { method: 'POST', token: ftok, body: {} });
     const tr = await j('/api/capture/' + tcap.id + '/raise', { method: 'POST', token: ftok, body: {} });
-    const list = (tr.b && tr.b.line_items) || [];
-    const tom = list.find((item) => /tomato/i.test(item.particulars || ''));
-    ok(!!tom, '★★ "tomato" came through as the name', JSON.stringify(list));
+    const entries = (tr.b && tr.b.line_items) || [];
+    const tom = entries.find((item) => /tomato/i.test(item.particulars || ''));
+    ok(!!tom, '★★ "tomato" came through as the name', JSON.stringify(entries));
     ok(tom && tom.quantity === 10, '★★ 10 came through as the quantity', JSON.stringify(tom));
     ok(tom && tom.price === 40, '★★★ 40.00 came through as the PRICE — the only figure in the message is kept', JSON.stringify(tom));
     ok(tom && tom.total === 400, '★ and the line totals to 400', JSON.stringify(tom));

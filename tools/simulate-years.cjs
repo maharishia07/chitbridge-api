@@ -266,9 +266,9 @@ const rup = (minor) => (minor / 100).toFixed(2);
     T.entries
       .filter((e) => e.fiscal_year === fy)
       .forEach((e) => {
-        const list = by.get(e.series) || [];
-        list.push(e);
-        by.set(e.series, list);
+        const rows = by.get(e.series) || [];
+        rows.push(e);
+        by.set(e.series, rows);
       });
     const list = [];
     by.forEach((arr, series) => {

@@ -130,8 +130,8 @@ async function definersReady() {
  *                    is recorded with its ledger; only the customer's copy is dropped, and the answer says why.
  * ⚠️ Before this, both were a bare 403 that the counter read as "key refused" — two bills sat pending with the network green.
  */
-async function tillMaySend(sender_id, outward, body) {
-  const b = body || {},
+async function tillMaySend(sender_id, outward, payload) {
+  const b = payload || {},
     bj = b.business_json || {};
   if (outward.length !== 1) return { refuse: 'a counter bill can go to one customer only' };
   const r = outward[0];
@@ -1272,8 +1272,8 @@ async function sendMoney(st, req, res) {
     const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
     const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
     const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
-    const gross = r2m(li.reduce((total, item) => total + listOf(item) * qtyOf(item), 0));
-    const net = r2m(li.reduce((total, item) => total + netOf(item), 0));
+    const gross = r2m(li.reduce((sum, item) => sum + listOf(item) * qtyOf(item), 0));
+    const net = r2m(li.reduce((sum, item) => sum + netOf(item), 0));
     let tax = null,
       total = null;
     /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
@@ -1488,7 +1488,7 @@ function sendBillCopyFor(st, receiver) {
   if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
   const bj = Object.assign({}, sendBjFor(st, receiver.entity_id), { counter_bill: true });
   const parts = bj.payment && Array.isArray(bj.payment.parts) ? bj.payment.parts : [];
-  const total = roundMoney(parts.reduce((total, item) => total + (Number(item && item.amount) || 0), 0));
+  const total = roundMoney(parts.reduce((sum, item) => sum + (Number(item && item.amount) || 0), 0));
   return {
     purpose: 'invoice',
     business_json: bj,
@@ -1695,7 +1695,7 @@ async function sendFolds(st, req, res) {
         label: item.label,
         frm_class: item.frm_class,
         on_rail: !!item.covered_onrail,
-        instruments: (item.instruments || []).map((item) => item.name)
+        instruments: (item.instruments || []).map((entry) => entry.name)
       }));
       if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: inc, areas };
     }
@@ -2686,12 +2686,12 @@ router.get('/sent', auth, async (req, res) => {
     const offset = ks.where ? 0 : (page - 1) * limit;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result } = await withEntity(entity_id, async (db) => {
-      const countResult = page === 1 && !ks.where ? await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${countWhere}`, countParams) : null;
+      const nestedCountResult = page === 1 && !ks.where ? await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${countWhere}`, countParams) : null;
 
       const limIdx = params.length + 1,
         offIdx = params.length + 2;
       const _cancelCol = await cancelCols();
-      const result = await db.query(
+      const outcome = await db.query(
         `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
               ch.summary_json, ch.created_at, ch.role,
               cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag,
@@ -2708,7 +2708,7 @@ router.get('/sent', auth, async (req, res) => {
         LIMIT $${limIdx} OFFSET $${offIdx}`,
         [...params, limit, offset]
       );
-      return { countResult, result };
+      return { countResult: nestedCountResult, result: outcome };
     });
 
     const next = afterOf(result.rows, limit, req);
@@ -2751,7 +2751,7 @@ router.get('/folder', auth, async (req, res) => {
     where = chitFilters(req, where, params);
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result } = await withEntity(entity_id, async (db) => {
-      const countResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
+      const nestedCountResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
 
       const orderBy =
         ({
@@ -2765,7 +2765,7 @@ router.get('/folder', auth, async (req, res) => {
         ' ' +
         (String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC');
       const _cancelCol = await cancelCols(); // b195 — named only when it exists; see cancelCols()
-      const result = await db.query(
+      const outcome = await db.query(
         `SELECT * FROM (
          SELECT DISTINCT ON (ch.chit_id)
               ch.chit_id, ch.sender_entity_display_name, ch.sender_entity_bridge_id, ch.all_recipients,
@@ -2786,7 +2786,7 @@ router.get('/folder', auth, async (req, res) => {
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
         [...params, limit, offset]
       );
-      return { countResult, result };
+      return { countResult: nestedCountResult, result: outcome };
     });
     /* ⚠️ `view` was echoed back and dropped by the envelope; the pager reads total/page/limit. It was the
        caller's own query param travelling in a circle. */
@@ -2825,7 +2825,7 @@ router.get('/rollup', auth, async (req, res) => {
     }
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { result, disp } = await withEntity(entity_id, async (db) => {
-      const result = await db.query(
+      const outcome = await db.query(
         `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
               COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
          FROM chit_status cs
@@ -2837,7 +2837,7 @@ router.get('/rollup', auth, async (req, res) => {
       );
       // D4: open-dispute count for the same scope — powers the "Disputes (n)" filter in the task menu.
       // Guarded so a pre-migration DB (no dispute tables) simply reports 0 rather than failing the rollup.
-      const disp = await db
+      const nestedDisp = await db
         .query(
           `SELECT COUNT(DISTINCT cs.chit_id)::int AS n
          FROM chit_status cs
@@ -2847,7 +2847,7 @@ router.get('/rollup', auth, async (req, res) => {
           params
         )
         .catch(() => ({ rows: [{ n: 0 }] }));
-      return { result, disp };
+      return { result: outcome, disp: nestedDisp };
     });
     res.json({ group_by: groupBy, direction: dir, groups: result.rows, dispute_open: disp.rows[0].n });
   } catch (err) {
@@ -2975,7 +2975,7 @@ router.get('/inbox', auth, async (req, res) => {
     paramCount = params.length;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result } = await withEntity(entity_id, async (db) => {
-      const countResult =
+      const nestedCountResult =
         page === 1 && !ks.where
           ? await db.query(
               `SELECT COUNT(*) FROM chit_status cs
@@ -2987,7 +2987,7 @@ router.get('/inbox', auth, async (req, res) => {
 
       // Get inbox — lightweight — no payload
       const _cancelCol = await cancelCols(); // b195 — see cancelCols(); three list selects, one fragment
-      const result = await db.query(
+      const outcome = await db.query(
         `SELECT
          ch.chit_id,
          ch.sender_entity_display_name,
@@ -3031,7 +3031,7 @@ router.get('/inbox', auth, async (req, res) => {
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
         [...params, limit, offset]
       );
-      return { countResult, result };
+      return { countResult: nestedCountResult, result: outcome };
     });
 
     const inboxNext = afterOf(result.rows, limit, req);
@@ -3204,8 +3204,8 @@ router.get('/:chit_id', auth, async (req, res) => {
           console.error('mark-read skipped:', e.message);
           try {
             await db.query('ROLLBACK TO SAVEPOINT mark_read');
-          } catch (e) {
-            cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', e);
+          } catch (problem) {
+            cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', problem);
           }
         }
       }
@@ -3222,7 +3222,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       );
 
       // Each participant has their own copy (entity_id = their entity).
-      const log = await db.query(
+      const nestedLog = await db.query(
         `SELECT action, action_by_identity_id, action_by_display_name, previous_status,
                 new_status, detail, created_at
          FROM state_log
@@ -3266,7 +3266,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       );
 
       /* (the "first opened" log row is written by the statement above, in the same round trip) */
-      return { header, detail, log };
+      return { header, detail, log: nestedLog };
     });
 
     if (data.notFound) {
@@ -3415,10 +3415,10 @@ router.get('/:chit_id', auth, async (req, res) => {
 
     if (!bundle)
       bundle = await withEntity(entity_id, async (db) => {
-        const participants = await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((reply) => reply.rows), null);
+        const nestedParticipants = await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((reply) => reply.rows), null);
         /* The b50 fallback, still scoped to self under FORCE — a degraded panel, never a leak. */
         const participants2 =
-          participants ||
+          nestedParticipants ||
           (await trySavepoint(
             db,
             (c) =>
@@ -3436,7 +3436,7 @@ router.get('/:chit_id', auth, async (req, res) => {
             []
           ));
 
-        const amd = await trySavepoint(db, () => amend.list(entity_id, chit_id, db), { amendments: [], migrated: false });
+        const nestedAmd = await trySavepoint(db, () => amend.list(entity_id, chit_id, db), { amendments: [], migrated: false });
         const rows = _lines0 ? await trySavepoint(db, () => amend.readLines(entity_id, chit_id, db), null) : null;
         const assigned = _lines0 ? await trySavepoint(db, () => assign.current(entity_id, chit_id, db), null) : null;
         const prog = _lines0 ? await trySavepoint(db, () => deliverline.progress(entity_id, chit_id, db), null) : null;
@@ -3462,7 +3462,7 @@ router.get('/:chit_id', auth, async (req, res) => {
               .then((reply) => (reply.rows[0] && reply.rows[0].w) || null),
           null
         );
-        return { participants: participants2, amd, rows, assigned, prog, my_received, books_wait };
+        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait };
       });
 
     _mark('bundle_6_reads');
@@ -3773,9 +3773,9 @@ router.post('/register/subjects/:subject_id/close', auth, async (req, res) => {
   try {
     res.json(await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name }));
   } catch (err) {
-    const body = { error: 'Cannot close yet', message: err.status && err.status < 500 ? err.message : safeErr(err) };
-    if (err.outstanding) body.outstanding = err.outstanding;
-    res.status(err.status || 500).json(body);
+    const payload = { error: 'Cannot close yet', message: err.status && err.status < 500 ? err.message : safeErr(err) };
+    if (err.outstanding) payload.outstanding = err.outstanding;
+    res.status(err.status || 500).json(payload);
   }
 });
 
@@ -4424,8 +4424,8 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
 
     /* The matcher's shortlist, re-read from the catalogue so the picker shows the SAME row shape as everything
        else — and so the price on it is today's, not whatever the reader saw when the chit was raised. */
-    const shortlist = (m) =>
-      (m.candidates || [])
+    const shortlist = (nestedM) =>
+      (nestedM.candidates || [])
         .map((item) => {
           const it = cat.items.find((x) => x.key === item.key);
           return it ? { ...full(it), status: item.status, status_text: item.status_text } : null;
@@ -4440,7 +4440,7 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
             (item) =>
               itemmatch.norm(item.name).includes(nq) ||
               nq.includes(itemmatch.norm(item.name)) ||
-              item.synonyms.some((item) => item.includes(nq) || nq.includes(item))
+              item.synonyms.some((entry) => entry.includes(nq) || nq.includes(entry))
           )
         : cat.items
     )
@@ -4509,16 +4509,16 @@ async function markChitPaid(db, press) {
 }
 /** the payment a Mark-paid press carries (method · ref · amount · note · when · who · the press's own client_ref, H2) */
 function pressPayment(req, entity_id) {
-  const body = req.body,
+  const payload = req.body,
     payment = {
-      method: body.method,
-      ref: body.ref || null,
-      amount: body.amount != null ? Number(body.amount) : null,
-      note: body.note || null,
+      method: payload.method,
+      ref: payload.ref || null,
+      amount: payload.amount != null ? Number(payload.amount) : null,
+      note: payload.note || null,
       at: new Date().toISOString(),
       by: (req.identity && req.identity.identity_id) || entity_id
     };
-  if (body.client_ref) payment.client_ref = String(body.client_ref);
+  if (payload.client_ref) payment.client_ref = String(payload.client_ref);
   return payment;
 }
 /** a Mark-paid that failed: the books' own refusals in words (already paid · a locked month · …), else a 500 */
@@ -5668,9 +5668,9 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
     const rls = await withEntity(entity_id, async (db) => {
       const access = await db.query(`SELECT 1 FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
       if (access.rows.length === 0) return null;
-      const hdr = await db.query(`SELECT auto_subject, schema_version FROM chit_header WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
-      const det = await db.query(`SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
-      return { hdr, det };
+      const nestedHdr = await db.query(`SELECT auto_subject, schema_version FROM chit_header WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
+      const nestedDet = await db.query(`SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
+      return { hdr: nestedHdr, det: nestedDet };
     });
     if (!rls) return res.status(403).json({ error: 'Forbidden' });
     const { hdr, det } = rls;

@@ -171,9 +171,9 @@ const DESIGN = (rootKey) => ({
   step(6, 'the store signs in with its handle and code');
   let clothToken = null;
   if (cloth) {
-    const reply = await api('/api/entities/verify', { method: 'POST', body: { user_id: cloth.handle, otp: cloth.claim_code } });
-    clothToken = (reply.json || {}).token;
-    ok('★★ ' + cloth.handle + ' signed in', !!clothToken, reply.status + ' ' + ((reply.json || {}).message || ''));
+    const response = await api('/api/entities/verify', { method: 'POST', body: { user_id: cloth.handle, otp: cloth.claim_code } });
+    clothToken = (response.json || {}).token;
+    ok('★★ ' + cloth.handle + ' signed in', !!clothToken, response.status + ' ' + ((response.json || {}).message || ''));
     // Clothing is the PUBLIC department. It needs stock, or the network storefront reports "no network" for the
     // same reason a shop with nothing in it does — which would look exactly like a missing tree.
     await api('/api/schemas/create-default', { method: 'POST', token: clothToken });
@@ -186,8 +186,8 @@ const DESIGN = (rootKey) => ({
   step(7, 'the warehouse cannot publish itself');
   let whToken = null;
   if (wh) {
-    const reply = await api('/api/entities/verify', { method: 'POST', body: { user_id: wh.handle, otp: wh.claim_code } });
-    whToken = (reply.json || {}).token;
+    const response = await api('/api/entities/verify', { method: 'POST', body: { user_id: wh.handle, otp: wh.claim_code } });
+    whToken = (response.json || {}).token;
     const push = await api('/api/entities/profile', { method: 'PATCH', token: whToken, body: { catalogue_visibility: 'public' } });
     ok("★★ the operator's decision survives the store's own Settings screen", push.status === 403, push.status + ' ' + ((push.json || {}).message || ''));
     // Give the warehouse something to see. Without a product, step 8's "can a sibling read it" passes on an EMPTY
@@ -254,8 +254,12 @@ const DESIGN = (rootKey) => ({
   // ── 10 · RE-ISSUE ────────────────────────────────────────────────────────────────────────────────────────
   step(10, 're-issue a code the operator can circulate');
   if (cloth) {
-    const reply = await api('/api/network-design/reissue', { method: 'POST', token: op.token, body: { user_id: cloth.handle } });
-    ok('★ the operator can issue a fresh code', reply.status === 200 && !!(reply.json || {}).claim_code, (reply.json || {}).message || reply.status);
+    const response = await api('/api/network-design/reissue', { method: 'POST', token: op.token, body: { user_id: cloth.handle } });
+    ok(
+      '★ the operator can issue a fresh code',
+      response.status === 200 && !!(response.json || {}).claim_code,
+      (response.json || {}).message || response.status
+    );
     const notMine = await api('/api/network-design/reissue', { method: 'POST', token: partner.token, body: { user_id: cloth.handle } });
     ok('★★ but only for stores THEY minted', notMine.status === 404, notMine.status + '');
   }
@@ -338,8 +342,8 @@ const DESIGN = (rootKey) => ({
     (closed.json || {}).message || ''
   );
   if (clothToken) {
-    const reply = await api('/api/entities/me', { token: clothToken });
-    const nowVis = ((reply.json || {}).entity || reply.json || {}).catalogue_visibility;
+    const response = await api('/api/entities/me', { token: clothToken });
+    const nowVis = ((response.json || {}).entity || response.json || {}).catalogue_visibility;
     ok('★★ the LIVE shop is no longer public', nowVis !== 'public', 'catalogue_visibility=' + nowVis);
   }
   const gone = await api('/api/catalogue/network/' + op.bridge);

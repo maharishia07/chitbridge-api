@@ -219,8 +219,8 @@ router.get('/snapshot', auth, async (req, res) => {
           engines: req.query.eng
         });
         if (c) {
-          const all = await keys.listOf(entity_id);
-          const tills = all.filter((item) => item && Array.isArray(item.scopes) && item.scopes.indexOf('till') >= 0);
+          const nestedAll = await keys.listOf(entity_id);
+          const tills = nestedAll.filter((item) => item && Array.isArray(item.scopes) && item.scopes.indexOf('till') >= 0);
           till = {
             suggested_id: c.id,
             assigned_id: c.id,
@@ -905,15 +905,15 @@ router.get('/snapshot', auth, async (req, res) => {
           if (['available', 'unavailable'].indexOf(itemstatus.statusOf(f)) < 0) continue;
           /* ⚠️ the counter puts an item id inside click handlers — a name like "Men's shirt" would break the button. The
              id is made safe here; the true reference rides beside it for the chit. */
-          const row = tillItem(String(l.line_id).replace(/['"\\<>&\s]/g, '_'), f);
-          if (!row.name) continue;
-          if (!catalogueRead.isPricedByStore(l, row.price)) {
+          const record = tillItem(String(l.line_id).replace(/['"\\<>&\s]/g, '_'), f);
+          if (!record.name) continue;
+          if (!catalogueRead.isPricedByStore(l, record.price)) {
             networkUnpriced++;
             continue;
           }
           /* ⭐ where it came from — the slip, the chit and the shop screen can all say "from <brand>" */
-          row.source = { key: l.source_key, title: l.source_title || null, owner: l.owner_entity_id || null, line: l.line_id };
-          items.push(row);
+          record.source = { key: l.source_key, title: l.source_title || null, owner: l.owner_entity_id || null, line: l.line_id };
+          items.push(record);
         }
       }
     } catch (e) {
@@ -2000,9 +2000,9 @@ function pairSweep() {
   for (const [k, v] of PAIR_MISSES) if (v.until < now) PAIR_MISSES.delete(k);
 }
 function pairCode() {
-  const crypto = require('crypto');
+  const nestedCrypto = require('crypto');
   for (;;) {
-    const b = crypto.randomBytes(6);
+    const b = nestedCrypto.randomBytes(6);
     let c = '';
     for (let index = 0; index < 6; index++) c += PAIR_ALPHABET[b[index] % PAIR_ALPHABET.length];
     if (!PAIR.has(c)) return c;
@@ -2610,14 +2610,14 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
     const entity_id = auth.entityOf(req);
     const text = req.body && typeof req.body === 'object' ? req.body : {};
     const BP = require('../lib/catalogue-blueprint');
-    const catwrite = require('../lib/catalogue-write');
+    const nestedCatwrite = require('../lib/catalogue-write');
     const units = require('../lib/units');
 
     /**
      * ⚠️⚠️ MINTING TWICE DOUBLES A CATALOGUE, and the copies carry different codes — two Tomatoes that are
      * not the same Tomato. The refusal says what is already there rather than a bare 409.
      */
-    const have = await catwrite.countItems(entity_id);
+    const have = await nestedCatwrite.countItems(entity_id);
     if (have > 0 && text.replace !== true) {
       return res.status(409).json({
         error: 'not empty',
@@ -2627,7 +2627,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
       });
     }
 
-    const existing = await catwrite.codesInUse(entity_id);
+    const existing = await nestedCatwrite.codesInUse(entity_id);
     let items = [],
       from = null,
       refused = [];
@@ -2694,7 +2694,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
       return out;
     });
 
-    const w = await catwrite.writeItems({ entity_id, items: items });
+    const w = await nestedCatwrite.writeItems({ entity_id, items: items });
     if (!w.ok) return res.status(w.status || 400).json({ error: w.error, message: w.message, invalid: w.invalid });
 
     /* ⭐ the shop screen and every open counter hear it on the same bell a price change rides */
@@ -2727,10 +2727,10 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
 router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req, res) => {
   try {
     const BP = require('../lib/catalogue-blueprint');
-    const catwrite = require('../lib/catalogue-write');
+    const nestedCatwrite = require('../lib/catalogue-write');
     let have = 0;
     try {
-      have = await catwrite.countItems(auth.entityOf(req));
+      have = await nestedCatwrite.countItems(auth.entityOf(req));
     } catch (e) {
       log.fellBack('till GET /catalogue/blueprints: failed — carried on without it', e);
     }
@@ -2749,7 +2749,7 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), async (req,
           products: bp.starter.length,
           units: bp.units,
           categories: bp.categories,
-          sample: bp.starter.slice(0, 4).map((item) => item.name)
+          sample: bp.starter.slice(0, 4).map((entry) => entry.name)
         };
       })
     });
@@ -2801,9 +2801,9 @@ router.get('/summary', auth, async (req, res) => {
     }
     const period = rollup.PERIODS.indexOf(req.query.period) >= 0 ? req.query.period : 'day';
     const limit = PL.limitOf(req.query.limit, SUMMARY_BILLS, SUMMARY_BILLS_MAX); /* the one clamp */
-    const { withEntity } = require('../db');
+    const { withEntity: nestedWithEntity } = require('../db');
     const statement = TS.summaryStatement(entity_id, period, limit); /* lib/till-summary: the ONE copy of the statement (its follow-up, done) */
-    const r = await withEntity(entity_id, (db) => db.query(statement.text, statement.params));
+    const r = await nestedWithEntity(entity_id, (db) => db.query(statement.text, statement.params));
 
     /**
      * ⭐ THE FOLD LIVES IN THE ENGINE, not here — rollup.acrossCounters(). The risky part of it (one row per
@@ -2834,8 +2834,8 @@ router.get('/bills', auth, async (req, res) => {
     /* ⭐ FX-CT1: ONE COUNTER'S BILLS — the day report asks what the server holds for THIS counter. Filtered in SQL, because the
        LIMIT runs first: on a busy shop the other counters' bills would crowd this one's out of a JS filter. */
     const till = typeof req.query.till === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(req.query.till) ? req.query.till : null;
-    const { withEntity } = require('../db');
-    const r = await withEntity(entity_id, (db) =>
+    const { withEntity: nestedWithEntity } = require('../db');
+    const r = await nestedWithEntity(entity_id, (db) =>
       db.query(
         /* ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08) */
         `SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json
@@ -2972,8 +2972,8 @@ router.get('/match', auth, async (req, res) => {
     const tol = { weight_bp: flags.tol_weight_bp == null ? 50 : Number(flags.tol_weight_bp), count_units: Number(flags.tol_count_units) || 0 };
     if (!heads.length) return res.json({ days, count: 0, orders: [], total: 0, page: 1, limit: 0 });
 
-    const { withEntity } = require('../db');
-    const out = await withEntity(entity_id, async (db) => {
+    const { withEntity: nestedWithEntity } = require('../db');
+    const out = await nestedWithEntity(entity_id, async (db) => {
       const ids = heads.map((item) => item.chit_id);
       const det = await db.query(
         `SELECT h.chit_id, d.line_items, h.business_json
@@ -3121,8 +3121,8 @@ router.get('/match', auth, async (req, res) => {
     /* [OFFR-04] landed = goods + freight etc. as the shop paid it: cost, so owner / can_see_costs only */
     if (!(await require('../lib/cost').canReadSafe(req, entity_id)))
       out.forEach((item) =>
-        (item.receipts || []).forEach((item) => {
-          delete item.landed;
+        (item.receipts || []).forEach((entry) => {
+          delete entry.landed;
         })
       );
     res.json(Object.assign({ days, count: out.length }, PL.pageOut('orders', out, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));

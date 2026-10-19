@@ -112,8 +112,8 @@ async function api(method, path, { token, key, body } = {}) {
   const gate = ((fl.json && fl.json.folders) || []).find((item) => (item.name || '').toLowerCase() === 'gate log');
   check('folder "Gate log" auto-created', !!gate, gate && gate.folder_id);
   if (gate) {
-    const reply = await api('GET', '/api/folders/' + gate.folder_id + '/chits', { token });
-    const rows = (reply.json && reply.json.chits) || [];
+    const response = await api('GET', '/api/folders/' + gate.folder_id + '/chits', { token });
+    const rows = (response.json && response.json.chits) || [];
     const mine = rows.find((item) => item.chit_id === chit_id);
     check('the exception is filed in the folder', !!mine);
     if (mine) {
@@ -136,13 +136,13 @@ async function api(method, path, { token, key, body } = {}) {
     betaToken = bVer.json && bVer.json.token;
     check('Beta logged in', !!betaToken);
     if (betaToken && gate) {
-      const reply = await api('GET', '/api/folders', { token: betaToken });
-      const betaSeesGate = ((reply.json && reply.json.folders) || []).some(
+      const response = await api('GET', '/api/folders', { token: betaToken });
+      const betaSeesGate = ((response.json && response.json.folders) || []).some(
         (item) => item.folder_id === gate.folder_id || (item.name || '').toLowerCase() === 'gate log'
       );
       check('Beta does NOT see Alpha\'s "Gate log" folder', !betaSeesGate);
-      const bc = await api('GET', '/api/folders/' + gate.folder_id + '/chits', { token: betaToken });
-      const betaRows = (bc.json && bc.json.chits) || [];
+      const answer = await api('GET', '/api/folders/' + gate.folder_id + '/chits', { token: betaToken });
+      const betaRows = (answer.json && answer.json.chits) || [];
       const leaked = betaRows.find((item) => item.chit_id === chit_id);
       check("Beta CANNOT read chits filed in Alpha's folder (RLS)", !leaked, 'rows visible to Beta: ' + betaRows.length);
     }
@@ -221,8 +221,8 @@ async function api(method, path, { token, key, body } = {}) {
   // ---- 12 · PROOF RETRIEVAL — PER-ENTITY copies (b66) ----
   console.log('\n12 · Proof retrieval — per-entity copies');
   if (proofId) {
-    const reply = await api('GET', '/api/attachments/' + proofId, { token });
-    check('Alpha (owner) fetches ITS OWN proof copy', reply.status === 200, 'status ' + reply.status);
+    const response = await api('GET', '/api/attachments/' + proofId, { token });
+    check('Alpha (owner) fetches ITS OWN proof copy', response.status === 200, 'status ' + response.status);
     if (betaToken) {
       // Beta must fetch ITS OWN copy — a DISTINCT id discovered via the chit detail, never Alpha's id.
       const bDetail = await api('GET', '/api/chits/' + chit_id, { token: betaToken });
@@ -230,8 +230,8 @@ async function api(method, path, { token, key, body } = {}) {
       const betaProof = bAtts[0] && bAtts[0].id;
       check('Beta has its OWN replicated proof copy (distinct id)', !!betaProof && betaProof !== proofId, 'beta ' + betaProof + ' vs alpha ' + proofId);
       if (betaProof) {
-        const reply = await api('GET', '/api/attachments/' + betaProof, { token: betaToken });
-        check('Beta fetches ITS OWN copy', reply.status === 200, 'status ' + reply.status);
+        const answer = await api('GET', '/api/attachments/' + betaProof, { token: betaToken });
+        check('Beta fetches ITS OWN copy', answer.status === 200, 'status ' + answer.status);
       }
       const pcross = await api('GET', '/api/attachments/' + proofId, { token: betaToken });
       check("Beta CANNOT fetch Alpha's copy id (per-entity isolation)", pcross.status !== 200, 'status ' + pcross.status);
@@ -245,8 +245,8 @@ async function api(method, path, { token, key, body } = {}) {
   const proofNoCC = exNoCC.json && exNoCC.json.proof_id;
   check('raised a NO-CC exception with proof', !!proofNoCC, proofNoCC || JSON.stringify(exNoCC.json));
   if (proofNoCC && betaToken) {
-    const reply = await api('GET', '/api/attachments/' + proofNoCC, { token: betaToken });
-    check('Beta has NO copy of a chit it is not party to (403/404)', reply.status === 403 || reply.status === 404, 'status ' + reply.status);
+    const response = await api('GET', '/api/attachments/' + proofNoCC, { token: betaToken });
+    check('Beta has NO copy of a chit it is not party to (403/404)', response.status === 403 || response.status === 404, 'status ' + response.status);
   }
 
   // ---- 13 · INGEST ERROR PATHS ----

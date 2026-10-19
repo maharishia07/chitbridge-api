@@ -43,9 +43,9 @@ async function api(m, p, o) {
   chk('login', !!token);
 
   async function lane(vertical, dest) {
-    const reply = await api('GET', '/api/governance/readiness?destination=' + dest + '&vertical=' + vertical + '&origin=IN', { token });
-    const keys = (reply.j && reply.j.standards) || [];
-    const titles = ((reply.j && reply.j.clearances) || []).map((item) => item.title);
+    const response = await api('GET', '/api/governance/readiness?destination=' + dest + '&vertical=' + vertical + '&origin=IN', { token });
+    const keys = (response.j && response.j.standards) || [];
+    const titles = ((response.j && response.j.clearances) || []).map((item) => item.title);
     return { keys, titles };
   }
   const has = (a, k) => a.indexOf(k) >= 0;

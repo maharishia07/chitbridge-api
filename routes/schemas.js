@@ -25,7 +25,7 @@ async function attrsReady() {
 router.get('/my', auth, async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
-    const schema = await query(
+    const nestedSchema = await query(
       `SELECT es.*, json_agg(sf ORDER BY sf.display_order) as fields
        FROM entity_schemas es
        LEFT JOIN schema_fields sf ON sf.schema_id = es.schema_id
@@ -33,7 +33,7 @@ router.get('/my', auth, async (req, res) => {
        GROUP BY es.schema_id`,
       [entity_id]
     );
-    res.json({ schema: schema.rows[0] || null });
+    res.json({ schema: nestedSchema.rows[0] || null });
   } catch (err) {
     console.error('Schema fetch error:', err.message);
     res.status(500).json({ error: 'Failed to get schema', message: safeErr(err) });

@@ -40,11 +40,11 @@ const has = (o, s) => JSON.stringify(o || '').includes(s);
   const id = snd.j && (snd.j.chit_id || (snd.j.chit && snd.j.chit.chit_id));
   chk('send-chit ok', !!id, id || JSON.stringify(snd.j).slice(0, 160));
   if (id) {
-    const reply = await api('GET', '/api/chits/' + id, { token });
-    chk('chit carries the governed lineage', has(reply.j, '"governed"'));
-    chk('assimilated the SHARED standard — ISO 9000', has(reply.j, 'iso-9001@v1'), 'governed.standard');
-    chk('assimilated the work-pattern', has(reply.j, 'send-chit@'), 'governed.pattern');
-    chk('assimilated the constitution (per-entity vertical)', has(reply.j, '"constitution"'), 'governed.constitution key present');
+    const response = await api('GET', '/api/chits/' + id, { token });
+    chk('chit carries the governed lineage', has(response.j, '"governed"'));
+    chk('assimilated the SHARED standard — ISO 9000', has(response.j, 'iso-9001@v1'), 'governed.standard');
+    chk('assimilated the work-pattern', has(response.j, 'send-chit@'), 'governed.pattern');
+    chk('assimilated the constitution (per-entity vertical)', has(response.j, '"constitution"'), 'governed.constitution key present');
   }
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
   process.exit(0);

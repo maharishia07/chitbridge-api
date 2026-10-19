@@ -249,12 +249,14 @@ run('prove-wholesaler-e2e', async (t) => {
   /* W-4 arithmetically, across every line */
   const list = lines.filter(
     (item) =>
-      !item.unit_split && Math.abs(item.breakdown.reduce((total, item) => total + item.qty, 0) - item.total) > 0.001 && !(item.conversions_applied || []).length
+      !item.unit_split &&
+      Math.abs(item.breakdown.reduce((total, entry) => total + entry.qty, 0) - item.total) > 0.001 &&
+      !(item.conversions_applied || []).length
   );
   t.ok(list.length === 0, '★★★ W-4 · every un-converted total EQUALS the sum of its shop lines', JSON.stringify(list.map((l) => l.item)));
 
   t.ok(
-    lines.every((item) => item.breakdown.every((item) => item.chit_id)),
+    lines.every((item) => item.breakdown.every((entry) => entry.chit_id)),
     '★★ W-7 · every attribution line traces to its chit'
   );
 

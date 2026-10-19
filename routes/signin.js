@@ -155,8 +155,8 @@ router.post('/sessions/revoke', auth, personOnly, async (req, res) => {
       if (!isOwner(req)) return res.status(403).json({ error: 'Forbidden', code: owner.OWNER_ONLY, message: DEVICES_WHY });
       const device_id = sessions.deviceIdOf(b.device_id);
       if (!device_id) return res.status(400).json({ error: 'Refused', message: 'device_id is not a device id.' });
-      const out = await sessions.revokeDevice(withTransaction, shop, device_id, me(req));
-      if (!out.revoked) return res.status(404).json({ error: 'Not found', message: 'No such device in this shop.' });
+      const nestedOut = await sessions.revokeDevice(withTransaction, shop, device_id, me(req));
+      if (!nestedOut.revoked) return res.status(404).json({ error: 'Not found', message: 'No such device in this shop.' });
       return res.json({ ok: true, revoked: 'device', device_id });
     }
     if (!b.jti) return res.status(400).json({ error: 'Refused', message: 'Send { jti } or { device_id }.' });
@@ -501,7 +501,7 @@ async function verify(req, res) {
   let identity = null;
   try {
     const otp = (req.body.otp || '').trim();
-    const pin = (req.body.pin || '').trim();
+    const nestedPin = (req.body.pin || '').trim();
     const email = (req.body.email || '').toLowerCase().trim();
     const handle = (req.body.user_id || '').trim();
     const id = String(req.body.id || '').trim();
@@ -538,7 +538,7 @@ async function verify(req, res) {
     identity = rows[0];
 
     // ⭐ ONE verify, OTP or PIN — lib/identity-auth.js. The engine counts and locks; this door says it in its words.
-    const check = await identityAuth.verifyCredential(query, identity, { otp, pin, name: email || handle || id });
+    const check = await identityAuth.verifyCredential(query, identity, { otp, pin: nestedPin, name: email || handle || id });
     if (!check.ok) {
       note(req, identity, actionOf(check.reason), check.method, check.reason);
       res.locals.code = check.reason || null;
@@ -804,13 +804,13 @@ async function actorLogin(req, res) {
 
     // First sign-in: the code (pin_hash NULL). Returning: the PIN. Both through the ONE engine.
     const otp = (req.body.otp || '').trim();
-    const pin = req.body.pin;
+    const nestedPin = req.body.pin;
     if (a.pin_hash) {
-      if (!pin) {
+      if (!nestedPin) {
         note(req, a, 'fail', 'pin', 'PIN_REQUIRED');
         return res.status(400).json({ error: 'PIN required', message: 'Enter your 4 digit PIN to login', use_pin: true });
       }
-      const check = await identityAuth.verifyCredential(query, a, { pin });
+      const check = await identityAuth.verifyCredential(query, a, { pin: nestedPin });
       if (!check.ok) {
         note(req, a, actionOf(check.reason), 'pin', check.reason);
         res.locals.code = check.reason;

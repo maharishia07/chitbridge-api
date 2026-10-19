@@ -444,7 +444,7 @@ async function claimDevice(db, entity_id, pf, who, ask) {
   if (assigned.length) {
     const hashes = await phoneHashesOf(db, entity_id, who.by);
     counter =
-      assigned.find((item) => assignedHashes(item.assigned.phone).some((item) => hashes.has(item)) && !keyHolds(item) && !phoneHeld.has(item.id)) || null;
+      assigned.find((item) => assignedHashes(item.assigned.phone).some((entry) => hashes.has(entry)) && !keyHolds(item) && !phoneHeld.has(item.id)) || null;
     if (counter) pick = counter.id;
   }
   /* 2 · kept */

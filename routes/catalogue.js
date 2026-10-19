@@ -35,10 +35,10 @@ const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
 // F2 — dual-channel customer identifier: the customer gives EXACTLY ONE of phone OR email. '@' present => email
 // channel, else phone. Returns { channel, raw } (raw = cleaned phone or normalised email) or { error }.
-function resolveContact(body) {
-  const ph = String(body.phone ?? '').trim();
-  const em = String(body.email ?? '').trim();
-  const id = String(body.identifier ?? '').trim();
+function resolveContact(payload) {
+  const ph = String(payload.phone ?? '').trim();
+  const em = String(payload.email ?? '').trim();
+  const id = String(payload.identifier ?? '').trim();
   if (ph && em) return { error: 'Give just one — a phone OR an email, not both.' };
   const text = id || ph || em;
   if (!text) return { error: 'Enter a phone number or an email.' };
@@ -409,7 +409,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         }
         // The buyer's POSITION. Deliberately computed AFTER price/total below: the seller's price comes from the
         // catalogue and is authoritative; the buyer's price travels ON THE CHIT and never touches money.
-        const proposal = validateProposal(li.proposal, oi, fref.band, fref.name);
+        const nestedProposal = validateProposal(li.proposal, oi, fref.band, fref.name);
         const finLine = {
           kind: 'finish',
           source: fref.source,
@@ -423,7 +423,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
           price: fref.price,
           total: money.round(fref.price * fq),
           ...(fref.band ? { seller_band: fref.band } : {}),
-          ...(proposal ? { proposal } : {}),
+          ...(nestedProposal ? { proposal: nestedProposal } : {}),
           // The order line carries the source's governance + the FROZEN container (verifiable). Routing = INFO for the ERP.
           governed: {
             under: fref.source,
@@ -455,7 +455,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
        app/pricing.js) — before offers, before tax; the list price rides beside it so the line can say what it re-priced from */
       const _pe = require('../lib/pricing-engine').CBPricing;
       const _unit = ref.d && ref.d.pricing_kind && _pe ? _pe.unitPrice(ref.d, qty, ref.price).amount : ref.price;
-      const total = money.round(_unit * qty);
+      const sum = money.round(_unit * qty);
       // T3.3 · the OFFER GUARD applies here too. validateProposal was called only on the finish/reference branch, so
       // the ordinary product path silently DROPPED `li.proposal` — meaning the documented restriction ("a fixed-price
       // shop now rejects an offer") was false for most shops. A plain product has no seller band, so an offer here is
@@ -510,7 +510,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
             unit: ref.unit,
             quantity: qty,
             price: _unit,
-            total,
+            total: sum,
             ...(_unit !== ref.price ? { list_price: ref.price, pricing: { kind: ref.d.pricing_kind, name: ref.d.pricing_def_name || null } } : {}),
             ...(proposal ? { proposal } : {}),
             ...(stock ? { stock } : {}),
@@ -792,7 +792,7 @@ router.post('/network-store/:networkId/order', async (req, res) => {
     // a plausible figure — which is the entire reason for doing this.
     const perStore = rows.map((item) => (item.item_data || {}).price).filter((item) => money.isMoney(item));
     if (perStore.length) money.sum(perStore); // throws 409 naming both currencies
-    const total = money.round2(items.reduce((total, item) => total + item.price * item.qty, 0));
+    const total = money.round2(items.reduce((sum, item) => sum + item.price * item.qty, 0));
     // The OPERATOR governs this network, so its governed currency denominates the order and every fragment beneath
     // it. Resolved ONCE here: the order and its fragments are one transaction and must not drift apart.
     const currency = await regional.currencyFor(operatorId);
@@ -836,7 +836,7 @@ router.post('/network-store/:networkId/order', async (req, res) => {
         receiver: store,
         chit_id: FRAG_ID,
         currency,
-        total_value: money.round2(sitems.reduce((total, item) => total + item.price * item.qty, 0)),
+        total_value: money.round2(sitems.reduce((sum, item) => sum + item.price * item.qty, 0)),
         subject: 'Fulfil order ' + ORDER_ID.slice(0, 8) + ' — ' + sitems.length + ' item(s)',
         trace: { parents: [ORDER_ID], product: 'FULFIL', qty: sitems.length, unit: 'items', network: { id: nid, operator: operatorId } },
         business: {
@@ -1367,21 +1367,21 @@ router.post(
           const docBudget = { count: 0, bytes: 0 };
           const declCache = {}; // T3.5 — one adoption resolve for the whole submission, not one per line
           for (let idx = 0; idx < raw.length; idx++) {
-            const li = raw[idx] || {};
-            const label = String(li.finish || li.name || li.particulars || 'Submission').slice(0, 200);
+            const nestedLi = raw[idx] || {};
+            const label = String(nestedLi.finish || nestedLi.name || nestedLi.particulars || 'Submission').slice(0, 200);
             // WHICH template is this entry? Its own declaration governs, so a store offering ITR-2 and a
             // Commercial Invoice validates each against ITS OWN fields — not one catalogue-wide set.
             const itemOi = orderInput.forItem(oi, await itemDeclFor(entity.identity_id, label, declCache));
             // T3.2 · forItem refuses an item declaration that would switch the pipeline; surface it rather than
             // proceeding under a contract the item did not actually get.
             if (itemOi.errors && itemOi.errors.length) throw _422(`"${label}": ${itemOi.errors.join('; ')}`);
-            const v = orderInput.validate(li.payload, itemOi.schema);
+            const v = orderInput.validate(nestedLi.payload, itemOi.schema);
             if (!v.ok) throw _422(`"${label}": ${v.errors.join('; ')}`);
             // THE LINE ITEM IS THE FILLED FORM **AND ITS PROOF**. Documents are validated and hashed BEFORE anything is
             // written; the sha256 is sealed onto the chit in the same transaction as the answers, so the record of what
             // was submitted can never be lost. The bytes are replicated per-copy afterwards (see below) — if that fails
             // the proof still stands and the blob is re-uploadable against a known hash.
-            const dv = orderInput.validateDocuments(li.documents, itemOi.documents, crypto, docBudget);
+            const dv = orderInput.validateDocuments(nestedLi.documents, itemOi.documents, crypto, docBudget);
             if (!dv.ok) throw _422(`"${label}": ${dv.errors.join('; ')}`);
             dv.docs.forEach((item) => pendingDocs.push({ ...item, line_index: idx })); // the proof stays attached to ITS form
             line_items.push({
@@ -1420,7 +1420,7 @@ router.post(
       // volume at 100%. On a rail whose USP is disputes, that is a tamper-evident lie.
       // So: an offer carries NO total_value and is labelled 'offer'. The only numbers on it are the seller's price
       // per line and the buyer's `proposal`. A settled figure appears if and when the seller accepts.
-      const negotiation = line_items.some((li) => li && li.proposal);
+      const negotiation = line_items.some((nestedLi) => nestedLi && nestedLi.proposal);
       const purpose = negotiation ? 'offer' : 'order';
       const chit_id = uuidv4();
       const custLocality = req.body && typeof req.body.location === 'string' ? req.body.location.trim().slice(0, 80) : ''; // STONE 4: consent-provided coarse locality

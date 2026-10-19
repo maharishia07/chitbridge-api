@@ -116,8 +116,8 @@ for (const f of files) {
    *
    * ⭐ The endpoint whose comments explain the fix best is the one a naive counter punishes hardest.
    */
-  const strip = (text) =>
-    text
+  const strip = (label) =>
+    label
       .replace(/\/\*[\s\S]*?\*\//g, ' ')
       .split('\n')
       .map((item) => {
@@ -165,7 +165,7 @@ for (const f of files) {
 
 rows.sort((first, second) => second.trips - first.trips);
 
-const total = rows.reduce((total, item) => total + item.trips, 0);
+const total = rows.reduce((sum, item) => sum + item.trips, 0);
 const worst = rows.filter((item) => item.collapsible > 0);
 
 console.log(
@@ -193,7 +193,7 @@ console.log(
     rows.length +
     ' endpoints open more than one transaction.' +
     '\n  Collapsing every one of them would remove ~' +
-    worst.reduce((total, item) => total + item.collapsible * 3, 0) +
+    worst.reduce((sum, item) => sum + item.collapsible * 3, 0) +
     ' round trips' +
     ' (each extra transaction costs 3 beyond its query).\n'
 );

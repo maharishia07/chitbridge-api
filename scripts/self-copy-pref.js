@@ -11,14 +11,14 @@ const BASE = process.env.CB_API || 'https://chitbridge-api-production.up.railway
 let PASS = 0,
   FAIL = 0;
 const ISSUES = [];
-function check(name, ok, detail) {
+function check(name, ok, nestedDetail) {
   if (ok) {
     PASS++;
-    console.log('  ✓ ' + name + (detail ? '  ' + detail : ''));
+    console.log('  ✓ ' + name + (nestedDetail ? '  ' + nestedDetail : ''));
   } else {
     FAIL++;
-    console.log('  ✗ ' + name + (detail ? '  — ' + detail : ''));
-    ISSUES.push(name + (detail ? ' — ' + detail : ''));
+    console.log('  ✗ ' + name + (nestedDetail ? '  — ' + nestedDetail : ''));
+    ISSUES.push(name + (nestedDetail ? ' — ' + nestedDetail : ''));
   }
   return ok;
 }

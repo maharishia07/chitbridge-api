@@ -91,16 +91,16 @@ if (!TO) need.push('WA_TEST_TO');
 
   console.log('\n── STEP 2 · did your reply reach the intake inbox? ──');
   async function j(p, o = {}) {
-    const reply = await fetch(API + p, {
+    const response = await fetch(API + p, {
       method: o.method || 'GET',
       headers: Object.assign({ 'Content-Type': 'application/json' }, o.token ? { Authorization: 'Bearer ' + o.token } : {}),
       body: o.body === undefined ? undefined : JSON.stringify(o.body)
     });
     let b = null;
     try {
-      b = await reply.json();
+      b = await response.json();
     } catch (_) {}
-    return { status: reply.status, b };
+    return { status: response.status, b };
   }
   const email = process.env.WA_TEST_ENTITY_EMAIL || 'beta@test-cb.com';
   await j('/api/entities/register', { method: 'POST', body: { email, display_name: 'Beta Fresh' } });

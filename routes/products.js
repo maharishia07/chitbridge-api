@@ -111,8 +111,8 @@ const gs1 = require('../lib/gs1');
 function gtinCheck(raw) {
   return gs1.classify(raw) === 'gtin-invalid' ? gs1.describe(raw).message : null;
 }
-function readUpload(body) {
-  const b = body || {};
+function readUpload(payload) {
+  const b = payload || {};
   if (typeof b.xlsx === 'string' && b.xlsx.trim()) {
     let buf;
     try {
@@ -690,17 +690,17 @@ router.get('/', auth, async (req, res) => {
           params: [entity_id]
         });
       }
-      const res = await readBatch(entity_id, actor, stmts);
+      const response = await readBatch(entity_id, actor, stmts);
       /* ⚠️⚠️ THE SCHEDULE STATEMENTS MOVED. They were res[2] and res[3]; the category tally and the
          uncategorised count now sit there, so the due-probe is res[4] and the parked rows res[5]. Reading the
          old indices would have taken a GROUP BY for a due-count and quietly decided nothing was ever due. */
-      const due = sched ? Number(res[4].rows[0].n) : 0;
+      const due = sched ? Number(response[4].rows[0].n) : 0;
       if (!due) {
-        r = res[0];
-        tally = res[1];
-        catRows = res[2].rows;
-        uncat = Number(res[3].rows[0].n) || 0;
-        pendingRows = sched ? res[5].rows : [];
+        r = response[0];
+        tally = response[1];
+        catRows = response[2].rows;
+        uncat = Number(response[3].rows[0].n) || 0;
+        pendingRows = sched ? response[5].rows : [];
       }
     } catch (e) {
       log.fellBack('products GET /: did not parse — answered with nothing', e, 'debug');
@@ -955,12 +955,12 @@ router.get('/export.csv', auth, async (req, res) => {
     const entity_id = ctx(req);
     /* ⭐ the projection lives in catalogueRows() — shared with the workbook, and every reason recorded there */
     const { items, schema } = await catalogueRows(entity_id, await safeCanSeeCosts(req, entity_id));
-    const body = csv.toCSV(items, { schema });
+    const payload = csv.toCSV(items, { schema });
     const stamp = new Date().toISOString().slice(0, 10);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="catalogue-${stamp}.csv"`);
     // Excel assumes the system codepage without this and mangles every non-ASCII product name.
-    res.send('﻿' + body);
+    res.send('﻿' + payload);
   } catch (e) {
     fail(res, e, 'Export failed');
   }
@@ -1406,14 +1406,14 @@ router.post('/starter-columns', auth, [body('vertical').isString()], validate, a
 });
 
 /** the stored row, read only when merge:true or a server-owned key asks for it (an ordinary edit costs no extra trip) → { missing } or { stored, bodyItem } */
-async function readStoredForEdit(entity_id, item_id, body) {
-  if (body.merge !== true && !catcols.hasServerOwned(body.item_data)) return { stored: null, bodyItem: body.item_data };
+async function readStoredForEdit(entity_id, item_id, payload) {
+  if (payload.merge !== true && !catcols.hasServerOwned(payload.item_data)) return { stored: null, bodyItem: payload.item_data };
   const current = await withEntity(entity_id, (db) =>
     db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [item_id, entity_id])
   );
   if (!current.rows.length) return { missing: true };
   const stored = current.rows[0].item_data || {};
-  return { stored, bodyItem: body.merge === true ? mergePatch(stored, body.item_data) : body.item_data };
+  return { stored, bodyItem: payload.merge === true ? mergePatch(stored, payload.item_data) : payload.item_data };
 }
 /** the 400 body for a declaration refused (a SERVER_OWNED key travels with its code) */
 function declRefusal(label, decl) {
@@ -1768,8 +1768,8 @@ router.post('/:id/media', auth, async (req, res) => {
     if (url) {
       const v = videoLink(url);
       if (!v) return res.status(400).json({ error: 'not_a_video_link', message: 'Paste a YouTube or Vimeo link.' });
-      const mid = require('crypto').randomUUID();
-      const out = await withEntity(entity_id, async (db) => {
+      const nestedMid = require('crypto').randomUUID();
+      const nestedOut = await withEntity(entity_id, async (db) => {
         const cur = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [
           req.params.id,
           entity_id
@@ -1778,7 +1778,7 @@ router.post('/:id/media', auth, async (req, res) => {
         const d = Object.assign({}, cur.rows[0].item_data || {});
         d.media = (Array.isArray(d.media) ? d.media : []).concat([
           {
-            id: mid,
+            id: nestedMid,
             kind: 'video',
             provider: v.provider,
             vid: v.vid,
@@ -1791,8 +1791,8 @@ router.post('/:id/media', auth, async (req, res) => {
         const u = await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: d }], { returning: 'item_data' });
         return u.rows[0];
       });
-      if (!out) return res.status(404).json({ error: 'Not found' });
-      return res.json({ message: 'Video linked', id: mid, media: out.item_data.media });
+      if (!nestedOut) return res.status(404).json({ error: 'Not found' });
+      return res.json({ message: 'Video linked', id: nestedMid, media: nestedOut.item_data.media });
     }
     if (!name || !data_base64) return res.status(400).json({ error: 'validation', message: 'name and data_base64, or a video url' });
     if (!(await objStore.available()))
@@ -1896,7 +1896,7 @@ router.get('/:id/versions', auth, async (req, res) => {
       if (!own.rows.length) return { notFound: true };
 
       if (when) {
-        const r = await db.query(
+        const nestedR = await db.query(
           /**
            * ⚠️ TRUNCATED TO MILLISECONDS ON BOTH SIDES, AND THE PROOF IS WHAT FOUND IT.
            *
@@ -1917,7 +1917,7 @@ router.get('/:id/versions', auth, async (req, res) => {
           ORDER BY version_no DESC LIMIT 1`,
           [entity_id, req.params.id, when.toISOString()]
         );
-        return { asOf: r.rows[0] || null };
+        return { asOf: nestedR.rows[0] || null };
       }
 
       const r = await db.query(
@@ -2166,9 +2166,9 @@ router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], valida
       for (const x of b.names) {
         if (!x || typeof x !== 'object') continue;
         if (x.price === undefined || x.price === null || x.price === '') continue;
-        const n = Number(x.price);
-        if (!Number.isFinite(n) || n < 0) continue;
-        priceBy.set(String(x.name).trim().toLowerCase() + '\u0001' + String(x.unit).trim().toLowerCase(), n);
+        const nestedN = Number(x.price);
+        if (!Number.isFinite(nestedN) || nestedN < 0) continue;
+        priceBy.set(String(x.name).trim().toLowerCase() + '\u0001' + String(x.unit).trim().toLowerCase(), nestedN);
       }
       if (priceBy.size) {
         items = items.map((item) => {

@@ -33,8 +33,8 @@ const login = async () => {
   const token = ver.j && ver.j.token;
   let bridge = ver.j && ver.j.bridge_id;
   if (!bridge) {
-    const reply = await api('GET', '/api/entities/me', { token });
-    bridge = reply.j && (reply.j.bridge_id || (reply.j.entity && reply.j.entity.bridge_id));
+    const response = await api('GET', '/api/entities/me', { token });
+    bridge = response.j && (response.j.bridge_id || (response.j.entity && response.j.entity.bridge_id));
   }
   return { token, bridge };
 };

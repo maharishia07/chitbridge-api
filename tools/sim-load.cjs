@@ -309,8 +309,8 @@ async function wipeShop(ids) {
     const cleared = [];
     for (const [t, list] of byTable) {
       const where = list.map((item) => item + ' = ANY($1::uuid[])').join(' OR ');
-      const r = await c.query(`DELETE FROM ${t} WHERE ${where}`, [ids]);
-      if (r.rowCount) cleared.push(t + ' ' + r.rowCount);
+      const nestedR = await c.query(`DELETE FROM ${t} WHERE ${where}`, [ids]);
+      if (nestedR.rowCount) cleared.push(t + ' ' + nestedR.rowCount);
     }
     const r = await c.query(`DELETE FROM identities WHERE identity_id = ANY($1::uuid[])`, [ids]);
     cleared.push('identities ' + r.rowCount);
@@ -472,7 +472,7 @@ async function scaleThen(shopId) {
     const mark = await sql(`SELECT source_ref FROM journal_entry WHERE entity_id = $1 AND source_ref LIKE 'opening:sim/%' ORDER BY created_at LIMIT 1`, [
       shopId
     ]);
-    const bills = await sql(`SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND sender_entity_id = $1 AND business_json ? 'bill_no'`, [
+    const nestedBills = await sql(`SELECT count(*)::int AS n FROM chit_header WHERE entity_id = $1 AND sender_entity_id = $1 AND business_json ? 'bill_no'`, [
       shopId
     ]);
     const loaded = mark.rows[0] ? mark.rows[0].source_ref.replace(/^opening:/, '') : null;
@@ -483,13 +483,13 @@ async function scaleThen(shopId) {
         process.exit(await scaleThen(shopId));
       }
       if (loaded === MARK) {
-        say('already loaded: ' + SHOP + ' holds ' + loaded + ' (' + bills.rows[0].n + ' bills). Nothing written.');
+        say('already loaded: ' + SHOP + ' holds ' + loaded + ' (' + nestedBills.rows[0].n + ' bills). Nothing written.');
         await proof(shopId, true);
         printLogin();
         process.exit(0);
       }
       if (loaded) die(SHOP + ' already holds ' + loaded + ' — a different seed/years. Rebuild with --fresh.');
-      if (bills.rows[0].n) die(SHOP + ' already has ' + bills.rows[0].n + ' bills (an earlier run that did not finish?). Rebuild with --fresh.');
+      if (nestedBills.rows[0].n) die(SHOP + ' already has ' + nestedBills.rows[0].n + ' bills (an earlier run that did not finish?). Rebuild with --fresh.');
       say('shop ' + SHOP + ' exists and is empty — loading into it');
     } else {
       const kids = await sql(`SELECT identity_id FROM identities WHERE parent_entity_id = $1`, [shopId]);

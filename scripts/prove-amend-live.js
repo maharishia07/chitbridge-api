@@ -155,8 +155,8 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
      searching both proves the quantity it saw regardless of whether the catalogue could match it. */
   const seen = [];
   ((gs.b || {}).requirement || []).forEach((item) =>
-    (item.breakdown || []).forEach((item) => {
-      if (item.chit_id === id) seen.push({ where: 'totalled', phrase: item.phrase, qty: item.qty });
+    (item.breakdown || []).forEach((entry) => {
+      if (entry.chit_id === id) seen.push({ where: 'totalled', phrase: entry.phrase, qty: entry.qty });
     })
   );
   (((gs.b || {}).flags || {}).unmatched || []).forEach((item) => {

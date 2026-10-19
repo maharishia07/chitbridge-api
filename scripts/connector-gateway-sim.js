@@ -140,7 +140,7 @@ if (require.main === module)
       // PREFERRED PATH — device-key ingest: authenticate with the CB-issued ActorKey (no user token), heartbeat +
       // emit in ONE call. The counterparty comes from the connection (TO optional). This is what a real Pi should use.
       if (cfg.key) {
-        const s = readSignal();
+        const nestedS = readSignal();
         var proof, proofName;
         if (cfg.proofFile) {
           try {
@@ -150,16 +150,16 @@ if (require.main === module)
             console.error('[warn] could not read PROOF_FILE:', e.message);
           }
         }
-        console.log('[read]', JSON.stringify(s), cfg.sub ? 'sub_type=' + cfg.sub : '', proof ? '+proof(' + proofName + ')' : '');
-        const out = await req(
+        console.log('[read]', JSON.stringify(nestedS), cfg.sub ? 'sub_type=' + cfg.sub : '', proof ? '+proof(' + proofName + ')' : '');
+        const nestedOut = await req(
           'POST',
           '/api/connectors/ingest',
           {
             bridge_id: cfg.bridge || undefined,
-            signal: s.signal,
-            value: s.value,
-            unit: s.unit,
-            device_id: s.device_id,
+            signal: nestedS.signal,
+            value: nestedS.value,
+            unit: nestedS.unit,
+            device_id: nestedS.device_id,
             sub_type: cfg.sub || undefined,
             proof: proof || undefined,
             proof_name: proofName || undefined,
@@ -169,9 +169,9 @@ if (require.main === module)
           { 'X-Bridge-Key': cfg.key }
         );
         console.log('[ingest] OK — health is now LIVE in the co-assist cockpit; exception filed over the rail.');
-        console.log('        chit_id:', out && (out.chit_id || '(none — heartbeat only)'));
-        if (out && out.note) console.log('        note:', out.note);
-        console.log('        raw:', JSON.stringify(out).slice(0, 300));
+        console.log('        chit_id:', nestedOut && (nestedOut.chit_id || '(none — heartbeat only)'));
+        if (nestedOut && nestedOut.note) console.log('        note:', nestedOut.note);
+        console.log('        raw:', JSON.stringify(nestedOut).slice(0, 300));
         return;
       }
       // FALLBACK PATH — session-token + /chits/send (M2M device keys weren't available; kept for demos without a key).

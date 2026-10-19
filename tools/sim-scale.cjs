@@ -91,8 +91,8 @@ async function run(ctx) {
     /* each payment adds 2 lines and closes one bill: bills B, payments B − OPEN, lines ≈ 4B + 2(B − OPEN) → B ≈ (need + 2·OPEN) / 6 of credit, the same again cash */
     const need = Math.max(0, target - have0),
       credit = Math.max(OPEN_ITEMS, Math.round((need + 2 * OPEN_ITEMS) / 10)),
-      cash = Math.max(0, Math.round((need - 4 * credit - 2 * (credit - OPEN_ITEMS)) / 4));
-    const total = credit + cash;
+      nestedCash = Math.max(0, Math.round((need - 4 * credit - 2 * (credit - OPEN_ITEMS)) / 4));
+    const total = credit + nestedCash;
     while (n < total && have0 < target) {
       const i = n,
         day = days[Math.floor((i * days.length) / total)],

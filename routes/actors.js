@@ -1033,10 +1033,10 @@ router.put(
            WHERE identity_id = $3`,
           [otp, expires, actor_id]
         );
-        const audit = await recordBreak(entity_id, actor_id, a.break_status, 'active', req.identity.identity_id, 'reactivate');
+        const nestedAudit = await recordBreak(entity_id, actor_id, a.break_status, 'active', req.identity.identity_id, 'reactivate');
         return res.json({
           message: 'Actor reactivated',
-          audit,
+          audit: nestedAudit,
           ...(await empCode.deliver({ to: toEmail, name: a.display_name, otp })),
           ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
           login_format: await loginIdFor(a.actor_key, req)
@@ -1354,9 +1354,9 @@ router.put(
       // B1 RLS: the whole assignment (chit_status + state_log, all own-entity) runs in withEntity(me); `db` is
       // shadowed to the tx client so the existing calls flow through the context (and the assign becomes atomic).
       await withEntity(entity_id, async (client) => {
-        const db = (t, p) => client.query(t, p);
+        const handle = (t, p) => client.query(t, p);
         // Verify chit belongs to this entity
-        const chit = await db(
+        const chit = await handle(
           `SELECT cs.*, i.display_name as actor_name
          FROM chit_status cs
          LEFT JOIN identities i ON i.identity_id = cs.assigned_to_actor_id
@@ -1382,9 +1382,9 @@ router.put(
           const movedOnPull = await assignChit(client, entity_id, chit_id, { identity_id: action_by_id, display_name: action_by_name }, 'pull', {
             me: railActions.meOf(req)
           });
-          await taskCount(db, action_by_id, 'take');
+          await taskCount(handle, action_by_id, 'take');
           // Log assignment event
-          await db(
+          await handle(
             `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
@@ -1394,7 +1394,7 @@ router.put(
           );
           // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
           if (movedOnPull.moved)
-            await db(
+            await handle(
               `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
@@ -1414,7 +1414,7 @@ router.put(
           if (!target_actor_id) {
             return res.status(400).json({ error: 'target_actor_id required for push' });
           }
-          const target = await db(
+          const target = await handle(
             `SELECT identity_id, display_name, current_task_count, max_tasks
            FROM identities
            WHERE identity_id = $1
@@ -1432,17 +1432,17 @@ router.put(
 
           // Reduce previous assignee count
           if (cs.assigned_to_actor_id) {
-            await taskCount(db, cs.assigned_to_actor_id, 'release');
+            await taskCount(handle, cs.assigned_to_actor_id, 'release');
           }
 
           const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) }); /* W1-RAIL: the one writer */
-          await taskCount(db, t.identity_id, 'take');
+          await taskCount(handle, t.identity_id, 'take');
           // Log assignment — differentiate initial push from actor-to-actor transfer
           const isTransfer = !!cs.assigned_to_actor_id;
           const assignDetail = isTransfer
             ? `Transferred from ${cs.actor_name} to ${t.display_name} by ${action_by_name}`
             : `Assigned to ${t.display_name} by ${action_by_name}`;
-          await db(
+          await handle(
             `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
@@ -1452,7 +1452,7 @@ router.put(
           );
           // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
           if (movedOnPush.moved)
-            await db(
+            await handle(
               `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
@@ -1471,11 +1471,11 @@ router.put(
 
         if (action === 'return') {
           if (cs.assigned_to_actor_id) {
-            await taskCount(db, cs.assigned_to_actor_id, 'release');
+            await taskCount(handle, cs.assigned_to_actor_id, 'release');
           }
           await assignChit(client, entity_id, chit_id, null); /* W1-RAIL: back to the pool through the one writer */
           // One row per participant — each owns their copy of this return event
-          await db(
+          await handle(
             `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
@@ -1707,9 +1707,9 @@ router.put('/:id/tasks/route', auth, ownerWrite, async (req, res) => {
     // B1 RLS: the whole route op (chit_status + state_log, own-entity) runs in withEntity(me); `db` shadowed to
     // the tx client so the existing calls flow through the context (and become atomic).
     await withEntity(entity_id, async (client) => {
-      const db = (t, p) => client.query(t, p);
+      const handle = (t, p) => client.query(t, p);
       // Verify chit belongs to this entity and is assigned to actor
-      const chit = await db(
+      const chit = await handle(
         `SELECT chit_id, assigned_to_actor_id
          FROM chit_status
          WHERE chit_id = $1 AND entity_id = $2`,
@@ -1724,9 +1724,9 @@ router.put('/:id/tasks/route', auth, ownerWrite, async (req, res) => {
         // Return to entity pool — W1-RAIL: the one writer (this copy also clears the name it used to leave behind)
         await assignChit(client, entity_id, chit_id, null);
         // Decrement from_actor task count
-        await taskCount(db, from_actor_id, 'release');
+        await taskCount(handle, from_actor_id, 'release');
         // Log
-        await db(
+        await handle(
           `INSERT INTO state_log
            (chit_id, entity_id, action,
             action_by_identity_id, action_by_display_name, detail)
@@ -1736,7 +1736,7 @@ router.put('/:id/tasks/route', auth, ownerWrite, async (req, res) => {
         return res.json({ message: 'Task returned to pool' });
       } else if (action === 'push' && to_actor_id) {
         // Push to another actor
-        const toActor = await db(
+        const toActor = await handle(
           `SELECT identity_id, display_name, current_task_count, max_tasks
            FROM identities
            WHERE identity_id = $1 AND parent_entity_id = $2
@@ -1751,10 +1751,10 @@ router.put('/:id/tasks/route', auth, ownerWrite, async (req, res) => {
         /* W1-RAIL: the one writer — this door used to write the id but NOT the display name, so the row still showed the previous person */
         await assignChit(client, entity_id, chit_id, ta, 'push');
         // Update task counts
-        await taskCount(db, from_actor_id, 'release');
-        await taskCount(db, to_actor_id, 'take');
+        await taskCount(handle, from_actor_id, 'release');
+        await taskCount(handle, to_actor_id, 'take');
         // Log
-        await db(
+        await handle(
           `INSERT INTO state_log
            (chit_id, entity_id, action,
             action_by_identity_id, action_by_display_name, detail)

@@ -24,7 +24,7 @@ function crc32(buf) {
     crc = 0xffffffff;
   for (let index = 0; index < buf.length; index++) {
     c = (crc ^ buf[index]) & 0xff;
-    for (let index = 0; index < 8; index++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    for (let position = 0; position < 8; position++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
     crc = c ^ (crc >>> 8);
   }
   return (crc ^ 0xffffffff) >>> 0;

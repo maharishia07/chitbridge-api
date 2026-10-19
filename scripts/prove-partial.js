@@ -158,7 +158,7 @@ async function pure() {
     const d = await P.j('/api/chits/' + id, auth);
     return { byLine: d.b.line_delivery || {}, summary: d.b.delivery_summary || null };
   };
-  const lineOf = (p, line_id) => (p.byLine || {})[line_id] || null;
+  const lineOf = (nestedP, line_id) => (nestedP.byLine || {})[line_id] || null;
 
   // ══ 1 · A HALF DELIVERY LEAVES THE RIGHT REMAINDER ══════════════════════════════════════════════════════════
   console.log('\n1 · Partial — half of one line');

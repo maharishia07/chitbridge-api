@@ -124,8 +124,8 @@
         JSON.parse(
           decodeURIComponent(
             Array.prototype.map
-              .call(s, function (text) {
-                return '%' + ('00' + text.charCodeAt(0).toString(16)).slice(-2);
+              .call(s, function (label) {
+                return '%' + ('00' + label.charCodeAt(0).toString(16)).slice(-2);
               })
               .join('')
           )
@@ -698,17 +698,17 @@
     } else if (S.at === 'in') {
       h = '<p class="cbsi-in" data-testid="signin-in">' + esc(S.said) + '</p>';
     }
-    var keep = null;
+    var nestedKeep = null;
     try {
       var ae = doc.activeElement;
-      if (ae && host.contains(ae) && ae.name) keep = { name: ae.name, v: ae.value };
+      if (ae && host.contains(ae) && ae.name) nestedKeep = { name: ae.name, v: ae.value };
     } catch (_) {}
     host.innerHTML = '<div class="cbsi" data-testid="signin-window" data-at="' + esc(S.at) + '"><form novalidate autocomplete="on">' + h + '</form></div>';
     var first = host.querySelector('input');
-    if (keep) {
-      var same = host.querySelector('input[name="' + keep.name + '"]');
+    if (nestedKeep) {
+      var same = host.querySelector('input[name="' + nestedKeep.name + '"]');
       if (same) {
-        same.value = keep.v;
+        same.value = nestedKeep.v;
         try {
           same.focus({ preventScroll: true });
         } catch (_) {}

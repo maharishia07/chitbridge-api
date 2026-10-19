@@ -486,8 +486,8 @@ async function keyListed(entity_id, jti, req) {
   if (c && Date.now() - c.at < 60000) return c.ok;
   let ok = false;
   try {
-    const { query } = require('../db');
-    const r = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
+    const { query: statement } = require('../db');
+    const r = await statement('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
     const list = (r.rows[0] && r.rows[0].policy_flags && r.rows[0].policy_flags.api_keys) || [];
     ok = keyAlive(list, jti);
   } catch (_) {

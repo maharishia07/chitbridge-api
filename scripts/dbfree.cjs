@@ -157,7 +157,7 @@ if (args.indexOf('--list') >= 0) {
   console.log('  ── DB-free ' + '─'.repeat(46));
   free.forEach((item) => {
     const nm = item.replace(/\.js$/, '');
-    const inTill = uniqLoaded.some((item) => item === nm || nm.indexOf(item) >= 0 || item.indexOf(nm) >= 0);
+    const inTill = uniqLoaded.some((entry) => entry === nm || nm.indexOf(entry) >= 0 || entry.indexOf(nm) >= 0);
     console.log('    ' + (inTill ? '●' : '○') + ' ' + item);
   });
   console.log('\n  ● already in the counter   ○ DB-free and not carried yet\n');

@@ -249,7 +249,7 @@ function removeLineItem(id) {
 }
 
 function updateLineItem(id, field, value) {
-  const item = lineItems.find((item) => item.id === id);
+  const item = lineItems.find((entry) => entry.id === id);
   if (item) {
     item[field] = field === 'quantity' || field === 'price' ? parseFloat(value) || 0 : value;
   }

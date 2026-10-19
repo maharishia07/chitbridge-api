@@ -126,11 +126,11 @@ const ITR2 = OI.resolve({
 async function extractText(pdfBuffer) {
   let mod = null,
     used = null;
-  for (const text of PDFJS_PATHS) {
+  for (const label of PDFJS_PATHS) {
     try {
-      if (text && fs.existsSync(text)) {
-        mod = await import('file://' + text.replace(/\\/g, '/'));
-        used = text;
+      if (label && fs.existsSync(label)) {
+        mod = await import('file://' + label.replace(/\\/g, '/'));
+        used = label;
         break;
       }
     } catch (_) {}
@@ -184,7 +184,7 @@ async function extractText(pdfBuffer) {
   if (missed.length) console.log('   ' + Y('· ') + 'patterns that did not match: ' + missed.join(', '));
   Object.entries(doc16)
     .slice(0, 4)
-    .forEach(([text, v]) => console.log('   ' + D(`    ${text.padEnd(20)} = ${v}`)));
+    .forEach(([label, v]) => console.log('   ' + D(`    ${label.padEnd(20)} = ${v}`)));
 
   // 4 · the handshake — coverage first (what it WOULD fill), then the actual fill with provenance
   console.log('\n' + B('4 · Map onto ITR-2 (lib/form-handshake.js)'));
@@ -238,8 +238,8 @@ async function extractText(pdfBuffer) {
       const ver = await call('POST', '/api/entities/verify', { email: 'gamma@test-cb.com', otp: (reg.json && reg.json.dev_otp) || '123456' });
       const shop = (ver.json && (ver.json.entity || ver.json)) || {};
       const sf = await call('GET', `/api/catalogue/${encodeURIComponent(shop.bridge_id)}`);
-      const names = ((sf.json && sf.json.finishes) || []).flatMap((item) => (item.items || []).map((item) => item.name));
-      const item = names.find((item) => /ITR/.test(item)) || names[0];
+      const names = ((sf.json && sf.json.finishes) || []).flatMap((entry) => (entry.items || []).map((element) => element.name));
+      const item = names.find((entry) => /ITR/.test(entry)) || names[0];
       if (!item) throw new Error('the Gamma store has no ITR-2 template — run scripts/reset-and-seed.js --go --skip-wipe');
       const who = 'form16.proto@test-cb.com';
       const start = await call('POST', `/api/catalogue/${encodeURIComponent(shop.bridge_id)}/order/start`, { identifier: who, name: 'Form16 prototype' });

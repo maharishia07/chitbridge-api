@@ -39,8 +39,8 @@ const S = (o) => JSON.stringify(o || '');
   chk('shop entity minted (login)', !!token);
   let bridge = (ver.j && (ver.j.bridge_id || (ver.j.entity && ver.j.entity.bridge_id))) || null;
   if (!bridge) {
-    const reply = await api('GET', '/api/entities/me', { token });
-    bridge = reply.j && (reply.j.bridge_id || (reply.j.entity && reply.j.entity.bridge_id));
+    const response = await api('GET', '/api/entities/me', { token });
+    bridge = response.j && (response.j.bridge_id || (response.j.entity && response.j.entity.bridge_id));
   }
   chk('shop has a bridge id (storefront address)', !!bridge, bridge || '—');
 

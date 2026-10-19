@@ -49,11 +49,11 @@ const has = (o, id) => JSON.stringify(o || '').includes(id);
   // create two actors under Alpha
   const ts = Date.now().toString().slice(-6);
   async function mkActor(key, nm) {
-    const reply = await api('POST', '/api/actors', { token: A.token, body: { display_name: nm, actor_key: key, hat: 'act' } });
-    const otp = reply.json && (reply.json.otp || reply.json.dev_otp || (reply.json.actor && reply.json.actor.otp));
-    if (!otp) return { err: 'no otp: ' + JSON.stringify(reply.json).slice(0, 160) };
-    const l = await api('POST', '/api/actors/login', { body: { username: key + '@' + ALPHA.toLowerCase(), otp } });
-    return { token: l.json && l.json.token, err: l.json && l.json.message };
+    const response = await api('POST', '/api/actors', { token: A.token, body: { display_name: nm, actor_key: key, hat: 'act' } });
+    const otp = response.json && (response.json.otp || response.json.dev_otp || (response.json.actor && response.json.actor.otp));
+    if (!otp) return { err: 'no otp: ' + JSON.stringify(response.json).slice(0, 160) };
+    const answer = await api('POST', '/api/actors/login', { body: { username: key + '@' + ALPHA.toLowerCase(), otp } });
+    return { token: answer.json && answer.json.token, err: answer.json && answer.json.message };
   }
   const ana = await mkActor('ana' + ts, 'Ana Reg'),
     bob = await mkActor('bob' + ts, 'Bob Reg');

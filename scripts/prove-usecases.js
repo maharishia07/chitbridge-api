@@ -71,8 +71,8 @@ const EMAIL = 'cholaauto@email.com';
    * all**. Every event silently did nothing and the job card printed four NOT STARTED rows, which read as a
    * product that had lost the data rather than a harness that had lost its token.
    */
-  const event = (id, rows, who) =>
-    P.j('/api/chits/' + id + '/deliver-lines', { method: 'POST', token: who && who.token ? who.token : auth.token, body: { rows } });
+  const event = (id, lines, who) =>
+    P.j('/api/chits/' + id + '/deliver-lines', { method: 'POST', token: who && who.token ? who.token : auth.token, body: { rows: lines } });
   const say = (id, text, type, line_id, who) =>
     P.j('/api/chits/' + id + '/messages', {
       method: 'POST',
@@ -255,12 +255,22 @@ const EMAIL = 'cholaauto@email.com';
   const rows = [c1, c2, c3, c4].map((id) => {
     const l = L[id] || {};
     const list = l.added || [];
-    const hours = list.filter((item) => item.unit === 'hour').reduce((total, item) => total + Number(item.quantity || 0), 0);
+    const nestedHours = list.filter((item) => item.unit === 'hour').reduce((total, item) => total + Number(item.quantity || 0), 0);
     const parts = list.filter((item) => item.unit !== 'hour');
-    const labour = list.filter((item) => item.unit === 'hour').reduce((total, item) => total + Number(item.amount || 0), 0);
-    const mats = parts.reduce((total, item) => total + Number(item.amount || 0), 0);
+    const nestedLabour = list.filter((item) => item.unit === 'hour').reduce((total, item) => total + Number(item.amount || 0), 0);
+    const nestedMats = parts.reduce((total, item) => total + Number(item.amount || 0), 0);
     const who = [...new Set(list.map((item) => item.by_actor).filter(Boolean))];
-    return { id, name: NAME[id], done: l.complete === true, hours, parts: parts.length, labour, mats, who, started: list.length > 0 };
+    return {
+      id,
+      name: NAME[id],
+      done: l.complete === true,
+      hours: nestedHours,
+      parts: parts.length,
+      labour: nestedLabour,
+      mats: nestedMats,
+      who,
+      started: list.length > 0
+    };
   });
 
   console.log('\n── JOB CARD · TN 09 BX 4471 ' + '─'.repeat(38));
@@ -305,7 +315,7 @@ const EMAIL = 'cholaauto@email.com';
   );
   ok(labour + mats === 7025, 'the running total is SUMMED from events — it rises as work happens', money(labour + mats));
   ok(
-    rows.every((item) => (L[item.id].added || []).every((item) => item.unit === 'hour' || item.reference)),
+    rows.every((item) => (L[item.id].added || []).every((entry) => entry.unit === 'hour' || entry.reference)),
     '⭐ every PART carries its catalogue reference — "6 materials changed" reconciles against the catalogue'
   );
 

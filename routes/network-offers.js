@@ -167,14 +167,14 @@ async function readReleased(batch, brandIds, standing, of) {
 }
 
 /** one network row of the store half: the brand, where this store stands with it, what it may do, and the offers it is handed */
-function networkRow(me, brand_id, st, who, rows, choices) {
+function networkRow(me, brand_id, st, nestedWho, rows, choices) {
   const inside = st.state === 'active';
-  const no = who.flags.network_offers || {};
+  const no = nestedWho.flags.network_offers || {};
   const policy = net.POLICIES.indexOf(no.policy) >= 0 ? no.policy : 'opt_in';
   const rel = no.released || {};
   return {
     brand_id,
-    brand_name: who.title || who.name || null,
+    brand_name: nestedWho.title || nestedWho.name || null,
     policy,
     /* ⭐ G3: the brand's bridge id, and the network ROOT's — the network store reads by the root (GET /api/catalogue/network/:bridge_id) */
     brand_bridge_id: st.brand_bridge_id || null,

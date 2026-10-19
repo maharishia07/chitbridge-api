@@ -130,8 +130,8 @@ const eq = (n, g, w) => ok(n, JSON.stringify(g) === JSON.stringify(w), 'got  ' +
   const gs = await j('/api/folders/groupsum?scope=order', { token: A });
   const seen = [];
   ((gs.b || {}).requirement || []).forEach((item) =>
-    (item.breakdown || []).forEach((item) => {
-      if (item.chit_id === id) seen.push({ p: item.phrase, q: item.qty });
+    (item.breakdown || []).forEach((entry) => {
+      if (entry.chit_id === id) seen.push({ p: entry.phrase, q: entry.qty });
     })
   );
   (((gs.b || {}).flags || {}).unmatched || []).forEach((item) => {

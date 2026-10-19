@@ -929,13 +929,13 @@ async function upsertVersioned(db, entity_id, who, kind, name, subKind, note, ru
   );
   if (!cur.rows[0]) {
     const ins = await db.query(insert, [entity_id, subKind, name, note, who.id]);
-    const id = ins.rows[0].definition_id;
+    const identifier = ins.rows[0].definition_id;
     await db.query(
       `INSERT INTO definition_version (definition_id, version, entity_id, rules, created_by)
                     VALUES ($1,1,$2,$3,$4)`,
-      [id, entity_id, JSON.stringify(rules), who.id]
+      [identifier, entity_id, JSON.stringify(rules), who.id]
     );
-    return { definition_id: id, version: 1, changed: true };
+    return { definition_id: identifier, version: 1, changed: true };
   }
   const id = cur.rows[0].definition_id;
   if (JSON.stringify(cur.rows[0].rules || {}) === JSON.stringify(rules)) {
@@ -1156,8 +1156,8 @@ const CASE_FIELDS = new Set([
 function unknownFields(rows) {
   const seen = new Set();
   (rows || []).forEach((item) =>
-    Object.keys(item || {}).forEach((item) => {
-      if (!CASE_FIELDS.has(item)) seen.add(item);
+    Object.keys(item || {}).forEach((entry) => {
+      if (!CASE_FIELDS.has(entry)) seen.add(entry);
     })
   );
   return [...seen].slice(0, 20);
@@ -1356,7 +1356,7 @@ router.get('/results', auth, async (req, res) => {
 
     if (q.case_key || q.run_id) {
       const where = q.case_key ? 'AND case_key = $2' : 'AND run_id = $2::uuid';
-      const r = await withEntity(entity_id, async (db) =>
+      const nestedR = await withEntity(entity_id, async (db) =>
         readPage(
           db,
           '*',
@@ -1368,7 +1368,14 @@ router.get('/results', auth, async (req, res) => {
         )
       );
       /* ⚠️ `history` named which branch answered and no caller read it — dropped by the envelope besides */
-      return res.json({ results: r.rows, count: r.rows.length, total: r.total, page: r.page, limit: r.limit, project: pj.project });
+      return res.json({
+        results: nestedR.rows,
+        count: nestedR.rows.length,
+        total: nestedR.total,
+        page: nestedR.page,
+        limit: nestedR.limit,
+        project: pj.project
+      });
     }
 
     /**

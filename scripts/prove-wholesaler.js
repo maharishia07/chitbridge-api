@@ -91,7 +91,7 @@ ok(
 );
 
 /* ── W-4 · ARITHMETIC (trust-critical) ─────────────────────────────────────────────────────────────────────── */
-const sumOfBreakdown = syn.lines.reduce((total, item) => total + item.breakdown.reduce((total, item) => total + item.qty, 0), 0);
+const sumOfBreakdown = syn.lines.reduce((total, item) => total + item.breakdown.reduce((sum, entry) => sum + entry.qty, 0), 0);
 ok(
   '★★★ W-4 · the consolidated total EQUALS the sum of the individual chit lines',
   syn.lines[0].total === sumOfBreakdown,
