@@ -74,7 +74,7 @@ const signin  = require('./signin');
 /**
  * SET-31 · the entity's own task ceiling: entity_actor_settings.default_max_tasks (Settings › Work), or null when
  * the owner never set one (then the 1-100 validator is the only bound, as before) or the table is absent.
- * Per-actor max_tasks may be lower, never higher; a new actor with none given gets this value (else 10).
+ * Per-actor max_tasks may be lower, never higher. Read ONLY when the request carries max_tasks (round-trip budget).
  */
 async function entityTaskCap(entity_id) {
   if (!(await schema.hasTable('entity_actor_settings'))) return null;
@@ -88,14 +88,15 @@ function overTaskCap(ceiling) {
 }
 /**
  * SET-31 · route guard for POST and PATCH /actors, run before the handler so the handlers stay as they were:
- * a per-actor max_tasks above the ceiling is a 400 naming the number; a new actor given none gets the ceiling.
+ * a per-actor max_tasks above the ceiling is a 400 naming the number. No max_tasks in the body = no read, no change
+ * (a new actor given none keeps today's default of 10; the stored default is not applied without a read).
  */
 async function taskCapGuard(req, res, next) {
   try {
+    const sent = req.body && req.body.max_tasks;
+    if (sent === undefined || sent === null || sent === '') return next();
     const ceiling = await entityTaskCap(auth.entityOf(req));
-    if (!ceiling) return next();
-    if (req.method === 'POST' && !req.body.max_tasks) req.body.max_tasks = ceiling;
-    if ('max_tasks' in req.body && parseInt(req.body.max_tasks, 10) > ceiling) return res.status(400).json(overTaskCap(ceiling));
+    if (ceiling && parseInt(sent, 10) > ceiling) return res.status(400).json(overTaskCap(ceiling));
     next();
   } catch (err) { next(err); }
 }
