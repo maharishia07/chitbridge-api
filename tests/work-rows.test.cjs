@@ -22,7 +22,7 @@ let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
 
 const S = require('./support/work-stub.cjs');
-const { D, E2, U, copy, seed, reset, as, get } = S;
+const { D, E1, E2, U, copy, seed, reset, as, get } = S;
 const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), close: () => S.stop() };
 (async () => {
   await new Promise((r) => srv.listen(0, '127.0.0.1', r));
@@ -99,12 +99,24 @@ const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), clo
     ok('W36: billedOfChitSql and MARKS_SQL share the one billed test', OO.billedOfChitSql('$1', '$2').includes(frag + '$2::text') && OO.MARKS_SQL.includes(frag + 'ANY($2::text[])'), OO.billedOfChitSql('$1', '$2')); }
   ok('W11: the plain facts carry no unbilled figure', !('unbilled' in (await get('/api/work/facts')).body.figures));
 
+  /* CRM-32: the Parties list's "not billed yet" is the SAME test and value as W11, grouped by the order's party - one calculation, one select + one marks statement */
+  { const W = require(path.join(API, 'lib', 'work-rows')), ctx0 = { entity: E1, actor: 'A1' };
+    D.copies.push(copy(20, { counterparty_id: 'cust-1', value: '300.00' }), copy(21, { counterparty_id: 'cust-9', value: '50.00' }), copy(22, { counterparty_id: 'cust-10', currency: 'AED', value: '10.00' }));
+    D.marks = D.marks.concat([{ against: null, billed: U(21) }]);
+    reset(); const by = await W.unbilledByParty(ctx0);
+    ok('CRM-32: two unbilled orders of one party are summed (1200.50 + 300.00), in minor units', JSON.stringify(by.get('cust-1')) === JSON.stringify({ n: 2, minor: 150050, currency: 'INR' }), JSON.stringify([...by]));
+    ok('CRM-32: a billed order is not counted - its party is absent, so the list shows none', !by.has('cust-9'));
+    ok('CRM-32: a party in another currency keeps its own currency (never summed across)', by.get('cust-10').currency === 'AED' && by.get('cust-10').minor === 1000);
+    ok('CRM-32: ONE select read + ONE marks statement for the whole list, never a query per party', D.batches === 1 && D.statements.filter((s) => /SELECT DISTINCT CASE/.test(s)).length === 1, D.batches + ' batches');
+    seed(); }
+
   /* ── 6 · truncated ── */
   D.bigRows = Array.from({ length: 5000 }, (_, i) => copy(1000 + i, { chit_id: U(1000 + i) }));
   const big = (await get('/api/work/list?view=orders_in')).body;
   ok('⭐ more copies than one read takes → truncated, NO counts, NO total (never a wrong one); the newest page still answers', big.truncated === true && big.counts === null && big.total === null && big.rows.length === 50);
   const bf = (await get('/api/work/facts')).body;
   ok('facts when truncated: no counts, no lines, no figures — left out, never 0', bf.truncated === true && bf.counts === null && bf.lines.length === 0 && Object.keys(bf.figures).length === 0);
+  { const W = require(path.join(API, 'lib', 'work-rows')); ok('CRM-32: truncated read -> unbilledByParty answers null (the list leaves the figure off, never a wrong 0)', (await W.unbilledByParty({ entity: E1, actor: 'A1' })) === null); }
   D.bigRows = null;
 
   /* ── 7 · degrade ── */

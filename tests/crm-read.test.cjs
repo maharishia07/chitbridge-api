@@ -175,6 +175,19 @@ const byId = (list, id) => list.parties.filter((p) => p.party_id === id);
     assert.strictEqual(A.parties[0].email, null);
   });
 
+  await ita('CRM-32: each listed party carries the server\'s "not billed yet" figure (one grouped read, work-rows\' own test); a party with none says n 0; too many copies -> the key is left off', async () => {
+    const WR = require('../lib/work-rows'), was = WR.unbilledByParty; let calls = 0;
+    WR.unbilledByParty = async () => { calls++; return new Map([[P(2), { n: 1, minor: 42000, currency: 'INR' }]]); };
+    try {
+      const r = await t.get('/parties');
+      assert.deepStrictEqual(byId(r.body, P(2))[0].unbilled, { n: 1, minor: 42000, currency: 'INR' });
+      assert.deepStrictEqual(byId(r.body, P(6))[0].unbilled, { n: 0, minor: 0, currency: null });
+      assert.strictEqual(calls, 1, 'one grouped read for the whole list, never one per party');
+      WR.unbilledByParty = async () => null;
+      assert.ok(!('unbilled' in byId((await t.get('/parties')).body, P(2))[0]), 'truncated: absent, never a wrong 0');
+    } finally { WR.unbilledByParty = was; }
+  });
+
   t.close();
   console.log('  ' + pass + ' checks'); if (process.exitCode) console.log('FAILED');
 })();
