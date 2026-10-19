@@ -78,13 +78,26 @@ const signin  = require('./signin');
  */
 async function entityTaskCap(entity_id) {
   if (!(await schema.hasTable('entity_actor_settings'))) return null;
-  const r = await db(`SELECT default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
-  return (r.rows[0] && r.rows[0].default_max_tasks) || null;
+  const settingsRow = await db(`SELECT default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+  return (settingsRow.rows[0] && settingsRow.rows[0].default_max_tasks) || null;
 }
 /** SET-31 · the 400 body when a per-actor max_tasks is above the entity's ceiling (the server decides; the person is told the number). */
-function overTaskCap(cap) {
+function overTaskCap(ceiling) {
   return { error: 'Over the limit', code: 'MAX_TASKS_OVER_ENTITY',
-    message: `A person can hold at most ${cap} tasks, the limit you set in Settings › Work. Raise that first, or give them ${cap} or fewer.` };
+    message: `A person can hold at most ${ceiling} tasks, the limit you set in Settings › Work. Raise that first, or give them ${ceiling} or fewer.` };
+}
+/**
+ * SET-31 · route guard for POST and PATCH /actors, run before the handler so the handlers stay as they were:
+ * a per-actor max_tasks above the ceiling is a 400 naming the number; a new actor given none gets the ceiling.
+ */
+async function taskCapGuard(req, res, next) {
+  try {
+    const ceiling = await entityTaskCap(auth.entityOf(req));
+    if (!ceiling) return next();
+    if (req.method === 'POST' && !req.body.max_tasks) req.body.max_tasks = ceiling;
+    if ('max_tasks' in req.body && parseInt(req.body.max_tasks, 10) > ceiling) return res.status(400).json(overTaskCap(ceiling));
+    next();
+  } catch (err) { next(err); }
 }
 const personSession = require('../lib/person-session');   // PEOPLE-SRV1 (G4): the one session listing — closeBy ends a person's phones
 const keysRoute = require('./keys');                       // PEOPLE-SRV1 (G4): the one key list — endKeysBy ends the keys a person opened   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
@@ -206,7 +219,7 @@ router.post('/check-key',
 // ── POST /api/actors ─────────────────────────────────────────
 // Create a new actor under entity
 router.post('/',
-  auth, ownerWrite,
+  auth, ownerWrite, taskCapGuard,
   [
     body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
@@ -283,9 +296,7 @@ router.post('/',
       const actor_key    = req.body.actor_key.toLowerCase().trim();
       const actor_role   = sanitise(req.body.actor_role || '');
       const phone        = req.body.phone || null;
-      const taskCap      = await entityTaskCap(entity_id);   // SET-31
-      const max_tasks    = req.body.max_tasks || taskCap || 10;
-      if (taskCap && max_tasks > taskCap) return res.status(400).json(overTaskCap(taskCap));
+      const max_tasks    = req.body.max_tasks || 10;
       const hat          = ['view_only','act','audit','mis','manager'].includes(req.body.hat) ? req.body.hat : 'act';
 
       // Check key available
@@ -405,7 +416,7 @@ router.post('/',
 // Edit a co-assist's owner-controlled profile fields (name / role / max_tasks / phone).
 // Does NOT touch login key, type, status, or shift — those have dedicated routes. Entity-scoped.
 router.patch('/:id',
-  auth, ownerWrite,
+  auth, ownerWrite, taskCapGuard,
   [
     body('display_name').optional().trim().isLength({ min: 2, max: 100 }),
     body('actor_role').optional({ nullable: true }).trim().isLength({ max: 100 }),
@@ -494,11 +505,7 @@ router.patch('/:id',
       if ('display_name' in req.body) { sets.push(`display_name = $${n++}`); vals.push(sanitise(req.body.display_name)); }
       if ('actor_role'   in req.body) { sets.push(`actor_role = $${n++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
       if ('phone'        in req.body) { sets.push(`phone = $${n++}`);        vals.push((req.body.phone || '').trim() || null); }
-      if ('max_tasks'    in req.body) {
-        const wanted = parseInt(req.body.max_tasks, 10), taskCap = await entityTaskCap(entity_id);   // SET-31
-        if (taskCap && wanted > taskCap) return res.status(400).json(overTaskCap(taskCap));
-        sets.push(`max_tasks = $${n++}`); vals.push(wanted);
-      }
+      if ('max_tasks'    in req.body) { sets.push(`max_tasks = $${n++}`);    vals.push(parseInt(req.body.max_tasks, 10)); }
       /* PEOPLE-EMAIL (SEC2): editable, so a person added without one can still get a reset code; empty clears it */
       if ('email'        in req.body) { sets.push(`email = $${n++}`);        vals.push(String(req.body.email || '').trim().toLowerCase() || null); }
       /**

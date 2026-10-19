@@ -13,10 +13,10 @@ const fields = fs.readFileSync(path.join(root, 'docs', 'FIELDS.md'), 'utf8');
 
 ok(/async function entityTaskCap\(entity_id\)[\s\S]*?schema\.hasTable\('entity_actor_settings'\)[\s\S]*?default_max_tasks/.test(src),
   'one reader of the ceiling, safe before the table exists');
-ok(/const max_tasks\s+= req\.body\.max_tasks \|\| taskCap \|\| 10;/.test(src), 'create: none given takes the entity default, else 10');
-ok(/if \(taskCap && max_tasks > taskCap\) return res\.status\(400\)\.json\(overTaskCap\(taskCap\)\)/.test(src), 'create: above the ceiling is refused with the number');
-ok(/if \(taskCap && wanted > taskCap\) return res\.status\(400\)\.json\(overTaskCap\(taskCap\)\)/.test(src), 'edit: above the ceiling is refused with the number');
-ok((src.match(/await entityTaskCap\(entity_id\)/g) || []).length === 2, 'exactly two call sites (create, edit), no second path');
+ok(/req\.method === 'POST' && !req\.body\.max_tasks\) req\.body\.max_tasks = ceiling/.test(src), 'create: none given takes the entity default, else 10');
+ok(/parseInt\(req\.body\.max_tasks, 10\) > ceiling\) return res\.status\(400\)\.json\(overTaskCap\(ceiling\)\)/.test(src), 'the guard refuses above the ceiling with the number');
+ok(/router\.post\('\/',\s+auth, ownerWrite, taskCapGuard,/.test(src) && /router\.patch\('\/:id',\s+auth, ownerWrite, taskCapGuard,/.test(src), 'create and edit both run the guard before the handler');
+ok((src.match(/await entityTaskCap\(/g) || []).length === 1, 'exactly one call site (the guard), no second path');
 ok(/MAX_TASKS_OVER_ENTITY/.test(src) && /MAX_TASKS_OVER_ENTITY/.test(fields), 'the code the client can branch on is in FIELDS.md');
 ok(/default_max_tasks` ceiling on `identities\.max_tasks`/.test(fields), 'FIELDS.md names the key, its layer and who sets it');
 ok(/ONE tax-not-applicable decision \(SET-20\)/.test(fields) && /policy_flags\.gst_registration/.test(fields), 'SET-20: gst_registration is named as the single tax-not-applicable decision');
