@@ -5108,7 +5108,7 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
 // Reason required and logged; the chit stays visible as voided, never deleted; the seal is untouched.
 router.put('/:chit_id/void',
   [ body('reason').trim().notEmpty().withMessage('A reason is required to void') ],
-  validate, auth,
+  auth, validate,
   async (req, res) => {
     try {
       const chit_id   = req.params.chit_id;
@@ -5253,7 +5253,7 @@ router.put('/:chit_id/void',
 router.post('/assign-bulk',
   [ body('chit_ids').isArray({ min: 1 }).withMessage('chit_ids[] required'),
     body('target_actor_id').isUUID().withMessage('target_actor_id required') ],
-  validate, auth,
+  auth, validate,
   async (req, res) => {
     try {
       const entity_id      = entityId(req);

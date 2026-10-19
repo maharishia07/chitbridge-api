@@ -45,22 +45,31 @@ const lines = (src) => src.split(/\r?\n/);
 const offenders = [];
 let authFirst = 0;
 
+/**
+ * SEC-73: the scan reads the SOURCE, not lines. `validate, auth,` on ONE line (any spacing, any line break, either
+ * line ending) hid six routes from the old line scan, which only saw `validate,` alone on its own line.
+ * Returns the index of every `validate` that is directly followed by `auth` in a middleware list.
+ */
+const VALIDATE_THEN_AUTH = /\bvalidate\s*,\s*auth\s*[,)]/g;
+const validateBeforeAuth = (src) => {
+  const hits = [];
+  let m;
+  VALIDATE_THEN_AUTH.lastIndex = 0;
+  while ((m = VALIDATE_THEN_AUTH.exec(src))) hits.push(m.index);
+  return hits;
+};
+
 for (const f of files) {
-  const L = lines(fs.readFileSync(path.join(R, f), 'utf8'));
-  for (let i = 0; i < L.length; i++) {
-    if (L[i].trim() !== 'validate,') continue;
-    /* the next middleware in the chain */
-    let j = i + 1;
-    while (j < L.length && !L[j].trim()) j++;
-    if (j < L.length && L[j].trim() === 'auth,') {
-      /* walk back to the route declaration this belongs to, for a useful message */
-      let k = i;
-      while (k > 0 && !/^router\.(get|post|put|patch|delete)\(/.test(L[k])) k--;
-      offenders.push(f + ':' + (i + 1) + '  ' + (L[k] || '').trim().slice(0, 58));
-    }
+  const src = fs.readFileSync(path.join(R, f), 'utf8');
+  const L = lines(src);
+  for (const at of validateBeforeAuth(src)) {
+    const line = lines(src.slice(0, at)).length;
+    /* walk back to the route declaration this belongs to, for a useful message */
+    let k = line - 1;
+    while (k > 0 && !/^router\.(get|post|put|patch|delete)\(/.test(L[k])) k--;
+    offenders.push(f + ':' + line + '  ' + (L[k] || '').trim().slice(0, 58));
   }
-  authFirst += (fs.readFileSync(path.join(R, f), 'utf8')
-    .match(/router\.(get|post|put|patch|delete)\('[^']*',\s*auth/g) || []).length;
+  authFirst += (src.match(/router\.(get|post|put|patch|delete)\('[^']*',\s*auth/g) || []).length;
 }
 
 console.log('\n── who you are, before what you sent ──');
@@ -74,16 +83,18 @@ offenders.forEach((o) => console.error('      ' + o));
  * comes back clean.
  */
 console.log('\n── the scan catches the shape, in both line endings ──');
-for (const [name, nl] of [['LF', '\n'], ['CRLF', '\r\n']]) {
-  const specimen = ['router.post(\'/x\',', '  [', '    body(\'a\').notEmpty(),', '  ],', '  validate,',
-    '  auth,', '  async (req, res) => {'].join(nl);
-  const S = lines(specimen);
-  let caught = false;
-  for (let i = 0; i < S.length; i++) {
-    if (S[i].trim() === 'validate,' && S[i + 1] && S[i + 1].trim() === 'auth,') caught = true;
+const planted = {
+  'two-line':          (nl) => ["router.post('/x',", '  [ body(1) ],', '  validate,', '  auth,', '  async () => {}'].join(nl),
+  'one-line (SEC-73)': (nl) => ["router.post('/x',", '  [ body(1) ],', '  validate, auth,', '  async () => {}'].join(nl),
+  'odd-spacing':       (nl) => ["router.post('/x', [], validate ,   auth , async () => {});"].join(nl),
+  'comma-first':       (nl) => ["router.post('/x', [],", '  validate', '  , auth,', '  async () => {});'].join(nl),
+};
+for (const [name, make] of Object.entries(planted)) {
+  for (const [le, nl] of [['LF', '\n'], ['CRLF', '\r\n']]) {
+    t('  …a planted ' + name + ' route (' + le + ') is reported', validateBeforeAuth(make(nl)).length === 1);
   }
-  t('  …a planted ' + name.padEnd(4) + ' route is reported', caught);
 }
+t('  …the right order is NOT reported', validateBeforeAuth("router.post('/x', auth, [], validate, async () => {});").length === 0);
 
 console.log('\n  ══ ' + pass + ' passed · ' + fail + ' failed ══\n');
 process.exit(fail ? 1 : 0);

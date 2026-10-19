@@ -101,7 +101,7 @@ router.post('/suppliers',
     body('nickname').optional().trim().isLength({ max: 80 }),
     body('notes').optional().trim().isLength({ max: 2000 }),
     body('preferred').optional().isBoolean() ],
-  validate, auth,
+  auth, validate,
   async (req, res) => {
     try {
       const owner     = ctx(req);
@@ -247,7 +247,7 @@ router.patch('/suppliers/:id',
     body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
     body('display_name').optional({ nullable: true }).trim().isLength({ max: 120 }),
     body('preferred').optional().isBoolean() ],
-  validate, auth,
+  auth, validate,
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -589,7 +589,7 @@ router.post('/customers',
   [ body('handle').optional().trim(), body('name').optional().trim(),
     body().custom((b) => { if (!String((b && b.handle) || '').trim() && !String((b && b.name) || '').trim())
       throw new Error('Give a User ID or email for a ChitBridge business, or a name for a local customer'); return true; }) ],
-  validate, auth,
+  auth, validate,
   async (req, res) => {
     try {
       const owner = ctx(req), handle = String(req.body.handle || '').trim();
@@ -668,7 +668,7 @@ router.post('/customers/:id/groups', auth, async (req, res) => {
 // Manual segment override (optional)
 router.patch('/customers/:id',
   [ body('segment_override').optional().isIn(['high_value','regular','new','inactive']) ],
-  validate, auth,
+  auth, validate,
   async (req, res) => {
     try {
       const owner = ctx(req);
