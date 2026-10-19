@@ -39,7 +39,7 @@ t('scripts/guards.cjs lists readability-guard.test.cjs', /'readability-guard\.te
  */
 const PASS_SUBJECT = 'chore(iter1): mechanical pass (MNT-4)';
 const subjects = spawnSync('git', ['-C', API, 'log', BASE + '..HEAD', '--format=%s'], { encoding: 'utf8' }).stdout || '';
-const waived = process.env.GITHUB_HEAD_REF === 'iter1/mechanical' && subjects.split(/\r?\n/).includes(PASS_SUBJECT);
+const waived = (process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME) === 'iter1/mechanical' && subjects.split(/\r?\n/).includes(PASS_SUBJECT);
 
 if (waived) {
   console.log('  waived  the iter1 mechanical pass (head branch iter1/mechanical + "' + PASS_SUBJECT + '"): one-time, expires on landing — see the PR section 6');
