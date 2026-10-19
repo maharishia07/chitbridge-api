@@ -143,10 +143,10 @@ if (web) {
     /function supportThem\(\)/.test(sup) && !/bridge/i.test(sup.match(/<input[^>]*>/g) || []),
     'a bridge id somebody types is a way to post a chit into a stranger’s Task');
   ok("the 'them' group is hidden when there is no counterparty",
-    /filter\(function\(d\)\{ return d !== 'them' \|\| supportThem\(\); \}\)/.test(web),
+    /filter\(function\s*\((\w+)\)\s*\{\s*return \1 !== 'them' \|\| supportThem\(\);\s*\}\)/.test(web),
     'a box that cannot work is worse than an absent one — the reader spends the typing before finding out');
   ok('a box is looked up by kind AND desk',
-    /b\.kind \+ '@' \+ b\.to === id/.test(web),
+    /\w+\.kind \+ '@' \+ \w+\.to === id/.test(web),
     'there are two incident boxes; picking the first sends half of them to the wrong company');
 } else {
   console.log('   ·    web checks skipped (chitbridge-web not beside this repo)');
@@ -175,7 +175,7 @@ if (web) {
     /api\('workRoutePreview'/.test(web) && /supportNoteLoad\(b\)/.test(web),
     'the client does not know whether that entity routes faults to a team, or whether the shop still exists');
   ok('and the send is held while it cannot land',
-    /if \(btn && r && r\.ok === false\) \{ btn\.disabled = true/.test(web));
+    /if \(btn && \w+ && \w+\.ok === false\) \{\s*btn\.disabled = true/.test(web));
   ok('a preview that fails does not block a real report',
     /a failed PREVIEW must not block a real report/.test(web)
       && /supportNoteHTML\(\{ ok: null/.test(web),
@@ -248,7 +248,7 @@ if (shop) {
   /* ⚠️⚠️ THE DOOR WAS INSIDE THE PRODUCT LIST. A shop with an empty catalogue drew no support link at all —
      and the emptier a shop is, the more likely the person reading it is the one with a problem. */
   ok('an EMPTY shop still has a door',
-    /nothing on display yet[\s\S]{0,300}\+ supLinkHtml\(\)/.test(shop),
+    /nothing on display yet[\s\S]{0,400}supLinkHtml\(\)/.test(shop),
     'support belongs to the shop, not to its shelves');
   ok('and so does one whose catalogue is private or gone',
     /no public catalogue[\s\S]{0,300}supLinkHtml\(\)/.test(shop),
@@ -257,9 +257,9 @@ if (shop) {
   ok('the storefront asks the server where it goes, before anything is typed',
     /support\/preview/.test(shop) && /function supNoteHtml\(\)/.test(shop));
   ok('and holds the send when it cannot land',
-    /onclick="supSendCode\(\)"'\+\(_sup\.dead\?' disabled':''\)/.test(shop));
+    /onclick="supSendCode\(\)"'\s*\+\s*\(_sup\.dead\s*\?\s*' disabled'\s*:\s*''\)/.test(shop));
   ok('the urgency words are the server’s, and absent rather than invented',
-    /_sup\.urgency=j\.urgency/.test(shop) && !/Sev-1/.test(shop),
+    /_sup\.urgency\s*=\s*\w+\.urgency/.test(shop) && !/Sev-1/.test(shop),
     'asking the question with wording the shop has never seen is worse than not asking it');
   ok('a failed check does not block a real report',
     /a failed CHECK must not block a real report/.test(shop));
