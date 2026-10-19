@@ -450,7 +450,7 @@
   "tools/tally-connector/prove.js": {"score":56,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":52,"noWhatLine":0,"emptyCatch":3,"noHeader":1},
   "tools/tally-connector/seed.cjs": {"score":9,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":8,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "tools/tally-connector/setup.js": {"score":30,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":27,"noWhatLine":0,"emptyCatch":2,"noHeader":1},
-  "tools/tally-connector/signin-ui.js": {"score":105,"long40":2,"long80":1,"complex10":9,"complex15":4,"deep3":0,"deep4":0,"cryptic":74,"noWhatLine":0,"emptyCatch":15,"noHeader":0},
+  "tools/tally-connector/signin-ui.js": {"score":92,"long40":4,"long80":2,"complex10":9,"complex15":4,"deep3":0,"deep4":0,"cryptic":58,"noWhatLine":0,"emptyCatch":15,"noHeader":0},
   "tools/tally-connector/their-bill.js": {"score":16,"long40":0,"long80":0,"complex10":1,"complex15":1,"deep3":0,"deep4":0,"cryptic":14,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "tools/tally-connector/till.html": {"score":3601,"long40":98,"long80":34,"complex10":233,"complex15":121,"deep3":8,"deep4":1,"cryptic":2768,"noWhatLine":193,"emptyCatch":145,"noHeader":0},
   "tools/tally-connector/till.js": {"score":223,"long40":5,"long80":2,"complex10":10,"complex15":8,"deep3":3,"deep4":2,"cryptic":155,"noWhatLine":6,"emptyCatch":32,"noHeader":0},
