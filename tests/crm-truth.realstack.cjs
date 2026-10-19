@@ -8,8 +8,7 @@
  * CR-04 remove refused with open dues · CR-05 a removed party is hidden, the row kept · CR-06 one phone, one party (lead, counter, import).
  * Not here (covered or a screen): CR-07 may-trade, CR-08 viewer, CR-09 follow-ups (offline ✓ files) · CR-10 the lead path (W16, a walk).
  * A `gap:` FAIL is a RECORDED finding (CRM-BACKLOG "K-TRUTH-1 2026-10-19"), never fixed here. LOCAL ONLY.
- * Break-tested 2026-10-19 by running each rule against the opposite world: CR-04 on the settled party and CR-05 on the owing one flip each other (200 vs 409);
- * CR-06b's new phone is added while the twin is skipped; CR-03a would read 12 customers if walk-ins counted.
+ * Break-tested 2026-10-19: each passing case was run once with its expected figure flipped to a wrong one (CR-02a 5 regular, CR-03a 12 customers, CR-04 status 200, CR-05 txn_count 99) and went red.
  * Run: node tests/crm-truth.realstack.cjs   (one realstack file at a time on :3100)
  * CARD 11-crm-and-marketing/crm-groups
  */
