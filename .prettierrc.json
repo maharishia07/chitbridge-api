@@ -4,5 +4,7 @@
   "tabWidth": 2,
   "printWidth": 160,
   "trailingComma": "none",
-  "arrowParens": "always"
+  "arrowParens": "always",
+  "quoteProps": "preserve",
+  "endOfLine": "lf"
 }
