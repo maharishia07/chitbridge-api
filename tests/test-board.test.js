@@ -251,9 +251,9 @@ it('⭐⭐⭐ the IDENTITY comes from the token and cannot be sent in the body',
     'testerOf no longer reads the identity off the request');
   assert.ok(!/tested_by[^,)]*req\.body|r\.tested_by|body\.tested_by/.test(route),
     'tested_by can be supplied by the caller — authorship would be forgeable');
-  /* the name may come from the row; the id may not */
-  assert.ok(/r\.tester_name \|\| who\.name/.test(route),
-    'the tester label no longer falls back to the login name when nobody typed one');
+  /* SEC-FIX3 S10 (QA-14): neither the id NOR the name may come from the row; the label is the login's, off the token */
+  assert.ok(/tester_name:\s*who\.name/.test(route) && !/r\.tester_name \|\|/.test(route),
+    'the tester label must be stamped from the token (who.name), never read from the posted row');
 });
 
 it('⚠️ the panel and the board both keep the tester name on the DEVICE, not on the entity', () => {
