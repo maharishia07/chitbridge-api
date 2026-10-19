@@ -58,14 +58,15 @@ async function countEntities(rootId) {
     `SELECT count(*)::int AS n FROM identities WHERE governed_by = $1`, [rootId]);
   return rows[0].n;
 }
+/** today's chits sent by one entity (UTC day) — also read by the Home Plan card, in its own batch (SET-35) */
+const CHITS_TODAY_SQL = `SELECT count(*)::int AS n FROM chit_header
+      WHERE sender_entity_id = $1
+        AND sent_at >= date_trunc('day', now() AT TIME ZONE 'UTC')`;
 async function countChitsToday(entityId) {
   // UTC-day window (absolute-time invariant). B1 RLS: an entity's own sent chits -> withEntity(entity). (Dormant
   // guard — call it OUTSIDE any open entity transaction to avoid nesting when it's eventually wired.)
-  const { rows } = await withEntity(entityId, (c) => c.query(
-    `SELECT count(*)::int AS n FROM chit_header
-      WHERE sender_entity_id = $1
-        AND sent_at >= date_trunc('day', now() AT TIME ZONE 'UTC')`, [entityId]));
-  return rows[0].n;
+  const { rows } = await withEntity(entityId, (c) => c.query(CHITS_TODAY_SQL, [entityId]));
+  return rows[0] ? rows[0].n : 0;   /* no row is no chits, never a throw */
 }
 
 // ── GET /api/governance/entities/:id — read-only view, no PII ──
@@ -528,6 +529,8 @@ module.exports = router;
 module.exports.assertChitAllowed = assertChitAllowed;
 module.exports.assertPublicAllowed = assertPublicAllowed;
 module.exports.loadActiveConstitution = loadActiveConstitution;
+module.exports.CHITS_TODAY_SQL = CHITS_TODAY_SQL;
+module.exports.countChitsToday = countChitsToday;   /* SET-35: the Plan & usage card counts today's chits with the quota's own counter, never a second one */
 
 /**
  * ── SUPPLIER READINESS ACCEPTANCE (b177) ────────────────────────────────────────────────────────────────────

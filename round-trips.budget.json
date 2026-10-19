@@ -848,6 +848,14 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/facts/connectors": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/facts/counters": {
       "file": "facts.js",
       "trips": 1,
@@ -868,6 +876,14 @@
       "file": "facts.js",
       "trips": 4,
       "wire": 9,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/governance": {
+      "file": "facts.js",
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 200,
       "extra": true
@@ -911,6 +927,14 @@
       "file": "facts.js",
       "trips": 1,
       "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/facts/plan": {
+      "file": "facts.js",
+      "trips": 2,
+      "wire": 2,
       "fired": true,
       "status": 200,
       "extra": true

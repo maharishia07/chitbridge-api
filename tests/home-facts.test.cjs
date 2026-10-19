@@ -72,6 +72,13 @@ function answer(text, params) {
       counters: { C1: { id: 'C1', held_by: 'k1' }, C2: { id: 'C2', held_by: 'k2' } },
       keys: [{ jti: 'k1', scopes: ['till'], till: { id: 'C1', closed_at: F.allShut ? SHUT_AT : null } }, { jti: 'k2', scopes: ['till'], till: { id: 'C2', closed_at: F.c2open ? null : '2026-10-01T10:00:00Z' } }] }] };
   }
+  /* SET-35: the connectors / governance / plan cards' reads */
+  if (/connector_type IS NOT NULL/.test(sql)) return { rows: F.connectors ? [
+    { identity_id: 'k1', display_name: 'Tally on OFFICE-PC', site: 'OFFICE-PC', last_seen: new Date(Date.now() - 60000).toISOString(), connector_type: 'erp', connector_config: { kit_id: 'tally@OFFICE-PC', adapter: 'tally' }, status: 'active' },
+    { identity_id: 'k2', display_name: 'CSV folder', site: 'BACK-PC', last_seen: new Date(Date.now() - 3 * DAYS).toISOString(), connector_type: 'erp', connector_config: { kit_id: 'csv@BACK-PC', adapter: 'csv' }, status: 'active' }] : [] };
+  if (/SELECT plan FROM identities/.test(sql)) return { rows: F.plan === null ? [] : [{ plan: F.plan || 'free' }] };
+  if (/FROM platform_constitution pc/.test(sql)) return { rows: F.noMenu ? [] : [{ version: 2, params: {}, plan_menu: { free: { max_entities: 5, chits_per_day: 10, max_networks: 1, public_facing: false } }, root_id: 'r1' }] };
+  if (/count\(\*\)::int AS n FROM chit_header/.test(sql)) return { rows: [{ n: F.chitsToday == null ? 4 : F.chitsToday }] };
   if (/can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: params[0] === 'a2' }] };
   if (/FROM books_setting/.test(sql)) return { rows: [{ entity_id: 'e1', enabled: F.booksOn, country: 'IN', last_check: { at: '2026-10-06T21:00:00Z', ok: true }, terms: F.terms || null }] };
   /* T3-P1-MONEY: the cheques held (books-store.cheques) — a post-dated one for tomorrow, one overdue for deposit, one already deposited, one written OUT */
@@ -204,6 +211,31 @@ const get = (port, p) => new Promise((ok) => {
   t('counters: till keys are counters, not "keys for other systems" - no keys line', r.json.lines.length, 1);
   t('counters: figures carry the raw numbers', r.json.figures, { counters: 2, counters_open: 1, keys: 0 });
   t('counters: at most 1 trip', r.trips <= 1, true);
+
+  /* ── SET-35: connectors · governance · plan (the CB Settings doors) ── */
+  r = await g('connectors');
+  t('connectors: none checked in says so in words, state not_started', [r.json.lines, r.json.state], [[{ text: 'No connector has checked in', value: 0 }], 'not_started']);
+  F.connectors = true; r = await g('connectors');
+  t('connectors: the count + how many are live, then the most recent with {when}', [r.json.lines[0].text, r.json.lines[1].text, typeof r.json.lines[1].at], ['2 connectors · 1 live', 'Tally on OFFICE-PC seen {when}', 'string']);
+  t('connectors: figures + one trip (lib/connector-rows, the status route own statement)', [r.json.figures, r.trips], [{ connectors: 2, live: 1 }, 1]);
+  F.connectors = false;
+  r = await g('governance');
+  t('governance: nothing set away from the default says so', r.json.lines, [{ text: 'Every rule at its default', value: 0 }]);
+  const P = require(API + '/lib/policy'); const was = P.get;
+  P.get = async () => Object.assign(P.defaults(), { trade_side: 'receive', tol_rate_bp: 25 });
+  r = await g('governance');
+  t('governance: two rules set by the shop, counted against lib/policy.defaults', [r.json.lines[0], r.json.figures.changed], [{ text: '2 rules set by you', value: 2 }, 2]);
+  P.get = was;
+  r = await g('plan');
+  t('plan: the plan + the constitution limit + today chits (the quota own counter)', r.json.lines.map((l) => l.text), ['Free plan', '4 chits today of 10']);
+  t('plan: figures carry the declared limits and the use', [r.json.figures.plan, r.json.figures.limits.chits_per_day, r.json.figures.used], ['free', 10, { chits_today: 4 }]);
+  F.chitsToday = 10; r = await g('plan');
+  t('plan: at the limit the line is marked dn', [r.json.lines[1].tone, r.json.state], ['dn', 'needs_you']);
+  F.chitsToday = null; F.plan = 'gold'; r = await g('plan');
+  t('plan: a plan the constitution does not declare says so in words - never 0, never unlimited', r.json.lines.map((l) => l.text), ['Gold plan', 'Limits not declared for this plan']);
+  F.plan = null; r = await g('plan');
+  t('plan: no plan row says so', r.json.lines[0].text, 'No plan recorded');
+  F.plan = undefined;
 
   /* orders (M145): a live door with its count - one read, asked for orders that came to the shop, counted by lib/measure's OPEN set */
   r = await g('orders');

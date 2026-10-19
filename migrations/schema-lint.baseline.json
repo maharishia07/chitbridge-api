@@ -312,7 +312,6 @@
   "000_baseline.sql|R14|cb_task.from_field_json_data",
   "000_baseline.sql|R14|cb_task.to_field_json_data",
   "000_baseline.sql|R14|platform_constitution.params",
-  "000_baseline.sql|R14|platform_constitution.plan_menu",
   "000_baseline.sql|R16|assist_qa",
   "000_baseline.sql|R16|blueprints",
   "000_baseline.sql|R16|catalogue_items",

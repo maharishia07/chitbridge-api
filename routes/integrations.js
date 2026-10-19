@@ -227,11 +227,8 @@ router.get('/download/:id', authIfOffered, async (req, res) => {
   res.end(buf);
 });
 
-const { health } = require('./connectors');   /* ⭐ the one health(last_seen) — the co-assist rail's (T2-HONEST) */
-const KIT_ROWS = `SELECT identity_id, display_name, site, last_seen, connector_type, connector_config, status, created_at
-                    FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND status = 'active'`;
-function rowOut(a) { const c = a.connector_config || {}; return { id: c.kit_id || a.identity_id, actor_id: a.identity_id, name: a.display_name, adapter: c.adapter || (a.connector_type === 'erp' ? 'erp' : a.connector_type), host: a.site || '', version: c.version || '',
-  key_jti: c.key_jti || null, last_seen: a.last_seen, health: health(a.last_seen), source: c.source || null, counters: c.counters || {}, note: c.note || '', kit: !!c.kit, enrol: c.enrol || null }; }
+/* the checked-in connectors: ONE statement and row shape — lib/connector-rows.js (SET-35: the Home card reads it too); health stays routes/connectors' */
+const { KIT_ROWS, rowOut, connectorsOf } = require('../lib/connector-rows');
 
 router.post('/heartbeat', auth, auth.requireScope('connector'), async (req, res) => {
   try {
@@ -385,10 +382,6 @@ const STREAM_LIST = [
   { id: 'receipt',  label: 'Receipt',  dir: 'out', what: 'a payment you marked becomes a receipt against the invoice' },
   { id: 'party',    label: 'Parties',  dir: 'out', what: 'a counterparty becomes a customer or supplier record' },
 ];
-async function connectorsOf(entity_id) {
-  const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [entity_id]);
-  return r.rows.map(rowOut);
-}
 router.get('/streams', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
