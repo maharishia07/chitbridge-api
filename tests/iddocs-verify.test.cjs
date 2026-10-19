@@ -1,4 +1,5 @@
 'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 /**
  * iddocs-verify.test.cjs — M18: a phone / e-mail identity document is verified by a code.
  * Invariant: an unverified contact is never used for recovery. Senders are stubbed — no DB, no network.
@@ -84,8 +85,8 @@ it('RECOVERY INVARIANT: only the document route and the verified helper read ide
 });
 it('route wiring: GET exposes verified (status + stamp), never selects verification_ref; PUT clears verification; both routes behind auth', () => {
   const s = read('routes/identity-docs.js');
-  const get = s.slice(s.indexOf("router.get('/documents'"), s.indexOf('async function resolveSubject'));
-  assert(/verified: d\.status === 'verified' && !!d\.verified_at/.test(get)); assert(!/SELECT[^`]*verification_ref/.test(get));
+  const get = s.slice(routeAt(s, 'get', '/documents'), s.indexOf('async function resolveSubject'));
+  assert(/verified: (\w+)\.status === 'verified' && !!\1\.verified_at/.test(get)); assert(!/SELECT[^`]*verification_ref/.test(get));
   assert(/verified_at = NULL, verified_by = NULL, verification_ref = NULL/.test(s), 'changing the value clears the verification');
   assert(/router\.post\('\/documents\/:scheme\/code', auth/.test(s) && /router\.post\('\/documents\/:scheme\/verify', auth/.test(s));
 });

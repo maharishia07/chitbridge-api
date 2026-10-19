@@ -269,7 +269,7 @@ const tally = {};
   t('…a viewer stays refused by the rail (level wins over everything)', RA.forBill('bill_received', null, { accept: { ok: false, why: 'read_only' } }).accept.why === 'read_only');
   const task = { accept: { ok: true } };
   t('not a bill (a task, an order, a bill I issued) → the rail\'s answer, the same object', RA.forBill('bill_issued', gap, task) === task && RA.forBill(null, gap, task) === task);
-  t('the chit read composes it (routes/chits.js: railActions.forBill over docOf + books_wait)', /railActions\.forBill\(_doc, bundle\.books_wait,/.test(SRC) && /doc: _doc,/.test(SRC) && /books_wait: bundle\.books_wait \|\| null/.test(SRC));
+  t('the chit read composes it (routes/chits.js: railActions.forBill over docOf + books_wait)', /railActions\.forBill\(\s*_doc,\s*bundle\.books_wait,/.test(SRC) && /doc: _doc,/.test(SRC) && /books_wait: bundle\.books_wait \|\| null/.test(SRC));
 
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');

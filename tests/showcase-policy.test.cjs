@@ -19,6 +19,6 @@ ok('every registered template is accepted', reg.every((n) => policy.coerce('show
 ok('an unregistered or junk template is refused', policy.coerce('showcase_template', 'showcase.x.y@1.0') === undefined && policy.coerce('showcase_template', 'chit.base.detail@1.0') === undefined && policy.coerce('showcase_template', { a: 1 }) === undefined);
 ok('sections: a real subset passes, junk is dropped, [] and non-arrays refused', JSON.stringify(policy.coerce('showcase_sections', ['strip', 'nope', 'menu'])) === '["strip","menu"]' && policy.coerce('showcase_sections', []) === undefined && policy.coerce('showcase_sections', 'strip') === undefined);
 const view = fs.readFileSync(path.join(__dirname, '..', 'lib', 'catalogue-view.js'), 'utf8');
-ok('the public view carries shop.showcase from entityFlags (already read)', /showcase: \{ template: \(entityFlags && entityFlags\.showcase_template\)/.test(view));
+ok('the public view carries shop.showcase from entityFlags (already read)', /showcase: \{\s*template: \(entityFlags && entityFlags\.showcase_template\)/.test(view));
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

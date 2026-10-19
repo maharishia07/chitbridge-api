@@ -1,4 +1,5 @@
 'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 /**
  * till-t2a.test.cjs - ROUND T2a (walk 2026-10-10, M126 M127 M128 M129 M130 M84b M131), measured against the page and the route.
  * No DB, no network, no browser: the page's own functions are lifted out of till.html and run; the route is read.
@@ -63,7 +64,7 @@ ok('/api/till/tasks says how an online order was placed (orderOf), from summary_
   assert.strictEqual(orderOf({ order_details: { channel: 'online', fulfilment: 'delivery', address: 'Anna Nagar' } }).fulfilment, 'delivery');
   assert.strictEqual(orderOf({ order_details: { channel: 'online', fulfilment: 'pickup' } }).fulfilment, 'pickup');
   assert.strictEqual(orderOf({ order_details: { channel: 'whatsapp' } }), null);
-  assert(fs.readFileSync(path.join(API, 'lib', 'open-orders.js'), 'utf8').includes('order: orderOf(h.summary_json), lines'));
+  assert(/order: orderOf\(h\.summary_json\),\s*lines/.test(fs.readFileSync(path.join(API, 'lib', 'open-orders.js'), 'utf8')));
 });
 
 console.log('- M127: the mode menu');
@@ -95,7 +96,7 @@ ok('the current mode is a named pill; one tap back to Sell; F10 and F8 work in e
 });
 ok('the snapshot says whether the shop holds stock from its OWN DATA, never its trade: a hotel with a stock-tracked packed product holds stock; a greengrocer with none does not', async () => {
   assert(!/SERVES_RE|laundry/.test(ROUTE), 'no sector-word list');
-  const src = ROUTE.slice(ROUTE.indexOf('async function holdsStockOf('), ROUTE.indexOf("router.get('/snapshot'"));
+  const src = ROUTE.slice(ROUTE.indexOf('async function holdsStockOf('), routeAt(ROUTE, 'get', '/snapshot'));
   const mk = (db, hasTable) => new Function('require', 'withEntity', src + '; return holdsStockOf;')(
     () => ({ hasTable: async () => hasTable }), (id, fn) => fn(db))('e1');
   /* a fake database that evaluates the two signals the query asks about */
@@ -112,8 +113,8 @@ ok('the snapshot says whether the shop holds stock from its OWN DATA, never its 
 
 console.log('- M130: no 403 on a normal load');
 ok('GET /quick-keys/hidden answers an empty list to a login that holds no counter', () => {
-  const at = ROUTE.indexOf("router.get('/quick-keys/hidden'");
-  const body = ROUTE.slice(at, ROUTE.indexOf("router.post('/quick-keys/hide'", at));
+  const at = routeAt(ROUTE, 'get', '/quick-keys/hidden');
+  const body = ROUTE.slice(at, routeAt(ROUTE, 'post', '/quick-keys/hide'));
   assert(body.includes("if (!counter_id) return res.json({ hidden: [] });"));
   assert(!body.includes('status(403)'));
 });

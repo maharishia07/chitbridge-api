@@ -54,7 +54,7 @@ const none = (list, why) => assert.deepStrictEqual(list, [], why + '\n      at: 
   await it('CAT-W1: the import writes its rows in ONE transaction (no withEntity per row)', () => {
     const src = CODE.find((c) => c.rel === 'routes/products.js').src;
     assert.ok(/catwrite\.patchItems\(db, entity_id, updates\)/.test(src) && /catwrite\.insertStamped\(db, entity_id, sid, inserts\)/.test(src), 'the import calls the one writer once');
-    const loop = src.slice(src.indexOf('const outcome = [], updates = [], inserts = [];'), src.indexOf('if (updates.length || inserts.length)'));
+    const loop = src.slice(src.search(/const outcome = \[\],\s*updates = \[\],\s*inserts = \[\];/), src.indexOf('if (updates.length || inserts.length)'));
     assert.ok(loop.length > 100 && !/withEntity\(/.test(loop), 'no withEntity inside the per-line loop');
   });
   await it('TA1: no write of current_task_count outside lib/assign-chit.js', () =>

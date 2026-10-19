@@ -57,7 +57,7 @@ const t = (name, ok, extra) => { if (ok) { pass++; console.log('  ok  ' + name);
 /* ── the BEFORE route: today's file with `auth,` moved back behind the validators (the order main had) ───────── */
 const SRC = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
 const nl = SRC.includes('\r\n') ? '\r\n' : '\n';
-const head = SRC.indexOf("router.post('/send'," + nl);
+const head = SRC.search(/router\.post\(\s*'\/send',\r?\n/); /* iter1: the formatter moved the path onto its own line */
 const firstAuth = SRC.indexOf(nl + '  auth,' + nl + '  [' + nl, head);
 const tail = SRC.indexOf(nl + '  ],' + nl + '  validate,' + nl, head);
 t('the /send route today puts auth FIRST — ahead of the validator chain', head > 0 && firstAuth > head && firstAuth < tail);

@@ -117,8 +117,8 @@ it('⭐⭐ a brand\'s offers say whether its stores have them — unreleased, re
 
 it('⚠️ the definitions list stamps them in the SAME message as the list (no extra trip)', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'definitions.js'), 'utf8');
-  assert.ok(/at\.net = stmts\.push\(/.test(src), 'the release state is not read in the batch');
-  assert.ok(/stampReleases\(rows, res\[at\.net\]/.test(src), 'the list is not stamped');
+  assert.ok(/at\.net =\s*stmts\.push\(/.test(src), 'the release state is not read in the batch');
+  assert.ok(/stampReleases\(\s*rows,\s*res\[at\.net\]/.test(src), 'the list is not stamped');
 });
 
 (async () => {

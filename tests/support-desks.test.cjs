@@ -19,6 +19,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 
 const R = (p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
 const raise = R('lib/raiseticket.js');
@@ -73,7 +74,7 @@ ok('the destination is the routed team, else the desk itself',
 
 ok('same entity both ends = ONE copy, Task only',
   /const isSelf = String\(to\) === String\(from\.entity_id\)/.test(raise)
-    && /copies = isSelf \? \[received\]/.test(raise),
+    && /copies = isSelf\s*\?\s*\[received\]/.test(raise),
   'a "sent" copy to yourself puts your own support requests in your own Order list');
 
 /* ── THE FOLDER, WHICH BELONGS TO EXACTLY ONE ENTITY ───────────────────────────────────────────────────────── */
@@ -98,7 +99,7 @@ ok('ancestors are tried NEAREST first',
 
 ok('ONLY the destination is inherited — never the folder or the person',
   /route_to_entity_id: up\.route_to_entity_id/.test(route)
-    && /folder_id: null, assignee_actor_id: null, notify_email: null,\s*\r?\n\s*route_to_entity_id: up\./.test(route),
+    && /folder_id: null,\s*assignee_actor_id: null,\s*notify_email: null,\s*route_to_entity_id: up\./.test(route),
   'a parent’s folder id does not exist in the child, and a parent’s staff are not the child’s');
 
 ok('the walk is bounded',
@@ -106,7 +107,7 @@ ok('the walk is bounded',
 
 ok('inheritance fails open, like every other rung here',
   /* T2-HONEST: it still fails open — and now it logs the failure first (log.fellBack) */
-  /catch \((_|e)\) \{ (log\.fellBack\('[^']*', e\); )?\/\* no tree, no column, no answer/.test(route));
+  /catch \((_|e)\) \{\s*(log\.fellBack\('[^']*', e\);\s*)?\/\* no tree, no column, no answer/.test(route));
 
 ok('and it SAYS it was inherited, and from whom',
   /why: 'inherited from '/.test(route),
@@ -114,10 +115,10 @@ ok('and it SAYS it was inherited, and from whom',
 
 /* ── THE WIRING, END TO END ────────────────────────────────────────────────────────────────────────────────── */
 ok('audience and counterparty reach raiseticket through supportcopy',
-  /audience: origin\.audience, to_bridge_id: origin\.to_bridge_id/.test(copy));
+  /audience: origin\.audience,\s*to_bridge_id: origin\.to_bridge_id/.test(copy));
 
 ok('both doors — incidents and requirements — pass them on',
-  (test.match(/audience: b\.audience, to_bridge_id: b\.to_bridge_id/g) || []).length === 2,
+  (test.match(/audience: b\.audience,\s*to_bridge_id: b\.to_bridge_id/g) || []).length === 2,
   'one door wired and the other not is the silence this codebase keeps producing');
 
 ok('the answer names the desk it used',
@@ -186,11 +187,11 @@ if (web) {
 const cat = R('routes/catalogue.js');
 
 ok('a storefront buyer has a door at all',
-  /router\.post\('\/:bridge_id\/support'/.test(cat) && /router\.get\('\/:bridge_id\/support\/preview'/.test(cat));
+  routeAt(cat, 'post', '/:bridge_id/support') >= 0 && routeAt(cat, 'get', '/:bridge_id/support/preview') >= 0);
 
 ok('it reuses the ORDER path’s identity, not a second anonymous sender',
-  /crHandle\(c0\.channel, c0\.raw, entity\)/.test(cat.split("router.post('/:bridge_id/support'")[1] || '')
-    && /verifyOtp\(query, c, req\.body\.otp[,)]/.test(cat.split("router.post('/:bridge_id/support'")[1] || ''),
+  /crHandle\(c0\.channel, c0\.raw, entity\)/.test(cat.slice(routeAt(cat, 'post', '/:bridge_id/support') + 1))
+    && /verifyOtp\(query, c, req\.body\.otp[,)]/.test(cat.slice(routeAt(cat, 'post', '/:bridge_id/support') + 1)),
   'a second mechanism for who a shopper is ends up with two different answers');
 
 ok('the code is SPENT, so one code is one ticket',
@@ -202,12 +203,12 @@ ok('the code is SPENT, so one code is one ticket',
 /* ⚠️ THE RESOLVED SHOP'S OWN BRIDGE ID, not the URL param — the link may carry a handle, and resolveEntity has
    already turned it into the real entity by this point. Still never a bridge id from the request body. */
 ok('it raises with audience them, addressed to the RESOLVED shop',
-  /audience: 'them', to_bridge_id: entity\.bridge_id/.test(cat)
+  /audience: 'them',\s*to_bridge_id: entity\.bridge_id/.test(cat)
     && !/to_bridge_id: (req\.body|b)\./.test(cat),
   'the shop is the one the buyer is standing in front of — never one named in the body');
 
 ok('a closed shop can actually be told — support has its own code step',
-  /router\.post\('\/:bridge_id\/support\/start'/.test(cat),
+  routeAt(cat, 'post', '/:bridge_id/support/start') >= 0,
   '/order/start 403s a closed shop, so the case the support path carefully allows was unreachable at the '
   + 'first button, and the refusal talked about orders to somebody who was not ordering');
 

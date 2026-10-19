@@ -1,19 +1,18 @@
 {
  "_about": "lint ratchet (MNT-1): eslint warnings per own-code file, 18 Oct = the baseline. A file may have FEWER warnings than its row, never more. Warn-only: no CI step reads this yet. Lower with `node tools/lint-ratchet.cjs --write`.",
  "_totals": {
-  "files": 429,
-  "eslintWarnings": 256,
+  "files": 430,
+  "eslintWarnings": 386,
   "parseErrors": 1,
   "prettierFail": 424,
-  "prettierChecked": 424
+  "prettierChecked": 425
  },
  "_rules": {
   "no-redeclare": 56,
   "no-unused-vars": 17,
-  "no-shadow": 89,
+  "no-shadow": 220,
   "no-useless-escape": 10,
   "no-control-regex": 5,
-  "no-extra-boolean-cast": 1,
   "no-empty": 77,
   "no-dupe-keys": 1
  },
@@ -194,6 +193,10 @@
   "prettierOk": false
  },
  "lib/conformance.js": {
+  "warnings": 0,
+  "prettierOk": false
+ },
+ "lib/connector-rows.js": {
   "warnings": 0,
   "prettierOk": false
  },
@@ -387,7 +390,7 @@
  },
  "lib/identity.js": {
   "warnings": 1,
-  "prettierOk": false
+  "prettierOk": true
  },
  "lib/impact.js": {
   "warnings": 0,
@@ -454,7 +457,7 @@
   "prettierOk": false
  },
  "lib/match.js": {
-  "warnings": 1,
+  "warnings": 0,
   "prettierOk": false
  },
  "lib/measure.js": {
@@ -630,7 +633,7 @@
   "prettierOk": false
  },
  "lib/readiness.js": {
-  "warnings": 3,
+  "warnings": 2,
   "prettierOk": false
  },
  "lib/reference.js": {
@@ -1030,7 +1033,7 @@
   "prettierOk": false
  },
  "routes/network-design.js": {
-  "warnings": 4,
+  "warnings": 2,
   "prettierOk": false
  },
  "routes/network-offers.js": {

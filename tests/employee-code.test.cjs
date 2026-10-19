@@ -93,7 +93,8 @@ it('source guard: all four code-issuing routes use employee-code; no 7-day code;
   const src = read('routes', 'actors.js');
   for (const fn of ['mint', 'refusal', 'deliver']) assert.strictEqual((src.match(new RegExp('empCode\\.' + fn + '\\(', 'g')) || []).length, 4, fn);
   assert(!/7 \* 24 \* 60 \* 60 \* 1000/.test(src), 'a 7-day code is still issued');
-  assert(!/^\s+otp,$/m.test(src), 'a bare `otp,` is still in a response');
+  /* iter1: the formatter puts each SQL parameter on its own line, so `otp,` followed by `otp_expires,` is the INSERT's parameter list, not a response */
+  assert(!/^\s+otp,\r?\n(?!\s+otp_expires,)/m.test(src), 'a bare `otp,` is still in a response');
   const li = src.split('\n').filter((l) => /login_instruction:/.test(l)).join('\n');
   assert(li && !/\botp\b|OTP:/.test(li), 'SEC2: login_instruction prints the code');
 });

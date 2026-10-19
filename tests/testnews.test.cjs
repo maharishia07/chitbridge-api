@@ -106,7 +106,7 @@ ok((src.match(/_raiser: ru\.raised_by_id \|\| row\.created_by \|\| null/g) || []
   'and both PATCH handlers fall back the same way, or the return leg on an older incident is owed to nobody');
 ok(/SELECT d\.definition_id, d\.name, d\.current_version/.test(src),
   'the PATCH handlers read d.name — a notification that names nothing cannot be acted on');
-ok(/delete out\._ref; delete out\._raiser/.test(src),
+ok(/delete out\._ref;\s*delete out\._raiser/.test(src),
   'and the carrier fields are stripped before the reply: the client is answered about the incident');
 
 console.log('\n' + (bad ? '✗ ' + bad + ' failure(s)' : '✓ the loop closes, on the right person') + '\n');

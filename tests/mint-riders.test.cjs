@@ -90,11 +90,17 @@ for (const f of files) {
      * writes one key per line, and nesting deeper than that is a rider's own shape, not a rider.
      */
     const keys = [];
-    for (const km of obj.match(/^\s{0,14}([a-z_][a-z0-9_]*)\s*:/gm) || []) {
-      keys.push(km.trim().replace(/\s*:$/, ''));
-    }
-    for (const km of obj.match(/^\s{0,14}([a-z_][a-z0-9_]*)\s*,\s*$/gm) || []) {
-      keys.push(km.trim().replace(/,$/, ''));
+    /* iter1: by BRACE DEPTH, not by indentation — the formatter indents nested literals into the old 14-space window, so a key counts only on a line that starts at depth 1 */
+    let level = 0;
+    for (const line of obj.split(/\r?\n/)) {
+      if (level === 1) {
+        const key = /^\s*([a-z_][a-z0-9_]*)\s*(:|,\s*$)/.exec(line);
+        if (key) keys.push(key[1]);
+      }
+      for (const ch of line.replace(/'[^']*'|"[^"]*"|`[^`]*`/g, '')) {
+        if (ch === '{' || ch === '[' || ch === '(') level++;
+        else if (ch === '}' || ch === ']' || ch === ')') level--;
+      }
     }
     for (const k of new Set(keys)) {
       if (fixed.has(k) || riders.has(k)) continue;
