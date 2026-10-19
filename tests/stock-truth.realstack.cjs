@@ -17,24 +17,9 @@
  * Run: node tests/stock-truth.realstack.cjs        (API_BASE / STOCK_DB override the defaults)
  * CARD 13-inventory-stock-and-traceability/on-hand-and-movements
  */
-const API = (process.env.API_BASE || 'http://127.0.0.1:3100').replace(/\/$/, '');
-const DB = process.env.STOCK_DB || 'postgres://postgres:cblocal@127.0.0.1:55432/cb_local';
-if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(API)) { console.error('REFUSED: local api only, not ' + API); process.exit(3); }
-if (!/@(127\.0\.0\.1|localhost):55432\//.test(DB)) { console.error('REFUSED: local database only'); process.exit(3); }
-
 const { Client } = require('pg');
-const ENTITY_OTP = '123456', CUSTOMER_OTP = '123123';
+const { API, DB, ENTITY_OTP, CUSTOMER_OTP, results, j, ok, pause, kase, expect, near, line, receipt, bill, creditNote } = require('./lib/truth-harness.cjs');   /* K-TRUTH-1: the one shared harness */
 const RUN = 'st' + (Date.now() % 1e10).toString(36);   /* a User ID is at most 20 characters */
-const results = [];
-
-/* ── the doors (the seed's own j()) ── */
-async function j(path, { method = 'GET', token, body } = {}) {
-  const r = await fetch(API + path, { method, headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}), body: body ? JSON.stringify(body) : undefined });
-  let b = null; try { b = await r.json(); } catch (_) { /* no body */ }
-  return { status: r.status, b: b || {} };
-}
-function ok(reply, what) { if (reply.status >= 300) throw new Error(what + ': HTTP ' + reply.status + ' ' + JSON.stringify(reply.b).slice(0, 240)); return reply; }
-const pause = (ms) => new Promise((done) => setTimeout(done, ms));
 
 /* ── the log and the cache, read-only ── */
 let pg = null, SHOP = null;
@@ -55,40 +40,12 @@ async function settle(item_id, n, ms = 4000) {
 }
 
 /* ── the chits a counter and goods-in send (shapes: seed-local demoBillChit / demoReceiptChit; till.html chitOfCN / chitOfDoc) ── */
-const line = (p, qty, unit, price) => ({ particulars: p.name, quantity: qty, unit: unit || p.unit, price, total: qty * price });
-function receipt(no, rows, at) {
-  return { recipients: [{ self: true, name: 'self' }], purpose: 'receipt', subject: 'Goods received ' + no, manual_subject: 'Goods received ' + no, client_ref: no,
-    business_json: { doc: 'receipt', doc_no: no, doc_at: at || new Date().toISOString(), party: { name: 'Stock truth supplier' } },
-    line_items: rows.map(([p, qty, cost, unit]) => Object.assign(line(p, qty, unit, cost), { item_data: { item_id: p.id } })) };
-}
-function bill(no, rows, billedAt) {
-  const total = rows.reduce((a, [p, qty]) => a + qty * p.price, 0);
-  return { recipients: [{ self: true, name: 'self' }], purpose: 'order', subject: 'Counter sale ' + no, manual_subject: 'Counter sale ' + no, client_ref: no,
-    business_json: { customer: { name: 'Walk-in' }, till: { id: 'C1', name: 'Counter 1', host: 'browser' }, bill_no: no, billed_at: billedAt || new Date().toISOString(),
-      payment: { mode: 'cash', paid: total, change: 0, parts: [{ how: 'cash', amount: total }] }, slip: 'cash' },
-    line_items: rows.map(([p, qty]) => Object.assign(line(p, qty, p.unit, p.price), { item_id: p.id })) };
-}
-function creditNote(no, against, rows) {
-  const total = rows.reduce((a, [p, qty]) => a + qty * p.price, 0);
-  return { recipients: [{ self: true, name: 'self' }], purpose: 'credit_note', subject: 'Credit note ' + no, manual_subject: 'Credit note ' + no, client_ref: no,
-    business_json: { customer: { name: 'Walk-in' }, till: { id: 'C1', name: 'Counter 1', host: 'browser' }, doc: 'credit_note', slip: 'credit_note', bill_no: no,
-      billed_at: new Date().toISOString(), against: { bill_no: against }, reason: 'returned', refund: { parts: [{ how: 'cash', amount: total }], total } },
-    line_items: rows.map(([p, qty]) => Object.assign(line(p, qty, p.unit, p.price), { item_id: p.id })) };
-}
 function despatch(no, orderId, rows) {
   return { recipients: [{ self: true, name: 'self' }], purpose: 'delivery_note', subject: 'Despatch ' + no, manual_subject: 'Despatch ' + no, client_ref: no,
     business_json: { doc: 'despatch', doc_no: no, doc_at: new Date().toISOString(), against: { chit_id: orderId } },
     line_items: rows.map(([p, qty]) => Object.assign(line(p, qty, p.unit, p.price), { item_data: { item_id: p.id } })) };
 }
 const send = async (body, what) => ok(await j('/api/chits/send', { method: 'POST', token: SHOP.token, body }), what).b;
-
-/* ── the case runner: an expectation that fails is recorded with what was seen ── */
-async function kase(id, title, fn, gap) {
-  try { const seen = await fn(); results.push({ id, title, pass: true, seen: seen || '', gap }); console.log('  ok   ' + id + ' ' + title); }
-  catch (e) { results.push({ id, title, pass: false, seen: e.message, gap }); console.log('  FAIL ' + id + ' ' + title + (gap ? '  [gap: ' + gap + ']' : '') + '\n         ' + e.message); }
-}
-function expect(cond, said) { if (!cond) throw new Error(said); }
-const near = (a, b) => Math.abs(Number(a) - Number(b)) < 1e-6;
 
 /* ── a fresh shop, its products and (for ST-18) a supplier on the rail ── */
 async function freshShop() {
