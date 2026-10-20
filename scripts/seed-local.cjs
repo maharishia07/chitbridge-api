@@ -5,13 +5,16 @@
  *   Mayur Restaurant — a restaurant on the storefront, 20 products (4 with photos), counters C1–C5, one staff login with a PIN,
  *   one local supplier, one customer. Everything goes through the api's own routes (no direct SQL), so the shape is whatever the
  *   routes make — nothing here can drift from them.
- *   --demo-month (opt-in, after the above): trade a month in it - country, books, costs, 40 bills, a supplier bill into stock, an open order, a task,
+ *   ⚠️ COUNTRY COMES FIRST, before any product. Since N1 (bacd8892) a new shop has no currency until it is stated, and a
+ *   priced product is refused without one ("Cannot stamp a price"). This step only ran under --demo-month, so every fresh
+ *   database failed at the first product; an old volume made before N1 hid it (NEW-MACHINE-FINDINGS A9, 2026-10-20).
+ *   --demo-month (opt-in, after the above): trade a month in it - books, costs, 40 bills, a supplier bill into stock, an open order, a task,
  *   consent, an Offer Lab draft, a Combo Lab set. Idempotent too; a step whose route refuses is skipped and listed.
  *
  * ⚠️ DEV_OTP must be armed on the server (lib/dev-otp.js: 123456 entity · 123123 customer). Refuses any api that is not on this machine.
  * Run: API_BASE=http://127.0.0.1:3100 node scripts/seed-local.cjs [--demo-month]
  * CALLED BY toolset/local-stack.sh (up); by hand before a demo (--demo-month).
- * FLOW register + sign in -> products -> counters -> staff login -> supplier -> customer -> (--demo-month) country, books, costs, bills, stock, supplier bill, order, task, consent, labs.
+ * FLOW register + sign in -> country -> products -> counters -> staff login -> supplier -> customer -> (--demo-month) books, costs, bills, stock, supplier bill, order, task, consent, labs.
  * CARD 28-platform-and-operations/local-seed
  */
 const zlib = require('zlib');
@@ -539,6 +542,7 @@ async function demoMonth({ token, bridge, ids }) {
     userId = ver.b.identity.user_id;
   step('shop ' + SHOP.name + ' · bridge ' + bridge + ' · user id ' + userId);
   must(await j('/api/entities/profile', { method: 'PATCH', token, body: { catalogue_visibility: 'public' } }), 'publish the storefront');
+  await demoSetCountry({ token }); /* before products: a price needs the shop's currency (see the header) */
 
   /* products — by name, so a re-run adds nothing */
   const have = must(await j('/api/products?limit=500', { token }), 'list products');
