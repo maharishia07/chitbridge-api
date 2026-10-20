@@ -2615,6 +2615,212 @@
    },
    "optional": []
   },
+  "GET /api/network-offers": {
+   "status": 200,
+   "example": {
+    "brand": {
+     "members": [
+      {
+       "id": "STORE",
+       "via": "joined",
+       "state": "active",
+       "edge_id": "e1",
+       "asked_by": "store",
+       "node_id": "n-s",
+       "parent_node": "n-b",
+       "name": "Shop One",
+       "may": {
+        "request": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Already in this network, or already asked."
+        },
+        "approve": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Nothing is waiting for an answer."
+        },
+        "decline": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Nothing is waiting for an answer."
+        },
+        "suspend": {
+         "ok": true,
+         "code": null,
+         "why": null
+        },
+        "resume": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Only a suspended member can be resumed."
+        },
+        "disconnect": {
+         "ok": true,
+         "code": null,
+         "why": null
+        }
+       }
+      }
+     ],
+     "is_brand": false,
+     "bridge_id": "shop.cb",
+     "root_bridge_id": "brand.cb",
+     "policy": "opt_in",
+     "stores": 0,
+     "offers": [
+      {
+       "id": "OFFER",
+       "name": "Tea Tuesday",
+       "kind": "discount",
+       "status": "live",
+       "version": 1,
+       "released": {
+        "version": 1,
+        "at": "TS",
+        "until": null,
+        "released_at": "TS"
+       },
+       "changed": false
+      }
+     ],
+     "catalogue": [
+      {
+       "source_key": "src1",
+       "title": "Brand Co",
+       "items": 1,
+       "changes": [
+        {
+         "kind": "changed",
+         "name": "Tea",
+         "fields": [
+          {
+           "field": "unit",
+           "from": null,
+           "to": "piece"
+          }
+         ]
+        }
+       ],
+       "candidates": [],
+       "missing": [],
+       "published": [
+        "Tea"
+       ],
+       "stores": [
+        {
+         "id": "STORE",
+         "name": "Shop One"
+        }
+       ],
+       "withdrawn_at": {},
+       "pending": null,
+       "log": [
+        {
+         "id": "L1",
+         "source_key": "src1",
+         "applied_at": "TS",
+         "changes": [
+          {
+           "name": "Tea",
+           "kind": "changed",
+           "fields": [
+            {
+             "field": "price",
+             "from": 90,
+             "to": 100
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    "store": {
+     "networks": [
+      {
+       "brand_id": "BRAND",
+       "brand_name": "Brand Co",
+       "policy": "opt_out",
+       "brand_bridge_id": "brand.cb",
+       "root_bridge_id": "brand.cb",
+       "membership": {
+        "state": "active",
+        "via": "joined",
+        "edge_id": "e1",
+        "brand_node": "n-b"
+       },
+       "may": {
+        "request": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Already in this network, or already asked."
+        },
+        "approve": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Nothing is waiting for an answer."
+        },
+        "decline": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Nothing is waiting for an answer."
+        },
+        "suspend": {
+         "ok": false,
+         "code": "NOT_ALLOWED",
+         "why": "Only the network can suspend or resume a member."
+        },
+        "resume": {
+         "ok": false,
+         "code": "BAD_STATE",
+         "why": "Only a suspended member can be resumed."
+        },
+        "disconnect": {
+         "ok": true,
+         "code": null,
+         "why": null
+        }
+       },
+       "offers": [
+        {
+         "id": "OFFER",
+         "name": "Tea Tuesday",
+         "kind": "discount",
+         "live": true,
+         "at": "TS",
+         "until": null,
+         "choice": "in",
+         "applies": true
+        }
+       ]
+      }
+     ],
+     "price_notices": [
+      {
+       "kind": "price",
+       "key": "L1|Tea",
+       "log_id": "L1",
+       "source_key": "src1",
+       "brand_id": "BRAND",
+       "brand_name": "Brand Co",
+       "name": "Tea",
+       "suggested": 100,
+       "was": 90,
+       "yours": 95,
+       "at": "TS"
+      }
+     ]
+    },
+    "may_design": {
+     "ok": true,
+     "why": null
+    }
+   },
+   "optional": []
+  },
   "GET /api/repeat": {
    "status": 200,
    "example": {

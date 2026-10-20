@@ -53,7 +53,7 @@ const SELF_TESTS = [
 ];
 console.log('\n── each rule fires on its own bad snippet, and stays quiet on the good one ──');
 for (const [rule, bad, good, header] of SELF_TESTS) {
-  if (rule === 'R17') { check('R17 a name outside bNNN_*.sql is refused', RULES.R17({}, null, { fileName: 'weird name.sql' }).length === 1 && !RULES.R17({}, null, { fileName: 'b9_x.sql' }).length); continue; }
+  if (rule === 'R17') { check('R17 a name outside bNNN_*.sql is refused', RULES.R17({}, null, { fileName: 'weird name.sql' }).length === 1 && !RULES.R17({}, null, { fileName: 'b9_x.sql' }).length); check('R17 a hand-run RUN-* file is a known name', !RULES.R17({}, null, { fileName: 'RUN-2026-10-20-0-x.sql' }).length); continue; }
   const fired = rulesFiredBy(bad), clean = rulesFiredBy(good, header);
   check(rule + ' fires on its bad snippet', fired.includes(rule), 'fired: ' + fired.join(' '));
   check(rule + ' is quiet on the good one', !clean.includes(rule), 'fired: ' + clean.join(' '));
