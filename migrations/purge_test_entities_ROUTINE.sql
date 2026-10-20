@@ -12,6 +12,9 @@
 -- A TEST entity is one the e2e suite minted, by pattern only:
 --   email  …@test.example | …@test-cb.com      user_id / display_name  e2eco-… | e2e.pool… | E2E Pool …
 -- A real business never matches these patterns. Change the pattern in ONE place: the CTE inside the function.
+-- Widened 20 Oct (DB-80): a shop whose parent is a test shop is one too (any depth), and every non-entity identity under a test
+-- shop goes with it (staff logins AND customers), after the rows that cite them. That run left 3,125 shop rows blocked by 115
+-- customers and 10 sub-shops. NOT all-or-nothing: each table's error is caught and reported (rows = -1), the rest still goes.
 --
 -- Routine: run this script whenever the list gets long, or from the editor:   SELECT * FROM purge_test_entities(false);
 -- Look first without deleting:                                                 SELECT * FROM purge_test_entities(true);
@@ -20,7 +23,7 @@
 CREATE OR REPLACE FUNCTION purge_test_entities(dry boolean DEFAULT true)
 RETURNS TABLE (what text, detail text, rows bigint)
 LANGUAGE plpgsql AS $fn$
-DECLARE t text; n bigint; ids uuid[]; pass int; progressed boolean; pending text[]; nxt text[]; r record; fk record;
+DECLARE t text; n bigint; ids uuid[]; kids uuid[]; more uuid[]; pass int; progressed boolean; pending text[]; nxt text[]; r record; fk record;
 BEGIN
   SELECT array_agg(identity_id) INTO ids FROM identities
    WHERE identity_type = 'entity'
@@ -28,6 +31,18 @@ BEGIN
         OR user_id ILIKE 'e2eco-%' OR display_name ILIKE 'e2eco-%'
         OR user_id ILIKE 'e2e.pool%' OR display_name ILIKE 'E2E Pool%' );
   IF ids IS NULL THEN what := 'nothing to purge'; detail := ''; rows := 0; RETURN NEXT; RETURN; END IF;
+
+  /* a shop whose parent is a test shop is test data too, at any depth (20 Oct: 10 sub-shops kept their parents alive) */
+  LOOP
+    SELECT array_agg(identity_id) INTO more FROM identities
+     WHERE identity_type = 'entity' AND parent_entity_id = ANY(ids) AND NOT identity_id = ANY(ids);
+    EXIT WHEN more IS NULL;
+    ids := ids || more;
+  END LOOP;
+  /* the test shops' own people: staff logins (actor) AND customers (20 Oct: 115 "Net Buyer" customers blocked the delete) */
+  SELECT array_agg(identity_id) INTO kids FROM identities
+   WHERE identity_type <> 'entity' AND parent_entity_id = ANY(ids);
+  kids := coalesce(kids, ARRAY[]::uuid[]);
 
   /* the entities themselves, named — so the report says WHO went, not only how many */
   FOR r IN SELECT display_name, email, user_id FROM identities WHERE identity_id = ANY(ids) ORDER BY created_at LOOP
@@ -75,8 +90,7 @@ BEGIN
       EXCEPTION WHEN OTHERS THEN what := 'skipped'; detail := t || ' (' || SQLSTATE || ')'; rows := -1; RETURN NEXT;
       END;
     END LOOP;
-    SELECT count(*) INTO n FROM identities WHERE identity_type = 'actor' AND parent_entity_id = ANY(ids);
-    what := 'would remove'; detail := 'identities (actors of test entities)'; rows := n; RETURN NEXT;
+    what := 'would remove'; detail := 'identities (people and customers of test entities)'; rows := coalesce(array_length(kids, 1), 0); RETURN NEXT;
     what := 'would remove'; detail := 'identities (test entities)'; rows := array_length(ids, 1); RETURN NEXT;
     RETURN;
   END IF;
@@ -112,16 +126,16 @@ BEGIN
      WHERE k.contype = 'f' AND array_length(k.conkey, 1) = 1 AND nch.nspname = 'public' AND pa.relname = 'identities' AND ch.relname <> 'identities'
   LOOP
     BEGIN
-      EXECUTE format('DELETE FROM %I WHERE %I = ANY($1)', fk.child, fk.child_col) USING ids;
+      EXECUTE format('DELETE FROM %I WHERE %I = ANY($1)', fk.child, fk.child_col) USING ids || kids;
       GET DIAGNOSTICS n = ROW_COUNT;
-      IF n > 0 THEN what := 'cleared'; detail := fk.child || '.' || fk.child_col || ' (cites a test entity)'; rows := n; RETURN NEXT; END IF;
+      IF n > 0 THEN what := 'cleared'; detail := fk.child || '.' || fk.child_col || ' (cites a test entity or its people)'; rows := n; RETURN NEXT; END IF;
     EXCEPTION WHEN OTHERS THEN what := 'skipped'; detail := fk.child || '.' || fk.child_col || ' (' || SQLSTATE || ')'; rows := -1; RETURN NEXT;
     END;
   END LOOP;
   BEGIN
-    DELETE FROM identities WHERE identity_type = 'actor' AND parent_entity_id = ANY(ids);
-    GET DIAGNOSTICS n = ROW_COUNT; what := 'removed'; detail := 'identities (actors of test entities)'; rows := n; RETURN NEXT;
-  EXCEPTION WHEN OTHERS THEN what := 'still blocked'; detail := 'identities (actors): ' || SQLERRM; rows := -1; RETURN NEXT;
+    DELETE FROM identities WHERE identity_id = ANY(kids);
+    GET DIAGNOSTICS n = ROW_COUNT; what := 'removed'; detail := 'identities (people and customers of test entities)'; rows := n; RETURN NEXT;
+  EXCEPTION WHEN OTHERS THEN what := 'still blocked'; detail := 'identities (people and customers): ' || SQLERRM; rows := -1; RETURN NEXT;
   END;
   BEGIN
     DELETE FROM identities WHERE identity_id = ANY(ids);
