@@ -47,7 +47,7 @@ function get(app, route) {
   await it('server.js asks the boot preflight first, and a sealed environment aborts boot on it', async () => {
     const text = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
     assert.ok(text.indexOf('bootPreflightErrors()') > 0 && text.indexOf('bootPreflightErrors()') < text.indexOf('app.use('), 'the preflight runs before any route is mounted');
-    assert.ok(/preflight\.length\)[^\n]*process\.exit\(1\)/.test(text), 'a non-empty preflight exits');
+    assert.ok(/preflight\.length\)[\s\S]{0,300}?process\.exit\(1\)/.test(text), 'a non-empty preflight exits');
   });
   console.log('\n  ' + pass + ' passed · ' + pass + ' checks');
   setTimeout(() => process.exit(process.exitCode || 0), 100);   // the server keeps its own listener open: end the run explicitly

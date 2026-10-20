@@ -10,7 +10,7 @@ const TEST = path.join(R, 'tests', 'shop-name.test.js');
 const BREAKS = [
   ['lib/profile.js', "trade_name: me.display_name || tag.trade_name || null,", "trade_name: tag.trade_name || me.display_name || null,", 'the vault\'s name beats the profile\'s on the invoice'],
   ['lib/profile.js', "v[k] = Object.assign({}, v[k], { other: { value:", "v[k] = Object.assign({}, v[k], { other_dropped: { value:", 'the vault\'s differing value is not recorded'],
-  ['routes/integrations.js', ".replace(/\\s+/g, '').toLowerCase()", "", 'a case-only difference is reported as a mismatch'],
+  ['routes/integrations.js', "norm(tn.other.value) !== norm(tn.value)", "String(tn.other.value) !== String(tn.value)", 'a case-only difference is reported as a mismatch'],
   ['lib/profile.js', "k === 'trade_name' && v[k] && v[k].source === 'profile'", "false", 'a higher-rung vault name wins trade_name'],
 ];
 let caught = 0; const missed = [];

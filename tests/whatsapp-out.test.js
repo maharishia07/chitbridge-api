@@ -72,8 +72,8 @@ t('★★ every refusal that HAS a recipient is logged, not silently dropped', (
 t('★★ absent evidence counts as OUTSIDE the window, never inside', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'whatsapp-out.js'), 'utf8');
   const fn = src.slice(src.indexOf('async function windowOpen'), src.indexOf('async function _log'));
-  assert.match(fn, /if \(!last\) return \{ open: false/, 'no inbound history must mean CLOSED');
-  assert.match(fn, /catch \(e\) \{ return \{ open: false/, 'a failed read must mean CLOSED, never open');
+  assert.match(fn, /if \(!last\)\s*return \{ open: false/, 'no inbound history must mean CLOSED');
+  assert.match(fn, /catch \((\w+)\) \{\s*return \{ open: false/, 'a failed read must mean CLOSED, never open');
 });
 
 console.log('\nwhatsapp-out · ⚠️ it must never affect the chit');

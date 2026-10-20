@@ -25,14 +25,14 @@ const notify = async (subject, html) => {
       from: process.env.FROM_EMAIL || 'noreply@chitandbridge.com',
       to,
       subject,
-      html,
+      html
     });
   } catch (err) {
     console.error('[SIM] notify failed:', err.message);
   }
 };
 
-const esc = (s) => String(s == null ? '' : s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+const esc = (s) => String(s == null ? '' : s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
 
 // GET /api/simulator/content — everything the page renders from.
 router.get('/content', async (_req, res) => {
@@ -43,7 +43,7 @@ router.get('/content', async (_req, res) => {
       query('SELECT * FROM sim_shapes  ORDER BY id'),
       query('SELECT * FROM sim_rules   ORDER BY ord'),
       query('SELECT * FROM sim_compare ORDER BY ord'),
-      query('SELECT * FROM sim_usps    ORDER BY ord'),
+      query('SELECT * FROM sim_usps    ORDER BY ord')
     ]);
     res.json({
       layers: layers.rows,
@@ -51,7 +51,7 @@ router.get('/content', async (_req, res) => {
       shapes: shapes.rows,
       rules: rules.rows,
       compare: compare.rows,
-      usps: usps.rows,
+      usps: usps.rows
     });
   } catch (err) {
     console.error('[SIM] content error:', err.message);
@@ -63,28 +63,20 @@ router.get('/content', async (_req, res) => {
 router.post('/lead', async (req, res) => {
   try {
     const name = String(req.body.name || '').trim();
-    const email = String(req.body.email || '').trim().toLowerCase();
+    const email = String(req.body.email || '')
+      .trim()
+      .toLowerCase();
     const org = String(req.body.org || '').trim() || null;
     if (name.length < 2 || !email.includes('@')) {
       return res.status(400).json({ error: 'A name and a valid email are required.' });
     }
-    const ins = await query(
-      'INSERT INTO sim_leads (name, email, org) VALUES ($1, $2, $3) RETURNING id',
-      [name, email, org]
-    );
+    const ins = await query('INSERT INTO sim_leads (name, email, org) VALUES ($1, $2, $3) RETURNING id', [name, email, org]);
     const leadId = ins.rows[0].id;
     // S1 (reviewer 2026-07-13) — a marketing tour lead is NOT a platform credential. NEVER sign it with the identity
     // secret (JWT_SECRET) or it becomes a valid platform token. Use a SEPARATE secret so auth.js can never verify it.
     const SIM_SECRET = process.env.SIM_JWT_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + '::sim-lead-v1' : 'sim-lead-dev-only');
-    const token = jwt.sign(
-      { kind: 'sim_lead', leadId, email },
-      SIM_SECRET,
-      { expiresIn: process.env.JWT_TTL || '7d' }
-    );
-    notify(
-      `New tour lead: ${name}`,
-      `<p><b>${esc(name)}</b> opened the tour.</p><p>Email: ${esc(email)}<br>Org: ${esc(org || '—')}</p>`
-    );
+    const token = jwt.sign({ kind: 'sim_lead', leadId, email }, SIM_SECRET, { expiresIn: process.env.JWT_TTL || '7d' });
+    notify(`New tour lead: ${name}`, `<p><b>${esc(name)}</b> opened the tour.</p><p>Email: ${esc(email)}<br>Org: ${esc(org || '—')}</p>`);
     res.json({ token, leadId });
   } catch (err) {
     console.error('[SIM] lead error:', err.message);
@@ -101,10 +93,7 @@ router.post('/feedback', async (req, res) => {
     const rating = Number.isFinite(+req.body.rating) ? +req.body.rating : null;
     // leadId is a uuid from the gate; ignore anything that isn't one.
     const leadId = /^[0-9a-f-]{36}$/i.test(req.body.leadId || '') ? req.body.leadId : null;
-    await query(
-      'INSERT INTO sim_feedback (lead_id, section, rating, message) VALUES ($1, $2, $3, $4)',
-      [leadId, section, rating, message]
-    );
+    await query('INSERT INTO sim_feedback (lead_id, section, rating, message) VALUES ($1, $2, $3, $4)', [leadId, section, rating, message]);
     notify(
       `Tour feedback (${section || 'page'}${rating ? `, ${rating}★` : ''})`,
       `<p>${esc(message)}</p><p>Section: ${esc(section || '—')} · Rating: ${rating || '—'} · Lead: ${esc(leadId || '—')}</p>`

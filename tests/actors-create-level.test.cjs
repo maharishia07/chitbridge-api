@@ -13,7 +13,8 @@ const ins = /INSERT INTO identities \([\s\S]*?\)`,\s*\[[\s\S]*?\]\.concat\(_lvlC
 ok(ins && /hat, entity_kind, country, email\$\{_lvlCol \? ', access_level/.test(ins[0]) && /\$\{_lvlCol \? ',\$14/.test(ins[0]), 'the INSERT writes access_level when the column exists (pre-b173: absent) — after the e-mail ($13, SEC2)');
 const expr = /const access_level = ([^;]+);/.exec(src);
 ok(expr, 'the level is chosen in one expression');
-const pick = (body, hat) => Function('access', 'req', 'hat', 'return ' + expr[1])(access, { body }, hat);
+const hatName = /FROM_HAT\[(\w+)\]/.exec(expr[1])[1]; /* iter1: the local holding the hat was renamed by the mechanical pass, so read its name from the expression */
+const pick = (body, hat) => Function('access', 'req', hatName, 'return ' + expr[1])(access, { body }, hat);
 ok(pick({ access_level: 'viewer' }, 'view_only') === 'viewer', 'the screen\'s viewer (sent with hat view_only) is stored as viewer');
 ok(pick({}, 'view_only') === 'commenter', 'an older client sending only hat view_only gets what levelOf would have derived (commenter)');
 ok(pick({}, 'act') === 'editor' && pick({ access_level: 'bogus' }, 'act') === 'editor', 'nothing chosen: editor, as before');

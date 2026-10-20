@@ -33,35 +33,58 @@ const ADMIN = process.env.CB_ADMIN_KEY;
  */
 const RUN = String(process.pid).slice(-5);
 const WHOLESALER = 'veg-wholesaler-' + RUN + '@test-cb.com';
-const LINE = '+9190' + RUN + '90';                       // the wholesaler's own WhatsApp line
+const LINE = '+9190' + RUN + '90'; // the wholesaler's own WhatsApp line
 
 const TAG = 'W' + String(process.pid).slice(-4);
 /* Three real shops, messy prose, in their own words. The spellings, units and gaps are the point. */
 const SHOPS = [
-  { phone: '+91 90000 11111', name: 'Selvam Veg Stall', addr: '12 Ramnagar main road',
-    msg: '2 crate thakkali and 5 kg vengayam by friday ' + TAG },
-  { phone: '+919000022222',   name: 'Amma Stores',      addr: '48 Gandhi bazaar',
-    msg: 'need 25 kg tomator, 10 kg onion friday please. deliver to 90 Market street this time ' + TAG },
-  { phone: '09000033333',     name: 'Kumar Fruits',     addr: '7 Anna salai',
-    msg: 'tommotto 3 kg and orange grade 1 4 kg on friday, also 2 kg dragonfruit ' + TAG },
+  { phone: '+91 90000 11111', name: 'Selvam Veg Stall', addr: '12 Ramnagar main road', msg: '2 crate thakkali and 5 kg vengayam by friday ' + TAG },
+  {
+    phone: '+919000022222',
+    name: 'Amma Stores',
+    addr: '48 Gandhi bazaar',
+    msg: 'need 25 kg tomator, 10 kg onion friday please. deliver to 90 Market street this time ' + TAG
+  },
+  { phone: '09000033333', name: 'Kumar Fruits', addr: '7 Anna salai', msg: 'tommotto 3 kg and orange grade 1 4 kg on friday, also 2 kg dragonfruit ' + TAG }
 ];
 
 const deliver = async (from, text) => {
-  const payload = JSON.stringify({ object: 'whatsapp_business_account', entry: [{ changes: [{ value: {
-    metadata: { display_phone_number: LINE, phone_number_id: '000' },
-    contacts: [{ wa_id: String(from).replace(/\D/g, ''), profile: { name: 'shop' } }],
-    messages: [{ from: String(from).replace(/\D/g, ''), id: 'wamid.' + TAG + '.' + Math.random().toString(36).slice(2, 8),
-      type: 'text', text: { body: text } }],
-  } }] }] });
-  return j('/api/capture/webhook/whatsapp', { method: 'POST', body: payload,
-    headers: { 'X-Hub-Signature-256': 'sha256=' + crypto.createHmac('sha256', SECRET).update(payload).digest('hex') } });
+  const payload = JSON.stringify({
+    object: 'whatsapp_business_account',
+    entry: [
+      {
+        changes: [
+          {
+            value: {
+              metadata: { display_phone_number: LINE, phone_number_id: '000' },
+              contacts: [{ wa_id: String(from).replace(/\D/g, ''), profile: { name: 'shop' } }],
+              messages: [
+                { from: String(from).replace(/\D/g, ''), id: 'wamid.' + TAG + '.' + Math.random().toString(36).slice(2, 8), type: 'text', text: { body: text } }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  });
+  return j('/api/capture/webhook/whatsapp', {
+    method: 'POST',
+    body: payload,
+    headers: { 'X-Hub-Signature-256': 'sha256=' + crypto.createHmac('sha256', SECRET).update(payload).digest('hex') }
+  });
 };
 
 run('prove-wholesaler-e2e', async (t) => {
   console.log('\n  W-1 … W-11 · three shops, one wholesaler, one fulfilment date\n');
-  if (!SECRET || !ADMIN) { t.note('needs WHATSAPP_APP_SECRET / CB_ADMIN_KEY'); return; }
+  if (!SECRET || !ADMIN) {
+    t.note('needs WHATSAPP_APP_SECRET / CB_ADMIN_KEY');
+    return;
+  }
   const canary = await j('/api/capture/webhook/whatsapp', { method: 'POST', body: '{}', headers: { 'X-Hub-Signature-256': 'sha256=deadbeef' } });
-  if (canary.status !== 401) { t.ok(false, 'ABORT — server not enforcing signatures'); return; }
+  if (canary.status !== 401) {
+    t.ok(false, 'ABORT — server not enforcing signatures');
+    return;
+  }
 
   const tok = await signIn(WHOLESALER, 'Veg Wholesaler');
   if (!tok) throw new Error('could not sign in');
@@ -70,9 +93,9 @@ run('prove-wholesaler-e2e', async (t) => {
         declares crate→kg, ONION DOES NOT (that is the W-6 case). ─────────────────────────────────────────────── */
   const want = [
     { name: 'Tomato', unit: 'kg', synonyms: ['thakkali', 'tomator', 'tommotto'], conversions: { crate: 20 }, price: 30 },
-    { name: 'Onion',  unit: 'kg', synonyms: ['vengayam'], price: 40 },
+    { name: 'Onion', unit: 'kg', synonyms: ['vengayam'], price: 40 },
     { name: 'Orange', variant: 'grade 1', unit: 'kg', synonyms: ['orange'], price: 90 },
-    { name: 'Orange', variant: 'grade 2', unit: 'kg', synonyms: ['orange'], price: 60 },
+    { name: 'Orange', variant: 'grade 2', unit: 'kg', synonyms: ['orange'], price: 60 }
   ];
   const have = JSON.stringify(((await j('/api/products', { token: tok })).b || {}).items || []);
   for (const w of want) {
@@ -89,25 +112,46 @@ run('prove-wholesaler-e2e', async (t) => {
 
   /* ── bind the wholesaler's line and deliver the three messages ────────────────────────────────────────────── */
   const chl = await j('/api/channels', { token: tok });
-  const wa = ((chl.b || {}).channels || []).find((c) => c.key === 'whatsapp') || { bindings: [] };
-  let bind = (wa.bindings || []).find((b) => b.address === LINE);
-  if (!bind) { const m = await j('/api/channels', { method: 'POST', token: tok, body: { channel: 'whatsapp', address: LINE, label: 'wholesaler line' } }); bind = m.b; }
+  const wa = ((chl.b || {}).channels || []).find((item) => item.key === 'whatsapp') || { bindings: [] };
+  let bind = (wa.bindings || []).find((item) => item.address === LINE);
+  if (!bind) {
+    const m = await j('/api/channels', { method: 'POST', token: tok, body: { channel: 'whatsapp', address: LINE, label: 'wholesaler line' } });
+    bind = m.b;
+  }
   if (bind && bind.status !== 'verified') await j('/api/channels/' + bind.id + '/approve', { method: 'POST', headers: { 'x-cb-admin-key': ADMIN }, body: {} });
 
-  for (const s of SHOPS) { const r = await deliver(s.phone, s.msg); t.ok(r.b && r.b.captured >= 1, '  · ' + s.name + ' messaged', JSON.stringify(r.b)); }
+  for (const s of SHOPS) {
+    const r = await deliver(s.phone, s.msg);
+    t.ok(r.b && r.b.captured >= 1, '  · ' + s.name + ' messaged', JSON.stringify(r.b));
+  }
 
   /* ── read → raise → chit, for each (W-1) ──────────────────────────────────────────────────────────────────── */
-  const caps = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).filter((c) => (c.raw_text || '').includes(TAG));
+  const caps = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).filter((item) => (item.raw_text || '').includes(TAG));
   t.ok(caps.length === 3, 'W-1 · three messages arrived as three captures', String(caps.length));
   const chits = [];
   for (const c of caps) {
     await j('/api/capture/' + c.id + '/structure', { method: 'POST', token: tok, body: {} });
     const p = await j('/api/capture/' + c.id + '/raise', { method: 'POST', token: tok, body: {} });
-    if (p.status !== 200) { t.ok(false, 'raise failed for a capture', JSON.stringify(p.b).slice(0, 140)); continue; }
-    const sent = await j('/api/chits/send', { method: 'POST', token: tok, body: {
-      recipients: p.b.recipients, subject: p.b.subject, line_items: p.b.line_items,
-      purpose: p.b.purpose, business_json: p.b.business_json, self_copy: p.b.self_copy } });
-    if (sent.b && sent.b.chit_id) { chits.push(sent.b.chit_id); await j('/api/capture/' + c.id + '/convert', { method: 'POST', token: tok, body: { chit_id: sent.b.chit_id } }); }
+    if (p.status !== 200) {
+      t.ok(false, 'raise failed for a capture', JSON.stringify(p.b).slice(0, 140));
+      continue;
+    }
+    const sent = await j('/api/chits/send', {
+      method: 'POST',
+      token: tok,
+      body: {
+        recipients: p.b.recipients,
+        subject: p.b.subject,
+        line_items: p.b.line_items,
+        purpose: p.b.purpose,
+        business_json: p.b.business_json,
+        self_copy: p.b.self_copy
+      }
+    });
+    if (sent.b && sent.b.chit_id) {
+      chits.push(sent.b.chit_id);
+      await j('/api/capture/' + c.id + '/convert', { method: 'POST', token: tok, body: { chit_id: sent.b.chit_id } });
+    }
   }
   t.ok(chits.length === 3, '★★★ W-1 · three messages became THREE attributed chits', String(chits.length));
 
@@ -115,9 +159,11 @@ run('prove-wholesaler-e2e', async (t) => {
   const tr = require('../lib/transcribe');
   t.ok(typeof tr.transcribe === 'function' && typeof tr.isVoice === 'function', 'W-2 · the transcription seam exists');
   const noEngine = await tr.transcribe({ bytes: Buffer.from('x'), mime: 'audio/ogg' });
-  t.ok(!tr.configured() ? (noEngine.ok === false && noEngine.reason === 'no-engine') : true,
+  t.ok(
+    !tr.configured() ? noEngine.ok === false && noEngine.reason === 'no-engine' : true,
     '★★★ W-2 · with no engine it REFUSES — audio never leaves CB by falling back to a cloud API',
-    JSON.stringify(noEngine));
+    JSON.stringify(noEngine)
+  );
   t.note('W-2 transcription itself needs WHISPER_URL (self-hosted). The audio + transcript columns are live (b135).');
 
   /* ── the two outputs ──────────────────────────────────────────────────────────────────────────────────────── */
@@ -127,23 +173,50 @@ run('prove-wholesaler-e2e', async (t) => {
   /* ⚠️ THE EARLIEST date, not the last: the W-10 test deliberately adds a LATER one, and 'last' would then point at
      it. Naming which day is meant is the difference between a stable assertion and a lucky one. */
   const fri = (R.dates || []).slice().sort()[0];
-  const lines = (R.requirement || []).filter((l) => l.date === fri);
+  const lines = (R.requirement || []).filter((item) => item.date === fri);
 
   console.log('\n  ══ A · CONSOLIDATED REQUIREMENT for ' + fri + ' ══════════════════════════════════');
   lines.forEach((l) => {
-    console.log('   ' + (l.item + (l.variant ? ' ' + l.variant : '')).padEnd(22)
-      + String(l.total).padStart(6) + ' ' + (l.canonical_unit || '')
-      + '   TOTAL across ' + l.stores + ' shop(s)'
-      + (l.conversions_applied ? '   ⚙ ' + l.conversions_applied.map((c) => c.qty + ' ' + c.from_unit + ' × ' + c.factor + ' = ' + c.became + ' ' + c.to_unit).join(', ') : ''));
-    l.breakdown.forEach((s2) => console.log('       └─ ' + String(s2.store_name).padEnd(20) + String(s2.qty).padStart(5) + ' ' + (s2.unit || l.canonical_unit) + '   (asked: "' + s2.phrase + '")'));
-    if (l.unit_split) console.log('       ⚠️ NOT ADDED: ' + l.unit_split.map((u) => u.qty + ' ' + u.unit).join('  +  ') + '   — no conversion declared');
+    console.log(
+      '   ' +
+        (l.item + (l.variant ? ' ' + l.variant : '')).padEnd(22) +
+        String(l.total).padStart(6) +
+        ' ' +
+        (l.canonical_unit || '') +
+        '   TOTAL across ' +
+        l.stores +
+        ' shop(s)' +
+        (l.conversions_applied
+          ? '   ⚙ ' +
+            l.conversions_applied.map((item) => item.qty + ' ' + item.from_unit + ' × ' + item.factor + ' = ' + item.became + ' ' + item.to_unit).join(', ')
+          : '')
+    );
+    l.breakdown.forEach((item) =>
+      console.log(
+        '       └─ ' +
+          String(item.store_name).padEnd(20) +
+          String(item.qty).padStart(5) +
+          ' ' +
+          (item.unit || l.canonical_unit) +
+          '   (asked: "' +
+          item.phrase +
+          '")'
+      )
+    );
+    if (l.unit_split)
+      console.log('       ⚠️ NOT ADDED: ' + l.unit_split.map((item) => item.qty + ' ' + item.unit).join('  +  ') + '   — no conversion declared');
   });
   console.log('\n  ══ B · ATTRIBUTION ═════════════════════════════════════════════════════════════');
-  lines.forEach((l) => console.log('   ' + (l.item + (l.variant ? ' ' + l.variant : '')).padEnd(20)
-    + l.breakdown.map((b) => b.store_name + ' ' + b.qty + (b.unit ? b.unit : '')).join(' · ')));
+  lines.forEach((l) =>
+    console.log(
+      '   ' +
+        (l.item + (l.variant ? ' ' + l.variant : '')).padEnd(20) +
+        l.breakdown.map((item) => item.store_name + ' ' + item.qty + (item.unit ? item.unit : '')).join(' · ')
+    )
+  );
   console.log('\n  ══ FLAGGED — shown, never folded into a total ══════════════════════════════════');
-  ['unmatched', 'variant_unspecified', 'date_unspecified', 'unit_split'].forEach((k) => {
-    (R.flags[k] || []).forEach((f) => console.log('   ' + k.padEnd(20) + JSON.stringify(f).slice(0, 110)));
+  ['unmatched', 'variant_unspecified', 'date_unspecified', 'unit_split'].forEach((item) => {
+    (R.flags[item] || []).forEach((f) => console.log('   ' + item.padEnd(20) + JSON.stringify(f).slice(0, 110)));
   });
   console.log('');
 
@@ -152,10 +225,12 @@ run('prove-wholesaler-e2e', async (t) => {
   t.ok(!!tomato, '★★★ W-3 · thakkali + tomator + tommotto collapsed into ONE tomato line', JSON.stringify(lines.map((l) => l.item)));
   t.ok(tomato && tomato.stores === 3, 'W-3 · …and all three shops are in it', tomato && String(tomato.stores));
   /* 2 crate ×20 = 40, + 25 kg + 3 kg = 68 kg */
-  t.ok(tomato && tomato.total === 68, '★★★ W-4/W-6 · 2 crate(×20) + 25 kg + 3 kg = 68 kg — conversion applied',
-    tomato && String(tomato.total));
-  t.ok(tomato && (tomato.conversions_applied || []).length === 1,
-    '★★★ W-6 · …and the conversion is RECORDED, not silent', JSON.stringify(tomato && tomato.conversions_applied));
+  t.ok(tomato && tomato.total === 68, '★★★ W-4/W-6 · 2 crate(×20) + 25 kg + 3 kg = 68 kg — conversion applied', tomato && String(tomato.total));
+  t.ok(
+    tomato && (tomato.conversions_applied || []).length === 1,
+    '★★★ W-6 · …and the conversion is RECORDED, not silent',
+    JSON.stringify(tomato && tomato.conversions_applied)
+  );
 
   const onion = lines.find((l) => /onion/i.test(l.item));
   t.ok(onion && onion.total === 15, '★★ W-3 · vengayam + onion collapsed (5 + 10 = 15 kg)', onion && String(onion.total));
@@ -164,27 +239,46 @@ run('prove-wholesaler-e2e', async (t) => {
   t.ok(g1 && g1.total === 4, '★★★ W-9 · orange grade 1 totals on its own', g1 && String(g1.total));
   t.ok(!lines.some((l) => /orange/i.test(l.item) && !l.variant), '★★★ W-9 · no variant-less orange line was invented');
 
-  t.ok((R.flags.unmatched || []).some((f) => /dragon/i.test(f.phrase || '')),
-    '★★★ W-5 · dragonfruit is FLAGGED unmatched', JSON.stringify(R.flags.unmatched));
+  t.ok(
+    (R.flags.unmatched || []).some((item) => /dragon/i.test(item.phrase || '')),
+    '★★★ W-5 · dragonfruit is FLAGGED unmatched',
+    JSON.stringify(R.flags.unmatched)
+  );
   t.ok(!lines.some((l) => /dragon/i.test(l.item)), '★★★ W-5 · …and appears in NO total');
 
   /* W-4 arithmetically, across every line */
-  const bad = lines.filter((l) => !l.unit_split && Math.abs(l.breakdown.reduce((n, b) => n + b.qty, 0) - l.total) > 0.001
-    && !(l.conversions_applied || []).length);
-  t.ok(bad.length === 0, '★★★ W-4 · every un-converted total EQUALS the sum of its shop lines',
-    JSON.stringify(bad.map((l) => l.item)));
+  const list = lines.filter(
+    (item) =>
+      !item.unit_split &&
+      Math.abs(item.breakdown.reduce((total, entry) => total + entry.qty, 0) - item.total) > 0.001 &&
+      !(item.conversions_applied || []).length
+  );
+  t.ok(list.length === 0, '★★★ W-4 · every un-converted total EQUALS the sum of its shop lines', JSON.stringify(list.map((l) => l.item)));
 
-  t.ok(lines.every((l) => l.breakdown.every((b) => b.chit_id)), '★★ W-7 · every attribution line traces to its chit');
+  t.ok(
+    lines.every((item) => item.breakdown.every((entry) => entry.chit_id)),
+    '★★ W-7 · every attribution line traces to its chit'
+  );
 
   /* W-10 · a second date must not join the first */
   await deliver(SHOPS[0].phone, '10 kg tomato on monday ' + TAG);
-  const c2 = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((c) => /monday/i.test(c.raw_text || ''));
+  const c2 = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((item) => /monday/i.test(item.raw_text || ''));
   if (c2) {
     await j('/api/capture/' + c2.id + '/structure', { method: 'POST', token: tok, body: {} });
     const p2 = await j('/api/capture/' + c2.id + '/raise', { method: 'POST', token: tok, body: {} });
     if (p2.status === 200) {
-      const s2 = await j('/api/chits/send', { method: 'POST', token: tok, body: { recipients: p2.b.recipients, subject: p2.b.subject,
-        line_items: p2.b.line_items, purpose: p2.b.purpose, business_json: p2.b.business_json, self_copy: p2.b.self_copy } });
+      const s2 = await j('/api/chits/send', {
+        method: 'POST',
+        token: tok,
+        body: {
+          recipients: p2.b.recipients,
+          subject: p2.b.subject,
+          line_items: p2.b.line_items,
+          purpose: p2.b.purpose,
+          business_json: p2.b.business_json,
+          self_copy: p2.b.self_copy
+        }
+      });
       if (s2.b && s2.b.chit_id) await j('/api/capture/' + c2.id + '/convert', { method: 'POST', token: tok, body: { chit_id: s2.b.chit_id } });
     }
   }
@@ -192,8 +286,7 @@ run('prove-wholesaler-e2e', async (t) => {
   const dates2 = (con2.b || {}).dates || [];
   const friAfter = ((con2.b || {}).requirement || []).find((l) => l.date === fri && /tomato/i.test(l.item));
   t.ok(dates2.length >= 2, '★★★ W-10 · a second fulfilment date appears as its OWN date', JSON.stringify(dates2));
-  t.ok(friAfter && friAfter.total === 68, '★★★ W-10 · …and Friday is UNCHANGED — Monday never joined it',
-    friAfter && String(friAfter.total));
+  t.ok(friAfter && friAfter.total === 68, '★★★ W-10 · …and Friday is UNCHANGED — Monday never joined it', friAfter && String(friAfter.total));
 
   /**
    * ⚠️ W-6, THE MONEY-ERROR CASE, ON REAL DATA. The run above reported "no invented conversion: none needed" —
@@ -202,13 +295,23 @@ run('prove-wholesaler-e2e', async (t) => {
    * to be handed back. So: a shop orders onion in CRATES, for which the catalogue declares NO conversion.
    */
   await deliver(SHOPS[2].phone, '4 crate vengayam by friday ' + TAG);
-  const c3 = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((c) => /crate vengayam/i.test(c.raw_text || ''));
+  const c3 = (((await j('/api/capture/pending', { token: tok })).b || {}).captures || []).find((item) => /crate vengayam/i.test(item.raw_text || ''));
   if (c3) {
     await j('/api/capture/' + c3.id + '/structure', { method: 'POST', token: tok, body: {} });
     const p3 = await j('/api/capture/' + c3.id + '/raise', { method: 'POST', token: tok, body: {} });
     if (p3.status === 200) {
-      const s3 = await j('/api/chits/send', { method: 'POST', token: tok, body: { recipients: p3.b.recipients, subject: p3.b.subject,
-        line_items: p3.b.line_items, purpose: p3.b.purpose, business_json: p3.b.business_json, self_copy: p3.b.self_copy } });
+      const s3 = await j('/api/chits/send', {
+        method: 'POST',
+        token: tok,
+        body: {
+          recipients: p3.b.recipients,
+          subject: p3.b.subject,
+          line_items: p3.b.line_items,
+          purpose: p3.b.purpose,
+          business_json: p3.b.business_json,
+          self_copy: p3.b.self_copy
+        }
+      });
       if (s3.b && s3.b.chit_id) await j('/api/capture/' + c3.id + '/convert', { method: 'POST', token: tok, body: { chit_id: s3.b.chit_id } });
     }
   }
@@ -216,23 +319,28 @@ run('prove-wholesaler-e2e', async (t) => {
   const onion3 = ((con3.b || {}).requirement || []).find((l) => l.date === fri && /onion/i.test(l.item));
   console.log('\n  ── W-6 on real data: onion in crates, no declared conversion ───────────────────');
   console.log('   ' + JSON.stringify({ total: onion3 && onion3.total, unit_split: onion3 && onion3.unit_split, flagged: onion3 && onion3.flagged }));
-  t.ok(onion3 && Array.isArray(onion3.unit_split),
+  t.ok(
+    onion3 && Array.isArray(onion3.unit_split),
     '★★★ W-6 · crates with NO declared conversion produce a SPLIT total, never an invented one',
-    JSON.stringify(onion3 && { total: onion3.total, split: onion3.unit_split }));
-  t.ok(onion3 && onion3.total === 15,
-    '★★★ W-6 · …and the kg total is STILL 15 — no crate figure was folded into it', onion3 && String(onion3.total));
-  t.ok(((con3.b || {}).flags || {}).unit_split && con3.b.flags.unit_split.length >= 1,
-    '★★★ W-6 · …and it is flagged for the wholesaler to resolve', JSON.stringify((con3.b.flags || {}).unit_split));
+    JSON.stringify(onion3 && { total: onion3.total, split: onion3.unit_split })
+  );
+  t.ok(onion3 && onion3.total === 15, '★★★ W-6 · …and the kg total is STILL 15 — no crate figure was folded into it', onion3 && String(onion3.total));
+  t.ok(
+    ((con3.b || {}).flags || {}).unit_split && con3.b.flags.unit_split.length >= 1,
+    '★★★ W-6 · …and it is flagged for the wholesaler to resolve',
+    JSON.stringify((con3.b.flags || {}).unit_split)
+  );
 
   /* W-11 · the address override */
-  const amma = lines.flatMap((l) => l.breakdown).find((b) => /Amma/i.test(b.store_name || ''));
+  const amma = lines.flatMap((item) => item.breakdown).find((item) => /Amma/i.test(item.store_name || ''));
   t.ok(!!amma, 'W-11 · the shop that named a different address is attributable', amma && amma.store_name);
   t.note('W-11 · deliver_to / address_overridden ride on each request (consolidationInput) — surfaced next to the shop.');
 
   console.log('\n  ── HAND-BACK NUMBERS ───────────────────────────────────────────────────────────');
-  console.log('   item phrases that failed to match the catalogue: ' + (R.unmatched_phrase_count || 0)
-    + '   ← how much catalogue/synonym work real deployment needs');
-  console.log('   W-4 totals reconcile      : ' + (bad.length === 0 ? 'YES' : 'NO'));
+  console.log(
+    '   item phrases that failed to match the catalogue: ' + (R.unmatched_phrase_count || 0) + '   ← how much catalogue/synonym work real deployment needs'
+  );
+  console.log('   W-4 totals reconcile      : ' + (list.length === 0 ? 'YES' : 'NO'));
   console.log('   W-9 variants never merged : ' + (!lines.some((l) => /orange/i.test(l.item) && !l.variant) ? 'YES' : 'NO'));
   const uf = ((con3.b || {}).flags || {}).unit_split || [];
   console.log('   W-6 no invented conversion: ' + (uf.length ? 'YES — split + flagged, proved on real data' : 'NOT EXERCISED'));

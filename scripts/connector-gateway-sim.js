@@ -38,7 +38,12 @@ const LOCAL = 'http://localhost:3000';
 function apiBase(env, argv) {
   const wantProd = (argv || []).includes('--production') || env.CB_SIM_PRODUCTION === '1';
   const base = String(env.API_BASE || (wantProd ? PRODUCTION : LOCAL)).replace(/\/$/, '');
-  let u; try { u = new URL(base); } catch (_) { return { refuse: 'API_BASE is not a URL: ' + base }; }
+  let u;
+  try {
+    u = new URL(base);
+  } catch (_) {
+    return { refuse: 'API_BASE is not a URL: ' + base };
+  }
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(u.hostname);
   if (u.protocol === 'http:' && !local) return { refuse: 'plain http is allowed only for localhost — use https for ' + u.hostname };
   if (u.protocol !== 'http:' && u.protocol !== 'https:') return { refuse: 'API_BASE must be http(s): ' + base };
@@ -49,99 +54,144 @@ module.exports = { apiBase };
 const _b = apiBase(process.env, process.argv);
 const API_BASE = _b.base;
 const cfg = {
-  key:    process.env.BRIDGE_KEY || '',      // PREFERRED: the CB-issued ActorKey -> device-key ingest (no user token)
-  bridge: process.env.BRIDGE_ID || '',       // the device BridgeId under the connector (for ingest routing/health)
-  token:  process.env.TOKEN || '',
-  email:  process.env.GATEWAY_EMAIL || '',   // dev-only: mint a token via OTP when no TOKEN / no BRIDGE_KEY
-  to:     process.env.TO || '',              // counterparty entity_id — who receives the signal (from the connection if omitted)
+  key: process.env.BRIDGE_KEY || '', // PREFERRED: the CB-issued ActorKey -> device-key ingest (no user token)
+  bridge: process.env.BRIDGE_ID || '', // the device BridgeId under the connector (for ingest routing/health)
+  token: process.env.TOKEN || '',
+  email: process.env.GATEWAY_EMAIL || '', // dev-only: mint a token via OTP when no TOKEN / no BRIDGE_KEY
+  to: process.env.TO || '', // counterparty entity_id — who receives the signal (from the connection if omitted)
   device: process.env.DEVICE_ID || 'edge-gw-01',
   signal: process.env.SIGNAL || 'temperature',
-  sub:    process.env.SUB_TYPE || '',        // the class this exception is (e.g. 'tanker') — group / count by it
-  proofFile: process.env.PROOF_FILE || '',   // path to a JPEG the edge captured — attached to the chit as proof
-  value:  process.env.VALUE || '42',
-  unit:   process.env.UNIT || 'C',
-  devOtp: process.env.DEV_OTP || '123456',
+  sub: process.env.SUB_TYPE || '', // the class this exception is (e.g. 'tanker') — group / count by it
+  proofFile: process.env.PROOF_FILE || '', // path to a JPEG the edge captured — attached to the chit as proof
+  value: process.env.VALUE || '42',
+  unit: process.env.UNIT || 'C',
+  devOtp: process.env.DEV_OTP || '123456'
 };
 
-function req(method, path, body, token, extraHeaders){
-  return new Promise((resolve, reject)=>{
+function req(method, path, body, token, extraHeaders) {
+  return new Promise((resolve, reject) => {
     const u = new URL(API_BASE + path);
     const data = body ? JSON.stringify(body) : null;
     const lib = u.protocol === 'http:' ? http : https;
-    const opts = { method, hostname:u.hostname, port:u.port||(u.protocol === 'http:' ? 80 : 443), path:u.pathname+u.search,
-      headers:{ 'Content-Type':'application/json',
-        ...(token?{Authorization:'Bearer '+token}:{}),
-        ...(extraHeaders||{}),
-        ...(data?{'Content-Length':Buffer.byteLength(data)}:{}) } };
-    const r = lib.request(opts, res=>{ let b=''; res.on('data',c=>b+=c); res.on('end',()=>{
-      let j; try{ j=JSON.parse(b); }catch(_){ j=b; }
-      if(res.statusCode>=400) reject(new Error('HTTP '+res.statusCode+' · '+((j&&(j.message||j.error))||b).toString().slice(0,200)));
-      else resolve(j); }); });
-    r.on('error', reject); if(data) r.write(data); r.end();
+    const opts = {
+      method,
+      hostname: u.hostname,
+      port: u.port || (u.protocol === 'http:' ? 80 : 443),
+      path: u.pathname + u.search,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        ...(extraHeaders || {}),
+        ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {})
+      }
+    };
+    const r = lib.request(opts, (res) => {
+      let b = '';
+      res.on('data', (c) => (b += c));
+      res.on('end', () => {
+        let j;
+        try {
+          j = JSON.parse(b);
+        } catch (_) {
+          j = b;
+        }
+        if (res.statusCode >= 400) reject(new Error('HTTP ' + res.statusCode + ' · ' + ((j && (j.message || j.error)) || b).toString().slice(0, 200)));
+        else resolve(j);
+      });
+    });
+    r.on('error', reject);
+    if (data) r.write(data);
+    r.end();
   });
 }
 
 // --- the DEVICE READ. On a real Pi this auto-reads the on-board CPU temperature (no extra hardware,
 //     perfect first sensor). Swap this body for an MQTT subscribe / Modbus poll / GPIO / I2C read for a
 //     real sensor — the API call below is unchanged. An explicit VALUE= env always wins (manual override). ---
-function readSignal(){
-  if(!process.env.VALUE){
-    try{
+function readSignal() {
+  if (!process.env.VALUE) {
+    try {
       const raw = fs.readFileSync('/sys/class/thermal/thermal_zone0/temp', 'utf8').trim();
-      const c = (parseInt(raw, 10) / 1000);
-      if(isFinite(c) && c > 0) return { device_id:cfg.device, signal:'cpu_temperature', value:c.toFixed(1), unit:'C' };
-    }catch(_){ /* not a Pi (e.g. laptop) — fall back to the env / default value */ }
+      const c = parseInt(raw, 10) / 1000;
+      if (isFinite(c) && c > 0) return { device_id: cfg.device, signal: 'cpu_temperature', value: c.toFixed(1), unit: 'C' };
+    } catch (_) {
+      /* not a Pi (e.g. laptop) — fall back to the env / default value */
+    }
   }
-  return { device_id:cfg.device, signal:cfg.signal, value:cfg.value, unit:cfg.unit };
+  return { device_id: cfg.device, signal: cfg.signal, value: cfg.value, unit: cfg.unit };
 }
 
-async function ensureToken(){
-  if(cfg.token) return cfg.token;
-  if(!cfg.email) throw new Error('Give TOKEN=<bearer>  OR (dev) GATEWAY_EMAIL=<email> to mint one via dev OTP.');
+async function ensureToken() {
+  if (cfg.token) return cfg.token;
+  if (!cfg.email) throw new Error('Give TOKEN=<bearer>  OR (dev) GATEWAY_EMAIL=<email> to mint one via dev OTP.');
   console.log('[auth] dev-minting a token for', cfg.email);
-  await req('POST','/api/entities/register', { email:cfg.email, display_name:'Gateway '+cfg.device }); // issues dev OTP
-  const v = await req('POST','/api/entities/verify', { email:cfg.email, otp:cfg.devOtp });
+  await req('POST', '/api/entities/register', { email: cfg.email, display_name: 'Gateway ' + cfg.device }); // issues dev OTP
+  const v = await req('POST', '/api/entities/verify', { email: cfg.email, otp: cfg.devOtp });
   const tok = v && (v.token || (v.data && v.data.token));
-  if(!tok) throw new Error('No token returned by verify — dev mode off, or wrong DEV_OTP.');
+  if (!tok) throw new Error('No token returned by verify — dev mode off, or wrong DEV_OTP.');
   return tok;
 }
 
-if (require.main === module) (async ()=>{
-  try{
-    if(_b.refuse) throw new Error(_b.refuse);
-    console.log('[api]', API_BASE);
-    // PREFERRED PATH — device-key ingest: authenticate with the CB-issued ActorKey (no user token), heartbeat +
-    // emit in ONE call. The counterparty comes from the connection (TO optional). This is what a real Pi should use.
-    if(cfg.key){
+if (require.main === module)
+  (async () => {
+    try {
+      if (_b.refuse) throw new Error(_b.refuse);
+      console.log('[api]', API_BASE);
+      // PREFERRED PATH — device-key ingest: authenticate with the CB-issued ActorKey (no user token), heartbeat +
+      // emit in ONE call. The counterparty comes from the connection (TO optional). This is what a real Pi should use.
+      if (cfg.key) {
+        const nestedS = readSignal();
+        var proof, proofName;
+        if (cfg.proofFile) {
+          try {
+            proof = fs.readFileSync(cfg.proofFile).toString('base64');
+            proofName = cfg.proofFile.split(/[\\/]/).pop();
+          } catch (e) {
+            console.error('[warn] could not read PROOF_FILE:', e.message);
+          }
+        }
+        console.log('[read]', JSON.stringify(nestedS), cfg.sub ? 'sub_type=' + cfg.sub : '', proof ? '+proof(' + proofName + ')' : '');
+        const nestedOut = await req(
+          'POST',
+          '/api/connectors/ingest',
+          {
+            bridge_id: cfg.bridge || undefined,
+            signal: nestedS.signal,
+            value: nestedS.value,
+            unit: nestedS.unit,
+            device_id: nestedS.device_id,
+            sub_type: cfg.sub || undefined,
+            proof: proof || undefined,
+            proof_name: proofName || undefined,
+            to: cfg.to || undefined
+          },
+          null,
+          { 'X-Bridge-Key': cfg.key }
+        );
+        console.log('[ingest] OK — health is now LIVE in the co-assist cockpit; exception filed over the rail.');
+        console.log('        chit_id:', nestedOut && (nestedOut.chit_id || '(none — heartbeat only)'));
+        if (nestedOut && nestedOut.note) console.log('        note:', nestedOut.note);
+        console.log('        raw:', JSON.stringify(nestedOut).slice(0, 300));
+        return;
+      }
+      // FALLBACK PATH — session-token + /chits/send (M2M device keys weren't available; kept for demos without a key).
+      if (!cfg.to) throw new Error('Set BRIDGE_KEY=<ActorKey> (preferred), or TO=<counterparty entity_id> for the token path.');
+      const token = await ensureToken();
       const s = readSignal();
-      var proof, proofName;
-      if(cfg.proofFile){ try{ proof = fs.readFileSync(cfg.proofFile).toString('base64'); proofName = cfg.proofFile.split(/[\\/]/).pop(); }catch(e){ console.error('[warn] could not read PROOF_FILE:', e.message); } }
-      console.log('[read]', JSON.stringify(s), cfg.sub?('sub_type='+cfg.sub):'', proof?('+proof('+proofName+')'):'');
-      const out = await req('POST','/api/connectors/ingest',
-        { bridge_id:cfg.bridge||undefined, signal:s.signal, value:s.value, unit:s.unit, device_id:s.device_id,
-          sub_type:cfg.sub||undefined, proof:proof||undefined, proof_name:proofName||undefined, to:cfg.to||undefined },
-        null, { 'X-Bridge-Key':cfg.key });
-      console.log('[ingest] OK — health is now LIVE in the co-assist cockpit; exception filed over the rail.');
-      console.log('        chit_id:', out && (out.chit_id||'(none — heartbeat only)'));
-      if(out && out.note) console.log('        note:', out.note);
-      console.log('        raw:', JSON.stringify(out).slice(0,300));
-      return;
+      console.log('[read]', JSON.stringify(s));
+      const body = {
+        recipients: [{ entity_id: cfg.to, role: 'to' }],
+        purpose: 'general',
+        manual_subject: 'Signal: ' + s.signal + (s.value ? ' = ' + s.value + s.unit : ''),
+        business_json: { kind: 'device_signal', device_id: s.device_id, signal: s.signal, value: s.value, unit: s.unit, at: new Date().toISOString() }
+      };
+      const out = await req('POST', '/api/chits/send', body, token);
+      const chitId = out && (out.chit_id || (out.chit && out.chit.chit_id) || (out.data && out.data.chit_id));
+      console.log('[emit] OK — a Device Signal chit was delivered to the counterparty Task inbox.');
+      console.log('       chit_id:', chitId || '(see raw)');
+      console.log('       raw:', JSON.stringify(out).slice(0, 300));
+    } catch (e) {
+      console.error('[FAIL]', e.message);
+      process.exit(1);
     }
-    // FALLBACK PATH — session-token + /chits/send (M2M device keys weren't available; kept for demos without a key).
-    if(!cfg.to) throw new Error('Set BRIDGE_KEY=<ActorKey> (preferred), or TO=<counterparty entity_id> for the token path.');
-    const token = await ensureToken();
-    const s = readSignal();
-    console.log('[read]', JSON.stringify(s));
-    const body = {
-      recipients: [{ entity_id: cfg.to, role:'to' }],
-      purpose: 'general',
-      manual_subject: 'Signal: ' + s.signal + (s.value ? (' = ' + s.value + s.unit) : ''),
-      business_json: { kind:'device_signal', device_id:s.device_id, signal:s.signal, value:s.value, unit:s.unit, at:new Date().toISOString() },
-    };
-    const out = await req('POST','/api/chits/send', body, token);
-    const chitId = out && (out.chit_id || (out.chit && out.chit.chit_id) || (out.data && out.data.chit_id));
-    console.log('[emit] OK — a Device Signal chit was delivered to the counterparty Task inbox.');
-    console.log('       chit_id:', chitId || '(see raw)');
-    console.log('       raw:', JSON.stringify(out).slice(0,300));
-  }catch(e){ console.error('[FAIL]', e.message); process.exit(1); }
-})();
+  })();

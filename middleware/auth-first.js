@@ -32,14 +32,15 @@ const isAuthFirst = (req) => req.method === 'POST' && AUTH_FIRST.test(req.path |
    default everywhere else; an oversized body is refused 413 BODY_TOO_LARGE by lib/knownerr.js */
 const limits = require('../lib/limits');
 const pair = (limit) => ({ json: express.json({ limit }), form: express.urlencoded({ extended: true, limit }) });
-const SMALL = pair(limits.BODY_DEFAULT), LARGE = pair(limits.BODY_LARGE);
+const SMALL = pair(limits.BODY_DEFAULT),
+  LARGE = pair(limits.BODY_LARGE);
 const json = (req, res, next) => (limits.isLarge(req) ? LARGE : SMALL).json(req, res, next);
 const form = (req, res, next) => (limits.isLarge(req) ? LARGE : SMALL).form(req, res, next);
 
 /** the global parsers — every request except an auth-first one, unchanged */
 const parsers = [
   (req, res, next) => (isAuthFirst(req) ? next() : json(req, res, next)),
-  (req, res, next) => (isAuthFirst(req) ? next() : form(req, res, next)),
+  (req, res, next) => (isAuthFirst(req) ? next() : form(req, res, next))
 ];
 
 /** auth, then the body — for the auth-first requests only; mount after the rate limiters, before idempotency */

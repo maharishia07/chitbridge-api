@@ -103,7 +103,7 @@ const big = (bytes) => JSON.stringify({ pad: 'x'.repeat(bytes) });
   const iId = at(/res\.setHeader\('X-Request-Id'/), iLog = at(/log\.info\('request'/), iParse = at(/app\.use\(authFirst\.parsers\)/), iTo = at(/app\.use\(require\('\.\/lib\/limits'\)\.requestTimeout\)/);
   ok(iId > 0 && iLog > iId && iParse > iLog, 'server.js: request id → logger → body parsers (a 413 still gets an id and a log line)');
   ok(iTo > 0, 'server.js mounts the request deadline');
-  ok(/if \(_known\) \{ res\.locals\.code = _known\.body\.code/.test(s), 'server.js: the error handler hands a known refusal\'s code to the log');
+  ok(/if \(_known\) \{\s*res\.locals\.code = _known\.body\.code/.test(s), 'server.js: the error handler hands a known refusal\'s code to the log');
 
   /* ── live: a planted pg_sleep is cancelled ── */
   if (process.env.DATABASE_URL) {

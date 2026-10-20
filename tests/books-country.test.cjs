@@ -50,7 +50,7 @@ const P = require(path.join(API, 'lib/books-period'));
   ok('IN · a malformed year is asked in India\'s words (unchanged)', await why({ country: 'IN' }, { fy: '2026' }) === 'Which financial year? e.g. 2026-27.', await why({ country: 'IN' }, { fy: '2026' }));
   ok('AE · its year is asked as the calendar year', await why({ country: 'AE' }, { fy: '2026-27' }) === 'Which financial year? e.g. 2026.', await why({ country: 'AE' }, { fy: '2026-27' }));
   const src = fs.readFileSync(path.join(API, 'lib/books-period.js'), 'utf8');
-  ok('A5 · the default entity comes from the pack\'s entity_bases', /Object\.keys\(bases\)\.find\(\(k\) => k !== 'company'\)/.test(src));
+  ok('A5 · the default entity comes from the pack\'s entity_bases', /Object\.keys\(bases\)\.find\(\((\w+)\) => \1 !== 'company'\)/.test(src));
   for (const [c, first] of [['IN', 'proprietor'], ['AU', 'sole_trader'], ['AE', 'sole_establishment']]) {
     const k = Object.keys(B.packOf({ country: c }).entity_bases).find((x) => x !== 'company');
     ok('A5 ' + c + ' · the one-owner default is ' + first, k === first, k);

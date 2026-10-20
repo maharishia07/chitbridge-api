@@ -24,6 +24,8 @@
  * ⭐ A LEGACY TOKEN (no jti, issued before M05 or by a page that did not name its device) is welcome here: logout answers
  * 200 (nothing listed to remove — the page clears itself), and renew turns it into a listed session when the request
  * names its device (X-Device-Id) — so a phone can move onto a revocable session without anybody signing in again.
+ 
+ * CALLED BY routes/actors.js, routes/entities.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
 const express = require('express');
 const log = require('../lib/logger');
@@ -37,8 +39,10 @@ const owner = require('../lib/owner');
 const { isOwner } = owner;
 
 const personOnly = (req, res, next) => {
-  if (req.api_key) { res.locals.code = 'KEY_CANNOT_SIGN_IN';
-    return res.status(403).json({ error: 'Forbidden', code: 'KEY_CANNOT_SIGN_IN', message: 'A key cannot sign in — sign in.' }); }
+  if (req.api_key) {
+    res.locals.code = 'KEY_CANNOT_SIGN_IN';
+    return res.status(403).json({ error: 'Forbidden', code: 'KEY_CANNOT_SIGN_IN', message: 'A key cannot sign in — sign in.' });
+  }
   next();
 };
 /* T3-P4-ACCOUNT: the ONE owner gate (lib/owner.gate = SEC2's ownerOnly, with the sentence) — the refusal carries code OWNER_ONLY and the sentence GET /sessions says in `may.devices`,
@@ -49,8 +53,11 @@ const fail = (res, e) => {
   const status = (e && e.status) || 500;
   if (e && e.code) res.locals.code = e.code;
   if (status >= 500) console.error('signin:', (e && e.message) || e);
-  res.status(status).json({ error: status >= 500 ? 'Server error' : 'Refused', code: (e && e.code) || null,
-                            message: status >= 500 ? 'Could not change your session. This is our fault.' : String(e.message) });
+  res.status(status).json({
+    error: status >= 500 ? 'Server error' : 'Refused',
+    code: (e && e.code) || null,
+    message: status >= 500 ? 'Could not change your session. This is our fault.' : String(e.message)
+  });
 };
 /** the claims of the token this request came with — auth already verified it */
 const claimsOf = (req) => jwt.decode(String(req.headers.authorization || '').replace(/^Bearer\s+/i, '')) || {};
@@ -67,12 +74,18 @@ router.post('/renew', auth, personOnly, async (req, res) => {
       /* a legacy token: becomes a listed session on the device the request names — or stays as it is */
       const device_id = sessions.deviceIdOf(req.headers['x-device-id']);
       if (!device_id) return res.status(400).json({ error: 'Refused', code: 'NO_DEVICE', message: 'Send X-Device-Id to renew.' });
-      s = await sessions.open(withTransaction, shop, { device_id, surface: (req.body && req.body.surface) || 'web', by: me(req),
-        ua: String(req.headers['user-agent'] || '').slice(0, 160) || null });
+      s = await sessions.open(withTransaction, shop, {
+        device_id,
+        surface: (req.body && req.body.surface) || 'web',
+        by: me(req),
+        ua: String(req.headers['user-agent'] || '').slice(0, 160) || null
+      });
     }
     const token = identityAuth.signToken(claimsOf(req), s);
     res.json({ token, jti: s.jti, exp: s.exp, device_id: s.device_id, surface: s.surface });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 router.post('/logout', auth, personOnly, async (req, res) => {
@@ -80,47 +93,70 @@ router.post('/logout', auth, personOnly, async (req, res) => {
     if (!req.session) return res.json({ ok: true, removed: false, legacy: true });
     const out = await sessions.close(withTransaction, shopOf(req), req.session.device_id, req.session.jti);
     res.json({ ok: true, removed: out.removed });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 router.get('/sessions', auth, personOnly, async (req, res) => {
   try {
     const devices = await sessions.devicesOf(query, shopOf(req));
-    const t = Math.floor(Date.now() / 1000), out = [];
+    const t = Math.floor(Date.now() / 1000),
+      out = [];
     for (const [device_id, d] of Object.entries(devices)) {
       if (!d || d.revoked_at) continue;
-      for (const s of (d.sessions || [])) {
+      for (const s of d.sessions || []) {
         if (!s || s.by !== me(req) || Number(s.exp) <= t) continue;
-        out.push({ jti: s.jti, device_id, surface: s.surface || null, iat: s.iat, exp: s.exp,
-                   current: !!(req.session && req.session.jti === s.jti),
-                   device: { label: d.label || null, kind: d.kind || null, seen: d.seen || null } });
+        out.push({
+          jti: s.jti,
+          device_id,
+          surface: s.surface || null,
+          iat: s.iat,
+          exp: s.exp,
+          current: !!(req.session && req.session.jti === s.jti),
+          device: { label: d.label || null, kind: d.kind || null, seen: d.seen || null }
+        });
       }
     }
     /* T3-P4-ACCOUNT: may.devices — whether THIS sign-in may read GET /devices and revoke a device (the owner); a co-assist sees the list greyed with this sentence */
     res.json({ sessions: out, legacy: !req.session, may: { devices: owner.may(req, DEVICES_WHY) } });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 router.get('/devices', auth, personOnly, ownerOnly, async (req, res) => {
   try {
     const devices = await sessions.devicesOf(query, shopOf(req));
     const t = Math.floor(Date.now() / 1000);
-    res.json({ devices: Object.entries(devices).map(([device_id, d]) => ({
-      device_id, label: d.label || null, kind: d.kind || null, by: d.by || null, first_seen: d.first_seen || null, seen: d.seen || null,
-      revoked_at: d.revoked_at || null, till_prefix: (d.till && d.till.prefix) || null,
-      sessions: (d.sessions || []).filter((s) => s && Number(s.exp) > t).length })) });
-  } catch (e) { fail(res, e); }
+    res.json({
+      devices: Object.entries(devices).map(([device_id, d]) => ({
+        device_id,
+        label: d.label || null,
+        kind: d.kind || null,
+        by: d.by || null,
+        first_seen: d.first_seen || null,
+        seen: d.seen || null,
+        revoked_at: d.revoked_at || null,
+        till_prefix: (d.till && d.till.prefix) || null,
+        sessions: (d.sessions || []).filter((item) => item && Number(item.exp) > t).length
+      }))
+    });
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 router.post('/sessions/revoke', auth, personOnly, async (req, res) => {
   try {
-    const b = req.body || {}, shop = shopOf(req);
+    const b = req.body || {},
+      shop = shopOf(req);
     if (b.device_id) {
       if (!isOwner(req)) return res.status(403).json({ error: 'Forbidden', code: owner.OWNER_ONLY, message: DEVICES_WHY });
       const device_id = sessions.deviceIdOf(b.device_id);
       if (!device_id) return res.status(400).json({ error: 'Refused', message: 'device_id is not a device id.' });
-      const out = await sessions.revokeDevice(withTransaction, shop, device_id, me(req));
-      if (!out.revoked) return res.status(404).json({ error: 'Not found', message: 'No such device in this shop.' });
+      const nestedOut = await sessions.revokeDevice(withTransaction, shop, device_id, me(req));
+      if (!nestedOut.revoked) return res.status(404).json({ error: 'Not found', message: 'No such device in this shop.' });
       return res.json({ ok: true, revoked: 'device', device_id });
     }
     if (!b.jti) return res.status(400).json({ error: 'Refused', message: 'Send { jti } or { device_id }.' });
@@ -128,12 +164,14 @@ router.post('/sessions/revoke', auth, personOnly, async (req, res) => {
     const devices = await sessions.devicesOf(query, shop);
     let found = null;
     for (const [device_id, d] of Object.entries(devices))
-      for (const s of ((d && d.sessions) || [])) if (s && String(s.jti) === String(b.jti)) found = { device_id, by: s.by };
+      for (const s of (d && d.sessions) || []) if (s && String(s.jti) === String(b.jti)) found = { device_id, by: s.by };
     if (!found) return res.json({ ok: true, removed: false });
     if (found.by !== me(req) && !isOwner(req)) return res.status(403).json({ error: 'Forbidden', message: 'Only the owner may end another person’s session.' });
     const out = await sessions.close(withTransaction, shop, found.device_id, String(b.jti));
     res.json({ ok: true, revoked: 'session', removed: out.removed });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -164,7 +202,11 @@ const { generateOTP } = require('../lib/otp');
 const { sendOtpEmail, sendOtp } = require('../lib/notify');
 const events = require('../lib/signin-events');
 
-const door = (name) => function signinDoor(req, res, next) { req.signinDoor = name; next(); };
+const door = (name) =>
+  function signinDoor(req, res, next) {
+    req.signinDoor = name;
+    next();
+  };
 const isNewDoor = (req) => req.signinDoor === 'signin';
 const actorLoginDoor = (req) => req.signinDoor === 'actor-login' || (isNewDoor(req) && !!req.body && req.body.username !== undefined);
 const shopOfIdentity = (i) => (i && (i.parent_entity_id || i.identity_id)) || null;
@@ -172,8 +214,16 @@ const actionOf = (reason) => (/_LOCKED$/.test(String(reason || '')) ? 'locked' :
 /** one signin_events row for this attempt — only when the attempt names a known person (no shop → no row) */
 function note(req, identity, action, method, code, jti) {
   if (!identity || !identity.identity_id) return;
-  events.record(Object.assign(events.fromRequest(req), {
-    entity_id: shopOfIdentity(identity), identity_id: identity.identity_id, action, method: method || null, code: code || null, jti: jti || null }));
+  events.record(
+    Object.assign(events.fromRequest(req), {
+      entity_id: shopOfIdentity(identity),
+      identity_id: identity.identity_id,
+      action,
+      method: method || null,
+      code: code || null,
+      jti: jti || null
+    })
+  );
 }
 /**
  * ⭐ M14 — ONE CONTACT, SEVERAL PEOPLE: the door asks which, never guesses (DECISIONS 2026-10-08). `choices[].id` is the STORED
@@ -181,8 +231,7 @@ function note(req, identity, action, method, code, jti) {
  */
 const chooseWhich = (req, res, choices) => {
   res.locals.code = 'CHOOSE_IDENTITY';
-  return res.status(409).json({ error: 'Which account?', code: 'CHOOSE_IDENTITY',
-    message: 'That contact is on more than one account. Choose one.', choices });
+  return res.status(409).json({ error: 'Which account?', code: 'CHOOSE_IDENTITY', message: 'That contact is on more than one account. Choose one.', choices });
 };
 const noAccount = (req, res, status, bodyOut) => {
   res.locals.code = 'NO_ACCOUNT';
@@ -197,7 +246,7 @@ const WORDS = {
       return { error: 'Account locked', message: 'Too many wrong attempts. Contact your admin to reset.' };
     if (check.reason === 'PIN_LOCKED') return { error: 'Login failed', message: 'Account locked after 5 wrong attempts. Contact your admin.' };
     return { error: 'Login failed', message: `Incorrect PIN. ${check.left} attempts remaining.` };
-  },
+  }
 };
 
 /* ── ask ─────────────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -210,7 +259,7 @@ const askChecks = [
   body('display_name').optional().trim().isLength({ min: 2, max: 255 }),
   body('user_id').optional().trim(),
   body('email').optional().trim(),
-  body('id').optional().trim(),
+  body('id').optional().trim()
 ];
 
 /**
@@ -222,31 +271,40 @@ const askChecks = [
 async function sendCode(req, res, { identity_id, email, display_name }, extra) {
   const otp = generateOTP('entity');
   const expires = new Date(Date.now() + 60 * 60 * 1000);
-  await query(
-    `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,
-    [otp, expires, identity_id]
-  );
+  await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [otp, expires, identity_id]);
   /**
    * ⚠️ A NETWORK-MINTED STORE HAS NO INBOX. It is issued a handle and a claim code; the credential travels through the
    * OPERATOR (Athi, 2026-08-07: "he can have the password similar to an actor and … circulate the same"). Calling the
    * mailer with no address would report a false failure — nothing was meant to be sent.
    */
   if (!email) {
-    return res.json(Object.assign({
-      message: 'This store signs in with the code its network operator issued.',
-      handle: (await query('SELECT user_id FROM identities WHERE identity_id = $1', [identity_id])).rows[0]?.user_id || null,
-      operator_issued: true,
-    }, extra || {}));
+    return res.json(
+      Object.assign(
+        {
+          message: 'This store signs in with the code its network operator issued.',
+          handle: (await query('SELECT user_id FROM identities WHERE identity_id = $1', [identity_id])).rows[0]?.user_id || null,
+          operator_issued: true
+        },
+        extra || {}
+      )
+    );
   }
   /* ⚠ the code is echoed only under lib/dev-otp.js's one rule (explicit opt-in, never sealed) — never on the sender's `dev` flag */
   const sent = await sendOtpEmail(email, display_name, otp);
-  return res.json(Object.assign({
-    message: sent.delivered ? 'Verification code sent to your email'
-           : sent.dev       ? 'Dev mode — verification code issued'
-           :                  "We couldn't send your code — please try again.",
-    email,
-    ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-  }, extra || {}));
+  return res.json(
+    Object.assign(
+      {
+        message: sent.delivered
+          ? 'Verification code sent to your email'
+          : sent.dev
+            ? 'Dev mode — verification code issued'
+            : "We couldn't send your code — please try again.",
+        email,
+        ...(devOtp.mayExposeOtp() && { dev_otp: otp })
+      },
+      extra || {}
+    )
+  );
 }
 
 async function ask(req, res, next) {
@@ -269,8 +327,9 @@ async function ask(req, res, next) {
     if (found.ambiguous) {
       res.locals.code = 'AMBIGUOUS_NAME';
       return res.status(409).json({
-        error: 'Ambiguous business', code: 'AMBIGUOUS_NAME',
-        message: 'More than one business matches that name. Ask your admin for the exact login.',
+        error: 'Ambiguous business',
+        code: 'AMBIGUOUS_NAME',
+        message: 'More than one business matches that name. Ask your admin for the exact login.'
       });
     }
     if (found.identity && found.identity.identity_type === 'actor') {
@@ -281,17 +340,24 @@ async function ask(req, res, next) {
       }
       /* ⭐ TOP-CORRECT: the code the admin shared is KEPT while it is live (identityAuth.heldOtp) — this line used to re-issue and
          overwrite it, so the employee typed a code that was no longer in the row. A new code only when none is held. */
-      const otp = identityAuth.heldOtp(a) || await identityAuth.issueOtp(query, a);
+      const otp = identityAuth.heldOtp(a) || (await identityAuth.issueOtp(query, a));
       note(req, a, 'ask', 'otp');
       /* M14: an employee who signed in by a VERIFIED e-mail gets the code there — the one contact the shop proved is theirs */
       const toMail = found.via === 'contact' && input.includes('@') && !identityAuth.mobileOf(input);
       const sent = toMail ? await sendOtpEmail(input.toLowerCase(), a.display_name, otp) : null;
-      return res.json(Object.assign({
-        message: sent && sent.delivered ? 'Verification code sent to your email'
-               : 'First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.',
-        user_id: a.user_id,
-        ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-      }, extra('actor', 'code', a.user_id)));
+      return res.json(
+        Object.assign(
+          {
+            message:
+              sent && sent.delivered
+                ? 'Verification code sent to your email'
+                : 'First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.',
+            user_id: a.user_id,
+            ...(devOtp.mayExposeOtp() && { dev_otp: otp })
+          },
+          extra('actor', 'code', a.user_id)
+        )
+      );
     }
 
     /**
@@ -307,18 +373,27 @@ async function ask(req, res, next) {
       const otp = await identityAuth.issueOtp(query, c, undefined, 'customer');
       if (to) await sendOtp(channel, to, c.display_name, otp);
       note(req, c, 'ask', 'otp');
-      return res.json(Object.assign({
-        message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
-        ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-      }, extra('customer', 'code', c.email)));
+      return res.json(
+        Object.assign(
+          {
+            message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
+            ...(devOtp.mayExposeOtp() && { dev_otp: otp })
+          },
+          extra('customer', 'code', c.email)
+        )
+      );
     }
 
     /* ⭐ M14 — an OWNER found by a mobile number or a verified e-mail: the row is in hand; the lookups below would not find a number */
     if (found.identity && found.via === 'contact') {
       const e = found.identity;
       note(req, { identity_id: e.identity_id }, 'ask', 'otp');
-      return await sendCode(req, res, { identity_id: e.identity_id, email: e.email, display_name: e.display_name },
-        extra('entity', 'code', e.user_id || e.email));
+      return await sendCode(
+        req,
+        res,
+        { identity_id: e.identity_id, email: e.email, display_name: e.display_name },
+        extra('entity', 'code', e.user_id || e.email)
+      );
     }
 
     const isEmail = input.includes('@');
@@ -331,7 +406,7 @@ async function ask(req, res, next) {
         identity_id = existing.rows[0].identity_id;
         console.log(`Existing entity login: ${email}`);
       } else if (req.signinDoor === 'register' && req.body.mode !== 'login') {
-        return next();   // ⭐ a new e-mail at /api/entities/register is a REGISTRATION — routes/entities.js. No other door creates.
+        return next(); // ⭐ a new e-mail at /api/entities/register is a REGISTRATION — routes/entities.js. No other door creates.
       } else {
         return noAccount(req, res, 400, { error: 'Not registered', message: 'No account found — please register first' });
       }
@@ -359,15 +434,15 @@ async function ask(req, res, next) {
           return res.status(409).json({
             error: 'Ambiguous name',
             message: `More than one business is called "${input}". Sign in with your email address or your User ID instead.`,
-            code: 'AMBIGUOUS_NAME',
+            code: 'AMBIGUOUS_NAME'
           });
         }
       }
       if (rows.rows.length === 0) {
         return noAccount(req, res, 400, { error: 'Not found', message: 'Entity not found — check your name, User ID, or email address' });
       }
-      identity_id  = rows.rows[0].identity_id;
-      email        = rows.rows[0].email;
+      identity_id = rows.rows[0].identity_id;
+      email = rows.rows[0].email;
       display_name = rows.rows[0].display_name;
       console.log(`Display name login: ${display_name} → ${email}`);
     }
@@ -388,19 +463,21 @@ const entityVerifyChecks = [
   body('email').optional().trim(),
   body('user_id').optional().trim(),
   body('id').optional().trim(),
-  body('otp').optional().trim().isLength({ min: 6, max: 64 }).withMessage('OTP must be 6 digits'),   // SEC1: up to 64 — a tester code is 8+ (words kept: signin-parity golden)
-  body('pin').optional().trim().isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be 4 digits'),
+  body('otp').optional().trim().isLength({ min: 6, max: 64 }).withMessage('OTP must be 6 digits'), // SEC1: up to 64 — a tester code is 8+ (words kept: signin-parity golden)
+  body('pin').optional().trim().isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be 4 digits')
 ];
 const actorLoginChecks = [
   body('username').trim().notEmpty().withMessage('Username required'),
   body('otp').optional().trim(),
-  body('pin').optional().trim().isLength({ min: 4, max: 4 }).isNumeric(),
+  body('pin').optional().trim().isLength({ min: 4, max: 4 }).isNumeric()
 ];
 async function verifyChecks(req, res, next) {
   try {
-    for (const c of (actorLoginDoor(req) ? actorLoginChecks : entityVerifyChecks)) await c.run(req);
+    for (const c of actorLoginDoor(req) ? actorLoginChecks : entityVerifyChecks) await c.run(req);
     next();
-  } catch (e) { next(e); }
+  } catch (e) {
+    next(e);
+  }
 }
 
 /** the one refusal a session adds at the door (M05): the owner removed this device */
@@ -409,7 +486,14 @@ function deviceRevoked(req, res, identity, method) {
   res.locals.code = 'DEVICE_REVOKED';
   return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' });
 }
-const jtiOf = (token) => { try { return (jwt.decode(token) || {}).jti || null; } catch (e) { log.fellBack('signin jtiOf: failed — answered with nothing', e); return null; } };
+const jtiOf = (token) => {
+  try {
+    return (jwt.decode(token) || {}).jti || null;
+  } catch (e) {
+    log.fellBack('signin jtiOf: failed — answered with nothing', e);
+    return null;
+  }
+};
 const methodOf = (identity) => (identityAuth.needsPin(identity) ? 'pin' : 'otp');
 
 async function verify(req, res) {
@@ -417,10 +501,10 @@ async function verify(req, res) {
   let identity = null;
   try {
     const otp = (req.body.otp || '').trim();
-    const pin = (req.body.pin || '').trim();
-    const email  = (req.body.email  || '').toLowerCase().trim();
+    const nestedPin = (req.body.pin || '').trim();
+    const email = (req.body.email || '').toLowerCase().trim();
     const handle = (req.body.user_id || '').trim();
-    const id     = String(req.body.id || '').trim();
+    const id = String(req.body.id || '').trim();
     if (!email && !handle && !id) {
       return res.status(400).json({ error: 'Verification failed', message: 'Send your email address or your User ID.' });
     }
@@ -437,24 +521,31 @@ async function verify(req, res) {
       if (f.ambiguous && f.choices) return chooseWhich(req, res, f.choices);
       if (f.ambiguous) {
         res.locals.code = 'AMBIGUOUS_NAME';
-        return res.status(409).json({ error: 'Ambiguous business', code: 'AMBIGUOUS_NAME',
-          message: 'More than one business matches that name. Ask your admin for the exact login.' });
+        return res.status(409).json({
+          error: 'Ambiguous business',
+          code: 'AMBIGUOUS_NAME',
+          message: 'More than one business matches that name. Ask your admin for the exact login.'
+        });
       }
       rows = f.identity ? [f.identity] : [];
     }
     if (rows.length === 0) {
-      return noAccount(req, res, 400, { error: 'Verification failed',
-        message: email ? 'Email not found — please register first' : 'That User ID is not recognised.' });
+      return noAccount(req, res, 400, {
+        error: 'Verification failed',
+        message: email ? 'Email not found — please register first' : 'That User ID is not recognised.'
+      });
     }
     identity = rows[0];
 
     // ⭐ ONE verify, OTP or PIN — lib/identity-auth.js. The engine counts and locks; this door says it in its words.
-    const check = await identityAuth.verifyCredential(query, identity, { otp, pin, name: email || handle || id });
+    const check = await identityAuth.verifyCredential(query, identity, { otp, pin: nestedPin, name: email || handle || id });
     if (!check.ok) {
       note(req, identity, actionOf(check.reason), check.method, check.reason);
       res.locals.code = check.reason || null;
       return res.status(check.status).json({
-        error: 'Verification failed', message: check.message, ...(check.use_pin ? { use_pin: true } : {}),
+        error: 'Verification failed',
+        message: check.message,
+        ...(check.use_pin ? { use_pin: true } : {})
       });
     }
 
@@ -478,10 +569,8 @@ async function verify(req, res) {
           const cc = /^[A-Za-z]{2}$/.test(String(ctx.country || '')) ? String(ctx.country).toUpperCase() : null;
           const cur = /^[A-Za-z]{3}$/.test(String(ctx.currency_code || '')) ? String(ctx.currency_code).toUpperCase() : null;
           /* ⚠️ an IANA zone, not free text — anything else is somebody's typing and would break every date we print */
-          const tz = /^[A-Za-z][A-Za-z0-9_+\-]*(?:\/[A-Za-z0-9_+\-]+){1,2}$/.test(String(ctx.timezone || ''))
-            ? String(ctx.timezone) : null;
-          const langs = Array.isArray(ctx.languages)
-            ? ctx.languages.filter((x) => /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(String(x))).slice(0, 3) : [];
+          const tz = /^[A-Za-z][A-Za-z0-9_+\-]*(?:\/[A-Za-z0-9_+\-]+){1,2}$/.test(String(ctx.timezone || '')) ? String(ctx.timezone) : null;
+          const langs = Array.isArray(ctx.languages) ? ctx.languages.filter((x) => /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(String(x))).slice(0, 3) : [];
           if (cc || cur || tz) {
             await query(
               `UPDATE identities
@@ -503,8 +592,7 @@ async function verify(req, res) {
           /* ⚠️ AN UNPARSEABLE IP IS NULL, NOT AN ERROR — a proxy chain can hand over anything */
           const rawIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
           const ip = /^[0-9a-fA-F:.]{3,45}$/.test(rawIp) ? rawIp : null;
-          const agreed = (typeof req.body.agreed_at === 'string' && !isNaN(Date.parse(req.body.agreed_at)))
-            ? req.body.agreed_at : null;
+          const agreed = typeof req.body.agreed_at === 'string' && !isNaN(Date.parse(req.body.agreed_at)) ? req.body.agreed_at : null;
           /**
            * ⭐ GOV-SPIN: THE COUNTRY THE REGISTRANT ACCEPTED with reg-agree (the register panel sends `country_source` only then). The server
            * decides the source from the facts and moves the stored country only while nothing exists (CS.acceptAtSignup) — a later sign-in
@@ -518,7 +606,10 @@ async function verify(req, res) {
               accepted = await withEntity(identity.identity_id, (h) => CS.acceptAtSignup(h, identity.identity_id, ctx, at));
             } catch (e) {
               /* STD2: through the logger — the shop keeps the country registration stored; Country setup shows it and lets the owner correct it */
-              require('../lib/logger').warn('signin.verify: accepted country NOT recorded — the registered country stands', { identity_id: identity.identity_id, why: String(e && e.message) });
+              require('../lib/logger').warn('signin.verify: accepted country NOT recorded — the registered country stands', {
+                identity_id: identity.identity_id,
+                why: String(e && e.message)
+              });
             }
           }
           const audit = await query(
@@ -526,36 +617,57 @@ async function verify(req, res) {
                (identity_id, claimed_country, claimed_currency, claimed_timezone, claimed_locale,
                 claimed_languages, device, ip, user_agent, agreed_at)
              VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, $9, $10) RETURNING signup_context_id`,
-            [identity.identity_id, cc, cur, tz,
-             (typeof ctx.locale === 'string' ? ctx.locale.slice(0, 40) : null),
-             JSON.stringify(langs),
-             JSON.stringify(ctx.device && typeof ctx.device === 'object' ? ctx.device : {}),
-             ip, String(req.headers['user-agent'] || '').slice(0, 400) || null, agreed]
+            [
+              identity.identity_id,
+              cc,
+              cur,
+              tz,
+              typeof ctx.locale === 'string' ? ctx.locale.slice(0, 40) : null,
+              JSON.stringify(langs),
+              JSON.stringify(ctx.device && typeof ctx.device === 'object' ? ctx.device : {}),
+              ip,
+              String(req.headers['user-agent'] || '').slice(0, 400) || null,
+              agreed
+            ]
           );
           /* GOV-SPIN: the accepted country's source code onto THIS audit row (b383) — named only once the column exists */
           const row = audit && audit.rows && audit.rows[0];
-          if (accepted && row && await require('../lib/schema').hasColumn('signup_context', 'country_source')) {
+          if (accepted && row && (await require('../lib/schema').hasColumn('signup_context', 'country_source'))) {
             await query(`UPDATE signup_context SET country_source = $2 WHERE signup_context_id = $1`, [row.signup_context_id, accepted.source]);
           }
         }
       } catch (e) {
         /* ⚠️ STILL LOUD ON FAILURE: the sign-in continues, but a capture that drops what it captured says so */
-        console.log('[signup-context] NOT STORED for ' + (identity && identity.identity_id) + ': '
-          + (e && e.message));
+        console.log('[signup-context] NOT STORED for ' + (identity && identity.identity_id) + ': ' + (e && e.message));
       }
 
       // AUTO-MINT the governance stamp onto the CHOSEN vertical (else the default). BEST-EFFORT — can never fail verification.
       try {
         const chosen = (req.body.constitution && String(req.body.constitution).trim()) || 'base';
-        let c = (await query(`SELECT constitution_key, version FROM constitution WHERE constitution_key = $1 AND active = true ORDER BY (is_default IS TRUE) DESC, minted_at DESC LIMIT 1`, [chosen])).rows[0];
+        let c = (
+          await query(
+            `SELECT constitution_key, version FROM constitution WHERE constitution_key = $1 AND active = true ORDER BY (is_default IS TRUE) DESC, minted_at DESC LIMIT 1`,
+            [chosen]
+          )
+        ).rows[0];
         if (!c) c = (await query(`SELECT constitution_key, version FROM constitution WHERE is_default = true AND active = true LIMIT 1`)).rows[0];
         if (c) {
           // place the entity on the INSTALLATION that serves its vertical (service-desk → the Mexico platform), else default
           /* GOV-SPIN: else THIS installation (INSTALLATION_KEY) — a spin's shops were stamped India's platform-0 */
           let installKey = require('../lib/country-setup').installationKey();
           /* …and THIS installation first when it serves the vertical — platform-0 also serves 'base', and created_at alone picked it on every spin */
-          try { const ir = await query(`SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY (installation_key = $2) DESC, created_at LIMIT 1`, [c.constitution_key, installKey]); if (ir.rows[0]) installKey = ir.rows[0].installation_key; }
-          catch (e) { require('../lib/logger').warn('signin.verify: installation lookup failed — the shop is stamped on this installation', { installKey, why: String(e && e.message) }); }
+          try {
+            const ir = await query(
+              `SELECT installation_key FROM installation WHERE vertical_key = $1 AND active = true ORDER BY (installation_key = $2) DESC, created_at LIMIT 1`,
+              [c.constitution_key, installKey]
+            );
+            if (ir.rows[0]) installKey = ir.rows[0].installation_key;
+          } catch (e) {
+            require('../lib/logger').warn('signin.verify: installation lookup failed — the shop is stamped on this installation', {
+              installKey,
+              why: String(e && e.message)
+            });
+          }
           /**
            * ⚠️⚠️ A SIGN-IN NEVER RE-STAMPS A SHOP'S CONSTITUTION (T3-FIXES, SIGNIN-CONST). This runs on EVERY owner verify, and a
            * plain sign-in names no constitution — so `chosen` fell to 'base' and a pharma shop was re-stamped base each morning.
@@ -563,27 +675,41 @@ async function verify(req, res) {
            * (version, installation) only while it is already on the same constitution — a different key is kept as chosen.
            */
           const named = !!(req.body.constitution && String(req.body.constitution).trim() === c.constitution_key);
-          const st = await withEntity(identity.identity_id, (cl) => cl.query(
-            `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
+          const st = await withEntity(identity.identity_id, (cl) =>
+            cl.query(
+              `INSERT INTO entity_governance (entity_id, constitution_key, constitution_version, installation_key) VALUES ($1,$2,$3,$4)
              ON CONFLICT (entity_id) DO UPDATE SET constitution_key = EXCLUDED.constitution_key, constitution_version = EXCLUDED.constitution_version, installation_key = EXCLUDED.installation_key, minted_at = now()
              WHERE $5::boolean OR entity_governance.constitution_key = EXCLUDED.constitution_key`,
-            [identity.identity_id, c.constitution_key, c.version, installKey, named]));
+              [identity.identity_id, c.constitution_key, c.version, installKey, named]
+            )
+          );
           if (st && st.rowCount === 0) {
-            require('../lib/logger').info('signin.verify: the shop keeps its own constitution — a sign-in does not re-stamp it', { entity: identity.identity_id, offered: c.constitution_key });
+            require('../lib/logger').info('signin.verify: the shop keeps its own constitution — a sign-in does not re-stamp it', {
+              entity: identity.identity_id,
+              offered: c.constitution_key
+            });
           } else {
             mintedConstitution = require('../lib/versionref').format(c.constitution_key, c.version);
             console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
           }
         }
-      } catch (e) { console.warn('entity auto-mint skipped:', (e && e.message) || e); }
+      } catch (e) {
+        console.warn('entity auto-mint skipped:', (e && e.message) || e);
+      }
 
       // BOOTSTRAP the default schema so catalogue/compose works at once. Non-fatal.
-      try { await require('../lib/schema-bootstrap').ensureDefaultSchema(identity.identity_id); } catch (e) { log.fellBack('signin verify: the helper failed — carried on without it', e); }
+      try {
+        await require('../lib/schema-bootstrap').ensureDefaultSchema(identity.identity_id);
+      } catch (e) {
+        log.fellBack('signin verify: the helper failed — carried on without it', e);
+      }
 
       /* CONNECT to this deployment's root (lib/rootlink.js) — inert without PLATFORM_ROOT_ENTITY, and never fails verification */
       try {
         await require('../lib/rootlink').connect(identity.identity_id, req.id);
-      } catch (e) { console.warn('root link skipped:', (e && e.message) || e); }
+      } catch (e) {
+        console.warn('root link skipped:', (e && e.message) || e);
+      }
     }
 
     /**
@@ -643,9 +769,8 @@ async function actorLogin(req, res) {
       res.locals.code = 'AMBIGUOUS_NAME';
       return res.status(409).json({
         error: 'Ambiguous business',
-        message: 'More than one business is called "' + entity_name + '". Sign in with the business User ID '
-          + 'after the @ instead — ask your admin for it.',
-        code: 'AMBIGUOUS_NAME',
+        message: 'More than one business is called "' + entity_name + '". Sign in with the business User ID ' + 'after the @ instead — ask your admin for it.',
+        code: 'AMBIGUOUS_NAME'
       });
     }
     if (!e.ok) return noAccount(req, res, 400, { error: 'Login failed', message: 'Entity not found — check spelling after @' });
@@ -666,28 +791,26 @@ async function actorLogin(req, res) {
       return noAccount(req, res, 400, { error: 'Login failed', message: `Actor ${actor_key} not found under ${entity_name}` });
     }
     a = actor.rows[0];
-    a.parent_entity_id = parent_entity.identity_id;   // a WHERE clause, not a column — set so issueToken uses THIS parent
+    a.parent_entity_id = parent_entity.identity_id; // a WHERE clause, not a column — set so issueToken uses THIS parent
     a.identity_type = 'actor';
 
     if (a.break_status === 'removed' || a.break_status === 'deactivated') {
       note(req, a, 'fail', methodOf(a), a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED');
       return res.status(400).json({
         error: 'Login failed',
-        message: a.break_status === 'removed'
-          ? 'This account has been removed. Contact your admin.'
-          : 'This account has been deactivated. Contact your admin.'
+        message: a.break_status === 'removed' ? 'This account has been removed. Contact your admin.' : 'This account has been deactivated. Contact your admin.'
       });
     }
 
     // First sign-in: the code (pin_hash NULL). Returning: the PIN. Both through the ONE engine.
     const otp = (req.body.otp || '').trim();
-    const pin = req.body.pin;
+    const nestedPin = req.body.pin;
     if (a.pin_hash) {
-      if (!pin) {
+      if (!nestedPin) {
         note(req, a, 'fail', 'pin', 'PIN_REQUIRED');
         return res.status(400).json({ error: 'PIN required', message: 'Enter your 4 digit PIN to login', use_pin: true });
       }
-      const check = await identityAuth.verifyCredential(query, a, { pin });
+      const check = await identityAuth.verifyCredential(query, a, { pin: nestedPin });
       if (!check.ok) {
         note(req, a, actionOf(check.reason), 'pin', check.reason);
         res.locals.code = check.reason;
@@ -715,14 +838,14 @@ async function actorLogin(req, res) {
       token,
       requires_pin_setup: !a.pin_hash,
       actor: {
-        identity_id:    a.identity_id,
-        bridge_id:      a.bridge_id,
-        display_name:   a.display_name,
-        actor_key:      a.actor_key,
-        actor_role:     a.actor_role,
-        login_format:   `${actor_key}@${entity_name}`,
-        parent_entity:  parent_entity.display_name,
-        break_status:   a.break_status,
+        identity_id: a.identity_id,
+        bridge_id: a.bridge_id,
+        display_name: a.display_name,
+        actor_key: a.actor_key,
+        actor_role: a.actor_role,
+        login_format: `${actor_key}@${entity_name}`,
+        parent_entity: parent_entity.display_name,
+        break_status: a.break_status
       }
     });
   } catch (err) {
@@ -767,12 +890,11 @@ async function checkLogin(req, res) {
 
 /* ── pin ─────────────────────────────────────────────────────────────────────────────────────────────────────────── */
 const pinChecks = [
-  body('pin').isLength({ min: 4, max: 4 }).isNumeric()
-    .withMessage('PIN must be exactly 4 digits'),
+  body('pin').isLength({ min: 4, max: 4 }).isNumeric().withMessage('PIN must be exactly 4 digits'),
   body('confirm_pin').custom((val, { req }) => {
     if (val !== req.body.pin) throw new Error('PINs do not match');
     return true;
-  }),
+  })
 ];
 /**
  * pin — a co-assist sets their PIN after the first code (was routes/actors.js POST /set-pin). Actor-only, as before:

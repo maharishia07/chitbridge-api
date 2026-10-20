@@ -11,7 +11,8 @@
  * FLOW       chain order → per file: strip → split → fold into the model → judge R1–R17 → { file, rule, object, allowed }[]
  */
 'use strict';
-const fs = require('fs'), path = require('path');
+const fs = require('fs'),
+  path = require('path');
 const { chainFiles } = require('./migrate.cjs');
 
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
@@ -20,7 +21,8 @@ const BASELINE_FILES = ['000_baseline.sql', '000_baseline_part2.sql'];
 const NATIONAL_DEFAULT = /\bDEFAULT\s+'(IN|INR|India|Asia\/Kolkata|\+91|GST)'/;
 const ONCE_ONLY_KEY = /^(client_ref|source_ref|external_id|idempotency_key|provider_msg_id|entry_no|bill_no)$/;
 const MONEY_NAME = /(^|_)(amount|price|total|cost|fee|tax|balance|paid|due|rate)(_|$)/;
-const BAD_MONEY_TYPE = /^(text|varchar(\(\d+\))?|character varying(\(\d+\))?|real|float\d*|double precision|numeric\(\s*\d+\s*,\s*2\s*\)|decimal\(\s*\d+\s*,\s*2\s*\))$/i;
+const BAD_MONEY_TYPE =
+  /^(text|varchar(\(\d+\))?|character varying(\(\d+\))?|real|float\d*|double precision|numeric\(\s*\d+\s*,\s*2\s*\)|decimal\(\s*\d+\s*,\s*2\s*\))$/i;
 const TIMESTAMP_WITHOUT_ZONE = /^timestamp(\s+without\s+time\s+zone)?(\(\d\))?(\s+without\s+time\s+zone)?$/;
 /** a check that can only pass on production rows: IF NOT FOUND / IF count(…) <> n … THEN RAISE EXCEPTION */
 const DATA_ASSERT = /(NOT\s+FOUND|count\s*\([^)]*\)\s*(<>|!=|=|<|>)\s*\d+)[^;]{0,200}?THEN\s+RAISE\s+EXCEPTION/i;
@@ -32,7 +34,11 @@ const PLAIN_INDEX_COLUMN = /^"?[A-Za-z_]\w*"?(\s+(ASC|DESC|NULLS\s+(FIRST|LAST)|
 
 /** the source with comments removed, dollar-quoted bodies kept */
 function stripComments(source) {
-  const noLineComments = source.replace(/\r\n/g, '\n').split('\n').map((line) => line.replace(/--.*$/, '')).join('\n');
+  const noLineComments = source
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/--.*$/, ''))
+    .join('\n');
   return noLineComments.replace(/\/\*[\s\S]*?\*\//g, '');
 }
 /** the source with comments gone and every dollar-quoted body blanked to $$ (the rules read statements, not procedure bodies) */
@@ -41,17 +47,23 @@ function stripForStatements(source) {
 }
 /** top-level statements: split on ; outside quotes */
 function splitStatements(text) {
-  const statements = []; let current = '', inQuote = false;
+  const statements = [];
+  let current = '',
+    inQuote = false;
   for (const char of text) {
     if (char === "'") inQuote = !inQuote;
-    if (char === ';' && !inQuote) { if (current.trim()) statements.push(current.trim()); current = ''; } else current += char;
+    if (char === ';' && !inQuote) {
+      if (current.trim()) statements.push(current.trim());
+      current = '';
+    } else current += char;
   }
   if (current.trim()) statements.push(current.trim());
   return statements;
 }
 /** the text between the first "(" at/after `from` and its matching ")", and what follows it */
 function parenBody(statement, from) {
-  const open = statement.indexOf('(', from || 0); if (open < 0) return null;
+  const open = statement.indexOf('(', from || 0);
+  if (open < 0) return null;
   let depth = 0;
   for (let i = open; i < statement.length; i++) {
     if (statement[i] === '(') depth++;
@@ -62,17 +74,27 @@ function parenBody(statement, from) {
 const DEPTH_CHANGE = { '(': 1, ')': -1 };
 /** split on commas that are not inside parentheses or quotes */
 function splitTopLevel(text) {
-  const parts = []; let depth = 0, current = '', inQuote = false;
+  const parts = [];
+  let depth = 0,
+    current = '',
+    inQuote = false;
   for (const char of text) {
     if (char === "'") inQuote = !inQuote;
     if (!inQuote) depth += DEPTH_CHANGE[char] || 0;
     const isSeparator = char === ',' && depth === 0 && !inQuote;
-    if (isSeparator) { parts.push(current.trim()); current = ''; } else current += char;
+    if (isSeparator) {
+      parts.push(current.trim());
+      current = '';
+    } else current += char;
   }
   if (current.trim()) parts.push(current.trim());
   return parts;
 }
-const unquote = (identifier) => String(identifier).replace(/"/g, '').replace(/^public\./, '').toLowerCase();
+const unquote = (identifier) =>
+  String(identifier)
+    .replace(/"/g, '')
+    .replace(/^public\./, '')
+    .toLowerCase();
 const columnNames = (text) => splitTopLevel(text).map((part) => unquote(part.trim().split(/\s+/)[0]));
 
 /** a column definition "name type rest…" → { name, type, rest } */
@@ -87,7 +109,10 @@ function parseColumn(definition) {
 /* ── the running model: what the chain has made so far ─────────────────────────────────────────────────────── */
 
 class Model {
-  constructor() { this.tables = new Map(); this.known = new Set(); }
+  constructor() {
+    this.tables = new Map();
+    this.known = new Set();
+  }
   /** the model of one table, made on first ask */
   table(name) {
     if (!this.tables.has(name)) this.tables.set(name, { columns: new Map(), keys: [], indexes: [] });
@@ -97,35 +122,53 @@ class Model {
 /** every key and index of a table as { columns, partial, unique } */
 const keysAndIndexes = (table) => table.indexes.concat(table.keys.map((key) => ({ columns: key, partial: false, unique: true })));
 /** an entry whose first n columns are exactly these */
-const leadsWith = (entries, columns) => entries.some((entry) => entry.columns.length >= columns.length && columns.every((name, position) => entry.columns[position] === name));
+const leadsWith = (entries, columns) =>
+  entries.some((entry) => entry.columns.length >= columns.length && columns.every((name, position) => entry.columns[position] === name));
 /** a PRIMARY KEY / UNIQUE constraint or unique index of the table that includes the column */
 const uniqueIncludes = (table, column) => keysAndIndexes(table).some((entry) => entry.unique && entry.columns.includes(column));
 
-const emptyFacts = () => ({ columns: [], created: [], foreignKeys: [], indexes: [], touched: [], destructive: [], ifNotExistsWithKey: [], knownExtra: [],
-  rls: { enable: new Set(), force: new Set(), policy: new Set() } });
+const emptyFacts = () => ({
+  columns: [],
+  created: [],
+  foreignKeys: [],
+  indexes: [],
+  touched: [],
+  destructive: [],
+  ifNotExistsWithKey: [],
+  knownExtra: [],
+  rls: { enable: new Set(), force: new Set(), policy: new Set() }
+});
 
 /** add one column, with the keys its inline clauses declare */
 function addColumn(model, tableName, column, facts) {
-  const table = model.table(tableName); table.columns.set(column.name, column);
+  const table = model.table(tableName);
+  table.columns.set(column.name, column);
   facts.columns.push({ table: tableName, ...column });
   if (/\bPRIMARY\s+KEY\b|\bUNIQUE\b/i.test(column.rest)) table.keys.push([column.name]);
   if (/\bREFERENCES\b/i.test(column.rest)) facts.foreignKeys.push({ table: tableName, columns: [column.name] });
 }
 /** a table-level constraint: PRIMARY KEY (a,b) · UNIQUE (a,b) · FOREIGN KEY (a) REFERENCES … */
 function addConstraint(model, tableName, definition, facts) {
-  const listed = parenBody(definition); if (!listed) return;
-  const kind = definition.slice(0, definition.indexOf('(')), columns = columnNames(listed.inner);
+  const listed = parenBody(definition);
+  if (!listed) return;
+  const kind = definition.slice(0, definition.indexOf('(')),
+    columns = columnNames(listed.inner);
   if (/\b(PRIMARY\s+KEY|UNIQUE)\b/i.test(kind)) model.table(tableName).keys.push(columns);
   if (/\bFOREIGN\s+KEY\b/i.test(kind)) facts.foreignKeys.push({ table: tableName, columns });
 }
 /** CREATE TABLE → the table's columns, keys and foreign keys; a TEMP table is only remembered as a name */
 function applyCreateTable(model, statement, facts) {
-  const head = new RegExp('^CREATE\\s+(?:(?:GLOBAL\\s+|LOCAL\\s+)?(?:TEMP|TEMPORARY)\\s+|UNLOGGED\\s+)?TABLE\\s+(IF\\s+NOT\\s+EXISTS\\s+)?(' + NAME + ')', 'i').exec(statement);
+  const head = new RegExp(
+    '^CREATE\\s+(?:(?:GLOBAL\\s+|LOCAL\\s+)?(?:TEMP|TEMPORARY)\\s+|UNLOGGED\\s+)?TABLE\\s+(IF\\s+NOT\\s+EXISTS\\s+)?(' + NAME + ')',
+    'i'
+  ).exec(statement);
   if (!head) return;
-  const name = unquote(head[2]); model.known.add(name);
+  const name = unquote(head[2]);
+  model.known.add(name);
   if (/^CREATE\s+(GLOBAL\s+|LOCAL\s+)?(TEMP|TEMPORARY)\b/i.test(statement)) return;
   facts.created.push({ table: name });
-  const body = parenBody(statement, head[0].length); if (!body) return;
+  const body = parenBody(statement, head[0].length);
+  if (!body) return;
   foldTableItems(model, name, body.inner, facts);
   if (head[1] && /\bREFERENCES\b|\bFOREIGN\s+KEY\b/i.test(body.inner)) facts.ifNotExistsWithKey.push(name);
 }
@@ -133,14 +176,22 @@ function applyCreateTable(model, statement, facts) {
 function foldTableItems(model, tableName, innerText, facts) {
   model.table(tableName);
   for (const item of splitTopLevel(innerText)) {
-    if (TABLE_CONSTRAINT.test(item)) { addConstraint(model, tableName, item.replace(/^CONSTRAINT\s+\S+\s+/i, ''), facts); continue; }
-    const column = parseColumn(item); if (column) addColumn(model, tableName, column, facts);
+    if (TABLE_CONSTRAINT.test(item)) {
+      addConstraint(model, tableName, item.replace(/^CONSTRAINT\s+\S+\s+/i, ''), facts);
+      continue;
+    }
+    const column = parseColumn(item);
+    if (column) addColumn(model, tableName, column, facts);
   }
 }
 /** one clause of an ALTER TABLE: ADD COLUMN, or ADD CONSTRAINT PRIMARY KEY / UNIQUE / FOREIGN KEY */
 function applyAlterClause(model, tableName, clause, facts) {
   const addColumnMatch = /^ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?([\s\S]+)$/i.exec(clause);
-  if (addColumnMatch) { const column = parseColumn(addColumnMatch[1]); if (column) addColumn(model, tableName, column, facts); return; }
+  if (addColumnMatch) {
+    const column = parseColumn(addColumnMatch[1]);
+    if (column) addColumn(model, tableName, column, facts);
+    return;
+  }
   const addKey = /^ADD\s+(?:CONSTRAINT\s+\S+\s+)?((?:PRIMARY\s+KEY|UNIQUE|FOREIGN\s+KEY)[\s\S]*)$/i.exec(clause);
   if (addKey) addConstraint(model, tableName, addKey[1], facts);
 }
@@ -148,7 +199,8 @@ function applyAlterClause(model, tableName, clause, facts) {
 function applyAlterTable(model, statement, facts) {
   const match = new RegExp('^ALTER\\s+TABLE\\s+(?:IF\\s+EXISTS\\s+)?(?:ONLY\\s+)?(' + NAME + ')\\s+([\\s\\S]*)$', 'i').exec(statement);
   if (!match) return;
-  const name = unquote(match[1]), action = match[2];
+  const name = unquote(match[1]),
+    action = match[2];
   facts.touched.push(name);
   if (/\bENABLE\s+ROW\s+LEVEL\s+SECURITY\b/i.test(action)) facts.rls.enable.add(name);
   if (/\bFORCE\s+ROW\s+LEVEL\s+SECURITY\b/i.test(action)) facts.rls.force.add(name);
@@ -157,11 +209,22 @@ function applyAlterTable(model, statement, facts) {
 }
 /** CREATE [UNIQUE] INDEX [CONCURRENTLY] [IF NOT EXISTS] name ON table [USING m] (cols) [WHERE …] */
 function applyCreateIndex(model, statement, facts) {
-  const head = new RegExp('^CREATE\\s+(UNIQUE\\s+)?INDEX\\s+(CONCURRENTLY\\s+)?(?:IF\\s+NOT\\s+EXISTS\\s+)?(' + NAME + ')?\\s*ON\\s+(?:ONLY\\s+)?(' + NAME + ')', 'i').exec(statement);
+  const head = new RegExp(
+    '^CREATE\\s+(UNIQUE\\s+)?INDEX\\s+(CONCURRENTLY\\s+)?(?:IF\\s+NOT\\s+EXISTS\\s+)?(' + NAME + ')?\\s*ON\\s+(?:ONLY\\s+)?(' + NAME + ')',
+    'i'
+  ).exec(statement);
   if (!head) return;
-  const tableName = unquote(head[4]), body = parenBody(statement, head[0].length); if (!body) return;
+  const tableName = unquote(head[4]),
+    body = parenBody(statement, head[0].length);
+  if (!body) return;
   const isPlain = splitTopLevel(body.inner).every((part) => PLAIN_INDEX_COLUMN.test(part));
-  const index = { name: unquote(head[3] || ''), columns: isPlain ? columnNames(body.inner) : [], partial: /\bWHERE\b/i.test(body.after), unique: !!head[1], hasExpression: !isPlain };
+  const index = {
+    name: unquote(head[3] || ''),
+    columns: isPlain ? columnNames(body.inner) : [],
+    partial: /\bWHERE\b/i.test(body.after),
+    unique: !!head[1],
+    hasExpression: !isPlain
+  };
   const table = model.table(tableName);
   facts.touched.push(tableName);
   facts.indexes.push({ table: tableName, ...index, concurrently: !!head[2], earlier: keysAndIndexes(table).slice() });
@@ -194,8 +257,11 @@ function readFile(model, source) {
   const facts = emptyFacts();
   learnNames(model, source);
   for (const statement of splitStatements(stripForStatements(source))) {
-    applyCreateTable(model, statement, facts); applyAlterTable(model, statement, facts); applyCreateIndex(model, statement, facts);
-    applyPolicy(statement, facts); noteStatement(statement, facts);
+    applyCreateTable(model, statement, facts);
+    applyAlterTable(model, statement, facts);
+    applyCreateIndex(model, statement, facts);
+    applyPolicy(statement, facts);
+    noteStatement(statement, facts);
   }
   facts.knownExtra.forEach((name) => model.known.add(name));
   return facts;
@@ -227,36 +293,72 @@ const header = (source, pattern) => pattern.test(source);
 
 /** each rule: (facts, model, ctx = { source, fileName, fieldsText }) → [{ object }] */
 const RULES = {
-  R1: (facts, model) => objects(facts.foreignKeys.filter((key) => !leadsWith(keysAndIndexes(model.table(key.table)), key.columns)).map((key) => label(key.table, key.columns))),
+  R1: (facts, model) =>
+    objects(facts.foreignKeys.filter((key) => !leadsWith(keysAndIndexes(model.table(key.table)), key.columns)).map((key) => label(key.table, key.columns))),
   R2: (facts) => objects(facts.created.filter((made) => hasEntityId(facts, made.table) && !isClosedByRls(facts, made.table)).map((made) => made.table)),
-  R3: (facts, model) => objects(facts.created.filter((made) => hasEntityId(facts, made.table) && !leadsWith(keysAndIndexes(model.table(made.table)), ['entity_id'])).map((made) => made.table)),
+  R3: (facts, model) =>
+    objects(
+      facts.created
+        .filter((made) => hasEntityId(facts, made.table) && !leadsWith(keysAndIndexes(model.table(made.table)), ['entity_id']))
+        .map((made) => made.table)
+    ),
   R4: (facts) => objects(facts.columns.filter((column) => TIMESTAMP_WITHOUT_ZONE.test(column.type)).map((column) => column.table + '.' + column.name)),
-  R5: (facts) => objects(facts.columns.filter((column) => MONEY_NAME.test(column.name) && !/_minor$/.test(column.name) && BAD_MONEY_TYPE.test(column.type)).map((column) => column.table + '.' + column.name)),
-  R6: (facts, model, ctx) => { const found = NATIONAL_DEFAULT.exec(stripForStatements(ctx.source)); return found ? objects([found[1]]) : []; },
-  R7: (facts, model) => objects(facts.columns.filter((column) => ONCE_ONLY_KEY.test(column.name) && !uniqueIncludes(model.table(column.table), column.name)).map((column) => column.table + '.' + column.name)),
+  R5: (facts) =>
+    objects(
+      facts.columns
+        .filter((column) => MONEY_NAME.test(column.name) && !/_minor$/.test(column.name) && BAD_MONEY_TYPE.test(column.type))
+        .map((column) => column.table + '.' + column.name)
+    ),
+  R6: (facts, model, ctx) => {
+    const found = NATIONAL_DEFAULT.exec(stripForStatements(ctx.source));
+    return found ? objects([found[1]]) : [];
+  },
+  R7: (facts, model) =>
+    objects(
+      facts.columns
+        .filter((column) => ONCE_ONLY_KEY.test(column.name) && !uniqueIncludes(model.table(column.table), column.name))
+        .map((column) => column.table + '.' + column.name)
+    ),
   R8: (facts) => objects(facts.indexes.filter(repeatsAnEarlierIndex).map((index) => label(index.table, index.columns))),
   R9: (facts) => objects(facts.ifNotExistsWithKey),
   R10: (facts, model, ctx) => objects(unterminatedBlocks(ctx.source)),
   R11: (facts, model) => objects(facts.touched.filter((name) => !model.known.has(name) && !/^(pg_|information_schema)/.test(name) && !name.includes('.'))),
-  R12: (facts, model, ctx) => (!header(ctx.source, /^--\s*fresh-db:\s*skip\b/m) && doBlocks(ctx.source).some((body) => DATA_ASSERT.test(body)) ? objects(['RAISE EXCEPTION on data']) : []),
-  R13: (facts, model, ctx) => (facts.indexes.some((index) => index.concurrently) && /^\s*BEGIN\s*;/im.test(stripComments(ctx.source)) ? objects(['CONCURRENTLY inside BEGIN']) : []),
-  R14: (facts, model, ctx) => objects(facts.columns.filter((column) => /^jsonb?$/.test(column.type) && !new RegExp('\\b' + column.name + '\\b').test(ctx.fieldsText)).map((column) => column.table + '.' + column.name)),
+  R12: (facts, model, ctx) =>
+    !header(ctx.source, /^--\s*fresh-db:\s*skip\b/m) && doBlocks(ctx.source).some((body) => DATA_ASSERT.test(body)) ? objects(['RAISE EXCEPTION on data']) : [],
+  R13: (facts, model, ctx) =>
+    facts.indexes.some((index) => index.concurrently) && /^\s*BEGIN\s*;/im.test(stripComments(ctx.source)) ? objects(['CONCURRENTLY inside BEGIN']) : [],
+  R14: (facts, model, ctx) =>
+    objects(
+      facts.columns
+        .filter((column) => /^jsonb?$/.test(column.type) && !new RegExp('\\b' + column.name + '\\b').test(ctx.fieldsText))
+        .map((column) => column.table + '.' + column.name)
+    ),
   R15: (facts, model, ctx) => (facts.destructive.length && !header(ctx.source, /^--\s*DESTRUCTIVE:\s*approved\s+\S+\s+\S+/m) ? objects(facts.destructive) : []),
   R16: (facts, model, ctx) => (facts.created.length && !header(ctx.source, /^--\s*OWNER:\s*\S+/m) ? objects(facts.created.map((made) => made.table)) : []),
-  R17: (facts, model, ctx) => (/^(000_baseline|migration_b|net0|sim0|purge_|READ-)/.test(ctx.fileName) || /^b\d+[a-z]?_[A-Za-z0-9_]+\.sql$/.test(ctx.fileName) ? [] : objects([ctx.fileName]))
+  R17: (facts, model, ctx) =>
+    /^(000_baseline|migration_b|net0|sim0|purge_|READ-)/.test(ctx.fileName) || /^b\d+[a-z]?_[A-Za-z0-9_]+\.sql$/.test(ctx.fileName)
+      ? []
+      : objects([ctx.fileName])
 };
 /** a plain, non-unique, full index that is the same as, or a leading part of, one the table already had */
 function repeatsAnEarlierIndex(index) {
   if (index.partial || index.unique || index.hasExpression || !index.columns.length) return false;
-  return index.earlier.some((other) => !other.partial && !other.hasExpression && other.columns.length >= index.columns.length
-    && index.columns.every((name, position) => other.columns[position] === name));
+  return index.earlier.some(
+    (other) =>
+      !other.partial &&
+      !other.hasExpression &&
+      other.columns.length >= index.columns.length &&
+      index.columns.every((name, position) => other.columns[position] === name)
+  );
 }
 
 /** `-- schema-lint: allow R5 R6 reason` header lines → { rules: Set, lines: [...] } */
 function allowedRules(source) {
-  const rules = new Set(), lines = [];
+  const rules = new Set(),
+    lines = [];
   for (const match of source.matchAll(/^--\s*schema-lint:\s*allow\s+((?:R\d+[\s,]*)+)(.*)$/gim)) {
-    (match[1].match(/R\d+/g) || []).forEach((rule) => rules.add(rule)); lines.push(match[0].trim());
+    (match[1].match(/R\d+/g) || []).forEach((rule) => rules.add(rule));
+    lines.push(match[0].trim());
   }
   return { rules, lines };
 }
@@ -265,7 +367,8 @@ function allowedRules(source) {
 
 /** every migration file in judging order: the chain, then what the chain skips (one-off data scripts, net0x, root-era files) */
 function orderedFiles() {
-  const everything = fs.readdirSync(MIGRATIONS_DIR).filter((file) => file.endsWith('.sql')), chain = BASELINE_FILES.concat(chainFiles());
+  const everything = fs.readdirSync(MIGRATIONS_DIR).filter((file) => file.endsWith('.sql')),
+    chain = BASELINE_FILES.concat(chainFiles());
   return chain.filter((file) => everything.includes(file)).concat(everything.filter((file) => !chain.includes(file)).sort());
 }
 /** tables the non-chain files create exist for every chain file (net0x, sim01 … are run by other paths): learn their names first */
@@ -275,24 +378,32 @@ function seedAmbientNames(model, files) {
 }
 /** the violations of one file, each once, marked allowed when the header excuses its rule */
 function judgeFile(file, facts, model, context) {
-  const allow = allowedRules(context.source), found = [];
+  const allow = allowedRules(context.source),
+    found = [];
   for (const rule of Object.keys(RULES)) {
     const seen = new Set();
     for (const hit of RULES[rule](facts, model, context)) {
-      if (!seen.has(hit.object)) { seen.add(hit.object); found.push({ file, rule, object: hit.object, allowed: allow.rules.has(rule) }); }
+      if (!seen.has(hit.object)) {
+        seen.add(hit.object);
+        found.push({ file, rule, object: hit.object, allowed: allow.rules.has(rule) });
+      }
     }
   }
   return { found, allowLines: allow.lines.map((line) => file + ': ' + line) };
 }
 /** replay → { files, violations: [{ file, rule, object, allowed }], allows } */
 function replay() {
-  const files = orderedFiles(), model = new Model(), violations = [], allows = [];
+  const files = orderedFiles(),
+    model = new Model(),
+    violations = [],
+    allows = [];
   const fieldsText = fs.existsSync(FIELDS_DICTIONARY) ? fs.readFileSync(FIELDS_DICTIONARY, 'utf8') : '';
   seedAmbientNames(model, files);
   for (const file of files) {
     const source = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
     const judged = judgeFile(file, readFile(model, source), model, { source, fileName: file, fieldsText });
-    violations.push(...judged.found); allows.push(...judged.allowLines);
+    violations.push(...judged.found);
+    allows.push(...judged.allowLines);
   }
   return { files, violations, allows };
 }

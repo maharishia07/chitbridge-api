@@ -26,7 +26,7 @@ const readOf = (row) => async () => ({ rows: row ? [row] : [] });
   const kept = CS.clean({ country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false }, source: { country: 'backfill b299 (today’s facts)', currency: 'typed' } });
   ok('saving an assumed (b299) country is the one-tap confirm: its source stops saying backfill', kept.source.country === 'confirmed by the owner' && kept.source.currency === 'typed');
   const src = require('fs').readFileSync(path.join(API, 'routes/chits.js'), 'utf8');
-  ok('the send route asks the gate right after the sender is known, and lets a draft through', /sendSender, sendMoneyStated,/.test(src) && /if \(req\.body\.is_draft\) return false;\s*\n\s*const refusal/.test(src));
+  ok('the send route asks the gate right after the sender is known, and lets a draft through', /sendSender,\s*sendMoneyStated,/.test(src) && /if \(req\.body\.is_draft\) return false;\s*\n\s*const refusal/.test(src));
 const fs = require('fs');
   /* ── N1: one reader per fact returns null + a reason, never India ── */
   const regional = require(path.join(API, 'lib/regional'));
@@ -41,9 +41,9 @@ const fs = require('fs');
   const policy = require(path.join(API, 'lib/policy'));
   ok('N2: the policy card says "GST registration" for India (unchanged) and "Tax registration" with no country', policy.schemaFor('IN').gst_registration.ui.label === 'GST registration' && policy.schemaFor(null).gst_registration.ui.label === 'Tax registration');
   const packed = fs.readFileSync(path.join(API, 'lib/catalogue-view.js'), 'utf8');
-  ok('N2: catalogue-view strips the UPI id unless the pack carries UPI (no country, no pack -> none)', /if \(!\(pk && pk\.chart && pk\.chart\.paymentModes && pk\.chart\.paymentModes\.upi\)\) upi_id = null;/.test(packed));
+  ok('N2: catalogue-view strips the UPI id unless the pack carries UPI (no country, no pack -> none)', /if \(!\(pk && pk\.chart && pk\.chart\.paymentModes && pk\.chart\.paymentModes\.upi\)\)\s*upi_id = null;/.test(packed));
   const profileSrc = fs.readFileSync(path.join(API, 'lib/profile.js'), 'utf8');
-  ok('N2: profile.invoiceParty: no pack does not split by state, and a state is asked only where the pack splits', profileSrc.includes("function splitsByStateOf(pack) { return !!(pack && pack.tax && pack.tax.supply === 'state'); }") && profileSrc.includes('if (!party.state && splitsByState)'));
+  ok('N2: profile.invoiceParty: no pack does not split by state, and a state is asked only where the pack splits', /function splitsByStateOf\(pack\) \{\s*return !!\(pack && pack\.tax && pack\.tax\.supply === 'state'\);\s*\}/.test(profileSrc) && profileSrc.includes('if (!party.state && splitsByState)'));
   const readySrc = fs.readFileSync(path.join(API, 'lib/readiness.js'), 'utf8');
   ok('N2: the GST Rule 46 readiness item is the Indian shop alone', readySrc.includes('if (isIndiaParty(party)) items.push(invoiceHeaderItem(party, rung, note));') && readySrc.includes("String(party.country || '').toUpperCase() === 'IN'"));
 
@@ -65,7 +65,7 @@ const fs = require('fs');
   /* ── N4: the year starts where the setting or the pack says ── */
   ok('N4: fyStartOf - the pack\'s month (India 4, Australia 7), null when no country or no pack', CS.fyStartOf('IN') === 4 && CS.fyStartOf('au') === 7 && CS.fyStartOf(null) === null && CS.fyStartOf('ZZ') === null);
   const tillSrc = fs.readFileSync(path.join(API, 'routes/till.js'), 'utf8');
-  ok('N4: the till snapshot carries shop.fy_start_month (the pack\'s), listed for the screen', tillSrc.includes("'money_why', 'fy_start_month']") && tillSrc.includes("fy_start_month: require('../lib/country-setup').fyStartOf(cbCountry)"));
+  ok('N4: the till snapshot carries shop.fy_start_month (the pack\'s), listed for the screen', tillSrc.includes("'money_why', 'fy_start_month']") && /fy_start_month:\s*require\('\.\.\/lib\/country-setup'\)\.fyStartOf\(cbCountry\)/.test(tillSrc));
   const migration = fs.readFileSync(path.join(API, 'migrations', 'b764_books_setting_fy_no_default.sql'), 'utf8');
   ok('N4: the migration drops books_setting.fy_start_month DEFAULT (written, not run) and the one writer names the column', /ALTER COLUMN fy_start_month DROP DEFAULT/.test(migration) && /INSERT INTO books_setting \(entity_id, enabled, walkin_grain, fy_start_month/.test(fs.readFileSync(path.join(API, 'lib/books-store.js'), 'utf8')));
 

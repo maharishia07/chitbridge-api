@@ -9,6 +9,7 @@
  * Run: node tests/t3-fixes.test.cjs
  */
 'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const fs = require('fs');
 const path = require('path');
 const API = path.join(__dirname, '..');
@@ -62,19 +63,19 @@ require.cache[require.resolve(path.join(API, 'db'))] = { id: 'db', loaded: true,
   t('a co-assist granted "Sees costs" may', (await cost.writeRefusal(SEES, 'e1', ['price', 'name'])) === null);
   /* every door asks it before it writes */
   const products = src('routes/products.js'), till = src('routes/till.js'), combo = src('routes/combo-templates.js');
-  const sched = products.slice(products.indexOf("router.post('/:id/schedule'"));
+  const sched = products.slice(routeAt(products, 'post', '/:id/schedule'));
   t('POST /products/:id/schedule asks the gate before it schedules', sched.indexOf('writeRefusal') > 0 && sched.indexOf('writeRefusal') < sched.indexOf('schedule.schedule('));
-  const patch = products.slice(products.indexOf("router.patch('/:id'"));
+  const patch = products.slice(routeAt(products, 'patch', '/:id'));
   t('PATCH /products/:id asks the same gate (no private copy)', patch.indexOf('writeRefusal') > 0 && products.indexOf('COST_BLIND_ALLOWED_FIELDS') < 0);
-  const price = till.slice(till.indexOf("router.post('/price'"));
+  const price = till.slice(routeAt(till, 'post', '/price'));
   /* INT6b: the UPDATE is the one product writer now (T2-WRITERS catwrite.patchItems) — the gate must come before its first read */
   t('POST /till/price asks the gate before it reads or writes', price.indexOf('writeRefusal') > 0 && price.indexOf('writeRefusal') < price.indexOf('SELECT item_data FROM catalogue_items') && price.indexOf('writeRefusal') < price.indexOf('catwrite.patchItems'));
-  const push = combo.slice(combo.indexOf("router.post('/:id/push'"));
+  const push = combo.slice(routeAt(combo, 'post', '/:id/push'));
   t('the combo push asks the gate before it reads or writes', push.indexOf('writeRefusal') > 0 && push.indexOf('writeRefusal') < push.indexOf('SELECT name, definition'));
 
   console.log('\n-- CAT-FIX1 · the profile writes the shop --');
   const ent = src('routes/entities.js');
-  const prof = ent.slice(ent.indexOf("router.patch('/profile'"), ent.indexOf("router.patch('/:id/erase'"));
+  const prof = ent.slice(routeAt(ent, 'patch', '/profile'), routeAt(ent, 'patch', '/:id/erase'));
   t('PATCH /entities/profile writes auth.entityOf(req), not the caller', /const id = auth\.entityOf\(req\);/.test(prof) && !/const id = req\.identity\.identity_id;/.test(prof));
 
   console.log('\n-- CAT-FIX1 · the import --');
@@ -88,7 +89,7 @@ require.cache[require.resolve(path.join(API, 'db'))] = { id: 'db', loaded: true,
   t('a barcode failing its GTIN check digit is warned, naming the right digit', gt.length === 1 && gt[0].row === 3 && gt[0].severity === 'warn' && /should be 1/.test(gt[0].message), JSON.stringify(rep.issues));
   t('…a good GTIN and an internal SKU are not', !rep.issues.some((i) => i.row === 2 || i.row === 4));
   t('workbookCut reads xlsx-read\'s truncated flag, both routes call it', (products.match(/= workbookCut\(parsed\)/g) || []).length === 2 && /WORKBOOK_CUT/.test(products));
-  const imp = products.slice(products.indexOf("router.post('/import', auth"));
+  const imp = products.slice(routeAt(products, 'post', '/import'));
   t('the commit refuses a cut workbook before it writes', imp.indexOf('workbookCut') > 0 && imp.indexOf('workbookCut') < imp.indexOf('commitFields'));
 
   console.log('\n-- SIGNIN-CONST --');

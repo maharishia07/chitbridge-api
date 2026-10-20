@@ -14,7 +14,7 @@ console.log('— the downloaded kit —');
 
 it('the shipped connector.json carries no "YOUR …" placeholder in any adapter block', () => {
   const s = read('routes/integrations.js');
-  const i = s.indexOf('const cfg = { api: base'); assert.ok(i > 0, 'the kit config literal moved');
+  const i = s.search(/const cfg = \{\s*api: base/); assert.ok(i > 0, 'the kit config literal moved');
   const block = s.slice(i, s.indexOf('const files =', i));
   const bad = block.split('\n').filter((l) => /:\s*'YOUR /.test(l));
   assert.deepStrictEqual(bad, [], 'placeholder value(s) in the kit config: ' + bad.join(' | '));

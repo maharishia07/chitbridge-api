@@ -7,8 +7,14 @@ require('dotenv').config();
 const { Client } = require('pg');
 (async () => {
   const entity = process.argv[2];
-  if (!process.env.DATABASE_URL) { console.error('set DATABASE_URL first'); process.exit(2); }
-  if (!entity) { console.error('pass an entity_id: node scripts/rls-context-test.js <entity_uuid>'); process.exit(2); }
+  if (!process.env.DATABASE_URL) {
+    console.error('set DATABASE_URL first');
+    process.exit(2);
+  }
+  if (!entity) {
+    console.error('pass an entity_id: node scripts/rls-context-test.js <entity_uuid>');
+    process.exit(2);
+  }
   const c = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   await c.connect();
   const who = await c.query(`SELECT current_user, rolbypassrls FROM pg_roles WHERE rolname = current_user`);
@@ -23,8 +29,13 @@ const { Client } = require('pg');
 
   console.log('context read back inside the tx:', JSON.stringify(ctx.rows[0].ctx));
   console.log('visible chit_header rows       :', cnt.rows[0].n);
-  console.log(cnt.rows[0].n > 0
-    ? 'PASS — set_config propagates; the withEntity mechanism works on this connection.'
-    : 'FAIL — 0 rows: set_config is NOT taking effect through this connection (pooler/transaction issue). This is the bug.');
+  console.log(
+    cnt.rows[0].n > 0
+      ? 'PASS — set_config propagates; the withEntity mechanism works on this connection.'
+      : 'FAIL — 0 rows: set_config is NOT taking effect through this connection (pooler/transaction issue). This is the bug.'
+  );
   await c.end();
-})().catch(e => { console.error('test failed:', e.message); process.exit(1); });
+})().catch((e) => {
+  console.error('test failed:', e.message);
+  process.exit(1);
+});

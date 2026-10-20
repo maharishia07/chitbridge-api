@@ -52,17 +52,17 @@ ok('the default load keeps its old idempotency mark (a shop loaded before --star
 { const bk = read('lib/books.js'), st = read('lib/books-store.js');
   ok('the ledger\'s first moment is read off the SAME clock as its year (books.enable at: CLOCK when simulated; saveSetting COALESCE($9, now()))',
     /at: CLOCK\.isSimulated && CLOCK\.isSimulated\(\) \? CLOCK\.now\(\)\.toISOString\(\) : null/.test(bk) && /COALESCE\(\$9::timestamptz, now\(\)\)/.test(st)); }
-ok('a sealed NODE_ENV is refused', /isSealed\(\)\) die\(/.test(src));
+ok('a sealed NODE_ENV is refused', /isSealed\(\)\)\s*die\(/.test(src));
 /* HX1: the schema step is tools/migrate.cjs — a database with tables runs only what its ledger lacks, and one with an EMPTY ledger is left alone */
 ok('the schema step is tools/migrate.cjs (one chain, with the ledger)', /require\('\.\/migrate\.cjs'\)\.apply\(DB/.test(src));
-ok('migrate leaves a database with tables and an empty ledger alone', /has tables and ' \+ \(hadLedger \? 'its ledger is empty'/.test(fs.readFileSync(path.join(__dirname, '..', 'tools', 'migrate.cjs'), 'utf8')));
+ok('migrate leaves a database with tables and an empty ledger alone', /has tables and ' \+\s*\(hadLedger \? 'its ledger is empty'/.test(fs.readFileSync(path.join(__dirname, '..', 'tools', 'migrate.cjs'), 'utf8')));
 ok('--schema-only (HX0, the compose migrate job) is the same schema step and nothing else: no shop, no api', (() => {
   const body = (/async function schemaOnly\(\) \{([\s\S]*?)\n\}/.exec(src) || [])[1] || '';
   return /await applySchema\(\)/.test(body) && !/server\.js|startApi|\/api\//.test(body) && /if \(SCHEMA_ONLY\) return schemaOnly\(\)/.test(src);
 })());
 ok('the shop walks the Country setup door (CS1) before the books open — never a raw write to identities / entity_governance', /\/api\/governance\/country-setup/.test(src) && src.indexOf('/api/governance/country-setup') < src.indexOf('/api/books/enable'));
 ok('CX0: the loader carries an IN, an AU and an AE shop, and reads currency · year · heads from the PACK (never a second table)',
-   /const SHOPS = \{[\s\S]*?\bIN:[\s\S]*?\bAU:[\s\S]*?\bAE:/.test(src) && /packFor\(COUNTRY\)/.test(src) && /PACK\.currency/.test(src) && /PACK\.fiscalYear\.startMonth/.test(src)
+   /const SHOPS = \{[\s\S]*?\bIN:[\s\S]*?\bAU:[\s\S]*?\bAE:/.test(src) && /packFor\(\s*COUNTRY\s*\)/.test(src) && /PACK\.currency/.test(src) && /PACK\.fiscalYear\.startMonth/.test(src)
    && /PACK\.taxHeads/.test(src) && !/COUNTRY === 'AU' \? 'AUD'/.test(src) && !/'\+05:30'\)/.test(src));
 ok('…and the year and month number come from lib/accounts-packs (the function the books routes use), not a rule of its own', /AP\.fiscalYearOf\(/.test(src) && /AP\.periodOf\(/.test(src) && !/m >= 4 \? y : y - 1/.test(src));
 
@@ -83,14 +83,14 @@ const au = P.planDays({ start: '2026-07-01', years: 1, seed: 7 });
 ok('a July year is 365 days from 2026-07-01 to 2027-06-30', au.days.length === 365 && au.days[0].day === '2026-07-01' && au.last === '2027-06-30' && au.days[364].day === '2027-06-30');
 ok('the loader takes the year and the month from lib/accounts-packs (fiscalYearOf · periodOf · fyRange), not an April of its own',
   /AP\.fiscalYearOf\(d, FYPACK\)/.test(src) && /AP\.periodOf\(d, FYPACK\)/.test(src) && /AP\.fyRange\(fy, FYPACK\)/.test(src) && !/m >= 4 \? y : y - 1/.test(src) && !/\+ 8\) % 12\) \+ 1/.test(src));
-ok('the plan starts on the pack\'s first month (April IN · July AU · January AE)', /START_ARG \|\| \('2026-' \+ String\(PACK\.fiscalYear\.startMonth\)/.test(src));
-ok('a one-rate pack\'s basket draws at its standard rate (AU 10 % · AE 5 %), an IN basket from its slab', /it\.rate === rateOf\(rate\)/.test(src));
+ok('the plan starts on the pack\'s first month (April IN · July AU · January AE)', /START_ARG \|\| '2026-' \+ String\(PACK\.fiscalYear\.startMonth\)/.test(src));
+ok('a one-rate pack\'s basket draws at its standard rate (AU 10 % · AE 5 %), an IN basket from its slab', /item\.rate === rateOf\(rate\)/.test(src));
 
 /* 4 · one clock on the chit */
 const chits = read('routes/chits.js'), mint = read('lib/mint.js'), b300 = read('migrations/b300_chit_deliver_clock.sql');
 ok('routes/chits.js stamps a chit with the shop clock (CLOCK.now()), never new Date() for `now`', /const now = CLOCK\.now\(\)/.test(chits) && !/const now = new Date\(\)/.test(chits));
-ok('…hands it to mint.header (created_at · sent_at)', /created_at: now, sent_at: now/.test(chits));
-ok('…and the legacy in-transaction inserts use it too (no NOW(),NOW() on chit_header)', !/NOW\(\),NOW\(\)\)`/.test(chits) && /'sent', now\]/.test(chits) && /'received', now\]/.test(chits));
+ok('…hands it to mint.header (created_at · sent_at)', /created_at: now,\s*sent_at: now/.test(chits));
+ok('…and the legacy in-transaction inserts use it too (no NOW(),NOW() on chit_header)', !/NOW\(\),NOW\(\)\)`/.test(chits) && /'sent',\s*now\s*\]/.test(chits) && /'received',\s*now\s*\]/.test(chits));
 ok('lib/mint.js header carries created_at / sent_at when given, nothing when not', /created_at: isoOf\(x\.created_at\)/.test(mint) && /\.\.\.\(x\.created_at \?/.test(mint));
 ok('migrations/b300 honours the copy\'s stamps and falls back to NOW()', /COALESCE\(NULLIF\(c->>'created_at', ''\)::timestamptz, NOW\(\)\)/.test(b300) && /COALESCE\(NULLIF\(c->>'sent_at', ''\)::timestamptz, NOW\(\)\)/.test(b300));
 ok('b300 says who runs it and that RLS is unchanged', /NOT RUN/.test(b300) && /RLS: unchanged/.test(b300));

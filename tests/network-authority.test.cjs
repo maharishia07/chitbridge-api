@@ -55,7 +55,7 @@ t('⚠️⚠️ no route takes the actor from the body any more', () => {
   const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   assert.ok(!/actingEntityId/.test(code), 'a route still reads actingEntityId from the request');
   for (const op of ['approve', 'decline', 'suspend', 'resume', 'disconnect', 'requestConnect']) {
-    assert.ok(new RegExp('net\\.' + op + '\\([^;]{0,400}?actorOf\\(req\\)\\)').test(code), op + ' is not given the signed-in business');
+    assert.ok(new RegExp('net\\.' + op + '\\([^;]{0,400}?actorOf\\(req\\)\\s*\\)').test(code), op + ' is not given the signed-in business');
   }
   assert.ok(/claim\(req\.params\.id, auth_\.entityOf\(req\)\)/.test(src), 'claim is not proven against the signed-in business');
 });

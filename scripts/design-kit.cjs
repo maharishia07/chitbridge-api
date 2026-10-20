@@ -20,18 +20,24 @@ fs.mkdirSync(OUT, { recursive: true });
 function blockAfter(marker) {
   const at = TILL.indexOf(marker);
   if (at < 0) throw new Error('not found: ' + marker);
-  const open = TILL.indexOf('{', at), close = TILL.indexOf('}', open);
+  const open = TILL.indexOf('{', at),
+    close = TILL.indexOf('}', open);
   return TILL.slice(open + 1, close);
 }
 function tokens(block) {
-  const out = {}; const re = /(--[a-z0-9-]+)\s*:\s*([^;]+)/gi; let m;
+  const out = {};
+  const re = /(--[a-z0-9-]+)\s*:\s*([^;]+)/gi;
+  let m;
   while ((m = re.exec(block))) out[m[1]] = m[2].trim();
   return out;
 }
 const LIGHT = tokens(blockAfter(':root{'));
 const DARK = Object.assign({}, LIGHT, tokens(blockAfter(':root[data-theme="dark"]{')));
 
-const varsOf = (t) => Object.keys(t).map((k) => '      ' + k + ': ' + t[k] + ';').join('\n');
+const varsOf = (t) =>
+  Object.keys(t)
+    .map((item) => '      ' + item + ': ' + t[item] + ';')
+    .join('\n');
 
 /* the shared head every card uses — the counter's own tokens, both themes */
 const HEAD = (title) => `<!doctype html>
@@ -69,8 +75,14 @@ const swatch = (k, what) => `
     <code style="font-size:.82em;color:var(--dim);min-width:86px">${LIGHT[k] || ''}</code>
     <span style="font-size:.85em;color:var(--dim)">${what}</span>
   </div>`;
-cards.push(card('foundations/colour.html', 'Foundations', 'Colour', 'Both themes, and what each token guards',
-  HEAD('Colour') + `
+cards.push(
+  card(
+    'foundations/colour.html',
+    'Foundations',
+    'Colour',
+    'Both themes, and what each token guards',
+    HEAD('Colour') +
+      `
 <h1>Colour</h1>
 <p class="note">Read out of till.html. Measured by <code>e2e/till-contrast.cjs</code> — 26 checks, both themes.
 <b>--edge</b> and <b>--on-accent</b> exist because the dark theme inverts the accents: white on the light-mint
@@ -96,7 +108,9 @@ cards.push(card('foundations/colour.html', 'Foundations', 'Colour', 'Both themes
       <span style="padding:8px 14px;border-radius:999px;background:var(--warn);color:var(--on-accent);font-weight:700">off the shelf</span>
     </div>
   </div>
-</div>`));
+</div>`
+  )
+);
 
 /* ── 2 · the bill row, which is the counter's most-read component ────────────────────────────────────────── */
 const billRow = (n, name, note, price, per, disc, qty, calc, value, sel) => `
@@ -122,8 +136,14 @@ const billRow = (n, name, note, price, per, disc, qty, calc, value, sel) => `
     <span style="text-align:right;font-variant-numeric:tabular-nums;font-weight:700">${value}</span>
     <span style="color:var(--warn);text-align:center">×</span>
   </div>`;
-cards.push(card('components/bill-row.html', 'Components', 'The bill row', 'Six columns; the arithmetic closes on every row',
-  HEAD('The bill row') + `
+cards.push(
+  card(
+    'components/bill-row.html',
+    'Components',
+    'The bill row',
+    'Six columns; the arithmetic closes on every row',
+    HEAD('The bill row') +
+      `
 <h1>The bill row</h1>
 <p class="note">Every figure a line is made of, in the order the sum is read. <b>qty × price − discount = value</b>
 holds on every row: a bill-wide offer is taken once at the summary, never spread onto the lines. The offer under
@@ -142,20 +162,31 @@ the item states its TERMS per product; the money is the Discount column's job.</
 <div class="cap">an offer that has not fired yet — grey, never the green that means money came off</div>
 <div class="frame">
   ${billRow(1, 'Cookies 250 g (pack 3)', 'GST 18% · <span style="color:var(--dim)">Buy 2 biscuits, get 1 free · buy 2 get 1 free</span>', '₹68.50', 'per packet', '—', 1, '₹68.50', '₹68.50', false)}
-</div>`));
+</div>`
+  )
+);
 
 /* ── 3 · the shelf row ───────────────────────────────────────────────────────────────────────────────────── */
-cards.push(card('components/shelf-row.html', 'Components', 'The shelf row', 'What the search returns; price matches the bill',
-  HEAD('The shelf row') + `
+cards.push(
+  card(
+    'components/shelf-row.html',
+    'Components',
+    'The shelf row',
+    'What the search returns; price matches the bill',
+    HEAD('The shelf row') +
+      `
 <h1>The shelf row</h1>
 <p class="note">The price here is the same figure the bill will charge — that is what lets a cart line be matched
 back to the row it came from. MRP is named as MRP and the gap stated as a fact, never as a "saving": the word
 <b>save</b>, and the green it comes in, appear at exactly one place on this counter.</p>
 <div class="frame">
-  ${[['Tata Green tea 100 g (premium)', 'BEV-06801 · Beverages', '₹119.00', 'per packet · incl. 5% GST', 'MRP ₹129.50 · ₹10.50 under', true],
-     ['Tea dust 250 g', 'BEV-TEA2 · Beverages', '₹128.00', 'per packet · incl. 5% GST', 'MRP ₹145.00 · ₹17.00 under', false],
-     ['Cookies 250 g (pack 3)', 'BIS-09816 · Biscuits', '₹68.50', 'per packet · incl. 18% GST', '', false]]
-    .map(([n, meta, price, per, mrp, sel]) => `
+  ${[
+    ['Tata Green tea 100 g (premium)', 'BEV-06801 · Beverages', '₹119.00', 'per packet · incl. 5% GST', 'MRP ₹129.50 · ₹10.50 under', true],
+    ['Tea dust 250 g', 'BEV-TEA2 · Beverages', '₹128.00', 'per packet · incl. 5% GST', 'MRP ₹145.00 · ₹17.00 under', false],
+    ['Cookies 250 g (pack 3)', 'BIS-09816 · Biscuits', '₹68.50', 'per packet · incl. 18% GST', '', false]
+  ]
+    .map(
+      ([n, meta, price, per, mrp, sel]) => `
   <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,auto) auto;gap:12px;align-items:center;
               padding:10px 12px;border-bottom:1px solid var(--line);
               ${sel ? 'background:var(--ok-tint);box-shadow:inset 3px 0 0 var(--ok)' : ''}">
@@ -168,30 +199,58 @@ back to the row it came from. MRP is named as MRP and the gap stated as a fact, 
       ${mrp ? `<span style="display:block;color:var(--dim);font-size:.78em">${mrp}</span>` : ''}</span>
     <span style="width:34px;height:34px;border:1px solid var(--edge);border-radius:8px;background:var(--card);
                  color:var(--ok);display:flex;align-items:center;justify-content:center;font-size:1.1em">+</span>
-  </div>`).join('')}
-</div>`));
+  </div>`
+    )
+    .join('')}
+</div>`
+  )
+);
 
 /* ── 4 · chips, quick keys, and the controls ─────────────────────────────────────────────────────────────── */
-cards.push(card('components/controls.html', 'Components', 'Chips, keys and controls', 'Category chips, quick keys, buttons, status pills',
-  HEAD('Chips, keys and controls') + `
+cards.push(
+  card(
+    'components/controls.html',
+    'Components',
+    'Chips, keys and controls',
+    'Category chips, quick keys, buttons, status pills',
+    HEAD('Chips, keys and controls') +
+      `
 <h1>Chips, keys and controls</h1>
 <p class="note">Anything you operate carries <b>--edge</b> (3:1). Dividers carry <b>--line</b> and are deliberately
 softer — WCAG 1.4.11 asks 3:1 of a control, not of a rule between two of sixty shelf rows.</p>
 
 <div class="cap">category chips — built from the categories that actually exist</div>
 <div class="frame"><div style="display:flex;gap:6px;padding:10px 12px;flex-wrap:wrap">
-  ${[['Everything', 1], ['On offer', 0], ['Off the shelf 5', 0], ['Spices 1461', 0], ['Rice &amp; grains 1283', 0], ['Personal care 1124', 0]]
-    .map(([t, on]) => `<span style="white-space:nowrap;padding:6px 11px;border:1px solid ${on ? 'var(--ok)' : 'var(--edge)'};
+  ${[
+    ['Everything', 1],
+    ['On offer', 0],
+    ['Off the shelf 5', 0],
+    ['Spices 1461', 0],
+    ['Rice &amp; grains 1283', 0],
+    ['Personal care 1124', 0]
+  ]
+    .map(
+      ([t, on]) => `<span style="white-space:nowrap;padding:6px 11px;border:1px solid ${on ? 'var(--ok)' : 'var(--edge)'};
       border-radius:999px;background:${on ? 'var(--ok-tint)' : 'var(--paper)'};color:${on ? 'var(--ok)' : 'var(--dim)'};
-      font-size:.82em;${on ? 'font-weight:600' : ''}">${t}</span>`).join('')}
+      font-size:.82em;${on ? 'font-weight:600' : ''}">${t}</span>`
+    )
+    .join('')}
 </div></div>
 
 <div class="cap">quick keys — learned from this counter's own bills, or a group somebody made</div>
 <div class="frame"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:10px 12px">
-  ${[['Tata Green tea 100 g', '₹119.00 / packet'], ['Tea dust 250 g', '₹128.00 / packet'], ['Filter coffee 200 g', '₹215.00 / packet'], ['Soft drink 750 ml', '₹45.00 / piece']]
-    .map(([n, p]) => `<span style="padding:14px 10px;border:1px solid var(--edge);border-radius:var(--radius);
+  ${[
+    ['Tata Green tea 100 g', '₹119.00 / packet'],
+    ['Tea dust 250 g', '₹128.00 / packet'],
+    ['Filter coffee 200 g', '₹215.00 / packet'],
+    ['Soft drink 750 ml', '₹45.00 / piece']
+  ]
+    .map(
+      ([n, p]) => `<span style="padding:14px 10px;border:1px solid var(--edge);border-radius:var(--radius);
       background:var(--paper);min-height:64px;display:block">
-      <b style="display:block;font-size:.95em">${n}</b><span style="color:var(--dim);font-size:.8em">${p}</span></span>`).join('')}
+      <b style="display:block;font-size:.95em">${n}</b><span style="color:var(--dim);font-size:.8em">${p}</span></span>`
+    )
+    .join('')}
 </div></div>
 
 <div class="cap">a bill's state — only "sent" is a promise</div>
@@ -208,12 +267,20 @@ softer — WCAG 1.4.11 asks 3:1 of a control, not of a rule between two of sixty
                color:var(--on-accent);font-weight:700">Save &amp; print · F9</span>
   <span style="padding:14px 22px;border-radius:var(--radius);border:1px solid var(--edge);background:var(--paper)">Park · F6</span>
   <span style="padding:14px 22px;border-radius:var(--radius);border:1px solid var(--edge);background:var(--paper)">Clear · Esc</span>
-</div></div>`));
+</div></div>`
+  )
+);
 
 /* ── 5 · the summary, where the bill-wide offer is stated ────────────────────────────────────────────────── */
 const trow = (l, r, cls) => `<div style="display:flex;justify-content:space-between;padding:1px 0;${cls || ''}"><span>${l}</span><span>${r}</span></div>`;
-cards.push(card('components/summary.html', 'Components', 'The summary', 'Folds by default; the bill-wide offer is stated here',
-  HEAD('The summary') + `
+cards.push(
+  card(
+    'components/summary.html',
+    'Components',
+    'The summary',
+    'Folds by default; the bill-wide offer is stated here',
+    HEAD('The summary') +
+      `
 <h1>The summary</h1>
 <p class="note">Folded by default — the bill is what a counter needs the room for. What stays visible is the
 decision: the TOTAL, and what was saved. The <b>bill-wide offer is taken here, once</b>, never spread across the
@@ -230,11 +297,19 @@ lines, so the step from "lines total" to TOTAL is a number you can point at.</p>
   ${trow('Saved *', '−₹121.55', 'color:var(--ok)')}
   <div style="display:flex;justify-content:space-between;font-size:1.5em;font-weight:800;padding-top:4px">
     <span>TOTAL</span><span>₹1,007.95</span></div>
-</div></div>`));
+</div></div>`
+  )
+);
 
 /* ── 6 · the whole counter, so a designer sees the composition, not just the parts ───────────────────────── */
-cards.push(card('screens/counter.html', 'Screens', 'The counter', 'Shelf and bill, side by side',
-  HEAD('The counter') + `
+cards.push(
+  card(
+    'screens/counter.html',
+    'Screens',
+    'The counter',
+    'Shelf and bill, side by side',
+    HEAD('The counter') +
+      `
 <h1>The counter</h1>
 <p class="note">The split is the shop's: a wholesaler wants the bill wide, a kirana wants the search wide, and the
 handle drags. Every section except the header, the bill and the totals can be switched off — a tiffin shop and a
@@ -293,11 +368,19 @@ ten-thousand-line kirana are not the same counter.</p>
                    color:var(--on-accent);font-weight:700">Save &amp; print · F9</span>
     </div>
   </div>
-</div>`));
+</div>`
+  )
+);
 
 /* ── 7 · the brief: what a redesign must not break ───────────────────────────────────────────────────────── */
-cards.push(card('BRIEF.html', 'Brand', 'The brief', 'What a redesign must keep — and what it may change',
-  HEAD('The brief') + `
+cards.push(
+  card(
+    'BRIEF.html',
+    'Brand',
+    'The brief',
+    'What a redesign must keep — and what it may change',
+    HEAD('The brief') +
+      `
 <h1>What a redesign must keep</h1>
 <p class="note">This counter is used at arm's length, in a bright shop, by somebody counting money with a
 customer waiting. These are not style preferences — each one was paid for by a real failure.</p>
@@ -324,14 +407,18 @@ customer waiting. These are not style preferences — each one was paid for by a
     <li>How an offer that has NOT fired yet should look beside one that has.</li>
     <li>The summary: folded by default, and the step from lines total to TOTAL.</li>
   </ul>
-</div></div>`));
+</div></div>`
+  )
+);
 
-fs.writeFileSync(path.join(OUT, 'README.md'),
-  '# The counter — design system\n\n'
-  + 'Extracted from `chitbridge-api/tools/tally-connector/till.html` by `build-dskit.cjs`.\n'
-  + 'Every colour and radius is PARSED from the source, so these cards cannot drift from the product.\n\n'
-  + 'Start at **BRIEF.html** — what a redesign must keep, and what is open.\n');
+fs.writeFileSync(
+  path.join(OUT, 'README.md'),
+  '# The counter — design system\n\n' +
+    'Extracted from `chitbridge-api/tools/tally-connector/till.html` by `build-dskit.cjs`.\n' +
+    'Every colour and radius is PARSED from the source, so these cards cannot drift from the product.\n\n' +
+    'Start at **BRIEF.html** — what a redesign must keep, and what is open.\n'
+);
 
 console.log('wrote ' + cards.length + ' cards to ' + OUT);
-cards.forEach((c) => console.log('   ' + c.group.padEnd(12) + c.path));
+cards.forEach((item) => console.log('   ' + item.group.padEnd(12) + item.path));
 console.log('\ntokens parsed: light ' + Object.keys(LIGHT).length + ', dark ' + Object.keys(DARK).length);

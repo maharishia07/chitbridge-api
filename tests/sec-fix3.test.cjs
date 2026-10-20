@@ -84,7 +84,7 @@ const STAFF = { identity: { identity_id: 'act-1', identity_type: 'actor', parent
   });
 
   console.log('\nS6 · another shop\'s registry values stay with it');
-  await it('the readiness passport blanks evidence_ref unless it is the caller\'s own', () => assert.ok(/isOwnRow \? rd : Object\.assign\(\{\}, rd, \{ clearances:[^;]+evidence_ref: null/.test(src('routes/governance.js'))));
+  await it('the readiness passport blanks evidence_ref unless it is the caller\'s own', () => assert.ok(/isOwnRow\s*\?\s*rd\s*:\s*Object\.assign\(\{\}, rd, \{ clearances:[^;]+evidence_ref: null/.test(src('routes/governance.js'))));
 
   console.log('\nS7 · WhatsApp sends only from a platform-verified line');
   const channels = require('../lib/channels');
@@ -98,7 +98,7 @@ const STAFF = { identity: { identity_id: 'act-1', identity_type: 'actor', parent
     assert.ok(/channel = 'whatsapp' AND status = 'verified'/.test(src('lib/crm-groups.js')));
     assert.ok(/b\.status = 'verified'/.test(src('lib/whatsapp-out.js')));
   });
-  await it('simulate is always the web channel', () => assert.ok(/channel: 'web', sender_ref/.test(src('routes/capture.js'))));
+  await it('simulate is always the web channel', () => assert.ok(/channel: 'web',\s*sender_ref/.test(src('routes/capture.js'))));
 
   console.log('\nS8 · a co-assist\'s kit download carries no key');
   await it('the key is minted only for the owner', () => assert.ok(/if \(req\.identity && isOwner\(req\)\) \{/.test(src('routes/integrations.js'))));
@@ -116,7 +116,7 @@ const STAFF = { identity: { identity_id: 'act-1', identity_type: 'actor', parent
   console.log('\nS10 · a non-writer\'s results stay under their own entity');
   await it('a shop that is not a board writer posts into its own entity', () => assert.strictEqual(testing.resultsEntityOf({ identity: { identity_id: SHOP_A } }), SHOP_A));
   await it('the board\'s own entity posts to the shared board', () => assert.strictEqual(testing.resultsEntityOf({ identity: { identity_id: BOARD } }), BOARD));
-  await it('the tester name is the token\'s, not the body\'s', () => assert.ok(/tester_name: who\.name,/.test(src('routes/testing.js'))));
+  await it('the tester name is the token\'s, not the body\'s', () => assert.ok(/tester_name: who\.name\b/.test(src('routes/testing.js'))));
 
   console.log('\nS11 · an unowned shared source is claimed by the root only');
   const assist = require('../routes/assist');

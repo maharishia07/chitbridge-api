@@ -20,37 +20,44 @@ const zlib = require('zlib');
 
 /* ── a minimal PNG encoder. Chunk = length, type, data, CRC32 — the format's own rules, nothing clever. ────── */
 function crc32(buf) {
-  let c, crc = 0xFFFFFFFF;
-  for (let n = 0; n < buf.length; n++) {
-    c = (crc ^ buf[n]) & 0xFF;
-    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+  let c,
+    crc = 0xffffffff;
+  for (let index = 0; index < buf.length; index++) {
+    c = (crc ^ buf[index]) & 0xff;
+    for (let position = 0; position < 8; position++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
     crc = c ^ (crc >>> 8);
   }
-  return (crc ^ 0xFFFFFFFF) >>> 0;
+  return (crc ^ 0xffffffff) >>> 0;
 }
 function chunk(type, data) {
-  const len = Buffer.alloc(4); len.writeUInt32BE(data.length, 0);
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length, 0);
   const td = Buffer.concat([Buffer.from(type, 'ascii'), data]);
-  const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(td), 0);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(td), 0);
   return Buffer.concat([len, td, crc]);
 }
 /* Deterministic pseudo-random — a plain LCG, seeded, so "random" bytes are the SAME bytes every run. A test
    fixture that differs between runs cannot assert a byte-identical round-trip. */
 function lcg(seed) {
   let s = seed >>> 0;
-  return function () { s = (s * 1664525 + 1013904223) >>> 0; return (s >>> 16) & 0xFF; };
+  return function () {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return (s >>> 16) & 0xff;
+  };
 }
 function png(w, h, rgb, noisy) {
   const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4);
-  ihdr[8] = 8;      // bit depth
-  ihdr[9] = 2;      // colour type 2 = truecolour RGB
+  ihdr.writeUInt32BE(w, 0);
+  ihdr.writeUInt32BE(h, 4);
+  ihdr[8] = 8; // bit depth
+  ihdr[9] = 2; // colour type 2 = truecolour RGB
   // 10,11,12 = compression 0, filter 0, interlace 0
   const raw = Buffer.alloc(h * (1 + w * 3));
   const rnd = lcg(20260815);
   for (let y = 0; y < h; y++) {
     const row = y * (1 + w * 3);
-    raw[row] = 0;                                   // filter: none
+    raw[row] = 0; // filter: none
     for (let x = 0; x < w; x++) {
       const p = row + 1 + x * 3;
       if (noisy) {
@@ -63,18 +70,20 @@ function png(w, h, rgb, noisy) {
          * Incompressible bytes are the point: the cap is about TRANSFERRED SIZE, so the fixture has to be
          * genuinely large, not nominally large.
          */
-        raw[p] = rnd(); raw[p + 1] = rnd(); raw[p + 2] = rnd();
+        raw[p] = rnd();
+        raw[p + 1] = rnd();
+        raw[p + 2] = rnd();
       } else {
         // a soft diagonal so the image is not a flat block, and is visibly a picture rather than a swatch
         const shade = ((x + y) % 32) - 16;
-        raw[p]     = Math.max(0, Math.min(255, rgb[0] + shade));
+        raw[p] = Math.max(0, Math.min(255, rgb[0] + shade));
         raw[p + 1] = Math.max(0, Math.min(255, rgb[1] + shade));
         raw[p + 2] = Math.max(0, Math.min(255, rgb[2] + shade));
       }
     }
   }
   return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', ihdr),
     chunk('IDAT', zlib.deflateSync(raw, { level: 9 })),
     chunk('IEND', Buffer.alloc(0))
@@ -82,12 +91,12 @@ function png(w, h, rgb, noisy) {
 }
 
 const PALETTE = [
-  ['cement',   [143, 169, 201]],
+  ['cement', [143, 169, 201]],
   ['toor-dal', [201, 180, 143]],
-  ['tomato',   [201, 150, 143]],
-  ['cable',    [156, 193, 168]],
+  ['tomato', [201, 150, 143]],
+  ['cable', [156, 193, 168]],
   ['jute-bag', [169, 156, 201]],
-  ['primer',   [201, 192, 143]]
+  ['primer', [201, 192, 143]]
 ];
 
 function main() {
@@ -106,17 +115,15 @@ function main() {
    * checks it too; a cap that is never tested is a cap that quietly stops working. Base64 inflates by ~33%, so
    * this is sized to be over the limit AFTER encoding as well as before.
    */
-  const big = png(1700, 1700, [120, 120, 120], true);   // noisy → incompressible → genuinely over 6MB
+  const big = png(1700, 1700, [120, 120, 120], true); // noisy → incompressible → genuinely over 6MB
   const bigFile = path.join(out, 'oversized.png');
   fs.writeFileSync(bigFile, big);
   made.push({ file: 'oversized.png', bytes: big.length, note: 'must be REFUSED at 6MB' });
 
   console.log('test media → ' + out);
-  made.forEach((m) => console.log('  ' + m.file.padEnd(16) + String(m.bytes).padStart(9) + ' bytes'
-    + (m.note ? '   ⚠️ ' + m.note : '')));
+  made.forEach((item) => console.log('  ' + item.file.padEnd(16) + String(item.bytes).padStart(9) + ' bytes' + (item.note ? '   ⚠️ ' + item.note : '')));
   const over = big.length > 6 * 1024 * 1024;
-  console.log('\noversized is actually over 6MB: ' + over
-    + (over ? '' : '   ⚠️ IT IS NOT — raise the dimensions or this proves nothing'));
+  console.log('\noversized is actually over 6MB: ' + over + (over ? '' : '   ⚠️ IT IS NOT — raise the dimensions or this proves nothing'));
   process.exit(over ? 0 : 1);
 }
 main();
