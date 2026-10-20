@@ -7,6 +7,10 @@
  *
  * These tests exercise the route's parsing and the lib's filtering as pure functions, without a database — the
  * shape is the thing being asserted, and the shape is where this goes wrong.
+ *
+ * CHARACTERISATION (QA-70): the test 'an unreadable id is indistinguishable...' compares applySelection with itself on
+ * purpose. Its oracle is equality of two answers (no-disclosure), not a fixed value; the fixed-value cases are the
+ * ones around it.
  */
 const { test } = require('node:test');
 const assert = require('node:assert');
