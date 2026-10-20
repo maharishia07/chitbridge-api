@@ -19,6 +19,7 @@
  * Run: node tests/claim-series.test.cjs · no DB, no network.
  */
 'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const fs = require('fs');
 const path = require('path');
 
@@ -246,7 +247,7 @@ function dupes() {
   const COUNTERS = fs.readFileSync(path.join(API, 'routes', 'counters.js'), 'utf8');
   t('T9 · /api/till/snapshot claims through keys.claimSeries(entity, req.till) for a key AND a device',
     /keys\.claimSeries\(entity_id, req\.till,/.test(TILL) && /req\.till\.device_id/.test(TILL) && !/keys\.claimTill\(/.test(TILL));
-  const send = CHITS.slice(CHITS.indexOf("router.post('/send'"));
+  const send = CHITS.slice(routeAt(CHITS, 'post', '/send'));
   t('/api/chits/send logs kind sent_by_other and still refuses only another device (400)',
     send.indexOf("if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other';") > 0
     && send.indexOf("return res.status(400).json({ error: 'Bill claim mismatch'") > 0);
@@ -256,7 +257,7 @@ function dupes() {
     /router\.claimTill = \(entity_id, jti, ask\) => router\.claimSeries\(entity_id, 'key:' \+ jti, ask\)/.test(KEYS)
     && (KEYS.match(/FROM chit_header/g) || []).length === 1 && !/FROM chit_header/.test(COUNTERS)
     && /keys\.bookedPrefixes\(db, entity_id\)/.test(COUNTERS));
-  t('moved-not-stopped kept (rival, older, moved_from, held_by)', /MOVED, NOT STOPPED/.test(KEYS) && /moved_from: using, held_by: rival\.name/.test(KEYS));
+  t('moved-not-stopped kept (rival, older, moved_from, held_by)', /MOVED, NOT STOPPED/.test(KEYS) && /moved_from: using,\s*held_by: rival\.name/.test(KEYS));
   t('POST /api/counters/:id/assign exists, owner only (the one gate, lib/owner.gate)', /router\.post\('\/:id\/assign'[^\n]*require\('..\/lib\/owner'\)\.gate\(/.test(COUNTERS));
 
   console.log('\n  ' + pass + ' passed · ' + fail + ' failed · ' + (pass + fail) + ' checks');

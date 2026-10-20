@@ -10440,13 +10440,12 @@ function counterTitle(){ return counterName(); }
  */
 /**
  * ⭐ M38 (walk 2026-10-10) — the top bar says shop · counter · who, each once. The counter pill is the COUNTER: the name the
- * shop gave it, else its prefix ("Counter C5", the same C5 the bills are numbered under).
+ * shop gave it, else "Counter 5" for prefix C5; a code-like prefix is not shown (CTR-146).
  */
 function counterPill(){
   var own = ''; try { own = String(ls.get(shopLs('cb_till_counter_name'), '') || '').trim(); } catch (e) { cbQuiet('counterPill:1', e); }
   if (own) return own;
-  var id = ''; try { id = String(tillId() || ''); } catch (e) { cbQuiet('counterPill:2', e); }
-  return id ? ('Counter ' + id) : counterName();
+  return counterName();   /* CTR-146 (W45): the counter's name, never its code */
 }
 /** who is on, in a word: the person — or "Shop login" when the shop's own account is signed in (its name is already on the bar) */
 function whoWord(){
@@ -10461,7 +10460,8 @@ function counterName(){
   var stored = String(ls.get('cb_till_name', '') || '').trim();
   if (stored && !/^Counter\s*\d*$/i.test(stored)) return stored;
   var id = ''; try { id = String(tillId() || ''); } catch (e) { cbQuiet('counterName:2', e); }
-  return id ? ('Counter ' + id.replace(/^C/i, '')) : 'Counter';
+  /* CTR-146: a plain number is a name (C5 = Counter 5); a code such as DQLG is not one, so it is not shown */
+  return /^C?\d+$/i.test(id) ? ('Counter ' + id.replace(/^C/i, '')) : 'Counter';
 }
 
 function hubWhoRow(){
@@ -22115,8 +22115,8 @@ try {
  * 20 px icon; in Despatch, F10 did nothing and nothing said how to get back. Now: the header names the current mode in words
  * (#modepill, opens the list), ← Sell is one tap back (#modeback), F10 (day close) and F8 (bills) work in every mode, and a key that
  * belongs to Sell says so. Receive and Despatch are SHOWN to every shop and greyed with the reason when the shop holds no stock -
- * the server says which (snapshot shop.holds_stock, from the trade), the counter may override it (tillOpt().stock), and a counter
- * that keeps order tickets (kitchen / order pad) serves rather than stocks. PROPOSAL - Athi decides the final placement.
+ * the server says which (snapshot shop.holds_stock, from the shop's own data) and the counter may override it (tillOpt().stock); kitchen
+ * tickets and open orders do not decide it (CTR-2). PROPOSAL - Athi decides the final placement.
  */
 var MODE_WORD = { sell: 'Sell', receive: 'Receive', despatch: 'Despatch', maintain: 'Maintenance' };
 var MODE_HINT = { sell: 'Ring up and print bills', receive: 'Count in goods that arrive', despatch: 'Pack and send an order', maintain: 'Change a product or its price' };
@@ -22124,7 +22124,8 @@ function holdsStock(){
   try {
     var o = tillOpt() || {};
     if (o.stock === true || o.stock === false) return o.stock;
-    if (kotOn() || purposeHas('open_orders')) return false;
+    /* CTR-2 (VERT-BOX VB2): the counter override, else the server's holds_stock — a counter that sends kitchen tickets or holds orders open
+       is not thereby a shop without stock (the trade is never read here) */
     return !(S && S.shop && S.shop.holds_stock === false);
   } catch (_) { return true; }
 }
@@ -23389,24 +23390,24 @@ function shareText(bill){
  */
 async function shareSlip(){
   var bill = LAST; if (!bill) return;
-  SHARE_TEXT = shareText(bill); SHARE_LINK = shopPrevUrl() || cbHome();
+  SHARE_TEXT = shareText(bill); SHARE_LINK = shopPrevUrl();   /* CTR-144: no storefront yet = NO link; the workshop (app.html) is never a customer's address */
   var alt = document.getElementById('slipshare_alt'); if (alt) { alt.hidden = true; alt.innerHTML = ''; }
   if (navigator.share) {
-    try { await navigator.share({ text: SHARE_TEXT, url: SHARE_LINK }); return; }
+    try { await navigator.share(SHARE_LINK ? { text: SHARE_TEXT, url: SHARE_LINK } : { text: SHARE_TEXT }); return; }
     catch (e) { if (e && e.name === 'AbortError') return; }
   }
   shareFallback();
 }
 function shareFallback(){
   var alt = document.getElementById('slipshare_alt'); if (!alt) return;
-  var full = SHARE_TEXT + '\n' + SHARE_LINK;
+  var full = SHARE_TEXT + (SHARE_LINK ? '\n' + SHARE_LINK : '');
   alt.innerHTML = '<a class="pill" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(full) + '">WhatsApp</a>'
     + '<a class="pill" href="sms:?body=' + encodeURIComponent(full) + '">SMS</a>'
     + '<button class="pill" onclick="shareCopy()">Copy</button>';
   alt.hidden = false;
 }
 function shareCopy(){
-  var full = SHARE_TEXT + '\n' + SHARE_LINK;
+  var full = SHARE_TEXT + (SHARE_LINK ? '\n' + SHARE_LINK : '');
   (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(full) : Promise.reject())
     .then(function(){ toastLine('Copied — paste it anywhere.'); })
     .catch(function(){ toastLine('Could not copy — select and copy by hand.'); });
@@ -25682,7 +25683,7 @@ function tvClose(){ var d = document.getElementById('tvdlg'); if (d && d.open) {
 function tvHere(){
   var k = (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) ? CloudHost.key : null;
   var shop = ls.get(shopLs('cb_till_shop'), '');
-  var addr = '/promo.html' + (k ? ('#key=' + encodeURIComponent(k) + (shop ? '&shop=' + encodeURIComponent(shop) : '')) : '');
+  var addr = cbRoot() + '/promo.html' + (k ? ('#key=' + encodeURIComponent(k) + (shop ? '&shop=' + encodeURIComponent(shop) : '')) : '');
   window.open(addr, '_blank', 'noopener');
 }
 async function tvPair(){
@@ -25813,9 +25814,9 @@ function shopPrevOut(){
   if (u) { try { window.open(u, '_blank', 'noopener'); } catch (e) { cbQuiet('shopPrevOut:1', e); } }
 }
 function shopPrevClose(){ var d = document.getElementById('shopprevdlg'); if (d && d.open) { try { d.close(); } catch (e) { cbQuiet('shopPrevClose:1', e); } } }
-function openProductLab(){ window.open('/product-lab.html', 'cb_product_lab'); }
-function openOfferLab(){ window.open('/offer-lab-next.html', 'cb_offer_lab'); }
-function openComboLab(){ window.open('/combo-lab.html', 'cb_combo_lab'); }
+function openProductLab(){ window.open(cbRoot() + '/product-lab.html', 'cb_product_lab'); }
+function openOfferLab(){ window.open(cbRoot() + '/offer-lab-next.html', 'cb_offer_lab'); }
+function openComboLab(){ window.open(cbRoot() + '/combo-lab.html', 'cb_combo_lab'); }
 /**
  * ⭐⭐⭐ START FROM SCRATCH — but never before everything is safe. Athi, 2026-09-09: *"in the counter we need a mechanism of cold
  * start or reboot kind of, which should clear the indexed db and then restart again — before that it has to sync up and nothing

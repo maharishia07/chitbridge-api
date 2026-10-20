@@ -43,6 +43,10 @@ const ASOF = '2026-10-12';
   const GST_OCT20 = { payable_minor: 500000, form: 'GSTR-3B', short: 'GST', due_date: '2026-10-20', why: null };   /* the words and the date are read()'s (returnDueFor): project() dates nothing itself */
   const r1 = CF.project(base);
   ok('opening = cash + bank, every row today first, 7 rows', r1.opening_minor === 5000000 && r1.series.length === 7 && r1.series[0].date === ASOF && r1.to === '2026-10-18', JSON.stringify([r1.opening_minor, r1.series.length, r1.to]));
+  /* WALK2 W32: two named figures — the cash drawer and the bank/UPI side — that add up to the one opening */
+  ok('W32: drawer ₹10,000 (role cash) · bank ₹40,000, summing to the opening', r1.drawer_minor === 1000000 && r1.bank_minor === 4000000 && r1.drawer_minor + r1.bank_minor === r1.opening_minor, JSON.stringify([r1.drawer_minor, r1.bank_minor]));
+  const rU = CF.project(Object.assign({}, base, { opening: base.opening.concat([{ role: 'upi', code: '1510', name: 'UPI', balance_minor: 72000 }]) }));
+  ok('W32: UPI counts on the bank side, never in the drawer', rU.drawer_minor === 1000000 && rU.bank_minor === 4072000, JSON.stringify([rU.drawer_minor, rU.bank_minor]));
   const d14 = r1.series.find((d) => d.date === '2026-10-14'), d15 = r1.series.find((d) => d.date === '2026-10-15');
   ok('Mala\'s ₹20,000 comes in on its due date; the balance there is ₹70,000', d14.in_minor === 2000000 && d14.balance_minor === 7000000, JSON.stringify(d14));
   ok('Kumar\'s ₹60,000 goes out on the 15th → ₹10,000 left — no shortfall yet', d15.out_minor === 6000000 && d15.balance_minor === 1000000 && !r1.shortfall, JSON.stringify([d15.balance_minor, r1.shortfall]));

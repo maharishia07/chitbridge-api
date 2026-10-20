@@ -1,0 +1,2 @@
+{"date":"2026-10-19","web":"ok","health":{"db":"ok","db_ms":456,"environment":"production","commit":"76d350b1aaaa","audit_lost":0},
+ "mainSha":{"api":"76d350b1","web":"abc1234"},"ci":{"web":"success","api":"success","engines":"success"},"stock":{"drift":0,"chits_without_movement":0}}

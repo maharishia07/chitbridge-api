@@ -25,22 +25,33 @@
 const API = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 const OTP = process.env.DEV_OTP || '123456';
 const arg = (k, d) => {
-  const hit = process.argv.find((a) => a.startsWith('--' + k + '='));
-  return hit ? hit.split('=').slice(1).join('=') : d;
+  const text = process.argv.find((item) => item.startsWith('--' + k + '='));
+  return text ? text.split('=').slice(1).join('=') : d;
 };
 const EMAIL = arg('email', 'alpha-timers@test-cb.com');
 
-let pass = 0, fail = 0;
+let pass = 0,
+  fail = 0;
 const ok = (name, cond, detail) => {
-  if (cond) { pass++; console.log('  ✓ ' + name); }
-  else { fail++; console.log('  ✗ ' + name + (detail ? '\n      ' + detail : '')); }
+  if (cond) {
+    pass++;
+    console.log('  ✓ ' + name);
+  } else {
+    fail++;
+    console.log('  ✗ ' + name + (detail ? '\n      ' + detail : ''));
+  }
 };
 
 async function api(path, { method = 'GET', token, body, headers = {} } = {}) {
   const res = await fetch(API + path, {
-    method, headers: { 'Content-Type': 'application/json', ...headers, ...(token ? { Authorization: 'Bearer ' + token } : {}) },
-    body: body === undefined ? undefined : JSON.stringify(body) });
-  let json = null; try { json = await res.json(); } catch (_) {}
+    method,
+    headers: { 'Content-Type': 'application/json', ...headers, ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  let json = null;
+  try {
+    json = await res.json();
+  } catch (_) {}
   return { status: res.status, json };
 }
 
@@ -52,9 +63,12 @@ const key = (r) => [r.bridge_id, r.item_id].join('|');
   console.log('='.repeat(74));
   console.log('  ' + API + '\n');
 
-  const v = await api('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: OTP } });
-  const token = (v.json || {}).token;
-  if (!token) { console.log('  could not sign in as ' + EMAIL + '\n'); process.exit(1); }
+  const reply = await api('/api/entities/verify', { method: 'POST', body: { email: EMAIL, otp: OTP } });
+  const token = (reply.json || {}).token;
+  if (!token) {
+    console.log('  could not sign in as ' + EMAIL + '\n');
+    process.exit(1);
+  }
 
   const PROBES = ['a', 'impeller', 'seal', 'zzzz-no-such-thing'];
 
@@ -73,32 +87,36 @@ const key = (r) => [r.bridge_id, r.item_id].join('|');
       ok('both paths answered', false, 'fast ' + fast.status + ', slow ' + slow.status);
       continue;
     }
-    ok('one-query path was actually used', (fast.json || {}).one_query === true,
-       'the function is missing — apply migrations/b122_network_search.sql');
+    ok('one-query path was actually used', (fast.json || {}).one_query === true, 'the function is missing — apply migrations/b122_network_search.sql');
 
-    const fr = ((fast.json || {}).rows) || [];
-    const sr = ((slow.json || {}).rows) || [];
+    const list = (fast.json || {}).rows || [];
+    const sr = (slow.json || {}).rows || [];
 
     // The per-store path caps at 5 items PER STORE; the single query caps at 200 overall. So the fan-out's set is
     // a SUBSET, and the honest check is that it contains nothing the single query missed — never the reverse.
-    const fastKeys = new Set(fr.map(key));
-    const missing = sr.filter((r) => !fastKeys.has(key(r)));
-    ok('one query missed nothing the fan-out found', missing.length === 0,
-       missing.slice(0, 3).map((r) => r.store + '/' + r.name).join(', '));
+    const fastKeys = new Set(list.map(key));
+    const missing = sr.filter((item) => !fastKeys.has(key(item)));
+    ok(
+      'one query missed nothing the fan-out found',
+      missing.length === 0,
+      missing
+        .slice(0, 3)
+        .map((item) => item.store + '/' + item.name)
+        .join(', ')
+    );
 
     // The one that matters: no store may appear in the fast answer that the slow answer would never show.
-    const slowStores = new Set(sr.map((r) => r.bridge_id));
-    const fastStores = [...new Set(fr.map((r) => r.bridge_id))];
-    const extra = sr.length ? fastStores.filter((b) => !slowStores.has(b)) : [];
+    const slowStores = new Set(sr.map((item) => item.bridge_id));
+    const fastStores = [...new Set(list.map((item) => item.bridge_id))];
+    const extra = sr.length ? fastStores.filter((item) => !slowStores.has(item)) : [];
     ok('no store visible to the fast path alone', extra.length === 0, extra.join(', '));
 
     // Prices are stamped by the holding store and never converted — the two paths must read the same stamp.
-    for (const f of fr) {
+    for (const f of list) {
       const s = sr.find((x) => key(x) === key(f));
       if (!s) continue;
       if (f.price !== s.price || f.price_currency !== s.price_currency) {
-        ok('price identical for ' + f.store + '/' + f.name, false,
-           JSON.stringify({ fast: [f.price, f.price_currency], slow: [s.price, s.price_currency] }));
+        ok('price identical for ' + f.store + '/' + f.name, false, JSON.stringify({ fast: [f.price, f.price_currency], slow: [s.price, s.price_currency] }));
       }
     }
     ok('prices agree wherever both paths saw the item', true);
@@ -108,4 +126,7 @@ const key = (r) => [r.bridge_id, r.item_id].join('|');
   console.log('  ' + pass + ' passed, ' + fail + ' failed');
   console.log('-'.repeat(74) + '\n');
   process.exit(fail ? 1 : 0);
-})().catch((e) => { console.error('\n  harness error: ' + e.message + '\n'); process.exit(1); });
+})().catch((e) => {
+  console.error('\n  harness error: ' + e.message + '\n');
+  process.exit(1);
+});

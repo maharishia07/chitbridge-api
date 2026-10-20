@@ -30,8 +30,8 @@ const DEFAULT_WINDOW_HOURS = 48;
 const IN_PROGRESS_STALE_MINUTES = Number(process.env.IDEMPOTENCY_STALE_MINUTES || 10);
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 3600 * 1000;
-const UNVERIFIED_MEMORY_MAX = 5000;   /* entries the store-off memory keeps before the oldest is forgotten */
-const STORE_MISSING_CODES = ['42P01', '42703'];   /* table or column missing — pre-b109, expected rather than alarming */
+const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
+const STORE_MISSING_CODES = ['42P01', '42703']; /* table or column missing — pre-b109, expected rather than alarming */
 
 /**
  * ⭐ ONE CANONICAL SERIALISATION (lib/canon.js, 2026-09-12). This was one of THREE copies — connectors.js and
@@ -47,20 +47,29 @@ const stable = (o) => require('../lib/canon').canon(o);
 /** scope from the SAME bearer token auth uses (parent_entity_id || identity_id); { entity: null, why } ⇒ the route's auth refuses it */
 function scopeOf(req) {
   const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) return { entity: null, why: null };   /* no bearer: nothing to scope, auth answers */
+  if (!header || !header.startsWith('Bearer ')) return { entity: null, why: null }; /* no bearer: nothing to scope, auth answers */
   try {
-    const claims = require('../lib/jwt-verify').verifyJwt(header.split(' ')[1]).claims;   // E10 — the ONE verifier
+    const claims = require('../lib/jwt-verify').verifyJwt(header.split(' ')[1]).claims; // E10 — the ONE verifier
     if (!claims.identity_id) return { entity: null, why: 'the token names no identity' };
     return { entity: claims.parent_entity_id || claims.identity_id, why: null };
-  } catch (e) { return { entity: null, why: 'the token could not be read: ' + (e && e.message) }; }
+  } catch (e) {
+    return { entity: null, why: 'the token could not be read: ' + (e && e.message) };
+  }
 }
 /** kept for the seam register and tests: the entity, or null */
 const scope = (req) => scopeOf(req).entity;
 
 /** the request's fingerprint (method · path · canonical body), or null when the body cannot be canonicalised (nesting too deep) */
 function fingerprint(req) {
-  try { return crypto.createHash('sha256').update(req.method + ' ' + req.path + ' ' + stable(req.body || {})).digest('hex'); }
-  catch (e) { log.warn('idempotency: the body could not be fingerprinted — the key is held without a body check', { id: req.id, path: req.path, err: e && e.message }); return null; }
+  try {
+    return crypto
+      .createHash('sha256')
+      .update(req.method + ' ' + req.path + ' ' + stable(req.body || {}))
+      .digest('hex');
+  } catch (e) {
+    log.warn('idempotency: the body could not be fingerprinted — the key is held without a body check', { id: req.id, path: req.path, err: e && e.message });
+    return null;
+  }
 }
 
 /* ── the durable store: idempotency_key (b109), one row per (entity, key), inside the entity's RLS ── */
@@ -71,60 +80,82 @@ const dbStore = {
         `SELECT idem_key, req_hash, state, status, response,
                 (created_at < now() - ($2 || ' hours')::interval
                  OR (state = 'in_progress' AND created_at < now() - ($4 || ' minutes')::interval)) AS expired
-           FROM idempotency_key WHERE entity_id = $1 AND idem_key = $3`, [entity, String(windowHrs), key, String(IN_PROGRESS_STALE_MINUTES)]);
+           FROM idempotency_key WHERE entity_id = $1 AND idem_key = $3`,
+        [entity, String(windowHrs), key, String(IN_PROGRESS_STALE_MINUTES)]
+      );
       if (found.rows[0] && !found.rows[0].expired) return { existing: found.rows[0] };
-      if (found.rows[0]) await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2`, [entity, key]);   // expired → reclaim
+      if (found.rows[0]) await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2`, [entity, key]); // expired → reclaim
       const claimed = await db.query(
         `INSERT INTO idempotency_key (entity_id, idem_key, method, path, req_hash, state)
          VALUES ($1,$2,$3,$4,$5,'in_progress') ON CONFLICT (entity_id, idem_key) DO NOTHING RETURNING idem_key`,
-        [entity, key, req.method, req.path, hash]);
+        [entity, key, req.method, req.path, hash]
+      );
       if (claimed.rows[0]) return { claimed: true };
-      const raced = await db.query(`SELECT idem_key, req_hash, state, status, response FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2`, [entity, key]);
-      return { existing: raced.rows[0] };   // lost the insert race → treat as replay
+      const raced = await db.query(`SELECT idem_key, req_hash, state, status, response FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2`, [
+        entity,
+        key
+      ]);
+      return { existing: raced.rows[0] }; // lost the insert race → treat as replay
     });
   },
   async finalize(entity, key, status, body) {
     return withEntity(entity, async (db) => {
-      if (status >= 500) {   // a server error is NOT a completed outcome — let a retry re-run it
+      if (status >= 500) {
+        // a server error is NOT a completed outcome — let a retry re-run it
         await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2 AND state = 'in_progress'`, [entity, key]);
-      } else {               // 2xx/3xx/4xx are settled outcomes — record so replays are consistent
-        await db.query(`UPDATE idempotency_key SET state = 'done', status = $3, response = $4::jsonb WHERE entity_id = $1 AND idem_key = $2`,
-          [entity, key, status, JSON.stringify(body == null ? null : body)]);
+      } else {
+        // 2xx/3xx/4xx are settled outcomes — record so replays are consistent
+        await db.query(`UPDATE idempotency_key SET state = 'done', status = $3, response = $4::jsonb WHERE entity_id = $1 AND idem_key = $2`, [
+          entity,
+          key,
+          status,
+          JSON.stringify(body == null ? null : body)
+        ]);
       }
     });
-  },
+  }
 };
 
 /* ── the store-off memory: the same contract, per process, bounded, forgotten after the window ── */
-const unverified = new Map();   /* (entity + '\n' + key) → { at, req_hash, state, status, response } */
+const unverified = new Map(); /* (entity + '\n' + key) → { at, req_hash, state, status, response } */
 const memoryStore = {
   async begin(entity, key, req, hash, windowHrs) {
-    const memoryKey = entity + '\n' + key, held = unverified.get(memoryKey);
+    const memoryKey = entity + '\n' + key,
+      held = unverified.get(memoryKey);
     const staleInProgress = held && held.state === 'in_progress' && Date.now() - held.at > IN_PROGRESS_STALE_MINUTES * MINUTE_MS;
     if (held && !staleInProgress && Date.now() - held.at <= windowHrs * HOUR_MS) return { existing: held };
-    if (held) unverified.delete(memoryKey);   // expired → reclaim
-    if (unverified.size >= UNVERIFIED_MEMORY_MAX) unverified.delete(unverified.keys().next().value);   // the oldest is forgotten
+    if (held) unverified.delete(memoryKey); // expired → reclaim
+    if (unverified.size >= UNVERIFIED_MEMORY_MAX) unverified.delete(unverified.keys().next().value); // the oldest is forgotten
     unverified.set(memoryKey, { at: Date.now(), req_hash: hash, state: 'in_progress', status: null, response: null });
     return { claimed: true };
   },
   async finalize(entity, key, status, body) {
-    const memoryKey = entity + '\n' + key, held = unverified.get(memoryKey);
+    const memoryKey = entity + '\n' + key,
+      held = unverified.get(memoryKey);
     if (!held) return;
-    if (status >= 500) unverified.delete(memoryKey);   // not a completed outcome — a retry may run again
+    if (status >= 500)
+      unverified.delete(memoryKey); // not a completed outcome — a retry may run again
     else Object.assign(held, { state: 'done', status, response: body == null ? null : body });
   },
   size: () => unverified.size,
-  clear: () => unverified.clear(),
+  clear: () => unverified.clear()
 };
 
 /** a key already held: the recorded answer (replay), a conflict (another body), or "still running" — never a second execution */
 function answerExisting(res, held, hash, isVerified) {
   if (!isVerified) res.setHeader('X-Idempotency', 'unverified');
   if (held.req_hash && hash && held.req_hash !== hash) {
-    return res.status(422).json({ code: 'IDEMPOTENCY_CONFLICT', error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' });
+    return res
+      .status(422)
+      .json({ code: 'IDEMPOTENCY_CONFLICT', error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' });
   }
-  if (held.state === 'done') { res.setHeader('X-Idempotent-Replay', 'true'); return res.status(held.status || 200).json(held.response); }
-  return res.status(409).json({ code: 'IDEMPOTENCY_IN_PROGRESS', error: 'In progress', message: 'A request with this Idempotency-Key is still being processed.' });
+  if (held.state === 'done') {
+    res.setHeader('X-Idempotent-Replay', 'true');
+    return res.status(held.status || 200).json(held.response);
+  }
+  return res
+    .status(409)
+    .json({ code: 'IDEMPOTENCY_IN_PROGRESS', error: 'In progress', message: 'A request with this Idempotency-Key is still being processed.' });
 }
 
 /** we own the key: record the handler's JSON answer through the store it was claimed in, then run the route */
@@ -134,7 +165,8 @@ function runAndRecord(req, res, next, store, claim) {
   res.json = (body) => {
     if (!captured) {
       captured = true;
-      store.finalize(claim.entity, claim.key, res.statusCode, body)
+      store
+        .finalize(claim.entity, claim.key, res.statusCode, body)
         .catch((e) => log.warn('idempotency: recording the answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }));
     }
     return origJson(body);
@@ -144,9 +176,15 @@ function runAndRecord(req, res, next, store, claim) {
 
 /** the store is off for this request: say why (warn), mark the answer, and guard the key in memory instead */
 function runUnverified(req, res, next, claim, why) {
-  log.warn('idempotency: store off — the key is held in this process only (a retry is refused here, not proven)', { id: req.id, method: req.method, path: req.path, why });
+  log.warn('idempotency: store off — the key is held in this process only (a retry is refused here, not proven)', {
+    id: req.id,
+    method: req.method,
+    path: req.path,
+    why
+  });
   res.setHeader('X-Idempotency', 'unverified');
-  return memoryStore.begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
+  return memoryStore
+    .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
     .then((outcome) => (outcome.existing ? answerExisting(res, outcome.existing, claim.hash, false) : runAndRecord(req, res, next, memoryStore, claim)));
 }
 
@@ -156,14 +194,22 @@ module.exports = function idempotency(req, res, next) {
   const key = req.headers['idempotency-key'];
   if (!key || !MUTATING.includes(req.method) || String(key).length > KEY_MAX_LENGTH) return next();
   const scoped = scopeOf(req);
-  if (!scoped.entity) {   /* no usable token: the route's auth refuses the request, so nothing can post twice — but it is said */
-    if (scoped.why) log.warn('idempotency: no scope for the key — the route\'s auth decides', { id: req.id, method: req.method, path: req.path, why: scoped.why });
+  if (!scoped.entity) {
+    /* no usable token: the route's auth refuses the request, so nothing can post twice — but it is said */
+    if (scoped.why)
+      log.warn("idempotency: no scope for the key — the route's auth decides", { id: req.id, method: req.method, path: req.path, why: scoped.why });
     return next();
   }
-  const claim = { entity: scoped.entity, key: String(key), hash: fingerprint(req), windowHrs: Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS) };
+  const claim = {
+    entity: scoped.entity,
+    key: String(key),
+    hash: fingerprint(req),
+    windowHrs: Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS)
+  };
   if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
 
-  dbStore.begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
+  dbStore
+    .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
     .then((outcome) => (outcome.existing ? answerExisting(res, outcome.existing, claim.hash, true) : runAndRecord(req, res, next, dbStore, claim)))
     .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
 };

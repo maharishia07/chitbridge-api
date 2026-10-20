@@ -9,6 +9,7 @@
  * Run: node tests/till-vendor.test.js   · no DB, no browser, no network.
  */
 'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const assert = require('assert'), fs = require('fs'), path = require('path'), vm = require('vm');
 const { execFileSync } = require('child_process');
 
@@ -829,7 +830,7 @@ JOBS.push(['⚠️⚠️ the page, the shop-PC program and the server name the s
   const names = [...listed.matchAll(/'([a-z0-9-]+)'/g)].map((m) => m[1]);
   assert.deepStrictEqual(names, tags, 'the shop-PC program does not fetch and serve exactly the engines the page loads');
   const route = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  const block = route.slice(route.indexOf('const ENGINES = {'), route.indexOf('router.get(\'/engine/:name\''));
+  const block = route.slice(route.indexOf('const ENGINES = {'), routeAt(route, 'get', '/engine/:name'));
   const served = [...block.matchAll(/(?:^|[\s{,])([a-z0-9]+):\s*'(\.\.\/[^']+)'/g)].map((m) => [m[1], m[2]]);
   assert.deepStrictEqual(served.map((x) => x[0]).sort(), tags.slice().sort(), 'the server cannot hand the program every engine the page loads');
   for (const [n, rel] of served) assert.ok(fs.existsSync(path.join(API, 'routes', rel)), n + ' is served from ' + rel + ', which does not exist');

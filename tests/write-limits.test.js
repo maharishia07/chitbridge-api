@@ -66,10 +66,11 @@ it('⚠️⚠️⚠️ each bulk door carries its own limiter', () => {
   const missing = [];
   for (const b of BULK) {
     const src = fs.readFileSync(path.join(API, b.file), 'utf8');
-    const at = src.indexOf(b.route);
+    const parts = /router\.(\w+)\('([^']+)'/.exec(b.route); /* iter1: a wrapped declaration puts the path on its own line */
+    const at = parts ? require('./support/src-find.cjs').routeAt(src, parts[1], parts[2]) : src.indexOf(b.route);
     assert.ok(at > 0, b.route + ' is gone from ' + b.file + ' — this guard is measuring nothing');
     /* the middleware list is everything up to the handler — one line is enough to see it */
-    const line = src.slice(at, src.indexOf('\n', src.indexOf('=>', at)) + 1);
+    const line = src.slice(at, src.indexOf('=>', at) + 2); /* iter1: the formatter spreads the middleware list over lines, so read up to the handler's arrow */
     if (!/[Ll]imiter/.test(line)) missing.push(b.file + ' ' + b.route + ' — ' + b.why);
   }
   assert.deepStrictEqual(missing, [],

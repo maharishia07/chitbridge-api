@@ -36,7 +36,7 @@ const E = require('../lib/books-engines');
 const S = require('../lib/books-store');
 
 const ctx = (req) => auth.entityOf(req);
-const { isOwner } = require('../lib/owner');   /* one owner test — the folder inventory's switch reads it too */
+const { isOwner } = require('../lib/owner'); /* one owner test — the folder inventory's switch reads it too */
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -44,13 +44,27 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
    /dues filtered its items by the shop's day of created_at but took asOf from the UTC clock: a bill recorded after midnight IST
    (18:30–24:00 UTC) was ahead of asOf and vanished from Payables / Receivables until the next UTC day — "You owe nobody" beside
    a supplier chip saying you owe lakhs. One day, from one helper, everywhere this file says today. */
-const today = (req) => CLOCK.today(req && req.books);   /* the shop's day; dayOf of a moment is never null */
+const today = (req) => CLOCK.today(req && req.books); /* the shop's day; dayOf of a moment is never null */
 const dateQ = (v, d) => (DATE.test(String(v || '').slice(0, 10)) ? String(v).slice(0, 10) : d);
 /* minor units in; an amount in rupees is rounded by money.round (the one rounder) first, never by a copy of the rule */
 const minorOf = (b) => (b.amount_minor != null ? Math.round(Number(b.amount_minor)) : Math.round(require('../lib/money').round(Number(b.amount)) * 100));
-const WORD = { walkin_day: 'Walk-in sales', sale_bill: 'Sale', purchase_bill: 'Purchase', payment_received: 'Payment received', payment_made: 'Payment made',
-  credit_given: 'Credit given', expense: 'Expense', other_income: 'Income', return: 'Return', credit_note: 'Credit note', purchase_return: 'Returned to supplier',
-  write_off: 'Written off', opening: 'Opening balance', manual: 'Journal', reversal: 'Reversal' };
+const WORD = {
+  walkin_day: 'Walk-in sales',
+  sale_bill: 'Sale',
+  purchase_bill: 'Purchase',
+  payment_received: 'Payment received',
+  payment_made: 'Payment made',
+  credit_given: 'Credit given',
+  expense: 'Expense',
+  other_income: 'Income',
+  return: 'Return',
+  credit_note: 'Credit note',
+  purchase_return: 'Returned to supplier',
+  write_off: 'Written off',
+  opening: 'Opening balance',
+  manual: 'Journal',
+  reversal: 'Reversal'
+};
 
 /** W2-BOOKS: a refusal that carries its own code (PERIOD_NOT_ENDED · RCM_NETTING_NOT_BUILT · NOT_FOR_COUNTRY …) says it — a screen branches on the code, never on the prose */
 function refusalBody(e) {
@@ -66,7 +80,8 @@ function fail(res, e) {
   /* FX1: a foreign entry whose day has no rate — 422 WITH the code, so a screen offers "Add rate" beside the sentence */
   if (e && e.code === 'FX_RATE_MISSING') return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   /* ⭐ CS1: the country gate — a pack-less country, no country, or the setup still to do: 422 WITH its code and sentence (never the quiet 404) */
-  if (e && (e.code === 'NO_COUNTRY_PACK' || e.code === 'NO_COUNTRY' || e.code === 'COUNTRY_SETUP_PENDING' || e.code === 'NO_MONEY')) return res.status(422).json({ code: e.code, error: e.message, message: e.message });
+  if (e && (e.code === 'NO_COUNTRY_PACK' || e.code === 'NO_COUNTRY' || e.code === 'COUNTRY_SETUP_PENDING' || e.code === 'NO_MONEY'))
+    return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   /* BAS1: an Indian shop asking GET /returns — its GSTR is read from the rail, not the ledgers: 422 WITH the code, so the GST screen paints the GSTR close instead */
   if (e && e.code === 'RETURN_FROM_RAIL') return res.status(422).json({ code: e.code, error: e.message, message: e.message });
   /* ⚠️ before the 422: "not migrated" is thrown as a refusal too, and read as 422 — missing tables are the server's state, 503 */
@@ -74,7 +89,8 @@ function fail(res, e) {
   /* a question the owner can answer (a missing field, a date that is not a date): 400, in words */
   if (e && e.code === 'BOOKS_BAD_REQUEST') return res.status(400).json({ error: e.message, message: e.message });
   /* T1-INV: closing stock from the ledger refused for a NAMED reason — the code and the products, so a screen offers Count / Enter by hand */
-  if (e && e.refused && /^STOCK_/.test(String(e.code || ''))) return res.status(422).json({ code: e.code, items: e.items || [], error: e.message, message: e.message });
+  if (e && e.refused && /^STOCK_/.test(String(e.code || '')))
+    return res.status(422).json({ code: e.code, items: e.items || [], error: e.message, message: e.message });
   if (e && (e.refused || e.code === 'BOOKS_REFUSED')) return res.status(422).json(refusalBody(e));
   if (e && (e.status === 409 || e.status === 422)) return res.status(e.status).json({ error: e.message, message: e.message });
   /* a terms field the owner can fix (lib/finance-terms): 400/404 in a sentence */
@@ -83,7 +99,9 @@ function fail(res, e) {
   /* ⭐ M30-2: the books are insert-only (b273: trigger + no UPDATE grant); a write the database refuses for that reason is the server's state (b295 not run), 503 in words — never a bare 500 */
   if (e && (e.code === '42501' || /insert-only/.test(String(e.message || '')))) {
     console.error('books route refused by the database:', e.code || '', String(e.message || e).slice(0, 300));
-    return res.status(503).json({ code: 'BOOKS_NOT_MIGRATED', error: 'Not available yet.', message: 'This cannot be saved yet — a database update (b295) is still to run.' });
+    return res
+      .status(503)
+      .json({ code: 'BOOKS_NOT_MIGRATED', error: 'Not available yet.', message: 'This cannot be saved yet — a database update (b295) is still to run.' });
   }
   /* silence is the bug: the 500 used to leave nothing in the Railway log */
   console.error('books route failed:', (e && e.stack) || e);
@@ -102,8 +120,11 @@ function owner(req, res, next) {
  *  (payments · cheque steps · disputes) had no level gate, only the owner-only ones did. The rail engine's ladder decides (lib/rail.byLevel:
  *  viewer → read_only, commenter → comment_only, editor → allowed), in its own sentence — the same word PATCH /payments/:id already answers. */
 function editor(req, res, next) {
-  const why = require('../lib/rail').byLevel(levelOf(req), 'amend');
-  if (why) { const say = require('../lib/rail').say(why); return res.status(403).json({ error: say, message: say, why, code: why.toUpperCase() }); }
+  const text = require('../lib/rail').byLevel(levelOf(req), 'amend');
+  if (text) {
+    const say = require('../lib/rail').say(text);
+    return res.status(403).json({ error: say, message: say, why: text, code: text.toUpperCase() });
+  }
   next();
 }
 /**
@@ -117,12 +138,19 @@ async function on(req, res, next) {
   try {
     const e = ctx(req);
     let st = null;
-    const s = await withEntity(e, async (h) => { st = await CS.gate(h, e); return B.settingOf(h, e); });
+    const s = await withEntity(e, async (h) => {
+      st = await CS.gate(h, e);
+      return B.settingOf(h, e);
+    });
     if (!s || !s.enabled) return res.status(404).json({ error: 'Not found' });
-    req.books = s; req.booksCountry = st || null; next();
-  } catch (err) { fail(res, err); }
+    req.books = s;
+    req.booksCountry = st || null;
+    next();
+  } catch (err) {
+    fail(res, err);
+  }
 }
-const curOf = (req) => B.curOf(req.books);   /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
+const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/status', auth, owner, async (req, res) => {
@@ -132,7 +160,9 @@ router.get('/status', auth, owner, async (req, res) => {
     const r = await withEntity(e, async (h) => ({ s: await B.settingOf(h, e), country: await CS.status(h, e) }));
     const s = r.s;
     res.json({ migrated: s !== null, enabled: !!(s && s.enabled), walkin_grain: s ? s.walkin_grain : null, engines: E.status(), country: r.country });
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.post('/enable', auth, owner, async (req, res) => {
   try {
@@ -143,21 +173,28 @@ router.post('/enable', auth, owner, async (req, res) => {
     const r = await B.enable(null, ctx(req), { by: byOf(req), walkin_grain: grain });
     require('../lib/books-hooks').forget(ctx(req));
     res.json(r);
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.post('/setting', auth, owner, on, async (req, res) => {
   try {
-    const e = ctx(req), b = req.body || {}, s = req.books;
+    const e = ctx(req),
+      b = req.body || {},
+      s = req.books;
     const grain = ['day', 'shift', 'bill'].indexOf(b.walkin_grain) >= 0 ? b.walkin_grain : s.walkin_grain;
     const enabled = b.enabled !== false;
     await withEntity(e, async (h) => {
       await S.saveSetting(h, e, Object.assign({}, s, { enabled, walkin_grain: grain }));
-      if (grain !== s.walkin_grain) await S.logChange(h, e, { by: byOf(req), table_name: 'books_setting', row_id: e, field: 'walkin_grain', old: s.walkin_grain, new: grain });
+      if (grain !== s.walkin_grain)
+        await S.logChange(h, e, { by: byOf(req), table_name: 'books_setting', row_id: e, field: 'walkin_grain', old: s.walkin_grain, new: grain });
       if (!enabled) await S.logChange(h, e, { by: byOf(req), table_name: 'books_setting', row_id: e, field: 'enabled', old: 'true', new: 'false' });
     });
     require('../lib/books-hooks').forget(e);
     res.json({ ok: true, enabled, walkin_grain: grain });
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * ⭐ CB FINANCE · TERMS (F2) — GET /terms?party_id&side → { terms_migrated, may_set, why_not, default, party: { party_id, side, own, effective } | null, events }
@@ -168,28 +205,59 @@ router.post('/setting', auth, owner, on, async (req, res) => {
  */
 router.get('/terms', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), T = require('../lib/finance-terms'), pid = req.query.party_id ? String(req.query.party_id) : null, side = req.query.side === 'supplier' ? 'supplier' : 'customer';
-    const mig = await T.migrated(), may = isOwner(req);
+    const e = ctx(req),
+      T = require('../lib/finance-terms'),
+      pid = req.query.party_id ? String(req.query.party_id) : null,
+      side = req.query.side === 'supplier' ? 'supplier' : 'customer';
+    const mig = await T.migrated(),
+      may = isOwner(req);
     const out = await withEntity(e, async (h) => {
       const dflt = mig ? await T.shopTerms(h, e) : {};
       const events = mig ? await (pid ? T.partyEvents(h, e, pid) : T.shopEvents(h, e)) : [];
       let party = null;
       if (pid) {
         const row = await T.partyRow(h, e, pid, side, mig);
-        if (row) party = { party_id: pid, side, own: { credit_days: row.credit_days, credit_limit_minor: row.credit_limit_minor == null ? null : Number(row.credit_limit_minor), interest: (row.terms || {}).interest || null, early: (row.terms || {}).early || null }, effective: T.resolve(dflt, row) };
+        if (row)
+          party = {
+            party_id: pid,
+            side,
+            own: {
+              credit_days: row.credit_days,
+              credit_limit_minor: row.credit_limit_minor == null ? null : Number(row.credit_limit_minor),
+              interest: (row.terms || {}).interest || null,
+              early: (row.terms || {}).early || null
+            },
+            effective: T.resolve(dflt, row)
+          };
       }
       return { dflt, party, events };
     });
-    res.json({ terms_migrated: mig, may_set: may, why_not: may ? null : 'Only the owner may set terms.', default: out.dflt, party: out.party, events: out.events });
-  } catch (err) { fail(res, err); }
+    res.json({
+      terms_migrated: mig,
+      may_set: may,
+      why_not: may ? null : 'Only the owner may set terms.',
+      default: out.dflt,
+      party: out.party,
+      events: out.events
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.post('/terms', auth, owner, on, async (req, res) => {
   try {
-    const e = ctx(req), T = require('../lib/finance-terms'), b = req.body || {}, pid = b.party_id ? String(b.party_id) : null, side = b.side === 'supplier' ? 'supplier' : 'customer';
-    if (!(await T.migrated())) return res.status(503).json({ code: 'TERMS_NOT_MIGRATED', error: 'Terms arrive after the next update.', message: 'Terms arrive after the next update.' });
+    const e = ctx(req),
+      T = require('../lib/finance-terms'),
+      b = req.body || {},
+      pid = b.party_id ? String(b.party_id) : null,
+      side = b.side === 'supplier' ? 'supplier' : 'customer';
+    if (!(await T.migrated()))
+      return res.status(503).json({ code: 'TERMS_NOT_MIGRATED', error: 'Terms arrive after the next update.', message: 'Terms arrive after the next update.' });
     const out = await withEntity(e, (h) => (pid ? T.saveParty(h, e, pid, side, b, byOf(req)) : T.saveShop(h, e, b, byOf(req))));
     res.json({ ok: true, terms: out });
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * GET /health → { enabled, currency, country, walkin_grain, last_check, engines, year: { fiscal_year, from, start_month }, waiting: [{ id, chit_id, ref, reason, tries, since, job, todo, name, candidates }],
@@ -207,18 +275,40 @@ router.get('/health', auth, on, async (req, res) => {
     /* ⭐ WX-R2R + CX2 (2026-10-13): ONE health shape for the shop's year and country (INT5b) — `year` = the shop's YEAR, as the reads below default
        it (fyStart — the pack's year on the setting's fy_start_month; the screens paint it instead of assuming April), and `country` = the CS1 status
        the gate just read (accounts.html sets SESSION.country from it — CX0's reader). CX2's top-level fy_start_month is year.start_month. 0 new trips. */
-    const pack = B.packOf(req.books), A = E.packs(), fy = A.fiscalYearOf(today(req), pack);
-    res.json({ enabled: true, currency: curOf(req), country: req.booksCountry || null, walkin_grain: req.books.walkin_grain, last_check: req.books.last_check || null, engines: E.status(),
+    const pack = B.packOf(req.books),
+      A = E.packs(),
+      fy = A.fiscalYearOf(today(req), pack);
+    res.json({
+      enabled: true,
+      currency: curOf(req),
+      country: req.booksCountry || null,
+      walkin_grain: req.books.walkin_grain,
+      last_check: req.books.last_check || null,
+      engines: E.status(),
       year: { fiscal_year: fy, from: fyStart(req, today(req)), start_month: Number(pack.fy_start_month) || null },
-      waiting: waiting.map(require('../lib/books-hooks').waitingRow), total: counts.total, page: 1, limit: LIMIT,
-      todo: { accept: counts.accept, add_supplier: counts.add_supplier, record: counts.record } });
-  } catch (err) { fail(res, err); }
+      waiting: waiting.map(require('../lib/books-hooks').waitingRow),
+      total: counts.total,
+      page: 1,
+      limit: LIMIT,
+      todo: { accept: counts.accept, add_supplier: counts.add_supplier, record: counts.record }
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.post('/check', auth, owner, on, async (req, res) => {
-  try { res.json(await require('../lib/books-nightly').check(ctx(req))); } catch (err) { fail(res, err); }
+  try {
+    res.json(await require('../lib/books-nightly').check(ctx(req)));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.post('/outbox/retry', auth, owner, on, async (req, res) => {
-  try { res.json(await require('../lib/books-hooks').retryOutbox(ctx(req), 100)); } catch (err) { fail(res, err); }
+  try {
+    res.json(await require('../lib/books-hooks').retryOutbox(ctx(req), 100));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /* ── the chart ──────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -227,28 +317,63 @@ router.get('/accounts', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const chart = await withEntity(e, (h) => S.accounts(h, e));
-    const codeOf = new Map(chart.map((a) => [String(a.account_id), a.code]));
+    const codeOf = new Map(chart.map((item) => [String(item.account_id), item.code]));
     /* FX-AU1: a PARKED row (active false — only books-store.parkChart writes it, when the country was corrected before anything posted) is
        the old country's ledger the new pack did not lay over: never posted to, kept only because cb_app has no DELETE (b272). It is not the
        shop's chart and is not shown — India's CGST/SGST/IGST beside Australia's GST was the F8 finding. Code allocation still sees it (S.accounts). */
-    res.json({ accounts: chart.filter((a) => a.active !== false).map((a) => ({ account_id: a.account_id, code: a.code, name: a.name, is_group: !!a.is_group, tally_group: a.tally_group,
-      nature: a.nature, role: a.role, parent_code: a.parent_id ? codeOf.get(String(a.parent_id)) || null : null, active: a.active !== false })) });
-  } catch (err) { fail(res, err); }
+    res.json({
+      accounts: chart
+        .filter((item) => item.active !== false)
+        .map((item) => ({
+          account_id: item.account_id,
+          code: item.code,
+          name: item.name,
+          is_group: !!item.is_group,
+          tally_group: item.tally_group,
+          nature: item.nature,
+          role: item.role,
+          parent_code: item.parent_id ? codeOf.get(String(item.parent_id)) || null : null,
+          active: item.active !== false
+        }))
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /accounts { name, parent_code | parent_id, source_code? } → { account: { code, account_id, name, source_code?, source_code_written? } } — the code is the system's (engines nextCode, role null); one typed here is refused (422).
  *  IM1: `source_code` = the code the ledger had in Xero / QuickBooks, kept beside ours (b302); one another ledger already holds is refused (422, a code clash). */
 router.post('/accounts', auth, owner, on, async (req, res) => {
   try {
-    const e = ctx(req), b = req.body || {};
+    const e = ctx(req),
+      b = req.body || {};
     let parent = b.parent_id;
-    if (!parent && b.parent_code) parent = ((await withEntity(e, (h) => S.accounts(h, e))).find((a) => String(a.code) === String(b.parent_code) && a.is_group) || {}).account_id;
-    const r = await B.addAccount(null, e, { name: b.name, parent_id: parent, code: b.code != null ? b.code : b.account_code, source_code: b.source_code, by: byOf(req) });
-    res.json({ ok: true, account: Object.assign({ code: r.code, account_id: r.account_id, name: r.name }, r.source_code !== undefined ? { source_code: r.source_code, source_code_written: r.source_code_written } : {}) });
-  } catch (err) { fail(res, err); }
+    if (!parent && b.parent_code)
+      parent = ((await withEntity(e, (h) => S.accounts(h, e))).find((item) => String(item.code) === String(b.parent_code) && item.is_group) || {}).account_id;
+    const r = await B.addAccount(null, e, {
+      name: b.name,
+      parent_id: parent,
+      code: b.code != null ? b.code : b.account_code,
+      source_code: b.source_code,
+      by: byOf(req)
+    });
+    res.json({
+      ok: true,
+      account: Object.assign(
+        { code: r.code, account_id: r.account_id, name: r.name },
+        r.source_code !== undefined ? { source_code: r.source_code, source_code_written: r.source_code_written } : {}
+      )
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────── */
-function fyStart(req, d) { const pack = B.packOf(req.books); const A = E.packs(); return A.fyRange(A.fiscalYearOf(d, pack), pack).start; }
+function fyStart(req, d) {
+  const pack = B.packOf(req.books);
+  const A = E.packs();
+  return A.fyRange(A.fiscalYearOf(d, pack), pack).start;
+}
 /**
  * ⭐ WHERE AN ENTRY CAME FROM (Athi, 2026-10-01, the first real entry: "where is it referenced to the sale record, how do I
  * connect to the sale record, who has done it?") — from the src_* columns S.entryLines reads in its own query:
@@ -262,23 +387,51 @@ function fyStart(req, d) { const pack = B.packOf(req.books); const A = E.packs()
  * null for an entry with no chit behind it (a payment typed in the Ledger, an opening, a manual entry).
  * ⚠️ A walk-in day names no seller: many people sold those bills, and "by" on it would read as if one person sold them all.
  */
-const KIND = { sale_bill: 'bill', purchase_bill: 'purchase', payment_received: 'receipt', payment_made: 'payment', return: 'credit_note', purchase_return: 'credit_note',
-  expense: 'expense', other_income: 'income', write_off: 'write_off', reversal: 'reversal', manual: 'manual', opening: 'opening', credit_given: 'bill' };
+const KIND = {
+  sale_bill: 'bill',
+  purchase_bill: 'purchase',
+  payment_received: 'receipt',
+  payment_made: 'payment',
+  return: 'credit_note',
+  purchase_return: 'credit_note',
+  expense: 'expense',
+  other_income: 'income',
+  write_off: 'write_off',
+  reversal: 'reversal',
+  manual: 'manual',
+  opening: 'opening',
+  credit_given: 'bill'
+};
 function sourceOf(l) {
   const day = Number(l.covers) > 0 && !l.source_chit_id;
   if (!l.source_chit_id && !day) return null;
   const m = /^walkin:([^:]+):/.exec(String(l.source_ref || ''));
-  const b = l.src_by;
+  const text = l.src_by;
   /* ⭐ M09: a PHONE's bill says `till.by` as the identity id the session is checked against and the NAME beside it as
      `till.by_name` (till.html tillStamp); a key's bill still sends { id, name, kind }. The books show the name either way. */
-  const seller = b && typeof b === 'object' ? (b.name || null)
-    : (l.src_by_name && String(l.src_by_name).trim()) ? String(l.src_by_name).trim()
-    : (typeof b === 'string' && b.trim() ? b.trim() : null);
+  const seller =
+    text && typeof text === 'object'
+      ? text.name || null
+      : l.src_by_name && String(l.src_by_name).trim()
+        ? String(l.src_by_name).trim()
+        : typeof text === 'string' && text.trim()
+          ? text.trim()
+          : null;
   const pay = howOf(l, day);
-  return { chit_id: l.src_chit_id || null, ref: l.src_ref || null, kind: day ? 'day' : (l.event_type === 'walkin_day' ? 'bill' : KIND[l.event_type] || l.event_type || null),
-    counter: l.src_till || (m ? m[1] : null) || l.counter_id || null, by: day ? null : (seller || l.by_name || null),
-    count: day ? Number(l.covers) : null, bills: day && Array.isArray(l.day_bills) ? l.day_bills : null, how: pay.how, how_ref: pay.how_ref, split: pay.split,
-    doc_at: day ? null : momentOf(l.src_billed_at) || momentOf(l.src_created_at), recorded_at: momentOf(l.recorded_at) };
+  return {
+    chit_id: l.src_chit_id || null,
+    ref: l.src_ref || null,
+    kind: day ? 'day' : l.event_type === 'walkin_day' ? 'bill' : KIND[l.event_type] || l.event_type || null,
+    counter: l.src_till || (m ? m[1] : null) || l.counter_id || null,
+    by: day ? null : seller || l.by_name || null,
+    count: day ? Number(l.covers) : null,
+    bills: day && Array.isArray(l.day_bills) ? l.day_bills : null,
+    how: pay.how,
+    how_ref: pay.how_ref,
+    split: pay.split,
+    doc_at: day ? null : momentOf(l.src_billed_at) || momentOf(l.src_created_at),
+    recorded_at: momentOf(l.recorded_at)
+  };
 }
 /**
  * ⭐ BOTH TIMES (Athi, 2026-10-01: "the time the bill was made or the time the entry was accepted? both should be there"):
@@ -287,9 +440,9 @@ function sourceOf(l) {
  *   recorded_at  the entry's created_at — when the ledger accepted it
  * ⚠️ billed_at is the counter's free text: a value that is not a moment is skipped, never passed on as one.
  */
-function momentOf(v) {
-  if (v == null || v === '') return null;
-  const t = v instanceof Date ? v.getTime() : Date.parse(String(v));
+function momentOf(date) {
+  if (date == null || date === '') return null;
+  const t = date instanceof Date ? date.getTime() : Date.parse(String(date));
   return isFinite(t) ? new Date(t).toISOString() : null;
 }
 /**
@@ -302,26 +455,39 @@ function momentOf(v) {
  * The words come through the posting rules' own reader (books-hooks modeOf); a tender it does not know keeps its word.
  */
 const HOW = { cash: 'Cash', upi: 'UPI', card: 'Card', cheque: 'Cheque', bank: 'Bank', credit: 'On credit' };
-function howWord(w) { const m = require('../lib/books-hooks').modeOf(w); return m ? HOW[m] : (String(w || '').trim() || null); }
+function howWord(w) {
+  const m = require('../lib/books-hooks').modeOf(w);
+  return m ? HOW[m] : String(w || '').trim() || null;
+}
 function howOf(l, day) {
   if (day) {
     const split = [];
-    (Array.isArray(l.tenders) ? l.tenders : []).forEach((t) => { const w = HOW[t.role] || t.role, x = split.find((s) => s.how === w);
-      if (x) x.amount_minor += Number(t.dr_minor); else split.push({ how: w, amount_minor: Number(t.dr_minor) }); });
-    return { how: split.length ? split.map((s) => s.how).join(' · ') : null, how_ref: null, split: split.length ? split : null };
+    (Array.isArray(l.tenders) ? l.tenders : []).forEach((item) => {
+      const w = HOW[item.role] || item.role,
+        x = split.find((entry) => entry.how === w);
+      if (x) x.amount_minor += Number(item.dr_minor);
+      else split.push({ how: w, amount_minor: Number(item.dr_minor) });
+    });
+    return { how: split.length ? split.map((item) => item.how).join(' · ') : null, how_ref: null, split: split.length ? split : null };
   }
   if (l.src_mode) {
     const c = l.src_cheque && typeof l.src_cheque === 'object' ? l.src_cheque : null;
     return { how: howWord(l.src_mode), how_ref: c && c.no ? [c.no, c.bank].filter(Boolean).join(' · ') : null, split: null };
   }
-  const parts = Array.isArray(l.src_parts) ? l.src_parts.filter((p) => p && p.how) : [];
-  const words = []; parts.forEach((p) => { const w = howWord(p.how); if (w && words.indexOf(w) < 0) words.push(w); });
-  const r = parts.map((p) => p.ref || p.reference || p.utr).find((x) => x != null && String(x).trim());
+  const parts = Array.isArray(l.src_parts) ? l.src_parts.filter((item) => item && item.how) : [];
+  const words = [];
+  parts.forEach((item) => {
+    const w = howWord(item.how);
+    if (w && words.indexOf(w) < 0) words.push(w);
+  });
+  const r = parts.map((item) => item.ref || item.reference || item.utr).find((x) => x != null && String(x).trim());
   return { how: words.length ? words.join(' + ') : null, how_ref: r ? String(r).trim() : null, split: null };
 }
 /** the names of the parties a read shows — PERF1: `ids` = only those (a Day book page, the cheques list); without ids every party of the shop (Dues) */
 async function partyNames(h, e, ids) {
-  const m = new Map(); (await S.parties(h, e, ids)).forEach((p) => m.set(String(p.party_id), p)); return m;
+  const lookup = new Map();
+  (await S.parties(h, e, ids)).forEach((item) => lookup.set(String(item.party_id), item));
+  return lookup;
 }
 /**
  * ⭐ PERF1 · THE PAGE A BOOKS LIST IS ASKED FOR (DISCIPLINES §2 — the Inbox's contract: top-level total · page · limit, a server-side maximum):
@@ -331,7 +497,10 @@ async function partyNames(h, e, ids) {
  */
 const PL = require('../lib/page-limit');
 function pageQ(q) {
-  const ids = String(q.entries || '').split(',').map((x) => x.trim()).filter((x) => UUID.test(x));
+  const ids = String(q.entries || '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter((x) => UUID.test(x));
   if (ids.length) return { entries: ids.slice(0, S.PAGE_MAX) };
   if (q.limit == null && q.after == null && q.page == null) return null;
   const m = /^(\d{4}-\d{2}-\d{2})\|(.{1,60})$/.exec(String(q.after || ''));
@@ -343,61 +512,144 @@ const cursorOf = (nx) => (nx ? nx.date + '|' + nx.no : null);
  *  lines: [{ code, name, party_id, party_name, dr_minor, cr_minor, counter, rate }] }] } — `source` is sourceOf(), read in the same query as the lines */
 router.get('/daybook', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), from = dateQ(req.query.from, today(req)), to = dateQ(req.query.to, from), pg = pageQ(req.query);
+    const e = ctx(req),
+      from = dateQ(req.query.from, today(req)),
+      to = dateQ(req.query.to, from),
+      pg = pageQ(req.query);
     let paged = null;
     const out = await withEntity(e, async (h) => {
       let lines;
       if (pg && pg.entries) lines = await S.entryLines(h, e, from, to, null, null, pg);
-      else if (pg) { const p = await S.entryPage(h, e, from, to, null, null, pg), t = await S.pageSums(h, e, from, to, null, null, null, false); lines = p.rows; paged = { next: p.next, limit: p.limit, sums: t }; }
-      else lines = await S.entryLines(h, e, from, to, null, null);
-      const names = await partyNames(h, e, lines.map((l) => l.party_id).filter(Boolean));
-      const entries = [], at = new Map();
+      else if (pg) {
+        const p = await S.entryPage(h, e, from, to, null, null, pg),
+          t = await S.pageSums(h, e, from, to, null, null, null, false);
+        lines = p.rows;
+        paged = { next: p.next, limit: p.limit, sums: t };
+      } else lines = await S.entryLines(h, e, from, to, null, null);
+      const names = await partyNames(h, e, lines.map((item) => item.party_id).filter(Boolean));
+      const entries = [],
+        at = new Map();
       for (const l of lines) {
         let x = at.get(l.entry_id);
-        if (!x) { x = { entry_id: l.entry_id, entry_no: l.entry_no, posting_date: E.ymd(l.posting_date), doc_date: E.ymd(l.doc_date), event_type: l.event_type,
-                        narration: l.narration || WORD[l.event_type] || l.event_type, source_chit_id: l.source_chit_id, reverses_entry_id: l.reverses_entry_id,
-                        reversed_by: l.reversed_by || null, reversed_by_id: l.reversed_by_id || null,   /* M174: "Reversed by MJ/…" — a link, and no Reverse button */
-                        source: sourceOf(l), lines: [] }; at.set(l.entry_id, x); entries.push(x); }
+        if (!x) {
+          x = {
+            entry_id: l.entry_id,
+            entry_no: l.entry_no,
+            posting_date: E.ymd(l.posting_date),
+            doc_date: E.ymd(l.doc_date),
+            event_type: l.event_type,
+            narration: l.narration || WORD[l.event_type] || l.event_type,
+            source_chit_id: l.source_chit_id,
+            reverses_entry_id: l.reverses_entry_id,
+            reversed_by: l.reversed_by || null,
+            reversed_by_id: l.reversed_by_id || null /* M174: "Reversed by MJ/…" — a link, and no Reverse button */,
+            source: sourceOf(l),
+            lines: []
+          };
+          at.set(l.entry_id, x);
+          entries.push(x);
+        }
         if (x.source && !x.source.counter && l.counter_id) x.source.counter = l.counter_id;
         const p = l.party_id ? names.get(String(l.party_id)) : null;
-        x.lines.push({ code: l.code, name: l.account_name, party_id: l.party_id, party_name: p ? (p.nickname || p.name) : null, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), counter: l.counter_id,
-          rate: l.tax_rate == null || l.tax_rate === '' ? null : Number(l.tax_rate) });   /* the tax rate the line was posted at - the Day book writes "@ 12%" beside it */
+        x.lines.push({
+          code: l.code,
+          name: l.account_name,
+          party_id: l.party_id,
+          party_name: p ? p.nickname || p.name : null,
+          dr_minor: Number(l.dr_minor),
+          cr_minor: Number(l.cr_minor),
+          counter: l.counter_id,
+          rate: l.tax_rate == null || l.tax_rate === '' ? null : Number(l.tax_rate)
+        }); /* the tax rate the line was posted at - the Day book writes "@ 12%" beside it */
       }
       return entries;
     });
     /* PERF1: a page says its place — total entries in [from, to] · page · limit · `next` (the ?after= of the next page, null on the last) · the range's Σ Dr / Σ Cr, from the server */
-    const page = paged ? { total: paged.sums.entries, page: pg.page, limit: paged.limit, next: cursorOf(paged.next), totals: { dr_minor: paged.sums.dr, cr_minor: paged.sums.cr } } : {};
+    const page = paged
+      ? {
+          total: paged.sums.entries,
+          page: pg.page,
+          limit: paged.limit,
+          next: cursorOf(paged.next),
+          totals: { dr_minor: paged.sums.dr, cr_minor: paged.sums.cr }
+        }
+      : {};
     res.json(Object.assign({ currency: curOf(req), from, to, entries: out, count: out.length }, page));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /** GET /ledger/:account?party&from&to — :account is the code (1300), the role (debtors) or the id →
  *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], closing_minor } */
 router.get('/ledger/:account', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), to = dateQ(req.query.to, today(req)), from = dateQ(req.query.from, fyStart(req, to)), pg = pageQ(req.query);
+    const e = ctx(req),
+      to = dateQ(req.query.to, today(req)),
+      from = dateQ(req.query.from, fyStart(req, to)),
+      pg = pageQ(req.query);
     const party = UUID.test(String(req.query.party || '')) ? String(req.query.party) : null;
     const out = await withEntity(e, async (h) => {
       const key = String(req.params.account);
       const chart = await S.accounts(h, e);
       const a = chart.find((x) => String(x.code) === key) || chart.find((x) => x.role === key) || chart.find((x) => String(x.account_id) === key);
       if (!a || a.is_group) return null;
-      const lo = await B.ledgerOf(h, e, a, party, from, to), open = lo.opening_minor;
+      const lo = await B.ledgerOf(h, e, a, party, from, to),
+        open = lo.opening_minor;
       /* PERF1: a page (?limit · ?after) reads its entries only; its first running balance = the range's opening + ONE indexed SUM of the lines before
          the cursor (S.pageSums — never the earlier pages read); the range's closing and Σ come from the same SUM, not from the rows on the page */
       const p = pg && !pg.entries ? await S.entryPage(h, e, from, to, a.account_id, party, Object.assign({ noOpening: !!lo.period0 }, pg)) : null;
       const t = p ? await S.pageSums(h, e, from, to, a.account_id, party, pg.after, !!lo.period0) : null;
-      const rows = (p ? p.rows : await S.entryLines(h, e, from, to, a.account_id, party)).filter((l) => !(lo.period0 && Number(l.period) === 0));   /* period 0 is IN the opening (WX-R2R) */
+      const rows = (p ? p.rows : await S.entryLines(h, e, from, to, a.account_id, party)).filter(
+        (item) => !(lo.period0 && Number(item.period) === 0)
+      ); /* period 0 is IN the opening (WX-R2R) */
       const first = t ? open + t.before_dr - t.before_cr : open;
       let run = first;
-      const lines = rows.map((l) => { run += Number(l.dr_minor) - Number(l.cr_minor); return { date: E.ymd(l.posting_date), doc_date: E.ymd(l.doc_date), what: l.narration || WORD[l.event_type] || l.event_type,
-        ref: l.entry_no, entry_id: l.entry_id, entry_no: l.entry_no, event_type: l.event_type, reverses_entry_id: l.reverses_entry_id || null, reversed_by: l.reversed_by || null, source_chit_id: l.source_chit_id, source: sourceOf(l), party_id: l.party_id, dr_minor: Number(l.dr_minor), cr_minor: Number(l.cr_minor), running_minor: run }; });
-      const base = { account: { code: a.code, name: a.name, nature: a.nature }, party, from, to, opening_minor: open, lines, closing_minor: t ? open + t.dr - t.cr : run };
-      return t ? Object.assign(base, { page_opening_minor: first, total: t.entries, page: pg.page, limit: p.limit, next: cursorOf(p.next), totals: { dr_minor: t.dr, cr_minor: t.cr } }) : base;
+      const lines = rows.map((item) => {
+        run += Number(item.dr_minor) - Number(item.cr_minor);
+        return {
+          date: E.ymd(item.posting_date),
+          doc_date: E.ymd(item.doc_date),
+          what: item.narration || WORD[item.event_type] || item.event_type,
+          ref: item.entry_no,
+          entry_id: item.entry_id,
+          entry_no: item.entry_no,
+          event_type: item.event_type,
+          reverses_entry_id: item.reverses_entry_id || null,
+          reversed_by: item.reversed_by || null,
+          source_chit_id: item.source_chit_id,
+          source: sourceOf(item),
+          party_id: item.party_id,
+          dr_minor: Number(item.dr_minor),
+          cr_minor: Number(item.cr_minor),
+          running_minor: run
+        };
+      });
+      const base = {
+        account: { code: a.code, name: a.name, nature: a.nature },
+        party,
+        from,
+        to,
+        opening_minor: open,
+        lines,
+        closing_minor: t ? open + t.dr - t.cr : run
+      };
+      return t
+        ? Object.assign(base, {
+            page_opening_minor: first,
+            total: t.entries,
+            page: pg.page,
+            limit: p.limit,
+            next: cursorOf(p.next),
+            totals: { dr_minor: t.dr, cr_minor: t.cr }
+          })
+        : base;
     });
     if (!out) return res.status(404).json({ error: 'Not found', message: 'No such ledger.' });
     res.json(Object.assign({ currency: curOf(req) }, out));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /** GET /party/:id/statement?from&to → CBLedger.partyStatement, as { currency, party_id, from, to, code, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book's), dr_minor, cr_minor, running_minor,
@@ -408,40 +660,81 @@ router.get('/ledger/:account', auth, on, async (req, res) => {
  *  (one read) — 'none' for every line while b285 has not run (books-store adviceReady), never a 42703. */
 router.get('/party/:id/statement', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), id = String(req.params.id);
+    const e = ctx(req),
+      id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
-    const to = dateQ(req.query.to, today(req)), from = dateQ(req.query.from, fyStart(req, to));
+    const to = dateQ(req.query.to, today(req)),
+      from = dateQ(req.query.from, fyStart(req, to));
     const out = await withEntity(e, async (h) => {
       const st = E.ledger().partyStatement({ ...(await statementInput(h, e, id, from, to)), party: id, from, to });
-      const meta = new Map((await S.ledgerLines(h, e, from, to, id)).map((l) => [String(l.entry_id), l]));
+      const meta = new Map((await S.ledgerLines(h, e, from, to, id)).map((item) => [String(item.entry_id), item]));
       /* where each entry came from (its bill, how it was paid, the counter, who rang it) - the same `source` the day book and a ledger carry, so a party's own ledger reads like theirs */
-      const src = new Map(); (await S.entryLines(h, e, from, to, null, id)).forEach((l) => { if (!src.has(String(l.entry_id))) src.set(String(l.entry_id), l); });
+      const lookup = new Map();
+      (await S.entryLines(h, e, from, to, null, id)).forEach((item) => {
+        if (!lookup.has(String(item.entry_id))) lookup.set(String(item.entry_id), item);
+      });
       const payIdOf = (m) => (/^pay:/.test(String(m.source_ref || '')) ? String(m.source_ref).slice(4) : null);
-      const anyPay = st.rows.some((r) => payIdOf(meta.get(String(r.entry_id)) || {}));
-      const byRef = anyPay ? E.receivables().outstanding((await B.partyItems(h, e, id, null))).by_ref : null;
+      const anyPay = st.rows.some((item) => payIdOf(meta.get(String(item.entry_id)) || {}));
+      const byRef = anyPay ? E.receivables().outstanding(await B.partyItems(h, e, id, null)).by_ref : null;
       /* M30: the advice columns of the payments on this statement (one read) and where their chits stand on my copy (one read) — only once b285 is in */
-      const payIds = st.rows.map((r) => payIdOf(meta.get(String(r.entry_id)) || {})).filter(Boolean);
+      const payIds = st.rows.map((item) => payIdOf(meta.get(String(item.entry_id)) || {})).filter(Boolean);
       const advReady = payIds.length ? await S.adviceReady(h, e) : false;
       const adv = new Map(advReady ? (await S.paymentsAdvice(h, e, payIds)).map((x) => [String(x.payment_id), x]) : []);
-      const advChits = Array.from(adv.values()).map((x) => x.advice_chit_id).filter(Boolean);
+      const advChits = Array.from(adv.values())
+        .map((x) => x.advice_chit_id)
+        .filter(Boolean);
       const advCs = advChits.length ? await S.adviceStates(h, e, advChits) : {};
-      const adviceOf = (pid) => { const x = adv.get(String(pid)) || {}; return { chit_id: x.advice_chit_id || null, state: B.adviceState(x, x.advice_chit_id ? advCs[x.advice_chit_id] : null), shared_at: x.advice_shared_at ? new Date(x.advice_shared_at).toISOString() : null }; };
-      return { code: st.code, opening_minor: st.opening_minor, closing_minor: st.closing_minor,
-        lines: st.rows.map((r) => { const m = meta.get(String(r.entry_id)) || {}, pid = payIdOf(m), mine = pid && byRef ? byRef['pay:' + pid] : null;
-          return { date: r.date, what: r.narration || WORD[m.event_type] || m.event_type || '', ref: r.jv_no,
-          source_chit_id: m.source_chit_id || null, source: src.has(String(r.entry_id)) ? sourceOf(src.get(String(r.entry_id))) : null, dr_minor: r.dr_minor, cr_minor: r.cr_minor, running_minor: r.running_minor,
-          entry_id: r.entry_id || null, entry_no: r.jv_no || null, event_type: m.event_type || null, reverses_entry_id: m.reverses_entry_id || null,
-          reversed_by: m.reversed_by || null, reversed_why: B.reversalWhy(m.reversed_narration), payment_id: pid,
-          unapplied_minor: pid ? (mine ? -Number(mine.outstanding_minor) : 0) : null,
-          advice: pid ? adviceOf(pid) : null }; }) };
+      const adviceOf = (pid) => {
+        const x = adv.get(String(pid)) || {};
+        return {
+          chit_id: x.advice_chit_id || null,
+          state: B.adviceState(x, x.advice_chit_id ? advCs[x.advice_chit_id] : null),
+          shared_at: x.advice_shared_at ? new Date(x.advice_shared_at).toISOString() : null
+        };
+      };
+      return {
+        code: st.code,
+        opening_minor: st.opening_minor,
+        closing_minor: st.closing_minor,
+        lines: st.rows.map((item) => {
+          const m = meta.get(String(item.entry_id)) || {},
+            pid = payIdOf(m),
+            mine = pid && byRef ? byRef['pay:' + pid] : null;
+          return {
+            date: item.date,
+            what: item.narration || WORD[m.event_type] || m.event_type || '',
+            ref: item.jv_no,
+            source_chit_id: m.source_chit_id || null,
+            source: lookup.has(String(item.entry_id)) ? sourceOf(lookup.get(String(item.entry_id))) : null,
+            dr_minor: item.dr_minor,
+            cr_minor: item.cr_minor,
+            running_minor: item.running_minor,
+            entry_id: item.entry_id || null,
+            entry_no: item.jv_no || null,
+            event_type: m.event_type || null,
+            reverses_entry_id: m.reverses_entry_id || null,
+            reversed_by: m.reversed_by || null,
+            reversed_why: B.reversalWhy(m.reversed_narration),
+            payment_id: pid,
+            unapplied_minor: pid ? (mine ? -Number(mine.outstanding_minor) : 0) : null,
+            advice: pid ? adviceOf(pid) : null
+          };
+        })
+      };
     });
     res.json(Object.assign({ currency: curOf(req), party_id: id, from, to }, out));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 async function statementInput(h, e, party, from, to) {
-  const c = await B.ledgerCtx(h, e); const A = E.packs();
-  return { pack: c.pack, balances: await B.yearBalances(h, e, A.fiscalYearOf(from, c.pack), c),
-           lines: (await S.ledgerLines(h, e, B.monthStart(c.pack, from), to, party)).map(E.lineOf) };
+  const c = await B.ledgerCtx(h, e);
+  const A = E.packs();
+  return {
+    pack: c.pack,
+    balances: await B.yearBalances(h, e, A.fiscalYearOf(from, c.pack), c),
+    lines: (await S.ledgerLines(h, e, B.monthStart(c.pack, from), to, party)).map(E.lineOf)
+  };
 }
 
 /**
@@ -460,77 +753,158 @@ router.get('/dues', auth, noKey, on, async (req, res) => {
        Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
        not set — credit_limit_from null / interest_state 'not_set' (interest_minor null) is the code the screen paints "Not set" from. */
     const fin = req.query.finance === '1';
-    if (fin && !isOwner(req)) { const no = req.query.side === 'supplier' ? 'Only the owner may see what you owe.' : 'Only the owner may see collections.'; return res.status(403).json({ error: no, message: no }); }
-    const e = ctx(req), asOf = dateQ(req.query.asOf, today(req));
+    if (fin && !isOwner(req)) {
+      const no = req.query.side === 'supplier' ? 'Only the owner may see what you owe.' : 'Only the owner may see collections.';
+      return res.status(403).json({ error: no, message: no });
+    }
+    const e = ctx(req),
+      asOf = dateQ(req.query.asOf, today(req));
     const sides = req.query.side === 'customer' ? ['debtors'] : req.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
-    const pay = fin && req.query.side === 'supplier';   /* F4 Payables: the supplier side of CB Finance */
+    const pay = fin && req.query.side === 'supplier'; /* F4 Payables: the supplier side of CB Finance */
     let payables = null;
     const out = await withEntity(e, async (h) => {
-      const chart = await S.accounts(h, e), per = new Map();
+      const chart = await S.accounts(h, e),
+        lookup = new Map();
       /* PERF1: "recorded on or before asOf (the shop's day)" is ONE moment — the start of the shop's next day (books-hooks.dayBounds) — compared per item;
          it was dayOf() per item, a zone conversion each (≈ 0.6 s of 0.9 s on 24k items at 100k lines) */
       const cut = Date.parse(require('../lib/books-hooks').dayBounds(asOf, req.books).to);
       /* FIN-R1: interest and limit come from the customer's TERMS (finance-terms.resolve: own, else the shop default, else not set) — one grouped read */
       const T = require('../lib/finance-terms');
       const terms = fin && sides.includes('debtors') ? await T.customerTerms(h, e) : null;
-      const effOf = (pid) => { const own = terms && terms.by_party.get(String(pid)); return own ? T.resolve(terms.shop, own) : null; };
+      const effOf = (pid) => {
+        const own = terms && terms.by_party.get(String(pid));
+        return own ? T.resolve(terms.shop, own) : null;
+      };
       let payableItems = [];
       for (const role of sides) {
-        const a = chart.find((x) => x.role === role); if (!a) continue;
-        const side = role === 'creditors' ? 'payable' : 'receivable', sign = role === 'creditors' ? -1 : 1;
+        const a = chart.find((x) => x.role === role);
+        if (!a) continue;
+        const side = role === 'creditors' ? 'payable' : 'receivable',
+          sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
-        const items = (await S.items(h, e, null, a.account_id)).filter((i) => new Date(i.created_at).getTime() < cut).map(E.itemOf);
+        const items = (await S.items(h, e, null, a.account_id)).filter((item) => new Date(item.created_at).getTime() < cut).map(E.itemOf);
         const d = E.dues(items, asOf, side);
         if (role === 'creditors') payableItems = items;
         const byRef = d.outstanding.by_ref || {};
         /* PERF1: each party's open documents, grouped ONCE — the filter over every document ran once per party (251 × 15k at 100k lines) */
         const docsOf = new Map();
-        Object.keys(byRef).forEach((k) => { const x = byRef[k]; if (!(x.outstanding_minor > 0)) return; const p = String(x.party); if (!docsOf.has(p)) docsOf.set(p, []); docsOf.get(p).push(x); });
-        Object.keys(d.ageing.by_party || {}).concat(Object.keys(d.outstanding.by_party || {})).forEach((pid) => {
-          if (per.has(pid + '|' + role)) return;
-          const ag = d.ageing.by_party[pid] || { undisputed: {}, disputed: {}, total_minor: 0 };
-          const open = Number((d.outstanding.by_party || {})[pid] || 0);
-          const docs = docsOf.get(String(pid)) || [];
-          const oldest = docs.map((x) => x.due_date || x.date).filter(Boolean).sort()[0] || null;
-          const buckets = {}; Object.keys(ag.undisputed || {}).forEach((k) => { buckets[k] = sign * ((ag.undisputed[k] || 0) + ((ag.disputed || {})[k] || 0)); });
-          const disputed = Object.keys(ag.disputed || {}).reduce((t, k) => t + (ag.disputed[k] || 0), 0);
-          const row = { party_id: pid, side: role === 'creditors' ? 'supplier' : 'customer', balance_minor: sign * open, oldest_due: oldest, disputed_minor: sign * disputed, buckets };
-          if (fin && role === 'debtors') { const eff = effOf(pid); row.interest_minor = E.interestMinor(docs, asOf, curOf(req), eff && eff.interest.value); row.interest_state = E.interestState(eff); }
-          per.set(pid + '|' + role, row);
+        Object.keys(byRef).forEach((item) => {
+          const x = byRef[item];
+          if (!(x.outstanding_minor > 0)) return;
+          const p = String(x.party);
+          if (!docsOf.has(p)) docsOf.set(p, []);
+          docsOf.get(p).push(x);
         });
+        Object.keys(d.ageing.by_party || {})
+          .concat(Object.keys(d.outstanding.by_party || {}))
+          .forEach((pid) => {
+            if (lookup.has(pid + '|' + role)) return;
+            const ag = d.ageing.by_party[pid] || { undisputed: {}, disputed: {}, total_minor: 0 };
+            const open = Number((d.outstanding.by_party || {})[pid] || 0);
+            const docs = docsOf.get(String(pid)) || [];
+            const oldest =
+              docs
+                .map((x) => x.due_date || x.date)
+                .filter(Boolean)
+                .sort()[0] || null;
+            const buckets = {};
+            Object.keys(ag.undisputed || {}).forEach((item) => {
+              buckets[item] = sign * ((ag.undisputed[item] || 0) + ((ag.disputed || {})[item] || 0));
+            });
+            const disputed = Object.keys(ag.disputed || {}).reduce((total, item) => total + (ag.disputed[item] || 0), 0);
+            const row = {
+              party_id: pid,
+              side: role === 'creditors' ? 'supplier' : 'customer',
+              balance_minor: sign * open,
+              oldest_due: oldest,
+              disputed_minor: sign * disputed,
+              buckets
+            };
+            if (fin && role === 'debtors') {
+              const eff = effOf(pid);
+              row.interest_minor = E.interestMinor(docs, asOf, curOf(req), eff && eff.interest.value);
+              row.interest_state = E.interestState(eff);
+            }
+            lookup.set(pid + '|' + role, row);
+          });
       }
       /* the names of the parties with dues — PERF1: only those, read from the shop's own lists (never the platform's identities) */
-      const names = await partyNames(h, e, Array.from(per.values()).map((r) => r.party_id).concat(payableItems.map((i) => i.party)));
+      const names = await partyNames(
+        h,
+        e,
+        Array.from(lookup.values())
+          .map((item) => item.party_id)
+          .concat(payableItems.map((item) => item.party))
+      );
       /* one row per party: a party on both lists nets (what they owe you less what you owe them) */
       const rows = new Map();
-      for (const r of per.values()) {
+      for (const r of lookup.values()) {
         const p = names.get(String(r.party_id)) || {};
         const x = rows.get(r.party_id);
-        if (!x) rows.set(r.party_id, Object.assign({ party_no: p.party_no || null, name: p.nickname || p.name || null }, r, fin ? E.limitView(effOf(r.party_id), r) : {}));
-        else { x.balance_minor += r.balance_minor; x.disputed_minor += r.disputed_minor; x.side = 'both'; x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
-               Object.keys(r.buckets).forEach((k) => { x.buckets[k] = (x.buckets[k] || 0) + r.buckets[k]; });
-               if (fin) { if (r.interest_minor != null) { x.interest_minor = (x.interest_minor || 0) + r.interest_minor; x.interest_state = r.interest_state; } Object.assign(x, E.limitView(effOf(r.party_id), x)); } }
+        if (!x)
+          rows.set(
+            r.party_id,
+            Object.assign({ party_no: p.party_no || null, name: p.nickname || p.name || null }, r, fin ? E.limitView(effOf(r.party_id), r) : {})
+          );
+        else {
+          x.balance_minor += r.balance_minor;
+          x.disputed_minor += r.disputed_minor;
+          x.side = 'both';
+          x.oldest_due = [x.oldest_due, r.oldest_due].filter(Boolean).sort()[0] || null;
+          Object.keys(r.buckets).forEach((item) => {
+            x.buckets[item] = (x.buckets[item] || 0) + r.buckets[item];
+          });
+          if (fin) {
+            if (r.interest_minor != null) {
+              x.interest_minor = (x.interest_minor || 0) + r.interest_minor;
+              x.interest_state = r.interest_state;
+            }
+            Object.assign(x, E.limitView(effOf(r.party_id), x));
+          }
+        }
       }
       /* FX1: a party with a foreign-currency balance shows it beside the books' figure — "USD 1,000 · ₹83,250" (b392; one grouped read; absent before b392 and for a party with none) */
       if (await S.fxLinesReady()) {
         const ids = sides.map((role) => (chart.find((x) => x.role === role) || {}).account_id).filter(Boolean);
         const fx = ids.length ? await S.foreignBalances(h, e, { asOf, functional: curOf(req), account_ids: ids }) : [];
         for (const f of fx) {
-          const r = rows.get(f.party_id); if (!r) continue;
+          const r = rows.get(f.party_id);
+          if (!r) continue;
           const have = (r.foreign = r.foreign || []).find((x) => x.currency === f.txn_currency);
-          if (have) { have.balance_minor += f.txn_minor; have.carried_minor += f.fn_minor; } else r.foreign.push({ currency: f.txn_currency, balance_minor: f.txn_minor, carried_minor: f.fn_minor });
+          if (have) {
+            have.balance_minor += f.txn_minor;
+            have.carried_minor += f.fn_minor;
+          } else r.foreign.push({ currency: f.txn_currency, balance_minor: f.txn_minor, carried_minor: f.fn_minor });
         }
       }
       if (pay) {
-        const P = require('../lib/books-payables'), more = await P.read(h, e);
-        const v = P.view({ asOf, currency: curOf(req), country: req.books && req.books.country, payable_items: payableItems, cheques: more.cheques, names, msme: more.msme, terms: more.terms, chart });
+        const nestedP = require('../lib/books-payables'),
+          more = await nestedP.read(h, e);
+        const v = nestedP.view({
+          asOf,
+          currency: curOf(req),
+          country: req.books && req.books.country,
+          payable_items: payableItems,
+          cheques: more.cheques,
+          names,
+          msme: more.msme,
+          terms: more.terms,
+          chart
+        });
         for (const r of rows.values()) r.payable = v.by_party[String(r.party_id)] || null;
         payables = { total_minor: v.total_minor };
       }
-      return Array.from(rows.values()).sort((a, b) => Math.abs(b.balance_minor) - Math.abs(a.balance_minor));
+      return Array.from(rows.values()).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
     });
-    res.json(Object.assign({ currency: curOf(req), asOf, parties: out, total_minor: out.reduce((t, p) => t + p.balance_minor, 0) }, payables ? { payables } : {}));
-  } catch (err) { fail(res, err); }
+    res.json(
+      Object.assign(
+        { currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0) },
+        payables ? { payables } : {}
+      )
+    );
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /**
@@ -547,31 +921,63 @@ const CASH_OWNER_ONLY = 'Only the owner may see the cash position.';
 router.get('/cashflow', auth, noKey, on, async (req, res) => {
   try {
     if (!isOwner(req)) return res.status(403).json({ error: CASH_OWNER_ONLY, message: CASH_OWNER_ONLY });
-    const e = ctx(req), CF = require('../lib/books-cashflow');
-    const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7, asOf = dateQ(req.query.asOf, today(req));
+    const e = ctx(req),
+      CF = require('../lib/books-cashflow');
+    const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7,
+      asOf = dateQ(req.query.asOf, today(req));
     res.json(await withEntity(e, (h) => CF.read(h, e, req.books, { asOf, days })));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced } */
 router.get('/trial-balance', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), asOf = dateQ(req.query.asOf, today(req));
+    const e = ctx(req),
+      asOf = dateQ(req.query.asOf, today(req));
     const tb = await withEntity(e, (h) => B.trialBalance(h, e, asOf));
-    res.json({ currency: curOf(req), asOf, rows: tb.rows.map((r) => ({ code: r.code, name: r.name, group: r.group, dr_minor: r.debit_minor, cr_minor: r.credit_minor })),
-      total_dr_minor: tb.total_dr_minor, total_cr_minor: tb.total_cr_minor, balanced: tb.balanced });
-  } catch (err) { fail(res, err); }
+    res.json({
+      currency: curOf(req),
+      asOf,
+      rows: tb.rows.map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor })),
+      total_dr_minor: tb.total_dr_minor,
+      total_cr_minor: tb.total_cr_minor,
+      balanced: tb.balanced
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** Schedule III lines → the flat ledger rows a screen lists ({ code, name, amount_minor, line }) */
-function flat(lines) { const out = []; (lines || []).forEach((L) => (L.accounts || []).forEach((a) => out.push({ code: a.code, name: a.name, amount_minor: a.amount_minor, line: L.label }))); return out; }
+function flat(lines) {
+  const out = [];
+  (lines || []).forEach((item) =>
+    (item.accounts || []).forEach((a) => out.push({ code: a.code, name: a.name, amount_minor: a.amount_minor, line: item.label }))
+  );
+  return out;
+}
 /** GET /pl?from&to → { currency, income: [{ code, name, amount_minor }], expense: [...], profit_minor } (inside one financial year) */
 router.get('/pl', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), to = dateQ(req.query.to, today(req)), from = dateQ(req.query.from, fyStart(req, to));
+    const e = ctx(req),
+      to = dateQ(req.query.to, today(req)),
+      from = dateQ(req.query.from, fyStart(req, to));
     const pl = await withEntity(e, (h) => B.profitAndLoss(h, e, from, to));
-    res.json({ currency: curOf(req), from, to, income: flat(pl.income), expense: flat(pl.expenses), total_income_minor: pl.total_income_minor,
-      total_expense_minor: pl.total_expenses_minor, profit_minor: pl.profit_minor, by_line: { income: pl.income, expense: pl.expenses } });
-  } catch (err) { fail(res, err); }
+    res.json({
+      currency: curOf(req),
+      from,
+      to,
+      income: flat(pl.income),
+      expense: flat(pl.expenses),
+      total_income_minor: pl.total_income_minor,
+      total_expense_minor: pl.total_expenses_minor,
+      profit_minor: pl.profit_minor,
+      by_line: { income: pl.income, expense: pl.expenses }
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * The engine's Schedule III lines → one side as the statement prints it: heads in the pack's order, each with its ledgers and a head total.
@@ -579,34 +985,57 @@ router.get('/pl', auth, on, async (req, res) => {
  * The year's profit so far (the engine's code-less 'profit_to_date' line) is named "Net profit" / "Net loss", sign kept.
  */
 function sideOf(lines, order) {
-  const rank = (k) => { const i = order.indexOf(k); return i < 0 ? order.length : i; };
-  const heads = (lines || []).map((L, i) => ({ L, i })).sort((a, b) => rank(a.L.line) - rank(b.L.line) || a.i - b.i).map(({ L }) => ({
-    line: L.line, label: L.label, total_minor: L.amount_minor,
-    ledgers: (L.accounts || []).map((a) => (a.role === 'profit_to_date'
-      ? { code: null, name: a.amount_minor < 0 ? 'Net loss' : 'Net profit', amount_minor: a.amount_minor, role: 'profit_to_date' }
-      : { code: a.code, name: a.name, amount_minor: a.amount_minor })) }));
-  return { heads, total_minor: heads.reduce((t, h) => t + h.total_minor, 0) };
+  const rank = (k) => {
+    const i = order.indexOf(k);
+    return i < 0 ? order.length : i;
+  };
+  const heads = (lines || [])
+    .map((item, index) => ({ L: item, i: index }))
+    .sort((first, second) => rank(first.L.line) - rank(second.L.line) || first.i - second.i)
+    .map(({ L }) => ({
+      line: L.line,
+      label: L.label,
+      total_minor: L.amount_minor,
+      ledgers: (L.accounts || []).map((item) =>
+        item.role === 'profit_to_date'
+          ? { code: null, name: item.amount_minor < 0 ? 'Net loss' : 'Net profit', amount_minor: item.amount_minor, role: 'profit_to_date' }
+          : { code: item.code, name: item.name, amount_minor: item.amount_minor }
+      )
+    }));
+  return { heads, total_minor: heads.reduce((total, item) => total + item.total_minor, 0) };
 }
 function sched3(bs, order) {
-  const eq = sideOf(bs.liabilities, order), as = sideOf(bs.assets, order), diff = as.total_minor - eq.total_minor;
+  const eq = sideOf(bs.liabilities, order),
+    as = sideOf(bs.assets, order),
+    diff = as.total_minor - eq.total_minor;
   return { equity_and_liabilities: eq, assets: as, balanced: diff === 0, difference_minor: diff };
 }
 /** GET /bs?asOf → { currency, assets, liabilities, equity, total_assets_minor, total_liab_equity_minor, balanced, by_line,
  *  schedule_iii: { equity_and_liabilities: { heads, total_minor }, assets: { heads, total_minor }, balanced, difference_minor } } */
 router.get('/bs', auth, on, async (req, res) => {
   try {
-    const e = ctx(req), asOf = dateQ(req.query.asOf, today(req));
+    const e = ctx(req),
+      asOf = dateQ(req.query.asOf, today(req));
     const out = await withEntity(e, async (h) => {
-      const bs = await B.balanceSheet(h, e, asOf, B.entityBasisOf(req.books));   /* undefined until the entity-type decision is taken → Schedule III */
-      const nature = new Map((await S.accounts(h, e)).map((a) => [String(a.code), a.nature]));
+      const bs = await B.balanceSheet(h, e, asOf, B.entityBasisOf(req.books)); /* undefined until the entity-type decision is taken → Schedule III */
+      const nature = new Map((await S.accounts(h, e)).map((item) => [String(item.code), item.nature]));
       const left = flat(bs.liabilities);
-      return { assets: flat(bs.assets), liabilities: left.filter((r) => r.code && nature.get(String(r.code)) !== 'equity'),
-        equity: left.filter((r) => !r.code || nature.get(String(r.code)) === 'equity'), total_assets_minor: bs.total_assets_minor,
-        total_liab_equity_minor: bs.total_liabilities_minor, profit_to_date_minor: bs.profit_to_date_minor, balanced: bs.balanced, by_line: { assets: bs.assets, liabilities: bs.liabilities },
-        schedule_iii: sched3(bs, Object.keys(B.packOf(req.books).sch3 || {})) };
+      return {
+        assets: flat(bs.assets),
+        liabilities: left.filter((item) => item.code && nature.get(String(item.code)) !== 'equity'),
+        equity: left.filter((item) => !item.code || nature.get(String(item.code)) === 'equity'),
+        total_assets_minor: bs.total_assets_minor,
+        total_liab_equity_minor: bs.total_liabilities_minor,
+        profit_to_date_minor: bs.profit_to_date_minor,
+        balanced: bs.balanced,
+        by_line: { assets: bs.assets, liabilities: bs.liabilities },
+        schedule_iii: sched3(bs, Object.keys(B.packOf(req.books).sch3 || {}))
+      };
     });
     res.json(Object.assign({ currency: curOf(req), asOf }, out));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /* ── payments: record → propose → confirm ─────────────────────────────────────────────────────────────────── */
@@ -622,7 +1051,8 @@ const MODES = ['cash', 'bank', 'upi', 'card', 'cheque'];
  */
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
 function paymentQuestion(req, needMode) {
-  const b = req.body || {}, cur = String(curOf(req)).toUpperCase();
+  const b = req.body || {},
+    cur = String(curOf(req)).toUpperCase();
   const party = String(b.party_id || b.party || '');
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
   if (b.currency && String(b.currency).toUpperCase() !== cur) return { refuse: { status: 422, words: 'This ledger is kept in ' + cur + '.' } };
@@ -636,10 +1066,16 @@ function paymentQuestion(req, needMode) {
 }
 /** the party as the words and the advice need it — the display name (else the nickname the lists keep; "this party" when neither is known), whether it is ON the rail
  *  (books-store parties: can it receive a chit), and the names map itself so the same read serves the outcome and the advice (M30) */
-async function partyOf(h, e, party) { const names = await partyNames(h, e), p = names.get(String(party)) || {}; return { names, name: p.name || p.nickname || 'this party', on_rail: p.on_rail === true }; }
+async function partyOf(h, e, party) {
+  const names = await partyNames(h, e),
+    p = names.get(String(party)) || {};
+  return { names, name: p.name || p.nickname || 'this party', on_rail: p.on_rail === true };
+}
 /** M30: who is asking (viewer · commenter · editor — lib/access, the rail ladder) and the shop's own name (the advice names its sender; a co-assist's token names the person) */
 const levelOf = (req) => require('../lib/access').levelOf(req.identity);
-async function meName(req, h, e) { return req.identity && req.identity.identity_type === 'entity' && req.identity.display_name ? req.identity.display_name : (await S.shopName(h, e)) || 'We'; }
+async function meName(req, h, e) {
+  return req.identity && req.identity.identity_type === 'entity' && req.identity.display_name ? req.identity.display_name : (await S.shopName(h, e)) || 'We';
+}
 /** POST /payments/preview — W1–W4 and the 409 share one shape: { code: 'ALREADY_PAID', error, message: words, warnings } */
 const alreadyPaid = (res, err) => res.status(409).json({ code: 'ALREADY_PAID', error: 'Already paid?', message: err.message, warnings: err.warnings || [] });
 
@@ -652,18 +1088,38 @@ const alreadyPaid = (res, err) => res.status(409).json({ code: 'ALREADY_PAID', e
  */
 router.post('/payments/preview', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), q = paymentQuestion(req, false);
+    const e = ctx(req),
+      q = paymentQuestion(req, false);
     if (q.refuse) return res.status(q.refuse.status).json({ error: q.refuse.words, message: q.refuse.words });
     const out = await withEntity(e, async (h) => {
-      const who = await partyOf(h, e, q.party), name = who.name;
+      const who = await partyOf(h, e, q.party),
+        name = who.name;
       const prop = await B.proposeFor(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, currency: q.cur });
-      const warnings = await B.duplicateWarnings(h, e, { party: q.party, direction: q.direction, amount_minor: q.amount_minor, allocate: q.allocate, allocations: q.allocations, country: q.country }, prop, name);
+      const warnings = await B.duplicateWarnings(
+        h,
+        e,
+        { party: q.party, direction: q.direction, amount_minor: q.amount_minor, allocate: q.allocate, allocations: q.allocations, country: q.country },
+        prop,
+        name
+      );
       /* M30: on_rail — the popup says "Tally Test is not on ChitBridge" before anything is recorded (SPEC §1.3) */
-      return { currency: prop.currency, party: { party_id: q.party, name, on_rail: who.on_rail }, open_minor: prop.open_minor, proposal: prop.proposal, apply_minor: prop.apply_minor,
-        on_account_minor: prop.on_account_minor, skipped: prop.skipped, why: prop.why, warnings, words: B.previewWords(prop, name, q.direction) };
+      return {
+        currency: prop.currency,
+        party: { party_id: q.party, name, on_rail: who.on_rail },
+        open_minor: prop.open_minor,
+        proposal: prop.proposal,
+        apply_minor: prop.apply_minor,
+        on_account_minor: prop.on_account_minor,
+        skipped: prop.skipped,
+        why: prop.why,
+        warnings,
+        words: B.previewWords(prop, name, q.direction)
+      };
     });
     res.json(out);
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * POST /payments { party_id, direction: in|out, amount_minor, currency, mode, reference?, cheque?: { number, bank, date }, received_at?, client_ref?,
@@ -682,38 +1138,98 @@ router.post('/payments/preview', auth, noKey, on, async (req, res) => {
  */
 router.post('/payments', auth, noKey, editor, on, async (req, res) => {
   try {
-    const e = ctx(req), b = req.body || {}, q = paymentQuestion(req, true);
+    const e = ctx(req),
+      b = req.body || {},
+      q = paymentQuestion(req, true);
     if (q.refuse) return res.status(q.refuse.status).json({ error: q.refuse.words, message: q.refuse.words });
     const { party, direction, amount_minor, cur, mode, allocate } = q;
     const date = dateQ(b.received_at || b.date, today(req));
     const chq = b.cheque && typeof b.cheque === 'object' ? b.cheque : {};
     const client_ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
     const ack = Array.isArray(b.acknowledge) ? b.acknowledge.map(String) : [];
-    const allocations = Array.isArray(b.allocations) ? b.allocations.filter((a) => a && typeof a === 'object').map((a) => ({ against_ref: String(a.against_ref || ''), amount_minor: Math.round(Number(a.amount_minor)) })) : null;
+    const allocations = Array.isArray(b.allocations)
+      ? b.allocations
+          .filter((item) => item && typeof item === 'object')
+          .map((item) => ({ against_ref: String(item.against_ref || ''), amount_minor: Math.round(Number(item.amount_minor)) }))
+      : null;
     /* ⭐ the payment row and its entry are ONE transaction (B.recordPayment) — a refusal leaves nothing half-recorded */
     const out = await withEntity(e, async (h) => {
-      const who = await partyOf(h, e, party), name = who.name;
+      const who = await partyOf(h, e, party),
+        name = who.name;
       /* the duplicate rule runs INSIDE recordPayment (p.warn), after its gates (a replay answers first; a stranger or a bad date is a 422) */
-      const rec = await B.recordPayment(h, e, { party_id: party, direction, amount_minor, currency: cur, mode, reference: b.reference,
-        cheque_no: chq.number || chq.no || b.cheque_no, cheque_bank: chq.bank || b.cheque_bank,
-        cheque_date: DATE.test(String(chq.date || chq.dated || b.cheque_date || '')) ? (chq.date || chq.dated || b.cheque_date) : null, received_at: date,
-        client_ref, by: byOf(req), strict_date: true, allocations, allocate, warn: { acknowledge: ack, country: q.country, name } });
-      if (!rec.payment.duplicate) rec.outcome = await B.paymentOutcome(h, e, { party_id: party, direction, amount_minor, currency: cur, mode }, rec.payment.payment_id, rec.allocation, name);
+      const rec = await B.recordPayment(h, e, {
+        party_id: party,
+        direction,
+        amount_minor,
+        currency: cur,
+        mode,
+        reference: b.reference,
+        cheque_no: chq.number || chq.no || b.cheque_no,
+        cheque_bank: chq.bank || b.cheque_bank,
+        cheque_date: DATE.test(String(chq.date || chq.dated || b.cheque_date || '')) ? chq.date || chq.dated || b.cheque_date : null,
+        received_at: date,
+        client_ref,
+        by: byOf(req),
+        strict_date: true,
+        allocations,
+        allocate,
+        warn: { acknowledge: ack, country: q.country, name }
+      });
+      if (!rec.payment.duplicate)
+        rec.outcome = await B.paymentOutcome(
+          h,
+          e,
+          { party_id: party, direction, amount_minor, currency: cur, mode },
+          rec.payment.payment_id,
+          rec.allocation,
+          name
+        );
       /* M30: the advice, ready to send — from the facts just written (no second read of the bills); a replay carries none (its row already answers) */
-      rec.advice = rec.payment.duplicate ? null : await B.adviceFor(h, e, { payment_id: rec.payment.payment_id, party_id: party, direction, amount_minor, currency: cur, mode, reference: b.reference || null, received_at: date },
-        { level: levelOf(req), me: await meName(req, h, e), names: who.names, ready: await S.adviceReady(h, e), settled: rec.outcome.settled, on_account_minor: rec.outcome.on_account_minor,
-          entry_no: rec.posted && rec.posted.entry_no, entry_id: rec.posted && rec.posted.entry_id });
+      rec.advice = rec.payment.duplicate
+        ? null
+        : await B.adviceFor(
+            h,
+            e,
+            {
+              payment_id: rec.payment.payment_id,
+              party_id: party,
+              direction,
+              amount_minor,
+              currency: cur,
+              mode,
+              reference: b.reference || null,
+              received_at: date
+            },
+            {
+              level: levelOf(req),
+              me: await meName(req, h, e),
+              names: who.names,
+              ready: await S.adviceReady(h, e),
+              settled: rec.outcome.settled,
+              on_account_minor: rec.outcome.on_account_minor,
+              entry_no: rec.posted && rec.posted.entry_no,
+              entry_id: rec.posted && rec.posted.entry_id
+            }
+          );
       return rec;
     });
     /* a bill settled here is a step of R-1400 (lib/bill-privacy) — after the commit, best effort, as /confirm does for "Choose the bills" */
     if (out.allocation && out.allocation.settled && out.allocation.settled.length) {
       try {
         const pay = await withEntity(e, (h) => S.payment(h, e, out.payment.payment_id));
-        await require('../lib/bill-privacy').moneySteps(e, pay, out.allocation.settled, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
-      } catch (e2) { console.error('bill money steps:', e2.message); }
+        await require('../lib/bill-privacy').moneySteps(e, pay, out.allocation.settled, {
+          id: byOf(req),
+          name: (req.identity && req.identity.display_name) || null
+        });
+      } catch (e2) {
+        console.error('bill money steps:', e2.message);
+      }
     }
     res.json(Object.assign({ ok: true }, out));
-  } catch (err) { if (err && err.code === 'ALREADY_PAID') return alreadyPaid(res, err); fail(res, err); }
+  } catch (err) {
+    if (err && err.code === 'ALREADY_PAID') return alreadyPaid(res, err);
+    fail(res, err);
+  }
 });
 /**
  * GET /payments/:id/advice (M30, SPEC-payments §3 · §4.3) → { currency, payment_id, party: { party_id, name, on_rail }, advice: { chit_id, state, shared_at },
@@ -724,15 +1240,19 @@ router.post('/payments', auth, noKey, editor, on, async (req, res) => {
  */
 router.get('/payments/:id/advice', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), id = String(req.params.id);
+    const e = ctx(req),
+      id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found', message: 'No such payment.' });
     const out = await withEntity(e, async (h) => {
-      const p = await S.payment(h, e, id); if (!p) return null;
+      const p = await S.payment(h, e, id);
+      if (!p) return null;
       return B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready: await S.adviceReady(h, e) });
     });
     if (!out) return res.status(404).json({ error: 'Not found', message: 'No such payment.' });
     res.json(Object.assign({ currency: curOf(req) }, out));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * GET /bank/rail?from&to (BR1) — THE RAIL LEG of the bank reconciliation the device runs (DECISIONS: the statement never leaves the device; the
@@ -745,27 +1265,44 @@ router.get('/payments/:id/advice', auth, noKey, on, async (req, res) => {
  */
 router.get('/bank/rail', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), to = dateQ(req.query.to, today(req)), from0 = dateQ(req.query.from, to);
+    const e = ctx(req),
+      to = dateQ(req.query.to, today(req)),
+      from0 = dateQ(req.query.from, to);
     const from = from0 > to ? to : from0;
-    if ((Date.parse(to) - Date.parse(from)) / 86400000 > 400) return res.status(400).json({ error: 'Too long', message: 'Choose a statement of 400 days or fewer.' });
+    if ((Date.parse(to) - Date.parse(from)) / 86400000 > 400)
+      return res.status(400).json({ error: 'Too long', message: 'Choose a statement of 400 days or fewer.' });
     const out = await withEntity(e, async (h) => {
       const rows = await S.bankRailChits(h, e, from, to, 500);
       const names = await partyNames(h, e);
       return { rows, names, me: await meName(req, h, e) };
     });
-    const R = require('../lib/rail'), lvl = R.byLevel(levelOf(req), 'ask');
-    const li = (x) => ({ ref_chit_id: x.ref_chit_id || null, bill_no: x.bill_no || null, applied_minor: Number.isInteger(x.applied_minor) ? x.applied_minor : null });
-    const rail_chits = out.rows.map((r) => {
-      const bj = r.business_json || {};
-      return { chit_id: r.chit_id, direction: r.direction, status: r.status || null, created_at: r.created_at ? new Date(r.created_at).toISOString() : null,
-        party: { id: r.party_id || null, name: r.party_name || null },
-        business_json: { kind: bj.kind, currency: bj.currency || null, payment_advice: bj.payment_advice || undefined, bank_query: bj.bank_query || undefined },
-        line_items: (Array.isArray(r.line_items) ? r.line_items : []).filter((x) => x && x.ref_chit_id).map(li) };
+    const R = require('../lib/rail'),
+      lvl = R.byLevel(levelOf(req), 'ask');
+    const li = (x) => ({
+      ref_chit_id: x.ref_chit_id || null,
+      bill_no: x.bill_no || null,
+      applied_minor: Number.isInteger(x.applied_minor) ? x.applied_minor : null
     });
-    const parties = [...out.names.values()].filter((p) => p.on_rail).map((p) => ({ party_id: p.party_id, name: p.nickname || p.name || null }));
+    const rail_chits = out.rows.map((item) => {
+      const bj = item.business_json || {};
+      return {
+        chit_id: item.chit_id,
+        direction: item.direction,
+        status: item.status || null,
+        created_at: item.created_at ? new Date(item.created_at).toISOString() : null,
+        party: { id: item.party_id || null, name: item.party_name || null },
+        business_json: { kind: bj.kind, currency: bj.currency || null, payment_advice: bj.payment_advice || undefined, bank_query: bj.bank_query || undefined },
+        line_items: (Array.isArray(item.line_items) ? item.line_items : []).filter((x) => x && x.ref_chit_id).map(li)
+      };
+    });
+    const parties = [...out.names.values()]
+      .filter((item) => item.on_rail)
+      .map((item) => ({ party_id: item.party_id, name: item.nickname || item.name || null }));
     /* ⚠️ `rail_chits`, never `chits`: the web's api() collapses a `chits` array and would drop parties / may (core.js unwrap) */
     res.json({ currency: curOf(req), from, to, me: out.me, rail_chits, parties, may: { ask: lvl ? { ok: false, why: lvl, say: R.say(lvl) } : { ok: true } } });
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * PATCH /payments/:id { advice_chit_id? | advice_shared_at?: true | ISO } (M30, SPEC §4.3) — a merge-patch of the NAMED fields only, after the chit was sent
@@ -776,59 +1313,116 @@ router.get('/bank/rail', auth, noKey, on, async (req, res) => {
  */
 router.patch('/payments/:id', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), id = String(req.params.id), b = req.body || {};
+    const e = ctx(req),
+      id = String(req.params.id),
+      b = req.body || {};
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found', message: 'No such payment.' });
     const chit = b.advice_chit_id != null ? String(b.advice_chit_id) : null;
     if (chit && !UUID.test(chit)) return res.status(400).json({ error: 'Which advice chit?', message: 'Which advice chit?' });
     let shared = null;
     if (b.advice_shared_at === true) shared = CLOCK.now().toISOString();
-    else if (b.advice_shared_at != null) { const t = Date.parse(String(b.advice_shared_at)); if (!Number.isFinite(t)) return res.status(400).json({ error: 'When was it shared?', message: 'When was it shared?' }); shared = new Date(t).toISOString(); }
+    else if (b.advice_shared_at != null) {
+      const t = Date.parse(String(b.advice_shared_at));
+      if (!Number.isFinite(t)) return res.status(400).json({ error: 'When was it shared?', message: 'When was it shared?' });
+      shared = new Date(t).toISOString();
+    }
     if (!chit && !shared) return res.status(400).json({ error: 'Nothing to change.', message: 'Nothing to change — advice_chit_id or advice_shared_at.' });
     const out = await withEntity(e, async (h) => {
-      const p = await S.payment(h, e, id); if (!p) return { status: 404, error: 'Not found', words: 'No such payment.' };
+      const p = await S.payment(h, e, id);
+      if (!p) return { status: 404, error: 'Not found', words: 'No such payment.' };
       const ready = await S.adviceReady(h, e);
       if (!ready) return { status: 503, code: 'BOOKS_NOT_MIGRATED', words: B.adviceMay({ level: 'editor', ready: false }).send_advice.say };
       const a = await B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready });
       const v = chit ? a.may.send_advice : a.may.share_advice;
       /* the same chit again is a replay (200), not a refusal; a DIFFERENT chit on a payment that sent one is the §4.3 409 */
-      if (chit && v.why === 'already_sent' && a.advice.chit_id && a.advice.chit_id !== chit) return { status: 409, code: 'ADVICE_EXISTS', words: 'An advice is already recorded for this payment.', advice_chit_id: a.advice.chit_id };
-      if (!v.ok && !(chit && v.why === 'already_sent' && a.advice.chit_id === chit)) return { status: /^(read_only|comment_only)$/.test(v.why) ? 403 : 409, code: v.why.toUpperCase(), why: v.why, words: v.say };
+      if (chit && v.why === 'already_sent' && a.advice.chit_id && a.advice.chit_id !== chit)
+        return { status: 409, code: 'ADVICE_EXISTS', words: 'An advice is already recorded for this payment.', advice_chit_id: a.advice.chit_id };
+      if (!v.ok && !(chit && v.why === 'already_sent' && a.advice.chit_id === chit))
+        return { status: /^(read_only|comment_only)$/.test(v.why) ? 403 : 409, code: v.why.toUpperCase(), why: v.why, words: v.say };
       const r = await S.setAdvice(h, e, id, { advice_chit_id: chit, advice_shared_at: shared });
       if (!r) return { status: 404, error: 'Not found', words: 'No such payment.' };
       if (r.conflict) return { status: 409, code: 'ADVICE_EXISTS', words: 'An advice is already recorded for this payment.', advice_chit_id: r.advice_chit_id };
       const cs = r.advice_chit_id ? (await S.adviceStates(h, e, [r.advice_chit_id]))[r.advice_chit_id] : null;
-      return { status: 200, body: { ok: true, payment_id: id, advice: { chit_id: r.advice_chit_id || null, state: B.adviceState(r, cs), shared_at: r.advice_shared_at ? new Date(r.advice_shared_at).toISOString() : null } } };
+      return {
+        status: 200,
+        body: {
+          ok: true,
+          payment_id: id,
+          advice: {
+            chit_id: r.advice_chit_id || null,
+            state: B.adviceState(r, cs),
+            shared_at: r.advice_shared_at ? new Date(r.advice_shared_at).toISOString() : null
+          }
+        }
+      };
     });
-    if (out.status !== 200) return res.status(out.status).json(Object.assign({ error: out.error || out.words, message: out.words }, out.code ? { code: out.code } : {}, out.why ? { why: out.why } : {}, out.advice_chit_id ? { advice_chit_id: out.advice_chit_id } : {}));
+    if (out.status !== 200)
+      return res
+        .status(out.status)
+        .json(
+          Object.assign(
+            { error: out.error || out.words, message: out.words },
+            out.code ? { code: out.code } : {},
+            out.why ? { why: out.why } : {},
+            out.advice_chit_id ? { advice_chit_id: out.advice_chit_id } : {}
+          )
+        );
     res.json(out.body);
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } — B.proposeFor, the one function */
 router.post('/payments/:id/propose', auth, noKey, editor, on, async (req, res) => {
   try {
-    const e = ctx(req), id = String(req.params.id);
+    const e = ctx(req),
+      id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return null;
-      const prop = await B.proposeFor(h, e, { party: p.party_id, direction: p.direction, amount_minor: p.amount_minor, currency: p.currency, credit_ref: 'pay:' + id });
-      return { proposal: prop.proposal, open_minor: prop.open_minor, apply_minor: prop.apply_minor, on_account_minor: prop.items.length ? prop.on_account_minor : 0, skipped: prop.skipped, why: prop.why };
+      const prop = await B.proposeFor(h, e, {
+        party: p.party_id,
+        direction: p.direction,
+        amount_minor: p.amount_minor,
+        currency: p.currency,
+        credit_ref: 'pay:' + id
+      });
+      return {
+        proposal: prop.proposal,
+        open_minor: prop.open_minor,
+        apply_minor: prop.apply_minor,
+        on_account_minor: prop.items.length ? prop.on_account_minor : 0,
+        skipped: prop.skipped,
+        why: prop.why
+      };
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     res.json(Object.assign({ payment_id: id }, out));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /payments/:id/confirm { allocations: [{ against_ref, amount_minor }] } — CBReceivables.confirmItems decides (disputed frozen, never more than open) */
 router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) => {
   try {
-    const e = ctx(req), id = String(req.params.id);
+    const e = ctx(req),
+      id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
     const list = Array.isArray((req.body || {}).allocations) ? req.body.allocations : [];
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return null;
-      return B.postEntry(h, e, { type: 'allocation', party: p.party_id, side: p.direction === 'in' ? 'customer' : 'supplier', credit_ref: 'pay:' + id, payment_id: id,
-        allocations: list.map((a) => ({ against_ref: String(a.against_ref || ''), amount_minor: Math.round(Number(a.amount_minor)) })), currency: p.currency, by: byOf(req) });
+      return B.postEntry(h, e, {
+        type: 'allocation',
+        party: p.party_id,
+        side: p.direction === 'in' ? 'customer' : 'supplier',
+        credit_ref: 'pay:' + id,
+        payment_id: id,
+        allocations: list.map((item) => ({ against_ref: String(item.against_ref || ''), amount_minor: Math.round(Number(item.amount_minor)) })),
+        currency: p.currency,
+        by: byOf(req)
+      });
     });
     if (!out) return res.status(404).json({ error: 'Not found' });
     /* ⭐ a payment against a BILL is a step of R-1400 — written at its messaging level (lib/bill-privacy): my history, and the
@@ -836,9 +1430,13 @@ router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) =
     try {
       const pay = await withEntity(e, (h) => S.payment(h, e, id));
       await require('../lib/bill-privacy').moneySteps(e, pay, list, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
-    } catch (e2) { console.error('bill money steps:', e2.message); }
+    } catch (e2) {
+      console.error('bill money steps:', e2.message);
+    }
     res.json(out);
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * GET /cheques[?all=1] → { currency, cheques: [{ payment_id, party_id, party_no, name, direction, amount_minor, currency,
@@ -854,40 +1452,99 @@ router.post('/payments/:id/confirm', auth, noKey, editor, on, async (req, res) =
  */
 router.get('/cheques', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), all = String(req.query.all || '') === '1', T = require('../lib/finance-terms'), may = isOwner(req);
+    const e = ctx(req),
+      all = String(req.query.all || '') === '1',
+      T = require('../lib/finance-terms'),
+      may = isOwner(req);
     const mig = await T.migrated();
     const out = await withEntity(e, async (h) => {
       const rows = await S.cheques(h, e, all, 200);
       const remind = T.pdcRemind(mig ? await T.shopTerms(h, e) : {});
-      const pids = Array.from(new Set(rows.map((c) => String(c.party_id))));
-      const names = await partyNames(h, e, pids), chart = await S.accounts(h, e), R = E.receivables(), kept = new Map(), day = today(req);
+      const pids = Array.from(new Set(rows.map((item) => String(item.party_id))));
+      const names = await partyNames(h, e, pids),
+        chart = await S.accounts(h, e),
+        R = E.receivables(),
+        kept = new Map(),
+        day = today(req);
       /* PERF1: every listed party's items on each control account in ONE read per account (≤ 2) — it was one read per party inside the loop (N+1) */
       for (const role of ['debtors', 'creditors']) {
-        const a = chart.find((x) => x.role === role), ids = Array.from(new Set(rows.filter((c) => (c.direction === 'in') === (role === 'debtors')).map((c) => String(c.party_id))));
+        const a = chart.find((x) => x.role === role),
+          ids = Array.from(new Set(rows.filter((item) => (item.direction === 'in') === (role === 'debtors')).map((item) => String(item.party_id))));
         if (!a || !ids.length) continue;
         ids.forEach((pid) => kept.set(pid + '|' + a.account_id, []));
-        (await S.items(h, e, ids, a.account_id)).forEach((it) => { const k = String(it.party_id) + '|' + a.account_id; if (kept.has(k)) kept.get(k).push(E.itemOf(it)); });
+        (await S.items(h, e, ids, a.account_id)).forEach((item) => {
+          const k = String(item.party_id) + '|' + a.account_id;
+          if (kept.has(k)) kept.get(k).push(E.itemOf(item));
+        });
       }
       const list = [];
       /* the engine's credit shape ({ id, amount, cheque: { no, date, status } }) from the same rows; the amount back from the row by id, so no second rounding */
-      const byId = new Map(rows.map((c) => [String(c.payment_id), c]));
-      const pdc = (R.pdcReminders(rows.filter((c) => c.direction === 'in').map((c) => ({ id: String(c.payment_id), amount: Number(c.amount_minor), cheque: { no: c.cheque_no || null, date: E.ymd(c.cheque_date), status: c.status || 'received' } })),
-        day, { on: remind.on, lead_days: remind.lead_days }) || []).map((r) => { const c = byId.get(String(r.credit)) || {}; return { payment_id: r.credit, cheque_no: r.no, cheque_date: r.date, amount_minor: Number(c.amount_minor || 0), state: r.state }; });
+      const byId = new Map(rows.map((item) => [String(item.payment_id), item]));
+      const pdc = (
+        R.pdcReminders(
+          rows
+            .filter((item) => item.direction === 'in')
+            .map((item) => ({
+              id: String(item.payment_id),
+              amount: Number(item.amount_minor),
+              cheque: { no: item.cheque_no || null, date: E.ymd(item.cheque_date), status: item.status || 'received' }
+            })),
+          day,
+          { on: remind.on, lead_days: remind.lead_days }
+        ) || []
+      ).map((item) => {
+        const c = byId.get(String(item.credit)) || {};
+        return { payment_id: item.credit, cheque_no: item.no, cheque_date: item.date, amount_minor: Number(c.amount_minor || 0), state: item.state };
+      });
       for (const c of rows) {
         const a = chart.find((x) => x.role === (c.direction === 'in' ? 'debtors' : 'creditors'));
         const k = c.party_id + '|' + (a ? a.account_id : '');
         if (!kept.has(k)) kept.set(k, []);
-        const next = ['deposited', 'cleared', 'bounced'].filter((to) => { try { R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day); return true; } catch (e) { logger.fellBack('books cheques: not a next step for this cheque — not offered', e, 'debug'); return false; } });
+        const next = ['deposited', 'cleared', 'bounced'].filter((to) => {
+          try {
+            R.itemsOfCheque(kept.get(k), 'pay:' + c.payment_id, to, day);
+            return true;
+          } catch (problem) {
+            logger.fellBack('books cheques: not a next step for this cheque — not offered', problem, 'debug');
+            return false;
+          }
+        });
         const p = names.get(String(c.party_id)) || {};
-        list.push({ payment_id: c.payment_id, party_id: c.party_id, party_no: p.party_no || null, name: p.nickname || p.name || null, direction: c.direction, amount_minor: Number(c.amount_minor),
-          currency: c.currency, reference: c.reference || null, cheque_no: c.cheque_no || null, cheque_bank: c.cheque_bank || null, cheque_date: E.ymd(c.cheque_date), received_at: E.ymd(c.received_at),
-          status: c.status || 'received', next });
+        list.push({
+          payment_id: c.payment_id,
+          party_id: c.party_id,
+          party_no: p.party_no || null,
+          name: p.nickname || p.name || null,
+          direction: c.direction,
+          amount_minor: Number(c.amount_minor),
+          currency: c.currency,
+          reference: c.reference || null,
+          cheque_no: c.cheque_no || null,
+          cheque_bank: c.cheque_bank || null,
+          cheque_date: E.ymd(c.cheque_date),
+          received_at: E.ymd(c.received_at),
+          status: c.status || 'received',
+          next
+        });
       }
       return { list, pdc, remind, day };
     });
-    res.json({ currency: curOf(req), asOf: out.day, cheques: out.list, pdc_reminders: out.pdc,
-      remind: { on: out.remind.on, lead_days: out.remind.lead_days, from: out.remind.from, may_set: may, why_not: may ? null : 'Only the owner may set the reminder.' } });
-  } catch (err) { fail(res, err); }
+    res.json({
+      currency: curOf(req),
+      asOf: out.day,
+      cheques: out.list,
+      pdc_reminders: out.pdc,
+      remind: {
+        on: out.remind.on,
+        lead_days: out.remind.lead_days,
+        from: out.remind.from,
+        may_set: may,
+        why_not: may ? null : 'Only the owner may set the reminder.'
+      }
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * POST /cheques/:id/status { status: deposited|cleared|bounced, date? } — :id is the cheque's payment_id.
@@ -898,52 +1555,96 @@ router.get('/cheques', auth, noKey, on, async (req, res) => {
  */
 router.post('/cheques/:id/status', auth, editor, on, async (req, res) => {
   try {
-    const e = ctx(req), id = String(req.params.id), b = req.body || {};
+    const e = ctx(req),
+      id = String(req.params.id),
+      b = req.body || {};
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
     const to = ['deposited', 'cleared', 'bounced'].indexOf(b.status) >= 0 ? b.status : null;
     if (!to) return res.status(400).json({ error: 'Deposited, cleared or bounced?', message: 'Deposited, cleared or bounced?' });
     res.json(await B.postEntry(null, e, { type: 'cheque_step', payment_id: id, to, date: dateQ(b.date, today(req)), strict_date: true, by: byOf(req) }));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /parties/:id/dispute { against_ref, disputed: true|false, side, note } — a disputed bill cannot take a payment (C4) */
 router.post('/parties/:id/dispute', auth, editor, on, async (req, res) => {
   try {
-    const e = ctx(req), id = String(req.params.id), b = req.body || {};
+    const e = ctx(req),
+      id = String(req.params.id),
+      b = req.body || {};
     if (!UUID.test(id) || !b.against_ref) return res.status(400).json({ error: 'Which bill?', message: 'Which bill?' });
-    res.json(await B.postEntry(null, e, { type: 'party_status', party: id, side: b.side === 'supplier' ? 'supplier' : 'customer', against_ref: String(b.against_ref),
-      status: b.disputed === false ? 'undisputed' : 'disputed', note: b.note ? String(b.note).slice(0, 300) : null, currency: curOf(req), by: byOf(req) }));
-  } catch (err) { fail(res, err); }
+    res.json(
+      await B.postEntry(null, e, {
+        type: 'party_status',
+        party: id,
+        side: b.side === 'supplier' ? 'supplier' : 'customer',
+        against_ref: String(b.against_ref),
+        status: b.disputed === false ? 'undisputed' : 'disputed',
+        note: b.note ? String(b.note).slice(0, 300) : null,
+        currency: curOf(req),
+        by: byOf(req)
+      })
+    );
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /* ── the "＋ Entry" door: the grid, the preview, the everyday events ───────────────────────────────────────────── */
 const M = () => require('../lib/books-manual');
 /** GET /events → { events: [{ kind, words, icon, band, voucher, fields, ledger_group, preview, post | route }], picks, pending, golden } — the grid; the screen holds no rules */
 router.get('/events', auth, noKey, on, (req, res) => {
-  try { res.json(M().catalogue(req.books)); } catch (err) { fail(res, err); }
+  try {
+    res.json(M().catalogue(req.books));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * POST /preview { event: { kind, …fields } } (or { event: 'kind', …fields }) → { ok, voucher: { series, type }, lines: [{ code, ledger, dr_minor, cr_minor, type, rule }], balanced, refusals, … }
  * Composed by lib/books.js composeEntry — the writer's own function. Writes nothing, takes no counter. A co-assist may preview; only the owner posts.
  */
 router.post('/preview', auth, noKey, on, async (req, res) => {
-  try { res.json(await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req), by: byOf(req) })); } catch (err) { fail(res, err); }
+  try {
+    res.json(await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req), by: byOf(req) }));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). Owner only; the same client_ref answers the first entry, duplicate: true. */
 router.post('/events', auth, noKey, owner, on, async (req, res) => {
-  try { res.json(await M().post(ctx(req), req.books, req.body || {}, byOf(req))); } catch (err) { fail(res, err); }
+  try {
+    res.json(await M().post(ctx(req), req.books, req.body || {}, byOf(req)));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
-const givenLines = (list) => require('../lib/books-manual').givenLines(list);   /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
+const givenLines = (list) => require('../lib/books-manual').givenLines(list); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 router.post('/entries', auth, owner, on, async (req, res) => {
   try {
     const b = req.body || {};
     /* against_ref (F4): the bill this journal settles — postEntry sets the party line against it (itemsFor → confirmItems), as a write-off does.
        CB Finance · Payables sends the early-pay discount this way: Dr the supplier against the bill · Cr Discount received (books-payables.view `record`). */
-    res.json(await B.postEntry(null, ctx(req), { type: 'manual', owner: true, narration: b.narration, date: dateQ(b.date, today(req)), currency: curOf(req), strict_date: true,
-      lines: givenLines(b.lines), ref: b.ref || null, source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null, by: byOf(req),
-      against_ref: b.against_ref ? String(b.against_ref).slice(0, 120) : null }));
-  } catch (err) { fail(res, err); }
+    res.json(
+      await B.postEntry(null, ctx(req), {
+        type: 'manual',
+        owner: true,
+        narration: b.narration,
+        date: dateQ(b.date, today(req)),
+        currency: curOf(req),
+        strict_date: true,
+        lines: givenLines(b.lines),
+        ref: b.ref || null,
+        source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null,
+        by: byOf(req),
+        against_ref: b.against_ref ? String(b.against_ref).slice(0, 120) : null
+      })
+    );
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /entries/:id/reverse { reason } → the mirror entry (never an edit) and, in the SAME transaction, the party rows that reopen the bills it had settled:
  *  { ok, entry_id, entry_no, posting_date, moved, reverses, reverses_entry_id, items, reopened: [{ against_ref, bill_no }], words }.
@@ -952,9 +1653,14 @@ router.post('/entries/:id/reverse', auth, owner, on, async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
     const r = await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason });
-    if (r && r.duplicate) { const m = 'This entry was already reversed by ' + r.entry_no + '.'; return res.status(409).json({ code: 'ALREADY_REVERSED', error: 'Already reversed', message: m, entry_no: r.entry_no, entry_id: r.entry_id }); }
+    if (r && r.duplicate) {
+      const m = 'This entry was already reversed by ' + r.entry_no + '.';
+      return res.status(409).json({ code: 'ALREADY_REVERSED', error: 'Already reversed', message: m, entry_no: r.entry_no, entry_id: r.entry_id });
+    }
     res.json(r);
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.post('/write-off', auth, owner, on, async (req, res) => {
   try {
@@ -964,10 +1670,25 @@ router.post('/write-off', auth, owner, on, async (req, res) => {
     /* ⭐ client_ref → source_ref: the same write-off pressed twice is ONE entry (it was two — critic M11); the second answers
        200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
     const ref = b.client_ref ? String(b.client_ref).slice(0, 80) : null;
-    res.json(await B.postEntry(null, ctx(req), { type: 'write_off', owner: true, party, amount: minorOf(b) / 100, reason: b.reason, currency: curOf(req), strict_date: true,
-      date: dateQ(b.date, today(req)), against_ref: b.against_ref ? String(b.against_ref) : null, source_ref: ref ? 'wo:' + ref : null,
-      doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()), by: byOf(req) }));
-  } catch (err) { fail(res, err); }
+    res.json(
+      await B.postEntry(null, ctx(req), {
+        type: 'write_off',
+        owner: true,
+        party,
+        amount: minorOf(b) / 100,
+        reason: b.reason,
+        currency: curOf(req),
+        strict_date: true,
+        date: dateQ(b.date, today(req)),
+        against_ref: b.against_ref ? String(b.against_ref) : null,
+        source_ref: ref ? 'wo:' + ref : null,
+        doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()),
+        by: byOf(req)
+      })
+    );
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * POST /opening { date?, rows: [{ code, party_no?, dr_minor, cr_minor, bill_ref?, due_date? }] } → { entry_no, suspense_minor, lines }
@@ -976,15 +1697,25 @@ router.post('/write-off', auth, owner, on, async (req, res) => {
  */
 router.post('/opening', auth, owner, on, async (req, res) => {
   try {
-    const e = ctx(req), b = req.body || {}, cur = curOf(req);
+    const e = ctx(req),
+      b = req.body || {},
+      cur = curOf(req);
     const rows = Array.isArray(b.rows) ? b.rows : [];
     if (!rows.length) return res.status(400).json({ error: 'No rows.', message: 'No rows.' });
-    const bad = rows.map((r, i) => ((Number(r.dr_minor) > 0) === (Number(r.cr_minor) > 0) ? i + 1 : 0)).filter(Boolean);
-    if (bad.length) return res.status(400).json({ error: 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.', message: 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.' });
+    const bad = rows.map((item, index) => (Number(item.dr_minor) > 0 === Number(item.cr_minor) > 0 ? index + 1 : 0)).filter(Boolean);
+    if (bad.length)
+      return res.status(400).json({
+        error: 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.',
+        message: 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.'
+      });
     /* ⭐ IM1: the entry itself is lib/books postOpening — the move-in importer posts a trial balance and the open bills through the same door */
-    const out = await withEntity(e, (h) => B.postOpening(h, e, { rows, date: dateQ(b.date, fyStart(req, today(req))), currency: cur, client_ref: b.client_ref, by: byOf(req) }));
+    const out = await withEntity(e, (h) =>
+      B.postOpening(h, e, { rows, date: dateQ(b.date, fyStart(req, today(req))), currency: cur, client_ref: b.client_ref, by: byOf(req) })
+    );
     res.json(out);
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /* ── MOVE IN FROM XERO / QUICKBOOKS (IM1) — three doors, owner only, the ledger on: the columns guessed, the dry run, the import (lib/move-in) ── */
 const MI = require('../lib/move-in');
@@ -993,10 +1724,23 @@ const MI = require('../lib/move-in');
  *  and W1.4 their company id when they know it (source_company: QBO realm · Xero organisation · Zoho organization) */
 function moveInBody(req) {
   const b = req.body || {};
-  const kind = MI.kindOf(b.kind), source = MI.sourceOf(b.source);
+  const kind = MI.kindOf(b.kind),
+    source = MI.sourceOf(b.source);
   const as_at = dateQ(b.as_at, null) || fyStart(req, today(req));
-  const side = kind === 'contacts' ? (b.side === 'supplier' ? 'supplier' : 'customer') : kind === 'open_bills' ? (b.side === 'payable' || b.side === 'supplier' ? 'payable' : 'receivable') : null;
-  return Object.assign({ kind, source, side, as_at, parsed: MI.readFile(b), decisions: b.decisions, client_ref: b.client_ref ? String(b.client_ref).slice(0, 80) : null }, moveInOrigin(b));
+  const side =
+    kind === 'contacts'
+      ? b.side === 'supplier'
+        ? 'supplier'
+        : 'customer'
+      : kind === 'open_bills'
+        ? b.side === 'payable' || b.side === 'supplier'
+          ? 'payable'
+          : 'receivable'
+        : null;
+  return Object.assign(
+    { kind, source, side, as_at, parsed: MI.readFile(b), decisions: b.decisions, client_ref: b.client_ref ? String(b.client_ref).slice(0, 80) : null },
+    moveInOrigin(b)
+  );
 }
 /** where the owner says the books come from: the country as given (lib/move-in-gate judges it) and their company id, each cut to size or null */
 function moveInOrigin(body) {
@@ -1008,16 +1752,37 @@ router.post('/move-in/preflight', auth, owner, on, async (req, res) => {
   try {
     const { kind, source, parsed } = moveInBody(req);
     const g = MI.guess(kind, parsed.headers);
-    res.json(Object.assign({ kind, source, headers: parsed.headers }, g, { rows_total: parsed.rows.length, sample: parsed.rows.slice(0, 5), sheet: parsed.sheet || null, sheets: parsed.sheets || null, header_row: parsed.headerRow || 1 }));
-  } catch (err) { fail(res, err); }
+    res.json(
+      Object.assign({ kind, source, headers: parsed.headers }, g, {
+        rows_total: parsed.rows.length,
+        sample: parsed.rows.slice(0, 5),
+        sheet: parsed.sheet || null,
+        sheets: parsed.sheets || null,
+        header_row: parsed.headerRow || 1
+      })
+    );
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** the plan for a confirmed file: the world read once (chart · parties · tax ids · phones · products), then the pure dry run */
 async function moveInPlan(req, h) {
-  const e = ctx(req), m = moveInBody(req);
+  const e = ctx(req),
+    m = moveInBody(req);
   const rows = MI.cells(m.kind, m.parsed, m.decisions);
   const w = await MI.world(h, e, m.kind, req.books, { source: m.source, side: m.side, rows });
-  const pl = MI.plan(m.kind, { source: m.source, side: m.side, rows, world: w, currency: curOf(req), as_at: m.as_at,
-    country: req.books && req.books.country, source_country: m.source_country, country_how: 'stated', source_company: m.source_company });
+  const pl = MI.plan(m.kind, {
+    source: m.source,
+    side: m.side,
+    rows,
+    world: w,
+    currency: curOf(req),
+    as_at: m.as_at,
+    country: req.books && req.books.country,
+    source_country: m.source_country,
+    country_how: 'stated',
+    source_company: m.source_company
+  });
   return { m, pl, w };
 }
 /** POST /move-in/preview { kind, source, source_country, source_company?, csv | xlsx, decisions: [{ incoming, field }], side?, as_at? } → { kind, source, side, as_at, counts: { add, merge, skip, hold }, rows: [{ line, what, action, why, data, code? }], refusal, notes, country: { shop, source, how }, company_id, tax_codes? } — the DRY RUN; nothing is written. A country refusal: 422 { code: MOVE_IN_COUNTRY · _UNSTATED · _WORD · MOVE_IN_FOREIGN · MOVE_IN_COMPANY } */
@@ -1025,22 +1790,27 @@ router.post('/move-in/preview', auth, owner, on, async (req, res) => {
   try {
     const { m, pl } = await withEntity(ctx(req), (h) => moveInPlan(req, h));
     res.json(Object.assign({ kind: m.kind, source: m.source, side: m.side, as_at: m.as_at }, pl));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /move-in/import { …as preview, confirm: true } → { kind, source, side, as_at, added, merged, skipped, held, rows: [the skipped and the held, with why (+ code)], notes, entry?,
  *  source_code_written?, proof, proof_stored, import_id } — ONE transaction; a refusal writes nothing (422 with the code and the sentence) */
 router.post('/move-in/import', auth, owner, on, async (req, res) => {
   try {
-    if ((req.body || {}).confirm !== true) return res.status(400).json({ error: 'Not confirmed', message: 'Nothing was imported — this needs an explicit confirmation.' });
+    if ((req.body || {}).confirm !== true)
+      return res.status(400).json({ error: 'Not confirmed', message: 'Nothing was imported — this needs an explicit confirmation.' });
     const e = ctx(req);
     const out = await withEntity(e, async (h) => {
       const { m, pl, w } = await moveInPlan(req, h);
       const r = await MI.apply(h, e, pl, { world: w, setting: req.books, by: byOf(req), as_at: m.as_at, currency: curOf(req), client_ref: m.client_ref });
       return Object.assign({ side: m.side, as_at: m.as_at }, r);
     });
-    MI.afterCommit(e, out);   /* committed: only now the items are metered (a refusal above threw, so a rolled-back move-in meters nothing) */
+    MI.afterCommit(e, out); /* committed: only now the items are metered (a refusal above threw, so a rolled-back move-in meters nothing) */
     res.json(out);
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** GET /move-in/imports → { ready, why, imports: [{ import_id, source, company_id, source_country, country_how, kind, side, as_at, counts, proof, created_at }] } —
  *  the latest 20 imports with their MATCH PROOF (W1.10, b765), read back. Owner only. Before b765: ready false with the sentence. One transaction. */
@@ -1048,7 +1818,9 @@ router.get('/move-in/imports', auth, owner, on, async (req, res) => {
   try {
     const e = ctx(req);
     res.json(await withEntity(e, (conn) => require('../lib/move-in-proof').list(conn, e)));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /* ── PARALLEL RUN (PR1) — an auditor's Tally / Xero / QBO period beside ours, line by line (lib/parallel-run). Their figures are a SNAPSHOT: read from export
    files, kept insert-only (b309 books_compare_part), NEVER posted. Who may: the owner, or the shop's auditor (a whole-entity login that may see money —
@@ -1058,96 +1830,200 @@ const COMPARE_NOT_READY = 'Comparing needs a database update (b309) that is stil
 async function compareMay(req, e) {
   if (req.api_key) return { may: false, why: 'Sign in to compare the books.' };
   if (isOwner(req)) return { may: true, why: null };
-  if (require('../lib/access').seesWholeEntity(req.identity) && await require('../lib/cost').canRead(req, e)) return { may: true, why: null };
-  return { may: false, why: 'Only the owner or the shop\'s auditor may compare the books.' };
+  if (require('../lib/access').seesWholeEntity(req.identity) && (await require('../lib/cost').canRead(req, e))) return { may: true, why: null };
+  return { may: false, why: "Only the owner or the shop's auditor may compare the books." };
 }
 async function comparer(req, res, next) {
-  try { const m = await compareMay(req, ctx(req)); if (!m.may) return res.status(403).json({ error: m.why, message: m.why }); next(); } catch (err) { fail(res, err); }
+  try {
+    const m = await compareMay(req, ctx(req));
+    if (!m.may) return res.status(403).json({ error: m.why, message: m.why });
+    next();
+  } catch (err) {
+    fail(res, err);
+  }
 }
-const notMigrated = () => { const x = new Error(COMPARE_NOT_READY); x.code = 'BOOKS_NOT_MIGRATED'; return x; };
+const notMigrated = () => {
+  const x = new Error(COMPARE_NOT_READY);
+  x.code = 'BOOKS_NOT_MIGRATED';
+  return x;
+};
 /** GET /compare → { currency, ready, why, may: { load: { may, why } }, snapshots: [{ snapshot_id, label, source, period_from, period_to, currency, parts, lines, created_at }] } — one transaction */
 router.get('/compare', auth, noKey, on, comparer, async (req, res) => {
   try {
     const e = ctx(req);
-    const out = await withEntity(e, async (h) => { const ready = await S.compareReady(); return { ready, snapshots: ready ? await S.compareSnapshots(h, e) : [] }; });
-    res.json({ currency: curOf(req), ready: out.ready, why: out.ready ? null : COMPARE_NOT_READY, may: { load: { may: out.ready, why: out.ready ? null : COMPARE_NOT_READY } },
-      parts: PR.PARTS.map((k) => ({ part: k, label: PR.PART_WORD[k] })), sources: PR.SOURCES.map((k) => ({ source: k, label: PR.SOURCE_WORD[k] })), snapshots: out.snapshots });
-  } catch (err) { fail(res, err); }
+    const out = await withEntity(e, async (h) => {
+      const ready = await S.compareReady();
+      return { ready, snapshots: ready ? await S.compareSnapshots(h, e) : [] };
+    });
+    res.json({
+      currency: curOf(req),
+      ready: out.ready,
+      why: out.ready ? null : COMPARE_NOT_READY,
+      may: { load: { may: out.ready, why: out.ready ? null : COMPARE_NOT_READY } },
+      parts: PR.PARTS.map((item) => ({ part: item, label: PR.PART_WORD[item] })),
+      sources: PR.SOURCES.map((item) => ({ source: item, label: PR.SOURCE_WORD[item] })),
+      snapshots: out.snapshots
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /compare/preflight { part, source, csv | xlsx | xml, sheet?, header_row? } → { part, source, format: table | tally_xml, headers, fields, guess, missing, ready, rows_total, sample } — nothing is read of the shop, nothing written */
 router.post('/compare/preflight', auth, noKey, on, comparer, async (req, res) => {
   try {
-    const b = req.body || {}, part = PR.partOf(b.part), source = PR.sourceOf(b.source);
-    if (b.xml && source !== 'tally') throw Object.assign(new Error('Only a Tally export comes as XML — export ' + PR.SOURCE_WORD[source] + '\'s report as CSV or Excel.'), { code: 'BOOKS_BAD_REQUEST' });
+    const b = req.body || {},
+      part = PR.partOf(b.part),
+      source = PR.sourceOf(b.source);
+    if (b.xml && source !== 'tally')
+      throw Object.assign(new Error('Only a Tally export comes as XML — export ' + PR.SOURCE_WORD[source] + "'s report as CSV or Excel."), {
+        code: 'BOOKS_BAD_REQUEST'
+      });
     res.json(Object.assign({ part, source }, PR.preflight(b, part, curOf(req))));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /compare/snapshots { snapshot_id?, label, source, part, period_from?, period_to, file_name?, csv | xlsx | xml, decisions? } → { snapshot_id, part, label, source, period_from, period_to, rows, skipped }
  *  A new snapshot with its first part, or one more part on a snapshot (its label, source and period are kept). Insert-only: a part it already has → 409. One transaction. */
 router.post('/compare/snapshots', auth, noKey, on, comparer, async (req, res) => {
   try {
-    const b = req.body || {}, e = ctx(req), part = PR.partOf(b.part), cur = curOf(req);
+    const b = req.body || {},
+      e = ctx(req),
+      part = PR.partOf(b.part),
+      cur = curOf(req);
     const out = await withEntity(e, async (h) => {
       if (!(await S.compareReady())) throw notMigrated();
       let head;
       if (b.snapshot_id) {
         if (!UUID.test(String(b.snapshot_id))) throw Object.assign(new Error('Which snapshot?'), { code: 'BOOKS_BAD_REQUEST' });
         const have = await S.compareParts(h, e, String(b.snapshot_id));
-        if (!have.length) { const x = new Error('That snapshot is not here.'); x.code = 'BOOKS_NOT_FOUND'; throw x; }
-        if (have.some((p) => p.part === part)) throw Object.assign(new Error('This snapshot already has their ' + PR.PART_WORD[part].toLowerCase() + ' — start a new snapshot for a fresh file.'), { status: 409 });
-        head = { snapshot_id: String(b.snapshot_id), label: have[0].label, source: have[0].source, period_from: have[0].period_from, period_to: have[0].period_to };
+        if (!have.length) {
+          const x = new Error('That snapshot is not here.');
+          x.code = 'BOOKS_NOT_FOUND';
+          throw x;
+        }
+        if (have.some((item) => item.part === part))
+          throw Object.assign(new Error('This snapshot already has their ' + PR.PART_WORD[part].toLowerCase() + ' — start a new snapshot for a fresh file.'), {
+            status: 409
+          });
+        head = {
+          snapshot_id: String(b.snapshot_id),
+          label: have[0].label,
+          source: have[0].source,
+          period_from: have[0].period_from,
+          period_to: have[0].period_to
+        };
       } else {
-        const to = dateQ(b.period_to, null), from = dateQ(b.period_from, null);
+        const to = dateQ(b.period_to, null),
+          from = dateQ(b.period_from, null);
         if (!to) throw Object.assign(new Error('Pick the last day of their period.'), { code: 'BOOKS_BAD_REQUEST' });
         if (from && from > to) throw Object.assign(new Error('The period starts after it ends.'), { code: 'BOOKS_BAD_REQUEST' });
-        const label = String(b.label || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+        const label = String(b.label || '')
+          .trim()
+          .replace(/\s+/g, ' ')
+          .slice(0, 80);
         if (!label) throw Object.assign(new Error('Give the snapshot a name.'), { code: 'BOOKS_BAD_REQUEST' });
         head = { snapshot_id: require('crypto').randomUUID(), label, source: PR.sourceOf(b.source), period_from: from || fyStart(req, to), period_to: to };
       }
       if (b.xml && head.source !== 'tally') throw Object.assign(new Error('Only a Tally export comes as XML.'), { code: 'BOOKS_BAD_REQUEST' });
       const r = PR.read(b, part, cur);
       if (!r.rows.length) throw Object.assign(new Error('Nothing to compare in that file — every row was skipped or blank.'), { refused: true });
-      const id = await S.insertComparePart(h, e, Object.assign({}, head, { part, currency: cur, file_name: b.file_name ? String(b.file_name).slice(0, 120) : null, rows: r.rows, by: byOf(req) }));
+      const id = await S.insertComparePart(
+        h,
+        e,
+        Object.assign({}, head, { part, currency: cur, file_name: b.file_name ? String(b.file_name).slice(0, 120) : null, rows: r.rows, by: byOf(req) })
+      );
       if (!id) throw Object.assign(new Error('This snapshot already has their ' + PR.PART_WORD[part].toLowerCase() + '.'), { status: 409 });
       return Object.assign({}, head, { part, rows: r.rows.length, skipped: r.skipped });
     });
     res.json(out);
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** the compare for one snapshot: its parts and our figures for its period in ONE transaction (chart · the period's entry lines · TB / P&L / BS · the BAS / VAT201);
  *  India's GSTR-3B is the rail's own read (lib/tax-copy ledgerFor) after it — the one second read. Each of our parts that cannot be read is said, not thrown. */
 async function compareRead(req) {
-  const e = ctx(req), id = String(req.params.id);
-  if (!UUID.test(id)) { const x = new Error('Not found'); x.code = 'BOOKS_NOT_FOUND'; throw x; }
-  const pack = B.packOf(req.books), cur = curOf(req);
+  const e = ctx(req),
+    id = String(req.params.id);
+  if (!UUID.test(id)) {
+    const x = new Error('Not found');
+    x.code = 'BOOKS_NOT_FOUND';
+    throw x;
+  }
+  const pack = B.packOf(req.books),
+    cur = curOf(req);
   const got = await withEntity(e, async (h) => {
     if (!(await S.compareReady())) throw notMigrated();
     const parts = await S.compareParts(h, e, id);
-    if (!parts.length) { const x = new Error('That snapshot is not here.'); x.code = 'BOOKS_NOT_FOUND'; throw x; }
-    const to = parts[0].period_to, from = parts[0].period_from || fyStart(req, to), has = (k) => parts.some((p) => p.part === k), ours = {};
+    if (!parts.length) {
+      const x = new Error('That snapshot is not here.');
+      x.code = 'BOOKS_NOT_FOUND';
+      throw x;
+    }
+    const to = parts[0].period_to,
+      from = parts[0].period_from || fyStart(req, to),
+      has = (k) => parts.some((item) => item.part === k),
+      ours = {};
     /* an engine's refusal (a P&L across two years, a return period not known) is said on that part; a database error is not swallowed */
-    const tsp = async (fn) => { try { return await fn(); } catch (err) { if (err && /^[0-9A-Z]{5}$/.test(String(err.code || '')) && !err.refused) throw err; return err instanceof Error ? err : new Error(String(err)); } };
-    const chart = await S.accounts(h, e), lines = await S.entryLines(h, e, from, to, null, null);
+    const tsp = async (fn) => {
+      try {
+        return await fn();
+      } catch (err) {
+        if (err && /^[0-9A-Z]{5}$/.test(String(err.code || '')) && !err.refused) throw err;
+        return err instanceof Error ? err : new Error(String(err));
+      }
+    };
+    const chart = await S.accounts(h, e),
+      lines = await S.entryLines(h, e, from, to, null, null);
     if (has('tb')) ours.tb = await tsp(() => B.trialBalance(h, e, to));
     if (has('pl')) ours.pl = await tsp(() => B.profitAndLoss(h, e, from, to));
     if (has('bs')) ours.bs = await tsp(() => B.balanceSheet(h, e, to, B.entityBasisOf(req.books)));
     if (has('ret') && pack.id !== 'IN') {
-      const ret = parts.find((p) => p.part === 'ret'), full = (ret.rows || []).some((r) => /^G(2|3|10|11)\b/i.test(String(r.name)));
+      const ret = parts.find((item) => item.part === 'ret'),
+        full = (ret.rows || []).some((item) => /^G(2|3|10|11)\b/i.test(String(item.name)));
       ours.ret = await tsp(() => P().taxReturn(e, req.books, { on: to, simpler: full ? '0' : undefined }, h));
     }
     return { parts, chart, lines, ours, from, to };
   });
-  if (got.parts.some((p) => p.part === 'ret') && pack.id === 'IN') {
-    try { const C = require('../lib/tax-copy'), T = require('../lib/tax-lines'), l = await C.ledgerFor(e, got.to.slice(0, 7)); got.ours.ret = Object.assign(PR.gstr3bBoxes(T.gstr3b(l.ledger, l.me, l.bounds.period)), { short: 'GSTR-3B' }); }
-    catch (err) { got.ours.ret = new Error('Our GSTR-3B for ' + got.to.slice(0, 7) + ' could not be read from the rail.'); got.ours.ret.refused = true; }
+  if (got.parts.some((item) => item.part === 'ret') && pack.id === 'IN') {
+    try {
+      const C = require('../lib/tax-copy'),
+        T = require('../lib/tax-lines'),
+        l = await C.ledgerFor(e, got.to.slice(0, 7));
+      got.ours.ret = Object.assign(PR.gstr3bBoxes(T.gstr3b(l.ledger, l.me, l.bounds.period)), { short: 'GSTR-3B' });
+    } catch (err) {
+      got.ours.ret = new Error('Our GSTR-3B for ' + got.to.slice(0, 7) + ' could not be read from the rail.');
+      got.ours.ret.refused = true;
+    }
   }
   const r = PR.compare({ parts: got.parts, chart: got.chart, ours: got.ours, lines: got.lines, currency: cur, from: got.from, to: got.to });
   const p0 = got.parts[0];
-  return Object.assign({ currency: cur, snapshot: { snapshot_id: p0.snapshot_id, label: p0.label, source: p0.source, source_word: PR.SOURCE_WORD[p0.source], period_from: got.from, period_to: got.to, parts: got.parts.map((p) => p.part) } }, r);
+  return Object.assign(
+    {
+      currency: cur,
+      snapshot: {
+        snapshot_id: p0.snapshot_id,
+        label: p0.label,
+        source: p0.source,
+        source_word: PR.SOURCE_WORD[p0.source],
+        period_from: got.from,
+        period_to: got.to,
+        parts: got.parts.map((item) => item.part)
+      }
+    },
+    r
+  );
 }
 /** GET /compare/:id → { currency, snapshot, parts: { tb|pl|bs|ret: { part, title, from, to, file_name, lines: [{ key, status, name, their_name, their_code, their_line, our_codes, theirs_minor,
  *  ours_minor, diff_minor, cause, why, entries: [{ entry_id, entry_no, date, amount_minor, chit_id, ref, kind, rail }], entries_n, open }], counts, error } }, counts, effort } — differences first */
-router.get('/compare/:id', auth, noKey, on, comparer, async (req, res) => { try { res.json(await compareRead(req)); } catch (err) { fail(res, err); } });
+router.get('/compare/:id', auth, noKey, on, comparer, async (req, res) => {
+  try {
+    res.json(await compareRead(req));
+  } catch (err) {
+    fail(res, err);
+  }
+});
 /** GET /compare/:id/csv → the same compare as a .csv for the auditor's file */
 router.get('/compare/:id/csv', auth, noKey, on, comparer, async (req, res) => {
   try {
@@ -1155,7 +2031,9 @@ router.get('/compare/:id/csv', auth, noKey, on, comparer, async (req, res) => {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="parallel-run-' + r.snapshot.period_to + '.csv"');
     res.send(PR.csv(r, r.currency));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /periods/:fy/:p/lock { reason, hard } · /unlock { reason } → { period: { fiscal_year, period, status } } */
 router.post('/periods/:fy/:p/:act', auth, owner, on, async (req, res) => {
@@ -1163,10 +2041,12 @@ router.post('/periods/:fy/:p/:act', auth, owner, on, async (req, res) => {
     const { fy, p, act } = req.params;
     if (!/^\d{4}(-\d{2})?$/.test(fy) || !/^\d{1,2}$/.test(p) || ['lock', 'unlock'].indexOf(act) < 0) return res.status(404).json({ error: 'Not found' });
     const b = req.body || {};
-    const status = act === 'unlock' ? 'open' : (b.hard === true ? 'hard_locked' : 'soft_locked');
+    const status = act === 'unlock' ? 'open' : b.hard === true ? 'hard_locked' : 'soft_locked';
     const r = await B.setPeriod(null, ctx(req), fy, Number(p), status, byOf(req), b.reason);
     res.json({ ok: true, period: { fiscal_year: r.fiscal_year, period: r.period, status: r.status } });
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /year/:fy/close → { ok, fiscal_year, next, locked, opening } · refused (422) with { refusals: [{ name, why }] } in plain words · a closed year answers { ok, duplicate: true } */
 router.post('/year/:fy/close', auth, owner, on, async (req, res) => {
@@ -1176,7 +2056,9 @@ router.post('/year/:fy/close', auth, owner, on, async (req, res) => {
     if (r.ok) return res.json(r);
     const message = r.refusals.map((x) => x.why).join(' ');
     res.status(422).json({ ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals });
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** GET /year/:fy/status → { fiscal_year, closed, can_close, refusals, months, next } — what a close would say, nothing written */
 router.get('/year/:fy/status', auth, on, async (req, res) => {
@@ -1184,41 +2066,82 @@ router.get('/year/:fy/status', auth, on, async (req, res) => {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return res.status(404).json({ error: 'Not found' });
     const e = ctx(req);
     const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy));
-    res.json({ fiscal_year: st.fiscal_year, closed: st.closed, can_close: st.can_close && !st.closed, refusals: st.closed ? [] : st.refusals, months: st.months, next: st.next });
-  } catch (err) { fail(res, err); }
+    res.json({
+      fiscal_year: st.fiscal_year,
+      closed: st.closed,
+      can_close: st.can_close && !st.closed,
+      refusals: st.closed ? [] : st.refusals,
+      months: st.months,
+      next: st.next
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.get('/periods', auth, on, async (req, res) => {
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
-    const { rows, figures, setting } = await withEntity(e, async (h) => ({ rows: await S.periods(h, e, null), figures: await S.periodFigures(h, e, fy), setting: await B.settingOf(h, e) }));
+    const { rows, figures, setting } = await withEntity(e, async (h) => ({
+      rows: await S.periods(h, e, null),
+      figures: await S.periodFigures(h, e, fy),
+      setting: await B.settingOf(h, e)
+    }));
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
-    const dated = rows.map((p) => Object.assign({}, p, { start_date: E.ymd(p.start_date), end_date: E.ymd(p.end_date) }));
+    const dated = rows.map((item) => Object.assign({}, item, { start_date: E.ymd(item.start_date), end_date: E.ymd(item.end_date) }));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
-    res.json({ periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting)).filter((p) => !fy || p.fiscal_year === fy) });
-  } catch (err) { fail(res, err); }
+    res.json({
+      periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting)).filter((item) => !fy || item.fiscal_year === fy)
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /* ── packs ──────────────────────────────────────────────────────────────────────────────────────────────────── */
 function manifestView(m) {
   const x = m || {};
-  return Object.assign({}, x, { files: (x.files || []).map((f) => ({ name: f.file || f.name, file: f.file || f.name, sha256: f.sha256, bytes: f.bytes, rows: f.rows })),
-    controls: { counts: x.counts || null, totals: x.totals || null, checks: x.checks || null } });
+  return Object.assign({}, x, {
+    files: (x.files || []).map((item) => ({
+      name: item.file || item.name,
+      file: item.file || item.name,
+      sha256: item.sha256,
+      bytes: item.bytes,
+      rows: item.rows
+    })),
+    controls: { counts: x.counts || null, totals: x.totals || null, checks: x.checks || null }
+  });
 }
 router.get('/packs', auth, owner, on, async (req, res) => {
   try {
     const e = ctx(req);
     const rows = await withEntity(e, (h) => S.packs(h, e));
-    res.json({ packs: rows.map((k) => ({ pack_id: k.pack_id, kind: k.kind, fiscal_year: k.fiscal_year, period: k.period, created_at: k.created_at, sha256: k.sha256,
-      stored: !!k.storage_path, has_file: !!k.storage_path, acknowledged_at: k.acknowledged_at || null, delete_after: E.ymd(k.delete_after) })) });
-  } catch (err) { fail(res, err); }
+    res.json({
+      packs: rows.map((item) => ({
+        pack_id: item.pack_id,
+        kind: item.kind,
+        fiscal_year: item.fiscal_year,
+        period: item.period,
+        created_at: item.created_at,
+        sha256: item.sha256,
+        stored: !!item.storage_path,
+        has_file: !!item.storage_path,
+        acknowledged_at: item.acknowledged_at || null,
+        delete_after: E.ymd(item.delete_after)
+      }))
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.post('/packs', auth, owner, on, async (req, res) => {
   try {
     const b = req.body || {};
     const r = await require('../lib/books-pack').build(ctx(req), { kind: b.kind, fiscal_year: b.fiscal_year, period: b.period, by: byOf(req) });
     res.json({ ok: true, pack: { pack_id: r.pack_id, sha256: r.sha256, stored: r.stored, bytes: r.bytes }, manifest: manifestView(r.manifest) });
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * GET /packs/:id → JSON: { pack, manifest: { files: [{ name, sha256, bytes }], controls }, has_file, file, download }
@@ -1229,26 +2152,58 @@ router.post('/packs', auth, owner, on, async (req, res) => {
  */
 router.get('/packs/:id', auth, owner, on, async (req, res) => {
   try {
-    const e = ctx(req), id = String(req.params.id);
+    const e = ctx(req),
+      id = String(req.params.id);
     if (!UUID.test(id)) return res.status(404).json({ error: 'Not found' });
     const p = await withEntity(e, (h) => S.pack(h, e, id));
     if (!p) return res.status(404).json({ error: 'Not found' });
-    res.json({ pack: { pack_id: p.pack_id, kind: p.kind, fiscal_year: p.fiscal_year, period: p.period, created_at: p.created_at, sha256: p.sha256, prev_sha256: p.prev_sha256,
-      stored: !!p.storage_path, acknowledged_at: p.acknowledged_at, delete_after: E.ymd(p.delete_after) }, manifest: manifestView(p.manifest),
-      has_file: !!p.storage_path, file: '/api/books/packs/' + id + '/file', download: p.storage_path ? '/api/books/packs/' + id + '/file' : null });
-  } catch (err) { fail(res, err); }
+    res.json({
+      pack: {
+        pack_id: p.pack_id,
+        kind: p.kind,
+        fiscal_year: p.fiscal_year,
+        period: p.period,
+        created_at: p.created_at,
+        sha256: p.sha256,
+        prev_sha256: p.prev_sha256,
+        stored: !!p.storage_path,
+        acknowledged_at: p.acknowledged_at,
+        delete_after: E.ymd(p.delete_after)
+      },
+      manifest: manifestView(p.manifest),
+      has_file: !!p.storage_path,
+      file: '/api/books/packs/' + id + '/file',
+      download: p.storage_path ? '/api/books/packs/' + id + '/file' : null
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.get('/packs/:id/file', auth, owner, on, async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
     const r = await require('../lib/books-pack').download(ctx(req), String(req.params.id));
     if (!r.found) return res.status(404).json({ error: 'Not found' });
-    if (!r.stored) return res.status(409).json({ error: 'This pack was built while storage was not connected — build it again to download it.', message: 'This pack was built while storage was not connected — build it again to download it.' });
+    if (!r.stored)
+      return res.status(409).json({
+        error: 'This pack was built while storage was not connected — build it again to download it.',
+        message: 'This pack was built while storage was not connected — build it again to download it.'
+      });
     res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename="ledger-pack-' + (r.pack.kind || 'pack') + '-' + (r.pack.fiscal_year || '') + (r.pack.period != null ? '-' + r.pack.period : '') + '.zip"');
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="ledger-pack-' +
+        (r.pack.kind || 'pack') +
+        '-' +
+        (r.pack.fiscal_year || '') +
+        (r.pack.period != null ? '-' + r.pack.period : '') +
+        '.zip"'
+    );
     res.setHeader('X-Pack-SHA256', r.pack.sha256);
     res.end(r.bytes);
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /**
  * POST /packs/:id/ack → { ok, acknowledged_at } — "we have it": the fact that later licenses summarising detail away.
@@ -1264,54 +2219,110 @@ router.post('/packs/:id/ack', auth, owner, on, async (req, res) => {
       const p = await S.pack(h, e, String(req.params.id));
       if (!p) return null;
       if (!p.storage_path) return { no_file: true };
-      const x = await S.ackPack(h, e, String(req.params.id), byOf(req)); if (x) await S.logChange(h, e, { by: byOf(req), table_name: 'books_pack', row_id: req.params.id, field: 'acknowledged', new: 'yes' }); return x; });
+      const x = await S.ackPack(h, e, String(req.params.id), byOf(req));
+      if (x) await S.logChange(h, e, { by: byOf(req), table_name: 'books_pack', row_id: req.params.id, field: 'acknowledged', new: 'yes' });
+      return x;
+    });
     if (!r) return res.status(404).json({ error: 'Not found' });
     if (r.no_file) return res.status(409).json({ code: 'PACK_NO_FILE', error: PACK_NO_FILE, message: PACK_NO_FILE });
     res.json({ ok: true, acknowledged_at: r.acknowledged_at });
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /* ── recurring entries (b281, DRAFT) and the To-do ─────────────────────────────────────────────────────────── */
 const RC = () => require('../lib/books-recurring');
 /** GET /recurring → { recurring: [{ recurring_id, name, event, frequency, next_on, end_on, auto, active, last_done_on, due }] } · 503 BOOKS_NOT_MIGRATED until b281 runs */
-router.get('/recurring', auth, owner, on, async (req, res) => { try { res.json({ recurring: await RC().list(ctx(req)) }); } catch (err) { fail(res, err); } });
+router.get('/recurring', auth, owner, on, async (req, res) => {
+  try {
+    res.json({ recurring: await RC().list(ctx(req)) });
+  } catch (err) {
+    fail(res, err);
+  }
+});
 /** POST /recurring { name, event: { kind, …fields as POST /events, no date }, frequency: monthly|quarterly|yearly, next_on, end_on?, auto? } */
-router.post('/recurring', auth, owner, on, async (req, res) => { try { res.json(await RC().create(ctx(req), req.books, req.body || {}, byOf(req))); } catch (err) { fail(res, err); } });
+router.post('/recurring', auth, owner, on, async (req, res) => {
+  try {
+    res.json(await RC().create(ctx(req), req.books, req.body || {}, byOf(req)));
+  } catch (err) {
+    fail(res, err);
+  }
+});
 /** PATCH /recurring/:id — a merge-patch: only the fields sent change */
 router.patch('/recurring/:id', auth, owner, on, async (req, res) => {
-  try { if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' }); res.json(await RC().patch(ctx(req), req.books, String(req.params.id), req.body || {}, byOf(req))); } catch (err) { fail(res, err); }
+  try {
+    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    res.json(await RC().patch(ctx(req), req.books, String(req.params.id), req.body || {}, byOf(req)));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** DELETE /recurring/:id — stops it (active: false); nothing is deleted, and what it posted stays */
 router.delete('/recurring/:id', auth, owner, on, async (req, res) => {
-  try { if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' }); res.json(await RC().stop(ctx(req), String(req.params.id))); } catch (err) { fail(res, err); }
+  try {
+    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    res.json(await RC().stop(ctx(req), String(req.params.id)));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /recurring/:id/post — accept the proposal: posts the due day as an MJ entry (client_ref = template + date) and moves it on · POST /recurring/:id/skip — let it pass */
 router.post('/recurring/:id/post', auth, owner, on, async (req, res) => {
-  try { if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' }); res.json(await RC().accept(ctx(req), req.books, String(req.params.id), byOf(req))); } catch (err) { fail(res, err); }
+  try {
+    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    res.json(await RC().accept(ctx(req), req.books, String(req.params.id), byOf(req)));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 router.post('/recurring/:id/skip', auth, owner, on, async (req, res) => {
-  try { if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' }); res.json(await RC().skip(ctx(req), String(req.params.id))); } catch (err) { fail(res, err); }
+  try {
+    if (!UUID.test(String(req.params.id))) return res.status(404).json({ error: 'Not found' });
+    res.json(await RC().skip(ctx(req), String(req.params.id)));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** GET /todo → [{ kind, count, words, action: { label, screen, call }, items? }] — CB Accounts' home; only what needs doing is listed. Kinds: bills_to_accept · months_not_locked · closing_stock_missing · gst_due · recurring_due · accrual_reversals_due · year_close_possible */
-router.get('/todo', auth, noKey, on, async (req, res) => { try { res.json(await require('../lib/books-todo').todo(ctx(req), req.books)); } catch (err) { fail(res, err); } });
+router.get('/todo', auth, noKey, on, async (req, res) => {
+  try {
+    res.json(await require('../lib/books-todo').todo(ctx(req), req.books));
+  } catch (err) {
+    fail(res, err);
+  }
+});
 
 module.exports = router;
 /* ── the period-end routes (engines v1.14–v1.16; lib/books-period.js builds each event THROUGH THE ENGINE) ─────────────
    Owner-only, switch on, idempotent (client_ref, or the entry's natural key), refused in a locked month (PERIOD_LOCKED, 409).
    The asset ones answer 503 BOOKS_NOT_MIGRATED until b280 (DRAFT) is run. */
 const P = () => require('../lib/books-period');
-const route = (method, p, fn) => router[method](p, auth, owner, on, async (req, res) => {
-  try { res.json(await fn(req, ctx(req), req.books, req.body || {}, byOf(req))); } catch (err) { fail(res, err); }
-});
+const route = (method, p, fn) =>
+  router[method](p, auth, owner, on, async (req, res) => {
+    try {
+      res.json(await fn(req, ctx(req), req.books, req.body || {}, byOf(req)));
+    } catch (err) {
+      fail(res, err);
+    }
+  });
 /** GET /assets?asOf → { currency, asOf, assets: [{ asset_id, name, asset_class, cost_minor, put_to_use, accumulated_minor, wdv_minor, disposed_on }], net_block: [per class, with the ledger's figure beside], total_wdv_minor } */
 router.get('/assets', auth, owner, on, async (req, res) => {
-  try { res.json(await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req)))); } catch (err) { fail(res, err); }
+  try {
+    res.json(await P().listAssets(ctx(req), req.books, dateQ(req.query.asOf, today(req))));
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /assets { name, class, cost, date, put_to_use?, how | party_id, client_ref } → the purchase entry (MJ) and the register row */
 route('post', '/assets', (req, e, s, b, by) => P().addAsset(e, s, b, by));
 /** POST /assets/:id/dispose { date, proceeds?, into?, client_ref } */
 route('post', '/assets/:id/dispose', (req, e, s, b, by) => {
-  if (!UUID.test(String(req.params.id))) { const x = new Error('Not found'); x.code = 'BOOKS_NOT_FOUND'; throw x; }
+  if (!UUID.test(String(req.params.id))) {
+    const x = new Error('Not found');
+    x.code = 'BOOKS_NOT_FOUND';
+    throw x;
+  }
   return P().disposeAsset(e, s, String(req.params.id), b, by);
 });
 /** POST /depreciation/run { fy } → one entry at the year end, from the register; says which entity basis it used */
@@ -1327,11 +2338,18 @@ route('post', '/gst/pay', (req, e, s, b, by) => P().gstPay(e, s, b, by));
 /* TOUR-FIX1: a shop whose return is not read from the ledgers (India: the GSTR from the rail) is an ANSWER, not a refusal — 200 with `form: null`,
    the code and the sentence the GST page shows above its close & pay (the 422 was swallowed by the page, 42 failed requests a visit on the tour) */
 router.get('/returns', auth, owner, on, async (req, res) => {
-  try { res.json(await P().taxReturn(ctx(req), req.books, req.query || {})); }
-  catch (err) {
+  try {
+    res.json(await P().taxReturn(ctx(req), req.books, req.query || {}));
+  } catch (err) {
     if (err && err.code === 'RETURN_FROM_RAIL') {
       const pack = err.pack || null;
-      return res.json({ form: null, pack, code: err.code, why: pack === 'IN' ? 'Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month\'s GST here.' : err.message, rail: pack === 'IN' ? '/api/tax/gstr' : null });
+      return res.json({
+        form: null,
+        pack,
+        code: err.code,
+        why: pack === 'IN' ? "Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month's GST here." : err.message,
+        rail: pack === 'IN' ? '/api/tax/gstr' : null
+      });
     }
     fail(res, err);
   }
@@ -1357,47 +2375,85 @@ function fxMay(req, ready) {
 /** GET /fx-rates?from=USD → { currency, ready, why, may: { add }, sources, rule: { standard, tax_rate_rule, official_name }, rates: [{ rate_id, date, from, to, rate, source, source_ref, created_at }] } — one transaction */
 router.get('/fx-rates', auth, noKey, on, async (req, res) => {
   try {
-    const e = ctx(req), ready = await FXR.ready(), fx = B.packOf(req.books).fx || {};
+    const e = ctx(req),
+      ready = await FXR.ready(),
+      fx = B.packOf(req.books).fx || {};
     const rates = ready ? await withEntity(e, (h) => FXR.list(h, e, { from: req.query.from })) : [];
-    res.json({ currency: curOf(req), ready, why: ready ? null : FX_NOT_READY, may: { add: fxMay(req, ready) }, sources: FXR.SOURCES,
-      rule: { standard: fx.standard || null, tax_rate_rule: fx.tax_rate_rule || null, official_name: fx.official_name || null }, rates });
-  } catch (err) { fail(res, err); }
+    res.json({
+      currency: curOf(req),
+      ready,
+      why: ready ? null : FX_NOT_READY,
+      may: { add: fxMay(req, ready) },
+      sources: FXR.SOURCES,
+      rule: { standard: fx.standard || null, tax_rate_rule: fx.tax_rate_rule || null, official_name: fx.official_name || null },
+      rates
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /fx-rates { date, currency, rate, source?, source_ref? } → { rate } — owner; insert-only (a correction is a newer row for the same day). One transaction. */
 router.post('/fx-rates', auth, noKey, on, owner, async (req, res) => {
   try {
     const e = ctx(req);
     res.status(201).json({ rate: await withEntity(e, (h) => FXR.add(h, e, req.books, req.body || {}, byOf(req))) });
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /fx-rates/import { csv, file_name? } → { added, refused: [{ line, why }], rates } — owner; the good rows in ONE insert, source 'import'. One transaction. */
 router.post('/fx-rates/import', auth, noKey, on, owner, async (req, res) => {
   try {
-    const e = ctx(req), b = req.body || {};
+    const e = ctx(req),
+      b = req.body || {};
     res.json(await withEntity(e, (h) => FXR.importCsv(h, e, req.books, b.csv, b.file_name ? String(b.file_name).slice(0, 120) : null, byOf(req))));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 const fxPeriod = (q) => {
-  const fy = String(q.fiscal_year || ''), p = Number(q.period);
-  if (!/^\d{4}(-\d{2})?$/.test(fy) || !Number.isInteger(p) || p < 1 || p > 12) throw Object.assign(new Error('Which month? A financial year and a month 1 to 12.'), { code: 'BOOKS_BAD_REQUEST' });
+  const fy = String(q.fiscal_year || ''),
+    p = Number(q.period);
+  if (!/^\d{4}(-\d{2})?$/.test(fy) || !Number.isInteger(p) || p < 1 || p > 12)
+    throw Object.assign(new Error('Which month? A financial year and a month 1 to 12.'), { code: 'BOOKS_BAD_REQUEST' });
   return { fy, p };
 };
 /** GET /fx-revalue?fiscal_year&period → { ready, why, may: { post }, date, reverses_on, functional, rows, missing, gain_minor, posted } — Month lock's foreign-balances line. Owner (it shows what parties owe). One transaction. */
 router.get('/fx-revalue', auth, noKey, on, owner, async (req, res) => {
   try {
-    const e = ctx(req), { fy, p } = fxPeriod(req.query || {});
+    const e = ctx(req),
+      { fy, p } = fxPeriod(req.query || {});
     const v = await withEntity(e, (h) => FXR.revaluation(h, e, req.books, fy, p));
-    const why = !v.ready ? 'Foreign balances need database updates (b391, b392) that are still to run.' : v.posted ? 'Revalued — ' + v.posted.entry_no + '.' : v.missing[0] || (v.event ? null : 'Nothing to revalue.');
-    res.json({ ready: v.ready, why, may: { post: { may: !!(v.ready && !v.posted && !v.missing.length && v.event), why } }, date: v.date, reverses_on: v.reverses_on, functional: v.functional,
-      rows: v.rows, missing: v.missing, gain_minor: v.gain_minor, posted: v.posted });
-  } catch (err) { fail(res, err); }
+    const why = !v.ready
+      ? 'Foreign balances need database updates (b391, b392) that are still to run.'
+      : v.posted
+        ? 'Revalued — ' + v.posted.entry_no + '.'
+        : v.missing[0] || (v.event ? null : 'Nothing to revalue.');
+    res.json({
+      ready: v.ready,
+      why,
+      may: { post: { may: !!(v.ready && !v.posted && !v.missing.length && v.event), why } },
+      date: v.date,
+      reverses_on: v.reverses_on,
+      functional: v.functional,
+      rows: v.rows,
+      missing: v.missing,
+      gain_minor: v.gain_minor,
+      posted: v.posted
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 /** POST /fx-revalue { fiscal_year, period } → { ok, entry_no, reversal_no, gain_minor, date, reverses_on } — owner; the revaluation and its reversal in ONE transaction; idempotent */
 router.post('/fx-revalue', auth, noKey, on, owner, async (req, res) => {
   try {
-    const e = ctx(req), { fy, p } = fxPeriod(req.body || {});
+    const e = ctx(req),
+      { fy, p } = fxPeriod(req.body || {});
     res.json(await withEntity(e, (h) => FXR.revalue(h, e, req.books, fy, p, byOf(req))));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 module.exports = router;

@@ -7,28 +7,40 @@
 // routes/actors.js — B3 Actor model API
 // All endpoints for create login manage actors
 
-const { shopCountrySql } = require('../lib/country-setup');   /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
+const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const logger = require('../lib/logger');
 const express = require('express');
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
-const empCode = require('../lib/employee-code');   // M02: the one place an employee's first code is minted, e-mailed and shown
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's lists */
+const empCode = require('../lib/employee-code'); // M02: the one place an employee's first code is minted, e-mailed and shown
 /** The e-mail on file for an employee (identities.email), or '' — a read that can never fail the request. */
-const actorEmail = async (id) => { try { const r = await db('SELECT email FROM identities WHERE identity_id = $1', [id]); return (r.rows[0] && r.rows[0].email) || ''; } catch (e) { logger.fellBack('actors actorEmail: the read failed — left blank', e); return ''; } };
-const devOtp = require('../lib/dev-otp');   // NEVER gate OTP exposure on process.env.DEV_OTP directly
-const identityAuth = require('../lib/identity-auth');   // [capability: sign-in] the one token issuer, entity or coassist
-const accessEvents = require('../lib/access-events');   // b172 — who changed whose access
-const schema = require('../lib/schema');   // b173 — deploy-before-migration column probe
-const access = require('../lib/access');   // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
-const railActions = require('../lib/rail-actions');   // T1-RAIL — who is moving the copy (the rail's level ladder)
-const router  = express.Router();
+const actorEmail = async (id) => {
+  try {
+    const r = await db('SELECT email FROM identities WHERE identity_id = $1', [id]);
+    return (r.rows[0] && r.rows[0].email) || '';
+  } catch (e) {
+    logger.fellBack('actors actorEmail: the read failed — left blank', e);
+    return '';
+  }
+};
+const devOtp = require('../lib/dev-otp'); // NEVER gate OTP exposure on process.env.DEV_OTP directly
+const identityAuth = require('../lib/identity-auth'); // [capability: sign-in] the one token issuer, entity or coassist
+const accessEvents = require('../lib/access-events'); // b172 — who changed whose access
+const schema = require('../lib/schema'); // b173 — deploy-before-migration column probe
+const access = require('../lib/access'); // b173 — the one place that knows what a level means (FX-L2C: the INSERT writes it)
+const railActions = require('../lib/rail-actions'); // T1-RAIL — who is moving the copy (the rail's level ladder)
+const router = express.Router();
 /* SEC2 · THE ONE owner gate on every people WRITE (lib/owner.js ownerOnly, the sentence lib/people.js already shows on the
    People screen). Before it, delegate and settings had no check at all and the others refused a person by an accidental 404. */
 const ownerWrite = require('../lib/owner').ownerOnly(require('../lib/people').OWNER_ONLY);
 /* PEOPLE-EMAIL (SEC2): identities.email is UNIQUE across every sign-in (000_baseline_part2.sql identities_email_key), so the
    owner's own address on a staff row collides. Said in words with a code — never "Key taken", never a 500. */
-const EMAIL_TAKEN = { error: 'E-mail in use', code: 'EMAIL_TAKEN',
-  message: 'That e-mail already signs in to another account. Use the person\'s own e-mail, or leave it empty.' };
+const EMAIL_TAKEN = {
+  error: 'E-mail in use',
+  code: 'EMAIL_TAKEN',
+  message: "That e-mail already signs in to another account. Use the person's own e-mail, or leave it empty."
+};
 const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(String(err.constraint || err.detail || '')));
 
 /**
@@ -56,22 +68,62 @@ async function loginIdFor(actor_key, req) {
   try {
     const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
     handle = r.rows[0] && r.rows[0].user_id;
-  } catch (e) { logger.fellBack('actors loginIdFor: the read failed — carried on without it', e); /* unreadable → fall through to the slug, never to a name with spaces in it */ }
+  } catch (e) {
+    logger.fellBack(
+      'actors loginIdFor: the read failed — carried on without it',
+      e
+    ); /* unreadable → fall through to the slug, never to a name with spaces in it */
+  }
   return `${actor_key}@${handle || require('../lib/handle').slug(req.identity.display_name || '')}`;
 }
 
 /* splitLogin — the ONE splitter for what somebody types at a sign-in box — moved to lib/identity-auth.js with the
    sign-in itself (M06); nothing in this file splits a login any more. */
-const mintuserid = require('../lib/mintuserid');   /* the ONE builder for an employee id */
+const mintuserid = require('../lib/mintuserid'); /* the ONE builder for an employee id */
 const { safeErr } = require('../lib/respond');
 const { body, param, query } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
-const auth    = require('../middleware/auth');
-const signin  = require('./signin');
-const personSession = require('../lib/person-session');   // PEOPLE-SRV1 (G4): the one session listing — closeBy ends a person's phones
-const keysRoute = require('./keys');                       // PEOPLE-SRV1 (G4): the one key list — endKeysBy ends the keys a person opened   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
+const auth = require('../middleware/auth');
+const signin = require('./signin');
+
+/**
+ * SET-31 · the entity's own task ceiling: entity_actor_settings.default_max_tasks (Settings › Work), or null when
+ * the owner never set one (then the 1-100 validator is the only bound, as before) or the table is absent.
+ * Per-actor max_tasks may be lower, never higher. Read ONLY when the request carries max_tasks (round-trip budget).
+ */
+async function entityTaskCap(entity_id) {
+  if (!(await schema.hasTable('entity_actor_settings'))) return null;
+  const settingsRow = await db(`SELECT default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+  return (settingsRow.rows[0] && settingsRow.rows[0].default_max_tasks) || null;
+}
+/** SET-31 · the 400 body when a per-actor max_tasks is above the entity's ceiling (the server decides; the person is told the number). */
+function overTaskCap(ceiling) {
+  return {
+    error: 'Over the limit',
+    code: 'MAX_TASKS_OVER_ENTITY',
+    message: `A person can hold at most ${ceiling} tasks, the limit you set in Settings › Work. Raise that first, or give them ${ceiling} or fewer.`
+  };
+}
+/**
+ * SET-31 · route guard for POST and PATCH /actors, run before the handler so the handlers stay as they were:
+ * a per-actor max_tasks above the ceiling is a 400 naming the number. No max_tasks in the body = no read, no change
+ * (a new actor given none keeps today's default of 10; the stored default is not applied without a read).
+ */
+async function taskCapGuard(req, res, next) {
+  try {
+    const sent = req.body && req.body.max_tasks;
+    if (sent === undefined || sent === null || sent === '') return next();
+    const ceiling = await entityTaskCap(auth.entityOf(req));
+    if (ceiling && parseInt(sent, 10) > ceiling) return res.status(400).json(overTaskCap(ceiling));
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+const personSession = require('../lib/person-session'); // PEOPLE-SRV1 (G4): the one session listing — closeBy ends a person's phones
+const keysRoute = require('./keys'); // PEOPLE-SRV1 (G4): the one key list — endKeysBy ends the keys a person opened   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -82,7 +134,11 @@ const generateBridgeId = require('../lib/bridgeid').generateBridgeId;
    recoverable — an attacker able to observe some output can predict a victim's code. The S4 reviewer fix said
    exactly this in 2026-07-13 and was applied to routes/entities.js only; this copy never got it. */
 const generateOTP = require('../lib/otp').generateOTP;
-const { taskCount, assignChit, rerouteOpenTasks } = require('../lib/assign-chit');   /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
+const {
+  taskCount,
+  assignChit,
+  rerouteOpenTasks
+} = require('../lib/assign-chit'); /* ⭐ TA1 · W1-RAIL: the one writer of who holds a chit and of a person's task count */
 
 // Suggest actor_key from full name
 // Ravi Kumar → ravik
@@ -121,49 +177,46 @@ const isKeyAvailable = async (actor_key, parent_entity_id) => {
 // ── POST /api/actors/suggest-key ────────────────────────────
 // Suggest actor_key from display_name
 // Used live as admin types name
-router.post('/suggest-key',
-  auth,
-  [body('display_name').trim().notEmpty()],
-  validate,
-  async (req, res) => {
-    try {
-      const entity_id = req.identity.identity_id;
-      const name = req.body.display_name;
-      let suggested = suggestKey(name);
-      let suffix = 1;
-      let available = await isKeyAvailable(suggested, entity_id);
+router.post('/suggest-key', auth, [body('display_name').trim().notEmpty()], validate, async (req, res) => {
+  try {
+    const entity_id = req.identity.identity_id;
+    const name = req.body.display_name;
+    let suggested = suggestKey(name);
+    let suffix = 1;
+    let available = await isKeyAvailable(suggested, entity_id);
 
-      // If taken — suggest with suffix
-      // ravik → ravik2 → ravik3
-      while (!available && suffix < 10) {
-        suggested = suggestKey(name) + (suffix + 1);
-        available = await isKeyAvailable(suggested, entity_id);
-        suffix++;
-      }
-
-      res.json({
-        suggested_key: suggested,
-        available,
-        login_format: await loginIdFor(suggested, req),
-        alternatives: [
-          suggestKey(name) + '2',
-          suggestKey(name) + 'r',
-          name.trim().toLowerCase().replace(/\s+/,'').slice(0,6),
-        ]
-      });
-    } catch (err) {
-      res.status(500).json({ error: 'Suggest failed', message: safeErr(err) });
+    // If taken — suggest with suffix
+    // ravik → ravik2 → ravik3
+    while (!available && suffix < 10) {
+      suggested = suggestKey(name) + (suffix + 1);
+      available = await isKeyAvailable(suggested, entity_id);
+      suffix++;
     }
+
+    res.json({
+      suggested_key: suggested,
+      available,
+      login_format: await loginIdFor(suggested, req),
+      alternatives: [suggestKey(name) + '2', suggestKey(name) + 'r', name.trim().toLowerCase().replace(/\s+/, '').slice(0, 6)]
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Suggest failed', message: safeErr(err) });
   }
-);
+});
 
 // ── POST /api/actors/check-key ───────────────────────────────
 // Check if specific key is available
 // Called when admin overrides suggestion
-router.post('/check-key',
+router.post(
+  '/check-key',
   auth,
-  [body('actor_key').trim().isLength({ min: 4, max: 12 }).matches(/^[a-z0-9]+$/)
-    .withMessage('Lowercase letters and numbers only — 4 to 12 characters')],
+  [
+    body('actor_key')
+      .trim()
+      .isLength({ min: 4, max: 12 })
+      .matches(/^[a-z0-9]+$/)
+      .withMessage('Lowercase letters and numbers only — 4 to 12 characters')
+  ],
   validate,
   async (req, res) => {
     try {
@@ -177,9 +230,7 @@ router.post('/check-key',
         actor_key,
         available,
         login_format: login,
-        message: available
-          ? `${login} is available`
-          : `${actor_key} is already taken under this entity`
+        message: available ? `${login} is available` : `${actor_key} is already taken under this entity`
       });
     } catch (err) {
       res.status(500).json({ error: 'Check failed', message: safeErr(err) });
@@ -189,8 +240,11 @@ router.post('/check-key',
 
 // ── POST /api/actors ─────────────────────────────────────────
 // Create a new actor under entity
-router.post('/',
-  auth, ownerWrite,
+router.post(
+  '/',
+  auth,
+  ownerWrite,
+  taskCapGuard,
   [
     body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
@@ -198,16 +252,19 @@ router.post('/',
     /* ⚠ 4–12. An employee's sign-in is `key@entity-user-id` — two names joined — and this half had no maximum
        at all, so a 40-character key would have produced a login nobody could type. The cap is on CREATE only:
        an actor_key is never re-validated on edit, so no existing co-assist is locked out by it. */
-    body('actor_key').trim().isLength({ min: 4, max: 12 })
-      .matches(/^[a-z0-9]+$/).withMessage('Lowercase and numbers only — 4 to 12 characters'),
+    body('actor_key')
+      .trim()
+      .isLength({ min: 4, max: 12 })
+      .matches(/^[a-z0-9]+$/)
+      .withMessage('Lowercase and numbers only — 4 to 12 characters'),
     body('actor_role').optional().trim().isLength({ max: 100 }),
     body('phone').optional().trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
     /* ⚠️ `hat` STAYS ACCEPTED until b173's column is retired — an older client may still send it, and
        refusing it would break a screen that has not been redeployed yet. lib/access.js maps it. */
-    body('hat').optional().isIn(['view_only','act','audit','mis','manager']),
-    body('access_level').optional().isIn(['viewer','commenter','editor']),
-    body('whole_entity').optional().isBoolean(),
+    body('hat').optional().isIn(['view_only', 'act', 'audit', 'mis', 'manager']),
+    body('access_level').optional().isIn(['viewer', 'commenter', 'editor']),
+    body('whole_entity').optional().isBoolean()
   ],
   validate,
   async (req, res) => {
@@ -230,7 +287,7 @@ router.post('/',
        */
       /* SEC2: the refusal itself is `ownerWrite` on the route (lib/owner.js) — one gate for every people write. */
 
-      const entity_id    = auth.entityOf(req);
+      const entity_id = auth.entityOf(req);
       /**
        * ⭐⭐ THE LOGIN HANDLE IS `key@user_id`, NOT `key@display name`. Athi, 2026-08-18: *"can we say how the
        * userid of the employee exists — employee-given-name@entity-use-id; this combination should be unique."*
@@ -261,14 +318,16 @@ router.post('/',
         const _u = await db('SELECT user_id, display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
         entity_row = _u.rows[0] || null;
         if (entity_row) entity_handle = entity_row.user_id || entity_row.display_name || entity_handle;
-      } catch (e) { logger.fellBack('actors: the read failed — carried on without it', e); /* fall back to the name we already have — never print an empty handle */ }
-      const entity_name  = entity_handle;
+      } catch (e) {
+        logger.fellBack('actors: the read failed — carried on without it', e); /* fall back to the name we already have — never print an empty handle */
+      }
+      const entity_name = entity_handle;
       const display_name = sanitise(req.body.display_name);
-      const actor_key    = req.body.actor_key.toLowerCase().trim();
-      const actor_role   = sanitise(req.body.actor_role || '');
-      const phone        = req.body.phone || null;
-      const max_tasks    = req.body.max_tasks || 10;
-      const hat          = ['view_only','act','audit','mis','manager'].includes(req.body.hat) ? req.body.hat : 'act';
+      const actor_key = req.body.actor_key.toLowerCase().trim();
+      const actor_role = sanitise(req.body.actor_role || '');
+      const phone = req.body.phone || null;
+      const max_tasks = req.body.max_tasks || 10;
+      const list = ['view_only', 'act', 'audit', 'mis', 'manager'].includes(req.body.hat) ? req.body.hat : 'act';
 
       // Check key available
       const available = await isKeyAvailable(actor_key, entity_id);
@@ -282,7 +341,7 @@ router.post('/',
 
       // Generate IDs
       const identity_id = uuidv4();
-      const bridge_id   = generateBridgeId();
+      const bridge_id = generateBridgeId();
       // ⭐ [capability: sign-in] fixedOtp('entity') closes the isSealed() gap generateOTP() never checked —
       // see lib/identity-auth.js. Same fixed code as an entity's own OTP on a LOCAL stack; a real code anywhere else (SEC1).
       // M02: 24 h, and refused up front in a sealed env with no Resend / no e-mail (nothing is written then).
@@ -310,7 +369,7 @@ router.post('/',
        */
       const employee_id = entity_row
         ? mintuserid.employee(actor_key, entity_row).handle
-        : null;                      /* no parent row readable → store nothing rather than store a guess */
+        : null; /* no parent row readable → store nothing rather than store a guess */
 
       /**
        * ⚠️⚠️ THE LEVEL IS WRITTEN HERE, OR THE "VIEWER" IS AN EDITOR (FX-L2C, 2026-10-13). This INSERT validated
@@ -320,7 +379,7 @@ router.post('/',
        * level after the POST. Now: the body's level, else the old hat's meaning (lib/access.FROM_HAT), else editor —
        * the same answer PATCH /actors/:id writes. WX-P2P-18 found the same on the real stack and adds the reach (whole_entity) as chosen. Before b173 the column is absent: not SELECTed, not written (lib/schema).
        */
-      const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : (access.FROM_HAT[hat] || access.EDITOR);
+      const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : access.FROM_HAT[list] || access.EDITOR;
       const _lvlCol = await schema.hasColumn('identities', 'access_level');
       /* PEOPLE-EMAIL (SEC2): the Add form's e-mail is STORED (identities.email, $13) — before, it was used once to send the first
          code and dropped, so every later reset / reactivate (actorEmail) found nothing and a sealed host refused it. */
@@ -331,9 +390,21 @@ router.post('/',
           max_tasks, identity_type, status, break_status,
           otp_code, otp_expires_at, hat, entity_kind, country, email${_lvlCol ? ', access_level, whole_entity' : ''}
         ) VALUES ($1,$2,$3,$4,$12,'human',$5,$6,$7,$8,'actor','active','active',$9,$10,$11,'actor',${shopCountrySql(5)},$13${_lvlCol ? ',$14,$15' : ''})`,
-        [identity_id, bridge_id, display_name, actor_key,
-         entity_id, actor_role || null, phone, max_tasks,
-         otp, otp_expires, hat, employee_id, toEmail || null].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])
+        [
+          identity_id,
+          bridge_id,
+          display_name,
+          actor_key,
+          entity_id,
+          actor_role || null,
+          phone,
+          max_tasks,
+          otp,
+          otp_expires,
+          list,
+          employee_id,
+          toEmail || null
+        ].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : [])
       );
 
       /* SEC2: a REAL code is never logged — only the local stack's fixed code, which is a known constant anyway */
@@ -344,8 +415,16 @@ router.post('/',
        * "extra co-assists" in its own header. Metered on CREATION; whether a seat is charged monthly or once
        * is a pricing question the ledger does not need to answer — it records that one was taken, and when.
        */
-      try { require('../lib/meter').meter(entity_id, 'coassist.create', {
-        detail: identity_id, rid: req.id }).catch(logger.orElse('actors: failed — carried on without it')); } catch (e) { logger.fellBack('actors: the helper failed — carried on without it', e); }
+      try {
+        require('../lib/meter')
+          .meter(entity_id, 'coassist.create', {
+            detail: identity_id,
+            rid: req.id
+          })
+          .catch(logger.orElse('actors: failed — carried on without it'));
+      } catch (e) {
+        logger.fellBack('actors: the helper failed — carried on without it', e);
+      }
 
       res.json({
         message: 'Actor created successfully',
@@ -356,14 +435,15 @@ router.post('/',
           actor_key,
           actor_role: actor_role || null,
           login_format: `${actor_key}@${entity_name}`,
-          parent_entity: entity_name,
+          parent_entity: entity_name
         },
         ...(await empCode.deliver({ to: toEmail, name: display_name, otp })),
         ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
         /* SEC2: the code reaches the person by e-mail; the answer names only the user id (a code here went through no door) */
-        login_instruction: `Ask ${display_name} to login with:\nUsername: ${actor_key}@${entity_name}` + (toEmail ? '\nThe first code was sent to their e-mail.' : '\nAdd their e-mail so the first code can be sent.')
+        login_instruction:
+          `Ask ${display_name} to login with:\nUsername: ${actor_key}@${entity_name}` +
+          (toEmail ? '\nThe first code was sent to their e-mail.' : '\nAdd their e-mail so the first code can be sent.')
       });
-
     } catch (err) {
       /**
        * ⚠️ A UNIQUE VIOLATION IS NOT A SERVER ERROR AND MUST NOT READ AS ONE. `23505` here means the key is
@@ -373,9 +453,12 @@ router.post('/',
        */
       if (emailTaken(err)) return res.status(409).json(EMAIL_TAKEN);
       if (err && err.code === '23505') {
-        return res.status(409).json({ error: 'Key taken',
-          message: 'That key already belongs to someone at this entity — including people who have been removed, '
-                 + 'because their name stays on the work they recorded. Choose another.' });
+        return res.status(409).json({
+          error: 'Key taken',
+          message:
+            'That key already belongs to someone at this entity — including people who have been removed, ' +
+            'because their name stays on the work they recorded. Choose another.'
+        });
       }
       console.error('Create actor error:', err.message);
       res.status(500).json({ error: 'Create failed', message: safeErr(err) });
@@ -386,8 +469,11 @@ router.post('/',
 // ── PATCH /api/actors/:id ────────────────────────────────────
 // Edit a co-assist's owner-controlled profile fields (name / role / max_tasks / phone).
 // Does NOT touch login key, type, status, or shift — those have dedicated routes. Entity-scoped.
-router.patch('/:id',
-  auth, ownerWrite,
+router.patch(
+  '/:id',
+  auth,
+  ownerWrite,
+  taskCapGuard,
   [
     body('display_name').optional().trim().isLength({ min: 2, max: 100 }),
     body('actor_role').optional({ nullable: true }).trim().isLength({ max: 100 }),
@@ -395,11 +481,11 @@ router.patch('/:id',
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
     /* ⚠️ `hat` STAYS ACCEPTED until b173's column is retired — an older client may still send it, and
        refusing it would break a screen that has not been redeployed yet. lib/access.js maps it. */
-    body('hat').optional().isIn(['view_only','act','audit','mis','manager']),
-    body('access_level').optional().isIn(['viewer','commenter','editor']),
+    body('hat').optional().isIn(['view_only', 'act', 'audit', 'mis', 'manager']),
+    body('access_level').optional().isIn(['viewer', 'commenter', 'editor']),
     body('whole_entity').optional().isBoolean(),
     body('can_see_costs').optional().isBoolean(),
-    body('email').optional({ nullable: true, checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
+    body('email').optional({ nullable: true, checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 })
   ],
   validate,
   async (req, res) => {
@@ -422,8 +508,8 @@ router.patch('/:id',
        */
       /* SEC2: the refusal itself is `ownerWrite` on the route (lib/owner.js) — one gate for every people write. */
 
-      const entity_id = auth.entityOf(req);   // the entity that owns it — never the caller's own id
-      const actor_id  = req.params.id;
+      const entity_id = auth.entityOf(req); // the entity that owns it — never the caller's own id
+      const actor_id = req.params.id;
       /**
        * ⚠️ ONLY THE ENTITY LOGIN MAY GRANT MONEY ACCESS (b145).
        *
@@ -437,8 +523,7 @@ router.patch('/:id',
        * feature only worked in its denying half.
        */
       if ('can_see_costs' in req.body && req.identity.identity_type === 'actor') {
-        return res.status(403).json({ error: 'Forbidden',
-          message: 'Only the account owner can change who sees costs and margin.' });
+        return res.status(403).json({ error: 'Forbidden', message: 'Only the account owner can change who sees costs and margin.' });
       }
       /**
        * ⭐⭐ READ THE BEFORE-ROW. IAM-SPEC §29 — until now nothing recorded that a hat changed, let alone what
@@ -468,17 +553,41 @@ router.patch('/:id',
         const _b = await db(
           `SELECT hat, can_see_costs, break_status${_pre ? ', access_level, whole_entity' : ''} FROM identities
             WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-          [actor_id, entity_id]);
+          [actor_id, entity_id]
+        );
         beforeRow = _b.rows[0] || null;
-      } catch (e) { logger.fellBack('actors PATCH /:id: the read failed — carried on without it', e); /* the audit trail must never be the reason a change fails */ }
+      } catch (e) {
+        logger.fellBack('actors PATCH /:id: the read failed — carried on without it', e); /* the audit trail must never be the reason a change fails */
+      }
 
-      const sets = [], vals = []; let n = 1;
-      if ('display_name' in req.body) { sets.push(`display_name = $${n++}`); vals.push(sanitise(req.body.display_name)); }
-      if ('actor_role'   in req.body) { sets.push(`actor_role = $${n++}`);   vals.push(sanitise(req.body.actor_role || '') || null); }
-      if ('phone'        in req.body) { sets.push(`phone = $${n++}`);        vals.push((req.body.phone || '').trim() || null); }
-      if ('max_tasks'    in req.body) { sets.push(`max_tasks = $${n++}`);    vals.push(parseInt(req.body.max_tasks, 10)); }
+      const sets = [],
+        vals = [];
+      let index = 1;
+      if ('display_name' in req.body) {
+        sets.push(`display_name = $${index++}`);
+        vals.push(sanitise(req.body.display_name));
+      }
+      if ('actor_role' in req.body) {
+        sets.push(`actor_role = $${index++}`);
+        vals.push(sanitise(req.body.actor_role || '') || null);
+      }
+      if ('phone' in req.body) {
+        sets.push(`phone = $${index++}`);
+        vals.push((req.body.phone || '').trim() || null);
+      }
+      if ('max_tasks' in req.body) {
+        sets.push(`max_tasks = $${index++}`);
+        vals.push(parseInt(req.body.max_tasks, 10));
+      }
       /* PEOPLE-EMAIL (SEC2): editable, so a person added without one can still get a reset code; empty clears it */
-      if ('email'        in req.body) { sets.push(`email = $${n++}`);        vals.push(String(req.body.email || '').trim().toLowerCase() || null); }
+      if ('email' in req.body) {
+        sets.push(`email = $${index++}`);
+        vals.push(
+          String(req.body.email || '')
+            .trim()
+            .toLowerCase() || null
+        );
+      }
       /**
        * ⚠️⚠️ THE `$` HERE IS LOAD-BEARING AND I DELETED IT ONCE. Commit 5196018 turned a working
        * `hat = $${n++}` into `hat = ${n++}` — a scripted edit collapsed the doubled dollar — and added the two
@@ -488,23 +597,40 @@ router.patch('/:id',
        * `$${n++}` inside a template literal is ONE literal dollar plus the interpolation. Anything that
        * rewrites these lines must preserve both.
        */
-      if ('hat'          in req.body) { sets.push(`hat = $${n++}`);          vals.push(req.body.hat); }
+      if ('hat' in req.body) {
+        sets.push(`hat = $${index++}`);
+        vals.push(req.body.hat);
+      }
       /* ⚠️ b173 MAY NOT BE APPLIED YET. Writing to a column that does not exist is Postgres 42703 and fails the
          WHOLE PATCH, not just this field — so the level is not written until the migration lands, and `hat`
          (which the UI sends alongside for exactly this window) carries the change on its own. lib/schema.js. */
       const _lvlCols = await schema.hasColumn('identities', 'access_level');
-      if (_lvlCols && 'access_level' in req.body) { sets.push(`access_level = $${n++}`); vals.push(req.body.access_level); }
+      if (_lvlCols && 'access_level' in req.body) {
+        sets.push(`access_level = $${index++}`);
+        vals.push(req.body.access_level);
+      }
       /* ⚠️ REACH IS THE ENTITY'S TO GRANT, LIKE MONEY. Guarded above with can_see_costs: an actor calling this
          route is refused outright, so a co-assist cannot widen their own reach. */
-      if (_lvlCols && 'whole_entity' in req.body) { sets.push(`whole_entity = $${n++}`); vals.push(!!req.body.whole_entity); }
+      if (_lvlCols && 'whole_entity' in req.body) {
+        sets.push(`whole_entity = $${index++}`);
+        vals.push(!!req.body.whole_entity);
+      }
       /* b145 — the ONLY way this column is ever set. Guarded above: an actor calling this route is refused. */
-      if ('can_see_costs' in req.body) { sets.push(`can_see_costs = $${n++}`); vals.push(!!req.body.can_see_costs); }
-      if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs' });
+      if ('can_see_costs' in req.body) {
+        sets.push(`can_see_costs = $${index++}`);
+        vals.push(!!req.body.can_see_costs);
+      }
+      if (!sets.length)
+        return res
+          .status(400)
+          .json({ error: 'Nothing to update', message: 'Provide display_name, actor_role, phone, email, max_tasks, hat, or can_see_costs' });
       vals.push(actor_id, entity_id);
       const r = await db(
         `UPDATE identities SET ${sets.join(', ')}
-         WHERE identity_id = $${n++} AND parent_entity_id = $${n} AND identity_type = 'actor'
-         RETURNING identity_id, display_name, actor_role, phone, email, max_tasks, hat, can_see_costs${_lvlCols ? ', access_level, whole_entity' : ''}`, vals);
+         WHERE identity_id = $${index++} AND parent_entity_id = $${index} AND identity_type = 'actor'
+         RETURNING identity_id, display_name, actor_role, phone, email, max_tasks, hat, can_see_costs${_lvlCols ? ', access_level, whole_entity' : ''}`,
+        vals
+      );
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found' });
       /* ⭐ The audit trail (b172). ONE EVENT PER ACCESS FIELD THAT MOVED — a PATCH setting both hat and
          can_see_costs is TWO access changes, and collapsing them loses which one a reason referred to.
@@ -520,18 +646,19 @@ router.patch('/:id',
        * is cheap and empty is worth less than nothing, because it is believed.
        */
       /* ⚠️ the change stands either way; a lost audit row is SAID — in the answer and in the log (review 2026-09-25) */
-      const audit = await withEntity(entity_id, (edb) => accessEvents.recordChanges((sql, args) => edb.query(sql, args), {
-        entity_id,
-        subject_identity_id: actor_id,
-        before: beforeRow,
-        after: r.rows[0],
-        changed_by: req.identity && req.identity.identity_id,
-        reason: (req.body.reason || '').trim() || null,
-      }));
+      const audit = await withEntity(entity_id, (entityDb) =>
+        accessEvents.recordChanges((sql, args) => entityDb.query(sql, args), {
+          entity_id,
+          subject_identity_id: actor_id,
+          before: beforeRow,
+          after: r.rows[0],
+          changed_by: req.identity && req.identity.identity_id,
+          reason: (req.body.reason || '').trim() || null
+        })
+      );
       if (audit && audit.failed) console.error('[actors] access change saved but', audit.failed, 'audit row(s) lost', { actor_id });
 
-      res.json({ message: 'Co-assist updated', actor: r.rows[0],
-                 audit: { recorded: (audit && audit.written) || 0, failed: (audit && audit.failed) || 0 } });
+      res.json({ message: 'Co-assist updated', actor: r.rows[0], audit: { recorded: (audit && audit.written) || 0, failed: (audit && audit.failed) || 0 } });
     } catch (err) {
       if (emailTaken(err)) return res.status(409).json(EMAIL_TAKEN);
       console.error('Update actor error:', err.message);
@@ -549,7 +676,8 @@ router.post('/set-pin', auth, signin.pinChecks, validate, signin.handlers.pin);
 
 // ── PUT /api/actors/change-pin ──────────────────────────────
 // Actor changes own PIN from profile page
-router.put('/change-pin',
+router.put(
+  '/change-pin',
   auth,
   [
     body('current_pin').isLength({ min: 4, max: 4 }).isNumeric(),
@@ -557,7 +685,7 @@ router.put('/change-pin',
     body('confirm_pin').custom((val, { req }) => {
       if (val !== req.body.new_pin) throw new Error('New PINs do not match');
       return true;
-    }),
+    })
   ],
   validate,
   async (req, res) => {
@@ -566,10 +694,7 @@ router.put('/change-pin',
       if (req.identity.identity_type !== 'actor') {
         return res.status(400).json({ error: 'Only actors can change PIN' });
       }
-      const actor = await db(
-        `SELECT pin_hash, pin_locked_at FROM identities WHERE identity_id = $1`,
-        [identity_id]
-      );
+      const actor = await db(`SELECT pin_hash, pin_locked_at FROM identities WHERE identity_id = $1`, [identity_id]);
       if (actor.rows.length === 0) {
         return res.status(404).json({ error: 'Actor not found' });
       }
@@ -581,7 +706,7 @@ router.put('/change-pin',
         });
       }
       // Verify current PIN
-      const match = await identityAuth.pinMatches(req.body.current_pin, a.pin_hash);   // the one PIN engine
+      const match = await identityAuth.pinMatches(req.body.current_pin, a.pin_hash); // the one PIN engine
       if (!match) {
         return res.status(400).json({
           error: 'Incorrect PIN',
@@ -604,48 +729,45 @@ router.put('/change-pin',
 
 // ── DELETE /api/actors/:id/pin ──────────────────────────────
 // Admin clears actor PIN — forces new PIN setup on next OTP login
-router.delete('/:id/pin',
-  auth, ownerWrite,
-  async (req, res) => {
-    try {
-      const entity_id = req.identity.identity_id;
-      const actor_id  = req.params.id;
-      // Verify actor belongs to this entity
-      const actor = await db(
-        `SELECT identity_id, display_name, actor_key FROM identities
+router.delete('/:id/pin', auth, ownerWrite, async (req, res) => {
+  try {
+    const entity_id = req.identity.identity_id;
+    const actor_id = req.params.id;
+    // Verify actor belongs to this entity
+    const actor = await db(
+      `SELECT identity_id, display_name, actor_key FROM identities
          WHERE identity_id = $1 AND parent_entity_id = $2
          AND identity_type = 'actor'`,
-        [actor_id, entity_id]
-      );
-      if (actor.rows.length === 0) {
-        return res.status(404).json({ error: 'Actor not found' });
-      }
-      // Clear the PIN AND issue a fresh OTP. The actor's original OTP was consumed at first login, so without
-      // a new one they'd have no way back in. One admin action = full re-onboard: new OTP -> they set a new PIN.
-      // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
-      const toEmail = await actorEmail(actor_id);
-      const refused = empCode.refusal(toEmail);
-      if (refused) return res.status(refused.status).json(refused.body);
-      const { otp, expires } = empCode.mint();
-      await db(
-        `UPDATE identities
+      [actor_id, entity_id]
+    );
+    if (actor.rows.length === 0) {
+      return res.status(404).json({ error: 'Actor not found' });
+    }
+    // Clear the PIN AND issue a fresh OTP. The actor's original OTP was consumed at first login, so without
+    // a new one they'd have no way back in. One admin action = full re-onboard: new OTP -> they set a new PIN.
+    // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
+    const toEmail = await actorEmail(actor_id);
+    const refused = empCode.refusal(toEmail);
+    if (refused) return res.status(refused.status).json(refused.body);
+    const { otp, expires } = empCode.mint();
+    await db(
+      `UPDATE identities
          SET pin_hash = NULL, pin_set_at = NULL, pin_attempts = 0, pin_locked_at = NULL,
              otp_code = $2, otp_expires_at = $3
          WHERE identity_id = $1`,
-        [actor_id, otp, expires]
-      );
-      res.json({
-        message: 'PIN reset — share the new one-time code; they set a new PIN on next login',
-        actor_name: actor.rows[0].display_name,
-        ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp })),
-        ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-        login_format: await loginIdFor(actor.rows[0].actor_key, req)
-      });
-    } catch (err) {
-      res.status(500).json({ error: 'Clear PIN failed', message: safeErr(err) });
-    }
+      [actor_id, otp, expires]
+    );
+    res.json({
+      message: 'PIN reset — share the new one-time code; they set a new PIN on next login',
+      actor_name: actor.rows[0].display_name,
+      ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp })),
+      ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
+      login_format: await loginIdFor(actor.rows[0].actor_key, req)
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Clear PIN failed', message: safeErr(err) });
   }
-);
+});
 
 // ── POST /api/actors/login — ALIAS (M06): the SAME handler as POST /api/signin/verify, on its actor-login door ──────
 // key@Display Name or key@user-id · OTP the first time, PIN after. The lookup, the words and the token are unchanged;
@@ -654,42 +776,40 @@ router.post('/login', signin.door('actor-login'), signin.verifyChecks, validate,
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
-router.get('/',
-  auth,
-  async (req, res) => {
-    try {
-      // Actors can also call this to see colleagues — use parent entity id
-      const entity_id = auth.entityOf(req);
-      const status     = req.query.status || 'active';
-      const actor_type = req.query.type   || null;
-      const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
+router.get('/', auth, async (req, res) => {
+  try {
+    // Actors can also call this to see colleagues — use parent entity id
+    const entity_id = auth.entityOf(req);
+    const status = req.query.status || 'active';
+    const actor_type = req.query.type || null;
+    const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
 
-      let where = `parent_entity_id = $1 AND identity_type = 'actor'`;
-      const params = [entity_id];
-      let p = 1;
+    let where = `parent_entity_id = $1 AND identity_type = 'actor'`;
+    const params = [entity_id];
+    let p = 1;
 
-      // Filter by status
-      if (status === 'active') {
-        where += ` AND break_status = 'active'`;
-      } else if (status === 'leave') {
-        where += ` AND break_status IN ('short_break','leave')`;
-      } else if (status === 'inactive') {
-        where += ` AND break_status = 'deactivated'`;
-      } else if (status === 'removed') {
-        where += ` AND break_status = 'removed'`;
-      } else if (status === 'all') {
-        // No filter
-      }
+    // Filter by status
+    if (status === 'active') {
+      where += ` AND break_status = 'active'`;
+    } else if (status === 'leave') {
+      where += ` AND break_status IN ('short_break','leave')`;
+    } else if (status === 'inactive') {
+      where += ` AND break_status = 'deactivated'`;
+    } else if (status === 'removed') {
+      where += ` AND break_status = 'removed'`;
+    } else if (status === 'all') {
+      // No filter
+    }
 
-      // Filter by type
-      if (actor_type) {
-        p++;
-        where += ` AND actor_type = $${p}`;
-        params.push(actor_type);
-      }
+    // Filter by type
+    if (actor_type) {
+      p++;
+      where += ` AND actor_type = $${p}`;
+      params.push(actor_type);
+    }
 
-      const result = await db(
-        `SELECT
+    const result = await db(
+      `SELECT
            identity_id, bridge_id, display_name,
            actor_key, actor_role, actor_type, hat,
            break_status, break_type, break_started_at,
@@ -713,110 +833,149 @@ router.get('/',
              WHEN 'removed' THEN 5
            END,
            display_name ASC`,
-        params
-      );
+      params
+    );
 
-      // Summary counts
-      const counts = await db(
-        `SELECT
+    // Summary counts
+    const counts = await db(
+      `SELECT
            break_status,
            COUNT(*) as count
          FROM identities
          WHERE parent_entity_id = $1
          AND identity_type = 'actor'
          GROUP BY break_status`,
-        [entity_id]
-      );
+      [entity_id]
+    );
 
-      const summary = {};
-      counts.rows.forEach(r => { summary[r.break_status] = parseInt(r.count); });
+    const summary = {};
+    counts.rows.forEach((item) => {
+      summary[item.break_status] = parseInt(item.count);
+    });
 
-      res.json(Object.assign(PL.pageOut('actors', result.rows, pg), {
+    res.json(
+      Object.assign(PL.pageOut('actors', result.rows, pg), {
         summary: {
-          active:      summary.active      || 0,
-          on_break:    (summary.short_break || 0) + (summary.leave || 0),
+          active: summary.active || 0,
+          on_break: (summary.short_break || 0) + (summary.leave || 0),
           deactivated: summary.deactivated || 0,
-          removed:     summary.removed     || 0,
-          total:       result.rows.length
+          removed: summary.removed || 0,
+          total: result.rows.length
         }
-      }));
-
-    } catch (err) {
-      console.error('List actors error:', err.message);
-      res.status(500).json({ error: 'Failed to list actors', message: safeErr(err) });
-    }
+      })
+    );
+  } catch (err) {
+    console.error('List actors error:', err.message);
+    res.status(500).json({ error: 'Failed to list actors', message: safeErr(err) });
   }
-);
+});
 
 // ── POST /api/actors/:id/otp ─────────────────────────────────
 // Regenerate OTP for actor — admin only
-router.post('/:id/otp',
-  auth, ownerWrite,
-  async (req, res) => {
-    try {
-      const entity_id = req.identity.identity_id;
-      const actor_id  = req.params.id;
+router.post('/:id/otp', auth, ownerWrite, async (req, res) => {
+  try {
+    const entity_id = req.identity.identity_id;
+    const actor_id = req.params.id;
 
-      // Verify actor belongs to this entity
-      const actor = await db(
-        `SELECT identity_id, display_name, actor_key
+    // Verify actor belongs to this entity
+    const actor = await db(
+      `SELECT identity_id, display_name, actor_key
          FROM identities
          WHERE identity_id = $1
          AND parent_entity_id = $2
          AND identity_type = 'actor'`,
-        [actor_id, entity_id]
-      );
+      [actor_id, entity_id]
+    );
 
-      if (actor.rows.length === 0) {
-        return res.status(404).json({ error: 'Not found', message: 'Actor not found' });
-      }
+    if (actor.rows.length === 0) {
+      return res.status(404).json({ error: 'Not found', message: 'Actor not found' });
+    }
 
-      // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
-      const toEmail = await actorEmail(actor_id);
-      const refused = empCode.refusal(toEmail);
-      if (refused) return res.status(refused.status).json(refused.body);
-      const { otp, expires } = empCode.mint();
+    // ⭐ [capability: sign-in] fixedOtp('entity') — see lib/identity-auth.js.
+    const toEmail = await actorEmail(actor_id);
+    const refused = empCode.refusal(toEmail);
+    if (refused) return res.status(refused.status).json(refused.body);
+    const { otp, expires } = empCode.mint();
 
-      await db(
-        `UPDATE identities
+    await db(
+      `UPDATE identities
          SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0
          WHERE identity_id = $3`,
-        [otp, expires, actor_id]
-      );
+      [otp, expires, actor_id]
+    );
 
-      res.json({
-        message: 'OTP reset successfully',
-        actor_name: actor.rows[0].display_name,
-        ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp })),
-        ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
-        login_format: await loginIdFor(actor.rows[0].actor_key, req),
-        expires_in: '7 days'
-      });
-
-    } catch (err) {
-      res.status(500).json({ error: 'OTP reset failed', message: safeErr(err) });
-    }
+    res.json({
+      message: 'OTP reset successfully',
+      actor_name: actor.rows[0].display_name,
+      ...(await empCode.deliver({ to: toEmail, name: actor.rows[0].display_name, otp })),
+      ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
+      login_format: await loginIdFor(actor.rows[0].actor_key, req),
+      expires_in: '7 days'
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'OTP reset failed', message: safeErr(err) });
   }
-);
+});
+
+/**
+ * recordBreak(entity_id, subject, before, after, by, reason) → { recorded, failed } — PEOPLE-SRV1 (compliance, 2026-10-14):
+ * THE OWNER'S ACTS ON A PERSON'S ACCESS GO ON THE IAM TRAIL. lib/access-events (b172, IAM-SPEC §29) already names
+ * break_status → break_changed and PATCH /:id records it, but switch off · remove · back on (PUT /:id/status) and away · back
+ * (PUT /break — now the owner's act too, G6) wrote no event: the trail missed exactly the acts a reviewer asks about.
+ * One helper, both routes. It runs AFTER the action's COMMIT, in its own withEntity (access_events is under RLS, like the
+ * PATCH's): a refused INSERT inside the action's transaction would abort the action, and the trail must never fail the act.
+ * A lost row is SAID — access-events logs it, this warns, and the answer carries `audit` (as the PATCH's does).
+ */
+async function recordBreak(entity_id, subject, before, after, by, reason) {
+  if (before === after) return { recorded: 0, failed: 0 };
+  const out = await withEntity(entity_id, (edb) =>
+    accessEvents.recordChanges((sql, args) => edb.query(sql, args), {
+      entity_id,
+      subject_identity_id: subject,
+      before: { break_status: before || null },
+      after: { break_status: after },
+      changed_by: by,
+      reason
+    })
+  );
+  if (out.failed) logger.warn("actors: the person's state changed but the access event was not written — the trail has a gap", { subject, after, reason });
+  return { recorded: out.written, failed: out.failed };
+}
+
+/**
+ * clearDisputeHandler(entity_id, actor_id) → how many open disputes stopped being routed to this (gone) person — 0 when the write fails (said in the log).
+ * B1 RLS (b68): chit_disputes is per-copy + FORCE RLS, so this MUST run under withEntity(me) — a plain query would fail closed and silently leave the gone actor as handler.
+ */
+async function clearDisputeHandler(entity_id, actor_id) {
+  try {
+    const cleared = await withEntity(entity_id, (client) =>
+      client.query(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id])
+    );
+    return (cleared && cleared.rowCount) || 0;
+  } catch (e) {
+    logger.fellBack('actors PUT /:id/status: the write failed — carried on without it', e);
+    return 0;
+  }
+}
 
 // ── PUT /api/actors/:id/status ───────────────────────────────
 // Deactivate or remove actor — admin only
-router.put('/:id/status',
-  auth, ownerWrite,
+router.put(
+  '/:id/status',
+  auth,
+  ownerWrite,
   [
-    body('action').isIn(['deactivate','remove','reactivate'])
-      .withMessage('Action must be deactivate remove or reactivate'),
-    body('task_action').optional().isIn(['pool','actor'])
-      .withMessage('task_action must be pool or actor'),
+    body('action').isIn(['deactivate', 'remove', 'reactivate']).withMessage('Action must be deactivate remove or reactivate'),
+    body('task_action').optional().isIn(['pool', 'actor']).withMessage('task_action must be pool or actor'),
     body('target_actor_id').optional().isUUID(),
     body('return_date').optional().isDate(),
-    body('confirm').optional().equals('REMOVE'),
+    body('confirm').optional().equals('REMOVE')
   ],
   validate,
   async (req, res) => {
     try {
       const entity_id = req.identity.identity_id;
-      const actor_id  = req.params.id;
+      const actor_id = req.params.id;
       const { action, task_action, target_actor_id, return_date, confirm } = req.body;
 
       // Verify actor belongs to entity
@@ -839,18 +998,18 @@ router.put('/:id/status',
       // Remove requires REMOVE confirmation
       if (action === 'remove' && confirm !== 'REMOVE') {
         return res.status(400).json({
-          error: 'Confirmation required', code: 'CONFIRM_REMOVE',   /* PEOPLE-SRV1: the screen asks "Remove?" on this code, never on the words */
+          error: 'Confirmation required',
+          code: 'CONFIRM_REMOVE' /* PEOPLE-SRV1: the screen asks "Remove?" on this code, never on the words */,
           message: 'Send confirm: REMOVE to permanently remove this actor',
-          tasks_warning: a.current_task_count > 0
-            ? `Actor has ${a.current_task_count} active tasks — route them first`
-            : null
+          tasks_warning: a.current_task_count > 0 ? `Actor has ${a.current_task_count} active tasks — route them first` : null
         });
       }
 
       // If tasks exist — require routing decision
       if (a.current_task_count > 0 && !task_action) {
         return res.status(400).json({
-          error: 'Tasks must be routed', code: 'TASKS_TO_ROUTE',
+          error: 'Tasks must be routed',
+          code: 'TASKS_TO_ROUTE',
           message: `Actor has ${a.current_task_count} active tasks`,
           required: 'Send task_action: pool (return to entity) or actor (pass to colleague)',
           actor_tasks: a.current_task_count
@@ -874,8 +1033,10 @@ router.put('/:id/status',
            WHERE identity_id = $3`,
           [otp, expires, actor_id]
         );
+        const nestedAudit = await recordBreak(entity_id, actor_id, a.break_status, 'active', req.identity.identity_id, 'reactivate');
         return res.json({
           message: 'Actor reactivated',
+          audit: nestedAudit,
           ...(await empCode.deliver({ to: toEmail, name: a.display_name, otp })),
           ...(devOtp.mayExposeOtp() && { dev_otp: otp }),
           login_format: await loginIdFor(a.actor_key, req)
@@ -897,8 +1058,13 @@ router.put('/:id/status',
       }
 
       // Atomic: route this actor's active tasks AND apply the status change together.
-      let tasks_routed = 0, covers_removed = 0, was_default_assignee = false, disputes_cleared = 0;
-      let signed_out = { sessions: 0, keys_closed: 0, keys_revoked: 0 }, endedJtis = [], endedKeys = [];
+      let tasks_routed = 0,
+        covers_removed = 0,
+        was_default_assignee = false,
+        disputes_cleared = 0;
+      let signed_out = { sessions: 0, keys_closed: 0, keys_revoked: 0 },
+        endedJtis = [],
+        endedKeys = [];
       // B1 RLS: all task-routing chit_status updates are this entity's own rows -> withEntity(me).
       await withEntity(entity_id, async (client) => {
         if (a.current_task_count > 0 && task_action) {
@@ -930,10 +1096,16 @@ router.put('/:id/status',
         }
         // Cover cleanup: a deactivated/removed actor can no longer be anyone's leave-cover — clear inbound
         // pointers too (its own cover pointer was cleared above). Leaves no dangling cover to a gone actor.
-        const _cc = await client.query(`UPDATE identities SET delegate_actor_id = NULL WHERE delegate_actor_id = $1 AND parent_entity_id = $2`, [actor_id, entity_id]);
+        const _cc = await client.query(`UPDATE identities SET delegate_actor_id = NULL WHERE delegate_actor_id = $1 AND parent_entity_id = $2`, [
+          actor_id,
+          entity_id
+        ]);
         covers_removed = _cc.rowCount || 0;
         // Default auto-assign assignee: if it points to this actor, clear it (would otherwise route to a gone actor).
-        const _da = await client.query(`UPDATE entity_actor_settings SET default_assignee_actor_id = NULL WHERE entity_id = $1 AND default_assignee_actor_id = $2`, [entity_id, actor_id]);
+        const _da = await client.query(
+          `UPDATE entity_actor_settings SET default_assignee_actor_id = NULL WHERE entity_id = $1 AND default_assignee_actor_id = $2`,
+          [entity_id, actor_id]
+        );
         was_default_assignee = (_da.rowCount || 0) > 0;
         /* PEOPLE-SRV1 (G4): SWITCHED OFF OR REMOVED = SIGNED OUT, in this same transaction. Every phone/browser session they
            opened is unlisted (lib/person-session closeBy) and every key they opened ends (routes/keys endKeysBy: a counter key is
@@ -942,26 +1114,23 @@ router.put('/:id/status',
         const ss = await personSession.closeBy((fn) => fn(client), entity_id, actor_id);
         const kk = await keysRoute.endKeysBy(client, entity_id, actor_id);
         signed_out = { sessions: ss.ended, keys_closed: kk.closed, keys_revoked: kk.revoked };
-        endedJtis = ss.jtis; endedKeys = kk.jtis;
+        endedJtis = ss.jtis;
+        endedKeys = kk.jtis;
       });
       /* after COMMIT: a request in between may have re-cached the old "listed" answer */
       endedJtis.forEach(personSession.forget);
       endedKeys.forEach(auth.forgetKey);
 
-      // Drop any dispute-handler assignment to this actor so open disputes aren't routed to a gone person.
-      // B1 RLS (b68): chit_disputes is now per-copy + FORCE RLS, so this MUST run under withEntity(me) — a plain
-      // query would fail-closed (0 rows) and silently leave the gone actor as handler. This entity's own copies only.
-      try {
-        await withEntity(entity_id, async (client) => {
-          const _dh = await client.query(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id]);
-          disputes_cleared = (_dh && _dh.rowCount) || 0;
-        });
-      } catch (e) { logger.fellBack('actors PUT /:id/status: the write failed — carried on without it', e); }
+      disputes_cleared = await clearDisputeHandler(entity_id, actor_id);
+
+      /* PEOPLE-SRV1 (compliance): switched off / removed goes on the IAM trail — by whom, from what state */
+      const audit = await recordBreak(entity_id, actor_id, a.break_status, action === 'remove' ? 'removed' : 'deactivated', req.identity.identity_id, action);
 
       res.json({
         message: `Actor ${action}d successfully`,
         actor_name: a.display_name,
         action,
+        audit,
         tasks_routed,
         task_action: task_action || null,
         return_date: return_date || null,
@@ -971,7 +1140,6 @@ router.put('/:id/status',
         signed_out,
         had_cover: !!a.delegate_actor_id
       });
-
     } catch (err) {
       console.error('Actor status error:', err.message);
       res.status(500).json({ error: 'Status change failed', message: safeErr(err) });
@@ -982,58 +1150,76 @@ router.put('/:id/status',
 /**
  * breakSubject(req) — PEOPLE-SRV1 (G6): WHOSE break this is. A person says their own (no actor_id, or their own id); the OWNER
  * marks someone away or back by naming them (`actor_id`) — owner only (ownerWrite, before this runs), one of the shop's own
- * people, not switched off or removed. → { id, name|null, other } or { status, body } to refuse with (a code on every refusal).
+ * people, not switched off or removed. → { id, name|null, other, before } or { status, body } to refuse with (a code on every
+ * refusal). ONE read serves both paths (compliance): `before` is the state the access event says the person was in — a person's
+ * own break reads their row too (+1 trip, counted by hand) rather than writing "was null" on the trail.
  */
 async function breakSubject(req) {
-  const asked = req.body.actor_id;
-  if (!asked || asked === req.identity.identity_id) {
-    if (req.identity.identity_type !== 'actor') return { status: 400, body: { error: 'Name the person', code: 'NAME_THE_PERSON', message: 'Say who is away — pick the person.' } };
-    return { id: req.identity.identity_id, name: null, other: false };
-  }
+  const asked = req.body.actor_id,
+    isOwnBreak = !asked || asked === req.identity.identity_id;
+  if (isOwnBreak && req.identity.identity_type !== 'actor')
+    return { status: 400, body: { error: 'Name the person', code: 'NAME_THE_PERSON', message: 'Say who is away — pick the person.' } };
   const r = await db(
     `SELECT identity_id, display_name, break_status FROM identities
       WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-    [asked, auth.entityOf(req)]);
+    [isOwnBreak ? req.identity.identity_id : asked, auth.entityOf(req)]
+  );
   const t = r.rows[0];
   if (!t || t.break_status === 'removed') return { status: 404, body: { error: 'Not found', code: 'NOT_FOUND', message: 'That person is not in your shop.' } };
-  if (t.break_status === 'deactivated') return { status: 400, body: { error: 'Switched off', code: 'SWITCHED_OFF', message: t.display_name + ' is switched off. Switch them on first.' } };
-  return { id: t.identity_id, name: t.display_name, other: true };
+  if (!isOwnBreak && t.break_status === 'deactivated')
+    return { status: 400, body: { error: 'Switched off', code: 'SWITCHED_OFF', message: t.display_name + ' is switched off. Switch them on first.' } };
+  return { id: t.identity_id, name: isOwnBreak ? null : t.display_name, other: !isOwnBreak, before: t.break_status };
 }
 /* the owner gate only when somebody ELSE is named — a person's own break stays theirs (hat-gate lets it through) */
-const ownerWhenOther = (req, res, next) => (req.body && req.body.actor_id && req.body.actor_id !== req.identity.identity_id ? ownerWrite(req, res, next) : next());
+const ownerWhenOther = (req, res, next) =>
+  req.body && req.body.actor_id && req.body.actor_id !== req.identity.identity_id ? ownerWrite(req, res, next) : next();
 
+/**
+ * coverConflict(actor_id, who, youre) → a 400 body when going off would leave someone uncovered (they cover somebody who is away, or their
+ * own leave-cover is away), else null. PEOPLE-SRV1: split out of PUT /break so the handler does not grow.
+ */
+async function coverConflict(actor_id, subject, youre) {
+  const refusal = (message) => ({ error: 'Cover conflict', code: 'COVER_CONFLICT', message });
+  const deps = (await db(`SELECT display_name FROM identities WHERE delegate_actor_id = $1 AND break_status IN ('short_break','leave')`, [actor_id])).rows;
+  if (deps.length)
+    return refusal(
+      `${youre} covering ${deps.map((item) => item.display_name).join(', ')} subject ${deps.length > 1 ? 'are' : 'is'} away — ${subject.other ? 'they' : 'you'} can't go off until they're back.`
+    );
+  const covered = (await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1`, [actor_id])).rows[0];
+  if (!covered || !covered.delegate_actor_id) return null;
+  const cover = (await db(`SELECT display_name, break_status FROM identities WHERE identity_id = $1`, [covered.delegate_actor_id])).rows[0];
+  return cover && cover.break_status !== 'active'
+    ? refusal(`${subject.other ? subject.name + "'s" : 'Your'} leave-cover ${cover.display_name} is also away — both can't be off at once.`)
+    : null;
+}
 // ── PUT /api/actors/break ────────────────────────────────────
 // Actor goes on break — short or leave. PEOPLE-SRV1 (G6): the owner may name the person (actor_id).
-router.put('/break',
+router.put(
+  '/break',
   auth,
   [
-    body('break_type').isIn(['short_break','leave','end_break'])
-      .withMessage('break_type must be short_break leave or end_break'),
-    body('task_action').optional().isIn(['hold','pool','actor']),
+    body('break_type').isIn(['short_break', 'leave', 'end_break']).withMessage('break_type must be short_break leave or end_break'),
+    body('task_action').optional().isIn(['hold', 'pool', 'actor']),
     body('target_actor_id').optional().isUUID(),
-    body('actor_id').optional().isUUID(),
+    body('actor_id').optional().isUUID()
   ],
   validate,
   ownerWhenOther,
   async (req, res) => {
     try {
-      const entity_id = auth.entityOf(req);   // B1 RLS context
+      const entity_id = auth.entityOf(req); // B1 RLS context
       const { break_type, task_action, target_actor_id } = req.body;
       const who = await breakSubject(req);
       if (who.status) return res.status(who.status).json(who.body);
       const actor_id = who.id;
-      const you = who.other ? who.name : 'You', youre = who.other ? who.name + ' is' : "You're";
+      const you = who.other ? who.name : 'You',
+        youre = who.other ? who.name + ' is' : "You're";
+      /* compliance: every break goes on the IAM trail — whose act (the owner's or the person's own), from what state */
+      const trail = (after) => recordBreak(entity_id, actor_id, who.before, after, req.identity.identity_id, (who.other ? 'owner: ' : 'own: ') + break_type);
 
       // Buddy-cover concurrency: don't leave anyone uncovered when going off (both directions; skip on end_break).
-      if (break_type !== 'end_break') {
-        const deps = (await db(`SELECT display_name FROM identities WHERE delegate_actor_id = $1 AND break_status IN ('short_break','leave')`, [actor_id])).rows;
-        if (deps.length) return res.status(400).json({ error: 'Cover conflict', code: 'COVER_CONFLICT', message: `${youre} covering ${deps.map(d=>d.display_name).join(', ')} who ${deps.length>1?'are':'is'} away — ${who.other ? 'they' : 'you'} can't go off until they're back.` });
-        const me = (await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1`, [actor_id])).rows[0];
-        if (me && me.delegate_actor_id) {
-          const cov = (await db(`SELECT display_name, break_status FROM identities WHERE identity_id = $1`, [me.delegate_actor_id])).rows[0];
-          if (cov && cov.break_status !== 'active') return res.status(400).json({ error: 'Cover conflict', code: 'COVER_CONFLICT', message: `${who.other ? who.name + "'s" : 'Your'} leave-cover ${cov.display_name} is also away — both can't be off at once.` });
-        }
-      }
+      const conflict = break_type !== 'end_break' && (await coverConflict(actor_id, who, youre));
+      if (conflict) return res.status(400).json(conflict);
 
       if (break_type === 'end_break') {
         // Return from any break
@@ -1045,7 +1231,12 @@ router.put('/break',
            WHERE identity_id = $1`,
           [actor_id]
         );
-        return res.json({ message: who.other ? who.name + ' is back' : 'Break ended — you are now active', actor_id, state: 'on' });
+        return res.json({
+          message: who.other ? who.name + ' is back' : 'Break ended — you are now active',
+          actor_id,
+          state: 'on',
+          audit: await trail('active')
+        });
       }
 
       if (break_type === 'short_break') {
@@ -1060,25 +1251,30 @@ router.put('/break',
         );
         return res.json({
           message: who.other ? who.name + ' is on a short break — their tasks are held' : 'Short break started — your tasks are held',
-          actor_id, state: 'away',
+          actor_id,
+          state: 'away',
           break_type: 'short_break',
-          tasks: 'held — nobody else can pull them'
+          tasks: 'held — nobody else can pull them',
+          audit: await trail('short_break')
         });
       }
 
       if (break_type === 'leave') {
         // Tasks must be routed before leave confirmed — active tasks only
-        const openTasks = await withEntity(entity_id, (c) => c.query(
-          `SELECT COUNT(*) as count FROM chit_status
+        const openTasks = await withEntity(entity_id, (c) =>
+          c.query(
+            `SELECT COUNT(*) as count FROM chit_status
            WHERE assigned_to_actor_id = $1
            AND current_status NOT IN (${railActions.CLOSED_SQL})`,
-          [actor_id]
-        ));
+            [actor_id]
+          )
+        );
         const count = parseInt(openTasks.rows[0].count);
 
         if (count > 0 && !task_action) {
           return res.status(400).json({
-            error: 'Route tasks first', code: 'TASKS_TO_ROUTE',
+            error: 'Route tasks first',
+            code: 'TASKS_TO_ROUTE',
             message: `${you} ${who.other ? 'has' : 'have'} ${count} active tasks`,
             required: 'Send task_action: pool (return to entity) or actor (pass to colleague)',
             task_count: count
@@ -1123,13 +1319,14 @@ router.put('/break',
 
         return res.json({
           message: who.other ? who.name + ' is on leave — tasks routed' : 'Leave started — tasks routed',
-          actor_id, state: 'away',
+          actor_id,
+          state: 'away',
           break_type: 'leave',
           task_action: task_action || null,
-          tasks_routed: count
+          tasks_routed: count,
+          audit: await trail('leave')
         });
       }
-
     } catch (err) {
       console.error('Break error:', err.message);
       res.status(500).json({ error: 'Break failed', message: safeErr(err) });
@@ -1139,169 +1336,159 @@ router.put('/break',
 
 // ── PUT /api/actors/assign/:chit_id ─────────────────────────
 // Pull push or return a chit assignment
-router.put('/assign/:chit_id',
+router.put(
+  '/assign/:chit_id',
   auth,
-  [
-    body('action').isIn(['pull','push','return'])
-      .withMessage('Action must be pull push or return'),
-    body('target_actor_id').optional().isUUID(),
-  ],
+  [body('action').isIn(['pull', 'push', 'return']).withMessage('Action must be pull push or return'), body('target_actor_id').optional().isUUID()],
   validate,
   async (req, res) => {
     try {
-      const chit_id      = req.params.chit_id;
+      const chit_id = req.params.chit_id;
       // entity_id   = participant entity context (parent for actors, self for entities)
       // action_by_* = whoever is performing — entity admin or actor, never remapped
-      const entity_id    = auth.entityOf(req);
-      const action_by_id   = req.identity.identity_id;
+      const entity_id = auth.entityOf(req);
+      const action_by_id = req.identity.identity_id;
       const action_by_name = req.identity.display_name;
       const { action, target_actor_id } = req.body;
 
       // B1 RLS: the whole assignment (chit_status + state_log, all own-entity) runs in withEntity(me); `db` is
       // shadowed to the tx client so the existing calls flow through the context (and the assign becomes atomic).
       await withEntity(entity_id, async (client) => {
-      const db = (t, p) => client.query(t, p);
-      // Verify chit belongs to this entity
-      const chit = await db(
-        `SELECT cs.*, i.display_name as actor_name
+        const handle = (t, p) => client.query(t, p);
+        // Verify chit belongs to this entity
+        const chit = await handle(
+          `SELECT cs.*, i.display_name as actor_name
          FROM chit_status cs
          LEFT JOIN identities i ON i.identity_id = cs.assigned_to_actor_id
          WHERE cs.chit_id = $1 AND cs.entity_id = $2`,
-        [chit_id, entity_id]
-      );
+          [chit_id, entity_id]
+        );
 
-      if (chit.rows.length === 0) {
-        return res.status(404).json({ error: 'Chit not found' });
-      }
-
-      const cs = chit.rows[0];
-
-      if (action === 'pull') {
-        // Can only pull if unassigned
-        if (cs.assigned_to_actor_id) {
-          return res.status(400).json({
-            error: 'Already assigned',
-            message: `Already assigned to ${cs.actor_name}`
-          });
+        if (chit.rows.length === 0) {
+          return res.status(404).json({ error: 'Chit not found' });
         }
-        /* W1-RAIL: the one assignment writer — the UPDATE and the back-to-pending step (rail-status statusGate) in one call */
-        const movedOnPull = await assignChit(client, entity_id, chit_id, { identity_id: action_by_id, display_name: action_by_name }, 'pull',
-          { me: railActions.meOf(req) });
-        await taskCount(db, action_by_id, 'take');
-        // Log assignment event
-        await db(
-          `INSERT INTO state_log
+
+        const cs = chit.rows[0];
+
+        if (action === 'pull') {
+          // Can only pull if unassigned
+          if (cs.assigned_to_actor_id) {
+            return res.status(400).json({
+              error: 'Already assigned',
+              message: `Already assigned to ${cs.actor_name}`
+            });
+          }
+          /* W1-RAIL: the one assignment writer — the UPDATE and the back-to-pending step (rail-status statusGate) in one call */
+          const movedOnPull = await assignChit(client, entity_id, chit_id, { identity_id: action_by_id, display_name: action_by_name }, 'pull', {
+            me: railActions.meOf(req)
+          });
+          await taskCount(handle, action_by_id, 'take');
+          // Log assignment event
+          await handle(
+            `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
            SELECT $1, entity_id, 'assigned', $2, $3, $4
            FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
-          [chit_id, action_by_id, action_by_name,
-           `Pulled by ${action_by_name}`, entity_id]
-        );
-        // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
-        if (movedOnPull.moved) await db(
-          `INSERT INTO state_log
+            [chit_id, action_by_id, action_by_name, `Pulled by ${action_by_name}`, entity_id]
+          );
+          // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
+          if (movedOnPull.moved)
+            await handle(
+              `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
            SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
            FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
-          [chit_id, action_by_id, action_by_name,
-           movedOnPull.from,
-           `Reset to pending — pulled by ${action_by_name}`, entity_id]
-        );
-        return res.json({
-          message: 'Chit pulled to your My Task',
-          action: 'pull',
-          assigned_to: action_by_name,
-          new_status: 'pending'
-        });
-      }
-
-      if (action === 'push') {
-        if (!target_actor_id) {
-          return res.status(400).json({ error: 'target_actor_id required for push' });
+              [chit_id, action_by_id, action_by_name, movedOnPull.from, `Reset to pending — pulled by ${action_by_name}`, entity_id]
+            );
+          return res.json({
+            message: 'Chit pulled to your My Task',
+            action: 'pull',
+            assigned_to: action_by_name,
+            new_status: 'pending'
+          });
         }
-        const target = await db(
-          `SELECT identity_id, display_name, current_task_count, max_tasks
+
+        if (action === 'push') {
+          if (!target_actor_id) {
+            return res.status(400).json({ error: 'target_actor_id required for push' });
+          }
+          const target = await handle(
+            `SELECT identity_id, display_name, current_task_count, max_tasks
            FROM identities
            WHERE identity_id = $1
            AND parent_entity_id = $2
            AND break_status = 'active'
            AND hat IN ('act','manager')`,
-          [target_actor_id, entity_id]
-        );
-        if (target.rows.length === 0) {
-          return res.status(400).json({ error: 'Target actor not found or not active' });
-        }
-        const t = target.rows[0];
-        // Warning if overloaded
-        const overloaded = t.current_task_count >= t.max_tasks;
+            [target_actor_id, entity_id]
+          );
+          if (target.rows.length === 0) {
+            return res.status(400).json({ error: 'Target actor not found or not active' });
+          }
+          const t = target.rows[0];
+          // Warning if overloaded
+          const overloaded = t.current_task_count >= t.max_tasks;
 
-        // Reduce previous assignee count
-        if (cs.assigned_to_actor_id) {
-          await taskCount(db, cs.assigned_to_actor_id, 'release');
-        }
+          // Reduce previous assignee count
+          if (cs.assigned_to_actor_id) {
+            await taskCount(handle, cs.assigned_to_actor_id, 'release');
+          }
 
-        const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) });   /* W1-RAIL: the one writer */
-        await taskCount(db, t.identity_id, 'take');
-        // Log assignment — differentiate initial push from actor-to-actor transfer
-        const isTransfer = !!cs.assigned_to_actor_id;
-        const assignDetail = isTransfer
-          ? `Transferred from ${cs.actor_name} to ${t.display_name} by ${action_by_name}`
-          : `Assigned to ${t.display_name} by ${action_by_name}`;
-        await db(
-          `INSERT INTO state_log
+          const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) }); /* W1-RAIL: the one writer */
+          await taskCount(handle, t.identity_id, 'take');
+          // Log assignment — differentiate initial push from actor-to-actor transfer
+          const isTransfer = !!cs.assigned_to_actor_id;
+          const assignDetail = isTransfer
+            ? `Transferred from ${cs.actor_name} to ${t.display_name} by ${action_by_name}`
+            : `Assigned to ${t.display_name} by ${action_by_name}`;
+          await handle(
+            `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
            SELECT $1, entity_id, $2, $3, $4, $5
            FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
-          [chit_id,
-           isTransfer ? 'transferred' : 'assigned',
-           action_by_id, action_by_name, assignDetail, entity_id]
-        );
-        // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
-        if (movedOnPush.moved) await db(
-          `INSERT INTO state_log
+            [chit_id, isTransfer ? 'transferred' : 'assigned', action_by_id, action_by_name, assignDetail, entity_id]
+          );
+          // Log status reset to pending so it appears in Open tab for the new assignee — only when the copy actually moved
+          if (movedOnPush.moved)
+            await handle(
+              `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
            SELECT $1, entity_id, 'status_pending', $2, $3, $4, 'pending', $5
            FROM chit_status WHERE chit_id = $1 AND entity_id = $6`,
-          [chit_id, action_by_id, action_by_name,
-           movedOnPush.from,
-           `Reset to pending — assigned to ${t.display_name} by ${action_by_name}`, entity_id]
-        );
-        return res.json({
-          message: `Chit pushed to ${t.display_name}`,
-          action: 'push',
-          assigned_to: t.display_name,
-          new_status: 'pending',
-          warning: overloaded ? `${t.display_name} is at maximum load` : null
-        });
-      }
-
-      if (action === 'return') {
-        if (cs.assigned_to_actor_id) {
-          await taskCount(db, cs.assigned_to_actor_id, 'release');
+              [chit_id, action_by_id, action_by_name, movedOnPush.from, `Reset to pending — assigned to ${t.display_name} by ${action_by_name}`, entity_id]
+            );
+          return res.json({
+            message: `Chit pushed to ${t.display_name}`,
+            action: 'push',
+            assigned_to: t.display_name,
+            new_status: 'pending',
+            warning: overloaded ? `${t.display_name} is at maximum load` : null
+          });
         }
-        await assignChit(client, entity_id, chit_id, null);   /* W1-RAIL: back to the pool through the one writer */
-        // One row per participant — each owns their copy of this return event
-        await db(
-          `INSERT INTO state_log
+
+        if (action === 'return') {
+          if (cs.assigned_to_actor_id) {
+            await taskCount(handle, cs.assigned_to_actor_id, 'release');
+          }
+          await assignChit(client, entity_id, chit_id, null); /* W1-RAIL: back to the pool through the one writer */
+          // One row per participant — each owns their copy of this return event
+          await handle(
+            `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, detail)
            SELECT $1, entity_id, 'returned', $2, $3, $4
            FROM chit_status WHERE chit_id = $1 AND entity_id = $5`,
-          [chit_id,
-           action_by_id, action_by_name,
-           `Returned to entity pool${cs.actor_name ? ` from ${cs.actor_name}` : ''} by ${action_by_name}`, entity_id]
-        );
-        return res.json({
-          message: 'Chit returned to entity pool',
-          action: 'return'
-        });
-      }
+            [chit_id, action_by_id, action_by_name, `Returned to entity pool${cs.actor_name ? ` from ${cs.actor_name}` : ''} by ${action_by_name}`, entity_id]
+          );
+          return res.json({
+            message: 'Chit returned to entity pool',
+            action: 'return'
+          });
+        }
       });
-
     } catch (err) {
       console.error('Assign error:', err.message);
       res.status(500).json({ error: 'Assignment failed', message: safeErr(err) });
@@ -1312,14 +1499,9 @@ router.put('/assign/:chit_id',
 // ── GET /api/actors/settings ─────────────────────────────────
 router.get('/settings', auth, async (req, res) => {
   try {
-    const entity_id = req.identity.identity_type === 'actor'
-      ? req.identity.parent_entity_id
-      : req.identity.identity_id;
+    const entity_id = req.identity.identity_type === 'actor' ? req.identity.parent_entity_id : req.identity.identity_id;
 
-    let result = await db(
-      `SELECT * FROM entity_actor_settings WHERE entity_id = $1`,
-      [entity_id]
-    );
+    let result = await db(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
 
     // Create default settings if not exist
     if (result.rows.length === 0) {
@@ -1337,31 +1519,36 @@ router.get('/settings', auth, async (req, res) => {
 });
 
 // ── PUT /api/actors/settings ─────────────────────────────────
-router.put('/settings',
-  auth, ownerWrite,
+router.put(
+  '/settings',
+  auth,
+  ownerWrite,
   [
-    body('assignment_model').optional().isIn(['pull','push','both']),
+    body('assignment_model').optional().isIn(['pull', 'push', 'both']),
     body('default_max_tasks').optional().isInt({ min: 1, max: 100 }),
     body('all_task_visible').optional().isBoolean(),
     body('auto_return_on_short_break').optional().isBoolean(),
-    body('auto_assign_mode').optional().isIn(['off','default_assignee','least_loaded']),
-    body('default_assignee_actor_id').optional({ nullable: true }).isUUID(),
+    body('auto_assign_mode').optional().isIn(['off', 'default_assignee', 'least_loaded']),
+    body('default_assignee_actor_id').optional({ nullable: true }).isUUID()
   ],
   validate,
   async (req, res) => {
     try {
       // Settings are entity-level. Actors resolve to their parent entity (must match GET /settings).
       const entity_id = auth.entityOf(req);
-      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
-              auto_assign_mode, default_assignee_actor_id } = req.body;
+      const { assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break, auto_assign_mode, default_assignee_actor_id } = req.body;
 
       // If a default assignee is named, it must be an assignable (Act/Manager) actor of this entity.
       if (default_assignee_actor_id) {
         const chk = await db(
           `SELECT 1 FROM identities WHERE identity_id = $1 AND parent_entity_id = $2
              AND identity_type = 'actor' AND hat IN ('act','manager')`,
-          [default_assignee_actor_id, entity_id]);
-        if (chk.rows.length === 0) return res.status(400).json({ error: 'Invalid default assignee', message: 'The default assignee must be an Act or Manager co-assist of this entity.' });
+          [default_assignee_actor_id, entity_id]
+        );
+        if (chk.rows.length === 0)
+          return res
+            .status(400)
+            .json({ error: 'Invalid default assignee', message: 'The default assignee must be an Act or Manager co-assist of this entity.' });
       }
 
       await db(
@@ -1377,8 +1564,15 @@ router.put('/settings',
            auto_assign_mode = COALESCE($6, entity_actor_settings.auto_assign_mode),
            default_assignee_actor_id = COALESCE($7, entity_actor_settings.default_assignee_actor_id),
            updated_at = NOW()`,
-        [entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
-         auto_assign_mode || null, default_assignee_actor_id || null]
+        [
+          entity_id,
+          assignment_model,
+          default_max_tasks,
+          all_task_visible,
+          auto_return_on_short_break,
+          auto_assign_mode || null,
+          default_assignee_actor_id || null
+        ]
       );
 
       const updated = await db(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
@@ -1392,74 +1586,71 @@ router.put('/settings',
 // ── PUT /api/actors/:id/delegate ── leave-cover delegate (D1) ──
 // Who covers this actor's auto-assigned work while they're on leave. Loop-prevented: the chain that
 // starts at the new delegate must never lead back to this actor.
-router.put('/:id/delegate',
-  auth, ownerWrite,
-  [ body('delegate_actor_id').optional({ nullable: true }).isUUID() ],
-  validate,
-  async (req, res) => {
-    try {
-      const entity_id = auth.entityOf(req);
-      const actorId = req.params.id;
-      const delegate = req.body.delegate_actor_id || null;
+router.put('/:id/delegate', auth, ownerWrite, [body('delegate_actor_id').optional({ nullable: true }).isUUID()], validate, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const actorId = req.params.id;
+    const delegate = req.body.delegate_actor_id || null;
 
-      if (delegate) {
-        if (delegate === actorId) return res.status(400).json({ error: 'Invalid delegate', message: 'An actor cannot delegate to themselves.' });
-        const d = await db(
-          `SELECT delegate_actor_id FROM identities WHERE identity_id = $1 AND parent_entity_id = $2
+    if (delegate) {
+      if (delegate === actorId) return res.status(400).json({ error: 'Invalid delegate', message: 'An actor cannot delegate to themselves.' });
+      const d = await db(
+        `SELECT delegate_actor_id FROM identities WHERE identity_id = $1 AND parent_entity_id = $2
              AND identity_type = 'actor' AND hat IN ('act','manager')`,
-          [delegate, entity_id]);
-        if (d.rows.length === 0) return res.status(400).json({ error: 'Invalid delegate', message: 'The delegate must be an Act or Manager co-assist of this entity.' });
-        // Cycles (buddy pairs: A covers B, B covers A) are ALLOWED for leave-cover. Integrity is protected by
-        // (a) the auto-assign resolver's runtime cycle guard, and (b) the /break concurrency check that stops
-        // two people in a cover relationship from being away at the same time. Only self-delegation is blocked.
-      }
+        [delegate, entity_id]
+      );
+      if (d.rows.length === 0)
+        return res.status(400).json({ error: 'Invalid delegate', message: 'The delegate must be an Act or Manager co-assist of this entity.' });
+      // Cycles (buddy pairs: A covers B, B covers A) are ALLOWED for leave-cover. Integrity is protected by
+      // (a) the auto-assign resolver's runtime cycle guard, and (b) the /break concurrency check that stops
+      // two people in a cover relationship from being away at the same time. Only self-delegation is blocked.
+    }
 
-      const upd = await db(
-        `UPDATE identities SET delegate_actor_id = $1
+    const upd = await db(
+      `UPDATE identities SET delegate_actor_id = $1
            WHERE identity_id = $2 AND parent_entity_id = $3 AND identity_type = 'actor'
          RETURNING identity_id, display_name, delegate_actor_id`,
-        [delegate, actorId, entity_id]);
-      if (upd.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found.' });
-      res.json({ message: delegate ? 'Delegate set' : 'Delegate cleared', actor: upd.rows[0] });
-    } catch (err) {
-      res.status(500).json({ error: 'Delegate update failed', message: safeErr(err) });
-    }
+      [delegate, actorId, entity_id]
+    );
+    if (upd.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Co-assist not found.' });
+    res.json({ message: delegate ? 'Delegate set' : 'Delegate cleared', actor: upd.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: 'Delegate update failed', message: safeErr(err) });
   }
-);
+});
 
 // ── GET /api/actors/:id/tasks ───────────────────────────────
 // Entity admin views tasks assigned to a specific actor
 // Returns chits currently assigned to that actor
-router.get('/:id/tasks',
-  auth,
-  async (req, res) => {
-    try {
-      const entity_id = req.identity.identity_id;
-      const actor_id  = req.params.id;
-      const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
+router.get('/:id/tasks', auth, async (req, res) => {
+  try {
+    const entity_id = req.identity.identity_id;
+    const actor_id = req.params.id;
+    const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
 
-      // Verify actor belongs to this entity
-      const actor = await db(
-        `SELECT identity_id, display_name, actor_key,
+    // Verify actor belongs to this entity
+    const actor = await db(
+      `SELECT identity_id, display_name, actor_key,
                 break_status, current_task_count, max_tasks
          FROM identities
          WHERE identity_id = $1
          AND parent_entity_id = $2
          AND identity_type = 'actor'`,
-        [actor_id, entity_id]
-      );
+      [actor_id, entity_id]
+    );
 
-      if (actor.rows.length === 0) {
-        return res.status(404).json({
-          error: 'Actor not found',
-          message: 'Co-assist not found under your entity'
-        });
-      }
+    if (actor.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Actor not found',
+        message: 'Co-assist not found under your entity'
+      });
+    }
 
-      const a = actor.rows[0];
+    const a = actor.rows[0];
 
-      // Get all chits assigned to this actor under this entity — B1 RLS: withEntity(me).
-      const tasks = await withEntity(entity_id, (c) => c.query(
+    // Get all chits assigned to this actor under this entity — B1 RLS: withEntity(me).
+    const tasks = await withEntity(entity_id, (c) =>
+      c.query(
         `SELECT
            cs.chit_id,
            cs.current_status,
@@ -1478,48 +1669,47 @@ router.get('/:id/tasks',
          AND cs.current_status NOT IN (${railActions.CLOSED_SQL})
          ORDER BY cs.created_at ASC`,
         [entity_id, actor_id]
-      ));
+      )
+    );
 
-      res.json(Object.assign(PL.pageOut('tasks', tasks.rows, pg), {
+    res.json(
+      Object.assign(PL.pageOut('tasks', tasks.rows, pg), {
         actor: {
-          identity_id:       a.identity_id,
-          display_name:      a.display_name,
-          actor_key:         a.actor_key,
-          break_status:      a.break_status,
+          identity_id: a.identity_id,
+          display_name: a.display_name,
+          actor_key: a.actor_key,
+          break_status: a.break_status,
           current_task_count: a.current_task_count,
-          max_tasks:         a.max_tasks
+          max_tasks: a.max_tasks
         },
         count: tasks.rows.length
-      }));
-
-    } catch (err) {
-      console.error('Actor tasks error:', err.message);
-      res.status(500).json({ error: 'Failed to get actor tasks' });
-    }
+      })
+    );
+  } catch (err) {
+    console.error('Actor tasks error:', err.message);
+    res.status(500).json({ error: 'Failed to get actor tasks' });
   }
-);
+});
 
 // ── PUT /api/actors/:id/tasks/route ─────────────────────────
 // Entity admin routes a specific task from an actor
 // action: pool (return to pool) | push (assign to another actor)
-router.put('/:id/tasks/route',
-  auth, ownerWrite,
-  async (req, res) => {
-    try {
-      const entity_id    = req.identity.identity_id;
-      const from_actor_id = req.params.id;
-      const { chit_id, action, to_actor_id } = req.body;
+router.put('/:id/tasks/route', auth, ownerWrite, async (req, res) => {
+  try {
+    const entity_id = req.identity.identity_id;
+    const from_actor_id = req.params.id;
+    const { chit_id, action, to_actor_id } = req.body;
 
-      if (!chit_id || !action) {
-        return res.status(400).json({ error: 'chit_id and action required' });
-      }
+    if (!chit_id || !action) {
+      return res.status(400).json({ error: 'chit_id and action required' });
+    }
 
-      // B1 RLS: the whole route op (chit_status + state_log, own-entity) runs in withEntity(me); `db` shadowed to
-      // the tx client so the existing calls flow through the context (and become atomic).
-      await withEntity(entity_id, async (client) => {
-      const db = (t, p) => client.query(t, p);
+    // B1 RLS: the whole route op (chit_status + state_log, own-entity) runs in withEntity(me); `db` shadowed to
+    // the tx client so the existing calls flow through the context (and become atomic).
+    await withEntity(entity_id, async (client) => {
+      const handle = (t, p) => client.query(t, p);
       // Verify chit belongs to this entity and is assigned to actor
-      const chit = await db(
+      const chit = await handle(
         `SELECT chit_id, assigned_to_actor_id
          FROM chit_status
          WHERE chit_id = $1 AND entity_id = $2`,
@@ -1534,21 +1724,19 @@ router.put('/:id/tasks/route',
         // Return to entity pool — W1-RAIL: the one writer (this copy also clears the name it used to leave behind)
         await assignChit(client, entity_id, chit_id, null);
         // Decrement from_actor task count
-        await taskCount(db, from_actor_id, 'release');
+        await taskCount(handle, from_actor_id, 'release');
         // Log
-        await db(
+        await handle(
           `INSERT INTO state_log
            (chit_id, entity_id, action,
             action_by_identity_id, action_by_display_name, detail)
            VALUES ($1,$2,'returned',$3,$4,'Returned to pool by admin override')`,
-          [chit_id, entity_id, entity_id,
-           req.identity.display_name]
+          [chit_id, entity_id, entity_id, req.identity.display_name]
         );
         return res.json({ message: 'Task returned to pool' });
-
       } else if (action === 'push' && to_actor_id) {
         // Push to another actor
-        const toActor = await db(
+        const toActor = await handle(
           `SELECT identity_id, display_name, current_task_count, max_tasks
            FROM identities
            WHERE identity_id = $1 AND parent_entity_id = $2
@@ -1563,17 +1751,15 @@ router.put('/:id/tasks/route',
         /* W1-RAIL: the one writer — this door used to write the id but NOT the display name, so the row still showed the previous person */
         await assignChit(client, entity_id, chit_id, ta, 'push');
         // Update task counts
-        await taskCount(db, from_actor_id, 'release');
-        await taskCount(db, to_actor_id, 'take');
+        await taskCount(handle, from_actor_id, 'release');
+        await taskCount(handle, to_actor_id, 'take');
         // Log
-        await db(
+        await handle(
           `INSERT INTO state_log
            (chit_id, entity_id, action,
             action_by_identity_id, action_by_display_name, detail)
            VALUES ($1,$2,'assigned',$3,$4,$5)`,
-          [chit_id, entity_id, entity_id,
-           req.identity.display_name,
-           `Routed to ${ta.display_name} by admin override`]
+          [chit_id, entity_id, entity_id, req.identity.display_name, `Routed to ${ta.display_name} by admin override`]
         );
         return res.json({
           message: `Task routed to ${ta.display_name}`,
@@ -1582,14 +1768,12 @@ router.put('/:id/tasks/route',
       }
 
       res.status(400).json({ error: 'Invalid action' });
-      });
-
-    } catch (err) {
-      console.error('Route task error:', err.message);
-      res.status(500).json({ error: 'Failed to route task' });
-    }
+    });
+  } catch (err) {
+    console.error('Route task error:', err.message);
+    res.status(500).json({ error: 'Failed to route task' });
   }
-);
+});
 
 /**
  * GET /api/actors/access-events — the IAM audit trail (b172).
@@ -1610,28 +1794,30 @@ router.put('/:id/tasks/route',
  * ⚠️ Declared AFTER the parameterised routes on purpose — there is no bare GET /:id here today, but adding one
  * later above this line would capture '/access-events' and the failure would look like an empty audit log.
  */
-router.get('/access-events',
-  auth,
-  async (req, res) => {
-    try {
-      const entity_id = auth.entityOf(req);
-      const subject = String(req.query.subject || '').trim();
-      const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
-      const params = [entity_id];
-      let where = 'e.entity_id = $1';
-      if (subject) { params.push(subject); where += ' AND e.subject_identity_id = $2'; }
+router.get('/access-events', auth, async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const subject = String(req.query.subject || '').trim();
+    const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
+    const params = [entity_id];
+    let where = 'e.entity_id = $1';
+    if (subject) {
+      params.push(subject);
+      where += ' AND e.subject_identity_id = $2';
+    }
 
-      /**
-       * ⚠️⚠️ withEntity ON THE READ TOO — and forgetting it here is why the audit trail still looked empty
-       * AFTER b175 fixed the policy and the write was scoped. access_events is WITH RLS, so a plain query has
-       * no app.current_entity, matches no rows, and returns [] — beside `applied: true`, which reads as
-       * "the feature is installed and there is simply nothing to show".
-       *
-       * ⭐ THAT IS THE WHOLE LESSON OF THIS BUG, TWICE OVER: a WITH RLS table needs the tenant on EVERY
-       * statement, reads included. Fixing the write and leaving the read is indistinguishable, from the
-       * outside, from not having fixed anything.
-       */
-      const r = await withEntity(entity_id, (edb) => edb.query(
+    /**
+     * ⚠️⚠️ withEntity ON THE READ TOO — and forgetting it here is why the audit trail still looked empty
+     * AFTER b175 fixed the policy and the write was scoped. access_events is WITH RLS, so a plain query has
+     * no app.current_entity, matches no rows, and returns [] — beside `applied: true`, which reads as
+     * "the feature is installed and there is simply nothing to show".
+     *
+     * ⭐ THAT IS THE WHOLE LESSON OF THIS BUG, TWICE OVER: a WITH RLS table needs the tenant on EVERY
+     * statement, reads included. Fixing the write and leaving the read is indistinguishable, from the
+     * outside, from not having fixed anything.
+     */
+    const r = await withEntity(entity_id, (edb) =>
+      edb.query(
         `SELECT e.event_id, e.subject_identity_id, s.display_name AS subject_name, s.actor_key,
                 e.action, e.before_value, e.after_value, e.reason, e.at,
                 e.changed_by, c.display_name AS changed_by_name
@@ -1640,15 +1826,17 @@ router.get('/access-events',
            LEFT JOIN identities c ON c.identity_id = e.changed_by
           WHERE ${where}
           ORDER BY e.at DESC
-          LIMIT 200`, params));
+          LIMIT 200`,
+        params
+      )
+    );
 
-      res.json(Object.assign(PL.pageOut('events', r.rows, pg), { applied: true }));
-    } catch (err) {
-      if (/access_events/.test(err.message || '')) return res.json({ events: [], applied: false, total: 0, page: 1, limit: 0 });
-      console.error('Access events error:', err.message);
-      res.status(500).json({ error: 'Read failed', message: safeErr(err) });
-    }
+    res.json(Object.assign(PL.pageOut('events', r.rows, pg), { applied: true }));
+  } catch (err) {
+    if (/access_events/.test(err.message || '')) return res.json({ events: [], applied: false, total: 0, page: 1, limit: 0 });
+    console.error('Access events error:', err.message);
+    res.status(500).json({ error: 'Read failed', message: safeErr(err) });
   }
-);
+});
 
 module.exports = router;

@@ -149,7 +149,6 @@ async function register() {
       document.getElementById('dev-otp-note').style.display = 'block';
       document.getElementById('dev-otp-value').textContent = data.dev_otp;
     }
-
   } catch (err) {
     msgEl.innerHTML = '<div class="msg error">Network error — please try again</div>';
     btn.disabled = false;
@@ -158,10 +157,11 @@ async function register() {
 }
 
 async function verify() {
-  const otp = document.getElementById('otp').value.trim();
+  const node = document.getElementById('otp').value.trim();
   const msgEl = document.getElementById('msg-otp');
 
-  if (!otp || otp.length < 6) {   // SEC1: a tester code is 8+ characters
+  if (!node || node.length < 6) {
+    // SEC1: a tester code is 8+ characters
     msgEl.innerHTML = '<div class="msg error">Enter the code you were sent</div>';
     return;
   }
@@ -175,7 +175,7 @@ async function verify() {
     const res = await fetch(`${API}/api/entities/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: currentEmail, otp })
+      body: JSON.stringify({ email: currentEmail, otp: node })
     });
     const data = await res.json();
 
@@ -194,7 +194,6 @@ async function verify() {
     document.getElementById('otp-section').style.display = 'none';
     document.getElementById('success-section').style.display = 'block';
     document.getElementById('bridge-id-display').textContent = data.entity.bridge_id;
-
   } catch (err) {
     msgEl.innerHTML = '<div class="msg error">Network error — please try again</div>';
     btn.disabled = false;

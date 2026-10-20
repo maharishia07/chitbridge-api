@@ -13,7 +13,7 @@ const W = require('./network-world.cjs');
 async function captureNetwork() {
   const h = G.harness({ rows: W.rows, known: W.known });
   const q = h.db.query;
-  h.db.readBatch = async (id, actor, stmts) => Promise.all(stmts.map((s) => q(s.text, s.params)));
+  h.db.readBatch = async (id, actor, stmts) => Promise.all(stmts.map((item) => q(item.text, item.params)));
   const app = h.app('/api/network-offers', require(path.join(G.API, 'routes', 'network-offers')));
   const got = {};
   for (const who of [W.S, W.B]) {

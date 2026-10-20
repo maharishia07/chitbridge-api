@@ -54,19 +54,27 @@ const dataOf = (x) => (x && x.item_data) || x || {};
   console.log('\n══ CATEGORY CITATIONS ' + (APPLY ? '· APPLYING' : '· DRY RUN (nothing will change)') + ' ══\n');
 
   const token = await P.signIn(EMAIL, SHOP);
-  if (!token) { console.log('sign-in failed for ' + SHOP); process.exit(1); }
+  if (!token) {
+    console.log('sign-in failed for ' + SHOP);
+    process.exit(1);
+  }
   const auth = { token };
 
   /* ── what is actually there ─────────────────────────────────────────────────────────────────────────── */
   const r = await P.j('/api/products?limit=500', auth);
   const items = (r.b && (r.b.items || r.b)) || [];
-  if (!Array.isArray(items)) { console.log('unexpected catalogue shape'); process.exit(1); }
+  if (!Array.isArray(items)) {
+    console.log('unexpected catalogue shape');
+    process.exit(1);
+  }
 
   /**
    * ⚠️ THE THREE STATES, COUNTED SEPARATELY, because only one of them is work — and reporting them together
    * would make a healthy catalogue look like a problem.
    */
-  const needs = [], already = [], none = [];
+  const needs = [],
+    already = [],
+    none = [];
   for (const it of items) {
     const d = dataOf(it);
     const cites = Array.isArray(d.categories) && d.categories.length;
@@ -87,28 +95,34 @@ const dataOf = (x) => (x && x.item_data) || x || {};
   }
 
   /* ── which categories, and which exist ──────────────────────────────────────────────────────────────── */
-  const wanted = [...new Set(needs.map((n) => n.name))].sort();
+  const wanted = [...new Set(needs.map((item) => item.name))].sort();
   const dr = await P.j('/api/definitions?kind=category&all=1', auth);
   const defs = (dr.b && (dr.b.definitions || dr.b)) || [];
   const byLower = new Map();
-  for (const d of (Array.isArray(defs) ? defs : [])) {
+  for (const d of Array.isArray(defs) ? defs : []) {
     if (d && d.name) byLower.set(String(d.name).toLowerCase(), d);
   }
 
   console.log('  the categories these products name:');
   const toCreate = [];
-  for (const w of wanted) {
-    const hit = byLower.get(w.toLowerCase());
-    const n = needs.filter((x) => x.name === w).length;
-    console.log('    ' + (hit ? 'have ' : 'NEW  ') + w.padEnd(26) + n + ' product' + (n === 1 ? '' : 's')
-      + (hit && hit.name !== w ? '   (matches existing "' + hit.name + '")' : ''));
-    if (!hit) toCreate.push(w);
+  for (const text of wanted) {
+    const hit = byLower.get(text.toLowerCase());
+    const n = needs.filter((x) => x.name === text).length;
+    console.log(
+      '    ' +
+        (hit ? 'have ' : 'NEW  ') +
+        text.padEnd(26) +
+        n +
+        ' product' +
+        (n === 1 ? '' : 's') +
+        (hit && hit.name !== text ? '   (matches existing "' + hit.name + '")' : '')
+    );
+    if (!hit) toCreate.push(text);
   }
   console.log('');
 
   if (!APPLY) {
-    console.log('  DRY RUN — would create ' + toCreate.length + ' category(ies) and set a citation on '
-      + needs.length + ' product(s).');
+    console.log('  DRY RUN — would create ' + toCreate.length + ' category(ies) and set a citation on ' + needs.length + ' product(s).');
     console.log('  The legacy `category` string stays on every one of them, untouched.');
     console.log('  Re-run with --apply to do it.\n');
     return;
@@ -120,25 +134,36 @@ const dataOf = (x) => (x && x.item_data) || x || {};
        resolve to nothing on the counter, which is the defect this whole change is closing. */
     const c = await P.j('/api/definitions', { method: 'POST', body: { kind: 'category', name, status: 'live' } }, auth);
     const made = c.b && (c.b.definition || c.b);
-    if (!made || !made.definition_id) { console.log('  could not create "' + name + '" — stopping, nothing further changed'); process.exit(1); }
+    if (!made || !made.definition_id) {
+      console.log('  could not create "' + name + '" — stopping, nothing further changed');
+      process.exit(1);
+    }
     byLower.set(name.toLowerCase(), made);
     console.log('  created  ' + name);
   }
 
   /* ── cite it, one product at a time, through the door the screen uses ───────────────────────────────── */
-  let done = 0, failed = 0;
+  let done = 0,
+    failed = 0;
   for (const { it, name } of needs) {
     const def = byLower.get(name.toLowerCase());
-    if (!def) { failed++; console.log('  no category for "' + name + '" — skipped'); continue; }
+    if (!def) {
+      failed++;
+      console.log('  no category for "' + name + '" — skipped');
+      continue;
+    }
     const id = it.item_id || it.id;
     /**
      * ⚠️ MERGE. The one key moves; the price, the stock and the legacy `category` string all stay exactly as
      * they are. A whole-record write here would clobber anything changed while this was running.
      */
-    const u = await P.j('/api/products/' + id,
-      { method: 'PATCH', body: { merge: true, item_data: { categories: [def.definition_id] } } }, auth);
-    if (u.s >= 200 && u.s < 300) { done++; }
-    else { failed++; console.log('  ' + (dataOf(it).name || id) + ' — refused (' + u.s + ')'); }
+    const u = await P.j('/api/products/' + id, { method: 'PATCH', body: { merge: true, item_data: { categories: [def.definition_id] } } }, auth);
+    if (u.s >= 200 && u.s < 300) {
+      done++;
+    } else {
+      failed++;
+      console.log('  ' + (dataOf(it).name || id) + ' — refused (' + u.s + ')');
+    }
   }
 
   console.log('\n  cited  ' + done + '\n  failed ' + failed);

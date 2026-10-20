@@ -19,6 +19,7 @@
  * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/books-payments.test.cjs
  */
 'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
@@ -174,11 +175,11 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     const recP = bsrc.slice(bsrc.indexOf('async function recordPayment('), bsrc.indexOf('/** the payment\'s journal event'));
     ok('recordPayment settles the bills on the handle it was given (settleBills(h, …)); it opens no transaction of its own', /settleBills\(h, entity, row, pay\.payment_id\)/.test(recP) && !/withEntity/.test(recP));
     const rsrc = fs.readFileSync(path.join(H.API, 'routes', 'books.js'), 'utf8');
-    const route = rsrc.slice(rsrc.indexOf("router.post('/payments', "), rsrc.indexOf("router.post('/payments/:id/propose'"));
+    const route = rsrc.slice(routeAt(rsrc, 'post', '/payments'), routeAt(rsrc, 'post', '/payments/:id/propose'));
     const tx = route.slice(route.indexOf('await withEntity(e, async (h) => {'), route.indexOf('return rec;'));
     ok('the route records (warn: the duplicate rule, asked inside recordPayment AFTER its gates) and reads the outcome inside ONE withEntity',
-      /B\.recordPayment\(h, e,[\s\S]*?warn: \{ acknowledge: ack/.test(tx) && /B\.paymentOutcome\(h, e,/.test(tx) && !/withEntity/.test(tx.slice(10))
-      && recP.indexOf('S.partyOn(h, entity') < recP.indexOf('duplicateWarnings(h, entity') && recP.indexOf('duplicateWarnings(h, entity') < recP.indexOf('S.insertPayment(h, entity'));
+      /B\.recordPayment\(h, e,[\s\S]*?warn: \{ acknowledge: ack/.test(tx) && /B\.paymentOutcome\(\s*h,\s*e,/.test(tx) && !/withEntity/.test(tx.slice(10))
+      && recP.indexOf('S.partyOn(h, entity') < recP.search(/duplicateWarnings\(\s*h,\s*entity/) && recP.search(/duplicateWarnings\(\s*h,\s*entity/) < recP.indexOf('S.insertPayment(h, entity'));
     ok('proposeFor is ONE function: preview, record (oldest_first) and /propose all call it; the old proposal body is gone from the route',
       (rsrc.match(/B\.proposeFor\(h, e,/g) || []).length === 2 && !/R\.proposeItems|R\.propose\(/.test(rsrc) && (bsrc.match(/async function proposeFor\(/g) || []).length === 1
       && /proposeFor\(h, entity,/.test(recP) && /proposeFor\(h, entity,/.test(bsrc.slice(bsrc.indexOf('async function settleBills('), bsrc.indexOf('async function firstPayment('))) && (bsrc.match(/R\.propose(Items)?\(/g) || []).length === 2);
@@ -270,10 +271,10 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
 
     /* the shape that makes it so: the chit route reads the copy, calls the door and marks the copy on ONE handle; no state_log row, no second "paid" */
     const csrc = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
-    const route = csrc.slice(csrc.indexOf("router.post('/:chit_id/payment'"), csrc.indexOf("router.delete('/:chit_id/payment'"));
+    const route = csrc.slice(routeAt(csrc, 'post', '/:chit_id/payment'), routeAt(csrc, 'delete', '/:chit_id/payment'));
     /* PAY-FIX shrink: the one-handle body is markChitPaid (called inside ONE withEntity by the route); the refusals are payFailure */
-    const tx = csrc.slice(csrc.indexOf('async function markChitPaid('), csrc.indexOf("router.post('/:chit_id/payment'"));
-    const routeAll = csrc.slice(csrc.indexOf('async function markChitPaid('), csrc.indexOf("router.delete('/:chit_id/payment'"));
+    const tx = csrc.slice(csrc.indexOf('async function markChitPaid('), routeAt(csrc, 'post', '/:chit_id/payment'));
+    const routeAll = csrc.slice(csrc.indexOf('async function markChitPaid('), routeAt(csrc, 'delete', '/:chit_id/payment'));
     ok('POST /chits/:id/payment: taxCopy.copyOn(db…) → hooks.chitPaid(db…) → UPDATE chit_header … payment, inside ONE withEntity; the books first (a refusal marks nothing)',
       /taxCopy\.copyOn\(db, chit_id, entity_id\)/.test(tx) && /hooks\.chitPaid\(db, entity_id,/.test(tx) && tx.indexOf('hooks.chitPaid(') < tx.indexOf("jsonb_build_object('payment'")
       && /withEntity\(entity_id, \(db\) => markChitPaid\(db,/.test(route) && !/withEntity/.test(tx.slice(0, tx.indexOf('function pressPayment'))) && !/state_log/.test(routeAll) && /ALREADY_PAID/.test(routeAll) && /hooks\.park\(entity_id/.test(route), tx.slice(0, 200));

@@ -50,8 +50,9 @@ const crm = require('../lib/crm');
 const F = require('../lib/crm-followups');
 const M = require('../lib/memberships');
 const PV = require('../lib/privacy');
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager */
-const PAGE_DEFAULT = 300, PAGE_MAX = 1000;   /* one page of this file's follow-ups and calls (300 = the queue's old silent cut, now a page with a total) */
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
+const PAGE_DEFAULT = 300,
+  PAGE_MAX = 1000; /* one page of this file's follow-ups and calls (300 = the queue's old silent cut, now a page with a total) */
 
 const ctx = (req) => auth.entityOf(req);
 const byOf = (req) => (req.identity && req.identity.identity_id) || null;
@@ -69,35 +70,54 @@ function noKey(req, res, next) {
 }
 /** a condition becomes a verdict with a code a screen maps to its own written line — the message is never shown as-is (design rule 1) */
 function fail(res, e) {
-  if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) return res.status(503).json({ code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CRM needs migration b276 — not run yet.' });
+  if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e)))
+    return res.status(503).json({ code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CRM needs migration b276 — not run yet.' });
   if (e && e.code === 'PRIVACY_NOT_MIGRATED') return res.status(503).json({ code: e.code, error: 'Not migrated yet', message: e.message });
   if (e && e.code === 'LEADS_NOT_MIGRATED') return res.status(503).json({ code: 'LEADS_NOT_MIGRATED', error: e.message, message: e.message });
-  if (e && e.status && e.status < 500) return res.status(e.status).json(Object.assign({ code: e.code || 'REFUSED', error: e.message, message: e.message }, e.why ? { why: e.why } : {}));
+  if (e && e.status && e.status < 500)
+    return res.status(e.status).json(Object.assign({ code: e.code || 'REFUSED', error: e.message, message: e.message }, e.why ? { why: e.why } : {}));
   return res.status(500).json({ error: 'Failed', message: safeErr(e) });
 }
 const bad = F.bad;
-const idOf = (req) => { const id = String(req.params.id || ''); if (!UUID.test(id)) throw bad('That is not a party id.', 400, 'BAD_ID'); return id; };
+const idOf = (req) => {
+  const id = String(req.params.id || '');
+  if (!UUID.test(id)) throw bad('That is not a party id.', 400, 'BAD_ID');
+  return id;
+};
 
 /* ── reads ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
 router.get('/parties', auth, noKey, async (req, res) => {
   try {
-    const out = await crm.list(ctx(req), { view: req.query.view === 'leads' ? 'leads' : null, consent: String(req.query.with || '').split(',').indexOf('consent') >= 0,
-      page: PL.pageOf(req.query.page), limit: PL.limitOf(req.query.limit, crm.CAP, crm.CAP) });
+    const out = await crm.list(ctx(req), {
+      actor: byOf(req),
+      view: req.query.view === 'leads' ? 'leads' : null,
+      consent:
+        String(req.query.with || '')
+          .split(',')
+          .indexOf('consent') >= 0,
+      page: PL.pageOf(req.query.page),
+      limit: PL.limitOf(req.query.limit, crm.CAP, crm.CAP)
+    });
     res.json(Object.assign(out, { may: crmMay(req) }));
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /** the record: the list row + the relationship line (the scorecard's own arithmetic) + points + open follow-ups */
 router.get('/parties/:id', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req);
+    const owner = ctx(req),
+      id = idOf(req);
     const found = await crm.one(owner, id, { stages: true, consent: true });
     if (!found) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'Not your party.' });
     const p = found.party;
     const rec = Object.assign({}, p, { merged_from: found.merged_from });
     /* the relationship: select.rows + measure.scorecard, exactly what /relationships/scorecard/:id answers — a local party has no chits */
     if (p.kind !== 'local') {
-      const select = require('../lib/select'), measure = require('../lib/measure'), policy = require('../lib/policy');
+      const select = require('../lib/select'),
+        measure = require('../lib/measure'),
+        policy = require('../lib/policy');
       const flags = await policy.get(owner);
       const rows = await select.rows(owner, { counterparty_id: p.party_id, limit: 5000 });
       const card = measure.scorecard(rows, { overdue_days: flags.overdue_days });
@@ -109,17 +129,30 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
       try {
         const b = await require('../lib/reward-store').balance(owner, { scheme: 'identity', value: p.party_id }, withEntity);
         if (b.programme) rec.points = { programme: b.programme.name, points: b.points, worth: b.worth };
-      } catch (e) { if (!(e && e.code === '42P01')) throw e; }
+      } catch (e) {
+        if (!(e && e.code === '42P01')) throw e;
+      }
     }
     /* the follow-ups: soft — before b276 the record is complete without them and says so */
-    rec.migrated = true; rec.followups = [];
-    try { rec.followups = await withEntity(owner, async (h) => F.list(h, owner, { party_id: p.party_id })); }
-    catch (e) { if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) rec.migrated = false; else throw e; }
+    rec.migrated = true;
+    rec.followups = [];
+    try {
+      rec.followups = await withEntity(owner, async (h) => F.list(h, owner, { party_id: p.party_id }));
+    } catch (e) {
+      if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) rec.migrated = false;
+      else throw e;
+    }
     /* a lead's stage chip + "Move to…": the server says which moves, and may/why (b297 not run → greyed with its sentence) */
-    if (rec.lead) rec.lead = Object.assign({}, rec.lead, { moves: M.KINDS.lead_stage.groups.filter((g) => g !== rec.lead.stage), may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY } });
-    rec.may = crmMay(req);   /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
+    if (rec.lead)
+      rec.lead = Object.assign({}, rec.lead, {
+        moves: M.KINDS.lead_stage.groups.filter((item) => item !== rec.lead.stage),
+        may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY }
+      });
+    rec.may = crmMay(req); /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
     res.json(rec);
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /**
@@ -128,73 +161,169 @@ router.get('/parties/:id', auth, noKey, async (req, res) => {
  * stage (FX-L2C): a lead's move as memberships holds it — { stage, from, by, at }; from is null on the first row (the lead's start).
  * Money on an entry is the stored figure (summary_json total_value; party_item amount_minor) — never recomputed.
  */
-const TIMELINE_PAGE = 30, TIMELINE_MAX = 100;
+const TIMELINE_PAGE = 30,
+  TIMELINE_MAX = 100;
 router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req);
+    const owner = ctx(req),
+      id = idOf(req);
     const found = await crm.one(owner, id);
     if (!found) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'Not your party.' });
     const party = found.party.party_id;
     const limit = PL.limitOf(req.query.limit, TIMELINE_PAGE, TIMELINE_MAX);
     let before = Date.now() + 86400000;
-    if (req.query.before) { const t = Date.parse(req.query.before); if (!isFinite(t)) throw bad('before is a time.', 400, 'BAD_BEFORE'); before = t; }
+    if (req.query.before) {
+      const t = Date.parse(req.query.before);
+      if (!isFinite(t)) throw bad('before is a time.', 400, 'BAD_BEFORE');
+      before = t;
+    }
     const beforeIso = new Date(before).toISOString();
     const entries = [];
     let migrated = true;
     /* chits (+ the latest external message of each) and disputes — through select.rows, the scorecard's own selector */
     if (found.party.kind !== 'local') {
       const select = require('../lib/select');
-      const cs = (await select.rows(owner, { counterparty_id: party, limit: 2000 })).filter((r) => new Date(r.created_at).getTime() < before).slice(0, limit);
-      const ids = cs.map((r) => r.chit_id);
-      for (const r of cs) entries.push({ kind: 'chit', at: crm.iso(r.created_at), chit_id: r.chit_id, direction: r.direction, status: r.current_status, purpose: r.purpose,
-        doc_kind: r.doc_kind || null, bill_no: r.bill_no || null, title: r.manual_subject || r.auto_subject || null,
-        value: crm.num(r.value), currency: r.currency || null, open_disputes: Number(r.open_disputes) || 0 });
+      const list = (await select.rows(owner, { counterparty_id: party, limit: 2000 }))
+        .filter((item) => new Date(item.created_at).getTime() < before)
+        .slice(0, limit);
+      const ids = list.map((item) => item.chit_id);
+      for (const r of list)
+        entries.push({
+          kind: 'chit',
+          at: crm.iso(r.created_at),
+          chit_id: r.chit_id,
+          direction: r.direction,
+          status: r.current_status,
+          purpose: r.purpose,
+          doc_kind: r.doc_kind || null,
+          bill_no: r.bill_no || null,
+          title: r.manual_subject || r.auto_subject || null,
+          value: crm.num(r.value),
+          currency: r.currency || null,
+          open_disputes: Number(r.open_disputes) || 0
+        });
       if (ids.length) {
         const extra = await withEntity(owner, async (h) => {
-          const m = await h.query(`SELECT DISTINCT ON (chit_id) chit_id, message_text, sender_display_name, created_at FROM chit_messages
-                                    WHERE chit_id = ANY($1::uuid[]) AND thread_type = 'external' AND created_at < $2 ORDER BY chit_id, created_at DESC`, [ids, beforeIso]);
-          const d = await h.query(`SELECT dispute_id, chit_id, status, category, created_at, resolved_at FROM chit_disputes WHERE chit_id = ANY($1::uuid[])`, [ids]);
+          const m = await h.query(
+            `SELECT DISTINCT ON (chit_id) chit_id, message_text, sender_display_name, created_at FROM chit_messages
+                                    WHERE chit_id = ANY($1::uuid[]) AND thread_type = 'external' AND created_at < $2 ORDER BY chit_id, created_at DESC`,
+            [ids, beforeIso]
+          );
+          const d = await h.query(`SELECT dispute_id, chit_id, status, category, created_at, resolved_at FROM chit_disputes WHERE chit_id = ANY($1::uuid[])`, [
+            ids
+          ]);
           return { m: m.rows, d: d.rows };
         });
-        for (const x of extra.m) entries.push({ kind: 'message', at: crm.iso(x.created_at), chit_id: x.chit_id, who: x.sender_display_name, text: String(x.message_text || '').slice(0, 200) });
-        for (const x of extra.d) { const at = Date.parse(x.created_at); if (at < before) entries.push({ kind: 'dispute', at: crm.iso(x.created_at), chit_id: x.chit_id, dispute_id: x.dispute_id, status: x.status, category: x.category }); }
+        for (const x of extra.m)
+          entries.push({
+            kind: 'message',
+            at: crm.iso(x.created_at),
+            chit_id: x.chit_id,
+            who: x.sender_display_name,
+            text: String(x.message_text || '').slice(0, 200)
+          });
+        for (const x of extra.d) {
+          const at = Date.parse(x.created_at);
+          if (at < before)
+            entries.push({ kind: 'dispute', at: crm.iso(x.created_at), chit_id: x.chit_id, dispute_id: x.dispute_id, status: x.status, category: x.category });
+        }
       }
     }
     /* the rest is read in one transaction, each optional source in its own savepoint (missing tables are quiet) */
     await withEntity(owner, async (h) => {
       const soft = (fn) => require('../db').trySavepoint(h, fn, { rows: [] });
-      const led = await soft(() => h.query(`SELECT item_id, ref, ref_kind, kind, amount_minor, currency, doc_date, created_at FROM party_item
+      const led = await soft(() =>
+        h.query(
+          `SELECT item_id, ref, ref_kind, kind, amount_minor, currency, doc_date, created_at FROM party_item
                                              WHERE entity_id = $1 AND party_id = $2 AND ref_kind IN ('bill','advance','on_account','allocation') AND created_at < $3
-                                             ORDER BY created_at DESC LIMIT $4`, [owner, party, beforeIso, limit]));
-      for (const x of led.rows) entries.push({ kind: 'ledger', at: crm.iso(x.created_at), ref: x.ref, ledger_kind: x.ref_kind === 'bill' ? 'bill' : 'receipt', source: x.kind || null,
-        amount_minor: Number(x.amount_minor), currency: x.currency, doc_date: x.doc_date ? String(x.doc_date).slice(0, 10) : null });
+                                             ORDER BY created_at DESC LIMIT $4`,
+          [owner, party, beforeIso, limit]
+        )
+      );
+      for (const x of led.rows)
+        entries.push({
+          kind: 'ledger',
+          at: crm.iso(x.created_at),
+          ref: x.ref,
+          ledger_kind: x.ref_kind === 'bill' ? 'bill' : 'receipt',
+          source: x.kind || null,
+          amount_minor: Number(x.amount_minor),
+          currency: x.currency,
+          doc_date: x.doc_date ? String(x.doc_date).slice(0, 10) : null
+        });
       if (isOwner(req)) {
-        const ch = await soft(() => h.query(`SELECT at, "by", table_name, field, old, new FROM books_change_log
-                                              WHERE entity_id = $1 AND table_name IN ('customer_list','supplier_list') AND row_id = $2 AND at < $3 ORDER BY at DESC LIMIT $4`, [owner, party, beforeIso, limit]));
+        const ch = await soft(() =>
+          h.query(
+            `SELECT at, "by", table_name, field, old, new FROM books_change_log
+                                              WHERE entity_id = $1 AND table_name IN ('customer_list','supplier_list') AND row_id = $2 AND at < $3 ORDER BY at DESC LIMIT $4`,
+            [owner, party, beforeIso, limit]
+          )
+        );
         for (const x of ch.rows) entries.push({ kind: 'change', at: crm.iso(x.at), field: x.field, old: x.old, new: x.new, by: x.by });
       }
       migrated = await F.migrated(h);
       if (migrated) {
-        const it = await h.query(`SELECT interaction_id, kind, direction, body, at, by_user_id FROM party_interaction WHERE owner_entity_id = $1 AND party_id = $2 AND at < $3 ORDER BY at DESC LIMIT $4`, [owner, party, beforeIso, limit]);
-        for (const x of it.rows) entries.push({ kind: 'interaction', at: crm.iso(x.at), interaction_id: x.interaction_id, interaction_kind: x.kind, direction: x.direction, body: x.body, by: x.by_user_id });
-        const fu = await h.query(`SELECT followup_id, what, due_at, created_at, done_at, assignee_user_id FROM party_followup WHERE owner_entity_id = $1 AND party_id = $2 ORDER BY created_at DESC LIMIT $3`, [owner, party, limit * 2]);
+        const it = await h.query(
+          `SELECT interaction_id, kind, direction, body, at, by_user_id FROM party_interaction WHERE owner_entity_id = $1 AND party_id = $2 AND at < $3 ORDER BY at DESC LIMIT $4`,
+          [owner, party, beforeIso, limit]
+        );
+        for (const x of it.rows)
+          entries.push({
+            kind: 'interaction',
+            at: crm.iso(x.at),
+            interaction_id: x.interaction_id,
+            interaction_kind: x.kind,
+            direction: x.direction,
+            body: x.body,
+            by: x.by_user_id
+          });
+        const fu = await h.query(
+          `SELECT followup_id, what, due_at, created_at, done_at, assignee_user_id FROM party_followup WHERE owner_entity_id = $1 AND party_id = $2 ORDER BY created_at DESC LIMIT $3`,
+          [owner, party, limit * 2]
+        );
         for (const x of fu.rows) {
-          if (new Date(x.created_at).getTime() < before) entries.push({ kind: 'followup', at: crm.iso(x.created_at), followup_id: x.followup_id, what: x.what, due_at: crm.iso(x.due_at) });
-          if (x.done_at && new Date(x.done_at).getTime() < before) entries.push({ kind: 'followup_done', at: crm.iso(x.done_at), followup_id: x.followup_id, what: x.what });
+          if (new Date(x.created_at).getTime() < before)
+            entries.push({ kind: 'followup', at: crm.iso(x.created_at), followup_id: x.followup_id, what: x.what, due_at: crm.iso(x.due_at) });
+          if (x.done_at && new Date(x.done_at).getTime() < before)
+            entries.push({ kind: 'followup_done', at: crm.iso(x.done_at), followup_id: x.followup_id, what: x.what });
         }
       }
       /* the stage trail (F7, FX-L2C): memberships IS the append-only history of every move (lib/memberships — the one writer), so the trail is a
          READ of it, never a second log: who · when · to, and "from" = the older row (one statement, LIMIT + 1 so the oldest row shown has its from).
          Before b297 the table is absent — its savepoint answers no rows (soft), exactly as the other optional sources. */
-      const st = await soft(() => h.query(`SELECT membership_id, grp, at, by_user_id FROM memberships WHERE entity_id = $1 AND item_type = 'party' AND item_id = $2 AND kind = 'lead_stage' AND at < $3
-                                            ORDER BY at DESC, membership_id DESC LIMIT $4`, [owner, party, beforeIso, limit + 1]));
-      st.rows.slice(0, limit).forEach((x, i) => entries.push({ kind: 'stage', at: crm.iso(x.at), membership_id: x.membership_id, stage: x.grp, from: st.rows[i + 1] ? st.rows[i + 1].grp : null, by: x.by_user_id || null }));
+      const st = await soft(() =>
+        h.query(
+          `SELECT membership_id, grp, at, by_user_id FROM memberships WHERE entity_id = $1 AND item_type = 'party' AND item_id = $2 AND kind = 'lead_stage' AND at < $3
+                                            ORDER BY at DESC, membership_id DESC LIMIT $4`,
+          [owner, party, beforeIso, limit + 1]
+        )
+      );
+      st.rows.slice(0, limit).forEach((x, index) =>
+        entries.push({
+          kind: 'stage',
+          at: crm.iso(x.at),
+          membership_id: x.membership_id,
+          stage: x.grp,
+          from: st.rows[index + 1] ? st.rows[index + 1].grp : null,
+          by: x.by_user_id || null
+        })
+      );
     });
-    entries.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+    entries.sort((first, second) => (first.at < second.at ? 1 : first.at > second.at ? -1 : 0));
     const page = entries.slice(0, limit);
     /* the one envelope beside the cursor: total = the rows this page could see (a cursor list has no whole count); page is always 1 of the cursor */
-    res.json({ party_id: party, entries: page, next_before: entries.length > limit ? page[page.length - 1].at : null, migrated, total: entries.length, page: 1, limit });
-  } catch (e) { fail(res, e); }
+    res.json({
+      party_id: party,
+      entries: page,
+      next_before: entries.length > limit ? page[page.length - 1].at : null,
+      migrated,
+      total: entries.length,
+      page: 1,
+      limit
+    });
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /**
@@ -202,7 +331,9 @@ router.get('/parties/:id/timeline', auth, noKey, async (req, res) => {
  * body.channel, else whatsapp (the one message kind the log offers); purpose is body.purpose, else service. Unknown words → 400 in words.
  */
 function contactOf(b) {
-  const x = b || {}, kind = String(x.kind || '').toLowerCase(), dir = String(x.direction || '').toLowerCase();
+  const x = b || {},
+    kind = String(x.kind || '').toLowerCase(),
+    dir = String(x.direction || '').toLowerCase();
   if (dir !== 'out' || (kind !== 'call' && kind !== 'message')) return null;
   const channel = kind === 'call' ? 'phone' : String(x.channel || 'whatsapp').toLowerCase();
   const purpose = String(x.purpose || 'service').toLowerCase();
@@ -214,30 +345,42 @@ function contactOf(b) {
 /* ── Phase 4: log, follow up, remove, walk-in ───────────────────────────────────────────────────────────────────── */
 router.post('/parties/:id/interactions', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req);
+    const owner = ctx(req),
+      id = idOf(req);
     const row = await withEntity(owner, async (h) => {
       await F.need(h);
       const on = await require('../lib/books-store').partyOn(h, owner, id);
       if (!on.customer && !on.supplier) throw bad('Not your party.', 404, 'NOT_FOUND');
-      const reach = contactOf(req.body);   /* G2: a call or message the shop MAKES asks the one gate first; in-bound, visits and notes are facts */
-      if (reach) { const v = await PV.gate(h, owner, { party_id: id }, reach.channel, reach.purpose); if (!v.may) throw PV.refusal(v); }
+      const reach = contactOf(req.body); /* G2: a call or message the shop MAKES asks the one gate first; in-bound, visits and notes are facts */
+      if (reach) {
+        const v = await PV.gate(h, owner, { party_id: id }, reach.channel, reach.purpose);
+        if (!v.may) throw PV.refusal(v);
+      }
       return F.addInteraction(h, owner, id, req.body, byOf(req));
     });
     res.status(201).json({ interaction: row });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /** ?scope=mine|all&done=0|1&page=&limit= → { followups, total, page, limit, late, today, shop_day, may } — one statement; none asked = every row */
 router.get('/followups', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
-    const out = await withEntity(owner, (h) => F.page(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', done: String(req.query.done) === '1', me: byOf(req), page }));
+    const owner = ctx(req),
+      page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
+    const out = await withEntity(owner, (h) =>
+      F.page(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', done: String(req.query.done) === '1', me: byOf(req), page })
+    );
     res.json(Object.assign(out, { may: crmMay(req) }));
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.post('/followups', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), b = req.body || {};
+    const owner = ctx(req),
+      b = req.body || {};
     if (!UUID.test(String(b.party_id || ''))) throw bad('Which party is it about?', 400, 'BAD_ID');
     const f = await withEntity(owner, async (h) => {
       await F.need(h);
@@ -246,22 +389,30 @@ router.post('/followups', auth, noKey, async (req, res) => {
       return F.create(h, owner, b, byOf(req));
     });
     res.status(201).json({ followup: f });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.patch('/followups/:id', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req);
+    const owner = ctx(req),
+      id = idOf(req);
     const f = await withEntity(owner, (h) => F.patch(h, owner, id, req.body, { by: byOf(req), isOwner: isOwner(req) }));
     res.json({ followup: f });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.delete('/followups/:id', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req);
+    const owner = ctx(req),
+      id = idOf(req);
     const gone = await withEntity(owner, (h) => F.remove(h, owner, id));
     if (!gone) return res.status(404).json({ code: 'NOT_FOUND', error: 'Not found', message: 'No such follow-up.' });
     res.json({ ok: true });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /**
@@ -270,11 +421,14 @@ router.delete('/followups/:id', auth, noKey, async (req, res) => {
  */
 router.delete('/parties/:id', auth, noKey, async (req, res) => {
   try {
-    if (!isOwner(req)) throw bad(REMOVE_WHY, 403, 'OWNER_ONLY');   /* the same sentence GET /parties may.remove.why carried */
-    const owner = ctx(req), id = idOf(req);
+    if (!isOwner(req)) throw bad(REMOVE_WHY, 403, 'OWNER_ONLY'); /* the same sentence GET /parties may.remove.why carried */
+    const owner = ctx(req),
+      id = idOf(req);
     await crm.removeParty(owner, id);
     res.json({ ok: true, party_id: id });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /**
@@ -283,41 +437,66 @@ router.delete('/parties/:id', auth, noKey, async (req, res) => {
  */
 router.post('/leads', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), b = req.body || {};
-    const name = String(b.name || '').replace(/\s+/g, ' ').trim();   /* \s — the letter s was being replaced ("Esai" → "E ai"), found by the FX-L2C real walk */
+    const owner = ctx(req),
+      b = req.body || {};
+    const name = String(b.name || '')
+      .replace(/\s+/g, ' ')
+      .trim(); /* \s — the letter s was being replaced ("Esai" → "E ai"), found by the FX-L2C real walk */
     if (!name) throw bad('Give the lead a name.', 400, 'BAD_NAME');
     const L = require('../lib/local-identity');
-    const ph = L.phoneOf(b.phone);   /* the one phone check (CRM-MINT1) */
+    const ph = L.phoneOf(b.phone); /* the one phone check (CRM-MINT1) */
     if (ph.bad) throw bad('That phone number does not look right.', 400, 'BAD_PHONE');
     const phone = ph.phone;
     const stage = b.stage == null || b.stage === '' ? 'lead' : String(b.stage);
     if (M.KINDS.lead_stage.groups.indexOf(stage) < 0) throw bad('That is not one of the stages.', 400, 'BAD_GROUP');
     await M.need();
     const out = await withEntity(owner, async (h) => {
-      const a = await L.addCustomer(h, owner, { name, phone, via: 'lead' });   /* ⭐ CRM-MINT1: the one add-customer */
+      const a = await L.addCustomer(h, owner, { name, phone, via: 'lead' }); /* ⭐ CRM-MINT1: the one add-customer */
       if (a.refused) throw bad((a.refused.error && a.refused.error.message) || 'Could not add them.', a.refused.status || 400, 'MINT_REFUSED');
       if (a.exists) throw bad(L.existsWords(a, 'That name is already on your list.'), 409, 'EXISTS');
-      const local = a.local, party_no = a.party_no;
+      const local = a.local,
+        party_no = a.party_no;
       const m = await M.add(h, owner, { kind: 'lead_stage', item_id: local.identity_id, group: stage, by: byOf(req) });
-      return { party: { party_id: local.identity_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false, lead: { stage, since: crm.iso(m.at) } } };
+      return {
+        party: {
+          party_id: local.identity_id,
+          display_name: local.display_name,
+          party_no,
+          kind: 'local',
+          on_chitbridge: false,
+          lead: { stage, since: crm.iso(m.at) }
+        }
+      };
     });
     res.status(201).json(out);
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /* ── L2: the call desk — the table of outcomes is lib/crm-calls (server); the web only labels it ─────────────────── */
 router.get('/calls', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
-    res.json(await withEntity(owner, (h) => require('../lib/crm-calls').queue(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', me: byOf(req), page, write: crmMay(req).write })));
-  } catch (e) { fail(res, e); }
+    const owner = ctx(req),
+      page = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
+    res.json(
+      await withEntity(owner, (h) =>
+        require('../lib/crm-calls').queue(h, owner, { scope: req.query.scope === 'mine' ? 'mine' : 'all', me: byOf(req), page, write: crmMay(req).write })
+      )
+    );
+  } catch (e) {
+    fail(res, e);
+  }
 });
 /** Body { outcome, after?: today|tomorrow|3days, due_at?: YYYY-MM-DD }. 201 { interaction, followup, stage, suggest } */
 router.post('/parties/:id/outcome', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req);
+    const owner = ctx(req),
+      id = idOf(req);
     res.status(201).json(await withEntity(owner, (h) => require('../lib/crm-calls').outcome(h, owner, id, req.body, byOf(req))));
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /**
@@ -333,23 +512,32 @@ router.post('/leads/import', auth, noKey, async (req, res) => {
     const b = req.body || {};
     const out = await require('../lib/crm-leads').importLeads(ctx(req), b.rows, { by: byOf(req), dry: !!b.dry });
     res.status(out.dry ? 200 : 201).json(out);
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /** "Move to…": the stage a lead is in now. Body { stage }. A new row — never an update; refused for a party that has traded (they are a customer). */
 router.post('/parties/:id/stage', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req), stage = String((req.body || {}).stage || '');
+    const owner = ctx(req),
+      id = idOf(req),
+      stage = String((req.body || {}).stage || '');
     if (M.KINDS.lead_stage.groups.indexOf(stage) < 0) throw bad('That is not one of the stages.', 400, 'BAD_GROUP');
     await M.need();
     const row = await withEntity(owner, async (h) => {
-      const c = await h.query(`SELECT txn_count FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 AND added_via = 'lead'`, [owner, id]);
+      const c = await h.query(`SELECT txn_count FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 AND added_via = 'lead'`, [
+        owner,
+        id
+      ]);
       if (!c.rows.length) throw bad('Not one of your leads.', 404, 'NOT_FOUND');
       if (Number(c.rows[0].txn_count) > 0) throw bad('They are a customer now.', 409, 'IS_CUSTOMER');
       return M.add(h, owner, { kind: 'lead_stage', item_id: id, group: stage, by: byOf(req) });
     });
     res.json({ ok: true, party_id: id, lead: { stage: row.grp, since: crm.iso(row.at) } });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /**
@@ -358,16 +546,22 @@ router.post('/parties/:id/stage', auth, noKey, async (req, res) => {
  */
 router.post('/walk-ins/add', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), b = req.body || {};
-    const rewards = require('../lib/rewards'), RS = require('../lib/reward-store'), L = require('../lib/local-identity');
-    const ph = L.phoneOf(b.phone);   /* the one phone check (CRM-MINT1) */
+    const owner = ctx(req),
+      b = req.body || {};
+    const rewards = require('../lib/rewards'),
+      RS = require('../lib/reward-store'),
+      L = require('../lib/local-identity');
+    const ph = L.phoneOf(b.phone); /* the one phone check (CRM-MINT1) */
     if (!ph.phone) throw bad('Give the phone number they used.', 400, 'BAD_PHONE');
     const from = rewards.holderOf({ phone: ph.phone });
     const digits = from.value.replace(/[^0-9]/g, '');
-    const name = String(b.name || '').replace(/\s+/g, ' ').trim() || ('Customer ' + digits.slice(-4));
+    const name =
+      String(b.name || '')
+        .replace(/\s+/g, ' ')
+        .trim() || 'Customer ' + digits.slice(-4);
     /* ⭐⭐ CRM-MINT1: the five writes (mint · contact · list row · number · the points) are ONE transaction — a points claim that
        fails no longer leaves a customer added without their points */
-    const inTx = (h) => (_entity, fn) => fn(h);   /* the reward store's withEntity, answered by the transaction already open */
+    const inTx = (h) => (_entity, fn) => fn(h); /* the reward store's withEntity, answered by the transaction already open */
     const { local, party_no, claimed } = await withEntity(owner, async (h) => {
       const a = await L.addCustomer(h, owner, { name, phone: from.value, via: 'manual' });
       if (a.refused) throw bad((a.refused.error && a.refused.error.message) || 'Could not add them.', a.refused.status || 400, 'MINT_REFUSED');
@@ -384,8 +578,13 @@ router.post('/walk-ins/add', auth, noKey, async (req, res) => {
       }
       return { local: a.local, party_no: a.party_no, claimed: got };
     });
-    res.status(201).json({ party: { party_id: local.identity_id, user_id: local.user_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false }, points_claimed: claimed });
-  } catch (e) { fail(res, e); }
+    res.status(201).json({
+      party: { party_id: local.identity_id, user_id: local.user_id, display_name: local.display_name, party_no, kind: 'local', on_chitbridge: false },
+      points_claimed: claimed
+    });
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /* ── CO1 privacy: contact consent (K2, b306) and the request register (K4 · K11, b307) — lib/privacy.js (PV, required at the top) ── */
@@ -396,7 +595,8 @@ async function mine(h, owner, id) {
 }
 router.get('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req);
+    const owner = ctx(req),
+      id = idOf(req);
     const out = await withEntity(owner, async (h) => {
       await mine(h, owner, id);
       const p = await PV.prefs(h, owner, id);
@@ -405,38 +605,57 @@ router.get('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
       return Object.assign(p, { law: PV.lawOf(c && c.country) });
     });
     res.json(Object.assign({ party_id: id }, out));
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.post('/parties/:id/contact-prefs', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), id = idOf(req);
-    const pref = await withEntity(owner, async (h) => { await mine(h, owner, id); return PV.notePref(h, owner, id, req.body, byOf(req)); });
+    const owner = ctx(req),
+      id = idOf(req);
+    const pref = await withEntity(owner, async (h) => {
+      await mine(h, owner, id);
+      return PV.notePref(h, owner, id, req.body, byOf(req));
+    });
     res.status(201).json({ pref });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.get('/privacy-requests', auth, noKey, async (req, res) => {
   try {
     const owner = ctx(req);
     const out = await withEntity(owner, (h) => PV.requests(h, owner, { open: String(req.query.open) === '1', page: req.query.page, limit: req.query.limit }));
     res.json(Object.assign(out, { may_answer: isOwner(req), why: isOwner(req) ? null : 'Only the owner answers a privacy request.' }));
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.post('/privacy-requests', auth, noKey, async (req, res) => {
   try {
-    const owner = ctx(req), b = req.body || {};
+    const owner = ctx(req),
+      b = req.body || {};
     if (b.party_id != null && !UUID.test(String(b.party_id))) throw bad('That is not a party id.', 400, 'BAD_ID');
-    const r = await withEntity(owner, async (h) => { if (b.party_id) await mine(h, owner, b.party_id); return PV.logRequest(h, owner, b, byOf(req)); });
+    const r = await withEntity(owner, async (h) => {
+      if (b.party_id) await mine(h, owner, b.party_id);
+      return PV.logRequest(h, owner, b, byOf(req));
+    });
     res.status(201).json({ request: r });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 router.post('/privacy-requests/:id/answer', auth, noKey, async (req, res) => {
   try {
     if (!isOwner(req)) throw bad('Only the owner answers a privacy request.', 403, 'OWNER_ONLY');
-    const owner = ctx(req), id = String(req.params.id || '');
+    const owner = ctx(req),
+      id = String(req.params.id || '');
     if (!UUID.test(id)) throw bad('That is not a request id.', 400, 'BAD_ID');
     const r = await withEntity(owner, (h) => PV.answerRequest(h, owner, id, req.body, byOf(req)));
     res.json({ request: r });
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 /* ── T3-P2-CRM: segments & groups (lib/crm-groups.js) — the ONE segment definition counted, named groups written, a set messaged through the one gate ── */
@@ -444,7 +663,11 @@ const CG = require('../lib/crm-groups');
 const whoIs = (req) => ({ owner: isOwner(req), editor: require('../lib/access').canEdit(req.identity) });
 /** who may: anyone signed in to the shop reads it (a viewer sees every action greyed with the server's sentence — `may`) */
 router.get('/segments', auth, noKey, async (req, res) => {
-  try { res.json(await CG.overview(ctx(req), whoIs(req))); } catch (e) { fail(res, e); }
+  try {
+    res.json(await CG.overview(ctx(req), whoIs(req)));
+  } catch (e) {
+    fail(res, e);
+  }
 });
 /** who may: the owner or an editor (hat-gate refuses a viewer first; this is the sentence) — { name, add[], remove[] }, ONE transaction */
 router.post('/groups', auth, noKey, async (req, res) => {
@@ -452,7 +675,9 @@ router.post('/groups', auth, noKey, async (req, res) => {
     if (!whoIs(req).editor) throw bad('Your login can only view.', 403, 'VIEW_ONLY');
     const owner = ctx(req);
     res.status(201).json(await withEntity(owner, (h) => CG.setGroup(h, owner, req.body)));
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 /** who may: the owner only — the group leaves every customer; the offers that named it are the warning GET /segments carried */
 router.delete('/groups/:name', auth, noKey, async (req, res) => {
@@ -460,14 +685,18 @@ router.delete('/groups/:name', auth, noKey, async (req, res) => {
     if (!isOwner(req)) throw bad('Only the owner deletes a group.', 403, 'OWNER_ONLY');
     const owner = ctx(req);
     res.json(await withEntity(owner, (h) => CG.dropGroup(h, owner, req.params.name)));
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 /** who may: the owner or an editor — { channel?, purpose?, text, dry? }: dry = the count and who is refused (by code); real = the one sender per allowed member */
 router.post('/segments/:key/send', auth, noKey, async (req, res) => {
   try {
     if (!whoIs(req).editor) throw bad('Your login can only view.', 403, 'VIEW_ONLY');
     res.json(await CG.send(ctx(req), req.params.key, req.body));
-  } catch (e) { fail(res, e); }
+  } catch (e) {
+    fail(res, e);
+  }
 });
 
 module.exports = router;

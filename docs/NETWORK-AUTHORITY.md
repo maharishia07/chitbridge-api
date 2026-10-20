@@ -1,46 +1,31 @@
-# Network authority & parent→child cascade (gap analysis + fix spec)
+# Network authority and the parent-to-child cascade (rewritten 2026-10-19 to match the code)
 
-**Question: is the authority cascade from top-level to next level handled? — NO, essentially absent.**
-The design intends "authority flows down the tree; you can only grant what you hold" (CO_HELP), but
-`src/services/network.js` enforces almost no authority, and what little exists is bypassable.
+**Question: who may do what on a network connection? Answer today: only the two businesses on it, and the acting business comes from the signed-in token, never from the request body.**
+This file first said "essentially absent" (gap analysis, 28 Jun 2026). That was true then and is not true now. Authority was built under ATH-86 (commit f55b1591, 17 Sep 2026, "authority from the token") and hardened on 14 Oct (standing check on reads). The rule table lives in code, so this page points to it instead of copying it.
 
-## Per-operation authority — today vs. should-be
-| Op | Today | Should be |
+## Where the rules are (read the code, not this page, when they differ)
+- `src/services/network.js` `mayAct(op, { edge, actorId, parentId, childId })` (about line 92): the pure rule table. `nodeOf()` (line 60) turns the signed-in identity into its node through the bridge (`identities.bridge_id` = `cb_entity.bridge_id`).
+- `tests/network-authority.test.cjs`: parent can, child can, stranger cannot, and the side that asked cannot approve. It runs without a database.
+- `lib/network-membership.js`: the membership and standing SQL (a member in standing, built under the brand or on an active commercial edge). Migration `b261_network_brand_edges.sql`.
+
+## Per-operation authority, as built
+| Op | Who may | Code |
 |---|---|---|
-| `register` | none | any authed user; becomes a root |
-| `requestConnect` | none (anyone can request any parent←child) | caller must be the parent or the child (initiator) |
-| `approve` | child-consent **only if `actingEntityId` provided — OPTIONAL → bypassable; frontend omits it** | the child must consent, derived from the token (not the body) |
-| `decline` | none | the child (or parent) of the edge |
-| `suspend` / `resume` | **none** (any edge) | the **parent** of the edge (authority over its child) |
-| `disconnect` | none (only the open-chit settle guard) | the parent **or** child of the edge |
-| `subtree` | none (read ANY entity's subtree) | caller must be **at/above** that node (its own subtree) |
-| `connections` | none (read ANY entity's edges) | caller = that entity (or an ancestor) |
-| `claim` | **none — anyone can claim ANY unclaimed entity** | identity verification (ATH-86) |
+| `register` | any signed-in business; becomes a root | `register()` |
+| `requestConnect` | the parent or the child (either side may ask) | `mayAct` op `request` |
+| `approve` | the side that did NOT ask (the other party consents), derived from the token | `mayAct` op `approve` |
+| `decline` | the parent or the child | `mayAct` |
+| `suspend`, `resume` | the parent only ("only the network can suspend or resume a member") | `mayAct` |
+| `disconnect` | the parent or the child | `mayAct` |
+| `subtree` | a business in the same network (same root) and in standing; a suspended member sees only its own node | `_sameRoot()` / `subtree()` |
+| `connections` | the node itself or one of its ancestors (`path <@`) | `connections()` |
+| `claim` | only the business the node belongs to (identity bridge match), and only while unclaimed | `claim()` |
 
-## The missing cascade model
-Nothing enforces that:
-- the **top node (root) has authority over its whole subtree**,
-- a **parent can act on its direct children's edges**,
-- **reads are scoped to the caller's own subtree** (you see yours, not others'),
-- **claim** proves ownership.
-Authority is either absent or taken from the (client-supplied) body. The cascade is a design goal, not built.
+Two kinds of edge: `governance` (the tree; one live parent; approving moves the child's subtree) and `commercial` (a brand's network of stores; many allowed; never moves the tree).
 
-## Why it matters beyond security
-The **"entities under the top node" quota** (subscription, billing-root) and the **engagement / scoped-grant**
-model both depend on this cascade — the top node governing its subtree. So building the cascade is foundational,
-not just a security patch.
+## Not built (stated, not hidden)
+- **Root authority over the whole subtree.** `mayAct` allows the direct parent or child of an edge only. A root cannot suspend a grandchild's edge; it must be the parent of that edge. The ltree containment check (`path <@`) is used for reads, not for writes.
+- **Cascade revoke.** On `disconnect`, grants that flowed through the edge are not revoked: the code carries `TODO: cascade-revoke grants ... when grants land` (`src/services/network.js`, in `disconnect`).
+- **Quota by subtree.** The subscription quota "entities under the top node" (`SUBSCRIPTION-ENTITLEMENTS.md`) does not read this cascade yet.
 
-## Fix spec (with the cb_entity ↔ identities bridge — Track B)
-1. **Derive the acting cb_entity from `req.identity`** (via the bridge), never from the body.
-2. **Per-op authority** as the table above: parent-of-edge for suspend/resume/disconnect; child-consent for
-   approve/decline (from token); subtree/connections scoped to the caller's subtree; claim via identity proof.
-3. **ltree makes the cascade cheap:** "X has authority over Y" = `Y.path <@ X.path` (Y is in X's subtree). One
-   containment check gives the whole top-down cascade.
-4. **Immediate sub-fixes — DONE (2bd37ee):** `approve` now **requires** `actingEntityId` (no omit-to-bypass consent);
-   `claim` only succeeds on an **unclaimed** entity (no hijack of an owned node). Both still spoofable until the
-   bridge, but the two worst footguns are closed. NOTE: the frontend `netApprove` (empty body) now 400s until it
-   passes the consenting entity — that path needs the bridge anyway.
-5. Tests for each authority rule (parent-can/child-can/stranger-cannot).
-
-Related: P0 item in `TECH-HARDENING-BACKLOG.md` (auth mitigated; this is the authority half),
-`SUBSCRIPTION-ENTITLEMENTS.md` (billing-root subtree quota depends on this cascade).
+History: 28 Jun 2026 gap analysis (commits ebb0a471, a73af54f); built 17 Sep 2026 (f55b1591). Checked against origin/main of this repo on 2026-10-19 by cb-docs; the cb-rail owner confirms the table.

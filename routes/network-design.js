@@ -8,22 +8,22 @@
 // this file only executes it. Owned nodes are created; partners are invited and never created.
 const express = require('express');
 const log = require('../lib/logger');
-const router  = express.Router();
+const router = express.Router();
 const { query, withEntity } = require('../db');
 const { safeErr } = require('../lib/respond');
 const auth = require('../middleware/auth');
 const handleLib = require('../lib/handle');
 const networkBuild = require('../lib/network-build');
-const run = require('../lib/network-build-run');          // the build's steps that read and write (T2-SPLIT)
+const run = require('../lib/network-build-run'); // the build's steps that read and write (T2-SPLIT)
 const visibilityCap = require('../lib/visibility-cap');
 const devOtp = require('../lib/dev-otp');
-const money = require('../lib/money');                    // a price is {amount,currency} — never a bare number
-const availability = require('../lib/availability');      // a quantity is not an answer without a date
-const catalogueView = require('../lib/catalogue-view');   // ONE visibility rule — stock follows the catalogue's
-const membership = require('../lib/network-membership');  // who is in the network — one reader, fails loudly (T2-HONEST)
+const money = require('../lib/money'); // a price is {amount,currency} — never a bare number
+const availability = require('../lib/availability'); // a quantity is not an answer without a date
+const catalogueView = require('../lib/catalogue-view'); // ONE visibility rule — stock follows the catalogue's
+const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
 
 const ent = (req) => auth.entityOf(req);
-const MAX_BYTES = 2_000_000;   // a design is a modest JSON tree; cap so this never becomes a document store
+const MAX_BYTES = 2_000_000; // a design is a modest JSON tree; cap so this never becomes a document store
 // Rows returned by the single-query network search (b122). Generous enough that a real search is whole, bounded
 // so one careless "a" cannot pull a 20,000-row catalogue through the API. Hitting it is REPORTED, never hidden.
 const SINGLE_LIMIT = 200;
@@ -32,10 +32,11 @@ const SINGLE_LIMIT = 200;
 router.get('/', auth, async (req, res) => {
   try {
     const e = ent(req);
-    const r = await withEntity(e, (db) => db.query(
-      `SELECT draft, updated_at FROM network_design WHERE entity_id = $1`, [e]));
+    const r = await withEntity(e, (db) => db.query(`SELECT draft, updated_at FROM network_design WHERE entity_id = $1`, [e]));
     res.json({ draft: r.rows.length ? r.rows[0].draft : null, updated_at: r.rows.length ? r.rows[0].updated_at : null });
-  } catch (err) { res.status(500).json({ error: 'Load failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Load failed', message: safeErr(err) });
+  }
 });
 
 // PUT /api/network-design — upsert the whole design draft { draft: {...} }.
@@ -66,28 +67,36 @@ router.put('/', auth, async (req, res) => {
      * Re-attached BY KEY, so "start over" — which mints fresh keys — still starts over.
      */
     const prevDraft = await run.designOf(e);
-    const prevNodes = (prevDraft && Array.isArray(prevDraft.nodes)) ? prevDraft.nodes : [];
+    const prevNodes = prevDraft && Array.isArray(prevDraft.nodes) ? prevDraft.nodes : [];
     if (prevNodes.length && Array.isArray(draft.nodes)) {
       const receipts = new Map();
-      prevNodes.forEach((n) => { if (n && n.key && (n.built || n.invited)) receipts.set(n.key, n); });
+      prevNodes.forEach((item) => {
+        if (item && item.key && (item.built || item.invited)) receipts.set(item.key, item);
+      });
       if (receipts.size) {
-        draft.nodes = draft.nodes.map((n) => {
-          const r = n && n.key ? receipts.get(n.key) : null;
-          if (!r) return n;
-          const out = Object.assign({}, n);
-          if (r.built && !out.built) out.built = r.built;
-          if (r.invited && !out.invited) out.invited = r.invited;
+        draft.nodes = draft.nodes.map((item) => {
+          const nestedR = item && item.key ? receipts.get(item.key) : null;
+          if (!nestedR) return item;
+          const out = Object.assign({}, item);
+          if (nestedR.built && !out.built) out.built = nestedR.built;
+          if (nestedR.invited && !out.invited) out.invited = nestedR.invited;
           return out;
         });
       }
     }
 
-    const r = await withEntity(e, (db) => db.query(
-      `INSERT INTO network_design (entity_id, draft, updated_at) VALUES ($1, $2, now())
+    const r = await withEntity(e, (db) =>
+      db.query(
+        `INSERT INTO network_design (entity_id, draft, updated_at) VALUES ($1, $2, now())
          ON CONFLICT (entity_id) DO UPDATE SET draft = EXCLUDED.draft, updated_at = now()
-       RETURNING updated_at`, [e, draft]));
+       RETURNING updated_at`,
+        [e, draft]
+      )
+    );
     res.json({ ok: true, updated_at: r.rows[0].updated_at });
-  } catch (err) { res.status(500).json({ error: 'Save failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Save failed', message: safeErr(err) });
+  }
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -107,7 +116,7 @@ router.put('/', auth, async (req, res) => {
  *  then failed to record that it had would offer to create them again.
  * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
-const { newClaimCode, CLAIM_DAYS } = run;   // the claim code and its life — one minting place (lib/network-build-run.js), /reissue uses it too
+const { newClaimCode, CLAIM_DAYS } = run; // the claim code and its life — one minting place (lib/network-build-run.js), /reissue uses it too
 
 /**
  * POST /api/network-design/validate   { draft?: { nodes: [...] }, root_handle?: string, ceiling?: 'public'|'network'|'private', sample?: bool }
@@ -134,17 +143,23 @@ router.post('/validate', auth, async (req, res) => {
       return res.status(413).json({ error: 'Too large', message: 'design exceeds ' + MAX_BYTES + ' bytes' });
     }
     if (!draft && !sample) draft = await run.designOf(me);
-    const nodes = (draft && Array.isArray(draft.nodes)) ? draft.nodes : [];
-    let rootHandle = String(body.root_handle || '').trim().toLowerCase();
+    const nodes = draft && Array.isArray(draft.nodes) ? draft.nodes : [];
+    let rootHandle = String(body.root_handle || '')
+      .trim()
+      .toLowerCase();
     if (!rootHandle && !sample) {
       const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [me]);
-      rootHandle = String((r.rows[0] && r.rows[0].user_id) || '').trim().toLowerCase();
+      rootHandle = String((r.rows[0] && r.rows[0].user_id) || '')
+        .trim()
+        .toLowerCase();
     }
     if (!rootHandle) rootHandle = 'sample';
-    const taken = (!sample && handleLib.check(rootHandle).ok) ? await run.takenUnder(rootHandle) : [];
+    const taken = !sample && handleLib.check(rootHandle).ok ? await run.takenUnder(rootHandle) : [];
     const ceiling = visibilityCap.RANK[String(body.ceiling || '').toLowerCase()] !== undefined ? String(body.ceiling).toLowerCase() : 'public';
     res.json(Object.assign({ dry_run: true, sample }, networkBuild.validate({ rootHandle, nodes, taken, ceiling })));
-  } catch (err) { res.status(500).json({ error: 'Check failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Check failed', message: safeErr(err) });
+  }
 });
 
 /**
@@ -158,8 +173,7 @@ router.post('/build', auth, async (req, res) => {
     // Only the entity itself mints. A co-assist acting under an entity may run the shop; creating new businesses
     // in the owner's name, holding their claim codes, is not a delegated act.
     if (req.identity.parent_entity_id) {
-      return res.status(403).json({ error: 'Not permitted',
-        message: 'Only the business owner can build a network. Sign in as the business itself.' });
+      return res.status(403).json({ error: 'Not permitted', message: 'Only the business owner can build a network. Sign in as the business itself.' });
     }
     const me = req.identity.identity_id;
     const dryRun = req.body && req.body.dry_run === true;
@@ -174,10 +188,9 @@ router.post('/build', auth, async (req, res) => {
 
     // ── 2 · THE DESIGN
     const draft = await run.designOf(me);
-    const nodes = (draft && Array.isArray(draft.nodes)) ? draft.nodes : [];
+    const nodes = draft && Array.isArray(draft.nodes) ? draft.nodes : [];
     if (!nodes.length) {
-      return res.status(400).json({ error: 'Nothing designed',
-        message: 'Draw the network first — add the branches and units you want, then build.' });
+      return res.status(400).json({ error: 'Nothing designed', message: 'Draw the network first — add the branches and units you want, then build.' });
     }
     const taken = await run.takenUnder(rootHandle);
     const live = await run.liveOf(nodes);
@@ -205,14 +218,32 @@ router.post('/build', auth, async (req, res) => {
      */
 
     if (dryRun) {
-      return res.json({ ok: true, dry_run: true, root: rootHandle, root_claimed: rootClaimed,
-        create: plan.create, update: plan.update, invite: plan.invite, skip: plan.skip,
-        problems: plan.problems, notes, counts: plan.counts });
+      return res.json({
+        ok: true,
+        dry_run: true,
+        root: rootHandle,
+        root_claimed: rootClaimed,
+        create: plan.create,
+        update: plan.update,
+        invite: plan.invite,
+        skip: plan.skip,
+        problems: plan.problems,
+        notes,
+        counts: plan.counts
+      });
     }
     if (!plan.create.length && !plan.update.length && !plan.invite.length) {
-      return res.json({ ok: true, root: rootHandle, created: [], updated: [], invited: [], skipped: plan.skip,
-        problems: plan.problems, notes,
-        message: plan.problems.length ? 'Nothing could be built — see the reasons.' : 'The network already matches this design.' });
+      return res.json({
+        ok: true,
+        root: rootHandle,
+        created: [],
+        updated: [],
+        invited: [],
+        skipped: plan.skip,
+        problems: plan.problems,
+        notes,
+        message: plan.problems.length ? 'Nothing could be built — see the reasons.' : 'The network already matches this design.'
+      });
     }
 
     // ── 4 · DO IT — one transaction (run.execute)
@@ -220,12 +251,16 @@ router.post('/build', auth, async (req, res) => {
     res.json(networkBuild.answer({ rootHandle, rootClaimed, plan, notes, result, claimDays: run.CLAIM_DAYS }));
   } catch (err) {
     if (err && err.code === '23505') {
-      return res.status(409).json({ error: 'Name taken',
-        message: 'One of these names was taken while the network was being built. Nothing was created — try again.' });
+      return res
+        .status(409)
+        .json({ error: 'Name taken', message: 'One of these names was taken while the network was being built. Nothing was created — try again.' });
     }
     if (err && err.code === '23514') {
-      return res.status(409).json({ error: 'Migration needed', code: 'VISIBILITY_NOT_MIGRATED',
-        message: 'This database does not accept "network" visibility yet — apply migration b115.' });
+      return res.status(409).json({
+        error: 'Migration needed',
+        code: 'VISIBILITY_NOT_MIGRATED',
+        message: 'This database does not accept "network" visibility yet — apply migration b115.'
+      });
     }
     console.error('Network build error:', err.message);
     res.status(500).json({ error: 'Build failed', message: safeErr(err) });
@@ -253,19 +288,24 @@ router.post('/reissue', auth, async (req, res) => {
 
     const r = await query(
       `SELECT identity_id, display_name, user_id FROM identities
-        WHERE LOWER(user_id) = LOWER($1) AND created_by = $2 AND identity_type = 'entity'`, [uid, me]);
+        WHERE LOWER(user_id) = LOWER($1) AND created_by = $2 AND identity_type = 'entity'`,
+      [uid, me]
+    );
     if (!r.rows.length) {
       return res.status(404).json({ error: 'Not found', message: `You did not create a store called "${uid}".` });
     }
     const claim = newClaimCode();
     const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
-    await query(
-      `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`,
-      [claim, expires, r.rows[0].identity_id]);
-    res.json({ ok: true, user_id: r.rows[0].user_id, display_name: r.rows[0].display_name,
-      claim_code: claim, expires_at: expires,
+    await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [claim, expires, r.rows[0].identity_id]);
+    res.json({
+      ok: true,
+      user_id: r.rows[0].user_id,
+      display_name: r.rows[0].display_name,
+      claim_code: claim,
+      expires_at: expires,
       ...(devOtp.mayExposeOtp() && { dev_otp: claim }),
-      message: `New code for ${r.rows[0].user_id}. It expires in ${CLAIM_DAYS} days.` });
+      message: `New code for ${r.rows[0].user_id}. It expires in ${CLAIM_DAYS} days.`
+    });
   } catch (err) {
     console.error('Reissue error:', err.message);
     res.status(500).json({ error: 'Re-issue failed', message: safeErr(err) });
@@ -332,17 +372,21 @@ async function visibleStores(meRow) {
   const truncated = members.length > MAX_STORES ? { asked: MAX_STORES, of: members.length } : null;
   const use = members.slice(0, MAX_STORES);
 
-  const ents = (await query(
-    `SELECT identity_id, bridge_id, display_name, purpose, city, lat, lng, currency_code, service_km,
+  const ents = (
+    await query(
+      `SELECT identity_id, bridge_id, display_name, purpose, city, lat, lng, currency_code, service_km,
             dispatch_days, ship_within_days, ship_beyond_days, sort_order,
             catalogue_visibility, plan, params_override
        FROM identities
-      WHERE bridge_id = ANY($1) AND identity_type = 'entity' AND status = 'active'`, [use])).rows;
+      WHERE bridge_id = ANY($1) AND identity_type = 'entity' AND status = 'active'`,
+      [use]
+    )
+  ).rows;
 
-  const visible = ents.filter((ent) => {
-    const chosen = ent.catalogue_visibility;
+  const visible = ents.filter((item) => {
+    const chosen = item.catalogue_visibility;
     if (chosen !== 'public' && chosen !== 'network') return false;
-    const cap = visibilityCap.capOf({ plan: ent.plan, paramsOverride: ent.params_override || {} });
+    const cap = visibilityCap.capOf({ plan: item.plan, paramsOverride: item.params_override || {} });
     return visibilityCap.RANK[visibilityCap.effective(chosen, cap)] > 0;
   });
   return { members: use, visible, truncated };
@@ -358,8 +402,7 @@ async function visibleStores(meRow) {
 router.get('/stores', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const meRow = (await query(
-      'SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
     if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
 
     const { visible, truncated } = await visibleStores(meRow);
@@ -367,18 +410,22 @@ router.get('/stores', auth, async (req, res) => {
 
     const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
     const stores = visible.map((e) => ({
-      entity_id: e.identity_id, bridge_id: e.bridge_id, name: e.display_name,
-      purpose: e.purpose || null, city: e.city || null, currency: e.currency_code || null,
+      entity_id: e.identity_id,
+      bridge_id: e.bridge_id,
+      name: e.display_name,
+      purpose: e.purpose || null,
+      city: e.city || null,
+      currency: e.currency_code || null,
       km: availability.distanceKm(from, { lat: e.lat == null ? null : Number(e.lat), lng: e.lng == null ? null : Number(e.lng) }),
       is_me: e.identity_id === me,
-      sort_order: e.sort_order == null ? null : Number(e.sort_order),
+      sort_order: e.sort_order == null ? null : Number(e.sort_order)
     }));
     // The operator's arrangement (b118) first, then by name — the same order the network tree uses, so a person
     // reading both sees one network rather than two lists that happen to hold the same stores.
-    stores.sort((a, b) => {
-      const ao = a.sort_order == null ? Number.MAX_SAFE_INTEGER : a.sort_order;
-      const bo = b.sort_order == null ? Number.MAX_SAFE_INTEGER : b.sort_order;
-      return ao !== bo ? ao - bo : String(a.name).localeCompare(String(b.name));
+    stores.sort((first, second) => {
+      const ao = first.sort_order == null ? Number.MAX_SAFE_INTEGER : first.sort_order;
+      const bo = second.sort_order == null ? Number.MAX_SAFE_INTEGER : second.sort_order;
+      return ao !== bo ? ao - bo : String(first.name).localeCompare(String(second.name));
     });
     res.json({ stores, ...(truncated && { truncated }) });
   } catch (err) {
@@ -391,25 +438,24 @@ router.get('/stores', auth, async (req, res) => {
 router.get('/availability', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const q = String(req.query.q || '').trim();
-    if (q.length < 2) {
+    const text = String(req.query.q || '').trim();
+    if (text.length < 2) {
       return res.status(400).json({ error: 'Bad request', message: 'Search for a product — two characters or more.' });
     }
 
-    const meRow = (await query(
-      'SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
     if (!meRow) return res.status(404).json({ error: 'Not found', message: 'Your account could not be read.' });
 
     // Everyone under MY root, at any depth — one query, whatever the shape of the tree.
     const members = await membership.treeOf(meRow.bridge_id);
     if (!members.length) {
-      return res.json({ q, rows: [], summary: 'This business is not part of a network.', not_in_network: true });
+      return res.json({ q: text, rows: [], summary: 'This business is not part of a network.', not_in_network: true });
     }
     const truncated = members.length > MAX_STORES;
     const use = members.slice(0, MAX_STORES);
 
     const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
-    const like = '%' + q.toLowerCase() + '%';
+    const like = '%' + text.toLowerCase() + '%';
     const rows = [];
 
     /**
@@ -424,14 +470,15 @@ router.get('/availability', auth, async (req, res) => {
      * the answer is identical either way, only the number of round trips differs. Code and migration can land in
      * either order, which is the same self-healing rule catalogue-view.js uses for b114.
      */
-    let single = null, degraded = null;
+    let single = null,
+      degraded = null;
     // A comparison switch, not a feature flag: it forces the ORIGINAL fan-out so scripts/prove-network-search.js
     // can ask the same deployment the same question both ways. It can only make the answer slower, never wider —
     // the fan-out is the stricter path, so this cannot be used to see more than the caller is entitled to.
     const forceFanout = req.get('X-CB-Force-Fanout') === '1';
     try {
       if (forceFanout) throw Object.assign(new Error('forced fan-out'), { forced: true });
-      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, q, SINGLE_LIMIT]);
+      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, text, SINGLE_LIMIT]);
     } catch (e) {
       /**
        * ⚠️ ANY failure of the fast path falls back to the fan-out — it does not fail the search.
@@ -459,43 +506,53 @@ router.get('/availability', auth, async (req, res) => {
        * visibleStores(), same module, evaluated once per store rather than once per row.
        */
       const capOk = new Map();
-      const allowed = single.rows.filter((r) => {
-        if (!capOk.has(r.entity_id)) {
-          const cap = visibilityCap.capOf({ plan: r.plan, paramsOverride: r.params_override || {} });
-          capOk.set(r.entity_id, visibilityCap.RANK[visibilityCap.effective(r.catalogue_visibility || 'private', cap)] > 0);
+      const allowed = single.rows.filter((item) => {
+        if (!capOk.has(item.entity_id)) {
+          const cap = visibilityCap.capOf({ plan: item.plan, paramsOverride: item.params_override || {} });
+          capOk.set(item.entity_id, visibilityCap.RANK[visibilityCap.effective(item.catalogue_visibility || 'private', cap)] > 0);
         }
-        return capOk.get(r.entity_id);
+        return capOk.get(item.entity_id);
       });
       for (const r of allowed) {
         const d = r.item_data || {};
-        const av = (d.avail && typeof d.avail === 'object') ? d.avail : null;
+        const av = d.avail && typeof d.avail === 'object' ? d.avail : null;
         const amt = money.amountOfLoose(d.price);
         rows.push({
-          store: r.store_name, bridge_id: r.bridge_id, city: r.city || null, entity_id: r.entity_id,
+          store: r.store_name,
+          bridge_id: r.bridge_id,
+          city: r.city || null,
+          entity_id: r.entity_id,
           price: Number.isFinite(amt) ? amt : null,
           price_currency: (money.isMoney(d.price) && d.price.currency) || r.currency_code || null,
-          lat: r.lat == null ? null : Number(r.lat), lng: r.lng == null ? null : Number(r.lng),
+          lat: r.lat == null ? null : Number(r.lat),
+          lng: r.lng == null ? null : Number(r.lng),
           service_km: r.service_km == null ? null : Number(r.service_km),
           dispatch_days: r.dispatch_days == null ? null : Number(r.dispatch_days),
           ship_within_days: r.ship_within_days == null ? null : Number(r.ship_within_days),
           ship_beyond_days: r.ship_beyond_days == null ? null : Number(r.ship_beyond_days),
-          item_id: r.item_id, name: d.name || d.code || '(unnamed)', code: d.code || d.sku || null,
+          item_id: r.item_id,
+          name: d.name || d.code || '(unnamed)',
+          code: d.code || d.sku || null,
           currency: r.currency_code || null,
           qty: av && av.qty !== undefined && av.qty !== null ? Number(av.qty) : null,
           source: av ? av.source : null,
           as_of: av ? av.as_of : null,
-          is_me: r.entity_id === me,
+          is_me: r.entity_id === me
         });
       }
       const out1 = availability.answer(rows, { from });
       return res.json({
-        q, from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
-        rows: out1.rows, summary: out1.summary, total: out1.total,
-        stores_with_stock: out1.stores_with_stock, stores_unknown: out1.stores_unknown,
+        q: text,
+        from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
+        rows: out1.rows,
+        summary: out1.summary,
+        total: out1.total,
+        stores_with_stock: out1.stores_with_stock,
+        stores_unknown: out1.stores_unknown,
         one_query: true,
         // The cap is SAID, not silently applied. A capped answer that looks complete is worse than a slow one —
         // the same rule the per-store path below follows when it has to leave members unasked.
-        ...(single.rows.length >= SINGLE_LIMIT && { truncated: { shown: SINGLE_LIMIT, note: 'narrow the search' } }),
+        ...(single.rows.length >= SINGLE_LIMIT && { truncated: { shown: SINGLE_LIMIT, note: 'narrow the search' } })
       });
     }
 
@@ -514,18 +571,22 @@ router.get('/availability', auth, async (req, res) => {
      * viewer", and every store in this list came FROM the viewer's own subtree — that is how it was found. So the
      * membership test is already answered and re-asking the database would be paying for a fact we hold.
      */
-    const ents = (await query(
-      `SELECT identity_id, bridge_id, display_name, city, lat, lng, currency_code, service_km,
+    const ents = (
+      await query(
+        `SELECT identity_id, bridge_id, display_name, city, lat, lng, currency_code, service_km,
               dispatch_days, ship_within_days, ship_beyond_days,
               catalogue_visibility, plan, params_override
          FROM identities
-        WHERE bridge_id = ANY($1) AND identity_type = 'entity' AND status = 'active'`, [use])).rows;
+        WHERE bridge_id = ANY($1) AND identity_type = 'entity' AND status = 'active'`,
+        [use]
+      )
+    ).rows;
 
-    const visible = ents.filter((ent) => {
-      const chosen = ent.catalogue_visibility;
-      if (chosen !== 'public' && chosen !== 'network') return false;   // private, or unset → absent
+    const visible = ents.filter((item) => {
+      const chosen = item.catalogue_visibility;
+      if (chosen !== 'public' && chosen !== 'network') return false; // private, or unset → absent
       // The operator cap still binds: a store capped to private is closed even if it chose otherwise.
-      const cap = visibilityCap.capOf({ plan: ent.plan, paramsOverride: ent.params_override || {} });
+      const cap = visibilityCap.capOf({ plan: item.plan, paramsOverride: item.params_override || {} });
       return visibilityCap.RANK[visibilityCap.effective(chosen, cap)] > 0;
     });
 
@@ -540,55 +601,69 @@ router.get('/availability', auth, async (req, res) => {
      * This is the difference between "fast for me" and "fast for the platform", and only the second one survives
      * more than one user.
      */
-    const perStore = await mapLimit(visible, 4, (ent) =>
-      withEntity(ent.identity_id, (db) => db.query(
-        `SELECT item_id, item_data FROM catalogue_items
+    const perStore = await mapLimit(visible, 4, (nestedEnt) =>
+      withEntity(nestedEnt.identity_id, (db) =>
+        db.query(
+          `SELECT item_id, item_data FROM catalogue_items
           WHERE entity_id = $1 AND is_active = true
             AND (LOWER(item_data->>'name') LIKE $2 OR LOWER(item_data->>'code') LIKE $2 OR LOWER(item_data->>'sku') LIKE $2)
-          LIMIT 5`, [ent.identity_id, like]))
-        .then((r) => ({ ent, rows: r.rows }))
-        .catch(() => ({ ent, rows: [] })));   // one unreadable store must not fail the whole answer
+          LIMIT 5`,
+          [nestedEnt.identity_id, like]
+        )
+      )
+        .then((reply) => ({ ent: nestedEnt, rows: reply.rows }))
+        .catch(() => ({ ent: nestedEnt, rows: [] }))
+    ); // one unreadable store must not fail the whole answer
 
-    for (const { ent, rows: itemRows } of perStore) {
+    for (const { ent: nestedEnt, rows: itemRows } of perStore) {
       for (const it of itemRows) {
         const d = it.item_data || {};
-        const av = (d.avail && typeof d.avail === 'object') ? d.avail : null;
+        const av = d.avail && typeof d.avail === 'object' ? d.avail : null;
         // The PRICE, as the holding store stamped it — its own currency, never converted. `money.amountOfLoose`
         // reads both shapes: a stamped {amount,currency} and a legacy bare number.
         const rawPrice = d.price;
         const amt = money.amountOfLoose(rawPrice);
         rows.push({
-          store: ent.display_name, bridge_id: ent.bridge_id, city: ent.city || null,
+          store: nestedEnt.display_name,
+          bridge_id: nestedEnt.bridge_id,
+          city: nestedEnt.city || null,
           // identity_id so a request can be addressed. Not a secret: this store's catalogue is already readable by
           // this viewer, and the supplier route hands out the same field for exactly the same reason.
-          entity_id: ent.identity_id,
+          entity_id: nestedEnt.identity_id,
           price: Number.isFinite(amt) ? amt : null,
-          price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || ent.currency_code || null,
-          lat: ent.lat == null ? null : Number(ent.lat), lng: ent.lng == null ? null : Number(ent.lng),
-          service_km: ent.service_km == null ? null : Number(ent.service_km),
-          dispatch_days: ent.dispatch_days == null ? null : Number(ent.dispatch_days),
-          ship_within_days: ent.ship_within_days == null ? null : Number(ent.ship_within_days),
-          ship_beyond_days: ent.ship_beyond_days == null ? null : Number(ent.ship_beyond_days),
-          item_id: it.item_id, name: d.name || d.code || '(unnamed)', code: d.code || d.sku || null,
-          currency: ent.currency_code || null,
+          price_currency: (money.isMoney(rawPrice) && rawPrice.currency) || nestedEnt.currency_code || null,
+          lat: nestedEnt.lat == null ? null : Number(nestedEnt.lat),
+          lng: nestedEnt.lng == null ? null : Number(nestedEnt.lng),
+          service_km: nestedEnt.service_km == null ? null : Number(nestedEnt.service_km),
+          dispatch_days: nestedEnt.dispatch_days == null ? null : Number(nestedEnt.dispatch_days),
+          ship_within_days: nestedEnt.ship_within_days == null ? null : Number(nestedEnt.ship_within_days),
+          ship_beyond_days: nestedEnt.ship_beyond_days == null ? null : Number(nestedEnt.ship_beyond_days),
+          item_id: it.item_id,
+          name: d.name || d.code || '(unnamed)',
+          code: d.code || d.sku || null,
+          currency: nestedEnt.currency_code || null,
           // null when the store has never said. NEVER 0 — see the header.
           qty: av && av.qty !== undefined && av.qty !== null ? Number(av.qty) : null,
           source: av ? av.source : null,
           as_of: av ? av.as_of : null,
-          is_me: ent.identity_id === me,
+          is_me: nestedEnt.identity_id === me
         });
       }
     }
 
     const out = availability.answer(rows, { from });
     res.json({
-      q, from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
-      rows: out.rows, summary: out.summary,
-      total: out.total, stores_with_stock: out.stores_with_stock, stores_unknown: out.stores_unknown,
+      q: text,
+      from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
+      rows: out.rows,
+      summary: out.summary,
+      total: out.total,
+      stores_with_stock: out.stores_with_stock,
+      stores_unknown: out.stores_unknown,
       // Said out loud rather than silently cut — a capped answer that looks complete is worse than a slow one.
       ...(truncated && { truncated: { asked: use.length, of: members.length } }),
       // The answer is correct either way; this only says it arrived the slow way because the fast path broke.
-      ...(degraded && { degraded }),
+      ...(degraded && { degraded })
     });
   } catch (err) {
     if (membership.answerReadFailed(res, err)) return;

@@ -1,0 +1,103 @@
+'use strict';
+/**
+ * tests/crm-truth.realstack.cjs — CRM (PARTIES) TRUTH, on the LOCAL stack (K-TRUTH-1 2026-10-19; case list: PM/BOX-TRUTH-TESTS.md §9 "CRM").
+ *
+ * CRM-6. The principles: ONE party list (a phone is one party, however it arrives) · the first named bill ends the lead · segments count NAMED
+ * bills only and say why a count is low · remove HIDES and never deletes, and is refused while dues are open.
+ * CR-01 first bill ends the lead · CR-02 segments match the bills sent · CR-03 unnamed bills are not counted AND the screen says why ·
+ * CR-04 remove refused with open dues · CR-05 a removed party is hidden, the row kept · CR-06 one phone, one party (lead, counter, import).
+ * Not here (covered or a screen): CR-07 may-trade, CR-08 viewer, CR-09 follow-ups (offline ✓ files) · CR-10 the lead path (W16, a walk).
+ * A `gap:` FAIL is a RECORDED finding (CRM-BACKLOG "K-TRUTH-1 2026-10-19"), never fixed here. LOCAL ONLY.
+ * Break-tested 2026-10-19: each passing case was run once with its expected figure flipped to a wrong one (CR-02a 5 regular, CR-03a 12 customers, CR-04 status 200, CR-05 txn_count 99) and went red.
+ * Run: node tests/crm-truth.realstack.cjs   (one realstack file at a time on :3100)
+ * CARD 11-crm-and-marketing/crm-groups
+ */
+const { Client } = require('pg');
+const H = require('./lib/truth-harness.cjs');
+const { DB, j, ok, pause, kase, expect, bill, freshShop, finish } = H;
+const RUN = 'cr' + (Date.now() % 1e10).toString(36);
+let pg = null;
+/** one counter bill; party = who it names (null = a walk-in with no name); credit = paid later (the customer then owes) */
+const sendBill = async (shop, no, P, qty, party, credit) => {
+  const b = bill(no, [[P, qty]]); b.business_json.customer = party ? { name: party.name, party_id: party.id } : { name: 'Walk-in' };
+  if (credit) { b.business_json.payment = { mode: 'credit', paid: 0, change: 0, parts: [{ how: 'credit', amount: qty * P.price }] }; b.business_json.slip = 'credit'; }
+  return ok(await j('/api/chits/send', { method: 'POST', token: shop.token, body: b }), 'bill ' + no).b;
+};
+const lead = async (shop, name, phone) => j('/api/crm/leads', { method: 'POST', token: shop.token, body: { name, phone } });
+const listOf = async (shop) => ok(await j('/api/crm/parties', { token: shop.token }), 'parties').b;
+const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { token: shop.token }), 'segments').b; const c = {}; s.segments.forEach((x) => { c[x.key] = x.count; }); return { c, raw: s }; };
+
+(async () => {
+  console.log('\n── crm truth on ' + H.API + ' · run ' + RUN + ' ──');
+  ok(await j('/health'), 'health');
+  pg = new Client({ connectionString: DB }); await pg.connect();
+  try {
+    const A = await freshShop(RUN + 'a', 'Crm truth');
+    ok(await j('/api/books/enable', { method: 'POST', token: A.token }), 'books on');   /* the Ledger is what says "dues" — a precondition, through its own route */
+    const r = ok(await j('/api/products', { method: 'POST', token: A.token, body: { item_data: { name: 'Rice', unit: 'piece', price: 60 } } }), 'product').b;
+    const P = { id: r.item.item_id, name: 'Rice', unit: 'piece', price: 60 };
+
+    const first = (await lead(A, 'First Bill Lead', '9876510001')).b.party;
+    await kase('CR-01', 'a lead stays a lead until the first bill that names them; then stage = customer, txn_count 1', async () => {
+      const before = ok(await j('/api/crm/parties/' + first.party_id, { token: A.token }), 'record').b;
+      expect(before.lead && before.lead.stage === 'lead', 'before the bill the stage is ' + JSON.stringify(before.lead));
+      await sendBill(A, RUN + '-f1', P, 1, { id: first.party_id, name: first.display_name }); await pause(1200);
+      const after = ok(await j('/api/crm/parties/' + first.party_id, { token: A.token }), 'record').b;
+      const n = (await pg.query('SELECT txn_count FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2', [A.entity, first.party_id])).rows[0];
+      expect(after.lead && after.lead.stage === 'customer' && Number(after.customer.txn_count) === 1 && n && Number(n.txn_count) === 1, 'after: ' + JSON.stringify(after.lead) + ' · txn_count ' + (n && n.txn_count));
+    });
+
+    /* the shop under test: 5 named customers, 40 bills (20 · 10 · 5 · 4 · 1), then unnamed walk-in bills */
+    const plan = [20, 10, 5, 4, 1], people = [];
+    for (let c = 0; c < plan.length; c++) { const l = ok(await lead(A, 'Seg Cust ' + c, '98765100' + (20 + c)), 'lead ' + c).b.party; people.push({ id: l.party_id, name: l.display_name, bills: plan[c] }); }
+    let n = 0;
+    for (const p of people) for (let k = 0; k < p.bills; k++) await sendBill(A, RUN + '-s' + (n++), P, 1, p, p === people[4]);   /* the last one buys on credit: he owes */
+    for (let k = 0; k < 6; k++) await sendBill(A, RUN + '-w' + k, P, 1, null);
+    await pause(3000);
+    const seg = await segCounts(A);
+    await kase('CR-02a', 'segments match the bills sent: 3-or-more bills = regular (4), fewer = new (+ the CR-01 customer), none inactive', async () => {
+      expect(seg.c.regular === 4 && seg.c.new === 2 && seg.c.inactive === 0, 'counts ' + JSON.stringify(seg.c) + ' (expected regular 4 · new 2 · inactive 0)');
+    });
+    await kase('CR-02b', 'with 40 named bills the top spender is HIGH VALUE (the count is not 0)', async () => {
+      const rows = (await pg.query("SELECT COUNT(*)::int AS n FROM party_item WHERE entity_id = $1 AND ref_kind = 'bill'", [A.entity])).rows[0].n;
+      expect(seg.c.high_value >= 1, 'high_value ' + seg.c.high_value + ' — the rule reads party_item bill rows: ' + rows + ' rows for 41 named bills');
+    }, 'W14: High value counts only bills that reached party_item (credit bills); a cash-paid customer is never high value');
+    await kase('CR-03a', 'unnamed (walk-in) bills are in no segment: customers = the named ones only', async () => {
+      const total = Object.values(seg.c).reduce((a, b) => a + b, 0);
+      expect(seg.raw.customers === 6 && total === 6, 'customers ' + seg.raw.customers + ' · segment total ' + total + ' (6 named, 6 unnamed bills)');
+    });
+    await kase('CR-03b', 'and the Groups answer SAYS why: it carries the count of unnamed bills it left out', async () => {
+      expect(/unnamed|walk[-_ ]?in|no[_ ]name/i.test(JSON.stringify(seg.raw)), 'segments answer keys: ' + Object.keys(seg.raw).join(', ') + ' — no reason for the 6 bills left out');
+    }, 'CRM-D6 not built: the segments answer has no "N of M bills had no name" line');
+
+    const owing = people[4], settled = people[3];
+    await kase('CR-04', 'removing a party who owes is refused with a sentence, and the party stays on the list', async () => {
+      const d = await j('/api/crm/parties/' + owing.id, { method: 'DELETE', token: A.token });
+      const still = (await listOf(A)).parties.some((x) => x.party_id === owing.id);
+      expect(d.status === 409 && d.b.code === 'HAS_DUES' && /dues/i.test(d.b.message || '') && still, 'delete ' + d.status + ' ' + JSON.stringify(d.b).slice(0, 160) + ' · still listed ' + still);
+    });
+    await kase('CR-05', 'removing a settled party HIDES them (off the list) and keeps the row and their bill count', async () => {
+      const d = await j('/api/crm/parties/' + settled.id, { method: 'DELETE', token: A.token });
+      const listed = (await listOf(A)).parties.some((x) => x.party_id === settled.id);
+      const row = (await pg.query('SELECT hidden_at, txn_count FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2', [A.entity, settled.id])).rows[0];
+      expect(d.status === 200 && !listed && row && row.hidden_at && Number(row.txn_count) === settled.bills, 'delete ' + d.status + ' · listed ' + listed + ' · row ' + JSON.stringify(row));
+    });
+
+    const base = (await lead(A, 'Phone Once', '9876510077')).b.party;
+    const count = async (digits) => (await pg.query("SELECT COUNT(*)::int AS n FROM identities i JOIN customer_list cl ON cl.customer_identity_id = i.identity_id " +
+      "WHERE cl.owner_entity_id = $1 AND regexp_replace(COALESCE(i.otp_contact,''), '[^0-9]', '', 'g') LIKE '%' || $2", [A.entity, digits])).rows[0].n;
+    await kase('CR-06a', 'the same phone added at the counter after a lead is refused with the existing name, and stays one party', async () => {
+      const c = await j('/api/relationships/customers', { method: 'POST', token: A.token, body: { name: 'Counter Twin', phone: '9876510077' } });
+      expect(c.status === 409 && /Phone Once/.test(JSON.stringify(c.b)) && await count('9876510077') === 1, 'counter add ' + c.status + ' ' + JSON.stringify(c.b).slice(0, 160) + ' · parties with that phone ' + await count('9876510077'));
+    });
+    await kase('CR-06b', 'a CSV import of the same phone is skipped with a reason ("Already a lead"), a new phone is added', async () => {
+      const i = ok(await j('/api/crm/leads/import', { method: 'POST', token: A.token, body: { rows: [{ name: 'Import Twin', phone: '9876510077' }, { name: 'Import New', phone: '9876510078' }] } }), 'import').b;
+      expect(i.added === 1 && i.skipped.length === 1 && i.rows[0].party_id === base.party_id && /already/i.test(i.skipped[0].why || '') && await count('9876510077') === 1, JSON.stringify({ added: i.added, skipped: i.skipped }).slice(0, 220));
+    });
+    await kase('CR-06c', 'the same phone typed with +91 and spaces is the same party', async () => {
+      const c = await lead(A, 'Format Twin', '+91 98765 10077');
+      expect(c.status === 409 && await count('9876510077') === 1, 'lead ' + c.status + ' ' + JSON.stringify(c.b).slice(0, 140) + ' · parties with that phone ' + await count('9876510077'));
+    });
+  } finally { await pg.end(); }
+  finish('crm-truth', process.env.CRM_TRUTH_JSON, { run: RUN });
+})().catch((e) => { console.error('crm truth could not run:', e && e.message); process.exit(2); });

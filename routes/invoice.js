@@ -25,57 +25,200 @@ router.post('/build', auth, auth.requireScope('invoice'), async (req, res) => {
     const body = req.body || {};
     const sh = await S.shelfOf(entity_id);
     /* a line named by CODE is the product: its id (offers aim at ids), its categories (category offers reach it), its opt-outs */
-    const lines = lines0.map((l) => { const prod = sh.productOf(l); return Object.assign({}, l, { item_id: l.item_id || sh.idOf(l), name: l.name || (prod && prod.name) || '',
-      categories: l.categories.length ? l.categories : ((prod && Array.isArray(prod.categories)) ? prod.categories.map(String) : []),
-      excluded: l.excluded.length ? l.excluded : ((prod && Array.isArray(prod.offers_excluded)) ? prod.offers_excluded.map(String) : []) }); });
+    const lines = lines0.map((item) => {
+      const prod = sh.productOf(item);
+      return Object.assign({}, item, {
+        item_id: item.item_id || sh.idOf(item),
+        name: item.name || (prod && prod.name) || '',
+        categories: item.categories.length ? item.categories : prod && Array.isArray(prod.categories) ? prod.categories.map(String) : [],
+        excluded: item.excluded.length ? item.excluded : prod && Array.isArray(prod.offers_excluded) ? prod.offers_excluded.map(String) : []
+      });
+    });
     /* 1 · pricing structure */
-    const priced = lines.map((l) => Object.assign({}, l, S.priceLine(l, sh.productOf(l))));
+    const priced = lines.map((item) => Object.assign({}, item, S.priceLine(item, sh.productOf(item))));
     const shop = await S.shopOf(entity_id);
     const seller = S.party(body.seller, shop.party);
     /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */
     const currency = body.currency || T.currencyOf(seller);
     /* 2 · offers on the priced lines */
     const off = await S.offerLines(entity_id, priced, body.offers, { currency });
-    const gross = priced.reduce((t, l) => t + l.unit_price * l.qty, 0);
-    const orderOff = (off.ev.adjustments || []).filter((a) => a.scope !== 'line' && a.scope !== 'note').reduce((t, a) => t + Math.abs(Number(a.amount) || 0), 0);
-    const withOffers = priced.map((l) => { const p = off.per[l.key] || {}; const lineOff = Number(p.off) || 0; const share = gross > 0 ? orderOff * (l.unit_price * l.qty) / gross : 0; return Object.assign({}, l, { discount: S.R2((l.discount || 0) + lineOff + share), offer_label: p.label || null }); });
+    const gross = priced.reduce((total, item) => total + item.unit_price * item.qty, 0);
+    const orderOff = (off.ev.adjustments || [])
+      .filter((item) => item.scope !== 'line' && item.scope !== 'note')
+      .reduce((total, item) => total + Math.abs(Number(item.amount) || 0), 0);
+    const withOffers = priced.map((item) => {
+      const p = off.per[item.key] || {};
+      const lineOff = Number(p.off) || 0;
+      const share = gross > 0 ? (orderOff * (item.unit_price * item.qty)) / gross : 0;
+      return Object.assign({}, item, { discount: S.R2((item.discount || 0) + lineOff + share), offer_label: p.label || null });
+    });
     /* 3 · tax rates, then the block */
     const rated = S.rateLines(withOffers, sh);
     /* ⭐ BUY1: a walk-in buyer (no country, no place of supply) is taxed inside the shop — tax-lines.walkIn, the ONE rule (computeTax applies it too; the echo below shows what was taxed) */
     const buyer = T.walkIn(seller, S.party(body.buyer, { RegType: 'regular' })).buyer;
-    const det = S.computeTax({ seller, buyer, lines: rated, priceIncludesTax: S.saidInclusive(body) != null ? S.saidInclusive(body) : shop.priceIncludesTax /* TAX-SRV1 G2: left out = the shop's own setting */, reverseCharge: !!body.reverseCharge, scheme: body.scheme });
-    const invoice = Object.assign({ DocDtls: { Typ: 'INV', No: null, Dt: require('../lib/shop-clock').today(seller && seller.Country) }   /* the seller's day (dayOf), not the server's UTC */, currency }, det);
-    res.json({ engine: 'chitbridge-invoice', version: 1, order: ['pricing structure', 'offers', 'tax'],
-      pricing: priced.map((l) => ({ key: l.key, unit_price: l.unit_price, list_price: l.list_price, structure: l.structure, why: l.why })),
-      offers: { subtotal: off.ev.subtotal, total: off.ev.total, adjustments: off.ev.adjustments || [], notes: off.ev.notes || [], considered: off.offers_considered },
-      rates: rated.map((l) => ({ key: l.key, gst_rate: l.gst_rate, cess_rate: l.cess_rate, hsn: l.hsn, slab: l.tax_slab_name, source: l.tax_source, scheme: l.tax_scheme })),
-      seller: { LglNm: seller.LglNm, Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType }, buyer: { LglNm: buyer.LglNm, Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country },
-      invoice, heads: T.heads(invoice) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+    const det = S.computeTax({
+      seller,
+      buyer,
+      lines: rated,
+      priceIncludesTax: S.saidInclusive(body) != null ? S.saidInclusive(body) : shop.priceIncludesTax /* TAX-SRV1 G2: left out = the shop's own setting */,
+      reverseCharge: !!body.reverseCharge,
+      scheme: body.scheme
+    });
+    const invoice = Object.assign(
+      {
+        DocDtls: {
+          Typ: 'INV',
+          No: null,
+          Dt: require('../lib/shop-clock').today(seller && seller.Country)
+        } /* the seller's day (dayOf), not the server's UTC */,
+        currency
+      },
+      det
+    );
+    res.json({
+      engine: 'chitbridge-invoice',
+      version: 1,
+      order: ['pricing structure', 'offers', 'tax'],
+      pricing: priced.map((item) => ({ key: item.key, unit_price: item.unit_price, list_price: item.list_price, structure: item.structure, why: item.why })),
+      offers: {
+        subtotal: off.ev.subtotal,
+        total: off.ev.total,
+        adjustments: off.ev.adjustments || [],
+        notes: off.ev.notes || [],
+        considered: off.offers_considered
+      },
+      rates: rated.map((item) => ({
+        key: item.key,
+        gst_rate: item.gst_rate,
+        cess_rate: item.cess_rate,
+        hsn: item.hsn,
+        slab: item.tax_slab_name,
+        source: item.tax_source,
+        scheme: item.tax_scheme
+      })),
+      seller: { LglNm: seller.LglNm, Gstin: seller.Gstin, State: seller.State, Country: seller.Country, RegType: seller.RegType },
+      buyer: { LglNm: buyer.LglNm, Gstin: buyer.Gstin, State: buyer.State, Pos: buyer.Pos, Country: buyer.Country },
+      invoice,
+      heads: T.heads(invoice)
+    });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
-router.get('/:chit_id', auth, auth.requireScope('invoice', 'connector') /* the B2B voucher reads the buyer's GSTIN and the tax split from here */, async (req, res) => {
-  try {
-    const me = auth.entityOf(req);
-    const hdr = await C.copyOf(req.params.chit_id, me);
-    if (!hdr) return res.status(404).json({ error: 'Not found' });
-    const e = await C.entryFor(hdr, me);
-    res.json({ chit_id: e.chit_id, direction: e.direction, sells: e.sells, status: e.status, provisional: e.provisional, frozen: e.frozen, rated: e.rated, unrated: e.unrated, seller: e.seller, buyer: e.buyer, invoice: e.invoice, heads: T.heads(e.invoice) });
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
-});
+router.get(
+  '/:chit_id',
+  auth,
+  auth.requireScope('invoice', 'connector') /* the B2B voucher reads the buyer's GSTIN and the tax split from here */,
+  async (req, res) => {
+    try {
+      const me = auth.entityOf(req);
+      const hdr = await C.copyOf(req.params.chit_id, me);
+      if (!hdr) return res.status(404).json({ error: 'Not found' });
+      const e = await C.entryFor(hdr, me);
+      res.json({
+        chit_id: e.chit_id,
+        direction: e.direction,
+        sells: e.sells,
+        status: e.status,
+        provisional: e.provisional,
+        frozen: e.frozen,
+        rated: e.rated,
+        unrated: e.unrated,
+        seller: e.seller,
+        buyer: e.buyer,
+        invoice: e.invoice,
+        heads: T.heads(e.invoice)
+      });
+    } catch (e) {
+      res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    }
+  }
+);
 
 router.openapi = {
   paths: {
-    '/api/invoice/build': { post: { summary: 'Build an invoice: pricing structure → offers → tax → INV-01 block (nothing is issued)', tags: ['invoice'], security: [{ apiKey: [] }, { bearer: [] }],
-      requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/InvoiceBody' } } } },
-      responses: { 200: { description: 'the built invoice and how it was arrived at', content: { 'application/json': { schema: { $ref: '#/components/schemas/InvoiceResult' } } } } } } },
-    '/api/invoice/{chit_id}': { get: { summary: 'The tax invoice of a chit this entity holds', tags: ['invoice'], security: [{ apiKey: [] }, { bearer: [] }], parameters: [{ name: 'chit_id', in: 'path', required: true, schema: { type: 'string' } }], responses: { 200: { description: 'invoice' }, 404: { description: 'not held' } } } },
+    '/api/invoice/build': {
+      post: {
+        summary: 'Build an invoice: pricing structure → offers → tax → INV-01 block (nothing is issued)',
+        tags: ['invoice'],
+        security: [{ apiKey: [] }, { bearer: [] }],
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/InvoiceBody' } } } },
+        responses: {
+          200: {
+            description: 'the built invoice and how it was arrived at',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/InvoiceResult' } } }
+          }
+        }
+      }
+    },
+    '/api/invoice/{chit_id}': {
+      get: {
+        summary: 'The tax invoice of a chit this entity holds',
+        tags: ['invoice'],
+        security: [{ apiKey: [] }, { bearer: [] }],
+        parameters: [{ name: 'chit_id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: { 200: { description: 'invoice' }, 404: { description: 'not held' } }
+      }
+    }
   },
   schemas: {
-    Party: { type: 'object', properties: { name: { type: 'string' }, Gstin: { type: 'string' }, State: { type: 'string', description: 'GST state code, e.g. 29' }, Pos: { type: 'string', description: 'place of supply (state code)' }, Country: { type: 'string', description: 'ISO 3166-1 alpha-2' }, RegType: { type: 'string', enum: ['regular', 'composition', 'unregistered'] } } },
-    InvoiceLine: { type: 'object', required: ['qty'], properties: { key: { type: 'string' }, item_id: { type: 'string' }, code: { type: 'string' }, name: { type: 'string' }, qty: { type: 'number' }, listPrice: { type: 'number' }, unit: { type: 'string' }, pricing: { $ref: '#/components/schemas/PricingStructure' }, discount: { type: 'number' }, gst_rate: { type: 'number' }, cess_rate: { type: 'number' }, hsn: { type: 'string' }, categories: { type: 'array', items: { type: 'string' } } } },
-    InvoiceBody: { type: 'object', required: ['lines'], properties: { seller: { $ref: '#/components/schemas/Party' }, buyer: { $ref: '#/components/schemas/Party' }, lines: { type: 'array', items: { $ref: '#/components/schemas/InvoiceLine' } }, offers: { type: 'array', items: { $ref: '#/components/schemas/Offer' } }, currency: { type: 'string' }, priceIncludesTax: { type: 'boolean' }, reverseCharge: { type: 'boolean' }, scheme: { type: 'string', description: 'GST (default) or a VAT-type scheme' } } },
-    InvoiceResult: { type: 'object', properties: { pricing: { type: 'array', items: { type: 'object' } }, offers: { type: 'object' }, rates: { type: 'array', items: { type: 'object' } }, seller: { $ref: '#/components/schemas/Party' }, buyer: { $ref: '#/components/schemas/Party' }, invoice: { type: 'object', description: 'INV-01 shape: ItemList[], ValDtls, _cb{scheme,supply,notes}' }, heads: { type: 'object' } } },
-  },
+    Party: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        Gstin: { type: 'string' },
+        State: { type: 'string', description: 'GST state code, e.g. 29' },
+        Pos: { type: 'string', description: 'place of supply (state code)' },
+        Country: { type: 'string', description: 'ISO 3166-1 alpha-2' },
+        RegType: { type: 'string', enum: ['regular', 'composition', 'unregistered'] }
+      }
+    },
+    InvoiceLine: {
+      type: 'object',
+      required: ['qty'],
+      properties: {
+        key: { type: 'string' },
+        item_id: { type: 'string' },
+        code: { type: 'string' },
+        name: { type: 'string' },
+        qty: { type: 'number' },
+        listPrice: { type: 'number' },
+        unit: { type: 'string' },
+        pricing: { $ref: '#/components/schemas/PricingStructure' },
+        discount: { type: 'number' },
+        gst_rate: { type: 'number' },
+        cess_rate: { type: 'number' },
+        hsn: { type: 'string' },
+        categories: { type: 'array', items: { type: 'string' } }
+      }
+    },
+    InvoiceBody: {
+      type: 'object',
+      required: ['lines'],
+      properties: {
+        seller: { $ref: '#/components/schemas/Party' },
+        buyer: { $ref: '#/components/schemas/Party' },
+        lines: { type: 'array', items: { $ref: '#/components/schemas/InvoiceLine' } },
+        offers: { type: 'array', items: { $ref: '#/components/schemas/Offer' } },
+        currency: { type: 'string' },
+        priceIncludesTax: { type: 'boolean' },
+        reverseCharge: { type: 'boolean' },
+        scheme: { type: 'string', description: 'GST (default) or a VAT-type scheme' }
+      }
+    },
+    InvoiceResult: {
+      type: 'object',
+      properties: {
+        pricing: { type: 'array', items: { type: 'object' } },
+        offers: { type: 'object' },
+        rates: { type: 'array', items: { type: 'object' } },
+        seller: { $ref: '#/components/schemas/Party' },
+        buyer: { $ref: '#/components/schemas/Party' },
+        invoice: { type: 'object', description: 'INV-01 shape: ItemList[], ValDtls, _cb{scheme,supply,notes}' },
+        heads: { type: 'object' }
+      }
+    }
+  }
 };
 module.exports = router;

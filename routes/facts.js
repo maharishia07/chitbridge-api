@@ -2,7 +2,7 @@
  * CARD 28-platform-and-operations/facts-route
  * /api/facts — WHAT EACH HOME CARD SAYS (N18, 2026-10-08).
  *
- *   GET /api/facts/:card   card ∈ till · counters · account · reports · accounts · orders · operations · disputes · assist · people · finance · product-lab · combo-lab · offer-lab · tax-lab · marketing (MKT-SRV1 G3: who agreed to offers) → { lines: [{ text, value?, tone? }], figures?, state }
+ *   GET /api/facts/:card   card ∈ till · counters · account · reports · accounts · orders · operations · disputes · assist · people · finance · product-lab · combo-lab · offer-lab · tax-lab · marketing (MKT-SRV1 G3: who agreed to offers) · crm · trend · storefront · compare (WALK2 W3) → { lines: [{ text, value?, tone? }], figures?, state }
  *   GET /api/facts/rail/chits  -> { overdue_days, truncated, items:[{ chit_id, tab:in|out, stuck, why, ... }] } - the chits behind the rail's numbers
  *   GET /api/facts/rail                                                                    → { suppliers, customers, in, out, stuck }
  *   state (every card, rail too): 'needs_you' (a line has tone 'dn') · 'in_use' (has data, nothing pending) · 'not_started' (never used: a card says so from its own figure). Default in home.withState.
@@ -24,7 +24,9 @@ router.get('/rail/chits', auth, async (req, res) => {
   if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to see the Home figures.' });
   try {
     res.json(await home.railChits({ entity: auth.entityOf(req), actor: req.identity && req.identity.identity_id, req }));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 router.get('/:card', auth, async (req, res) => {
@@ -34,7 +36,9 @@ router.get('/:card', auth, async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     res.json(await build({ entity, actor: req.identity && req.identity.identity_id, req }));
-  } catch (e) { res.status(500).json({ error: 'Failed', message: safeErr(e) }); }
+  } catch (e) {
+    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+  }
 });
 
 module.exports = router;

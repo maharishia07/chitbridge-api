@@ -10,28 +10,29 @@
 // FLOW  auth → validate → withEntity → lib/crm · lib/local-identity (the add/remove paths)
 // CARD 11-crm-and-marketing/relationships-routes
 const express = require('express');
-const PL = require('../lib/page-limit');   /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
-const PAGE_DEFAULT = 50, PAGE_MAX = 200;   /* one page of this file's lists */
+const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
+const PAGE_DEFAULT = 50,
+  PAGE_MAX = 200; /* one page of this file's lists */
 const log = require('../lib/logger');
 /* SEC-FIX3 S5 — a handle lookup finds a BUSINESS only: not a storefront customer (<phone>@<shop>.cr, identity_type 'customer') and not an
    employee (name@shop.br, an actor) — both carry a parent entity. Otherwise adding one confirmed it and returned their phone/contact. */
 const A_BUSINESS = `identity_type = 'entity' AND parent_entity_id IS NULL`;
 
-const router  = express.Router();
+const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { query, withEntity } = require('../db');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const { isOwner } = require('../lib/owner');
-const catalogueView  = require('../lib/catalogue-view');    // the SAME catalogue read the public storefront uses
+const catalogueView = require('../lib/catalogue-view'); // the SAME catalogue read the public storefront uses
 const catalogueBuild = require('../lib/catalogue-build');
-const customerGroups = require('../lib/customer-groups');   // the one segment expression + the viewer's groups
-const orderInput     = require('../lib/order-input');
+const customerGroups = require('../lib/customer-groups'); // the one segment expression + the viewer's groups
+const orderInput = require('../lib/order-input');
 /* ⭐ SPEC-books-v2 §4: the party fields (legal name, party no, credit days/limit, state, tax ids) live ON these lists */
-const partyFields    = require('../lib/party-fields');
-const PARTY_KEYS     = ['legal_name', 'nickname', 'credit_days', 'credit_limit', 'credit_limit_minor', 'state_code', 'merged_into', 'tax_ids'];
-const hasParty = (b, side) => PARTY_KEYS.some((k) => k in (b || {}) && !(side === 'supplier' && k === 'nickname'));
+const partyFields = require('../lib/party-fields');
+const PARTY_KEYS = ['legal_name', 'nickname', 'credit_days', 'credit_limit', 'credit_limit_minor', 'state_code', 'merged_into', 'tax_ids'];
+const hasParty = (b, side) => PARTY_KEYS.some((item) => item in (b || {}) && !(side === 'supplier' && item === 'nickname'));
 /** the party half of a PATCH: its own answer (404 / 409 / 400 in words) or null when the body carries none */
 async function partyPatch(req, res, side) {
   if (!hasParty(req.body, side)) return null;
@@ -39,9 +40,18 @@ async function partyPatch(req, res, side) {
   try {
     return await withEntity(owner, (db) => partyFields.patch(db, owner, side, req.params.id, req.body, req.identity && req.identity.identity_id));
   } catch (e) {
-    if (e && e.code === 'DUPLICATE_PARTY') { res.status(409).json({ code: 'DUPLICATE_PARTY', error: e.message, message: e.message, holder: e.holder || null, scheme: e.scheme || null }); return false; }
-    if (e && e.status) { res.status(e.status).json({ error: e.status === 404 ? 'Not found' : (e.status === 409 ? 'Conflict' : 'validation'), message: e.message }); return false; }
-    if (e && e.code === '23505') { res.status(409).json({ code: 'DUPLICATE_PARTY', error: partyFields.DUPLICATE_PARTY, message: partyFields.DUPLICATE_PARTY }); return false; }
+    if (e && e.code === 'DUPLICATE_PARTY') {
+      res.status(409).json({ code: 'DUPLICATE_PARTY', error: e.message, message: e.message, holder: e.holder || null, scheme: e.scheme || null });
+      return false;
+    }
+    if (e && e.status) {
+      res.status(e.status).json({ error: e.status === 404 ? 'Not found' : e.status === 409 ? 'Conflict' : 'validation', message: e.message });
+      return false;
+    }
+    if (e && e.code === '23505') {
+      res.status(409).json({ code: 'DUPLICATE_PARTY', error: partyFields.DUPLICATE_PARTY, message: partyFields.DUPLICATE_PARTY });
+      return false;
+    }
     throw e;
   }
 }
@@ -52,8 +62,12 @@ async function partyPatch(req, res, side) {
  * ⚠️ Never fails the add: before b272/b274 there is no series, and the nightly job still catches up. → the number, or null.
  */
 async function numberParty(owner, party_id) {
-  try { return await withEntity(owner, (db) => require('../db').trySavepoint(db, () => partyFields.ensureNo(db, owner, party_id), null)); }
-  catch (e) { log.fellBack('relationships numberParty: the read failed — answered with nothing', e); return null; }
+  try {
+    return await withEntity(owner, (db) => require('../db').trySavepoint(db, () => partyFields.ensureNo(db, owner, party_id), null));
+  } catch (e) {
+    log.fellBack('relationships numberParty: the read failed — answered with nothing', e);
+    return null;
+  }
 }
 
 // actors act in their parent entity's context
@@ -93,29 +107,32 @@ const ctx = (req) => auth.entityOf(req);
  *
  * ⚠️ STILL UNILATERAL. Nobody is asked or notified, which is why the read tier stays at public storefront.
  */
-router.post('/suppliers',
-  [ body('supplier_bridge_id').optional({ nullable: true }).trim(),
+router.post(
+  '/suppliers',
+  [
+    body('supplier_bridge_id').optional({ nullable: true }).trim(),
     body('name').optional({ nullable: true }).trim().isLength({ max: 120 }),
     body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
     body('category').optional().trim().isLength({ max: 50 }),
     body('nickname').optional().trim().isLength({ max: 80 }),
     body('notes').optional().trim().isLength({ max: 2000 }),
-    body('preferred').optional().isBoolean() ],
-  validate, auth,
+    body('preferred').optional().isBoolean()
+  ],
+  auth,
+  validate,
   async (req, res) => {
     try {
-      const owner     = ctx(req);
-      const bridge    = String(req.body.supplier_bridge_id || '').trim();
+      const owner = ctx(req);
+      const bridge = String(req.body.supplier_bridge_id || '').trim();
       const localName = sanitise(String(req.body.name || '').trim()) || null;
-      const kind      = req.body.supply_kind === 'own_use' ? 'own_use' : 'resale';
-      const category  = sanitise(req.body.category || '') || null;
-      const nickname  = sanitise(req.body.nickname || '') || null;
-      const notes     = sanitise(req.body.notes || '') || null;
+      const kind = req.body.supply_kind === 'own_use' ? 'own_use' : 'resale';
+      const category = sanitise(req.body.category || '') || null;
+      const nickname = sanitise(req.body.nickname || '') || null;
+      const notes = sanitise(req.body.notes || '') || null;
       const preferred = req.body.preferred === true || req.body.preferred === 'true';
 
       if (!bridge && !localName)
-        return res.status(400).json({ error: 'Invalid',
-          message: 'Give a User ID or email for a ChitBridge business, or a name for a local supplier' });
+        return res.status(400).json({ error: 'Invalid', message: 'Give a User ID or email for a ChitBridge business, or a name for a local supplier' });
 
       /* ⚠️⚠️ ANOTHER SHOP'S MINTED PARTY IS NOT ADDABLE. `~acmetraders.corner-hardware` resolves perfectly well by
          user_id — it is an ordinary entity row — so without this a competitor who guessed the handle could add
@@ -128,28 +145,42 @@ router.post('/suppliers',
       if (!bridge) {
         const local = await require('../lib/local-identity').mint(owner, localName, { query });
         if (local.error) return res.status(local.status).json(local.error);
-        const dupL = await withEntity(owner, (db) => db.query(
-          `SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, local.identity_id]));
-        if (dupL.rows.length > 0)
-          return res.status(409).json({ error: 'Exists', message: localName + ' is already in your supplier list' });
-        await withEntity(owner, (db) => db.query(
-          /**
-           * ⚠️ added_via = 'manual', NOT 'local'. `added_via` has a CHECK constraint (manual/transaction/import)
-           * and 'local' failed it — a 500 that reached the screen as "Something went wrong", caught by [SUP-02]
-           * on its first run.
-           * ⭐ AND 'manual' IS ALSO THE RIGHT ANSWER, not just the permitted one. The column records HOW the row
-           * arrived — a person typed it — which is true of both kinds. WHETHER they are on the rail is the
-           * handle's job, and putting it here as well would be the same fact in two places, free to disagree.
-           */
-          `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind,
+        const dupL = await withEntity(owner, (db) =>
+          db.query(`SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, local.identity_id])
+        );
+        if (dupL.rows.length > 0) return res.status(409).json({ error: 'Exists', message: localName + ' is already in your supplier list' });
+        await withEntity(owner, (db) =>
+          db.query(
+            /**
+             * ⚠️ added_via = 'manual', NOT 'local'. `added_via` has a CHECK constraint (manual/transaction/import)
+             * and 'local' failed it — a 500 that reached the screen as "Something went wrong", caught by [SUP-02]
+             * on its first run.
+             * ⭐ AND 'manual' IS ALSO THE RIGHT ANSWER, not just the permitted one. The column records HOW the row
+             * arrived — a person typed it — which is true of both kinds. WHETHER they are on the rail is the
+             * handle's job, and putting it here as well would be the same fact in two places, free to disagree.
+             */
+            `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind,
                                       category, nickname, notes, preferred, added_via)
            VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
-          [owner, local.identity_id, kind, category, nickname, notes, preferred]));
+            [owner, local.identity_id, kind, category, nickname, notes, preferred]
+          )
+        );
         const localNo = await numberParty(owner, local.identity_id);
-        return res.json({ message: 'Supplier added',
-          supplier: { supplier_entity_id: local.identity_id, bridge_id: local.bridge_id, party_no: localNo,
-                      display_name: local.display_name, on_rail: false,
-                      supply_kind: kind, category, nickname, notes, preferred } });
+        return res.json({
+          message: 'Supplier added',
+          supplier: {
+            supplier_entity_id: local.identity_id,
+            bridge_id: local.bridge_id,
+            party_no: localNo,
+            display_name: local.display_name,
+            on_rail: false,
+            supply_kind: kind,
+            category,
+            nickname,
+            notes,
+            preferred
+          }
+        });
       }
 
       // Resolve by bridge_id OR external user_id OR email — the panel prompts "User ID or email",
@@ -157,47 +188,62 @@ router.post('/suppliers',
       const sup = await query(
         `SELECT identity_id, display_name FROM identities
          WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)) AND ${A_BUSINESS}
-         LIMIT 1`, [bridge]);
-      if (sup.rows.length === 0)
-        return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
-      if (sup.rows[0].identity_id === owner)
-        return res.status(400).json({ error: 'Invalid', message: 'Cannot add yourself' });
+         LIMIT 1`,
+        [bridge]
+      );
+      if (sup.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
+      if (sup.rows[0].identity_id === owner) return res.status(400).json({ error: 'Invalid', message: 'Cannot add yourself' });
 
-      const dup = await withEntity(owner, (db) => db.query(
-        `SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
-        [owner, sup.rows[0].identity_id]));
-      if (dup.rows.length > 0)
-        return res.status(409).json({ error: 'Exists', message: 'Already in your supplier list' });
+      const dup = await withEntity(owner, (db) =>
+        db.query(`SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [owner, sup.rows[0].identity_id])
+      );
+      if (dup.rows.length > 0) return res.status(409).json({ error: 'Exists', message: 'Already in your supplier list' });
 
-      await withEntity(owner, (db) => db.query(
-        `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind, category, nickname, notes, preferred, added_via)
+      await withEntity(owner, (db) =>
+        db.query(
+          `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind, category, nickname, notes, preferred, added_via)
          VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
-        [owner, sup.rows[0].identity_id, kind, category, nickname, notes, preferred]));
+          [owner, sup.rows[0].identity_id, kind, category, nickname, notes, preferred]
+        )
+      );
 
       /* ⭐ ON THE RAIL WAS ASSERTED, NOW ASKED (2026-10-02): an inactive business, or one in another sandbox, is found by
          the lookup above but cannot trade with this shop — lib/istest mayTrade, b249's rule. Added anyway (the list is the
          shop's), but it says so now rather than at the first order. */
       const trade = await require('../lib/istest').mayTrade(owner, sup.rows[0].identity_id);
       const supNo = await numberParty(owner, sup.rows[0].identity_id);
-      res.json({ message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
-        supplier: { bridge_id: bridge, display_name: sup.rows[0].display_name, on_rail: !!trade.ok, party_no: supNo,
-                    ...(trade.ok ? {} : { one_sided: { why: trade.why } }),
-                    supply_kind: kind, category, nickname, notes, preferred } });
+      res.json({
+        message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
+        supplier: {
+          bridge_id: bridge,
+          display_name: sup.rows[0].display_name,
+          on_rail: !!trade.ok,
+          party_no: supNo,
+          ...(trade.ok ? {} : { one_sided: { why: trade.why } }),
+          supply_kind: kind,
+          category,
+          nickname,
+          notes,
+          preferred
+        }
+      });
     } catch (err) {
       console.error('Add supplier error:', err.message);
       res.status(500).json({ error: 'Add supplier failed', message: safeErr(err) });
     }
-  });
+  }
+);
 
 // List my suppliers — has_catalogue reflects an active default schema only
 router.get('/suppliers', auth, async (req, res) => {
   try {
     const owner = ctx(req);
-    const r = await withEntity(owner, (db) => db.query(
-      /* ⭐ `on_rail` COMES FROM THE HANDLE — a `~` handle was minted by a business, never registered by a person
+    const r = await withEntity(owner, (db) =>
+      db.query(
+        /* ⭐ `on_rail` COMES FROM THE HANDLE — a `~` handle was minted by a business, never registered by a person
          (lib/handle.js). The row is an ordinary entity in every other respect, so the join and every downstream
          lookup stay exactly as they were; that was the point of minting a real id rather than writing a null. */
-      `SELECT sl.supplier_list_id, sl.category, sl.nickname, sl.preferred, sl.notes, sl.created_at,
+        `SELECT sl.supplier_list_id, sl.category, sl.nickname, sl.preferred, sl.notes, sl.created_at,
               COALESCE(sl.supply_kind, 'resale') AS supply_kind,
               /* ⭐ lib/istest mayTradeSql — the ONE rule (b249 + on the rail); this was a second, handle-only copy of it */
               ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail,
@@ -209,27 +255,64 @@ router.get('/suppliers', auth, async (req, res) => {
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
-       ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]));
+       ORDER BY sl.preferred DESC, sl.created_at DESC`,
+        [owner]
+      )
+    );
     /* ⭐ the public facts with their rung (lib/public-facts.js) — the row's raw flags never leave the server */
     const { factsOf } = require('../lib/public-facts');
-    const rows = r.rows.map((x) => { const facts = factsOf(x); const o = Object.assign({}, x); delete o.policy_flags; delete o.gstn; o.facts = facts; return o; });
+    const rows = r.rows.map((x) => {
+      const facts = factsOf(x);
+      const o = Object.assign({}, x);
+      delete o.policy_flags;
+      delete o.gstn;
+      o.facts = facts;
+      return o;
+    });
     /* ⭐ WHAT EACH SUPPLIER GIVES ME, ON THE LIST (Athi, 2026-09-06: "the customer knows without even clicking — special discount for you").
        Per supplier: their live offers scoped to a group I am in or to me by name (lib/customer-groups), by the supplier's own names and the
        engine's promise. Read in parallel; a supplier whose read fails simply shows no tag. A stranger gets [] everywhere. */
     try {
-      const cg = require('../lib/customer-groups'); const cv = require('../lib/catalogue-view'); const eng = require('../lib/offers-engine').CBOffers;
-      await Promise.all(rows.map(async (o) => {
-        /* ⚠️ A LOCAL SUPPLIER HAS NO OFFERS AND NEVER WILL — they are not on the platform. Asking anyway costs two
+      const cg = require('../lib/customer-groups');
+      const cv = require('../lib/catalogue-view');
+      const eng = require('../lib/offers-engine').CBOffers;
+      await Promise.all(
+        rows.map(async (item) => {
+          /* ⚠️ A LOCAL SUPPLIER HAS NO OFFERS AND NEVER WILL — they are not on the platform. Asking anyway costs two
            reads per row and can only ever answer []; a shop whose suppliers are mostly local is exactly the shop
            that would feel it. Skipping is cheaper AND more honest than an empty answer that looks computed. */
-        if (o.on_rail === false) { o.for_you = []; return; }
-        try {
-          const [groups, all] = await Promise.all([cg.groupsOf({ seller_id: o.supplier_entity_id, viewer_id: owner, withEntity }), cv.liveOffers({ entity_id: o.supplier_entity_id, withEntity, all: true })]);
-          o.for_you = cg.offersFor(all, groups).filter((x) => x.customer_group).map((x) => { let p = null; try { p = eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => offerMoney(n, o.supplier_money), customer_groups: groups }) : null; } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); } return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive }; });
-        } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — answered with none', e, 'debug'); o.for_you = []; }
-      }));
-    } catch (e) { log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug'); }
-    for (const row of rows) delete row.supplier_money;   /* read above for the supplier's own offer wording; not part of the answer */
+          if (item.on_rail === false) {
+            item.for_you = [];
+            return;
+          }
+          try {
+            const [groups, all] = await Promise.all([
+              cg.groupsOf({ seller_id: item.supplier_entity_id, viewer_id: owner, withEntity }),
+              cv.liveOffers({ entity_id: item.supplier_entity_id, withEntity, all: true })
+            ]);
+            item.for_you = cg
+              .offersFor(all, groups)
+              .filter((x) => x.customer_group)
+              .map((x) => {
+                let p = null;
+                try {
+                  p =
+                    eng && eng.promise ? eng.promise(x, { now: new Date(), money: (n) => offerMoney(n, item.supplier_money), customer_groups: groups }) : null;
+                } catch (e) {
+                  log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug');
+                }
+                return { label: x.label, promise: p || null, scope: x.scope || 'line', exclusive: !!x.exclusive };
+              });
+          } catch (e) {
+            log.fellBack('relationships GET /suppliers: did not parse — answered with none', e, 'debug');
+            item.for_you = [];
+          }
+        })
+      );
+    } catch (e) {
+      log.fellBack('relationships GET /suppliers: did not parse — carried on without it', e, 'debug');
+    }
+    for (const row of rows) delete row.supplier_money; /* read above for the supplier's own offer wording; not part of the answer */
     await partyFields.decorate(withEntity, owner, rows, 'supplier_entity_id', 'supplier');
     res.json(Object.assign({ count: rows.length }, PL.pageOut('suppliers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
@@ -240,30 +323,51 @@ router.get('/suppliers', auth, async (req, res) => {
 
 // Update owner-side fields on a supplier relationship — your naming / preferred / notes / category.
 // Does NOT touch the supplier's own entity (that's theirs). Only the fields the owner controls.
-router.patch('/suppliers/:id',
-  [ body('nickname').optional({ nullable: true }).trim().isLength({ max: 80 }),
+router.patch(
+  '/suppliers/:id',
+  [
+    body('nickname').optional({ nullable: true }).trim().isLength({ max: 80 }),
     body('category').optional({ nullable: true }).trim().isLength({ max: 50 }),
     body('notes').optional({ nullable: true }).trim().isLength({ max: 2000 }),
     body('supply_kind').optional().isIn(['resale', 'own_use']).withMessage('supply_kind must be resale or own_use'),
     body('display_name').optional({ nullable: true }).trim().isLength({ max: 120 }),
-    body('preferred').optional().isBoolean() ],
-  validate, auth,
+    body('preferred').optional().isBoolean()
+  ],
+  auth,
+  validate,
   async (req, res) => {
     try {
       const owner = ctx(req);
       const party = await partyPatch(req, res, 'supplier');
       if (party === false) return;
-      const sets = [], vals = []; let n = 1;
-      if ('nickname'  in req.body) { sets.push(`nickname = $${n++}`);  vals.push(sanitise(req.body.nickname || '') || null); }
-      if ('category'  in req.body) { sets.push(`category = $${n++}`);  vals.push(sanitise(req.body.category || '') || null); }
-      if ('notes'     in req.body) { sets.push(`notes = $${n++}`);     vals.push(sanitise(req.body.notes || '') || null); }
-      if ('preferred' in req.body) { sets.push(`preferred = $${n++}`); vals.push(req.body.preferred === true || req.body.preferred === 'true'); }
+      const sets = [],
+        vals = [];
+      let index = 1;
+      if ('nickname' in req.body) {
+        sets.push(`nickname = $${index++}`);
+        vals.push(sanitise(req.body.nickname || '') || null);
+      }
+      if ('category' in req.body) {
+        sets.push(`category = $${index++}`);
+        vals.push(sanitise(req.body.category || '') || null);
+      }
+      if ('notes' in req.body) {
+        sets.push(`notes = $${index++}`);
+        vals.push(sanitise(req.body.notes || '') || null);
+      }
+      if ('preferred' in req.body) {
+        sets.push(`preferred = $${index++}`);
+        vals.push(req.body.preferred === true || req.body.preferred === 'true');
+      }
       /* ⭐ Athi, 2026-09-10: *"while adding or may be later through edit set a flag — is he the supplier for my
          sales or is he the facilitator"*. Later matters: a shop learns what a supplier actually is by using them,
          and the first guess on the add form is often wrong. Moving the flag moves which tab they appear under and
          what a delivery from them does — a resale supplier's goods are OFFERED to the catalogue, an own_use
          supplier's never are (lib/adopt.js). ⚠️ It changes nothing already adopted; the past stays as it was. */
-      if ('supply_kind' in req.body) { sets.push(`supply_kind = $${n++}`); vals.push(req.body.supply_kind === 'own_use' ? 'own_use' : 'resale'); }
+      if ('supply_kind' in req.body) {
+        sets.push(`supply_kind = $${index++}`);
+        vals.push(req.body.supply_kind === 'own_use' ? 'own_use' : 'resale');
+      }
 
       /**
        * ⭐⭐ RENAME A SUPPLIER YOU MINTED. Athi, 2026-09-10: *"user id we generate, but the shop name — they can
@@ -280,20 +384,22 @@ router.patch('/suppliers/:id',
        * mix-up he is guarding against, and a silent merge would move history between two real records.
        */
       if ('display_name' in req.body && String(req.body.display_name || '').trim()) {
-        const who = await withEntity(owner, (db) => db.query(
-          `SELECT i.identity_id, i.user_id FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
-            WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`, [req.params.id, owner]));
+        const who = await withEntity(owner, (db) =>
+          db.query(
+            `SELECT i.identity_id, i.user_id FROM supplier_list sl JOIN identities i ON i.identity_id = sl.supplier_entity_id
+            WHERE sl.supplier_list_id = $1 AND sl.owner_entity_id = $2`,
+            [req.params.id, owner]
+          )
+        );
         const row = who.rows[0];
         if (!row) return res.status(404).json({ error: 'Not found' });
         if (!require('../lib/handle').isMinted(row.user_id))
-          return res.status(403).json({ error: 'Not yours',
-            message: 'That is their own business name. Use "your name for them" instead.' });
+          return res.status(403).json({ error: 'Not yours', message: 'That is their own business name. Use "your name for them" instead.' });
         const nm = sanitise(String(req.body.display_name).trim().replace(/\s+/g, ' ')).slice(0, 120);
         try {
           await query(`UPDATE identities SET display_name = $1 WHERE identity_id = $2`, [nm, row.identity_id]);
         } catch (e) {
-          if (e && e.code === '23505') return res.status(409).json({ error: 'Exists',
-            message: 'You already have a supplier called ' + nm + '.' });
+          if (e && e.code === '23505') return res.status(409).json({ error: 'Exists', message: 'You already have a supplier called ' + nm + '.' });
           throw e;
         }
         if (!sets.length) return res.json({ message: 'Supplier updated', display_name: nm });
@@ -301,16 +407,21 @@ router.patch('/suppliers/:id',
       if (!sets.length && party) return res.json({ message: 'Supplier updated', party });
       if (!sets.length) return res.status(400).json({ error: 'Nothing to update', message: 'Provide nickname, category, notes, supply_kind, or preferred' });
       vals.push(req.params.id, owner);
-      const r = await withEntity(owner, (db) => db.query(
-        `UPDATE supplier_list SET ${sets.join(', ')}
-         WHERE supplier_list_id = $${n++} AND owner_entity_id = $${n} RETURNING supplier_list_id`, vals));
+      const r = await withEntity(owner, (db) =>
+        db.query(
+          `UPDATE supplier_list SET ${sets.join(', ')}
+         WHERE supplier_list_id = $${index++} AND owner_entity_id = $${index} RETURNING supplier_list_id`,
+          vals
+        )
+      );
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
       res.json({ message: 'Supplier updated', ...(party ? { party } : {}) });
     } catch (err) {
       console.error('Update supplier error:', err.message);
       res.status(500).json({ error: 'Update failed', message: safeErr(err) });
     }
-  });
+  }
+);
 
 /**
  * Remove from my list (does not affect the supplier).
@@ -325,7 +436,9 @@ router.delete('/suppliers/:id', auth, async (req, res) => {
     /* R8: owner only, refused with money open, and it HIDES (CRM's own remove) — a staff login can no longer delete a supplier the shop owes */
     if (!isOwner(req)) return res.status(403).json({ code: 'OWNER_ONLY', error: 'Owner only', message: 'Only the owner can remove a supplier.' });
     const owner = ctx(req);
-    const row = await withEntity(owner, (db) => db.query(`SELECT supplier_entity_id FROM supplier_list WHERE supplier_list_id = $1 AND owner_entity_id = $2`, [req.params.id, owner]));
+    const row = await withEntity(owner, (db) =>
+      db.query(`SELECT supplier_entity_id FROM supplier_list WHERE supplier_list_id = $1 AND owner_entity_id = $2`, [req.params.id, owner])
+    );
     if (row.rows.length === 0) return res.status(404).json({ error: 'Not found' });
     await require('../lib/crm').removeParty(owner, row.rows[0].supplier_entity_id);
     res.json({ message: 'Supplier removed' });
@@ -363,19 +476,22 @@ router.delete('/suppliers/:id', auth, async (req, res) => {
  *
  * ⚠️ Declared BEFORE `/suppliers/:supplier_entity_id/...` so a literal path can never be read as an id.
  */
-const AVAIL_CONCURRENCY = 6;      // enough to hide latency, low enough not to stampede our own DB
+const AVAIL_CONCURRENCY = 6; // enough to hide latency, low enough not to stampede our own DB
 const AVAIL_HITS_PER_SUPPLIER = 6;
 router.get('/suppliers/availability', auth, async (req, res) => {
   try {
     const owner = ctx(req);
-    const q = String(req.query.q || '').trim().toLowerCase();
+    const text = String(req.query.q || '')
+      .trim()
+      .toLowerCase();
     /* Two characters, same floor as the panel. A one-letter query matches most catalogues and answers nothing. */
-    if (q.length < 2) return res.json({ q, results: [], count: 0, searched: 0 });
+    if (text.length < 2) return res.json({ q: text, results: [], count: 0, searched: 0 });
 
-    const sup = await withEntity(owner, (db) => db.query(
-      /* ⚠️ The SAME columns the single-catalogue route selects. buildPublicView reads `business_status` for the
+    const sup = await withEntity(owner, (db) =>
+      db.query(
+        /* ⚠️ The SAME columns the single-catalogue route selects. buildPublicView reads `business_status` for the
          shop block; selecting a narrower row here would build a subtly different view from the same resolver. */
-      `SELECT sl.supplier_list_id, sl.nickname, sl.preferred,
+        `SELECT sl.supplier_list_id, sl.nickname, sl.preferred,
               i.identity_id AS supplier_entity_id, i.bridge_id, i.user_id, i.display_name, i.currency_code,
               i.business_status,
               EXISTS (SELECT 1 FROM entity_schemas es
@@ -389,27 +505,55 @@ router.get('/suppliers/availability', auth, async (req, res) => {
              supplier has none — including them would spend a read per row to learn nothing and then report "no",
              which reads as "they don't stock it" rather than "we cannot ask them". Silence is the truer answer. */
           AND COALESCE(i.identity_type, 'entity') <> 'local'
-        ORDER BY sl.preferred DESC, sl.created_at DESC`, [owner]));
+        ORDER BY sl.preferred DESC, sl.created_at DESC`,
+        [owner]
+      )
+    );
 
     const viewer = req.identity && req.identity.bridge_id;
-    const deps = { query, withEntity, catalogueBuild, orderInput,
-      identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'),
-      container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'), viewer };
+    const deps = {
+      query,
+      withEntity,
+      catalogueBuild,
+      orderInput,
+      identity: require('../lib/identity'),
+      catalogueRead: require('../lib/catalogue-read'),
+      container: require('../lib/container'),
+      visibilityCap: require('../lib/visibility-cap'),
+      viewer
+    };
 
     const matches = (p) => {
       const d = (p && p.item_data) || p || {};
-      return ((d.name || d.product || '') + ' ' + (d.code || d.hsn || d.sku || '')).toLowerCase().indexOf(q) >= 0;
+      return ((d.name || d.product || '') + ' ' + (d.code || d.hsn || d.sku || '')).toLowerCase().indexOf(text) >= 0;
     };
 
     const one = async (s) => {
-      const base = { supplier_list_id: s.supplier_list_id, supplier_entity_id: s.supplier_entity_id,
-                     bridge_id: s.bridge_id, display_name: s.display_name, nickname: s.nickname,
-                     preferred: s.preferred, currency: s.currency_code || null };
+      const base = {
+        supplier_list_id: s.supplier_list_id,
+        supplier_entity_id: s.supplier_entity_id,
+        bridge_id: s.bridge_id,
+        display_name: s.display_name,
+        nickname: s.nickname,
+        preferred: s.preferred,
+        currency: s.currency_code || null
+      };
       if (!s.has_catalogue) return Object.assign(base, { state: 'nocat', hits: [] });
       try {
-        const view = await catalogueView.buildPublicView(Object.assign({ entity: {
-          identity_id: s.supplier_entity_id, display_name: s.display_name, bridge_id: s.bridge_id,
-          currency_code: s.currency_code, business_status: s.business_status } }, deps));
+        const view = await catalogueView.buildPublicView(
+          Object.assign(
+            {
+              entity: {
+                identity_id: s.supplier_entity_id,
+                display_name: s.display_name,
+                bridge_id: s.bridge_id,
+                currency_code: s.currency_code,
+                business_status: s.business_status
+              }
+            },
+            deps
+          )
+        );
         /* ⚠️ `available:false` is NOT `miss`. The schema exists but the shop is not showing — that is the same
            "cannot tell" as having published nothing, and reporting it as "does not stock it" would be a guess. */
         if (!view.available) return Object.assign(base, { state: 'nocat', hits: [] });
@@ -421,13 +565,17 @@ router.get('/suppliers/availability', auth, async (req, res) => {
              the same value, so the mistake would have been invisible until a shop overrode it. */
           currency: (view.shop && view.shop.currency_code) || s.currency_code || null,
           total_items: (view.items || []).length,
-          hits: hits.slice(0, AVAIL_HITS_PER_SUPPLIER).map((p) => {
-            const d = (p && p.item_data) || p || {};
-            return { item_id: p.item_id || null, name: d.name || d.product || 'item',
-                     unit: d.unit || 'unit', price: d.price == null ? null : d.price,
-                     code: d.code || d.sku || d.hsn || null };
+          hits: hits.slice(0, AVAIL_HITS_PER_SUPPLIER).map((item) => {
+            const d = (item && item.item_data) || item || {};
+            return {
+              item_id: item.item_id || null,
+              name: d.name || d.product || 'item',
+              unit: d.unit || 'unit',
+              price: d.price == null ? null : d.price,
+              code: d.code || d.sku || d.hsn || null
+            };
           }),
-          more: Math.max(0, hits.length - AVAIL_HITS_PER_SUPPLIER),
+          more: Math.max(0, hits.length - AVAIL_HITS_PER_SUPPLIER)
         });
       } catch (e) {
         /* ⚠️ One unreadable supplier must not fail the whole answer — the other forty are still worth having. */
@@ -436,16 +584,25 @@ router.get('/suppliers/availability', auth, async (req, res) => {
     };
 
     /* Bounded concurrency: the client's version was strictly sequential, which is what made 50 suppliers slow. */
-    const rows = sup.rows, results = new Array(rows.length);
+    const rows = sup.rows,
+      results = new Array(rows.length);
     let next = 0;
-    await Promise.all(Array.from({ length: Math.min(AVAIL_CONCURRENCY, rows.length) }, async () => {
-      for (;;) {
-        const i = next++; if (i >= rows.length) return;
-        results[i] = await one(rows[i]);
-      }
-    }));
+    await Promise.all(
+      Array.from({ length: Math.min(AVAIL_CONCURRENCY, rows.length) }, async () => {
+        for (;;) {
+          const i = next++;
+          if (i >= rows.length) return;
+          results[i] = await one(rows[i]);
+        }
+      })
+    );
 
-    res.json(Object.assign({ q, count: results.filter((r) => r && r.state === 'has').length, searched: rows.length }, PL.pageOut('results', results, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+    res.json(
+      Object.assign(
+        { q: text, count: results.filter((item) => item && item.state === 'has').length, searched: rows.length },
+        PL.pageOut('results', results, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))
+      )
+    );
   } catch (err) {
     res.status(500).json({ error: 'Supplier availability failed', message: safeErr(err) });
   }
@@ -458,7 +615,9 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
     const sid = req.params.supplier_entity_id;
     const sup = await query(
       `SELECT identity_id, display_name, bridge_id, currency_code, business_status
-       FROM identities WHERE identity_id = $1 AND identity_type = 'entity' AND COALESCE(sealed, false) = false`, [sid]);
+       FROM identities WHERE identity_id = $1 AND identity_type = 'entity' AND COALESCE(sealed, false) = false`,
+      [sid]
+    );
     const supplier = sup.rows[0] || null;
     if (!supplier) return res.json({ supplier: null, schema: null, fields: [], items: [], finishes: [] });
     // ── ONE CATALOGUE READ (SPEC-one-path-many-principals) ────────────────────────────────────────────────────
@@ -474,13 +633,24 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
     //   • Adding a supplier is UNILATERAL (POST /suppliers inserts with no consent from the supplier), so being
     //     "related" is SELF-ASSERTED and must NOT authorise anything beyond public. A tier that shows more needs
     //     bilateral consent, which supplier_list does not model. Do not add one until it does.
-    const view = await catalogueView.buildPublicView({ entity: supplier, asOwner: (String(sid) === String(ctx(req))) /* an entity reading its OWN catalogue sees it whole — Record a sale, Our own stock (2026-09-05) */, query, withEntity, catalogueBuild, orderInput, identity: require('../lib/identity'), catalogueRead: require('../lib/catalogue-read'), container: require('../lib/container'), visibilityCap: require('../lib/visibility-cap'),
+    const view = await catalogueView.buildPublicView({
+      entity: supplier,
+      asOwner: String(sid) === String(ctx(req)) /* an entity reading its OWN catalogue sees it whole — Record a sale, Our own stock (2026-09-05) */,
+      query,
+      withEntity,
+      catalogueBuild,
+      orderInput,
+      identity: require('../lib/identity'),
+      catalogueRead: require('../lib/catalogue-read'),
+      container: require('../lib/container'),
+      visibilityCap: require('../lib/visibility-cap'),
       // The reader, so a NETWORK-tier catalogue resolves for a fellow member. A supplier link alone still sees
       // exactly public — membership is decided by the network tree, not by this list.
       viewer: req.identity && req.identity.bridge_id,
       /* ⭐ AND WHO THEY ARE TO THIS SELLER (2026-09-06): customer-only offers reach a reader the SELLER's customer list names — the seller's
          own record of a trade or a placement, so the bilateral precondition above holds; a supplier link by itself still sees exactly public. */
-      viewer_id: ctx(req) });
+      viewer_id: ctx(req)
+    });
     if (!view.available) return res.json({ supplier, schema: null, fields: [], items: [], groups: [], finishes: [] });
     /* ⚠️ THE WHOLE VIEW, NOT A HAND-PICKED SUBSET (Athi, 2026-09-05: "still offer not appearing?"). This list named nine
        fields and left out `offers` and `categories`, so a buyer's Suppliers screen never received the seller's live offers
@@ -495,17 +665,24 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, async (req, res) =>
 
 /** the seller's named groups — for the Customers pane's chips and the offer editor's "Only for" picker. Before the customers/:id routes. */
 router.get('/customers/groups', auth, async (req, res) => {
-  try { res.json(await customerGroups.namesOf({ seller_id: ctx(req), withEntity })); }
-  catch (err) { res.status(500).json({ error: 'Get groups failed', message: safeErr(err) }); }
+  try {
+    res.json(await customerGroups.namesOf({ seller_id: ctx(req), withEntity }));
+  } catch (err) {
+    res.status(500).json({ error: 'Get groups failed', message: safeErr(err) });
+  }
 });
 router.get('/customers', auth, async (req, res) => {
   try {
-    const owner   = ctx(req);
+    const owner = ctx(req);
     const segment = (req.query.segment || '').trim();
     // B1 RLS: customer_list is owner-scoped (owner_entity_id) -> withEntity(me).
     /* the groups column may not be migrated yet: ask with it, and once more without on 42703 */
-    let _g = true, _seg = customerGroups.SEGMENT_SQL; const _run = () => withEntity(owner, (db) => db.query(
-      `SELECT cl.customer_list_id, cl.customer_type, cl.added_via,
+    let _g = true,
+      _seg = customerGroups.SEGMENT_SQL;
+    const _run = () =>
+      withEntity(owner, (db) =>
+        db.query(
+          `SELECT cl.customer_list_id, cl.customer_type, cl.added_via,
               cl.txn_count, cl.last_txn_at, ${_g ? 'cl.groups,' : ''}
               i.identity_id AS customer_identity_id, i.bridge_id, i.user_id, i.display_name,
               i.email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
@@ -516,10 +693,24 @@ router.get('/customers', auth, async (req, res) => {
        JOIN identities i ON i.identity_id = cl.customer_identity_id
        WHERE cl.owner_entity_id = $1
          AND ${customerGroups.NOT_A_SUPPLIER_SQL}
-       ORDER BY cl.last_txn_at DESC NULLS LAST`, [owner]));
+       ORDER BY cl.last_txn_at DESC NULLS LAST`,
+          [owner]
+        )
+      );
     /* no party_item yet (42P01) → the segment without high_value, as before b273 */
-    let r; for (let _t = 0; !r && _t < 3; _t++) { try { r = await _run(); } catch (e) { if (e && e.code === '42703' && _g) _g = false; else if (e && e.code === '42P01' && _seg !== customerGroups.SEGMENT_SQL_BASE) _seg = customerGroups.SEGMENT_SQL_BASE; else throw e; } }
-    const rows = (segment ? r.rows.filter(c => c.segment === segment) : r.rows).map((c) => Object.assign(c, { groups: Array.isArray(c.groups) ? c.groups : [] }));
+    let r;
+    for (let count = 0; !r && count < 3; count++) {
+      try {
+        r = await _run();
+      } catch (e) {
+        if (e && e.code === '42703' && _g) _g = false;
+        else if (e && e.code === '42P01' && _seg !== customerGroups.SEGMENT_SQL_BASE) _seg = customerGroups.SEGMENT_SQL_BASE;
+        else throw e;
+      }
+    }
+    const rows = (segment ? r.rows.filter((item) => item.segment === segment) : r.rows).map((item) =>
+      Object.assign(item, { groups: Array.isArray(item.groups) ? item.groups : [] })
+    );
     await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
     res.json(Object.assign({ count: rows.length, groups_migrated: _g }, PL.pageOut('customers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
@@ -550,9 +741,13 @@ router.get('/customers/:id/rewards', auth, async (req, res) => {
     const holder = { scheme: 'identity', value: String(req.params.id || '') };
     if (!holder.value) return res.status(400).json({ error: 'validation', message: 'a customer id is required' });
     const b = await store.balance(owner, holder, withEntity);
-    if (!b.programme) return res.json({ programme: null, points: 0,
-      /* ⚠️ NOT AN ERROR AND NOT AN EMPTY BOX. Most shops run no programme; the pane says so plainly. */
-      says: 'This shop does not run a points programme.' });
+    if (!b.programme)
+      return res.json({
+        programme: null,
+        points: 0,
+        /* ⚠️ NOT AN ERROR AND NOT AN EMPTY BOX. Most shops run no programme; the pane says so plainly. */
+        says: 'This shop does not run a points programme.'
+      });
     /**
      * ⭐⭐ worthOf IS THE INTERPRETATION, and it already existed — it says what the balance is worth in money, what
      * it is already enough for, and what the NEXT reward is and how far off. I nearly wrote a second function for
@@ -563,13 +758,19 @@ router.get('/customers/:id/rewards', auth, async (req, res) => {
      */
     const w = rewards.worthOf(b.programme, b.points, {});
     res.json({
-      programme: b.programme.name, points: b.points, worth: b.worth, negative: b.negative,
+      programme: b.programme.name,
+      points: b.points,
+      worth: b.worth,
+      negative: b.negative,
       earns: rewards.describeEarn(b.programme, {}),
-      says: w.says, reach: w.reach, next: w.next, money_known: w.moneyKnown,
+      says: w.says,
+      reach: w.reach,
+      next: w.next,
+      money_known: w.moneyKnown,
       expires_months: b.programme.expires_months || null,
       /* the last movements, so "where did those come from" has an answer on the same screen */
       recent: b.entries.slice(0, 12),
-      expired_now: b.expired.reduce((a, e) => a + Math.abs(e.points), 0),
+      expired_now: b.expired.reduce((total, e) => total + Math.abs(e.points), 0)
     });
   } catch (err) {
     /* ⚠️ BEFORE THE MIGRATION IS RUN the table does not exist, and a CRM pane must not break because of it */
@@ -585,14 +786,23 @@ router.get('/customers/:id/rewards', auth, async (req, res) => {
  * before the first order — to give them an "Only for" offer — adds them here: resolved the way a supplier is (User ID · bridge id · email),
  * never yourself, 'manual', no transactions yet (segment reads "new" until the count says otherwise).
  */
-router.post('/customers',
-  [ body('handle').optional().trim(), body('name').optional().trim(),
-    body().custom((b) => { if (!String((b && b.handle) || '').trim() && !String((b && b.name) || '').trim())
-      throw new Error('Give a User ID or email for a ChitBridge business, or a name for a local customer'); return true; }) ],
-  validate, auth,
+router.post(
+  '/customers',
+  [
+    body('handle').optional().trim(),
+    body('name').optional().trim(),
+    body().custom((b) => {
+      if (!String((b && b.handle) || '').trim() && !String((b && b.name) || '').trim())
+        throw new Error('Give a User ID or email for a ChitBridge business, or a name for a local customer');
+      return true;
+    })
+  ],
+  auth,
+  validate,
   async (req, res) => {
     try {
-      const owner = ctx(req), handle = String(req.body.handle || '').trim();
+      const owner = ctx(req),
+        handle = String(req.body.handle || '').trim();
       /* ⭐⭐ A NAME, NOT AN ID (Athi, 2026-10-02): a walk-in regular who is not on ChitBridge. The counter allows On credit only for a
          customer the shop KNOWS (till.html custKnown), and the snapshot lists every customer_list row — so a named row is what makes
          credit possible. The supplier door's own path: lib/local-identity.mint (kind 'cus') gives an ordinary entity row with a
@@ -600,22 +810,37 @@ router.post('/customers',
       if (!handle) {
         const localName = sanitise(String(req.body.name || '').trim());
         const L = require('../lib/local-identity');
-        const ph = L.phoneOf(req.body.phone);   /* ⭐ CRM-MINT1: the one phone check (it was 6–20 characters here, ≥ 8 digits everywhere else) */
+        const ph = L.phoneOf(req.body.phone); /* ⭐ CRM-MINT1: the one phone check (it was 6–20 characters here, ≥ 8 digits everywhere else) */
         if (ph.bad) return res.status(400).json({ error: 'Invalid', message: 'Enter a valid phone number.' });
         const phone = ph.phone;
         /* ⭐ phone and GSTIN go where the till's customer query already reads them: identities.otp_contact (as phone) and .gstn —
            no schema change. Nothing looks an identity up BY otp_contact, so a minted row cannot be reached through it. */
-        const gstin = sanitise(String(req.body.gstin || '')).replace(/\s+/g, '').toUpperCase();
+        const gstin = sanitise(String(req.body.gstin || ''))
+          .replace(/\s+/g, '')
+          .toUpperCase();
         /* ⭐ CRM-MINT1: mint · contact · list row · number — the one add-customer, one transaction */
         const a = await withEntity(owner, (h) => L.addCustomer(h, owner, { name: localName, phone, gstin, via: 'manual' }));
         if (a.refused) return res.status(a.refused.status).json(a.refused.error);
         if (a.exists) return res.status(409).json({ error: 'Exists', message: L.existsWords(a, localName + ' is already in your customer list') });
         const local = a.local;
         const why = 'not on ChitBridge — bills stay with you';
-        return res.json({ message: 'Customer added — ' + why,
-          customer: { customer_list_id: a.customer_list_id, customer_identity_id: local.identity_id, display_name: local.display_name,
-                      user_id: local.user_id, bridge_id: local.bridge_id, segment: 'new', added_via: 'manual', party_no: a.party_no,
-                      phone: phone || null, gstin: gstin || null, on_rail: false, one_sided: { why } } });
+        return res.json({
+          message: 'Customer added — ' + why,
+          customer: {
+            customer_list_id: a.customer_list_id,
+            customer_identity_id: local.identity_id,
+            display_name: local.display_name,
+            user_id: local.user_id,
+            bridge_id: local.bridge_id,
+            segment: 'new',
+            added_via: 'manual',
+            party_no: a.party_no,
+            phone: phone || null,
+            gstin: gstin || null,
+            on_rail: false,
+            one_sided: { why }
+          }
+        });
       }
       /* ⚠️ Same fence as the supplier add: a `~` handle is a party some OTHER business minted, and it resolves by
          user_id like any entity. Answer as if it does not exist rather than confirming the guess. */
@@ -624,29 +849,48 @@ router.post('/customers',
       const who = await query(
         `SELECT identity_id, display_name, user_id, bridge_id FROM identities
           WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1) OR LOWER(email) = LOWER($1)) AND ${A_BUSINESS}
-          LIMIT 1`, [handle]);
+          LIMIT 1`,
+        [handle]
+      );
       if (who.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'No business with that User ID, bridge ID, or email' });
       const c = who.rows[0];
       if (c.identity_id === owner) return res.status(400).json({ error: 'Invalid', message: 'Cannot add yourself' });
-      const r = await withEntity(owner, (db) => db.query(
-        `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
+      const r = await withEntity(owner, (db) =>
+        db.query(
+          `INSERT INTO customer_list (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
          VALUES ($1, $2, 'entity', 'manual', 0, NULL)
          ON CONFLICT (owner_entity_id, customer_identity_id) DO NOTHING
-         RETURNING customer_list_id`, [owner, c.identity_id]));
+         RETURNING customer_list_id`,
+          [owner, c.identity_id]
+        )
+      );
       if (r.rows.length === 0) return res.status(409).json({ error: 'Exists', message: 'Already in your customer list' });
       /* ⭐ ADDED, AND TOLD WHETHER BILLS CAN REACH THEM (Athi, 2026-10-02 — two bills sat pending for customers this door let
          in without a word). lib/istest mayTrade, b249's rule: inactive or another sandbox → the sale is still recorded and
          booked, only their copy is not sent. Said here, before the first bill, not discovered at the counter. */
       const trade = await require('../lib/istest').mayTrade(owner, c.identity_id);
       const custNo = await numberParty(owner, c.identity_id);
-      res.json({ message: trade.ok ? 'Customer added' : 'Customer added — bills to them stay here only: ' + trade.why,
-        customer: { customer_list_id: r.rows[0].customer_list_id, customer_identity_id: c.identity_id, display_name: c.display_name, user_id: c.user_id, bridge_id: c.bridge_id, segment: 'new', added_via: 'manual', party_no: custNo,
-                    on_rail: !!trade.ok, ...(trade.ok ? {} : { one_sided: { why: trade.why } }) } });
+      res.json({
+        message: trade.ok ? 'Customer added' : 'Customer added — bills to them stay here only: ' + trade.why,
+        customer: {
+          customer_list_id: r.rows[0].customer_list_id,
+          customer_identity_id: c.identity_id,
+          display_name: c.display_name,
+          user_id: c.user_id,
+          bridge_id: c.bridge_id,
+          segment: 'new',
+          added_via: 'manual',
+          party_no: custNo,
+          on_rail: !!trade.ok,
+          ...(trade.ok ? {} : { one_sided: { why: trade.why } })
+        }
+      });
     } catch (err) {
       console.error('Add customer error:', err.message);
       res.status(500).json({ error: 'Add customer failed', message: safeErr(err) });
     }
-  });
+  }
+);
 
 /**
  * ⭐ PLACE A CUSTOMER IN NAMED GROUPS (decision 2, 2026-09-06). POST /customers/:id/groups { groups: ['dealers', 'wholesale'] } replaces the
@@ -655,39 +899,53 @@ router.post('/customers',
 router.post('/customers/:id/groups', auth, async (req, res) => {
   try {
     if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to place a customer in a group.' });
-    const owner = ctx(req); const groups = customerGroups.cleanGroups(req.body && req.body.groups);
-    const r = await withEntity(owner, (db) => db.query(`UPDATE customer_list SET groups = $1 WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id, groups`, [groups, req.params.id, owner]));
+    const owner = ctx(req);
+    const groups = customerGroups.cleanGroups(req.body && req.body.groups);
+    const r = await withEntity(owner, (db) =>
+      db.query(`UPDATE customer_list SET groups = $1 WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id, groups`, [
+        groups,
+        req.params.id,
+        owner
+      ])
+    );
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     res.json({ ok: true, groups: r.rows[0].groups });
   } catch (err) {
-    if (err && err.code === '42703') return res.status(409).json({ error: 'Not migrated', message: 'Named groups need the customer_groups migration (migrations/b205_customer_groups.sql) — run it in the Supabase SQL editor.' });
+    if (err && err.code === '42703')
+      return res.status(409).json({
+        error: 'Not migrated',
+        message: 'Named groups need the customer_groups migration (migrations/b205_customer_groups.sql) — run it in the Supabase SQL editor.'
+      });
     res.status(500).json({ error: 'Set groups failed', message: safeErr(err) });
   }
 });
 
 // Manual segment override (optional)
-router.patch('/customers/:id',
-  [ body('segment_override').optional().isIn(['high_value','regular','new','inactive']) ],
-  validate, auth,
-  async (req, res) => {
-    try {
-      const owner = ctx(req);
-      const party = await partyPatch(req, res, 'customer');
-      if (party === false) return;
-      if (!('segment_override' in (req.body || {}))) {
-        if (party) return res.json({ message: 'Customer updated', party });
-        return res.status(400).json({ error: 'Nothing to update', message: 'Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)' });
-      }
-      const r = await withEntity(owner, (db) => db.query(
+router.patch('/customers/:id', [body('segment_override').optional().isIn(['high_value', 'regular', 'new', 'inactive'])], auth, validate, async (req, res) => {
+  try {
+    const owner = ctx(req);
+    const party = await partyPatch(req, res, 'customer');
+    if (party === false) return;
+    if (!('segment_override' in (req.body || {}))) {
+      if (party) return res.json({ message: 'Customer updated', party });
+      return res.status(400).json({
+        error: 'Nothing to update',
+        message: 'Provide segment_override or a party field (legal_name, nickname, credit_days, credit_limit, state_code, tax_ids)'
+      });
+    }
+    const r = await withEntity(owner, (db) =>
+      db.query(
         `UPDATE customer_list SET segment_override = $1
          WHERE customer_list_id = $2 AND owner_entity_id = $3 RETURNING customer_list_id`,
-        [req.body.segment_override, req.params.id, owner]));
-      if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
-      res.json({ message: 'Segment updated' });
-    } catch (err) {
-      res.status(500).json({ error: 'Update segment failed', message: safeErr(err) });
-    }
-  });
+        [req.body.segment_override, req.params.id, owner]
+      )
+    );
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    res.json({ message: 'Segment updated' });
+  } catch (err) {
+    res.status(500).json({ error: 'Update segment failed', message: safeErr(err) });
+  }
+});
 
 /**
  * ── COUNTERPARTY SCORECARD ──────────────────────────────────────────────────────────────────────────────────────
@@ -704,15 +962,16 @@ router.patch('/customers/:id',
  * GET /api/relationships/scorecard            — everyone you have actually traded with
  * GET /api/relationships/scorecard/:entity_id — one counterparty, in depth
  */
-const select  = require('../lib/select');
+const select = require('../lib/select');
 const measure = require('../lib/measure');
-const policy  = require('../lib/policy');
+const policy = require('../lib/policy');
 
 /** N1: an offer's amount in the SUPPLIER's own money (its stated currency; none stated → the bare amount); only a rupee supplier reads ₹ */
 function offerMoney(amount, currency) {
-  const stated = require('../lib/country-setup').currencyStated(currency), digits = require('../lib/money').decimals(stated);
+  const stated = require('../lib/country-setup').currencyStated(currency),
+    digits = require('../lib/money').decimals(stated);
   const figure = Number(amount).toFixed(digits);
-  if (stated === 'INR') return '₹' + figure;   /* IN-only branch: the rupee shop reads exactly what it read before */
+  if (stated === 'INR') return '₹' + figure; /* IN-only branch: the rupee shop reads exactly what it read before */
   return stated ? stated + ' ' + figure : figure;
 }
 
@@ -723,17 +982,21 @@ router.get('/scorecard', auth, async (req, res) => {
     // to score, and a counterparty you trade with daily belongs here whether or not anyone added them.
     const list = await select.counterparties(me, { since: req.query.since });
     res.json({ counterparties: list, note: list.length ? undefined : 'no trades yet — nothing to score' });
-  } catch (err) { res.status(500).json({ error: 'Scorecard list failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Scorecard list failed', message: safeErr(err) });
+  }
 });
 
 router.get('/scorecard/:entity_id', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const flags = await policy.get(me);            // overdue is a POLICY, never a constant baked into a report
+    const flags = await policy.get(me); // overdue is a POLICY, never a constant baked into a report
     const rows = await select.rows(me, { counterparty_id: req.params.entity_id, since: req.query.since, limit: 5000 });
     const card = measure.scorecard(rows, { overdue_days: flags.overdue_days });
     res.json(Object.assign({ counterparty_id: req.params.entity_id, name: (rows[0] || {}).counterparty_name || null }, card));
-  } catch (err) { res.status(500).json({ error: 'Scorecard failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Scorecard failed', message: safeErr(err) });
+  }
 });
 
 module.exports = router;

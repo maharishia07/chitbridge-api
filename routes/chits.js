@@ -11,22 +11,24 @@
  */
 const express = require('express');
 const cbLog = require('../lib/logger');
-const { round: roundMoney } = require('../lib/money');   /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
+const {
+  round: roundMoney
+} = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
-const railActions = require('../lib/rail-actions');   // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
-const disputeMay = require('../lib/dispute-may');   // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
-const railStatus = require('../lib/rail-status');   // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
-const { assignChit, taskCount } = require('../lib/assign-chit');   // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
-const ownBill = require('../lib/counter-bill');   // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
+const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
+const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
+const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
+const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
+const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
 const log = require('../lib/logger');
 const { body } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const storage = require('../lib/storage');
-const docnumber = require('../lib/docnumber');   // what a document number may look like, per country
-const { tillClaimOf } = require('../lib/holder');   // M11 — a phone's bill names its device and person; checked against the session
-const CLOCK = require('../lib/shop-clock');   // ⭐ Y1b — a chit's sent_at/created_at are the SHOP CLOCK's moment (the system clock in life; set by tools/sim-load.cjs), never SQL NOW()
+const docnumber = require('../lib/docnumber'); // what a document number may look like, per country
+const { tillClaimOf } = require('../lib/holder'); // M11 — a phone's bill names its device and person; checked against the session
+const CLOCK = require('../lib/shop-clock'); // ⭐ Y1b — a chit's sent_at/created_at are the SHOP CLOCK's moment (the system clock in life; set by tools/sim-load.cjs), never SQL NOW()
 
 /**
  * ⭐ THE SHOP'S JURISDICTION, MEMOISED FOR FIVE MINUTES.
@@ -45,7 +47,9 @@ async function countryOfEntity(entity_id) {
     const r = await query(`SELECT country, gstn FROM identities WHERE identity_id = $1`, [entity_id]);
     const row = r.rows[0] || {};
     c = require('../lib/profile').countryOf({ country: row.country, gstin: row.gstn });
-  } catch (e) { cbLog.fellBack('chits countryOfEntity: the read failed — carried on without it', e); /* ⚠️ a bill must never fail because we could not look up a country */ }
+  } catch (e) {
+    cbLog.fellBack('chits countryOfEntity: the read failed — carried on without it', e); /* ⚠️ a bill must never fail because we could not look up a country */
+  }
   _countryMemo.set(entity_id, { c: c, at: Date.now() });
   return c;
 }
@@ -54,24 +58,24 @@ const schema = require('../lib/schema');
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
-const mint = require('../lib/mint');   // ⚠️ the SHAPE of a chit — one place, four call sites
+const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
 const amend = require('../lib/amend'); // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
 const assign = require('../lib/assign');
-const policy = require('../lib/policy');   // ⚠️ backlog 11 — each copy owner's retention FLOOR, applied at the mint
+const policy = require('../lib/policy'); // ⚠️ backlog 11 — each copy owner's retention FLOOR, applied at the mint
 const deliverline = require('../lib/deliverline');
 const cost = require('../lib/cost');
-const raida = require('../lib/raida');   // b182 — the register on a line
+const raida = require('../lib/raida'); // b182 — the register on a line
 const reprice = require('../lib/reprice'); // pull catalogue prices onto a chit — as AMENDMENTS, never a silent edit // ⚠️ b145 — PRIVATE + write-without-read; the gate is here, RLS cannot express it // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
-const itemmatch = require('../lib/itemmatch');  // ⚠️ THE one matcher — same resolution the raise path used
+const itemmatch = require('../lib/itemmatch'); // ⚠️ THE one matcher — same resolution the raise path used
 /* TAX ON THE CHIT (STUDY-gst-structure §6, 2026-09-04): the shelf that rates a line at send, the line rater, the freeze at completed. */
 const regional = require('../lib/regional');
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
-const taxEngine = require('../lib/tax');   // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
+const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
-const localIdentity = require('../lib/local-identity');   /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
-const istest = require('../lib/istest');   /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
+const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
+const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
    live in the Bills folders. The SAME classification the folders read through lib/select.js, so the two can never disagree. */
 const FOLDER_INV = require('../lib/folder-inventory');
@@ -98,9 +102,12 @@ async function definersReady() {
     const r = await query(
       `SELECT (to_regprocedure('chit_deliver(uuid,boolean,jsonb)') IS NOT NULL
            AND to_regprocedure('chit_log_targets(uuid,uuid[],text,uuid,text,text)') IS NOT NULL
-           AND to_regprocedure('chit_participant_parity(uuid,uuid)') IS NOT NULL) AS ok`);
+           AND to_regprocedure('chit_participant_parity(uuid,uuid)') IS NOT NULL) AS ok`
+    );
     _definersReady = !!(r.rows[0] && r.rows[0].ok);
-  } catch (e) { cbLog.fellBack('chits definersReady: the read failed — carried on without it', e); /* leave false — fall back to legacy */ }
+  } catch (e) {
+    cbLog.fellBack('chits definersReady: the read failed — carried on without it', e); /* leave false — fall back to legacy */
+  }
   return _definersReady;
 }
 
@@ -123,8 +130,9 @@ async function definersReady() {
  *                    is recorded with its ledger; only the customer's copy is dropped, and the answer says why.
  * ⚠️ Before this, both were a bare 403 that the counter read as "key refused" — two bills sat pending with the network green.
  */
-async function tillMaySend(sender_id, outward, body) {
-  const b = body || {}, bj = b.business_json || {};
+async function tillMaySend(sender_id, outward, payload) {
+  const b = payload || {},
+    bj = b.business_json || {};
   if (outward.length !== 1) return { refuse: 'a counter bill can go to one customer only' };
   const r = outward[0];
   if (String(r.role || 'to').toLowerCase() !== 'to') return { refuse: 'a counter bill can only be addressed "to" its customer' };
@@ -134,18 +142,25 @@ async function tillMaySend(sender_id, outward, body) {
   if (!bj.customer || String(bj.customer.entity_id || '') !== eid) return { refuse: 'the bill names a different customer from the one it is sent to' };
   const who = r.name || (bj.customer && bj.customer.name) || 'this customer';
   try {
-    const ok = await withEntity(sender_id, (db) => db.query(
-      `SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id
+    const ok = await withEntity(sender_id, (db) =>
+      db.query(
+        `SELECT 1 AS ok FROM customer_list c JOIN identities i ON i.identity_id = c.customer_identity_id
         WHERE c.owner_entity_id = $1 AND c.customer_identity_id = $2 AND ${localIdentity.mayTradeSql('i', '$1')}
-        LIMIT 1`, [sender_id, eid]));
+        LIMIT 1`,
+        [sender_id, eid]
+      )
+    );
     if (ok.rows.length === 1) return null;
     /* the second look only says WHICH rule failed, so the words on the bill are the true ones */
-    const listed = await withEntity(sender_id, (db) => db.query(
-      `SELECT 1 AS ok FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 LIMIT 1`, [sender_id, eid]));
-    if (!listed.rows.length) return { oneSided: who + ' is not on this shop\'s customer list' };
+    const listed = await withEntity(sender_id, (db) =>
+      db.query(`SELECT 1 AS ok FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = $2 LIMIT 1`, [sender_id, eid])
+    );
+    if (!listed.rows.length) return { oneSided: who + " is not on this shop's customer list" };
     const v = await localIdentity.mayTrade(sender_id, eid);
     return { oneSided: v.ok ? who + ' could not be sent their copy' : v.say };
-  } catch (_) { return { oneSided: 'the customer could not be checked just now' }; }
+  } catch (_) {
+    return { oneSided: 'the customer could not be checked just now' };
+  }
 }
 
 // Run a b50/b51/b52 definer inside withEntity(caller); before the delivery layer is applied, run the legacy
@@ -157,8 +172,13 @@ async function tillMaySend(sender_id, outward, body) {
 let _folderColReady = null;
 async function folderColReady() {
   if (_folderColReady !== null) return _folderColReady;
-  try { const r = await query(`SELECT 1 FROM information_schema.columns WHERE table_name = 'chit_status' AND column_name = 'folder_id' LIMIT 1`); _folderColReady = r.rows.length > 0; }
-  catch (e) { cbLog.fellBack('chits folderColReady: the read failed — answered no', e); _folderColReady = false; }
+  try {
+    const r = await query(`SELECT 1 FROM information_schema.columns WHERE table_name = 'chit_status' AND column_name = 'folder_id' LIMIT 1`);
+    _folderColReady = r.rows.length > 0;
+  } catch (e) {
+    cbLog.fellBack('chits folderColReady: the read failed — answered no', e);
+    _folderColReady = false;
+  }
   return _folderColReady;
 }
 
@@ -184,7 +204,7 @@ const generateAutoSubject = (purpose, senderName, date, clock) => {
     general: 'Message'
   };
   const label = purposes[purpose] || 'Chit';
-  const dateStr = require('../lib/country-setup').datePhrase(date, clock);   /* N3: the shop's locale and zone, India's only when the shop is India's */
+  const dateStr = require('../lib/country-setup').datePhrase(date, clock); /* N3: the shop's locale and zone, India's only when the shop is India's */
   return `${label} from ${senderName} — ${dateStr}`;
 };
 
@@ -206,10 +226,8 @@ const calculateSummary = (lineItems) => {
    * not absent. `availability.countedZero`, `sheet.fromSheet`'s blank cell, `itemstatus`: same line, drawn again.
    */
   const total = lineItems.reduce((sum, item) => {
-    const explicit = (item.total !== undefined && item.total !== null && String(item.total).trim() !== '');
-    const t = explicit
-      ? parseFloat(item.total)
-      : (parseFloat(item.price) || 0) * (parseFloat(item.quantity) || 0);
+    const explicit = item.total !== undefined && item.total !== null && String(item.total).trim() !== '';
+    const t = explicit ? parseFloat(item.total) : (parseFloat(item.price) || 0) * (parseFloat(item.quantity) || 0);
     return sum + (Number.isFinite(t) ? t : 0);
   }, 0);
   return {
@@ -223,17 +241,23 @@ const calculateSummary = (lineItems) => {
 // actor id (active + Act/Manager hat) or null. Loop-guarded (visited set + depth cap). Capacity is
 // NOT re-checked here — the default/overflow assignee absorbs excess by design (D1).
 async function resolveDelegateTarget(client, entity_id, actorId) {
-  const seen = new Set(); let cur = actorId; let depth = 0;
+  const seen = new Set();
+  let cur = actorId;
+  let depth = 0;
   while (cur && depth < 12) {
-    if (seen.has(cur)) return null;                    // cycle → give up (set-time check is the primary guard)
+    if (seen.has(cur)) return null; // cycle → give up (set-time check is the primary guard)
     seen.add(cur);
-    const r = (await client.query(
-      `SELECT identity_id, break_status, hat, delegate_actor_id
+    const r = (
+      await client.query(
+        `SELECT identity_id, break_status, hat, delegate_actor_id
          FROM identities WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-      [cur, entity_id])).rows[0];
+        [cur, entity_id]
+      )
+    ).rows[0];
     if (!r) return null;
     if (r.break_status === 'active' && (r.hat === 'act' || r.hat === 'manager')) return r.identity_id;
-    cur = r.delegate_actor_id; depth++;                // on leave / not assignable → try their delegate
+    cur = r.delegate_actor_id;
+    depth++; // on leave / not assignable → try their delegate
   }
   return null;
 }
@@ -243,60 +267,76 @@ async function resolveDelegateTarget(client, entity_id, actorId) {
 async function autoAssignReceived(entity_id, chit_id) {
   // B1 RLS: the receiver auto-assigns within its OWN roster -> withEntity(receiver), not withTransaction.
   await withEntity(entity_id, async (client) => {
-    const st = (await client.query(
-      `SELECT auto_assign_mode, default_assignee_actor_id, default_max_tasks
-         FROM entity_actor_settings WHERE entity_id = $1`, [entity_id])).rows[0];
+    const st = (
+      await client.query(
+        `SELECT auto_assign_mode, default_assignee_actor_id, default_max_tasks
+         FROM entity_actor_settings WHERE entity_id = $1`,
+        [entity_id]
+      )
+    ).rows[0];
     const mode = (st && st.auto_assign_mode) || 'off';
     if (mode === 'off') return;
     const defMax = (st && st.default_max_tasks) || 10;
     const defaultAssignee = (st && st.default_assignee_actor_id) || null;
 
     // Idempotency + scope: only the actionable received copy, still unassigned.
-    const cs = (await client.query(
-      `SELECT assigned_to_actor_id, current_status FROM chit_status
+    const cs = (
+      await client.query(
+        `SELECT assigned_to_actor_id, current_status FROM chit_status
          WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received' AND deleted_at IS NULL`,
-      [chit_id, entity_id])).rows[0];
+        [chit_id, entity_id]
+      )
+    ).rows[0];
     if (!cs || cs.assigned_to_actor_id) return;
 
     let target = null;
     if (mode === 'default_assignee') {
       target = defaultAssignee;
     } else if (mode === 'least_loaded') {
-      const cand = (await client.query(
-        `SELECT identity_id, max_tasks, current_task_count FROM identities
+      const cand = (
+        await client.query(
+          `SELECT identity_id, max_tasks, current_task_count FROM identities
            WHERE parent_entity_id = $1 AND identity_type = 'actor' AND break_status = 'active'
              AND hat IN ('act','manager')
            ORDER BY current_task_count ASC, last_assigned_at ASC NULLS FIRST
-           LIMIT 10`, [entity_id])).rows;
-      const room = cand.find(a => (a.current_task_count || 0) < (a.max_tasks || defMax));
-      target = room ? room.identity_id : defaultAssignee;   // all full → overflow to the default assignee
+           LIMIT 10`,
+          [entity_id]
+        )
+      ).rows;
+      const room = cand.find((item) => (item.current_task_count || 0) < (item.max_tasks || defMax));
+      target = room ? room.identity_id : defaultAssignee; // all full → overflow to the default assignee
     }
-    if (!target) return;                               // no eligible actor + no default → stays in the pool
+    if (!target) return; // no eligible actor + no default → stays in the pool
 
-    target = await resolveDelegateTarget(client, entity_id, target);   // route past anyone on leave
+    target = await resolveDelegateTarget(client, entity_id, target); // route past anyone on leave
     if (!target) return;
 
-    const t = (await client.query(
-      `SELECT identity_id, display_name FROM identities
+    const t = (
+      await client.query(
+        `SELECT identity_id, display_name FROM identities
          WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-      [target, entity_id])).rows[0];
+        [target, entity_id]
+      )
+    ).rows[0];
     if (!t) return;
 
     /* ⭐ W1-RAIL: the one assignment writer (lib/assign-chit) — my received copy, then back to pending through the ONE status write
        (T1-RAIL, rail-status statusGate), never a bare SET. The status was read with the row above — no second read. The shop's own
        automation moves it as SYSTEM. */
     await assignChit(client, entity_id, chit_id, t, 'auto', { copy: 'received', me: railStatus.SYSTEM, from: cs.current_status });
-    await taskCount(client, t.identity_id, 'take');   /* TA1 */
+    await taskCount(client, t.identity_id, 'take'); /* TA1 */
     await client.query(
       `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
        VALUES ($1, $2, 'assigned', NULL, 'System (auto-assign)', 'pending', $3)`,
-      [chit_id, entity_id, `Auto-assigned to ${t.display_name} (${mode === 'least_loaded' ? 'least-loaded' : 'default assignee'})`]);
+      [chit_id, entity_id, `Auto-assigned to ${t.display_name} (${mode === 'least_loaded' ? 'least-loaded' : 'default assignee'})`]
+    );
   });
 }
 
 // ─── POST /chits/send ─────────────────────────────────────────
 // Send a chit from sender to one or more receivers
-router.post('/send',
+router.post(
+  '/send',
   /* ⭐ M04 (IAM §35): WHO before WHAT. auth runs ahead of the validator chain, so an unauthenticated or refused caller never
      has its body examined — and server.js (middleware/auth-first.js) authenticates this route before the body is even
      parsed. The second auth here keeps the route self-guarding; it reuses the decision, it does not repeat it. */
@@ -305,9 +345,7 @@ router.post('/send',
     // Accept legacy `receivers` (all = To) OR fan-out `recipients` [{..., role:'to'|'cc'|'for'}];
     // a draft may have no recipients. (ATH-119)
     body().custom((_v, { req }) => {
-      const list = Array.isArray(req.body.recipients) ? req.body.recipients
-                 : Array.isArray(req.body.receivers)  ? req.body.receivers
-                 : [];
+      const list = Array.isArray(req.body.recipients) ? req.body.recipients : Array.isArray(req.body.receivers) ? req.body.receivers : [];
       if (!req.body.is_draft && list.length === 0) {
         throw new Error('At least one recipient required');
       }
@@ -333,13 +371,13 @@ router.post('/send',
          scrap): the mirror of 'expense', business_json.income = { what, mode, amount, class }. Posted by class (4210+)
          when the shop's ledger is on (lib/books-hooks.js). ⚠️ The counter's rollup (engine rollup.js v1.5.0) does not
          know it yet and would count it as a sale — no counter sends one until engines v1.8.0 teaches rollup isIncome. */
-      .isIn(['order','invoice','receipt','inquiry','delivery_note','general','credit_note','expense','income','subscription'])
+      .isIn(['order', 'invoice', 'receipt', 'inquiry', 'delivery_note', 'general', 'credit_note', 'expense', 'income', 'subscription'])
       .withMessage('Invalid purpose'),
     body('manual_subject').optional().trim().isLength({ max: 500 }),
     // Per-send copy choice — honoured ONLY on a pure self-chit (see the pureSelfChit branch); ignored elsewhere.
     body('self_copy').optional().isIn(['both', 'sent', 'received']).withMessage('self_copy must be both|sent|received'),
     body('line_items').optional().isArray(),
-    body('business_json').optional().isObject(),
+    body('business_json').optional().isObject()
   ],
   validate,
   async (req, res) => {
@@ -375,8 +413,7 @@ router.post('/send',
        * the request again, through the one reader both sides use.
        */
       const raceRef = refOf(req);
-      if (raceRef && err && (err.code === '23505')
-          && /client_ref/.test(String(err.constraint || err.detail || err.message || ''))) {
+      if (raceRef && err && err.code === '23505' && /client_ref/.test(String(err.constraint || err.detail || err.message || ''))) {
         try {
           const who = entityId(req);
           const seen = await sameRefLook(who, raceRef);
@@ -384,17 +421,18 @@ router.post('/send',
             const _bj = req.body && req.body.business_json;
             const mine = (_bj && _bj.till && _bj.till.id) || null;
             const theirs = seen.till_id || null;
-            const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
+            const myAt = _bj && _bj.billed_at ? String(_bj.billed_at) : null;
             const theirAt = seen.billed_at ? String(seen.billed_at) : null;
             /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — via the one function both callers share, so this can no
                longer drift from it (it used to: this branch had no sameName wording at all). */
             const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, raceRef);
             if (verdict.collision) return res.status(409).json(verdict.body);
             /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
-            return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true,
-                                          client_ref: raceRef, raced: true });
+            return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref: raceRef, raced: true });
           }
-        } catch (e) { cbLog.fellBack('chits: failed — carried on without it', e); /* fall through to the ordinary failure — a bad answer here must not hide the real one */ }
+        } catch (e) {
+          cbLog.fellBack('chits: failed — carried on without it', e); /* fall through to the ordinary failure — a bad answer here must not hide the real one */
+        }
       }
       /* ⭐ a refusal the database made on purpose (b247's population boundary) answers as one — 409, in words — not
          as "Send failed" (lib/knownerr, external review §23) */
@@ -411,13 +449,41 @@ router.post('/send',
    lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
 const SEND_STEPS = [
-  sendSender, sendMoneyStated, sendLab, sendNumberCheck, sendTillClaim, sendReplay, sendTillGate,
-  sendBody, sendCredit, sendSource, sendFanOut, sendTrace,
-  sendPrefs, sendRecipients, sendSeller, sendOffers, sendMoney,
-  sendIssued, sendCopyPolicy, sendPromote, sendParticipants, sendRetention,
-  sendFolds, sendDesigns, sendSummary, sendFreeze, sendCopies,
-  sendOperatorCopy, sendWrite, sendCustomers, sendAssign, sendMeter,
-  sendStock, sendBooks, sendAnswer,
+  sendSender,
+  sendMoneyStated,
+  sendLab,
+  sendNumberCheck,
+  sendTillClaim,
+  sendReplay,
+  sendTillGate,
+  sendBody,
+  sendCredit,
+  sendSource,
+  sendFanOut,
+  sendTrace,
+  sendPrefs,
+  sendRecipients,
+  sendSeller,
+  sendOffers,
+  sendMoney,
+  sendIssued,
+  sendCopyPolicy,
+  sendPromote,
+  sendParticipants,
+  sendRetention,
+  sendFolds,
+  sendDesigns,
+  sendSummary,
+  sendFreeze,
+  sendCopies,
+  sendOperatorCopy,
+  sendWrite,
+  sendCustomers,
+  sendAssign,
+  sendMeter,
+  sendStock,
+  sendBooks,
+  sendAnswer
 ];
 
 /** who is sending — the entity (an actor acts FOR it), its bridge id and name, read fresh when the claim is stale */
@@ -444,7 +510,10 @@ async function sendSender(st, req, res) {
   const staleClaim = !sender_bridge_id || !sender_display_name;
   if (staleClaim || (req.identity.identity_type === 'actor' && req.identity.parent_entity_id)) {
     const _ent = await query(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [sender_id]);
-    if (_ent.rows[0]) { sender_bridge_id = _ent.rows[0].bridge_id; sender_display_name = _ent.rows[0].display_name; }
+    if (_ent.rows[0]) {
+      sender_bridge_id = _ent.rows[0].bridge_id;
+      sender_display_name = _ent.rows[0].display_name;
+    }
   }
   /**
    * ⚠️ AND IF IT IS STILL MISSING, REFUSE IN WORDS. A 500 from a NOT NULL constraint tells a shopkeeper that
@@ -452,9 +521,12 @@ async function sendSender(st, req, res) {
    * is actually wrong and who can fix it, and the counter shows it on the bill that is stuck.
    */
   if (!sender_bridge_id) {
-    return res.status(409).json({ error: 'no_bridge_id',
-      message: 'This shop has no ChitBridge address yet, so a sale cannot be recorded against it. '
-             + 'Open ChitBridge → Settings and set the shop\'s bridge id, then send this bill again.' });
+    return res.status(409).json({
+      error: 'no_bridge_id',
+      message:
+        'This shop has no ChitBridge address yet, so a sale cannot be recorded against it. ' +
+        "Open ChitBridge → Settings and set the shop's bridge id, then send this bill again."
+    });
   }
   Object.assign(st, { sender_id, sender_bridge_id, sender_display_name });
 }
@@ -467,7 +539,7 @@ async function sendSender(st, req, res) {
 async function sendMoneyStated(state, req, res) {
   const countrySetup = require('../lib/country-setup');
   const facts = await countrySetup.statedFacts(query, state.sender_id);
-  state.clock = countrySetup.clockOf(facts);   /* N3: the shop's zone and locale write the subject's date */
+  state.clock = countrySetup.clockOf(facts); /* N3: the shop's zone and locale write the subject's date */
   if (req.body.is_draft) return false;
   const refusal = countrySetup.documentRefusal(facts);
   if (!refusal) return false;
@@ -525,7 +597,7 @@ async function sendNumberCheck(st, req, res) {
    * above its own declaration parses perfectly — `node -c` has nothing to say, because a TDZ violation is a
    * RUNTIME error — which is why tests/tdz-guard.test.js now exists.
    */
-  const client_ref = refOf(req);        /* ⚠️ one reader — the route's catch asks the same question again */
+  const client_ref = refOf(req); /* ⚠️ one reader — the route's catch asks the same question again */
 
   let number_check = null;
   if (client_ref) {
@@ -553,8 +625,8 @@ async function sameRefLook(sender_id, client_ref) {
 }
 /** the one place the bill number is read off a request, so the catch below cannot drift from the check above */
 function refOf(req) {
-  const v = req && req.body && req.body.client_ref;
-  return (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 64) : null;
+  const text = req && req.body && req.body.client_ref;
+  return typeof text === 'string' && text.trim() ? text.trim().slice(0, 64) : null;
 }
 /**
  * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
@@ -565,8 +637,18 @@ function refOf(req) {
  */
 function moneyOfInvoice(inv, currency_code) {
   const m = taxEngine.moneyOf(inv, currency_code);
-  return { gross: m.gross, savings: m.savings, net: m.net, taxable: m.taxable, tax: m.tax, total: m.total,
-           round_off: m.round_off, currency_code, provisional: false, issued: true };
+  return {
+    gross: m.gross,
+    savings: m.savings,
+    net: m.net,
+    taxable: m.taxable,
+    tax: m.tax,
+    total: m.total,
+    round_off: m.round_off,
+    currency_code,
+    provisional: false,
+    issued: true
+  };
 }
 /**
  * ⭐⭐⭐ ONE TIE-BREAK, TWO CALLERS — lifted 2026-09-26 per the external review's §22. This verdict (same till id
@@ -586,17 +668,28 @@ function tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref) {
     body: {
       error: 'Bill number already used by another counter',
       code: 'TILL_SERIES_COLLISION',
-      client_ref, till: mine, taken_by: theirs,
+      client_ref,
+      till: mine,
+      taken_by: theirs,
       message: sameName
-        ? ('Bill ' + client_ref + ' was already recorded by a different counter that is ALSO called '
-          + mine + '. Two counters are numbering from the same series. This counter is given its own '
-          + 'number the next time it reads the shop. This bill is kept on the counter, unsent — it was '
-          + 'already printed with this number, so how it is recorded needs a decision. Nothing has been lost.')
-        : ('Bill ' + client_ref + ' was already recorded by counter ' + theirs + ', and this is '
-          + 'counter ' + mine + '. Two counters are numbering from the same series. This counter is given '
-          + 'its own number the next time it reads the shop. This bill is kept on the counter, unsent — '
-          + 'nothing has been lost.'),
-    },
+        ? 'Bill ' +
+          client_ref +
+          ' was already recorded by a different counter that is ALSO called ' +
+          mine +
+          '. Two counters are numbering from the same series. This counter is given its own ' +
+          'number the next time it reads the shop. This bill is kept on the counter, unsent — it was ' +
+          'already printed with this number, so how it is recorded needs a decision. Nothing has been lost.'
+        : 'Bill ' +
+          client_ref +
+          ' was already recorded by counter ' +
+          theirs +
+          ', and this is ' +
+          'counter ' +
+          mine +
+          '. Two counters are numbering from the same series. This counter is given ' +
+          'its own number the next time it reads the shop. This bill is kept on the counter, unsent — ' +
+          'nothing has been lost.'
+    }
   };
 }
 
@@ -616,8 +709,8 @@ async function sendTillClaim(st, req, res) {
     res.locals.code = tillClaim.code;
     return res.status(400).json({ error: 'Bill claim mismatch', code: tillClaim.code, field: tillClaim.field, client_ref, message: tillClaim.message });
   }
-  if (tillClaim.stamp) Object.assign(req.body.business_json.till, tillClaim.stamp);   /* merge-patch: `by` is never overwritten by sent_by */
-  if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other';   /* the request log line names it */
+  if (tillClaim.stamp) Object.assign(req.body.business_json.till, tillClaim.stamp); /* merge-patch: `by` is never overwritten by sent_by */
+  if (tillClaim.sentByOther) res.locals.kind = 'sent_by_other'; /* the request log line names it */
 }
 
 /** the same bill twice is the same chit — a retry answered with the chit that exists, a collision refused and named */
@@ -647,7 +740,7 @@ async function sendReplay(st, req, res) {
          * is REFUSED AND NAMED, because a number that two devices both think is theirs is a thing a person
          * has to settle, not something a server may quietly pick a winner for.
          */
-         /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
+        /* ⚠ FROM req.body, NOT the `business_json` const — that is declared further down, so naming it
             here is a temporal dead zone and EVERY duplicate would have thrown a ReferenceError. */
         const _bj = req.body && req.body.business_json;
         const mine = (_bj && _bj.till && _bj.till.id) || null;
@@ -674,13 +767,18 @@ async function sendReplay(st, req, res) {
          * ⚠️ Either side missing it — every chit that is not a counter bill, and anything older — behaves
          * exactly as before. This only ever turns a silent absorption into a spoken refusal.
          */
-        const myAt = (_bj && _bj.billed_at) ? String(_bj.billed_at) : null;
+        const myAt = _bj && _bj.billed_at ? String(_bj.billed_at) : null;
         const theirAt = seen.billed_at ? String(seen.billed_at) : null;
         const verdict = tillCollisionVerdict(mine, theirs, myAt, theirAt, client_ref);
         if (verdict.collision) return res.status(409).json(verdict.body);
         return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref });
       }
-    } catch (e) { cbLog.fellBack('chits: failed — carried on without it', e); /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */ }
+    } catch (e) {
+      cbLog.fellBack(
+        'chits: failed — carried on without it',
+        e
+      ); /* a lookup that fails must not stop a sale — the worst case is the ordinary one, a new chit */
+    }
   }
 }
 
@@ -691,23 +789,27 @@ async function sendTillGate(st, req, res) {
    * ⚠️ A TILL KEY MAY ONLY BILL ITSELF. The key lives on a shop PC where anyone can pick it up; a counter sale is the shop's own
    * record and never addresses another business. The scope opens the send route; this closes it to one shape.
    */
-  let oneSided = null;   /* { why } when a counter bill is recorded without its customer's copy — see tillMaySend */
-  const tk = req.till && req.till.key;   /* M04 — the holder says whether a key is speaking (middleware/auth holderOf) */
+  let oneSided = null; /* { why } when a counter bill is recorded without its customer's copy — see tillMaySend */
+  const tk = req.till && req.till.key; /* M04 — the holder says whether a key is speaking (middleware/auth holderOf) */
   if (tk && tk.scopes.indexOf('till') >= 0 && !tk.scopes.includes('connector')) {
-    const rl = (Array.isArray(req.body.recipients) ? req.body.recipients : (Array.isArray(req.body.receivers) ? req.body.receivers : []));
-    const outward = rl.filter((r) => r && r.self !== true && String(r.entity_id || '') !== String(sender_id));
+    const list = Array.isArray(req.body.recipients) ? req.body.recipients : Array.isArray(req.body.receivers) ? req.body.receivers : [];
+    const outward = list.filter((item) => item && item.self !== true && String(item.entity_id || '') !== String(sender_id));
     const gate = outward.length ? await tillMaySend(sender_id, outward, req.body) : null;
     if (gate && gate.refuse) {
       /* ⚠️ code TILL_SEND_REFUSED: a refusal of THIS BILL's shape, not of the key — the counter keeps it and sends the rest */
-      return res.status(403).json({ error: 'Forbidden', code: 'TILL_SEND_REFUSED',
-        message: 'Not sent: ' + gate.refuse + '. Counter bills go only to listed customers on ChitBridge.' });
+      return res.status(403).json({
+        error: 'Forbidden',
+        code: 'TILL_SEND_REFUSED',
+        message: 'Not sent: ' + gate.refuse + '. Counter bills go only to listed customers on ChitBridge.'
+      });
     }
     if (gate && gate.oneSided) {
       /* ⭐ ONE-SIDED: the sale and its ledger are recorded; only the customer's copy is dropped. The bill keeps naming its
          customer (business_json.customer) — it is still their bill, they simply do not receive a copy on ChitBridge. */
-      const keep = rl.filter((r) => !(r && r.self !== true && String(r.entity_id || '') !== String(sender_id)));
-      if (!keep.some((r) => r && r.self === true)) keep.push({ self: true, name: 'self' });
-      if (Array.isArray(req.body.recipients)) req.body.recipients = keep; else req.body.receivers = keep;
+      const keep = list.filter((item) => !(item && item.self !== true && String(item.entity_id || '') !== String(sender_id)));
+      if (!keep.some((item) => item && item.self === true)) keep.push({ self: true, name: 'self' });
+      if (Array.isArray(req.body.recipients)) req.body.recipients = keep;
+      else req.body.receivers = keep;
       oneSided = { why: gate.oneSided };
     }
   }
@@ -723,15 +825,15 @@ async function sendBody(st, req, res) {
      that states its position, instead of position being whatever order the array happened to be built in
      ("the one you selected comes as the last record"). Done here because this is where a chit is born;
      mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
-  let line_items = mint.lines(req.body.line_items || []);   // `let`: rated below, once the sender is known
+  const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
   /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
-  let business_json = req.body.business_json
-    || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
+  const business_json =
+    req.body.business_json || (req.body.schema_values && Object.keys(req.body.schema_values).length ? { schema_values: req.body.schema_values } : null);
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
      refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
   const pageAsked = business_json && typeof business_json === 'object' ? business_json.page : undefined;
-  let pageStamp = mint.page(pageAsked);
+  const pageStamp = mint.page(pageAsked);
   if (!pageStamp.ok) return res.status(400).json({ error: 'Unknown page', code: pageStamp.code, message: pageStamp.message });
   /**
    * ⚠️⚠️ THE SAME FAULT, LATENT. `currency_code` was declared ~90 lines below the tax-invoice block that reads
@@ -747,7 +849,7 @@ async function sendBody(st, req, res) {
      answer — never INR by default. The counter sends no currency: an AU shop's every bill was minted as INR, and the ledger hook then
      refused each one ("an entry in INR needs its rate to AUD"), so no sale ever posted. Decided below from the sender's row that
      the self-copy preference already reads (one query, not two). */
-  let currency_code = (business_json && business_json.currency) || null;
+  const currency_code = (business_json && business_json.currency) || null;
   Object.assign(st, { purpose, manual_subject, line_items, business_json, pageAsked, pageStamp, currency_code });
 }
 
@@ -764,7 +866,16 @@ async function sendCredit(st, req, res) {
     const chk = await F.creditSaleCheck(sender_id, business_json);
     if (chk.over) {
       const allowedBy = F.overrideBy(req, business_json.credit_override);
-      if (!allowedBy) return res.status(409).json({ code: 'OVER_LIMIT', error: 'Over the credit limit.', message: F.overSentence(chk), limit_minor: chk.limit_minor, owed_minor: chk.owed_minor, after_minor: chk.after_minor, party_id: chk.party_id });
+      if (!allowedBy)
+        return res.status(409).json({
+          code: 'OVER_LIMIT',
+          error: 'Over the credit limit.',
+          message: F.overSentence(chk),
+          limit_minor: chk.limit_minor,
+          owed_minor: chk.owed_minor,
+          after_minor: chk.after_minor,
+          party_id: chk.party_id
+        });
       F.noteOverride(sender_id, chk, allowedBy).catch(cbLog.orElse('chits: failed — carried on without it'));
     }
   }
@@ -798,22 +909,24 @@ async function sendSource(st, req, res) {
    * ⚠️ AND IT IS WHAT THE SENDER HAS DECLARED PUBLICLY ABOUT THEIR TRADE — the sector already shown on their
    * passport — never the profile itself, and never the vault.
    */
-  if (business_json && typeof business_json === 'object'
-      && ['receipt', 'delivery_note', 'order'].indexOf(String(purpose)) >= 0 && !business_json.source) {
+  if (business_json && typeof business_json === 'object' && ['receipt', 'delivery_note', 'order'].indexOf(String(purpose)) >= 0 && !business_json.source) {
     try {
       /* ⚠️⚠️ withEntity, NOT query. entity_profile is RLS-isolated, and a bare query() runs with no
          app.current_entity set — under which every policy is false and the read returns ZERO ROWS.
          Not an error: an empty answer that looks exactly like a shop that declared no trade. This is
          the quietest failure on the platform and it cost an hour here. */
-      const sp = await withEntity(sender_id, (db) => db.query(
-        `SELECT sectors FROM entity_profile WHERE entity_id = $1`, [sender_id]));
+      const sp = await withEntity(sender_id, (db) => db.query(`SELECT sectors FROM entity_profile WHERE entity_id = $1`, [sender_id]));
       const row = sp.rows[0] || {};
       const sectors = row.sectors || [];
       if (sectors && sectors.length) {
-        business_json.source = { name: sender_display_name || null, sectors,
-                                 vertical: require('../lib/adopt').verticalOf(sectors) };
+        business_json.source = { name: sender_display_name || null, sectors, vertical: require('../lib/adopt').verticalOf(sectors) };
       }
-    } catch (e) { cbLog.fellBack('chits: the read failed — carried on without it', e); /* a shop that has declared no trade sends goods that require nothing — the ordinary case */ }
+    } catch (e) {
+      cbLog.fellBack(
+        'chits: the read failed — carried on without it',
+        e
+      ); /* a shop that has declared no trade sends goods that require nothing — the ordinary case */
+    }
   }
 }
 
@@ -823,15 +936,15 @@ async function sendFanOut(st, req, res) {
   const is_draft = !!req.body.is_draft;
   // Promote/update a saved draft IN PLACE (same chit_id): Draft stays a draft until sent; sending flips it to
   // Order + fans out to Task. is_draft:true + promote_draft_id => update the draft; is_draft:false => send it.
-  const promote_draft_id = (typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id) ? req.body.promote_draft_id : null;
+  const promote_draft_id = typeof req.body.promote_draft_id === 'string' && req.body.promote_draft_id ? req.body.promote_draft_id : null;
 
   // ── Fan-out recipients (ATH-119): To/CC/For. Backward-compatible: legacy `receivers` => all To. ──
   const LIMITS = { to: 5, cc: 5, for: 1, items: 50, attachments: 10 };
   const ROLE_MAP = { to: 'Act', cc: 'Info', for: 'For' };
-  const rawList = (Array.isArray(req.body.recipients) ? req.body.recipients
-                 : Array.isArray(req.body.receivers)  ? req.body.receivers
-                 : []
-                ).map(r => ({ ...r, kind: String(r.role || 'to').toLowerCase() }));
+  const rawList = (Array.isArray(req.body.recipients) ? req.body.recipients : Array.isArray(req.body.receivers) ? req.body.receivers : []).map((item) => ({
+    ...item,
+    kind: String(item.role || 'to').toLowerCase()
+  }));
 
   // Server-side LIMITS re-check — never trust the client (ATH-120).
   const counts = { to: 0, cc: 0, for: 0 };
@@ -863,11 +976,11 @@ async function sendTrace(st, req, res) {
     if (built.error) return res.status(400).json({ error: 'Invalid handoff', message: built.error });
     traceEdge = built.edge;
     if (traceEdge && traceEdge.parents.length) {
-      const held = await withEntity(sender_id, (db) => db.query(
-        `SELECT chit_id FROM chit_header WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2`,
-        [traceEdge.parents, sender_id]));
-      const heldSet = new Set(held.rows.map((r) => r.chit_id));
-      const missing = traceEdge.parents.filter((p) => !heldSet.has(p));
+      const held = await withEntity(sender_id, (db) =>
+        db.query(`SELECT chit_id FROM chit_header WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2`, [traceEdge.parents, sender_id])
+      );
+      const heldSet = new Set(held.rows.map((item) => item.chit_id));
+      const missing = traceEdge.parents.filter((item) => !heldSet.has(item));
       if (missing.length) return res.status(400).json({ error: 'Invalid handoff', message: `Parent chit not co-held by sender: ${missing.join(', ')}` });
     }
   }
@@ -881,8 +994,10 @@ async function sendPrefs(st, req, res) {
   // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
   const prefRow = await query(`SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1`, [sender_id]);
   /* the sender's money (WX-R2R, above): the row's own code; a row without one asks lib/regional.currencyFor — the ONE resolver (its regional layer, its fallback) */
-  const statedMoney = currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || await require('../lib/regional').currencyFor(sender_id);
-  currency_code = statedMoney ? String(statedMoney).toUpperCase() : null;   /* N1: none stated → null (sendMoneyStated refuses a document first), never 'INR' by name */
+  const statedMoney = currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || (await require('../lib/regional').currencyFor(sender_id));
+  currency_code = statedMoney
+    ? String(statedMoney).toUpperCase()
+    : null; /* N1: none stated → null (sendMoneyStated refuses a document first), never 'INR' by name */
   /**
    * ⭐ A SELF-CHIT MAKES ONE COPY, AND IT IS THE TASK — Athi, 2026-08-14: *"self should create one copy only,
    * no two copies, and you would be very specific about direction."*
@@ -903,9 +1018,15 @@ async function sendPrefs(st, req, res) {
    * copies stay mandatory there, because the co-held transfer is the whole point.
    */
   const selfCopyPref = prefRow.rows[0]?.self_copy_pref || 'received';
-  const makeSelfReceiver = (k) => ({ entity_id: sender_id, bridge_id: sender_bridge_id,
-    display_name: sender_display_name, kind: k, role: ROLE_MAP[k], all_role: k === 'to' ? 'receiver' : k });
-  let hasSelf = false;
+  const makeSelfReceiver = (k) => ({
+    entity_id: sender_id,
+    bridge_id: sender_bridge_id,
+    display_name: sender_display_name,
+    kind: k,
+    role: ROLE_MAP[k],
+    all_role: k === 'to' ? 'receiver' : k
+  });
+  const hasSelf = false;
   Object.assign(st, { currency_code, selfCopyPref, makeSelfReceiver, hasSelf });
 }
 
@@ -919,7 +1040,14 @@ async function sendRecipients(st, req, res) {
   for (const r of rawList) {
     // Self recipient ("+ Self" or your own name): always create the entity's 'received' (Task)
     // copy here; the 'sent' (Order) copy is the SENDER block below. Two copies, always.
-    if (r.self === true || ['self','me'].includes(String(r.name || '').trim().toLowerCase())) {
+    if (
+      r.self === true ||
+      ['self', 'me'].includes(
+        String(r.name || '')
+          .trim()
+          .toLowerCase()
+      )
+    ) {
       if (!hasSelf) receiverDetails.push(makeSelfReceiver(r.kind));
       hasSelf = true;
       continue;
@@ -935,15 +1063,21 @@ async function sendRecipients(st, req, res) {
      */
     const typedAny = String(r.user_id || r.bridge || r.bridge_id || r.display_name || r.name || '').trim();
     if (require('../lib/handle').isMinted(typedAny)) {
-      return res.status(404).json({ error: 'Not found',
-        message: `"${typedAny}" cannot receive chits — that is a local record, not a ChitBridge business.` });
+      return res.status(404).json({ error: 'Not found', message: `"${typedAny}" cannot receive chits — that is a local record, not a ChitBridge business.` });
     }
     const rec = await sendLookupRecipient(r);
 
     if (!rec || rec.rows.length === 0) {
-      if (is_draft) {   // a draft is WIP — keep the entered recipient name (unresolved); resolution is enforced only on send
-        receiverDetails.push({ entity_id: null, bridge_id: null, display_name: (r.display_name || r.name || '').toString().trim(),
-          kind: r.kind, role: ROLE_MAP[r.kind], all_role: r.kind === 'to' ? 'receiver' : r.kind });
+      if (is_draft) {
+        // a draft is WIP — keep the entered recipient name (unresolved); resolution is enforced only on send
+        receiverDetails.push({
+          entity_id: null,
+          bridge_id: null,
+          display_name: (r.display_name || r.name || '').toString().trim(),
+          kind: r.kind,
+          role: ROLE_MAP[r.kind],
+          all_role: r.kind === 'to' ? 'receiver' : r.kind
+        });
         continue;
       }
       return res.status(404).json({
@@ -959,15 +1093,15 @@ async function sendRecipients(st, req, res) {
       hasSelf = true;
       continue;
     }
-    if (seen.has(rid)) continue;   // de-dupe external recipients
+    if (seen.has(rid)) continue; // de-dupe external recipients
     seen.add(rid);
 
     receiverDetails.push({
       entity_id: rid,
       bridge_id: rec.rows[0].bridge_id,
       display_name: rec.rows[0].display_name,
-      kind: r.kind,                                   // to | cc | for
-      role: ROLE_MAP[r.kind],                         // Act | Info | For (chit_header.role)
+      kind: r.kind, // to | cc | for
+      role: ROLE_MAP[r.kind], // Act | Info | For (chit_header.role)
       all_role: r.kind === 'to' ? 'receiver' : r.kind // for the all_recipients snapshot
     });
   }
@@ -988,23 +1122,32 @@ async function sendLookupRecipient(r) {
     /* ⭐ BY IDENTITY BEFORE BY NAME (Athi, 2026-09-06: renamed tallytest to "Tally Test Shop" on the profile — "now I couldn't send the chit,
        it says Tally Test Shop not found"). A display name is a VIEW name, free to change; the bridge id and the user id are set once
        (project-user-id-rule). The Suppliers checkout and Compose now send the id; a name alone is the last resort, kept for typed recipients. */
-    rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE bridge_id = $1 AND status = 'active' AND identity_type = 'entity'`, [String(r.bridge || r.bridge_id).trim()]);
+    rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE bridge_id = $1 AND status = 'active' AND identity_type = 'entity'`, [
+      String(r.bridge || r.bridge_id).trim()
+    ]);
   } else if (r.user_id) {
-    rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`, [String(r.user_id).trim()]);
+    rec = await query(
+      `SELECT identity_id, bridge_id, display_name FROM identities WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`,
+      [String(r.user_id).trim()]
+    );
   } else if (r.display_name || r.name) {
     const typed = (r.display_name || r.name).trim();
     /* a typed handle may be a user id or a bridge id as easily as a name — try those first, then the name */
-    rec = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR bridge_id = $1) AND status = 'active' AND identity_type = 'entity' LIMIT 1`, [typed]);
-    if (!rec.rows.length) rec = await query(
-      `SELECT identity_id, bridge_id, display_name FROM identities
+    rec = await query(
+      `SELECT identity_id, bridge_id, display_name FROM identities WHERE (LOWER(user_id) = LOWER($1) OR bridge_id = $1) AND status = 'active' AND identity_type = 'entity' LIMIT 1`,
+      [typed]
+    );
+    if (!rec.rows.length)
+      rec = await query(
+        `SELECT identity_id, bridge_id, display_name FROM identities
        WHERE LOWER(display_name) = LOWER($1) AND status = 'active'
        AND identity_type = 'entity'
        /* ⚠️ never a minted party. Their display names are ordinary shop names — "Corner Hardware" — so
           without this a name typed by ANY business could resolve to another one's private supplier record.
           The typed-handle test above cannot catch this one: what was typed is a name, not a handle. */
        AND COALESCE(user_id, '') NOT LIKE '~%'`,
-      [typed]
-    );
+        [typed]
+      );
   }
   return rec;
 }
@@ -1024,12 +1167,14 @@ async function sendSeller(st, req, res) {
    * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
    */
   const orderLike = /^(order|offer)$/.test(String(purpose || ''));
-  const toIds = receiverDetails.filter((r) => r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)).map((r) => String(r.entity_id));
+  const toIds = receiverDetails
+    .filter((item) => item.kind === 'to' && item.entity_id && String(item.entity_id) !== String(sender_id))
+    .map((item) => String(item.entity_id));
   /* ⚠️ A COUNTER BILL IS 'order' TOO, AND THE COUNTER SELLS IT (the two-sided counter bill, 2026-10-01). Sent to an on-rail
      customer it has one 'to' recipient — read as an order, the CUSTOMER would have become the seller: their shelf, their
      offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
   const counterBill = taxCopy.counterIssued(business_json);
-  const sellerId = (orderLike && !counterBill && toIds.length === 1) ? toIds[0] : sender_id;
+  const sellerId = orderLike && !counterBill && toIds.length === 1 ? toIds[0] : sender_id;
   /**
    * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
    * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
@@ -1038,10 +1183,21 @@ async function sendSeller(st, req, res) {
    * price or total. Athi (asleep): "complete all on your own" — decision logged in BUILD_LOG.
    */
   try {
-    const shelf = await taxShelf.readShelf(sellerId, { withEntity, query, regionLayer: regional.regionLayer,
-      getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) }, { withItems: true });
-    if (shelf) line_items = taxLines.decorate(line_items, { items: shelf.items, slabs: shelf.slabs, categories: shelf.categories, face: shelf.face });   /* the Map, as the storefront passes it — see slabOf */
-  } catch (e) { cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */ }
+    const shelf = await taxShelf.readShelf(
+      sellerId,
+      { withEntity, query, regionLayer: regional.regionLayer, getFace: (eid) => catalogueView.getFace({ entity_id: eid, withEntity }) },
+      { withItems: true }
+    );
+    if (shelf)
+      line_items = taxLines.decorate(line_items, {
+        items: shelf.items,
+        slabs: shelf.slabs,
+        categories: shelf.categories,
+        face: shelf.face
+      }); /* the Map, as the storefront passes it — see slabOf */
+  } catch (e) {
+    cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */
+  }
   Object.assign(st, { line_items, orderLike, toIds, counterBill, sellerId });
 }
 
@@ -1067,18 +1223,31 @@ async function sendOffers(st, req, res) {
    * A captured/typed sale (no billed_at) still needs these live offers — that path is what this block exists
    * for — so the guard is additive, not a new refusal.
    */
-  let offersApplied = [];   /* what the seller's live offers did to these lines (line + cart scope) — recorded on the summary */
+  let offersApplied = []; /* what the seller's live offers did to these lines (line + cart scope) — recorded on the summary */
   try {
     const bj = business_json || {};
     const alreadyBilled = require('../lib/offers-live').alreadyBilled(bj);
-    const toSelf = Array.isArray(req.body.recipients) && req.body.recipients.length && req.body.recipients.every((r) => r && (r.self === true || String(r.name || '').toLowerCase() === 'self'));
+    const toSelf =
+      Array.isArray(req.body.recipients) &&
+      req.body.recipients.length &&
+      req.body.recipients.every((item) => item && (item.self === true || String(item.name || '').toLowerCase() === 'self'));
     /* any purpose: the intake page records a captured message as 'general' with priced lines — still the seller's own sale */
     if (!alreadyBilled && (bj.customer || bj.via || toSelf || orderLike)) {
-      const cur = await require('../lib/regional').currencyFor(sellerId).catch(cbLog.orElse('chits sendOffers: the seller money was not read - no live offers applied', null));
-      const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, { withEntity, viewer: orderLike ? sender_id : null });   /* an order's buyer may hold a customer-only offer with this seller */
-      if (r && r.items) { line_items = r.items; offersApplied = Array.isArray(r.applied) ? r.applied : []; }
+      const cur = await require('../lib/regional')
+        .currencyFor(sellerId)
+        .catch(cbLog.orElse('chits sendOffers: the seller money was not read - no live offers applied', null));
+      const r = await require('../lib/offers-live').applyLiveOffers({ identity_id: sellerId, currency_code: cur }, line_items, null, {
+        withEntity,
+        viewer: orderLike ? sender_id : null
+      }); /* an order's buyer may hold a customer-only offer with this seller */
+      if (r && r.items) {
+        line_items = r.items;
+        offersApplied = Array.isArray(r.applied) ? r.applied : [];
+      }
     }
-  } catch (e) { cbLog.fellBack('chits: the read failed — carried on without it', e); /* no offers, no change */ }
+  } catch (e) {
+    cbLog.fellBack('chits: the read failed — carried on without it', e); /* no offers, no change */
+  }
   Object.assign(st, { line_items, offersApplied });
 }
 
@@ -1103,16 +1272,18 @@ async function sendMoney(st, req, res) {
     const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
     const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
     const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
-    const gross = r2m(li.reduce((a, l) => a + listOf(l) * qtyOf(l), 0));
-    const net = r2m(li.reduce((a, l) => a + netOf(l), 0));
-    let tax = null, total = null;
+    const gross = r2m(li.reduce((sum, item) => sum + listOf(item) * qtyOf(item), 0));
+    const net = r2m(li.reduce((sum, item) => sum + netOf(item), 0));
+    let tax = null,
+      total = null;
     /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
-    const buyerId = counterBill ? null : orderLike ? String(sender_id) : (toIds.length === 1 ? toIds[0] : null);
+    const buyerId = counterBill ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
     if (li.length && buyerId && String(sellerId) !== String(buyerId)) {
       const ids = [String(sellerId), String(buyerId)];
       const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [ids]);
       const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
-      const sRow = rowOf(sellerId), bRow = rowOf(buyerId);
+      const sRow = rowOf(sellerId),
+        bRow = rowOf(buyerId);
       if (sRow && bRow) {
         /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent,
            so priceIncludesTax arrived as undefined and !!undefined taxed a GST-inclusive shelf price as
@@ -1123,13 +1294,33 @@ async function sendMoney(st, req, res) {
            reaches DocDtls.Dt (metadata, no rate lookup keys on it), but a bill queued offline and sent days
            later must say when it was actually billed, same reasoning as the offers guard just above. */
         const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
-        const inv = taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: invAt, priceIncludesTax });
+        const inv = taxLines.invoiceFor({
+          lines: li,
+          seller: taxLines.partyOf(sRow),
+          buyer: taxLines.partyOf(bRow),
+          currency: currency_code,
+          at: invAt,
+          priceIncludesTax
+        });
         const h = taxLines.heads(inv.invoice);
-        if (h && Number.isFinite(h.tax)) { tax = r2m(h.tax); total = r2m(h.total || (net + tax)); }
+        if (h && Number.isFinite(h.tax)) {
+          tax = r2m(h.tax);
+          total = r2m(h.total || net + tax);
+        }
       }
     }
-    moneyBlock = { gross, savings: r2m(gross - net), net, tax, total: total != null ? total : (tax != null ? r2m(net + tax) : null), currency_code, provisional: true };
-  } catch (e) { cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */ }
+    moneyBlock = {
+      gross,
+      savings: r2m(gross - net),
+      net,
+      tax,
+      total: total != null ? total : tax != null ? r2m(net + tax) : null,
+      currency_code,
+      provisional: true
+    };
+  } catch (e) {
+    cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
+  }
   Object.assign(st, { moneyBlock });
 }
 
@@ -1152,14 +1343,28 @@ async function sendIssued(st, req, res) {
     moneyBlock = moneyOfInvoice(carried, currency_code);
     issuedTotal = moneyBlock.total;
     try {
-      const e = await taxCopy.entryFor({ chit_id: null, sender_entity_id: sender_id, purpose, business_json, line_items, currency_code,
-        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(receiverDetails.filter((r) => r.entity_id)
-          .map((r) => ({ entity_id: r.entity_id, role: r.all_role || 'receiver' }))), sent_at: business_json.billed_at || null }, sender_id);
+      const e = await taxCopy.entryFor(
+        {
+          chit_id: null,
+          sender_entity_id: sender_id,
+          purpose,
+          business_json,
+          line_items,
+          currency_code,
+          all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
+            receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
+          ),
+          sent_at: business_json.billed_at || null
+        },
+        sender_id
+      );
       if (e && e.tax_check && !e.tax_check.ok) {
         business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
         require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
       }
-    } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */ }
+    } catch (e) {
+      cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
+    }
   }
   Object.assign(st, { moneyBlock, issuedTotal });
 }
@@ -1167,7 +1372,7 @@ async function sendIssued(st, req, res) {
 /** which copies a self-chit or a numbered document keeps — declared, never silent */
 async function sendCopyPolicy(st, req, res) {
   const { sender_id, client_ref, is_draft, promote_draft_id, selfCopyPref, hasSelf, receiverDetails } = st;
-  const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every(r => r.entity_id === sender_id);
+  const pureSelfChit = hasSelf && !is_draft && !promote_draft_id && receiverDetails.every((item) => item.entity_id === sender_id);
   /**
    * ⚠️ ENGINE TOUCH, STRICTLY ADDITIVE — a PER-SEND copy choice, and it can only ever narrow a PURE SELF-CHIT.
    *
@@ -1187,13 +1392,17 @@ async function sendCopyPolicy(st, req, res) {
   const reqSelfCopy = ['both', 'sent', 'received'].includes(String(req.body.self_copy || '')) ? String(req.body.self_copy) : null;
   const effSelfCopy = reqSelfCopy || selfCopyPref;
   const copySource = reqSelfCopy ? 'request' : 'setting';
-  let copyPolicy = null, suppressSentCopy = false;
-  if (pureSelfChit) {                          // every self-chit KEEPS its identity (scope:'self') — recorded, not showcased
-    if (effSelfCopy === 'sent') {             // ORDER-only → drop the self Task (received) copy
-      const si = receiverDetails.findIndex(r => r.entity_id === sender_id);
+  let copyPolicy = null,
+    suppressSentCopy = false;
+  if (pureSelfChit) {
+    // every self-chit KEEPS its identity (scope:'self') — recorded, not showcased
+    if (effSelfCopy === 'sent') {
+      // ORDER-only → drop the self Task (received) copy
+      const si = receiverDetails.findIndex((item) => item.entity_id === sender_id);
       if (si >= 0) receiverDetails.splice(si, 1);
       copyPolicy = { scope: 'self', kept: ['sent'], suppressed: ['received'], reason: 'Task copy suppressed — self-chit (Order only)', source: copySource };
-    } else if (effSelfCopy === 'received') {  // TASK-only → drop the sender Order (sent) copy
+    } else if (effSelfCopy === 'received') {
+      // TASK-only → drop the sender Order (sent) copy
       suppressSentCopy = true;
       copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'], reason: 'Order copy suppressed — self-chit (Task only)', source: copySource };
     } else if (client_ref) {
@@ -1214,11 +1423,19 @@ async function sendCopyPolicy(st, req, res) {
        * decided it. A suppression that cannot be told apart from a gap is not governed (see the note above).
        */
       suppressSentCopy = true;
-      copyPolicy = { scope: 'self', kept: ['received'], suppressed: ['sent'],
-                     reason: 'Order copy suppressed — ' + client_ref + ' is a numbered document, and a number '
-                           + 'may appear once in a shop\'s books (b263). The setting asked for both.',
-                     source: 'numbered-document' };
-    } else {                                  // BOTH → keep both copies, but STILL declare the self-chit identity
+      copyPolicy = {
+        scope: 'self',
+        kept: ['received'],
+        suppressed: ['sent'],
+        reason:
+          'Order copy suppressed — ' +
+          client_ref +
+          ' is a numbered document, and a number ' +
+          "may appear once in a shop's books (b263). The setting asked for both.",
+        source: 'numbered-document'
+      };
+    } else {
+      // BOTH → keep both copies, but STILL declare the self-chit identity
       copyPolicy = { scope: 'self', kept: ['sent', 'received'], suppressed: [], reason: 'Self-chit — both copies', source: copySource };
     }
   } else if (client_ref && hasSelf && !is_draft && !promote_draft_id) {
@@ -1230,9 +1447,13 @@ async function sendCopyPolicy(st, req, res) {
      * (the self copy); the customer holds their own. Declared, like every suppression here.
      */
     suppressSentCopy = true;
-    copyPolicy = { scope: 'sender', kept: ['received'], suppressed: ['sent'],
-                   reason: 'One copy for the sender — ' + client_ref + ' is a numbered document, and a number may appear once '
-                         + 'in a shop\'s books (b263).', source: 'numbered-document' };
+    copyPolicy = {
+      scope: 'sender',
+      kept: ['received'],
+      suppressed: ['sent'],
+      reason: 'One copy for the sender — ' + client_ref + ' is a numbered document, and a number may appear once ' + "in a shop's books (b263).",
+      source: 'numbered-document'
+    };
   }
   Object.assign(st, { copyPolicy, suppressSentCopy });
 }
@@ -1246,9 +1467,13 @@ async function sendCopyPolicy(st, req, res) {
  */
 function sendBjFor(st, eid) {
   const { client_ref, business_json, sender_id } = st;
-  return (client_ref && business_json && typeof business_json === 'object' && String(eid) !== String(sender_id))
-  ? (() => { const o = Object.assign({}, business_json); delete o.client_ref; return o; })()
-  : business_json;
+  return client_ref && business_json && typeof business_json === 'object' && String(eid) !== String(sender_id)
+    ? (() => {
+        const o = Object.assign({}, business_json);
+        delete o.client_ref;
+        return o;
+      })()
+    : business_json;
 }
 
 /**
@@ -1262,11 +1487,14 @@ function sendBillCopyFor(st, receiver) {
   const { counterBill, is_draft, sender_id, sender_display_name } = st;
   if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
   const bj = Object.assign({}, sendBjFor(st, receiver.entity_id), { counter_bill: true });
-  const parts = (bj.payment && Array.isArray(bj.payment.parts)) ? bj.payment.parts : [];
-  const total = roundMoney(parts.reduce((t, p) => t + (Number(p && p.amount) || 0), 0));
-  return { purpose: 'invoice', business_json: bj,
-           manual_subject: 'Bill ' + bj.bill_no + ' from ' + (sender_display_name || 'the seller'),
-           bill_received: { from: sender_display_name || null, no: String(bj.bill_no), total } };
+  const parts = bj.payment && Array.isArray(bj.payment.parts) ? bj.payment.parts : [];
+  const total = roundMoney(parts.reduce((sum, item) => sum + (Number(item && item.amount) || 0), 0));
+  return {
+    purpose: 'invoice',
+    business_json: bj,
+    manual_subject: 'Bill ' + bj.bill_no + ' from ' + (sender_display_name || 'the seller'),
+    bill_received: { from: sender_display_name || null, no: String(bj.bill_no), total }
+  };
 }
 
 /** promoting a draft: it must be this entity's draft, and its page goes with it */
@@ -1276,12 +1504,17 @@ async function sendPromote(st, req, res) {
   // ── validateSend hook: when promoting a draft, it must be THIS entity's draft. (Baseline/supplier-window
   //    and other send-time rules will plug in here when we build Suppliers.) ──
   if (promote_draft_id) {
-    const dchk = await withEntity(sender_id, (db) => db.query(`SELECT role, business_json->>'page' AS page FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id]));
+    const dchk = await withEntity(sender_id, (db) =>
+      db.query(`SELECT role, business_json->>'page' AS page FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [promote_draft_id, sender_id])
+    );
     if (dchk.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Draft not found' });
     if (dchk.rows[0].role !== 'Draft') return res.status(400).json({ error: 'Not a draft', message: 'This chit has already been sent' });
     /* the draft's page goes with it when the resend does not name one — a draft resumed through a form that does not
        carry business_json.page must not quietly become a base-page chit (N03) */
-    if (pageAsked == null && dchk.rows[0].page) { const kept = mint.page(dchk.rows[0].page); if (kept.ok) pageStamp = kept; }
+    if (pageAsked == null && dchk.rows[0].page) {
+      const kept = mint.page(dchk.rows[0].page);
+      if (kept.ok) pageStamp = kept;
+    }
   }
   Object.assign(st, { pageStamp });
 }
@@ -1291,11 +1524,19 @@ async function sendParticipants(st, req, res) {
   const { sender_id, sender_bridge_id, sender_display_name, purpose, is_draft, promote_draft_id, traceEdge, receiverDetails } = st;
   // Generate chit_id — same for ALL participants (reuse the draft's id when promoting, so the draft BECOMES the order)
   const chit_id = promote_draft_id || uuidv4();
-  const now = CLOCK.now();   /* Y1b: the one clock — the day a bill lands on (books-hooks.dayOf) and the day it is listed under agree */
+  const now = CLOCK.now(); /* Y1b: the one clock — the day a bill lands on (books-hooks.dayOf) and the day it is listed under agree */
 
   // Build all_recipients — snapshot with sender + all recipients (with fan-out roles)
   /* ⭐ THE BELL RINGS FOR EVERY RECIPIENT once this response has gone out (i.e. after the commit) — lib/events.js */
-  try { require('../lib/events').notifyAfter(res, receiverDetails.map(r => r.entity_id), { kind: 'chit', id: chit_id, who: sender_display_name || null, note: purpose || null }); } catch (e) { cbLog.fellBack('chits: the signal was not sent — carried on without it', e); }
+  try {
+    require('../lib/events').notifyAfter(
+      res,
+      receiverDetails.map((item) => item.entity_id),
+      { kind: 'chit', id: chit_id, who: sender_display_name || null, note: purpose || null }
+    );
+  } catch (e) {
+    cbLog.fellBack('chits: the signal was not sent — carried on without it', e);
+  }
   const all_recipients = [
     {
       entity_id: sender_id,
@@ -1303,9 +1544,11 @@ async function sendParticipants(st, req, res) {
       display_name: sender_display_name,
       role: 'sender'
     },
-    ...receiverDetails.map(r => ({
-      entity_id: r.entity_id, bridge_id: r.bridge_id,
-      display_name: r.display_name, role: r.all_role
+    ...receiverDetails.map((item) => ({
+      entity_id: item.entity_id,
+      bridge_id: item.bridge_id,
+      display_name: item.display_name,
+      role: item.all_role
     }))
   ];
 
@@ -1316,11 +1559,16 @@ async function sendParticipants(st, req, res) {
   let operatorInfo = null;
   if (traceEdge && traceEdge.network && traceEdge.network.operator && !is_draft) {
     const opId = traceEdge.network.operator;
-    if (opId !== sender_id && !receiverDetails.some((r) => r.entity_id === opId)) {
+    if (opId !== sender_id && !receiverDetails.some((item) => item.entity_id === opId)) {
       const opRow = await query(`SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = $1 AND status = 'active'`, [opId]);
       if (opRow.rows[0]) {
         operatorInfo = opRow.rows[0];
-        all_recipients.push({ entity_id: operatorInfo.identity_id, bridge_id: operatorInfo.bridge_id, display_name: operatorInfo.display_name, role: 'operator' });
+        all_recipients.push({
+          entity_id: operatorInfo.identity_id,
+          bridge_id: operatorInfo.bridge_id,
+          display_name: operatorInfo.display_name,
+          role: 'operator'
+        });
       }
     }
   }
@@ -1338,18 +1586,29 @@ async function sendRetention(st, req, res) {
   /* ⭐ a counter bill's value is its invoice's TotInvVal (above), never the sum of its line nets */
   if (issuedTotal != null) summary.total_value = issuedTotal;
   // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
-  const ext_priority = ['normal','high','urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
+  const ext_priority = ['normal', 'high', 'urgent'].includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
   // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
   //    or deletes yet (retire = Ph2, purge = Ph3, gated). Migration-free: rides summary_json.retention like copy_policy.
   //    Per-chit override now; the governed DEFAULT lives in the governance channel (backlog), not a Settings toggle. ──
-  const DEFAULT_RETENTION_DAYS = null;   // governed default resolves from the cascade later
+  const DEFAULT_RETENTION_DAYS = null; // governed default resolves from the cascade later
   let retention = null;
   {
-    const rd = (Number.isFinite(+req.body.retention_days) && +req.body.retention_days > 0) ? Math.floor(+req.body.retention_days) : null;
-    let exp = null, src = null, days = null;
-    if (typeof req.body.expires_at === 'string' && !isNaN(Date.parse(req.body.expires_at))) { exp = new Date(req.body.expires_at).toISOString(); src = 'manual'; }
-    else if (rd) { exp = new Date(Date.now() + rd * 86400000).toISOString(); src = 'manual'; days = rd; }
-    else if (DEFAULT_RETENTION_DAYS) { exp = new Date(Date.now() + DEFAULT_RETENTION_DAYS * 86400000).toISOString(); src = 'default'; days = DEFAULT_RETENTION_DAYS; }
+    const rd = Number.isFinite(+req.body.retention_days) && +req.body.retention_days > 0 ? Math.floor(+req.body.retention_days) : null;
+    let exp = null,
+      src = null,
+      days = null;
+    if (typeof req.body.expires_at === 'string' && !isNaN(Date.parse(req.body.expires_at))) {
+      exp = new Date(req.body.expires_at).toISOString();
+      src = 'manual';
+    } else if (rd) {
+      exp = new Date(Date.now() + rd * 86400000).toISOString();
+      src = 'manual';
+      days = rd;
+    } else if (DEFAULT_RETENTION_DAYS) {
+      exp = new Date(Date.now() + DEFAULT_RETENTION_DAYS * 86400000).toISOString();
+      src = 'default';
+      days = DEFAULT_RETENTION_DAYS;
+    }
     if (exp) retention = { expires_at: exp, retention_days: days, source: src };
   }
   /**
@@ -1367,12 +1626,16 @@ async function sendRetention(st, req, res) {
    * ⚠️ Nothing deletes yet (retire is Ph2, purge Ph3, both human-gated), so this ships the guard BEFORE the
    * thing it guards — which is the only order in which it is worth building.
    */
-  const _reqDays = (retention && retention.retention_days) ? +retention.retention_days : null;
+  const _reqDays = retention && retention.retention_days ? +retention.retention_days : null;
   const retainDaysFor = async (owner_id) => {
     let floor = 90;
-    try { const f = await policy.get(owner_id); if (Number.isFinite(+f.retention_floor_days)) floor = +f.retention_floor_days; }
-    catch (e) { cbLog.fellBack('chits retainDaysFor: failed — carried on without it', e); /* unreadable policy → keep the schema default; never shorten on an error */ }
-    return Math.max(policy.RECORDS_FLOOR_DAYS, floor, _reqDays || 0);   /* CO3: the records-law floor sits under every copy */
+    try {
+      const f = await policy.get(owner_id);
+      if (Number.isFinite(+f.retention_floor_days)) floor = +f.retention_floor_days;
+    } catch (e) {
+      cbLog.fellBack('chits retainDaysFor: failed — carried on without it', e); /* unreadable policy → keep the schema default; never shorten on an error */
+    }
+    return Math.max(policy.RECORDS_FLOOR_DAYS, floor, _reqDays || 0); /* CO3: the records-law floor sits under every copy */
   };
   Object.assign(st, { auto_subject, summary, ext_priority, retention, retainDaysFor });
 }
@@ -1386,8 +1649,18 @@ async function sendFolds(st, req, res) {
   let governed = null;
   try {
     const cfg = await require('../lib/workpattern').resolveWorkPattern('send-chit', { entity_id: sender_id });
-    if (cfg) governed = { pattern: cfg._blueprint, capability: cfg._capability, constitution: cfg._constitution, standard: cfg._standard, standards: cfg._standards, boilerplate: cfg._boilerplate };
-  } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* seam is best-effort */ }
+    if (cfg)
+      governed = {
+        pattern: cfg._blueprint,
+        capability: cfg._capability,
+        constitution: cfg._constitution,
+        standard: cfg._standard,
+        standards: cfg._standards,
+        boilerplate: cfg._boilerplate
+      };
+  } catch (e) {
+    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* seam is best-effort */
+  }
   // ── ORDER-BINDING: fold the sender's HELD clearances into the chit (per-copy snapshot, FROZEN). The buyer sees, on
   //    THIS order, exactly the supplier's clearances met + their assurance rung; later changes never alter this copy.
   //    Best-effort — never blocks the send. ──
@@ -1395,11 +1668,20 @@ async function sendFolds(st, req, res) {
   try {
     const rd = await require('../lib/readiness').resolveReadiness(sender_id);
     const held = (rd.clearances || [])
-      .filter(c => c.status === 'gathered' || c.status === 'expiring')
-      .map(c => ({ standard: c.standard, doc: c.doc, title: c.title, rung: c.rung,
-        valid_until: c.valid_until || null, verified_at: c.verified_at || null, verified_by: c.verified_by || null }));
+      .filter((item) => item.status === 'gathered' || item.status === 'expiring')
+      .map((item) => ({
+        standard: item.standard,
+        doc: item.doc,
+        title: item.title,
+        rung: item.rung,
+        valid_until: item.valid_until || null,
+        verified_at: item.verified_at || null,
+        verified_by: item.verified_by || null
+      }));
     if (held.length) folded_clearances = { folded_at: new Date().toISOString(), items: held };
-  } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */ }
+  } catch (e) {
+    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */
+  }
   // ── COMMERCIAL COVER fold — a trade order (one that carries clearances) also freezes its commercial-cover FRAMEWORK
   //    onto the buyer's copy: payment/transit/currency/credit cover by risk, and which is already evidenced on-rail
   //    (e.g. performance risk = the supplier's on-rail track record). Framework, not a secured instrument — honest.
@@ -1409,11 +1691,17 @@ async function sendFolds(st, req, res) {
     if (folded_clearances) {
       const inc = (summary && summary.incoterm) || 'CIF';
       const ci = require('../lib/instruments').resolveInstruments({ cross_border: 1, incoterm: inc });
-      const areas = (ci.cluster || []).map(g => ({ label: g.label, frm_class: g.frm_class,
-        on_rail: !!g.covered_onrail, instruments: (g.instruments || []).map(i => i.name) }));
+      const areas = (ci.cluster || []).map((item) => ({
+        label: item.label,
+        frm_class: item.frm_class,
+        on_rail: !!item.covered_onrail,
+        instruments: (item.instruments || []).map((entry) => entry.name)
+      }));
       if (areas.length) folded_commercial = { folded_at: new Date().toISOString(), incoterm: inc, areas };
     }
-  } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */ }
+  } catch (e) {
+    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* best-effort */
+  }
   Object.assign(st, { governed, folded_clearances, folded_commercial });
 }
 
@@ -1425,13 +1713,20 @@ function sendViaOf(business_json) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   const str = (x, n) => (x === null || x === undefined || x === '' ? null : String(x).slice(0, n || 120));
   const out = {
-    channel: str(v.channel, 24), from: str(v.from, 64), from_name: str(v.from_name, 120),
-    to: str(v.to, 64), provider_msg_id: str(v.provider_msg_id, 128), capture_id: str(v.capture_id, 64),
-    received_at: str(v.received_at, 40), read_by: str(v.read_by, 40),
+    channel: str(v.channel, 24),
+    from: str(v.from, 64),
+    from_name: str(v.from_name, 120),
+    to: str(v.to, 64),
+    provider_msg_id: str(v.provider_msg_id, 128),
+    capture_id: str(v.capture_id, 64),
+    received_at: str(v.received_at, 40),
+    read_by: str(v.read_by, 40),
     /* Order-level facts that have no column of their own. `unplaced` is what the reader could not place at
        all — surfaced, never dropped: a request that quietly lost 'deliver at 7pm' looks correct and is not. */
-    delivery_at: str(v.delivery_at, 120), delivery_address: str(v.delivery_address, 300),
-    notes: str(v.notes, 800), unplaced: str(v.unplaced, 800),
+    delivery_at: str(v.delivery_at, 120),
+    delivery_address: str(v.delivery_address, 300),
+    notes: str(v.notes, 800),
+    unplaced: str(v.unplaced, 800),
     sender_verified: v.sender_verified === true,
     // What they actually wrote, capped — the full text rides as an attachment, not in every copy's summary.
     raw_excerpt: str(v.raw_excerpt, 400),
@@ -1440,17 +1735,20 @@ function sendViaOf(business_json) {
     /* How each line got its price. Re-read key by key rather than spread: the counts must be numbers and the
        lists must be short, whatever a caller sends. */
     priced: (() => {
-      const p = v.priced; if (!p || typeof p !== 'object') return undefined;
+      const p = v.priced;
+      if (!p || typeof p !== 'object') return undefined;
       const n = (x) => (Number.isFinite(+x) ? Math.max(0, Math.min(999, Math.trunc(+x))) : 0);
       const arr = (a, f) => (Array.isArray(a) ? a.slice(0, 5).map(f) : []);
       return {
-        from_catalogue: n(p.from_catalogue), unpriced: n(p.unpriced), catalogue_used: p.catalogue_used !== false,
+        from_catalogue: n(p.from_catalogue),
+        unpriced: n(p.unpriced),
+        catalogue_used: p.catalogue_used !== false,
         ambiguous: arr(p.ambiguous, (x) => ({ name: str(x && x.name, 200), matches: n(x && x.matches) })),
-        asked_differs: arr(p.asked_differs, (x) => ({ name: str(x && x.name, 200), asked: +x.asked || 0, ours: +x.ours || 0 })),
+        asked_differs: arr(p.asked_differs, (x) => ({ name: str(x && x.name, 200), asked: +x.asked || 0, ours: +x.ours || 0 }))
       };
-    })(),
+    })()
   };
-  return out.channel ? out : null;      // no channel, no provenance — a `via` naming nothing is noise
+  return out.channel ? out : null; // no channel, no provenance — a `via` naming nothing is noise
 }
 
 /** each party's detail-page reading, resolved once per party */
@@ -1483,7 +1781,9 @@ async function sendDesigns(st, req, res) {
     try {
       const _pf = await policy.get(eid);
       if (_pf && _pf.detail_design && _pf.detail_design !== 'chit') d = _pf.detail_design;
-    } catch (e) { cbLog.fellBack('chits _designFor: failed — carried on without it', e); /* no stamp; Order level, which is the default anyway */ }
+    } catch (e) {
+      cbLog.fellBack('chits _designFor: failed — carried on without it', e); /* no stamp; Order level, which is the default anyway */
+    }
     _designCache.set(eid, d);
     return d;
   };
@@ -1498,15 +1798,32 @@ async function sendDesigns(st, req, res) {
 function sendSummaryFor(st, eid) {
   const { _designCache, _detailDesign, summary_json } = st;
   const d = _designCache.get(eid);
-  if (d === _detailDesign) return summary_json;                 // identical — share the object
+  if (d === _detailDesign) return summary_json; // identical — share the object
   const s = Object.assign({}, summary_json);
-  if (d) s.detail_design = d; else delete s.detail_design;
+  if (d) s.detail_design = d;
+  else delete s.detail_design;
   return s;
 }
 
 /** the shared summary every copy carries */
 async function sendSummary(st, req, res) {
-  const { purpose, business_json, currency_code, traceEdge, offersApplied, moneyBlock, copyPolicy, now, summary, ext_priority, retention, governed, folded_clearances, folded_commercial, _detailDesign } = st;
+  const {
+    purpose,
+    business_json,
+    currency_code,
+    traceEdge,
+    offersApplied,
+    moneyBlock,
+    copyPolicy,
+    now,
+    summary,
+    ext_priority,
+    retention,
+    governed,
+    folded_clearances,
+    folded_commercial,
+    _detailDesign
+  } = st;
   /* the provenance rider, whitelisted (sendViaOf) */
   const via = sendViaOf(business_json);
   /* ⚠️ The SKELETON comes from lib/mint.js; every rider below is still decided here. mint.summary() adds a rider
@@ -1524,7 +1841,7 @@ async function sendSummary(st, req, res) {
     /* RAIL-LAB-SRV1: a lab chit says so on every copy (sendLab proved the shop may; mint.summary keeps the rider only when true) */
     lab: st.lab ? true : undefined,
     // Forward keeps a reference to the source chit (new thread; content unchanged) so it can be grouped later.
-    forwarded_from: (typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64) ? req.body.forwarded_from : null,
+    forwarded_from: typeof req.body.forwarded_from === 'string' && req.body.forwarded_from.length <= 64 ? req.body.forwarded_from : null,
     copy_policy: copyPolicy,
     retention,
     /**
@@ -1560,7 +1877,7 @@ async function sendSummary(st, req, res) {
      * ⚠️ WHITELISTED, NOT COPIED. summary_json is ours; letting a caller spread arbitrary keys into it would
      * make the chit's own summary a place strangers can write. Known keys, coerced, capped.
      */
-    via,
+    via
   });
   Object.assign(st, { summary_json });
 }
@@ -1577,15 +1894,34 @@ async function sendFreeze(st, req, res) {
       LIMIT 1`,
     [sender_id]
   );
-  const frozen_schema_id      = schemaRow.rows[0]?.schema_id      || null;
+  const frozen_schema_id = schemaRow.rows[0]?.schema_id || null;
   const frozen_schema_version = schemaRow.rows[0]?.schema_version || null;
-  const created_by_actor_id   = req.identity.identity_id;   // who actually pressed send
+  const created_by_actor_id = req.identity.identity_id; // who actually pressed send
   Object.assign(st, { frozen_schema_id, frozen_schema_version, created_by_actor_id });
 }
 
 /** every participant's copy — the sender's, each receiver's in its holder's words */
 async function sendCopies(st, req, res) {
-  const { sender_id, sender_bridge_id, sender_display_name, purpose, manual_subject, line_items, pageStamp, is_draft, receiverDetails, now, all_recipients, auto_subject, summary, summary_json, frozen_schema_id, frozen_schema_version, created_by_actor_id, suppressSentCopy } = st;
+  const {
+    sender_id,
+    sender_bridge_id,
+    sender_display_name,
+    purpose,
+    manual_subject,
+    line_items,
+    pageStamp,
+    is_draft,
+    receiverDetails,
+    now,
+    all_recipients,
+    auto_subject,
+    summary,
+    summary_json,
+    frozen_schema_id,
+    frozen_schema_version,
+    created_by_actor_id,
+    suppressSentCopy
+  } = st;
   let { business_json } = st;
   // ── Compose the per-participant copies for the delivery layer (SENDER always; RECEIVERS unless draft).
   //    Every copy carries the SAME sender = the caller, which is chit_deliver's isolation gate. ──
@@ -1595,53 +1931,105 @@ async function sendCopies(st, req, res) {
   /* ⭐ THE PAGE STAMP (N03): on the header of every copy that carries business data — sender, receivers, a bill copy.
      Added onto what the sender sent, never a rewrite of it; set ONCE here and written by no route afterwards. */
   business_json = Object.assign({}, business_json && typeof business_json === 'object' ? business_json : {}, { page: pageStamp.page });
-  st.business_json = business_json;   /* the page-stamped business data — what bjFor / billCopyFor read from here on */
-  const _summaryFor = (eid) => sendSummaryFor(st, eid), bjFor = (eid) => sendBjFor(st, eid), billCopyFor = (receiver) => sendBillCopyFor(st, receiver);
+  st.business_json = business_json; /* the page-stamped business data — what bjFor / billCopyFor read from here on */
+  const _summaryFor = (eid) => sendSummaryFor(st, eid),
+    bjFor = (eid) => sendBjFor(st, eid),
+    billCopyFor = (receiver) => sendBillCopyFor(st, receiver);
   const headerCommon = mint.header({
-    sender_entity_id: sender_id, sender_entity_bridge_id: sender_bridge_id,
-    sender_entity_display_name: sender_display_name, all_recipients, purpose,
-    auto_subject, manual_subject: manual_subject || null, summary_json,
-    schema_version: frozen_schema_version, schema_id: frozen_schema_id, created_by_actor_id,
-    detail_type: purpose, line_item_count: summary.line_item_count,
-    total_value: summary.total_value, currency_code: summary_json.currency_code,
-    created_at: now, sent_at: now,   /* Y1b: the shop clock's moment (b300 reads it; before b300 the definer stamps NOW() as it always did) */
+    sender_entity_id: sender_id,
+    sender_entity_bridge_id: sender_bridge_id,
+    sender_entity_display_name: sender_display_name,
+    all_recipients,
+    purpose,
+    auto_subject,
+    manual_subject: manual_subject || null,
+    summary_json,
+    schema_version: frozen_schema_version,
+    schema_id: frozen_schema_id,
+    created_by_actor_id,
+    detail_type: purpose,
+    line_item_count: summary.line_item_count,
+    total_value: summary.total_value,
+    currency_code: summary_json.currency_code,
+    created_at: now,
+    sent_at: now /* Y1b: the shop clock's moment (b300 reads it; before b300 the definer stamps NOW() as it always did) */
   });
-  const mkCopy = (extra) => mint.party(headerCommon, Object.assign({
-    // omitted -> SQL NULL (matches legacy): chit_deliver reads c->>'key', for which an absent key and a JSON
-    // null are indistinguishable, so passing them conditionally is the same write either way.
-    business_json: business_json || undefined,
-    line_items: line_items.length > 0 ? line_items : undefined,
-  }, extra));
-  const copies = suppressSentCopy ? [] : [ mkCopy({
-    entity_id: sender_id, direction: 'sent', role: is_draft ? 'Draft' : 'Act',
-    current_status: railActions.SENT_STATUS, priority_flag: 'normal', payload_delivered: true,
-    log: { action: 'created', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
-           new_status: railActions.SENT_STATUS, detail: `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}` },
-  }) ];
-  if (!is_draft) for (const receiver of receiverDetails) {
-    const rcv_status = railActions.arrivalStatus(receiver.kind);   // the one table: To acts (pending); CC/For are informed (delivered)
-    const billCopy = billCopyFor(receiver);   /* the customer's copy of a counter bill — a bill, in their words */
-    copies.push(mkCopy(Object.assign({
-      /**
-       * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING — see _summaryFor above. Every other key
-       * here is the shared record and must not diverge; `detail_design` is the one exception, because it is
-       * not a fact about the trade but how the holder of THIS copy reads their own work.
-       *
-       * ⚠️ Set on the LIVE path as well as the legacy fan-out below. The operator's redacted copy proved
-       * per-copy summary_json was already a seam — this rides the same one rather than inventing another.
-       */
-      summary_json: _summaryFor(receiver.entity_id),
-      business_json: bjFor(receiver.entity_id) || undefined,   /* the sender's replay key stays on the sender's row (bjFor) */
-      entity_id: receiver.entity_id, direction: 'received', role: receiver.role,
-      current_status: rcv_status, priority_flag: 'normal',
-      log: { action: 'delivered', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
-             new_status: rcv_status, detail: `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})` },
-    }, billCopy ? {
-      purpose: billCopy.purpose, detail_type: billCopy.purpose, manual_subject: billCopy.manual_subject,
-      business_json: billCopy.business_json,
-      summary_json: Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received }),
-    } : {})));
-  }
+  const mkCopy = (extra) =>
+    mint.party(
+      headerCommon,
+      Object.assign(
+        {
+          // omitted -> SQL NULL (matches legacy): chit_deliver reads c->>'key', for which an absent key and a JSON
+          // null are indistinguishable, so passing them conditionally is the same write either way.
+          business_json: business_json || undefined,
+          line_items: line_items.length > 0 ? line_items : undefined
+        },
+        extra
+      )
+    );
+  const copies = suppressSentCopy
+    ? []
+    : [
+        mkCopy({
+          entity_id: sender_id,
+          direction: 'sent',
+          role: is_draft ? 'Draft' : 'Act',
+          current_status: railActions.SENT_STATUS,
+          priority_flag: 'normal',
+          payload_delivered: true,
+          log: {
+            action: 'created',
+            action_by_identity_id: sender_id,
+            action_by_display_name: sender_display_name,
+            new_status: railActions.SENT_STATUS,
+            detail: `Chit created and sent to ${receiverDetails.map((item) => item.display_name).join(', ')}`
+          }
+        })
+      ];
+  if (!is_draft)
+    for (const receiver of receiverDetails) {
+      const rcv_status = railActions.arrivalStatus(receiver.kind); // the one table: To acts (pending); CC/For are informed (delivered)
+      const billCopy = billCopyFor(receiver); /* the customer's copy of a counter bill — a bill, in their words */
+      copies.push(
+        mkCopy(
+          Object.assign(
+            {
+              /**
+               * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING — see _summaryFor above. Every other key
+               * here is the shared record and must not diverge; `detail_design` is the one exception, because it is
+               * not a fact about the trade but how the holder of THIS copy reads their own work.
+               *
+               * ⚠️ Set on the LIVE path as well as the legacy fan-out below. The operator's redacted copy proved
+               * per-copy summary_json was already a seam — this rides the same one rather than inventing another.
+               */
+              summary_json: _summaryFor(receiver.entity_id),
+              business_json: bjFor(receiver.entity_id) || undefined /* the sender's replay key stays on the sender's row (bjFor) */,
+              entity_id: receiver.entity_id,
+              direction: 'received',
+              role: receiver.role,
+              current_status: rcv_status,
+              priority_flag: 'normal',
+              log: {
+                action: 'delivered',
+                action_by_identity_id: sender_id,
+                action_by_display_name: sender_display_name,
+                new_status: rcv_status,
+                detail: `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})`
+              }
+            },
+            billCopy
+              ? {
+                  purpose: billCopy.purpose,
+                  detail_type: billCopy.purpose,
+                  manual_subject: billCopy.manual_subject,
+                  business_json: billCopy.business_json,
+                  summary_json: Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received })
+                }
+              : {}
+          )
+        )
+      );
+    }
   Object.assign(st, { business_json, headerCommon, copies });
 }
 
@@ -1657,13 +2045,23 @@ async function sendOperatorCopy(st, req, res) {
        total_value, handing the operator the commercial terms this copy exists to withhold. A builder that fills
        in defaults is the wrong tool for a record defined by what it leaves out. */
     const opSummary = { line_item_count: summary_json.line_item_count, purpose: summary_json.purpose, trace: summary_json.trace, oversight: true };
-    copies.push(mint.party(headerCommon, {
-      summary_json: opSummary, total_value: null,
-      entity_id: operatorInfo.identity_id, direction: 'received', role: 'For',
-      current_status: railActions.ARRIVAL.for,
-      log: { action: 'oversight', action_by_identity_id: sender_id, action_by_display_name: sender_display_name,
-             new_status: railActions.ARRIVAL.for, detail: `Network oversight co-hold (edge only) — ${operatorInfo.display_name}` },
-    }));
+    copies.push(
+      mint.party(headerCommon, {
+        summary_json: opSummary,
+        total_value: null,
+        entity_id: operatorInfo.identity_id,
+        direction: 'received',
+        role: 'For',
+        current_status: railActions.ARRIVAL.for,
+        log: {
+          action: 'oversight',
+          action_by_identity_id: sender_id,
+          action_by_display_name: sender_display_name,
+          new_status: railActions.ARRIVAL.for,
+          detail: `Network oversight co-hold (edge only) — ${operatorInfo.display_name}`
+        }
+      })
+    );
   }
 }
 
@@ -1682,7 +2080,7 @@ async function sendWrite(st, req, res) {
      * write can never fail a guaranteed chit (D-065). A named party that is also a recipient is left to the recipient block.
      */
     const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
-    const isRecipient = namedParty && receiverDetails.some((r) => String(r.entity_id) === String(namedParty));
+    const isRecipient = namedParty && receiverDetails.some((item) => String(item.entity_id) === String(namedParty));
     await withEntity(sender_id, async (c) => {
       await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: c });
       if (namedParty && !isRecipient) await trySavepoint(c, () => require('../lib/crm').traded(c, sender_id, namedParty, now), null);
@@ -1696,7 +2094,8 @@ async function sendWrite(st, req, res) {
 async function sendLegacyWrite(st) {
   const { promote_draft_id, chit_id, sender_id, suppressSentCopy, is_draft, receiverDetails } = st;
   await withTransaction(async (client) => {
-    if (promote_draft_id) {   // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
+    if (promote_draft_id) {
+      // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
       await client.query('DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
       await client.query('DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
       await client.query('DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
@@ -1712,8 +2111,27 @@ async function sendLegacyWrite(st) {
 
 /** the legacy fan-out: the sender's own four rows */
 async function sendLegacySenderRows(client, st) {
-  const { chit_id, sender_id, sender_bridge_id, sender_display_name, all_recipients, purpose, auto_subject, manual_subject, summary_json,
-          business_json, frozen_schema_version, frozen_schema_id, created_by_actor_id, is_draft, now, summary, line_items, retainDaysFor, receiverDetails } = st;
+  const {
+    chit_id,
+    sender_id,
+    sender_bridge_id,
+    sender_display_name,
+    all_recipients,
+    purpose,
+    auto_subject,
+    manual_subject,
+    summary_json,
+    business_json,
+    frozen_schema_version,
+    frozen_schema_id,
+    created_by_actor_id,
+    is_draft,
+    now,
+    summary,
+    line_items,
+    retainDaysFor,
+    receiverDetails
+  } = st;
   await client.query(
     `INSERT INTO chit_header
      (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
@@ -1721,23 +2139,42 @@ async function sendLegacySenderRows(client, st) {
       auto_subject, manual_subject, summary_json, business_json,
       schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
-    [chit_id, sender_id, sender_id, sender_bridge_id,
-     sender_display_name, JSON.stringify(all_recipients), purpose,
-     auto_subject, manual_subject || null,
-     JSON.stringify(summary_json),
-     business_json ? JSON.stringify(business_json) : null,
-     frozen_schema_version, frozen_schema_id, created_by_actor_id,
-     is_draft ? 'Draft' : 'Act', chit_id, 'sent', now]
+    [
+      chit_id,
+      sender_id,
+      sender_id,
+      sender_bridge_id,
+      sender_display_name,
+      JSON.stringify(all_recipients),
+      purpose,
+      auto_subject,
+      manual_subject || null,
+      JSON.stringify(summary_json),
+      business_json ? JSON.stringify(business_json) : null,
+      frozen_schema_version,
+      frozen_schema_id,
+      created_by_actor_id,
+      is_draft ? 'Draft' : 'Act',
+      chit_id,
+      'sent',
+      now
+    ]
   );
   await client.query(
     `INSERT INTO chit_detail
      (chit_id, entity_id, detail_type, line_item_count,
       total_value, currency_code, line_items, direction, payload_delivered_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW())`,
-    [chit_id, sender_id, purpose,
-     summary.line_item_count, summary.total_value,
-     summary_json.currency_code,
-     line_items.length > 0 ? JSON.stringify(line_items) : null, 'sent']
+    [
+      chit_id,
+      sender_id,
+      purpose,
+      summary.line_item_count,
+      summary.total_value,
+      summary_json.currency_code,
+      line_items.length > 0 ? JSON.stringify(line_items) : null,
+      'sent'
+    ]
   );
   await client.query(
     `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag,
@@ -1751,22 +2188,40 @@ async function sendLegacySenderRows(client, st) {
      (chit_id, entity_id, action, action_by_identity_id,
       action_by_display_name, new_status, detail)
      VALUES ($1,$2,'created',$3,$4,'delivered',$5)`,
-    [chit_id, sender_id, sender_id, sender_display_name,
-     `Chit created and sent to ${receiverDetails.map(r => r.display_name).join(', ')}`]
+    [chit_id, sender_id, sender_id, sender_display_name, `Chit created and sent to ${receiverDetails.map((item) => item.display_name).join(', ')}`]
   );
 }
 
 /** the legacy fan-out: one receiver's four rows, in its holder's words */
 async function sendLegacyReceiverRows(client, st, receiver) {
-  const { chit_id, sender_id, sender_bridge_id, sender_display_name, all_recipients, purpose, auto_subject, manual_subject,
-          frozen_schema_version, frozen_schema_id, created_by_actor_id, now, summary, summary_json, line_items, retainDaysFor } = st;
-  const _summaryFor = (eid) => sendSummaryFor(st, eid), bjFor = (eid) => sendBjFor(st, eid), billCopyFor = (r) => sendBillCopyFor(st, r);
-  const rcv_status = railActions.arrivalStatus(receiver.kind);   // the one table (rail-actions ARRIVAL), as the live path above
-  const billCopy = billCopyFor(receiver);   /* the same per-copy reading as the live path above */
+  const {
+    chit_id,
+    sender_id,
+    sender_bridge_id,
+    sender_display_name,
+    all_recipients,
+    purpose,
+    auto_subject,
+    manual_subject,
+    frozen_schema_version,
+    frozen_schema_id,
+    created_by_actor_id,
+    now,
+    summary,
+    summary_json,
+    line_items,
+    retainDaysFor
+  } = st;
+  const _summaryFor = (eid) => sendSummaryFor(st, eid),
+    bjFor = (eid) => sendBjFor(st, eid),
+    billCopyFor = (r) => sendBillCopyFor(st, r);
+  const rcv_status = railActions.arrivalStatus(receiver.kind); // the one table (rail-actions ARRIVAL), as the live path above
+  const billCopy = billCopyFor(receiver); /* the same per-copy reading as the live path above */
   const rcvPurpose = billCopy ? billCopy.purpose : purpose;
   const rcvBj = billCopy ? billCopy.business_json : bjFor(receiver.entity_id);
-  const rcvSummary = billCopy ? Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received })
-                              : _summaryFor(receiver.entity_id);
+  const rcvSummary = billCopy
+    ? Object.assign({}, _summaryFor(receiver.entity_id), { purpose: billCopy.purpose, bill_received: billCopy.bill_received })
+    : _summaryFor(receiver.entity_id);
   await client.query(
     `INSERT INTO chit_header
      (chit_id, entity_id, sender_entity_id, sender_entity_bridge_id,
@@ -1774,36 +2229,55 @@ async function sendLegacyReceiverRows(client, st, receiver) {
       auto_subject, manual_subject, summary_json, business_json,
       schema_version, schema_id, created_by_actor_id, role, chit_ref, direction, sent_at, created_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$18)`,
-    [chit_id, receiver.entity_id, sender_id, sender_bridge_id,
-     sender_display_name, JSON.stringify(all_recipients), rcvPurpose,
-     auto_subject, (billCopy ? billCopy.manual_subject : manual_subject) || null,
-     /**
-      * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING. Athi, 2026-08-24: *"the customer copy
-      * and supplier copy should be the same, but the interpretation can be in another tab — how the
-      * customer request is interpreted can stay within the receiving end."*
-      *
-      * ⚠️⚠️ EVERY OTHER KEY IN summary_json IS THE SHARED RECORD AND MUST NOT DIVERGE — the value, the
-      * lines, the clearances, the provenance. `detail_design` is the one exception, because it is not a
-      * fact about the trade at all: it is how the holder of THIS copy reads their own work. Stamping
-      * the sender's choice here would let a customer decide how a workshop organises its mechanics.
-      *
-      * ⚠️ Read server-side, per copy. This is not one entity reading another's settings — no client
-      * ever sees it — it is the server writing each copy the way its own owner asked to read it.
-      */
-     JSON.stringify(rcvSummary),
-     rcvBj ? JSON.stringify(rcvBj) : null,
-     frozen_schema_version, frozen_schema_id, created_by_actor_id,
-     receiver.role, chit_id, 'received', now]
+    [
+      chit_id,
+      receiver.entity_id,
+      sender_id,
+      sender_bridge_id,
+      sender_display_name,
+      JSON.stringify(all_recipients),
+      rcvPurpose,
+      auto_subject,
+      (billCopy ? billCopy.manual_subject : manual_subject) || null,
+      /**
+       * ⭐⭐ THE RECIPIENT'S COPY CARRIES THE RECIPIENT'S READING. Athi, 2026-08-24: *"the customer copy
+       * and supplier copy should be the same, but the interpretation can be in another tab — how the
+       * customer request is interpreted can stay within the receiving end."*
+       *
+       * ⚠️⚠️ EVERY OTHER KEY IN summary_json IS THE SHARED RECORD AND MUST NOT DIVERGE — the value, the
+       * lines, the clearances, the provenance. `detail_design` is the one exception, because it is not a
+       * fact about the trade at all: it is how the holder of THIS copy reads their own work. Stamping
+       * the sender's choice here would let a customer decide how a workshop organises its mechanics.
+       *
+       * ⚠️ Read server-side, per copy. This is not one entity reading another's settings — no client
+       * ever sees it — it is the server writing each copy the way its own owner asked to read it.
+       */
+      JSON.stringify(rcvSummary),
+      rcvBj ? JSON.stringify(rcvBj) : null,
+      frozen_schema_version,
+      frozen_schema_id,
+      created_by_actor_id,
+      receiver.role,
+      chit_id,
+      'received',
+      now
+    ]
   );
   await client.query(
     `INSERT INTO chit_detail
      (chit_id, entity_id, detail_type, line_item_count,
       total_value, currency_code, line_items, direction)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-    [chit_id, receiver.entity_id, rcvPurpose,
-     summary.line_item_count, summary.total_value,
-     summary_json.currency_code,
-     line_items.length > 0 ? JSON.stringify(line_items) : null, 'received']
+    [
+      chit_id,
+      receiver.entity_id,
+      rcvPurpose,
+      summary.line_item_count,
+      summary.total_value,
+      summary_json.currency_code,
+      line_items.length > 0 ? JSON.stringify(line_items) : null,
+      'received'
+    ]
   );
   await client.query(
     /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's — resolved per receiver, so ten recipients with ten
@@ -1818,8 +2292,7 @@ async function sendLegacyReceiverRows(client, st, receiver) {
      (chit_id, entity_id, action, action_by_identity_id,
       action_by_display_name, new_status, detail)
      VALUES ($1,$2,'delivered',$3,$4,$5,$6)`,
-    [chit_id, receiver.entity_id, sender_id, sender_display_name, rcv_status,
-     `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})`]
+    [chit_id, receiver.entity_id, sender_id, sender_display_name, rcv_status, `Chit received from ${sender_display_name} (${receiver.kind.toUpperCase()})`]
   );
 }
 
@@ -1829,42 +2302,51 @@ async function sendCustomers(st, req, res) {
   // ── Best-effort CRM auto-add — AFTER commit; a CRM write must never fail a guaranteed chit (D-065) ──
   // Q4: this post-commit write is OUTSIDE the delivery, so it runs in its OWN withEntity(sender) — customer_list
   // is RLS-scoped on owner_entity_id, so a bare query() would fail closed under FORCE.
-  if (!is_draft) for (const receiver of receiverDetails) {
-    try {
-      await withEntity(sender_id, async (db) => {
-        const isSupplier = await db.query(
-          `SELECT 1 FROM supplier_list
+  if (!is_draft)
+    for (const receiver of receiverDetails) {
+      try {
+        await withEntity(sender_id, async (db) => {
+          const isSupplier = await db.query(
+            `SELECT 1 FROM supplier_list
             WHERE owner_entity_id = $1 AND supplier_entity_id = $2`,
-          [sender_id, receiver.entity_id]
-        );
-        if (isSupplier.rows.length === 0) {
-          await db.query(
-            `INSERT INTO customer_list
+            [sender_id, receiver.entity_id]
+          );
+          if (isSupplier.rows.length === 0) {
+            await db.query(
+              `INSERT INTO customer_list
                (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
              VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
              ON CONFLICT (owner_entity_id, customer_identity_id)
              DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
-            [sender_id, receiver.entity_id]
-          );
-        }
-      });
-    } catch (e) { console.log('customer auto-add skipped:', e.message); }
-  }
+              [sender_id, receiver.entity_id]
+            );
+          }
+        });
+      } catch (e) {
+        console.log('customer auto-add skipped:', e.message);
+      }
+    }
   /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
      RECEIVER as the SENDER's customer — right for a bill the seller sends, backwards for an order, where the BUYER sends. The seller
      (the recipient who sells) gets the row, the way the storefront order path gives the shop one (CJ-06). Best-effort, after commit. */
-  if (!is_draft && orderLike) for (const receiver of receiverDetails) {
-    if (String(receiver.entity_id) !== String(sellerId) || String(sellerId) === String(sender_id)) continue;
-    try {
-      await withEntity(sellerId, (db) => db.query(
-        `INSERT INTO customer_list
+  if (!is_draft && orderLike)
+    for (const receiver of receiverDetails) {
+      if (String(receiver.entity_id) !== String(sellerId) || String(sellerId) === String(sender_id)) continue;
+      try {
+        await withEntity(sellerId, (db) =>
+          db.query(
+            `INSERT INTO customer_list
            (owner_entity_id, customer_identity_id, customer_type, added_via, txn_count, last_txn_at)
          VALUES ($1, $2, 'entity', 'transaction', 1, NOW())
          ON CONFLICT (owner_entity_id, customer_identity_id)
          DO UPDATE SET txn_count = customer_list.txn_count + 1, last_txn_at = NOW()`,
-        [sellerId, sender_id]));
-    } catch (e) { console.log('seller customer auto-add skipped:', e.message); }
-  }
+            [sellerId, sender_id]
+          )
+        );
+      } catch (e) {
+        console.log('seller customer auto-add skipped:', e.message);
+      }
+    }
 }
 
 /** after the commit: auto-assign each actionable copy by its own entity */
@@ -1873,11 +2355,15 @@ async function sendAssign(st, req, res) {
   // ── Best-effort auto-assign on receipt (D1) — AFTER commit; never fails the guaranteed chit ──
   // Only the actionable 'to' copy is auto-assigned; CC/For stay informational. Each receiver entity
   // resolves against ITS OWN settings/roster (the receiver decides how its inbox auto-assigns).
-  if (!is_draft) for (const receiver of receiverDetails) {
-    if (receiver.kind !== 'to' || !receiver.entity_id) continue;
-    try { await autoAssignReceived(receiver.entity_id, chit_id); }
-    catch (e) { console.log('auto-assign skipped:', e.message); }
-  }
+  if (!is_draft)
+    for (const receiver of receiverDetails) {
+      if (receiver.kind !== 'to' || !receiver.entity_id) continue;
+      try {
+        await autoAssignReceived(receiver.entity_id, chit_id);
+      } catch (e) {
+        console.log('auto-assign skipped:', e.message);
+      }
+    }
 }
 
 /** meter the send — after the work, never able to fail it */
@@ -1909,13 +2395,19 @@ async function sendMeter(st, req, res) {
        * ⚠️ It is what the value WAS at send, which is the only figure that can be charged against. A later
        * amend changes the chit and must not retro-change what was billed.
        */
-      require('../lib/meter').meter(sender_id, 'chit.send', {
-        detail: chit_id, quantity: 1, rid: req.id,
-        basis: (summary && summary.total_value != null) ? summary.total_value : null,
-        currency: (summary_json && summary_json.currency_code) || null,
-        meta: { purpose: purpose || undefined },
-      }).catch(cbLog.orElse('chits: failed — carried on without it'));
-    } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
+      require('../lib/meter')
+        .meter(sender_id, 'chit.send', {
+          detail: chit_id,
+          quantity: 1,
+          rid: req.id,
+          basis: summary && summary.total_value != null ? summary.total_value : null,
+          currency: (summary_json && summary_json.currency_code) || null,
+          meta: { purpose: purpose || undefined }
+        })
+        .catch(cbLog.orElse('chits: failed — carried on without it'));
+    } catch (e) {
+      cbLog.fellBack('chits: the helper failed — carried on without it', e);
+    }
   }
 }
 
@@ -1942,24 +2434,34 @@ async function sendStock(st, req, res) {
   if (!is_draft) {
     try {
       require('../lib/stock-from-chit')
-        .postFor(sender_id, { chit_id, purpose, is_draft, business_json, line_items, created_at: now },
-                 withEntity, { actor_id: req.identity && req.identity.identity_id })
-        .then((r) => {
-          if (!r || (!r.failed.length && !r.skipped.length)) return;
+        .postFor(sender_id, { chit_id, purpose, is_draft, business_json, line_items, created_at: now }, withEntity, {
+          actor_id: req.identity && req.identity.identity_id
+        })
+        .then((reply) => {
+          if (!reply || (!reply.failed.length && !reply.skipped.length)) return;
           /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
              and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
           try {
             require('../lib/logger').warn('stock.from-chit', {
-              chit_id, entity_id: sender_id, moved: r.moved, duplicate: r.duplicate,
-              skipped: r.skipped.length, failed: r.failed,
+              chit_id,
+              entity_id: sender_id,
+              moved: reply.moved,
+              duplicate: reply.duplicate,
+              skipped: reply.skipped.length,
+              failed: reply.failed,
               /* STK-FIX1b: a REFUSED line (an unreadable batch or expiry) is named with its sentence and code — a count alone is silence */
-              refused: r.skipped.filter((s) => s.code === 'batch_unreadable' || s.code === 'expiry_unreadable')
-                                .map((s) => ({ line_ref: s.line_ref, item_id: s.item_id, code: s.code, why: s.why })),
+              refused: reply.skipped
+                .filter((item) => item.code === 'batch_unreadable' || item.code === 'expiry_unreadable')
+                .map((item) => ({ line_ref: item.line_ref, item_id: item.item_id, code: item.code, why: item.why }))
             });
-          } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
+          } catch (e) {
+            cbLog.fellBack('chits: the helper failed — carried on without it', e);
+          }
         })
-        .catch(cbLog.orElse('chits: failed — carried on without it'));   /* postFor already never rejects; this is belt and braces on the hot path */
-    } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
+        .catch(cbLog.orElse('chits: failed — carried on without it')); /* postFor already never rejects; this is belt and braces on the hot path */
+    } catch (e) {
+      cbLog.fellBack('chits: the helper failed — carried on without it', e);
+    }
   }
 }
 
@@ -1978,9 +2480,12 @@ async function sendBooks(st, req, res) {
       const who = req.identity && req.identity.identity_id;
       setImmediate(() => {
         hooks.afterChit(sender_id, chit_id, who);
-        for (const r of receiverDetails) if (r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)) hooks.afterChit(r.entity_id, chit_id, null);
+        for (const r of receiverDetails)
+          if (r.kind === 'to' && r.entity_id && String(r.entity_id) !== String(sender_id)) hooks.afterChit(r.entity_id, chit_id, null);
       });
-    } catch (e) { cbLog.fellBack('chits: the helper failed — carried on without it', e); }
+    } catch (e) {
+      cbLog.fellBack('chits: the helper failed — carried on without it', e);
+    }
   }
 }
 
@@ -1999,7 +2504,7 @@ async function sendAnswer(st, req, res) {
        a claim that the number was checked and approved. */
     ...(number_check ? { number_check } : {}),
     /* ⭐ present only when the customer's copy was not sent — the counter shows it on the bill */
-    ...(oneSided ? { one_sided: oneSided } : {}),
+    ...(oneSided ? { one_sided: oneSided } : {})
   });
 
   /**
@@ -2011,7 +2516,9 @@ async function sendAnswer(st, req, res) {
    */
   if (!is_draft && client_ref && business_json && business_json.series) {
     setImmediate(() => {
-      require('./counters').noteBill(sender_id, business_json.series, business_json.billed_at, client_ref).catch(cbLog.orElse('chits: the helper failed — carried on without it'));
+      require('./counters')
+        .noteBill(sender_id, business_json.series, business_json.billed_at, client_ref)
+        .catch(cbLog.orElse('chits: the helper failed — carried on without it'));
     });
   }
 }
@@ -2024,8 +2531,8 @@ async function sendAnswer(st, req, res) {
 // All parameterised (no injection). Used by /inbox, /sent, /folder. (Criteria set can become schema-driven later.)
 /* ── PERF1 · the chit lists' page: a server-side maximum, and keyset paging in the default (newest-first) order ── */
 const PAGE_LIMIT = require('../lib/page-limit');
-const LIST_MAX = 200;   /* the most rows one page of a chit list answers (DISCIPLINES §2 — never the client's word) */
-const LIST_PAGE = 20;   /* the page a chit list answers when asked for one without a size */
+const LIST_MAX = 200; /* the most rows one page of a chit list answers (DISCIPLINES §2 — never the client's word) */
+const LIST_PAGE = 20; /* the page a chit list answers when asked for one without a size */
 /** a chit list's page — ALWAYS a page (inbox · sent · folder were never answered whole): the one clamp, and whether the asked size
  *  was cut, so the answer can say so (W2-RAIL R2: PAGE_LIMIT.capOf → `capped` + `cap_note`, never a silent 200-row ceiling) */
 function listPage(req) {
@@ -2046,13 +2553,16 @@ function keysetOf(req, params, a) {
 const keyCol = (a) => `to_char(${a}.created_at::timestamptz, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') || '|' || ${a}.chit_id::text AS _after`;
 /** `next` from a page's rows (null on a short page, or in another order) — and the cursor column taken off every row */
 function afterOf(rows, limit, req) {
-  const last = rows[rows.length - 1], keyed = !(req.query.sort && req.query.sort !== 'date') && String(req.query.dir || '').toLowerCase() !== 'asc';
+  const last = rows[rows.length - 1],
+    keyed = !(req.query.sort && req.query.sort !== 'date') && String(req.query.dir || '').toLowerCase() !== 'asc';
   const next = keyed && rows.length === limit && last ? last._after || null : null;
-  rows.forEach((r) => { delete r._after; });
+  rows.forEach((item) => {
+    delete item._after;
+  });
   return next;
 }
 
-function chitFilters(req, where, params){
+function chitFilters(req, where, params) {
   /**
    * ⚠️ A FOLDER IS A FILTER ON THIS LIST, NOT A SECOND SCREEN. Athi, 2026-08-10: *"we just pass the parameter as
    * folder name and filter data accordingly, so the same panel works for each folder."*
@@ -2062,42 +2572,84 @@ function chitFilters(req, where, params){
    * separately is how the two would drift.
    */
   const fid = String(req.query.folder_id || '').trim();
-  if (/^[0-9a-f-]{36}$/i.test(fid)) { params.push(fid); where += ` AND cs.folder_id = $${params.length}::uuid`; }
-  const num = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
-  const amin = num(req.query.amount_min), amax = num(req.query.amount_max);
-  if (amin !== null) { params.push(amin); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`; }
-  if (amax !== null) { params.push(amax); where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) <= $${params.length}`; }
+  if (/^[0-9a-f-]{36}$/i.test(fid)) {
+    params.push(fid);
+    where += ` AND cs.folder_id = $${params.length}::uuid`;
+  }
+  const num = (v) => {
+    const n = parseFloat(v);
+    return isFinite(n) ? n : null;
+  };
+  const amin = num(req.query.amount_min),
+    amax = num(req.query.amount_max);
+  if (amin !== null) {
+    params.push(amin);
+    where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) >= $${params.length}`;
+  }
+  if (amax !== null) {
+    params.push(amax);
+    where += ` AND COALESCE((ch.summary_json->>'total_value')::numeric,0) <= $${params.length}`;
+  }
   /* ⭐ a date filter is the SHOP's day (M210): midnight in the shop's own zone (identities.timezone, b176; else its country pack's zone, else UTC) — the
      same rule as books-hooks.dayBounds, spelt in SQL because this builder is synchronous and a trip to read the zone is not
      affordable here. `timestamp AT TIME ZONE zone` names the instant that midnight is; it compares right against created_at
      before b301 (naive, read as UTC by the pinned session zone) and after it (timestamptz). */
   const dateQ = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '').trim());
   if (dateQ(req.query.date_from) || dateQ(req.query.date_to)) {
-    params.push(entityId(req));                                     /* the SHOP (an actor's parent entity), whose zone it is */
+    params.push(entityId(req)); /* the SHOP (an actor's parent entity), whose zone it is */
     const zone = `COALESCE((SELECT COALESCE(z.timezone, ${require('../lib/country-setup').zoneCaseSql('z')}) FROM identities z WHERE z.identity_id = $${params.length}::uuid), 'UTC')`;
-    if (dateQ(req.query.date_from)) { params.push(String(req.query.date_from).trim()); where += ` AND ch.created_at >= ($${params.length}::date::timestamp AT TIME ZONE ${zone})`; }
-    if (dateQ(req.query.date_to))   { params.push(String(req.query.date_to).trim());   where += ` AND ch.created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE ${zone})`; }
-  } else {                                                          /* a full timestamp: as before, an instant */
-    if (req.query.date_from) { params.push(req.query.date_from); where += ` AND ch.created_at >= $${params.length}::timestamptz`; }
-    if (req.query.date_to)   { params.push(req.query.date_to);   where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`; }
+    if (dateQ(req.query.date_from)) {
+      params.push(String(req.query.date_from).trim());
+      where += ` AND ch.created_at >= ($${params.length}::date::timestamp AT TIME ZONE ${zone})`;
+    }
+    if (dateQ(req.query.date_to)) {
+      params.push(String(req.query.date_to).trim());
+      where += ` AND ch.created_at < (($${params.length}::date + 1)::timestamp AT TIME ZONE ${zone})`;
+    }
+  } else {
+    /* a full timestamp: as before, an instant */
+    if (req.query.date_from) {
+      params.push(req.query.date_from);
+      where += ` AND ch.created_at >= $${params.length}::timestamptz`;
+    }
+    if (req.query.date_to) {
+      params.push(req.query.date_to);
+      where += ` AND ch.created_at < ($${params.length}::date + interval '1 day')`;
+    }
   }
   /* ⭐ TRADE-SRV1 G3: ?abroad=1 → only the trades across a border (another currency, or a party in another country) — ONE fragment
      (country-setup.abroadSql, beside shopCountrySql), so Task, Order and every folder answer the same */
-  if (req.query.abroad === '1' || req.query.abroad === 'true') { params.push(entityId(req)); where += ` AND ${require('../lib/country-setup').abroadSql('ch', params.length)}`; }
-  if (req.query.priority)  { params.push(req.query.priority);  where += ` AND cs.priority_flag = $${params.length}`; }
-  if (req.query.fstatus)   {
+  if (req.query.abroad === '1' || req.query.abroad === 'true') {
+    params.push(entityId(req));
+    where += ` AND ${require('../lib/country-setup').abroadSql('ch', params.length)}`;
+  }
+  if (req.query.priority) {
+    params.push(req.query.priority);
+    where += ` AND cs.priority_flag = $${params.length}`;
+  }
+  if (req.query.fstatus) {
     /* ⭐ W2-RAIL R2: the buckets are the ONE table (lib/rail-actions BUCKETS, read off the engine's transitions) — never spelled here */
-    const L = railActions.BUCKETS[req.query.fstatus] || [req.query.fstatus];
-    const ph = L.map(s => { params.push(s); return '$'+params.length; }).join(',');
+    const list = railActions.BUCKETS[req.query.fstatus] || [req.query.fstatus];
+    const ph = list
+      .map((item) => {
+        params.push(item);
+        return '$' + params.length;
+      })
+      .join(',');
     where += ` AND cs.current_status IN (${ph})`;
   }
   // Delegation scope: unassigned = the entity's own pool; assigned = delegated to a co-assist. assigned_to=me|<id>
   // scopes to one actor (fixes actor "My Task"). No param = everything (back-compat).
-  if (req.query.assignment === 'unassigned')      where += ` AND cs.assigned_to_actor_id IS NULL`;
-  else if (req.query.assignment === 'assigned')   where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
+  if (req.query.assignment === 'unassigned') where += ` AND cs.assigned_to_actor_id IS NULL`;
+  else if (req.query.assignment === 'assigned') where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
   const at = req.query.assigned_to;
-  if (at === 'me')                            { params.push(req.identity.identity_id); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
-  else if (at && at !== 'me' && at !== 'all') { params.push(at); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
+  if (at === 'me') {
+    params.push(req.identity.identity_id);
+    where += ` AND cs.assigned_to_actor_id = $${params.length}`;
+  } else if (at && at !== 'me' && at !== 'all') {
+    params.push(at);
+    where += ` AND cs.assigned_to_actor_id = $${params.length}`;
+  }
   // D4: dispute filter — chits with an OPEN dispute THIS entity holds a copy of (per-copy: RLS scopes to my own copies).
   if (req.query.dispute === 'open' || req.query.dispute === 'active') {
     where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.status = 'open')`;
@@ -2109,7 +2661,9 @@ router.get('/sent', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* PERF1: as the Inbox — a server-side maximum, keyset after page 1, the count on page 1 only */
-    const pg = listPage(req), page = pg.page, limit = pg.limit;
+    const pg = listPage(req),
+      page = pg.page,
+      limit = pg.limit;
     const q_search = (req.query.q || '').trim();
 
     // search across the header data (subject, recipients, purpose). pg_trgm GIN index recommended at scale.
@@ -2125,18 +2679,20 @@ router.get('/sent', auth, async (req, res) => {
          JOIN chit_status cs ON cs.chit_id = ch.chit_id AND cs.entity_id = ch.entity_id AND cs.direction = ch.direction`;
 
     where = chitFilters(req, where, params);
-    const countWhere = where, countParams = params.slice();
+    const countWhere = where,
+      countParams = params.slice();
     const ks = keysetOf(req, params, 'ch');
     if (ks.where) where += ks.where;
     const offset = ks.where ? 0 : (page - 1) * limit;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result } = await withEntity(entity_id, async (db) => {
-    const countResult = page === 1 && !ks.where ? await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${countWhere}`, countParams) : null;
+      const nestedCountResult = page === 1 && !ks.where ? await db.query(`SELECT COUNT(*) ${joinFrom} WHERE ${countWhere}`, countParams) : null;
 
-    const limIdx = params.length + 1, offIdx = params.length + 2;
-    const _cancelCol = await cancelCols();
-    const result = await db.query(
-      `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
+      const limIdx = params.length + 1,
+        offIdx = params.length + 2;
+      const _cancelCol = await cancelCols();
+      const outcome = await db.query(
+        `SELECT ch.chit_id, ch.all_recipients, ch.purpose, ch.auto_subject, ch.manual_subject,
               ch.summary_json, ch.created_at, ch.role,
               cs.current_status, cs.priority_flag, cs.customer_priority, cs.star_flag,
               /* b195 cancel-request flag, named only when the column exists — see the note above the query. */
@@ -2148,11 +2704,11 @@ router.get('/sent', auth, async (req, res) => {
               ${keyCol('ch')}
          ${joinFrom}
         WHERE ${where}
-        ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:"(ch.all_recipients->1->>'display_name')",amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:"CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC, ch.chit_id DESC
+        ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: "(ch.all_recipients->1->>'display_name')", amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
         LIMIT $${limIdx} OFFSET $${offIdx}`,
-      [...params, limit, offset]
-    );
-    return { countResult, result };
+        [...params, limit, offset]
+      );
+      return { countResult: nestedCountResult, result: outcome };
     });
 
     const next = afterOf(result.rows, limit, req);
@@ -2170,15 +2726,17 @@ router.get('/folder', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* always a page (the mailbox folders were never answered whole); LIM2: the one pager — before it ?limit=1000000 was obeyed here */
-    const pg = listPage(req), { page, limit, offset } = pg;
-    const view   = req.query.view || 'drafts';
+    const pg = listPage(req),
+      { page, limit, offset } = pg;
+    const view = req.query.view || 'drafts';
     const q_search = (req.query.q || '').trim();
 
     const params = [entity_id];
     let where = `cs.entity_id = $1`;
-    if (view === 'trash')        where += ` AND cs.deleted_at IS NOT NULL`;
+    if (view === 'trash') where += ` AND cs.deleted_at IS NOT NULL`;
     else if (view === 'archive') where += ` AND cs.archived_at IS NOT NULL AND cs.deleted_at IS NULL`;
-    else {                       where += ` AND ch.role = 'Draft' AND cs.deleted_at IS NULL`;   // drafts
+    else {
+      where += ` AND ch.role = 'Draft' AND cs.deleted_at IS NULL`; // drafts
       // Drafts are personal WIP until sent: an actor sees ONLY the drafts they authored (mailing model).
       params.push(req.identity.identity_id);
       where += ` AND ch.created_by_actor_id = $${params.length}`;
@@ -2193,13 +2751,22 @@ router.get('/folder', auth, async (req, res) => {
     where = chitFilters(req, where, params);
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result } = await withEntity(entity_id, async (db) => {
-    const countResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
+      const nestedCountResult = await db.query(`SELECT COUNT(DISTINCT ch.chit_id) ${joinFrom} WHERE ${where}`, params);
 
-    const orderBy = ({date:'created_at',subject:'COALESCE(manual_subject, auto_subject)',amount:"(summary_json->>'total_value')::numeric",status:'current_status',priority:"CASE priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort] || 'created_at')
-                  + ' ' + ((String(req.query.dir||'').toLowerCase()==='asc') ? 'ASC' : 'DESC');
-    const _cancelCol = await cancelCols();   // b195 — named only when it exists; see cancelCols()
-    const result = await db.query(
-      `SELECT * FROM (
+      const orderBy =
+        ({
+          date: 'created_at',
+          subject: 'COALESCE(manual_subject, auto_subject)',
+          amount: "(summary_json->>'total_value')::numeric",
+          status: 'current_status',
+          priority: "CASE priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",
+          priority_ext: "CASE summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"
+        }[req.query.sort] || 'created_at') +
+        ' ' +
+        (String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC');
+      const _cancelCol = await cancelCols(); // b195 — named only when it exists; see cancelCols()
+      const outcome = await db.query(
+        `SELECT * FROM (
          SELECT DISTINCT ON (ch.chit_id)
               ch.chit_id, ch.sender_entity_display_name, ch.sender_entity_bridge_id, ch.all_recipients,
               ch.purpose, ch.auto_subject, ch.manual_subject, ch.summary_json, ch.created_at,
@@ -2217,9 +2784,9 @@ router.get('/folder', auth, async (req, res) => {
        ) t
        ORDER BY ${orderBy}, created_at DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-      [...params, limit, offset]
-    );
-    return { countResult, result };
+        [...params, limit, offset]
+      );
+      return { countResult: nestedCountResult, result: outcome };
     });
     /* ⚠️ `view` was echoed back and dropped by the envelope; the pager reads total/page/limit. It was the
        caller's own query param travelling in a circle. */
@@ -2236,42 +2803,51 @@ router.get('/folder', auth, async (req, res) => {
 router.get('/rollup', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
-    const groupBy = (req.query.group_by === 'state') ? 'state' : 'counterparty';
+    const groupBy = req.query.group_by === 'state' ? 'state' : 'counterparty';
     const keyExpr = groupBy === 'state' ? 'cs.current_status' : 'ch.sender_entity_display_name';
     // direction scopes the rollup to Task (received) or Order (sent); omit for both. Without it, self-chits
     // (sent+received held by one entity) would double-count.
-    const dir = (req.query.direction === 'sent' || req.query.direction === 'received') ? req.query.direction : null;
+    const dir = req.query.direction === 'sent' || req.query.direction === 'received' ? req.query.direction : null;
     const params = [entity_id];
     let where = `cs.entity_id = $1 AND cs.deleted_at IS NULL AND cs.archived_at IS NULL`;
-    if (dir) { params.push(dir); where += ` AND cs.direction = $${params.length}`; }
+    if (dir) {
+      params.push(dir);
+      where += ` AND cs.direction = $${params.length}`;
+    }
     /* ⭐ the track's counts leave out the bills its list leaves out (lib/folder-inventory inboxSql) — a tab that counted them
        would promise rows the list never shows. Both queries below join chit_header as ch. */
     if (dir) where += ` AND ${FOLDER_INV.inboxSql('ch', 'cs')}`;
-    if (req.query.assignment === 'unassigned')      where += ` AND cs.assigned_to_actor_id IS NULL`;
-    else if (req.query.assignment === 'assigned')   where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
-    else if (req.query.assigned_to === 'me')        { params.push(req.identity.identity_id); where += ` AND cs.assigned_to_actor_id = $${params.length}`; }
+    if (req.query.assignment === 'unassigned') where += ` AND cs.assigned_to_actor_id IS NULL`;
+    else if (req.query.assignment === 'assigned') where += ` AND cs.assigned_to_actor_id IS NOT NULL`;
+    else if (req.query.assigned_to === 'me') {
+      params.push(req.identity.identity_id);
+      where += ` AND cs.assigned_to_actor_id = $${params.length}`;
+    }
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { result, disp } = await withEntity(entity_id, async (db) => {
-    const result = await db.query(
-      `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
+      const outcome = await db.query(
+        `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
               COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
         GROUP BY ${keyExpr}
         ORDER BY chits DESC`,
-      params
-    );
-    // D4: open-dispute count for the same scope — powers the "Disputes (n)" filter in the task menu.
-    // Guarded so a pre-migration DB (no dispute tables) simply reports 0 rather than failing the rollup.
-    const disp = await db.query(
-      `SELECT COUNT(DISTINCT cs.chit_id)::int AS n
+        params
+      );
+      // D4: open-dispute count for the same scope — powers the "Disputes (n)" filter in the task menu.
+      // Guarded so a pre-migration DB (no dispute tables) simply reports 0 rather than failing the rollup.
+      const nestedDisp = await db
+        .query(
+          `SELECT COUNT(DISTINCT cs.chit_id)::int AS n
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
           AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.status = 'open')`,
-      params).catch(() => ({ rows: [{ n: 0 }] }));
-    return { result, disp };
+          params
+        )
+        .catch(() => ({ rows: [{ n: 0 }] }));
+      return { result: outcome, disp: nestedDisp };
     });
     res.json({ group_by: groupBy, direction: dir, groups: result.rows, dispute_open: disp.rows[0].n });
   } catch (err) {
@@ -2297,7 +2873,7 @@ router.get('/rollup', auth, async (req, res) => {
  * The trailing comma is INSIDE the fragment: an absent column then leaves the SELECT list untouched rather than
  * a dangling `,` in front of the next expression.
  */
-async function cancelCols(){
+async function cancelCols() {
   /**
    * ⚠️⚠️ TWO MIGRATIONS, TWO INDEPENDENT CHECKS. b195 added the REQUEST columns and b197 the CONFIRM ones, and
    * they are run by hand on separate days — so one may exist without the other in either direction. A single
@@ -2313,10 +2889,9 @@ async function cancelCols(){
    * endpoint for a row and look at its KEYS. Reading the write path proves the write; only reading the payload
    * proves the read.
    */
-  const req  = await schema.hasColumn('chit_status', 'cancel_requested_at');
+  const req = await schema.hasColumn('chit_status', 'cancel_requested_at');
   const conf = await schema.hasColumn('chit_status', 'cancel_confirmed_at');
-  return (req  ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '')
-       + (conf ? 'cs.cancel_confirmed_at, cs.cancel_confirmed_by,' : '');
+  return (req ? 'cs.cancel_requested_at, cs.cancel_requested_by, cs.cancel_reason,' : '') + (conf ? 'cs.cancel_confirmed_at, cs.cancel_confirmed_by,' : '');
 }
 
 router.get('/inbox', auth, async (req, res) => {
@@ -2324,7 +2899,9 @@ router.get('/inbox', auth, async (req, res) => {
     // Actors query their parent entity's inbox (chit_status is entity-keyed)
     const entity_id = entityId(req);
     /* PERF1: a server-side maximum (lib/page-limit — `?limit=1000000` was obeyed) · keyset after page 1 (`after`, below) · the COUNT on page 1 only */
-    const pg = listPage(req), page = pg.page, limit = pg.limit;
+    const pg = listPage(req),
+      page = pg.page,
+      limit = pg.limit;
     const status_filter = req.query.status || null;
     const q_search = (req.query.q || '').trim();
 
@@ -2360,10 +2937,13 @@ router.get('/inbox', auth, async (req, res) => {
        * ⚠️ NAMING A FOLDER STILL WINS. Inside a folder the list stays that folder filtered — the folder-as-a-
        * filter model is untouched. Only the top-level "Unassigned / Assigned / All Task" question goes wide.
        */
-      const asksAssignment = req.query.assignment === 'unassigned' || req.query.assignment === 'assigned'
-        || (req.query.assigned_to && req.query.assigned_to !== 'all');
-      if (/^[0-9a-f-]{36}$/i.test(fid)) { paramCount++; whereClause += ` AND cs.folder_id = $${paramCount}::uuid`; params.push(fid); }
-      else if (!asksAssignment) whereClause += ` AND cs.folder_id IS NULL`;
+      const asksAssignment =
+        req.query.assignment === 'unassigned' || req.query.assignment === 'assigned' || (req.query.assigned_to && req.query.assigned_to !== 'all');
+      if (/^[0-9a-f-]{36}$/i.test(fid)) {
+        paramCount++;
+        whereClause += ` AND cs.folder_id = $${paramCount}::uuid`;
+        params.push(fid);
+      } else if (!asksAssignment) whereClause += ` AND cs.folder_id IS NULL`;
     }
     /**
      * ⭐⭐ BILLS ARE NOT TASKS (Athi, 2026-10-01: "the purpose of rail is for the order to be received and serviced, but this is
@@ -2387,24 +2967,28 @@ router.get('/inbox', auth, async (req, res) => {
 
     whereClause = chitFilters(req, whereClause, params);
     /* the count is of the same rows, before the keyset narrows them — and only on the first page (the pager keeps it: app.html pgNext) */
-    const countWhere = whereClause, countParams = params.slice();
+    const countWhere = whereClause,
+      countParams = params.slice();
     const ks = keysetOf(req, params, 'ch');
     if (ks.where) whereClause += ks.where;
     const offset = ks.where ? 0 : (page - 1) * limit;
     paramCount = params.length;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { countResult, result } = await withEntity(entity_id, async (db) => {
-    const countResult = page === 1 && !ks.where ? await db.query(
-      `SELECT COUNT(*) FROM chit_status cs
+      const nestedCountResult =
+        page === 1 && !ks.where
+          ? await db.query(
+              `SELECT COUNT(*) FROM chit_status cs
         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${countWhere}`,
-      countParams
-    ) : null;
+              countParams
+            )
+          : null;
 
-    // Get inbox — lightweight — no payload
-    const _cancelCol = await cancelCols();   // b195 — see cancelCols(); three list selects, one fragment
-    const result = await db.query(
-      `SELECT
+      // Get inbox — lightweight — no payload
+      const _cancelCol = await cancelCols(); // b195 — see cancelCols(); three list selects, one fragment
+      const outcome = await db.query(
+        `SELECT
          ch.chit_id,
          ch.sender_entity_display_name,
          ch.sender_entity_bridge_id,
@@ -2443,26 +3027,30 @@ router.get('/inbox', auth, async (req, res) => {
                           AND ch.entity_id = cs.entity_id
                           AND ch.direction = cs.direction
        WHERE ${whereClause}
-       ORDER BY ${({date:'ch.created_at',subject:'COALESCE(ch.manual_subject, ch.auto_subject)',from:'ch.sender_entity_display_name',amount:"(ch.summary_json->>'total_value')::numeric",status:'cs.current_status',priority:"CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END",priority_ext:"CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END"}[req.query.sort]||'ch.created_at')} ${(String(req.query.dir||'').toLowerCase()==='asc')?'ASC':'DESC'}, ch.created_at DESC, ch.chit_id DESC
+       ORDER BY ${{ date: 'ch.created_at', subject: 'COALESCE(ch.manual_subject, ch.auto_subject)', from: 'ch.sender_entity_display_name', amount: "(ch.summary_json->>'total_value')::numeric", status: 'cs.current_status', priority: "CASE cs.priority_flag WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END", priority_ext: "CASE ch.summary_json->>'priority_external' WHEN 'urgent' THEN 3 WHEN 'high' THEN 2 WHEN 'normal' THEN 1 ELSE 0 END" }[req.query.sort] || 'ch.created_at'} ${String(req.query.dir || '').toLowerCase() === 'asc' ? 'ASC' : 'DESC'}, ch.created_at DESC, ch.chit_id DESC
        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`,
-      [...params, limit, offset]
-    );
-    return { countResult, result };
+        [...params, limit, offset]
+      );
+      return { countResult: nestedCountResult, result: outcome };
     });
 
     const inboxNext = afterOf(result.rows, limit, req);
-    const total = countResult ? parseInt(countResult.rows[0].count) : null;   /* PERF1: counted on page 1; later pages say null and the pager keeps page 1's */
-    res.json(Object.assign({
-      chits: result.rows,
-      // top-level total/page/limit — mirrors /sent so the web pager treats both lists the same
-      total,
-      page,
-      limit,
-      next: inboxNext   /* PERF1: the ?after= of the next page (newest-first order only; null on the last) */
-      /* ⚠️ the `pagination` object said the same three numbers a second time and the envelope dropped it on the
+    const total = countResult ? parseInt(countResult.rows[0].count) : null; /* PERF1: counted on page 1; later pages say null and the pager keeps page 1's */
+    res.json(
+      Object.assign(
+        {
+          chits: result.rows,
+          // top-level total/page/limit — mirrors /sent so the web pager treats both lists the same
+          total,
+          page,
+          limit,
+          next: inboxNext /* PERF1: the ?after= of the next page (newest-first order only; null on the last) */
+          /* ⚠️ the `pagination` object said the same three numbers a second time and the envelope dropped it on the
          way in. Two spellings of one fact is how they start disagreeing. */
-    }, PAGE_LIMIT.capOf(pg, result.rows.length, total)));   /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
-
+        },
+        PAGE_LIMIT.capOf(pg, result.rows.length, total)
+      )
+    ); /* W2-RAIL R2: a cut page says so — `capped` + `cap_note` */
   } catch (err) {
     console.error('Inbox error:', err.message);
     res.status(500).json({ error: 'Failed to get inbox', message: safeErr(err) });
@@ -2507,16 +3095,19 @@ router.get('/inbox', auth, async (req, res) => {
 router.get('/pulse', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const r = await withEntity(me, (db) => db.query(
-      `SELECT
+    const r = await withEntity(me, (db) =>
+      db.query(
+        `SELECT
          (SELECT MAX(created_at) FROM chit_header WHERE entity_id = $1) AS h,
          (SELECT MAX(created_at) FROM state_log   WHERE entity_id = $1) AS s,
          (SELECT MAX(updated_at) FROM chit_status WHERE entity_id = $1) AS c,
          (SELECT COUNT(*)        FROM chit_header WHERE entity_id = $1) AS n`,
-      [me]));
+        [me]
+      )
+    );
     const x = r.rows[0] || {};
-    const w = ['h', 's', 'c'].map((k) => (x[k] ? new Date(x[k]).getTime() : 0)).join('.') + '.' + (x.n || 0);
-    res.json({ w });
+    const list = ['h', 's', 'c'].map((item) => (x[item] ? new Date(x[item]).getTime() : 0)).join('.') + '.' + (x.n || 0);
+    res.json({ w: list });
   } catch (e) {
     /**
      * ⚠️ A PULSE THAT FAILS MUST NOT SILENCE THE SCREEN. Answering an error would leave the client with no
@@ -2532,25 +3123,43 @@ router.get('/unread', auth, async (req, res) => {
   try {
     if (req.identity.identity_type !== 'actor') return res.json({ unread: [] });
     const entity_id = entityId(req);
-    const actor_id  = req.identity.identity_id;
+    const actor_id = req.identity.identity_id;
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
-    const r = await withEntity(entity_id, (db) => db.query(
-      `SELECT DISTINCT cs.chit_id
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `SELECT DISTINCT cs.chit_id
          FROM chit_status cs
          LEFT JOIN chit_reads cr ON cr.chit_id = cs.chit_id AND cr.actor_id = $2
         WHERE cs.entity_id = $1 AND cs.deleted_at IS NULL
           AND (cr.read_at IS NULL OR cs.updated_at > cr.read_at)`,
-      [entity_id, actor_id]));
-    res.json({ unread: r.rows.map(x => x.chit_id) });
-  } catch (err) { res.status(500).json({ error: 'Unread failed', message: safeErr(err) }); }
+        [entity_id, actor_id]
+      )
+    );
+    res.json({ unread: r.rows.map((x) => x.chit_id) });
+  } catch (err) {
+    res.status(500).json({ error: 'Unread failed', message: safeErr(err) });
+  }
 });
 
+/**
+ * orderBilledSql(header) — WALK2 W36: the ONE_SHOT scalar that says whether a bill names this ORDER yet (open-orders' ONE billed test, the Tasks
+ * list's Billed tag), so the sheet says "Not billed yet" instead of "Unpaid" (an order is a promise; it never posts). NULL when not an order.
+ */
+function orderBilledSql(header) {
+  return header && header.purpose === 'order' ? require('../lib/open-orders').billedOfChitSql('$1', '$2') : 'NULL::boolean';
+}
 router.get('/:chit_id', auth, async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
   const _wantTiming = String(req.query.timing || '') === '1';
-  const _T = {}; let _t0 = Date.now();
-  const _mark = (k) => { if (_wantTiming) { _T[k] = Date.now() - _t0; _t0 = Date.now(); } };
+  const _T = {};
+  let _t0 = Date.now();
+  const _mark = (k) => {
+    if (_wantTiming) {
+      _T[k] = Date.now() - _t0;
+      _t0 = Date.now();
+    }
+  };
   try {
     const chit_id = req.params.chit_id;
     // Actors use parent entity's id — chit_header and chit_status are entity-keyed
@@ -2576,7 +3185,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       if (participation.rows.length === 0) return { notFound: true };
       // Draft privacy: a draft is the author's PRIVATE WIP — another actor of the SAME entity must not read it,
       // even by direct id. The drafts LIST is author-scoped (created_by_actor_id); the detail read must be too.
-      const _draft = participation.rows.find(r => r.role === 'Draft');
+      const _draft = participation.rows.find((item) => item.role === 'Draft');
       if (_draft && _draft.created_by_actor_id !== req.identity.identity_id) return { notFound: true };
 
       // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
@@ -2588,11 +3197,16 @@ router.get('/:chit_id', auth, async (req, res) => {
           await db.query(
             `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
              ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
-            [chit_id, req.identity.identity_id]);
+            [chit_id, req.identity.identity_id]
+          );
           await db.query('RELEASE SAVEPOINT mark_read');
         } catch (e) {
           console.error('mark-read skipped:', e.message);
-          try { await db.query('ROLLBACK TO SAVEPOINT mark_read'); } catch (e) { cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', e); }
+          try {
+            await db.query('ROLLBACK TO SAVEPOINT mark_read');
+          } catch (problem) {
+            cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', problem);
+          }
         }
       }
 
@@ -2608,7 +3222,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       );
 
       // Each participant has their own copy (entity_id = their entity).
-      const log = await db.query(
+      const nestedLog = await db.query(
         `SELECT action, action_by_identity_id, action_by_display_name, previous_status,
                 new_status, detail, created_at
          FROM state_log
@@ -2652,7 +3266,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       );
 
       /* (the "first opened" log row is written by the statement above, in the same round trip) */
-      return { header, detail, log };
+      return { header, detail, log: nestedLog };
     });
 
     if (data.notFound) {
@@ -2697,8 +3311,7 @@ router.get('/:chit_id', auth, async (req, res) => {
      */
     _mark('main_read');
 
-    const _lines0 = (data.detail.rows[0] && Array.isArray(data.detail.rows[0].line_items))
-      ? mint.order(data.detail.rows[0].line_items) : null;
+    const _lines0 = data.detail.rows[0] && Array.isArray(data.detail.rows[0].line_items) ? mint.order(data.detail.rows[0].line_items) : null;
     _mark('mint_order');
 
     /**
@@ -2759,7 +3372,7 @@ router.get('/:chit_id', auth, async (req, res) => {
           WHERE cs.chit_id = $2 AND cs.entity_id = $1 AND cs.direction = 'received' LIMIT 1)            AS my_received,
         -- ⭐ STD1: what the books wait on for THIS chit (books_outbox, b273: todo · name · why · candidates) — a scalar, no round trip;
         -- the bill's Accept verdict below is composed from it (the server's may/why), never from a list the page happens to hold.
-        ${require('../lib/books-store').waitOfChitSql('$1', '$2')}                                        AS books_wait`;
+        ${require('../lib/books-store').waitOfChitSql('$1', '$2')}                                        AS books_wait, ${orderBilledSql(data.header.rows[0])} AS order_billed`;
 
     let bundle = null;
     try {
@@ -2774,6 +3387,7 @@ router.get('/:chit_id', auth, async (req, res) => {
           prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
           my_received: g.my_received || null,
           books_wait: g.books_wait || null,
+          order_billed: g.order_billed /* W36: orderBilledSql */,
           /**
            * ⭐ THE ATTACHMENT LIST RIDES ALONG — it cost a whole transaction of its own, measured at 1074ms,
            * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
@@ -2789,10 +3403,8 @@ router.get('/:chit_id', auth, async (req, res) => {
            * `cb_attachment` (before b65/b66) now costs nothing at all rather than two round trips per open,
            * and still cannot poison the transaction, because the query is never issued.
            */
-          attachments: (await schema.hasTable('cb_attachment'))
-            ? await storage.listForChit(chit_id, entity_id, db)
-            : null,
-          _fast: true,
+          attachments: (await schema.hasTable('cb_attachment')) ? await storage.listForChit(chit_id, entity_id, db) : null,
+          _fast: true
         };
       });
     } catch (e) {
@@ -2801,34 +3413,57 @@ router.get('/:chit_id', auth, async (req, res) => {
     }
     _mark('one_shot');
 
-    if (!bundle) bundle = await withEntity(entity_id, async (db) => {
-      const participants = await trySavepoint(db,
-        (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((r) => r.rows),
-        null);
-      /* The b50 fallback, still scoped to self under FORCE — a degraded panel, never a leak. */
-      const participants2 = participants || await trySavepoint(db, (c) => c.query(
-        `SELECT cs.entity_id, cs.current_status, cs.read_at,
+    if (!bundle)
+      bundle = await withEntity(entity_id, async (db) => {
+        const nestedParticipants = await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((reply) => reply.rows), null);
+        /* The b50 fallback, still scoped to self under FORCE — a degraded panel, never a leak. */
+        const participants2 =
+          nestedParticipants ||
+          (await trySavepoint(
+            db,
+            (c) =>
+              c
+                .query(
+                  `SELECT cs.entity_id, cs.current_status, cs.read_at,
                 cs.assigned_to_actor_display_name, cs.updated_at,
                 i.display_name, i.bridge_id
            FROM chit_status cs
            JOIN identities i ON i.identity_id = cs.entity_id
-          WHERE cs.chit_id = $1`, [chit_id]).then((r) => r.rows), []);
+          WHERE cs.chit_id = $1`,
+                  [chit_id]
+                )
+                .then((reply) => reply.rows),
+            []
+          ));
 
-      const amd = await trySavepoint(db, () => amend.list(entity_id, chit_id, db),
-        { amendments: [], migrated: false });
-      const rows = _lines0 ? await trySavepoint(db, () => amend.readLines(entity_id, chit_id, db), null) : null;
-      const assigned = _lines0 ? await trySavepoint(db, () => assign.current(entity_id, chit_id, db), null) : null;
-      const prog = _lines0 ? await trySavepoint(db, () => deliverline.progress(entity_id, chit_id, db), null) : null;
+        const nestedAmd = await trySavepoint(db, () => amend.list(entity_id, chit_id, db), { amendments: [], migrated: false });
+        const rows = _lines0 ? await trySavepoint(db, () => amend.readLines(entity_id, chit_id, db), null) : null;
+        const assigned = _lines0 ? await trySavepoint(db, () => assign.current(entity_id, chit_id, db), null) : null;
+        const prog = _lines0 ? await trySavepoint(db, () => deliverline.progress(entity_id, chit_id, db), null) : null;
 
-      /* R01 — my received copy's status, as the one-shot reads it (null = none, or not readable here) */
-      const my_received = await trySavepoint(db, (c) => c.query(
-        `SELECT cs.current_status FROM chit_status cs WHERE cs.chit_id = $1 AND cs.entity_id = $2 AND cs.direction = 'received' LIMIT 1`,
-        [chit_id, entity_id]).then((r) => (r.rows[0] && r.rows[0].current_status) || null), null);
-      /* STD1 — the books' wait on this chit, as the one-shot reads it (null = none, or not readable here) */
-      const books_wait = await trySavepoint(db, (c) => c.query(`SELECT ${require('../lib/books-store').waitOfChitSql('$1', '$2')} AS w`, [entity_id, chit_id])
-        .then((r) => (r.rows[0] && r.rows[0].w) || null), null);
-      return { participants: participants2, amd, rows, assigned, prog, my_received, books_wait };
-    });
+        /* R01 — my received copy's status, as the one-shot reads it (null = none, or not readable here) */
+        const my_received = await trySavepoint(
+          db,
+          (c) =>
+            c
+              .query(`SELECT cs.current_status FROM chit_status cs WHERE cs.chit_id = $1 AND cs.entity_id = $2 AND cs.direction = 'received' LIMIT 1`, [
+                chit_id,
+                entity_id
+              ])
+              .then((reply) => (reply.rows[0] && reply.rows[0].current_status) || null),
+          null
+        );
+        /* STD1 — the books' wait on this chit, as the one-shot reads it (null = none, or not readable here) */
+        const books_wait = await trySavepoint(
+          db,
+          (c) =>
+            c
+              .query(`SELECT ${require('../lib/books-store').waitOfChitSql('$1', '$2')} AS w`, [entity_id, chit_id])
+              .then((reply) => (reply.rows[0] && reply.rows[0].w) || null),
+          null
+        );
+        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait };
+      });
 
     _mark('bundle_6_reads');
     const participants = bundle.participants;
@@ -2836,10 +3471,11 @@ router.get('/:chit_id', auth, async (req, res) => {
        dragging it into this transaction would couple a blob read to the chit's own read for no round-trip saving. */
     /* ⭐ Already read inside the one-shot transaction when that path ran. Only the FALLBACK path — an
        environment where the one-shot statement failed — still pays for its own transaction here. */
-    const attachments = (bundle && bundle.attachments != null)
-      ? bundle.attachments
-      : await storage.listForChit(chit_id, entity_id).catch(cbLog.orElse('chits GET /:chit_id: failed — answered with none', []));
-    _mark('attachments');   // per-entity: the caller's OWN copies only
+    const attachments =
+      bundle && bundle.attachments != null
+        ? bundle.attachments
+        : await storage.listForChit(chit_id, entity_id).catch(cbLog.orElse('chits GET /:chit_id: failed — answered with none', []));
+    _mark('attachments'); // per-entity: the caller's OWN copies only
 
     /* ── b137 AMENDMENTS ─────────────────────────────────────────────────────────────────────────────────────
        ⚠️ `detail.line_items` IS RETURNED UNTOUCHED — it is what the reader produced and it never changes. The
@@ -2870,30 +3506,54 @@ router.get('/:chit_id', auth, async (req, res) => {
     try {
       const _h = data.header.rows[0];
       if (_h && billPrivacy.isBill(_h, entity_id)) {
-        const mine = await billPrivacy.mineSet(entity_id, data.log.rows.map((r) => r.action_by_identity_id));
+        const mine = await billPrivacy.mineSet(
+          entity_id,
+          data.log.rows.map((item) => item.action_by_identity_id)
+        );
         _red = billPrivacy.redactRead({ header: _h, me: entity_id, state_log: data.log.rows, participants: bundle.participants, mine });
         if (_lines0) {
-          const dl = await withEntity(entity_id, (db) => db.query(
-            `SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
+          const dl = await withEntity(entity_id, (db) =>
+            db.query(
+              `SELECT l.line_id, l.particulars, l.unit AS ordered_unit, l.quantity AS ordered, l.removed,
                     d.delivery_id, d.quantity AS dq, d.unit AS du, d.reference, d.note, d.recorded_by_entity_id, d.recorded_by_name,
                     d.recorded_by_actor_name, d.delivered_at, to_jsonb(d)->>'kind' AS dkind, (to_jsonb(d)->>'amount')::numeric AS damount,
                     to_jsonb(d)->>'particulars' AS dparticulars
                FROM chit_line l LEFT JOIN chit_line_delivery d ON d.entity_id = l.entity_id AND d.chit_id = l.chit_id AND d.line_id = l.line_id
               WHERE l.entity_id = $1 AND l.chit_id = $2 AND (d.delivery_id IS NULL OR d.recorded_by_entity_id = $1)
-              ORDER BY l.seq, l.line_id, d.delivered_at`, [entity_id, chit_id])).catch(cbLog.orElse('chits GET /:chit_id: failed — answered with nothing', null));
+              ORDER BY l.seq, l.line_id, d.delivered_at`,
+              [entity_id, chit_id]
+            )
+          ).catch(cbLog.orElse('chits GET /:chit_id: failed — answered with nothing', null));
           _prog = dl ? await deliverline.progress(entity_id, chit_id, null, dl.rows) : null;
         }
       }
-    } catch (e) { console.error('bill read redaction:', e.message); _red = { private: true, state_log: [], participants: [] }; _prog = null; }
-    const _byId = new Map((_lines || []).map((l) => [l.line_id, l]));
+    } catch (e) {
+      console.error('bill read redaction:', e.message);
+      _red = { private: true, state_log: [], participants: [] };
+      _prog = null;
+    }
+    const _byId = new Map((_lines || []).map((item) => [item.line_id, item]));
     const _live = _rows
       ? _rows.map((row, i) => {
           const orig = _byId.get(row.line_id) || (_lines || [])[i] || row;
-          const chain = (amd.amendments || []).filter((a) => a.line_id === row.line_id).sort((x, y) => x.seq - y.seq);
-          return { index: i, line_id: row.line_id, live: row.removed ? null : row, original: orig,
-                   history: chain.length ? [orig].concat(chain.slice(0, -1).map((c) => c.line).filter(Boolean)) : [],
-                   removed: !!row.removed, reason_code: row.removed_reason || (chain.length ? chain[chain.length - 1].reason_code : undefined),
-                   versions: chain.length };
+          const chain = (amd.amendments || []).filter((item) => item.line_id === row.line_id).sort((x, y) => x.seq - y.seq);
+          return {
+            index: i,
+            line_id: row.line_id,
+            live: row.removed ? null : row,
+            original: orig,
+            history: chain.length
+              ? [orig].concat(
+                  chain
+                    .slice(0, -1)
+                    .map((item) => item.line)
+                    .filter(Boolean)
+                )
+              : [],
+            removed: !!row.removed,
+            reason_code: row.removed_reason || (chain.length ? chain[chain.length - 1].reason_code : undefined),
+            versions: chain.length
+          };
         })
       : amend.liveSet(_lines, amd.amendments);
     /**
@@ -2906,11 +3566,20 @@ router.get('/:chit_id', auth, async (req, res) => {
     try {
       const KEEP = ['discount', 'offer', 'gst_rate', 'cess_rate', 'tax_name', 'tax_scheme', 'tax_slab_name', 'tax_source', 'hsn', 'sku', 'item_id', 'code'];
       if (Array.isArray(_lines) && Array.isArray(_live) && _lines.length === _live.length) {
-        _live.forEach((e, i) => { const j = _lines[i]; if (!j || !e) return;
-          [e.live, e.original].forEach((tgt) => { if (!tgt || typeof tgt !== 'object') return; KEEP.forEach((k) => { if ((tgt[k] === undefined || tgt[k] === null) && j[k] !== undefined && j[k] !== null) tgt[k] = j[k]; }); });
+        _live.forEach((e, index) => {
+          const j = _lines[index];
+          if (!j || !e) return;
+          [e.live, e.original].forEach((item) => {
+            if (!item || typeof item !== 'object') return;
+            KEEP.forEach((k) => {
+              if ((item[k] === undefined || item[k] === null) && j[k] !== undefined && j[k] !== null) item[k] = j[k];
+            });
+          });
         });
       }
-    } catch (e) { cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e); }
+    } catch (e) {
+      cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e);
+    }
 
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
@@ -2929,12 +3598,23 @@ router.get('/:chit_id', auth, async (req, res) => {
       /* ⭐⭐ R01 — MAY I DO X ON THIS COPY, answered by the rail engine (lib/rail.js) over the facts of MY copy: one verdict per
          action, { ok:true } or { ok:false, why } with why from the engine's vocabulary. The writing routes ask the same
          engine before they write, so a ✓ here is never refused there. A host paints this; it never computes it. */
-      actions: railActions.forBill(_doc, bundle.books_wait, railActions.actions({ held: true, received: bundle.my_received || null,
-        sender: !!(data.header.rows[0] && String(data.header.rows[0].sender_entity_id) === String(entity_id)) }, railActions.meOf(req))),
+      actions: railActions.forBill(
+        _doc,
+        bundle.books_wait,
+        railActions.actions(
+          {
+            held: true,
+            received: bundle.my_received || null,
+            sender: !!(data.header.rows[0] && String(data.header.rows[0].sender_entity_id) === String(entity_id))
+          },
+          railActions.meOf(req)
+        )
+      ),
       /* ⭐ STD1: WHAT DOCUMENT THIS COPY IS, said by the server (lib/folder-inventory docOf — the Bills folders' own classification), so the popup
          never guesses whether it holds a bill; and what the books wait on for it (books_wait: todo · name · why · candidates, or null) */
       doc: _doc,
       books_wait: bundle.books_wait || null,
+      order_billed: bundle.order_billed /* W36: true · false on an order, null otherwise; absent on the fallback path */,
       /* ⭐ THE LIVE SET — one entry per ORIGINAL line, carrying what it is now and everything it has been.
          Removed lines are PRESENT with live:null: they must stay visible as evidence while counting nowhere.
          Sent whenever lines exist, amended or not, so the client has exactly one shape to render. */
@@ -2949,9 +3629,8 @@ router.get('/:chit_id', auth, async (req, res) => {
       ...(_assigned && _assigned.size ? { line_assignment: Object.fromEntries(_assigned) } : {}),
       /* ⚠️ b144 — SHARED, so this is present on BOTH copies. Each side sees its own claims and the other's,
          attributed; nothing is merged into one number. Totals are summed here, never stored. */
-      ...(_prog && _prog.size ? { line_delivery: Object.fromEntries(_prog), delivery_summary: deliverline.summarise(_prog) } : {}),
+      ...(_prog && _prog.size ? { line_delivery: Object.fromEntries(_prog), delivery_summary: deliverline.summarise(_prog) } : {})
     });
-
   } catch (err) {
     console.error('Chit detail error:', err.message);
     res.status(500).json({ error: 'Failed to get chit', message: safeErr(err) });
@@ -2971,8 +3650,7 @@ router.post('/:chit_id/reprice', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
-    const mine = await withEntity(entity_id, (db) => db.query(
-      `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
     /* ⭐ W2-RAIL R2 — THE RAIL QUESTION, the same one /amend asks: a reprice WRITES amendments (lib/reprice apply → amend.record),
        so it is the `amend` action — the level ladder (viewer · commenter refused in the engine's word), then "I hold a copy".
        Preview too: the answer GET /chits/:id gives for `amend` is the door's answer, preview or apply. */
@@ -2982,8 +3660,12 @@ router.post('/:chit_id/reprice', auth, async (req, res) => {
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
     const opts = { line_ids: ids, only_unpriced: !!req.body.only_unpriced };
     if (req.body.preview) return res.json(await reprice.plan(entity_id, chit_id, opts));
-    res.json(await reprice.apply(entity_id, chit_id, opts, {
-      actor_id: req.identity.identity_id, actor_name: req.identity.display_name }));
+    res.json(
+      await reprice.apply(entity_id, chit_id, opts, {
+        actor_id: req.identity.identity_id,
+        actor_name: req.identity.display_name
+      })
+    );
   } catch (err) {
     console.error('Reprice error:', err.message);
     res.status(err.status || 500).json({ error: 'Reprice failed', message: safeErr(err) });
@@ -3004,11 +3686,14 @@ router.post('/:chit_id/costs', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
-    const mine = await withEntity(entity_id, (db) => db.query(
-      `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
     if (!mine.rows.length) return res.status(404).json({ error: 'Not found', message: 'Chit not found or you do not have access' });
-    res.json(await cost.record(entity_id, chit_id, req.body.rows || req.body, {
-      actor_id: req.identity.identity_id, actor_name: req.identity.display_name }));
+    res.json(
+      await cost.record(entity_id, chit_id, req.body.rows || req.body, {
+        actor_id: req.identity.identity_id,
+        actor_name: req.identity.display_name
+      })
+    );
   } catch (err) {
     console.error('Cost record error:', err.message);
     res.status(err.status || 500).json({ error: 'Failed to record cost', message: safeErr(err) });
@@ -3029,7 +3714,6 @@ router.get('/:chit_id/costs', auth, async (req, res) => {
   }
 });
 
-
 // ═══ b182 · THE REGISTER ON A LINE — risks, assumptions, issues, dependencies, actions, decisions ══════════════
 //
 // Design: C:\dev\DESIGN-raida-and-cover.md. Phase 0 records facts and nothing else — no owner, no due date, no
@@ -3046,25 +3730,38 @@ router.get('/:chit_id/costs', auth, async (req, res) => {
 
 /** What a register may be attached to. A registry, so a new kind is data. */
 router.get('/register/attachables', auth, async (req, res) => {
-  try { res.json(await raida.attachables()); }
-  catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
+  try {
+    res.json(await raida.attachables());
+  } catch (err) {
+    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+  }
 });
 
 router.get('/register/subjects', auth, async (req, res) => {
   try {
-    res.json(await raida.listSubjects(entityId(req), {
-      type_key: req.query.type_key || undefined, open_only: req.query.open === '1' }));
-  } catch (err) { res.status(500).json({ error: 'Failed to list registers', message: safeErr(err) }); }
+    res.json(
+      await raida.listSubjects(entityId(req), {
+        type_key: req.query.type_key || undefined,
+        open_only: req.query.open === '1'
+      })
+    );
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list registers', message: safeErr(err) });
+  }
 });
 
 router.post('/register/subjects', auth, async (req, res) => {
   try {
-    res.json(await raida.subjectFor(entityId(req), {
-      type_key: req.body.type_key, ref_id: req.body.ref_id,
-      ref_label: req.body.ref_label, name: req.body.name }));
+    res.json(
+      await raida.subjectFor(entityId(req), {
+        type_key: req.body.type_key,
+        ref_id: req.body.ref_id,
+        ref_label: req.body.ref_label,
+        name: req.body.name
+      })
+    );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to open the register',
-      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    res.status(err.status || 500).json({ error: 'Failed to open the register', message: err.status && err.status < 500 ? err.message : safeErr(err) });
   }
 });
 
@@ -3074,26 +3771,28 @@ router.post('/register/subjects', auth, async (req, res) => {
  */
 router.post('/register/subjects/:subject_id/close', auth, async (req, res) => {
   try {
-    res.json(await raida.closeSubject(entityId(req), req.params.subject_id,
-      { by_name: req.identity.display_name }));
+    res.json(await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name }));
   } catch (err) {
-    const body = { error: 'Cannot close yet', message: err.status && err.status < 500 ? err.message : safeErr(err) };
-    if (err.outstanding) body.outstanding = err.outstanding;
-    res.status(err.status || 500).json(body);
+    const payload = { error: 'Cannot close yet', message: err.status && err.status < 500 ? err.message : safeErr(err) };
+    if (err.outstanding) payload.outstanding = err.outstanding;
+    res.status(err.status || 500).json(payload);
   }
 });
 
 /** The library — the same risk turns up everywhere, worded slightly differently. */
 router.get('/register/templates', auth, async (req, res) => {
-  try { res.json(await raida.templates(entityId(req))); }
-  catch (err) { res.status(500).json({ error: 'Failed to read the library', message: safeErr(err) }); }
+  try {
+    res.json(await raida.templates(entityId(req)));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to read the library', message: safeErr(err) });
+  }
 });
 
 router.post('/register/templates', auth, async (req, res) => {
-  try { res.json(await raida.addTemplate(entityId(req), req.body || {})); }
-  catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to save it',
-      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+  try {
+    res.json(await raida.addTemplate(entityId(req), req.body || {}));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: 'Failed to save it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
   }
 });
 
@@ -3111,12 +3810,18 @@ router.post('/register/templates', auth, async (req, res) => {
  */
 router.post('/register/subjects/:subject_id/entries', auth, async (req, res) => {
   try {
-    res.json(await raida.add(entityId(req), null, Object.assign({}, req.body, {
-      subject_id: req.params.subject_id,
-      by_name: req.identity.display_name })));
+    res.json(
+      await raida.add(
+        entityId(req),
+        null,
+        Object.assign({}, req.body, {
+          subject_id: req.params.subject_id,
+          by_name: req.identity.display_name
+        })
+      )
+    );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to record it',
-      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    res.status(err.status || 500).json({ error: 'Failed to record it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
   }
 });
 
@@ -3128,42 +3833,42 @@ router.post('/register/subjects/:subject_id/entries', auth, async (req, res) => 
  */
 router.post('/register/entries/:raida_id/close', auth, async (req, res) => {
   try {
-    res.json(await raida.close(entityId(req), null, req.params.raida_id,
-      Object.assign({}, req.body, { by_name: req.identity.display_name })));
+    res.json(await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to close it',
-      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    res.status(err.status || 500).json({ error: 'Failed to close it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
   }
 });
 
 router.get('/register/walk/:from', auth, async (req, res) => {
   try {
-    res.json(await raida.walk(entityId(req), req.params.from,
-      { backwards: req.query.backwards === '1', depth: req.query.depth }));
-  } catch (err) { res.status(500).json({ error: 'Failed to walk it', message: safeErr(err) }); }
+    res.json(await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth }));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to walk it', message: safeErr(err) });
+  }
 });
 
 /** Revise a field without destroying what it said before — an appended row, never an UPDATE. */
 router.post('/register/entries/:raida_id/revise', auth, async (req, res) => {
   try {
-    res.json(await raida.revise(entityId(req), req.params.raida_id,
-      Object.assign({}, req.body, { by_name: req.identity.display_name })));
+    res.json(await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to revise it',
-      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    res.status(err.status || 500).json({ error: 'Failed to revise it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
   }
 });
 
 /** ⭐⭐ Accept a residual risk. A signature, at a level the severity demands, with a date it comes back. */
 router.post('/register/entries/:raida_id/accept', auth, async (req, res) => {
   try {
-    res.json(await raida.accept(entityId(req), req.params.raida_id, {
-      accepted_by_name: req.body.accepted_by_name || req.identity.display_name,
-      authority_level: req.body.authority_level, rationale: req.body.rationale,
-      review_by: req.body.review_by }));
+    res.json(
+      await raida.accept(entityId(req), req.params.raida_id, {
+        accepted_by_name: req.body.accepted_by_name || req.identity.display_name,
+        authority_level: req.body.authority_level,
+        rationale: req.body.rationale,
+        review_by: req.body.review_by
+      })
+    );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Failed to record the acceptance',
-      message: err.status && err.status < 500 ? err.message : safeErr(err) });
+    res.status(err.status || 500).json({ error: 'Failed to record the acceptance', message: err.status && err.status < 500 ? err.message : safeErr(err) });
   }
 });
 
@@ -3179,11 +3884,13 @@ router.get('/raida/report', auth, async (req, res) => {
   try {
     /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
        of one set of facts instead of two registers a company keeps rewriting to survive two audits. */
-    res.json(await raida.report(entityId(req), {
-      subject_id: req.query.subject_id || undefined,
-      standard_key: req.query.standard || undefined }));
-  }
-  catch (err) {
+    res.json(
+      await raida.report(entityId(req), {
+        subject_id: req.query.subject_id || undefined,
+        standard_key: req.query.standard || undefined
+      })
+    );
+  } catch (err) {
     console.error('Raida report error:', err.message);
     res.status(err.status || 500).json({ error: 'Failed to read the register', message: safeErr(err) });
   }
@@ -3208,9 +3915,12 @@ router.post('/:chit_id/raida', auth, async (req, res) => {
     /* ⭐ ONE TRANSACTION. The ownership check and the insert share it — a second withEntity would pay
        BEGIN + set_config + COMMIT again to learn what this one already knows. */
     const out = await withEntity(entity_id, async (db) => {
-      const mine = await db.query(
-        `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-      if (!mine.rows.length) { const e = new Error('Chit not found or you do not have access'); e.status = 404; throw e; }
+      const mine = await db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+      if (!mine.rows.length) {
+        const e = new Error('Chit not found or you do not have access');
+        e.status = 404;
+        throw e;
+      }
       /**
        * ⚠️⚠️ THE WHOLE ENTRY, NOT FOUR FIELDS. This forwarded kind · body · line_id · visibility and nothing
        * else, so a risk raised from a line card could never carry a rating, an owner, a treatment or a
@@ -3222,15 +3932,27 @@ router.post('/:chit_id/raida', auth, async (req, res) => {
        * somebody else's order.
        */
       return raida.add(entity_id, chit_id, {
-        kind: req.body.kind, body: req.body.body, line_id: req.body.line_id,
+        kind: req.body.kind,
+        body: req.body.body,
+        line_id: req.body.line_id,
         visibility: req.body.visibility,
-        owner_name: req.body.owner_name, due_date: req.body.due_date, review_date: req.body.review_date,
-        likelihood: req.body.likelihood, severity: req.body.severity,
-        treatment: req.body.treatment, verification_method: req.body.verification_method,
-        response: req.body.response, template_id: req.body.template_id,
-        rel_type: req.body.rel_type, to_type: req.body.to_type, to_id: req.body.to_id,
-        to_label: req.body.to_label, needed_by: req.body.needed_by,
-        by_name: req.identity.display_name, db });
+        owner_name: req.body.owner_name,
+        due_date: req.body.due_date,
+        review_date: req.body.review_date,
+        likelihood: req.body.likelihood,
+        severity: req.body.severity,
+        treatment: req.body.treatment,
+        verification_method: req.body.verification_method,
+        response: req.body.response,
+        template_id: req.body.template_id,
+        rel_type: req.body.rel_type,
+        to_type: req.body.to_type,
+        to_id: req.body.to_id,
+        to_label: req.body.to_label,
+        needed_by: req.body.needed_by,
+        by_name: req.identity.display_name,
+        db
+      });
     });
     res.json(out);
   } catch (err) {
@@ -3244,8 +3966,7 @@ router.post('/:chit_id/raida', auth, async (req, res) => {
    different endings and a flag cannot tell them apart. */
 router.post('/:chit_id/raida/:raida_id/close', auth, async (req, res) => {
   try {
-    res.json(await raida.close(entityId(req), req.params.chit_id, req.params.raida_id,
-      { body: req.body.body, by_name: req.identity.display_name }));
+    res.json(await raida.close(entityId(req), req.params.chit_id, req.params.raida_id, { body: req.body.body, by_name: req.identity.display_name }));
   } catch (err) {
     console.error('Raida close error:', err.message);
     res.status(err.status || 500).json({ error: 'Failed to close it', message: err.status && err.status < 500 ? err.message : safeErr(err) });
@@ -3283,18 +4004,27 @@ router.get('/:chit_id/use', auth, async (req, res) => {
     const entity_id = entityId(req);
     const copy = await taxCopy.copyOf(req.params.chit_id, entity_id);
     if (!copy) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
-    if (!taxCopy.billReceived(copy, entity_id)) return res.status(409).json({ error: 'Not a bill', message: 'Only a bill you received says what its goods are for' });
+    if (!taxCopy.billReceived(copy, entity_id))
+      return res.status(409).json({ error: 'Not a bill', message: 'Only a bill you received says what its goods are for' });
     const eff = await require('../lib/bill-use').forCopy(entity_id, copy);
-    res.json(Object.assign({ chit_id: req.params.chit_id, status: copy.current_status,
-      changeable: /^(pending|delivered|read)$/.test(String(copy.current_status || '')) }, eff));
-  } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
+    res.json(
+      Object.assign(
+        { chit_id: req.params.chit_id, status: copy.current_status, changeable: /^(pending|delivered|read)$/.test(String(copy.current_status || '')) },
+        eff
+      )
+    );
+  } catch (err) {
+    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+  }
 });
 router.put('/:chit_id/use', auth, async (req, res) => {
   try {
     const r = await require('../lib/bill-use').set(entityId(req), req.params.chit_id, req.body || {}, { name: req.identity && req.identity.display_name });
     if (!r.ok) return res.status(r.status || 400).json({ error: 'Not saved', message: r.message });
     res.json(r);
-  } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+  }
 });
 
 router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
@@ -3307,16 +4037,27 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
     const _me = railActions.meOf(req);
     const _lv = railActions.canDeliver({ held: true }, _me);
     if (!_lv.ok) return railActions.refuseOwnCopy(res, _lv);
-    let _mineCopy = null, _copyRead = true;
-    try { _mineCopy = await taxCopy.copyOf(chit_id, entity_id); }
-    catch (e) { _copyRead = false; log.warn('deliver.copy-unread', { chit_id, entity_id, err: e && e.message, then: 'the delivery definer checks the participant' }); }
-    if (_copyRead) { const _v = railActions.canDeliver({ held: !!_mineCopy }, _me); if (!_v.ok) return railActions.refuseOwnCopy(res, _v); }
+    let _mineCopy = null,
+      _copyRead = true;
+    try {
+      _mineCopy = await taxCopy.copyOf(chit_id, entity_id);
+    } catch (e) {
+      _copyRead = false;
+      log.warn('deliver.copy-unread', { chit_id, entity_id, err: e && e.message, then: 'the delivery definer checks the participant' });
+    }
+    if (_copyRead) {
+      const _v = railActions.canDeliver({ held: !!_mineCopy }, _me);
+      if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
+    }
     const useSaid = await deliverUse(req, entity_id, chit_id);
     /* ⭐⭐ ON A BILL, GOODS-IN IS MY OWN STEP (lib/bill-privacy): recorded on my copy only, and its line is written at my bill
        folder's level — never replicated into, or announced to, the other shop */
     const _bill = !!(_mineCopy && billPrivacy.isBill(_mineCopy, entity_id));
     const out = await deliverline.record(entity_id, chit_id, req.body.rows || req.body, {
-      actor_id: req.identity.identity_id, actor_name: req.identity.display_name, private: _bill });
+      actor_id: req.identity.identity_id,
+      actor_name: req.identity.display_name,
+      private: _bill
+    });
     /* H6 — a replay of rows already recorded is answered with the first result and does not announce, advance or accept again */
     if (out.delivered.length && out.delivered.every((row) => row.replayed)) return res.json({ ...out, replayed: true });
     await deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill);
@@ -3332,13 +4073,14 @@ router.post('/:chit_id/deliver-lines', auth, async (req, res) => {
 
 /* ═══ DELIVER-LINES' NAMED STEPS (T2-SPLIT, 2026-10-14) — the use · the announcement · the progress · the goods-in accept. ═══ */
 
-  /* ⭐ goods-in may say what the goods are for (the same field Intake sets) — recorded BEFORE the lines, so the tick below
+/* ⭐ goods-in may say what the goods are for (the same field Intake sets) — recorded BEFORE the lines, so the tick below
      accepts with the answer in place; a bill already accepted refuses it, said, and the delivery still records */
 async function deliverUse(req, entity_id, chit_id) {
   let useSaid = null;
   if (req.body && !Array.isArray(req.body) && (req.body.use !== undefined || req.body.use_lines !== undefined)) {
-    useSaid = await require('../lib/bill-use').set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines },
-      { name: req.identity && req.identity.display_name }).catch((e) => ({ ok: false, message: String(e && e.message) }));
+    useSaid = await require('../lib/bill-use')
+      .set(entity_id, chit_id, { use: req.body.use, lines: req.body.use_lines }, { name: req.identity && req.identity.display_name })
+      .catch((e) => ({ ok: false, message: String(e && e.message) }));
   }
   return useSaid;
 }
@@ -3347,51 +4089,66 @@ async function deliverUse(req, entity_id, chit_id) {
 async function deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill) {
   if (_bill) {
     try {
-      out.step = await billPrivacy.writeStep(entity_id, chit_id, { code: billPrivacy.ownerCode(_mineCopy, entity_id), step: 'goods_checked',
-        label: 'Goods checked', lines: out.delivered.length }, { id: req.identity.identity_id, name: req.identity.display_name });
-    } catch (e) { console.error('bill step (goods-in) not written:', e.message); }
+      out.step = await billPrivacy.writeStep(
+        entity_id,
+        chit_id,
+        { code: billPrivacy.ownerCode(_mineCopy, entity_id), step: 'goods_checked', label: 'Goods checked', lines: out.delivered.length },
+        { id: req.identity.identity_id, name: req.identity.display_name }
+      );
+    } catch (e) {
+      console.error('bill step (goods-in) not written:', e.message);
+    }
   } else
-  try {
-    const d = out.delivered.map((x) => x.quantity).join(', ');
-    /**
-     * ⭐ THE NOTIFICATION FANS OUT TO EVERY PARTY, BECAUSE THE DELIVERY DOES.
-     *
-     * ⚠️ IT USED TO WRITE ONE ROW, INTO THE ACTING ENTITY'S COPY ONLY. So when the counterparty recorded a
-     * delivery against your order, the DELIVERY crossed — b144's definer puts it in every copy — and the
-     * NOTIFICATION did not. Found 2026-08-15 by checking b157 end to end: Karpagam recorded 5 kg, mytest's
-     * badge stayed at zero and the event never appeared in the feed at all.
-     *
-     * That is the most important event this product has. Goods moved, and the other side was not told.
-     *
-     * ⚠️ DISTINCT entity_id — one row per PARTY, not per chit_status row. A self-chit holds two status rows for
-     * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
-     * (b150 wrote every delivery twice for exactly this reason).
-     *
-     * ⚠️ IT NEEDS A SECURITY DEFINER, AND MY FIRST ATTEMPT DID NOT USE ONE. I wrote the fan-out as a plain
-     * INSERT … SELECT DISTINCT entity_id FROM chit_status inside withEntity(actor) and asserted a definer was
-     * unnecessary. The test disproved it in minutes: that subquery runs under RLS, sees only the actor's own
-     * chit_status row, and therefore wrote exactly the single row it had always written. It LOOKED like a
-     * fan-out and behaved like the bug. b158 does it properly — the audience is computed inside the definer
-     * from the chit's participants and is never a parameter.
-     *
-     * ⚠️ BEST-EFFORT, DELIBERATELY. It stays inside this try/catch: if the function is missing (pre-b158) or
-     * RLS refuses, the delivery still stands. A notification that fails must never undo a movement of goods.
-     */
-    await withEntity(entity_id, (db) => db.query(
-      'SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n',
-      [chit_id, 'delivered_line', req.identity.identity_id, req.identity.display_name,
-       out.delivered.length + ' line(s) delivered: ' + d]))
-      /* Pre-b158 the function does not exist — fall back to the single-copy row rather than losing the event
+    try {
+      const d = out.delivered.map((x) => x.quantity).join(', ');
+      /**
+       * ⭐ THE NOTIFICATION FANS OUT TO EVERY PARTY, BECAUSE THE DELIVERY DOES.
+       *
+       * ⚠️ IT USED TO WRITE ONE ROW, INTO THE ACTING ENTITY'S COPY ONLY. So when the counterparty recorded a
+       * delivery against your order, the DELIVERY crossed — b144's definer puts it in every copy — and the
+       * NOTIFICATION did not. Found 2026-08-15 by checking b157 end to end: Karpagam recorded 5 kg, mytest's
+       * badge stayed at zero and the event never appeared in the feed at all.
+       *
+       * That is the most important event this product has. Goods moved, and the other side was not told.
+       *
+       * ⚠️ DISTINCT entity_id — one row per PARTY, not per chit_status row. A self-chit holds two status rows for
+       * one entity, and this is the fourth place today where a missing DISTINCT would have doubled something
+       * (b150 wrote every delivery twice for exactly this reason).
+       *
+       * ⚠️ IT NEEDS A SECURITY DEFINER, AND MY FIRST ATTEMPT DID NOT USE ONE. I wrote the fan-out as a plain
+       * INSERT … SELECT DISTINCT entity_id FROM chit_status inside withEntity(actor) and asserted a definer was
+       * unnecessary. The test disproved it in minutes: that subquery runs under RLS, sees only the actor's own
+       * chit_status row, and therefore wrote exactly the single row it had always written. It LOOKED like a
+       * fan-out and behaved like the bug. b158 does it properly — the audience is computed inside the definer
+       * from the chit's participants and is never a parameter.
+       *
+       * ⚠️ BEST-EFFORT, DELIBERATELY. It stays inside this try/catch: if the function is missing (pre-b158) or
+       * RLS refuses, the delivery still stands. A notification that fails must never undo a movement of goods.
+       */
+      await withEntity(entity_id, (db) =>
+        db.query('SELECT state_log_fanout($1::uuid,$2::text,$3::uuid,$4::text,$5::text) AS n', [
+          chit_id,
+          'delivered_line',
+          req.identity.identity_id,
+          req.identity.display_name,
+          out.delivered.length + ' line(s) delivered: ' + d
+        ])
+      )
+        /* Pre-b158 the function does not exist — fall back to the single-copy row rather than losing the event
          entirely. The counterparty is not notified until the migration runs, which is the status quo. */
-      .catch(async (e) => {
-        if (!(e && e.code === '42883')) throw e;
-        return withEntity(entity_id, (db) => db.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+        .catch(async (e) => {
+          if (!(e && e.code === '42883')) throw e;
+          return withEntity(entity_id, (db) =>
+            db.query(
+              `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
            VALUES ($1,$2,'delivered_line',$3,$4,$5)`,
-          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name,
-           out.delivered.length + ' line(s) delivered: ' + d]));
-      });
-  } catch (e) { console.error('deliver state_log skipped:', e.message); }
+              [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, out.delivered.length + ' line(s) delivered: ' + d]
+            )
+          );
+        });
+    } catch (e) {
+      console.error('deliver state_log skipped:', e.message);
+    }
 }
 
 /**
@@ -3439,12 +4196,20 @@ async function goodsInAccept(req, entity_id, chit_id, out) {
     if (s && s.lines > 0 && s.complete === s.lines) {
       const mine = await taxCopy.copyOf(chit_id, entity_id);
       if (mine && taxCopy.billReceived(mine, entity_id) && /^(pending|delivered|read)$/.test(String(mine.current_status || ''))) {
-        const mv = await moveStatus(entity_id, chit_id, 'accepted',
-          { id: req.identity.identity_id, name: req.identity.display_name }, 'Goods received in full — accepted at goods-in', railActions.meOf(req));
+        const mv = await moveStatus(
+          entity_id,
+          chit_id,
+          'accepted',
+          { id: req.identity.identity_id, name: req.identity.display_name },
+          'Goods received in full — accepted at goods-in',
+          railActions.meOf(req)
+        );
         if (mv.moved) out.accepted = true;
       }
     }
-  } catch (e) { console.error('goods-in accept skipped:', e.message); }
+  } catch (e) {
+    console.error('goods-in accept skipped:', e.message);
+  }
 }
 
 // ═══ b143 · PER-LINE ASSIGNMENT — division of labour, and it is PRIVATE ═════════════════════════════════════════
@@ -3459,24 +4224,35 @@ router.post('/:chit_id/assign-lines', auth, async (req, res) => {
     const entity_id = entityId(req);
     /* Assign only on a chit I hold. Without this an id in the URL would file work against a document I am not
        party to — RLS would keep the row mine and harmless, but it would still be a record of someone else's job. */
-    const mine = await withEntity(entity_id, (db) => db.query(
-      `SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const mine = await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
     /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
     const _v = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'assign');
     if (!_v.ok) return railActions.refuseOwnCopy(res, _v);
 
     const out = await assign.assign(entity_id, chit_id, req.body.edits || req.body, {
-      actor_id: req.identity.identity_id, actor_name: req.identity.display_name });
+      actor_id: req.identity.identity_id,
+      actor_name: req.identity.display_name
+    });
 
     /* ⚠️ LOGGED, BUT INTERNALLY. state_log is per-copy, so this stays on our side of the boundary — the
        counterparty's log is a different set of rows and never receives it. */
     try {
-      const detail = out.assignments.map((a) => (a.assignee_name || 'Unassigned') + (a.task ? ' · ' + a.task : '') + (a.due_date ? ' · due ' + String(a.due_date).slice(0, 10) : '')).join('; ');
-      await withEntity(entity_id, (db) => db.query(
-        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+      const detail = out.assignments
+        .map(
+          (item) =>
+            (item.assignee_name || 'Unassigned') + (item.task ? ' · ' + item.task : '') + (item.due_date ? ' · due ' + String(item.due_date).slice(0, 10) : '')
+        )
+        .join('; ');
+      await withEntity(entity_id, (db) =>
+        db.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
          VALUES ($1,$2,'assigned_line',$3,$4,$5)`,
-        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]));
-    } catch (e) { console.error('assign state_log skipped:', e.message); }
+          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
+        )
+      );
+    } catch (e) {
+      console.error('assign state_log skipped:', e.message);
+    }
 
     res.json(out);
   } catch (err) {
@@ -3505,41 +4281,63 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
     /* Amend only what I actually hold. Without this an id in the URL would be enough to file a correction against
        a stranger's chit — the row would be RLS-scoped to me and harmless, but it would still be a record of a
        document I was never party to. */
-    const mine = await withEntity(entity_id, (db) => db.query(
-      `SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
+    const mine = await withEntity(entity_id, (db) => db.query(`SELECT role FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
     /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
     const verdict = railActions.can({ held: mine.rows.length > 0 }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return railActions.refuseOwnCopy(res, verdict);
 
     const out = await amend.record(entity_id, chit_id, req.body.edits || req.body, {
-      actor_id: req.identity.identity_id, actor_name: req.identity.display_name });
+      actor_id: req.identity.identity_id,
+      actor_name: req.identity.display_name
+    });
 
     /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
        every other action. Best-effort: a missing log must not lose a correction that already committed. */
     try {
-      const detail = out.amendments.map((a) => a.line === null
-        ? ('line ' + (a.line_index + 1) + ' removed (' + a.reason_code + ')')
-        : ('line ' + (a.line_index + 1) + ' → ' + [a.line.particulars, a.line.quantity, a.line.unit].filter(Boolean).join(' ') + ' (' + a.reason_code + ')')).join('; ');
-      await withEntity(entity_id, (db) => db.query(
-        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+      const detail = out.amendments
+        .map((item) =>
+          item.line === null
+            ? 'line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')'
+            : 'line ' +
+              (item.line_index + 1) +
+              ' → ' +
+              [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') +
+              ' (' +
+              item.reason_code +
+              ')'
+        )
+        .join('; ');
+      await withEntity(entity_id, (db) =>
+        db.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
          VALUES ($1,$2,'amended',$3,$4,$5)`,
-        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]));
-    } catch (e) { console.error('amend state_log skipped:', e.message); }
+          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
+        )
+      );
+    } catch (e) {
+      console.error('amend state_log skipped:', e.message);
+    }
 
     /* ⚠️ SYNONYM CANDIDATES ARE REPORTED, NOT WRITTEN. A correction that renames an item ("thakkali" → Tomato) is
        exactly the fact worth learning, but writing it into the catalogue unasked would permanently merge two words
        on one person's typo, and nothing downstream would ever flag it. Athi's rule (2026-08-11): synonyms may
        promote automatically, but only on N independent confirmations across entities — never on one. Units and
        grades never promote automatically at all. */
-    const orig = ((await withEntity(entity_id, (db) => db.query(
-      'SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2 LIMIT 1', [chit_id, entity_id])))
-      .rows[0] || {}).line_items || [];
-    const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const orig =
+      (
+        (await withEntity(entity_id, (db) => db.query('SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2 LIMIT 1', [chit_id, entity_id])))
+          .rows[0] || {}
+      ).line_items || [];
+    const norm = (s) =>
+      String(s || '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
     const candidates = out.amendments
-      .filter((a) => a.line && a.reason_code === 'misread_by_ai')
-      .map((a) => ({ was: (orig[a.line_index] || {}).particulars, now: a.line.particulars, amendment_id: a.amendment_id }))
-      .filter((c) => c.was && c.now && norm(c.was) !== norm(c.now))
-      .map((c) => ({ amendment_id: c.amendment_id, term: c.was, means: c.now }));
+      .filter((item) => item.line && item.reason_code === 'misread_by_ai')
+      .map((item) => ({ was: (orig[item.line_index] || {}).particulars, now: item.line.particulars, amendment_id: item.amendment_id }))
+      .filter((item) => item.was && item.now && norm(item.was) !== norm(item.now))
+      .map((item) => ({ amendment_id: item.amendment_id, term: item.was, means: item.now }));
 
     res.json({ ...out, ...(candidates.length ? { synonym_candidates: candidates } : {}) });
   } catch (err) {
@@ -3561,10 +4359,12 @@ router.post('/:chit_id/amend', auth, async (req, res) => {
     }
     if (err && err.code === '23514') {
       console.error('Amend rejected by a CHECK constraint:', err.constraint || '', err.detail || err.message);
-      return res.status(409).json({ error: 'Not an accepted value',
+      return res.status(409).json({
+        error: 'Not an accepted value',
         message: /reason_code/.test(err.constraint || '')
           ? 'That amendment reason is not accepted on this environment yet — b148 adds it.'
-          : 'The database refused one of these values: ' + (err.constraint || 'constraint violation') });
+          : 'The database refused one of these values: ' + (err.constraint || 'constraint violation')
+      });
     }
     console.error('Amend error:', err.code || '', err.message);
     res.status(err.status || 500).json({ error: 'Failed to amend', message: safeErr(err) });
@@ -3600,39 +4400,67 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
        Currency travels beside it rather than being dropped: a bare 100 with no code is how two currencies
        eventually get added together. */
     const money = require('../lib/money');
-    const full = (it) => ({ name: it.name, variant: it.variant || null, unit: it.unit || null,
-      price: money.amountOf(it.price), currency: money.currencyOf(it.price),
+    const full = (it) => ({
+      name: it.name,
+      variant: it.variant || null,
+      unit: it.unit || null,
+      price: money.amountOf(it.price),
+      currency: money.currencyOf(it.price),
       unit_size: it.unit_size || null,
-      label: it.name + (it.variant ? ' · ' + it.variant : ''), key: it.key,
+      label: it.name + (it.variant ? ' · ' + it.variant : ''),
+      key: it.key,
       /* The durable identity, so a human pick stamps the same reference the matcher would have. Without it the
          one path where we are CERTAIN which item was meant would be the only one leaving no reference. */
-      item_id: it.item_id || null, sku: it.sku || null, their_ref: (it.their_ref && typeof it.their_ref === "object") ? { system: String(it.their_ref.system || "").slice(0, 120), id: String(it.their_ref.id || "").slice(0, 120) } : null,   /* the BUYER'S id for this line (Identifiers row) — travels so their side can match it */
+      item_id: it.item_id || null,
+      sku: it.sku || null,
+      their_ref:
+        it.their_ref && typeof it.their_ref === 'object'
+          ? { system: String(it.their_ref.system || '').slice(0, 120), id: String(it.their_ref.id || '').slice(0, 120) }
+          : null /* the BUYER'S id for this line (Identifiers row) — travels so their side can match it */,
       /* the moment, so a human pick fixes the base exactly as the matcher does — one shape, three paths */
-      as_of: it.as_of || null, hash: itemmatch.stampOf(it) });
+      as_of: it.as_of || null,
+      hash: itemmatch.stampOf(it)
+    });
 
     /* The matcher's shortlist, re-read from the catalogue so the picker shows the SAME row shape as everything
        else — and so the price on it is today's, not whatever the reader saw when the chit was raised. */
-    const shortlist = (m) => (m.candidates || [])
-      .map((c) => { const it = cat.items.find((x) => x.key === c.key);
-        return it ? { ...full(it), status: c.status, status_text: c.status_text } : null; })
-      .filter(Boolean);
+    const shortlist = (nestedM) =>
+      (nestedM.candidates || [])
+        .map((item) => {
+          const it = cat.items.find((x) => x.key === item.key);
+          return it ? { ...full(it), status: item.status, status_text: item.status_text } : null;
+        })
+        .filter(Boolean);
 
     const m = q ? itemmatch.match(q, req.query.comment || '', cat) : null;
     const nq = itemmatch.norm(q);
-    const items = (nq ? cat.items.filter((it) =>
-        itemmatch.norm(it.name).includes(nq) || nq.includes(itemmatch.norm(it.name)) ||
-        it.synonyms.some((s) => s.includes(nq) || nq.includes(s)))
-      : cat.items).slice(0, 200).map(full);
+    const items = (
+      nq
+        ? cat.items.filter(
+            (item) =>
+              itemmatch.norm(item.name).includes(nq) ||
+              nq.includes(itemmatch.norm(item.name)) ||
+              item.synonyms.some((entry) => entry.includes(nq) || nq.includes(entry))
+          )
+        : cat.items
+    )
+      .slice(0, 200)
+      .map(full);
 
     res.json({
       has_catalogue: true,
       /* The whole list too (capped), because the match may be wrong — that is why a human is here. */
       items: items.length ? items : cat.items.slice(0, 200).map(full),
-      match: m && m.item ? { ...full(m.item),
-        /* ⚠️ SURFACED, NOT HIDDEN. "The catalogue has grades and your message named none" is the single most
+      match:
+        m && m.item
+          ? {
+              ...full(m.item),
+              /* ⚠️ SURFACED, NOT HIDDEN. "The catalogue has grades and your message named none" is the single most
            useful thing to tell someone who is about to confirm a line. */
-        ...(m.variant_unspecified ? { variant_unspecified: true, variants: m.variants } : {}),
-        ...(m.fuzzy ? { matched_by_spelling: true } : {}) } : null,
+              ...(m.variant_unspecified ? { variant_unspecified: true, variants: m.variants } : {}),
+              ...(m.fuzzy ? { matched_by_spelling: true } : {})
+            }
+          : null,
       /* ⚠️ THE SHORTLIST, NOT A COUNT. This returned `ambiguous: 2` — a number the screen could only print as
          "matches 2 catalogue lines", leaving the person to hunt those two out of a 200-row picker themselves. The
          matcher knew which two; it just did not say. `shortlist()` shapes them exactly like every other pickable
@@ -3640,7 +4468,7 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
       ...(m && m.ambiguous ? { ambiguous: m.matches, candidates: shortlist(m) } : {}),
       /* Same treatment for "the catalogue has grades and you named none" — one picker, two causes. */
       ...(m && m.variant_unspecified ? { candidates: shortlist(m) } : {}),
-      ...(m && m.unmatched ? { unmatched: m.reason } : {}),
+      ...(m && m.unmatched ? { unmatched: m.reason } : {})
     });
   } catch (err) {
     console.error('Catalogue overlay error:', err.message);
@@ -3649,7 +4477,8 @@ router.get('/:chit_id/catalogue-overlay', auth, async (req, res) => {
 });
 /** the quote a Mark-paid is held against: the summary's total, else the frozen invoice's grand total, else null */
 function quotedTotalOf(copy) {
-  const summary = copy.summary_json || {}, invoice = (copy.business_json || {}).invoice;
+  const summary = copy.summary_json || {},
+    invoice = (copy.business_json || {}).invoice;
   if (summary.total_value != null) return Number(summary.total_value);
   return invoice && invoice.grand_total != null ? Number(invoice.grand_total) : null;
 }
@@ -3667,18 +4496,29 @@ async function markChitPaid(db, press) {
   /* an amount above the quoted total is a dispute, not a payment — unless the note says why (a tip, a rounding, an old balance) */
   const quoted = quotedTotalOf(copy);
   if (payment.amount != null && !payment.note && quoted != null && payment.amount > quoted * 1.005 + 1) return { over: quoted };
-  const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, bj, { payment }) }),
-    { by: payment.by, acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge.map(String) : [], name: (bj.customer && bj.customer.name) || undefined });
+  const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, bj, { payment }) }), {
+    by: payment.by,
+    acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge.map(String) : [],
+    name: (bj.customer && bj.customer.name) || undefined
+  });
   const marked = await db.query(
     `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('payment', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
-    [JSON.stringify(payment), chit_id, entity_id]);
+    [JSON.stringify(payment), chit_id, entity_id]
+  );
   return marked.rows.length ? { books } : null;
 }
 /** the payment a Mark-paid press carries (method · ref · amount · note · when · who · the press's own client_ref, H2) */
 function pressPayment(req, entity_id) {
-  const body = req.body, payment = { method: body.method, ref: body.ref || null, amount: body.amount != null ? Number(body.amount) : null, note: body.note || null,
-    at: new Date().toISOString(), by: (req.identity && req.identity.identity_id) || entity_id };
-  if (body.client_ref) payment.client_ref = String(body.client_ref);
+  const payload = req.body,
+    payment = {
+      method: payload.method,
+      ref: payload.ref || null,
+      amount: payload.amount != null ? Number(payload.amount) : null,
+      note: payload.note || null,
+      at: new Date().toISOString(),
+      by: (req.identity && req.identity.identity_id) || entity_id
+    };
+  if (payload.client_ref) payment.client_ref = String(payload.client_ref);
   return payment;
 }
 /** a Mark-paid that failed: the books' own refusals in words (already paid · a locked month · …), else a 500 */
@@ -3688,30 +4528,64 @@ function payFailure(res, err) {
   if (err && (err.refused || err.status === 409 || err.status === 422 || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) return BR.fail(res, err);
   return res.status(500).json({ error: 'Payment failed', message: safeErr(err) });
 }
-router.post('/:chit_id/payment', auth, [ body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']), body('ref').optional().trim().isLength({ max: 120 }), body('amount').optional().isFloat({ min: 0 }), body('note').optional().trim().isLength({ max: 240 }), body('acknowledge').optional().isArray(), body('client_ref').optional().trim().isLength({ max: 80 }) ], validate, async (req, res) => {
-  try {
-    const entity_id = auth.entityOf(req), chit_id = req.params.chit_id;
-    /* H2 (PAY-FIX): the press's own reference (the web mints one per open of the sheet) — the books key the payment chitpay:<chit>:<ref>, so a second
+router.post(
+  '/:chit_id/payment',
+  auth,
+  [
+    body('method').isIn(['upi', 'cash', 'card', 'bank', 'other']),
+    body('ref').optional().trim().isLength({ max: 120 }),
+    body('amount').optional().isFloat({ min: 0 }),
+    body('note').optional().trim().isLength({ max: 240 }),
+    body('acknowledge').optional().isArray(),
+    body('client_ref').optional().trim().isLength({ max: 80 })
+  ],
+  validate,
+  async (req, res) => {
+    try {
+      const entity_id = auth.entityOf(req),
+        chit_id = req.params.chit_id;
+      /* H2 (PAY-FIX): the press's own reference (the web mints one per open of the sheet) — the books key the payment chitpay:<chit>:<ref>, so a second
        "Mark paid" is a second payment and a retry of the same press is its own replay (docs/FIELDS.md business_json.payment.client_ref) */
-    const payment = pressPayment(req, entity_id);
-    const hooks = require('../lib/books-hooks');
-    const out = await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks }));
-    if (!out) return res.status(404).json({ error: 'Not found' });
-    if (out.parts) return res.status(422).json({ error: 'The tender is on the bill', message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.' });
-    if (out.over != null) return res.status(422).json({ error: 'Above the quoted amount', message: 'Received ' + payment.amount + ' against a quote of ' + out.over + '. Add a note saying why, or record the quoted amount.', quoted: out.over });
-    /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
-    if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
-    /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
-    try { require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method }); } catch (e) { cbLog.fellBack('chits POST /:chit_id/payment: the signal was not sent — carried on without it', e); }
-    /* a replay (the same press, or an older web's second press on one chit) is SAID: the books kept the first — never "recorded" twice */
-    const replayed = !!(out.books && out.books.payment && out.books.payment.duplicate);
-    res.json({ message: replayed ? 'Already recorded' : 'Payment recorded', replayed, payment, books: out.books });
-  } catch (err) { payFailure(res, err); }
-});
+      const payment = pressPayment(req, entity_id);
+      const hooks = require('../lib/books-hooks');
+      const out = await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks }));
+      if (!out) return res.status(404).json({ error: 'Not found' });
+      if (out.parts)
+        return res.status(422).json({
+          error: 'The tender is on the bill',
+          message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.'
+        });
+      if (out.over != null)
+        return res.status(422).json({
+          error: 'Above the quoted amount',
+          message: 'Received ' + payment.amount + ' against a quote of ' + out.over + '. Add a note saying why, or record the quoted amount.',
+          quoted: out.over
+        });
+      /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
+      if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id }, out.books.why, chit_id, 'chit:' + chit_id);
+      /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
+      try {
+        require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method });
+      } catch (e) {
+        cbLog.fellBack('chits POST /:chit_id/payment: the signal was not sent — carried on without it', e);
+      }
+      /* a replay (the same press, or an older web's second press on one chit) is SAID: the books kept the first — never "recorded" twice */
+      const replayed = !!(out.books && out.books.payment && out.books.payment.duplicate);
+      res.json({ message: replayed ? 'Already recorded' : 'Payment recorded', replayed, payment, books: out.books });
+    } catch (err) {
+      payFailure(res, err);
+    }
+  }
+);
 router.delete('/:chit_id/payment', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const r = await withEntity(entity_id, (db) => db.query(`UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`, [req.params.chit_id, entity_id]));
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
+        [req.params.chit_id, entity_id]
+      )
+    );
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
     /* the books' record is not undone by clearing the mark (drift D1): name the entry, so the owner reverses it there — never silently */
     let books = null;
@@ -3722,14 +4596,31 @@ router.delete('/:chit_id/payment', auth, async (req, res) => {
         const mine = await S.paymentsOfChit(db, entity_id, req.params.chit_id);
         if (!mine.length) return null;
         const named = [];
-        for (const p of mine) { const en = await S.entryBySource(db, entity_id, 'pay:' + p.payment_id); named.push({ payment_id: p.payment_id, entry_no: en ? en.entry_no : null }); }
+        for (const p of mine) {
+          const en = await S.entryBySource(db, entity_id, 'pay:' + p.payment_id);
+          named.push({ payment_id: p.payment_id, entry_no: en ? en.entry_no : null });
+        }
         const entryNumbers = named.map((x) => x.entry_no).filter(Boolean);
-        return { payment_id: named[0].payment_id, entry_no: named[0].entry_no, payments: named,
-          words: 'The books still hold ' + (named.length === 1 ? 'this payment' : 'these ' + named.length + ' payments') + (entryNumbers.length ? ' (' + entryNumbers.join(', ') + ')' : '') + ' — reverse ' + (named.length === 1 ? 'it' : 'them') + ' there.' };
+        return {
+          payment_id: named[0].payment_id,
+          entry_no: named[0].entry_no,
+          payments: named,
+          words:
+            'The books still hold ' +
+            (named.length === 1 ? 'this payment' : 'these ' + named.length + ' payments') +
+            (entryNumbers.length ? ' (' + entryNumbers.join(', ') + ')' : '') +
+            ' — reverse ' +
+            (named.length === 1 ? 'it' : 'them') +
+            ' there.'
+        };
       });
-    } catch (e) { if (!e || e.code !== '42P01') console.error('payment clear: books read failed:', e && e.message); }
+    } catch (e) {
+      if (!e || e.code !== '42P01') console.error('payment clear: books read failed:', e && e.message);
+    }
     res.json({ message: 'Payment cleared', books });
-  } catch (err) { res.status(500).json({ error: 'Payment clear failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Payment clear failed', message: safeErr(err) });
+  }
 });
 
 /**
@@ -3742,13 +4633,22 @@ router.post('/:chit_id/books-request', auth, async (req, res) => {
     if (req.api_key) return res.status(403).json({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' });
     const entity_id = entityId(req);
     const reqRec = { at: new Date().toISOString(), by: req.identity.identity_id };
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('books_request', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
-      [JSON.stringify(reqRec), req.params.chit_id, entity_id]));
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) || jsonb_build_object('books_request', $1::jsonb) WHERE chit_id = $2 AND entity_id = $3 RETURNING chit_id`,
+        [JSON.stringify(reqRec), req.params.chit_id, entity_id]
+      )
+    );
     if (!r.rows.length) return res.status(404).json({ error: 'Not found' });
-    try { require('../lib/events').emit([entity_id], { kind: 'books', id: req.params.chit_id }); } catch (e) { cbLog.fellBack('chits POST /:chit_id/books-request: the signal was not sent — carried on without it', e); }
+    try {
+      require('../lib/events').emit([entity_id], { kind: 'books', id: req.params.chit_id });
+    } catch (e) {
+      cbLog.fellBack('chits POST /:chit_id/books-request: the signal was not sent — carried on without it', e);
+    }
     res.json({ ok: true, books_request: reqRec });
-  } catch (err) { res.status(500).json({ error: 'Failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed', message: safeErr(err) });
+  }
 });
 /**
  * H3 (PAY-FIX): the books would not take the reversal of a withdrawn chit (every month locked, …) — the withdrawal did NOT happen (its
@@ -3759,8 +4659,12 @@ function withdrawFailure(res, err) {
     console.error('Void error:', err.message);
     return res.status(500).json({ error: 'Void failed', message: safeErr(err) });
   }
-  return res.status(409).json({ error: 'Cannot withdraw', code: err.code || 'BOOKS_REFUSED', why: 'books_refused',
-    message: 'The books hold this chit and could not reverse it: ' + err.message + ' Open the month, or reverse the entry there, then withdraw again.' });
+  return res.status(409).json({
+    error: 'Cannot withdraw',
+    code: err.code || 'BOOKS_REFUSED',
+    why: 'books_refused',
+    message: 'The books hold this chit and could not reverse it: ' + err.message + ' Open the month, or reverse the entry there, then withdraw again.'
+  });
 }
 /**
  * the sender's own cancel leg (T1-RAIL + H3): my SENT copy goes through the same rail gate, the sale it posted is reversed in that SAME
@@ -3777,9 +4681,14 @@ async function cancelSentCopy(entity_id, chit_id, viewer, note, by) {
     return gate;
   });
   if (!sent.ok && sent.why !== 'not_received') log.warn('sent copy not cancelled', { chit_id, from: sent.from, why: sent.why });
-  await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: by.name,
-    thread_type: 'external', msg_type: 'action',
-    message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}` });
+  await postMessageCopies({
+    chit_id,
+    sender_entity_id: entity_id,
+    sender_display_name: by.name,
+    thread_type: 'external',
+    msg_type: 'action',
+    message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}`
+  });
   return sent.books;
 }
 /**
@@ -3790,8 +4699,13 @@ async function cancelSentCopy(entity_id, chit_id, viewer, note, by) {
  */
 /** ORD-FIX O6: write the caller's OWN received copy (the gate said yes) — compare-and-set, so someone who moved it a moment ago wins; → `done` for the writer, a `conflict` stop for the loser */
 async function writeOrConflict(verdict, done) {
-  try { await verdict.write(); return done; }
-  catch (e) { if (e && e.code === 'status_conflict') return { stop: 'conflict', message: e.message }; throw e; }
+  try {
+    await verdict.write();
+    return done;
+  } catch (e) {
+    if (e && e.code === 'status_conflict') return { stop: 'conflict', message: e.message };
+    throw e;
+  }
 }
 /** the first half of a status move, inside the transaction: the verdict (rail-status statusGate), the open-dispute count, the copy the freeze reads, then the write — or a marker saying why it stopped */
 /** the copy the freeze reads, or the narrow header read: one statement either way */
@@ -3802,18 +4716,18 @@ async function readMoveHeader(db, chit_id, entity_id, new_status) {
    * BEGIN · set_config · SELECT · COMMIT for chit_header, four trips to fetch what was already in hand.
    * ⚠️ Only on `completed`; every other status takes the narrow read below and nothing more.
    */
-  const copy = (new_status === 'completed')
-    ? await taxCopy.copyOn(db, chit_id, entity_id)
-    : undefined;
+  const copy = new_status === 'completed' ? await taxCopy.copyOn(db, chit_id, entity_id) : undefined;
   /* ⚠️ AND THE NARROW READ IS THE ELSE, NOT AN EXTRA. The wide copy already carries sender_entity_id, so
      reading chit_header twice in one transaction — which is what the first cut of this left behind — was
      a statement spent on a column already on the row above. */
-  const header = (copy !== undefined)
-    ? { rows: copy ? [copy] : [] }
-    : await db.query(
-        /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
-        `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]);
+  const header =
+    copy !== undefined
+      ? { rows: copy ? [copy] : [] }
+      : await db.query(
+          /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
+          `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
+          [chit_id, entity_id]
+        );
   return { copy, header };
 }
 async function readThenWriteMove(db, press) {
@@ -3835,176 +4749,226 @@ async function readThenWriteMove(db, press) {
 
   /* the ONE open-dispute count (lib/dispute-may openOn, W2-RAIL R2). Closing never blocks on a dispute (C1 above), so an
      unreadable count (null, logged there) only loses the warning — delete and archive, which DO block, refuse on it. */
-  const openCount = checkDisputes ? ((await disputeMay.openOn(db, chit_id)) || 0) : 0;
+  const openCount = checkDisputes ? (await disputeMay.openOn(db, chit_id)) || 0 : 0;
   const { copy, header } = await readMoveHeader(db, chit_id, entity_id, new_status);
   /* ⭐ FX-F10W2: REJECTING A BILL SAYS WHY (lib/workflow needsOf: reject → reason; the chit read answers actions.reject.needs). The
      reason is the note — it goes on the chit's history. Refused before the write, said; a task keeps its own ask. */
-  if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(header.rows[0], entity_id) === 'bill_received') return { stop: 'reason', previous_status };
+  if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(header.rows[0], entity_id) === 'bill_received')
+    return { stop: 'reason', previous_status };
   return writeOrConflict(verdict, { previous_status, openCount, header, copy });
 }
 async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
-      const action_by_id = by.id, action_by_name = by.name;
-      let disputeWarning = null;
-      let booksOnCancel = null;   /* H3: what the books did with a sender's cancel (the reversal, or its refusal in words) */
-      /* ⭐ R01: the transition table that lived here (validTransitions) is the rail engine's TRANSITIONS now, verbatim, and the
+  const action_by_id = by.id,
+    action_by_name = by.name;
+  let disputeWarning = null;
+  let booksOnCancel = null; /* H3: what the books did with a sender's cancel (the reversal, or its refusal in words) */
+  /* ⭐ R01: the transition table that lived here (validTransitions) is the rail engine's TRANSITIONS now, verbatim, and the
          decision is rail.move — the same function GET /chits/:id answers `actions` with. `me` = railActions.meOf(req). */
-      if (!me) throw new Error('moveStatus: who is moving it (railActions.meOf(req)) is required');
+  if (!me) throw new Error('moveStatus: who is moving it (railActions.meOf(req)) is required');
 
-      // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
-      // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
-      const _checkDisputes = ['completed', 'cancelled'].includes(new_status)
-        && await schema.hasTable('chit_disputes');
+  // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
+  // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
+  const _checkDisputes = ['completed', 'cancelled'].includes(new_status) && (await schema.hasTable('chit_disputes'));
 
-      const _pre = await withEntity(entity_id, (db) => readThenWriteMove(db, { entity_id, chit_id, new_status, me, note, checkDisputes: _checkDisputes }));
+  const _pre = await withEntity(entity_id, (db) => readThenWriteMove(db, { entity_id, chit_id, new_status, me, note, checkDisputes: _checkDisputes }));
 
-      /* ⭐ the early returns, OUTSIDE the transaction — see the note above on why they are markers */
-      if (_pre.stop === 'missing') {
-        return { code: 404, body: { error: 'Not found', message: 'Chit not found', why: _pre.why } };
+  /* ⭐ the early returns, OUTSIDE the transaction — see the note above on why they are markers */
+  if (_pre.stop === 'missing') {
+    return { code: 404, body: { error: 'Not found', message: 'Chit not found', why: _pre.why } };
+  }
+  /* the hat gate refuses a viewer / commenter before this route runs; the engine says the same if one ever gets here */
+  if (_pre.stop === 'level') {
+    return { code: 403, body: { error: 'Not permitted', message: railActions.WHY[_pre.why], why: _pre.why } };
+  }
+  if (_pre.stop === 'noop') {
+    return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
+  }
+  if (_pre.stop === 'conflict') return { code: 409, body: { error: 'Status changed', code: 'status_conflict', message: _pre.message } };
+  if (_pre.stop === 'reason') {
+    return {
+      code: 400,
+      body: {
+        error: 'Reason required',
+        code: 'reason_required',
+        message: 'Say why you are rejecting this bill — the reason goes on the bill.',
+        why: 'reason_required'
       }
-      /* the hat gate refuses a viewer / commenter before this route runs; the engine says the same if one ever gets here */
-      if (_pre.stop === 'level') {
-        return { code: 403, body: { error: 'Not permitted', message: railActions.WHY[_pre.why], why: _pre.why } };
+    };
+  }
+  if (_pre.stop === 'invalid') {
+    return {
+      code: 400,
+      body: {
+        error: 'Invalid transition',
+        message: `Cannot move from ${_pre.previous_status} to ${new_status}`,
+        allowed_transitions: _pre.allowed,
+        why: _pre.why
       }
-      if (_pre.stop === 'noop') {
-        return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
-      }
-      if (_pre.stop === 'conflict') return { code: 409, body: { error: 'Status changed', code: 'status_conflict', message: _pre.message } };
-      if (_pre.stop === 'reason') {
-        return { code: 400, body: { error: 'Reason required', code: 'reason_required', message: 'Say why you are rejecting this bill — the reason goes on the bill.', why: 'reason_required' } };
-      }
-      if (_pre.stop === 'invalid') {
-        return { code: 400, body: {
-          error: 'Invalid transition',
-          message: `Cannot move from ${_pre.previous_status} to ${new_status}`,
-          allowed_transitions: _pre.allowed,
-          why: _pre.why,
-        } };
-      }
-      const previous_status = _pre.previous_status;
-      /* ⭐ G3 — THE STAMP. `completed` freezes the invoice on MY copy (lib/tax-copy.freezeOnComplete); fails open. */
-      if (new_status === 'completed') { try { await taxCopy.freezeOnComplete(chit_id, entity_id, _pre.copy); } catch (e) { cbLog.fellBack('chits moveStatus: failed — carried on without it', e); } }
-      /**
-       * ⭐⭐ THE BUYER'S ACCEPTANCE REACHES THE LEDGER (Athi, 2026-10-01: "a checking mechanism in the rail to allow it to the
-       * sundry creditor"). A bill I RECEIVED posts as my purchase only once MY copy is accepted / in_progress / completed
-       * (lib/books-hooks buyerGate) — and THIS is the one transition that says so. After the commit, never awaited, never
-       * able to fail the status change; off it is one cached read. Idempotent on the chit (source_ref chit:<id>), so a
-       * second door firing the same acceptance posts nothing twice.
-       */
-      /* FX-F10W2: a rejection / cancellation reaches the books too — it never posts, and the bill's Waiting row closes as "Rejected — not posted" */
-      if (/^(accepted|in_progress|completed|rejected|cancelled)$/.test(new_status)) {
-        try { const hooks = require('../lib/books-hooks'); setImmediate(() => hooks.afterChit(entity_id, chit_id, action_by_id)); }
-        catch (e) { require('../lib/logger').warn('books.hook-not-reached', { entity_id, chit_id, status: new_status, error: String((e && e.message) || e), then: 'the nightly sweep posts or closes it' }); }
-      }
+    };
+  }
+  const previous_status = _pre.previous_status;
+  /* ⭐ G3 — THE STAMP. `completed` freezes the invoice on MY copy (lib/tax-copy.freezeOnComplete); fails open. */
+  if (new_status === 'completed') {
+    try {
+      await taxCopy.freezeOnComplete(chit_id, entity_id, _pre.copy);
+    } catch (e) {
+      cbLog.fellBack('chits moveStatus: failed — carried on without it', e);
+    }
+  }
+  /**
+   * ⭐⭐ THE BUYER'S ACCEPTANCE REACHES THE LEDGER (Athi, 2026-10-01: "a checking mechanism in the rail to allow it to the
+   * sundry creditor"). A bill I RECEIVED posts as my purchase only once MY copy is accepted / in_progress / completed
+   * (lib/books-hooks buyerGate) — and THIS is the one transition that says so. After the commit, never awaited, never
+   * able to fail the status change; off it is one cached read. Idempotent on the chit (source_ref chit:<id>), so a
+   * second door firing the same acceptance posts nothing twice.
+   */
+  /* FX-F10W2: a rejection / cancellation reaches the books too — it never posts, and the bill's Waiting row closes as "Rejected — not posted" */
+  if (/^(accepted|in_progress|completed|rejected|cancelled)$/.test(new_status)) {
+    try {
+      const hooks = require('../lib/books-hooks');
+      setImmediate(() => hooks.afterChit(entity_id, chit_id, action_by_id));
+    } catch (e) {
+      require('../lib/logger').warn('books.hook-not-reached', {
+        entity_id,
+        chit_id,
+        status: new_status,
+        error: String((e && e.message) || e),
+        then: 'the nightly sweep posts or closes it'
+      });
+    }
+  }
 
-      if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
+  if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
 
-      // (chit_status was updated inside the transaction above)
+  // (chit_status was updated inside the transaction above)
 
-      // One log row per participant — a CROSS-entity write, so via the b50 delivery-agent fn chit_log_all
-      // (validated: caller must be a participant). Fallback = the legacy INSERT...SELECT when b50 isn't applied.
-      const detail = (note ||
-        `Status changed from ${previous_status} to ${new_status} by ${action_by_name}`)
-        + (disputeWarning ? ` ⚠ ${disputeWarning}` : '');
+  // One log row per participant — a CROSS-entity write, so via the b50 delivery-agent fn chit_log_all
+  // (validated: caller must be a participant). Fallback = the legacy INSERT...SELECT when b50 isn't applied.
+  const detail = (note || `Status changed from ${previous_status} to ${new_status} by ${action_by_name}`) + (disputeWarning ? ` ⚠ ${disputeWarning}` : '');
 
-      /**
-       * ⭐⭐ A BILL'S STATUS IS THE HOLDER'S OWN STEP (Athi, 2026-10-01: "goods verified and accounted are internal status, not
-       * between two shops"). On a bill copy the change is written ONCE, as a bill_step at the level of the folder that owns it
-       * (B-2100 for a bill I received, B-1300 for one I issued — internal by default, never external): my history only, or
-       * nothing. It is no longer fanned into the other shop's timeline, feed or bell. Every other chit logs as it always did.
-       */
-      const _hrow = (_pre.header && _pre.header.rows && _pre.header.rows[0]) || null;
-      if (_hrow && billPrivacy.isBill(_hrow, entity_id)) {
-        try {
-          await billPrivacy.writeStep(entity_id, chit_id, { code: billPrivacy.ownerCode(_hrow, entity_id), step: new_status,
-            label: billPrivacy.STATUS_LABEL[new_status] || new_status, note: note || undefined }, { id: action_by_id, name: action_by_name });
-        } catch (e) { console.error('bill step (status) not written:', e.message); }
-      } else
-      await crossing(entity_id,
-        `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-        [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail],
-        (db) => db.query(
+  /**
+   * ⭐⭐ A BILL'S STATUS IS THE HOLDER'S OWN STEP (Athi, 2026-10-01: "goods verified and accounted are internal status, not
+   * between two shops"). On a bill copy the change is written ONCE, as a bill_step at the level of the folder that owns it
+   * (B-2100 for a bill I received, B-1300 for one I issued — internal by default, never external): my history only, or
+   * nothing. It is no longer fanned into the other shop's timeline, feed or bell. Every other chit logs as it always did.
+   */
+  const _hrow = (_pre.header && _pre.header.rows && _pre.header.rows[0]) || null;
+  if (_hrow && billPrivacy.isBill(_hrow, entity_id)) {
+    try {
+      await billPrivacy.writeStep(
+        entity_id,
+        chit_id,
+        { code: billPrivacy.ownerCode(_hrow, entity_id), step: new_status, label: billPrivacy.STATUS_LABEL[new_status] || new_status, note: note || undefined },
+        { id: action_by_id, name: action_by_name }
+      );
+    } catch (e) {
+      console.error('bill step (status) not written:', e.message);
+    }
+  } else
+    await crossing(
+      entity_id,
+      `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
+      [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail],
+      (db) =>
+        db.query(
           `INSERT INTO state_log
            (chit_id, entity_id, action, action_by_identity_id,
             action_by_display_name, previous_status, new_status, detail)
            SELECT $1, entity_id, $2, $3, $4, $5, $6, $7
            FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1) cs`,
-          [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail]));
+          [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail]
+        )
+    );
 
-      // The header came back with the same transaction, above — read to check sender and propagate a cancel.
-      const header = _pre.header;
+  // The header came back with the same transaction, above — read to check sender and propagate a cancel.
+  const header = _pre.header;
 
-      const isSender = header.rows.length > 0 &&
-                       header.rows[0].sender_entity_id === entity_id;
+  const isSender = header.rows.length > 0 && header.rows[0].sender_entity_id === entity_id;
 
-      // Sender cancel = a REQUEST, never a cross-entity write (Athi): the sender cancels ITS OWN copy and delivers a
-      // flagged "[cancel requested]" message to the recipients; each recipient cancels its own copy at its own will.
-      if (isSender && new_status === 'cancelled') booksOnCancel = await cancelSentCopy(entity_id, chit_id, me, note, by);
+  // Sender cancel = a REQUEST, never a cross-entity write (Athi): the sender cancels ITS OWN copy and delivers a
+  // flagged "[cancel requested]" message to the recipients; each recipient cancels its own copy at its own will.
+  if (isSender && new_status === 'cancelled') booksOnCancel = await cancelSentCopy(entity_id, chit_id, me, note, by);
 
-      /**
-       * ⭐⭐ THE RETURN LEG (b197) — Athi, 2026-09-02: *"on cancelling the requester should be notified as well
-       * and his flag to set as cancelled, change from cancel requested to cancelled in the order copy as well."*
-       *
-       * A withdrawal without this is a request with no reply: the sender could see that they had ASKED and never
-       * that anyone AGREED. b195 answers "somebody asked me"; this answers the opposite question, which is the
-       * one the person who withdrew is actually holding.
-       *
-       * ⚠️ ONLY WHEN THIS COPY WAS ACTUALLY ASKED. A recipient may cancel for their own reasons and that is not a
-       * reply to anything — reporting it to the sender as a confirmation would credit them with an agreement
-       * nobody made. `cancel_requested_at` being set is what makes this an answer rather than a coincidence.
-       *
-       * ⚠️ WITHIN THE SENDER'S CONTEXT, NOT A NULL ONE. The b49 policy is `entity_id = NULLIF(current_setting(…),
-       * '')::uuid`, so a null context matches NOTHING and the UPDATE would write nowhere, silently — the exact
-       * mistake b195 shipped with, caught only by the end-to-end spec.
-       */
-      if (!isSender && new_status === 'cancelled') {
-        try {
-          if (await schema.hasColumn('chit_status', 'cancel_confirmed_at')) {
-            const senderId = header.rows.length ? header.rows[0].sender_entity_id : null;
-            const asked = await withEntity(entity_id, (db) => db.query(
-              `SELECT cancel_requested_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
-              [chit_id, entity_id]));
-            const wasAsked = !!(asked.rows[0] && asked.rows[0].cancel_requested_at);
-            if (senderId && senderId !== entity_id && wasAsked) {
-              await withEntity(senderId, (db) => db.query(
-                `UPDATE chit_status
+  /**
+   * ⭐⭐ THE RETURN LEG (b197) — Athi, 2026-09-02: *"on cancelling the requester should be notified as well
+   * and his flag to set as cancelled, change from cancel requested to cancelled in the order copy as well."*
+   *
+   * A withdrawal without this is a request with no reply: the sender could see that they had ASKED and never
+   * that anyone AGREED. b195 answers "somebody asked me"; this answers the opposite question, which is the
+   * one the person who withdrew is actually holding.
+   *
+   * ⚠️ ONLY WHEN THIS COPY WAS ACTUALLY ASKED. A recipient may cancel for their own reasons and that is not a
+   * reply to anything — reporting it to the sender as a confirmation would credit them with an agreement
+   * nobody made. `cancel_requested_at` being set is what makes this an answer rather than a coincidence.
+   *
+   * ⚠️ WITHIN THE SENDER'S CONTEXT, NOT A NULL ONE. The b49 policy is `entity_id = NULLIF(current_setting(…),
+   * '')::uuid`, so a null context matches NOTHING and the UPDATE would write nowhere, silently — the exact
+   * mistake b195 shipped with, caught only by the end-to-end spec.
+   */
+  if (!isSender && new_status === 'cancelled') {
+    try {
+      if (await schema.hasColumn('chit_status', 'cancel_confirmed_at')) {
+        const senderId = header.rows.length ? header.rows[0].sender_entity_id : null;
+        const asked = await withEntity(entity_id, (db) =>
+          db.query(`SELECT cancel_requested_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
+        );
+        const wasAsked = !!(asked.rows[0] && asked.rows[0].cancel_requested_at);
+        if (senderId && senderId !== entity_id && wasAsked) {
+          await withEntity(senderId, (db) =>
+            db.query(
+              `UPDATE chit_status
                     SET cancel_confirmed_at = NOW(), cancel_confirmed_by = $2
                   WHERE chit_id = $1 AND entity_id = $3`,
-                [chit_id, action_by_name, senderId]));
-              await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: action_by_name,
-                thread_type: 'external', msg_type: 'action',
-                message_text: `[cancel confirmed] ${action_by_name} has cancelled their copy.` });
-            }
-          }
-        } catch (e) { console.error('cancel confirm:', e.message); }
+              [chit_id, action_by_name, senderId]
+            )
+          );
+          await postMessageCopies({
+            chit_id,
+            sender_entity_id: entity_id,
+            sender_display_name: action_by_name,
+            thread_type: 'external',
+            msg_type: 'action',
+            message_text: `[cancel confirmed] ${action_by_name} has cancelled their copy.`
+          });
+        }
       }
+    } catch (e) {
+      console.error('cancel confirm:', e.message);
+    }
+  }
 
-      return { code: 200, moved: true, body: {
-        message: `Chit ${new_status}`,
-        warning: disputeWarning,   // C1: set when a disputed chit was closed anyway (UI shows who + that it was open)
-        chit_id,
-        previous_status,
-        new_status,
-        ...(booksOnCancel ? { books: booksOnCancel } : {})       // H3 (only when the cancel touched the books — every other move answers as it always did): the reversal the cancel posted (entry_no · reverses), { none } when nothing was posted, { refused } in words
-      } };
+  return {
+    code: 200,
+    moved: true,
+    body: {
+      message: `Chit ${new_status}`,
+      warning: disputeWarning, // C1: set when a disputed chit was closed anyway (UI shows who + that it was open)
+      chit_id,
+      previous_status,
+      new_status,
+      ...(booksOnCancel ? { books: booksOnCancel } : {}) // H3 (only when the cancel touched the books — every other move answers as it always did): the reversal the cancel posted (entry_no · reverses), { none } when nothing was posted, { refused } in words
+    }
+  };
 }
 
-router.put('/:chit_id/status',
+router.put(
+  '/:chit_id/status',
   [
     body('status')
       .trim()
-      .isIn(railActions.ASKABLE)   /* W2-RAIL R2: every transition target of the engine's table — delivered · read are the system's alone */
+      .isIn(railActions.ASKABLE) /* W2-RAIL R2: every transition target of the engine's table — delivered · read are the system's alone */
       .withMessage('Invalid status'),
-    body('note').optional().trim().isLength({ max: 500 }),
+    body('note').optional().trim().isLength({ max: 500 })
   ],
   auth,
   validate,
   async (req, res) => {
     try {
-      const chit_id      = req.params.chit_id;
+      const chit_id = req.params.chit_id;
       // entity_id   = participant entity context (parent for actors, self for entities)
       // action_by_* = whoever is performing — entity admin or actor, never remapped
-      const entity_id    = entityId(req);
-      const action_by_id   = req.identity.identity_id;
+      const entity_id = entityId(req);
+      const action_by_id = req.identity.identity_id;
       const action_by_name = req.identity.display_name;
       const new_status = req.body.status;
       const note = sanitise(req.body.note || '');
@@ -4078,8 +5042,12 @@ router.put('/:chit_id/status',
         require('../lib/whatsapp-out')
           .notifyChitStatus(entity_id, chit_id, new_status, null)
           .catch(cbLog.orElse('status changed, but the WhatsApp reply was not sent — the customer was not told'));
-      } catch (e) { cbLog.fellBack('status changed, but the WhatsApp reply could not start — the customer was not told', e); /* outbound is never allowed to affect the status change */ }
-
+      } catch (e) {
+        cbLog.fellBack(
+          'status changed, but the WhatsApp reply could not start — the customer was not told',
+          e
+        ); /* outbound is never allowed to affect the status change */
+      }
     } catch (err) {
       console.error('Update status error:', err.message);
       res.status(500).json({ error: 'Update failed', message: safeErr(err) });
@@ -4103,42 +5071,51 @@ async function postMessageCopies(msg, db) {
   // passed, establish withEntity(sender) here (all callers pass sender = their authenticated entity_id).
   /* b155 — a message may name the LINE it is about. The audience is decided by the 9-arg form exactly as before;
      the 10-arg form only stamps line_id onto the copies it created, so this cannot widen who sees anything. */
-  const args = [message_id, msg.chit_id, msg.sender_entity_id, msg.sender_display_name || null,
-                msg.thread_type, msg.message_text, msg.msg_type || 'info', !!msg.is_dispute, msg.dispute_id || null];
-  const call = (runner) => runner(
-    `SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS created_at`, args.concat([msg.line_id || null]));
+  const args = [
+    message_id,
+    msg.chit_id,
+    msg.sender_entity_id,
+    msg.sender_display_name || null,
+    msg.thread_type,
+    msg.message_text,
+    msg.msg_type || 'info',
+    !!msg.is_dispute,
+    msg.dispute_id || null
+  ];
+  const call = (runner) => runner(`SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS created_at`, args.concat([msg.line_id || null]));
   /* ⚠️ FALL BACK TO THE 9-ARG FORM ONLY WHEN NO LINE WAS NAMED. Code ships before the migration by standing
      order, so between this deploy and b155 the 10-arg function does not exist (42883). Retrying without it is
      right for a chit-level message and WRONG for a line-scoped one — that would post the message to the thread
      while silently losing which line it was about, which is worse than refusing it. */
   const run = async (q) => {
-    try { return await call(q); }
-    catch (e) {
+    try {
+      return await call(q);
+    } catch (e) {
       if (e && e.code === '42883' && !msg.line_id) {
         return q(`SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9) AS created_at`, args);
       }
       throw e;
     }
   };
-  const r = db ? await run((t, p) => db.query(t, p))
-              : await withEntity(msg.sender_entity_id, (c) => run((t, p) => c.query(t, p)));
+  const r = db ? await run((t, p) => db.query(t, p)) : await withEntity(msg.sender_entity_id, (c) => run((t, p) => c.query(t, p)));
   return { message_id, created_at: r.rows[0] && r.rows[0].created_at };
 }
 
-router.post('/:chit_id/messages',
+router.post(
+  '/:chit_id/messages',
   [
     body('message_text').trim().notEmpty().withMessage('Message text required'),
-    body('thread_type').isIn(['external','internal']).withMessage('thread_type must be external or internal'),
+    body('thread_type').isIn(['external', 'internal']).withMessage('thread_type must be external or internal'),
     body('is_dispute').optional().isBoolean(),
-    body('dispute_id').optional({ nullable:true }).isUUID(),
-    body('line_id').optional({ nullable:true }).isUUID(),
+    body('dispute_id').optional({ nullable: true }).isUUID(),
+    body('line_id').optional({ nullable: true }).isUUID()
   ],
   auth,
   validate,
   async (req, res) => {
-    const { chit_id }  = req.params;
+    const { chit_id } = req.params;
     const { message_text, thread_type } = req.body;
-    const entity_id    = entityId(req);
+    const entity_id = entityId(req);
     const display_name = req.identity.display_name;
 
     /**
@@ -4163,23 +5140,23 @@ router.post('/:chit_id/messages',
        The words below are the ones this route always said; the engine's refusal word rides along as `why`. */
     const _me = railActions.meOf(req);
     const _act = thread_type === 'external' ? 'message_external' : 'message_internal';
-    const _lvl = railActions.can({ held: true }, _me, _act);   // the copy is not read yet — this verdict is the level's alone
+    const _lvl = railActions.can({ held: true }, _me, _act); // the copy is not read yet — this verdict is the level's alone
     if (!_lvl.ok) {
       return railActions.refuse(res, _lvl, 403, {
         error: 'Not permitted',
-        message: _lvl.why === 'read_only'
-          ? 'Your access is view-only. You can read this conversation but not post to it.'
-          : 'Your access is comment-only. You can reply internally, but not to the other party.',
-        access_level: _me.level,
+        message:
+          _lvl.why === 'read_only'
+            ? 'Your access is view-only. You can read this conversation but not post to it.'
+            : 'Your access is comment-only. You can reply internally, but not to the other party.',
+        access_level: _me.level
       });
     }
 
     try {
       // B1 RLS: participant access check on own copy -> withEntity(me).
-      const held = await withEntity(entity_id, (db) => db.query(
-        `SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      ));
+      const held = await withEntity(entity_id, (db) =>
+        db.query(`SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
+      );
       const _v = railActions.can({ held: held.rows.length > 0 }, _me, _act);
       if (!_v.ok) {
         return railActions.refuse(res, _v, 403, { error: 'Forbidden', message: 'Not a participant on this chit' });
@@ -4197,8 +5174,9 @@ router.post('/:chit_id/messages',
          chit, so it keeps the plain-external audience. null = not a roster-scoped message (plain external, or chit_wide). */
       let disputeRoster = null;
       if (isDispute && disputeId) {
-        const party = await withEntity(entity_id, (db) => db.query(
-          `SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id]));
+        const party = await withEntity(entity_id, (db) =>
+          db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id])
+        );
         if (party.rows.length === 0) {
           return res.status(403).json({ error: 'Forbidden', message: 'Not a party to this dispute' });
         }
@@ -4207,27 +5185,40 @@ router.post('/:chit_id/messages',
           disputeRoster = [entity_id];
           try {
             const rr = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [disputeId]));
-            disputeRoster = [...new Set([entity_id].concat(rr.rows.map((r) => String(r.entity_id))))];
-          } catch (e) { cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* keep [me] */ }
+            disputeRoster = [...new Set([entity_id].concat(rr.rows.map((item) => String(item.entity_id))))];
+          } catch (e) {
+            cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* keep [me] */
+          }
         }
       }
       // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
       let senderName = display_name;
       if (isDispute && req.identity.parent_entity_id) {
-        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(cbLog.orElse('chits POST /:chit_id/messages: the read failed — answered with none', ({ rows: [] })));
+        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
+          cbLog.orElse('chits POST /:chit_id/messages: the read failed — answered with none', { rows: [] })
+        );
         if (_e.rows[0] && _e.rows[0].display_name) senderName = _e.rows[0].display_name;
       }
 
       // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
-      const result = await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: senderName,
-        thread_type, message_text, msg_type: req.body.msg_type, is_dispute: isDispute, dispute_id: disputeId,
-        line_id: req.body.line_id || null });
+      const result = await postMessageCopies({
+        chit_id,
+        sender_entity_id: entity_id,
+        sender_display_name: senderName,
+        thread_type,
+        message_text,
+        msg_type: req.body.msg_type,
+        is_dispute: isDispute,
+        dispute_id: disputeId,
+        line_id: req.body.line_id || null
+      });
 
       // Log external messages into every participant's timeline — a CROSS-entity write, via chit_log_all
       // (validated: caller must be a participant). Fallback = the legacy per-participant loop when b50 isn't applied.
       if (thread_type === 'external' && disputeRoster) {
         // a dispute reply: the roster only (chit_log_targets, validated like the dispute raise/resolve notices)
-        await crossing(entity_id,
+        await crossing(
+          entity_id,
           `SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`,
           [chit_id, disputeRoster, 'message_sent', entity_id, display_name, message_text.slice(0, 100)],
           async (db) => {
@@ -4235,24 +5226,28 @@ router.post('/:chit_id/messages',
               await db.query(
                 `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
                  VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-                [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]);
+                [chit_id, pid, entity_id, display_name, message_text.slice(0, 100)]
+              );
             }
-          });
+          }
+        );
       } else if (thread_type === 'external') {
-        await crossing(entity_id,
+        await crossing(
+          entity_id,
           `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
           [chit_id, 'message_sent', entity_id, display_name, null, null, message_text.slice(0, 100)],
           async (db) => {
             // DISTINCT entity: a self-chit has two copies under one entity — log once per entity, not per copy.
-            const participants = await db.query(
-              `SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
+            const participants = await db.query(`SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1`, [chit_id]);
             for (const p of participants.rows) {
               await db.query(
                 `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
                  VALUES ($1, $2, 'message_sent', $3, $4, $5)`,
-                [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]);
+                [chit_id, p.entity_id, entity_id, display_name, message_text.slice(0, 100)]
+              );
             }
-          });
+          }
+        );
       }
 
       /* ⭐ THE BELL, for the people on the other side of an EXTERNAL message (CB CRM — a reply lands on the party's timeline and the
@@ -4260,21 +5255,25 @@ router.post('/:chit_id/messages',
          answer: a push that cannot be sent never fails the message. kind · id · who — nothing of the text rides it (lib/events). */
       if (thread_type === 'external') {
         try {
-          const aud = await withEntity(entity_id, (db) => db.query(
-            `SELECT sender_entity_id, all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]));
+          const aud = await withEntity(entity_id, (db) =>
+            db.query(`SELECT sender_entity_id, all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id])
+          );
           const h = aud.rows[0] || {};
-          const others = (disputeRoster || [h.sender_entity_id].concat((Array.isArray(h.all_recipients) ? h.all_recipients : []).map((x) => x && x.entity_id)))
-            .filter((x) => x && String(x) !== String(entity_id));
+          const others = (
+            disputeRoster || [h.sender_entity_id].concat((Array.isArray(h.all_recipients) ? h.all_recipients : []).map((x) => x && x.entity_id))
+          ).filter((x) => x && String(x) !== String(entity_id));
           if (others.length) require('../lib/events').notifyAfter(res, others, { kind: 'message', id: chit_id, who: display_name || null });
-        } catch (e) { cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* the message is sent; only the push is lost */ }
+        } catch (e) {
+          cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* the message is sent; only the push is lost */
+        }
       }
 
       res.json({
-        message_id:           result.message_id,
+        message_id: result.message_id,
         thread_type,
         message_text,
-        sender_display_name:  display_name,
-        created_at:           result.created_at,
+        sender_display_name: display_name,
+        created_at: result.created_at
       });
     } catch (err) {
       console.error('Send message error:', err.message);
@@ -4286,8 +5285,8 @@ router.post('/:chit_id/messages',
 // ─── GET /chits/:chit_id/messages ────────────────────────────
 // thread_type query: 'all' | 'external' | 'internal'
 router.get('/:chit_id/messages', auth, async (req, res) => {
-  const { chit_id }   = req.params;
-  const entity_id     = entityId(req);
+  const { chit_id } = req.params;
+  const entity_id = entityId(req);
   const thread_filter = req.query.thread_type || 'all';
 
   try {
@@ -4296,9 +5295,9 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
     // cross-entity visibility logic is gone; the filter is just by thread_type on my own rows.
     const result = await withEntity(entity_id, async (db) => {
       const access = await db.query(`SELECT 1 FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
-      if (access.rows.length === 0) return null;   // not a participant
+      if (access.rows.length === 0) return null; // not a participant
       let cond = '';
-      if (thread_filter === 'internal')      cond = ` AND COALESCE(is_dispute,false)=false AND thread_type='internal'`;
+      if (thread_filter === 'internal') cond = ` AND COALESCE(is_dispute,false)=false AND thread_type='internal'`;
       else if (thread_filter === 'external') cond = ` AND ((COALESCE(is_dispute,false)=false AND thread_type='external') OR is_dispute=true)`;
       if (req.query.dispute === '1' || req.query.dispute === 'true') cond += ` AND is_dispute = true`;
       /* b155 — one line's thread. Read through to_jsonb so the column may not exist yet: naming line_id directly
@@ -4307,16 +5306,23 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
       /* ⚠️ THE PLACEHOLDER IS "$" + THE INDEX. Written through a shell the dollar was eaten, leaving
          `= 2` — a uuid compared against the integer two, which matches nothing and returns an empty thread
          rather than an error. A filter that silently finds nothing looks exactly like "there are no notes". */
-      if (req.query.line_id) { params.push(req.query.line_id); cond += ` AND to_jsonb(chit_messages)->>'line_id' = $` + params.length; }
+      if (req.query.line_id) {
+        params.push(req.query.line_id);
+        cond += ` AND to_jsonb(chit_messages)->>'line_id' = $` + params.length;
+      }
       return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, params);
     });
     if (result === null) return res.status(403).json({ error: 'Forbidden' });
 
-    const msgIds = result.rows.map(m => m.message_id).filter(Boolean);
-    const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', []));   // per-entity: caller's own copies
+    const msgIds = result.rows.map((item) => item.message_id).filter(Boolean);
+    const atts = await storage.listForMessages(msgIds, entity_id).catch(cbLog.orElse('chits GET /:chit_id/messages: failed — answered with none', [])); // per-entity: caller's own copies
     const byMsg = {};
-    for (const a of atts) { (byMsg[a.message_id] = byMsg[a.message_id] || []).push(a); }
-    for (const m of result.rows) { m.attachments = byMsg[m.message_id] || []; }
+    for (const a of atts) {
+      (byMsg[a.message_id] = byMsg[a.message_id] || []).push(a);
+    }
+    for (const m of result.rows) {
+      m.attachments = byMsg[m.message_id] || [];
+    }
     res.json(Object.assign({ count: result.rows.length }, PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
     console.error('Get messages error:', err.message);
@@ -4328,28 +5334,30 @@ router.get('/:chit_id/messages', auth, async (req, res) => {
 // ─── B3.10 — targeted + erasure-aware dispute helpers ────────
 // integrity-critical categories whose audience the platform widens by obligation (opt-in via env)
 const WIDEN_CATEGORIES = (process.env.CB_DISPUTE_WIDEN_CATEGORIES || '')
-  .split(',').map(s => s.trim()).filter(Boolean);
+  .split(',')
+  .map((item) => item.trim())
+  .filter(Boolean);
 
 async function probeParity(chit_id, target_entity_id, caller_entity_id) {
   if (!target_entity_id) return { parity_state: null, mode: 'two_sided', answerable: true, target_display_name: null };
   const idn = await query(`SELECT display_name, status, is_erased FROM identities WHERE identity_id=$1`, [target_entity_id]);
-  if (idn.rows.length === 0) return { parity_state:'absent', mode:'one_sided', answerable:false, target_display_name:'[unknown]' };
+  if (idn.rows.length === 0) return { parity_state: 'absent', mode: 'one_sided', answerable: false, target_display_name: '[unknown]' };
   const t = idn.rows[0];
-  if (t.is_erased)            return { parity_state:'erased', mode:'one_sided', answerable:false, target_display_name:'[erased]' };
-  if (t.status !== 'active')  return { parity_state:'defunct', mode:'one_sided', answerable:false, target_display_name:t.display_name };
+  if (t.is_erased) return { parity_state: 'erased', mode: 'one_sided', answerable: false, target_display_name: '[erased]' };
+  if (t.status !== 'active') return { parity_state: 'defunct', mode: 'one_sided', answerable: false, target_display_name: t.display_name };
   // Cross-entity read of the counterparty's copy -> b52 chit_participant_parity (validated participant);
   // fallback to the legacy direct read pre-b52. Same row-presence semantics either way.
-  const cs = await crossing(caller_entity_id,
-    `SELECT * FROM chit_participant_parity($1,$2)`, [chit_id, target_entity_id],
-    (db) => db.query(`SELECT deleted_at FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, target_entity_id]));
-  if (cs.rows.length === 0)   return { parity_state:'absent', mode:'one_sided', answerable:false, target_display_name:t.display_name };
-  if (cs.rows[0].deleted_at)  return { parity_state:'archived', mode:'two_sided', answerable:true, target_display_name:t.display_name };
-  return { parity_state:'present', mode:'two_sided', answerable:true, target_display_name:t.display_name };
+  const cs = await crossing(caller_entity_id, `SELECT * FROM chit_participant_parity($1,$2)`, [chit_id, target_entity_id], (db) =>
+    db.query(`SELECT deleted_at FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, target_entity_id])
+  );
+  if (cs.rows.length === 0) return { parity_state: 'absent', mode: 'one_sided', answerable: false, target_display_name: t.display_name };
+  if (cs.rows[0].deleted_at) return { parity_state: 'archived', mode: 'two_sided', answerable: true, target_display_name: t.display_name };
+  return { parity_state: 'present', mode: 'two_sided', answerable: true, target_display_name: t.display_name };
 }
 
 /** the businesses a dispute names: the checklist, else the single target of a targeted dispute */
 function askedPartyIds(checklist, targetId) {
-  return checklist.length ? [...new Set(checklist)] : (targetId ? [targetId] : []);
+  return checklist.length ? [...new Set(checklist)] : targetId ? [targetId] : [];
 }
 
 /** SEC-FIX3 S4 — which of these entity ids HOLD a copy of the chit (chit_participants, callable by a holder only); a stranger gets no copy, no reason text */
@@ -4361,77 +5369,94 @@ async function holdersAmong(callerEntity, chit_id, ids) {
 }
 
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
-router.post('/:chit_id/disputes',
+router.post(
+  '/:chit_id/disputes',
   [
-    body('category').isIn(['quality','quantity','delivery','payment','docs','other']).withMessage('Invalid category'),
+    body('category').isIn(['quality', 'quantity', 'delivery', 'payment', 'docs', 'other']).withMessage('Invalid category'),
     body('reason').trim().isLength({ min: 10 }).withMessage('Reason must be at least 10 characters'),
-    body('target_entity_id').optional({ nullable:true }).isUUID().withMessage('Bad target'),
+    body('target_entity_id').optional({ nullable: true }).isUUID().withMessage('Bad target'),
     body('participant_entity_ids').optional().isArray().withMessage('participant_entity_ids must be an array'),
     body('chit_wide').optional().isBoolean(),
-    body('via').optional().isIn(['chit','mailbox']),
+    body('via').optional().isIn(['chit', 'mailbox'])
   ],
   auth,
   validate,
   async (req, res) => {
     const { chit_id } = req.params;
     const { category, reason, target_entity_id = null, chit_wide = false, via = 'chit' } = req.body;
-    const entity_id    = entityId(req);
+    const entity_id = entityId(req);
     const display_name = req.identity.display_name;
     try {
       // 1. raiser must be a participant
-      const access = await withEntity(entity_id, (db) => db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]));
-      if (access.rows.length === 0) return res.status(403).json({ error:'Not a participant' });
+      const access = await withEntity(entity_id, (db) =>
+        db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id])
+      );
+      if (access.rows.length === 0) return res.status(403).json({ error: 'Not a participant' });
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
       const _cs = access.rows[0].current_status;
-      const closedWarning = (_cs === 'completed' || _cs === 'cancelled')
-        ? `This chit is already ${_cs} — the dispute is raised anyway. Bring it back to Act if it needs work.`
-        : null;
+      const closedWarning =
+        _cs === 'completed' || _cs === 'cancelled'
+          ? `This chit is already ${_cs} — the dispute is raised anyway. Bring it back to Act if it needs work.`
+          : null;
       // B3 (Athi): dispute records + messages carry the ENTITY's name; the acting actor stays as provenance in the timeline.
       let entityName = display_name;
       if (req.identity.parent_entity_id) {
-        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(cbLog.orElse('chits POST /:chit_id/disputes: the read failed — answered with none', ({ rows: [] })));
+        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
+          cbLog.orElse('chits POST /:chit_id/disputes: the read failed — answered with none', { rows: [] })
+        );
         if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name;
       }
 
       // 2. can't target yourself
       if (target_entity_id && target_entity_id === entity_id)
-        return res.status(400).json({ error:'Invalid target', message:'You cannot raise a dispute against yourself' });
+        return res.status(400).json({ error: 'Invalid target', message: 'You cannot raise a dispute against yourself' });
 
       // 3. decide scope + probe parity → mode
       // D4: an explicit party checklist means a TARGETED dispute (only those parties see it), even when no
       // single target_entity_id is given. Only fall through to chit_wide when NO parties were selected.
-      const selParties = Array.isArray(req.body.participant_entity_ids)
-        ? req.body.participant_entity_ids.filter(x => x && x !== entity_id) : [];
-      let scope = chit_wide ? 'chit_wide' : ((target_entity_id || selParties.length) ? 'targeted' : 'chit_wide');
-      const parity = await probeParity(chit_id, scope === 'targeted' ? (target_entity_id || null) : null, entity_id);
+      const selParties = Array.isArray(req.body.participant_entity_ids) ? req.body.participant_entity_ids.filter((x) => x && x !== entity_id) : [];
+      let scope = chit_wide ? 'chit_wide' : target_entity_id || selParties.length ? 'targeted' : 'chit_wide';
+      const parity = await probeParity(chit_id, scope === 'targeted' ? target_entity_id || null : null, entity_id);
 
       // 4. platform widen by obligation
       let widened = false;
-      if (scope === 'targeted' && WIDEN_CATEGORIES.includes(category)) { scope = 'chit_wide'; widened = true; }
+      if (scope === 'targeted' && WIDEN_CATEGORIES.includes(category)) {
+        scope = 'chit_wide';
+        widened = true;
+      }
 
       // 5. duplicate guard (raiser + category + same target + open) — per-copy: read the raiser's OWN dispute copies.
-      const dup = await withEntity(entity_id, (db) => db.query(
-        `SELECT dispute_id FROM chit_disputes
+      const dup = await withEntity(entity_id, (db) =>
+        db.query(
+          `SELECT dispute_id FROM chit_disputes
           WHERE chit_id=$1 AND raised_by_entity_id=$2 AND status='open' AND category=$3
             AND COALESCE(target_entity_id::text,'') = COALESCE($4::text,'')`,
-        [chit_id, entity_id, category, scope === 'targeted' ? target_entity_id : null]));
-      if (dup.rows.length) return res.status(400).json({ error:'Dispute exists', message:`You already have an open ${category} dispute here` });
+          [chit_id, entity_id, category, scope === 'targeted' ? target_entity_id : null]
+        )
+      );
+      if (dup.rows.length) return res.status(400).json({ error: 'Dispute exists', message: `You already have an open ${category} dispute here` });
 
       // 5b. D4 — resolve the involved parties (multi-select checklist). Falls back to the single
       //     target for back-compat. Raiser + parties form the roster; each party carries its own status.
       const partyIds = await holdersAmong(entity_id, chit_id, askedPartyIds(selParties, scope === 'targeted' ? target_entity_id : null));
-      let partyNames = {};
+      const partyNames = {};
       if (partyIds.length) {
         const nm = await query(`SELECT identity_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [partyIds]);
-        nm.rows.forEach(r => { partyNames[r.identity_id] = r.display_name; });
+        nm.rows.forEach((item) => {
+          partyNames[item.identity_id] = item.display_name;
+        });
       }
 
       // 6. evidence snapshot — "forward your chit" (survives counterparty erasure)
-      const snap = await withEntity(entity_id, (db) => db.query(
-        `SELECT ch.auto_subject, ch.summary_json, cs.current_status AS my_status
+      const snap = await withEntity(entity_id, (db) =>
+        db.query(
+          `SELECT ch.auto_subject, ch.summary_json, cs.current_status AS my_status
            FROM chit_header ch JOIN chit_status cs ON cs.chit_id=ch.chit_id AND cs.entity_id=$2
-          WHERE ch.chit_id=$1`, [chit_id, entity_id]));
+          WHERE ch.chit_id=$1`,
+          [chit_id, entity_id]
+        )
+      );
       const evidence = { ...(snap.rows[0] || {}), captured_at: new Date().toISOString(), via };
 
       // 7 + 8. insert dispute + timeline atomically (INV-2). Post-b68 chit_disputes IS per-copy + FORCE-RLS, so the
@@ -4441,26 +5466,44 @@ router.post('/:chit_id/disputes',
       // b68 — per-entity dispute copies. Build the roster snapshot + audience (raiser + parties); the definer
       // replicates one chit_disputes copy per participant (bypasses FORCE-RLS as owner). dispute_participants retired.
       const dispute_id = uuidv4();
-      const roster = [{ entity_id, display_name: entityName, role: 'raiser' }]
-        .concat(partyIds.map(pid => ({ entity_id: pid, display_name: partyNames[pid] || null, role: 'party' })));
+      const roster = [{ entity_id, display_name: entityName, role: 'raiser' }].concat(
+        partyIds.map((pid) => ({ entity_id: pid, display_name: partyNames[pid] || null, role: 'party' }))
+      );
       const audience = [...new Set([entity_id, ...partyIds])];
       await withEntity(entity_id, async (client) => {
-        await client.query(
-          `SELECT chit_dispute_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::uuid[])`,
-          [dispute_id, chit_id, entity_id, entityName,
-           scope === 'targeted' ? target_entity_id : null,
-           scope === 'targeted' ? parity.target_display_name : null,
-           scope, parity.mode, parity.answerable, parity.parity_state, via, category, reason,
-           JSON.stringify(evidence), JSON.stringify(roster), audience]);
+        await client.query(`SELECT chit_dispute_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::uuid[])`, [
+          dispute_id,
+          chit_id,
+          entity_id,
+          entityName,
+          scope === 'targeted' ? target_entity_id : null,
+          scope === 'targeted' ? parity.target_display_name : null,
+          scope,
+          parity.mode,
+          parity.answerable,
+          parity.parity_state,
+          via,
+          category,
+          reason,
+          JSON.stringify(evidence),
+          JSON.stringify(roster),
+          audience
+        ]);
         // raiser's own timeline
         await client.query(
           `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
            VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-          [chit_id, entity_id, entity_id, display_name,
-           `Dispute raised — ${category} (${parity.mode === 'one_sided' ? 'record-only' : scope}): ${reason.slice(0,80)}`]);
+          [
+            chit_id,
+            entity_id,
+            entity_id,
+            display_name,
+            `Dispute raised — ${category} (${parity.mode === 'one_sided' ? 'record-only' : scope}): ${reason.slice(0, 80)}`
+          ]
+        );
         // per-party timeline notices — CROSS write into each party's own state_log copy
         if (partyIds.length) {
-          const notice = `Dispute raised against you — ${category}: ${reason.slice(0,80)}`;
+          const notice = `Dispute raised against you — ${category}: ${reason.slice(0, 80)}`;
           if (ready) {
             await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [chit_id, partyIds, 'dispute_raised', entity_id, display_name, notice]);
           } else {
@@ -4468,33 +5511,60 @@ router.post('/:chit_id/disputes',
               await client.query(
                 `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
                  VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-                [chit_id, pid, entity_id, display_name, notice]);
+                [chit_id, pid, entity_id, display_name, notice]
+              );
             }
           }
         }
         // the dispute REASON as a per-copy dispute message (roster-scoped via chit_message_deliver)
-        await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: entityName,
-          thread_type: 'external', message_text: `[${category}] ${reason}`, is_dispute: true, dispute_id }, client);
+        await postMessageCopies(
+          {
+            chit_id,
+            sender_entity_id: entity_id,
+            sender_display_name: entityName,
+            thread_type: 'external',
+            message_text: `[${category}] ${reason}`,
+            is_dispute: true,
+            dispute_id
+          },
+          client
+        );
       });
-      const d = { dispute_id, mode: parity.mode, answerable: parity.answerable, parity_state: parity.parity_state,
-        target_display_name: scope === 'targeted' ? parity.target_display_name : null };
+      const d = {
+        dispute_id,
+        mode: parity.mode,
+        answerable: parity.answerable,
+        parity_state: parity.parity_state,
+        target_display_name: scope === 'targeted' ? parity.target_display_name : null
+      };
       res.json({
-        dispute_id: d.dispute_id, category, reason, status:'open',
-        warning: closedWarning,   // C2: set when raised on an already-closed chit
-        scope, mode: d.mode, answerable: d.answerable, parity_state: d.parity_state,
+        dispute_id: d.dispute_id,
+        category,
+        reason,
+        status: 'open',
+        warning: closedWarning, // C2: set when raised on an already-closed chit
+        scope,
+        mode: d.mode,
+        answerable: d.answerable,
+        parity_state: d.parity_state,
         target_display_name: d.target_display_name,
         raised_by_display_name: entityName,
-        alert: d.mode === 'one_sided'
-          ? `The other side is no longer reachable (${d.parity_state}). This is lodged as a unilateral record on your own copy.`
-          : (widened ? 'This category notifies all parties — raised chit-wide.' : 'Dispute raised with the selected party.'),
-        message: 'Dispute raised',
+        alert:
+          d.mode === 'one_sided'
+            ? `The other side is no longer reachable (${d.parity_state}). This is lodged as a unilateral record on your own copy.`
+            : widened
+              ? 'This category notifies all parties — raised chit-wide.'
+              : 'Dispute raised with the selected party.',
+        message: 'Dispute raised'
       });
     } catch (err) {
       console.error('Raise dispute error:', err.message);
-      if (err.message.includes('chit_disputes')) return res.status(500).json({ error:'Table not found', message:'Run B3.5 + B3.10 migrations', sql_needed:true });
-      res.status(500).json({ error:'Raise dispute failed', message: safeErr(err) });
+      if (err.message.includes('chit_disputes'))
+        return res.status(500).json({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true });
+      res.status(500).json({ error: 'Raise dispute failed', message: safeErr(err) });
     }
-  });
+  }
+);
 
 // ─── GET /chits/:chit_id/disputes ────────────────────────────
 // All participants see all disputes on a chit
@@ -4507,28 +5577,46 @@ router.post('/:chit_id/disputes',
  *   actions.resolve  { ok } | { ok:false, why, say } — lib/dispute-may.resolve, the same verdict PUT …/resolve refuses with
  */
 async function finishDisputes(rows, entity_id, me) {
-  const ids = rows.map((d) => d.dispute_id);
+  const ids = rows.map((item) => item.dispute_id);
   const statusBy = {};
   let rosterRead = false;
   if (ids.length) {
     try {
-      const rr = await query(`SELECT u.did AS dispute_id, r.entity_id, r.role, r.status FROM unnest($1::uuid[]) AS u(did) CROSS JOIN LATERAL chit_dispute_roster(u.did) r`, [ids]);
-      rr.rows.forEach((r) => { statusBy[r.dispute_id + '|' + r.entity_id] = r.status; });
+      const rr = await query(
+        `SELECT u.did AS dispute_id, r.entity_id, r.role, r.status FROM unnest($1::uuid[]) AS u(did) CROSS JOIN LATERAL chit_dispute_roster(u.did) r`,
+        [ids]
+      );
+      rr.rows.forEach((item) => {
+        statusBy[item.dispute_id + '|' + item.entity_id] = item.status;
+      });
       rosterRead = true;
-    } catch (err) { log.warn('dispute roster read failed — the snapshot is shown', { err: err.message, n: ids.length }); }
+    } catch (err) {
+      log.warn('dispute roster read failed — the snapshot is shown', { err: err.message, n: ids.length });
+    }
   }
   const lvl = railActions.can({ held: true }, me, 'dispute');
   return rows.map(({ evidence_snapshot, roster, ...d }) => {
-    const parts = (roster || d.participants || []).map((p) => ({ dispute_id: d.dispute_id, entity_id: p.entity_id, display_name: p.display_name, role: p.role,
-      dispute_status: (rosterRead && statusBy[d.dispute_id + '|' + p.entity_id]) || p.dispute_status || 'open' }));
+    const parts = (roster || d.participants || []).map((item) => ({
+      dispute_id: d.dispute_id,
+      entity_id: item.entity_id,
+      display_name: item.display_name,
+      role: item.role,
+      dispute_status: (rosterRead && statusBy[d.dispute_id + '|' + item.entity_id]) || item.dispute_status || 'open'
+    }));
     const mine = d.raised_by_entity_id === entity_id;
-    return { ...d, has_evidence: evidence_snapshot != null, participants: parts, others: parts.filter((p) => p.entity_id !== entity_id), mine,
-      actions: { resolve: disputeMay.resolve(lvl, { open: d.status === 'open', raisedByMe: mine }) } };
+    return {
+      ...d,
+      has_evidence: evidence_snapshot != null,
+      participants: parts,
+      others: parts.filter((item) => item.entity_id !== entity_id),
+      mine,
+      actions: { resolve: disputeMay.resolve(lvl, { open: d.status === 'open', raisedByMe: mine }) }
+    };
   });
 }
 router.get('/:chit_id/disputes', auth, async (req, res) => {
   const { chit_id } = req.params;
-  const entity_id   = entityId(req);
+  const entity_id = entityId(req);
 
   try {
     // B1 RLS: participant access check on own copy -> withEntity(me). T3: the chit's recipients ride the same transaction (who a dispute may name).
@@ -4545,10 +5633,16 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
     // evidence_snapshot is PII — expose presence only; roster surfaced as participants
     const disputes = await finishDisputes(own.rows, entity_id, me);
     /* T3: who a new dispute may name — everyone on the chit but me, once each (the raise route ticks these as participant_entity_ids) */
-    const seen = {}, raise_parties = (Array.isArray(own.recipients) ? own.recipients : []).filter((r) => r && r.entity_id && r.entity_id !== entity_id && !seen[r.entity_id] && (seen[r.entity_id] = 1))
-      .map((r) => ({ entity_id: r.entity_id, display_name: r.display_name || null, role: r.role || null }));
-    res.json({ disputes, open_count: disputes.filter(d => d.status === 'open').length, raise_parties,
-      actions: { raise: disputeMay.raise(railActions.can({ held: true }, me, 'dispute')) } });
+    const seen = {},
+      raise_parties = (Array.isArray(own.recipients) ? own.recipients : [])
+        .filter((item) => item && item.entity_id && item.entity_id !== entity_id && !seen[item.entity_id] && (seen[item.entity_id] = 1))
+        .map((item) => ({ entity_id: item.entity_id, display_name: item.display_name || null, role: item.role || null }));
+    res.json({
+      disputes,
+      open_count: disputes.filter((item) => item.status === 'open').length,
+      raise_parties,
+      actions: { raise: disputeMay.raise(railActions.can({ held: true }, me, 'dispute')) }
+    });
   } catch (err) {
     if (err.message.includes('chit_disputes')) return res.json({ disputes: [], open_count: 0 });
     res.status(500).json({ error: 'Get disputes failed', message: safeErr(err) });
@@ -4560,27 +5654,23 @@ router.get('/:chit_id/disputes', auth, async (req, res) => {
 // viewer is party to. probe (fault) → localise (coordinate) → route (routing) + proof.
 // Never writes anything; never returns evidence_snapshot contents.
 const FAULT_SUMMARY = {
-  present:  'Both sides present — workable',
+  present: 'Both sides present — workable',
   archived: 'Counterparty archived their copy — still workable',
-  erased:   'Counterparty erased — no live other side',
-  defunct:  'Counterparty no longer active',
-  absent:   'No counterparty copy found on this chit',
+  erased: 'Counterparty erased — no live other side',
+  defunct: 'Counterparty no longer active',
+  absent: 'No counterparty copy found on this chit'
 };
 router.get('/:chit_id/diagnosis', auth, async (req, res) => {
   const { chit_id } = req.params;
-  const entity_id   = entityId(req);
+  const entity_id = entityId(req);
   try {
     // B1 RLS: own-copy reads (status/header/detail) -> withEntity(me).
     const rls = await withEntity(entity_id, async (db) => {
       const access = await db.query(`SELECT 1 FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
       if (access.rows.length === 0) return null;
-      const hdr = await db.query(
-        `SELECT auto_subject, schema_version FROM chit_header WHERE chit_id=$1 AND entity_id=$2`,
-        [chit_id, entity_id]);
-      const det = await db.query(
-        `SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`,
-        [chit_id, entity_id]);
-      return { hdr, det };
+      const nestedHdr = await db.query(`SELECT auto_subject, schema_version FROM chit_header WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
+      const nestedDet = await db.query(`SELECT line_items FROM chit_detail WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id]);
+      return { hdr: nestedHdr, det: nestedDet };
     });
     if (!rls) return res.status(403).json({ error: 'Forbidden' });
     const { hdr, det } = rls;
@@ -4589,43 +5679,54 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
       const raw = det.rows[0]?.line_items;
       const li = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : [];
       if (Array.isArray(li) && li.length) {
-        itemLabel = li.map(i => i.particulars || i.product).filter(Boolean).join(', ') || null;
+        itemLabel =
+          li
+            .map((item) => item.particulars || item.product)
+            .filter(Boolean)
+            .join(', ') || null;
       }
-    } catch (e) { cbLog.fellBack('chits GET /:chit_id/diagnosis: did not parse — answered with nothing', e, 'debug'); itemLabel = null; }
+    } catch (e) {
+      cbLog.fellBack('chits GET /:chit_id/diagnosis: did not parse — answered with nothing', e, 'debug');
+      itemLabel = null;
+    }
 
     // same audience rule as GET disputes — never leak someone else's dispute
-    const d = await withEntity(entity_id, (db) => db.query(   // per-copy: RLS returns MY OWN dispute copies
-      `SELECT dispute_id, category, reason, status, created_at,
+    const d = await withEntity(entity_id, (db) =>
+      db.query(
+        // per-copy: RLS returns MY OWN dispute copies
+        `SELECT dispute_id, category, reason, status, created_at,
               target_display_name, scope, mode, answerable, parity_state, via,
               (evidence_snapshot IS NOT NULL) AS has_evidence
          FROM chit_disputes
         WHERE chit_id=$1
         ORDER BY created_at ASC`,
-      [chit_id]));
+        [chit_id]
+      )
+    );
 
-    const diagnoses = d.rows.map(x => ({
+    const diagnoses = d.rows.map((x) => ({
       dispute_id: x.dispute_id,
-      category:   x.category,
-      reason:     x.reason,
-      status:     x.status,
+      category: x.category,
+      reason: x.reason,
+      status: x.status,
       created_at: x.created_at,
       resolvable: x.mode === 'two_sided',
       // probe → the fault
       fault: {
-        state:    x.parity_state || 'present',
+        state: x.parity_state || 'present',
         category: x.category,
-        summary:  FAULT_SUMMARY[x.parity_state] || FAULT_SUMMARY.present,
+        summary: FAULT_SUMMARY[x.parity_state] || FAULT_SUMMARY.present
       },
       // localise → the coordinate (who / what / which version)
       coordinate: {
-        party:          x.target_display_name || 'all parties',
-        line_item:      itemLabel,
-        schema_version: hdr.rows[0]?.schema_version ?? null,
+        party: x.target_display_name || 'all parties',
+        line_item: itemLabel,
+        schema_version: hdr.rows[0]?.schema_version ?? null
       },
       // route → how it is handled
       routing: { scope: x.scope, mode: x.mode, answerable: x.answerable },
       // proof → presence only + provenance (never the contents)
-      proof: { evidence_captured: x.has_evidence, arose_from: x.via },
+      proof: { evidence_captured: x.has_evidence, arose_from: x.via }
     }));
 
     res.json({ chit_id, chit_subject: hdr.rows[0]?.auto_subject || null, diagnoses, count: diagnoses.length });
@@ -4638,30 +5739,39 @@ router.get('/:chit_id/diagnosis', auth, async (req, res) => {
 
 // ─── PUT /chits/:chit_id/disputes/:dispute_id/resolve ────────
 // Only the entity that raised the dispute can resolve it
-router.put('/:chit_id/disputes/:dispute_id/resolve',
-  [ body('resolution_note').trim().notEmpty().withMessage('Resolution note required'),
-    body('target_entity_id').optional({ nullable:true }).isUUID() ],
+router.put(
+  '/:chit_id/disputes/:dispute_id/resolve',
+  [body('resolution_note').trim().notEmpty().withMessage('Resolution note required'), body('target_entity_id').optional({ nullable: true }).isUUID()],
   auth,
   validate,
   async (req, res) => {
     const { chit_id, dispute_id } = req.params;
-    const { resolution_note }     = req.body;
-    const targetParty  = req.body.target_entity_id || null;   // per-party resolve; null = clear all remaining
-    const entity_id    = entityId(req);
+    const { resolution_note } = req.body;
+    const targetParty = req.body.target_entity_id || null; // per-party resolve; null = clear all remaining
+    const entity_id = entityId(req);
     const display_name = req.identity.display_name;
     // B3: the resolution message posts in the ENTITY name (the acting actor stays as provenance in the timeline).
     let entityName = display_name;
-    if (req.identity.parent_entity_id) { const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(cbLog.orElse('chits PUT /:chit_id/disputes/:dispute_id/resolve: the read failed — answered with none', ({ rows: [] }))); if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name; }
+    if (req.identity.parent_entity_id) {
+      const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
+        cbLog.orElse('chits PUT /:chit_id/disputes/:dispute_id/resolve: the read failed — answered with none', { rows: [] })
+      );
+      if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name;
+    }
 
     try {
       // b68 — per-copy: read the raiser's OWN dispute copy (RLS), then resolve across copies via the definer.
-      const dispute = await withEntity(entity_id, (db) => db.query(
-        `SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2`, [dispute_id, chit_id]));
+      const dispute = await withEntity(entity_id, (db) =>
+        db.query(`SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2`, [dispute_id, chit_id])
+      );
       if (dispute.rows.length === 0) return res.status(404).json({ error: 'Dispute not found' });
 
       const d = dispute.rows[0];
       /* T3-DISPUTES-ASSIST: the SAME verdict GET answers as actions.resolve (lib/dispute-may) — the status codes and words unchanged, `why` added */
-      const may = disputeMay.resolve(railActions.can({ held: true }, railActions.meOf(req), 'dispute'), { open: d.status === 'open', raisedByMe: d.raised_by_entity_id === entity_id });
+      const may = disputeMay.resolve(railActions.can({ held: true }, railActions.meOf(req), 'dispute'), {
+        open: d.status === 'open',
+        raisedByMe: d.raised_by_entity_id === entity_id
+      });
       if (!may.ok && may.why === 'already_resolved') return res.status(400).json({ error: 'Dispute already resolved', why: may.why });
       if (!may.ok && may.why === 'not_raiser') {
         return res.status(403).json({ error: 'Forbidden', message: 'Only the entity that raised the dispute can resolve it', why: may.why });
@@ -4672,9 +5782,8 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
          The definer only checks chit membership; an unchecked id would hand an outsider "Dispute resolved — <category>: <note>". */
       if (targetParty) {
         const ros = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [dispute_id]));
-        if (!ros.rows.some((r) => r.role === 'party' && String(r.entity_id) === String(targetParty))) {
-          return res.status(400).json({ error: 'Invalid target', code: 'DISPUTE_TARGET_NOT_PARTY',
-            message: 'That business is not a party to this dispute' });
+        if (!ros.rows.some((item) => item.role === 'party' && String(item.entity_id) === String(targetParty))) {
+          return res.status(400).json({ error: 'Invalid target', code: 'DISPUTE_TARGET_NOT_PARTY', message: 'That business is not a party to this dispute' });
         }
       }
 
@@ -4685,22 +5794,38 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
         if (targetParty) resolvedPartyIds = [targetParty];
         else {
           const openR = await client.query(`SELECT entity_id FROM chit_dispute_roster($1) WHERE role='party' AND status='open'`, [dispute_id]);
-          resolvedPartyIds = openR.rows.map(r => r.entity_id);
+          resolvedPartyIds = openR.rows.map((item) => item.entity_id);
         }
         // definer clears the party copy(ies), and the raiser's copy when no party remains open. Returns allResolved.
-        const rr = await client.query(`SELECT chit_dispute_resolve($1,$2,$3,$4) AS all_resolved`, [dispute_id, entity_id, targetParty || null, resolution_note]);
+        const rr = await client.query(`SELECT chit_dispute_resolve($1,$2,$3,$4) AS all_resolved`, [
+          dispute_id,
+          entity_id,
+          targetParty || null,
+          resolution_note
+        ]);
         const allResolved = rr.rows[0].all_resolved;
         // resolver's own timeline
         await client.query(
           `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
            VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-          [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`]);
+          [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0, 100)}`]
+        );
         // resolution note as a per-copy dispute message (roster-scoped)
-        await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: entityName,
-          thread_type: 'external', message_text: `[resolved] ${resolution_note}`, is_dispute: true, dispute_id }, client);
+        await postMessageCopies(
+          {
+            chit_id,
+            sender_entity_id: entity_id,
+            sender_display_name: entityName,
+            thread_type: 'external',
+            message_text: `[resolved] ${resolution_note}`,
+            is_dispute: true,
+            dispute_id
+          },
+          client
+        );
         // notify the cleared parties on their own timeline
         if (resolvedPartyIds.length) {
-          const notice = `Dispute resolved — ${d.category}: ${resolution_note.slice(0,100)}`;
+          const notice = `Dispute resolved — ${d.category}: ${resolution_note.slice(0, 100)}`;
           if (ready) {
             await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [chit_id, resolvedPartyIds, 'dispute_resolved', entity_id, display_name, notice]);
           } else {
@@ -4708,7 +5833,8 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
               await client.query(
                 `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
                  VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-                [chit_id, pid, entity_id, display_name, notice]);
+                [chit_id, pid, entity_id, display_name, notice]
+              );
             }
           }
         }
@@ -4717,7 +5843,14 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
       /* ⭐ a settled dispute may release a bill a party already ACCEPTED (lib/books-hooks buyerGate: open dispute → waits).
          The dispute carries no "in whose favour"; the buyer's own status says it — accepted posts, rejected never does. */
       if (out.allResolved) {
-        try { const hooks = require('../lib/books-hooks'); setImmediate(() => { for (const p of [entity_id].concat(out.resolvedPartyIds || [])) hooks.afterChit(p, chit_id, null); }); } catch (e) { cbLog.fellBack('chits PUT /:chit_id/disputes/:dispute_id/resolve: the helper failed — carried on without it', e); }
+        try {
+          const hooks = require('../lib/books-hooks');
+          setImmediate(() => {
+            for (const p of [entity_id].concat(out.resolvedPartyIds || [])) hooks.afterChit(p, chit_id, null);
+          });
+        } catch (e) {
+          cbLog.fellBack('chits PUT /:chit_id/disputes/:dispute_id/resolve: the helper failed — carried on without it', e);
+        }
       }
 
       res.json({
@@ -4725,7 +5858,8 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
         status: out.allResolved ? 'resolved' : 'open',
         resolved_parties: out.resolvedPartyIds,
         fully_resolved: out.allResolved,
-        resolution_note, resolved_by: display_name,
+        resolution_note,
+        resolved_by: display_name,
         message: out.allResolved ? 'Dispute fully resolved' : 'Party resolved — still open for the others'
       });
     } catch (err) {
@@ -4748,14 +5882,16 @@ router.put('/:chit_id/disputes/:dispute_id/resolve',
  */
 router.get('/disputes/queue', auth, async (req, res) => {
   const entity_id = entityId(req);
-  const qs = req.query || {};
-  const status = ['open', 'resolved', 'all'].includes(qs.status) ? qs.status : 'open';
-  const side = ['mine', 'against'].includes(qs.side) ? qs.side : null;
-  const words = typeof qs.q === 'string' ? qs.q.trim().slice(0, 100) : '';
+  const list = req.query || {};
+  const status = ['open', 'resolved', 'all'].includes(list.status) ? list.status : 'open';
+  const side = ['mine', 'against'].includes(list.side) ? list.side : null;
+  const words = typeof list.q === 'string' ? list.q.trim().slice(0, 100) : '';
   const like = words ? '%' + words.replace(/[\\%_]/g, (c) => '\\' + c) + '%' : null;
-  const pageAsked = PAGE_LIMIT.pageArgs(qs, 50, 200);   /* not asked = every row, as before */
-  const paged = pageAsked.asked, limit = pageAsked.limit, page = pageAsked.page;
-  const dir = qs.sort === 'new' ? 'DESC' : 'ASC';
+  const pageAsked = PAGE_LIMIT.pageArgs(list, 50, 200); /* not asked = every row, as before */
+  const paged = pageAsked.asked,
+    limit = pageAsked.limit,
+    page = pageAsked.page;
+  const dir = list.sort === 'new' ? 'DESC' : 'ASC';
 
   try {
     // B1 RLS: own-copy subselects (chit_header/chit_status) -> withEntity(me). per-copy: RLS returns only MY OWN dispute copies.
@@ -4774,27 +5910,49 @@ router.get('/disputes/queue', auth, async (req, res) => {
          WHERE ($4::text IS NULL OR concat_ws(' ', x.auto_subject, x.purpose, x.category, x.reason, x.raised_by_display_name, x.resolution_note) ILIKE $4::text)
          ORDER BY x.created_at ${dir}, x.dispute_id
          LIMIT $5 OFFSET $6`,
-        [entity_id, status, side, like, limit, pageAsked.offset]);
-      const c = await db.query(`SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes`);
+        [entity_id, status, side, like, limit, pageAsked.offset]
+      );
+      const c = await db.query(
+        `SELECT count(*) FILTER (WHERE status = 'open')::int AS open, count(*) FILTER (WHERE status <> 'open')::int AS resolved FROM chit_disputes`
+      );
       return { rows: r.rows, counts: c.rows[0] || { open: 0, resolved: 0 } };
     });
     const total = got.rows.length ? Number(got.rows[0]._total) : 0;
     // evidence_snapshot is PII — expose presence only, never its contents; the roster as participants (live status per party) so the raiser can resolve each party
-    const rows = await finishDisputes(got.rows.map(({ _total, ...d }) => d), entity_id, railActions.meOf(req));
+    const rows = await finishDisputes(
+      got.rows.map(({ _total, ...d }) => d),
+      entity_id,
+      railActions.meOf(req)
+    );
     // "other" now means disputes targeting me (untargeted ones no longer leak)
-    const myDisputes    = rows.filter(d => d.raised_by_entity_id === entity_id);
-    const otherDisputes = rows.filter(d => d.raised_by_entity_id !== entity_id);
+    const myDisputes = rows.filter((item) => item.raised_by_entity_id === entity_id);
+    const otherDisputes = rows.filter((item) => item.raised_by_entity_id !== entity_id);
 
     res.json({
-      disputes:       rows,
-      my_disputes:    myDisputes,
+      disputes: rows,
+      my_disputes: myDisputes,
       other_disputes: otherDisputes,
-      total_open:     got.counts.open,
-      rows, total, page, limit: limit || total, counts: { open: got.counts.open, resolved: got.counts.resolved },
+      total_open: got.counts.open,
+      rows,
+      total,
+      page,
+      limit: limit || total,
+      counts: { open: got.counts.open, resolved: got.counts.resolved }
     });
   } catch (err) {
     if (err.message.includes('chit_disputes')) {
-      return res.json({ disputes: [], my_disputes: [], other_disputes: [], total_open: 0, rows: [], total: 0, page: 1, limit: 0, counts: { open: 0, resolved: 0 }, code: 'DISPUTES_NOT_SET_UP' });
+      return res.json({
+        disputes: [],
+        my_disputes: [],
+        other_disputes: [],
+        total_open: 0,
+        rows: [],
+        total: 0,
+        page: 1,
+        limit: 0,
+        counts: { open: 0, resolved: 0 },
+        code: 'DISPUTES_NOT_SET_UP'
+      });
     }
     res.status(500).json({ error: 'Get dispute queue failed', message: safeErr(err) });
   }
@@ -4813,46 +5971,44 @@ async function housekeepFacts(db, chit_id, entity_id) {
     `SELECT cs.current_status, ch.role FROM chit_status cs
        JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
       WHERE cs.chit_id = $1 AND cs.entity_id = $2 AND cs.deleted_at IS NULL`,
-    [chit_id, entity_id]);
+    [chit_id, entity_id]
+  );
   if (copy.rows.length === 0) return null;
   return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) };
 }
 router.delete('/:chit_id', auth, async (req, res) => {
   try {
-    const chit_id        = req.params.chit_id;
-    const entity_id      = entityId(req);
-    const action_by_id   = req.identity.identity_id;
+    const chit_id = req.params.chit_id;
+    const entity_id = entityId(req);
+    const action_by_id = req.identity.identity_id;
     const action_by_name = req.identity.display_name;
 
     // B1 RLS: caller deletes only its own copy -> withEntity(me). ONE transaction: the facts, the verdict, the write, the log.
     await withEntity(entity_id, async (db) => {
-    const facts = await housekeepFacts(db, chit_id, entity_id);
-    if (!facts) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already deleted' });
-    const verdict = railActions.canHousekeep('delete', facts);
-    if (!verdict.ok) return railActions.refuseHousekeep(res, verdict);
+      const facts = await housekeepFacts(db, chit_id, entity_id);
+      if (!facts) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already deleted' });
+      const verdict = railActions.canHousekeep('delete', facts);
+      if (!verdict.ok) return railActions.refuseHousekeep(res, verdict);
 
-    // Soft delete this entity's copy only
-    await db.query(
-      `UPDATE chit_status
+      // Soft delete this entity's copy only
+      await db.query(
+        `UPDATE chit_status
        SET deleted_at = NOW(), updated_at = NOW()
        WHERE chit_id = $1 AND entity_id = $2`,
-      [chit_id, entity_id]
-    );
+        [chit_id, entity_id]
+      );
 
-    // Audit trail — one row for this entity's copy
-    await db.query(
-      `INSERT INTO state_log
+      // Audit trail — one row for this entity's copy
+      await db.query(
+        `INSERT INTO state_log
        (chit_id, entity_id, action, action_by_identity_id,
         action_by_display_name, previous_status, new_status, detail)
        VALUES ($1, $2, 'deleted', $3, $4, $5, $5, $6)`,
-      [chit_id, entity_id, action_by_id, action_by_name,
-       facts.current_status,
-       `Chit deleted by ${action_by_name}`]
-    );
+        [chit_id, entity_id, action_by_id, action_by_name, facts.current_status, `Chit deleted by ${action_by_name}`]
+      );
 
-    res.json({ message: 'Chit deleted', chit_id });
+      res.json({ message: 'Chit deleted', chit_id });
     });
-
   } catch (err) {
     console.error('Delete chit error:', err.message);
     res.status(500).json({ error: 'Delete failed', message: safeErr(err) });
@@ -4865,19 +6021,20 @@ router.delete('/:chit_id', auth, async (req, res) => {
 
 // PUT /chits/:chit_id/priority — INTERNAL queue priority. Never crosses the edge.
 // urgent requires a reason, logged as an internal action message.
-router.put('/:chit_id/priority',
+router.put(
+  '/:chit_id/priority',
   [
-    body('priority').trim().isIn(['normal','high','urgent']).withMessage('priority must be normal|high|urgent'),
-    body('reason').optional().trim().isLength({ max: 500 }),
+    body('priority').trim().isIn(['normal', 'high', 'urgent']).withMessage('priority must be normal|high|urgent'),
+    body('reason').optional().trim().isLength({ max: 500 })
   ],
   auth,
   validate,
   async (req, res) => {
     try {
-      const chit_id   = req.params.chit_id;
+      const chit_id = req.params.chit_id;
       const entity_id = entityId(req);
-      const priority  = req.body.priority;
-      const reason    = sanitise(req.body.reason || '');
+      const priority = req.body.priority;
+      const reason = sanitise(req.body.reason || '');
 
       if (priority === 'urgent' && !reason) {
         return res.status(400).json({ error: 'Reason required', message: 'An urgent priority needs a reason' });
@@ -4885,27 +6042,33 @@ router.put('/:chit_id/priority',
 
       // B1 RLS: caller sets priority on its own copy -> withEntity(me).
       await withEntity(entity_id, async (db) => {
-      const access = await db.query(
-        `SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      );
-      if (access.rows.length === 0) {
-        return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
-      }
+        const access = await db.query(`SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
+        if (access.rows.length === 0) {
+          return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
+        }
 
-      await db.query(
-        `UPDATE chit_status SET priority_flag = $1, updated_at = NOW()
+        await db.query(
+          `UPDATE chit_status SET priority_flag = $1, updated_at = NOW()
          WHERE chit_id = $2 AND entity_id = $3`,
-        [priority, chit_id, entity_id]
-      );
+          [priority, chit_id, entity_id]
+        );
 
-      // urgent → record an internal action message (only this entity's internal thread — single copy)
-      if (priority === 'urgent') {
-        await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
-          thread_type: 'internal', message_text: `Marked URGENT: ${reason}`, msg_type: 'action' }, db);
-      }
+        // urgent → record an internal action message (only this entity's internal thread — single copy)
+        if (priority === 'urgent') {
+          await postMessageCopies(
+            {
+              chit_id,
+              sender_entity_id: entity_id,
+              sender_display_name: req.identity.display_name,
+              thread_type: 'internal',
+              message_text: `Marked URGENT: ${reason}`,
+              msg_type: 'action'
+            },
+            db
+          );
+        }
 
-      res.json({ message: 'Priority updated', chit_id, priority_flag: priority });
+        res.json({ message: 'Priority updated', chit_id, priority_flag: priority });
       });
     } catch (err) {
       console.error('Set priority error:', err.message);
@@ -4917,51 +6080,50 @@ router.put('/:chit_id/priority',
 // PUT /chits/:chit_id/priority-flag — CUSTOMER cross-edge priority, WRITE-ONCE.
 // DESIGN (review): set + lock on EVERY participant row so the counterparty sees it;
 // reject once customer_priority_locked is true.
-router.put('/:chit_id/priority-flag',
-  [ body('priority').isBoolean().withMessage('priority must be true or false') ],
-  auth,
-  validate,
-  async (req, res) => {
-    try {
-      const chit_id   = req.params.chit_id;
-      const entity_id = entityId(req);
-      const flag      = req.body.priority === true || req.body.priority === 'true';
+router.put('/:chit_id/priority-flag', [body('priority').isBoolean().withMessage('priority must be true or false')], auth, validate, async (req, res) => {
+  try {
+    const chit_id = req.params.chit_id;
+    const entity_id = entityId(req);
+    const flag = req.body.priority === true || req.body.priority === 'true';
 
-      // B1 RLS: write-once lock check on own copy -> withEntity(me).
-      const access = await withEntity(entity_id, (db) => db.query(
-        `SELECT customer_priority_locked FROM chit_status WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      ));
-      if (access.rows.length === 0) {
-        return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
-      }
-      if (access.rows[0].customer_priority_locked) {
-        return res.status(409).json({ error: 'Locked', message: 'Customer priority is write-once and already set' });
-      }
-
-      // Customer flag is cross-edge (write-once) -> set on ALL participant rows via chit_set_customer_priority_all
-      // (validated: caller must be a participant). Fallback = the legacy all-rows update when b50 isn't applied.
-      await crossing(entity_id,
-        `SELECT chit_set_customer_priority_all($1,$2)`,
-        [chit_id, flag],
-        (db) => db.query(
-          `UPDATE chit_status SET customer_priority = $1, customer_priority_locked = true, updated_at = NOW()
-           WHERE chit_id = $2`,
-          [flag, chit_id]));
-
-      // Trail parity with internal urgent: log who/when as an action message.
-      // External thread (visibility NULL) — the customer flag is cross-edge, so both parties see the trail.
-      await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
-        thread_type: 'external', msg_type: 'action',
-        message_text: flag ? 'Customer marked this chit as priority' : 'Customer cleared priority' });
-
-      res.json({ message: 'Customer priority set', chit_id, customer_priority: flag, locked: true });
-    } catch (err) {
-      console.error('Customer flag error:', err.message);
-      res.status(500).json({ error: 'Customer flag failed', message: safeErr(err) });
+    // B1 RLS: write-once lock check on own copy -> withEntity(me).
+    const access = await withEntity(entity_id, (db) =>
+      db.query(`SELECT customer_priority_locked FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
+    );
+    if (access.rows.length === 0) {
+      return res.status(404).json({ error: 'Not found', message: 'Chit not found for this entity' });
     }
+    if (access.rows[0].customer_priority_locked) {
+      return res.status(409).json({ error: 'Locked', message: 'Customer priority is write-once and already set' });
+    }
+
+    // Customer flag is cross-edge (write-once) -> set on ALL participant rows via chit_set_customer_priority_all
+    // (validated: caller must be a participant). Fallback = the legacy all-rows update when b50 isn't applied.
+    await crossing(entity_id, `SELECT chit_set_customer_priority_all($1,$2)`, [chit_id, flag], (db) =>
+      db.query(
+        `UPDATE chit_status SET customer_priority = $1, customer_priority_locked = true, updated_at = NOW()
+           WHERE chit_id = $2`,
+        [flag, chit_id]
+      )
+    );
+
+    // Trail parity with internal urgent: log who/when as an action message.
+    // External thread (visibility NULL) — the customer flag is cross-edge, so both parties see the trail.
+    await postMessageCopies({
+      chit_id,
+      sender_entity_id: entity_id,
+      sender_display_name: req.identity.display_name,
+      thread_type: 'external',
+      msg_type: 'action',
+      message_text: flag ? 'Customer marked this chit as priority' : 'Customer cleared priority'
+    });
+
+    res.json({ message: 'Customer priority set', chit_id, customer_priority: flag, locked: true });
+  } catch (err) {
+    console.error('Customer flag error:', err.message);
+    res.status(500).json({ error: 'Customer flag failed', message: safeErr(err) });
   }
-);
+});
 
 // ─────────────────────────────────────────────────────────────
 // feat/chit-actions — archive (reversible), void (terminal), assign-bulk
@@ -4972,7 +6134,8 @@ router.put('/:chit_id/priority-flag',
 // and the chit was archived; now it is 503 disputes_unknown, logged (lib/dispute-may openOn). One transaction, not two.
 router.post('/:chit_id/archive', auth, async (req, res) => {
   try {
-    const entity_id = entityId(req), chit_id = req.params.chit_id;
+    const entity_id = entityId(req),
+      chit_id = req.params.chit_id;
     // B1 RLS: caller archives only its own copy -> withEntity(me). Per-copy: my own open dispute copies.
     await withEntity(entity_id, async (db) => {
       const verdict = railActions.canHousekeep('archive', { open_disputes: await disputeMay.openOn(db, chit_id) });
@@ -4981,11 +6144,14 @@ router.post('/:chit_id/archive', auth, async (req, res) => {
         `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
           WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL AND archived_at IS NULL
           RETURNING chit_id`,
-        [chit_id, entity_id]);
+        [chit_id, entity_id]
+      );
       if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or already archived' });
       res.json({ message: 'Chit archived', chit_id });
     });
-  } catch (err) { res.status(500).json({ error: 'Archive failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Archive failed', message: safeErr(err) });
+  }
 });
 
 // PUT /chits/:chit_id/star — toggle the star/flag on MY copies (kept in sync across both directions).
@@ -4994,15 +6160,15 @@ router.put('/:chit_id/star', auth, async (req, res) => {
     const entity_id = entityId(req);
     // B1 RLS: caller acts only on its own copy -> withEntity(me).
     await withEntity(entity_id, async (db) => {
-    const cur = await db.query(`SELECT star_flag FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`,
-      [req.params.chit_id, entity_id]);
-    if (cur.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
-    const next = !cur.rows[0].star_flag;
-    await db.query(`UPDATE chit_status SET star_flag = $3, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`,
-      [req.params.chit_id, entity_id, next]);
-    res.json({ message: 'Star toggled', chit_id: req.params.chit_id, star_flag: next });
+      const cur = await db.query(`SELECT star_flag FROM chit_status WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [req.params.chit_id, entity_id]);
+      if (cur.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+      const next = !cur.rows[0].star_flag;
+      await db.query(`UPDATE chit_status SET star_flag = $3, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2`, [req.params.chit_id, entity_id, next]);
+      res.json({ message: 'Star toggled', chit_id: req.params.chit_id, star_flag: next });
     });
-  } catch (err) { res.status(500).json({ error: 'Star failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Star failed', message: safeErr(err) });
+  }
 });
 
 // POST /chits/:chit_id/unread — mark MY copy unread (clear read_at).
@@ -5010,11 +6176,17 @@ router.post('/:chit_id/unread', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
     // B1 RLS: caller acts only on its own copy -> withEntity(me).
-    const r = await withEntity(entity_id, (db) => db.query(`UPDATE chit_status SET read_at = NULL, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
-      [req.params.chit_id, entity_id]));
+    const r = await withEntity(entity_id, (db) =>
+      db.query(`UPDATE chit_status SET read_at = NULL, updated_at = NOW() WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`, [
+        req.params.chit_id,
+        entity_id
+      ])
+    );
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
     res.json({ message: 'Marked unread', chit_id: req.params.chit_id });
-  } catch (err) { res.status(500).json({ error: 'Mark-unread failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Mark-unread failed', message: safeErr(err) });
+  }
 });
 
 // POST /chits/:chit_id/unarchive — restore MY copy to inbox/sent.
@@ -5022,46 +6194,55 @@ router.post('/:chit_id/unarchive', auth, async (req, res) => {
   try {
     const entity_id = entityId(req);
     // B1 RLS: caller acts only on its own copy -> withEntity(me).
-    const r = await withEntity(entity_id, (db) => db.query(
-      `UPDATE chit_status SET archived_at = NULL, updated_at = NOW()
+    const r = await withEntity(entity_id, (db) =>
+      db.query(
+        `UPDATE chit_status SET archived_at = NULL, updated_at = NOW()
         WHERE chit_id = $1 AND entity_id = $2 AND archived_at IS NOT NULL
         RETURNING chit_id`,
-      [req.params.chit_id, entity_id]));
+        [req.params.chit_id, entity_id]
+      )
+    );
     if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found or not archived' });
     res.json({ message: 'Chit restored', chit_id: req.params.chit_id });
-  } catch (err) { res.status(500).json({ error: 'Unarchive failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Unarchive failed', message: safeErr(err) });
+  }
 });
 
 // POST /chits/:chit_id/restore — bring MY copy back from Trash (undo a soft delete).
 // Mirrors DELETE /:chit_id (which sets deleted_at); clears deleted_at on this entity's copy only + logs it.
 router.post('/:chit_id/restore', auth, async (req, res) => {
   try {
-    const chit_id        = req.params.chit_id;
-    const entity_id      = entityId(req);
-    const action_by_id   = req.identity.identity_id;
+    const chit_id = req.params.chit_id;
+    const entity_id = entityId(req);
+    const action_by_id = req.identity.identity_id;
     const action_by_name = req.identity.display_name;
     // B1 RLS: caller restores only its own copy -> withEntity(me).
     await withEntity(entity_id, async (db) => {
-    const r = await db.query(
-      `UPDATE chit_status SET deleted_at = NULL, updated_at = NOW()
+      const r = await db.query(
+        `UPDATE chit_status SET deleted_at = NULL, updated_at = NOW()
         WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NOT NULL
         RETURNING chit_id`,
-      [chit_id, entity_id]);
-    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found in Trash' });
-    await db.query(
-      `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+        [chit_id, entity_id]
+      );
+      if (r.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found in Trash' });
+      await db.query(
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
        VALUES ($1, $2, 'restored', $3, $4, $5)`,
-      [chit_id, entity_id, action_by_id, action_by_name, `Chit restored from Trash by ${action_by_name}`]);
-    res.json({ message: 'Chit restored from Trash', chit_id });
+        [chit_id, entity_id, action_by_id, action_by_name, `Chit restored from Trash by ${action_by_name}`]
+      );
+      res.json({ message: 'Chit restored from Trash', chit_id });
     });
-  } catch (err) { res.status(500).json({ error: 'Restore failed', message: safeErr(err) }); }
+  } catch (err) {
+    res.status(500).json({ error: 'Restore failed', message: safeErr(err) });
+  }
 });
 
 // DELETE /chits/:chit_id/purge — permanently remove a DRAFT (owner only). Real chits are immutable co-held
 // records and can NEVER be hard-deleted here; only role='Draft' (un-bridged, sender-only) qualifies.
 router.delete('/:chit_id/purge', auth, async (req, res) => {
   try {
-    const chit_id   = req.params.chit_id;
+    const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
     // B1 RLS: caller purges only its own draft copy -> withEntity(me) (was withTransaction).
     await withEntity(entity_id, async (db) => {
@@ -5070,13 +6251,18 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
       /* W2-RAIL R2: the same draft rule the trash door now enforces (canHousekeep: a sent/received copy → 409 co_held_record) */
       const verdict = railActions.canHousekeep('purge', { role: chk.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) });
       if (!verdict.ok) return railActions.refuseHousekeep(res, verdict);
-      if (chk.rows[0].created_by_actor_id !== req.identity.identity_id) return res.status(403).json({ error: 'Forbidden', message: 'You can only delete drafts you created.' });
-      await db.query(`DELETE FROM chit_messages WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);   // per-entity: my own copies only
+      if (chk.rows[0].created_by_actor_id !== req.identity.identity_id)
+        return res.status(403).json({ error: 'Forbidden', message: 'You can only delete drafts you created.' });
+      await db.query(`DELETE FROM chit_messages WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]); // per-entity: my own copies only
       await db.query(`DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       await db.query(`DELETE FROM chit_detail WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       await db.query(`DELETE FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       await db.query(`DELETE FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
-      try { await db.query(`DELETE FROM cb_attachment WHERE chit_id = $1`, [chit_id]); } catch (e) { cbLog.fellBack('chits DELETE /:chit_id/purge: the write failed — carried on without it', e); /* attachment table may not exist */ }
+      try {
+        await db.query(`DELETE FROM cb_attachment WHERE chit_id = $1`, [chit_id]);
+      } catch (e) {
+        cbLog.fellBack('chits DELETE /:chit_id/purge: the write failed — carried on without it', e); /* attachment table may not exist */
+      }
       res.json({ message: 'Draft permanently deleted', chit_id });
     });
   } catch (err) {
@@ -5099,162 +6285,176 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
 // rather than being overwritten. Never a cross-entity write: you cannot reach into somebody else's records.
 //
 // Reason required and logged; the chit stays visible as voided, never deleted; the seal is untouched.
-router.put('/:chit_id/void',
-  [ body('reason').trim().notEmpty().withMessage('A reason is required to void') ],
-  validate, auth,
-  async (req, res) => {
-    try {
-      const chit_id   = req.params.chit_id;
-      const entity_id = entityId(req);
-      const reason    = sanitise(req.body.reason);
+router.put('/:chit_id/void', [body('reason').trim().notEmpty().withMessage('A reason is required to void')], auth, validate, async (req, res) => {
+  try {
+    const chit_id = req.params.chit_id;
+    const entity_id = entityId(req);
+    const reason = sanitise(req.body.reason);
 
-      // B1 RLS: sender check on own copy -> withEntity(me).
-      const own = await withEntity(entity_id, (db) => db.query(
-        `SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]));
-      if (own.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
-      if (own.rows[0].sender_entity_id !== entity_id) {
-        return res.status(403).json({ error: 'Forbidden', message: 'Only the sender can void a chit' });
-      }
+    // B1 RLS: sender check on own copy -> withEntity(me).
+    const own = await withEntity(entity_id, (db) =>
+      db.query(`SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
+    );
+    if (own.rows.length === 0) return res.status(404).json({ error: 'Not found', message: 'Chit not found' });
+    if (own.rows[0].sender_entity_id !== entity_id) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the sender can void a chit' });
+    }
 
-      // Void = the sender withdraws ITS OWN copy and REQUESTS cancellation from the recipients — never a cross-entity
-      // write. Each recipient acts on its own copy at its own will (it sees the flagged message below).
-      const me = railActions.meOf(req);
-      const gate = await withEntity(entity_id, async (db) => {
-        /**
-         * ⭐⭐ `cancelled`, NOT `void` — Athi, 2026-09-02: *"go with cancelled, retire void."*
-         *
-         * ⚠️⚠️ `void` WAS A STATUS THE FRONT END HAD NEVER HEARD OF. The list maps status → bucket with
-         * `ST[current_status] || 'open'`, and `void` is not in ST — so a withdrawn order fell through the default
-         * and went on reading as **OPEN** in the sender's own list. The withdrawal worked and the screen said it
-         * had not. A vocabulary with one word that only the server knows is not a vocabulary.
-         *
-         * ⭐ AND `cancelled` ALREADY EXISTED, meaning exactly this, already bucketed as closed, already in every
-         * filter and rollup. There were two withdrawal paths — this route, and setting status to `cancelled` as
-         * the sender, which already posted the same `[cancel requested]` message. Two mechanisms for one act, one
-         * of them speaking a private word. This route keeps the door (the button calls it, it enforces
-         * sender-only, it requires a reason) and now writes the vocabulary everything else understands.
-         *
-         * ⚠️ The state_log action stays `voided`: it is a HISTORY row, and rewriting what old entries claim
-         * happened would falsify the record this table exists to keep. b196 converts the stored statuses; the log
-         * keeps saying what the code was called on the day.
-         */
-        /* ⭐⭐ T1-RAIL — THROUGH THE ONE STATUS WRITE. This was a bare SET for every own copy, so a COMPLETED chit could be
+    // Void = the sender withdraws ITS OWN copy and REQUESTS cancellation from the recipients — never a cross-entity
+    // write. Each recipient acts on its own copy at its own will (it sees the flagged message below).
+    const me = railActions.meOf(req);
+    const gate = await withEntity(entity_id, async (db) => {
+      /**
+       * ⭐⭐ `cancelled`, NOT `void` — Athi, 2026-09-02: *"go with cancelled, retire void."*
+       *
+       * ⚠️⚠️ `void` WAS A STATUS THE FRONT END HAD NEVER HEARD OF. The list maps status → bucket with
+       * `ST[current_status] || 'open'`, and `void` is not in ST — so a withdrawn order fell through the default
+       * and went on reading as **OPEN** in the sender's own list. The withdrawal worked and the screen said it
+       * had not. A vocabulary with one word that only the server knows is not a vocabulary.
+       *
+       * ⭐ AND `cancelled` ALREADY EXISTED, meaning exactly this, already bucketed as closed, already in every
+       * filter and rollup. There were two withdrawal paths — this route, and setting status to `cancelled` as
+       * the sender, which already posted the same `[cancel requested]` message. Two mechanisms for one act, one
+       * of them speaking a private word. This route keeps the door (the button calls it, it enforces
+       * sender-only, it requires a reason) and now writes the vocabulary everything else understands.
+       *
+       * ⚠️ The state_log action stays `voided`: it is a HISTORY row, and rewriting what old entries claim
+       * happened would falsify the record this table exists to keep. b196 converts the stored statuses; the log
+       * keeps saying what the code was called on the day.
+       */
+      /* ⭐⭐ T1-RAIL — THROUGH THE ONE STATUS WRITE. This was a bare SET for every own copy, so a COMPLETED chit could be
            withdrawn though the rail has no completed → cancelled step. Each copy I hold (the sent one; a self-chit also its
            received one) asks lib/rail-status statusGate; if ANY copy may not be cancelled, nothing is written and the sender is
            told why. Own copies only, as before. */
-        const gates = [];
-        for (const copy of railStatus.COPIES) {
-          const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', me, { copy });
-          if (g.from) gates.push(g);   // a copy I do not hold has nothing to move
-        }
-        const refusedBy = gates.find((g) => !g.ok);
-        if (refusedBy) return { refused: refusedBy };
-        for (const g of gates) await g.write();
-        await db.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
-           VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
-          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]);   // own timeline only
-        return { refused: null, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) };   // H3
-      });
-      if (gate.refused) {
-        const g = gate.refused;
-        if (g.why !== 'wrong_step') {
-          return railActions.refuse(res, g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] });
-        }
-        /* what happened · what it means · what to do — `why` is the code a screen branches on, never this sentence */
-        return railActions.refuse(res, g, 409, { error: 'Cannot withdraw',
-          message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
-          from: g.from, allowed_transitions: g.allowed });
+      const gates = [];
+      for (const copy of railStatus.COPIES) {
+        const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', me, { copy });
+        if (g.from) gates.push(g); // a copy I do not hold has nothing to move
       }
-      // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
-      await postMessageCopies({ chit_id, sender_entity_id: entity_id, sender_display_name: req.identity.display_name,
-        thread_type: 'external', msg_type: 'action', message_text: `[cancel requested] ${reason}` });
+      const refusedBy = gates.find((item) => !item.ok);
+      if (refusedBy) return { refused: refusedBy };
+      for (const g of gates) await g.write();
+      await db.query(
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
+           VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
+        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]
+      ); // own timeline only
+      return { refused: null, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
+    });
+    if (gate.refused) {
+      const g = gate.refused;
+      if (g.why !== 'wrong_step') {
+        return railActions.refuse(res, g, 403, { error: 'Not permitted', message: railActions.WHY[g.why] });
+      }
+      /* what happened · what it means · what to do — `why` is the code a screen branches on, never this sentence */
+      return railActions.refuse(res, g, 409, {
+        error: 'Cannot withdraw',
+        message: `This chit is already ${g.from}, so it cannot be withdrawn. Raise a dispute on it if something is wrong.`,
+        from: g.from,
+        allowed_transitions: g.allowed
+      });
+    }
+    // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
+    await postMessageCopies({
+      chit_id,
+      sender_entity_id: entity_id,
+      sender_display_name: req.identity.display_name,
+      thread_type: 'external',
+      msg_type: 'action',
+      message_text: `[cancel requested] ${reason}`
+    });
 
-      /**
-       * ⭐⭐ AND A FLAG ON THEIR COPY, NOT ONLY A MESSAGE (b195). Athi, 2026-09-02: *"it has to be flagged against
-       * the order right away, so we need a flag to show cancel requested."*
-       *
-       * The message alone lands in the Messages tab, behind a click, in a list with everything else — so the one
-       * fact that changes what a supplier should do next arrived looking like chatter. It could not be derived on
-       * the read path either: `msg_type` is CHECK-constrained to eight values, none meaning "cancel request", so
-       * the only marker was a PREFIX IN THE TEXT and every screen would have had to string-match message bodies.
-       *
-       * ⚠️⚠️ THIS IS NOT THE CROSS-ENTITY WRITE THIS ROUTE FORBIDS, and the line is worth being exact about.
-       * `postMessageCopies` directly above ALREADY writes into every recipient's copy — delivering INTO a copy is
-       * what the rail does. What it must never do is decide FOR them:
-       *     cancel_requested_at  — someone has asked. Inbound. Written here.        ✅
-       *     current_status       — their answer. Only they may write it.            ❌ untouched
-       * A supplier who cut the stock at 6am still refuses by leaving their status where it is.
-       *
-       * ⚠️ SCOPED TO THE OTHER PARTICIPANTS: `entity_id <> $2`. The sender's own row is already terminal-void
-       * from the UPDATE above, and stamping "cancel requested" on it as well would make the sender look like
-       * somebody who had been asked.
-       *
-       * ⚠️⚠️ ONE CONTEXT PER RECIPIENT — AND MY FIRST VERSION USED `withEntity(null)` AND WROTE NOTHING.
-       *
-       * The b49 policy on chit_status is `entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid`.
-       * With no context that expression is NULL, `entity_id = NULL` is never true, and the UPDATE matched ZERO
-       * rows — inside a catch, so nothing was raised and the withdrawal reported success. The flag simply never
-       * existed. ⭐ THE END-TO-END SPEC IS WHAT CAUGHT IT: every part was green (the button, the banner's render
-       * states, the column reaching the payload) and the join was dead.
-       *
-       * ⚠️ AND THE COMMENT I WROTE ARGUED FOR THE BUG — it said a null context was needed because the sender's
-       * context would filter the rows. A null context filters EVERYTHING. This is the same RLS-with-no-usable-
-       * context blackout diagnosed for the register earlier in this same session; writing it a second time, one
-       * day later, is why the rule is worth stating plainly: **RLS with no context is not "unrestricted", it is
-       * "matches nothing".**
-       *
-       * ⭐ The rail already had the answer beside this line: `postMessageCopies` reaches every copy through the
-       * SECURITY DEFINER `chit_message_deliver`. Without a definer for this, the honest equivalent is to set each
-       * recipient's own context and write their row — the server acting as delivery agent, one copy at a time,
-       * which is exactly what a per-copy rail does.
-       *
-       * ⚠️ Recipients come from the SENDER'S OWN header (`all_recipients`), readable under the sender's context —
-       * so nothing here needs to read across a boundary in order to write across one.
-       *
-       * ⚠️ GUARDED BY hasColumn so the deploy can precede the migration in either order, and wrapped so a failure
-       * here can never lose the withdrawal itself: the sender's copy and the message are already committed, and
-       * an un-flagged request is a smaller fault than a withdrawal that reports failure after doing the work.
-       */
-      try {
-        if (await schema.hasColumn('chit_status', 'cancel_requested_at')) {
-          const hdr = await withEntity(entity_id, (db) => db.query(
-            `SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]));
-          const parties = ((hdr.rows[0] && hdr.rows[0].all_recipients) || [])
-            .map((r) => r && r.entity_id)
-            .filter((id) => id && id !== entity_id);
-          /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
+    /**
+     * ⭐⭐ AND A FLAG ON THEIR COPY, NOT ONLY A MESSAGE (b195). Athi, 2026-09-02: *"it has to be flagged against
+     * the order right away, so we need a flag to show cancel requested."*
+     *
+     * The message alone lands in the Messages tab, behind a click, in a list with everything else — so the one
+     * fact that changes what a supplier should do next arrived looking like chatter. It could not be derived on
+     * the read path either: `msg_type` is CHECK-constrained to eight values, none meaning "cancel request", so
+     * the only marker was a PREFIX IN THE TEXT and every screen would have had to string-match message bodies.
+     *
+     * ⚠️⚠️ THIS IS NOT THE CROSS-ENTITY WRITE THIS ROUTE FORBIDS, and the line is worth being exact about.
+     * `postMessageCopies` directly above ALREADY writes into every recipient's copy — delivering INTO a copy is
+     * what the rail does. What it must never do is decide FOR them:
+     *     cancel_requested_at  — someone has asked. Inbound. Written here.        ✅
+     *     current_status       — their answer. Only they may write it.            ❌ untouched
+     * A supplier who cut the stock at 6am still refuses by leaving their status where it is.
+     *
+     * ⚠️ SCOPED TO THE OTHER PARTICIPANTS: `entity_id <> $2`. The sender's own row is already terminal-void
+     * from the UPDATE above, and stamping "cancel requested" on it as well would make the sender look like
+     * somebody who had been asked.
+     *
+     * ⚠️⚠️ ONE CONTEXT PER RECIPIENT — AND MY FIRST VERSION USED `withEntity(null)` AND WROTE NOTHING.
+     *
+     * The b49 policy on chit_status is `entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid`.
+     * With no context that expression is NULL, `entity_id = NULL` is never true, and the UPDATE matched ZERO
+     * rows — inside a catch, so nothing was raised and the withdrawal reported success. The flag simply never
+     * existed. ⭐ THE END-TO-END SPEC IS WHAT CAUGHT IT: every part was green (the button, the banner's render
+     * states, the column reaching the payload) and the join was dead.
+     *
+     * ⚠️ AND THE COMMENT I WROTE ARGUED FOR THE BUG — it said a null context was needed because the sender's
+     * context would filter the rows. A null context filters EVERYTHING. This is the same RLS-with-no-usable-
+     * context blackout diagnosed for the register earlier in this same session; writing it a second time, one
+     * day later, is why the rule is worth stating plainly: **RLS with no context is not "unrestricted", it is
+     * "matches nothing".**
+     *
+     * ⭐ The rail already had the answer beside this line: `postMessageCopies` reaches every copy through the
+     * SECURITY DEFINER `chit_message_deliver`. Without a definer for this, the honest equivalent is to set each
+     * recipient's own context and write their row — the server acting as delivery agent, one copy at a time,
+     * which is exactly what a per-copy rail does.
+     *
+     * ⚠️ Recipients come from the SENDER'S OWN header (`all_recipients`), readable under the sender's context —
+     * so nothing here needs to read across a boundary in order to write across one.
+     *
+     * ⚠️ GUARDED BY hasColumn so the deploy can precede the migration in either order, and wrapped so a failure
+     * here can never lose the withdrawal itself: the sender's copy and the message are already committed, and
+     * an un-flagged request is a smaller fault than a withdrawal that reports failure after doing the work.
+     */
+    try {
+      if (await schema.hasColumn('chit_status', 'cancel_requested_at')) {
+        const hdr = await withEntity(entity_id, (db) =>
+          db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
+        );
+        const parties = ((hdr.rows[0] && hdr.rows[0].all_recipients) || []).map((item) => item && item.entity_id).filter((id) => id && id !== entity_id);
+        /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
              timestamp for no reason. */
-          for (const rid of [...new Set(parties)]) {
-            await withEntity(rid, (db) => db.query(
+        for (const rid of [...new Set(parties)]) {
+          await withEntity(rid, (db) =>
+            db.query(
               `UPDATE chit_status
                   SET cancel_requested_at = NOW(), cancel_requested_by = $2, cancel_reason = $3
                 WHERE chit_id = $1 AND entity_id = $4`,
-              [chit_id, req.identity.display_name, reason, rid]));
-          }
+              [chit_id, req.identity.display_name, reason, rid]
+            )
+          );
         }
-      } catch (e) { console.error('cancel flag:', e.message); }
+      }
+    } catch (e) {
+      console.error('cancel flag:', e.message);
+    }
 
-      /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
+    /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
          the private word this change exists to retire. */
-      res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books });
-    } catch (err) { withdrawFailure(res, err); }
-  });
+    res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books });
+  } catch (err) {
+    withdrawFailure(res, err);
+  }
+});
 
 // POST /chits/assign-bulk — push-assign many chits to one actor (mirrors the single push).
-router.post('/assign-bulk',
-  [ body('chit_ids').isArray({ min: 1 }).withMessage('chit_ids[] required'),
-    body('target_actor_id').isUUID().withMessage('target_actor_id required') ],
-  validate, auth,
+router.post(
+  '/assign-bulk',
+  [body('chit_ids').isArray({ min: 1 }).withMessage('chit_ids[] required'), body('target_actor_id').isUUID().withMessage('target_actor_id required')],
+  auth,
+  validate,
   async (req, res) => {
     try {
-      const entity_id      = entityId(req);
-      const action_by_id   = req.identity.identity_id;
+      const entity_id = entityId(req);
+      const action_by_id = req.identity.identity_id;
       const action_by_name = req.identity.display_name;
       const { chit_ids, target_actor_id } = req.body;
-      const me = railActions.meOf(req);   // T1-RAIL: who moves each copy back to pending (the rail's level ladder)
-      if (chit_ids.length > 200) return res.status(400).json({ error: 'Too many', message: 'Assign at most 200 chits at once.' });   // F4: bound the batch (long tx / lock contention)
+      const me = railActions.meOf(req); // T1-RAIL: who moves each copy back to pending (the rail's level ladder)
+      if (chit_ids.length > 200) return res.status(400).json({ error: 'Too many', message: 'Assign at most 200 chits at once.' }); // F4: bound the batch (long tx / lock contention)
 
       // Atomic: the whole batch (counts + chit_status + state_log) commits together or rolls back —
       // a mid-loop failure no longer leaves a partial assign. Target validated inside the tx.
@@ -5262,34 +6462,56 @@ router.post('/assign-bulk',
       const out = await withEntity(entity_id, async (client) => {
         // (e) Assignment rule from settings: honour pull/push mode + per-actor capacity BEFORE assigning.
         const st = await client.query(`SELECT assignment_model, default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
-        const model  = (st.rows[0] && st.rows[0].assignment_model) || 'both';
+        const model = (st.rows[0] && st.rows[0].assignment_model) || 'both';
         const defMax = (st.rows[0] && st.rows[0].default_max_tasks) || 10;
-        if (model === 'pull') { const e = new Error('Push-assign is off — this entity is in pull mode (co-assists take tasks themselves).'); e.status = 400; throw e; }
+        if (model === 'pull') {
+          const e = new Error('Push-assign is off — this entity is in pull mode (co-assists take tasks themselves).');
+          e.status = 400;
+          throw e;
+        }
 
         const target = await client.query(
           `SELECT identity_id, display_name, max_tasks, current_task_count FROM identities
             WHERE identity_id = $1 AND parent_entity_id = $2 AND break_status = 'active'
               AND hat IN ('act','manager')`,
-          [target_actor_id, entity_id]);
-        if (target.rows.length === 0) { const e = new Error('Target co-assist not found, not on shift, or not an assignable hat (Act/Manager)'); e.status = 400; throw e; }
+          [target_actor_id, entity_id]
+        );
+        if (target.rows.length === 0) {
+          const e = new Error('Target co-assist not found, not on shift, or not an assignable hat (Act/Manager)');
+          e.status = 400;
+          throw e;
+        }
         const t = target.rows[0];
         const cap = t.max_tasks || defMax;
         let load = t.current_task_count || 0;
 
-        const assigned = []; const skipped = [];
+        const assigned = [];
+        const skipped = [];
         for (const chit_id of chit_ids) {
-          const cs = await client.query(
-            `SELECT assigned_to_actor_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL`,
-            [chit_id, entity_id]);
-          if (cs.rows.length === 0) { skipped.push({ chit_id, reason: 'not found' }); continue; }
+          const cs = await client.query(`SELECT assigned_to_actor_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2 AND deleted_at IS NULL`, [
+            chit_id,
+            entity_id
+          ]);
+          if (cs.rows.length === 0) {
+            skipped.push({ chit_id, reason: 'not found' });
+            continue;
+          }
           const already = cs.rows[0].assigned_to_actor_id;
-          if (already === t.identity_id) { assigned.push(chit_id); continue; }              // already theirs — no change, no cost
-          if (load >= cap) { skipped.push({ chit_id, reason: `at capacity (${cap})` }); continue; }   // (e) capacity gate
-          if (already) { await taskCount(client, already, 'release'); }
+          if (already === t.identity_id) {
+            assigned.push(chit_id);
+            continue;
+          } // already theirs — no change, no cost
+          if (load >= cap) {
+            skipped.push({ chit_id, reason: `at capacity (${cap})` });
+            continue;
+          } // (e) capacity gate
+          if (already) {
+            await taskCount(client, already, 'release');
+          }
           /* ⭐ W1-RAIL: the one assignment writer — the UPDATE, then back to pending through the ONE status write (T1-RAIL): only my
              received copy moves (the rail's rule); a sent copy keeps its status. The assignment stands either way; a refusal is logged. */
           await assignChit(client, entity_id, chit_id, t, 'push', { me });
-          await taskCount(client, t.identity_id, 'take');   /* TA1 */
+          await taskCount(client, t.identity_id, 'take'); /* TA1 */
           load++;
           await client.query(
             // F3: assignment is INTERNAL — write ONLY the assigning entity's own row. The assignee sees it via the
@@ -5298,7 +6520,8 @@ router.post('/assign-bulk',
              /* DISTINCT — a self-chit holds two chit_status rows for one entity, so this wrote the same
                 assignment event twice. The read side now dedupes it, but writing it twice was still wrong. */
              SELECT $1, entity_id, 'assigned', $2, $3, $4 FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $5) s`,
-            [chit_id, action_by_id, action_by_name, `Bulk-assigned to ${t.display_name} by ${action_by_name}`, entity_id]);
+            [chit_id, action_by_id, action_by_name, `Bulk-assigned to ${t.display_name} by ${action_by_name}`, entity_id]
+          );
           assigned.push(chit_id);
         }
         return { t, assigned, skipped, cap };
@@ -5309,7 +6532,8 @@ router.post('/assign-bulk',
       console.error('Bulk assign error:', err.message);
       res.status(500).json({ error: 'Bulk assign failed', message: safeErr(err) });
     }
-  });
+  }
+);
 
 // ─── GET /chits/:id/children ──────────────────────────────────────────────────────────────────────────────
 // Forward-link resolver (Fragment 1): the immediate children of a handoff = every chit whose trace.parents SET
@@ -5321,13 +6545,16 @@ router.get('/:id/children', auth, async (req, res) => {
     const me = entityId(req);
     const id = req.params.id;
     if (!trace.UUID_RE.test(id)) return res.status(400).json({ error: 'Bad request', message: 'Invalid chit id' });
-    const r = await withEntity(me, (db) => db.query(
-      `SELECT chit_id, entity_id, direction, manual_subject, auto_subject,
+    const r = await withEntity(me, (db) =>
+      db.query(
+        `SELECT chit_id, entity_id, direction, manual_subject, auto_subject,
               summary_json->'trace' AS trace
          FROM chit_header
         WHERE summary_json->'trace'->'parents' @> $1::jsonb
         ORDER BY created_at ASC`,
-      [JSON.stringify(id)]));
+        [JSON.stringify(id)]
+      )
+    );
     res.json({ parent_chit_id: id, count: r.rows.length, children: r.rows });
   } catch (err) {
     res.status(500).json({ error: 'Failed to get children', message: safeErr(err) });
@@ -5346,10 +6573,11 @@ router.get('/:id/trace', auth, async (req, res) => {
     const id = req.params.id;
     if (!trace.UUID_RE.test(id)) return res.status(400).json({ error: 'Bad request', message: 'Invalid chit id' });
     const dir = req.query.dir === 'backward' ? 'backward' : 'forward';
-    const MAX_NODES = 2000, MAX_DEPTH = 40;
+    const MAX_NODES = 2000,
+      MAX_DEPTH = 40;
     // Optional network scope: when given, the walk follows ONLY edges tagged with this network id, so an entity in
     // several networks never bleeds one into another (the multi-network leak). Omit to walk all co-held edges.
-    const net = (typeof req.query.network === 'string' && req.query.network.trim()) ? req.query.network.trim() : null;
+    const net = typeof req.query.network === 'string' && req.query.network.trim() ? req.query.network.trim() : null;
     const g = traceGraph(me, net);
     const seed = await g.fetch1(id);
     if (!seed.rows[0]) return res.status(404).json({ error: 'Not found', message: 'Chit not visible to you' });
@@ -5359,16 +6587,26 @@ router.get('/:id/trace', auth, async (req, res) => {
       await traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH);
       const { nodes, edges } = g;
       const nodeArr = [...nodes.values()];
-      const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
+      const terminals = nodeArr.filter((item) => !edges.some((e) => e.from === item.chit_id));
       // ── Mass-balance invariant (Fragment 3): at each node, what goes OUT (sum of its children's base_qty) must not
       //    exceed what came IN (its own base_qty), in the same base unit. out > in ⇒ RED — more claimed out than
       //    received = theft / dilution / counterfeit, caught with no investigation. Only compares like base units.
-      const flagged = traceBalance(nodeArr, (n) => edges.filter((e) => e.from === n.chit_id).map((e) => nodes.get(e.to)).filter(Boolean));
-      return res.json({ dir, start: id, reachable_count: nodeArr.length,
-        depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0),
+      const flagged = traceBalance(nodeArr, (n) =>
+        edges
+          .filter((e) => e.from === n.chit_id)
+          .map((e) => nodes.get(e.to))
+          .filter(Boolean)
+      );
+      return res.json({
+        dir,
+        start: id,
+        reachable_count: nodeArr.length,
+        depth_max: nodeArr.reduce((total, item) => Math.max(total, item.depth), 0),
         flagged,
-        terminals: terminals.map((t) => ({ chit_id: t.chit_id, product: t.product })),
-        nodes: nodeArr, edges });
+        terminals: terminals.map((item) => ({ chit_id: item.chit_id, product: item.product })),
+        nodes: nodeArr,
+        edges
+      });
     }
 
     // backward: follow parents toward the origin (records every visible parent edge; advances along the first visible parent).
@@ -5385,46 +6623,93 @@ router.get('/:id/trace', auth, async (req, res) => {
 // came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
 // co-holds — not commercial terms — so this stays within the TR-6 lens.
 function traceToName(row) {
-  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { cbLog.fellBack('chits traceToName: did not parse — answered with none', e, 'debug'); a = []; } }
-  a = Array.isArray(a) ? a : []; const rec = a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator'); return rec ? rec.display_name : null;
+  let list = row.all_recipients;
+  if (typeof list === 'string') {
+    try {
+      list = JSON.parse(list);
+    } catch (e) {
+      cbLog.fellBack('chits traceToName: did not parse — answered with none', e, 'debug');
+      list = [];
+    }
+  }
+  list = Array.isArray(list) ? list : [];
+  const rec = list.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator');
+  return rec ? rec.display_name : null;
 }
 /** a node's edge facts off its frozen summary_json.trace */
 function traceEdgeOf(t) {
-  t = t || {}; return { product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
-    base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null, is_origin: !!t.is_origin, parents: Array.isArray(t.parents) ? t.parents : [] };
+  t = t || {};
+  return {
+    product: t.product || null,
+    qty: t.qty ?? null,
+    unit: t.unit || null,
+    base_qty: t.base_qty ?? null,
+    base_unit: t.base_unit || null,
+    is_origin: !!t.is_origin,
+    parents: Array.isArray(t.parents) ? t.parents : []
+  };
 }
 
 /** the walk's graph: nodes by chit, each edge once, and the one RLS-scoped read a hop makes (`net` = one network only) */
 function traceGraph(me, net) {
-  const fetch1 = (cid) => withEntity(me, (db) => db.query(
-    `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
-       FROM chit_header WHERE chit_id = $1${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''} LIMIT 1`, net ? [cid, net] : [cid]));
+  const fetch1 = (cid) =>
+    withEntity(me, (db) =>
+      db.query(
+        `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+       FROM chit_header WHERE chit_id = $1${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''} LIMIT 1`,
+        net ? [cid, net] : [cid]
+      )
+    );
   const nodes = new Map();
   const edges = [];
   const seenEdge = new Set();
-  const addEdge = (from, to) => { const k = `${from}|${to}`; if (!seenEdge.has(k)) { seenEdge.add(k); edges.push({ from, to }); } };
-  const put = (row, depth) => { if (!nodes.has(row.chit_id)) nodes.set(row.chit_id, { chit_id: row.chit_id, entity_id: row.entity_id, depth,
-    sender_name: row.sender_entity_display_name || null, to_name: traceToName(row), network: (row.trace && row.trace.network && row.trace.network.id) || null, ...traceEdgeOf(row.trace) }); };
+  const addEdge = (from, to) => {
+    const k = `${from}|${to}`;
+    if (!seenEdge.has(k)) {
+      seenEdge.add(k);
+      edges.push({ from, to });
+    }
+  };
+  const put = (row, depth) => {
+    if (!nodes.has(row.chit_id))
+      nodes.set(row.chit_id, {
+        chit_id: row.chit_id,
+        entity_id: row.entity_id,
+        depth,
+        sender_name: row.sender_entity_display_name || null,
+        to_name: traceToName(row),
+        network: (row.trace && row.trace.network && row.trace.network.id) || null,
+        ...traceEdgeOf(row.trace)
+      });
+  };
   return { nodes, edges, fetch1, addEdge, put };
 }
 
 /** forward = exposure / recall set (BFS; the visited set collapses diamonds and cycles) */
 async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
   const { nodes, addEdge, put } = g;
-  let frontier = [id], depth = 0;
+  let frontier = [id],
+    depth = 0;
   while (frontier.length && depth < MAX_DEPTH && nodes.size < MAX_NODES) {
-    const r = await withEntity(me, (db) => db.query(
-      `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+    const r = await withEntity(me, (db) =>
+      db.query(
+        `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
          FROM chit_header
         WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
-      net ? [frontier, net] : [frontier]));
+        net ? [frontier, net] : [frontier]
+      )
+    );
     const next = [];
     for (const row of r.rows) {
       const parents = Array.isArray(row.trace && row.trace.parents) ? row.trace.parents : [];
       for (const p of parents) if (frontier.includes(p)) addEdge(p, row.chit_id);
-      if (!nodes.has(row.chit_id)) { put(row, depth + 1); next.push(row.chit_id); }
+      if (!nodes.has(row.chit_id)) {
+        put(row, depth + 1);
+        next.push(row.chit_id);
+      }
     }
-    frontier = next; depth++;
+    frontier = next;
+    depth++;
   }
 }
 
@@ -5433,9 +6718,15 @@ function traceBalance(nodeArr, kidsOf) {
   let flagged = 0;
   for (const n of nodeArr) {
     const kids = kidsOf(n);
-    if (!kids.length || n.base_qty == null) { n.balance = null; continue; }         // a leaf, or no quantity to balance
-    if (!kids.every((k) => k.base_qty != null && k.base_unit === n.base_unit)) { n.balance = { status: 'unknown' }; continue; }
-    const out = kids.reduce((s, k) => s + k.base_qty, 0);
+    if (!kids.length || n.base_qty == null) {
+      n.balance = null;
+      continue;
+    } // a leaf, or no quantity to balance
+    if (!kids.every((item) => item.base_qty != null && item.base_unit === n.base_unit)) {
+      n.balance = { status: 'unknown' };
+      continue;
+    }
+    const out = kids.reduce((total, item) => total + item.base_qty, 0);
     const delta = out - n.base_qty;
     const red = delta > 1e-9;
     if (red) flagged++;
@@ -5447,18 +6738,26 @@ function traceBalance(nodeArr, kidsOf) {
 /** backward = provenance toward the origin — returns the path walked */
 async function traceBackward(g, id, MAX_DEPTH) {
   const { nodes, fetch1, addEdge, put } = g;
-  let current = id, depth = 0; const path = [id];
+  let current = id,
+    depth = 0;
+  const path = [id];
   while (depth < MAX_DEPTH) {
     const cur = nodes.get(current);
     const parents = cur ? cur.parents : [];
-    if (!parents || !parents.length) break;   // origin — or an honest dead-end where provenance isn't co-held
+    if (!parents || !parents.length) break; // origin — or an honest dead-end where provenance isn't co-held
     let advanced = null;
     for (const p of parents) {
       const pr = await fetch1(p);
-      if (pr.rows[0]) { addEdge(p, current); put(pr.rows[0], depth + 1); if (!advanced) advanced = p; }
+      if (pr.rows[0]) {
+        addEdge(p, current);
+        put(pr.rows[0], depth + 1);
+        if (!advanced) advanced = p;
+      }
     }
     if (!advanced) break;
-    path.push(advanced); current = advanced; depth++;
+    path.push(advanced);
+    current = advanced;
+    depth++;
   }
   return path;
 }
@@ -5469,19 +6768,32 @@ async function traceBackward(g, id, MAX_DEPTH) {
 router.get('/trace/batches', auth, async (req, res) => {
   try {
     const me = entityId(req);
-    const toName = traceToName;   /* the ONE label for a handoff — shared with the walk (T2-SPLIT) */
-    const r = await withEntity(me, (db) => db.query(
-      `SELECT chit_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace, created_at
+    const toName = traceToName; /* the ONE label for a handoff — shared with the walk (T2-SPLIT) */
+    const r = await withEntity(me, (db) =>
+      db.query(
+        `SELECT chit_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace, created_at
          FROM chit_header
         WHERE summary_json->'trace' IS NOT NULL
         ORDER BY ((summary_json->'trace'->>'is_origin') = 'true') DESC, created_at DESC
-        LIMIT 200`));
-    const seen = new Set(); const batches = [];
+        LIMIT 200`
+      )
+    );
+    const seen = new Set();
+    const batches = [];
     for (const row of r.rows) {
-      if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
+      if (seen.has(row.chit_id)) continue;
+      seen.add(row.chit_id);
       const t = row.trace || {};
-      batches.push({ chit_id: row.chit_id, product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null,
-        is_origin: !!t.is_origin, network: (t.network && t.network.id) || null, sender_name: row.sender_entity_display_name || null, to_name: toName(row) });
+      batches.push({
+        chit_id: row.chit_id,
+        product: t.product || null,
+        qty: t.qty ?? null,
+        unit: t.unit || null,
+        is_origin: !!t.is_origin,
+        network: (t.network && t.network.id) || null,
+        sender_name: row.sender_entity_display_name || null,
+        to_name: toName(row)
+      });
     }
     res.json(Object.assign({ count: batches.length }, PAGE_LIMIT.pageOut('batches', batches, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX))));
   } catch (err) {
@@ -5504,18 +6816,27 @@ router.get('/trace/by-batch', auth, async (req, res) => {
     const { edges, nodeArr, kidsMap, nmap } = batchChain(items);
     // mass-balance, same invariant as the walk — the ONE rule (traceBalance)
     const flagged = traceBalance(nodeArr, (n) => (kidsMap[n.chit_id] || []).map((id) => nmap[id]).filter(Boolean));
-    const terminals = nodeArr.filter((n) => !edges.some((e) => e.from === n.chit_id));
-    res.json({ dir: 'forward', by_batch: q, reconstructed: true,
+    const terminals = nodeArr.filter((item) => !edges.some((e) => e.from === item.chit_id));
+    res.json({
+      dir: 'forward',
+      by_batch: q,
+      reconstructed: true,
       /* ⚠️ THE CALLER MUST BE ABLE TO TELL THESE APART. 'batch' = these shipments carried this lot. 'product' =
          no lot data was found anywhere, so this is every movement of a product with that name — a much wider and
          much weaker answer, and the one a recall must never be shown without the caveat. */
       matched_on,
-      matched_note: matched_on === 'batch'
-        ? 'Matched on the lot recorded on each line — GS1 (10) batch or (21) serial.'
-        : 'No lot was recorded on any line, so this is every movement of a product with that name — not a lot-level recall.',
+      matched_note:
+        matched_on === 'batch'
+          ? 'Matched on the lot recorded on each line — GS1 (10) batch or (21) serial.'
+          : 'No lot was recorded on any line, so this is every movement of a product with that name — not a lot-level recall.',
       start: (nodeArr[0] && nodeArr[0].chit_id) || null,
-      reachable_count: nodeArr.length, depth_max: nodeArr.reduce((m, n) => Math.max(m, n.depth), 0), flagged,
-      terminals: terminals.map((t) => ({ chit_id: t.chit_id, product: t.product })), nodes: nodeArr, edges });
+      reachable_count: nodeArr.length,
+      depth_max: nodeArr.reduce((total, item) => Math.max(total, item.depth), 0),
+      flagged,
+      terminals: terminals.map((item) => ({ chit_id: item.chit_id, product: item.product })),
+      nodes: nodeArr,
+      edges
+    });
   } catch (err) {
     res.status(500).json({ error: 'Batch trace failed', message: safeErr(err) });
   }
@@ -5525,8 +6846,17 @@ router.get('/trace/by-batch', auth, async (req, res) => {
 
 /** the receiver of a handoff (by-batch chains on it): the 'receiver' row, else the first party that is not sender or operator */
 function traceRecipientOf(row) {
-  let a = row.all_recipients; if (typeof a === 'string') { try { a = JSON.parse(a); } catch (e) { cbLog.fellBack('chits traceRecipientOf: did not parse — answered with none', e, 'debug'); a = []; } }
-  a = Array.isArray(a) ? a : []; return a.find((x) => x.role === 'receiver') || a.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
+  let list = row.all_recipients;
+  if (typeof list === 'string') {
+    try {
+      list = JSON.parse(list);
+    } catch (e) {
+      cbLog.fellBack('chits traceRecipientOf: did not parse — answered with none', e, 'debug');
+      list = [];
+    }
+  }
+  list = Array.isArray(list) ? list : [];
+  return list.find((x) => x.role === 'receiver') || list.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
 }
 
 /**
@@ -5549,39 +6879,59 @@ function traceRecipientOf(row) {
  */
 async function batchRows(me, q) {
   let matched_on = 'batch';
-  let r = await withEntity(me, (db) => db.query(
-    `SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients,
+  let r = await withEntity(me, (db) =>
+    db.query(
+      `SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients,
             h.summary_json->'trace' AS trace
        FROM chit_header h
        JOIN chit_line   l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id
       WHERE h.summary_json->'trace' IS NOT NULL
         AND l.removed = false
         AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))`,
-    [q])).catch((e) => {   // pre-b142 there is no chit_line to join — fall through, do not fail
-      require('../lib/logger').warn('trace.by-batch-no-lines', { err: e && e.message });
-      return { rows: [] };
-    });
+      [q]
+    )
+  ).catch((e) => {
+    // pre-b142 there is no chit_line to join — fall through, do not fail
+    require('../lib/logger').warn('trace.by-batch-no-lines', { err: e && e.message });
+    return { rows: [] };
+  });
 
   if (!r.rows.length) {
     matched_on = 'product';
-    r = await withEntity(me, (db) => db.query(
-      `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
+    r = await withEntity(me, (db) =>
+      db.query(
+        `SELECT chit_id, sender_entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
          FROM chit_header
         WHERE summary_json->'trace' IS NOT NULL
-          AND lower(summary_json->'trace'->>'product') = lower($1)`, [q]));
+          AND lower(summary_json->'trace'->>'product') = lower($1)`,
+        [q]
+      )
+    );
   }
   return { r, matched_on };
 }
 
 /** one item per chit (the lot join can return a chit once per matching line) */
 function batchItems(rows) {
-  const seen = new Set(); const items = [];
+  const seen = new Set();
+  const items = [];
   for (const row of rows) {
-    if (seen.has(row.chit_id)) continue; seen.add(row.chit_id);
-    const rec = traceRecipientOf(row); const t = row.trace || {};
-    items.push({ chit_id: row.chit_id, sender_entity_id: row.sender_entity_id, sender_name: row.sender_entity_display_name || null,
-      to_entity_id: rec ? rec.entity_id : null, to_name: rec ? rec.display_name : null,
-      product: t.product || null, qty: (t.qty ?? null), unit: t.unit || null, base_qty: (t.base_qty ?? null), base_unit: t.base_unit || null });
+    if (seen.has(row.chit_id)) continue;
+    seen.add(row.chit_id);
+    const rec = traceRecipientOf(row);
+    const t = row.trace || {};
+    items.push({
+      chit_id: row.chit_id,
+      sender_entity_id: row.sender_entity_id,
+      sender_name: row.sender_entity_display_name || null,
+      to_entity_id: rec ? rec.entity_id : null,
+      to_name: rec ? rec.display_name : null,
+      product: t.product || null,
+      qty: t.qty ?? null,
+      unit: t.unit || null,
+      base_qty: t.base_qty ?? null,
+      base_unit: t.base_unit || null
+    });
   }
   return items;
 }
@@ -5589,15 +6939,46 @@ function batchItems(rows) {
 /** the chain rebuilt from the data alone, and each node's depth from the roots */
 function batchChain(items) {
   // rebuild edges: X → Y when receiver(X) === sender(Y). Pure data correlation, no links.
-  const bySender = {}; items.forEach((it) => { (bySender[it.sender_entity_id] = bySender[it.sender_entity_id] || []).push(it); });
-  const edges = []; const hasParent = new Set();
-  items.forEach((x) => (bySender[x.to_entity_id] || []).forEach((y) => { if (y.chit_id !== x.chit_id) { edges.push({ from: x.chit_id, to: y.chit_id }); hasParent.add(y.chit_id); } }));
-  const nmap = {}; items.forEach((it) => { nmap[it.chit_id] = Object.assign({}, it, { depth: 0, is_origin: !hasParent.has(it.chit_id) }); });
+  const bySender = {};
+  items.forEach((item) => {
+    (bySender[item.sender_entity_id] = bySender[item.sender_entity_id] || []).push(item);
+  });
+  const edges = [];
+  const hasParent = new Set();
+  items.forEach((x) =>
+    (bySender[x.to_entity_id] || []).forEach((y) => {
+      if (y.chit_id !== x.chit_id) {
+        edges.push({ from: x.chit_id, to: y.chit_id });
+        hasParent.add(y.chit_id);
+      }
+    })
+  );
+  const nmap = {};
+  items.forEach((item) => {
+    nmap[item.chit_id] = Object.assign({}, item, { depth: 0, is_origin: !hasParent.has(item.chit_id) });
+  });
   // BFS depth from the roots
-  const kidsMap = {}; edges.forEach((e) => { (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to); });
-  let frontier = items.filter((it) => !hasParent.has(it.chit_id)).map((it) => it.chit_id);
-  const seenD = new Set(frontier); let d = 0;
-  while (frontier.length && d < 60) { const next = []; frontier.forEach((id) => (kidsMap[id] || []).forEach((k) => { if (!seenD.has(k)) { seenD.add(k); nmap[k].depth = d + 1; next.push(k); } })); frontier = next; d++; }
+  const kidsMap = {};
+  edges.forEach((e) => {
+    (kidsMap[e.from] = kidsMap[e.from] || []).push(e.to);
+  });
+  let frontier = items.filter((item) => !hasParent.has(item.chit_id)).map((item) => item.chit_id);
+  const seenD = new Set(frontier);
+  let count = 0;
+  while (frontier.length && count < 60) {
+    const next = [];
+    frontier.forEach((id) =>
+      (kidsMap[id] || []).forEach((item) => {
+        if (!seenD.has(item)) {
+          seenD.add(item);
+          nmap[item].depth = count + 1;
+          next.push(item);
+        }
+      })
+    );
+    frontier = next;
+    count++;
+  }
   const nodeArr = Object.values(nmap);
   return { edges, nodeArr, kidsMap, nmap };
 }
@@ -5609,21 +6990,25 @@ function batchChain(items) {
 router.get('/trace/networks', auth, async (req, res) => {
   try {
     const me = entityId(req);
-    const r = await withEntity(me, (db) => db.query(
-      `SELECT summary_json->'trace'->'network'->>'id' AS network_id,
+    const r = await withEntity(me, (db) =>
+      db.query(
+        `SELECT summary_json->'trace'->'network'->>'id' AS network_id,
               bool_or((summary_json->'trace'->'network'->>'operator') = $1) AS is_operator,
               count(DISTINCT chit_id) AS edges
          FROM chit_header
         WHERE summary_json->'trace'->'network'->>'id' IS NOT NULL
         GROUP BY 1
-        ORDER BY edges DESC`, [me]));
+        ORDER BY edges DESC`,
+        [me]
+      )
+    );
     res.json({ networks: r.rows.map((x) => ({ network_id: x.network_id, is_operator: !!x.is_operator, edges: Number(x.edges) })) });
   } catch (err) {
     res.status(500).json({ error: 'Failed to list networks', message: safeErr(err) });
   }
 });
 
-router.moveStatus = moveStatus;   /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
-router._autoAssignReceived = autoAssignReceived;   /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
+router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
+router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
-router.holdersAmong = holdersAmong;   /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
+router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */

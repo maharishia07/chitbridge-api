@@ -1,6 +1,12 @@
 'use strict';
 /**
  * rls-census.cjs — THE LIVE RLS STATE, AGAINST A BASELINE THAT IS COMMITTED ([TILL-169]).
+ * CARD 28-platform-and-operations/rls-census
+ *
+ * OWNS       the comparison of the database's RLS state (enabled · forced · policy count · cb_app may read) with db/rls-baseline.json,
+ *            and writing that baseline (--save). The editor form of the same census is migrations/READ-2026-10-19-1-rls-grants-census.sql.
+ * CALLED BY  the regression pack, by hand (railway run, or --from Athi's editor paste); tests/rls-census-from.test.cjs proves --from.
+ * FLOW       rows (live query, or rowsFromPaste) → now{} → --save writes the baseline · else compare: lost / weaker / fresh → exit code
  *
  * ── ⚠️⚠️⚠️ WHY THIS EXISTS ─────────────────────────────────────────────────────────────────────────────────
  *
@@ -28,14 +34,35 @@
  *
  *   node scripts/rls-census.cjs          compare against the baseline  (exit 1 on a regression)
  *   node scripts/rls-census.cjs --save   write the baseline from live
+ *   node scripts/rls-census.cjs --from <census.json> [--save]
+ *                                        the same, from Athi's paste of migrations/READ-2026-10-19-1-rls-grants-census.sql
+ *                                        (the Supabase editor, as postgres): no DATABASE_URL, no railway (DB-1, 19 Oct)
  *
- * Needs DATABASE_URL, so it belongs in the regression pack, not in the offline guard suite.
+ * Needs DATABASE_URL (or --from), so it belongs in the regression pack, not in the offline guard suite.
  */
-const fs = require('fs'), path = require('path');
-const { Pool } = require('pg');
+const fs = require('fs'),
+  path = require('path');
 
 const BASE = path.join(__dirname, '..', 'db', 'rls-baseline.json');
 const SAVE = process.argv.indexOf('--save') >= 0;
+const FROM = process.argv.indexOf('--from') >= 0 ? process.argv[process.argv.indexOf('--from') + 1] : null;
+
+/** the editor census's `tables` object as the rows the live query returns — public tables only, like that query */
+function rowsFromPaste(file) {
+  const pasted = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const census = pasted && pasted.census && typeof pasted.census === 'object' ? pasted.census : pasted;
+  const tables = census.tables || {};
+  return Object.keys(tables)
+    .filter((name) => name.indexOf('.') < 0)
+    .sort()
+    .map((name) => ({
+      t: name,
+      rls: tables[name].rls,
+      forced: tables[name].forced,
+      policies: tables[name].policies,
+      app_reads: tables[name].app_reads
+    }));
+}
 
 /** ⚠️ one query, so the picture cannot be half-read: state, force, policy count and what cb_app may do */
 const SQL = `
@@ -51,16 +78,32 @@ const SQL = `
    order by 1`;
 
 (async () => {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   let rows;
-  try { rows = (await pool.query(SQL)).rows; }
-  catch (e) { console.error('cannot read the census: ' + e.message); process.exit(2); }
-  await pool.end();
+  if (FROM) {
+    try {
+      rows = rowsFromPaste(FROM);
+    } catch (e) {
+      console.error('cannot read the pasted census ' + FROM + ': ' + e.message);
+      process.exit(2);
+    }
+  } else {
+    const { Pool } = require('pg'); /* only the live read needs the driver */
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+    try {
+      rows = (await pool.query(SQL)).rows;
+    } catch (e) {
+      console.error('cannot read the census: ' + e.message);
+      process.exit(2);
+    }
+    await pool.end();
+  }
 
   const now = {};
-  rows.forEach((r) => { now[r.t] = { rls: !!r.rls, forced: !!r.forced, policies: r.policies, app_reads: !!r.app_reads }; });
-  const on = rows.filter((r) => r.rls).length;
-  const openRead = rows.filter((r) => !r.rls && r.app_reads).length;
+  rows.forEach((item) => {
+    now[item.t] = { rls: !!item.rls, forced: !!item.forced, policies: item.policies, app_reads: !!item.app_reads };
+  });
+  const on = rows.filter((item) => item.rls).length;
+  const openRead = rows.filter((item) => !item.rls && item.app_reads).length;
 
   console.log('\n── RLS census ' + '─'.repeat(52));
   console.log('  tables in public        ' + rows.length);
@@ -71,7 +114,7 @@ const SQL = `
     fs.mkdirSync(path.dirname(BASE), { recursive: true });
     fs.writeFileSync(BASE, JSON.stringify({ at: new Date().toISOString(), tables: now }, null, 1) + '\n');
     console.log('\n  baseline written: db/rls-baseline.json  (' + Object.keys(now).length + ' tables)');
-    console.log('  ⚠️ committing this freezes today\'s state, including what is wrong — so a regression is visible.\n');
+    console.log("  ⚠️ committing this freezes today's state, including what is wrong — so a regression is visible.\n");
     return;
   }
 
@@ -79,18 +122,25 @@ const SQL = `
     console.error('\n  no baseline. Run with --save once, read it, and commit it.\n');
     process.exit(2);
   }
-  const was = JSON.parse(fs.readFileSync(BASE, 'utf8')).tables;
-  const lost = [], weaker = [], fresh = [], gained = [], gone = [];
+  const parsed = JSON.parse(fs.readFileSync(BASE, 'utf8')).tables;
+  const lost = [],
+    weaker = [],
+    fresh = [],
+    gained = [],
+    gone = [];
 
-  Object.keys(was).forEach((t) => {
-    if (!now[t]) { gone.push(t); return; }
+  Object.keys(parsed).forEach((item) => {
+    if (!now[item]) {
+      gone.push(item);
+      return;
+    }
     /* ⚠️⚠️ THE ONE THAT MATTERS: protection that was there and is not */
-    if (was[t].rls && !now[t].rls) lost.push(t);
-    else if (was[t].policies > now[t].policies) weaker.push(t + ' (' + was[t].policies + ' → ' + now[t].policies + ')');
-    else if (!was[t].rls && now[t].rls) gained.push(t);
+    if (parsed[item].rls && !now[item].rls) lost.push(item);
+    else if (parsed[item].policies > now[item].policies) weaker.push(item + ' (' + parsed[item].policies + ' → ' + now[item].policies + ')');
+    else if (!parsed[item].rls && now[item].rls) gained.push(item);
   });
-  Object.keys(now).forEach((t) => {
-    if (!was[t] && !now[t].rls && now[t].app_reads) fresh.push(t);
+  Object.keys(now).forEach((item) => {
+    if (!parsed[item] && !now[item].rls && now[item].app_reads) fresh.push(item);
   });
 
   const say = (label, list, bad) => {
@@ -105,8 +155,11 @@ const SQL = `
   say('no longer exist', gone, false);
 
   const broken = lost.length + weaker.length + fresh.length;
-  console.log('\n' + (broken
-    ? '  ✗ ' + broken + ' regression(s). A table that loses RLS is readable across every tenant.\n'
-    : '  ✓ nothing lost protection since ' + JSON.parse(fs.readFileSync(BASE, 'utf8')).at.slice(0, 10) + '\n'));
+  console.log(
+    '\n' +
+      (broken
+        ? '  ✗ ' + broken + ' regression(s). A table that loses RLS is readable across every tenant.\n'
+        : '  ✓ nothing lost protection since ' + JSON.parse(fs.readFileSync(BASE, 'utf8')).at.slice(0, 10) + '\n')
+  );
   process.exit(broken ? 1 : 0);
 })();
