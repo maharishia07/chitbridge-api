@@ -6285,7 +6285,7 @@ router.delete('/:chit_id/purge', auth, async (req, res) => {
 // rather than being overwritten. Never a cross-entity write: you cannot reach into somebody else's records.
 //
 // Reason required and logged; the chit stays visible as voided, never deleted; the seal is untouched.
-router.put('/:chit_id/void', [body('reason').trim().notEmpty().withMessage('A reason is required to void')], validate, auth, async (req, res) => {
+router.put('/:chit_id/void', [body('reason').trim().notEmpty().withMessage('A reason is required to void')], auth, validate, async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     const entity_id = entityId(req);
@@ -6445,8 +6445,8 @@ router.put('/:chit_id/void', [body('reason').trim().notEmpty().withMessage('A re
 router.post(
   '/assign-bulk',
   [body('chit_ids').isArray({ min: 1 }).withMessage('chit_ids[] required'), body('target_actor_id').isUUID().withMessage('target_actor_id required')],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       const entity_id = entityId(req);

@@ -118,8 +118,8 @@ router.post(
     body('notes').optional().trim().isLength({ max: 2000 }),
     body('preferred').optional().isBoolean()
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -333,8 +333,8 @@ router.patch(
     body('display_name').optional({ nullable: true }).trim().isLength({ max: 120 }),
     body('preferred').optional().isBoolean()
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -797,8 +797,8 @@ router.post(
       return true;
     })
   ],
-  validate,
   auth,
+  validate,
   async (req, res) => {
     try {
       const owner = ctx(req),
@@ -921,7 +921,7 @@ router.post('/customers/:id/groups', auth, async (req, res) => {
 });
 
 // Manual segment override (optional)
-router.patch('/customers/:id', [body('segment_override').optional().isIn(['high_value', 'regular', 'new', 'inactive'])], validate, auth, async (req, res) => {
+router.patch('/customers/:id', [body('segment_override').optional().isIn(['high_value', 'regular', 'new', 'inactive'])], auth, validate, async (req, res) => {
   try {
     const owner = ctx(req);
     const party = await partyPatch(req, res, 'customer');
