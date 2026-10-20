@@ -191,7 +191,10 @@ test('⚠️ an entity word pointing at a unit we do not know resolves to nothin
 });
 
 test('the extra map never changes behaviour when absent — the default path is untouched', () => {
-  for (const w of ['kg', 'கிலோ', 'किलो', 'gunny', '']) {
+  /* QA-70: a FIXED oracle, so the test no longer compares normUnit with itself only */
+  const FIXED = { 'kg': 'kg', 'கிலோ': 'kg', 'किलो': 'kg', 'gunny': 'gunny', '': '' };
+  for (const w of Object.keys(FIXED)) {
+    assert.strictEqual(normUnit(w), FIXED[w], w + ' folds to its fixed canonical form');
     assert.strictEqual(normUnit(w), normUnit(w, undefined));
     assert.strictEqual(normUnit(w), normUnit(w, {}));
   }
