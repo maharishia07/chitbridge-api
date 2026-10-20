@@ -336,7 +336,7 @@ const RULES = {
   R15: (facts, model, ctx) => (facts.destructive.length && !header(ctx.source, /^--\s*DESTRUCTIVE:\s*approved\s+\S+\s+\S+/m) ? objects(facts.destructive) : []),
   R16: (facts, model, ctx) => (facts.created.length && !header(ctx.source, /^--\s*OWNER:\s*\S+/m) ? objects(facts.created.map((made) => made.table)) : []),
   R17: (facts, model, ctx) =>
-    /^(000_baseline|migration_b|net0|sim0|purge_|READ-)/.test(ctx.fileName) || /^b\d+[a-z]?_[A-Za-z0-9_]+\.sql$/.test(ctx.fileName)
+    /^(000_baseline|migration_b|net0|sim0|purge_|READ-|RUN-)/.test(ctx.fileName) || /^b\d+[a-z]?_[A-Za-z0-9_]+\.sql$/.test(ctx.fileName)
       ? []
       : objects([ctx.fileName])
 };
