@@ -29,8 +29,10 @@ const BASELINE = ['000_baseline.sql', '000_baseline_part2.sql'];
 
 /** a migration file the chain skips: a dry run, a verify, a one-off data script, a purge.
  *  BCP-MIG (17 Oct): `_LIST` is gone — under /i it matched `supplier_list`, so b270 (supplier_list RLS) never ran on a rebuilt database;
- *  the purge_*_LIST file it was for is skipped by `purge`. */
-const CHAIN_SKIP = /dryrun|verify|COMMIT|purge|^READ-|^sim01|^net0/i;
+ *  the purge_*_LIST file it was for is skipped by `purge`.
+ *  RUN-* (20 Oct, Athi): a one-off file Athi runs by hand in the SQL editor (a role, a grant fix) — never part of the chain;
+ *  what it changed is folded into the baseline by DB-3. */
+const CHAIN_SKIP = /dryrun|verify|COMMIT|purge|^READ-|^RUN-|^sim01|^net0/i;
 const numOf = (f) => Number(/b(\d+)/.exec(f)[1]);
 /** the chain after the baseline, in number order (b105 before b105a, migration_b48 among the b4x).
  *  BCP-MIG (17 Oct): a letter suffix (b105a b171d b194b b263b) is IN the chain — `b\d+_` alone dropped those four on a rebuild. */
