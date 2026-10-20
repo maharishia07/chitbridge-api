@@ -12,6 +12,7 @@
  * Run: node tests/snapshot-wire.test.js   · no DB, no network.
  */
 'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
 const taxSlab = require(path.join(API, 'lib', 'tax-slab.js'));
@@ -80,7 +81,7 @@ it('⚠️ the OLD shape resolves to nothing — which is what a shop saw, in si
 
 it('a shop with no shelf at all still gets an array, never null', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  assert.ok(src.indexOf("((shelf && shelf.slabs) || [])") > 0, 'the fallback must stay an array — the counter does .length on it');
+  assert.ok(src.includes("(shelf && shelf.slabs) || []"), 'the fallback must stay an array — the counter does .length on it');
 });
 
 it('⚠️⚠️ the snapshot says how many products the shop HAS — a delete is invisible to a delta', () => {
@@ -169,7 +170,7 @@ it('⭐ and the snapshot sends that status, or the flag can never travel', () =>
   assert.ok(src.indexOf('status: itemstatus.statusOf(d)') > 0,
     'the snapshot does not carry the lifecycle status — the counter cannot show what it cannot see');
   /* the row is on the counter at all only because the snapshot stopped filtering to sellable */
-  assert.ok(src.indexOf('onTheCounter') > 0 && src.indexOf('all.filter(onTheCounter)') > 0,
+  assert.ok(src.indexOf('onTheCounter') > 0 && /all\s*\.filter\(onTheCounter\)/.test(src),
     'an item marked off the shelf must stay on the counter, or it can never be put back from there');
 });
 
@@ -679,7 +680,7 @@ it('⭐⭐ the maintenance panel holds the four decisions and writes each throug
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   /* ⚠️ slice to the NEXT route, not to a named one — two routes were added between /flags and /price and the guard
      started reading them as part of /flags, which is how a guard quietly changes what it is guarding. */
-  const at = src.indexOf("router.post('/flags'");
+  const at = routeAt(src, 'post', '/flags');
   const route = src.slice(at, src.indexOf(String.fromCharCode(10) + 'router.', at + 10));
   assert.ok(route.indexOf('nothing to set') > 0, '/flags accepts a body that sets nothing');
   for (const field of ['name', 'category', 'tax_slab'])
@@ -797,7 +798,7 @@ it('⭐⭐ the state code comes from the same GSTIN the shop is shown as having'
   /* moved 2026-09-17: profile.gstin was never selected, so the fallback now reads invoiceParty (the vault's GSTIN row) */
   assert.ok(src.indexOf('const gstin = row.gstn || party.gstin || null;') > 0,
     'the GSTIN is not read once into one place');
-  assert.ok(src.indexOf('state_code: String(gstin ||') > 0,
+  assert.ok(/state_code:\s*String\(gstin \|\|/.test(src),
     'the state code is derived from a different field than the GSTIN that is shown — a profile GSTIN would charge tax it cannot split');
   assert.ok(src.indexOf("state_code: String(row.gstn ||") < 0, 'the old identity-row-only derivation is back');
 });
@@ -858,7 +859,7 @@ it('⭐⭐⭐ a GSTIN typed at the counter is checked there AND refused by the s
     'the counter sends the shop profile without checking it first — Athi: "if the information is validated and then we can sync"');
 
   /* 3 · ⚠️ AND THE SERVER REFUSES ANYWAY. A page is not a place a rule can be enforced. */
-  const route = src.slice(src.indexOf("router.post('/shop'"), src.indexOf("router.get('/bills'"));
+  const route = src.slice(routeAt(src, 'post', '/shop'), routeAt(src, 'get', '/bills'));
   assert.ok(route.length > 200, 'POST /api/till/shop is gone');
   assert.ok(route.indexOf("gstinChecksum(") > 0, 'the server takes a GSTIN from a counter without checking it');
   assert.ok(route.indexOf("status(400)") > 0, 'a bad GSTIN is not refused, only noted');
@@ -1043,7 +1044,7 @@ it('⭐ the slip box is paper for a slip and themed for a screen, and never mixe
  */
 it('⭐⭐ the till may move one product in or out of one live offer, and may not touch the offer itself', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  const r = src.slice(src.indexOf("router.post('/offer-item'"), src.indexOf("router.post('/price'"));
+  const r = src.slice(routeAt(src, 'post', '/offer-item'), routeAt(src, 'post', '/price'));
   assert.ok(r.length > 500, 'the offer-item route is missing');
   /* it appends a version — definition_version is append-only BY GRANT, so an UPDATE of it would simply be refused */
   assert.ok(r.indexOf('INSERT INTO definition_version') > 0, 'the offer is edited rather than versioned');
@@ -1162,7 +1163,7 @@ it('⭐⭐ a GSTR row carries a real unit quantity code, not the shopkeeper own 
   const uom = require(path.join(API, 'lib', 'units.js'));
   const src = fs.readFileSync(path.join(API, 'lib', 'tax-lines.js'), 'utf8');
   assert.ok(src.indexOf("uqc: it.Unit || 'OTH'") < 0, 'the seller word is filed as a UQC again');
-  assert.ok(src.indexOf('uqc: uqcFor(it.Unit)') > 0, 'the unit is not mapped through lib/units');
+  assert.ok(/uqc: uqcFor\(\w+\.Unit\)/.test(src), 'the unit is not mapped through lib/units');
   assert.ok(src.indexOf("require('./units')") > 0, 'tax-lines does not use the one unit map');
   /* the words a counter actually uses must reach real codes */
   for (const [word, code] of [['packet', 'PAC'], ['piece', 'PCS'], ['kg', 'KGS'], ['litre', 'LTR'], ['bag', 'BAG']])
@@ -1359,7 +1360,7 @@ it('⚠️⚠️ the customer list asks for columns that exist, on the table tha
   const q = src.slice(src.indexOf('let customers = []'), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
   /* ⭐ MOVED 2026-09-29 (M36): the SQL now lives in the snapshot's OWN map, read in one shared transaction; the site
      reads it through ownRead('customers'). The assertions follow the SQL to where it is, and the site must still use it. */
-  const sq = src.slice(src.indexOf('      customers: (db) => db.query('), src.indexOf('      adoption: (db) =>'));
+  const sq = src.slice(src.search(/\n\s+customers: \(db\) =>/), src.search(/\n\s+adoption: \(db\) =>/));
   assert.ok(sq.length > 0 && q.indexOf("ownRead('customers')") > 0, 'the customer read is no longer OWN.customers — find where it went');
   /* the name and the number live on identities; customer_list is the JOIN and carries the relationship */
   assert.ok(sq.indexOf('JOIN identities') > 0, 'the name and phone are read from customer_list, which has neither');
@@ -1387,7 +1388,7 @@ console.log('— rewards —');
 it('⭐⭐ the programme is on the wire, so a counter with the line down still knows the rule', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
   const store = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'reward-store.js'), 'utf8');
-  assert.ok(/\n\s+reward,/.test(src), 'the snapshot no longer carries reward — the counter cannot award offline');
+  assert.ok(/\n\s+reward\s*(\/\*[\s\S]*?\*\/)?\s*,/.test(src), 'the snapshot no longer carries reward — the counter cannot award offline');
   assert.ok(store.indexOf("d.kind = 'reward' AND d.status = 'live'") > 0,
     'the programme must be read as a live definition, the same way an offer is');
   assert.ok(store.indexOf('LIMIT 1') > 0, 'two live programmes would mean two balances at one shop');
@@ -1412,7 +1413,7 @@ it('⭐⭐⭐ ONE reader of a balance — the counter and the shop must never qu
 it('⚠️ a customer carries the ID points hang from, not just a name', () => {
   const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
   const q = src.slice(src.indexOf('let customers = []'), src.indexOf('THE PEOPLE WHO MAY STAND AT A COUNTER'));
-  const sq = src.slice(src.indexOf('      customers: (db) => db.query('), src.indexOf('      adoption: (db) =>'));   /* OWN.customers (M36) */
+  const sq = src.slice(src.search(/\n\s+customers: \(db\) =>/), src.search(/\n\s+adoption: \(db\) =>/));   /* OWN.customers (M36) */
   assert.ok(sq.indexOf('i.identity_id') > 0, 'the query must select identity_id');
   assert.ok(q.indexOf('identity_id: x.identity_id') > 0,
     'the id must reach the counter — a balance addressed by name would eventually be paid to the wrong Kumar');

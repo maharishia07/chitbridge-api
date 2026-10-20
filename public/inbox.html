@@ -105,21 +105,24 @@ const API = '';
 const token = localStorage.getItem('cb_token');
 const entity = JSON.parse(localStorage.getItem('cb_entity') || '{}');
 
-if (!token) { window.location.href = '/'; }
+if (!token) {
+  window.location.href = '/';
+}
 
-document.getElementById('entity-info').textContent =
-  `${entity.display_name} · ${entity.bridge_id}`;
+document.getElementById('entity-info').textContent = `${entity.display_name} · ${entity.bridge_id}`;
 
 function getStatusClass(status) {
-  return `status-${status}` in document.createElement('div').style
-    ? status : status.replace('_', '_');
+  return `status-${status}` in document.createElement('div').style ? status : status.replace('_', '_');
 }
 
 function formatDate(dateStr) {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit'
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   });
 }
 
@@ -128,7 +131,7 @@ function formatSummary(summaryJson) {
   const s = typeof summaryJson === 'string' ? JSON.parse(summaryJson) : summaryJson;
   const parts = [];
   if (s.line_item_count) parts.push(`${s.line_item_count} items`);
-  if (s.total_value) parts.push(`${s.currency_code || 'INR'} ${parseFloat(s.total_value).toLocaleString('en-IN', {minimumFractionDigits: 2})}`);
+  if (s.total_value) parts.push(`${s.currency_code || 'INR'} ${parseFloat(s.total_value).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`);
   return parts.join(' · ');
 }
 
@@ -137,15 +140,16 @@ async function loadInbox(statusFilter = '') {
   listEl.innerHTML = '<div class="loading">Loading...</div>';
 
   try {
-    const url = statusFilter
-      ? `${API}/api/chits/inbox?status=${statusFilter}`
-      : `${API}/api/chits/inbox`;
+    const url = statusFilter ? `${API}/api/chits/inbox?status=${statusFilter}` : `${API}/api/chits/inbox`;
 
     const res = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
-    if (res.status === 401) { logout(); return; }
+    if (res.status === 401) {
+      logout();
+      return;
+    }
     const data = await res.json();
 
     if (!data.chits || data.chits.length === 0) {
@@ -160,12 +164,13 @@ async function loadInbox(statusFilter = '') {
       return;
     }
 
-    listEl.innerHTML = data.chits.map(chit => {
-      const isUnread = !chit.read_at;
-      const summary = formatSummary(chit.summary_json);
-      const isSender = chit.sender_entity_bridge_id === entity.bridge_id;
+    listEl.innerHTML = data.chits
+      .map((chit) => {
+        const isUnread = !chit.read_at;
+        const summary = formatSummary(chit.summary_json);
+        const isSender = chit.sender_entity_bridge_id === entity.bridge_id;
 
-      return `
+        return `
         <div class="chit-item ${isUnread ? 'unread' : ''}"
              onclick="window.location.href='/chit.html?id=${chit.chit_id}'">
           <div class="chit-row1">
@@ -185,8 +190,8 @@ async function loadInbox(statusFilter = '') {
           ${chit.manual_subject ? `<div class="manual-subject">"${chit.manual_subject}"</div>` : ''}
           ${summary ? `<div class="summary">${summary}</div>` : ''}
         </div>`;
-    }).join('');
-
+      })
+      .join('');
   } catch (err) {
     listEl.innerHTML = '<div class="empty"><div class="icon">⚠️</div><div>Failed to load inbox</div></div>';
   }
@@ -200,8 +205,7 @@ async function checkPendingConnections() {
     const data = await res.json();
     if (data.count > 0) {
       document.getElementById('pending-banner').style.display = 'flex';
-      document.getElementById('pending-text').textContent =
-        `📨 You have ${data.count} pending connection request${data.count > 1 ? 's' : ''}`;
+      document.getElementById('pending-text').textContent = `📨 You have ${data.count} pending connection request${data.count > 1 ? 's' : ''}`;
     }
   } catch (err) {}
 }

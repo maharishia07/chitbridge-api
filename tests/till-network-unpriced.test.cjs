@@ -12,5 +12,5 @@ t('the store never priced it → not priced by the store', typeof read.isPricedB
 t('the store priced it → priced', read.isPricedByStore(priced, 200) === true);
 t('price_per_litre counts like the storefront', read.isPricedByStore(perLitre, 150) === true);
 t('a zero price is never priced', read.isPricedByStore(priced, 0) === false);
-t('the counter snapshot asks the one rule', /isPricedByStore\(l, row\.price\)/.test(fs.readFileSync(path.join(__dirname, '..', 'routes', 'till.js'), 'utf8')));
+t('the counter snapshot asks the one rule', /isPricedByStore\(\w+, \w+\.price\)/.test(fs.readFileSync(path.join(__dirname, '..', 'routes', 'till.js'), 'utf8')));
 console.log(pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);

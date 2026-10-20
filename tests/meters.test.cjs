@@ -109,7 +109,7 @@ calls.forEach((c) => {
  */
 console.log('\n── a floating meter call is still handled ──');
 allRoutes.forEach(({ f, src }) => {
-  for (const m of src.matchAll(/\.meter\([\s\S]{0,400}?\}\)([\s\S]{0,20})/g)) {
+  for (const m of src.matchAll(/\.meter\([\s\S]{0,400}?\}\)([\s\S]{0,60})/g)) {
     if (!/\.catch\(/.test(m[1])) fail++, console.error('  ✗ ' + f + ': a meter call has no .catch()');
   }
 });

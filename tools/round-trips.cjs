@@ -48,15 +48,17 @@ try {
     const m = line.match(/app\.use\(\s*['"]([^'"]+)['"].*require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/);
     if (m && !mounts[m[2] + '.js']) mounts[m[2] + '.js'] = m[1];
   }
-} catch (_) { /* no server.js — paths stay router-relative, and the join simply finds nothing */ }
+} catch (_) {
+  /* no server.js — paths stay router-relative, and the join simply finds nothing */
+}
 
-const files = fs.readdirSync(R).filter((f) => f.endsWith('.js'));
+const files = fs.readdirSync(R).filter((item) => item.endsWith('.js'));
 const rows = [];
 
 for (const f of files) {
-  const src = fs.readFileSync(path.join(R, f), 'utf8');
+  const text = fs.readFileSync(path.join(R, f), 'utf8');
   /* every route declaration, and the span of its handler up to the next one */
-  const decls = [...src.matchAll(/router\.(get|post|put|patch|delete)\(\s*(['"`])([^'"`]*)\2/g)];
+  const decls = [...text.matchAll(/router\.(get|post|put|patch|delete)\(\s*(['"`])([^'"`]*)\2/g)];
   /**
    * ⚠️⚠️ THE HANDLER IS PAREN-MATCHED, NOT SLICED TO THE NEXT ROUTE. My first version took everything between
    * one `router.x(` and the next — which swallows any helper function declared between them. It reported
@@ -68,20 +70,42 @@ for (const f of files) {
    * strings and comments are skipped so a `)` inside them cannot end the span early.
    */
   const handlerOf = (from) => {
-    let i = src.indexOf('(', from), depth = 0, s = i;
-    for (; i < src.length; i++) {
-      const c = src[i], n = src[i + 1];
-      if (c === '/' && n === '/') { i = src.indexOf('\n', i); if (i < 0) break; continue; }
-      if (c === '/' && n === '*') { i = src.indexOf('*/', i); if (i < 0) break; i++; continue; }
+    let i = text.indexOf('(', from),
+      depth = 0,
+      s = i;
+    for (; i < text.length; i++) {
+      const c = text[i],
+        n = text[i + 1];
+      if (c === '/' && n === '/') {
+        i = text.indexOf('\n', i);
+        if (i < 0) break;
+        continue;
+      }
+      if (c === '/' && n === '*') {
+        i = text.indexOf('*/', i);
+        if (i < 0) break;
+        i++;
+        continue;
+      }
       if (c === "'" || c === '"' || c === '`') {
-        const q = c; i++;
-        for (; i < src.length; i++) { if (src[i] === '\\') { i++; continue; } if (src[i] === q) break; }
+        const q = c;
+        i++;
+        for (; i < text.length; i++) {
+          if (text[i] === '\\') {
+            i++;
+            continue;
+          }
+          if (text[i] === q) break;
+        }
         continue;
       }
       if (c === '(') depth++;
-      else if (c === ')') { depth--; if (depth === 0) return src.slice(s, i + 1); }
+      else if (c === ')') {
+        depth--;
+        if (depth === 0) return text.slice(s, i + 1);
+      }
     }
-    return src.slice(s, Math.min(src.length, s + 4000));
+    return text.slice(s, Math.min(text.length, s + 4000));
   };
 
   /**
@@ -92,19 +116,22 @@ for (const f of files) {
    *
    * ⭐ The endpoint whose comments explain the fix best is the one a naive counter punishes hardest.
    */
-  const strip = (t) => t
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .split('\n').map((L) => {
-      const i = L.indexOf('//');
-      if (i < 0) return L;
-      /* a // inside a string is not a comment — cheap check: an odd number of quotes before it */
-      const before = L.slice(0, i);
-      const odd = (q) => (before.split(q).length - 1) % 2 === 1;
-      return (odd("'") || odd('"') || odd('`')) ? L : before;
-    }).join('\n');
+  const strip = (label) =>
+    label
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .split('\n')
+      .map((item) => {
+        const i = item.indexOf('//');
+        if (i < 0) return item;
+        /* a // inside a string is not a comment — cheap check: an odd number of quotes before it */
+        const before = item.slice(0, i);
+        const odd = (q) => (before.split(q).length - 1) % 2 === 1;
+        return odd("'") || odd('"') || odd('`') ? item : before;
+      })
+      .join('\n');
 
-  decls.forEach((d) => {
-    const body = strip(handlerOf(d.index));
+  decls.forEach((item) => {
+    const body = strip(handlerOf(item.index));
 
     const n = (re) => (body.match(re) || []).length;
     const we = n(/\bwithEntity\s*\(/g);
@@ -112,50 +139,84 @@ for (const f of files) {
     const oe = n(/\bonEntity\s*\(/g);
     /* ⚠️ EXCLUDE the ones already counted — `withEntity(id, c => c.query(...))` would otherwise be
        double-charged for its inner query, which is the query the transaction was opened FOR. */
-    const q  = n(/(?:^|[^.\w])query\s*\(/g) - we - wt;
+    const q = n(/(?:^|[^.\w])query\s*\(/g) - we - wt;
 
     const trips = we * COST.withEntity + wt * COST.withTransaction + oe * COST.onEntity + Math.max(0, q) * COST.query;
     rows.push({
       /* ⚠️ no regex here on purpose — a trailing-slash strip written as a literal has now had its backslash
          eaten by a generated edit twice in this file alone. String work cannot be mis-escaped. */
       route: (() => {
-        let p = (mounts[f] || '') + d[3];
+        let p = (mounts[f] || '') + item[3];
         if (p.length > 1 && p[p.length - 1] === '/') p = p.slice(0, -1);
-        return d[1].toUpperCase().padEnd(6) + (p || d[3]);
+        return item[1].toUpperCase().padEnd(6) + (p || item[3]);
       })(),
-      file: f, we, wt, oe, q: Math.max(0, q), trips,
+      file: f,
+      we,
+      wt,
+      oe,
+      q: Math.max(0, q),
+      trips,
       /* ⭐ THE ACTIONABLE SIGNAL: more than one transaction opened in one handler. One is unavoidable; the
          second onwards is the pattern onEntity exists to collapse. */
-      collapsible: Math.max(0, (we + wt) - 1),
+      collapsible: Math.max(0, we + wt - 1)
     });
   });
 }
 
-rows.sort((a, b) => b.trips - a.trips);
+rows.sort((first, second) => second.trips - first.trips);
 
-const total = rows.reduce((s, r) => s + r.trips, 0);
-const worst = rows.filter((r) => r.collapsible > 0);
+const total = rows.reduce((sum, item) => sum + item.trips, 0);
+const worst = rows.filter((item) => item.collapsible > 0);
 
-console.log('\n  ' + rows.length + ' endpoints in ' + files.length + ' route files · ~' + total + ' static round trips'
-  + '\n  cost model (db/index.js): withEntity 4 · withTransaction 3 · onEntity 1 · query 1\n');
+console.log(
+  '\n  ' +
+    rows.length +
+    ' endpoints in ' +
+    files.length +
+    ' route files · ~' +
+    total +
+    ' static round trips' +
+    '\n  cost model (db/index.js): withEntity 4 · withTransaction 3 · onEntity 1 · query 1\n'
+);
 
 console.log('  WORST — more than one transaction opened in a single handler:\n');
 console.log('    ' + 'trips'.padStart(6) + '  ' + 'extra tx'.padStart(8) + '  endpoint');
-worst.slice(0, 20).forEach((r) => {
-  console.log('    ' + String(r.trips).padStart(6) + '  ' + String(r.collapsible).padStart(8) + '  '
-    + r.route.padEnd(46) + r.file);
+worst.slice(0, 20).forEach((item) => {
+  console.log('    ' + String(item.trips).padStart(6) + '  ' + String(item.collapsible).padStart(8) + '  ' + item.route.padEnd(46) + item.file);
 });
 if (worst.length > 20) console.log('    … and ' + (worst.length - 20) + ' more');
 
-console.log('\n  ' + worst.length + ' of ' + rows.length + ' endpoints open more than one transaction.'
-  + '\n  Collapsing every one of them would remove ~'
-  + worst.reduce((s, r) => s + r.collapsible * 3, 0) + ' round trips'
-  + ' (each extra transaction costs 3 beyond its query).\n');
+console.log(
+  '\n  ' +
+    worst.length +
+    ' of ' +
+    rows.length +
+    ' endpoints open more than one transaction.' +
+    '\n  Collapsing every one of them would remove ~' +
+    worst.reduce((sum, item) => sum + item.collapsible * 3, 0) +
+    ' round trips' +
+    ' (each extra transaction costs 3 beyond its query).\n'
+);
 
 if (process.argv.indexOf('--all') >= 0) {
   console.log('  EVERY ENDPOINT:\n');
-  rows.forEach((r) => console.log('    ' + String(r.trips).padStart(4) + '  we=' + r.we + ' wt=' + r.wt
-    + ' oe=' + r.oe + ' q=' + r.q + '   ' + r.route.padEnd(46) + r.file));
+  rows.forEach((item) =>
+    console.log(
+      '    ' +
+        String(item.trips).padStart(4) +
+        '  we=' +
+        item.we +
+        ' wt=' +
+        item.wt +
+        ' oe=' +
+        item.oe +
+        ' q=' +
+        item.q +
+        '   ' +
+        item.route.padEnd(46) +
+        item.file
+    )
+  );
   console.log();
 }
 
@@ -188,19 +249,23 @@ if (process.argv.indexOf('--all') >= 0) {
   const pathB = require('path');
   const BUDGET = pathB.join(__dirname, 'round-trips.budget.json');
   const now = {};
-  rows.forEach((r) => { now[r.route + '  ' + r.file] = r.trips; });
+  rows.forEach((item) => {
+    now[item.route + '  ' + item.file] = item.trips;
+  });
 
   if (process.argv.includes('--update')) {
     const old = fsB.existsSync(BUDGET) ? JSON.parse(fsB.readFileSync(BUDGET, 'utf8')) : {};
     const raised = [];
     const next = {};
     for (const [k, v] of Object.entries(now)) {
-      if (old[k] != null && v > old[k] && !process.argv.includes('--allow-raise')) { raised.push(`${k}  ${old[k]} → ${v}`); next[k] = old[k]; }
-      else next[k] = v;
+      if (old[k] != null && v > old[k] && !process.argv.includes('--allow-raise')) {
+        raised.push(`${k}  ${old[k]} → ${v}`);
+        next[k] = old[k];
+      } else next[k] = v;
     }
     if (raised.length) {
       console.error('\n  x refusing to raise a budget — that is the drift this exists to stop:');
-      raised.forEach((r) => console.error('      ' + r));
+      raised.forEach((item) => console.error('      ' + item));
       console.error('\n  Collapse the extra transaction, or re-run with --allow-raise if it is genuinely intended.\n');
       process.exit(1);
     }
@@ -210,12 +275,18 @@ if (process.argv.indexOf('--all') >= 0) {
   }
 
   if (process.argv.includes('--check')) {
-    if (!fsB.existsSync(BUDGET)) { console.error('\n  no budget yet — run: node tools/round-trips.cjs --update\n'); process.exit(1); }
+    if (!fsB.existsSync(BUDGET)) {
+      console.error('\n  no budget yet — run: node tools/round-trips.cjs --update\n');
+      process.exit(1);
+    }
     const budget = JSON.parse(fsB.readFileSync(BUDGET, 'utf8'));
     const over = [];
     const fresh = [];
     for (const [k, v] of Object.entries(now)) {
-      if (budget[k] == null) { if (v > 8) fresh.push(`${k} = ${v}`); continue; }
+      if (budget[k] == null) {
+        if (v > 8) fresh.push(`${k} = ${v}`);
+        continue;
+      }
       if (v > budget[k]) over.push(`${k}  ${budget[k]} → ${v}`);
     }
     console.log('\n── round trips per endpoint, against their budget ──');
@@ -224,11 +295,11 @@ if (process.argv.indexOf('--all') >= 0) {
        and anything above that is a design decision someone should have to state out loud. */
     if (fresh.length) {
       console.error(`\n  x ${fresh.length} NEW endpoint(s) start above 8 trips:`);
-      fresh.forEach((f) => console.error('      ' + f));
+      fresh.forEach((item) => console.error('      ' + item));
     }
     if (over.length) {
       console.error(`\n  x ${over.length} endpoint(s) now cost MORE than budgeted:`);
-      over.forEach((o) => console.error('      ' + o));
+      over.forEach((item) => console.error('      ' + item));
       console.error('\n  Each extra transaction is ~3 trips, ~250ms each. Collapse it, or --update --allow-raise.\n');
     }
     if (!over.length && !fresh.length) console.log('  OK — no endpoint costs more than its budget\n');

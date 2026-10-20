@@ -9,6 +9,7 @@
  * Run: node tests/books-routes.test.cjs
  */
 'use strict';
+const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const path = require('path');
 const http = require('http');
 const express = require('express');
@@ -187,14 +188,14 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('a payment dated in a locked month → 409 PERIOD_LOCKED with the exact sentence', lp.status === 409 && lp.body.code === 'PERIOD_LOCKED'
     && lp.body.error === 'That month is locked. Open it again (with a reason) to record this.', JSON.stringify(lp.body));
   const src = require('fs').readFileSync(path.join(H.API, 'routes', 'books.js'), 'utf8');
-  const payH = src.slice(src.indexOf("router.post('/payments', "), src.indexOf("router.post('/payments/:id/propose'"));
+  const payH = src.slice(routeAt(src, 'post', '/payments'), routeAt(src, 'post', '/payments/:id/propose'));
   const bsrc = require('fs').readFileSync(path.join(H.API, 'lib', 'books.js'), 'utf8');
   const recP = bsrc.slice(bsrc.indexOf('async function recordPayment('), bsrc.indexOf('/** the payment\'s journal event'));
   /* M26: the route's one withEntity now also asks the duplicate rule first and reads the outcome after — still ONE handle, still
      one insertPayment and two postEntry in recordPayment (the bills are settled by settleBills on that same handle) */
   const payTx = payH.slice(payH.indexOf('await withEntity(e, async (h) => {'), payH.indexOf('return rec;'));
   ok('…and the payment row and its entry are ONE transaction (the route hands recordPayment one handle; it inserts and posts on it)',
-    /B\.recordPayment\(h, e,/.test(payTx) && !/withEntity/.test(payTx.slice(10)) && /S\.insertPayment\(h, entity, p\)/.test(recP) && (recP.match(/postEntry\(h, entity,/g) || []).length === 2 && nP >= 0);
+    /B\.recordPayment\(h, e,/.test(payTx) && !/withEntity/.test(payTx.slice(10)) && /S\.insertPayment\(h, entity, p\)/.test(recP) && (recP.match(/postEntry\(\s*h,\s*entity,/g) || []).length === 2 && nP >= 0);
   const ul0 = await q('POST', '/periods/2026-27/5/unlock', {});
   ok('unlock without a reason is refused', ul0.status === 422);
   const ul = await q('POST', '/periods/2026-27/5/unlock', { reason: 'late supplier bill' });
@@ -337,7 +338,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   const el = ssrc.slice(ssrc.indexOf('async function entryLines('), ssrc.indexOf('async function entries('));
   ok('…in ONE query: entryLines LEFT JOINs the shop\'s own chit_header (entity-scoped, ONE copy — a self-chit can have two, b149) and identities — never a read per row',
     /LEFT JOIN LATERAL \(SELECT [^)]*FROM chit_header x\s+WHERE x\.entity_id = \$1 AND x\.chit_id = h\.source_chit_id[^)]*LIMIT 1\) c ON true/.test(el) && /LEFT JOIN identities i ON i\.identity_id = h\.created_by/.test(el)
-    && !/S\.(billNos|entry)\(/.test(src.slice(src.indexOf("router.get('/daybook'"), src.indexOf("router.get('/party/:id/statement'"))));
+    && !/S\.(billNos|entry)\(/.test(src.slice(routeAt(src, 'get', '/daybook'), routeAt(src, 'get', '/party/:id/statement'))));
 
   /* a loss: salaries paid from cash, bigger than the profit so far → "Net loss" under capital, still balanced */
   const ls = await q('POST', '/entries', { narration: 'Salaries', date: '2026-09-08', lines: [{ code: '6020', dr_minor: 200000 }, { code: '1400', cr_minor: 200000 }] });

@@ -255,8 +255,9 @@ it('⭐ the counter\'s own PIN is tried FIRST, and it works with the line down',
   /* 2026-10-08: the ORDER is the window's (CBSignin.machine go(): the host's local credential before any post) — read off the kit's
      byte copy of the window, which scripts/vendor-till.cjs holds equal to web public/app/signin-ui.js */
   const WIN = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'signin-ui.js'), 'utf8').replace(/\r\n/g, '\n');
-  const go = body(WIN, 'function go(').text;
-  const pinAt = go.indexOf('L.find('), netAt = go.indexOf('return askFor(w.value)');
+  /* iter1: go() is nested and indented now, so its end is found by brace depth, not by a closing brace at column 0 */
+  const go = (() => { const at = WIN.indexOf('function go('); let depth = 0; for (let k = WIN.indexOf('{', at); k < WIN.length; k++) { if (WIN[k] === '{') depth++; else if (WIN[k] === '}' && --depth === 0) return WIN.slice(at, k + 1); } return ''; })();
+  const pinAt = go.search(/\w+\.find\(/), netAt = go.indexOf('return askFor(w.value)');
   assert.ok(pinAt > 0 && netAt > pinAt, 'the network is asked before this counter\'s own PIN');
   const mnt = body(PAGE, 'function usignMount(').text;
   assert.ok(mnt.indexOf('if (!lineUp())') > 0 && mnt.indexOf('if (!lineUp())') < mnt.indexOf('SIGN().transport(c)'), 'offline with no PIN is not refused in words');

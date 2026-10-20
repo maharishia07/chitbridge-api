@@ -25,7 +25,7 @@ const src = fs.readFileSync(path.join(ROOT, 'lib', 'books-tally.js'), 'utf8');
 ok('lib/books-tally.js writes no Tally XML of its own (no <VOUCHER, <LEDGER, <ENVELOPE literal)', !/<VOUCHER|<LEDGER[ >]|<ENVELOPE|<ALLLEDGERENTRIES/.test(src.replace(/\/\*[\s\S]*?\*\//g, '')));
 ok('…and takes its builders from the adapter', /adapters', 'tally\.js'\)\)\.builders/.test(src) && typeof A.builders.accountingVoucherBody === 'function');
 const pack = fs.readFileSync(path.join(ROOT, 'lib', 'books-pack.js'), 'utf8');
-ok('lib/books-pack.js drops the engine\'s tally.xml when the adapter built the files, and records tally_xml_status', /f\.name !== 'tally\.xml'/.test(pack) && /tally_xml_status: tally\.status/.test(pack) && /status: 'unverified'/.test(pack));
+ok('lib/books-pack.js drops the engine\'s tally.xml when the adapter built the files, and records tally_xml_status', /\w+\.name !== 'tally\.xml'/.test(pack) && /tally_xml_status: tally\.status/.test(pack) && /status: 'unverified'/.test(pack));
 
 /* the Receipt the connector sends today, frozen — the generic builder must not have changed a byte of it */
 const RECEIPT = '<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME>\n'

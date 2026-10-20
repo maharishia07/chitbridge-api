@@ -2,7 +2,7 @@
  * OWNS      which rules the lint ratchet counts (tools/lint-ratchet.cjs). CALLED BY that tool and editors. CARD qa/lint-ratchet
  * The packages come from $CB_LINT_TOOL / C:/dev/toolset/lint-tool, not from this repo's package.json (yet).
  * Rules = eslint:recommended as warnings, plus no empty catch and no shadowing. no-undef is OFF: the pages are classic scripts that share globals across files
- * (19,049 false alarms on 18 Oct); unused-vars counts function-local names only for the same reason. A globals manifest is iteration-1 work (MNT-4).*/
+ * (19,049 false alarms on 18 Oct); unused-vars counts function-local names only for the same reason. The globals manifest (iteration 1, MNT-4) is eslint.globals.json; no-undef is opt-in via CB_LINT_NOUNDEF=1.*/
 'use strict';
 const path = require('path');
 const { createRequire } = require('module');
@@ -30,5 +30,7 @@ module.exports = [
     linterOptions: { reportUnusedDisableDirectives: 'off' },
     rules: { ...asWarnings, 'no-empty': ['warn', { allowEmptyCatch: false }], 'no-shadow': 'warn', 'no-var': 'off', 'no-undef': 'off', 'no-unused-vars': ['warn', { vars: 'local', args: 'none', caughtErrors: 'none' }] }
   },
-  { files: ['**/*.mjs'], languageOptions: { sourceType: 'module' } }
+  { files: ['**/*.mjs'], languageOptions: { sourceType: 'module' } },
+  // opt-in: CB_LINT_NOUNDEF=1 turns no-undef on with the globals each page really shares (regenerate: node C:/dev/toolset/iter1/globals-manifest.cjs api --write)
+  ...(process.env.CB_LINT_NOUNDEF ? require('./eslint.noundef.cjs') : [])
 ];
