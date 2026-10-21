@@ -18,7 +18,7 @@ const fs = require('fs');
 
 const API = path.join(__dirname, '..');
 const ROUTE = fs.readFileSync(path.join(API, 'routes', 'signin.js'), 'utf8');   // M06: verify (and this capture) moved from entities.js
-const MIG = fs.readFileSync(path.join(API, 'migrations', 'b264_signup_context.sql'), 'utf8');
+const MIG = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b264_signup_context.sql'), 'utf8');
 
 let pass = 0, fail = 0;
 function it(name, fn) {

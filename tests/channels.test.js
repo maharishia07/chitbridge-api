@@ -77,7 +77,7 @@ console.log('\nchannels · ⚠️ a CLAIM is not a PERMISSION (b124)');
  * code. A challenge is only proof when the claimant cannot also satisfy it.
  */
 const fs = require('node:fs'), path = require('node:path');
-const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'b124_channel_verified_only.sql'), 'utf8');
+const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'archive', 'b124_channel_verified_only.sql'), 'utf8');
 t('★★ channel_owner() resolves VERIFIED bindings only — a declared claim reaches nobody', () => {
   const fn = sql.slice(sql.indexOf('CREATE OR REPLACE FUNCTION channel_owner'));
   assert.match(fn, /status\s*=\s*'verified'/, 'the status filter is the whole point of b124');

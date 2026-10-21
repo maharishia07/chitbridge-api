@@ -21,7 +21,7 @@ let pass = 0;
 const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); }
   catch (e) { console.log('  FAIL ' + what + '\n       ' + e.message); process.exitCode = 1; } };
 
-const sql = fs.readFileSync(path.join(API, 'migrations', 'b219_test_ledger.sql'), 'utf8');
+const sql = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b219_test_ledger.sql'), 'utf8');
 const route = fs.readFileSync(path.join(API, 'routes', 'testing.js'), 'utf8');
 const board = fs.readFileSync(path.join(WEB, 'testing.html'), 'utf8');
 const panel = fs.readFileSync(path.join(WEB, 'app', 'cap-testing.js'), 'utf8');

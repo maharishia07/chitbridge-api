@@ -61,7 +61,7 @@ for (const [rule, bad, good, header] of SELF_TESTS) {
 check('an allow header names the rules it excuses', [...allowedRules('-- schema-lint: allow R5 R6 because\nSELECT 1;').rules].join() === 'R5,R6');
 
 console.log('\n── migrations/ replayed in chain order ──');
-const { files, violations, allows } = replay();
+const { files, violations, allows, baselineTables } = replay();
 const baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, 'utf8'));
 const baselineFiles = new Set(baseline.files), baselineViolations = new Set(baseline.violations);
 const live = violations.filter((v) => !v.allowed);
@@ -84,8 +84,9 @@ check('every NEW migration (' + newFiles.length + ') passes every rule', fromNew
 check('no file in the baseline picked up a violation it did not have', grown.length === 0, grown.slice(0, 8).map(keyOf).join(' | '));
 check('the baseline holds nothing already fixed (it only shrinks)', stale.length === 0, stale.slice(0, 5).join(' | ') + (stale.length > 5 ? ' …' : '') + '  → node tests/schema-lint.test.cjs --write-baseline');
 check('every file the baseline names still exists', gone.length === 0, gone.join(', '));
-check('the scan reached the chain', files.length > 250, files.length + ' files');
-check('the baseline is big enough to be real', baselineViolations.size > 100, baselineViolations.size + ' known violation(s) in ' + baselineFiles.size + ' old file(s)');
+/* DB-REBASE (18 Oct): the old chain is in migrations/archive/; the one baseline is read into the model, not judged. A new file is
+   judged against every table the baseline makes — so the model must hold them all (158 on 18 Oct), or R11 would wave through anything. */
+check('the one baseline was read into the model', baselineTables >= 150, baselineTables + ' tables · ' + files.length + ' file(s) judged after it');
 console.log('\n  ' + allows.length + ' allow header(s):' + (allows.length ? '\n    ' + allows.join('\n    ') : ' none'));
 console.log('\n  ' + checks + ' checks');
 process.exit(failed ? 1 : 0);

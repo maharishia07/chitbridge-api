@@ -109,19 +109,26 @@ it('the transport is config: an access key pair → SigV4 · S3_KEY alone → Su
 
 /* ── 4 · the ledger ── */
 const mig = require('../tools/migrate.cjs');
-it('the chain carries the ledger (b304) and --record-through takes the baseline with it', () => {
-  assert.ok(mig.chainFiles().includes(mig.LEDGER_FILE));
-  const t = mig.through('b304');
-  assert.ok(t.includes('000_baseline.sql') && t.includes('000_baseline_part2.sql') && t.includes(mig.LEDGER_FILE));
-  assert.ok(!t.some((f) => /^b(30[5-9]|3[1-9]\d)_/.test(f)), 'a file after b304 was taken');
+/* DB-REBASE (18 Oct 2026): ONE baseline (000_baseline_2026-10-21.sql) carries the schema through b767, the ledger table (b304) and the
+   reference rows; the old chain is in migrations/archive/ and never runs on a new database. */
+it('the one baseline carries the ledger (b304) and --record-through takes only the baseline up to b767', () => {
+  assert.deepStrictEqual(mig.BASELINE, ['000_baseline_2026-10-21.sql']);
+  const base = fs.readFileSync(path.join(API, 'migrations', mig.BASELINE[0]), 'utf8');
+  assert.ok(/CREATE TABLE public\.schema_migrations \(/.test(base), 'the baseline does not make schema_migrations');
+  assert.ok(!base.includes('\r'), 'the baseline has CR characters — a CRLF checkout puts \\r inside every function body it makes (.gitattributes eol=lf)');
+  assert.ok(/do NOT run this file there/.test(base), 'the baseline no longer tells production not to run it');
+  assert.ok(fs.existsSync(mig.LEDGER_PATH), 'b304 is not in migrations/archive/');
+  assert.deepStrictEqual(mig.through('b767'), mig.BASELINE);
   assert.throws(() => mig.through('latest'), /migration number/);
 });
-it('the chain keeps every schema file a rebuild needs: letter suffixes and a name holding "_list" (BCP-MIG, 17 Oct)', () => {
+it('the chain after the baseline: only bNNN above b767, letter suffixes in, dry runs out, archive never read', () => {
   const chain = mig.chainFiles();
-  for (const f of ['b105a_floor_trigger_definer.sql', 'b171d_customer_who_and_when.sql', 'b263b_clear_the_duplicate_bills.sql', 'b270_supplier_list_rls.sql'])
-    assert.ok(chain.includes(f), f + ' is not in the chain');
-  assert.ok(chain.indexOf('b105_retention_prep.sql') < chain.indexOf('b105a_floor_trigger_definer.sql'), 'b105a runs before b105');
+  assert.ok(chain.every((f) => /^b\d+[a-z]?_/.test(f) && Number(/^b(\d+)/.exec(f)[1]) > mig.BASELINE_THROUGH), 'a file at or below b767 is in the chain');
   assert.ok(!chain.some((f) => /dryrun|verify|purge/i.test(f)), 'a dry run, verify or purge file is in the chain');
+  assert.ok(!chain.includes('b270_supplier_list_rls.sql') && !chain.includes(mig.LEDGER_FILE), 'an archived file is back in the chain');
+  for (const f of ['b105a_floor_trigger_definer.sql', 'b171d_customer_who_and_when.sql', 'b263b_clear_the_duplicate_bills.sql', 'b270_supplier_list_rls.sql'])
+    assert.ok(fs.existsSync(path.join(API, 'migrations', 'archive', f)), f + ' is not kept in migrations/archive/');
+  assert.deepStrictEqual(mig.strayFiles(), [], 'a bNNN at or below b767 sits in migrations/ — it would never run; renumber it');
 });
 
 /* ── 5 · no platform host in shipped code ── */

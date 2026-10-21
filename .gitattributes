@@ -5,3 +5,5 @@
 # Workflow YAML embeds bash `run:` blocks — keep LF so the runner's shell doesn't choke on CRLF.
 *.yml text eol=lf
 *.yaml text eol=lf
+# DB-REBASE: the baseline carries function bodies and seed text byte for byte — CRLF would put \r inside every function on a Windows checkout
+migrations/000_baseline*.sql text eol=lf

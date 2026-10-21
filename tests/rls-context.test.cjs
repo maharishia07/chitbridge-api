@@ -112,7 +112,7 @@ const EXPECTED = {
      says it may. */
   'routes/catalogue.js:catalogue_items': 'public storefront fallback; the RLS policy explicitly permits public items',
   'routes/products.js:catalogue_items': 'public storefront fallback; the RLS policy explicitly permits public items',
-  /* ⭐ VERIFIED against migrations/b265_signup_context_rls.sql: the ONLY policy on signup_context is
+  /* ⭐ VERIFIED against migrations/archive/b265_signup_context_rls.sql: the ONLY policy on signup_context is
      `FOR INSERT WITH CHECK (true)`, deliberately — the row is written during sign-up, BEFORE the entity being
      signed up exists, so a policy keyed on app.current_entity would block signing up at all. No SELECT/UPDATE/
      DELETE policy exists, so FORCE RLS makes the table write-only through cb_app regardless of context. */

@@ -1,3 +1,45 @@
+# Migration manifest
+
+## ⭐ FROM 21 OCT 2026: ONE BASELINE = PRODUCTION'S SCHEMA + NUMBERED MIGRATIONS AFTER IT (DB-3, Athi)
+
+> "db baselining so we don't need to run multiple migrations … then we can note down migrations from this moment onwards" (Athi, 18 Oct 2026)
+> DECISIONS 2026-10-18: "one baseline = production schema now; only numbered migrations after it".
+
+**The rule.** A new database = `migrations/000_baseline_2026-10-21.sql`, then ONLY the numbered migrations after it (`b768` onward),
+in number order. Each one is logged in `migrations/MIGRATIONS-LOG.md` with **run-by / run-at** for every database it ran on.
+The one runner is `tools/migrate.cjs` (it records each file in `schema_migrations`). Never edit the baseline or an applied file:
+a change is a new `bNNN`.
+
+| | |
+|---|---|
+| Baseline | `000_baseline_2026-10-21.sql`: the public schema of production exactly as Athi's `pg_dump --schema-only --no-owner -n public` showed it on 21 Oct 2026 06:46 IST (server 17.6), plus the `ops` and `metrics` schemas and the reference rows of the 28 seeded tables. Roles: makes `cb_app` / `cb_ops` / `cb_metrics` / `cb_backup` if missing. |
+| Covers | everything up to and including **b767**, and `RUN-2026-10-20-0..4` (backup role, public-role revokes, column grants, add-only grants). `tools/migrate.cjs` `BASELINE_THROUGH = 767`: a `bNNN` at or below it in `migrations/` is never run and is named as a stray. |
+| Made by | `tools/baseline-from-snapshot.cjs` from the snapshot (kept OUTSIDE git). The edits are listed in its header: `\restrict` lines, `SET transaction_timeout`, `CREATE SCHEMA public`, Supabase-only roles' grants (service_role anon authenticated postgres supabase_*), search_path `pg_catalog, public`, and 20 varchar CHECKs written without the outer `::text[]` cast so they re-parse to the dumped tree. |
+| NOT compared with live | `ops` (the app role is closed out of it by design), `metrics`, and the reference rows: the snapshot had none of them. They come from the migration files through a scratch database. |
+| Left out | `RUN-2026-10-20-8..11` (test-shop purge, VACUUM FULL: they change rows, not schema). `blueprint_source` and `blueprint_template` and the other columns the old chain had and production does not (below). |
+| Proven | replay on PostgreSQL 17.11: a database built from the baseline alone, dumped the same way, equals the snapshot line for line except the Supabase-role grants it leaves out. `ops` and `metrics` equal the migration-built scratch database; the reference rows equal it row for row. |
+| Production | production already HAS this schema: **never run the baseline there**. The owner records it: `node tools/migrate.cjs --db <prod> --record 000_baseline_2026-10-21.sql`. |
+| History | the files the baseline replaces are kept unchanged in `migrations/archive/`: `000_baseline.sql` + `000_baseline_part2.sql`, `migration_b42..b57`, `b58..b767` (with their dry runs / verifies), `net01..03`, `sim01`, `RUN-2026-10-20-0..4`. The static guards read them through `writtenSqlFiles()`. |
+| Still here | `purge_test_entities_*`, `READ-*` and `RUN-2026-10-20-8..11`: utilities and data runs, never in the chain. |
+
+**Production is not the old chain** (found by the replay, 21 Oct; the baseline follows production, so none of the chain-only objects is in it).
+The old chain (b767) has, and production does not: tables `blueprint_source`, `blueprint_template` (b60); columns `blueprints.{prerequisites,provides,requires,source_key,template_keys,version}`,
+`entity_governance.{blueprint_key,blueprint_version,boilerplate_version}` (b294), `cb_entity.root_path` + trigger `cb_entity_root_immutable` (b243/b244), `folder.kind` (b275), `test_result.project` (b292);
+functions `register_blueprint`, `cb_entity_root_is_immutable`; policy `register_entry_isolation`; 13 indexes (b121 `idx_ci_*_trgm` x3, `cb_entity_root_path_idx`, `idx_test_result_project`, and
+`account_balance_year_idx` `bt_source_idx` `catalogue_items_updated_idx` `journal_entry_page_idx` `journal_entry_reverses_idx` `journal_line_account_entry_idx`
+`party_item_account_party_idx` `party_item_payment_idx` `usage_ledger_ai_day`). Production has, and the chain does not: `purge_test_entities`, indexes `journal_entry_date_idx` `journal_line_account_idx`,
+policies `chit_line_raida_isolation` and `read_all`. 8 functions have older bodies in production (`chit_dispute_deliver`, `chit_log_all`, `chit_log_targets`, `chit_participant_parity`,
+`chit_participants`, `chit_set_customer_priority_all`, `chit_set_status_all`, `create_from_blueprint`). Which of these production should get is Athi's call; each would be a new `bNNN` above b767.
+
+**Needs Athi (production SQL, files only):** `b768_membership_kind_read_policy.sql`: `membership_kind` has RLS on and no policy in production, so the app role reads 0 rows (no code reads it yet). The baseline stays equal to production; b768 is the fix.
+
+**Writing a new migration:** take the next number above the highest in `migrations/` (and above any reserved for a round), header rule as
+before (what · RLS stated · idempotent · who runs it), then a row in `MIGRATIONS-LOG.md` when it runs anywhere that matters.
+
+---
+
+# History (before 21 Oct 2026) — kept as written
+
 # Migration manifest — single ordered chain (Phase-1 consolidation, 2026-06-27)
 
 The canonical apply order for a fresh database. Files live in two places today

@@ -322,7 +322,7 @@ it('⚠️⚠️ every added_via the route writes is one the CHECK constraint pe
    * arrived — a person typed it — which is true of both kinds. WHETHER they are on the rail is the handle's job.
    * The same fact in two columns is two facts waiting to disagree.
    */
-  const allowed = (fs.readFileSync(path.join(__dirname, '..', 'migrations', '000_baseline_part2.sql'), 'utf8')
+  const allowed = (fs.readFileSync(path.join(__dirname, '..', 'migrations', 'archive', '000_baseline_part2.sql'), 'utf8')
     .match(/supplier_list_added_via_check[\s\S]{0,400}?\)\);/) || [''])[0]
     .match(/'([a-z_]+)'::character varying/g) || [];
   const permitted = allowed.map((s) => s.split("'")[1]);
@@ -339,7 +339,7 @@ it('⚠️⚠️ every added_via the route writes is one the CHECK constraint pe
 console.log('— the migration —');
 
 it('⚠️ b218 folds the name exactly the way the code does, or one of them is inert', () => {
-  const sql = src('migrations/b218_local_suppliers.sql');
+  const sql = src('migrations/archive/b218_local_suppliers.sql');
   assert.ok(/uq_identities_minted_sup/.test(sql));
   assert.ok(/lower\(btrim\(display_name\)\)/.test(sql), 'the index must fold case the same way mint() does');
   assert.ok(/parent_entity_id/.test(sql), 'one name per SHOP — two shops may each have their own Corner Hardware');

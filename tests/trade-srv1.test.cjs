@@ -73,7 +73,7 @@ const call = (port, method, p, body) => new Promise((done) => {
 
 (async () => {
   console.log('\n══ G1 · AU and AE lanes (b538) ══');
-  const MIG = fs.readFileSync(path.join(API, 'migrations', 'b538_trade_lanes_au_ae.sql'), 'utf8');
+  const MIG = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b538_trade_lanes_au_ae.sql'), 'utf8');
   ok('b538 adds the AU and AE destinations, idempotent (ON CONFLICT), with its RLS line and the proof block', /\('AU', 'Australia'/.test(MIG) && /\('AE', 'United Arab Emirates'/.test(MIG) && /ON CONFLICT \(dest_key\) DO NOTHING/.test(MIG) && /^-- RLS: WITHOUT/m.test(MIG) && /DO \$\$/.test(MIG));
   const app = {}; MIG.replace(/SET applicability = '([^']+)'::jsonb[\s\S]*?WHERE standard_key = '([a-z0-9-]+)'/g, (m, j, k) => { app[k] = { standard_key: k, applicability: JSON.parse(j) }; });
   ok('b538 states applicability for exim-policy and the five AU/AE standards', ['exim-policy', 'au-export-declaration', 'ae-export-declaration', 'aicis', 'rcm', 'ecas'].every((k) => app[k]), Object.keys(app).join());

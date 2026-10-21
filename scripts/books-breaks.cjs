@@ -1,4 +1,10 @@
-/* break each books guard once; every break must turn its test red; every file is restored from a COPY (never git) */
+/**
+ * scripts/books-breaks.cjs: break each books guard once; every break must turn its test red; every file is restored from a COPY (never git).
+ * OWNS       the list of deliberate breaks of the books guards (each names the guard test it must turn red).
+ * CALLED BY  by hand (node scripts/books-breaks.cjs [repo root]); never by CI. DB-3 (21 Oct 2026): migration paths point at migrations/archive/.
+ * FLOW       for each break: copy the file, apply the break, run the guard test, expect red, restore the copy.
+ * CARD       16-finance/books-store
+ */
 const fs = require('fs'),
   path = require('path'),
   { spawnSync } = require('child_process');
@@ -21,14 +27,14 @@ const BREAKS = [
   ],
   [
     'books-writer',
-    'migrations/b273_books_journal.sql',
+    'migrations/archive/b273_books_journal.sql',
     'ALTER TABLE party_item       ENABLE ROW LEVEL SECURITY;  ALTER TABLE party_item       FORCE ROW LEVEL SECURITY;',
     'ALTER TABLE party_item       ENABLE ROW LEVEL SECURITY;',
     'party_item not FORCE RLS'
   ],
   [
     'books-writer',
-    'migrations/b273_books_journal.sql',
+    'migrations/archive/b273_books_journal.sql',
     'REVOKE UPDATE, DELETE ON journal_entry, journal_line, party_item, books_payment, books_change_log FROM cb_app;',
     '',
     'cb_app keeps UPDATE/DELETE on the journal'
@@ -118,17 +124,17 @@ const BREAKS = [
     '',
     'bill references may not add up to the line'
   ],
-  ['migration-rerunnable', 'migrations/b272_books_ledger.sql', 'DROP FUNCTION IF EXISTS ops.f_books_enabled();', '', 'RETURNS TABLE without a DROP'],
+  ['migration-rerunnable', 'migrations/archive/b272_books_ledger.sql', 'DROP FUNCTION IF EXISTS ops.f_books_enabled();', '', 'RETURNS TABLE without a DROP'],
   [
     'migration-lint',
-    'migrations/b273_books_journal.sql',
+    'migrations/archive/b273_books_journal.sql',
     '  entry_id          uuid NOT NULL,\n  entity_id         uuid NOT NULL,\n  line_no',
     '  entry_id          uuid NOT NULL REFERENCES journal_entry (entry_id),\n  entity_id         uuid NOT NULL,\n  line_no',
     'a foreign key inside CREATE TABLE IF NOT EXISTS'
   ],
   [
     'entity-cast-guard',
-    'migrations/b274_books_party.sql',
+    'migrations/archive/b274_books_party.sql',
     "  USING      (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid)\n  WITH CHECK (entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid);\nREVOKE DELETE ON books_pack",
     "  USING      (entity_id = current_setting('app.current_entity', true)::uuid)\n  WITH CHECK (entity_id = current_setting('app.current_entity', true)::uuid);\nREVOKE DELETE ON books_pack",
     'an unguarded ::uuid cast'
@@ -321,14 +327,14 @@ const BREAKS = [
   ],
   [
     'books-writer',
-    'migrations/b272_books_ledger.sql',
+    'migrations/archive/b272_books_ledger.sql',
     'REVOKE DELETE ON books_setting, ledger_account, fiscal_period, books_counter FROM cb_app;\n',
     '',
     "F16: cb_app keeps DELETE on the ledger's setup tables"
   ],
   [
     'books-writer',
-    'migrations/b273_books_journal.sql',
+    'migrations/archive/b273_books_journal.sql',
     '-- ⚠️⚠️ RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS.',
     '-- ⚠️⚠️ RUN IN THE SUPABASE SQL EDITOR.',
     'F23: a SQL file no longer says who runs it'

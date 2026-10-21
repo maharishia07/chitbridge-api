@@ -16,7 +16,7 @@
     "made-to-order"
    ],
    "origin": "system",
-   "origin_detail": "gen_random_uuid() at INSERT (migrations/000_baseline.sql)",
+   "origin_detail": "gen_random_uuid() at INSERT (migrations/archive/000_baseline.sql)",
    "means": "The product's identity; every other table points at it.",
    "source": "catalogue_items.item_id",
    "set_by": "system, at mint (lib/mint-product.js, lib/catalogue-write.js)",

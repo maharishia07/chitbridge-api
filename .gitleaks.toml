@@ -21,5 +21,5 @@ paths = [
   # test-case definitions: "case_key" identifiers (e.g. names of cases), not credentials
   '''^data/test-cases\.json$''',
   # installation_key identifiers ('platform-0' ...) in the governance seed, not credentials
-  '''^migrations/b74_platform_governance\.sql$''',
+  '''^migrations/(archive/)?b74_platform_governance\.sql$''',
 ]
