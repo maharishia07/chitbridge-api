@@ -12,8 +12,8 @@ const path = require('path');
 const { STATES } = require('../lib/rail-actions');
 
 const read = (f) => fs.readFileSync(path.join(__dirname, '..', 'migrations', f), 'utf8').replace(/\r\n/g, '\n');
-let fail = 0;
-const t = (name, ok, extra) => { if (ok) console.log('  ✓ ' + name); else { fail++; console.error('  ✗ ' + name + (extra ? '   ' + extra : '')); } };
+let fail = 0, total = 0;
+const t = (name, ok, extra) => { total++; if (ok) console.log('  ✓ ' + name); else { fail++; console.error('  ✗ ' + name + (extra ? '   ' + extra : '')); } };
 
 const b773 = read('b773_chit_status_current_status_check.sql');
 const m = b773.match(/CHECK \(current_status IN \(([^)]*)\)\)/);
