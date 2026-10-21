@@ -6,9 +6,8 @@
 --    cb_app sees 0 rows. No api code reads the table today (lib/memberships.js only mirrors its kinds in code; the memberships FK check runs
 --    as the table owner), so nothing returns wrong data now; the first reader would get an empty dictionary. Found by the DB-3 replay
 --    (tests/rls-fresh-db: "every table with RLS on has a policy").
--- RLS: stays ENABLED; one SELECT-only policy, same shape as catalogue_source read_all (USING (true)). No INSERT/UPDATE/DELETE policy and the
+-- RLS: already ENABLED in production (not repeated here); one SELECT-only policy, same shape as catalogue_source read_all (USING (true)). No INSERT/UPDATE/DELETE policy and the
 --    privileges stay revoked (b297), so the app still cannot write the dictionary.
 
-ALTER TABLE membership_kind ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS membership_kind_read_all ON membership_kind;
 CREATE POLICY membership_kind_read_all ON membership_kind FOR SELECT USING (true);
