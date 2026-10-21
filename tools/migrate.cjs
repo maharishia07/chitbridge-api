@@ -17,6 +17,8 @@
  * CARD       28-platform-and-operations/migrations-and-schema
  * CALLED BY  Dockerfile target `migrate` (deploy/compose.yml one-shot job) · tools/fresh-db-check.cjs (CI `fresh-db`) · tools/schema-replay.cjs
  *            and tools/sim-load.cjs (chainFiles / CHAIN_SKIP) · tests/hosting-neutral.test.cjs
+ * K-DB       status/apply ask ledgerVisible first: a role that cannot see schema_migrations gets "cannot see the ledger as <role>: run as the
+ *            owner", exit 1, nothing run (tests/migrate-ledger-visible.test.cjs, CI fresh-db).
  */
 'use strict';
 const path = require('path'),
@@ -90,6 +92,24 @@ function open(url) {
 async function hasTable(pool, name) {
   return (await pool.query(`SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1`, [name])).rows.length > 0;
 }
+/* K-DB (21 Oct 2026): schema_migrations has an owner-only policy (baseline schema_migrations_owner) under FORCE RLS, so cb_app sees 0
+   rows of a full ledger: status() would call every file pending and apply() would run the whole chain again. The ONE question
+   "can this role see the ledger" — no SELECT grant → blind; RLS active for the role, not a member of the table owner, and 0 rows → blind.
+   → { sees, role } */
+async function ledgerVisible(pool) {
+  const probe = await pool.query(
+    `SELECT current_user AS role, has_table_privilege('public.schema_migrations', 'SELECT') AS can_select,
+            row_security_active('public.schema_migrations') AS filtered,
+            pg_has_role(current_user, c.relowner, 'MEMBER') OR r.rolsuper OR r.rolbypassrls AS owner_like
+       FROM pg_class c JOIN pg_roles r ON r.rolname = current_user WHERE c.oid = 'public.schema_migrations'::regclass`
+  );
+  const row = probe.rows[0];
+  if (!row.can_select) return { sees: false, role: row.role };
+  if (!row.filtered || row.owner_like) return { sees: true, role: row.role };
+  const rows = await pool.query('SELECT count(*)::int AS n FROM schema_migrations');
+  return { sees: rows.rows[0].n > 0, role: row.role };
+}
+const blindLine = (role) => 'cannot see the ledger as ' + role + ': run as the owner';
 async function ledger(pool) {
   const r = await pool.query('SELECT filename, sha256, source FROM schema_migrations');
   return new Map(r.rows.map((x) => [x.filename, x]));
@@ -115,6 +135,13 @@ async function apply(url, opts) {
     await pool.query('SELECT 1');
     const fresh = !(await hasTable(pool, 'identities'));
     const hadLedger = await hasTable(pool, 'schema_migrations');
+    if (hadLedger) {
+      const view = await ledgerVisible(pool);
+      if (!view.sees) {
+        say(blindLine(view.role) + ' — nothing run');
+        return { ran: [], failed: [], skipped: 0, fresh, left_alone: true, blind: view.role };
+      }
+    }
     /* a database with tables and no (or an empty) ledger is somebody's live data whose history we cannot see: touch NOTHING */
     if (!fresh && (!hadLedger || [...(await ledger(pool)).keys()].filter((item) => item !== LEDGER_FILE).length === 0)) {
       say(
@@ -178,6 +205,8 @@ async function status(url) {
   const pool = open(url);
   try {
     if (!(await hasTable(pool, 'schema_migrations'))) return { ledger: false };
+    const view = await ledgerVisible(pool);
+    if (!view.sees) return { ledger: true, blind: view.role };
     const done = await ledger(pool);
     const all = BASELINE.concat(chainFiles());
     const pending = all.filter((item) => !done.has(item));
@@ -207,7 +236,7 @@ function through(bnnn) {
   return BASELINE.concat(chainFiles().filter((item) => numOf(item) <= n));
 }
 
-module.exports = { apply, status, recordFiles, through, chainFiles, strayFiles, writtenSqlFiles, CHAIN_SKIP, LEDGER_FILE, LEDGER_PATH, BASELINE, BASELINE_THROUGH };
+module.exports = { apply, status, ledgerVisible, recordFiles, through, chainFiles, strayFiles, writtenSqlFiles, CHAIN_SKIP, LEDGER_FILE, LEDGER_PATH, BASELINE, BASELINE_THROUGH };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);
@@ -229,6 +258,7 @@ if (require.main === module) {
         console.log('  no schema_migrations table — ' + LEDGER_FILE + ' has not run here');
         return;
       }
+      if (s.blind) fail(blindLine(s.blind));
       console.log('  ' + s.recorded + ' file(s) recorded · ' + s.pending.length + ' pending · ' + s.changed.length + ' changed since they ran');
       s.pending.forEach((item) => console.log('    pending  ' + item));
       s.changed.forEach((item) => console.log('    changed  ' + item));
@@ -250,6 +280,7 @@ if (require.main === module) {
       return;
     }
     const r = await apply(url);
+    if (r.blind) fail(blindLine(r.blind));
     if (r.fresh && !r.left_alone)
       for (const t of ['identities', 'chit_header', 'journal_entry', 'books_setting', 'customer_list', 'catalogue_items']) {
         const pool = open(url);
