@@ -34,5 +34,5 @@ const b775 = read('b775_minted_parties_to_local.sql');
 t('b775 uses the READ-4 predicate and only touches rows not yet local', /identity_type = 'entity' AND user_id LIKE '~%'/.test(b775) && /entity_kind IS DISTINCT FROM 'local'/.test(b775));
 t('b775 stops above the expected count and notices on 0', /moved > 5/.test(b775) && /RAISE NOTICE/.test(b775));
 
-console.log('\n  ' + (fail ? fail + ' FAILED' : 'all passed'));
+console.log('\n  ' + total + ' checks' + (fail ? ', ' + fail + ' FAILED' : ''));
 process.exit(fail ? 1 : 0);
