@@ -80,6 +80,7 @@ const GUARDS = [
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
   'ctp-door.test.cjs', // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
   /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
+  'chit-status-check.test.cjs', // b773's CHECK list equals the rail's status list (DB-72)
   'migration-lint.test.cjs', // no NEW migration hides a FOREIGN KEY inside CREATE TABLE IF NOT EXISTS
   'schema-lint.test.cjs', // ⭐⭐ SCHEMA-LINT (assessment 2026-10-16): a NEW migration indexes its FKs, FORCEs its RLS, uses timestamptz and no national default, keys its once-only facts, and applies on an empty database — baseline shrinks only
   'rls-census-from.test.cjs', // DB-1 (19 Oct): rls-census --from reads Athi's editor paste with the same verdicts as a live read
