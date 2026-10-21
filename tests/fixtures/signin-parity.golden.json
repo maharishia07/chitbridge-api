@@ -580,7 +580,7 @@
      "status": 400,
      "body": {
       "error": "Validation failed",
-      "message": "Send your email address or your User ID."
+      "message": "Type your mobile number, email or User ID."
      }
     }
    ],
@@ -1029,7 +1029,7 @@
      "status": 400,
      "body": {
       "error": "Verification failed",
-      "message": "Send your email address or your User ID."
+      "message": "Type your mobile number, email or User ID."
      }
     }
    ],

@@ -42,6 +42,7 @@ const GUARDS = /\bauth\b|customerAuth|requireScope|\badmin\b|X-Bridge-Key|softId
  * mutating route is a deliberate act somebody has to write a sentence for, rather than a line nobody notices.
  */
 const PUBLIC = {
+  'csp-report POST /': 'a browser posts its CSP report with no credential; own limiter, 8 KB cap, logs shaped fields only (K-SEC PR A)',
   'actors POST /login': 'signing in — a credential cannot be required to obtain one',
   'entities POST /register': 'registration — the same',
   'entities POST /verify': 'the one-time code that completes registration',

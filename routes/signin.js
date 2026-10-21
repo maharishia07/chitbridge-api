@@ -1,6 +1,7 @@
 'use strict';
 /**
  * /api/signin — A PERSON'S SESSIONS: renew · logout · list · revoke (M05, SPEC-iam-build §4.2, D3, D14).
+ * CARD 18-identity-sign-in-and-access/sign-in
  *
  *   POST /api/signin/renew              (person)  → { token, jti, exp, device_id } — new jti, same device, old jti gone
  *   POST /api/signin/logout             (person)  → { ok, removed } — removes this session's jti; 200 even if already gone
@@ -311,7 +312,7 @@ async function ask(req, res, next) {
   try {
     const input = String(req.body.email || req.body.user_id || req.body.id || '').trim();
     if (!input) {
-      return res.status(400).json({ error: 'Validation failed', message: 'Send your email address or your User ID.' });
+      return res.status(400).json({ error: 'Validation failed', message: 'Type your mobile number, email or User ID.' });
     }
     /* the new door also answers `id`: the stored id the page verifies with — a mobile or e-mail resolves ONCE (M14) */
     const extra = (kind, need, id) => (isNewDoor(req) ? { kind, need, ...(id ? { id } : {}) } : {});
@@ -486,6 +487,23 @@ function deviceRevoked(req, res, identity, method) {
   res.locals.code = 'DEVICE_REVOKED';
   return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' });
 }
+/**
+ * sessionRefused(err, req, res, identity, method) → true when issueToken refused the door and the answer is sent.
+ * DEVICE_REVOKED (403, the owner removed the device) · SESSION_NOT_LISTED (503, K-SEC PR A: our listing failed — try again;
+ * never a legacy token instead). Anything else → false, and the door answers its own 500.
+ */
+function sessionRefused(err, req, res, identity, method) {
+  const code = err && err.code;
+  if (code === 'DEVICE_REVOKED') {
+    deviceRevoked(req, res, identity, method);
+    return true;
+  }
+  if (code !== 'SESSION_NOT_LISTED') return false;
+  note(req, identity, 'fail', method, code);
+  res.locals.code = code;
+  res.status(503).json({ error: 'Sign-in failed', code, message: err.message });
+  return true;
+}
 const jtiOf = (token) => {
   try {
     return (jwt.decode(token) || {}).jti || null;
@@ -506,7 +524,7 @@ async function verify(req, res) {
     const handle = (req.body.user_id || '').trim();
     const id = String(req.body.id || '').trim();
     if (!email && !handle && !id) {
-      return res.status(400).json({ error: 'Verification failed', message: 'Send your email address or your User ID.' });
+      return res.status(400).json({ error: 'Verification failed', message: 'Type your mobile number, email or User ID.' });
     }
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups — a handle carries a unique index whatever type owns it */
@@ -742,7 +760,7 @@ async function verify(req, res) {
       constitution: mintedConstitution
     });
   } catch (err) {
-    if (err && err.code === 'DEVICE_REVOKED') return deviceRevoked(req, res, identity, identity && methodOf(identity));
+    if (sessionRefused(err, req, res, identity, identity && methodOf(identity))) return;
     console.error('Verify error:', err.message);
     res.status(500).json({ error: 'Verification failed', message: safeErr(err) });
   }
@@ -849,7 +867,7 @@ async function actorLogin(req, res) {
       }
     });
   } catch (err) {
-    if (err && err.code === 'DEVICE_REVOKED') return deviceRevoked(req, res, a, a && (a.pin_hash ? 'pin' : 'otp'));
+    if (sessionRefused(err, req, res, a, a && (a.pin_hash ? 'pin' : 'otp'))) return;
     console.error('Actor login error:', err.message);
     res.status(500).json({ error: 'Login failed', message: safeErr(err) });
   }

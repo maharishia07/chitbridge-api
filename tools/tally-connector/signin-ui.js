@@ -15,10 +15,11 @@
  *     surface: 'index'|'accounts'|'crm'|'till'|'shop'|'lab',
  *     need: 'person' | 'customer',  // person → cb_sess (the apps' session); customer → sessionStorage cb_cust@<shop>, never cb_sess
  *     shop,                         // customer only: the shop's entity_id (the storefront)
- *     deviceId,                     // OPTIONAL. A string or () => string. Given → X-Device-Id rides every sign-in call and the server
- *                                   //   mints a LISTED, revocable session bound to this device (M05) — ONLY for a host whose every
- *                                   //   later call also sends X-Device-Id (the till does; auth answers 401 DEVICE_MISMATCH otherwise).
- *                                   //   Absent → today's token (7 d, unlisted), exactly what app.html's own login gets.
+ *     deviceId,                     // OPTIONAL. A string or () => string. X-Device-Id rides every sign-in call and the server
+ *                                   //   mints a LISTED, revocable session bound to this device (M05). Every later call must send
+ *                                   //   X-Device-Id too (auth answers 401 DEVICE_MISMATCH otherwise): the till does it itself, every
+ *                                   //   other page through /app/device-id.js (CBDevice, K-SEC PR A). ABSENT → CBDevice.id() when the
+ *                                   //   page loaded device-id.js; false, or no CBDevice, or no storage → today's token (7 d, unlisted).
  *     methods: { google:true, … },  // the method SLOTS switched on by the host — hidden until a method ships AND the host says so
  *     onMethod(name),               // what a switched-on slot does (the provider flow lives here, nowhere else)
  *     registerHref,                 // OPTIONAL: the register door ("New shop? Register") — the window itself never creates an account
@@ -145,6 +146,8 @@
   }
   function deviceOf(c) {
     var d = c && c.deviceId;
+    /* K-SEC PR A: a host that names no device gets this browser's (public/app/device-id.js) — every web door is a session */
+    if (d === undefined && root.CBDevice && typeof root.CBDevice.id === 'function') d = root.CBDevice.id;
     if (typeof d === 'function') {
       try {
         d = d();

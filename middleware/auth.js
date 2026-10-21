@@ -1,4 +1,7 @@
 // middleware/auth.js — JWT validation middleware
+// OWNS  the request's credential decision: verify → key listing · person session · auto token · legacy (counted; refused behind LEGACY_TOKEN_REFUSE) → req.identity, req.till
+// FLOW  every protected route → auth → hat-gate → handler
+// CARD 18-identity-sign-in-and-access/sessions-and-devices
 // CALLED BY routes/actors.js, routes/adopt.js, routes/assist.js, routes/attachments.js, routes/books.js (+40 more)   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
 const { verifyJwt, rotating } = require('../lib/jwt-verify'); // E10 — JWT_SECRET, then JWT_SECRET_PREV
 const { query } = require('../db');
@@ -83,10 +86,12 @@ const auth = async (req, res, next) => {
      * server within 60 s.
      * ⚠️⚠️ A TOKEN WITHOUT A jti IS LEGACY AND PASSES EXACTLY AS BEFORE — every token issued before M05, and every sign-in
      * from a page that does not yet name its device. Unlisted, not revocable, honoured until its own exp (≤ 7 d). The
-     * request log marks it kind:'legacy' so the day nobody holds one is visible. Nobody is signed out by this change.
+     * request log marks it kind:'legacy' so the day nobody holds one is visible. K-SEC PR A: tokenRefusal (below the module).
      */
+    const refusal = tokenRefusal(decoded, res);
+    if (refusal) return res.status(401).json(refusal);
     let sessRec = null;
-    if (decoded.kind !== 'api_key' && decoded.jti) {
+    if (isPersonSession(decoded)) {
       const sent = String(req.headers['x-device-id'] || '').trim();
       if (!decoded.device_id || sent !== String(decoded.device_id)) {
         mark(res, 'code', 'DEVICE_MISMATCH');
@@ -110,8 +115,6 @@ const auth = async (req, res, next) => {
         });
       }
       mark(res, 'kind', 'person');
-    } else if (decoded.kind !== 'api_key') {
-      mark(res, 'kind', 'legacy');
     }
     /* E10: verified by the PREVIOUS secret — the rotation window is still carrying this person. Visible so the day nobody holds one is too. */
     if (rotated) mark(res, 'kind', 'rotated');
@@ -247,6 +250,32 @@ const auth = async (req, res, next) => {
 };
 
 module.exports = auth;
+/** a listed person session: a person token that carries a jti (not a key, not the shop's auto-raise token) */
+const isPersonSession = (claims) => claims.kind !== 'api_key' && claims.kind !== 'auto' && !!claims.jti;
+/** a shop's auto-raise token lives AUTO_MAX_LIFE_S at most (lib/autoraise.js signs 60 s); anything longer is not one of ours */
+const AUTO_MAX_LIFE_S = 120;
+const autoAlive = (claims) => claims.auto === true && !!claims.jti && Number(claims.exp) - Number(claims.iat) <= AUTO_MAX_LIFE_S;
+/**
+ * tokenRefusal(claims, res) → a 401 body, or null — K-SEC PR A (critic C9/C10), the ONE legacy refusal. Keys and listed
+ * sessions are judged elsewhere in auth (null here). An auto-raise token passes only while short-lived. A person token WITHOUT
+ * a jti is legacy: counted (lib/person-session noteLegacyUse → /health), marked kind:'legacy', and refused 401 SESSION_UPGRADE
+ * ("Sign in again") ONLY when LEGACY_TOKEN_REFUSE is set — off by default, so nobody is signed out by this change.
+ */
+function tokenRefusal(claims, res) {
+  if (claims.kind === 'api_key' || isPersonSession(claims)) return null;
+  if (claims.kind === 'auto') {
+    const alive = autoAlive(claims);
+    mark(res, alive ? 'kind' : 'code', alive ? 'auto' : 'AUTO_TOKEN');
+    return alive ? null : { error: 'Unauthorised', code: 'AUTO_TOKEN', message: 'Invalid token' };
+  }
+  const sessions = require('../lib/person-session');
+  const refused = sessions.refusingLegacy();
+  sessions.noteLegacyUse(refused);
+  mark(res, 'kind', 'legacy');
+  if (!refused) return null;
+  mark(res, 'code', 'SESSION_UPGRADE');
+  return { error: 'Unauthorised', code: 'SESSION_UPGRADE', message: 'Sign in again to keep going.' };
+}
 /** res.locals.<k> = v for the request log (server.js) — a stub res in a test may have no locals */
 function mark(res, k, v) {
   try {

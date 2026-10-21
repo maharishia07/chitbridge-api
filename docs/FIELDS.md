@@ -460,7 +460,7 @@ and replaces only this key (`jsonb_set(…, '{devices}', …)`). One engine: `li
 
 | Claim | Shape | Meaning |
 |---|---|---|
-| `kind` | `'person'` | a listed person session (a key is `'api_key'`; a legacy token has no `kind`). |
+| `kind` | `'person'` · `'auto'` | a listed person session (a key is `'api_key'`; a legacy token has no `kind`). `'auto'` (K-SEC PR A): the shop's own auto-raise token from `lib/autoraise.js` — `auto: true`, a `jti`, 60 s; auth admits it only while it lives ≤ 120 s, never listed. |
 | `jti` | uuid | the session's id; alive only while listed under `device_id`. |
 | `device_id` | string | the device the token is bound to; `X-Device-Id` must equal it (else 401 `DEVICE_MISMATCH`). |
 | `surface` | `'till'` · `'index'` · `'app'` · … | where it was signed in; `till` lives 30 days, everything else 7 (D3). |
@@ -469,6 +469,13 @@ and replaces only this key (`jsonb_set(…, '{devices}', …)`). One engine: `li
 **Legacy tokens** (no `jti`): every token issued before M05, and every sign-in that names no device. Honoured exactly as
 before until their own `exp` (≤ 7 days); not listed, not revocable; the request log carries `kind: 'legacy'` (a session:
 `kind: 'person'`). `POST /api/signin/renew` with `X-Device-Id` turns one into a listed session.
+**K-SEC PR A (2026-10-21):** every web page now names its device (web `public/app/device-id.js`), so a sign-in there is a
+session. A legacy person token is refused 401 `SESSION_UPGRADE` ("Sign in again") ONLY when the variable `LEGACY_TOKEN_REFUSE`
+is `1`/`true` — off by default. A sign-in whose session cannot be listed answers 503 `SESSION_NOT_LISTED` (never a legacy token).
+
+| GET /health key | Shape | Source / derived · who writes it · who reads it |
+|---|---|---|
+| `legacy_tokens` | `{ refusing, minted, customer_minted, used, refused }` | Derived, per process since boot: `lib/person-session.legacyCounts()`. `minted` = person tokens issued with no session; `customer_minted` = storefront customer tokens (exempt from the refusal, counted apart); `used` / `refused` = requests on a person legacy token. Written by issueToken and middleware/auth.js; read by Athi before setting `LEGACY_TOKEN_REFUSE` (7 days at `minted: 0`). |
 
 **Response keys** — `POST /api/signin/renew` → `{ token, jti, exp, device_id, surface }` · `POST /api/signin/logout` →
 `{ ok, removed, legacy? }` · `GET /api/signin/sessions` → `{ sessions: [{ jti, device_id, surface, iat, exp, current, device:

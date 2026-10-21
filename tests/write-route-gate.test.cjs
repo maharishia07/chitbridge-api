@@ -27,6 +27,7 @@ const WRITE_ALLOW = {
   'POST /api/entities/verify': 'sign-in code check (signin.door + verifyChecks)',
   'POST /api/signin/ask': 'sign-in code request (signin.door)',
   'POST /api/signin/verify': 'sign-in code check (signin.door + verifyChecks)',
+  'POST /api/csp-report': 'a browser posts its CSP report with no credential; own limiter, 8 KB cap, logs shaped fields only (K-SEC PR A)',
   'POST /api/capture/webhook/whatsapp': 'provider webhook, verified by its signature inside the handler',
   'POST /api/capture/webhook/email': 'provider webhook, verified by its signature inside the handler',
   'POST /api/ctp/deliver': 'peer installation delivery, verified by the CTP signature (ctpLimiter)',

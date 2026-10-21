@@ -169,6 +169,24 @@ app.use(
     crossOriginResourcePolicy: false
   })
 );
+/**
+ * ⭐ K-SEC PR A (SEC-68, critic C11): A STRICT CSP ON EVERYTHING THIS API ANSWERS EXCEPT THE 5 OLD PAGES. JSON, /.well-known
+ * and media need no script, style or frame, so they get `default-src 'none'; frame-ancestors 'none'` — a response that is
+ * ever rendered as a page can run nothing and cannot be framed. The legacy pages in public/ (chit · connections · inbox ·
+ * register · send .html) carry inline script, so they are left exactly as they were (Athi decides whether they stay).
+ * tests/api-csp.test.cjs proves both halves and that /.well-known/ctp.json is still served as JSON.
+ */
+const LEGACY_PAGES = new Set(
+  require('fs')
+    .readdirSync(path.join(__dirname, 'public'))
+    .filter((name) => /.html$/.test(name))
+    .map((name) => '/' + name)
+);
+const apiCsp = helmet.contentSecurityPolicy({
+  useDefaults: false,
+  directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"], baseUri: ["'none'"], formAction: ["'none'"] }
+});
+app.use((req, res, next) => (LEGACY_PAGES.has(req.path) ? next() : apiCsp(req, res, next)));
 
 /**
  * ⚠️ THE PROVIDER WEBHOOKS NEED THE RAW BODY, AND MUST CLAIM IT BEFORE express.json DOES.
@@ -447,6 +465,7 @@ app.use('/api/facts', require('./routes/facts')); // N18 — what each Home card
 app.use('/api/work', require('./routes/work')); // TO1 — Tasks & Orders, read: the list, the sheet, the counts (lib/work-rows.js; engines `workflow`)
 app.use('/api/crm', require('./routes/crm')); // CB CRM — one party record, the log, follow-ups (docs/design/crm/PLAN.md Phases 3–4)
 app.use('/api/repeat', require('./routes/repeat-supply')); // RI1 — repeat supply as an AGREEMENT both parties hold: accept · counter · skip · pause · end; each run a normal chit (lib/repeat-supply.js)
+app.use('/api/csp-report', require('./routes/csp-report')); // K-SEC PR A — where the web's report-only CSP reports (public, its own limiter, 204)
 app.use('/api/privacy', require('./routes/privacy')); // CO1 — public privacy facts: sub-processors + regions, notice, contact (lib/privacy.js)
 /* ⭐ what a shop buys to USE — its own list, never products, never priced, and structurally unable to
    reach a storefront because a storefront query would have to JOIN a table it has no reason to know. */
@@ -484,7 +503,10 @@ app.get('/health', async (req, res) => {
     region: process.env.RAILWAY_REPLICA_REGION || process.env.RAILWAY_REGION || null,
     web: require('./lib/public-base').webBase() || null /* HX1: the site this api serves (PUBLIC_WEB_BASE) — a counter learns it here */,
     /* SEC-SMALL: IAM audit rows this process could not write since boot (lib/access-events.lostCount) — a reviewer wants to see 0 */
-    audit_lost: require('./lib/access-events').lostCount()
+    audit_lost: require('./lib/access-events').lostCount(),
+    /* K-SEC PR A: tokens with no jti since boot — minted · customer_minted · used · refused, and whether LEGACY_TOKEN_REFUSE is on.
+       Athi turns the refusal on after 7 days of minted: 0 here (SECURITY-BACKLOG.md) */
+    legacy_tokens: require('./lib/person-session').legacyCounts()
   });
 });
 

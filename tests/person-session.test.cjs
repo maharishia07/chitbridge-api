@@ -130,9 +130,12 @@ const dec = (tok) => jwt.decode(tok);
     t('a customer token is never a person session (storefront unchanged)',
       !dec(await identityAuth.issueToken(q, { identity_id: 'c1', identity_type: 'customer', parent_entity_id: 'shop1' }, { device_id: DEV_A })).jti);
     FAIL_WRITES = true;
-    const fallback = dec(await identityAuth.issueToken(q, OWNER, { device_id: DEV_C }));
+    let refusedAs = null;
+    try { await identityAuth.issueToken(q, OWNER, { device_id: DEV_C }); } catch (e) { refusedAs = e; }
     FAIL_WRITES = false;
-    t('⚠️ if the listing cannot be written the sign-in STILL succeeds — with a legacy token, never a refusal', !fallback.jti && fallback.identity_id === 'shop1');
+    /* K-SEC PR A (critic C10): the fallback was a legacy token — unlisted, unrevocable, and the one the refusal turns away */
+    t('⚠️ if the listing cannot be written the sign-in is REFUSED 503 SESSION_NOT_LISTED with a sentence — never downgraded to a legacy token',
+      !!refusedAs && refusedAs.code === 'SESSION_NOT_LISTED' && refusedAs.status === 503 && /Try again/.test(refusedAs.message));
     /* M06: both sign-in doors now live in routes/signin.js (entities /verify and actors /login are aliases of its verify) */
     const ent = fs.readFileSync(path.join(API, 'routes', 'signin.js'), 'utf8'), act = ent;
     t('both sign-in doors hand issueToken the device the page named (deviceOfSignin)',
@@ -272,7 +275,8 @@ const dec = (tok) => jwt.decode(tok);
     r = await call('GET', '/api/probe', { token: tokA, device: DEV_A });
     t('  …device A is untouched by another device\'s removal', r.status === 200);
     t('the doors answer a removed device 403 DEVICE_REVOKED in words (not a 500)',
-      (ent.match(/err\.code === 'DEVICE_REVOKED'/g) || []).length === 2);
+      /* K-SEC PR A: both doors go through ONE helper (sessionRefused): DEVICE_REVOKED 403, SESSION_NOT_LISTED 503 */
+      (ent.match(/if \(sessionRefused\(err, req, res, /g) || []).length === 2 && /code === 'DEVICE_REVOKED'/.test(ent) && /status\(503\)/.test(ent));
 
     console.log('\n── one shape ──');
     t('auth builds the session holder in lib/holder.js (one builder)', auth.holderOf === require(path.join(API, 'lib', 'holder')).holderOf);

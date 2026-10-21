@@ -21,6 +21,7 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `NODE_ENV` | in production | `production` | no | Sealed set enforces the OTP/mail boot guard. |
 | `JWT_SECRET` | always | `<32+ random chars>` | yes | HS256 signing key for every session; ≥32 chars. |
 | `JWT_SECRET_PREV` | optional | `<previous JWT_SECRET>` | yes | Still verifies tokens during a secret rotation. |
+| `LEGACY_TOKEN_REFUSE` | optional | `1` | no | K-SEC: refuse person tokens with no jti (401 SESSION_UPGRADE). Off when unset. Set only after 7 days of `/health` `legacy_tokens.minted: 0`. |
 | `JWT_TTL` | optional | `7d` | no | Lifetime of simulator lead tokens. |
 | `PORT` | optional | `3000` | no | Listen port (default 3000). |
 | `HOST` | optional | `127.0.0.1` | no | Listen address; unset = all interfaces. |
