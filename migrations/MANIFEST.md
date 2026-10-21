@@ -31,6 +31,8 @@ functions `register_blueprint`, `cb_entity_root_is_immutable`; policy `register_
 policies `chit_line_raida_isolation` and `read_all`. 8 functions have older bodies in production (`chit_dispute_deliver`, `chit_log_all`, `chit_log_targets`, `chit_participant_parity`,
 `chit_participants`, `chit_set_customer_priority_all`, `chit_set_status_all`, `create_from_blueprint`). Which of these production should get is Athi's call; each would be a new `bNNN` above b767.
 
+**Needs Athi (production SQL, files only):** `b768_membership_kind_read_policy.sql`: `membership_kind` has RLS on and no policy in production, so the app role reads 0 rows (no code reads it yet). The baseline stays equal to production; b768 is the fix.
+
 **Writing a new migration:** take the next number above the highest in `migrations/` (and above any reserved for a round), header rule as
 before (what · RLS stated · idempotent · who runs it), then a row in `MIGRATIONS-LOG.md` when it runs anywhere that matters.
 
