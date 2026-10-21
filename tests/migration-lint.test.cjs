@@ -166,6 +166,55 @@ t('  ...and re-runnable', /DROP POLICY IF EXISTS/.test(b189app));
 t('the apply reports whether other tables are still unreadable',
   /STILL UNREADABLE TO THE APP/.test(b189app) && /pg_policy/.test(b189app) && /relrowsecurity/.test(b189app));
 
+console.log('\n-- DB-9 / DB-36: a new column speaks the vocabulary and is not a near-duplicate --');
+/* K-DB (21 Oct 2026). The vocabulary is C:/dev/PM/NAMING-AND-MEANING.md section 2 (Athi, 18 Oct: "the meaning should be same across
+   everywhere"): a new column never uses a word listed there as a forbidden synonym. The column inventory is C:/dev/schema-inventory.cjs
+   read over THIS migrations/ folder (the baseline + the numbered files): a new column whose name differs from an existing one only by
+   underscores, case or a trailing s (retention_sources beside retention_source) is a near-duplicate, and a live column is never renamed.
+   Both files live in the docs repo beside this one (C:/dev, or ../chitbridge-docs in the cloud runner); where it is absent (GitHub CI)
+   the check SAYS it was not run, never passes in silence. */
+const DOCS = [path.join(__dirname, '..', '..'), path.join(__dirname, '..', '..', 'chitbridge-docs')].find((dir) =>
+  fs.existsSync(path.join(dir, 'schema-inventory.cjs')) && fs.existsSync(path.join(dir, 'PM', 'NAMING-AND-MEANING.md')));
+/** the snake_case names section 2 forbids in new code (the backticked words of its "Forbidden synonyms" column) */
+function forbiddenWords(doc) {
+  const words = new Set();
+  const section = doc.split(/\n## 2\. /)[1] || '';
+  for (const row of section.split(/\n## /)[0].split('\n').filter((line) => line.startsWith('|'))) {
+    const cells = row.split('|');
+    for (const m of (cells[4] || '').matchAll(/`([a-z][a-z0-9_]*)`/g)) words.add(m[1]);
+  }
+  return words;
+}
+const nearKey = (name) => name.toLowerCase().replace(/_/g, '').replace(/s$/, '');
+/** the problems with these new columns against the existing ones → ['table.column: why'] */
+function vocabularyProblems(fresh, existing, forbidden) {
+  const byKey = new Map(existing.map((name) => [nearKey(name), name]));
+  const out = [];
+  for (const { table, column } of fresh) {
+    if (!/^[a-z][a-z0-9_]*$/.test(column)) out.push(table + '.' + column + ': not snake_case');
+    if (forbidden.has(column)) out.push(table + '.' + column + ': a forbidden synonym (NAMING-AND-MEANING section 2)');
+    const twin = byKey.get(nearKey(column));
+    if (twin && twin !== column) out.push(table + '.' + column + ': near-duplicate of the existing column ' + twin);
+  }
+  return out;
+}
+if (!DOCS) console.log('  - vocabulary and near-duplicate check NOT RUN: schema-inventory.cjs / PM/NAMING-AND-MEANING.md not beside the repo');
+else {
+  const inventory = require(path.join(DOCS, 'schema-inventory.cjs')).read(DIR);
+  const forbidden = forbiddenWords(fs.readFileSync(path.join(DOCS, 'PM', 'NAMING-AND-MEANING.md'), 'utf8'));
+  const BASE = require('../tools/migrate.cjs').BASELINE[0].replace(/\.sql$/, '');
+  const existing = [...new Set(inventory.filter((x) => x.born === BASE).flatMap((x) => x.cols))];
+  const fresh = inventory.flatMap((x) => (x.born === BASE ? [] : x.cols).concat(x.added).map((column) => ({ table: x.name, column })));
+  t('the vocabulary has forbidden words to check against', forbidden.has('shop_id') && forbidden.has('product_id'), forbidden.size + ' words');
+  const found = vocabularyProblems(fresh, existing, forbidden);
+  t('no new column after the baseline breaks the vocabulary or near-duplicates one', found.length === 0, fresh.length + ' new · ' + found.join(' | '));
+  t('  ...the rule fires on a planted near-duplicate (retention_sources)',
+    vocabularyProblems([{ table: 'chit_status', column: 'retention_sources' }], existing.concat(['retention_source']), forbidden).length === 1);
+  t('  ...and on a planted forbidden synonym (shop_id)', vocabularyProblems([{ table: 'x', column: 'shop_id' }], existing, forbidden).length === 1);
+  const renames = require('../tools/migrate.cjs').chainFiles().filter((f) => /\bRENAME\s+COLUMN\b/i.test(fs.readFileSync(at(f), 'utf8').replace(/--.*$/gm, '')));
+  t('no numbered migration renames a live column', renames.length === 0, renames.join(' | '));
+}
+
 console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
 console.log('  ' + pass + ' checks');   /* the gate (scripts/guards.cjs) reads "<n> checks" */
 process.exitCode = fail ? 1 : 0;

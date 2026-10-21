@@ -204,7 +204,7 @@ not_identities:
 # ⚠️ entity_kind is guarded by a CHECK constraint. This list must match it exactly — the test asserts it.
 entity_kind:
   constraint: identities_entity_kind_chk
-  declared_in: migrations/archive/b225_entity_kind.sql
+  declared_in: migrations/b769_local_entity_kind.sql   # b225 made it; b769 (K-DB) added local
   default: customer
   values:
     customer: a real registered business — THE DEFAULT
@@ -214,6 +214,7 @@ entity_kind:
     internal: ours — the platform root, demo shops, anything we mint for ourselves
     actor:    a person or co-assist under an entity
     shopper:  a WALK-IN CUSTOMER of a shop — not our customer
+    local:    a party a shop minted by name (~owner.cus-n / ~owner.sup-n) that never registered; b769, written once it has run
 
 identity_type:
   values: [entity, actor, customer]

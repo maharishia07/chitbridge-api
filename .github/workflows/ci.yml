@@ -235,6 +235,10 @@ jobs:
         run: node tools/fresh-db-check.cjs --db "$CB_FRESH_DB_URL"
       - name: RLS isolation test on the fresh database
         run: node tests/rls-fresh-db.test.cjs
+      - name: the runner refuses a role that cannot see the ledger (K-DB)
+        run: node tests/migrate-ledger-visible.test.cjs
+      - name: the monthly test_result routine (summarise, purge) inside one rolled-back transaction (K-DB, DB-8)
+        run: node tests/test-result-routine.test.cjs
 
   scan:
     # E02 — dependency + secret scanning on every push/PR.

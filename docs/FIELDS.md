@@ -1067,6 +1067,7 @@ Columns, not response keys: SCHEMA-ASSESSMENT-2026-10-16 §7 found 134 columns o
 | `archived_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/chits.js`, `routes/folders.js` · read by `lib/select.js` |
 | `folder_id` | uuid | no schema comment, the owning module names it · written by `lib/folder-rules.js`, `lib/raiseticket.js`, `routes/chits.js`, `routes/connectors.js` +1 · read by `lib/folder-inventory.js`, `lib/folder-views.js`, `lib/groupsum.js`, `lib/select.js` +3 |
 | `retire_at` | timestamp with time zone | no schema comment, the owning module names it · written by `routes/chits.js` · read by `lib/retention.js` |
+| `retention_source` | text, NULL or `records_law` · `own_floor` · `sender_asked` (CHECK `chit_status_retention_source_chk`) | **b771, K-DB / SET-26 (21 Oct 2026).** Source · written once at the mint by `routes/chits.js` `retainDaysFor` (per copy: the winner of MAX(records-law floor `policy.RECORDS_FLOOR_DAYS`, the owner's `policy_flags.retention_floor_days`, the sender's `retention_days`)), only once b771 has run (`schema.hasColumn`). NULL = minted before b771. Read by: nobody yet (the audit answer to "why is this copy kept N days"). Owned data: each party's own, never in the shared `summary_json`. |
 | `retired_at` | timestamp with time zone | no schema comment, the owning module names it · written by no app file · read by `lib/supply-store.js` |
 | `cancel_requested_at` | timestamp without time zone | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
 | `cancel_requested_by` | character varying | no schema comment, the owning module names it · written by `routes/chits.js` · read by no file that names it |
@@ -1138,3 +1139,18 @@ Columns, not response keys: SCHEMA-ASSESSMENT-2026-10-16 §7 found 134 columns o
 | `figures` (GET /api/facts/connectors, new card) | `{ connectors, live }` | Derived by `lib/home-facts.connectors` over `lib/connector-rows.connectorsOf` — the statement GET /api/integrations/status answers with (one trip); `live` = the one `health` rule (routes/connectors). State `not_started` when none has checked in. Read by the Home card of manifest entry `connectors`. |
 | `figures` (GET /api/facts/governance, new card) | `{ changed, rules }` | Derived: `lib/policy.get` against `lib/policy.defaults` — how many flags the shop set away from the default. Read by the Home card of manifest entry `governance`. |
 | `figures` (GET /api/facts/plan, new card) | `{ plan, limits, used: { chits_today } }` | `plan` = `identities.plan`; `limits` = the active constitution's `plan_menu[plan]` (null when not declared — the line says so, never 0); `chits_today` = `routes/governance.countChitsToday`, the quota's own counter. The chits line is `dn` at the daily limit. Read by the Home card of manifest entry `plan`. |
+
+## `ops.retention_flush_log` (b772, K-DB / DB-21 + PM-16, 21 Oct 2026)
+
+One row per retention commit attempt. Written ONLY by `ops.f_retention_flush_event` (SECURITY DEFINER), called by `lib/retention.js`
+`planRetirement({ commit: true })`; cb_app has no grant on the table; cb_ops reads it. Nothing in the app reads it yet (the audit answer to
+"why is this copy gone, or why was nothing flushed").
+
+| column | type | meaning · written by · read by |
+|---|---|---|
+| `mode` | text `BLOCKED` · `commit-not-wired` · `committed` | the answer planRetirement gave; `committed` is reserved for the human-gated commit path (not wired) |
+| `reason` | text | why it was BLOCKED, in words (no archive receipt, a receipt that does not match, the guardrail); NULL when not blocked |
+| `candidates` · `deleted` | integer | copies due at that moment · copies removed (always 0 until a commit path is wired) |
+| `receipt` | jsonb object or NULL | the archive receipt the caller handed: `{ archive_ref, sha256, rows, at }` (DB-21: where the archive lives is Athi's call) |
+| `guardrail` | jsonb | planRetirement's guardrail at that moment: `{ rows, total, pct, threshold_rows, threshold_pct, blocked }` |
+| `run_by` · `at` | text · timestamptz | `session_user` of the caller · when |

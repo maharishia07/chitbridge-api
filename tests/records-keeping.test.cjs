@@ -104,7 +104,8 @@ const over = packs.filter((p) => typeof p.retentionYears === 'number' && p.reten
 check('B2 the floor is at least every registered pack\'s retentionYears (' + packs.map((p) => p.id + ':' + (p.retentionYears == null ? '—' : p.retentionYears)).join(' ') + ')', over.length === 0, over.map((p) => p.id).join(' '));
 
 const chits = read('routes/chits.js');
-check('B3 the mint puts the records floor under every copy (retainDaysFor)', /return Math\.max\(policy\.RECORDS_FLOOR_DAYS, floor, _reqDays \|\| 0\)/.test(chits));
+check('B3 the mint puts the records floor under every copy (retainDaysFor → retention.copyRetention)', /return copyRetention\(floor, _reqDays, /.test(chits) &&
+  /const days = Math\.max\(RECORDS_FLOOR_DAYS, floor, requested \|\| 0\)/.test(read('lib/retention.js')));
 const retainDays = (shopFloor, requested) => Math.max(policy.RECORDS_FLOOR_DAYS, shopFloor, requested || 0);
 check('B3 a shop floor of 0 and a sender asking 1 day still keep 9 years', retainDays(0, 1) === policy.RECORDS_FLOOR_DAYS);
 check('B3 a longer ask is honoured', retainDays(90, 5000) === 5000);

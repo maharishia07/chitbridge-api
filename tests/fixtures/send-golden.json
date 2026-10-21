@@ -286,6 +286,14 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2",
+    "params": [
+     "chit_status",
+     "retention_source"
+    ]
+   },
+   {
     "via": "tx",
     "sql": "INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag, retention_expires_at, retire_at) VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval)",
     "params": [

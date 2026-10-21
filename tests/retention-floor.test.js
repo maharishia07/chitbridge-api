@@ -60,3 +60,36 @@ test('policy.get returns the floor, so the mint never has to guess one', async (
   const defs = policy.defaults ? policy.defaults() : null;
   if (defs) assert.strictEqual(defs.retention_floor_days, 90);
 });
+
+/* ── SET-26 (K-DB, 21 Oct 2026): the copy says WHICH rule set its days ─────────────────────────────────────────────────
+   lib/retention.copyRetention is the ONE calculation (routes/chits.js retainDaysFor calls it for every copy): the MAX, its winner
+   (records_law · own_floor · sender_asked, a tie names the law first) and, once b771 has run, the column the INSERT adds. Called here
+   directly — no copy of the ladder in the test. b771's CHECK must name exactly the sources it can return. */
+const fs = require('node:fs');
+const path = require('node:path');
+const { copyRetention } = require('../lib/retention');
+const SOURCES = ['records_law', 'own_floor', 'sender_asked'];
+const LAW = policy.RECORDS_FLOOR_DAYS;
+
+test('SET-26 · copyRetention: the source names the rule that won the MAX', () => {
+  assert.deepStrictEqual([copyRetention(90, 30, false).days, copyRetention(90, 30, false).source], [LAW, 'records_law'], 'the law wins over a short floor and request');
+  assert.deepStrictEqual([copyRetention(LAW + 100, 30, false).days, copyRetention(LAW + 100, 30, false).source], [LAW + 100, 'own_floor'], "the owner's higher floor wins");
+  assert.deepStrictEqual([copyRetention(90, LAW + 365, false).days, copyRetention(90, LAW + 365, false).source], [LAW + 365, 'sender_asked'], 'a longer request wins');
+  assert.strictEqual(copyRetention(LAW, LAW, false).source, 'records_law', 'a tie names the law first');
+  assert.strictEqual(copyRetention(90, null, false).days, LAW, 'no request: the floors alone');
+});
+
+test('SET-26 · copyRetention: not stamped adds nothing to the INSERT; stamped adds retention_source as $5', () => {
+  const before = copyRetention(90, 30, false);
+  assert.deepStrictEqual({ col: before.col, val: before.val, params: before.params }, { col: '', val: '', params: [] });
+  const after = copyRetention(LAW + 100, 30, true);
+  assert.deepStrictEqual({ col: after.col, val: after.val, params: after.params }, { col: ', retention_source', val: ', $5', params: ['own_floor'] });
+});
+
+test('SET-26 · b771 allows exactly the sources the route writes', () => {
+  const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'b771_chit_status_retention_source.sql'), 'utf8');
+  const chk = (sql.match(/retention_source IN \(([^)]*)\)/) || [])[1] || '';
+  assert.deepStrictEqual((chk.match(/'([a-z_]+)'/g) || []).map((item) => item.replace(/'/g, '')).sort(), SOURCES.slice().sort());
+  const returned = [copyRetention(90, 0, true), copyRetention(LAW + 1, 0, true), copyRetention(90, LAW + 1, true)].map((item) => item.source).sort();
+  assert.deepStrictEqual(returned, SOURCES.slice().sort(), 'every source copyRetention returns is one b771 allows');
+});

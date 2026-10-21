@@ -55,6 +55,7 @@ async function countryOfEntity(entity_id) {
 }
 /* Cached "does the database actually have this?" probe — cheaper than a savepoint and truer than a guess. */
 const schema = require('../lib/schema');
+const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
@@ -1627,6 +1628,9 @@ async function sendRetention(st, req, res) {
    * thing it guards — which is the only order in which it is worth building.
    */
   const _reqDays = retention && retention.retention_days ? +retention.retention_days : null;
+  /* SET-26 (K-DB, 21 Oct 2026): the copy's days AND the rule that set them, declared the way copy_policy declares its source —
+     records_law (CO3, RECORDS_FLOOR_DAYS) · own_floor (the owner's retention_floor_days) · sender_asked (the sender's retention_days).
+     `stamp`: chit_status.retention_source exists (b771), so the copy row carries the source; before b771 the days alone, as before. */
   const retainDaysFor = async (owner_id) => {
     let floor = 90;
     try {
@@ -1635,7 +1639,7 @@ async function sendRetention(st, req, res) {
     } catch (e) {
       cbLog.fellBack('chits retainDaysFor: failed — carried on without it', e); /* unreadable policy → keep the schema default; never shorten on an error */
     }
-    return Math.max(policy.RECORDS_FLOOR_DAYS, floor, _reqDays || 0); /* CO3: the records-law floor sits under every copy */
+    return copyRetention(floor, _reqDays, await schema.hasColumn('chit_status', 'retention_source')); /* CO3: MAX over the records-law floor */
   };
   Object.assign(st, { auto_subject, summary, ext_priority, retention, retainDaysFor });
 }
@@ -2176,12 +2180,12 @@ async function sendLegacySenderRows(client, st) {
       'sent'
     ]
   );
+  const kept = await retainDaysFor(sender_id); // internal priority starts normal; each party sets its own (external rides on summary_json)
   await client.query(
     `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag,
-                              retention_expires_at, retire_at)
-     VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval)`,
-    // internal priority starts normal; each party sets its own (external rides on summary_json)
-    [chit_id, sender_id, 'normal', String(await retainDaysFor(sender_id))]
+                              retention_expires_at, retire_at${kept.col})
+     VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.val})`,
+    [chit_id, sender_id, 'normal', String(kept.days)].concat(kept.params)
   );
   await client.query(
     `INSERT INTO state_log
@@ -2279,13 +2283,12 @@ async function sendLegacyReceiverRows(client, st, receiver) {
       'received'
     ]
   );
+  const kept = await retainDaysFor(receiver.entity_id); /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's: each recipient's copy keeps its own minimum */
   await client.query(
-    /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's — resolved per receiver, so ten recipients with ten
-       different retention policies each keep their copy for their own minimum. */
     `INSERT INTO chit_status (chit_id, entity_id, current_status, direction,
-                              retention_expires_at, retire_at)
-     VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval)`,
-    [chit_id, receiver.entity_id, rcv_status, String(await retainDaysFor(receiver.entity_id))]
+                              retention_expires_at, retire_at${kept.col})
+     VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.val})`,
+    [chit_id, receiver.entity_id, rcv_status, String(kept.days)].concat(kept.params)
   );
   await client.query(
     `INSERT INTO state_log
@@ -6685,7 +6688,9 @@ function traceGraph(me, net) {
   return { nodes, edges, fetch1, addEdge, put };
 }
 
-/** forward = exposure / recall set (BFS; the visited set collapses diamonds and cycles) */
+/** forward = exposure / recall set (BFS; the visited set collapses diamonds and cycles).
+ *  DB-59 / K-DB: `parents ?| frontier` is served by b770's GIN (chit_header_trace_parents_gin, jsonb_ops); the old
+ *  jsonb_array_elements_text EXISTS read every chit_header row once per depth. Same rows for an array of chit-id strings. */
 async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
   const { nodes, addEdge, put } = g;
   let frontier = [id],
@@ -6695,7 +6700,7 @@ async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
       db.query(
         `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
          FROM chit_header
-        WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
+        WHERE summary_json->'trace'->'parents' ?| $1::text[]${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
         net ? [frontier, net] : [frontier]
       )
     );
