@@ -60,3 +60,37 @@ test('policy.get returns the floor, so the mint never has to guess one', async (
   const defs = policy.defaults ? policy.defaults() : null;
   if (defs) assert.strictEqual(defs.retention_floor_days, 90);
 });
+
+/* ── SET-26 (K-DB, 21 Oct 2026): the copy says WHICH rule set its days ─────────────────────────────────────────────────
+   retainDaysFor returns { days, source, stamp }; source is the winner of the MAX, in this order on a tie: records_law, own_floor,
+   sender_asked. b771 adds chit_status.retention_source with a CHECK naming exactly those three, and the mint writes it only when the
+   column exists. The mirror below is the route's arithmetic; the two source checks hold the route and the migration to it. */
+const fs = require('node:fs');
+const path = require('node:path');
+const keptFor = (lawFloor, ownFloor, requested) => {
+  const days = Math.max(lawFloor, ownFloor, requested || 0);
+  return { days, source: days === lawFloor ? 'records_law' : days === ownFloor ? 'own_floor' : 'sender_asked' };
+};
+const SOURCES = ['records_law', 'own_floor', 'sender_asked'];
+
+test('SET-26 · the source names the rule that won the MAX', () => {
+  const law = policy.RECORDS_FLOOR_DAYS;
+  assert.deepStrictEqual(keptFor(law, 90, 30), { days: law, source: 'records_law' }, 'the records-law floor wins over a short floor and request');
+  assert.deepStrictEqual(keptFor(law, law + 100, 30), { days: law + 100, source: 'own_floor' }, "the owner's higher floor wins");
+  assert.deepStrictEqual(keptFor(law, 90, law + 365), { days: law + 365, source: 'sender_asked' }, 'a longer request wins');
+  assert.strictEqual(keptFor(law, law, law).source, 'records_law', 'a tie names the law first');
+});
+
+test('SET-26 · the route returns { days, source } and writes retention_source only behind the b771 column check', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8').replace(/\r\n/g, '\n');
+  assert.ok(/const source = days === policy\.RECORDS_FLOOR_DAYS \? 'records_law' : days === floor \? 'own_floor' : 'sender_asked';/.test(src), 'the source ladder');
+  assert.ok(/return \{ days, source, stamp: await schema\.hasColumn\('chit_status', 'retention_source'\) \}/.test(src), 'the column check');
+  const writes = src.match(/retire_at\$\{kept\.stamp \? ', retention_source' : ''\}/g) || [];
+  assert.strictEqual(writes.length, 2, 'both copies (the sender\'s and each receiver\'s) write the source behind kept.stamp');
+});
+
+test('SET-26 · b771 allows exactly the sources the route writes', () => {
+  const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'b771_chit_status_retention_source.sql'), 'utf8');
+  const chk = (sql.match(/retention_source IN \(([^)]*)\)/) || [])[1] || '';
+  assert.deepStrictEqual((chk.match(/'([a-z_]+)'/g) || []).map((item) => item.replace(/'/g, '')).sort(), SOURCES.slice().sort());
+});
