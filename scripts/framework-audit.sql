@@ -25,11 +25,11 @@ SELECT 1 AS n, 'handle is dotted but entity_kind is not network' AS finding,
 
 UNION ALL
 -- ② a tilde handle is a local supplier
-SELECT 2, 'handle is ~x.sup-n but entity_kind is not supplier',
+SELECT 2, 'handle is ~x.sup-n but entity_kind is not supplier or local',
        count(*), coalesce(string_agg(user_id, ' · '), '')
   FROM (SELECT user_id FROM identities
          WHERE identity_type = 'entity' AND coalesce(status,'active') <> 'erased'
-           AND user_id LIKE '~%' AND entity_kind <> 'supplier' LIMIT 5) x
+           AND user_id LIKE '~%' AND entity_kind NOT IN ('supplier', 'local') LIMIT 5) x
 
 UNION ALL
 -- ③ classified network but no place on any tree — the classification and the structure disagree

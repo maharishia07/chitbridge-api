@@ -33,7 +33,8 @@ function migration(suffix) {
   return fs.readFileSync(hit.path, 'utf8').replace(/\r\n/g, '\n');
 }
 
-const KINDS = ['customer', 'network', 'supplier', 'test', 'internal', 'actor', 'shopper'];
+/* K-DB b769 (21 Oct 2026): 'local' = a party a shop minted by name that never registered (OPS-41) */
+const KINDS = ['customer', 'network', 'supplier', 'test', 'internal', 'actor', 'shopper', 'local'];
 
 let pass = 0;
 const it = (what, fn) => {
