@@ -55,6 +55,7 @@ async function countryOfEntity(entity_id) {
 }
 /* Cached "does the database actually have this?" probe — cheaper than a savepoint and truer than a guess. */
 const schema = require('../lib/schema');
+const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
 const { validate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
@@ -1638,18 +1639,9 @@ async function sendRetention(st, req, res) {
     } catch (e) {
       cbLog.fellBack('chits retainDaysFor: failed — carried on without it', e); /* unreadable policy → keep the schema default; never shorten on an error */
     }
-    const days = Math.max(policy.RECORDS_FLOOR_DAYS, floor, _reqDays || 0); /* CO3: the records-law floor sits under every copy */
-    return copyRetention(days, floor, await schema.hasColumn('chit_status', 'retention_source'));
+    return copyRetention(floor, _reqDays, await schema.hasColumn('chit_status', 'retention_source')); /* CO3: MAX over the records-law floor */
   };
   Object.assign(st, { auto_subject, summary, ext_priority, retention, retainDaysFor });
-}
-
-/** SET-26 (K-DB): one copy's retention — its days, the rule that won the MAX (records_law · own_floor · sender_asked) and, once b771
- *  has run (`stamp`), the retention_source column, value ($5) and parameter its chit_status INSERT adds; before b771 nothing is added. */
-function copyRetention(days, floor, stamp) {
-  const source = days === policy.RECORDS_FLOOR_DAYS ? 'records_law' : days === floor ? 'own_floor' : 'sender_asked';
-  if (!stamp) return { days, source, stamp, col: '', val: '', params: [] };
-  return { days, source, stamp, col: ', retention_source', val: ', $5', params: [source] };
 }
 
 /** the governed lineage, the held clearances and the commercial cover — folded, frozen */
