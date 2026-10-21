@@ -33,6 +33,28 @@ policies `chit_line_raida_isolation` and `read_all`. 8 functions have older bodi
 
 **Needs Athi (production SQL, files only):** `b768_membership_kind_read_policy.sql`: `membership_kind` has RLS on and no policy in production, so the app role reads 0 rows (no code reads it yet). The baseline stays equal to production; b768 is the fix.
 
+**Needs Athi · K-DB (wave W1, 21 Oct 2026; numbers b769-b775 reserved, b769-b772 used).** Run each in the Supabase SQL editor AS postgres, then
+`node tools/migrate.cjs --db <prod> --record <file>` (as the owner: since K-DB `--status` and apply() refuse a role that cannot see the ledger) and a
+`MIGRATIONS-LOG.md` row. The code works before each one runs (it checks the schema first).
+
+| # | file / decision | what | to whom |
+|---|---|---|---|
+| 1 | `b769_local_entity_kind.sql` | `'local'` joins `identities_entity_kind_chk`; from then a minted party is `local`, not `supplier` (OPS-41) | Athi runs |
+| 2 | `b770_trace_parents_gin.sql` | GIN on the trace parents (jsonb_ops), **CREATE INDEX CONCURRENTLY: paste it ALONE**, no transaction | Athi runs |
+| 3 | `b771_chit_status_retention_source.sql` | each copy records which rule set its retention (SET-26) | Athi runs |
+| 4 | `b772_ops_retention_flush_log.sql` | the retention flush event log in `ops` (DB-21, PM-16); closed to cb_app, one definer door | Athi runs |
+| 5 | `READ-2026-10-21-1-chit-status-values.sql` | DB-72: every current_status value; the CHECK (NOT VALID, then VALIDATE) is written only from this paste | paste back |
+| 6 | `READ-2026-10-21-2-db44-duplicate-names.sql` | DB-44: definitions that would break UNIQUE (entity_id, kind, parent, name); which copy survives | paste back; then cb-catalogue + cb-accounting decide |
+| 7 | `READ-2026-10-21-3-db65-governance-rows.sql` | DB-65: governed identities with no entity_governance row; then the drop of identities.constitution_version / governed_by | paste back; the drop is Athi's yes |
+| 8 | `READ-2026-10-21-4-local-kind-count.sql` | OPS-41: the existing `~` rows by kind; moving them from `supplier` to `local` (after b769) | paste back; the row move is Athi's yes |
+| 9 | where the retention archive lives | lib/retention.js now refuses a commit without an archive receipt (`archive_ref`, `sha256`, `rows`, `at`); no table holds archived copies (quota) | Athi decides |
+| 10 | `docs/27-…/census/2026-10-21-proposals-db5-db6.md` (docs repo) | DB-5 / DB-6: index and tidy proposals, one yes / no per line; nothing removed | Athi answers per line |
+
+**Monthly routine (DB-8, b221 v2):** on the first maintenance night of each month, `RUN-2026-10-21-5-test-result-summarise.sql` then
+`RUN-2026-10-21-6-test-result-purge.sql` then `READ-2026-10-21-5-test-result-check.sql` (paste back). They add 0 rows / delete 0 rows until
+Sep 2027 (test_result starts Sep 2026, the window is 12 whole months). A purge frees quota only after `RUN-2026-10-20-9` (VACUUM FULL, alone).
+Proven by `tests/test-result-routine.test.cjs` (CI fresh-db, one rolled-back transaction).
+
 **Writing a new migration:** take the next number above the highest in `migrations/` (and above any reserved for a round), header rule as
 before (what · RLS stated · idempotent · who runs it), then a row in `MIGRATIONS-LOG.md` when it runs anywhere that matters.
 
