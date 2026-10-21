@@ -47,7 +47,7 @@ function rows(s, p, ctx) {
     if (p[1] && !(r.trace.network && r.trace.network.id === p[1])) return [];
     return [r];
   }
-  if (/jsonb_array_elements_text/.test(s)) {
+  if (/'parents' ?| $1/.test(s)) {
     const front = p[0] || [];
     return Object.values(GRAPH).filter((r) => r.trace.parents.some((x) => front.includes(x)) && (!p[1] || (r.trace.network && r.trace.network.id === p[1])));
   }

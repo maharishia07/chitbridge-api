@@ -757,7 +757,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE summary_json->'trace'->'parents' ?| $1::text[]",
     "params": [
      [
       "A"
@@ -766,7 +766,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE summary_json->'trace'->'parents' ?| $1::text[]",
     "params": [
      [
       "B",
@@ -776,7 +776,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE summary_json->'trace'->'parents' ?| $1::text[]",
     "params": [
      [
       "D",
@@ -889,7 +889,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[])) AND summary_json->'trace'->'network'->>'id' = $2",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE summary_json->'trace'->'parents' ?| $1::text[] AND summary_json->'trace'->'network'->>'id' = $2",
     "params": [
      [
       "A"
@@ -899,7 +899,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[])) AND summary_json->'trace'->'network'->>'id' = $2",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE summary_json->'trace'->'parents' ?| $1::text[] AND summary_json->'trace'->'network'->>'id' = $2",
     "params": [
      [
       "B"
@@ -909,7 +909,7 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[])) AND summary_json->'trace'->'network'->>'id' = $2",
+    "sql": "SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace FROM chit_header WHERE summary_json->'trace'->'parents' ?| $1::text[] AND summary_json->'trace'->'network'->>'id' = $2",
     "params": [
      [
       "D"

@@ -6685,7 +6685,9 @@ function traceGraph(me, net) {
   return { nodes, edges, fetch1, addEdge, put };
 }
 
-/** forward = exposure / recall set (BFS; the visited set collapses diamonds and cycles) */
+/** forward = exposure / recall set (BFS; the visited set collapses diamonds and cycles).
+ *  DB-59 / K-DB: `parents ?| frontier` is served by b770's GIN (chit_header_trace_parents_gin, jsonb_ops); the old
+ *  jsonb_array_elements_text EXISTS read every chit_header row once per depth. Same rows for an array of chit-id strings. */
 async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
   const { nodes, addEdge, put } = g;
   let frontier = [id],
@@ -6695,7 +6697,7 @@ async function traceForward(g, me, id, net, MAX_NODES, MAX_DEPTH) {
       db.query(
         `SELECT chit_id, entity_id, sender_entity_display_name, all_recipients, summary_json->'trace' AS trace
          FROM chit_header
-        WHERE EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(summary_json->'trace'->'parents','[]'::jsonb)) AS e WHERE e = ANY($1::text[]))${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
+        WHERE summary_json->'trace'->'parents' ?| $1::text[]${net ? " AND summary_json->'trace'->'network'->>'id' = $2" : ''}`,
         net ? [frontier, net] : [frontier]
       )
     );
