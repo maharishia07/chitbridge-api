@@ -66,7 +66,7 @@ const helperCallers = Object.keys(fns).filter((k) => HELPERS.some((h) => h !== k
 ok('the write helpers are called only by postEntry and by one another', helperCallers.every((k) => k === 'postEntry' || HELPERS.indexOf(k) >= 0), 'callers: ' + helperCallers.join(', '));
 
 /* 3 · insert-only, by trigger AND by grant */
-const b273 = read('migrations/b273_books_journal.sql');
+const b273 = read('migrations/archive/b273_books_journal.sql');
 ['journal_entry', 'journal_line', 'party_item', 'books_change_log', 'books_payment'].forEach((t) => {
   ok('b273: ' + t + ' has the insert-only trigger', new RegExp('CREATE TRIGGER \\w+ BEFORE UPDATE OR DELETE ON ' + t + ' FOR EACH ROW EXECUTE FUNCTION books_insert_only\\(\\)').test(b273));
 });
@@ -84,7 +84,7 @@ ok('lib/books-hooks afterChit swallows every rejection', /function afterChit[\s\
 /* 5 · RLS on every books table */
 const TABLES = ['books_setting', 'ledger_account', 'fiscal_period', 'books_counter', 'journal_entry', 'journal_line', 'account_balance', 'party_item', 'books_payment',
   'books_outbox', 'books_change_log', 'party_tax_id', 'books_pack'];
-const sql = ['b272_books_ledger.sql', 'b273_books_journal.sql', 'b274_books_party.sql'].map((f) => read('migrations/' + f)).join('\n');
+const sql = ['b272_books_ledger.sql', 'b273_books_journal.sql', 'b274_books_party.sql'].map((f) => read('migrations/archive/' + f)).join('\n');
 const idx = read('db/index.js');
 TABLES.forEach((t) => {
   ok(t + ': FORCE RLS + a NULLIF-guarded policy + in the RLS tripwire', new RegExp('ALTER TABLE ' + t + '\\s+FORCE\\s+ROW LEVEL SECURITY').test(sql)
@@ -92,13 +92,13 @@ TABLES.forEach((t) => {
 });
 
 /* 6 · the setup tables cannot be deleted by the application role; the SQL says who runs it; the pack's own words */
-const b272 = read('migrations/b272_books_ledger.sql');
+const b272 = read('migrations/archive/b272_books_ledger.sql');
 ok('b272: cb_app loses DELETE on the switch, the chart, the months and the number series (critic F16)', /REVOKE DELETE ON books_setting, ledger_account, fiscal_period, books_counter FROM cb_app;/.test(b272));
 const SETUP_DELETE = /DELETE\s+FROM\s+(books_setting|ledger_account|fiscal_period|books_counter)\b/i;
 const deleters = FILES.filter((f) => SETUP_DELETE.test(read(f)));
 ok('…and nothing in the server deletes from them (the revoke takes away nothing that is used)', deleters.length === 0, 'found in: ' + deleters.join(', '));
 ['b272_books_ledger.sql', 'b273_books_journal.sql', 'b274_books_party.sql'].forEach((f) => {
-  ok(f + ' says who runs it: as postgres, WITHOUT RLS (critic F23)', /RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS/.test(read('migrations/' + f)));
+  ok(f + ' says who runs it: as postgres, WITHOUT RLS (critic F23)', /RUN AS postgres IN THE SUPABASE SQL EDITOR — WITHOUT RLS/.test(read('migrations/archive/' + f)));
 });
 const order = read('docs/drafts/BOOKS-RUN-ORDER.md');
 ok('BOOKS-RUN-ORDER says the same, the three expected rows, and how an owner switches a shop on (no screen does)', /Run as `postgres` in the Supabase editor \(WITHOUT RLS\)/.test(order)

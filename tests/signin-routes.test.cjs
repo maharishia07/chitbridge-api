@@ -409,7 +409,7 @@ const firstDiff = (a, b) => {
     t('action outside the CHECK → not written, logged', bad1.written === false && EVENTS.length === 0 && LOGS.some((l) => /^error .*signin_events/.test(l) && /login/.test(l)));
     t('method outside the CHECK → not written', bad2.written === false && EVENTS.length === 0);
     t('no entity_id (NOT NULL) → not written', bad3.written === false && EVENTS.length === 0);
-    const b282 = fs.readFileSync(path.join(API, 'migrations', 'b282_signin_events.sql'), 'utf8');
+    const b282 = fs.readFileSync(path.join(API, 'migrations', 'archive', 'b282_signin_events.sql'), 'utf8');
     const list = (col) => (b282.match(new RegExp(col + "\\s+text[^\\n]*CHECK \\(" + col + " IN \\(([^)]*)\\)")) || [])[1].split(',').map((x) => x.trim().replace(/'/g, ''));
     t('the writer\'s lists ARE the migration\'s CHECK lists', same(events.ACTIONS, list('action')) && same(events.METHODS, list('method')));
 

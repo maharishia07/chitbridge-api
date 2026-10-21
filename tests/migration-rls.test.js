@@ -27,6 +27,10 @@
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const DIR = path.join(__dirname, '..', 'migrations');
+/* DB-REBASE (18 Oct): the SQL as written lives in migrations/archive/ (before the one baseline) and migrations/ (after it);
+   the baseline itself is a pg_dump, proven by the rebase fingerprint, so it is not read here */
+const WRITTEN = new Map(require('../tools/migrate.cjs').writtenSqlFiles().map((x) => [x.name, x.path]));
+const at = (f) => WRITTEN.get(f) || path.join(DIR, f);
 
 let pass = 0;
 const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); }
@@ -61,7 +65,7 @@ const ALLOWED = {
   signup_context: 'closed by b265_signup_context_rls.sql — append-only, INSERT policy only',
 };
 
-const files = fs.readdirSync(DIR).filter((f) => f.endsWith('.sql')).sort();
+const files = [...WRITTEN.keys()].filter((f) => f.endsWith('.sql')).sort();
 
 /** every `CREATE TABLE [IF NOT EXISTS] <name>` in a file, ignoring temp tables */
 /**
@@ -120,7 +124,7 @@ it('the migrations are found', () => {
 const CLOSED = (function () {
   const set = {};
   files.forEach((f) => {
-    fs.readFileSync(path.join(DIR, f), 'utf8')
+    fs.readFileSync(at(f), 'utf8')
       .replace(/ALTER\s+TABLE\s+(?:public\.)?"?([\w]+)"?\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi,
         (all, t) => { set[t] = f; return all; });
   });
@@ -140,7 +144,7 @@ const CLOSED = (function () {
 it('⚠️⚠️⚠️ every table created by a migration has RLS switched on somewhere', () => {
   const open = [];
   files.forEach((f) => {
-    tablesIn(fs.readFileSync(path.join(DIR, f), 'utf8')).forEach((t) => {
+    tablesIn(fs.readFileSync(at(f), 'utf8')).forEach((t) => {
       if (ALLOWED[t] || CLOSED[t]) return;
       if (open.indexOf(t) < 0) open.push(t + '  (created in ' + f + ')');
     });
@@ -166,7 +170,7 @@ it('⚠️⚠️⚠️ every table created by a migration has RLS switched on so
 it('⭐⭐ and a migration from b200 onwards does it in its own file', () => {
   const late = [];
   files.filter((f) => { const m = f.match(/^b(\d+)/); return m && Number(m[1]) >= 200; }).forEach((f) => {
-    const sql = fs.readFileSync(path.join(DIR, f), 'utf8');
+    const sql = fs.readFileSync(at(f), 'utf8');
     tablesIn(sql).forEach((t) => {
       if (ALLOWED[t]) return;
       const on = new RegExp('ALTER\\s+TABLE\\s+(?:public\\.)?"?' + t + '"?\\s+ENABLE\\s+ROW\\s+LEVEL\\s+SECURITY', 'i');
@@ -184,7 +188,7 @@ it('⭐⭐ and a migration from b200 onwards does it in its own file', () => {
 it('⚠️⚠️ and forces it, so the owner is bound too', () => {
   const soft = [];
   files.forEach((f) => {
-    const sql = fs.readFileSync(path.join(DIR, f), 'utf8');
+    const sql = fs.readFileSync(at(f), 'utf8');
     tablesIn(sql).forEach((t) => {
       if (ALLOWED[t]) return;
       const on = new RegExp('ALTER\\s+TABLE\\s+(?:public\\.)?"?' + t + '"?\\s+ENABLE\\s+ROW', 'i');
@@ -200,7 +204,7 @@ it('⚠️⚠️ and forces it, so the owner is bound too', () => {
 it('⭐ a table with RLS has at least one policy', () => {
   const mute = [];
   files.forEach((f) => {
-    const sql = fs.readFileSync(path.join(DIR, f), 'utf8');
+    const sql = fs.readFileSync(at(f), 'utf8');
     tablesIn(sql).forEach((t) => {
       if (ALLOWED[t]) return;
       const on = new RegExp('ALTER\\s+TABLE\\s+(?:public\\.)?"?' + t + '"?\\s+ENABLE\\s+ROW', 'i');

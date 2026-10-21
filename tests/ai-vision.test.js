@@ -115,7 +115,7 @@ const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
      * back to when ai_skill is unreadable. Checking only one would let the guard exist in the copy that is not
      * being used on the day the database is having trouble — precisely when nobody is looking closely.
      */
-    const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'b127_photo_skills.sql'), 'utf8');
+    const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'archive', 'b127_photo_skills.sql'), 'utf8');
     const seed = fs.readFileSync(path.join(__dirname, '..', 'lib', 'ai.js'), 'utf8');
     for (const id of ['photo-to-items', 'photo-to-chit']) {
       for (const [where, src] of [['migration', sql], ['in-code SEED', seed]]) {

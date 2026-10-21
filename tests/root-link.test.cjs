@@ -29,11 +29,12 @@ const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
  * moment those files were renumbered to b225_/b226_ — which happened the same day, because eight of the nine
  * migrations written that day had collided with existing numbers. A number is an ordering, not an identity.
  */
+/* DB-REBASE (18 Oct): the SQL as written lives in migrations/archive/ (before the one baseline) and migrations/ (after it) */
 function migration(suffix) {
-  const dir = path.join(ROOT, 'migrations');
-  const hit = fs.readdirSync(dir).filter((f) => f.endsWith(suffix)).sort().pop();
+  const hits = require('../tools/migrate.cjs').writtenSqlFiles().filter((f) => f.name.endsWith(suffix));
+  const hit = hits.sort((a, b) => a.name.localeCompare(b.name)).pop();
   if (!hit) throw new Error('no migration ending in ' + suffix + ' — was it renamed as well as renumbered?');
-  return fs.readFileSync(path.join(dir, hit), 'utf8');
+  return fs.readFileSync(hit.path, 'utf8');
 }
 
 let pass = 0;
@@ -45,9 +46,8 @@ const it = (what, fn) => {
 /** every quoted literal inside `CHECK (<col> ... ARRAY[...])` for one column, across all migrations */
 function allowedFor(table, col) {
   const found = new Set();
-  for (const f of fs.readdirSync(path.join(ROOT, 'migrations')).sort()) {
-    if (!f.endsWith('.sql')) continue;
-    const sql = read(path.join('migrations', f)).split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
+  for (const f of require('../tools/migrate.cjs').writtenSqlFiles().map((x) => x.rel)) {
+    const sql = read(f).split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
     /* ⚠️ TWO SPELLINGS, BOTH LIVE IN THIS FOLDER. b216 writes `CHECK (supply_kind IN ('resale','own_use'))`
        while the baseline and b159 write `= ANY (ARRAY[...])`. A parser that knew only one reported "no CHECK
        found" for a constraint that plainly exists — which reads as "unconstrained" and is the more dangerous

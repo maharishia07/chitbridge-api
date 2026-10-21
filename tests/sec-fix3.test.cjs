@@ -74,7 +74,7 @@ const STAFF = { identity: { identity_id: 'act-1', identity_type: 'actor', parent
     ANSWER = (sql) => (/chit_participants/.test(sql) ? [{ entity_id: SHOP_A }, { entity_id: SHOP_B }] : []);
     assert.deepStrictEqual(await chits.holdersAmong(SHOP_A, 'c1', [SHOP_B, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc']), [SHOP_B]);
   });
-  await it('the definer migration checks the audience too', () => assert.ok(/NOT EXISTS \(SELECT 1 FROM chit_status WHERE chit_id = p_chit_id AND entity_id = v_ent\)/.test(src('migrations/b742_dispute_audience_holders.sql'))));
+  await it('the definer migration checks the audience too', () => assert.ok(/NOT EXISTS \(SELECT 1 FROM chit_status WHERE chit_id = p_chit_id AND entity_id = v_ent\)/.test(src('migrations/archive/b742_dispute_audience_holders.sql'))));
 
   console.log('\nS5 · a handle lookup finds a business, not a customer or an employee');
   await it('both add-by-handle lookups carry the business filter', () => {

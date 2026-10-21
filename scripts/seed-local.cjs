@@ -24,7 +24,9 @@ if (!/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(API)) {
   process.exit(3);
 }
 
-if (process.env.DATABASE_URL && process.env.DATABASE_URL !== 'postgres://postgres:cblocal@127.0.0.1:55432/cb_local') {
+/* CB_LOCAL_PGPORT (toolset/local-stack.sh): a second throwaway stack on another port; still only 127.0.0.1, still only this database name */
+const LOCAL_DB_URL = 'postgres://postgres:cblocal@127.0.0.1:' + (process.env.CB_LOCAL_PGPORT || '55432') + '/cb_local';
+if (process.env.DATABASE_URL && process.env.DATABASE_URL !== LOCAL_DB_URL) {
   console.error('REFUSED: seed-local only works against the local test database');
   process.exit(3);
 }

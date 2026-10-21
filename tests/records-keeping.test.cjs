@@ -30,8 +30,8 @@ require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
 
 /* ── A · the edit trail ─────────────────────────────────────────────────────────────────────────────────────────────── */
 const BOOKS = ['journal_entry', 'journal_line', 'party_item', 'books_payment', 'books_change_log'];
-const b273 = read('migrations/b273_books_journal.sql');
-const b295 = read('migrations/b295_books_payment_advice_update.sql');
+const b273 = read('migrations/archive/b273_books_journal.sql');
+const b295 = read('migrations/archive/b295_books_payment_advice_update.sql');
 for (const t of BOOKS) {
   const fn = t === 'books_payment' ? 'books_payment_guard' : 'books_insert_only';
   const src = t === 'books_payment' ? b295 : b273;
@@ -80,7 +80,7 @@ const policy = require(path.join(ROOT, 'lib/policy.js'));
 const TRAIL = /audit|change_?log|edit_?log|trail/i;
 check('A5 no policy flag can switch the edit log off', !Object.keys(policy.FLAGS).some((k) => TRAIL.test(k)) &&
   !Object.values(policy.FLAGS).some((f) => Array.isArray(f.keys) && f.keys.some((k) => TRAIL.test(k))));
-const settingCols = (read('migrations/b272_books_ledger.sql').match(/CREATE TABLE IF NOT EXISTS books_setting \(([\s\S]*?)\n\);/) || ['', ''])[1];
+const settingCols = (read('migrations/archive/b272_books_ledger.sql').match(/CREATE TABLE IF NOT EXISTS books_setting \(([\s\S]*?)\n\);/) || ['', ''])[1];
 check('A5 books_setting has no column that switches the edit log off', settingCols.length > 0 && !TRAIL.test(settingCols), settingCols.slice(0, 80));
 
 /* the masters' writers log every change (who · when · field · old → new) through the one writer, books-store logChange */
@@ -109,7 +109,7 @@ const retainDays = (shopFloor, requested) => Math.max(policy.RECORDS_FLOOR_DAYS,
 check('B3 a shop floor of 0 and a sender asking 1 day still keep 9 years', retainDays(0, 1) === policy.RECORDS_FLOOR_DAYS);
 check('B3 a longer ask is honoured', retainDays(90, 5000) === 5000);
 
-const b305 = read('migrations/b305_records_floor.sql');
+const b305 = read('migrations/archive/b305_records_floor.sql');
 check('B4 b305 sets the schema default to the same 9 years', /SET DEFAULT \(now\(\) \+ interval '9 years'\)/.test(b305));
 check('B4 b305 only lengthens (every UPDATE is guarded by "< created_at + 9 years")', (b305.match(/UPDATE chit_status/g) || []).length === 2 &&
   (b305.match(/< created_at \+ interval '9 years'/g) || []).length >= 4 && !/DELETE FROM/i.test(b305));

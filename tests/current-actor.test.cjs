@@ -87,7 +87,7 @@ t('no request, no actor', currentActor() === null);
 
   /* ── and the far end still reads the same name ──────────────────────────────────────────────────────── */
   console.log('\n── the trigger reads what the transaction writes ──');
-  const mig = read('migrations/b146_catalogue_item_version.sql');
+  const mig = read('migrations/archive/b146_catalogue_item_version.sql');
   t('b146 still stamps changed_by from app.current_actor',
     /changed_by/.test(mig) && /current_setting\('app\.current_actor'/.test(mig));
   /**

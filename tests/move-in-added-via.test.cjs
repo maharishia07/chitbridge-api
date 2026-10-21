@@ -25,7 +25,9 @@ const t = async (name, fn) => {
 
 /* migrations in the order they are run: the baseline (000_*) first, then bNNN by number */
 const orderOf = (f) => { const m = /^b(\d+)/.exec(f); return m ? Number(m[1]) : (/^0+_/.test(f) ? -1 : Infinity); };
-const files = fs.readdirSync(MIG).filter((f) => f.endsWith('.sql') && orderOf(f) !== Infinity)
+/* DB-REBASE (18 Oct): the SQL as written lives in migrations/archive/ (before the one baseline) and migrations/ (after it) */
+const written = new Map(require('../tools/migrate.cjs').writtenSqlFiles().map((f) => [f.name, f.path]));
+const files = [...written.keys()].filter((f) => orderOf(f) !== Infinity)
   .sort((a, b) => orderOf(a) - orderOf(b) || a.localeCompare(b));
 
 /** the allowed added_via values of one table: the LAST `<table>_added_via_check` CHECK across the run order */
@@ -33,7 +35,7 @@ function allowedOf(table) {
   let last = null;
   const re = new RegExp('ADD\\s+CONSTRAINT\\s+' + table + '_added_via_check\\s+CHECK\\s*\\(([\\s\\S]*?)\\)\\s*;', 'gi');
   for (const f of files) {
-    const sql = fs.readFileSync(path.join(MIG, f), 'utf8').replace(/--[^\n]*/g, '');
+    const sql = fs.readFileSync(written.get(f), 'utf8').replace(/--[^\n]*/g, '');
     let m; while ((m = re.exec(sql))) last = { file: f, values: (m[1].match(/'([^']+)'/g) || []).map((s) => s.slice(1, -1)) };
   }
   return last;

@@ -148,7 +148,8 @@ t('no engine module imports an adoption-layer library', () => {
 // Not portable, and not trying to be. What matters is that the isolation guarantee has no gaps — a table with
 // ENABLE but not FORCE still lets the TABLE OWNER read every row, so the two must always come as a pair.
 function rlsTables() {
-  const dirs = [path.join(API, 'migrations'), path.join(API, 'db')];
+  /* DB-REBASE (18 Oct): migrations/archive/ holds the chain before the one baseline (a pg_dump, proven by the rebase fingerprint) */
+  const dirs = [path.join(API, 'migrations', 'archive'), path.join(API, 'migrations'), path.join(API, 'db')];
   const enabled = new Set(), forced = new Set();
   for (const dir of dirs) {
     if (!fs.existsSync(dir)) continue;
@@ -176,7 +177,7 @@ t('TIER C · nothing is FORCED without being ENABLED', () => {
 });
 
 t('TIER C · the per-copy delivery function is where the manifest says it is', () => {
-  const p = path.join(API, 'migrations', 'migration_b50_rls_delivery_functions.sql');
+  const p = path.join(API, 'migrations', 'archive', 'migration_b50_rls_delivery_functions.sql');
   assert.ok(fs.existsSync(p), 'chit_deliver migration is missing — per-copy settlement has no definition');
   assert.match(fs.readFileSync(p, 'utf8'), /FUNCTION\s+chit_deliver/i);
 });
