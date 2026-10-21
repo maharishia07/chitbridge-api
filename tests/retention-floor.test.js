@@ -84,8 +84,9 @@ test('SET-26 · the source names the rule that won the MAX', () => {
 test('SET-26 · the route returns { days, source } and writes retention_source only behind the b771 column check', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8').replace(/\r\n/g, '\n');
   assert.ok(/const source = days === policy\.RECORDS_FLOOR_DAYS \? 'records_law' : days === floor \? 'own_floor' : 'sender_asked';/.test(src), 'the source ladder');
-  assert.ok(/return \{ days, source, stamp: await schema\.hasColumn\('chit_status', 'retention_source'\) \}/.test(src), 'the column check');
-  const writes = src.match(/retire_at\$\{kept\.stamp \? ', retention_source' : ''\}/g) || [];
+  assert.ok(/return copyRetention\(days, floor, await schema\.hasColumn\('chit_status', 'retention_source'\)\)/.test(src), 'the column check');
+  assert.ok(/if \(!stamp\) return \{ days, source, stamp, col: '', val: '', params: \[\] \};/.test(src), 'before b771 the INSERT adds nothing');
+  const writes = src.match(/retire_at\$\{kept\.col\}\)/g) || [];
   assert.strictEqual(writes.length, 2, 'both copies (the sender\'s and each receiver\'s) write the source behind kept.stamp');
 });
 

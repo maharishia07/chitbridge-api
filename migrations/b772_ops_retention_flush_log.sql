@@ -7,6 +7,7 @@
 --    commit is refused (BLOCKED) unless the caller hands one (where the archive lives is Athi's call; NO table here holds archived copies,
 --    the database is at the Free-plan quota). PM-16: a missing row must be explainable, so every commit attempt (refused or not) is one row
 --    here: when, what mode, why, how many candidates, how many deleted (0 until a commit path is wired), the receipt, the guardrail.
+-- OWNER: lib/retention.js (planRetirement, the one flush door)
 -- RLS: ops.retention_flush_log is ENABLE + FORCE ROW LEVEL SECURITY. Closed to cb_app (no table grant at all) and to PUBLIC; cb_ops reads it
 --    (SELECT, policy retention_flush_log_ops_read). The ONE writer is ops.f_retention_flush_event(...), SECURITY DEFINER (owner postgres),
 --    insert-only, which cb_app may EXECUTE — the same shape as ops.f_books_enabled (b272): the app gets one narrow door, never the table.

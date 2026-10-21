@@ -1639,10 +1639,17 @@ async function sendRetention(st, req, res) {
       cbLog.fellBack('chits retainDaysFor: failed — carried on without it', e); /* unreadable policy → keep the schema default; never shorten on an error */
     }
     const days = Math.max(policy.RECORDS_FLOOR_DAYS, floor, _reqDays || 0); /* CO3: the records-law floor sits under every copy */
-    const source = days === policy.RECORDS_FLOOR_DAYS ? 'records_law' : days === floor ? 'own_floor' : 'sender_asked';
-    return { days, source, stamp: await schema.hasColumn('chit_status', 'retention_source') };
+    return copyRetention(days, floor, await schema.hasColumn('chit_status', 'retention_source'));
   };
   Object.assign(st, { auto_subject, summary, ext_priority, retention, retainDaysFor });
+}
+
+/** SET-26 (K-DB): one copy's retention — its days, the rule that won the MAX (records_law · own_floor · sender_asked) and, once b771
+ *  has run (`stamp`), the retention_source column, value ($5) and parameter its chit_status INSERT adds; before b771 nothing is added. */
+function copyRetention(days, floor, stamp) {
+  const source = days === policy.RECORDS_FLOOR_DAYS ? 'records_law' : days === floor ? 'own_floor' : 'sender_asked';
+  if (!stamp) return { days, source, stamp, col: '', val: '', params: [] };
+  return { days, source, stamp, col: ', retention_source', val: ', $5', params: [source] };
 }
 
 /** the governed lineage, the held clearances and the commercial cover — folded, frozen */
@@ -2181,13 +2188,12 @@ async function sendLegacySenderRows(client, st) {
       'sent'
     ]
   );
-  const kept = await retainDaysFor(sender_id);
+  const kept = await retainDaysFor(sender_id); // internal priority starts normal; each party sets its own (external rides on summary_json)
   await client.query(
     `INSERT INTO chit_status (chit_id, entity_id, current_status, direction, priority_flag,
-                              retention_expires_at, retire_at${kept.stamp ? ', retention_source' : ''})
-     VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.stamp ? ', $5' : ''})`,
-    // internal priority starts normal; each party sets its own (external rides on summary_json)
-    [chit_id, sender_id, 'normal', String(kept.days)].concat(kept.stamp ? [kept.source] : [])
+                              retention_expires_at, retire_at${kept.col})
+     VALUES ($1,$2,'delivered','sent',$3, now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.val})`,
+    [chit_id, sender_id, 'normal', String(kept.days)].concat(kept.params)
   );
   await client.query(
     `INSERT INTO state_log
@@ -2285,14 +2291,12 @@ async function sendLegacyReceiverRows(client, st, receiver) {
       'received'
     ]
   );
-  const kept = await retainDaysFor(receiver.entity_id);
+  const kept = await retainDaysFor(receiver.entity_id); /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's: each recipient's copy keeps its own minimum */
   await client.query(
-    /* ⚠️ THE RECEIVER'S OWN FLOOR, not the sender's — resolved per receiver, so ten recipients with ten
-       different retention policies each keep their copy for their own minimum. */
     `INSERT INTO chit_status (chit_id, entity_id, current_status, direction,
-                              retention_expires_at, retire_at${kept.stamp ? ', retention_source' : ''})
-     VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.stamp ? ', $5' : ''})`,
-    [chit_id, receiver.entity_id, rcv_status, String(kept.days)].concat(kept.stamp ? [kept.source] : [])
+                              retention_expires_at, retire_at${kept.col})
+     VALUES ($1,$2,$3,'received', now() + ($4 || ' days')::interval, now() + ($4 || ' days')::interval${kept.val})`,
+    [chit_id, receiver.entity_id, rcv_status, String(kept.days)].concat(kept.params)
   );
   await client.query(
     `INSERT INTO state_log

@@ -125,6 +125,29 @@ async function record(pool, files, source) {
 }
 
 /**
+ * preflight(pool, report) → { fresh } to go on, or { stop: <apply's answer> } to touch NOTHING: a role that cannot see the ledger (K-DB), or a
+ * database with tables and no (or an empty) ledger (somebody's live data whose history we cannot see). Throws on a half-built database.
+ */
+async function preflight(pool, report) {
+  const fresh = !(await hasTable(pool, 'identities'));
+  const hadLedger = await hasTable(pool, 'schema_migrations');
+  const nothing = { ran: [], failed: [], skipped: 0, fresh, left_alone: true };
+  const view = hadLedger ? await ledgerVisible(pool) : { sees: true };
+  if (!view.sees) {
+    report(blindLine(view.role) + ' — nothing run');
+    return { stop: Object.assign(nothing, { blind: view.role }) };
+  }
+  if (!fresh && (!hadLedger || [...(await ledger(pool)).keys()].filter((item) => item !== LEDGER_FILE).length === 0)) {
+    report('the database has tables and ' + (hadLedger ? 'its ledger is empty' : 'no ledger (' + LEDGER_FILE + ')') + ' — nothing run. Record what it already has first:');
+    report('  run migrations/archive/' + LEDGER_FILE + ' as the owner, then: node tools/migrate.cjs --db <url> --record-through bNNN   (the last migration it has had)');
+    return { stop: nothing };
+  }
+  /* the baseline makes schema_migrations itself, so an empty database that already has one was half-built by hand: stop */
+  if (fresh && hadLedger) throw new Error('the database has no identities table but has schema_migrations — drop it and build again, or record what it has');
+  return { fresh };
+}
+
+/**
  * apply(url, { say }) → { ran: [...], failed: [...], skipped: n, fresh, left_alone? }. The one writer of schema_migrations rows with
  * source 'migrate'. A file that fails is reported and NOT recorded, so the next run tries it again.
  */
@@ -133,27 +156,9 @@ async function apply(url, opts) {
   const pool = open(url);
   try {
     await pool.query('SELECT 1');
-    const fresh = !(await hasTable(pool, 'identities'));
-    const hadLedger = await hasTable(pool, 'schema_migrations');
-    if (hadLedger) {
-      const view = await ledgerVisible(pool);
-      if (!view.sees) {
-        say(blindLine(view.role) + ' — nothing run');
-        return { ran: [], failed: [], skipped: 0, fresh, left_alone: true, blind: view.role };
-      }
-    }
-    /* a database with tables and no (or an empty) ledger is somebody's live data whose history we cannot see: touch NOTHING */
-    if (!fresh && (!hadLedger || [...(await ledger(pool)).keys()].filter((item) => item !== LEDGER_FILE).length === 0)) {
-      say(
-        'the database has tables and ' +
-          (hadLedger ? 'its ledger is empty' : 'no ledger (' + LEDGER_FILE + ')') +
-          ' — nothing run. Record what it already has first:'
-      );
-      say('  run migrations/archive/' + LEDGER_FILE + ' as the owner, then: node tools/migrate.cjs --db <url> --record-through bNNN   (the last migration it has had)');
-      return { ran: [], failed: [], skipped: 0, fresh, left_alone: true };
-    }
-    /* the baseline makes schema_migrations itself, so an empty database that already has one was half-built by hand: stop */
-    if (fresh && hadLedger) throw new Error('the database has no identities table but has schema_migrations — drop it and build again, or record what it has');
+    const verdict = await preflight(pool, say);
+    if (verdict.stop) return verdict.stop;
+    const fresh = verdict.fresh;
     const list = [],
       failed = [];
     if (fresh) {
