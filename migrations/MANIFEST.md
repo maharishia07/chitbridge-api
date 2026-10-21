@@ -33,7 +33,7 @@ policies `chit_line_raida_isolation` and `read_all`. 8 functions have older bodi
 
 **Needs Athi (production SQL, files only):** `b768_membership_kind_read_policy.sql`: `membership_kind` has RLS on and no policy in production, so the app role reads 0 rows (no code reads it yet). The baseline stays equal to production; b768 is the fix.
 
-**Needs Athi · K-DB (wave W1, 21 Oct 2026; numbers b769-b775 reserved, b769-b772 used).** Run each in the Supabase SQL editor AS postgres, then
+**Needs Athi · K-DB (wave W1, 21 Oct 2026; numbers b769-b775 reserved, b769-b775 written; b769-b772 RUN 21 Oct).** Run each in the Supabase SQL editor AS postgres, then
 `node tools/migrate.cjs --db <prod> --record <file>` (as the owner: since K-DB `--status` and apply() refuse a role that cannot see the ledger) and a
 `MIGRATIONS-LOG.md` row. The code works before each one runs (it checks the schema first).
 
@@ -43,6 +43,9 @@ policies `chit_line_raida_isolation` and `read_all`. 8 functions have older bodi
 | 2 | `b770_trace_parents_gin.sql` | GIN on the trace parents (jsonb_ops), **CREATE INDEX CONCURRENTLY: paste it ALONE**, no transaction | Athi runs |
 | 3 | `b771_chit_status_retention_source.sql` | each copy records which rule set its retention (SET-26) | Athi runs |
 | 4 | `b772_ops_retention_flush_log.sql` | the retention flush event log in `ops` (DB-21, PM-16); closed to cb_app, one definer door | Athi runs |
+| 4a | `b773_chit_status_current_status_check.sql` | DB-72: CHECK on `chit_status.current_status` = the rail's 9 statuses (NOT VALID, then VALIDATE); NULL allowed | Athi runs |
+| 4b | `b774_definition_name_unique_folded.sql` | DB-44: UNIQUE (entity_id, kind, lower(btrim(name))) on `definition`; counts first and stops with the number; parent is not a column, see header | Athi runs |
+| 4c | `b775_minted_parties_to_local.sql` | OPS-41: the minted `~` parties move `supplier` to `local` (expected 1); run AFTER b769 | Athi runs |
 | 5 | `READ-2026-10-21-1-chit-status-values.sql` | DB-72: every current_status value; the CHECK (NOT VALID, then VALIDATE) is written only from this paste | paste back |
 | 6 | `READ-2026-10-21-2-db44-duplicate-names.sql` | DB-44: definitions that would break UNIQUE (entity_id, kind, parent, name); which copy survives | paste back; then cb-catalogue + cb-accounting decide |
 | 7 | `READ-2026-10-21-3-db65-governance-rows.sql` | DB-65: governed identities with no entity_governance row; then the drop of identities.constitution_version / governed_by | paste back; the drop is Athi's yes |
