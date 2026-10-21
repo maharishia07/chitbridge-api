@@ -1,3 +1,6 @@
+# K-DB (21 Oct 2026): every text file is LF in the index AND the working copy on every OS, so a migration sha256
+# is the same on Windows and Linux (b768 was recorded with the LF hash). text=auto leaves binary files alone.
+* text=auto eol=lf
 # Keep shell scripts LF on every OS so bash can run them.
 # (Windows autocrlf would otherwise inject CRLF and break `bash -n` at the first line.)
 # .js / .sql are intentionally left to the default handling.
