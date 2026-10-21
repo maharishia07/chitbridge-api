@@ -312,7 +312,7 @@ async function ask(req, res, next) {
   try {
     const input = String(req.body.email || req.body.user_id || req.body.id || '').trim();
     if (!input) {
-      return res.status(400).json({ error: 'Validation failed', message: 'Send your email address or your User ID.' });
+      return res.status(400).json({ error: 'Validation failed', message: 'Type your mobile number, email or User ID.' });
     }
     /* the new door also answers `id`: the stored id the page verifies with — a mobile or e-mail resolves ONCE (M14) */
     const extra = (kind, need, id) => (isNewDoor(req) ? { kind, need, ...(id ? { id } : {}) } : {});
@@ -524,7 +524,7 @@ async function verify(req, res) {
     const handle = (req.body.user_id || '').trim();
     const id = String(req.body.id || '').trim();
     if (!email && !handle && !id) {
-      return res.status(400).json({ error: 'Verification failed', message: 'Send your email address or your User ID.' });
+      return res.status(400).json({ error: 'Verification failed', message: 'Type your mobile number, email or User ID.' });
     }
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups — a handle carries a unique index whatever type owns it */
