@@ -533,6 +533,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "INVALID_INPUT",
+   "status": "422",
+   "title": "Input not valid",
+   "shopkeeper": "Some of what was sent is missing or not valid.",
+   "hint": "Fix the fields listed and send it again.",
+   "owner_area": "validate",
+   "since": "2026-10-22"
+  },
+  {
    "code": "INVALID_KEY_REQUEST",
    "status": "400",
    "title": "Key request not valid",
@@ -629,6 +638,15 @@
    "shopkeeper": "PENDING",
    "hint": "-",
    "owner_area": "schemas",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "MISSING_FIELD",
+   "status": "422",
+   "title": "Field missing",
+   "shopkeeper": "A needed field was left out.",
+   "hint": "Fill in the field named and send it again.",
+   "owner_area": "validate",
    "since": "2026-10-22"
   },
   {
@@ -1412,6 +1430,15 @@
    "shopkeeper": "PENDING",
    "hint": "-",
    "owner_area": "verdict",
+   "since": "2026-10-22"
+  },
+  {
+   "code": "WRONG_VALUE",
+   "status": "422",
+   "title": "Field not valid",
+   "shopkeeper": "A field has a value of the wrong kind.",
+   "hint": "Use the kind of value the field asks for.",
+   "owner_area": "validate",
    "since": "2026-10-22"
   },
   {

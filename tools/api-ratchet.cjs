@@ -10,7 +10,7 @@
  *   node tools/api-ratchet.cjs --base origin/main     check (CI)
  *   node tools/api-ratchet.cjs --base origin/main --hotfix   a PR labelled hotfix: a touched route that does not meet may stay if the PR records a dated debt entry (14 days)
  *   node tools/api-ratchet.cjs --write                rewrite docs/api-ratchet.json from the head register (refuses to raise the count; --seed overrides for the first run)
- * Stage "1a": only routes/keys.js is held to "meets standard minus the 1b columns" (every live column true); every other touched route is counted, not blocked. The stage flips to "1b" when ajv lands.
+ * Stage "1b" (ajv landed): a touched route of a brought-over file (HELD_FILES: routes/keys.js) must have all seven machine columns true; every other touched route is counted, not blocked. Stage "all" holds every route.
  */
 const fs = require('fs');
 const os = require('os');
@@ -19,7 +19,8 @@ const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const RATCHET_FILE = path.join(ROOT, 'docs', 'api-ratchet.json');
-const HELD_AT_1A = ['routes/keys.js'];
+/* the route files brought to the standard so far: a PR touching one of their routes must keep it at all seven machine columns (S16 a); the list grows with each slice */
+const HELD_FILES = ['routes/keys.js'];
 const DEBT_DAYS = 14;
 const argv = process.argv.slice(2);
 const flag = (name) => argv.includes(name);
@@ -71,9 +72,10 @@ function touchedRoutes(baseRegister, headRegister) {
 const liveColumnsPass = (row) => Object.keys(row.columns).every((name) => row.columns[name] === true);
 const meets = (row) => row.status === 'meets standard';
 
-/** routes held to the standard at this stage: all of them at 1b, only the worked example at 1a */
-const isHeld = (row, stage) => stage !== '1a' || HELD_AT_1A.includes(row.file);
-const passesHold = (row, stage) => (stage === '1a' ? liveColumnsPass(row) : meets(row));
+/** routes held to the standard: the brought-over files until stage 'all' (every route, once the sweep is done) */
+const isHeld = (row, stage) => stage === 'all' || HELD_FILES.includes(row.file);
+/** a held route passes on its seven machine columns; the cb-api sign-off is the reviewer's, dated in the register, and is not the builder's to give (consult-map rule 1) */
+const passesHold = (row) => liveColumnsPass(row);
 
 /** debt entries: a route listed here is allowed to stay below the standard until `expires` */
 function debtProblems(debt, hotfix, failing) {
@@ -93,7 +95,7 @@ function checkRoutes(base, head, ratchet, hotfix) {
   const debt = ratchet.debt || [];
   const touched = touchedRoutes(base, head);
   const held = touched.filter((row) => isHeld(row, stage));
-  const failing = held.filter((row) => !passesHold(row, stage));
+  const failing = held.filter((row) => !passesHold(row));
   const owed = failing.filter((row) => !debt.some((entry) => entry.route === row.key && entry.expires >= today()));
   const problems = hotfix ? [] : owed.map((row) => row.key + ' was added or changed and does not meet the standard (' + Object.keys(row.columns).filter((name) => row.columns[name] !== true).join(', ') + ')');
   const counted = touched.filter((row) => !isHeld(row, stage) && !meets(row));

@@ -24,8 +24,8 @@ const baseRegister = { routes: [row('GET /a', 'h1', 'a.js'), row('GET /b', 'h2',
 const headRegister = { routes: [row('GET /a', 'h1', 'a.js'), row('GET /b', 'h9', 'b.js'), row('GET /c', 'h3', 'c.js')] };
 const touched = ratchet.touchedRoutes(baseRegister, headRegister).map((r) => r.key);
 t('touched = a changed hash or a new route, never an untouched sibling', touched.join() === 'GET /b,GET /c');
-t('at stage 1a only the worked example (routes/keys.js) is held to the standard', ratchet.isHeld(row('x', 'h', 'routes/keys.js'), '1a') && !ratchet.isHeld(row('x', 'h', 'b.js'), '1a'));
-t('a held route with a failing column does not pass', !ratchet.passesHold(row('x', 'h', 'routes/keys.js', { error_shape: false }), '1a'));
+t('at stage 1b only the brought-over files (routes/keys.js) are held to the standard', ratchet.isHeld(row('x', 'h', 'routes/keys.js'), '1b') && !ratchet.isHeld(row('x', 'h', 'b.js'), '1b'));
+t('a held route with a failing column does not pass', !ratchet.passesHold(row('x', 'h', 'routes/keys.js', { error_shape: false }), '1b'));
 t('an expired debt entry is a problem', ratchet.debtProblems([{ route: 'GET /b', opened: '2020-01-01', expires: '2020-01-10', pr: '#1' }], false, []).length === 1);
 t('a hotfix with no debt entry is a problem', ratchet.debtProblems([], true, [row('GET /b', 'h', 'b.js')]).length === 1);
 t('the register normaliser ignores comments and spacing', register.normalise('a = 1 // note') === register.normalise('a  =  1'));
