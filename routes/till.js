@@ -1036,10 +1036,7 @@ router.get('/snapshot', auth, async (req, res) => {
       staff,
       /**
        * ⭐⭐⭐ THE CATEGORY MASTER, ON THE COUNTER ([TILL-114]). id → name for the shop's own categories, so the
-       * relation exists locally and mapping is not a problem with the line down.
-       * ⚠️ ITS OWN KEY, NOT `categories`: that key already carries the TAX categories (kind 'category' definitions with
-       * their default slab), which the counter hands to the tax engine. Both sat under `categories`, the later one won,
-       * and the master never reached the counter (found by the lint pass, api #324). Two different things, two keys.
+       * relation exists locally (own key `category_master`: `categories` is the TAX categories, docs/FIELDS.md) and mapping is not a problem with the line down.
        * ⚠️ Small by nature — a shop has categories in the tens, not the thousands — so it rides every
        * snapshot rather than needing a door of its own.
        */
@@ -1064,8 +1061,7 @@ router.get('/snapshot', auth, async (req, res) => {
        * checks produces: correct in four call sites and silently empty in the fifth.
        */
       slabs: shelf && shelf.slabs instanceof Map ? [...shelf.slabs.values()] : (shelf && shelf.slabs) || [],
-      /* the TAX categories (definitions with a default slab): what CBTax.slab.resolve reads as `categories` */
-      categories: (shelf && shelf.categories) || [],
+      categories: (shelf && shelf.categories) || [] /* the TAX categories CBTax.slab.resolve reads */,
       face: (shelf && shelf.face) || {},
       customers,
       suppliers,
