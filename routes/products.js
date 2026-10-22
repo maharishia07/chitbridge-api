@@ -189,6 +189,16 @@ function csvWithHead(parsed, headerRow) {
 const identity = require('../lib/identity'); // which line is this, and which product does it belong to
 const starter = require('../lib/starter-fields'); // the standard column set for a trade — an empty catalogue is not a blank page
 
+/* What a client may read: a deliberate user error carries its own sentence (e.userMessage); anything else is the generic safeErr line. */
+function userSafeMessage(e) {
+  return e.userMessage || safeErr(e);
+}
+
+/* An error that carries its own HTTP status: a 4xx is the caller's mistake and its sentence is safe to show; a 5xx is ours, so only the generic line. */
+function statusSafeMessage(e) {
+  return e.status < 500 ? e.message : safeErr(e);
+}
+
 /**
  * A DELIBERATE refusal must not be reported as an internal failure.
  *
@@ -518,7 +528,7 @@ router.post('/status/bulk', auth, [body('ids').isArray({ min: 1 }), body('status
       reads_as: r.rows.length ? itemstatus.explain(r.rows[0].item_data || {}) : null
     });
   } catch (e) {
-    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: e.message });
+    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: statusSafeMessage(e) });
     fail(res, e, 'Bulk status failed');
   }
 });
@@ -1023,7 +1033,7 @@ router.post(
       try {
         parsed = readUpload(req.body);
       } catch (e) {
-        return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) });
+        return res.status(400).json({ error: 'Could not read the file', message: userSafeMessage(e) });
       }
       // preflight() wants rows positionally, so a duplicate header cannot silently collapse into one key.
       const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
@@ -1104,7 +1114,7 @@ router.post(
       try {
         parsed = readUpload(req.body);
       } catch (e) {
-        return res.status(400).json({ error: 'Could not read the file', message: e.userMessage || String(e.message) });
+        return res.status(400).json({ error: 'Could not read the file', message: userSafeMessage(e) });
       }
       /* ⚠️ A CUT WORKBOOK IS REFUSED, like a file over IMPORT_MAX_ROWS: importing the part that was read would leave a person
        working out which products are missing — the all-or-nothing rule this route keeps everywhere else. */
@@ -1265,7 +1275,7 @@ router.post(
             outcome.push({ line, sku, action: 'created', name: item.name, warning });
           }
         } catch (e) {
-          outcome.push({ line, sku, action: 'failed', name: item.name, message: e.message });
+          outcome.push({ line, sku, action: 'failed', name: item.name, message: userSafeMessage(e) });
         }
       }
 
@@ -1669,7 +1679,7 @@ router.put('/:id/status', auth, [body('status').isString()], validate, async (re
       schema_org: d.status_schema_org || itemstatus.SCHEMA_ORG[itemstatus.statusOf(d)]
     });
   } catch (e) {
-    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: e.message });
+    if (e.status) return res.status(e.status).json({ error: 'Bad status', message: statusSafeMessage(e) });
     fail(res, e, 'Status update failed');
   }
 });
@@ -2199,7 +2209,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], valida
       const stamped = itemstatus.stamp({ status: wantStatus }, { id: (req.identity && req.identity.identity_id) || null });
       items = items.map((item) => Object.assign({}, item, stamped));
     } catch (e) {
-      return res.status(400).json({ error: 'status', message: String(e && e.message) });
+      return res.status(400).json({ error: 'status', message: safeErr(e) });
     }
 
     if (!items.length) {
@@ -2222,7 +2232,7 @@ router.post('/lists/adopt', auth, bulkLimiter, [body('list').isString()], valida
       } catch (e) {
         return res
           .status(500)
-          .json({ error: 'Failed', message: 'Your categories could not be set up, so nothing was added. ' + String(e && e.message).slice(0, 120) });
+          .json({ error: 'Failed', message: 'Your categories could not be set up, so nothing was added. ' + safeErr(e) });
       }
     }
     items = items.map((x) => {
