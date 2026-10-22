@@ -127,5 +127,59 @@ it('signed-in traffic is not throttled by the new limiters: renew / logout / ses
   assert.deepStrictEqual(newlyLimited.map(key), [], 'a signed-in route sits behind a strict public limiter');
 });
 
-console.log('  ' + pass + ' checks');
-process.exit(process.exitCode || 0);
+/* ── SEC-79 / SEC-82 / SEC-84 ─────────────────────────────────────────────────────────────────────────────────── */
+const jwt = require('jsonwebtoken');
+const { callerKey } = require(path.join(API, 'lib', 'limiter-key'));
+const fakeReq = (headers, ip) => ({ headers, ip: ip || '203.0.113.9' });
+
+it('SEC-79 · rotating an invented header does not earn a fresh bucket (same IP, same key)', () => {
+  const a = callerKey(fakeReq({ 'x-api-key': 'made-up-1' })), b = callerKey(fakeReq({ 'x-api-key': 'made-up-2' }));
+  const c = callerKey(fakeReq({ authorization: 'Bearer anything-else' })), d = callerKey(fakeReq({}));
+  assert.ok(a === b && b === c && c === d && /^ip:/.test(a), [a, b, c, d].join(' | '));
+  assert.notStrictEqual(a, callerKey(fakeReq({}, '203.0.113.10')), 'a different address is a different bucket');
+});
+
+it('SEC-79 · a token whose signature verifies keeps its own bucket (shared shop Wi-Fi is not one bucket)', () => {
+  const tok = (jti) => jwt.sign({ identity_id: 'ent-1', identity_type: 'entity', jti }, process.env.JWT_SECRET, { algorithm: 'HS256' });
+  const k1 = callerKey(fakeReq({ authorization: 'Bearer ' + tok('j1') })), k1b = callerKey(fakeReq({ 'x-api-key': tok('j1') }));
+  assert.strictEqual(k1, k1b, 'Bearer and X-Api-Key of one token are one bucket');
+  assert.notStrictEqual(k1, callerKey(fakeReq({ authorization: 'Bearer ' + tok('j2') })));
+  const forged = jwt.sign({ identity_id: 'ent-1', jti: 'j1' }, 'not-the-secret', { algorithm: 'HS256' });
+  assert.ok(/^ip:/.test(callerKey(fakeReq({ authorization: 'Bearer ' + forged }))), 'a forged token falls back to the address');
+});
+
+it('SEC-79 · no limiter in the code keys on the raw header any more', () => {
+  ['server.js', 'routes/till.js'].forEach((f) => assert.ok(!require('fs').readFileSync(path.join(API, f), 'utf8').includes("req.headers.authorization || req.ip"), f + ' still keys on the raw header'));
+});
+
+it('SEC-84 · every limiter in server.js sends the standard RateLimit headers, and Retry-After is exposed to browsers', () => {
+  const src = require('fs').readFileSync(path.join(API, 'server.js'), 'utf8');
+  const made = src.split('rateLimit({').length - 1, withStd = src.split('standardHeaders: true').length - 1;
+  assert.ok(made >= 7 && made === withStd, made + ' limiters, ' + withStd + ' with standardHeaders');
+  const at = src.indexOf('exposedHeaders: ['), exposed = src.slice(at, src.indexOf(']', at));
+  ['Retry-After', 'RateLimit-Limit', 'RateLimit-Remaining', 'RateLimit-Reset'].forEach((h) => assert.ok(exposed.includes("'" + h + "'"), h + ' not exposed'));
+});
+
+const http = require('http');
+const get = (port, p) => new Promise((resolve, reject) => http.get({ port, path: p }, (r) => { r.resume(); r.on('end', () => resolve(r)); }).on('error', reject));
+(async () => {
+  const srv = http.createServer(app).listen(0);
+  const port = srv.address().port;
+  try {
+    const open = await get(port, '/api/openapi.json');
+    it('SEC-84 · a public door answers with RateLimit-Limit / -Remaining / -Reset', () => {
+      ['ratelimit-limit', 'ratelimit-remaining', 'ratelimit-reset'].forEach((h) => assert.ok(open.headers[h], h + ' missing'));
+      assert.strictEqual(open.headers['ratelimit-limit'], '240');
+    });
+    const refused = await get(port, '/api/people');
+    it('SEC-82 · a 401 carries WWW-Authenticate', () => {
+      assert.strictEqual(refused.statusCode, 401);
+      assert.ok(/^Bearer /.test(refused.headers['www-authenticate'] || ''), String(refused.headers['www-authenticate']));
+    });
+    const missing = await get(port, '/api/no-such-door');
+    it('SEC-82 · a non-401 answer does not carry it', () => assert.ok(missing.statusCode !== 401 && !missing.headers['www-authenticate']));
+  } finally { srv.close(); }
+  console.log('  ' + pass + ' checks');
+  process.exit(process.exitCode || 0);
+})();
+

@@ -63,7 +63,7 @@ const catalogueMintLimiter = rateLimit({
   max: parseInt(process.env.TILL_CATALOGUE_MAX || '20'),
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => String(req.headers['x-api-key'] || req.headers.authorization || req.ip).slice(-64),
+  keyGenerator: require('../lib/limiter-key').callerKey, /* SEC-79 */
   message: { error: 'Too many requests', message: 'That is a lot of attempts in a short time. Nothing has been changed — try again in a few minutes.' }
 }); /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */ /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const rewards = require('../lib/rewards'); /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
