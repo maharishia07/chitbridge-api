@@ -74,5 +74,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     });
   } finally { srv.close(); }
   console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');
-  process.exit(fail ? 1 : 0);
+  /* exitCode, not exit(): exit() while the closing server socket is mid-close aborts Node 24 on Windows (UV_HANDLE_CLOSING, src/win/async.c:94) */
+  process.exitCode = fail ? 1 : 0;
+  if (srv.closeAllConnections) srv.closeAllConnections();
 });
