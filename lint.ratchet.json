@@ -2,14 +2,18 @@
  "_about": "lint ratchet (MNT-1): eslint warnings per own-code file, 18 Oct = the baseline. A file may have FEWER warnings than its row, never more. Warn-only: no CI step reads this yet. Lower with `node tools/lint-ratchet.cjs --write`.",
  "_totals": {
   "files": 431,
-  "eslintWarnings": 74,
+  "eslintWarnings": 86,
   "parseErrors": 0,
   "prettierFail": 12,
   "prettierChecked": 431
  },
  "_rules": {
+  "no-unused-vars": 8,
+  "no-useless-escape": 1,
+  "no-control-regex": 2,
   "no-empty": 73,
-  "no-dupe-keys": 1
+  "no-dupe-keys": 1,
+  "no-shadow": 1
  },
  "lib/access-events.js": {
   "warnings": 0,

@@ -124,7 +124,7 @@ const ORDER_INPUT = { preset: 'form', schema: { properties: { notes: { type: 'st
   console.log('  API: ' + API);
   hr('═');
 
-  let store, sourceKey, chitId;
+  let store, customer, sourceKey, chitId;
 
   // ─────────────────────────────────────────────────────────────────────────────
   head('Create the DOCUMENT store (a real entity)');

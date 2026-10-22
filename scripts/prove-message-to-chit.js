@@ -205,7 +205,7 @@ const messageFor = (stamp) => 'Hi, please send 2 boxes of bolts and 5 metres of 
   const again = await j('/api/capture/' + cap.id + '/convert', { method: 'POST', token: A, body: { chit_id } });
   ok('★★ (a) converting the same capture twice is REFUSED', again.status === 404, 'status ' + again.status);
 
-  await j('/api/capture/pending', { token: A });
+  const beforeDup = ((await j('/api/capture/pending', { token: A })).b.captures || []).length;
   /* Redeliver the SAME wamid by replaying an identical signed payload — which is exactly what a Meta retry is. */
   const same = JSON.stringify({
     object: 'whatsapp_business_account',

@@ -81,8 +81,8 @@ const me = async (token) => (await api('/api/entities/me', { token })).json;
     console.log('\n  cannot continue without both.\n');
     process.exit(1);
   }
-  await me(brand);
-  const shopMe = await me(shop);
+  const brandMe = await me(brand),
+    shopMe = await me(shop);
   const shopBridge = shopMe.bridge_id || (shopMe.entity && shopMe.entity.bridge_id);
   say(`brand ${BRAND.name}   ·   shop ${SHOP.name} (${shopBridge})`);
 
