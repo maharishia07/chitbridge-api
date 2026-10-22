@@ -7,6 +7,7 @@ const express = require('express');
 const logger = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
+const idempotency = require('../middleware/idempotency'); // API-3 S36: the public money doors require an Idempotency-Key
 const { problem, fromError } = require('../lib/problem'); // API-1 slice 1e: every public storefront refusal is a Problem that keeps its old body
 const storefront = require('../lib/storefront-contract'); // the public doors' OpenAPI operations and the old answers the storefront reads
 const { oldBody } = storefront; // { error, message }: the old body shop.html reads
@@ -576,6 +577,16 @@ async function resolveEntity(handle) {
   );
   return r.rows[0] || null;
 }
+/** the shop a request is on, read once: the key gate and the handler share the one read */
+const shopFor = (req) => (req.storefrontShop = req.storefrontShop || resolveEntity(req.params.bridge_id));
+/** ⭐ API-3 S36: order/start and order/confirm hold one Idempotency-Key per (shop, contact) — a double tap or a retry is answered once */
+const onceOnly = idempotency.requireKey({
+  shopOf: shopFor,
+  contactOf: (req) => {
+    const typed = resolveContact(req.body);
+    return typed.error ? null : typed.channel + ' ' + typed.raw;
+  }
+});
 
 // ── Network storefront (the lens): aggregate the PUBLIC catalogues of a NETWORK's members into ONE store. The
 //    public read runs withEntity(null) so RLS returns ONLY public items — a private department is never exposed.
@@ -1112,9 +1123,10 @@ router.get('/:bridge_id/capture-fields', async (req, res) => {
 router.post(
   '/:bridge_id/order/start',
   doorCheck('POST /:bridge_id/order/start'), // strict input; identifier (phone|email) validated in-handler via resolveContact
+  onceOnly,
   async (req, res) => {
     try {
-      const entity = await resolveEntity(req.params.bridge_id);
+      const entity = await shopFor(req);
       if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
       if (entity.business_status === 'closed') return refuseAs(req, res, { status: 403, code: 'SHOP_CLOSED', legacy: storefront.SHOP_CLOSED });
       const c = resolveContact(req.body);
@@ -1313,9 +1325,10 @@ router.post(
   '/:bridge_id/order/confirm',
   doorCheck('POST /:bridge_id/order/confirm', [['otp'], ['line_items', 'Order is empty']]),
   storefront.trimmed('otp'),
+  onceOnly,
   async (req, res) => {
     try {
-      const entity = await resolveEntity(req.params.bridge_id);
+      const entity = await shopFor(req);
       if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
       if (entity.business_status === 'closed') return refuseAs(req, res, { status: 403, code: 'SHOP_CLOSED', legacy: storefront.SHOP_CLOSED });
       const c0 = resolveContact(req.body);

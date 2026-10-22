@@ -90,7 +90,7 @@
    "path": "/api/catalogue/:bridge_id/my-documents/:id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1906,
+   "line": 1919,
    "hash": "1b34207b0a69660c",
    "columns": {
     "schema_in": false,
@@ -2385,7 +2385,7 @@
    "path": "/api/catalogue/:bridge_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1082,
+   "line": 1093,
    "hash": "baa5a1ee9cdc5a82",
    "columns": {
     "schema_in": true,
@@ -2418,7 +2418,7 @@
    "path": "/api/catalogue/:bridge_id/capture-fields",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1100,
+   "line": 1111,
    "hash": "d607d6f62eb7d0de",
    "columns": {
     "schema_in": true,
@@ -2451,7 +2451,7 @@
    "path": "/api/catalogue/:bridge_id/my-documents",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1885,
+   "line": 1898,
    "hash": "a016ada3fe93aabf",
    "columns": {
     "schema_in": false,
@@ -2479,7 +2479,7 @@
    "path": "/api/catalogue/:bridge_id/my-orders",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1859,
+   "line": 1872,
    "hash": "722b6a6522934dfd",
    "columns": {
     "schema_in": false,
@@ -2507,7 +2507,7 @@
    "path": "/api/catalogue/:bridge_id/support/preview",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1174,
+   "line": 1186,
    "hash": "e92723610f98cd45",
    "columns": {
     "schema_in": true,
@@ -2540,7 +2540,7 @@
    "path": "/api/catalogue/enquiry",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1037,
+   "line": 1048,
    "hash": "62f3cf03cfa45494",
    "columns": {
     "schema_in": false,
@@ -2570,7 +2570,7 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1995,
+   "line": 2008,
    "hash": "909446b9f8a2c3b5",
    "columns": {
     "schema_in": false,
@@ -2600,7 +2600,7 @@
    "path": "/api/catalogue/network-store/:networkId",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 606,
+   "line": 617,
    "hash": "985e2513117c90be",
    "columns": {
     "schema_in": true,
@@ -2634,7 +2634,7 @@
    "path": "/api/catalogue/network/:bridge_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 876,
+   "line": 887,
    "hash": "7e516fd50beb91fc",
    "columns": {
     "schema_in": true,
@@ -11445,7 +11445,7 @@
    "path": "/api/catalogue/:bridge_id/login/verify",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1806,
+   "line": 1819,
    "hash": "40aa5cc7f1e7dbf3",
    "columns": {
     "schema_in": true,
@@ -11481,8 +11481,8 @@
    "path": "/api/catalogue/:bridge_id/order/confirm",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1312,
-   "hash": "c7f1952d25e79ca0",
+   "line": 1324,
+   "hash": "886a72b35cc1a60b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11520,8 +11520,8 @@
    "path": "/api/catalogue/:bridge_id/order/start",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1112,
-   "hash": "a6d31ef7a885e307",
+   "line": 1123,
+   "hash": "ee635ba5745b99e8",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11529,12 +11529,13 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": true
+    "status_codes": false
    },
    "declared": [
     400,
     403,
     404,
+    409,
     422,
     500
    ],
@@ -11556,7 +11557,7 @@
    "path": "/api/catalogue/:bridge_id/support",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1251,
+   "line": 1263,
    "hash": "0bbbd9474b3eb284",
    "columns": {
     "schema_in": true,
@@ -11593,7 +11594,7 @@
    "path": "/api/catalogue/:bridge_id/support/start",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1212,
+   "line": 1224,
    "hash": "7d9d4681880be122",
    "columns": {
     "schema_in": true,
@@ -11628,7 +11629,7 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 2018,
+   "line": 2031,
    "hash": "e762f4cf80197ac2",
    "columns": {
     "schema_in": false,
@@ -11658,7 +11659,7 @@
    "path": "/api/catalogue/network-store/:networkId/order",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 738,
+   "line": 749,
    "hash": "dec4bb854d252554",
    "columns": {
     "schema_in": true,
@@ -11695,7 +11696,7 @@
    "path": "/api/catalogue/photo-extract",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1927,
+   "line": 1940,
    "hash": "213dfb21eec3556c",
    "columns": {
     "schema_in": false,

@@ -6,10 +6,12 @@
 // so it is safe to deploy before b109 is run. Scoped per entity, WITH RLS (via withEntity).
 //
 // owns: the Idempotency-Key contract (idempotency_key table, b109) and the in-process memory that stands in when the store is off.
-// called by: server.js (app.use('/api', …) after auth-then-parse, before the routers); lib/autoraise sends the header.
+// CARD 28-platform-and-operations/idempotency
+// called by: server.js (app.use('/api', …) after auth-then-parse, before the routers); lib/autoraise sends the header;
+//            routes/catalogue.js mounts requireKey() on the public money doors (order/start, order/confirm).
 // FLOW  key? → scopeOf(token) → fingerprint(body) → store.begin → { existing → answerExisting | claimed → capture res.json → next → store.finalize }
 //       store off (table missing · store error · body unfingerprintable) → the SAME flow on memoryStore, every answer marked X-Idempotency: unverified
-// // CARD 28-platform-and-operations/idempotency
+//       public door: no key → 400 IDEMPOTENCY_KEY_REQUIRED · shopOf + contactOf → (shop entity, hashed contact + key) → the SAME flow
 //
 // ⭐ LIM2 (W1-PLAT, 15 Oct): WHEN IDEMPOTENCY IS OFF, A RETRY WARNS AND IS REFUSED. Before, three silent paths ran a retried
 // mutation A SECOND TIME with no trace: an unreadable token (`catch (_) { return null }`), a body the canon could not
@@ -21,6 +23,7 @@
 const crypto = require('crypto');
 const { withEntity } = require('../db');
 const log = require('../lib/logger');
+const { problem } = require('../lib/problem');
 
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const KEY_MAX_LENGTH = 200;
@@ -142,20 +145,18 @@ const memoryStore = {
 };
 
 /** a key already held: the recorded answer (replay), a conflict (another body), or "still running" — never a second execution */
-function answerExisting(res, held, hash, isVerified) {
+function answerExisting(req, res, held, hash, isVerified) {
   if (!isVerified) res.setHeader('X-Idempotency', 'unverified');
   if (held.req_hash && hash && held.req_hash !== hash) {
-    return res
-      .status(422)
-      .json({ code: 'IDEMPOTENCY_CONFLICT', error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' });
+    const legacy = { error: 'Idempotency conflict', message: 'This Idempotency-Key was already used with a different request.' };
+    return problem(req, res, { status: 422, code: 'IDEMPOTENCY_CONFLICT', detail: legacy.message, legacy });
   }
   if (held.state === 'done') {
     res.setHeader('X-Idempotent-Replay', 'true');
     return res.status(held.status || 200).json(held.response);
   }
-  return res
-    .status(409)
-    .json({ code: 'IDEMPOTENCY_IN_PROGRESS', error: 'In progress', message: 'A request with this Idempotency-Key is still being processed.' });
+  const legacy = { error: 'In progress', message: 'A request with this Idempotency-Key is still being processed.' };
+  return problem(req, res, { status: 409, code: 'IDEMPOTENCY_IN_PROGRESS', detail: legacy.message, legacy });
 }
 
 /** we own the key: record the handler's JSON answer through the store it was claimed in, then run the route */
@@ -185,8 +186,19 @@ function runUnverified(req, res, next, claim, why) {
   res.setHeader('X-Idempotency', 'unverified');
   return memoryStore
     .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
-    .then((outcome) => (outcome.existing ? answerExisting(res, outcome.existing, claim.hash, false) : runAndRecord(req, res, next, memoryStore, claim)));
+    .then((outcome) => (outcome.existing ? answerExisting(req, res, outcome.existing, claim.hash, false) : runAndRecord(req, res, next, memoryStore, claim)));
 }
+
+/** the key is ours to hold: the durable store, or the memory when the store is off */
+function holdKey(req, res, next, claim) {
+  if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
+  return dbStore
+    .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
+    .then((outcome) => (outcome.existing ? answerExisting(req, res, outcome.existing, claim.hash, true) : runAndRecord(req, res, next, dbStore, claim)))
+    .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
+}
+/** the replay window in hours (IDEMPOTENCY_WINDOW_HOURS, 48 by default) */
+const windowHours = () => Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS);
 
 const storeWhy = (e) => (e && STORE_MISSING_CODES.includes(e.code) ? 'idempotency_key is not migrated (b109)' : 'store error: ' + (e && e.message));
 
@@ -200,20 +212,43 @@ module.exports = function idempotency(req, res, next) {
       log.warn("idempotency: no scope for the key — the route's auth decides", { id: req.id, method: req.method, path: req.path, why: scoped.why });
     return next();
   }
-  const claim = {
-    entity: scoped.entity,
-    key: String(key),
-    hash: fingerprint(req),
-    windowHrs: Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS)
-  };
-  if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
-
-  dbStore
-    .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
-    .then((outcome) => (outcome.existing ? answerExisting(res, outcome.existing, claim.hash, true) : runAndRecord(req, res, next, dbStore, claim)))
-    .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
+  return holdKey(req, res, next, { entity: scoped.entity, key: String(key), hash: fingerprint(req), windowHrs: windowHours() });
 };
 
+/* ── ⭐ API-3 S36 · THE PUBLIC MONEY DOORS (laptop1, 23 Oct). A storefront order carries no bearer, so the pass above leaves it
+   alone: a double tap on Place order, or a retry after a lost answer, ran twice. These doors REQUIRE the key and scope it
+   themselves: the shop the door is on (its entity, so the row sits inside that shop's RLS) and the contact the shopper typed,
+   hashed, never kept in clear. One shopper's key can never answer for another shopper, or on another shop. ── */
+const KEY_REQUIRED = {
+  error: 'Bad request',
+  message: 'Send an Idempotency-Key header: one per attempt, the same one when you retry it.'
+};
+/** requireKey({ shopOf, contactOf }) → the gate a public money door mounts; tools/api-register.cjs finds it by its name */
+function requireKey({ shopOf, contactOf }) {
+  /** the gate: no key is refused; otherwise the key is held for (this shop, this contact) and the route runs at most once */
+  return async function requireIdempotencyKey(req, res, next) {
+    const key = req.headers['idempotency-key'];
+    if (!key || String(key).length > KEY_MAX_LENGTH)
+      return problem(req, res, { status: 400, code: 'IDEMPOTENCY_KEY_REQUIRED', detail: KEY_REQUIRED.message, legacy: KEY_REQUIRED });
+    let shop = null;
+    try {
+      shop = await shopOf(req);
+    } catch (e) {
+      return next(); /* the route reads the shop again and answers its own 500; nothing ran, so nothing can run twice */
+    }
+    const contact = shop && contactOf(req);
+    if (!contact) return next(); /* no such shop, or no usable contact: the route refuses it before anything is written */
+    const contactHash = crypto.createHash('sha256').update(String(contact)).digest('hex').slice(0, 32);
+    return holdKey(req, res, next, {
+      entity: shop.identity_id,
+      key: 'public ' + contactHash + ' ' + String(key),
+      hash: fingerprint(req),
+      windowHrs: windowHours()
+    });
+  };
+}
+
+module.exports.requireKey = requireKey;
 module.exports._stable = stable;
 module.exports._scope = scope;
 module.exports._memory = memoryStore;

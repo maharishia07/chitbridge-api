@@ -141,6 +141,76 @@ const reset = () => { storeRows = {}; storeError = null; stmts = []; warns.lengt
     const select = stmts.find((q) => /^\s*SELECT/.test(q) && /expired/.test(q));
     assert.ok(/state = 'in_progress' AND created_at < now\(\) - \(\$4 \|\| ' minutes'\)/.test(select), 'stale in_progress is expired');
   });
+  /* ── ⭐ API-3 S36 · the public money doors (order/start, order/confirm): no bearer, so the door names the shop and the contact ── */
+  const SHOPS = { 'shop-a': { identity_id: 'ent-a' }, 'shop-b': { identity_id: 'ent-b' } };
+  let shopFails = null;
+  const gate = idempotency.requireKey({
+    shopOf: async (req) => { if (shopFails) throw shopFails; return SHOPS[req.params.bridge_id] || null; },
+    contactOf: (req) => req.body.identifier || null
+  });
+  function tap(o) {
+    const req = { id: 'req-pub', method: 'POST', path: '/' + o.shop + '/order/confirm', params: { bridge_id: o.shop }, body: { identifier: o.contact, line_items: [1] },
+      headers: o.key === undefined ? {} : { 'idempotency-key': o.key } };
+    const res = { statusCode: 200, headers: {}, body: undefined, locals: {},
+      status(code) { this.statusCode = code; return this; }, setHeader(k, v) { this.headers[k] = v; }, set(k, v) { this.headers[k] = v; }, json(b) { this.body = b; return this; } };
+    let ran = false;
+    return new Promise((resolve) => {
+      const finish = () => setTimeout(() => resolve({ ran, status: res.statusCode, body: res.body, headers: res.headers }), 5);
+      gate(req, res, () => { ran = true; res.status(200).json({ order: o.contact + '@' + o.shop }); finish(); });
+      setTimeout(finish, 20);
+    });
+  }
+  await ita('S36 · the gate is named requireIdempotencyKey — tools/api-register.cjs finds a money door\'s gate by that name', async () => {
+    assert.strictEqual(gate.name, 'requireIdempotencyKey');
+  });
+  await ita('S36 · no key, or one longer than 200 → 400 IDEMPOTENCY_KEY_REQUIRED as a Problem with the old words; nothing runs, nothing is stored', async () => {
+    reset(); shopFails = null;
+    for (const key of [undefined, '', 'k'.repeat(201)]) {
+      const r = await tap({ shop: 'shop-a', contact: 'a@b.co', key });
+      assert.strictEqual(r.status, 400); assert.strictEqual(r.ran, false); assert.strictEqual(r.body.code, 'IDEMPOTENCY_KEY_REQUIRED');
+      assert.strictEqual(r.body.error, 'Bad request'); assert.ok(/Idempotency-Key/.test(r.body.message)); assert.strictEqual(r.body.status, 400);
+    }
+    assert.strictEqual(stmts.length, 0);
+  });
+  await ita('S36 · no such shop, no usable contact, or the shop read failing → the route answers (next), nothing stored', async () => {
+    reset();
+    assert.ok((await tap({ shop: 'shop-x', contact: 'a@b.co', key: 'k' })).ran, 'unknown shop: the route says 404');
+    assert.ok((await tap({ shop: 'shop-a', contact: null, key: 'k' })).ran, 'no contact: the route says 422');
+    shopFails = new Error('db down');
+    assert.ok((await tap({ shop: 'shop-a', contact: 'a@b.co', key: 'k' })).ran, 'the read failed: the route reads again and answers its own 500');
+    shopFails = null;
+    assert.strictEqual(stmts.length, 0);
+  });
+  await ita('S36 · one shop, one contact, one key → the retry is the recorded answer, never a second run', async () => {
+    reset();
+    const first = await tap({ shop: 'shop-a', contact: 'a@b.co', key: 'k1' });
+    const retry = await tap({ shop: 'shop-a', contact: 'a@b.co', key: 'k1' });
+    assert.ok(first.ran); assert.strictEqual(retry.ran, false); assert.deepStrictEqual(retry.body, first.body); assert.strictEqual(retry.headers['X-Idempotent-Replay'], 'true');
+  });
+  await ita('S36 · scoped by shop AND contact: the same key from another shopper, or on another shop, is its own attempt', async () => {
+    reset();
+    const mine = await tap({ shop: 'shop-a', contact: 'a@b.co', key: 'same' });
+    const theirs = await tap({ shop: 'shop-a', contact: 'c@d.co', key: 'same' });
+    const elsewhere = await tap({ shop: 'shop-b', contact: 'a@b.co', key: 'same' });
+    assert.ok(mine.ran && theirs.ran && elsewhere.ran, 'three attempts, three runs');
+    assert.deepStrictEqual(theirs.body, { order: 'c@d.co@shop-a' }, 'never another shopper\'s answer');
+    assert.deepStrictEqual(Object.keys(storeRows).map((slot) => slot.split('\n')[0]).sort(), ['ent-a', 'ent-a', 'ent-b'], 'each row sits inside its shop\'s RLS entity');
+  });
+  await ita('S36 · the contact is never kept in clear: the stored key holds its hash', async () => {
+    reset();
+    await tap({ shop: 'shop-a', contact: 'a@b.co', key: 'k2' });
+    const slots = Object.keys(storeRows);
+    assert.strictEqual(slots.length, 1); assert.ok(!/a@b\.co/.test(slots[0]), slots[0]); assert.ok(/^ent-a\npublic [0-9a-f]{32} k2$/.test(slots[0]), slots[0]);
+  });
+  await ita('S36 · the conflict and in-progress answers are Problems that keep code, error and message', async () => {
+    reset();
+    await tap({ shop: 'shop-a', contact: 'a@b.co', key: 'k3' });
+    const other = await send({ key: 'g1', answer: { status: 200, body: {} } });
+    const conflict = await send({ key: 'g1', body: { b: 2 } });
+    assert.ok(other.ran); assert.strictEqual(conflict.status, 422);
+    assert.deepStrictEqual([conflict.body.code, conflict.body.error, conflict.body.status], ['IDEMPOTENCY_CONFLICT', 'Idempotency conflict', 422]);
+    assert.ok(conflict.body.message && conflict.body.detail === conflict.body.message);
+  });
   await ita('no empty catch in middleware/idempotency.js and no console.* — the logger says what the person sees instead', async () => {
     const src = fs.readFileSync(path.join(API, 'middleware', 'idempotency.js'), 'utf8');
     assert.ok(!/catch\s*\(\s*_?\s*\)\s*\{\s*(return[^;]*;)?\s*\}/.test(src), 'an empty catch is back');

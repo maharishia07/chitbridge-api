@@ -544,6 +544,45 @@
       ]
      },
      "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    },
+    {
+     "scenario": "start-no-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "note": "new with public idempotency (API-3 S36): before, a request without an Idempotency-Key ran, so a double tap or a retry after a lost answer ran twice. public/shop.html sends one key per attempt (web twin, landed first)."
+    },
+    {
+     "scenario": "start-key-in-progress",
+     "status": 409,
+     "body_keys": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "fixture": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "note": "new with public idempotency (API-3 S36): middleware/idempotency.js's own answer, the same one a signed-in mutation gets, now a Problem that keeps code, error and message."
+    },
+    {
+     "scenario": "start-key-other-body",
+     "status": 422,
+     "body_keys": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "fixture": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "note": "new with public idempotency (API-3 S36): middleware/idempotency.js's own answer, the same one a signed-in mutation gets, now a Problem that keeps code, error and message."
     }
    ]
   },
@@ -1004,6 +1043,45 @@
       ]
      },
      "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    },
+    {
+     "scenario": "confirm-no-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "note": "new with public idempotency (API-3 S36): before, a request without an Idempotency-Key ran, so a double tap or a retry after a lost answer ran twice. public/shop.html sends one key per attempt (web twin, landed first)."
+    },
+    {
+     "scenario": "confirm-key-in-progress",
+     "status": 409,
+     "body_keys": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "fixture": {
+      "error": "In progress",
+      "message": "A request with this Idempotency-Key is still being processed."
+     },
+     "note": "new with public idempotency (API-3 S36): middleware/idempotency.js's own answer, the same one a signed-in mutation gets, now a Problem that keeps code, error and message."
+    },
+    {
+     "scenario": "confirm-key-other-body",
+     "status": 422,
+     "body_keys": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "fixture": {
+      "error": "Idempotency conflict",
+      "message": "This Idempotency-Key was already used with a different request."
+     },
+     "note": "new with public idempotency (API-3 S36): middleware/idempotency.js's own answer, the same one a signed-in mutation gets, now a Problem that keeps code, error and message."
     }
    ]
   },

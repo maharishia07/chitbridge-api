@@ -455,8 +455,8 @@
    "code": "IDEMPOTENCY_CONFLICT",
    "status": "422",
    "title": "Idempotency conflict",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This was already sent once, with different details.",
+   "hint": "Start it again; the new try goes as its own.",
    "owner_area": "idempotency",
    "since": "2026-10-22"
   },
@@ -464,10 +464,19 @@
    "code": "IDEMPOTENCY_IN_PROGRESS",
    "status": "409",
    "title": "Idempotency in progress",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "The same request is still being handled.",
+   "hint": "Wait a moment and look before sending it again.",
    "owner_area": "idempotency",
    "since": "2026-10-22"
+  },
+  {
+   "code": "IDEMPOTENCY_KEY_REQUIRED",
+   "status": "400",
+   "title": "Idempotency key required",
+   "shopkeeper": "The order came without its one-time mark, so nothing was sent.",
+   "hint": "Reload the shop page and try again.",
+   "owner_area": "idempotency",
+   "since": "2026-10-23"
   },
   {
    "code": "IDOC_CONSENT_REQUIRED",
