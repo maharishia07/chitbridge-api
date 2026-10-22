@@ -253,8 +253,8 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | GET | /api/schemas/fields | schemas | routes/schemas.js:86 | no | no | no | no | no | no | no | not started |
 | GET | /api/schemas/my | schemas | routes/schemas.js:25 | no | no | no | no | no | no | no | not started |
 | GET | /api/service/:chit_id | service | routes/service.js:49 | no | no | no | no | no | no | no | not started |
-| GET | /api/signin/devices | signin | routes/signin.js:129 | no | no | no | no | no | no | no | not started |
-| GET | /api/signin/sessions | signin | routes/signin.js:102 | no | no | no | no | no | no | no | not started |
+| GET | /api/signin/devices | signin | routes/signin.js:130 | no | no | no | no | no | no | no | not started |
+| GET | /api/signin/sessions | signin | routes/signin.js:103 | no | no | no | no | no | no | no | not started |
 | GET | /api/simulator/content | simulator | routes/simulator.js:38 | no | no | no | no | no | no | no | not started |
 | GET | /api/supplies | supplies | routes/supplies.js:32 | yes | no | no | no | yes | no | no | partial |
 | GET | /api/tax/gstr | tax | routes/tax.js:83 | no | no | no | no | no | no | no | not started |
@@ -556,12 +556,12 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:305 | no | no | no | no | no | no | no | not started |
 | POST | /api/service/:chit_id/resolve | service | routes/service.js:215 | no | no | no | no | no | no | no | not started |
 | POST | /api/service/:chit_id/respond | service | routes/service.js:193 | no | no | no | no | no | no | no | not started |
-| POST | /api/signin/ask | signin | routes/signin.js:936 | no | no | no | no | no | no | no | not started |
-| POST | /api/signin/logout | signin | routes/signin.js:92 | no | no | no | no | no | no | no | not started |
-| POST | /api/signin/pin | signin | routes/signin.js:938 | no | no | no | no | no | no | no | not started |
-| POST | /api/signin/renew | signin | routes/signin.js:68 | no | no | no | no | no | no | no | not started |
-| POST | /api/signin/sessions/revoke | signin | routes/signin.js:151 | no | no | no | no | no | no | no | not started |
-| POST | /api/signin/verify | signin | routes/signin.js:937 | no | no | no | no | no | no | no | not started |
+| POST | /api/signin/ask | signin | routes/signin.js:950 | no | no | no | no | no | no | no | not started |
+| POST | /api/signin/logout | signin | routes/signin.js:93 | no | no | no | no | no | no | no | not started |
+| POST | /api/signin/pin | signin | routes/signin.js:952 | no | no | no | no | no | no | no | not started |
+| POST | /api/signin/renew | signin | routes/signin.js:69 | no | no | no | no | no | no | no | not started |
+| POST | /api/signin/sessions/revoke | signin | routes/signin.js:152 | no | no | no | no | no | no | no | not started |
+| POST | /api/signin/verify | signin | routes/signin.js:951 | no | no | no | no | no | no | no | not started |
 | POST | /api/simulator/feedback | simulator | routes/simulator.js:88 | no | no | no | no | no | no | no | not started |
 | POST | /api/simulator/lead | simulator | routes/simulator.js:63 | no | no | no | no | no | no | no | not started |
 | POST | /api/supplies | supplies | routes/supplies.js:53 | no | no | no | no | no | no | no | not started |
