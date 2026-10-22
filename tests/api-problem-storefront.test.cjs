@@ -83,6 +83,7 @@ const FRESH = {
   adoptionFails: false,
   buyer: true,
   attempts: 0,
+  expired: false,
   members: [MEMBER_ID],
   tree: null,
   treeFails: false,
@@ -149,7 +150,7 @@ function rowsFor(sql, params) {
             bridge_id: 'BUYER01',
             display_name: 'Buyer',
             otp_code: GOOD_CODE,
-            otp_expires_at: new Date(Date.now() + 600000).toISOString(),
+            otp_expires_at: new Date(Date.now() + (world.expired ? -600000 : 600000)).toISOString(),
             otp_attempts: world.attempts
           }
         ]
@@ -454,7 +455,7 @@ const SCENARIOS = [
     id: 'support-locked',
     route: 'POST /api/catalogue/:bridge_id/support',
     url: C + '/shop-s/support',
-    status: 429,
+    status: 400,
     setup: { attempts: 99 },
     body: { phone: '9876543210', otp: GOOD_CODE, observed: 'It broke' }
   },
@@ -524,7 +525,7 @@ const SCENARIOS = [
     id: 'confirm-locked',
     route: 'POST /api/catalogue/:bridge_id/order/confirm',
     url: C + '/shop-s/order/confirm',
-    status: 429,
+    status: 400,
     setup: { attempts: 99 },
     body: CONFIRM()
   },
@@ -626,6 +627,30 @@ const SCENARIOS = [
   { id: 'shop-ok', route: 'GET /api/catalogue/:bridge_id', url: C + '/shop-s', status: 200, setup: { view: SHOP_VIEW } },
   { id: 'shop-sign-in-first', route: 'GET /api/catalogue/:bridge_id', url: C + '/shop-s', status: 200, setup: { view: SIGN_IN_VIEW } },
   { id: 'fields-ok', route: 'GET /api/catalogue/:bridge_id/capture-fields', url: C + '/shop-s/capture-fields', status: 200 },
+  {
+    id: 'support-expired',
+    route: 'POST /api/catalogue/:bridge_id/support',
+    url: C + '/shop-s/support',
+    status: 400,
+    setup: { expired: true },
+    body: { phone: '9876543210', otp: GOOD_CODE, observed: 'It broke' }
+  },
+  {
+    id: 'confirm-expired',
+    route: 'POST /api/catalogue/:bridge_id/order/confirm',
+    url: C + '/shop-s/order/confirm',
+    status: 400,
+    setup: { expired: true },
+    body: CONFIRM()
+  },
+  {
+    id: 'login-expired',
+    route: 'POST /api/catalogue/:bridge_id/login/verify',
+    url: C + '/shop-s/login/verify',
+    status: 400,
+    setup: { expired: true },
+    body: { phone: '9876543210', otp: GOOD_CODE }
+  },
   {
     id: 'start-no-key',
     route: 'POST /api/catalogue/:bridge_id/order/start',
@@ -744,7 +769,7 @@ const SCENARIOS = [
     id: 'login-locked',
     route: 'POST /api/catalogue/:bridge_id/login/verify',
     url: C + '/shop-s/login/verify',
-    status: 429,
+    status: 400,
     setup: { attempts: 99 },
     body: { phone: '9876543210', otp: GOOD_CODE }
   },
@@ -851,6 +876,7 @@ async function checkRoutes(port, recording) {
   if (!argv.includes('--capture')) await checkOnceOnly(port);
   delete process.env.NETWORK_STORE_ORDERS;
   checkSameNotFound(recording);
+  checkSameRefusal(recording);
   return tested;
 }
 
@@ -934,6 +960,25 @@ function checkSameNotFound(recording) {
   pairs.forEach(([route, unknown, hidden]) =>
     check(hidden + ': the same 404, byte for byte, as ' + unknown, sameValue(bodyOf(route, unknown), bodyOf(route, hidden)))
   );
+}
+
+/* ⭐ SEC-81c: before sign-in, an unknown contact and a refused code (wrong, locked, expired) answer byte for byte the same on each door */
+function checkSameRefusal(recording) {
+  const DOORS = [
+    ['POST /api/catalogue/:bridge_id/support', 'support-no-code-asked', 'support'],
+    ['POST /api/catalogue/:bridge_id/order/confirm', 'confirm-not-started', 'confirm'],
+    ['POST /api/catalogue/:bridge_id/login/verify', 'login-no-account', 'login']
+  ];
+  for (const [route, unknown, door] of DOORS) {
+    const bodyOf = (scenario) => Object.assign({}, recording[route][scenario].body, { request_id: null });
+    for (const known of [door + '-wrong-code', door + '-locked', door + '-expired']) {
+      const same = recording[route][known].status === recording[route][unknown].status && sameValue(bodyOf(known), bodyOf(unknown));
+      check(known + ': the same answer, byte for byte, as ' + unknown + ' (no one can tell a customer from a stranger)', same, [
+        bodyOf(known),
+        bodyOf(unknown)
+      ]);
+    }
+  }
 }
 
 /* ── lib/storefront-contract.js as a unit: the operations, the old validation body, the 5xx bodies ── */

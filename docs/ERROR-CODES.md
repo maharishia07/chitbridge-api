@@ -30,7 +30,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHIT_NOT_DELIVERED | 503 | Chit not delivered | PENDING | - | connectors | 2026-10-22 |
 | CHOOSE_IDENTITY | 409 | Choose identity | PENDING | - | signin | 2026-10-22 |
 | CLAIM_RECORDED | 409 | Claim recorded | PENDING | - | reward-store | 2026-10-22 |
-| CODE_NOT_ASKED | 400 | No code asked for | Ask for a code first — none was sent to that phone or email at this shop. | Tap "Send code", then type the code you get. | catalogue | 2026-10-23 |
 | CONFIRM_REMOVE | 400 | Confirm remove | PENDING | - | actors | 2026-10-22 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | PENDING | - | whatsapp-out | 2026-10-22 |
 | CONTACT_INVALID | 422 | Phone or email not usable | Enter one phone number or one email — not both, and in a form we can send to. | Check the number or the address and try again. | catalogue | 2026-10-23 |
@@ -92,7 +91,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NETWORK_READ_FAILED | 503 | Network not read | We could not read who is in the network just now. Nothing was changed. | Try again in a minute. | network-membership | 2026-10-23 |
 | NO_MATCHING_PRODUCTS | 404 | No matching products | None of those products is sold in this network. | Go back to the store and choose again. | catalogue | 2026-10-23 |
 | NO_OPERATOR | 409 | Network has no operator | This network has nobody to take the order just now. | Tell the store; try again later. | catalogue | 2026-10-23 |
-| NO_SHOPPER_ACCOUNT | 400 | No account here yet | There is no account with that phone or email at this shop yet. | Place an order first; it makes your account. | catalogue | 2026-10-23 |
 | NOTIF_DISMISS_NOT_MIGRATED | 503 | Notif dismiss not migrated | PENDING | - | notifications | 2026-10-22 |
 | NOT_BOARD_WRITER | 403 | Not board writer | PENDING | - | testing | 2026-10-22 |
 | NOT_FOR_COUNTRY | varies | Not for country | PENDING | - | integrations | 2026-10-22 |

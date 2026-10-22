@@ -65,6 +65,7 @@ of file each thing is; this says what already does the job.
 | 28 | `mint` | `catalogue-blueprint.js` | the whole pack, unchanged — |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 27 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 27 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 26 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 26 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
@@ -72,7 +73,6 @@ of file each thing is; this says what already does the job.
 | 26 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 26 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 26 | `changes` | `books-store.js` |  |
-| 26 | `refusal` | `employee-code.js` | and Resend there is no way to hand it over. |
 | 26 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 26 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
@@ -128,6 +128,7 @@ of file each thing is; this says what already does the job.
 | 17 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 17 | `match` | `itemmatch.js` | actually state. |
 | 17 | `known` | `knownerr.js` | known(err) → { status, body } · null |
+| 17 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 17 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 17 | `fail` | `books.js` |  |
 | 16 | `message` | `cap-print.js` | the one message: |
@@ -136,7 +137,6 @@ of file each thing is; this says what already does the job.
 | 16 | `panel` | `sides.js` |  |
 | 16 | `plan` | `crm-leads.js` | `existing`: |
 | 16 | `group` | `identity.js` | again in a different costume. |
-| 16 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
 | 15 | `bkMoney` | `cap-books.js` |  |
@@ -148,7 +148,6 @@ of file each thing is; this says what already does the job.
 | 15 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 15 | `connectors` | `home-facts.js` | declare (said in words — |
 | 15 | `governance` | `home-facts.js` |  |
-| 15 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 15 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `control` | `cap-settings.js` |  |

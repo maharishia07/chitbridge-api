@@ -1277,11 +1277,9 @@ router.post(
            FROM identities WHERE email = $1`,
         [handle]
       );
-      if (!cr.rows.length) return refuseAs(req, res, { status: 400, code: 'CODE_NOT_ASKED', legacy: oldBody('Verify failed', 'Ask for a code first') });
       const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] }); // SEC1: the typed contact, for TESTER_NAMES
-      if (otpCheck.status === 429) return refuseAs(req, res, { status: 429, code: 'OTP_LOCKED', legacy: oldBody('Verify failed', otpCheck.message) });
-      if (!otpCheck.ok) return refuseAs(req, res, { status: 400, code: otpCheck.reason, legacy: oldBody('Verify failed', otpCheck.message) });
+      if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
+        return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.VERIFY_REFUSED });
 
       /* ⚠️ THE CODE IS SPENT, exactly as /order/confirm spends it. verifyOtp does not clear it, so without this
          one code would post tickets for the rest of its fifteen minutes. */
@@ -1340,11 +1338,9 @@ router.post(
          FROM identities WHERE email = $1`,
         [handle]
       );
-      if (!cr.rows.length) return refuseAs(req, res, { status: 400, code: 'CODE_NOT_ASKED', legacy: oldBody('Verify failed', 'Start the order first') });
       const c = cr.rows[0];
-      const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] }); // SEC1: the typed contact, for TESTER_NAMES
-      if (otpCheck.status === 429) return refuseAs(req, res, { status: 429, code: 'OTP_LOCKED', legacy: oldBody('Verify failed', otpCheck.message) });
-      if (!otpCheck.ok) return refuseAs(req, res, { status: 400, code: otpCheck.reason, legacy: oldBody('Verify failed', otpCheck.message) });
+      if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
+        return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.VERIFY_REFUSED });
       // build the guaranteed chit: customer = sender, shop = receiver
       // PRICE INTEGRITY (CJ-07): re-price every line against the shop's catalogue; reject anything that can't be
       // matched/priced. `line_items` + `total` below are now SERVER-authoritative, not customer-supplied.
@@ -1816,6 +1812,16 @@ router.post(
 );
 
 // ── CJ-F1: verify OTP for sign-in (no order) → customer token ──
+/**
+ * ⭐ SEC-81c · BEFORE SIGN-IN, ONE ANSWER. Is there a shopper row for this contact, and does the typed code hold? An unknown
+ * contact, a wrong code, an expired one and a locked row all get the same 400 in SEC-81's sentence (#333), so no one can probe
+ * which phones and e-mails are a shop's customers. The row is never told apart from the code; the attempt counting stays in
+ * lib/otp verifyOtp, untouched.
+ */
+async function codeHolds(row, typed, names) {
+  if (!row) return false;
+  return (await verifyOtp(query, row, typed, { names })).ok; // SEC1: the typed contact, for TESTER_NAMES
+}
 router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify', [['otp']]), storefront.trimmed('otp'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
@@ -1828,12 +1834,9 @@ router.post('/:bridge_id/login/verify', doorCheck('POST /:bridge_id/login/verify
          FROM identities WHERE email = $1`,
       [handle]
     );
-    if (!cr.rows.length)
-      return refuseAs(req, res, { status: 400, code: 'NO_SHOPPER_ACCOUNT', legacy: oldBody('Sign-in failed', 'No account — place an order first') });
     const c = cr.rows[0];
-    const otpCheck = await verifyOtp(query, c, req.body.otp, { names: [c0.raw, handle] }); // SEC1: the typed contact, for TESTER_NAMES
-    if (otpCheck.status === 429) return refuseAs(req, res, { status: 429, code: 'OTP_LOCKED', legacy: oldBody('Sign-in failed', otpCheck.message) });
-    if (!otpCheck.ok) return refuseAs(req, res, { status: 400, code: otpCheck.reason, legacy: oldBody('Sign-in failed', otpCheck.message) });
+    if (!(await codeHolds(c, req.body.otp, [c0.raw, handle])))
+      return refuseAs(req, res, { status: 400, code: 'SIGNIN_REFUSED', legacy: storefront.SIGN_IN_REFUSED });
     await spendShopperOtp(query, c.identity_id);
     // ⭐ [capability: sign-in] issueToken() — see the other call site in this file for why this stopped
     // being a third hand-built jwt.sign().

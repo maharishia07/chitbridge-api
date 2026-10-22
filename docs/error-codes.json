@@ -191,15 +191,6 @@
    "since": "2026-10-22"
   },
   {
-   "code": "CODE_NOT_ASKED",
-   "status": "400",
-   "title": "No code asked for",
-   "shopkeeper": "Ask for a code first — none was sent to that phone or email at this shop.",
-   "hint": "Tap \"Send code\", then type the code you get.",
-   "owner_area": "catalogue",
-   "since": "2026-10-23"
-  },
-  {
    "code": "CONFIRM_REMOVE",
    "status": "400",
    "title": "Confirm remove",
@@ -945,15 +936,6 @@
    "hint": "-",
    "owner_area": "marketing-results",
    "since": "2026-10-22"
-  },
-  {
-   "code": "NO_SHOPPER_ACCOUNT",
-   "status": "400",
-   "title": "No account here yet",
-   "shopkeeper": "There is no account with that phone or email at this shop yet.",
-   "hint": "Place an order first; it makes your account.",
-   "owner_area": "catalogue",
-   "since": "2026-10-23"
   },
   {
    "code": "NO_SHOP_COPY",

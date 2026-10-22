@@ -90,7 +90,7 @@
    "path": "/api/catalogue/:bridge_id/my-documents/:id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1919,
+   "line": 1922,
    "hash": "1b34207b0a69660c",
    "columns": {
     "schema_in": false,
@@ -2451,7 +2451,7 @@
    "path": "/api/catalogue/:bridge_id/my-documents",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1898,
+   "line": 1901,
    "hash": "a016ada3fe93aabf",
    "columns": {
     "schema_in": false,
@@ -2479,7 +2479,7 @@
    "path": "/api/catalogue/:bridge_id/my-orders",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1872,
+   "line": 1875,
    "hash": "722b6a6522934dfd",
    "columns": {
     "schema_in": false,
@@ -2570,7 +2570,7 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 2008,
+   "line": 2011,
    "hash": "909446b9f8a2c3b5",
    "columns": {
     "schema_in": false,
@@ -11445,8 +11445,8 @@
    "path": "/api/catalogue/:bridge_id/login/verify",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1819,
-   "hash": "40aa5cc7f1e7dbf3",
+   "line": 1825,
+   "hash": "9d34219e5166cb7b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11460,7 +11460,6 @@
     400,
     404,
     422,
-    429,
     500
    ],
    "notes": [
@@ -11481,8 +11480,8 @@
    "path": "/api/catalogue/:bridge_id/order/confirm",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1324,
-   "hash": "56c30a3eebd74030",
+   "line": 1322,
+   "hash": "060fac9633f19490",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11498,7 +11497,6 @@
     404,
     409,
     422,
-    429,
     500,
     503
    ],
@@ -11558,7 +11556,7 @@
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
    "line": 1263,
-   "hash": "0bbbd9474b3eb284",
+   "hash": "81696fd76afddafd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -11572,7 +11570,6 @@
     400,
     404,
     422,
-    429,
     500,
     502
    ],
@@ -11629,7 +11626,7 @@
    "path": "/api/catalogue/enquiry/:item_id",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 2031,
+   "line": 2034,
    "hash": "e762f4cf80197ac2",
    "columns": {
     "schema_in": false,
@@ -11696,7 +11693,7 @@
    "path": "/api/catalogue/photo-extract",
    "owner_area": "catalogue",
    "file": "routes/catalogue.js",
-   "line": 1940,
+   "line": 1943,
    "hash": "213dfb21eec3556c",
    "columns": {
     "schema_in": false,

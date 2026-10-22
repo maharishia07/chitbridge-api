@@ -740,36 +740,39 @@
      "status": 400,
      "body_keys": {
       "error": "Verify failed",
-      "message": "Ask for a code first"
+      "message": "That sign-in didn't work. Check the details and try again."
      },
      "fixture": {
       "error": "Verify failed",
-      "message": "Ask for a code first"
-     }
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     },
     {
      "scenario": "support-wrong-code",
      "status": 400,
      "body_keys": {
       "error": "Verify failed",
-      "message": "Incorrect code — 4 attempts left."
+      "message": "That sign-in didn't work. Check the details and try again."
      },
      "fixture": {
       "error": "Verify failed",
-      "message": "Incorrect code — 4 attempts left."
-     }
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     },
     {
      "scenario": "support-locked",
-     "status": 429,
+     "status": 400,
      "body_keys": {
       "error": "Verify failed",
-      "message": "Too many incorrect attempts — request a new code."
+      "message": "That sign-in didn't work. Check the details and try again."
      },
      "fixture": {
       "error": "Verify failed",
-      "message": "Too many incorrect attempts — request a new code."
-     }
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     },
     {
      "scenario": "support-not-raised",
@@ -817,6 +820,19 @@
       ]
      },
      "note": "new since slice 1e (API-3 strict input): a key this door does not read is refused in the old validation words; before, it was dropped without a word and the request went on."
+    },
+    {
+     "scenario": "support-expired",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     }
    ]
   },
@@ -915,36 +931,39 @@
      "status": 400,
      "body_keys": {
       "error": "Verify failed",
-      "message": "Start the order first"
+      "message": "That sign-in didn't work. Check the details and try again."
      },
      "fixture": {
       "error": "Verify failed",
-      "message": "Start the order first"
-     }
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     },
     {
      "scenario": "confirm-wrong-code",
      "status": 400,
      "body_keys": {
       "error": "Verify failed",
-      "message": "Incorrect code — 4 attempts left."
+      "message": "That sign-in didn't work. Check the details and try again."
      },
      "fixture": {
       "error": "Verify failed",
-      "message": "Incorrect code — 4 attempts left."
-     }
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     },
     {
      "scenario": "confirm-locked",
-     "status": 429,
+     "status": 400,
      "body_keys": {
       "error": "Verify failed",
-      "message": "Too many incorrect attempts — request a new code."
+      "message": "That sign-in didn't work. Check the details and try again."
      },
      "fixture": {
       "error": "Verify failed",
-      "message": "Too many incorrect attempts — request a new code."
-     }
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     },
     {
      "scenario": "confirm-not-in-catalogue",
@@ -1082,6 +1101,19 @@
       "message": "This Idempotency-Key was already used with a different request."
      },
      "note": "new with public idempotency (API-3 S36): middleware/idempotency.js's own answer, the same one a signed-in mutation gets, now a Problem that keeps code, error and message."
+    },
+    {
+     "scenario": "confirm-expired",
+     "status": 400,
+     "body_keys": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Verify failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     }
    ]
   },
@@ -1161,36 +1193,39 @@
      "status": 400,
      "body_keys": {
       "error": "Sign-in failed",
-      "message": "No account — place an order first"
+      "message": "That sign-in didn't work. Check the details and try again."
      },
      "fixture": {
       "error": "Sign-in failed",
-      "message": "No account — place an order first"
-     }
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     },
     {
      "scenario": "login-wrong-code",
      "status": 400,
      "body_keys": {
       "error": "Sign-in failed",
-      "message": "Incorrect code — 4 attempts left."
+      "message": "That sign-in didn't work. Check the details and try again."
      },
      "fixture": {
       "error": "Sign-in failed",
-      "message": "Incorrect code — 4 attempts left."
-     }
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     },
     {
      "scenario": "login-locked",
-     "status": 429,
+     "status": 400,
      "body_keys": {
       "error": "Sign-in failed",
-      "message": "Too many incorrect attempts — request a new code."
+      "message": "That sign-in didn't work. Check the details and try again."
      },
      "fixture": {
       "error": "Sign-in failed",
-      "message": "Too many incorrect attempts — request a new code."
-     }
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     },
     {
      "scenario": "login-fails",
@@ -1203,6 +1238,19 @@
       "error": "Sign-in failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "login-expired",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "fixture": {
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again."
+     },
+     "note": "SEC-81c (23 Oct): before sign-in, an unknown contact and a refused code (wrong, locked, expired) get one answer, 400 SIGNIN_REFUSED in SEC-81's sentence (#333). Before, the words (and a 429 for a lock) told a shop's customers apart from strangers. public/shop.html shows `message` on any non-200 and branches on none of these."
     }
    ]
   }

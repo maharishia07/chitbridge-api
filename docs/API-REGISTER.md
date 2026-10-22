@@ -12,7 +12,7 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | DELETE | /api/actors/:id/pin | actors | routes/actors.js:732 | no | no | no | no | no | no | no | not started |
 | DELETE | /api/books/recurring/:id | books | routes/books.js:2262 | no | no | no | no | no | no | no | not started |
-| DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1919 | no | no | no | no | no | no | no | not started |
+| DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1922 | no | no | no | no | no | no | no | not started |
 | DELETE | /api/channels/:id | channels | routes/channels.js:127 | no | no | no | no | no | no | no | not started |
 | DELETE | /api/chits/:chit_id | chits | routes/chits.js:5980 | no | no | no | no | no | no | no | not started |
 | DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4582 | no | no | no | no | no | no | no | not started |
@@ -91,11 +91,11 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | GET | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:16 | no | no | no | no | no | no | no | not started |
 | GET | /api/catalogue/:bridge_id | catalogue | routes/catalogue.js:1093 | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/catalogue/:bridge_id/capture-fields | catalogue | routes/catalogue.js:1111 | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/catalogue/:bridge_id/my-documents | catalogue | routes/catalogue.js:1898 | no | no | no | no | no | no | no | not started |
-| GET | /api/catalogue/:bridge_id/my-orders | catalogue | routes/catalogue.js:1872 | no | no | no | no | no | no | no | not started |
+| GET | /api/catalogue/:bridge_id/my-documents | catalogue | routes/catalogue.js:1901 | no | no | no | no | no | no | no | not started |
+| GET | /api/catalogue/:bridge_id/my-orders | catalogue | routes/catalogue.js:1875 | no | no | no | no | no | no | no | not started |
 | GET | /api/catalogue/:bridge_id/support/preview | catalogue | routes/catalogue.js:1186 | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/catalogue/enquiry | catalogue | routes/catalogue.js:1048 | no | no | no | no | no | no | no | not started |
-| GET | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2008 | no | no | no | no | no | no | no | not started |
+| GET | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2011 | no | no | no | no | no | no | no | not started |
 | GET | /api/catalogue/network-store/:networkId | catalogue | routes/catalogue.js:617 | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/catalogue/network/:bridge_id | catalogue | routes/catalogue.js:887 | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/channels | channels | routes/channels.js:20 | no | no | no | no | no | no | no | not started |
@@ -392,14 +392,14 @@ Seven machine columns (S15): schema_in · schema_out · error_shape · codes_reg
 | POST | /api/capture/stores | capture | routes/capture.js:305 | no | no | no | no | no | no | no | not started |
 | POST | /api/capture/webhook/email | capture | routes/capture.js:220 | no | no | no | no | no | no | no | not started |
 | POST | /api/capture/webhook/whatsapp | capture | routes/capture.js:190 | no | no | no | no | no | no | no | not started |
-| POST | /api/catalogue/:bridge_id/login/verify | catalogue | routes/catalogue.js:1819 | yes | yes | yes | yes | yes | yes | yes | partial |
-| POST | /api/catalogue/:bridge_id/order/confirm | catalogue | routes/catalogue.js:1324 | yes | yes | yes | yes | yes | yes | yes | partial |
+| POST | /api/catalogue/:bridge_id/login/verify | catalogue | routes/catalogue.js:1825 | yes | yes | yes | yes | yes | yes | yes | partial |
+| POST | /api/catalogue/:bridge_id/order/confirm | catalogue | routes/catalogue.js:1322 | yes | yes | yes | yes | yes | yes | yes | partial |
 | POST | /api/catalogue/:bridge_id/order/start | catalogue | routes/catalogue.js:1123 | yes | yes | yes | yes | yes | yes | no | partial |
 | POST | /api/catalogue/:bridge_id/support | catalogue | routes/catalogue.js:1263 | yes | yes | yes | yes | yes | yes | yes | partial |
 | POST | /api/catalogue/:bridge_id/support/start | catalogue | routes/catalogue.js:1224 | yes | yes | yes | yes | yes | yes | yes | partial |
-| POST | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2031 | no | no | no | no | no | no | no | not started |
+| POST | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2034 | no | no | no | no | no | no | no | not started |
 | POST | /api/catalogue/network-store/:networkId/order | catalogue | routes/catalogue.js:749 | yes | yes | yes | yes | yes | yes | yes | partial |
-| POST | /api/catalogue/photo-extract | catalogue | routes/catalogue.js:1940 | no | no | no | no | no | no | no | not started |
+| POST | /api/catalogue/photo-extract | catalogue | routes/catalogue.js:1943 | no | no | no | no | no | no | no | not started |
 | POST | /api/channels | channels | routes/channels.js:73 | no | no | no | no | no | no | no | not started |
 | POST | /api/channels/:id/approve | channels | routes/channels.js:101 | no | no | no | no | no | no | no | not started |
 | POST | /api/channels/:id/auto-raise | channels | routes/channels.js:53 | no | no | no | no | no | no | no | not started |
