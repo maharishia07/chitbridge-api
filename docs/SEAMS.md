@@ -10,12 +10,12 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 113 | `list` | `amend.js` |  |
-| 105 | `rows` | `crm.js` | still in them: |
+| 106 | `rows` | `crm.js` | still in them: |
 | 100 | `withEntity` | `books-hooks.js` |  |
 | 86 | `read` | `books-cashflow.js` | Trips: |
 | 75 | `money` | `bill-privacy.js` |  |
 | 71 | `words` | `variant.browser.js` |  |
-| 68 | `answer` | `availability.js` | from March; then nearest. |
+| 69 | `answer` | `availability.js` | from March; then nearest. |
 | 65 | `list` | `cap-settings.js` |  |
 | 64 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 63 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -38,7 +38,7 @@ of file each thing is; this says what already does the job.
 | 40 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 39 | `view` | `books-payables.js` | group: |
 | 39 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 38 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 39 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 38 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 37 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 36 | `line` | `rail-bell.js` | one row of the feed -> { i, mine, chit, who, say, subj, d, s, id } — |
@@ -64,7 +64,7 @@ of file each thing is; this says what already does the job.
 | 28 | `sentence` | `one-person.js` |  |
 | 28 | `facts` | `bill-steps.js` | MY state_log — |
 | 27 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
-| 27 | `mint` | `catalogue-blueprint.js` | the whole pack, unchanged — |
+| 28 | `mint` | `catalogue-blueprint.js` | the whole pack, unchanged — |
 | 27 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 26 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
@@ -108,7 +108,7 @@ of file each thing is; this says what already does the job.
 | 19 | `card` | `cap-shop.js` |  |
 | 19 | `reason` | `lab-kit.js` | W9: |
 | 19 | `more` | `lab-kit.js` | paints up to `max` (3) lines; beyond that a button "and N more" whose popup is a CBList (sort · search · resiz |
-| 19 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
+| 21 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 19 | `entries` | `books-store.js` |  |
 | 19 | `said` | `dispute-may.js` | a rail verdict → the answer with its sentence (the rail's WHY table; an unknown word fails loudly, as rail.say |
 | 19 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
