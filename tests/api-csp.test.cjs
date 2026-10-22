@@ -4,7 +4,7 @@
  * The REAL server.js is loaded (database stubbed, listen() made a no-op) and asked over HTTP on a local port:
  *   · a JSON answer (/health) carries default-src 'none' + frame-ancestors 'none'
  *   · /.well-known/ctp.json is still served: 200, application/json, and strict too (the critic's landing check)
- *   · the 5 old pages in public/ are served WITHOUT the strict policy, so their inline script keeps working
+ *   · the 5 old pages in public/ are retired (SEC-77): /chit.html and the rest answer 404, still under the strict policy
  *   · POST /api/csp-report takes both report shapes (report-uri and report-to), answers 204, logs shaped fields only,
  *     has a limiter of its own, and refuses a body over 8 KB
  * Run: node tests/api-csp.test.cjs · no network beyond 127.0.0.1, no DB.
@@ -112,13 +112,12 @@ const STRICT = /default-src 'none'/;
       assert.ok(/application\/json/.test(r.headers['content-type'] || ''), r.headers['content-type']);
       assert.ok(STRICT.test(r.headers['content-security-policy'] || ''));
     });
-    const pages = fs.readdirSync(path.join(API, 'public')).filter((n) => /\.html$/.test(n));
-    await it('the old pages are served WITHOUT the strict policy (' + pages.join(' · ') + ')', async () => {
-      assert.ok(pages.length >= 5, 'expected the 5 old pages, found ' + pages.length);
-      for (const name of pages) {
-        const r = await ask(port, 'GET', '/' + name);
-        assert.strictEqual(r.status, 200, name + ' answered ' + r.status);
-        assert.ok(!STRICT.test(r.headers['content-security-policy'] || ''), name + ' got the strict policy and would lose its inline script');
+    await it('the 5 old pages are retired (SEC-77): /chit.html answers 404 and still carries the strict policy', async () => {
+      assert.ok(!fs.existsSync(path.join(API, 'public')), 'public/ is back');
+      for (const name of ['chit', 'connections', 'inbox', 'register', 'send']) {
+        const r = await ask(port, 'GET', '/' + name + '.html');
+        assert.strictEqual(r.status, 404, name + '.html answered ' + r.status);
+        assert.ok(STRICT.test(r.headers['content-security-policy'] || ''), name + '.html lost the strict policy');
       }
     });
     await it('POST /api/csp-report (report-uri shape) → 204, one shaped log line, no query string kept', async () => {
