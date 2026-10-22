@@ -115,6 +115,11 @@ const bill = (i, id, daysAgo, extra) => Object.assign({ chit_id: id, counterpart
     assert.strictEqual(first.status, 200); assert.strictEqual(first.body.page, 1); assert.strictEqual(first.body.limit, 1); assert.strictEqual(first.body.customers.length, 1);
     assert.deepStrictEqual(first.body.customers, again.body.customers);
   });
+  await t('the contract (docs/contracts/web-api.json) lists GET /api/marketing/came-back with the keys the web reads, and its not-yet-migrated keys as optional', () => {
+    const entry = JSON.parse(require('fs').readFileSync(path.join(API, 'docs', 'contracts', 'web-api.json'), 'utf8')).routes['GET /api/marketing/came-back'];
+    assert.ok(entry && entry.status === 200); ['customers', 'sent_n', 'came_back_n', 'days', 'money', 'why', 'total', 'page', 'limit'].forEach((key) => assert.ok(key in entry.example, key));
+    assert.deepStrictEqual(entry.optional.slice().sort(), ['code', 'say']);
+  });
   srv.close();
   console.log('\n' + (failed ? 'FAILURES above - ' : '') + n + ' checks passed' + (failed ? ', ' + failed + ' failed' : ''));
   process.exit(failed ? 1 : 0);

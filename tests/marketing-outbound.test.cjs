@@ -131,6 +131,11 @@ const inserts = () => world.calls.filter((c) => /^INSERT INTO channel_outbound/.
     srv.close();
     assert.strictEqual(anon.status, 401); assert.strictEqual(mine.status, 200); assert.strictEqual(mine.body.page, 1); assert.deepStrictEqual(mine.body, twice.body);
   });
+  await t('the contract (docs/contracts/web-api.json) lists GET /api/channels/outbound with reason_code, party_name, basis and the pager keys', () => {
+    const entry = JSON.parse(fs.readFileSync(path.join(API, 'docs', 'contracts', 'web-api.json'), 'utf8')).routes['GET /api/channels/outbound'];
+    assert.ok(entry && entry.status === 200); ['total', 'page', 'limit', 'migrated'].forEach((key) => assert.ok(key in entry.example, key));
+    ['reason_code', 'party_name', 'basis', 'send_ref'].forEach((key) => assert.ok(key in entry.example.outbound[0], key));
+  });
   console.log('\n' + (failed ? 'FAILURES above - ' : '') + n + ' checks passed' + (failed ? ', ' + failed + ' failed' : ''));
   process.exit(failed ? 1 : 0);
 })();
