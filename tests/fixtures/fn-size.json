@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 234,
+  "long_functions": 233,
   "worst_complexity": 185,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -459,7 +459,6 @@
       "GET /:chit_id"
     ],
     "routes/signin.js": [
-      "actorLogin",
       "ask",
       "verify"
     ],

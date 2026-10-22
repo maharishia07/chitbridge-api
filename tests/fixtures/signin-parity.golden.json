@@ -1,5 +1,5 @@
 {
- "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug",
+ "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug · amended 2026-10-22 (SEC-81): every refusal of an unknown account, a wrong secret or a locked account now answers the one safe sentence (status 400, same body); rows unchanged",
  "scenarios": {
   "ask.entity.email": {
    "responses": [
@@ -214,8 +214,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Not registered",
-      "message": "No account found — please register first"
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -265,8 +272,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Not found",
-      "message": "Entity not found — check your name, User ID, or email address"
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -840,8 +854,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Incorrect code — 4 attempts left."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -891,43 +912,85 @@
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Incorrect code — 4 attempts left."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Incorrect code — 3 attempts left."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Incorrect code — 2 attempts left."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Incorrect code — 1 attempt left."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Too many incorrect attempts — request a new code."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
-     "status": 429,
+     "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Too many incorrect attempts — request a new code."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -977,8 +1040,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Email not found — please register first"
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -1217,41 +1287,71 @@
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Incorrect PIN. 4 attempts left.",
-      "use_pin": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Incorrect PIN. 3 attempts left.",
-      "use_pin": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Incorrect PIN. 2 attempts left.",
-      "use_pin": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Incorrect PIN. 1 attempt left.",
-      "use_pin": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Account locked after 5 wrong attempts. Ask your admin to reset your PIN.",
-      "use_pin": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -1410,8 +1510,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Too many wrong attempts. Ask your admin to reset your PIN."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -1702,43 +1809,85 @@
     {
      "status": 400,
      "body": {
-      "error": "Login failed",
-      "message": "Incorrect PIN. 4 attempts remaining."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Login failed",
-      "message": "Incorrect PIN. 3 attempts remaining."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Login failed",
-      "message": "Incorrect PIN. 2 attempts remaining."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Login failed",
-      "message": "Incorrect PIN. 1 attempts remaining."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Login failed",
-      "message": "Account locked after 5 wrong attempts. Contact your admin."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     },
     {
      "status": 400,
      "body": {
-      "error": "Account locked",
-      "message": "Too many wrong attempts. Contact your admin to reset."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -2032,8 +2181,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Login failed",
-      "message": "Incorrect code — 4 attempts left."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -2135,8 +2291,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Login failed",
-      "message": "This account has been removed. Contact your admin."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -2186,8 +2349,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Account locked",
-      "message": "Too many wrong attempts. Contact your admin to reset."
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -2340,8 +2510,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Login failed",
-      "message": "Entity not found — check spelling after @"
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -2391,8 +2568,15 @@
     {
      "status": 400,
      "body": {
-      "error": "Login failed",
-      "message": "Actor zz not found under shop one"
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "type": "https://chitbridge.com/problems/signin_refused",
+      "title": "Sign-in refused",
+      "status": 400,
+      "code": "SIGNIN_REFUSED",
+      "detail": "That sign-in didn't work. Check the details and try again.",
+      "hint": "Check the details and try again.",
+      "request_id": null
      }
     }
    ],
@@ -2600,9 +2784,8 @@
     {
      "status": 200,
      "body": {
-      "has_pin": false,
-      "valid": false,
-      "removed": true
+      "valid": true,
+      "has_pin": false
      }
     }
    ],
@@ -2652,8 +2835,8 @@
     {
      "status": 200,
      "body": {
-      "has_pin": false,
-      "valid": false
+      "valid": true,
+      "has_pin": false
      }
     }
    ],
@@ -2703,8 +2886,8 @@
     {
      "status": 200,
      "body": {
-      "has_pin": false,
-      "valid": false
+      "valid": true,
+      "has_pin": false
      }
     }
    ],
@@ -2754,8 +2937,8 @@
     {
      "status": 200,
      "body": {
-      "has_pin": false,
-      "valid": false
+      "valid": true,
+      "has_pin": false
      }
     }
    ],
