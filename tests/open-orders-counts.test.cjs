@@ -30,3 +30,4 @@ t('kind day, count 3, counter C5', [s.kind, s.count, s.counter], ['day', 3, 'C5'
 t('source.bills = the bill numbers, each openable', s.bills.map((b) => b.ref + '/' + b.chit_id), ['C5/26-27/0001/a', 'C5/26-27/0002/b', 'C5/26-27/0003/c']);
 t('a later line of the day (no day_bills) gives null, never []', sourceOf(Object.assign({}, day, { day_bills: null })).bills, null);
 
+console.log(pass + ' checks'); process.exitCode = fail ? 1 : 0;

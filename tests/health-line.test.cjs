@@ -10,4 +10,4 @@ assert.strictEqual(bad.status, 2); assert.ok(/bad health input/.test(bad.stderr)
 const { formatLine } = require(script);
 const red = formatLine({ health: { db: 'ok', environment: 'production', commit: 'deadbee1', audit_lost: 2 }, mainSha: { api: '76d350b1', web: 'x' }, ci: { web: 'success', api: 'failure', engines: 'success' } }, 'D');
 assert.ok(red.red.includes('api commit behind main') && red.red.includes('CI not green') && /stock n\/a/.test(red.line));
-console.log('health-line: ok');
+console.log('health-line: ok · 6 checks');
