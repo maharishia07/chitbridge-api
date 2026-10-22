@@ -4,8 +4,8 @@
  "counts": {
   "routes": 633,
   "not_started": 607,
-  "partial": 23,
-  "meets": 3
+  "partial": 17,
+  "meets": 9
  },
  "machine_columns": [
   "schema_in",
@@ -743,13 +743,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#335",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/actors",
@@ -3953,13 +3953,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#335",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/definitions",
@@ -13465,13 +13465,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#335",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/ctp/query",
@@ -13500,13 +13500,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#335",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /api/definitions",
@@ -17850,13 +17850,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#335",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "POST /query",
@@ -17885,13 +17885,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#335",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "PUT /api/actors/:id/delegate",
